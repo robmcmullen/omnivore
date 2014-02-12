@@ -24,10 +24,10 @@ was designed to be toolkit agnostic and it was relatively easy to bring their
 libraries up to date as compared to Qt.  My patches have not made it back to
 Enthought yet, which is why I'm requiring the custom build.
 
-cd ~/src/enthought
-for name in traits; do echo $name; git clone https://github.com/enthought/$name.git; cd $name; python setup.py develop; cd ..; done
-for name in pyface traitsui envisage; do echo $name; git clone https://github.com/robmcmullen/$name.git; cd $name; python setup.py develop; cd ..; done
-for name in apptools enable; do echo $name; git clone https://github.com/enthought/$name.git; cd $name; python setup.py develop; cd ..; done
+    cd ~/src/enthought
+    for name in traits; do echo $name; git clone https://github.com/enthought/$name.git; cd $name; python setup.py develop; cd ..; done
+    for name in pyface traitsui envisage; do echo $name; git clone https://github.com/robmcmullen/$name.git; cd $name; python setup.py develop; cd ..; done
+    for name in apptools enable; do echo $name; git clone https://github.com/enthought/$name.git; cd $name; python setup.py develop; cd ..; done
 
 
 RUNNING THE PROGRAM
@@ -35,9 +35,9 @@ RUNNING THE PROGRAM
 
 This is still alpha software, so caveat emptor.  The only way to get it currently is to clone it from git:
 
-$ git clone https://github.com/robmcmullen/peppy2.git
-$ cd peppy2
-$ python run.py
+    $ git clone https://github.com/robmcmullen/peppy2.git
+    $ cd peppy2
+    $ python run.py
 
 
 DISCLAIMER
