@@ -1,10 +1,11 @@
-from traits.api import HasTraits, provides
+from envisage.api import Plugin
+from traits.api import HasTraits, provides, List
 
-from i_filetype import IFileType
+from ..i_file_recognizer import IFileRecognizer
 import imghdr
 
-@provides(IFileType)
-class ImageFileType(HasTraits):
+@provides(IFileRecognizer)
+class ImageRecognizer(HasTraits):
     """ Identify common image formats
     
     """
@@ -31,10 +32,24 @@ class ImageFileType(HasTraits):
         
         If byte stream is not known, returns None
         """
-        if byte_stream is None:
-            return
         name = imghdr.what("", h=byte_stream)
         if name is None:
             return
         name = self.mime_map.get(name, name)
         return "image/%s" % name
+
+
+class ImageRecognizerPlugin(Plugin):
+    """ A plugin that contributes to the peppy.file_type.recognizer extension point. """
+
+    #### 'IPlugin' interface ##################################################
+
+    # The plugin's unique identifier.
+    id = 'peppy.file_type.recognizer.image'
+
+    # The plugin's name (suitable for displaying to the user).
+    name = 'Image Recognizer Plugin'
+
+    # This tells us that the plugin contributes the value of this trait to the
+    # 'greetings' extension point.
+    recognizer = List([ImageRecognizer()], contributes_to='peppy.file_type.recognizer')

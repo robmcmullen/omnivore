@@ -70,7 +70,7 @@ class FrameworkApplication(TasksApplication):
     #### API
 
     def load_file(self, uri, active_task):
-        service = self.get_service("file_type.i_filetype.IFileType")
+        service = self.get_service("file_type.i_file_recognizer.IFileRecognizer")
         print "SERVICE!!!", service
         
         from utils.file_guess import FileGuess
@@ -85,6 +85,9 @@ class FrameworkApplication(TasksApplication):
                     print "  can edit: %s" % guess.metadata.mime
                     possibilities.append(factory)
         print possibilities
+        if not possibilities:
+            print "no editor for %s" % uri
+            return
         
         best = possibilities[0]
         

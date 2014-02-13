@@ -1,7 +1,7 @@
 # Enthought library imports.
 from traits.api import Interface, Str
 
-class IFileType(Interface):
+class IFileRecognizer(Interface):
     """ File type identifier service.
     
     """

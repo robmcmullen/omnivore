@@ -3,12 +3,16 @@ import os.path
 
 # Enthought library imports.
 from envisage.api import ExtensionPoint, Plugin, ServiceOffer
-from traits.api import List
+from traits.api import List, Instance
 
+from i_file_recognizer import IFileRecognizer
 
 class FileTypePlugin(Plugin):
     """ Plugin for identifying file types
     """
+
+    # The Ids of the extension points that this plugin offers.
+    RECOGNIZER = 'peppy.file_type.recognizer'
 
     # Extension point IDs.
     SERVICE_OFFERS    = 'envisage.service_offers'
@@ -20,6 +24,22 @@ class FileTypePlugin(Plugin):
 
     # The plugin's name (suitable for displaying to the user).
     name = 'File Type'
+
+    #### Extension points offered by this plugin ##############################
+
+    # The identify_bytes extension point.
+    #
+    # Notice that we use the string name of the 'IMessage' interface rather
+    # than actually importing it. This makes sure that the import only happens
+    # when somebody actually gets the contributions to the extension point.
+    recognizers = ExtensionPoint(
+        List(Instance(IFileRecognizer)), id=RECOGNIZER, desc="""
+    
+    This extension point allows you to contribute file scanners that determine
+    MIME types from a byte stream or file name.
+    
+        """
+    )
 
     #### Contributions to extension points made by this plugin ################
 
@@ -34,17 +54,19 @@ class FileTypePlugin(Plugin):
 
         print "in _service_offers_default"
         offer1 = ServiceOffer(
-            protocol = 'file_type.i_filetype.IFileType',
-            factory  = self._create_image_file_type_service
+            protocol = 'file_type.i_file_recognizer.IFileRecognizer',
+            factory  = self._create_file_recognizer_driver_service
         )
 
         return [offer1]
 
-    def _create_image_file_type_service(self):
-        """ Factory method for the ImageFileType service. """
+    def _create_file_recognizer_driver_service(self):
+        """ Factory method for the File Recognizer Driver service. """
+
+        print "in _create_file_recognizer_driver_service."
+        print "  recognizers: %s" % str(self.recognizers)
 
         # Only do imports when you need to! This makes sure that the import
         # only happens when somebody needs an 'IMOTD' service.
-        from .image import ImageFileType
-
-        return ImageFileType()
+        from .driver import FileRecognizerDriver
+        return FileRecognizerDriver(recognizers=self.recognizers)
