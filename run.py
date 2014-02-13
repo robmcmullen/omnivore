@@ -7,6 +7,7 @@ import logging
 from envisage.core_plugin import CorePlugin
 from envisage.ui.tasks.tasks_plugin import TasksPlugin
 from framework.plugin import FrameworkPlugin
+from file_type.plugin import FileTypePlugin
 
 # Local imports.
 from framework.application import FrameworkApplication
@@ -17,7 +18,7 @@ def main(argv):
     """
     logging.basicConfig(level=logging.WARNING)
 
-    plugins = [ CorePlugin(), TasksPlugin(), FrameworkPlugin() ]
+    plugins = [ CorePlugin(), TasksPlugin(), FrameworkPlugin(), FileTypePlugin() ]
     app = FrameworkApplication(plugins=plugins)
     
     app.run()

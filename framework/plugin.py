@@ -2,7 +2,7 @@
 import os.path
 
 # Enthought library imports.
-from envisage.api import ExtensionPoint, Plugin, ServiceOffer
+from envisage.api import ExtensionPoint, Plugin
 from envisage.ui.tasks.api import TaskFactory
 from traits.api import List
 
@@ -15,7 +15,6 @@ class FrameworkPlugin(Plugin):
     PREFERENCES       = 'envisage.preferences'
     PREFERENCES_PANES = 'envisage.ui.tasks.preferences_panes'
     TASKS             = 'envisage.ui.tasks.tasks'
-    SERVICE_OFFERS    = 'envisage.service_offers'
 
     #### 'IPlugin' interface ##################################################
 
@@ -30,7 +29,6 @@ class FrameworkPlugin(Plugin):
     preferences = List(contributes_to=PREFERENCES)
     preferences_panes = List(contributes_to=PREFERENCES_PANES)
     tasks = List(contributes_to=TASKS)
-    service_offers = List(contributes_to=SERVICE_OFFERS)
 
     ###########################################################################
     # Protected interface.
@@ -69,23 +67,3 @@ class FrameworkPlugin(Plugin):
 #                        name = '2D Visualization',
 #                        factory = Visualize2dTask),
             ]
-
-    def _service_offers_default(self):
-        """ Trait initializer. """
-
-        print "in _service_offers_default"
-        offer1 = ServiceOffer(
-            protocol = 'file_type.i_filetype.IFileType',
-            factory  = self._create_image_file_type_service
-        )
-
-        return [offer1]
-
-    def _create_image_file_type_service(self):
-        """ Factory method for the ImageFileType service. """
-
-        # Only do imports when you need to! This makes sure that the import
-        # only happens when somebody needs an 'IMOTD' service.
-        from file_type.image import ImageFileType
-
-        return ImageFileType()
