@@ -16,7 +16,7 @@ class FileGuess(object):
     # be scanned for a signature
     head_size = 1024*1024
     
-    def __init__(self, uri, mime_service):
+    def __init__(self, uri):
         fh = open(uri, "rb")
         
         # In order to handle arbitrarily sized files, only read the first
@@ -24,10 +24,9 @@ class FileGuess(object):
         # as needed.
         self.bytes = fh.read(self.head_size)
         fh.close()
-        mime = mime_service.identify_bytes(self.bytes)
-        print mime
         
-        self.metadata = FileMetadata(uri=uri, mime=mime)
+        # Use the default mime type until it is recognized
+        self.metadata = FileMetadata(uri=uri)
         
     def get_utf8(self):
         return self.bytes

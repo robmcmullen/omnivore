@@ -17,3 +17,12 @@ class IFileRecognizer(Interface):
         
         If byte stream is not known, returns None
         """
+
+class IFileRecognizerDriver(Interface):
+    """ File type identifier service.
+    
+    """
+
+    def recognize(self, guess):
+        """Attempt to set the mime type of a FileGuess.
+        """

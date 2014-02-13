@@ -70,12 +70,15 @@ class FrameworkApplication(TasksApplication):
     #### API
 
     def load_file(self, uri, active_task):
-        service = self.get_service("file_type.i_file_recognizer.IFileRecognizer")
+        service = self.get_service("file_type.i_file_recognizer.IFileRecognizerDriver")
         print "SERVICE!!!", service
         
         from utils.file_guess import FileGuess
         # The FileGuess loads the first part of the file and tries to identify it.
-        guess = FileGuess(uri, service)
+        guess = FileGuess(uri)
+        
+        # Attempt to classify the guess using the file recognizer service
+        service.recognize(guess)
         
         possibilities = []
         for factory in self.task_factories:

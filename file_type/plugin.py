@@ -5,7 +5,7 @@ import os.path
 from envisage.api import ExtensionPoint, Plugin, ServiceOffer
 from traits.api import List, Instance
 
-from i_file_recognizer import IFileRecognizer
+from i_file_recognizer import IFileRecognizer, IFileRecognizerDriver
 
 class FileTypePlugin(Plugin):
     """ Plugin for identifying file types
@@ -54,7 +54,7 @@ class FileTypePlugin(Plugin):
 
         print "in _service_offers_default"
         offer1 = ServiceOffer(
-            protocol = 'file_type.i_file_recognizer.IFileRecognizer',
+            protocol = 'file_type.i_file_recognizer.IFileRecognizerDriver',
             factory  = self._create_file_recognizer_driver_service
         )
 
