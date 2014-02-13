@@ -22,7 +22,7 @@ current support for wx.  Enthought is transitioning to Qt is their primary GUI
 toolkit and their wx support has been limited recently.  Fortunately Enthought
 was designed to be toolkit agnostic and it was relatively easy to bring their
 libraries up to date as compared to Qt.  My patches have not made it back to
-Enthought yet, which is why I'm requiring the custom build.
+Enthought yet, which is why I'm requiring the custom build::
 
     cd ~/src/enthought
     for name in traits; do echo $name; git clone https://github.com/enthought/$name.git; cd $name; python setup.py develop; cd ..; done
@@ -33,7 +33,7 @@ Enthought yet, which is why I'm requiring the custom build.
 RUNNING THE PROGRAM
 ===================
 
-This is still alpha software, so caveat emptor.  The only way to get it currently is to clone it from git:
+This is still alpha software, so caveat emptor.  The only way to get it currently is to clone it from git::
 
     $ git clone https://github.com/robmcmullen/peppy2.git
     $ cd peppy2
