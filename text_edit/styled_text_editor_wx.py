@@ -74,7 +74,8 @@ class StyledTextEditor(Editor):
             path = self.path
             text = ''
         else:
-            path = guess.uri
+            metadata = guess.get_metadata()
+            path = metadata.uri
             text = guess.get_utf8()
 
         print len(text)
