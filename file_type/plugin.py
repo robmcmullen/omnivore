@@ -27,16 +27,11 @@ class FileTypePlugin(Plugin):
 
     #### Extension points offered by this plugin ##############################
 
-    # The identify_bytes extension point.
-    #
-    # Notice that we use the string name of the 'IMessage' interface rather
-    # than actually importing it. This makes sure that the import only happens
-    # when somebody actually gets the contributions to the extension point.
     recognizers = ExtensionPoint(
         List(Instance(IFileRecognizer)), id=RECOGNIZER, desc="""
     
     This extension point allows you to contribute file scanners that determine
-    MIME types from a byte stream or file name.
+    MIME types from a byte stream.
     
         """
     )
@@ -66,7 +61,7 @@ class FileTypePlugin(Plugin):
         print "in _create_file_recognizer_driver_service."
         print "  recognizers: %s" % str(self.recognizers)
 
-        # Only do imports when you need to! This makes sure that the import
-        # only happens when somebody needs an 'IMOTD' service.
+        # Lazy importing, even though this is a fundamental service and
+        # therefore doesn't buy us anything.  But as an example it's useful.
         from .driver import FileRecognizerDriver
         return FileRecognizerDriver(recognizers=self.recognizers)

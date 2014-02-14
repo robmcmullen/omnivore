@@ -9,7 +9,7 @@ class FileMetadata(HasTraits):
 
 
 class FileGuess(object):
-    """Loads the first part of a file and tries to guess its MIME type
+    """Loads the first part of a file and provides a container for metadata
 
     """
     # Arbitrary size header, but should be large enough that binary files can
