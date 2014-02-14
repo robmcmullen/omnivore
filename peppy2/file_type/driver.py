@@ -2,7 +2,7 @@ from traits.api import HasTraits, provides, List, Instance
 
 from i_file_recognizer import IFileRecognizer, IFileRecognizerDriver
 
-from utils.textutil import guessBinary
+from peppy2.utils.textutil import guessBinary
 
 @provides(IFileRecognizerDriver)
 class FileRecognizerDriver(HasTraits):

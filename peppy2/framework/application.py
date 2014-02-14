@@ -6,7 +6,7 @@ from pyface.tasks.api import TaskWindowLayout
 from traits.api import Bool, Instance, List, Property
 
 # Local imports.
-from preferences import FrameworkPreferences, \
+from peppy2.framework.preferences import FrameworkPreferences, \
     FrameworkPreferencesPane
 
 
@@ -17,10 +17,10 @@ class FrameworkApplication(TasksApplication):
     #### 'IApplication' interface #############################################
 
     # The application's globally unique identifier.
-    id = 'peppy.framework'
+    id = 'peppy2.framework.application'
 
     # The application's user-visible name.
-    name = 'Framework'
+    name = 'Peppy2'
 
     #### 'TasksApplication' interface #########################################
 
@@ -70,10 +70,10 @@ class FrameworkApplication(TasksApplication):
     #### API
 
     def load_file(self, uri, active_task):
-        service = self.get_service("file_type.i_file_recognizer.IFileRecognizerDriver")
+        service = self.get_service("peppy2.file_type.i_file_recognizer.IFileRecognizerDriver")
         print "SERVICE!!!", service
         
-        from utils.file_guess import FileGuess
+        from peppy2.utils.file_guess import FileGuess
         # The FileGuess loads the first part of the file and tries to identify it.
         guess = FileGuess(uri)
         

@@ -39,6 +39,7 @@ def toolkit_object(mname, oname):
     """
 
     be_mname = mname + _toolkit_backend_name
+    print "attempting toolkit import: %s" % be_mname
 
     class Unimplemented(object):
         """ This is returned if an object isn't implemented by the selected

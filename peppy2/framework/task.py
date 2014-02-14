@@ -11,7 +11,7 @@ from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
     SMenu, SToolBar, TaskAction, TaskToggleGroup
 from traits.api import on_trait_change, Property, Instance
 
-from dock_panes import FileBrowserPane
+from peppy2.dock_panes import FileBrowserPane
 
 class OpenAction(Action):
     name = 'Open'

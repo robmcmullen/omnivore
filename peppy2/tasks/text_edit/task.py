@@ -11,9 +11,7 @@ from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
     SMenu, SToolBar, TaskAction, TaskToggleGroup
 from traits.api import on_trait_change, Property, Instance
 
-from dock_panes import FileBrowserPane
-
-from framework.task import FrameworkTask
+from peppy2.framework.task import FrameworkTask
 from styled_text_editor import StyledTextEditor
 
 class TextEditTask(FrameworkTask):

@@ -12,7 +12,7 @@ class FileTypePlugin(Plugin):
     """
 
     # The Ids of the extension points that this plugin offers.
-    RECOGNIZER = 'peppy.file_type.recognizer'
+    RECOGNIZER = 'peppy2.file_recognizer'
 
     # Extension point IDs.
     SERVICE_OFFERS    = 'envisage.service_offers'
@@ -20,7 +20,7 @@ class FileTypePlugin(Plugin):
     #### 'IPlugin' interface ##################################################
 
     # The plugin's unique identifier.
-    id = 'peppy.file_type'
+    id = 'peppy2.file_type.plugin'
 
     # The plugin's name (suitable for displaying to the user).
     name = 'File Type'
@@ -49,7 +49,7 @@ class FileTypePlugin(Plugin):
 
         print "in _service_offers_default"
         offer1 = ServiceOffer(
-            protocol = 'file_type.i_file_recognizer.IFileRecognizerDriver',
+            protocol = 'peppy2.file_type.i_file_recognizer.IFileRecognizerDriver',
             factory  = self._create_file_recognizer_driver_service
         )
 

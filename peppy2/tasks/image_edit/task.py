@@ -10,7 +10,7 @@ from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
 from traits.api import on_trait_change, Property, Instance
 
 
-from framework.task import FrameworkTask
+from peppy2.framework.task import FrameworkTask
 from panes import Pane1, Pane2, Pane3
 from bitmap_editor import BitmapEditor
 

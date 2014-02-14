@@ -3,14 +3,15 @@
 # Standard library imports.
 import logging
 
-# Plugin imports.
+# Enthought library imports.
+from traits.etsconfig.api import ETSConfig
 from envisage.core_plugin import CorePlugin
 from envisage.ui.tasks.tasks_plugin import TasksPlugin
-from framework.plugin import FrameworkPlugin
-from file_type.plugin import FileTypePlugin
  
 # Local imports.
-from framework.application import FrameworkApplication
+from peppy2.framework.plugin import FrameworkPlugin
+from peppy2.file_type.plugin import FileTypePlugin
+from peppy2.framework.application import FrameworkApplication
 
 
 def add_plugins(module, plugins):
@@ -32,8 +33,8 @@ def main(argv):
 
     plugins = [ CorePlugin(), TasksPlugin(), FrameworkPlugin(), FileTypePlugin() ]
     
-    import file_type.recognizers
-    add_plugins(file_type.recognizers, plugins)
+    import peppy2.file_type.recognizers
+    add_plugins(peppy2.file_type.recognizers, plugins)
     
     app = FrameworkApplication(plugins=plugins)
     

@@ -52,4 +52,4 @@ class ImageRecognizerPlugin(Plugin):
 
     # This tells us that the plugin contributes the value of this trait to the
     # 'greetings' extension point.
-    recognizer = List([ImageRecognizer()], contributes_to='peppy.file_type.recognizer')
+    recognizer = List([ImageRecognizer()], contributes_to='peppy2.file_recognizer')

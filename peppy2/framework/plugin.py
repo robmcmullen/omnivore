@@ -19,10 +19,10 @@ class FrameworkPlugin(Plugin):
     #### 'IPlugin' interface ##################################################
 
     # The plugin's unique identifier.
-    id = 'peppy.framework'
+    id = 'peppy2.framework.plugin'
 
     # The plugin's name (suitable for displaying to the user).
-    name = 'Framework'
+    name = 'Peppy2'
 
     #### Contributions to extension points made by this plugin ################
 
@@ -35,20 +35,19 @@ class FrameworkPlugin(Plugin):
     ###########################################################################
 
     def _preferences_default(self):
-        filename = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'preferences.ini')
+        filename = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'preferences.ini')
         return [ 'file://' + filename ]
 
     def _preferences_panes_default(self):
-        from framework_preferences import FrameworkPreferencesPane
-        from text_edit import TextEditPreferencesPane
-        from image_edit import ImageEditPreferencesPane
+        from preferences import FrameworkPreferencesPane
+        from peppy2.tasks.text_edit import TextEditPreferencesPane
+        from peppy2.tasks.image_edit import ImageEditPreferencesPane
         return [ FrameworkPreferencesPane, TextEditPreferencesPane, ImageEditPreferencesPane ]
 
     def _tasks_default(self):
-        from attractors import Visualize2dTask
-        from skeleton import SkeletonTask
-        from text_edit import TextEditTask
-        from image_edit import ImageEditTask
+        from peppy2.tasks.skeleton import SkeletonTask
+        from peppy2.tasks.text_edit import TextEditTask
+        from peppy2.tasks.image_edit import ImageEditTask
 
         return [ 
             TaskFactory(id = 'peppy.framework.text_edit',

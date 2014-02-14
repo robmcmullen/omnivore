@@ -11,7 +11,7 @@ from pyface.tasks.api import Editor
 
 # Local imports.
 from i_bitmap_editor import IBitmapEditor
-from utils.wx.bitmapscroller import BitmapScroller
+from peppy2.utils.wx.bitmapscroller import BitmapScroller
 
 @provides(IBitmapEditor)
 class BitmapEditor(Editor):
