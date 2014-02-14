@@ -1,6 +1,6 @@
-=================
-Tasks and Actions
-=================
+======================
+Tasks and Applications
+======================
 
 The TaskApplication (envisage/ui/tasks/tasks_application.py, direct subclass
 of Application from envisage/application.py) includes a set of traits for
