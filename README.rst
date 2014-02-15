@@ -34,7 +34,7 @@ implementation that worked, but was a whole project in itself.  In the
 intervening years, PyFilesystem_ was written, removing the need for me to use
 my own code.
 
-.. PyFilesystem_: http://packages.python.org/fs/index.html
+.. _PyFilesystem: http://packages.python.org/fs/index.html
 
 
 PREREQUISITES
