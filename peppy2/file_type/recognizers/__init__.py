@@ -34,8 +34,6 @@
 #for filename in glob.iglob(os.path.join(path, "*.py")):
 #    if filename.endswith("__init__.py"):
 #        continue
-#    if filename.endswith("builtins.py"):
-#        continue
 #    modname = filename.rstrip(".py").split("/")[-1]
 #    module = imp.load_source(modname, filename)
 #    members = inspect.getmembers(module, inspect.isclass)
