@@ -14,25 +14,30 @@ framework instead of my old custom framework.
 GOAL FOR REWRITE
 ================
 
-Why a rewrite of peppy[1]?
+Why a rewrite of the original peppy_ (which I'll call peppy1 even though it
+never got to a 1.0 release)?
 
-* **Simplify the code.** Peppy[1] had the ability to have any major mode in
-any window, but this needed a lot of code to support minor modes switching
-in and out as tabs changed.  I got it to work and all, but the code was quite
-convoluted.  Peppy2 only allows similar major modes in a window, and different
-major modes require a new window.  Not a huge inconvenience but saves a
-considerable amount of coding, so I'm happy with this tradeoff.  It allows me
-to use the Enthought Tasks framework pretty much as-is.
+.. _peppy: http://peppy.flipturn.org
 
-* **Simplify the interface to make it easier for others to contribute.**  The
-original peppy was using my own framework which had a steep learning curve.
-Hopefully by moving to Enthought's framework, it will have a broader appeal.
+* **Simplify the code.**
+  Peppy1 had the ability to have any major mode in any window, but this needed
+  a lot of code to support minor modes switching in and out as tabs changed.
+  I got it to work and all, but the code was quite convoluted.  Peppy2 only
+  allows similar major modes in a window, and different major modes require
+  a new window.  Not a huge inconvenience but saves a considerable amount of
+  coding, so I'm happy with this tradeoff.  It allows me to use the Enthought
+  Tasks framework pretty much as-is.
 
-* **Simplify my life.** Remove a lot of my custom code for code that
-others support and maintain.  For example, I wrote a virtual file system
-implementation that worked, but was a whole project in itself.  In the
-intervening years, PyFilesystem_ was written, removing the need for me to use
-my own code.
+* **Make it easier for others to contribute.**
+  Peppy1 was using my own framework which had a steep learning curve.
+  Hopefully by moving to Enthought's framework, it will have a broader appeal.
+
+* **Leverage other people's code.**
+  I wrote a lot of custom code for stuff that I needed at the time, but now
+  there are similar packages that others support and maintain.  For example,
+  I wrote a virtual file system implementation that worked, but was a whole
+  project in itself.  In the intervening years, PyFilesystem_ was written,
+  removing the need for me to use my own code.
 
 .. _PyFilesystem: http://packages.python.org/fs/index.html
 
