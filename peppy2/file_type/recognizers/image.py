@@ -1,7 +1,7 @@
 from envisage.api import Plugin
 from traits.api import HasTraits, provides, List
 
-from ..i_file_recognizer import IFileRecognizer
+from peppy2.file_type.i_file_recognizer import IFileRecognizer
 import imghdr
 
 @provides(IFileRecognizer)
