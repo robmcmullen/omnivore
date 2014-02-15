@@ -11,6 +11,32 @@ sidebars.  It is a rewrite of the original peppy, now based on the Enthought
 framework instead of my old custom framework.
 
 
+GOAL FOR REWRITE
+================
+
+Why a rewrite of peppy[1]?
+
+* **Simplify the code.** Peppy[1] had the ability to have any major mode in
+any window, but this needed a lot of code to support minor modes switching
+in and out as tabs changed.  I got it to work and all, but the code was quite
+convoluted.  Peppy2 only allows similar major modes in a window, and different
+major modes require a new window.  Not a huge inconvenience but saves a
+considerable amount of coding, so I'm happy with this tradeoff.  It allows me
+to use the Enthought Tasks framework pretty much as-is.
+
+* **Simplify the interface to make it easier for others to contribute.**  The
+original peppy was using my own framework which had a steep learning curve.
+Hopefully by moving to Enthought's framework, it will have a broader appeal.
+
+* **Simplify my life.** Remove a lot of my custom code for code that
+others support and maintain.  For example, I wrote a virtual file system
+implementation that worked, but was a whole project in itself.  In the
+intervening years, PyFilesystem_ was written, removing the need for me to use
+my own code.
+
+.. PyFilesystem_: http://packages.python.org/fs/index.html
+
+
 PREREQUISITES
 =============
 
