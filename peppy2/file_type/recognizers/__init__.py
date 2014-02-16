@@ -5,11 +5,11 @@
 #
 # A cog script is included to automatically generate the expected code. Test with::
 #
-#    cog __init__.py
+#    cog.py __init__.py
 #
 # which prints to standard output. To place the generated code in the file, use::
 #
-#    cog -r __init__.py
+#    cog.py -r __init__.py
 #
 # Note that the cog script works when called from the top directory (.i.e.  at
 # the same level as the peppy2 directory) or this directory.
@@ -47,5 +47,7 @@
 plugins = []
 from image import ImageRecognizerPlugin
 plugins.append(ImageRecognizerPlugin())
+from text import TextRecognizerPlugin
+plugins.append(TextRecognizerPlugin())
 # [[[end]]]
 

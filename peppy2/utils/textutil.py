@@ -95,7 +95,7 @@ def detectEncoding(bytes):
     for txt in lines:
         match = regex.search(txt)
         if match:
-            #print("Found encoding %s" % match.group(1))
+            print "guessEncoding: Found encoding %s" % match.group(1)
             return match.group(1), None
     return None, None
 
@@ -154,7 +154,8 @@ def guessBinary(text, percentage=5):
 
     @rtype: boolean
     """
-    if detectEncoding(text):
+    encoding, bom = detectEncoding(text)
+    if encoding:
         # The presence of an encoding by definition indicates a text file, so
         # therefore not binary!
         return False
@@ -163,6 +164,7 @@ def guessBinary(text, percentage=5):
     for ch in data:
         if (ch<8) or (ch>13 and ch<32) or (ch>126):
             binary+=1
+    print "guessBinary: len=%d, num binary=%d" % (len(text), binary)
     if binary>(len(text)/percentage):
         return True
     return False
