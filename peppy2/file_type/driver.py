@@ -1,5 +1,7 @@
 from traits.api import HasTraits, provides, List, Instance
-from pyface.tasks.topological_sort import before_after_sort
+
+from peppy2.utils.sortutil import before_after_wildcard_sort
+
 from i_file_recognizer import IFileRecognizer, IFileRecognizerDriver
 
 @provides(IFileRecognizerDriver)
@@ -31,7 +33,7 @@ class FileRecognizerDriver(HasTraits):
     def _recognizers_changed(self, old, new):
         print "_recognizers_changed: old=%s new=%s" % (str(old), str(new))
         print "  old order: %s" % ", ".join([r.id for r in self.recognizers])
-        s = before_after_sort(self.recognizers)
+        s = before_after_wildcard_sort(self.recognizers)
         # Is there a proper way to set the value in the trait change callback?
         # Assigning a new list will get call the notification handler multiple
         # times, although it seems to end the cycle when it detects that the
