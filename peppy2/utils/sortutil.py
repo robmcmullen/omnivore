@@ -1,10 +1,22 @@
 from pyface.tasks.topological_sort import topological_sort
 
+def find_wildcard_matches(item_map, pattern):
+    if pattern.endswith("*"):
+        pattern = pattern[:-1]
+    if pattern:
+        for id, item in item_map.iteritems():
+            if id.startswith(pattern):
+                yield item
+
 def before_after_wildcard_sort(items):
     """ Sort a sequence of items with 'before', 'after', and 'id' attributes.
         
     The sort is topological. If an item does not specify a 'before' or 'after',
     it is placed after the preceding item.
+    
+    Simple wildcards are allowed in the 'before' or 'after' attributes.  The
+    asterisk must be the last character in the string, so the form "text*"
+    will match any id that starts with "text".
 
     If a cycle is found in the dependencies, a warning is logged and the order
     of the items is undefined.
@@ -22,13 +34,23 @@ def before_after_wildcard_sort(items):
         # Attempt to use 'before' and 'after' to make pairs.
         new_pairs = []
         if hasattr(item, 'before') and item.before:
-            parent, child = item, item_map.get(item.before)
-            if child:
-                new_pairs.append((parent, child))
+            if item.before.endswith("*"):
+                for child in find_wildcard_matches(item_map, item.before):
+#                    print "%s should be before %s" % (item.id, child.id)
+                    new_pairs.append((item, child))
+            else:
+                child = item_map.get(item.before)
+                if child:
+                    new_pairs.append((item, child))
         if hasattr(item, 'after') and item.after:
-            parent, child = item_map.get(item.after), item
-            if parent:
-                new_pairs.append((parent, child))
+            if item.after.endswith("*"):
+                for parent in find_wildcard_matches(item_map, item.after):
+#                    print "%s should be after %s" % (item.id, parent.id)
+                    new_pairs.append((parent, item))
+            else:
+                parent = item_map.get(item.after)
+                if parent:
+                    new_pairs.append((parent, item))
 
         # If we have any pairs, use them. Otherwise, use the previous unmatched
         # item as a parent, if possible.
