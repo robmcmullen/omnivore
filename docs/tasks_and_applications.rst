@@ -4,7 +4,7 @@ Tasks and Applications
 
 The TaskApplication (envisage/ui/tasks/tasks_application.py, direct subclass
 of Application from envisage/application.py) includes a set of traits for
-managing the application:
+managing the application::
 
     # The active task window (the last one to get focus).
     active_window = Instance(TaskWindow)
@@ -42,8 +42,8 @@ managing the application:
 
 among others.
 
-Q: How do we get a reference to the application?
-A: through the TaskWindow: TaskWindow.application
+:Q: How do we get a reference to the application?
+:A: through the TaskWindow: TaskWindow.application
 
-Q: How do we create a new top-level window?
-A: TaskApplication.create_window
+:Q: How do we create a new top-level window?
+:A: TaskApplication.create_window
