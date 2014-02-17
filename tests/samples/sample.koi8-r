@@ -1,0 +1,32 @@
+# OPENVPN.Lint05
+# -*- coding: KOI8-R -*-
+client
+dev tun
+proto tcp
+
+# Адрес сервера
+remote 192.168.190.254 1194
+
+resolv-retry infinite
+
+nobind
+
+user nobody
+group nobody
+
+persist-key
+persist-tun
+
+# Сертификаты сервера
+ca /etc/openvpn/keys/ca.crt
+tls-auth /etc/openvpn/keys/ta.key 1
+# Клиент
+cert /etc/openvpn/keys/d_cli.crt
+key /etc/openvpn/keys/d_cli.key
+
+# Компрессия обязательно!!!
+comp-lzo
+
+log /var/log/openvpn.log
+verb 5
+
