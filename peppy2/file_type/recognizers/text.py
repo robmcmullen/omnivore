@@ -9,14 +9,7 @@ class PlainTextRecognizer(HasTraits):
     """ Identify common text formats
     
     """
-
-    # The service name
-    name = "Text"
-    
-    # The file type category, e.g. image, executable, archive, etc.
-    category = "text"
-    
-    #####
+    id = "text/plain"
     
     def identify_bytes(self, byte_stream):
         """Return a MIME type if byte stream can be identified.

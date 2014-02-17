@@ -6,17 +6,12 @@ import imghdr
 
 @provides(IFileRecognizer)
 class ImageRecognizer(HasTraits):
-    """ Identify common image formats
+    """Recognizer for common image formats
     
     """
-
-    # The service name
-    name = "Image"
+    id = "image/common"
     
-    # The file type category, e.g. image, executable, archive, etc.
-    category = "image"
-    
-    #####
+    before = "text/plain"
     
     mime_map = {
         'rgb': 'x-rgb',
