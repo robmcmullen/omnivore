@@ -30,24 +30,48 @@
 #sys.path.append(top)
 #cog.msg("top dir     : %s" % top)
 #import glob
-#cog.outl("plugins = []")
+#cog.outl("recognizers = []")
 #for filename in glob.iglob(os.path.join(path, "*.py")):
 #    if filename.endswith("__init__.py"):
 #        continue
 #    modname = filename.rstrip(".py").split("/")[-1]
 #    module = imp.load_source(modname, filename)
 #    members = inspect.getmembers(module, inspect.isclass)
-#    for name, pluginclass in members:
-#        if issubclass(pluginclass, Plugin):
+#    names = []
+#    for name, cls in members:
+#        if hasattr(cls, 'identify_bytes'):
 #            # make sure class is from this module and not an imported dependency
-#            if pluginclass.__module__.startswith(modname):
-#                cog.outl("from %s import %s" % (modname, name))
-#                cog.outl("plugins.append(%s())" % name)
+#            if cls.__module__.startswith(modname):
+#                names.append(name)
+#    if names:
+#       cog.outl("from %s import %s" % (modname, ", ".join(names)))
+#       for name in names:
+#           cog.outl("recognizers.append(%s())" % name)
 # ]]]*/
-plugins = []
-from image import ImageRecognizerPlugin
-plugins.append(ImageRecognizerPlugin())
-from text import TextRecognizerPlugin
-plugins.append(TextRecognizerPlugin())
+recognizers = []
+from image import ImageRecognizer
+recognizers.append(ImageRecognizer())
+from text import PlainTextRecognizer, PoundBangTextRecognizer
+recognizers.append(PlainTextRecognizer())
+recognizers.append(PoundBangTextRecognizer())
 # [[[end]]]
 
+from envisage.api import Plugin
+from traits.api import List
+
+class BuiltinFileRecognizerPlugin(Plugin):
+    """ A plugin that contributes to the peppy.file_type.recognizer extension point. """
+
+    #### 'IPlugin' interface ##################################################
+
+    # The plugin's unique identifier.
+    id = 'peppy.file_type.recognizer.builtin'
+
+    # The plugin's name (suitable for displaying to the user).
+    name = 'Builtin File Recognizer Plugin'
+
+    # This tells us that the plugin contributes the value of this trait to the
+    # 'greetings' extension point.
+    recognizer = List(recognizers, contributes_to='peppy2.file_recognizer')
+
+plugins = [BuiltinFileRecognizerPlugin()]

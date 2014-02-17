@@ -1,12 +1,11 @@
-from envisage.api import Plugin
-from traits.api import HasTraits, provides, List
+from traits.api import HasTraits, provides
 
 from peppy2.file_type.i_file_recognizer import IFileRecognizer
 from peppy2.utils.textutil import guessBinary
 
 @provides(IFileRecognizer)
 class PlainTextRecognizer(HasTraits):
-    """ Identify common text formats
+    """Default plain text identifier based on percentage of non-ASCII bytes.
     
     """
     id = "text/plain"
@@ -19,18 +18,26 @@ class PlainTextRecognizer(HasTraits):
         if not guessBinary(byte_stream):
             return "text/plain"
 
-
-class TextRecognizerPlugin(Plugin):
-    """ A plugin that contributes to the peppy.file_type.recognizer extension point. """
-
-    #### 'IPlugin' interface ##################################################
-
-    # The plugin's unique identifier.
-    id = 'peppy.file_type.recognizer.text'
-
-    # The plugin's name (suitable for displaying to the user).
-    name = 'Text Recognizer Plugin'
-
-    # This tells us that the plugin contributes the value of this trait to the
-    # 'greetings' extension point.
-    recognizer = List([PlainTextRecognizer()], contributes_to='peppy2.file_recognizer')
+@provides(IFileRecognizer)
+class PoundBangTextRecognizer(HasTraits):
+    """Recognizer for pound bang style executable script files
+    
+    """
+    id = "text/poundbang"
+    
+    before = "text/plain"
+    
+    def identify_bytes(self, byte_stream):
+        """Return a MIME type if byte stream can be identified.
+        
+        If byte stream is not known, returns None
+        """
+        if not byte_stream.startswith("#!"):
+            return
+        line = byte_stream[2:80].lower().strip()
+        if line.startswith("/usr/bin/env"):
+            line = line[12:].strip()
+        words = line.split()
+        names = words[0].split("/")
+        if names[-1]:
+            return "text/%s" % names[-1]

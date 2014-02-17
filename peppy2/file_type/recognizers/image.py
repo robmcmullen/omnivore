@@ -1,5 +1,4 @@
-from envisage.api import Plugin
-from traits.api import HasTraits, provides, List
+from traits.api import HasTraits, provides
 
 from peppy2.file_type.i_file_recognizer import IFileRecognizer
 import imghdr
@@ -32,19 +31,3 @@ class ImageRecognizer(HasTraits):
             return
         name = self.mime_map.get(name, name)
         return "image/%s" % name
-
-
-class ImageRecognizerPlugin(Plugin):
-    """ A plugin that contributes to the peppy.file_type.recognizer extension point. """
-
-    #### 'IPlugin' interface ##################################################
-
-    # The plugin's unique identifier.
-    id = 'peppy.file_type.recognizer.image'
-
-    # The plugin's name (suitable for displaying to the user).
-    name = 'Image Recognizer Plugin'
-
-    # This tells us that the plugin contributes the value of this trait to the
-    # 'greetings' extension point.
-    recognizer = List([ImageRecognizer()], contributes_to='peppy2.file_recognizer')
