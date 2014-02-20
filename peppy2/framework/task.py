@@ -4,25 +4,43 @@
 # Enthought library imports.
 from pyface.api import ImageResource, ConfirmationDialog, FileDialog, \
     ImageResource, YES, OK, CANCEL
-from pyface.action.api import Action, StatusBarManager
+from pyface.action.api import StatusBarManager
 from pyface.tasks.api import Task, TaskWindow, TaskLayout, TaskWindowLayout, PaneItem, IEditor, \
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
 from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
     SMenu, SToolBar, TaskAction, TaskToggleGroup
 from traits.api import on_trait_change, Property, Instance
 
+from peppy2.framework.action import FrameworkAction
 from peppy2.dock_panes import FileBrowserPane
 
-class OpenAction(Action):
+class OpenAction(FrameworkAction):
     name = 'Open'
     accelerator = 'Ctrl+O'
-    tooltip = 'Open a File'
+    tooltip = 'Open a file'
     image = ImageResource('document_open')
 
     def perform(self, event):
         dialog = FileDialog(parent=event.task.window.control)
         if dialog.open() == OK:
             event.task.window.application.load_file(dialog.path, event.task)
+
+class SaveAction(FrameworkAction):
+    name = 'Save'
+    accelerator = 'Ctrl+S'
+    tooltip = 'Save the current file'
+    image = ImageResource('document_save')
+
+    def perform(self, event):
+        dialog = FileDialog(parent=event.task.window.control)
+        if dialog.open() == OK:
+            event.task.window.application.load_file(dialog.path, event.task)
+    
+    def set_enabled(self, task, active_editor):
+        self.enabled = active_editor.dirty
+    
+    def set_enabled_no_editor(self, task):
+        self.enabled = False
 
 class FrameworkTask(Task):
     """ A simple task for opening a blank editor.
@@ -38,28 +56,17 @@ class FrameworkTask(Task):
 
     editor_area = Instance(IEditorAreaPane)
     
-#    tool_bars = [ SToolBar(TaskAction(method='new',
-#                                      tooltip='New file',
-#                                      image=ImageResource('document_new')),
-#                           TaskAction(method='open',
-#                                      tooltip='Open a file',
-#                                      image=ImageResource('document_open')),
-#                           TaskAction(method='save',
-#                                      tooltip='Save the current file',
-#                                      image=ImageResource('document_save')),
-#                           image_size = (32, 32)), ]
-
     ###########################################################################
     # 'Task' interface.
     ###########################################################################
 
     def _menu_bar_default(self):
         open = OpenAction()
+        save = SaveAction()
         return SMenuBar(SMenu(TaskAction(name='New', method='new',
                                          accelerator='Ctrl+N'),
                               open,
-                              TaskAction(name='Save', method='save',
-                                         accelerator='Ctrl+S'),
+                              save,
                               TaskAction(name='Exit', method='exit',
                                          accelerator='Ctrl+Q'),
                               id='File', name='&File'),
@@ -74,13 +81,15 @@ class FrameworkTask(Task):
 
     def _tool_bars_default(self):
         open = OpenAction()
+        save = SaveAction()
         return [ SToolBar(TaskAction(method='new',
                                       tooltip='New file',
                                       image=ImageResource('document_new')),
                            open,
-                           TaskAction(method='save',
-                                      tooltip='Save the current file',
-                                      image=ImageResource('document_save')),
+                           save,
+                           TaskAction(method='debug',
+                                      tooltip='Do some debug stuff',
+                                      image=ImageResource('debug')),
                            show_tool_names=False), ]
 
     def _status_bar_default(self):
@@ -99,6 +108,7 @@ class FrameworkTask(Task):
             self.status_bar.message = active.name
         else:
             self.status_bar.message = self.name
+        self.update_actions()
 
     def create_central_pane(self):
         """ Create the central pane: the text editor.
@@ -163,6 +173,46 @@ class FrameworkTask(Task):
         """
         print "Quitting!!!"
         self.window.application.exit()
+
+    def _iter_schema_items(self, items):
+        """Generator to pull all Actions out of the list of Schemas
+        
+        Schemas may contain other schemas, which requires this recursive
+        approach.
+        """
+        for item in items:
+            if hasattr(item, 'items'):
+                for a in self._iter_schema_items(item.items):
+                    yield a
+            else:
+                yield item
+
+    def update_actions(self):
+        """Update actions based on the state of the task and active editor
+        """
+        action_schemas = list(self.menu_bar.items)
+        action_schemas.extend(self.tool_bars)
+        if self.active_editor:
+            for action in self._iter_schema_items(action_schemas):
+#                print "action: %s %s" % (getattr(action, 'name', '--'), action)
+                try:
+                    action.set_enabled(self, self.active_editor)
+                except AttributeError:
+                    # skip actions that aren't FrameworkActions
+                    pass
+        else:
+            for action in self._iter_schema_items(action_schemas):
+#                print "action: %s %s" % (getattr(action, 'name', '--'), action)
+                try:
+                    action.set_enabled_no_editor(self)
+                except AttributeError:
+                    # skip actions that aren't FrameworkActions
+                    pass
+
+    def debug(self):
+        """Debug stuff!
+        """
+        self.update_actions()
 
     ###########################################################################
     # 'FrameworkTask' interface.
