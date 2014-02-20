@@ -9,12 +9,17 @@ Abstract
 
 peppy - (ap)Proximated (X)Emacs Powered by Python
 
-This is a multi-format editor written in and extensible through Python.  It
-attempts to provide an XEmacs-like multi- window, multi-tabbed interface.  The
-architectural goal is to provide a system with low coupling in order to reduce
-the work required to extend the editor with new major modes, minor modes, and
-sidebars.  It is a rewrite of the original peppy, now based on the Enthought
-framework instead of my old custom framework.
+A full-featured editor for text files and more, Peppy provides an XEmacs-like
+multi-window/multi-tabbed user interface and is written in and extensible
+through Python.  It is built around the emacs concept of major modes --
+different views are presented to the user depending on the type of data being
+edited.
+
+It is a rewrite of the original peppy, now based on the Enthought Tasks
+framework instead of my old custom framework.  (Note that only wxPython is
+supported as a GUI backend).  The architectural goal is to provide a system
+with low coupling in order to reduce the work required to extend the editor
+with new major modes, minor modes, and sidebars.
 
 
 Goal For Rewrite
@@ -76,6 +81,15 @@ This is still alpha software, so caveat emptor.  The only way to get it currentl
     $ git clone https://github.com/robmcmullen/peppy2.git
     $ cd peppy2
     $ python run.py
+
+
+Plugins
+=======
+
+Peppy is extended by plugins.  Plugins are based on the `Enthought Framework`__
+and are discovered using setuptools plugins.
+
+__ http://docs.enthought.com/envisage/envisage_core_documentation/index.html
 
 
 Disclaimer
