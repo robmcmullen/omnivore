@@ -66,6 +66,17 @@ class FrameworkApplication(TasksApplication):
                 print "skipping flag %s" % arg
             print "processing %s" % arg
             self.load_file(arg, None)
+    
+    def _window_created_fired(self, event):
+        """The toolkit window doesn't exist yet.
+        """
+    
+    def _window_opened_fired(self, event):
+        """The toolkit window does exist here.
+        """
+        print "WINDOW OPENED!!! %s" % event.window.control
+        import wx
+        event.window.control.Bind(wx.EVT_IDLE, self._wx_on_idle)
 
     #### API
 
@@ -125,3 +136,15 @@ class FrameworkApplication(TasksApplication):
         print metadata.mime
         print dir(metadata)
 
+
+    #### wx event handlers ####################################################
+
+    def _wx_on_idle(self, evt):
+        """ Called during idle time. """
+        control = evt.GetEventObject()
+        if control == self.active_window.control:
+            #print "Processing idle on %s" % self.active_window
+            self.active_window.active_task.process_idle()
+        else:
+            #print "Skipping idle on %s" % control
+            pass

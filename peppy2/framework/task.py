@@ -200,6 +200,9 @@ class FrameworkTask(Task):
         """Debug stuff!
         """
         self.update_actions()
+    
+    def process_idle(self):
+        self.update_actions()
 
     ###########################################################################
     # 'FrameworkTask' interface.
