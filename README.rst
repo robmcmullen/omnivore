@@ -4,7 +4,7 @@ Peppy2
 
 
 
-ABSTRACT
+Abstract
 ========
 
 peppy - (ap)Proximated (X)Emacs Powered by Python
@@ -17,7 +17,7 @@ sidebars.  It is a rewrite of the original peppy, now based on the Enthought
 framework instead of my old custom framework.
 
 
-GOAL FOR REWRITE
+Goal For Rewrite
 ================
 
 Why a rewrite of the original peppy_ (which I'll call peppy1 even though it
@@ -48,7 +48,7 @@ never got to a 1.0 release)?
 .. _PyFilesystem: http://packages.python.org/fs/index.html
 
 
-PREREQUISITES
+Prerequisites
 =============
 
 python 2.7 (but not 3.x yet)
@@ -68,7 +68,7 @@ Enthought yet, which is why I'm requiring the custom build::
     for name in envisage; do echo $name; git clone https://github.com/robmcmullen/$name.git; cd $name; python setup.py develop; cd ..; done
 
 
-RUNNING THE PROGRAM
+Running The Program
 ===================
 
 This is still alpha software, so caveat emptor.  The only way to get it currently is to clone it from git::
@@ -78,7 +78,7 @@ This is still alpha software, so caveat emptor.  The only way to get it currentl
     $ python run.py
 
 
-DISCLAIMER
+Disclaimer
 ==========
 
 peppy, (ap)Proximated (X)Emacs Powered by Python
