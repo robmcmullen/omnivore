@@ -174,19 +174,6 @@ class FrameworkTask(Task):
         print "Quitting!!!"
         self.window.application.exit()
 
-    def _iter_schema_items(self, items):
-        """Generator to pull all Actions out of the list of Schemas
-        
-        Schemas may contain other schemas, which requires this recursive
-        approach.
-        """
-        for item in items:
-            if hasattr(item, 'items'):
-                for a in self._iter_schema_items(item.items):
-                    yield a
-            else:
-                yield item
-
     def update_actions(self):
         """Update actions based on the state of the task and active editor
         """
@@ -224,6 +211,19 @@ class FrameworkTask(Task):
     ###########################################################################
     # Protected interface.
     ###########################################################################
+
+    def _iter_schema_items(self, items):
+        """Generator to pull all Actions out of the list of Schemas
+        
+        Schemas may contain other schemas, which requires this recursive
+        approach.
+        """
+        for item in items:
+            if hasattr(item, 'items'):
+                for a in self._iter_schema_items(item.items):
+                    yield a
+            else:
+                yield item
 
     def _prompt_for_save(self):
         """ Prompts the user to save if necessary. Returns whether the dialog
