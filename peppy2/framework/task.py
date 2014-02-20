@@ -4,7 +4,7 @@
 # Enthought library imports.
 from pyface.api import ImageResource, ConfirmationDialog, FileDialog, \
     ImageResource, YES, OK, CANCEL
-from pyface.action.api import Action
+from pyface.action.api import Action, StatusBarManager
 from pyface.tasks.api import Task, TaskWindow, TaskLayout, TaskWindowLayout, PaneItem, IEditor, \
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
 from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
@@ -83,11 +83,22 @@ class FrameworkTask(Task):
                                       image=ImageResource('document_save')),
                            show_tool_names=False), ]
 
+    def _status_bar_default(self):
+        return StatusBarManager(message="Hi!")
+
     def _default_layout_default(self):
         return TaskLayout(
             left=VSplitter(
                 PaneItem('peppy.framework.file_browser_pane'),
                 ))
+
+    def activated(self):
+        print "  status bar: %s" % self.status_bar
+        active = self.active_editor
+        if active:
+            self.status_bar.message = active.name
+        else:
+            self.status_bar.message = self.name
 
     def create_central_pane(self):
         """ Create the central pane: the text editor.
