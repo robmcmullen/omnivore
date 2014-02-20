@@ -199,7 +199,11 @@ class FrameworkTask(Task):
     def debug(self):
         """Debug stuff!
         """
-        self.update_actions()
+        action_schemas = list(self.menu_bar.items)
+        action_schemas.extend(self.tool_bars)
+        for action in self._iter_schema_items(action_schemas):
+            if hasattr(action, 'name'):
+                action.name = action.name + "!"
     
     def process_idle(self):
         self.update_actions()
