@@ -1,5 +1,5 @@
 # Standard library imports.
-import os.path
+import os
 
 # Enthought library imports.
 from envisage.api import ExtensionPoint, Plugin
@@ -35,7 +35,14 @@ class FrameworkPlugin(Plugin):
     ###########################################################################
 
     def _preferences_default(self):
-        filename = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'preferences.ini')
+        from peppy2.third_party.appdirs import user_config_dir
+        dirname = user_config_dir(self.name)
+        if not os.path.exists(dirname):
+            os.mkdir(dirname)
+        filename = os.path.join(dirname, 'preferences.ini')
+        if not os.path.exists(filename):
+            fh = open(filename, "wb")
+            fh.close()
         return [ 'file://' + filename ]
 
     def _preferences_panes_default(self):
