@@ -58,3 +58,37 @@ def get_py2exe_toolkit_includes(module=None, toolkit="wx"):
             mod_name = ("%s.%s" % (mod_root, f[:-3])).replace("/", ".")
             includes.append(mod_name)
     return includes
+
+def get_py2exe_data_files(module=None):
+    """Get a list of data files that should be included in a py2exe/py2app
+    distribution's data files parameter.
+    
+    The returned list should be added to the data_files keyword parameter of the
+    setup call; e.g:
+    
+    data_files = []
+    import peppy2
+    data_files.extend(peppy2.get_py2exe_data_files())
+    setup(..., data_files=data_files, ...)
+    """
+    extensions = [".png", ".jpg", ".ico", ]
+    
+    if module is None:
+        path = __file__
+    else:
+        path = module.__file__
+    import os
+    basedir, module = os.path.split(os.path.dirname(path))
+    print basedir, module
+    data_files = []
+    for root, dirs, files in os.walk(os.path.join(basedir, module)):
+        print root, files
+        mod_root = root[len(basedir) + 1:]
+        needed = []
+        for f in files:
+            for suffix in extensions:
+                if f.endswith(suffix):
+                    needed.append(os.path.join(root, f))
+        if needed:
+            data_files.append((mod_root, needed))
+    return data_files
