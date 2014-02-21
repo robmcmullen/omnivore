@@ -59,7 +59,7 @@ def get_py2exe_toolkit_includes(module=None, toolkit="wx"):
             includes.append(mod_name)
     return includes
 
-def get_py2exe_data_files(module=None):
+def get_py2exe_data_files(module=None, excludes=[]):
     """Get a list of data files that should be included in a py2exe/py2app
     distribution's data files parameter.
     
@@ -78,17 +78,25 @@ def get_py2exe_data_files(module=None):
     else:
         path = module.__file__
     import os
+    import fnmatch
     basedir, module = os.path.split(os.path.dirname(path))
-    print basedir, module
+    #print basedir, module
     data_files = []
     for root, dirs, files in os.walk(os.path.join(basedir, module)):
-        print root, files
+        #print root, files
         mod_root = root[len(basedir) + 1:]
         needed = []
         for f in files:
             for suffix in extensions:
                 if f.endswith(suffix):
-                    needed.append(os.path.join(root, f))
+                    path = os.path.join(root, f)
+                    for pattern in excludes:
+                        if fnmatch.fnmatch(path, pattern):
+                            path = None
+                            break
+                    if path:
+                        needed.append(path)
+                        break
         if needed:
             data_files.append((mod_root, needed))
     return data_files
