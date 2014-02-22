@@ -151,12 +151,16 @@ class FrameworkApplication(TasksApplication):
 
 
 def run(plugins=[], use_eggs=True, egg_path=[]):
-    from pkg_resources import Environment, working_set
+    """Start the application
+    
+    :param plugins: list of user plugins
+    :param use_eggs Boolean: search for setuptools plugins and plugins in local eggs?
+    :param egg_path: list of user-specified paths to search for more plugins
+    """
     import logging
     
     # Enthought library imports.
-    from envisage.api import PluginManager, EggPluginManager
-    from envisage.composite_plugin_manager import CompositePluginManager
+    from envisage.api import PluginManager
     from envisage.core_plugin import CorePlugin
     
     # Local imports.
@@ -171,13 +175,17 @@ def run(plugins=[], use_eggs=True, egg_path=[]):
     # Add the user's plugins
     core_plugins.extend(plugins)
     
-    # Default is just to use the specified plugins as well as any found
-    # through setuptools.  If plugins from local eggs are desired, we need an
-    # additional step
+    # The default is to use the specified plugins as well as any found
+    # through setuptools and any local eggs (if an egg_path is specified).
+    # Egg/setuptool plugin searching is turned off by the use_eggs parameter.
     default = PluginManager(
         plugins = core_plugins,
     )
     if use_eggs:
+        from pkg_resources import Environment, working_set
+        from envisage.api import EggPluginManager
+        from envisage.composite_plugin_manager import CompositePluginManager
+        
         # Find all additional eggs and add them to the working set
         environment = Environment(egg_path)
         distributions, errors = working_set.find_plugins(environment)
