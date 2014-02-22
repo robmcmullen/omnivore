@@ -42,6 +42,31 @@ class SaveAction(FrameworkAction):
     def set_enabled_no_editor(self, task):
         self.enabled = False
 
+class ExitAction(FrameworkAction):
+    name = 'Quit'
+    accelerator = 'Ctrl+Q'
+    tooltip = 'Quit the program'
+    menu_role = "Quit"
+
+    def perform(self, event):
+        event.task.exit()
+
+class PreferencesAction(FrameworkAction):
+    name = 'Preferences...'
+    tooltip = 'Program settings and configuration options'
+    menu_role = "Preferences"
+
+    def perform(self, event):
+        print "peform: %s" % self.name
+
+class AboutAction(FrameworkAction):
+    name = 'About...'
+    tooltip = 'About this program'
+    menu_role = "About"
+
+    def perform(self, event):
+        print "peform: %s" % self.name
+
 class FrameworkTask(Task):
     """ A simple task for opening a blank editor.
     """
@@ -61,22 +86,22 @@ class FrameworkTask(Task):
     ###########################################################################
 
     def _menu_bar_default(self):
-        open = OpenAction()
-        save = SaveAction()
         return SMenuBar(SMenu(TaskAction(name='New', method='new',
                                          accelerator='Ctrl+N'),
-                              open,
-                              save,
-                              TaskAction(name='Exit', method='exit',
-                                         accelerator='Ctrl+Q'),
+                              OpenAction(),
+                              SaveAction(),
+                              ExitAction(),
                               id='File', name='&File'),
-                        SMenu(id='Edit', name='&Edit'),
+                        SMenu(PreferencesAction(),
+                              id='Edit', name='&Edit'),
                         SMenu(#DockPaneToggleGroup(),
                               TaskToggleGroup(),
                               id='View', name='&View'),
                         SMenu(TaskAction(name='New Window', method='new_window',
                                          accelerator='Ctrl+W'),
                               id='Window', name='&Window'),
+                        SMenu(AboutAction(),
+                              id='Help', name='&Help'),
                         )
 
     def _tool_bars_default(self):
