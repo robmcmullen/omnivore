@@ -148,3 +148,58 @@ class FrameworkApplication(TasksApplication):
         else:
             #print "Skipping idle on %s" % control
             pass
+
+
+def run(plugins=[], use_eggs=True, egg_path=[]):
+    from pkg_resources import Environment, working_set
+    import logging
+    
+    # Enthought library imports.
+    from envisage.api import PluginManager, EggPluginManager
+    from envisage.composite_plugin_manager import CompositePluginManager
+    from envisage.core_plugin import CorePlugin
+    
+    # Local imports.
+    from peppy2.framework.plugin import PeppyTasksPlugin, FrameworkPlugin
+    from peppy2.file_type.plugin import FileTypePlugin
+    
+    # Include standard plugins
+    core_plugins = [ CorePlugin(), PeppyTasksPlugin(), FrameworkPlugin(), FileTypePlugin() ]
+    import peppy2.file_type.recognizers
+    core_plugins.extend(peppy2.file_type.recognizers.plugins)
+    
+    # Add the user's plugins
+    core_plugins.extend(plugins)
+    
+    # Default is just to use the specified plugins as well as any found
+    # through setuptools.  If plugins from local eggs are desired, we need an
+    # additional step
+    default = PluginManager(
+        plugins = core_plugins,
+    )
+    if use_eggs:
+        # Find all additional eggs and add them to the working set
+        environment = Environment(egg_path)
+        distributions, errors = working_set.find_plugins(environment)
+        if len(errors) > 0:
+            raise SystemError('cannot add eggs %s' % errors)
+        logger = logging.getLogger()
+        logger.debug('added eggs %s' % distributions)
+        map(working_set.add, distributions)
+
+        # The plugin manager specifies which eggs to include and ignores all others
+        egg = EggPluginManager(
+            include = [
+                'peppy2.tasks',
+            ]
+        )
+        
+        plugin_manager = CompositePluginManager(
+            plugin_managers=[default, egg]
+        )
+    else:
+        plugin_manager = default
+
+    app = FrameworkApplication(plugin_manager=plugin_manager)
+    
+    app.run()
