@@ -9,10 +9,9 @@ from traits.etsconfig.api import ETSConfig
 from envisage.api import PluginManager, EggPluginManager
 from envisage.composite_plugin_manager import CompositePluginManager
 from envisage.core_plugin import CorePlugin
-from envisage.ui.tasks.tasks_plugin import TasksPlugin
  
 # Local imports.
-from peppy2.framework.plugin import FrameworkPlugin
+from peppy2.framework.plugin import PeppyTasksPlugin, FrameworkPlugin
 from peppy2.file_type.plugin import FileTypePlugin
 from peppy2.framework.application import FrameworkApplication
 
@@ -30,7 +29,7 @@ def main(argv):
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
-    plugins = [ CorePlugin(), TasksPlugin(), FrameworkPlugin(), FileTypePlugin() ]
+    plugins = [ CorePlugin(), PeppyTasksPlugin(), FrameworkPlugin(), FileTypePlugin() ]
     
     import peppy2.file_type.recognizers
     plugins.extend(peppy2.file_type.recognizers.plugins)

@@ -5,7 +5,13 @@ import os
 from envisage.api import ExtensionPoint, Plugin
 from envisage.ui.tasks.api import TaskFactory
 from traits.api import List
+from envisage.ui.tasks.tasks_plugin import TasksPlugin
 
+class PeppyTasksPlugin(TasksPlugin):
+    # Override the default task extensions that supply redundant Exit and
+    # Preferences menu items and the default dock pane viewing group.
+    def _my_task_extensions_default(self):
+        return []
 
 class FrameworkPlugin(Plugin):
     """ The sample framework plugin.
