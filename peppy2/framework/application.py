@@ -76,7 +76,8 @@ class FrameworkApplication(TasksApplication):
         """
         print "WINDOW OPENED!!! %s" % event.window.control
         import wx
-        event.window.control.Bind(wx.EVT_IDLE, self._wx_on_idle)
+        # If using wx idle event handler, uncomment this next line
+        #event.window.control.Bind(wx.EVT_IDLE, self._wx_on_idle)
 
     #### API
 
@@ -142,6 +143,8 @@ class FrameworkApplication(TasksApplication):
     def _wx_on_idle(self, evt):
         """ Called during idle time. """
         control = evt.GetEventObject()
+#        if not self.active_window:
+#            print "No active window!!!"
         if control == self.active_window.control:
             #print "Processing idle on %s" % self.active_window
             self.active_window.active_task.process_idle()

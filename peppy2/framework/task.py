@@ -8,13 +8,12 @@ from pyface.action.api import StatusBarManager
 from pyface.tasks.api import Task, TaskWindow, TaskLayout, TaskWindowLayout, PaneItem, IEditor, \
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
 from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
-    SMenu, SToolBar, TaskAction, TaskToggleGroup
-from traits.api import on_trait_change, Property, Instance
+    SMenu, SToolBar, TaskAction, EditorAction, TaskToggleGroup
+from traits.api import on_trait_change, Property, Instance, Bool
 
-from peppy2.framework.action import FrameworkAction
 from peppy2.dock_panes import FileBrowserPane
 
-class OpenAction(FrameworkAction):
+class OpenAction(Action):
     name = 'Open'
     accelerator = 'Ctrl+O'
     tooltip = 'Open a file'
@@ -25,24 +24,19 @@ class OpenAction(FrameworkAction):
         if dialog.open() == OK:
             event.task.window.application.load_file(dialog.path, event.task)
 
-class SaveAction(FrameworkAction):
+class SaveAction(EditorAction):
     name = 'Save'
     accelerator = 'Ctrl+S'
     tooltip = 'Save the current file'
     image = ImageResource('document_save')
+    enabled_name = 'dirty' # enabled based on state of task.active_editor.dirty
 
     def perform(self, event):
         dialog = FileDialog(parent=event.task.window.control)
         if dialog.open() == OK:
             event.task.window.application.load_file(dialog.path, event.task)
-    
-    def set_enabled(self, task, active_editor):
-        self.enabled = active_editor.dirty
-    
-    def set_enabled_no_editor(self, task):
-        self.enabled = False
 
-class ExitAction(FrameworkAction):
+class ExitAction(Action):
     name = 'Quit'
     accelerator = 'Ctrl+Q'
     tooltip = 'Quit the program'
@@ -51,7 +45,7 @@ class ExitAction(FrameworkAction):
     def perform(self, event):
         event.task.exit()
 
-class PreferencesAction(FrameworkAction):
+class PreferencesAction(Action):
     name = 'Preferences...'
     tooltip = 'Program settings and configuration options'
     menu_role = "Preferences"
@@ -59,7 +53,7 @@ class PreferencesAction(FrameworkAction):
     def perform(self, event):
         print "peform: %s" % self.name
 
-class AboutAction(FrameworkAction):
+class AboutAction(Action):
     name = 'About...'
     tooltip = 'About this program'
     menu_role = "About"
@@ -133,7 +127,6 @@ class FrameworkTask(Task):
             self.status_bar.message = active.name
         else:
             self.status_bar.message = self.name
-        self.update_actions()
 
     def create_central_pane(self):
         """ Create the central pane: the text editor.
@@ -199,28 +192,6 @@ class FrameworkTask(Task):
         print "Quitting!!!"
         self.window.application.exit()
 
-    def update_actions(self):
-        """Update actions based on the state of the task and active editor
-        """
-        action_schemas = list(self.menu_bar.items)
-        action_schemas.extend(self.tool_bars)
-        if self.active_editor:
-            for action in self._iter_schema_items(action_schemas):
-#                print "action: %s %s" % (getattr(action, 'name', '--'), action)
-                try:
-                    action.set_enabled(self, self.active_editor)
-                except AttributeError:
-                    # skip actions that aren't FrameworkActions
-                    pass
-        else:
-            for action in self._iter_schema_items(action_schemas):
-#                print "action: %s %s" % (getattr(action, 'name', '--'), action)
-                try:
-                    action.set_enabled_no_editor(self)
-                except AttributeError:
-                    # skip actions that aren't FrameworkActions
-                    pass
-
     def debug(self):
         """Debug stuff!
         """
@@ -249,6 +220,12 @@ class FrameworkTask(Task):
         
         Schemas may contain other schemas, which requires this recursive
         approach.
+        
+        Usage:
+            action_schemas = list(self.menu_bar.items)
+            action_schemas.extend(self.tool_bars)
+            for action in self._iter_schema_items(action_schemas):
+                # do something
         """
         for item in items:
             if hasattr(item, 'items'):
