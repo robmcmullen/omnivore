@@ -80,6 +80,7 @@ class StyledTextEditor(Editor):
 
         print len(text)
         self.control.SetTextUTF8(text)
+        self.control.EmptyUndoBuffer()
         self.dirty = False
 
     def save(self, path=None):
@@ -254,7 +255,7 @@ class StyledTextEditor(Editor):
     def _on_stc_changed(self, event):
         """ Called whenever a change is made to the text of the document. """
 
-        self.dirty = True
+        self.dirty = self.control.CanUndo()
         self.changed = True
 
         # Give other event handlers a chance.
