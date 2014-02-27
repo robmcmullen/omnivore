@@ -7,7 +7,7 @@ from traits.api import on_trait_change
 from envisage.api import Plugin
 from envisage.ui.tasks.api import TasksApplication
 from pyface.api import FileDialog, YES, OK, CANCEL
-from pyface.tasks.api import Task
+from pyface.tasks.api import Task, TaskWindow
 from pyface.action.api import Action, MenuBarManager
 from pyface.tasks.action.api import SMenuBar, SMenu, TaskActionManagerBuilder
 
@@ -18,13 +18,9 @@ class OpenAction(Action):
     tooltip = 'Open a file'
 
     def perform(self, event):
-        print event
-        print event.task
-        print event.task.window
-        print event.task.application
         dialog = FileDialog(parent=None)
         if dialog.open() == OK:
-            event.task.application.load_file(dialog.path, event.task)
+            event.task.window.application.load_file(dialog.path, event.task)
 
 # These actions are temporarily duplicates of the actions in
 # peppy2.framework.task -- need to figure out how to grab a selection of
@@ -87,8 +83,8 @@ class OSXMenuBarPlugin(Plugin):
                            )
         app = wx.GetApp()
         # Create a fake task so we can use the menu creation routines
-        task = Task(menu_bar=menubar)
-        task.application = self.application
+        window = TaskWindow(application=self.application)
+        task = Task(menu_bar=menubar, window=window)
         
         t = TaskActionManagerBuilder(task=task)
         mgr = t.create_menu_bar_manager()
