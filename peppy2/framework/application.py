@@ -172,6 +172,10 @@ def run(plugins=[], use_eggs=True, egg_path=[]):
     
     # Include standard plugins
     core_plugins = [ CorePlugin(), PeppyTasksPlugin(), FrameworkPlugin(), FileTypePlugin() ]
+    if sys.platform == "darwin":
+        from peppy2.framework.osx_plugin import OSXMenuBarPlugin
+        core_plugins.append(OSXMenuBarPlugin())
+    
     import peppy2.file_type.recognizers
     core_plugins.extend(peppy2.file_type.recognizers.plugins)
     
