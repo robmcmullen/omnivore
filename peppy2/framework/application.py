@@ -1,5 +1,30 @@
 import sys
 
+# Create the wx app here so we can capture the Mac specific stuff that
+# traitsui.wx.toolkit's wx creation routines don't handle.  Also, monkey
+# patching wx.GetApp() to add MacOpenFile (etc) doesn't seem to work, so we
+# have to have these routines at app creation time.
+import wx
+class EnthoughtWxApp(wx.App):
+    def MacOpenFile(self, filename):
+        """OSX specific routine to handle files that are dropped on the icon
+        
+        """
+        print "MacOpenFile: opening %s" % filename
+        if hasattr(self, 'tasks_application'):
+            print "MacOpenFile: application started!"
+            if not hasattr(sys, "frozen") and len(sys.argv) > 0 and filename == sys.argv[0]:
+                # MacOpenFile appears to be called once for each command line
+                # argument, so this will get called for each comman line
+                # argument.  While the argument to this function matches the
+                # command line arguments, skip them.
+                print "MacOpenFile: skipping command line argument %s" % filename
+                del sys.argv[0]
+            else:
+                self.tasks_application.load_file(filename, None)
+
+_app = EnthoughtWxApp(redirect=False)
+
 # Enthought library imports.
 from envisage.ui.tasks.api import TasksApplication
 from pyface.tasks.api import TaskWindowLayout

@@ -71,6 +71,9 @@ class OSXMenuBarPlugin(Plugin):
             self.set_common_menu_29()
         else:
             print "Don't have MacSetCommonMenuBar!!!"
+        app = wx.GetApp()
+        app.tasks_application = self.application
+        print app
 
     def set_common_menu_29(self):
         menubar = SMenuBar(SMenu(OpenAction(),
