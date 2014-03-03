@@ -27,6 +27,7 @@ _app = EnthoughtWxApp(redirect=False)
 
 # Enthought library imports.
 from envisage.ui.tasks.api import TasksApplication
+from envisage.ui.tasks.task_window_event import TaskWindowEvent, VetoableTaskWindowEvent
 from pyface.tasks.api import TaskWindowLayout
 from traits.api import Bool, Instance, List, Property
 
@@ -162,6 +163,30 @@ class FrameworkApplication(TasksApplication):
         print metadata.mime
         print dir(metadata)
 
+    # Override the default window closing event handlers only on Mac because
+    # Mac allows the application to remain open while no windows are open
+    if sys.platform == "darwin":
+        def _on_window_closing(self, window, trait_name, event):
+            # Event notification.
+            self.window_closing = window_event = VetoableTaskWindowEvent(
+                window=window)
+
+            if window_event.veto:
+                event.veto = True
+            else:
+                # Store the layout of the window.
+                window_layout = window.get_window_layout()
+                self._state.push_window_layout(window_layout)
+
+        def _on_window_closed(self, window, trait_name, event):
+            self.windows.remove(window)
+
+            # Event notification.
+            self.window_closed = TaskWindowEvent(window=window)
+
+            # Was this the last window?
+            if len(self.windows) == 0 and self._explicit_exit:
+                self.stop()
 
     #### wx event handlers ####################################################
 
