@@ -178,7 +178,7 @@ class FrameworkApplication(TasksApplication):
             pass
 
 
-def run(plugins=[], use_eggs=True, egg_path=[]):
+def run(plugins=[], use_eggs=True, egg_path=[], image_path=[]):
     """Start the application
     
     :param plugins: list of user plugins
@@ -239,6 +239,10 @@ def run(plugins=[], use_eggs=True, egg_path=[]):
         )
     else:
         plugin_manager = default
+
+    from pyface.resource_manager import resource_manager
+    import os
+    resource_manager.extra_paths.extend(image_path)
 
     app = FrameworkApplication(plugin_manager=plugin_manager)
     
