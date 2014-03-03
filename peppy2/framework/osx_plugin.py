@@ -94,7 +94,10 @@ class OSXMenuBarPlugin(Plugin):
         control = mgr.create_menu_bar(app)
         wx.MenuBar.MacSetCommonMenuBar(control)
         
-        # Need to create this dummy frame, otherwise wx will exit its event
-        # loop when the last window is closed.
-        self.dummy_frame = wx.Frame(None, -1, pos=(-9000,-9000))
-        self.dummy_frame.Hide()
+        # Prevent wx from exiting when the last window is closed
+        app.SetExitOnFrameDelete(False)
+
+    @on_trait_change('application:application_exiting')
+    def kill_wx(self):
+        app = wx.GetApp()
+        app.ExitMainLoop()
