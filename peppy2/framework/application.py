@@ -194,6 +194,7 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[]):
     # Local imports.
     from peppy2.framework.plugin import PeppyTasksPlugin, FrameworkPlugin
     from peppy2.file_type.plugin import FileTypePlugin
+    from peppy2 import get_image_path
     
     # Include standard plugins
     core_plugins = [ CorePlugin(), PeppyTasksPlugin(), FrameworkPlugin(), FileTypePlugin() ]
@@ -240,9 +241,13 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[]):
     else:
         plugin_manager = default
 
+    # Add peppy2 icons after all image paths to allow user icon themes to take
+    # precidence
     from pyface.resource_manager import resource_manager
     import os
-    resource_manager.extra_paths.extend(image_path)
+    image_paths = image_path[:]
+    image_paths.append(get_image_path("icons"))
+    resource_manager.extra_paths.extend(image_paths)
 
     app = FrameworkApplication(plugin_manager=plugin_manager)
     

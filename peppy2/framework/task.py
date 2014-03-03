@@ -17,7 +17,7 @@ class OpenAction(Action):
     name = 'Open'
     accelerator = 'Ctrl+O'
     tooltip = 'Open a file'
-    image = ImageResource('document_open')
+    image = ImageResource('file_open')
 
     def perform(self, event):
         dialog = FileDialog(parent=event.task.window.control)
@@ -28,7 +28,7 @@ class SaveAction(EditorAction):
     name = 'Save'
     accelerator = 'Ctrl+S'
     tooltip = 'Save the current file'
-    image = ImageResource('document_save')
+    image = ImageResource('file_save')
     enabled_name = 'dirty' # enabled based on state of task.active_editor.dirty
 
     def perform(self, event):
@@ -103,7 +103,7 @@ class FrameworkTask(Task):
         save = SaveAction()
         return [ SToolBar(TaskAction(method='new',
                                       tooltip='New file',
-                                      image=ImageResource('document_new')),
+                                      image=ImageResource('file_new')),
                            open,
                            save,
                            TaskAction(method='debug',

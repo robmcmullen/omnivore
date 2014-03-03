@@ -100,3 +100,36 @@ def get_py2exe_data_files(module=None, excludes=[]):
         if needed:
             data_files.append((mod_root, needed))
     return data_files
+
+def get_image_path(rel_path, module=None, excludes=[]):
+    """Get the image path for static images relative to the specified module
+    
+    The image path will be modified to find images in py2exe/py2app
+    locations assuming that the data files have been added using the above
+    get_py2exe_data_files function.
+    
+    For example, in peppy2, the images are located in a directory "icons" in
+    main peppy2 directory (e.g. peppy2/icons):
+        
+    import peppy2
+    image_path = get_image_path("icons", peppy2)
+    
+    will return the absolute path of "peppy2/icons".
+    """
+    if module is None:
+        path = __file__
+    else:
+        path = module.__file__
+    import os
+    import sys
+    frozen = getattr(sys, 'frozen', False)
+    image_path = os.path.join(os.path.dirname(path), rel_path)
+    if frozen:
+        if frozen in ('macosx_app'):
+            #print "FROZEN!!! %s" % frozen
+            root = os.environ['RESOURCEPATH']
+            zippath, image_path = image_path.split(".zip/")
+            image_path = os.path.join(root, image_path)
+        else:
+            print "App packager %s not yet supported for image paths!!!"
+    return image_path
