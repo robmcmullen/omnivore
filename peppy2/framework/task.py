@@ -43,7 +43,7 @@ class ExitAction(Action):
     menu_role = "Quit"
 
     def perform(self, event):
-        event.task.exit()
+        event.task.window.application.exit()
 
 class PreferencesAction(Action):
     name = 'Preferences...'
@@ -185,12 +185,6 @@ class FrameworkTask(Task):
             else:
                 return False
         return True
-
-    def exit(self):
-        """ Opens a new empty window
-        """
-        print "Quitting!!!"
-        self.window.application.exit()
 
     def debug(self):
         """Debug stuff!

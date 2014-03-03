@@ -32,7 +32,7 @@ class ExitAction(Action):
     menu_role = "Quit"
 
     def perform(self, event):
-        event.task.exit()
+        event.task.window.application.exit()
 
 class PreferencesAction(Action):
     name = 'Preferences...'
