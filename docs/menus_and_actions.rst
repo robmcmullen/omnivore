@@ -35,7 +35,10 @@ Using the SchemaAddition it seems to be possible to add to menus. SchemaAddition
 Menu Item Enabled State
 =======================
 
-Maybe subclass from ListeningAction (pyface/tasks/action/listening_action.py)?
-That seems to link a trait in one object to the enabled/disabled (and also
-visibility) of the menu item.  Haven't tried this yet, though.
+Subclassing from EditorAction provides the ability to set the enabled/disabled state of the item based on a trait in the parent Editor.  E.g.::
 
+    class SaveAction(EditorAction):
+        enabled_name = 'dirty'
+
+will automatically enable/disable the item whenever the state of
+task.active_editor.dirty changes.
