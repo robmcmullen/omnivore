@@ -146,25 +146,50 @@ class FrameworkTask(Task):
     # 'FrameworkTask' interface.
     ###########################################################################
 
-    def new(self, guess=None):
+    def new(self, source=None):
         """ Opens a new tab
+        
+        :param source: optional :class:`FileGuess` or :class:`Editor` instance
+        that will load a new file or create a new view of the existing editor,
+        respectively.
         """
         editor = self.get_editor()
         self.editor_area.add_editor(editor)
         self.editor_area.activate_editor(editor)
-        editor.load(guess)
+        if hasattr(source, 'get_metadata'):
+            editor.load(source)
+        else:
+            editor.view_of(source)
         self.activated()
 
-    def new_window(self):
-        """ Opens a new empty window
+    def new_window(self, task=None, view=None):
+        """ Opens a new window
+        
+        With no arguments, opens an empty window with the default task.
+        
+        :keyword task: optional task to set the task of the new window
+        
+        :keyword view: optional :class:`Editor` instance that will set the
+        task of the new window and will create a new view of the editor in the
+        first tab
         """
         print "Opening new window!!!"
         window = self.window.application.create_window()
         print "  window=%s" % str(window)
         print "  self=%s" % str(self.window)
-        task = FrameworkTask()
+        print "  task type: %s" % str(task)
+        print "  view of: %s" % str(view)
+        if view is not None:
+            task_cls = view.editor_area.task.__class__
+        elif task is not None:
+            task_cls = task.__class__
+        else:
+            task_cls = FrameworkTask
+        task = task_cls()
         window.add_task(task)
         window.activate_task(task)
+        if view is not None:
+            task.new(view)
         window.open()
         print "All windows: %s" % self.window.application.windows
 
@@ -202,7 +227,7 @@ class FrameworkTask(Task):
     # 'FrameworkTask' interface.
     ###########################################################################
 
-    def get_editor(self, guess=None):
+    def get_editor(self):
         raise NotImplementedError
 
     ###########################################################################
