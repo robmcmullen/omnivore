@@ -30,6 +30,14 @@ Using the SchemaAddition it seems to be possible to add to menus. SchemaAddition
     This trait takes precedence over 'after' and 'before', and values of those
     traits that are not compatible with the absolute_position are ignored.
 
+In a task, adding menu items is provide by the extra_actions trait, e.g.::
+
+    def _extra_actions_default(self):
+        actions = [ SchemaAddition(id='NewView',
+                                   factory=NewViewAction,
+                                   path='MenuBar/Window'),
+                    ]
+        return actions
 
 
 Menu Item Enabled State
