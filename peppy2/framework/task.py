@@ -61,6 +61,20 @@ class AboutAction(Action):
     def perform(self, event):
         print "peform: %s" % self.name
 
+class NewViewAction(EditorAction):
+    name = 'New View of Current Tab'
+    tooltip = 'New view of the project in the current tab'
+
+    def perform(self, event):
+        event.task.new_window(view=event.task.active_editor)
+
+class NewWindowAction(Action):
+    name = 'New Window'
+    tooltip = 'Open a new window'
+
+    def perform(self, event):
+        event.task.new_window()
+
 class FrameworkTask(Task):
     """ A simple task for opening a blank editor.
     """
@@ -91,8 +105,8 @@ class FrameworkTask(Task):
                         SMenu(#DockPaneToggleGroup(),
                               TaskToggleGroup(),
                               id='View', name='&View'),
-                        SMenu(TaskAction(name='New Window', method='new_window',
-                                         accelerator='Ctrl+W'),
+                        SMenu(NewViewAction(),
+                              NewWindowAction(),
                               id='Window', name='&Window'),
                         SMenu(AboutAction(),
                               id='Help', name='&Help'),
