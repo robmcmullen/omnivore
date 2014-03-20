@@ -107,7 +107,7 @@ class FrameworkApplication(TasksApplication):
 
     #### API
 
-    def load_file(self, uri, active_task):
+    def load_file(self, uri, active_task, **kwargs):
         service = self.get_service("peppy2.file_type.i_file_recognizer.IFileRecognizerDriver")
         print "SERVICE!!!", service
         
@@ -138,7 +138,7 @@ class FrameworkApplication(TasksApplication):
             print "  active task: %s" % window.active_task
             if window.active_task.__class__ == best.factory:
                 print "  found active task"
-                window.active_task.new(guess)
+                window.active_task.new(guess, **kwargs)
                 return
         
         # Not found in existing windows, so open new window with task
@@ -155,7 +155,7 @@ class FrameworkApplication(TasksApplication):
         window.activate_task(first)
         window.open()
         print "All windows: %s" % self.windows
-        task.new(guess)
+        task.new(guess, **kwargs)
         metadata = guess.get_metadata()
         print guess.metadata
         print guess.metadata.mime

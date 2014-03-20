@@ -37,12 +37,12 @@ class FrameworkEditor(Editor):
         """
         raise NotImplementedError
 
-    def load(self, guess=None):
+    def load(self, guess=None, **kwargs):
         """ Loads the contents of the editor.
         """
         raise NotImplementedError
 
-    def view_of(self, editor):
+    def view_of(self, editor, **kwargs):
         """ Copy the view of the supplied editor.
         """
         raise NotImplementedError

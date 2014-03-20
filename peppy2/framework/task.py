@@ -160,7 +160,7 @@ class FrameworkTask(Task):
     # 'FrameworkTask' interface.
     ###########################################################################
 
-    def new(self, source=None):
+    def new(self, source=None, **kwargs):
         """ Opens a new tab
         
         :param source: optional :class:`FileGuess` or :class:`Editor` instance
@@ -171,9 +171,9 @@ class FrameworkTask(Task):
         self.editor_area.add_editor(editor)
         self.editor_area.activate_editor(editor)
         if hasattr(source, 'get_metadata'):
-            editor.load(source)
+            editor.load(source, **kwargs)
         else:
-            editor.view_of(source)
+            editor.view_of(source, **kwargs)
         self.activated()
 
     def new_window(self, task=None, view=None):
