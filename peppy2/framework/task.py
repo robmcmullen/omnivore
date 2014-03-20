@@ -4,7 +4,7 @@
 # Enthought library imports.
 from pyface.api import ImageResource, ConfirmationDialog, FileDialog, \
     ImageResource, YES, OK, CANCEL
-from pyface.action.api import StatusBarManager, Action
+from pyface.action.api import StatusBarManager, Action, Group, Separator
 from pyface.tasks.api import Task, TaskWindow, TaskLayout, TaskWindowLayout, PaneItem, IEditor, \
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
 from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
@@ -94,11 +94,14 @@ class FrameworkTask(Task):
     ###########################################################################
 
     def _menu_bar_default(self):
-        return SMenuBar(SMenu(TaskAction(name='New', method='new',
-                                         accelerator='Ctrl+N'),
-                              OpenAction(),
-                              SaveAction(),
-                              ExitAction(),
+        return SMenuBar(SMenu(Group(TaskAction(name='New', method='new',
+                                         accelerator='Ctrl+N'), id="NewGroup"),
+                              Separator(id="NewGroupEnd", separator=False),
+                              Group(OpenAction(), id="OpenGroup"),
+                              Separator(id="OpenGroupEnd", separator=False),
+                              Group(SaveAction(), id="SaveGroup"),
+                              Separator(id="SaveGroupEnd", separator=False),
+                              Group(ExitAction(), id="ExitGroup"),
                               id='File', name='&File'),
                         SMenu(PreferencesAction(),
                               id='Edit', name='&Edit'),
