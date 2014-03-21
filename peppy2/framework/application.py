@@ -29,7 +29,7 @@ _app = EnthoughtWxApp(redirect=False)
 from envisage.ui.tasks.api import TasksApplication
 from envisage.ui.tasks.task_window_event import TaskWindowEvent, VetoableTaskWindowEvent
 from pyface.tasks.api import TaskWindowLayout
-from traits.api import Bool, Instance, List, Property
+from traits.api import Bool, Instance, List, Property, Str
 
 # Local imports.
 from peppy2.framework.preferences import FrameworkPreferences, \
@@ -60,6 +60,8 @@ class FrameworkApplication(TasksApplication):
     #### 'FrameworkApplication' interface ####################################
 
     preferences_helper = Instance(FrameworkPreferences)
+    
+    startup_task = Str
 
     ###########################################################################
     # Private interface.
@@ -69,7 +71,9 @@ class FrameworkApplication(TasksApplication):
 
     def _default_layout_default(self):
         active_task = self.preferences_helper.default_task
-        tasks = [ factory.id for factory in self.task_factories ]
+        if not active_task:
+            active_task = self.startup_task
+        tasks = [ factory.id for factory in self.task_factories if active_task and active_task == factory.id ]
         return [ TaskWindowLayout(*tasks,
                                   active_task = active_task,
                                   size = (800, 600)) ]
@@ -203,7 +207,7 @@ class FrameworkApplication(TasksApplication):
             pass
 
 
-def run(plugins=[], use_eggs=True, egg_path=[], image_path=[]):
+def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task=""):
     """Start the application
     
     :param plugins: list of user plugins
@@ -274,6 +278,6 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[]):
     image_paths.append(get_image_path("icons"))
     resource_manager.extra_paths.extend(image_paths)
 
-    app = FrameworkApplication(plugin_manager=plugin_manager)
+    app = FrameworkApplication(plugin_manager=plugin_manager, startup_task=startup_task)
     
     app.run()
