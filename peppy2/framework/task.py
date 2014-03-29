@@ -173,7 +173,7 @@ class FrameworkTask(Task):
         editor = self.get_editor()
         self.editor_area.add_editor(editor)
         self.editor_area.activate_editor(editor)
-        if hasattr(source, 'get_metadata'):
+        if hasattr(source, 'get_metadata') or source is None:
             editor.load(source, **kwargs)
         else:
             editor.view_of(source, **kwargs)
