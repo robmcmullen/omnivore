@@ -84,6 +84,8 @@ class FrameworkTask(Task):
     id = 'peppy.framework.framework_task'
     name = 'Framework'
 
+    icon = Instance(ImageResource)
+
     active_editor = Property(Instance(IEditor),
                              depends_on='editor_area.active_editor')
 
@@ -146,6 +148,7 @@ class FrameworkTask(Task):
             self.status_bar.message = active.name
         else:
             self.status_bar.message = self.name
+        self.window.icon = self.icon
 
     def create_central_pane(self):
         """ Create the central pane: the text editor.
