@@ -39,6 +39,38 @@ In a task, adding menu items is provide by the extra_actions trait, e.g.::
                     ]
         return actions
 
+Adding a group (i.e. multiple actions) seems to be a bit finicky about how they are added. Key points:
+
+1) the menu specified must already exist or the items will be silently ignored
+2) the only way that worked for me was to specify the group in a lambda:
+
+        testgroup = lambda : Group(ZoomInAction(),
+                          ZoomOutAction(), id="zoomgroup2234")
+        actions = [SchemaAddition(factory=testgroup,
+                                   path='MenuBar/Extra',
+                                   absolute_position="first",
+                                   ),
+                    ]
+
+Attempting to define a group like this:
+
+class ZoomGroup(Group):
+    id = "ZoomGroup"
+    
+    def _items_default(self):
+        return [ZoomInAction(),
+                ZoomOutAction()]
+
+and using
+
+        actions = [SchemaAddition(factory=ZoomGroup,
+                                   path='MenuBar/Extra',
+                                   absolute_position="first",
+                                   ),
+                    ]
+
+silently failed.
+
 
 Menu Item Enabled State
 =======================
