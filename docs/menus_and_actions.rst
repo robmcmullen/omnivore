@@ -50,3 +50,16 @@ Subclassing from EditorAction provides the ability to set the enabled/disabled s
 
 will automatically enable/disable the item whenever the state of
 task.active_editor.dirty changes.
+
+
+Menu Item Initial Value
+=======================
+
+Checkboxes and toggles require an initial value, and also must be updated when
+the view or the active editor changes.  My naive approach to handling this
+problem is to add a trait change handler on the EditorAction's active editor
+trait, e.g.  setting a checkbox initial state::
+
+    @on_trait_change('active_editor')
+    def _update_checked(self):
+        self.checked = self.active_editor.control.bounding_boxes_shown
