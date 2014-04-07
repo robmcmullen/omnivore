@@ -119,15 +119,16 @@ class FrameworkTask(Task):
     def _tool_bars_default(self):
         open = OpenAction()
         save = SaveAction()
-        return [ SToolBar(TaskAction(method='new',
-                                      tooltip='New file',
-                                      image=ImageResource('file_new')),
-                           open,
-                           save,
-                           TaskAction(method='debug',
-                                      tooltip='Do some debug stuff',
-                                      image=ImageResource('debug')),
-                           show_tool_names=False), ]
+        return [ SToolBar(Group(TaskAction(method='new',
+                                           tooltip='New file',
+                                           image=ImageResource('file_new')),
+                                open,
+                                save,
+                                TaskAction(method='debug',
+                                           tooltip='Do some debug stuff',
+                                           image=ImageResource('debug')),
+                                id="File"),
+                          show_tool_names=False), ]
 
     def _status_bar_default(self):
         return StatusBarManager(message="Hi!")
