@@ -107,6 +107,7 @@ class FrameworkTask(Task):
                               id='Edit', name='&Edit'),
                         SMenu(#DockPaneToggleGroup(),
                               TaskToggleGroup(),
+                              Separator(id="TaskGroupEnd"),
                               id='View', name='&View'),
                         SMenu(NewViewAction(),
                               NewWindowAction(),
