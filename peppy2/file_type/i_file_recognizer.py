@@ -20,10 +20,10 @@ class IFileRecognizer(Interface):
     # The recognizer will be processed before the item with this ID.
     before = Str
 
-    def identify_bytes(self, byte_stream):
-        """Return a MIME type if byte stream can be identified.
+    def identify(self, guess):
+        """Return a MIME type if the FileGuess can be identified.
         
-        If byte stream is not known, returns None
+        If the file type is not matched by this recognizer, returns None
         """
 
 class IFileRecognizerDriver(Interface):

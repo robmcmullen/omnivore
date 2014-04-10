@@ -20,7 +20,7 @@ class FileRecognizerDriver(HasTraits):
         print "trying %d recognizers " % len(self.recognizers)
         for recognizer in self.recognizers:
             print "trying %s recognizer: " % recognizer.id,
-            mime = recognizer.identify_bytes(guess.bytes)
+            mime = recognizer.identify(guess)
             if mime is not None:
                 print "found %s" % mime
                 guess.metadata.mime = mime

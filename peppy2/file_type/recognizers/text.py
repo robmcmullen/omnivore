@@ -10,12 +10,8 @@ class PlainTextRecognizer(HasTraits):
     """
     id = "text/plain"
     
-    def identify_bytes(self, byte_stream):
-        """Return a MIME type if byte stream can be identified.
-        
-        If byte stream is not known, returns None
-        """
-        if not guessBinary(byte_stream):
+    def identify(self, guess):
+        if not guessBinary(guess.get_utf8()):
             return "text/plain"
 
 @provides(IFileRecognizer)
@@ -27,11 +23,8 @@ class PoundBangTextRecognizer(HasTraits):
     
     before = "text/plain"
     
-    def identify_bytes(self, byte_stream):
-        """Return a MIME type if byte stream can be identified.
-        
-        If byte stream is not known, returns None
-        """
+    def identify(self, guess):
+        byte_stream = guess.get_utf8()
         if not byte_stream.startswith("#!"):
             return
         line = byte_stream[2:80].lower().strip()

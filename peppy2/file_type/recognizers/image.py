@@ -21,12 +21,8 @@ class ImageRecognizer(HasTraits):
         'xbm': 'x-xbitmap,'
         }
     
-    def identify_bytes(self, byte_stream):
-        """Return a MIME type if byte stream can be identified.
-        
-        If byte stream is not known, returns None
-        """
-        name = imghdr.what("", h=byte_stream)
+    def identify(self, guess):
+        name = imghdr.what("", h=guess.get_utf8())
         if name is None:
             return
         name = self.mime_map.get(name, name)
