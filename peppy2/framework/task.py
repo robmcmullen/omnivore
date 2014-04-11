@@ -108,7 +108,7 @@ class FrameworkTask(Task):
                         SMenu(Separator(id="PrefGroup", separator=False),
                               Group(PreferencesAction(), absolute_position="last"),
                               id='Edit', name='&Edit'),
-                        SMenu(#DockPaneToggleGroup(),
+                        SMenu(DockPaneToggleGroup(),
                               TaskToggleGroup(),
                               Separator(id="TaskGroupEnd"),
                               id='View', name='&View'),
