@@ -28,7 +28,7 @@ _app = EnthoughtWxApp(redirect=False)
 # Enthought library imports.
 from envisage.ui.tasks.api import TasksApplication
 from envisage.ui.tasks.task_window_event import TaskWindowEvent, VetoableTaskWindowEvent
-from pyface.tasks.api import TaskWindowLayout
+from pyface.tasks.api import Task, TaskWindowLayout
 from traits.api import Bool, Instance, List, Property, Str
 
 # Local imports.
@@ -137,13 +137,10 @@ class FrameworkApplication(TasksApplication):
         best = possibilities[0]
         
         # Look for existing task in current windows
-        for window in self.windows:
-            print "window: %s" % window
-            print "  active task: %s" % window.active_task
-            if window.active_task.__class__ == best.factory:
-                print "  found active task"
-                window.active_task.new(guess, **kwargs)
-                return
+        task = self.find_active_task_of_type(best.factory)
+        if task:
+            task.new(guess, **kwargs)
+            return
         
         # Not found in existing windows, so open new window with task
         tasks = [ factory.id for factory in possibilities ]
@@ -166,6 +163,31 @@ class FrameworkApplication(TasksApplication):
         print metadata
         print metadata.mime
         print dir(metadata)
+    
+    def get_task_class(self, task):
+        if isinstance(task, Task):
+            task = task.__class__
+        return task
+    
+    def find_active_task_of_type(self, requested_task):
+        task_cls = self.get_task_class(requested_task)
+        for window in self.windows:
+            print "window: %s" % window
+            print "  active task: %s" % window.active_task
+            if window.active_task.__class__ == task_cls:
+                print "  found active task"
+                return window.active_task
+    
+    def find_or_create_task_of_type(self, requested_task):
+        task = self.find_active_task_of_type(requested_task)
+        if not task:
+            task_cls = self.get_task_class(requested_task)
+            window = self.create_window(layout=TaskWindowLayout())
+            task = task_cls()
+            window.add_task(task)
+            window.activate_task(task)
+            window.open()
+        return task
 
     # Override the default window closing event handlers only on Mac because
     # Mac allows the application to remain open while no windows are open

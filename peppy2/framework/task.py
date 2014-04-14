@@ -21,7 +21,8 @@ class NewFileAction(Action):
     task_cls = Any
     
     def perform(self, event=None):
-        event.task.new_window(task=self.task_cls)
+        task = event.task.window.application.find_or_create_task_of_type(self.task_cls)
+        task.new()
 
     def _get_tooltip(self):
         return u'Open a new %s' % self.name
