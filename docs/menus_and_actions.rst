@@ -95,3 +95,85 @@ trait, e.g.  setting a checkbox initial state::
     @on_trait_change('active_editor')
     def _update_checked(self):
         self.checked = self.active_editor.control.bounding_boxes_shown
+
+
+Tool Bars and Enable/Visible states
+===================================
+
+I added some code in pyface to set toolbar item visibily and (entire) toolbar
+visibility.  Apparently they don't work together well when using the agw.aui
+toolbar.
+
+.. note::
+
+    None of this is applicable to the standard wx.Toolbar, although the
+    wx.Toolbar has problems on Mac, which is why I needed to go with the
+    owner- drawn agw.aui toolbar.
+
+I added an action with a 'visible_name' attribute, e.g.::
+
+    class AddLinesAction(EditorAction):
+        name = 'Add Lines Mode'
+        visible_name = 'layer_has_points'
+        tooltip = 'Add lines to the current layer'
+        image = ImageResource('add_lines.png')
+        style = 'radio'
+
+and when using the aui toolbar, the initial toolbar view could contain two
+checked items.  Once the toolbar was hidden and shown, it would appear
+correctly.
+
+I instrumented pyface/ui/wx/application_window.py _wx_show_tool_bar as follows::
+
+    def _wx_show_tool_bar(self, tool_bar, visible):
+        """ Hide/Show a tool bar. """
+
+        if aui is not None:
+            pane = self._aui_manager.GetPane(tool_bar.tool_bar_manager.id)
+
+            if visible:
+                pane.Show()
+
+            else:
+                # Without this workaround, toolbars know the sizes of other
+                # hidden toolbars and leave gaps in the toolbar dock
+                pane.window.Show(False)
+                self._aui_manager.DetachPane(pane.window)
+                info = self._get_tool_par_pane_info(pane.window)
+                info.Hide()
+                self._aui_manager.AddPane(pane.window, info)
+
+            self._aui_manager.Update()
+            if visible:
+                tool_bar.tool_bar_manager._wx_fix_tool_state(tool_bar)
+
+        else:
+            tool_bar.Show(visible)
+
+        return
+
+and added the following method to ToolBarManager in
+pyface/ui/wx/action/toolbar_manager.py::
+
+    def _wx_fix_tool_state(self, tool_bar):
+        """ Workaround for the wxPython tool bar bug.
+
+        Without this,  only the first item in a radio group can be selected
+         when the tool bar is first realised 8^()
+
+        """
+
+        for group in self.groups:
+            for item in group.items:
+                if item.action.style == 'radio':
+                    print "action %s, state %s, internal state %s, %s" % (item.action.name, item.action.checked, item.control_id, str(item))
+                    for wrapped in item._wrappers:
+                        print " wrapped control: %s, state=%s" % (wrapped.control, wrapped.control.state)
+                        wrapped.control.state = 0
+                        tool_bar.ToggleTool(wrapped.control_id, item.action.checked)
+
+which worked around the problem.
+
+I subsequently discovered that if you don't hide the toolbar items of toolbars
+that you plan to hide, it works correctly.
+
