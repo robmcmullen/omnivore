@@ -61,7 +61,7 @@ class FrameworkApplication(TasksApplication):
 
     preferences_helper = Instance(FrameworkPreferences)
     
-    startup_task = Str
+    startup_task = Str('peppy.framework.text_edit')
 
     ###########################################################################
     # Private interface.
@@ -235,6 +235,7 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task=""):
     :param plugins: list of user plugins
     :param use_eggs Boolean: search for setuptools plugins and plugins in local eggs?
     :param egg_path: list of user-specified paths to search for more plugins
+    :param startup_task string: task factory identifier for task shown in initial window
     """
     import logging
     
@@ -300,6 +301,9 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task=""):
     image_paths.append(get_image_path("icons"))
     resource_manager.extra_paths.extend(image_paths)
 
-    app = FrameworkApplication(plugin_manager=plugin_manager, startup_task=startup_task)
+    kwargs = {}
+    if startup_task:
+        kwargs['startup_task'] = startup_task
+    app = FrameworkApplication(plugin_manager=plugin_manager, **kwargs)
     
     app.run()
