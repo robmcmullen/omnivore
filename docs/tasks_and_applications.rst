@@ -47,3 +47,65 @@ among others.
 
 :Q: How do we create a new top-level window?
 :A: TaskApplication.create_window
+
+
+Determining the TaskWindow
+==========================
+
+A reference to the TaskWindow is kept in the Task instance.  Here's how to
+access the task window from:
+
+:Task: self.window
+:Editor: self.editor_area.task.window
+:TaskAction event handler: event.task.window.
+:EditorAction event handler: self.active_editor.task.window
+
+
+Error Reporting
+===============
+
+The TaskWindow includes several convenience methods to show standard dialogs::
+
+    def confirm(self, message, title=None, cancel=False, default=NO):
+        """ Convenience method to show a confirmation dialog.
+
+        message is the text of the message to display.
+        title is the text of the window title.
+        cancel is set if the dialog should contain a Cancel button.
+        default is the default button.
+        """
+
+    def information(self, message, title='Information'):
+        """ Convenience method to show an information message dialog.
+
+        message is the text of the message to display.
+        title is the text of the window title.
+        """
+
+    def warning(self, message, title='Warning'):
+        """ Convenience method to show a warning message dialog.
+
+        message is the text of the message to display.
+        title is the text of the window title.
+        """
+
+    def error(self, message, title='Error'):
+        """ Convenience method to show an error message dialog.
+
+        message is the text of the message to display.
+        title is the text of the window title.
+        """
+
+The confirm dialog returns constants for OK, CANCEL, YES and NO, accessed by::
+
+    from pyface.api import OK, CANCEL, YES, NO
+
+Since all those constants are positive numbers, using something like::
+
+    if confirm("Save file?"):
+        save()
+
+will not work as expected.  Instead, use::
+
+    if confirm("Save file?") == YES:
+        save()
