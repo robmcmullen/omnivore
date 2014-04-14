@@ -94,6 +94,9 @@ class FrameworkTask(Task):
     ###########################################################################
     # 'Task' interface.
     ###########################################################################
+    
+    def _icon_default(self):
+        return ImageResource('peppy48')
 
     def _menu_bar_default(self):
         return SMenuBar(SMenu(Group(TaskAction(name='New', method='new',
