@@ -4,14 +4,85 @@
 # Enthought library imports.
 from pyface.api import ImageResource, ConfirmationDialog, FileDialog, \
     ImageResource, YES, OK, CANCEL
-from pyface.action.api import StatusBarManager, Action, Group, Separator
+from pyface.action.api import StatusBarManager, Action, ActionItem, Group, Separator
 from pyface.tasks.api import Task, TaskWindow, TaskLayout, TaskWindowLayout, PaneItem, IEditor, \
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
 from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
     SMenu, SToolBar, TaskAction, EditorAction, TaskToggleGroup
-from traits.api import on_trait_change, Property, Instance, Bool
+from traits.api import on_trait_change, Property, Instance, Bool, Str, Unicode, Any, List
 
 from peppy2.dock_panes import FileBrowserPane
+
+class NewFileAction(Action):
+    """ An action for creating a new empty file that can be edited by a particular task
+    """
+    tooltip = Property(Unicode, depends_on='name')
+
+    task_cls = Any
+    
+    def perform(self, event=None):
+        event.task.new_window(task=self.task_cls)
+
+    def _get_tooltip(self):
+        return u'Open a new %s' % self.name
+
+class NewFileGroup(Group):
+    """ A menu for creating a new file for each type of task
+    """
+
+    #### 'ActionManager' interface ############################################
+
+    id = 'NewFileGroup'
+    
+    items = List
+
+    #### 'TaskChangeMenuManager' interface ####################################
+
+    # The ActionManager to which the group belongs.
+    manager = Any
+
+    # The window that contains the group.
+    application = Instance('envisage.ui.tasks.api.TasksApplication')
+        
+    ###########################################################################
+    # Private interface.
+    ###########################################################################
+
+    def _get_items(self):
+        items = []
+        for factory in self.application.task_factories:
+            if hasattr(factory.factory, 'new_file_text'):
+                task_cls = factory.factory
+                if task_cls.new_file_text:
+                    action = NewFileAction(name=task_cls.new_file_text, task_cls=task_cls)
+                    items.append((task_cls.new_file_text, ActionItem(action=action)))
+        items.sort()
+        items = [i[1] for i in items]
+        return items
+
+    def _rebuild(self):
+        # Clear out the old group, then build the new one.
+        self.destroy()
+        self.items = self._get_items()
+
+        # Inform our manager that it needs to be rebuilt.
+        self.manager.changed = True
+        
+    #### Trait initializers ###################################################
+
+    def _items_default(self):
+        self.application.on_trait_change(self._rebuild, 'task_factories[]')
+        return self._get_items()
+
+    def _manager_default(self):
+        manager = self
+        while isinstance(manager, Group):
+            manager = manager.parent
+        return manager
+    
+    def _application_default(self):
+        return self.manager.controller.task.window.application
+
 
 class OpenAction(Action):
     name = 'Open'
@@ -87,6 +158,10 @@ class NewWindowAction(Action):
 class FrameworkTask(Task):
     """ A simple task for opening a blank editor.
     """
+    
+    # Class properties (not traits!)
+    
+    new_file_text = ''
 
     #### Task interface #######################################################
 
@@ -108,8 +183,8 @@ class FrameworkTask(Task):
         return ImageResource('peppy48')
 
     def _menu_bar_default(self):
-        return SMenuBar(SMenu(Group(TaskAction(name='New', method='new',
-                                         accelerator='Ctrl+N'), id="NewGroup"),
+        return SMenuBar(SMenu(Separator(id="NewGroup", separator=False),
+                              SMenu(NewFileGroup(), id="NewFileGroup", name="New", before="NewGroupEnd", after="NewGroup"),
                               Separator(id="NewGroupEnd", separator=False),
                               Group(OpenAction(), id="OpenGroup"),
                               Separator(id="OpenGroupEnd", separator=False),
@@ -220,7 +295,10 @@ class FrameworkTask(Task):
         if view is not None:
             task_cls = view.editor_area.task.__class__
         elif task is not None:
-            task_cls = task.__class__
+            if isinstance(task, FrameworkTask):
+                task_cls = task.__class__
+            else:
+                task_cls = task
         else:
             task_cls = FrameworkTask
         task = task_cls()

@@ -177,3 +177,105 @@ which worked around the problem.
 I subsequently discovered that if you don't hide the toolbar items of toolbars
 that you plan to hide, it works correctly.
 
+Dynamically Populated Menus
+===========================
+
+There are two ways include menus that can have varying numbers of items, either
+as a list in the same menu or as a list in a pop-right submenu.  Both are
+accomplished in the same manner using pyface menu Groups; the latter is simply
+placed in a sub-menu.
+
+I modified the example found in pyface/tasks/action/task_toggle_group.py to
+walk the list of Tasks known to the application and add an item to the menu
+for each task that supports opening a new blank file of that type::
+
+    class NewFileAction(Action):
+        """ An action for creating a new empty file that can be edited by a particular task
+        """
+        tooltip = Property(Unicode, depends_on='name')
+
+        task_cls = Any
+        
+        def perform(self, event=None):
+            event.task.new_window(task=self.task_cls)
+
+        def _get_tooltip(self):
+            return u'Open a new %s' % self.name
+
+    class NewFileGroup(Group):
+        """ A menu for creating a new file for each type of task
+        """
+
+        #### 'ActionManager' interface ############################################
+
+        id = 'NewFileGroup'
+        
+        items = List
+
+        #### 'TaskChangeMenuManager' interface ####################################
+
+        # The ActionManager to which the group belongs.
+        manager = Any
+
+        # The window that contains the group.
+        application = Instance('envisage.ui.tasks.api.TasksApplication')
+            
+        ###########################################################################
+        # Private interface.
+        ###########################################################################
+
+        def _get_items(self):
+            items = []
+            for factory in self.application.task_factories:
+                if hasattr(factory.factory, 'new_file_text'):
+                    task_cls = factory.factory
+                    if task_cls.new_file_text:
+                        action = NewFileAction(name=task_cls.new_file_text, task_cls=task_cls)
+                        items.append((task_cls.new_file_text, ActionItem(action=action)))
+            items.sort()
+            items = [i[1] for i in items]
+            return items
+
+        def _rebuild(self):
+            # Clear out the old group, then build the new one.
+            self.destroy()
+            self.items = self._get_items()
+
+            # Inform our manager that it needs to be rebuilt.
+            self.manager.changed = True
+            
+        #### Trait initializers ###################################################
+
+        def _items_default(self):
+            self.application.on_trait_change(self._rebuild, 'task_factories[]')
+            return self._get_items()
+
+        def _manager_default(self):
+            manager = self
+            while isinstance(manager, Group):
+                manager = manager.parent
+            return manager
+        
+        def _application_default(self):
+            return self.manager.controller.task.window.application
+
+The menu can be added to the menubar either directly::
+
+    def _menu_bar_default(self):
+        return SMenuBar(SMenu(NewFileGroup(),
+                              ...
+
+or in a submenu::
+
+    def _menu_bar_default(self):
+        return SMenuBar(SMenu(Separator(id="NewGroup", separator=False),
+                              SMenu(NewFileGroup(), id="NewFileGroup", name="New", before="NewGroupEnd", after="NewGroup"),
+                              Separator(id="NewGroupEnd", separator=False),
+                              ...
+
+but note that to workaround a problem that caused the NewFileGroup to show up
+at the end of the file menu, I had to add these dummy separator groups and
+force the NewFileGroup to be between them.  Placing the NewFileGroup as the
+first group or not including BOTH the before and after keywords caused the
+NewFileGroup to appear at the end of the menu.
+

@@ -18,6 +18,8 @@ class ImageEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
     """
 
+    new_file_text = "Bitmap Image"
+
     #### Task interface #######################################################
 
     id = 'peppy.framework.image_edit_task'

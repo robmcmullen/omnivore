@@ -18,6 +18,8 @@ class TextEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
     """
 
+    new_file_text = "Text File"
+
     #### Task interface #######################################################
 
     id = 'peppy.framework.text_edit_task'
