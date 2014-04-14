@@ -32,9 +32,18 @@ class SaveAction(EditorAction):
     enabled_name = 'dirty' # enabled based on state of task.active_editor.dirty
 
     def perform(self, event):
-        dialog = FileDialog(parent=event.task.window.control)
+        event.task.save_file(None)
+
+class SaveAsAction(EditorAction):
+    name = 'Save As...'
+    accelerator = 'Ctrl+Shift+S'
+    tooltip = 'Save the current file with a new name'
+    image = ImageResource('file_save_as')
+
+    def perform(self, event):
+        dialog = FileDialog(parent=event.task.window.control, action='save as')
         if dialog.open() == OK:
-            event.task.window.application.load_file(dialog.path, event.task)
+            event.task.save_file(dialog.path)
 
 class ExitAction(Action):
     name = 'Quit'
@@ -104,7 +113,10 @@ class FrameworkTask(Task):
                               Separator(id="NewGroupEnd", separator=False),
                               Group(OpenAction(), id="OpenGroup"),
                               Separator(id="OpenGroupEnd", separator=False),
-                              Group(SaveAction(), id="SaveGroup"),
+                              Group(
+                                  SaveAction(),
+                                  SaveAsAction(),
+                                  id="SaveGroup"),
                               Separator(id="SaveGroupEnd", separator=False),
                               Group(ExitAction(), id="ExitGroup"),
                               id='File', name='&File'),
