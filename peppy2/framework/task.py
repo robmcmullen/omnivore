@@ -132,7 +132,15 @@ class PreferencesAction(Action):
     menu_role = "Preferences"
 
     def perform(self, event):
-        print "peform: %s" % self.name
+        from envisage.ui.tasks.preferences_dialog import \
+            PreferencesDialog
+
+        window = event.task.window
+        dialog = window.application.get_service(PreferencesDialog)
+        ui = dialog.edit_traits(parent=window.control, kind='livemodal')
+
+        if ui.result:
+            window.application.preferences.save()
 
 class AboutAction(Action):
     name = 'About...'
