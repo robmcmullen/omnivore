@@ -6,6 +6,7 @@ from envisage.api import ExtensionPoint, Plugin
 from envisage.ui.tasks.api import TaskFactory
 from traits.api import List
 from envisage.ui.tasks.tasks_plugin import TasksPlugin
+from traits.etsconfig.api import ETSConfig
 
 class PeppyTasksPlugin(TasksPlugin):
     # Override the default task extensions that supply redundant Exit and
@@ -41,11 +42,7 @@ class FrameworkPlugin(Plugin):
     ###########################################################################
 
     def _preferences_default(self):
-        from peppy2.third_party.appdirs import user_config_dir
-        dirname = user_config_dir(self.name)
-        if not os.path.exists(dirname):
-            os.mkdir(dirname)
-        filename = os.path.join(dirname, 'preferences.ini')
+        filename = os.path.join(ETSConfig.application_home, 'preferences.ini')
         if not os.path.exists(filename):
             fh = open(filename, "wb")
             fh.close()

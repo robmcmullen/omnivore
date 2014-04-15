@@ -2,6 +2,16 @@
 Tasks and Applications
 ======================
 
+Configuration Directory
+=======================
+
+Peppy2 changes the default configuration directory from
+:file:`$(HOME)/.enthought/peppy2.framework.application` to
+:file:`$(HOME)/.config/Peppy2` on unix. On Mac OS X it will be :file:`$(HOME)/Library/Application Support/Peppy2`, and windows will be :file:`C:\\Users\\<username>\\AppData\\Local\\Peppy2\\Peppy2`
+
+Traits Summary
+==============
+
 The TaskApplication (envisage/ui/tasks/tasks_application.py, direct subclass
 of Application from envisage/application.py) includes a set of traits for
 managing the application::

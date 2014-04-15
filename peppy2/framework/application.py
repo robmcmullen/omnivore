@@ -1,3 +1,4 @@
+import os
 import sys
 
 # Create the wx app here so we can capture the Mac specific stuff that
@@ -22,6 +23,8 @@ class EnthoughtWxApp(wx.App):
                 del sys.argv[0]
             else:
                 self.tasks_application.load_file(filename, None)
+
+from traits.etsconfig.api import ETSConfig
 
 _app = EnthoughtWxApp(redirect=False)
 
@@ -228,6 +231,18 @@ class FrameworkApplication(TasksApplication):
             #print "Skipping idle on %s" % control
             pass
 
+    def _initialize_application_home(self):
+        """ Initialize the application home directory. """
+
+        from peppy2.third_party.appdirs import user_config_dir
+        dirname = user_config_dir(self.name)
+        ETSConfig.application_home = dirname
+
+        # Make sure it exists!
+        if not os.path.exists(ETSConfig.application_home):
+            os.makedirs(ETSConfig.application_home)
+
+        return
 
 def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task=""):
     """Start the application
