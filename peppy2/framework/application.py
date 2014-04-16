@@ -32,7 +32,7 @@ _app = EnthoughtWxApp(redirect=False)
 from envisage.ui.tasks.api import TasksApplication
 from envisage.ui.tasks.task_window_event import TaskWindowEvent, VetoableTaskWindowEvent
 from pyface.tasks.api import Task, TaskWindowLayout
-from traits.api import Bool, Instance, List, Property, Str
+from traits.api import Bool, Instance, List, Property, Str, Event, Dict
 
 # Local imports.
 from peppy2.framework.preferences import FrameworkPreferences, \
@@ -65,6 +65,10 @@ class FrameworkApplication(TasksApplication):
     preferences_helper = Instance(FrameworkPreferences)
     
     startup_task = Str('peppy.framework.text_edit')
+    
+    plugin_event = Event
+    
+    plugin_data = {}
 
     ###########################################################################
     # Private interface.
@@ -243,6 +247,12 @@ class FrameworkApplication(TasksApplication):
             os.makedirs(ETSConfig.application_home)
 
         return
+    
+    #### Convenience methods
+    
+    def get_plugin_data(self, plugin_id):
+        return self.plugin_data[plugin_id]
+    
 
 def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task=""):
     """Start the application
@@ -259,12 +269,12 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task=""):
     from envisage.core_plugin import CorePlugin
     
     # Local imports.
-    from peppy2.framework.plugin import PeppyTasksPlugin, FrameworkPlugin
+    from peppy2.framework.plugin import PeppyTasksPlugin, PeppyMainPlugin
     from peppy2.file_type.plugin import FileTypePlugin
     from peppy2 import get_image_path
     
     # Include standard plugins
-    core_plugins = [ CorePlugin(), PeppyTasksPlugin(), FrameworkPlugin(), FileTypePlugin() ]
+    core_plugins = [ CorePlugin(), PeppyTasksPlugin(), PeppyMainPlugin(), FileTypePlugin() ]
     if sys.platform == "darwin":
         from peppy2.framework.osx_plugin import OSXMenuBarPlugin
         core_plugins.append(OSXMenuBarPlugin())

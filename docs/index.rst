@@ -17,9 +17,10 @@ Development Notes:
 .. toctree::
    :maxdepth: 3
 
+   tasks_and_applications
+   plugins
    preferences
    mime_types.rst
-   tasks_and_applications
    editor_area
    menus_and_actions
 
