@@ -2,6 +2,15 @@
 Tasks and Applications
 ======================
 
+Blank Window
+============
+
+If you get a blank window, that probably means that no tasks have
+been added to the window.  One way this happens is a bad application
+memento in the config directory.  In my case, removing the file
+:file:`/home/rob/.config/Peppy2/tasks/wx/application_memento` can fix it.
+
+
 Configuration Directory
 =======================
 
