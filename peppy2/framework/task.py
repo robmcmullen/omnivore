@@ -280,6 +280,8 @@ class FrameworkTask(Task):
         self.editor_area.activate_editor(editor)
         if hasattr(source, 'get_metadata') or source is None:
             editor.load(source, **kwargs)
+            if source is not None:
+                self.window.application.successfully_loaded_event = source.metadata.uri
         else:
             editor.view_of(source, **kwargs)
         self.activated()

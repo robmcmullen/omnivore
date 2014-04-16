@@ -66,6 +66,8 @@ class FrameworkApplication(TasksApplication):
     
     startup_task = Str('peppy.framework.text_edit')
     
+    successfully_loaded_event = Event
+    
     plugin_event = Event
     
     plugin_data = {}
@@ -281,6 +283,9 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task=""):
     
     import peppy2.file_type.recognizers
     core_plugins.extend(peppy2.file_type.recognizers.plugins)
+    
+    import peppy2.plugins
+    core_plugins.extend(peppy2.plugins.plugins)
     
     # Add the user's plugins
     core_plugins.extend(plugins)
