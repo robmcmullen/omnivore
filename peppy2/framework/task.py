@@ -303,16 +303,27 @@ class FrameworkTask(Task):
         print "  self=%s" % str(self.window)
         print "  task type: %s" % str(task)
         print "  view of: %s" % str(view)
+        task_id = None
         if view is not None:
             task_cls = view.editor_area.task.__class__
+            print "  task_cls: %s" % str(task_cls)
         elif task is not None:
             if isinstance(task, FrameworkTask):
                 task_cls = task.__class__
             else:
                 task_cls = task
         else:
-            task_cls = FrameworkTask
-        task = task_cls()
+            task_id = self.window.application.startup_task
+        if task_id is None:
+            task = task_cls()
+            task_id = task.id
+        print "  task id: %s" % task_id
+        print "  returned factory: %s" % self.window.application._get_task_factory(task_id)
+        for factory in self.window.application.task_factories:
+            print "    factory: %s, %s" % (factory.id, factory)
+        
+        task = self.window.application.create_task(task_id)
+        print "  created task: %s" % task
         window.add_task(task)
         window.activate_task(task)
         if view is not None:

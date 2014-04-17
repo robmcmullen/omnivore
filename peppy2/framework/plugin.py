@@ -19,6 +19,20 @@ class FrameworkPlugin(Plugin):
     """ The sample framework plugin.
     """
 
+    #### convenience functions
+
+    def task_factories_from_tasks(self, tasks):
+        # Create task factories for each task such that each factory will have
+        # the same id as the task
+        factories = []
+        for cls in tasks:
+            task = cls()
+            factory = TaskFactory(id=task.id, name=task.name, factory=cls)
+            factories.append(factory)
+            print "FACTORY!!!", factory.id, factory.name
+        
+        return factories
+
     def get_helper(self, helper_object, debug=True):
         """Handle mistakes in preference files by using the default value for
         any bad preference values.
@@ -128,24 +142,10 @@ class PeppyMainPlugin(FrameworkPlugin):
         return [ FrameworkPreferencesPane, TextEditPreferencesPane, ImageEditPreferencesPane ]
 
     def _tasks_default(self):
-        from peppy2.tasks.skeleton import SkeletonTask
         from peppy2.tasks.text_edit import TextEditTask
         from peppy2.tasks.image_edit import ImageEditTask
 
-        return [ 
-            TaskFactory(id = 'peppy.framework.text_edit',
-                        name = 'Text Editor',
-                        factory = TextEditTask),
-
-            TaskFactory(id = 'peppy.framework.image_edit',
-                        name = 'Image Editor',
-                        factory = ImageEditTask),
-
-            TaskFactory(id = 'peppy.framework.skeleton',
-                        name = 'Dummy Task',
-                        factory = SkeletonTask),
-
-#            TaskFactory(id = 'peppy.framework.task_2d',
-#                        name = '2D Visualization',
-#                        factory = Visualize2dTask),
-            ]
+        return self.task_factories_from_tasks([
+            TextEditTask,
+            ImageEditTask,
+            ])

@@ -7,8 +7,12 @@ Blank Window
 
 If you get a blank window, that probably means that no tasks have
 been added to the window.  One way this happens is a bad application
-memento in the config directory.  In my case, removing the file
-:file:`/home/rob/.config/Peppy2/tasks/wx/application_memento` can fix it.
+memento in the config directory.  In once case, removing the file
+:file:`/home/rob/.config/Peppy2/tasks/wx/application_memento` can fix it.  In
+another case, an incorrect task id was found (due to a typo in the task id
+itself) and the call to application.create_task(task_id) returned None.
+
+
 
 
 Configuration Directory

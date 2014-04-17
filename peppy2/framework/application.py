@@ -64,7 +64,7 @@ class FrameworkApplication(TasksApplication):
 
     preferences_helper = Instance(FrameworkPreferences)
     
-    startup_task = Str('peppy.framework.text_edit')
+    startup_task = Str('peppy.framework.text_edit_task')
     
     successfully_loaded_event = Event
     
@@ -80,9 +80,13 @@ class FrameworkApplication(TasksApplication):
 
     def _default_layout_default(self):
         active_task = self.preferences_helper.default_task
+        print "active task: -->%s<--" % active_task
         if not active_task:
             active_task = self.startup_task
+        print "active task: -->%s<--" % active_task
+        print "factories: %s" % " ".join([ factory.id for factory in self.task_factories])
         tasks = [ factory.id for factory in self.task_factories if active_task and active_task == factory.id ]
+        print "Default layout: %s" % str(tasks)
         return [ TaskWindowLayout(*tasks,
                                   active_task = active_task,
                                   size = (800, 600)) ]
@@ -159,7 +163,7 @@ class FrameworkApplication(TasksApplication):
         print "  window=%s" % str(window)
         first = None
         for factory in possibilities:
-            task = factory.factory()
+            task = self.create_task(factory.id)
             window.add_task(task)
             first = first or task
         window.activate_task(first)
