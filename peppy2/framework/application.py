@@ -31,8 +31,9 @@ _app = EnthoughtWxApp(redirect=False)
 # Enthought library imports.
 from envisage.ui.tasks.api import TasksApplication
 from envisage.ui.tasks.task_window_event import TaskWindowEvent, VetoableTaskWindowEvent
+from pyface.api import ImageResource
 from pyface.tasks.api import Task, TaskWindowLayout
-from traits.api import Bool, Instance, List, Property, Str, Event, Dict
+from traits.api import provides, Bool, Instance, List, Property, Str, Unicode, Event, Dict
 
 # Local imports.
 from peppy2.framework.preferences import FrameworkPreferences, \
@@ -77,6 +78,13 @@ class FrameworkApplication(TasksApplication):
     ###########################################################################
 
     #### Trait initializers ###################################################
+    
+    def _about_title_default(self):
+        return self.name
+    
+    def _about_version_default(self):
+        from peppy2 import __version__
+        return __version__
 
     def _default_layout_default(self):
         active_task = self.preferences_helper.default_task

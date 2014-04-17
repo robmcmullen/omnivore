@@ -8,9 +8,11 @@ from pyface.tasks.api import Task, TaskWindow, TaskLayout, TaskWindowLayout, Pan
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
 from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
     SMenu, SToolBar, TaskAction, EditorAction, TaskToggleGroup
-from traits.api import on_trait_change, Property, Instance, Bool, Str, Unicode, Any, List
+from traits.api import provides, on_trait_change, Property, Instance, Bool, Str, Unicode, Any, List
 
 from peppy2.dock_panes import FileBrowserPane
+from peppy2.framework.i_about import IAbout
+from peppy2.framework.about import AboutDialog
 
 class NewFileAction(Action):
     """ An action for creating a new empty file that can be edited by a particular task
@@ -147,7 +149,7 @@ class AboutAction(Action):
     menu_role = "About"
 
     def perform(self, event):
-        print "peform: %s" % self.name
+        AboutDialog(event.task.window.control, event.task)
 
 class NewViewAction(EditorAction):
     name = 'New View of Current Tab'
@@ -163,6 +165,8 @@ class NewWindowAction(Action):
     def perform(self, event):
         event.task.new_window()
 
+
+@provides(IAbout)
 class FrameworkTask(Task):
     """ A simple task for opening a blank editor.
     """
@@ -182,6 +186,22 @@ class FrameworkTask(Task):
                              depends_on='editor_area.active_editor')
 
     editor_area = Instance(IEditorAreaPane)
+    
+    #### 'IAbout' interface ###################################################
+    
+    about_title = Unicode('Peppy2')
+    
+    about_version = Unicode
+    
+    about_description = Unicode('Edit stuff.')
+    
+    about_website = Str('http://peppy.flipturn.org')
+    
+    about_image = Instance(ImageResource, ImageResource('peppy48'))
+    
+    def _about_version_default(self):
+        from peppy2 import __version__
+        return __version__
     
     ###########################################################################
     # 'Task' interface.
