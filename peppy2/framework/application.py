@@ -185,14 +185,22 @@ class FrameworkApplication(TasksApplication):
         return task
     
     def find_active_task_of_type(self, task_id):
-        for window in self.windows:
+        # Check active window first, then other windows
+        w = list(self.windows)
+        try:
+            i = w.index(self.active_window)
+            w.pop(i)
+            w[0:0] = [self.active_window]
+        except ValueError:
+            pass
+        for window in w:
             print "window: %s" % window
             print "  active task: %s" % window.active_task
             if window.active_task.id == task_id:
                 print "  found active task"
                 return window.active_task
         print "  no active task matches %s" % task_id
-        for window in self.windows:
+        for window in w:
             task = window.active_task
             if task is None:
                 continue
