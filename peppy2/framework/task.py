@@ -18,10 +18,10 @@ class NewFileAction(Action):
     """
     tooltip = Property(Unicode, depends_on='name')
 
-    task_cls = Any
+    task_id = Any
     
     def perform(self, event=None):
-        task = event.task.window.application.find_or_create_task_of_type(self.task_cls)
+        task = event.task.window.application.find_or_create_task_of_type(self.task_id)
         task.new()
 
     def _get_tooltip(self):
@@ -55,7 +55,7 @@ class NewFileGroup(Group):
             if hasattr(factory.factory, 'new_file_text'):
                 task_cls = factory.factory
                 if task_cls.new_file_text:
-                    action = NewFileAction(name=task_cls.new_file_text, task_cls=task_cls)
+                    action = NewFileAction(name=task_cls.new_file_text, task_id=factory.id)
                     items.append((task_cls.new_file_text, ActionItem(action=action)))
         items.sort()
         items = [i[1] for i in items]

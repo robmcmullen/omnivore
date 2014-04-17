@@ -150,7 +150,7 @@ class FrameworkApplication(TasksApplication):
         best = possibilities[0]
         
         # Look for existing task in current windows
-        task = self.find_active_task_of_type(best.factory)
+        task = self.find_active_task_of_type(best.id)
         if task:
             task.new(guess, **kwargs)
             return
@@ -177,28 +177,47 @@ class FrameworkApplication(TasksApplication):
         print metadata.mime
         print dir(metadata)
     
-    def get_task_class(self, task):
-        if isinstance(task, Task):
-            task = task.__class__
+    def create_task_in_window(self, task_id, window):
+        print "creating %s task" % task_id
+        task = self.create_task(task_id)
+        window.add_task(task)
+        window.activate_task(task)
         return task
     
-    def find_active_task_of_type(self, requested_task):
-        task_cls = self.get_task_class(requested_task)
+    def find_active_task_of_type(self, task_id):
         for window in self.windows:
             print "window: %s" % window
             print "  active task: %s" % window.active_task
-            if window.active_task.__class__ == task_cls:
+            if window.active_task.id == task_id:
                 print "  found active task"
                 return window.active_task
+        print "  no active task matches %s" % task_id
+        for window in self.windows:
+            task = window.active_task
+            if task is None:
+                continue
+            # if no editors in the task, replace the task with the new task
+            print "  window %s: %d" % (window, len(task.editor_area.editors))
+            if len(task.editor_area.editors) == 0:
+                print "  replacing unused task!"
+                # The bugs in remove_task seem to have been fixed so that the
+                # subsequent adding of a new task does seem to work now.  But
+                # I'm leaving in the workaround for now of simply closing the
+                # active window, forcing the new task to open in a new window.
+                if True:
+                    window.remove_task(task)
+                    task = self.create_task_in_window(task_id, window)
+                    return task
+                else:
+                    window.close()
+                    return None
     
-    def find_or_create_task_of_type(self, requested_task):
-        task = self.find_active_task_of_type(requested_task)
+    def find_or_create_task_of_type(self, task_id):
+        task = self.find_active_task_of_type(task_id)
         if not task:
-            task_cls = self.get_task_class(requested_task)
+            print "task %s not found in active windows; creating new window" % task_id
             window = self.create_window(layout=TaskWindowLayout())
-            task = task_cls()
-            window.add_task(task)
-            window.activate_task(task)
+            task = self.create_task_in_window(task_id, window)
             window.open()
         return task
 
