@@ -2,8 +2,7 @@
 
 """
 # Enthought library imports.
-from pyface.api import ImageResource, ConfirmationDialog, FileDialog, \
-    ImageResource, YES, OK, CANCEL
+from pyface.api import ImageResource, FileDialog, YES, OK, CANCEL
 from pyface.action.api import StatusBarManager, Action, ActionItem, Group, Separator
 from pyface.tasks.api import Task, TaskWindow, TaskLayout, TaskWindowLayout, PaneItem, IEditor, \
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
@@ -401,10 +400,8 @@ class FrameworkTask(Task):
         if not dirty_editors.keys():
             return True
         message = 'You have unsaved files. Would you like to save them?'
-        dialog = ConfirmationDialog(parent=self.window.control,
-                                    message=message, cancel=True,
+        result = self.window.confirm(message=message, cancel=True,
                                     default=CANCEL, title='Save Changes?')
-        result = dialog.open()
         if result == CANCEL:
             return False
         elif result == YES:
