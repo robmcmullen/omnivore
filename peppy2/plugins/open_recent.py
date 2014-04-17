@@ -130,14 +130,14 @@ class RecentFiles(object):
         """Unserialize items from the file into a list"""
         print "UNSERIALIZING: %s" % str(self.serialize_uri)
         self.storage = []
-        with open(self.serialize_uri,'r') as fh:
-            try:
+        try:
+            with open(self.serialize_uri,'r') as fh:
                 for line in fh:
                     trimmed = line.decode('utf8').rstrip()
                     if trimmed.strip():
                         self.storage.append(trimmed)
-            except:
-                pass
+        except:
+            pass
     
     def append_uri(self, uri, extra=None):
         if self.is_acceptable_uri(uri):
