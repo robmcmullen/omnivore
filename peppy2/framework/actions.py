@@ -1,0 +1,158 @@
+# Enthought library imports.
+from pyface.api import ImageResource
+from pyface.action.api import Action, ActionItem, Group
+from pyface.tasks.action.api import EditorAction
+from traits.api import Property, Instance, Bool, Str, Unicode, Any, List
+
+from peppy2.framework.about import AboutDialog
+
+class NewFileAction(Action):
+    """ An action for creating a new empty file that can be edited by a particular task
+    """
+    tooltip = Property(Unicode, depends_on='name')
+
+    task_id = Any
+    
+    def perform(self, event=None):
+        task = event.task.window.application.find_or_create_task_of_type(self.task_id)
+        task.new()
+
+    def _get_tooltip(self):
+        return u'Open a new %s' % self.name
+
+class NewFileGroup(Group):
+    """ A menu for creating a new file for each type of task
+    """
+
+    #### 'ActionManager' interface ############################################
+
+    id = 'NewFileGroup'
+    
+    items = List
+
+    #### 'TaskChangeMenuManager' interface ####################################
+
+    # The ActionManager to which the group belongs.
+    manager = Any
+
+    # The window that contains the group.
+    application = Instance('envisage.ui.tasks.api.TasksApplication')
+        
+    ###########################################################################
+    # Private interface.
+    ###########################################################################
+
+    def _get_items(self):
+        items = []
+        for factory in self.application.task_factories:
+            if hasattr(factory.factory, 'new_file_text'):
+                task_cls = factory.factory
+                if task_cls.new_file_text:
+                    action = NewFileAction(name=task_cls.new_file_text, task_id=factory.id)
+                    items.append((task_cls.new_file_text, ActionItem(action=action)))
+        items.sort()
+        items = [i[1] for i in items]
+        return items
+
+    def _rebuild(self):
+        # Clear out the old group, then build the new one.
+        self.destroy()
+        self.items = self._get_items()
+
+        # Inform our manager that it needs to be rebuilt.
+        self.manager.changed = True
+        
+    #### Trait initializers ###################################################
+
+    def _items_default(self):
+        self.application.on_trait_change(self._rebuild, 'task_factories[]')
+        return self._get_items()
+
+    def _manager_default(self):
+        manager = self
+        while isinstance(manager, Group):
+            manager = manager.parent
+        return manager
+    
+    def _application_default(self):
+        return self.manager.controller.task.window.application
+
+
+class OpenAction(Action):
+    name = 'Open'
+    accelerator = 'Ctrl+O'
+    tooltip = 'Open a file'
+    image = ImageResource('file_open')
+
+    def perform(self, event):
+        dialog = FileDialog(parent=event.task.window.control)
+        if dialog.open() == OK:
+            event.task.window.application.load_file(dialog.path, event.task)
+
+class SaveAction(EditorAction):
+    name = 'Save'
+    accelerator = 'Ctrl+S'
+    tooltip = 'Save the current file'
+    image = ImageResource('file_save')
+    enabled_name = 'dirty' # enabled based on state of task.active_editor.dirty
+
+    def perform(self, event):
+        event.task.save_file(None)
+
+class SaveAsAction(EditorAction):
+    name = 'Save As...'
+    accelerator = 'Ctrl+Shift+S'
+    tooltip = 'Save the current file with a new name'
+    image = ImageResource('file_save_as')
+
+    def perform(self, event):
+        dialog = FileDialog(parent=event.task.window.control, action='save as')
+        if dialog.open() == OK:
+            event.task.save_file(dialog.path)
+
+class ExitAction(Action):
+    name = 'Quit'
+    accelerator = 'Ctrl+Q'
+    tooltip = 'Quit the program'
+    menu_role = "Quit"
+
+    def perform(self, event):
+        event.task.window.application.exit()
+
+class PreferencesAction(Action):
+    name = 'Preferences...'
+    tooltip = 'Program settings and configuration options'
+    menu_role = "Preferences"
+
+    def perform(self, event):
+        from envisage.ui.tasks.preferences_dialog import \
+            PreferencesDialog
+
+        window = event.task.window
+        dialog = window.application.get_service(PreferencesDialog)
+        ui = dialog.edit_traits(parent=window.control, kind='livemodal')
+
+        if ui.result:
+            window.application.preferences.save()
+
+class AboutAction(Action):
+    name = 'About...'
+    tooltip = 'About this program'
+    menu_role = "About"
+
+    def perform(self, event):
+        AboutDialog(event.task.window.control, event.task)
+
+class NewViewAction(EditorAction):
+    name = 'New View of Current Tab'
+    tooltip = 'New view of the project in the current tab'
+
+    def perform(self, event):
+        event.task.new_window(view=event.task.active_editor)
+
+class NewWindowAction(Action):
+    name = 'New Window'
+    tooltip = 'Open a new window'
+
+    def perform(self, event):
+        event.task.new_window()
