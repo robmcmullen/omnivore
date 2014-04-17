@@ -141,6 +141,7 @@ class RecentFiles(object):
     
     def append_uri(self, uri, extra=None):
         if self.is_acceptable_uri(uri):
+            uri = os.path.abspath(uri)
             item = unicode(uri)
             if extra:
                 item = (item, extra)
