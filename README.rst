@@ -72,6 +72,11 @@ Enthought yet, which is why I'm requiring the custom build::
     for name in apptools; do echo $name; git clone https://github.com/enthought/$name.git; cd $name; python setup.py develop; cd ..; done
     for name in envisage; do echo $name; git clone https://github.com/robmcmullen/$name.git; cd $name; python setup.py develop; cd ..; done
 
+Or, if you already have all the code checked out and want to build for a new
+version of python, you can use::
+
+    for name in traits pyface traitsui apptools envisage; do cd $name; python setup.py develop; cd ..; done
+
 
 Running The Program
 ===================
