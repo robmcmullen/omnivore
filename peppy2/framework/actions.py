@@ -1,5 +1,5 @@
 # Enthought library imports.
-from pyface.api import ImageResource
+from pyface.api import ImageResource, FileDialog
 from pyface.action.api import Action, ActionItem, Group
 from pyface.tasks.action.api import EditorAction
 from traits.api import Property, Instance, Bool, Str, Unicode, Any, List
@@ -141,7 +141,11 @@ class AboutAction(Action):
     menu_role = "About"
 
     def perform(self, event):
-        AboutDialog(event.task.window.control, event.task)
+        # Don't rely on the event window as this might be called by the OSX
+        # minimal menu which, once installed by the OSX plugin, never changes
+        # with the task.
+        top = event.task.window.application.active_window
+        AboutDialog(top.control, top.active_task)
 
 class NewViewAction(EditorAction):
     name = 'New View of Current Tab'

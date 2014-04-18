@@ -11,44 +11,7 @@ from pyface.tasks.api import Task, TaskWindow
 from pyface.action.api import Action, MenuBarManager
 from pyface.tasks.action.api import SMenuBar, SMenu, TaskActionManagerBuilder
 
-
-class OpenAction(Action):
-    name = 'Open'
-    accelerator = 'Ctrl+O'
-    tooltip = 'Open a file'
-
-    def perform(self, event):
-        dialog = FileDialog(parent=None)
-        if dialog.open() == OK:
-            event.task.window.application.load_file(dialog.path, event.task)
-
-# These actions are temporarily duplicates of the actions in
-# peppy2.framework.task -- need to figure out how to grab a selection of
-# actions that apply to the Mac minimal menu
-class ExitAction(Action):
-    name = 'Quit'
-    accelerator = 'Ctrl+Q'
-    tooltip = 'Quit the program'
-    menu_role = "Quit"
-
-    def perform(self, event):
-        event.task.window.application.exit()
-
-class PreferencesAction(Action):
-    name = 'Preferences...'
-    tooltip = 'Program settings and configuration options'
-    menu_role = "Preferences"
-
-    def perform(self, event):
-        print "peform: %s" % self.name
-
-class AboutAction(Action):
-    name = 'About...'
-    tooltip = 'About this program'
-    menu_role = "About"
-
-    def perform(self, event):
-        print "peform: %s" % self.name
+from peppy2.framework.actions import OpenAction, ExitAction, PreferencesAction, AboutAction
 
 
 class OSXMenuBarPlugin(Plugin):
