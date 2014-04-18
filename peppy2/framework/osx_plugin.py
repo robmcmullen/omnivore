@@ -8,7 +8,7 @@ from envisage.api import Plugin, ExtensionPoint
 from envisage.ui.tasks.api import TasksApplication
 from pyface.api import FileDialog, YES, OK, CANCEL
 from pyface.tasks.api import Task, TaskWindow
-from pyface.action.api import Action, MenuBarManager
+from pyface.action.api import Action, ActionItem, Group, Separator
 from pyface.tasks.action.api import SMenuBar, SMenu, TaskActionManagerBuilder, SchemaAddition
 
 from peppy2.framework.actions import OpenAction, ExitAction, PreferencesAction, AboutAction
@@ -52,8 +52,12 @@ class OSXMenuBarPlugin(Plugin):
         print app
 
     def set_common_menu_29(self):
-        menubar = SMenuBar(SMenu(OpenAction(),
-                                 ExitAction(),
+        menubar = SMenuBar(SMenu(Separator(id="NewGroup", separator=False),
+                                 Separator(id="NewGroupEnd", separator=False),
+                                 Group(OpenAction(), id="OpenGroup"),
+                                 Separator(id="OpenGroupEnd", separator=False),
+                                 Separator(id="SaveGroupEnd", separator=False),
+                                 Group(ExitAction(), id="ExitGroup"),
                                  id='File', name='&File'),
                            SMenu(PreferencesAction(),
                                  id='Edit', name='&Edit'),

@@ -8,6 +8,8 @@ from traits.api import List, TraitError
 from envisage.ui.tasks.tasks_plugin import TasksPlugin
 from traits.etsconfig.api import ETSConfig
 from apptools.preferences.api import Preferences, PreferencesHelper
+from pyface.tasks.action.api import SMenuBar, SMenu, SchemaAddition
+
 
 class PeppyTasksPlugin(TasksPlugin):
     # Override the default task extensions that supply redundant Exit and
@@ -109,6 +111,7 @@ class PeppyMainPlugin(FrameworkPlugin):
     PREFERENCES       = 'envisage.preferences'
     PREFERENCES_PANES = 'envisage.ui.tasks.preferences_panes'
     TASKS             = 'envisage.ui.tasks.tasks'
+    OSX_MINIMAL_MENU = 'peppy2.osx_minimal_menu'
 
     #### 'IPlugin' interface ##################################################
 
@@ -123,6 +126,7 @@ class PeppyMainPlugin(FrameworkPlugin):
     preferences = List(contributes_to=PREFERENCES)
     preferences_panes = List(contributes_to=PREFERENCES_PANES)
     tasks = List(contributes_to=TASKS)
+    osx_actions = List(contributes_to=OSX_MINIMAL_MENU)
 
     ###########################################################################
     # Protected interface.
@@ -149,3 +153,22 @@ class PeppyMainPlugin(FrameworkPlugin):
             TextEditTask,
             ImageEditTask,
             ])
+
+    def _osx_actions_default(self):
+        from peppy2.framework.actions import NewFileGroup
+        
+        submenu = lambda: SMenu(
+            id='NewFileSubmenu', name="New"
+        )
+        actions = [
+            SchemaAddition(factory=submenu,
+                           path='MenuBar/File',
+                           before="OpenGroup"
+                           ),
+            SchemaAddition(factory=NewFileGroup,
+                           path='MenuBar/File/NewFileSubmenu',
+                           ),
+            ]
+        
+        return actions
+
