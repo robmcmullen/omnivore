@@ -1,9 +1,32 @@
 # Enthought library imports.
 from envisage.ui.tasks.api import PreferencesPane, TaskFactory
 from apptools.preferences.api import PreferencesHelper
-from traits.api import Bool, Dict, Enum, List, Str, Unicode
+from traits.api import on_trait_change, Bool, Dict, Enum, List, Str, Unicode, Instance
 from traitsui.api import EnumEditor, HGroup, VGroup, Item, Label, \
     View
+from envisage.api import IApplication
+from pyface.api import Dialog, OK
+
+
+class FrameworkPreferenceDialog(Dialog):
+    
+    application = Instance(IApplication)
+    
+    def _create_dialog_area(self, parent):
+        from envisage.ui.tasks.preferences_dialog import \
+            PreferencesDialog
+
+        dialog = self.application.get_service(PreferencesDialog)
+        self.prefs_ui = dialog.edit_traits(parent=parent, scrollable=True, kind='subpanel')
+        return self.prefs_ui.control
+    
+    @on_trait_change('closed')
+    def delete_prefs_ui(self):
+        if self.return_code == OK:
+            self.prefs_ui.handler.apply()
+            self.application.preferences.save()
+        self.prefs_ui.finish()
+        self.prefs_ui = None
 
 
 class FrameworkPreferences(PreferencesHelper):
