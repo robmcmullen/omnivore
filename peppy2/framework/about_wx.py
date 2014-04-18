@@ -16,8 +16,11 @@ class AboutDialog(object):
         # Load the image to be displayed in the about box.
         #image = self.about_image.create_image()
         icon = wx.EmptyIcon()
-        icon.CopyFromBitmap(about.about_image.create_bitmap())
-        info.SetIcon(icon)
+        try:
+            icon.CopyFromBitmap(about.about_image.create_bitmap())
+            info.SetIcon(icon)
+        except:
+            print "Bad icon file: %s" % about.about_image.absolute_path
         
         info.SetName(about.about_title)
         info.SetVersion(about.about_version)

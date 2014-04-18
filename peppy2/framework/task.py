@@ -46,7 +46,7 @@ class FrameworkTask(Task):
     
     about_website = Str('http://peppy.flipturn.org')
     
-    about_image = Instance(ImageResource, ImageResource('peppy48'))
+    about_image = Instance(ImageResource, ImageResource('peppy128'))
     
     def _about_version_default(self):
         from peppy2 import __version__
