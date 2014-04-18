@@ -1,5 +1,5 @@
 # Enthought library imports.
-from pyface.api import ImageResource, FileDialog
+from pyface.api import ImageResource, FileDialog, YES, OK, CANCEL
 from pyface.action.api import Action, ActionItem, Group
 from pyface.tasks.action.api import EditorAction
 from traits.api import Property, Instance, Bool, Str, Unicode, Any, List
