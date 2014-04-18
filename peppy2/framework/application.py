@@ -11,18 +11,17 @@ class EnthoughtWxApp(wx.App):
         """OSX specific routine to handle files that are dropped on the icon
         
         """
-        print "MacOpenFile: opening %s" % filename
         if hasattr(self, 'tasks_application'):
-            print "MacOpenFile: application started!"
-            if not hasattr(sys, "frozen") and len(sys.argv) > 0 and filename == sys.argv[0]:
-                # MacOpenFile appears to be called once for each command line
-                # argument, so this will get called for each comman line
-                # argument.  While the argument to this function matches the
-                # command line arguments, skip them.
-                print "MacOpenFile: skipping command line argument %s" % filename
-                del sys.argv[0]
-            else:
-                self.tasks_application.load_file(filename, None)
+            # The tasks_application attribute is added to this wx.App instance
+            # when the application has been initialized.  This is used as a
+            # flag to indicate that the subsequent calls to MacOpenFile are
+            # real drops of files onto the dock icon.  Prior to that, this
+            # method gets called for all the command line arguments which would
+            # give us two copies of each file specified on the command line.
+            print "MacOpenFile: loading %s" % filename
+            self.tasks_application.load_file(filename, None)
+        else:
+            print "MacOpenFile: skipping %s because it's a command line argument" % filename
 
 from traits.etsconfig.api import ETSConfig
 
@@ -117,6 +116,8 @@ class FrameworkApplication(TasksApplication):
                 print "skipping flag %s" % arg
             print "processing %s" % arg
             self.load_file(arg, None)
+        app = wx.GetApp()
+        app.tasks_application = self
     
     def _window_created_fired(self, event):
         """The toolkit window doesn't exist yet.
