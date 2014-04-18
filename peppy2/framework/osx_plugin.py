@@ -3,13 +3,13 @@ import os
 import wx
 
 # Enthought library imports.
-from traits.api import on_trait_change
-from envisage.api import Plugin
+from traits.api import on_trait_change, List, Instance
+from envisage.api import Plugin, ExtensionPoint
 from envisage.ui.tasks.api import TasksApplication
 from pyface.api import FileDialog, YES, OK, CANCEL
 from pyface.tasks.api import Task, TaskWindow
 from pyface.action.api import Action, MenuBarManager
-from pyface.tasks.action.api import SMenuBar, SMenu, TaskActionManagerBuilder
+from pyface.tasks.action.api import SMenuBar, SMenu, TaskActionManagerBuilder, SchemaAddition
 
 from peppy2.framework.actions import OpenAction, ExitAction, PreferencesAction, AboutAction
 
@@ -18,6 +18,8 @@ class OSXMenuBarPlugin(Plugin):
     """Plugin providing the minimal menu when the Mac application has no
     windows open.
     """
+    
+    OSX_MINIMAL_MENU = 'peppy2.osx_minimal_menu'
 
     #### 'IPlugin' interface ##################################################
 
@@ -26,6 +28,17 @@ class OSXMenuBarPlugin(Plugin):
 
     # The plugin's name (suitable for displaying to the user).
     name = 'OSX Menu'
+    
+    #### Extension points offered by this plugin ##############################
+
+    minimal_menu_actions = ExtensionPoint(
+        List(Instance(SchemaAddition)), id=OSX_MINIMAL_MENU, desc="""
+    
+    This extension point allows you to contribute schema additions to the menu
+    that will appear when no windows are open in an Mac OS X application.
+    
+        """
+    )
 
     @on_trait_change('application:started')
     def set_common_menu(self):
@@ -50,7 +63,8 @@ class OSXMenuBarPlugin(Plugin):
         app = wx.GetApp()
         # Create a fake task so we can use the menu creation routines
         window = TaskWindow(application=self.application)
-        task = Task(menu_bar=menubar, window=window)
+        print "minimal menu extra items: %s" % str(self.minimal_menu_actions)
+        task = Task(menu_bar=menubar, window=window, extra_actions=self.minimal_menu_actions)
         
         t = TaskActionManagerBuilder(task=task)
         mgr = t.create_menu_bar_manager()

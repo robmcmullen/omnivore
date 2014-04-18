@@ -245,13 +245,15 @@ class OpenRecentPlugin(FrameworkPlugin):
     # Extension point IDs.
     PREFERENCES_PANES = 'envisage.ui.tasks.preferences_panes'
     TASK_EXTENSIONS   = 'envisage.ui.tasks.task_extensions'
+    OSX_MINIMAL_MENU = 'peppy2.osx_minimal_menu'
 
     #### Contributions to extension points made by this plugin ################
 
     preferences_panes = List(contributes_to=PREFERENCES_PANES)
     actions = List(contributes_to=TASK_EXTENSIONS)
+    osx_actions = List(contributes_to=OSX_MINIMAL_MENU)
 
-    def _actions_default(self):
+    def _osx_actions_default(self):
         submenu = lambda: SMenu(
             id='OpenRecentSubmenu', name="Open Recent"
         )
@@ -265,6 +267,11 @@ class OpenRecentPlugin(FrameworkPlugin):
                            path='MenuBar/File/OpenRecentSubmenu'),
             ]
 
+        return actions
+
+    def _actions_default(self):
+        # Using the same actions as the minimal menu
+        actions = self._osx_actions_default()
         return [ TaskExtension(actions=actions) ]
 
     def _preferences_panes_default(self):
