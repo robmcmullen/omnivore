@@ -130,10 +130,54 @@ class PreferencesAction(Action):
 
         window = event.task.window
         dialog = window.application.get_service(PreferencesDialog)
-        ui = dialog.edit_traits(parent=window.control, kind='livemodal')
+        
+        # FIXME: using the built-in dialog box handler segfaults on OS X:
+#0   libwx_osx_cocoau-2.9.4.0.0.dylib	0x0000000101539f07 wxWidgetCocoaImpl::mouseEvent(NSEvent*, NSView*, void*) + 183
+#1   com.apple.AppKit              	0x00007fff89efac98 -[NSWindow sendEvent:] + 6306
+#2   libwx_osx_cocoau-2.9.4.0.0.dylib	0x0000000101526a5c -[wxNSPanel sendEvent:] + 140
+#3   com.apple.AppKit              	0x00007fff89e943a5 -[NSApplication sendEvent:] + 5593
+#4   com.apple.AppKit              	0x00007fff8a0e2797 -[NSApplication _realDoModalLoop:peek:] + 708
+#5   com.apple.AppKit              	0x00007fff8a0e2369 -[NSApplication runModalForWindow:] + 120
+#6   libwx_osx_cocoau-2.9.4.0.0.dylib	0x000000010151804e wxModalEventLoop::DoRun() + 174
+#7   libwx_osx_cocoau-2.9.4.0.0.dylib	0x00000001013eb607 wxCFEventLoop::Run() + 55
+#8   libwx_osx_cocoau-2.9.4.0.0.dylib	0x00000001014538d9 wxDialog::ShowModal() + 73
+#9   _windows_.so                  	0x000000010422b7b6 _wrap_Dialog_ShowModal + 102
+        if False:
+            ui = dialog.edit_traits(parent=window.control, kind='livemodal')
+            
+            if ui.result:
+                window.application.preferences.save()
+        
+        # Using a custom dialog box doesn't segfault.  Maybe I'm not cleaning
+        # up everything and therefore not triggering the segfault?
+        import wx
+        root = self._root = wx.Dialog(window.control, -1, style=wx.DEFAULT_DIALOG_STYLE)
+        panel = wx.Panel(root)
+        ui = dialog.edit_traits(parent=panel, scrollable=True, kind='subpanel')
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        panel.SetSizer(sizer)
+        sizer.Add(ui.control, 1, wx.EXPAND|wx.ALL, 2)
+        btnsizer = wx.StdDialogButtonSizer()
+        ok = wx.Button(panel, wx.ID_NO, "OK!")
+        btnsizer.SetAffirmativeButton(ok)
+        ok.Bind(wx.EVT_BUTTON, lambda evt: root.EndModal(wx.ID_OK))
+        cancel = wx.Button(panel, wx.ID_YES, "Cancel!")
+        btnsizer.SetNegativeButton(cancel)
+        cancel.Bind(wx.EVT_BUTTON, lambda evt: root.EndModal(wx.ID_CANCEL))
 
-        if ui.result:
+        btnsizer.Realize()
+        sizer.Add(btnsizer, 0, wx.ALL | wx.ALIGN_RIGHT, 5)
+        panel.Fit()
+        
+        root.Layout()
+        root.Fit()
+
+        value = root.ShowModal()
+        if value == wx.ID_OK:
+            # apply the changes to the in-memory preferences, then save to disk
+            ui.handler.apply()
             window.application.preferences.save()
+        ui.finish()
 
 class AboutAction(Action):
     name = 'About...'
