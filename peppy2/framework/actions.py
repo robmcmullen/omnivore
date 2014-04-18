@@ -79,7 +79,7 @@ class NewFileGroup(Group):
 
 
 class OpenAction(Action):
-    name = 'Open'
+    name = 'Open...'
     accelerator = 'Ctrl+O'
     tooltip = 'Open a file'
     image = ImageResource('file_open')
@@ -121,6 +121,7 @@ class ExitAction(Action):
 
 class PreferencesAction(Action):
     name = 'Preferences...'
+    accelerator = 'Ctrl+,'
     tooltip = 'Program settings and configuration options'
     menu_role = "Preferences"
 
