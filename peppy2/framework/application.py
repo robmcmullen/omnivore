@@ -144,6 +144,11 @@ class FrameworkApplication(TasksApplication):
         # Attempt to classify the guess using the file recognizer service
         service.recognize(guess)
         
+        # Short circuit: if the file can be edited by the active task, use that!
+        if active_task is not None and active_task.can_edit(guess.metadata.mime):
+            active_task.new(guess, **kwargs)
+            return
+        
         possibilities = []
         for factory in self.task_factories:
             print "factory: %s" % factory.name
