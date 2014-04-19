@@ -127,9 +127,6 @@ class FrameworkApplication(TasksApplication):
         """The toolkit window does exist here.
         """
         print "WINDOW OPENED!!! %s" % event.window.control
-        import wx
-        # If using wx idle event handler, uncomment this next line
-        #event.window.control.Bind(wx.EVT_IDLE, self._wx_on_idle)
 
     #### API
 
@@ -267,20 +264,6 @@ class FrameworkApplication(TasksApplication):
             # Was this the last window?
             if len(self.windows) == 0 and self._explicit_exit:
                 self.stop()
-
-    #### wx event handlers ####################################################
-
-    def _wx_on_idle(self, evt):
-        """ Called during idle time. """
-        control = evt.GetEventObject()
-#        if not self.active_window:
-#            print "No active window!!!"
-        if control == self.active_window.control:
-            #print "Processing idle on %s" % self.active_window
-            self.active_window.active_task.process_idle()
-        else:
-            #print "Skipping idle on %s" % control
-            pass
 
     def _initialize_application_home(self):
         """ Initialize the application home directory. """

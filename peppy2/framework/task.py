@@ -225,9 +225,6 @@ class FrameworkTask(Task):
         for action in self._iter_schema_items(action_schemas):
             if hasattr(action, 'name'):
                 action.name = action.name + "!"
-    
-    def process_idle(self):
-        self.update_actions()
 
     ###########################################################################
     # 'FrameworkTask' interface.
