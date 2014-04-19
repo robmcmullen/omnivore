@@ -127,6 +127,13 @@ class FrameworkApplication(TasksApplication):
         """The toolkit window does exist here.
         """
         print "WINDOW OPENED!!! %s" % event.window.control
+        
+        # Check to see that there's at least one task.  If a bad application
+        # memento (~/.config/Peppy2/tasks/wx/application_memento), the window
+        # may be blank in which case we need to add the default task.
+        if not event.window.tasks:
+            self.create_task_in_window(self.startup_task, event.window)
+            print "EMPTY WINDOW OPENED!!! Created task."
 
     #### API
 
