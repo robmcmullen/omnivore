@@ -266,7 +266,9 @@ class FrameworkApplication(TasksApplication):
                 self.stop()
 
     def _initialize_application_home(self):
-        """ Initialize the application home directory. """
+        """Override the envisage.application method to force the use of standard
+        config directory location instead of ~/.enthought 
+        """
 
         from peppy2.third_party.appdirs import user_config_dir
         dirname = user_config_dir(self.name)
