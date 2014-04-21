@@ -177,7 +177,7 @@ class FrameworkApplication(TasksApplication):
         tasks = [ factory.id for factory in possibilities ]
         print "no task window found: creating new layout for %s" % str(tasks)
 #        window = self.create_window(TaskWindowLayout(size = (800, 600)))
-        window = self.create_window(layout=TaskWindowLayout())
+        window = self.create_window()
         print "  window=%s" % str(window)
         first = None
         for factory in possibilities:
@@ -242,7 +242,7 @@ class FrameworkApplication(TasksApplication):
         task = self.find_active_task_of_type(task_id)
         if not task:
             print "task %s not found in active windows; creating new window" % task_id
-            window = self.create_window(layout=TaskWindowLayout())
+            window = self.create_window()
             task = self.create_task_in_window(task_id, window)
             window.open()
         return task

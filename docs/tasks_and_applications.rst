@@ -71,6 +71,9 @@ among others.
 :Q: How do we create a new top-level window?
 :A: TaskApplication.create_window
 
+:Q: How do you specify the size of a top-level window?
+:A: TaskApplication.create_window(TaskWindowLayout(size = (800, 600)))
+
 
 Determining the TaskWindow
 ==========================
