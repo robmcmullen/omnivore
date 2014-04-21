@@ -51,3 +51,13 @@ class FrameworkEditor(Editor):
         """ Saves the contents of the editor.
         """
         raise NotImplementedError
+
+    #### convenience functions
+    
+    @property
+    def task(self):
+        return self.editor_area.task
+    
+    @property
+    def window(self):
+        return self.editor_area.task.window
