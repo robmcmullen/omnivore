@@ -217,6 +217,17 @@ class FrameworkTask(Task):
                 return False
         return True
 
+    def allow_different_task(self, guess, other_task):
+        """Hook to allow tasks to abort loading different task window.
+        
+        This method allows a hook to confirm that the user wants to load a file
+        that can't be handled by the current task.  For example, this can be
+        used to prompt with a dialog box.
+        
+        :rtype: Boolean; True means continue with the file load
+        """
+        return True
+
     def debug(self):
         """Debug stuff!
         """

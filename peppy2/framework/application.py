@@ -167,6 +167,11 @@ class FrameworkApplication(TasksApplication):
         
         best = possibilities[0]
         
+        if active_task is not None:
+            # Ask the active task if it's OK to load a different editor
+            if not active_task.allow_different_task(guess, best.factory):
+                return
+
         # Look for existing task in current windows
         task = self.find_active_task_of_type(best.id)
         if task:
