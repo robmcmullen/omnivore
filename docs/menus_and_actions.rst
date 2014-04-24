@@ -279,3 +279,18 @@ force the NewFileGroup to be between them.  Placing the NewFileGroup as the
 first group or not including BOTH the before and after keywords caused the
 NewFileGroup to appear at the end of the menu.
 
+Keyboard Mapping
+================
+
+One of the big attractions/headaches in peppy1 was its ability to handle emacs-
+style multi-key shortcuts.  It was a big project to be able to do that, and I'm
+not sure how to handle it in envisage.
+
+Possibly with accelerator tables, explained better than I had seen before here:
+
+http://wxpython-users.1045709.n5.nabble.com/Use-of-AcceleratorTable-td2337246.html
+
+although I do remember experimenting with them in the peppy1 days without
+success.  I don't remember if I tried the methods recommended above and they
+didn't work, or if I just didn't understand them correctly.
+
