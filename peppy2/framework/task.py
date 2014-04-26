@@ -95,7 +95,14 @@ class FrameworkTask(Task):
                         SMenu(NewViewAction(),
                               NewWindowAction(),
                               id='Window', name='&Window'),
-                        SMenu(AboutAction(),
+                        SMenu(Separator(id="AboutGroup", separator=False),
+                              Group(AboutAction()),
+                              Separator(id="DebugGroupStart"),
+                              SMenu(TaskAction(name='Dynamic Menu Names', method='debug',
+                                               tooltip='Do some debug stuff',
+                                               image=ImageResource('debug')),
+                                    id="Debug", name="Debug", before="DebugGroupEnd", after="DebugGroupStart"),
+                              Separator(id="DebugGroupEnd", separator=False),
                               id='Help', name='&Help'),
                         )
 

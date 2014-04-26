@@ -390,7 +390,7 @@ class ExceptionHandlerPlugin(FrameworkPlugin):
         actions = [
             SchemaAddition(id='RaiseException',
                            factory=RaiseExceptionAction,
-                           path='MenuBar/Help'),
+                           path='MenuBar/Help/Debug'),
             ]
 
         return [ TaskExtension(actions=actions) ]
