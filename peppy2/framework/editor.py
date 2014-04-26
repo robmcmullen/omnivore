@@ -19,6 +19,10 @@ class FrameworkEditor(Editor):
     name = Property(Unicode, depends_on='path')
 
     tooltip = Property(Unicode, depends_on='path')
+    
+    can_undo = Bool(False)
+    
+    can_redo = Bool(False)
 
     #### property getters
 
@@ -49,6 +53,16 @@ class FrameworkEditor(Editor):
 
     def save(self, path=None):
         """ Saves the contents of the editor.
+        """
+        raise NotImplementedError
+
+    def undo(self):
+        """ Undoes the last action
+        """
+        raise NotImplementedError
+
+    def redo(self):
+        """ Re-performs the last undone action
         """
         raise NotImplementedError
 

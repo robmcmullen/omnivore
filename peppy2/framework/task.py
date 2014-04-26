@@ -72,7 +72,12 @@ class FrameworkTask(Task):
                               Separator(id="SaveGroupEnd", separator=False),
                               Group(ExitAction(), id="ExitGroup"),
                               id='File', name='&File'),
-                        SMenu(Separator(id="PrefGroup", separator=False),
+                        SMenu(Group(
+                                  UndoAction(),
+                                  RedoAction(),
+                                  id="UndoGroup"),
+                              Separator(id="UndoGroupEnd", separator=False),
+                              Separator(id="PrefGroup", separator=False),
                               Group(PreferencesAction(), absolute_position="last"),
                               id='Edit', name='&Edit'),
                         SMenu(DockPaneToggleGroup(),
@@ -98,6 +103,9 @@ class FrameworkTask(Task):
                                            tooltip='Do some debug stuff',
                                            image=ImageResource('debug')),
                                 id="File"),
+                          Group(UndoAction(),
+                                RedoAction(),
+                                id="Undo"),
                           show_tool_names=False), ]
 
     def _status_bar_default(self):

@@ -45,6 +45,10 @@ class StyledTextEditor(Editor):
     name = Property(Unicode, depends_on='path')
 
     tooltip = Property(Unicode, depends_on='path')
+    
+    can_undo = Bool(False)
+    
+    can_redo = Bool(False)
 
     show_line_numbers = Bool(True)
 
@@ -94,6 +98,12 @@ class StyledTextEditor(Editor):
         f.close()
 
         self.dirty = False
+    
+    def undo(self):
+        self.control.Undo()
+    
+    def redo(self):
+        self.control.Redo()
 
     def select_line(self, lineno):
         """ Selects the specified line.
@@ -256,6 +266,8 @@ class StyledTextEditor(Editor):
         """ Called whenever a change is made to the text of the document. """
 
         self.dirty = self.control.CanUndo()
+        self.can_undo = self.control.CanUndo()
+        self.can_redo = self.control.CanRedo()
         self.changed = True
 
         # Give other event handlers a chance.

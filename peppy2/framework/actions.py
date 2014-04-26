@@ -119,6 +119,26 @@ class ExitAction(Action):
     def perform(self, event):
         event.task.window.application.exit()
 
+class UndoAction(EditorAction):
+    name = 'Undo'
+    accelerator = 'Ctrl+Z'
+    tooltip = 'Undo last action'
+    image = ImageResource('undo')
+    enabled_name = 'can_undo'
+
+    def perform(self, event):
+        self.active_editor.undo()
+
+class RedoAction(EditorAction):
+    name = 'Redo'
+    accelerator = 'Ctrl+Shift+Z'
+    tooltip = 'Redo the last undone action'
+    image = ImageResource('redo')
+    enabled_name = 'can_redo'
+
+    def perform(self, event):
+        self.active_editor.redo()
+
 class PreferencesAction(Action):
     name = 'Preferences...'
     accelerator = 'Ctrl+,'
