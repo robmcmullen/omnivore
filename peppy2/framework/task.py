@@ -48,6 +48,14 @@ class FrameworkTask(Task):
     
     about_image = Instance(ImageResource, ImageResource('peppy128'))
     
+    #### 'IErrorReporter' interface ###########################################
+    
+    error_email_from = Str
+    
+    error_email_passwd = Str
+    
+    error_email_to = Str
+    
     def _about_version_default(self):
         from peppy2 import __version__
         return __version__
