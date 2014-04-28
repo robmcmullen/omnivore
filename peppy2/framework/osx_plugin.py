@@ -12,6 +12,13 @@ from pyface.action.api import Action, ActionItem, Group, Separator
 from pyface.tasks.action.api import SMenuBar, SMenu, TaskActionManagerBuilder, SchemaAddition
 
 from peppy2.framework.actions import OpenAction, ExitAction, PreferencesAction, AboutAction
+from peppy2.framework.task import FrameworkTask
+
+
+class OSXMinimalTask(FrameworkTask):
+    @classmethod
+    def can_edit(cls, mime):
+        return False
 
 
 class OSXMenuBarPlugin(Plugin):
@@ -65,7 +72,7 @@ class OSXMenuBarPlugin(Plugin):
         # Create a fake task so we can use the menu creation routines
         window = TaskWindow(application=self.application)
         print "minimal menu extra items: %s" % str(self.minimal_menu_actions)
-        task = Task(menu_bar=menubar, window=window, extra_actions=self.minimal_menu_actions)
+        task = OSXMinimalTask(menu_bar=menubar, window=window, extra_actions=self.minimal_menu_actions)
         
         t = TaskActionManagerBuilder(task=task)
         mgr = t.create_menu_bar_manager()
