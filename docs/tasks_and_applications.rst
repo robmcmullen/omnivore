@@ -22,12 +22,14 @@ Peppy2 changes the default configuration directory from
 :file:`$(HOME)/.enthought/peppy2.framework.application` to
 :file:`$(HOME)/.config/Peppy2` on unix. On Mac OS X it will be :file:`$(HOME)/Library/Application Support/Peppy2`, and windows will be :file:`C:\\Users\\<username>\\AppData\\Local\\Peppy2\\Peppy2`
 
-Traits Summary
-==============
+TaskApplication
+===============
 
-The TaskApplication (envisage/ui/tasks/tasks_application.py, direct subclass
-of Application from envisage/application.py) includes a set of traits for
-managing the application::
+* source: envisage/envisage/ui/tasks/tasks_application.py
+* direct subclass of Application: envisage/envisage/application.py
+
+Traits Summary
+--------------
 
     # The active task window (the last one to get focus).
     active_window = Instance(TaskWindow)
@@ -75,8 +77,98 @@ among others.
 :A: TaskApplication.create_window(TaskWindowLayout(size = (800, 600)))
 
 
+TaskWindow
+==========
+
+* source: envisage/envisage/ui/tasks/task_window.py
+* direct subclass of pyface's TaskWindow: pyface/pyface/tasks/task_window.py
+
+Traits Summary
+--------------
+
+    # From envisage.ui.tasks.TaskWindow:
+    
+    # The application that created and is managing this window.
+    application = Instance('envisage.ui.tasks.api.TasksApplication')
+
+    # The window's icon.  We override it so it can delegate to the application
+    # icon if the window's icon is not set.
+    icon = Property(Instance(ImageResource), depends_on='_icon')
+
+    # From pyface.tasks.task_window.TaskWindow:
+
+    #### IWindow interface ####################################################
+
+    # Unless a title is specifically assigned, delegate to the active task.
+    title = Property(Unicode, depends_on='active_task, _title')
+
+    #### TaskWindow interface ################################################
+
+    # The pane (central or dock) in the active task that currently has focus.
+    active_pane = Instance(ITaskPane)
+
+    # The active task for this window.
+    active_task = Instance(Task)
+
+    # The list of all tasks currently attached to this window. All panes of the
+    # inactive tasks are hidden.
+    tasks = List(Task)
+
+    # The central pane of the active task, which is always visible.
+    central_pane = Instance(ITaskPane)
+
+    # The list of all dock panes in the active task, which may or may not be
+    # visible.
+    dock_panes = List(IDockPane)
+
+    # The factory for the window's TaskActionManagerBuilder, which is
+    # instantiated to translate menu and tool bar schemas into Pyface action
+    # managers. This attribute can overridden to introduce custom logic into
+    # the translation process, although this is not usually necessary.
+    action_manager_builder_factory = Callable(TaskActionManagerBuilder)
+
+Task
+====
+
+* source: pyface/pyface/tasks/task.py
+
+Traits Summary
+--------------
+
+    # The task's identifier.
+    id = Str
+
+    # The task's user-visible name.
+    name = Unicode
+
+    # The default layout to use for the task. If not overridden, only the
+    # central pane is displayed.
+    default_layout = Instance(TaskLayout, ())
+
+    # A list of extra IDockPane factories for the task. These dock panes are
+    # used in conjunction with the dock panes returned by create_dock_panes().
+    extra_dock_pane_factories = List(Callable)
+
+    # The window to which the task is attached. Set by the framework.
+    window = Instance('pyface.tasks.task_window.TaskWindow')
+
+    #### Actions ##############################################################
+
+    # The menu bar for the task.
+    menu_bar = Instance(MenuBarSchema)
+
+    # The (optional) status bar for the task.
+    status_bar = Instance(StatusBarManager)
+
+    # The list of tool bars for the tasks.
+    tool_bars = List(ToolBarSchema)
+
+    # A list of extra actions, groups, and menus that are inserted into menu
+    # bars and tool bars constructed from the above schemas.
+    extra_actions = List(SchemaAddition)
+
 Determining the TaskWindow
-==========================
+--------------------------
 
 A reference to the TaskWindow is kept in the Task instance.  Here's how to
 access the task window from:
