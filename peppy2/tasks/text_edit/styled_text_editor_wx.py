@@ -21,15 +21,15 @@ import wx.stc
 
 # Enthought library imports.
 from traits.api import Bool, Event, Instance, File, Unicode, Property, provides
-from pyface.tasks.api import Editor
 from pyface.util.python_stc import PythonSTC, faces
 
 # Local imports.
+from peppy2.framework.editor import FrameworkEditor
 from i_styled_text_editor import IStyledTextEditor
 from pyface.key_pressed_event import KeyPressedEvent
 
 @provides(IStyledTextEditor)
-class StyledTextEditor(Editor):
+class StyledTextEditor(FrameworkEditor):
     """ The toolkit specific implementation of a StyledTextEditor.  See the
     IStyledTextEditor interface for the API documentation.
     """
@@ -38,18 +38,6 @@ class StyledTextEditor(Editor):
 
     obj = Instance(File)
 
-    path = Unicode
-
-    dirty = Bool(False)
-
-    name = Property(Unicode, depends_on='path')
-
-    tooltip = Property(Unicode, depends_on='path')
-    
-    can_undo = Bool(False)
-    
-    can_redo = Bool(False)
-
     show_line_numbers = Bool(True)
 
     #### Events ####
@@ -57,12 +45,6 @@ class StyledTextEditor(Editor):
     changed = Event
 
     key_pressed = Event(KeyPressedEvent)
-
-    def _get_tooltip(self):
-        return self.path
-
-    def _get_name(self):
-        return basename(self.path) or 'Untitled'
 
     ###########################################################################
     # 'PythonEditor' interface.
@@ -85,6 +67,7 @@ class StyledTextEditor(Editor):
         print len(text)
         self.control.SetTextUTF8(text)
         self.control.EmptyUndoBuffer()
+        self.path = path
         self.dirty = False
 
     def save(self, path=None):
@@ -124,10 +107,6 @@ class StyledTextEditor(Editor):
     ###########################################################################
     # Trait handlers.
     ###########################################################################
-
-    def _path_changed(self):
-        if self.control is not None:
-            self.load()
 
     def _show_line_numbers_changed(self):
         if self.control is not None:
