@@ -97,7 +97,7 @@ class SaveAction(EditorAction):
     enabled_name = 'dirty' # enabled based on state of task.active_editor.dirty
 
     def perform(self, event):
-        event.task.save_file(None)
+        self.active_editor.save(None)
 
 class SaveAsAction(EditorAction):
     name = 'Save As...'
@@ -108,7 +108,7 @@ class SaveAsAction(EditorAction):
     def perform(self, event):
         dialog = FileDialog(parent=event.task.window.control, action='save as')
         if dialog.open() == OK:
-            event.task.save_file(dialog.path)
+            self.active_editor.save(dialog.path)
 
 class ExitAction(Action):
     name = 'Quit'
