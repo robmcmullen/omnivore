@@ -55,7 +55,7 @@ def get_py2exe_toolkit_includes(module=None, toolkit="wx"):
         mod_root = root[len(basedir) + 1:]
         needed = [f for f in files if f.endswith(suffix)]
         for f in needed:
-            mod_name = ("%s.%s" % (mod_root, f[:-3])).replace("/", ".")
+            mod_name = ("%s.%s" % (mod_root, f[:-3])).replace("/", ".").replace("\\", ".")
             includes.append(mod_name)
     return includes
 
