@@ -71,7 +71,8 @@ def get_py2exe_data_files(module=None, excludes=[]):
     data_files.extend(peppy2.get_py2exe_data_files())
     setup(..., data_files=data_files, ...)
     """
-    extensions = [".png", ".jpg", ".ico", ]
+    # added .zip files for pyface image libraries
+    extensions = [".png", ".jpg", ".ico", ".zip"]
     
     if module is None:
         path = __file__
