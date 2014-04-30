@@ -8,12 +8,12 @@ from pyface.tasks.api import Task, TaskWindow, TaskLayout, TaskWindowLayout, Pan
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
 from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
     SMenu, SToolBar, TaskAction, TaskToggleGroup
-from traits.api import provides, on_trait_change, Property, Instance, Bool, Str, Unicode
+from traits.api import provides, on_trait_change, Property, Instance, Bool, Str, Unicode, Int
 
 from peppy2.dock_panes import FileBrowserPane
 from peppy2.framework.i_about import IAbout
 from peppy2.framework.actions import *
-
+from peppy2.framework.status_bar_manager import FrameworkStatusBarManager
 
 @provides(IAbout)
 class FrameworkTask(Task):
@@ -35,6 +35,8 @@ class FrameworkTask(Task):
                              depends_on='editor_area.active_editor')
 
     editor_area = Instance(IEditorAreaPane)
+    
+    status_bar_debug_width = Int(150)
     
     #### 'IAbout' interface ###################################################
     
@@ -124,7 +126,7 @@ class FrameworkTask(Task):
                           show_tool_names=False), ]
 
     def _status_bar_default(self):
-        return StatusBarManager(message="Hi!")
+        return FrameworkStatusBarManager(message="Hi!", debug_width=self.status_bar_debug_width)
 
     def _default_layout_default(self):
         return TaskLayout(
