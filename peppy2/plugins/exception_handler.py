@@ -105,6 +105,9 @@ def send_email_via_gmail(subject, message, sender, passwd, recipient):
 
     # Import the email modules we'll need
     from email.mime.text import MIMEText
+    
+    responses = []
+    sent = False
     try:
         # Open a plain text file for reading.  For this example, assume that
         # the text file contains only ASCII characters.
@@ -122,13 +125,16 @@ def send_email_via_gmail(subject, message, sender, passwd, recipient):
         # Send the message via our own SMTP server, but don't include the
         # envelope header.
         s = smtplib.SMTP('smtp.gmail.com', 587)
-        s.starttls()
-        s.login(sender, passwd)
-        s.sendmail(msg['From'], [msg['To']], msg.as_string())
-        s.quit()
-        return True
+        responses.append(s.starttls())
+        responses.append(s.login(sender, passwd))
+        responses.append(s.sendmail(msg['From'], [msg['To']], msg.as_string()))
+        responses.append(s.quit())
+        sent = True
     except Exception, e:
         wx.MessageBox("Unable to send email:\n\%s\n\nPlease email the bug report to %s" % (str(e), recipient))
+        responses.append(e)
+    text = "\n".join([str(r) for r in responses])
+    return sent, text
 
 
 #-----------------------------------------------------------------------------#
@@ -260,13 +266,16 @@ class ErrorDialog(wx.Dialog):
         if e_id == wx.ID_CLOSE:
             self.Close()
         elif e_id == ID_SEND:
-            if send_email_via_gmail("%s Error Report" % self.task.about_title,
-                                    self.err_msg,
-                                    self.task.error_email_from,
-                                    self.task.error_email_passwd,
-                                    self.task.error_email_to):
+            status, error =  send_email_via_gmail(
+                "%s Error Report" % self.task.about_title,
+                self.err_msg,
+                self.task.error_email_from,
+                self.task.error_email_passwd,
+                self.task.error_email_to)
+            if status:
                 self.Close()
             else:
+                self._panel.text.AppendText(error)
                 btn = wx.FindWindowById(ID_SEND, self)
                 btn.Enable(False)
         elif e_id == wx.ID_ABORT:
@@ -320,6 +329,7 @@ class ErrorPanel(wx.Panel):
         tctrl = wx.TextCtrl(self, value=self.err_msg, size=(700, -1),
                             style=wx.TE_MULTILINE)
         tctrl.SetInsertionPoint(len(self.err_msg))
+        self.text = tctrl
         wx.CallAfter(tctrl.ShowPosition, len(self.err_msg))
 
         abort_b = wx.Button(self, wx.ID_ABORT, _("Abort"))
