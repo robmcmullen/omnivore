@@ -39,6 +39,11 @@ from peppy2.framework.preferences import FrameworkPreferences, \
     FrameworkPreferencesPane
 
 
+def _task_window_wx_on_mousewheel(self, event):
+    if self.active_task and hasattr(self.active_task, '_wx_on_mousewheel_from_window'):
+        print "calling mousewheel in task %s" % self.active_task
+        self.active_task._wx_on_mousewheel_from_window(event)
+
 class FrameworkApplication(TasksApplication):
     """ The sample framework Tasks application.
     """
@@ -134,6 +139,12 @@ class FrameworkApplication(TasksApplication):
         if not event.window.tasks:
             self.create_task_in_window(self.startup_task, event.window)
             print "EMPTY WINDOW OPENED!!! Created task."
+        
+        if sys.platform.startswith("win"):
+            # monkey patch to include mousewheel handler on the TaskWindow
+            import types
+            event.window._wx_on_mousewheel = types.MethodType(_task_window_wx_on_mousewheel, event.window)
+            event.window.control.Bind(wx.EVT_MOUSEWHEEL, event.window._wx_on_mousewheel)
 
     #### API
 
