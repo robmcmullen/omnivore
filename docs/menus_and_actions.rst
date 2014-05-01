@@ -294,3 +294,10 @@ although I do remember experimenting with them in the peppy1 days without
 success.  I don't remember if I tried the methods recommended above and they
 didn't work, or if I just didn't understand them correctly.
 
+Also: see the Phoenix docs for an event processing overview. Does this apply to 2.x?
+
+http://wxpython.org/Phoenix/docs/html/events_overview.html
+
+Or maybe EventFilter?
+
+http://wxpython.org/Phoenix/docs/html/EventFilter.html
