@@ -136,6 +136,27 @@ def send_email_via_gmail(subject, message, sender, passwd, recipient):
     text = "\n".join([str(r) for r in responses])
     return sent, text
 
+def message_body_encode(body):
+    import urllib
+    return urllib.quote_plus(body).encode("utf-8")
+
+def send_email_via_webbrowser(subject, message, recipient):
+    import webbrowser
+
+    sent = False
+    error = ""
+    try:
+        msg = message_body_encode(message)
+        print msg
+        url = 'mailto:%s&subject=%s&body=%s' % (recipient, subject, msg)
+        
+        webbrowser.open(url)
+        sent = True
+    except Exception, e:
+        wx.MessageBox("Unable to send email:\n\%s\n\nPlease email the bug report to %s" % (str(e), recipient))
+        error = str(e)
+    return sent, error
+
 
 #-----------------------------------------------------------------------------#
 
@@ -266,11 +287,9 @@ class ErrorDialog(wx.Dialog):
         if e_id == wx.ID_CLOSE:
             self.Close()
         elif e_id == ID_SEND:
-            status, error =  send_email_via_gmail(
+            status, error =  send_email_via_webbrowser(
                 "%s Error Report" % self.task.about_title,
                 self.err_msg,
-                self.task.error_email_from,
-                self.task.error_email_passwd,
                 self.task.error_email_to)
             if status:
                 self.Close()
