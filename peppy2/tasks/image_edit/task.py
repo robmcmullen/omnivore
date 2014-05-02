@@ -13,6 +13,7 @@ from traits.api import on_trait_change, Property, Instance
 from peppy2.framework.task import FrameworkTask
 from panes import Pane1, Pane2, Pane3
 from bitmap_editor import BitmapEditor
+from preferences import ImageEditPreferences
 
 class ImageEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
@@ -24,6 +25,8 @@ class ImageEditTask(FrameworkTask):
 
     id = 'peppy.framework.image_edit_task'
     name = 'Image Editor'
+    
+    preferences_helper = ImageEditPreferences
 
     ###########################################################################
     # 'Task' interface.

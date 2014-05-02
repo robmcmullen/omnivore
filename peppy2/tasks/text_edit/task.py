@@ -13,6 +13,7 @@ from traits.api import on_trait_change, Property, Instance
 
 from peppy2.framework.task import FrameworkTask
 from styled_text_editor import StyledTextEditor
+from preferences import TextEditPreferences
 
 class TextEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
@@ -24,6 +25,8 @@ class TextEditTask(FrameworkTask):
 
     id = 'peppy.framework.text_edit_task'
     name = 'Text Editor'
+    
+    preferences_helper = TextEditPreferences
 
     ###########################################################################
     # 'FrameworkTask' interface.

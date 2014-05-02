@@ -9,6 +9,7 @@ from pyface.tasks.api import Task, TaskWindow, TaskLayout, TaskWindowLayout, Pan
 from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
     SMenu, SToolBar, TaskAction, TaskToggleGroup
 from traits.api import provides, on_trait_change, Property, Instance, Bool, Str, Unicode, Int
+from apptools.preferences.api import PreferencesHelper
 
 from peppy2.dock_panes import FileBrowserPane
 from peppy2.framework.i_about import IAbout
@@ -35,6 +36,10 @@ class FrameworkTask(Task):
                              depends_on='editor_area.active_editor')
 
     editor_area = Instance(IEditorAreaPane)
+    
+    #### FrameworkTask interface ##############################################
+    
+    preferences_helper = Instance(PreferencesHelper)
     
     status_bar_debug_width = Int(150)
     
@@ -250,8 +255,11 @@ class FrameworkTask(Task):
                 action.name = action.name + "!"
 
     ###########################################################################
-    # 'FrameworkTask' interface.
+    # 'FrameworkTask' convenience functions.
     ###########################################################################
+    
+    def get_preferences(self):
+        return self.window.application.get_preferences(self.preferences_helper)
 
     def get_group(self, location, menu_name, group_name):
         actions = self.get_actions(location, menu_name, group_name)
