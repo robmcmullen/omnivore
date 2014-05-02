@@ -75,10 +75,7 @@ class FrameworkTask(Task):
                               Separator(id="NewGroupEnd", separator=False),
                               Group(OpenAction(), id="OpenGroup"),
                               Separator(id="OpenGroupEnd", separator=False),
-                              Group(
-                                  SaveAction(),
-                                  SaveAsAction(),
-                                  id="SaveGroup"),
+                              self.get_group("Menu", "File", "SaveGroup"),
                               Separator(id="SaveGroupEnd", separator=False),
                               Group(ExitAction(), id="ExitGroup"),
                               id='File', name='&File'),
@@ -109,17 +106,7 @@ class FrameworkTask(Task):
                         )
 
     def _tool_bars_default(self):
-        open = OpenAction()
-        save = SaveAction()
-        return [ SToolBar(Group(TaskAction(method='new',
-                                           tooltip='New file',
-                                           image=ImageResource('file_new')),
-                                open,
-                                save,
-                                TaskAction(method='debug',
-                                           tooltip='Do some debug stuff',
-                                           image=ImageResource('debug')),
-                                id="File"),
+        return [ SToolBar(self.get_groups("ToolBar", "File", "NewGroup", "OpenGroup", "SaveGroup"),
                           Group(UndoAction(),
                                 RedoAction(),
                                 id="Undo"),
@@ -265,6 +252,45 @@ class FrameworkTask(Task):
     ###########################################################################
     # 'FrameworkTask' interface.
     ###########################################################################
+
+    def get_group(self, location, menu_name, group_name):
+        actions = self.get_actions(location, menu_name, group_name)
+        return Group(*actions, id=group_name)
+    
+    def get_groups(self, location, menu_name, *group_names):
+        actions = []
+        for group_name in group_names:
+            actions.extend(self.get_actions(location, menu_name, group_name))
+        return Group(*actions, id=menu_name)
+
+    def get_actions(self, location, menu_name, group_name):
+        if location == "Menu":
+            if menu_name == "File":
+                if group_name == "SaveGroup":
+                    return [
+                        SaveAction(),
+                        SaveAsAction(),
+                        ]
+
+        if location.startswith("Tool"):
+            if menu_name == "File":
+                if group_name == "NewGroup":
+                    return [
+                        TaskAction(method='new',
+                                   tooltip='New file',
+                                   image=ImageResource('file_new')),
+                        ]
+                elif group_name == "OpenGroup":
+                    return [
+                        OpenAction(),
+                        ]
+                elif group_name == "SaveGroup":
+                    return [
+                        SaveAction(),
+                        SaveAsAction(),
+                        ]
+                
+        return []
 
     def get_editor(self):
         raise NotImplementedError
