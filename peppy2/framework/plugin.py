@@ -36,40 +36,7 @@ class FrameworkPlugin(Plugin):
         return factories
 
     def get_helper(self, helper_object, debug=True):
-        """Handle mistakes in preference files by using the default value for
-        any bad preference values.
-        
-        """
-        try:
-            helper = helper_object(preferences=self.application.preferences)
-        except TraitError:
-            # Create an empty preference object and helper so we can try
-            # preferences one-by-one to see which are bad
-            empty = Preferences()
-            helper = helper_object(preferences=empty)
-            if debug:
-                print "Application preferences before determining error:"
-                self.application.preferences.dump()
-            for t in helper.trait_names():
-                if helper._is_preference_trait(t):
-                    pref_name = "%s.%s" % (helper.preferences_path, t)
-                    text_value = self.application.preferences.get(pref_name)
-                    if text_value is None:
-                        # None means the preference isn't specified, which
-                        # isn't an error.
-                        continue
-                    try:
-                        empty.set(pref_name, self.application.preferences.get(pref_name))
-                    except:
-                        print "Invalid preference for %s: %s. Using default value %s" % (pref_name, self.application.preferences.get(pref_name), getattr(helper, t))
-                        self.application.preferences.remove(pref_name)
-                        # Also remove from default scope
-                        self.application.preferences.remove("default/%s" % pref_name)
-            if debug:
-                print "Application preferences after removing bad preferences:"
-                self.application.preferences.dump()
-            helper = helper_object(preferences=self.application.preferences)
-        return helper
+        return self.application.get_preferences(helper_object, debug)
     
     def set_plugin_data(self, data):
         """Store some plugin data in the application so that objects outside

@@ -308,6 +308,42 @@ class FrameworkApplication(TasksApplication):
     def get_plugin_data(self, plugin_id):
         return self.plugin_data[plugin_id]
     
+    def get_preferences(self, helper_object, debug=True):
+        """Get preferences for a particular PreferenceHelper object.
+        
+        Handle mistakes in preference files by using the default value for any
+        bad preference values.
+        """
+        try:
+            helper = helper_object(preferences=self.preferences)
+        except TraitError:
+            # Create an empty preference object and helper so we can try
+            # preferences one-by-one to see which are bad
+            empty = Preferences()
+            helper = helper_object(preferences=empty)
+            if debug:
+                print "Application preferences before determining error:"
+                self.preferences.dump()
+            for t in helper.trait_names():
+                if helper._is_preference_trait(t):
+                    pref_name = "%s.%s" % (helper.preferences_path, t)
+                    text_value = self.preferences.get(pref_name)
+                    if text_value is None:
+                        # None means the preference isn't specified, which
+                        # isn't an error.
+                        continue
+                    try:
+                        empty.set(pref_name, self.preferences.get(pref_name))
+                    except:
+                        print "Invalid preference for %s: %s. Using default value %s" % (pref_name, self.preferences.get(pref_name), getattr(helper, t))
+                        self.preferences.remove(pref_name)
+                        # Also remove from default scope
+                        self.preferences.remove("default/%s" % pref_name)
+            if debug:
+                print "Application preferences after removing bad preferences:"
+                self.preferences.dump()
+            helper = helper_object(preferences=self.preferences)
+        return helper
 
 def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task=""):
     """Start the application
