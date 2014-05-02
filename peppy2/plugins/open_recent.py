@@ -289,5 +289,9 @@ class OpenRecentPlugin(FrameworkPlugin):
     def update_recent_file(self, uri):
         print "NEWLY LOADED FILE: %s" % uri
         recent_files = self.get_plugin_data()
-        recent_files.append_uri(uri)
+        try:
+            recent_files.append_uri(uri)
+        except Exception, e:
+            print "FAILED ADDING %s to recent files list: %s" % (uri, e.message)
+            return
         self.fire_plugin_event()
