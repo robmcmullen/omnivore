@@ -43,6 +43,8 @@ class FrameworkTask(Task):
     
     status_bar_debug_width = Int(150)
     
+    start_new_editor_in_new_window = Bool(False)
+    
     #### 'IAbout' interface ###################################################
     
     about_title = Unicode('Peppy2')
@@ -213,6 +215,8 @@ class FrameworkTask(Task):
         window.activate_task(task)
         if view is not None:
             task.new(view)
+        elif task.start_new_editor_in_new_window:
+            task.new()
         window.open()
         print "All windows: %s" % self.window.application.windows
 
