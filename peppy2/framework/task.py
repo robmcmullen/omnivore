@@ -215,8 +215,6 @@ class FrameworkTask(Task):
         window.activate_task(task)
         if view is not None:
             task.new(view)
-        elif task.start_new_editor_in_new_window:
-            task.new()
         window.open()
         print "All windows: %s" % self.window.application.windows
 

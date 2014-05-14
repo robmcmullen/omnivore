@@ -140,6 +140,10 @@ class FrameworkApplication(TasksApplication):
             self.create_task_in_window(self.startup_task, event.window)
             print "EMPTY WINDOW OPENED!!! Created task."
         
+        task = event.window.active_task
+        if task.active_editor is None and task.start_new_editor_in_new_window:
+            task.new()
+        
         if sys.platform.startswith("win"):
             # monkey patch to include mousewheel handler on the TaskWindow
             import types
