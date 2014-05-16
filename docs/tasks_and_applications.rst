@@ -2,18 +2,6 @@
 Tasks and Applications
 ======================
 
-Blank Window
-============
-
-If you get a blank window, that probably means that no tasks have
-been added to the window.  One way this happens is a bad application
-memento in the config directory.  In once case, removing the file
-:file:`/home/rob/.config/Peppy2/tasks/wx/application_memento` can fix it.  In
-another case, an incorrect task id was found (due to a typo in the task id
-itself) and the call to application.create_task(task_id) returned None.
-
-
-
 
 Configuration Directory
 =======================
@@ -177,6 +165,34 @@ access the task window from:
 :Editor: self.editor_area.task.window
 :TaskAction event handler: event.task.window.
 :EditorAction event handler: self.active_editor.task.window
+
+Blank Window
+------------
+
+If you get a blank window, that probably means that no tasks have
+been added to the window.  One way this happens is a bad application
+memento in the config directory.  In once case, removing the file
+:file:`/home/rob/.config/Peppy2/tasks/wx/application_memento` can fix it.  In
+another case, an incorrect task id was found (due to a typo in the task id
+itself) and the call to application.create_task(task_id) returned None.
+
+Saving and Restoring Window Layout
+----------------------------------
+
+The Enthought framework saves the editor and pane layouts for every open window
+at the time of application exit to try to restore the same layout at the next
+application start.  This file is the application_memento file, as above.
+
+If the window layout has changed in the program but an old version of the
+layout is restored, not all panes may be visible, pane titles might still be
+the old pane titles, etc.
+
+To work around this without modifying the Enthought code to check for a version
+number, you can simply change the Task's id to something previously unused and
+the default layout as specified in the task will be used.
+
+For instance, changing the Task.id from "example.task" to "example.task.v2"
+will force the old layout to be discarded.
 
 
 Error Reporting
