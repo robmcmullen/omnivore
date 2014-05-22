@@ -39,7 +39,7 @@
 #    members = inspect.getmembers(module, inspect.isclass)
 #    names = []
 #    for name, cls in members:
-#        if hasattr(cls, 'identify_bytes'):
+#        if hasattr(cls, 'identify'):
 #            # make sure class is from this module and not an imported dependency
 #            if cls.__module__.startswith(modname):
 #                names.append(name)
