@@ -35,7 +35,7 @@
 #    if filename.endswith("__init__.py"):
 #        continue
 #    cog.msg("filename: %s" % filename)
-#    modname = filename.rstrip(".py").split("/")[-1]
+#    modname = filename.split(".py")[0].split("/")[-1]
 #    module = imp.load_source(modname, filename)
 #    cog.msg("module: %s" % module.__name__)
 #    members = inspect.getmembers(module, inspect.isclass)
