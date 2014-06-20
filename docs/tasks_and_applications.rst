@@ -53,7 +53,42 @@ Traits Summary
     # The factory for creating task windows.
     window_factory = Callable(TaskWindow)
 
-among others.
+    #### Application layout ###################################################
+
+    # The default layout for the application. If not specified, a single window
+    # will be created with the first available task factory.
+    default_layout = List(TaskWindowLayout)
+
+    # Whether to always apply the default *application level* layout when the
+    # application is started. Even if this is False, the layout state of
+    # individual tasks will be restored.
+    always_use_default_layout = Bool(False)
+
+    #### Application lifecycle events #########################################
+
+    # Fired after the initial windows have been created and the GUI event loop
+    # has been started.
+    application_initialized = Event
+
+    # Fired immediately before the extant windows are destroyed and the GUI
+    # event loop is terminated.
+    application_exiting = Event
+
+    # Fired when a task window has been created.
+    window_created = Event(TaskWindowEvent)
+
+    # Fired when a task window is opening.
+    window_opening = Event(VetoableTaskWindowEvent)
+
+    # Fired when a task window has been opened.
+    window_opened = Event(TaskWindowEvent)
+
+    # Fired when a task window is closing.
+    window_closing = Event(VetoableTaskWindowEvent)
+
+    # Fired when a task window has been closed.
+    window_closed = Event(TaskWindowEvent)
+
 
 :Q: How do we get a reference to the application?
 :A: through the TaskWindow: TaskWindow.application
