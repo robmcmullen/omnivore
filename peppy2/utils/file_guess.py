@@ -6,6 +6,9 @@ class FileMetadata(HasTraits):
     uri = Unicode
     
     mime = Str(default="application/octet-stream")
+    
+    def __str__(self):
+        return "uri=%s, mime=%s" % (self.uri, self.mime)
 
 
 class FileGuess(object):
@@ -28,6 +31,9 @@ class FileGuess(object):
         # Use the default mime type until it is recognized
         self.metadata = FileMetadata(uri=uri)
         
+    def __str__(self):
+        return "guess: metadata: %s, %d bytes available for signature" % (self.metadata, len(self.bytes))
+    
     def get_utf8(self):
         return self.bytes
     
