@@ -158,7 +158,11 @@ class FrameworkApplication(TasksApplication):
         
         from peppy2.utils.file_guess import FileGuess
         # The FileGuess loads the first part of the file and tries to identify it.
-        guess = FileGuess(uri)
+        try:
+            guess = FileGuess(uri)
+        except IOError, e:
+            active_task.window.error(str(e), "File Load Error")
+            return
         
         # Attempt to classify the guess using the file recognizer service
         service.recognize(guess)
