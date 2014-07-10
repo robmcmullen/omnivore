@@ -364,8 +364,6 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task=""):
     :param egg_path: list of user-specified paths to search for more plugins
     :param startup_task string: task factory identifier for task shown in initial window
     """
-    import logging
-    
     # Enthought library imports.
     from envisage.api import PluginManager
     from envisage.core_plugin import CorePlugin
@@ -374,6 +372,7 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task=""):
     from peppy2.framework.plugin import PeppyTasksPlugin, PeppyMainPlugin
     from peppy2.file_type.plugin import FileTypePlugin
     from peppy2 import get_image_path
+    from peppy2.utils.jobs import get_global_job_manager
     
     # Include standard plugins
     core_plugins = [ CorePlugin(), PeppyTasksPlugin(), PeppyMainPlugin(), FileTypePlugin() ]
@@ -437,3 +436,7 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task=""):
     app = FrameworkApplication(plugin_manager=plugin_manager, **kwargs)
     
     app.run()
+    
+    job_manager = get_global_job_manager()
+    if job_manager is not None:
+        job_manager.shutdown()
