@@ -1,6 +1,9 @@
 # Major package imports.
 import wx
 
+import logging
+log = logging.getLogger(__name__)
+
 class AboutDialog(object):
     """ The toolkit specific implementation of an AboutDialog.  See the
     IAboutDialog interface for the API documentation.
@@ -20,7 +23,7 @@ class AboutDialog(object):
             icon.CopyFromBitmap(about.about_image.create_bitmap())
             info.SetIcon(icon)
         except:
-            print "Bad icon file: %s" % about.about_image.absolute_path
+            log.error("AboutDialog: bad icon file: %s" % about.about_image.absolute_path)
         
         info.SetName(about.about_title)
         info.SetVersion(about.about_version)

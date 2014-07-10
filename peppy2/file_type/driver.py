@@ -4,6 +4,9 @@ from peppy2.utils.sortutil import before_after_wildcard_sort
 
 from i_file_recognizer import IFileRecognizer, IFileRecognizerDriver
 
+import logging
+log = logging.getLogger(__name__)
+
 @provides(IFileRecognizerDriver)
 class FileRecognizerDriver(HasTraits):
     """ Identify files using the available FileRecognizer extension point contributors
@@ -17,22 +20,22 @@ class FileRecognizerDriver(HasTraits):
         """
         if guess.bytes is None:
             return
-        print "trying %d recognizers " % len(self.recognizers)
+        log.debug("trying %d recognizers " % len(self.recognizers))
         for recognizer in self.recognizers:
-            print "trying %s recognizer: " % recognizer.id,
+            log.debug("trying %s recognizer: " % recognizer.id,)
             mime = recognizer.identify(guess)
             if mime is not None:
-                print "found %s" % mime
+                log.debug("found %s" % mime)
                 guess.metadata.mime = mime
                 return
-            print "unrecognized"
+            log.debug("unrecognized")
         
         guess.metadata.mime = "application/octet-stream"
-        print "Not recognized; default is %s" % guess.metadata.mime
+        log.debug("Not recognized; default is %s" % guess.metadata.mime)
 
     def _recognizers_changed(self, old, new):
-        print "_recognizers_changed: old=%s new=%s" % (str(old), str(new))
-        print "  old order: %s" % ", ".join([r.id for r in self.recognizers])
+        log.debug("_recognizers_changed: old=%s new=%s" % (str(old), str(new)))
+        log.debug("  old order: %s" % ", ".join([r.id for r in self.recognizers]))
         s = before_after_wildcard_sort(self.recognizers)
         # Is there a proper way to set the value in the trait change callback?
         # Assigning a new list will get call the notification handler multiple
@@ -41,4 +44,4 @@ class FileRecognizerDriver(HasTraits):
         # this by replacing the items in the list so that the list object
         # itself hasn't changed, only the members.
         self.recognizers[:] = s
-        print "  new order: %s" % ", ".join([r.id for r in s])
+        log.debug("  new order: %s" % ", ".join([r.id for r in s]))

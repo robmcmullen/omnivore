@@ -12,6 +12,9 @@ from traitsui.api import EnumEditor, HGroup, VGroup, Item, Label, View
 
 from peppy2.framework.plugin import FrameworkPlugin
 
+import logging
+log = logging.getLogger(__name__)
+
 class OpenRecentPreferences(PreferencesHelper):
     """ The preferences helper for the Framework application.
     """
@@ -102,7 +105,7 @@ class RecentFiles(object):
     def _storage_flag_default(self):
         self.storage_flag = True
         self.storage = []
-        print "STORAGE_FLAG!!! %s" % self.storage_flag
+        log.debug("STORAGE_FLAG!!! %s" % self.storage_flag)
         self.unserialize()
     
     def is_acceptable_uri(self, uri):
@@ -116,7 +119,7 @@ class RecentFiles(object):
     
     def serialize(self):
         """Serialize the current items to the file"""
-        print "SERIALIZING: %s" % str(self.storage)
+        log.debug("SERIALIZING: %s" % str(self.storage))
         # trim list to maximum possible length
         self.storage[self.helper.max_list_length():] = []
         with open(self.serialize_uri,'w') as fh:
@@ -128,7 +131,7 @@ class RecentFiles(object):
             
     def unserialize(self):
         """Unserialize items from the file into a list"""
-        print "UNSERIALIZING: %s" % str(self.serialize_uri)
+        log.debug("UNSERIALIZING: %s" % str(self.serialize_uri))
         self.storage = []
         try:
             with open(self.serialize_uri,'r') as fh:
@@ -155,7 +158,7 @@ class RecentFiles(object):
             # New items are added at the top of this list
             self.storage[0:0]=[item]
             self.serialize()
-        print "STORAGE: %s" % str(self.storage)
+        log.debug("STORAGE: %s" % str(self.storage))
 
 
 class OpenRecentAction(Action):
@@ -193,7 +196,7 @@ class OpenRecentGroup(Group):
     def _get_items(self):
         items = []
         recent_files = self.application.get_plugin_data('open_recent')
-        print "GET ITEMS: recent_files=%s, storage=%s" % (recent_files, recent_files.storage)
+        log.debug("GET ITEMS: recent_files=%s, storage=%s" % (recent_files, recent_files.storage))
         if recent_files is not None:
             for uri in recent_files.iter_items():
                 action = OpenRecentAction(uri=uri)
@@ -226,7 +229,7 @@ class OpenRecentGroup(Group):
     
     @on_trait_change('application:plugin_event')
     def updated_fired(self, event):
-        print "updated!!!"
+        log.debug("updated!!!")
         self._rebuild()
 
 
@@ -287,11 +290,11 @@ class OpenRecentPlugin(FrameworkPlugin):
 
     @on_trait_change('application:successfully_loaded_event')
     def update_recent_file(self, uri):
-        print "NEWLY LOADED FILE: %s" % uri
+        log.debug("NEWLY LOADED FILE: %s" % uri)
         recent_files = self.get_plugin_data()
         try:
             recent_files.append_uri(uri)
         except Exception, e:
-            print "FAILED ADDING %s to recent files list: %s" % (uri, e.message)
+            log.warning("FAILED ADDING %s to recent files list: %s" % (uri, e.message))
             return
         self.fire_plugin_event()

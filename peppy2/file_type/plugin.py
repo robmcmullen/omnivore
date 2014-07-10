@@ -7,6 +7,9 @@ from traits.api import List, Instance
 
 from i_file_recognizer import IFileRecognizer, IFileRecognizerDriver
 
+import logging
+log = logging.getLogger(__name__)
+
 class FileTypePlugin(Plugin):
     """ Plugin for identifying file types
     """
@@ -47,7 +50,7 @@ class FileTypePlugin(Plugin):
     def _service_offers_default(self):
         """ Trait initializer. """
 
-        print "in _service_offers_default"
+        log.debug("in _service_offers_default")
         offer1 = ServiceOffer(
             protocol = 'peppy2.file_type.i_file_recognizer.IFileRecognizerDriver',
             factory  = self._create_file_recognizer_driver_service
@@ -58,8 +61,8 @@ class FileTypePlugin(Plugin):
     def _create_file_recognizer_driver_service(self):
         """ Factory method for the File Recognizer Driver service. """
 
-        print "in _create_file_recognizer_driver_service."
-        print "  recognizers: %s" % str(self.recognizers)
+        log.debug("in _create_file_recognizer_driver_service.")
+        log.debug("  recognizers: %s" % str(self.recognizers))
 
         # Lazy importing, even though this is a fundamental service and
         # therefore doesn't buy us anything.  But as an example it's useful.

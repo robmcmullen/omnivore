@@ -14,6 +14,9 @@ from pyface.tasks.action.api import SMenuBar, SMenu, TaskActionManagerBuilder, S
 from peppy2.framework.actions import OpenAction, ExitAction, PreferencesAction, AboutAction
 from peppy2.framework.task import FrameworkTask
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class OSXMinimalTask(FrameworkTask):
     @classmethod
@@ -50,10 +53,7 @@ class OSXMenuBarPlugin(Plugin):
     @on_trait_change('application:started')
     def set_common_menu(self):
         if hasattr(wx.MenuBar, "MacSetCommonMenuBar"):
-            print "On OSX, have MacSetCommonMenuBar!!!"
             self.set_common_menu_29()
-        else:
-            print "Don't have MacSetCommonMenuBar!!!"
 
     def set_common_menu_29(self):
         menubar = SMenuBar(SMenu(Separator(id="NewGroup", separator=False),
@@ -71,7 +71,7 @@ class OSXMenuBarPlugin(Plugin):
         app = wx.GetApp()
         # Create a fake task so we can use the menu creation routines
         window = TaskWindow(application=self.application)
-        print "minimal menu extra items: %s" % str(self.minimal_menu_actions)
+        log.debug("OSXMenuBarPlugin: minimal menu extra items: %s" % str(self.minimal_menu_actions))
         task = OSXMinimalTask(menu_bar=menubar, window=window, extra_actions=self.minimal_menu_actions)
         
         t = TaskActionManagerBuilder(task=task)

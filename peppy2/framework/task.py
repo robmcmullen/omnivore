@@ -16,6 +16,9 @@ from peppy2.framework.i_about import IAbout
 from peppy2.framework.actions import *
 from peppy2.framework.status_bar_manager import FrameworkStatusBarManager
 
+import logging
+log = logging.getLogger(__name__)
+
 @provides(IAbout)
 class FrameworkTask(Task):
     """ A simple task for opening a blank editor.
@@ -129,7 +132,7 @@ class FrameworkTask(Task):
                 ))
 
     def activated(self):
-        print "  status bar: %s" % self.status_bar
+        log.debug("  status bar: %s" % self.status_bar)
         active = self.active_editor
         if active:
             self.status_bar.message = active.name
@@ -184,16 +187,16 @@ class FrameworkTask(Task):
         task of the new window and will create a new view of the editor in the
         first tab
         """
-        print "Opening new window!!!"
+        log.debug("Opening new window!!!")
         window = self.window.application.create_window()
-        print "  window=%s" % str(window)
-        print "  self=%s" % str(self.window)
-        print "  task type: %s" % str(task)
-        print "  view of: %s" % str(view)
+        log.debug("  window=%s" % str(window))
+        log.debug("  self=%s" % str(self.window))
+        log.debug("  task type: %s" % str(task))
+        log.debug("  view of: %s" % str(view))
         task_id = None
         if view is not None:
             task_cls = view.editor_area.task.__class__
-            print "  task_cls: %s" % str(task_cls)
+            log.debug("  task_cls: %s" % str(task_cls))
         elif task is not None:
             if isinstance(task, FrameworkTask):
                 task_cls = task.__class__
@@ -204,19 +207,19 @@ class FrameworkTask(Task):
         if task_id is None:
             task = task_cls()
             task_id = task.id
-        print "  task id: %s" % task_id
-        print "  returned factory: %s" % self.window.application._get_task_factory(task_id)
+        log.debug("  task id: %s" % task_id)
+        log.debug("  returned factory: %s" % self.window.application._get_task_factory(task_id))
         for factory in self.window.application.task_factories:
-            print "    factory: %s, %s" % (factory.id, factory)
+            log.debug("    factory: %s, %s" % (factory.id, factory))
         
         task = self.window.application.create_task(task_id)
-        print "  created task: %s" % task
+        log.debug("  created task: %s" % task)
         window.add_task(task)
         window.activate_task(task)
         if view is not None:
             task.new(view)
         window.open()
-        print "All windows: %s" % self.window.application.windows
+        log.debug("All windows: %s" % self.window.application.windows)
 
     def save(self):
         """ Attempts to save the current file, prompting for a path if

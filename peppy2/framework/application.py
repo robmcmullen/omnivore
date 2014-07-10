@@ -1,6 +1,9 @@
 import os
 import sys
 
+import logging
+log = logging.getLogger(__name__)
+
 # Create the wx app here so we can capture the Mac specific stuff that
 # traitsui.wx.toolkit's wx creation routines don't handle.  Also, monkey
 # patching wx.GetApp() to add MacOpenFile (etc) doesn't seem to work, so we
@@ -18,10 +21,10 @@ class EnthoughtWxApp(wx.App):
             # real drops of files onto the dock icon.  Prior to that, this
             # method gets called for all the command line arguments which would
             # give us two copies of each file specified on the command line.
-            print "MacOpenFile: loading %s" % filename
+            log.debug("MacOpenFile: loading %s" % filename)
             self.tasks_application.load_file(filename, None)
         else:
-            print "MacOpenFile: skipping %s because it's a command line argument" % filename
+            log.debug("MacOpenFile: skipping %s because it's a command line argument" % filename)
 
 from traits.etsconfig.api import ETSConfig
 
@@ -41,7 +44,7 @@ from peppy2.framework.preferences import FrameworkPreferences, \
 
 def _task_window_wx_on_mousewheel(self, event):
     if self.active_task and hasattr(self.active_task, '_wx_on_mousewheel_from_window'):
-        print "calling mousewheel in task %s" % self.active_task
+        log.debug("calling mousewheel in task %s" % self.active_task)
         self.active_task._wx_on_mousewheel_from_window(event)
 
 class FrameworkApplication(TasksApplication):
@@ -92,13 +95,13 @@ class FrameworkApplication(TasksApplication):
 
     def _default_layout_default(self):
         active_task = self.preferences_helper.default_task
-        print "active task: -->%s<--" % active_task
+        log.debug("active task: -->%s<--" % active_task)
         if not active_task:
             active_task = self.startup_task
-        print "active task: -->%s<--" % active_task
-        print "factories: %s" % " ".join([ factory.id for factory in self.task_factories])
+        log.debug("active task: -->%s<--" % active_task)
+        log.debug("factories: %s" % " ".join([ factory.id for factory in self.task_factories]))
         tasks = [ factory.id for factory in self.task_factories if active_task and active_task == factory.id ]
-        print "Default layout: %s" % str(tasks)
+        log.debug("Default layout: %s" % str(tasks))
         return [ TaskWindowLayout(*tasks,
                                   active_task = active_task,
                                   size = (800, 600)) ]
@@ -115,11 +118,11 @@ class FrameworkApplication(TasksApplication):
     #### Trait event handlers
     
     def _application_initialized_fired(self):
-        print "STARTING!!!"
+        log.debug("STARTING!!!")
         for arg in sys.argv[1:]:
             if arg.startswith("-"):
-                print "skipping flag %s" % arg
-            print "processing %s" % arg
+                log.debug("skipping flag %s" % arg)
+            log.debug("processing %s" % arg)
             self.load_file(arg, None)
         app = wx.GetApp()
         app.tasks_application = self
@@ -131,14 +134,14 @@ class FrameworkApplication(TasksApplication):
     def _window_opened_fired(self, event):
         """The toolkit window does exist here.
         """
-        print "WINDOW OPENED!!! %s" % event.window.control
+        log.debug("WINDOW OPENED!!! %s" % event.window.control)
         
         # Check to see that there's at least one task.  If a bad application
         # memento (~/.config/Peppy2/tasks/wx/application_memento), the window
         # may be blank in which case we need to add the default task.
         if not event.window.tasks:
             self.create_task_in_window(self.startup_task, event.window)
-            print "EMPTY WINDOW OPENED!!! Created task."
+            log.debug("EMPTY WINDOW OPENED!!! Created task.")
         
         task = event.window.active_task
         if task.active_editor is None and task.start_new_editor_in_new_window:
@@ -154,7 +157,7 @@ class FrameworkApplication(TasksApplication):
 
     def load_file(self, uri, active_task, **kwargs):
         service = self.get_service("peppy2.file_type.i_file_recognizer.IFileRecognizerDriver")
-        print "SERVICE!!!", service
+        log.debug("SERVICE!!! %s" % service)
         
         from peppy2.utils.file_guess import FileGuess
         # The FileGuess loads the first part of the file and tries to identify it.
@@ -174,14 +177,14 @@ class FrameworkApplication(TasksApplication):
         
         possibilities = []
         for factory in self.task_factories:
-            print "factory: %s" % factory.name
+            log.debug("factory: %s" % factory.name)
             if hasattr(factory.factory, "can_edit"):
                 if factory.factory.can_edit(guess.metadata.mime):
-                    print "  can edit: %s" % guess.metadata.mime
+                    log.debug("  can edit: %s" % guess.metadata.mime)
                     possibilities.append(factory)
-        print possibilities
+        log.debug(possibilities)
         if not possibilities:
-            print "no editor for %s" % uri
+            log.debug("no editor for %s" % uri)
             return
         
         best = possibilities[0]
@@ -199,10 +202,10 @@ class FrameworkApplication(TasksApplication):
         
         # Not found in existing windows, so open new window with task
         tasks = [ factory.id for factory in possibilities ]
-        print "no task window found: creating new layout for %s" % str(tasks)
+        log.debug("no task window found: creating new layout for %s" % str(tasks))
 #        window = self.create_window(TaskWindowLayout(size = (800, 600)))
         window = self.create_window()
-        print "  window=%s" % str(window)
+        log.debug("  window=%s" % str(window))
         first = None
         for factory in possibilities:
             task = self.create_task(factory.id)
@@ -210,17 +213,17 @@ class FrameworkApplication(TasksApplication):
             first = first or task
         window.activate_task(first)
         window.open()
-        print "All windows: %s" % self.windows
+        log.debug("All windows: %s" % self.windows)
         task.new(guess, **kwargs)
         metadata = guess.get_metadata()
-        print guess.metadata
-        print guess.metadata.mime
-        print metadata
-        print metadata.mime
-        print dir(metadata)
+        log.debug(guess.metadata)
+        log.debug(guess.metadata.mime)
+        log.debug(metadata)
+        log.debug(metadata.mime)
+        log.debug(dir(metadata))
     
     def create_task_in_window(self, task_id, window):
-        print "creating %s task" % task_id
+        log.debug("creating %s task" % task_id)
         task = self.create_task(task_id)
         window.add_task(task)
         window.activate_task(task)
@@ -236,20 +239,20 @@ class FrameworkApplication(TasksApplication):
         except ValueError:
             pass
         for window in w:
-            print "window: %s" % window
-            print "  active task: %s" % window.active_task
+            log.debug("window: %s" % window)
+            log.debug("  active task: %s" % window.active_task)
             if window.active_task.id == task_id:
-                print "  found active task"
+                log.debug("  found active task")
                 return window.active_task
-        print "  no active task matches %s" % task_id
+        log.debug("  no active task matches %s" % task_id)
         for window in w:
             task = window.active_task
             if task is None:
                 continue
             # if no editors in the task, replace the task with the new task
-            print "  window %s: %d" % (window, len(task.editor_area.editors))
+            log.debug("  window %s: %d" % (window, len(task.editor_area.editors)))
             if len(task.editor_area.editors) == 0:
-                print "  replacing unused task!"
+                log.debug("  replacing unused task!")
                 # The bugs in remove_task seem to have been fixed so that the
                 # subsequent adding of a new task does seem to work now.  But
                 # I'm leaving in the workaround for now of simply closing the
@@ -265,7 +268,7 @@ class FrameworkApplication(TasksApplication):
     def find_or_create_task_of_type(self, task_id):
         task = self.find_active_task_of_type(task_id)
         if not task:
-            print "task %s not found in active windows; creating new window" % task_id
+            log.debug("task %s not found in active windows; creating new window" % task_id)
             window = self.create_window()
             task = self.create_task_in_window(task_id, window)
             window.open()
@@ -330,7 +333,7 @@ class FrameworkApplication(TasksApplication):
             empty = Preferences()
             helper = helper_object(preferences=empty)
             if debug:
-                print "Application preferences before determining error:"
+                log.debug("Application preferences before determining error:")
                 self.preferences.dump()
             for t in helper.trait_names():
                 if helper._is_preference_trait(t):
@@ -343,12 +346,12 @@ class FrameworkApplication(TasksApplication):
                     try:
                         empty.set(pref_name, self.preferences.get(pref_name))
                     except:
-                        print "Invalid preference for %s: %s. Using default value %s" % (pref_name, self.preferences.get(pref_name), getattr(helper, t))
+                        log.error("Invalid preference for %s: %s. Using default value %s" % (pref_name, self.preferences.get(pref_name), getattr(helper, t)))
                         self.preferences.remove(pref_name)
                         # Also remove from default scope
                         self.preferences.remove("default/%s" % pref_name)
             if debug:
-                print "Application preferences after removing bad preferences:"
+                log.debug("Application preferences after removing bad preferences:")
                 self.preferences.dump()
             helper = helper_object(preferences=self.preferences)
         return helper

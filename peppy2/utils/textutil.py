@@ -8,6 +8,9 @@ therefore may be used independently of peppy.
 """
 import re
 
+import logging
+log = logging.getLogger(__name__)
+
 def piglatin(text):
     """Translate string to pig latin.
     
@@ -95,7 +98,7 @@ def detectEncoding(bytes):
     for txt in lines:
         match = regex.search(txt)
         if match:
-            print "guessEncoding: Found encoding %s" % match.group(1)
+            log.debug("guessEncoding: Found encoding %s" % match.group(1))
             return match.group(1), None
     return None, None
 
@@ -164,7 +167,7 @@ def guessBinary(text, percentage=5):
     for ch in data:
         if (ch<8) or (ch>13 and ch<32) or (ch>126):
             binary+=1
-    print "guessBinary: len=%d, num binary=%d" % (len(text), binary)
+    log.debug("guessBinary: len=%d, num binary=%d" % (len(text), binary))
     if binary>(len(text)/percentage):
         return True
     return False
@@ -267,4 +270,4 @@ if __name__ == "__main__":
     for file in sys.argv[1:]:
         fh = open(file)
         text = fh.read()
-        print "file=%s, tabsize=%d" % (file, guessSpacesPerIndent(text))
+        log.debug("file=%s, tabsize=%d" % (file, guessSpacesPerIndent(text)))

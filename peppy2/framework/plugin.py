@@ -31,7 +31,6 @@ class FrameworkPlugin(Plugin):
             task = cls()
             factory = TaskFactory(id=task.id, name=task.name, factory=cls)
             factories.append(factory)
-            print "FACTORY!!!", factory.id, factory.name
         
         return factories
 

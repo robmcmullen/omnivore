@@ -5,11 +5,8 @@ import sys
 _toolkit_backend_name = None
 
 def _init_toolkit():
-    print __name__
     from pyface.toolkit import _toolkit_backend
-    print _toolkit_backend
     backend = _toolkit_backend.strip(".").split(".")[-1]
-    print backend
     
     global _toolkit_backend_name
     _toolkit_backend_name = "_" + backend
@@ -39,7 +36,6 @@ def toolkit_object(mname, oname):
     """
 
     be_mname = mname + _toolkit_backend_name
-    print "attempting toolkit import: %s" % be_mname
 
     class Unimplemented(object):
         """ This is returned if an object isn't implemented by the selected

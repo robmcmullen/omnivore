@@ -61,7 +61,6 @@ class BitmapEditor(Editor):
                 #raise TypeError("Bad image -- either it really isn't an image, or wxPython doesn't support the image format.")
                 img = wx.EmptyImage(1,1)
 
-        print img
         self.control.setImage(img)
         self.dirty = False
 

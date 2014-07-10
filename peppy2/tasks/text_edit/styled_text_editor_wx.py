@@ -64,7 +64,6 @@ class StyledTextEditor(FrameworkEditor):
             path = metadata.uri
             text = guess.get_utf8()
 
-        print len(text)
         self.control.SetTextUTF8(text)
         self.control.EmptyUndoBuffer()
         self.path = path

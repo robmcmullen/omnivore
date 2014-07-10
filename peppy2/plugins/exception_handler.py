@@ -147,7 +147,6 @@ def send_email_via_webbrowser(subject, message, recipient):
     error = ""
     try:
         msg = message_body_encode(message)
-        print msg
         url = 'mailto:%s?subject=%s&body=%s' % (recipient, subject, msg)
         
         webbrowser.open(url)
