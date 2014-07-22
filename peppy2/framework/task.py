@@ -80,40 +80,14 @@ class FrameworkTask(Task):
         return ImageResource('peppy48')
 
     def _menu_bar_default(self):
-        return SMenuBar(SMenu(Separator(id="NewGroup", separator=False),
-                              SMenu(NewFileGroup(), id="NewFileGroup", name="New", before="NewGroupEnd", after="NewGroup"),
-                              Separator(id="NewGroupEnd", separator=False),
-                              Group(OpenAction(), id="OpenGroup"),
-                              Separator(id="OpenGroupEnd", separator=False),
-                              self.get_group("Menu", "File", "SaveGroup"),
-                              Separator(id="SaveGroupEnd", separator=False),
-                              Group(ExitAction(), id="ExitGroup"),
-                              id='File', name='&File'),
-                        SMenu(Group(
-                                  UndoAction(),
-                                  RedoAction(),
-                                  id="UndoGroup"),
-                              Separator(id="UndoGroupEnd", separator=False),
-                              Separator(id="PrefGroup", separator=False),
-                              Group(PreferencesAction(), absolute_position="last"),
-                              id='Edit', name='&Edit'),
-                        SMenu(DockPaneToggleGroup(),
-                              TaskToggleGroup(),
-                              Separator(id="TaskGroupEnd"),
-                              id='View', name='&View'),
-                        SMenu(NewViewAction(),
-                              NewWindowAction(),
-                              id='Window', name='&Window'),
-                        SMenu(Separator(id="AboutGroup", separator=False),
-                              Group(AboutAction()),
-                              Separator(id="DebugGroupStart"),
-                              SMenu(TaskAction(name='Dynamic Menu Names', method='debug',
-                                               tooltip='Do some debug stuff',
-                                               image=ImageResource('debug')),
-                                    id="Debug", name="Debug", before="DebugGroupEnd", after="DebugGroupStart"),
-                              Separator(id="DebugGroupEnd", separator=False),
-                              id='Help', name='&Help'),
-                        )
+        menus = []
+        self.add_menu(menus, "Menu", "File", "NewGroup", "OpenGroup", "SaveGroup", "ExitGroup")
+        self.add_menu(menus, "Menu", "Edit", "UndoGroup", "CopyPasteGroup", "SelectGroup", "FindGroup", "PrefGroup")
+        self.add_menu(menus, "Menu", "View", "TaskGroup")
+        self.add_menu(menus, "Menu", "Window", "WindowGroup")
+        self.add_menu(menus, "Menu", "Help", "AboutGroup", "DocGroup", "BugReportGroup", "DebugGroup")
+        
+        return SMenuBar(*menus)
 
     def _tool_bars_default(self):
         return [ SToolBar(self.get_groups("ToolBar", "File", "NewGroup", "OpenGroup", "SaveGroup"),
@@ -266,6 +240,39 @@ class FrameworkTask(Task):
     def get_preferences(self):
         return self.window.application.get_preferences(self.preferences_helper)
 
+    def add_menu(self, menu, location, menu_name, *group_names):
+        items = []
+        for group_name in group_names:
+            self.add_actions_and_groups(items, location, menu_name, group_name)
+        menu.append(SMenu(*items, id=menu_name, name=menu_name))
+
+    def add_actions_and_groups(self, menu_items, location, menu_name, group_name):
+        actions = self.get_actions(location, menu_name, group_name)
+        groups = []
+        group_suffix = ""
+        group_index = 0
+        current = []
+        
+        for item in actions:
+            if isinstance(item, Group) or isinstance(item, SMenu):
+                if current:
+                    group = Group(*current, id="%s%s" % (group_name, group_suffix))
+                    group_index += 1
+                    group_suffix = str(group_index)
+                    groups.append(group)
+                    current = []
+                groups.append(item)
+            else:
+                current.append(item)
+        if current:
+            group = Group(*current, id="%s%s" % (group_name, group_suffix))
+            groups.append(group)
+
+        menu_items.append(Separator(id="%sStart" % group_name, separator=False))
+        for group in groups:
+            menu_items.append(group)
+        menu_items.append(Separator(id="%sEnd" % group_name, separator=False))
+
     def get_group(self, location, menu_name, group_name):
         actions = self.get_actions(location, menu_name, group_name)
         return Group(*actions, id=group_name)
@@ -279,12 +286,58 @@ class FrameworkTask(Task):
     def get_actions(self, location, menu_name, group_name):
         if location == "Menu":
             if menu_name == "File":
-                if group_name == "SaveGroup":
+                if group_name == "NewGroup":
+                    return [
+                        SMenu(NewFileGroup(), id="NewFileGroup", name="New"),
+                        ]
+                elif group_name == "OpenGroup":
+                    return [
+                        OpenAction(),
+                        ]
+                elif group_name == "SaveGroup":
                     return [
                         SaveAction(),
                         SaveAsAction(),
                         ]
-
+                elif group_name == "ExitGroup":
+                    return [
+                        ExitAction(),
+                        ]
+            elif menu_name == "Edit":
+                if group_name == "UndoGroup":
+                    return [
+                        UndoAction(),
+                        RedoAction(),
+                        ]
+                elif group_name == "PrefGroup":
+                    return [
+                        Group(PreferencesAction(), absolute_position="last"),
+                        ]
+            elif menu_name == "View":
+                if group_name == "TaskGroup":
+                    return [
+                        DockPaneToggleGroup(),
+                        TaskToggleGroup(),
+                        ]
+            elif menu_name == "Window":
+                if group_name == "WindowGroup":
+                    return [
+                        NewViewAction(),
+                        NewWindowAction(),
+                        ]
+            elif menu_name == "Help":
+                if group_name == "AboutGroup":
+                    return [
+                        AboutAction()
+                        ]
+                elif group_name == "DebugGroup":
+                    return [
+                        SMenu(TaskAction(name='Dynamic Menu Names', method='debug',
+                                         tooltip='Do some debug stuff',
+                                         image=ImageResource('debug')),
+                              id="Debug", name="Debug"),
+                        ]
+        
         if location.startswith("Tool"):
             if menu_name == "File":
                 if group_name == "NewGroup":
