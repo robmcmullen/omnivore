@@ -109,15 +109,18 @@ class PeppyMainPlugin(FrameworkPlugin):
         from preferences import FrameworkPreferencesPane
         from peppy2.tasks.text_edit import TextEditPreferencesPane
         from peppy2.tasks.image_edit import ImageEditPreferencesPane
-        return [ FrameworkPreferencesPane, TextEditPreferencesPane, ImageEditPreferencesPane ]
+        from peppy2.tasks.hex_edit import HexEditPreferencesPane
+        return [ FrameworkPreferencesPane, TextEditPreferencesPane, ImageEditPreferencesPane, HexEditPreferencesPane, ]
 
     def _tasks_default(self):
         from peppy2.tasks.text_edit import TextEditTask
         from peppy2.tasks.image_edit import ImageEditTask
+        from peppy2.tasks.hex_edit import HexEditTask
 
         return self.task_factories_from_tasks([
             TextEditTask,
             ImageEditTask,
+            HexEditTask,
             ])
 
     def _osx_actions_default(self):
