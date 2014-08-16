@@ -187,13 +187,22 @@ def disasm(buf, pc):
     
     return extra + 1, "%04x" % pc, bytes, opstr
 
+def get_disassembly_from_bytes(pc, source):
+    index = 0
+    while index < len(source):
+        try:
+            count, addr, bytes, opstr = disasm(source, pc)
+        except IndexError:
+            raise StopIteration
+        yield "%4s %-8s %-s" % (addr, bytes, opstr)
+        pc += count
+        index += count
+
 if __name__ == "__main__":
     with open(sys.argv[1], 'rb') as fh:
         binary = fh.read()
     print len(binary)
     
     pc = 0;
-    while pc < len(binary):
-        count, addr, bytes, opstr = disasm(binary, pc)
-        print "%4s %-8s %-s" % (addr, bytes, opstr)
-        pc += count
+    for line in get_disassembly_from_bytes(pc, binary):
+        print line

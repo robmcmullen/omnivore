@@ -14,6 +14,7 @@ from traits.api import on_trait_change, Property, Instance
 from peppy2.framework.task import FrameworkTask
 from hex_editor import HexEditor
 from preferences import HexEditPreferences
+from panes import MOS6502DisassemblyPane
 
 class HexEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
@@ -27,6 +28,23 @@ class HexEditTask(FrameworkTask):
     name = 'Hex Editor'
     
     preferences_helper = HexEditPreferences
+
+    ###########################################################################
+    # 'Task' interface.
+    ###########################################################################
+
+    def _default_layout_default(self):
+        return TaskLayout(
+            right=HSplitter(
+                PaneItem('hex_edit.mos6502_disasmbly_pane'),
+                ),
+            )
+
+    def create_dock_panes(self):
+        """ Create the file browser and connect to its double click event.
+        """
+        return [ MOS6502DisassemblyPane() ]
+
 
     ###########################################################################
     # 'FrameworkTask' interface.

@@ -58,6 +58,8 @@ class HexEditor(FrameworkEditor):
         self.control.Update(self.bytestore)
         self.path = path
         self.dirty = False
+        
+        self.disassembly.update(text)
 
     def save(self, path=None):
         """ Saves the contents of the editor.
@@ -109,6 +111,9 @@ class HexEditor(FrameworkEditor):
 
         # Listen for key press events.
         wx.EVT_CHAR(stc, self._on_char)
+
+        # Get related controls
+        self.disassembly = self.window.get_dock_pane('hex_edit.mos6502_disasmbly_pane').control
 
         # Load the editor's contents.
         self.load()
