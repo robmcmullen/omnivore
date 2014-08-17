@@ -114,6 +114,7 @@ class HexEditor(FrameworkEditor):
 
         # Get related controls
         self.disassembly = self.window.get_dock_pane('hex_edit.mos6502_disasmbly_pane').control
+        self.byte_graphics = self.window.get_dock_pane('hex_edit.byte_graphics').control
 
         # Load the editor's contents.
         self.load()
