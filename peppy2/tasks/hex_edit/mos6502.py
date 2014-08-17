@@ -3,7 +3,7 @@ import wx
 
 from pyface.util.python_stc import PythonSTC, faces
 
-from stcbase import PeppySTC
+from peppy2.utils.wx.stcbase import PeppySTC
 from peppy2.utils.dis6502 import get_disassembly_from_bytes
 
 class MOS6502Disassembly(wx.Panel):

@@ -14,7 +14,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 from peppy2.framework.editor import FrameworkEditor
 from i_hex_editor import IHexEditor
 from grid_control import HexEditControl
-from stcbase import PeppySTC
+from peppy2.utils.wx.stcbase import PeppySTC
 
 @provides(IHexEditor)
 class HexEditor(FrameworkEditor):
