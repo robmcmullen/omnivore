@@ -5,6 +5,7 @@ from os.path import basename
 # Major package imports.
 import wx
 import wx.stc
+import numpy as np
 
 # Enthought library imports.
 from traits.api import Bool, Event, Instance, File, Unicode, Property, provides
@@ -60,6 +61,25 @@ class HexEditor(FrameworkEditor):
         self.dirty = False
         
         self.disassembly.update(text)
+        
+        if len(text) > 0:
+            scale = 4
+            count = len(text)
+            bytes = np.fromstring(text, dtype=np.uint8)
+            bits = np.unpackbits(bytes)
+            bits = bits.reshape((-1, 8))
+            bits[bits==0]=255
+            bits[bits==1]=0
+            width = 8
+            height = count
+            array = np.zeros((height, width, 3), dtype=np.uint8)
+            array[:,:,0] = bits
+            array[:,:,1] = bits
+            array[:,:,2] = bits
+            image = wx.EmptyImage(width,height)
+            image.SetData( array.tostring())
+            image.Rescale(width * scale, height * scale)
+            self.byte_graphics.setImage(image)
 
     def save(self, path=None):
         """ Saves the contents of the editor.
