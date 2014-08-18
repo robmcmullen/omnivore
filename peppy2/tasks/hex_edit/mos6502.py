@@ -44,6 +44,6 @@ class MOS6502Disassembly(wx.Panel):
         self.stc.StyleSetSize(n, faces['size'])
 
     def update(self, bytes):
-        lines = "\n".join(get_disassembly_from_bytes(0x1000, bytes))
+        lines = "\n".join(get_disassembly_from_bytes(0x0000, bytes))
         self.stc.SetText(lines)
     
