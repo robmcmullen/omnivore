@@ -1,5 +1,6 @@
 import os
 import sys
+import argparse
 
 import logging
 log = logging.getLogger(__name__)
@@ -79,6 +80,8 @@ class FrameworkApplication(TasksApplication):
     plugin_event = Event
     
     plugin_data = {}
+    
+    command_line_args = List
 
     ###########################################################################
     # Private interface.
@@ -119,7 +122,7 @@ class FrameworkApplication(TasksApplication):
     
     def _application_initialized_fired(self):
         log.debug("STARTING!!!")
-        for arg in sys.argv[1:]:
+        for arg in self.command_line_args:
             if arg.startswith("-"):
                 log.debug("skipping flag %s" % arg)
             log.debug("processing %s" % arg)
@@ -389,13 +392,19 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task=""):
     # Add the user's plugins
     core_plugins.extend(plugins)
     
+    # Check basic command line args
+    default_parser = argparse.ArgumentParser(description="Default Parser")
+    default_parser.add_argument("--no-eggs", dest="use_eggs", action="store_false", default=True, help="Do not load plugins from python eggs")
+    options, extra_args = default_parser.parse_known_args()
+    print("after default_parser: extra_args: %s" % extra_args)
+
     # The default is to use the specified plugins as well as any found
     # through setuptools and any local eggs (if an egg_path is specified).
     # Egg/setuptool plugin searching is turned off by the use_eggs parameter.
     default = PluginManager(
         plugins = core_plugins,
     )
-    if use_eggs:
+    if use_eggs and options.use_eggs:
         from pkg_resources import Environment, working_set
         from envisage.api import EggPluginManager
         from envisage.composite_plugin_manager import CompositePluginManager
@@ -433,7 +442,7 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task=""):
     kwargs = {}
     if startup_task:
         kwargs['startup_task'] = startup_task
-    app = FrameworkApplication(plugin_manager=plugin_manager, **kwargs)
+    app = FrameworkApplication(plugin_manager=plugin_manager, command_line_args=extra_args, **kwargs)
     
     app.run()
     
