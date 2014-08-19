@@ -26,19 +26,16 @@ class ProgressDialog(wx.Dialog):
                            style=wx.DEFAULT_DIALOG_STYLE)
         self.border = 20
         
-        self.SetBackgroundColour(wx.WHITE)
-
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.label = wx.StaticText(self, -1, "Loading...")
-        self.label.SetBackgroundColour(wx.WHITE)
+        self.label.SetMinSize((400, -1))
         sizer.Add(self.label, 0, flag=wx.EXPAND|wx.ALL, border=self.border)
 
         self.progressHeight = 12
         self.gauge = wx.Gauge(self, -1,
               range=100, size = (-1, self.progressHeight),
               style=wx.GA_HORIZONTAL|wx.GA_SMOOTH)
-        self.gauge.SetBackgroundColour(wx.WHITE)
         sizer.Add(self.gauge, 0, flag=wx.EXPAND|wx.ALL, border=self.border)
 
         self.count = 0
@@ -88,7 +85,7 @@ class wxLogHandler(logging.Handler):
     progress_dialog = None
     
     
-    def __init__(self):
+    def __init__(self, title_prefix=""):
         """
         Initialize the handler
         @param wxDest: the destination object to post the event to 
@@ -96,6 +93,7 @@ class wxLogHandler(logging.Handler):
         """
         logging.Handler.__init__(self)
         self.level = logging.DEBUG
+        self.title_prefix = title_prefix
 
     def flush(self):
         """
@@ -129,20 +127,30 @@ class wxLogHandler(logging.Handler):
     def post(self, evt):
         print "POSTING!!!!!! %s: %s" % (evt.levelname, evt.message)
         d = self.get_dialog()
-        if evt.message == "START":
+        m = evt.message
+        if m.startswith("START"):
+            if "=" in m:
+                _, uri = m.split("=")
+                d.SetTitle("%s %s" % (self.title_prefix, uri))
+            else:
+                d.SetTitle(self.title_prefix)
             wx.BeginBusyCursor()
             wx.Yield()
-        elif evt.message == "END":
+        elif m.startswith("TITLE"):
+            _, uri = m.split("=")
+            d.SetTitle("%s %s" % (self.title_prefix, uri))
+            wx.Yield()
+        elif m == "END":
             wx.EndBusyCursor()
             d.Destroy()
             wx.Yield()
-        elif evt.message.startswith("TICKS"):
-            _, count = evt.message.split("=")
+        elif m.startswith("TICKS"):
+            _, count = m.split("=")
             d.set_ticks(int(count))
-        elif evt.message == "PULSE":
+        elif m == "PULSE":
             d.set_pulse()
         else:
-            d.tick(evt.message)
+            d.tick(m)
 
 
 class FileProgressPlugin(FrameworkPlugin):
@@ -162,9 +170,9 @@ class FileProgressPlugin(FrameworkPlugin):
 
     def start(self):
         log = logging.getLogger("load")
-        handler = wxLogHandler()
+        handler = wxLogHandler("Loading")
         log.addHandler(handler)
         
         log = logging.getLogger("save")
-        handler = wxLogHandler()
+        handler = wxLogHandler("Saving")
         log.addHandler(handler)
