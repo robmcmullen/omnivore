@@ -28,7 +28,7 @@ class ProgressDialog(wx.Dialog):
         
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.label = wx.StaticText(self, -1, "Loading...")
+        self.label = wx.StaticText(self, -1, "Working...")
         self.label.SetMinSize((400, -1))
         sizer.Add(self.label, 0, flag=wx.EXPAND|wx.ALL, border=self.border)
 
@@ -63,6 +63,7 @@ class ProgressDialog(wx.Dialog):
         """
         self.gauge.Pulse()
         self.is_pulse = True
+        wx.Yield()
 
     def tick(self, text):
         """Advance the progress bar by one tick and update the label.
