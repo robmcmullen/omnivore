@@ -63,7 +63,7 @@ class HexEditor(FrameworkEditor):
         self.disassembly.update(text)
         
         if len(text) > 0:
-            scale = 4
+            scale = 2
             count = len(text)
             bytes = np.fromstring(text, dtype=np.uint8)
             bits = np.unpackbits(bytes)
