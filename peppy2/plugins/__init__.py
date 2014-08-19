@@ -52,6 +52,8 @@
 plugins = []
 from exception_handler import ExceptionHandlerPlugin
 plugins.append(ExceptionHandlerPlugin())
+from file_progress import FileProgressPlugin
+plugins.append(FileProgressPlugin())
 from open_recent import OpenRecentPlugin
 plugins.append(OpenRecentPlugin())
 #[[[end]]]
