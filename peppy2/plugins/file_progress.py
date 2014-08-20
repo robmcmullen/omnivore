@@ -20,11 +20,12 @@ wxLogEvent, EVT_WX_LOG_EVENT = wx.lib.newevent.NewEvent()
 
 
 class ProgressDialog(wx.Dialog):
-    def __init__(self, parent, title="Progress"):
+    def __init__(self, parent, title="Progress", delay=1000):
         wx.Dialog.__init__(self, parent, -1, title,
                            size=wx.DefaultSize, pos=wx.DefaultPosition, 
                            style=wx.DEFAULT_DIALOG_STYLE)
         self.border = 20
+        self.delay = delay
         
         sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -40,7 +41,8 @@ class ProgressDialog(wx.Dialog):
 
         self.count = 0
 
-        self.visible = True
+        self.visible = False
+        self._delaytimer = wx.PyTimer(self.on_timer)
         self.is_pulse = True
 
         self.SetSizer(sizer)
@@ -49,6 +51,14 @@ class ProgressDialog(wx.Dialog):
         self.gauge.Layout()
         self.Layout()
         self.CenterOnParent()
+
+    def start_visibility_timer(self):
+        if not self._delaytimer.IsRunning():
+            self._delaytimer.Start(self.delay, oneShot=True)
+
+    def on_timer(self):
+        print "SHOWING PROGRESS WINDOW!!!!!!!!"
+        self.Show()
 
     def set_ticks(self, count):
         """Set the total number of ticks that will be contained in the
@@ -95,6 +105,7 @@ class wxLogHandler(logging.Handler):
         logging.Handler.__init__(self)
         self.level = logging.DEBUG
         self.title_prefix = title_prefix
+        self.disabled = None
 
     def flush(self):
         """
@@ -120,37 +131,48 @@ class wxLogHandler(logging.Handler):
         if cls.progress_dialog is None or not cls.progress_dialog:
             top = wx.GetApp().GetTopWindow()
             cls.progress_dialog = ProgressDialog(top)
-        if not cls.progress_dialog.IsShown():
-            cls.progress_dialog.Show()
-            wx.Yield()
         return cls.progress_dialog
     
+    def force_cursor(self):
+        # OS X resets the busy cursor when the cursor moves out of the dialog,
+        # so at every tick call this method to reset it to the wait cursor.
+        # Other platforms don't have this problem.
+        wx.SetCursor(wx.StockCursor(wx.CURSOR_WAIT))
+    
     def post(self, evt):
-        print "POSTING!!!!!! %s: %s" % (evt.levelname, evt.message)
         d = self.get_dialog()
         m = evt.message
         if m.startswith("START"):
+            # Forcibly disable all windows (other than the progress dialog) to
+            # prevent user event processing in the wx.Yield calls.
+            self.disabler = wx.WindowDisabler(d)
+            wx.BeginBusyCursor()
             if "=" in m:
                 _, uri = m.split("=")
                 d.SetTitle("%s %s" % (self.title_prefix, uri))
             else:
                 d.SetTitle(self.title_prefix)
-            wx.BeginBusyCursor()
+            d.start_visibility_timer()
             wx.Yield()
         elif m.startswith("TITLE"):
+            self.force_cursor()
             _, uri = m.split("=")
             d.SetTitle("%s %s" % (self.title_prefix, uri))
             wx.Yield()
         elif m == "END":
             wx.EndBusyCursor()
+            self.disabler = None
             d.Destroy()
             wx.Yield()
         elif m.startswith("TICKS"):
+            self.force_cursor()
             _, count = m.split("=")
             d.set_ticks(int(count))
         elif m == "PULSE":
+            self.force_cursor()
             d.set_pulse()
         else:
+            self.force_cursor()
             d.tick(m)
 
 
