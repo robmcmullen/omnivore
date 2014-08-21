@@ -110,7 +110,7 @@ class wxLogHandler(logging.Handler):
     progress_dialog = None
     
     
-    def __init__(self, title_prefix=""):
+    def __init__(self, default_title=""):
         """
         Initialize the handler
         @param wxDest: the destination object to post the event to 
@@ -118,7 +118,7 @@ class wxLogHandler(logging.Handler):
         """
         logging.Handler.__init__(self)
         self.level = logging.DEBUG
-        self.title_prefix = title_prefix
+        self.default_title = default_title
         self.disabled = None
 
     def flush(self):
@@ -171,16 +171,16 @@ class wxLogHandler(logging.Handler):
             self.disabler = wx.WindowDisabler(d)
             wx.BeginBusyCursor()
             if "=" in m:
-                _, uri = m.split("=")
-                d.SetTitle("%s %s" % (self.title_prefix, uri))
+                _, text = m.split("=")
+                d.SetTitle(text)
             else:
-                d.SetTitle(self.title_prefix)
+                d.SetTitle(self.default_title)
             d.start_visibility_timer()
             wx.Yield()
         elif m.startswith("TITLE"):
             self.force_cursor()
-            _, uri = m.split("=")
-            d.SetTitle("%s %s" % (self.title_prefix, uri))
+            _, text = m.split("=")
+            d.SetTitle(text)
             wx.Yield()
         elif m == "END":
             wx.EndBusyCursor()
@@ -215,10 +215,6 @@ class FileProgressPlugin(FrameworkPlugin):
     name = 'Recently Opened Files List'
 
     def start(self):
-        log = logging.getLogger("load")
-        handler = wxLogHandler("Loading")
-        log.addHandler(handler)
-        
-        log = logging.getLogger("save")
-        handler = wxLogHandler("Saving")
+        log = logging.getLogger("progress")
+        handler = wxLogHandler("Progress")
         log.addHandler(handler)
