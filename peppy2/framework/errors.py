@@ -1,0 +1,2 @@
+class ProgressCancelError(Exception):
+    pass

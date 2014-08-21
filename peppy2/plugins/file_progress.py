@@ -9,7 +9,7 @@ from envisage.api import ExtensionPoint, Plugin
 
 # Local imports.
 from peppy2.framework.plugin import FrameworkPlugin
-
+from peppy2.framework.errors import ProgressCancelError
 
 import logging
 log = logging.getLogger(__name__)
@@ -45,6 +45,15 @@ class ProgressDialog(wx.Dialog):
         self._delaytimer = wx.PyTimer(self.on_timer)
         self.is_pulse = True
 
+        btnsizer = wx.StdDialogButtonSizer()
+        btn = wx.Button(self, wx.ID_CANCEL)
+        btn.SetDefault()
+        btnsizer.AddButton(btn)
+        btnsizer.Realize()
+        sizer.Add(btnsizer, 0, flag=wx.EXPAND|wx.ALL, border=5)
+        btn.Bind(wx.EVT_BUTTON, self.on_cancel)
+        self.request_cancel = False
+
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.label.Layout()
@@ -52,12 +61,17 @@ class ProgressDialog(wx.Dialog):
         self.Layout()
         self.CenterOnParent()
 
+    def on_cancel(self, evt):
+        self.request_cancel = True
+    
+    def raise_error(self):
+        raise ProgressCancelError(self.GetTitle() + " canceled by user!")
+
     def start_visibility_timer(self):
         if not self._delaytimer.IsRunning():
             self._delaytimer.Start(self.delay, oneShot=True)
 
     def on_timer(self):
-        print "SHOWING PROGRESS WINDOW!!!!!!!!"
         self.Show()
 
     def set_ticks(self, count):
@@ -117,9 +131,18 @@ class wxLogHandler(logging.Handler):
         Emit a record.
 
         """
+        # Handle progress cancel request here, the only place that's not inside
+        # a wx event handler.  Attempting to handle inside an event handler
+        # doesn't propagate outside the event handler.
+        d = self.__class__.progress_dialog
+        if d and d.request_cancel:
+            # change flag so the END command can be processed by post()
+            d.request_cancel = False
+            raise ProgressCancelError(d.GetTitle() + " canceled by user!")
+        
         try:
             msg = self.format(record)
-            evt = wxLogEvent(message=msg,levelname=record.levelname)            
+            evt = wxLogEvent(message=msg,levelname=record.levelname)
             self.post(evt)
         except (KeyboardInterrupt, SystemExit):
             raise
