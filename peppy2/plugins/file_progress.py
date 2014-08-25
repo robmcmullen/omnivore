@@ -102,17 +102,22 @@ class ProgressDialog(wx.Dialog):
         self.is_pulse = True
         wx.Yield()
 
-    def tick(self, text=None):
+    def tick(self, text=None, index=None):
         """Advance the progress bar by one tick and update the label.
         """
         ok = self.is_update_time()
         if self.is_pulse:
-            self.label.SetLabel(text)
+            if text:
+                self.label.SetLabel(text)
             if ok:
                 self.gauge.Pulse()
         else:
-            self.label.SetLabel(text)
-            self.count += 1
+            if text:
+                self.label.SetLabel(text)
+            if index is None:
+                self.count += 1
+            else:
+                self.count = index
             if self.count > self.gauge.GetRange():
                 self.set_pulse()
             elif ok:
@@ -223,9 +228,13 @@ class wxLogHandler(logging.Handler):
                 self.force_cursor()
                 _, count = m.split("=")
                 d.set_ticks(int(count))
-            elif m == "TICK":
+            elif m.startswith("TICK"):
                 self.force_cursor()
-                d.tick()
+                if "=" in m:
+                    _, count = m.split("=")
+                    d.tick(index=int(count))
+                else:
+                    d.tick()
             elif m == "PULSE":
                 self.force_cursor()
                 d.set_pulse()
