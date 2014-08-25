@@ -202,7 +202,7 @@ class wxLogHandler(logging.Handler):
             self.disabler = wx.WindowDisabler(d)
             wx.BeginBusyCursor()
             if "=" in m:
-                _, text = m.split("=")
+                _, text = m.split("=", 1)
                 d.SetTitle(text)
             else:
                 d.SetTitle(self.default_title)
@@ -221,17 +221,17 @@ class wxLogHandler(logging.Handler):
                 return
             if m.startswith("TITLE"):
                 self.force_cursor()
-                _, text = m.split("=")
+                _, text = m.split("=", 1)
                 d.SetTitle(text)
                 wx.Yield()
             elif m.startswith("TICKS"):
                 self.force_cursor()
-                _, count = m.split("=")
+                _, count = m.split("=", 1)
                 d.set_ticks(int(count))
             elif m.startswith("TICK"):
                 self.force_cursor()
                 if "=" in m:
-                    _, count = m.split("=")
+                    _, count = m.split("=", 1)
                     d.tick(index=int(count))
                 else:
                     d.tick()
