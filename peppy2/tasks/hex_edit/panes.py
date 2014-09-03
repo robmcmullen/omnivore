@@ -7,7 +7,7 @@ from traits.api import on_trait_change
 
 # Local imports.
 from mos6502 import MOS6502Disassembly
-from peppy2.utils.wx.bitmapscroller import BitmapScroller
+from peppy2.utils.wx.bitviewscroller import BitviewScroller
 
 import logging
 log = logging.getLogger(__name__)
@@ -39,5 +39,5 @@ class ByteGraphicsPane(DockPane):
     name = 'Byte Graphics'
     
     def create_contents(self, parent):
-        control = BitmapScroller(parent)
+        control = BitviewScroller(parent)
         return control

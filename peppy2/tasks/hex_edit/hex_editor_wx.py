@@ -16,6 +16,7 @@ from peppy2.framework.editor import FrameworkEditor
 from i_hex_editor import IHexEditor
 from grid_control import HexEditControl
 from peppy2.utils.wx.stcbase import PeppySTC
+from peppy2.utils.wx.stcbinary import BinarySTC
 
 @provides(IHexEditor)
 class HexEditor(FrameworkEditor):
@@ -51,35 +52,15 @@ class HexEditor(FrameworkEditor):
             path = metadata.uri
             text = guess.get_utf8()
 
-#        self.control.SetTextUTF8(text)
-        self.bytestore.SetText('')
-        styledtxt = '\0'.join(text)+'\0'
-        self.bytestore.AddStyledText(styledtxt)
-        self.bytestore.EmptyUndoBuffer()
+        self.bytestore.SetBinary(text)
         self.control.Update(self.bytestore)
         self.path = path
         self.dirty = False
         
-        self.disassembly.update(text)
+        self.disassembly.update(self.bytestore.data)
         
         if len(text) > 0:
-            scale = 2
-            count = len(text)
-            bytes = np.fromstring(text, dtype=np.uint8)
-            bits = np.unpackbits(bytes)
-            bits = bits.reshape((-1, 8))
-            bits[bits==0]=255
-            bits[bits==1]=0
-            width = 8
-            height = count
-            array = np.zeros((height, width, 3), dtype=np.uint8)
-            array[:,:,0] = bits
-            array[:,:,1] = bits
-            array[:,:,2] = bits
-            image = wx.EmptyImage(width,height)
-            image.SetData( array.tostring())
-            image.Rescale(width * scale, height * scale)
-            self.byte_graphics.setImage(image)
+            self.byte_graphics.set_data(self.bytestore.data)
 
     def save(self, path=None):
         """ Saves the contents of the editor.
@@ -112,25 +93,12 @@ class HexEditor(FrameworkEditor):
         """ Creates the toolkit-specific control for the widget. """
 
         # Base-class constructor.
-        self.bytestore = stc = PeppySTC(parent)
+        self.bytestore = stc = BinarySTC()
         self.control = HexEditControl(parent, self, stc)
 
         ##########################################
         # Events.
         ##########################################
-
-        # By default, the will fire EVT_STC_CHANGE evented for all mask values
-        # (STC_MODEVENTMASKALL). This generates too many events.
-        stc.SetModEventMask(wx.stc.STC_MOD_INSERTTEXT |
-                            wx.stc.STC_MOD_DELETETEXT |
-                            wx.stc.STC_PERFORMED_UNDO |
-                            wx.stc.STC_PERFORMED_REDO)
-
-        # Listen for changes to the file.
-        wx.stc.EVT_STC_CHANGE(stc, stc.GetId(), self._on_stc_changed)
-
-        # Listen for key press events.
-        wx.EVT_CHAR(stc, self._on_char)
 
         # Get related controls
         self.disassembly = self.window.get_dock_pane('hex_edit.mos6502_disasmbly_pane').control

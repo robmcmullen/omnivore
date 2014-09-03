@@ -358,7 +358,7 @@ class HugeTable(Grid.PyGridTableBase):
         if row not in self._cache:
             startpos = row*self.nbytes
             endpos = startpos + self.nbytes
-            data = self.stc.GetBinaryData(startpos,endpos)
+            data = self.stc.GetBytes(startpos,endpos)
             
             # pad data with dummy bytes if we've hit the end of file and it's
             # not an even multiple of the column size
@@ -404,7 +404,7 @@ class HugeTable(Grid.PyGridTableBase):
         loc = self.getLoc(row, col)
         locend = loc + len(bytes)
         
-        self.stc.SetBinaryData(loc, locend, bytes)
+        self.stc.SetBytes(loc, locend, bytes)
         
         self.invalidateCacheRow(row)
 

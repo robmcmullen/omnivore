@@ -4,7 +4,7 @@ import wx
 from pyface.util.python_stc import PythonSTC, faces
 
 from peppy2.utils.wx.stcbase import PeppySTC
-from peppy2.utils.dis6502 import get_disassembly_from_bytes
+from peppy2.utils.dis6502 import NumpyDisassembler
 
 class MOS6502Disassembly(wx.Panel):
 
@@ -44,6 +44,7 @@ class MOS6502Disassembly(wx.Panel):
         self.stc.StyleSetSize(n, faces['size'])
 
     def update(self, bytes):
-        lines = "\n".join(get_disassembly_from_bytes(0x0000, bytes))
+        d = NumpyDisassembler(bytes, 0)
+        lines = "\n".join(d.get_disassembly())
         self.stc.SetText(lines)
     
