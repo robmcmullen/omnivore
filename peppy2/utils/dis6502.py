@@ -158,45 +158,76 @@ opdict = {
 0xfe: ("INC $%02x%02x,X", 2),
     }
 
-def disasm(buf, pc):
-    opcode = ord(buf[pc])
+class BaseDisassembler(object):
+    def __init__(self, source, pc=0):
+        self.set_source(source)
+        self.set_pc(pc)
+        self.origin = self.pc
+        
+    def set_source(self, source):
+        self.source = source
+        self.length = len(source)
+        
+    def set_pc(self, pc):
+        self.pc = pc
+        
+    def get_next(self):
+        raise RuntimeError("abstract method")
     
-    try:
-        opstr, extra = opdict[opcode]
-    except KeyError:
-        opstr, extra = ".db $%02x" % opcode, 0
-    
-    if extra == 1:
-        operand1 = ord(buf[pc+1])
-        bytes = "%02x %02x" % (opcode, operand1)
-        opstr = opstr % operand1
-    elif extra == 2:
-        operand1 = ord(buf[pc+1])
-        operand2 = ord(buf[pc+2])
-        bytes = "%02x %02x %02x" % (opcode, operand1, operand2)
-        opstr = opstr % (operand2, operand1)
-    elif extra == -1:
-        operand1 = ord(buf[pc+1])
-        bytes = "%02x %02x" % (opcode, operand1)
-        signed = operand1 - 256 if operand1 > 127 else operand1
-        rel = pc + 2 + signed
-        opstr = opstr % rel
-        extra = 1
-    else:
-        bytes = "%02x" % opcode
-    
-    return extra + 1, "%04x" % pc, bytes, opstr
-
-def get_disassembly_from_bytes(pc, source):
-    index = 0
-    while index < len(source):
+    def disasm(self):
+        pc = self.pc
+        opcode = self.get_next()
+        
         try:
-            count, addr, bytes, opstr = disasm(source, pc)
-        except IndexError:
+            opstr, extra = opdict[opcode]
+        except KeyError:
+            opstr, extra = ".db $%02x" % opcode, 0
+        
+        if extra == 1:
+            operand1 = self.get_next()
+            bytes = "%02x %02x" % (opcode, operand1)
+            opstr = opstr % operand1
+        elif extra == 2:
+            operand1 = self.get_next()
+            operand2 = self.get_next()
+            bytes = "%02x %02x %02x" % (opcode, operand1, operand2)
+            opstr = opstr % (operand2, operand1)
+        elif extra == -1:
+            operand1 = self.get_next()
+            bytes = "%02x %02x" % (opcode, operand1)
+            signed = operand1 - 256 if operand1 > 127 else operand1
+            rel = pc + 2 + signed
+            opstr = opstr % rel
+        else:
+            bytes = "%02x" % opcode
+        
+        return "%04x" % pc, bytes, opstr
+
+    def get_disassembly(self):
+        while True:
+            addr, bytes, opstr = self.disasm()
+            yield "%4s %-8s %-s" % (addr, bytes, opstr)
+
+class TextDisassembler(BaseDisassembler):
+    def get_next(self):
+        if self.pc >= self.origin + self.length:
             raise StopIteration
-        yield "%4s %-8s %-s" % (addr, bytes, opstr)
-        pc += count
-        index += count
+        opcode = ord(self.source[self.pc])
+        self.pc += 1
+        return opcode
+
+class NumpyDisassembler(BaseDisassembler):
+    def set_source(self, source):
+        self.source = source
+        self.length = source.size
+        
+    def get_next(self):
+        if self.pc >= self.origin + self.length:
+            raise StopIteration
+        opcode = int(self.source[self.pc])
+        self.pc += 1
+        return opcode
+
 
 if __name__ == "__main__":
     with open(sys.argv[1], 'rb') as fh:
@@ -204,5 +235,6 @@ if __name__ == "__main__":
     print len(binary)
     
     pc = 0;
-    for line in get_disassembly_from_bytes(pc, binary):
+    disasm = TextDisassembler(binary, pc)
+    for line in disasm.get_disassembly():
         print line
