@@ -79,6 +79,8 @@ class FrameworkApplication(TasksApplication):
     
     plugin_event = Event
     
+    preferences_changed_event = Event
+    
     plugin_data = {}
     
     command_line_args = List

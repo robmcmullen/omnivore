@@ -170,7 +170,9 @@ class PreferencesAction(Action):
         
         from peppy2.framework.preferences import FrameworkPreferenceDialog
         dialog = FrameworkPreferenceDialog(application=event.task.window.application, style="modal")
-        dialog.open()
+        status = dialog.open()
+        if status == OK:
+            event.task.window.application.preferences_changed_event = True
 
 class AboutAction(Action):
     name = 'About...'
