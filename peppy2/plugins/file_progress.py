@@ -133,6 +133,7 @@ class wxLogHandler(logging.Handler):
     
     progress_dialog = None
     
+    disabler = None
     
     def __init__(self, default_title=""):
         """
@@ -143,7 +144,6 @@ class wxLogHandler(logging.Handler):
         logging.Handler.__init__(self)
         self.level = logging.DEBUG
         self.default_title = default_title
-        self.disabled = None
 
     def flush(self):
         """
@@ -187,6 +187,25 @@ class wxLogHandler(logging.Handler):
             return None
         return cls.progress_dialog
     
+    @classmethod
+    def open_dialog(cls):
+        d = cls.get_dialog()
+        # Forcibly disable all windows (other than the progress dialog) to
+        # prevent user event processing in the wx.Yield calls.
+        cls.disabler = wx.WindowDisabler(d)
+        wx.BeginBusyCursor()
+        return d
+    
+    @classmethod
+    def close_dialog(cls):
+        d = cls.get_dialog_if_open()
+        if d is not None:
+            wx.EndBusyCursor()
+            cls.disabler = None
+            d.Destroy()
+            wx.Yield()
+        cls.progress_dialog = None
+    
     def force_cursor(self):
         # OS X resets the busy cursor when the cursor moves out of the dialog,
         # so at every tick call this method to reset it to the wait cursor.
@@ -196,11 +215,7 @@ class wxLogHandler(logging.Handler):
     def post(self, evt):
         m = evt.message
         if m.startswith("START"):
-            d = self.get_dialog()
-            # Forcibly disable all windows (other than the progress dialog) to
-            # prevent user event processing in the wx.Yield calls.
-            self.disabler = wx.WindowDisabler(d)
-            wx.BeginBusyCursor()
+            d = self.open_dialog()
             if "=" in m:
                 _, text = m.split("=", 1)
                 d.SetTitle(text)
@@ -209,11 +224,7 @@ class wxLogHandler(logging.Handler):
             d.start_visibility_timer()
             wx.Yield()
         elif m == "END":
-            d = self.get_dialog_if_open()
-            wx.EndBusyCursor()
-            self.disabler = None
-            d.Destroy()
-            wx.Yield()
+            self.close_dialog()
         else:
             d = self.get_dialog_if_open()
             if d is None:
