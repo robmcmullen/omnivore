@@ -74,6 +74,10 @@ class ProgressDialog(wx.Dialog):
         if not self._delaytimer.IsRunning():
             self._delaytimer.Start(self.delay, oneShot=True)
 
+    def stop_visibility_timer(self):
+        if self._delaytimer.IsRunning():
+            self._delaytimer.Stop()
+
     def on_timer(self):
         self.Show()
 
@@ -202,6 +206,7 @@ class wxLogHandler(logging.Handler):
         if d is not None:
             wx.EndBusyCursor()
             cls.disabler = None
+            d.stop_visibility_timer()
             d.Destroy()
             wx.Yield()
         cls.progress_dialog = None
