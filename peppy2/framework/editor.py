@@ -22,7 +22,11 @@ class FrameworkEditor(Editor):
     
     can_undo = Bool(False)
     
+    undo_label = Unicode
+    
     can_redo = Bool(False)
+    
+    redo_label = Unicode
 
     #### property getters
 

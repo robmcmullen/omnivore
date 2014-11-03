@@ -119,22 +119,80 @@ class ExitAction(Action):
     def perform(self, event):
         event.task.window.application.exit()
 
-class UndoAction(EditorAction):
+class NameChangeAction(EditorAction):
+    """Extension to the EditorAction that provides a user-updatable menu item
+    name based on a trait
+    
+    EditorAction is subclassed from ListeningAction, and the ListeningAction
+    methods destroy and _object_chaged must be called because the new
+    trait name 'menu_item_name' can't be added to list of traits managed by
+    ListeningAction and so must be taken care of here before the superclass
+    can do its work.
+    """
+    menu_item_name = Str
+
+    def destroy(self):
+        """ Called when the action is no longer required.
+
+        Remove all the task listeners.
+
+        """
+
+        if self.object:
+            self.object.on_trait_change(
+                self._menu_item_update, self.menu_item_name, remove=True
+            )
+        super(NameChangeAction, self).destroy(event)
+
+    def _menu_item_name_changed(self, old, new):
+        obj = self.object
+        if obj is not None:
+            if old:
+                obj.on_trait_change(self._menu_item_update, old, remove=True)
+            if new:
+                obj.on_trait_change(self._menu_item_update, new)
+        self._label_update()
+
+    def _object_changed(self, old, new):
+        kind = 'menu_item'
+        method = getattr(self, '_%s_update' % kind)
+        name = getattr(self, '%s_name' % kind)
+        if name:
+            if old:
+                old.on_trait_change(method, name, remove=True)
+            if new:
+                new.on_trait_change(method, name)
+        method()
+        super(NameChangeAction, self)._object_changed(old, new)
+
+    def _menu_item_update(self):
+        if self.menu_item_name:
+            if self.object:
+                self.name = str(self._get_attr(self.object, 
+                                               self.menu_item_name, 'Undo'))
+            else:
+                self.name = 'Undo'
+        else:
+            self.name = 'Undo'
+
+class UndoAction(NameChangeAction):
     name = 'Undo'
     accelerator = 'Ctrl+Z'
     tooltip = 'Undo last action'
     image = ImageResource('undo')
     enabled_name = 'can_undo'
+    menu_item_name = 'undo_label'
 
     def perform(self, event):
         self.active_editor.undo()
 
-class RedoAction(EditorAction):
+class RedoAction(NameChangeAction):
     name = 'Redo'
     accelerator = 'Ctrl+Shift+Z'
     tooltip = 'Redo the last undone action'
     image = ImageResource('redo')
     enabled_name = 'can_redo'
+    menu_item_name = 'redo_label'
 
     def perform(self, event):
         self.active_editor.redo()
