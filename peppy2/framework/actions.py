@@ -142,7 +142,7 @@ class NameChangeAction(EditorAction):
             self.object.on_trait_change(
                 self._menu_item_update, self.menu_item_name, remove=True
             )
-        super(NameChangeAction, self).destroy(event)
+        super(NameChangeAction, self).destroy()
 
     def _menu_item_name_changed(self, old, new):
         obj = self.object
