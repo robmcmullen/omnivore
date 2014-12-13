@@ -78,6 +78,29 @@ version of python, you can use::
     for name in traits pyface traitsui apptools envisage; do cd $name; python setup.py develop; cd ..; done
 
 
+Virtualenv Setup
+================
+
+virtualenv /data/virtualenv/wx3
+source $VIRTUAL_ENV/bin/activate
+mkdir src
+cd src
+tar xvf /opt/download/wxPython-src-3.0.1.1.tar.bz2 
+cd wxPython-src-3.0.1.1/
+./configure --prefix=$VIRTUAL_ENV
+make -j 8
+make install
+cat <<EOF >> $VIRTUAL_ENV/bin/activate
+LD_LIBRARY_PATH="$VIRTUAL_ENV/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH
+EOF
+cd wxPython
+python setup.py install
+# cd demo/
+# python demo.py 
+
+
+
 Running The Program
 ===================
 
