@@ -120,13 +120,24 @@ def get_image_path(rel_path, module=None, excludes=[]):
     if module is None:
         path = __file__
     else:
-        path = module.__file__
+        try:
+            path = module.__file__
+        except AttributeError:
+            # must be a string containing the module hiearchy
+            path = module.replace(".", "/") + "/remove-this.py"
     import os
     import sys
     frozen = getattr(sys, 'frozen', False)
     image_path = os.path.join(os.path.dirname(path), rel_path)
     if frozen:
-        if frozen in ('macosx_app'):
+        if frozen == True:
+            # fixme: MEIPASS not actually needed? the path is actually set to
+            # the executable path?
+            
+            # root = sys._MEIPASS
+            path = os.path.dirname(path)
+            image_path = os.path.join(path, rel_path)
+        elif frozen in ('macosx_app'):
             #print "FROZEN!!! %s" % frozen
             root = os.environ['RESOURCEPATH']
             zippath, image_path = image_path.split(".zip/")
