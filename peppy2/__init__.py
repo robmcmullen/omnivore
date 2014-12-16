@@ -102,12 +102,19 @@ def get_py2exe_data_files(module=None, excludes=[]):
             data_files.append((mod_root, needed))
     return data_files
 
-def get_image_path(rel_path, module=None, excludes=[]):
+def get_image_path(rel_path, module=None, file=None, excludes=[]):
     """Get the image path for static images relative to the specified module
+    or file.
     
     The image path will be modified to find images in py2exe/py2app
     locations assuming that the data files have been added using the above
     get_py2exe_data_files function.
+    
+    Either the module or file keyword parameter may be specified to provide
+    a relative module or file name.  The module may be specified either by
+    reference to an imported module, or by a dotted string.  The file must be
+    specified using the __file__ keyword.  If both are specified, file takes
+    precedence.
     
     For example, in peppy2, the images are located in a directory "icons" in
     main peppy2 directory (e.g. peppy2/icons):
@@ -116,15 +123,25 @@ def get_image_path(rel_path, module=None, excludes=[]):
     image_path = get_image_path("icons", peppy2)
     
     will return the absolute path of "peppy2/icons".
+    
+    An example using the file keyword: if the current module is in the
+    peppy2/framework directory, then the call to:
+    
+    get_image_path("icons", file=__file__)
+    
+    will contain the absolute path to the peppy2/framework/icons directory.
     """
-    if module is None:
-        path = __file__
+    if file is None:
+        if module is None:
+            path = __file__
+        else:
+            try:
+                path = module.__file__
+            except AttributeError:
+                # must be a string containing the module hiearchy
+                path = module.replace(".", "/") + "/this-will-be-removed.py"
     else:
-        try:
-            path = module.__file__
-        except AttributeError:
-            # must be a string containing the module hiearchy
-            path = module.replace(".", "/") + "/remove-this.py"
+        path = file.replace(".", "/")
     import os
     import sys
     frozen = getattr(sys, 'frozen', False)
