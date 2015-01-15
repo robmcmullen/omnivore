@@ -204,11 +204,11 @@ class wxLogHandler(logging.Handler):
     def close_dialog(cls):
         d = cls.get_dialog_if_open()
         if d is not None:
-            wx.EndBusyCursor()
             cls.disabler = None
             d.stop_visibility_timer()
             d.Destroy()
             wx.Yield()
+            wx.EndBusyCursor()  # fails in wx 3.0 before Yield
         cls.progress_dialog = None
     
     def force_cursor(self):
