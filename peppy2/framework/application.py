@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+from datetime import datetime
 
 import logging
 log = logging.getLogger(__name__)
@@ -84,6 +85,10 @@ class FrameworkApplication(TasksApplication):
     plugin_data = {}
     
     command_line_args = List
+    
+    log_dir = Str
+    
+    log_file_ext = Str
 
     ###########################################################################
     # Private interface.
@@ -309,7 +314,7 @@ class FrameworkApplication(TasksApplication):
         config directory location instead of ~/.enthought 
         """
 
-        from peppy2.third_party.appdirs import user_config_dir
+        from peppy2.third_party.appdirs import user_config_dir, user_log_dir
         dirname = user_config_dir(self.name)
         ETSConfig.application_home = dirname
 
@@ -317,6 +322,13 @@ class FrameworkApplication(TasksApplication):
         if not os.path.exists(ETSConfig.application_home):
             os.makedirs(ETSConfig.application_home)
 
+        dirname = user_log_dir(self.name)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        self.log_dir = dirname
+        
+        self.log_file_ext = "-%s" % datetime.now().strftime("%Y%m%d-%H%M%S")
+        
         return
     
     #### Convenience methods
@@ -360,6 +372,23 @@ class FrameworkApplication(TasksApplication):
                 self.preferences.dump()
             helper = helper_object(preferences=self.preferences)
         return helper
+    
+    def save_log(self, text, log_file_name_base, ext=""):
+        filename = log_file_name_base + self.log_file_ext
+        if ext:
+            if not ext.startswith("."):
+                filename += "."
+            filename += ext
+        else:
+            filename += ".log"
+        filename = os.path.join(self.log_dir, filename)
+        
+        try:
+            with open(filename, "wb") as fh:
+                fh.write(text)
+        except IOError:
+            log.error("Failed writing %s to %s" % (log_file_name_base, filename))
+
 
 def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", application_name=""):
     """Start the application
