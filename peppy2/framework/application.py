@@ -373,7 +373,7 @@ class FrameworkApplication(TasksApplication):
             helper = helper_object(preferences=self.preferences)
         return helper
     
-    def save_log(self, text, log_file_name_base, ext=""):
+    def get_log_file_name(self, log_file_name_base, ext=""):
         filename = log_file_name_base + self.log_file_ext
         if ext:
             if not ext.startswith("."):
@@ -382,6 +382,10 @@ class FrameworkApplication(TasksApplication):
         else:
             filename += ".log"
         filename = os.path.join(self.log_dir, filename)
+        return filename
+    
+    def save_log(self, text, log_file_name_base, ext=""):
+        filename = self.get_log_file_name(log_file_name_base, ext)
         
         try:
             with open(filename, "wb") as fh:
