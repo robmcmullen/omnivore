@@ -361,13 +361,14 @@ class FrameworkApplication(TasksApplication):
             helper = helper_object(preferences=self.preferences)
         return helper
 
-def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task=""):
+def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", application_name=""):
     """Start the application
     
     :param plugins: list of user plugins
     :param use_eggs Boolean: search for setuptools plugins and plugins in local eggs?
     :param egg_path: list of user-specified paths to search for more plugins
     :param startup_task string: task factory identifier for task shown in initial window
+    :param application_name string: change application name instead of default Peppy2
     """
     # Enthought library imports.
     from envisage.api import PluginManager
@@ -444,6 +445,8 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task=""):
     kwargs = {}
     if startup_task:
         kwargs['startup_task'] = startup_task
+    if application_name:
+        kwargs['name'] = application_name
     app = FrameworkApplication(plugin_manager=plugin_manager, command_line_args=extra_args, **kwargs)
     
     app.run()
