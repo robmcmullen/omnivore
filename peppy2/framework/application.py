@@ -165,7 +165,7 @@ class FrameworkApplication(TasksApplication):
 
     #### API
 
-    def load_file(self, uri, active_task, **kwargs):
+    def load_file(self, uri, active_task=None, task_id="", **kwargs):
         service = self.get_service("peppy2.file_type.i_file_recognizer.IFileRecognizerDriver")
         log.debug("SERVICE!!! %s" % service)
         
@@ -188,7 +188,10 @@ class FrameworkApplication(TasksApplication):
         possibilities = []
         for factory in self.task_factories:
             log.debug("factory: %s" % factory.name)
-            if hasattr(factory.factory, "can_edit"):
+            if task_id:
+                if factory.id == task_id:
+                    possibilities.append(factory)
+            elif hasattr(factory.factory, "can_edit"):
                 if factory.factory.can_edit(guess.metadata.mime):
                     log.debug("  can edit: %s" % guess.metadata.mime)
                     possibilities.append(factory)
