@@ -157,7 +157,8 @@ def get_image_path(rel_path, module=None, file=None, excludes=[]):
         elif frozen in ('macosx_app'):
             #print "FROZEN!!! %s" % frozen
             root = os.environ['RESOURCEPATH']
-            zippath, image_path = image_path.split(".zip/")
+            if ".zip/" in image_path:
+                zippath, image_path = image_path.split(".zip/")
             image_path = os.path.join(root, image_path)
         else:
             print "App packager %s not yet supported for image paths!!!"
