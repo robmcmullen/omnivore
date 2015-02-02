@@ -397,7 +397,7 @@ class FrameworkApplication(TasksApplication):
             log.error("Failed writing %s to %s" % (log_file_name_base, filename))
 
 
-def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", application_name=""):
+def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", application_name="", debug_log=False):
     """Start the application
     
     :param plugins: list of user plugins
@@ -484,6 +484,14 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", 
     if application_name:
         kwargs['name'] = application_name
     app = FrameworkApplication(plugin_manager=plugin_manager, command_line_args=extra_args, **kwargs)
+    
+    # Create a debugging log
+    if debug_log:
+        filename = app.get_log_file_name("debug")
+        handler = logging.FileHandler(filename)
+        logger = logging.getLogger('')
+        logger.addHandler(handler)
+        logger.setLevel(logging.DEBUG)
     
     app.run()
     
