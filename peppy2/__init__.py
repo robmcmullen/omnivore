@@ -102,7 +102,7 @@ def get_py2exe_data_files(module=None, excludes=[]):
             data_files.append((mod_root, needed))
     return data_files
 
-def get_image_path(rel_path, module=None, file=None, excludes=[]):
+def get_image_path(rel_path, module=None, file=None, up_one_level=False, excludes=[]):
     """Get the image path for static images relative to the specified module
     or file.
     
@@ -144,6 +144,8 @@ def get_image_path(rel_path, module=None, file=None, excludes=[]):
         path = file.replace(".", "/")
     import os
     import sys
+    if up_one_level:
+        path = os.path.dirname(path)
     frozen = getattr(sys, 'frozen', False)
     image_path = os.path.join(os.path.dirname(path), rel_path)
     if frozen:
