@@ -31,30 +31,6 @@ To extract all non SYS files while converting to lower case, use::
     File #8 : *ASTEROIDS    066 : copying to asteroid.s
 
 
-Command Line Help
------------------
-
-The built-in help in accessed with the standard ``--help`` argument::
-
-    $ python atrcopy.py --help
-    usage: atrcopy.py [-h] [-v] [-l] [--dry-run] [-n] [-x] [--xex] ATR [ATR ...]
-
-    Extract images off ATR format disks
-
-    positional arguments:
-      ATR            an ATR image file [or a list of them]
-
-    optional arguments:
-      -h, --help     show this help message and exit
-      -v, --verbose
-      -l, --lower    convert filenames to lower case
-      --dry-run      don't extract, just show what would have been extracted
-      -n, --no-sys   only extract things that look like games (no DOS or .SYS
-                     files)
-      -x, --extract  extract files
-      --xex          add .xex extension
-
-
 Example on Mac OS X
 -------------------
 
@@ -79,13 +55,13 @@ automatically.  Go to the ``atrtest`` folder by typing::
 You should see the file ``atrcopy.py`` as well as the other ATR images you
 placed in this directory by using the command::
 
-    ls -l *
+    ls -l
 
 For example, you might see::
 
     mac:~/Documents/atrtest $ ls -l
     -rw-r--r-- 1 rob  staff  92176 May 18 21:57 GAMES1.ATR
-    -rwxr-xr-x 1 rob  staff   8154 May 18 22:36 atrcopy.py*
+    -rwxr-xr-x 1 rob  staff   8154 May 18 22:36 atrcopy.py
 
 Now, run the program by typing ``python atrcopy.py YOURFILE.ATR`` and you should
 see the contents of the ATR image in the familiar Atari DOS format::
@@ -133,3 +109,28 @@ DOS files.  So a full example might be::
     File #6 : *DIGDUG       133 : copying to digdug.xex
     File #7 : *ANTEATER     066 : copying to anteater.xex
     File #8 : *ASTEROIDS    066 : copying to asteroids.xex
+
+
+Command Line Arguments
+----------------------
+
+The available command line arguments are summarized using the standard ``--
+help`` argument::
+
+    $ python atrcopy.py --help
+    usage: atrcopy.py [-h] [-v] [-l] [--dry-run] [-n] [-x] [--xex] ATR [ATR ...]
+
+    Extract images off ATR format disks
+
+    positional arguments:
+      ATR            an ATR image file [or a list of them]
+
+    optional arguments:
+      -h, --help     show this help message and exit
+      -v, --verbose
+      -l, --lower    convert filenames to lower case
+      --dry-run      don't extract, just show what would have been extracted
+      -n, --no-sys   only extract things that look like games (no DOS or .SYS
+                     files)
+      -x, --extract  extract files
+      --xex          add .xex extension
