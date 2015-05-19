@@ -96,10 +96,15 @@ class AtrDirent(object):
         self.current_sector = 0
     
     def __str__(self):
-        locked = "*" if self.locked else ""
-        dos = "(mydos)" if self.mydos else ""
+        output = "o" if self.opened_output else "."
+        dos2 = "2" if self.dos_2 else "."
+        mydos = "m" if self.mydos else "."
+        in_use = "u" if self.in_use else "."
+        deleted = "d" if self.deleted else "."
+        locked = "*" if self.locked else " "
+        flags = "%s%s%s%s%s%s %03d" % (output, dos2, mydos, in_use, deleted, locked, self.starting_sector)
         if self.in_use:
-            return "File #%-2d: %1s%-8s%-3s  %03d %s" % (self.file_num, locked, self.filename, self.ext, self.num_sectors, dos)
+            return "File #%-2d (%s) %-8s%-3s  %03d" % (self.file_num, flags, self.filename, self.ext, self.num_sectors)
         return
     
     def start_read(self):
