@@ -31,6 +31,30 @@ To extract all non SYS files while converting to lower case, use::
     File #8 : *ASTEROIDS    066 : copying to asteroid.s
 
 
+Command Line Help
+-----------------
+
+The built-in help in accessed with the standard ``--help`` argument::
+
+    $ python atrcopy.py --help
+    usage: atrcopy.py [-h] [-v] [-l] [--dry-run] [-n] [-x] [--xex] ATR [ATR ...]
+
+    Extract images off ATR format disks
+
+    positional arguments:
+      ATR            an ATR image file [or a list of them]
+
+    optional arguments:
+      -h, --help     show this help message and exit
+      -v, --verbose
+      -l, --lower    convert filenames to lower case
+      --dry-run      don't extract, just show what would have been extracted
+      -n, --no-sys   only extract things that look like games (no DOS or .SYS
+                     files)
+      -x, --extract  extract files
+      --xex          add .xex extension
+
+
 Example on Mac OS X
 -------------------
 

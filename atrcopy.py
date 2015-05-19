@@ -235,14 +235,15 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description="Extract images off ATR format disks")
     parser.add_argument("-v", "--verbose", default=0, action="count")
-    parser.add_argument("-l", "--lower", action="store_true", default=False, help="Convert filenames to lower case")
-    parser.add_argument("--dry-run", action="store_true", default=False, help="Don't extract, just show what would have been extracted")
-    parser.add_argument("-n", "--no-sys", action="store_true", default=False, help="Only extract things that look like games (no DOS or .SYS files)")
-    parser.add_argument("-x", "--extract", action="store_true", default=False, help="Extract files")
-    parser.add_argument("--xex", action="store_true", default=False, help="Add .xex extension")
+    parser.add_argument("-l", "--lower", action="store_true", default=False, help="convert filenames to lower case")
+    parser.add_argument("--dry-run", action="store_true", default=False, help="don't extract, just show what would have been extracted")
+    parser.add_argument("-n", "--no-sys", action="store_true", default=False, help="only extract things that look like games (no DOS or .SYS files)")
+    parser.add_argument("-x", "--extract", action="store_true", default=False, help="extract files")
+    parser.add_argument("--xex", action="store_true", default=False, help="add .xex extension")
+    parser.add_argument("files", metavar="ATR", nargs="+", help="an ATR image file [or a list of them]")
     options, extra_args = parser.parse_known_args()
 
-    for args in extra_args:
+    for args in options.files:
         print args
         with open(args, "rb") as fh:
             atr = AtrDiskImage(fh)
