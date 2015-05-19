@@ -40,15 +40,15 @@ a framework version from python.org.
 To prevent overwriting important system files, it's best to create a working
 folder: a new empty folder somewhere and do all your testing in that folder.
 For this example, create a folder called ``atrtest`` in your ``Documents``
-folder.  Put a few ``.ATR`` images in this directory as well
+folder.  Put a few ``.ATR`` images in this directory to use for testing.
 
-Download or copy the file ``atrcopy.py`` and put the ``Documents/atrtest``
+Download or copy the file ``atrcopy.py`` and put it the ``Documents/atrtest``
 folder.
 
 Since this is a command line programe, you must start a Terminal by double
-clicking on Terminal.app in the Applications/Utilities folder in the Finder.
-When Terminal opens, it will put you in your home folder.  Go do the atrtest
-folder by typing::
+clicking on Terminal.app in the ``Applications/Utilities`` folder in
+the Finder.  When Terminal opens, it will put you in your home folder
+automatically.  Go to the ``atrtest`` folder by typing::
 
     cd Documents/atrtest
 
