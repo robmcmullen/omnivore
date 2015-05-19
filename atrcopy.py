@@ -17,6 +17,7 @@ class FileNumberMismatchError164(AtrError):
 
 class AtrHeader(object):
     format = "<hhhBLLB"
+    file_format = "ATR"
     
     def __init__(self, bytes=None):
         self.size_in_bytes = 0
@@ -42,7 +43,22 @@ class AtrHeader(object):
             raise InvalidAtrHeader
     
     def __str__(self):
-        return "size=%d, sector size=%d, crc=%d flags=%d unused=%d" % (self.size_in_bytes, self.sector_size, self.crc, self.flags, self.unused)
+        return "%s Disk Image (size=%d, sector size=%d, crc=%d flags=%d unused=%d)" % (self.file_format, self.size_in_bytes, self.sector_size, self.crc, self.flags, self.unused)
+
+    def check_size(self, size):
+        if self.size_in_bytes == 0:
+            if size == 92160:
+                self.size_in_bytes = size
+                self.sector_size = 128
+            elif size == 184320:
+                self.size_in_bytes = size
+                self.sector_size = 256
+
+class XfdHeader(AtrHeader):
+    file_format = "XFD"
+    
+    def __str__(self):
+        return "%s Disk Image (size=%d, sector size=%d)" % (self.file_format, self.size_in_bytes, self.sector_size)
 
 class AtrDirent(object):
     format = "<Bhh8s3s"
@@ -77,6 +93,7 @@ class AtrDirent(object):
         self.starting_sector = values[2]
         self.filename = values[3].rstrip()
         self.ext = values[4].rstrip()
+        self.current_sector = 0
     
     def __str__(self):
         locked = "*" if self.locked else ""
@@ -85,17 +102,37 @@ class AtrDirent(object):
             return "File #%-2d: %1s%-8s%-3s  %03d %s" % (self.file_num, locked, self.filename, self.ext, self.num_sectors, dos)
         return
     
-    def process_raw_sector(self, bytes):
-        file_num = ord(bytes[-3]) >> 2
+    def start_read(self):
+        self.current_sector = self.starting_sector
+        self.current_read = self.num_sectors
+    
+    def read_sector(self, disk):
+        raw = disk.get_raw_bytes(self.current_sector)
+        bytes = self.process_raw_sector(disk, raw)
+        return (bytes, self.current_sector == 0)
+
+    def process_raw_sector(self, disk, raw):
+        file_num = ord(raw[-3]) >> 2
         if file_num != self.file_num:
             raise FileNumberMismatchError164()
-        sector = ((ord(bytes[-3]) & 0x3) << 8) + ord(bytes[-2])
-        num_bytes = ord(bytes[-1])
-        return sector, bytes[0:num_bytes]
+        self.current_sector = ((ord(raw[-3]) & 0x3) << 8) + ord(raw[-2])
+        num_bytes = ord(raw[-1])
+        return raw[0:num_bytes]
     
     def get_filename(self):
         ext = ("." + self.ext) if self.ext else ""
         return self.filename + ext
+
+class MydosDirent(AtrDirent):
+    def process_raw_sector(self, disk, raw):
+        self.current_read -= 1
+        if self.current_read == 0:
+            self.current_sector = 0
+        else:
+            self.current_sector += 1
+            if self.current_sector == disk.first_vtoc:
+                self.current_sector = disk.first_data_after_vtoc
+        return raw
 
 class AtrFile(object):
     pass
@@ -104,12 +141,19 @@ class AtrDiskImage(object):
     def __init__(self, fh):
         self.fh = fh
         self.header = None
+        self.first_vtoc = 360
+        self.first_data_after_vtoc = 369
+        self.total_sectors = 0
+        self.unused_sectors = 0
         self.files = []
         self.setup()
     
     def __str__(self):
+        return "%s %d total sectors (%d free), %d files" % (self.header, self.total_sectors, self.unused_sectors, len(self.files))
+    
+    def dir(self):
         lines = []
-        lines.append("ATR Disk Image (%s) %d files" % (self.header, len(self.files)))
+        lines.append(str(self))
         for dirent in self.files:
             if dirent.in_use:
                 lines.append(str(dirent))
@@ -121,6 +165,7 @@ class AtrDiskImage(object):
         
         self.read_atr_header()
         self.check_size()
+        self.get_vtoc()
         self.get_directory()
     
     def read_atr_header(self):
@@ -129,16 +174,10 @@ class AtrDiskImage(object):
         try:
             self.header = AtrHeader(bytes)
         except InvalidAtrHeader:
-            self.header = AtrHeader()
+            self.header = XfdHeader()
     
     def check_size(self):
-        if self.header.size_in_bytes == 0:
-            if self.size == 92160:
-                self.header.size_in_bytes = self.size
-                self.header.sector_size = 128
-            elif self.size == 184320:
-                self.header.size_in_bytes = self.size
-                self.header.sector_size = 256
+        self.header.check_size(self.size)
         self.initial_sector_size = self.header.sector_size
         self.num_initial_sectors = 0
     
@@ -152,7 +191,13 @@ class AtrDiskImage(object):
         pos += self.header.atr_header_offset
         return pos, size
     
-    def get_sectors(self, start, end):
+    def get_raw_bytes(self, sector):
+        pos, size = self.get_pos(sector)
+        self.fh.seek(pos)
+        raw = self.fh.read(size)
+        return raw
+    
+    def get_sectors(self, start, end=None):
         """ Get contiguous sectors
         
         :param start: first sector number to read (note: numbering starts from 1)
@@ -162,12 +207,26 @@ class AtrDiskImage(object):
         output = StringIO()
         pos, size = self.get_pos(start)
         self.fh.seek(pos)
+        if end is None:
+            end = start
         while start <= end:
             bytes = self.fh.read(size)
             output.write(bytes)
             start += 1
             pos, size = self.get_pos(start)
         return output.getvalue()
+    
+    def get_vtoc(self):
+        bytes = self.get_sectors(360)
+        values = struct.unpack("<BHH", bytes[0:5])
+        code = values[0]
+        if code == 0 or code == 2:
+            num = 1
+        else:
+            num = (code * 2) - 3
+        self.first_vtoc = 360 - num + 1
+        self.total_sectors = values[1]
+        self.unused_sectors = values[2]
     
     def get_directory(self):
         dir_bytes = self.get_sectors(361, 368)
@@ -176,6 +235,9 @@ class AtrDiskImage(object):
         files = []
         while i < len(dir_bytes):
             dirent = AtrDirent(num, dir_bytes[i:i+16])
+            if dirent.mydos:
+                dirent = MydosDirent(num, dir_bytes[i:i+16])
+            
             if dirent.in_use:
                 files.append(dirent)
             elif dirent.flag == 0:
@@ -186,13 +248,12 @@ class AtrDiskImage(object):
     
     def get_file(self, dirent):
         output = StringIO()
-        sector = dirent.starting_sector
-        while sector > 0:
-            pos, size = self.get_pos(sector)
-            self.fh.seek(pos)
-            raw = self.fh.read(size)
-            sector, bytes = dirent.process_raw_sector(raw)
+        dirent.start_read()
+        while True:
+            bytes, last = dirent.read_sector(self)
             output.write(bytes)
+            if last:
+                break
         return output.getvalue()
     
     def find_file(self, filename):
@@ -243,10 +304,10 @@ if __name__ == "__main__":
     parser.add_argument("files", metavar="ATR", nargs="+", help="an ATR image file [or a list of them]")
     options, extra_args = parser.parse_known_args()
 
-    for args in options.files:
-        print args
-        with open(args, "rb") as fh:
+    for filename in options.files:
+        with open(filename, "rb") as fh:
             atr = AtrDiskImage(fh)
+            print "%s: %s" % (filename, atr)
             for dirent in atr.files:
                 try:
                     process(dirent, options)
