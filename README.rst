@@ -134,3 +134,5 @@ help`` argument::
                      files)
       -x, --extract  extract files
       --xex          add .xex extension
+      -f, --force    force operation on disk images that have bad directory
+                     entries or look like boot disks
