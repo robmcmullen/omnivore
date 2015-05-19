@@ -39,10 +39,10 @@ a framework version from python.org.
 
 To prevent overwriting important system files, it's best to create a working
 folder: a new empty folder somewhere and do all your testing in that folder.
-For this example, create a folder called ``atrtest`` in your Documents
+For this example, create a folder called ``atrtest`` in your ``Documents``
 folder.  Put a few ``.ATR`` images in this directory as well
 
-Download or copy the file atrcopy.py and put the Documents/atrtest folder.
+Download or copy the file ``atrcopy.py`` and put the ``Documents/atrtest``
 folder.
 
 Since this is a command line programe, you must start a Terminal by double
