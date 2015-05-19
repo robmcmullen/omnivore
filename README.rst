@@ -16,16 +16,19 @@ References
 Example Usage
 =============
 
-$ python atrcopy.py GAMES1.ATR -x -n --dry-run --xex
-File #0 : *DOS     SYS  039 : DRY_RUN: skipping system file
-File #1 : *MINER2       138 : DRY_RUN: copying to MINER2.XEX
-File #2 : *DEFENDER     132 : DRY_RUN: copying to DEFENDER.XEX
-File #3 : *CENTIPEDE    045 : DRY_RUN: copying to CENTIPEDE.XEX
-File #4 : *GALAXIAN     066 : DRY_RUN: copying to GALAXIAN.XEX
-File #5 : *AUTORUN SYS  005 : DRY_RUN: skipping system file
-File #6 : *DIGDUG       133 : DRY_RUN: copying to DIGDUG.XEX
-File #7 : *ANTEATER     066 : DRY_RUN: copying to ANTEATER.XEX
-File #8 : *ASTEROIDS    066 : DRY_RUN: copying to ASTEROIDS.XEX
+To extract all non SYS files while converting to lower case, use::
+
+    $ python atrcopy.py /tmp/GAMES1.ATR -x -l -n
+    GAMES1.ATR
+    File #0 : *DOS     SYS  039 : skipping system file dos.sys
+    File #1 : *MINER2       138 : copying to miner2
+    File #2 : *DEFENDER     132 : copying to defender
+    File #3 : *CENTIPEDE    045 : copying to centiped.e
+    File #4 : *GALAXIAN     066 : copying to galaxian
+    File #5 : *AUTORUN SYS  005 : skipping system file autorun.sys
+    File #6 : *DIGDUG       133 : copying to digdug
+    File #7 : *ANTEATER     066 : copying to anteater
+    File #8 : *ASTEROIDS    066 : copying to asteroid.s
 
 
 Example on Mac OS X
@@ -36,7 +39,8 @@ a framework version from python.org.
 
 To prevent overwriting important system files, it's best to create a working
 folder: a new empty folder somewhere and do all your testing in that folder.
-For this example, create a folder called `atrtest` in your Documents folder. Put a few `.ATR` images in this directory as well
+For this example, create a folder called ``atrtest`` in your Documents
+folder.  Put a few ``.ATR`` images in this directory as well
 
 Download or copy the file atrcopy.py and put the Documents/atrtest folder.
 folder.
@@ -48,8 +52,8 @@ folder by typing::
 
     cd Documents/atrtest
 
-You should see the file `atrcopy.py` as well as the other ATR images you placed
-in this directory by using the command::
+You should see the file ``atrcopy.py`` as well as the other ATR images you
+placed in this directory by using the command::
 
     ls -l *
 
@@ -59,7 +63,7 @@ For example, you might see::
     -rw-r--r-- 1 rob  staff  92176 May 18 21:57 GAMES1.ATR
     -rwxr-xr-x 1 rob  staff   8154 May 18 22:36 atrcopy.py*
 
-Now, run the program by typing `python atrcopy.py YOURFILE.ATR` and you should
+Now, run the program by typing ``python atrcopy.py YOURFILE.ATR`` and you should
 see the contents of the ATR image in the familiar Atari DOS format::
 
     mac:~/Documents/atrtest $ python atrcopy.py GAMES1.ATR
@@ -74,8 +78,8 @@ see the contents of the ATR image in the familiar Atari DOS format::
     File #7 : *ANTEATER     066 
     File #8 : *ASTEROIDS    066 
 
-Without any additional arguments, it will not extract files.  To actually
-pull the files out of the ATR image, you need to specify the -x command line
+Without any additional arguments, it will not extract files.  To actually pull
+the files out of the ATR image, you need to specify the ``-x`` command line
 argument::
 
     mac:~/Documents/atrtest $ python atrcopy.py -x GAMES1.ATR
@@ -90,9 +94,9 @@ argument::
     File #7 : *ANTEATER     066 : copying to ANTEATER
     File #8 : *ASTEROIDS    066 : copying to ASTEROID.S
 
-There are other flags, like the `-l` flag to covert to lower case, and the
-`--xex` flag to add the `.XEX` extension to the filename, and `-n` to skip DOS
-files.  So a full example might be::
+There are other flags, like the ``-l`` flag to covert to lower case, and the
+``--xex`` flag to add the `.XEX` extension to the filename, and ``-n`` to skip
+DOS files.  So a full example might be::
 
     mac:~/Documents/atrtest $ python atrcopy.py -n -l -x --xex GAMES1.ATR
     GAMES1.ATR
