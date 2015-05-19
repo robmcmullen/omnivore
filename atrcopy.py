@@ -345,8 +345,7 @@ if __name__ == "__main__":
                 print "%s: %s" % (filename, atr)
             except:
                 print "%s: Doesn't look like a supported disk image" % filename
-                #continue
-                raise
+                continue
             if atr.all_sane or options.force:
                 for dirent in atr.files:
                     try:
