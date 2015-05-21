@@ -82,7 +82,7 @@ class XfdHeader(AtrHeader):
     file_format = "XFD"
     
     def __str__(self):
-        return "%s Disk Image (size=%d, sector size=%d)" % (self.file_format, self.size_in_bytes, self.sector_size)
+        return "%s Disk Image (size=%d (%dx%db)" % (self.file_format, self.size_in_bytes, self.max_sectors, self.sector_size)
 
 class AtrDirent(object):
     format = "<Bhh8s3s"
