@@ -13,6 +13,13 @@ References
 * http://www.atarimax.com/jindroush.atari.org/afmtatr.html
 
 
+Supported Disk Image Formats
+============================
+
+* ``XFD``: XFormer images, basically raw disk dumps
+* ``ATR``: Nick Kennedy's disk image format; includes 16 byte header
+
+
 Example Usage
 =============
 
@@ -40,7 +47,7 @@ a framework version from python.org.
 To prevent overwriting important system files, it's best to create a working
 folder: a new empty folder somewhere and do all your testing in that folder.
 For this example, create a folder called ``atrtest`` in your ``Documents``
-folder.  Put a few ``.ATR`` images in this directory to use for testing.
+folder.  Put a few disk images in this directory to use for testing.
 
 Download or copy the file ``atrcopy.py`` and put it the ``Documents/atrtest``
 folder.
@@ -64,7 +71,7 @@ For example, you might see::
     -rwxr-xr-x 1 rob  staff   8154 May 18 22:36 atrcopy.py
 
 Now, run the program by typing ``python atrcopy.py YOURFILE.ATR`` and you should
-see the contents of the ATR image in the familiar Atari DOS format::
+see the contents of the ``ATR`` image in the familiar Atari DOS format::
 
     mac:~/Documents/atrtest $ python atrcopy.py GAMES1.ATR
     GAMES1.ATR
@@ -79,7 +86,7 @@ see the contents of the ATR image in the familiar Atari DOS format::
     File #8 : *ASTEROIDS    066 
 
 Without any additional arguments, it will not extract files.  To actually pull
-the files out of the ATR image, you need to specify the ``-x`` command line
+the files out of the ``ATR`` image, you need to specify the ``-x`` command line
 argument::
 
     mac:~/Documents/atrtest $ python atrcopy.py -x GAMES1.ATR
@@ -120,10 +127,10 @@ help`` argument::
     $ python atrcopy.py --help
     usage: atrcopy.py [-h] [-v] [-l] [--dry-run] [-n] [-x] [--xex] ATR [ATR ...]
 
-    Extract images off ATR format disks
+    Extract images off ATR or XFD format disks
 
     positional arguments:
-      ATR            an ATR image file [or a list of them]
+      ATR            a disk image file [or a list of them]
 
     optional arguments:
       -h, --help     show this help message and exit
