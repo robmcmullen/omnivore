@@ -198,7 +198,7 @@ while True:
         if operand == "":
             line += " {0:s}".format(mnemonic)
         else:
-            line += " {0:s}    {1:s}".format(mnemonic, operand)
+            line += " {0:4s}   {1:s}".format(mnemonic, operand)
 
         # Print line of output
         print(line)

@@ -18,6 +18,7 @@ leadInBytes = []
 addressModeTable = {
 "implied"     : "",
 "immediate"   : "#${0:02X}",
+"immediatex"  : "#${0:02X}{1:02X}",
 "direct"      : "${0:02X}",
 "indexed"     : "${0:02X},x",
 "extended"    : "${0:02X}{1:02X}",
@@ -32,7 +33,7 @@ addressModeTable = {
 #   addressing mode
 #   flags (e.g. pcr)
 opcodeTable = {
-0x00 : [ 1, "nop", "implied"         ],
+0x01 : [ 1, "nop", "implied"         ],
 0x06 : [ 1, "tap", "implied"         ],
 0x07 : [ 1, "tpa", "implied"         ],
 0x08 : [ 1, "inx", "implied"         ],
@@ -141,9 +142,9 @@ opcodeTable = {
 0x89 :    [ 2, "adc", "immediate"    ],
 0x8a :    [ 2, "ora", "immediate"    ],
 0x8b :    [ 2, "add", "immediate"    ],
-0x8c :    [ 2, "cpx", "immediate"    ],
+0x8c :    [ 3, "cpx", "immediatex"   ],
 0x8d :    [ 2, "bsr", "relative"     ],
-0x8e :    [ 2, "lds", "immediate"    ],
+0x8e :    [ 3, "lds", "immediatex"   ],
 
 0x90 :    [ 2, "sub", "direct"       ],
 0x91 :    [ 2, "cmp", "direct"       ],
@@ -202,7 +203,7 @@ opcodeTable = {
 0xc9 :    [ 2, "adcb", "immediate"   ],
 0xca :    [ 2, "orab", "immediate"   ],
 0xcb :    [ 2, "addb", "immediate"   ],
-0xce :    [ 2, "ldx", "immediate"    ],
+0xce :    [ 3, "ldx", "immediatex"   ],
 
 0xd0 :    [ 2, "subb", "direct"      ],
 0xd1 :    [ 2, "cmpb", "direct"      ],
