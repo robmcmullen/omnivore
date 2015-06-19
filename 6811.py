@@ -20,11 +20,14 @@ addressModeTable = {
 "immediatex" : "#${0:02X}{1:02X}",
 "direct"     : "${0:02X}",
 "direct2"    : "${0:02X} ${1:02X}",
+"direct3"    : "${0:02X} ${1:02X} ${2:02X}",
 "extended"   : "${0:02X}{1:02X}",
 "indexedx"   : "${0:02X},x",
-"indexedy"   : "${0:02X},y",
 "indexedx2"  : "${0:02X},x ${1:02X}",
+"indexedx3"  : "${0:02X},x ${1:02X} ${2:02X}",
+"indexedy"   : "${0:02X},y",
 "indexedy2"  : "${0:02X},y ${1:02X}",
+"indexedy3"  : "${0:02X},y ${1:02X} ${2:02X}",
 "relative"   : "${0:04X}",
 }
 
@@ -114,7 +117,10 @@ opcodeTable = {
 0x26   :  [ 2, "bne",  "relative", pcr   ],
 0x2a   :  [ 2, "bpl",  "relative", pcr   ],
 0x20   :  [ 2, "bra",  "relative", pcr   ],
-
+0x13   :  [ 4, "brclr", "direct3",       ],
+0x1f   :  [ 4, "brclr", "indexedx3",     ],
+0x181f :  [ 5, "brclr", "indexedy3",     ],
+0x21   :  [ 2, "brn",  "relative", pcr   ],
 
 
 
