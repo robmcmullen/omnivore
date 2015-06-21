@@ -31,7 +31,7 @@ addressModeTable = {
 "zeropagey"               : "${0:02X},y",
 "indirectzeropage"        : "(${0:02X})",
 "absoluteindexedindirect" : "(${1:02X}{0:02X},x)",
-"zeropagerelative"        : "${0:02X}, ${1:04X}",
+"zeropagerelative"        : "${0:02X},${1:04X}",
 }
 
 # Op Code Table
@@ -54,7 +54,7 @@ opcodeTable = {
 0x0c : [ 3, "tsb",  "absolute"          ],
 0x0d : [ 3, "ora",  "absolute"          ],
 0x0e : [ 3, "asl",  "absolute"          ],
-0x0f : [ 3, "bbr0", "zeropagerelative"  ],
+0x0f : [ 3, "bbr0", "zeropagerelative", pcr ],
 
 0x10 : [ 2, "bpl",  "relative", pcr     ],
 0x11 : [ 2, "ora",  "indirecty"         ],
@@ -69,7 +69,7 @@ opcodeTable = {
 0x1c : [ 3, "trb",  "absolute"          ],
 0x1d : [ 3, "ora",  "absolutex"         ],
 0x1e : [ 3, "asl",  "absolutex"         ],
-0x1f : [ 2, "bbr1", "zeropagerelative"  ],
+0x1f : [ 3, "bbr1", "zeropagerelative", pcr ],
 
 0x20 : [ 3, "jsr",  "absolute"          ],
 0x21 : [ 2, "and",  "indirectx"         ],
@@ -83,7 +83,7 @@ opcodeTable = {
 0x2c : [ 3, "bit",  "absolute"          ],
 0x2d : [ 3, "and",  "absolute"          ],
 0x2e : [ 3, "rol",  "absolute"          ],
-0x2f : [ 3, "bbr2", "zeropagerelative"  ],
+0x2f : [ 3, "bbr2", "zeropagerelative", pcr ],
 
 0x30 : [ 2, "bmi",  "relative", pcr     ],
 0x31 : [ 2, "and",  "indirecty"         ],
@@ -98,7 +98,7 @@ opcodeTable = {
 0x3c : [ 3, "bit",  "absolutex"         ],
 0x3d : [ 3, "and",  "absolutex"         ],
 0x3e : [ 3, "rol",  "absolutex"         ],
-0x3f : [ 2, "bbr3", "zeropagerelative"  ],
+0x3f : [ 3, "bbr3", "zeropagerelative", pcr ],
 
 0x40 : [ 1, "rti",  "implicit"          ],
 0x41 : [ 2, "eor",  "indirectx"         ],
@@ -111,7 +111,7 @@ opcodeTable = {
 0x4c : [ 3, "jmp",  "absolute"          ],
 0x4d : [ 3, "eor",  "absolute"          ],
 0x4e : [ 3, "lsr",  "absolute"          ],
-0x4f : [ 2, "bbr4", "zeropagerelative"  ],
+0x4f : [ 3, "bbr4", "zeropagerelative", pcr ],
 
 0x50 : [ 2, "bvc",  "relative", pcr     ],
 0x51 : [ 2, "eor",  "indirecty"         ],
@@ -124,7 +124,7 @@ opcodeTable = {
 0x5a : [ 1, "phy",  "implicit"          ],
 0x5d : [ 3, "eor",  "absolutex"         ],
 0x5e : [ 3, "lsr",  "absolutex"         ],
-0x5f : [ 2, "bbr5", "zeropagerelative"  ],
+0x5f : [ 3, "bbr5", "zeropagerelative", pcr ],
 
 0x60 : [ 1, "rts",  "implicit"          ],
 0x61 : [ 2, "adc",  "indirectx"         ],
@@ -138,7 +138,7 @@ opcodeTable = {
 0x6c : [ 3, "jmp",  "indirect"          ],
 0x6d : [ 3, "adc",  "absolute"          ],
 0x6e : [ 3, "ror",  "absolute"          ],
-0x6f : [ 2, "bbr6", "zeropagerelative"  ],
+0x6f : [ 3, "bbr6", "zeropagerelative", pcr ],
 
 0x70 : [ 2, "bvs",  "relative", pcr     ],
 0x71 : [ 2, "adc",  "indirecty"         ],
@@ -150,10 +150,10 @@ opcodeTable = {
 0x78 : [ 1, "sei",  "implicit"          ],
 0x79 : [ 3, "adc",  "absolutey"         ],
 0x7a : [ 1, "ply",  "implicit"          ],
-0x7c : [ 2, "jmp",  "absoluteindexedindirect" ],
+0x7c : [ 3, "jmp",  "absoluteindexedindirect" ],
 0x7d : [ 3, "adc",  "absolutex"         ],
 0x7e : [ 3, "ror",  "absolutex"         ],
-0x7f : [ 2, "bbr7",  "zeropagerelative" ],
+0x7f : [ 3, "bbr7",  "zeropagerelative", pcr ],
 
 0x80 : [ 2, "bra",  "relative"          ],
 0x81 : [ 2, "sta",  "indirectx"         ],
@@ -167,7 +167,7 @@ opcodeTable = {
 0x8c : [ 3, "sty",  "absolute"          ],
 0x8d : [ 3, "sta",  "absolute"          ],
 0x8e : [ 3, "stx",  "absolute"          ],
-0x8f : [ 2, "bbs0", "zeropagerelative"  ],
+0x8f : [ 3, "bbs0", "zeropagerelative", pcr ],
 
 0x90 : [ 2, "bcc",  "relative", pcr     ],
 0x91 : [ 2, "sta",  "indirecty"         ],
@@ -182,7 +182,7 @@ opcodeTable = {
 0x9c : [ 3, "stz",  "absolute"          ],
 0x9d : [ 3, "sta",  "absolutex"         ],
 0x9e : [ 3, "stz",  "absolutex"         ],
-0x9f : [ 2, "bbs1", "zeropagerelative"  ],
+0x9f : [ 3, "bbs1", "zeropagerelative", pcr ],
 
 0xa0 : [ 2, "ldy",  "immediate"         ],
 0xa1 : [ 2, "lda",  "indirectx"         ],
@@ -197,7 +197,7 @@ opcodeTable = {
 0xac : [ 3, "ldy",  "absolute"          ],
 0xad : [ 3, "lda",  "absolute"          ],
 0xae : [ 3, "ldx",  "absolute"          ],
-0xaf : [ 2, "bbs2", "zeropagerelative"  ],
+0xaf : [ 3, "bbs2", "zeropagerelative", pcr ],
 
 0xb0 : [ 2, "bcs",  "relative", pcr     ],
 0xb1 : [ 2, "lda",  "indirecty"         ],
@@ -212,7 +212,7 @@ opcodeTable = {
 0xbc : [ 3, "ldy",  "absolutex"         ],
 0xbd : [ 3, "lda",  "absolutex"         ],
 0xbe : [ 3, "ldx",  "absolutey"         ],
-0xbf : [ 2, "bbs3", "zeropagerelative"  ],
+0xbf : [ 3, "bbs3", "zeropagerelative", pcr ],
 
 0xc0 : [ 2, "cpy",  "immediate"         ],
 0xc1 : [ 2, "cmp",  "indirectx"         ],
@@ -227,7 +227,7 @@ opcodeTable = {
 0xcc : [ 3, "cpy",  "absolute"          ],
 0xcd : [ 3, "cmp",  "absolute"          ],
 0xce : [ 3, "dec",  "absolute"          ],
-0xcf : [ 2, "bbs4", "zeropagerelative"  ],
+0xcf : [ 3, "bbs4", "zeropagerelative", pcr ],
 
 0xd0 : [ 2, "bne",  "relative", pcr     ],
 0xd1 : [ 2, "cmp",  "indirecty"         ],
@@ -241,7 +241,7 @@ opcodeTable = {
 0xda : [ 1, "stp",  "implicit"          ], # WDC 65C02 only (not Rockwell)
 0xdd : [ 3, "cmp",  "absolutex"         ],
 0xde : [ 3, "dec",  "absolutex"         ],
-0xdf : [ 2, "bbs5", "zeropagerelative"  ],
+0xdf : [ 3, "bbs5", "zeropagerelative", pcr ],
 
 0xe0 : [ 2, "cpx",  "immediate"         ],
 0xe1 : [ 2, "sbc",  "indirectx"         ],
@@ -255,7 +255,7 @@ opcodeTable = {
 0xec : [ 3, "cpx",  "absolute"          ],
 0xed : [ 3, "sbc",  "absolute"          ],
 0xee : [ 3, "inc",  "absolute"          ],
-0xef : [ 2, "bbs6", "zeropagerelative"  ],
+0xef : [ 3, "bbs6", "zeropagerelative", pcr ],
 
 0xf0 : [ 2, "beq",  "relative", pcr     ],
 0xf1 : [ 2, "sbc",  "indirecty"         ],
@@ -268,7 +268,7 @@ opcodeTable = {
 0xfa : [ 1, "plx",  "implicit"          ],
 0xfd : [ 3, "sbc",  "absolutex"         ],
 0xfe : [ 3, "inc",  "absolutex"         ],
-0xff : [ 2, "bbs7", "zeropagerelative"  ],
+0xff : [ 3, "bbs7", "zeropagerelative", pcr ],
 
 }
 
