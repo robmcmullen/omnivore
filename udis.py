@@ -149,9 +149,10 @@ while True:
 
         op = {}  # Array to hold operands
 
-        # Get any operands and stor in an array
+        # Get any operands and store in an array
         for i in range(1, maxLength):
             if (i < length):
+                # TODO: Could get EOF here
                 op[i] = ord(f.read(1))  # Get operand bytes
                 if args.nolist is False:
                     line += " {0:02X}".format(op[i])
@@ -187,10 +188,14 @@ while True:
 
         # Special check for invalid op code. Display as ??? or .byte depending on command line option.
         if mnemonic == "???" and not args.invalid:
-            if isprint(chr(opcode)):
-                mnemonic = ".byte  '{0:c}'".format(opcode)
+            # Handle case where invalid opcode has a leadin byte.
+            if leadin is True:
+                mnemonic = ".byte  ${0:02X},${1:02X}".format(opcode // 256, opcode % 256)
             else:
-                mnemonic = ".byte  ${0:02X}".format(opcode)
+                if isprint(chr(opcode)):
+                    mnemonic = ".byte  '{0:c}'".format(opcode)
+                else:
+                    mnemonic = ".byte  ${0:02X}".format(opcode)
 
         # Need one more space if not in no list mode.
         if args.nolist is False:
@@ -210,6 +215,7 @@ while True:
 
         # Reset variables for next line of output.
         line = ""
+        operand = ""
         flags = 0
 
     except KeyboardInterrupt:

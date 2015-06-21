@@ -7,6 +7,12 @@
 # DataWidth = 8 # 8-bit data
 # AddressWidth = 16 # 16-bit addresses
 
+# Notes:
+
+# 1. Some instructions use the same opcode (e.g. bcs and blo).
+#    Disassembly will use whatever is listed last in this table.
+# 2. brset/brclr instructions do not yet output correct branch address.
+
 # Maximum length of an instruction (for formatting purposes)
 maxLength = 5
 
@@ -19,8 +25,8 @@ addressModeTable = {
 "immediate"  : "#${0:02X}",
 "immediatex" : "#${0:02X}{1:02X}",
 "direct"     : "${0:02X}",
-"direct2"    : "${0:02X} ${1:02X}",
-"direct3"    : "${0:02X} ${1:02X} ${2:02X}",
+"direct2"    : "*${0:02X} ${1:02X}",
+"direct3"    : "*${0:02X} ${1:02X} ${2:02X}",
 "extended"   : "${0:02X}{1:02X}",
 "indexedx"   : "${0:02X},x",
 "indexedx2"  : "${0:02X},x ${1:02X}",
@@ -117,13 +123,13 @@ opcodeTable = {
 0x26   :  [ 2, "bne",  "relative", pcr   ],
 0x2a   :  [ 2, "bpl",  "relative", pcr   ],
 0x20   :  [ 2, "bra",  "relative", pcr   ],
-0x13   :  [ 4, "brclr", "direct3",       ],
-0x1f   :  [ 4, "brclr", "indexedx3",     ],
-0x181f :  [ 5, "brclr", "indexedy3",     ],
+0x13   :  [ 4, "brclr", "direct3", pcr   ],
+0x1f   :  [ 4, "brclr", "indexedx3", pcr ],
+0x181f :  [ 5, "brclr", "indexedy3", pcr ],
 0x21   :  [ 2, "brn",  "relative", pcr   ],
-0x12   :  [ 4, "brset", "direct3",       ],
-0x1e   :  [ 4, "brset", "indexedx3",     ],
-0x181e :  [ 5, "brset", "indexedy3",     ],
+0x12   :  [ 4, "brset", "direct3", pcr   ],
+0x1e   :  [ 4, "brset", "indexedx3", pcr ],
+0x181e :  [ 5, "brset", "indexedy3", pcr ],
 0x14   :  [ 3, "bset", "direct2",        ],
 0x1c   :  [ 3, "bset", "indexedx2",      ],
 0x181c :  [ 4, "bset", "indexedy2",      ],
