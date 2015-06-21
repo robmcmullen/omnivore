@@ -8,7 +8,7 @@
 # AddressWidth = 16 # 16-bit addresses
 
 # Maximum length of an instruction (for formatting purposes)
-maxLength = 5;
+maxLength = 5
 
 # Leadin bytes for multbyte instructions
 leadInBytes = [0x18, 0x1a, 0xcd]
@@ -318,7 +318,7 @@ opcodeTable = {
 0xdf   :  [ 2, "stx",  "direct"          ],
 0xff   :  [ 3, "stx",  "extended"        ],
 0xef   :  [ 2, "stx",  "indexedx"        ],
-0x18ef :  [ 3, "stx",  "indexedy"        ],
+0xcdef :  [ 3, "stx",  "indexedy"        ],
 0x18df :  [ 3, "sty",  "direct"          ],
 0x18ff :  [ 4, "sty",  "extended"        ],
 0x1aef :  [ 3, "sty",  "indexedx"        ],

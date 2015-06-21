@@ -23,7 +23,7 @@ CPU    Status
 
 6809   planned
 
-6811   planned
+6811   done
 
 8008   planned
 

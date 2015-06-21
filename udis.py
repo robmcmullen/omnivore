@@ -89,9 +89,10 @@ except FileNotFoundError:
 
 # Print initial origin address
 if args.nolist is False:
-    print("{0:04X}            .org   ${1:04X}".format(address, address))
+    s = "                          "
+    print("{0:04X}{1:s}.org   ${2:04X}".format(address, s[0:maxLength*3+3], address))
 else:
-    print(" .org    ${0:04X}".format(address))
+    print(" .org   ${0:04X}".format(address))
 
 while True:
     try:
@@ -99,7 +100,8 @@ while True:
 
         if len(b) == 0:  # handle EOF
             if args.nolist is False:
-                print("{0:04X}            end".format(address))
+                s = "                          "
+                print("{0:04X}{1:s}end".format(address, s[0:maxLength*3+3]))
             break
 
         # Get op code
@@ -158,7 +160,7 @@ while True:
                     line += "   "
 
         # Handle relative addresses. Indicated by the flag pcr being set.
-        # TODO: Needs changes if more flags are added.
+        # Note: Needs changes if more flags are added.
         if flags == pcr:
             if op[1] < 128:
                 op[1] = address + op[1] + 2
@@ -198,7 +200,7 @@ while True:
         if operand == "":
             line += " {0:s}".format(mnemonic)
         else:
-            line += " {0:4s}   {1:s}".format(mnemonic, operand)
+            line += " {0:5s}  {1:s}".format(mnemonic, operand)
 
         # Print line of output
         print(line)
