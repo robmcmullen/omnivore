@@ -26,14 +26,14 @@ addressModeTable = {
 "immediatex" : "#${0:02X}{1:02X}",
 "direct"     : "${0:02X}",
 "direct2"    : "*${0:02X} ${1:02X}",
-"direct3"    : "*${0:02X} ${1:02X} ${2:02X}",
+"direct3"    : "*${0:02X} ${1:02X} ${2:04X}",
 "extended"   : "${0:02X}{1:02X}",
 "indexedx"   : "${0:02X},x",
 "indexedx2"  : "${0:02X},x ${1:02X}",
-"indexedx3"  : "${0:02X},x ${1:02X} ${2:02X}",
+"indexedx3"  : "${0:02X},x ${1:02X} ${2:04X}",
 "indexedy"   : "${0:02X},y",
 "indexedy2"  : "${0:02X},y ${1:02X}",
-"indexedy3"  : "${0:02X},y ${1:02X} ${2:02X}",
+"indexedy3"  : "${0:02X},y ${1:02X} ${2:04X}",
 "relative"   : "${0:04X}",
 }
 
