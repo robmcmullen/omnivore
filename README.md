@@ -11,11 +11,11 @@ The following CPUs are either supported or planned to be supported:
 CPU    Status
 ---    ------
 
-1802   planned
+1802   possible
 
 6502   done
 
-65816  planned
+65816  possible
 
 65C02  planned
 
@@ -27,9 +27,9 @@ CPU    Status
 
 8008   planned
 
-8051   planned
+8051   possible
 
-F8     planned
+F8     possible
 
 Z80    planned
 

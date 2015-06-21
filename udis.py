@@ -40,7 +40,6 @@ def isprint(c):
 # Avoids an error when output piped, e.g. to "less"
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
-# TODO: Add command line option to show available CPUs.
 
 # Parse command line options
 parser = argparse.ArgumentParser()
@@ -58,7 +57,8 @@ plugin = dir + os.sep + args.cpu + ".py"
 try:
     exec(open(plugin).read())
 except FileNotFoundError:
-    print(("error: cpu plugin file '{}' not found.".format(plugin)), file=sys.stderr)
+    print(("error: CPU plugin file '{}' not found.".format(plugin)), file=sys.stderr)
+    print("The following CPUs are supported: 6502 6800 6811")
     sys.exit(1)
 
 # Get filename from command line arguments.
