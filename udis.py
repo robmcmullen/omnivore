@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import sys
 import fileinput
 import argparse
@@ -51,7 +52,9 @@ parser.add_argument("-i", "--invalid", help="Show invalid opcodes as ??? rather 
 args = parser.parse_args()
 
 # Load CPU plugin based on command line option.
-plugin = args.cpu + ".py"
+# Looks for plugin in same directory as this program.
+dir = os.path.dirname(os.path.realpath(__file__))
+plugin = dir + os.sep + args.cpu + ".py"
 try:
     exec(open(plugin).read())
 except FileNotFoundError:
@@ -110,6 +113,8 @@ while True:
         # Handle if opcode is a leadin byte
         if opcode in leadInBytes:
             b = f.read(1)  # Get next byte of extended opcode
+            if len(b) == 0: # Unexpected EOF
+                break;
             opcode = (opcode << 8) + ord(b)
             leadin = True
         else:
@@ -152,13 +157,18 @@ while True:
         # Get any operands and store in an array
         for i in range(1, maxLength):
             if (i < length):
-                # TODO: Could get EOF here
-                op[i] = ord(f.read(1))  # Get operand bytes
+                b = f.read(1)
+                if len(b) == 0: # Unexpected EOF
+                    break;
+                op[i] = ord(b)  # Get operand bytes
                 if args.nolist is False:
                     line += " {0:02X}".format(op[i])
             else:
                 if args.nolist is False and leadin is False and i != length-1:
                     line += "   "
+
+        if len(b) == 0: # Unexpected EOF
+            break;
 
         # Handle relative addresses. Indicated by the flag pcr being set.
         # Assumes the operand that needs to be PC relative is the last one.
