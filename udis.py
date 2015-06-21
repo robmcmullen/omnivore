@@ -157,7 +157,7 @@ while True:
                 if args.nolist is False:
                     line += " {0:02X}".format(op[i])
             else:
-                if args.nolist is False:
+                if args.nolist is False and leadin is False and i != length-1:
                     line += "   "
 
         # Handle relative addresses. Indicated by the flag pcr being set.
@@ -190,7 +190,10 @@ while True:
         if mnemonic == "???" and not args.invalid:
             # Handle case where invalid opcode has a leadin byte.
             if leadin is True:
-                mnemonic = ".byte  ${0:02X},${1:02X}".format(opcode // 256, opcode % 256)
+                if args.nolist is False:
+                    mnemonic = "         .byte  ${0:02X},${1:02X}".format(opcode // 256, opcode % 256)
+                else:
+                    mnemonic = ".byte  ${0:02X},${1:02X}".format(opcode // 256, opcode % 256)
             else:
                 if isprint(chr(opcode)):
                     mnemonic = ".byte  '{0:c}'".format(opcode)
