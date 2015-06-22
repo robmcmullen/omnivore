@@ -61,8 +61,7 @@ class FileTypePlugin(Plugin):
     def _create_file_recognizer_driver_service(self):
         """ Factory method for the File Recognizer Driver service. """
 
-        log.debug("in _create_file_recognizer_driver_service.")
-        log.debug("  recognizers: %s" % str(self.recognizers))
+        log.info("known recognizers: %s" % str(self.recognizers))
 
         # Lazy importing, even though this is a fundamental service and
         # therefore doesn't buy us anything.  But as an example it's useful.

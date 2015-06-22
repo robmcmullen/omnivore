@@ -25,13 +25,13 @@ class FileRecognizerDriver(HasTraits):
             log.debug("trying %s recognizer: " % recognizer.id,)
             mime = recognizer.identify(guess)
             if mime is not None:
-                log.debug("found %s" % mime)
+                log.info("found %s for %s" % (mime, guess.metadata.uri))
                 guess.metadata.mime = mime
                 return
             log.debug("unrecognized")
         
         guess.metadata.mime = "application/octet-stream"
-        log.debug("Not recognized; default is %s" % guess.metadata.mime)
+        log.info("Not recognized; default is %s" % guess.metadata.mime)
 
     def _recognizers_changed(self, old, new):
         log.debug("_recognizers_changed: old=%s new=%s" % (str(old), str(new)))

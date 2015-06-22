@@ -493,6 +493,10 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", 
         logger.addHandler(handler)
         logger.setLevel(logging.DEBUG)
     
+    # Turn off peppy2 log debug messages by default
+    log = logging.getLogger("peppy2")
+    log.setLevel(logging.INFO)
+
     app.run()
     
     job_manager = get_global_job_manager()
