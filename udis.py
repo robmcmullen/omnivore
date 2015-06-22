@@ -172,12 +172,12 @@ while True:
 
         # Handle relative addresses. Indicated by the flag pcr being set.
         # Assumes the operand that needs to be PC relative is the last one.
-        # Note: Needs changes if more flags are added.
+        # Note: Code will need changes if more flags are added.
         if flags == pcr:
             if op[length-1] < 128:
-                op[length-1] = address + op[length-1] + 2
+                op[length-1] = address + op[length-1] + length
             else:
-                op[length-1] = address - (256 - op[length-1]) + 2
+                op[length-1] = address - (256 - op[length-1]) + length
             if op[length-1] < 0:
                 op[length-1] = 65536 + op[length-1]
 

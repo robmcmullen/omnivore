@@ -91,7 +91,7 @@ opcodeTable = {
 0x34 : [ 2, "bit",  "zeropagex"         ],
 0x35 : [ 2, "and",  "zeropagex"         ],
 0x36 : [ 2, "rol",  "zeropagex"         ],
-0x37 : [ 1, "rmb3", "zeropage"          ],
+0x37 : [ 2, "rmb3", "zeropage"          ],
 0x38 : [ 1, "sec",  "implicit"          ],
 0x39 : [ 3, "and",  "absolutey"         ],
 0x3a : [ 1, "dec",  "accumulator"       ],
@@ -155,7 +155,7 @@ opcodeTable = {
 0x7e : [ 3, "ror",  "absolutex"         ],
 0x7f : [ 3, "bbr7",  "zeropagerelative", pcr ],
 
-0x80 : [ 2, "bra",  "relative"          ],
+0x80 : [ 2, "bra",  "relative", pcr     ],
 0x81 : [ 2, "sta",  "indirectx"         ],
 0x84 : [ 2, "sty",  "zeropage"          ],
 0x85 : [ 2, "sta",  "zeropage"          ],
@@ -238,7 +238,7 @@ opcodeTable = {
 0xd8 : [ 1, "cld",  "implicit"          ],
 0xd9 : [ 3, "cmp",  "absolutey"         ],
 0xda : [ 1, "phx",  "implicit"          ],
-0xda : [ 1, "stp",  "implicit"          ], # WDC 65C02 only (not Rockwell)
+0xdb : [ 1, "stp",  "implicit"          ], # WDC 65C02 only (not Rockwell)
 0xdd : [ 3, "cmp",  "absolutex"         ],
 0xde : [ 3, "dec",  "absolutex"         ],
 0xdf : [ 3, "bbs5", "zeropagerelative", pcr ],
