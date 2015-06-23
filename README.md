@@ -17,7 +17,7 @@ CPU    Status
 
 65816  possible
 
-65C02  planned
+65C02  done
 
 6800   done
 
@@ -25,7 +25,7 @@ CPU    Status
 
 6811   done
 
-8008   planned
+8080   planned
 
 8051   possible
 
