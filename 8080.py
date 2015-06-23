@@ -89,6 +89,7 @@ addressModeTable = {
 "regal"      : "a,l",
 "regam"      : "a,m",
 "regaa"      : "a,a",
+"imm"        : "${0:02X}",
 "immb"       : "b,${0:02X}",
 "immc"       : "c,${0:02X}",
 "immd"       : "d,${0:02X}",
@@ -99,6 +100,8 @@ addressModeTable = {
 "immxh"      : "h,${1:02X}{0:02X}",
 "immxsp"     : "sp,${1:02X}{0:02X}",
 "direct"     : "${1:02X}{0:02X}",
+"0"          : "0",
+"1"          : "1",
 }
 
 # Op Code Table
@@ -239,139 +242,138 @@ opcodeTable = {
 0x7e : [ 1, "mov",  "regam"     ],
 0x7f : [ 1, "mov",  "regaa"     ],
 
+0x80 : [ 1, "add",  "regb"      ],
+0x81 : [ 1, "add",  "regc"      ],
+0x82 : [ 1, "add",  "regd"      ],
+0x83 : [ 1, "add",  "rege"      ],
+0x84 : [ 1, "add",  "regh"      ],
+0x85 : [ 1, "add",  "regl"      ],
+0x86 : [ 1, "add",  "regm"      ],
+0x87 : [ 1, "add",  "rega"      ],
+0x88 : [ 1, "adc",  "regb"      ],
+0x89 : [ 1, "adc",  "regc"      ],
+0x8a : [ 1, "adc",  "regd"      ],
+0x8b : [ 1, "adc",  "rege"      ],
+0x8c : [ 1, "adc",  "regh"      ],
+0x8d : [ 1, "adc",  "regl"      ],
+0x8e : [ 1, "adc",  "regm"      ],
+0x8f : [ 1, "adc",  "rega"      ],
+
+0x90 : [ 1, "sub",  "regb"      ],
+0x91 : [ 1, "sub",  "regc"      ],
+0x92 : [ 1, "sub",  "regd"      ],
+0x93 : [ 1, "sub",  "rege"      ],
+0x94 : [ 1, "sub",  "regh"      ],
+0x95 : [ 1, "sub",  "regl"      ],
+0x96 : [ 1, "sub",  "regm"      ],
+0x97 : [ 1, "sub",  "rega"      ],
+0x98 : [ 1, "sbb",  "regb"      ],
+0x99 : [ 1, "sbb",  "regc"      ],
+0x9a : [ 1, "sbb",  "regd"      ],
+0x9b : [ 1, "sbb",  "rege"      ],
+0x9c : [ 1, "sbb",  "regh"      ],
+0x9d : [ 1, "sbb",  "regl"      ],
+0x9e : [ 1, "sbb",  "regm"      ],
+0x9f : [ 1, "sbb",  "rega"      ],
+
+0xa0 : [ 1, "ana",  "regb"      ],
+0xa1 : [ 1, "ana",  "regc"      ],
+0xa2 : [ 1, "ana",  "regd"      ],
+0xa3 : [ 1, "ana",  "rege"      ],
+0xa4 : [ 1, "ana",  "regh"      ],
+0xa5 : [ 1, "ana",  "regl"      ],
+0xa6 : [ 1, "ana",  "regm"      ],
+0xa7 : [ 1, "ana",  "rega"      ],
+0xa8 : [ 1, "xra",  "regb"      ],
+0xa9 : [ 1, "xra",  "regc"      ],
+0xaa : [ 1, "xra",  "regd"      ],
+0xab : [ 1, "xra",  "rege"      ],
+0xac : [ 1, "xra",  "regh"      ],
+0xad : [ 1, "xra",  "regl"      ],
+0xae : [ 1, "xra",  "regm"      ],
+0xaf : [ 1, "xra",  "rega"      ],
+
+0xb0 : [ 1, "ora",  "regb"      ],
+0xb1 : [ 1, "ora",  "regc"      ],
+0xb2 : [ 1, "ora",  "regd"      ],
+0xb3 : [ 1, "ora",  "rege"      ],
+0xb4 : [ 1, "ora",  "regh"      ],
+0xb5 : [ 1, "ora",  "regl"      ],
+0xb6 : [ 1, "ora",  "regm"      ],
+0xb7 : [ 1, "ora",  "rega"      ],
+0xb8 : [ 1, "cmp",  "regb"      ],
+0xb9 : [ 1, "cmp",  "regc"      ],
+0xba : [ 1, "cmp",  "regd"      ],
+0xbb : [ 1, "cmp",  "rege"      ],
+0xbc : [ 1, "cmp",  "regh"      ],
+0xbd : [ 1, "cmp",  "regl"      ],
+0xbe : [ 1, "cmp",  "regm"      ],
+0xbf : [ 1, "cmp",  "rega"      ],
+
+0xc0 : [ 1, "rnz",  "implied"   ],
+0xc1 : [ 1, "pop",  "regb"      ],
+0xc2 : [ 3, "jnz",  "direct"    ],
+0xc3 : [ 3, "jmp",  "direct"    ],
+0xc4 : [ 3, "cnz",  "direct"    ],
+0xc5 : [ 1, "push", "regb"      ],
+0xc6 : [ 2, "adi",  "imm"       ],
+0xc7 : [ 1, "rst",  "0"         ],
+0xc8 : [ 1, "rz",   "implied"   ],
+0xc9 : [ 1, "ret",  "implied"   ],
+0xca : [ 3, "jz",   "direct"    ],
+0xcc : [ 3, "cz",   "direct"    ],
+0xcd : [ 3, "call", "direct"    ],
+0xce : [ 2, "aci",  "imm"       ],
+0xcf : [ 1, "rst",  "1"         ],
+
 }
 
 # End of processor specific code
 ##########################################################################
 
+#     ["rnc",         1],  # d0
+#     ["pop     d",   1],  # d1
+#     ["jnc     ",    3],  # d2
+#     ["out     ",    2],  # d3
+#     ["cnc     ",    3],  # d4
+#     ["push    d",   1],  # d5
+#     ["sui     ",    2],  # d6
+#     ["rst     2",   1],  # d7
+#     ["rc",          1],  # d8
+#     ["jc      ",    3],  # da
+#     ["in      ",    2],  # db
+#     ["cc      ",    3],  # dc
+#     ["sbi     ",    2],  # de
+#     ["rst     3",   1],  # df
  
-#     ["add     b",   1],  # 80
-#     ["add     c",   1],  # 81
-#     ["add     d",   1],  # 82
-#     ["add     e",   1],  # 83
-#     ["add     h",   1],  # 84
-#     ["add     l",   1],  # 85
-#     ["add     m",   1],  # 86
-#     ["add     a",   1],  # 87
-#     ["adc     b",   1],  # 88
-#     ["adc     c",   1],  # 89
-#     ["adc     d",   1],  # 8A
-#     ["adc     e",   1],  # 8B
-#     ["adc     h",   1],  # 8C
-#     ["adc     l",   1],  # 8D
-#     ["adc     m",   1],  # 8E
-#     ["adc     a",   1],  # 8F
-# 
-#     ["sub     b",   1],  # 90
-#     ["sub     c",   1],  # 91
-#     ["sub     d",   1],  # 92
-#     ["sub     e",   1],  # 93
-#     ["sub     h",   1],  # 94
-#     ["sub     l",   1],  # 95
-#     ["sub     m",   1],  # 96
-#     ["sub     a",   1],  # 97
-#     ["sbb     b",   1],  # 98
-#     ["sbb     c",   1],  # 99
-#     ["sbb     d",   1],  # 9A
-#     ["sbb     e",   1],  # 9B
-#     ["sbb     h",   1],  # 9C
-#     ["sbb     l",   1],  # 9D
-#     ["sbb     m",   1],  # 9E
-#     ["sbb     a",   1],  # 9F
-# 
-#     ["ana     b",   1],  # A0
-#     ["ana     c",   1],  # A1
-#     ["ana     d",   1],  # A2
-#     ["ana     e",   1],  # A3
-#     ["ana     h",   1],  # A4
-#     ["ana     l",   1],  # A5
-#     ["ana     m",   1],  # A6
-#     ["ana     a",   1],  # A7
-#     ["xra     b",   1],  # A8
-#     ["xra     c",   1],  # A9
-#     ["xra     d",   1],  # AA
-#     ["xra     e",   1],  # AB
-#     ["xra     h",   1],  # AC
-#     ["xra     l",   1],  # AD
-#     ["xra     m",   1],  # AE
-#     ["xra     a",   1],  # AF
-# 
-#     ["ora     b",   1],  # B0
-#     ["ora     c",   1],  # B1
-#     ["ora     d",   1],  # B2
-#     ["ora     e",   1],  # B3
-#     ["ora     h",   1],  # B4
-#     ["ora     l",   1],  # B5
-#     ["ora     m",   1],  # B6
-#     ["ora     a",   1],  # B7
-#     ["cmp     b",   1],  # B8
-#     ["cmp     c",   1],  # B9
-#     ["cmp     d",   1],  # BA
-#     ["cmp     e",   1],  # BB
-#     ["cmp     h",   1],  # BC
-#     ["cmp     l",   1],  # BD
-#     ["cmp     m",   1],  # BE
-#     ["cmp     a",   1],  # BF
-# 
-#     ["rnz",         1],  # C0
-#     ["pop     b",   1],  # C1
-#     ["jnz     ",    3],  # C2
-#     ["jmp     ",    3],  # C3
-#     ["cnz     ",    3],  # C4
-#     ["push    b",   1],  # C5
-#     ["adi     ",    2],  # C6
-#     ["rst     0",   1],  # C7
-#     ["rz",          1],  # C8
-#     ["ret",         1],  # C9
-#     ["jz      ",    3],  # CA
-#     ["cz      ",    3],  # CC
-#     ["call    ",    3],  # CD
-#     ["aci     ",    2],  # CE
-#     ["rst     1",   1],  # CF
-# 
-#     ["rnc",         1],  # D0
-#     ["pop     d",   1],  # D1
-#     ["jnc     ",    3],  # D2
-#     ["out     ",    2],  # D3
-#     ["cnc     ",    3],  # D4
-#     ["push    d",   1],  # D5
-#     ["sui     ",    2],  # D6
-#     ["rst     2",   1],  # D7
-#     ["rc",          1],  # D8
-#     ["jc      ",    3],  # DA
-#     ["in      ",    2],  # DB
-#     ["cc      ",    3],  # DC
-#     ["sbi     ",    2],  # DE
-#     ["rst     3",   1],  # DF
-# 
-#     ["rpo",         1],  # E0
-#     ["pop     h",   1],  # E1
-#     ["jpo     ",    3],  # E2
-#     ["xthl",        1],  # E3
-#     ["cpo     ",    3],  # E4
-#     ["push    h",   1],  # E5
-#     ["ani     ",    2],  # E6
-#     ["rst     4",   1],  # E7
-#     ["rpe",         1],  # E8
-#     ["pchl",        1],  # E9
-#     ["jpe     ",    3],  # EA
-#     ["xchg",        1],  # EB
-#     ["cpe     ",    3],  # EC
-#     ["xri     ",    2],  # EE
-#     ["rst     5",   1],  # EF
-# 
-#     ["rp",          1],  # F0
-#     ["pop     psw", 1],  # F1
-#     ["jp      ",    3],  # F2
-#     ["di",          1],  # F3
-#     ["cp      ",    3],  # F4
-#     ["push    psw", 1],  # F5
-#     ["ori     ",    2],  # F6
-#     ["rst     6",   1],  # F7
-#     ["rm",          1],  # F8
-#     ["sphl",        1],  # F9
-#     ["jm      ",    3],  # FA
-#     ["ei",          1],  # FB
-#     ["cm      ",    3],  # FC
-#     ["cpi     ",    2],  # FE
-#     ["rst     7",   1],  # FF
+#     ["rpo",         1],  # e0
+#     ["pop     h",   1],  # e1
+#     ["jpo     ",    3],  # e2
+#     ["xthl",        1],  # e3
+#     ["cpo     ",    3],  # e4
+#     ["push    h",   1],  # e5
+#     ["ani     ",    2],  # e6
+#     ["rst     4",   1],  # e7
+#     ["rpe",         1],  # e8
+#     ["pchl",        1],  # e9
+#     ["jpe     ",    3],  # ea
+#     ["xchg",        1],  # eb
+#     ["cpe     ",    3],  # ec
+#     ["xri     ",    2],  # ee
+#     ["rst     5",   1],  # ef
+ 
+#     ["rp",          1],  # f0
+#     ["pop     psw", 1],  # f1
+#     ["jp      ",    3],  # f2
+#     ["di",          1],  # f3
+#     ["cp      ",    3],  # f4
+#     ["push    psw", 1],  # f5
+#     ["ori     ",    2],  # f6
+#     ["rst     6",   1],  # f7
+#     ["rm",          1],  # f8
+#     ["sphl",        1],  # f9
+#     ["jm      ",    3],  # fa
+#     ["ei",          1],  # fb
+#     ["cm      ",    3],  # fc
+#     ["cpi     ",    2],  # fe
+#     ["rst     7",   1],  # ff
