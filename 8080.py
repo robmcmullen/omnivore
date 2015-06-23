@@ -20,9 +20,21 @@ addressModeTable = {
 "rega"       : "a",
 "regb"       : "b",
 "regc"       : "c",
+"regd"       : "d",
+"rege"       : "e",
+"regh"       : "h",
+"regl"       : "h",
+"regm"       : "m",
+"regsp"      : "sp",
 "immb"       : "b,${0:02X}",
 "immc"       : "c,${0:02X}",
+"immd"       : "d,${0:02X}",
+"immh"       : "h,${0:02X}",
+"immm"       : "m,${0:02X}",
 "immxb"      : "b,${1:02X}{0:02X}",
+"immxd"      : "d,${1:02X}{0:02X}",
+"immxh"      : "h,${1:02X}{0:02X}",
+"immxsp"     : "sp,${1:02X}{0:02X}",
 "direct"     : "${1:02X}{0:02X}",
 }
 
@@ -37,19 +49,64 @@ opcodeTable = {
 
 0x00 : [ 1, "nop",  "implied"    ],
 0x01 : [ 3, "lxi",  "immxb"      ],
-0x02 : [ 3, "stax", "regb"       ],
+0x02 : [ 1, "stax", "regb"       ],
 0x03 : [ 1, "inx",  "regb"       ],
 0x04 : [ 1, "inr",  "regb"       ],
 0x05 : [ 1, "dcr",  "regb"       ],
 0x06 : [ 2, "mvi",  "immb"       ],
 0x07 : [ 1, "rlc",  "implied"    ],
 0x09 : [ 1, "dad",  "regb"       ],
-0x0a : [ 2, "ldax", "regb",      ],
+0x0a : [ 1, "ldax", "regb",      ],
 0x0b : [ 1, "dcx",  "regb",      ],
 0x0c : [ 1, "inr",  "regc"       ],
 0x0d : [ 1, "dcr",  "regc"       ],
 0x0e : [ 2, "mvi",  "immc"       ],
 0x0f : [ 1, "rrc",  "implied"    ],
+
+0x11 : [ 3, "lxi",  "immxd"      ],
+0x12 : [ 1, "stax", "regd"       ],
+0x13 : [ 1, "inx",  "regd"       ],
+0x14 : [ 1, "inr",  "regd"       ],
+0x15 : [ 1, "dcr",  "regd"       ],
+0x16 : [ 2, "mvi",  "immd"       ],
+0x17 : [ 1, "ral",  "implied"    ],
+0x19 : [ 1, "dad",  "implied"    ],
+0x1a : [ 1, "ldax", "regd"       ],
+0x1b : [ 1, "dcx",  "regd"       ],
+0x1c : [ 1, "inr",  "rege"       ],
+0x1d : [ 1, "dcr",  "rege"       ],
+0x1e : [ 1, "mvi",  "rege"       ],
+0x1f : [ 1, "rar",  "implied"    ],
+
+0x21 : [ 3, "lxi",  "immh"      ],
+0x22 : [ 1, "shld", "implied"   ],
+0x23 : [ 1, "inx",  "regh"      ],
+0x24 : [ 1, "inr",  "regh"      ],
+0x25 : [ 1, "dcr",  "regh"      ],
+0x26 : [ 2, "mvi",  "regh"      ],
+0x27 : [ 1, "daa",  "implied"   ],
+0x29 : [ 1, "dad",  "regh"      ],
+0x2a : [ 3, "lhld", "direct"    ],
+0x2b : [ 1, "dcx",  "regh"      ],
+0x2c : [ 1, "inr",  "regl"      ],
+0x2d : [ 1, "dcr",  "regl"      ],
+0x2e : [ 2, "mvi",  "regl"      ],
+0x2f : [ 1, "cma",  "implied"   ],
+
+0x31 : [ 3, "lxi",  "immxsp"    ],
+0x32 : [ 3, "sta",  "direct"    ],
+0x33 : [ 1, "inx",  "regsp"     ],
+0x34 : [ 1, "inr",  "regm"      ],
+0x35 : [ 1, "dcr",  "regm"      ],
+0x36 : [ 2, "mvi",  "immm"      ],
+0x37 : [ 1, "stc",  "implied"   ],
+0x39 : [ 1, "dad",  "regsp"     ],
+0x3a : [ 3, "lda",  "direct"    ],
+0x3b : [ 1, "dcx",  "regsp"     ],
+0x3c : [ 1, "inr",  "rega"      ],
+0x3d : [ 1, "dcr",  "rega"      ],
+0x3e : [ 2, "mvi",  "rega"      ],
+0x3f : [ 1, "cmc",  "implied"   ],
 
 }
 
@@ -57,14 +114,6 @@ opcodeTable = {
 ##########################################################################
 # 
 # 
-# 0x10 : [ 2, "bpl", "relative", pcr   ],
-# 0x11 : [ 2, "ora", "indirecty"       ],
-# 0x15 : [ 2, "ora", "zeropagex"       ],
-# 0x16 : [ 2, "asl", "zeropagex"       ],
-# 0x18 : [ 1, "clc", "implicit"        ],
-# 0x19 : [ 3, "ora", "absolutey"       ],
-# 0x1d : [ 3, "ora", "absolutex"       ],
-# 0x1e : [ 3, "asl", "absolutex"       ],
 # 
 # registerb
 # registerc
@@ -147,54 +196,6 @@ opcodeTable = {
 # 7
 # 
 # 
-# --
-# 
-# 
-# 
-#     ["lxi     d,",  3],  # 11
-#     ["stax    d",   1],  # 12
-#     ["inx     d",   1],  # 13
-#     ["inr     d",   1],  # 14
-#     ["dcr     d",   1],  # 15
-#     ["mvi     d,",  2],  # 16
-#     ["ral",         1],  # 17
-#     ["dad",         1],  # 19
-#     ["ldax    d",   1],  # 1A
-#     ["dcx     d",   1],  # 1B
-#     ["inr     e",   1],  # 1C
-#     ["dcr     e",   1],  # 1D
-#     ["mvi     e,",  2],  # 1E
-#     ["rar",         1],  # 1F
-# 
-#     ["lxi     h,",  3],  # 21
-#     ["shld    ",    3],  # 22
-#     ["inx     h",   1],  # 23
-#     ["inr     h",   1],  # 24
-#     ["dcr     h",   1],  # 25
-#     ["mvi     h,",  2],  # 26
-#     ["daa",         1],  # 27
-#     ["dad     h",   1],  # 29
-#     ["lhld    ",    3],  # 2A
-#     ["dcx     h",   1],  # 2B
-#     ["inr     l",   1],  # 2C
-#     ["dcr     l",   1],  # 2D
-#     ["mvi     l,",  2],  # 2E
-#     ["cma",         1],  # 2F
-# 
-#     ["lxi     sp,", 3],  # 31
-#     ["sta     ",    3],  # 32
-#     ["inx     sp",  1],  # 33
-#     ["inr     m",   1],  # 34
-#     ["dcr     m",   1],  # 35
-#     ["mvi     m,",  2],  # 36
-#     ["stc",         1],  # 37
-#     ["dad     sp",  1],  # 39
-#     ["lda     ",    3],  # 3A
-#     ["dcx     sp",  1],  # 3B
-#     ["inr     a",   1],  # 3C
-#     ["dcr     a",   1],  # 3D
-#     ["mvi     a,",  2],  # 3E
-#     ["cmc",         1],  # 3F
 # 
 #     ["mov     b,b", 1],  # 40
 #     ["mov     b,c", 1],  # 41

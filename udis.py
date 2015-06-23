@@ -113,8 +113,8 @@ while True:
         # Handle if opcode is a leadin byte
         if opcode in leadInBytes:
             b = f.read(1)  # Get next byte of extended opcode
-            if len(b) == 0: # Unexpected EOF
-                break;
+            if len(b) == 0:  # Unexpected EOF
+                break
             opcode = (opcode << 8) + ord(b)
             leadin = True
         else:
@@ -158,8 +158,8 @@ while True:
         for i in range(1, maxLength):
             if (i < length):
                 b = f.read(1)
-                if len(b) == 0: # Unexpected EOF
-                    break;
+                if len(b) == 0:  # Unexpected EOF
+                    break
                 op[i] = ord(b)  # Get operand bytes
                 if args.nolist is False:
                     line += " {0:02X}".format(op[i])
@@ -167,8 +167,8 @@ while True:
                 if args.nolist is False and leadin is False and i != length-1:
                     line += "   "
 
-        if len(b) == 0: # Unexpected EOF
-            break;
+        if len(b) == 0:  # Unexpected EOF
+            break
 
         # Handle relative addresses. Indicated by the flag pcr being set.
         # Assumes the operand that needs to be PC relative is the last one.
