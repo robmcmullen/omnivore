@@ -148,6 +148,7 @@ class wxLogHandler(logging.Handler):
         logging.Handler.__init__(self)
         self.level = logging.DEBUG
         self.default_title = default_title
+        self.use_gui = True
 
     def flush(self):
         """
@@ -218,6 +219,9 @@ class wxLogHandler(logging.Handler):
         wx.SetCursor(wx.StockCursor(wx.CURSOR_WAIT))
     
     def post(self, evt):
+        if not self.use_gui:
+            print "NO GUI: message=%s" % evt.message
+            return
         m = evt.message
         if m.startswith("START"):
             d = self.open_dialog()
@@ -230,6 +234,9 @@ class wxLogHandler(logging.Handler):
             wx.Yield()
         elif m == "END":
             self.close_dialog()
+        elif m == "NO GUI":
+            self.close_dialog()
+            self.use_gui = False
         else:
             d = self.get_dialog_if_open()
             if d is None:
