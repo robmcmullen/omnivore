@@ -89,6 +89,7 @@ addressModeTable = {
 "regal"      : "a,l",
 "regam"      : "a,m",
 "regaa"      : "a,a",
+"regpsw"     : "psw",
 "imm"        : "${0:02X}",
 "immb"       : "b,${0:02X}",
 "immc"       : "c,${0:02X}",
@@ -102,6 +103,12 @@ addressModeTable = {
 "direct"     : "${1:02X}{0:02X}",
 "0"          : "0",
 "1"          : "1",
+"2"          : "2",
+"3"          : "3",
+"4"          : "4",
+"5"          : "5",
+"6"          : "6",
+"7"          : "7",
 }
 
 # Op Code Table
@@ -326,54 +333,54 @@ opcodeTable = {
 0xce : [ 2, "aci",  "imm"       ],
 0xcf : [ 1, "rst",  "1"         ],
 
+0xd0 : [ 1, "rnc",  "implied"   ],
+0xd1 : [ 1, "pop",  "regd"      ],
+0xd2 : [ 3, "jnc",  "direct"    ],
+0xd3 : [ 2, "out",  "imm"       ],
+0xd4 : [ 3, "cnc",  "direct"    ],
+0xd5 : [ 1, "push", "regd"      ],
+0xd6 : [ 2, "sui",  "imm"       ],
+0xd7 : [ 1, "rst",  "2"         ],
+0xd8 : [ 1, "rc",   "implied"   ],
+0xda : [ 3, "jc",   "direct"    ],
+0xdb : [ 2, "in",   "imm"       ],
+0xdc : [ 3, "cc",   "direct"    ],
+0xde : [ 2, "sbi",  "imm"       ],
+0xdf : [ 1, "rst",  "3"         ],
+
+0xe0 : [ 1, "rpo",  "implied"   ],
+0xe1 : [ 1, "pop",  "regh"      ],
+0xe2 : [ 3, "jpo",  "direct"    ],
+0xe3 : [ 1, "xthl", "implied"   ],
+0xe4 : [ 3, "cpo",  "direct"    ],
+0xe5 : [ 1, "push", "regh"      ],
+0xe6 : [ 2, "ani",  "imm"       ],
+0xe7 : [ 1, "rst",  "4"         ],
+0xe8 : [ 1, "rpe",  "implied"   ],
+0xe9 : [ 1, "pchl", "implied"   ],
+0xea : [ 3, "jpe",  "direct"    ],
+0xeb : [ 1, "xchg", "implied"   ],
+0xec : [ 3, "cpe",  "direct"    ],
+0xee : [ 2, "xri",  "imm"       ],
+0xef : [ 1, "rst",  "5"         ],
+
+0xf0 : [ 1, "rp",   "implied"   ],
+0xf1 : [ 1, "pop",  "regpsw"    ],
+0xf2 : [ 3, "jp",   "direct"    ],
+0xf3 : [ 1, "di",   "implied"   ],
+0xf4 : [ 3, "cp",   "direct"    ],
+0xf5 : [ 1, "push", "regpsw"    ],
+0xf6 : [ 2, "ori",  "imm"       ],
+0xf7 : [ 1, "rst",  "6"         ],
+0xf8 : [ 1, "rm",   "implied"   ],
+0xf9 : [ 1, "sphl", "implied"   ],
+0xfa : [ 3, "jm",   "direct"    ],
+0xfb : [ 1, "ei",   "implied"   ],
+0xfc : [ 3, "cm",   "direct"    ],
+0xfe : [ 2, "cpi",  "imm"       ],
+0xff : [ 1, "rst",  "7"         ],
+
 }
 
 # End of processor specific code
 ##########################################################################
-
-#     ["rnc",         1],  # d0
-#     ["pop     d",   1],  # d1
-#     ["jnc     ",    3],  # d2
-#     ["out     ",    2],  # d3
-#     ["cnc     ",    3],  # d4
-#     ["push    d",   1],  # d5
-#     ["sui     ",    2],  # d6
-#     ["rst     2",   1],  # d7
-#     ["rc",          1],  # d8
-#     ["jc      ",    3],  # da
-#     ["in      ",    2],  # db
-#     ["cc      ",    3],  # dc
-#     ["sbi     ",    2],  # de
-#     ["rst     3",   1],  # df
- 
-#     ["rpo",         1],  # e0
-#     ["pop     h",   1],  # e1
-#     ["jpo     ",    3],  # e2
-#     ["xthl",        1],  # e3
-#     ["cpo     ",    3],  # e4
-#     ["push    h",   1],  # e5
-#     ["ani     ",    2],  # e6
-#     ["rst     4",   1],  # e7
-#     ["rpe",         1],  # e8
-#     ["pchl",        1],  # e9
-#     ["jpe     ",    3],  # ea
-#     ["xchg",        1],  # eb
-#     ["cpe     ",    3],  # ec
-#     ["xri     ",    2],  # ee
-#     ["rst     5",   1],  # ef
- 
-#     ["rp",          1],  # f0
-#     ["pop     psw", 1],  # f1
-#     ["jp      ",    3],  # f2
-#     ["di",          1],  # f3
-#     ["cp      ",    3],  # f4
-#     ["push    psw", 1],  # f5
-#     ["ori     ",    2],  # f6
-#     ["rst     6",   1],  # f7
-#     ["rm",          1],  # f8
-#     ["sphl",        1],  # f9
-#     ["jm      ",    3],  # fa
-#     ["ei",          1],  # fb
-#     ["cm      ",    3],  # fc
-#     ["cpi     ",    2],  # fe
-#     ["rst     7",   1],  # ff
