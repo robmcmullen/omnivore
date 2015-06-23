@@ -25,7 +25,7 @@ CPU    Status
 
 6811   done
 
-8080   planned
+8080   done
 
 8051   possible
 

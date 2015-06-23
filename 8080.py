@@ -26,6 +26,38 @@ addressModeTable = {
 "regl"       : "h",
 "regm"       : "m",
 "regsp"      : "sp",
+"regbb"      : "b,b",
+"regbc"      : "b,c",
+"regbd"      : "b,d",
+"regbe"      : "b,e",
+"regbh"      : "b,h",
+"regbl"      : "b,l",
+"regbm"      : "b,m",
+"regba"      : "b,a",
+"regcb"      : "c,b",
+"regcc"      : "c,c",
+"regcd"      : "c,d",
+"regce"      : "c,e",
+"regch"      : "c,h",
+"regcl"      : "c,l",
+"regcm"      : "c,m",
+"regca"      : "c,a",
+"regdb"      : "d,b",
+"regdc"      : "d,c",
+"regdd"      : "d,d",
+"regde"      : "d,e",
+"regdh"      : "d,h",
+"regdl"      : "d,l",
+"regdm"      : "d,m",
+"regda"      : "d,a",
+"regeb"      : "e,b",
+"regec"      : "e,c",
+"reged"      : "e,d",
+"regee"      : "e,e",
+"regeh"      : "e,h",
+"regel"      : "e,l",
+"regem"      : "e,m",
+"regea"      : "e,a",
 "immb"       : "b,${0:02X}",
 "immc"       : "c,${0:02X}",
 "immd"       : "d,${0:02X}",
@@ -108,128 +140,45 @@ opcodeTable = {
 0x3e : [ 2, "mvi",  "rega"      ],
 0x3f : [ 1, "cmc",  "implied"   ],
 
+0x40 : [ 1, "mov",  "regbb"     ],
+0x41 : [ 1, "mov",  "regbc"     ],
+0x42 : [ 1, "mov",  "regbd"     ],
+0x43 : [ 1, "mov",  "regbe"     ],
+0x44 : [ 1, "mov",  "regbh"     ],
+0x45 : [ 1, "mov",  "regbl"     ],
+0x46 : [ 1, "mov",  "regbm"     ],
+0x47 : [ 1, "mov",  "regba"     ],
+0x48 : [ 1, "mov",  "regcb"     ],
+0x49 : [ 1, "mov",  "regcc"     ],
+0x4a : [ 1, "mov",  "regcd"     ],
+0x4b : [ 1, "mov",  "regce"     ],
+0x4c : [ 1, "mov",  "regch"     ],
+0x4d : [ 1, "mov",  "regcl"     ],
+0x4e : [ 1, "mov",  "regcm"     ],
+0x4f : [ 1, "mov",  "regca"     ],
+
+0x50 : [ 1, "mov",  "regdb"     ],
+0x51 : [ 1, "mov",  "regdc"     ],
+0x52 : [ 1, "mov",  "regdd"     ],
+0x53 : [ 1, "mov",  "regde"     ],
+0x54 : [ 1, "mov",  "regdh"     ],
+0x55 : [ 1, "mov",  "regdl"     ],
+0x56 : [ 1, "mov",  "regdm"     ],
+0x57 : [ 1, "mov",  "regda"     ],
+0x58 : [ 1, "mov",  "regeb"     ],
+0x59 : [ 1, "mov",  "regec"     ],
+0x5a : [ 1, "mov",  "reged"     ],
+0x5b : [ 1, "mov",  "regee"     ],
+0x5c : [ 1, "mov",  "regeh"     ],
+0x5d : [ 1, "mov",  "regel"     ],
+0x5e : [ 1, "mov",  "regem"     ],
+0x5f : [ 1, "mov",  "regea"     ],
+
 }
 
 # End of processor specific code
 ##########################################################################
-# 
-# 
-# 
-# registerb
-# registerc
-# registerd
-# registere
-# registerh
-# registerl
-# registerm
-# registersp
-# a,a
-# a,b
-# a,c
-# a,d
-# a,e
-# a,h
-# a,l
-# a,m
-# b,a
-# b,b
-# b,c
-# b,d
-# b,e
-# b,h
-# b,l
-# b,m
-# c,a
-# c,b
-# c,c
-# c,d
-# c,e
-# c,h
-# c,l
-# c,m
-# d,a
-# d,b
-# d,c
-# d,d
-# d,e
-# d,h
-# d,l
-# d,m
-# e,a
-# e,b
-# e,c
-# e,d
-# e,e
-# e,h
-# e,l
-# e,m
-# h,a
-# h,b
-# h,c
-# h,d
-# h,e
-# h,h
-# h,l
-# h,m
-# l,a
-# l,b
-# l,c
-# l,d
-# l,e
-# l,h
-# l,l
-# l,m
-# m,a
-# m,b
-# m,c
-# m,d
-# m,e
-# m,h
-# m,l
-# psw
-# 1
-# 2
-# 3
-# 4
-# 5
-# 6
-# 7
-# 
-# 
-# 
-#     ["mov     b,b", 1],  # 40
-#     ["mov     b,c", 1],  # 41
-#     ["mov     b,d", 1],  # 42
-#     ["mov     b,e", 1],  # 43
-#     ["mov     b,h", 1],  # 44
-#     ["mov     b,l", 1],  # 45
-#     ["mov     b,m", 1],  # 46
-#     ["mov     b,a", 1],  # 47
-#     ["mov     c,b", 1],  # 48
-#     ["mov     c,c", 1],  # 49
-#     ["mov     c,d", 1],  # 4A
-#     ["mov     c,e", 1],  # 4B
-#     ["mov     c,h", 1],  # 4C
-#     ["mov     c,l", 1],  # 4D
-#     ["mov     c,m", 1],  # 4E
-#     ["mov     c,a", 1],  # 4F
-# 
-#     ["mov     d,b", 1],  # 50
-#     ["mov     d,c", 1],  # 51
-#     ["mov     d,d", 1],  # 52
-#     ["mov     d,e", 1],  # 53
-#     ["mov     d,h", 1],  # 54
-#     ["mov     d,l", 1],  # 55
-#     ["mov     d,m", 1],  # 56
-#     ["mov     d,a", 1],  # 57
-#     ["mov     e,b", 1],  # 58
-#     ["mov     e,c", 1],  # 59
-#     ["mov     e,d", 1],  # 5A
-#     ["mov     e,e", 1],  # 5B
-#     ["mov     e,h", 1],  # 5C
-#     ["mov     e,l", 1],  # 5D
-#     ["mov     e,m", 1],  # 5E
-#     ["mov     e,a", 1],  # 5F
+
 # 
 #     ["mov     h,b", 1],  # 60
 #     ["mov     h,c", 1],  # 61
