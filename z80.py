@@ -11,43 +11,54 @@
 maxLength = 3
 
 # Leadin bytes for multibyte instructions
-leadInBytes = [0xdd, 0xed, 0xfd]
+leadInBytes = [0xcb, 0xdd, 0xfd]
 
 # Addressing mode table
 # List of addressing modes and corresponding format strings for operands.
 addressModeTable = {
 "implied"    : "",
-"immbc"      : "bc,${1:02X}{0:02X}",
-"immde"      : "bc,${1:02X}{0:02X}",
-"indbca"     : "(bc),a",
-"inddea"     : "(de),a",
-"indade"     : "a,(de)",
-"indabc"     : "a,(bc)",
-"regb"       : "b",
-"regbc"      : "bc",
-"regde"      : "de",
-"indb"       : "b,${0:02X}",
-"indc"       : "c,${0:02X}",
-"indd"       : "d,${0:02X}",
-"inde"       : "e,${0:02X}",
-"regafaf"    : "af,af",
-"reghlbc"    : "hl,bc",
-"reghlde"    : "hl,de",
-"imm"        : "${0:02X}",
-
-"immx"       : "${1:02X}{0:02X}",
-"rel"        : "${0:04X}",
-"ext"        : "[${1:02X}{0:02X}]",
-"ind"        : "[${0:02X}+{1:02X}]",
-"rega"       : "a",
-"regc"       : "c",
-"regd"       : "d",
-"rege"       : "e",
-"regh"       : "h",
-"regl"       : "l",
-"reginda"    : "[a]",
-"bit"        : "${0:02X}",
-"0"          : "0",
+"a"          : "a",
+"b"          : "b",
+"c"          : "c",
+"d"          : "d",
+"e"          : "e",
+"h"          : "h",
+"l"          : "l",
+"sp"         : "sp",
+"bc"         : "bc",
+"de"         : "de",
+"hl"         : "hl",
+"af,af"      : "af,af",
+"hl,bc"      : "hl,bc",
+"hl,de"      : "hl,bc",
+"hl,hl"      : "hl,hl",
+"hl,sp"      : "hl,sp",
+"bc,nn"      : "bc,${1:02X}{0:02X}",
+"de,nn"      : "de,${1:02X}{0:02X}",
+"hl,nn"      : "hl,${1:02X}{0:02X}",
+"sp,nn"      : "sp,${1:02X}{0:02X}",
+"indnn,hl"   : "(${1:02X}{0:02X}),hl",
+"indhl,n"    : "(hl),(${0:02X})",
+"a,indnn"    : "a,(${1:02X}{0:02X})",
+"indnn,a"    : "(${1:02X}{0:02X}),a",
+"hl,indnn"   : "hl,(${1:02X}{0:02X})",
+"indbc,a"    : "(bc),a",
+"indde,a"    : "(de),a",
+"indhl"      : "(hl)",
+"a,indde"    : "a,(de)",
+"a,indbc"    : "a,(bc)",
+"n"          : "${0:02X}",
+"a,n"        : "a,${0:02X}",
+"b,n"        : "b,${0:02X}",
+"c,n"        : "b,${0:02X}",
+"d,n"        : "d,${0:02X}",
+"e,n"        : "e,${0:02X}",
+"h,n"        : "h,${0:02X}",
+"l,n"        : "l,${0:02X}",
+"nz,n"       : "nz,${0:04X}",
+"z,n"        : "z,${0:04X}",
+"nc,n"       : "nc,${0:04X}",
+"c,n"        : "c,${0:04X}",
 }
 
 
@@ -61,73 +72,73 @@ addressModeTable = {
 opcodeTable = {
 
 0x00 : [ 1, "nop",  "implied"    ],
-0x01 : [ 3, "ld",   "immbc"      ],
-0x02 : [ 1, "ld",   "indbca"     ],
-0x03 : [ 1, "inc",  "regbc"      ],
-0x04 : [ 1, "inc",  "regb"       ],
-0x05 : [ 1, "dec",  "regb"       ],
-0x06 : [ 2, "ld",   "indb"       ],
+0x01 : [ 3, "ld",   "bc,nn"      ],
+0x02 : [ 1, "ld",   "indbc,a"    ],
+0x03 : [ 1, "inc",  "bc"         ],
+0x04 : [ 1, "inc",  "b"          ],
+0x05 : [ 1, "dec",  "b"          ],
+0x06 : [ 2, "ld",   "b,n"        ],
 0x07 : [ 1, "rlca", "implied"    ],
-0x08 : [ 1, "ex",   "regafaf"    ],
-0x09 : [ 1, "add",  "reghlbc"    ],
-0x0a : [ 1, "ld",   "indabc"     ],
-0x0b : [ 1, "dec",  "regbc"      ],
-0x0c : [ 1, "inc",  "regc"       ],
-0x0d : [ 1, "dec",  "regc"       ],
-0x0e : [ 2, "ld",   "indc"       ],
+0x08 : [ 1, "ex",   "af,af"      ],
+0x09 : [ 1, "add",  "hl,bc"      ],
+0x0a : [ 1, "ld",   "a,indbc"    ],
+0x0b : [ 1, "dec",  "bc"         ],
+0x0c : [ 1, "inc",  "c"          ],
+0x0d : [ 1, "dec",  "c"          ],
+0x0e : [ 2, "ld",   "c,n"        ],
 0x0f : [ 1, "rrca", "implied"    ],
 
-0x10 : [ 2, "djnz", "imm"        ],
-0x11 : [ 3, "ld",   "immde"      ],
-0x12 : [ 1, "ld",   "inddea"     ],
-0x13 : [ 1, "inc",  "regde"      ],
-0x14 : [ 1, "inc",  "regd"       ],
-0x15 : [ 1, "dec",  "regd"       ],
-0x16 : [ 2, "ld",   "indd"       ],
+0x10 : [ 2, "djnz", "n", pcr     ],
+0x11 : [ 3, "ld",   "de,nn"      ],
+0x12 : [ 1, "ld",   "indde,a"    ],
+0x13 : [ 1, "inc",  "de"         ],
+0x14 : [ 1, "inc",  "d"          ],
+0x15 : [ 1, "dec",  "d"          ],
+0x16 : [ 2, "ld",   "d,n"        ],
 0x17 : [ 1, "rla",  "implied"    ],
-0x18 : [ 2, "jr",   "imm"        ],
-0x19 : [ 1, "add",  "reghlde"    ],
-0x1a : [ 1, "ld",   "indade"     ],
-0x1b : [ 1, "dec",  "regde"      ],
-0x1c : [ 1, "inc",  "rege"       ],
-0x1d : [ 1, "dec",  "rege"       ],
-0x1e : [ 2, "ld",   "inde"       ],
+0x18 : [ 2, "jr",   "n", pcr     ],
+0x19 : [ 1, "add",  "hl,de"      ],
+0x1a : [ 1, "ld",   "a,indde"    ],
+0x1b : [ 1, "dec",  "de"         ],
+0x1c : [ 1, "inc",  "e"          ],
+0x1d : [ 1, "dec",  "e"          ],
+0x1e : [ 2, "ld",   "e,n"        ],
 0x1f : [ 1, "rra",  "implied"    ],
 
-#  [ "jr      nz,", 1 ],    # 20
-#  [ "ld      hl,", 3 ],    # 21
-#  [ "ld      (", 3 ],      # 22 then append "),hl"
-#  [ "inc     hl", 1 ],     # 23
-#  [ "inc     h", 1 ],      # 24
-#  [ "dec     h", 1 ],      # 25
-#  [ "ld      h,", 2 ],     # 26
-#  [ "daa", 1 ],            # 27
-#  [ "jr      z,", 1 ],     # 28
-#  [ "add     hl,jl", 1 ],  # 29
-#  [ "ld      hl,(", 3 ],   # 2A then append ")"
-#  [ "dec     hl", 1 ],     # 2B
-#  [ "inc     l", 1 ],      # 2C
-#  [ "dec     l", 1 ],      # 2D
-#  [ "ld      l,", 2 ],     # 2E
-#  [ "cpl", 1 ],            # 2F
-#
-#  [ "jr      nc,", 2 ],    # 30
-#  [ "ld      sp,", 3 ],    # 31
-#  [ "ld      (", 3 ],      # 32 then append "),a"
-#  [ "inc     sp", 1 ],     # 33
-#  [ "inc     (hl)", 1 ],   # 34
-#  [ "dec     (hl)", 1 ],   # 35
-#  [ "ld      (hl),", 2 ],  # 36
-#  [ "scf", 1 ],            # 37
-#  [ "jr      c,", 1 ],     # 38
-#  [ "add     hl,sp", 1 ],  # 39
-#  [ "ld      a,(", 3 ],    # 3A then append ")"
-#  [ "dec     sp", 1 ],     # 3B
-#  [ "inc     a", 1 ],      # 3C
-#  [ "dec     a", 1 ],      # 3D
-#  [ "ld      a,", 2 ],     # 3E
-#  [ "ccf", 1 ],            # 3F
-#
+0x20 : [ 2, "jr",   "nz,n"       ],
+0x21 : [ 3, "ld",   "hl,nn"      ],
+0x22 : [ 3, "ld",   "indnn,hl"   ],
+0x23 : [ 1, "inc",  "hl"         ],
+0x24 : [ 1, "inc",  "h"          ],
+0x25 : [ 1, "dec",  "h"          ],
+0x26 : [ 2, "ld",   "h,n"        ],
+0x27 : [ 1, "daa",  "implied"    ],
+0x28 : [ 2, "jr",   "z,n", pcr   ],
+0x29 : [ 1, "add",  "hl,hl"      ],
+0x2a : [ 3, "ld",   "hl,indnn"   ],
+0x2b : [ 1, "dec",  "hl"         ],
+0x2c : [ 1, "inc",  "l"          ],
+0x2d : [ 1, "dec",  "l"          ],
+0x2e : [ 2, "ld",   "l,n"        ],
+0x2f : [ 1, "cpl",  "implied"    ],
+
+0x30 : [ 2, "jr",   "nc,n", pcr  ],
+0x31 : [ 3, "ld",   "sp,nn"      ],
+0x32 : [ 3, "ld",   "indnn,a"    ],
+0x33 : [ 1, "inc",  "sp"         ],
+0x34 : [ 1, "inc",  "indhl"      ],
+0x35 : [ 1, "dec",  "indhl"      ],
+0x36 : [ 2, "ld",   "indhl,n"    ],
+0x37 : [ 1, "scf",  "implied"    ],
+0x38 : [ 2, "jr",   "c,n", pcr   ],
+0x39 : [ 1, "add",  "hl,sp"      ],
+0x3a : [ 3, "ld",   "a,indnn"    ],
+0x3b : [ 1, "dec",  "sp"         ],
+0x3c : [ 1, "inc",  "a"          ],
+0x3d : [ 1, "dec",  "a"          ],
+0x3e : [ 2, "ld",   "a,n"        ],
+0x3f : [ 1, "ccf",  "implied"   ],
+
 #  [ "ld      b,b", 1 ],    # 40
 #  [ "ld      b,c", 1 ],    # 41
 #  [ "ld      b,d", 1 ],    # 42
@@ -332,6 +343,10 @@ opcodeTable = {
 #  [ "cp      ", 2 ],       # FE
 #  [ "rst     38", 1 ],     # FF
 #
+
+# Multibyte instructions
+
+0xcb00 : [ 2, "rlc", "b"    ],
 
 }
 
