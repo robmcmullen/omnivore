@@ -11,7 +11,7 @@
 maxLength = 3
 
 # Leadin bytes for multibyte instructions
-leadInBytes = [0xcb, 0xdd, 0xfd]
+leadInBytes = [0xcb, 0xdd, 0xed, 0xfd]
 
 # Addressing mode table
 # List of addressing modes and corresponding format strings for operands.
@@ -28,6 +28,13 @@ addressModeTable = {
 "bc"         : "bc",
 "de"         : "de",
 "hl"         : "hl",
+"a,a"        : "a,a",
+"a,b"        : "a,b",
+"a,c"        : "a,c",
+"a,d"        : "a,d",
+"a,e"        : "a,e",
+"a,h"        : "a,h",
+"a,l"        : "a,l",
 "b,a"        : "b,a",
 "b,b"        : "b,b",
 "b,c"        : "b,c",
@@ -97,6 +104,7 @@ addressModeTable = {
 "a,indde"    : "a,(de)",
 "a,indbc"    : "a,(bc)",
 "b,indhl"    : "b,(hl)",
+"a,indhl"    : "a,(hl)",
 "c,indhl"    : "c,(hl)",
 "d,indhl"    : "d,(hl)",
 "e,indhl"    : "e,(hl)",
@@ -247,105 +255,105 @@ opcodeTable = {
 
 0x70 : [ 1, "ld",   "indhl,b"    ],
 0x71 : [ 1, "ld",   "indhl,c"    ],
-#  [ "ld      (hl),d", 1 ], # 72
-#  [ "ld      (hl),e", 1 ], # 73
-#  [ "ld      (hl),h", 1 ], # 74
-#  [ "ld      (hl),l", 1 ], # 75
-#  [ "halt",           1 ], # 76
-#  [ "ld      (hl),a", 1 ], # 77
-#  [ "ld      a,b", 1 ],    # 78
-#  [ "ld      a,c", 1 ],    # 79
-#  [ "ld      a,d", 1 ],    # 7A
-#  [ "ld      a,e", 1 ],    # 7B
-#  [ "ld      a,h", 1 ],    # 7C
-#  [ "ld      a,l", 1 ],    # 7D
-#  [ "ld      a,(hl)", 1 ], # 7E
-#  [ "ld      a,a", 1 ],    # 7F
-#
-#  [ "add     a,b", 1 ],    # 80
-#  [ "add     a,c", 1 ],    # 81
-#  [ "add     a,d", 1 ],    # 82
-#  [ "add     a,ee", 1 ],   # 83
-#  [ "add     a,h", 1 ],    # 84
-#  [ "add     a,l", 1 ],    # 85
-#  [ "add     a,(hl)", 1 ], # 86
-#  [ "add     a,a", 1 ],    # 87
-#  [ "adc     a,b", 1 ],    # 88
-#  [ "adc     a,c", 1 ],    # 89
-#  [ "adc     a,d", 1 ],    # 8A
-#  [ "adc     a,e", 1 ],    # 8B
-#  [ "adc     a,h", 1 ],    # 8C
-#  [ "adc     a,l", 1 ],    # 8D
-#  [ "adc     a,(hl)", 1 ], # 8E
-#  [ "adc     a,a", 1 ],    # 8F
-#
-#  [ "sub     b", 1 ],      # 90
-#  [ "sub     c", 1 ],      # 91    
-#  [ "sub     d", 1 ],      # 92
-#  [ "sub     e", 1 ],      # 93
-#  [ "sub     h", 1 ],      # 94
-#  [ "sub     l", 1 ],      # 95
-#  [ "sub     (hl)", 1 ],   # 96
-#  [ "sub     a", 1 ],      # 97
-#  [ "sbc     a,b", 1 ],    # 98
-#  [ "sbc     a,c", 1 ],    # 99
-#  [ "sbc     a,d", 1 ],    # 9A
-#  [ "sbc     a,e", 1 ],    # 9B
-#  [ "sbc     a,h", 1 ],    # 9C
-#  [ "sbc     a,l", 1 ],    # 9D
-#  [ "sbc     a,(hl)", 1 ], # 9E
-#  [ "sbc     a,a", 1 ],    # 9F
-#
-#  [ "and     b", 1 ],      # A0
-#  [ "and     c", 1 ],      # A1
-#  [ "and     d", 1 ],      # A2
-#  [ "and     e", 1 ],      # A3
-#  [ "and     h", 1 ],      # A4
-#  [ "and     l", 1 ],      # A5
-#  [ "and     (hl)", 1 ],   # A6
-#  [ "and     a", 1 ],      # A7
-#  [ "xor     b", 1 ],      # A8
-#  [ "xor     c", 1 ],      # A9
-#  [ "xor     d", 1 ],      # AA
-#  [ "xor     e", 1 ],      # AB
-#  [ "xor     h", 1 ],      # AC
-#  [ "xor     l", 1 ],      # AD
-#  [ "xor     (hl)", 1 ],   # AE
-#  [ "xor     a", 1 ],      # AF
-#
-#  [ "or      b", 1 ],      # B0
-#  [ "or      c", 1 ],      # B1
-#  [ "or      d", 1 ],      # B2
-#  [ "or      e", 1 ],      # B3
-#  [ "or      h", 1 ],      # B4
-#  [ "or      l", 1 ],      # B5
-#  [ "or      (hl)", 1 ],   # B6
-#  [ "or      a", 1 ],      # B7
-#  [ "cp      b", 1 ],      # B8
-#  [ "cp      c", 1 ],      # B9
-#  [ "cp      d", 1 ],      # BA
-#  [ "cp      e", 1 ],      # BB
-#  [ "cp      h", 1 ],      # BC
-#  [ "cp      l", 1 ],      # BD
-#  [ "cp      (hl)", 1 ],   # BE
-#  [ "cp      a", 1 ],      # BF
-#
-#  [ "ret     nz", 1 ],     # C0
-#  [ "pop     bc", 1 ],     # C1
-#  [ "jp      nz,", 3 ],    # C2
-#  [ "jp      ", 3 ],       # C3
-#  [ "call    nz,", 3 ],    # C4
-#  [ "push    bc", 1 ],     # C5
-#  [ "ada     a,", 2 ],     # C6
-#  [ "rst     00", 1 ],     # C7
-#  [ "ret     z", 1 ],      # C8
-#  [ "ret", 1 ],            # C9
-#  [ "jp      z,", 3 ],     # CA
-#  [ "prefix", 2 ],         # CB
-#  [ "call    z,", 3 ],     # CC
-#  [ "call    ", 3 ],       # CD
-#  [ "adc     a,", 2 ],      # CE
-#  [ "rst     08", 1 ],     # CF
+0x72 : [ 1, "ld",   "indhl,d"    ],
+0x73 : [ 1, "ld",   "indhl,e"    ],
+0x74 : [ 1, "ld",   "indhl,h"    ],
+0x75 : [ 1, "ld",   "indhl,l"    ],
+0x76 : [ 1, "halt", "implied"    ],
+0x77 : [ 1, "ld",   "indhl,a"    ],
+0x78 : [ 1, "ld",   "a,b"        ],
+0x79 : [ 1, "ld",   "a,c"        ],
+0x7a : [ 1, "ld",   "a,d"        ],
+0x7b : [ 1, "ld",   "a,e"        ],
+0x7c : [ 1, "ld",   "a,h"        ],
+0x7d : [ 1, "ld",   "a,l"        ],
+0x7e : [ 1, "ld",   "a,indhl"    ],
+0x7f : [ 1, "ld",   "a,a"        ],
+
+0x80 : [ 1, "add",  "a,b"        ],
+0x81 : [ 1, "add",  "a,c"        ],
+0x82 : [ 1, "add",  "a,d"        ],
+0x83 : [ 1, "add",  "a,e"        ],
+0x84 : [ 1, "add",  "a,h"        ],
+0x85 : [ 1, "add",  "a,l"        ],
+0x86 : [ 1, "add",  "a,indhl"    ],
+0x87 : [ 1, "add",  "a,a"        ],
+0x88 : [ 1, "adc",  "a,b"        ],
+0x89 : [ 1, "adc",  "a,c"        ],
+0x8a : [ 1, "adc",  "a,d"        ],
+0x8b : [ 1, "adc",  "a,e"        ],
+0x8c : [ 1, "adc",  "a,h"        ],
+0x8d : [ 1, "adc",  "a,l"        ],
+0x8e : [ 1, "adc",  "a,indhl"    ],
+0x8f : [ 1, "adc",  "a,a"        ],
+
+0x90 : [ 1, "sub",  "b"          ],
+0x91 : [ 1, "sub",  "c"          ],
+0x92 : [ 1, "sub",  "d"          ],
+0x93 : [ 1, "sub",  "e"          ],
+0x94 : [ 1, "sub",  "h"          ],
+0x95 : [ 1, "sub",  "l"          ],
+0x96 : [ 1, "sub",  "indhl"      ],
+0x97 : [ 1, "sub",  "a"          ],
+0x98 : [ 1, "sbc",  "a,b"        ],
+0x99 : [ 1, "sbc",  "a,c"        ],
+0x9a : [ 1, "sbc",  "a,d"        ],
+0x9b : [ 1, "sbc",  "a,e"        ],
+0x9c : [ 1, "sbc",  "a,h"        ],
+0x9d : [ 1, "sbc",  "a,l"        ],
+0x9e : [ 1, "sbc",  "a,indhl"    ],
+0x9f : [ 1, "sbc",  "a,a"        ],
+
+0xa0 : [ 1, "and",  "b"          ],
+0xa1 : [ 1, "and",  "c"          ],
+0xa2 : [ 1, "and",  "d"          ],
+0xa3 : [ 1, "and",  "e"          ],
+0xa4 : [ 1, "and",  "h"          ],
+0xa5 : [ 1, "and",  "l"          ],
+0xa6 : [ 1, "and",  "indhl"      ],
+0xa7 : [ 1, "and",  "a"          ],
+0xa8 : [ 1, "xor",  "b"          ],
+0xa9 : [ 1, "xor",  "c"          ],
+0xaa : [ 1, "xor",  "d"          ],
+0xab : [ 1, "xor",  "e"          ],
+0xac : [ 1, "xor",  "h"          ],
+0xad : [ 1, "xor",  "l"          ],
+0xae : [ 1, "xor",  "indhl"      ],
+0xaf : [ 1, "xor",  "a"          ],
+
+0xb0 : [ 1, "or",  "b"           ],
+0xb1 : [ 1, "or",  "c"           ],
+0xb2 : [ 1, "or",  "d"           ],
+0xb3 : [ 1, "or",  "e"           ],
+0xb4 : [ 1, "or",  "h"           ],
+0xb5 : [ 1, "or",  "l"           ],
+0xb6 : [ 1, "or",  "indhl"       ],
+0xb7 : [ 1, "or",  "a"           ],
+0xb8 : [ 1, "cp",  "b"           ],
+0xb9 : [ 1, "cp",  "c"           ],
+0xba : [ 1, "cp",  "d"           ],
+0xbb : [ 1, "cp",  "e"           ],
+0xbc : [ 1, "cp",  "h"           ],
+0xbd : [ 1, "cp",  "l"           ],
+0xbe : [ 1, "cp",  "indhl"       ],
+0xbf : [ 1, "cp",  "a"           ],
+
+#  [ "ret     nz", 1 ],     # c0
+#  [ "pop     bc", 1 ],     # c1
+#  [ "jp      nz,", 3 ],    # c2
+#  [ "jp      ", 3 ],       # c3
+#  [ "call    nz,", 3 ],    # c4
+#  [ "push    bc", 1 ],     # c5
+#  [ "ada     a,", 2 ],     # c6
+#  [ "rst     00", 1 ],     # c7
+#  [ "ret     z", 1 ],      # c8
+#  [ "ret", 1 ],            # c9
+#  [ "jp      z,", 3 ],     # ca
+#  [ "prefix", 2 ],         # cb
+#  [ "call    z,", 3 ],     # cc
+#  [ "call    ", 3 ],       # cd
+#  [ "adc     a,", 2 ],     # ce
+#  [ "rst     08", 1 ],     # cf
 #
 #  [ "ret     nc", 1 ],     # D0
 #  [ "pop     de", 1 ],     # D1
