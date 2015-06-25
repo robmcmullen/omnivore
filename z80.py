@@ -28,6 +28,48 @@ addressModeTable = {
 "bc"         : "bc",
 "de"         : "de",
 "hl"         : "hl",
+"b,a"        : "b,a",
+"b,b"        : "b,b",
+"b,c"        : "b,c",
+"b,d"        : "b,d",
+"b,e"        : "b,e",
+"b,h"        : "b,h",
+"b,l"        : "b,l",
+"c,l"        : "c,l",
+"c,a"        : "c,a",
+"c,b"        : "c,b",
+"c,c"        : "c,c",
+"c,d"        : "c,d",
+"c,e"        : "c,e",
+"c,h"        : "c,h",
+"d,a"        : "d,a",
+"d,b"        : "d,b",
+"d,c"        : "d,c",
+"d,d"        : "d,d",
+"d,e"        : "d,e",
+"d,h"        : "d,h",
+"d,l"        : "d,l",
+"e,a"        : "e,a",
+"e,b"        : "e,b",
+"e,c"        : "e,c",
+"e,d"        : "e,d",
+"e,e"        : "e,e",
+"e,h"        : "e,h",
+"e,l"        : "e,l",
+"h,a"        : "h,a",
+"h,b"        : "h,b",
+"h,c"        : "h,c",
+"h,d"        : "h,d",
+"h,e"        : "h,e",
+"h,h"        : "h,h",
+"h,l"        : "h,l",
+"l,b"        : "l,b",
+"l,a"        : "l,a",
+"l,c"        : "l,c",
+"l,d"        : "l,d",
+"l,e"        : "l,e",
+"l,h"        : "l,h",
+"l,l"        : "l,l",
 "af,af"      : "af,af",
 "hl,bc"      : "hl,bc",
 "hl,de"      : "hl,bc",
@@ -45,8 +87,21 @@ addressModeTable = {
 "indbc,a"    : "(bc),a",
 "indde,a"    : "(de),a",
 "indhl"      : "(hl)",
+"indhl,a"    : "(hl),a",
+"indhl,b"    : "(hl),b",
+"indhl,c"    : "(hl),c",
+"indhl,d"    : "(hl),d",
+"indhl,e"    : "(hl),e",
+"indhl,h"    : "(hl),h",
+"indhl,l"    : "(hl),l",
 "a,indde"    : "a,(de)",
 "a,indbc"    : "a,(bc)",
+"b,indhl"    : "b,(hl)",
+"c,indhl"    : "c,(hl)",
+"d,indhl"    : "d,(hl)",
+"e,indhl"    : "e,(hl)",
+"h,indhl"    : "h,(hl)",
+"l,indhl"    : "l,(hl)",
 "n"          : "${0:02X}",
 "a,n"        : "a,${0:02X}",
 "b,n"        : "b,${0:02X}",
@@ -137,61 +192,61 @@ opcodeTable = {
 0x3c : [ 1, "inc",  "a"          ],
 0x3d : [ 1, "dec",  "a"          ],
 0x3e : [ 2, "ld",   "a,n"        ],
-0x3f : [ 1, "ccf",  "implied"   ],
+0x3f : [ 1, "ccf",  "implied"    ],
 
-#  [ "ld      b,b", 1 ],    # 40
-#  [ "ld      b,c", 1 ],    # 41
-#  [ "ld      b,d", 1 ],    # 42
-#  [ "ld      b,e", 1 ],    # 43
-#  [ "ld      b,h", 1 ],    # 44
-#  [ "ld      b,l", 1 ],    # 45
-#  [ "ld      b,(hl)", 1 ], # 46
-#  [ "ld      b,a", 1 ],    # 47
-#  [ "ld      c,b", 1 ],    # 48
-#  [ "ld      c,c", 1 ],    # 49
-#  [ "ld      c,d", 1 ],    # 4A
-#  [ "ld      c,e", 1 ],    # 4B
-#  [ "ld      c,h", 1 ],    # 4C
-#  [ "ld      c,l", 1 ],    # 4D
-#  [ "ld      c,(hl)", 1 ], # 4E
-#  [ "ld      c,a", 1 ],    # 4F
-#
-#  [ "ld      d,b", 1 ],    # 50
-#  [ "ld      d,c", 1 ],    # 51
-#  [ "ld      d,d", 1 ],    # 52
-#  [ "ld      d,e", 1 ],    # 53
-#  [ "ld      d,h", 1 ],    # 54
-#  [ "ld      d,l", 1 ],    # 55
-#  [ "ld      d,(hl)", 1 ], # 56
-#  [ "ld      d,a", 1 ],    # 57
-#  [ "ld      e,b", 1 ],    # 58
-#  [ "ld      e,c", 1 ],    # 59
-#  [ "ld      e,d", 1 ],    # 5A
-#  [ "ld      e,e", 1 ],    # 5B
-#  [ "ld      e,h", 1 ],    # 5C
-#  [ "ld      e,l", 1 ],    # 5D
-#  [ "ld      e,(hl)", 1 ], # 5E
-#  [ "ld      e,a", 1 ],    # 5F
-#
-#  [ "ld      h,b", 1 ],    # 60
-#  [ "ld      h,c", 1 ],    # 61
-#  [ "ld      h,d", 1 ],    # 62
-#  [ "ld      h,e", 1 ],    # 63
-#  [ "ld      h,h", 1 ],    # 64
-#  [ "ld      h,l", 1 ],    # 65
-#  [ "ld      h,(hl)", 1 ], # 66
-#  [ "ld      h,a", 1 ],    # 67
-#  [ "ld      l,b", 1 ],    # 68
-#  [ "ld      l,c", 1 ],    # 69
-#  [ "ld      l,d", 1 ],    # 6A
-#  [ "ld      l,e", 1 ],    # 6B
-#  [ "ld      l,h", 1 ],    # 6C
-#  [ "ld      l,l", 1 ],    # 6D
-#  [ "ld      l,(hl)", 1 ], # 6E
-#  [ "ld      l,a", 1 ],    # 6F
-#
-#  [ "ld      (hl),b", 1 ], # 70
-#  [ "ld      (hl),c", 1 ], # 71
+0x40 : [ 1, "ld",   "b,b"        ],
+0x41 : [ 1, "ld",   "b,c"        ],
+0x42 : [ 1, "ld",   "b,d"        ],
+0x43 : [ 1, "ld",   "b,e"        ],
+0x44 : [ 1, "ld",   "b,h"        ],
+0x45 : [ 1, "ld",   "b,l"        ],
+0x46 : [ 1, "ld",   "b,indhl"    ],
+0x47 : [ 1, "ld",   "b,a"        ],
+0x48 : [ 1, "ld",   "c,b"        ],
+0x49 : [ 1, "ld",   "c,c"        ],
+0x4a : [ 1, "ld",   "c,d"        ],
+0x4b : [ 1, "ld",   "c,e"        ],
+0x4c : [ 1, "ld",   "c,h"        ],
+0x4d : [ 1, "ld",   "c,l"        ],
+0x4e : [ 1, "ld",   "c,indhl"    ],
+0x4f : [ 1, "ld",   "c,a"        ],
+
+0x50 : [ 1, "ld",   "d,b"        ],
+0x51 : [ 1, "ld",   "d,c"        ],
+0x52 : [ 1, "ld",   "d,d"        ],
+0x53 : [ 1, "ld",   "d,e"        ],
+0x54 : [ 1, "ld",   "d,h"        ],
+0x55 : [ 1, "ld",   "d,l"        ],
+0x56 : [ 1, "ld",   "d,indhl"    ],
+0x57 : [ 1, "ld",   "d,a"        ],
+0x58 : [ 1, "ld",   "e,b"        ],
+0x59 : [ 1, "ld",   "e,c"        ],
+0x5a : [ 1, "ld",   "e,d"        ],
+0x5b : [ 1, "ld",   "e,e"        ],
+0x5c : [ 1, "ld",   "e,h"        ],
+0x5d : [ 1, "ld",   "e,l"        ],
+0x5e : [ 1, "ld",   "e,indhl"    ],
+0x5f : [ 1, "ld",   "e,a"        ],
+
+0x60 : [ 1, "ld",   "h,b"        ],
+0x61 : [ 1, "ld",   "h,c"        ],
+0x62 : [ 1, "ld",   "h,d"        ],
+0x63 : [ 1, "ld",   "h,e"        ],
+0x64 : [ 1, "ld",   "h,h"        ],
+0x65 : [ 1, "ld",   "h,l"        ],
+0x66 : [ 1, "ld",   "h,indhl"    ],
+0x67 : [ 1, "ld",   "h,a"        ],
+0x68 : [ 1, "ld",   "l,b"        ],
+0x69 : [ 1, "ld",   "l,c"        ],
+0x6a : [ 1, "ld",   "l,d"        ],
+0x6b : [ 1, "ld",   "l,e"        ],
+0x6c : [ 1, "ld",   "l,h"        ],
+0x6d : [ 1, "ld",   "l,l"        ],
+0x6e : [ 1, "ld",   "l,indhl"    ],
+0x6f : [ 1, "ld",   "l,a"        ],
+
+0x70 : [ 1, "ld",   "indhl,b"    ],
+0x71 : [ 1, "ld",   "indhl,c"    ],
 #  [ "ld      (hl),d", 1 ], # 72
 #  [ "ld      (hl),e", 1 ], # 73
 #  [ "ld      (hl),h", 1 ], # 74
