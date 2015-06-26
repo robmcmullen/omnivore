@@ -92,6 +92,8 @@ addressModeTable = {
 "hl,sp"      : "hl,sp",
 "sp,hl"      : "sp,hl",
 "de,hl"      : "de,hl",
+"ix,bc"      : "ix,bc",
+"iy,bc"      : "iy,bc",
 "bc,nn"      : "bc,${1:02X}{0:02X}",
 "de,nn"      : "de,${1:02X}{0:02X}",
 "hl,nn"      : "hl,${1:02X}{0:02X}",
@@ -152,6 +154,11 @@ addressModeTable = {
 "28"         : "$28",
 "30"         : "$10",
 "38"         : "$18",
+"0,b"        : "0,b",
+"0,c"        : "0,c",
+"0,d"        : "0,d",
+"7,a"        : "7,a",
+"b,indc"     : "b,(c)",
 }
 
 
@@ -434,46 +441,79 @@ opcodeTable = {
 
 # Multibyte instructions
 
-0xcb00 : [ 2, "rlc", "b"    ],
+0xcb00 : [ 2, "rlc",  "b"        ],
+0xcb01 : [ 2, "rlc",  "c"        ],
+0xcb02 : [ 2, "rlc",  "d"        ],
+0xcb03 : [ 2, "rlc",  "e"        ],
+0xcb04 : [ 2, "rlc",  "h"        ],
+0xcb05 : [ 2, "rlc",  "l"        ],
+0xcb06 : [ 2, "rlc",  "indhl"    ],
+0xcb07 : [ 2, "rlc",  "a"        ],
+0xcb08 : [ 2, "rrc",  "b"        ],
+0xcb09 : [ 2, "rrc",  "c"        ],
+0xcb0a : [ 2, "rrc",  "d"        ],
+0xcb0b : [ 2, "rrc",  "e"        ],
+0xcb0c : [ 2, "rrc",  "h"        ],
+0xcb0d : [ 2, "rrc",  "l"        ],
+0xcb0e : [ 2, "rrc",  "indhl"    ],
+0xcb0f : [ 2, "rrc",  "a"        ],
+
+0xcb10 : [ 2, "rl",   "b"        ],
+0xcb11 : [ 2, "rl",   "c"        ],
+0xcb12 : [ 2, "rl",   "d"        ],
+0xcb13 : [ 2, "rl",   "e"        ],
+0xcb14 : [ 2, "rl",   "h"        ],
+0xcb15 : [ 2, "rl",   "l"        ],
+0xcb16 : [ 2, "rl",   "indhl"    ],
+0xcb17 : [ 2, "rl",   "a"        ],
+0xcb18 : [ 2, "rr",   "b"        ],
+0xcb19 : [ 2, "rr",   "c"        ],
+0xcb1a : [ 2, "rr",   "d"        ],
+0xcb1b : [ 2, "rr",   "e"        ],
+0xcb1c : [ 2, "rr",   "h"        ],
+0xcb1d : [ 2, "rr",   "l"        ],
+0xcb1e : [ 2, "rr",   "indhl"    ],
+0xcb1f : [ 2, "rr",   "a"        ],
+
+0xcb20 : [ 2, "sla",  "b"        ],
+0xcb21 : [ 2, "sla",  "c"        ],
+0xcb22 : [ 2, "sla",  "d"        ],
+0xcb23 : [ 2, "sla",  "e"        ],
+0xcb24 : [ 2, "sla",  "h"        ],
+0xcb25 : [ 2, "sla",  "l"        ],
+0xcb26 : [ 2, "sla",  "indhl"    ],
+0xcb27 : [ 2, "sla",  "a"        ],
+0xcb28 : [ 2, "sra",  "b"        ],
+0xcb29 : [ 2, "sra",  "c"        ],
+0xcb2a : [ 2, "sra",  "d"        ],
+0xcb2b : [ 2, "sra",  "e"        ],
+0xcb2c : [ 2, "sra",  "h"        ],
+0xcb2d : [ 2, "sra",  "l"        ],
+0xcb2e : [ 2, "sra",  "indhl"    ],
+0xcb2f : [ 2, "sra",  "a"        ],
+
+0xcb38 : [ 2, "srl",  "b"        ],
+0xcb39 : [ 2, "srl",  "c"        ],
+0xcb3a : [ 2, "srl",  "d"        ],
+0xcb3b : [ 2, "srl",  "e"        ],
+0xcb3c : [ 2, "srl",  "h"        ],
+0xcb3d : [ 2, "srl",  "l"        ],
+0xcb3e : [ 2, "srl",  "indhl"    ],
+0xcb3f : [ 2, "srl",  "a"        ],
+
+0xcb40 : [ 2, "bit",  "0,b"      ],
+0xcb41 : [ 2, "bit",  "0,c"      ],
+0xcb42 : [ 2, "bit",  "0,d"      ],
+# etc.
+0xcbff : [ 2, "set",  "7,a"      ],
+
+0xdd09 : [ 2, "add",  "ix,bc"    ],
+
+0xfd09 : [ 2, "add",  "iy,bc"    ],
+
+0xed40 : [ 2, "in",  "b,indc"    ],
 
 }
 
 # End of processor specific code
 ##########################################################################
-
-
-## Lookup table for multibyte instructions starting with 0xCB
-#lookupTableCB = [
-#  [ "rlc     b", 2 ],      # 00
-#  [ "rlc     c", 2 ],      # 01
-#  [ "rlc     d", 2 ],      # 02
-#  [ "rlc     e", 2 ],      # 03
-#  [ "rlc     h", 2 ],      # 04
-#  [ "rlc     l", 2 ],      # 05
-#  [ "rlc     (hl)", 2 ],   # 06
-#  [ "rlc     a", 2 ],      # 07
-#  [ "rrc     b", 2 ],      # 08
-#  [ "rrc     c", 2 ],      # 09
-#  [ "rrc     d", 2 ],      # 0A
-#  [ "rrc     e", 2 ],      # 0B
-#  [ "rrc     h", 2 ],      # 0C
-#  [ "rrc     l", 2 ],      # 0D
-#  [ "rrc     (hl)", 2 ],   # 0E
-#  [ "rrc     a", 2 ],      # 0F
-#
-#  [ "rl      b", 2 ],      # 10
-#  [ "rl      c", 2 ],      # 11
-#  [ "rl      d", 2 ],      # 12
-#  [ "rl      e", 2 ],      # 13
-#  [ "rl      h", 2 ],      # 14
-#  [ "rl      l", 2 ],      # 15
-#  [ "rl      (hl)", 2 ],   # 16
-#  [ "rl      a", 2 ],      # 17
-#  [ "rr      b", 2 ],      # 18
-#  [ "rr      c", 2 ],      # 19
-#  [ "rr      d", 2 ],      # 1A
-#  [ "rr      e", 2 ],      # 1B
-#  [ "rr      h", 2 ],      # 1C
-#  [ "rr      l", 2 ],      # 1D
-#  [ "rr      (hl)", 2 ],   # 1E
-#  [ "rr      e", 2 ],      # 1F

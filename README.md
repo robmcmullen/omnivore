@@ -31,7 +31,7 @@ CPU    Status
 
 F8     possible
 
-Z80    planned
+Z80    done
 
 
 
