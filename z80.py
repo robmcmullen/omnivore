@@ -877,7 +877,9 @@ opcodeTable = {
 
 0xdd8e : [3,  "adc",  "indix+d"   ],
 
-0xddcb : [ 4, "bit",  "n,indix+d" ],
+# The below are a set of instructions that all start with 0xddcb. They
+# are not supported yet.
+0xddcb : [ 4, "unimplemented",  "implied" ],
 
 0xed40 : [ 2, "in",   "b,indc"   ],
 0xed41 : [ 2, "out",  "indc,b"   ],
@@ -971,7 +973,9 @@ opcodeTable = {
 0xfdb6 : [ 3, "or",   "indiy+d"   ],
 0xfdbe : [ 3, "cp",   "indiy+d"   ],
 
-0xfdcb : [ 4, "bit",  "n,indiy+d" ],
+# The below are a set of instructions that all start with 0xfdcb. They
+# are not supported yet.
+0xfdcb : [ 4, "unimplemented",  "implied" ],
 
 }
 
