@@ -90,9 +90,10 @@ except FileNotFoundError:
 # line - line to output
 # leadin - extended opcode (true/false)
 
+s = "                          "
+
 # Print initial origin address
 if args.nolist is False:
-    s = "                          "
     print("{0:04X}{1:s}.org   ${2:04X}".format(address, s[0:maxLength*3+3], address))
 else:
     print(" .org   ${0:04X}".format(address))
@@ -103,7 +104,6 @@ while True:
 
         if len(b) == 0:  # handle EOF
             if args.nolist is False:
-                s = "                          "
                 print("{0:04X}{1:s}end".format(address, s[0:maxLength*3+3]))
             break
 
@@ -202,7 +202,7 @@ while True:
             # Handle case where invalid opcode has a leadin byte.
             if leadin is True:
                 if args.nolist is False:
-                    mnemonic = "         .byte  ${0:02X},${1:02X}".format(opcode // 256, opcode % 256)
+                    mnemonic = "{0:s}.byte  ${1:02X},${2:02X}".format(s[0:(maxLength-length-2)*3], opcode // 256, opcode % 256)
                 else:
                     mnemonic = ".byte  ${0:02X},${1:02X}".format(opcode // 256, opcode % 256)
             else:

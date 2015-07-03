@@ -21,7 +21,7 @@ CPU    Status
 
 6800   done
 
-6809   planned
+6809   started
 
 6811   done
 
