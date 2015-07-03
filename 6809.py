@@ -26,6 +26,7 @@ addressModeTable = {
 "extended"    : "${0:02X}{1:02X}",
 "rel8"        : "${0:04X}",
 "rel16"       : "${0:02X}{1:02X}",
+"r1,r2"       : "${0:02X}",  # Not fully implemented
 # Extended Indirect
 # Relative Indirect
 # Zero-offset Indexed
@@ -142,6 +143,26 @@ opcodeTable = {
 0x0a   :  [ 2, "dec",  "direct"          ],
 0x6a   :  [ 2, "dec",  "indexed"         ],
 0x7a   :  [ 3, "dec",  "extended"        ],
+0x88   :  [ 2, "eora", "imm8"            ],
+0x98   :  [ 2, "eora", "direct"          ],
+0xa8   :  [ 2, "eora", "direct"          ],
+0xb8   :  [ 3, "eora", "extended"        ],
+0xc8   :  [ 2, "eorb", "imm8"            ],
+0xd8   :  [ 2, "eorb", "direct"          ],
+0xe8   :  [ 2, "eorb", "direct"          ],
+0xf8   :  [ 3, "eorb", "extended"        ],
+0x1e   :  [ 2, "exg",  "r1,r2"           ],
+0x4c   :  [ 1, "inca", "inherent"        ],
+0x5c   :  [ 1, "incb", "inherent"        ],
+0x0c   :  [ 2, "inc",  "indexed"         ],
+0x6c   :  [ 2, "inc",  "direct"          ],
+0x7c   :  [ 3, "inc",  "extended"        ],
+0x0e   :  [ 2, "jmp",  "indexed"         ],
+0x6e   :  [ 2, "jmp",  "direct"          ],
+0x7e   :  [ 3, "jmp",  "extended"        ],
+0x9d   :  [ 2, "jsr",  "indexed"         ],
+0xad   :  [ 2, "jsr",  "direct"          ],
+0xbd   :  [ 3, "jsr",  "extended"        ],
 
 
 0x26   :  [ 2, "bne",  "rel8", pcr       ],
