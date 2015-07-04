@@ -21,7 +21,7 @@ CPU    Status
 
 6800   done
 
-6809   started
+6809   done (incomplete)
 
 6811   done
 
@@ -31,7 +31,7 @@ CPU    Status
 
 F8     possible
 
-Z80    done
+Z80    done (incomplete)
 
 
 
