@@ -1179,6 +1179,9 @@ class CommandTreeEvent(wx.PyCommandEvent):
 
         return self._label
     
+    def IsDroppedBeforeItem(self):
+        return bool(self._before)
+    
 
 # ----------------------------------------------------------------------------
 # TreeEvent is a special class for all events associated with tree controls
@@ -7800,8 +7803,11 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                 self._dragImage.EndDrag()
 
             if self._dropTarget:
+                before = self._dropTarget.IsDropLineAbove()
                 self._dropTarget.SetDropLine(False)
                 self._dropTarget.SetHilight(False)
+            else:
+                before = False
                 
             if self._oldSelection:
             
@@ -7813,6 +7819,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             event = TreeEvent(wxEVT_TREE_END_DRAG, self.GetId())
             event._item = item
             event._pointDrag = self.CalcScrolledPosition(pt)
+            event._before = before
             event.SetEventObject(self)
 
             self.GetEventHandler().ProcessEvent(event)
