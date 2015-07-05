@@ -27,7 +27,7 @@ CPU    Status
 
 8080   done
 
-8051   possible
+8051   done (incomplete)
 
 F8     possible
 
