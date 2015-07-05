@@ -18,17 +18,21 @@ leadInBytes = []
 addressModeTable = {
 ""           : "",
 "@a+dptr"    : "@a+dptr",
+"@dptr,a"    : "@dptr,a",
 "@r0"        : "@r0",
+"@r0,a"      : "@r0,a",
 "@r0,direct" : "@r0,${0:02X}",
 "@r0,immed"  : "@r0,#${0:02X}",
 "@r0,immed,offset" : "@r0,#${0:02x},${1:02X}",
 "@r1"        : "@r1",
+"@r1,a"      : "@r1,a",
 "@r1,direct" : "@r1,${0:02X}",
 "@r1,immed"  : "@r1,#${0:02X}",
 "@r1,immed,offset" : "@r1,#${0:02x},${1:02X}",
 "a"          : "a",
 "a,@a+dptr"  : "a,@a+dptr",
 "a,@a+pc"    : "a,@a+pc",
+"a,@dptr"    : "a,@dptr",
 "a,@r0"      : "a,@r0",
 "a,@r1"      : "a,@r1",
 "a,direct"   : "a,${0:02X}",
@@ -57,6 +61,7 @@ addressModeTable = {
 "direct,a"   : "${0:02X},a",
 "direct,direct" : "${0:02X},${1:02X}",
 "direct,immed": "${0:02X},#{1:02X}",
+"direct,offset" : "${0:02X},${1:02X}",
 "direct,r0"  : "${0:02X},r0",
 "direct,r1"  : "${0:02X},r1",
 "direct,r2"  : "${0:02X},r2",
@@ -69,37 +74,53 @@ addressModeTable = {
 "dptr,immed" : "${0:02X},#${1:02X}",
 "offset"     : "${0:04X}",
 "r0"         : "r0",
+"r0,a"       : "r0,a",
 "r0,direct"  : "r0,${0:02X}",
 "r0,immed"   : "r0,#${0:02X}",
 "r0,immed,offset" : "r0,#${0:02x},${1:02X}",
+"r0,offset"  : "r0,${0:02X}",
 "r1"         : "r1",
+"r1,a"       : "r1,a",
 "r1,direct"  : "r1,${0:02X}",
 "r1,immed"   : "r1,#${0:02X}",
 "r1,immed,offset" : "r1,#${0:02x},${1:02X}",
+"r1,offset"  : "r1,${0:02X}",
 "r2"         : "r2",
+"r2,a"       : "r2,a",
 "r2,direct"  : "r2,${0:02X}",
 "r2,immed"   : "r2,#${0:02X}",
 "r2,immed,offset" : "r2,#${0:02x},${1:02X}",
+"r2,offset"  : "r2,${0:02X}",
 "r3"         : "r3",
+"r3,a"       : "r3,a",
 "r3,direct"  : "r3,${0:02X}",
 "r3,immed"   : "r3,#${0:02X}",
 "r3,immed,offset" : "r3,#${0:02x},${1:02X}",
+"r3,offset"  : "r3,${0:02X}",
 "r4"         : "r4",
+"r4,a"       : "r4,a",
 "r4,direct"  : "r4,${0:02X}",
 "r4,immed"   : "r4,#${0:02X}",
 "r4,immed,offset" : "r4,#${0:02x},${1:02X}",
+"r4,offset"  : "r4,${0:02X}",
 "r5"         : "r5",
+"r5,a"       : "r5,a",
 "r5,direct"  : "r5,${0:02X}",
 "r5,immed"   : "r5,#${0:02X}",
 "r5,immed,offset" : "r5,#${0:02x},${1:02X}",
+"r5,offset"  : "r5,${0:02X}",
 "r6"         : "r6",
+"r6,a"       : "r6,a",
 "r6,direct"  : "r6,${0:02X}",
 "r6,immed"   : "r6,#${0:02X}",
 "r6,immed,offset" : "r6,#${0:02x},${1:02X}",
+"r6,offset"  : "r6,${0:02X}",
 "r7"         : "r7",
+"r7,a"       : "r7,a",
 "r7,direct"  : "r7,${0:02X}",
 "r7,immed"   : "r7,#${0:02X}",
 "r7,immed,offset" : "r7,#${0:02x},${1:02X}",
+"r7,offset"  : "r7,${0:02X}",
 }
 
 # Op Code Table
@@ -314,73 +335,73 @@ opcodeTable = {
 0xbe : [ 3, "cjne", "r6,immed,offset" ],
 0xbf : [ 3, "cjne", "r7,immed,offset" ],
 
-#0xc0 : [ 2, "push direct
-#0xc1 : [ 2, "ajmp addr11
-#0xc2 : [ 2, "clr bit
-#0xc3 : [ 1, "clr c
-#0xc4 : [ 1, "swap a
-#0xc5 : [ 2, "xch a, direct
-#0xc6 : [ 1, "xch a, @r0
-#0xc7 : [ 1, "xch a, @r1
-#0xc8 : [ 1, "xch a, r0
-#0xc9 : [ 1, "xch a, r1
-#0xca : [ 1, "xch a, r2
-#0xcb : [ 1, "xch a, r3
-#0xcc : [ 1, "xch a, r4
-#0xcd : [ 1, "xch a, r5
-#0xce : [ 1, "xch a, r6
-#0xcf : [ 1, "xch a, r7
+0xc0 : [ 2, "push", "direct"     ],
+0xc1 : [ 2, "ajmp", "addr11"     ],
+0xc2 : [ 2, "clr",  "bit"        ],
+0xc3 : [ 1, "clr",  "c"          ],
+0xc4 : [ 1, "swap", "a"          ],
+0xc5 : [ 2, "xch",  "a,direct"   ],
+0xc6 : [ 1, "xch",  "a,@r0"      ],
+0xc7 : [ 1, "xch",  "a,@r1"      ],
+0xc8 : [ 1, "xch",  "a,r0"       ],
+0xc9 : [ 1, "xch",  "a,r1"       ],
+0xca : [ 1, "xch",  "a,r2"       ],
+0xcb : [ 1, "xch",  "a,r3"       ],
+0xcc : [ 1, "xch",  "a,r4"       ],
+0xcd : [ 1, "xch",  "a,r5"       ],
+0xce : [ 1, "xch",  "a,r6"       ],
+0xcf : [ 1, "xch",  "a,r7"       ],
 
-#0xd0 : [ 2, "pop", "direct"
-#0xd1 : [ 2, "acall addr11
-#0xd2 : [ 2, "setb bit
-#0xd3 : [ 1, "setb c
-#0xd4 : [ 1, "da a
-#0xd5 : [ 3, "djnz direct, offset
-#0xd6 : [ 1, "xchd a, @r0
-#0xd7 : [ 1, "xchd a, @r1
-#0xd8 : [ 2, "djnz r0, offset
-#0xd9 : [ 2, "djnz r1, offset
-#0xda : [ 2, "djnz r2, offset
-#0xdb : [ 2, "djnz r3, offset
-#0xdc : [ 2, "djnz r4, offset
-#0xdd : [ 2, "djnz r5, offset
-#0xde : [ 2, "djnz r6, offset
-#0xdf : [ 2, "djnz r7, offset
+0xd0 : [ 2, "pop",  "direct"     ],
+0xd1 : [ 2, "acall", "addr11"    ],
+0xd2 : [ 2, "setb", "bit"        ],
+0xd3 : [ 1, "setb", "c"          ],
+0xd4 : [ 1, "da",   "a"          ],
+0xd5 : [ 3, "djnz", "direct,offset" ],
+0xd6 : [ 1, "xchd", "a,@r0"      ],
+0xd7 : [ 1, "xchd", "a,@r1"      ],
+0xd8 : [ 2, "djnz", "r0,offset"  ],
+0xd9 : [ 2, "djnz", "r1,offset"  ],
+0xda : [ 2, "djnz", "r2,offset"  ],
+0xdb : [ 2, "djnz", "r3,offset"  ],
+0xdc : [ 2, "djnz", "r4,offset"  ],
+0xdd : [ 2, "djnz", "r5,offset"  ],
+0xde : [ 2, "djnz", "r6,offset"  ],
+0xdf : [ 2, "djnz", "r7,offset"  ],
 
-#0xe0 : [ 1, "movx a, @dptr
-#0xe1 : [ 2, "ajmp addr11
-#0xe2 : [ 1, "movx a, @r0
-#0xe3 : [ 1, "movx a, @r1
-#0xe4 : [ 1, "clr a
-#0xe5 : [ 2, "mov a, direct
-#0xe6 : [ 1, "mov a, @r0
-#0xe7 : [ 1, "mov a, @r1
-#0xe8 : [ 1, "mov a, r0
-#0xe9 : [ 1, "mov a, r1
-#0xea : [ 1, "mov a, r2
-#0xeb : [ 1, "mov a, r3
-#0xec : [ 1, "mov a, r4
-#0xed : [ 1, "mov a, r5
-#0xee : [ 1, "mov a, r6
-#0xef : [ 1, "mov a, r7
+0xe0 : [ 1, "movx", "a,@dptr"    ],
+0xe1 : [ 2, "ajmp", "addr11"     ],
+0xe2 : [ 1, "movx", "a,@r0"      ],
+0xe3 : [ 1, "movx", "a,@r1"      ],
+0xe4 : [ 1, "clr",  "a"          ],
+0xe5 : [ 2, "mov",  "a,direct"   ],
+0xe6 : [ 1, "mov",  "a,@r0"      ],
+0xe7 : [ 1, "mov",  "a,@r1"      ],
+0xe8 : [ 1, "mov",  "a,r0"       ],
+0xe9 : [ 1, "mov",  "a,r1"       ],
+0xea : [ 1, "mov",  "a,r2"       ],
+0xeb : [ 1, "mov",  "a,r3"       ],
+0xec : [ 1, "mov",  "a,r4"       ],
+0xed : [ 1, "mov",  "a,r5"       ],
+0xee : [ 1, "mov",  "a,r6"       ],
+0xef : [ 1, "mov",  "a,r7"       ],
 
-#0xf0 : [ 1, "movx @dptr, a
-#0xf1 : [ 2, "acall addr11
-#0xf2 : [ 1, "movx @r0, a
-#0xf3 : [ 1, "movx @r1, a
-#0xf4 : [ 1, "cpl a
-#0xf5 : [ 2, "mov direct, a
-#0xf6 : [ 1, "mov @r0, a
-#0xf7 : [ 1, "mov @r1, a
-#0xf8 : [ 1, "mov r0, a
-#0xf9 : [ 1, "mov r1, a
-#0xfa : [ 1, "mov r2, a
-#0xfb : [ 1, "mov r3, a
-#0xfc : [ 1, "mov r4, a
-#0xfd : [ 1, "mov r5, a
-#0xfe : [ 1, "mov r6, a
-#0xff : [ 1, "mov r7, a
+0xf0 : [ 1, "movx", "@dptr,a"    ],
+0xf1 : [ 2, "acall", "addr11"    ],
+0xf2 : [ 1, "movx", "@r0,a"      ],
+0xf3 : [ 1, "movx", "@r1,a"      ],
+0xf4 : [ 1, "cpl", "a"           ],
+0xf5 : [ 2, "mov", "direct,a"    ],
+0xf6 : [ 1, "mov", "@r0,a"       ],
+0xf7 : [ 1, "mov", "@r1,a"       ],
+0xf8 : [ 1, "mov", "r0,a"        ],
+0xf9 : [ 1, "mov", "r1,a"        ],
+0xfa : [ 1, "mov", "r2,a"        ],
+0xfb : [ 1, "mov", "r3,a"        ],
+0xfc : [ 1, "mov", "r4,a"        ],
+0xfd : [ 1, "mov", "r5,a"        ],
+0xfe : [ 1, "mov", "r6,a"        ],
+0xff : [ 1, "mov", "r7,a"        ],
 
 }
 
