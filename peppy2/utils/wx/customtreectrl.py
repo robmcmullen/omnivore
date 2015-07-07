@@ -431,6 +431,7 @@ TREE_HITTEST_ONITEMCHECKICON  = 0x4000
 """ On the check icon, if present. """
 TREE_HITTEST_ONITEM  = TREE_HITTEST_ONITEMICON | TREE_HITTEST_ONITEMLABEL | TREE_HITTEST_ONITEMCHECKICON
 """ Anywhere on the item. """
+TREE_HITTEST_ONDROPFOLDER = TREE_HITTEST_ONITEMINDENT | TREE_HITTEST_ONITEMBUTTON
 
 TREE_ITEMTYPE_NORMAL = 0
 """ A normal item. """
@@ -1008,6 +1009,7 @@ class CommandTreeEvent(wx.PyCommandEvent):
         self._evtKey = evtKey
         self._pointDrag = point
         self._label = label
+        self._in_folder = False  # if dropped in folder
         self._before = True  # or if False, after the selected item
         
 
@@ -1178,10 +1180,15 @@ class CommandTreeEvent(wx.PyCommandEvent):
         """
 
         return self._label
-    
+
+
+    def IsDroppedInFolder(self):
+        return bool(self._in_folder)
+
+
     def IsDroppedBeforeItem(self):
         return bool(self._before)
-    
+
 
 # ----------------------------------------------------------------------------
 # TreeEvent is a special class for all events associated with tree controls
@@ -1651,6 +1658,7 @@ class GenericTreeItem(object):
         self._visited = False       # visited state for an hypertext item
         self._has_drop_line = False
         self._drop_line_above = False
+        self._drop_in_folder = False
 
         if self._type > 0:
             # do not construct the array for normal items
@@ -1681,6 +1689,12 @@ class GenericTreeItem(object):
         self._has_drop_line = drop_line
         self._drop_line_above = above
     
+
+    def IsDropInFolder(self):
+        return self._drop_in_folder
+    
+    def SetDropInFolder(self, drop):
+        self._drop_in_folder = drop
 
     def IsOk(self):
         """
@@ -6551,7 +6565,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         total_h = self.GetLineHeight(item)
         drawItemBackground = False
             
-        if item.IsSelected():
+        if item.IsSelected() or item.IsDropInFolder():
         
             # under mac selections are only a rectangle in case they don't have the focus
             if wx.Platform == "__WXMAC__":
@@ -7774,14 +7788,18 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             if self._countDrag == 0 and item:
                 self._oldItem = item
 
-            if item != self._dropTarget or (item and flags&TREE_HITTEST_ONITEMUPPERPART != item.IsDropLineAbove()):
+            if item != self._dropTarget or (item and flags&TREE_HITTEST_ONITEMUPPERPART != item.IsDropLineAbove()) or (item and flags&TREE_HITTEST_ONDROPFOLDER != item.IsDropInFolder()):
                     
                 # unhighlight the previous drop target
                 if self._dropTarget:
+                    self._dropTarget.SetDropInFolder(False)
                     self._dropTarget.SetDropLine(False)
                     self.RefreshLine(self._dropTarget)
                 if item:
-                    item.SetDropLine(True, flags&TREE_HITTEST_ONITEMUPPERPART)
+                    if flags&TREE_HITTEST_ONDROPFOLDER:
+                        item.SetDropInFolder(True)
+                    else:
+                        item.SetDropLine(True, flags&TREE_HITTEST_ONITEMUPPERPART)
                     self.RefreshLine(item)
                     self._countDrag = self._countDrag + 1
                 self._dropTarget = item
@@ -7803,10 +7821,12 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                 self._dragImage.EndDrag()
 
             if self._dropTarget:
+                in_folder = self._dropTarget.IsDropInFolder()
                 before = self._dropTarget.IsDropLineAbove()
                 self._dropTarget.SetDropLine(False)
                 self._dropTarget.SetHilight(False)
             else:
+                in_folder = False
                 before = False
                 
             if self._oldSelection:
@@ -7820,6 +7840,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             event._item = item
             event._pointDrag = self.CalcScrolledPosition(pt)
             event._before = before
+            event._in_folder = in_folder
             event.SetEventObject(self)
 
             self.GetEventHandler().ProcessEvent(event)
