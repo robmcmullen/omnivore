@@ -1,6 +1,8 @@
 """ Text editor sample task
 
 """
+import wx
+
 # Enthought library imports.
 from pyface.api import ImageResource, FileDialog, YES, OK, CANCEL
 from pyface.action.api import StatusBarManager, Group, Separator
@@ -47,6 +49,8 @@ class FrameworkTask(Task):
     status_bar_debug_width = Int(150)
     
     start_new_editor_in_new_window = Bool(False)
+    
+    print_data = Any
     
     #### 'IAbout' interface ###################################################
     
@@ -223,6 +227,24 @@ class FrameworkTask(Task):
         :rtype: Boolean; True means continue with the file load
         """
         return True
+
+    def _print_data_default(self):
+        data = wx.PrintData()
+        data.SetPaperId(wx.PAPER_LETTER)
+        data.SetOrientation(wx.PORTRAIT)
+        return data
+
+    def page_setup(self):
+        data = wx.PageSetupDialogData(self.print_data)
+        data.SetDefaultMinMargins(True)
+
+        dlg = wx.PageSetupDialog(self.window.control, data)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            data = dlg.GetPageSetupData().GetPrintData()
+            self.print_data = wx.PrintData(data)  # Force a copy
+
+        dlg.Destroy()
 
     def debug(self):
         """Debug stuff!

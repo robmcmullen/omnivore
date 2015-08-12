@@ -72,9 +72,6 @@ class FrameworkEditor(Editor):
         """
         raise NotImplementedError
     
-    def page_setup(self):
-        raise NotImplementedError
-    
     def print_preview(self):
         raise NotImplementedError
     

@@ -110,13 +110,12 @@ class SaveAsAction(EditorAction):
         if dialog.open() == OK:
             self.active_editor.save(dialog.path)
 
-class PageSetupAction(EditorAction):
+class PageSetupAction(Action):
     name = 'Page Setup...'
     tooltip = 'Choose options for printing'
-    enabled_name = 'printable'
 
     def perform(self, event):
-        self.active_editor.page_setup()
+        event.task.page_setup()
 
 class PrintPreviewAction(EditorAction):
     name = 'Print Preview'
