@@ -110,6 +110,40 @@ class SaveAsAction(EditorAction):
         if dialog.open() == OK:
             self.active_editor.save(dialog.path)
 
+class PageSetupAction(EditorAction):
+    name = 'Page Setup...'
+    tooltip = 'Choose options for printing'
+    enabled_name = 'printable'
+
+    def perform(self, event):
+        self.active_editor.page_setup()
+
+class PrintPreviewAction(EditorAction):
+    name = 'Print Preview'
+    tooltip = 'Preview the pages to be printed'
+    enabled_name = 'printable'
+
+    def perform(self, event):
+        self.active_editor.print_preview()
+
+class PrintAction(EditorAction):
+    name = 'Print...'
+    tooltip = 'Print the current view to a printer'
+    enabled_name = 'printable'
+
+    def perform(self, event):
+        self.active_editor.print_page()
+
+class SaveAsPDFAction(EditorAction):
+    name = 'Export As PDF...'
+    tooltip = 'Save the current view as a PDF'
+    enabled_name = 'printable'
+
+    def perform(self, event):
+        dialog = FileDialog(parent=event.task.window.control, action='save as')
+        if dialog.open() == OK:
+            self.active_editor.save_as_pdf(dialog.path)
+
 class ExitAction(Action):
     name = 'Quit'
     accelerator = 'Ctrl+Q'

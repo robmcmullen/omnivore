@@ -48,6 +48,8 @@ class FrameworkTask(Task):
     
     start_new_editor_in_new_window = Bool(False)
     
+    printable = Bool(False)
+    
     #### 'IAbout' interface ###################################################
     
     about_title = Unicode('Peppy2')
@@ -81,7 +83,7 @@ class FrameworkTask(Task):
 
     def _menu_bar_default(self):
         menus = []
-        self.add_menu(menus, "Menu", "File", "NewGroup", "OpenGroup", "SaveGroup", "ExitGroup")
+        self.add_menu(menus, "Menu", "File", "NewGroup", "OpenGroup", "SaveGroup", "PrintGroup", "ExitGroup")
         self.add_menu(menus, "Menu", "Edit", "UndoGroup", "CopyPasteGroup", "SelectGroup", "FindGroup", "PrefGroup")
         self.add_menu(menus, "Menu", "View", "TaskGroup")
         self.add_menu(menus, "Menu", "Window", "WindowGroup")
@@ -232,6 +234,18 @@ class FrameworkTask(Task):
         for action in self._iter_schema_items(action_schemas):
             if hasattr(action, 'name'):
                 action.name = action.name + "!"
+    
+    def page_setup(self):
+        pass
+    
+    def print_preview(self):
+        pass
+    
+    def print_page(self):
+        pass
+    
+    def save_as_pdf(self, path):
+        pass
 
     ###########################################################################
     # 'FrameworkTask' convenience functions.
@@ -298,6 +312,13 @@ class FrameworkTask(Task):
                     return [
                         SaveAction(),
                         SaveAsAction(),
+                        ]
+                elif group_name == "PrintGroup":
+                    return [
+                        PageSetupAction(),
+                        PrintPreviewAction(),
+                        PrintAction(),
+                        SaveAsPDFAction(),
                         ]
                 elif group_name == "ExitGroup":
                     return [
