@@ -48,8 +48,6 @@ class FrameworkTask(Task):
     
     start_new_editor_in_new_window = Bool(False)
     
-    printable = Bool(False)
-    
     #### 'IAbout' interface ###################################################
     
     about_title = Unicode('Peppy2')
@@ -234,18 +232,6 @@ class FrameworkTask(Task):
         for action in self._iter_schema_items(action_schemas):
             if hasattr(action, 'name'):
                 action.name = action.name + "!"
-    
-    def page_setup(self):
-        pass
-    
-    def print_preview(self):
-        pass
-    
-    def print_page(self):
-        pass
-    
-    def save_as_pdf(self, path):
-        pass
 
     ###########################################################################
     # 'FrameworkTask' convenience functions.

@@ -27,6 +27,8 @@ class FrameworkEditor(Editor):
     can_redo = Bool(False)
     
     redo_label = Unicode("Redo")
+    
+    printable = Bool(False)
 
     #### property getters
 
@@ -68,6 +70,18 @@ class FrameworkEditor(Editor):
     def redo(self):
         """ Re-performs the last undone action
         """
+        raise NotImplementedError
+    
+    def page_setup(self):
+        raise NotImplementedError
+    
+    def print_preview(self):
+        raise NotImplementedError
+    
+    def print_page(self):
+        raise NotImplementedError
+    
+    def save_as_pdf(self, path=None):
         raise NotImplementedError
 
     #### convenience functions
