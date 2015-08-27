@@ -111,10 +111,14 @@ class BackgroundHttpDownloader(object):
         self.results = Queue.Queue()
         self.thread = OnlyLatestHttpThread(self.urlq, self.results)
         self.thread.start()
+        self.get_server_config()
     
     def __del__(self):
         self.urlq.put(None)
         self.thread.join()
+    
+    def get_server_config(self):
+        pass
     
     def send_request(self, url):
         self.urlq.put(url)
