@@ -15,12 +15,13 @@ log = multiprocessing.log_to_stderr()
 log.setLevel(logging.DEBUG)
 
 
-class URLRequest(object):
-    def __init__(self, url):
-        self.url = url
+class BaseURLRequest(object):
+    def __init__(self):
+        self.url = "no url"
         self.data = None
         self.error = None
         self.is_finished = False
+        self.is_skippable = True
     
     def __str__(self):
         if self.data is None:
@@ -34,6 +35,19 @@ class URLRequest(object):
     def has_error(self):
         return self.error is not None
     
+    def get_data_using_thread(self):
+        self.get_data_from_server()
+        self.is_finished = True
+    
+    def get_data_from_server(self):
+        self.data = "testing..."
+
+
+class URLRequest(BaseURLRequest):
+    def __init__(self, url):
+        BaseURLRequest.__init__(self)
+        self.url = url
+
     def get_data_from_server(self):
         try:
             request = urllib2.Request(self.url)
@@ -41,11 +55,13 @@ class URLRequest(object):
             self.data = response.read()
         except urllib2.URLError, e:
             self.error = e
-    
-    def get_data_using_thread(self):
-        self.get_data_from_server()
-        self.is_finished = True
-    
+
+
+class UnskippableURLRequest(URLRequest):
+    def __init__(self, url):
+        URLRequest.__init__(self, url)
+        self.is_skippable = False
+
 
 class HttpThread(threading.Thread):
     def __init__(self, in_q, out_q):
@@ -77,9 +93,9 @@ class OnlyLatestHttpThread(HttpThread):
         """Return only the latest URL, skip any older ones as being outdated
         
         """
-        url = self  # Need some marker that isn't None because None means quit
+        url = BaseURLRequest()  # can't use None because None means quit
         wait = True
-        while True:
+        while url is not None and url.is_skippable:
             try:
                 url = self.in_q.get(wait)
                 log.debug("found url %s", url)
