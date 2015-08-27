@@ -20,11 +20,12 @@ class URLRequest(object):
         self.url = url
         self.data = None
         self.error = None
+        self.is_finished = False
     
     def __str__(self):
         if self.data is None:
             if self.error is None:
-                return self.url
+                return str(self.url)
             else:
                 return "%s returned error: %s" % (self.url, self.error)
         else:
@@ -33,13 +34,17 @@ class URLRequest(object):
     def has_error(self):
         return self.error is not None
     
-    def load(self):
+    def get_data_from_server(self):
         try:
             request = urllib2.Request(self.url)
             response = urllib2.urlopen(request)
             self.data = response.read()
         except urllib2.URLError, e:
             self.error = e
+    
+    def get_data_using_thread(self):
+        self.get_data_from_server()
+        self.is_finished = True
     
 
 class HttpThread(threading.Thread):
@@ -61,7 +66,7 @@ class HttpThread(threading.Thread):
                 break
             
             log.debug("%s: loading from %s" % (self.name, url))
-            url.load()
+            url.get_data_using_thread()
             log.debug("%s: result from %s" % (self.name, url))
             self.out_q.put(url)
             
@@ -72,7 +77,7 @@ class OnlyLatestHttpThread(HttpThread):
         """Return only the latest URL, skip any older ones as being outdated
         
         """
-        url = self
+        url = self  # Need some marker that isn't None because None means quit
         wait = True
         while True:
             try:
@@ -95,7 +100,7 @@ class BackgroundHttpDownloader(object):
         self.urlq.put(None)
         self.thread.join()
     
-    def load(self, url):
+    def send_request(self, url):
         self.urlq.put(url)
     
     def get_finished(self):
@@ -113,12 +118,12 @@ if __name__ == "__main__":
     
 
     downloader = BackgroundHttpDownloader()
-    downloader.load(URLRequest('http://www.python.org/'))
-    downloader.load(URLRequest('http://www.doughellmann.com/PyMOTW/contents.html'))
-    downloader.load(URLRequest('http://playermissile.com'))
-    downloader.load(URLRequest('http://docs.python.org/release/2.6.8/_static/py.png'))
-    downloader.load(URLRequest('http://image.tmdb.org/t/p/w342/vpk4hLyiuI2SqCss0T3jeoYcL8E.jpg'))
-    downloader.load(URLRequest('hvvttp://playermissile.com'))
+    downloader.send_request(URLRequest('http://www.python.org/'))
+    downloader.send_request(URLRequest('http://www.doughellmann.com/PyMOTW/contents.html'))
+    downloader.send_request(URLRequest('http://playermissile.com'))
+    downloader.send_request(URLRequest('http://docs.python.org/release/2.6.8/_static/py.png'))
+    downloader.send_request(URLRequest('http://image.tmdb.org/t/p/w342/vpk4hLyiuI2SqCss0T3jeoYcL8E.jpg'))
+    downloader.send_request(URLRequest('hvvttp://playermissile.com'))
     first = True
     for i in range(10):
         print "STEP", i
@@ -126,10 +131,10 @@ if __name__ == "__main__":
         for url in downloaded:
             print 'FINISHED:', url
         if i > 1 and first:
-            downloader.load(URLRequest('http://www.python.org/images/python-logo.gif'))
-            downloader.load(URLRequest('http://www.python.org/'))
-            downloader.load(URLRequest('http://www.doughellmann.com/PyMOTW/contents.html'))
-            downloader.load(URLRequest('http://playermissile.com'))
+            downloader.send_request(URLRequest('http://www.python.org/images/python-logo.gif'))
+            downloader.send_request(URLRequest('http://www.python.org/'))
+            downloader.send_request(URLRequest('http://www.doughellmann.com/PyMOTW/contents.html'))
+            downloader.send_request(URLRequest('http://playermissile.com'))
             first = False
         time.sleep(1)
             
