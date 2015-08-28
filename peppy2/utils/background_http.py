@@ -15,7 +15,7 @@ log = multiprocessing.log_to_stderr()
 log.setLevel(logging.DEBUG)
 
 
-class BaseURLRequest(object):
+class BaseRequest(object):
     def __init__(self):
         self.url = "no url"
         self.data = None
@@ -43,9 +43,15 @@ class BaseURLRequest(object):
         self.data = "testing..."
 
 
-class URLRequest(BaseURLRequest):
+class UnskippableRequest(BaseRequest):
+    def __init__(self):
+        BaseRequest.__init__(self)
+        self.is_skippable = False
+
+
+class URLRequest(BaseRequest):
     def __init__(self, url):
-        BaseURLRequest.__init__(self)
+        BaseRequest.__init__(self)
         self.url = url
 
     def get_data_from_server(self):
@@ -70,21 +76,21 @@ class HttpThread(threading.Thread):
         self.out_q = out_q
 
     def get_next(self):
-        url = self.in_q.get(True) # blocking
-        return url
+        req = self.in_q.get(True) # blocking
+        return req
 
     def run(self):
         log.debug("%s: starting http thread..." % self.name)
         while True:
-            log.debug("%s: waiting for URL..." % self.name)
-            url = self.get_next()
-            if url is None:
+            log.debug("%s: waiting for request..." % self.name)
+            req = self.get_next()
+            if req is None:
                 break
             
-            log.debug("%s: loading from %s" % (self.name, url))
-            url.get_data_using_thread()
-            log.debug("%s: result from %s" % (self.name, url))
-            self.out_q.put(url)
+            log.debug("%s: loading from %s" % (self.name, req))
+            req.get_data_using_thread()
+            log.debug("%s: result from %s" % (self.name, req))
+            self.out_q.put(req)
             
 
 
@@ -93,35 +99,35 @@ class OnlyLatestHttpThread(HttpThread):
         """Return only the latest URL, skip any older ones as being outdated
         
         """
-        url = BaseURLRequest()  # can't use None because None means quit
+        req = BaseRequest()  # can't use None because None means quit
         wait = True
-        while url is not None and url.is_skippable:
+        while req is not None and req.is_skippable:
             try:
-                url = self.in_q.get(wait)
-                log.debug("found url %s", url)
+                req = self.in_q.get(wait)
+                log.debug("found req %s", req)
             except Queue.Empty:
                 break
             wait = False
-        return url
+        return req
 
 
 class BackgroundHttpDownloader(object):
     def __init__(self):
-        self.urlq = Queue.Queue()
+        self.requests = Queue.Queue()
         self.results = Queue.Queue()
-        self.thread = OnlyLatestHttpThread(self.urlq, self.results)
+        self.thread = OnlyLatestHttpThread(self.requests, self.results)
         self.thread.start()
         self.get_server_config()
     
     def __del__(self):
-        self.urlq.put(None)
+        self.requests.put(None)
         self.thread.join()
     
     def get_server_config(self):
         pass
     
-    def send_request(self, url):
-        self.urlq.put(url)
+    def send_request(self, req):
+        self.requests.put(req)
     
     def get_finished(self):
         finished = []
