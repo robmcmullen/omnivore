@@ -1,3 +1,5 @@
+import wx.lib.inspection
+
 # Enthought library imports.
 from pyface.api import ImageResource, FileDialog, YES, OK, CANCEL
 from pyface.action.api import Action, ActionItem, Group
@@ -290,3 +292,10 @@ class NewWindowAction(Action):
 
     def perform(self, event):
         event.task.new_window()
+
+class WidgetInspectorAction(Action):
+    name = 'Widget Inspector'
+    tooltip = 'Open the wxPython Widget Inspector'
+
+    def perform(self, event):
+        wx.lib.inspection.InspectionTool().Show()

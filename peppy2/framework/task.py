@@ -364,6 +364,7 @@ class FrameworkTask(Task):
                         SMenu(TaskAction(name='Dynamic Menu Names', method='debug',
                                          tooltip='Do some debug stuff',
                                          image=ImageResource('debug')),
+                              WidgetInspectorAction(),
                               id="Debug", name="Debug"),
                         ]
         
