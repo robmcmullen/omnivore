@@ -17,6 +17,7 @@ from i_hex_editor import IHexEditor
 from grid_control import HexEditControl
 from peppy2.utils.wx.stcbase import PeppySTC
 from peppy2.utils.wx.stcbinary import BinarySTC
+from peppy2.utils.wx.bitviewscroller import EVT_BYTECLICKED
 
 @provides(IHexEditor)
 class HexEditor(FrameworkEditor):
@@ -103,6 +104,7 @@ class HexEditor(FrameworkEditor):
         # Get related controls
         self.disassembly = self.window.get_dock_pane('hex_edit.mos6502_disasmbly_pane').control
         self.byte_graphics = self.window.get_dock_pane('hex_edit.byte_graphics').control
+        self.byte_graphics.Bind(EVT_BYTECLICKED, self.byte_clicked)
 
         # Load the editor's contents.
         self.load()
@@ -110,6 +112,11 @@ class HexEditor(FrameworkEditor):
         return self.control
 
     #### wx event handlers ####################################################
+    
+    def byte_clicked(self, event):
+        print event
+        print event.byte, event.bit
+        self.control.SelectPos(event.byte)
 
     def _on_stc_changed(self, event):
         """ Called whenever a change is made to the text of the document. """

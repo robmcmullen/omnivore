@@ -19,6 +19,19 @@ import numpy as np
 import wx
 import wx.lib.newevent
 
+myEVT_BYTECLICKED = wx.NewEventType()
+
+EVT_BYTECLICKED = wx.PyEventBinder(myEVT_BYTECLICKED, 1)
+
+class BitviewEvent(wx.PyCommandEvent):
+    """Event sent when a LayerControl is changed."""
+
+    def __init__(self, eventType, id, byte, bit):
+        wx.PyCommandEvent.__init__(self, eventType, id)
+        self.byte = byte
+        self.bit = bit
+
+
 class BitviewScroller(wx.ScrolledWindow):
     dbg_call_seq = 0
     
@@ -37,7 +50,7 @@ class BitviewScroller(wx.ScrolledWindow):
         self.scaled_bmp = None
         self.width = 0
         self.height = 0
-        self.zoom = 3
+        self.zoom = 5
         self.crop = None
         
         # hacks
@@ -48,43 +61,32 @@ class BitviewScroller(wx.ScrolledWindow):
         self.save_cursor = None
         
         self.Bind(wx.EVT_PAINT, self.OnPaint)
-
-        # selectors and related storage
-        self.use_selector = None
-        self.selector = None
-        self.selector_event_callback = None
-        self.overlay = wx.Overlay()
         self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvent)
 
-    def zoomIn(self, zoom=1):
+    def zoom_in(self, zoom=1):
         self.zoom += zoom
         if self.zoom > self.max_zoom:
             self.zoom = self.max_zoom
         self.set_scale()
         
-    def zoomOut(self, zoom=1):
+    def zoom_out(self, zoom=1):
         self.zoom -= zoom
         if self.zoom < self.min_zoom:
             self.zoom = self.min_zoom
         self.set_scale()
 
-    def _clearBackground(self, dc, w, h):
-        dc.SetBackground(wx.Brush(self.background_color))
-        dc.Clear()
-
-    def _drawBackground(self, dc, w, h):
-        self._clearBackground(dc, w, h)
-
     def get_image(self, start_row, num_rows):
         print "Getting image: start=%d, num=%d" % (start_row, num_rows)
-        start = start_row * self.bytes_per_row
-        end = start + (num_rows * self.bytes_per_row)
-        if end > self.bytes.size:
-            end = self.bytes.size
+        self.start_row = start_row
+        self.num_rows = num_rows
+        self.start_byte = start_row * self.bytes_per_row
+        self.end_byte = self.start_byte + (num_rows * self.bytes_per_row)
+        if self.end_byte > self.bytes.size:
+            self.end_byte = self.bytes.size
             bytes = np.zeros((num_rows * self.bytes_per_row), dtype=np.uint8)
-            bytes[0:end - start] = self.bytes[start_row * self.bytes_per_row:end]
+            bytes[0:self.end_byte - self.start_byte] = self.bytes[start_row * self.bytes_per_row:self.end_byte]
         else:
-            bytes = self.bytes[start_row * self.bytes_per_row:end]
+            bytes = self.bytes[start_row * self.bytes_per_row:self.end_byte]
         bits = np.unpackbits(bytes)
         bits = bits.reshape((-1, 8 * self.bytes_per_row))
         bits[bits==0]=255
@@ -99,6 +101,25 @@ class BitviewScroller(wx.ScrolledWindow):
         image.Rescale(width * self.zoom, num_rows * self.zoom)
         bmp = wx.BitmapFromImage(image)
         return bmp
+
+    def copy_to_clipboard(self):
+        """Copies current image to clipboard.
+
+        Copies the current image, including scaling, zooming, etc. to
+        the clipboard.
+        """
+        bmpdo = wx.BitmapDataObject(self.scaled_bmp)
+        if wx.TheClipboard.Open():
+            wx.TheClipboard.SetData(bmpdo)
+            wx.TheClipboard.Close()
+
+    def get_row_info(self):
+        x, y = self.GetViewStart()
+        w, h = self.GetClientSizeTuple()
+        h2 = (h / self.bytes_per_row) * self.bytes_per_row
+        start_row, num_rows = y, h2 / self.zoom + 1
+        print "x, y, w, h, start, num: ", x, y, w, h, start_row, num_rows
+        return start_row, num_rows
 
     def prepare_image(self):
         """Creates new image at specified zoom factor.
@@ -115,16 +136,14 @@ class BitviewScroller(wx.ScrolledWindow):
             
             w, h = self.GetClientSizeTuple()
             dc = wx.MemoryDC()
-            self.scaled_bmp = wx.EmptyBitmap(self.width, h)
+            self.scaled_bmp = wx.EmptyBitmap(w, h)
             
-            x, y = self.GetViewStart()
-            print "x, y, w, h: ", x, y, w, h
             dc.SelectObject(self.scaled_bmp)
             dc.SetBackground(wx.Brush(self.background_color))
             dc.Clear()
             
-            h2 = (h / self.bytes_per_row) * self.bytes_per_row
-            bmp = self.get_image(y, h2 / self.zoom + 1)
+            start_row, num_rows = self.get_row_info()
+            bmp = self.get_image(start_row, num_rows)
             dc.DrawBitmap(bmp, 0, 0, True)
 
     def set_scale(self):
@@ -148,169 +167,32 @@ class BitviewScroller(wx.ScrolledWindow):
         if rate < 1:
             rate = 1
         self.SetScrollRate(rate, rate)
-        if self.selector:
-            self.selector.recalc()
         self.Refresh()
     
     def set_data(self, byte_source):
         self.bytes = byte_source
         self.set_scale()
 
-    def copyToClipboard(self):
-        """Copies current image to clipboard.
-
-        Copies the current image, including scaling, zooming, etc. to
-        the clipboard.
-        """
-        img = self._getCroppedImage()
-        w = int(img.GetWidth() * self.zoom)
-        h = int(img.GetHeight() * self.zoom)
-        clip = wx.BitmapFromImage(img.Scale(w, h))
-        bmpdo = wx.BitmapDataObject(clip)
-        if wx.TheClipboard.Open():
-            wx.TheClipboard.SetData(bmpdo)
-            wx.TheClipboard.Close()
-
-    def saveImage(self, filename):
-        """Copies current image to clipboard.
-
-        Copies the current image, including scaling, zooming, etc. to
-        the clipboard.
-        """
-        handlers = {'.png': wx.BITMAP_TYPE_PNG,
-                    '.jpg': wx.BITMAP_TYPE_JPEG,
-                    }
-
-        root, ext = os.path.splitext(filename)
-        ext = ext.lower()
-        if ext in handlers:
-            try:
-                status = self.scaled_bmp.SaveFile(filename, handlers[ext])
-            except:
-                status = False
-            return status
-        raise TypeError("Unknown image file extension %s" % ext)
-
-    def convertEventCoords(self, ev):
+    def event_coords_to_byte(self, ev):
         """Convert event coordinates to world coordinates.
 
         Convert the event coordinates to world coordinates by locating
         the offset of the scrolled window's viewport and adjusting the
         event coordinates.
         """
-        xView, yView = self.GetViewStart()
-        xDelta, yDelta = self.GetScrollPixelsPerUnit()
-        x = ev.GetX() + (xView * xDelta)
-        y = ev.GetY() + (yView * yDelta)
-        return (x, y)
+        inside = True
 
-    def getBoundedCoords(self, x, y):
-        """Return image coordinates clipped to boundary of image."""
-        
-        if x<0: x=0
-        elif x>=self.img.GetWidth(): x=self.img.GetWidth()-1
-        if y<0: y=0
-        elif y>=self.img.GetHeight(): y=self.img.GetHeight()-1
-        return (x, y)
-
-    def getImageCoords(self, x, y, fixbounds = True):
-        """Convert scrolled window coordinates to image coordinates.
-
-        Convert from the scrolled window coordinates (where (0,0) is
-        the upper left corner when the window is scrolled to the
-        top-leftmost position) to the corresponding point on the
-        original (i.e. unzoomed, unrotated, uncropped) image.
-        """
-        x = int(x / self.zoom)
-        y = int(y / self.zoom)
-        if fixbounds:
-            return self.getBoundedCoords(x, y)
-        else:
-            return (x, y)
-
-    def isInBounds(self, x, y):
-        """Check if world coordinates are on the image.
-
-        Return True if the world coordinates lie on the image.
-        """
-        if self.img is None or x<0 or y<0 or x>=self.width or y>=self.height:
-            return False
-        return True
-
-    def isEventInClientArea(self, ev):
-        """Check if event is in the viewport.
-
-        Return True if the event is within the visible viewport of the
-        scrolled window.
-        """
-        size = self.GetClientSizeTuple()
-        x = ev.GetX()
-        y = ev.GetY()
-        if x < 0 or x >= size[0] or y < 0 or y >= size[1]:
-            return False
-        return True
-
-    def setCursor(self, cursor):
-        """Set cursor for the window.
-
-        A mild enhancement of the wx standard SetCursor that takes an
-        integer id as well as a wx.StockCursor instance.
-        """
-        if isinstance(cursor, int):
-            cursor = wx.StockCursor(cursor)
-        self.SetCursor(cursor)
-
-    def blankCursor(self, ev, coords=None):
-        """Turn off cursor.
-
-        Some selectors, like the crosshair selector, work better when
-        the mouse cursor isn't obscuring the image.  This method is
-        called by the selector itself to blank the cursor when over
-        the image.
-        """
-        #dprint()
-        if coords is None:
-            coords = self.convertEventCoords(ev)
-        if self.isInBounds(*coords) and self.isEventInClientArea(ev):
-            if not self.save_cursor:
-                self.save_cursor = True
-                self.setCursor(wx.StockCursor(wx.CURSOR_BLANK))
-        else:
-            if self.save_cursor:
-                self.setCursor(self.use_selector.cursor)
-                self.save_cursor = False
-
-    def getSelectorCoordsOnImage(self, with_cropped_offset=True):
-        if self.selector:
-            x, y = self.getImageCoords(*self.selector.world_coords)
-            if self.crop is not None and with_cropped_offset:
-                x += self.crop[0]
-                y += self.crop[1]
-            return (x, y)
-        return None
-    
-    def setSelector(self, selector):
-        if self.selector:
-            self.selector.cleanup()
-            self.selector = None
-        self.use_selector = selector
-        self.setCursor(self.use_selector.cursor)
-        self.save_cursor = None
-    
-    def startSelector(self, ev=None):
-        self.selector = self.use_selector(self, ev)
-
-    def getActiveSelector(self):
-        """Returns the currently active selector."""
-        return self.selector
-
-    def endActiveSelector(self):
-        if self.selector:
-            self.selector.cleanup()
-            self.selector = None
-        if self.save_cursor:
-            self.setCursor(self.use_selector.cursor)
-            self.save_cursor = None
+        x, y = self.GetViewStart()
+        x = (ev.GetX() // self.zoom) + x
+        y = (ev.GetY() // self.zoom) + y
+        xbyte = (x // 8)
+        if x < 0 or xbyte >= self.bytes_per_row or y < 0 or y > (self.start_row + self.num_rows):
+            inside = False
+        byte = (self.bytes_per_row * y) + xbyte
+        if byte > self.end_byte:
+            inside = False
+        bit = 7 - (x & 7)
+        return byte, bit, inside
 
     def OnMouseEvent(self, ev):
         """Driver to process mouse events.
@@ -320,31 +202,21 @@ class BitviewScroller(wx.ScrolledWindow):
         its event combination, it becomes the active selector and
         further mouse events are directed to its handler.
         """
-        if self.img:
-            inside = self.isEventInClientArea(ev)
-            
-            try:
-                # First, process the event itself or start it up if it has
-                # been triggered.
-                if self.selector:
-                    if not self.selector.processEvent(ev):
-                        self.endActiveSelector()
-                elif inside and self.use_selector.trigger(ev):
-                    self.startSelector(ev)
+        x = ev.GetX()
+        y = ev.GetY()
+        byte, bit, inside = self.event_coords_to_byte(ev)
+        print x, y, byte, bit, inside
+        
+        if ev.LeftIsDown() and inside:
+            event = BitviewEvent(myEVT_BYTECLICKED, self.GetId(), byte, bit)
+            self.GetEventHandler().ProcessEvent(event)
+        w = ev.GetWheelRotation()
+        if ev.ControlDown():
+            if w < 0:
+                self.zoom_out()
+            elif w > 0:
+                self.zoom_in()
 
-                # Next, if we have a selector, process some user interface
-                # side effects
-                if self.selector:
-                    if self.selector.want_autoscroll and not inside:
-                        self.autoScroll(ev)
-                    if self.selector.want_blank_cursor:
-                        self.blankCursor(ev)
-            except:
-                # If something bad happens, make sure we return control of the
-                # mouse pointer to the user
-                if self.HasCapture():
-                    self.ReleaseMouse()
-                raise
         ev.Skip()
 
     def OnPaint(self, evt):
@@ -374,56 +246,19 @@ if __name__ == '__main__':
     frame = wx.Frame(None, -1, title='Test', size=(500,500))
     frame.CreateStatusBar()
     
-    # Add a panel that the rubberband will work on.
     panel = BitviewScroller(frame)
     bytes = np.arange(256, dtype=np.uint8)
     panel.set_data(bytes)
 
-#    # Add the callbacks
-#    def crosshairCallback(ev):
-#        x, y = ev.imageCoords
-#        frame.SetStatusText("x=%d y=%d" % (x, y))
-#    panel.Bind(EVT_CROSSHAIR_MOTION, crosshairCallback)
-#    def rubberbandMotionCallback(ev):
-#        x0, y0 = ev.upperLeftImageCoords
-#        x1, y1 = ev.lowerRightImageCoords
-#        frame.SetStatusText("moving rubberband: ul = (%d,%d) lr = (%d,%d)" % (x0, y0, x1, y1))
-#    panel.Bind(EVT_RUBBERBAND_MOTION, rubberbandMotionCallback)
-#    def rubberbandSizeCallback(ev):
-#        x0, y0 = ev.upperLeftImageCoords
-#        x1, y1 = ev.lowerRightImageCoords
-#        frame.SetStatusText("sizing rubberband: ul = (%d,%d) lr = (%d,%d)" % (x0, y0, x1, y1))
-#    panel.Bind(EVT_RUBBERBAND_SIZE, rubberbandSizeCallback)
-
-    # Layout the frame
     sizer = wx.BoxSizer(wx.VERTICAL)
     sizer.Add(panel,  1, wx.EXPAND | wx.ALL, 5)
     
     def buttonHandler(ev):
         id = ev.GetId()
         if id == 100:
-            panel.zoomIn()
+            panel.zoom_in()
         elif id == 101:
-            panel.zoomOut()
-#        elif id == 102:
-#            panel.setSelector(Crosshair)
-#        elif id == 103:
-#            panel.setSelector(RubberBand)
-#        elif id == 104:
-#            selector = panel.getActiveSelector()
-#            dprint("selector = %s" % selector)
-#            if isinstance(selector, RubberBand):
-#                box = selector.getSelectedBox()
-#                dprint("selected box = %s" % str(box))
-#                panel.setCrop(box)
-#        elif id == 105:
-#            panel.setCrop(None)
-#        elif id == 106:
-#            panel.setSelector(RubberBand)
-#            panel.startSelector()
-#            selector = panel.getActiveSelector()
-#            img = panel.orig_img
-#            selector.setSelection(0,0, img.GetWidth()/2, img.GetHeight()/2)
+            panel.zoom_out()
         elif id == 200:
             wildcard="*"
             dlg = wx.FileDialog(
@@ -450,7 +285,7 @@ if __name__ == '__main__':
         elif id == 201:
             pass
         elif id == 202:
-            panel.copyToClipboard()
+            panel.copy_to_clipboard()
     buttonsizer = wx.BoxSizer(wx.HORIZONTAL)
     sizer.Add(buttonsizer, 0, wx.EXPAND | wx.ALL, 5)
     button = wx.Button(frame, 100, 'Zoom In')
@@ -459,27 +294,6 @@ if __name__ == '__main__':
     button = wx.Button(frame, 101, 'Zoom Out')
     frame.Bind(wx.EVT_BUTTON, buttonHandler, button)
     buttonsizer.Add(button, 0, wx.EXPAND, 0)
-    button = wx.Button(frame, 102, 'Crosshair')
-    frame.Bind(wx.EVT_BUTTON, buttonHandler, button)
-    buttonsizer.Add(button, 0, wx.EXPAND, 0)
-    button = wx.Button(frame, 103, 'Select')
-    frame.Bind(wx.EVT_BUTTON, buttonHandler, button)
-    buttonsizer.Add(button, 0, wx.EXPAND, 0)
-    
-    buttonsizer = wx.BoxSizer(wx.HORIZONTAL)
-    sizer.Add(buttonsizer, 0, wx.EXPAND | wx.ALL, 5)
-    button = wx.Button(frame, 104, 'Crop')
-    frame.Bind(wx.EVT_BUTTON, buttonHandler, button)
-    buttonsizer.Add(button, 0, wx.EXPAND, 0)
-    button = wx.Button(frame, 105, 'Uncrop')
-    frame.Bind(wx.EVT_BUTTON, buttonHandler, button)
-    buttonsizer.Add(button, 0, wx.EXPAND, 0)
-    button = wx.Button(frame, 106, 'Select half')
-    frame.Bind(wx.EVT_BUTTON, buttonHandler, button)
-    buttonsizer.Add(button, 0, wx.EXPAND, 0)
-
-    buttonsizer = wx.BoxSizer(wx.HORIZONTAL)
-    sizer.Add(buttonsizer, 0, wx.EXPAND | wx.ALL, 5)
     button = wx.Button(frame, 200, 'Load')
     frame.Bind(wx.EVT_BUTTON, buttonHandler, button)
     buttonsizer.Add(button, 0, wx.EXPAND, 0)

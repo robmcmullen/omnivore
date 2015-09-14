@@ -955,6 +955,12 @@ class HexEditControl(Grid.Grid):
         row, col=self.GetTable().getCursorPosition(pos, self.GetGridCursorCol())
         self.SetGridCursor(row,col)
         self.MakeCellVisible(row,col)
+
+    def SelectPos(self, pos):
+        row, col=self.GetTable().getCursorPosition(pos, self.GetGridCursorCol())
+        self.SetGridCursor(row,col)
+        self.SelectBlock(row,col,row,col,False)
+        self.MakeCellVisible(row,col)
     
     def addUpdateUIEvent(self, callback):
         """Add the equivalent to STC_UPDATEUI event for UI changes.
