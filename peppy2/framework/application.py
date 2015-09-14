@@ -89,6 +89,8 @@ class FrameworkApplication(TasksApplication):
     log_dir = Str
     
     log_file_ext = Str
+    
+    cache_dir = Str
 
     ###########################################################################
     # Private interface.
@@ -317,7 +319,7 @@ class FrameworkApplication(TasksApplication):
         config directory location instead of ~/.enthought 
         """
 
-        from peppy2.third_party.appdirs import user_config_dir, user_log_dir
+        from peppy2.third_party.appdirs import user_config_dir, user_log_dir, user_cache_dir
         dirname = user_config_dir(self.name)
         ETSConfig.application_home = dirname
 
@@ -331,6 +333,11 @@ class FrameworkApplication(TasksApplication):
         self.log_dir = dirname
         
         self.log_file_ext = "-%s" % datetime.now().strftime("%Y%m%d-%H%M%S")
+
+        dirname = user_cache_dir(self.name)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        self.cache_dir = dirname
         
         return
     
