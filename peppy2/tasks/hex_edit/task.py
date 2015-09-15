@@ -52,6 +52,10 @@ class HexEditTask(FrameworkTask):
             ]
 
 
+    def _active_editor_changed(self, editor):
+        print "active editor changed to ", editor
+        editor.update_panes()
+
     ###########################################################################
     # 'FrameworkTask' interface.
     ###########################################################################

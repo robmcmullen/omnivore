@@ -58,11 +58,7 @@ class HexEditor(FrameworkEditor):
         self.path = path
         self.dirty = False
         
-        self.disassembly.update(self.bytestore.data)
-        
-        if len(text) > 0:
-            self.byte_graphics.set_data(self.bytestore.data)
-            self.font_map.set_data(self.bytestore.data)
+        self.update_panes()
 
     def save(self, path=None):
         """ Saves the contents of the editor.
@@ -81,6 +77,11 @@ class HexEditor(FrameworkEditor):
     
     def redo(self):
         self.bytestore.Redo()
+
+    def update_panes(self):
+        self.disassembly.update(self.bytestore.data)
+        self.byte_graphics.set_data(self.bytestore.data)
+        self.font_map.set_data(self.bytestore.data)
 
     ###########################################################################
     # Trait handlers.
