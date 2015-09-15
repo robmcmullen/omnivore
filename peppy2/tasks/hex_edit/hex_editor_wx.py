@@ -62,6 +62,7 @@ class HexEditor(FrameworkEditor):
         
         if len(text) > 0:
             self.byte_graphics.set_data(self.bytestore.data)
+            self.font_map.set_data(self.bytestore.data)
 
     def save(self, path=None):
         """ Saves the contents of the editor.
@@ -105,6 +106,7 @@ class HexEditor(FrameworkEditor):
         self.disassembly = self.window.get_dock_pane('hex_edit.mos6502_disasmbly_pane').control
         self.byte_graphics = self.window.get_dock_pane('hex_edit.byte_graphics').control
         self.byte_graphics.Bind(EVT_BYTECLICKED, self.byte_clicked)
+        self.font_map = self.window.get_dock_pane('hex_edit.font_map').control
 
         # Load the editor's contents.
         self.load()
