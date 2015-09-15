@@ -108,6 +108,7 @@ class HexEditor(FrameworkEditor):
         self.byte_graphics = self.window.get_dock_pane('hex_edit.byte_graphics').control
         self.byte_graphics.Bind(EVT_BYTECLICKED, self.byte_clicked)
         self.font_map = self.window.get_dock_pane('hex_edit.font_map').control
+        self.font_map.Bind(EVT_BYTECLICKED, self.byte_clicked)
 
         # Load the editor's contents.
         self.load()

@@ -339,6 +339,26 @@ class FontMapScroller(BitviewScroller):
         bmp = wx.BitmapFromImage(image)
         return bmp
 
+    def event_coords_to_byte(self, ev):
+        """Convert event coordinates to world coordinates.
+
+        Convert the event coordinates to world coordinates by locating
+        the offset of the scrolled window's viewport and adjusting the
+        event coordinates.
+        """
+        inside = True
+
+        x, y = self.GetViewStart()
+        x = (ev.GetX() // self.zoom // 8) + x
+        y = (ev.GetY() // self.zoom // 8) + y
+        if x < 0 or x >= self.bytes_per_row or y < 0 or y > (self.start_row + self.visible_rows):
+            inside = False
+        byte = (self.bytes_per_row * y) + x
+        if byte > self.end_byte:
+            inside = False
+        bit = 7 - (y & 7)
+        return byte, bit, inside
+
 
 
 if __name__ == '__main__':
