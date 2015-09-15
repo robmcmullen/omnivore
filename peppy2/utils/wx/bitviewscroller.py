@@ -75,30 +75,30 @@ class BitviewScroller(wx.ScrolledWindow):
             self.zoom = self.min_zoom
         self.set_scale()
 
-    def get_image(self, start_row, num_rows):
-        print "Getting image: start=%d, num=%d" % (start_row, num_rows)
-        self.start_row = start_row
-        self.num_rows = num_rows
-        self.start_byte = start_row * self.bytes_per_row
-        self.end_byte = self.start_byte + (num_rows * self.bytes_per_row)
+    def get_image(self):
+        print "Getting image: start=%d, num=%d" % (self.start_row, self.num_rows)
+        sr = self.start_row
+        nr = self.num_rows
+        self.start_byte = sr * self.bytes_per_row
+        self.end_byte = self.start_byte + (nr * self.bytes_per_row)
         if self.end_byte > self.bytes.size:
             self.end_byte = self.bytes.size
-            bytes = np.zeros((num_rows * self.bytes_per_row), dtype=np.uint8)
-            bytes[0:self.end_byte - self.start_byte] = self.bytes[start_row * self.bytes_per_row:self.end_byte]
+            bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
+            bytes[0:self.end_byte - self.start_byte] = self.bytes[sr * self.bytes_per_row:self.end_byte]
         else:
-            bytes = self.bytes[start_row * self.bytes_per_row:self.end_byte]
+            bytes = self.bytes[sr * self.bytes_per_row:self.end_byte]
         bits = np.unpackbits(bytes)
         bits = bits.reshape((-1, 8 * self.bytes_per_row))
         bits[bits==0]=255
         bits[bits==1]=0
         width = 8 * self.bytes_per_row
-        array = np.zeros((num_rows, width, 3), dtype=np.uint8)
+        array = np.zeros((nr, width, 3), dtype=np.uint8)
         array[:,:,0] = bits
         array[:,:,1] = bits
         array[:,:,2] = bits
-        image = wx.EmptyImage(width, num_rows)
+        image = wx.EmptyImage(width, nr)
         image.SetData(array.tostring())
-        image.Rescale(width * self.zoom, num_rows * self.zoom)
+        image.Rescale(width * self.zoom, nr * self.zoom)
         bmp = wx.BitmapFromImage(image)
         return bmp
 
@@ -113,14 +113,6 @@ class BitviewScroller(wx.ScrolledWindow):
             wx.TheClipboard.SetData(bmpdo)
             wx.TheClipboard.Close()
 
-    def get_row_info(self):
-        x, y = self.GetViewStart()
-        w, h = self.GetClientSizeTuple()
-        h2 = (h / self.bytes_per_row) * self.bytes_per_row
-        start_row, num_rows = y, h2 / self.zoom + 1
-        print "x, y, w, h, start, num: ", x, y, w, h, start_row, num_rows
-        return start_row, num_rows
-
     def prepare_image(self):
         """Creates new image at specified zoom factor.
 
@@ -130,9 +122,7 @@ class BitviewScroller(wx.ScrolledWindow):
         really huge and the zoom factor is large.
         """
         if self.bytes is not None:
-            rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
-            self.width = int(8 * self.bytes_per_row * self.zoom)
-            self.height = int(rows * self.zoom)
+            self.calc_image_size()
             
             w, h = self.GetClientSizeTuple()
             dc = wx.MemoryDC()
@@ -142,9 +132,15 @@ class BitviewScroller(wx.ScrolledWindow):
             dc.SetBackground(wx.Brush(self.background_color))
             dc.Clear()
             
-            start_row, num_rows = self.get_row_info()
-            bmp = self.get_image(start_row, num_rows)
+            bmp = self.get_image()
             dc.DrawBitmap(bmp, 0, 0, True)
+    
+    def calc_image_size(self):
+        x, y = self.GetViewStart()
+        w, h = self.GetClientSizeTuple()
+        h2 = (h / self.bytes_per_row) * self.bytes_per_row
+        self.start_row, self.num_rows = y, h2 / self.zoom + 1
+        print "x, y, w, h, start, num: ", x, y, w, h, self.start_row, self.num_rows
 
     def set_scale(self):
         """Creates new image at specified zoom factor.
@@ -155,19 +151,25 @@ class BitviewScroller(wx.ScrolledWindow):
         really huge and the zoom factor is large.
         """
         if self.bytes is not None:
-            rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
-            self.width = int(8 * self.bytes_per_row * self.zoom)
-            self.height = int(rows * self.zoom)
+            self.calc_scale_from_bytes()
         else:
             self.width = 10
             self.height = 10
         print "set_scale: ", self.width, self.height
         self.SetVirtualSize((self.width, self.height))
+        self.calc_scroll_rate()
+        self.Refresh()
+    
+    def calc_scale_from_bytes(self):
+        self.total_rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
+        self.width = int(8 * self.bytes_per_row * self.zoom)
+        self.height = int(self.total_rows * self.zoom)
+    
+    def calc_scroll_rate(self):
         rate = int(self.zoom)
         if rate < 1:
             rate = 1
         self.SetScrollRate(rate, rate)
-        self.Refresh()
     
     def set_data(self, byte_source):
         self.bytes = byte_source
@@ -205,7 +207,7 @@ class BitviewScroller(wx.ScrolledWindow):
         x = ev.GetX()
         y = ev.GetY()
         byte, bit, inside = self.event_coords_to_byte(ev)
-        print x, y, byte, bit, inside
+        #print x, y, byte, bit, inside
         
         if ev.LeftIsDown() and inside:
             event = BitviewEvent(myEVT_BYTECLICKED, self.GetId(), byte, bit)
@@ -252,7 +254,92 @@ class FontMapScroller(BitviewScroller):
         
         if font is None:
             font = default_font
+        self.set_font(font)
+    
+    def calc_scale_from_bytes(self):
+        self.total_rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
+        self.width = int(8 * self.bytes_per_row * self.zoom)
+        self.height = int(8 * self.total_rows * self.zoom)
+    
+    def calc_scroll_rate(self):
+        rate = int(self.zoom)
+        if rate < 1:
+            rate = 1
+        self.SetScrollRate(8 * rate, 8 * rate)
+    
+    def calc_image_size(self):
+        x, y = self.GetViewStart()
+        w, h = self.GetClientSizeTuple()
+        r = (h / self.bytes_per_row / 8) * self.bytes_per_row
+        self.start_row, self.num_rows = y, (r / self.zoom) + 1
+        c = w / 8
+        self.start_col, self.num_cols = x, (c / self.zoom) + 1
+        print "fontmap: x, y, w, h, row start, num: ", x, y, w, h, self.start_row, self.num_rows, "col start, num:", self.start_col, self.num_cols
+
+    def set_font(self, raw):
+        bytes = np.fromstring(raw, dtype=np.uint8)
+        print "numpy font:", bytes
+        print bytes[1]
+        bits = np.unpackbits(bytes)
+        bits = bits.reshape((-1, 8, 8))
+        print bits[1]
+        
+        bits[bits==0]=255
+        bits[bits==1]=0
+        font = np.zeros((256, 8, 8, 3), dtype=np.uint8)
+        font[0:128,:,:,0] = bits
+        font[0:128,:,:,1] = bits
+        font[0:128,:,:,2] = bits
+        
+        # Inverse characters when high bit set
+        font[128:256,:,:,0] = 255 - bits
+        font[128:256,:,:,1] = 255 - bits
+        font[128:256,:,:,2] = 255 - bits
+        print font[1]
+        
         self.font = font
+
+    def get_image(self):
+        print "Getting fontmap: start=%d, num=%d" % (self.start_row, self.num_rows)
+        sr = self.start_row
+        nr = self.num_rows
+        self.start_byte = sr * self.bytes_per_row
+        self.end_byte = self.start_byte + (nr * self.bytes_per_row)
+        if self.end_byte > self.bytes.size:
+            self.end_byte = self.bytes.size
+            bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
+            bytes[0:self.end_byte - self.start_byte] = self.bytes[sr * self.bytes_per_row:self.end_byte]
+        else:
+            bytes = self.bytes[sr * self.bytes_per_row:self.end_byte]
+        
+        sc = self.start_col
+        nc = self.num_cols
+        bytes = bytes.reshape((nr, -1))
+        print "get_image: bytes", bytes
+        
+        width = 8 * self.bytes_per_row
+        height = 8 * nr
+        print "pixel width:", width, height, "zoom", self.zoom
+        array = np.zeros((height, width, 3), dtype=np.uint8)
+        
+        print self.end_byte, self.start_byte, (self.end_byte - self.start_byte) / self.bytes_per_row
+        er = min((self.end_byte - self.start_byte) / self.bytes_per_row, nr)
+        ec = min(self.bytes_per_row, sc + self.bytes_per_row)
+        print "bytes:", sr, nr, er, sc, nc, ec, bytes.shape
+        y = 0
+        for j in range(er):
+            x = 0
+            for i in range(sc, ec):
+                c = bytes[j, i]
+                array[y:y+8,x:x+8,:] = self.font[c]
+                x += 8
+            y += 8
+        print array.shape
+        image = wx.EmptyImage(width, height)
+        image.SetData(array.tostring())
+        image.Rescale(width * self.zoom, height * self.zoom)
+        bmp = wx.BitmapFromImage(image)
+        return bmp
 
 
 
