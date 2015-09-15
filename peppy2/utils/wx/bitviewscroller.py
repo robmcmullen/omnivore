@@ -48,19 +48,19 @@ class BitviewScroller(wx.ScrolledWindow):
         self.bytes = None
         self.img = None
         self.scaled_bmp = None
-        self.width = 0
-        self.height = 0
+        self.grid_width = 0
+        self.grid_height = 0
         self.zoom = 5
         self.crop = None
         
         # hacks
-        self.just_scrolled = False
         
         # cursors
         self.default_cursor = wx.CURSOR_ARROW
         self.save_cursor = None
         
         self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_SIZE, self.on_resize)
         self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvent)
 
     def zoom_in(self, zoom=1):
@@ -76,9 +76,9 @@ class BitviewScroller(wx.ScrolledWindow):
         self.set_scale()
 
     def get_image(self):
-        print "Getting image: start=%d, num=%d" % (self.start_row, self.num_rows)
+        print "Getting image: start=%d, num=%d" % (self.start_row, self.visible_rows)
         sr = self.start_row
-        nr = self.num_rows
+        nr = self.visible_rows
         self.start_byte = sr * self.bytes_per_row
         self.end_byte = self.start_byte + (nr * self.bytes_per_row)
         if self.end_byte > self.bytes.size:
@@ -138,9 +138,12 @@ class BitviewScroller(wx.ScrolledWindow):
     def calc_image_size(self):
         x, y = self.GetViewStart()
         w, h = self.GetClientSizeTuple()
-        h2 = (h / self.bytes_per_row) * self.bytes_per_row
-        self.start_row, self.num_rows = y, h2 / self.zoom + 1
-        print "x, y, w, h, start, num: ", x, y, w, h, self.start_row, self.num_rows
+        self.start_row = y
+        
+        # For proper buffered paiting, the visible rows must include the
+        # (possibly) partially obscured last row
+        self.visible_rows = ((h + self.zoom - 1) / self.zoom)
+        print "x, y, w, h, start, num: ", x, y, w, h, self.start_row, self.visible_rows
 
     def set_scale(self):
         """Creates new image at specified zoom factor.
@@ -153,17 +156,17 @@ class BitviewScroller(wx.ScrolledWindow):
         if self.bytes is not None:
             self.calc_scale_from_bytes()
         else:
-            self.width = 10
-            self.height = 10
-        print "set_scale: ", self.width, self.height
-        self.SetVirtualSize((self.width, self.height))
+            self.grid_width = 10
+            self.grid_height = 10
+        print "set_scale: ", self.grid_width, self.grid_height
+        self.SetVirtualSize((self.grid_width * self.zoom, self.grid_height * self.zoom))
         self.calc_scroll_rate()
         self.Refresh()
     
     def calc_scale_from_bytes(self):
         self.total_rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
-        self.width = int(8 * self.bytes_per_row * self.zoom)
-        self.height = int(self.total_rows * self.zoom)
+        self.grid_width = int(8 * self.bytes_per_row)
+        self.grid_height = int(self.total_rows)
     
     def calc_scroll_rate(self):
         rate = int(self.zoom)
@@ -188,7 +191,7 @@ class BitviewScroller(wx.ScrolledWindow):
         x = (ev.GetX() // self.zoom) + x
         y = (ev.GetY() // self.zoom) + y
         xbyte = (x // 8)
-        if x < 0 or xbyte >= self.bytes_per_row or y < 0 or y > (self.start_row + self.num_rows):
+        if x < 0 or xbyte >= self.bytes_per_row or y < 0 or y > (self.start_row + self.visible_rows):
             inside = False
         byte = (self.bytes_per_row * y) + xbyte
         if byte > self.end_byte:
@@ -226,21 +229,11 @@ class BitviewScroller(wx.ScrolledWindow):
         print("In OnPaint %d" % self.dbg_call_seq)
         self.prepare_image()
         if self.scaled_bmp is not None:
-            
-            #dc=wx.BufferedPaintDC(self, self.scaled_bmp, wx.BUFFER_CLIENT_AREA)
-            dc=wx.PaintDC(self)
-            dc.DrawBitmap(self.scaled_bmp, 0, 0)
-            # Note that the drawing actually happens when the dc goes
-            # out of scope and is destroyed.
-            
-#            # FIXME: This check for MSW is because it gets multiple onpaint
-#            # events, so make sure it's only called once for consecutive
-#            # repaints.  HACK!
-#            if self.selector and (wx.Platform != '__WXMSW__' or not self.just_scrolled):
-#                wx.CallAfter(self.selector.recalc_and_draw)
-            #self.overlay.Reset()
-        self.just_scrolled = False
+            dc = wx.BufferedPaintDC(self, self.scaled_bmp, wx.BUFFER_CLIENT_AREA)
         evt.Skip()
+    
+    def on_resize(self, evt):
+        self.calc_image_size()
 
 
 default_font = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x18\x18\x18\x18\x00\x18\x00\x00fff\x00\x00\x00\x00\x00f\xffff\xfff\x00\x18>`<\x06|\x18\x00\x00fl\x180fF\x00\x1c6\x1c8of;\x00\x00\x18\x18\x18\x00\x00\x00\x00\x00\x0e\x1c\x18\x18\x1c\x0e\x00\x00p8\x18\x188p\x00\x00f<\xff<f\x00\x00\x00\x18\x18~\x18\x18\x00\x00\x00\x00\x00\x00\x00\x18\x180\x00\x00\x00~\x00\x00\x00\x00\x00\x00\x00\x00\x00\x18\x18\x00\x00\x06\x0c\x180`@\x00\x00<fnvf<\x00\x00\x188\x18\x18\x18~\x00\x00<f\x0c\x180~\x00\x00~\x0c\x18\x0cf<\x00\x00\x0c\x1c<l~\x0c\x00\x00~`|\x06f<\x00\x00<`|ff<\x00\x00~\x06\x0c\x1800\x00\x00<f<ff<\x00\x00<f>\x06\x0c8\x00\x00\x00\x18\x18\x00\x18\x18\x00\x00\x00\x18\x18\x00\x18\x180\x06\x0c\x180\x18\x0c\x06\x00\x00\x00~\x00\x00~\x00\x00`0\x18\x0c\x180`\x00\x00<f\x0c\x18\x00\x18\x00\x00<fnn`>\x00\x00\x18<ff~f\x00\x00|f|ff|\x00\x00<f``f<\x00\x00xlfflx\x00\x00~`|``~\x00\x00~`|```\x00\x00>``nf>\x00\x00ff~fff\x00\x00~\x18\x18\x18\x18~\x00\x00\x06\x06\x06\x06f<\x00\x00flxxlf\x00\x00`````~\x00\x00cw\x7fkcc\x00\x00fv~~nf\x00\x00<ffff<\x00\x00|ff|``\x00\x00<fffl6\x00\x00|ff|lf\x00\x00<`<\x06\x06<\x00\x00~\x18\x18\x18\x18\x18\x00\x00fffff~\x00\x00ffff<\x18\x00\x00cck\x7fwc\x00\x00ff<<ff\x00\x00ff<\x18\x18\x18\x00\x00~\x0c\x180`~\x00\x00\x1e\x18\x18\x18\x18\x1e\x00\x00@`0\x18\x0c\x06\x00\x00x\x18\x18\x18\x18x\x00\x00\x08\x1c6c\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\x00\x006\x7f\x7f>\x1c\x08\x00\x18\x18\x18\x1f\x1f\x18\x18\x18\x03\x03\x03\x03\x03\x03\x03\x03\x18\x18\x18\xf8\xf8\x00\x00\x00\x18\x18\x18\xf8\xf8\x18\x18\x18\x00\x00\x00\xf8\xf8\x18\x18\x18\x03\x07\x0e\x1c8p\xe0\xc0\xc0\xe0p8\x1c\x0e\x07\x03\x01\x03\x07\x0f\x1f?\x7f\xff\x00\x00\x00\x00\x0f\x0f\x0f\x0f\x80\xc0\xe0\xf0\xf8\xfc\xfe\xff\x0f\x0f\x0f\x0f\x00\x00\x00\x00\xf0\xf0\xf0\xf0\x00\x00\x00\x00\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\x00\x00\x00\x00\xf0\xf0\xf0\xf0\x00\x1c\x1cww\x08\x1c\x00\x00\x00\x00\x1f\x1f\x18\x18\x18\x00\x00\x00\xff\xff\x00\x00\x00\x18\x18\x18\xff\xff\x18\x18\x18\x00\x00<~~~<\x00\x00\x00\x00\x00\xff\xff\xff\xff\xc0\xc0\xc0\xc0\xc0\xc0\xc0\xc0\x00\x00\x00\xff\xff\x18\x18\x18\x18\x18\x18\xff\xff\x00\x00\x00\xf0\xf0\xf0\xf0\xf0\xf0\xf0\xf0\x18\x18\x18\x1f\x1f\x00\x00\x00x`x`~\x18\x1e\x00\x00\x18<~\x18\x18\x18\x00\x00\x18\x18\x18~<\x18\x00\x00\x180~0\x18\x00\x00\x00\x18\x0c~\x0c\x18\x00\x00\x00\x18<~~<\x18\x00\x00\x00<\x06>f>\x00\x00``|ff|\x00\x00\x00<```<\x00\x00\x06\x06>ff>\x00\x00\x00<f~`<\x00\x00\x0e\x18>\x18\x18\x18\x00\x00\x00>ff>\x06|\x00``|fff\x00\x00\x18\x008\x18\x18<\x00\x00\x06\x00\x06\x06\x06\x06<\x00``lxlf\x00\x008\x18\x18\x18\x18<\x00\x00\x00f\x7f\x7fkc\x00\x00\x00|ffff\x00\x00\x00<fff<\x00\x00\x00|ff|``\x00\x00>ff>\x06\x06\x00\x00|f```\x00\x00\x00>`<\x06|\x00\x00\x18~\x18\x18\x18\x0e\x00\x00\x00ffff>\x00\x00\x00fff<\x18\x00\x00\x00ck\x7f>6\x00\x00\x00f<\x18<f\x00\x00\x00fff>\x0cx\x00\x00~\x0c\x180~\x00\x00\x18<~~\x18<\x00\x18\x18\x18\x18\x18\x18\x18\x18\x00~x|nf\x06\x00\x08\x188x8\x18\x08\x00\x10\x18\x1c\x1e\x1c\x18\x10\x00'
@@ -258,8 +251,8 @@ class FontMapScroller(BitviewScroller):
     
     def calc_scale_from_bytes(self):
         self.total_rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
-        self.width = int(8 * self.bytes_per_row * self.zoom)
-        self.height = int(8 * self.total_rows * self.zoom)
+        self.grid_width = int(8 * self.bytes_per_row)
+        self.grid_height = int(8 * self.total_rows)
     
     def calc_scroll_rate(self):
         rate = int(self.zoom)
@@ -270,11 +263,15 @@ class FontMapScroller(BitviewScroller):
     def calc_image_size(self):
         x, y = self.GetViewStart()
         w, h = self.GetClientSizeTuple()
-        r = (h / self.bytes_per_row / 8) * self.bytes_per_row
-        self.start_row, self.num_rows = y, (r / self.zoom) + 1
+        self.start_row = y
+        
+        # For proper buffered paiting, the visible rows must include the
+        # (possibly) partially obscured last row
+        zoom_factor = 8 + self.zoom
+        self.visible_rows = ((h + zoom_factor - 1) / zoom_factor)
         c = w / 8
         self.start_col, self.num_cols = x, (c / self.zoom) + 1
-        print "fontmap: x, y, w, h, row start, num: ", x, y, w, h, self.start_row, self.num_rows, "col start, num:", self.start_col, self.num_cols
+        print "fontmap: x, y, w, h, row start, num: ", x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.num_cols
 
     def set_font(self, raw):
         bytes = np.fromstring(raw, dtype=np.uint8)
@@ -300,9 +297,9 @@ class FontMapScroller(BitviewScroller):
         self.font = font
 
     def get_image(self):
-        print "Getting fontmap: start=%d, num=%d" % (self.start_row, self.num_rows)
+        print "Getting fontmap: start=%d, num=%d" % (self.start_row, self.visible_rows)
         sr = self.start_row
-        nr = self.num_rows
+        nr = self.visible_rows
         self.start_byte = sr * self.bytes_per_row
         self.end_byte = self.start_byte + (nr * self.bytes_per_row)
         if self.end_byte > self.bytes.size:
@@ -311,21 +308,22 @@ class FontMapScroller(BitviewScroller):
             bytes[0:self.end_byte - self.start_byte] = self.bytes[sr * self.bytes_per_row:self.end_byte]
         else:
             bytes = self.bytes[sr * self.bytes_per_row:self.end_byte]
+        num_rows_with_data = (self.end_byte - self.start_byte) / self.bytes_per_row
         
         sc = self.start_col
         nc = self.num_cols
         bytes = bytes.reshape((nr, -1))
-        print "get_image: bytes", bytes
+        #print "get_image: bytes", bytes
         
         width = 8 * self.bytes_per_row
         height = 8 * nr
-        print "pixel width:", width, height, "zoom", self.zoom
+        print "pixel width:", width, height, "zoom", self.zoom, "rows with data", num_rows_with_data
         array = np.zeros((height, width, 3), dtype=np.uint8)
         
         print self.end_byte, self.start_byte, (self.end_byte - self.start_byte) / self.bytes_per_row
-        er = min((self.end_byte - self.start_byte) / self.bytes_per_row, nr)
+        er = min(num_rows_with_data, nr)
         ec = min(self.bytes_per_row, sc + self.bytes_per_row)
-        print "bytes:", sr, nr, er, sc, nc, ec, bytes.shape
+        print "bytes:", nr, er, sc, nc, ec, bytes.shape
         y = 0
         for j in range(er):
             x = 0
