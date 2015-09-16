@@ -269,7 +269,8 @@ class FrameworkTask(Task):
         menu.append(SMenu(*items, id=menu_name, name=menu_name))
 
     def add_actions_and_groups(self, menu_items, location, menu_name, group_name):
-        actions = self.get_actions(location, menu_name, group_name)
+        actions = self.get_actions_wrapper(location, menu_name, group_name)
+
         groups = []
         group_suffix = ""
         group_index = 0
@@ -296,14 +297,21 @@ class FrameworkTask(Task):
         menu_items.append(Separator(id="%sEnd" % group_name, separator=False))
 
     def get_group(self, location, menu_name, group_name):
-        actions = self.get_actions(location, menu_name, group_name)
+        actions = self.get_actions_wrapper(location, menu_name, group_name)
         return Group(*actions, id=group_name)
     
     def get_groups(self, location, menu_name, *group_names):
         actions = []
         for group_name in group_names:
-            actions.extend(self.get_actions(location, menu_name, group_name))
+            actions.extend(self.get_actions_wrapper(location, menu_name, group_name))
         return Group(*actions, id=menu_name)
+
+    def get_actions_wrapper(self, location, menu_name, group_name):
+        actions = self.get_actions(location, menu_name, group_name)
+        if actions is None:
+            # fall back to this class if it's not found in subclass
+            actions = FrameworkTask.get_actions(self, location, menu_name, group_name)
+        return actions
 
     def get_actions(self, location, menu_name, group_name):
         if location == "Menu":
