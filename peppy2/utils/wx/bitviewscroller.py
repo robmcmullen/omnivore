@@ -39,7 +39,8 @@ class BitviewScroller(wx.ScrolledWindow):
         wx.ScrolledWindow.__init__(self, parent, -1)
 
         # Settings
-        self.background_color = wx.Colour(160, 160, 160)
+        self.background_color = (160, 160, 160)
+        self.wx_background_color = wx.Colour(*self.background_color)
         self.max_zoom = 16
         self.min_zoom = 1
         self.bytes_per_row = 1
@@ -131,11 +132,11 @@ class BitviewScroller(wx.ScrolledWindow):
             self.scaled_bmp = wx.EmptyBitmap(w, h)
             
             dc.SelectObject(self.scaled_bmp)
-            dc.SetBackground(wx.Brush(self.background_color))
+            dc.SetBackground(wx.Brush(self.wx_background_color))
             dc.Clear()
             
             bmp = self.get_image()
-            dc.DrawBitmap(bmp, 0, 0, True)
+            dc.DrawBitmap(bmp, 0, 0)
     
     def calc_image_size(self):
         x, y = self.GetViewStart()
@@ -316,7 +317,7 @@ class FontMapScroller(BitviewScroller):
             bytes[0:self.end_byte - self.start_byte] = self.bytes[sr * self.bytes_per_row:self.end_byte]
         else:
             bytes = self.bytes[sr * self.bytes_per_row:self.end_byte]
-        num_rows_with_data = (self.end_byte - self.start_byte) / self.bytes_per_row
+        num_rows_with_data = (self.end_byte - self.start_byte + self.bytes_per_row - 1) / self.bytes_per_row
         
         sc = self.start_col
         nc = self.num_cols
@@ -327,19 +328,24 @@ class FontMapScroller(BitviewScroller):
         height = 8 * nr
         print "pixel width:", width, height, "zoom", self.zoom, "rows with data", num_rows_with_data
         array = np.zeros((height, width, 3), dtype=np.uint8)
+        array[:,:] = self.background_color
         
         print self.end_byte, self.start_byte, (self.end_byte - self.start_byte) / self.bytes_per_row
         er = min(num_rows_with_data, nr)
         ec = min(self.bytes_per_row, sc + self.bytes_per_row)
         print "bytes:", nr, er, sc, nc, ec, bytes.shape
         y = 0
+        e = self.start_byte
         for j in range(er):
             x = 0
             for i in range(sc, ec):
+                if e + i >= self.end_byte:
+                    break
                 c = bytes[j, i]
                 array[y:y+8,x:x+8,:] = self.font[c]
                 x += 8
             y += 8
+            e += self.bytes_per_row
         print array.shape
         image = wx.EmptyImage(width, height)
         image.SetData(array.tostring())
