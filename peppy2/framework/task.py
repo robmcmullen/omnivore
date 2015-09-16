@@ -87,7 +87,7 @@ class FrameworkTask(Task):
         menus = []
         self.add_menu(menus, "Menu", "File", "NewGroup", "OpenGroup", "SaveGroup", "PrintGroup", "ExitGroup")
         self.add_menu(menus, "Menu", "Edit", "UndoGroup", "CopyPasteGroup", "SelectGroup", "FindGroup", "PrefGroup")
-        self.add_menu(menus, "Menu", "View", "TaskGroup")
+        self.add_menu(menus, "Menu", "View", "ViewChangeGroup", "ViewConfigGroup", "ViewToggleGroup", "ViewDebugGroup", "TaskGroup")
         self.add_menu(menus, "Menu", "Window", "WindowGroup")
         self.add_menu(menus, "Menu", "Help", "AboutGroup", "DocGroup", "BugReportGroup", "DebugGroup")
         
