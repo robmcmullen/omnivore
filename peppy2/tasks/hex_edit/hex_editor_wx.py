@@ -8,7 +8,7 @@ import wx.stc
 import numpy as np
 
 # Enthought library imports.
-from traits.api import Bool, Event, Instance, File, Unicode, Property, provides
+from traits.api import Any, Bool, Event, Instance, File, Unicode, Property, provides
 from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
@@ -18,6 +18,7 @@ from grid_control import HexEditControl
 from peppy2.utils.wx.stcbase import PeppySTC
 from peppy2.utils.wx.stcbinary import BinarySTC
 from peppy2.utils.wx.bitviewscroller import EVT_BYTECLICKED
+import peppy2.utils.fonts as fonts
 
 @provides(IHexEditor)
 class HexEditor(FrameworkEditor):
@@ -34,6 +35,8 @@ class HexEditor(FrameworkEditor):
     changed = Event
 
     key_pressed = Event(KeyPressedEvent)
+    
+    font = Any
 
     ###########################################################################
     # 'PythonEditor' interface.
@@ -82,6 +85,10 @@ class HexEditor(FrameworkEditor):
         self.disassembly.update(self.bytestore.data)
         self.byte_graphics.set_data(self.bytestore.data)
         self.font_map.set_data(self.bytestore.data)
+    
+    def set_font(self, font):
+        self.font_map.set_font(font)
+        self.font_map.Refresh()
 
     ###########################################################################
     # Trait handlers.
@@ -109,6 +116,7 @@ class HexEditor(FrameworkEditor):
         self.byte_graphics.Bind(EVT_BYTECLICKED, self.byte_clicked)
         self.font_map = self.window.get_dock_pane('hex_edit.font_map').control
         self.font_map.Bind(EVT_BYTECLICKED, self.byte_clicked)
+        self.font_map.set_font(fonts.A8DefaultFont)
 
         # Load the editor's contents.
         self.load()
