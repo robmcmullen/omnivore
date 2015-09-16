@@ -8,6 +8,10 @@ from traits.api import Property, Instance, Bool, Str, Unicode, Any, List
 
 from peppy2.framework.about import AboutDialog
 
+import logging
+log = logging.getLogger(__name__)
+
+
 class NewFileAction(Action):
     """ An action for creating a new empty file that can be edited by a particular task
     """
@@ -299,3 +303,127 @@ class WidgetInspectorAction(Action):
 
     def perform(self, event):
         wx.lib.inspection.InspectionTool().Show()
+
+
+class BaseDynamicSubmenuGroup(Group):
+    """ A group used for a dynamic menu.
+    """
+
+    #### 'ActionManager' interface ############################################
+
+    id = 'DynamicMenuGroup'
+    items = List
+
+    #### 'TaskChangeMenuManager' interface ####################################
+
+    # The ActionManager to which the group belongs.
+    manager = Any
+
+    # ENTHOUGHT QUIRK: This doesn't work: can't have a property depending on
+    # a task because this forces task_default to be called very early in the
+    # initialization process, before the window hierarchy is defined.
+    #
+    # active_editor = Property(Instance(IEditor),
+    #                         depends_on='task.active_editor')
+    
+    event_name = Str('change this to the Event trait')
+        
+    ###########################################################################
+    # Private interface.
+    ###########################################################################
+
+    def _get_items(self, *args, **kwargs):
+        # Override this in your subclass to return the list of actions
+        return []
+
+    def _rebuild(self, *args, **kwargs):
+        # Clear out the old group, then build the new one.
+        self.destroy()
+        
+        # Get the new items, passing the event arguments to the method
+        self.items = self._get_items(*args, **kwargs)
+
+        # Inform our manager that it needs to be rebuilt.
+        self.manager.changed = True
+        
+    #### Trait initializers ###################################################
+
+    def _items_default(self):
+        log.debug("DYNAMICGROUP: _items_default!!!")
+        if True:
+            t = self._get_trait_for_event()
+            t.on_trait_change(self._rebuild, self.event_name)
+        else:
+            self._set_trait_event()
+        return self._get_items()
+
+    def _set_trait_event(self):
+        raise NotImplementedError
+
+    def _manager_default(self):
+        manager = self
+        while isinstance(manager, Group):
+            manager = manager.parent
+        log.debug("DYNAMICGROUP: _manager_default=%s!!!" % manager)
+        return manager
+    
+    # ENTHOUGHT QUIRK: This doesn't work: the trait change decorator never
+    # seems to get called, however specifying the on_trait_change in the
+    # _items_default method works.
+    #
+    #    @on_trait_change('task.layer_selection_changed')
+    #    def updated_fired(self, event):
+    #        log.debug("SAVELAYERGROUP: updated!!!")
+    #        self._rebuild(event)
+
+
+class TaskDynamicSubmenuGroup(BaseDynamicSubmenuGroup):
+    """ A group used for a dynamic menu.
+    """
+
+    # The task instance must be passed in as an attribute creation argument
+    # because we need to bind on a task trait change to update the menu
+    task = Instance('peppy2.framework.task.FrameworkTask')
+        
+    ###########################################################################
+    # Private interface.
+    ###########################################################################
+
+    def _get_trait_for_event(self):
+        return self.task
+        
+    def _set_trait_event(self):
+        self.task.on_trait_change(self._rebuild, self.event_name)
+        
+    #### Trait initializers ###################################################
+    
+    def _task_default(self):
+        log.debug("DYNAMICGROUP: _task_default=%s!!!" % self.manager.controller.task)
+        return self.manager.controller.task
+
+
+class ApplicationDynamicSubmenuGroup(BaseDynamicSubmenuGroup):
+    """ A group used for a dynamic menu based on an application event.
+    """
+
+    # The application instance must be a trait so we can set an on_trait_change
+    # handler
+    application = Instance('envisage.ui.tasks.api.TasksApplication')
+
+    def _get_trait_for_event(self):
+        return self.application
+        
+    def _set_trait_event(self):
+        self.application.on_trait_change(self._rebuild, self.event_name)
+
+    #### Trait initializers ###################################################
+    
+    def _application_default(self):
+        print "APPLICATION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        print "APPLICATION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        print "APPLICATION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        print "APPLICATION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        print "APPLICATION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        print self.manager.controller.task.window.application
+        log.debug("DYNAMICGROUP: _task_default=%s!!!" % self.manager.controller.task)
+        return self.manager.controller.task.window.application

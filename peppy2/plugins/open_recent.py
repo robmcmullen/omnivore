@@ -11,6 +11,7 @@ from pyface.tasks.action.api import SMenu, TaskAction, EditorAction, SchemaAddit
 from traitsui.api import EnumEditor, HGroup, VGroup, Item, Label, View
 
 from peppy2.framework.plugin import FrameworkPlugin
+from peppy2.framework.actions import ApplicationDynamicSubmenuGroup
 
 import logging
 log = logging.getLogger(__name__)
@@ -171,7 +172,7 @@ class OpenRecentAction(Action):
         event.task.window.application.load_file(self.uri, event.task)
 
 
-class OpenRecentGroup(Group):
+class OpenRecentGroup(ApplicationDynamicSubmenuGroup):
     """ A menu for creating a new file for each type of task
     """
 
@@ -179,15 +180,7 @@ class OpenRecentGroup(Group):
 
     id = 'NewFileGroup'
     
-    items = List
-
-    #### 'TaskChangeMenuManager' interface ####################################
-
-    # The ActionManager to which the group belongs.
-    manager = Any
-
-    # The window that contains the group.
-    application = Instance('envisage.ui.tasks.api.TasksApplication')
+    event_name = 'plugin_event'
     
     ###########################################################################
     # Private interface.
@@ -203,34 +196,6 @@ class OpenRecentGroup(Group):
                 items.append(ActionItem(action=action))
             
         return items
-
-    def _rebuild(self):
-        # Clear out the old group, then build the new one.
-        self.destroy()
-        self.items = self._get_items()
-
-        # Inform our manager that it needs to be rebuilt.
-        self.manager.changed = True
-        
-    #### Trait initializers ###################################################
-
-    def _items_default(self):
-        self.application.on_trait_change(self._rebuild, 'plugin_event')
-        return self._get_items()
-
-    def _manager_default(self):
-        manager = self
-        while isinstance(manager, Group):
-            manager = manager.parent
-        return manager
-    
-    def _application_default(self):
-        return self.manager.controller.task.window.application
-    
-    @on_trait_change('application:plugin_event')
-    def updated_fired(self, event):
-        log.debug("updated!!!")
-        self._rebuild()
 
 
 class OpenRecentPlugin(FrameworkPlugin):
