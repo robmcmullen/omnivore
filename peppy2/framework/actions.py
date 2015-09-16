@@ -350,14 +350,11 @@ class BaseDynamicSubmenuGroup(Group):
 
     def _items_default(self):
         log.debug("DYNAMICGROUP: _items_default!!!")
-        if True:
-            t = self._get_trait_for_event()
-            t.on_trait_change(self._rebuild, self.event_name)
-        else:
-            self._set_trait_event()
+        t = self._get_trait_for_event()
+        t.on_trait_change(self._rebuild, self.event_name)
         return self._get_items()
 
-    def _set_trait_event(self):
+    def _get_trait_for_event(self):
         raise NotImplementedError
 
     def _manager_default(self):
@@ -392,9 +389,6 @@ class TaskDynamicSubmenuGroup(BaseDynamicSubmenuGroup):
     def _get_trait_for_event(self):
         return self.task
         
-    def _set_trait_event(self):
-        self.task.on_trait_change(self._rebuild, self.event_name)
-        
     #### Trait initializers ###################################################
     
     def _task_default(self):
@@ -412,18 +406,9 @@ class ApplicationDynamicSubmenuGroup(BaseDynamicSubmenuGroup):
 
     def _get_trait_for_event(self):
         return self.application
-        
-    def _set_trait_event(self):
-        self.application.on_trait_change(self._rebuild, self.event_name)
 
     #### Trait initializers ###################################################
     
     def _application_default(self):
-        print "APPLICATION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        print "APPLICATION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        print "APPLICATION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        print "APPLICATION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        print "APPLICATION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        print self.manager.controller.task.window.application
-        log.debug("DYNAMICGROUP: _task_default=%s!!!" % self.manager.controller.task)
+        log.debug("DYNAMICGROUP: _application_default=%s!!!" % self.manager.controller.task.window.application)
         return self.manager.controller.task.window.application
