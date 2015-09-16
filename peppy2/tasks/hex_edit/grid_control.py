@@ -108,16 +108,17 @@ log = logging.getLogger(__name__)
 #    
 
 class HugeTable(Grid.PyGridTableBase):
-    def __init__(self,stc,format="16c"):
+    def __init__(self, stc, format="16c", show_hex=True, show_records=True):
         Grid.PyGridTableBase.__init__(self)
+        
+        self._debug=False
+        self._show_hex = show_hex
+        self._show_records = show_records
+        self._show_record_numbers = False
+        self._col_labels = None
 
         self.setFormat(format)
         self.setSTC(stc)
-        
-        self._debug=False
-        self._show_hex = True
-        self._show_record_numbers = False
-        self._col_labels = None
 
     def setFormat(self, format):
         if format:
@@ -130,7 +131,10 @@ class HugeTable(Grid.PyGridTableBase):
             self.nbytes = nbytes
             self._hexcols = self.nbytes
             self.parseFormat(self.format)
-            self._cols = self._hexcols + self._textcols
+            if self._show_records:
+                self._cols = self._hexcols + self._textcols
+            else:
+                self._cols = self._hexcols
             log.debug("# hexcols = %d, # textcols = %d, total=%d" % (self._hexcols, self._textcols, self._cols))
         
         # Any change in the format will invalidate the cache since the cache
@@ -827,13 +831,13 @@ class HexEditControl(Grid.Grid):
     def verifyCompatibleSTC(self, stc_class):
         return hasattr(stc_class, 'GetBinaryData')
 
-    def __init__(self, parent, editor, stc):
+    def __init__(self, parent, editor, stc, format="16c", show_records=True):
         """Create the HexEdit viewer
         """
         Grid.Grid.__init__(self, parent, -1)
         self.editor = editor
         self.stc = stc
-        self.table = HugeTable(stc, "16c")
+        self.table = HugeTable(stc, format, show_records=show_records)
 
         # The second parameter means that the grid is to take
         # ownership of the table and will destroy it when done.

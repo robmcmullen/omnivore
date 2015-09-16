@@ -97,7 +97,7 @@ class HexEditor(FrameworkEditor):
 
         # Base-class constructor.
         self.bytestore = stc = BinarySTC()
-        self.control = HexEditControl(parent, self, stc)
+        self.control = HexEditControl(parent, self, stc, show_records=False)
 
         ##########################################
         # Events.
