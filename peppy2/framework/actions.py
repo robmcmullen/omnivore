@@ -332,16 +332,16 @@ class BaseDynamicSubmenuGroup(Group):
     # Private interface.
     ###########################################################################
 
-    def _get_items(self, *args, **kwargs):
+    def _get_items(self, event_data=None):
         # Override this in your subclass to return the list of actions
         return []
 
-    def _rebuild(self, *args, **kwargs):
+    def _rebuild(self, new_trait_val):
         # Clear out the old group, then build the new one.
         self.destroy()
         
         # Get the new items, passing the event arguments to the method
-        self.items = self._get_items(*args, **kwargs)
+        self.items = self._get_items(new_trait_val)
 
         # Inform our manager that it needs to be rebuilt.
         self.manager.changed = True

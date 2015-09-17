@@ -34,7 +34,7 @@ class FontChoiceGroup(TaskDynamicSubmenuGroup):
     # Private interface.
     ###########################################################################
 
-    def _get_items(self, *args, **kwargs):
+    def _get_items(self, event_data=None):
         items = []
         action = UseFontAction(font=fonts.A8DefaultFont)
         items.append(ActionItem(action=action))

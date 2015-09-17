@@ -186,7 +186,7 @@ class OpenRecentGroup(ApplicationDynamicSubmenuGroup):
     # Private interface.
     ###########################################################################
 
-    def _get_items(self):
+    def _get_items(self, event_data=None):
         items = []
         recent_files = self.application.get_plugin_data('open_recent')
         log.debug("GET ITEMS: recent_files=%s, storage=%s" % (recent_files, recent_files.storage))
