@@ -250,6 +250,7 @@ class BitviewScroller(wx.ScrolledWindow):
 class FontMapScroller(BitviewScroller):
     def __init__(self, parent, font=None):
         BitviewScroller.__init__(self, parent)
+        self.bytes_per_row = 8
         self.zoom = 2
         
         if font is None:
@@ -281,8 +282,8 @@ class FontMapScroller(BitviewScroller):
         print "fontmap: x, y, w, h, row start, num: ", x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.num_cols
 
     def set_font(self, font):
-        self.bit_width = font['x_bits']
-        self.bytes_per_row = font['y_bytes']
+        self.char_pixel_width = font['char_w']
+        self.char_pixel_height = font['char_h']
         bytes = np.fromstring(font['data'], dtype=np.uint8)
         print "numpy font:", bytes
         print bytes[1]
@@ -324,14 +325,8 @@ class FontMapScroller(BitviewScroller):
         bytes = bytes.reshape((nr, -1))
         #print "get_image: bytes", bytes
         
-        # FIXME: Why does setting the following width, height result in really
-        # slow refreshing?
-        width = int(self.bit_width * self.bytes_per_row)
-        height = int(nr * self.bytes_per_row)
-        # changing it to these hardcoded 8s results in very fast updating
-        width = 8 * self.bytes_per_row
-        height = 8 * nr
-        
+        width = int(self.char_pixel_width * self.bytes_per_row)
+        height = int(nr * self.char_pixel_height)
         
         print "pixel width:", width, height, "zoom", self.zoom, "rows with data", num_rows_with_data
         array = np.zeros((height, width, 3), dtype=np.uint8)
