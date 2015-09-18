@@ -93,8 +93,7 @@ class OpenAction(Action):
 
     def perform(self, event):
         if event.task.active_editor:
-            path = os.path.dirname(event.task.active_editor.path)
-            dialog = FileDialog(default_directory=path, parent=event.task.window.control)
+            dialog = FileDialog(default_directory=event.task.active_editor.most_recent_path, parent=event.task.window.control)
         else:
             dialog = FileDialog(parent=event.task.window.control)
         if dialog.open() == OK:

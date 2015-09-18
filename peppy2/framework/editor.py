@@ -90,3 +90,7 @@ class FrameworkEditor(Editor):
     @property
     def window(self):
         return self.editor_area.task.window
+
+    @property
+    def most_recent_path(self):
+        return os.path.dirname(self.path)
