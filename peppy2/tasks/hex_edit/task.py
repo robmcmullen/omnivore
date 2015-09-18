@@ -4,7 +4,7 @@
 # Enthought library imports.
 from pyface.api import ImageResource, ConfirmationDialog, FileDialog, \
     ImageResource, YES, OK, CANCEL
-from pyface.action.api import Action, ActionItem
+from pyface.action.api import Action, ActionItem, Separator, Group
 from pyface.tasks.api import Task, TaskWindow, TaskLayout, PaneItem, IEditor, \
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
 from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
@@ -21,11 +21,6 @@ import peppy2.utils.fonts as fonts
 class FontChoiceGroup(TaskDynamicSubmenuGroup):
     """ A menu for changing the active task in a task window.
     """
-
-    #### 'ActionManager' interface ############################################
-
-    id = 'FontChoiceGroup'
-
     #### 'DynamicSubmenuGroup' interface ######################################
 
     event_name = 'fonts_changed'
@@ -36,10 +31,11 @@ class FontChoiceGroup(TaskDynamicSubmenuGroup):
 
     def _get_items(self, event_data=None):
         items = []
-        action = UseFontAction(font=fonts.A8DefaultFont)
-        items.append(ActionItem(action=action))
-        action = UseFontAction(font=fonts.A8ComputerFont)
-        items.append(ActionItem(action=action))
+        print event_data
+        if event_data is not None:
+            for font in event_data:
+                action = UseFontAction(font=font)
+                items.append(ActionItem(action=action))
             
         return items
 
@@ -51,6 +47,21 @@ class UseFontAction(EditorAction):
     
     def perform(self, event):
         self.active_editor.set_font(self.font)
+
+class LoadFontAction(EditorAction):
+    name = 'Load Font...'
+    
+    def perform(self, event):
+        dialog = FileDialog(parent=event.task.window.control)
+        if dialog.open() == OK:
+            self.active_editor.load_font(dialog.path)
+
+class GetFontFromSelectionAction(EditorAction):
+    name = 'Get Font From Selection'
+    enabled_name = 'grid_range_selected'
+    
+    def perform(self, event):
+        self.active_editor.get_font_from_selection()
 
 
 class HexEditTask(FrameworkTask):
@@ -113,7 +124,16 @@ class HexEditTask(FrameworkTask):
             if menu_name == "View":
                 if group_name == "ViewConfigGroup":
                     return [
-                        SMenu(FontChoiceGroup(),
+                        SMenu(
+                            Group(
+                                UseFontAction(font=fonts.A8DefaultFont),
+                                UseFontAction(font=fonts.A8ComputerFont),
+                                id="a1", separator=True),
+                            FontChoiceGroup(id="a2", separator=True),
+                            Group(
+                                LoadFontAction(),
+                                GetFontFromSelectionAction(),
+                                id="a3", separator=True),
                             id='FontChoiceSubmenu', name="Font"),
                         ]
 

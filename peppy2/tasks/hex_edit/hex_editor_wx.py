@@ -1,6 +1,6 @@
 # Standard library imports.
 import sys
-from os.path import basename
+import os
 
 # Major package imports.
 import wx
@@ -30,13 +30,19 @@ class HexEditor(FrameworkEditor):
 
     obj = Instance(File)
 
+    #### traits
+    
+    font = Any
+
     #### Events ####
 
     changed = Event
 
     key_pressed = Event(KeyPressedEvent)
     
-    font = Any
+    # Class attributes (not traits)
+    
+    font_list = None
 
     ###########################################################################
     # 'PythonEditor' interface.
@@ -44,6 +50,8 @@ class HexEditor(FrameworkEditor):
 
     def create(self, parent):
         self.control = self._create_control(parent)
+        self.init_fonts(self.window.application)
+        self.task.fonts_changed = self.font_list
 
     def load(self, guess=None):
         """ Loads the contents of the editor.
@@ -86,9 +94,47 @@ class HexEditor(FrameworkEditor):
         self.byte_graphics.set_data(self.bytestore.data)
         self.font_map.set_data(self.bytestore.data)
     
+    @classmethod
+    def init_fonts(cls, application):
+        if cls.font_list is None:
+            try:
+                data = application.get_bson_data("font_list")
+                cls.font_list = data['font_list']
+            except IOError:
+                # file not found
+                cls.font_list = []
+            except ValueError:
+                # bad JSON format
+                cls.font_list = []
+    
+    def remember_fonts(self):
+        data = {'font_list': self.font_list}
+        self.window.application.save_bson_data("font_list", data)
+    
     def set_font(self, font):
         self.font_map.set_font(font)
         self.font_map.Refresh()
+    
+    def load_font(self, filename):
+        try:
+            fh = open(filename, 'rb')
+            data = fh.read() + "\0"*1024
+            data = data[0:1024]
+            font = {
+                'name': os.path.basename(filename),
+                'data': data,
+                'char_w': 8,
+                'char_h': 8,
+                }
+            self.set_font(font)
+            self.font_list.append(font)
+            self.remember_fonts()
+            self.task.fonts_changed = self.font_list
+        except:
+            raise
+    
+    def get_font_from_selection(self):
+        pass
 
     ###########################################################################
     # Trait handlers.

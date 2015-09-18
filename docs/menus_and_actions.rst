@@ -279,6 +279,30 @@ force the NewFileGroup to be between them.  Placing the NewFileGroup as the
 first group or not including BOTH the before and after keywords caused the
 NewFileGroup to appear at the end of the menu.
 
+
+Groups
+======
+
+Within a menu::
+
+    SMenu(
+        Group(
+            UseFontAction(font=fonts.A8DefaultFont),
+            id="a1", separator=True),
+        FontChoiceGroup(id="a2", separator=True),
+        Group(
+            LoadFontAction(),
+            GetFontFromSelectionAction(),
+            id="a3", separator=True),
+        id='FontChoiceSubmenu', name="Font"),
+
+items appear to be sorted by their id, NOT the order in the argument list, so
+specifying the id explicitly is the only way to force the sort order to match
+the listing order.
+
+
+
+
 Keyboard Mapping
 ================
 
