@@ -49,6 +49,8 @@ class BitviewScroller(wx.ScrolledWindow):
 
         # internal storage
         self.bytes = None
+        self.start_byte = None
+        self.end_byte = None
         self.img = None
         self.scaled_bmp = None
         self.grid_width = 0
@@ -212,6 +214,9 @@ class BitviewScroller(wx.ScrolledWindow):
         its event combination, it becomes the active selector and
         further mouse events are directed to its handler.
         """
+        if self.end_byte is None:  # end_byte is a proxy for the image being loaded
+            return
+        
         x = ev.GetX()
         y = ev.GetY()
         byte, bit, inside = self.event_coords_to_byte(ev)
