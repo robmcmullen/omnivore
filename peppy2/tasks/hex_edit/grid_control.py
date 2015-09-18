@@ -855,6 +855,7 @@ class HexEditControl(Grid.Grid):
         self.Bind(Grid.EVT_GRID_CELL_LEFT_CLICK, self.OnLeftDown)
         self.Bind(Grid.EVT_GRID_CELL_RIGHT_CLICK, self.OnRightDown)
         self.Bind(Grid.EVT_GRID_SELECT_CELL, self.OnSelectCell)
+        self.Bind(Grid.EVT_GRID_RANGE_SELECT, self.OnSelectRange)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.Bind(EVT_WAIT_UPDATE,self.OnUnderlyingUpdate)
         self.Show(True)
@@ -911,6 +912,14 @@ class HexEditControl(Grid.Grid):
         wx.CallAfter(self.doUpdateUICallback)
 
     def OnSelectCell(self, evt):
+        print "cell selected:", evt.GetCol(), evt.GetRow()
+        self.editor.grid_range_selected = False
+        evt.Skip()
+        wx.CallAfter(self.doUpdateUICallback)
+
+    def OnSelectRange(self, evt):
+        print "range selected:", evt.GetTopLeftCoords(), evt.GetBottomRightCoords()
+        self.editor.grid_range_selected = True
         evt.Skip()
         wx.CallAfter(self.doUpdateUICallback)
 

@@ -32,6 +32,8 @@ class HexEditor(FrameworkEditor):
 
     #### traits
     
+    grid_range_selected = Bool
+    
     font = Any
 
     #### Events ####
