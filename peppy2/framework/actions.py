@@ -1,3 +1,4 @@
+import os
 import wx.lib.inspection
 
 # Enthought library imports.
@@ -91,7 +92,11 @@ class OpenAction(Action):
     image = ImageResource('file_open')
 
     def perform(self, event):
-        dialog = FileDialog(parent=event.task.window.control)
+        if event.task.active_editor:
+            path = os.path.dirname(event.task.active_editor.path)
+            dialog = FileDialog(default_directory=path, parent=event.task.window.control)
+        else:
+            dialog = FileDialog(parent=event.task.window.control)
         if dialog.open() == OK:
             event.task.window.application.load_file(dialog.path, event.task)
 
