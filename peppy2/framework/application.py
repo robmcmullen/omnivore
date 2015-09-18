@@ -402,6 +402,44 @@ class FrameworkApplication(TasksApplication):
                 fh.write(text)
         except IOError:
             log.error("Failed writing %s to %s" % (log_file_name_base, filename))
+    
+    def get_config_dir_filename(self, subdir, json_name):
+        config_dir = ETSConfig.application_home
+        dirname = os.path.join(config_dir, subdir)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        return os.path.join(dirname, json_name)
+    
+    def get_json_data(self, json_name):
+        file_path = self.get_config_dir_filename("json", json_name)
+        with open(file_path, "r") as fh:
+            json_data = json.load(fh)
+        return json_data
+    
+    def save_json_data(self, json_name, json_data):
+        file_path = self.get_config_dir_filename("json", json_name)
+        with open(file_path, "w") as fh:
+            json.dump(json_data, fh)
+    
+    def get_bson_data(self, bson_name):
+        import bson
+        
+        file_path = self.get_config_dir_filename("bson", bson_name)
+        with open(file_path, "r") as fh:
+            raw = fh.read()
+        if len(raw) > 0:
+            bson_data = bson.loads(raw)
+        else:
+            raise IOError("Blank BSON data")
+        return bson_data
+    
+    def save_bson_data(self, bson_name, bson_data):
+        import bson
+        
+        file_path = self.get_config_dir_filename("bson", bson_name)
+        raw = bson.dumps(bson_data)
+        with open(file_path, "w") as fh:
+            fh.write(raw)
 
 
 def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", application_name="", debug_log=False):
