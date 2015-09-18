@@ -208,6 +208,9 @@ class FrameworkApplication(TasksApplication):
             # Ask the active task if it's OK to load a different editor
             if not active_task.allow_different_task(guess, best.factory):
                 return
+            if active_task.can_edit("application/octet-stream") and active_task.ask_attempt_loading_as_octet_stream(guess, best.factory):
+                active_task.new(guess, **kwargs)
+                return
 
         # Look for existing task in current windows
         task = self.find_active_task_of_type(best.id)

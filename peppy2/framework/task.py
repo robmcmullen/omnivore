@@ -224,7 +224,8 @@ class FrameworkTask(Task):
         that can't be handled by the current task.  For example, this can be
         used to prompt with a dialog box.
         
-        :rtype: Boolean; True means continue with the file load
+        :rtype: Boolean; True means continue with the file load in a separate
+        task window
         """
         return True
 
@@ -254,6 +255,9 @@ class FrameworkTask(Task):
         for action in self._iter_schema_items(action_schemas):
             if hasattr(action, 'name'):
                 action.name = action.name + "!"
+
+    def ask_attempt_loading_as_octet_stream(self, guess, other_task):
+        return self.window.confirm("%s\n\nwas identified with a MIME type of %s\nand can also be edited in a %s window.\n\nOpen here in the %s window instead?" % (guess.metadata.uri, guess.metadata.mime, other_task.new_file_text, self.name), "Edit in %s?" % self.name) == YES
 
     ###########################################################################
     # 'FrameworkTask' convenience functions.
