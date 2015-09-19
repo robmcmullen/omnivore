@@ -46,7 +46,7 @@ class HexEditor(FrameworkEditor):
     
     font_list = None
     
-    font_mode = Enum(2, 4, 5, 6 ,7)
+    font_mode = Enum(2, 4, 5, 6, 7, 8, 9)
 
     ###########################################################################
     # 'PythonEditor' interface.

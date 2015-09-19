@@ -41,6 +41,25 @@ def gtia_ntsc_to_rgb(val):
 def gtia_pal_to_rgb(val):
     return gtia_to_rgb(val, pal_phase)
 
+def atari_color_to_rgb(val, country="NTSC"):
+    if country == "PAL":
+        return gtia_pal_to_rgb(val)
+    return gtia_ntsc_to_rgb(val)
+
+def powerup_colors():
+    # From Mapping the Atari
+    return list([40, 202, 148, 70, 0])
+
+def gr0_colors(colors):
+    bg = colors[2]
+    cr = bg & 0xf0;
+    lm = colors[1] & 0x0f
+    fg = cr | lm
+    return fg, bg
+
+# Don't export the utility functions 
+__all__ = ['atari_color_to_rgb', 'powerup_colors', 'gr0_colors']
+
 
 if __name__ == "__main__":
     for i in range(33):

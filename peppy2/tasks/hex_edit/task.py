@@ -158,8 +158,10 @@ class HexEditTask(FrameworkTask):
                                 FontStyleBaseAction(font_mode=2, name="Antic 2 (Gr 0)"),
                                 FontStyleBaseAction(font_mode=4, name="Antic 4"),
                                 FontStyleBaseAction(font_mode=5, name="Antic 5"),
-                                FontStyleBaseAction(font_mode=6, name="Antic 6 (Gr 1)"),
-                                FontStyleBaseAction(font_mode=7, name="Antic 7 (Gr 2)"),
+                                FontStyleBaseAction(font_mode=6, name="Antic 6 (Gr 1) Uppercase and Numbers"),
+                                FontStyleBaseAction(font_mode=8, name="Antic 6 (Gr 1) Lowercase and Symbols"),
+                                FontStyleBaseAction(font_mode=7, name="Antic 7 (Gr 2) Uppercase and Numbers"),
+                                FontStyleBaseAction(font_mode=9, name="Antic 7 (Gr 2) Lowercase and Symbols"),
                                 id="a1", separator=True),
                             id='FontChoiceSubmenu2', separator=True, name="Antic Mode"),
                         ]
