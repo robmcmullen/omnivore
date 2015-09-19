@@ -166,8 +166,7 @@ class BitviewScroller(wx.ScrolledWindow):
             self.grid_width = 10
             self.grid_height = 10
         print "set_scale: ", self.grid_width, self.grid_height
-        self.SetVirtualSize((self.grid_width * self.zoom, self.grid_height * self.zoom))
-        self.calc_scroll_rate()
+        self.calc_scroll_params()
         self.Refresh()
     
     def calc_scale_from_bytes(self):
@@ -175,7 +174,8 @@ class BitviewScroller(wx.ScrolledWindow):
         self.grid_width = int(8 * self.bytes_per_row)
         self.grid_height = int(self.total_rows)
     
-    def calc_scroll_rate(self):
+    def calc_scroll_params(self):
+        self.SetVirtualSize((self.grid_width * self.zoom, self.grid_height * self.zoom))
         rate = int(self.zoom)
         if rate < 1:
             rate = 1
@@ -253,10 +253,14 @@ class BitviewScroller(wx.ScrolledWindow):
 
 
 class FontMapScroller(BitviewScroller):
-    def __init__(self, parent, font=None):
+    font_width_extra_zoom = [0, 0, 1, 0, 1, 1, 2, 2]
+    font_height_extra_zoom = [0, 0, 1, 0, 1, 2, 1, 2]
+    
+    def __init__(self, parent, font=None, font_mode=2):
         BitviewScroller.__init__(self, parent)
         self.bytes_per_row = 8
         self.zoom = 2
+        self.font_mode = font_mode
         
         if font is None:
             font = fonts.A8DefaultFont
@@ -267,11 +271,20 @@ class FontMapScroller(BitviewScroller):
         self.grid_width = int(8 * self.bytes_per_row)
         self.grid_height = int(8 * self.total_rows)
     
-    def calc_scroll_rate(self):
-        rate = int(self.zoom)
-        if rate < 1:
-            rate = 1
-        self.SetScrollRate(8 * rate, 8 * rate)
+    def get_zoom_factors(self):
+        zw = self.font_width_extra_zoom[self.font_mode]
+        zh = self.font_height_extra_zoom[self.font_mode]
+        return zw * self.zoom, zh * self.zoom
+    
+    def calc_scroll_params(self):
+        zw, zh = self.get_zoom_factors()
+        self.SetVirtualSize((self.grid_width * zw, self.grid_height * zh))
+        self.SetScrollRate(8 * zw, 8 * zh)
+    
+    def set_font_mode(self, font_mode):
+        self.font_mode = font_mode
+        self.calc_scroll_params()
+        self.Refresh()
     
     def calc_image_size(self):
         x, y = self.GetViewStart()
@@ -280,10 +293,11 @@ class FontMapScroller(BitviewScroller):
         
         # For proper buffered paiting, the visible rows must include the
         # (possibly) partially obscured last row
-        zoom_factor = 8 + self.zoom
-        self.visible_rows = ((h + zoom_factor - 1) / zoom_factor)
-        c = w / 8
-        self.start_col, self.num_cols = x, (c / self.zoom) + 1
+        zw, zh = self.get_zoom_factors()
+        zoom_factor = 8 * zh
+        self.visible_rows = (h + zoom_factor - 1) / zoom_factor
+        zoom_factor = 8 * zw
+        self.start_col, self.num_cols = x, (w + zoom_factor - 1) / zoom_factor
         print "fontmap: x, y, w, h, row start, num: ", x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.num_cols
 
     def set_font(self, font):
@@ -341,6 +355,8 @@ class FontMapScroller(BitviewScroller):
         er = min(num_rows_with_data, nr)
         ec = min(self.bytes_per_row, sc + self.bytes_per_row)
         print "bytes:", nr, er, sc, nc, ec, bytes.shape
+        zx = self.font_width_extra_zoom[self.font_mode]
+        zy = self.font_height_extra_zoom[self.font_mode]
         y = 0
         e = self.start_byte
         for j in range(er):
@@ -356,7 +372,8 @@ class FontMapScroller(BitviewScroller):
         print array.shape
         image = wx.EmptyImage(width, height)
         image.SetData(array.tostring())
-        image.Rescale(width * self.zoom, height * self.zoom)
+        zw, zh = self.get_zoom_factors()
+        image.Rescale(width * zw, height * zh)
         bmp = wx.BitmapFromImage(image)
         return bmp
 
@@ -369,9 +386,10 @@ class FontMapScroller(BitviewScroller):
         """
         inside = True
 
+        zw, zh = self.get_zoom_factors()
         x, y = self.GetViewStart()
-        x = (ev.GetX() // self.zoom // 8) + x
-        y = (ev.GetY() // self.zoom // 8) + y
+        x = (ev.GetX() // zw // 8) + x
+        y = (ev.GetY() // zh // 8) + y
         if x < 0 or x >= self.bytes_per_row or y < 0 or y > (self.start_row + self.visible_rows):
             inside = False
         byte = (self.bytes_per_row * y) + x

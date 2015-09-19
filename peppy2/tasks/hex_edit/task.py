@@ -9,7 +9,7 @@ from pyface.tasks.api import Task, TaskWindow, TaskLayout, PaneItem, IEditor, \
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
 from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
     SMenu, SToolBar, TaskAction, TaskToggleGroup, EditorAction
-from traits.api import on_trait_change, Property, Instance, Any, Event
+from traits.api import on_trait_change, Property, Instance, Any, Event, Int
 
 from peppy2.framework.task import FrameworkTask
 from peppy2.framework.actions import TaskDynamicSubmenuGroup
@@ -62,6 +62,24 @@ class GetFontFromSelectionAction(EditorAction):
     
     def perform(self, event):
         self.active_editor.get_font_from_selection()
+
+
+class FontStyleBaseAction(EditorAction):
+    """Radio buttons for changing font style
+    """
+    # Traits
+    style = 'radio'
+    
+    font_mode = Int
+
+    def perform(self, event):
+        self.active_editor.font_mode = self.font_mode
+        self.active_editor.redraw_panes()
+
+    @on_trait_change('active_editor.font_mode')
+    def _update_checked(self):
+        if self.active_editor:
+            self.checked = self.active_editor.font_mode == self.font_mode
 
 
 class HexEditTask(FrameworkTask):
@@ -134,7 +152,16 @@ class HexEditTask(FrameworkTask):
                                 LoadFontAction(),
                                 GetFontFromSelectionAction(),
                                 id="a3", separator=True),
-                            id='FontChoiceSubmenu', name="Font"),
+                            id='FontChoiceSubmenu1', separator=True, name="Font"),
+                        SMenu(
+                            Group(
+                                FontStyleBaseAction(font_mode=2, name="Antic 2 (Gr 0)"),
+                                FontStyleBaseAction(font_mode=4, name="Antic 4"),
+                                FontStyleBaseAction(font_mode=5, name="Antic 5"),
+                                FontStyleBaseAction(font_mode=6, name="Antic 6 (Gr 1)"),
+                                FontStyleBaseAction(font_mode=7, name="Antic 7 (Gr 2)"),
+                                id="a1", separator=True),
+                            id='FontChoiceSubmenu2', separator=True, name="Antic Mode"),
                         ]
 
     ###

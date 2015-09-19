@@ -8,7 +8,7 @@ import wx.stc
 import numpy as np
 
 # Enthought library imports.
-from traits.api import Any, Bool, Event, Instance, File, Unicode, Property, provides
+from traits.api import Any, Bool, Event, Enum, Instance, File, Unicode, Property, provides
 from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
@@ -45,6 +45,8 @@ class HexEditor(FrameworkEditor):
     # Class attributes (not traits)
     
     font_list = None
+    
+    font_mode = Enum(2, 4, 5, 6 ,7)
 
     ###########################################################################
     # 'PythonEditor' interface.
@@ -96,6 +98,9 @@ class HexEditor(FrameworkEditor):
         self.byte_graphics.set_data(self.bytestore.data)
         self.font_map.set_data(self.bytestore.data)
     
+    def redraw_panes(self):
+        self.font_map.set_font_mode(self.font_mode)
+    
     @classmethod
     def init_fonts(cls, application):
         if cls.font_list is None:
@@ -115,7 +120,7 @@ class HexEditor(FrameworkEditor):
     
     def set_font(self, font):
         self.font_map.set_font(font)
-        self.font_map.Refresh()
+        self.redraw_panes()
     
     def load_font(self, filename):
         try:
