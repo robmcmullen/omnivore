@@ -166,9 +166,7 @@ class HexEditor(FrameworkEditor):
         # Get related controls
         self.disassembly = self.window.get_dock_pane('hex_edit.mos6502_disasmbly_pane').control
         self.byte_graphics = self.window.get_dock_pane('hex_edit.byte_graphics').control
-        self.byte_graphics.Bind(EVT_BYTECLICKED, self.byte_clicked)
         self.font_map = self.window.get_dock_pane('hex_edit.font_map').control
-        self.font_map.Bind(EVT_BYTECLICKED, self.byte_clicked)
         self.font_map.set_font(fonts.A8DefaultFont)
 
         # Load the editor's contents.
@@ -178,10 +176,8 @@ class HexEditor(FrameworkEditor):
 
     #### wx event handlers ####################################################
     
-    def byte_clicked(self, event):
-        print event
-        print event.byte, event.bit
-        self.control.SelectPos(event.byte)
+    def byte_clicked(self, byte, bit):
+        self.control.SelectPos(byte)
 
     def _on_stc_changed(self, event):
         """ Called whenever a change is made to the text of the document. """

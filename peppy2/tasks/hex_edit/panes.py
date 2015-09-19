@@ -27,7 +27,7 @@ class MOS6502DisassemblyPane(DockPane):
     #### trait change handlers
     
     def _task_changed(self):
-        log.debug("TASK CHANGED IN MERGEPOINTSPANE!!!! %s" % self.task)
+        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
         if self.control:
             self.control.set_task(self.task)
 
@@ -39,8 +39,15 @@ class ByteGraphicsPane(DockPane):
     name = 'Byte Graphics'
     
     def create_contents(self, parent):
-        control = BitviewScroller(parent)
+        control = BitviewScroller(parent, self.task)
         return control
+    
+    #### trait change handlers
+    
+    def _task_changed(self):
+        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
+        if self.control:
+            self.control.set_task(self.task)
 
 
 class FontMapPane(DockPane):
@@ -50,5 +57,12 @@ class FontMapPane(DockPane):
     name = 'Font Map'
     
     def create_contents(self, parent):
-        control = FontMapScroller(parent)
+        control = FontMapScroller(parent, self.task)
         return control
+    
+    #### trait change handlers
+    
+    def _task_changed(self):
+        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
+        if self.control:
+            self.control.set_task(self.task)

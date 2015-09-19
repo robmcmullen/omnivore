@@ -37,10 +37,11 @@ class BitviewEvent(wx.PyCommandEvent):
 class BitviewScroller(wx.ScrolledWindow):
     dbg_call_seq = 0
     
-    def __init__(self, parent):
+    def __init__(self, parent, task):
         wx.ScrolledWindow.__init__(self, parent, -1)
 
         # Settings
+        self.task = task
         self.background_color = (160, 160, 160)
         self.wx_background_color = wx.Colour(*self.background_color)
         self.max_zoom = 16
@@ -69,6 +70,9 @@ class BitviewScroller(wx.ScrolledWindow):
         self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvent)
         self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
         self.Bind(wx.EVT_MENU, self.on_menu)
+    
+    def set_task(self, task):
+        self.task = task
 
     def zoom_in(self, zoom=1):
         self.zoom += zoom
@@ -223,8 +227,7 @@ class BitviewScroller(wx.ScrolledWindow):
         #print x, y, byte, bit, inside
         
         if ev.LeftIsDown() and inside:
-            event = BitviewEvent(myEVT_BYTECLICKED, self.GetId(), byte, bit)
-            self.GetEventHandler().ProcessEvent(event)
+            wx.CallAfter(self.task.active_editor.byte_clicked, byte, bit)
         w = ev.GetWheelRotation()
         if ev.ControlDown():
             if w < 0:
@@ -256,8 +259,8 @@ class FontMapScroller(BitviewScroller):
     font_width_extra_zoom = [0, 0, 1, 0, 1, 1, 2, 2]
     font_height_extra_zoom = [0, 0, 1, 0, 1, 2, 1, 2]
     
-    def __init__(self, parent, font=None, font_mode=2):
-        BitviewScroller.__init__(self, parent)
+    def __init__(self, parent, task, font=None, font_mode=2):
+        BitviewScroller.__init__(self, parent, task)
         self.bytes_per_row = 8
         self.zoom = 2
         self.font_mode = font_mode
