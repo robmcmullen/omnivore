@@ -1,4 +1,4 @@
-from os.path import basename
+import os
 
 # Enthought library imports.
 from traits.api import Bool, Unicode, Property
@@ -36,7 +36,7 @@ class FrameworkEditor(Editor):
         return self.path
 
     def _get_name(self):
-        return basename(self.path) or 'Untitled'
+        return os.path.basename(self.path) or 'Untitled'
 
     ###########################################################################
     # 'FrameworkEditor' interface.
