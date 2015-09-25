@@ -73,8 +73,7 @@ class FontStyleBaseAction(EditorAction):
     font_mode = Int
 
     def perform(self, event):
-        self.active_editor.font_mode = self.font_mode
-        self.active_editor.redraw_panes()
+        self.active_editor.set_font(font_mode=self.font_mode)
 
     @on_trait_change('active_editor.font_mode')
     def _update_checked(self):

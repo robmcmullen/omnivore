@@ -264,14 +264,11 @@ class FontMapScroller(BitviewScroller):
         BitviewScroller.__init__(self, parent, task)
         self.bytes_per_row = 8
         self.zoom = 2
-        self.font_mode = font_mode
         
-        if font is None:
-            font = fonts.A8DefaultFont
         if pfcolors is None:
             pfcolors = colors.powerup_colors()
         self.set_colors(pfcolors)
-        self.set_font(font)
+        self.set_font(font, font_mode)
     
     def calc_scale_from_bytes(self):
         self.total_rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
@@ -288,7 +285,7 @@ class FontMapScroller(BitviewScroller):
         self.SetVirtualSize((self.grid_width * zw, self.grid_height * zh))
         self.SetScrollRate(8 * zw, 8 * zh)
     
-    def set_font_mode(self, font_mode):
+    def calc_font_mode_sizes(self, font_mode):
         self.font_mode = font_mode
         if self.font_mode == 2:
             self.bits_to_font = self.bits_to_gr0
@@ -297,9 +294,7 @@ class FontMapScroller(BitviewScroller):
         else:
             self.bits_to_font = self.bits_to_gr1
             
-        self.set_font(self.raw_font)
         self.calc_scroll_params()
-        self.Refresh()
     
     def calc_image_size(self):
         x, y = self.GetViewStart()
@@ -321,7 +316,9 @@ class FontMapScroller(BitviewScroller):
         for c in pfcolors:
             self.rgb.append(colors.atari_color_to_rgb(c))
 
-    def set_font(self, font):
+    def set_font(self, font, font_mode):
+        if font is None:
+            font = fonts.A8DefaultFont
         self.raw_font = font
         self.char_pixel_width = font['char_w']
         self.char_pixel_height = font['char_h']
@@ -332,6 +329,7 @@ class FontMapScroller(BitviewScroller):
         bits = bits.reshape((-1, 8, 8))
         print bits[1]
         
+        self.calc_font_mode_sizes(font_mode)
         self.font = self.bits_to_font(bits)
         print self.font
         

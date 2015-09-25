@@ -97,9 +97,10 @@ class HexEditor(FrameworkEditor):
         self.disassembly.update(self.bytestore.data)
         self.byte_graphics.set_data(self.bytestore.data)
         self.font_map.set_data(self.bytestore.data)
+        self.set_font(self.font)
     
     def redraw_panes(self):
-        self.font_map.set_font_mode(self.font_mode)
+        self.font_map.Refresh()
     
     @classmethod
     def init_fonts(cls, application):
@@ -118,8 +119,14 @@ class HexEditor(FrameworkEditor):
         data = {'font_list': self.font_list}
         self.window.application.save_bson_data("font_list", data)
     
-    def set_font(self, font):
-        self.font_map.set_font(font)
+    def set_font(self, font=None, font_mode=None):
+        if font is None:
+            font = self.font
+        self.font = font
+        if font_mode is None:
+            font_mode = self.font_mode
+        self.font_mode = font_mode
+        self.font_map.set_font(font, font_mode)
         self.redraw_panes()
     
     def load_font(self, filename):
@@ -167,7 +174,6 @@ class HexEditor(FrameworkEditor):
         self.disassembly = self.window.get_dock_pane('hex_edit.mos6502_disasmbly_pane').control
         self.byte_graphics = self.window.get_dock_pane('hex_edit.byte_graphics').control
         self.font_map = self.window.get_dock_pane('hex_edit.font_map').control
-        self.font_map.set_font(fonts.A8DefaultFont)
 
         # Load the editor's contents.
         self.load()
