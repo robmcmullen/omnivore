@@ -26,6 +26,10 @@ myEVT_BYTECLICKED = wx.NewEventType()
 
 EVT_BYTECLICKED = wx.PyEventBinder(myEVT_BYTECLICKED, 1)
 
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
 class BitviewEvent(wx.PyCommandEvent):
     """Event sent when a LayerControl is changed."""
 
@@ -88,7 +92,7 @@ class BitviewScroller(wx.ScrolledWindow):
         self.set_scale()
 
     def get_image(self):
-        print "Getting image: start=%d, num=%d" % (self.start_row, self.visible_rows)
+        log.debug("Getting image: start=%d, num=%d" % (self.start_row, self.visible_rows))
         sr = self.start_row
         nr = self.visible_rows
         self.start_byte = sr * self.bytes_per_row
@@ -155,7 +159,7 @@ class BitviewScroller(wx.ScrolledWindow):
         # For proper buffered paiting, the visible rows must include the
         # (possibly) partially obscured last row
         self.visible_rows = ((h + self.zoom - 1) / self.zoom)
-        print "x, y, w, h, start, num: ", x, y, w, h, self.start_row, self.visible_rows
+        log.debug("x, y, w, h, start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows]))
 
     def set_scale(self):
         """Creates new image at specified zoom factor.
@@ -170,7 +174,7 @@ class BitviewScroller(wx.ScrolledWindow):
         else:
             self.grid_width = 10
             self.grid_height = 10
-        print "set_scale: ", self.grid_width, self.grid_height
+        log.debug("set_scale: %s" % str([self.grid_width, self.grid_height]))
         self.calc_scroll_params()
         self.Refresh()
     
@@ -225,7 +229,7 @@ class BitviewScroller(wx.ScrolledWindow):
         x = ev.GetX()
         y = ev.GetY()
         byte, bit, inside = self.event_coords_to_byte(ev)
-        #print x, y, byte, bit, inside
+        #log.debug(x, y, byte, bit, inside)
         
         if ev.LeftIsDown() and inside:
             wx.CallAfter(self.task.active_editor.byte_clicked, byte, bit)
@@ -308,7 +312,7 @@ class FontMapScroller(BitviewScroller):
         self.visible_rows = (h + zoom_factor - 1) / zoom_factor
         zoom_factor = 8 * zw
         self.start_col, self.num_cols = x, (w + zoom_factor - 1) / zoom_factor
-        print "fontmap: x, y, w, h, row start, num: ", x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.num_cols
+        log.debug("fontmap: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.num_cols]))
     
     def set_colors(self, pfcolors):
         self.pfcolors = list(pfcolors)
@@ -323,15 +327,15 @@ class FontMapScroller(BitviewScroller):
         self.char_pixel_width = font['char_w']
         self.char_pixel_height = font['char_h']
         bytes = np.fromstring(font['data'], dtype=np.uint8)
-        print "numpy font:", bytes
-        print bytes[1]
+#        print "numpy font:", bytes)
+#        print bytes[1]
         bits = np.unpackbits(bytes)
         bits = bits.reshape((-1, 8, 8))
-        print bits[1]
+#        print bits[1]
         
         self.calc_font_mode_sizes(font_mode)
         self.font = self.bits_to_font(bits)
-        print self.font
+#        log.debug(self.font)
         
     def bits_to_gr0(self, bits):
         fg, bg = colors.gr0_colors(self.pfcolors)
@@ -447,7 +451,7 @@ class FontMapScroller(BitviewScroller):
     bits_to_font = bits_to_gr0
 
     def get_image(self):
-        print "Getting fontmap: start=%d, num=%d" % (self.start_row, self.visible_rows)
+        log.debug("Getting fontmap: start=%d, num=%d" % (self.start_row, self.visible_rows))
         sr = self.start_row
         nr = self.visible_rows
         self.start_byte = sr * self.bytes_per_row
@@ -463,19 +467,19 @@ class FontMapScroller(BitviewScroller):
         sc = self.start_col
         nc = self.num_cols
         bytes = bytes.reshape((nr, -1))
-        #print "get_image: bytes", bytes
+        #log.debug("get_image: bytes", bytes)
         
         width = int(self.char_pixel_width * self.bytes_per_row)
         height = int(nr * self.char_pixel_height)
         
-        print "pixel width:", width, height, "zoom", self.zoom, "rows with data", num_rows_with_data
+        log.debug("pixel width: %dx%d, zoom=%d, rows with data=%d" % (width, height, self.zoom, num_rows_with_data))
         array = np.zeros((height, width, 3), dtype=np.uint8)
         array[:,:] = self.background_color
         
-        print self.end_byte, self.start_byte, (self.end_byte - self.start_byte) / self.bytes_per_row
+        log.debug(str([self.end_byte, self.start_byte, (self.end_byte - self.start_byte) / self.bytes_per_row]))
         er = min(num_rows_with_data, nr)
         ec = min(self.bytes_per_row, sc + self.bytes_per_row)
-        print "bytes:", nr, er, sc, nc, ec, bytes.shape
+        log.debug("bytes: %s" % str([nr, er, sc, nc, ec, bytes.shape]))
         zx = self.font_width_extra_zoom[self.font_mode]
         zy = self.font_height_extra_zoom[self.font_mode]
         y = 0
@@ -490,7 +494,7 @@ class FontMapScroller(BitviewScroller):
                 x += 8
             y += 8
             e += self.bytes_per_row
-        print array.shape
+        log.debug(array.shape)
         image = wx.EmptyImage(width, height)
         image.SetData(array.tostring())
         zw, zh = self.get_zoom_factors()
@@ -530,7 +534,7 @@ class FontMapScroller(BitviewScroller):
                 try:
                     self.bytes_per_row = int(dlg.GetValue())
                 except ValueError:
-                    print "Bad value: %s" % dlg.GetValue()
+                    log.debug("Bad value: %s" % dlg.GetValue())
 
             dlg.Destroy()
             self.set_scale()
