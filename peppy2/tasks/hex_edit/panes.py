@@ -6,7 +6,7 @@ from pyface.tasks.api import DockPane, TraitsDockPane
 from traits.api import on_trait_change
 
 # Local imports.
-from mos6502 import MOS6502Disassembly
+from disassembly import DisassemblyPanel
 from peppy2.utils.wx.bitviewscroller import BitviewScroller, FontMapScroller
 
 import logging
@@ -14,14 +14,14 @@ log = logging.getLogger(__name__)
 
 
 
-class MOS6502DisassemblyPane(DockPane):
+class DisassemblyPane(DockPane):
     #### TaskPane interface ###################################################
 
-    id = 'hex_edit.mos6502_disasmbly_pane'
-    name = '6502 Disassembly'
+    id = 'hex_edit.disasmbly_pane'
+    name = 'Disassembly'
     
     def create_contents(self, parent):
-        control = MOS6502Disassembly(parent, self.task)
+        control = DisassemblyPanel(parent, self.task)
         return control
     
     #### trait change handlers

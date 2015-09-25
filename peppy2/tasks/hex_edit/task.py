@@ -105,7 +105,7 @@ class HexEditTask(FrameworkTask):
     def _default_layout_default(self):
         return TaskLayout(
             right=HSplitter(
-                PaneItem('hex_edit.mos6502_disasmbly_pane'),
+                PaneItem('hex_edit.disasmbly_pane'),
                 PaneItem('hex_edit.byte_graphics'),
                 PaneItem('hex_edit.font_map'),
                 ),
@@ -115,7 +115,7 @@ class HexEditTask(FrameworkTask):
         """ Create the file browser and connect to its double click event.
         """
         return [
-            panes.MOS6502DisassemblyPane(),
+            panes.DisassemblyPane(),
             panes.ByteGraphicsPane(),
             panes.FontMapPane(),
             ]

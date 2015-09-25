@@ -4,9 +4,8 @@ import wx
 from pyface.util.python_stc import PythonSTC, faces
 
 from peppy2.utils.wx.stcbase import PeppySTC
-from peppy2.utils.dis6502 import NumpyDisassembler
 
-class MOS6502Disassembly(wx.Panel):
+class DisassemblyPanel(wx.Panel):
 
     """
     A panel for displaying and manipulating the properties of a layer.
@@ -34,6 +33,8 @@ class MOS6502Disassembly(wx.Panel):
         self.Fit()
     
         self.set_style(wx.stc.STC_P_DEFAULT, "#000000", "#ffffff")
+        
+        self.disassembler = None
 
     def set_style(self, n, fore, back):
         self.stc.StyleSetForeground(n, fore)
@@ -42,9 +43,12 @@ class MOS6502Disassembly(wx.Panel):
         self.stc.StyleSetBackground(n, back)
         self.stc.StyleSetFaceName(n, "courier new")
         self.stc.StyleSetSize(n, faces['size'])
+    
+    def set_disassembler(self, disassembler):
+        self.disassembler = disassembler
 
     def update(self, bytes):
-        d = NumpyDisassembler(bytes, 0)
+        d = self.disassembler(bytes, 0)
         lines = "\n".join(d.get_disassembly())
         self.stc.SetText(lines)
     

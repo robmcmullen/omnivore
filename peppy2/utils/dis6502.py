@@ -216,7 +216,7 @@ class TextDisassembler(BaseDisassembler):
         self.pc += 1
         return opcode
 
-class NumpyDisassembler(BaseDisassembler):
+class Basic6502Disassembler(BaseDisassembler):
     def set_source(self, source):
         self.source = source
         self.length = source.size

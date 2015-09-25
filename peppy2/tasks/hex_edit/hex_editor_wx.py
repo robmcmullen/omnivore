@@ -19,6 +19,7 @@ from peppy2.utils.wx.stcbase import PeppySTC
 from peppy2.utils.wx.stcbinary import BinarySTC
 from peppy2.utils.wx.bitviewscroller import EVT_BYTECLICKED
 import peppy2.utils.fonts as fonts
+from peppy2.utils.dis6502 import Basic6502Disassembler
 
 @provides(IHexEditor)
 class HexEditor(FrameworkEditor):
@@ -35,6 +36,8 @@ class HexEditor(FrameworkEditor):
     grid_range_selected = Bool
     
     font = Any
+    
+    disassembler = Any
 
     #### Events ####
 
@@ -47,6 +50,11 @@ class HexEditor(FrameworkEditor):
     font_list = None
     
     font_mode = Enum(2, 4, 5, 6, 7, 8, 9)
+    
+    ##### Default traits
+    
+    def _disassembler_default(self):
+        return Basic6502Disassembler
 
     ###########################################################################
     # 'PythonEditor' interface.
@@ -94,6 +102,7 @@ class HexEditor(FrameworkEditor):
         self.bytestore.Redo()
 
     def update_panes(self):
+        self.disassembly.set_disassembler(self.disassembler)
         self.disassembly.update(self.bytestore.data)
         self.byte_graphics.set_data(self.bytestore.data)
         self.font_map.set_data(self.bytestore.data)
@@ -171,7 +180,8 @@ class HexEditor(FrameworkEditor):
         ##########################################
 
         # Get related controls
-        self.disassembly = self.window.get_dock_pane('hex_edit.mos6502_disasmbly_pane').control
+        self.disassembly = self.window.get_dock_pane('hex_edit.disasmbly_pane').control
+        self.disassembly.set_disassembler(self.disassembler)
         self.byte_graphics = self.window.get_dock_pane('hex_edit.byte_graphics').control
         self.font_map = self.window.get_dock_pane('hex_edit.font_map').control
 
