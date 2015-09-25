@@ -19,7 +19,7 @@ from peppy2.utils.wx.stcbase import PeppySTC
 from peppy2.utils.wx.stcbinary import BinarySTC
 from peppy2.utils.wx.bitviewscroller import EVT_BYTECLICKED
 import peppy2.utils.fonts as fonts
-from peppy2.utils.dis6502 import Basic6502Disassembler
+from peppy2.utils.dis6502 import Atari800Disassembler
 
 @provides(IHexEditor)
 class HexEditor(FrameworkEditor):
@@ -54,7 +54,7 @@ class HexEditor(FrameworkEditor):
     ##### Default traits
     
     def _disassembler_default(self):
-        return Basic6502Disassembler
+        return Atari800Disassembler
 
     ###########################################################################
     # 'PythonEditor' interface.
@@ -158,6 +158,11 @@ class HexEditor(FrameworkEditor):
     
     def get_font_from_selection(self):
         pass
+    
+    def set_disassembler(self, disassembler):
+        self.disassembler = disassembler
+        self.disassembly.set_disassembler(disassembler)
+        self.disassembly.update(self.bytestore.data)
 
     ###########################################################################
     # Trait handlers.

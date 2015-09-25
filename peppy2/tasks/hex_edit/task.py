@@ -17,6 +17,7 @@ from hex_editor import HexEditor
 from preferences import HexEditPreferences
 import panes
 import peppy2.utils.fonts as fonts
+import peppy2.utils.dis6502 as dis6502
 
 class FontChoiceGroup(TaskDynamicSubmenuGroup):
     """ A menu for changing the active task in a task window.
@@ -79,6 +80,26 @@ class FontStyleBaseAction(EditorAction):
     def _update_checked(self):
         if self.active_editor:
             self.checked = self.active_editor.font_mode == self.font_mode
+
+
+class DisassemblerBaseAction(EditorAction):
+    """Radio buttons for changing font style
+    """
+    # Traits
+    style = 'radio'
+    
+    disassembler = Any
+    
+    def _name_default(self):
+        return self.disassembler.menu_name
+
+    def perform(self, event):
+        self.active_editor.set_disassembler(self.disassembler)
+
+    @on_trait_change('active_editor.disassembler')
+    def _update_checked(self):
+        if self.active_editor:
+            self.checked = self.active_editor.disassembler == self.disassembler
 
 
 class HexEditTask(FrameworkTask):
@@ -163,6 +184,13 @@ class HexEditTask(FrameworkTask):
                                 FontStyleBaseAction(font_mode=9, name="Antic 7 (Gr 2) Lowercase and Symbols"),
                                 id="a1", separator=True),
                             id='FontChoiceSubmenu2', separator=True, name="Antic Mode"),
+                        SMenu(
+                            Group(
+                                DisassemblerBaseAction(disassembler=dis6502.Basic6502Disassembler),
+                                DisassemblerBaseAction(disassembler=dis6502.Atari800Disassembler),
+                                DisassemblerBaseAction(disassembler=dis6502.Atari5200Disassembler),
+                                id="a1", separator=True),
+                            id='FontChoiceSubmenu3', separator=True, name="Disassembler"),
                         ]
 
     ###
