@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+
+__version__ = "1.0.0"
+
+
 import struct
 from cStringIO import StringIO
 
@@ -193,6 +197,11 @@ class ObjSegment(object):
         return s
 
 class AtariDosFile(object):
+    """Parse a binary chunk into segments according to the Atari DOS object
+    file format.
+    
+    Ref: http://www.atarimax.com/jindroush.atari.org/afmtexe.html
+    """
     def __init__(self, data):
         self.data = data
         self.size = len(data)
