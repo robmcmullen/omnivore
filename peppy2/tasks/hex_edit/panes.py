@@ -69,10 +69,10 @@ class FontMapPane(DockPane):
             self.control.set_task(self.task)
 
 
-class SegmentPane(DockPane):
+class SegmentsPane(DockPane):
     #### TaskPane interface ###################################################
 
-    id = 'hex_edit.segment'
+    id = 'hex_edit.segments'
     name = 'Segments'
     
     def create_contents(self, parent):

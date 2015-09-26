@@ -189,6 +189,7 @@ class HexEditor(FrameworkEditor):
         self.disassembly.set_disassembler(self.disassembler)
         self.byte_graphics = self.window.get_dock_pane('hex_edit.byte_graphics').control
         self.font_map = self.window.get_dock_pane('hex_edit.font_map').control
+        self.segment_list = self.window.get_dock_pane('hex_edit.segments').control
 
         # Load the editor's contents.
         self.load()

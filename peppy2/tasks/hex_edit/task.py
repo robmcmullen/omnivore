@@ -129,6 +129,7 @@ class HexEditTask(FrameworkTask):
                 PaneItem('hex_edit.disasmbly_pane'),
                 PaneItem('hex_edit.byte_graphics'),
                 PaneItem('hex_edit.font_map'),
+                PaneItem('hex_edit.segments'),
                 ),
             )
 
@@ -139,6 +140,7 @@ class HexEditTask(FrameworkTask):
             panes.DisassemblyPane(),
             panes.ByteGraphicsPane(),
             panes.FontMapPane(),
+            panes.SegmentsPane(),
             ]
 
 
