@@ -173,8 +173,59 @@ class MydosDirent(AtrDirent):
                 self.current_sector = disk.first_data_after_vtoc
         return raw
 
-class AtrFile(object):
+
+class InvalidBinaryFile(AtrError):
     pass
+
+class ObjSegment(object):
+    def __init__(self, metadata_start, data_start, start_addr, end_addr, data, error=None):
+        self.metadata_start = metadata_start
+        self.data_start = data_start
+        self.start_addr = start_addr
+        self.end_addr = end_addr
+        self.data = data
+        self.error = error
+    
+    def __str__(self):
+        s = "%04x-%04x (%04x @ %04x)" % (self.start_addr, self.end_addr, len(self.data), self.data_start)
+        if self.error:
+            s += " " + self.error
+        return s
+
+class AtariDosFile(object):
+    def __init__(self, data):
+        self.data = data
+        self.size = len(data)
+        self.segments = []
+        self.parse_segments()
+    
+    def __str__(self):
+        return "\n".join(str(s) for s in self.segments) + "\n"
+    
+    def parse_segments(self):
+        bytes = self.data
+        pos = 0
+        first = True
+        while pos < self.size:
+            header, = struct.unpack("<H", bytes[pos:pos+2])
+            if header == 0xffff:
+                # Apparently 0xffff header can appear in any segment, not just
+                # the first.  Regardless, it is ignored everywhere.
+                pos += 2
+            elif first:
+                raise InvalidBinaryFile
+            first = False
+            if len(bytes[pos:pos + 4]) < 4:
+                self.segments.append(ObjSegment(0, 0, bytes[pos:pos + 4], "Short Segment Header"))
+                break
+            start, end = struct.unpack("<HH", bytes[pos:pos + 4])
+            count = end - start + 1
+            found = len(bytes[pos + 4:pos + 4 + count])
+            if found < count:
+                self.segments.append(ObjSegment(pos, pos + 4, start, end, bytes[pos:pos + count], "Incomplete Data"))
+                break
+            self.segments.append(ObjSegment(pos, pos + 4, start, end, bytes[pos:pos + count]))
+            pos += 4 + count
 
 class AtrDiskImage(object):
     def __init__(self, fh):
@@ -345,6 +396,13 @@ if __name__ == "__main__":
                 print "%s: %s" % (filename, atr)
             except:
                 print "%s: Doesn't look like a supported disk image" % filename
+                fh.seek(0)
+                data = fh.read()
+                try:
+                    xex = AtariDosFile(data)
+                    print xex
+                except InvalidBinaryFile:
+                    print "%s: Doesn't look like an XEX either" % filename
                 continue
             if atr.all_sane or options.force:
                 for dirent in atr.files:
