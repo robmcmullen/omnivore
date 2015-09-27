@@ -8,7 +8,7 @@ import wx.stc
 import numpy as np
 
 # Enthought library imports.
-from traits.api import Any, Bool, Event, Enum, Instance, File, Unicode, Property, provides
+from traits.api import Any, Bool, Int, List, Event, Enum, Instance, File, Unicode, Property, provides
 from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
@@ -20,6 +20,7 @@ from peppy2.utils.wx.stcbinary import BinarySTC
 from peppy2.utils.wx.bitviewscroller import EVT_BYTECLICKED
 import peppy2.utils.fonts as fonts
 from peppy2.utils.dis6502 import Atari800Disassembler
+from peppy2.utils.binutil import known_segment_parsers, DefaultSegmentParser, XexSegmentParser, InvalidSegmentParser
 
 @provides(IHexEditor)
 class HexEditor(FrameworkEditor):
@@ -38,6 +39,14 @@ class HexEditor(FrameworkEditor):
     font = Any
     
     disassembler = Any
+    
+    segment_parser = Any(XexSegmentParser)
+    
+    segments = List
+    
+    segment_number = Int(0)
+    
+    segment_data = Any(None)
 
     #### Events ####
 
@@ -77,10 +86,10 @@ class HexEditor(FrameworkEditor):
             text = guess.get_utf8()
 
         self.bytestore.SetBinary(text)
-        self.control.Update(self.bytestore)
         self.path = path
         self.dirty = False
         
+        self.set_segment_parser(self.segment_parser)
         self.update_panes()
 
     def save(self, path=None):
@@ -102,10 +111,13 @@ class HexEditor(FrameworkEditor):
         self.bytestore.Redo()
 
     def update_panes(self):
+        temp_stc = BinarySTC()
+        temp_stc.SetBinary(self.segment_data)
+        self.control.Update(temp_stc)
         self.disassembly.set_disassembler(self.disassembler)
-        self.disassembly.update(self.bytestore.data)
-        self.byte_graphics.set_data(self.bytestore.data)
-        self.font_map.set_data(self.bytestore.data)
+        self.disassembly.update(self.segment_data)
+        self.byte_graphics.set_data(self.segment_data)
+        self.font_map.set_data(self.segment_data)
         self.set_font(self.font)
     
     def redraw_panes(self):
@@ -162,7 +174,24 @@ class HexEditor(FrameworkEditor):
     def set_disassembler(self, disassembler):
         self.disassembler = disassembler
         self.disassembly.set_disassembler(disassembler)
-        self.disassembly.update(self.bytestore.data)
+        self.disassembly.update(self.segment_data)
+    
+    def set_segment_parser(self, parser):
+        self.segment_parser = parser
+        try:
+            s = self.segment_parser(self.bytestore.data)
+        except InvalidSegmentParser:
+            self.segment_parser = DefaultSegmentParser
+            s = self.segment_parser(self.bytestore.data)
+        self.segments = s.segments
+        self.segment_list.set_segments(self.segments)
+        self.segment_data = self.bytestore.data
+        self.segment_number = 0
+    
+    def view_segment_number(self, number):
+        self.segment_number = number if number < len(self.segments) else 0
+        self.segment_data = self.segments[self.segment_number].data
+        self.update_panes()
 
     ###########################################################################
     # Trait handlers.
@@ -190,6 +219,7 @@ class HexEditor(FrameworkEditor):
         self.byte_graphics = self.window.get_dock_pane('hex_edit.byte_graphics').control
         self.font_map = self.window.get_dock_pane('hex_edit.font_map').control
         self.segment_list = self.window.get_dock_pane('hex_edit.segments').control
+        self.segment_list.Bind(wx.EVT_LISTBOX, self.on_segment_click)
 
         # Load the editor's contents.
         self.load()
@@ -200,6 +230,12 @@ class HexEditor(FrameworkEditor):
     
     def byte_clicked(self, byte, bit):
         self.control.SelectPos(byte)
+
+    def on_segment_click(self, event):
+        item = event.GetSelection()
+        print "Selected segment %d" % item
+        self.view_segment_number(item)
+        event.Skip()
 
     def _on_stc_changed(self, event):
         """ Called whenever a change is made to the text of the document. """

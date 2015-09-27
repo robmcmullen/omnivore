@@ -18,6 +18,7 @@ from preferences import HexEditPreferences
 import panes
 import peppy2.utils.fonts as fonts
 import peppy2.utils.dis6502 as dis6502
+from peppy2.utils.binutil import known_segment_parsers
 
 class FontChoiceGroup(TaskDynamicSubmenuGroup):
     """ A menu for changing the active task in a task window.
@@ -102,6 +103,27 @@ class DisassemblerBaseAction(EditorAction):
             self.checked = self.active_editor.disassembler == self.disassembler
 
 
+class SegmentBaseAction(EditorAction):
+    """Radio buttons for changing font style
+    """
+    # Traits
+    style = 'radio'
+    
+    segment_parser = Any
+    
+    def _name_default(self):
+        return self.segment_parser.menu_name
+
+    def perform(self, event):
+        self.active_editor.set_segment_parser(self.segment_parser)
+        self.active_editor.view_segment_number(0)
+
+    @on_trait_change('active_editor.disassembler')
+    def _update_checked(self):
+        if self.active_editor:
+            self.checked = self.active_editor.segment_parser == self.segment_parser
+
+
 class HexEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
     """
@@ -163,6 +185,7 @@ class HexEditTask(FrameworkTask):
         if location == "Menu":
             if menu_name == "View":
                 if group_name == "ViewConfigGroup":
+                    segment_parser_actions = [SegmentBaseAction(segment_parser=s) for s in known_segment_parsers]
                     return [
                         SMenu(
                             Group(
@@ -193,6 +216,11 @@ class HexEditTask(FrameworkTask):
                                 DisassemblerBaseAction(disassembler=dis6502.Atari5200Disassembler),
                                 id="a1", separator=True),
                             id='FontChoiceSubmenu3', separator=True, name="Disassembler"),
+                        SMenu(
+                            Group(
+                                *segment_parser_actions,
+                                id="a1", separator=True),
+                            id='FontChoiceSubmenu4', separator=True, name="File Type"),
                         ]
 
     ###

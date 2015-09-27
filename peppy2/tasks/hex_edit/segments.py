@@ -21,17 +21,16 @@ class SegmentList(wx.ListBox):
         self.task = task
     
     def set_segments(self, segments):
-        self.segments = segments
-        items = ["All"]
+        items = [str(s) for s in segments]
         self.SetItems(items)
 
     def on_click(self, event):
         item = event.GetSelection()
         print "Selected segment %d" % item
-        evt.Skip()
+        event.Skip()
     
     def on_dclick(self, event):
-        evt.Skip()
+        event.Skip()
     
     def on_popup(self, event):
-        evt.Skip()
+        event.Skip()
