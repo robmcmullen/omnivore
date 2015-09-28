@@ -489,6 +489,7 @@ class HugeTable(Grid.PyGridTableBase):
     def UpdateValues(self, grid):
         """Update all displayed values"""
         # This sends an event to the grid table to update all of the values
+        self.invalidateCache()
         msg = Grid.GridTableMessage(self, Grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
         grid.ProcessTableMessage(msg)
 
@@ -886,6 +887,7 @@ class HexEditControl(Grid.Grid):
             stc = self.stc
         try:
             self.table.ResetView(self, stc, format, col_labels)
+            self.table.UpdateValues(self)
             self.editor.task.status_bar.message = "Record format = '%s', %d bytes per record" % (self.table.format, self.table.nbytes)
         except struct.error:
             self.editor.task.status_bar.message = "Bad record format: %s" % format
