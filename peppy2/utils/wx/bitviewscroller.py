@@ -546,6 +546,105 @@ class FontMapScroller(BitviewScroller):
         self.PopupMenu(popup, event.GetPosition())
 
 
+class MemoryMapScroller(BitviewScroller):
+    def __init__(self, parent, task, font=None, font_mode=2, pfcolors=None):
+        BitviewScroller.__init__(self, parent, task)
+        self.bytes_per_row = 256
+        self.zoom = 2
+    
+    def calc_scale_from_bytes(self):
+        self.total_rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
+        self.grid_width = int(self.bytes_per_row)
+        self.grid_height = int(self.total_rows)
+    
+    def calc_scroll_params(self):
+        z = self.zoom
+        self.SetVirtualSize((self.grid_width * z, self.grid_height * z))
+        self.SetScrollRate(8 * z, 8 * z)
+    
+    def calc_image_size(self):
+        x, y = self.GetViewStart()
+        w, h = self.GetClientSizeTuple()
+        self.start_row = y
+        
+        # For proper buffered paiting, the visible rows must include the
+        # (possibly) partially obscured last row
+        z = self.zoom
+        self.visible_rows = (h + z - 1) / z
+        self.start_col, self.num_cols = x, (w + z - 1) / z
+        log.debug("fontmap: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.num_cols]))
+
+    def get_image(self):
+        log.debug("Getting fontmap: start=%d, num=%d" % (self.start_row, self.visible_rows))
+        sr = self.start_row
+        nr = self.visible_rows
+        self.start_byte = sr * self.bytes_per_row
+        self.end_byte = self.start_byte + (nr * self.bytes_per_row)
+        if self.end_byte > self.bytes.size:
+            self.end_byte = self.bytes.size
+            bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
+            bytes[0:self.end_byte - self.start_byte] = self.bytes[sr * self.bytes_per_row:self.end_byte]
+        else:
+            bytes = self.bytes[sr * self.bytes_per_row:self.end_byte]
+        num_rows_with_data = (self.end_byte - self.start_byte + self.bytes_per_row - 1) / self.bytes_per_row
+        
+        sc = self.start_col
+        nc = self.num_cols
+        bytes = bytes.reshape((nr, -1))
+        #log.debug("get_image: bytes", bytes)
+        
+        width = self.bytes_per_row
+        height = nr
+        
+        log.debug("pixel width: %dx%d, zoom=%d, rows with data=%d" % (width, height, self.zoom, num_rows_with_data))
+        array = np.zeros((height, width, 3), dtype=np.uint8)
+        array[:,:] = self.background_color
+        
+        log.debug(str([self.end_byte, self.start_byte, (self.end_byte - self.start_byte) / self.bytes_per_row]))
+        er = min(num_rows_with_data, nr)
+        ec = min(self.bytes_per_row, sc + self.bytes_per_row)
+        log.debug("bytes: %s" % str([nr, er, sc, nc, ec, bytes.shape]))
+        y = 0
+        e = self.start_byte
+        for j in range(er):
+            x = 0
+            for i in range(sc, ec):
+                if e + i >= self.end_byte:
+                    break
+                c = bytes[j, i]
+                array[y,x,:] = (c, c, c)
+                x += 1
+            y += 1
+            e += self.bytes_per_row
+        log.debug(array.shape)
+        image = wx.EmptyImage(width, height)
+        image.SetData(array.tostring())
+        z = self.zoom
+        image.Rescale(width * z, height * z)
+        bmp = wx.BitmapFromImage(image)
+        return bmp
+
+    def event_coords_to_byte(self, ev):
+        """Convert event coordinates to world coordinates.
+
+        Convert the event coordinates to world coordinates by locating
+        the offset of the scrolled window's viewport and adjusting the
+        event coordinates.
+        """
+        inside = True
+
+        z = self.zoom
+        x, y = self.GetViewStart()
+        x = (ev.GetX() // z) + x
+        y = (ev.GetY() // z) + y
+        if x < 0 or x >= self.bytes_per_row or y < 0 or y > (self.start_row + self.visible_rows):
+            inside = False
+        byte = (self.bytes_per_row * y) + x
+        if byte > self.end_byte:
+            inside = False
+        return byte, 0, inside
+
+
 if __name__ == '__main__':
     app   = wx.PySimpleApp()
     frame = wx.Frame(None, -1, title='Test', size=(500,500))

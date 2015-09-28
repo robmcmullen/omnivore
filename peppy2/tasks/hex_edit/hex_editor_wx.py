@@ -119,6 +119,7 @@ class HexEditor(FrameworkEditor):
         self.byte_graphics.set_data(self.segment_data)
         self.font_map.set_data(self.segment_data)
         self.set_font(self.font)
+        self.memory_map.set_data(self.segment_data)
     
     def redraw_panes(self):
         self.font_map.Refresh()
@@ -219,6 +220,7 @@ class HexEditor(FrameworkEditor):
         self.disassembly.set_disassembler(self.disassembler)
         self.byte_graphics = self.window.get_dock_pane('hex_edit.byte_graphics').control
         self.font_map = self.window.get_dock_pane('hex_edit.font_map').control
+        self.memory_map = self.window.get_dock_pane('hex_edit.memory_map').control
         self.segment_list = self.window.get_dock_pane('hex_edit.segments').control
         self.segment_list.Bind(wx.EVT_LISTBOX, self.on_segment_click)
 

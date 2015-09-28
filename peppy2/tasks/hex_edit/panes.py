@@ -8,7 +8,7 @@ from traits.api import on_trait_change
 # Local imports.
 from disassembly import DisassemblyPanel
 from segments import SegmentList
-from peppy2.utils.wx.bitviewscroller import BitviewScroller, FontMapScroller
+from peppy2.utils.wx.bitviewscroller import BitviewScroller, FontMapScroller, MemoryMapScroller
 
 import logging
 log = logging.getLogger(__name__)
@@ -59,6 +59,24 @@ class FontMapPane(DockPane):
     
     def create_contents(self, parent):
         control = FontMapScroller(parent, self.task)
+        return control
+    
+    #### trait change handlers
+    
+    def _task_changed(self):
+        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
+        if self.control:
+            self.control.set_task(self.task)
+
+
+class MemoryMapPane(DockPane):
+    #### TaskPane interface ###################################################
+
+    id = 'hex_edit.memory_map'
+    name = 'Memory Map'
+    
+    def create_contents(self, parent):
+        control = MemoryMapScroller(parent, self.task)
         return control
     
     #### trait change handlers
