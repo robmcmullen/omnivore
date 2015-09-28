@@ -236,7 +236,7 @@ class AtariDosFile(object):
             self.segments.append(ObjSegment(pos, pos + 4, start, end, bytes[pos:pos + count]))
             pos += 4 + count
 
-class AtrDiskImage(object):
+class AtrDiskImageFromFile(object):
     def __init__(self, fh):
         self.fh = fh
         self.header = None
@@ -356,6 +356,119 @@ class AtrDiskImage(object):
                 return bytes
         return ""
 
+class AtrDiskImage(object):
+    def __init__(self, bytes):
+        self.bytes = bytes
+        self.header = None
+        self.first_vtoc = 360
+        self.first_data_after_vtoc = 369
+        self.total_sectors = 0
+        self.unused_sectors = 0
+        self.files = []
+        self.all_sane = True
+        self.setup()
+    
+    def __str__(self):
+        if self.all_sane:
+            return "%s %d usable sectors (%d free), %d files" % (self.header, self.total_sectors, self.unused_sectors, len(self.files))
+        else:
+            return "%s bad directory entries; possible boot disk? Use -f option to try to extract anyway" % self.header
+    
+    def dir(self):
+        lines = []
+        lines.append(str(self))
+        for dirent in self.files:
+            if dirent.in_use:
+                lines.append(str(dirent))
+        return "\n".join(lines)
+    
+    def setup(self):
+        self.size = len(self.bytes)
+        
+        self.read_atr_header()
+        self.check_size()
+        self.get_vtoc()
+        self.get_directory()
+    
+    def read_atr_header(self):
+        bytes = self.bytes[0:16]
+        try:
+            self.header = AtrHeader(bytes)
+        except InvalidAtrHeader:
+            self.header = XfdHeader()
+    
+    def check_size(self):
+        self.header.check_size(self.size)
+    
+    def get_raw_bytes(self, sector):
+        pos, size = self.header.get_pos(sector)
+        return self.bytes[pos:pos + size]
+    
+    def get_sectors(self, start, end=None):
+        """ Get contiguous sectors
+        
+        :param start: first sector number to read (note: numbering starts from 1)
+        :param end: last sector number to read
+        :returns: bytes
+        """
+        pos, size = self.header.get_pos(start)
+        if end is None:
+            end = start
+        while start <= end:
+            start += 1
+            _, more = self.header.get_pos(start)
+            size += more
+        return self.bytes[pos:pos + size]
+    
+    def get_vtoc(self):
+        bytes = self.get_sectors(360)[0:5]
+        values = struct.unpack("<BHH", bytes)
+        code = values[0]
+        if code == 0 or code == 2:
+            num = 1
+        else:
+            num = (code * 2) - 3
+        self.first_vtoc = 360 - num + 1
+        self.total_sectors = values[1]
+        self.unused_sectors = values[2]
+    
+    def get_directory(self):
+        dir_bytes = self.get_sectors(361, 368)
+        i = 0
+        num = 0
+        files = []
+        while i < len(dir_bytes):
+            dirent = AtrDirent(self, num, dir_bytes[i:i+16])
+            if dirent.mydos:
+                dirent = MydosDirent(self, num, dir_bytes[i:i+16])
+            
+            if dirent.in_use:
+                files.append(dirent)
+                if not dirent.is_sane:
+                    self.all_sane = False
+            elif dirent.flag == 0:
+                break
+            i += 16
+            num += 1
+        self.files = files
+    
+    def get_file(self, dirent):
+        output = StringIO()
+        dirent.start_read()
+        while True:
+            bytes, last = dirent.read_sector(self)
+            output.write(bytes)
+            if last:
+                break
+        return output.getvalue()
+    
+    def find_file(self, filename):
+        for dirent in self.files:
+            if filename == dirent.get_filename():
+                bytes = self.get_file(dirent)
+                return bytes
+        return ""
+
 def process(dirent, options):
     skip = False
     action = "copying to"
@@ -400,13 +513,12 @@ if __name__ == "__main__":
 
     for filename in options.files:
         with open(filename, "rb") as fh:
+            data = fh.read()
             try:
-                atr = AtrDiskImage(fh)
+                atr = AtrDiskImage(data)
                 print "%s: %s" % (filename, atr)
             except:
                 print "%s: Doesn't look like a supported disk image" % filename
-                fh.seek(0)
-                data = fh.read()
                 try:
                     xex = AtariDosFile(data)
                     print xex
