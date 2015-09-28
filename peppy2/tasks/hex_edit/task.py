@@ -8,7 +8,7 @@ from pyface.action.api import Action, ActionItem, Separator, Group
 from pyface.tasks.api import Task, TaskWindow, TaskLayout, PaneItem, IEditor, \
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
 from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
-    SMenu, SToolBar, TaskAction, TaskToggleGroup, EditorAction
+    SMenu, SToolBar, TaskAction, TaskToggleGroup, EditorAction, SchemaAddition
 from traits.api import on_trait_change, Property, Instance, Any, Event, Int
 
 from peppy2.framework.task import FrameworkTask
@@ -21,7 +21,7 @@ import peppy2.utils.dis6502 as dis6502
 from peppy2.utils.binutil import known_segment_parsers
 
 class FontChoiceGroup(TaskDynamicSubmenuGroup):
-    """ A menu for changing the active task in a task window.
+    """Dynamic menu group to display the available fonts
     """
     #### 'DynamicSubmenuGroup' interface ######################################
 
@@ -103,7 +103,7 @@ class DisassemblerBaseAction(EditorAction):
             self.checked = self.active_editor.disassembler == self.disassembler
 
 
-class SegmentBaseAction(EditorAction):
+class SegmentParserAction(EditorAction):
     """Radio buttons for changing font style
     """
     # Traits
@@ -123,6 +123,38 @@ class SegmentBaseAction(EditorAction):
         if self.active_editor:
             self.checked = self.active_editor.segment_parser == self.segment_parser
 
+class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
+    """Dynamic menu group to display the available fonts
+    """
+    #### 'DynamicSubmenuGroup' interface ######################################
+
+    event_name = 'segments_changed'
+
+    ###########################################################################
+    # Private interface.
+    ###########################################################################
+
+    def _get_items(self, event_data=None):
+        items = []
+        print event_data
+        if event_data is not None:
+            for i, segment in enumerate(event_data):
+                action = UseSegmentAction(segment=segment, segment_number=i)
+                items.append(ActionItem(action=action))
+            
+        return items
+
+class UseSegmentAction(EditorAction):
+    segment = Any
+    
+    segment_number = Int
+    
+    def _name_default(self):
+        return str(self.segment)
+    
+    def perform(self, event):
+        self.active_editor.view_segment_number(self.segment_number)
+
 
 class HexEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
@@ -140,6 +172,8 @@ class HexEditTask(FrameworkTask):
     #### Menu events ##########################################################
     
     fonts_changed = Event
+    
+    segments_changed = Event
 
     ###########################################################################
     # 'Task' interface.
@@ -165,6 +199,16 @@ class HexEditTask(FrameworkTask):
             panes.SegmentsPane(),
             ]
 
+    def _extra_actions_default(self):
+        segment_menu = self.create_menu("Menu", "Segments", "SegmentParserGroup", "SegmentGroup")
+        actions = [
+            # Menubar additions
+            SchemaAddition(factory=lambda: segment_menu,
+                           path='MenuBar',
+                           after="Edit",
+                           ),
+            ]
+        return actions
 
     def _active_editor_changed(self, editor):
         print "active editor changed to ", editor
@@ -185,7 +229,6 @@ class HexEditTask(FrameworkTask):
         if location == "Menu":
             if menu_name == "View":
                 if group_name == "ViewConfigGroup":
-                    segment_parser_actions = [SegmentBaseAction(segment_parser=s) for s in known_segment_parsers]
                     return [
                         SMenu(
                             Group(
@@ -216,11 +259,20 @@ class HexEditTask(FrameworkTask):
                                 DisassemblerBaseAction(disassembler=dis6502.Atari5200Disassembler),
                                 id="a1", separator=True),
                             id='FontChoiceSubmenu3', separator=True, name="Disassembler"),
+                        ]
+            elif menu_name == "Segments":
+                if group_name == "SegmentParserGroup":
+                    segment_parser_actions = [SegmentParserAction(segment_parser=s) for s in known_segment_parsers]
+                    return [
                         SMenu(
                             Group(
                                 *segment_parser_actions,
                                 id="a1", separator=True),
-                            id='FontChoiceSubmenu4', separator=True, name="File Type"),
+                            id='submenu1', separator=True, name="File Type"),
+                        ]
+                elif group_name == "SegmentGroup":
+                    return [
+                        SegmentChoiceGroup(id="a2", separator=True),
                         ]
 
     ###

@@ -187,6 +187,7 @@ class HexEditor(FrameworkEditor):
         self.segment_list.set_segments(self.segments)
         self.segment_data = self.bytestore.data
         self.segment_number = 0
+        self.task.segments_changed = self.segments
     
     def view_segment_number(self, number):
         self.segment_number = number if number < len(self.segments) else 0
