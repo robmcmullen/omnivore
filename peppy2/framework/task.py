@@ -266,11 +266,15 @@ class FrameworkTask(Task):
     def get_preferences(self):
         return self.window.application.get_preferences(self.preferences_helper)
 
-    def add_menu(self, menu, location, menu_name, *group_names):
+    def create_menu(self, location, menu_name, *group_names):
         items = []
         for group_name in group_names:
             self.add_actions_and_groups(items, location, menu_name, group_name)
-        menu.append(SMenu(*items, id=menu_name, name=menu_name))
+        return SMenu(*items, id=menu_name, name=menu_name)
+
+    def add_menu(self, menu, location, menu_name, *group_names):
+        entry = self.create_menu(location, menu_name, *group_names)
+        menu.append(entry)
 
     def add_actions_and_groups(self, menu_items, location, menu_name, group_name):
         actions = self.get_actions_wrapper(location, menu_name, group_name)
