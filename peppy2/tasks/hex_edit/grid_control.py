@@ -852,8 +852,12 @@ class HexEditControl(Grid.Grid):
         self.RegisterDataType(Grid.GRID_VALUE_STRING, None, None)
         self.SetDefaultEditor(HexCellEditor(self))
 
+        self.anchor_selection = (0, 0)
+        self.allow_range_select = True
         self.updateUICallback = None
         self.Bind(Grid.EVT_GRID_CELL_LEFT_CLICK, self.OnLeftDown)
+        self.Bind(wx.EVT_MOTION, self.on_motion)
+        self.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse)
         self.Bind(Grid.EVT_GRID_CELL_RIGHT_CLICK, self.OnRightDown)
         self.Bind(Grid.EVT_GRID_SELECT_CELL, self.OnSelectCell)
         self.Bind(Grid.EVT_GRID_RANGE_SELECT, self.OnSelectRange)
@@ -913,17 +917,81 @@ class HexEditControl(Grid.Grid):
         evt.Skip()
         wx.CallAfter(self.doUpdateUICallback)
 
+    def on_motion(self, evt):
+        x, y = evt.GetPosition()
+        cell = self.XYToCell(x, y)
+        print "x, y, cell", x, y, cell
+        evt.Skip()
+
+    def on_mouse(self, evt):
+        x, y = evt.GetPosition()
+        cell = self.XYToCell(x, y)
+        print "x, y, cell", x, y, cell
+        evt.Skip()
+
     def OnSelectCell(self, evt):
         print "cell selected:", evt.GetCol(), evt.GetRow()
+        if evt.Selecting():
+            self.anchor_selection = (evt.GetRow(), evt.GetCol())
+        else:
+            self.anchor_selection = (0, 0)
         self.editor.grid_range_selected = False
         evt.Skip()
         wx.CallAfter(self.doUpdateUICallback)
 
     def OnSelectRange(self, evt):
+        if not self.allow_range_select:
+            print "Range select prohibited during block update"
+            return
         print "range selected:", evt.GetTopLeftCoords(), evt.GetBottomRightCoords()
+        if evt.Selecting():
+            t, l = evt.GetTopLeftCoords()
+            b, r = evt.GetBottomRightCoords()
+            w = self.GetTable().getNumberHexCols()
+            if b > t:
+                # Grid only selectsa box, but we want starting and ending
+                # positions like in a text editor.  Have to adjust start and
+                # end columns if dragging rectangle to the left because the
+                # position that should be the first selected is actually the
+                # upper right corner of the box.  The anchor point is used
+                # from the saved data from OnSelectCell as the upper right
+                # and the end column is swapped with the start column
+                ar, ac = self.anchor_selection
+                if ar == t and ac > l:
+                    r = l
+                    l = ac
+                elif ar == b and ac < r:
+                    l = r
+                    r = ac
+            wx.CallAfter(self.update_range, t, l, b, r)
+            evt.Veto()
         self.editor.grid_range_selected = True
         evt.Skip()
         wx.CallAfter(self.doUpdateUICallback)
+    
+    def update_range(self, t, l, b, r):
+        self.allow_range_select = False
+        print "UPDATE RANGE!!!"
+        self.ClearSelection()
+        print "  AfterClearSelection"
+        w = self.GetTable().getNumberHexCols()
+        if b > t + 1:
+            print "selecting:", t + 1, 0, b - 1, w - 1
+            self.SelectBlock(t + 1, 0, b - 1, w - 1, True)
+        if b > t:
+            ar, ac = self.anchor_selection
+            if ar == t and ac > l:
+                r = l
+                l = ac
+            elif ar == b and ac < r:
+                l = r
+                r = ac
+            self.SelectBlock(t, l, t, w - 1, True)
+            self.SelectBlock(b, 0, b, r, True)
+        else:
+            self.SelectBlock(t, l, t, r, False)
+        self.allow_range_select = True
+        
 
     def OnKeyDown(self, evt):
         log.debug("evt=%s" % evt)
