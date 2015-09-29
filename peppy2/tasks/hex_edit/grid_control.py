@@ -916,7 +916,7 @@ class HexEditControl(Grid.Grid):
     def OnLeftDown(self, evt):
         evt.Skip()
         wx.CallAfter(self.doUpdateUICallback)
-
+ 
     def on_motion(self, evt):
         x, y = evt.GetPosition()
         cell = self.XYToCell(x, y)
@@ -991,7 +991,12 @@ class HexEditControl(Grid.Grid):
         else:
             self.SelectBlock(t, l, t, r, False)
         self.allow_range_select = True
+    
+    def select_range(self, start_addr, end_addr):
+        self.allow_range_select = False
+         
         
+        self.allow_range_select = True
 
     def OnKeyDown(self, evt):
         log.debug("evt=%s" % evt)

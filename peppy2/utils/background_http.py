@@ -7,11 +7,10 @@ import urllib2 as urllib2
 import os
 import time
 import threading
-import multiprocessing
 import Queue
 
 import logging
-log = multiprocessing.log_to_stderr()
+log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
