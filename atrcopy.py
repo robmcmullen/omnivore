@@ -231,9 +231,9 @@ class AtariDosFile(object):
             count = end - start + 1
             found = len(bytes[pos + 4:pos + 4 + count])
             if found < count:
-                self.segments.append(ObjSegment(pos, pos + 4, start, end, bytes[pos:pos + count], "Incomplete Data"))
+                self.segments.append(ObjSegment(pos, pos + 4, start, end, bytes[pos + 4:pos + 4 + count], "Incomplete Data"))
                 break
-            self.segments.append(ObjSegment(pos, pos + 4, start, end, bytes[pos:pos + count]))
+            self.segments.append(ObjSegment(pos, pos + 4, start, end, bytes[pos + 4:pos + 4 + count]))
             pos += 4 + count
 
 class AtrDiskImageFromFile(object):
