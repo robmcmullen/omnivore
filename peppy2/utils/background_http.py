@@ -101,6 +101,7 @@ class OnlyLatestHttpThread(HttpThread):
         req = BaseRequest()  # can't use None because None means quit
         wait = True
         while req is not None and req.is_skippable:
+            log.debug("skipping req %s, skippable=%s", req, req.is_skippable)
             try:
                 req = self.in_q.get(wait)
                 log.debug("found req %s", req)
@@ -121,6 +122,40 @@ class BackgroundHttpDownloader(object):
     def __del__(self):
         self.requests.put(None)
         self.thread.join()
+    
+    def get_server_config(self):
+        pass
+    
+    def send_request(self, req):
+        self.requests.put(req)
+    
+    def get_finished(self):
+        finished = []
+        try:
+            while True:
+                data = self.results.get(False)
+                finished.append(data)
+        except Queue.Empty:
+            pass
+        return finished
+
+
+class BackgroundHttpMultiDownloader(object):
+    def __init__(self, num_workers=4):
+        self.requests = Queue.Queue()
+        self.results = Queue.Queue()
+        self.threads = []
+        for i in range(num_workers):
+            thread = HttpThread(self.requests, self.results)
+            thread.start()
+            self.threads.append(thread)
+        self.get_server_config()
+    
+    def __del__(self):
+        for t in self.threads:
+            self.requests.put(None)
+        for t in self.threads:
+            t.join()
     
     def get_server_config(self):
         pass
