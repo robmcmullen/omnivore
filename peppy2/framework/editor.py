@@ -1,8 +1,11 @@
 import os
 
 # Enthought library imports.
-from traits.api import Bool, Unicode, Property
+from traits.api import Any, Bool, Unicode, Property
 from pyface.tasks.api import Editor
+
+from document import Document
+
 
 class FrameworkEditor(Editor):
     """The pyface editor template for the peppy2 framework
@@ -13,6 +16,8 @@ class FrameworkEditor(Editor):
     #### 'IProjectEditor' interface ############################################
 
     path = Unicode
+    
+    document = Any(None)
 
     dirty = Bool(False)
 

@@ -13,8 +13,10 @@ from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
 from peppy2.framework.editor import FrameworkEditor
+from peppy2.framework.document import Document
 from i_hex_editor import IHexEditor
 from grid_control import HexEditControl
+from peppy2.utils.file_guess import FileMetadata
 from peppy2.utils.wx.stcbase import PeppySTC
 from peppy2.utils.wx.stcbinary import BinarySTC
 from peppy2.utils.wx.bitviewscroller import EVT_BYTECLICKED
@@ -40,13 +42,9 @@ class HexEditor(FrameworkEditor):
     
     disassembler = Any
     
-    segment_parser = Any(XexSegmentParser)
-    
-    segments = List
-    
     segment_number = Int(0)
     
-    segment_data = Any(None)
+    bytes_view = Any
 
     #### Events ####
 
@@ -78,18 +76,19 @@ class HexEditor(FrameworkEditor):
         """ Loads the contents of the editor.
         """
         if guess is None:
-            path = self.path
-            text = ''
+            metadata = FileMetadata(uri=self.path)
+            bytes = ''
         else:
             metadata = guess.get_metadata()
-            path = metadata.uri
-            text = guess.get_utf8()
+            bytes = guess.get_utf8()
+        doc = Document(metadata, bytes)
 
-        self.bytestore.SetBinary(text)
-        self.path = path
+        self.document = doc
+        self.bytestore.SetBinary(doc.bytes)
+        self.path = doc.metadata.uri
         self.dirty = False
         
-        self.set_segment_parser(self.segment_parser)
+        self.set_segment_parser(XexSegmentParser)
         self.update_panes()
 
     def save(self, path=None):
@@ -112,16 +111,17 @@ class HexEditor(FrameworkEditor):
 
     def update_panes(self):
         temp_stc = BinarySTC()
-        temp_stc.SetBinary(self.segment_data)
+        temp_stc.SetBinary(self.bytes_view)
         self.control.Update(temp_stc)
         self.disassembly.set_disassembler(self.disassembler)
-        self.disassembly.update(self.segment_data)
-        self.byte_graphics.set_data(self.segment_data)
-        self.font_map.set_data(self.segment_data)
+        self.disassembly.update(self.bytes_view)
+        self.byte_graphics.set_data(self.bytes_view)
+        self.font_map.set_data(self.bytes_view)
         self.set_font(self.font)
-        self.memory_map.set_data(self.segment_data)
-        self.segment_list.set_segments(self.segments)
-        self.task.segments_changed = self.segments
+        self.memory_map.set_data(self.bytes_view)
+        doc = self.document
+        self.segment_list.set_segments(doc.segments)
+        self.task.segments_changed = doc.segments
     
     def redraw_panes(self):
         self.font_map.Refresh()
@@ -177,24 +177,26 @@ class HexEditor(FrameworkEditor):
     def set_disassembler(self, disassembler):
         self.disassembler = disassembler
         self.disassembly.set_disassembler(disassembler)
-        self.disassembly.update(self.segment_data)
+        self.disassembly.update(self.bytes_view)
     
     def set_segment_parser(self, parser):
-        self.segment_parser = parser
+        doc = self.document
+        doc.segment_parser = parser
         try:
-            s = self.segment_parser(self.bytestore.data)
+            s = doc.segment_parser(doc.bytes)
         except InvalidSegmentParser:
-            self.segment_parser = DefaultSegmentParser
-            s = self.segment_parser(self.bytestore.data)
-        self.segments = s.segments
-        self.segment_list.set_segments(self.segments)
-        self.segment_data = self.bytestore.data
+            doc.segment_parser = DefaultSegmentParser
+            s = doc.segment_parser(doc.bytes)
+        doc.segments = s.segments
+        self.segment_list.set_segments(doc.segments)
+        self.bytes_view = doc.bytes
         self.segment_number = 0
-        self.task.segments_changed = self.segments
+        self.task.segments_changed = doc.segments
     
     def view_segment_number(self, number):
-        self.segment_number = number if number < len(self.segments) else 0
-        self.segment_data = self.segments[self.segment_number].data
+        doc = self.document
+        self.segment_number = number if number < len(doc.segments) else 0
+        self.bytes_view = doc.segments[self.segment_number].data
         self.update_panes()
 
     ###########################################################################
@@ -210,6 +212,7 @@ class HexEditor(FrameworkEditor):
         """ Creates the toolkit-specific control for the widget. """
 
         # Base-class constructor.
+        print "CONSTRUCTOR!!!"
         self.bytestore = stc = BinarySTC()
         self.control = HexEditControl(parent, self, stc, show_records=False)
 
