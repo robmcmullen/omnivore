@@ -120,6 +120,8 @@ class HexEditor(FrameworkEditor):
         self.font_map.set_data(self.segment_data)
         self.set_font(self.font)
         self.memory_map.set_data(self.segment_data)
+        self.segment_list.set_segments(self.segments)
+        self.task.segments_changed = self.segments
     
     def redraw_panes(self):
         self.font_map.Refresh()
