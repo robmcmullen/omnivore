@@ -26,7 +26,9 @@ class SegmentList(wx.ListBox):
 
     def on_click(self, event):
         item = event.GetSelection()
-        print "Selected segment %d" % item
+        editor = self.task.active_editor
+        print "Selected segment %d for document %s, control %s" % (item, editor.document, event.GetEventObject())
+        editor.view_segment_number(item)
         event.Skip()
     
     def on_dclick(self, event):

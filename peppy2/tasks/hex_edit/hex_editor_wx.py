@@ -224,7 +224,6 @@ class HexEditor(FrameworkEditor):
         self.font_map = self.window.get_dock_pane('hex_edit.font_map').control
         self.memory_map = self.window.get_dock_pane('hex_edit.memory_map').control
         self.segment_list = self.window.get_dock_pane('hex_edit.segments').control
-        self.segment_list.Bind(wx.EVT_LISTBOX, self.on_segment_click)
 
         # Load the editor's contents.
         self.load()
@@ -235,12 +234,6 @@ class HexEditor(FrameworkEditor):
     
     def byte_clicked(self, byte, bit):
         self.control.SelectPos(byte)
-
-    def on_segment_click(self, event):
-        item = event.GetSelection()
-        print "Selected segment %d" % item
-        self.view_segment_number(item)
-        event.Skip()
 
     def _on_stc_changed(self, event):
         """ Called whenever a change is made to the text of the document. """
