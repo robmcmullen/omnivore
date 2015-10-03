@@ -46,9 +46,9 @@ class DisassemblyPanel(wx.Panel):
     
     def set_disassembler(self, disassembler):
         self.disassembler = disassembler
-
-    def update(self, bytes):
-        d = self.disassembler(bytes, 0)
+    
+    def set_segment(self, segment):
+        d = self.disassembler(segment.data, segment.start_addr, -segment.start_addr)
         lines = "\n".join(d.get_disassembly())
         self.stc.SetText(lines)
     

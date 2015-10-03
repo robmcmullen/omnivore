@@ -19,7 +19,8 @@ class SegmentParser(object):
 
 
 class DefaultSegment(object):
-    def __init__(self, data, error=None):
+    def __init__(self, start_addr, data, error=None):
+        self.start_addr = start_addr
         self.data = data
         self.error = error
     
@@ -74,7 +75,7 @@ class XexSegmentParser(SegmentParser):
     menu_name = "XEX (Atari 8-bit executable)"
     
     def parse(self, bytes):
-        self.segments.append(DefaultSegment(bytes))
+        self.segments.append(DefaultSegment(0, bytes))
         try:
             xex = atrcopy.AtariDosFile(bytes)
             print xex

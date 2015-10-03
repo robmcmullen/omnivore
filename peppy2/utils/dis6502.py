@@ -1143,17 +1143,18 @@ class BaseDisassembler(object):
     
     memloc_name = {}
     
-    def __init__(self, source, pc=0):
+    def __init__(self, source, pc=0, pc_source_offset=0):
         self.set_source(source)
-        self.set_pc(pc)
+        self.set_pc(pc, pc_source_offset)
         self.origin = self.pc
         
     def set_source(self, source):
         self.source = source
         self.length = len(source)
         
-    def set_pc(self, pc):
+    def set_pc(self, pc, offset):
         self.pc = pc
+        self.pc_offset = offset
         
     def get_next(self):
         raise RuntimeError("abstract method")
@@ -1210,7 +1211,7 @@ class TextDisassembler(BaseDisassembler):
     def get_next(self):
         if self.pc >= self.origin + self.length:
             raise StopIteration
-        opcode = ord(self.source[self.pc])
+        opcode = ord(self.source[self.pc + self.pc_offset])
         self.pc += 1
         return opcode
 
@@ -1224,7 +1225,7 @@ class Basic6502Disassembler(BaseDisassembler):
     def get_next(self):
         if self.pc >= self.origin + self.length:
             raise StopIteration
-        opcode = int(self.source[self.pc])
+        opcode = int(self.source[self.pc + self.pc_offset])
         self.pc += 1
         return opcode
 

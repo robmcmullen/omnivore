@@ -110,16 +110,16 @@ class HexEditor(FrameworkEditor):
         self.bytestore.Redo()
 
     def update_panes(self):
+        doc = self.document
         temp_stc = BinarySTC()
         temp_stc.SetBinary(self.bytes_view)
         self.control.Update(temp_stc)
         self.disassembly.set_disassembler(self.disassembler)
-        self.disassembly.update(self.bytes_view)
+        self.disassembly.set_segment(doc.segments[self.segment_number])
         self.byte_graphics.set_data(self.bytes_view)
         self.font_map.set_data(self.bytes_view)
         self.set_font(self.font)
         self.memory_map.set_data(self.bytes_view)
-        doc = self.document
         self.segment_list.set_segments(doc.segments)
         self.task.segments_changed = doc.segments
     
@@ -177,7 +177,7 @@ class HexEditor(FrameworkEditor):
     def set_disassembler(self, disassembler):
         self.disassembler = disassembler
         self.disassembly.set_disassembler(disassembler)
-        self.disassembly.update(self.bytes_view)
+        self.disassembly.set_segment(doc.segments[self.segment_number])
     
     def set_segment_parser(self, parser):
         doc = self.document
