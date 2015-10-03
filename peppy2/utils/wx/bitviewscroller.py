@@ -55,6 +55,7 @@ class BitviewScroller(wx.ScrolledWindow):
 
         # internal storage
         self.bytes = None
+        self.start_addr = 0
         self.start_byte = None
         self.end_byte = None
         self.img = None
@@ -190,8 +191,9 @@ class BitviewScroller(wx.ScrolledWindow):
             rate = 1
         self.SetScrollRate(rate, rate)
     
-    def set_data(self, byte_source):
-        self.bytes = byte_source
+    def set_segment(self, segment):
+        self.bytes = segment.data
+        self.start_addr = segment.start_addr
         self.set_scale()
 
     def event_coords_to_byte(self, ev):
@@ -220,8 +222,8 @@ class BitviewScroller(wx.ScrolledWindow):
         c = addr - (r * self.bytes_per_row)
         return r, c
     
-    def select_pos(self, addr):
-        r, c = self.byte_to_row_col(addr)
+    def select_pos(self, rel_pos):
+        r, c = self.byte_to_row_col(rel_pos)
         if r < self.start_row:
             # above current view
             self.Scroll(c, r)
@@ -234,6 +236,10 @@ class BitviewScroller(wx.ScrolledWindow):
                 self.Scroll(c, last_scroll_row)
             else:
                 self.Scroll(c, r)
+    
+    def select_addr(self, addr):
+        rel_pos = addr - self.start_addr
+        self.select_pos(rel_pos)
 
     def OnMouseEvent(self, ev):
         """Driver to process mouse events.
@@ -252,7 +258,7 @@ class BitviewScroller(wx.ScrolledWindow):
         #log.debug(x, y, byte, bit, inside)
         
         if ev.LeftIsDown() and inside:
-            wx.CallAfter(self.task.active_editor.byte_clicked, byte, bit, self)
+            wx.CallAfter(self.task.active_editor.byte_clicked, byte, bit, self.start_addr, self)
         w = ev.GetWheelRotation()
         if ev.ControlDown():
             if w < 0:

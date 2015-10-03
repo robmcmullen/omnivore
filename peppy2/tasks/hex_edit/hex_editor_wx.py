@@ -111,15 +111,16 @@ class HexEditor(FrameworkEditor):
 
     def update_panes(self):
         doc = self.document
+        segment = doc.segments[self.segment_number]
         temp_stc = BinarySTC()
         temp_stc.SetBinary(self.bytes_view)
         self.control.Update(temp_stc)
         self.disassembly.set_disassembler(self.disassembler)
-        self.disassembly.set_segment(doc.segments[self.segment_number])
-        self.byte_graphics.set_data(self.bytes_view)
-        self.font_map.set_data(self.bytes_view)
+        self.disassembly.set_segment(segment)
+        self.byte_graphics.set_segment(segment)
+        self.font_map.set_segment(segment)
         self.set_font(self.font)
-        self.memory_map.set_data(self.bytes_view)
+        self.memory_map.set_segment(segment)
         self.segment_list.set_segments(doc.segments)
         self.task.segments_changed = doc.segments
     
@@ -235,7 +236,7 @@ class HexEditor(FrameworkEditor):
 
     #### wx event handlers ####################################################
     
-    def byte_clicked(self, byte, bit, control):
+    def byte_clicked(self, byte, bit, start_addr, control):
         if control != self.control:
             self.control.SelectPos(byte)
         if control != self.disassembly:
