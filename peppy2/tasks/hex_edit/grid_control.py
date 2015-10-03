@@ -116,9 +116,13 @@ class HugeTable(Grid.PyGridTableBase):
         self._show_records = show_records
         self._show_record_numbers = False
         self._col_labels = None
+        self._start_addr = 0
 
         self.setFormat(format)
         self.setSTC(stc)
+    
+    def set_start_address(self, addr):
+        self._start_addr = addr
 
     def setFormat(self, format):
         if format:
@@ -312,7 +316,7 @@ class HugeTable(Grid.PyGridTableBase):
     def GetRowLabelValue(self, row):
         if self._show_record_numbers:
             return "%d" % row
-        return "%04x" % (row*self.nbytes)
+        return "%04x" % (row*self.nbytes + self._start_addr)
 
     def GetNumberCols(self):
         log.debug("cols = %d" % self._cols)
@@ -891,6 +895,16 @@ class HexEditControl(Grid.Grid):
             stc = self.stc
         try:
             self.table.ResetView(self, stc, format, col_labels)
+            self.table.UpdateValues(self)
+            self.editor.task.status_bar.message = "Record format = '%s', %d bytes per record" % (self.table.format, self.table.nbytes)
+        except struct.error:
+            self.editor.task.status_bar.message = "Bad record format: %s" % format
+
+    def set_segment(self, segment):
+        self.stc.SetBinary(segment.data)
+        self.table.set_start_address(segment.start_addr)
+        try:
+            self.table.ResetView(self, self.stc, None, None)
             self.table.UpdateValues(self)
             self.editor.task.status_bar.message = "Record format = '%s', %d bytes per record" % (self.table.format, self.table.nbytes)
         except struct.error:

@@ -112,9 +112,7 @@ class HexEditor(FrameworkEditor):
     def update_panes(self):
         doc = self.document
         segment = doc.segments[self.segment_number]
-        temp_stc = BinarySTC()
-        temp_stc.SetBinary(self.bytes_view)
-        self.control.Update(temp_stc)
+        self.control.set_segment(segment)
         self.disassembly.set_disassembler(self.disassembler)
         self.disassembly.set_segment(segment)
         self.byte_graphics.set_segment(segment)
