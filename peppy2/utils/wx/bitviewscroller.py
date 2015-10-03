@@ -560,7 +560,7 @@ class MemoryMapScroller(BitviewScroller):
     def calc_scroll_params(self):
         z = self.zoom
         self.SetVirtualSize((self.grid_width * z, self.grid_height * z))
-        self.SetScrollRate(8 * z, 8 * z)
+        self.SetScrollRate(z, z)
     
     def calc_image_size(self):
         x, y = self.GetViewStart()
