@@ -235,8 +235,17 @@ class HexEditor(FrameworkEditor):
 
     #### wx event handlers ####################################################
     
-    def byte_clicked(self, byte, bit):
-        self.control.SelectPos(byte)
+    def byte_clicked(self, byte, bit, control):
+        if control != self.control:
+            self.control.SelectPos(byte)
+        if control != self.disassembly:
+            self.disassembly.select_pos(byte)
+        if control != self.byte_graphics:
+            self.byte_graphics.select_pos(byte)
+        if control != self.font_map:
+            self.font_map.select_pos(byte)
+        if control != self.memory_map:
+            self.memory_map.select_pos(byte)
 
     def _on_stc_changed(self, event):
         """ Called whenever a change is made to the text of the document. """

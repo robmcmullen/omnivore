@@ -52,3 +52,5 @@ class DisassemblyPanel(wx.Panel):
         lines = "\n".join(d.get_disassembly())
         self.stc.SetText(lines)
     
+    def select_pos(self, addr):
+        print "make %s visible in disassembly!" % addr

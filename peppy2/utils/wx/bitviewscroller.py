@@ -214,6 +214,26 @@ class BitviewScroller(wx.ScrolledWindow):
             inside = False
         bit = 7 - (x & 7)
         return byte, bit, inside
+    
+    def byte_to_row_col(self, addr):
+        r = addr // self.bytes_per_row
+        c = addr - (r * self.bytes_per_row)
+        return r, c
+    
+    def select_pos(self, addr):
+        r, c = self.byte_to_row_col(addr)
+        if r < self.start_row:
+            # above current view
+            self.Scroll(c, r)
+        elif r >= self.start_row and r < self.start_row + self.visible_rows:
+            # row is already visible, but column may not be
+            self.Scroll(c, self.start_row)
+        elif r >= self.start_row + self.visible_rows:
+            last_scroll_row = self.total_rows - self.visible_rows
+            if r >= last_scroll_row:
+                self.Scroll(c, last_scroll_row)
+            else:
+                self.Scroll(c, r)
 
     def OnMouseEvent(self, ev):
         """Driver to process mouse events.
@@ -232,7 +252,7 @@ class BitviewScroller(wx.ScrolledWindow):
         #log.debug(x, y, byte, bit, inside)
         
         if ev.LeftIsDown() and inside:
-            wx.CallAfter(self.task.active_editor.byte_clicked, byte, bit)
+            wx.CallAfter(self.task.active_editor.byte_clicked, byte, bit, self)
         w = ev.GetWheelRotation()
         if ev.ControlDown():
             if w < 0:
