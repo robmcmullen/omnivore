@@ -32,7 +32,7 @@ class DefaultSegmentParser(SegmentParser):
     menu_name = "Raw Data"
     
     def parse(self, bytes):
-        self.segments = [DefaultSegment(bytes)]
+        self.segments = [DefaultSegment(0, bytes)]
 
 
 class AtrFileSegment(object):
@@ -52,7 +52,7 @@ class ATRSegmentParser(SegmentParser):
     menu_name = "ATR Disk Image"
     
     def parse(self, bytes):
-        self.segments.append(DefaultSegment(bytes))
+        self.segments.append(DefaultSegment(0, bytes))
         try:
             self.atr = atrcopy.AtrDiskImage(bytes)
         except:
