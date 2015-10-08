@@ -1,6 +1,8 @@
 import os
 import sys
 import argparse
+import json
+import jsonpickle
 from datetime import datetime
 
 import logging
@@ -417,9 +419,12 @@ class FrameworkApplication(TasksApplication):
         file_path = self.get_config_dir_filename("json", json_name)
         with open(file_path, "r") as fh:
             json_data = json.load(fh)
-        return json_data
+        encoded = json_data[json_name]
+        return jsonpickle.decode(encoded)
     
-    def save_json_data(self, json_name, json_data):
+    def save_json_data(self, json_name, data):
+        encoded = jsonpickle.encode(data)
+        json_data = {json_name: encoded}
         file_path = self.get_config_dir_filename("json", json_name)
         with open(file_path, "w") as fh:
             json.dump(json_data, fh)
@@ -432,14 +437,16 @@ class FrameworkApplication(TasksApplication):
             raw = fh.read()
         if len(raw) > 0:
             bson_data = bson.loads(raw)
+            data = bson_data[bson_name]
         else:
             raise IOError("Blank BSON data")
-        return bson_data
+        return data
     
-    def save_bson_data(self, bson_name, bson_data):
+    def save_bson_data(self, bson_name, data):
         import bson
         
         file_path = self.get_config_dir_filename("bson", bson_name)
+        bson_data = {bson_name: data}
         raw = bson.dumps(bson_data)
         with open(file_path, "w") as fh:
             fh.write(raw)

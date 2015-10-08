@@ -129,8 +129,7 @@ class HexEditor(FrameworkEditor):
     def init_fonts(cls, application):
         if cls.font_list is None:
             try:
-                data = application.get_bson_data("font_list")
-                cls.font_list = data['font_list']
+                cls.font_list = application.get_bson_data("font_list")
             except IOError:
                 # file not found
                 cls.font_list = []
@@ -139,8 +138,7 @@ class HexEditor(FrameworkEditor):
                 cls.font_list = []
     
     def remember_fonts(self):
-        data = {'font_list': self.font_list}
-        self.window.application.save_bson_data("font_list", data)
+        self.window.application.save_bson_data("font_list", self.font_list)
     
     def set_font(self, font=None, font_mode=None):
         if font is None:
