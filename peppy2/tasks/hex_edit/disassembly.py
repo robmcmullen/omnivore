@@ -18,7 +18,7 @@ class DisassemblyPanel(ULC.UltimateListCtrl):
         
         ULC.UltimateListCtrl.__init__(
             self, parent, -1, 
-            agwStyle=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_HRULES|wx.LC_VRULES
+            agwStyle=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_HRULES|wx.LC_VRULES|ULC.ULC_USER_ROW_HEIGHT
             )
         
 #        # Mac/Win needs this, otherwise background color is black
@@ -39,6 +39,7 @@ class DisassemblyPanel(ULC.UltimateListCtrl):
         self.SetColumnWidth(1, 100)
         self.SetColumnWidth(2, 175)
         self.SetColumnWidth(3, 500)
+        self.SetUserLineHeight(10)
 
         self.SetItemCount(0)
 
