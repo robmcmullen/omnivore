@@ -3,7 +3,7 @@
 # are defined in the source distribution, and everything else that
 # needs this should grab it from here.
 __author__ = "Rob McMullen"
-__author_email__ = "robm@users.sourceforge.net"
+__author_email__ = "feedback@playermissile.com"
 __url__ = "https://github.com/robmcmullen/peppy2"
 __download_url__ = "https://github.com/robmcmullen/peppy2/releases"
 __bug_report_url__ = "https://github.com/robmcmullen/peppy2/issues"
@@ -15,6 +15,10 @@ __requires__ = [
     'traitsui',
     'apptools',
     'envisage',
+    'atrcopy>=1.0.1',
+    'jsonpickle',
+    'bson',
+    'numpy',
 ]
 
 # The real version number is maintained in a file that's under version control
@@ -25,8 +29,8 @@ try:
     __codename__ = _peppy_version.codename
     __revision__ = _peppy_version.revision
 except ImportError:
-    __version__ = "0.1.dev"
-    __codename__ = "git-codename"
+    __version__ = "dev"
+    __codename__ = "git"
     __revision__ = "HEAD"
 
 
