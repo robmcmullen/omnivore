@@ -1,7 +1,10 @@
 import sys
 import wx
 
-class DisassemblyPanel(wx.ListCtrl):
+from wx.lib.agw import ultimatelistctrl as ULC
+
+
+class DisassemblyPanel(ULC.UltimateListCtrl):
 
     """
     A panel for displaying and manipulating the properties of a layer.
@@ -13,9 +16,9 @@ class DisassemblyPanel(wx.ListCtrl):
     def __init__(self, parent, task):
         self.task = task
         
-        wx.ListCtrl.__init__(
+        ULC.UltimateListCtrl.__init__(
             self, parent, -1, 
-            style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_HRULES|wx.LC_VRULES
+            agwStyle=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_HRULES|wx.LC_VRULES
             )
         
 #        # Mac/Win needs this, otherwise background color is black
@@ -82,6 +85,15 @@ class DisassemblyPanel(wx.ListCtrl):
         if col == 0:
             return "%04x" % line[col]
         return line[col]
+    
+    def OnGetItemToolTip(self, item, col):
+        return None
+
+    def OnGetItemTextColour(self, item, col):
+        return None
+
+    def OnGetItemAttr(self, item):
+        return None
 
     def event_coords_to_byte(self, ev):
         """Convert event coordinates to world coordinates.
@@ -95,12 +107,12 @@ class DisassemblyPanel(wx.ListCtrl):
         x = ev.GetX()
         y = ev.GetY()
         index, flags = self.HitTest((x, y))
+        print "on index", index, "flags", flags
         if index == wx.NOT_FOUND:
-            if flags & wx.LIST_HITTEST_NOWHERE:
+            if flags is not None and flags & wx.LIST_HITTEST_NOWHERE:
                 index = self.GetItemCount()
             else:
                 inside = False
-        print "on index", index
         if inside:
             byte = self.lines[index][0] - self.start_addr
         else:
