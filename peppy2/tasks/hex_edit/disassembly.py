@@ -24,7 +24,9 @@ class DisassemblyPanel(wx.ListCtrl):
         
         self.disassembler = None
         self.lines = []
+        self.start_addr = 0
         self.addr_to_lines = {}
+        self.start_select = 0
         
         self.InsertColumn(0, "Addr")
         self.InsertColumn(1, "Bytes")
@@ -37,7 +39,12 @@ class DisassemblyPanel(wx.ListCtrl):
 
         self.SetItemCount(0)
 
-    
+        self.selected_attr = wx.ListItemAttr()
+        self.selected_attr.SetBackgroundColour("cyan")
+
+        self.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse)
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
+        
     def set_disassembler(self, disassembler):
         self.disassembler = disassembler
     
@@ -50,6 +57,10 @@ class DisassemblyPanel(wx.ListCtrl):
             addr_map[addr] = i
         self.lines = lines
         self.addr_to_lines = addr_map
+        if self.lines:
+            self.start_addr = self.lines[0][0]
+        else:
+            self.start_addr = 0
         self.SetItemCount(len(lines))
     
     def select_pos(self, addr):
@@ -71,4 +82,52 @@ class DisassemblyPanel(wx.ListCtrl):
         if col == 0:
             return "%04x" % line[col]
         return line[col]
+
+    def event_coords_to_byte(self, ev):
+        """Convert event coordinates to world coordinates.
+
+        Convert the event coordinates to world coordinates by locating
+        the offset of the scrolled window's viewport and adjusting the
+        event coordinates.
+        """
+        inside = True
+
+        x = ev.GetX()
+        y = ev.GetY()
+        index, flags = self.HitTest((x, y))
+        if index == wx.NOT_FOUND:
+            if flags & wx.LIST_HITTEST_NOWHERE:
+                index = self.GetItemCount()
+            else:
+                inside = False
+        print "on index", index
+        if inside:
+            byte = self.lines[index][0] - self.start_addr
+        else:
+            byte = 0
+        return byte, 0, inside
+
+    def on_mouse(self, ev):
+        """Driver to process mouse events.
+
+        This is the main driver to process all mouse events that
+        happen on the BitmapScroller.  Once a selector is triggered by
+        its event combination, it becomes the active selector and
+        further mouse events are directed to its handler.
+        """
+        byte, bit, inside = self.event_coords_to_byte(ev)
+        #log.debug(x, y, byte, bit, inside)
+        
+        if ev.LeftIsDown() and inside:
+            wx.CallAfter(self.task.active_editor.byte_clicked, byte, bit, self.start_addr, self)
+#        w = ev.GetWheelRotation()
+#        if w < 0:
+#            self.scroll_up()
+#        elif w > 0:
+#            self.scroll_down()
+
+        ev.Skip()
+
+    def on_select(self, ev):
+        self.start_select = ev.GetIndex()
 
