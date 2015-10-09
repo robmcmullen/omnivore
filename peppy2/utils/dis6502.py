@@ -1190,7 +1190,7 @@ class BaseDisassembler(object):
             bytes = "%02x" % opcode
             memloc = None
         
-        return "%04x" % pc, bytes, opstr, memloc, rw
+        return pc, bytes, opstr, memloc, rw
 
     def get_disassembly(self):
         while True:

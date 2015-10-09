@@ -54,8 +54,21 @@ class DisassemblyPanel(wx.ListCtrl):
     
     def select_pos(self, addr):
         print "make %s visible in disassembly!" % addr
+        addr_map = self.addr_to_lines
+        if addr in addr_map:
+            index = addr_map[addr]
+        else:
+            index = 0
+            for a in range(addr - 1, addr - 5, -1):
+                if a in addr_map:
+                    index = addr_map[a]
+                    break
+        print "addr %s -> index=%d" % (addr, index)
+        self.EnsureVisible(index)
         
     def OnGetItemText(self, item, col):
         line = self.lines[item]
+        if col == 0:
+            return "%04x" % line[col]
         return line[col]
 
