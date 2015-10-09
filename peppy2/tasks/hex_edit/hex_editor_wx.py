@@ -64,7 +64,7 @@ class HexEditor(FrameworkEditor):
         return Atari800Disassembler
 
     ###########################################################################
-    # 'PythonEditor' interface.
+    # 'FrameworkEditor' interface.
     ###########################################################################
 
     def create(self, parent):
@@ -195,6 +195,9 @@ class HexEditor(FrameworkEditor):
         self.segment_number = number if number < len(doc.segments) else 0
         self.bytes_view = doc.segments[self.segment_number].data
         self.update_panes()
+    
+    def update_history(self):
+        self.undo_history.update_history()
 
     ###########################################################################
     # Trait handlers.
@@ -224,6 +227,7 @@ class HexEditor(FrameworkEditor):
         self.font_map = self.window.get_dock_pane('hex_edit.font_map').control
         self.memory_map = self.window.get_dock_pane('hex_edit.memory_map').control
         self.segment_list = self.window.get_dock_pane('hex_edit.segments').control
+        self.undo_history = self.window.get_dock_pane('hex_edit.undo').control
 
         # Load the editor's contents.
         self.load()

@@ -116,6 +116,21 @@ class UndoStack(list):
         return None
 
 
+class BatchStatus(object):
+    def __init__(self):
+        # Any messages will be added to this list
+        self.messages = []
+    
+        # Any error messages will be added to this list
+        self.errors = []
+    
+    def add_flags(self, command, flags):
+        if flags.message is not None:
+            self.messages.append(flags.message)
+        if flags.errors:
+            self.errors.extend(flags.errors)
+
+
 class CommandStatus(object):
     def __init__(self):
         # True if command successfully completes, must set to False on failure

@@ -85,6 +85,9 @@ class FrameworkEditor(Editor):
     
     def save_as_pdf(self, path=None):
         raise NotImplementedError
+    
+    def update_history(self):
+        pass
 
     #### convenience functions
     

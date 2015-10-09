@@ -9,6 +9,7 @@ from traits.api import on_trait_change
 from disassembly import DisassemblyPanel
 from segments import SegmentList
 from peppy2.utils.wx.bitviewscroller import BitviewScroller, FontMapScroller, MemoryMapScroller
+from peppy2.framework.undo_panel import UndoHistoryPanel
 
 import logging
 log = logging.getLogger(__name__)
@@ -95,6 +96,24 @@ class SegmentsPane(DockPane):
     
     def create_contents(self, parent):
         control = SegmentList(parent, self.task)
+        return control
+    
+    #### trait change handlers
+    
+    def _task_changed(self):
+        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
+        if self.control:
+            self.control.set_task(self.task)
+
+
+class UndoPane(DockPane):
+    #### TaskPane interface ###################################################
+
+    id = 'hex_edit.undo'
+    name = 'Undo History'
+    
+    def create_contents(self, parent):
+        control = UndoHistoryPanel(parent, self.task)
         return control
     
     #### trait change handlers

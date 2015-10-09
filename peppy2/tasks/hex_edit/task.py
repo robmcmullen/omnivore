@@ -187,6 +187,7 @@ class HexEditTask(FrameworkTask):
                 PaneItem('hex_edit.font_map'),
                 PaneItem('hex_edit.memory_map'),
                 PaneItem('hex_edit.segments'),
+                PaneItem('hex_edit.undo'),
                 ),
             )
 
@@ -199,6 +200,7 @@ class HexEditTask(FrameworkTask):
             panes.FontMapPane(),
             panes.MemoryMapPane(),
             panes.SegmentsPane(),
+            panes.UndoPane(),
             ]
 
     def _extra_actions_default(self):
