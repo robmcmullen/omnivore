@@ -1,11 +1,7 @@
 import sys
 import wx
 
-from pyface.util.python_stc import PythonSTC, faces
-
-from peppy2.utils.wx.stcbase import PeppySTC
-
-class DisassemblyPanel(wx.Panel):
+class DisassemblyPanel(wx.ListCtrl):
 
     """
     A panel for displaying and manipulating the properties of a layer.
@@ -17,40 +13,49 @@ class DisassemblyPanel(wx.Panel):
     def __init__(self, parent, task):
         self.task = task
         
-        wx.Panel.__init__(self, parent)
+        wx.ListCtrl.__init__(
+            self, parent, -1, 
+            style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_HRULES|wx.LC_VRULES
+            )
         
-        # Mac/Win needs this, otherwise background color is black
-        attr = self.GetDefaultAttributes()
-        self.SetBackgroundColour(attr.colBg)
-        
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        
-        self.stc = PeppySTC(self)
-        self.sizer.Add(self.stc, 1, wx.EXPAND | wx.ALL)
-        
-        self.SetSizer(self.sizer)
-        self.sizer.Layout()
-        self.Fit()
-    
-        self.set_style(wx.stc.STC_P_DEFAULT, "#000000", "#ffffff")
+#        # Mac/Win needs this, otherwise background color is black
+#        attr = self.GetDefaultAttributes()
+#        self.SetBackgroundColour(attr.colBg)
         
         self.disassembler = None
+        self.lines = []
+        self.addr_to_lines = {}
+        
+        self.InsertColumn(0, "Addr")
+        self.InsertColumn(1, "Bytes")
+        self.InsertColumn(2, "Disassembly")
+        self.InsertColumn(3, "Comment")
+        self.SetColumnWidth(0, 75)
+        self.SetColumnWidth(1, 100)
+        self.SetColumnWidth(2, 175)
+        self.SetColumnWidth(3, 500)
 
-    def set_style(self, n, fore, back):
-        self.stc.StyleSetForeground(n, fore)
-        #self.StyleSetBackground(n, '#c0c0c0')
-        #self.StyleSetBackground(n, '#ffffff')
-        self.stc.StyleSetBackground(n, back)
-        self.stc.StyleSetFaceName(n, "courier new")
-        self.stc.StyleSetSize(n, faces['size'])
+        self.SetItemCount(0)
+
     
     def set_disassembler(self, disassembler):
         self.disassembler = disassembler
     
     def set_segment(self, segment):
         d = self.disassembler(segment.data, segment.start_addr, -segment.start_addr)
-        lines = "\n".join(d.get_disassembly())
-        self.stc.SetText(lines)
+        lines = []
+        addr_map = {}
+        for i, (addr, bytes, opstr, comment) in enumerate(d.get_disassembly()):
+            lines.append((addr, bytes, opstr, comment))
+            addr_map[addr] = i
+        self.lines = lines
+        self.addr_to_lines = addr_map
+        self.SetItemCount(len(lines))
     
     def select_pos(self, addr):
         print "make %s visible in disassembly!" % addr
+        
+    def OnGetItemText(self, item, col):
+        line = self.lines[item]
+        return line[col]
+

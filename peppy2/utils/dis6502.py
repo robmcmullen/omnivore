@@ -1196,7 +1196,7 @@ class BaseDisassembler(object):
         while True:
             addr, bytes, opstr, memloc, rw = self.disasm()
             comment = self.get_memloc_name(memloc, rw)
-            yield "%4s %-8s %-12s %s" % (addr, bytes, opstr, comment)
+            yield (addr, bytes, opstr, comment)
     
     def get_memloc_name(self, memloc, rw):
         if rw == "":
