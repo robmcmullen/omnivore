@@ -11,101 +11,77 @@ import wx.lib.newevent
 import logging
 log = logging.getLogger(__name__)
 
-#from peppy.yapsy.plugins import *
-#from peppy.actions import *
-#from peppy.major import *
-#from peppy.stcinterface import *
-#from peppy.actions.minibuffer import *
+# Grid tips:
+# http://www.blog.pythonlibrary.org/2010/04/04/wxpython-grid-tips-and-tricks/
 
 
-#class OpenHexEditor(SelectAction):
-#    """Open a Hex Editor"""
-#    name = "&Open Hex Editor..."
-#    default_menu = "&Help/Samples"
-#
-###    def isEnabled(self, state=None):
-###        return not self.frame.isOpen()
-#
-#    def action(self, index=-1, multiplier=1):
-#        self.frame.open("about:0x00-0xff")
-#
-#
-#class WorksWithHexEdit(object):
-#    @classmethod
-#    def worksWithMajorMode(cls, modecls):
-#        return modecls.keyword == 'HexEdit'
-#
-#class GotoOffset(WorksWithHexEdit, MinibufferAction):
-#    """Goto an offset.
-#    
-#    Use minibuffer to request an offset, then move the cursor to that
-#    location in the file.
-#    """
-#
-#    name = "Goto Offset..."
-#    default_menu = ("Edit", 500)
-#    key_bindings = {'default': 'M-g',}
-#    minibuffer = IntMinibuffer
-#    minibuffer_label = "Goto Offset:"
-#
-#    def processMinibuffer(self, minibuffer, mode, pos):
-#        """
-#        Callback function used to set the grid's cursor to the
-#        specified byte offset.
-#        """
-#        #dprint("goto pos = %d" % pos)
-#        mode.GotoPos(pos)
-#
-#
-#class HexRecordFormat(WorksWithHexEdit, MinibufferAction):
-#    """Change how hex values are unpacked to human-readable values 
-#    
-#    Use minibuffer to change the struct description of the hex values
-#    """
-#
-#    name = "Record Format..."
-#    default_menu = ("View", -500)
-#    key_bindings = {'default': 'M-f',}
-#    minibuffer = TextMinibuffer
-#    minibuffer_label = "Record Format:"
-#
-#    def getInitialValueHook(self):
-#        return self.mode.table.format
-#
-#    def processMinibuffer(self, minibuffer, mode, text):
-#        #dprint("changing format to %s" % text)
-#        self.mode.Update(format=str(text))
-#
-#
-#class ShowHexDigits(WorksWithHexEdit, ToggleAction):
-#    """Show or hide the display of hex digits
-#    
-#    """
-#    name = "Show Hex Digits"
-#    default_menu = ("View", 550)
-#
-#    def isChecked(self):
-#        return self.mode.table._show_hex
-#    
-#    def action(self, index=-1, multiplier=1):
-#        #dprint("showing hex digits: %s" % (not self.mode.table._show_hex))
-#        self.mode.table.showHexDigits(self.mode, not self.mode.table._show_hex)
-#    
-#
-#class ShowRecordNumbers(WorksWithHexEdit, ToggleAction):
-#    """Show record numbers instead of byte offset
-#    
-#    """
-#    name = "Show Record Numbers"
-#    default_menu = ("View", 551)
-#
-#    def isChecked(self):
-#        return self.mode.table._show_record_numbers
-#    
-#    def action(self, index=-1, multiplier=1):
-#        #dprint("showing hex digits: %s" % (not self.mode.table._show_record_numbers))
-#        self.mode.table.showRecordNumbers(self.mode, not self.mode.table._show_record_numbers)
-#    
+class MegaFontRenderer(Grid.PyGridCellRenderer):
+    def __init__(self, table, color="black", font="ARIAL", fontsize=8):
+        """Render data in the specified color and font and fontsize"""
+        Grid.PyGridCellRenderer.__init__(self)
+        self.table = table
+        self.color = color
+        self.font = wx.Font(fontsize, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, font)
+        self.selectedBrush = wx.Brush("blue", wx.SOLID)
+        self.normalBrush = wx.Brush(wx.WHITE, wx.SOLID)
+        self.colSize = None
+        self.rowSize = 50
+
+    def Draw(self, grid, attr, dc, rect, row, col, isSelected):
+        # Here we draw text in a grid cell using various fonts
+        # and colors.  We have to set the clipping region on
+        # the grid's DC, otherwise the text will spill over
+        # to the next cell
+        dc.SetClippingRect(rect)
+
+        # clear the background
+        dc.SetBackgroundMode(wx.SOLID)
+        
+        index = col + row * self.table.getNumberHexCols()
+        start, end = grid.anchor_index, grid.end_index
+        if start > end:
+            start, end = end, start
+        print "r,c,index", row, col, index, "grid selection:", start, end
+        isSelected = start <= index <= end
+        if isSelected:
+            dc.SetBrush(wx.Brush(wx.BLUE, wx.SOLID))
+            dc.SetPen(wx.Pen(wx.BLUE, 1, wx.SOLID))
+        else:
+            dc.SetBrush(wx.Brush(wx.WHITE, wx.SOLID))
+            dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
+        dc.DrawRectangleRect(rect)
+
+        text = self.table.GetValue(row, col)
+        dc.SetBackgroundMode(wx.SOLID)
+
+        # change the text background based on whether the grid is selected
+        # or not
+        if isSelected:
+            dc.SetBrush(self.selectedBrush)
+            dc.SetTextBackground("blue")
+        else:
+            dc.SetBrush(self.normalBrush)
+            dc.SetTextBackground("white")
+
+        dc.SetTextForeground(self.color)
+        dc.SetFont(self.font)
+        dc.DrawText(text, rect.x+1, rect.y+1)
+
+        # Okay, now for the advanced class :)
+        # Let's add three dots "..."
+        # to indicate that that there is more text to be read
+        # when the text is larger than the grid cell
+
+        width, height = dc.GetTextExtent(text)
+        
+        if width > rect.width-2:
+            width, height = dc.GetTextExtent("...")
+            x = rect.x+1 + rect.width-2 - width
+            dc.DrawRectangle(x, rect.y+1, width+1, height)
+            dc.DrawText("...", x, rect.y+1)
+
+        dc.DestroyClippingRegion()
+
 
 class HugeTable(Grid.PyGridTableBase):
     def __init__(self, stc, format="16c", show_hex=True, show_records=True):
@@ -462,6 +438,8 @@ class HugeTable(Grid.PyGridTableBase):
             hexattr = Grid.GridCellAttr()
             hexattr.SetFont(font)
             hexattr.SetBackgroundColour("white")
+            renderer = MegaFontRenderer(self)
+            hexattr.SetRenderer(renderer)
             log.debug("hexcol %d width=%d" % (col,width))
             grid.SetColMinimalWidth(col, 0)
             grid.SetColSize(col, width)
@@ -856,15 +834,15 @@ class HexEditControl(Grid.Grid):
         self.RegisterDataType(Grid.GRID_VALUE_STRING, None, None)
         self.SetDefaultEditor(HexCellEditor(self))
 
-        self.anchor_selection = (0, 0)
+        self.anchor_index = None
+        self.end_index = None
         self.allow_range_select = True
         self.updateUICallback = None
         self.Bind(Grid.EVT_GRID_CELL_LEFT_CLICK, self.OnLeftDown)
-        self.Bind(wx.EVT_MOTION, self.on_motion)
-        self.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse)
+        self.GetGridWindow().Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(Grid.EVT_GRID_CELL_RIGHT_CLICK, self.OnRightDown)
-        self.Bind(Grid.EVT_GRID_SELECT_CELL, self.OnSelectCell)
-        self.Bind(Grid.EVT_GRID_RANGE_SELECT, self.OnSelectRange)
+#        self.Bind(Grid.EVT_GRID_SELECT_CELL, self.OnSelectCell)
+#        self.Bind(Grid.EVT_GRID_RANGE_SELECT, self.OnSelectRange)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.Bind(EVT_WAIT_UPDATE,self.OnUnderlyingUpdate)
         self.Show(True)
@@ -928,27 +906,34 @@ class HexEditControl(Grid.Grid):
         log.debug(self.GetSelectedRows())
 
     def OnLeftDown(self, evt):
+        c, r = (evt.GetCol(), evt.GetRow())
+        self.anchor_index = c + r * self.GetTable().getNumberHexCols()
+        self.end_index = self.anchor_index
+        print "down: cell", (c, r)
         evt.Skip()
+        wx.CallAfter(self.ForceRefresh)
         wx.CallAfter(self.doUpdateUICallback)
  
     def on_motion(self, evt):
-        x, y = evt.GetPosition()
-        cell = self.XYToCell(x, y)
-        print "x, y, cell", x, y, cell
-        evt.Skip()
-
-    def on_mouse(self, evt):
-        x, y = evt.GetPosition()
-        cell = self.XYToCell(x, y)
-        print "x, y, cell", x, y, cell
+        if self.anchor_index is not None and evt.LeftIsDown():
+            x, y = evt.GetPosition()
+            x, y = self.CalcUnscrolledPosition(x, y)
+            r, c = self.XYToCell(x, y)
+            index = c + r * self.GetTable().getNumberHexCols()
+            if index != self.end_index:
+                self.end_index = index
+                wx.CallAfter(self.ForceRefresh)
+            print "motion: x, y, index", x, y, index
         evt.Skip()
 
     def OnSelectCell(self, evt):
         print "cell selected:", evt.GetCol(), evt.GetRow()
         if evt.Selecting():
-            self.anchor_selection = (evt.GetRow(), evt.GetCol())
+            self.anchor_index = (evt.GetRow(), evt.GetCol())
+            self.end_index = (evt.GetRow(), evt.GetCol())
         else:
-            self.anchor_selection = (0, 0)
+            self.anchor_index = (0, 0)
+            self.end_index = (-1, -1)
         self.editor.grid_range_selected = False
         evt.Skip()
         wx.CallAfter(self.doUpdateUICallback)
@@ -970,7 +955,7 @@ class HexEditControl(Grid.Grid):
                 # upper right corner of the box.  The anchor point is used
                 # from the saved data from OnSelectCell as the upper right
                 # and the end column is swapped with the start column
-                ar, ac = self.anchor_selection
+                ar, ac = self.anchor_index
                 if ar == t and ac > l:
                     r = l
                     l = ac
@@ -978,6 +963,8 @@ class HexEditControl(Grid.Grid):
                     l = r
                     r = ac
             wx.CallAfter(self.update_range, t, l, b, r)
+            self.anchor_index = t, l
+            self.end_index = b, r
             evt.Veto()
         self.editor.grid_range_selected = True
         evt.Skip()
@@ -993,7 +980,7 @@ class HexEditControl(Grid.Grid):
             print "selecting:", t + 1, 0, b - 1, w - 1
             self.SelectBlock(t + 1, 0, b - 1, w - 1, True)
         if b > t:
-            ar, ac = self.anchor_selection
+            ar, ac = self.anchor_index
             if ar == t and ac > l:
                 r = l
                 l = ac
