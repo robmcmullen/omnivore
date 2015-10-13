@@ -39,7 +39,7 @@ class DisassemblyPanel(ULC.UltimateListCtrl):
         self.SetColumnWidth(1, 100)
         self.SetColumnWidth(2, 175)
         self.SetColumnWidth(3, 500)
-        self.SetUserLineHeight(10)
+        self.SetUserLineHeight(12)
 
         self.SetItemCount(0)
 
@@ -107,7 +107,11 @@ class DisassemblyPanel(ULC.UltimateListCtrl):
 
         x = ev.GetX()
         y = ev.GetY()
-        index, flags = self.HitTest((x, y))
+        try:
+            index, flags = self.HitTest((x, y))
+        except:
+            # UltimateListCtrl raises exception with hit test on column headers
+            return 0, 0, False
         print "on index", index, "flags", flags
         if index == wx.NOT_FOUND:
             if flags is not None and flags & wx.LIST_HITTEST_NOWHERE:
