@@ -195,6 +195,12 @@ class ObjSegment(object):
         if self.error:
             s += " " + self.error
         return s
+    
+    def __len__(self):
+        return len(self.data)
+    
+    def __getitem__(self, val):
+        return self.data[val]
 
 class AtariDosFile(object):
     """Parse a binary chunk into segments according to the Atari DOS object
