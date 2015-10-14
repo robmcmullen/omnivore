@@ -4,7 +4,6 @@ import os
 
 # Major package imports.
 import wx
-import wx.stc
 import numpy as np
 
 # Enthought library imports.
@@ -17,12 +16,10 @@ from peppy2.framework.document import Document
 from i_hex_editor import IHexEditor
 from grid_control import HexEditControl
 from peppy2.utils.file_guess import FileMetadata
-from peppy2.utils.wx.stcbase import PeppySTC
-from peppy2.utils.wx.stcbinary import BinarySTC
 from peppy2.utils.wx.bitviewscroller import EVT_BYTECLICKED
 import peppy2.utils.fonts as fonts
 from peppy2.utils.dis6502 import Atari800Disassembler
-from peppy2.utils.binutil import known_segment_parsers, DefaultSegmentParser, XexSegmentParser, InvalidSegmentParser
+from peppy2.utils.binutil import known_segment_parsers, DefaultSegmentParser, XexSegmentParser, InvalidSegmentParser, DefaultSegment
 
 @provides(IHexEditor)
 class HexEditor(FrameworkEditor):
@@ -43,8 +40,6 @@ class HexEditor(FrameworkEditor):
     disassembler = Any
     
     segment_number = Int(0)
-    
-    bytes_view = Any
 
     #### Events ####
 
@@ -84,7 +79,6 @@ class HexEditor(FrameworkEditor):
         doc = Document(metadata, bytes)
 
         self.document = doc
-        self.bytestore.SetBinary(doc.bytes)
         self.path = doc.metadata.uri
         self.dirty = False
         
@@ -186,18 +180,47 @@ class HexEditor(FrameworkEditor):
             s = doc.segment_parser(doc.bytes)
         doc.segments = s.segments
         self.segment_list.set_segments(doc.segments)
-        self.bytes_view = doc.bytes
         self.segment_number = 0
         self.task.segments_changed = doc.segments
     
     def view_segment_number(self, number):
         doc = self.document
         self.segment_number = number if number < len(doc.segments) else 0
-        self.bytes_view = doc.segments[self.segment_number].data
         self.update_panes()
     
     def update_history(self):
         self.undo_history.update_history()
+
+    # Command processor
+
+    def update_undo_redo(self):
+        command = self.document.undo_stack.get_undo_command()
+        if command is None:
+            self.undo_label = "Undo"
+            self.can_undo = False
+        else:
+            text = str(command).replace("&", "&&")
+            self.undo_label = "Undo: %s" % text
+            self.can_undo = True
+            
+        command = self.document.undo_stack.get_redo_command()
+        if command is None:
+            self.redo_label = "Redo"
+            self.can_redo = False
+        else:
+            text = str(command).replace("&", "&&")
+            self.redo_label = "Redo: %s" % text
+            self.can_redo = True
+            
+        self.dirty = self.document.undo_stack.is_dirty()
+    
+    def undo(self):
+        undo = self.document.undo_stack.undo(self)
+        self.process_flags(undo.flags)
+    
+    def redo(self):
+        undo = self.document.undo_stack.redo(self)
+        self.process_flags(undo.flags)
 
     ###########################################################################
     # Trait handlers.
@@ -213,8 +236,8 @@ class HexEditor(FrameworkEditor):
 
         # Base-class constructor.
         print "CONSTRUCTOR!!!"
-        self.bytestore = stc = BinarySTC()
-        self.control = HexEditControl(parent, self, stc, show_records=False)
+        fake_segment = DefaultSegment()
+        self.control = HexEditControl(parent, self, fake_segment)
 
         ##########################################
         # Events.
@@ -238,7 +261,7 @@ class HexEditor(FrameworkEditor):
     
     def byte_clicked(self, byte, bit, start_addr, control):
         if control != self.control:
-            self.control.SelectPos(byte)
+            self.control.select_pos(byte)
         if control != self.disassembly:
             self.disassembly.select_pos(byte)
         if control != self.byte_graphics:
@@ -247,32 +270,3 @@ class HexEditor(FrameworkEditor):
             self.font_map.select_pos(byte)
         if control != self.memory_map:
             self.memory_map.select_pos(byte)
-
-    def _on_stc_changed(self, event):
-        """ Called whenever a change is made to the text of the document. """
-
-        self.dirty = self.bytestore.CanUndo()
-        self.can_undo = self.bytestore.CanUndo()
-        self.can_redo = self.bytestore.CanRedo()
-        self.changed = True
-
-        # Give other event handlers a chance.
-        event.Skip()
-
-        return
-
-    def _on_char(self, event):
-        """ Called whenever a change is made to the text of the document. """
-
-        self.key_pressed = KeyPressedEvent(
-            alt_down     = event.m_altDown == 1,
-            control_down = event.m_controlDown == 1,
-            shift_down   = event.m_shiftDown == 1,
-            key_code     = event.m_keyCode,
-            event        = event
-        )
-
-        # Give other event handlers a chance.
-        event.Skip()
-
-        return

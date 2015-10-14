@@ -1,16 +1,29 @@
 import numpy as np
 
 from peppy2.utils.command import UndoStack, BatchStatus
+from peppy2.utils.file_guess import FileMetadata
 
 
 class Document(object):
+    @classmethod
+    def get_blank(cls):
+        metadata = FileMetadata(uri="about:blank")
+        return cls(metadata, "")
+    
     def __init__(self, metadata, bytes):
         self.metadata = metadata
         self.bytes = np.fromstring(bytes, dtype=np.uint8)
         self.undo_stack = UndoStack()
+        self.segments = []
     
     def __str__(self):
         return self.metadata.uri
+    
+    def __len__(self):
+        return np.alen(self.bytes)
+    
+    def __getitem__(self, val):
+        return self.bytes[val]
     
     def process_command(self, command, editor):
         """Process a single command and immediately update the UI to reflect

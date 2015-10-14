@@ -19,13 +19,21 @@ class SegmentParser(object):
 
 
 class DefaultSegment(object):
-    def __init__(self, start_addr, data, error=None):
+    def __init__(self, start_addr=0, data=None, error=None):
         self.start_addr = start_addr
+        if data is None:
+            data = np.fromstring("", dtype=np.uint8)
         self.data = data
         self.error = error
     
     def __str__(self):
         return "All (%d bytes)" % len(self.data)
+    
+    def __len__(self):
+        return np.alen(self.data)
+    
+    def __getitem__(self, val):
+        return self.data[val]
 
 
 class DefaultSegmentParser(SegmentParser):
@@ -35,11 +43,10 @@ class DefaultSegmentParser(SegmentParser):
         self.segments = [DefaultSegment(0, bytes)]
 
 
-class AtrFileSegment(object):
+class AtrFileSegment(DefaultSegment):
     def __init__(self, dirent, data, error=None):
+        DefaultSegment.__init__(self, 0, data, error)
         self.dirent = dirent
-        self.data = data
-        self.error = error
     
     def __str__(self):
         s = str(self.dirent)
