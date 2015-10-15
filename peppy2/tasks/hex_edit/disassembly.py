@@ -298,7 +298,8 @@ class DisassemblyPanel(Grid.Grid):
         self.SetGridCursor(row,col)
         self.EnableCellEditControl()
     
-    def addr_to_row(self, addr):
+    def pos_to_row(self, pos):
+        addr = pos + self.GetTable().start_addr
         addr_map = self.GetTable().addr_to_lines
         if addr in addr_map:
             index = addr_map[addr]
@@ -313,7 +314,7 @@ class DisassemblyPanel(Grid.Grid):
 
     def select_pos(self, pos):
         print "make %s visible in disassembly!" % pos
-        row = self.addr_to_row(pos)
+        row = self.pos_to_row(pos)
         self.select_range(row, row)
         self.SetGridCursor(row, 0)
         self.MakeCellVisible(row, 0)
