@@ -5,11 +5,11 @@ from setuptools import setup, find_packages
 
 
 info = {}
-execfile(join('peppy2', '__init__.py'), info)
+execfile(join('omnimon', '__init__.py'), info)
 
 
 setup(
-    name = 'peppy2',
+    name = 'omnimon',
     version = info['__version__'],
     author = info['__author__'],
     author_email = info['__author_email__'],

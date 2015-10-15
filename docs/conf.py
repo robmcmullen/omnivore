@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
+#p -*- coding: utf-8 -*-
 #
-# peppy documentation build configuration file, created by
+# omnimon documentation build configuration file, created by
 # sphinx-quickstart on Thu May  8 15:35:23 2008.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -35,17 +35,17 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General substitutions.
-project = 'Peppy'
+project = 'Omnimon'
 copyright = '2008-2014, Rob McMullen'
 
-import peppy2
+import omnimon
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = peppy2.__version__
+version = omnimon.__version__
 # The full version, including alpha/beta/rc tags.
-release = peppy2.__version__
+release = omnimon.__version__
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -126,7 +126,7 @@ html_use_modindex = False
 #html_file_suffix = ''
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'peppydoc'
+htmlhelp_basename = 'omnimondoc'
 
 
 # Options for LaTeX output
@@ -146,13 +146,13 @@ latex_elements = {
 
 \begin{minipage}{0.25\textwidth}
 \begin{flushleft}
-\includegraphics[width=1.0\textwidth]{../../_static/peppy256.png}\\[1cm]
+\includegraphics[width=1.0\textwidth]{../../_static/omnimon256.png}\\[1cm]
 \end{flushleft}
 \end{minipage}
 \begin{minipage}{0.75\textwidth}
 \begin{flushright}
 
-{ \Huge \CTV Peppy User Manual}\\[0.4cm]
+{ \Huge \CTV Omnimon User Manual}\\[0.4cm]
 
 \CTV{\Large Version %s}\\[0.5cm]
 \end{flushright}
@@ -166,7 +166,7 @@ latex_elements = {
 \Large
 Rob McMullen \\
 \large
-robm@users.sourceforge.net
+feedback@playermissile.com
 
 \vfill
 
@@ -187,7 +187,7 @@ robm@users.sourceforge.net
 # (source start file, target name, title, author, documentclass [howto/manual],
 # toctree_only).
 latex_documents = [
-  ('index', 'UserManual.tex', 'Peppy User Manual', 'Rob McMullen', 'manual', True),
+  ('index', 'UserManual.tex', 'Omnimon User Manual', 'Rob McMullen', 'manual', True),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

@@ -3,7 +3,7 @@ import os
 from nose.tools import *
 
 from pyface.tasks.topological_sort import before_after_sort
-from peppy2.utils.sortutil import *
+from omnimon.utils.sortutil import *
 
 class SortItem(object):
     def __init__(self, id, before="", after=""):

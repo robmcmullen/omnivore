@@ -4,7 +4,7 @@
 import logging
  
 # Local imports.
-from peppy2.framework.application import run
+from omnimon.framework.application import run
 
 
 # A list of the directories that contain the application's eggs (any directory

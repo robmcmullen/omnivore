@@ -1,25 +1,37 @@
-======
-Peppy2
-======
+=======
+Omnimon
+=======
 
 
 
 Abstract
 ========
 
-peppy - (ap)Proximated (X)Emacs Powered by Python
+Omnimon - the Atari 8-bit binary editor sponsored by the Player/Missile Podcast
 
-A full-featured editor for text files and more, Peppy provides an XEmacs-like
-multi-window/multi-tabbed user interface and is written in and extensible
-through Python.  It is built around the emacs concept of major modes --
-different views are presented to the user depending on the type of data being
-edited.
+While producing the Player/Missile podcast, I have had many ideas about hacking
+code on the 8-bits like I used to as a kid.  One of the tools I had was the
+Omnimon system monitor board by CDY Consulting, an add-on board for the Atari
+800 that provided a ROM-resident monitor similiar to what was available by
+default on the Apple ][ series.  The name of this program comes as an homage
+to that hardware.
 
-It is a rewrite of the original peppy, now based on the Enthought Tasks
-framework instead of my old custom framework.  (Note that only wxPython is
-supported as a GUI backend).  The architectural goal is to provide a system
-with low coupling in order to reduce the work required to extend the editor
-with new major modes, minor modes, and sidebars.
+Omnimon is more than an Atari binary editor, but that's what I'm publicizing
+it as.  It also aims to be a generic editor framework and eventually a
+replacement for my peppy text editor.
+
+Omnimon provides an XEmacs-like multi-window/multi-tabbed user interface and
+is written in and extensible through Python.  It is built around the emacs
+concept of major modes -- different views are presented to the user depending
+on the type of data being edited.
+
+It is a rewrite of peppy (my previous editor framework), but now it's based on
+the Enthought Tasks framework instead of my old custom framework.  (Note that
+even though Enthought has moved mostly toward Qt as the supported GUI toolkit,
+I have forked Enthought's code and extended it with better wxPython support.
+Only wxPython is supported as a GUI backend for Omnimon).  The architectural
+goal is to provide a system with low coupling in order to reduce the work
+required to extend the editor with new major modes, minor modes, and sidebars.
 
 
 Goal For Rewrite
@@ -106,8 +118,8 @@ Running The Program
 
 This is still alpha software, so caveat emptor.  The only way to get it currently is to clone it from git::
 
-    $ git clone https://github.com/robmcmullen/peppy2.git
-    $ cd peppy2
+    $ git clone https://github.com/robmcmullen/omnimon.git
+    $ cd omnimon
     $ python run.py
 
 
@@ -123,7 +135,7 @@ __ http://docs.enthought.com/envisage/envisage_core_documentation/index.html
 Disclaimer
 ==========
 
-peppy, (ap)Proximated (X)Emacs Powered by Python
+Omnimon, the Atari 8-bit binary editor sponsored by the Player/Missile Podcast
 Copyright (c) 2006-2014 Rob McMullen (robm@users.sourceforge.net)
 
 This program is free software; you can redistribute it and/or modify

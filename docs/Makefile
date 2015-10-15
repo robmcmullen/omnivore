@@ -26,7 +26,7 @@ html:
 htmlhelp:
 	mkdir -p $(BUILDDIR)/htmlhelp $(BUILDDIR)/doctrees
 	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) $(BUILDDIR)/htmlhelp
-	#sphinx-wxoptimize -o ../peppy2/help $(BUILDDIR)/htmlhelp
+	#sphinx-wxoptimize -o ../omnimon/help $(BUILDDIR)/htmlhelp
 
 latex:
 	mkdir -p $(BUILDDIR)/latex $(BUILDDIR)/doctrees
