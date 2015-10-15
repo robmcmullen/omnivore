@@ -46,7 +46,7 @@ class MegaFontRenderer(Grid.PyGridCellRenderer):
             start, end = grid.anchor_index, grid.end_index
             if start > end:
                 start, end = end, start
-            print "r,c,index", row, col, index, "grid selection:", start, end
+#            print "r,c,index", row, col, index, "grid selection:", start, end
             is_in_range = start <= index <= end
             if isSelected or is_in_range:
                 dc.SetBrush(wx.Brush(wx.BLUE, wx.SOLID))
