@@ -37,22 +37,21 @@ required to extend the editor with new major modes, minor modes, and sidebars.
 Goal For Rewrite
 ================
 
-Why a rewrite of the original peppy_ (which I'll call peppy1 even though it
-never got to a 1.0 release)?
+Why a rewrite of the original peppy_ editor?
 
 .. _peppy: http://peppy.flipturn.org
 
 * **Simplify the code.**
-  Peppy1 had the ability to have any major mode in any window, but this needed
+  Peppy had the ability to have any major mode in any window, but this needed
   a lot of code to support minor modes switching in and out as tabs changed.
-  I got it to work and all, but the code was quite convoluted.  Peppy2 only
+  I got it to work and all, but the code was quite convoluted.  Omnimon only
   allows similar major modes in a window, and different major modes require
   a new window.  Not a huge inconvenience but saves a considerable amount of
   coding, so I'm happy with this tradeoff.  It allows me to use the Enthought
   Tasks framework pretty much as-is.
 
 * **Make it easier for others to contribute.**
-  Peppy1 was using my own framework which had a steep learning curve.
+  Peppy was using my own framework which had a steep learning curve.
   Hopefully by moving to Enthought's framework, it will have a broader appeal.
 
 * **Leverage other people's code.**
@@ -71,7 +70,7 @@ Prerequisites
 python 2.7 (but not 3.x yet)
 wxPython 2.9.x (but not 3.0 yet)
 
-The Enthought framework is a custom build for peppy because I've enabled
+The Enthought framework is a custom build for omnimon because I've enabled
 current support for wx.  Enthought is transitioning to Qt is their primary GUI
 toolkit and their wx support has been limited recently.  Fortunately Enthought
 was designed to be toolkit agnostic and it was relatively easy to bring their
@@ -126,7 +125,7 @@ This is still alpha software, so caveat emptor.  The only way to get it currentl
 Plugins
 =======
 
-Peppy is extended by plugins.  Plugins are based on the `Enthought Framework`__
+Omnimon is extended by plugins.  Plugins are based on the `Enthought Framework`__
 and are discovered using setuptools plugins.
 
 __ http://docs.enthought.com/envisage/envisage_core_documentation/index.html
@@ -136,7 +135,7 @@ Disclaimer
 ==========
 
 Omnimon, the Atari 8-bit binary editor sponsored by the Player/Missile Podcast
-Copyright (c) 2006-2014 Rob McMullen (robm@users.sourceforge.net)
+Copyright (c) 2014-2015 Rob McMullen (feedback@playermissile.com)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
