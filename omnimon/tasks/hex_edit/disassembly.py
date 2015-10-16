@@ -253,6 +253,7 @@ class DisassemblyPanel(Grid.Grid):
         print "down: cell", (c, r)
         evt.Skip()
         wx.CallAfter(self.ForceRefresh)
+        wx.CallAfter(self.task.active_editor.byte_clicked, self.anchor_index, 0, self.GetTable().segment.start_addr, self)
  
     def on_motion(self, evt):
         if self.anchor_index is not None and evt.LeftIsDown():
@@ -263,6 +264,7 @@ class DisassemblyPanel(Grid.Grid):
             if index != self.end_index:
                 self.end_index = index
                 wx.CallAfter(self.ForceRefresh)
+                wx.CallAfter(self.task.active_editor.byte_clicked, self.end_index, 0, self.GetTable().segment.start_addr, self)
             print "motion: x, y, index", x, y, index
         evt.Skip()
 
