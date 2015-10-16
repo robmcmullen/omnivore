@@ -11,12 +11,12 @@ log.setLevel(logging.DEBUG)
 
 
 class MegaFontRenderer(Grid.PyGridCellRenderer):
-    def __init__(self, table, color="black", font="ARIAL", fontsize=8):
+    def __init__(self, table, color="black", font="", fontsize=8):
         """Render data in the specified color and font and fontsize"""
         Grid.PyGridCellRenderer.__init__(self)
         self.table = table
         self.color = color
-        self.font = wx.Font(fontsize, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, font)
+        self.font = wx.Font(fontsize, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, font)
         self.selectedBrush = wx.Brush("blue", wx.SOLID)
         self.normalBrush = wx.Brush(wx.WHITE, wx.SOLID)
         self.colSize = None
@@ -163,20 +163,19 @@ class DisassemblyTable(Grid.PyGridTableBase):
         grid.EndBatch()
 
         # update the scrollbars and the displayed part of the grid
-        grid.SetColMinimalAcceptableWidth(0)
-        font=wx.Font(10, wx.MODERN, wx.NORMAL, wx.NORMAL)
-        dc=wx.MemoryDC()
-        dc.SetFont(font)
-        
+        dc = wx.MemoryDC()
+        dc.SetFont(grid.font)
         (width, height) = dc.GetTextExtent("M")
         grid.SetDefaultRowSize(height)
-        
+        grid.SetColMinimalAcceptableWidth(width)
+        grid.SetRowMinimalAcceptableHeight(height + 1)
+
         for col in range(self._cols):
             # Can't share GridCellAttrs among columns; causes crash when
             # freeing them.  So, have to individually allocate the attrs for
             # each column
             hexattr = Grid.GridCellAttr()
-            hexattr.SetFont(font)
+            hexattr.SetFont(grid.font)
             hexattr.SetBackgroundColour("white")
             renderer = MegaFontRenderer(self)
             hexattr.SetRenderer(renderer)
@@ -187,7 +186,13 @@ class DisassemblyTable(Grid.PyGridTableBase):
 
         self._rows = self.GetNumberRows()
         self._cols = self.GetNumberCols()
-
+        
+        dc.SetFont(grid.label_font)
+        (width, height) = dc.GetTextExtent("M")
+        grid.SetColLabelSize(height + 4)
+        digits = len(hex(self._rows)) - 2
+        grid.SetRowLabelSize(width * digits + 4)
+        
         grid.AdjustScrollbars()
         grid.ForceRefresh()
 
@@ -210,6 +215,9 @@ class DisassemblyPanel(Grid.Grid):
         if segment is None:
             segment = DefaultSegment()
         self.table = DisassemblyTable(segment)
+        self.font = wx.Font(8, wx.MODERN, wx.NORMAL, wx.NORMAL)
+        self.label_font = wx.Font(8, wx.MODERN, wx.NORMAL, wx.FONTWEIGHT_BOLD)
+        self.SetLabelFont(self.label_font)
 
         # The second parameter means that the grid is to take
         # ownership of the table and will destroy it when done.
@@ -219,6 +227,7 @@ class DisassemblyPanel(Grid.Grid):
         self.SetMargins(0,0)
         self.SetColMinimalAcceptableWidth(10)
         self.EnableDragGridSize(False)
+        self.DisableDragRowSize()
 
         self.RegisterDataType(Grid.GRID_VALUE_STRING, None, None)
 #        self.SetDefaultEditor(HexCellEditor(self))
