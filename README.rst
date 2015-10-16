@@ -68,7 +68,7 @@ Prerequisites
 =============
 
 python 2.7 (but not 3.x yet)
-wxPython 2.9.x (but not 3.0 yet)
+wxPython 3.0.x
 
 The Enthought framework is a custom build for omnimon because I've enabled
 current support for wx.  Enthought is transitioning to Qt is their primary GUI
@@ -95,8 +95,8 @@ virtualenv /data/virtualenv/wx3
 source $VIRTUAL_ENV/bin/activate
 mkdir src
 cd src
-tar xvf /opt/download/wxPython-src-3.0.1.1.tar.bz2 
-cd wxPython-src-3.0.1.1/
+tar xvf /opt/download/wxPython-src-3.0.2.0.tar.bz2 
+cd wxPython-src-3.0.2.0/
 ./configure --prefix=$VIRTUAL_ENV
 make -j 8
 make install
