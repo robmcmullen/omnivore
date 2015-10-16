@@ -420,7 +420,7 @@ class AtrDiskImage(object):
         pos, size = self.header.get_pos(start)
         if end is None:
             end = start
-        while start <= end:
+        while start < end:
             start += 1
             _, more = self.header.get_pos(start)
             size += more
