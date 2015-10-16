@@ -78,8 +78,7 @@ libraries up to date as compared to Qt.  My patches have not made it back to
 Enthought yet, which is why I'm requiring the custom build::
 
     cd ~/src/enthought
-    for name in traits; do echo $name; git clone https://github.com/enthought/$name.git; cd $name; python setup.py develop; cd ..; done
-    for name in pyface traitsui; do echo $name; git clone https://github.com/robmcmullen/$name.git; cd $name; python setup.py develop; cd ..; done
+    for name in traits pyface traitsui; do echo $name; git clone https://github.com/robmcmullen/$name.git; cd $name; python setup.py develop; cd ..; done
     for name in apptools; do echo $name; git clone https://github.com/enthought/$name.git; cd $name; python setup.py develop; cd ..; done
     for name in envisage; do echo $name; git clone https://github.com/robmcmullen/$name.git; cd $name; python setup.py develop; cd ..; done
 
