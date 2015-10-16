@@ -43,18 +43,6 @@ class DefaultSegmentParser(SegmentParser):
         self.segments = [DefaultSegment(0, bytes)]
 
 
-class AtrFileSegment(DefaultSegment):
-    def __init__(self, dirent, data, error=None):
-        DefaultSegment.__init__(self, 0, data, error)
-        self.dirent = dirent
-    
-    def __str__(self):
-        s = str(self.dirent)
-        if self.error:
-            s += " " + self.error
-        return s
-
-
 class ATRSegmentParser(SegmentParser):
     menu_name = "ATR Disk Image"
     
@@ -65,18 +53,9 @@ class ATRSegmentParser(SegmentParser):
         except:
             raise InvalidSegmentParser
         
-        for dirent in atr.files:
-            try:
-                bytes = atr.get_file(dirent)
-                error = None
-            except atrcopy.FileNumberMismatchError164:
-                bytes = None
-                error = "Error 164"
-            except atrcopy.ByteNotInFile166:
-                bytes = None
-                error = "Invalid sector"
-            a = AtrFileSegment(dirent, bytes, error)
-            self.segments.append(AtrSegment(dirent))
+        self.atr.parse_segments()
+        self.segments.extend(self.atr.segments)
+
 
 class XexSegmentParser(SegmentParser):
     menu_name = "XEX (Atari 8-bit executable)"
