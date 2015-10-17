@@ -258,7 +258,7 @@ class BitviewScroller(wx.ScrolledWindow):
         #log.debug(x, y, byte, bit, inside)
         
         if ev.LeftIsDown() and inside:
-            wx.CallAfter(self.task.active_editor.byte_clicked, byte, bit, self.start_addr, self)
+            wx.CallAfter(self.task.active_editor.byte_clicked, byte, bit, byte, byte, self.start_addr, self)
         w = ev.GetWheelRotation()
         if ev.ControlDown():
             if w < 0:
