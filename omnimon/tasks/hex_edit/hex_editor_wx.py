@@ -259,14 +259,14 @@ class HexEditor(FrameworkEditor):
 
     #### wx event handlers ####################################################
     
-    def byte_clicked(self, byte, bit, start_addr, control):
+    def byte_clicked(self, byte, bit, start_index, end_index, start_addr, control):
         if control != self.control:
-            self.control.select_pos(byte)
+            self.control.select_index(byte, start_index, end_index)
         if control != self.disassembly:
-            self.disassembly.select_pos(byte)
+            self.disassembly.select_index(byte, start_index, end_index)
         if control != self.byte_graphics:
-            self.byte_graphics.select_pos(byte)
+            self.byte_graphics.select_index(byte, start_index, end_index)
         if control != self.font_map:
-            self.font_map.select_pos(byte)
+            self.font_map.select_index(byte, start_index, end_index)
         if control != self.memory_map:
-            self.memory_map.select_pos(byte)
+            self.memory_map.select_index(byte, start_index, end_index)

@@ -30,12 +30,6 @@ class ByteTable(ByteGridTable):
         self.segment = segment
         self._rows=((len(self.segment) - 1) / self.bytes_per_row) + 1
         log.debug("segment %s: rows=%d cols=%d len=%d" % (segment, self._rows, self.bytes_per_row, len(self.segment)))
-
-    def get_index(self, row, col):
-        """Get the byte offset from start of file given row, col
-        position.
-        """
-        return row * self.bytes_per_row + col
     
     def is_index_valid(self, index):
         return index < len(self.segment)
@@ -43,15 +37,6 @@ class ByteTable(ByteGridTable):
     def get_col_size(self, col):
         return 2
 
-    def getCursorPosition(self, loc, refcol=0):
-        """Get cursor position from byte offset from start of file.
-        Optionally take a column parameter that tells us which side of
-        the grid we're on, the hex side or the calculated side.
-        """
-        row=loc/self.bytes_per_row
-        col=loc%self.bytes_per_row
-        return (row,col)
-   
     def getNextCursorPosition(self, row, col):
         col+=1
         if col>=self.bytes_per_row:
@@ -90,7 +75,7 @@ class ByteTable(ByteGridTable):
         else:
             log.debug('SetValue(%d, %d, "%s")=%d out of range.' % (row, col, value,val))
             
-        i = self.get_index(row, col)
+        i,_ = self.get_index(row, col)
         end = loc + len(bytes)
         
         self.segment[i:end] = bytes
@@ -113,18 +98,3 @@ class HexEditControl(ByteGrid):
     def set_segment(self, segment):
         self.table.ResetView(self, segment)
         self.table.UpdateValues(self)
-
-    def goto_pos(self, pos):
-        row, col=self.table.getCursorPosition(pos, self.GetGridCursorCol())
-        self.SetGridCursor(row,col)
-        self.MakeCellVisible(row,col)
-
-    def select_pos(self, pos):
-        self.select_range(pos, pos)
-        self.goto_pos(pos)
-    
-    def select_range(self, start, end):
-        self.ClearSelection()
-        self.anchor_index = start
-        self.end_index = end
-        self.ForceRefresh()

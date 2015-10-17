@@ -30,7 +30,7 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
         # clear the background
         dc.SetBackgroundMode(wx.SOLID)
         
-        index = self.table.get_index(row, col)
+        index, _ = self.table.get_index_range(row, col)
         if not self.table.is_index_valid(index):
             dc.SetBrush(wx.Brush(wx.WHITE, wx.SOLID))
             dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
@@ -91,9 +91,17 @@ class ByteGridTable(Grid.PyGridTableBase):
         self._rows = 1
         self._cols = len(self.column_labels)
     
-    def get_index(self, r, c):
-        return r
     
+    def get_index_range(self, row, col):
+        """Get the byte offset from start of file given row, col
+        position.
+        """
+        index = row * self.bytes_per_row + col
+        return index, index
+
+    def get_row_col(self, index):
+        return divmod(index, self.bytes_per_row)
+
     def is_index_valid(self, index):
         return index < self._rows
     
@@ -521,23 +529,23 @@ class ByteGrid(Grid.Grid):
     def OnLeftDown(self, evt):
         c, r = (evt.GetCol(), evt.GetRow())
         self.ClearSelection()
-        self.anchor_index = self.table.get_index(r, c)
+        self.anchor_index, _ = self.table.get_index_range(r, c)
         self.end_index = self.anchor_index
         print "down: cell", (c, r)
         evt.Skip()
         wx.CallAfter(self.ForceRefresh)
-        wx.CallAfter(self.task.active_editor.byte_clicked, self.anchor_index, 0, self.table.segment.start_addr, self)
+        wx.CallAfter(self.task.active_editor.byte_clicked, self.anchor_index, 0, self.anchor_index, self.anchor_index, self.table.segment.start_addr, self)
  
     def on_motion(self, evt):
         if self.anchor_index is not None and evt.LeftIsDown():
             x, y = evt.GetPosition()
             x, y = self.CalcUnscrolledPosition(x, y)
             r, c = self.XYToCell(x, y)
-            index = self.table.get_index(r, c)
+            _, index = self.table.get_index_range(r, c)
             if index != self.end_index:
                 self.end_index = index
                 wx.CallAfter(self.ForceRefresh)
-                wx.CallAfter(self.task.active_editor.byte_clicked, self.end_index, 0, self.table.segment.start_addr, self)
+                wx.CallAfter(self.task.active_editor.byte_clicked, self.end_index, 0, self.anchor_index, self.end_index, self.table.segment.start_addr, self)
             print "motion: x, y, index", x, y, index
         evt.Skip()
 
@@ -572,27 +580,15 @@ class ByteGrid(Grid.Grid):
         (row,col)=self.table.getNextCursorPosition(self.GetGridCursorRow(),self.GetGridCursorCol())
         self.SetGridCursor(row,col)
         self.EnableCellEditControl()
-    
-    def pos_to_row(self, pos):
-        addr = pos + self.table.start_addr
-        addr_map = self.table.addr_to_lines
-        if addr in addr_map:
-            index = addr_map[addr]
-        else:
-            index = 0
-            for a in range(addr - 1, addr - 5, -1):
-                if a in addr_map:
-                    index = addr_map[a]
-                    break
-        print "addr %s -> index=%d" % (addr, index)
-        return index
 
-    def select_pos(self, pos):
-        print "make %s visible in disassembly!" % pos
-        row = self.pos_to_row(pos)
-        self.select_range(row, row)
-        self.SetGridCursor(row, 0)
-        self.MakeCellVisible(row, 0)
+    def goto_index(self, index):
+        row, col = self.table.get_row_col(index)
+        self.SetGridCursor(row, col)
+        self.MakeCellVisible(row,col)
+
+    def select_index(self, cursor, start, end):
+        self.select_range(start, end)
+        self.goto_index(cursor)
     
     def select_range(self, start, end):
         self.ClearSelection()

@@ -1170,24 +1170,24 @@ class BaseDisassembler(object):
         
         if extra == 1:
             operand1 = self.get_next()
-            bytes = "%02x %02x" % (opcode, operand1)
+            bytes = (opcode, operand1)
             opstr = opstr % operand1
             memloc = operand1
         elif extra == 2:
             operand1 = self.get_next()
             operand2 = self.get_next()
-            bytes = "%02x %02x %02x" % (opcode, operand1, operand2)
+            bytes = (opcode, operand1, operand2)
             opstr = opstr % (operand2, operand1)
             memloc = operand1 + 256 * operand2
         elif extra == -1:
             operand1 = self.get_next()
-            bytes = "%02x %02x" % (opcode, operand1)
+            bytes = (opcode, operand1)
             signed = operand1 - 256 if operand1 > 127 else operand1
             rel = pc + 2 + signed
             opstr = opstr % rel
             memloc = None
         else:
-            bytes = "%02x" % opcode
+            bytes = (opcode,)
             memloc = None
         
         return pc, bytes, opstr, memloc, rw

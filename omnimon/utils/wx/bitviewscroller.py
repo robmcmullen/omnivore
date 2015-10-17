@@ -222,7 +222,7 @@ class BitviewScroller(wx.ScrolledWindow):
         c = addr - (r * self.bytes_per_row)
         return r, c
     
-    def select_pos(self, rel_pos):
+    def select_index(self, rel_pos, start_index, end_index):
         r, c = self.byte_to_row_col(rel_pos)
         if r < self.start_row:
             # above current view
@@ -239,7 +239,7 @@ class BitviewScroller(wx.ScrolledWindow):
     
     def select_addr(self, addr):
         rel_pos = addr - self.start_addr
-        self.select_pos(rel_pos)
+        self.select_index(rel_pos)
 
     def OnMouseEvent(self, ev):
         """Driver to process mouse events.

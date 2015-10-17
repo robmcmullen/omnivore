@@ -36,7 +36,26 @@ class DisassemblyTable(ByteGridTable):
             self.start_addr = 0
 
         self._rows = len(self.lines)
-   
+    
+    def get_index_range(self, r, c):
+        line = self.lines[r]
+        index = line[0] - self.start_addr
+        return index, index + len(line[1]) - 1
+    
+    def get_row_col(self, index):
+        addr = index + self.start_addr
+        addr_map = self.addr_to_lines
+        if addr in addr_map:
+            row = addr_map[addr]
+        else:
+            row = 0
+            for a in range(addr - 1, addr - 5, -1):
+                if a in addr_map:
+                    row = addr_map[a]
+                    break
+        print "addr %s -> row=%d" % (addr, row)
+        return row, 0
+    
     def GetRowLabelValue(self, row):
         if self.lines:
             line = self.lines[row]
@@ -45,6 +64,8 @@ class DisassemblyTable(ByteGridTable):
     
     def GetValue(self, row, col):
         line = self.lines[row]
+        if col == 0:
+            return " ".join("%02x" % i for i in line[1])
         return str(line[col + 1])
 
     def SetValue(self, row, col, value):
@@ -54,7 +75,7 @@ class DisassemblyTable(ByteGridTable):
         else:
             log.debug('SetValue(%d, %d, "%s")=%d out of range.' % (row, col, value,val))
             
-        i = self.get_index(row, col)
+        i, _ = self.get_index_range(row, col)
         end = loc + len(bytes)
         
         self.segment[i:end] = bytes
@@ -82,30 +103,3 @@ class DisassemblyPanel(ByteGrid):
 
     def set_disassembler(self, d):
         self.table.disassembler = d
-    
-    def pos_to_row(self, pos):
-        addr = pos + self.GetTable().start_addr
-        addr_map = self.GetTable().addr_to_lines
-        if addr in addr_map:
-            index = addr_map[addr]
-        else:
-            index = 0
-            for a in range(addr - 1, addr - 5, -1):
-                if a in addr_map:
-                    index = addr_map[a]
-                    break
-        print "addr %s -> index=%d" % (addr, index)
-        return index
-
-    def select_pos(self, pos):
-        print "make %s visible in disassembly!" % pos
-        row = self.pos_to_row(pos)
-        self.select_range(row, row)
-        self.SetGridCursor(row, 0)
-        self.MakeCellVisible(row, 0)
-    
-    def select_range(self, start, end):
-        self.ClearSelection()
-        self.anchor_index = start
-        self.end_index = end
-        self.ForceRefresh()
