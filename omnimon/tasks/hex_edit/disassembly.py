@@ -42,6 +42,9 @@ class DisassemblyTable(ByteGridTable):
         index = line[0] - self.start_addr
         return index, index + len(line[1]) - 1
     
+    def is_index_valid(self, index):
+        return index < len(self.segment)
+    
     def get_row_col(self, index):
         addr = index + self.start_addr
         addr_map = self.addr_to_lines

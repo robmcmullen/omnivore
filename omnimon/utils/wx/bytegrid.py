@@ -103,7 +103,7 @@ class ByteGridTable(Grid.PyGridTableBase):
         return divmod(index, self.bytes_per_row)
 
     def is_index_valid(self, index):
-        return index < self._rows
+        return index < self._rows * self._cols
     
     def get_col_size(self, c):
         return self.column_sizes[c]
