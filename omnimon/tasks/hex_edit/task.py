@@ -118,7 +118,7 @@ class SegmentParserAction(EditorAction):
         self.active_editor.set_segment_parser(self.segment_parser)
         self.active_editor.view_segment_number(0)
 
-    @on_trait_change('active_editor.disassembler')
+    @on_trait_change('active_editor.segment_parser')
     def _update_checked(self):
         if self.active_editor:
             self.checked = self.active_editor.document.segment_parser == self.segment_parser

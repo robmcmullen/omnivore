@@ -19,7 +19,7 @@ from omnimon.utils.file_guess import FileMetadata
 from omnimon.utils.wx.bitviewscroller import EVT_BYTECLICKED
 import omnimon.utils.fonts as fonts
 from omnimon.utils.dis6502 import Atari800Disassembler
-from omnimon.utils.binutil import known_segment_parsers, DefaultSegmentParser, XexSegmentParser, InvalidSegmentParser, DefaultSegment
+from omnimon.utils.binutil import known_segment_parsers, DefaultSegmentParser, ATRSegmentParser, XexSegmentParser, InvalidSegmentParser, DefaultSegment
 
 @provides(IHexEditor)
 class HexEditor(FrameworkEditor):
@@ -38,6 +38,8 @@ class HexEditor(FrameworkEditor):
     font = Any
     
     disassembler = Any
+    
+    segment_parser = Any
     
     segment_number = Int(0)
 
@@ -82,7 +84,7 @@ class HexEditor(FrameworkEditor):
         self.path = doc.metadata.uri
         self.dirty = False
         
-        self.set_segment_parser(XexSegmentParser)
+        self.find_segment_parser([ATRSegmentParser, XexSegmentParser])
         self.update_panes()
 
     def save(self, path=None):
@@ -170,18 +172,25 @@ class HexEditor(FrameworkEditor):
         self.disassembly.set_disassembler(disassembler)
         self.disassembly.set_segment(doc.segments[self.segment_number])
     
-    def set_segment_parser(self, parser):
+    def find_segment_parser(self, parsers):
         doc = self.document
-        doc.segment_parser = parser
-        try:
-            s = doc.segment_parser(doc.bytes)
-        except InvalidSegmentParser:
-            doc.segment_parser = DefaultSegmentParser
-            s = doc.segment_parser(doc.bytes)
+        parsers.append(DefaultSegmentParser)
+        for parser in parsers:
+            doc.segment_parser = parser
+            try:
+                s = doc.segment_parser(doc.bytes)
+                break
+            except InvalidSegmentParser:
+                pass
         doc.segments = s.segments
         self.segment_list.set_segments(doc.segments)
         self.segment_number = 0
+        self.segment_parser = parser
         self.task.segments_changed = doc.segments
+    
+    def set_segment_parser(self, parser):
+        parsers = [parser, DefaultSegmentParser]
+        self.find_segment_parser(parsers)
     
     def view_segment_number(self, number):
         doc = self.document
