@@ -237,7 +237,7 @@ class HexEditor(FrameworkEditor):
         # Base-class constructor.
         print "CONSTRUCTOR!!!"
         fake_segment = DefaultSegment()
-        self.control = HexEditControl(parent, self, fake_segment)
+        self.control = HexEditControl(parent, self.task, fake_segment)
 
         ##########################################
         # Events.
