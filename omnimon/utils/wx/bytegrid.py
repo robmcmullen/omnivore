@@ -529,24 +529,35 @@ class ByteGrid(Grid.Grid):
     def OnLeftDown(self, evt):
         c, r = (evt.GetCol(), evt.GetRow())
         self.ClearSelection()
-        self.anchor_index, _ = self.table.get_index_range(r, c)
-        self.end_index = self.anchor_index
+        self.anchor_start_index, self.anchor_end_index = self.table.get_index_range(r, c)
+        self.anchor_index = self.anchor_start_index
+        self.end_index = self.anchor_end_index
         print "down: cell", (c, r)
         evt.Skip()
         wx.CallAfter(self.ForceRefresh)
-        wx.CallAfter(self.task.active_editor.byte_clicked, self.anchor_index, 0, self.anchor_index, self.anchor_index, self.table.segment.start_addr, self)
+        wx.CallAfter(self.task.active_editor.byte_clicked, self.anchor_index, 0, self.anchor_index, self.end_index, self.table.segment.start_addr, self)
  
     def on_motion(self, evt):
         if self.anchor_index is not None and evt.LeftIsDown():
             x, y = evt.GetPosition()
             x, y = self.CalcUnscrolledPosition(x, y)
             r, c = self.XYToCell(x, y)
-            _, index = self.table.get_index_range(r, c)
-            if index != self.end_index:
-                self.end_index = index
+            index1, index2 = self.table.get_index_range(r, c)
+            update = False
+            if self.anchor_index < index1:
+                if index2 != self.end_index:
+                    self.anchor_index = self.anchor_start_index
+                    self.end_index = index2
+                    update = True
+            else:
+                if index1 != self.end_index:
+                    self.anchor_index = self.anchor_end_index
+                    self.end_index = index1
+                    update = True
+            if update:
                 wx.CallAfter(self.ForceRefresh)
                 wx.CallAfter(self.task.active_editor.byte_clicked, self.end_index, 0, self.anchor_index, self.end_index, self.table.segment.start_addr, self)
-            print "motion: x, y, index", x, y, index
+            print "motion: x, y, index1, index2", x, y, index1, index2
         evt.Skip()
 
     def OnSelectCell(self, evt):
