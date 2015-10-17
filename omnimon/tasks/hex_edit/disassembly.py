@@ -38,8 +38,10 @@ class DisassemblyTable(ByteGridTable):
         self._rows = len(self.lines)
    
     def GetRowLabelValue(self, row):
-        line = self.lines[row]
-        return "%04x" % line[0]
+        if self.lines:
+            line = self.lines[row]
+            return "%04x" % line[0]
+        return "0000"
     
     def GetValue(self, row, col):
         line = self.lines[row]

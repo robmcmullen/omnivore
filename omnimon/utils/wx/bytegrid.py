@@ -174,8 +174,8 @@ class ByteGridTable(Grid.PyGridTableBase):
         dc.SetFont(grid.label_font)
         (width, height) = dc.GetTextExtent("M")
         grid.SetColLabelSize(height + 4)
-        digits = len(hex(self._rows)) - 2
-        grid.SetRowLabelSize(width * digits + 4)
+        text = self.GetRowLabelValue(self._rows - 1)
+        grid.SetRowLabelSize(width * len(text) + 4)
         
         grid.AdjustScrollbars()
         grid.ForceRefresh()
