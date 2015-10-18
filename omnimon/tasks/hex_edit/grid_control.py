@@ -28,11 +28,22 @@ class ByteTable(ByteGridTable):
 
     def set_segment(self, segment):
         self.segment = segment
-        self._rows=((len(self.segment) - 1) / self.bytes_per_row) + 1
+        self.start_offset = self.segment.start_addr & 0x0f
+        self._rows=((self.start_offset + len(self.segment) - 1) / self.bytes_per_row) + 1
         log.debug("segment %s: rows=%d cols=%d len=%d" % (segment, self._rows, self.bytes_per_row, len(self.segment)))
     
+    def get_index_range(self, row, col):
+        """Get the byte offset from start of file given row, col
+        position.
+        """
+        index = row * self.bytes_per_row + col - self.start_offset
+        return index, index
+
+    def get_row_col(self, index):
+        return divmod(index + self.start_offset, self.bytes_per_row)
+
     def is_index_valid(self, index):
-        return index < len(self.segment)
+        return 0 <= index < len(self.segment)
     
     def get_col_size(self, col):
         return 2
@@ -58,13 +69,13 @@ class ByteTable(ByteGridTable):
         return (row,col)
    
     def GetRowLabelValue(self, row):
-        return "%04x" % (row*self.bytes_per_row + self.segment.start_addr)
+        return "%04x" % (row*self.bytes_per_row + self.segment.start_addr - self.start_offset)
 
     def GetColLabelValue(self, col):
         return "%x" % col
     
     def GetValue(self, row, col):
-        i = row * self.bytes_per_row + col
+        i, _ = self.get_index_range(row, col)
         byte = self.segment[i]
         return "%02x" % byte
 
