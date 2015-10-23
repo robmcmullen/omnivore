@@ -2,11 +2,21 @@
 # All rights reserved.
 from os.path import join
 from setuptools import setup, find_packages
+from distutils.extension import Extension
+from Cython.Distutils import build_ext
+
+import numpy
 
 
 info = {}
 execfile(join('omnimon', '__init__.py'), info)
 
+ext_modules = [
+    Extension("omnimon.utils.wx.bitviewscroller_speedups",
+              sources=["omnimon/utils/wx/bitviewscroller_speedups.pyx"],
+              include_dirs=[numpy.get_include()],
+              ),
+    ]
 
 setup(
     name = 'omnimon',
@@ -30,7 +40,8 @@ setup(
         """.splitlines() if len(c.strip()) > 0],
     description = '(ap)Proximated (X)Emacs Powered by Python.',
     long_description = open('README.rst').read(),
-    ext_modules = [],
+    cmdclass={'build_ext': build_ext},
+    ext_modules = ext_modules,
     install_requires = info['__requires__'],
     license = "BSD",
     packages = find_packages(),

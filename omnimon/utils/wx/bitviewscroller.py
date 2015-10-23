@@ -23,6 +23,11 @@ import wx.lib.newevent
 import omnimon.utils.fonts as fonts
 import omnimon.utils.colors as colors
 
+try:
+    import bitviewscroller_speedups as speedups
+except ImportError:
+    speedups = None
+
 myEVT_BYTECLICKED = wx.NewEventType()
 
 EVT_BYTECLICKED = wx.PyEventBinder(myEVT_BYTECLICKED, 1)
@@ -650,7 +655,10 @@ class MemoryMapScroller(BitviewScroller):
         bytes = bytes.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
         
-        array = self.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, (0,0,128))
+        if speedups is not None:
+            array = speedups.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, (0,0,128))
+        else:
+            array = self.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, (0,0,128))
         log.debug(array.shape)
         width = array.shape[1]
         height = array.shape[0]
@@ -664,6 +672,7 @@ class MemoryMapScroller(BitviewScroller):
         return bmp
 
     def get_numpy_memory_map_image(self, bytes, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, selected_color):
+        log.debug("SLOW VERSION OF get_numpy_memory_map_image!!!")
         num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) / bytes_per_row
         width = num_cols
         height = num_rows_with_data
