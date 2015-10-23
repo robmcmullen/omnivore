@@ -14,6 +14,7 @@
 """
 
 import os
+import time
 
 import numpy as np
 import wx
@@ -635,6 +636,7 @@ class MemoryMapScroller(BitviewScroller):
 
     def get_image(self):
         log.debug("get_image: memory map: start=%d, num=%d" % (self.start_row, self.visible_rows))
+        t0 = time.clock()
         sr = self.start_row
         nr = self.visible_rows
         self.start_byte = sr * self.bytes_per_row
@@ -645,43 +647,47 @@ class MemoryMapScroller(BitviewScroller):
             bytes[0:self.end_byte - self.start_byte] = self.bytes[sr * self.bytes_per_row:self.end_byte]
         else:
             bytes = self.bytes[sr * self.bytes_per_row:self.end_byte]
-        num_rows_with_data = (self.end_byte - self.start_byte + self.bytes_per_row - 1) / self.bytes_per_row
-        
-        sc = self.start_col
-        nc = self.num_cols
         bytes = bytes.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
         
-        width = self.bytes_per_row
-        height = nr
-        
-        log.debug("pixel width: %dx%d, zoom=%d, rows with data=%d" % (width, height, self.zoom, num_rows_with_data))
-        array = np.zeros((height, width, 3), dtype=np.uint8)
-        array[:,:] = self.background_color
-        
-        log.debug(str([self.end_byte, self.start_byte, (self.end_byte - self.start_byte) / self.bytes_per_row]))
-        er = min(num_rows_with_data, nr)
-        ec = min(self.bytes_per_row, sc + self.bytes_per_row)
-        log.debug("bytes: %s" % str([nr, er, sc, nc, ec, bytes.shape]))
-        y = 0
-        e = self.start_byte
-        for j in range(er):
-            x = 0
-            for i in range(sc, ec):
-                if e + i >= self.end_byte:
-                    break
-                c = bytes[j, i]
-                array[y,x,:] = (c, c, c)
-                x += 1
-            y += 1
-            e += self.bytes_per_row
+        array = self.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, (0,0,128))
         log.debug(array.shape)
+        width = array.shape[1]
+        height = array.shape[0]
+        t = time.clock()
+        log.debug("get_image: time %f" % (t - t0))
         image = wx.EmptyImage(width, height)
         image.SetData(array.tostring())
         z = self.zoom
         image.Rescale(width * z, height * z)
         bmp = wx.BitmapFromImage(image)
         return bmp
+
+    def get_numpy_memory_map_image(self, bytes, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, selected_color):
+        num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) / bytes_per_row
+        width = self.bytes_per_row
+        height = num_rows
+        
+        log.debug("memory map size: %dx%d, zoom=%d, rows with data=%d, rows %d, cols %d-%d" % (width, height, self.zoom, num_rows_with_data, num_rows, start_col, start_col + num_cols - 1))
+        array = np.empty((height, width, 3), dtype=np.uint8)
+        array[:,:] = background_color
+        
+        log.debug(str([end_byte, start_byte, (end_byte - start_byte) / bytes_per_row]))
+        end_row = min(num_rows_with_data, num_rows)
+        end_col = min(bytes_per_row, start_col + bytes_per_row)
+        y = 0
+        e = start_byte
+        for j in range(end_row):
+            x = 0
+            for i in range(start_col, end_col):
+                if e + i >= end_byte:
+                    break
+                c = bytes[j, i]
+                array[y,x,:] = (c, c, c)
+                x += 1
+            y += 1
+            e += bytes_per_row
+        return array
 
     def event_coords_to_byte(self, evt):
         """Convert event coordinates to world coordinates.
