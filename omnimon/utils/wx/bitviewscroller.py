@@ -49,6 +49,7 @@ class BitviewScroller(wx.ScrolledWindow):
         self.task = task
         self.background_color = (160, 160, 160)
         self.wx_background_color = wx.Colour(*self.background_color)
+        self.selected_color = (0, 0, 128)
         self.max_zoom = 16
         self.min_zoom = 1
         self.bytes_per_row = 1
@@ -98,10 +99,12 @@ class BitviewScroller(wx.ScrolledWindow):
         self.end_byte = self.start_byte + (nr * self.bytes_per_row)
         if self.end_byte > self.bytes.size:
             self.end_byte = self.bytes.size
+            count = self.end_byte - self.start_byte
             bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
-            bytes[0:self.end_byte - self.start_byte] = self.bytes[sr * self.bytes_per_row:self.end_byte]
+            bytes[0:count] = self.bytes[self.start_byte:self.end_byte]
         else:
-            bytes = self.bytes[sr * self.bytes_per_row:self.end_byte]
+            count = self.end_byte - self.start_byte
+            bytes = self.bytes[self.start_byte:self.end_byte]
         bits = np.unpackbits(bytes)
         bits = bits.reshape((-1, 8 * self.bytes_per_row))
         bits[bits==0]=255
@@ -111,6 +114,20 @@ class BitviewScroller(wx.ScrolledWindow):
         array[:,:,0] = bits
         array[:,:,1] = bits
         array[:,:,2] = bits
+        if self.anchor_index is not None:
+            start_index, end_index = self.anchor_index, self.end_index
+            if start_index > end_index:
+                start_index, end_index = end_index, start_index
+            start_highlight = max(start_index - self.start_byte, 0)
+            end_highlight = min(end_index - self.start_byte, count)
+            print "highlight:", start_highlight, end_highlight
+            if start_highlight < count and end_highlight >= 0:
+                # change all white pixels to the highlight color.  The mask
+                # must be collapsed on the color axis to result in one entry
+                # per row so it can be applied to the array.
+                mask = array[start_highlight:end_highlight + 1,:,:] == (255, 255, 255)
+                mask = np.all(mask, axis=2)
+                array[start_highlight:end_highlight + 1,:,:][mask] = self.selected_color
         image = wx.EmptyImage(width, nr)
         image.SetData(array.tostring())
         image.Rescale(width * self.zoom, nr * self.zoom)
@@ -224,6 +241,8 @@ class BitviewScroller(wx.ScrolledWindow):
         return r, c
     
     def select_index(self, rel_pos, start_index, end_index):
+        self.anchor_index = start_index
+        self.end_index = end_index
         r, c = self.byte_to_row_col(rel_pos)
         if r < self.start_row:
             # above current view
@@ -237,6 +256,7 @@ class BitviewScroller(wx.ScrolledWindow):
                 self.Scroll(c, last_scroll_row)
             else:
                 self.Scroll(c, r)
+        self.Refresh()
     
     def select_addr(self, addr):
         rel_pos = addr - self.start_addr
