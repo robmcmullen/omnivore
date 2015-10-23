@@ -287,6 +287,7 @@ class BitviewScroller(wx.ScrolledWindow):
         if inside:
             self.anchor_index = self.end_index = byte
             wx.CallAfter(self.task.active_editor.byte_clicked, self.anchor_index, bit, self.anchor_index, self.end_index, self.start_addr, self)
+            wx.CallAfter(self.Refresh)
         evt.Skip()
  
     def on_motion(self, evt):
@@ -296,6 +297,7 @@ class BitviewScroller(wx.ScrolledWindow):
                 if byte != self.end_index:
                     self.end_index = byte
                     wx.CallAfter(self.task.active_editor.byte_clicked, self.end_index, bit, self.anchor_index, self.end_index, self.start_addr, self)
+                    wx.CallAfter(self.Refresh)
                 print "motion: byte, start, end", byte, self.anchor_index, self.end_index
         evt.Skip()
 
