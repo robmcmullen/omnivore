@@ -64,9 +64,14 @@ class BitviewScroller(wx.ScrolledWindow):
         self.grid_height = 0
         self.zoom = 5
         
+        self.anchor_index = None
+        self.end_index = None
+        
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_resize)
-        self.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse)
+        self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
+        self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
+        self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
         self.Bind(wx.EVT_MENU, self.on_menu)
     
@@ -189,18 +194,21 @@ class BitviewScroller(wx.ScrolledWindow):
         self.start_addr = segment.start_addr
         self.set_scale()
 
-    def event_coords_to_byte(self, ev):
+    def event_coords_to_byte(self, evt):
         """Convert event coordinates to world coordinates.
 
         Convert the event coordinates to world coordinates by locating
         the offset of the scrolled window's viewport and adjusting the
         event coordinates.
         """
+        if self.end_byte is None:  # end_byte is a proxy for the image being loaded
+            return 0, 0, False
+        
         inside = True
 
         x, y = self.GetViewStart()
-        x = (ev.GetX() // self.zoom) + x
-        y = (ev.GetY() // self.zoom) + y
+        x = (evt.GetX() // self.zoom) + x
+        y = (evt.GetY() // self.zoom) + y
         xbyte = (x // 8)
         if x < 0 or xbyte >= self.bytes_per_row or y < 0 or y > (self.start_row + self.visible_rows):
             inside = False
@@ -234,7 +242,7 @@ class BitviewScroller(wx.ScrolledWindow):
         rel_pos = addr - self.start_addr
         self.select_index(rel_pos)
 
-    def on_mouse(self, ev):
+    def on_mouse_wheel(self, evt):
         """Driver to process mouse events.
 
         This is the main driver to process all mouse events that
@@ -245,21 +253,31 @@ class BitviewScroller(wx.ScrolledWindow):
         if self.end_byte is None:  # end_byte is a proxy for the image being loaded
             return
         
-        x = ev.GetX()
-        y = ev.GetY()
-        byte, bit, inside = self.event_coords_to_byte(ev)
-        #log.debug(x, y, byte, bit, inside)
-        
-        if ev.LeftIsDown() and inside:
-            wx.CallAfter(self.task.active_editor.byte_clicked, byte, bit, byte, byte, self.start_addr, self)
-        w = ev.GetWheelRotation()
-        if ev.ControlDown():
+        w = evt.GetWheelRotation()
+        if evt.ControlDown():
             if w < 0:
                 self.zoom_out()
             elif w > 0:
                 self.zoom_in()
 
-        ev.Skip()
+        evt.Skip()
+
+    def on_left_down(self, evt):
+        byte, bit, inside = self.event_coords_to_byte(evt)
+        if inside:
+            self.anchor_index = self.end_index = byte
+            wx.CallAfter(self.task.active_editor.byte_clicked, self.anchor_index, bit, self.anchor_index, self.end_index, self.start_addr, self)
+        evt.Skip()
+ 
+    def on_motion(self, evt):
+        if self.anchor_index is not None and evt.LeftIsDown():
+            byte, bit, inside = self.event_coords_to_byte(evt)
+            if inside:
+                if byte != self.end_index:
+                    self.end_index = byte
+                    wx.CallAfter(self.task.active_editor.byte_clicked, self.end_index, bit, self.anchor_index, self.end_index, self.start_addr, self)
+                print "motion: byte, start, end", byte, self.anchor_index, self.end_index
+        evt.Skip()
 
     def on_paint(self, evt):
         self.dbg_call_seq += 1
@@ -521,7 +539,7 @@ class FontMapScroller(BitviewScroller):
         bmp = wx.BitmapFromImage(image)
         return bmp
 
-    def event_coords_to_byte(self, ev):
+    def event_coords_to_byte(self, evt):
         """Convert event coordinates to world coordinates.
 
         Convert the event coordinates to world coordinates by locating
@@ -532,8 +550,8 @@ class FontMapScroller(BitviewScroller):
 
         zw, zh = self.get_zoom_factors()
         x, y = self.GetViewStart()
-        x = (ev.GetX() // zw // 8) + x
-        y = (ev.GetY() // zh // 8) + y
+        x = (evt.GetX() // zw // 8) + x
+        y = (evt.GetY() // zh // 8) + y
         if x < 0 or x >= self.bytes_per_row or y < 0 or y > (self.start_row + self.visible_rows):
             inside = False
         byte = (self.bytes_per_row * y) + x
@@ -643,7 +661,7 @@ class MemoryMapScroller(BitviewScroller):
         bmp = wx.BitmapFromImage(image)
         return bmp
 
-    def event_coords_to_byte(self, ev):
+    def event_coords_to_byte(self, evt):
         """Convert event coordinates to world coordinates.
 
         Convert the event coordinates to world coordinates by locating
@@ -654,8 +672,8 @@ class MemoryMapScroller(BitviewScroller):
 
         z = self.zoom
         x, y = self.GetViewStart()
-        x = (ev.GetX() // z) + x
-        y = (ev.GetY() // z) + y
+        x = (evt.GetX() // z) + x
+        y = (evt.GetY() // z) + y
         if x < 0 or x >= self.bytes_per_row or y < 0 or y > (self.start_row + self.visible_rows):
             inside = False
         byte = (self.bytes_per_row * y) + x
@@ -676,8 +694,8 @@ if __name__ == '__main__':
     sizer = wx.BoxSizer(wx.VERTICAL)
     sizer.Add(panel,  1, wx.EXPAND | wx.ALL, 5)
     
-    def buttonHandler(ev):
-        id = ev.GetId()
+    def buttonHandler(evt):
+        id = evt.GetId()
         if id == 100:
             panel.zoom_in()
         elif id == 101:
