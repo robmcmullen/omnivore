@@ -63,17 +63,10 @@ class BitviewScroller(wx.ScrolledWindow):
         self.grid_width = 0
         self.grid_height = 0
         self.zoom = 5
-        self.crop = None
         
-        # hacks
-        
-        # cursors
-        self.default_cursor = wx.CURSOR_ARROW
-        self.save_cursor = None
-        
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_resize)
-        self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvent)
+        self.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse)
         self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
         self.Bind(wx.EVT_MENU, self.on_menu)
     
@@ -93,7 +86,7 @@ class BitviewScroller(wx.ScrolledWindow):
         self.set_scale()
 
     def get_image(self):
-        log.debug("Getting image: start=%d, num=%d" % (self.start_row, self.visible_rows))
+        log.debug("get_image: bit image: start=%d, num=%d" % (self.start_row, self.visible_rows))
         sr = self.start_row
         nr = self.visible_rows
         self.start_byte = sr * self.bytes_per_row
@@ -241,7 +234,7 @@ class BitviewScroller(wx.ScrolledWindow):
         rel_pos = addr - self.start_addr
         self.select_index(rel_pos)
 
-    def OnMouseEvent(self, ev):
+    def on_mouse(self, ev):
         """Driver to process mouse events.
 
         This is the main driver to process all mouse events that
@@ -268,9 +261,9 @@ class BitviewScroller(wx.ScrolledWindow):
 
         ev.Skip()
 
-    def OnPaint(self, evt):
+    def on_paint(self, evt):
         self.dbg_call_seq += 1
-        print("In OnPaint %d" % self.dbg_call_seq)
+        print("In on_paint %d" % self.dbg_call_seq)
         self.prepare_image()
         if self.scaled_bmp is not None:
             dc = wx.BufferedPaintDC(self, self.scaled_bmp, wx.BUFFER_CLIENT_AREA)
@@ -477,7 +470,7 @@ class FontMapScroller(BitviewScroller):
     bits_to_font = bits_to_gr0
 
     def get_image(self):
-        log.debug("Getting fontmap: start=%d, num=%d" % (self.start_row, self.visible_rows))
+        log.debug("get_image: fontmap: start=%d, num=%d" % (self.start_row, self.visible_rows))
         sr = self.start_row
         nr = self.visible_rows
         self.start_byte = sr * self.bytes_per_row
@@ -601,7 +594,7 @@ class MemoryMapScroller(BitviewScroller):
         log.debug("fontmap: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.num_cols]))
 
     def get_image(self):
-        log.debug("Getting fontmap: start=%d, num=%d" % (self.start_row, self.visible_rows))
+        log.debug("get_image: memory map: start=%d, num=%d" % (self.start_row, self.visible_rows))
         sr = self.start_row
         nr = self.visible_rows
         self.start_byte = sr * self.bytes_per_row
