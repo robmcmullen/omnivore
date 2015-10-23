@@ -665,8 +665,8 @@ class MemoryMapScroller(BitviewScroller):
 
     def get_numpy_memory_map_image(self, bytes, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, selected_color):
         num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) / bytes_per_row
-        width = self.bytes_per_row
-        height = num_rows
+        width = num_cols
+        height = num_rows_with_data
         
         log.debug("memory map size: %dx%d, zoom=%d, rows with data=%d, rows %d, cols %d-%d" % (width, height, self.zoom, num_rows_with_data, num_rows, start_col, start_col + num_cols - 1))
         array = np.empty((height, width, 3), dtype=np.uint8)
@@ -674,7 +674,7 @@ class MemoryMapScroller(BitviewScroller):
         
         log.debug(str([end_byte, start_byte, (end_byte - start_byte) / bytes_per_row]))
         end_row = min(num_rows_with_data, num_rows)
-        end_col = min(bytes_per_row, start_col + bytes_per_row)
+        end_col = min(bytes_per_row, start_col + num_cols)
         y = 0
         e = start_byte
         for j in range(end_row):
