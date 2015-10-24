@@ -53,6 +53,7 @@ class BitviewScroller(wx.ScrolledWindow):
 
         # Settings
         self.task = task
+        self.editor = None
         self.background_color = (160, 160, 160)
         self.wx_background_color = wx.Colour(*self.background_color)
         self.selected_color = (0, 0, 128)
@@ -71,9 +72,6 @@ class BitviewScroller(wx.ScrolledWindow):
         self.grid_height = 0
         self.zoom = 5
         
-        self.anchor_index = None
-        self.end_index = None
-        
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_resize)
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
@@ -88,6 +86,7 @@ class BitviewScroller(wx.ScrolledWindow):
     def recalc_view(self):
         editor = self.task.active_editor
         if editor is not None:
+            self.editor = editor
             self.bytes = editor.segment.data
             self.start_addr = editor.segment.start_addr
             self.set_scale()
@@ -130,8 +129,9 @@ class BitviewScroller(wx.ScrolledWindow):
         array[:,:,0] = bits
         array[:,:,1] = bits
         array[:,:,2] = bits
-        if self.anchor_index is not None:
-            start_index, end_index = self.anchor_index, self.end_index
+        e = self.editor
+        if e.anchor_index is not None:
+            start_index, end_index = e.anchor_index, e.end_index
             if start_index > end_index:
                 start_index, end_index = end_index, start_index
             start_highlight = max(start_index - self.start_byte, 0)
@@ -255,9 +255,7 @@ class BitviewScroller(wx.ScrolledWindow):
         c = addr - (r * self.bytes_per_row)
         return r, c
     
-    def select_index(self, rel_pos, start_index, end_index):
-        self.anchor_index = start_index
-        self.end_index = end_index
+    def select_index(self, rel_pos):
         r, c = self.byte_to_row_col(rel_pos)
         if r < self.start_row:
             # above current view
@@ -300,20 +298,22 @@ class BitviewScroller(wx.ScrolledWindow):
     def on_left_down(self, evt):
         byte, bit, inside = self.event_coords_to_byte(evt)
         if inside:
-            self.anchor_index = self.end_index = byte
-            wx.CallAfter(self.task.active_editor.byte_clicked, self.anchor_index, bit, self.anchor_index, self.end_index, self.start_addr, self)
+            e = self.editor
+            e.anchor_index = e.end_index = e.anchor_start_index = e.anchor_end_index = byte
+            wx.CallAfter(self.task.active_editor.byte_clicked, e.anchor_index, bit, self.start_addr, self)
             wx.CallAfter(self.Refresh)
         evt.Skip()
  
     def on_motion(self, evt):
-        if self.anchor_index is not None and evt.LeftIsDown():
+        e = self.editor
+        if e.anchor_index is not None and evt.LeftIsDown():
             byte, bit, inside = self.event_coords_to_byte(evt)
             if inside:
-                if byte != self.end_index:
-                    self.end_index = byte
-                    wx.CallAfter(self.task.active_editor.byte_clicked, self.end_index, bit, self.anchor_index, self.end_index, self.start_addr, self)
+                if byte != e.end_index:
+                    e.end_index = byte
+                    wx.CallAfter(self.task.active_editor.byte_clicked, e.end_index, bit, self.start_addr, self)
                     wx.CallAfter(self.Refresh)
-                print "motion: byte, start, end", byte, self.anchor_index, self.end_index
+                print "motion: byte, start, end", byte, e.anchor_index, e.end_index
         evt.Skip()
 
     def on_paint(self, evt):

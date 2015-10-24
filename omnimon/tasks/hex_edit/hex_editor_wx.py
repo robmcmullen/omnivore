@@ -46,6 +46,14 @@ class HexEditor(FrameworkEditor):
     disassembler = Any
     
     segment = Any(None)
+    
+    anchor_index = Any(None)
+    
+    initial_start_index = Any(None)
+    
+    initial_end_index = Any(None)
+
+    end_index = Any(None)
 
     #### Events ####
 
@@ -272,14 +280,14 @@ class HexEditor(FrameworkEditor):
 
     #### wx event handlers ####################################################
     
-    def byte_clicked(self, byte, bit, start_index, end_index, start_addr, control):
+    def byte_clicked(self, byte, bit, start_addr, control):
         if control != self.control:
-            self.control.select_index(byte, start_index, end_index)
+            self.control.select_index(byte)
         if control != self.disassembly:
-            self.disassembly.select_index(byte, start_index, end_index)
+            self.disassembly.select_index(byte)
         if control != self.byte_graphics:
-            self.byte_graphics.select_index(byte, start_index, end_index)
+            self.byte_graphics.select_index(byte)
         if control != self.font_map:
-            self.font_map.select_index(byte, start_index, end_index)
+            self.font_map.select_index(byte)
         if control != self.memory_map:
-            self.memory_map.select_index(byte, start_index, end_index)
+            self.memory_map.select_index(byte)

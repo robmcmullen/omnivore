@@ -102,5 +102,6 @@ class DisassemblyPanel(ByteGrid):
     def recalc_view(self):
         editor = self.task.active_editor
         if editor is not None:
+            self.editor = editor
             self.table.ResetView(self, editor)
             self.table.UpdateValues(self)

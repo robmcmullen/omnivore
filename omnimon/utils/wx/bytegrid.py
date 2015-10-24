@@ -36,7 +36,7 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
             dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
             dc.DrawRectangleRect(rect)
         else:
-            start, end = grid.anchor_index, grid.end_index
+            start, end = grid.editor.anchor_index, grid.editor.end_index
             if start > end:
                 start, end = end, start
 #            print "r,c,index", row, col, index, "grid selection:", start, end
@@ -493,6 +493,7 @@ class ByteGrid(Grid.Grid):
         """
         Grid.Grid.__init__(self, parent, -1)
         self.task = task
+        self.editor = None
         self.table = table
         self.font = wx.Font(8, wx.MODERN, wx.NORMAL, wx.NORMAL)
         self.label_font = wx.Font(8, wx.MODERN, wx.NORMAL, wx.FONTWEIGHT_BOLD)
@@ -511,8 +512,6 @@ class ByteGrid(Grid.Grid):
         self.RegisterDataType(Grid.GRID_VALUE_STRING, None, None)
 #        self.SetDefaultEditor(HexCellEditor(self))
 
-        self.anchor_index = None
-        self.end_index = None
         self.allow_range_select = True
         self.updateUICallback = None
         self.Bind(Grid.EVT_GRID_CELL_LEFT_CLICK, self.OnLeftDown)
@@ -529,34 +528,36 @@ class ByteGrid(Grid.Grid):
     def OnLeftDown(self, evt):
         c, r = (evt.GetCol(), evt.GetRow())
         self.ClearSelection()
-        self.anchor_start_index, self.anchor_end_index = self.table.get_index_range(r, c)
-        self.anchor_index = self.anchor_start_index
-        self.end_index = self.anchor_end_index
+        e = self.editor
+        e.anchor_start_index, e.anchor_end_index = self.table.get_index_range(r, c)
+        e.anchor_index = e.anchor_start_index
+        e.end_index = e.anchor_end_index
         print "down: cell", (c, r)
         evt.Skip()
         wx.CallAfter(self.ForceRefresh)
-        wx.CallAfter(self.task.active_editor.byte_clicked, self.anchor_index, 0, self.anchor_index, self.end_index, self.table.segment.start_addr, self)
+        wx.CallAfter(self.task.active_editor.byte_clicked, e.anchor_index, 0, self.table.segment.start_addr, self)
  
     def on_motion(self, evt):
-        if self.anchor_index is not None and evt.LeftIsDown():
+        e = self.editor
+        if e.anchor_index is not None and evt.LeftIsDown():
             x, y = evt.GetPosition()
             x, y = self.CalcUnscrolledPosition(x, y)
             r, c = self.XYToCell(x, y)
             index1, index2 = self.table.get_index_range(r, c)
             update = False
-            if self.anchor_index < index1:
-                if index2 != self.end_index:
-                    self.anchor_index = self.anchor_start_index
-                    self.end_index = index2
+            if e.anchor_index < index1:
+                if index2 != e.end_index:
+                    e.anchor_index = e.anchor_start_index
+                    e.end_index = index2
                     update = True
             else:
-                if index1 != self.end_index:
-                    self.anchor_index = self.anchor_end_index
-                    self.end_index = index1
+                if index1 != e.end_index:
+                    e.anchor_index = e.anchor_end_index
+                    e.end_index = index1
                     update = True
             if update:
                 wx.CallAfter(self.ForceRefresh)
-                wx.CallAfter(self.task.active_editor.byte_clicked, self.end_index, 0, self.anchor_index, self.end_index, self.table.segment.start_addr, self)
+                wx.CallAfter(self.task.active_editor.byte_clicked, e.end_index, 0, self.table.segment.start_addr, self)
             print "motion: x, y, index1, index2", x, y, index1, index2
         evt.Skip()
 
@@ -597,12 +598,7 @@ class ByteGrid(Grid.Grid):
         self.SetGridCursor(row, col)
         self.MakeCellVisible(row,col)
 
-    def select_index(self, cursor, start, end):
-        self.select_range(start, end)
-        self.goto_index(cursor)
-    
-    def select_range(self, start, end):
+    def select_index(self, cursor):
         self.ClearSelection()
-        self.anchor_index = start
-        self.end_index = end
+        self.goto_index(cursor)
         self.ForceRefresh()
