@@ -638,7 +638,7 @@ class MemoryMapScroller(BitviewScroller):
         z = self.zoom
         self.visible_rows = (h + z - 1) / z
         self.start_col, self.num_cols = x, (w + z - 1) / z
-        log.debug("fontmap: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.num_cols]))
+        log.debug("memory map: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.num_cols]))
 
     def get_image(self):
         log.debug("get_image: memory map: start=%d, num=%d" % (self.start_row, self.visible_rows))
@@ -668,16 +668,17 @@ class MemoryMapScroller(BitviewScroller):
     def get_numpy_memory_map_image(self, bytes, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, selected_color):
         log.debug("SLOW VERSION OF get_numpy_memory_map_image!!!")
         num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) / bytes_per_row
-        width = num_cols
-        height = num_rows_with_data
-        
-        log.debug("memory map size: %dx%d, zoom=%d, rows with data=%d, rows %d, cols %d-%d" % (width, height, self.zoom, num_rows_with_data, num_rows, start_col, start_col + num_cols - 1))
-        array = np.empty((height, width, 3), dtype=np.uint8)
-        array[:,:] = background_color
         
         log.debug(str([end_byte, start_byte, (end_byte - start_byte) / bytes_per_row]))
         end_row = min(num_rows_with_data, num_rows)
         end_col = min(bytes_per_row, start_col + num_cols)
+        
+        width = end_col - start_col
+        height = num_rows_with_data
+        log.debug("memory map size: %dx%d, zoom=%d, rows with data=%d, rows %d, cols %d-%d" % (width, height, self.zoom, num_rows_with_data, num_rows, start_col, start_col + width - 1))
+        array = np.empty((height, width, 3), dtype=np.uint8)
+        array[:,:] = background_color
+        
         y = 0
         e = start_byte
         for j in range(end_row):
