@@ -84,6 +84,13 @@ class BitviewScroller(wx.ScrolledWindow):
     
     def set_task(self, task):
         self.task = task
+    
+    def recalc_view(self):
+        editor = self.task.active_editor
+        if editor is not None:
+            self.bytes = editor.segment.data
+            self.start_addr = editor.segment.start_addr
+            self.set_scale()
 
     def zoom_in(self, zoom=1):
         self.zoom += zoom
@@ -218,11 +225,6 @@ class BitviewScroller(wx.ScrolledWindow):
         if rate < 1:
             rate = 1
         self.SetScrollRate(rate, rate)
-    
-    def set_segment(self, segment):
-        self.bytes = segment.data
-        self.start_addr = segment.start_addr
-        self.set_scale()
 
     def event_coords_to_byte(self, evt):
         """Convert event coordinates to world coordinates.

@@ -13,21 +13,22 @@ class DisassemblyTable(ByteGridTable):
     column_labels = ["Bytes", "Disassembly", "Comment"]
     column_sizes = [8, 12, 20]
     
-    def __init__(self, segment):
+    def __init__(self):
         ByteGridTable.__init__(self)
-        
-        self.disassembler = None
-        self.set_segment(segment)
+        self.lines = []
+        self._rows = 0
+        self.addr_to_lines = {}
+        self.start_addr = 0
 
-    def set_segment(self, segment):
-        self.segment = segment
+    def set_editor(self, editor):
+        self.editor = editor
+        self.segment = segment = self.editor.segment
         lines = []
         addr_map = {}
-        if self.disassembler is not None:
-            d = self.disassembler(segment.data, segment.start_addr, -segment.start_addr)
-            for i, (addr, bytes, opstr, comment) in enumerate(d.get_disassembly()):
-                lines.append((addr, bytes, opstr, comment))
-                addr_map[addr] = i
+        d = editor.disassembler(segment.data, segment.start_addr, -segment.start_addr)
+        for i, (addr, bytes, opstr, comment) in enumerate(d.get_disassembly()):
+            lines.append((addr, bytes, opstr, comment))
+            addr_map[addr] = i
         self.lines = lines
         self.addr_to_lines = addr_map
         if self.lines:
@@ -83,8 +84,8 @@ class DisassemblyTable(ByteGridTable):
         
         self.segment[i:end] = bytes
 
-    def ResetViewProcessArgs(self, segment, *args):
-        self.set_segment(segment)
+    def ResetViewProcessArgs(self, editor, *args):
+        self.set_editor(editor)
 
 
 class DisassemblyPanel(ByteGrid):
@@ -92,17 +93,14 @@ class DisassemblyPanel(ByteGrid):
     View for editing in hexidecimal notation.
     """
 
-    def __init__(self, parent, task, segment=None):
+    def __init__(self, parent, task):
         """Create the HexEdit viewer
         """
-        if segment is None:
-            segment = DefaultSegment()
-        table = DisassemblyTable(segment)
+        table = DisassemblyTable()
         ByteGrid.__init__(self, parent, task, table)
 
-    def set_segment(self, segment):
-        self.table.ResetView(self, segment)
-        self.table.UpdateValues(self)
-
-    def set_disassembler(self, d):
-        self.table.disassembler = d
+    def recalc_view(self):
+        editor = self.task.active_editor
+        if editor is not None:
+            self.table.ResetView(self, editor)
+            self.table.UpdateValues(self)

@@ -18,19 +18,20 @@ log.setLevel(logging.DEBUG)
 
 
 class ByteTable(ByteGridTable):
-    def __init__(self, segment, bytes_per_row=16):
+    def __init__(self, bytes_per_row=16):
         ByteGridTable.__init__(self)
         
         self._debug=False
         self.bytes_per_row = bytes_per_row
         self._cols = self.bytes_per_row
-        self.set_segment(segment)
+        self._rows = 0
 
-    def set_segment(self, segment):
-        self.segment = segment
-        self.start_offset = self.segment.start_addr & 0x0f
-        self._rows=((self.start_offset + len(self.segment) - 1) / self.bytes_per_row) + 1
-        log.debug("segment %s: rows=%d cols=%d len=%d" % (segment, self._rows, self.bytes_per_row, len(self.segment)))
+    def set_editor(self, editor):
+        self.editor = editor
+        self.segment = segment = self.editor.segment
+        self.start_offset = segment.start_addr & 0x0f
+        self._rows=((self.start_offset + len(segment) - 1) / self.bytes_per_row) + 1
+        log.debug("segment %s: rows=%d cols=%d len=%d" % (segment, self._rows, self.bytes_per_row, len(segment)))
     
     def get_index_range(self, row, col):
         """Get the byte offset from start of file given row, col
@@ -91,8 +92,8 @@ class ByteTable(ByteGridTable):
         
         self.segment[i:end] = bytes
 
-    def ResetViewProcessArgs(self, segment, *args):
-        self.set_segment(segment)
+    def ResetViewProcessArgs(self, editor, *args):
+        self.set_editor(editor)
 
 
 class HexEditControl(ByteGrid):
@@ -100,12 +101,14 @@ class HexEditControl(ByteGrid):
     View for editing in hexidecimal notation.
     """
 
-    def __init__(self, parent, task, segment):
+    def __init__(self, parent, task):
         """Create the HexEdit viewer
         """
-        table = ByteTable(segment)
+        table = ByteTable()
         ByteGrid.__init__(self, parent, task, table)
 
-    def set_segment(self, segment):
-        self.table.ResetView(self, segment)
-        self.table.UpdateValues(self)
+    def recalc_view(self):
+        editor = self.task.active_editor
+        if editor is not None:
+            self.table.ResetView(self, editor)
+            self.table.UpdateValues(self)

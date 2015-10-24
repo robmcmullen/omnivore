@@ -35,13 +35,17 @@ class HexEditor(FrameworkEditor):
     
     grid_range_selected = Bool
     
+    segment_parser = Any
+    
+    segment_number = Int(0)
+    
+    ### View traits
+    
     font = Any
     
     disassembler = Any
     
-    segment_parser = Any
-    
-    segment_number = Int(0)
+    segment = Any(None)
 
     #### Events ####
 
@@ -59,6 +63,9 @@ class HexEditor(FrameworkEditor):
     
     def _disassembler_default(self):
         return Atari800Disassembler
+    
+    def _segment_default(self):
+        return DefaultSegment()
 
     ###########################################################################
     # 'FrameworkEditor' interface.
@@ -107,14 +114,13 @@ class HexEditor(FrameworkEditor):
 
     def update_panes(self):
         doc = self.document
-        segment = doc.segments[self.segment_number]
-        self.control.set_segment(segment)
-        self.disassembly.set_disassembler(self.disassembler)
-        self.disassembly.set_segment(segment)
-        self.byte_graphics.set_segment(segment)
-        self.font_map.set_segment(segment)
+        self.segment = doc.segments[self.segment_number]
+        self.control.recalc_view()
+        self.disassembly.recalc_view()
+        self.byte_graphics.recalc_view()
+        self.font_map.recalc_view()
         self.set_font(self.font)
-        self.memory_map.set_segment(segment)
+        self.memory_map.recalc_view()
         self.segment_list.set_segments(doc.segments)
         self.task.segments_changed = doc.segments
     
@@ -245,8 +251,7 @@ class HexEditor(FrameworkEditor):
 
         # Base-class constructor.
         print "CONSTRUCTOR!!!"
-        fake_segment = DefaultSegment()
-        self.control = HexEditControl(parent, self.task, fake_segment)
+        self.control = HexEditControl(parent, self.task)
 
         ##########################################
         # Events.
@@ -254,7 +259,6 @@ class HexEditor(FrameworkEditor):
 
         # Get related controls
         self.disassembly = self.window.get_dock_pane('hex_edit.disasmbly_pane').control
-        self.disassembly.set_disassembler(self.disassembler)
         self.byte_graphics = self.window.get_dock_pane('hex_edit.byte_graphics').control
         self.font_map = self.window.get_dock_pane('hex_edit.font_map').control
         self.memory_map = self.window.get_dock_pane('hex_edit.memory_map').control
