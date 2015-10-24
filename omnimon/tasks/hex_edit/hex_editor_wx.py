@@ -18,6 +18,7 @@ from grid_control import HexEditControl
 from omnimon.utils.file_guess import FileMetadata
 from omnimon.utils.wx.bitviewscroller import EVT_BYTECLICKED
 import omnimon.utils.fonts as fonts
+import omnimon.utils.colors as colors
 from omnimon.utils.dis6502 import Atari800Disassembler
 from omnimon.utils.binutil import known_segment_parsers, DefaultSegmentParser, ATRSegmentParser, XexSegmentParser, InvalidSegmentParser, DefaultSegment
 
@@ -41,7 +42,9 @@ class HexEditor(FrameworkEditor):
     
     ### View traits
     
-    font = Any
+    antic_font = Any
+    
+    playfield_colors = Any
     
     disassembler = Any
     
@@ -94,6 +97,12 @@ class HexEditor(FrameworkEditor):
     
     def _text_font_default(self):
         return wx.Font(self.text_font_size, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, self.text_font_face)
+    
+    def _antic_font_default(self):
+        return fonts.A8DefaultFont
+    
+    def _playfield_colors_default(self):
+        return colors.powerup_colors()
 
     ###########################################################################
     # 'FrameworkEditor' interface.
@@ -148,7 +157,6 @@ class HexEditor(FrameworkEditor):
         self.disassembly.recalc_view()
         self.byte_graphics.recalc_view()
         self.font_map.recalc_view()
-        self.set_font(self.font)
         self.memory_map.recalc_view()
         self.segment_list.set_segments(doc.segments)
         self.task.segments_changed = doc.segments
@@ -178,12 +186,12 @@ class HexEditor(FrameworkEditor):
     
     def set_font(self, font=None, font_mode=None):
         if font is None:
-            font = self.font
-        self.font = font
+            font = self.antic_font
+        self.antic_font = font
         if font_mode is None:
             font_mode = self.font_mode
         self.font_mode = font_mode
-        self.font_map.set_font(font, font_mode)
+        self.font_map.set_font()
         self.redraw_panes()
     
     def load_font(self, filename):

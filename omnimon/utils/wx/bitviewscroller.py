@@ -87,8 +87,16 @@ class BitviewScroller(wx.ScrolledWindow):
             self.editor = editor
             self.bytes = editor.segment.data
             self.start_addr = editor.segment.start_addr
-            self.background_color = editor.empty_color
+            self.background_color = self.editor.empty_color
+            self.set_colors()
+            self.set_font()
             self.set_scale()
+    
+    def set_colors(self):
+        pass
+    
+    def set_font(self):
+        pass
 
     def zoom_in(self, zoom=1):
         self.zoom += zoom
@@ -306,7 +314,7 @@ class BitviewScroller(wx.ScrolledWindow):
  
     def on_motion(self, evt):
         e = self.editor
-        if e.anchor_start_index is not None and evt.LeftIsDown():
+        if e is not None and evt.LeftIsDown():
             byte, bit, inside = self.event_coords_to_byte(evt)
             if inside:
                 index1 = byte
@@ -351,15 +359,11 @@ class FontMapScroller(BitviewScroller):
     font_width_extra_zoom = [0, 0, 1, 0, 1, 1, 2, 2, 2, 2]
     font_height_extra_zoom = [0, 0, 1, 0, 1, 2, 1, 2, 1, 2]
     
-    def __init__(self, parent, task, font=None, font_mode=2, pfcolors=None):
+    def __init__(self, parent, task):
         BitviewScroller.__init__(self, parent, task)
         self.bytes_per_row = 8
         self.zoom = 2
-        
-        if pfcolors is None:
-            pfcolors = colors.powerup_colors()
-        self.set_colors(pfcolors)
-        self.set_font(font, font_mode)
+        self.font_mode = 2
     
     def calc_scale_from_bytes(self):
         self.total_rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
@@ -401,16 +405,23 @@ class FontMapScroller(BitviewScroller):
         self.start_col, self.num_cols = x, (w + zoom_factor - 1) / zoom_factor
         log.debug("fontmap: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.num_cols]))
     
-    def set_colors(self, pfcolors):
-        self.pfcolors = list(pfcolors)
-        self.rgb = []
+    def set_colors(self):
+        pfcolors = list(self.editor.playfield_colors)
+        self.normal_colors = []
+        self.highlight_colors = []
         for c in pfcolors:
-            self.rgb.append(colors.atari_color_to_rgb(c))
+            self.normal_colors.append(colors.atari_color_to_rgb(c))
+            self.highlight_colors.append(colors.atari_color_to_rgb(c))
+        self.highlight_colors[-1] = self.editor.highlight_color
 
-    def set_font(self, font, font_mode):
-        if font is None:
-            font = fonts.A8DefaultFont
-        self.raw_font = font
+        fg, bg = colors.gr0_colors(pfcolors)
+        fg = colors.atari_color_to_rgb(fg)
+        bg = colors.atari_color_to_rgb(bg)
+        self.normal_gr0_colors = [fg, bg]
+        self.highlight_gr0_colors = [fg, self.editor.highlight_color]
+
+    def set_font(self):
+        font = self.editor.antic_font
         self.char_pixel_width = font['char_w']
         self.char_pixel_height = font['char_h']
         bytes = np.fromstring(font['data'], dtype=np.uint8)
@@ -420,14 +431,13 @@ class FontMapScroller(BitviewScroller):
         bits = bits.reshape((-1, 8, 8))
 #        print bits[1]
         
-        self.calc_font_mode_sizes(font_mode)
-        self.font = self.bits_to_font(bits)
+        self.calc_font_mode_sizes(self.editor.font_mode)
+        self.normal_font = self.bits_to_font(bits, self.normal_colors, self.normal_gr0_colors)
+        self.highlight_font = self.bits_to_font(bits, self.highlight_colors, self.highlight_gr0_colors)
 #        log.debug(self.font)
         
-    def bits_to_gr0(self, bits):
-        fg, bg = colors.gr0_colors(self.pfcolors)
-        fg = colors.atari_color_to_rgb(fg)
-        bg = colors.atari_color_to_rgb(bg)
+    def bits_to_gr0(self, bits, colors, gr0_colors):
+        fg, bg = gr0_colors
         r = np.empty(bits.shape, dtype=np.uint8)
         r[bits==0] = fg[0]
         r[bits==1] = bg[0]
@@ -454,8 +464,8 @@ class FontMapScroller(BitviewScroller):
         font[128:256,:,:,2] = b
         return font
         
-    def bits_to_gr1(self, bits):
-        bg = self.rgb[4]
+    def bits_to_gr1(self, bits, colors, gr0_colors):
+        bg = self.normal_colors[4]
         if self.font_mode == 6 or self.font_mode == 7:
             half = bits[0:64,:,:]
         else:
@@ -468,7 +478,7 @@ class FontMapScroller(BitviewScroller):
         start_char = 0
         for i in range(4):
             end_char = start_char + 64
-            fg = self.rgb[i]
+            fg = colors[i]
             r[half==0] = bg[0]
             r[half==1] = fg[0]
             g[half==0] = bg[1]
@@ -481,14 +491,14 @@ class FontMapScroller(BitviewScroller):
             start_char = end_char
         return font
         
-    def bits_to_antic4(self, bits):
+    def bits_to_antic4(self, bits, colors, gr0_colors):
         """
         
         http://www.atarimagazines.com/compute/issue49/419_1_Graphics_0_Text_In_Four_Colors.php
         
         There are four possible combinations of two bits: 00, 01, 10, 11. Each combination represents a different color. The color corresponding to the bit-pair 00 is stored at location 712; the color for the bit-pair 01 is at location 708; the color for bit-pair 10 is at 709; the color for bit-pair 11 is at 710.
         """
-        pf0, pf1, pf2, pf3, bak = self.rgb
+        pf0, pf1, pf2, pf3, bak = colors
         r = np.empty(bits.shape, dtype=np.uint8)
         g = np.empty(bits.shape, dtype=np.uint8)
         b = np.empty(bits.shape, dtype=np.uint8)
@@ -571,13 +581,21 @@ class FontMapScroller(BitviewScroller):
         zy = self.font_height_extra_zoom[self.font_mode]
         y = 0
         e = self.start_byte
+        f = self.normal_font
+        fh = self.highlight_font
+        anchor_start, anchor_end = self.editor.anchor_start_index, self.editor.anchor_end_index
+        if anchor_start > anchor_end:
+            anchor_start, anchor_end = anchor_end, anchor_start
         for j in range(er):
             x = 0
             for i in range(sc, ec):
                 if e + i >= self.end_byte:
                     break
                 c = bytes[j, i]
-                array[y:y+8,x:x+8,:] = self.font[c]
+                if anchor_start <= e + i < anchor_end:
+                    array[y:y+8,x:x+8,:] = fh[c]
+                else:
+                    array[y:y+8,x:x+8,:] = f[c]
                 x += 8
             y += 8
             e += self.bytes_per_row
@@ -684,7 +702,7 @@ class MemoryMapScroller(BitviewScroller):
         log.debug("get_image: time %f" % (t - t0))
         return array
 
-    def get_numpy_memory_map_image(self, bytes, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, anchor_start_index, anchor_end_index, selected_color):
+    def get_numpy_memory_map_image(self, bytes, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, anchor_start, anchor_end, selected_color):
         log.debug("SLOW VERSION OF get_numpy_memory_map_image!!!")
         num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) / bytes_per_row
         
@@ -706,7 +724,7 @@ class MemoryMapScroller(BitviewScroller):
                 if e + i >= end_byte:
                     break
                 c = bytes[j, i]
-                if anchor_start_index <= e + i <= anchor_end_index:
+                if anchor_start <= e + i <= anchor_end:
                     r = selected_color[0] * c >> 8
                     g = selected_color[1] * c >> 8
                     b = selected_color[2] * c >> 8
