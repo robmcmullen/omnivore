@@ -47,13 +47,16 @@ class HexEditor(FrameworkEditor):
     
     segment = Any(None)
     
-    anchor_index = Int(0)
+    # Anchor indexes behave like cursor positions: they indicate positions
+    # between bytes, so zero is before the first byte and the max value of an
+    # anchor is the number of bytes + 1
+    anchor_start_index = Int(0)
     
-    initial_start_index = Int(0)
+    anchor_initial_start_index = Int(0)
     
-    initial_end_index = Int(0)
+    anchor_initial_end_index = Int(0)
 
-    end_index = Int(0)
+    anchor_end_index = Int(0)
     
     highlight_color = Any((100, 200, 230))
     

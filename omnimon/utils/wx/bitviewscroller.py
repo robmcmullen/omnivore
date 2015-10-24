@@ -129,8 +129,8 @@ class BitviewScroller(wx.ScrolledWindow):
         array[:,:,1] = bits
         array[:,:,2] = bits
         e = self.editor
-        if e.anchor_index >= 0:
-            start_index, end_index = e.anchor_index, e.end_index
+        if e.anchor_start_index != e.anchor_end_index:
+            start_index, end_index = e.anchor_start_index, e.anchor_end_index
             if start_index > end_index:
                 start_index, end_index = end_index, start_index
             start_highlight = max(start_index - self.start_byte, 0)
@@ -140,9 +140,9 @@ class BitviewScroller(wx.ScrolledWindow):
                 # change all white pixels to the highlight color.  The mask
                 # must be collapsed on the color axis to result in one entry
                 # per row so it can be applied to the array.
-                mask = array[start_highlight:end_highlight + 1,:,:] == (255, 255, 255)
+                mask = array[start_highlight:end_highlight,:,:] == (255, 255, 255)
                 mask = np.all(mask, axis=2)
-                array[start_highlight:end_highlight + 1,:,:][mask] = self.editor.highlight_color
+                array[start_highlight:end_highlight,:,:][mask] = self.editor.highlight_color
         return array
 
     def copy_to_clipboard(self):
@@ -298,21 +298,35 @@ class BitviewScroller(wx.ScrolledWindow):
         byte, bit, inside = self.event_coords_to_byte(evt)
         if inside:
             e = self.editor
-            e.anchor_index = e.end_index = e.anchor_start_index = e.anchor_end_index = byte
-            wx.CallAfter(self.task.active_editor.byte_clicked, e.anchor_index, bit, self.start_addr, self)
+            e.anchor_start_index = e.anchor_initial_start_index = byte
+            e.anchor_end_index = e.anchor_initial_end_index = byte + 1
+            wx.CallAfter(self.task.active_editor.byte_clicked, e.anchor_start_index, bit, self.start_addr, self)
             wx.CallAfter(self.Refresh)
         evt.Skip()
  
     def on_motion(self, evt):
         e = self.editor
-        if e.anchor_index is not None and evt.LeftIsDown():
+        if e.anchor_start_index is not None and evt.LeftIsDown():
             byte, bit, inside = self.event_coords_to_byte(evt)
             if inside:
-                if byte != e.end_index:
-                    e.end_index = byte
-                    wx.CallAfter(self.task.active_editor.byte_clicked, e.end_index, bit, self.start_addr, self)
+                index1 = byte
+                index2 = byte + 1
+                print index1, index2, e.anchor_start_index, e.anchor_end_index
+                update = False
+                if e.anchor_start_index <= index1:
+                    if index2 != e.anchor_end_index:
+                        e.anchor_start_index = e.anchor_initial_start_index
+                        e.anchor_end_index = index2
+                        update = True
+                else:
+                    if index1 != e.anchor_end_index:
+                        e.anchor_start_index = e.anchor_initial_end_index
+                        e.anchor_end_index = index1
+                        update = True
+                if update:
+                    wx.CallAfter(self.task.active_editor.byte_clicked, e.anchor_end_index, bit, self.start_addr, self)
                     wx.CallAfter(self.Refresh)
-                print "motion: byte, start, end", byte, e.anchor_index, e.end_index
+                print "motion: byte, start, end", byte, e.anchor_start_index, e.anchor_end_index
         evt.Skip()
 
     def on_paint(self, evt):
@@ -658,7 +672,7 @@ class MemoryMapScroller(BitviewScroller):
         #log.debug("get_image: bytes", bytes)
         
         e = self.editor
-        anchor_start, anchor_end = e.anchor_index, e.end_index
+        anchor_start, anchor_end = e.anchor_start_index, e.anchor_end_index
         if anchor_start > anchor_end:
             anchor_start, anchor_end = anchor_end, anchor_start
         if speedups is not None:
@@ -670,7 +684,7 @@ class MemoryMapScroller(BitviewScroller):
         log.debug("get_image: time %f" % (t - t0))
         return array
 
-    def get_numpy_memory_map_image(self, bytes, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, anchor_index, end_index, selected_color):
+    def get_numpy_memory_map_image(self, bytes, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, anchor_start_index, anchor_end_index, selected_color):
         log.debug("SLOW VERSION OF get_numpy_memory_map_image!!!")
         num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) / bytes_per_row
         
@@ -692,7 +706,7 @@ class MemoryMapScroller(BitviewScroller):
                 if e + i >= end_byte:
                     break
                 c = bytes[j, i]
-                if anchor_index <= e + i <= end_index:
+                if anchor_start_index <= e + i <= anchor_end_index:
                     r = selected_color[0] * c >> 8
                     g = selected_color[1] * c >> 8
                     b = selected_color[2] * c >> 8

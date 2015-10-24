@@ -38,7 +38,7 @@ class ByteTable(ByteGridTable):
         position.
         """
         index = row * self.bytes_per_row + col - self.start_offset
-        return index, index
+        return index, index + 1
 
     def get_row_col(self, index):
         return divmod(index + self.start_offset, self.bytes_per_row)

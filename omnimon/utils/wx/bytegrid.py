@@ -40,11 +40,11 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
             dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
             dc.DrawRectangleRect(rect)
         else:
-            start, end = grid.editor.anchor_index, grid.editor.end_index
+            start, end = grid.editor.anchor_start_index, grid.editor.anchor_end_index
             if start > end:
                 start, end = end, start
 #            print "r,c,index", row, col, index, "grid selection:", start, end
-            is_in_range = start <= index <= end
+            is_in_range = start <= index < end
             if is_in_range:
                 dc.SetBrush(self.selected_brush)
                 dc.SetPen(self.selected_pen)
@@ -526,13 +526,12 @@ class ByteGrid(Grid.Grid):
         c, r = (evt.GetCol(), evt.GetRow())
         self.ClearSelection()
         e = self.editor
-        e.anchor_start_index, e.anchor_end_index = self.table.get_index_range(r, c)
-        e.anchor_index = e.anchor_start_index
-        e.end_index = e.anchor_end_index
+        e.anchor_initial_start_index, e.anchor_initial_end_index = self.table.get_index_range(r, c)
+        e.anchor_start_index, e.anchor_end_index = e.anchor_initial_start_index, e.anchor_initial_end_index
         print "down: cell", (c, r)
         evt.Skip()
         wx.CallAfter(self.ForceRefresh)
-        wx.CallAfter(self.task.active_editor.byte_clicked, e.anchor_index, 0, self.table.segment.start_addr, self)
+        wx.CallAfter(self.task.active_editor.byte_clicked, e.anchor_start_index, 0, self.table.segment.start_addr, self)
  
     def on_motion(self, evt):
         e = self.editor
@@ -542,19 +541,19 @@ class ByteGrid(Grid.Grid):
             r, c = self.XYToCell(x, y)
             index1, index2 = self.table.get_index_range(r, c)
             update = False
-            if e.anchor_index < index1:
-                if index2 != e.end_index:
-                    e.anchor_index = e.anchor_start_index
-                    e.end_index = index2
+            if e.anchor_start_index <= index1:
+                if index2 != e.anchor_end_index:
+                    e.anchor_start_index = e.anchor_initial_start_index
+                    e.anchor_end_index = index2
                     update = True
             else:
-                if index1 != e.end_index:
-                    e.anchor_index = e.anchor_end_index
-                    e.end_index = index1
+                if index1 != e.anchor_end_index:
+                    e.anchor_start_index = e.anchor_initial_end_index
+                    e.anchor_end_index = index1
                     update = True
             if update:
                 wx.CallAfter(self.ForceRefresh)
-                wx.CallAfter(self.task.active_editor.byte_clicked, e.end_index, 0, self.table.segment.start_addr, self)
+                wx.CallAfter(self.task.active_editor.byte_clicked, e.anchor_end_index, 0, self.table.segment.start_addr, self)
             print "motion: x, y, index1, index2", x, y, index1, index2
         evt.Skip()
 
