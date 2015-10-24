@@ -465,7 +465,7 @@ class FontMapScroller(BitviewScroller):
         return font
         
     def bits_to_gr1(self, bits, colors, gr0_colors):
-        bg = self.normal_colors[4]
+        bg = colors[4]
         if self.font_mode == 6 or self.font_mode == 7:
             half = bits[0:64,:,:]
         else:
