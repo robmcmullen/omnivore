@@ -54,9 +54,7 @@ class BitviewScroller(wx.ScrolledWindow):
         # Settings
         self.task = task
         self.editor = None
-        self.background_color = (160, 160, 160)
-        self.wx_background_color = wx.Colour(*self.background_color)
-        self.selected_color = (0, 0, 128)
+        self.background_color = None
         self.max_zoom = 16
         self.min_zoom = 1
         self.bytes_per_row = 1
@@ -89,6 +87,7 @@ class BitviewScroller(wx.ScrolledWindow):
             self.editor = editor
             self.bytes = editor.segment.data
             self.start_addr = editor.segment.start_addr
+            self.background_color = editor.empty_color
             self.set_scale()
 
     def zoom_in(self, zoom=1):
@@ -143,7 +142,7 @@ class BitviewScroller(wx.ScrolledWindow):
                 # per row so it can be applied to the array.
                 mask = array[start_highlight:end_highlight + 1,:,:] == (255, 255, 255)
                 mask = np.all(mask, axis=2)
-                array[start_highlight:end_highlight + 1,:,:][mask] = self.selected_color
+                array[start_highlight:end_highlight + 1,:,:][mask] = self.editor.highlight_color
         return array
 
     def copy_to_clipboard(self):
@@ -173,7 +172,7 @@ class BitviewScroller(wx.ScrolledWindow):
             self.scaled_bmp = wx.EmptyBitmap(w, h)
             
             dc.SelectObject(self.scaled_bmp)
-            dc.SetBackground(wx.Brush(self.wx_background_color))
+            dc.SetBackground(wx.Brush(self.background_color))
             dc.Clear()
             
             array = self.get_image()
@@ -659,9 +658,9 @@ class MemoryMapScroller(BitviewScroller):
         #log.debug("get_image: bytes", bytes)
         
         if speedups is not None:
-            array = speedups.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, (0,0,128))
+            array = speedups.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, self.editor.highlight_color)
         else:
-            array = self.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, (0,0,128))
+            array = self.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, self.editor.highlight_color)
         log.debug(array.shape)
         t = time.clock()
         log.debug("get_image: time %f" % (t - t0))

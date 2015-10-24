@@ -7,7 +7,7 @@ import wx
 import numpy as np
 
 # Enthought library imports.
-from traits.api import Any, Bool, Int, List, Event, Enum, Instance, File, Unicode, Property, provides
+from traits.api import Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides
 from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
@@ -54,6 +54,20 @@ class HexEditor(FrameworkEditor):
     initial_end_index = Any(None)
 
     end_index = Any(None)
+    
+    highlight_color = Any((100, 200, 230))
+    
+    background_color = Any((255, 255, 255))
+    
+    text_color = Any((0, 0, 0))
+    
+    empty_color = Any(None)
+    
+    text_font_size = Int(8)
+    
+    text_font_face = Str("")
+    
+    text_font = Any(None)
 
     #### Events ####
 
@@ -74,6 +88,9 @@ class HexEditor(FrameworkEditor):
     
     def _segment_default(self):
         return DefaultSegment()
+    
+    def _text_font_default(self):
+        return wx.Font(self.text_font_size, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, self.text_font_face)
 
     ###########################################################################
     # 'FrameworkEditor' interface.
@@ -123,6 +140,7 @@ class HexEditor(FrameworkEditor):
     def update_panes(self):
         doc = self.document
         self.segment = doc.segments[self.segment_number]
+        self.set_colors()
         self.control.recalc_view()
         self.disassembly.recalc_view()
         self.byte_graphics.recalc_view()
@@ -131,6 +149,11 @@ class HexEditor(FrameworkEditor):
         self.memory_map.recalc_view()
         self.segment_list.set_segments(doc.segments)
         self.task.segments_changed = doc.segments
+    
+    def set_colors(self):
+        if self.empty_color is None:
+            attr = self.control.GetDefaultAttributes()
+            self.empty_color = attr.colBg.Get(False)
     
     def redraw_panes(self):
         self.font_map.Refresh()

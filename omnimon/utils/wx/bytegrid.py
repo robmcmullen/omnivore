@@ -9,14 +9,18 @@ log.setLevel(logging.DEBUG)
 
 
 class ByteGridRenderer(Grid.PyGridCellRenderer):
-    def __init__(self, table, color="black", font="", fontsize=8):
+    def __init__(self, table, editor):
         """Render data in the specified color and font and fontsize"""
         Grid.PyGridCellRenderer.__init__(self)
         self.table = table
-        self.color = color
-        self.font = wx.Font(fontsize, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, font)
-        self.selectedBrush = wx.Brush("blue", wx.SOLID)
-        self.normalBrush = wx.Brush(wx.WHITE, wx.SOLID)
+        self.color = editor.text_color
+        self.font = editor.text_font
+        self.selected_background = editor.highlight_color
+        self.selected_brush = wx.Brush(editor.highlight_color, wx.SOLID)
+        self.selected_pen = wx.Pen(editor.highlight_color, 1, wx.SOLID)
+        self.normal_background = editor.background_color
+        self.normal_brush = wx.Brush(editor.background_color, wx.SOLID)
+        self.normal_pen = wx.Pen(editor.background_color, 1, wx.SOLID)
         self.colSize = None
         self.rowSize = 50
 
@@ -42,24 +46,17 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
 #            print "r,c,index", row, col, index, "grid selection:", start, end
             is_in_range = start <= index <= end
             if is_in_range:
-                dc.SetBrush(wx.Brush(wx.BLUE, wx.SOLID))
-                dc.SetPen(wx.Pen(wx.BLUE, 1, wx.SOLID))
+                dc.SetBrush(self.selected_brush)
+                dc.SetPen(self.selected_pen)
+                dc.SetTextBackground(self.selected_background)
             else:
-                dc.SetBrush(wx.Brush(wx.WHITE, wx.SOLID))
-                dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
+                dc.SetBrush(self.normal_brush)
+                dc.SetPen(self.normal_pen)
+                dc.SetTextBackground(self.normal_background)
             dc.DrawRectangleRect(rect)
 
             text = self.table.GetValue(row, col)
             dc.SetBackgroundMode(wx.SOLID)
-
-            # change the text background based on whether the grid is selected
-            # or not
-            if is_in_range:
-                dc.SetBrush(self.selectedBrush)
-                dc.SetTextBackground("blue")
-            else:
-                dc.SetBrush(self.normalBrush)
-                dc.SetTextBackground("white")
 
             dc.SetTextForeground(self.color)
             dc.SetFont(self.font)
@@ -169,7 +166,7 @@ class ByteGridTable(Grid.PyGridTableBase):
             hexattr = Grid.GridCellAttr()
             hexattr.SetFont(grid.font)
             hexattr.SetBackgroundColour("white")
-            renderer = ByteGridRenderer(self)
+            renderer = ByteGridRenderer(self, grid.editor)
             hexattr.SetRenderer(renderer)
             log.debug("hexcol %d width=%d" % (col,width))
             grid.SetColMinimalWidth(col, 0)
