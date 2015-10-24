@@ -96,6 +96,9 @@ class BitviewScroller(wx.ScrolledWindow):
         if self.zoom < self.min_zoom:
             self.zoom = self.min_zoom
         self.set_scale()
+    
+    def get_zoom_factors(self):
+        return self.zoom, self.zoom
 
     def get_image(self):
         log.debug("get_image: bit image: start=%d, num=%d" % (self.start_row, self.visible_rows))
@@ -134,11 +137,7 @@ class BitviewScroller(wx.ScrolledWindow):
                 mask = array[start_highlight:end_highlight + 1,:,:] == (255, 255, 255)
                 mask = np.all(mask, axis=2)
                 array[start_highlight:end_highlight + 1,:,:][mask] = self.selected_color
-        image = wx.EmptyImage(width, nr)
-        image.SetData(array.tostring())
-        image.Rescale(width * self.zoom, nr * self.zoom)
-        bmp = wx.BitmapFromImage(image)
-        return bmp
+        return array
 
     def copy_to_clipboard(self):
         """Copies current image to clipboard.
@@ -170,8 +169,16 @@ class BitviewScroller(wx.ScrolledWindow):
             dc.SetBackground(wx.Brush(self.wx_background_color))
             dc.Clear()
             
-            bmp = self.get_image()
-            dc.DrawBitmap(bmp, 0, 0)
+            array = self.get_image()
+            width = array.shape[1]
+            height = array.shape[0]
+            if width > 0 and height > 0:
+                image = wx.EmptyImage(width, height)
+                image.SetData(array.tostring())
+                zw, zh = self.get_zoom_factors()
+                image.Rescale(width * zw, height * zh)
+                bmp = wx.BitmapFromImage(image)
+                dc.DrawBitmap(bmp, 0, 0)
     
     def calc_image_size(self):
         x, y = self.GetViewStart()
@@ -559,13 +566,7 @@ class FontMapScroller(BitviewScroller):
                 x += 8
             y += 8
             e += self.bytes_per_row
-        log.debug(array.shape)
-        image = wx.EmptyImage(width, height)
-        image.SetData(array.tostring())
-        zw, zh = self.get_zoom_factors()
-        image.Rescale(width * zw, height * zh)
-        bmp = wx.BitmapFromImage(image)
-        return bmp
+        return array
 
     def event_coords_to_byte(self, evt):
         """Convert event coordinates to world coordinates.
@@ -660,16 +661,9 @@ class MemoryMapScroller(BitviewScroller):
         else:
             array = self.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, (0,0,128))
         log.debug(array.shape)
-        width = array.shape[1]
-        height = array.shape[0]
         t = time.clock()
         log.debug("get_image: time %f" % (t - t0))
-        image = wx.EmptyImage(width, height)
-        image.SetData(array.tostring())
-        z = self.zoom
-        image.Rescale(width * z, height * z)
-        bmp = wx.BitmapFromImage(image)
-        return bmp
+        return array
 
     def get_numpy_memory_map_image(self, bytes, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, selected_color):
         log.debug("SLOW VERSION OF get_numpy_memory_map_image!!!")
