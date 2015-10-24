@@ -439,26 +439,26 @@ class FontMapScroller(BitviewScroller):
     def bits_to_gr0(self, bits, colors, gr0_colors):
         fg, bg = gr0_colors
         r = np.empty(bits.shape, dtype=np.uint8)
-        r[bits==0] = fg[0]
-        r[bits==1] = bg[0]
+        r[bits==0] = bg[0]
+        r[bits==1] = fg[0]
         g = np.empty(bits.shape, dtype=np.uint8)
-        g[bits==0] = fg[1]
-        g[bits==1] = bg[1]
+        g[bits==0] = bg[1]
+        g[bits==1] = fg[1]
         b = np.empty(bits.shape, dtype=np.uint8)
-        b[bits==0] = fg[2]
-        b[bits==1] = bg[2]
+        b[bits==0] = bg[2]
+        b[bits==1] = fg[2]
         font = np.zeros((256, 8, 8, 3), dtype=np.uint8)
         font[0:128,:,:,0] = r
         font[0:128,:,:,1] = g
         font[0:128,:,:,2] = b
         
         # Inverse characters when high bit set
-        r[bits==0] = bg[0]
-        r[bits==1] = fg[0]
-        g[bits==0] = bg[1]
-        g[bits==1] = fg[1]
-        b[bits==0] = bg[2]
-        b[bits==1] = fg[2]
+        r[bits==0] = fg[0]
+        r[bits==1] = bg[0]
+        g[bits==0] = fg[1]
+        g[bits==1] = bg[1]
+        b[bits==0] = fg[2]
+        b[bits==1] = bg[2]
         font[128:256,:,:,0] = r
         font[128:256,:,:,1] = g
         font[128:256,:,:,2] = b
