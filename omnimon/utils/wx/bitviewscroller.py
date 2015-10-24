@@ -129,7 +129,7 @@ class BitviewScroller(wx.ScrolledWindow):
         array[:,:,1] = bits
         array[:,:,2] = bits
         e = self.editor
-        if e.anchor_index is not None:
+        if e.anchor_index >= 0:
             start_index, end_index = e.anchor_index, e.end_index
             if start_index > end_index:
                 start_index, end_index = end_index, start_index
@@ -657,16 +657,20 @@ class MemoryMapScroller(BitviewScroller):
         bytes = bytes.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
         
+        e = self.editor
+        anchor_start, anchor_end = e.anchor_index, e.end_index
+        if anchor_start > anchor_end:
+            anchor_start, anchor_end = anchor_end, anchor_start
         if speedups is not None:
-            array = speedups.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, self.editor.highlight_color)
+            array = speedups.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, anchor_start, anchor_end, e.highlight_color)
         else:
-            array = self.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, self.editor.highlight_color)
+            array = self.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, anchor_start, anchor_end, e.highlight_color)
         log.debug(array.shape)
         t = time.clock()
         log.debug("get_image: time %f" % (t - t0))
         return array
 
-    def get_numpy_memory_map_image(self, bytes, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, selected_color):
+    def get_numpy_memory_map_image(self, bytes, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, anchor_index, end_index, selected_color):
         log.debug("SLOW VERSION OF get_numpy_memory_map_image!!!")
         num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) / bytes_per_row
         
@@ -688,7 +692,13 @@ class MemoryMapScroller(BitviewScroller):
                 if e + i >= end_byte:
                     break
                 c = bytes[j, i]
-                array[y,x,:] = (c, c, c)
+                if anchor_index <= e + i <= end_index:
+                    r = selected_color[0] * c >> 8
+                    g = selected_color[1] * c >> 8
+                    b = selected_color[2] * c >> 8
+                    array[y,x,:] = (r, g, b)
+                else:
+                    array[y,x,:] = (c, c, c)
                 x += 1
             y += 1
             e += bytes_per_row

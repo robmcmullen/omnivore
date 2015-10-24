@@ -536,7 +536,7 @@ class ByteGrid(Grid.Grid):
  
     def on_motion(self, evt):
         e = self.editor
-        if e.anchor_index is not None and evt.LeftIsDown():
+        if evt.LeftIsDown():
             x, y = evt.GetPosition()
             x, y = self.CalcUnscrolledPosition(x, y)
             r, c = self.XYToCell(x, y)

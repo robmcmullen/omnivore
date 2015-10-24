@@ -47,13 +47,13 @@ class HexEditor(FrameworkEditor):
     
     segment = Any(None)
     
-    anchor_index = Any(None)
+    anchor_index = Int(0)
     
-    initial_start_index = Any(None)
+    initial_start_index = Int(0)
     
-    initial_end_index = Any(None)
+    initial_end_index = Int(0)
 
-    end_index = Any(None)
+    end_index = Int(0)
     
     highlight_color = Any((100, 200, 230))
     
