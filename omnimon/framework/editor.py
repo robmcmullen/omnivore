@@ -115,10 +115,12 @@ class FrameworkEditor(Editor):
     def undo(self):
         undo = self.document.undo_stack.undo(self)
         self.process_flags(undo.flags)
+        self.update_undo_redo()
     
     def redo(self):
         undo = self.document.undo_stack.redo(self)
         self.process_flags(undo.flags)
+        self.update_undo_redo()
     
     def process_flags(self, flags):
         self.update_history()
