@@ -5,6 +5,7 @@ cimport numpy as np
 
 
 @cython.boundscheck(False)
+@cython.wraparound(False)
 def get_numpy_memory_map_image(np.ndarray[np.uint8_t, ndim=2] bytes, int start_byte, int end_byte, int bytes_per_row, int num_rows, int start_col, int num_cols, background_color, anchor_start, anchor_end, selected_color):
     cdef int num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) // bytes_per_row
     cdef np.uint8_t bgr = background_color[0]
