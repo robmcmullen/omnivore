@@ -242,35 +242,6 @@ class HexEditor(FrameworkEditor):
     def update_history(self):
         self.undo_history.update_history()
 
-    # Command processor
-
-    def update_undo_redo(self):
-        command = self.document.undo_stack.get_undo_command()
-        if command is None:
-            self.undo_label = "Undo"
-            self.can_undo = False
-        else:
-            text = str(command).replace("&", "&&")
-            self.undo_label = "Undo: %s" % text
-            self.can_undo = True
-            
-        command = self.document.undo_stack.get_redo_command()
-        if command is None:
-            self.redo_label = "Redo"
-            self.can_redo = False
-        else:
-            text = str(command).replace("&", "&&")
-            self.redo_label = "Redo: %s" % text
-            self.can_redo = True
-    
-    def undo(self):
-        undo = self.document.undo_stack.undo(self)
-        self.process_flags(undo.flags)
-    
-    def redo(self):
-        undo = self.document.undo_stack.redo(self)
-        self.process_flags(undo.flags)
-
     ###########################################################################
     # Trait handlers.
     ###########################################################################
