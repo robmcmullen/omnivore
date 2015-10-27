@@ -274,8 +274,8 @@ class BitviewScroller(wx.ScrolledWindow):
             last_scroll_row = self.total_rows - self.visible_rows
             if r >= last_scroll_row:
                 self.Scroll(c, last_scroll_row)
-            else:
-                self.Scroll(c, r)
+            elif r > self.visible_rows:
+                self.Scroll(c, r - self.visible_rows)
         self.Refresh()
     
     def select_addr(self, addr):
