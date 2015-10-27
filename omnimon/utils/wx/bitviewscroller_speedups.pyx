@@ -25,6 +25,7 @@ def get_numpy_memory_map_image(np.ndarray[np.uint8_t, ndim=2] bytes, int start_b
     cdef int y = 0
     cdef int e = start_byte
     cdef int x, i, j
+    cdef np.uint8_t bw = 0xff
     cdef np.uint8_t c
     cdef np.uint16_t h
     for j in range(end_row):
@@ -35,8 +36,8 @@ def get_numpy_memory_map_image(np.ndarray[np.uint8_t, ndim=2] bytes, int start_b
                 array[y,x,1] = bgg
                 array[y,x,2] = bgb
             else:
-                c = bytes[j, i]
-                if start <= e + i <= end:
+                c = bytes[j, i] ^ bw
+                if start <= e + i < end:
                     h = sr * c >> 8
                     array[y,x,0] = h
                     h = sg * c >> 8

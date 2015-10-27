@@ -723,8 +723,8 @@ class MemoryMapScroller(BitviewScroller):
             for i in range(start_col, end_col):
                 if e + i >= end_byte:
                     break
-                c = bytes[j, i]
-                if anchor_start <= e + i <= anchor_end:
+                c = bytes[j, i] ^ 0xff
+                if anchor_start <= e + i < anchor_end:
                     r = selected_color[0] * c >> 8
                     g = selected_color[1] * c >> 8
                     b = selected_color[2] * c >> 8
