@@ -104,6 +104,9 @@ class ByteGridTable(Grid.PyGridTableBase):
     
     def get_col_size(self, c):
         return self.column_sizes[c]
+    
+    def get_col_type(self, c):
+        return "hex"
    
     def GetNumberRows(self):
         return self._rows
@@ -388,24 +391,12 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         to begin editing.  Set the focus to the edit control.
         *Must Override*
         """
-        log.debug("row,col=(%d,%d)" % (row, col))
         self.startValue = grid.GetTable().GetValue(row, col)
-        mode='hex'
-        table=self.parentgrid.table
-        textcol=table.getTextCol(col)
-        if textcol>=0:
-            textfmt=table.types[textcol]
-            if textfmt.endswith('s') or textfmt.endswith('c'):
-                if table.sizes[textcol]==1:
-                    mode='char'
-                else:
-                    mode='str'
-            else:
-                mode='text'
-            log.debug("In value area! mode=%s" % mode)
+        mode = self.parentgrid.table.get_col_type(col)
+        log.debug("row,col=(%d,%d), mode=%s" % (row, col, mode))
         self._tc.editingNewCell(self.startValue,mode)
 
-    def EndEdit(self, row, col, grid):
+    def EndEdit(self, row, col, grid, old_val):
         """
         Complete the editing of the current cell. Returns True if the value
         has changed.  If necessary, the control may be destroyed.
@@ -507,7 +498,7 @@ class ByteGrid(Grid.Grid):
         self.DisableDragRowSize()
 
         self.RegisterDataType(Grid.GRID_VALUE_STRING, None, None)
-#        self.SetDefaultEditor(HexCellEditor(self))
+        self.SetDefaultEditor(HexCellEditor(self))
 
         self.allow_range_select = True
         self.updateUICallback = None

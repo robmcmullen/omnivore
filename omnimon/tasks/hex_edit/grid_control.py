@@ -83,14 +83,10 @@ class ByteTable(ByteGridTable):
     def SetValue(self, row, col, value):
         val=int(value,16)
         if val>=0 and val<256:
-            bytes = chr(val)
+            i, _ = self.get_index_range(row, col)
+            self.segment[i:i+1] = val
         else:
-            log.debug('SetValue(%d, %d, "%s")=%d out of range.' % (row, col, value,val))
-            
-        i,_ = self.get_index(row, col)
-        end = loc + len(bytes)
-        
-        self.segment[i:end] = bytes
+            log.debug('SetValue(%d, %d, "%s")=%d out of range.' % (row, col, value, val))
 
     def ResetViewProcessArgs(self, editor, *args):
         self.set_editor(editor)

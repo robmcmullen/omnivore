@@ -32,8 +32,11 @@ class DefaultSegment(object):
     def __len__(self):
         return np.alen(self.data)
     
-    def __getitem__(self, val):
-        return self.data[val]
+    def __getitem__(self, index):
+        return self.data[index]
+    
+    def __setitem__(self, index, value):
+        self.data[index] = value
 
 
 class DefaultSegmentParser(SegmentParser):
