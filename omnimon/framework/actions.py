@@ -2,12 +2,13 @@ import os
 import wx.lib.inspection
 
 # Enthought library imports.
-from pyface.api import ImageResource, FileDialog, YES, OK, CANCEL
+from pyface.api import ImageResource, FileDialog, YES, NO, OK, CANCEL
 from pyface.action.api import Action, ActionItem, Group
 from pyface.tasks.action.api import EditorAction
 from traits.api import Property, Instance, Bool, Str, Unicode, Any, List
 
 from omnimon.framework.about import AboutDialog
+from omnimon.utils.file_guess import FileGuess
 
 import logging
 log = logging.getLogger(__name__)
@@ -119,6 +120,19 @@ class SaveAsAction(EditorAction):
         dialog = FileDialog(parent=event.task.window.control, action='save as')
         if dialog.open() == OK:
             self.active_editor.save(dialog.path)
+
+class RevertAction(EditorAction):
+    name = 'Revert'
+    tooltip = 'Revert to last saved version'
+
+    def perform(self, event):
+        message = "Revert file from\n\n%s?" % self.active_editor.document.metadata.uri
+        result = event.task.window.confirm(message=message, default=NO, title='Revert File?')
+        if result == CANCEL:
+            return
+        elif result == YES:
+            guess = FileGuess(self.active_editor.document.metadata.uri)
+            self.active_editor.load(guess)
 
 class PageSetupAction(Action):
     name = 'Page Setup...'

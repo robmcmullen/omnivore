@@ -85,7 +85,7 @@ class FrameworkTask(Task):
 
     def _menu_bar_default(self):
         menus = []
-        self.add_menu(menus, "Menu", "File", "NewGroup", "OpenGroup", "SaveGroup", "PrintGroup", "ExitGroup")
+        self.add_menu(menus, "Menu", "File", "NewGroup", "OpenGroup", "SaveGroup", "RevertGroup", "PrintGroup", "ExitGroup")
         self.add_menu(menus, "Menu", "Edit", "UndoGroup", "CopyPasteGroup", "SelectGroup", "FindGroup", "PrefGroup")
         self.add_menu(menus, "Menu", "View", "ViewChangeGroup", "ViewConfigGroup", "ViewToggleGroup", "ViewDebugGroup", "TaskGroup")
         self.add_menu(menus, "Menu", "Window", "WindowGroup")
@@ -336,6 +336,10 @@ class FrameworkTask(Task):
                     return [
                         SaveAction(),
                         SaveAsAction(),
+                        ]
+                elif group_name == "RevertGroup":
+                    return [
+                        RevertAction(),
                         ]
                 elif group_name == "PrintGroup":
                     return [
