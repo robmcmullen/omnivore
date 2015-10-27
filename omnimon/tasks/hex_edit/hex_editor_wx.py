@@ -117,16 +117,12 @@ class HexEditor(FrameworkEditor):
         """ Loads the contents of the editor.
         """
         if guess is None:
-            metadata = FileMetadata(uri=self.path)
-            bytes = ''
+            doc = Document()
         else:
             metadata = guess.get_metadata()
             bytes = guess.get_utf8()
-        doc = Document(metadata, bytes)
-
+            doc = Document(metadata=metadata, bytes=bytes)
         self.document = doc
-        self.path = doc.metadata.uri
-        self.dirty = False
         
         self.find_segment_parser([ATRSegmentParser, XexSegmentParser])
         self.update_panes()
@@ -135,13 +131,11 @@ class HexEditor(FrameworkEditor):
         """ Saves the contents of the editor.
         """
         if path is None:
-            path = self.path
+            path = self.document.uri
 
         f = file(path, 'w')
         f.write(self.control.GetTextUTF8())
         f.close()
-
-        self.dirty = False
     
     def undo(self):
         self.bytestore.Undo()
@@ -268,8 +262,6 @@ class HexEditor(FrameworkEditor):
             text = str(command).replace("&", "&&")
             self.redo_label = "Redo: %s" % text
             self.can_redo = True
-            
-        self.dirty = self.document.undo_stack.is_dirty()
     
     def undo(self):
         undo = self.document.undo_stack.undo(self)

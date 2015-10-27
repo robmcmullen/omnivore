@@ -15,17 +15,15 @@ class FrameworkEditor(Editor):
 
     #### 'IProjectEditor' interface ############################################
 
-    path = Unicode
-    
     document = Any(None)
-
-    dirty = Bool(False)
-
-    name = Property(Unicode, depends_on='path')
-
-    tooltip = Property(Unicode, depends_on='path')
     
-    can_undo = Bool(False)
+    name = Property(Bool, depends_on='document')
+
+    tooltip = Property(Unicode, depends_on='document')
+    
+    dirty = Property(Bool, depends_on='document')  # has to be a property because pyface's Editor uses it.
+    
+    can_undo = Bool(False)  # has to be a property of Editor because EditorActions need to refer to this trait
     
     undo_label = Unicode("Undo")
     
@@ -35,13 +33,21 @@ class FrameworkEditor(Editor):
     
     printable = Bool(False)
 
+    #### trait default values
+
+    def _document_default(self):
+        return Document()
+
     #### property getters
 
-    def _get_tooltip(self):
-        return self.path
-
     def _get_name(self):
-        return os.path.basename(self.path) or 'Untitled'
+        return self.document.name
+
+    def _get_tooltip(self):
+        return self.document.metadata.uri
+
+    def _get_dirty(self):
+        return self.document.undo_stack.is_dirty()
 
     ###########################################################################
     # 'FrameworkEditor' interface.
@@ -101,4 +107,4 @@ class FrameworkEditor(Editor):
 
     @property
     def most_recent_path(self):
-        return os.path.dirname(self.path)
+        return os.path.dirname(self.document.uri)
