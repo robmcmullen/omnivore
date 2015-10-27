@@ -39,7 +39,7 @@ class Document(HasTraits):
     #### trait default values
     
     def _metadata_default(self):
-        return FileMetadata(uri="about:blank")
+        return FileMetadata(uri="")
     
     def _undo_stack_default(self):
         return UndoStack()
