@@ -6,7 +6,7 @@ import numpy as np
 # Enthought library imports.
 from traits.api import HasTraits, Trait, TraitHandler, Int, Any, List, Set, Bool, Event, Dict, Set, Unicode, Property
 
-from omnimon.utils.command import UndoStack, BatchStatus
+from omnimon.utils.command import UndoStack, BatchFlags
 from omnimon.utils.file_guess import FileMetadata
 
 
@@ -75,25 +75,18 @@ class Document(HasTraits):
         """Process a single command and immediately update the UI to reflect
         the results of the command.
         """
-        b = BatchStatus()
-        undo = self.process_batch_command(command, b, editor)
-        self.perform_batch_flags(b, editor)
-        history = self.undo_stack.serialize()
-        editor.window.application.save_log(str(history), "command_log", ".log")
+        b = BatchFlags()
+        undo = self.process_batch_command(command, b)
+        if undo.flags.success:
+            editor.perform_batch_flags(self, b)
         return undo
         
-    def process_batch_command(self, command, b, editor):
+    def process_batch_command(self, command, b):
         """Process a single command but don't update the UI immediately.
         Instead, update the batch flags to reflect the changes needed to
         the UI.
         
         """
-        undo = self.undo_stack.perform(command, editor)
+        undo = self.undo_stack.perform(command, self)
         b.add_flags(command, undo.flags)
         return undo
-    
-    def perform_batch_flags(self, b, editor):
-        """Perform the UI updates given the BatchStatus flags
-        
-        """
-        editor.update_history()

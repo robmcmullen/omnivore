@@ -147,13 +147,16 @@ class HexEditor(FrameworkEditor):
         doc = self.document
         self.segment = doc.segments[self.segment_number]
         self.set_colors()
+        self.refresh_panes()
+        self.segment_list.set_segments(doc.segments)
+        self.task.segments_changed = doc.segments
+    
+    def refresh_panes(self):
         self.control.recalc_view()
         self.disassembly.recalc_view()
         self.byte_graphics.recalc_view()
         self.font_map.recalc_view()
         self.memory_map.recalc_view()
-        self.segment_list.set_segments(doc.segments)
-        self.task.segments_changed = doc.segments
     
     def set_colors(self):
         if self.empty_color is None:
@@ -241,6 +244,17 @@ class HexEditor(FrameworkEditor):
     
     def update_history(self):
         self.undo_history.update_history()
+    
+    def perform_batch_flags(self, document, batch_flags):
+        """Perform the UI updates given the BatchStatus flags
+        
+        """
+        if batch_flags.refresh_needed:
+            self.refresh_panes()
+        
+#        history = document.undo_stack.serialize()
+#        self.window.application.save_log(str(history), "command_log", ".log")
+        self.update_history()
 
     ###########################################################################
     # Trait handlers.

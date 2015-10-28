@@ -9,6 +9,8 @@ import wx.lib.newevent
 
 from omnimon.utils.wx.bytegrid import ByteGridTable, ByteGrid
 
+from commands import ChangeByteCommand
+
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -109,3 +111,22 @@ class HexEditControl(ByteGrid):
             self.editor = editor
             self.table.ResetView(self, editor)
             self.table.UpdateValues(self)
+    
+    def change_value(self, row, col, text):
+        """Called after editor has provided a new value for a cell.
+        
+        Can use this to override the default handler.  Return True if the grid
+        should be updated, or False if the value is invalid or the grid will
+        be updated some other way.
+        """
+        try:
+            val = int(text,16)
+            if val >= 0 and val < 256:
+                start, end = self.table.get_index_range(row, col)
+                cmd = ChangeByteCommand(start, end, val)
+                print "Found value %d @ %d-%d" % (val, start, end), "processing command", cmd
+                editor = self.task.active_editor
+                editor.document.process_command(cmd, editor)
+        except ValueError:
+            pass
+        return False

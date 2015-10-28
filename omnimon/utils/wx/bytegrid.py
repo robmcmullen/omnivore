@@ -408,8 +408,7 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         val = self._tc.GetValue()
         
         if val != self.startValue:
-            changed = True
-            grid.GetTable().SetValue(row, col, val) # update the table
+            changed = grid.change_value(row, col, val) # update the table
 
         self.startValue = ''
         self._tc.SetValue('')
@@ -589,3 +588,13 @@ class ByteGrid(Grid.Grid):
         self.ClearSelection()
         self.goto_index(cursor)
         self.ForceRefresh()
+    
+    def change_value(self, row, col, text):
+        """Called after editor has provided a new value for a cell.
+        
+        Can use this to override the default handler.  Return True if the grid
+        should be updated, or False if the value is invalid or the grid will
+        be updated some other way.
+        """
+        self.table.SetValue(row, col, text) # update the table
+        return True

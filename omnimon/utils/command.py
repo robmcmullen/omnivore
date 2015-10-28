@@ -22,10 +22,10 @@ class UndoStack(list):
     def set_save_point(self):
         self.save_point_index = self.insert_index
     
-    def perform(self, cmd, editor):
+    def perform(self, cmd, document):
         if cmd is None:
             return UndoInfo()
-        undo_info = cmd.perform(editor)
+        undo_info = cmd.perform(document)
         if undo_info.flags.success:
             self.add_command(cmd)
         cmd.last_flags = undo_info.flags
@@ -38,11 +38,11 @@ class UndoStack(list):
         if self.can_undo():
             return self[self.insert_index - 1]
     
-    def undo(self, editor):
+    def undo(self, document):
         cmd = self.get_undo_command()
         if cmd is None:
             return UndoInfo()
-        undo_info = cmd.undo(editor)
+        undo_info = cmd.undo(document)
         if undo_info.flags.success:
             self.insert_index -= 1
         cmd.last_flags = undo_info.flags
@@ -55,11 +55,11 @@ class UndoStack(list):
         if self.can_redo():
             return self[self.insert_index]
     
-    def redo(self, editor):
+    def redo(self, document):
         cmd = self.get_redo_command()
         if cmd is None:
             return UndoInfo()
-        undo_info = cmd.perform(editor)
+        undo_info = cmd.perform(document)
         if undo_info.flags.success:
             self.insert_index += 1
         cmd.last_flags = undo_info.flags
@@ -95,15 +95,12 @@ class UndoStack(list):
         return h
     
     def serialize(self):
-        from serializer import Serializer
         s = Serializer()
         for c in self:
             s.add(c)
         return s
     
     def unserialize_text(self, text, manager):
-        from serializer import TextDeserializer
-        
         offset = manager.get_invariant_offset()
         s = TextDeserializer(text, offset)
         for cmd in s.iter_cmds(manager):
@@ -116,22 +113,30 @@ class UndoStack(list):
         return None
 
 
-class BatchStatus(object):
+class BatchFlags(object):
+    """Coelesce the messages and flags from multiple commands into a single set
+    of messages and flags
+    """
     def __init__(self):
         # Any messages will be added to this list
         self.messages = []
     
         # Any error messages will be added to this list
         self.errors = []
+        
+        # If *any* of the commands needed a refresh, this will be set to True
+        self.refresh_needed = False
     
     def add_flags(self, command, flags):
         if flags.message is not None:
             self.messages.append(flags.message)
         if flags.errors:
             self.errors.extend(flags.errors)
+        if flags.refresh_needed:
+            self.refresh_needed = True
 
 
-class CommandStatus(object):
+class StatusFlags(object):
     def __init__(self):
         # True if command successfully completes, must set to False on failure
         self.success = True
@@ -141,13 +146,16 @@ class CommandStatus(object):
         
         # Message displayed to the user
         self.message = None
+        
+        # set to True if the all views of the data need to be refreshed
+        self.refresh_needed = False
 
 
 class UndoInfo(object):
     def __init__(self):
         self.index = -1
         self.data = None
-        self.flags = CommandStatus()
+        self.flags = StatusFlags()
     
     def __str__(self):
         return "index=%d, flags=%s" % (self.index, str(dir(self.flags)))
@@ -176,10 +184,10 @@ class Command(object):
     def is_recordable(self):
         return True
     
-    def perform(self, editor):
+    def perform(self, document):
         pass
     
-    def undo(self, editor):
+    def undo(self, document):
         pass
 
 
@@ -190,13 +198,13 @@ class Batch(Command):
     def __str__(self):
         return "<batch>"
     
-    def perform(self, editor):
+    def perform(self, document):
         for c in self:
-            c.perform(editor)
+            c.perform(document)
     
-    def undo(self, editor):
+    def undo(self, document):
         for c in reversed(self):
-            c.undo(editor)
+            c.undo(document)
 
 
 def get_known_commands():
