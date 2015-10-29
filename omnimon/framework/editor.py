@@ -111,6 +111,11 @@ class FrameworkEditor(Editor):
         """
         pass
     
+    def ensure_visible(self, start, end):
+        """Make sure the current range of indexes is shown
+        """
+        pass
+    
     # Command processor
 
     def update_undo_redo(self):
@@ -169,6 +174,11 @@ class FrameworkEditor(Editor):
         
         """
         d = self.document
+        
+        if flags.index_range is not None:
+            # Only update the range on the current view, not other views which
+            # are allowed to remain where they are
+            self.ensure_visible(*flags.index_range)
         
         if flags.refresh_needed or flags.byte_values_changed:
             d.byte_values_changed = True

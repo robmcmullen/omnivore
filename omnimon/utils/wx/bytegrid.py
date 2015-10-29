@@ -521,7 +521,7 @@ class ByteGrid(Grid.Grid):
         print "down: cell", (c, r)
         evt.Skip()
         wx.CallAfter(self.ForceRefresh)
-        wx.CallAfter(self.task.active_editor.byte_clicked, e.anchor_start_index, 0, self.table.segment.start_addr, self)
+        wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_start_index, 0, self)
  
     def on_motion(self, evt):
         e = self.editor
@@ -543,7 +543,7 @@ class ByteGrid(Grid.Grid):
                     update = True
             if update:
                 wx.CallAfter(self.ForceRefresh)
-                wx.CallAfter(self.task.active_editor.byte_clicked, e.anchor_end_index, 0, self.table.segment.start_addr, self)
+                wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_end_index, 0, self)
             print "motion: x, y, index1, index2", x, y, index1, index2
         evt.Skip()
 

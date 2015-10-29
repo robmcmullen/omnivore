@@ -130,6 +130,9 @@ class StatusFlags(object):
         # set to True if the all views of the data need to be refreshed
         self.refresh_needed = False
         
+        # ensure the specified index range is visible
+        self.index_range = None
+        
         for flags in args:
             self.add_flags(flags)
     
@@ -146,6 +149,19 @@ class StatusFlags(object):
             self.byte_values_changed = True
         if flags.refresh_needed:
             self.refresh_needed = True
+        
+        # Expand the index range to include the new range specified in flags
+        if flags.index_range is not None:
+            if self.index_range is None:
+                self.index_range = flags.index_range
+            else:
+                s1, s2 = self.index_range
+                f1, f2 = flags.index_range
+                if f1 < s1:
+                    s1 = f1
+                if f2 > s2:
+                    s2 = f1
+                self.index_range = (s1, s2)
 
 
 class UndoInfo(object):

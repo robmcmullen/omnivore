@@ -16,7 +16,6 @@ from omnimon.framework.document import Document
 from i_hex_editor import IHexEditor
 from grid_control import HexEditControl
 from omnimon.utils.file_guess import FileMetadata
-from omnimon.utils.wx.bitviewscroller import EVT_BYTECLICKED
 import omnimon.utils.fonts as fonts
 import omnimon.utils.colors as colors
 from omnimon.utils.dis6502 import Atari800Disassembler
@@ -236,6 +235,9 @@ class HexEditor(FrameworkEditor):
         self.segment_number = number if number < len(doc.segments) else 0
         self.update_panes()
     
+    def ensure_visible(self, start, end):
+        self.index_clicked(start, 0, None)
+    
     def update_history(self):
 #        history = document.undo_stack.serialize()
 #        self.window.application.save_log(str(history), "command_log", ".log")
@@ -276,14 +278,14 @@ class HexEditor(FrameworkEditor):
 
     #### wx event handlers ####################################################
     
-    def byte_clicked(self, byte, bit, start_addr, control):
+    def index_clicked(self, index, bit, control):
         if control != self.control:
-            self.control.select_index(byte)
+            self.control.select_index(index)
         if control != self.disassembly:
-            self.disassembly.select_index(byte)
+            self.disassembly.select_index(index)
         if control != self.byte_graphics:
-            self.byte_graphics.select_index(byte)
+            self.byte_graphics.select_index(index)
         if control != self.font_map:
-            self.font_map.select_index(byte)
+            self.font_map.select_index(index)
         if control != self.memory_map:
-            self.memory_map.select_index(byte)
+            self.memory_map.select_index(index)

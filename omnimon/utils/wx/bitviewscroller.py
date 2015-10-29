@@ -28,10 +28,6 @@ try:
 except ImportError:
     speedups = None
 
-myEVT_BYTECLICKED = wx.NewEventType()
-
-EVT_BYTECLICKED = wx.PyEventBinder(myEVT_BYTECLICKED, 1)
-
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -308,7 +304,7 @@ class BitviewScroller(wx.ScrolledWindow):
             e = self.editor
             e.anchor_start_index = e.anchor_initial_start_index = byte
             e.anchor_end_index = e.anchor_initial_end_index = byte + 1
-            wx.CallAfter(self.task.active_editor.byte_clicked, e.anchor_start_index, bit, self.start_addr, self)
+            wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_start_index, bit, self)
             wx.CallAfter(self.Refresh)
         evt.Skip()
  
@@ -332,7 +328,7 @@ class BitviewScroller(wx.ScrolledWindow):
                         e.anchor_end_index = index1
                         update = True
                 if update:
-                    wx.CallAfter(self.task.active_editor.byte_clicked, e.anchor_end_index, bit, self.start_addr, self)
+                    wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_end_index, bit, self)
                     wx.CallAfter(self.Refresh)
                 print "motion: byte, start, end", byte, e.anchor_start_index, e.anchor_end_index
         evt.Skip()
