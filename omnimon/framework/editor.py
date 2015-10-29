@@ -1,13 +1,16 @@
 import os
 
 # Enthought library imports.
-from traits.api import Any, Bool, Unicode, Property
+from traits.api import on_trait_change, Any, Bool, Unicode, Property
 from pyface.tasks.api import Editor
 
 from omnimon.utils.command import StatusFlags
 
 from document import Document
 
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 class FrameworkEditor(Editor):
     """The pyface editor template for the omnimon framework
@@ -90,8 +93,24 @@ class FrameworkEditor(Editor):
         raise NotImplementedError
     
     def update_history(self):
+        """Hook to update any undo history list and/or save history log to a file
+        """
         pass
 
+    def update_panes(self):
+        """Called when each pane should be rebuilt from the (possibly new)
+        document, or when the document formatting or structure has changed.
+        """
+        pass
+    
+    def refresh_panes(self):
+        """Called when the panes should be repainted.
+        
+        Typically this is called when the contents of the document have changed
+        but the document formatting or structure hasn't changed.
+        """
+        pass
+    
     # Command processor
 
     def update_undo_redo(self):
@@ -117,12 +136,12 @@ class FrameworkEditor(Editor):
     def undo(self):
         undo = self.document.undo_stack.undo(self)
         self.process_flags(undo.flags)
-        self.update_undo_redo()
+        self.document.undo_stack_changed = True
     
     def redo(self):
         undo = self.document.undo_stack.redo(self)
         self.process_flags(undo.flags)
-        self.update_undo_redo()
+        self.document.undo_stack_changed = True
     
     def process_command(self, command):
         """Process a single command and immediately update the UI to reflect
@@ -132,6 +151,7 @@ class FrameworkEditor(Editor):
         undo = self.process_batch_command(command, f)
         if undo.flags.success:
             self.process_flags(f)
+            self.document.undo_stack_changed = True
         return undo
         
     def process_batch_command(self, command, f):
@@ -148,10 +168,28 @@ class FrameworkEditor(Editor):
         """Perform the UI updates given the StatusFlags or BatchFlags flags
         
         """
-        if flags.refresh_needed:
-            self.refresh_panes()
+        d = self.document
         
+        if flags.refresh_needed or flags.byte_values_changed:
+            d.byte_values_changed = True
+            
+    
+    #### Traits event handlers
+    
+    # Trait event handlers are used instead of calling these functions directly
+    # because multiple views of the document might exist and all editors will
+    # be informed of the update via the trait event on the document.
+    
+    @on_trait_change('document:undo_stack_changed')
+    def undo_stack_changed(self):
+        log.debug("undo_stack_changed called!!!")
+        self.update_undo_redo()
         self.update_history()
+    
+    @on_trait_change('document:byte_values_changed')
+    def byte_values_changed(self):
+        log.debug("byte_values_changed called!!!")
+        self.refresh_panes()
 
     #### convenience functions
     

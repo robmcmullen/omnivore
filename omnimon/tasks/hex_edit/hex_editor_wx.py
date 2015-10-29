@@ -136,12 +136,6 @@ class HexEditor(FrameworkEditor):
         f = file(path, 'w')
         f.write(self.control.GetTextUTF8())
         f.close()
-    
-    def undo(self):
-        self.bytestore.Undo()
-    
-    def redo(self):
-        self.bytestore.Redo()
 
     def update_panes(self):
         doc = self.document

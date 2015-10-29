@@ -124,6 +124,9 @@ class StatusFlags(object):
         # Message displayed to the user
         self.message = None
         
+        # has any data values changed, forcing all views to be refreshed?
+        self.byte_values_changed = False
+        
         # set to True if the all views of the data need to be refreshed
         self.refresh_needed = False
         
@@ -139,6 +142,8 @@ class StatusFlags(object):
             for e in flags.errors:
                 self.errors.append("  %s" % e)
             self.errors.append("")
+        if flags.byte_values_changed:
+            self.byte_values_changed = True
         if flags.refresh_needed:
             self.refresh_needed = True
 

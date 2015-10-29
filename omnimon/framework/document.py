@@ -35,6 +35,12 @@ class Document(HasTraits):
     bytes = Trait("", TraitNumpyConverter())
     
     segments = List
+    
+    # Trait events to provide view updating
+    
+    undo_stack_changed = Event
+    
+    byte_values_changed = Event  # but not the size of the bytes array. That's not handled yet
 
     #### trait default values
     
