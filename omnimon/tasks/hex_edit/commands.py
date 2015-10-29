@@ -21,22 +21,23 @@ class ChangeByteCommand(Command):
         self.segment = segment
         self.start_index = start_index
         self.end_index = end_index
-        self.bytes = bytes
+        self.data = bytes
     
     def __str__(self):
         return "Change Bytes"
     
     def perform(self, editor):
         self.undo_info = undo = UndoInfo()
-        undo.flags.refresh_needed = True
-        old_bytes = self.segment.data[self.start_index:self.end_index]
-        self.segment.data[self.start_index:self.end_index] = self.bytes
-        undo.data = (old_bytes, )
+        undo.flags.byte_values_changed = True
+        old_data = self.segment.data[self.start_index:self.end_index].copy()
+        self.segment.data[self.start_index:self.end_index] = self.data
+        undo.data = (old_data, )
         return undo
 
     def undo(self, editor):
-        old_bytes, = self.undo_info.data
-        self.segment.data[self.start_index:self.end_index] = old_bytes
+        old_data, = self.undo_info.data
+        print "undo: old_data =", old_data
+        self.segment.data[self.start_index:self.end_index] = old_data
         undo = UndoInfo()
-        undo.flags.refresh_needed = True
+        undo.flags.byte_values_changed = True
         return undo
