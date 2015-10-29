@@ -22,10 +22,10 @@ class UndoStack(list):
     def set_save_point(self):
         self.save_point_index = self.insert_index
     
-    def perform(self, cmd, document):
+    def perform(self, cmd, editor):
         if cmd is None:
             return UndoInfo()
-        undo_info = cmd.perform(document)
+        undo_info = cmd.perform(editor)
         if undo_info.flags.success:
             self.add_command(cmd)
         cmd.last_flags = undo_info.flags
@@ -38,11 +38,11 @@ class UndoStack(list):
         if self.can_undo():
             return self[self.insert_index - 1]
     
-    def undo(self, document):
+    def undo(self, editor):
         cmd = self.get_undo_command()
         if cmd is None:
             return UndoInfo()
-        undo_info = cmd.undo(document)
+        undo_info = cmd.undo(editor)
         if undo_info.flags.success:
             self.insert_index -= 1
         cmd.last_flags = undo_info.flags
@@ -55,11 +55,11 @@ class UndoStack(list):
         if self.can_redo():
             return self[self.insert_index]
     
-    def redo(self, document):
+    def redo(self, editor):
         cmd = self.get_redo_command()
         if cmd is None:
             return UndoInfo()
-        undo_info = cmd.perform(document)
+        undo_info = cmd.perform(editor)
         if undo_info.flags.success:
             self.insert_index += 1
         cmd.last_flags = undo_info.flags
@@ -113,31 +113,8 @@ class UndoStack(list):
         return None
 
 
-class BatchFlags(object):
-    """Coelesce the messages and flags from multiple commands into a single set
-    of messages and flags
-    """
-    def __init__(self):
-        # Any messages will be added to this list
-        self.messages = []
-    
-        # Any error messages will be added to this list
-        self.errors = []
-        
-        # If *any* of the commands needed a refresh, this will be set to True
-        self.refresh_needed = False
-    
-    def add_flags(self, command, flags):
-        if flags.message is not None:
-            self.messages.append(flags.message)
-        if flags.errors:
-            self.errors.extend(flags.errors)
-        if flags.refresh_needed:
-            self.refresh_needed = True
-
-
 class StatusFlags(object):
-    def __init__(self):
+    def __init__(self, *args):
         # True if command successfully completes, must set to False on failure
         self.success = True
         
@@ -149,6 +126,21 @@ class StatusFlags(object):
         
         # set to True if the all views of the data need to be refreshed
         self.refresh_needed = False
+        
+        for flags in args:
+            self.add_flags(flags)
+    
+    def add_flags(self, flags, cmd=None):
+        if flags.message is not None:
+            self.messages.append(flags.message)
+        if flags.errors:
+            if cmd is not None:
+                self.errors.append("In %s:" % str(cmd))
+            for e in flags.errors:
+                self.errors.append("  %s" % e)
+            self.errors.append("")
+        if flags.refresh_needed:
+            self.refresh_needed = True
 
 
 class UndoInfo(object):

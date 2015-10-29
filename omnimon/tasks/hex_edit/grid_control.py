@@ -123,10 +123,9 @@ class HexEditControl(ByteGrid):
             val = int(text,16)
             if val >= 0 and val < 256:
                 start, end = self.table.get_index_range(row, col)
-                cmd = ChangeByteCommand(start, end, val)
+                cmd = ChangeByteCommand(self.table.segment, start, end, val)
                 print "Found value %d @ %d-%d" % (val, start, end), "processing command", cmd
-                editor = self.task.active_editor
-                editor.document.process_command(cmd, editor)
+                self.task.active_editor.process_command(cmd)
         except ValueError:
             pass
         return False

@@ -4,6 +4,8 @@ import os
 from traits.api import Any, Bool, Unicode, Property
 from pyface.tasks.api import Editor
 
+from omnimon.utils.command import StatusFlags
+
 from document import Document
 
 
@@ -122,7 +124,33 @@ class FrameworkEditor(Editor):
         self.process_flags(undo.flags)
         self.update_undo_redo()
     
+    def process_command(self, command):
+        """Process a single command and immediately update the UI to reflect
+        the results of the command.
+        """
+        f = StatusFlags()
+        undo = self.process_batch_command(command, f)
+        if undo.flags.success:
+            self.process_flags(f)
+        return undo
+        
+    def process_batch_command(self, command, f):
+        """Process a single command but don't update the UI immediately.
+        Instead, update the batch flags to reflect the changes needed to
+        the UI.
+        
+        """
+        undo = self.document.undo_stack.perform(command, self)
+        f.add_flags(undo.flags, command)
+        return undo
+    
     def process_flags(self, flags):
+        """Perform the UI updates given the StatusFlags or BatchFlags flags
+        
+        """
+        if flags.refresh_needed:
+            self.refresh_panes()
+        
         self.update_history()
 
     #### convenience functions

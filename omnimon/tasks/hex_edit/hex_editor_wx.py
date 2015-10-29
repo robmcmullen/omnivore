@@ -243,18 +243,9 @@ class HexEditor(FrameworkEditor):
         self.update_panes()
     
     def update_history(self):
-        self.undo_history.update_history()
-    
-    def perform_batch_flags(self, document, batch_flags):
-        """Perform the UI updates given the BatchStatus flags
-        
-        """
-        if batch_flags.refresh_needed:
-            self.refresh_panes()
-        
 #        history = document.undo_stack.serialize()
 #        self.window.application.save_log(str(history), "command_log", ".log")
-        self.update_history()
+        self.undo_history.update_history()
 
     ###########################################################################
     # Trait handlers.
