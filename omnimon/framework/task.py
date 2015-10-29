@@ -358,6 +358,16 @@ class FrameworkTask(Task):
                         UndoAction(),
                         RedoAction(),
                         ]
+                elif group_name == "CopyPasteGroup":
+                    return [
+                        CutAction(),
+                        CopyAction(),
+                        PasteAction(),
+                        ]
+                elif group_name == "SelectGroup":
+                    return [
+                        SelectAllAction(),
+                        ]
                 elif group_name == "PrefGroup":
                     return [
                         Group(PreferencesAction(), absolute_position="last"),

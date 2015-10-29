@@ -35,6 +35,10 @@ class FrameworkEditor(Editor):
     redo_label = Unicode("Redo")
     
     printable = Bool(False)
+    
+    can_cut = Bool(False)
+    
+    can_copy = Bool(False)
 
     #### trait default values
 
@@ -80,6 +84,27 @@ class FrameworkEditor(Editor):
 
     def redo(self):
         """ Re-performs the last undone action
+        """
+        raise NotImplementedError
+
+    def cut(self):
+        """ Copies the current selection to the clipboard and removes the selection
+        """
+        raise NotImplementedError
+
+    def copy(self):
+        """ Copies the current selection to the clipboard
+        """
+        raise NotImplementedError
+
+    def paste(self):
+        """ Pastes the current clipboard at the current insertion point or over
+        the current selection
+        """
+        raise NotImplementedError
+
+    def select_all(self):
+        """ Selects the entire document
         """
         raise NotImplementedError
     

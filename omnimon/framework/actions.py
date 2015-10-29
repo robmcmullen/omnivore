@@ -254,6 +254,41 @@ class RedoAction(NameChangeAction):
     def perform(self, event):
         self.active_editor.redo()
 
+class CutAction(EditorAction):
+    name = 'Cut'
+    accelerator = 'Ctrl+X'
+    tooltip = 'Cut and remove the current selection'
+    enabled_name = 'can_cut'
+
+    def perform(self, event):
+        self.active_editor.cut()
+
+class CopyAction(EditorAction):
+    name = 'Copy'
+    accelerator = 'Ctrl+C'
+    tooltip = 'Copy the current selection'
+    enabled_name = 'can_copy'
+
+    def perform(self, event):
+        self.active_editor.copy()
+
+class PasteAction(EditorAction):
+    name = 'Paste'
+    accelerator = 'Ctrl+V'
+    tooltip = 'Paste the current selection'
+    enabled_name = 'can_copy'
+
+    def perform(self, event):
+        self.active_editor.paste()
+
+class SelectAllAction(Action):
+    name = 'Select All'
+    accelerator = 'Ctrl+A'
+    tooltip = 'Select the entire document'
+
+    def perform(self, event):
+        event.task.active_editor.select_all()
+
 class PreferencesAction(Action):
     name = 'Preferences...'
     accelerator = 'Ctrl+,'
