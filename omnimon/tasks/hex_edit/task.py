@@ -15,6 +15,7 @@ from omnimon.framework.task import FrameworkTask
 from omnimon.framework.actions import TaskDynamicSubmenuGroup
 from hex_editor import HexEditor
 from preferences import HexEditPreferences
+from commands import *
 import panes
 import omnimon.utils.fonts as fonts
 import omnimon.utils.dis6502 as dis6502
@@ -156,6 +157,16 @@ class UseSegmentAction(EditorAction):
         self.active_editor.view_segment_number(self.segment_number)
 
 
+class ZeroAction(EditorAction):
+    name = 'Zero'
+    enabled_name = 'can_copy'
+    
+    def perform(self, event):
+        e = self.active_editor
+        cmd = ZeroCommand(e.segment, e.anchor_start_index, e.anchor_end_index)
+        self.active_editor.process_command(cmd)
+
+
 class HexEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
     """
@@ -205,9 +216,14 @@ class HexEditTask(FrameworkTask):
 
     def _extra_actions_default(self):
         segment_menu = self.create_menu("Menu", "Segments", "SegmentParserGroup", "SegmentGroup")
+        bytes_menu = self.create_menu("Menu", "Bytes", "HexModifyGroup")
         actions = [
             # Menubar additions
             SchemaAddition(factory=lambda: segment_menu,
+                           path='MenuBar',
+                           after="Edit",
+                           ),
+            SchemaAddition(factory=lambda: bytes_menu,
                            path='MenuBar',
                            after="Edit",
                            ),
@@ -278,6 +294,11 @@ class HexEditTask(FrameworkTask):
                 elif group_name == "SegmentGroup":
                     return [
                         SegmentChoiceGroup(id="a2", separator=True),
+                        ]
+            elif menu_name == "Bytes":
+                if group_name == "HexModifyGroup":
+                    return [
+                        ZeroAction(),
                         ]
 
     ###

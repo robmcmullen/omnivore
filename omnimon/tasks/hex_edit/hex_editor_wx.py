@@ -312,3 +312,4 @@ class HexEditor(FrameworkEditor):
             self.font_map.select_index(index)
         if control != self.memory_map:
             self.memory_map.select_index(index)
+        self.can_copy = (self.anchor_start_index != self.anchor_end_index)

@@ -42,3 +42,18 @@ class ChangeByteCommand(Command):
         print "undo: old_data =", old_data
         self.segment.data[self.start_index:self.end_index] = old_data
         return self.undo_info
+
+
+class ZeroCommand(ChangeByteCommand):
+    short_name = "zero"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('start_index', 'int'),
+            ('end_index', 'int'),
+            ]
+    
+    def __init__(self, segment, start_index, end_index):
+        ChangeByteCommand.__init__(self, segment, start_index, end_index, 0)
+    
+    def __str__(self):
+        return "Zero Bytes"
