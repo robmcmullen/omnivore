@@ -28,7 +28,7 @@ class SetDataCommand(Command):
         else:
             return "%s @ %04x" % (self.pretty_name, self.start_index)
     
-    def get_data(self, source):
+    def get_data(self, orig):
         raise NotImplementedError
     
     def perform(self, editor):
@@ -63,7 +63,7 @@ class ChangeByteCommand(SetDataCommand):
         SetDataCommand.__init__(self, segment, start_index, end_index)
         self.data = bytes
     
-    def get_data(self, source):
+    def get_data(self, orig):
         return self.data
 
 
@@ -71,12 +71,12 @@ class PasteCommand(ChangeByteCommand):
     short_name = "paste"
     pretty_name = "Paste"
     
-    def get_data(self, source):
+    def get_data(self, orig):
         data_len = np.alen(self.data)
         print "paste:", self.data, data_len
-        dest_len = np.alen(source)
-        if data_len > dest_len > 1:
-            data_len = dest_len
+        orig_len = np.alen(orig)
+        if data_len > orig_len > 1:
+            data_len = orig_len
         return self.data[0:data_len]
     
     def perform(self, editor):
@@ -99,6 +99,20 @@ class PasteCommand(ChangeByteCommand):
         i2 = i1 + np.alen(old_data)
         self.segment.data[i1:i2] = old_data
         return self.undo_info
+
+
+class PasteAndRepeatCommand(PasteCommand):
+    short_name = "paste_rep"
+    pretty_name = "Paste And Repeat"
+    
+    def get_data(self, orig):
+        bytes = self.data
+        data_len = np.alen(bytes)
+        orig_len = np.alen(orig)
+        if orig_len > data_len:
+            reps = (orig_len / data_len) + 1
+            bytes = np.tile(bytes, reps)
+        return bytes[0:orig_len]
 
 
 class ZeroCommand(ChangeByteCommand):
@@ -144,8 +158,8 @@ class SetHighBitCommand(SetDataCommand):
     def __init__(self, segment, start_index, end_index):
         SetDataCommand.__init__(self, segment, start_index, end_index)
     
-    def get_data(self, source):
-        return np.bitwise_or(source, 0x80)
+    def get_data(self, orig):
+        return np.bitwise_or(orig, 0x80)
 
 
 class ClearHighBitCommand(SetDataCommand):
@@ -160,8 +174,8 @@ class ClearHighBitCommand(SetDataCommand):
     def __init__(self, segment, start_index, end_index):
         SetDataCommand.__init__(self, segment, start_index, end_index)
     
-    def get_data(self, source):
-        return np.bitwise_and(source, 0x7f)
+    def get_data(self, orig):
+        return np.bitwise_and(orig, 0x7f)
 
 
 class BitwiseNotCommand(SetDataCommand):
@@ -176,32 +190,32 @@ class BitwiseNotCommand(SetDataCommand):
     def __init__(self, segment, start_index, end_index):
         SetDataCommand.__init__(self, segment, start_index, end_index)
     
-    def get_data(self, source):
-        return np.invert(source)
+    def get_data(self, orig):
+        return np.invert(orig)
 
 
 class OrWithCommand(ChangeByteCommand):
     short_name = "or_value"
     pretty_name = "OR With"
     
-    def get_data(self, source):
-        return np.bitwise_or(source, self.data)
+    def get_data(self, orig):
+        return np.bitwise_or(orig, self.data)
 
 
 class AndWithCommand(ChangeByteCommand):
     short_name = "and_value"
     pretty_name = "AND With"
     
-    def get_data(self, source):
-        return np.bitwise_and(source, self.data)
+    def get_data(self, orig):
+        return np.bitwise_and(orig, self.data)
 
 
 class XorWithCommand(ChangeByteCommand):
     short_name = "xor_value"
     pretty_name = "XOR With"
     
-    def get_data(self, source):
-        return np.bitwise_xor(source, self.data)
+    def get_data(self, orig):
+        return np.bitwise_xor(orig, self.data)
 
 
 class LeftShiftCommand(SetDataCommand):
@@ -216,8 +230,8 @@ class LeftShiftCommand(SetDataCommand):
     def __init__(self, segment, start_index, end_index):
         SetDataCommand.__init__(self, segment, start_index, end_index)
     
-    def get_data(self, source):
-        return np.left_shift(source, 1)
+    def get_data(self, orig):
+        return np.left_shift(orig, 1)
 
 
 class RightShiftCommand(SetDataCommand):
@@ -232,8 +246,8 @@ class RightShiftCommand(SetDataCommand):
     def __init__(self, segment, start_index, end_index):
         SetDataCommand.__init__(self, segment, start_index, end_index)
     
-    def get_data(self, source):
-        return np.right_shift(source, 1)
+    def get_data(self, orig):
+        return np.right_shift(orig, 1)
 
 
 class LeftRotateCommand(SetDataCommand):
@@ -248,9 +262,9 @@ class LeftRotateCommand(SetDataCommand):
     def __init__(self, segment, start_index, end_index):
         SetDataCommand.__init__(self, segment, start_index, end_index)
     
-    def get_data(self, source):
-        rotated = np.right_shift(np.bitwise_and(source, 0x80), 7)
-        return np.bitwise_or(np.left_shift(source, 1), rotated)
+    def get_data(self, orig):
+        rotated = np.right_shift(np.bitwise_and(orig, 0x80), 7)
+        return np.bitwise_or(np.left_shift(orig, 1), rotated)
 
 
 class RightRotateCommand(SetDataCommand):
@@ -265,17 +279,17 @@ class RightRotateCommand(SetDataCommand):
     def __init__(self, segment, start_index, end_index):
         SetDataCommand.__init__(self, segment, start_index, end_index)
     
-    def get_data(self, source):
-        rotated = np.left_shift(np.bitwise_and(source, 0x01), 7)
-        return np.bitwise_or(np.right_shift(source, 1), rotated)
+    def get_data(self, orig):
+        rotated = np.left_shift(np.bitwise_and(orig, 0x01), 7)
+        return np.bitwise_or(np.right_shift(orig, 1), rotated)
 
 
 class RampUpCommand(ChangeByteCommand):
     short_name = "ramp_up"
     pretty_name = "Ramp Up"
     
-    def get_data(self, source):
-        num = np.alen(source)
+    def get_data(self, orig):
+        num = np.alen(orig)
         return np.arange(self.data, self.data + num)
 
 
@@ -283,7 +297,7 @@ class RampDownCommand(ChangeByteCommand):
     short_name = "ramp_down"
     pretty_name = "Ramp Down"
     
-    def get_data(self, source):
-        num = np.alen(source)
+    def get_data(self, orig):
+        num = np.alen(orig)
         return np.arange(self.data, self.data - num, -1)
 

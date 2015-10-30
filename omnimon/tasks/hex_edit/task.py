@@ -12,7 +12,7 @@ from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
 from traits.api import on_trait_change, Property, Instance, Any, Event, Int
 
 from omnimon.framework.task import FrameworkTask
-from omnimon.framework.actions import TaskDynamicSubmenuGroup
+from omnimon.framework.actions import *
 from hex_editor import HexEditor
 from preferences import HexEditPreferences
 from commands import *
@@ -249,6 +249,21 @@ class RampDownAction(IndexRangeValueAction):
     cmd = RampDownCommand
 
 
+class PasteAndRepeatAction(EditorAction):
+    name = 'Paste and Repeat'
+    accelerator = 'Shift+Ctrl+V'
+    tooltip = 'Paste and repeat clipboard data until current selection is filled'
+    enabled_name = 'can_copy'
+    
+    def perform(self, event):
+        e = self.active_editor
+        data_obj = e.get_paste_data_object()
+        if data_obj is not None:
+            bytes = e.get_numpy_from_data_object(data_obj)
+            cmd = PasteAndRepeatCommand(e.segment, e.anchor_start_index, e.anchor_end_index, bytes)
+            self.active_editor.process_command(cmd)
+
+
 class HexEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
     """
@@ -330,7 +345,15 @@ class HexEditTask(FrameworkTask):
     
     def get_actions(self, location, menu_name, group_name):
         if location == "Menu":
-            if menu_name == "View":
+            if menu_name == "Edit":
+                if group_name == "CopyPasteGroup":
+                    return [
+                        CutAction(),
+                        CopyAction(),
+                        PasteAction(),
+                        PasteAndRepeatAction(),
+                        ]
+            elif menu_name == "View":
                 if group_name == "ViewConfigGroup":
                     return [
                         SMenu(
