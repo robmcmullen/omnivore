@@ -184,6 +184,12 @@ class ClearHighBitAction(IndexRangeAction):
 class BitwiseNotAction(IndexRangeAction):
     cmd = BitwiseNotCommand
 
+class LeftShiftAction(IndexRangeAction):
+    cmd = LeftShiftCommand
+
+class RightShiftAction(IndexRangeAction):
+    cmd = RightShiftCommand
+
 
 class HexEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
@@ -322,6 +328,8 @@ class HexEditTask(FrameworkTask):
                         SetHighBitAction(),
                         ClearHighBitAction(),
                         BitwiseNotAction(),
+                        LeftShiftAction(),
+                        RightShiftAction(),
                         ]
 
     ###

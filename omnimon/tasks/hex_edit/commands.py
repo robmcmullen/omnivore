@@ -136,3 +136,35 @@ class BitwiseNotCommand(SetDataCommand):
     
     def get_data(self, source):
         return np.invert(source)
+
+
+class LeftShiftCommand(SetDataCommand):
+    short_name = "left_shift"
+    pretty_name = "Left Shift"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('start_index', 'int'),
+            ('end_index', 'int'),
+            ]
+    
+    def __init__(self, segment, start_index, end_index):
+        SetDataCommand.__init__(self, segment, start_index, end_index)
+    
+    def get_data(self, source):
+        return np.left_shift(source, 1)
+
+
+class RightShiftCommand(SetDataCommand):
+    short_name = "right_shift"
+    pretty_name = "Right Shift"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('start_index', 'int'),
+            ('end_index', 'int'),
+            ]
+    
+    def __init__(self, segment, start_index, end_index):
+        SetDataCommand.__init__(self, segment, start_index, end_index)
+    
+    def get_data(self, source):
+        return np.right_shift(source, 1)
