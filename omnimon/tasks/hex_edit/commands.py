@@ -90,6 +90,11 @@ class FFCommand(ChangeByteCommand):
         ChangeByteCommand.__init__(self, segment, start_index, end_index, 0xff)
 
 
+class SetValueCommand(ChangeByteCommand):
+    short_name = "set_value"
+    pretty_name = "Set Value"
+
+
 class SetHighBitCommand(SetDataCommand):
     short_name = "set_high_bit"
     pretty_name = "Set High Bit"

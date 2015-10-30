@@ -2,7 +2,7 @@
 
 """
 # Enthought library imports.
-from pyface.api import ImageResource, ConfirmationDialog, FileDialog, \
+from pyface.api import GUI, ImageResource, ConfirmationDialog, FileDialog, \
     ImageResource, YES, OK, CANCEL
 from pyface.action.api import Action, ActionItem, Separator, Group
 from pyface.tasks.api import Task, TaskWindow, TaskLayout, PaneItem, IEditor, \
@@ -197,6 +197,40 @@ class RightRotateAction(IndexRangeAction):
     cmd = RightRotateCommand
 
 
+class IndexRangeValueAction(IndexRangeAction):
+    def get_value(self, editor):
+        import wx
+        dialog = wx.TextEntryDialog(editor.window.control, "Enter byte value: (prefix with 0x or $ for hex)", "Byte Value")
+
+        result = dialog.ShowModal()
+        if result == wx.ID_OK:
+            text = dialog.GetValue()
+            try:
+                if text.startswith("0x"):
+                    value = int(text[2:], 16)
+                elif text.startswith("$"):
+                    value = int(text[1:], 16)
+                else:
+                    value = int(text)
+            except (ValueError, TypeError):
+                value = None
+        dialog.Destroy()
+        return value
+        
+    def show_dialog(self, editor):
+        e = editor
+        value = self.get_value(editor)
+        if value is not None:
+            cmd = self.cmd(e.segment, e.anchor_start_index, e.anchor_end_index, value)
+            self.active_editor.process_command(cmd)
+            
+    def perform(self, event):
+        GUI.invoke_later(self.show_dialog, self.active_editor)
+
+class SetValueAction(IndexRangeValueAction):
+    cmd = SetValueCommand
+
+
 class HexEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
     """
@@ -330,6 +364,7 @@ class HexEditTask(FrameworkTask):
                     return [
                         ZeroAction(),
                         FFAction(),
+                        SetValueAction(),
                         Separator(),
                         SetHighBitAction(),
                         ClearHighBitAction(),
