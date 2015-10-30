@@ -23,7 +23,10 @@ class SetDataCommand(Command):
         self.end_index = end_index
     
     def __str__(self):
-        return self.pretty_name
+        if self.end_index - self.start_index > 1:
+            return "%s @ %04x-%04x" % (self.pretty_name, self.start_index + self.segment.start_addr, self.end_index + self.segment.start_addr)
+        else:
+            return "%s @ %04x" % (self.pretty_name, self.start_index)
     
     def get_data(self, source):
         raise NotImplementedError
