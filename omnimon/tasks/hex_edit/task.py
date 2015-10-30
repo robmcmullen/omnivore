@@ -242,6 +242,12 @@ class AndWithAction(IndexRangeValueAction):
 class XorWithAction(IndexRangeValueAction):
     cmd = XorWithCommand
 
+class RampUpAction(IndexRangeValueAction):
+    cmd = RampUpCommand
+
+class RampDownAction(IndexRangeValueAction):
+    cmd = RampDownCommand
+
 
 class HexEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
@@ -389,6 +395,9 @@ class HexEditTask(FrameworkTask):
                         RightShiftAction(),
                         LeftRotateAction(),
                         RightRotateAction(),
+                        Separator(),
+                        RampUpAction(),
+                        RampDownAction(),
                         ]
 
     ###

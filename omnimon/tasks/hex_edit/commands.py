@@ -232,3 +232,21 @@ class RightRotateCommand(SetDataCommand):
         rotated = np.left_shift(np.bitwise_and(source, 0x01), 7)
         return np.bitwise_or(np.right_shift(source, 1), rotated)
 
+
+class RampUpCommand(ChangeByteCommand):
+    short_name = "ramp_up"
+    pretty_name = "Ramp Up"
+    
+    def get_data(self, source):
+        num = np.alen(source)
+        return np.arange(self.data, self.data + num)
+
+
+class RampDownCommand(ChangeByteCommand):
+    short_name = "ramp_down"
+    pretty_name = "Ramp Down"
+    
+    def get_data(self, source):
+        num = np.alen(source)
+        return np.arange(self.data, self.data - num, -1)
+
