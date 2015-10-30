@@ -7,24 +7,26 @@ import logging
 progress_log = logging.getLogger("progress")
 
 
-class ChangeByteCommand(Command):
-    short_name = "cb"
+class SetDataCommand(Command):
+    short_name = "get_data_base"
+    pretty_name = "Set Data Abstract Command"
     serialize_order =  [
             ('segment', 'int'),
             ('start_index', 'int'),
             ('end_index', 'int'),
-            ('bytes', 'string'),
             ]
     
-    def __init__(self, segment, start_index, end_index, bytes):
+    def __init__(self, segment, start_index, end_index):
         Command.__init__(self)
         self.segment = segment
         self.start_index = start_index
         self.end_index = end_index
-        self.data = bytes
     
     def __str__(self):
-        return "Change Bytes"
+        return self.pretty_name
+    
+    def get_data(self, source):
+        raise NotImplementedError
     
     def perform(self, editor):
         i1 = self.start_index
@@ -33,7 +35,7 @@ class ChangeByteCommand(Command):
         undo.flags.byte_values_changed = True
         undo.flags.index_range = i1, i2
         old_data = self.segment.data[i1:i2].copy()
-        self.segment.data[i1:i2] = self.data
+        self.segment.data[i1:i2] = self.get_data(self.segment.data[i1:i2])
         undo.data = (old_data, )
         return undo
 
@@ -44,8 +46,27 @@ class ChangeByteCommand(Command):
         return self.undo_info
 
 
+class ChangeByteCommand(SetDataCommand):
+    short_name = "cb"
+    pretty_name = "Change Bytes"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('start_index', 'int'),
+            ('end_index', 'int'),
+            ('bytes', 'string'),
+            ]
+    
+    def __init__(self, segment, start_index, end_index, bytes):
+        SetDataCommand.__init__(self, segment, start_index, end_index)
+        self.data = bytes
+    
+    def get_data(self, source):
+        return self.data
+
+
 class ZeroCommand(ChangeByteCommand):
     short_name = "zero"
+    pretty_name = "Zero Bytes"
     serialize_order =  [
             ('segment', 'int'),
             ('start_index', 'int'),
@@ -54,13 +75,11 @@ class ZeroCommand(ChangeByteCommand):
     
     def __init__(self, segment, start_index, end_index):
         ChangeByteCommand.__init__(self, segment, start_index, end_index, 0)
-    
-    def __str__(self):
-        return "Zero Bytes"
 
 
 class FFCommand(ChangeByteCommand):
     short_name = "ff"
+    pretty_name = "FF Bytes"
     serialize_order =  [
             ('segment', 'int'),
             ('start_index', 'int'),
@@ -69,6 +88,51 @@ class FFCommand(ChangeByteCommand):
     
     def __init__(self, segment, start_index, end_index):
         ChangeByteCommand.__init__(self, segment, start_index, end_index, 0xff)
+
+
+class SetHighBitCommand(SetDataCommand):
+    short_name = "set_high_bit"
+    pretty_name = "Set High Bit"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('start_index', 'int'),
+            ('end_index', 'int'),
+            ]
     
-    def __str__(self):
-        return "FF Bytes"
+    def __init__(self, segment, start_index, end_index):
+        SetDataCommand.__init__(self, segment, start_index, end_index)
+    
+    def get_data(self, source):
+        return np.bitwise_or(source, 0x80)
+
+
+class ClearHighBitCommand(SetDataCommand):
+    short_name = "clear_high_bit"
+    pretty_name = "Clear High Bit"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('start_index', 'int'),
+            ('end_index', 'int'),
+            ]
+    
+    def __init__(self, segment, start_index, end_index):
+        SetDataCommand.__init__(self, segment, start_index, end_index)
+    
+    def get_data(self, source):
+        return np.bitwise_and(source, 0x7f)
+
+
+class BitwiseNotCommand(SetDataCommand):
+    short_name = "bitwise_not"
+    pretty_name = "Bitwise NOT"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('start_index', 'int'),
+            ('end_index', 'int'),
+            ]
+    
+    def __init__(self, segment, start_index, end_index):
+        SetDataCommand.__init__(self, segment, start_index, end_index)
+    
+    def get_data(self, source):
+        return np.invert(source)

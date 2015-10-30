@@ -174,6 +174,18 @@ class FFAction(IndexRangeAction):
     name = 'FF'
     cmd = FFCommand
 
+class SetHighBitAction(IndexRangeAction):
+    name = 'Set High Bit'
+    cmd = SetHighBitCommand
+
+class ClearHighBitAction(IndexRangeAction):
+    name = 'Clear High Bit'
+    cmd = ClearHighBitCommand
+
+class BitwiseNotAction(IndexRangeAction):
+    name = 'Bitwise NOT'
+    cmd = BitwiseNotCommand
+
 
 class HexEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
@@ -308,6 +320,10 @@ class HexEditTask(FrameworkTask):
                     return [
                         ZeroAction(),
                         FFAction(),
+                        Separator(),
+                        SetHighBitAction(),
+                        ClearHighBitAction(),
+                        BitwiseNotAction(),
                         ]
 
     ###
