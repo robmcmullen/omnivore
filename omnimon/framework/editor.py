@@ -1,7 +1,10 @@
 import os
 
+# Major package imports.
+import wx
+
 # Enthought library imports.
-from traits.api import on_trait_change, Any, Bool, Unicode, Property
+from traits.api import on_trait_change, Any, Bool, Int, Unicode, Property
 from pyface.tasks.api import Editor
 
 from omnimon.utils.command import StatusFlags
@@ -39,6 +42,17 @@ class FrameworkEditor(Editor):
     can_cut = Bool(False)
     
     can_copy = Bool(False)
+    
+    # Anchor indexes behave like cursor positions: they indicate positions
+    # between bytes, so zero is before the first byte and the max value of an
+    # anchor is the number of bytes + 1
+    anchor_start_index = Int(0)
+    
+    anchor_initial_start_index = Int(0)
+    
+    anchor_initial_end_index = Int(0)
+
+    anchor_end_index = Int(0)
 
     #### trait default values
 
@@ -95,18 +109,43 @@ class FrameworkEditor(Editor):
     def copy(self):
         """ Copies the current selection to the clipboard
         """
-        raise NotImplementedError
+        self.data_obj = self.create_clipboard_data_object()
+        if self.data_obj is None:
+            return
+        if wx.TheClipboard.Open():
+            wx.TheClipboard.SetData(self.data_obj)
+            wx.TheClipboard.Close()
+            print "Copied object to clipboard", self.data_obj
+        else:
+            self.window.error("Unable to open clipboard", "Clipboard Error")
 
     def paste(self):
         """ Pastes the current clipboard at the current insertion point or over
         the current selection
         """
-        raise NotImplementedError
-
-    def select_all(self):
-        """ Selects the entire document
-        """
-        raise NotImplementedError
+        data_objs = self.get_supported_clipboard_data_objects()
+        
+        if wx.TheClipboard.Open():
+            for data_obj in data_objs:
+                success = wx.TheClipboard.GetData(data_obj)
+                if success:
+                    break
+            wx.TheClipboard.Close()
+        else:
+            self.window.error("Unable to open clipboard", "Clipboard Error")
+            success = False
+        if success:
+            self.paste_data_object(data_obj)
+    
+    def paste_data_object(self, data_obj):
+        print "Found data object %s" % data_obj
+        print "value:", data_obj.GetText()
+    
+    def create_clipboard_data_object(self):
+        return wx.TextDataObject("Omnimon!")
+    
+    def get_supported_clipboard_data_objects(self):
+        return [wx.TextDataObject()]
     
     def print_preview(self):
         raise NotImplementedError
@@ -140,6 +179,13 @@ class FrameworkEditor(Editor):
         """Make sure the current range of indexes is shown
         """
         pass
+
+    def select_all(self):
+        """ Selects the entire document
+        """
+        self.anchor_start_index = self.anchor_initial_start_index = 0
+        self.anchor_end_index = self.anchor_initial_end_index = len(self.document)
+        self.refresh_panes()
     
     # Command processor
 
@@ -201,6 +247,10 @@ class FrameworkEditor(Editor):
         d = self.document
         
         if flags.index_range is not None:
+            if flags.select_range:
+                self.anchor_start_index = self.anchor_initial_start_index = flags.index_range[0]
+                self.anchor_end_index = self.anchor_initial_end_index = flags.index_range[1]
+            
             # Only update the range on the current view, not other views which
             # are allowed to remain where they are
             self.ensure_visible(*flags.index_range)

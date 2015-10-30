@@ -133,6 +133,9 @@ class StatusFlags(object):
         # ensure the specified index range is visible
         self.index_range = None
         
+        # set to True if the index_range should be selected
+        self.select_range = False
+        
         for flags in args:
             self.add_flags(flags)
     
@@ -149,6 +152,8 @@ class StatusFlags(object):
             self.byte_values_changed = True
         if flags.refresh_needed:
             self.refresh_needed = True
+        if flags.select_range:
+            self.select_range = True
         
         # Expand the index range to include the new range specified in flags
         if flags.index_range is not None:

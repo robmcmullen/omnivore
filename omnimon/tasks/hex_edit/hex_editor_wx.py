@@ -21,6 +21,9 @@ import omnimon.utils.colors as colors
 from omnimon.utils.dis6502 import Atari800Disassembler
 from omnimon.utils.binutil import known_segment_parsers, DefaultSegmentParser, ATRSegmentParser, XexSegmentParser, InvalidSegmentParser, DefaultSegment
 
+from commands import PasteCommand
+
+
 @provides(IHexEditor)
 class HexEditor(FrameworkEditor):
     """ The toolkit specific implementation of a HexEditor.  See the
@@ -48,17 +51,6 @@ class HexEditor(FrameworkEditor):
     disassembler = Any
     
     segment = Any(None)
-    
-    # Anchor indexes behave like cursor positions: they indicate positions
-    # between bytes, so zero is before the first byte and the max value of an
-    # anchor is the number of bytes + 1
-    anchor_start_index = Int(0)
-    
-    anchor_initial_start_index = Int(0)
-    
-    anchor_initial_end_index = Int(0)
-
-    anchor_end_index = Int(0)
     
     highlight_color = Any((100, 200, 230))
     
@@ -135,29 +127,33 @@ class HexEditor(FrameworkEditor):
         f = file(path, 'w')
         f.write(self.control.GetTextUTF8())
         f.close()
-
-    def cut(self):
-        """ Copies the current selection to the clipboard and removes the selection
-        """
-        pass
-
-    def copy(self):
-        """ Copies the current selection to the clipboard
-        """
-        pass
-
-    def paste(self):
-        """ Pastes the current clipboard at the current insertion point or over
-        the current selection
-        """
-        pass
-
-    def select_all(self):
-        """ Selects the entire document
-        """
-        self.anchor_start_index = self.anchor_initial_start_index = 0
-        self.anchor_end_index = self.anchor_initial_end_index = len(self.document)
-        self.refresh_panes()
+    
+    def paste_data_object(self, data_obj):
+        if wx.DF_TEXT in data_obj.GetAllFormats():
+            value = data_obj.GetText()
+        else:
+            value = data_obj.GetData()
+        bytes = np.fromstring(value, dtype=np.uint8)
+        source_len = np.alen(bytes)
+        print "paste:", bytes, source_len
+        dest_len = self.anchor_end_index - self.anchor_start_index
+        if source_len > dest_len > 1:
+            bytes = bytes[0:dest_len]
+            source_len = np.alen(bytes)
+        cmd = PasteCommand(self.segment, self.anchor_start_index, self.anchor_start_index + source_len, bytes)
+        self.process_command(cmd)
+    
+    def create_clipboard_data_object(self):
+        if self.anchor_start_index != self.anchor_end_index:
+            data = self.segment[self.anchor_start_index:self.anchor_end_index]
+            data_obj = wx.CustomDataObject("numpy")
+            data_obj.SetData(data.tostring())
+            print "Created data obj", data_obj, "for", data
+            return data_obj
+        return None
+    
+    def get_supported_clipboard_data_objects(self):
+        return [wx.CustomDataObject("numpy"), wx.TextDataObject()]
 
     def update_panes(self):
         doc = self.document

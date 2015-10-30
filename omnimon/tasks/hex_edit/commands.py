@@ -67,6 +67,16 @@ class ChangeByteCommand(SetDataCommand):
         return self.data
 
 
+class PasteCommand(ChangeByteCommand):
+    short_name = "paste"
+    pretty_name = "Paste"
+    
+    def perform(self, editor):
+        undo = ChangeByteCommand.perform(self, editor)
+        undo.flags.select_range = True
+        return undo
+
+
 class ZeroCommand(ChangeByteCommand):
     short_name = "zero"
     pretty_name = "Zero Bytes"
