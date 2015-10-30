@@ -57,3 +57,18 @@ class ZeroCommand(ChangeByteCommand):
     
     def __str__(self):
         return "Zero Bytes"
+
+
+class FFCommand(ChangeByteCommand):
+    short_name = "ff"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('start_index', 'int'),
+            ('end_index', 'int'),
+            ]
+    
+    def __init__(self, segment, start_index, end_index):
+        ChangeByteCommand.__init__(self, segment, start_index, end_index, 0xff)
+    
+    def __str__(self):
+        return "FF Bytes"

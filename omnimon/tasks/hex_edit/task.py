@@ -157,14 +157,22 @@ class UseSegmentAction(EditorAction):
         self.active_editor.view_segment_number(self.segment_number)
 
 
-class ZeroAction(EditorAction):
-    name = 'Zero'
+class IndexRangeAction(EditorAction):
     enabled_name = 'can_copy'
+    cmd = None
     
     def perform(self, event):
         e = self.active_editor
-        cmd = ZeroCommand(e.segment, e.anchor_start_index, e.anchor_end_index)
+        cmd = self.cmd(e.segment, e.anchor_start_index, e.anchor_end_index)
         self.active_editor.process_command(cmd)
+
+class ZeroAction(IndexRangeAction):
+    name = 'Zero'
+    cmd = ZeroCommand
+
+class FFAction(IndexRangeAction):
+    name = 'FF'
+    cmd = FFCommand
 
 
 class HexEditTask(FrameworkTask):
@@ -299,6 +307,7 @@ class HexEditTask(FrameworkTask):
                 if group_name == "HexModifyGroup":
                     return [
                         ZeroAction(),
+                        FFAction(),
                         ]
 
     ###
