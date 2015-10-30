@@ -136,6 +136,29 @@ class HexEditor(FrameworkEditor):
         f.write(self.control.GetTextUTF8())
         f.close()
 
+    def cut(self):
+        """ Copies the current selection to the clipboard and removes the selection
+        """
+        pass
+
+    def copy(self):
+        """ Copies the current selection to the clipboard
+        """
+        pass
+
+    def paste(self):
+        """ Pastes the current clipboard at the current insertion point or over
+        the current selection
+        """
+        pass
+
+    def select_all(self):
+        """ Selects the entire document
+        """
+        self.anchor_start_index = self.anchor_initial_start_index = 0
+        self.anchor_end_index = self.anchor_initial_end_index = len(self.document)
+        self.refresh_panes()
+
     def update_panes(self):
         doc = self.document
         self.segment = doc.segments[self.segment_number]
