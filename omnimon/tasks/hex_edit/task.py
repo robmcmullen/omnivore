@@ -161,29 +161,27 @@ class IndexRangeAction(EditorAction):
     enabled_name = 'can_copy'
     cmd = None
     
+    def _name_default(self):
+        return self.cmd.pretty_name
+    
     def perform(self, event):
         e = self.active_editor
         cmd = self.cmd(e.segment, e.anchor_start_index, e.anchor_end_index)
         self.active_editor.process_command(cmd)
 
 class ZeroAction(IndexRangeAction):
-    name = 'Zero'
     cmd = ZeroCommand
 
 class FFAction(IndexRangeAction):
-    name = 'FF'
     cmd = FFCommand
 
 class SetHighBitAction(IndexRangeAction):
-    name = 'Set High Bit'
     cmd = SetHighBitCommand
 
 class ClearHighBitAction(IndexRangeAction):
-    name = 'Clear High Bit'
     cmd = ClearHighBitCommand
 
 class BitwiseNotAction(IndexRangeAction):
-    name = 'Bitwise NOT'
     cmd = BitwiseNotCommand
 
 
