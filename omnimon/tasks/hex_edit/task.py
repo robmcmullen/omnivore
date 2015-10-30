@@ -198,6 +198,9 @@ class RightRotateAction(IndexRangeAction):
 
 
 class IndexRangeValueAction(IndexRangeAction):
+    def _name_default(self):
+        return self.cmd.pretty_name + "..."
+    
     def get_value(self, editor):
         import wx
         dialog = wx.TextEntryDialog(editor.window.control, "Enter byte value: (prefix with 0x or $ for hex)", "Byte Value")
@@ -229,6 +232,15 @@ class IndexRangeValueAction(IndexRangeAction):
 
 class SetValueAction(IndexRangeValueAction):
     cmd = SetValueCommand
+
+class OrWithAction(IndexRangeValueAction):
+    cmd = OrWithCommand
+
+class AndWithAction(IndexRangeValueAction):
+    cmd = AndWithCommand
+
+class XorWithAction(IndexRangeValueAction):
+    cmd = XorWithCommand
 
 
 class HexEditTask(FrameworkTask):
@@ -369,6 +381,10 @@ class HexEditTask(FrameworkTask):
                         SetHighBitAction(),
                         ClearHighBitAction(),
                         BitwiseNotAction(),
+                        OrWithAction(),
+                        AndWithAction(),
+                        XorWithAction(),
+                        Separator(),
                         LeftShiftAction(),
                         RightShiftAction(),
                         LeftRotateAction(),

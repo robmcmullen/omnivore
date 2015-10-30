@@ -143,6 +143,30 @@ class BitwiseNotCommand(SetDataCommand):
         return np.invert(source)
 
 
+class OrWithCommand(ChangeByteCommand):
+    short_name = "or_value"
+    pretty_name = "OR With"
+    
+    def get_data(self, source):
+        return np.bitwise_or(source, self.data)
+
+
+class AndWithCommand(ChangeByteCommand):
+    short_name = "and_value"
+    pretty_name = "AND With"
+    
+    def get_data(self, source):
+        return np.bitwise_and(source, self.data)
+
+
+class XorWithCommand(ChangeByteCommand):
+    short_name = "xor_value"
+    pretty_name = "XOR With"
+    
+    def get_data(self, source):
+        return np.bitwise_xor(source, self.data)
+
+
 class LeftShiftCommand(SetDataCommand):
     short_name = "left_shift"
     pretty_name = "Left Shift"
