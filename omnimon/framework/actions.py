@@ -275,7 +275,7 @@ class CopyAction(EditorAction):
 class PasteAction(EditorAction):
     name = 'Paste'
     accelerator = 'Ctrl+V'
-    tooltip = 'Paste the current selection'
+    tooltip = 'Paste from the clipboard'
     enabled_name = 'can_copy'
 
     def perform(self, event):

@@ -71,10 +71,34 @@ class PasteCommand(ChangeByteCommand):
     short_name = "paste"
     pretty_name = "Paste"
     
+    def get_data(self, source):
+        data_len = np.alen(self.data)
+        print "paste:", self.data, data_len
+        dest_len = np.alen(source)
+        if data_len > dest_len > 1:
+            data_len = dest_len
+        return self.data[0:data_len]
+    
     def perform(self, editor):
-        undo = ChangeByteCommand.perform(self, editor)
+        i1 = self.start_index
+        i2 = self.end_index
+        data = self.get_data(self.segment.data[i1:i2])
+        i2 = i1 + np.alen(data)  # Force end index to be length of pasted data
+        self.undo_info = undo = UndoInfo()
+        undo.flags.byte_values_changed = True
+        undo.flags.index_range = i1, i2
         undo.flags.select_range = True
+        old_data = self.segment.data[i1:i2].copy()
+        self.segment.data[i1:i2] = data
+        undo.data = (old_data, )
         return undo
+
+    def undo(self, editor):
+        old_data, = self.undo_info.data
+        i1 = self.start_index
+        i2 = i1 + np.alen(old_data)
+        self.segment.data[i1:i2] = old_data
+        return self.undo_info
 
 
 class ZeroCommand(ChangeByteCommand):

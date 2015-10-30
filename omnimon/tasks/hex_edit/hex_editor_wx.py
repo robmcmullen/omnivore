@@ -128,20 +128,18 @@ class HexEditor(FrameworkEditor):
         f.write(self.control.GetTextUTF8())
         f.close()
     
-    def paste_data_object(self, data_obj):
+    def process_paste_data_object(self, data_obj):
+        bytes = self.get_numpy_from_data_object(data_obj)
+        cmd = PasteCommand(self.segment, self.anchor_start_index, self.anchor_end_index, bytes)
+        self.process_command(cmd)
+    
+    def get_numpy_from_data_object(self, data_obj):
         if wx.DF_TEXT in data_obj.GetAllFormats():
             value = data_obj.GetText()
         else:
             value = data_obj.GetData()
         bytes = np.fromstring(value, dtype=np.uint8)
-        source_len = np.alen(bytes)
-        print "paste:", bytes, source_len
-        dest_len = self.anchor_end_index - self.anchor_start_index
-        if source_len > dest_len > 1:
-            bytes = bytes[0:dest_len]
-            source_len = np.alen(bytes)
-        cmd = PasteCommand(self.segment, self.anchor_start_index, self.anchor_start_index + source_len, bytes)
-        self.process_command(cmd)
+        return bytes
     
     def create_clipboard_data_object(self):
         if self.anchor_start_index != self.anchor_end_index:

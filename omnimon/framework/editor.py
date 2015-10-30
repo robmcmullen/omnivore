@@ -123,6 +123,11 @@ class FrameworkEditor(Editor):
         """ Pastes the current clipboard at the current insertion point or over
         the current selection
         """
+        data_obj = self.get_paste_data_object()
+        if data_obj is not None:
+            self.process_paste_data_object(data_obj)
+    
+    def get_paste_data_object(self):
         data_objs = self.get_supported_clipboard_data_objects()
         
         if wx.TheClipboard.Open():
@@ -135,9 +140,10 @@ class FrameworkEditor(Editor):
             self.window.error("Unable to open clipboard", "Clipboard Error")
             success = False
         if success:
-            self.paste_data_object(data_obj)
+            return data_obj
+        return None
     
-    def paste_data_object(self, data_obj):
+    def process_paste_data_object(self, data_obj):
         print "Found data object %s" % data_obj
         print "value:", data_obj.GetText()
     
