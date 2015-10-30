@@ -168,3 +168,38 @@ class RightShiftCommand(SetDataCommand):
     
     def get_data(self, source):
         return np.right_shift(source, 1)
+
+
+class LeftRotateCommand(SetDataCommand):
+    short_name = "left_rotate"
+    pretty_name = "Left Rotate"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('start_index', 'int'),
+            ('end_index', 'int'),
+            ]
+    
+    def __init__(self, segment, start_index, end_index):
+        SetDataCommand.__init__(self, segment, start_index, end_index)
+    
+    def get_data(self, source):
+        rotated = np.right_shift(np.bitwise_and(source, 0x80), 7)
+        return np.bitwise_or(np.left_shift(source, 1), rotated)
+
+
+class RightRotateCommand(SetDataCommand):
+    short_name = "right_rotate"
+    pretty_name = "Right Rotate"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('start_index', 'int'),
+            ('end_index', 'int'),
+            ]
+    
+    def __init__(self, segment, start_index, end_index):
+        SetDataCommand.__init__(self, segment, start_index, end_index)
+    
+    def get_data(self, source):
+        rotated = np.left_shift(np.bitwise_and(source, 0x01), 7)
+        return np.bitwise_or(np.right_shift(source, 1), rotated)
+

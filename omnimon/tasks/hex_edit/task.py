@@ -190,6 +190,12 @@ class LeftShiftAction(IndexRangeAction):
 class RightShiftAction(IndexRangeAction):
     cmd = RightShiftCommand
 
+class LeftRotateAction(IndexRangeAction):
+    cmd = LeftRotateCommand
+
+class RightRotateAction(IndexRangeAction):
+    cmd = RightRotateCommand
+
 
 class HexEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
@@ -330,6 +336,8 @@ class HexEditTask(FrameworkTask):
                         BitwiseNotAction(),
                         LeftShiftAction(),
                         RightShiftAction(),
+                        LeftRotateAction(),
+                        RightRotateAction(),
                         ]
 
     ###
