@@ -53,34 +53,11 @@ class StyledTextEditor(FrameworkEditor):
     def create(self, parent):
         self.control = self._create_control(parent)
 
-    def load(self, guess=None):
-        """ Loads the contents of the editor.
-        """
-        if guess is None:
-            path = self.path
-            text = ''
-        else:
-            metadata = guess.get_metadata()
-            path = metadata.uri
-            text = guess.get_utf8()
-
+    def rebuild_document_properties(self):
+        text = self.document.to_bytes()
         self.control.SetTextUTF8(text)
         self.control.EmptyUndoBuffer()
-        self.path = path
-        self.dirty = False
 
-    def save(self, path=None):
-        """ Saves the contents of the editor.
-        """
-        if path is None:
-            path = self.path
-
-        f = file(path, 'w')
-        f.write(self.control.GetTextUTF8())
-        f.close()
-
-        self.dirty = False
-    
     def undo(self):
         self.control.Undo()
     

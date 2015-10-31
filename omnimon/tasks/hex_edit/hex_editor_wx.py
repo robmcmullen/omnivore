@@ -104,20 +104,8 @@ class HexEditor(FrameworkEditor):
         self.init_fonts(self.window.application)
         self.task.fonts_changed = self.font_list
 
-    def load(self, guess=None):
-        """ Loads the contents of the editor.
-        """
-        if guess is None:
-            doc = Document()
-        else:
-            metadata = guess.get_metadata()
-            bytes = guess.get_utf8()
-            doc = Document(metadata=metadata, bytes=bytes)
-        self.document = doc
-        
+    def rebuild_document_properties(self):
         self.find_segment_parser([ATRSegmentParser, XexSegmentParser])
-        self.update_panes()
-        self.document.undo_stack_changed = True
     
     def process_paste_data_object(self, data_obj):
         bytes = self.get_numpy_from_data_object(data_obj)

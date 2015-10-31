@@ -76,3 +76,6 @@ class Document(HasTraits):
     
     def __getitem__(self, val):
         return self.bytes[val]
+
+    def to_bytes(self):
+        return self.bytes.tostring()

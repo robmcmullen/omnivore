@@ -76,10 +76,22 @@ class FrameworkEditor(Editor):
         """
         raise NotImplementedError
 
-    def load(self, guess=None, **kwargs):
+    def load(self, guess=None):
         """ Loads the contents of the editor.
         """
-        raise NotImplementedError
+        if guess is None:
+            doc = Document()
+        else:
+            metadata = guess.get_metadata()
+            bytes = guess.get_utf8()
+            doc = Document(metadata=metadata, bytes=bytes)
+        self.document = doc
+        self.rebuild_document_properties()
+        self.update_panes()
+        self.document.undo_stack_changed = True
+    
+    def rebuild_document_properties(self):
+        pass
 
     def view_of(self, editor, **kwargs):
         """ Copy the view of the supplied editor.
