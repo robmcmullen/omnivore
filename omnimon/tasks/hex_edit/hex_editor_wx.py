@@ -117,6 +117,7 @@ class HexEditor(FrameworkEditor):
         
         self.find_segment_parser([ATRSegmentParser, XexSegmentParser])
         self.update_panes()
+        self.document.undo_stack_changed = True
 
     def save(self, path=None):
         """ Saves the contents of the editor.
