@@ -89,7 +89,16 @@ class FrameworkEditor(Editor):
     def save(self, path=None):
         """ Saves the contents of the editor.
         """
-        raise NotImplementedError
+        if path is None:
+            path = self.document.uri
+
+        try:
+            with open(path, 'w') as f:
+                f.write(self.document.bytes.tostring())
+                self.document.undo_stack.set_save_point()
+                self.document.undo_stack_changed = True
+        except Exception, e:
+            self.window.error("Error trying to save:\n\n%s\n\n%s" % (path, str(e)), "File Save Error")
 
     def undo(self):
         """ Undoes the last action

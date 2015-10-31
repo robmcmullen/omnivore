@@ -118,16 +118,6 @@ class HexEditor(FrameworkEditor):
         self.find_segment_parser([ATRSegmentParser, XexSegmentParser])
         self.update_panes()
         self.document.undo_stack_changed = True
-
-    def save(self, path=None):
-        """ Saves the contents of the editor.
-        """
-        if path is None:
-            path = self.document.uri
-
-        f = file(path, 'w')
-        f.write(self.control.GetTextUTF8())
-        f.close()
     
     def process_paste_data_object(self, data_obj):
         bytes = self.get_numpy_from_data_object(data_obj)
