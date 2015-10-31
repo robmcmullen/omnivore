@@ -137,7 +137,7 @@ class HexEditor(FrameworkEditor):
         self.segment = doc.segments[self.segment_number]
         self.set_colors()
         self.refresh_panes()
-        self.segment_list.set_segments(doc.segments)
+        self.segment_list.set_segments(doc.segments, self.segment_number)
         self.task.segments_changed = doc.segments
     
     def refresh_panes(self):
@@ -217,9 +217,9 @@ class HexEditor(FrameworkEditor):
             except InvalidSegmentParser:
                 pass
         doc.segments = s.segments
-        self.segment_list.set_segments(doc.segments)
         self.segment_number = 0
         self.segment_parser = parser
+        self.segment_list.set_segments(doc.segments, self.segment_number)
         self.task.segments_changed = doc.segments
     
     def set_segment_parser(self, parser):

@@ -20,15 +20,18 @@ class SegmentList(wx.ListBox):
     def set_task(self, task):
         self.task = task
     
-    def set_segments(self, segments):
+    def set_segments(self, segments, selected=0):
         items = [str(s) for s in segments]
         self.SetItems(items)
+        self.SetSelection(selected)
 
     def on_click(self, event):
-        item = event.GetSelection()
-        editor = self.task.active_editor
-        print "Selected segment %d for document %s, control %s" % (item, editor.document, event.GetEventObject())
-        editor.view_segment_number(item)
+        selected = event.GetExtraLong()
+        if selected:
+            item = event.GetSelection()
+            editor = self.task.active_editor
+            print "Selected segment %d for document %s, control %s" % (item, editor.document, event.GetEventObject())
+            wx.CallAfter(editor.view_segment_number, item)
         event.Skip()
     
     def on_dclick(self, event):
