@@ -248,6 +248,24 @@ class RampUpAction(IndexRangeValueAction):
 class RampDownAction(IndexRangeValueAction):
     cmd = RampDownCommand
 
+class AddValueAction(IndexRangeValueAction):
+    cmd = AddValueCommand
+
+class SubtractValueAction(IndexRangeValueAction):
+    cmd = SubtractValueCommand
+
+class SubtractFromAction(IndexRangeValueAction):
+    cmd = SubtractFromCommand
+
+class MultiplyAction(IndexRangeValueAction):
+    cmd = MultiplyCommand
+
+class DivideByAction(IndexRangeValueAction):
+    cmd = DivideByCommand
+
+class DivideFromAction(IndexRangeValueAction):
+    cmd = DivideFromCommand
+
 
 class PasteAndRepeatAction(EditorAction):
     name = 'Paste and Repeat'
@@ -418,6 +436,13 @@ class HexEditTask(FrameworkTask):
                         RightShiftAction(),
                         LeftRotateAction(),
                         RightRotateAction(),
+                        Separator(),
+                        AddValueAction(),
+                        SubtractValueAction(),
+                        SubtractFromAction(),
+                        MultiplyAction(),
+                        DivideByAction(),
+                        DivideFromAction(),
                         Separator(),
                         RampUpAction(),
                         RampDownAction(),

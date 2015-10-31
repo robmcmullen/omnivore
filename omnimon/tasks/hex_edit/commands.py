@@ -301,3 +301,50 @@ class RampDownCommand(ChangeByteCommand):
         num = np.alen(orig)
         return np.arange(self.data, self.data - num, -1)
 
+
+class AddValueCommand(ChangeByteCommand):
+    short_name = "add_value"
+    pretty_name = "Add"
+    
+    def get_data(self, orig):
+        return orig + self.data
+
+
+class SubtractValueCommand(ChangeByteCommand):
+    short_name = "subtract_value"
+    pretty_name = "Subtract"
+    
+    def get_data(self, orig):
+        return orig - self.data
+
+
+class SubtractFromCommand(ChangeByteCommand):
+    short_name = "subtract_from"
+    pretty_name = "Subtract From"
+    
+    def get_data(self, orig):
+        return self.data - orig
+
+
+class MultiplyCommand(ChangeByteCommand):
+    short_name = "multiply"
+    pretty_name = "Multiply"
+    
+    def get_data(self, orig):
+        return orig * self.data
+
+
+class DivideByCommand(ChangeByteCommand):
+    short_name = "divide"
+    pretty_name = "Divide By"
+    
+    def get_data(self, orig):
+        return orig / self.data
+
+
+class DivideFromCommand(ChangeByteCommand):
+    short_name = "divide_from"
+    pretty_name = "Divide From"
+    
+    def get_data(self, orig):
+        return self.data / orig
