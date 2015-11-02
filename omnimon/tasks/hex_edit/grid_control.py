@@ -9,6 +9,7 @@ import wx.lib.newevent
 
 from omnimon.utils.wx.bytegrid import ByteGridTable, ByteGrid
 
+from omnimon.framework.actions import *
 from commands import ChangeByteCommand
 
 import logging
@@ -129,3 +130,6 @@ class HexEditControl(ByteGrid):
         except ValueError:
             pass
         return False
+    
+    def get_popup_actions(self):
+        return [CutAction, CopyAction, PasteAction, None, SelectAllAction]

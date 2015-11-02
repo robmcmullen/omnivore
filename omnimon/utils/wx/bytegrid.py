@@ -511,6 +511,12 @@ class ByteGrid(Grid.Grid):
 
     def OnRightDown(self, evt):
         log.debug(self.GetSelectedRows())
+        actions = self.get_popup_actions()
+        if actions:
+            self.editor.popup_context_menu_from_actions(self, actions)
+    
+    def get_popup_actions(self):
+        return []
 
     def OnLeftDown(self, evt):
         c, r = (evt.GetCol(), evt.GetRow())

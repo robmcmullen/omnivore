@@ -6,6 +6,7 @@ import wx
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Bool, Int, Unicode, Property
 from pyface.tasks.api import Editor
+from pyface.action.api import ActionEvent
 
 from omnimon.utils.command import StatusFlags
 
@@ -285,6 +286,55 @@ class FrameworkEditor(Editor):
         if flags.refresh_needed or flags.byte_values_changed:
             d.byte_values_changed = True
             
+    def popup_context_menu_from_commands(self, window, commands):
+        """Popup a simple context menu with menu items defined by commands.
+        
+        Each entry is either None to indicate a separator, or a 2-tuple
+        containing the string name and the command instance to process if the
+        menu entry is selected.
+        """
+        popup = wx.Menu()
+        context_menu_data = dict()
+        for entry in commands:
+            if entry is None:
+                popup.AppendSeparator()
+            else:
+                name, cmd = entry
+                i = wx.NewId()
+                popup.Append(i, name)
+                context_menu_data[i] = cmd
+        ret = window.GetPopupMenuSelectionFromUser(popup)
+        if ret == wx.ID_NONE:
+            return
+        cmd = context_menu_data[ret]
+        self.process_command(cmd)
+        
+    def popup_context_menu_from_actions(self, window, actions):
+        """Popup a simple context menu with menu items defined by actions.
+        
+        Each entry is either None to indicate a separator, or an action to be
+        used as the menu item.  Note that the action may be either an Action
+        instance or the class of that Action.  If it is a class, a temporary
+        instance of that class will be created.
+        """
+        popup = wx.Menu()
+        context_menu_data = dict()
+        for action in actions:
+            if action is None:
+                popup.AppendSeparator()
+            else:
+                i = wx.NewId()
+                if not hasattr(action, 'task'):
+                    action = action(task=self.task)
+                item = popup.Append(i, action.name)
+                item.Enable(action.enabled)
+                context_menu_data[i] = action
+        ret = window.GetPopupMenuSelectionFromUser(popup)
+        if ret == wx.ID_NONE:
+            return
+        action = context_menu_data[ret]
+        action_event = ActionEvent(task=self.task)
+        action.perform(action_event)
     
     #### Traits event handlers
     
