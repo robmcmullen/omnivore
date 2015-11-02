@@ -62,7 +62,7 @@ class FrameworkTask(Task):
     
     about_website = Str('http://playermissile.com/omnimon')
     
-    about_image = Instance(ImageResource, ImageResource('omnimon128'))
+    about_image = Instance(ImageResource, ImageResource('omnimon256'))
     
     #### 'IErrorReporter' interface ###########################################
     
@@ -81,7 +81,7 @@ class FrameworkTask(Task):
     ###########################################################################
     
     def _icon_default(self):
-        return ImageResource('omnimon48')
+        return ImageResource('omnimon16')
 
     def _menu_bar_default(self):
         menus = []
