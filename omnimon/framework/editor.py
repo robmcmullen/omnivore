@@ -213,6 +213,7 @@ class FrameworkEditor(Editor):
         """
         self.anchor_start_index = self.anchor_initial_start_index = 0
         self.anchor_end_index = self.anchor_initial_end_index = len(self.document)
+        self.can_copy = (self.anchor_start_index != self.anchor_end_index)
         self.refresh_panes()
     
     # Command processor
