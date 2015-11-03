@@ -88,6 +88,7 @@ class FrameworkTask(Task):
         self.add_menu(menus, "Menu", "File", "NewGroup", "OpenGroup", "SaveGroup", "RevertGroup", "PrintGroup", "ExitGroup")
         self.add_menu(menus, "Menu", "Edit", "UndoGroup", "CopyPasteGroup", "SelectGroup", "FindGroup", "PrefGroup")
         self.add_menu(menus, "Menu", "View", "ViewChangeGroup", "ViewConfigGroup", "ViewToggleGroup", "ViewDebugGroup", "TaskGroup")
+        self.add_menu(menus, "Menu", "Documents", "DocumentGroup")
         self.add_menu(menus, "Menu", "Window", "WindowGroup")
         self.add_menu(menus, "Menu", "Help", "AboutGroup", "DocGroup", "BugReportGroup", "DebugGroup")
         
@@ -377,6 +378,11 @@ class FrameworkTask(Task):
                     return [
                         DockPaneToggleGroup(),
                         TaskToggleGroup(),
+                        ]
+            elif menu_name == "Documents":
+                if group_name == "DocumentGroup":
+                    return [
+                        DocumentSelectGroup(),
                         ]
             elif menu_name == "Window":
                 if group_name == "WindowGroup":

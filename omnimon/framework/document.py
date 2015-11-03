@@ -32,6 +32,8 @@ class Document(HasTraits):
 
     uri = Property(Unicode, depends_on='metadata')
     
+    invariant = Int(-1)
+    
     bytes = Trait("", TraitNumpyConverter())
     
     segments = List
@@ -63,6 +65,10 @@ class Document(HasTraits):
 
     def _get_uri(self):
         return self.metadata.uri
+    
+    @property
+    def menu_name(self):
+        return "%s (%s)" % (self.name, self.uri)
     
     @classmethod
     def get_blank(cls):

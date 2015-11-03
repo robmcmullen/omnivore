@@ -39,7 +39,7 @@ from envisage.ui.tasks.api import TasksApplication
 from envisage.ui.tasks.task_window_event import TaskWindowEvent, VetoableTaskWindowEvent
 from pyface.api import ImageResource
 from pyface.tasks.api import Task, TaskWindowLayout
-from traits.api import provides, Bool, Instance, List, Property, Str, Unicode, Event, Dict
+from traits.api import provides, Bool, Instance, List, Property, Str, Unicode, Event, Dict, Int
 
 # Local imports.
 from omnimon.framework.preferences import FrameworkPreferences, \
@@ -93,6 +93,10 @@ class FrameworkApplication(TasksApplication):
     log_file_ext = Str
     
     cache_dir = Str
+    
+    next_document_invariant = Int(0)
+    
+    documents = List
 
     ###########################################################################
     # Private interface.
@@ -347,6 +351,31 @@ class FrameworkApplication(TasksApplication):
         return
     
     #### Convenience methods
+    
+    def add_document(self, document):
+        """Add document to the application list of open documents
+        
+        FIXME: check for duplicates?
+        """
+        existing = self.get_document(document.invariant)
+        if existing:
+            return existing
+        
+        document.invariant = self.next_document_invariant
+        self.next_document_invariant += 1
+        self.documents.append(document)
+        return document
+    
+    def get_document(self, invariant):
+        """Add document to the application list of open documents
+        
+        FIXME: check for duplicates?
+        """
+        for doc in self.documents:
+            print "checking document", doc.invariant, doc, doc.uri
+            if doc.invariant == invariant:
+                return doc
+        return None
     
     def get_plugin_data(self, plugin_id):
         return self.plugin_data[plugin_id]

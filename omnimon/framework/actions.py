@@ -5,7 +5,7 @@ import wx.lib.inspection
 from pyface.api import ImageResource, FileDialog, YES, NO, OK, CANCEL
 from pyface.action.api import Action, ActionItem, Group
 from pyface.tasks.action.api import EditorAction
-from traits.api import Property, Instance, Bool, Str, Unicode, Any, List
+from traits.api import Property, Instance, Bool, Str, Unicode, Any, List, Int
 
 from omnimon.framework.about import AboutDialog
 from omnimon.utils.file_guess import FileGuess
@@ -465,3 +465,38 @@ class ApplicationDynamicSubmenuGroup(BaseDynamicSubmenuGroup):
     def _application_default(self):
         log.debug("DYNAMICGROUP: _application_default=%s!!!" % self.manager.controller.task.window.application)
         return self.manager.controller.task.window.application
+
+
+class SwitchDocumentAction(Action):
+    invariant = Int
+    
+    name = Str
+    
+    def perform(self, event):
+        app = event.task.window.application
+        doc = app.get_document(self.invariant)
+        if doc is not None:
+            print "Switching to", doc
+            if event.task.can_edit(doc.metadata.mime):
+                event.task.active_editor.view_document(doc)
+
+
+class DocumentSelectGroup(ApplicationDynamicSubmenuGroup):
+    """ A menu for creating a new file for each type of task
+    """
+
+    event_name = 'successfully_loaded_event'
+    
+    ###########################################################################
+    # Private interface.
+    ###########################################################################
+
+    def _get_items(self, event_data=None):
+        print self.application.documents
+        documents = sorted(self.application.documents, key=lambda x: x.name.lower())
+        items = []
+        for document in documents:
+            print document
+            action = SwitchDocumentAction(invariant=document.invariant, name=document.menu_name)
+            items.append(ActionItem(action=action))
+        return items

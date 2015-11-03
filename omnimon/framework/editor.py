@@ -86,7 +86,10 @@ class FrameworkEditor(Editor):
             metadata = guess.get_metadata()
             bytes = guess.get_utf8()
             doc = Document(metadata=metadata, bytes=bytes)
-        self.document = doc
+            self.view_document(doc)
+    
+    def view_document(self, doc):
+        self.document = self.task.window.application.add_document(doc)
         self.rebuild_document_properties()
         self.update_panes()
         self.document.undo_stack_changed = True
