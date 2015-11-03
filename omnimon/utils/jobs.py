@@ -9,7 +9,6 @@ import os, time, logging, threading, multiprocessing, Queue
 #### log = logging.getLogger("dinoteeth.job")
 
 log = multiprocessing.log_to_stderr()
-log.setLevel(logging.DEBUG)
 
 
 

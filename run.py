@@ -17,8 +17,25 @@ def main(argv):
     """ Run the application.
     """
     logging.basicConfig(level=logging.WARNING)
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    if "-d" in argv:
+        i = argv.index("-d")
+        argv.pop(i)  # discard -d
+        next = argv.pop(i)  # discard next
+        if next == "all":
+            logger = logging.getLogger()
+            logger.setLevel(logging.DEBUG)
+        else:
+            loggers = next.split(",")
+            for name in loggers:
+                log = logging.getLogger(name)
+                log.setLevel(logging.DEBUG)
+
+    else:
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+    for toolkit in ['pyface', 'envisage', 'traits', 'traitsui', 'apptools']:
+        _ = logging.getLogger(toolkit)
+        _.setLevel(logging.WARNING)
 
     run(egg_path=EGG_PATH)
 

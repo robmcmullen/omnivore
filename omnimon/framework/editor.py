@@ -14,7 +14,7 @@ from document import Document
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
 
 class FrameworkEditor(Editor):
     """The pyface editor template for the omnimon framework
