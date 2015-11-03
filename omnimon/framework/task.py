@@ -81,7 +81,7 @@ class FrameworkTask(Task):
     ###########################################################################
     
     def _icon_default(self):
-        return ImageResource('omnimon16')
+        return ImageResource('omnimon')
 
     def _menu_bar_default(self):
         menus = []
