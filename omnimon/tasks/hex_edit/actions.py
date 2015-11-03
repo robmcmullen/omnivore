@@ -72,6 +72,23 @@ class FontStyleBaseAction(EditorAction):
             self.checked = self.active_editor.font_mode == self.font_mode
 
 
+class TextFontAction(EditorAction):
+    name = 'Text Font...'
+    
+    def perform(self, event):
+        e = self.active_editor
+        data = wx.FontData()
+        data.EnableEffects(True)
+        data.SetColour(e.text_color)
+        data.SetInitialFont(e.text_font)
+        dlg = wx.FontDialog(self.active_editor.control, data)
+        if dlg.ShowModal() == wx.ID_OK:
+            data = dlg.GetFontData()
+            e.text_font = data.GetChosenFont()
+            e.text_color = data.GetColour()
+            e.refresh_panes()
+
+
 class DisassemblerBaseAction(EditorAction):
     """Radio buttons for changing font style
     """

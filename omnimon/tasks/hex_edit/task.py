@@ -122,6 +122,7 @@ class HexEditTask(FrameworkTask):
                                 DisassemblerBaseAction(disassembler=dis6502.Atari5200Disassembler),
                                 id="a1", separator=True),
                             id='FontChoiceSubmenu3', separator=True, name="Disassembler"),
+                        TextFontAction(),
                         ]
             elif menu_name == "Segments":
                 if group_name == "SegmentParserGroup":
