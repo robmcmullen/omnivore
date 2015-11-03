@@ -66,7 +66,8 @@ class HexEditTask(FrameworkTask):
 
     def _active_editor_changed(self, editor):
         print "active editor changed to ", editor
-        if editor is not None:
+        # Make sure it's a valid document before refreshing
+        if editor is not None and editor.document.segments:
             editor.update_panes()
 
     ###########################################################################
