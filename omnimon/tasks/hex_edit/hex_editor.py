@@ -227,8 +227,11 @@ class HexEditor(FrameworkEditor):
     
     def view_segment_number(self, number):
         doc = self.document
-        self.segment_number = number if number < len(doc.segments) else 0
-        self.update_panes()
+        num = number if number < len(doc.segments) else 0
+        if num != self.segment_number:
+            self.segment_number = num
+            self.segment = doc.segments[self.segment_number]
+            self.refresh_panes()
     
     def ensure_visible(self, start, end):
         self.index_clicked(start, 0, None)
