@@ -68,7 +68,7 @@ class AtrHeader(object):
         self.max_sectors = self.size_in_bytes / self.sector_size
     
     def sector_is_valid(self, sector):
-        return sector >= 0 and sector < self.max_sectors
+        return sector > 0 and sector <= self.max_sectors
     
     def get_pos(self, sector):
         if not self.sector_is_valid(sector):
