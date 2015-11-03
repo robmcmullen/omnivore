@@ -3,6 +3,7 @@
 import os
 import sys
 import shutil
+import glob
 import subprocess
 from setuptools import setup, find_packages
 from distutils.extension import Extension
@@ -68,7 +69,6 @@ common_includes = [
     "pyface.ui.wx.workbench.*",
 ]
 common_includes.extend(omnimon.get_py2exe_toolkit_includes())
-common_includes.extend(omnimon.get_py2exe_toolkit_includes(omnimon))
 print common_includes
 
 py2app_includes = [
@@ -96,82 +96,95 @@ py2exe_excludes = [
 base_dist_dir = "dist-%s" % spaceless_version
 win_dist_dir = os.path.join(base_dist_dir, "win")
 mac_dist_dir = os.path.join(base_dist_dir, "mac")
-if sys.platform.startswith("win"):
-    shutil.rmtree(win_dist_dir, ignore_errors=True)
-elif sys.platform.startswith('darwin'):
-    shutil.rmtree(mac_dist_dir, ignore_errors=True)
 
-setup(
-    name = 'Omnimon',
-    version = info['__version__'],
-    author = info['__author__'],
-    author_email = info['__author_email__'],
-    url = info['__url__'],
-    download_url = ('%s-%s.tar.gz' % (info['__download_url__'], info['__version__'])),
-    classifiers = [c.strip() for c in """\
-        Development Status :: 3 - Alpha
-        Intended Audience :: Developers
-        License :: OSI Approved :: GNU General Public License (GPL)
-        Operating System :: MacOS
-        Operating System :: Microsoft :: Windows
-        Operating System :: OS Independent
-        Operating System :: POSIX
-        Operating System :: Unix
-        Programming Language :: Python
-        Topic :: Software Development :: Libraries
-        Topic :: Text Editors
-        """.splitlines() if len(c.strip()) > 0],
-    description = '(ap)Proximated (X)Emacs Powered by Python.',
-    long_description = open('README.rst').read(),
-    cmdclass={'build_ext': build_ext},
-    ext_modules = ext_modules,
-    install_requires = info['__requires__'],
-    license = "BSD",
-    packages = find_packages(),
-    package_data = {'': ['images/*', '*.ini',]},
-    data_files=data_files,
-    
-    app=["run.py"],
-    windows=[dict(
-        script="run.py",
-        icon_resources=[(1, "omnimon/icons/omnimon.ico")],
-    )],
-    options=dict(
-        py2app=dict(
-            dist_dir=mac_dist_dir,
-            argv_emulation=True,
-            packages=[],
-            optimize=2,  # Equivalent to running "python -OO".
-            semi_standalone=False,
-            includes=common_includes + py2app_includes,
-            excludes=common_excludes,
-            frameworks=[],
-            iconfile="omnimon/icons/omnimon.icns",
-            plist=dict(
-                CFBundleName="Omnimon",
-                CFBundleTypeExtensions=["xex", "fnt"],
-                CFBundleTypeName="Document",
-                CFBundleTypeRole="Editor",
-                CFBundleShortVersionString=info['__version__'],
-                CFBundleGetInfoString="Omnimon %s" % info['__version__'],
-                CFBundleExecutable="Omnimon",
-                CFBUndleIdentifier="com.playermissile",
-            )
-        ),
-        py2exe=dict(
-            dist_dir=win_dist_dir,
-            optimize=2,
-            skip_archive=True,
-            compressed=False,
-            packages=[],
-            includes=common_includes,
-            excludes=common_excludes + py2exe_excludes,
-        ),
-        build=dict(compiler="msvc",) if sys.platform.startswith("win") else {},
-        ),
-    platforms = ["Windows", "Linux", "Mac OS-X", "Unix", "Solaris"],
-    zip_safe = False,
-    )
+is_64bit = sys.maxsize > 2**32
+
+if sys.platform.startswith("win"):
+    import py2exe
+    if is_64bit:
+        # Help py2exe find MSVCP90.DLL
+        sys.path.append("c:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/redist/amd64/Microsoft.VC90.CRT")
+    else:
+        # Help py2exe find MSVCP90.DLL
+        sys.path.append("c:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/redist/x86/Microsoft.VC90.CRT")
+
+if 'nsis' not in sys.argv:
+    if sys.platform.startswith("win"):
+        shutil.rmtree(win_dist_dir, ignore_errors=True)
+    elif sys.platform.startswith('darwin'):
+        shutil.rmtree(mac_dist_dir, ignore_errors=True)
+
+    setup(
+        name = 'Omnimon',
+        version = info['__version__'],
+        author = info['__author__'],
+        author_email = info['__author_email__'],
+        url = info['__url__'],
+        download_url = ('%s-%s.tar.gz' % (info['__download_url__'], info['__version__'])),
+        classifiers = [c.strip() for c in """\
+            Development Status :: 3 - Alpha
+            Intended Audience :: Developers
+            License :: OSI Approved :: GNU General Public License (GPL)
+            Operating System :: MacOS
+            Operating System :: Microsoft :: Windows
+            Operating System :: OS Independent
+            Operating System :: POSIX
+            Operating System :: Unix
+            Programming Language :: Python
+            Topic :: Software Development :: Libraries
+            Topic :: Text Editors
+            """.splitlines() if len(c.strip()) > 0],
+        description = '(ap)Proximated (X)Emacs Powered by Python.',
+        long_description = open('README.rst').read(),
+        cmdclass={'build_ext': build_ext},
+        ext_modules = ext_modules,
+        install_requires = info['__requires__'],
+        license = "BSD",
+        packages = find_packages(),
+        package_data = {'': ['images/*', '*.ini',]},
+        data_files=data_files,
+        
+        app=["run.py"],
+        windows=[dict(
+            script="run.py",
+            icon_resources=[(1, "omnimon/icons/omnimon.ico")],
+        )],
+        options=dict(
+            py2app=dict(
+                dist_dir=mac_dist_dir,
+                argv_emulation=True,
+                packages=[],
+                optimize=2,  # Equivalent to running "python -OO".
+                semi_standalone=False,
+                includes=common_includes + py2app_includes,
+                excludes=common_excludes,
+                frameworks=[],
+                iconfile="omnimon/icons/omnimon.icns",
+                plist=dict(
+                    CFBundleName="Omnimon",
+                    CFBundleTypeExtensions=["xex", "atr", "xfd", "obx"],
+                    CFBundleTypeName="Document",
+                    CFBundleTypeRole="Editor",
+                    CFBundleShortVersionString=info['__version__'],
+                    CFBundleGetInfoString="Omnimon %s" % info['__version__'],
+                    CFBundleExecutable="Omnimon",
+                    CFBUndleIdentifier="com.playermissile",
+                )
+            ),
+            py2exe=dict(
+                dist_dir=win_dist_dir,
+                optimize=2,
+                skip_archive=True,
+                compressed=False,
+                packages=[],
+                includes=common_includes,
+                excludes=common_excludes + py2exe_excludes,
+            ),
+            build=dict(compiler="msvc",) if sys.platform.startswith("win") else {},
+            ),
+        platforms = ["Windows", "Linux", "Mac OS-X", "Unix", "Solaris"],
+        zip_safe = False,
+        )
 
 if 'py2exe' in sys.argv and sys.platform.startswith("win"):
     print "*** create installer ***"
@@ -182,11 +195,12 @@ ArchitecturesInstallIn64BitMode=x64"""
         
         # copy manifest and app config files to work around side-by-side
         # errors
-        for f in glob(r'pyinstaller/Microsoft.VC90.CRT-9.0.30729.6161/*'):
+        for f in glob.glob(r'pyinstaller/Microsoft.VC90.CRT-9.0.30729.6161/*'):
             print f
             shutil.copy(f, win_dist_dir)
     else:
         nsis_arch = ""
+    shutil.copy("%s/run.exe" % win_dist_dir, "%s/omnimon.exe" % win_dist_dir)
     iss_filename = "%s\\omnimon.iss" % win_dist_dir
     iss_file = open(iss_filename, "w")
     iss_file.write( """
