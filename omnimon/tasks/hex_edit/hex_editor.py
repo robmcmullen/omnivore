@@ -203,8 +203,7 @@ class HexEditor(FrameworkEditor):
     
     def set_disassembler(self, disassembler):
         self.disassembler = disassembler
-        self.disassembly.set_disassembler(disassembler)
-        self.disassembly.set_segment(doc.segments[self.segment_number])
+        self.disassembly.recalc_view()
     
     def find_segment_parser(self, parsers):
         doc = self.document
