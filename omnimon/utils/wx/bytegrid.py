@@ -156,7 +156,7 @@ class ByteGridTable(Grid.PyGridTableBase):
 
         # update the scrollbars and the displayed part of the grid
         dc = wx.MemoryDC()
-        dc.SetFont(grid.font)
+        dc.SetFont(grid.editor.text_font)
         (width, height) = dc.GetTextExtent("M")
         grid.SetDefaultRowSize(height)
         grid.SetColMinimalAcceptableWidth(width)
@@ -167,7 +167,7 @@ class ByteGridTable(Grid.PyGridTableBase):
             # freeing them.  So, have to individually allocate the attrs for
             # each column
             hexattr = Grid.GridCellAttr()
-            hexattr.SetFont(grid.font)
+            hexattr.SetFont(grid.editor.text_font)
             hexattr.SetBackgroundColour("white")
             renderer = ByteGridRenderer(self, grid.editor)
             hexattr.SetRenderer(renderer)
@@ -179,7 +179,9 @@ class ByteGridTable(Grid.PyGridTableBase):
         self._rows = self.GetNumberRows()
         self._cols = self.GetNumberCols()
         
-        dc.SetFont(grid.label_font)
+        label_font = grid.editor.text_font.Bold()
+        grid.SetLabelFont(label_font)
+        dc.SetFont(label_font)
         (width, height) = dc.GetTextExtent("M")
         grid.SetColLabelSize(height + 4)
         text = self.GetRowLabelValue(self._rows - 1)
@@ -482,9 +484,6 @@ class ByteGrid(Grid.Grid):
         self.task = task
         self.editor = None
         self.table = table
-        self.font = wx.Font(8, wx.MODERN, wx.NORMAL, wx.NORMAL)
-        self.label_font = wx.Font(8, wx.MODERN, wx.NORMAL, wx.FONTWEIGHT_BOLD)
-        self.SetLabelFont(self.label_font)
 
         # The second parameter means that the grid is to take
         # ownership of the table and will destroy it when done.

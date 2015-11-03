@@ -103,7 +103,7 @@ class HexEditTask(FrameworkTask):
                                 LoadFontAction(),
                                 GetFontFromSelectionAction(),
                                 id="a3", separator=True),
-                            id='FontChoiceSubmenu1', separator=True, name="Font"),
+                            id='FontChoiceSubmenu1', separator=True, name="Antic Font"),
                         SMenu(
                             Group(
                                 FontStyleBaseAction(font_mode=2, name="Antic 2 (Gr 0)"),
