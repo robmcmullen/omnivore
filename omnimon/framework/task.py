@@ -152,7 +152,7 @@ class FrameworkTask(Task):
             if source is not None:
                 self.window.application.successfully_loaded_event = source.metadata.uri
         else:
-            editor.view_of(source, **kwargs)
+            editor.view_document(source.document)
         self.activated()
 
     def new_window(self, task=None, view=None):

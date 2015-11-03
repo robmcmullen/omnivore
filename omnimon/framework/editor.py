@@ -87,20 +87,19 @@ class FrameworkEditor(Editor):
             bytes = guess.get_utf8()
             doc = Document(metadata=metadata, bytes=bytes)
             self.view_document(doc)
-    
+
     def view_document(self, doc):
+        """ Change the view to the specified document
+        """
         self.document = self.task.window.application.add_document(doc)
         self.rebuild_document_properties()
         self.update_panes()
         self.document.undo_stack_changed = True
     
     def rebuild_document_properties(self):
-        pass
-
-    def view_of(self, editor, **kwargs):
-        """ Copy the view of the supplied editor.
+        """ Recreate any editor attributes for the new document
         """
-        raise NotImplementedError
+        pass
 
     def save(self, path=None):
         """ Saves the contents of the editor.
