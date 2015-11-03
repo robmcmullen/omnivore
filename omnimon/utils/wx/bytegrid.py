@@ -475,10 +475,10 @@ class ByteGrid(Grid.Grid):
     View for editing in hexidecimal notation.
     """
 
-    def __init__(self, parent, task, table):
+    def __init__(self, parent, task, table, **kwargs):
         """Create the HexEdit viewer
         """
-        Grid.Grid.__init__(self, parent, -1)
+        Grid.Grid.__init__(self, parent, -1, **kwargs)
         self.task = task
         self.editor = None
         self.table = table

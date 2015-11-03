@@ -23,7 +23,7 @@ class DisassemblyPane(DockPane):
     name = 'Disassembly'
     
     def create_contents(self, parent):
-        control = DisassemblyPanel(parent, self.task)
+        control = DisassemblyPanel(parent, self.task, size=(200,-1))
         return control
     
     #### trait change handlers
@@ -41,7 +41,7 @@ class ByteGraphicsPane(DockPane):
     name = 'Byte Graphics'
     
     def create_contents(self, parent):
-        control = BitviewScroller(parent, self.task)
+        control = BitviewScroller(parent, self.task, size=(64,-1))
         return control
     
     #### trait change handlers
@@ -59,7 +59,7 @@ class FontMapPane(DockPane):
     name = 'Font Map'
     
     def create_contents(self, parent):
-        control = FontMapScroller(parent, self.task)
+        control = FontMapScroller(parent, self.task, size=(160,-1))
         return control
     
     #### trait change handlers
@@ -77,7 +77,7 @@ class MemoryMapPane(DockPane):
     name = 'Memory Map'
     
     def create_contents(self, parent):
-        control = MemoryMapScroller(parent, self.task)
+        control = MemoryMapScroller(parent, self.task, size=(-1,30))
         return control
     
     #### trait change handlers
@@ -95,7 +95,7 @@ class SegmentsPane(DockPane):
     name = 'Segments'
     
     def create_contents(self, parent):
-        control = SegmentList(parent, self.task)
+        control = SegmentList(parent, self.task, size=(64,-1))
         return control
     
     #### trait change handlers
@@ -113,7 +113,7 @@ class UndoPane(DockPane):
     name = 'Undo History'
     
     def create_contents(self, parent):
-        control = UndoHistoryPanel(parent, self.task)
+        control = UndoHistoryPanel(parent, self.task, size=(64,-1))
         return control
     
     #### trait change handlers

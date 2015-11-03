@@ -5,10 +5,10 @@ class SegmentList(wx.ListBox):
     """Segment selector for choosing which portion of the binary data to view
     """
 
-    def __init__(self, parent, task):
+    def __init__(self, parent, task, **kwargs):
         self.task = task
         
-        wx.ListBox.__init__(self, parent, style=wx.LB_SINGLE|wx.SIMPLE_BORDER)
+        wx.ListBox.__init__(self, parent, style=wx.LB_SINGLE|wx.SIMPLE_BORDER, **kwargs)
         self.Bind(wx.EVT_LISTBOX, self.on_click)
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.on_dclick)
         self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)

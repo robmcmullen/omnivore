@@ -44,8 +44,8 @@ class BitviewEvent(wx.PyCommandEvent):
 class BitviewScroller(wx.ScrolledWindow):
     dbg_call_seq = 0
     
-    def __init__(self, parent, task):
-        wx.ScrolledWindow.__init__(self, parent, -1)
+    def __init__(self, parent, task, **kwargs):
+        wx.ScrolledWindow.__init__(self, parent, -1, **kwargs)
 
         # Settings
         self.task = task
@@ -362,8 +362,8 @@ class FontMapScroller(BitviewScroller):
     font_width_extra_zoom = [0, 0, 1, 0, 1, 1, 2, 2, 2, 2]
     font_height_extra_zoom = [0, 0, 1, 0, 1, 2, 1, 2, 1, 2]
     
-    def __init__(self, parent, task):
-        BitviewScroller.__init__(self, parent, task)
+    def __init__(self, parent, task, **kwargs):
+        BitviewScroller.__init__(self, parent, task, **kwargs)
         self.bytes_per_row = 8
         self.zoom = 2
         self.font_mode = 2
@@ -652,8 +652,8 @@ class FontMapScroller(BitviewScroller):
 
 
 class MemoryMapScroller(BitviewScroller):
-    def __init__(self, parent, task, font=None, font_mode=2, pfcolors=None):
-        BitviewScroller.__init__(self, parent, task)
+    def __init__(self, parent, task, **kwargs):
+        BitviewScroller.__init__(self, parent, task, **kwargs)
         self.bytes_per_row = 256
         self.zoom = 2
     

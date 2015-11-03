@@ -13,7 +13,7 @@ from omnimon.framework.actions import *
 from hex_editor import HexEditor
 from preferences import HexEditPreferences
 from actions import *
-import panes
+import pane_layout
 import omnimon.utils.fonts as fonts
 import omnimon.utils.dis6502 as dis6502
 from omnimon.utils.binutil import known_segment_parsers
@@ -27,7 +27,7 @@ class HexEditTask(FrameworkTask):
 
     #### Task interface #######################################################
 
-    id = 'omnimon.framework.hex_edit_task'
+    id = pane_layout.task_id_with_pane_layout
     name = 'Hex Editor'
     
     preferences_helper = HexEditPreferences
@@ -43,28 +43,10 @@ class HexEditTask(FrameworkTask):
     ###########################################################################
 
     def _default_layout_default(self):
-        return TaskLayout(
-            right=HSplitter(
-                PaneItem('hex_edit.disasmbly_pane'),
-                PaneItem('hex_edit.byte_graphics'),
-                PaneItem('hex_edit.font_map'),
-                PaneItem('hex_edit.memory_map'),
-                PaneItem('hex_edit.segments'),
-                PaneItem('hex_edit.undo'),
-                ),
-            )
+        return pane_layout.pane_layout()
 
     def create_dock_panes(self):
-        """ Create the file browser and connect to its double click event.
-        """
-        return [
-            panes.DisassemblyPane(),
-            panes.ByteGraphicsPane(),
-            panes.FontMapPane(),
-            panes.MemoryMapPane(),
-            panes.SegmentsPane(),
-            panes.UndoPane(),
-            ]
+        return pane_layout.pane_create()
 
     def _extra_actions_default(self):
         segment_menu = self.create_menu("Menu", "Segments", "SegmentParserGroup", "SegmentGroup")

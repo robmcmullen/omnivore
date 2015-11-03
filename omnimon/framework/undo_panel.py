@@ -6,9 +6,9 @@ import wx
 
 
 class UndoHistoryPanel(wx.Panel):
-    def __init__(self, parent, task):
+    def __init__(self, parent, task, **kwargs):
         self.task = task
-        wx.Panel.__init__(self, parent, wx.ID_ANY)
+        wx.Panel.__init__(self, parent, wx.ID_ANY, **kwargs)
         
         # Mac/Win needs this, otherwise background color is black
         attr = self.GetDefaultAttributes()

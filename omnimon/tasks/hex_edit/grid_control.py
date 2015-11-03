@@ -100,11 +100,11 @@ class HexEditControl(ByteGrid):
     View for editing in hexidecimal notation.
     """
 
-    def __init__(self, parent, task):
+    def __init__(self, parent, task, **kwargs):
         """Create the HexEdit viewer
         """
         table = ByteTable()
-        ByteGrid.__init__(self, parent, task, table)
+        ByteGrid.__init__(self, parent, task, table, **kwargs)
 
     def recalc_view(self):
         editor = self.task.active_editor
