@@ -6,7 +6,6 @@ from omnimon.utils.binutil import DefaultSegment
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class DisassemblyTable(ByteGridTable):

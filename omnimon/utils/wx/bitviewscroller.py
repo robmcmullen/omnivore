@@ -30,7 +30,6 @@ except ImportError:
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 class BitviewEvent(wx.PyCommandEvent):
     """Event sent when a LayerControl is changed."""
@@ -139,7 +138,7 @@ class BitviewScroller(wx.ScrolledWindow):
                 start_index, end_index = end_index, start_index
             start_highlight = max(start_index - self.start_byte, 0)
             end_highlight = min(end_index - self.start_byte, count)
-            print "highlight:", start_highlight, end_highlight
+            log.debug("highlight %d-%d" % (start_highlight, end_highlight))
             if start_highlight < count and end_highlight >= 0:
                 # change all white pixels to the highlight color.  The mask
                 # must be collapsed on the color axis to result in one entry
@@ -322,7 +321,7 @@ class BitviewScroller(wx.ScrolledWindow):
             if inside:
                 index1 = byte
                 index2 = byte + 1
-                print index1, index2, e.anchor_start_index, e.anchor_end_index
+#                print index1, index2, e.anchor_start_index, e.anchor_end_index
                 update = False
                 if e.anchor_start_index <= index1:
                     if index2 != e.anchor_end_index:
@@ -337,12 +336,12 @@ class BitviewScroller(wx.ScrolledWindow):
                 if update:
                     wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_end_index, bit, self)
                     wx.CallAfter(self.Refresh)
-                print "motion: byte, start, end", byte, e.anchor_start_index, e.anchor_end_index
+#                print "motion: byte, start, end", byte, e.anchor_start_index, e.anchor_end_index
         evt.Skip()
 
     def on_paint(self, evt):
         self.dbg_call_seq += 1
-        print("In on_paint %d" % self.dbg_call_seq)
+        log.debug("In on_paint %d" % self.dbg_call_seq)
         self.prepare_image()
         if self.scaled_bmp is not None:
             dc = wx.BufferedPaintDC(self, self.scaled_bmp, wx.BUFFER_CLIENT_AREA)

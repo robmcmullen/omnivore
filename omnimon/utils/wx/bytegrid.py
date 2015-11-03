@@ -5,7 +5,6 @@ import wx.grid as Grid
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class ByteGridRenderer(Grid.PyGridCellRenderer):
@@ -523,7 +522,6 @@ class ByteGrid(Grid.Grid):
         e = self.editor
         e.anchor_initial_start_index, e.anchor_initial_end_index = self.table.get_index_range(r, c)
         e.anchor_start_index, e.anchor_end_index = e.anchor_initial_start_index, e.anchor_initial_end_index
-        print "down: cell", (c, r)
         evt.Skip()
         wx.CallAfter(self.ForceRefresh)
         wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_start_index, 0, self)
@@ -549,11 +547,10 @@ class ByteGrid(Grid.Grid):
             if update:
                 wx.CallAfter(self.ForceRefresh)
                 wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_end_index, 0, self)
-            print "motion: x, y, index1, index2", x, y, index1, index2
         evt.Skip()
 
     def OnSelectCell(self, evt):
-        print "cell selected:", evt.GetCol(), evt.GetRow()
+        log.debug("cell selected r=%d c=%d" % (evt.GetCol(), evt.GetRow()))
         evt.Skip()
 
     def OnKeyDown(self, evt):

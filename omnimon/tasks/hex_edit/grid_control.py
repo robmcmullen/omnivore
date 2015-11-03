@@ -14,7 +14,6 @@ from commands import ChangeByteCommand
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # Grid tips:
 # http://www.blog.pythonlibrary.org/2010/04/04/wxpython-grid-tips-and-tricks/
@@ -125,7 +124,6 @@ class HexEditControl(ByteGrid):
             if val >= 0 and val < 256:
                 start, end = self.table.get_index_range(row, col)
                 cmd = ChangeByteCommand(self.table.segment, start, end, val)
-                print "Found value %d @ %d-%d" % (val, start, end), "processing command", cmd
                 self.task.active_editor.process_command(cmd)
         except ValueError:
             pass
