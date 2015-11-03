@@ -386,12 +386,22 @@ class AtrDiskImage(object):
             segments = [sectors, header, code]
         return segments
     
+    def get_sector_segments(self):
+        segments = []
+        addr = 0
+        for index in range(1, self.header.max_sectors + 1):
+            bytes = self.get_sectors(index)
+            sector = ObjSegment(0, 0, addr, addr + len(bytes), bytes, name="Sector %03d" % (index))
+            addr += len(bytes)
+            segments.append(sector)
+        return segments
+    
     def parse_segments(self):
         if self.header.size_in_bytes > 0:
             self.segments.append(ObjSegment(0, 0, 0, self.header.atr_header_offset, self.bytes[0:self.header.atr_header_offset], name="%s Header" % self.header.file_format))
         self.segments.append(ObjSegment(0, 0, 0, self.header.size_in_bytes, self.bytes[self.header.atr_header_offset:], name="Raw disk sectors"))
         self.segments.extend(self.get_boot_segments())
-        
+        self.segments.extend(self.get_sector_segments())
         
 #        for dirent in self.atr.files:
 #            try:
