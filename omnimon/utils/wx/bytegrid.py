@@ -378,7 +378,7 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         log.debug("show=%s, attr=%s" % (show, attr))
         Grid.PyGridCellEditor.Show(self, show, attr)
 
-    def PaintBackground(self, rect, attr):
+    def PaintBackground(self, dc, rect, attr):
         """
         Draws the part of the cell not occupied by the edit control.  The
         base  class version just fills it with background colour from the
