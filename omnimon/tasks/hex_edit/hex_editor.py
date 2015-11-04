@@ -131,12 +131,14 @@ class HexEditor(FrameworkEditor):
         return [wx.CustomDataObject("numpy"), wx.TextDataObject()]
 
     def update_panes(self):
-        doc = self.document
-        self.segment = doc.segments[self.segment_number]
+        self.segment = self.document.segments[self.segment_number]
         self.set_colors()
         self.refresh_panes()
-        self.segment_list.set_segments(doc.segments, self.segment_number)
-        self.task.segments_changed = doc.segments
+        self.update_segments_ui()
+    
+    def update_segments_ui(self):
+        self.segment_list.set_segments(self.document.segments, self.segment_number)
+        self.task.segments_changed = self.document.segments
     
     def refresh_panes(self):
         self.control.recalc_view()
@@ -219,8 +221,7 @@ class HexEditor(FrameworkEditor):
         doc.segments = s.segments
         self.segment_number = 0
         self.segment_parser = parser
-        self.segment_list.set_segments(doc.segments, self.segment_number)
-        self.task.segments_changed = doc.segments
+        self.update_segments_ui()
         self.select_none(refresh=False)
     
     def set_segment_parser(self, parser):
