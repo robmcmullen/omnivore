@@ -364,8 +364,8 @@ class FontMapScroller(BitviewScroller):
     font_to_atascii_mapping = np.hstack([np.arange(64, 96, dtype=np.uint8),np.arange(64, dtype=np.uint8),np.arange(96, 128, dtype=np.uint8)])
     font_to_atascii_mapping = np.hstack([font_to_atascii_mapping, font_to_atascii_mapping + 128])
     font_mappings = [
-        (wx.NewId(), "Internal Character Codes", np.arange(256, dtype=np.uint8)),
-        (wx.NewId(), "ATASCII Characters", font_to_atascii_mapping),
+        (wx.NewId(), "ANTIC Map", "Internal Character Codes", np.arange(256, dtype=np.uint8)),
+        (wx.NewId(), "ATASCII", "ATASCII Characters", font_to_atascii_mapping),
         ]
     
     def __init__(self, parent, task, **kwargs):
@@ -451,7 +451,10 @@ class FontMapScroller(BitviewScroller):
     
     def set_font_mapping(self, index):
         self.font_mapping_index = index
-        self.font_mapping = self.font_mappings[self.font_mapping_index][2]
+        self.font_mapping = self.font_mappings[self.font_mapping_index][3]
+    
+    def get_font_mapping_name(self):
+        return self.font_mappings[self.font_mapping_index][1]
         
     def bits_to_gr0(self, bits, colors, gr0_colors):
         fg, bg = gr0_colors
@@ -655,10 +658,10 @@ class FontMapScroller(BitviewScroller):
             dlg.Destroy()
             self.set_scale()
         else:
-            for i, (id, name, mapping) in enumerate(self.font_mappings):
+            for i, (id, title, menu_name, mapping) in enumerate(self.font_mappings):
                 if event.GetId() == id:
                     self.set_font_mapping(i)
-                    wx.CallAfter(self.Refresh)
+                    wx.CallAfter(self.task.active_editor.update_fonts)
                     break
 
     def on_popup(self, event):
@@ -666,8 +669,8 @@ class FontMapScroller(BitviewScroller):
         self.width_id = wx.NewId()
         popup.Append(self.width_id, "Set Map Width")
         popup.AppendSeparator()
-        for i, (id, name, mapping) in enumerate(self.font_mappings):
-            popup.Append(id, "View as %s" % name)
+        for i, (id, title, menu_name, mapping) in enumerate(self.font_mappings):
+            popup.Append(id, "View as %s" % menu_name)
             if self.font_mapping_index == i:
                 popup.Enable(id, False)
         self.PopupMenu(popup, event.GetPosition())

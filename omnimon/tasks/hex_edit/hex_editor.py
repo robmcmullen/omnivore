@@ -152,9 +152,12 @@ class HexEditor(FrameworkEditor):
             attr = self.control.GetDefaultAttributes()
             self.empty_color = attr.colBg.Get(False)
     
-    def redraw_panes(self):
+    def update_fonts(self):
         self.font_map.Refresh()
-    
+        pane = self.window.get_dock_pane('hex_edit.font_map')
+        pane.name = self.font_map.get_font_mapping_name()
+        self.window._aui_manager.Update()
+        
     @classmethod
     def init_fonts(cls, application):
         if cls.font_list is None:
@@ -178,7 +181,7 @@ class HexEditor(FrameworkEditor):
             font_mode = self.font_mode
         self.font_mode = font_mode
         self.font_map.set_font()
-        self.redraw_panes()
+        self.update_fonts()
     
     def load_font(self, filename):
         try:
