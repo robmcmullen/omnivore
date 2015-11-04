@@ -8,6 +8,7 @@ from traits.api import HasTraits, Trait, TraitHandler, Int, Any, List, Set, Bool
 
 from omnimon.utils.command import UndoStack
 from omnimon.utils.file_guess import FileMetadata
+from omnimon.utils.binutil import DefaultSegment
 
 
 class TraitNumpyConverter(TraitHandler):
@@ -56,7 +57,7 @@ class Document(HasTraits):
         return ""
     
     def _segments_default(self):
-        return list()
+        return list([DefaultSegment()])
 
     #### trait property getters
 
