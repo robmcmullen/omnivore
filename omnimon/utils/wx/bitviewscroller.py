@@ -368,9 +368,9 @@ class FontMapScroller(BitviewScroller):
         (wx.NewId(), "ATASCII", "ATASCII Characters", font_to_atascii_mapping),
         ]
     
-    def __init__(self, parent, task, **kwargs):
+    def __init__(self, parent, task, bytes_per_row=8, **kwargs):
         BitviewScroller.__init__(self, parent, task, **kwargs)
-        self.bytes_per_row = 8
+        self.bytes_per_row = bytes_per_row
         self.zoom = 2
         self.font_mode = 2
         self.set_font_mapping(1)
