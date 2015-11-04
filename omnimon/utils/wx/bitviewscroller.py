@@ -361,11 +361,19 @@ class FontMapScroller(BitviewScroller):
     font_width_extra_zoom = [0, 0, 1, 0, 1, 1, 2, 2, 2, 2]
     font_height_extra_zoom = [0, 0, 1, 0, 1, 2, 1, 2, 1, 2]
     
+    font_to_atascii_mapping = np.hstack([np.arange(64, 96, dtype=np.uint8),np.arange(64, dtype=np.uint8),np.arange(96, 128, dtype=np.uint8)])
+    font_to_atascii_mapping = np.hstack([font_to_atascii_mapping, font_to_atascii_mapping + 128])
+    font_mappings = [
+        (wx.NewId(), "Internal Character Codes", np.arange(256, dtype=np.uint8)),
+        (wx.NewId(), "ATASCII Characters", font_to_atascii_mapping),
+        ]
+    
     def __init__(self, parent, task, **kwargs):
         BitviewScroller.__init__(self, parent, task, **kwargs)
         self.bytes_per_row = 8
         self.zoom = 2
         self.font_mode = 2
+        self.set_font_mapping(1)
     
     def calc_scale_from_bytes(self):
         self.total_rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
@@ -440,6 +448,10 @@ class FontMapScroller(BitviewScroller):
         self.normal_font = self.bits_to_font(bits, self.normal_colors, self.normal_gr0_colors)
         self.highlight_font = self.bits_to_font(bits, self.highlight_colors, self.highlight_gr0_colors)
 #        log.debug(self.font)
+    
+    def set_font_mapping(self, index):
+        self.font_mapping_index = index
+        self.font_mapping = self.font_mappings[self.font_mapping_index][2]
         
     def bits_to_gr0(self, bits, colors, gr0_colors):
         fg, bg = gr0_colors
@@ -596,7 +608,7 @@ class FontMapScroller(BitviewScroller):
             for i in range(sc, ec):
                 if e + i >= self.end_byte:
                     break
-                c = bytes[j, i]
+                c = self.font_mapping[bytes[j, i]]
                 if anchor_start <= e + i < anchor_end:
                     array[y:y+8,x:x+8,:] = fh[c]
                 else:
@@ -642,11 +654,22 @@ class FontMapScroller(BitviewScroller):
 
             dlg.Destroy()
             self.set_scale()
+        else:
+            for i, (id, name, mapping) in enumerate(self.font_mappings):
+                if event.GetId() == id:
+                    self.set_font_mapping(i)
+                    wx.CallAfter(self.Refresh)
+                    break
 
     def on_popup(self, event):
         popup = wx.Menu()
         self.width_id = wx.NewId()
         popup.Append(self.width_id, "Set Map Width")
+        popup.AppendSeparator()
+        for i, (id, name, mapping) in enumerate(self.font_mappings):
+            popup.Append(id, "View as %s" % name)
+            if self.font_mapping_index == i:
+                popup.Enable(id, False)
         self.PopupMenu(popup, event.GetPosition())
 
 
