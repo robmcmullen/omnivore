@@ -220,10 +220,12 @@ class HexEditor(FrameworkEditor):
         self.segment_parser = parser
         self.segment_list.set_segments(doc.segments, self.segment_number)
         self.task.segments_changed = doc.segments
+        self.select_none(refresh=False)
     
     def set_segment_parser(self, parser):
         parsers = [parser, DefaultSegmentParser]
         self.find_segment_parser(parsers)
+        self.update_panes()
     
     def view_segment_number(self, number):
         doc = self.document

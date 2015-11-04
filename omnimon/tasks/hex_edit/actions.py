@@ -122,7 +122,6 @@ class SegmentParserAction(EditorAction):
 
     def perform(self, event):
         self.active_editor.set_segment_parser(self.segment_parser)
-        self.active_editor.view_segment_number(0)
 
     @on_trait_change('task.segments_changed')
     def _update_checked(self):
