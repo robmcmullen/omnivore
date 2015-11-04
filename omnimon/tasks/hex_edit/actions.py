@@ -22,7 +22,6 @@ class FontChoiceGroup(TaskDynamicSubmenuGroup):
 
     def _get_items(self, event_data=None):
         items = []
-        print event_data
         if event_data is not None:
             for font in event_data:
                 action = UseFontAction(font=font)
@@ -141,7 +140,6 @@ class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
 
     def _get_items(self, event_data=None):
         items = []
-        print event_data
         if event_data is not None:
             for i, segment in enumerate(event_data):
                 action = UseSegmentAction(segment=segment, segment_number=i)
