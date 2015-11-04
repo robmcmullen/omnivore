@@ -13,7 +13,6 @@ from pyface.key_pressed_event import KeyPressedEvent
 # Local imports.
 from omnimon.framework.editor import FrameworkEditor
 from omnimon.framework.document import Document
-from i_hex_editor import IHexEditor
 from grid_control import HexEditControl
 from omnimon.utils.file_guess import FileMetadata
 import omnimon.utils.fonts as fonts
@@ -24,7 +23,6 @@ from omnimon.utils.binutil import known_segment_parsers, DefaultSegmentParser, A
 from commands import PasteCommand
 
 
-@provides(IHexEditor)
 class HexEditor(FrameworkEditor):
     """ The toolkit specific implementation of a HexEditor.  See the
     IHexEditor interface for the API documentation.
