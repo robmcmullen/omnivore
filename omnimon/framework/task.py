@@ -10,7 +10,7 @@ from pyface.tasks.api import Task, TaskWindow, TaskLayout, TaskWindowLayout, Pan
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
 from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
     SMenu, SToolBar, TaskAction, TaskToggleGroup
-from traits.api import provides, on_trait_change, Property, Instance, Bool, Str, Unicode, Int
+from traits.api import provides, on_trait_change, Property, Instance, Bool, Str, Unicode, Int, Event
 from apptools.preferences.api import PreferencesHelper
 
 from omnimon.dock_panes import FileBrowserPane
@@ -52,6 +52,8 @@ class FrameworkTask(Task):
     
     print_data = Any
     
+    document_changed = Event
+    
     #### 'IAbout' interface ###################################################
     
     about_title = Unicode('Omnimon')
@@ -89,7 +91,7 @@ class FrameworkTask(Task):
         self.add_menu(menus, "Menu", "Edit", "UndoGroup", "CopyPasteGroup", "SelectGroup", "FindGroup", "PrefGroup")
         self.add_menu(menus, "Menu", "View", "ViewChangeGroup", "ViewConfigGroup", "ViewToggleGroup", "ViewDebugGroup", "TaskGroup")
         self.add_menu(menus, "Menu", "Documents", "DocumentGroup")
-        self.add_menu(menus, "Menu", "Window", "WindowGroup")
+        self.add_menu(menus, "Menu", "Window", "NewTaskGroup", "WindowGroup")
         self.add_menu(menus, "Menu", "Help", "AboutGroup", "DocGroup", "BugReportGroup", "DebugGroup")
         
         return SMenuBar(*menus)
@@ -385,9 +387,14 @@ class FrameworkTask(Task):
                         DocumentSelectGroup(),
                         ]
             elif menu_name == "Window":
+                if group_name == "NewTaskGroup":
+                    return [
+                        SMenu(
+                            NewViewInGroup(id="a1", separator=True),
+                            id='WindowTabGroupSubmenu2', separator=True, name="New View In..."),
+                        ]
                 if group_name == "WindowGroup":
                     return [
-                        NewViewAction(),
                         NewWindowAction(),
                         ]
             elif menu_name == "Help":

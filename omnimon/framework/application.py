@@ -195,21 +195,10 @@ class FrameworkApplication(TasksApplication):
             active_task.new(guess, **kwargs)
             return
         
-        possibilities = []
-        for factory in self.task_factories:
-            log.debug("factory: %s" % factory.name)
-            if task_id:
-                if factory.id == task_id:
-                    possibilities.append(factory)
-            elif hasattr(factory.factory, "can_edit"):
-                if factory.factory.can_edit(guess.metadata.mime):
-                    log.debug("  can edit: %s" % guess.metadata.mime)
-                    possibilities.append(factory)
-        log.debug(possibilities)
+        possibilities = self.get_possible_task_factories(guess.metadata.mime, task_id)
         if not possibilities:
             log.debug("no editor for %s" % uri)
             return
-        
         best = possibilities[0]
         
         if active_task is not None:
@@ -247,6 +236,30 @@ class FrameworkApplication(TasksApplication):
         log.debug(metadata)
         log.debug(metadata.mime)
         log.debug(dir(metadata))
+    
+    def get_possible_task_factories(self, mime, task_id=""):
+        possibilities = []
+        for factory in self.task_factories:
+            log.debug("factory: %s" % factory.name)
+            if task_id:
+                if factory.id == task_id:
+                    possibilities.append(factory)
+            elif hasattr(factory.factory, "can_edit"):
+                if factory.factory.can_edit(mime):
+                    log.debug("  can edit: %s" % mime)
+                    possibilities.append(factory)
+        log.debug(possibilities)
+        return possibilities
+    
+    def create_task_from_factory_id(self, guess, factory_id):
+        window = self.create_window()
+        log.debug("  window=%s" % str(window))
+        task = self.create_task(factory_id)
+        window.add_task(task)
+        window.activate_task(task)
+        window.open()
+        task.new(guess)
+        return task
     
     def create_task_in_window(self, task_id, window):
         log.debug("creating %s task" % task_id)

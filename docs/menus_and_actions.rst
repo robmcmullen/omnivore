@@ -301,6 +301,37 @@ specifying the id explicitly is the only way to force the sort order to match
 the listing order.
 
 
+Submenu Names
+=============
+
+It is not obvious how to dynamically rename a submenu, because submenu names
+must be defined in the SMenu call, as above.  A trait change handler in a
+Group that sets the Group name does not work as that's not propagated to the
+toolkit-specific menu.  It turns out that you have to set the changed trait
+on the pyface.ui.wx.action.menu_manager.MenuManager object in the manager
+hierarchy of the group.  A manager is the pyface object that performs the
+MVC handling of the menu system -- pyface menu objects aren't directly UI
+components themselves, they use the manager to create the wx side of the menu.
+In this example::
+    
+    class NewViewInGroup(TaskDynamicSubmenuGroup):
+        name = 'New View As'
+        tooltip = 'New view of the project with a different task'
+        event_name = 'document_changed'
+
+        def perform(self, event):
+            event.task.new_window(view=event.task.active_editor)
+        
+        @on_trait_change('task.document_changed')
+        def _update_name(self):
+            if self.task.active_editor:
+                self.manager.name = "New View of %s" % self.task.active_editor.document.name
+                print "manager", self.manager
+                print "parent", self.manager.parent
+                print "parent.parent", self.manager.parent.parent
+                self.manager.parent.parent.changed = True
+
+it turns out the MenuManager is the grandparent of the Group.
 
 
 Keyboard Mapping

@@ -5,7 +5,7 @@ import wx.lib.inspection
 from pyface.api import ImageResource, FileDialog, YES, NO, OK, CANCEL
 from pyface.action.api import Action, ActionItem, Group
 from pyface.tasks.action.api import EditorAction
-from traits.api import Property, Instance, Bool, Str, Unicode, Any, List, Int
+from traits.api import on_trait_change, Property, Instance, Bool, Str, Unicode, Any, List, Int
 
 from omnimon.framework.about import AboutDialog
 from omnimon.utils.file_guess import FileGuess
@@ -336,13 +336,6 @@ class AboutAction(Action):
         top = event.task.window.application.active_window
         AboutDialog(top.control, top.active_task)
 
-class NewViewAction(EditorAction):
-    name = 'New View of Current Tab'
-    tooltip = 'New view of the project in the current tab'
-
-    def perform(self, event):
-        event.task.new_window(view=event.task.active_editor)
-
 class NewWindowAction(Action):
     name = 'New Window'
     tooltip = 'Open a new window'
@@ -500,3 +493,43 @@ class DocumentSelectGroup(ApplicationDynamicSubmenuGroup):
             action = SwitchDocumentAction(invariant=document.invariant, name=document.menu_name)
             items.append(ActionItem(action=action))
         return items
+
+
+class NewViewInNewTaskAction(Action):
+    factory_id = Str
+    
+    def perform(self, event):
+        event.task.window.application.create_task_from_factory_id(event.task.active_editor, self.factor_id)
+
+
+class NewViewInGroup(TaskDynamicSubmenuGroup):
+    name = '<this is not used; the name is set in the SMenu in which this group is added>'
+    tooltip = 'New view of the project with a different task'
+    event_name = 'document_changed'
+
+    def perform(self, event):
+        event.task.new_window(view=event.task.active_editor)
+    
+    @on_trait_change('task.document_changed')
+    def _update_name(self):
+        if self.task.active_editor:
+            # The name of the menu is taken from the SMenu in which this Group
+            # is included, not the name in this object.
+            self.manager.name = "New View of %s" % self.task.active_editor.document.name
+            # Tell the MenuManager in the hierarchy that the SMenu name has
+            # changed.  This depth up the hierarchy (grandparent) works for
+            # this instance where this group is a child of the SMen.
+            self.manager.parent.parent.changed = True
+
+    def _get_items(self, event_data=None):
+        e = self.task.active_editor
+        items = []
+        if e:
+            mime = e.document.metadata.mime
+            factories = self.task.window.application.get_possible_task_factories(mime)
+            for factory in factories:
+                print "FACTORY!", factory
+                action = NewViewInNewTaskAction(name="In a %s Window" % factory.name, factor_id=factory.id)
+                items.append(ActionItem(action=action))
+        return items
+

@@ -95,6 +95,7 @@ class FrameworkEditor(Editor):
         self.rebuild_document_properties()
         self.update_panes()
         self.document.undo_stack_changed = True
+        self.task.document_changed = self.document
     
     def rebuild_document_properties(self):
         """ Recreate any editor attributes for the new document
