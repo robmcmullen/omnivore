@@ -215,27 +215,7 @@ class FrameworkApplication(TasksApplication):
             task.new(guess, **kwargs)
             return
         
-        # Not found in existing windows, so open new window with task
-        tasks = [ factory.id for factory in possibilities ]
-        log.debug("no task window found: creating new layout for %s" % str(tasks))
-#        window = self.create_window(TaskWindowLayout(size = (800, 600)))
-        window = self.create_window()
-        log.debug("  window=%s" % str(window))
-        first = None
-        for factory in possibilities:
-            task = self.create_task(factory.id)
-            window.add_task(task)
-            first = first or task
-        window.activate_task(first)
-        window.open()
-        log.debug("All windows: %s" % self.windows)
-        task.new(guess, **kwargs)
-        metadata = guess.get_metadata()
-        log.debug(guess.metadata)
-        log.debug(guess.metadata.mime)
-        log.debug(metadata)
-        log.debug(metadata.mime)
-        log.debug(dir(metadata))
+        self.create_task_from_factory_id(guess, best.id)
     
     def get_possible_task_factories(self, mime, task_id=""):
         possibilities = []
