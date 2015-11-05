@@ -116,11 +116,13 @@ class OmnimonMainPlugin(FrameworkPlugin):
         from omnimon.tasks.text_edit import TextEditTask
         from omnimon.tasks.image_edit import ImageEditTask
         from omnimon.tasks.hex_edit import HexEditTask
+        from omnimon.tasks.map_edit import MapEditTask
 
         return self.task_factories_from_tasks([
             TextEditTask,
             ImageEditTask,
             HexEditTask,
+            MapEditTask,
             ])
 
     def _osx_actions_default(self):
