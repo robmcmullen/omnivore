@@ -1,6 +1,8 @@
 """ Action definitions for HexEdit task
 
 """
+import wx
+
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Int
 from pyface.action.api import Action, ActionItem
@@ -173,9 +175,11 @@ class IndexRangeAction(EditorAction):
 
 class ZeroAction(IndexRangeAction):
     cmd = ZeroCommand
+    accelerator = 'Ctrl+0'
 
 class FFAction(IndexRangeAction):
     cmd = FFCommand
+    accelerator = 'Ctrl+9'
 
 class SetHighBitAction(IndexRangeAction):
     cmd = SetHighBitCommand
@@ -185,6 +189,7 @@ class ClearHighBitAction(IndexRangeAction):
 
 class BitwiseNotAction(IndexRangeAction):
     cmd = BitwiseNotCommand
+    accelerator = 'Ctrl+1'
 
 class LeftShiftAction(IndexRangeAction):
     cmd = LeftShiftCommand
@@ -194,9 +199,11 @@ class RightShiftAction(IndexRangeAction):
 
 class LeftRotateAction(IndexRangeAction):
     cmd = LeftRotateCommand
+    accelerator = 'Ctrl+<'
 
 class RightRotateAction(IndexRangeAction):
     cmd = RightRotateCommand
+    accelerator = 'Ctrl+>'
 
 
 class IndexRangeValueAction(IndexRangeAction):
@@ -230,19 +237,22 @@ class IndexRangeValueAction(IndexRangeAction):
             self.active_editor.process_command(cmd)
             
     def perform(self, event):
-        GUI.invoke_later(self.show_dialog, self.active_editor)
+        wx.CallAfter(self.show_dialog, self.active_editor)
 
 class SetValueAction(IndexRangeValueAction):
     cmd = SetValueCommand
 
 class OrWithAction(IndexRangeValueAction):
     cmd = OrWithCommand
+    accelerator = 'Ctrl+\\'
 
 class AndWithAction(IndexRangeValueAction):
     cmd = AndWithCommand
+    accelerator = 'Ctrl+7'
 
 class XorWithAction(IndexRangeValueAction):
     cmd = XorWithCommand
+    accelerator = 'Ctrl+6'
 
 class RampUpAction(IndexRangeValueAction):
     cmd = RampUpCommand
@@ -252,21 +262,27 @@ class RampDownAction(IndexRangeValueAction):
 
 class AddValueAction(IndexRangeValueAction):
     cmd = AddValueCommand
+    accelerator = 'Ctrl+='
 
 class SubtractValueAction(IndexRangeValueAction):
     cmd = SubtractValueCommand
+    accelerator = 'Ctrl+-'
 
 class SubtractFromAction(IndexRangeValueAction):
     cmd = SubtractFromCommand
+    accelerator = 'Shift+Ctrl+-'
 
 class MultiplyAction(IndexRangeValueAction):
     cmd = MultiplyCommand
+    accelerator = 'Ctrl+8'
 
 class DivideByAction(IndexRangeValueAction):
     cmd = DivideByCommand
+    accelerator = 'Ctrl+/'
 
 class DivideFromAction(IndexRangeValueAction):
     cmd = DivideFromCommand
+    accelerator = 'Shift+Ctrl+/'
 
 
 class PasteAndRepeatAction(EditorAction):
