@@ -19,6 +19,7 @@ from commands import *
 from omnimon.tasks.hex_edit.actions import *
 import pane_layout
 import omnimon.utils.fonts as fonts
+from omnimon.utils.binutil import known_segment_parsers
 
 
 class MapEditTask(FrameworkTask):
@@ -37,6 +38,8 @@ class MapEditTask(FrameworkTask):
     #### Menu events ##########################################################
     
     fonts_changed = Event
+    
+    segments_changed = Event
 
     ###########################################################################
     # 'Task' interface.
@@ -49,9 +52,14 @@ class MapEditTask(FrameworkTask):
         return pane_layout.pane_create()
 
     def _extra_actions_default(self):
+        segment_menu = self.create_menu("Menu", "Segments", "SegmentParserGroup", "SegmentGroup")
         tiles_menu = self.create_menu("Menu", "Tiles", "TileModifyGroup")
         actions = [
             # Menubar additions
+            SchemaAddition(factory=lambda: segment_menu,
+                           path='MenuBar',
+                           after="Edit",
+                           ),
             SchemaAddition(factory=lambda: tiles_menu,
                            path='MenuBar',
                            after="Edit",
@@ -102,6 +110,20 @@ class MapEditTask(FrameworkTask):
                                 FontStyleBaseAction(font_mode=9, name="Antic 7 (Gr 2) Lowercase and Symbols"),
                                 id="a1", separator=True),
                             id='FontChoiceSubmenu2', separator=True, name="Antic Mode"),
+                        ]
+            elif menu_name == "Segments":
+                if group_name == "SegmentParserGroup":
+                    segment_parser_actions = [SegmentParserAction(segment_parser=s) for s in known_segment_parsers]
+                    return [
+                        SMenu(
+                            Group(
+                                *segment_parser_actions,
+                                id="a1", separator=True),
+                            id='submenu1', separator=True, name="File Type"),
+                        ]
+                elif group_name == "SegmentGroup":
+                    return [
+                        SegmentChoiceGroup(id="a2", separator=True),
                         ]
 
     ###
