@@ -42,7 +42,11 @@ class HexEditor(FrameworkEditor):
     
     ### View traits
     
+    antic_font_data = Any
+    
     antic_font = Any
+    
+    font_mode = Enum(2, 4, 5, 6, 7, 8, 9)
     
     playfield_colors = Any
     
@@ -74,8 +78,6 @@ class HexEditor(FrameworkEditor):
     
     font_list = None
     
-    font_mode = Enum(2, 4, 5, 6, 7, 8, 9)
-    
     ##### Default traits
     
     def _disassembler_default(self):
@@ -87,8 +89,11 @@ class HexEditor(FrameworkEditor):
     def _text_font_default(self):
         return wx.Font(self.text_font_size, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, self.text_font_face)
     
-    def _antic_font_default(self):
+    def _antic_font_data_default(self):
         return fonts.A8DefaultFont
+    
+    def _font_mode_default(self):
+        return 2  # Antic mode 2, Graphics 0
     
     def _playfield_colors_default(self):
         return colors.powerup_colors()
@@ -173,13 +178,18 @@ class HexEditor(FrameworkEditor):
     def remember_fonts(self):
         self.window.application.save_bson_data("font_list", self.font_list)
     
+    def get_antic_font(self):
+        return fonts.AnticFont(self.antic_font_data, self.font_mode, self.playfield_colors, self.highlight_color)
+    
     def set_font(self, font=None, font_mode=None):
+        print font
         if font is None:
-            font = self.antic_font
-        self.antic_font = font
+            font = self.antic_font_data
         if font_mode is None:
             font_mode = self.font_mode
         self.font_mode = font_mode
+        self.antic_font_data = font
+        self.antic_font = self.get_antic_font()
         self.font_map.set_font()
         self.update_fonts()
     
@@ -259,6 +269,7 @@ class HexEditor(FrameworkEditor):
         # Base-class constructor.
         print "CONSTRUCTOR!!!"
         self.control = HexEditControl(parent, self.task)
+        self.antic_font = self.get_antic_font()
 
         ##########################################
         # Events.
