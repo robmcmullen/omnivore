@@ -212,9 +212,8 @@ class HexEditor(FrameworkEditor):
         doc = self.document
         parsers.append(DefaultSegmentParser)
         for parser in parsers:
-            doc.segment_parser = parser
             try:
-                s = doc.segment_parser(doc.bytes)
+                s = parser(doc.bytes)
                 break
             except InvalidSegmentParser:
                 pass
