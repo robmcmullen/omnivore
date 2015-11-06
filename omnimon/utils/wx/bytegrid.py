@@ -523,6 +523,7 @@ class ByteGrid(Grid.Grid):
         e.anchor_initial_start_index, e.anchor_initial_end_index = self.table.get_index_range(r, c)
         e.anchor_start_index, e.anchor_end_index = e.anchor_initial_start_index, e.anchor_initial_end_index
         evt.Skip()
+        self.SetGridCursor(r, c)
         wx.CallAfter(self.ForceRefresh)
         wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_start_index, 0, self)
  
@@ -545,6 +546,7 @@ class ByteGrid(Grid.Grid):
                     e.anchor_end_index = index1
                     update = True
             if update:
+                self.SetGridCursor(r, c)
                 wx.CallAfter(self.ForceRefresh)
                 wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_end_index, 0, self)
         evt.Skip()
@@ -555,19 +557,40 @@ class ByteGrid(Grid.Grid):
 
     def OnKeyDown(self, evt):
         log.debug("evt=%s" % evt)
-        if evt.GetKeyCode() == wx.WXK_RETURN or evt.GetKeyCode()==wx.WXK_TAB:
+        key = evt.GetKeyCode()
+        moved = False
+        r, c = self.GetGridCursorRow(), self.GetGridCursorCol()
+        if key == wx.WXK_RETURN or key == wx.WXK_TAB:
             if evt.ControlDown():   # the edit control needs this key
                 evt.Skip()
             else:
                 self.DisableCellEditControl()
                 if evt.ShiftDown():
-                    (row,col)=self.table.getPrevCursorPosition(self.GetGridCursorRow(),self.GetGridCursorCol())
+                    (r, c) = self.table.getPrevCursorPosition(r, c)
                 else:
-                    (row,col)=self.table.getNextCursorPosition(self.GetGridCursorRow(),self.GetGridCursorCol())
-                self.SetGridCursor(row,col)
-                self.MakeCellVisible(row,col)
+                    (r, c) = self.table.getNextCursorPosition(r, c)
+                moved = True
+        elif key == wx.WXK_RIGHT:
+            r, c = self.table.getNextCursorPosition(r, c)
+            moved = True
+        elif key == wx.WXK_LEFT:
+            r, c = self.table.getPrevCursorPosition(r, c)
+            moved = True
+        elif key == wx.WXK_UP:
+            r = 0 if r <= 1 else r - 1
+            moved = True
+        elif key == wx.WXK_DOWN:
+            n = self.GetNumberRows()
+            r = n - 1 if r >= n - 1 else r + 1
+            moved = True
         else:
             evt.Skip()
+        
+        if moved:
+            self.SetGridCursor(r, c)
+            self.MakeCellVisible(r, c)
+            index1, index2 = self.table.get_index_range(r, c)
+            wx.CallAfter(self.task.active_editor.index_clicked, index1, 0, self)
 
     def abortEdit(self):
         self.DisableCellEditControl()
