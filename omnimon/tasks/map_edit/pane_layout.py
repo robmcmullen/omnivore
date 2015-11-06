@@ -32,6 +32,9 @@ def pane_layout():
         bottom=HSplitter(
             PaneItem('map_edit.memory_map'),
             ),
+        right=VSplitter(
+            PaneItem('map_edit.tile_map'),
+        ),
         )
 
 def pane_create():
@@ -43,4 +46,5 @@ def pane_create():
         panes.MemoryMapPane(),
         panes.SegmentsPane(),
         panes.UndoPane(),
+        panes.TileMapPane(),
         ]

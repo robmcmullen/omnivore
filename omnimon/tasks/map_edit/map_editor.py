@@ -20,6 +20,16 @@ class MapEditor(HexEditor):
     """ The toolkit specific implementation of a HexEditor.  See the
     IHexEditor interface for the API documentation.
     """
+    
+    antic_tile_map = Any
+    
+    ##### Default traits
+    
+    def _antic_tile_map_default(self):
+        return [("trees", np.arange(26, 45, dtype=np.uint8)),
+                ("roads", np.arange(50, 72, dtype=np.uint8)),
+                ("buildings", np.arange(75, 80, dtype=np.uint8)),
+                ]
 
     ###########################################################################
     # 'FrameworkEditor' interface.
@@ -31,6 +41,7 @@ class MapEditor(HexEditor):
     def refresh_panes(self):
         self.control.recalc_view()
         self.memory_map.recalc_view()
+        self.tile_map.recalc_view()
     
     ###########################################################################
     # Trait handlers.
@@ -54,6 +65,7 @@ class MapEditor(HexEditor):
 
         # Get related controls
         self.memory_map = self.window.get_dock_pane('map_edit.memory_map').control
+        self.tile_map = self.window.get_dock_pane('map_edit.tile_map').control
         self.segment_list = self.window.get_dock_pane('map_edit.segments').control
         self.undo_history = self.window.get_dock_pane('map_edit.undo').control
 

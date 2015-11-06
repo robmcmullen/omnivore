@@ -8,6 +8,7 @@ from traits.api import on_trait_change
 # Local imports.
 from omnimon.tasks.hex_edit.segments import SegmentList
 from omnimon.utils.wx.bitviewscroller import BitviewScroller, FontMapScroller, MemoryMapScroller
+from omnimon.utils.wx.tilelist import TileListControl
 from omnimon.framework.undo_panel import UndoHistoryPanel
 
 import logging
@@ -59,6 +60,24 @@ class UndoPane(DockPane):
     
     def create_contents(self, parent):
         control = UndoHistoryPanel(parent, self.task)
+        return control
+    
+    #### trait change handlers
+    
+    def _task_changed(self):
+        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
+        if self.control:
+            self.control.set_task(self.task)
+
+
+class TileMapPane(DockPane):
+    #### TaskPane interface ###################################################
+
+    id = 'map_edit.tile_map'
+    name = 'Tile Map'
+    
+    def create_contents(self, parent):
+        control = TileListControl(parent, self.task, size=(200,-1))
         return control
     
     #### trait change handlers
