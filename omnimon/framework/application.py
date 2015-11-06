@@ -201,7 +201,7 @@ class FrameworkApplication(TasksApplication):
         if not possibilities:
             log.debug("no editor for %s" % uri)
             return
-        best = possibilities[0]
+        best = self.find_best_task_factory(guess, possibilities)
         
         if active_task is not None:
             # Ask the active task if it's OK to load a different editor
@@ -232,6 +232,14 @@ class FrameworkApplication(TasksApplication):
                     possibilities.append(factory)
         log.debug(possibilities)
         return possibilities
+    
+    def find_best_task_factory(self, guess, factories):
+        scores = []
+        for factory in self.task_factories:
+            score = factory.factory.get_match_score(guess)
+            scores.append((score, factory))
+        scores.sort()
+        return scores[-1][1]
     
     def create_task_from_factory_id(self, guess, factory_id):
         window = self.create_window()
