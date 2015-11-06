@@ -57,7 +57,7 @@ class MapEditor(HexEditor):
 
         # Base-class constructor.
         print "CONSTRUCTOR!!!"
-        self.control = self.font_map = FontMapScroller(parent, self.task, 40)
+        self.control = self.font_map = FontMapScroller(parent, self.task, 40, 0)
 
         ##########################################
         # Events.
