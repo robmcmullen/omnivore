@@ -1,6 +1,7 @@
 import os
 
 # Major package imports.
+from fs.opener import opener
 import wx
 
 # Enthought library imports.
@@ -102,19 +103,29 @@ class FrameworkEditor(Editor):
         """
         pass
 
-    def save(self, path=None):
+    def save(self, uri=None):
         """ Saves the contents of the editor.
         """
-        if path is None:
-            path = self.document.uri
+        if uri is None:
+            uri = self.document.uri
 
         try:
-            with open(path, 'w') as f:
-                f.write(self.document.bytes.tostring())
-                self.document.undo_stack.set_save_point()
-                self.document.undo_stack_changed = True
+            # Have to use a two-step process to write to the file: open the
+            # filesystem, then open the file.  Have to open the filesystem
+            # as writeable in case this is a virtual filesystem (like ZipFS),
+            # otherwise the write to the actual file will fail with a read-
+            # only filesystem error.
+            fs, relpath = opener.parse(uri, writeable=True)
+            fh = fs.open(relpath, 'wb')
+            log.debug("saving to %s" % uri)
+            fh.write(self.document.bytes.tostring())
+            fh.close()
+            fs.close()
+            self.document.undo_stack.set_save_point()
+            self.document.undo_stack_changed = True
         except Exception, e:
-            self.window.error("Error trying to save:\n\n%s\n\n%s" % (path, str(e)), "File Save Error")
+            log.error("%s: %s" % (uri, str(e)))
+            self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
 
     def undo(self):
         """ Undoes the last action

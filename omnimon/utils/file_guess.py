@@ -1,5 +1,9 @@
-import os
+from fs.opener import opener, fsopen
+
 from traits.api import HasTraits, Str, Unicode
+
+import logging
+log = logging.getLogger(__name__)
 
 
 class FileMetadata(HasTraits):
@@ -20,7 +24,10 @@ class FileGuess(object):
     head_size = 1024*1024
     
     def __init__(self, uri):
-        fh = open(uri, "rb")
+        log.debug("Attempting to load %s" % uri)
+        fs, relpath = opener.parse(uri)
+        log.debug("Filesystem: %s" % fs)
+        fh = fs.open(relpath, "rb")
         
         # In order to handle arbitrarily sized files, only read the first
         # header bytes.  If the file is bigger, it will be read by the task
@@ -28,8 +35,23 @@ class FileGuess(object):
         self.bytes = fh.read(self.head_size)
         fh.close()
         
+        # Normalize the uri if possible
+        if fs.haspathurl(relpath):
+            uri = fs.getpathurl(relpath)
+        elif fs.hassyspath(relpath):
+            abspath = fs.getsyspath(relpath)
+            if abspath.startswith("\\\\?\\") and len(abspath) < 260:
+                # on windows, pyfilesystem returns extended path notation to
+                # allow paths greater than 256 characters.  If the path is
+                # short, change slashes to normal and remove the prefix
+                abspath = abspath[4:].replace("\\", "/")
+            uri = "file://" + abspath
+        
         # Use the default mime type until it is recognized
         self.metadata = FileMetadata(uri=uri)
+        
+        # Release filesystem resources
+        fs.close()
         
     def __str__(self):
         return "guess: metadata: %s, %d bytes available for signature" % (self.metadata, len(self.bytes))
@@ -41,5 +63,5 @@ class FileGuess(object):
         return self.metadata.clone_traits()
 
     def get_stream(self):
-        fh = open(self.metadata.uri, "rb")
+        fh = fsopen(self.metadata.uri, "rb")
         return fh

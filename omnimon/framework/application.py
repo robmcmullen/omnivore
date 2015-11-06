@@ -5,6 +5,8 @@ import json
 import jsonpickle
 from datetime import datetime
 
+import fs
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -181,7 +183,7 @@ class FrameworkApplication(TasksApplication):
         # The FileGuess loads the first part of the file and tries to identify it.
         try:
             guess = FileGuess(uri)
-        except IOError, e:
+        except fs.errors.FSError, e:
             log.error("File load error: %s" % str(e))
             if active_task is not None:
                 active_task.window.error(str(e), "File Load Error")

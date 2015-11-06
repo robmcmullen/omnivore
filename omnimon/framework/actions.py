@@ -1,6 +1,8 @@
 import os
 import wx.lib.inspection
 
+import fs
+
 # Enthought library imports.
 from pyface.api import ImageResource, FileDialog, YES, NO, OK, CANCEL
 from pyface.action.api import Action, ActionItem, Group

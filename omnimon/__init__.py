@@ -19,6 +19,7 @@ __requires__ = [
     'jsonpickle',
     'bson',
     'numpy',
+    'fs',
 ]
 
 # The real version number is maintained in a file that's under version control
