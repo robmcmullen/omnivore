@@ -14,7 +14,7 @@ from hex_editor import HexEditor
 from preferences import HexEditPreferences
 from actions import *
 import pane_layout
-import omnimon.utils.fonts as fonts
+import omnimon.utils.wx.fonts as fonts
 import omnimon.utils.dis6502 as dis6502
 from omnimon.utils.binutil import known_segment_parsers
 

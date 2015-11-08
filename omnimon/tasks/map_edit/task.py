@@ -18,7 +18,7 @@ from preferences import MapEditPreferences
 from commands import *
 from omnimon.tasks.hex_edit.actions import *
 import pane_layout
-import omnimon.utils.fonts as fonts
+import omnimon.utils.wx.fonts as fonts
 from omnimon.utils.binutil import known_segment_parsers
 
 

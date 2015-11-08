@@ -37,6 +37,7 @@ class MapEditor(HexEditor):
 
     def update_fonts(self):
         self.font_map.Refresh()
+        self.tile_map.Refresh()
     
     def refresh_panes(self):
         self.control.recalc_view()

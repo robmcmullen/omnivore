@@ -15,7 +15,7 @@ class TileCategory(object):
         w, h = parent.GetTextExtent(self.name)
         return h + 5
     
-    def draw(self, dc, rect):
+    def draw(self, font, dc, rect):
         dc.DrawLabel(self.name, rect, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
 class Tile(object):
@@ -24,10 +24,12 @@ class Tile(object):
         self.keystroke = keystroke
     
     def get_height(self, parent):
-        return 20
+        return parent.editor.antic_font.get_height(parent.zoom)
     
-    def draw(self, dc, rect):
-        dc.DrawLabel("  *", rect, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+    def draw(self, parent, dc, rect):
+        bmp = parent.editor.antic_font.get_image(self.tile_num, parent.zoom)
+        print bmp
+        dc.DrawBitmap(bmp, rect.x+10, rect.y)
 
 
 class TileListBox(wx.VListBox):
@@ -42,13 +44,13 @@ class TileListBox(wx.VListBox):
         dc.SetFont(self.GetFont())
         dc.SetTextForeground(c)
         item = self.GetParent().items[n]
-        item.draw(dc, rect)
+        item.draw(self.GetParent(), dc, rect)
 
     # This method must be overridden.  It should return the height
     # required to draw the n'th item.
     def OnMeasureItem(self, n):
         item = self.GetParent().items[n]
-        h = item.get_height(self)
+        h = item.get_height(self.GetParent())
         return h
 
 
@@ -74,6 +76,7 @@ class TileListControl(wx.Panel):
         
         self.parse_tile_map([("test", np.arange(0,10, dtype=np.uint8))])
         self.setup_tiles()
+        self.zoom = 2
 
     def recalc_view(self):
         editor = self.task.active_editor

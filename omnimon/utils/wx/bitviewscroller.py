@@ -20,7 +20,7 @@ import numpy as np
 import wx
 import wx.lib.newevent
 
-import omnimon.utils.fonts as fonts
+import fonts
 import omnimon.utils.colors as colors
 
 try:

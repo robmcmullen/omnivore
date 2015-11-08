@@ -15,7 +15,7 @@ from omnimon.framework.editor import FrameworkEditor
 from omnimon.framework.document import Document
 from grid_control import HexEditControl
 from omnimon.utils.file_guess import FileMetadata
-import omnimon.utils.fonts as fonts
+import omnimon.utils.wx.fonts as fonts
 import omnimon.utils.colors as colors
 from omnimon.utils.dis6502 import Atari800Disassembler
 from omnimon.utils.binutil import known_segment_parsers, DefaultSegmentParser, ATRSegmentParser, XexSegmentParser, InvalidSegmentParser, DefaultSegment

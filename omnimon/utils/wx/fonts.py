@@ -1,6 +1,7 @@
 import numpy as np
+import wx
 
-import colors
+from omnimon.utils import colors
 
 # Font is a dict (easily serializable with JSON) with the following attributes:
 #    data: string containing font data
@@ -186,3 +187,20 @@ class AnticFont(object):
         font[128:256,:,:,1] = g
         font[128:256,:,:,2] = b
         return font
+    
+    def get_height(self, zoom):
+        return self.char_h * self.scale_h * zoom
+    
+    def get_image(self, char_index, zoom, highlight=False):
+        f = self.highlight_font if highlight else self.normal_font
+        array = f[char_index]
+        print array
+        w = self.char_w
+        h = self.char_h
+        image = wx.EmptyImage(w, h)
+        image.SetData(array.tostring())
+        w *= self.scale_w * zoom
+        h *= self.scale_h * zoom
+        image.Rescale(w, h)
+        bmp = wx.BitmapFromImage(image)
+        return bmp
