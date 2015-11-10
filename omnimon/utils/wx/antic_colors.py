@@ -31,7 +31,15 @@ class ColorListBox(wx.VListBox):
             c = self.GetForegroundColour()
         dc.SetFont(self.GetFont())
         dc.SetTextForeground(c)
-        dc.DrawLabel(self.get_label(n), rect, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+        label = self.get_label(n)
+        dc.DrawLabel(label, rect, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+        w, h = self.GetTextExtent(label)
+        color = self.GetParent().get_color(n)
+        print color
+        dc.SetBrush(wx.Brush(color))
+        rect.OffsetXY(w, 0)
+        rect.Deflate(2, 2)
+        dc.DrawRectangleRect(rect)
 
     # This method must be overridden.  It should return the height
     # required to draw the n'th item.
@@ -92,6 +100,9 @@ class AnticColorDialog(wx.Dialog):
         self.color_registers.SetItemCount(9)
         self.current_register = 4
         self.color_registers.SetSelection(self.current_register)
+    
+    def get_color(self, register):
+        return colors.gtia_ntsc_to_rgb(self.colors[register])
 
     def init_grid(self):
         self.grid.Clear(True)
@@ -169,6 +180,7 @@ class AnticColorDialog(wx.Dialog):
         b, c = self.toggles[id]
         print "color", c
         self.colors[self.current_register] = c
+        self.color_registers.Refresh()
 
 if __name__ == "__main__":
     """
