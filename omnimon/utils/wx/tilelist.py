@@ -24,12 +24,14 @@ class Tile(object):
         self.keystroke = keystroke
     
     def get_height(self, parent):
-        return parent.editor.antic_font.get_height(parent.zoom)
+        if parent.editor:  # Might get called before an editor is set
+            return parent.editor.antic_font.get_height(parent.zoom)
+        return 10
     
     def draw(self, parent, dc, rect):
-        bmp = parent.editor.antic_font.get_image(self.tile_num, parent.zoom)
-        print bmp
-        dc.DrawBitmap(bmp, rect.x+10, rect.y)
+        if parent.editor:  # Might get called before an editor is set
+            bmp = parent.editor.antic_font.get_image(self.tile_num, parent.zoom)
+            dc.DrawBitmap(bmp, rect.x+10, rect.y)
 
 
 class TileListBox(wx.VListBox):
