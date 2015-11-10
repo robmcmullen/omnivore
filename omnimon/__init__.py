@@ -10,16 +10,12 @@ __bug_report_url__ = "https://github.com/robmcmullen/omnimon/issues"
 __keywords__ = "text editor, python, plugins"
 __license__ = "GPL"
 __requires__ = [
-    'traits',
-    'pyface',
-    'traitsui',
-    'apptools',
-    'envisage',
-    'atrcopy>=1.0.1',
+    'numpy',
+    'atrcopy>=1.1.1',
     'jsonpickle',
     'bson',
-    'numpy',
     'fs',
+    'configobj',
 ]
 
 # The real version number is maintained in a file that's under version control

@@ -1,29 +1,90 @@
 # Copyright (c) 2008-2013 by Enthought, Inc.
 # All rights reserved.
+
+# NOTE: For py2exe, dependencies can't be installed using python eggs.
+# Pip/distutils will do automatic dependency installation using eggs by
+# default, but it seems to be able to be disabled using:
+#
+#     [easy_install]
+#     zip_ok = False
+#
+# in the ~/.pydistutils.cfg.  On windows, this goes in  %HOME%\pydistutils.cfg
+#
+# See https://docs.python.org/2/install/#location-and-names-of-config-files
+
 import os
 import sys
 import shutil
 import glob
 import subprocess
-from setuptools import setup, find_packages
+from setuptools import find_packages
+from distutils.core import setup
 from distutils.extension import Extension
-from Cython.Distutils import build_ext
-
-import numpy
-
-
-info = {}
-execfile(os.path.join('omnimon', '__init__.py'), info)
+try:
+    from Cython.Distutils import build_ext
+except ImportError:
+    use_cython = False
+else:
+    use_cython = True
 
 ext_modules = [
-    Extension("omnimon.utils.wx.bitviewscroller_speedups",
-              sources=["omnimon/utils/wx/bitviewscroller_speedups.pyx"],
-              include_dirs=[numpy.get_include()],
+    Extension("traits.ctraits",
+              sources = ["traits/ctraits.c"],
+              extra_compile_args = ["-DNDEBUG=1", "-O3" ]#, '-DPy_LIMITED_API'],
               ),
     ]
 
+cmdclass = dict()
+
+# Conditional cython recipe from http://stackoverflow.com/questions/4505747
+if use_cython:
+    # Numpy required before the call to setup if generating the C file using
+    # cython, but this shouldn't be a problem for normal users because the C
+    # files will be distributed with the source.
+    import numpy
+    
+    # Cython needs some replacements for default build commands
+    cmdclass["build_ext"] = build_ext
+
+    ext_modules.append(
+        Extension("omnimon.utils.wx.bitviewscroller_speedups",
+                  sources=["omnimon/utils/wx/bitviewscroller_speedups.pyx"],
+                  include_dirs=[numpy.get_include()],
+                  )
+        )
+else:
+    from setuptools.command.build_ext import build_ext as _build_ext
+
+    # Bootstrap numpy so that numpy can be installed as a dependency, from:
+    # http://stackoverflow.com/questions/19919905
+    class build_ext(_build_ext):
+        def finalize_options(self):
+            _build_ext.finalize_options(self)
+            # Prevent numpy from thinking it is still in its setup process:
+            __builtins__.__NUMPY_SETUP__ = False
+            import numpy
+            self.include_dirs.append(numpy.get_include())
+    cmdclass["build_ext"] = build_ext
+
+    ext_modules.append(
+        Extension("omnimon.utils.wx.bitviewscroller_speedups",
+                  sources=["omnimon/utils/wx/bitviewscroller_speedups.c"],
+                  )
+        )
+
+if "sdist" in sys.argv:
+    from distutils.command.sdist import sdist as _sdist
+
+    class sdist(_sdist):
+        def run(self):
+            # Make sure the compiled Cython files in the distribution are up-to-date
+            from Cython.Build import cythonize
+            cythonize(["omnimon/utils/wx/bitviewscroller_speedups.pyx"])
+            _sdist.run(self)
+    cmdclass["sdist"] = sdist
+
 import omnimon
-full_version = info['__version__']
+full_version = omnimon.__version__
 spaceless_version = full_version.replace(" ", "_")
 
 data_files = []
@@ -93,6 +154,25 @@ common_excludes = [
 py2exe_excludes = [
     ]
 
+package_data = {
+    '': ['images/*',
+         '*.ini',
+         ],
+    'apptools': ['help/help_plugin/*.ini',
+                 'help/help_plugin/action/images/*.png',
+                 'logger/plugin/*.ini',
+                 'logger/plugin/view/images/*.png',
+                 'naming/ui/images/*.png',
+                 ],
+    'traitsui': ['image/library/*.zip',
+                 'wx/images/*',
+                 'qt4/images/*',
+                 ],
+    }
+
+packages = find_packages()
+print packages
+
 base_dist_dir = "dist-%s" % spaceless_version
 win_dist_dir = os.path.join(base_dist_dir, "win")
 mac_dist_dir = os.path.join(base_dist_dir, "mac")
@@ -116,11 +196,11 @@ if 'nsis' not in sys.argv:
 
     setup(
         name = 'Omnimon',
-        version = info['__version__'],
-        author = info['__author__'],
-        author_email = info['__author_email__'],
-        url = info['__url__'],
-        download_url = ('%s-%s.tar.gz' % (info['__download_url__'], info['__version__'])),
+        version = omnimon.__version__,
+        author = omnimon.__author__,
+        author_email = omnimon.__author_email__,
+        url = omnimon.__url__,
+        download_url = ('%s-%s.tar.gz' % (omnimon.__download_url__, omnimon.__version__)),
         classifiers = [c.strip() for c in """\
             Development Status :: 3 - Alpha
             Intended Audience :: Developers
@@ -134,14 +214,15 @@ if 'nsis' not in sys.argv:
             Topic :: Software Development :: Libraries
             Topic :: Text Editors
             """.splitlines() if len(c.strip()) > 0],
-        description = '(ap)Proximated (X)Emacs Powered by Python.',
+        description = "The Atari 8-bit binary editor sponsored by the Player/Missile Podcast.",
         long_description = open('README.rst').read(),
-        cmdclass={'build_ext': build_ext},
+        cmdclass = cmdclass,
         ext_modules = ext_modules,
-        install_requires = info['__requires__'],
+        install_requires = omnimon.__requires__,
+        setup_requires = ["numpy"],
         license = "BSD",
         packages = find_packages(),
-        package_data = {'': ['images/*', '*.ini',]},
+        package_data = package_data,
         data_files=data_files,
         
         app=["run.py"],
@@ -165,8 +246,8 @@ if 'nsis' not in sys.argv:
                     CFBundleTypeExtensions=["xex", "atr", "xfd", "obx"],
                     CFBundleTypeName="Document",
                     CFBundleTypeRole="Editor",
-                    CFBundleShortVersionString=info['__version__'],
-                    CFBundleGetInfoString="Omnimon %s" % info['__version__'],
+                    CFBundleShortVersionString=omnimon.__version__,
+                    CFBundleGetInfoString="Omnimon %s" % omnimon.__version__,
                     CFBundleExecutable="Omnimon",
                     CFBUndleIdentifier="com.playermissile",
                 )
@@ -182,7 +263,7 @@ if 'nsis' not in sys.argv:
             ),
             build=dict(compiler="msvc",) if sys.platform.startswith("win") else {},
             ),
-        platforms = ["Windows", "Linux", "Mac OS-X", "Unix", "Solaris"],
+        platforms = ["Windows", "Linux", "Mac OS-X", "Unix"],
         zip_safe = False,
         )
 

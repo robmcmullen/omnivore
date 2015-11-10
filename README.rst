@@ -1,3 +1,4 @@
+
 =======
 Omnimon
 =======
@@ -74,18 +75,9 @@ The Enthought framework is a custom build for omnimon because I've enabled
 current support for wx.  Enthought is transitioning to Qt is their primary GUI
 toolkit and their wx support has been limited recently.  Fortunately Enthought
 was designed to be toolkit agnostic and it was relatively easy to bring their
-libraries up to date as compared to Qt.  My patches have not made it back to
-Enthought yet, which is why I'm requiring the custom build::
-
-    cd ~/src/enthought
-    for name in traits pyface traitsui; do echo $name; git clone https://github.com/robmcmullen/$name.git; cd $name; python setup.py develop; cd ..; done
-    for name in apptools; do echo $name; git clone https://github.com/enthought/$name.git; cd $name; python setup.py develop; cd ..; done
-    for name in envisage; do echo $name; git clone https://github.com/robmcmullen/$name.git; cd $name; python setup.py develop; cd ..; done
-
-Or, if you already have all the code checked out and want to build for a new
-version of python, you can use::
-
-    for name in traits pyface traitsui apptools envisage; do cd $name; python setup.py develop; cd ..; done
+libraries up to date as compared to Qt.  My patches have not made it back
+to Enthought yet, which is why I have included my versions of the Enthought
+libraries in the Omnimon distribution.
 
 
 Virtualenv Setup
@@ -118,6 +110,7 @@ This is still alpha software, so caveat emptor.  The only way to get it currentl
 
     $ git clone https://github.com/robmcmullen/omnimon.git
     $ cd omnimon
+    $ python setup.py build_ext --inplace
     $ python run.py
 
 
