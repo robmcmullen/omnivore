@@ -152,8 +152,9 @@ class AnticColorDialog(wx.Dialog):
 
         self.init_colors()
 
-#        border = wx.BoxSizer(wx.VERTICAL)
-#        border.Add(sizer, 0, wx.GROW|wx.ALL, 25)
+        # Need SetSizeHints to force the window to fit the size of the sizer. From
+        # http://wxpython.org/Phoenix/docs/html/sizers_overview.html#sizers-overview
+        sizer.SetSizeHints(self)
         self.SetSizer(sizer)
         self.Layout()
         self.Fit()
