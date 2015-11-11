@@ -10,6 +10,7 @@ from pyface.tasks.action.api import TaskAction, EditorAction
 
 from omnimon.framework.actions import *
 from commands import *
+from omnimon.utils.wx.antic_colors import AnticColorDialog
 
 class FontChoiceGroup(TaskDynamicSubmenuGroup):
     """Dynamic menu group to display the available fonts
@@ -71,6 +72,24 @@ class FontStyleBaseAction(EditorAction):
     def _update_checked(self):
         if self.active_editor:
             self.checked = self.active_editor.font_mode == self.font_mode
+
+
+class AnticColorAction(EditorAction):
+    name = 'Choose Colors...'
+    
+    def perform(self, event):
+        e = self.active_editor
+        dlg = AnticColorDialog(event.task.window.control, e)
+        if dlg.ShowModal() == wx.ID_OK:
+            e.update_colors(dlg.colors)
+
+
+class UseColorsAction(EditorAction):
+    name = 'Use Colors'
+    colors = Any
+    
+    def perform(self, event):
+        self.active_editor.update_colors(self.colors)
 
 
 class TextFontAction(EditorAction):

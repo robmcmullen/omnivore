@@ -157,6 +157,14 @@ class HexEditor(FrameworkEditor):
             attr = self.control.GetDefaultAttributes()
             self.empty_color = attr.colBg.Get(False)
     
+    def update_colors(self, colors):
+        if len(colors) == 5:
+            self.playfield_colors = colors
+        else:
+            self.playfield_colors = colors[4:9]
+        self.set_font()
+        self.refresh_panes()
+    
     def update_fonts(self):
         self.font_map.Refresh()
         pane = self.window.get_dock_pane('hex_edit.font_map')

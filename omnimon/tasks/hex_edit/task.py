@@ -17,6 +17,7 @@ import pane_layout
 import omnimon.utils.wx.fonts as fonts
 import omnimon.utils.dis6502 as dis6502
 from omnimon.utils.binutil import known_segment_parsers
+import omnimon.utils.colors as colors
 
 
 class HexEditTask(FrameworkTask):
@@ -116,6 +117,14 @@ class HexEditTask(FrameworkTask):
                                 FontStyleBaseAction(font_mode=9, name="Antic 7 (Gr 2) Lowercase and Symbols"),
                                 id="a1", separator=True),
                             id='FontChoiceSubmenu2', separator=True, name="Antic Mode"),
+                        SMenu(
+                            Group(
+                                UseColorsAction(name="Powerup Colors", colors=colors.powerup_colors()),
+                                id="a1", separator=True),
+                            Group(
+                                AnticColorAction(),
+                                id="a2", separator=True),
+                            id='FontChoiceSubmenu2a', separator=True, name="Antic Colors"),
                         SMenu(
                             Group(
                                 DisassemblerBaseAction(disassembler=dis6502.Basic6502Disassembler),
