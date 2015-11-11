@@ -20,9 +20,29 @@ from omnimon.utils import colors
 #712  2C8  COLOR4 (Background/Border)
 
 class ColorListBox(wx.VListBox):
+    memory_map_label = [
+        "Player 0",
+        "Player 1",
+        "Player 2",
+        "Player 3",
+        "Playfield 0",
+        "Playfield 1",
+        "Playfield 2",
+        "Playfield 3",
+        "Background",
+        ]
+    
+    def calc_sizes(self):
+        self.max_w = 0
+        for n in range(len(self.memory_map_label)):
+            label = self.get_label(n)
+            w, h = self.GetTextExtent(label)
+            if w > self.max_w:
+                self.max_w = w
+    
     def get_label(self, n):
         reg = n + 704
-        return "%d (%x)" % (reg, reg)
+        return "%d (%x) %s" % (reg, reg, self.memory_map_label[n])
     
     # This method must be overridden.  When called it should draw the
     # n'th item on the dc within the rect.  How it is drawn, and what
@@ -36,10 +56,9 @@ class ColorListBox(wx.VListBox):
         dc.SetTextForeground(c)
         label = self.get_label(n)
         dc.DrawLabel(label, rect, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
-        w, h = self.GetTextExtent(label)
         color = self.GetParent().get_color(n)
         dc.SetBrush(wx.Brush(color))
-        rect.OffsetXY(w, 0)
+        rect.OffsetXY(self.max_w, 0)
         rect.Deflate(2, 2)
         dc.DrawRectangleRect(rect)
 
@@ -70,7 +89,6 @@ class AnticPalette(canvas.Canvas):
         #wx.InitAllImageHandlers()
         
         self.palette = self.init_palette(editor)
-        print "palette size", self.palette.GetSize()
         canvas.Canvas.__init__(self, parent, -1, size=self.palette.GetSize(), style=wx.SIMPLE_BORDER)
 
     def init_palette(self, editor):
@@ -133,7 +151,7 @@ class AnticColorDialog(wx.Dialog):
         sizer.Add(self.name, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
 
         box = wx.BoxSizer(wx.HORIZONTAL)
-        self.color_registers = ColorListBox(self, -1, style=wx.VSCROLL, size=(100, -1))
+        self.color_registers = ColorListBox(self, -1, style=wx.VSCROLL, size=(200, -1))
         box.Add(self.color_registers, 0, wx.EXPAND|wx.ALL, 4)
         self.palette = AnticPalette(self, editor)
         box.Add(self.palette, 1, wx.ALL, 4)
@@ -160,6 +178,7 @@ class AnticColorDialog(wx.Dialog):
         self.Fit()
     
     def init_colors(self):
+        self.color_registers.calc_sizes()
         c = list(self.editor.playfield_colors)
         if len(c) == 5:
             self.colors = list([0, 0, 0, 0])
@@ -187,7 +206,6 @@ class AnticColorDialog(wx.Dialog):
     
     def on_set_register(self, event):
         self.current_register = event.GetSelection()
-        print "register", self.current_register
         color = self.colors[self.current_register]
         self.palette.ReDraw()
         self.palette.highlight_color(color)
@@ -221,7 +239,6 @@ class AnticColorDialog(wx.Dialog):
         # Highlight a fresh selected area
         self.palette.ReDraw()
         c = self.palette.highlight_xy(m_x, m_y)
-        print "color", c
         self.colors[self.current_register] = c
         self.color_registers.Refresh()
 
