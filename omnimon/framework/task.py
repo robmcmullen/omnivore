@@ -4,6 +4,7 @@
 import wx
 
 # Enthought library imports.
+from pyface.wx.aui import aui
 from pyface.api import ImageResource, FileDialog, YES, OK, CANCEL
 from pyface.action.api import StatusBarManager, Group, Separator
 from pyface.tasks.api import Task, TaskWindow, TaskLayout, TaskWindowLayout, PaneItem, IEditor, \
@@ -134,6 +135,9 @@ class FrameworkTask(Task):
         handler = lambda: self.window.application.load_file(browser.selected_file, self)
         browser.on_trait_change(handler, 'activated')
         return [ browser ]
+    
+    def prepare_destroy(self):
+        self.destroy_minibuffer()
 
     ###########################################################################
     # 'FrameworkTask' interface.
@@ -433,6 +437,54 @@ class FrameworkTask(Task):
 
     def get_editor(self):
         raise NotImplementedError
+
+    ###########################################################################
+    # Minibuffer convenience routines
+    ###########################################################################
+    
+    minibuffer_pane_name = "omnimon.framework.minibuffer"
+    
+    def create_minibuffer(self):
+        log.debug("Creating space for minibuffer")
+        panel = wx.Panel(self.window.control, -1, name="Minibuffer")
+        panel.SetSize((500, 40))
+        panel.SetBackgroundColour('blue')
+        info = aui.AuiPaneInfo()
+        info.Caption("Minibuffer")
+        info.LeftDockable(False)
+        info.Name(self.minibuffer_pane_name)
+        info.RightDockable(False)
+        info.Layer(99)
+        info.Bottom()
+        info.Hide()
+        info.DockFixed(True)
+        #info.CaptionVisible(False)  # hides the caption bar & close button
+        self.window._aui_manager.AddPane(panel, info)
+        return info
+    
+    def show_minibuffer(self):
+        # minibuffer_pane_info is stored in the TaskWindow instance because all
+        # tasks use the same minibuffer pane in the AUI manager
+        try:
+            info = self.window.minibuffer_pane_info
+        except AttributeError:
+            info = self.create_minibuffer()
+            self.window.minibuffer_pane_info = info
+        log.debug("Window: %s, info: %s" % (self.window, info))
+        info.Show()
+        self.window._aui_manager.Update()
+    
+    def destroy_minibuffer(self):
+        try:
+            info = self.window.minibuffer_pane_info
+        except AttributeError:
+            return
+        control = info.window
+        self.window._aui_manager.DetachPane(control)
+        if info.minibuffer:
+            info.minibuffer.destroy()
+        else:
+            control.Destroy()
 
     ###########################################################################
     # Protected interface.

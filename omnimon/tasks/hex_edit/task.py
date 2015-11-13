@@ -92,6 +92,10 @@ class HexEditTask(FrameworkTask):
                         PasteAction(),
                         PasteAndRepeatAction(),
                         ]
+                elif group_name == "FindGroup":
+                    return [
+                        FindBytesAction(),
+                        ]
             elif menu_name == "View":
                 if group_name == "ViewConfigGroup":
                     return [
