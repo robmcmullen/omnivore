@@ -194,6 +194,7 @@ class FrameworkApplication(TasksApplication):
         
         # Short circuit: if the file can be edited by the active task, use that!
         if active_task is not None and active_task.can_edit(guess.metadata.mime):
+            log.debug("active task %s can edit %s" % (active_task, guess.metadata.mime))
             active_task.new(guess, **kwargs)
             return
         
@@ -208,15 +209,18 @@ class FrameworkApplication(TasksApplication):
             if not active_task.allow_different_task(guess, best.factory):
                 return
             if active_task.can_edit("application/octet-stream") and active_task.ask_attempt_loading_as_octet_stream(guess, best.factory):
+                log.debug("Active task %s allows application/octet-stream" % active_task.id)
                 active_task.new(guess, **kwargs)
                 return
 
         # Look for existing task in current windows
         task = self.find_active_task_of_type(best.id)
         if task:
+            log.debug("Found task %s in current window" % best.id)
             task.new(guess, **kwargs)
             return
         
+        log.debug("Creating task %s in current window" % best.id)
         self.create_task_from_factory_id(guess, best.id)
     
     def get_possible_task_factories(self, mime, task_id=""):
@@ -230,15 +234,16 @@ class FrameworkApplication(TasksApplication):
                 if factory.factory.can_edit(mime):
                     log.debug("  can edit: %s" % mime)
                     possibilities.append(factory)
-        log.debug(possibilities)
+        log.debug("get_possible_task_factories: %s" % str([(p.name, p.id) for p in possibilities]))
         return possibilities
     
     def find_best_task_factory(self, guess, factories):
         scores = []
-        for factory in self.task_factories:
+        for factory in factories:
             score = factory.factory.get_match_score(guess)
             scores.append((score, factory))
         scores.sort()
+        log.debug("find_best_task_factory: %s" % str([(score, p.name, p.id) for (s, p) in scores]))
         return scores[-1][1]
     
     def create_task_from_factory_id(self, guess, factory_id):
