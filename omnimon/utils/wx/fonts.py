@@ -37,7 +37,6 @@ class AnticFont(object):
     font_height_scale = [0, 0, 1, 0, 1, 2, 1, 2, 1, 2]
     
     def __init__(self, font_data, font_mode, playfield_colors, highlight_color):
-        print "font:", font_data['name']
         self.char_w = font_data['char_w']
         self.char_h = font_data['char_h']
         self.scale_w = self.font_width_scale[font_mode]
@@ -63,11 +62,8 @@ class AnticFont(object):
     
     def set_fonts(self, font_data, font_mode):
         bytes = np.fromstring(font_data['data'], dtype=np.uint8)
-#        print "numpy font:", bytes)
-#        print bytes[1]
         bits = np.unpackbits(bytes)
         bits = bits.reshape((-1, 8, 8))
-#        print bits[1]
         
         bits_to_font = self.get_bits_to_font_function(font_mode)
         self.normal_font = bits_to_font(bits, font_mode, self.normal_colors, self.normal_gr0_colors)
@@ -194,7 +190,6 @@ class AnticFont(object):
     def get_image(self, char_index, zoom, highlight=False):
         f = self.highlight_font if highlight else self.normal_font
         array = f[char_index]
-        print array
         w = self.char_w
         h = self.char_h
         image = wx.EmptyImage(w, h)
