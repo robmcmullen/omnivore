@@ -11,6 +11,7 @@ from pyface.tasks.action.api import TaskAction, EditorAction
 from omnimon.framework.actions import *
 from commands import *
 from omnimon.utils.wx.antic_colors import AnticColorDialog
+from omnimon.framework.minibuffer import *
 
 class FontChoiceGroup(TaskDynamicSubmenuGroup):
     """Dynamic menu group to display the available fonts
@@ -325,4 +326,4 @@ class FindBytesAction(EditorAction):
     tooltip = 'Find sequences of bytes in the raw data'
 
     def perform(self, event):
-        event.task.show_minibuffer()
+        event.task.show_minibuffer(TextMinibuffer(self.active_editor, FindHexCommand))

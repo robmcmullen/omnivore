@@ -348,3 +348,11 @@ class DivideFromCommand(ChangeByteCommand):
     
     def get_data(self, orig):
         return self.data / orig
+
+
+class FindHexCommand(Command):
+    short_name = "findhex"
+    pretty_name = "Find Hex Bytes"
+    
+    def get_data(self, orig):
+        return self.data

@@ -444,11 +444,8 @@ class FrameworkTask(Task):
     
     minibuffer_pane_name = "omnimon.framework.minibuffer"
     
-    def create_minibuffer(self):
+    def create_minibuffer_info(self):
         log.debug("Creating space for minibuffer")
-        panel = wx.Panel(self.window.control, -1, name="Minibuffer")
-        panel.SetSize((500, 40))
-        panel.SetBackgroundColour('blue')
         info = aui.AuiPaneInfo()
         info.Caption("Minibuffer")
         info.LeftDockable(False)
@@ -459,17 +456,25 @@ class FrameworkTask(Task):
         info.Hide()
         info.DockFixed(True)
         #info.CaptionVisible(False)  # hides the caption bar & close button
-        self.window._aui_manager.AddPane(panel, info)
+        info.minibuffer = None
         return info
     
-    def show_minibuffer(self):
+    def show_minibuffer(self, minibuffer):
         # minibuffer_pane_info is stored in the TaskWindow instance because all
         # tasks use the same minibuffer pane in the AUI manager
         try:
             info = self.window.minibuffer_pane_info
         except AttributeError:
-            info = self.create_minibuffer()
+            info = self.create_minibuffer_info()
             self.window.minibuffer_pane_info = info
+        if info.minibuffer is not None:
+            info.minibuffer.destroy()
+        info.minibuffer = minibuffer
+        minibuffer.create_control(self.window.control)
+#        panel = wx.Panel(self.window.control, -1, name="Minibuffer")
+#        panel.SetSize((500, 40))
+#        panel.SetBackgroundColour('blue')
+        self.window._aui_manager.AddPane(minibuffer.control, info)
         log.debug("Window: %s, info: %s" % (self.window, info))
         info.Show()
         self.window._aui_manager.Update()
@@ -479,12 +484,8 @@ class FrameworkTask(Task):
             info = self.window.minibuffer_pane_info
         except AttributeError:
             return
-        control = info.window
-        self.window._aui_manager.DetachPane(control)
-        if info.minibuffer:
-            info.minibuffer.destroy()
-        else:
-            control.Destroy()
+        self.window._aui_manager.DetachPane(info.minibuffer.control)
+        info.minibuffer.destroy()
 
     ###########################################################################
     # Protected interface.
