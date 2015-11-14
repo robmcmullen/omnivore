@@ -41,6 +41,11 @@ class Minibuffer(object):
         panel.SetSize((500, 40))
         panel.SetBackgroundColour('blue')
         self.control = panel
+    
+    def destroy_control(self):
+        if self.control is not None:
+            self.control.Destroy()
+            self.control = None
 
     def repeat(self, action):
         """Entry point used to reinitialize the minibuffer without creating
@@ -58,13 +63,6 @@ class Minibuffer(object):
         """
         log.debug("focus!!!")
         self.control.SetFocus()
-    
-    def destroy(self):
-        """
-        Destroy the minibuffer widgets.
-        """
-        self.panel.Destroy()
-        self.panel = None
     
     def perform(self, value):
         """Execute the processMinibuffer method of the action"""

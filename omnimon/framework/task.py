@@ -455,7 +455,7 @@ class FrameworkTask(Task):
         info.Bottom()
         info.Hide()
         info.DockFixed(True)
-        #info.CaptionVisible(False)  # hides the caption bar & close button
+        info.CaptionVisible(False)  # hides the caption bar & close button
         info.minibuffer = None
         return info
     
@@ -465,18 +465,35 @@ class FrameworkTask(Task):
         try:
             info = self.window.minibuffer_pane_info
         except AttributeError:
+            panel = wx.Panel(self.window.control, style=wx.NO_BORDER)
+            sizer = wx.BoxSizer(wx.HORIZONTAL)
+            close_image = ImageResource('cancel')
+            bmp = close_image.create_bitmap()
+            close = wx.BitmapButton(panel, -1, bmp, size=(bmp.GetWidth()+10, bmp.GetHeight()+10), style=wx.NO_BORDER)
+            close.Bind(wx.EVT_BUTTON, self.on_hide_minibuffer)
+            sizer.Add(close, 0, wx.EXPAND)
+            panel.SetSizer(sizer)
             info = self.create_minibuffer_info()
+            self.window._aui_manager.AddPane(panel, info)
+            # info.window is set to panel in the AUI code
             self.window.minibuffer_pane_info = info
         if info.minibuffer is not None:
-            info.minibuffer.destroy()
+            log.debug("Removing old minibuffer control: %s" % info.minibuffer.control)
+            info.window.GetSizer().Hide(0)
+            info.window.GetSizer().Remove(0)
+            info.minibuffer.destroy_control()
+            log.debug("Children: %s" % info.window.GetSizer().Children)
         info.minibuffer = minibuffer
-        minibuffer.create_control(self.window.control)
-#        panel = wx.Panel(self.window.control, -1, name="Minibuffer")
-#        panel.SetSize((500, 40))
-#        panel.SetBackgroundColour('blue')
-        self.window._aui_manager.AddPane(minibuffer.control, info)
+        minibuffer.create_control(info.window)
+        info.window.GetSizer().Insert(0, minibuffer.control, 1, wx.EXPAND)
+        info.window.GetSizer().Layout()
         log.debug("Window: %s, info: %s" % (self.window, info))
         info.Show()
+        self.window._aui_manager.Update()
+    
+    def on_hide_minibuffer(self, event):
+        info = self.window.minibuffer_pane_info
+        info.Hide()
         self.window._aui_manager.Update()
     
     def destroy_minibuffer(self):
