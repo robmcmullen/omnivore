@@ -20,7 +20,7 @@ class Minibuffer(object):
     label = "Input:"
     error = "Bad input."
     
-    def __init__(self, editor, command_cls, label=None, initial=None):
+    def __init__(self, editor, command_cls, label=None, initial=None, **kwargs):
         self.control = None
         self.editor = editor
         self.command_cls = command_cls
@@ -29,6 +29,7 @@ class Minibuffer(object):
         else:
             self.label = command_cls.pretty_name
         self.initial = initial
+        self.kwargs = kwargs
         
     def create_control(self, parent, **kwargs):
         """
@@ -132,13 +133,17 @@ class TextMinibuffer(Minibuffer):
     def perform(self):
         """Execute the command associatied with this minibuffer"""
         value, error = self.get_result()
-        cmd = self.command_cls(value, error)
+        cmd = self.command_cls(value, error, **self.kwargs)
         self.editor.process_command(cmd)
     
-    def repeat(self):
+    def repeat(self, minibuffer=None):
         """Shortcut to perform the same action again."""
         value, error = self.get_result()
-        cmd = self.command_cls(value, error, True)
+        if minibuffer is not None:
+            kwargs = minibuffer.kwargs
+        else:
+            kwargs = self.kwargs
+        cmd = self.command_cls(value, error, True, **kwargs)
         self.editor.process_command(cmd)
 
 

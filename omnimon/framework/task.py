@@ -6,7 +6,7 @@ import wx
 # Enthought library imports.
 from pyface.wx.aui import aui
 from pyface.api import ImageResource, FileDialog, YES, OK, CANCEL
-from pyface.action.api import StatusBarManager, Group, Separator
+from pyface.action.api import StatusBarManager, Group, Separator, ActionEvent
 from pyface.tasks.api import Task, TaskWindow, TaskLayout, TaskWindowLayout, PaneItem, IEditor, \
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
 from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
@@ -54,6 +54,8 @@ class FrameworkTask(Task):
     print_data = Any
     
     document_changed = Event
+    
+    keyboard_shortcuts = Any
     
     #### 'IAbout' interface ###################################################
     
@@ -112,6 +114,17 @@ class FrameworkTask(Task):
             left=VSplitter(
                 PaneItem('omnimon.framework.file_browser_pane'),
                 ))
+    
+    def _keyboard_shortcuts_default(self):
+        actions = []
+        
+        # Give each keyboard action a wx ID so that it can be identified in the
+        # menu callback
+        for action in self.get_keyboard_actions():
+            id = wx.NewId()
+            action.keyboard_shortcut_id = id
+            actions.append(action)
+        return actions
 
     def activated(self):
         log.debug("  status bar: %s" % self.status_bar)
@@ -121,6 +134,7 @@ class FrameworkTask(Task):
         else:
             self.status_bar.message = self.name
         self.window.icon = self.icon
+        self.set_keyboard_shortcuts()
 
     def create_central_pane(self):
         """ Create the central pane: the text editor.
@@ -434,6 +448,52 @@ class FrameworkTask(Task):
                         ]
                 
         return []
+    
+    def get_keyboard_actions(self):
+        """Return a list of actions to be used as keyboard shortcuts only, not
+        appearing in a menubar or toolbar
+        """
+        return []
+    
+    def parse_accelerator(self, text, id):
+        if text:
+            entry = wx.AcceleratorEntry(cmdID=id)
+            entry.FromString(text)
+            return entry
+        return None
+    
+    def create_accelerator_table(self):
+        shortcut_map = {}
+        table_entries = []
+        for action in self.keyboard_shortcuts:
+            id = action.keyboard_shortcut_id
+            table_entry = self.parse_accelerator(action.accelerator, id)
+            if table_entry is not None:
+                shortcut_map[id] = action
+                table_entries.append(table_entry)
+        log.debug("Accelerator table entries: %s" % str([t.ToString() for t in table_entries]))
+        return shortcut_map, wx.AcceleratorTable(table_entries)
+    
+    def on_keyboard_shortcut(self, event):
+        id = event.GetId()
+        log.debug("Keyboard shortcut! %s", id)
+        try:
+            action = self.keyboard_shortcut_map[id]
+        except KeyError:
+            log.error("Keyboard shortcut for %s not in this task" % id)
+            return
+        event = ActionEvent(task=self)
+        # Set the task so that dependent traits (e.g.  active_editor for
+        # EditorActions) will be available
+        action.task = self
+        action.perform(event)
+    
+    def set_keyboard_shortcuts(self):
+        shortcut_map, table = self.create_accelerator_table()
+        self.window.control.SetAcceleratorTable(table)
+        self.keyboard_shortcut_map = shortcut_map
+        for id in shortcut_map.keys():
+            self.window.control.Bind(wx.EVT_MENU, self.on_keyboard_shortcut, id=id)
 
     def get_editor(self):
         raise NotImplementedError
@@ -459,7 +519,7 @@ class FrameworkTask(Task):
         info.minibuffer = None
         return info
     
-    def show_minibuffer(self, minibuffer):
+    def show_minibuffer(self, minibuffer, **kwargs):
         # minibuffer_pane_info is stored in the TaskWindow instance because all
         # tasks use the same minibuffer pane in the AUI manager
         try:
@@ -496,7 +556,7 @@ class FrameworkTask(Task):
             log.debug("Window: %s, info: %s" % (self.window, info))
         else:
             info.minibuffer.focus()
-            info.minibuffer.repeat()
+            info.minibuffer.repeat(minibuffer)  # Include new minibuffer
         if not info.IsShown():
             info.Show()
             self.window._aui_manager.Update()

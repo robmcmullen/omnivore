@@ -326,4 +326,14 @@ class FindBytesAction(EditorAction):
     tooltip = 'Find sequences of bytes in the raw data'
 
     def perform(self, event):
+        log.debug("EVENT!!! %s" % event)
         event.task.show_minibuffer(TextMinibuffer(self.active_editor, FindHexCommand))
+
+
+class FindBytesReverseAction(EditorAction):
+    name = 'Find Bytes (Backwards)'
+    accelerator = 'Ctrl+R'
+    tooltip = 'Find sequences of bytes in the raw data, searching backwards'
+
+    def perform(self, event):
+        event.task.show_minibuffer(TextMinibuffer(self.active_editor, FindHexCommand, reverse=True))

@@ -182,6 +182,11 @@ class HexEditTask(FrameworkTask):
                         RampDownAction(),
                         ]
 
+    def get_keyboard_actions(self):
+        return [
+            FindBytesReverseAction(),
+            ]
+
     ###
     @classmethod
     def can_edit(cls, mime):
