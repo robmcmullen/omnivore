@@ -308,6 +308,9 @@ class FrameworkEditor(Editor):
             # are allowed to remain where they are
             self.ensure_visible(*flags.index_range)
         
+        if flags.message:
+            self.task.status_bar.message = flags.message
+        
         if flags.refresh_needed or flags.byte_values_changed:
             d.byte_values_changed = True
             

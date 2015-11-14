@@ -477,19 +477,29 @@ class FrameworkTask(Task):
             self.window._aui_manager.AddPane(panel, info)
             # info.window is set to panel in the AUI code
             self.window.minibuffer_pane_info = info
+        repeat = False
         if info.minibuffer is not None:
-            log.debug("Removing old minibuffer control: %s" % info.minibuffer.control)
-            info.window.GetSizer().Hide(0)
-            info.window.GetSizer().Remove(0)
-            info.minibuffer.destroy_control()
-            log.debug("Children: %s" % info.window.GetSizer().Children)
-        info.minibuffer = minibuffer
-        minibuffer.create_control(info.window)
-        info.window.GetSizer().Insert(0, minibuffer.control, 1, wx.EXPAND)
-        info.window.GetSizer().Layout()
-        log.debug("Window: %s, info: %s" % (self.window, info))
-        info.Show()
-        self.window._aui_manager.Update()
+            if minibuffer.__class__ == info.minibuffer.__class__:
+                repeat = True
+            else:
+                log.debug("Removing old minibuffer control: %s" % info.minibuffer.control)
+                info.window.GetSizer().Hide(0)
+                info.window.GetSizer().Remove(0)
+                info.minibuffer.destroy_control()
+                log.debug("Children: %s" % info.window.GetSizer().Children)
+        if not repeat:
+            minibuffer.create_control(info.window)
+            info.window.GetSizer().Insert(0, minibuffer.control, 1, wx.EXPAND)
+            info.window.GetSizer().Layout()
+            minibuffer.focus()
+            info.minibuffer = minibuffer
+            log.debug("Window: %s, info: %s" % (self.window, info))
+        else:
+            info.minibuffer.focus()
+            info.minibuffer.repeat()
+        if not info.IsShown():
+            info.Show()
+            self.window._aui_manager.Update()
     
     def on_hide_minibuffer(self, event):
         info = self.window.minibuffer_pane_info

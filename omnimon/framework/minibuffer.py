@@ -47,15 +47,6 @@ class Minibuffer(object):
             self.control.Destroy()
             self.control = None
 
-    def repeat(self, action):
-        """Entry point used to reinitialize the minibuffer without creating
-        a new instance.
-        
-        @param action: the L{SelectAction} that caused the repeat, which could
-        be different than C{self.action} stored during the __init__ method.
-        """
-        raise NotImplementedError
-
     def focus(self):
         """
         Set the focus to the component in the menubar that should get
@@ -64,13 +55,13 @@ class Minibuffer(object):
         log.debug("focus!!!")
         self.control.SetFocus()
     
-    def perform(self, value):
-        """Execute the processMinibuffer method of the action"""
-        cmd = self.command_cls(value)
-        error = self.action.processMinibuffer(self, self.mode, value)
-        if error is not None:
-            self.mode.frame.SetStatusText(error)
-
+    def perform(self):
+        """Execute the command associatied with this minibuffer"""
+        pass
+    
+    def repeat(self):
+        """Shortcut to perform the same action again."""
+        pass
 
 
 class TextMinibuffer(Minibuffer):
@@ -87,6 +78,8 @@ class TextMinibuffer(Minibuffer):
         prompt = wx.StaticText(self.control, -1, _(self.label))
         sizer.Add(prompt, 0, wx.CENTER)
         self.text = wx.TextCtrl(self.control, -1, size=(-1,-1), style=wx.TE_PROCESS_ENTER)
+        self.text.Bind(wx.EVT_TEXT, self.on_text)
+        self.text.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
         sizer.Add(self.text, 1, wx.EXPAND)
         self.control.SetSizer(sizer)
 
@@ -94,6 +87,25 @@ class TextMinibuffer(Minibuffer):
             self.text.ChangeValue(self.initial)
             self.text.SetInsertionPointEnd() 
             self.text.SetSelection(0, self.text.GetLastPosition()) 
+
+    def focus(self):
+        """
+        Set the focus to the component in the menubar that should get
+        the text focus.
+        """
+        log.debug("TextCtrl focus!!!")
+        self.text.SetFocus()
+
+    def on_text(self, evt):
+        text = evt.GetString()
+        log.debug(text)
+        self.perform()
+        evt.Skip()
+
+    def on_key_down(self, evt):
+        text = evt.GetKeyCode()
+        log.debug(text)
+        evt.Skip()
         
     def convert(self, text):
         return text
@@ -116,6 +128,18 @@ class TextMinibuffer(Minibuffer):
                 self.mode.frame.SetStatusText(error)
             text = None
         return text, error
+    
+    def perform(self):
+        """Execute the command associatied with this minibuffer"""
+        value, error = self.get_result()
+        cmd = self.command_cls(value, error)
+        self.editor.process_command(cmd)
+    
+    def repeat(self):
+        """Shortcut to perform the same action again."""
+        value, error = self.get_result()
+        cmd = self.command_cls(value, error, True)
+        self.editor.process_command(cmd)
 
 
 class IntMinibuffer(TextMinibuffer):

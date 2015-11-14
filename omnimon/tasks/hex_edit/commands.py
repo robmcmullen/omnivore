@@ -354,5 +354,35 @@ class FindHexCommand(Command):
     short_name = "findhex"
     pretty_name = "Find Hex Bytes"
     
-    def get_data(self, orig):
-        return self.data
+    def __init__(self, search_text, error, repeat=False):
+        Command.__init__(self)
+        self.search_text = search_text
+        self.error = error
+        self.repeat = repeat
+    
+    def __str__(self):
+        return "%s %s" % (self.pretty_name, repr(self.search_text))
+    
+    def perform(self, editor):
+        self.undo_info = undo = UndoInfo()
+        undo.flags.changed_document = False
+        if self.error:
+            undo.flags.message = self.error
+        else:
+            try:
+                s = bytearray.fromhex(self.search_text)
+                i1 = editor.anchor_start_index
+                if self.repeat:
+                    i1 += 1
+                i2 = len(editor.segment)
+                text = editor.segment.data[i1:i2].tostring()
+                i3 = text.find(s)
+                if i3 >= 0:
+                    undo.flags.index_range = i1 + i3, i1 + i3 + len(s)
+                    undo.flags.select_range = True
+                    undo.flags.message = "Found at $%04x" % (i1 + i3)
+                else:
+                    undo.flags.message = "Not found"
+            except ValueError, e:
+                undo.flags.message = str(e)
+        return undo

@@ -26,9 +26,10 @@ class UndoStack(list):
         if cmd is None:
             return UndoInfo()
         undo_info = cmd.perform(editor)
-        if undo_info.flags.success:
-            self.add_command(cmd)
-        cmd.last_flags = undo_info.flags
+        if undo_info.flags.changed_document:
+            if undo_info.flags.success:
+                self.add_command(cmd)
+            cmd.last_flags = undo_info.flags
         return undo_info
 
     def can_undo(self):
@@ -118,11 +119,14 @@ class StatusFlags(object):
         # True if command successfully completes, must set to False on failure
         self.success = True
         
+        # True if command made a change to the document and therefore should be recorded
+        self.changed_document = True
+        
         # List of errors encountered
         self.errors = []
         
         # Message displayed to the user
-        self.message = None
+        self.message = ""
         
         # has any data values changed, forcing all views to be refreshed?
         self.byte_values_changed = False
@@ -141,7 +145,7 @@ class StatusFlags(object):
     
     def add_flags(self, flags, cmd=None):
         if flags.message is not None:
-            self.messages.append(flags.message)
+            self.message += flags.message
         if flags.errors:
             if cmd is not None:
                 self.errors.append("In %s:" % str(cmd))
