@@ -337,3 +337,12 @@ class FindBytesReverseAction(EditorAction):
 
     def perform(self, event):
         event.task.show_minibuffer(TextMinibuffer(self.active_editor, FindHexCommand, reverse=True))
+
+
+class CancelMinibufferAction(EditorAction):
+    name = 'Cancel Minibuffer'
+    accelerator = 'ESC'
+    tooltip = 'Remove minibuffer'
+
+    def perform(self, event):
+        event.task.on_hide_minibuffer(None)
