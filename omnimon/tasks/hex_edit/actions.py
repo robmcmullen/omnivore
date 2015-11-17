@@ -246,6 +246,8 @@ class IndexRangeValueAction(IndexRangeAction):
                     value = int(text)
             except (ValueError, TypeError):
                 value = None
+        else:
+            value = None
         dialog.Destroy()
         return value
         
