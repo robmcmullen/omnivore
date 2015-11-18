@@ -549,7 +549,7 @@ class ByteGrid(Grid.Grid):
                 if not self.select_extend_mode:
                     # Shift pressed during drag; turn into extend mode
                     e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
-                if index1 <= e.anchor_initial_start_index:
+                if index1 < e.anchor_initial_start_index:
                     e.anchor_start_index = index1
                     e.anchor_end_index = e.anchor_initial_end_index
                     update = True
