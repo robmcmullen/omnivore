@@ -65,6 +65,7 @@ class BitviewScroller(wx.ScrolledWindow):
         self.grid_height = 0
         self.zoom = 5
         
+        self.select_extend_mode = False
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_resize)
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
@@ -311,8 +312,16 @@ class BitviewScroller(wx.ScrolledWindow):
         byte, bit, inside = self.event_coords_to_byte(evt)
         if inside:
             e = self.editor
-            e.anchor_start_index = e.anchor_initial_start_index = byte
-            e.anchor_end_index = e.anchor_initial_end_index = byte + 1
+            self.select_extend_mode = evt.ShiftDown()
+            if self.select_extend_mode:
+                if byte < e.anchor_start_index:
+                    e.anchor_start_index = byte
+                elif byte + 1 > e.anchor_start_index:
+                    e.anchor_end_index = byte + 1
+                e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
+            else:
+                e.anchor_start_index = e.anchor_initial_start_index = byte
+                e.anchor_end_index = e.anchor_initial_end_index = byte + 1
             wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_start_index, bit, self)
             wx.CallAfter(self.Refresh)
         evt.Skip()
@@ -326,16 +335,30 @@ class BitviewScroller(wx.ScrolledWindow):
                 index2 = byte + 1
 #                print index1, index2, e.anchor_start_index, e.anchor_end_index
                 update = False
-                if e.anchor_start_index <= index1:
-                    if index2 != e.anchor_end_index:
+                if evt.ShiftDown():
+                    if not self.select_extend_mode:
+                        # Shift pressed during drag; turn into extend mode
+                        e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
+                    if index1 < e.anchor_initial_start_index:
+                        e.anchor_start_index = index1
+                        e.anchor_end_index = e.anchor_initial_end_index
+                        update = True
+                    else:
                         e.anchor_start_index = e.anchor_initial_start_index
                         e.anchor_end_index = index2
                         update = True
                 else:
-                    if index1 != e.anchor_end_index:
-                        e.anchor_start_index = e.anchor_initial_end_index
-                        e.anchor_end_index = index1
-                        update = True
+                    if e.anchor_start_index <= index1:
+                        if index2 != e.anchor_end_index:
+                            e.anchor_start_index = e.anchor_initial_start_index
+                            e.anchor_end_index = index2
+                            update = True
+                    else:
+                        if index1 != e.anchor_end_index:
+                            e.anchor_start_index = e.anchor_initial_end_index
+                            e.anchor_end_index = index1
+                            update = True
+                self.select_extend_mode = evt.ShiftDown()
                 if update:
                     wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_end_index, bit, self)
                     wx.CallAfter(self.Refresh)
