@@ -497,6 +497,7 @@ class ByteGrid(Grid.Grid):
         self.RegisterDataType(Grid.GRID_VALUE_STRING, None, None)
         self.SetDefaultEditor(HexCellEditor(self))
 
+        self.select_extend_mode = False
         self.allow_range_select = True
         self.updateUICallback = None
         self.Bind(Grid.EVT_GRID_CELL_LEFT_CLICK, self.OnLeftDown)
@@ -518,11 +519,20 @@ class ByteGrid(Grid.Grid):
 
     def OnLeftDown(self, evt):
         c, r = (evt.GetCol(), evt.GetRow())
-        self.ClearSelection()
         e = self.editor
-        e.anchor_initial_start_index, e.anchor_initial_end_index = self.table.get_index_range(r, c)
-        e.anchor_start_index, e.anchor_end_index = e.anchor_initial_start_index, e.anchor_initial_end_index
-        evt.Skip()
+        self.select_extend_mode = evt.ShiftDown()
+        if self.select_extend_mode:
+            index1, index2 = self.table.get_index_range(r, c)
+            if index1 < e.anchor_start_index:
+                e.anchor_start_index = index1
+            elif index2 > e.anchor_start_index:
+                e.anchor_end_index = index2
+            e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
+        else:
+            self.ClearSelection()
+            e.anchor_initial_start_index, e.anchor_initial_end_index = self.table.get_index_range(r, c)
+            e.anchor_start_index, e.anchor_end_index = e.anchor_initial_start_index, e.anchor_initial_end_index
+            evt.Skip()
         self.SetGridCursor(r, c)
         wx.CallAfter(self.ForceRefresh)
         wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_start_index, 0, self)
@@ -535,16 +545,30 @@ class ByteGrid(Grid.Grid):
             r, c = self.XYToCell(x, y)
             index1, index2 = self.table.get_index_range(r, c)
             update = False
-            if e.anchor_start_index <= index1:
-                if index2 != e.anchor_end_index:
+            if evt.ShiftDown():
+                if not self.select_extend_mode:
+                    # Shift pressed during drag; turn into extend mode
+                    e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
+                if index1 <= e.anchor_initial_start_index:
+                    e.anchor_start_index = index1
+                    e.anchor_end_index = e.anchor_initial_end_index
+                    update = True
+                else:
                     e.anchor_start_index = e.anchor_initial_start_index
                     e.anchor_end_index = index2
                     update = True
             else:
-                if index1 != e.anchor_end_index:
-                    e.anchor_start_index = e.anchor_initial_end_index
-                    e.anchor_end_index = index1
-                    update = True
+                if e.anchor_start_index <= index1:
+                    if index2 != e.anchor_end_index:
+                        e.anchor_start_index = e.anchor_initial_start_index
+                        e.anchor_end_index = index2
+                        update = True
+                else:
+                    if index1 != e.anchor_end_index:
+                        e.anchor_start_index = e.anchor_initial_end_index
+                        e.anchor_end_index = index1
+                        update = True
+            self.select_extend_mode = evt.ShiftDown()
             if update:
                 self.SetGridCursor(r, c)
                 wx.CallAfter(self.ForceRefresh)
