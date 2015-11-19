@@ -40,7 +40,7 @@ class FileBrowserPane(TraitsDockPane):
     #### trait change handlers
     
     def _activated_changed(self):
-        self.task.window.application.load_file(self.selected_file, self.task)
+        self.task.window.application.load_file(self.selected_file, self.task, in_current_window=True)
 
 
 class PythonScriptBrowserPane(FileBrowserPane):

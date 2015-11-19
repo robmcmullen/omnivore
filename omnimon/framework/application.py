@@ -175,7 +175,7 @@ class FrameworkApplication(TasksApplication):
 
     #### API
 
-    def load_file(self, uri, active_task=None, task_id="", **kwargs):
+    def load_file(self, uri, active_task=None, task_id="", in_current_window=False, **kwargs):
         service = self.get_service("omnimon.file_type.i_file_recognizer.IFileRecognizerDriver")
         log.debug("SERVICE!!! %s" % service)
         
@@ -211,6 +211,10 @@ class FrameworkApplication(TasksApplication):
             if active_task.can_edit("application/octet-stream") and active_task.ask_attempt_loading_as_octet_stream(guess, best.factory):
                 log.debug("Active task %s allows application/octet-stream" % active_task.id)
                 active_task.new(guess, **kwargs)
+                return
+            if in_current_window:
+                task = self.create_task_in_window(best.id, active_task.window)
+                task.new(guess, **kwargs)
                 return
 
         # Look for existing task in current windows
