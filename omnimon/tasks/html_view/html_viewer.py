@@ -1,0 +1,50 @@
+# Standard library imports.
+import sys
+
+# Major package imports.
+import wx
+
+# Enthought library imports.
+from traits.api import Bool, Event, Instance, File, Unicode, Property, provides
+
+# Local imports.
+from omnimon.framework.editor import FrameworkEditor
+
+class HtmlViewer(FrameworkEditor):
+    """ The toolkit specific implementation of a simple HTML viewer
+    """
+
+    #### Events ####
+
+    changed = Event
+
+    ###########################################################################
+    # 'PythonEditor' interface.
+    ###########################################################################
+
+    def create(self, parent):
+        self.control = self._create_control(parent)
+
+    def rebuild_document_properties(self):
+        text = self.document.to_bytes()
+        self.control.SetPage(text)
+
+    def set_preferences(self):
+        prefs = self.task.get_preferences()
+        self.control.SetStandardFonts(prefs.font_size, prefs.normal_face, prefs.fixed_face)
+
+    ###########################################################################
+    # Private interface.
+    ###########################################################################
+
+    def _create_control(self, parent):
+        """ Creates the toolkit-specific control for the widget. """
+
+        # Base-class constructor.
+        self.control = wx.html.HtmlWindow(parent, -1, style=wx.NO_FULL_REPAINT_ON_RESIZE)
+        self.set_preferences()
+
+        # Load the editor's contents.
+        self.load()
+
+        return self.control

@@ -15,6 +15,32 @@ class PlainTextRecognizer(HasTraits):
             return "text/plain"
 
 @provides(IFileRecognizer)
+class XMLTextRecognizer(HasTraits):
+    """Default plain text identifier based on percentage of non-ASCII bytes.
+    
+    """
+    id = "text/xml"
+    
+    before = "text/plain"
+    
+    def identify(self, guess):
+        byte_stream = guess.get_utf8().strip()
+        if not byte_stream.startswith("<"):
+            return
+        if byte_stream.startswith("<?xml"):
+            found_xml = True
+        else:
+            found_xml = False
+        if "<rss" in byte_stream:
+            return "application/rss+xml"
+        byte_stream = byte_stream.lower()
+        if "<!doctype html" in byte_stream or "<html" in byte_stream:
+            return "text/html"
+        
+        if found_xml:
+            return "text/xml"
+
+@provides(IFileRecognizer)
 class PoundBangTextRecognizer(HasTraits):
     """Recognizer for pound bang style executable script files
     

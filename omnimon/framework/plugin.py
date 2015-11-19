@@ -110,19 +110,22 @@ class OmnimonMainPlugin(FrameworkPlugin):
         from omnimon.tasks.text_edit import TextEditPreferencesPane
         from omnimon.tasks.image_edit import ImageEditPreferencesPane
         from omnimon.tasks.hex_edit import HexEditPreferencesPane
-        return [ FrameworkPreferencesPane, TextEditPreferencesPane, ImageEditPreferencesPane, HexEditPreferencesPane, ]
+        from omnimon.tasks.html_view import HtmlViewPreferencesPane
+        return [ FrameworkPreferencesPane, TextEditPreferencesPane, ImageEditPreferencesPane, HexEditPreferencesPane, HtmlViewPreferencesPane]
 
     def _tasks_default(self):
         from omnimon.tasks.text_edit import TextEditTask
         from omnimon.tasks.image_edit import ImageEditTask
         from omnimon.tasks.hex_edit import HexEditTask
         from omnimon.tasks.map_edit import MapEditTask
+        from omnimon.tasks.html_view import HtmlViewTask
 
         return self.task_factories_from_tasks([
             TextEditTask,
             ImageEditTask,
             HexEditTask,
             MapEditTask,
+            HtmlViewTask,
             ])
 
     def _osx_actions_default(self):

@@ -51,9 +51,10 @@
 recognizers = []
 from image import ImageRecognizer
 recognizers.append(ImageRecognizer())
-from text import PlainTextRecognizer, PoundBangTextRecognizer
+from text import PlainTextRecognizer, PoundBangTextRecognizer, XMLTextRecognizer
 recognizers.append(PlainTextRecognizer())
 recognizers.append(PoundBangTextRecognizer())
+recognizers.append(XMLTextRecognizer())
 # [[[end]]]
 
 from envisage.api import Plugin
