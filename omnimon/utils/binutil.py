@@ -19,15 +19,16 @@ class SegmentParser(object):
 
 
 class DefaultSegment(object):
-    def __init__(self, start_addr=0, data=None, error=None):
+    def __init__(self, start_addr=0, data=None, error=None, text="All"):
         self.start_addr = start_addr
         if data is None:
             data = np.fromstring("", dtype=np.uint8)
         self.data = data
         self.error = error
+        self.text = text
     
     def __str__(self):
-        return "All (%d bytes)" % len(self.data)
+        return "%s (%d bytes)" % (self.text, len(self.data))
     
     def __len__(self):
         return np.alen(self.data)

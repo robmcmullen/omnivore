@@ -8,7 +8,7 @@ from traits.api import HasTraits, Trait, TraitHandler, Int, Any, List, Set, Bool
 
 from omnimon.utils.command import UndoStack
 from omnimon.utils.file_guess import FileMetadata
-from omnimon.utils.binutil import DefaultSegment
+from omnimon.utils.binutil import DefaultSegment, DefaultSegmentParser, InvalidSegmentParser
 
 
 class TraitNumpyConverter(TraitHandler):
@@ -38,6 +38,8 @@ class Document(HasTraits):
     bytes = Trait("", TraitNumpyConverter())
     
     segments = List
+    
+    user_segments = List
     
     # Trait events to provide view updating
     
@@ -86,3 +88,19 @@ class Document(HasTraits):
 
     def to_bytes(self):
         return self.bytes.tostring()
+
+    def parse_segments(self, parser_list):
+        parser_list.append(DefaultSegmentParser)
+        for parser in parser_list:
+            try:
+                s = parser(self.bytes)
+                break
+            except InvalidSegmentParser:
+                pass
+        self.segments = s.segments
+        self.segments.extend(self.user_segments)
+        return parser
+    
+    def add_user_segment(self, segment):
+        self.user_segments.append(segment)
+        self.segments.append(segment)

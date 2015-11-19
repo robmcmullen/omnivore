@@ -147,6 +147,7 @@ class HexEditTask(FrameworkTask):
                                 *segment_parser_actions,
                                 id="a1", separator=True),
                             id='submenu1', separator=True, name="File Type"),
+                        GetSegmentFromSelectionAction(),
                         ]
                 elif group_name == "SegmentGroup":
                     return [

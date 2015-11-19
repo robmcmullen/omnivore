@@ -180,6 +180,26 @@ class UseSegmentAction(EditorAction):
     def perform(self, event):
         self.active_editor.view_segment_number(self.segment_number)
 
+class GetSegmentFromSelectionAction(EditorAction):
+    name = 'Get Segment From Selection'
+    enabled_name = 'can_copy'
+    
+    def perform(self, event):
+        e = self.active_editor
+        dialog = wx.TextEntryDialog(e.window.control, "Enter segment name", "New Segment")
+
+        result = dialog.ShowModal()
+        if result == wx.ID_OK:
+            segment = e.get_segment_from_selection()
+            text = dialog.GetValue()
+            if not text:
+                text = "%04x-%04x" % (segment.start_addr, segment.start_addr + len(segment) - 1)
+            segment.text = text
+        else:
+            value = None
+        dialog.Destroy()
+        e.add_user_segment(segment)
+
 
 class IndexRangeAction(EditorAction):
     enabled_name = 'can_copy'

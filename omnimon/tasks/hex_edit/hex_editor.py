@@ -18,7 +18,7 @@ from omnimon.utils.file_guess import FileMetadata
 import omnimon.utils.wx.fonts as fonts
 import omnimon.utils.colors as colors
 from omnimon.utils.dis6502 import Atari800Disassembler
-from omnimon.utils.binutil import known_segment_parsers, DefaultSegmentParser, ATRSegmentParser, XexSegmentParser, InvalidSegmentParser, DefaultSegment
+from omnimon.utils.binutil import known_segment_parsers, ATRSegmentParser, XexSegmentParser, DefaultSegment
 
 from commands import PasteCommand
 
@@ -227,23 +227,14 @@ class HexEditor(FrameworkEditor):
         self.disassembly.recalc_view()
     
     def find_segment_parser(self, parsers):
-        doc = self.document
-        parsers.append(DefaultSegmentParser)
-        for parser in parsers:
-            try:
-                s = parser(doc.bytes)
-                break
-            except InvalidSegmentParser:
-                pass
-        doc.segments = s.segments
+        parser = self.document.parse_segments(parsers)
         self.segment_number = 0
         self.segment_parser = parser
         self.update_segments_ui()
         self.select_none(refresh=False)
     
     def set_segment_parser(self, parser):
-        parsers = [parser, DefaultSegmentParser]
-        self.find_segment_parser(parsers)
+        self.find_segment_parser([parser])
         self.update_panes()
     
     def view_segment_number(self, number):
@@ -253,6 +244,15 @@ class HexEditor(FrameworkEditor):
             self.segment_number = num
             self.segment = doc.segments[self.segment_number]
             self.refresh_panes()
+    
+    def get_segment_from_selection(self):
+        data = self.segment[self.anchor_start_index:self.anchor_end_index]
+        segment = DefaultSegment(self.segment.start_addr + self.anchor_start_index, data)
+        return segment
+    
+    def add_user_segment(self, segment):
+        self.document.add_user_segment(segment)
+        self.update_segments_ui()
     
     def ensure_visible(self, start, end):
         self.index_clicked(start, 0, None)
