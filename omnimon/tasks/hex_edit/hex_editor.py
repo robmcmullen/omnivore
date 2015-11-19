@@ -241,9 +241,32 @@ class HexEditor(FrameworkEditor):
         doc = self.document
         num = number if number < len(doc.segments) else 0
         if num != self.segment_number:
+            new_segment = doc.segments[num]
+            self.adjust_selection(self.segment, new_segment)
+            self.segment = new_segment
             self.segment_number = num
-            self.segment = doc.segments[self.segment_number]
-            self.select_none()
+            self.refresh_panes()
+    
+    def adjust_selection(self, current_segment, new_segment):
+        """Adjust the selection of the current segment so that it is limited to the
+        bounds of the new segment.
+        
+        If the current selection is entirely out of bounds of the new segment,
+        all the selection indexes will be set to zero.
+        """
+        indexes = np.array([self.anchor_initial_start_index, self.anchor_start_index, self.anchor_initial_end_index, self.anchor_end_index], dtype=np.int64)
+        
+        # find byte index of view into master array
+        current_offset = np.byte_bounds(current_segment.data)[0]
+        new_offset = np.byte_bounds(new_segment.data)[0]
+        
+        delta = new_offset - current_offset
+        indexes -= delta
+        indexes.clip(0, len(new_segment), out=indexes)
+        same = (indexes == indexes[0])
+        if same.all():
+            indexes = np.zeros(4, dtype=np.int64)
+        self.anchor_initial_start_index, self.anchor_start_index, self.anchor_initial_end_index, self.anchor_end_index = list(indexes)
     
     def get_segment_from_selection(self):
         data = self.segment[self.anchor_start_index:self.anchor_end_index]
