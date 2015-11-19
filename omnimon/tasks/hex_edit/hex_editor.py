@@ -243,7 +243,7 @@ class HexEditor(FrameworkEditor):
         if num != self.segment_number:
             self.segment_number = num
             self.segment = doc.segments[self.segment_number]
-            self.refresh_panes()
+            self.select_none()
     
     def get_segment_from_selection(self):
         data = self.segment[self.anchor_start_index:self.anchor_end_index]
