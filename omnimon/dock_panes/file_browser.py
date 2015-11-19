@@ -26,15 +26,21 @@ class FileBrowserPane(TraitsDockPane):
     filters = List(Str)
 
     # The currently selected file.
-    selected_file = File(os.path.expanduser('~'))
+    selected_file = File(os.getcwd())
 
     # The view used to construct the dock pane's widget.
     view = View(Item('selected_file',
                      editor=FileEditor(dclick_name='activated',
                                        filter_name='filters'),
                      style='custom',
+                     width=250,
                      show_label=False),
                 resizable=True)
+    
+    #### trait change handlers
+    
+    def _activated_changed(self):
+        self.task.window.application.load_file(self.selected_file, self.task)
 
 
 class PythonScriptBrowserPane(FileBrowserPane):
