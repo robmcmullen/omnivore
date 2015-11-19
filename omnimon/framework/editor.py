@@ -232,7 +232,7 @@ class FrameworkEditor(Editor):
             self.refresh_panes()
 
     def select_none(self, refresh=True):
-        """ Selects the entire document
+        """ Clears any selection in the document
         """
         self.anchor_start_index = self.anchor_initial_start_index = 0
         self.anchor_end_index = self.anchor_initial_end_index = 0

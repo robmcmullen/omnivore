@@ -291,6 +291,14 @@ class SelectAllAction(Action):
     def perform(self, event):
         event.task.active_editor.select_all()
 
+class SelectNoneAction(Action):
+    name = 'Select None'
+    accelerator = 'Shift+Ctrl+A'
+    tooltip = 'Clear selection'
+
+    def perform(self, event):
+        event.task.active_editor.select_none()
+
 class PreferencesAction(Action):
     name = 'Preferences...'
     accelerator = 'Ctrl+,'

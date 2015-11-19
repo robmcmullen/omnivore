@@ -388,6 +388,7 @@ class FrameworkTask(Task):
                 elif group_name == "SelectGroup":
                     return [
                         SelectAllAction(),
+                        SelectNoneAction(),
                         ]
                 elif group_name == "PrefGroup":
                     return [
