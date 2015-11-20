@@ -11,13 +11,11 @@ import wx
 import logging
 log = logging.getLogger(__name__)
 
-from omnimon import __version__, __codename__, __revision__, __author__, __author_email__, __url__
+from omnimon import __version__, __author__, __author_email__, __url__
 substitutes = {
     'prog': 'Omnimon Editor',
     'yearrange': '2014-2015',
     'version': __version__,
-    'codename': __codename__,
-    'revision': __revision__,
     'description': "The Atari 8-bit binary editor & disassembler",
     'author': __author__,
     'author_email': __author_email__,
@@ -50,7 +48,7 @@ substitutes['copyright'] = 'Copyright (c) %(yearrange)s %(author)s (%(author_ema
 
 about = {
     "omnimon": """<html>
-<h2>%(prog)s %(version)s %(revision)s \"%(codename)s\"</h2>
+<h2>%(prog)s %(version)s</h2>
 
 <p><img src="about://logo.png">
 

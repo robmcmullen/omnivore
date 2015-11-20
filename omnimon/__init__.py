@@ -23,12 +23,8 @@ __requires__ = [
 try:
     import _omnimon_version
     __version__ = _omnimon_version.version
-    __codename__ = _omnimon_version.codename
-    __revision__ = _omnimon_version.revision
 except ImportError:
     __version__ = "dev"
-    __codename__ = "git"
-    __revision__ = "HEAD"
 
 
 # py2exe utilities
