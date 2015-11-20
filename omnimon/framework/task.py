@@ -27,9 +27,11 @@ class FrameworkTask(Task):
     """ A simple task for opening a blank editor.
     """
     
-    # Class properties (not traits!)
+    # Class properties (not traits!) because they must be available in a TaskFactory 
     
     new_file_text = ''
+    
+    about_application = "about://omnimon"  # URL to load if no document specified on the command line
 
     #### Task interface #######################################################
 

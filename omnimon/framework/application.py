@@ -142,11 +142,19 @@ class FrameworkApplication(TasksApplication):
     def _application_initialized_fired(self):
         log.debug("STARTING!!!")
         init_filesystems()
+        loaded = False
         for arg in self.command_line_args:
             if arg.startswith("-"):
                 log.debug("skipping flag %s" % arg)
+                continue
             log.debug("processing %s" % arg)
             self.load_file(arg, None)
+            loaded = True
+        if not loaded:
+            factory = self.get_task_factory(self.startup_task)
+            url = factory.factory.about_application
+            if url:
+                self.load_file(url)
         app = wx.GetApp()
         app.tasks_application = self
     
@@ -252,6 +260,12 @@ class FrameworkApplication(TasksApplication):
         scores.sort()
         log.debug("find_best_task_factory: %s" % str([(score, p.name, p.id) for (s, p) in scores]))
         return scores[-1][1]
+    
+    def get_task_factory(self, task_id):
+        for factory in self.task_factories:
+            if factory.id == task_id:
+                return factory
+        return None
     
     def create_task_from_factory_id(self, guess, factory_id):
         window = self.create_window()
