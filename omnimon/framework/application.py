@@ -7,6 +7,8 @@ from datetime import datetime
 
 import fs
 
+from filesystem import init_filesystems
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -139,6 +141,7 @@ class FrameworkApplication(TasksApplication):
     
     def _application_initialized_fired(self):
         log.debug("STARTING!!!")
+        init_filesystems()
         for arg in self.command_line_args:
             if arg.startswith("-"):
                 log.debug("skipping flag %s" % arg)
