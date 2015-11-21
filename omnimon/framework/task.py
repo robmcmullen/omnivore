@@ -575,7 +575,7 @@ class FrameworkTask(Task):
         except AttributeError:
             return
         self.window._aui_manager.DetachPane(info.minibuffer.control)
-        info.minibuffer.destroy()
+        info.minibuffer.destroy_control()
 
     ###########################################################################
     # Protected interface.
