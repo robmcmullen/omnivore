@@ -224,10 +224,7 @@ class FrameworkApplication(TasksApplication):
                 active_task.new(guess, **kwargs)
                 return
             if in_current_window:
-                # FIXME: there's still a bug on OS X where multiple tasks
-                # aren't properly switched, leaving the UI unusable.
-                window = self.create_window()
-                task = self.create_task_in_window(best.id, window)
+                task = self.create_task_in_window(best.id, active_task.window)
                 task.new(guess, **kwargs)
                 return
 
@@ -315,13 +312,11 @@ class FrameworkApplication(TasksApplication):
                 # subsequent adding of a new task does seem to work now.  But
                 # I'm leaving in the workaround for now of simply closing the
                 # active window, forcing the new task to open in a new window.
-                if True and sys.platform != "darwin":
+                if True:
                     window.remove_task(task)
                     task = self.create_task_in_window(task_id, window)
                     return task
                 else:
-                    # The bug still exists on OS X, so force the task to open
-                    # in a new window
                     window.close()
                     return None
     

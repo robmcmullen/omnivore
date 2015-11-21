@@ -1,14 +1,14 @@
 # Standard library imports.
-import os.path
+import os
+
+import wx
 
 # Enthought library imports.
-from pyface.api import PythonEditor
-from pyface.tasks.api import TraitsDockPane
-from traits.api import Event, File, Instance, List, Str
-from traitsui.api import View, Item, FileEditor
+from pyface.tasks.api import DockPane
+from traits.api import Event, File, List, Str
 
 
-class FileBrowserPane(TraitsDockPane):
+class FileBrowserPane(DockPane):
     """ A simple file browser pane.
     """
 
@@ -19,28 +19,17 @@ class FileBrowserPane(TraitsDockPane):
 
     #### FileBrowserPane interface ############################################
 
-    # Fired when a file is double-clicked.
-    activated = Event
-
     # The list of wildcard filters for filenames.
     filters = List(Str)
-
-    # The currently selected file.
-    selected_file = File(os.getcwd())
-
-    # The view used to construct the dock pane's widget.
-    view = View(Item('selected_file',
-                     editor=FileEditor(dclick_name='activated',
-                                       filter_name='filters'),
-                     style='custom',
-                     width=250,
-                     show_label=False),
-                resizable=True)
     
-    #### trait change handlers
+    def create_contents(self, parent):
+        control = wx.GenericDirCtrl(parent, -1, size=(200,-1), style=wx.NO_BORDER)
+        control.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.on_selected)
+        return control
     
-    def _activated_changed(self):
-        self.task.window.application.load_file(self.selected_file, self.task, in_current_window=True)
+    def on_selected(self, evt):
+        selected_file = self.control.GetFilePath()
+        wx.CallAfter(self.task.window.application.load_file, selected_file, self.task, in_current_window=True)
 
 
 class PythonScriptBrowserPane(FileBrowserPane):
