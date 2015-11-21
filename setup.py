@@ -188,6 +188,23 @@ if sys.platform.startswith("win"):
         # Help py2exe find MSVCP90.DLL
         sys.path.append("c:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/redist/x86/Microsoft.VC90.CRT")
 
+def remove_pyc(basedir):
+    for curdir, dirlist, filelist in os.walk(basedir):
+        print curdir
+        for name in filelist:
+            if name.endswith(".pyo"):
+                c = name[:-1] + "c"
+                cpath = os.path.join(curdir, c)
+                print "  " + name
+                # remove .pyc if .pyo exists
+                if os.path.exists(cpath):
+                    os.remove(cpath)
+                # remove .py if not in numpy because numpy is crazy
+                path = cpath[:-1]
+                if os.path.exists(path) and "numpy" not in path:
+                    os.remove(path)
+
+
 if 'nsis' not in sys.argv:
     if sys.platform.startswith("win"):
         shutil.rmtree(win_dist_dir, ignore_errors=True)
@@ -327,12 +344,13 @@ Filename: "{app}\omnimon.exe"; Description: "{cm:LaunchProgram,Omnimon}"; Flags:
         '"C:\Program Files (x86)\Inno Setup 5\ISCC.exe" %s' % iss_filename,
     )
 elif 'py2app' in sys.argv and sys.platform.startswith('darwin'):
+    remove_pyc(mac_dist_dir)
     app_name = "%s/Omnimon.app" % mac_dist_dir
     
     # Strip out useless binary stuff from the site packages zip file.
     # Saves 3MB or so
     site_packages = "%s/Contents/Resources/lib/python2.7/site-packages.zip" % app_name
-    subprocess.call(['/usr/bin/zip', '-d', site_packages, "distutils/command/*", "wx/locale/*", "*.c", "*.pyx", "*.png", "*.jpg", "*.ico", ])
+    subprocess.call(['/usr/bin/zip', '-d', site_packages, "distutils/command/*", "wx/locale/*", "*.c", "*.pyx", "*.png", "*.jpg", "*.ico", "*.xcf", "*.icns", "reportlab/fonts/*", ])
 
     fat_app_name = "%s/Omnimon.fat.app" % mac_dist_dir
     os.rename(app_name, fat_app_name)
