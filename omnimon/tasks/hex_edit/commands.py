@@ -364,6 +364,9 @@ class FindHexCommand(Command):
     def __str__(self):
         return "%s %s" % (self.pretty_name, repr(self.search_text))
     
+    def get_search_string(self):
+        return bytearray.fromhex(self.search_text)
+    
     def perform(self, editor):
         self.undo_info = undo = UndoInfo()
         undo.flags.changed_document = False
@@ -371,7 +374,7 @@ class FindHexCommand(Command):
             undo.flags.message = self.error
         else:
             try:
-                s = bytearray.fromhex(self.search_text)
+                s = self.get_search_string()
             except ValueError, e:
                 s = None
                 undo.flags.message = str(e)
@@ -398,3 +401,11 @@ class FindHexCommand(Command):
                 else:
                     undo.flags.message = "Not found"
         return undo
+
+
+class FindTextCommand(FindHexCommand):
+    short_name = "findtext"
+    pretty_name = "Find Text Characters"
+    
+    def get_search_string(self):
+        return bytearray(self.search_text, "utf-8")

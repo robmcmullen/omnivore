@@ -94,6 +94,7 @@ class HexEditTask(FrameworkTask):
                         ]
                 elif group_name == "FindGroup":
                     return [
+                        FindAction(),
                         FindBytesAction(),
                         ]
             elif menu_name == "View":

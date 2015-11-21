@@ -342,9 +342,19 @@ class PasteAndRepeatAction(EditorAction):
             self.active_editor.process_command(cmd)
 
 
+class FindAction(EditorAction):
+    name = 'Find String'
+    accelerator = 'Ctrl+F'
+    tooltip = 'Find sequences of bytes in the raw data'
+
+    def perform(self, event):
+        log.debug("EVENT!!! %s" % event)
+        event.task.show_minibuffer(TextMinibuffer(self.active_editor, FindTextCommand))
+
+
 class FindBytesAction(EditorAction):
     name = 'Find Bytes'
-    accelerator = 'Ctrl+F'
+    accelerator = 'Shift+Ctrl+F'
     tooltip = 'Find sequences of bytes in the raw data'
 
     def perform(self, event):
