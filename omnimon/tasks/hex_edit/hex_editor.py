@@ -62,7 +62,7 @@ class HexEditor(FrameworkEditor):
     
     empty_color = Any(None)
     
-    text_font_size = Int(9)
+    text_font_size = Int(12)
     
     text_font_face = Str("")
     
