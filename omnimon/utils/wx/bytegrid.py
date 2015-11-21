@@ -622,7 +622,7 @@ class ByteGrid(Grid.Grid):
             index1, index2 = self.table.get_index_range(r, c)
             wx.CallAfter(self.task.active_editor.index_clicked, index1, 0, self)
 
-    def abortEdit(self):
+    def cancel_edit(self):
         self.DisableCellEditControl()
 
     def advanceCursor(self):

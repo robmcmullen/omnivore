@@ -533,7 +533,7 @@ class FrameworkTask(Task):
             close_image = ImageResource('cancel')
             bmp = close_image.create_bitmap()
             close = wx.BitmapButton(panel, -1, bmp, size=(bmp.GetWidth()+10, bmp.GetHeight()+10), style=wx.NO_BORDER)
-            close.Bind(wx.EVT_BUTTON, self.on_hide_minibuffer)
+            close.Bind(wx.EVT_BUTTON, self.on_hide_minibuffer_or_cancel)
             sizer.Add(close, 0, wx.EXPAND)
             panel.SetSizer(sizer)
             info = self.create_minibuffer_info()
@@ -564,10 +564,25 @@ class FrameworkTask(Task):
             info.Show()
             self.window._aui_manager.Update()
     
-    def on_hide_minibuffer(self, event):
-        info = self.window.minibuffer_pane_info
-        info.Hide()
-        self.window._aui_manager.Update()
+    def find_cancel_edit(self, control):
+        while control is not None:
+            if hasattr(control, "cancel_edit"):
+                control.cancel_edit()
+                return
+            else:
+                control = control.GetParent()
+    
+    def on_hide_minibuffer_or_cancel(self, event):
+        try:
+            info = self.window.minibuffer_pane_info
+        except AttributeError:
+            info = None
+        if info is None or not info.IsShown():
+            focused = self.window.control.FindFocus()
+            self.find_cancel_edit(focused)
+        else:
+            info.Hide()
+            self.window._aui_manager.Update()
     
     def destroy_minibuffer(self):
         try:

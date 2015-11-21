@@ -372,9 +372,9 @@ class FindBytesReverseAction(EditorAction):
 
 
 class CancelMinibufferAction(EditorAction):
-    name = 'Cancel Minibuffer'
+    name = 'Cancel Minibuffer or current edit'
     accelerator = 'ESC'
-    tooltip = 'Remove minibuffer'
+    tooltip = 'Remove minibuffer or cancel current edit'
 
     def perform(self, event):
-        event.task.on_hide_minibuffer(None)
+        event.task.on_hide_minibuffer_or_cancel(None)
