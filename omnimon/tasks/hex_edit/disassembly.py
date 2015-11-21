@@ -37,6 +37,10 @@ class DisassemblyTable(ByteGridTable):
 
         self._rows = len(self.lines)
     
+    def set_grid_cell_attr(self, grid, col, attr):
+        ByteGridTable.set_grid_cell_attr(self, grid, col, attr)
+        attr.SetReadOnly(True)
+    
     def get_index_range(self, r, c):
         line = self.lines[r]
         index = line[0] - self.start_addr

@@ -127,6 +127,20 @@ class ByteGridTable(Grid.PyGridTableBase):
 
     def ResetViewProcessArgs(self, *args):
         pass
+    
+    def set_grid_cell_attr(self, grid, col, attr):
+        attr.SetFont(grid.editor.text_font)
+        attr.SetBackgroundColour("white")
+        renderer = ByteGridRenderer(self, grid.editor)
+        attr.SetRenderer(renderer)
+    
+    def set_col_attr(self, grid, col, char_width):
+        attr = Grid.GridCellAttr()
+        self.set_grid_cell_attr(grid, col, attr)
+        log.debug("hexcol %d width=%d" % (col, char_width))
+        grid.SetColMinimalWidth(col, 0)
+        grid.SetColSize(col, (char_width * self.get_col_size(col)) + 4)
+        grid.SetColAttr(col, attr)
 
     def ResetView(self, grid, *args):
         """
@@ -165,15 +179,7 @@ class ByteGridTable(Grid.PyGridTableBase):
             # Can't share GridCellAttrs among columns; causes crash when
             # freeing them.  So, have to individually allocate the attrs for
             # each column
-            hexattr = Grid.GridCellAttr()
-            hexattr.SetFont(grid.editor.text_font)
-            hexattr.SetBackgroundColour("white")
-            renderer = ByteGridRenderer(self, grid.editor)
-            hexattr.SetRenderer(renderer)
-            log.debug("hexcol %d width=%d" % (col,width))
-            grid.SetColMinimalWidth(col, 0)
-            grid.SetColSize(col, (width * self.get_col_size(col)) + 4)
-            grid.SetColAttr(col, hexattr)
+            self.set_col_attr(grid, col, width)
 
         self._rows = self.GetNumberRows()
         self._cols = self.GetNumberCols()
