@@ -204,6 +204,28 @@ def remove_pyc(basedir):
                 if os.path.exists(path) and "numpy" not in path:
                     os.remove(path)
 
+def remove_numpy_tests(basedir):
+    print basedir
+    for f in glob.glob("%s/*/tests" % basedir):
+        print f
+        shutil.rmtree(f)
+    for f in glob.glob("%s/tests" % basedir):
+        print f
+        shutil.rmtree(f)
+    for f in ["tests", "f2py", "testing", "core/include", "core/lib", "distutils"]:
+        path = os.path.join(basedir, f)
+        shutil.rmtree(path, ignore_errors=True)
+    testing = "%s/testing" % basedir
+    os.mkdir(testing)
+    
+    tester_replace = """class Tester(object):
+    def bench(self, label='fast', verbose=1, extra_argv=None):
+        pass
+    test = bench
+"""
+    fh = open("%s/__init__.py" % testing, "wb")
+    fh.write(tester_replace)
+    fh.close()
 
 if 'nsis' not in sys.argv:
     if sys.platform.startswith("win"):
@@ -351,6 +373,10 @@ elif 'py2app' in sys.argv and sys.platform.startswith('darwin'):
     # Saves 3MB or so
     site_packages = "%s/Contents/Resources/lib/python2.7/site-packages.zip" % app_name
     subprocess.call(['/usr/bin/zip', '-d', site_packages, "distutils/command/*", "wx/locale/*", "*.c", "*.pyx", "*.png", "*.jpg", "*.ico", "*.xcf", "*.icns", "reportlab/fonts/*", ])
+
+    # fixup numpy
+    numpy_dir = "%s/Contents/Resources/lib/python2.7/numpy" % app_name
+    remove_numpy_tests(numpy_dir)
 
     fat_app_name = "%s/Omnimon.fat.app" % mac_dist_dir
     os.rename(app_name, fat_app_name)
