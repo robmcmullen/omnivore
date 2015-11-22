@@ -52,26 +52,6 @@ class ByteTable(ByteGridTable):
     def get_col_size(self, col):
         return 2
 
-    def getNextCursorPosition(self, row, col):
-        col+=1
-        if col>=self.bytes_per_row:
-            if row<self._rows-1:
-                row+=1
-                col=0
-            else:
-                col=self.bytes_per_row-1
-        return (row,col)
-   
-    def getPrevCursorPosition(self, row, col):
-        col-=1
-        if col<0:
-            if row>0:
-                row-=1
-                col=self.bytes_per_row-1
-            else:
-                col=0
-        return (row,col)
-   
     def GetRowLabelValue(self, row):
         return "%04x" % (row*self.bytes_per_row + self.segment.start_addr - self.start_offset)
 
@@ -88,8 +68,10 @@ class ByteTable(ByteGridTable):
         if val>=0 and val<256:
             i, _ = self.get_index_range(row, col)
             self.segment[i:i+1] = val
+            return True
         else:
             log.debug('SetValue(%d, %d, "%s")=%d out of range.' % (row, col, value, val))
+            return False
 
     def ResetViewProcessArgs(self, editor, *args):
         self.set_editor(editor)
@@ -120,6 +102,7 @@ class HexEditControl(ByteGrid):
         should be updated, or False if the value is invalid or the grid will
         be updated some other way.
         """
+        print "HERE!"
         try:
             val = int(text,16)
             if val >= 0 and val < 256:

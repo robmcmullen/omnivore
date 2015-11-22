@@ -1,8 +1,12 @@
 import sys
 import wx
 
-from omnimon.utils.wx.bytegrid import ByteGridTable, ByteGrid
+from omnimon.utils.wx.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 from omnimon.utils.binutil import DefaultSegment
+
+from omnimon.third_party.asm6502 import assemble_text
+
+from commands import ChangeByteCommand
 
 import logging
 log = logging.getLogger(__name__)
@@ -39,7 +43,10 @@ class DisassemblyTable(ByteGridTable):
     
     def set_grid_cell_attr(self, grid, col, attr):
         ByteGridTable.set_grid_cell_attr(self, grid, col, attr)
-        attr.SetReadOnly(True)
+        if col == 1:
+            attr.SetReadOnly(False)
+        else:
+            attr.SetReadOnly(True)
     
     def get_index_range(self, r, c):
         line = self.lines[r]
@@ -62,11 +69,34 @@ class DisassemblyTable(ByteGridTable):
                     break
         print "addr %s -> row=%d" % (addr, row)
         return row, 0
+
+    def get_next_cursor_pos(self, row, col):
+        col += 1
+        if col >= self._cols:
+            if row < self._rows - 1:
+                row += 1
+                col = 1
+            else:
+                col = self._cols - 1
+        return (row, col)
+   
+    def get_prev_cursor_pos(self, row, col):
+        col -= 1
+        if col < 1:
+            if row > 0:
+                row -= 1
+                col = self._cols - 1
+            else:
+                col = 1
+        return (row, col)
+    
+    def get_pc(self, row):
+        return self.lines[row][0]
     
     def GetRowLabelValue(self, row):
         if self.lines:
-            line = self.lines[row]
-            return "%04x" % line[0]
+            addr = self.get_pc(row)
+            return "%04x" % addr
         return "0000"
     
     def GetValue(self, row, col):
@@ -76,19 +106,51 @@ class DisassemblyTable(ByteGridTable):
         return str(line[col + 1])
 
     def SetValue(self, row, col, value):
-        val=int(value,16)
-        if val>=0 and val<256:
-            bytes = chr(val)
-        else:
-            log.debug('SetValue(%d, %d, "%s")=%d out of range.' % (row, col, value,val))
-            
-        i, _ = self.get_index_range(row, col)
-        end = loc + len(bytes)
-        
-        self.segment[i:end] = bytes
+        print "VALUE!!!!!", value
+        return True
 
     def ResetViewProcessArgs(self, editor, *args):
         self.set_editor(editor)
+
+
+class AssemblerTextCtrl(HexTextCtrl):
+    def setMode(self, mode):
+        self.mode='6502'
+        self.SetMaxLength(0)
+        self.autoadvance=0
+        self.userpressed=False
+
+class AssemblerEditor(HexCellEditor):
+    def Create(self, parent, id, evtHandler):
+        """
+        Called to create the control, which must derive from wx.Control.
+        *Must Override*
+        """
+        print "CREATED ASSEMBLEREDITOR"
+        self._tc = AssemblerTextCtrl(parent, id, self.parentgrid)
+        self.SetControl(self._tc)
+
+        if evtHandler:
+            self._tc.PushEventHandler(evtHandler)
+
+    def EndEdit(self, row, col, grid, old_val):
+        """
+        Complete the editing of the current cell. Returns True if the value
+        has changed.  If necessary, the control may be destroyed.
+        *Must Override*
+        """
+        log.debug("row,col=(%d,%d)" % (row, col))
+        changed = False
+
+        val = self._tc.GetValue()
+        
+        if val != self.startValue:
+            print "GRID!!!", grid
+            changed = grid.change_value(row, col, val) # update the table
+
+        self.startValue = ''
+        self._tc.SetValue('')
+        return changed
 
 
 class DisassemblyPanel(ByteGrid):
@@ -101,6 +163,10 @@ class DisassemblyPanel(ByteGrid):
         """
         table = DisassemblyTable()
         ByteGrid.__init__(self, parent, task, table, **kwargs)
+    
+    def get_default_cell_editor(self):
+        print "SET CELL EDITOR"
+        return AssemblerEditor(self)
 
     def recalc_view(self):
         editor = self.task.active_editor
@@ -108,3 +174,23 @@ class DisassemblyPanel(ByteGrid):
             self.editor = editor
             self.table.ResetView(self, editor)
             self.table.UpdateValues(self)
+    
+    def change_value(self, row, col, text):
+        """Called after editor has provided a new value for a cell.
+        
+        Can use this to override the default handler.  Return True if the grid
+        should be updated, or False if the value is invalid or the grid will
+        be updated some other way.
+        """
+        print "HERE!!!!"
+        try:
+            pc = self.table.get_pc(row)
+            bytes = assemble_text(text.upper(), pc)
+            start, _ = self.table.get_index_range(row, col)
+            end = start + len(bytes)
+            cmd = ChangeByteCommand(self.table.segment, start, end, bytes)
+            self.task.active_editor.process_command(cmd)
+            return True
+        except ValueError:
+            pass
+        return False

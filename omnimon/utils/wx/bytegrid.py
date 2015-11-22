@@ -106,6 +106,26 @@ class ByteGridTable(Grid.PyGridTableBase):
     
     def get_col_type(self, c):
         return "hex"
+
+    def get_next_cursor_pos(self, row, col):
+        col += 1
+        if col >= self._cols:
+            if row < self._rows - 1:
+                row += 1
+                col = 0
+            else:
+                col = self._cols - 1
+        return (row, col)
+   
+    def get_prev_cursor_pos(self, row, col):
+        col -= 1
+        if col < 0:
+            if row > 0:
+                row -= 1
+                col = self._cols - 1
+            else:
+                col = 0
+        return (row, col)
    
     def GetNumberRows(self):
         return self._rows
@@ -410,6 +430,7 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         has changed.  If necessary, the control may be destroyed.
         *Must Override*
         """
+        print "IN END EDIT"
         log.debug("row,col=(%d,%d)" % (row, col))
         changed = False
 
@@ -502,7 +523,8 @@ class ByteGrid(Grid.Grid):
         self.DisableDragRowSize()
 
         self.RegisterDataType(Grid.GRID_VALUE_STRING, None, None)
-        self.SetDefaultEditor(HexCellEditor(self))
+        e = self.get_default_cell_editor()
+        self.SetDefaultEditor(e)
 
         self.select_extend_mode = False
         self.allow_range_select = True
@@ -514,6 +536,9 @@ class ByteGrid(Grid.Grid):
 #        self.Bind(Grid.EVT_GRID_RANGE_SELECT, self.OnSelectRange)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.Show(True)
+    
+    def get_default_cell_editor(self):
+        return HexCellEditor(self)
 
     def OnRightDown(self, evt):
         log.debug(self.GetSelectedRows())
@@ -587,8 +612,8 @@ class ByteGrid(Grid.Grid):
         evt.Skip()
 
     def OnKeyDown(self, evt):
-        log.debug("evt=%s" % evt)
         key = evt.GetKeyCode()
+        log.debug("evt=%s, key=%s" % (evt, key))
         moved = False
         r, c = self.GetGridCursorRow(), self.GetGridCursorCol()
         if key == wx.WXK_RETURN or key == wx.WXK_TAB:
@@ -597,15 +622,15 @@ class ByteGrid(Grid.Grid):
             else:
                 self.DisableCellEditControl()
                 if evt.ShiftDown():
-                    (r, c) = self.table.getPrevCursorPosition(r, c)
+                    (r, c) = self.table.get_prev_cursor_pos(r, c)
                 else:
-                    (r, c) = self.table.getNextCursorPosition(r, c)
+                    (r, c) = self.table.get_next_cursor_pos(r, c)
                 moved = True
         elif key == wx.WXK_RIGHT:
-            r, c = self.table.getNextCursorPosition(r, c)
+            r, c = self.table.get_next_cursor_pos(r, c)
             moved = True
         elif key == wx.WXK_LEFT:
-            r, c = self.table.getPrevCursorPosition(r, c)
+            r, c = self.table.get_prev_cursor_pos(r, c)
             moved = True
         elif key == wx.WXK_UP:
             r = 0 if r <= 1 else r - 1
@@ -632,7 +657,7 @@ class ByteGrid(Grid.Grid):
         # FIXME: moving from the hex region to the value region using
         # self.MoveCursorRight(False) causes a segfault, so make sure
         # to stay in the same region
-        (row,col)=self.table.getNextCursorPosition(self.GetGridCursorRow(),self.GetGridCursorCol())
+        (row,col)=self.table.get_next_cursor_pos(self.GetGridCursorRow(),self.GetGridCursorCol())
         self.SetGridCursor(row,col)
         self.EnableCellEditControl()
 
@@ -653,5 +678,4 @@ class ByteGrid(Grid.Grid):
         should be updated, or False if the value is invalid or the grid will
         be updated some other way.
         """
-        self.table.SetValue(row, col, text) # update the table
-        return True
+        return self.table.SetValue(row, col, text) # update the table
