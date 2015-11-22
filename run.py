@@ -2,10 +2,6 @@
 
 # Standard library imports.
 import logging
- 
-# Local imports.
-from omnimon.framework.application import run
-
 
 # A list of the directories that contain the application's eggs (any directory
 # not specified as an absolute path is treated as being relative to the current
@@ -17,6 +13,9 @@ def main(argv):
     """ Run the application.
     """
     logging.basicConfig(level=logging.WARNING)
+    for toolkit in ['pyface', 'envisage', 'traits', 'traitsui', 'apptools']:
+        _ = logging.getLogger(toolkit)
+        _.setLevel(logging.WARNING)
     if "-d" in argv:
         i = argv.index("-d")
         argv.pop(i)  # discard -d
@@ -33,10 +32,8 @@ def main(argv):
     else:
         logger = logging.getLogger()
         logger.setLevel(logging.INFO)
-    for toolkit in ['pyface', 'envisage', 'traits', 'traitsui', 'apptools']:
-        _ = logging.getLogger(toolkit)
-        _.setLevel(logging.WARNING)
 
+    from omnimon.framework.application import run
     run(egg_path=EGG_PATH)
 
     logging.shutdown()
