@@ -285,41 +285,53 @@ class FrameworkApplication(TasksApplication):
         return task
     
     def find_active_task_of_type(self, task_id):
-        # Check active window first, then other windows
-        w = list(self.windows)
-        try:
-            i = w.index(self.active_window)
-            w.pop(i)
-            w[0:0] = [self.active_window]
-        except ValueError:
-            pass
-        for window in w:
-            log.debug("window: %s" % window)
-            log.debug("  active task: %s" % window.active_task)
-            if window.active_task.id == task_id:
-                log.debug("  found active task")
-                return window.active_task
-        log.debug("  no active task matches %s" % task_id)
-        for window in w:
-            task = window.active_task
-            if task is None:
-                continue
-            # if no editors in the task, replace the task with the new task
-            log.debug("  window %s: %d" % (window, len(task.editor_area.editors)))
-            if len(task.editor_area.editors) == 0:
-                log.debug("  replacing unused task!")
-                # The bugs in remove_task seem to have been fixed so that the
-                # subsequent adding of a new task does seem to work now.  But
-                # I'm leaving in the workaround for now of simply closing the
-                # active window, forcing the new task to open in a new window.
-                if True:
-                    window.remove_task(task)
-                    task = self.create_task_in_window(task_id, window)
-                    return task
-                else:
-                    window.close()
-                    return None
-    
+        # Until remove_task bug is fixed, don't create any new windows, just
+        # add a new task to the current window unless the task already exists
+        for t in self.active_window.tasks:
+            if t.id == task_id:
+                log.debug("found non-active task in current window; activating!")
+                self.active_window.activate_task(t)
+                return t
+        task = self.create_task_in_window(task_id, self.active_window)
+        return task
+#        # Check active window first, then other windows
+#        w = list(self.windows)
+#        try:
+#            i = w.index(self.active_window)
+#            w[0:0] = [self.active_window]
+#            w.pop(i)
+#        except ValueError:
+#            pass
+#        
+#        for window in w:
+#            log.debug("window: %s" % window)
+#            log.debug("  active task: %s" % window.active_task)
+#            if window.active_task.id == task_id:
+#                log.debug("  found active task")
+#                return window.active_task
+#        log.debug("  no active task matches %s" % task_id)
+#        for window in w:
+#            task = window.active_task
+#            if task is None:
+#                continue
+#            # if no editors in the task, replace the task with the new task
+#            log.debug("  window %s: %d" % (window, len(task.editor_area.editors)))
+#            if len(task.editor_area.editors) == 0:
+#                log.debug("  replacing unused task!")
+#                # The bugs in remove_task seem to have been fixed so that the
+#                # subsequent adding of a new task does seem to work now.  But
+#                # I'm leaving in the workaround for now of simply closing the
+#                # active window, forcing the new task to open in a new window.
+#                if True:
+#                    log.debug("removing task %s" % task)
+#                    print window
+#                    #window.remove_task(task)
+#                    task = self.create_task_in_window(task_id, window)
+#                    return task
+#                else:
+#                    window.close()
+#                    return None
+
     def find_or_create_task_of_type(self, task_id):
         task = self.find_active_task_of_type(task_id)
         if not task:
