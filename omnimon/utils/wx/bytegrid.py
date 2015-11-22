@@ -306,16 +306,17 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
         if key==wx.WXK_TAB:
             wx.CallAfter(self.parentgrid.advanceCursor)
             return
-        if key==wx.WXK_ESCAPE:
-            self.SetValue(self.startValue)
-            wx.CallAfter(self.parentgrid.abortEdit)
-            return
         elif self.mode=='hex':
             if self.isValidHexDigit(key):
                 self.userpressed=True
         elif self.mode!='hex':
             self.userpressed=True
         evt.Skip()
+
+    def cancel_edit(self):
+        log.debug("cancelling edit in hex cell editor!")
+        self.SetValue(self.startValue)
+        self.parentgrid.cancel_edit()
         
     def OnText(self, evt):
         """
@@ -623,6 +624,7 @@ class ByteGrid(Grid.Grid):
             wx.CallAfter(self.task.active_editor.index_clicked, index1, 0, self)
 
     def cancel_edit(self):
+        log.debug("cancelling edit!")
         self.DisableCellEditControl()
 
     def advanceCursor(self):
