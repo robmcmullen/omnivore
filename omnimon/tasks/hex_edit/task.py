@@ -81,6 +81,11 @@ class HexEditTask(FrameworkTask):
         editor = HexEditor()
         return editor
 
+    def get_font_mapping_actions(self):
+        return [
+            FontMappingBaseAction(font_mapping=0, name="Antic Internal Codes", task=self),
+            FontMappingBaseAction(font_mapping=1, name="ATASCII Codes", task=self),
+            ]
     
     def get_actions(self, location, menu_name, group_name):
         if location == "Menu":
@@ -99,6 +104,7 @@ class HexEditTask(FrameworkTask):
                         ]
             elif menu_name == "View":
                 if group_name == "ViewConfigGroup":
+                    font_mapping_actions = self.get_font_mapping_actions()
                     return [
                         SMenu(
                             Group(
@@ -122,6 +128,16 @@ class HexEditTask(FrameworkTask):
                                 FontStyleBaseAction(font_mode=9, name="Antic 7 (Gr 2) Lowercase and Symbols"),
                                 id="a1", separator=True),
                             id='FontChoiceSubmenu2', separator=True, name="Antic Mode"),
+                        SMenu(
+                            Group(
+                                *font_mapping_actions,
+                                id="a2", separator=True),
+                            id='FontChoiceSubmenu2', separator=True, name="Antic Font Mapping"),
+                        SMenu(
+                            Group(
+                                FontMappingWidthAction(),
+                                id="a3", separator=True),
+                            id='FontChoiceSubmenu2', separator=True, name="Antic Font Width"),
                         SMenu(
                             Group(
                                 UseColorsAction(name="Powerup Colors", colors=colors.powerup_colors()),

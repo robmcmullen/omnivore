@@ -46,7 +46,11 @@ class HexEditor(FrameworkEditor):
     
     antic_font = Any
     
+    antic_font_mapping = Enum(0, 1)
+    
     font_mode = Enum(2, 4, 5, 6, 7, 8, 9)
+    
+    map_width = Int
     
     playfield_colors = Any
     
@@ -94,6 +98,12 @@ class HexEditor(FrameworkEditor):
     
     def _font_mode_default(self):
         return 2  # Antic mode 2, Graphics 0
+    
+    def _antic_font_mapping_default(self):
+        return 1  # ATASCII
+    
+    def _map_width_default(self):
+        return 8  # ATASCII
     
     def _playfield_colors_default(self):
         return colors.powerup_colors()
@@ -199,7 +209,20 @@ class HexEditor(FrameworkEditor):
         self.antic_font_data = font
         self.antic_font = self.get_antic_font()
         self.font_map.set_font()
+        self.set_font_mapping()
+    
+    def set_font_mapping(self, font_mapping=None):
+        if font_mapping is None:
+            font_mapping = self.antic_font_mapping
+        self.antic_font_mapping = font_mapping
+        self.font_map.set_font_mapping(self.antic_font_mapping)
         self.update_fonts()
+    
+    def set_map_width(self, width=None):
+        if width is None:
+            width = self.map_width
+        self.map_width = width
+        self.font_map.set_scale(self.map_width)
     
     def load_font(self, filename):
         try:

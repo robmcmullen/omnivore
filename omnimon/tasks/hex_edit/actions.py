@@ -75,6 +75,42 @@ class FontStyleBaseAction(EditorAction):
             self.checked = self.active_editor.font_mode == self.font_mode
 
 
+class FontMappingBaseAction(EditorAction):
+    """Radio buttons for changing font style
+    """
+    # Traits
+    style = 'radio'
+    
+    font_mapping = Int
+
+    def perform(self, event):
+        self.active_editor.set_font_mapping(self.font_mapping)
+
+    @on_trait_change('active_editor.antic_font_mapping')
+    def _update_checked(self):
+        if self.active_editor:
+            self.checked = self.active_editor.antic_font_mapping == self.font_mapping
+
+
+class FontMappingWidthAction(EditorAction):
+    name = "Map Width"
+
+    def perform(self, event):
+        e = self.active_editor
+        dlg = wx.TextEntryDialog(event.task.window.control, 'Enter new map width in bytes', 'Set Map Width', str(e.map_width))
+
+        if dlg.ShowModal() == wx.ID_OK:
+            try:
+                width = int(dlg.GetValue())
+            except ValueError:
+                log.debug("Bad value: %s" % dlg.GetValue())
+                width = 0
+
+        dlg.Destroy()
+        if width > 0:
+            e.set_map_width(width)
+
+
 class AnticColorAction(EditorAction):
     name = 'Choose Colors...'
     

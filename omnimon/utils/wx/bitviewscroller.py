@@ -20,6 +20,11 @@ import numpy as np
 import wx
 import wx.lib.newevent
 
+from pyface.action.api import Action
+from pyface.tasks.action.api import EditorAction
+
+from omnimon.framework.actions import *
+from omnimon.tasks.hex_edit.actions import *
 import fonts
 import omnimon.utils.colors as colors
 
@@ -72,7 +77,6 @@ class BitviewScroller(wx.ScrolledWindow):
         self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
-        self.Bind(wx.EVT_MENU, self.on_menu)
     
     def is_ready_to_render(self):
         return self.bytes is not None
@@ -206,7 +210,7 @@ class BitviewScroller(wx.ScrolledWindow):
         self.visible_rows = ((h + self.zoom - 1) / self.zoom)
         log.debug("x, y, w, h, start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows]))
 
-    def set_scale(self):
+    def set_scale(self, width=None):
         """Creates new image at specified zoom factor.
 
         Creates a new image that is to be used as the background of
@@ -214,6 +218,8 @@ class BitviewScroller(wx.ScrolledWindow):
         image, which could lead to memory problems if the image is
         really huge and the zoom factor is large.
         """
+        if width is not None:
+            self.bytes_per_row = width
         if self.bytes is not None:
             self.calc_scale_from_bytes()
         else:
@@ -378,10 +384,12 @@ class BitviewScroller(wx.ScrolledWindow):
             self.calc_image_size()
     
     def on_popup(self, evt):
-        pass
+        actions = self.get_popup_actions()
+        if actions:
+            self.editor.popup_context_menu_from_actions(self, actions)
     
-    def on_menu(self, evt):
-        pass
+    def get_popup_actions(self):
+        return [CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction]
 
 
 class FontMapScroller(BitviewScroller):
@@ -520,38 +528,11 @@ class FontMapScroller(BitviewScroller):
         bit = 7 - (y & 7)
         return byte, bit, inside
     
-    def on_menu(self, event):
-        if event.GetId() == self.width_id:
-            
-            dlg = wx.TextEntryDialog(
-                    self, 'Enter new map width in bytes',
-                    'Set Map Width', str(self.bytes_per_row))
-
-            if dlg.ShowModal() == wx.ID_OK:
-                try:
-                    self.bytes_per_row = int(dlg.GetValue())
-                except ValueError:
-                    log.debug("Bad value: %s" % dlg.GetValue())
-
-            dlg.Destroy()
-            self.set_scale()
-        else:
-            for i, (id, title, menu_name, mapping) in enumerate(self.font_mappings):
-                if event.GetId() == id:
-                    self.set_font_mapping(i)
-                    wx.CallAfter(self.task.active_editor.update_fonts)
-                    break
-
-    def on_popup(self, event):
-        popup = wx.Menu()
-        self.width_id = wx.NewId()
-        popup.Append(self.width_id, "Set Map Width")
-        popup.AppendSeparator()
-        for i, (id, title, menu_name, mapping) in enumerate(self.font_mappings):
-            popup.Append(id, "View as %s" % menu_name)
-            if self.font_mapping_index == i:
-                popup.Enable(id, False)
-        self.PopupMenu(popup, event.GetPosition())
+    def get_popup_actions(self):
+        actions = BitviewScroller.get_popup_actions(self)
+        actions.extend([None, FontMappingWidthAction, None])
+        actions.extend(self.task.get_font_mapping_actions())
+        return actions
 
 
 class MemoryMapScroller(BitviewScroller):
