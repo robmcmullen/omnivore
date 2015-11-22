@@ -181,7 +181,7 @@ class UseSegmentAction(EditorAction):
         self.active_editor.view_segment_number(self.segment_number)
 
 class GetSegmentFromSelectionAction(EditorAction):
-    name = 'Get Segment From Selection'
+    name = 'New Segment From Selection'
     enabled_name = 'can_copy'
     
     def perform(self, event):
