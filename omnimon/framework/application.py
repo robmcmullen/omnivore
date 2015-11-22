@@ -287,13 +287,23 @@ class FrameworkApplication(TasksApplication):
     def find_active_task_of_type(self, task_id):
         # Until remove_task bug is fixed, don't create any new windows, just
         # add a new task to the current window unless the task already exists
-        for t in self.active_window.tasks:
-            if t.id == task_id:
-                log.debug("found non-active task in current window; activating!")
-                self.active_window.activate_task(t)
-                return t
-        task = self.create_task_in_window(task_id, self.active_window)
-        return task
+        w = list(self.windows)
+        try:
+            i = w.index(self.active_window)
+            w[0:0] = [self.active_window]
+            w.pop(i)
+        except ValueError:
+            pass
+        
+        for window in w:
+            for t in window.tasks:
+                if t.id == task_id:
+                    log.debug("found non-active task in current window; activating!")
+                    window.activate_task(t)
+                    return t
+        if window:
+            task = self.create_task_in_window(task_id, window)
+            return task
 #        # Check active window first, then other windows
 #        w = list(self.windows)
 #        try:
