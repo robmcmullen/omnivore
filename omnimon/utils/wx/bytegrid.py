@@ -365,6 +365,7 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
                 # changes to be skipped over.  Need some flag in grid
                 # to see if we're editing, or to delay updates until a
                 # certain period of calmness, or something.
+                print "advancing after edit"
                 wx.CallAfter(self.parentgrid.advance_cursor)
 
 
@@ -433,14 +434,15 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         has changed.  If necessary, the control may be destroyed.
         *Must Override*
         """
-        print "IN END EDIT"
         log.debug("row,col=(%d,%d)" % (row, col))
-        changed = False
 
         val = self._tc.GetValue()
-        
         if val != self.startValue:
             changed = grid.change_value(row, col, val) # update the table
+            # On error, don't advance cursor
+            grid.change_is_valid = changed
+        else:
+            changed = False
 
         self.startValue = ''
         self._tc.SetValue('')
@@ -528,6 +530,7 @@ class ByteGrid(Grid.Grid):
         self.RegisterDataType(Grid.GRID_VALUE_STRING, None, None)
         e = self.get_default_cell_editor()
         self.SetDefaultEditor(e)
+        self.change_is_valid = True
 
         self.select_extend_mode = False
         self.allow_range_select = True
@@ -626,9 +629,10 @@ class ByteGrid(Grid.Grid):
                 self.DisableCellEditControl()
                 if evt.ShiftDown():
                     (r, c) = self.table.get_prev_cursor_pos(r, c)
-                else:
+                elif self.change_is_valid:
                     (r, c) = self.table.get_next_editable_pos(r, c)
                 moved = True
+                self.change_is_valid = True
         elif key == wx.WXK_RIGHT:
             r, c = self.table.get_next_cursor_pos(r, c)
             moved = True
