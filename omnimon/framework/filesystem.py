@@ -42,6 +42,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 <li>Mark James for the <a href=\"http://www.famfamfam.com/lab/icons/silk/\">free silk icon set</a>
 <li>Chris Barker for bug reports and fixes on OS X</a>
 <li>Kevin Savetz of <a href=\"http://ataripodcast.com\">ANTIC, the Atari Podcast</a> for beta testing
+<li>David Beazley, author of <a href="\http://dabeaz.com\">Python Cookbook, 3rd Ed. and more</a>, for the 6502 mini assembler
 </ul>""",
     }
 substitutes['copyright'] = 'Copyright (c) %(yearrange)s %(author)s (%(author_email)s)' % substitutes
