@@ -67,6 +67,25 @@ class ChangeByteCommand(SetDataCommand):
         return self.data
 
 
+class MiniAssemblerCommand(ChangeByteCommand):
+    short_name = "asm"
+    pretty_name = "Asm"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('start_index', 'int'),
+            ('end_index', 'int'),
+            ('bytes', 'string'),
+            ('asm', 'string'),
+            ]
+    
+    def __init__(self, segment, start_index, end_index, bytes, asm):
+        ChangeByteCommand.__init__(self, segment, start_index, end_index, bytes)
+        self.asm = asm
+    
+    def __str__(self):
+        return "%s @ %04x" % (self.asm, self.start_index)
+
+
 class PasteCommand(ChangeByteCommand):
     short_name = "paste"
     pretty_name = "Paste"

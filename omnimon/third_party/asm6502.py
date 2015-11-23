@@ -329,7 +329,6 @@ opcodes_6502 = {
 # Parse address modes for various 6502 instructions
 def parse_address_mode(mode):
     # Accumulator or implicit. Example: INC
-    print "MODE!!!", mode
     if not mode or mode == 'A':    return ("accum","0")  
 
     # Immediate value. Example : LDA #13  
@@ -373,7 +372,6 @@ def parse_opcode(line):
         zp_objcode = opcodemodes.get(zpmode)
         if zp_objcode is not None:
             zp_objcode = list(zp_objcode)
-            print "FOUND ZERO PAGE CODE", zp_objcode
     else:
         zp_objcode = None
     return (value, list(objcode), zp_objcode)
@@ -450,9 +448,11 @@ def assemble_text(text, pc=0):
     symbols['HIGH'] = lambda x : (x & 0xff00) >> 8
     symbols['LOW'] = lambda x : x & 0xff
     symbols['PC'] = pc
-    print "VALUE:", value
-    value = value.replace("$", "0x")
-    realvalue = eval(value,symbols)
+    v = value.replace("$", "0x")
+    try:
+        realvalue = eval(v,symbols)
+    except Exception, e:
+        raise AssemblyError("Invalid number: %s" % value)
     if isinstance(realvalue,str):
         realvalue = ord(realvalue) & 0xff
     if not isinstance(realvalue, int):

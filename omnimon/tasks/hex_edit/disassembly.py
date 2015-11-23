@@ -4,9 +4,9 @@ import wx
 from omnimon.utils.wx.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 from omnimon.utils.binutil import DefaultSegment
 
-from omnimon.third_party.asm6502 import assemble_text
+from omnimon.third_party.asm6502 import assemble_text, AssemblyError
 
-from commands import ChangeByteCommand
+from commands import MiniAssemblerCommand
 
 import logging
 log = logging.getLogger(__name__)
@@ -67,7 +67,6 @@ class DisassemblyTable(ByteGridTable):
                 if a in addr_map:
                     row = addr_map[a]
                     break
-        print "addr %s -> row=%d" % (addr, row)
         return row, 0
 
     def get_next_cursor_pos(self, row, col):
@@ -113,10 +112,6 @@ class DisassemblyTable(ByteGridTable):
             return " ".join("%02x" % i for i in line[1])
         return str(line[col + 1])
 
-    def SetValue(self, row, col, value):
-        print "VALUE!!!!!", value
-        return True
-
     def ResetViewProcessArgs(self, editor, *args):
         self.set_editor(editor)
 
@@ -134,31 +129,11 @@ class AssemblerEditor(HexCellEditor):
         Called to create the control, which must derive from wx.Control.
         *Must Override*
         """
-        print "CREATED ASSEMBLEREDITOR"
         self._tc = AssemblerTextCtrl(parent, id, self.parentgrid)
         self.SetControl(self._tc)
 
         if evtHandler:
             self._tc.PushEventHandler(evtHandler)
-
-    def EndEdit(self, row, col, grid, old_val):
-        """
-        Complete the editing of the current cell. Returns True if the value
-        has changed.  If necessary, the control may be destroyed.
-        *Must Override*
-        """
-        log.debug("row,col=(%d,%d)" % (row, col))
-        changed = False
-
-        val = self._tc.GetValue()
-        
-        if val != self.startValue:
-            print "GRID!!!", grid
-            changed = grid.change_value(row, col, val) # update the table
-
-        self.startValue = ''
-        self._tc.SetValue('')
-        return changed
 
 
 class DisassemblyPanel(ByteGrid):
@@ -173,7 +148,6 @@ class DisassemblyPanel(ByteGrid):
         ByteGrid.__init__(self, parent, task, table, **kwargs)
     
     def get_default_cell_editor(self):
-        print "SET CELL EDITOR"
         return AssemblerEditor(self)
 
     def recalc_view(self):
@@ -190,15 +164,15 @@ class DisassemblyPanel(ByteGrid):
         should be updated, or False if the value is invalid or the grid will
         be updated some other way.
         """
-        print "HERE!!!!"
         try:
             pc = self.table.get_pc(row)
-            bytes = assemble_text(text.upper(), pc)
+            cmd = text.upper()
+            bytes = assemble_text(cmd, pc)
             start, _ = self.table.get_index_range(row, col)
             end = start + len(bytes)
-            cmd = ChangeByteCommand(self.table.segment, start, end, bytes)
+            cmd = MiniAssemblerCommand(self.table.segment, start, end, bytes, cmd)
             self.task.active_editor.process_command(cmd)
             return True
-        except ValueError:
-            pass
+        except AssemblyError, e:
+            self.task.window.error(unicode(e))
         return False
