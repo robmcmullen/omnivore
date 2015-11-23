@@ -132,12 +132,10 @@ class HexEditTask(FrameworkTask):
                             Group(
                                 *font_mapping_actions,
                                 id="a2", separator=True),
-                            id='FontChoiceSubmenu2', separator=True, name="Antic Font Mapping"),
-                        SMenu(
                             Group(
                                 FontMappingWidthAction(),
                                 id="a3", separator=True),
-                            id='FontChoiceSubmenu2', separator=True, name="Antic Font Width"),
+                            id='FontChoiceSubmenu2a1', separator=True, name="Char Map"),
                         SMenu(
                             Group(
                                 UseColorsAction(name="Powerup Colors", colors=colors.powerup_colors()),
