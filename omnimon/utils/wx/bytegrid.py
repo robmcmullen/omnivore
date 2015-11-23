@@ -116,6 +116,9 @@ class ByteGridTable(Grid.PyGridTableBase):
             else:
                 col = self._cols - 1
         return (row, col)
+    
+    def get_next_editable_pos(self, row, col):
+        return self.get_next_cursor_pos(row, col)
    
     def get_prev_cursor_pos(self, row, col):
         col -= 1
@@ -324,7 +327,7 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
         key=evt.GetKeyCode()
         
         if key==wx.WXK_TAB:
-            wx.CallAfter(self.parentgrid.advanceCursor)
+            wx.CallAfter(self.parentgrid.advance_cursor)
             return
         elif self.mode=='hex':
             if self.isValidHexDigit(key):
@@ -362,7 +365,7 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
                 # changes to be skipped over.  Need some flag in grid
                 # to see if we're editing, or to delay updates until a
                 # certain period of calmness, or something.
-                wx.CallAfter(self.parentgrid.advanceCursor)
+                wx.CallAfter(self.parentgrid.advance_cursor)
 
 
 class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
@@ -624,7 +627,7 @@ class ByteGrid(Grid.Grid):
                 if evt.ShiftDown():
                     (r, c) = self.table.get_prev_cursor_pos(r, c)
                 else:
-                    (r, c) = self.table.get_next_cursor_pos(r, c)
+                    (r, c) = self.table.get_next_editable_pos(r, c)
                 moved = True
         elif key == wx.WXK_RIGHT:
             r, c = self.table.get_next_cursor_pos(r, c)
@@ -652,12 +655,12 @@ class ByteGrid(Grid.Grid):
         log.debug("cancelling edit!")
         self.DisableCellEditControl()
 
-    def advanceCursor(self):
+    def advance_cursor(self):
         self.DisableCellEditControl()
         # FIXME: moving from the hex region to the value region using
         # self.MoveCursorRight(False) causes a segfault, so make sure
         # to stay in the same region
-        (row,col)=self.table.get_next_cursor_pos(self.GetGridCursorRow(),self.GetGridCursorCol())
+        (row,col)=self.table.get_next_editable_pos(self.GetGridCursorRow(),self.GetGridCursorCol())
         self.SetGridCursor(row,col)
         self.EnableCellEditControl()
 

@@ -79,6 +79,14 @@ class DisassemblyTable(ByteGridTable):
             else:
                 col = self._cols - 1
         return (row, col)
+
+    def get_next_editable_pos(self, row, col):
+        if col < 1:
+            col = 1
+        else:
+            col = 1
+            row += 1
+        return (row, col)
    
     def get_prev_cursor_pos(self, row, col):
         col -= 1
