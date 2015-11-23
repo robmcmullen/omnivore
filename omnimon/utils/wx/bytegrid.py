@@ -249,7 +249,7 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
         # reset the validator based on the columns.  We have to do the
         # validation ourselves using EVT_KEY_DOWN.
         wx.TextCtrl.__init__(self,parent, id,
-                             style=wx.TE_PROCESS_TAB|wx.TE_PROCESS_ENTER)
+                             style=wx.TE_PROCESS_TAB|wx.TE_PROCESS_ENTER|wx.NO_BORDER)
         log.debug("parent=%s" % parent)
         self.SetInsertionPoint(0)
         self.Bind(wx.EVT_TEXT, self.OnText)
