@@ -175,4 +175,5 @@ class DisassemblyPanel(ByteGrid):
             return True
         except AssemblyError, e:
             self.task.window.error(unicode(e))
+            self.SetFocus()  # OS X quirk: return focus to the grid so the user can keep typing
         return False
