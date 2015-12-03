@@ -288,6 +288,10 @@ class FrameworkApplication(TasksApplication):
         # Until remove_task bug is fixed, don't create any new windows, just
         # add a new task to the current window unless the task already exists
         w = list(self.windows)
+        if not w:
+            # OS X might not have any windows open; a menubar is allowed to
+            # exist without windows.
+            return None
         try:
             i = w.index(self.active_window)
             w[0:0] = [self.active_window]
