@@ -200,6 +200,7 @@ class HexEditTask(FrameworkTask):
 
     def get_keyboard_actions(self):
         return [
+            FindReverseAction(),
             FindBytesReverseAction(),
             CancelMinibufferAction(),
             ]

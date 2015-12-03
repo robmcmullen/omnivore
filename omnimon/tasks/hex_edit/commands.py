@@ -399,6 +399,7 @@ class FindHexCommand(Command):
                 undo.flags.message = str(e)
             
             if s is not None:
+                wrapped_message = ""
                 if self.reverse:
                     i1 = 0
                     i2 = editor.anchor_end_index
@@ -406,6 +407,13 @@ class FindHexCommand(Command):
                         i2 -= 1
                     text = editor.segment.data[i1:i2].tostring()
                     i3 = text.rfind(s)
+                    if i3 < 0:
+                        # Wrap search starting from beginning
+                        wrapped_message = " (Reached start of page; wrapping search starting at end)"
+                        i1 = i2
+                        i2 = len(editor.segment)
+                        text = editor.segment.data[i1:i2].tostring()
+                        i3 = text.rfind(s)
                 else:
                     i1 = editor.anchor_start_index
                     i2 = len(editor.segment)
@@ -413,10 +421,17 @@ class FindHexCommand(Command):
                         i1 += 1
                     text = editor.segment.data[i1:i2].tostring()
                     i3 = text.find(s)
+                    if i3 < 0:
+                        # Wrap search starting from beginning
+                        wrapped_message = " (Reached end of page; wrapping search starting at top)"
+                        i2 = i1
+                        i1 = 0
+                        text = editor.segment.data[i1:i2].tostring()
+                        i3 = text.find(s)
                 if i3 >= 0:
                     undo.flags.index_range = i1 + i3, i1 + i3 + len(s)
                     undo.flags.select_range = True
-                    undo.flags.message = "Found at $%04x" % (i1 + i3)
+                    undo.flags.message = ("Found at $%04x" % (i1 + i3)) + wrapped_message
                 else:
                     undo.flags.message = "Not found"
         return undo
