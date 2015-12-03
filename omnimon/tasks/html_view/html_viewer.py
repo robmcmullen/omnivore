@@ -3,12 +3,16 @@ import sys
 
 # Major package imports.
 import wx
+from wx.lib.ClickableHtmlWindow import PyClickableHtmlWindow
 
 # Enthought library imports.
 from traits.api import Bool, Event, Instance, File, Unicode, Property, provides
 
 # Local imports.
 from omnimon.framework.editor import FrameworkEditor
+
+class HtmlWindow(PyClickableHtmlWindow):
+    pass
 
 class HtmlViewer(FrameworkEditor):
     """ The toolkit specific implementation of a simple HTML viewer
@@ -41,7 +45,7 @@ class HtmlViewer(FrameworkEditor):
         """ Creates the toolkit-specific control for the widget. """
 
         # Base-class constructor.
-        self.control = wx.html.HtmlWindow(parent, -1, style=wx.NO_FULL_REPAINT_ON_RESIZE)
+        self.control = HtmlWindow(parent, -1, style=wx.NO_FULL_REPAINT_ON_RESIZE)
         self.set_preferences()
 
         # Load the editor's contents.
