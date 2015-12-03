@@ -74,7 +74,7 @@ class MemoryMapPane(DockPane):
     #### TaskPane interface ###################################################
 
     id = 'hex_edit.memory_map'
-    name = 'Memory Map'
+    name = 'Page Map'
     
     def create_contents(self, parent):
         control = MemoryMapScroller(parent, self.task, size=(-1,30))
