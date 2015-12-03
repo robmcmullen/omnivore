@@ -542,7 +542,7 @@ class FrameworkTask(Task):
             self.window.minibuffer_pane_info = info
         repeat = False
         if info.minibuffer is not None:
-            if minibuffer.__class__ == info.minibuffer.__class__:
+            if info.minibuffer.is_repeat(minibuffer):
                 repeat = True
             else:
                 log.debug("Removing old minibuffer control: %s" % info.minibuffer.control)

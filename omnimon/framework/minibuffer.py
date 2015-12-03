@@ -60,6 +60,9 @@ class Minibuffer(object):
         """Execute the command associatied with this minibuffer"""
         pass
     
+    def is_repeat(self, other):
+        return self.__class__ == other.__class__ and self.command_cls == other.command_cls
+    
     def repeat(self):
         """Shortcut to perform the same action again."""
         pass
