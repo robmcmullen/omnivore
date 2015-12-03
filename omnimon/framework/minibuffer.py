@@ -102,13 +102,15 @@ class TextMinibuffer(Minibuffer):
 
     def on_text(self, evt):
         text = evt.GetString()
-        log.debug(text)
+        log.debug("text: %s" % text)
         self.perform()
         evt.Skip()
 
     def on_key_down(self, evt):
-        text = evt.GetKeyCode()
-        log.debug(text)
+        keycode = evt.GetKeyCode()
+        log.debug("key down: %s" % keycode)
+        if keycode == wx.WXK_RETURN:
+            self.repeat()
         evt.Skip()
         
     def convert(self, text):
