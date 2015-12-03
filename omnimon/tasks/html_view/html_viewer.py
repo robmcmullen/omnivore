@@ -12,7 +12,19 @@ from traits.api import Bool, Event, Instance, File, Unicode, Property, provides
 from omnimon.framework.editor import FrameworkEditor
 
 class HtmlWindow(PyClickableHtmlWindow):
-    pass
+    def OnCellMouseHover(self, cell, x, y):
+        # Without access to the task window, search the control hierarchy to
+        # find a wx.Frame and set the status text directly
+        parent = self.GetParent()
+        while parent:
+            if hasattr(parent, "SetStatusText"):
+                linkinfo = cell.GetLink()
+                if linkinfo is not None:
+                    parent.SetStatusText(linkinfo.GetHref())
+                else:
+                    parent.SetStatusText("")
+                return
+            parent = parent.GetParent()
 
 class HtmlViewer(FrameworkEditor):
     """ The toolkit specific implementation of a simple HTML viewer
