@@ -318,9 +318,9 @@ class BitviewScroller(wx.ScrolledWindow):
         evt.Skip()
 
     def on_left_down(self, evt):
+        e = self.editor
         byte, bit, inside = self.event_coords_to_byte(evt)
         if inside:
-            e = self.editor
             self.select_extend_mode = evt.ShiftDown()
             if self.select_extend_mode:
                 if byte < e.anchor_start_index:
@@ -328,11 +328,10 @@ class BitviewScroller(wx.ScrolledWindow):
                 elif byte + 1 > e.anchor_start_index:
                     e.anchor_end_index = byte + 1
                 e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
+                e.cursor_index = byte
             else:
-                e.anchor_start_index = e.anchor_initial_start_index = byte
-                e.anchor_end_index = e.anchor_initial_end_index = byte + 1
-            wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_start_index, bit, self)
-            wx.CallAfter(self.Refresh)
+                e.set_cursor(byte, False)
+            wx.CallAfter(e.index_clicked, e.anchor_start_index, bit, None)
         evt.Skip()
  
     def on_motion(self, evt):
@@ -351,26 +350,29 @@ class BitviewScroller(wx.ScrolledWindow):
                     if index1 < e.anchor_initial_start_index:
                         e.anchor_start_index = index1
                         e.anchor_end_index = e.anchor_initial_end_index
+                        e.cursor_index = index1
                         update = True
                     else:
                         e.anchor_start_index = e.anchor_initial_start_index
                         e.anchor_end_index = index2
+                        e.cursor_index = index2
                         update = True
                 else:
                     if e.anchor_start_index <= index1:
                         if index2 != e.anchor_end_index:
                             e.anchor_start_index = e.anchor_initial_start_index
                             e.anchor_end_index = index2
+                            e.cursor_index = index2
                             update = True
                     else:
                         if index1 != e.anchor_end_index:
                             e.anchor_start_index = e.anchor_initial_end_index
                             e.anchor_end_index = index1
+                            e.cursor_index = index1
                             update = True
                 self.select_extend_mode = evt.ShiftDown()
                 if update:
-                    wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_end_index, bit, self)
-                    wx.CallAfter(self.Refresh)
+                    wx.CallAfter(e.index_clicked, e.anchor_end_index, bit, None)
 #                print "motion: byte, start, end", byte, e.anchor_start_index, e.anchor_end_index
         evt.Skip()
 
@@ -402,6 +404,7 @@ class BitviewScroller(wx.ScrolledWindow):
     
     def on_char(self, evt):
         log.debug("on_char!")
+        evt.Skip()
 
 
 class FontMapScroller(BitviewScroller):
@@ -504,6 +507,9 @@ class FontMapScroller(BitviewScroller):
         anchor_start, anchor_end = self.editor.anchor_start_index, self.editor.anchor_end_index
         if anchor_start > anchor_end:
             anchor_start, anchor_end = anchor_end, anchor_start
+        elif anchor_start == anchor_end:
+            anchor_start = self.editor.cursor_index
+            anchor_end = anchor_start + 1
         for j in range(er):
             x = 0
             for i in range(sc, ec):
@@ -546,11 +552,17 @@ class FontMapScroller(BitviewScroller):
         actions.extend(self.task.get_font_mapping_actions())
         return actions
     
-    def on_char(self, evt):
-        log.debug("on_char! %s" % evt.GetUniChar())
-        self.change_byte(self.editor.anchor_start_index, evt.GetUniChar())
+    def on_focus(self, evt):
+        log.debug("on_focus!")
     
-    def change_byte(self, index, value):
+    def on_focus_lost(self, evt):
+        log.debug("on_focus_lost!")
+    
+    def on_char(self, evt):
+        log.debug("on_char! char=%s, key=%s, shift=%s, ctrl=%s, cmd=%s" % (evt.GetUniChar(), evt.GetRawKeyCode(), evt.ShiftDown(), evt.ControlDown(), evt.CmdDown()))
+        self.change_byte(evt.GetUniChar())
+    
+    def change_byte(self, value):
         pass
 
 

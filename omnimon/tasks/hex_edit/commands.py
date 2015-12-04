@@ -20,6 +20,8 @@ class SetDataCommand(Command):
         Command.__init__(self)
         self.segment = segment
         self.start_index = start_index
+        if start_index == end_index:
+            end_index += 1
         self.end_index = end_index
     
     def __str__(self):
@@ -406,7 +408,7 @@ class FindHexCommand(Command):
                 wrapped_message = ""
                 if self.reverse:
                     i1 = 0
-                    i2 = editor.anchor_end_index
+                    i2 = editor.cursor_index
                     if self.repeat:
                         i2 -= 1
                     text = editor.segment.data[i1:i2].tostring()
@@ -419,7 +421,7 @@ class FindHexCommand(Command):
                         text = editor.segment.data[i1:i2].tostring()
                         i3 = text.rfind(s)
                 else:
-                    i1 = editor.anchor_start_index
+                    i1 = editor.cursor_index
                     i2 = len(editor.segment)
                     if self.repeat:
                         i1 += 1
@@ -434,6 +436,7 @@ class FindHexCommand(Command):
                         i3 = text.find(s)
                 if i3 >= 0:
                     undo.flags.index_range = i1 + i3, i1 + i3 + len(s)
+                    undo.flags.cursor_index = i1
                     undo.flags.select_range = True
                     undo.flags.message = ("Found at $%04x" % (i1 + i3)) + wrapped_message
                 else:

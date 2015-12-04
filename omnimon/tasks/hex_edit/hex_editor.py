@@ -120,6 +120,9 @@ class HexEditor(FrameworkEditor):
     def rebuild_document_properties(self):
         self.find_segment_parser([ATRSegmentParser, XexSegmentParser])
     
+    def document_length(self):
+        return len(self.segment)
+    
     def process_paste_data_object(self, data_obj):
         bytes = self.get_numpy_from_data_object(data_obj)
         cmd = PasteCommand(self.segment, self.anchor_start_index, self.anchor_end_index, bytes)
@@ -345,6 +348,7 @@ class HexEditor(FrameworkEditor):
     #### wx event handlers ####################################################
     
     def index_clicked(self, index, bit, control):
+        self.cursor_index = index
         if control != self.control:
             self.control.select_index(index)
         if control != self.disassembly:

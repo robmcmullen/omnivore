@@ -45,9 +45,14 @@ class FrameworkEditor(Editor):
     
     can_copy = Bool(False)
     
+    # Cursor index points to positions between bytes, so zero is before the
+    # first byte and the max index is the number of bytes, which points to
+    # after the last byte
+    
+    cursor_index = Int(0)
+    
     # Anchor indexes behave like cursor positions: they indicate positions
-    # between bytes, so zero is before the first byte and the max value of an
-    # anchor is the number of bytes + 1
+    # between bytes
     anchor_start_index = Int(0)
     
     anchor_initial_start_index = Int(0)
@@ -102,6 +107,9 @@ class FrameworkEditor(Editor):
         """ Recreate any editor attributes for the new document
         """
         pass
+    
+    def document_length(self):
+        return len(self.document)
 
     def save(self, uri=None):
         """ Saves the contents of the editor.
@@ -240,6 +248,19 @@ class FrameworkEditor(Editor):
         if refresh:
             self.refresh_panes()
     
+    def set_cursor(self, index, refresh=True):
+        max_index = self.document_length()
+        if index < 0:
+            index = 0
+        elif index > max_index:
+            index = max_index
+        self.cursor_index = index
+        self.anchor_start_index = self.anchor_initial_start_index = index
+        self.anchor_end_index = self.anchor_initial_end_index = index
+        self.can_copy = False
+        if refresh:
+            self.refresh_panes()
+    
     # Command processor
 
     def update_undo_redo(self):
@@ -298,26 +319,28 @@ class FrameworkEditor(Editor):
         
         """
         d = self.document
+        visible_range = False
         
+        if flags.cursor_index is not None:
+            self.cursor_index = self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = flags.cursor_index
+            visible_range = True
+            
         if flags.index_range is not None:
             if flags.select_range:
                 self.anchor_start_index = self.anchor_initial_start_index = flags.index_range[0]
                 self.anchor_end_index = self.anchor_initial_end_index = flags.index_range[1]
-            
-            # Only update the range on the current view, not other views which
-            # are allowed to remain where they are
-            self.ensure_visible(*flags.index_range)
-        
-        if flags.cursor_index is not None:
-            self.anchor_start_index = self.anchor_initial_start_index = flags.cursor_index
-            self.anchor_end_index = self.anchor_initial_end_index = flags.cursor_index + 1
-            self.ensure_visible(self.anchor_start_index, self.anchor_end_index)
+            visible_range = True
         
         if flags.message:
             self.task.status_bar.message = flags.message
         
         if flags.refresh_needed or flags.byte_values_changed:
             d.byte_values_changed = True
+        
+        if visible_range:
+            # Only update the range on the current editor, not other views which
+            # are allowed to remain where they are
+            self.ensure_visible(self.anchor_start_index, self.anchor_end_index)
             
     def popup_context_menu_from_commands(self, window, commands):
         """Popup a simple context menu with menu items defined by commands.

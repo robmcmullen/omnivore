@@ -563,17 +563,20 @@ class ByteGrid(Grid.Grid):
             index1, index2 = self.table.get_index_range(r, c)
             if index1 < e.anchor_start_index:
                 e.anchor_start_index = index1
+                e.cursor_index = index1
             elif index2 > e.anchor_start_index:
                 e.anchor_end_index = index2
+                e.cursor_index = index2
             e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
         else:
             self.ClearSelection()
             e.anchor_initial_start_index, e.anchor_initial_end_index = self.table.get_index_range(r, c)
             e.anchor_start_index, e.anchor_end_index = e.anchor_initial_start_index, e.anchor_initial_end_index
+            e.cursor_index = e.anchor_initial_start_index
             evt.Skip()
         self.SetGridCursor(r, c)
         wx.CallAfter(self.ForceRefresh)
-        wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_start_index, 0, self)
+        wx.CallAfter(e.index_clicked, e.anchor_start_index, 0, self)
  
     def on_motion(self, evt):
         e = self.editor
@@ -608,9 +611,10 @@ class ByteGrid(Grid.Grid):
                         update = True
             self.select_extend_mode = evt.ShiftDown()
             if update:
+                e.cursor_index = index1
                 self.SetGridCursor(r, c)
                 wx.CallAfter(self.ForceRefresh)
-                wx.CallAfter(self.task.active_editor.index_clicked, e.anchor_end_index, 0, self)
+                wx.CallAfter(e.index_clicked, e.anchor_end_index, 0, self)
         evt.Skip()
 
     def OnSelectCell(self, evt):
@@ -618,6 +622,7 @@ class ByteGrid(Grid.Grid):
         evt.Skip()
 
     def OnKeyDown(self, evt):
+        e = self.editor
         key = evt.GetKeyCode()
         log.debug("evt=%s, key=%s" % (evt, key))
         moved = False
@@ -653,7 +658,7 @@ class ByteGrid(Grid.Grid):
             self.SetGridCursor(r, c)
             self.MakeCellVisible(r, c)
             index1, index2 = self.table.get_index_range(r, c)
-            wx.CallAfter(self.task.active_editor.index_clicked, index1, 0, self)
+            wx.CallAfter(e.index_clicked, index1, 0, self)
 
     def cancel_edit(self):
         log.debug("cancelling edit!")
@@ -661,11 +666,10 @@ class ByteGrid(Grid.Grid):
 
     def advance_cursor(self):
         self.DisableCellEditControl()
-        # FIXME: moving from the hex region to the value region using
-        # self.MoveCursorRight(False) causes a segfault, so make sure
-        # to stay in the same region
-        (row,col)=self.table.get_next_editable_pos(self.GetGridCursorRow(),self.GetGridCursorCol())
-        self.SetGridCursor(row,col)
+        (r, c)=self.table.get_next_editable_pos(self.GetGridCursorRow(),self.GetGridCursorCol())
+        self.SetGridCursor(r, c)
+        index1, index2 = self.table.get_index_range(r, c)
+        self.editor.set_cursor(index1, False)
         self.EnableCellEditControl()
 
     def goto_index(self, index):
