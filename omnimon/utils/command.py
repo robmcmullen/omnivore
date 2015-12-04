@@ -140,6 +140,9 @@ class StatusFlags(object):
         # set to True if the index_range should be selected
         self.select_range = False
         
+        # set cursor index to position
+        self.cursor_index = None
+        
         for flags in args:
             self.add_flags(flags)
     
@@ -171,6 +174,9 @@ class StatusFlags(object):
                 if f2 > s2:
                     s2 = f1
                 self.index_range = (s1, s2)
+        
+        if flags.cursor_index is not None:
+            self.cursor_index = flags.cursor_index
 
 
 class UndoInfo(object):

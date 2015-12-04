@@ -37,6 +37,8 @@ class SetDataCommand(Command):
         self.undo_info = undo = UndoInfo()
         undo.flags.byte_values_changed = True
         undo.flags.index_range = i1, i2
+        if self.cursor_at_end:
+            undo.flags.cursor_index = i2
         old_data = self.segment.data[i1:i2].copy()
         self.segment.data[i1:i2] = self.get_data(self.segment.data[i1:i2])
         undo.data = (old_data, )
@@ -57,11 +59,13 @@ class ChangeByteCommand(SetDataCommand):
             ('start_index', 'int'),
             ('end_index', 'int'),
             ('bytes', 'string'),
+            ('cursor_at_end', 'bool'),
             ]
     
-    def __init__(self, segment, start_index, end_index, bytes):
+    def __init__(self, segment, start_index, end_index, bytes, cursor_at_end=False):
         SetDataCommand.__init__(self, segment, start_index, end_index)
         self.data = bytes
+        self.cursor_at_end = cursor_at_end
     
     def get_data(self, orig):
         return self.data

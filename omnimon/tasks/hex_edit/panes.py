@@ -1,6 +1,5 @@
-"""Sample panes for Skeleton
+import wx
 
-"""
 # Enthought library imports.
 from pyface.tasks.api import DockPane, TraitsDockPane
 from traits.api import on_trait_change
@@ -10,6 +9,7 @@ from disassembly import DisassemblyPanel
 from segments import SegmentList
 from omnimon.utils.wx.bitviewscroller import BitviewScroller, FontMapScroller, MemoryMapScroller
 from omnimon.framework.undo_panel import UndoHistoryPanel
+from commands import ChangeByteCommand
 
 import logging
 log = logging.getLogger(__name__)
@@ -52,6 +52,11 @@ class ByteGraphicsPane(DockPane):
             self.control.set_task(self.task)
 
 
+class CharMap(FontMapScroller):
+    def change_byte(self, index, value):
+        cmd = ChangeByteCommand(self.editor.segment, index, index+1, value, True)
+        self.editor.process_command(cmd)
+
 class FontMapPane(DockPane):
     #### TaskPane interface ###################################################
 
@@ -59,7 +64,7 @@ class FontMapPane(DockPane):
     name = 'Font Map'
     
     def create_contents(self, parent):
-        control = FontMapScroller(parent, self.task, size=(160,-1))
+        control = CharMap(parent, self.task, size=(160,-1))
         return control
     
     #### trait change handlers

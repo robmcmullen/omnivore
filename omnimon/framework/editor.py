@@ -308,6 +308,11 @@ class FrameworkEditor(Editor):
             # are allowed to remain where they are
             self.ensure_visible(*flags.index_range)
         
+        if flags.cursor_index is not None:
+            self.anchor_start_index = self.anchor_initial_start_index = flags.cursor_index
+            self.anchor_end_index = self.anchor_initial_end_index = flags.cursor_index + 1
+            self.ensure_visible(self.anchor_start_index, self.anchor_end_index)
+        
         if flags.message:
             self.task.status_bar.message = flags.message
         

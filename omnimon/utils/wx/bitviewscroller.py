@@ -77,6 +77,9 @@ class BitviewScroller(wx.ScrolledWindow):
         self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
+        self.Bind(wx.EVT_SET_FOCUS, self.on_focus)
+        self.Bind(wx.EVT_KILL_FOCUS, self.on_focus_lost)
+        self.Bind(wx.EVT_CHAR, self.on_char)
     
     def is_ready_to_render(self):
         return self.bytes is not None
@@ -390,6 +393,15 @@ class BitviewScroller(wx.ScrolledWindow):
     
     def get_popup_actions(self):
         return [CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction]
+    
+    def on_focus(self, evt):
+        log.debug("on_focus!")
+    
+    def on_focus_lost(self, evt):
+        log.debug("on_focus_lost!")
+    
+    def on_char(self, evt):
+        log.debug("on_char!")
 
 
 class FontMapScroller(BitviewScroller):
@@ -533,6 +545,13 @@ class FontMapScroller(BitviewScroller):
         actions.extend([None, FontMappingWidthAction, None])
         actions.extend(self.task.get_font_mapping_actions())
         return actions
+    
+    def on_char(self, evt):
+        log.debug("on_char! %s" % evt.GetUniChar())
+        self.change_byte(self.editor.anchor_start_index, evt.GetUniChar())
+    
+    def change_byte(self, index, value):
+        pass
 
 
 class MemoryMapScroller(BitviewScroller):
