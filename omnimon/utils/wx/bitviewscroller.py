@@ -559,10 +559,13 @@ class FontMapScroller(BitviewScroller):
         return actions
     
     def set_status_message(self):
+        e = self.editor
+        if e is None:
+            return
         if self.inverse:
-            self.editor.task.status_bar.message = "Editing text (INVERSE MODE): Press F1 for normal characters"
+            e.task.status_bar.message = "Editing text (INVERSE MODE): Press F1 for normal characters"
         else:
-            self.editor.task.status_bar.message = "Editing text: Press F1 for inverse"
+            e.task.status_bar.message = "Editing text: Press F1 for inverse"
     
     def on_focus(self, evt):
         log.debug("on_focus!")
@@ -572,7 +575,9 @@ class FontMapScroller(BitviewScroller):
         
     def on_focus_lost(self, evt):
         log.debug("on_focus_lost!")
-        self.editor.task.status_bar.message = ""
+        e = self.editor
+        if e is not None:
+            e.task.status_bar.message = ""
     
     def on_char(self, evt):
         log.debug("on_char! char=%s, key=%s, shift=%s, ctrl=%s, cmd=%s" % (evt.GetUniChar(), evt.GetRawKeyCode(), evt.ShiftDown(), evt.ControlDown(), evt.CmdDown()))
@@ -584,12 +589,13 @@ class FontMapScroller(BitviewScroller):
         pass
     
     def on_char_hook(self, evt):
-        log.debug("on_char_hook! char=%s, key=%s, shift=%s, ctrl=%s, cmd=%s" % (evt.GetUniChar(), evt.GetKeyCode(), evt.ShiftDown(), evt.ControlDown(), evt.CmdDown()))
+        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
+        mods = evt.GetModifiers()
         char = evt.GetUniChar()
         if char == 0:
             char = evt.GetKeyCode()
         byte = None
-        if evt.ControlDown():
+        if mods == wx.MOD_RAW_CONTROL:
             if char == 44:  # Ctrl-, prints ATASCII 0 (heart)
                 byte = 0 + self.inverse
             elif char >= 65 and char <= 90:  # Ctrl-[A-Z] prints ATASCII chars 1-26
@@ -604,7 +610,7 @@ class FontMapScroller(BitviewScroller):
                 byte = 253
             elif char == wx.WXK_INSERT:
                 byte = 255
-        elif evt.ShiftDown():
+        elif mods == wx.MOD_SHIFT:
             if char == wx.WXK_BACK:
                 byte = 156
             elif char == wx.WXK_INSERT:
