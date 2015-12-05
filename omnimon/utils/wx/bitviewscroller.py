@@ -595,6 +595,7 @@ class FontMapScroller(BitviewScroller):
         if char == 0:
             char = evt.GetKeyCode()
         byte = None
+        delta_index = None
         if mods == wx.MOD_RAW_CONTROL:
             if char == 44:  # Ctrl-, prints ATASCII 0 (heart)
                 byte = 0 + self.inverse
@@ -634,14 +635,10 @@ class FontMapScroller(BitviewScroller):
             self.inverse = (self.inverse + 0x80) & 0x80
             self.set_status_message()
         
-        elif char == wx.WXK_ESCAPE:
-            if self.pending_esc:
-                byte = 27
-            else:
-                self.pending_esc = True
-        
         elif self.pending_esc:
-            if char == wx.WXK_UP:
+            if char == wx.WXK_ESCAPE:
+                byte = 27
+            elif char == wx.WXK_UP:
                 byte = 28
             elif char == wx.WXK_DOWN:
                 byte = 29
@@ -650,11 +647,28 @@ class FontMapScroller(BitviewScroller):
             elif char == wx.WXK_RIGHT:
                 byte = 31
         
-        if byte is None:
-            evt.Skip()
-        else:
+        elif char == wx.WXK_ESCAPE:
+            self.pending_esc = True
+        
+        elif char == wx.WXK_UP:
+            delta_index = -self.bytes_per_row
+        elif char == wx.WXK_DOWN:
+            delta_index = self.bytes_per_row
+        elif char == wx.WXK_LEFT:
+            delta_index = -1
+        elif char == wx.WXK_RIGHT:
+            delta_index = 1
+        
+        if byte is not None:
             self.change_byte(byte)
             self.pending_esc = False
+        elif delta_index is not None:
+            e = self.editor
+            index = e.cursor_index + delta_index
+            e.set_cursor(index, False)
+            wx.CallAfter(self.select_index, index)
+        else:
+            evt.Skip()
 
 
 class MemoryMapScroller(BitviewScroller):
