@@ -80,6 +80,7 @@ class BitviewScroller(wx.ScrolledWindow):
         self.Bind(wx.EVT_SET_FOCUS, self.on_focus)
         self.Bind(wx.EVT_KILL_FOCUS, self.on_focus_lost)
         self.Bind(wx.EVT_CHAR, self.on_char)
+        self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
     
     def is_ready_to_render(self):
         return self.bytes is not None
@@ -405,6 +406,10 @@ class BitviewScroller(wx.ScrolledWindow):
     def on_char(self, evt):
         log.debug("on_char!")
         evt.Skip()
+    
+    def on_char_hook(self, evt):
+        log.debug("on_char_hook!")
+        evt.Skip()
 
 
 class FontMapScroller(BitviewScroller):
@@ -421,6 +426,7 @@ class FontMapScroller(BitviewScroller):
         self.zoom = 2
         self.font = None
         self.set_font_mapping(font_mapping)
+        self.inverse = 0
     
     def is_ready_to_render(self):
         return self.font is not None
@@ -552,18 +558,97 @@ class FontMapScroller(BitviewScroller):
         actions.extend(self.task.get_font_mapping_actions())
         return actions
     
+    def set_status_message(self):
+        if self.inverse:
+            self.editor.task.status_bar.message = "Editing text (INVERSE MODE): Press F1 for normal characters"
+        else:
+            self.editor.task.status_bar.message = "Editing text: Press F1 for inverse"
+    
     def on_focus(self, evt):
         log.debug("on_focus!")
-    
+        self.inverse = 0
+        self.pending_esc = False
+        self.set_status_message()
+        
     def on_focus_lost(self, evt):
         log.debug("on_focus_lost!")
+        self.editor.task.status_bar.message = ""
     
     def on_char(self, evt):
         log.debug("on_char! char=%s, key=%s, shift=%s, ctrl=%s, cmd=%s" % (evt.GetUniChar(), evt.GetRawKeyCode(), evt.ShiftDown(), evt.ControlDown(), evt.CmdDown()))
-        self.change_byte(evt.GetUniChar())
+        char = evt.GetUniChar()
+        if char > 0:
+            self.change_byte(char | self.inverse)
     
     def change_byte(self, value):
         pass
+    
+    def on_char_hook(self, evt):
+        log.debug("on_char_hook! char=%s, key=%s, shift=%s, ctrl=%s, cmd=%s" % (evt.GetUniChar(), evt.GetKeyCode(), evt.ShiftDown(), evt.ControlDown(), evt.CmdDown()))
+        char = evt.GetUniChar()
+        if char == 0:
+            char = evt.GetKeyCode()
+        byte = None
+        if evt.ControlDown():
+            if char == 44:  # Ctrl-, prints ATASCII 0 (heart)
+                byte = 0 + self.inverse
+            elif char >= 65 and char <= 90:  # Ctrl-[A-Z] prints ATASCII chars 1-26
+                byte = char - 64 + self.inverse
+            elif char == 46:  # Ctrl-. prints ATASCII 96 (diamond)
+                byte = 96 + self.inverse
+            elif char == 59:  # Ctrl-; prints ATASCII 123 (spade)
+                byte = 123 + self.inverse
+            elif char == wx.WXK_TAB:
+                byte = 158
+            elif char == 50:  # Ctrl-2 prints ATASCII 253 (buzzer)
+                byte = 253
+            elif char == wx.WXK_INSERT:
+                byte = 255
+        elif evt.ShiftDown():
+            if char == wx.WXK_BACK:
+                byte = 156
+            elif char == wx.WXK_INSERT:
+                byte = 157
+            elif char == wx.WXK_TAB:
+                byte = 159
+        elif char == wx.WXK_HOME:
+            byte = 125
+        elif char == wx.WXK_BACK:
+            byte = 126
+        elif char == wx.WXK_TAB:
+            byte = 127
+        elif char == wx.WXK_RETURN:
+            byte = 155
+        elif char == wx.WXK_DELETE:
+            byte = 254
+        elif char == wx.WXK_INSERT:
+            byte = 255
+        
+        elif char == wx.WXK_F1:
+            self.inverse = (self.inverse + 0x80) & 0x80
+            self.set_status_message()
+        
+        elif char == wx.WXK_ESCAPE:
+            if self.pending_esc:
+                byte = 27
+            else:
+                self.pending_esc = True
+        
+        elif self.pending_esc:
+            if char == wx.WXK_UP:
+                byte = 28
+            elif char == wx.WXK_DOWN:
+                byte = 29
+            elif char == wx.WXK_LEFT:
+                byte = 30
+            elif char == wx.WXK_RIGHT:
+                byte = 31
+        
+        if byte is None:
+            evt.Skip()
+        else:
+            self.change_byte(byte)
+            self.pending_esc = False
 
 
 class MemoryMapScroller(BitviewScroller):

@@ -59,10 +59,8 @@ class CharMap(FontMapScroller):
             index = e.anchor_start_index
         else:
             index = e.cursor_index
-        print "before:", e.cursor_index
         cmd = ChangeByteCommand(e.segment, index, index+1, value, True)
         e.process_command(cmd)
-        print "after:", e.cursor_index
 
 
 class FontMapPane(DockPane):
