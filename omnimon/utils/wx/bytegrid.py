@@ -583,6 +583,19 @@ class ByteGrid(Grid.Grid):
             x, y = evt.GetPosition()
             x, y = self.CalcUnscrolledPosition(x, y)
             r, c = self.XYToCell(x, y)
+            if r < 0:
+                # XYToCell fails with (-1, -1) when the mouse is not within
+                # the grid of cells.  XToCol with the second param True will
+                # return a valid result when it's off the edge, but there's no
+                # equivalent in YToRow (at least in 3.0 classic.  In Phoenix,
+                # YToRow does support that param).
+                c = self.XToCol(x, True)
+                r = self.YToRow(y)
+                if r < 0:
+                    if y < 0:
+                        r = 0
+                    else:
+                        r = self.table.GetNumberRows() - 1
             index1, index2 = self.table.get_index_range(r, c)
             update = False
             if evt.ShiftDown():
