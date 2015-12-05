@@ -242,8 +242,7 @@ class FrameworkEditor(Editor):
     def select_none(self, refresh=True):
         """ Clears any selection in the document
         """
-        self.anchor_start_index = self.anchor_initial_start_index = 0
-        self.anchor_end_index = self.anchor_initial_end_index = 0
+        self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = self.cursor_index
         self.can_copy = False
         if refresh:
             self.refresh_panes()

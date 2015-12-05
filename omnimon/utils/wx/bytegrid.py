@@ -423,6 +423,7 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         to begin editing.  Set the focus to the edit control.
         *Must Override*
         """
+        grid.editor.select_none(False)
         self.startValue = grid.GetTable().GetValue(row, col)
         mode = self.parentgrid.table.get_col_type(col)
         log.debug("row,col=(%d,%d), mode=%s" % (row, col, mode))
@@ -574,9 +575,7 @@ class ByteGrid(Grid.Grid):
             e.anchor_start_index, e.anchor_end_index = e.anchor_initial_start_index, e.anchor_initial_end_index
             e.cursor_index = e.anchor_initial_start_index
             evt.Skip()
-        self.SetGridCursor(r, c)
-        wx.CallAfter(self.ForceRefresh)
-        wx.CallAfter(e.index_clicked, e.anchor_start_index, 0, self)
+        wx.CallAfter(e.index_clicked, e.anchor_start_index, 0, None)
  
     def on_motion(self, evt):
         e = self.editor
@@ -612,9 +611,7 @@ class ByteGrid(Grid.Grid):
             self.select_extend_mode = evt.ShiftDown()
             if update:
                 e.cursor_index = index1
-                self.SetGridCursor(r, c)
-                wx.CallAfter(self.ForceRefresh)
-                wx.CallAfter(e.index_clicked, e.anchor_end_index, 0, self)
+                wx.CallAfter(e.index_clicked, e.cursor_index, 0, None)
         evt.Skip()
 
     def OnSelectCell(self, evt):
@@ -666,10 +663,12 @@ class ByteGrid(Grid.Grid):
 
     def advance_cursor(self):
         self.DisableCellEditControl()
-        (r, c)=self.table.get_next_editable_pos(self.GetGridCursorRow(),self.GetGridCursorCol())
+        e = self.editor
+        r, c = self.table.get_row_col(e.cursor_index)
+        (r, c) = self.table.get_next_editable_pos(r, c)
         self.SetGridCursor(r, c)
         index1, index2 = self.table.get_index_range(r, c)
-        self.editor.set_cursor(index1, False)
+        e.set_cursor(index1, False)
         self.EnableCellEditControl()
 
     def goto_index(self, index):
