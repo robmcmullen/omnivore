@@ -217,12 +217,14 @@ class BitviewScroller(wx.ScrolledWindow):
         x, y = self.GetViewStart()
         w, h = self.GetClientSizeTuple()
         self.start_row = y
+        self.start_col = x
         
         # For proper buffered paiting, the visible_rows must include the
         # (possibly) partially obscured last row.  fully_visible_rows
         # indicates the number of rows without that last partially obscured
         # row (if it exists).
         self.fully_visible_rows = h / self.zoom
+        self.fully_visible_cols = w / self.zoom
         self.visible_rows = ((h + self.zoom - 1) / self.zoom)
         log.debug("x, y, w, h, start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows]))
 
@@ -293,22 +295,38 @@ class BitviewScroller(wx.ScrolledWindow):
     
     def select_index(self, rel_pos):
         r, c = self.byte_to_row_col(rel_pos)
-#        print "r, c, start, vis", r, c, self.start_row, self.fully_visible_rows
+        print "r, c, start, vis", r, c, self.start_row, self.fully_visible_rows
         last_row = self.start_row + self.fully_visible_rows - 1
+        last_col = self.start_col + self.fully_visible_cols - 1
+        
+        update = False
         if r < self.start_row:
             # above current view
-            self.Scroll(c, r)
-        elif r >= self.start_row and r < last_row:
-            # row is already visible, but column may not be
-            self.Scroll(c, self.start_row)
+            update = True
         elif r >= last_row:
+            # below last row
             last_scroll_row = self.total_rows - self.fully_visible_rows
             if r >= last_scroll_row:
-                self.Scroll(c, last_scroll_row)
+                r = last_scroll_row
+                update = True
             elif r >= self.fully_visible_rows:
-                self.Scroll(c, r - self.fully_visible_rows + 1)
-#        x, y = self.GetViewStart()
-#        print "new row start:", y
+                r = r - self.fully_visible_rows + 1
+                update = True
+        else:
+            # row is already visible so don't change row position
+            r = self.start_row
+        
+        if c < self.start_col:
+            # left of start column, so set start view to that column
+            update = True
+        elif c >= last_col:
+            c = c - self.fully_visible_cols + 1
+            update = True
+        else:
+            c = self.start_col
+
+        if update:
+            self.Scroll(c, r)
         self.Refresh()
     
     def select_addr(self, addr):
@@ -467,6 +485,7 @@ class FontMapScroller(BitviewScroller):
         x, y = self.GetViewStart()
         w, h = self.GetClientSizeTuple()
         self.start_row = y
+        self.start_col = y
         
         # For proper buffered paiting, the visible_rows must include the
         # (possibly) partially obscured last row.  fully_visible_rows
@@ -477,6 +496,7 @@ class FontMapScroller(BitviewScroller):
         self.fully_visible_rows = h / zoom_factor
         self.visible_rows = (h + zoom_factor - 1) / zoom_factor
         zoom_factor = 8 * zw
+        self.fully_visible_cols = w / zoom_factor
         self.start_col, self.num_cols = x, (w + zoom_factor - 1) / zoom_factor
         log.debug("fontmap: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.num_cols]))
     
@@ -708,6 +728,7 @@ class MemoryMapScroller(BitviewScroller):
         x, y = self.GetViewStart()
         w, h = self.GetClientSizeTuple()
         self.start_row = y
+        self.start_col = x
         
         # For proper buffered paiting, the visible_rows must include the
         # (possibly) partially obscured last row.  fully_visible_rows
@@ -715,6 +736,7 @@ class MemoryMapScroller(BitviewScroller):
         # row (if it exists).
         z = self.zoom
         self.fully_visible_rows = h / z
+        self.fully_visible_cols = w / z
         self.visible_rows = (h + z - 1) / z
         self.start_col, self.num_cols = x, (w + z - 1) / z
         log.debug("memory map: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.num_cols]))
