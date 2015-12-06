@@ -92,7 +92,14 @@ class FrameworkEditor(Editor):
             metadata = guess.get_metadata()
             bytes = guess.get_utf8()
             doc = Document(metadata=metadata, bytes=bytes)
+            self.init_user_segments(doc)
             self.view_document(doc)
+
+    def init_user_segments(self, doc):
+        """ Set up any pre-calculated segments based on the type or content of
+        the just-loaded document.
+        """
+        pass
 
     def view_document(self, doc):
         """ Change the view to the specified document

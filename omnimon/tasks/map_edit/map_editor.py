@@ -14,6 +14,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 from omnimon.tasks.hex_edit.hex_editor import HexEditor
 from omnimon.framework.document import Document
 from omnimon.utils.wx.bitviewscroller import FontMapScroller
+from omnimon.utils.binutil import DefaultSegment
 
 
 class MapEditor(HexEditor):
@@ -49,6 +50,19 @@ class MapEditor(HexEditor):
         self.control.recalc_view()
         self.memory_map.recalc_view()
         self.tile_map.recalc_view()
+
+    def init_user_segments(self, doc):
+        """ Set up any pre-calculated segments based on the type or content of
+        the just-loaded document.
+        """
+        state = doc.bytes[0:6] == [0xff, 0xff, 0x80, 0x2a, 0xff, 0x8a]
+        if state.all():
+            print "Found getaway.xex!!!"
+            font = DefaultSegment(0x31b0, doc.bytes[0x736:0x1136], text="Playfield font")
+            doc.add_user_segment(font)
+            map = DefaultSegment(0x4b00, doc.bytes[0x2086:0x6086], text="Playfield map")
+            doc.add_user_segment(map)
+            self.set_map_width(256)
     
     ###########################################################################
     # Trait handlers.
