@@ -82,6 +82,8 @@ class MapEditTask(FrameworkTask):
         editor = MapEditor()
         return editor
 
+    def get_font_mapping_actions(self):
+        return []
     
     def get_actions(self, location, menu_name, group_name):
         if location == "Menu":

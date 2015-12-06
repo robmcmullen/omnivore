@@ -30,6 +30,12 @@ class MapEditor(HexEditor):
                 ("roads", np.arange(50, 72, dtype=np.uint8)),
                 ("buildings", np.arange(75, 80, dtype=np.uint8)),
                 ]
+    
+    def _antic_font_mapping_default(self):
+        return 0  # Internal
+    
+    def _map_width_default(self):
+        return 32
 
     ###########################################################################
     # 'FrameworkEditor' interface.
@@ -57,8 +63,7 @@ class MapEditor(HexEditor):
         """ Creates the toolkit-specific control for the widget. """
 
         # Base-class constructor.
-        print "CONSTRUCTOR!!!"
-        self.control = self.font_map = FontMapScroller(parent, self.task, 40, 0)
+        self.control = self.font_map = FontMapScroller(parent, self.task, self.map_width, self.antic_font_mapping)
         self.antic_font = self.get_antic_font()
 
         ##########################################
