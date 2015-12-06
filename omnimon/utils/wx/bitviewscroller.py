@@ -69,6 +69,7 @@ class BitviewScroller(wx.ScrolledWindow):
         self.grid_width = 0
         self.grid_height = 0
         self.zoom = 5
+        self.border_width = 1
         
         self.select_extend_mode = False
         self.Bind(wx.EVT_PAINT, self.on_paint)
@@ -138,26 +139,37 @@ class BitviewScroller(wx.ScrolledWindow):
         bits = bits.reshape((-1, 8 * self.bytes_per_row))
         bits[bits==0]=255
         bits[bits==1]=0
-        width = 8 * self.bytes_per_row
-        array = np.zeros((nr, width, 3), dtype=np.uint8)
-        array[:,:,0] = bits
-        array[:,:,1] = bits
-        array[:,:,2] = bits
+        bitwidth = 8 * self.bytes_per_row
+        border = self.border_width
+        width = bitwidth + 2 * border
+        array = np.empty((nr, width, 3), dtype=np.uint8)
+        array[:,border:border + bitwidth,0] = bits
+        array[:,border:border + bitwidth,1] = bits
+        array[:,border:border + bitwidth,2] = bits
+        array[:,0:border,:] = self.background_color
+        array[:,border + bitwidth:width,:] = self.background_color
         e = self.editor
-        if e.anchor_start_index != e.anchor_end_index:
-            start_index, end_index = e.anchor_start_index, e.anchor_end_index
-            if start_index > end_index:
-                start_index, end_index = end_index, start_index
-            start_highlight = max(start_index - self.start_byte, 0)
-            end_highlight = min(end_index - self.start_byte, count)
-            log.debug("highlight %d-%d" % (start_highlight, end_highlight))
-            if start_highlight < count and end_highlight >= 0:
-                # change all white pixels to the highlight color.  The mask
-                # must be collapsed on the color axis to result in one entry
-                # per row so it can be applied to the array.
-                mask = array[start_highlight:end_highlight,:,:] == (255, 255, 255)
-                mask = np.all(mask, axis=2)
-                array[start_highlight:end_highlight,:,:][mask] = self.editor.highlight_color
+        start_index, end_index = e.anchor_start_index, e.anchor_end_index
+        if start_index > end_index:
+            start_index, end_index = end_index, start_index
+        elif start_index == end_index:
+            start_index = e.cursor_index
+            end_index = start_index + 1
+        start_highlight = max(start_index - self.start_byte, 0)
+        end_highlight = min(end_index - self.start_byte, count)
+        log.debug("highlight %d-%d" % (start_highlight, end_highlight))
+        if start_highlight < count and end_highlight >= 0:
+            # change all white pixels to the highlight color.  The mask
+            # must be collapsed on the color axis to result in one entry
+            # per row so it can be applied to the array.
+            mask = array[start_highlight:end_highlight,:,:] == (255, 255, 255)
+            mask = np.all(mask, axis=2)
+            array[start_highlight:end_highlight,:,:][mask] = self.editor.highlight_color
+            
+            # Highlight the border areas so the selection is visible even
+            # if there's an all-filled area
+            array[start_highlight:end_highlight,0:border,:] = self.editor.highlight_color
+            array[start_highlight:end_highlight,border + bitwidth:width,:] = self.editor.highlight_color
         return array
 
     def copy_to_clipboard(self):
@@ -235,7 +247,7 @@ class BitviewScroller(wx.ScrolledWindow):
     
     def calc_scale_from_bytes(self):
         self.total_rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
-        self.grid_width = int(8 * self.bytes_per_row)
+        self.grid_width = int(8 * self.bytes_per_row) + (2 * self.border_width)
         self.grid_height = int(self.total_rows)
     
     def calc_scroll_params(self):
@@ -260,9 +272,14 @@ class BitviewScroller(wx.ScrolledWindow):
         x, y = self.GetViewStart()
         x = (evt.GetX() // self.zoom) + x
         y = (evt.GetY() // self.zoom) + y
-        xbyte = (x // 8)
-        if x < 0 or xbyte >= self.bytes_per_row or y < 0 or y > (self.start_row + self.visible_rows):
+        if x < 0 or x >= self.grid_width or y < 0 or y > (self.start_row + self.visible_rows):
             inside = False
+        x -= self.border_width
+        if x < 0:
+            x = 0
+        elif x >= 8 * self.bytes_per_row:
+            x = 8 * self.bytes_per_row - 1
+        xbyte = (x // 8)
         byte = (self.bytes_per_row * y) + xbyte
         if byte > self.end_byte:
             inside = False
@@ -497,7 +514,7 @@ class FontMapScroller(BitviewScroller):
         height = int(nr * self.font.char_h)
         
         log.debug("pixel width: %dx%d, zoom=%d, rows with data=%d" % (width, height, self.zoom, num_rows_with_data))
-        array = np.zeros((height, width, 3), dtype=np.uint8)
+        array = np.empty((height, width, 3), dtype=np.uint8)
         array[:,:] = self.background_color
         
         log.debug(str([self.end_byte, self.start_byte, (self.end_byte - self.start_byte) / self.bytes_per_row]))
