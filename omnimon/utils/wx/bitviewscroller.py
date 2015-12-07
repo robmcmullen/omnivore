@@ -367,7 +367,7 @@ class BitviewScroller(wx.ScrolledWindow):
                 e.cursor_index = byte
             else:
                 e.set_cursor(byte, False)
-            wx.CallAfter(e.index_clicked, e.anchor_start_index, bit, None)
+            wx.CallAfter(e.index_clicked, byte, bit, None)
         evt.Skip()
  
     def on_motion(self, evt):
