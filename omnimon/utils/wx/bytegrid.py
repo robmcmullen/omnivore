@@ -575,7 +575,7 @@ class ByteGrid(Grid.Grid):
             e.anchor_start_index, e.anchor_end_index = e.anchor_initial_start_index, e.anchor_initial_end_index
             e.cursor_index = e.anchor_initial_start_index
             evt.Skip()
-        wx.CallAfter(e.index_clicked, e.anchor_start_index, 0, None)
+        wx.CallAfter(e.index_clicked, e.cursor_index, 0, None)
  
     def on_motion(self, evt):
         e = self.editor
