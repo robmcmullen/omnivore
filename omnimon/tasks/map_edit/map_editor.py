@@ -58,7 +58,7 @@ class MapEditor(HexEditor):
         state = doc.bytes[0:6] == [0xff, 0xff, 0x80, 0x2a, 0xff, 0x8a]
         if state.all():
             print "Found getaway.xex!!!"
-            font = DefaultSegment(0x31b0, doc.bytes[0x736:0x1136], text="Playfield font")
+            font = DefaultSegment(0x31a0, doc.bytes[0x726:0xb26], text="Playfield font")
             doc.add_user_segment(font)
             map = DefaultSegment(0x4b00, doc.bytes[0x2086:0x6086], text="Playfield map")
             doc.add_user_segment(map)
