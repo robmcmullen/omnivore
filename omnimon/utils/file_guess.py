@@ -25,6 +25,10 @@ class FileGuess(object):
     
     def __init__(self, uri):
         log.debug("Attempting to load %s" % uri)
+        if uri.startswith("file://"):
+            # FIXME: workaround to allow opening of file:// URLs with the
+            # ! character
+            uri = uri.replace("file://", "")
         fs, relpath = opener.parse(uri)
         log.debug("Filesystem: %s" % fs)
         fh = fs.open(relpath, "rb")
