@@ -33,10 +33,25 @@ class EnthoughtWxApp(wx.App):
             self.tasks_application.load_file(filename, None)
         else:
             log.debug("MacOpenFile: skipping %s because it's a command line argument" % filename)
+    
+    throw_out_next_wheel_rotation = False
+    
+    def FilterEvent(self, evt):
+        if hasattr(evt, "GetWheelRotation"):
+            print "FILTEREVENT!!!", evt.GetWheelRotation(), evt
+            wheel = evt.GetWheelRotation()
+            if wheel != 0:
+                if self.throw_out_next_wheel_rotation:
+                    self.throw_out_next_wheel_rotation = False
+                    return 0
+                self.throw_out_next_wheel_rotation = True
+        return -1
 
 from traits.etsconfig.api import ETSConfig
 
 _app = EnthoughtWxApp(redirect=False)
+if False:  # enable this to use FilterEvent
+    _app.SetCallFilterEvent(True)
 
 # Enthought library imports.
 from envisage.ui.tasks.api import TasksApplication
