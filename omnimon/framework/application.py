@@ -45,6 +45,8 @@ class EnthoughtWxApp(wx.App):
                     self.throw_out_next_wheel_rotation = False
                     return 0
                 self.throw_out_next_wheel_rotation = True
+        if hasattr(evt, "GetKeyCode"):
+            print "FILTEREVENT!!! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers()))
         return -1
 
 from traits.etsconfig.api import ETSConfig
