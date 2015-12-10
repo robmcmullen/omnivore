@@ -157,6 +157,7 @@ class HexEditor(FrameworkEditor):
     def update_segments_ui(self):
         self.segment_list.set_segments(self.document.segments, self.segment_number)
         self.task.segments_changed = self.document.segments
+        self.task.segment_selected = self.segment_number
     
     def refresh_panes(self):
         self.control.recalc_view()

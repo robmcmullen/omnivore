@@ -200,12 +200,15 @@ class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
         items = []
         if event_data is not None:
             for i, segment in enumerate(event_data):
-                action = UseSegmentAction(segment=segment, segment_number=i)
-                items.append(ActionItem(action=action))
+                action = UseSegmentAction(segment=segment, segment_number=i, task=self.task, checked=False)
+                log.debug("SegmentChoiceGroup: created %s for %s, num=%d" % (action, str(segment), i))
+                items.append(ActionItem(action=action, parent=self))
             
         return items
 
 class UseSegmentAction(EditorAction):
+    style = 'radio'
+    
     segment = Any
     
     segment_number = Int
@@ -215,6 +218,13 @@ class UseSegmentAction(EditorAction):
     
     def perform(self, event):
         self.active_editor.view_segment_number(self.segment_number)
+
+    @on_trait_change('task.segment_selected')
+    def _update_checked(self):
+        if self.active_editor:
+            state = self.active_editor.segment_number == self.segment_number
+            log.debug("UseSegmentAction: checked=%s %s %s %s" % (state, str(self.segment), self.active_editor.segment_number, self.segment_number))
+            self.checked = state
 
 class GetSegmentFromSelectionAction(EditorAction):
     name = 'New Segment From Selection'

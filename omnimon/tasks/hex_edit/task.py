@@ -38,6 +38,11 @@ class HexEditTask(FrameworkTask):
     fonts_changed = Event
     
     segments_changed = Event
+    
+    # Must use different trait event in order for actions populated in the
+    # dynamic menu (set by segments_changed event above) to have their radio
+    # buttons updated properly
+    segment_selected = Event
 
     ###########################################################################
     # 'Task' interface.
