@@ -92,116 +92,121 @@ class HexEditTask(FrameworkTask):
             FontMappingBaseAction(font_mapping=1, name="ATASCII Codes", task=self),
             ]
     
-    def get_actions(self, location, menu_name, group_name):
-        if location == "Menu":
-            if menu_name == "Edit":
-                if group_name == "CopyPasteGroup":
-                    return [
-                        CutAction(),
-                        CopyAction(),
-                        PasteAction(),
-                        PasteAndRepeatAction(),
-                        ]
-                elif group_name == "FindGroup":
-                    return [
-                        FindAction(),
-                        FindBytesAction(),
-                        ]
-            elif menu_name == "View":
-                if group_name == "ViewConfigGroup":
-                    font_mapping_actions = self.get_font_mapping_actions()
-                    return [
-                        SMenu(
-                            Group(
-                                UseFontAction(font=fonts.A8DefaultFont),
-                                UseFontAction(font=fonts.A8ComputerFont),
-                                id="a1", separator=True),
-                            FontChoiceGroup(id="a2", separator=True),
-                            Group(
-                                LoadFontAction(),
-                                GetFontFromSelectionAction(),
-                                id="a3", separator=True),
-                            id='FontChoiceSubmenu1', separator=True, name="Antic Font"),
-                        SMenu(
-                            Group(
-                                FontStyleBaseAction(font_mode=2, name="Antic 2 (Gr 0)"),
-                                FontStyleBaseAction(font_mode=4, name="Antic 4"),
-                                FontStyleBaseAction(font_mode=5, name="Antic 5"),
-                                FontStyleBaseAction(font_mode=6, name="Antic 6 (Gr 1) Uppercase and Numbers"),
-                                FontStyleBaseAction(font_mode=8, name="Antic 6 (Gr 1) Lowercase and Symbols"),
-                                FontStyleBaseAction(font_mode=7, name="Antic 7 (Gr 2) Uppercase and Numbers"),
-                                FontStyleBaseAction(font_mode=9, name="Antic 7 (Gr 2) Lowercase and Symbols"),
-                                id="a1", separator=True),
-                            id='FontChoiceSubmenu2', separator=True, name="Antic Mode"),
-                        SMenu(
-                            Group(
-                                *font_mapping_actions,
-                                id="a2", separator=True),
-                            Group(
-                                FontMappingWidthAction(),
-                                id="a3", separator=True),
-                            id='FontChoiceSubmenu2a1', separator=True, name="Char Map"),
-                        SMenu(
-                            Group(
-                                UseColorsAction(name="Powerup Colors", colors=colors.powerup_colors()),
-                                id="a1", separator=True),
-                            Group(
-                                AnticColorAction(),
-                                id="a2", separator=True),
-                            id='FontChoiceSubmenu2a', separator=True, name="Antic Colors"),
-                        SMenu(
-                            Group(
-                                DisassemblerBaseAction(disassembler=dis6502.Basic6502Disassembler),
-                                DisassemblerBaseAction(disassembler=dis6502.Atari800Disassembler),
-                                DisassemblerBaseAction(disassembler=dis6502.Atari5200Disassembler),
-                                id="a1", separator=True),
-                            id='FontChoiceSubmenu3', separator=True, name="Disassembler"),
-                        TextFontAction(),
-                        ]
-            elif menu_name == "Segments":
-                if group_name == "SegmentParserGroup":
-                    segment_parser_actions = [SegmentParserAction(segment_parser=s) for s in known_segment_parsers]
-                    return [
-                        SMenu(
-                            Group(
-                                *segment_parser_actions,
-                                id="a1", separator=True),
-                            id='submenu1', separator=True, name="File Type"),
-                        GetSegmentFromSelectionAction(),
-                        ]
-                elif group_name == "SegmentGroup":
-                    return [
-                        SegmentChoiceGroup(id="a2", separator=True),
-                        ]
-            elif menu_name == "Bytes":
-                if group_name == "HexModifyGroup":
-                    return [
-                        ZeroAction(),
-                        FFAction(),
-                        SetValueAction(),
-                        Separator(),
-                        SetHighBitAction(),
-                        ClearHighBitAction(),
-                        BitwiseNotAction(),
-                        OrWithAction(),
-                        AndWithAction(),
-                        XorWithAction(),
-                        Separator(),
-                        LeftShiftAction(),
-                        RightShiftAction(),
-                        LeftRotateAction(),
-                        RightRotateAction(),
-                        Separator(),
-                        AddValueAction(),
-                        SubtractValueAction(),
-                        SubtractFromAction(),
-                        MultiplyAction(),
-                        DivideByAction(),
-                        DivideFromAction(),
-                        Separator(),
-                        RampUpAction(),
-                        RampDownAction(),
-                        ]
+    def get_actions_Menu_Edit_CopyPasteGroup(self):
+        return [
+            CutAction(),
+            CopyAction(),
+            PasteAction(),
+            PasteAndRepeatAction(),
+            ]
+    
+    def get_actions_Menu_Edit_FindGroup(self):
+        return [
+            FindAction(),
+            FindBytesAction(),
+            ]
+    
+    def get_common_ViewConfigGroup(self):
+        font_mapping_actions = self.get_font_mapping_actions()
+        return [
+            SMenu(
+                Group(
+                    UseFontAction(font=fonts.A8DefaultFont),
+                    UseFontAction(font=fonts.A8ComputerFont),
+                    id="a1", separator=True),
+                FontChoiceGroup(id="a2", separator=True),
+                Group(
+                    LoadFontAction(),
+                    GetFontFromSelectionAction(),
+                    id="a3", separator=True),
+                id='FontChoiceSubmenu1', separator=True, name="Antic Font"),
+            SMenu(
+                Group(
+                    FontStyleBaseAction(font_mode=2, name="Antic 2 (Gr 0)"),
+                    FontStyleBaseAction(font_mode=4, name="Antic 4"),
+                    FontStyleBaseAction(font_mode=5, name="Antic 5"),
+                    FontStyleBaseAction(font_mode=6, name="Antic 6 (Gr 1) Uppercase and Numbers"),
+                    FontStyleBaseAction(font_mode=8, name="Antic 6 (Gr 1) Lowercase and Symbols"),
+                    FontStyleBaseAction(font_mode=7, name="Antic 7 (Gr 2) Uppercase and Numbers"),
+                    FontStyleBaseAction(font_mode=9, name="Antic 7 (Gr 2) Lowercase and Symbols"),
+                    id="a1", separator=True),
+                id='FontChoiceSubmenu2', separator=True, name="Antic Mode"),
+            SMenu(
+                Group(
+                    *font_mapping_actions,
+                    id="a2", separator=True),
+                Group(
+                    FontMappingWidthAction(),
+                    id="a3", separator=True),
+                id='FontChoiceSubmenu2a1', separator=True, name="Char Map"),
+            SMenu(
+                Group(
+                    UseColorsAction(name="Powerup Colors", colors=colors.powerup_colors()),
+                    id="a1", separator=True),
+                Group(
+                    AnticColorAction(),
+                    id="a2", separator=True),
+                id='FontChoiceSubmenu2a', separator=True, name="Antic Colors"),
+            ]
+    
+    def get_actions_Menu_View_ViewConfigGroup(self):
+        actions = self.get_common_ViewConfigGroup()
+        actions.extend([
+            SMenu(
+                Group(
+                    DisassemblerBaseAction(disassembler=dis6502.Basic6502Disassembler),
+                    DisassemblerBaseAction(disassembler=dis6502.Atari800Disassembler),
+                    DisassemblerBaseAction(disassembler=dis6502.Atari5200Disassembler),
+                    id="a1", separator=True),
+                id='FontChoiceSubmenu3', separator=True, name="Disassembler"),
+            TextFontAction(),
+            ])
+        return actions
+    
+    def get_actions_Menu_Segments_SegmentParserGroup(self):
+        segment_parser_actions = [SegmentParserAction(segment_parser=s) for s in known_segment_parsers]
+        return [
+            SMenu(
+                Group(
+                    *segment_parser_actions,
+                    id="a1", separator=True),
+                id='submenu1', separator=True, name="File Type"),
+            GetSegmentFromSelectionAction(),
+            ]
+    
+    def get_actions_Menu_Segments_SegmentGroup(self):
+        return [
+            SegmentChoiceGroup(id="a2", separator=True),
+            ]
+    
+    def get_actions_Menu_Bytes_HexModifyGroup(self):
+        return [
+            ZeroAction(),
+            FFAction(),
+            SetValueAction(),
+            Separator(),
+            SetHighBitAction(),
+            ClearHighBitAction(),
+            BitwiseNotAction(),
+            OrWithAction(),
+            AndWithAction(),
+            XorWithAction(),
+            Separator(),
+            LeftShiftAction(),
+            RightShiftAction(),
+            LeftRotateAction(),
+            RightRotateAction(),
+            Separator(),
+            AddValueAction(),
+            SubtractValueAction(),
+            SubtractFromAction(),
+            MultiplyAction(),
+            DivideByAction(),
+            DivideFromAction(),
+            Separator(),
+            RampUpAction(),
+            RampDownAction(),
+            ]
 
     def get_keyboard_actions(self):
         return [

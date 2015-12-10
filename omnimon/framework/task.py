@@ -102,7 +102,7 @@ class FrameworkTask(Task):
         return SMenuBar(*menus)
 
     def _tool_bars_default(self):
-        return [ SToolBar(self.get_groups("ToolBar", "File", "NewGroup", "OpenGroup", "SaveGroup"),
+        return [ SToolBar(self.get_groups("Tool", "File", "NewGroup", "OpenGroup", "SaveGroup"),
                           Group(UndoAction(),
                                 RedoAction(),
                                 id="Undo"),
@@ -345,112 +345,127 @@ class FrameworkTask(Task):
         return actions
 
     def get_actions(self, location, menu_name, group_name):
-        if location == "Menu":
-            if menu_name == "File":
-                if group_name == "NewGroup":
-                    return [
-                        SMenu(NewFileGroup(), id="NewFileGroup", name="New"),
-                        ]
-                elif group_name == "OpenGroup":
-                    return [
-                        OpenAction(),
-                        ]
-                elif group_name == "SaveGroup":
-                    return [
-                        SaveAction(),
-                        SaveAsAction(),
-                        ]
-                elif group_name == "RevertGroup":
-                    return [
-                        RevertAction(),
-                        ]
-                elif group_name == "PrintGroup":
-                    return [
-                        PageSetupAction(),
-                        PrintPreviewAction(),
-                        PrintAction(),
-                        SaveAsPDFAction(),
-                        ]
-                elif group_name == "ExitGroup":
-                    return [
-                        ExitAction(),
-                        ]
-            elif menu_name == "Edit":
-                if group_name == "UndoGroup":
-                    return [
-                        UndoAction(),
-                        RedoAction(),
-                        ]
-                elif group_name == "CopyPasteGroup":
-                    return [
-                        CutAction(),
-                        CopyAction(),
-                        PasteAction(),
-                        ]
-                elif group_name == "SelectGroup":
-                    return [
-                        SelectAllAction(),
-                        SelectNoneAction(),
-                        ]
-                elif group_name == "PrefGroup":
-                    return [
-                        Group(PreferencesAction(), absolute_position="last"),
-                        ]
-            elif menu_name == "View":
-                if group_name == "TaskGroup":
-                    return [
-                        DockPaneToggleGroup(),
-                        TaskToggleGroup(),
-                        ]
-            elif menu_name == "Documents":
-                if group_name == "DocumentGroup":
-                    return [
-                        DocumentSelectGroup(),
-                        ]
-            elif menu_name == "Window":
-                if group_name == "NewTaskGroup":
-                    return [
-                        SMenu(
-                            NewViewInGroup(id="a1", separator=True),
-                            id='WindowTabGroupSubmenu2', separator=True, name="New View In..."),
-                        ]
-                if group_name == "WindowGroup":
-                    return [
-                        NewWindowAction(),
-                        ]
-            elif menu_name == "Help":
-                if group_name == "AboutGroup":
-                    return [
-                        AboutAction()
-                        ]
-                elif group_name == "DebugGroup":
-                    return [
-                        SMenu(TaskAction(name='Dynamic Menu Names', method='debug',
-                                         tooltip='Do some debug stuff',
-                                         image=ImageResource('debug')),
-                              WidgetInspectorAction(),
-                              id="Debug", name="Debug"),
-                        ]
-        
-        if location.startswith("Tool"):
-            if menu_name == "File":
-                if group_name == "NewGroup":
-                    return [
-                        TaskAction(method='new',
-                                   tooltip='New file',
-                                   image=ImageResource('file_new')),
-                        ]
-                elif group_name == "OpenGroup":
-                    return [
-                        OpenAction(),
-                        ]
-                elif group_name == "SaveGroup":
-                    return [
-                        SaveAction(),
-                        SaveAsAction(),
-                        ]
-                
-        return []
+        method_name = "get_actions_%s_%s_%s" % (location, menu_name, group_name)
+        try:
+            method = getattr(self, method_name)
+            actions = method()
+        except AttributeError:
+            log.warning("%s actions not found for %s/%s" % (location, menu_name, group_name))
+            actions = []
+        return actions
+    
+    def get_actions_Menu_File_NewGroup(self):
+        return [
+            SMenu(NewFileGroup(), id="NewFileGroup", name="New"),
+            ]
+    
+    def get_actions_Menu_File_OpenGroup(self):
+        return [
+            OpenAction(),
+            ]
+    
+    def get_actions_Menu_File_SaveGroup(self):
+        return [
+            SaveAction(),
+            SaveAsAction(),
+            ]
+    
+    def get_actions_Menu_File_RevertGroup(self):
+        return [
+            RevertAction(),
+            ]
+    
+    def get_actions_Menu_File_PrintGroup(self):
+        return [
+            PageSetupAction(),
+            PrintPreviewAction(),
+            PrintAction(),
+            SaveAsPDFAction(),
+            ]
+    
+    def get_actions_Menu_File_ExitGroup(self):
+        return [
+            ExitAction(),
+            ]
+
+    def get_actions_Menu_Edit_UndoGroup(self):
+        return [
+            UndoAction(),
+            RedoAction(),
+            ]
+    
+    def get_actions_Menu_Edit_CopyPasteGroup(self):
+        return [
+            CutAction(),
+            CopyAction(),
+            PasteAction(),
+            ]
+    
+    def get_actions_Menu_Edit_SelectGroup(self):
+        return [
+            SelectAllAction(),
+            SelectNoneAction(),
+            ]
+    
+    def get_actions_Menu_Edit_PrefGroup(self):
+        return [
+            Group(PreferencesAction(), absolute_position="last"),
+            ]
+    
+    def get_actions_Menu_View_TaskGroup(self):
+        return [
+            DockPaneToggleGroup(),
+            TaskToggleGroup(),
+            ]
+    
+    def get_actions_Menu_Documents_DocumentGroup(self):
+        return [
+            DocumentSelectGroup(),
+            ]
+    
+    def get_actions_Menu_Window_NewTaskGroup(self):
+        return [
+            SMenu(
+                NewViewInGroup(id="a1", separator=True),
+                id='WindowTabGroupSubmenu2', separator=True, name="New View In..."),
+            ]
+    
+    def get_actions_Menu_Window_WindowGroup(self):
+        return [
+            NewWindowAction(),
+            ]
+    
+    def get_actions_Menu_Help_AboutGroup(self):
+        return [
+            AboutAction()
+            ]
+    
+    def get_actions_Menu_Help_DebugGroup(self):
+        return [
+            SMenu(TaskAction(name='Dynamic Menu Names', method='debug',
+                             tooltip='Do some debug stuff',
+                             image=ImageResource('debug')),
+                  WidgetInspectorAction(),
+                  id="Debug", name="Debug"),
+            ]
+    
+    def get_actions_Tool_File_NewGroup(self):
+        return [
+            TaskAction(method='new',
+                       tooltip='New file',
+                       image=ImageResource('file_new')),
+            ]
+    
+    def get_actions_Tool_File_OpenGroup(self):
+        return [
+            OpenAction(),
+            ]
+    
+    def get_actions_Tool_File_SaveGroup(self):
+        return [
+            SaveAction(),
+            SaveAsAction(),
+            ]
     
     def get_keyboard_actions(self):
         """Return a list of actions to be used as keyboard shortcuts only, not
