@@ -222,18 +222,8 @@ class UseSegmentAction(EditorAction):
     def perform(self, event):
         self.active_editor.view_segment_number(self.segment_number)
 
-class UseSegmentRadioAction(EditorAction):
+class UseSegmentRadioAction(UseSegmentAction):
     style = 'radio'
-    
-    segment = Any
-    
-    segment_number = Int
-    
-    def _name_default(self):
-        return str(self.segment)
-    
-    def perform(self, event):
-        self.active_editor.view_segment_number(self.segment_number)
 
     @on_trait_change('task.segment_selected')
     def _update_checked(self):
