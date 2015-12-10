@@ -1,6 +1,8 @@
 """ Action definitions for HexEdit task
 
 """
+import sys
+
 import wx
 
 # Enthought library imports.
@@ -200,13 +202,27 @@ class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
         items = []
         if event_data is not None:
             for i, segment in enumerate(event_data):
-                action = UseSegmentAction(segment=segment, segment_number=i, task=self.task, checked=False)
+                if sys.platform == "darwin":
+                    action = UseSegmentAction(segment=segment, segment_number=i, task=self.task)
+                else:
+                    action = UseSegmentRadioAction(segment=segment, segment_number=i, task=self.task, checked=False)
                 log.debug("SegmentChoiceGroup: created %s for %s, num=%d" % (action, str(segment), i))
                 items.append(ActionItem(action=action, parent=self))
             
         return items
 
 class UseSegmentAction(EditorAction):
+    segment = Any
+    
+    segment_number = Int
+    
+    def _name_default(self):
+        return str(self.segment)
+    
+    def perform(self, event):
+        self.active_editor.view_segment_number(self.segment_number)
+
+class UseSegmentRadioAction(EditorAction):
     style = 'radio'
     
     segment = Any
