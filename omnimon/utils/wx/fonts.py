@@ -61,7 +61,10 @@ class AnticFont(object):
         self.highlight_gr0_colors = [fg, highlight_color]
     
     def set_fonts(self, font_data, font_mode):
-        bytes = np.fromstring(font_data['data'], dtype=np.uint8)
+        if 'np_data' in font_data:
+            bytes = font_data['np_data']
+        else:
+            bytes = np.fromstring(font_data['data'], dtype=np.uint8)
         bits = np.unpackbits(bytes)
         bits = bits.reshape((-1, 8, 8))
         
