@@ -11,18 +11,19 @@ from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
     SMenu, SToolBar, TaskAction, TaskToggleGroup, EditorAction, SchemaAddition
 from traits.api import on_trait_change, Property, Instance, Any, Event, Int
 
-from omnimon.framework.task import FrameworkTask
 from omnimon.framework.actions import *
 from map_editor import MapEditor
 from preferences import MapEditPreferences
 from commands import *
+from omnimon.tasks.hex_edit.task import HexEditTask
 from omnimon.tasks.hex_edit.actions import *
 import pane_layout
 import omnimon.utils.wx.fonts as fonts
 from omnimon.utils.binutil import known_segment_parsers
+import omnimon.utils.colors as colors
 
 
-class MapEditTask(FrameworkTask):
+class MapEditTask(HexEditTask):
     """ Tile-based map editor
     """
 
@@ -67,11 +68,6 @@ class MapEditTask(FrameworkTask):
             ]
         return actions
 
-    def _active_editor_changed(self, editor):
-        print "active editor changed to ", editor
-        if editor is not None:
-            editor.update_panes()
-
     ###########################################################################
     # 'FrameworkTask' interface.
     ###########################################################################
@@ -81,14 +77,12 @@ class MapEditTask(FrameworkTask):
         """
         editor = MapEditor()
         return editor
-
-    def get_font_mapping_actions(self):
-        return []
     
     def get_actions(self, location, menu_name, group_name):
         if location == "Menu":
             if menu_name == "View":
                 if group_name == "ViewConfigGroup":
+                    font_mapping_actions = self.get_font_mapping_actions()
                     return [
                         SMenu(
                             Group(
@@ -112,6 +106,22 @@ class MapEditTask(FrameworkTask):
                                 FontStyleBaseAction(font_mode=9, name="Antic 7 (Gr 2) Lowercase and Symbols"),
                                 id="a1", separator=True),
                             id='FontChoiceSubmenu2', separator=True, name="Antic Mode"),
+                        SMenu(
+                            Group(
+                                *font_mapping_actions,
+                                id="a2", separator=True),
+                            Group(
+                                FontMappingWidthAction(),
+                                id="a3", separator=True),
+                            id='FontChoiceSubmenu2a1', separator=True, name="Char Map"),
+                        SMenu(
+                            Group(
+                                UseColorsAction(name="Powerup Colors", colors=colors.powerup_colors()),
+                                id="a1", separator=True),
+                            Group(
+                                AnticColorAction(),
+                                id="a2", separator=True),
+                            id='FontChoiceSubmenu2a', separator=True, name="Antic Colors"),
                         ]
             elif menu_name == "Segments":
                 if group_name == "SegmentParserGroup":
