@@ -12,6 +12,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
 from omnimon.tasks.hex_edit.hex_editor import HexEditor
+from omnimon.tasks.hex_edit.panes import CharMap
 from omnimon.framework.document import Document
 from omnimon.utils.wx.bitviewscroller import FontMapScroller
 from omnimon.utils.binutil import ATRSegmentParser, XexSegmentParser, DefaultSegment, AnticFontSegment
@@ -84,7 +85,7 @@ class MapEditor(HexEditor):
         """ Creates the toolkit-specific control for the widget. """
 
         # Base-class constructor.
-        self.control = self.font_map = FontMapScroller(parent, self.task, self.map_width, self.antic_font_mapping)
+        self.control = self.font_map = CharMap(parent, self.task, self.map_width, self.antic_font_mapping)
         self.antic_font = self.get_antic_font()
 
         ##########################################
