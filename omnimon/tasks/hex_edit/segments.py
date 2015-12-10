@@ -8,14 +8,10 @@ class SegmentList(wx.ListBox):
     def __init__(self, parent, task, **kwargs):
         self.task = task
         
-        wx.ListBox.__init__(self, parent, style=wx.LB_SINGLE|wx.SIMPLE_BORDER, **kwargs)
+        wx.ListBox.__init__(self, parent, style=wx.LB_SINGLE, **kwargs)
         self.Bind(wx.EVT_LISTBOX, self.on_click)
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.on_dclick)
         self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
-
-        # Mac/Win needs this, otherwise background color is black
-        attr = self.GetDefaultAttributes()
-        self.SetBackgroundColour(attr.colBg)
     
     def set_task(self, task):
         self.task = task

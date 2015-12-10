@@ -277,6 +277,7 @@ class HexEditor(FrameworkEditor):
             self.adjust_selection(self.segment, new_segment)
             self.segment = new_segment
             self.segment_number = num
+            self.update_segments_ui()
             self.refresh_panes()
     
     def adjust_selection(self, current_segment, new_segment):
