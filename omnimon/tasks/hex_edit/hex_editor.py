@@ -252,9 +252,15 @@ class HexEditor(FrameworkEditor):
         self.disassembler = disassembler
         self.disassembly.recalc_view()
     
-    def find_segment_parser(self, parsers):
+    def find_segment_parser(self, parsers, segment_name=None):
         parser = self.document.parse_segments(parsers)
-        self.segment_number = 0
+        if segment_name is not None:
+            index = self.document.find_segment_index_by_name(segment_name)
+            if index < 0:
+                index = 0
+        else:
+            index = 0
+        self.segment_number = index
         self.segment_parser = parser
         self.update_segments_ui()
         self.select_none(refresh=False)

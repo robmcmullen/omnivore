@@ -19,16 +19,16 @@ class SegmentParser(object):
 
 
 class DefaultSegment(object):
-    def __init__(self, start_addr=0, data=None, error=None, text="All"):
+    def __init__(self, start_addr=0, data=None, error=None, name="All"):
         self.start_addr = start_addr
         if data is None:
             data = np.fromstring("", dtype=np.uint8)
         self.data = data
         self.error = error
-        self.text = text
+        self.name = name
     
     def __str__(self):
-        return "%s (%d bytes)" % (self.text, len(self.data))
+        return "%s (%d bytes)" % (self.name, len(self.data))
     
     def __len__(self):
         return np.alen(self.data)
@@ -49,7 +49,7 @@ class AnticFontSegment(DefaultSegment):
     @property
     def antic_font(self):
         font = {
-            'name': self.text,
+            'name': self.name,
             'char_w': 8,
             'char_h': 8,
             'np_data': self.data,

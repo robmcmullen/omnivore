@@ -104,3 +104,9 @@ class Document(HasTraits):
     def add_user_segment(self, segment):
         self.user_segments.append(segment)
         self.segments.append(segment)
+    
+    def find_segment_index_by_name(self, name):
+        for i, s in enumerate(self.segments):
+            if s.name == name:
+                return i
+        return -1
