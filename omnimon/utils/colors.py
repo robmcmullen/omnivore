@@ -83,11 +83,6 @@ def gtia_ntsc_to_rgb_table(val):
 
 gtia_ntsc_to_rgb = gtia_ntsc_to_rgb_table
 
-def atari_color_to_rgb(val, country="NTSC"):
-    if country == "PAL":
-        return gtia_pal_to_rgb(val)
-    return gtia_ntsc_to_rgb(val)
-
 def powerup_colors():
     # From Mapping the Atari
     return list([40, 202, 148, 70, 0])

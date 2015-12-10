@@ -26,7 +26,6 @@ from pyface.tasks.action.api import EditorAction
 from omnimon.framework.actions import *
 from omnimon.tasks.hex_edit.actions import *
 import fonts
-import omnimon.utils.colors as colors
 
 try:
     import bitviewscroller_speedups as speedups

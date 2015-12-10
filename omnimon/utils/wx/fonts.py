@@ -36,27 +36,27 @@ class AnticFont(object):
     font_width_scale = [0, 0, 1, 0, 1, 1, 2, 2, 2, 2]
     font_height_scale = [0, 0, 1, 0, 1, 2, 1, 2, 1, 2]
     
-    def __init__(self, font_data, font_mode, playfield_colors, highlight_color):
+    def __init__(self, font_data, font_mode, playfield_colors, highlight_color, color_converter):
         self.char_w = font_data['char_w']
         self.char_h = font_data['char_h']
         self.scale_w = self.font_width_scale[font_mode]
         self.scale_h = self.font_height_scale[font_mode]
         
-        self.set_colors(playfield_colors, highlight_color)
+        self.set_colors(playfield_colors, highlight_color, color_converter)
         self.set_fonts(font_data, font_mode)
     
-    def set_colors(self, playfield_colors, highlight_color):
+    def set_colors(self, playfield_colors, highlight_color, color_converter):
         pfcolors = list(playfield_colors)
         self.normal_colors = []
         self.highlight_colors = []
         for c in pfcolors:
-            self.normal_colors.append(colors.atari_color_to_rgb(c))
-            self.highlight_colors.append(colors.atari_color_to_rgb(c))
+            self.normal_colors.append(color_converter(c))
+            self.highlight_colors.append(color_converter(c))
         self.highlight_colors[-1] = highlight_color
 
         fg, bg = colors.gr0_colors(pfcolors)
-        fg = colors.atari_color_to_rgb(fg)
-        bg = colors.atari_color_to_rgb(bg)
+        fg = color_converter(fg)
+        bg = color_converter(bg)
         self.normal_gr0_colors = [fg, bg]
         self.highlight_gr0_colors = [fg, highlight_color]
     

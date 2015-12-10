@@ -131,6 +131,20 @@ class UseColorsAction(EditorAction):
         self.active_editor.update_colors(self.colors)
 
 
+class ColorStandardAction(EditorAction):
+    style = 'radio'
+    
+    color_standard = Int
+
+    def perform(self, event):
+        self.active_editor.set_color_standard(self.color_standard)
+
+    @on_trait_change('active_editor.color_standard')
+    def _update_checked(self):
+        if self.active_editor:
+            self.checked = self.active_editor.color_standard == self.color_standard
+
+
 class TextFontAction(EditorAction):
     name = 'Text Font...'
     

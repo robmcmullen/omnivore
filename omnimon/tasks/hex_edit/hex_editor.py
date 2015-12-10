@@ -54,6 +54,8 @@ class HexEditor(FrameworkEditor):
     
     playfield_colors = Any
     
+    color_standard = Enum(0, 1)
+    
     disassembler = Any
     
     segment = Any(None)
@@ -107,6 +109,9 @@ class HexEditor(FrameworkEditor):
     
     def _playfield_colors_default(self):
         return colors.powerup_colors()
+    
+    def _color_standard_default(self):
+        return 0  # NTSC
 
     ###########################################################################
     # 'FrameworkEditor' interface.
@@ -179,6 +184,15 @@ class HexEditor(FrameworkEditor):
         self.set_font()
         self.refresh_panes()
     
+    def set_color_standard(self, std):
+        self.color_standard = std
+        self.update_colors(self.playfield_colors)
+    
+    def get_color_converter(self):
+        if self.color_standard == 0:
+            return colors.gtia_ntsc_to_rgb
+        return colors.gtia_pal_to_rgb
+    
     def update_fonts(self):
         self.font_map.Refresh()
         pane = self.window.get_dock_pane('hex_edit.font_map')
@@ -201,7 +215,8 @@ class HexEditor(FrameworkEditor):
         self.window.application.save_bson_data("font_list", self.font_list)
     
     def get_antic_font(self):
-        return fonts.AnticFont(self.antic_font_data, self.font_mode, self.playfield_colors, self.highlight_color)
+        color_converter = self.get_color_converter()
+        return fonts.AnticFont(self.antic_font_data, self.font_mode, self.playfield_colors, self.highlight_color, color_converter)
     
     def set_font(self, font=None, font_mode=None):
         print font
