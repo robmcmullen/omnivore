@@ -7,6 +7,7 @@ from traits.api import on_trait_change
 
 # Local imports.
 from omnimon.tasks.hex_edit.segments import SegmentList
+from omnimon.tasks.hex_edit.commands import ChangeByteCommand
 from omnimon.utils.wx.bitviewscroller import BitviewScroller, FontMapScroller, MemoryMapScroller
 from omnimon.utils.wx.tilelist import TileListControl
 from omnimon.framework.undo_panel import UndoHistoryPanel
@@ -77,7 +78,7 @@ class TileMapPane(DockPane):
     name = 'Tile Map'
     
     def create_contents(self, parent):
-        control = TileListControl(parent, self.task, size=(200,-1))
+        control = TileListControl(parent, self.task, size=(200,-1), command=ChangeByteCommand)
         return control
     
     #### trait change handlers

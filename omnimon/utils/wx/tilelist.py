@@ -23,6 +23,9 @@ class Tile(object):
         self.tile_num = tile_num
         self.keystroke = keystroke
     
+    def get_bytes(self):
+        return [self.tile_num]
+    
     def get_height(self, parent):
         if parent.editor:  # Might get called before an editor is set
             return parent.editor.antic_font.get_height(parent.zoom)
@@ -61,12 +64,15 @@ class TileListControl(wx.Panel):
     View for displaying categories of tiles to paint the map
     """
 
-    def __init__(self, parent, task, **kwargs):
+    def __init__(self, parent, task, command=None, **kwargs):
         wx.Panel.__init__(self, parent, -1, **kwargs)
         self.task = task
         self.editor = None
+        self.command_cls = command
         
         self.tile_list = TileListBox(self, -1, style=wx.VSCROLL)
+        self.tile_list.Bind(wx.EVT_LEFT_DOWN, self.on_tile_clicked)
+        self.tile_list.Bind(wx.EVT_LISTBOX, self.on_tile)
         self.cat = wx.Choice(self, -1)
         self.cat.Bind(wx.EVT_CHOICE, self.on_category)
 
@@ -110,3 +116,31 @@ class TileListControl(wx.Panel):
         cat = event.GetSelection()
         item, index = self.categories[cat]
         self.tile_list.ScrollToRow(index)
+    
+    def on_tile_clicked(self, event):
+        p = event.GetPosition()
+        index = self.tile_list.HitTest(p)
+        print p, index, self.items[index]
+        self.change_tile(self.items[index])
+        self.tile_list.SetSelection(index)
+    
+    def on_tile(self, event):
+        index = event.GetInt()
+        print index, self.items[index]
+        self.change_tile(self.items[index])
+        
+    def change_tile(self, tile):
+        e = self.editor
+        if e is None:
+            return
+        cmd_cls = self.command_cls
+        if cmd_cls is None:
+            return
+        if e.can_copy:
+            index = e.anchor_start_index
+        else:
+            index = e.cursor_index
+        value = tile.get_bytes()
+        cmd = cmd_cls(e.segment, index, index+len(value), value, True)
+        e.process_command(cmd)
+

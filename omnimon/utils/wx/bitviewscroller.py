@@ -454,11 +454,12 @@ class FontMapScroller(BitviewScroller):
         (wx.NewId(), "ATASCII", "ATASCII Characters", font_to_atascii_mapping),
         ]
     
-    def __init__(self, parent, task, bytes_per_row=8, font_mapping=1, **kwargs):
+    def __init__(self, parent, task, bytes_per_row=8, font_mapping=1, command=None, **kwargs):
         BitviewScroller.__init__(self, parent, task, **kwargs)
         self.bytes_per_row = bytes_per_row
         self.zoom = 2
         self.font = None
+        self.command_cls = command
         self.set_font_mapping(font_mapping)
         self.inverse = 0
     
@@ -622,7 +623,18 @@ class FontMapScroller(BitviewScroller):
             self.change_byte(char | self.inverse)
     
     def change_byte(self, value):
-        pass
+        e = self.editor
+        if e is None:
+            return
+        cmd_cls = self.command_cls
+        if cmd_cls is None:
+            return
+        if e.can_copy:
+            index = e.anchor_start_index
+        else:
+            index = e.cursor_index
+        cmd = cmd_cls(e.segment, index, index+1, value, True)
+        e.process_command(cmd)
     
     def on_char_hook(self, evt):
         log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))

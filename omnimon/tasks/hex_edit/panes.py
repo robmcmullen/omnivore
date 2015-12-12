@@ -52,17 +52,6 @@ class ByteGraphicsPane(DockPane):
             self.control.set_task(self.task)
 
 
-class CharMap(FontMapScroller):
-    def change_byte(self, value):
-        e = self.editor
-        if e.can_copy:
-            index = e.anchor_start_index
-        else:
-            index = e.cursor_index
-        cmd = ChangeByteCommand(e.segment, index, index+1, value, True)
-        e.process_command(cmd)
-
-
 class FontMapPane(DockPane):
     #### TaskPane interface ###################################################
 
@@ -70,7 +59,7 @@ class FontMapPane(DockPane):
     name = 'Font Map'
     
     def create_contents(self, parent):
-        control = CharMap(parent, self.task, size=(160,-1))
+        control = FontMapScroller(parent, self.task, size=(160,-1), command=ChangeByteCommand)
         return control
     
     #### trait change handlers
