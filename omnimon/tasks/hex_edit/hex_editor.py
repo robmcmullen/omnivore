@@ -138,7 +138,7 @@ class HexEditor(FrameworkEditor):
             value = data_obj.GetText()
         else:
             value = data_obj.GetData()
-        bytes = np.fromstring(value, dtype=np.uint8)
+        bytes = np.fromstring(value.encode('latin-1'), dtype=np.uint8)
         return bytes
     
     def create_clipboard_data_object(self):
