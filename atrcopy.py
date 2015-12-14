@@ -193,6 +193,7 @@ class ObjSegment(object):
         if name and not name.endswith(" "):
             name += " "
         self.name = name
+        self.page_size = -1
     
     def __str__(self):
         s = "%s%04x-%04x (%04x @ %04x)" % (self.name, self.start_addr, self.end_addr, len(self.data), self.data_start)
@@ -205,6 +206,29 @@ class ObjSegment(object):
     
     def __getitem__(self, val):
         return self.data[val]
+    
+    def label(self, index):
+        return "%04x" % (index + self.start_addr)
+
+class RawSectorsSegment(ObjSegment):
+    def __init__(self, first_sector, num_sectors, count, data, **kwargs):
+        ObjSegment.__init__(self, 0, 0, 0, count, data, **kwargs)
+        self.page_size = 128
+        self.first_sector = first_sector
+        self.num_sectors = num_sectors
+    
+    def __str__(self):
+        if self.num_sectors > 1:
+            s = "%s (sectors %d-%d)" % (self.name, self.first_sector, self.first_sector + self.num_sectors - 1)
+        else:
+            s = "%s (sector %d)" % (self.name, self.first_sector)
+        if self.error:
+            s += " " + self.error
+        return s
+    
+    def label(self, index):
+        sector, byte = divmod(index, self.page_size)
+        return "s%03d:%02x" % (sector + self.first_sector, byte)
 
 class AtariDosFile(object):
     """Parse a binary chunk into segments according to the Atari DOS object
@@ -262,6 +286,7 @@ class AtrDiskImage(object):
         self.bytes = bytes
         self.header = None
         self.first_vtoc = 360
+        self.num_vtoc = 1
         self.first_data_after_vtoc = 369
         self.total_sectors = 0
         self.unused_sectors = 0
@@ -331,6 +356,7 @@ class AtrDiskImage(object):
         else:
             num = (code * 2) - 3
         self.first_vtoc = 360 - num + 1
+        self.num_vtoc = num
         self.total_sectors = values[1]
         self.unused_sectors = values[2]
     
@@ -371,6 +397,16 @@ class AtrDiskImage(object):
                 return bytes
         return ""
     
+    def get_contiguous_sectors(self, sector, num):
+        start = 0
+        count = 0
+        for index in range(sector, sector + num):
+            pos, size = self.header.get_pos(index)
+            if start == 0:
+                start = pos
+            count += size
+        return start, count
+    
     def get_boot_segments(self):
         bytes = self.get_sectors(1)[0:20]
         values = struct.unpack("<BBHHBHBBBHBHBH", bytes)
@@ -386,22 +422,29 @@ class AtrDiskImage(object):
             segments = [sectors, header, code]
         return segments
     
-    def get_sector_segments(self):
+    def get_vtoc_segments(self):
         segments = []
         addr = 0
-        for index in range(1, self.header.max_sectors + 1):
-            bytes = self.get_sectors(index)
-            sector = ObjSegment(0, 0, addr, addr + len(bytes), bytes, name="Sector %03d" % (index))
-            addr += len(bytes)
-            segments.append(sector)
+        start, count = self.get_contiguous_sectors(self.first_vtoc, self.num_vtoc)
+        segment = RawSectorsSegment(self.first_vtoc, self.num_vtoc, count, self.bytes[start:start+count], name="VTOC")
+        segments.append(segment)
+        return segments
+    
+    def get_directory_segments(self):
+        segments = []
+        addr = 0
+        start, count = self.get_contiguous_sectors(361, 8)
+        segment = RawSectorsSegment(361, 8, count, self.bytes[start:start+count], name="Directory")
+        segments.append(segment)
         return segments
     
     def parse_segments(self):
         if self.header.size_in_bytes > 0:
             self.segments.append(ObjSegment(0, 0, 0, self.header.atr_header_offset, self.bytes[0:self.header.atr_header_offset], name="%s Header" % self.header.file_format))
-        self.segments.append(ObjSegment(0, 0, 0, self.header.size_in_bytes, self.bytes[self.header.atr_header_offset:], name="Raw disk sectors"))
+        self.segments.append(RawSectorsSegment(1, self.header.max_sectors, self.header.size_in_bytes, self.bytes[self.header.atr_header_offset:], name="Raw disk sectors"))
         self.segments.extend(self.get_boot_segments())
-        self.segments.extend(self.get_sector_segments())
+        self.segments.extend(self.get_vtoc_segments())
+        self.segments.extend(self.get_directory_segments())
         
 #        for dirent in self.atr.files:
 #            try:
