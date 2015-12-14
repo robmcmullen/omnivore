@@ -1,9 +1,18 @@
+import sys
+
 # Enthought library imports.
 from envisage.ui.tasks.api import PreferencesPane, TaskFactory
 from apptools.preferences.api import PreferencesHelper
 from traits.api import Bool, Dict, Enum, List, Str, Unicode, Int, Font
 from traitsui.api import FontEditor, HGroup, VGroup, Item, Label, \
     View
+
+if sys.platform == "darwin":
+    def_font = "10 point Monaco"
+elif sys.platform == "win32":
+    def_font = "10 point Lucida Console"
+else:
+    def_font = "10 point monospace"
 
 
 class HexEditPreferences(PreferencesHelper):
@@ -18,7 +27,7 @@ class HexEditPreferences(PreferencesHelper):
     #### Preferences ##########################################################
 
     # Font used for hex/disassembly
-    text_font = Font('10 point fixed')
+    text_font = Font(def_font)
 
 
 class HexEditPreferencesPane(PreferencesPane):
