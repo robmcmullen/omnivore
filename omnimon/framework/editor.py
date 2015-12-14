@@ -266,6 +266,8 @@ class FrameworkEditor(Editor):
         self.can_copy = False
         if refresh:
             self.refresh_panes()
+        
+        return index
     
     # Command processor
 
