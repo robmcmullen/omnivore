@@ -68,10 +68,6 @@ class HexEditor(FrameworkEditor):
     
     empty_color = Any(None)
     
-    text_font_size = Int(12)
-    
-    text_font_face = Str("")
-    
     text_font = Any(None)
 
     #### Events ####
@@ -93,7 +89,8 @@ class HexEditor(FrameworkEditor):
         return DefaultSegment()
     
     def _text_font_default(self):
-        return wx.Font(self.text_font_size, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, self.text_font_face)
+        prefs = self.task.get_preferences()
+        return prefs.text_font
     
     def _antic_font_data_default(self):
         return fonts.A8DefaultFont
@@ -152,6 +149,12 @@ class HexEditor(FrameworkEditor):
     
     def get_supported_clipboard_data_objects(self):
         return [wx.CustomDataObject("numpy"), wx.TextDataObject()]
+    
+    def set_text_font(self, font, color):
+        self.text_color = color
+        self.text_font = font
+        prefs = self.task.get_preferences()
+        prefs.text_font = font
 
     def update_panes(self):
         self.segment = self.document.segments[self.segment_number]

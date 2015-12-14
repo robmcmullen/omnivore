@@ -157,8 +157,7 @@ class TextFontAction(EditorAction):
         dlg = wx.FontDialog(self.active_editor.control, data)
         if dlg.ShowModal() == wx.ID_OK:
             data = dlg.GetFontData()
-            e.text_font = data.GetChosenFont()
-            e.text_color = data.GetColour()
+            e.set_text_font(data.GetChosenFont(), data.GetColour())
             e.refresh_panes()
 
 

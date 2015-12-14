@@ -1,8 +1,8 @@
 # Enthought library imports.
 from envisage.ui.tasks.api import PreferencesPane, TaskFactory
 from apptools.preferences.api import PreferencesHelper
-from traits.api import Bool, Dict, Enum, List, Str, Unicode
-from traitsui.api import EnumEditor, HGroup, VGroup, Item, Label, \
+from traits.api import Bool, Dict, Enum, List, Str, Unicode, Int, Font
+from traitsui.api import FontEditor, HGroup, VGroup, Item, Label, \
     View
 
 
@@ -13,15 +13,12 @@ class HexEditPreferences(PreferencesHelper):
     #### 'PreferencesHelper' interface ########################################
 
     # The path to the preference node that contains the preferences.
-    preferences_path = 'omnimon.framework.text_edit'
+    preferences_path = 'omnimon.task.hex_edit'
 
     #### Preferences ##########################################################
 
-    # Display line numbers
-    show_line_numbers = Bool
-
-    # Wrap lines (if True) or display horizontal scrollbar (if False)
-    wrap_lines = Bool
+    # Font used for hex/disassembly
+    text_font = Font('10 point fixed')
 
 
 class HexEditPreferencesPane(PreferencesPane):
@@ -38,11 +35,8 @@ class HexEditPreferencesPane(PreferencesPane):
     #### 'FrameworkPreferencesPane' interface ################################
 
     view = View(
-        VGroup(HGroup(Item('show_line_numbers'),
-                      Label('Show line numbers'),
+        VGroup(HGroup(Item('text_font'),
+                      Label('Hex Display Font'),
                       show_labels = False),
-               HGroup(Item('wrap_lines'),
-                      Label('Wrap lines'),
-                      show_labels = False),
-               label='Text editor'),
+               label='Hex Editor'),
         resizable=True)
