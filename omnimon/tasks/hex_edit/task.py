@@ -86,6 +86,14 @@ class HexEditTask(FrameworkTask):
         editor = HexEditor()
         return editor
 
+    @on_trait_change('window.application.preferences_changed_event')
+    def refresh_from_new_preferences(self):
+        e = self.active_editor
+        if e is not None:
+            prefs = self.get_preferences()
+            e.text_font = prefs.text_font
+            e.refresh_panes()
+
     def get_font_mapping_actions(self):
         return [
             FontMappingBaseAction(font_mapping=0, name="Antic Internal Codes", task=self),
