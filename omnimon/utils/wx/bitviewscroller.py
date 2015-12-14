@@ -457,9 +457,9 @@ class BitviewScroller(wx.ScrolledWindow):
         elif char == wx.WXK_RIGHT:
             delta_index = 1
         elif char == wx.WXK_PAGEUP:
-            delta_index = -self.fully_visible_rows
+            delta_index = -(self.fully_visible_rows * self.bytes_per_row)
         elif char == wx.WXK_PAGEDOWN:
-            delta_index = self.fully_visible_rows
+            delta_index = self.fully_visible_rows * self.bytes_per_row
         
         if delta_index is not None:
             e = self.editor
@@ -730,6 +730,10 @@ class FontMapScroller(BitviewScroller):
             delta_index = -1
         elif char == wx.WXK_RIGHT:
             delta_index = 1
+        elif char == wx.WXK_PAGEUP:
+            delta_index = -(self.fully_visible_rows * self.bytes_per_row)
+        elif char == wx.WXK_PAGEDOWN:
+            delta_index = self.fully_visible_rows * self.bytes_per_row
         
         if byte is not None:
             self.change_byte(byte)
