@@ -1,9 +1,4 @@
-"""Sample panes for Skeleton
-
-"""
-# Enthought library imports.
-from pyface.tasks.api import DockPane, TraitsDockPane
-from traits.api import on_trait_change
+from omnimon.framework.panes import FrameworkPane
 
 # Local imports.
 from omnimon.tasks.hex_edit.segments import SegmentList
@@ -16,8 +11,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-
-class MemoryMapPane(DockPane):
+class MemoryMapPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
     id = 'map_edit.memory_map'
@@ -26,16 +20,9 @@ class MemoryMapPane(DockPane):
     def create_contents(self, parent):
         control = MemoryMapScroller(parent, self.task, size=(600,30))
         return control
-    
-    #### trait change handlers
-    
-    def _task_changed(self):
-        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
-        if self.control:
-            self.control.set_task(self.task)
 
 
-class SegmentsPane(DockPane):
+class SegmentsPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
     id = 'map_edit.segments'
@@ -44,16 +31,9 @@ class SegmentsPane(DockPane):
     def create_contents(self, parent):
         control = SegmentList(parent, self.task, size=(64,150))
         return control
-    
-    #### trait change handlers
-    
-    def _task_changed(self):
-        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
-        if self.control:
-            self.control.set_task(self.task)
 
 
-class UndoPane(DockPane):
+class UndoPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
     id = 'map_edit.undo'
@@ -62,16 +42,9 @@ class UndoPane(DockPane):
     def create_contents(self, parent):
         control = UndoHistoryPanel(parent, self.task, size=(64,150))
         return control
-    
-    #### trait change handlers
-    
-    def _task_changed(self):
-        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
-        if self.control:
-            self.control.set_task(self.task)
 
 
-class TileMapPane(DockPane):
+class TileMapPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
     id = 'map_edit.tile_map'
@@ -80,10 +53,3 @@ class TileMapPane(DockPane):
     def create_contents(self, parent):
         control = TileListControl(parent, self.task, size=(200,500), command=ChangeByteCommand)
         return control
-    
-    #### trait change handlers
-    
-    def _task_changed(self):
-        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
-        if self.control:
-            self.control.set_task(self.task)

@@ -1,8 +1,6 @@
 import wx
 
-# Enthought library imports.
-from pyface.tasks.api import DockPane, TraitsDockPane
-from traits.api import on_trait_change
+from omnimon.framework.panes import FrameworkPane
 
 # Local imports.
 from disassembly import DisassemblyPanel
@@ -15,8 +13,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-
-class DisassemblyPane(DockPane):
+class DisassemblyPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
     id = 'hex_edit.disasmbly_pane'
@@ -25,16 +22,9 @@ class DisassemblyPane(DockPane):
     def create_contents(self, parent):
         control = DisassemblyPanel(parent, self.task, size=(300,500))
         return control
-    
-    #### trait change handlers
-    
-    def _task_changed(self):
-        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
-        if self.control:
-            self.control.set_task(self.task)
 
 
-class ByteGraphicsPane(DockPane):
+class ByteGraphicsPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
     id = 'hex_edit.byte_graphics'
@@ -43,16 +33,9 @@ class ByteGraphicsPane(DockPane):
     def create_contents(self, parent):
         control = BitviewScroller(parent, self.task, size=(64,500))
         return control
-    
-    #### trait change handlers
-    
-    def _task_changed(self):
-        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
-        if self.control:
-            self.control.set_task(self.task)
 
 
-class FontMapPane(DockPane):
+class FontMapPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
     id = 'hex_edit.font_map'
@@ -61,16 +44,9 @@ class FontMapPane(DockPane):
     def create_contents(self, parent):
         control = FontMapScroller(parent, self.task, size=(160,500), command=ChangeByteCommand)
         return control
-    
-    #### trait change handlers
-    
-    def _task_changed(self):
-        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
-        if self.control:
-            self.control.set_task(self.task)
 
 
-class MemoryMapPane(DockPane):
+class MemoryMapPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
     id = 'hex_edit.memory_map'
@@ -79,16 +55,9 @@ class MemoryMapPane(DockPane):
     def create_contents(self, parent):
         control = MemoryMapScroller(parent, self.task, size=(600,30))
         return control
-    
-    #### trait change handlers
-    
-    def _task_changed(self):
-        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
-        if self.control:
-            self.control.set_task(self.task)
 
 
-class SegmentsPane(DockPane):
+class SegmentsPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
     id = 'hex_edit.segments'
@@ -97,16 +66,9 @@ class SegmentsPane(DockPane):
     def create_contents(self, parent):
         control = SegmentList(parent, self.task, size=(64,150))
         return control
-    
-    #### trait change handlers
-    
-    def _task_changed(self):
-        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
-        if self.control:
-            self.control.set_task(self.task)
 
 
-class UndoPane(DockPane):
+class UndoPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
     id = 'hex_edit.undo'
@@ -115,10 +77,3 @@ class UndoPane(DockPane):
     def create_contents(self, parent):
         control = UndoHistoryPanel(parent, self.task, size=(64,150))
         return control
-    
-    #### trait change handlers
-    
-    def _task_changed(self):
-        log.debug("TASK CHANGED IN DISASSEMBLY!!!! %s" % self.task)
-        if self.control:
-            self.control.set_task(self.task)
