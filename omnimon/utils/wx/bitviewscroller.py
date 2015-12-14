@@ -715,6 +715,7 @@ class FontMapScroller(BitviewScroller):
             index = e.cursor_index + delta_index
             e.set_cursor(index, False)
             wx.CallAfter(self.select_index, index)
+            wx.CallAfter(e.index_clicked, index, 0, self)
         else:
             evt.Skip()
 

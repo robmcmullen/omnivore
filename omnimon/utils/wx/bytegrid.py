@@ -20,6 +20,9 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
         self.normal_background = editor.background_color
         self.normal_brush = wx.Brush(editor.background_color, wx.SOLID)
         self.normal_pen = wx.Pen(editor.background_color, 1, wx.SOLID)
+        self.cursor_background = editor.background_color
+        self.cursor_brush = wx.Brush(editor.background_color, wx.TRANSPARENT)
+        self.cursor_pen = wx.Pen(editor.unfocused_cursor_color, 1, wx.SOLID)
         self.colSize = None
         self.rowSize = 50
 
@@ -73,6 +76,12 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
                 x = rect.x+1 + rect.width-2 - width
                 dc.DrawRectangle(x, rect.y+1, width+1, height)
                 dc.DrawText("...", x, rect.y+1)
+            
+            r, c = self.table.get_row_col(grid.editor.cursor_index)
+            if row == r and col == c:
+                dc.SetPen(self.cursor_pen)
+                dc.SetBrush(self.cursor_brush)
+                dc.DrawRectangleRect(rect)
 
         dc.DestroyClippingRegion()
 
@@ -665,10 +674,12 @@ class ByteGrid(Grid.Grid):
             evt.Skip()
         
         if moved:
+            index1, index2 = self.table.get_index_range(r, c)
+            refresh_self = None if e.can_copy else self
+            e.set_cursor(index1, False)
             self.SetGridCursor(r, c)
             self.MakeCellVisible(r, c)
-            index1, index2 = self.table.get_index_range(r, c)
-            wx.CallAfter(e.index_clicked, index1, 0, self)
+            wx.CallAfter(e.index_clicked, index1, 0, refresh_self)
 
     def cancel_edit(self):
         log.debug("cancelling edit!")

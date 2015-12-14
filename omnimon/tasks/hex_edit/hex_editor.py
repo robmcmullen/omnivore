@@ -62,6 +62,8 @@ class HexEditor(FrameworkEditor):
     
     highlight_color = Any((100, 200, 230))
     
+    unfocused_cursor_color = Any((128, 128, 128))
+    
     background_color = Any((255, 255, 255))
     
     text_color = Any((0, 0, 0))
