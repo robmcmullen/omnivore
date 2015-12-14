@@ -21,10 +21,10 @@ class MemoryMapPane(DockPane):
     #### TaskPane interface ###################################################
 
     id = 'map_edit.memory_map'
-    name = 'Memory Map'
+    name = 'Page Map'
     
     def create_contents(self, parent):
-        control = MemoryMapScroller(parent, self.task)
+        control = MemoryMapScroller(parent, self.task, size=(600,30))
         return control
     
     #### trait change handlers
@@ -42,7 +42,7 @@ class SegmentsPane(DockPane):
     name = 'Segments'
     
     def create_contents(self, parent):
-        control = SegmentList(parent, self.task, size=(64,-1))
+        control = SegmentList(parent, self.task, size=(64,150))
         return control
     
     #### trait change handlers
@@ -60,7 +60,7 @@ class UndoPane(DockPane):
     name = 'Undo History'
     
     def create_contents(self, parent):
-        control = UndoHistoryPanel(parent, self.task)
+        control = UndoHistoryPanel(parent, self.task, size=(64,150))
         return control
     
     #### trait change handlers
@@ -78,7 +78,7 @@ class TileMapPane(DockPane):
     name = 'Tile Map'
     
     def create_contents(self, parent):
-        control = TileListControl(parent, self.task, size=(200,-1), command=ChangeByteCommand)
+        control = TileListControl(parent, self.task, size=(200,500), command=ChangeByteCommand)
         return control
     
     #### trait change handlers
