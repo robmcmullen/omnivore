@@ -39,6 +39,10 @@ class DefaultSegment(object):
     
     def __setitem__(self, index, value):
         self.data[index] = value
+    
+    def label(self, index):
+        return "%04x" % (index + self.start_addr)
+        
 
 
 class AnticFontSegment(DefaultSegment):

@@ -53,7 +53,7 @@ class ByteTable(ByteGridTable):
         return 2
 
     def GetRowLabelValue(self, row):
-        return "%04x" % (row*self.bytes_per_row + self.segment.start_addr - self.start_offset)
+        return self.segment.label(row*self.bytes_per_row - self.start_offset)
 
     def GetColLabelValue(self, col):
         return "%x" % col
