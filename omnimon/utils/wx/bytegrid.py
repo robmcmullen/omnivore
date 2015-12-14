@@ -670,6 +670,20 @@ class ByteGrid(Grid.Grid):
             n = self.GetNumberRows()
             r = n - 1 if r >= n - 1 else r + 1
             moved = True
+        elif key == wx.WXK_PAGEUP:
+            page_size = e.segment.page_size
+            if page_size < 0:
+                evt.Skip()
+            else:
+                index = e.set_cursor(e.cursor_index - page_size, False)
+                wx.CallAfter(e.index_clicked, index, 0, None)
+        elif key == wx.WXK_PAGEDOWN:
+            page_size = e.segment.page_size
+            if page_size < 0:
+                evt.Skip()
+            else:
+                index = e.set_cursor(e.cursor_index + page_size, False)
+                wx.CallAfter(e.index_clicked, index, 0, None)
         else:
             evt.Skip()
         

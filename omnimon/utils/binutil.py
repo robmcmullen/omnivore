@@ -26,6 +26,7 @@ class DefaultSegment(object):
         self.data = data
         self.error = error
         self.name = name
+        self.page_size = -1
     
     def __str__(self):
         return "%s (%d bytes)" % (self.name, len(self.data))

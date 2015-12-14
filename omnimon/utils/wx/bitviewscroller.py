@@ -441,12 +441,7 @@ class BitviewScroller(wx.ScrolledWindow):
         log.debug("on_char!")
         evt.Skip()
     
-    def on_char_hook(self, evt):
-        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
-        mods = evt.GetModifiers()
-        char = evt.GetUniChar()
-        if char == 0:
-            char = evt.GetKeyCode()
+    def process_movement_keys(self, char):
         delta_index = None
         if char == wx.WXK_UP:
             delta_index = -self.bytes_per_row
@@ -457,15 +452,34 @@ class BitviewScroller(wx.ScrolledWindow):
         elif char == wx.WXK_RIGHT:
             delta_index = 1
         elif char == wx.WXK_PAGEUP:
-            delta_index = -(self.fully_visible_rows * self.bytes_per_row)
+            page_size = self.editor.segment.page_size
+            if page_size < 0:
+                delta_index = -(self.fully_visible_rows * self.bytes_per_row)
+            else:
+                delta_index = -page_size
         elif char == wx.WXK_PAGEDOWN:
-            delta_index = self.fully_visible_rows * self.bytes_per_row
-        
+            page_size = self.editor.segment.page_size
+            if page_size < 0:
+                delta_index = self.fully_visible_rows * self.bytes_per_row
+            else:
+                delta_index = page_size
+        return delta_index
+    
+    def process_delta_index(self, delta_index):
+        e = self.editor
+        index = e.set_cursor(e.cursor_index + delta_index, False)
+        wx.CallAfter(self.select_index, index)
+        wx.CallAfter(e.index_clicked, index, 0, self)
+    
+    def on_char_hook(self, evt):
+        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
+        mods = evt.GetModifiers()
+        char = evt.GetUniChar()
+        if char == 0:
+            char = evt.GetKeyCode()
+        delta_index = self.process_movement_keys(char)
         if delta_index is not None:
-            e = self.editor
-            index = e.set_cursor(e.cursor_index + delta_index, False)
-            wx.CallAfter(self.select_index, index)
-            wx.CallAfter(e.index_clicked, index, 0, self)
+            self.process_delta_index(delta_index)
         else:
             evt.Skip()
 
@@ -722,18 +736,8 @@ class FontMapScroller(BitviewScroller):
         elif char == wx.WXK_ESCAPE:
             self.pending_esc = True
         
-        elif char == wx.WXK_UP:
-            delta_index = -self.bytes_per_row
-        elif char == wx.WXK_DOWN:
-            delta_index = self.bytes_per_row
-        elif char == wx.WXK_LEFT:
-            delta_index = -1
-        elif char == wx.WXK_RIGHT:
-            delta_index = 1
-        elif char == wx.WXK_PAGEUP:
-            delta_index = -(self.fully_visible_rows * self.bytes_per_row)
-        elif char == wx.WXK_PAGEDOWN:
-            delta_index = self.fully_visible_rows * self.bytes_per_row
+        else:
+            delta_index = self.process_movement_keys(char)
         
         if byte is not None:
             self.change_byte(byte)
