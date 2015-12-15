@@ -1,8 +1,8 @@
 include run.py
 include *.rst
 recursive-include docs *.rst
-recursive-include omnimon/icons *.png *.ico *.icns
+recursive-include omnivore/icons *.png *.ico *.icns
 recursive-include test_data *
 recursive-include tests *.sh *.py
-recursive-include omnimon *.c
+recursive-include omnivore *.c
 include traits/*.h

@@ -33,7 +33,7 @@ def main(argv):
         logger = logging.getLogger()
         logger.setLevel(logging.INFO)
 
-    from omnimon.framework.application import run
+    from omnivore.framework.application import run
     run(egg_path=EGG_PATH)
 
     logging.shutdown()

@@ -6,9 +6,9 @@ Tasks and Applications
 Configuration Directory
 =======================
 
-Omnimon changes the default configuration directory from
-:file:`$(HOME)/.enthought/omnimon.framework.application` to
-:file:`$(HOME)/.config/Omnimon` on unix. On Mac OS X it will be :file:`$(HOME)/Library/Application Support/Omnimon`, and windows will be :file:`C:\\Users\\<username>\\AppData\\Local\\Omnimon\\Omnimon`
+Omnivore changes the default configuration directory from
+:file:`$(HOME)/.enthought/omnivore.framework.application` to
+:file:`$(HOME)/.config/Omnivore` on unix. On Mac OS X it will be :file:`$(HOME)/Library/Application Support/Omnivore`, and windows will be :file:`C:\\Users\\<username>\\AppData\\Local\\Omnivore\\Omnivore`
 
 TaskApplication
 ===============
@@ -207,7 +207,7 @@ Blank Window
 If you get a blank window, that probably means that no tasks have
 been added to the window.  One way this happens is a bad application
 memento in the config directory.  In once case, removing the file
-:file:`/home/rob/.config/Omnimon/tasks/wx/application_memento` can fix it.  In
+:file:`/home/rob/.config/Omnivore/tasks/wx/application_memento` can fix it.  In
 another case, an incorrect task id was found (due to a typo in the task id
 itself) and the call to application.create_task(task_id) returned None.
 

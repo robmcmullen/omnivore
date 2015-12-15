@@ -1,6 +1,6 @@
 #p -*- coding: utf-8 -*-
 #
-# omnimon documentation build configuration file, created by
+# omnivore documentation build configuration file, created by
 # sphinx-quickstart on Thu May  8 15:35:23 2008.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -35,17 +35,17 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General substitutions.
-project = 'Omnimon'
+project = 'Omnivore'
 copyright = '2008-2014, Rob McMullen'
 
-import omnimon
+import omnivore
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = omnimon.__version__
+version = omnivore.__version__
 # The full version, including alpha/beta/rc tags.
-release = omnimon.__version__
+release = omnivore.__version__
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -126,7 +126,7 @@ html_use_modindex = False
 #html_file_suffix = ''
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'omnimondoc'
+htmlhelp_basename = 'omnivoredoc'
 
 
 # Options for LaTeX output
@@ -146,13 +146,13 @@ latex_elements = {
 
 \begin{minipage}{0.25\textwidth}
 \begin{flushleft}
-\includegraphics[width=1.0\textwidth]{../../_static/omnimon256.png}\\[1cm]
+\includegraphics[width=1.0\textwidth]{../../_static/omnivore256.png}\\[1cm]
 \end{flushleft}
 \end{minipage}
 \begin{minipage}{0.75\textwidth}
 \begin{flushright}
 
-{ \Huge \CTV Omnimon User Manual}\\[0.4cm]
+{ \Huge \CTV Omnivore User Manual}\\[0.4cm]
 
 \CTV{\Large Version %s}\\[0.5cm]
 \end{flushright}
@@ -187,7 +187,7 @@ feedback@playermissile.com
 # (source start file, target name, title, author, documentclass [howto/manual],
 # toctree_only).
 latex_documents = [
-  ('index', 'UserManual.tex', 'Omnimon User Manual', 'Rob McMullen', 'manual', True),
+  ('index', 'UserManual.tex', 'Omnivore User Manual', 'Rob McMullen', 'manual', True),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

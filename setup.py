@@ -47,8 +47,8 @@ if use_cython:
     cmdclass["build_ext"] = build_ext
 
     ext_modules.append(
-        Extension("omnimon.utils.wx.bitviewscroller_speedups",
-                  sources=["omnimon/utils/wx/bitviewscroller_speedups.pyx"],
+        Extension("omnivore.utils.wx.bitviewscroller_speedups",
+                  sources=["omnivore/utils/wx/bitviewscroller_speedups.pyx"],
                   include_dirs=[numpy.get_include()],
                   )
         )
@@ -67,8 +67,8 @@ else:
     cmdclass["build_ext"] = build_ext
 
     ext_modules.append(
-        Extension("omnimon.utils.wx.bitviewscroller_speedups",
-                  sources=["omnimon/utils/wx/bitviewscroller_speedups.c"],
+        Extension("omnivore.utils.wx.bitviewscroller_speedups",
+                  sources=["omnivore/utils/wx/bitviewscroller_speedups.c"],
                   )
         )
 
@@ -79,22 +79,22 @@ if "sdist" in sys.argv:
         def run(self):
             # Make sure the compiled Cython files in the distribution are up-to-date
             from Cython.Build import cythonize
-            cythonize(["omnimon/utils/wx/bitviewscroller_speedups.pyx"])
+            cythonize(["omnivore/utils/wx/bitviewscroller_speedups.pyx"])
             _sdist.run(self)
     cmdclass["sdist"] = sdist
 
-import omnimon
-full_version = omnimon.__version__
+import omnivore
+full_version = omnivore.__version__
 spaceless_version = full_version.replace(" ", "_")
 
 data_files = []
-data_files.extend(omnimon.get_py2exe_data_files())
+data_files.extend(omnivore.get_py2exe_data_files())
 
 import traitsui
-data_files.extend(omnimon.get_py2exe_data_files(traitsui, excludes=["*/qt4/*"]))
+data_files.extend(omnivore.get_py2exe_data_files(traitsui, excludes=["*/qt4/*"]))
 
 import pyface
-data_files.extend(omnimon.get_py2exe_data_files(pyface, excludes=["*/qt4/*", "*/pyface/images/*.jpg"]))
+data_files.extend(omnivore.get_py2exe_data_files(pyface, excludes=["*/qt4/*", "*/pyface/images/*.jpg"]))
 
 common_includes = [
     "ctypes",
@@ -129,7 +129,7 @@ common_includes = [
     "pyface.ui.wx.tasks.*",
     "pyface.ui.wx.workbench.*",
 ]
-common_includes.extend(omnimon.get_py2exe_toolkit_includes())
+common_includes.extend(omnivore.get_py2exe_toolkit_includes())
 print common_includes
 
 py2app_includes = [
@@ -234,12 +234,12 @@ if 'nsis' not in sys.argv:
         shutil.rmtree(mac_dist_dir, ignore_errors=True)
 
     setup(
-        name = 'Omnimon',
-        version = omnimon.__version__,
-        author = omnimon.__author__,
-        author_email = omnimon.__author_email__,
-        url = omnimon.__url__,
-        download_url = ('%s-%s.tar.gz' % (omnimon.__download_url__, omnimon.__version__)),
+        name = 'Omnivore',
+        version = omnivore.__version__,
+        author = omnivore.__author__,
+        author_email = omnivore.__author_email__,
+        url = omnivore.__url__,
+        download_url = ('%s-%s.tar.gz' % (omnivore.__download_url__, omnivore.__version__)),
         classifiers = [c.strip() for c in """\
             Development Status :: 3 - Alpha
             Intended Audience :: Developers
@@ -257,7 +257,7 @@ if 'nsis' not in sys.argv:
         long_description = open('README.rst').read(),
         cmdclass = cmdclass,
         ext_modules = ext_modules,
-        install_requires = omnimon.__requires__,
+        install_requires = omnivore.__requires__,
         setup_requires = ["numpy"],
         license = "BSD",
         packages = find_packages(),
@@ -267,7 +267,7 @@ if 'nsis' not in sys.argv:
         app=["run.py"],
         windows=[dict(
             script="run.py",
-            icon_resources=[(1, "omnimon/icons/omnimon.ico")],
+            icon_resources=[(1, "omnivore/icons/omnivore.ico")],
         )],
         options=dict(
             py2app=dict(
@@ -279,15 +279,15 @@ if 'nsis' not in sys.argv:
                 includes=common_includes + py2app_includes,
                 excludes=common_excludes,
                 frameworks=[],
-                iconfile="omnimon/icons/omnimon.icns",
+                iconfile="omnivore/icons/omnivore.icns",
                 plist=dict(
-                    CFBundleName="Omnimon",
+                    CFBundleName="Omnivore",
                     CFBundleTypeExtensions=["xex", "atr", "xfd", "obx"],
                     CFBundleTypeName="Document",
                     CFBundleTypeRole="Editor",
-                    CFBundleShortVersionString=omnimon.__version__,
-                    CFBundleGetInfoString="Omnimon %s" % omnimon.__version__,
-                    CFBundleExecutable="Omnimon",
+                    CFBundleShortVersionString=omnivore.__version__,
+                    CFBundleGetInfoString="Omnivore %s" % omnivore.__version__,
+                    CFBundleExecutable="Omnivore",
                     CFBUndleIdentifier="com.playermissile",
                 )
             ),
@@ -320,22 +320,22 @@ ArchitecturesInstallIn64BitMode=x64"""
             shutil.copy(f, win_dist_dir)
     else:
         nsis_arch = ""
-    shutil.copy("%s/run.exe" % win_dist_dir, "%s/omnimon.exe" % win_dist_dir)
-    iss_filename = "%s\\omnimon.iss" % win_dist_dir
+    shutil.copy("%s/run.exe" % win_dist_dir, "%s/omnivore.exe" % win_dist_dir)
+    iss_filename = "%s\\omnivore.iss" % win_dist_dir
     iss_file = open(iss_filename, "w")
     iss_file.write( """
 [Setup]
 AppId={{8AE5A4C3-B67E-4243-9F45-401C554A9019}
-AppName=Omnimon
-AppVerName=Omnimon %s
+AppName=Omnivore
+AppVerName=Omnivore %s
 AppPublisher=Player/Missile Podcast
 AppPublisherURL=http://www.playermissile.com/
 AppSupportURL=http://www.playermissile.com/
 AppUpdatesURL=http://www.playermissile.com/
-DefaultDirName={pf}\Omnimon
-DefaultGroupName=Omnimon
-OutputBaseFilename=Omnimon_%s
-SetupIconFile=..\..\omnimon\icons\omnimon.ico
+DefaultDirName={pf}\Omnivore
+DefaultGroupName=Omnivore
+OutputBaseFilename=Omnivore_%s
+SetupIconFile=..\..\omnivore\icons\omnivore.ico
 Compression=lzma
 SolidCompression=yes
 %s
@@ -348,17 +348,17 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "omnimon.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "omnivore.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{group}\Omnimon"; Filename: "{app}\omnimon.exe"
-Name: "{commondesktop}\Omnimon"; Filename: "{app}\omnimon.exe"; Tasks: desktopicon
-Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Omnimon"; Filename: "{app}\omnimon.exe"; Tasks: quicklaunchicon
+Name: "{group}\Omnivore"; Filename: "{app}\omnivore.exe"
+Name: "{commondesktop}\Omnivore"; Filename: "{app}\omnivore.exe"; Tasks: desktopicon
+Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Omnivore"; Filename: "{app}\omnivore.exe"; Tasks: quicklaunchicon
 
 [Run]
-Filename: "{app}\omnimon.exe"; Description: "{cm:LaunchProgram,Omnimon}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\omnivore.exe"; Description: "{cm:LaunchProgram,Omnivore}"; Flags: nowait postinstall skipifsilent
 """ % ( full_version, spaceless_version, nsis_arch ) )
     iss_file.close()
 
@@ -367,7 +367,7 @@ Filename: "{app}\omnimon.exe"; Description: "{cm:LaunchProgram,Omnimon}"; Flags:
     )
 elif 'py2app' in sys.argv and sys.platform.startswith('darwin'):
     remove_pyc(mac_dist_dir)
-    app_name = "%s/Omnimon.app" % mac_dist_dir
+    app_name = "%s/Omnivore.app" % mac_dist_dir
     
     # Strip out useless binary stuff from the site packages zip file.
     # Saves 3MB or so
@@ -378,11 +378,11 @@ elif 'py2app' in sys.argv and sys.platform.startswith('darwin'):
     numpy_dir = "%s/Contents/Resources/lib/python2.7/numpy" % app_name
     remove_numpy_tests(numpy_dir)
 
-    fat_app_name = "%s/Omnimon.fat.app" % mac_dist_dir
+    fat_app_name = "%s/Omnivore.fat.app" % mac_dist_dir
     os.rename(app_name, fat_app_name)
     subprocess.call(['/usr/bin/ditto', '-arch', 'x86_64', fat_app_name, app_name])
     cwd = os.getcwd()
     os.chdir(mac_dist_dir)
-    subprocess.call(['/usr/bin/zip', '-r', '-9', '-q', "Omnimon-%s-darwin.zip" % spaceless_version, 'Omnimon.app', ])
+    subprocess.call(['/usr/bin/zip', '-r', '-9', '-q', "Omnivore-%s-darwin.zip" % spaceless_version, 'Omnivore.app', ])
     os.chdir(cwd)
     shutil.rmtree(fat_app_name)
