@@ -115,7 +115,7 @@ class FrameworkApplication(TasksApplication):
     
     cache_dir = Str
     
-    next_document_invariant = Int(0)
+    next_document_id = Int(0)
     
     documents = List
 
@@ -431,23 +431,23 @@ class FrameworkApplication(TasksApplication):
         
         FIXME: check for duplicates?
         """
-        existing = self.get_document(document.invariant)
+        existing = self.get_document(document.document_id)
         if existing:
             return existing
         
-        document.invariant = self.next_document_invariant
-        self.next_document_invariant += 1
+        document.document_id = self.next_document_id
+        self.next_document_id += 1
         self.documents.append(document)
         return document
     
-    def get_document(self, invariant):
+    def get_document(self, document_id):
         """Add document to the application list of open documents
         
         FIXME: check for duplicates?
         """
         for doc in self.documents:
-            print "checking document", doc.invariant, doc, doc.uri
-            if doc.invariant == invariant:
+            print "checking document", doc.document_id, doc, doc.uri
+            if doc.document_id == document_id:
                 return doc
         return None
     

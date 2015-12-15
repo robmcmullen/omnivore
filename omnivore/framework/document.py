@@ -4,7 +4,7 @@ import types
 import numpy as np
 
 # Enthought library imports.
-from traits.api import HasTraits, Trait, TraitHandler, Int, Any, List, Set, Bool, Event, Dict, Set, Unicode, Property
+from traits.api import HasTraits, Trait, TraitHandler, Int, Any, List, Set, Bool, Event, Dict, Set, Unicode, Property, Str
 
 from omnivore.utils.command import UndoStack
 from omnivore.utils.file_guess import FileMetadata
@@ -33,7 +33,9 @@ class Document(HasTraits):
 
     uri = Property(Unicode, depends_on='metadata')
     
-    invariant = Int(-1)
+    document_id = Int(-1)
+    
+    last_task_id = Str
     
     bytes = Trait("", TraitNumpyConverter())
     

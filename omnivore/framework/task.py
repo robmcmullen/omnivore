@@ -173,9 +173,19 @@ class FrameworkTask(Task):
             editor.load(source, **kwargs)
             if source is not None:
                 self.window.application.successfully_loaded_event = source.metadata.uri
+        elif hasattr(source, 'document_id'):
+            editor.view_document(source)
         else:
             editor.view_document(source.document)
         self.activated()
+    
+    def find_tab_or_open(self, document):
+        print self.editor_area.editors
+        for editor in self.editor_area.editors:
+            if editor.document == document:
+                self.editor_area.activate_editor(editor)
+                return
+        self.new(document)
 
     def new_window(self, task=None, view=None):
         """ Opens a new window

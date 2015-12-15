@@ -471,17 +471,17 @@ class ApplicationDynamicSubmenuGroup(BaseDynamicSubmenuGroup):
 
 
 class SwitchDocumentAction(Action):
-    invariant = Int
+    document_id = Int
     
     name = Str
     
     def perform(self, event):
         app = event.task.window.application
-        doc = app.get_document(self.invariant)
+        doc = app.get_document(self.document_id)
         if doc is not None:
-            print "Switching to", doc
-            if event.task.can_edit(doc.metadata.mime):
-                event.task.active_editor.view_document(doc)
+            log.debug("Switching to %s, task=%s" % (doc, doc.last_task_id))
+            task = app.find_active_task_of_type(doc.last_task_id)
+            task.find_tab_or_open(doc)
 
 
 class DocumentSelectGroup(ApplicationDynamicSubmenuGroup):
@@ -500,7 +500,7 @@ class DocumentSelectGroup(ApplicationDynamicSubmenuGroup):
         items = []
         for document in documents:
             print document
-            action = SwitchDocumentAction(invariant=document.invariant, name=document.menu_name)
+            action = SwitchDocumentAction(document_id=document.document_id, name=document.menu_name)
             items.append(ActionItem(action=action))
         return items
 

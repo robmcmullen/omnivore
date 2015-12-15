@@ -104,6 +104,7 @@ class FrameworkEditor(Editor):
     def view_document(self, doc):
         """ Change the view to the specified document
         """
+        doc.last_task_id = self.task.id
         self.document = self.task.window.application.add_document(doc)
         self.rebuild_document_properties()
         self.update_panes()
