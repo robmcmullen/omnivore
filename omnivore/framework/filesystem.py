@@ -13,10 +13,11 @@ log = logging.getLogger(__name__)
 
 from omnivore import __version__, __author__, __author_email__, __url__
 substitutes = {
-    'prog': 'Omnivore Editor',
+    'prog': 'Omnivore XL',
     'yearrange': '2014-2015',
     'version': __version__,
-    'description': "The Atari 8-bit binary editor & disassembler",
+    'description': "The binary editor and disassembler for modern Atari 8-bit hackers",
+    'tagline': "Byte into the meat of Atari Software! Coded and tested by vegetarians.",
     'author': __author__,
     'author_email': __author_email__,
     'url': __url__,
@@ -51,9 +52,11 @@ about = {
     "omnivore": """<html>
 <h2>%(prog)s %(version)s</h2>
 
+<h3>%(description)s</h3>
+
 <p><img src="about://logo.png">
 
-<h3>%(description)s</h3>
+<h5>%(tagline)s</h5>
 
 <p>%(copyright)s</p>
 
