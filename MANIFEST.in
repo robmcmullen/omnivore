@@ -1,8 +1,9 @@
 include run.py
 include *.rst
+include LICENSE*
 recursive-include docs *.rst
 recursive-include omnivore/icons *.png *.ico *.icns
-recursive-include test_data *
+recursive-include test_data air_defense_v18.xex
 recursive-include tests *.sh *.py
 recursive-include omnivore *.c
 include traits/*.h
