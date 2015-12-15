@@ -20,11 +20,11 @@ substitutes = {
     'author': __author__,
     'author_email': __author_email__,
     'url': __url__,
-    'license': "Application licensed under the GPLv3; most code also dual licensed under GPLv2",
+    'license': "Application licensed under the GNU General Public License, version 3.0",
     'warning': """<P>This code is still under development, so make backups and save often.""",
     'license_text': """This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
+the Free Software Foundation; either version 3 of the License, or
 (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
