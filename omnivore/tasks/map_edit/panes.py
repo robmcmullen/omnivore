@@ -3,7 +3,7 @@ from omnivore.framework.panes import FrameworkPane
 # Local imports.
 from omnivore.tasks.hex_edit.segments import SegmentList
 from omnivore.tasks.hex_edit.commands import ChangeByteCommand
-from omnivore.utils.wx.bitviewscroller import BitviewScroller, FontMapScroller, MemoryMapScroller
+from omnivore.utils.wx.bitviewscroller import BitviewScroller, FontMapScroller, CharacterSetViewer, MemoryMapScroller
 from omnivore.utils.wx.tilelist import TileListControl
 from omnivore.framework.undo_panel import UndoHistoryPanel
 
@@ -52,4 +52,15 @@ class TileMapPane(FrameworkPane):
     
     def create_contents(self, parent):
         control = TileListControl(parent, self.task, size=(200,500), command=ChangeByteCommand)
+        return control
+
+
+class CharacterSetPane(FrameworkPane):
+    #### TaskPane interface ###################################################
+
+    id = 'map_edit.character_set'
+    name = 'Character Set'
+    
+    def create_contents(self, parent):
+        control = CharacterSetViewer(parent, self.task, size=(256,500))
         return control

@@ -46,11 +46,13 @@ class MapEditor(HexEditor):
     def update_fonts(self):
         self.font_map.Refresh()
         self.tile_map.Refresh()
+        self.character_set.Refresh()
     
     def refresh_panes(self):
         self.control.recalc_view()
         self.memory_map.recalc_view()
         self.tile_map.recalc_view()
+        self.character_set.recalc_view()
 
     def init_user_segments(self, doc):
         """ Set up any pre-calculated segments based on the type or content of
@@ -95,6 +97,7 @@ class MapEditor(HexEditor):
         # Get related controls
         self.memory_map = self.window.get_dock_pane('map_edit.memory_map').control
         self.tile_map = self.window.get_dock_pane('map_edit.tile_map').control
+        self.character_set = self.window.get_dock_pane('map_edit.character_set').control
         self.segment_list = self.window.get_dock_pane('map_edit.segments').control
         self.undo_history = self.window.get_dock_pane('map_edit.undo').control
 

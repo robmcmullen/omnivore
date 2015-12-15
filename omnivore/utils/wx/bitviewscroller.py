@@ -120,6 +120,16 @@ class BitviewScroller(wx.ScrolledWindow):
     def get_zoom_factors(self):
         return self.zoom, self.zoom
 
+    def get_highlight_indexes(self):
+        e = self.editor
+        anchor_start, anchor_end = e.anchor_start_index, e.anchor_end_index
+        if anchor_start > anchor_end:
+            anchor_start, anchor_end = anchor_end, anchor_start
+        elif anchor_start == anchor_end:
+            anchor_start = e.cursor_index
+            anchor_end = anchor_start + 1
+        return anchor_start, anchor_end
+
     def get_image(self):
         log.debug("get_image: bit image: start=%d, num=%d" % (self.start_row, self.visible_rows))
         sr = self.start_row
@@ -148,12 +158,7 @@ class BitviewScroller(wx.ScrolledWindow):
         array[:,0:border,:] = self.background_color
         array[:,border + bitwidth:width,:] = self.background_color
         e = self.editor
-        start_index, end_index = e.anchor_start_index, e.anchor_end_index
-        if start_index > end_index:
-            start_index, end_index = end_index, start_index
-        elif start_index == end_index:
-            start_index = e.cursor_index
-            end_index = start_index + 1
+        start_index, end_index = self.get_highlight_indexes()
         start_highlight = max(start_index - self.start_byte, 0)
         end_highlight = min(end_index - self.start_byte, count)
         log.debug("highlight %d-%d" % (start_highlight, end_highlight))
@@ -585,12 +590,7 @@ class FontMapScroller(BitviewScroller):
         e = self.start_byte
         f = self.font.normal_font
         fh = self.font.highlight_font
-        anchor_start, anchor_end = self.editor.anchor_start_index, self.editor.anchor_end_index
-        if anchor_start > anchor_end:
-            anchor_start, anchor_end = anchor_end, anchor_start
-        elif anchor_start == anchor_end:
-            anchor_start = self.editor.cursor_index
-            anchor_end = anchor_start + 1
+        anchor_start, anchor_end = self.get_highlight_indexes()
         for j in range(er):
             x = 0
             for i in range(sc, ec):
@@ -750,6 +750,66 @@ class FontMapScroller(BitviewScroller):
         else:
             evt.Skip()
 
+
+class CharacterSetViewer(FontMapScroller):
+    def __init__(self, parent, task, bytes_per_row=16, font_mapping=0, command=None, **kwargs):
+        FontMapScroller.__init__(self, parent, task, bytes_per_row, font_mapping, command, **kwargs)
+        self.bytes = np.arange(256, dtype=np.uint8)
+        self.start_addr = 0
+        self.selected_char = -1
+    
+    def recalc_view(self):
+        editor = self.task.active_editor
+        if editor is not None:
+            self.editor = editor
+            self.background_color = self.editor.empty_color
+            self.set_colors()
+            self.set_font()
+            self.set_scale()
+
+    def on_left_down(self, evt):
+        e = self.editor
+        byte, bit, inside = self.event_coords_to_byte(evt)
+        if inside:
+            self.selected_char = byte
+            wx.CallAfter(self.Refresh)
+        evt.Skip()
+ 
+    def on_motion(self, evt):
+        e = self.editor
+        if e is not None and evt.LeftIsDown():
+            byte, bit, inside = self.event_coords_to_byte(evt)
+            if inside:
+                pass
+        evt.Skip()
+    
+    def set_status_message(self):
+        return
+    
+    def get_popup_actions(self):
+        return []
+    
+    def get_highlight_indexes(self):
+        if self.selected_char < 0:
+            return 0, 0
+        return self.selected_char, self.selected_char + 1
+    
+    def process_delta_index(self, delta_index):
+        _, self.selected_char = divmod(self.selected_char + delta_index, 256)
+        self.Refresh()
+    
+    def on_char_hook(self, evt):
+        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
+        mods = evt.GetModifiers()
+        char = evt.GetUniChar()
+        if char == 0:
+            char = evt.GetKeyCode()
+        delta_index = self.process_movement_keys(char)
+        if delta_index is not None:
+            self.process_delta_index(delta_index)
+        else:
+            evt.Skip()
+    
 
 class MemoryMapScroller(BitviewScroller):
     def __init__(self, parent, task, **kwargs):
