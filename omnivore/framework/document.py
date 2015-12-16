@@ -66,7 +66,7 @@ class Document(HasTraits):
     #### trait property getters
 
     def _get_name(self):
-        return os.path.basename(self.metadata.uri) or 'Untitled'
+        return self.metadata.name or 'Untitled'
 
     def _get_uri(self):
         return self.metadata.uri

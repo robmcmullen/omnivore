@@ -1,6 +1,8 @@
+import os
+
 from fs.opener import opener, fsopen
 
-from traits.api import HasTraits, Str, Unicode, Trait, TraitHandler
+from traits.api import HasTraits, Str, Unicode, Trait, TraitHandler, Property
 
 import logging
 log = logging.getLogger(__name__)
@@ -11,17 +13,18 @@ def normalize_uri(uri):
         # FIXME: workaround to allow opening of file:// URLs with the
         # ! character
         uri = uri.replace("file://", "")
-    fs, relpath = opener.parse(uri)
-    if fs.haspathurl(relpath):
-        uri = fs.getpathurl(relpath)
-    elif fs.hassyspath(relpath):
-        abspath = fs.getsyspath(relpath)
-        if abspath.startswith("\\\\?\\") and len(abspath) < 260:
-            # on windows, pyfilesystem returns extended path notation to
-            # allow paths greater than 256 characters.  If the path is
-            # short, change slashes to normal and remove the prefix
-            abspath = abspath[4:].replace("\\", "/")
-        uri = "file://" + abspath
+    if uri:
+        fs, relpath = opener.parse(uri)
+        if fs.haspathurl(relpath):
+            uri = fs.getpathurl(relpath)
+        elif fs.hassyspath(relpath):
+            abspath = fs.getsyspath(relpath)
+            if abspath.startswith("\\\\?\\") and len(abspath) < 260:
+                # on windows, pyfilesystem returns extended path notation to
+                # allow paths greater than 256 characters.  If the path is
+                # short, change slashes to normal and remove the prefix
+                abspath = abspath[4:].replace("\\", "/")
+            uri = "file://" + abspath
     return uri
 
 
@@ -44,8 +47,13 @@ class FileMetadata(HasTraits):
     
     mime = Str(default="application/octet-stream")
     
+    name = Property(Unicode, depends_on='uri')
+    
     def __str__(self):
         return "uri=%s, mime=%s" % (self.uri, self.mime)
+
+    def _get_name(self):
+        return os.path.basename(self.uri)
 
 
 class FileGuess(object):
