@@ -45,7 +45,9 @@ class FrameworkEditor(Editor):
     
     can_copy = Bool(False)
     
-    can_paste = Bool(True)
+    # can_paste is set by the idle handler of the FrameworkApplication for the
+    # active window
+    can_paste = Bool(False)
     
     # Cursor index points to positions between bytes, so zero is before the
     # first byte and the max index is the number of bytes, which points to
@@ -184,7 +186,7 @@ class FrameworkEditor(Editor):
             self.window.error("Unsupported data format", "Paste Error")
     
     def get_paste_data_object(self):
-        data_objs = self.get_supported_clipboard_data_objects()
+        data_objs = self.supported_clipboard_data_objects
         
         if wx.TheClipboard.Open():
             for data_obj in data_objs:
@@ -203,11 +205,12 @@ class FrameworkEditor(Editor):
         print "Found data object %s" % data_obj
         print "value:", data_obj.GetText()
     
+    # must be a class attribute because for checking clipboard data formats of
+    # custom objects, data formats must be singletons
+    supported_clipboard_data_objects = [wx.TextDataObject()]
+    
     def create_clipboard_data_object(self):
         return wx.TextDataObject("Omnivore!")
-    
-    def get_supported_clipboard_data_objects(self):
-        return [wx.TextDataObject()]
     
     def print_preview(self):
         raise NotImplementedError

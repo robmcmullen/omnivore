@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import argparse
 import json
 import jsonpickle
@@ -60,7 +61,7 @@ from envisage.ui.tasks.api import TasksApplication
 from envisage.ui.tasks.task_window_event import TaskWindowEvent, VetoableTaskWindowEvent
 from pyface.api import ImageResource
 from pyface.tasks.api import Task, TaskWindowLayout
-from traits.api import provides, Bool, Instance, List, Property, Str, Unicode, Event, Dict, Int
+from traits.api import provides, Bool, Instance, List, Property, Str, Unicode, Event, Dict, Int, Float
 
 # Local imports.
 from omnivore.framework.preferences import FrameworkPreferences, \
@@ -118,6 +119,10 @@ class FrameworkApplication(TasksApplication):
     next_document_id = Int(0)
     
     documents = List
+    
+    last_clipboard_check_time = Float(-1)
+    
+    clipboard_check_interval = Float(.75)
 
     ###########################################################################
     # Private interface.
@@ -174,7 +179,34 @@ class FrameworkApplication(TasksApplication):
                 self.load_file(url)
         app = wx.GetApp()
         app.tasks_application = self
+        
+        app.Bind(wx.EVT_IDLE, self.on_idle)
     
+    def on_idle(self, evt):
+        t = time.time()
+        if t > self.last_clipboard_check_time + self.clipboard_check_interval:
+            wx.CallAfter(self.check_clipboard_can_paste)
+            self.last_clipboard_check_time = time.time()
+    
+    def check_clipboard_can_paste(self):
+        if not self.active_window:
+            return
+        editor = self.active_window.active_task.active_editor
+        data_formats = [o.GetFormat() for o in editor.supported_clipboard_data_objects]
+        log.debug("Checking clipboard formats %s" % str(data_formats))
+        supported = False
+        if not wx.TheClipboard.IsOpened():
+            try:
+                if wx.TheClipboard.Open():
+                    for f in data_formats:
+                        if wx.TheClipboard.IsSupported(f):
+                            log.debug("  found clipboard format: %s" % str(f))
+                            supported = True
+            finally:
+                if wx.TheClipboard.IsOpened():
+                    wx.TheClipboard.Close()
+            editor.can_paste = supported
+        
     def _window_created_fired(self, event):
         """The toolkit window doesn't exist yet.
         """

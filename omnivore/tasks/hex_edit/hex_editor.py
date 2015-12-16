@@ -140,6 +140,8 @@ class HexEditor(FrameworkEditor):
         bytes = np.fromstring(value.encode('latin-1'), dtype=np.uint8)
         return bytes
     
+    supported_clipboard_data_objects = [wx.CustomDataObject("numpy"), wx.TextDataObject()]
+    
     def create_clipboard_data_object(self):
         if self.anchor_start_index != self.anchor_end_index:
             data = self.segment[self.anchor_start_index:self.anchor_end_index]
@@ -148,9 +150,6 @@ class HexEditor(FrameworkEditor):
             print "Created data obj", data_obj, "for", data
             return data_obj
         return None
-    
-    def get_supported_clipboard_data_objects(self):
-        return [wx.CustomDataObject("numpy"), wx.TextDataObject()]
     
     def set_text_font(self, font, color):
         self.text_color = color
