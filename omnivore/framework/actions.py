@@ -278,7 +278,7 @@ class PasteAction(EditorAction):
     name = 'Paste'
     accelerator = 'Ctrl+V'
     tooltip = 'Paste from the clipboard'
-    enabled_name = 'can_copy'
+    enabled_name = 'can_paste'
 
     def perform(self, event):
         self.active_editor.paste()

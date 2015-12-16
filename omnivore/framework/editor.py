@@ -45,6 +45,8 @@ class FrameworkEditor(Editor):
     
     can_copy = Bool(False)
     
+    can_paste = Bool(True)
+    
     # Cursor index points to positions between bytes, so zero is before the
     # first byte and the max index is the number of bytes, which points to
     # after the last byte
@@ -178,6 +180,8 @@ class FrameworkEditor(Editor):
         data_obj = self.get_paste_data_object()
         if data_obj is not None:
             self.process_paste_data_object(data_obj)
+        else:
+            self.window.error("Unsupported data format", "Paste Error")
     
     def get_paste_data_object(self):
         data_objs = self.get_supported_clipboard_data_objects()
