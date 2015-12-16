@@ -1,13 +1,46 @@
 from fs.opener import opener, fsopen
 
-from traits.api import HasTraits, Str, Unicode
+from traits.api import HasTraits, Str, Unicode, Trait, TraitHandler
 
 import logging
 log = logging.getLogger(__name__)
 
 
+def normalize_uri(uri):
+    if uri.startswith("file://"):
+        # FIXME: workaround to allow opening of file:// URLs with the
+        # ! character
+        uri = uri.replace("file://", "")
+    fs, relpath = opener.parse(uri)
+    if fs.haspathurl(relpath):
+        uri = fs.getpathurl(relpath)
+    elif fs.hassyspath(relpath):
+        abspath = fs.getsyspath(relpath)
+        if abspath.startswith("\\\\?\\") and len(abspath) < 260:
+            # on windows, pyfilesystem returns extended path notation to
+            # allow paths greater than 256 characters.  If the path is
+            # short, change slashes to normal and remove the prefix
+            abspath = abspath[4:].replace("\\", "/")
+        uri = "file://" + abspath
+    return uri
+
+
+class TraitUriNormalizer(TraitHandler):
+    """Trait validator to convert bytes to numpy array"""
+    def validate(self, object, name, value):
+        try:
+            uri = normalize_uri(value)
+            print "TRAITS!!!!! uri=%s", uri
+            return uri
+        except:
+            self.error(object, name, value)
+
+    def info(self):
+        return '**a string or unicode URI**'
+
+
 class FileMetadata(HasTraits):
-    uri = Unicode
+    uri = Trait("", TraitUriNormalizer())
     
     mime = Str(default="application/octet-stream")
     
@@ -39,20 +72,9 @@ class FileGuess(object):
         self.bytes = fh.read(self.head_size)
         fh.close()
         
-        # Normalize the uri if possible
-        if fs.haspathurl(relpath):
-            uri = fs.getpathurl(relpath)
-        elif fs.hassyspath(relpath):
-            abspath = fs.getsyspath(relpath)
-            if abspath.startswith("\\\\?\\") and len(abspath) < 260:
-                # on windows, pyfilesystem returns extended path notation to
-                # allow paths greater than 256 characters.  If the path is
-                # short, change slashes to normal and remove the prefix
-                abspath = abspath[4:].replace("\\", "/")
-            uri = "file://" + abspath
-        
         # Use the default mime type until it is recognized
         self.metadata = FileMetadata(uri=uri)
+        print "POST!!!!!", self.metadata
         
         # Release filesystem resources
         fs.close()
