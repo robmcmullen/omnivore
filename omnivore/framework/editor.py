@@ -135,6 +135,10 @@ class FrameworkEditor(Editor):
             # as writeable in case this is a virtual filesystem (like ZipFS),
             # otherwise the write to the actual file will fail with a read-
             # only filesystem error.
+            if uri.startswith("file://"):
+                # FIXME: workaround to allow opening of file:// URLs with the
+                # ! character
+                uri = uri.replace("file://", "")
             fs, relpath = opener.parse(uri, writeable=True)
             fh = fs.open(relpath, 'wb')
             log.debug("saving to %s" % uri)
