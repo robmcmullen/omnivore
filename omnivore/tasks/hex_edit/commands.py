@@ -48,7 +48,6 @@ class SetDataCommand(Command):
 
     def undo(self, editor):
         old_data, = self.undo_info.data
-        print "undo: old_data =", old_data
         self.segment.data[self.start_index:self.end_index] = old_data
         return self.undo_info
 
@@ -98,7 +97,6 @@ class PasteCommand(ChangeByteCommand):
     
     def get_data(self, orig):
         data_len = np.alen(self.data)
-        print "paste:", self.data, data_len
         orig_len = np.alen(orig)
         if data_len > orig_len > 1:
             data_len = orig_len

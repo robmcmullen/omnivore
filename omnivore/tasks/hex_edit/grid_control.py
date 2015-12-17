@@ -102,7 +102,6 @@ class HexEditControl(ByteGrid):
         should be updated, or False if the value is invalid or the grid will
         be updated some other way.
         """
-        print "HERE!"
         try:
             val = int(text,16)
             if val >= 0 and val < 256:

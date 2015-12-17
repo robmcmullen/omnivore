@@ -157,7 +157,6 @@ class HexEditor(FrameworkEditor):
             data = self.segment[self.anchor_start_index:self.anchor_end_index]
             data_obj = wx.CustomDataObject("numpy")
             data_obj.SetData(data.tostring())
-            print "Created data obj", data_obj, "for", data
             return data_obj
         return None
     
@@ -233,7 +232,6 @@ class HexEditor(FrameworkEditor):
         return fonts.AnticFont(self.antic_font_data, self.font_mode, self.playfield_colors, self.highlight_color, color_converter)
     
     def set_font(self, font=None, font_mode=None):
-        print font
         if font is None:
             font = self.antic_font_data
         if font_mode is None:
@@ -361,7 +359,6 @@ class HexEditor(FrameworkEditor):
         """ Creates the toolkit-specific control for the widget. """
 
         # Base-class constructor.
-        print "CONSTRUCTOR!!!"
         self.control = HexEditControl(parent, self.task)
         self.antic_font = self.get_antic_font()
 

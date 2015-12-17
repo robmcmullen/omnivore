@@ -495,11 +495,9 @@ class DocumentSelectGroup(ApplicationDynamicSubmenuGroup):
     ###########################################################################
 
     def _get_items(self, event_data=None):
-        print self.application.documents
         documents = sorted(self.application.documents, key=lambda x: x.name.lower())
         items = []
         for document in documents:
-            print document
             action = SwitchDocumentAction(document_id=document.document_id, name=document.menu_name)
             items.append(ActionItem(action=action))
         return items
@@ -538,7 +536,6 @@ class NewViewInGroup(TaskDynamicSubmenuGroup):
             mime = e.document.metadata.mime
             factories = self.task.window.application.get_possible_task_factories(mime)
             for factory in factories:
-                print "FACTORY!", factory
                 action = NewViewInNewTaskAction(name="In a %s Window" % factory.name, factor_id=factory.id)
                 items.append(ActionItem(action=action))
         return items

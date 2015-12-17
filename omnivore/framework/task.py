@@ -180,7 +180,6 @@ class FrameworkTask(Task):
         self.activated()
     
     def find_tab_or_open(self, document):
-        print self.editor_area.editors
         for editor in self.editor_area.editors:
             if editor.document == document:
                 self.editor_area.activate_editor(editor)

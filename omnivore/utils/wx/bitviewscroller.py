@@ -299,7 +299,7 @@ class BitviewScroller(wx.ScrolledWindow):
     
     def select_index(self, rel_pos):
         r, c = self.byte_to_row_col(rel_pos)
-        print "r, c, start, vis", r, c, self.start_row, self.fully_visible_rows
+#        print "r, c, start, vis", r, c, self.start_row, self.fully_visible_rows
         last_row = self.start_row + self.fully_visible_rows - 1
         last_col = self.start_col + self.fully_visible_cols - 1
         

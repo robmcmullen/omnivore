@@ -90,7 +90,6 @@ class XexSegmentParser(SegmentParser):
         self.segments.append(DefaultSegment(0, bytes))
         try:
             xex = atrcopy.AtariDosFile(bytes)
-            print xex
         except atrcopy.InvalidBinaryFile:
             raise InvalidSegmentParser
 

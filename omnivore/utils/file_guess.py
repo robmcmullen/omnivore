@@ -33,7 +33,6 @@ class TraitUriNormalizer(TraitHandler):
     def validate(self, object, name, value):
         try:
             uri = normalize_uri(value)
-            print "TRAITS!!!!! uri=%s", uri
             return uri
         except:
             self.error(object, name, value)
@@ -82,7 +81,6 @@ class FileGuess(object):
         
         # Use the default mime type until it is recognized
         self.metadata = FileMetadata(uri=uri)
-        print "POST!!!!!", self.metadata
         
         # Release filesystem resources
         fs.close()

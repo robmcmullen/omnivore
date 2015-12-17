@@ -175,7 +175,6 @@ class FrameworkEditor(Editor):
         if wx.TheClipboard.Open():
             wx.TheClipboard.SetData(self.data_obj)
             wx.TheClipboard.Close()
-            print "Copied object to clipboard", self.data_obj
         else:
             self.window.error("Unable to open clipboard", "Clipboard Error")
 
@@ -206,8 +205,7 @@ class FrameworkEditor(Editor):
         return None
     
     def process_paste_data_object(self, data_obj):
-        print "Found data object %s" % data_obj
-        print "value:", data_obj.GetText()
+        pass  # Override in subclass
     
     # must be a class attribute because for checking clipboard data formats of
     # custom objects, data formats must be singletons

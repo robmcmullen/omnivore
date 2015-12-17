@@ -473,12 +473,9 @@ class FrameworkApplication(TasksApplication):
         return document
     
     def get_document(self, document_id):
-        """Add document to the application list of open documents
-        
-        FIXME: check for duplicates?
+        """Find an existing document given the document_id
         """
         for doc in self.documents:
-            print "checking document", doc.document_id, doc, doc.uri
             if doc.document_id == document_id:
                 return doc
         return None
@@ -625,7 +622,6 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", 
     default_parser = argparse.ArgumentParser(description="Default Parser")
     default_parser.add_argument("--no-eggs", dest="use_eggs", action="store_false", default=True, help="Do not load plugins from python eggs")
     options, extra_args = default_parser.parse_known_args()
-    print("after default_parser: extra_args: %s" % extra_args)
 
     # The default is to use the specified plugins as well as any found
     # through setuptools and any local eggs (if an egg_path is specified).
