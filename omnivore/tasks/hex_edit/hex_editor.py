@@ -134,10 +134,10 @@ class HexEditor(FrameworkEditor):
     
     def get_numpy_from_data_object(self, data_obj):
         if wx.DF_TEXT in data_obj.GetAllFormats():
-            value = data_obj.GetText()
+            value = data_obj.GetText().encode('utf-8')
         else:
             value = data_obj.GetData()
-        bytes = np.fromstring(value.encode('latin-1'), dtype=np.uint8)
+        bytes = np.fromstring(value, dtype=np.uint8)
         return bytes
     
     supported_clipboard_data_objects = [wx.CustomDataObject("numpy"), wx.TextDataObject()]
