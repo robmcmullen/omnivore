@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 # have to have these routines at app creation time.
 import wx
 class EnthoughtWxApp(wx.App):
-    def MacOpenFile(self, filename):
+    def MacOpenFiles(self, filenames):
         """OSX specific routine to handle files that are dropped on the icon
         
         """
@@ -30,8 +30,9 @@ class EnthoughtWxApp(wx.App):
             # real drops of files onto the dock icon.  Prior to that, this
             # method gets called for all the command line arguments which would
             # give us two copies of each file specified on the command line.
-            log.debug("MacOpenFile: loading %s" % filename)
-            self.tasks_application.load_file(filename, None)
+            for filename in filenames:
+                log.debug("MacOpenFile: loading %s" % filename)
+                self.tasks_application.load_file(filename, None)
         else:
             log.debug("MacOpenFile: skipping %s because it's a command line argument" % filename)
     
