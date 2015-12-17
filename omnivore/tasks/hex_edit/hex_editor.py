@@ -133,7 +133,17 @@ class HexEditor(FrameworkEditor):
         self.process_command(cmd)
     
     def get_numpy_from_data_object(self, data_obj):
+        # Full list of valid data formats:
+        #
+        # >>> import wx
+        # >>> [x for x in dir(wx) if x.startswith("DF_")]
+        # ['DF_BITMAP', 'DF_DIB', 'DF_DIF', 'DF_ENHMETAFILE', 'DF_FILENAME',
+        # 'DF_HTML', 'DF_INVALID', 'DF_LOCALE', 'DF_MAX', 'DF_METAFILE',
+        # 'DF_OEMTEXT', 'DF_PALETTE', 'DF_PENDATA', 'DF_PRIVATE', 'DF_RIFF',
+        # 'DF_SYLK', 'DF_TEXT', 'DF_TIFF', 'DF_UNICODETEXT', 'DF_WAVE']
         if wx.DF_TEXT in data_obj.GetAllFormats():
+            value = data_obj.GetText().encode('utf-8')
+        elif wx.DF_UNICODETEXT in data_obj.GetAllFormats():  # for windows
             value = data_obj.GetText().encode('utf-8')
         else:
             value = data_obj.GetData()
