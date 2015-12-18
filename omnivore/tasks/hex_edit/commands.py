@@ -448,3 +448,120 @@ class FindTextCommand(FindHexCommand):
     
     def get_search_string(self):
         return bytearray(self.search_text, "utf-8")
+
+
+class UnifiedFindCommand(Command):
+    short_name = "find"
+    pretty_name = "Find"
+    
+    def __init__(self, search_text, error, repeat=False, reverse=False):
+        Command.__init__(self)
+        self.search_text = search_text
+        self.error = error
+        self.repeat = repeat
+        self.reverse = reverse
+    
+    def __str__(self):
+        return "%s %s" % (self.pretty_name, repr(self.search_text))
+    
+    def get_search_hex(self):
+        return bytearray.fromhex(self.search_text)
+    
+    def get_search_text(self):
+        return bytearray(self.search_text, "utf-8")
+
+    def prepare_search(self):
+        errors = []
+        valid = []
+        try:
+            s = self.get_search_hex()
+            valid.append((self.do_search_string, s))
+        except ValueError, e:
+            s = None
+            errors.append(str(e))
+        try:
+            s = self.get_search_text()
+            valid.append((self.do_search_string, s))
+        except ValueError, e:
+            s = None
+            errors.append(str(e))
+        return valid, errors
+    
+    def do_search_string(self, needle, haystack):
+        if self.reverse:
+            return haystack.rfind(needle)
+        else:
+            return haystack.find(needle)
+    
+    def perform(self, editor):
+        self.undo_info = undo = UndoInfo()
+        undo.flags.changed_document = False
+        if self.error:
+            undo.flags.message = self.error
+        else:
+            valid_searches, errors = self.prepare_search()
+            
+            if valid_searches:
+                wrapped_message = ""
+                match = None
+                nearest = -1
+                if self.reverse:
+                    i1 = 0
+                    i2 = editor.cursor_index
+                    if self.repeat:
+                        i2 -= 1
+                    text = editor.segment.data[i1:i2].tostring()
+                    for method, s in valid_searches:
+                        i3 = method(s, text)
+                        if i3 >= 0 and i3 > nearest:
+                            nearest = i3
+                            match = s
+                    if nearest < 0:
+                        # Wrap search starting from beginning
+                        wrapped_message = " (Reached start of page; wrapping search starting at end)"
+                        i1 = editor.cursor_index
+                        i2 = len(editor.segment)
+                        if self.repeat:
+                            i1 += 1
+                        text = editor.segment.data[i1:i2].tostring()
+                        for method, s in valid_searches:
+                            i3 = method(s, text)
+                            if i3 >= 0 and i3 > nearest:
+                                nearest = i3
+                                match = s
+                else:
+                    i1 = editor.cursor_index
+                    i2 = len(editor.segment)
+                    if self.repeat:
+                        i1 += 1
+                    text = editor.segment.data[i1:i2].tostring()
+                    for method, s in valid_searches:
+                        i3 = method(s, text)
+                        if i3 >= 0 and (i3 < nearest or nearest == -1):
+                            nearest = i3
+                            match = s
+                    if match is None:
+                        # Wrap search starting from beginning
+                        wrapped_message = " (Reached end of page; wrapping search starting at top)"
+                        i2 = i1
+                        i1 = 0
+                        text = editor.segment.data[i1:i2].tostring()
+                        for method, s in valid_searches:
+                            i3 = method(s, text)
+                            if i3 >= 0 and (i3 < nearest or nearest == -1):
+                                nearest = i3
+                                match = s
+                if match is not None:
+                    undo.flags.index_range = i1 + nearest, i1 + nearest + len(match)
+                    undo.flags.cursor_index = i1
+                    undo.flags.select_range = True
+                    undo.flags.message = ("Found at $%04x" % (i1 + nearest)) + wrapped_message
+                else:
+                    if editor.can_copy:
+                        undo.flags.message = "Returned to the starting point"
+                    else:
+                        undo.flags.message = "Not found"
+            else:
+                undo.flags.message = str(errors)
+        return undo
+

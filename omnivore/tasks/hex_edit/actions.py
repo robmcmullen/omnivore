@@ -408,13 +408,13 @@ class PasteAndRepeatAction(EditorAction):
 
 
 class FindAction(EditorAction):
-    name = 'Find String'
+    name = 'Find'
     accelerator = 'Ctrl+F'
-    tooltip = 'Find sequences of characters in the raw data'
+    tooltip = 'Find bytes or characters in the raw data'
 
     def perform(self, event):
         log.debug("EVENT!!! %s" % event)
-        event.task.show_minibuffer(TextMinibuffer(self.active_editor, FindTextCommand))
+        event.task.show_minibuffer(TextMinibuffer(self.active_editor, UnifiedFindCommand))
 
 
 class FindReverseAction(EditorAction):
@@ -423,7 +423,7 @@ class FindReverseAction(EditorAction):
     tooltip = 'Find sequences of characters in the raw data, searching backwards'
 
     def perform(self, event):
-        event.task.show_minibuffer(TextMinibuffer(self.active_editor, FindTextCommand, reverse=True))
+        event.task.show_minibuffer(TextMinibuffer(self.active_editor, UnifiedFindCommand, reverse=True))
 
 
 class FindBytesAction(EditorAction):
