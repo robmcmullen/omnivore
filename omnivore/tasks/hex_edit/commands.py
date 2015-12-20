@@ -23,6 +23,7 @@ class SetDataCommand(Command):
         if start_index == end_index:
             end_index += 1
         self.end_index = end_index
+        self.cursor_at_end = False
     
     def __str__(self):
         if self.end_index - self.start_index > 1:
