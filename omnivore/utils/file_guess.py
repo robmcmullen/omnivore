@@ -1,6 +1,7 @@
 import os
 
 from fs.opener import opener, fsopen
+from fs.errors import FSError
 
 from traits.api import HasTraits, Str, Unicode, Trait, TraitHandler, Property
 
@@ -34,6 +35,9 @@ class TraitUriNormalizer(TraitHandler):
         try:
             uri = normalize_uri(value)
             return uri
+        except FSError:
+            # Allow the error to be caught when the file is actually opened
+            return value
         except:
             self.error(object, name, value)
 
