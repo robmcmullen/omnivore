@@ -19,7 +19,7 @@ class SegmentParser(object):
 
 
 class DefaultSegment(object):
-    def __init__(self, start_addr=0, data=None, error=None, name="All"):
+    def __init__(self, start_addr=0, data=None, name="All", error=None):
         self.start_addr = start_addr
         if data is None:
             data = np.fromstring("", dtype=np.uint8)
@@ -51,6 +51,39 @@ class DefaultSegment(object):
             self._search_copy = self.data.tostring()
         return self._search_copy
 
+class NumpyObjSegment(DefaultSegment):
+    def __init__(self, metadata_start, data_start, start_addr, end_addr, data, name="", error=None):
+        DefaultSegment.__init__(self, start_addr, data, name, error)
+        self.metadata_start = metadata_start
+        self.data_start = data_start
+        self.end_addr = self.start_addr + len(self)
+    
+    def __str__(self):
+        s = "%s %04x-%04x (%04x @ %04x)" % (self.name, self.start_addr, self.end_addr, len(self.data), self.data_start)
+        if self.error:
+            s += " " + self.error
+        return s
+
+class NumpySectorsSegment(DefaultSegment):
+    def __init__(self, first_sector, num_sectors, count, data, **kwargs):
+        DefaultSegment.__init__(self, 0, data, **kwargs)
+        self.page_size = 128
+        self.first_sector = first_sector
+        self.num_sectors = num_sectors
+    
+    def __str__(self):
+        if self.num_sectors > 1:
+            s = "%s (sectors %d-%d)" % (self.name, self.first_sector, self.first_sector + self.num_sectors - 1)
+        else:
+            s = "%s (sector %d)" % (self.name, self.first_sector)
+        if self.error:
+            s += " " + self.error
+        return s
+    
+    def label(self, index):
+        sector, byte = divmod(index, self.page_size)
+        return "s%03d:%02x" % (sector + self.first_sector, byte)
+
 class AnticFontSegment(DefaultSegment):
     def __init__(self, *args, **kwargs):
         DefaultSegment.__init__(self, *args, **kwargs)
@@ -75,13 +108,28 @@ class DefaultSegmentParser(SegmentParser):
         self.segments = [DefaultSegment(0, bytes)]
 
 
+class NumpyAtrDiskImage(atrcopy.AtrDiskImage):
+    def get_obj_segment(self, metadata_start, data_start, start_addr, end_addr, data, name):
+        """Subclass use: override this method to create a custom segment.
+        
+        By default uses an ObjSegment
+        """
+        return NumpyObjSegment(metadata_start, data_start, start_addr, end_addr, data, name)
+    
+    def get_raw_sectors_segment(self, first_sector, num_sectors, count, data, **kwargs):
+        """Subclass use: override this method to create a custom segment.
+        
+        By default uses an RawSectorsSegment
+        """
+        return NumpySectorsSegment(first_sector, num_sectors, count, data, **kwargs)
+
 class ATRSegmentParser(SegmentParser):
     menu_name = "ATR Disk Image"
     
     def parse(self, bytes):
         self.segments.append(DefaultSegment(0, bytes))
         try:
-            self.atr = atrcopy.AtrDiskImage(bytes)
+            self.atr = NumpyAtrDiskImage(bytes)
         except:
             raise InvalidSegmentParser
         
@@ -89,13 +137,21 @@ class ATRSegmentParser(SegmentParser):
         self.segments.extend(self.atr.segments)
 
 
+class NumpyAtariDosFile(atrcopy.AtariDosFile):
+    def get_obj_segment(self, metadata_start, data_start, start_addr, end_addr, data, name):
+        """Subclass use: override this method to create a custom segment.
+        
+        By default uses an ObjSegment
+        """
+        return NumpyObjSegment(metadata_start, data_start, start_addr, end_addr, data, name)
+
 class XexSegmentParser(SegmentParser):
     menu_name = "XEX (Atari 8-bit executable)"
     
     def parse(self, bytes):
         self.segments.append(DefaultSegment(0, bytes))
         try:
-            xex = atrcopy.AtariDosFile(bytes)
+            xex = NumpyAtariDosFile(bytes)
         except atrcopy.InvalidBinaryFile:
             raise InvalidSegmentParser
 
