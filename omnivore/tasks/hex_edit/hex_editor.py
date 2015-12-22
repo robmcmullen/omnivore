@@ -19,6 +19,7 @@ import omnivore.utils.wx.fonts as fonts
 import omnivore.utils.colors as colors
 from omnivore.utils.dis6502 import Atari800Disassembler
 from omnivore.utils.binutil import known_segment_parsers, ATRSegmentParser, XexSegmentParser, DefaultSegment
+from omnivore.utils.searchutil import known_searchers
 
 from commands import PasteCommand
 
@@ -81,6 +82,8 @@ class HexEditor(FrameworkEditor):
     # Class attributes (not traits)
     
     font_list = None
+    
+    searchers = known_searchers
     
     ##### Default traits
     

@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 
 from omnivore.framework.errors import ProgressCancelError
@@ -42,14 +44,14 @@ class SetDataCommand(Command):
         undo.flags.index_range = i1, i2
         if self.cursor_at_end:
             undo.flags.cursor_index = i2
-        old_data = self.segment.data[i1:i2].copy()
-        self.segment.data[i1:i2] = self.get_data(self.segment.data[i1:i2])
+        old_data = self.segment[i1:i2].copy()
+        self.segment[i1:i2] = self.get_data(old_data)
         undo.data = (old_data, )
         return undo
 
     def undo(self, editor):
         old_data, = self.undo_info.data
-        self.segment.data[self.start_index:self.end_index] = old_data
+        self.segment[self.start_index:self.end_index] = old_data
         return self.undo_info
 
 
@@ -112,8 +114,8 @@ class PasteCommand(ChangeByteCommand):
         undo.flags.byte_values_changed = True
         undo.flags.index_range = i1, i2
         undo.flags.select_range = True
-        old_data = self.segment.data[i1:i2].copy()
-        self.segment.data[i1:i2] = data
+        old_data = self.segment[i1:i2].copy()
+        self.segment[i1:i2] = data
         undo.data = (old_data, )
         return undo
 
@@ -121,7 +123,7 @@ class PasteCommand(ChangeByteCommand):
         old_data, = self.undo_info.data
         i1 = self.start_index
         i2 = i1 + np.alen(old_data)
-        self.segment.data[i1:i2] = old_data
+        self.segment[i1:i2] = old_data
         return self.undo_info
 
 
@@ -564,5 +566,43 @@ class UnifiedFindCommand(Command):
                         undo.flags.message = "Not found"
             else:
                 undo.flags.message = str(errors)
+        return undo
+
+
+class FindAllCommand(Command):
+    short_name = "find"
+    pretty_name = "Find"
+    
+    def __init__(self, search_text, error, repeat=False, reverse=False):
+        Command.__init__(self)
+        self.search_text = search_text
+        self.error = error
+        self.repeat = repeat
+        self.reverse = reverse
+    
+    def __str__(self):
+        return "%s %s" % (self.pretty_name, repr(self.search_text))
+    
+    def get_search_string(self):
+        return bytearray.fromhex(self.search_text)
+    
+    def perform(self, editor):
+        self.undo_info = undo = UndoInfo()
+        undo.flags.changed_document = False
+        if self.error:
+            undo.flags.message = self.error
+        else:
+            errors = []
+            found = []
+            for searcher_cls in editor.searchers:
+                try:
+                    searcher = searcher_cls(editor, self.search_text)
+                    found.append(searcher)
+                except ValueError, e:
+                    errors.append(str(e))
+            
+            if found:
+                for searcher in found:
+                    print searcher
         return undo
 

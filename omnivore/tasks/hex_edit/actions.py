@@ -414,7 +414,7 @@ class FindAction(EditorAction):
 
     def perform(self, event):
         log.debug("EVENT!!! %s" % event)
-        event.task.show_minibuffer(TextMinibuffer(self.active_editor, UnifiedFindCommand))
+        event.task.show_minibuffer(TextMinibuffer(self.active_editor, FindAllCommand))
 
 
 class FindReverseAction(EditorAction):

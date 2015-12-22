@@ -27,6 +27,7 @@ class DefaultSegment(object):
         self.error = error
         self.name = name
         self.page_size = -1
+        self._search_copy = None
     
     def __str__(self):
         return "%s (%d bytes)" % (self.name, len(self.data))
@@ -39,11 +40,16 @@ class DefaultSegment(object):
     
     def __setitem__(self, index, value):
         self.data[index] = value
+        self._search_copy = None
     
     def label(self, index):
         return "%04x" % (index + self.start_addr)
-        
-
+    
+    @property
+    def search_copy(self):
+        if self._search_copy is None:
+            self._search_copy = self.data.tostring()
+        return self._search_copy
 
 class AnticFontSegment(DefaultSegment):
     def __init__(self, *args, **kwargs):

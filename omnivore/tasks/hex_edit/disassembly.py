@@ -177,3 +177,12 @@ class DisassemblyPanel(ByteGrid):
             self.task.window.error(unicode(e))
             self.SetFocus()  # OS X quirk: return focus to the grid so the user can keep typing
         return False
+    
+    def search(self, search_text, match_case=False):
+        lines = self.table.lines
+        if not match_case:
+            search_text = search_text.lower()
+            matches = [(t[0], t[0] + len(t[1])) for t in lines if search_text in t[3].lower()]
+        else:
+            matches = [(t[0], t[0] + len(t[1])) for t in lines if search_text in t[3]]
+        return matches
