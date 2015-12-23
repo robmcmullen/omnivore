@@ -144,10 +144,12 @@ class BitviewScroller(wx.ScrolledWindow):
             count = self.end_byte - self.start_byte
             bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
             bytes[0:count] = self.bytes[self.start_byte:self.end_byte]
+            style = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
+            style[0:count] = self.style[self.start_byte:self.end_byte]
         else:
             count = self.end_byte - self.start_byte
             bytes = self.bytes[self.start_byte:self.end_byte]
-        style = self.style[self.start_byte:self.end_byte]
+            style = self.style[self.start_byte:self.end_byte]
         bits = np.unpackbits(bytes)
         bits = bits.reshape((-1, 8 * self.bytes_per_row))
         bits[bits==0]=255
