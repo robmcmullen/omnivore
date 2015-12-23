@@ -99,6 +99,12 @@ class DisassemblyTable(ByteGridTable):
     
     def get_pc(self, row):
         return self.lines[row][0]
+
+    def get_value_style(self, row, col):
+        line = self.lines[row]
+        if col == 0:
+            return " ".join("%02x" % i for i in line[1]), 0
+        return str(line[col + 1]), 0
     
     def GetRowLabelValue(self, row):
         if self.lines:

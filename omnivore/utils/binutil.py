@@ -24,6 +24,7 @@ class DefaultSegment(object):
         if data is None:
             data = np.fromstring("", dtype=np.uint8)
         self.data = data
+        self.style = np.zeros_like(self.data, dtype=np.uint8)
         self.error = error
         self.name = name
         self.page_size = -1
@@ -41,6 +42,14 @@ class DefaultSegment(object):
     def __setitem__(self, index, value):
         self.data[index] = value
         self._search_copy = None
+    
+    def clear_style_bits(self, match=False, comment=False):
+        style_mask = 0xff
+        if match:
+            style_mask &= 0xfe
+        if comment:
+            style_mask &= 0x7f
+        self.style[:] &= style_mask
     
     def label(self, index):
         return "%04x" % (index + self.start_addr)

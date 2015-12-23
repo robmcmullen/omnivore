@@ -52,6 +52,10 @@ class ByteTable(ByteGridTable):
     def get_col_size(self, col):
         return 2
 
+    def get_value_style(self, row, col):
+        i, _ = self.get_index_range(row, col)
+        return "%02x" % self.segment[i], self.segment.style[i]
+
     def GetRowLabelValue(self, row):
         return self.segment.label(row*self.bytes_per_row - self.start_offset)
 

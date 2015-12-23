@@ -67,6 +67,10 @@ class HexEditor(FrameworkEditor):
     
     background_color = Any((255, 255, 255))
     
+    match_background_color = Any((255, 255, 180))
+    
+    comment_background_color = Any((255, 180, 200))
+    
     text_color = Any((0, 0, 0))
     
     empty_color = Any(None)

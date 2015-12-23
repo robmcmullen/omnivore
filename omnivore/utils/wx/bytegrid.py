@@ -23,6 +23,12 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
         self.cursor_background = editor.background_color
         self.cursor_brush = wx.Brush(editor.background_color, wx.TRANSPARENT)
         self.cursor_pen = wx.Pen(editor.unfocused_cursor_color, 1, wx.SOLID)
+        self.match_background = editor.match_background_color
+        self.match_brush = wx.Brush(editor.match_background_color, wx.SOLID)
+        self.match_pen = wx.Pen(editor.match_background_color, 1, wx.SOLID)
+        self.comment_background = editor.comment_background_color
+        self.comment_brush = wx.Brush(editor.comment_background_color, wx.SOLID)
+        self.comment_pen = wx.Pen(editor.comment_background_color, 1, wx.SOLID)
         self.colSize = None
         self.rowSize = 50
 
@@ -42,6 +48,8 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
             dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
             dc.DrawRectangleRect(rect)
         else:
+            text, style = self.table.get_value_style(row, col)
+            
             start, end = grid.editor.anchor_start_index, grid.editor.anchor_end_index
             if start > end:
                 start, end = end, start
@@ -52,12 +60,20 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
                 dc.SetPen(self.selected_pen)
                 dc.SetTextBackground(self.selected_background)
             else:
-                dc.SetBrush(self.normal_brush)
-                dc.SetPen(self.normal_pen)
-                dc.SetTextBackground(self.normal_background)
+                if style & 1:
+                    dc.SetPen(self.match_pen)
+                    dc.SetBrush(self.match_brush)
+                    dc.SetTextBackground(self.match_background)
+                elif style & 128:
+                    dc.SetPen(self.comment_pen)
+                    dc.SetBrush(self.comment_brush)
+                    dc.SetTextBackground(self.comment_background)
+                else:
+                    dc.SetPen(self.normal_pen)
+                    dc.SetBrush(self.normal_brush)
+                    dc.SetTextBackground(self.normal_background)
             dc.DrawRectangleRect(rect)
 
-            text = self.table.GetValue(row, col)
             dc.SetBackgroundMode(wx.SOLID)
 
             dc.SetTextForeground(self.color)

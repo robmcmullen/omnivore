@@ -594,6 +594,7 @@ class FindAllCommand(Command):
         else:
             errors = []
             found = []
+            editor.segment.clear_style_bits(match=True)
             for searcher_cls in editor.searchers:
                 try:
                     searcher = searcher_cls(editor, self.search_text)
@@ -604,5 +605,6 @@ class FindAllCommand(Command):
             if found:
                 for searcher in found:
                     print searcher
+            undo.flags.refresh_needed = True
         return undo
 
