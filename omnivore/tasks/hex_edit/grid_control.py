@@ -64,15 +64,21 @@ class ByteTable(ByteGridTable):
     
     def GetValue(self, row, col):
         i, _ = self.get_index_range(row, col)
-        byte = self.segment[i]
+        try:
+            byte = self.segment[i]
+        except:
+            byte = 0
         return "%02x" % byte
 
     def SetValue(self, row, col, value):
         val=int(value,16)
         if val>=0 and val<256:
             i, _ = self.get_index_range(row, col)
-            self.segment[i:i+1] = val
-            return True
+            if self.is_index_valid(i):
+                self.segment[i:i+1] = val
+                return True
+            log.debug('SetValue(%d, %d, "%s")=%d index %d out of range.' % (row, col, value, val, i))
+            return False
         else:
             log.debug('SetValue(%d, %d, "%s")=%d out of range.' % (row, col, value, val))
             return False
@@ -110,8 +116,9 @@ class HexEditControl(ByteGrid):
             val = int(text,16)
             if val >= 0 and val < 256:
                 start, end = self.table.get_index_range(row, col)
-                cmd = ChangeByteCommand(self.table.segment, start, end, val)
-                self.task.active_editor.process_command(cmd)
+                if self.table.is_index_valid(start):
+                    cmd = ChangeByteCommand(self.table.segment, start, end, val)
+                    self.task.active_editor.process_command(cmd)
         except ValueError:
             pass
         return False
