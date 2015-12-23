@@ -75,6 +75,7 @@ class BitviewScroller(wx.ScrolledWindow):
         self.Bind(wx.EVT_SIZE, self.on_resize)
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
         self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
+        self.Bind(wx.EVT_LEFT_DCLICK, self.on_left_dclick)
         self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
         self.Bind(wx.EVT_SET_FOCUS, self.on_focus)
@@ -402,6 +403,9 @@ class BitviewScroller(wx.ScrolledWindow):
                 e.set_cursor(byte, False)
             wx.CallAfter(e.index_clicked, byte, bit, None)
         evt.Skip()
+
+    def on_left_dclick(self, evt):
+        self.on_left_down(evt)
  
     def on_motion(self, evt):
         e = self.editor
@@ -534,6 +538,7 @@ class FontMapScroller(BitviewScroller):
         self.command_cls = command
         self.set_font_mapping(font_mapping)
         self.inverse = 0
+        self.editing = False
     
     def is_ready_to_render(self):
         return self.font is not None
@@ -676,25 +681,45 @@ class FontMapScroller(BitviewScroller):
         e = self.editor
         if e is None:
             return
-        if self.inverse:
-            e.task.status_bar.message = "Editing text (INVERSE MODE): Press F1 for normal characters"
+        if not self.editing:
+            message = "Double click or press F2 to begin editing text"
         else:
-            e.task.status_bar.message = "Editing text: Press F1 for inverse"
+            if self.inverse:
+                message = "Editing text (INVERSE MODE): Press F1 for normal characters"
+            else:
+                message = "Editing text: Press F1 for inverse"
+            message += " (press F2 to stop editing or click outside the character map window)"
+        e.task.status_bar.message = message
     
     def on_focus(self, evt):
         log.debug("on_focus!")
         self.inverse = 0
         self.pending_esc = False
         self.set_status_message()
+        self.editing = False
         
     def on_focus_lost(self, evt):
         log.debug("on_focus_lost!")
         e = self.editor
         if e is not None:
             e.task.status_bar.message = ""
+        self.editing = False
+
+    def on_left_dclick(self, evt):
+        e = self.editor
+        byte, bit, inside = self.event_coords_to_byte(evt)
+        if inside:
+            e.set_cursor(byte, False)
+            wx.CallAfter(e.index_clicked, byte, bit, None)
+            self.editing = True
+            self.set_status_message()
+        evt.Skip()
     
     def on_char(self, evt):
         log.debug("on_char! char=%s, key=%s, shift=%s, ctrl=%s, cmd=%s" % (evt.GetUniChar(), evt.GetRawKeyCode(), evt.ShiftDown(), evt.ControlDown(), evt.CmdDown()))
+        if not self.editing:
+            evt.Skip()
+            return
         char = evt.GetUniChar()
         if char > 0:
             self.change_byte(char | self.inverse)
@@ -721,62 +746,72 @@ class FontMapScroller(BitviewScroller):
             char = evt.GetKeyCode()
         byte = None
         delta_index = None
-        if mods == wx.MOD_RAW_CONTROL:
-            if char == 44:  # Ctrl-, prints ATASCII 0 (heart)
-                byte = 0 + self.inverse
-            elif char >= 65 and char <= 90:  # Ctrl-[A-Z] prints ATASCII chars 1-26
-                byte = char - 64 + self.inverse
-            elif char == 46:  # Ctrl-. prints ATASCII 96 (diamond)
-                byte = 96 + self.inverse
-            elif char == 59:  # Ctrl-; prints ATASCII 123 (spade)
-                byte = 123 + self.inverse
+        if not self.editing:
+            if char == wx.WXK_F2:
+                self.editing = True
+                self.set_status_message()
+            else:
+                delta_index = self.process_movement_keys(char)
+        else:
+            if mods == wx.MOD_RAW_CONTROL:
+                if char == 44:  # Ctrl-, prints ATASCII 0 (heart)
+                    byte = 0 + self.inverse
+                elif char >= 65 and char <= 90:  # Ctrl-[A-Z] prints ATASCII chars 1-26
+                    byte = char - 64 + self.inverse
+                elif char == 46:  # Ctrl-. prints ATASCII 96 (diamond)
+                    byte = 96 + self.inverse
+                elif char == 59:  # Ctrl-; prints ATASCII 123 (spade)
+                    byte = 123 + self.inverse
+                elif char == wx.WXK_TAB:
+                    byte = 158
+                elif char == 50:  # Ctrl-2 prints ATASCII 253 (buzzer)
+                    byte = 253
+                elif char == wx.WXK_INSERT:
+                    byte = 255
+            elif mods == wx.MOD_SHIFT:
+                if char == wx.WXK_BACK:
+                    byte = 156
+                elif char == wx.WXK_INSERT:
+                    byte = 157
+                elif char == wx.WXK_TAB:
+                    byte = 159
+            elif char == wx.WXK_HOME:
+                byte = 125
+            elif char == wx.WXK_BACK:
+                byte = 126
             elif char == wx.WXK_TAB:
-                byte = 158
-            elif char == 50:  # Ctrl-2 prints ATASCII 253 (buzzer)
-                byte = 253
+                byte = 127
+            elif char == wx.WXK_RETURN:
+                byte = 155
+            elif char == wx.WXK_DELETE:
+                byte = 254
             elif char == wx.WXK_INSERT:
                 byte = 255
-        elif mods == wx.MOD_SHIFT:
-            if char == wx.WXK_BACK:
-                byte = 156
-            elif char == wx.WXK_INSERT:
-                byte = 157
-            elif char == wx.WXK_TAB:
-                byte = 159
-        elif char == wx.WXK_HOME:
-            byte = 125
-        elif char == wx.WXK_BACK:
-            byte = 126
-        elif char == wx.WXK_TAB:
-            byte = 127
-        elif char == wx.WXK_RETURN:
-            byte = 155
-        elif char == wx.WXK_DELETE:
-            byte = 254
-        elif char == wx.WXK_INSERT:
-            byte = 255
+            
+            elif char == wx.WXK_F1:
+                self.inverse = (self.inverse + 0x80) & 0x80
+                self.set_status_message()
+            elif char == wx.WXK_F2:
+                self.editing = False
+                self.set_status_message()
+            
+            elif self.pending_esc:
+                if char == wx.WXK_ESCAPE:
+                    byte = 27
+                elif char == wx.WXK_UP:
+                    byte = 28
+                elif char == wx.WXK_DOWN:
+                    byte = 29
+                elif char == wx.WXK_LEFT:
+                    byte = 30
+                elif char == wx.WXK_RIGHT:
+                    byte = 31
+            
+            elif char == wx.WXK_ESCAPE:
+                self.pending_esc = True
         
-        elif char == wx.WXK_F1:
-            self.inverse = (self.inverse + 0x80) & 0x80
-            self.set_status_message()
-        
-        elif self.pending_esc:
-            if char == wx.WXK_ESCAPE:
-                byte = 27
-            elif char == wx.WXK_UP:
-                byte = 28
-            elif char == wx.WXK_DOWN:
-                byte = 29
-            elif char == wx.WXK_LEFT:
-                byte = 30
-            elif char == wx.WXK_RIGHT:
-                byte = 31
-        
-        elif char == wx.WXK_ESCAPE:
-            self.pending_esc = True
-        
-        else:
-            delta_index = self.process_movement_keys(char)
+            else:
+                delta_index = self.process_movement_keys(char)
         
         if byte is not None:
             self.change_byte(byte)
