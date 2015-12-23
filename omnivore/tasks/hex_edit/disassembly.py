@@ -106,7 +106,7 @@ class DisassemblyTable(ByteGridTable):
         index = line[0] - self.start_addr
         style = 0
         for i in range(line[4]):
-            style |= self.segment.style[index]
+            style |= self.segment.style[index + i]
         if col == 0:
             return " ".join("%02x" % i for i in line[1]), style
         return str(line[col + 1]), style
