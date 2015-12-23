@@ -30,6 +30,9 @@ class Minibuffer(object):
             self.label = command_cls.pretty_name
         self.initial = initial
         self.kwargs = kwargs
+    
+    def change_editor(self, editor):
+        self.editor = editor
         
     def create_control(self, parent, **kwargs):
         """
@@ -162,6 +165,12 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         self.next_match = next_match
         self.prev_match = prev_match
         self.segment = editor.segment
+    
+    def change_editor(self, editor):
+        self.segment.clear_style_bits(match=True)
+        self.editor = editor
+        self.segment = editor.segment
+        self.search_command = None
     
     def is_repeat(self, other):
         return self.__class__ == other.__class__ and self.command_cls == other.command_cls and self.editor == other.editor and self.segment == other.segment and self.search_command is not None

@@ -608,6 +608,17 @@ class FrameworkTask(Task):
             info.Hide()
             self.window._aui_manager.Update()
     
+    def change_minibuffer_editor(self, editor):
+        """Inform the currently open minibuffer that the editor has changed
+        so it can update its internal state to match
+        """
+        try:
+            info = self.window.minibuffer_pane_info
+        except AttributeError:
+            return
+        if info.minibuffer is not None:
+            info.minibuffer.change_editor(editor)
+    
     def destroy_minibuffer(self):
         try:
             info = self.window.minibuffer_pane_info

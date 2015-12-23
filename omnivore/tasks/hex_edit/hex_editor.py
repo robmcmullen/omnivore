@@ -312,6 +312,7 @@ class HexEditor(FrameworkEditor):
             self.adjust_selection(self.segment, new_segment)
             self.segment = new_segment
             self.segment_number = num
+            self.task.change_minibuffer_editor(self)
             self.update_segments_ui()
             self.refresh_panes()
     
