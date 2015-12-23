@@ -20,9 +20,7 @@ class BaseSearcher(object):
         return matches
     
     def set_style(self, editor):
-        style = editor.segment.style
-        for start, end in self.matches:
-            style[start:end] = 1
+        editor.segment.set_style_ranges(self.matches, match=True)
 
 class HexSearcher(BaseSearcher):
     def __str__(self):

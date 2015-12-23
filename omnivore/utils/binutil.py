@@ -19,12 +19,16 @@ class SegmentParser(object):
 
 
 class DefaultSegment(object):
+    debug = False
+    
     def __init__(self, start_addr=0, data=None, name="All", error=None):
         self.start_addr = start_addr
         if data is None:
             data = np.fromstring("", dtype=np.uint8)
         self.data = data
         self.style = np.zeros_like(self.data, dtype=np.uint8)
+        if self.debug:
+            self.style = np.arange(len(self), dtype=np.uint8)
         self.error = error
         self.name = name
         self.page_size = -1
@@ -43,13 +47,31 @@ class DefaultSegment(object):
         self.data[index] = value
         self._search_copy = None
     
-    def clear_style_bits(self, match=False, comment=False):
+    def get_style_bits(self, match=False, comment=False):
+        style_bits = 0
+        if match:
+            style_bits |= 1
+        if comment:
+            style_bits |= 0x80
+        return style_bits
+    
+    def get_style_mask(self, match=False, comment=False):
         style_mask = 0xff
         if match:
             style_mask &= 0xfe
         if comment:
             style_mask &= 0x7f
-        self.style[:] &= style_mask
+        return style_mask
+    
+    def set_style_ranges(self, ranges, **kwargs):
+        style_bits = self.get_style_bits(**kwargs)
+        s = self.style
+        for start, end in ranges:
+            s[start:end] |= style_bits
+    
+    def clear_style_bits(self, **kwargs):
+        style_mask = self.get_style_mask(**kwargs)
+        self.style &= style_mask
     
     def label(self, index):
         return "%04x" % (index + self.start_addr)
