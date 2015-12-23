@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-__version__ = "1.1.1"
+__version__ = "1.3.0"
 
 
 import struct
@@ -245,6 +245,13 @@ class AtariDosFile(object):
     def __str__(self):
         return "\n".join(str(s) for s in self.segments) + "\n"
     
+    def get_obj_segment(self, metadata_start, data_start, start_addr, end_addr, data, name=""):
+        """Subclass use: override this method to create a custom segment.
+        
+        By default uses an ObjSegment
+        """
+        return ObjSegment(metadata_start, data_start, start_addr, end_addr, data, name)
+    
     def parse_segments(self):
         bytes = self.data
         pos = 0
@@ -259,15 +266,15 @@ class AtariDosFile(object):
                 raise InvalidBinaryFile
             first = False
             if len(bytes[pos:pos + 4]) < 4:
-                self.segments.append(ObjSegment(0, 0, bytes[pos:pos + 4], "Short Segment Header"))
+                self.segments.append(self.get_obj_segment(0, 0, bytes[pos:pos + 4], "Short Segment Header"))
                 break
             start, end = struct.unpack("<HH", bytes[pos:pos + 4])
             count = end - start + 1
             found = len(bytes[pos + 4:pos + 4 + count])
             if found < count:
-                self.segments.append(ObjSegment(pos, pos + 4, start, end, bytes[pos + 4:pos + 4 + count], "Incomplete Data"))
+                self.segments.append(self.get_obj_segment(pos, pos + 4, start, end, bytes[pos + 4:pos + 4 + count], "Incomplete Data"))
                 break
-            self.segments.append(ObjSegment(pos, pos + 4, start, end, bytes[pos + 4:pos + 4 + count]))
+            self.segments.append(self.get_obj_segment(pos, pos + 4, start, end, bytes[pos + 4:pos + 4 + count]))
             pos += 4 + count
 
 class AtrFileSegment(ObjSegment):
@@ -407,6 +414,20 @@ class AtrDiskImage(object):
             count += size
         return start, count
     
+    def get_obj_segment(self, metadata_start, data_start, start_addr, end_addr, data, name):
+        """Subclass use: override this method to create a custom segment.
+        
+        By default uses an ObjSegment
+        """
+        return ObjSegment(metadata_start, data_start, start_addr, end_addr, data, name)
+    
+    def get_raw_sectors_segment(self, first_sector, num_sectors, count, data, **kwargs):
+        """Subclass use: override this method to create a custom segment.
+        
+        By default uses an RawSectorsSegment
+        """
+        return RawSectorsSegment(first_sector, num_sectors, count, data, **kwargs)
+
     def get_boot_segments(self):
         bytes = self.get_sectors(1)[0:20]
         values = struct.unpack("<BBHHBHBBBHBHBH", bytes)
@@ -416,9 +437,9 @@ class AtrDiskImage(object):
             num = values[1]
             addr = values[2]
             bytes = self.get_sectors(1, num)
-            header = ObjSegment(0, 0, addr, addr + 20, bytes[0:20], name="Boot Header")
-            sectors = ObjSegment(0, 0, addr, addr + len(bytes), bytes, name="Boot Sectors")
-            code = ObjSegment(0, 0, addr + 20, addr + len(bytes), bytes[20:], name="Boot Code")
+            header = self.get_obj_segment(0, 0, addr, addr + 20, bytes[0:20], name="Boot Header")
+            sectors = self.get_obj_segment(0, 0, addr, addr + len(bytes), bytes, name="Boot Sectors")
+            code = self.get_obj_segment(0, 0, addr + 20, addr + len(bytes), bytes[20:], name="Boot Code")
             segments = [sectors, header, code]
         return segments
     
@@ -426,7 +447,7 @@ class AtrDiskImage(object):
         segments = []
         addr = 0
         start, count = self.get_contiguous_sectors(self.first_vtoc, self.num_vtoc)
-        segment = RawSectorsSegment(self.first_vtoc, self.num_vtoc, count, self.bytes[start:start+count], name="VTOC")
+        segment = self.get_raw_sectors_segment(self.first_vtoc, self.num_vtoc, count, self.bytes[start:start+count], name="VTOC")
         segments.append(segment)
         return segments
     
@@ -434,14 +455,14 @@ class AtrDiskImage(object):
         segments = []
         addr = 0
         start, count = self.get_contiguous_sectors(361, 8)
-        segment = RawSectorsSegment(361, 8, count, self.bytes[start:start+count], name="Directory")
+        segment = self.get_raw_sectors_segment(361, 8, count, self.bytes[start:start+count], name="Directory")
         segments.append(segment)
         return segments
     
     def parse_segments(self):
         if self.header.size_in_bytes > 0:
-            self.segments.append(ObjSegment(0, 0, 0, self.header.atr_header_offset, self.bytes[0:self.header.atr_header_offset], name="%s Header" % self.header.file_format))
-        self.segments.append(RawSectorsSegment(1, self.header.max_sectors, self.header.size_in_bytes, self.bytes[self.header.atr_header_offset:], name="Raw disk sectors"))
+            self.segments.append(self.get_obj_segment(0, 0, 0, self.header.atr_header_offset, self.bytes[0:self.header.atr_header_offset], name="%s Header" % self.header.file_format))
+        self.segments.append(self.get_raw_sectors_segment(1, self.header.max_sectors, self.header.size_in_bytes, self.bytes[self.header.atr_header_offset:], name="Raw disk sectors"))
         self.segments.extend(self.get_boot_segments())
         self.segments.extend(self.get_vtoc_segments())
         self.segments.extend(self.get_directory_segments())
