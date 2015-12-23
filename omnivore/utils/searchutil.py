@@ -4,8 +4,11 @@ import re
 class BaseSearcher(object):
     def __init__(self, editor, search_text, **kwargs):
         self.search_text = self.get_search_text(search_text)
-        self.matches = self.get_matches(editor)
-        self.set_style(editor)
+        if len(self.search_text) > 0:
+            self.matches = self.get_matches(editor)
+            self.set_style(editor)
+        else:
+            self.matches = []
     
     def get_search_text(self, text):
         return bytearray(text, "utf-8")
