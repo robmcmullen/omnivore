@@ -1,4 +1,5 @@
 import re
+import bisect
 
 import numpy as np
 
@@ -376,205 +377,13 @@ class DivideFromCommand(ChangeByteCommand):
         return self.data / orig
 
 
-class FindHexCommand(Command):
-    short_name = "findhex"
-    pretty_name = "Find Hex Bytes"
-    
-    def __init__(self, search_text, error, repeat=False, reverse=False):
-        Command.__init__(self)
-        self.search_text = search_text
-        self.error = error
-        self.repeat = repeat
-        self.reverse = reverse
-    
-    def __str__(self):
-        return "%s %s" % (self.pretty_name, repr(self.search_text))
-    
-    def get_search_string(self):
-        return bytearray.fromhex(self.search_text)
-    
-    def perform(self, editor):
-        self.undo_info = undo = UndoInfo()
-        undo.flags.changed_document = False
-        if self.error:
-            undo.flags.message = self.error
-        else:
-            try:
-                s = self.get_search_string()
-            except ValueError, e:
-                s = None
-                undo.flags.message = str(e)
-            
-            if s is not None:
-                wrapped_message = ""
-                if self.reverse:
-                    i1 = 0
-                    i2 = editor.cursor_index
-                    if self.repeat:
-                        i2 -= 1
-                    text = editor.segment.data[i1:i2].tostring()
-                    i3 = text.rfind(s)
-                    if i3 < 0:
-                        # Wrap search starting from beginning
-                        wrapped_message = " (Reached start of page; wrapping search starting at end)"
-                        i1 = i2
-                        i2 = len(editor.segment)
-                        text = editor.segment.data[i1:i2].tostring()
-                        i3 = text.rfind(s)
-                else:
-                    i1 = editor.cursor_index
-                    i2 = len(editor.segment)
-                    if self.repeat:
-                        i1 += 1
-                    text = editor.segment.data[i1:i2].tostring()
-                    i3 = text.find(s)
-                    if i3 < 0:
-                        # Wrap search starting from beginning
-                        wrapped_message = " (Reached end of page; wrapping search starting at top)"
-                        i2 = i1
-                        i1 = 0
-                        text = editor.segment.data[i1:i2].tostring()
-                        i3 = text.find(s)
-                if i3 >= 0:
-                    undo.flags.index_range = i1 + i3, i1 + i3 + len(s)
-                    undo.flags.cursor_index = i1
-                    undo.flags.select_range = True
-                    undo.flags.message = ("Found at $%04x" % (i1 + i3)) + wrapped_message
-                else:
-                    undo.flags.message = "Not found"
-        return undo
-
-
-class FindTextCommand(FindHexCommand):
-    short_name = "findtext"
-    pretty_name = "Find Text Characters"
-    
-    def get_search_string(self):
-        return bytearray(self.search_text, "utf-8")
-
-
-class UnifiedFindCommand(Command):
-    short_name = "find"
-    pretty_name = "Find"
-    
-    def __init__(self, search_text, error, repeat=False, reverse=False):
-        Command.__init__(self)
-        self.search_text = search_text
-        self.error = error
-        self.repeat = repeat
-        self.reverse = reverse
-    
-    def __str__(self):
-        return "%s %s" % (self.pretty_name, repr(self.search_text))
-    
-    def get_search_hex(self):
-        return bytearray.fromhex(self.search_text)
-    
-    def get_search_text(self):
-        return bytearray(self.search_text, "utf-8")
-
-    def prepare_search(self):
-        errors = []
-        valid = []
-        try:
-            s = self.get_search_hex()
-            valid.append((self.do_search_string, s))
-        except ValueError, e:
-            s = None
-            errors.append(str(e))
-        try:
-            s = self.get_search_text()
-            valid.append((self.do_search_string, s))
-        except ValueError, e:
-            s = None
-            errors.append(str(e))
-        return valid, errors
-    
-    def do_search_string(self, needle, haystack):
-        if self.reverse:
-            return haystack.rfind(needle)
-        else:
-            return haystack.find(needle)
-    
-    def perform(self, editor):
-        self.undo_info = undo = UndoInfo()
-        undo.flags.changed_document = False
-        if self.error:
-            undo.flags.message = self.error
-        else:
-            valid_searches, errors = self.prepare_search()
-            
-            if valid_searches:
-                wrapped_message = ""
-                match = None
-                nearest = -1
-                if self.reverse:
-                    i1 = 0
-                    i2 = editor.cursor_index
-                    if self.repeat:
-                        i2 -= 1
-                    text = editor.segment.data[i1:i2].tostring()
-                    for method, s in valid_searches:
-                        i3 = method(s, text)
-                        if i3 >= 0 and i3 > nearest:
-                            nearest = i3
-                            match = s
-                    if nearest < 0:
-                        # Wrap search starting from beginning
-                        wrapped_message = " (Reached start of page; wrapping search starting at end)"
-                        i1 = editor.cursor_index
-                        i2 = len(editor.segment)
-                        if self.repeat:
-                            i1 += 1
-                        text = editor.segment.data[i1:i2].tostring()
-                        for method, s in valid_searches:
-                            i3 = method(s, text)
-                            if i3 >= 0 and i3 > nearest:
-                                nearest = i3
-                                match = s
-                else:
-                    i1 = editor.cursor_index
-                    i2 = len(editor.segment)
-                    if self.repeat:
-                        i1 += 1
-                    text = editor.segment.data[i1:i2].tostring()
-                    for method, s in valid_searches:
-                        i3 = method(s, text)
-                        if i3 >= 0 and (i3 < nearest or nearest == -1):
-                            nearest = i3
-                            match = s
-                    if match is None:
-                        # Wrap search starting from beginning
-                        wrapped_message = " (Reached end of page; wrapping search starting at top)"
-                        i2 = i1
-                        i1 = 0
-                        text = editor.segment.data[i1:i2].tostring()
-                        for method, s in valid_searches:
-                            i3 = method(s, text)
-                            if i3 >= 0 and (i3 < nearest or nearest == -1):
-                                nearest = i3
-                                match = s
-                if match is not None:
-                    undo.flags.index_range = i1 + nearest, i1 + nearest + len(match)
-                    undo.flags.cursor_index = i1
-                    undo.flags.select_range = True
-                    undo.flags.message = ("Found at $%04x" % (i1 + nearest)) + wrapped_message
-                else:
-                    if editor.can_copy:
-                        undo.flags.message = "Returned to the starting point"
-                    else:
-                        undo.flags.message = "Not found"
-            else:
-                undo.flags.message = str(errors)
-        return undo
-
-
 class FindAllCommand(Command):
     short_name = "find"
     pretty_name = "Find"
     
-    def __init__(self, search_text, error, repeat=False, reverse=False):
+    def __init__(self, start_cursor_index, search_text, error, repeat=False, reverse=False):
         Command.__init__(self)
+        self.start_cursor_index = start_cursor_index
         self.search_text = search_text
         self.error = error
         self.repeat = repeat
@@ -587,6 +396,7 @@ class FindAllCommand(Command):
         return bytearray.fromhex(self.search_text)
     
     def perform(self, editor):
+        self.all_matches = []
         self.undo_info = undo = UndoInfo()
         undo.flags.changed_document = False
         if self.error:
@@ -604,7 +414,64 @@ class FindAllCommand(Command):
             
             if found:
                 for searcher in found:
-                    print searcher
+                    self.all_matches.extend(searcher.matches)
+                self.all_matches.sort()
+                
+                # Need to use a tuple in order for bisect to search the list
+                # of tuples
+                cursor_tuple = (self.start_cursor_index, 0)
+                self.current_match_index = bisect.bisect_left(self.all_matches, cursor_tuple)
+                try:
+                    match = self.all_matches[self.current_match_index]
+                    undo.flags.index_range = match
+                    undo.flags.cursor_index = match[0]
+                    undo.flags.select_range = True
+                    undo.flags.message = ("Match %d of %d, found at $%04x" % (self.current_match_index + 1, len(self.all_matches), match[0]))
+                except IndexError:
+                    undo.flags.message = "Not found"
             undo.flags.refresh_needed = True
         return undo
 
+class FindNextCommand(Command):
+    short_name = "findnext"
+    pretty_name = "Find Next"
+    
+    def __init__(self, search_command):
+        Command.__init__(self)
+        self.search_command = search_command
+    
+    def get_index(self):
+        cmd = self.search_command
+        cmd.current_match_index += 1
+        index = cmd.current_match_index
+        if index >= len(cmd.all_matches):
+            index = cmd.current_match_index = 0
+        return index
+    
+    def perform(self, editor):
+        self.undo_info = undo = UndoInfo()
+        undo.flags.changed_document = False
+        index = self.get_index()
+        all_matches = self.search_command.all_matches
+        try:
+            match = all_matches[index]
+            undo.flags.index_range = match
+            undo.flags.cursor_index = match[0]
+            undo.flags.select_range = True
+            undo.flags.message = ("Match %d of %d, found at $%04x" % (index + 1, len(all_matches), match[0]))
+        except IndexError:
+            pass
+        undo.flags.refresh_needed = True
+        return undo
+
+class FindPrevCommand(FindNextCommand):
+    short_name = "findprev"
+    pretty_name = "Find Previous"
+    
+    def get_index(self):
+        cmd = self.search_command
+        cmd.current_match_index -= 1
+        index = cmd.current_match_index
+        if index < 0:
+            index = cmd.current_match_index = len(cmd.all_matches) - 1
+        return index

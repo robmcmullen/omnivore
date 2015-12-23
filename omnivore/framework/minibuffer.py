@@ -152,6 +152,52 @@ class TextMinibuffer(Minibuffer):
         self.editor.process_command(cmd)
 
 
+class NextPrevTextMinibuffer(TextMinibuffer):
+    def __init__(self, editor, command_cls, next_cls, prev_cls, next_match=False, prev_match=False, **kwargs):
+        TextMinibuffer.__init__(self, editor, command_cls, **kwargs)
+        self.next_cls = next_cls
+        self.prev_cls = prev_cls
+        self.start_cursor_index = -1
+        self.search_command = None
+        self.next_match = next_match
+        self.prev_match = prev_match
+        
+    def on_key_down(self, evt):
+        keycode = evt.GetKeyCode()
+        mods = evt.GetModifiers()
+        log.debug("key down: %s" % keycode)
+        if keycode == wx.WXK_RETURN:
+            if mods == wx.MOD_RAW_CONTROL or mods == wx.MOD_SHIFT:
+                self.prev()
+            else:
+                self.next()
+        evt.Skip()
+    
+    def next(self):
+        cmd = self.next_cls(self.search_command)
+        self.editor.process_command(cmd)
+    
+    def prev(self):
+        cmd = self.prev_cls(self.search_command)
+        self.editor.process_command(cmd)
+    
+    def perform(self):
+        """Execute the command associatied with this minibuffer"""
+        value, error = self.get_result()
+        if self.start_cursor_index < 0:
+            self.start_cursor_index = self.editor.cursor_index
+        cmd = self.command_cls(self.start_cursor_index, value, error, **self.kwargs)
+        self.editor.process_command(cmd)
+        self.search_command = cmd
+    
+    def repeat(self, minibuffer=None):
+        if minibuffer is not None:
+            if minibuffer.next_match:
+                self.next()
+            elif minibuffer.prev_match:
+                self.prev()
+
+
 class IntMinibuffer(TextMinibuffer):
     """Dedicated subclass of Minibuffer that prompts for an integer.
     

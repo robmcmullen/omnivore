@@ -410,39 +410,29 @@ class PasteAndRepeatAction(EditorAction):
 class FindAction(EditorAction):
     name = 'Find'
     accelerator = 'Ctrl+F'
-    tooltip = 'Find bytes or characters in the raw data'
+    tooltip = 'Find bytes or characters in the raw data or in disassembly comments'
 
     def perform(self, event):
         log.debug("EVENT!!! %s" % event)
-        event.task.show_minibuffer(TextMinibuffer(self.active_editor, FindAllCommand))
+        event.task.show_minibuffer(NextPrevTextMinibuffer(self.active_editor, FindAllCommand, FindNextCommand, FindPrevCommand))
 
-
-class FindReverseAction(EditorAction):
-    name = 'Find String (Backwards)'
-    accelerator = 'Ctrl+R'
-    tooltip = 'Find sequences of characters in the raw data, searching backwards'
-
-    def perform(self, event):
-        event.task.show_minibuffer(TextMinibuffer(self.active_editor, UnifiedFindCommand, reverse=True))
-
-
-class FindBytesAction(EditorAction):
-    name = 'Find Bytes'
-    accelerator = 'Shift+Ctrl+F'
-    tooltip = 'Find sequences of bytes in the raw data'
+class FindNextAction(EditorAction):
+    name = 'Find Next'
+    accelerator = 'Ctrl+G'
+    tooltip = 'Find next match'
 
     def perform(self, event):
         log.debug("EVENT!!! %s" % event)
-        event.task.show_minibuffer(TextMinibuffer(self.active_editor, FindHexCommand))
+        event.task.show_minibuffer(NextPrevTextMinibuffer(self.active_editor, FindAllCommand, FindNextCommand, FindPrevCommand, next_match=True))
 
-
-class FindBytesReverseAction(EditorAction):
-    name = 'Find Bytes (Backwards)'
-    accelerator = 'Shift+Ctrl+R'
-    tooltip = 'Find sequences of bytes in the raw data, searching backwards'
+class FindPrevAction(EditorAction):
+    name = 'Find Previous'
+    accelerator = 'Shift+Ctrl+G'
+    tooltip = 'Find previous match'
 
     def perform(self, event):
-        event.task.show_minibuffer(TextMinibuffer(self.active_editor, FindHexCommand, reverse=True))
+        log.debug("EVENT!!! %s" % event)
+        event.task.show_minibuffer(NextPrevTextMinibuffer(self.active_editor, FindAllCommand, FindNextCommand, FindPrevCommand, prev_match=True))
 
 
 class CancelMinibufferAction(EditorAction):

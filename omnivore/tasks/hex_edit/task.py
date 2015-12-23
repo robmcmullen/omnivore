@@ -110,7 +110,7 @@ class HexEditTask(FrameworkTask):
     def get_actions_Menu_Edit_FindGroup(self):
         return [
             FindAction(),
-            FindBytesAction(),
+            FindNextAction(),
             ]
     
     def get_common_ViewConfigGroup(self):
@@ -221,8 +221,7 @@ class HexEditTask(FrameworkTask):
 
     def get_keyboard_actions(self):
         return [
-            FindReverseAction(),
-            FindBytesReverseAction(),
+            FindPrevAction(),
             CancelMinibufferAction(),
             ]
 
