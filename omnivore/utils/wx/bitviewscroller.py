@@ -93,7 +93,10 @@ class BitviewScroller(wx.ScrolledWindow):
         if editor is not None:
             self.editor = editor
             self.bytes = editor.segment.data
+            self.style = editor.segment.style
             self.start_addr = editor.segment.start_addr
+            self.match_color = self.editor.match_background_color
+            self.comment_color = self.editor.comment_background_color
             self.background_color = self.editor.empty_color
             self.set_colors()
             self.set_font()
@@ -144,6 +147,7 @@ class BitviewScroller(wx.ScrolledWindow):
         else:
             count = self.end_byte - self.start_byte
             bytes = self.bytes[self.start_byte:self.end_byte]
+        style = self.style[self.start_byte:self.end_byte]
         bits = np.unpackbits(bytes)
         bits = bits.reshape((-1, 8 * self.bytes_per_row))
         bits[bits==0]=255
@@ -162,18 +166,41 @@ class BitviewScroller(wx.ScrolledWindow):
         start_highlight = max(start_index - self.start_byte, 0)
         end_highlight = min(end_index - self.start_byte, count)
         log.debug("highlight %d-%d" % (start_highlight, end_highlight))
+        
+        mask = array == (255, 255, 255)
+        mask = np.all(mask, axis=2)
+        
+        # highlight any comments
+        match = style & 0x80
+        style_mask = match==0x80
+        # This doesn't do anything! A mask of a mask apparently doesn't work
+        # array[style_mask,:,:][mask[style_mask]] = self.comment_color
+        s = np.tile(style_mask, (mask.shape[1], 1)).T
+        m2 = np.logical_and(mask, s)
+        array[m2] = self.comment_color
+        array[style_mask,0:border,:] = self.comment_color
+        array[style_mask,border + bitwidth:width,:] = self.comment_color
+        
+        # highlight any matches
+        match = style & 0x1
+        style_mask = match==0x1
+        s = np.tile(style_mask, (mask.shape[1], 1)).T
+        m2 = np.logical_and(mask, s)
+        array[m2] = self.match_color
+        array[style_mask,0:border,:] = self.match_color
+        array[style_mask,border + bitwidth:width,:] = self.match_color
+
         if start_highlight < count and end_highlight >= 0:
             # change all white pixels to the highlight color.  The mask
             # must be collapsed on the color axis to result in one entry
             # per row so it can be applied to the array.
-            mask = array[start_highlight:end_highlight,:,:] == (255, 255, 255)
-            mask = np.all(mask, axis=2)
-            array[start_highlight:end_highlight,:,:][mask] = self.editor.highlight_color
+            array[start_highlight:end_highlight,:,:][mask[start_highlight:end_highlight]] = self.editor.highlight_color
             
             # Highlight the border areas so the selection is visible even
             # if there's an all-filled area
             array[start_highlight:end_highlight,0:border,:] = self.editor.highlight_color
             array[start_highlight:end_highlight,border + bitwidth:width,:] = self.editor.highlight_color
+
         return array
 
     def copy_to_clipboard(self):
