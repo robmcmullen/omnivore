@@ -591,13 +591,17 @@ class FontMapScroller(BitviewScroller):
             self.end_byte = self.bytes.size
             bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
             bytes[0:self.end_byte - self.start_byte] = self.bytes[sr * self.bytes_per_row:self.end_byte]
+            style = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
+            style[0:self.end_byte - self.start_byte] = self.style[sr * self.bytes_per_row:self.end_byte]
         else:
-            bytes = self.bytes[sr * self.bytes_per_row:self.end_byte]
+            bytes = self.bytes[self.start_byte:self.end_byte]
+            style = self.style[self.start_byte:self.end_byte]
         num_rows_with_data = (self.end_byte - self.start_byte + self.bytes_per_row - 1) / self.bytes_per_row
         
         sc = self.start_col
         nc = self.num_cols
         bytes = bytes.reshape((nr, -1))
+        style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
         
         width = int(self.font.char_w * self.bytes_per_row)
@@ -617,6 +621,8 @@ class FontMapScroller(BitviewScroller):
         e = self.start_byte
         f = self.font.normal_font
         fh = self.font.highlight_font
+        fm = self.font.match_font
+        fc = self.font.comment_font
         anchor_start, anchor_end = self.get_highlight_indexes()
         for j in range(er):
             x = 0
@@ -626,6 +632,10 @@ class FontMapScroller(BitviewScroller):
                 c = self.font_mapping[bytes[j, i]]
                 if anchor_start <= e + i < anchor_end:
                     array[y:y+8,x:x+8,:] = fh[c]
+                elif style[j, i] & 1:
+                    array[y:y+8,x:x+8,:] = fm[c]
+                elif style[j, i] & 0x80:
+                    array[y:y+8,x:x+8,:] = fc[c]
                 else:
                     array[y:y+8,x:x+8,:] = f[c]
                 x += 8

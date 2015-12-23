@@ -236,7 +236,7 @@ class HexEditor(FrameworkEditor):
     
     def get_antic_font(self):
         color_converter = self.get_color_converter()
-        return fonts.AnticFont(self.antic_font_data, self.font_mode, self.playfield_colors, self.highlight_color, color_converter)
+        return fonts.AnticFont(self.antic_font_data, self.font_mode, self.playfield_colors, self.highlight_color, self.match_background_color, self.comment_background_color, color_converter)
     
     def set_font(self, font=None, font_mode=None):
         if font is None:

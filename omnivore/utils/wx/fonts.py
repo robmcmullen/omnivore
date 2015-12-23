@@ -36,29 +36,37 @@ class AnticFont(object):
     font_width_scale = [0, 0, 1, 0, 1, 1, 2, 2, 2, 2]
     font_height_scale = [0, 0, 1, 0, 1, 2, 1, 2, 1, 2]
     
-    def __init__(self, font_data, font_mode, playfield_colors, highlight_color, color_converter):
+    def __init__(self, font_data, font_mode, playfield_colors, highlight_color, match_color, comment_color, color_converter):
         self.char_w = font_data['char_w']
         self.char_h = font_data['char_h']
         self.scale_w = self.font_width_scale[font_mode]
         self.scale_h = self.font_height_scale[font_mode]
         
-        self.set_colors(playfield_colors, highlight_color, color_converter)
+        self.set_colors(playfield_colors, highlight_color, match_color, comment_color, color_converter)
         self.set_fonts(font_data, font_mode)
     
-    def set_colors(self, playfield_colors, highlight_color, color_converter):
+    def set_colors(self, playfield_colors, highlight_color, match_color, comment_color, color_converter):
         pfcolors = list(playfield_colors)
         self.normal_colors = []
         self.highlight_colors = []
+        self.match_colors = []
+        self.comment_colors = []
         for c in pfcolors:
             self.normal_colors.append(color_converter(c))
             self.highlight_colors.append(color_converter(c))
+            self.match_colors.append(color_converter(c))
+            self.comment_colors.append(color_converter(c))
         self.highlight_colors[-1] = highlight_color
+        self.match_colors[-1] = match_color
+        self.comment_colors[-1] = comment_color
 
         fg, bg = colors.gr0_colors(pfcolors)
         fg = color_converter(fg)
         bg = color_converter(bg)
         self.normal_gr0_colors = [fg, bg]
         self.highlight_gr0_colors = [fg, highlight_color]
+        self.match_gr0_colors = [fg, match_color]
+        self.comment_gr0_colors = [fg, comment_color]
     
     def set_fonts(self, font_data, font_mode):
         if 'np_data' in font_data:
@@ -71,6 +79,8 @@ class AnticFont(object):
         bits_to_font = self.get_bits_to_font_function(font_mode)
         self.normal_font = bits_to_font(bits, font_mode, self.normal_colors, self.normal_gr0_colors)
         self.highlight_font = bits_to_font(bits, font_mode, self.highlight_colors, self.highlight_gr0_colors)
+        self.match_font = bits_to_font(bits, font_mode, self.match_colors, self.match_gr0_colors)
+        self.comment_font = bits_to_font(bits, font_mode, self.comment_colors, self.comment_gr0_colors)
     
     def get_bits_to_font_function(self, font_mode):
         if font_mode == 2:
