@@ -161,6 +161,10 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         self.search_command = None
         self.next_match = next_match
         self.prev_match = prev_match
+        self.segment = editor.segment
+    
+    def is_repeat(self, other):
+        return self.__class__ == other.__class__ and self.command_cls == other.command_cls and self.editor == other.editor and self.segment == other.segment and self.search_command is not None
         
     def on_key_down(self, evt):
         keycode = evt.GetKeyCode()
