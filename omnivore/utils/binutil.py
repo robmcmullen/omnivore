@@ -118,7 +118,7 @@ class DefaultSegmentParser(SegmentParser):
 
 
 class NumpyAtrDiskImage(atrcopy.AtrDiskImage):
-    def get_obj_segment(self, metadata_start, data_start, start_addr, end_addr, data, name):
+    def get_obj_segment(self, metadata_start, data_start, start_addr, end_addr, data, name=""):
         """Subclass use: override this method to create a custom segment.
         
         By default uses an ObjSegment
@@ -147,7 +147,7 @@ class ATRSegmentParser(SegmentParser):
 
 
 class NumpyAtariDosFile(atrcopy.AtariDosFile):
-    def get_obj_segment(self, metadata_start, data_start, start_addr, end_addr, data, name):
+    def get_obj_segment(self, metadata_start, data_start, start_addr, end_addr, data, name=""):
         """Subclass use: override this method to create a custom segment.
         
         By default uses an ObjSegment
