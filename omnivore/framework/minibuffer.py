@@ -187,12 +187,14 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         evt.Skip()
     
     def next(self):
-        cmd = self.next_cls(self.search_command)
-        self.editor.process_command(cmd)
+        if self.search_command is not None:
+            cmd = self.next_cls(self.search_command)
+            self.editor.process_command(cmd)
     
     def prev(self):
-        cmd = self.prev_cls(self.search_command)
-        self.editor.process_command(cmd)
+        if self.search_command is not None:
+            cmd = self.prev_cls(self.search_command)
+            self.editor.process_command(cmd)
     
     def perform(self):
         """Execute the command associatied with this minibuffer"""
@@ -209,6 +211,9 @@ class NextPrevTextMinibuffer(TextMinibuffer):
                 self.next()
             elif minibuffer.prev_match:
                 self.prev()
+            elif not wx.Window.FindFocus() == self.text:
+                self.text.SetFocus()
+                self.text.SelectAll()
 
 
 class IntMinibuffer(TextMinibuffer):

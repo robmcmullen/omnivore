@@ -416,19 +416,22 @@ class FindAllCommand(Command):
                 for searcher in found:
                     self.all_matches.extend(searcher.matches)
                 self.all_matches.sort()
-                
+                print "Find:", self.all_matches
+                if len(self.all_matches) == 0:
+                    undo.flags.message = "Not found"
+                else:
                 # Need to use a tuple in order for bisect to search the list
                 # of tuples
-                cursor_tuple = (self.start_cursor_index, 0)
-                self.current_match_index = bisect.bisect_left(self.all_matches, cursor_tuple)
-                try:
+                    cursor_tuple = (editor.cursor_index, 0)
+                    self.current_match_index = bisect.bisect_left(self.all_matches, cursor_tuple)
+                    if self.current_match_index >= len(self.all_matches):
+                        self.current_match_index = 0
                     match = self.all_matches[self.current_match_index]
+                    print self.current_match_index, match, cursor_tuple
                     undo.flags.index_range = match
                     undo.flags.cursor_index = match[0]
                     undo.flags.select_range = True
                     undo.flags.message = ("Match %d of %d, found at $%04x" % (self.current_match_index + 1, len(self.all_matches), match[0]))
-                except IndexError:
-                    undo.flags.message = "Not found"
             undo.flags.refresh_needed = True
         return undo
 
@@ -453,6 +456,7 @@ class FindNextCommand(Command):
         undo.flags.changed_document = False
         index = self.get_index()
         all_matches = self.search_command.all_matches
+        print "FindNext:", all_matches
         try:
             match = all_matches[index]
             undo.flags.index_range = match
