@@ -30,7 +30,8 @@ class DisassemblyTable(ByteGridTable):
         addr_map = {}
         d = editor.disassembler(segment.data, segment.start_addr, -segment.start_addr)
         for i, (addr, bytes, opstr, comment) in enumerate(d.get_disassembly()):
-            lines.append((addr, bytes, opstr, comment))
+            count = len(bytes)
+            lines.append((addr, bytes, opstr, comment, count))
             addr_map[addr] = i
         self.lines = lines
         self.addr_to_lines = addr_map
@@ -51,7 +52,7 @@ class DisassemblyTable(ByteGridTable):
     def get_index_range(self, r, c):
         line = self.lines[r]
         index = line[0] - self.start_addr
-        return index, index + len(line[1])
+        return index, index + line[4]
     
     def is_index_valid(self, index):
         return index < len(self.segment)
@@ -102,9 +103,13 @@ class DisassemblyTable(ByteGridTable):
 
     def get_value_style(self, row, col):
         line = self.lines[row]
+        index = line[0] - self.start_addr
+        style = 0
+        for i in range(line[4]):
+            style |= self.segment.style[index]
         if col == 0:
-            return " ".join("%02x" % i for i in line[1]), 0
-        return str(line[col + 1]), 0
+            return " ".join("%02x" % i for i in line[1]), style
+        return str(line[col + 1]), style
     
     def GetRowLabelValue(self, row):
         if self.lines:
