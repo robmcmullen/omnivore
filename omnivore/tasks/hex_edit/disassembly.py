@@ -6,6 +6,8 @@ from omnivore.utils.binutil import DefaultSegment
 
 from omnivore.third_party.asm6502 import assemble_text, AssemblyError
 
+from omnivore.framework.actions import *
+from actions import *
 from commands import MiniAssemblerCommand
 
 import logging
@@ -197,3 +199,6 @@ class DisassemblyPanel(ByteGrid):
         else:
             matches = [(t[0], t[0] + len(t[1])) for t in lines if search_text in t[3]]
         return matches
+    
+    def get_popup_actions(self):
+        return [CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction]
