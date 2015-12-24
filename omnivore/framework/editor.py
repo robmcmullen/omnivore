@@ -279,6 +279,11 @@ class FrameworkEditor(Editor):
         
         return index
     
+    def invalidate_search(self):
+        """Hook for subclasses to get notified if the document is changed and
+        any search params should be cleared."""
+        pass
+    
     # Command processor
 
     def update_undo_redo(self):
@@ -352,8 +357,10 @@ class FrameworkEditor(Editor):
         if flags.message:
             self.task.status_bar.message = flags.message
         
-        if flags.refresh_needed or flags.byte_values_changed:
-            d.byte_values_changed = True
+        if flags.byte_values_changed:
+            d.byte_values_changed = True  # also handles refresh
+        elif flags.refresh_needed:
+            self.refresh_panes()
         
         if visible_range:
             # Only update the range on the current editor, not other views which
@@ -425,6 +432,7 @@ class FrameworkEditor(Editor):
     @on_trait_change('document:byte_values_changed')
     def byte_values_changed(self):
         log.debug("byte_values_changed called!!!")
+        self.invalidate_search()
         self.refresh_panes()
 
     #### convenience functions

@@ -312,9 +312,12 @@ class HexEditor(FrameworkEditor):
             self.adjust_selection(self.segment, new_segment)
             self.segment = new_segment
             self.segment_number = num
-            self.task.change_minibuffer_editor(self)
+            self.invalidate_search(self)
             self.update_segments_ui()
             self.refresh_panes()
+    
+    def invalidate_search(self):
+        self.task.change_minibuffer_editor(self)
     
     def adjust_selection(self, current_segment, new_segment):
         """Adjust the selection of the current segment so that it is limited to the
