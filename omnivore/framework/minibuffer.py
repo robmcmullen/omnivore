@@ -211,7 +211,7 @@ class NextPrevTextMinibuffer(TextMinibuffer):
                 self.next()
             elif minibuffer.prev_match:
                 self.prev()
-            elif not wx.Window.FindFocus() == self.text:
+            else:
                 self.text.SetFocus()
                 self.text.SelectAll()
 
