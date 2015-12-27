@@ -103,6 +103,14 @@ class BitviewScroller(wx.ScrolledWindow):
             self.set_font()
             self.set_scale()
     
+    def refresh_view(self):
+        editor = self.task.active_editor
+        if editor is not None:
+            if self.editor != editor:
+                self.recalc_view()
+            else:
+                self.Refresh()
+        
     def set_colors(self):
         pass
     

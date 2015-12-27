@@ -91,7 +91,7 @@ class HexEditTask(FrameworkTask):
         if e is not None:
             prefs = self.get_preferences()
             e.text_font = prefs.text_font
-            e.refresh_panes()
+            e.reconfigure_panes()
 
     def get_font_mapping_actions(self):
         return [

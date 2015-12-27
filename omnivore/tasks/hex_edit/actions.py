@@ -159,7 +159,7 @@ class TextFontAction(EditorAction):
         if dlg.ShowModal() == wx.ID_OK:
             data = dlg.GetFontData()
             e.set_text_font(data.GetChosenFont(), data.GetColour())
-            e.refresh_panes()
+            e.reconfigure_panes()
 
 
 class DisassemblerBaseAction(EditorAction):

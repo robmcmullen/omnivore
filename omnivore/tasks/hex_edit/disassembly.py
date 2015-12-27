@@ -162,13 +162,6 @@ class DisassemblyPanel(ByteGrid):
     
     def get_default_cell_editor(self):
         return AssemblerEditor(self)
-
-    def recalc_view(self):
-        editor = self.task.active_editor
-        if editor is not None:
-            self.editor = editor
-            self.table.ResetView(self, editor)
-            self.table.UpdateValues(self)
     
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.

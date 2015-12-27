@@ -176,7 +176,7 @@ class HexEditor(FrameworkEditor):
     def update_panes(self):
         self.segment = self.document.segments[self.segment_number]
         self.set_colors()
-        self.refresh_panes()
+        self.reconfigure_panes()
         self.update_segments_ui()
     
     def update_segments_ui(self):
@@ -184,12 +184,19 @@ class HexEditor(FrameworkEditor):
         self.task.segments_changed = self.document.segments
         self.task.segment_selected = self.segment_number
     
-    def refresh_panes(self):
+    def reconfigure_panes(self):
         self.control.recalc_view()
         self.disassembly.recalc_view()
         self.byte_graphics.recalc_view()
         self.font_map.recalc_view()
         self.memory_map.recalc_view()
+    
+    def refresh_panes(self):
+        self.control.refresh_view()
+        self.disassembly.refresh_view()
+        self.byte_graphics.refresh_view()
+        self.font_map.refresh_view()
+        self.memory_map.refresh_view()
     
     def set_colors(self):
         if self.empty_color is None:
@@ -202,7 +209,7 @@ class HexEditor(FrameworkEditor):
         else:
             self.playfield_colors = colors[4:9]
         self.set_font()
-        self.refresh_panes()
+        self.reconfigure_panes()
     
     def set_color_standard(self, std):
         self.color_standard = std
@@ -314,7 +321,7 @@ class HexEditor(FrameworkEditor):
             self.segment_number = num
             self.invalidate_search()
             self.update_segments_ui()
-            self.refresh_panes()
+            self.reconfigure_panes()
             self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
     
     def invalidate_search(self):

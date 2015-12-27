@@ -205,6 +205,7 @@ class ByteGridTable(Grid.PyGridTableBase):
         oldrows=self._rows
         oldcols=self._cols
         self.ResetViewProcessArgs(*args)
+        log.debug("resetting view for %s" % grid)
         
         grid.BeginBatch()
 
@@ -575,6 +576,21 @@ class ByteGrid(Grid.Grid):
 #        self.Bind(Grid.EVT_GRID_RANGE_SELECT, self.OnSelectRange)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.Show(True)
+
+    def recalc_view(self):
+        editor = self.task.active_editor
+        if editor is not None:
+            self.editor = editor
+            self.table.ResetView(self, editor)
+            self.table.UpdateValues(self)
+    
+    def refresh_view(self):
+        editor = self.task.active_editor
+        if editor is not None:
+            if self.editor != editor:
+                self.recalc_view()
+            else:
+                self.ForceRefresh()
     
     def get_default_cell_editor(self):
         return HexCellEditor(self)

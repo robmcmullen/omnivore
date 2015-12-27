@@ -253,6 +253,12 @@ class FrameworkEditor(Editor):
         """
         pass
     
+    def reconfigure_panes(self):
+        """Called when the panes should be updated after a possible document
+        formatting or structure change.
+        """
+        pass
+    
     def ensure_visible(self, start, end):
         """Make sure the current range of indexes is shown
         """
@@ -444,7 +450,7 @@ class FrameworkEditor(Editor):
     def byte_values_changed(self):
         log.debug("byte_values_changed called!!!")
         self.invalidate_search()
-        self.refresh_panes()
+        self.reconfigure_panes()
 
     #### convenience functions
     
