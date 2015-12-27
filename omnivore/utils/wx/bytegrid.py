@@ -689,6 +689,7 @@ class ByteGrid(Grid.Grid):
                         update = True
             self.select_extend_mode = evt.ShiftDown()
             if update:
+                e.document.change_count += 1
                 e.cursor_index = index1
                 wx.CallAfter(e.index_clicked, e.cursor_index, 0, None)
         evt.Skip()
