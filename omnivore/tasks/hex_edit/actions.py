@@ -426,8 +426,8 @@ class FindAction(EditorAction):
     tooltip = 'Find bytes or characters in the raw data or in disassembly comments'
 
     def perform(self, event):
-        log.debug("EVENT!!! %s" % event)
-        event.task.show_minibuffer(NextPrevTextMinibuffer(self.active_editor, FindAllCommand, FindNextCommand, FindPrevCommand))
+        e = self.active_editor
+        event.task.show_minibuffer(NextPrevTextMinibuffer(e, FindAllCommand, FindNextCommand, FindPrevCommand, initial=e.last_search_settings["find"]))
 
 class FindNextAction(EditorAction):
     name = 'Find Next'
@@ -435,8 +435,8 @@ class FindNextAction(EditorAction):
     tooltip = 'Find next match'
 
     def perform(self, event):
-        log.debug("EVENT!!! %s" % event)
-        event.task.show_minibuffer(NextPrevTextMinibuffer(self.active_editor, FindAllCommand, FindNextCommand, FindPrevCommand, next_match=True))
+        e = self.active_editor
+        event.task.show_minibuffer(NextPrevTextMinibuffer(e, FindAllCommand, FindNextCommand, FindPrevCommand, next_match=True, initial=e.last_search_settings["find"]))
 
 class FindPrevAction(EditorAction):
     name = 'Find Previous'
@@ -444,8 +444,8 @@ class FindPrevAction(EditorAction):
     tooltip = 'Find previous match'
 
     def perform(self, event):
-        log.debug("EVENT!!! %s" % event)
-        event.task.show_minibuffer(NextPrevTextMinibuffer(self.active_editor, FindAllCommand, FindNextCommand, FindPrevCommand, prev_match=True))
+        e = self.active_editor
+        event.task.show_minibuffer(NextPrevTextMinibuffer(e, FindAllCommand, FindNextCommand, FindPrevCommand, prev_match=True, initial=e.last_search_settings["find"]))
 
 
 class CancelMinibufferAction(EditorAction):

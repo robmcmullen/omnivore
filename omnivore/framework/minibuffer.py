@@ -204,6 +204,8 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         cmd = self.command_cls(self.start_cursor_index, value, error, **self.kwargs)
         self.editor.process_command(cmd)
         self.search_command = cmd
+        self.editor.last_search_settings["find"] = value
+        print self.editor.last_search_settings
     
     def repeat(self, minibuffer=None):
         if minibuffer is not None:

@@ -5,7 +5,7 @@ from fs.opener import opener
 import wx
 
 # Enthought library imports.
-from traits.api import on_trait_change, Any, Bool, Int, Unicode, Property
+from traits.api import on_trait_change, Any, Bool, Int, Unicode, Property, Dict
 from pyface.tasks.api import Editor
 from pyface.action.api import ActionEvent
 
@@ -64,11 +64,22 @@ class FrameworkEditor(Editor):
     anchor_initial_end_index = Int(0)
 
     anchor_end_index = Int(0)
+    
+    last_search_settings = Dict()
 
     #### trait default values
 
     def _document_default(self):
         return Document()
+    
+    def _last_search_settings_default(self):
+        return {
+            "find": "",
+            "replace": "",
+            "case_sensitive": False,
+            "allow_inverse": False,
+            "regex": False,
+            }
 
     #### property getters
 
