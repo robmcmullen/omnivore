@@ -444,18 +444,21 @@ class FindNextCommand(Command):
         Command.__init__(self)
         self.search_command = search_command
     
-    def get_index(self):
+    def get_index(self, editor):
         cmd = self.search_command
-        cmd.current_match_index += 1
-        index = cmd.current_match_index
-        if index >= len(cmd.all_matches):
-            index = cmd.current_match_index = 0
-        return index
+        cursor_tuple = (editor.cursor_index, 0)
+        match_index = bisect.bisect_right(cmd.all_matches, cursor_tuple)
+        if match_index == cmd.current_match_index:
+            match_index += 1
+        if match_index >= len(cmd.all_matches):
+            match_index = 0
+        cmd.current_match_index = match_index
+        return match_index
     
     def perform(self, editor):
         self.undo_info = undo = UndoInfo()
         undo.flags.changed_document = False
-        index = self.get_index()
+        index = self.get_index(editor)
         all_matches = self.search_command.all_matches
         print "FindNext:", all_matches
         try:
@@ -473,10 +476,12 @@ class FindPrevCommand(FindNextCommand):
     short_name = "findprev"
     pretty_name = "Find Previous"
     
-    def get_index(self):
+    def get_index(self, editor):
         cmd = self.search_command
-        cmd.current_match_index -= 1
-        index = cmd.current_match_index
-        if index < 0:
-            index = cmd.current_match_index = len(cmd.all_matches) - 1
-        return index
+        cursor_tuple = (editor.cursor_index, 0)
+        match_index = bisect.bisect_left(cmd.all_matches, cursor_tuple)
+        match_index -= 1
+        if match_index < 0:
+            match_index = len(cmd.all_matches) - 1
+        cmd.current_match_index = match_index
+        return match_index
