@@ -101,7 +101,9 @@ class TextMinibuffer(Minibuffer):
         the text focus.
         """
         log.debug("TextCtrl focus!!!")
+        s1, s2 = self.text.GetSelection()
         self.text.SetFocus()
+        self.text.SetSelection(s1, s2)
 
     def on_text(self, evt):
         text = evt.GetString()
@@ -139,8 +141,15 @@ class TextMinibuffer(Minibuffer):
         return text, error
     
     def clear_selection(self):
+        # When text is selected, the insertion point is set to start of
+        # selection.  Want to set it to the end of selection so the user can
+        # continue typing after deselected.
         p = self.text.GetInsertionPoint()
+        s1, s2 = self.text.GetSelection()
+        if s1 != s2:
+            p = s2
         self.text.SetSelection(p, p)
+        self.text.SetInsertionPoint(p)
     
     def perform(self):
         """Execute the command associatied with this minibuffer"""
