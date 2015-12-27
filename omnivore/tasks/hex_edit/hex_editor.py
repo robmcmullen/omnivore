@@ -315,6 +315,7 @@ class HexEditor(FrameworkEditor):
             self.invalidate_search()
             self.update_segments_ui()
             self.refresh_panes()
+            self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
     
     def invalidate_search(self):
         self.task.change_minibuffer_editor(self)
