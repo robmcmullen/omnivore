@@ -417,7 +417,7 @@ class FindAllCommand(Command):
                 for searcher in found:
                     self.all_matches.extend(searcher.matches)
                 self.all_matches.sort()
-                print "Find:", self.all_matches
+                #print "Find:", self.all_matches
                 if len(self.all_matches) == 0:
                     undo.flags.message = "Not found"
                 else:
@@ -460,7 +460,7 @@ class FindNextCommand(Command):
         undo.flags.changed_document = False
         index = self.get_index(editor)
         all_matches = self.search_command.all_matches
-        print "FindNext:", all_matches
+        #print "FindNext:", all_matches
         try:
             match = all_matches[index]
             undo.flags.index_range = match
