@@ -200,5 +200,24 @@ class DisassemblyPanel(ByteGrid):
             matches = [(t[0], t[0] + len(t[1])) for t in lines if search_text in t[3]]
         return matches
     
-    def get_popup_actions(self):
-        return [CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction]
+    def get_goto_action(self, r, c):
+        index, _ = self.table.get_index_range(r, c)
+        index_addr = self.table.get_pc(r)
+        d = self.editor.disassembler(self.table.segment.data[index:], index_addr, -index_addr)
+        next_addr, bytes, opstr, memloc, rw, addr_dest = d.disasm()
+        segment_start = self.table.segment.start_addr
+        if addr_dest is not None:
+            if addr_dest < segment_start or addr_dest > segment_start + len(self.table.segment):
+                msg = "Address $%04x not in segment" % addr_dest
+                addr_dest = None
+        else:
+            msg = "No address to jump to"
+        if addr_dest is not None:
+            goto_action = GotoIndexAction(name="Go to address $%04x" % addr_dest, enabled=True, addr_index=addr_dest-segment_start, task=self.task, active_editor=self.task.active_editor)
+        else:
+            goto_action = GotoIndexAction(name=msg, enabled=False, task=self.task)
+        return goto_action
+    
+    def get_popup_actions(self, r, c):
+        goto_action = self.get_goto_action(r, c)
+        return [goto_action, None, CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction]

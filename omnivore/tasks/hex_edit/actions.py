@@ -266,6 +266,14 @@ class GetSegmentFromSelectionAction(EditorAction):
         e.add_user_segment(segment)
 
 
+class GotoIndexAction(Action):
+    addr_index = Int()
+    
+    def perform(self, event):
+        e = self.active_editor
+        e.index_clicked(self.addr_index, 0, None)
+
+
 class IndexRangeAction(EditorAction):
     enabled_name = 'can_copy'
     cmd = None

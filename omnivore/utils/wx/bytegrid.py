@@ -563,7 +563,7 @@ class ByteGrid(Grid.Grid):
         self.updateUICallback = None
         self.Bind(Grid.EVT_GRID_CELL_LEFT_CLICK, self.OnLeftDown)
         self.GetGridWindow().Bind(wx.EVT_MOTION, self.on_motion)
-        self.Bind(Grid.EVT_GRID_CELL_RIGHT_CLICK, self.OnRightDown)
+        self.GetGridWindow().Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
 #        self.Bind(Grid.EVT_GRID_SELECT_CELL, self.OnSelectCell)
 #        self.Bind(Grid.EVT_GRID_RANGE_SELECT, self.OnSelectRange)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
@@ -574,11 +574,12 @@ class ByteGrid(Grid.Grid):
 
     def OnRightDown(self, evt):
         log.debug(self.GetSelectedRows())
-        actions = self.get_popup_actions()
+        r, c = self.get_rc_from_event(evt)
+        actions = self.get_popup_actions(r, c)
         if actions:
             self.editor.popup_context_menu_from_actions(self, actions)
     
-    def get_popup_actions(self):
+    def get_popup_actions(self, r, c):
         return []
 
     def OnLeftDown(self, evt):
@@ -601,26 +602,30 @@ class ByteGrid(Grid.Grid):
             e.cursor_index = e.anchor_initial_start_index
             evt.Skip()
         wx.CallAfter(e.index_clicked, e.cursor_index, 0, None)
+
+    def get_rc_from_event(self, evt):
+        x, y = evt.GetPosition()
+        x1, y1 = self.CalcUnscrolledPosition(x, y)
+        r, c = self.XYToCell(x1, y1)
+        if r < 0:
+            # XYToCell fails with (-1, -1) when the mouse is not within
+            # the grid of cells.  XToCol with the second param True will
+            # return a valid result when it's off the edge, but there's no
+            # equivalent in YToRow (at least in 3.0 classic.  In Phoenix,
+            # YToRow does support that param).
+            c = self.XToCol(x1, True)
+            r = self.YToRow(y1)
+            if r < 0:
+                if y1 < 0:
+                    r = 0
+                else:
+                    r = self.table.GetNumberRows() - 1
+        return r, c
  
     def on_motion(self, evt):
         e = self.editor
         if evt.LeftIsDown():
-            x, y = evt.GetPosition()
-            x, y = self.CalcUnscrolledPosition(x, y)
-            r, c = self.XYToCell(x, y)
-            if r < 0:
-                # XYToCell fails with (-1, -1) when the mouse is not within
-                # the grid of cells.  XToCol with the second param True will
-                # return a valid result when it's off the edge, but there's no
-                # equivalent in YToRow (at least in 3.0 classic.  In Phoenix,
-                # YToRow does support that param).
-                c = self.XToCol(x, True)
-                r = self.YToRow(y)
-                if r < 0:
-                    if y < 0:
-                        r = 0
-                    else:
-                        r = self.table.GetNumberRows() - 1
+            r, c = self.get_rc_from_event(evt)
             index1, index2 = self.table.get_index_range(r, c)
             update = False
             if evt.ShiftDown():
