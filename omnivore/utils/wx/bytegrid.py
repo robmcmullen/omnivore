@@ -22,7 +22,7 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
         self.normal_pen = wx.Pen(editor.background_color, 1, wx.SOLID)
         self.cursor_background = editor.background_color
         self.cursor_brush = wx.Brush(editor.background_color, wx.TRANSPARENT)
-        self.cursor_pen = wx.Pen(editor.unfocused_cursor_color, 1, wx.SOLID)
+        self.cursor_pen = wx.Pen(editor.unfocused_cursor_color, 2, wx.SOLID)
         self.match_background = editor.match_background_color
         self.match_brush = wx.Brush(editor.match_background_color, wx.SOLID)
         self.match_pen = wx.Pen(editor.match_background_color, 1, wx.SOLID)
@@ -97,7 +97,8 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
             if row == r and col == c:
                 dc.SetPen(self.cursor_pen)
                 dc.SetBrush(self.cursor_brush)
-                dc.DrawRectangleRect(rect)
+                x = rect.x+1
+                dc.DrawRectangle(rect.x+1, rect.y+1, rect.width-1, rect.height-1)
 
         dc.DestroyClippingRegion()
 
