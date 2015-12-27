@@ -388,6 +388,7 @@ class FindAllCommand(Command):
         self.error = error
         self.repeat = repeat
         self.reverse = reverse
+        self.current_match_index = -1
     
     def __str__(self):
         return "%s %s" % (self.pretty_name, repr(self.search_text))
