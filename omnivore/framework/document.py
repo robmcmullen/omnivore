@@ -112,3 +112,12 @@ class Document(HasTraits):
             if s.name == name:
                 return i
         return -1
+    
+    def find_segment_in_range(self, addr):
+        """Assuming segments had a start_addr param, find first segment that
+        has addr as a valid address
+        """
+        for i, s in enumerate(self.segments):
+            if addr >= s.start_addr and addr < (s.start_addr + len(s)):
+                return i, s, addr - s.start_addr
+        return -1, None, None

@@ -206,14 +206,22 @@ class DisassemblyPanel(ByteGrid):
         d = self.editor.disassembler(self.table.segment.data[index:], index_addr, -index_addr)
         next_addr, bytes, opstr, memloc, rw, addr_dest = d.disasm()
         segment_start = self.table.segment.start_addr
+        segment_num = -1
+        addr_index = addr_dest-segment_start
         if addr_dest is not None:
             if addr_dest < segment_start or addr_dest > segment_start + len(self.table.segment):
-                msg = "Address $%04x not in segment" % addr_dest
-                addr_dest = None
+                segment_num, segment_dest, addr_index = self.editor.document.find_segment_in_range(addr_dest)
+                if segment_dest is not None:
+                    msg = "Go to address $%04x in segment %s" % (addr_dest, str(segment_dest))
+                else:
+                    msg = "Address $%04x not in any segment" % addr_dest
+                    addr_dest = None
+            else:
+                msg = "Go to address $%04x" % addr_dest
         else:
             msg = "No address to jump to"
         if addr_dest is not None:
-            goto_action = GotoIndexAction(name="Go to address $%04x" % addr_dest, enabled=True, addr_index=addr_dest-segment_start, task=self.task, active_editor=self.task.active_editor)
+            goto_action = GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.task, active_editor=self.task.active_editor)
         else:
             goto_action = GotoIndexAction(name=msg, enabled=False, task=self.task)
         return goto_action

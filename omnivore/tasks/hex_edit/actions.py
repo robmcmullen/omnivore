@@ -269,8 +269,12 @@ class GetSegmentFromSelectionAction(EditorAction):
 class GotoIndexAction(Action):
     addr_index = Int()
     
+    segment_num = Int()
+    
     def perform(self, event):
         e = self.active_editor
+        if self.segment_num >= 0:
+            e.view_segment_number(self.segment_num)
         e.index_clicked(self.addr_index, 0, None)
 
 
