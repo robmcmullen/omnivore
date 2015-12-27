@@ -20,6 +20,99 @@ log = logging.getLogger(__name__)
 # http://www.blog.pythonlibrary.org/2010/04/04/wxpython-grid-tips-and-tricks/
 
 
+class ImageCache(object):
+    def __init__(self, width=-1, height=-1):
+        self.width = width
+        self.height = height
+    
+    def invalidate(self):
+        pass
+    
+    def set_colors(self, editor):
+        self.color = editor.text_color
+        self.font = editor.text_font
+        self.selected_background = editor.highlight_color
+        self.selected_brush = wx.Brush(editor.highlight_color, wx.SOLID)
+        self.selected_pen = wx.Pen(editor.highlight_color, 1, wx.SOLID)
+        self.normal_background = editor.background_color
+        self.normal_brush = wx.Brush(editor.background_color, wx.SOLID)
+        self.normal_pen = wx.Pen(editor.background_color, 1, wx.SOLID)
+        self.cursor_background = editor.background_color
+        self.cursor_brush = wx.Brush(editor.background_color, wx.TRANSPARENT)
+        self.cursor_pen = wx.Pen(editor.unfocused_cursor_color, 2, wx.SOLID)
+        self.match_background = editor.match_background_color
+        self.match_brush = wx.Brush(editor.match_background_color, wx.SOLID)
+        self.match_pen = wx.Pen(editor.match_background_color, 1, wx.SOLID)
+        self.comment_background = editor.comment_background_color
+        self.comment_brush = wx.Brush(editor.comment_background_color, wx.SOLID)
+        self.comment_pen = wx.Pen(editor.comment_background_color, 1, wx.SOLID)
+    
+    def draw_blank(self, dc, rect):
+        dc.SetBrush(wx.Brush(wx.WHITE, wx.SOLID))
+        dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
+        dc.DrawRectangleRect(rect)
+    
+    def draw_text(self, dc, rect, text, style):
+        if style == -1:
+            dc.SetBrush(self.selected_brush)
+            dc.SetPen(self.selected_pen)
+            dc.SetTextBackground(self.selected_background)
+        elif style & 1:
+            dc.SetPen(self.match_pen)
+            dc.SetBrush(self.match_brush)
+            dc.SetTextBackground(self.match_background)
+        elif style & 128:
+            dc.SetPen(self.comment_pen)
+            dc.SetBrush(self.comment_brush)
+            dc.SetTextBackground(self.comment_background)
+        else:
+            dc.SetPen(self.normal_pen)
+            dc.SetBrush(self.normal_brush)
+            dc.SetTextBackground(self.normal_background)
+        dc.SetBackgroundMode(wx.SOLID)
+        dc.DrawRectangleRect(rect)
+        dc.SetTextForeground(self.color)
+        dc.SetFont(self.font)
+        dc.DrawText(text, rect.x+1, rect.y+1)
+
+
+class CachingHexRenderer(Grid.PyGridCellRenderer):
+    def __init__(self, table, editor, cache):
+        """Render data in the specified color and font and fontsize"""
+        Grid.PyGridCellRenderer.__init__(self)
+        self.table = table
+        self.cache = cache
+        cache.set_colors(editor)
+
+    def Draw(self, grid, attr, dc, rect, row, col, isSelected):
+        index, _ = self.table.get_index_range(row, col)
+        if not self.table.is_index_valid(index):
+            self.cache.draw_blank(dc, rect)
+        else:
+            text, style = self.table.get_value_style(row, col)
+            start, end = grid.editor.anchor_start_index, grid.editor.anchor_end_index
+            if start > end:
+                start, end = end, start
+#            print "r,c,index", row, col, index, "grid selection:", start, end
+            is_in_range = start <= index < end
+            if is_in_range:
+                style = -1
+            self.cache.draw_text(dc, rect, text, style)
+
+            r, c = self.table.get_row_col(grid.editor.cursor_index)
+            if row == r and col == c:
+                dc.SetPen(self.cache.cursor_pen)
+                dc.SetBrush(self.cache.cursor_brush)
+                x = rect.x+1
+                if sys.platform == "darwin":
+                    w = rect.width - 2
+                    h = rect.height - 2
+                else:
+                    w = rect.width - 1
+                    h = rect.height - 1
+                dc.DrawRectangle(rect.x+1, rect.y+1, w, h)
+
+
 class ByteTable(ByteGridTable):
     def __init__(self, bytes_per_row=16):
         ByteGridTable.__init__(self)
@@ -83,7 +176,8 @@ class ByteTable(ByteGridTable):
             log.debug('SetValue(%d, %d, "%s")=%d out of range.' % (row, col, value, val))
             return False
 
-    def ResetViewProcessArgs(self, editor, *args):
+    def ResetViewProcessArgs(self, grid, editor, *args):
+        grid.image_cache.invalidate()
         self.set_editor(editor)
 
 
@@ -97,6 +191,10 @@ class HexEditControl(ByteGrid):
         """
         table = ByteTable()
         ByteGrid.__init__(self, parent, task, table, **kwargs)
+        self.image_cache = ImageCache()
+    
+    def get_grid_cell_renderer(self, table, editor):
+        return CachingHexRenderer(table, editor, self.image_cache)
     
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.

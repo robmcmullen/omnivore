@@ -125,7 +125,7 @@ class DisassemblyTable(ByteGridTable):
             return " ".join("%02x" % i for i in line[1])
         return str(line[col + 1])
 
-    def ResetViewProcessArgs(self, editor, *args):
+    def ResetViewProcessArgs(self, grid, editor, *args):
         self.set_editor(editor)
 
 

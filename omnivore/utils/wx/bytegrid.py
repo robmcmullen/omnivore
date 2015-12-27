@@ -29,8 +29,6 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
         self.comment_background = editor.comment_background_color
         self.comment_brush = wx.Brush(editor.comment_background_color, wx.SOLID)
         self.comment_pen = wx.Pen(editor.comment_background_color, 1, wx.SOLID)
-        self.colSize = None
-        self.rowSize = 50
 
     def Draw(self, grid, attr, dc, rect, row, col, isSelected):
         # Here we draw text in a grid cell using various fonts
@@ -180,13 +178,13 @@ class ByteGridTable(Grid.PyGridTableBase):
     def SetValue(self, row, col, value):
         raise NotImplementedError
 
-    def ResetViewProcessArgs(self, *args):
+    def ResetViewProcessArgs(self, grid, *args):
         pass
     
     def set_grid_cell_attr(self, grid, col, attr):
         attr.SetFont(grid.editor.text_font)
         attr.SetBackgroundColour("white")
-        renderer = ByteGridRenderer(self, grid.editor)
+        renderer = grid.get_grid_cell_renderer(self, grid.editor)
         attr.SetRenderer(renderer)
     
     def set_col_attr(self, grid, col, char_width):
@@ -204,7 +202,7 @@ class ByteGridTable(Grid.PyGridTableBase):
         """
         oldrows=self._rows
         oldcols=self._cols
-        self.ResetViewProcessArgs(*args)
+        self.ResetViewProcessArgs(grid, *args)
         log.debug("resetting view for %s" % grid)
         
         grid.BeginBatch()
@@ -580,6 +578,9 @@ class ByteGrid(Grid.Grid):
     
     def __repr__(self):
         return "<%s at 0x%x>" % (self.__class__.__name__, id(self))
+    
+    def get_grid_cell_renderer(self, table, editor):
+        return ByteGridRenderer(table, editor)
 
     def recalc_view(self):
         editor = self.task.active_editor
