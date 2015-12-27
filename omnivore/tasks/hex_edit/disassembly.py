@@ -193,11 +193,12 @@ class DisassemblyPanel(ByteGrid):
     
     def search(self, search_text, match_case=False):
         lines = self.table.lines
+        s = self.table.start_addr
         if not match_case:
             search_text = search_text.lower()
-            matches = [(t[0], t[0] + len(t[1])) for t in lines if search_text in t[3].lower()]
+            matches = [(t[0] - s, t[0] - s + len(t[1])) for t in lines if search_text in t[3].lower()]
         else:
-            matches = [(t[0], t[0] + len(t[1])) for t in lines if search_text in t[3]]
+            matches = [(t[0] - s, t[0] - s + len(t[1])) for t in lines if search_text in t[3]]
         return matches
     
     def get_goto_action(self, r, c):
