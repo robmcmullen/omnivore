@@ -369,6 +369,7 @@ class FrameworkEditor(Editor):
             if flags.select_range:
                 self.anchor_start_index = self.anchor_initial_start_index = flags.index_range[0]
                 self.anchor_end_index = self.anchor_initial_end_index = flags.index_range[1]
+                d.change_count += 1
             visible_range = True
         
         if flags.message:

@@ -83,6 +83,9 @@ class BitviewScroller(wx.ScrolledWindow):
         self.Bind(wx.EVT_CHAR, self.on_char)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
     
+    def __repr__(self):
+        return "<%s at 0x%x>" % (self.__class__.__name__, id(self))
+    
     def is_ready_to_render(self):
         return self.bytes is not None
     

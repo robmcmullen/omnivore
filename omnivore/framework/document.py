@@ -48,6 +48,8 @@ class Document(HasTraits):
     undo_stack_changed = Event
     
     byte_values_changed = Event  # but not the size of the bytes array. That's not handled yet
+    
+    change_count = Int()
 
     #### trait default values
     

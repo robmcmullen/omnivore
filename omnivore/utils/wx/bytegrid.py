@@ -565,6 +565,7 @@ class ByteGrid(Grid.Grid):
         e = self.get_default_cell_editor()
         self.SetDefaultEditor(e)
         self.change_is_valid = True
+        self.last_change_count = 0
 
         self.select_extend_mode = False
         self.allow_range_select = True
@@ -576,6 +577,9 @@ class ByteGrid(Grid.Grid):
 #        self.Bind(Grid.EVT_GRID_RANGE_SELECT, self.OnSelectRange)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.Show(True)
+    
+    def __repr__(self):
+        return "<%s at 0x%x>" % (self.__class__.__name__, id(self))
 
     def recalc_view(self):
         editor = self.task.active_editor
@@ -583,14 +587,23 @@ class ByteGrid(Grid.Grid):
             self.editor = editor
             self.table.ResetView(self, editor)
             self.table.UpdateValues(self)
+            self.last_change_count = editor.document.change_count
     
     def refresh_view(self):
         editor = self.task.active_editor
         if editor is not None:
             if self.editor != editor:
                 self.recalc_view()
+            elif self.IsShown():
+                #self.ForceRefresh()
+                if self.last_change_count == editor.document.change_count:
+                    log.debug("skipping refresh; document change count=%d" % self.last_change_count)
+                else:
+                    log.debug("refreshing! document change count=%d" % self.last_change_count)
+                    self.Refresh()
+                    self.last_change_count = editor.document.change_count
             else:
-                self.ForceRefresh()
+                log.debug("skipping refresh of hidden %s" % self)
     
     def get_default_cell_editor(self):
         return HexCellEditor(self)
@@ -761,7 +774,7 @@ class ByteGrid(Grid.Grid):
     def select_index(self, cursor):
         self.ClearSelection()
         self.goto_index(cursor)
-        self.ForceRefresh()
+        self.refresh_view()
     
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.
