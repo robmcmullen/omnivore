@@ -103,7 +103,7 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
                     h = rect.height - 2
                 else:
                     w = rect.width - 1
-                    h = rect.width - 1
+                    h = rect.height - 1
                 dc.DrawRectangle(rect.x+1, rect.y+1, w, h)
 
         dc.DestroyClippingRegion()
