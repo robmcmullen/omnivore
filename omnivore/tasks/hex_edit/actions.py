@@ -13,6 +13,7 @@ from pyface.tasks.action.api import TaskAction, EditorAction
 from omnivore.framework.actions import *
 from commands import *
 from omnivore.utils.wx.antic_colors import AnticColorDialog
+from omnivore.utils.wx.dialogs import HexEntryDialog
 from omnivore.framework.minibuffer import *
 
 class FontChoiceGroup(TaskDynamicSubmenuGroup):
@@ -278,6 +279,23 @@ class GotoIndexAction(Action):
         e.index_clicked(self.addr_index, 0, None)
 
 
+class SegmentGotoAction(EditorAction):
+    name = "Goto Address..."
+    accelerator = 'Alt+G'
+
+    def perform(self, event):
+        e = self.active_editor
+        dialog = HexEntryDialog(e.window.control, "Enter address value: (prefix with 0x or $ for hex)", "Goto Address in a Segment")
+        addr = dialog.show_and_get_value()
+        if addr is not None:
+            segment_num, segment, index = e.document.find_segment_in_range(addr)
+            if segment_num >= 0:
+                e.view_segment_number(segment_num)
+                e.index_clicked(index, 0, None)
+            else:
+                e.task.status_bar.message = "Address $%04x not valid in any segment" % addr
+
+
 class IndexRangeAction(EditorAction):
     enabled_name = 'can_copy'
     cmd = None
@@ -328,25 +346,8 @@ class IndexRangeValueAction(IndexRangeAction):
         return self.cmd.pretty_name + "..."
     
     def get_value(self, editor):
-        import wx
-        dialog = wx.TextEntryDialog(editor.window.control, "Enter byte value: (prefix with 0x or $ for hex)", "Byte Value")
-
-        result = dialog.ShowModal()
-        if result == wx.ID_OK:
-            text = dialog.GetValue()
-            try:
-                if text.startswith("0x"):
-                    value = int(text[2:], 16)
-                elif text.startswith("$"):
-                    value = int(text[1:], 16)
-                else:
-                    value = int(text)
-            except (ValueError, TypeError):
-                value = None
-        else:
-            value = None
-        dialog.Destroy()
-        return value
+        dialog = HexEntryDialog(editor.window.control, "Enter byte value: (prefix with 0x or $ for hex)", "Byte Value")
+        return dialog.show_and_get_value()
         
     def show_dialog(self, editor):
         e = editor

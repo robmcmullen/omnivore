@@ -188,6 +188,8 @@ class HexEditTask(FrameworkTask):
     def get_actions_Menu_Segments_SegmentGroup(self):
         return [
             SegmentChoiceGroup(id="a2", separator=True),
+            Separator(),
+            SegmentGotoAction(),
             ]
     
     def get_actions_Menu_Bytes_HexModifyGroup(self):
