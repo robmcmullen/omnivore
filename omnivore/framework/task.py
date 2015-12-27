@@ -567,6 +567,7 @@ class FrameworkTask(Task):
         repeat = False
         if info.minibuffer is not None:
             if info.minibuffer.is_repeat(minibuffer):
+                log.debug("Reusing old minibuffer control: %s" % info.minibuffer.control)
                 repeat = True
             else:
                 log.debug("Removing old minibuffer control: %s" % info.minibuffer.control)

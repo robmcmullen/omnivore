@@ -138,6 +138,10 @@ class TextMinibuffer(Minibuffer):
             text = None
         return text, error
     
+    def clear_selection(self):
+        p = self.text.GetInsertionPoint()
+        self.text.SetSelection(p, p)
+    
     def perform(self):
         """Execute the command associatied with this minibuffer"""
         value, error = self.get_result()
@@ -166,6 +170,16 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         self.prev_match = prev_match
         self.segment = editor.segment
     
+    def create_control(self, parent, **kwargs):
+        TextMinibuffer.create_control(self, parent, **kwargs)
+
+        if self.initial:
+            self.perform()
+            # If using a previous search, select all text in case user wants to
+            # start over again
+            self.text.SetInsertionPointEnd()
+            self.text.SetSelection(0, self.text.GetLastPosition())
+    
     def change_editor(self, editor):
         self.segment.clear_style_bits(match=True)
         self.editor = editor
@@ -190,11 +204,13 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         if self.search_command is not None:
             cmd = self.next_cls(self.search_command)
             self.editor.process_command(cmd)
+            self.clear_selection()
     
     def prev(self):
         if self.search_command is not None:
             cmd = self.prev_cls(self.search_command)
             self.editor.process_command(cmd)
+            self.clear_selection()
     
     def perform(self):
         """Execute the command associatied with this minibuffer"""
@@ -206,6 +222,7 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         self.search_command = cmd
         self.editor.last_search_settings["find"] = value
         print self.editor.last_search_settings
+        self.clear_selection()
     
     def repeat(self, minibuffer=None):
         if minibuffer is not None:
