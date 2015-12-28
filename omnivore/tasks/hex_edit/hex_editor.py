@@ -76,6 +76,12 @@ class HexEditor(FrameworkEditor):
     empty_color = Any(None)
     
     text_font = Any(None)
+    
+    last_cursor_index = Int(0)
+    
+    last_anchor_start_index = Int(0)
+    
+    last_anchor_end_index = Int(0)
 
     #### Events ####
 
@@ -191,7 +197,12 @@ class HexEditor(FrameworkEditor):
         self.font_map.recalc_view()
         self.memory_map.recalc_view()
     
+    def check_document_change(self):
+        if self.last_cursor_index != self.cursor_index or self.last_anchor_start_index != self.anchor_start_index or self.last_anchor_end_index != self.anchor_end_index:
+            self.document.change_count += 1
+    
     def refresh_panes(self):
+        self.check_document_change()
         self.control.refresh_view()
         self.disassembly.refresh_view()
         self.byte_graphics.refresh_view()
@@ -402,6 +413,7 @@ class HexEditor(FrameworkEditor):
     
     def index_clicked(self, index, bit, control):
         self.cursor_index = index
+        self.check_document_change()
         if control != self.control:
             self.control.select_index(index)
         if control != self.disassembly:
