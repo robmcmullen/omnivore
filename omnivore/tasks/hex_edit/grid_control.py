@@ -24,9 +24,10 @@ class ImageCache(object):
     def __init__(self, width=-1, height=-1):
         self.width = width
         self.height = height
+        self.cache = {}
     
     def invalidate(self):
-        pass
+        self.cache = {}
     
     def set_colors(self, editor):
         self.color = editor.text_color
@@ -53,6 +54,19 @@ class ImageCache(object):
         dc.DrawRectangleRect(rect)
     
     def draw_text(self, dc, rect, text, style):
+        k = (text, style, rect.width, rect.height)
+        try:
+            bmp = self.cache[k]
+        except KeyError:
+            bmp = wx.EmptyBitmap(rect.width, rect.height)
+            mdc = wx.MemoryDC()
+            mdc.SelectObject(bmp)
+            r = wx.Rect(0, 0, rect.width, rect.height)
+            self.draw_text_to_dc(mdc, r, text, style)
+            self.cache[k] = bmp
+        dc.DrawBitmap(bmp, rect.x, rect.y)
+    
+    def draw_text_to_dc(self, dc, rect, text, style):
         if style == -1:
             dc.SetBrush(self.selected_brush)
             dc.SetPen(self.selected_pen)
