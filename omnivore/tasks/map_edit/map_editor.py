@@ -48,11 +48,17 @@ class MapEditor(HexEditor):
         self.tile_map.Refresh()
         self.character_set.Refresh()
     
-    def refresh_panes(self):
+    def reconfigure_panes(self):
         self.control.recalc_view()
         self.memory_map.recalc_view()
         self.tile_map.recalc_view()
         self.character_set.recalc_view()
+    
+    def refresh_panes(self):
+        self.control.refresh_view()
+        self.memory_map.refresh_view()
+        self.tile_map.refresh_view()
+        self.character_set.refresh_view()
 
     def init_user_segments(self, doc):
         """ Set up any pre-calculated segments based on the type or content of
