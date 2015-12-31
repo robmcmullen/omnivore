@@ -840,6 +840,7 @@ class CharacterSetViewer(FontMapScroller):
     def __init__(self, parent, task, bytes_per_row=16, font_mapping=0, command=None, **kwargs):
         FontMapScroller.__init__(self, parent, task, bytes_per_row, font_mapping, command, **kwargs)
         self.bytes = np.arange(256, dtype=np.uint8)
+        self.style = np.zeros(256, dtype=np.uint8)
         self.start_addr = 0
         self.selected_char = -1
     
