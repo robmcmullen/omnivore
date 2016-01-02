@@ -1,6 +1,3 @@
-# Copyright (c) 2008-2013 by Enthought, Inc.
-# All rights reserved.
-
 # NOTE: For py2exe, dependencies can't be installed using python eggs.
 # Pip/distutils will do automatic dependency installation using eggs by
 # default, but it seems to be able to be disabled using:
@@ -250,8 +247,8 @@ if 'nsis' not in sys.argv:
             Operating System :: POSIX
             Operating System :: Unix
             Programming Language :: Python
-            Topic :: Software Development :: Libraries
-            Topic :: Text Editors
+            Topic :: Utilities
+            Topic :: Software Development :: Disassemblers
             """.splitlines() if len(c.strip()) > 0],
         description = "The Atari 8-bit binary editor sponsored by the Player/Missile Podcast.",
         long_description = open('README.rst').read(),
