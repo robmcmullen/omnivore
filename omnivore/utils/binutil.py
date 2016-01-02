@@ -32,6 +32,7 @@ class DefaultSegment(object):
         self.error = error
         self.name = name
         self.page_size = -1
+        self.map_width = 40
         self._search_copy = None
     
     def __str__(self):

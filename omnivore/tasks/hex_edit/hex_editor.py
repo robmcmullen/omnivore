@@ -18,7 +18,7 @@ from omnivore.utils.file_guess import FileMetadata
 import omnivore.utils.wx.fonts as fonts
 import omnivore.utils.colors as colors
 from omnivore.utils.dis6502 import Atari800Disassembler
-from omnivore.utils.binutil import known_segment_parsers, ATRSegmentParser, XexSegmentParser, DefaultSegment
+from omnivore.utils.binutil import known_segment_parsers, ATRSegmentParser, XexSegmentParser, DefaultSegment, AnticFontSegment
 from omnivore.utils.searchutil import known_searchers
 
 from commands import PasteCommand
@@ -133,6 +133,23 @@ class HexEditor(FrameworkEditor):
         self.control = self._create_control(parent)
         self.init_fonts(self.window.application)
         self.task.fonts_changed = self.font_list
+
+    def init_user_segments(self, doc):
+        """ Set up any pre-calculated segments based on the type or content of
+        the just-loaded document.
+        """
+        state = doc.bytes[0:6] == [0xff, 0xff, 0x80, 0x2a, 0xff, 0x8a]
+        if state.all():
+            print "Found getaway.xex!!!"
+            font_segment = AnticFontSegment(0x2b00, doc.bytes[0x086:0x486], name="Playfield font")
+            doc.add_user_segment(font_segment)
+            segment = DefaultSegment(0x4b00, doc.bytes[0x2086:0x6086], name="Playfield map")
+            segment.map_width = 256
+            doc.add_user_segment(segment)
+            colors = [0x46, 0xD6, 0x74, 0x0C, 0x14, 0x86, 0x02, 0xB6, 0xBA]
+            self.update_colors(colors)
+            self.set_font(font_segment.antic_font, 5)
+            self.initial_segment = segment
 
     def rebuild_document_properties(self):
         self.find_segment_parser([ATRSegmentParser, XexSegmentParser])
@@ -322,6 +339,9 @@ class HexEditor(FrameworkEditor):
         self.find_segment_parser([parser])
         self.update_panes()
     
+    def view_segment_set_width(self, segment):
+        self.map_width = 8
+    
     def view_segment_number(self, number):
         doc = self.document
         num = number if number < len(doc.segments) else 0
@@ -332,6 +352,7 @@ class HexEditor(FrameworkEditor):
             self.segment_number = num
             self.invalidate_search()
             self.update_segments_ui()
+            self.view_segment_set_width(new_segment)
             self.reconfigure_panes()
             self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
     

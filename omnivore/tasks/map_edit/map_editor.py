@@ -14,7 +14,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 from omnivore.tasks.hex_edit.hex_editor import HexEditor
 from omnivore.framework.document import Document
 from omnivore.utils.wx.bitviewscroller import FontMapScroller
-from omnivore.utils.binutil import ATRSegmentParser, XexSegmentParser, DefaultSegment, AnticFontSegment
+from omnivore.utils.binutil import ATRSegmentParser, XexSegmentParser
 from omnivore.tasks.hex_edit.commands import ChangeByteCommand
 
 
@@ -59,26 +59,12 @@ class MapEditor(HexEditor):
         self.memory_map.refresh_view()
         self.tile_map.refresh_view()
         self.character_set.refresh_view()
-
-    def init_user_segments(self, doc):
-        """ Set up any pre-calculated segments based on the type or content of
-        the just-loaded document.
-        """
-        state = doc.bytes[0:6] == [0xff, 0xff, 0x80, 0x2a, 0xff, 0x8a]
-        if state.all():
-            print "Found getaway.xex!!!"
-            font = AnticFontSegment(0x2b00, doc.bytes[0x086:0x486], name="Playfield font")
-            doc.add_user_segment(font)
-            map = DefaultSegment(0x4b00, doc.bytes[0x2086:0x6086], name="Playfield map")
-            doc.add_user_segment(map)
-            colors = [0x46, 0xD6, 0x74, 0x0C, 0x14, 0x86, 0x02, 0xB6, 0xBA]
-            self.update_colors(colors)
-            self.set_font(font.antic_font, 5)
-            self.set_map_width(256)
-            self.initial_segment = map
     
     def rebuild_document_properties(self):
         self.find_segment_parser([ATRSegmentParser, XexSegmentParser], "Playfield map")
+    
+    def view_segment_set_width(self, segment):
+        self.map_width = segment.map_width
     
     ###########################################################################
     # Trait handlers.
