@@ -232,11 +232,11 @@ if 'nsis' not in sys.argv:
 
     setup(
         name = 'Omnivore',
-        version = omnivore.__version__,
+        version = full_version,
         author = omnivore.__author__,
         author_email = omnivore.__author_email__,
         url = omnivore.__url__,
-        download_url = ('%s-%s.tar.gz' % (omnivore.__download_url__, omnivore.__version__)),
+        download_url = ('%s-%s.tar.gz' % (omnivore.__download_url__, full_version)),
         classifiers = [c.strip() for c in """\
             Development Status :: 3 - Alpha
             Intended Audience :: Developers
@@ -257,7 +257,7 @@ if 'nsis' not in sys.argv:
         install_requires = omnivore.__requires__,
         setup_requires = ["numpy"],
         license = "BSD",
-        packages = find_packages(),
+        packages = packages,
         package_data = package_data,
         data_files=data_files,
         
@@ -282,8 +282,8 @@ if 'nsis' not in sys.argv:
                     CFBundleTypeExtensions=["xex", "atr", "xfd", "obx"],
                     CFBundleTypeName="Document",
                     CFBundleTypeRole="Editor",
-                    CFBundleShortVersionString=omnivore.__version__,
-                    CFBundleGetInfoString="Omnivore %s" % omnivore.__version__,
+                    CFBundleShortVersionString=full_version,
+                    CFBundleGetInfoString="Omnivore %s" % full_version,
                     CFBundleExecutable="Omnivore",
                     CFBUndleIdentifier="com.playermissile",
                 )
