@@ -116,18 +116,25 @@ class FrameworkEditor(Editor):
         """
         pass
 
-    def view_document(self, doc):
+    def view_document(self, doc, old_editor=None):
         """ Change the view to the specified document
         """
         doc.last_task_id = self.task.id
         self.document = self.task.window.application.add_document(doc)
         self.rebuild_document_properties()
+        if old_editor is not None:
+            self.copy_view_properties(old_editor)
         self.update_panes()
         self.document.undo_stack_changed = True
         self.task.document_changed = self.document
     
     def rebuild_document_properties(self):
         """ Recreate any editor attributes for the new document
+        """
+        pass
+    
+    def copy_view_properties(self, old_editor):
+        """ Copy editor properties to the new view
         """
         pass
     

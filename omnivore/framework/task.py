@@ -176,7 +176,7 @@ class FrameworkTask(Task):
         elif hasattr(source, 'document_id'):
             editor.view_document(source)
         else:
-            editor.view_document(source.document)
+            editor.view_document(source.document, source)
         self.activated()
     
     def find_tab_or_open(self, document):

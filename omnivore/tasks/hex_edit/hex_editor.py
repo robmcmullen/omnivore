@@ -154,6 +154,10 @@ class HexEditor(FrameworkEditor):
     def rebuild_document_properties(self):
         self.find_segment_parser([ATRSegmentParser, XexSegmentParser])
     
+    def copy_view_properties(self, old_editor):
+        self.update_colors(old_editor.playfield_colors)
+        self.set_font(old_editor.antic_font_data, old_editor.font_mode)
+    
     def document_length(self):
         return len(self.segment)
     
