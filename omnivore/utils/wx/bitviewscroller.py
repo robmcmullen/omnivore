@@ -896,6 +896,12 @@ class CharacterSetViewer(FontMapScroller):
         else:
             evt.Skip()
     
+    def on_left_down(self, evt):
+        e = self.editor
+        byte, bit, inside = self.event_coords_to_byte(evt)
+        if inside:
+            print "selected char:", byte
+        evt.Skip()
 
 class MemoryMapScroller(BitviewScroller):
     def __init__(self, parent, task, **kwargs):
