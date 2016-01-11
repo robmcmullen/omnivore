@@ -299,7 +299,7 @@ class HexEditor(FrameworkEditor):
         if width is None:
             width = self.map_width
         self.map_width = width
-        self.font_map.set_scale(self.map_width)
+        self.font_map.recalc_view()
     
     def load_font(self, filename):
         try:
@@ -337,6 +337,8 @@ class HexEditor(FrameworkEditor):
         self.segment_number = index
         self.segment_parser = parser
         self.update_segments_ui()
+        new_segment = self.document.segments[index]
+        self.view_segment_set_width(new_segment)
         self.select_none(refresh=False)
     
     def set_segment_parser(self, parser):

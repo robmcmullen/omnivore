@@ -104,6 +104,7 @@ class BitviewScroller(wx.ScrolledWindow):
             self.background_color = self.editor.empty_color
             self.set_colors()
             self.set_font()
+            self.update_bytes_per_row()
             self.set_scale()
     
     def refresh_view(self):
@@ -273,7 +274,10 @@ class BitviewScroller(wx.ScrolledWindow):
         self.visible_rows = ((h + self.zoom - 1) / self.zoom)
         log.debug("x, y, w, h, start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows]))
 
-    def set_scale(self, width=None):
+    def update_bytes_per_row(self):
+        pass
+
+    def set_scale(self):
         """Creates new image at specified zoom factor.
 
         Creates a new image that is to be used as the background of
@@ -281,8 +285,6 @@ class BitviewScroller(wx.ScrolledWindow):
         image, which could lead to memory problems if the image is
         really huge and the zoom factor is large.
         """
-        if width is not None:
-            self.bytes_per_row = width
         if self.bytes is not None:
             self.calc_scale_from_bytes()
         else:
@@ -543,7 +545,6 @@ class FontMapScroller(BitviewScroller):
     
     def __init__(self, parent, task, bytes_per_row=8, font_mapping=1, command=None, **kwargs):
         BitviewScroller.__init__(self, parent, task, **kwargs)
-        self.bytes_per_row = bytes_per_row
         self.zoom = 2
         self.font = None
         self.command_cls = command
@@ -553,6 +554,9 @@ class FontMapScroller(BitviewScroller):
     
     def is_ready_to_render(self):
         return self.font is not None
+
+    def update_bytes_per_row(self):
+        self.bytes_per_row = self.editor.map_width
     
     def calc_scale_from_bytes(self):
         self.total_rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
