@@ -18,7 +18,7 @@ class MemoryMapPane(FrameworkPane):
     name = 'Page Map'
     
     def create_contents(self, parent):
-        control = MemoryMapScroller(parent, self.task, size=(600,50))
+        control = MemoryMapScroller(parent, self.task, size=(64,50))
         return control
 
 
