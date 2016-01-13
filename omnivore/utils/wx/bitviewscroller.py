@@ -546,6 +546,7 @@ class FontMapScroller(BitviewScroller):
     def __init__(self, parent, task, bytes_per_row=8, font_mapping=1, command=None, **kwargs):
         BitviewScroller.__init__(self, parent, task, **kwargs)
         self.zoom = 2
+        self.bytes_per_row = bytes_per_row
         self.font = None
         self.command_cls = command
         self.set_font_mapping(font_mapping)
