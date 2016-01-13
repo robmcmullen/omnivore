@@ -66,6 +66,8 @@ class FrameworkEditor(Editor):
     anchor_end_index = Int(0)
     
     last_search_settings = Dict()
+    
+    mouse_mode = Any
 
     #### trait default values
 

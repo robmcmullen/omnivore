@@ -21,6 +21,7 @@ import pane_layout
 import omnivore.utils.wx.fonts as fonts
 from omnivore.utils.binutil import known_segment_parsers
 import omnivore.utils.colors as colors
+from omnivore.framework.toolbar import get_toolbar_group
 
 
 class MapEditTask(HexEditTask):
@@ -67,6 +68,12 @@ class MapEditTask(HexEditTask):
                            ),
             ]
         return actions
+
+    def _tool_bars_default(self):
+        toolbars = []
+        toolbars.append(get_toolbar_group("Modes", MapEditor.valid_mouse_modes))
+        toolbars.extend(HexEditTask._tool_bars_default(self))
+        return toolbars
 
     ###########################################################################
     # 'FrameworkTask' interface.

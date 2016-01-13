@@ -74,12 +74,15 @@ class BitviewScroller(wx.ScrolledWindow):
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_resize)
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
+        self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
         self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.Bind(wx.EVT_LEFT_DCLICK, self.on_left_dclick)
         self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
         self.Bind(wx.EVT_SET_FOCUS, self.on_focus)
         self.Bind(wx.EVT_KILL_FOCUS, self.on_focus_lost)
+        self.Bind(wx.EVT_ENTER_WINDOW, self.on_mouse_enter)
+        self.Bind(wx.EVT_LEAVE_WINDOW, self.on_mouse_leave)
         self.Bind(wx.EVT_CHAR, self.on_char)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
     
@@ -400,7 +403,10 @@ class BitviewScroller(wx.ScrolledWindow):
 
         evt.Skip()
 
-    def on_left_down(self, evt):
+    def on_left_up(self, evt):
+        evt.Skip()
+
+    def set_cursor_pos_from_event(self, evt):
         e = self.editor
         byte, bit, inside = self.event_coords_to_byte(evt)
         if inside:
@@ -415,51 +421,57 @@ class BitviewScroller(wx.ScrolledWindow):
             else:
                 e.set_cursor(byte, False)
             wx.CallAfter(e.index_clicked, byte, bit, None)
+
+    def on_left_down(self, evt):
+        self.set_cursor_pos_from_event(evt)
         evt.Skip()
 
     def on_left_dclick(self, evt):
         self.on_left_down(evt)
  
-    def on_motion(self, evt):
+    def set_selection_from_event(self, evt):
         e = self.editor
-        if e is not None and evt.LeftIsDown():
-            byte, bit, inside = self.event_coords_to_byte(evt)
-            if inside:
-                index1 = byte
-                index2 = byte + 1
+        byte, bit, inside = self.event_coords_to_byte(evt)
+        if inside:
+            index1 = byte
+            index2 = byte + 1
 #                print index1, index2, e.anchor_start_index, e.anchor_end_index
-                update = False
-                if evt.ShiftDown():
-                    if not self.select_extend_mode:
-                        # Shift pressed during drag; turn into extend mode
-                        e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
-                    if index1 < e.anchor_initial_start_index:
-                        e.anchor_start_index = index1
-                        e.anchor_end_index = e.anchor_initial_end_index
-                        e.cursor_index = index1
-                        update = True
-                    else:
+            update = False
+            if evt.ShiftDown():
+                if not self.select_extend_mode:
+                    # Shift pressed during drag; turn into extend mode
+                    e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
+                if index1 < e.anchor_initial_start_index:
+                    e.anchor_start_index = index1
+                    e.anchor_end_index = e.anchor_initial_end_index
+                    e.cursor_index = index1
+                    update = True
+                else:
+                    e.anchor_start_index = e.anchor_initial_start_index
+                    e.anchor_end_index = index2
+                    e.cursor_index = index2
+                    update = True
+            else:
+                if e.anchor_start_index <= index1:
+                    if index2 != e.anchor_end_index:
                         e.anchor_start_index = e.anchor_initial_start_index
                         e.anchor_end_index = index2
                         e.cursor_index = index2
                         update = True
                 else:
-                    if e.anchor_start_index <= index1:
-                        if index2 != e.anchor_end_index:
-                            e.anchor_start_index = e.anchor_initial_start_index
-                            e.anchor_end_index = index2
-                            e.cursor_index = index2
-                            update = True
-                    else:
-                        if index1 != e.anchor_end_index:
-                            e.anchor_start_index = e.anchor_initial_end_index
-                            e.anchor_end_index = index1
-                            e.cursor_index = index1
-                            update = True
-                self.select_extend_mode = evt.ShiftDown()
-                if update:
-                    wx.CallAfter(e.index_clicked, e.anchor_end_index, bit, None)
+                    if index1 != e.anchor_end_index:
+                        e.anchor_start_index = e.anchor_initial_end_index
+                        e.anchor_end_index = index1
+                        e.cursor_index = index1
+                        update = True
+            self.select_extend_mode = evt.ShiftDown()
+            if update:
+                wx.CallAfter(e.index_clicked, e.anchor_end_index, bit, None)
 #                print "motion: byte, start, end", byte, e.anchor_start_index, e.anchor_end_index
+ 
+    def on_motion(self, evt):
+        if self.editor is not None and evt.LeftIsDown():
+            self.set_selection_from_event(evt)
         evt.Skip()
 
     def on_paint(self, evt):
@@ -487,6 +499,12 @@ class BitviewScroller(wx.ScrolledWindow):
     
     def on_focus_lost(self, evt):
         log.debug("on_focus_lost!")
+    
+    def on_mouse_enter(self, evt):
+        evt.Skip()
+    
+    def on_mouse_leave(self, evt):
+        evt.Skip()
     
     def on_char(self, evt):
         log.debug("on_char!")
@@ -866,6 +884,14 @@ class CharacterSetViewer(FontMapScroller):
             wx.CallAfter(self.Refresh)
         evt.Skip()
  
+    def on_left_dclick(self, evt):
+        e = self.editor
+        byte, bit, inside = self.event_coords_to_byte(evt)
+        if inside:
+            self.selected_char = byte
+            wx.CallAfter(self.Refresh)
+        evt.Skip()
+    
     def on_motion(self, evt):
         e = self.editor
         if e is not None and evt.LeftIsDown():
