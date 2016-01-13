@@ -155,7 +155,32 @@ class SelectMode(MouseHandler):
             self.canvas.zoom_out()
         elif amount > 0:
             self.canvas.zoom_in()
-        
+
+
+class DrawMode(SelectMode):
+    icon = "pencil.png"
+    menu_item_name = "Draw"
+    menu_item_tooltip = "Draw with current tile"
+
+    def process_left_down(self, evt):
+        c = self.canvas
+        e = c.editor
+        if e is None:
+            return
+        bytes = e.get_current_draw_pattern()
+        if not bytes:
+            return
+        print "drawing ", bytes
+        byte, bit, inside = c.event_coords_to_byte(evt)
+        if inside:
+            e.set_cursor(byte, False)
+            index = e.cursor_index
+            cmd = ChangeByteCommand(e.segment, index, index+len(bytes), bytes, False, True)
+            e.process_command(cmd)
+
+    def process_mouse_motion_down(self, evt):
+        self.process_left_down(evt)
+
 
 class MapEditor(HexEditor):
     """ The toolkit specific implementation of a HexEditor.  See the
@@ -163,7 +188,7 @@ class MapEditor(HexEditor):
     """
     ##### class attributes
     
-    valid_mouse_modes = [SelectMode]
+    valid_mouse_modes = [SelectMode, DrawMode]
     
     ##### traits
     
@@ -210,6 +235,15 @@ class MapEditor(HexEditor):
     
     def view_segment_set_width(self, segment):
         self.map_width = segment.map_width
+    
+    def update_mouse_mode(self):
+        self.control.set_mouse_mode(self.mouse_mode)
+    
+    def get_current_draw_pattern(self):
+        c = self.character_set.selected_char
+        if c < 0:
+            return []
+        return [c]
     
     ###########################################################################
     # Trait handlers.

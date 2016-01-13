@@ -310,6 +310,11 @@ class FrameworkEditor(Editor):
         any search params should be cleared."""
         pass
     
+    def update_mouse_mode(self):
+        """Hook for subclasses to process the change to a new mouse mode 
+        """
+        pass
+    
     # Command processor
 
     def update_undo_redo(self):
