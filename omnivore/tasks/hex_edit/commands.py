@@ -27,6 +27,7 @@ class SetDataCommand(Command):
             end_index += 1
         self.end_index = end_index
         self.cursor_at_end = False
+        self.ignore_if_same_bytes = False
     
     def __str__(self):
         if self.end_index - self.start_index > 1:
@@ -47,6 +48,8 @@ class SetDataCommand(Command):
             undo.flags.cursor_index = i2
         old_data = self.segment[i1:i2].copy()
         self.segment[i1:i2] = self.get_data(old_data)
+        if self.ignore_if_same_bytes and self.segment[i1:i2] == old_data:
+            undo.flags.success = False
         undo.data = (old_data, )
         return undo
 
@@ -65,12 +68,14 @@ class ChangeByteCommand(SetDataCommand):
             ('end_index', 'int'),
             ('bytes', 'string'),
             ('cursor_at_end', 'bool'),
+            ('ignore_if_same_bytes', 'bool'),
             ]
     
-    def __init__(self, segment, start_index, end_index, bytes, cursor_at_end=False):
+    def __init__(self, segment, start_index, end_index, bytes, cursor_at_end=False, ignore_if_same_bytes=False):
         SetDataCommand.__init__(self, segment, start_index, end_index)
         self.data = bytes
         self.cursor_at_end = cursor_at_end
+        self.ignore_if_same_bytes = ignore_if_same_bytes
     
     def get_data(self, orig):
         return self.data
