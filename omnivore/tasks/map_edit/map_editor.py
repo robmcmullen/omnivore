@@ -167,7 +167,7 @@ class DrawMode(SelectMode):
         e = c.editor
         if e is None:
             return
-        bytes = e.get_current_draw_pattern()
+        bytes = e.draw_pattern
         if not bytes:
             return
         print "drawing ", bytes
@@ -193,6 +193,8 @@ class MapEditor(HexEditor):
     ##### traits
     
     antic_tile_map = Any
+    
+    draw_pattern = Any(None)
     
     ##### Default traits
     
@@ -239,11 +241,17 @@ class MapEditor(HexEditor):
     def update_mouse_mode(self):
         self.control.set_mouse_mode(self.mouse_mode)
     
-    def get_current_draw_pattern(self):
-        c = self.character_set.selected_char
-        if c < 0:
-            return []
-        return [c]
+    def set_current_draw_pattern(self, pattern, control):
+        try:
+            iter(pattern)
+        except TypeError:
+            self.draw_pattern = [pattern]
+        else:
+            self.draw_pattern = pattern
+        if control != self.tile_map:
+            self.tile_map.clear_tile_selection()
+        if control != self.character_set:
+            self.character_set.clear_tile_selection()
     
     ###########################################################################
     # Trait handlers.

@@ -83,6 +83,7 @@ class TileListControl(wx.Panel):
         self.Fit()
         
         self.parse_tile_map([("test", np.arange(0,10, dtype=np.uint8))])
+        self.current_tile = -1
         self.setup_tiles()
         self.zoom = 2
 
@@ -110,7 +111,7 @@ class TileListControl(wx.Panel):
         self.cat.Set(cats)
         self.cat.SetSelection(0)
         self.tile_list.SetItemCount(len(self.items))
-        self.tile_list.SetSelection(0)
+        self.tile_list.SetSelection(self.current_tile)
     
     def on_category(self, event):
         cat = event.GetSelection()
@@ -121,8 +122,15 @@ class TileListControl(wx.Panel):
         p = event.GetPosition()
         index = self.tile_list.HitTest(p)
         print p, index, self.items[index]
-        self.change_tile(self.items[index])
-        self.tile_list.SetSelection(index)
+        e = self.editor
+        if e is not None:
+            self.current_tile = index
+            e.set_current_draw_pattern(self.items[index].get_bytes(), self)
+            self.tile_list.SetSelection(index)
+    
+    def clear_tile_selection(self):
+        self.current_tile = -1
+        self.tile_list.SetSelection(-1)
     
     def on_tile(self, event):
         index = event.GetInt()

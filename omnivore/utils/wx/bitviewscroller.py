@@ -867,6 +867,16 @@ class CharacterSetViewer(FontMapScroller):
         self.start_addr = 0
         self.selected_char = -1
     
+    def set_selected_char(self, index):
+        self.selected_char = index
+        e = self.editor
+        if e is not None:
+            e.set_current_draw_pattern(self.selected_char, self)
+    
+    def clear_tile_selection(self):
+        self.selected_char = -1
+        self.Refresh()
+    
     def recalc_view(self):
         editor = self.task.active_editor
         if editor is not None:
@@ -880,7 +890,7 @@ class CharacterSetViewer(FontMapScroller):
         e = self.editor
         byte, bit, inside = self.event_coords_to_byte(evt)
         if inside:
-            self.selected_char = byte
+            self.set_selected_char(byte)
             wx.CallAfter(self.Refresh)
         evt.Skip()
  
@@ -888,7 +898,7 @@ class CharacterSetViewer(FontMapScroller):
         e = self.editor
         byte, bit, inside = self.event_coords_to_byte(evt)
         if inside:
-            self.selected_char = byte
+            self.set_selected_char(byte)
             wx.CallAfter(self.Refresh)
         evt.Skip()
     
@@ -912,7 +922,8 @@ class CharacterSetViewer(FontMapScroller):
         return self.selected_char, self.selected_char + 1
     
     def process_delta_index(self, delta_index):
-        _, self.selected_char = divmod(self.selected_char + delta_index, 256)
+        _, byte = divmod(self.selected_char + delta_index, 256)
+        self.set_selected_char(byte)
         self.Refresh()
     
     def on_char_hook(self, evt):
