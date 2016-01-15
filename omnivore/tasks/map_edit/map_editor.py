@@ -251,6 +251,9 @@ class MapEditor(HexEditor):
         if control != self.character_set:
             self.character_set.clear_tile_selection()
     
+    def perform_idle(self):
+        pass
+    
     ###########################################################################
     # Trait handlers.
     ###########################################################################
