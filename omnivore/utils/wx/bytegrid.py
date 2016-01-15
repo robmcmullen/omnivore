@@ -588,6 +588,7 @@ class ByteGrid(Grid.Grid):
             self.editor = editor
             self.table.ResetView(self, editor)
             self.table.UpdateValues(self)
+            self.goto_index(editor.cursor_index)
             self.last_change_count = editor.document.change_count
     
     def refresh_view(self):
