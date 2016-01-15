@@ -250,6 +250,9 @@ class MapEditor(HexEditor):
             self.tile_map.clear_tile_selection()
         if control != self.character_set:
             self.character_set.clear_tile_selection()
+
+    def mark_index_range_changed(self, index_range):
+        pass
     
     def perform_idle(self):
         pass
