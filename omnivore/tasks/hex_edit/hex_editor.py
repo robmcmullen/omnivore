@@ -372,7 +372,7 @@ class HexEditor(FrameworkEditor):
         If the current selection is entirely out of bounds of the new segment,
         all the selection indexes will be set to zero.
         """
-        indexes = np.array([self.anchor_initial_start_index, self.anchor_start_index, self.anchor_initial_end_index, self.anchor_end_index], dtype=np.int64)
+        indexes = np.array([self.cursor_index, self.anchor_initial_start_index, self.anchor_start_index, self.anchor_initial_end_index, self.anchor_end_index], dtype=np.int64)
         
         # find byte index of view into master array
         current_offset = np.byte_bounds(current_segment.data)[0]
@@ -380,11 +380,12 @@ class HexEditor(FrameworkEditor):
         
         delta = new_offset - current_offset
         indexes -= delta
-        indexes.clip(0, len(new_segment), out=indexes)
-        same = (indexes == indexes[0])
+        indexes.clip(0, len(new_segment) - 1, out=indexes)
+        sel = indexes[1:5]
+        same = (sel == sel[0])
         if same.all():
-            indexes = np.zeros(4, dtype=np.int64)
-        self.anchor_initial_start_index, self.anchor_start_index, self.anchor_initial_end_index, self.anchor_end_index = list(indexes)
+            indexes[1:5] = 0
+        self.cursor_index, self.anchor_initial_start_index, self.anchor_start_index, self.anchor_initial_end_index, self.anchor_end_index = list(indexes)
     
     def get_segment_from_selection(self):
         data = self.segment[self.anchor_start_index:self.anchor_end_index]
