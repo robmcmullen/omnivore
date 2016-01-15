@@ -25,7 +25,7 @@ class DisassemblyTable(ByteGridTable):
         self.index_to_row = []
         self.start_addr = 0
         self.next_row = -1
-        self.chunk_size = 32
+        self.chunk_size = 256
         self.disassembler = None
 
     def set_editor(self, editor):
