@@ -41,9 +41,14 @@ class DisassemblyTable(ByteGridTable):
         self.disassemble_next()
     
     def restart_disassembly(self, index):
-        self.next_row = self.index_to_row[index]
-        pc = self.get_pc(self.next_row)
-        self.disassembler.set_pc(self.segment.data, pc)
+        next_row = self.index_to_row[index]
+        
+        # don't reset starting point if the requested index is already in the
+        # region to be rebuilt
+        if self.next_row < 0 or next_row < self.next_row:
+            self.next_row = next_row
+            pc = self.get_pc(self.next_row)
+            self.disassembler.set_pc(self.segment.data, pc)
     
     def disassemble_next(self):
         if self.next_row < 0:
