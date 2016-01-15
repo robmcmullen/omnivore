@@ -305,6 +305,12 @@ class FrameworkEditor(Editor):
         
         return index
     
+    def mark_index_range_changed(self, index_range):
+        """Hook for subclasses to be informed when bytes within the specified
+        index range have changed.
+        """
+        pass
+    
     def invalidate_search(self):
         """Hook for subclasses to get notified if the document is changed and
         any search params should be cleared."""
@@ -312,6 +318,12 @@ class FrameworkEditor(Editor):
     
     def update_mouse_mode(self):
         """Hook for subclasses to process the change to a new mouse mode 
+        """
+        pass
+    
+    def perform_idle(self):
+        """Hook for subclasses to do some (small!) processing during UI idle
+        time.
         """
         pass
     
@@ -385,6 +397,7 @@ class FrameworkEditor(Editor):
                 self.anchor_end_index = self.anchor_initial_end_index = flags.index_range[1]
                 d.change_count += 1
             visible_range = True
+            self.mark_index_range_changed(flags.index_range)
         
         if flags.message:
             self.task.status_bar.message = flags.message
@@ -465,7 +478,7 @@ class FrameworkEditor(Editor):
     def byte_values_changed(self):
         log.debug("byte_values_changed called!!!")
         self.invalidate_search()
-        self.reconfigure_panes()
+        self.refresh_panes()
 
     #### convenience functions
     

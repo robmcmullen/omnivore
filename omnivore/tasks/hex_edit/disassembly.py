@@ -22,28 +22,61 @@ class DisassemblyTable(ByteGridTable):
         ByteGridTable.__init__(self)
         self.lines = []
         self._rows = 0
-        self.addr_to_lines = {}
+        self.index_to_row = []
         self.start_addr = 0
+        self.next_row = -1
+        self.chunk_size = 32
+        self.disassembler = None
 
     def set_editor(self, editor):
         self.editor = editor
         self.segment = segment = self.editor.segment
-        lines = []
-        addr_map = {}
-        d = editor.disassembler(segment.data, segment.start_addr, -segment.start_addr)
-        for i, (addr, bytes, opstr, comment) in enumerate(d.get_disassembly()):
-            count = len(bytes)
-            lines.append((addr, bytes, opstr, comment, count))
-            addr_map[addr] = i
-        self.lines = lines
-        self.addr_to_lines = addr_map
-        if self.lines:
-            self.start_addr = self.lines[0][0]
-        else:
-            self.start_addr = 0
-
-        self._rows = len(self.lines)
+        self.lines = []
+        self.index_to_row = []
+        self._rows = 0
+        self.disassembler = editor.disassembler(segment.data, segment.start_addr, -segment.start_addr)
+        self.disassembler.set_pc(segment.data, segment.start_addr)
+        self.next_row = 0
+        self.start_addr = segment.start_addr
+        self.disassemble_next()
     
+    def restart_disassembly(self, index):
+        self.next_row = self.index_to_row[index]
+        pc = self.get_pc(self.next_row)
+        self.disassembler.set_pc(self.segment.data, pc)
+    
+    def disassemble_next(self):
+        if self.next_row < 0:
+            return
+        lines = []
+        start_row = self.next_row
+        try:
+            for i in range(self.chunk_size):
+                (addr, bytes, opstr, comment) = self.disassembler.get_instruction()
+                count = len(bytes)
+                data = (addr, bytes, opstr, comment, count)
+                lines.append(data)
+        except StopIteration:
+            pass
+        if lines:
+            n = len(lines)
+            self.lines[start_row:start_row+n] = lines
+            start_index, index_to_row = self.get_index_to_row(lines, start_row)
+            self.index_to_row[start_index:start_index+len(index_to_row)] = index_to_row
+            self.next_row += n
+        else:
+            self.next_row = -1
+    
+    def get_index_to_row(self, lines, start_row):
+        row = start_row
+        index = lines[0][0] - self.start_addr
+        counts = [d[4] for d in lines]
+        index_to_row = []
+        for c in counts:
+            index_to_row.extend([row] * c)
+            row += 1
+        return index, index_to_row
+        
     def set_grid_cell_attr(self, grid, col, attr):
         ByteGridTable.set_grid_cell_attr(self, grid, col, attr)
         if col == 1:
@@ -60,16 +93,10 @@ class DisassemblyTable(ByteGridTable):
         return index < len(self.segment)
     
     def get_row_col(self, index):
-        addr = index + self.start_addr
-        addr_map = self.addr_to_lines
-        if addr in addr_map:
-            row = addr_map[addr]
-        else:
-            row = 0
-            for a in range(addr - 1, addr - 5, -1):
-                if a in addr_map:
-                    row = addr_map[a]
-                    break
+        try:
+            row = self.index_to_row[index]
+        except:
+            row = self.index_to_row[-1]
         return row, 0
 
     def get_next_cursor_pos(self, row, col):
@@ -126,7 +153,10 @@ class DisassemblyTable(ByteGridTable):
         return str(line[col + 1])
 
     def ResetViewProcessArgs(self, grid, editor, *args):
-        self.set_editor(editor)
+        if editor is not None:
+            self.set_editor(editor)
+        else:
+            self._rows = len(self.lines)
 
 
 class AssemblerTextCtrl(HexTextCtrl):
@@ -162,7 +192,15 @@ class DisassemblyPanel(ByteGrid):
     
     def get_default_cell_editor(self):
         return AssemblerEditor(self)
+
+    def perform_idle(self):
+        if self.table.next_row >= 0:
+            self.table.disassemble_next()
+            self.table.ResetView(self, None)
     
+    def restart_disassembly(self, index):
+        self.table.restart_disassembly(index)
+        
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.
         

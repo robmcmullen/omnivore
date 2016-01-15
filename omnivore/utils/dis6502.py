@@ -167,17 +167,14 @@ class BaseDisassembler(object):
     memloc_name = {}
     
     def __init__(self, source, pc=0, pc_source_offset=0):
-        self.set_source(source)
-        self.set_pc(pc, pc_source_offset)
+        self.set_pc(source, pc)
+        self.pc_offset = pc_source_offset  # index into source array of pc
         self.origin = self.pc
         
-    def set_source(self, source):
+    def set_pc(self, source, pc):
         self.source = source
         self.length = len(source)
-        
-    def set_pc(self, pc, offset):
         self.pc = pc
-        self.pc_offset = offset
         
     def get_next(self):
         raise RuntimeError("abstract method")
@@ -224,6 +221,11 @@ class BaseDisassembler(object):
             addr, bytes, opstr, memloc, rw, dest_pc = self.disasm()
             comment = self.get_memloc_name(memloc, rw)
             yield (addr, bytes, opstr, comment)
+    
+    def get_instruction(self):
+        addr, bytes, opstr, memloc, rw, dest_pc = self.disasm()
+        comment = self.get_memloc_name(memloc, rw)
+        return (addr, bytes, opstr, comment)
     
     def get_memloc_name(self, memloc, rw):
         if rw == "":

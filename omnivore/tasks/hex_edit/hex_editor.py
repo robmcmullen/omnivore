@@ -403,6 +403,12 @@ class HexEditor(FrameworkEditor):
 #        self.window.application.save_log(str(history), "command_log", ".log")
         self.undo_history.update_history()
 
+    def mark_index_range_changed(self, index_range):
+        self.disassembly.restart_disassembly(index_range[0])
+    
+    def perform_idle(self):
+        self.disassembly.perform_idle()
+
     ###########################################################################
     # Trait handlers.
     ###########################################################################

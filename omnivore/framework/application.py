@@ -184,17 +184,19 @@ class FrameworkApplication(TasksApplication):
         app.Bind(wx.EVT_IDLE, self.on_idle)
     
     def on_idle(self, evt):
-        t = time.time()
-        if t > self.last_clipboard_check_time + self.clipboard_check_interval:
-            wx.CallAfter(self.check_clipboard_can_paste)
-            self.last_clipboard_check_time = time.time()
-    
-    def check_clipboard_can_paste(self):
+        evt.Skip()
         if not self.active_window:
             return
         editor = self.active_window.active_task.active_editor
         if editor is None:
             return
+        t = time.time()
+        if t > self.last_clipboard_check_time + self.clipboard_check_interval:
+            wx.CallAfter(self.check_clipboard_can_paste, editor)
+            self.last_clipboard_check_time = time.time()
+        editor.perform_idle()
+    
+    def check_clipboard_can_paste(self, editor):
         data_formats = [o.GetFormat() for o in editor.supported_clipboard_data_objects]
         log.debug("Checking clipboard formats %s" % str(data_formats))
         supported = False

@@ -228,8 +228,6 @@ class MapEditor(HexEditor):
     def refresh_panes(self):
         self.control.refresh_view()
         self.memory_map.refresh_view()
-        self.tile_map.refresh_view()
-        self.character_set.refresh_view()
     
     def rebuild_document_properties(self):
         self.find_segment_parser([ATRSegmentParser, XexSegmentParser], "Playfield map")
