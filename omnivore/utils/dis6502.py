@@ -188,28 +188,36 @@ class BaseDisassembler(object):
         except KeyError:
             opstr, extra, rw = ".db $%02x" % opcode, 0, ""
         
-        if extra == 1:
-            operand1 = self.get_next()
-            bytes = (opcode, operand1)
-            opstr = opstr % operand1
-            memloc = operand1
-            dest_pc = memloc
-        elif extra == 2:
-            operand1 = self.get_next()
-            operand2 = self.get_next()
-            bytes = (opcode, operand1, operand2)
-            opstr = opstr % (operand2, operand1)
-            memloc = operand1 + 256 * operand2
-            dest_pc = memloc
-        elif extra == -1:
-            operand1 = self.get_next()
-            bytes = (opcode, operand1)
-            signed = operand1 - 256 if operand1 > 127 else operand1
-            rel = pc + 2 + signed
-            opstr = opstr % rel
-            memloc = None
-            dest_pc = rel
-        else:
+        try:
+            next_pc = self.pc
+            if extra == 1:
+                operand1 = self.get_next()
+                bytes = (opcode, operand1)
+                opstr = opstr % operand1
+                memloc = operand1
+                dest_pc = memloc
+            elif extra == 2:
+                operand1 = self.get_next()
+                operand2 = self.get_next()
+                bytes = (opcode, operand1, operand2)
+                opstr = opstr % (operand2, operand1)
+                memloc = operand1 + 256 * operand2
+                dest_pc = memloc
+            elif extra == -1:
+                operand1 = self.get_next()
+                bytes = (opcode, operand1)
+                signed = operand1 - 256 if operand1 > 127 else operand1
+                rel = pc + 2 + signed
+                opstr = opstr % rel
+                memloc = None
+                dest_pc = rel
+            else:
+                bytes = (opcode,)
+                memloc = None
+                dest_pc = None
+        except StopIteration:
+            self.pc = next_pc
+            opstr, extra, rw = ".db $%02x" % opcode, 0, ""
             bytes = (opcode,)
             memloc = None
             dest_pc = None
