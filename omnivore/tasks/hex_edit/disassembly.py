@@ -190,6 +190,11 @@ class DisassemblyPanel(ByteGrid):
         """
         table = DisassemblyTable()
         ByteGrid.__init__(self, parent, task, table, **kwargs)
+        
+        # During idle-time disassembly, an index may not yet be visible.  The
+        # value is saved here so the view can be scrolled there once it does
+        # get disassembled.
+        self.pending_index = -1
     
     def get_default_cell_editor(self):
         return AssemblerEditor(self)
@@ -198,9 +203,22 @@ class DisassemblyPanel(ByteGrid):
         if self.table.next_row >= 0:
             self.table.disassemble_next()
             self.table.ResetView(self, None)
+            if self.pending_index >= 0:
+                self.goto_index(self.pending_index)
     
     def restart_disassembly(self, index):
         self.table.restart_disassembly(index)
+
+    def goto_index(self, index):
+        try:
+            row = self.table.index_to_row[index]
+            self.pending_index = -1
+        except IndexError:
+            self.pending_index = index
+        else:
+            row, col = self.table.get_row_col(index)
+            self.SetGridCursor(row, col)
+            self.MakeCellVisible(row,col)
         
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.
