@@ -65,6 +65,7 @@ class DisassemblyTable(ByteGridTable):
             self.index_to_row[start_index:start_index+len(index_to_row)] = index_to_row
             self.next_row += n
         else:
+            self.lines[self.next_row:] = []
             self.next_row = -1
     
     def get_index_to_row(self, lines, start_row):
