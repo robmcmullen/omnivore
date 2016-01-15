@@ -260,7 +260,7 @@ class GetSegmentFromSelectionAction(EditorAction):
             text = dialog.GetValue()
             if not text:
                 text = "%04x-%04x" % (segment.start_addr, segment.start_addr + len(segment) - 1)
-            segment.text = text
+            segment.name = text
         else:
             value = None
         dialog.Destroy()
