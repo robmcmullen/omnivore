@@ -635,6 +635,8 @@ class FrameworkApplication(TasksApplication):
         if task.id in self.perspectives:
             layout.perspective = self.perspectives[task.id]
             window.set_layout(layout)
+        toolbars = window._window_backend.get_toolbars()
+        window._window_backend.show_toolbars(toolbars)
 
 def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", application_name="", debug_log=False):
     """Start the application
