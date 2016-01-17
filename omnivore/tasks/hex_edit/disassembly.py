@@ -41,7 +41,12 @@ class DisassemblyTable(ByteGridTable):
         self.disassemble_next()
     
     def restart_disassembly(self, index):
-        next_row = self.index_to_row[index]
+        try:
+            next_row = self.index_to_row[index]
+        except IndexError:
+            # requesting an index that has yet to be disassembled, so it will
+            # get there when it gets there! Be patient!
+            return
         
         # don't reset starting point if the requested index is already in the
         # region to be rebuilt
