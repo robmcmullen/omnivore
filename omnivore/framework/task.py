@@ -128,6 +128,11 @@ class FrameworkTask(Task):
             actions.append(action)
         return actions
 
+    ##### Task setup/cleanup
+
+    def initialized(self):
+        self.window.application.remember_perspectives(self.window)
+
     def activated(self):
         log.debug("  status bar: %s" % self.status_bar)
         active = self.active_editor
@@ -153,6 +158,7 @@ class FrameworkTask(Task):
         return [ browser ]
     
     def prepare_destroy(self):
+        self.window.application.remember_perspectives(self.window)
         self.destroy_minibuffer()
 
     ###########################################################################
@@ -178,6 +184,8 @@ class FrameworkTask(Task):
         else:
             editor.view_document(source.document, source)
         self.activated()
+        
+        self.window.application.restore_perspective(self.window, self)
     
     def find_tab_or_open(self, document):
         for editor in self.editor_area.editors:

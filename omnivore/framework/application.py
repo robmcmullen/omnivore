@@ -62,7 +62,7 @@ from envisage.ui.tasks.api import TasksApplication
 from envisage.ui.tasks.task_window_event import TaskWindowEvent, VetoableTaskWindowEvent
 from pyface.api import ImageResource
 from pyface.tasks.api import Task, TaskWindowLayout
-from traits.api import provides, Bool, Instance, List, Property, Str, Unicode, Event, Dict, Int, Float
+from traits.api import provides, Bool, Instance, List, Property, Str, Unicode, Event, Dict, Int, Float, Tuple
 
 # Local imports.
 from omnivore.framework.preferences import FrameworkPreferences, \
@@ -124,6 +124,12 @@ class FrameworkApplication(TasksApplication):
     last_clipboard_check_time = Float(-1)
     
     clipboard_check_interval = Float(.75)
+    
+    perspectives = Dict
+    
+    default_window_size = (800, 600)
+    
+    last_window_size = Tuple(default_window_size)
 
     ###########################################################################
     # Private interface.
@@ -149,7 +155,7 @@ class FrameworkApplication(TasksApplication):
         log.debug("Default layout: %s" % str(tasks))
         return [ TaskWindowLayout(*tasks,
                                   active_task = active_task,
-                                  size = (800, 600)) ]
+                                  size = self.last_window_size) ]
 
     def _preferences_helper_default(self):
         return FrameworkPreferences(preferences = self.preferences)
@@ -157,7 +163,8 @@ class FrameworkApplication(TasksApplication):
     #### Trait property getter/setters ########################################
 
     def _get_always_use_default_layout(self):
-        return self.preferences_helper.always_use_default_layout
+        #return self.preferences_helper.always_use_default_layout
+        return True
 
 
     #### Trait event handlers
@@ -215,11 +222,13 @@ class FrameworkApplication(TasksApplication):
     def _window_created_fired(self, event):
         """The toolkit window doesn't exist yet.
         """
+        self.init_perspectives()
     
     def _window_opened_fired(self, event):
         """The toolkit window does exist here.
         """
-        log.debug("WINDOW OPENED!!! %s" % event.window.control)
+        log.debug("WINDOW OPENED!!! %s, size=%s" % (event.window.control, str(self.last_window_size)))
+        event.window.size = tuple(self.last_window_size)
         
         # Check to see that there's at least one task.  If a bad application
         # memento (~/.config/Omnivore/tasks/wx/application_memento), the window
@@ -587,7 +596,45 @@ class FrameworkApplication(TasksApplication):
         raw = bson.dumps(bson_data)
         with open(file_path, "w") as fh:
             fh.write(raw)
+    
+    # class attributes
+    
+    perspectives_loaded = False
+    
+    def init_perspectives(self):
+        if self.perspectives_loaded:
+            return
+        try:
+            data = self.get_json_data("perspectives")
+        except IOError:
+            # file not found
+            data = {}
+        self.perspectives = data.get("perspectives", {})
+        self.last_window_size = tuple(data.get("window_size", self.default_window_size))
+        log.debug("init_perspectives: size=%s" % str(self.last_window_size))
+    
+    def remember_perspectives(self, window):
+        layout = window.get_layout()
+        if layout is not None:
+            p = layout.perspective
+            # make sure central pane exists, otherwise will restore without
+            # central pane visible
+            if "name=Central;" in p:
+                log.debug("remember_perspective: %s, size=%s" % (layout.id, str(window.size)))
+                self.perspectives[layout.id] = p
+                self.last_window_size = window.size
+                data = {"perspectives": dict(self.perspectives),
+                        "window_size": list(self.last_window_size),
+                        }
+                self.save_json_data("perspectives", data)
 
+    def restore_perspective(self, window, task):
+        # get layout object that can be used to restore perspective since we
+        # only serialize the perspective string and not the whole layout object
+        layout = window.get_layout()
+        if task.id in self.perspectives:
+            layout.perspective = self.perspectives[task.id]
+            window.set_layout(layout)
 
 def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", application_name="", debug_log=False):
     """Start the application
