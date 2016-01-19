@@ -642,10 +642,13 @@ class FontMapScroller(BitviewScroller):
         #log.debug("get_image: bytes", bytes)
         
         anchor_start, anchor_end = self.get_highlight_indexes()
-        array = self.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, self.font, anchor_start, anchor_end)
+        if speedups is not None:
+            array = speedups.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, self.font, self.font_mapping, anchor_start, anchor_end)
+        else:
+            array = self.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, self.font, self.font_mapping, anchor_start, anchor_end)
         return array
     
-    def get_numpy_font_map_image(self, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, font, anchor_start, anchor_end):
+    def get_numpy_font_map_image(self, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, font, font_mapping, anchor_start, anchor_end):
         num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) / bytes_per_row
         
         sc = start_col
@@ -673,7 +676,7 @@ class FontMapScroller(BitviewScroller):
             for i in range(sc, ec):
                 if e + i >= end_byte:
                     break
-                c = self.font_mapping[bytes[j, i]]
+                c = font_mapping[bytes[j, i]]
                 if anchor_start <= e + i < anchor_end:
                     array[y:y+8,x:x+8,:] = fh[c]
                 elif style[j, i] & 1:
