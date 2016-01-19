@@ -637,38 +637,41 @@ class FontMapScroller(BitviewScroller):
         else:
             bytes = self.bytes[self.start_byte:self.end_byte]
             style = self.style[self.start_byte:self.end_byte]
-        num_rows_with_data = (self.end_byte - self.start_byte + self.bytes_per_row - 1) / self.bytes_per_row
-        
-        sc = self.start_col
-        nc = self.num_cols
         bytes = bytes.reshape((nr, -1))
         style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
         
-        width = int(self.font.char_w * self.bytes_per_row)
-        height = int(nr * self.font.char_h)
+        anchor_start, anchor_end = self.get_highlight_indexes()
+        array = self.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, self.font, anchor_start, anchor_end)
+        return array
+    
+    def get_numpy_font_map_image(self, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, font, anchor_start, anchor_end):
+        num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) / bytes_per_row
+        
+        sc = start_col
+        nc = num_cols
+        nr = num_rows
+        width = int(font.char_w * bytes_per_row)
+        height = int(nr * font.char_h)
         
         log.debug("pixel width: %dx%d, zoom=%d, rows with data=%d" % (width, height, self.zoom, num_rows_with_data))
         array = np.empty((height, width, 3), dtype=np.uint8)
-        array[:,:] = self.background_color
+        array[:,:] = background_color
         
-        log.debug(str([self.end_byte, self.start_byte, (self.end_byte - self.start_byte) / self.bytes_per_row]))
+        log.debug(str([end_byte, start_byte, (end_byte - start_byte) / bytes_per_row]))
         er = min(num_rows_with_data, nr)
-        ec = min(self.bytes_per_row, sc + self.bytes_per_row)
+        ec = min(bytes_per_row, sc + bytes_per_row)
         log.debug("bytes: %s" % str([nr, er, sc, nc, ec, bytes.shape]))
-        zx = self.font.scale_w
-        zy = self.font.scale_h
         y = 0
-        e = self.start_byte
-        f = self.font.normal_font
-        fh = self.font.highlight_font
-        fm = self.font.match_font
-        fc = self.font.comment_font
-        anchor_start, anchor_end = self.get_highlight_indexes()
+        e = start_byte
+        f = font.normal_font
+        fh = font.highlight_font
+        fm = font.match_font
+        fc = font.comment_font
         for j in range(er):
             x = 0
             for i in range(sc, ec):
-                if e + i >= self.end_byte:
+                if e + i >= end_byte:
                     break
                 c = self.font_mapping[bytes[j, i]]
                 if anchor_start <= e + i < anchor_end:
@@ -681,7 +684,7 @@ class FontMapScroller(BitviewScroller):
                     array[y:y+8,x:x+8,:] = f[c]
                 x += 8
             y += 8
-            e += self.bytes_per_row
+            e += bytes_per_row
         return array
 
     def event_coords_to_byte(self, evt):
