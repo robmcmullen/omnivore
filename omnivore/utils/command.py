@@ -10,14 +10,11 @@ log = logging.getLogger(__name__)
 
 
 class UndoStack(list):
-    _next_batch_id = 0
-    
     def __init__(self, *args, **kwargs):
         list.__init__(self, *args, **kwargs)
         self.insert_index = 0
         self.save_point_index = 0
         self.batch = self
-        self.batch_id = None
     
     def is_dirty(self):
         return self.insert_index != self.save_point_index
@@ -25,21 +22,16 @@ class UndoStack(list):
     def set_save_point(self):
         self.save_point_index = self.insert_index
     
-    @property
-    def next_batch_id(cls):
-        cls._next_batch_id += 1
-        return cls._next_batch_id
-    
-    def perform(self, cmd, editor, batch_id):
+    def perform(self, cmd, editor, batch=None):
         if cmd is None:
             return UndoInfo()
-        if batch_id != self.batch_id:
-            if batch_id is None:
+        if batch != self.batch:
+            if batch is None:
                 self.end_batch()
             else:
-                if self.batch_id is not None:
+                if self.batch is not None:
                     self.end_batch()
-                self.start_batch(batch_id)
+                self.start_batch(batch)
         undo_info = cmd.perform(editor)
         if undo_info.flags.changed_document:
             if undo_info.flags.success:
@@ -81,18 +73,15 @@ class UndoStack(list):
         cmd.last_flags = undo_info.flags
         return undo_info
     
-    def start_batch(self, batch_id):
-        self.batch_id = batch_id
-        log.debug("Starting batch %s" % self.batch_id)
-        if self.batch == self:
-            self.batch = Batch()
+    def start_batch(self, batch):
+        self.batch = batch
+        log.debug("Starting batch %s" % self.batch)
     
     def end_batch(self):
-        log.debug("Ending batch %s" % self.batch_id)
-        if self.batch_id is not None:
+        log.debug("Ending batch %s" % self.batch)
+        if self.batch != self:
             batch_command = self.batch
             self.batch = self
-            self.batch_id = None
             self.add_command(batch_command)
 
     def add_command(self, command):

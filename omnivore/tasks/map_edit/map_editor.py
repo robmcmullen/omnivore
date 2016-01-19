@@ -19,6 +19,8 @@ from omnivore.utils.binutil import ATRSegmentParser, XexSegmentParser
 from omnivore.tasks.hex_edit.commands import ChangeByteCommand
 from omnivore.framework.mouse_handler import MouseHandler
 
+from commands import DrawBatchCommand
+
 
 class MainFontMapScroller(FontMapScroller):
     """Subclass adapts the mouse interface to the MouseHandler class
@@ -34,7 +36,7 @@ class MainFontMapScroller(FontMapScroller):
         self.forced_cursor = None
         self.set_mouse_mode(MouseHandler)  # dummy initial mouse handler
         self.default_pan_mode = SelectMode(self)
-        self.batch_id = None
+        self.batch = None
 
     def set_mouse_mode(self, handler):
         self.release_mouse()
@@ -172,15 +174,13 @@ class DrawMode(SelectMode):
         if not bytes:
             return
         if start:
-            self.batch_id = e.get_batch_id()
-            print "starting batch", self.batch_id
-        print "drawing ", bytes
+            self.batch = DrawBatchCommand()
         byte, bit, inside = c.event_coords_to_byte(evt)
         if inside:
             e.set_cursor(byte, False)
             index = e.cursor_index
             cmd = ChangeByteCommand(e.segment, index, index+len(bytes), bytes, False, True)
-            e.process_command(cmd, self.batch_id)
+            e.process_command(cmd, self.batch)
 
     def process_left_down(self, evt):
         self.draw(evt, True)
@@ -193,9 +193,8 @@ class DrawMode(SelectMode):
         e = c.editor
         if e is None:
             return
-        print "ending batch", self.batch_id
-        self.batch_id = None
         e.end_batch()
+        self.batch = None
 
 class MapEditor(HexEditor):
     """ The toolkit specific implementation of a HexEditor.  See the
