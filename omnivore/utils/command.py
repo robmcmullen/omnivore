@@ -10,11 +10,14 @@ log = logging.getLogger(__name__)
 
 
 class UndoStack(list):
+    _next_batch_id = 0
+    
     def __init__(self, *args, **kwargs):
         list.__init__(self, *args, **kwargs)
         self.insert_index = 0
         self.save_point_index = 0
         self.batch = self
+        self.batch_id = None
     
     def is_dirty(self):
         return self.insert_index != self.save_point_index
@@ -22,9 +25,21 @@ class UndoStack(list):
     def set_save_point(self):
         self.save_point_index = self.insert_index
     
-    def perform(self, cmd, editor):
+    @property
+    def next_batch_id(cls):
+        cls._next_batch_id += 1
+        return cls._next_batch_id
+    
+    def perform(self, cmd, editor, batch_id):
         if cmd is None:
             return UndoInfo()
+        if batch_id != self.batch_id:
+            if batch_id is None:
+                self.end_batch()
+            else:
+                if self.batch_id is not None:
+                    self.end_batch()
+                self.start_batch(batch_id)
         undo_info = cmd.perform(editor)
         if undo_info.flags.changed_document:
             if undo_info.flags.success:
@@ -66,12 +81,19 @@ class UndoStack(list):
         cmd.last_flags = undo_info.flags
         return undo_info
     
-    def start_batch(self):
+    def start_batch(self, batch_id):
+        self.batch_id = batch_id
+        log.debug("Starting batch %s" % self.batch_id)
         if self.batch == self:
             self.batch = Batch()
     
     def end_batch(self):
-        self.batch = self
+        log.debug("Ending batch %s" % self.batch_id)
+        if self.batch_id is not None:
+            batch_command = self.batch
+            self.batch = self
+            self.batch_id = None
+            self.add_command(batch_command)
 
     def add_command(self, command):
         self.batch.insert_at_index(command)
@@ -223,16 +245,34 @@ class Batch(Command):
     """A batch is immutable once created, so there's no need to allow
     intermediate index points.
     """
+    def __init__(self):
+        Command.__init__(self)
+        self.commands = []
+        
     def __str__(self):
         return "<batch>"
     
     def perform(self, document):
-        for c in self:
-            c.perform(document)
+        flags = StatusFlags()
+        for c in self.commands:
+            undo = c.perform(document)
+            flags.add_flags(undo.flags)
+        undo = UndoInfo()
+        undo.flags = flags
+        return undo
     
     def undo(self, document):
-        for c in reversed(self):
-            c.undo(document)
+        flags = StatusFlags()
+        for c in reversed(self.commands):
+            undo = c.undo(document)
+            flags.add_flags(undo.flags)
+        undo = UndoInfo()
+        undo.flags = flags
+        return undo
+    
+    def insert_at_index(self, command):
+        if command.is_recordable():
+            self.commands.append(command)
 
 
 def get_known_commands():

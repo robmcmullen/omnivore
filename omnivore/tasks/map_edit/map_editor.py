@@ -34,6 +34,7 @@ class MainFontMapScroller(FontMapScroller):
         self.forced_cursor = None
         self.set_mouse_mode(MouseHandler)  # dummy initial mouse handler
         self.default_pan_mode = SelectMode(self)
+        self.batch_id = None
 
     def set_mouse_mode(self, handler):
         self.release_mouse()
@@ -162,7 +163,7 @@ class DrawMode(SelectMode):
     menu_item_name = "Draw"
     menu_item_tooltip = "Draw with current tile"
 
-    def process_left_down(self, evt):
+    def draw(self, evt, start=False):
         c = self.canvas
         e = c.editor
         if e is None:
@@ -170,17 +171,31 @@ class DrawMode(SelectMode):
         bytes = e.draw_pattern
         if not bytes:
             return
+        if start:
+            self.batch_id = e.get_batch_id()
+            print "starting batch", self.batch_id
         print "drawing ", bytes
         byte, bit, inside = c.event_coords_to_byte(evt)
         if inside:
             e.set_cursor(byte, False)
             index = e.cursor_index
             cmd = ChangeByteCommand(e.segment, index, index+len(bytes), bytes, False, True)
-            e.process_command(cmd)
+            e.process_command(cmd, self.batch_id)
+
+    def process_left_down(self, evt):
+        self.draw(evt, True)
 
     def process_mouse_motion_down(self, evt):
-        self.process_left_down(evt)
+        self.draw(evt)
 
+    def process_left_up(self, evt):
+        c = self.canvas
+        e = c.editor
+        if e is None:
+            return
+        print "ending batch", self.batch_id
+        self.batch_id = None
+        e.end_batch()
 
 class MapEditor(HexEditor):
     """ The toolkit specific implementation of a HexEditor.  See the

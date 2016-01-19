@@ -359,24 +359,31 @@ class FrameworkEditor(Editor):
         self.process_flags(undo.flags)
         self.document.undo_stack_changed = True
     
-    def process_command(self, command):
+    def get_batch_id(self):
+        return self.document.undo_stack.next_batch_id
+    
+    def end_batch(self):
+        self.document.undo_stack.end_batch()
+        self.document.undo_stack_changed = True
+    
+    def process_command(self, command, batch_id=None):
         """Process a single command and immediately update the UI to reflect
         the results of the command.
         """
         f = StatusFlags()
-        undo = self.process_batch_command(command, f)
+        undo = self.process_batch_command(command, f, batch_id)
         if undo.flags.success:
             self.process_flags(f)
             self.document.undo_stack_changed = True
         return undo
         
-    def process_batch_command(self, command, f):
+    def process_batch_command(self, command, f, batch_id=None):
         """Process a single command but don't update the UI immediately.
         Instead, update the batch flags to reflect the changes needed to
         the UI.
         
         """
-        undo = self.document.undo_stack.perform(command, self)
+        undo = self.document.undo_stack.perform(command, self, batch_id)
         f.add_flags(undo.flags, command)
         return undo
     
