@@ -63,36 +63,40 @@ def get_numpy_font_map_image(np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray[np
     cdef np.uint8_t bgg = background_color[1]
     cdef np.uint8_t bgb = background_color[2]
     
-    cdef int er = min(num_rows_with_data, num_rows)
-    cdef int ec = min(bytes_per_row, start_col + num_cols)
-    cdef int width = font.char_w * bytes_per_row
+    cdef int end_col = min(bytes_per_row, start_col + num_cols)
+    cdef int width = font.char_w * num_cols
     cdef int height = num_rows * font.char_h
     cdef np.ndarray[np.uint8_t, ndim=3] array = np.empty([height, width, 3], dtype=np.uint8)
+    cdef np.uint8_t[:,:,:] fast_array = array
 
     cdef int y = 0
     cdef int e = start_byte
     cdef int x, i, j
     cdef np.ndarray[np.uint8_t, ndim=4] f = font.normal_font
+    cdef np.uint8_t[:,:,:,:] fast_f = f
     cdef np.ndarray[np.uint8_t, ndim=4] fh = font.highlight_font
+    cdef np.uint8_t[:,:,:,:] fast_fh = fh
     cdef np.ndarray[np.uint8_t, ndim=4] fm = font.match_font
+    cdef np.uint8_t[:,:,:,:] fast_fm = fm
     cdef np.ndarray[np.uint8_t, ndim=4] fc = font.comment_font
-    for j in range(er):
+    cdef np.uint8_t[:,:,:,:] fast_fc = fc
+    for j in range(num_rows):
         x = 0
-        for i in range(start_col, ec):
-            if e + i >= end_byte:
-                array[y:y+8,x:x+8,0] = bgr
-                array[y:y+8,x:x+8,1] = bgg
-                array[y:y+8,x:x+8,2] = bgb
+        for i in range(start_col, start_col + num_cols):
+            if e + i >= end_byte or i >= end_col:
+                fast_array[y:y+8,x:x+8,0] = bgr
+                fast_array[y:y+8,x:x+8,1] = bgg
+                fast_array[y:y+8,x:x+8,2] = bgb
             else:
                 c = font_mapping[bytes[j, i]]
                 if anchor_start <= e + i < anchor_end:
-                    array[y:y+8,x:x+8,:] = fh[c]
+                    fast_array[y:y+8,x:x+8,:] = fast_fh[c]
                 elif style[j, i] & 1:
-                    array[y:y+8,x:x+8,:] = fm[c]
+                    fast_array[y:y+8,x:x+8,:] = fast_fm[c]
                 elif style[j, i] & 0x80:
-                    array[y:y+8,x:x+8,:] = fc[c]
+                    fast_array[y:y+8,x:x+8,:] = fast_fc[c]
                 else:
-                    array[y:y+8,x:x+8,:] = f[c]
+                    fast_array[y:y+8,x:x+8,:] = fast_f[c]
             x += 8
         y += 8
         e += bytes_per_row

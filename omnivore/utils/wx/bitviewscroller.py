@@ -649,42 +649,34 @@ class FontMapScroller(BitviewScroller):
         return array
     
     def get_numpy_font_map_image(self, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, font, font_mapping, anchor_start, anchor_end):
-        num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) / bytes_per_row
-        
-        sc = start_col
-        nc = num_cols
-        nr = num_rows
-        width = int(font.char_w * bytes_per_row)
-        height = int(nr * font.char_h)
-        
-        log.debug("pixel width: %dx%d, zoom=%d, rows with data=%d" % (width, height, self.zoom, num_rows_with_data))
+        width = int(font.char_w * num_cols)
+        height = int(num_rows * font.char_h)
+        log.debug("pixel width: %dx%d" % (width, height))
         array = np.empty((height, width, 3), dtype=np.uint8)
-        array[:,:] = background_color
         
-        log.debug(str([end_byte, start_byte, (end_byte - start_byte) / bytes_per_row]))
-        er = min(num_rows_with_data, nr)
-        ec = min(bytes_per_row, sc + bytes_per_row)
-        log.debug("bytes: %s" % str([nr, er, sc, nc, ec, bytes.shape]))
+        log.debug("start byte: %s, end_byte: %s, bytes_per_row=%d num_rows=%d start_col=%d num_cols=%d" % (start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols))
+        end_col = min(bytes_per_row, start_col + num_cols)
         y = 0
         e = start_byte
         f = font.normal_font
         fh = font.highlight_font
         fm = font.match_font
         fc = font.comment_font
-        for j in range(er):
+        for j in range(num_rows):
             x = 0
-            for i in range(sc, ec):
-                if e + i >= end_byte:
-                    break
-                c = font_mapping[bytes[j, i]]
-                if anchor_start <= e + i < anchor_end:
-                    array[y:y+8,x:x+8,:] = fh[c]
-                elif style[j, i] & 1:
-                    array[y:y+8,x:x+8,:] = fm[c]
-                elif style[j, i] & 0x80:
-                    array[y:y+8,x:x+8,:] = fc[c]
+            for i in range(start_col, start_col + num_cols):
+                if e + i >= end_byte or i >= end_col:
+                    array[y:y+8,x:x+8,:] = background_color
                 else:
-                    array[y:y+8,x:x+8,:] = f[c]
+                    c = font_mapping[bytes[j, i]]
+                    if anchor_start <= e + i < anchor_end:
+                        array[y:y+8,x:x+8,:] = fh[c]
+                    elif style[j, i] & 1:
+                        array[y:y+8,x:x+8,:] = fm[c]
+                    elif style[j, i] & 0x80:
+                        array[y:y+8,x:x+8,:] = fc[c]
+                    else:
+                        array[y:y+8,x:x+8,:] = f[c]
                 x += 8
             y += 8
             e += bytes_per_row
