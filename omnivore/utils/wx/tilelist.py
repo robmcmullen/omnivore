@@ -230,20 +230,22 @@ class TileWrapControl(wx.Panel):
         self.tile_map = tile_map
         self.categories = []
         self.items = []
-        for label, tiles in tile_map:
+        for items in tile_map:
+            label = items[0]
             t = wx.StaticText(panel, -1, label)
             sizer.Add(t, 0, wx.EXPAND, 0)
             self.categories.append(t)
             w = wx.WrapSizer()
-            for i in np.arange(np.alen(tiles)):
-                if self.editor:
-                    data = tiles[i:i+1]
-                    bmp = self.editor.antic_font.get_image(data[0], self.zoom)
-                    btn = TileButton(panel, -1, bmp, style=wx.BORDER_NONE|wx.BU_EXACTFIT)
-                    btn.tile_data = data
-                    btn.Bind(wx.EVT_BUTTON, self.on_tile_clicked)
-                    w.Add(btn, 0, wx.ALL, 0)
-                    self.items.append(btn)
+            for tiles in items[1:]:
+                for i in np.arange(np.alen(tiles)):
+                    if self.editor:
+                        data = tiles[i:i+1]
+                        bmp = self.editor.antic_font.get_image(data[0], self.zoom)
+                        btn = TileButton(panel, -1, bmp, style=wx.BORDER_NONE|wx.BU_EXACTFIT)
+                        btn.tile_data = data
+                        btn.Bind(wx.EVT_BUTTON, self.on_tile_clicked)
+                        w.Add(btn, 0, wx.ALL, 0)
+                        self.items.append(btn)
             sizer.Add(w, 0, wx.EXPAND, 0)
     
     def setup_tiles(self):
@@ -320,12 +322,19 @@ if __name__ == '__main__':
     class MyFrame(wx.Frame):
         def __init__(self, parent, id, title):
             wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.DefaultSize)
-            tile_map = [("trees", np.arange(26, 45, dtype=np.uint8)),
-                        ("roads", np.arange(50, 72, dtype=np.uint8)),
-                        ("buildings", np.arange(75, 80, dtype=np.uint8)),
-                        ("people", np.arange(90, 92, dtype=np.uint8)),
-                        ("water", np.arange(150, 172, dtype=np.uint8)),
-                        ]
+            tile_map = [
+            ("road", [0x70]),
+            ("trees", range(0x80, 0x96), range(0x01, 0x16),),
+            ("buildings", range(0x96, 0x9f), range(0x16, 0x1f), range(0x41, 0x51), range(0x5d, 0x60),),
+            ("people", range(0xf1, 0xf4), range(0x71, 0x74)),
+            ("water", range(0x2e, 0x41),),
+            ("bridges", range(0x69, 0x6d),),
+            ("vehicles", range(0x51, 0x59),),
+            ("airport", range(0x60, 0x68), [0x5f], range(0x59, 0x5d), range(0xd9, 0xdd)), 
+            ("golf", range(0xa9, 0xae),),
+            ("other", [0x20, 0x25, 0x26, ]),
+            ("special", range(0x21, 0x25), range(0x74, 0x76),), 
+                ]
             color_converter = colors.gtia_ntsc_to_rgb
             highlight_color = (100, 200, 230)
             unfocused_cursor_color = (128, 128, 128)
