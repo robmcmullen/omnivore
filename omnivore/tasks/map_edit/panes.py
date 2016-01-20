@@ -4,7 +4,7 @@ from omnivore.framework.panes import FrameworkPane
 from omnivore.tasks.hex_edit.segments import SegmentList
 from omnivore.tasks.hex_edit.commands import ChangeByteCommand
 from omnivore.utils.wx.bitviewscroller import BitviewScroller, FontMapScroller, CharacterSetViewer, MemoryMapScroller
-from omnivore.utils.wx.tilelist import TileListControl
+from omnivore.utils.wx.tilelist import TileWrapControl
 from omnivore.framework.undo_panel import UndoHistoryPanel
 
 import logging
@@ -51,7 +51,7 @@ class TileMapPane(FrameworkPane):
     name = 'Tile Map'
     
     def create_contents(self, parent):
-        control = TileListControl(parent, self.task, size=(200,500), command=ChangeByteCommand)
+        control = TileWrapControl(parent, self.task, size=(200,500), command=ChangeByteCommand)
         return control
 
 

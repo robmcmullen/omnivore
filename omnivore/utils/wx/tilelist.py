@@ -2,6 +2,8 @@ import sys
 
 import numpy as np
 import wx
+import wx.lib.scrolledpanel as scrolled
+import wx.lib.buttons as buttons
 
 import logging
 log = logging.getLogger(__name__)
@@ -152,3 +154,196 @@ class TileListControl(wx.Panel):
         cmd = cmd_cls(e.segment, index, index+len(value), value, True)
         e.process_command(cmd)
 
+
+class TileButton(buttons.GenBitmapToggleButton):
+    labelDelta = 0
+    label_border = 4
+    faceDnClr = wx.Colour(100, 200, 230)
+    
+    def DoGetBestSize(self):
+        """
+        Overridden base class virtual.  Determines the best size of the
+        button based on the label and bezel size.
+        """
+        w, h, useMin = self._GetLabelSize()
+        width = w + self.label_border + 2 * self.bezelWidth + 4 * int(self.useFocusInd)
+        height = h + self.label_border + 2 * self.bezelWidth + 4 * int(self.useFocusInd)
+        return (width, height)
+    
+    def InitColours(self):
+        pass
+
+    def DrawBezel(self, dc, x1, y1, x2, y2):
+        pass
+    
+    @classmethod
+    def set_colors(cls, editor):
+        cls.faceDnClr = wx.Colour(*editor.highlight_color)
+
+class TileWrapControl(wx.Panel):
+    """
+    View for displaying categories of tiles to paint the map
+    """
+
+    def __init__(self, parent, task, command=None, **kwargs):
+        wx.Panel.__init__(self, parent, -1, **kwargs)
+        self.task = task
+        self.editor = None
+        self.command_cls = command
+        
+        self.cat = wx.Choice(self, -1)
+        self.cat.Bind(wx.EVT_CHOICE, self.on_category)
+        self.panel = scrolled.ScrolledPanel(self, -1, style=wx.VSCROLL)
+        self.panel.Bind(wx.EVT_SIZE, self.panel_size)
+        psiz = wx.BoxSizer(wx.VERTICAL)
+        self.panel.SetSizer(psiz)
+        self.panel.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_ALWAYS)
+        self.panel.SetupScrolling(scroll_x=False)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.cat, 0, wx.EXPAND, 0)
+        sizer.Add(self.panel, 1, wx.EXPAND, 0)
+        self.SetSizer(sizer)
+        self.Fit()
+        
+        self.parse_tile_map(self.panel, [("test", np.arange(0,10, dtype=np.uint8))])
+        self.current_tile = None
+        self.setup_tiles()
+        self.zoom = 2
+    
+    def panel_size(self, evt):
+        size = self.panel.GetSize()
+        vsize = self.panel.GetVirtualSize()
+        self.panel.SetVirtualSize((size[0] - 20, vsize[1]))
+
+    def recalc_view(self):
+        editor = self.task.active_editor
+        if editor is not None:
+            self.editor = editor
+            self.parse_tile_map(self.panel, editor.antic_tile_map)
+            self.setup_tiles()
+            TileButton.set_colors(editor)
+    
+    def parse_tile_map(self, panel, tile_map):
+        sizer = panel.GetSizer()
+        sizer.DeleteWindows()
+        self.tile_map = tile_map
+        self.categories = []
+        self.items = []
+        for label, tiles in tile_map:
+            t = wx.StaticText(panel, -1, label)
+            sizer.Add(t, 0, wx.EXPAND, 0)
+            self.categories.append(t)
+            w = wx.WrapSizer()
+            for i in np.arange(np.alen(tiles)):
+                if self.editor:
+                    data = tiles[i:i+1]
+                    bmp = self.editor.antic_font.get_image(data[0], self.zoom)
+                    btn = TileButton(panel, -1, bmp, style=wx.BORDER_NONE|wx.BU_EXACTFIT)
+                    btn.tile_data = data
+                    btn.Bind(wx.EVT_BUTTON, self.on_tile_clicked)
+                    w.Add(btn, 0, wx.ALL, 0)
+                    self.items.append(btn)
+            sizer.Add(w, 0, wx.EXPAND, 0)
+    
+    def setup_tiles(self):
+        cats = [str(c.GetLabelText()) for c in self.categories]
+        self.cat.Set(cats)
+        self.cat.SetSelection(0)
+    
+    def on_category(self, event):
+        cat = event.GetSelection()
+        label = self.categories[cat]
+        #self.panel.ScrollChildIntoView(label)
+        sppu_x, sppu_y = self.panel.GetScrollPixelsPerUnit()
+        vs_x, vs_y = self.panel.GetViewStart()
+        cr = label.GetRect()
+        print cr
+        self.panel.Scroll(0, vs_y + (cr.y / sppu_y))
+    
+    def on_tile_clicked(self, event):
+        btn = event.GetEventObject()
+        e = self.editor
+        if e is not None:
+            self.current_tile = btn
+            e.set_current_draw_pattern(btn.tile_data, self)
+            self.clear_toggle_except(btn)
+    
+    def clear_tile_selection(self):
+        self.current_tile = None
+        self.clear_toggle_except()
+    
+    def clear_toggle_except(self, btn=None):
+        for b in self.items:
+            if b != btn:
+                b.SetToggle(False)
+    
+    def on_tile(self, event):
+        index = event.GetInt()
+        print index, self.items[index]
+        self.change_tile(self.items[index])
+        
+    def change_tile(self, tile):
+        e = self.editor
+        if e is None:
+            return
+        cmd_cls = self.command_cls
+        if cmd_cls is None:
+            return
+        if e.can_copy:
+            index = e.anchor_start_index
+        else:
+            index = e.cursor_index
+        value = tile.get_bytes()
+        cmd = cmd_cls(e.segment, index, index+len(value), value, True)
+        e.process_command(cmd)
+
+
+
+
+if __name__ == '__main__':
+    import sys
+    sys.path[0:0] = [".."]
+    print sys.path
+    import fonts
+    import colors
+    
+    class Wrapper(object):
+        def __init__(self, **kwargs):
+            for k, v in kwargs.iteritems():
+                setattr(self, k, v)
+        
+        def set_current_draw_pattern(self, *args, **kwargs):
+            pass
+        
+    
+    class MyFrame(wx.Frame):
+        def __init__(self, parent, id, title):
+            wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.DefaultSize)
+            tile_map = [("trees", np.arange(26, 45, dtype=np.uint8)),
+                        ("roads", np.arange(50, 72, dtype=np.uint8)),
+                        ("buildings", np.arange(75, 80, dtype=np.uint8)),
+                        ("people", np.arange(90, 92, dtype=np.uint8)),
+                        ("water", np.arange(150, 172, dtype=np.uint8)),
+                        ]
+            color_converter = colors.gtia_ntsc_to_rgb
+            highlight_color = (100, 200, 230)
+            unfocused_cursor_color = (128, 128, 128)
+            background_color = (255, 255, 255)
+            match_background_color = (255, 255, 180)
+            comment_background_color = (255, 180, 200)
+            antic_font = fonts.AnticFont(fonts.A8DefaultFont, 4, colors.powerup_colors(), highlight_color, match_background_color, comment_background_color, color_converter)
+            editor = Wrapper(antic_font=antic_font, antic_tile_map=tile_map, highlight_color=highlight_color)
+            task = Wrapper(active_editor=editor)
+            panel = TileWrapControl(self, task)
+            panel.recalc_view()
+
+    class MyApp(wx.App):
+        def OnInit(self):
+            frame = MyFrame(None, -1, 'test')
+            frame.Show(True)
+            frame.Center()
+            return True
+
+    app = MyApp(0)
+    app.MainLoop()
