@@ -22,6 +22,9 @@ class UndoStack(list):
     def set_save_point(self):
         self.save_point_index = self.insert_index
     
+    def perform_setup(self, editor):
+        pass
+    
     def perform(self, cmd, editor, batch=None):
         if cmd is None:
             return UndoInfo()
@@ -32,6 +35,7 @@ class UndoStack(list):
                 if self.batch is not None:
                     self.end_batch()
                 self.start_batch(batch)
+        self.batch.perform_setup(editor)
         undo_info = cmd.perform(editor)
         if undo_info.flags.changed_document:
             if undo_info.flags.success:
@@ -80,7 +84,7 @@ class UndoStack(list):
     def end_batch(self):
         log.debug("Ending batch %s" % self.batch)
         if self.batch != self:
-            batch_command = self.batch
+            batch_command = self.batch.get_recordable_command()
             self.batch = self
             self.add_command(batch_command)
 
@@ -223,6 +227,9 @@ class Command(object):
     def is_recordable(self):
         return True
     
+    def perform_setup(self, document):
+        pass
+    
     def perform(self, document):
         pass
     
@@ -240,6 +247,9 @@ class Batch(Command):
         
     def __str__(self):
         return "<batch>"
+    
+    def get_recordable_command(self):
+        return self
     
     def perform(self, document):
         flags = StatusFlags()
@@ -262,6 +272,36 @@ class Batch(Command):
     def insert_at_index(self, command):
         if command.is_recordable():
             self.commands.append(command)
+
+
+class Overlay(Command):
+    def __init__(self):
+        Command.__init__(self)
+        self.last_command = None
+        
+    def __str__(self):
+        return "<overlay>"
+    
+    def get_recordable_command(self):
+        return self.last_command
+    
+    def perform_setup(self, document):
+        flags = StatusFlags()
+        last = self.last_command
+        if last is not None:
+            undo = last.undo(document)
+            flags.add_flags(undo.flags)
+        undo = UndoInfo()
+        undo.flags = flags
+        return undo
+    
+    def undo(self, document):
+        # Not used because the overlay is replaced by the last command.  See
+        # get_recordable_command above
+        pass
+    
+    def insert_at_index(self, command):
+        self.last_command = command
 
 
 def get_known_commands():

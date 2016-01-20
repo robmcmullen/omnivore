@@ -16,10 +16,11 @@ from omnivore.tasks.hex_edit.hex_editor import HexEditor
 from omnivore.framework.document import Document
 from omnivore.utils.wx.bitviewscroller import FontMapScroller
 from omnivore.utils.binutil import ATRSegmentParser, XexSegmentParser
+from omnivore.utils.command import Overlay
 from omnivore.tasks.hex_edit.commands import ChangeByteCommand
 from omnivore.framework.mouse_handler import MouseHandler
 
-from commands import DrawBatchCommand
+from commands import DrawBatchCommand, LineCommand
 
 
 class MainFontMapScroller(FontMapScroller):
@@ -196,13 +197,52 @@ class DrawMode(SelectMode):
         e.end_batch()
         self.batch = None
 
+
+class LineMode(SelectMode):
+    icon = "shape_line.png"
+    menu_item_name = "Line"
+    menu_item_tooltip = "Draw line with current tile"
+
+    def draw(self, evt, start=False):
+        c = self.canvas
+        e = c.editor
+        if e is None:
+            return
+        bytes = e.draw_pattern
+        if not bytes:
+            return
+        byte, bit, inside = c.event_coords_to_byte(evt)
+        if inside:
+            if start:
+                self.batch = Overlay()
+                self.start_index = byte
+            e.set_cursor(byte, False)
+            index = byte
+            cmd = LineCommand(e.segment, self.start_index, index, bytes)
+            e.process_command(cmd, self.batch)
+
+    def process_left_down(self, evt):
+        self.draw(evt, True)
+
+    def process_mouse_motion_down(self, evt):
+        self.draw(evt)
+
+    def process_left_up(self, evt):
+        c = self.canvas
+        e = c.editor
+        if e is None:
+            return
+        e.end_batch()
+        self.batch = None
+
+
 class MapEditor(HexEditor):
     """ The toolkit specific implementation of a HexEditor.  See the
     IHexEditor interface for the API documentation.
     """
     ##### class attributes
     
-    valid_mouse_modes = [SelectMode, DrawMode]
+    valid_mouse_modes = [SelectMode, DrawMode, LineMode]
     
     ##### traits
     
