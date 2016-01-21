@@ -6,7 +6,7 @@ cimport numpy as np
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def get_numpy_memory_map_image(np.ndarray[np.uint8_t, ndim=2] bytes, int start_byte, int end_byte, int bytes_per_row, int num_rows, int start_col, int num_cols, background_color, anchor_start, anchor_end, selected_color):
+def get_numpy_memory_map_image(np.ndarray[np.uint8_t, ndim=2] bytes, int start_byte, int end_byte, int bytes_per_row, int num_rows, int start_col, int num_cols, background_color, anchor_start, anchor_end, selected_color, bint rect_select, rc1, rc2):
     cdef int num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) // bytes_per_row
     cdef np.uint8_t bgr = background_color[0]
     cdef np.uint8_t bgg = background_color[1]
@@ -29,6 +29,10 @@ def get_numpy_memory_map_image(np.ndarray[np.uint8_t, ndim=2] bytes, int start_b
     cdef np.uint8_t bw = 0xff
     cdef np.uint8_t c
     cdef np.uint16_t h
+    cdef int r1, c1, r2, c2
+    if rect_select:
+        r1, c1 = rc1
+        r2, c2 = rc2
     for j in range(end_row):
         x = 0
         for i in range(start_col, end_col):
@@ -38,7 +42,7 @@ def get_numpy_memory_map_image(np.ndarray[np.uint8_t, ndim=2] bytes, int start_b
                 array[y,x,2] = bgb
             else:
                 c = bytes[j, i] ^ bw
-                if start <= e + i < end:
+                if start <= e + i < end and (not rect_select or c1 <= i < c2):
                     h = sr * c >> 8
                     array[y,x,0] = h
                     h = sg * c >> 8
@@ -57,7 +61,7 @@ def get_numpy_memory_map_image(np.ndarray[np.uint8_t, ndim=2] bytes, int start_b
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def get_numpy_font_map_image(np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray[np.uint8_t, ndim=2] style, int start_byte, int end_byte, int bytes_per_row, int num_rows, int start_col, int num_cols, background_color, font, np.ndarray[np.uint8_t] font_mapping, int anchor_start, int anchor_end):
+def get_numpy_font_map_image(np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray[np.uint8_t, ndim=2] style, int start_byte, int end_byte, int bytes_per_row, int num_rows, int start_col, int num_cols, background_color, font, np.ndarray[np.uint8_t] font_mapping, int anchor_start, int anchor_end, bint rect_select, rc1, rc2):
     cdef int num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) // bytes_per_row
     cdef np.uint8_t bgr = background_color[0]
     cdef np.uint8_t bgg = background_color[1]
@@ -80,6 +84,10 @@ def get_numpy_font_map_image(np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray[np
     cdef np.uint8_t[:,:,:,:] fast_fm = fm
     cdef np.ndarray[np.uint8_t, ndim=4] fc = font.comment_font
     cdef np.uint8_t[:,:,:,:] fast_fc = fc
+    cdef int r1, c1, r2, c2
+    if rect_select:
+        r1, c1 = rc1
+        r2, c2 = rc2
     for j in range(num_rows):
         x = 0
         for i in range(start_col, start_col + num_cols):
@@ -89,7 +97,7 @@ def get_numpy_font_map_image(np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray[np
                 fast_array[y:y+8,x:x+8,2] = bgb
             else:
                 c = font_mapping[bytes[j, i]]
-                if anchor_start <= e + i < anchor_end:
+                if anchor_start <= e + i < anchor_end and (not rect_select or c1 <= i < c2):
                     fast_array[y:y+8,x:x+8,:] = fast_fh[c]
                 elif style[j, i] & 1:
                     fast_array[y:y+8,x:x+8,:] = fast_fm[c]

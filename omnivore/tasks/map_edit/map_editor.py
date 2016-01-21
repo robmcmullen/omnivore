@@ -266,6 +266,10 @@ class MapEditor(HexEditor):
     
     draw_pattern = Any(None)
     
+    # Class attributes (not traits)
+    
+    rect_select = True
+    
     ##### Default traits
     
     def _antic_tile_map_default(self):

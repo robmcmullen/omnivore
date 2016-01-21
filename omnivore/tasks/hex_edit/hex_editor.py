@@ -95,6 +95,8 @@ class HexEditor(FrameworkEditor):
     
     searchers = known_searchers
     
+    rect_select = False
+    
     ##### Default traits
     
     def _disassembler_default(self):
