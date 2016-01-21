@@ -111,7 +111,7 @@ class FontMappingWidthAction(EditorAction):
 
         dlg.Destroy()
         if width > 0:
-            e.set_map_width(width)
+            wx.CallAfter(e.set_map_width, width)
 
 
 class AnticColorAction(EditorAction):
