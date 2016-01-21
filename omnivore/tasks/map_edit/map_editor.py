@@ -17,6 +17,7 @@ from omnivore.framework.document import Document
 from omnivore.utils.wx.bitviewscroller import FontMapScroller
 from omnivore.utils.binutil import ATRSegmentParser, XexSegmentParser
 from omnivore.utils.command import Overlay
+from omnivore.utils.searchutil import HexSearcher, CharSearcher
 from omnivore.tasks.hex_edit.commands import ChangeByteCommand
 from omnivore.framework.mouse_handler import MouseHandler
 
@@ -269,6 +270,8 @@ class MapEditor(HexEditor):
     # Class attributes (not traits)
     
     rect_select = True
+    
+    searchers = [HexSearcher, CharSearcher]
     
     ##### Default traits
     
