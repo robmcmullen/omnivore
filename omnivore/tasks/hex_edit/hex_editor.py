@@ -152,6 +152,18 @@ class HexEditor(FrameworkEditor):
             self.update_colors(colors)
             self.set_font(font_segment.antic_font, 5)
             self.initial_segment = segment
+        state = doc.bytes[0x10:0x19] == [0x00, 0xc1, 0x80, 0x0f, 0xcc, 0x22, 0x18, 0x60, 0x0e]
+        if state.all():
+            print "Found getaway.atr!!!"
+            font_segment = AnticFontSegment(0x2b00, doc.bytes[0x090:0x490], name="Playfield font")
+            doc.add_user_segment(font_segment)
+            segment = DefaultSegment(0x4b00, doc.bytes[0x2090:0x6090], name="Playfield map")
+            segment.map_width = 256
+            doc.add_user_segment(segment)
+            colors = [0x46, 0xD6, 0x74, 0x0C, 0x14, 0x86, 0x02, 0xB6, 0xBA]
+            self.update_colors(colors)
+            self.set_font(font_segment.antic_font, 5)
+            self.initial_segment = segment
 
     def rebuild_document_properties(self):
         self.find_segment_parser([ATRSegmentParser, XexSegmentParser])
