@@ -3,7 +3,7 @@ import numpy as np
 from omnivore.framework.errors import ProgressCancelError
 from omnivore.utils.command import Batch, Command, UndoInfo
 from omnivore.tasks.hex_edit.commands import ChangeByteCommand
-from omnivore.utils.drawutil import get_line
+from omnivore.utils.drawutil import *
 
 import logging
 progress_log = logging.getLogger("progress")
@@ -45,6 +45,9 @@ class LineCommand(Command):
     def get_data(self, orig):
         return self.data
     
+    def get_points(self, i1, i2, map_width):
+        return get_line(i1, i2, map_width)
+    
     def perform(self, editor):
         i1 = self.start_index
         i2 = self.end_index
@@ -54,7 +57,7 @@ class LineCommand(Command):
         undo.flags.byte_values_changed = True
         undo.flags.index_range = i1, i2
         undo.flags.cursor_index = self.end_index
-        line = np.asarray(get_line(i1, i2, editor.map_width), dtype=np.uint32)
+        line = np.asarray(self.get_points(i1, i2, editor.map_width), dtype=np.uint32)
         old_data = self.segment[line].copy()
         self.segment[line] = self.get_data(old_data)
         if (self.segment[line] == old_data).all():
@@ -66,3 +69,19 @@ class LineCommand(Command):
         line, old_data = self.undo_info.data
         self.segment[line] = old_data
         return self.undo_info
+
+
+class SquareCommand(LineCommand):
+    short_name = "square"
+    pretty_name = "Square"
+    
+    def get_points(self, i1, i2, map_width):
+        return get_rectangle(i1, i2, map_width)
+
+
+class FilledSquareCommand(LineCommand):
+    short_name = "filled_square"
+    pretty_name = "Filled Square"
+    
+    def get_points(self, i1, i2, map_width):
+        return get_filled_rectangle(i1, i2, map_width)

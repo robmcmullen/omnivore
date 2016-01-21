@@ -20,7 +20,7 @@ from omnivore.utils.command import Overlay
 from omnivore.tasks.hex_edit.commands import ChangeByteCommand
 from omnivore.framework.mouse_handler import MouseHandler
 
-from commands import DrawBatchCommand, LineCommand
+from commands import *
 
 
 class MainFontMapScroller(FontMapScroller):
@@ -162,7 +162,7 @@ class SelectMode(MouseHandler):
 
 
 class DrawMode(SelectMode):
-    icon = "pencil.png"
+    icon = "shape_freehand.png"
     menu_item_name = "Draw"
     menu_item_tooltip = "Draw with current tile"
 
@@ -198,10 +198,8 @@ class DrawMode(SelectMode):
         self.batch = None
 
 
-class LineMode(SelectMode):
-    icon = "shape_line.png"
-    menu_item_name = "Line"
-    menu_item_tooltip = "Draw line with current tile"
+class OverlayMode(SelectMode):
+    command = None
 
     def draw(self, evt, start=False):
         c = self.canvas
@@ -218,7 +216,7 @@ class LineMode(SelectMode):
                 self.start_index = byte
             e.set_cursor(byte, False)
             index = byte
-            cmd = LineCommand(e.segment, self.start_index, index, bytes)
+            cmd = self.command(e.segment, self.start_index, index, bytes)
             e.process_command(cmd, self.batch)
 
     def process_left_down(self, evt):
@@ -235,6 +233,24 @@ class LineMode(SelectMode):
         e.end_batch()
         self.batch = None
 
+class LineMode(OverlayMode):
+    icon = "shape_line.png"
+    menu_item_name = "Line"
+    menu_item_tooltip = "Draw line with current tile"
+    command = LineCommand
+
+class SquareMode(OverlayMode):
+    icon = "shape_hollow_square.png"
+    menu_item_name = "Square"
+    menu_item_tooltip = "Draw square with current tile"
+    command = SquareCommand
+
+class FilledSquareMode(OverlayMode):
+    icon = "shape_filled_square.png"
+    menu_item_name = "Filled Square"
+    menu_item_tooltip = "Draw filled square with current tile"
+    command = FilledSquareCommand
+
 
 class MapEditor(HexEditor):
     """ The toolkit specific implementation of a HexEditor.  See the
@@ -242,7 +258,7 @@ class MapEditor(HexEditor):
     """
     ##### class attributes
     
-    valid_mouse_modes = [SelectMode, DrawMode, LineMode]
+    valid_mouse_modes = [SelectMode, DrawMode, LineMode, SquareMode, FilledSquareMode]
     
     ##### traits
     

@@ -57,3 +57,41 @@ def get_line(start_index, end_index, map_width):
     if swapped:
         points.reverse()
     return points
+
+def get_rectangle(start_index, end_index, map_width):
+    # Setup initial conditions
+    y1, x1 = divmod(start_index, map_width)
+    y2, x2 = divmod(end_index, map_width)
+ 
+    if x1 > x2:
+        x1, x2 = x2, x1
+    if y1 > y2:
+        y1, y2 = y2, y1
+    
+    points = []
+    for x in range(x1, x2 + 1):
+        points.append(y1 * map_width + x)
+    for y in range(y1 + 1, y2):
+        points.append(y * map_width + x1)
+        if x2 > x1:
+            points.append(y * map_width + x2)
+    if y2 > y1:
+        for x in range(x1, x2 + 1):
+            points.append(y2 * map_width + x)
+    return points
+
+def get_filled_rectangle(start_index, end_index, map_width):
+    # Setup initial conditions
+    y1, x1 = divmod(start_index, map_width)
+    y2, x2 = divmod(end_index, map_width)
+ 
+    if x1 > x2:
+        x1, x2 = x2, x1
+    if y1 > y2:
+        y1, y2 = y2, y1
+    
+    points = []
+    for y in range(y1, y2 + 1):
+        index = y * map_width + x1
+        points.extend(range(index, index - x1 + x2 + 1))
+    return points
