@@ -14,10 +14,10 @@ log = logging.getLogger(__name__)
 from omnivore import __version__, __author__, __author_email__, __url__
 substitutes = {
     'prog': 'Omnivore XL',
-    'yearrange': '2014-2015',
+    'yearrange': '2014-2016',
     'version': __version__,
     'description': "The binary editor and disassembler for modern Atari 8-bit hackers",
-    'tagline': "Byte into the meat of Atari Software! Coded and tested by vegetarians.",
+    'tagline': "Byte into the meat of Atari Software!",
     'author': __author__,
     'author_email': __author_email__,
     'url': __url__,
@@ -42,7 +42,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 <ul>
 <li>Mark James for the <a href=\"http://www.famfamfam.com/lab/icons/silk/\">free silk icon set</a>
 <li>Chris Barker for bug reports and fixes on OS X</a>
-<li>Kevin Savetz of <a href=\"http://ataripodcast.com\">ANTIC, the Atari Podcast</a> for beta testing
+<li>Kevin Savetz of <a href=\"http://ataripodcast.com\">ANTIC, the Atari 8-bit Podcast</a> for beta testing
+<li>Wade Ripkowski of <a href=\"http://inverseatascii.info\">Inverse ATASCII, the Atari 8-bit Productivity Podcast</a> for beta testing
 <li>David Beazley, author of <a href=\"http://dabeaz.com\">Python Cookbook, 3rd Ed. and more</a>, for the 6502 mini assembler
 </ul>""",
     }
