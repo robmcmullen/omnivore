@@ -1,5 +1,7 @@
 import os
 
+import numpy as np
+
 from fs.opener import opener, fsopen
 from fs.errors import FSError
 
@@ -80,6 +82,7 @@ class FileGuess(object):
         # In order to handle arbitrarily sized files, only read the first
         # header bytes.  If the file is bigger, it will be read by the task
         # as needed.
+        self._numpy = None
         self.bytes = fh.read(self.head_size)
         fh.close()
         
@@ -94,6 +97,12 @@ class FileGuess(object):
     
     def get_utf8(self):
         return self.bytes
+    
+    @property
+    def numpy(self):
+        if self._numpy is None:
+            self._numpy = np.fromstring(self.bytes, dtype=np.uint8)
+        return self._numpy
     
     def get_metadata(self):
         return self.metadata.clone_traits()

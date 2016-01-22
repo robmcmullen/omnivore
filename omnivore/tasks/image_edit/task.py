@@ -57,5 +57,6 @@ class ImageEditTask(FrameworkTask):
 
     ###
     @classmethod
-    def can_edit(cls, mime):
+    def can_edit(cls, document):
+        mime = document.metadata.mime
         return mime == "image/jpeg" or mime == "image/png"

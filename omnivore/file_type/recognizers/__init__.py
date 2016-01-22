@@ -55,6 +55,9 @@ from text import PlainTextRecognizer, PoundBangTextRecognizer, XMLTextRecognizer
 recognizers.append(PlainTextRecognizer())
 recognizers.append(PoundBangTextRecognizer())
 recognizers.append(XMLTextRecognizer())
+from atari8bit import ATRRecognizer, XEXRecognizer
+recognizers.append(ATRRecognizer())
+recognizers.append(XEXRecognizer())
 # [[[end]]]
 
 from envisage.api import Plugin

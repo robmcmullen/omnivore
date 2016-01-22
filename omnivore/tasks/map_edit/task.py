@@ -90,18 +90,16 @@ class MapEditTask(HexEditTask):
 
     ###
     @classmethod
-    def can_edit(cls, mime):
-        return mime == "application/octet-stream"
+    def can_edit(cls, document):
+        return document.metadata.mime == "application/octet-stream" or document.segments
     
     @classmethod
-    def get_match_score(cls, guess):
+    def get_match_score(cls, document):
         """Return a number based on how good of a match this task is to the
-        incoming FileGuess.
+        incoming Document.
         
         0 = generic match
         ...
         10 = absolute match
         """
-        if guess.metadata.uri.endswith("Getaway!.xex"):
-            return 10
         return 0

@@ -316,7 +316,7 @@ class MapEditor(HexEditor):
         self.memory_map.refresh_view()
     
     def rebuild_document_properties(self):
-        self.find_segment_parser([ATRSegmentParser, XexSegmentParser], "Playfield map")
+        self.find_segment("Playfield map")
         self.control.set_mouse_mode(SelectMode)
     
     def view_segment_set_width(self, segment):

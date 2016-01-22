@@ -697,13 +697,13 @@ class FrameworkTask(Task):
 
     ###
     @classmethod
-    def can_edit(cls, mime):
+    def can_edit(cls, document):
         raise NotImplementedError
     
     @classmethod
-    def get_match_score(cls, guess):
+    def get_match_score(cls, document):
         """Return a number based on how good of a match this task is to the
-        incoming FileGuess.
+        incoming Document.
         
         0 = generic match
         ...

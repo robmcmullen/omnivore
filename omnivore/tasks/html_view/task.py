@@ -55,8 +55,8 @@ class HtmlViewTask(FrameworkTask):
     
     ###
     @classmethod
-    def can_edit(cls, mime):
-        return mime == "text/html"
+    def can_edit(cls, document):
+        return document.metadata.mime == "text/html"
     
     @classmethod
     def get_match_score(cls, guess):

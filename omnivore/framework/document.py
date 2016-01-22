@@ -41,7 +41,11 @@ class Document(HasTraits):
     
     segments = List
     
+    segment_parser = Any
+    
     user_segments = List
+    
+    extra_metadata = Dict
     
     # Trait events to provide view updating
     
@@ -63,7 +67,7 @@ class Document(HasTraits):
         return ""
     
     def _segments_default(self):
-        return list([DefaultSegment()])
+        return list([DefaultSegment(0, self.bytes)])
 
     #### trait property getters
 
@@ -101,9 +105,13 @@ class Document(HasTraits):
                 break
             except InvalidSegmentParser:
                 pass
-        self.segments = s.segments
+        self.set_segments(s)
+    
+    def set_segments(self, parser):
+        self.segment_parser = parser
+        self.segments = []
+        self.segments.extend(parser.segments)
         self.segments.extend(self.user_segments)
-        return parser
     
     def add_user_segment(self, segment):
         self.user_segments.append(segment)

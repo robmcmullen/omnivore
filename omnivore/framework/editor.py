@@ -100,19 +100,21 @@ class FrameworkEditor(Editor):
         """
         raise NotImplementedError
 
-    def load(self, guess=None):
+    def load(self, source=None):
         """ Loads the contents of the editor.
         """
-        if guess is None:
+        if source is None:
             doc = Document()
+        elif hasattr(source, 'document_id'):
+            self.view_document(source)
         else:
-            metadata = guess.get_metadata()
-            bytes = guess.get_utf8()
+            metadata = source.get_metadata()
+            bytes = source.get_utf8()
             doc = Document(metadata=metadata, bytes=bytes)
-            self.init_user_segments(doc)
+            self.init_extra_metadata(doc)
             self.view_document(doc)
 
-    def init_user_segments(self, doc):
+    def init_extra_metadata(self, doc):
         """ Set up any pre-calculated segments based on the type or content of
         the just-loaded document.
         """
@@ -126,6 +128,8 @@ class FrameworkEditor(Editor):
         self.rebuild_document_properties()
         if old_editor is not None:
             self.copy_view_properties(old_editor)
+        else:
+            self.init_extra_metadata(doc)
         self.update_panes()
         self.document.undo_stack_changed = True
         self.task.document_changed = self.document

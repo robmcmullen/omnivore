@@ -40,5 +40,5 @@ class TextEditTask(FrameworkTask):
 
     ###
     @classmethod
-    def can_edit(cls, mime):
-        return mime.startswith("text/")
+    def can_edit(cls, document):
+        return document.metadata.mime.startswith("text/")

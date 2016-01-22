@@ -533,8 +533,7 @@ class NewViewInGroup(TaskDynamicSubmenuGroup):
         e = self.task.active_editor
         items = []
         if e:
-            mime = e.document.metadata.mime
-            factories = self.task.window.application.get_possible_task_factories(mime)
+            factories = self.task.window.application.get_possible_task_factories(e.document)
             for factory in factories:
                 action = NewViewInNewTaskAction(name="In a %s Window" % factory.name, factor_id=factory.id)
                 items.append(ActionItem(action=action))

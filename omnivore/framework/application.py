@@ -264,44 +264,46 @@ class FrameworkApplication(TasksApplication):
             return
         
         # Attempt to classify the guess using the file recognizer service
-        service.recognize(guess)
+        document = service.recognize(guess)
+        log.debug("created document %s (mime=%s) %d segments from parser %s" % (document, document.metadata.mime, len(document.segments), document.segment_parser.__class__.__name__))
         
         # Short circuit: if the file can be edited by the active task, use that!
-        if active_task is not None and active_task.can_edit(guess.metadata.mime):
-            log.debug("active task %s can edit %s" % (active_task, guess.metadata.mime))
-            active_task.new(guess, **kwargs)
+        if active_task is not None and active_task.can_edit(document):
+            log.debug("active task %s can edit %s" % (active_task, document))
+            active_task.new(document, **kwargs)
             return
         
-        possibilities = self.get_possible_task_factories(guess.metadata.mime, task_id)
+        possibilities = self.get_possible_task_factories(document, task_id)
         if not possibilities:
             log.debug("no editor for %s" % uri)
             return
-        best = self.find_best_task_factory(guess, possibilities)
+        best = self.find_best_task_factory(document, possibilities)
         
         if active_task is not None:
             # Ask the active task if it's OK to load a different editor
             if not active_task.allow_different_task(guess, best.factory):
                 return
-            if active_task.can_edit("application/octet-stream") and active_task.ask_attempt_loading_as_octet_stream(guess, best.factory):
+            dummy = Document(metadata="application/octet-stream")
+            if active_task.can_edit(document) and active_task.ask_attempt_loading_as_octet_stream(guess, best.factory):
                 log.debug("Active task %s allows application/octet-stream" % active_task.id)
-                active_task.new(guess, **kwargs)
+                active_task.new(document, **kwargs)
                 return
             if in_current_window:
                 task = self.create_task_in_window(best.id, active_task.window)
-                task.new(guess, **kwargs)
+                task.new(document, **kwargs)
                 return
 
         # Look for existing task in current windows
         task = self.find_active_task_of_type(best.id)
         if task:
             log.debug("Found task %s in current window" % best.id)
-            task.new(guess, **kwargs)
+            task.new(document, **kwargs)
             return
         
         log.debug("Creating task %s in current window" % best.id)
-        self.create_task_from_factory_id(guess, best.id)
+        self.create_task_from_factory_id(document, best.id)
     
-    def get_possible_task_factories(self, mime, task_id=""):
+    def get_possible_task_factories(self, document, task_id=""):
         possibilities = []
         for factory in self.task_factories:
             log.debug("factory: %s" % factory.name)
@@ -309,16 +311,19 @@ class FrameworkApplication(TasksApplication):
                 if factory.id == task_id:
                     possibilities.append(factory)
             elif hasattr(factory.factory, "can_edit"):
-                if factory.factory.can_edit(mime):
-                    log.debug("  can edit: %s" % mime)
+                if factory.factory.can_edit(document):
+                    log.debug("  can edit: %s" % document)
                     possibilities.append(factory)
         log.debug("get_possible_task_factories: %s" % str([(p.name, p.id) for p in possibilities]))
         return possibilities
     
-    def find_best_task_factory(self, guess, factories):
+    def find_best_task_factory(self, document, factories):
         scores = []
         for factory in factories:
-            score = factory.factory.get_match_score(guess)
+            if document.last_task_id == factory.id:
+                # short circuit if document is requesting a specific task
+                return factory
+            score = factory.factory.get_match_score(document)
             scores.append((score, factory))
         scores.sort()
         log.debug("find_best_task_factory: %s" % str([(score, p.name, p.id) for (s, p) in scores]))

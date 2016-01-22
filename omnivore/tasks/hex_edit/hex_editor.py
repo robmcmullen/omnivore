@@ -136,37 +136,21 @@ class HexEditor(FrameworkEditor):
         self.init_fonts(self.window.application)
         self.task.fonts_changed = self.font_list
 
-    def init_user_segments(self, doc):
+    def init_extra_metadata(self, doc):
         """ Set up any pre-calculated segments based on the type or content of
         the just-loaded document.
         """
-        state = doc.bytes[0:6] == [0xff, 0xff, 0x80, 0x2a, 0xff, 0x8a]
-        if state.all():
-            print "Found getaway.xex!!!"
-            font_segment = AnticFontSegment(0x2b00, doc.bytes[0x086:0x486], name="Playfield font")
-            doc.add_user_segment(font_segment)
-            segment = DefaultSegment(0x4b00, doc.bytes[0x2086:0x6086], name="Playfield map")
-            segment.map_width = 256
-            doc.add_user_segment(segment)
-            colors = [0x46, 0xD6, 0x74, 0x0C, 0x14, 0x86, 0x02, 0xB6, 0xBA]
-            self.update_colors(colors)
-            self.set_font(font_segment.antic_font, 5)
-            self.initial_segment = segment
-        state = doc.bytes[0x10:0x19] == [0x00, 0xc1, 0x80, 0x0f, 0xcc, 0x22, 0x18, 0x60, 0x0e]
-        if state.all():
-            print "Found getaway.atr!!!"
-            font_segment = AnticFontSegment(0x2b00, doc.bytes[0x090:0x490], name="Playfield font")
-            doc.add_user_segment(font_segment)
-            segment = DefaultSegment(0x4b00, doc.bytes[0x2090:0x6090], name="Playfield map")
-            segment.map_width = 256
-            doc.add_user_segment(segment)
-            colors = [0x46, 0xD6, 0x74, 0x0C, 0x14, 0x86, 0x02, 0xB6, 0xBA]
-            self.update_colors(colors)
-            self.set_font(font_segment.antic_font, 5)
-            self.initial_segment = segment
+        e = doc.extra_metadata
+        print "EXTRA!!!", e
+        if 'colors' in e:
+            self.update_colors(e['colors'])
+        if 'font' in e:
+            self.set_font(e['font'][0], e['font'][1])
+        if 'initial segment' in e:
+            self.initial_segment = e['initial segment']
 
     def rebuild_document_properties(self):
-        self.find_segment_parser([ATRSegmentParser, XexSegmentParser])
+        self.find_segment()
     
     def copy_view_properties(self, old_editor):
         self.update_colors(old_editor.playfield_colors)
@@ -341,7 +325,10 @@ class HexEditor(FrameworkEditor):
         self.disassembly.recalc_view()
     
     def find_segment_parser(self, parsers, segment_name=None):
-        parser = self.document.parse_segments(parsers)
+        self.document.parse_segments(parsers)
+        self.find_segment(segment_name)
+    
+    def find_segment(self, segment_name=None):
         if segment_name is not None:
             index = self.document.find_segment_index_by_name(segment_name)
             if index < 0:
@@ -349,9 +336,10 @@ class HexEditor(FrameworkEditor):
         else:
             index = 0
         self.segment_number = index
-        self.segment_parser = parser
+        self.segment_parser = self.document.segment_parser
         self.update_segments_ui()
         new_segment = self.document.segments[index]
+        print new_segment
         self.view_segment_set_width(new_segment)
         self.select_none(refresh=False)
     
