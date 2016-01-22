@@ -69,6 +69,12 @@ class BitviewScroller(wx.ScrolledWindow):
         self.grid_height = 0
         self.zoom = 5
         self.border_width = 1
+        self.start_row = 0
+        self.start_col = 0
+        self.fully_visible_rows = 1
+        self.fully_visible_cols = 1
+        self.visible_rows = 1
+
         self.rect_select = False
         
         self.select_extend_mode = False
