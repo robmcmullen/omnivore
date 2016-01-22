@@ -247,6 +247,7 @@ class TileWrapControl(wx.Panel):
                         w.Add(btn, 0, wx.ALL, 0)
                         self.items.append(btn)
             sizer.Add(w, 0, wx.EXPAND, 0)
+        self.Layout()
     
     def setup_tiles(self):
         cats = [str(c.GetLabelText()) for c in self.categories]
