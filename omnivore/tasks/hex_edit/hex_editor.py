@@ -159,7 +159,7 @@ class HexEditor(FrameworkEditor):
         return len(self.segment)
     
     def process_paste_data_object(self, data_obj):
-        bytes = self.get_numpy_from_data_object(data_obj)
+        bytes, extra = self.get_numpy_from_data_object(data_obj)
         cmd = PasteCommand(self.segment, self.anchor_start_index, self.anchor_end_index, bytes)
         self.process_command(cmd)
     
@@ -172,16 +172,22 @@ class HexEditor(FrameworkEditor):
         # 'DF_HTML', 'DF_INVALID', 'DF_LOCALE', 'DF_MAX', 'DF_METAFILE',
         # 'DF_OEMTEXT', 'DF_PALETTE', 'DF_PENDATA', 'DF_PRIVATE', 'DF_RIFF',
         # 'DF_SYLK', 'DF_TEXT', 'DF_TIFF', 'DF_UNICODETEXT', 'DF_WAVE']
+        extra = None
         if wx.DF_TEXT in data_obj.GetAllFormats():
             value = data_obj.GetText().encode('utf-8')
         elif wx.DF_UNICODETEXT in data_obj.GetAllFormats():  # for windows
             value = data_obj.GetText().encode('utf-8')
         else:
             value = data_obj.GetData()
+            fmt = data_obj.GetPreferredFormat()
+            if fmt.GetId() == "numpy,columns":
+                r, c, value = value.split(",")
+                print "columns!", r, c, value
+                extra = int(r), int(c)
         bytes = np.fromstring(value, dtype=np.uint8)
-        return bytes
+        return bytes, extra
     
-    supported_clipboard_data_objects = [wx.CustomDataObject("numpy"), wx.TextDataObject()]
+    supported_clipboard_data_objects = [wx.CustomDataObject("numpy"), wx.CustomDataObject("numpy,columns"), wx.TextDataObject()]
     
     def create_clipboard_data_object(self):
         if self.anchor_start_index != self.anchor_end_index:

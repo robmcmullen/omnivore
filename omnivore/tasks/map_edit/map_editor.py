@@ -18,7 +18,7 @@ from omnivore.utils.wx.bitviewscroller import FontMapScroller
 from omnivore.utils.binutil import ATRSegmentParser, XexSegmentParser
 from omnivore.utils.command import Overlay
 from omnivore.utils.searchutil import HexSearcher, CharSearcher
-from omnivore.tasks.hex_edit.commands import ChangeByteCommand
+from omnivore.tasks.hex_edit.commands import ChangeByteCommand, PasteCommand
 from omnivore.framework.mouse_handler import MouseHandler
 
 from commands import *
@@ -339,6 +339,32 @@ class MapEditor(HexEditor):
     
     def perform_idle(self):
         pass
+    
+    def process_paste_data_object(self, data_obj):
+        bytes, extra = self.get_numpy_from_data_object(data_obj)
+        print extra
+        if extra is None:
+            cmd = PasteCommand(self.segment, self.anchor_start_index, self.anchor_end_index, bytes)
+        else:
+            r, c = extra
+            cmd = PasteRectangularCommand(self.segment, self.anchor_start_index, r, c, self.control.bytes_per_row, bytes)
+        self.process_command(cmd)
+    
+    def create_clipboard_data_object(self):
+        if self.anchor_start_index != self.anchor_end_index:
+            anchor_start, anchor_end, (r1, c1), (r2, c2) = self.control.get_highlight_indexes()
+            print anchor_start, anchor_end, (r1, c1), (r2, c2)
+            bpr = self.control.bytes_per_row
+            last = r2 * bpr
+            print last
+            d = self.segment[:last].reshape(-1, bpr)
+            print d
+            data = d[r1:r2, c1:c2]
+            print data
+            data_obj = wx.CustomDataObject("numpy,columns")
+            data_obj.SetData("%d,%d,%s" % (r2 - r1, c2 - c1, data.tostring()))
+            return data_obj
+        return None
     
     ###########################################################################
     # Trait handlers.

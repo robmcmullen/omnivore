@@ -85,3 +85,51 @@ class FilledSquareCommand(LineCommand):
     
     def get_points(self, i1, i2, map_width):
         return get_filled_rectangle(i1, i2, map_width)
+
+
+class PasteRectangularCommand(Command):
+    short_name = "paste_rect"
+    pretty_name = "Paste Rectangular"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('start_index', 'int'),
+            ('rows', 'int'),
+            ('cols', 'int'),
+            ('bytes_per_row', 'int'),
+            ('bytes', 'string'),
+            ]
+    
+    def __init__(self, segment, start_index, rows, cols, bytes_per_row, bytes):
+        Command.__init__(self)
+        self.segment = segment
+        self.start_index = start_index
+        self.rows = rows
+        self.cols = cols
+        self.bytes_per_row = bytes_per_row
+        self.bytes = bytes
+    
+    def __str__(self):
+        return "%s @ %04x (%dx%d)" % (self.pretty_name, self.start_index + self.segment.start_addr, self.cols, self.rows)
+    
+    def perform(self, editor):
+        i1 = self.start_index
+        bpr = self.bytes_per_row
+        r1, c1 = divmod(i1, bpr)
+        r2 = r1 + self.rows
+        c2 = c1 + self.cols
+        last = r2 * bpr
+        d = self.segment[:last].reshape(-1, bpr)
+        self.undo_info = undo = UndoInfo()
+        undo.flags.byte_values_changed = True
+        #undo.flags.index_range = i1, i2
+        old_data = d[r1:r2,c1:c2].copy()
+        new_data = np.fromstring(self.bytes, dtype=np.uint8).reshape(self.rows, self.cols)
+        d[r1:r2, c1:c2] = new_data
+        undo.data = (r1, c1, r2, c2, last, old_data, )
+        return undo
+
+    def undo(self, editor):
+        r1, c1, r2, c2, last, old_data, = self.undo_info.data
+        d = self.segment[:last].reshape(-1, self.bytes_per_row)
+        d[r1:r2, c1:c2] = old_data
+        return self.undo_info

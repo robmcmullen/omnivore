@@ -415,7 +415,7 @@ class PasteAndRepeatAction(EditorAction):
         e = self.active_editor
         data_obj = e.get_paste_data_object()
         if data_obj is not None:
-            bytes = e.get_numpy_from_data_object(data_obj)
+            bytes, extra = e.get_numpy_from_data_object(data_obj)
             cmd = PasteAndRepeatCommand(e.segment, e.anchor_start_index, e.anchor_end_index, bytes)
             self.active_editor.process_command(cmd)
 
