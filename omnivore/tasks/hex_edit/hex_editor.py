@@ -141,7 +141,6 @@ class HexEditor(FrameworkEditor):
         the just-loaded document.
         """
         e = doc.extra_metadata
-        print "EXTRA!!!", e
         if 'colors' in e:
             self.update_colors(e['colors'])
         if 'font' in e:

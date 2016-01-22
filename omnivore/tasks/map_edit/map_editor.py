@@ -276,19 +276,7 @@ class MapEditor(HexEditor):
     ##### Default traits
     
     def _antic_tile_map_default(self):
-        return [
-            ("road", [0x70]),
-            ("trees", range(0x80, 0x96), range(0x01, 0x16),),
-            ("buildings", range(0x96, 0x9f), range(0x16, 0x1f), range(0x41, 0x51), range(0x5d, 0x60),),
-            ("people", range(0xf1, 0xf4), range(0x71, 0x74)),
-            ("water", range(0x2e, 0x41),),
-            ("bridges", range(0x69, 0x6d),),
-            ("vehicles", range(0x51, 0x59),),
-            ("airport", range(0x60, 0x68), [0x5f], range(0x59, 0x5d), range(0xd9, 0xdd)), 
-            ("golf", range(0xa9, 0xae),),
-            ("other", [0x20, 0x25, 0x26, ]),
-            ("special", range(0x21, 0x25), range(0x74, 0x76),), 
-            ]
+        return []
     
     def _antic_font_mapping_default(self):
         return 0  # Internal
@@ -299,6 +287,15 @@ class MapEditor(HexEditor):
     ###########################################################################
     # 'FrameworkEditor' interface.
     ###########################################################################
+
+    def init_extra_metadata(self, doc):
+        """ Set up any pre-calculated segments based on the type or content of
+        the just-loaded document.
+        """
+        HexEditor.init_extra_metadata(self, doc)
+        e = doc.extra_metadata
+        if 'tile map' in e:
+            self.antic_tile_map = e['tile map']
 
     def update_fonts(self):
         self.font_map.Refresh()
