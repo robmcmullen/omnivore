@@ -9,6 +9,7 @@ from datetime import datetime
 import fs
 
 from filesystem import init_filesystems
+from document import Document
 
 import logging
 log = logging.getLogger(__name__)
