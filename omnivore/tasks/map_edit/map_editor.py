@@ -162,6 +162,33 @@ class SelectMode(MouseHandler):
             self.canvas.zoom_in()
 
 
+class PickTileMode(SelectMode):
+    icon = "eyedropper.png"
+    menu_item_name = "Pick Tile"
+    menu_item_tooltip = "Pick a tile from the map and use as the current draw tile"
+    
+    def init_post_hook(self):
+        self.last_index = None
+
+    def process_left_down(self, evt):
+        c = self.canvas
+        index, bit, inside = c.event_coords_to_byte(evt)
+        e = c.editor
+        value = e.segment[index]
+        if self.last_index != index:
+            e.set_cursor(index, False)
+            e.character_set.set_selected_char(value)
+            e.index_clicked(index, bit, None)
+            e.character_set.Refresh()
+        self.last_index = index
+
+    def process_mouse_motion_down(self, evt):
+        self.process_left_down(evt)
+
+    def process_left_up(self, evt):
+        self.last_index = None
+
+
 class DrawMode(SelectMode):
     icon = "shape_freehand.png"
     menu_item_name = "Draw"
@@ -259,7 +286,7 @@ class MapEditor(HexEditor):
     """
     ##### class attributes
     
-    valid_mouse_modes = [SelectMode, DrawMode, LineMode, SquareMode, FilledSquareMode]
+    valid_mouse_modes = [SelectMode, PickTileMode, DrawMode, LineMode, SquareMode, FilledSquareMode]
     
     ##### traits
     

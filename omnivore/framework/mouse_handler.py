@@ -31,6 +31,11 @@ class MouseHandler(object):
         # Optional (only OS X at this point) mouse wheel event filter
         self.wheel_scroll_count = 0
         self.use_every_nth_wheel_scroll = 5
+        
+        self.init_post_hook()
+    
+    def init_post_hook(self):
+        pass
     
     def get_cursor(self):
         return wx.StockCursor(wx.CURSOR_ARROW)
