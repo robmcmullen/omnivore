@@ -58,8 +58,7 @@ def get_line(start_index, end_index, map_width):
         points.reverse()
     return points
 
-def get_rectangle(start_index, end_index, map_width):
-    # Setup initial conditions
+def get_bounds(start_index, end_index, map_width):
     y1, x1 = divmod(start_index, map_width)
     y2, x2 = divmod(end_index, map_width)
  
@@ -67,6 +66,10 @@ def get_rectangle(start_index, end_index, map_width):
         x1, x2 = x2, x1
     if y1 > y2:
         y1, y2 = y2, y1
+    return (x1, y1), (x2, y2)
+
+def get_rectangle(start_index, end_index, map_width):
+    (x1, y1), (x2, y2) = get_bounds(start_index, end_index, map_width)
     
     points = []
     for x in range(x1, x2 + 1):
@@ -81,14 +84,7 @@ def get_rectangle(start_index, end_index, map_width):
     return points
 
 def get_filled_rectangle(start_index, end_index, map_width):
-    # Setup initial conditions
-    y1, x1 = divmod(start_index, map_width)
-    y2, x2 = divmod(end_index, map_width)
- 
-    if x1 > x2:
-        x1, x2 = x2, x1
-    if y1 > y2:
-        y1, y2 = y2, y1
+    (x1, y1), (x2, y2) = get_bounds(start_index, end_index, map_width)
     
     points = []
     for y in range(y1, y2 + 1):

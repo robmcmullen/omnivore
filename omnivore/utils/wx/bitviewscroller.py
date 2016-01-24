@@ -152,48 +152,52 @@ class BitviewScroller(wx.ScrolledWindow):
         anchor_start, anchor_end = e.anchor_start_index, e.anchor_end_index
         r1 = c1 = r2 = c2 = -1
         if self.rect_select:
-            # determine row,col of upper left and lower right of selected
-            # rectangle.  The values are inclusive, so ul=(0,0) and lr=(1,2)
-            # is 2 rows and 3 columns.  Columns need to be adjusted slightly
-            # depending on quadrant of selection because anchor indexes are
-            # measured as cursor positions, that is: positions between the
-            # bytes where as rect select needs to think of the selections as
-            # on the byte positions themselves, not in between.
-            bpr = self.bytes_per_row
-            r1, c1 = divmod(anchor_start, bpr)
-            r2, c2 = divmod(anchor_end, bpr)
-            log.debug("rect select before:       anchors=%d,%d ul=%s lr=%s" % ( anchor_start, anchor_end, (r1, c1), (r2, c2)))
-            if c1 >= c2:
-                # start column is to the right of the end column so columns
-                # need to be swapped
-                if r1 >= r2:
-                    # start row is below end row, so rows swapped as well
-                    c1, c2 = c2, c1 + 1
-                    r1, r2 = r2, r1
-                elif c2 == 0:
-                    # When the cursor is at the end of a line, anchor_end points
-                    # to the first character of the next line.  Handle this
-                    # special case by pointing to end of the previous line.
-                    c2 = bpr
-                    r2 -= 1
-                else:
-                    c1, c2 = c2 - 1, c1 + 1
-            else:
-                # start column is to the left of the end column, so don't need
-                # to swap columns
-                if r1 > r2:
-                    # start row is below end row
-                    r1, r2 = r2, r1
-                    c2 += 1
-            anchor_start = r1 * bpr + c1
-            anchor_end = r2 * bpr + c2
-            r2 += 1
-            log.debug("rect select computations: anchors=%d,%d ul=%s lr=%s" % ( anchor_start, anchor_end, (r1, c1), (r2, c2)))
+            anchor_start, anchor_end, (r1, c1), (r2, c2) = self.get_rect_indexes(anchor_start, anchor_end)
         elif anchor_start > anchor_end:
             anchor_start, anchor_end = anchor_end, anchor_start
         elif anchor_start == anchor_end:
             anchor_start = e.cursor_index
             anchor_end = anchor_start + 1
+        return anchor_start, anchor_end, (r1, c1), (r2, c2)
+    
+    def get_rect_indexes(self, anchor_start, anchor_end):
+        # determine row,col of upper left and lower right of selected
+        # rectangle.  The values are inclusive, so ul=(0,0) and lr=(1,2)
+        # is 2 rows and 3 columns.  Columns need to be adjusted slightly
+        # depending on quadrant of selection because anchor indexes are
+        # measured as cursor positions, that is: positions between the
+        # bytes where as rect select needs to think of the selections as
+        # on the byte positions themselves, not in between.
+        bpr = self.bytes_per_row
+        r1, c1 = divmod(anchor_start, bpr)
+        r2, c2 = divmod(anchor_end, bpr)
+        log.debug("rect select before:       anchors=%d,%d ul=%s lr=%s" % ( anchor_start, anchor_end, (r1, c1), (r2, c2)))
+        if c1 >= c2:
+            # start column is to the right of the end column so columns
+            # need to be swapped
+            if r1 >= r2:
+                # start row is below end row, so rows swapped as well
+                c1, c2 = c2, c1 + 1
+                r1, r2 = r2, r1
+            elif c2 == 0:
+                # When the cursor is at the end of a line, anchor_end points
+                # to the first character of the next line.  Handle this
+                # special case by pointing to end of the previous line.
+                c2 = bpr
+                r2 -= 1
+            else:
+                c1, c2 = c2 - 1, c1 + 1
+        else:
+            # start column is to the left of the end column, so don't need
+            # to swap columns
+            if r1 > r2:
+                # start row is below end row
+                r1, r2 = r2, r1
+                c2 += 1
+        anchor_start = r1 * bpr + c1
+        anchor_end = r2 * bpr + c2
+        r2 += 1
+        log.debug("rect select computations: anchors=%d,%d ul=%s lr=%s" % ( anchor_start, anchor_end, (r1, c1), (r2, c2)))
         return anchor_start, anchor_end, (r1, c1), (r2, c2)
     
     def get_image(self):

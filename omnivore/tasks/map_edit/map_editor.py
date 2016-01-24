@@ -18,6 +18,7 @@ from omnivore.utils.wx.bitviewscroller import FontMapScroller
 from omnivore.utils.binutil import ATRSegmentParser, XexSegmentParser
 from omnivore.utils.command import Overlay
 from omnivore.utils.searchutil import HexSearcher, CharSearcher
+from omnivore.utils.drawutil import get_bounds
 from omnivore.tasks.hex_edit.commands import ChangeByteCommand, PasteCommand
 from omnivore.framework.mouse_handler import MouseHandler
 
@@ -148,12 +149,39 @@ class SelectMode(MouseHandler):
     icon = "select.png"
     menu_item_name = "Select"
     menu_item_tooltip = "Select regions"
+    
+    def display_coords(self, evt, extra=None):
+        c = self.canvas
+        e = c.editor
+        if e is not None:
+            index, bit, inside = c.event_coords_to_byte(evt)
+            r0, c0 = c.byte_to_row_col(index)
+            msg = "row=%d (0x%x) col=%d (0x%x) index=%d (0x%x)" % (r0, r0, c0, c0, index, index)
+            if extra:
+                msg += " " + extra
+            e.task.status_bar.message = msg
+    
+    def get_display_rect(self):
+        c = self.canvas
+        anchor_start, anchor_end, (r1, c1), (r2, c2) = c.get_highlight_indexes()
+        extra = None
+        if r1 >= 0:
+            w = c2 - c1
+            h = r2 - r1
+            if w > 0 or h > 0:
+                extra = "rectangle: width=%d (0x%x), height=%d (0x%x)" % (w, w, h, h)
+        return extra
 
     def process_left_down(self, evt):
         self.canvas.set_cursor_pos_from_event(evt)
+        self.display_coords(evt)
 
     def process_mouse_motion_down(self, evt):
         self.canvas.set_selection_from_event(evt)
+        self.display_coords(evt, self.get_display_rect())
+
+    def process_mouse_motion_up(self, evt):
+        self.display_coords(evt)
     
     def zoom_mouse_wheel(self, evt, amount):
         if amount < 0:
@@ -181,6 +209,7 @@ class PickTileMode(SelectMode):
             e.index_clicked(index, bit, None)
             e.character_set.Refresh()
         self.last_index = index
+        self.display_coords(evt, "tile=%d" % value)
 
     def process_mouse_motion_down(self, evt):
         self.process_left_down(evt)
@@ -213,9 +242,11 @@ class DrawMode(SelectMode):
 
     def process_left_down(self, evt):
         self.draw(evt, True)
+        self.display_coords(evt)
 
     def process_mouse_motion_down(self, evt):
         self.draw(evt)
+        self.display_coords(evt)
 
     def process_left_up(self, evt):
         c = self.canvas
@@ -228,7 +259,21 @@ class DrawMode(SelectMode):
 
 class OverlayMode(SelectMode):
     command = None
-
+    
+    def get_display_rect(self, index):
+        c = self.canvas
+        i1 = self.start_index
+        i2 = index
+        if i2 < i1:
+            i1, i2 = i2, i1
+        (x1, y1), (x2, y2) = get_bounds(i1, i2, c.bytes_per_row)
+        extra = None
+        w = x2 - x1 + 1
+        h = y2 - y1 + 1
+        if w > 0 or h > 0:
+            extra = "rectangle: width=%d (0x%x), height=%d (0x%x)" % (w, w, h, h)
+        return extra
+    
     def draw(self, evt, start=False):
         c = self.canvas
         e = c.editor
@@ -246,6 +291,7 @@ class OverlayMode(SelectMode):
             index = byte
             cmd = self.command(e.segment, self.start_index, index, bytes)
             e.process_command(cmd, self.batch)
+            self.display_coords(evt, self.get_display_rect(index))
 
     def process_left_down(self, evt):
         self.draw(evt, True)
