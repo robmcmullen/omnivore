@@ -356,6 +356,9 @@ class MapEditor(HexEditor):
     
     def _map_width_default(self):
         return 32
+    
+    def _draw_pattern_default(self):
+        return [0]
 
     ###########################################################################
     # 'FrameworkEditor' interface.
