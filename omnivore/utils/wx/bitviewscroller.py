@@ -701,7 +701,39 @@ class FontMapScroller(BitviewScroller):
             array = speedups.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, self.font, self.font_mapping, anchor_start, anchor_end, self.rect_select, rc1, rc2)
         else:
             array = self.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, self.font, self.font_mapping, anchor_start, anchor_end, self.rect_select, rc1, rc2)
+        
+        self.show_highlight(array, rc1, rc2)
+        
         return array
+    
+    def show_highlight(self, array, rc1, rc2):
+        if rc1 is None:
+            return
+        r1, c1 = rc1
+        r2, c2 = rc2
+        sr = r1 - self.start_row
+        er = r2 - self.start_row
+        sc = c1 - self.start_col
+        ec = c2 - self.start_col
+        print sr, sc, er, ec, array.shape
+        x1 = sc * 8
+        x2 = ec * 8 - 1
+        y1 = sr * 8
+        y2 = er * 8 - 1
+        xmax = array.shape[1]
+        ymax = array.shape[0]
+        c1 = max(x1, 0)
+        c2 = min(x2, xmax)
+        if y1 >= 0 and y1 < ymax and c2 > c1:
+            array[y1, c1:c2 + 1] = self.background_color
+        if y2 >= 0 and y2 < ymax and c2 > c1:
+            array[y2, c1:c2 + 1] = self.background_color
+        c1 = max(y1, 0)
+        c2 = min(y2, ymax)
+        if x1 >= 0 and x1 < xmax and c2 > c1:
+            array[c1:c2 + 1, x1] = self.background_color
+        if x2 >= 0 and x2 < xmax and c2 > c1:
+            array[c1:c2 + 1, x2] = self.background_color
     
     def get_numpy_font_map_image(self, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, font, font_mapping, anchor_start, anchor_end, rect_select, rc1, rc2):
         width = int(font.char_w * num_cols)
