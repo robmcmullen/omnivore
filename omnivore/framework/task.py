@@ -61,11 +61,11 @@ class FrameworkTask(Task):
     
     #### 'IAbout' interface ###################################################
     
-    about_title = Unicode('Omnivore')
+    about_title = Unicode('Omnivore XL')
     
     about_version = Unicode
     
-    about_description = Unicode('Edit stuff.')
+    about_description = Unicode('Byte into the meat of Atari Software!')
     
     about_website = Str('http://playermissile.com/omnivore')
     
