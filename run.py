@@ -1,4 +1,4 @@
-# Simple tasks application
+#!/usr/bin/env python
 
 # Standard library imports.
 import logging

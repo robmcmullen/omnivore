@@ -260,7 +260,7 @@ if 'nsis' not in sys.argv:
         packages = packages,
         package_data = package_data,
         data_files=data_files,
-        
+        scripts = ['scripts/omnivore'],
         app=["run.py"],
         windows=[dict(
             script="run.py",
