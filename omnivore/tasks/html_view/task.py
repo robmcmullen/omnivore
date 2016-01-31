@@ -28,8 +28,6 @@ class HtmlViewTask(FrameworkTask):
 
     id = pane_layout.task_id_with_pane_layout
     name = 'HTML Viewer'
-
-    icon = Instance("world")
     
     preferences_helper = HtmlViewPreferences
 
