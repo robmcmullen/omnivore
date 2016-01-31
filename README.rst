@@ -12,14 +12,122 @@ Omnivore - the Atari 8-bit binary editor sponsored by the Player/Missile Podcast
 
 While producing the Player/Missile podcast, I have had many ideas about hacking
 code on the 8-bits like I used to as a kid.  One of the tools I had was the
-Omnivore system monitor board by CDY Consulting, an add-on board for the Atari
+Omnimon system monitor board by CDY Consulting, an add-on board for the Atari
 800 that provided a ROM-resident monitor similiar to what was available by
-default on the Apple ][ series.  The name of this program comes as an homage
-to that hardware.
+default on the Apple ][ series.  In fact, I originally named this program
+Omnimon but felt that would be too confusing as there are people in the 8-bit
+community who still use the original Omnimon hardware.  Using the prefix
+"Omni-" is my tribute to all the fun I had with the Omnimon hardware.
 
-Omnivore is more than an Atari binary editor, but that's what I'm publicizing
-it as.  It also aims to be a generic editor framework and eventually a
-replacement for my peppy text editor.
+Omnivore is a cross-platform app for modern hardware (running linux, OS X and
+Windows) to work with executables or disk images of Atari 8-bit machines.  (I
+have long- term goals to support editing MAME ROMS and disk images of other
+8-bit machines like the C64 and Apple ][.)
+
+Omnivore is more than an Atari binary editor.  It can also create and edit maps
+using character-based graphic tiles.  For instance: many games use the 5-color
+ANTIC modes 4 or 5 to provide a complex scrolling background while using much
+less memory than the multi-color bit-mapped modes.
+
+In addition to supporting more platforms, I also intend to add support for
+editing character sets and player-missile graphic shapes.
+
+
+How To Run Omnivore
+===================
+
+Note that this is still beta-level software, so caveat emptor.
+
+Binaries are available for Windows (64-bit) and Mac OS X 10.9 and up at the
+`downloads <http://playermissile.com/omnivore/downloads>`_ page.
+
+Binaries for linux are not currently available, although I would like to
+provide packages for Ubuntu, Linux Mint and Gentoo at some point.  To run
+on linux, you'll have to install it from source.  It's not that complicated;
+apart from wxPython, everything can be installed from the `Python Package
+Index <https://pypi.python.org/pypi>`_ using pip.
+
+
+Installing From Source
+======================
+
+If you're running linux (like me!) or are interested in hacking on the code or making bug fixes or improvements, I'd recommend that you set up a python virtual environment with all the dependencies you need in there, rather than cluttering up your system's python. I've tested this on linux and OS X.
+
+I do not develop this way on Windows; rather, I have a virtual machine dedicated to Omnivore development and install everything in the system python in that VM.
+
+Prerequisites
+-------------
+
+* python 2.7 (but not 3.x yet)
+* wxPython 3.0.x
+
+The Enthought framework is a custom build for omnivore because I've enabled
+current support for wx.  Enthought is transitioning to Qt is their primary GUI
+toolkit and their wx support has been limited recently.  Fortunately Enthought
+was designed to be toolkit agnostic and it was relatively easy to bring their
+libraries up to date as compared to Qt.  My patches have not made it back
+to Enthought yet, which is why I have included my versions of the Enthought
+libraries in the Omnivore distribution.
+
+
+Virtualenv Setup
+----------------
+
+First: download the `wxPython 3.0.2.0 <http://downloads.sourceforge.net/wxpython/wxPython-src-3.0.2.0.tar.bz2>`_ source.
+
+Next, setup the virtual environment::
+
+    virtualenv /data/virtualenv/wx3
+    source $VIRTUAL_ENV/bin/activate
+    mkdir src
+    cd src
+    tar xvf ~/Downloads/wxPython-src-3.0.2.0.tar.bz2 
+    cd wxPython-src-3.0.2.0/
+    ./configure --prefix=$VIRTUAL_ENV
+    make -j 8
+    make install
+    cd wxPython
+    python setup.py install
+
+The ``activate`` script needs to be modified in order for the dynamic libraries to be discovered correctly. You can do this with a simple multi-line shell command::
+
+    cat <<EOF >> $VIRTUAL_ENV/bin/activate
+    LD_LIBRARY_PATH="$VIRTUAL_ENV/lib:$LD_LIBRARY_PATH"
+    export LD_LIBRARY_PATH
+    EOF
+
+Running The Program
+-------------------
+
+Get the source from cloning it from github::
+
+    $ git clone https://github.com/robmcmullen/omnivore.git
+    $ cd omnivore
+    $ python setup.py build_ext --inplace
+    $ python run.py
+
+You'll need the git package on your system, which is available through your
+package manager.
+
+
+Development
+===========
+
+Plugins
+-------
+
+Omnivore is extended by plugins.  Plugins are based on the `Enthought Framework`__
+and are discovered using setuptools plugins.
+
+__ http://docs.enthought.com/envisage/envisage_core_documentation/index.html
+
+The plugin architecture is documented by Enthought, but is not terribly easy to
+understand.  I intend to produce some sample plugins to provide some examples
+in case others would like to provide more functionality to Omnivore.
+
+
+Some Boring History
+===================
 
 Omnivore provides an XEmacs-like multi-window/multi-tabbed user interface and
 is written in and extensible through Python.  It is built around the emacs
@@ -33,10 +141,6 @@ I have forked Enthought's code and extended it with better wxPython support.
 Only wxPython is supported as a GUI backend for Omnivore).  The architectural
 goal is to provide a system with low coupling in order to reduce the work
 required to extend the editor with new major modes, minor modes, and sidebars.
-
-
-Goal For Rewrite
-================
 
 Why a rewrite of the original peppy_ editor?
 
@@ -65,71 +169,11 @@ Why a rewrite of the original peppy_ editor?
 .. _PyFilesystem: http://packages.python.org/fs/index.html
 
 
-Prerequisites
-=============
-
-python 2.7 (but not 3.x yet)
-wxPython 3.0.x
-
-The Enthought framework is a custom build for omnivore because I've enabled
-current support for wx.  Enthought is transitioning to Qt is their primary GUI
-toolkit and their wx support has been limited recently.  Fortunately Enthought
-was designed to be toolkit agnostic and it was relatively easy to bring their
-libraries up to date as compared to Qt.  My patches have not made it back
-to Enthought yet, which is why I have included my versions of the Enthought
-libraries in the Omnivore distribution.
-
-The Enthought libraries are licensed with a modi
-
-
-Virtualenv Setup
-================
-
-virtualenv /data/virtualenv/wx3
-source $VIRTUAL_ENV/bin/activate
-mkdir src
-cd src
-tar xvf /opt/download/wxPython-src-3.0.2.0.tar.bz2 
-cd wxPython-src-3.0.2.0/
-./configure --prefix=$VIRTUAL_ENV
-make -j 8
-make install
-cat <<EOF >> $VIRTUAL_ENV/bin/activate
-LD_LIBRARY_PATH="$VIRTUAL_ENV/lib:$LD_LIBRARY_PATH"
-export LD_LIBRARY_PATH
-EOF
-cd wxPython
-python setup.py install
-# cd demo/
-# python demo.py 
-
-
-
-Running The Program
-===================
-
-This is still alpha software, so caveat emptor.  The only way to get it currently is to clone it from git::
-
-    $ git clone https://github.com/robmcmullen/omnivore.git
-    $ cd omnivore
-    $ python setup.py build_ext --inplace
-    $ python run.py
-
-
-Plugins
-=======
-
-Omnivore is extended by plugins.  Plugins are based on the `Enthought Framework`__
-and are discovered using setuptools plugins.
-
-__ http://docs.enthought.com/envisage/envisage_core_documentation/index.html
-
-
 Disclaimer
 ==========
 
 Omnivore, the Atari 8-bit binary editor sponsored by the Player/Missile Podcast
-Copyright (c) 2014-2015 Rob McMullen (feedback@playermissile.com)
+Copyright (c) 2014-2016 Rob McMullen (feedback@playermissile.com)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -155,14 +199,14 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
- * Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
- * Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
- * Neither the name of Enthought, Inc. nor the names of its contributors may
-   be used to endorse or promote products derived from this software without
-   specific prior written permission.
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+* Neither the name of Enthought, Inc. nor the names of its contributors may
+  be used to endorse or promote products derived from this software without
+  specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
