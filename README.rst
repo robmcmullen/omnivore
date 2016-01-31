@@ -38,8 +38,10 @@ How To Run Omnivore
 
 Note that this is still beta-level software, so caveat emptor.
 
-Binaries are available for Windows (64-bit) and Mac OS X 10.9 and up at the
-`downloads <http://playermissile.com/omnivore/downloads>`_ page.
+Binaries are available for Windows 7 and later (64-bit
+only) and Mac OS X 10.9 and later and at the `home page
+<http://playermissile.com/omnivore/>`_ or directly through the `github
+releases <https://github.com/robmcmullen/omnivore/releases>`_ page.
 
 Binaries for linux are not currently available, although I would like to
 provide packages for Ubuntu, Linux Mint and Gentoo at some point.  To run
