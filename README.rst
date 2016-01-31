@@ -51,15 +51,29 @@ Index <https://pypi.python.org/pypi>`_ using pip.
 Installing From Source
 ======================
 
-If you're running linux (like me!) or are interested in hacking on the code or making bug fixes or improvements, I'd recommend that you set up a python virtual environment with all the dependencies you need in there, rather than cluttering up your system's python. I've tested this on linux and OS X.
+If you're interested in hacking on the code or making bug fixes or
+improvements, you can install and run the source distribution.
 
-I do not develop this way on Windows; rather, I have a virtual machine dedicated to Omnivore development and install everything in the system python in that VM.
+If you're running linux (like me!), I'd recommend you set up a python
+virtual environment with all the dependencies you need in there, rather than
+cluttering up your system's python.
+
+On OS X, I have had difficulty with installing wxPython in a virtualenv, so
+I had to resort to installing it using the `default DMG on the wxPython site
+<http://wxpython.org/download.php#osxdefault>`_ and using the `framework
+install of python 2.7 <https://www.python.org/downloads/mac-osx/>`_, not the
+system's python.
+
+I do not develop on Windows at all, but for testing purposes I have a virtual
+machine dedicated to Omnivore development and install everything in the system
+python in that VM.
 
 Prerequisites
 -------------
 
 * python 2.7 (but not 3.x yet)
 * wxPython 3.0.x
+* optionally: Cython for graphic speedups
 
 The Enthought framework is a custom build for omnivore because I've enabled
 current support for wx.  Enthought is transitioning to Qt is their primary GUI
@@ -70,15 +84,51 @@ to Enthought yet, which is why I have included my versions of the Enthought
 libraries in the Omnivore distribution.
 
 
-Virtualenv Setup
-----------------
+Virtualenv Setup -- *Linux Only*
+----------------------------------
 
 First: download the `wxPython 3.0.2.0 <http://downloads.sourceforge.net/wxpython/wxPython-src-3.0.2.0.tar.bz2>`_ source.
 
 Next, setup the virtual environment::
 
     virtualenv /data/virtualenv/wx3
+
+The ``activate`` script needs to be modified in order for the dynamic libraries
+to be discovered correctly.  You can do this with a simple multi-line shell
+command::
+
+    cat <<EOF >> $VIRTUAL_ENV/bin/activate
+    LD_LIBRARY_PATH="$VIRTUAL_ENV/lib:$LD_LIBRARY_PATH"
+    export LD_LIBRARY_PATH
+    EOF
+
+Begin using the virtualenv with::
+
     source $VIRTUAL_ENV/bin/activate
+
+MS Visual C++ Compiler -- *Windows Only*
+------------------------------------------
+
+Windows doesn't come with a C compiler, which is needed for some extensions in Omnivore. Happily, Microsoft provides a cut-down version of their Visual Studio compiler just for compiling Python extensions! Download and install it from `here <https://www.microsoft.com/en-us/download/details.aspx?id=44266>`_.
+
+Cython -- *All Platforms*
+------------------------------------------
+
+To install cython for the graphics speedup code, numpy is a prerequisite so
+that cython can understand the numpy code.  If you do not install cython,
+numpy will automatically be installed in the normal install of omnivore.
+
+However, cython is recommended::
+
+    pip install numpy
+    pip install cython
+
+wxPython -- *Linux*
+---------------------
+
+wxPython is the GUI toolkit, and unfortunately it is not able to be installed
+using pip, so you have to compile it yourself::
+
     mkdir src
     cd src
     tar xvf ~/Downloads/wxPython-src-3.0.2.0.tar.bz2 
@@ -89,25 +139,34 @@ Next, setup the virtual environment::
     cd wxPython
     python setup.py install
 
-The ``activate`` script needs to be modified in order for the dynamic libraries to be discovered correctly. You can do this with a simple multi-line shell command::
+wxPython -- *Other Plaftorms*
+-------------------------------
 
-    cat <<EOF >> $VIRTUAL_ENV/bin/activate
-    LD_LIBRARY_PATH="$VIRTUAL_ENV/lib:$LD_LIBRARY_PATH"
-    export LD_LIBRARY_PATH
-    EOF
+* OS X: `download the package installer <http://wxpython.org/download.php#osxdefault>`_
+* Windows: `download and run the installer http://wxpython.org/download.php#msw>`_
 
-Running The Program
--------------------
+Installing Omnivore -- *All Platforms*
+----------------------------------------
 
 Get the source from cloning it from github::
 
     $ git clone https://github.com/robmcmullen/omnivore.git
     $ cd omnivore
     $ python setup.py build_ext --inplace
-    $ python run.py
 
-You'll need the git package on your system, which is available through your
-package manager.
+You'll need the git package on your system, which is available through
+your package manager on linux, or from the `git homepage 
+<https://git-scm.com/downloads>`_ on other platforms.
+
+
+Running the Program -- *All Platforms*
+----------------------------------------
+
+Once the C modules are built (the Enthought library requires a C module and
+Omnivore has those several Cython modules for graphic speedups), you can run
+the program from the main source directory using::
+
+    $ python run.py
 
 
 Development
