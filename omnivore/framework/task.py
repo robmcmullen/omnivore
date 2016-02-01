@@ -185,6 +185,7 @@ class FrameworkTask(Task):
                 self.window.application.successfully_loaded_event = source.metadata.uri
         elif hasattr(source, 'document_id'):
             editor.view_document(source)
+            self.window.application.successfully_loaded_event = source.metadata.uri
         else:
             editor.view_document(source.document, source)
         self.activated()
