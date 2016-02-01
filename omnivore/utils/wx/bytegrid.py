@@ -111,12 +111,18 @@ class ByteGridTable(Grid.PyGridTableBase):
     column_labels = [""]
     column_sizes = [4]
     
+    @classmethod
+    def update_preferences(cls, prefs):
+        if prefs.hex_grid_lower_case:
+            cls.get_value_style = cls.get_value_style_lower
+        else:
+            cls.get_value_style = cls.get_value_style_upper
+    
     def __init__(self):
         Grid.PyGridTableBase.__init__(self)
         
         self._rows = 1
         self._cols = len(self.column_labels)
-    
     
     def get_index_range(self, row, col):
         """Get the byte offset from start of file given row, col
@@ -172,8 +178,16 @@ class ByteGridTable(Grid.PyGridTableBase):
     def GetColLabelValue(self, col):
         return self.column_labels[col]
     
-    def GetValue(self, row, col):
+    def get_value_style_upper(self, row, col):
         raise NotImplementedError
+    
+    def get_value_style_lower(self, row, col):
+        raise NotImplementedError
+    
+    get_value_style = get_value_style_lower
+    
+    def GetValue(self, row, col):
+        return self.get_value_style(row, col)[0]
 
     def SetValue(self, row, col, value):
         raise NotImplementedError

@@ -128,13 +128,6 @@ class CachingHexRenderer(Grid.PyGridCellRenderer):
 
 
 class ByteTable(ByteGridTable):
-    @classmethod
-    def update_preferences(cls, prefs):
-        if prefs.hex_grid_lower_case:
-            cls.get_value_style = cls.get_value_style_lower
-        else:
-            cls.get_value_style = cls.get_value_style_upper
-    
     def __init__(self, bytes_per_row=16):
         ByteGridTable.__init__(self)
         
@@ -173,22 +166,12 @@ class ByteTable(ByteGridTable):
     def get_value_style_lower(self, row, col):
         i, _ = self.get_index_range(row, col)
         return "%02x" % self.segment[i], self.segment.style[i]
-    
-    get_value_style = get_value_style_lower
 
     def GetRowLabelValue(self, row):
         return self.segment.label(row*self.bytes_per_row - self.start_offset)
 
     def GetColLabelValue(self, col):
         return "%x" % col
-    
-    def GetValue(self, row, col):
-        i, _ = self.get_index_range(row, col)
-        try:
-            byte = self.segment[i]
-        except:
-            byte = 0
-        return "%02x" % byte
 
     def SetValue(self, row, col, value):
         val=int(value,16)

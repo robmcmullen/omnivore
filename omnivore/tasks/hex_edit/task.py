@@ -19,6 +19,7 @@ import omnivore.utils.dis6502 as dis6502
 from omnivore.utils.binutil import known_segment_parsers
 import omnivore.utils.colors as colors
 from grid_control import ByteTable
+from disassembly import DisassemblyTable
 
 
 class HexEditTask(FrameworkTask):
@@ -28,6 +29,8 @@ class HexEditTask(FrameworkTask):
     new_file_text = "Binary File"
     
     hex_grid_lower_case = Bool(True)
+    
+    assembly_lower_case = Bool(False)
 
     #### Task interface #######################################################
 
@@ -54,6 +57,10 @@ class HexEditTask(FrameworkTask):
     def _hex_grid_lower_case_default(self):
         prefs = self.get_preferences()
         return prefs.hex_grid_lower_case
+    
+    def _assembly_lower_case_default(self):
+        prefs = self.get_preferences()
+        return prefs.assembly_lower_case
 
     def _default_layout_default(self):
         return pane_layout.pane_layout()
@@ -89,6 +96,7 @@ class HexEditTask(FrameworkTask):
     def initialize_class_preferences(self):
         prefs = self.get_preferences()
         ByteTable.update_preferences(prefs)
+        DisassemblyTable.update_preferences(prefs)
 
     def get_editor(self, guess=None):
         """ Opens a new empty window
@@ -102,7 +110,10 @@ class HexEditTask(FrameworkTask):
         if e is not None:
             prefs = self.get_preferences()
             e.text_font = prefs.text_font
+            self.hex_grid_lower_case = prefs.hex_grid_lower_case
+            self.assembly_lower_case = prefs.assembly_lower_case
             ByteTable.update_preferences(prefs)
+            DisassemblyTable.update_preferences(prefs)
             e.reconfigure_panes()
 
     def get_font_mapping_actions(self):

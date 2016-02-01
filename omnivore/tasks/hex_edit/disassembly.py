@@ -34,7 +34,7 @@ class DisassemblyTable(ByteGridTable):
         self.lines = []
         self.index_to_row = []
         self._rows = 0
-        self.disassembler = editor.disassembler(segment.data, segment.start_addr, -segment.start_addr)
+        self.disassembler = editor.disassembler(segment.data, segment.start_addr, -segment.start_addr, editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
         self.disassembler.set_pc(segment.data, segment.start_addr)
         self.next_row = 0
         self.start_addr = segment.start_addr
@@ -141,7 +141,7 @@ class DisassemblyTable(ByteGridTable):
     def get_pc(self, row):
         return self.lines[row][0]
 
-    def get_value_style(self, row, col):
+    def get_value_style_lower(self, row, col):
         line = self.lines[row]
         index = line[0] - self.start_addr
         style = 0
@@ -151,17 +151,21 @@ class DisassemblyTable(ByteGridTable):
             return " ".join("%02x" % i for i in line[1]), style
         return str(line[col + 1]), style
     
+    def get_value_style_upper(self, row, col):
+        line = self.lines[row]
+        index = line[0] - self.start_addr
+        style = 0
+        for i in range(line[4]):
+            style |= self.segment.style[index + i]
+        if col == 0:
+            return " ".join("%02X" % i for i in line[1]), style
+        return str(line[col + 1]), style
+    
     def GetRowLabelValue(self, row):
         if self.lines:
             addr = self.get_pc(row)
             return "%04x" % addr
         return "0000"
-    
-    def GetValue(self, row, col):
-        line = self.lines[row]
-        if col == 0:
-            return " ".join("%02x" % i for i in line[1])
-        return str(line[col + 1])
 
     def ResetViewProcessArgs(self, grid, editor, *args):
         if editor is not None:

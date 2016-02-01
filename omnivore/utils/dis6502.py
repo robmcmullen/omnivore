@@ -166,10 +166,29 @@ class BaseDisassembler(object):
     
     memloc_name = {}
     
-    def __init__(self, source, pc=0, pc_source_offset=0):
+    def __init__(self, source, pc=0, pc_source_offset=0, hex_lower=True, mnemonic_lower=False):
         self.set_pc(source, pc)
         self.pc_offset = pc_source_offset  # index into source array of pc
         self.origin = self.pc
+        self.get_opdict(hex_lower, mnemonic_lower)
+    
+    def get_opdict(self, hex_lower, mnemonic_lower):
+        d = {}
+        for byte, (opstr, extra, rw) in opdict.iteritems():
+            if " " in opstr:
+                op, addr = opstr.split(" ", 1)
+                if mnemonic_lower:
+                    op = op.lower()
+                if not hex_lower:
+                    addr = addr.replace("%02x", "%02X").replace("%04x", "%04X")
+                opstr = op + " " + addr
+                print "%02x: %s" % (byte, opstr)
+            elif mnemonic_lower:
+                opstr = opstr.lower()
+            d[byte] = opstr, extra, rw
+        self.opdict = d
+        self.data_byte = ".db $%02" + ("x" if hex_lower else "X")
+        print self.data_byte
         
     def set_pc(self, source, pc):
         self.source = source
@@ -184,9 +203,9 @@ class BaseDisassembler(object):
         opcode = self.get_next()
         
         try:
-            opstr, extra, rw = opdict[opcode]
+            opstr, extra, rw = self.opdict[opcode]
         except KeyError:
-            opstr, extra, rw = ".db $%02x" % opcode, 0, ""
+            opstr, extra, rw = self.data_byte % opcode, 0, ""
         
         try:
             next_pc = self.pc
@@ -217,7 +236,7 @@ class BaseDisassembler(object):
                 dest_pc = None
         except StopIteration:
             self.pc = next_pc
-            opstr, extra, rw = ".db $%02x" % opcode, 0, ""
+            opstr, extra, rw = self.data_byte % opcode, 0, ""
             bytes = (opcode,)
             memloc = None
             dest_pc = None

@@ -30,6 +30,8 @@ class HexEditPreferences(PreferencesHelper):
     text_font = Font(def_font)
     
     hex_grid_lower_case = Bool(True)
+    
+    assembly_lower_case = Bool(False)
 
 
 class HexEditPreferencesPane(PreferencesPane):
@@ -51,6 +53,9 @@ class HexEditPreferencesPane(PreferencesPane):
                       show_labels = False),
                HGroup(Item('hex_grid_lower_case'),
                       Label('Use Lower Case for Hex Digits'),
+                      show_labels = False),
+               HGroup(Item('assembly_lower_case'),
+                      Label('Use Lower Case for Assembler Mnemonics'),
                       show_labels = False),
                label='Hex Editor'),
         resizable=True)
