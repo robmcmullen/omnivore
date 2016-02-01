@@ -236,7 +236,7 @@ if 'nsis' not in sys.argv:
         author = omnivore.__author__,
         author_email = omnivore.__author_email__,
         url = omnivore.__url__,
-        download_url = ('%s-%s.tar.gz' % (omnivore.__download_url__, full_version)),
+        download_url = ('%s/%s.tar.gz' % (omnivore.__download_url__, full_version)),
         classifiers = [c.strip() for c in """\
             Development Status :: 3 - Alpha
             Intended Audience :: Developers

@@ -5,7 +5,7 @@
 __author__ = "Rob McMullen"
 __author_email__ = "feedback@playermissile.com"
 __url__ = "https://github.com/robmcmullen/omnivore"
-__download_url__ = "https://github.com/robmcmullen/omnivore/releases"
+__download_url__ = "https://github.com/robmcmullen/omnivore/archive"
 __bug_report_url__ = "https://github.com/robmcmullen/omnivore/issues"
 __keywords__ = "text editor, python, plugins"
 __license__ = "GPL"
