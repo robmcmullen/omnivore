@@ -74,8 +74,11 @@ class DefaultSegment(object):
         style_mask = self.get_style_mask(**kwargs)
         self.style &= style_mask
     
-    def label(self, index):
-        return "%04x" % (index + self.start_addr)
+    def label(self, index, lower_case=True):
+        if lower_case:
+            return "%04x" % (index + self.start_addr)
+        else:
+            return "%04X" % (index + self.start_addr)
     
     @property
     def search_copy(self):
@@ -112,9 +115,11 @@ class NumpySectorsSegment(DefaultSegment):
             s += " " + self.error
         return s
     
-    def label(self, index):
+    def label(self, index, lower_case=True):
         sector, byte = divmod(index, self.page_size)
-        return "s%03d:%02x" % (sector + self.first_sector, byte)
+        if lower_case:
+            return "s%03d:%02x" % (sector + self.first_sector, byte)
+        return "s%03d:%02X" % (sector + self.first_sector, byte)
 
 class AnticFontSegment(DefaultSegment):
     def __init__(self, *args, **kwargs):

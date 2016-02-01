@@ -164,7 +164,9 @@ class DisassemblyTable(ByteGridTable):
     def GetRowLabelValue(self, row):
         if self.lines:
             addr = self.get_pc(row)
-            return "%04x" % addr
+            if self.get_value_style == self.get_value_style_lower:
+                return "%04x" % addr
+            return "%04X" % addr
         return "0000"
 
     def ResetViewProcessArgs(self, grid, editor, *args):

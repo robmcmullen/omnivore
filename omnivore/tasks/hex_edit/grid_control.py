@@ -168,10 +168,12 @@ class ByteTable(ByteGridTable):
         return "%02x" % self.segment[i], self.segment.style[i]
 
     def GetRowLabelValue(self, row):
-        return self.segment.label(row*self.bytes_per_row - self.start_offset)
+        return self.segment.label(row*self.bytes_per_row - self.start_offset, self.get_value_style == self.get_value_style_lower)
 
     def GetColLabelValue(self, col):
-        return "%x" % col
+        if self.get_value_style == self.get_value_style_lower:
+            return "%x" % col
+        return "%X" % col
 
     def SetValue(self, row, col, value):
         val=int(value,16)
