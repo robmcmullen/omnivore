@@ -182,7 +182,6 @@ class HexEditor(FrameworkEditor):
             fmt = data_obj.GetPreferredFormat()
             if fmt.GetId() == "numpy,columns":
                 r, c, value = value.split(",")
-                print "columns!", r, c, value
                 extra = int(r), int(c)
         bytes = np.fromstring(value, dtype=np.uint8)
         return bytes, extra
@@ -344,7 +343,6 @@ class HexEditor(FrameworkEditor):
         self.segment_parser = self.document.segment_parser
         self.update_segments_ui()
         new_segment = self.document.segments[index]
-        print new_segment
         self.view_segment_set_width(new_segment)
         self.select_none(refresh=False)
     

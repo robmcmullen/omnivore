@@ -715,7 +715,6 @@ class FontMapScroller(BitviewScroller):
         er = r2 - self.start_row
         sc = c1 - self.start_col
         ec = c2 - self.start_col
-        print sr, sc, er, ec, array.shape
         x1 = sc * 8
         x2 = ec * 8 - 1
         y1 = sr * 8
