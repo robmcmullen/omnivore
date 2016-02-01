@@ -474,7 +474,24 @@ class FrameworkApplication(TasksApplication):
             os.makedirs(dirname)
         self.cache_dir = dirname
         
-        return
+        # Prevent py2exe from creating a dialog box on exit saying that there
+        # are error messages.  It thinks that anything written to stderr is an
+        # error, and the python logging module redirects everything to stderr.
+        # Instead, redirect stderr to a log file in the user log directory
+        frozen = getattr(sys, 'frozen', False)
+        if frozen in ('dll', 'windows_exe', 'console_exe'):
+            # redirect py2exe stderr/stdout to log file
+            log = self.get_log_file_name("py2exe")
+            oldlog = sys.stdout
+            sys.stdout = open(log, 'w')
+            if hasattr(oldlog, "saved_text"):
+                sys.stdout.write("".join(oldlog.saved_text))
+            sys.stderr = sys.stdout
+            
+            # The logging module won't redirect to the new stderr without help
+            handler = logging.StreamHandler(sys.stderr)
+            logger = logging.getLogger('')
+            logger.addHandler(handler)
     
     #### Convenience methods
     
