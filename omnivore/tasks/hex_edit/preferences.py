@@ -28,6 +28,8 @@ class HexEditPreferences(PreferencesHelper):
 
     # Font used for hex/disassembly
     text_font = Font(def_font)
+    
+    hex_grid_lower_case = Bool(True)
 
 
 class HexEditPreferencesPane(PreferencesPane):
@@ -46,6 +48,9 @@ class HexEditPreferencesPane(PreferencesPane):
     view = View(
         VGroup(HGroup(Item('text_font'),
                       Label('Hex Display Font'),
+                      show_labels = False),
+               HGroup(Item('hex_grid_lower_case'),
+                      Label('Use Lower Case for Hex Digits'),
                       show_labels = False),
                label='Hex Editor'),
         resizable=True)

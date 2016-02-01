@@ -132,6 +132,10 @@ class FrameworkTask(Task):
 
     def initialized(self):
         self.window.application.remember_perspectives(self.window)
+        self.initialize_class_preferences()
+    
+    def initialize_class_preferences(self):
+        pass
 
     def activated(self):
         log.debug("  status bar: %s" % self.status_bar)

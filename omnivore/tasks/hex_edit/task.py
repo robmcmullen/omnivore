@@ -18,6 +18,7 @@ import omnivore.utils.wx.fonts as fonts
 import omnivore.utils.dis6502 as dis6502
 from omnivore.utils.binutil import known_segment_parsers
 import omnivore.utils.colors as colors
+from grid_control import ByteTable
 
 
 class HexEditTask(FrameworkTask):
@@ -25,6 +26,8 @@ class HexEditTask(FrameworkTask):
     """
 
     new_file_text = "Binary File"
+    
+    hex_grid_lower_case = Bool(True)
 
     #### Task interface #######################################################
 
@@ -47,6 +50,10 @@ class HexEditTask(FrameworkTask):
     ###########################################################################
     # 'Task' interface.
     ###########################################################################
+    
+    def _hex_grid_lower_case_default(self):
+        prefs = self.get_preferences()
+        return prefs.text_font
 
     def _default_layout_default(self):
         return pane_layout.pane_layout()
@@ -78,6 +85,10 @@ class HexEditTask(FrameworkTask):
     ###########################################################################
     # 'FrameworkTask' interface.
     ###########################################################################
+    
+    def initialize_class_preferences(self):
+        prefs = self.get_preferences()
+        ByteTable.update_preferences(prefs)
 
     def get_editor(self, guess=None):
         """ Opens a new empty window
@@ -91,6 +102,7 @@ class HexEditTask(FrameworkTask):
         if e is not None:
             prefs = self.get_preferences()
             e.text_font = prefs.text_font
+            ByteTable.update_preferences(prefs)
             e.reconfigure_panes()
 
     def get_font_mapping_actions(self):
