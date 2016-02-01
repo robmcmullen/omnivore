@@ -154,8 +154,8 @@ if sys.platform.startswith("win"):
         # Help py2exe find MSVCP90.DLL from vcredist_x64
         sys.path.append("C:/Windows/winsxs/amd64_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.6161_none_08e61857a83bc251")
     else:
-        # Help py2exe find MSVCP90.DLL
-        sys.path.append("c:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/redist/x86/Microsoft.VC90.CRT")
+        # Help py2exe find MSVCP90.DLL from vcredist_x86
+        sys.path.append("C:/Windows/winsxs/x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.1_none_e163563597edeada")
 
 def remove_pyc(basedir):
     for curdir, dirlist, filelist in os.walk(basedir):
