@@ -53,7 +53,7 @@ class HexEditTask(FrameworkTask):
     
     def _hex_grid_lower_case_default(self):
         prefs = self.get_preferences()
-        return prefs.text_font
+        return prefs.hex_grid_lower_case
 
     def _default_layout_default(self):
         return pane_layout.pane_layout()
