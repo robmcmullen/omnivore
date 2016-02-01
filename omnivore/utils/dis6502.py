@@ -182,13 +182,11 @@ class BaseDisassembler(object):
                 if not hex_lower:
                     addr = addr.replace("%02x", "%02X").replace("%04x", "%04X")
                 opstr = op + " " + addr
-                print "%02x: %s" % (byte, opstr)
             elif mnemonic_lower:
                 opstr = opstr.lower()
             d[byte] = opstr, extra, rw
         self.opdict = d
         self.data_byte = ".db $%02" + ("x" if hex_lower else "X")
-        print self.data_byte
         
     def set_pc(self, source, pc):
         self.source = source
