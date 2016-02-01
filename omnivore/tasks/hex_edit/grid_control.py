@@ -63,6 +63,7 @@ class ImageCache(object):
             mdc.SelectObject(bmp)
             r = wx.Rect(0, 0, rect.width, rect.height)
             self.draw_text_to_dc(mdc, r, text, style)
+            del mdc  # force the bitmap painting by deleting the gc
             self.cache[k] = bmp
         dc.DrawBitmap(bmp, rect.x, rect.y)
     
