@@ -113,18 +113,6 @@ MS Visual C++ Compiler -- *Windows Only*
 
 Windows doesn't come with a C compiler, which is needed for some extensions in Omnivore. Happily, Microsoft provides a cut-down version of their Visual Studio compiler just for compiling Python extensions! Download and install it from `here <https://www.microsoft.com/en-us/download/details.aspx?id=44266>`_.
 
-Cython -- *All Platforms*
-------------------------------------------
-
-To install cython for the graphics speedup code, numpy is a prerequisite so
-that cython can understand the numpy code.  If you do not install cython,
-numpy will automatically be installed in the normal install of omnivore.
-
-However, cython is recommended::
-
-    pip install numpy
-    pip install cython
-
 wxPython -- *Linux*
 ---------------------
 
@@ -173,6 +161,19 @@ the program from the main source directory using::
 
 Development
 ===========
+
+Graphics Speedups
+-----------------
+
+The Cython extension is used to speed up some of the time-critical code (like
+repainting all the character graphics), but it is only required if you were
+going to debug or recompile those specific .pyx files.  Cython is not needed
+for hacking on the python code.
+
+Should you change a cython file (currently only
+omnivore/utils/wx/bitviewscroller_speedups.pyx), use the command ``python
+setup-cython.py`` to turn that into a C extension, then use ``python setup.py
+build_ext --inplace`` to regenerate the dynamic libraries.
 
 Plugins
 -------

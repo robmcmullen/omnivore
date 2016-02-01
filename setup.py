@@ -17,57 +17,31 @@ import subprocess
 from setuptools import find_packages
 from distutils.core import setup
 from distutils.extension import Extension
-try:
-    from Cython.Distutils import build_ext
-except ImportError:
-    use_cython = False
-else:
-    use_cython = True
 
 ext_modules = [
     Extension("traits.ctraits",
               sources = ["traits/ctraits.c"],
               extra_compile_args = ["-DNDEBUG=1", "-O3" ]#, '-DPy_LIMITED_API'],
               ),
+    Extension("omnivore.utils.wx.bitviewscroller_speedups",
+              sources=["omnivore/utils/wx/bitviewscroller_speedups.c"],
+              )
     ]
 
 cmdclass = dict()
 
-# Conditional cython recipe from http://stackoverflow.com/questions/4505747
-if use_cython:
-    # Numpy required before the call to setup if generating the C file using
-    # cython, but this shouldn't be a problem for normal users because the C
-    # files will be distributed with the source.
-    import numpy
-    
-    # Cython needs some replacements for default build commands
-    cmdclass["build_ext"] = build_ext
+from setuptools.command.build_ext import build_ext as _build_ext
 
-    ext_modules.append(
-        Extension("omnivore.utils.wx.bitviewscroller_speedups",
-                  sources=["omnivore/utils/wx/bitviewscroller_speedups.pyx"],
-                  include_dirs=[numpy.get_include()],
-                  )
-        )
-else:
-    from setuptools.command.build_ext import build_ext as _build_ext
-
-    # Bootstrap numpy so that numpy can be installed as a dependency, from:
-    # http://stackoverflow.com/questions/19919905
-    class build_ext(_build_ext):
-        def finalize_options(self):
-            _build_ext.finalize_options(self)
-            # Prevent numpy from thinking it is still in its setup process:
-            __builtins__.__NUMPY_SETUP__ = False
-            import numpy
-            self.include_dirs.append(numpy.get_include())
-    cmdclass["build_ext"] = build_ext
-
-    ext_modules.append(
-        Extension("omnivore.utils.wx.bitviewscroller_speedups",
-                  sources=["omnivore/utils/wx/bitviewscroller_speedups.c"],
-                  )
-        )
+# Bootstrap numpy so that numpy can be installed as a dependency, from:
+# http://stackoverflow.com/questions/19919905
+class build_ext(_build_ext):
+    def finalize_options(self):
+        _build_ext.finalize_options(self)
+        # Prevent numpy from thinking it is still in its setup process:
+        __builtins__.__NUMPY_SETUP__ = False
+        import numpy
+        self.include_dirs.append(numpy.get_include())
+cmdclass["build_ext"] = build_ext
 
 if "sdist" in sys.argv:
     from distutils.command.sdist import sdist as _sdist
@@ -127,7 +101,6 @@ common_includes = [
     "pyface.ui.wx.workbench.*",
 ]
 common_includes.extend(omnivore.get_py2exe_toolkit_includes())
-print common_includes
 
 py2app_includes = [
 ]
@@ -168,7 +141,6 @@ package_data = {
     }
 
 packages = find_packages()
-print packages
 
 base_dist_dir = "dist-%s" % spaceless_version
 win_dist_dir = os.path.join(base_dist_dir, "win")
@@ -256,7 +228,7 @@ if 'nsis' not in sys.argv:
         ext_modules = ext_modules,
         install_requires = omnivore.__requires__,
         setup_requires = ["numpy"],
-        license = "BSD",
+        license = "GPL",
         packages = packages,
         package_data = package_data,
         data_files=data_files,
