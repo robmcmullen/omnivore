@@ -12,7 +12,7 @@ from traits.api import on_trait_change, Property, Instance
 
 from omnivore.framework.task import FrameworkTask
 from panes import Pane1, Pane2, Pane3
-from bitmap_editor import BitmapEditor
+from image_editor import ImageEditor
 from preferences import ImageEditPreferences
 
 class ImageEditTask(FrameworkTask):
@@ -52,7 +52,7 @@ class ImageEditTask(FrameworkTask):
     def get_editor(self, guess=None):
         """ Opens a new empty window
         """
-        editor = BitmapEditor()
+        editor = ImageEditor()
         return editor
 
     ###

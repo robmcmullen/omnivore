@@ -10,13 +10,14 @@ from traits.api import Bool, Event, Instance, File, Unicode, Property, provides
 from pyface.tasks.api import Editor
 
 # Local imports.
-from i_bitmap_editor import IBitmapEditor
-from omnivore.utils.wx.bitmapscroller import BitmapScroller
+from omnivore.framework.editor import FrameworkEditor
+from i_image_editor import IImageEditor
+from omnivore.utils.wx.imagescroller import ImageScroller
 
-@provides(IBitmapEditor)
-class BitmapEditor(Editor):
-    """ The toolkit specific implementation of a BitmapEditor.  See the
-    IBitmapEditor interface for the API documentation.
+@provides(IImageEditor)
+class ImageEditor(FrameworkEditor):
+    """ The toolkit specific implementation of a ImageEditor.  See the
+    IImageEditor interface for the API documentation.
     """
 
     #### 'IPythonEditor' interface ############################################
@@ -42,38 +43,24 @@ class BitmapEditor(Editor):
         return basename(self.path) or 'Untitled'
 
     ###########################################################################
-    # 'BitmapEditor' interface.
+    # 'ImageEditor' interface.
     ###########################################################################
 
     def create(self, parent):
         self.control = self._create_control(parent)
 
-    def load(self, guess=None):
-        """ Loads the contents of the editor.
-        """
-        img = wx.EmptyImage(1,1)
-        if guess is None:
-            path = self.path
-        else:
-            metadata = guess.get_metadata()
-            path = metadata.uri
-            if not img.LoadMimeStream(guess.get_stream(), metadata.mime):
-                #raise TypeError("Bad image -- either it really isn't an image, or wxPython doesn't support the image format.")
-                img = wx.EmptyImage(1,1)
+    def rebuild_document_properties(self):
+        pass
+    
+    def copy_view_properties(self, old_editor):
+        pass
 
-        self.control.setImage(img)
-        self.dirty = False
-
-    def save(self, path=None):
-        """ Saves the contents of the editor.
-        """
-        if path is None:
-            path = self.path
-
-        self.control.saveImage(path)
-
-        self.dirty = False
-
+    def update_panes(self):
+        self.reconfigure_panes()
+    
+    def reconfigure_panes(self):
+        self.control.recalc_view()
+    
     ###########################################################################
     # Trait handlers.
     ###########################################################################
@@ -90,7 +77,7 @@ class BitmapEditor(Editor):
         """ Creates the toolkit-specific control for the widget. """
 
         # Base-class constructor.
-        self.control = BitmapScroller(parent)
+        self.control = ImageScroller(parent, self.task)
 
         # Load the editor's contents.
         self.load()

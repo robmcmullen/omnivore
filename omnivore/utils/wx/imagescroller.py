@@ -1,15 +1,15 @@
 #-----------------------------------------------------------------------------
-# Name:        bitmapscroller.py
-# Purpose:     scrolling container for bitmaps
+# Name:        imagescroller.py
+# Purpose:     scrolling container for bitmapped images
 #
 # Author:      Rob McMullen
 #
 # Created:     2007
 # RCS-ID:      $Id: $
-# Copyright:   (c) 2007 Rob McMullen
+# Copyright:   (c) 2007-2016 Rob McMullen
 # License:     wxWidgets
 #-----------------------------------------------------------------------------
-"""BitmapScroller -- a container for viewing bitmapped images.
+"""ImageScroller -- a container for viewing bitmapped images.
 
 This control is designed to be a generic bitmap viewer that can scroll
 to handle large images.  In addition, user interaction with the bitmap
@@ -60,7 +60,7 @@ Changelog:
     0.4:
         * added methods to allow programmatic specification of rubberband
         * added setSelection to Rubberband
-        * added startSelector to BitmapScroller
+        * added startSelector to ImageScroller
     0.5:
         * changed to wx.Overlay for drawing (instead of XOR)
 """
@@ -133,15 +133,15 @@ class MouseSelector(object):
 
     A selector is a class that represents a user interaction with the
     bitmap.  User interactions are triggered by a certain mouse event
-    combination, and once triggered, the BitmapScroller makes that the
+    combination, and once triggered, the ImageScroller makes that the
     current selector.
 
-    Mouse event processing for the BitmapScroller is directed to the
+    Mouse event processing for the ImageScroller is directed to the
     current selector through the processEvent method, which directs
     the action depending on which combination of mouse events occur.
     The processEvent handler should return False when an event
     combination is reached that signals the end of the selector's
-    processing.  The selector will be destroyed by the BitmapScroller
+    processing.  The selector will be destroyed by the ImageScroller
     when this occurs.
     """
     cursor = wx.CURSOR_ARROW
@@ -231,7 +231,7 @@ class MouseSelector(object):
         This method is called when the user has completed the
         interaction.  This does not necessarily destroy the selector
         -- it's up to the processEvent returning False to signal the
-        BitmapScroller to kill the selector.
+        ImageScroller to kill the selector.
 
         This could be used in multi-stage processing; see the
         RubberBand for an example where finishEvent doesn't mean that
@@ -711,11 +711,13 @@ class RubberBand(MouseSelector):
         self.draw()
 
 
-class BitmapScroller(wx.ScrolledWindow):
+class ImageScroller(wx.ScrolledWindow):
     dbg_call_seq = 0
     
-    def __init__(self, parent, selector=Crosshair):
+    def __init__(self, parent, task, selector=Crosshair):
         wx.ScrolledWindow.__init__(self, parent, -1)
+        self.task = task
+        self.editor = None
 
         # Settings
         self.background_color = wx.Colour(160, 160, 160)
@@ -751,6 +753,20 @@ class BitmapScroller(wx.ScrolledWindow):
         self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvent)
 
         self.setSelector(selector)
+    
+    def recalc_view(self):
+        editor = self.task.active_editor
+        if editor is not None:
+            self.editor = editor
+            self.document = editor.document
+            self.set_data()
+    
+    def set_data(self):
+        img = wx.EmptyImage(1,1)
+        if not img.LoadMimeStream(self.document.bytestream, self.document.metadata.mime):
+            #raise TypeError("Bad image -- either it really isn't an image, or wxPython doesn't support the image format.")
+            img = wx.EmptyImage(1,1)
+        self.setImage(img)
 
     def zoomIn(self, zoom=2):
         self.zoom *= zoom
@@ -1103,7 +1119,7 @@ class BitmapScroller(wx.ScrolledWindow):
         """Driver to process mouse events.
 
         This is the main driver to process all mouse events that
-        happen on the BitmapScroller.  Once a selector is triggered by
+        happen on the ImageScroller.  Once a selector is triggered by
         its event combination, it becomes the active selector and
         further mouse events are directed to its handler.
         """
@@ -1164,11 +1180,11 @@ class BitmapScroller(wx.ScrolledWindow):
 
 if __name__ == '__main__':
     app   = wx.PySimpleApp()
-    frame = wx.Frame(None, -1, title='BitmapScroller Test', size=(500,500))
+    frame = wx.Frame(None, -1, title='ImageScroller Test', size=(500,500))
     frame.CreateStatusBar()
     
     # Add a panel that the rubberband will work on.
-    panel = BitmapScroller(frame)
+    panel = ImageScroller(frame)
     img = wx.ImageFromBitmap(wx.ArtProvider_GetBitmap(wx.ART_WARNING, wx.ART_OTHER, wx.Size(48, 48)))
     panel.setImage(img)
 

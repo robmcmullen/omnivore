@@ -6,7 +6,7 @@ from traits.api import Bool, Event, Instance, File, Interface, Unicode
 from pyface.tasks.i_editor import IEditor
 
 
-class IBitmapEditor(IEditor):
+class IImageEditor(IEditor):
     """ A widget for editing text. """
 
     #### 'IPythonEditor' interface ############################################
