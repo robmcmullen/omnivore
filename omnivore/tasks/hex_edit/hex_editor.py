@@ -53,6 +53,8 @@ class HexEditor(FrameworkEditor):
     
     map_width = Int
     
+    map_zoom = Int
+    
     bitmap_width = Int
     
     bitmap_zoom = Int
@@ -124,6 +126,9 @@ class HexEditor(FrameworkEditor):
     
     def _map_width_default(self):
         return 8  # ATASCII
+    
+    def _map_zoom_default(self):
+        return 2
     
     def _bitmap_width_default(self):
         return 1
@@ -323,6 +328,12 @@ class HexEditor(FrameworkEditor):
         if width is None:
             width = self.map_width
         self.map_width = width
+        self.font_map.recalc_view()
+    
+    def set_map_zoom(self, zoom=None):
+        if zoom is None:
+            zoom = self.map_zoom
+        self.map_zoom = zoom
         self.font_map.recalc_view()
     
     def load_font(self, filename):

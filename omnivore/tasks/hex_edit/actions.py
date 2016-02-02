@@ -125,6 +125,16 @@ class FontMappingWidthAction(EditorAction):
             wx.CallAfter(e.set_map_width, width)
 
 
+class FontMappingZoomAction(EditorAction):
+    name = "Map Zoom"
+
+    def perform(self, event):
+        e = self.active_editor
+        width = prompt_for_hex(e.window.control, 'Enter new pixel zoom factor', 'Set Map Zoom', e.map_zoom)
+        if width is not None and width > 0:
+            wx.CallAfter(e.set_map_zoom, width)
+
+
 class AnticColorAction(EditorAction):
     name = 'Choose Colors...'
     

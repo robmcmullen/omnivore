@@ -127,6 +127,14 @@ class BitviewScroller(wx.ScrolledWindow):
             else:
                 self.Refresh()
         
+    def sync_settings(self):
+        e = self.editor
+        if e is not None:
+            self.sync_to_editor(e)
+    
+    def sync_to_editor(self, e):
+        pass
+
     def set_colors(self):
         pass
     
@@ -147,6 +155,7 @@ class BitviewScroller(wx.ScrolledWindow):
         elif zoom < self.min_zoom:
             zoom = self.min_zoom
         self.zoom = zoom
+        self.sync_settings()
     
     def get_zoom_factors(self):
         return self.zoom, self.zoom
@@ -532,7 +541,10 @@ class BitmapScroller(BitviewScroller):
     
     def update_zoom(self):
         self.set_zoom(self.editor.bitmap_zoom)
-        self.editor.bitmap_zoom = self.zoom
+    
+    def sync_to_editor(self, e):
+        e.bitmap_zoom = self.zoom
+        e.bitmap_width = self.bytes_per_row
     
     def event_coords_to_byte(self, evt):
         if self.end_byte is None:  # end_byte is a proxy for the image being loaded
@@ -714,6 +726,13 @@ class FontMapScroller(BitviewScroller):
     def update_bytes_per_row(self):
         self.bytes_per_row = self.editor.map_width
     
+    def update_zoom(self):
+        self.set_zoom(self.editor.map_zoom)
+    
+    def sync_to_editor(self, e):
+        e.map_zoom = self.zoom
+        e.map_width = self.bytes_per_row
+    
     def calc_scale_from_bytes(self):
         self.total_rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
         self.grid_width = int(8 * self.bytes_per_row)
@@ -876,7 +895,7 @@ class FontMapScroller(BitviewScroller):
     
     def get_popup_actions(self):
         actions = BitviewScroller.get_popup_actions(self)
-        actions.extend([None, FontMappingWidthAction, None])
+        actions.extend([None, FontMappingWidthAction, FontMappingZoomAction, None])
         actions.extend(self.task.get_font_mapping_actions())
         return actions
     
