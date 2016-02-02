@@ -105,6 +105,16 @@ class BitmapWidthAction(EditorAction):
             wx.CallAfter(e.set_bitmap_width, width)
 
 
+class BitmapZoomAction(EditorAction):
+    name = "Bitmap Zoom"
+
+    def perform(self, event):
+        e = self.active_editor
+        width = prompt_for_hex(e.window.control, 'Enter new pixel zoom factor', 'Set Bitmap Zoom', e.bitmap_zoom)
+        if width is not None and width > 0:
+            wx.CallAfter(e.set_bitmap_zoom, width)
+
+
 class FontMappingWidthAction(EditorAction):
     name = "Map Width"
 

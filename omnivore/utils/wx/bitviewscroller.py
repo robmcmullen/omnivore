@@ -116,6 +116,7 @@ class BitviewScroller(wx.ScrolledWindow):
             self.set_colors()
             self.set_font()
             self.update_bytes_per_row()
+            self.update_zoom()
             self.set_scale()
     
     def refresh_view(self):
@@ -133,16 +134,19 @@ class BitviewScroller(wx.ScrolledWindow):
         pass
 
     def zoom_in(self, zoom=1):
-        self.zoom += zoom
-        if self.zoom > self.max_zoom:
-            self.zoom = self.max_zoom
+        self.set_zoom(self.zoom + zoom)
         self.set_scale()
         
     def zoom_out(self, zoom=1):
-        self.zoom -= zoom
-        if self.zoom < self.min_zoom:
-            self.zoom = self.min_zoom
+        self.set_zoom(self.zoom - zoom)
         self.set_scale()
+    
+    def set_zoom(self, zoom):
+        if zoom > self.max_zoom:
+            zoom = self.max_zoom
+        elif zoom < self.min_zoom:
+            zoom = self.min_zoom
+        self.zoom = zoom
     
     def get_zoom_factors(self):
         return self.zoom, self.zoom
@@ -260,6 +264,9 @@ class BitviewScroller(wx.ScrolledWindow):
         log.debug("x, y, w, h, start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows]))
 
     def update_bytes_per_row(self):
+        pass
+
+    def update_zoom(self):
         pass
 
     def set_scale(self):
@@ -523,6 +530,10 @@ class BitmapScroller(BitviewScroller):
     def update_bytes_per_row(self):
         self.bytes_per_row = self.editor.bitmap_width
     
+    def update_zoom(self):
+        self.set_zoom(self.editor.bitmap_zoom)
+        self.editor.bitmap_zoom = self.zoom
+    
     def event_coords_to_byte(self, evt):
         if self.end_byte is None:  # end_byte is a proxy for the image being loaded
             return 0, 0, False
@@ -675,7 +686,7 @@ class BitmapScroller(BitviewScroller):
     
     def get_popup_actions(self):
         actions = BitviewScroller.get_popup_actions(self)
-        actions.extend([None, BitmapWidthAction])
+        actions.extend([None, BitmapWidthAction, BitmapZoomAction])
         return actions
 
 

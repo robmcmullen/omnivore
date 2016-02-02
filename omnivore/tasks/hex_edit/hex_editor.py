@@ -55,6 +55,8 @@ class HexEditor(FrameworkEditor):
     
     bitmap_width = Int
     
+    bitmap_zoom = Int
+    
     playfield_colors = Any
     
     color_standard = Enum(0, 1)
@@ -125,6 +127,9 @@ class HexEditor(FrameworkEditor):
     
     def _bitmap_width_default(self):
         return 1
+    
+    def _bitmap_zoom_default(self):
+        return 5
     
     def _playfield_colors_default(self):
         return colors.powerup_colors()
@@ -263,6 +268,12 @@ class HexEditor(FrameworkEditor):
         if width is None:
             width = self.bitmap_width
         self.bitmap_width = width
+        self.bitmap.recalc_view()
+    
+    def set_bitmap_zoom(self, zoom=None):
+        if zoom is None:
+            zoom = self.bitmap_zoom
+        self.bitmap_zoom = zoom
         self.bitmap.recalc_view()
     
     def update_fonts(self):

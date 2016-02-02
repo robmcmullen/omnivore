@@ -172,6 +172,7 @@ class HexEditTask(FrameworkTask):
             SMenu(
                 Group(
                     BitmapWidthAction(),
+                    BitmapZoomAction(),
                     id="a1", separator=True),
                 id='FontChoiceSubmenu2a2', separator=True, name="Bitmap"),
             SMenu(
