@@ -187,7 +187,10 @@ class ByteGridTable(Grid.PyGridTableBase):
     get_value_style = get_value_style_lower
     
     def GetValue(self, row, col):
-        return self.get_value_style(row, col)[0]
+        index, _ = self.get_index_range(row, col)
+        if self.is_index_valid(index):
+            return self.get_value_style(row, col)[0]
+        return ""
 
     def SetValue(self, row, col, value):
         raise NotImplementedError
