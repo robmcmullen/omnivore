@@ -53,6 +53,8 @@ class HexEditor(FrameworkEditor):
     
     map_width = Int
     
+    bitmap_width = Int
+    
     playfield_colors = Any
     
     color_standard = Enum(0, 1)
@@ -120,6 +122,9 @@ class HexEditor(FrameworkEditor):
     
     def _map_width_default(self):
         return 8  # ATASCII
+    
+    def _bitmap_width_default(self):
+        return 1
     
     def _playfield_colors_default(self):
         return colors.powerup_colors()
@@ -253,6 +258,12 @@ class HexEditor(FrameworkEditor):
         if self.color_standard == 0:
             return colors.gtia_ntsc_to_rgb
         return colors.gtia_pal_to_rgb
+    
+    def set_bitmap_width(self, width=None):
+        if width is None:
+            width = self.bitmap_width
+        self.bitmap_width = width
+        self.byte_graphics.recalc_view()
     
     def update_fonts(self):
         self.font_map.Refresh()

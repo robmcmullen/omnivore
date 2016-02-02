@@ -201,76 +201,7 @@ class BitviewScroller(wx.ScrolledWindow):
         return anchor_start, anchor_end, (r1, c1), (r2, c2)
     
     def get_image(self):
-        log.debug("get_image: bit image: start=%d, num=%d" % (self.start_row, self.visible_rows))
-        sr = self.start_row
-        nr = self.visible_rows
-        self.start_byte = sr * self.bytes_per_row
-        self.end_byte = self.start_byte + (nr * self.bytes_per_row)
-        if self.end_byte > self.bytes.size:
-            self.end_byte = self.bytes.size
-            count = self.end_byte - self.start_byte
-            bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
-            bytes[0:count] = self.bytes[self.start_byte:self.end_byte]
-            style = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
-            style[0:count] = self.style[self.start_byte:self.end_byte]
-        else:
-            count = self.end_byte - self.start_byte
-            bytes = self.bytes[self.start_byte:self.end_byte]
-            style = self.style[self.start_byte:self.end_byte]
-        bits = np.unpackbits(bytes)
-        bits = bits.reshape((-1, 8 * self.bytes_per_row))
-        bits[bits==0]=255
-        bits[bits==1]=0
-        bitwidth = 8 * self.bytes_per_row
-        border = self.border_width
-        width = bitwidth + 2 * border
-        array = np.empty((nr, width, 3), dtype=np.uint8)
-        array[:,border:border + bitwidth,0] = bits
-        array[:,border:border + bitwidth,1] = bits
-        array[:,border:border + bitwidth,2] = bits
-        array[:,0:border,:] = self.background_color
-        array[:,border + bitwidth:width,:] = self.background_color
-        e = self.editor
-        start_index, end_index, rc1, rc2 = self.get_highlight_indexes()
-        start_highlight = max(start_index - self.start_byte, 0)
-        end_highlight = min(end_index - self.start_byte, count)
-        log.debug("highlight %d-%d" % (start_highlight, end_highlight))
-        
-        mask = array == (255, 255, 255)
-        mask = np.all(mask, axis=2)
-        
-        # highlight any comments
-        match = style & 0x80
-        style_mask = match==0x80
-        # This doesn't do anything! A mask of a mask apparently doesn't work
-        # array[style_mask,:,:][mask[style_mask]] = self.comment_color
-        s = np.tile(style_mask, (mask.shape[1], 1)).T
-        m2 = np.logical_and(mask, s)
-        array[m2] = self.comment_color
-        array[style_mask,0:border,:] = self.comment_color
-        array[style_mask,border + bitwidth:width,:] = self.comment_color
-        
-        # highlight any matches
-        match = style & 0x1
-        style_mask = match==0x1
-        s = np.tile(style_mask, (mask.shape[1], 1)).T
-        m2 = np.logical_and(mask, s)
-        array[m2] = self.match_color
-        array[style_mask,0:border,:] = self.match_color
-        array[style_mask,border + bitwidth:width,:] = self.match_color
-
-        if start_highlight < count and end_highlight >= 0:
-            # change all white pixels to the highlight color.  The mask
-            # must be collapsed on the color axis to result in one entry
-            # per row so it can be applied to the array.
-            array[start_highlight:end_highlight,:,:][mask[start_highlight:end_highlight]] = self.editor.highlight_color
-            
-            # Highlight the border areas so the selection is visible even
-            # if there's an all-filled area
-            array[start_highlight:end_highlight,0:border,:] = self.editor.highlight_color
-            array[start_highlight:end_highlight,border + bitwidth:width,:] = self.editor.highlight_color
-
-        return array
+        raise NotImplementedError
 
     def copy_to_clipboard(self):
         """Copies current image to clipboard.
@@ -367,27 +298,7 @@ class BitviewScroller(wx.ScrolledWindow):
         the offset of the scrolled window's viewport and adjusting the
         event coordinates.
         """
-        if self.end_byte is None:  # end_byte is a proxy for the image being loaded
-            return 0, 0, False
-        
-        inside = True
-
-        x, y = self.GetViewStart()
-        x = (evt.GetX() // self.zoom) + x
-        y = (evt.GetY() // self.zoom) + y
-        if x < 0 or x >= self.grid_width or y < 0 or y > (self.start_row + self.visible_rows):
-            inside = False
-        x -= self.border_width
-        if x < 0:
-            x = 0
-        elif x >= 8 * self.bytes_per_row:
-            x = 8 * self.bytes_per_row - 1
-        xbyte = (x // 8)
-        byte = (self.bytes_per_row * y) + xbyte
-        if byte > self.end_byte:
-            inside = False
-        bit = 7 - (x & 7)
-        return byte, bit, inside
+        raise NotImplementedError
     
     def byte_to_row_col(self, addr):
         r = addr // self.bytes_per_row
@@ -606,6 +517,166 @@ class BitviewScroller(wx.ScrolledWindow):
             self.process_delta_index(delta_index)
         else:
             evt.Skip()
+
+
+class BitmapScroller(BitviewScroller):
+    def update_bytes_per_row(self):
+        self.bytes_per_row = self.editor.bitmap_width
+    
+    def event_coords_to_byte(self, evt):
+        if self.end_byte is None:  # end_byte is a proxy for the image being loaded
+            return 0, 0, False
+        
+        inside = True
+
+        x, y = self.GetViewStart()
+        x = (evt.GetX() // self.zoom) + x
+        y = (evt.GetY() // self.zoom) + y
+        if x < 0 or x >= self.grid_width or y < 0 or y > (self.start_row + self.visible_rows):
+            inside = False
+        if self.bytes_per_row == 1:
+            # border only used on single byte width drawing
+            x -= self.border_width
+        if x < 0:
+            x = 0
+        elif x >= 8 * self.bytes_per_row:
+            x = 8 * self.bytes_per_row - 1
+        xbyte = (x // 8)
+        byte = (self.bytes_per_row * y) + xbyte
+        if byte > self.end_byte:
+            inside = False
+        bit = 7 - (x & 7)
+        return byte, bit, inside
+    
+    def get_image(self):
+        log.debug("get_image: bit image: start=%d, num=%d" % (self.start_row, self.visible_rows))
+        sr = self.start_row
+        nr = self.visible_rows
+        self.start_byte = sr * self.bytes_per_row
+        self.end_byte = self.start_byte + (nr * self.bytes_per_row)
+        if self.end_byte > self.bytes.size:
+            self.end_byte = self.bytes.size
+            count = self.end_byte - self.start_byte
+            bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
+            bytes[0:count] = self.bytes[self.start_byte:self.end_byte]
+            style = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
+            style[0:count] = self.style[self.start_byte:self.end_byte]
+        else:
+            count = self.end_byte - self.start_byte
+            bytes = self.bytes[self.start_byte:self.end_byte]
+            style = self.style[self.start_byte:self.end_byte]
+        if self.bytes_per_row == 1:
+            return self.get_image_1(sr, nr, count, bytes, style)
+        else:
+            return self.get_image_multi(sr, nr, count, bytes, style)
+    
+    def get_image_1(self, sr, nr, count, bytes, style):
+        bits = np.unpackbits(bytes)
+        bits = bits.reshape((-1, 8 * self.bytes_per_row))
+        bits[bits==0]=255
+        bits[bits==1]=0
+        bitwidth = 8 * self.bytes_per_row
+        border = self.border_width
+        width = bitwidth + 2 * border
+        array = np.empty((nr, width, 3), dtype=np.uint8)
+        array[:,border:border + bitwidth,0] = bits
+        array[:,border:border + bitwidth,1] = bits
+        array[:,border:border + bitwidth,2] = bits
+        array[:,0:border,:] = self.background_color
+        array[:,border + bitwidth:width,:] = self.background_color
+        array[count:,border:border + bitwidth,:] = self.background_color
+        e = self.editor
+        start_index, end_index, rc1, rc2 = self.get_highlight_indexes()
+        start_highlight = max(start_index - self.start_byte, 0)
+        end_highlight = min(end_index - self.start_byte, count)
+        log.debug("highlight %d-%d" % (start_highlight, end_highlight))
+        
+        mask = array == (255, 255, 255)
+        mask = np.all(mask, axis=2)
+        
+        # highlight any comments
+        match = style & 0x80
+        style_mask = match==0x80
+        # This doesn't do anything! A mask of a mask apparently doesn't work
+        # array[style_mask,:,:][mask[style_mask]] = self.comment_color
+        s = np.tile(style_mask, (mask.shape[1], 1)).T
+        m2 = np.logical_and(mask, s)
+        array[m2] = self.comment_color
+        array[style_mask,0:border,:] = self.comment_color
+        array[style_mask,border + bitwidth:width,:] = self.comment_color
+        
+        # highlight any matches
+        match = style & 0x1
+        style_mask = match==0x1
+        s = np.tile(style_mask, (mask.shape[1], 1)).T
+        m2 = np.logical_and(mask, s)
+        array[m2] = self.match_color
+        array[style_mask,0:border,:] = self.match_color
+        array[style_mask,border + bitwidth:width,:] = self.match_color
+
+        if start_highlight < count and end_highlight >= 0:
+            # change all white pixels to the highlight color.  The mask
+            # must be collapsed on the color axis to result in one entry
+            # per row so it can be applied to the array.
+            array[start_highlight:end_highlight,:,:][mask[start_highlight:end_highlight]] = self.editor.highlight_color
+            
+            # Highlight the border areas so the selection is visible even
+            # if there's an all-filled area
+            array[start_highlight:end_highlight,0:border,:] = self.editor.highlight_color
+            array[start_highlight:end_highlight,border + bitwidth:width,:] = self.editor.highlight_color
+
+        return array
+    
+    def get_image_multi(self, sr, nr, count, bytes, style):
+        bits = np.unpackbits(bytes)
+        bits = bits.reshape((-1, 8 * self.bytes_per_row))
+        bits[bits==0]=255
+        bits[bits==1]=0
+        width = 8 * self.bytes_per_row
+        bitimage = np.empty((nr, width, 3), dtype=np.uint8)
+        bitimage[:,:,0] = bits
+        bitimage[:,:,1] = bits
+        bitimage[:,:,2] = bits
+        e = self.editor
+        start_index, end_index, rc1, rc2 = self.get_highlight_indexes()
+        start_highlight = max(start_index - self.start_byte, 0)
+        end_highlight = min(end_index - self.start_byte, count)
+        log.debug("highlight %d-%d" % (start_highlight, end_highlight))
+        
+        array = bitimage.reshape((-1, 8, 3))
+        array[count:,:,:] = self.background_color
+
+        mask = array == (255, 255, 255)
+        mask = np.all(mask, axis=2)
+        
+        # highlight any comments
+        match = style & 0x80
+        style_mask = match==0x80
+        # This doesn't do anything! A mask of a mask apparently doesn't work
+        # array[style_mask,:,:][mask[style_mask]] = self.comment_color
+        s = np.tile(style_mask, (mask.shape[1], 1)).T
+        m2 = np.logical_and(mask, s)
+        array[m2] = self.comment_color
+        
+        # highlight any matches
+        match = style & 0x1
+        style_mask = match==0x1
+        s = np.tile(style_mask, (mask.shape[1], 1)).T
+        m2 = np.logical_and(mask, s)
+        array[m2] = self.match_color
+
+        if start_highlight < count and end_highlight >= 0:
+            # change all white pixels to the highlight color.  The mask
+            # must be collapsed on the color axis to result in one entry
+            # per row so it can be applied to the array.
+            array[start_highlight:end_highlight,:,:][mask[start_highlight:end_highlight]] = self.editor.highlight_color
+
+        return bitimage
+    
+    def get_popup_actions(self):
+        actions = BitviewScroller.get_popup_actions(self)
+        actions.extend([None, BitmapWidthAction])
+        return actions
 
 
 class FontMapScroller(BitviewScroller):

@@ -95,6 +95,25 @@ class FontMappingBaseAction(EditorAction):
             self.checked = self.active_editor.antic_font_mapping == self.font_mapping
 
 
+class BitmapWidthAction(EditorAction):
+    name = "Bitmap Width"
+
+    def perform(self, event):
+        e = self.active_editor
+        dlg = wx.TextEntryDialog(event.task.window.control, 'Enter new bitmap width in bytes', 'Set Bitmap Width', str(e.bitmap_width))
+
+        if dlg.ShowModal() == wx.ID_OK:
+            try:
+                width = int(dlg.GetValue())
+            except ValueError:
+                log.debug("Bad value: %s" % dlg.GetValue())
+                width = 0
+
+        dlg.Destroy()
+        if width > 0:
+            wx.CallAfter(e.set_bitmap_width, width)
+
+
 class FontMappingWidthAction(EditorAction):
     name = "Map Width"
 

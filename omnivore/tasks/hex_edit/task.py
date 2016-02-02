@@ -171,6 +171,11 @@ class HexEditTask(FrameworkTask):
                 id='FontChoiceSubmenu2a1', separator=True, name="Char Map"),
             SMenu(
                 Group(
+                    BitmapWidthAction(),
+                    id="a1", separator=True),
+                id='FontChoiceSubmenu2a2', separator=True, name="Bitmap"),
+            SMenu(
+                Group(
                     ColorStandardAction(name="NTSC", color_standard=0),
                     ColorStandardAction(name="PAL", color_standard=1),
                     id="a0", separator=True),

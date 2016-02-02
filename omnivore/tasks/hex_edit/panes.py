@@ -5,7 +5,7 @@ from omnivore.framework.panes import FrameworkPane
 # Local imports.
 from disassembly import DisassemblyPanel
 from segments import SegmentList
-from omnivore.utils.wx.bitviewscroller import BitviewScroller, FontMapScroller, MemoryMapScroller
+from omnivore.utils.wx.bitviewscroller import BitmapScroller, FontMapScroller, MemoryMapScroller
 from omnivore.framework.undo_panel import UndoHistoryPanel
 from commands import ChangeByteCommand
 
@@ -31,7 +31,7 @@ class ByteGraphicsPane(FrameworkPane):
     name = 'Byte Graphics'
     
     def create_contents(self, parent):
-        control = BitviewScroller(parent, self.task, size=(64,500))
+        control = BitmapScroller(parent, self.task, size=(64,500))
         return control
 
 
