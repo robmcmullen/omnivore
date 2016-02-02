@@ -13,7 +13,7 @@ from pyface.tasks.action.api import TaskAction, EditorAction
 from omnivore.framework.actions import *
 from commands import *
 from omnivore.utils.wx.antic_colors import AnticColorDialog
-from omnivore.utils.wx.dialogs import HexEntryDialog
+from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string
 from omnivore.framework.minibuffer import *
 
 class FontChoiceGroup(TaskDynamicSubmenuGroup):
@@ -100,17 +100,8 @@ class BitmapWidthAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        dlg = wx.TextEntryDialog(event.task.window.control, 'Enter new bitmap width in bytes', 'Set Bitmap Width', str(e.bitmap_width))
-
-        if dlg.ShowModal() == wx.ID_OK:
-            try:
-                width = int(dlg.GetValue())
-            except ValueError:
-                log.debug("Bad value: %s" % dlg.GetValue())
-                width = 0
-
-        dlg.Destroy()
-        if width > 0:
+        width = prompt_for_hex(e.window.control, 'Enter new bitmap width in bytes', 'Set Bitmap Width', e.bitmap_width)
+        if width is not None and width > 0:
             wx.CallAfter(e.set_bitmap_width, width)
 
 
@@ -119,17 +110,8 @@ class FontMappingWidthAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        dlg = wx.TextEntryDialog(event.task.window.control, 'Enter new map width in bytes', 'Set Map Width', str(e.map_width))
-
-        if dlg.ShowModal() == wx.ID_OK:
-            try:
-                width = int(dlg.GetValue())
-            except ValueError:
-                log.debug("Bad value: %s" % dlg.GetValue())
-                width = 0
-
-        dlg.Destroy()
-        if width > 0:
+        width = prompt_for_hex(e.window.control, 'Enter new map width in bytes', 'Set Map Width', str(e.map_width))
+        if width is not None and width > 0:
             wx.CallAfter(e.set_map_width, width)
 
 
@@ -271,19 +253,13 @@ class GetSegmentFromSelectionAction(EditorAction):
     
     def perform(self, event):
         e = self.active_editor
-        dialog = wx.TextEntryDialog(e.window.control, "Enter segment name", "New Segment")
-
-        result = dialog.ShowModal()
-        if result == wx.ID_OK:
+        text = prompt_for_string(e.window.control, "Enter segment name", "New Segment")
+        if text is not None:
             segment = e.get_segment_from_selection()
-            text = dialog.GetValue()
             if not text:
                 text = "%04x-%04x" % (segment.start_addr, segment.start_addr + len(segment) - 1)
             segment.name = text
-        else:
-            value = None
-        dialog.Destroy()
-        e.add_user_segment(segment)
+            e.add_user_segment(segment)
 
 
 class GotoIndexAction(Action):
@@ -304,8 +280,7 @@ class SegmentGotoAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        dialog = HexEntryDialog(e.window.control, "Enter address value: (prefix with 0x or $ for hex)", "Goto Address in a Segment")
-        addr = dialog.show_and_get_value()
+        addr = prompt_for_hex(e.window.control, "Enter address value: (prefix with 0x or $ for hex)", "Goto Address in a Segment")
         if addr is not None:
             segment_num, segment, index = e.document.find_segment_in_range(addr)
             if segment_num >= 0:
@@ -364,13 +339,8 @@ class IndexRangeValueAction(IndexRangeAction):
     def _name_default(self):
         return self.cmd.pretty_name + "..."
     
-    def get_value(self, editor):
-        dialog = HexEntryDialog(editor.window.control, "Enter byte value: (prefix with 0x or $ for hex)", "Byte Value")
-        return dialog.show_and_get_value()
-        
-    def show_dialog(self, editor):
-        e = editor
-        value = self.get_value(editor)
+    def show_dialog(self, e):
+        value = prompt_for_hex(e.window.control, "Enter byte value: (prefix with 0x or $ for hex)", "Byte Value")
         if value is not None:
             cmd = self.cmd(e.segment, e.anchor_start_index, e.anchor_end_index, value)
             self.active_editor.process_command(cmd)
