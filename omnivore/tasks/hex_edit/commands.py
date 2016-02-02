@@ -113,7 +113,7 @@ class PasteCommand(ChangeByteCommand):
     
     def perform(self, editor):
         i1 = self.start_index
-        i2 = self.end_index
+        i2 = i1 + np.alen(self.data)
         data = self.get_data(self.segment.data[i1:i2])
         i2 = i1 + np.alen(data)  # Force end index to be length of pasted data
         self.undo_info = undo = UndoInfo()
