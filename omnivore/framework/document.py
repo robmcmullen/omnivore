@@ -1,5 +1,6 @@
 import os
 import types
+import cStringIO as StringIO
 
 import numpy as np
 
@@ -96,6 +97,10 @@ class Document(HasTraits):
 
     def to_bytes(self):
         return self.bytes.tostring()
+    
+    @property
+    def bytestream(self):
+        return StringIO.StringIO(self.bytes)
 
     def parse_segments(self, parser_list):
         parser_list.append(DefaultSegmentParser)
