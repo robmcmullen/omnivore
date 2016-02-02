@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 class DisassemblyPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
-    id = 'hex_edit.disasmbly_pane'
+    id = 'hex_edit.disassembly'
     name = 'Disassembly'
     
     def create_contents(self, parent):
@@ -24,11 +24,11 @@ class DisassemblyPane(FrameworkPane):
         return control
 
 
-class ByteGraphicsPane(FrameworkPane):
+class BitmapPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
-    id = 'hex_edit.byte_graphics'
-    name = 'Byte Graphics'
+    id = 'hex_edit.bitmap'
+    name = 'Bitmap'
     
     def create_contents(self, parent):
         control = BitmapScroller(parent, self.task, size=(64,500))
@@ -39,7 +39,7 @@ class FontMapPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
     id = 'hex_edit.font_map'
-    name = 'Font Map'
+    name = 'Char Map'
     
     def create_contents(self, parent):
         control = FontMapScroller(parent, self.task, size=(160,500), command=ChangeByteCommand)

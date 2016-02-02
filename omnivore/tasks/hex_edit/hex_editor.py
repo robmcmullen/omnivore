@@ -221,7 +221,7 @@ class HexEditor(FrameworkEditor):
     def reconfigure_panes(self):
         self.control.recalc_view()
         self.disassembly.recalc_view()
-        self.byte_graphics.recalc_view()
+        self.bitmap.recalc_view()
         self.font_map.recalc_view()
         self.memory_map.recalc_view()
     
@@ -233,7 +233,7 @@ class HexEditor(FrameworkEditor):
         self.check_document_change()
         self.control.refresh_view()
         self.disassembly.refresh_view()
-        self.byte_graphics.refresh_view()
+        self.bitmap.refresh_view()
         self.font_map.refresh_view()
         self.memory_map.refresh_view()
     
@@ -263,7 +263,7 @@ class HexEditor(FrameworkEditor):
         if width is None:
             width = self.bitmap_width
         self.bitmap_width = width
-        self.byte_graphics.recalc_view()
+        self.bitmap.recalc_view()
     
     def update_fonts(self):
         self.font_map.Refresh()
@@ -447,8 +447,8 @@ class HexEditor(FrameworkEditor):
         ##########################################
 
         # Get related controls
-        self.disassembly = self.window.get_dock_pane('hex_edit.disasmbly_pane').control
-        self.byte_graphics = self.window.get_dock_pane('hex_edit.byte_graphics').control
+        self.disassembly = self.window.get_dock_pane('hex_edit.disassembly').control
+        self.bitmap = self.window.get_dock_pane('hex_edit.bitmap').control
         self.font_map = self.window.get_dock_pane('hex_edit.font_map').control
         self.memory_map = self.window.get_dock_pane('hex_edit.memory_map').control
         self.segment_list = self.window.get_dock_pane('hex_edit.segments').control
@@ -468,8 +468,8 @@ class HexEditor(FrameworkEditor):
             self.control.select_index(index)
         if control != self.disassembly:
             self.disassembly.select_index(index)
-        if control != self.byte_graphics:
-            self.byte_graphics.select_index(index)
+        if control != self.bitmap:
+            self.bitmap.select_index(index)
         if control != self.font_map:
             self.font_map.select_index(index)
         if control != self.memory_map:
