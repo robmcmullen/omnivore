@@ -74,6 +74,7 @@ class BitviewScroller(wx.ScrolledWindow):
         self.fully_visible_rows = 1
         self.fully_visible_cols = 1
         self.visible_rows = 1
+        self.visible_cols = 1
 
         self.rect_select = False
         
@@ -270,6 +271,7 @@ class BitviewScroller(wx.ScrolledWindow):
         self.fully_visible_rows = h / self.zoom
         self.fully_visible_cols = w / self.zoom
         self.visible_rows = ((h + self.zoom - 1) / self.zoom)
+        self.visible_cols = ((w + self.zoom - 1) / self.zoom)
         log.debug("x, y, w, h, start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows]))
 
     def update_bytes_per_row(self):
@@ -589,9 +591,13 @@ class BitmapScroller(BitviewScroller):
             bytes = self.bytes[self.start_byte:self.end_byte]
             style = self.style[self.start_byte:self.end_byte]
         if self.bytes_per_row == 1:
-            return self.get_image_1(sr, nr, count, bytes, style)
+            array = self.get_image_1(sr, nr, count, bytes, style)
         else:
-            return self.get_image_multi(sr, nr, count, bytes, style)
+            array = self.get_image_multi(sr, nr, count, bytes, style)
+        sc = self.start_col
+        nc = self.visible_cols
+        clipped = array[:,sc:sc + nc,:]
+        return clipped
     
     def get_image_1(self, sr, nr, count, bytes, style):
         bits = np.unpackbits(bytes)
@@ -764,8 +770,8 @@ class FontMapScroller(BitviewScroller):
         self.visible_rows = (h + zoom_factor - 1) / zoom_factor
         zoom_factor = 8 * zw
         self.fully_visible_cols = w / zoom_factor
-        self.start_col, self.num_cols = x, (w + zoom_factor - 1) / zoom_factor
-        log.debug("fontmap: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.num_cols]))
+        self.start_col, self.visible_cols = x, (w + zoom_factor - 1) / zoom_factor
+        log.debug("fontmap: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.visible_cols]))
     
     def set_font(self):
         self.font = self.editor.antic_font
@@ -799,9 +805,9 @@ class FontMapScroller(BitviewScroller):
         
         anchor_start, anchor_end, rc1, rc2 = self.get_highlight_indexes()
         if speedups is not None:
-            array = speedups.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, self.font, self.font_mapping, anchor_start, anchor_end, self.rect_select, rc1, rc2)
+            array = speedups.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, self.background_color, self.font, self.font_mapping, anchor_start, anchor_end, self.rect_select, rc1, rc2)
         else:
-            array = self.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, self.font, self.font_mapping, anchor_start, anchor_end, self.rect_select, rc1, rc2)
+            array = self.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, self.background_color, self.font, self.font_mapping, anchor_start, anchor_end, self.rect_select, rc1, rc2)
         
         self.show_highlight(array, rc1, rc2)
         
@@ -1157,8 +1163,8 @@ class MemoryMapScroller(BitviewScroller):
         self.fully_visible_rows = h / z
         self.fully_visible_cols = w / z
         self.visible_rows = (h + z - 1) / z
-        self.start_col, self.num_cols = x, (w + z - 1) / z
-        log.debug("memory map: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.num_cols]))
+        self.start_col, self.visible_cols = x, (w + z - 1) / z
+        log.debug("memory map: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.visible_cols]))
 
     def get_image(self):
         log.debug("get_image: memory map: start=%d, num=%d" % (self.start_row, self.visible_rows))
@@ -1179,9 +1185,9 @@ class MemoryMapScroller(BitviewScroller):
         e = self.editor
         anchor_start, anchor_end, rc1, rc2 = self.get_highlight_indexes()
         if speedups is not None:
-            array = speedups.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, anchor_start, anchor_end, e.highlight_color, self.rect_select, rc1, rc2)
+            array = speedups.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, self.background_color, anchor_start, anchor_end, e.highlight_color, self.rect_select, rc1, rc2)
         else:
-            array = self.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.num_cols, self.background_color, anchor_start, anchor_end, e.highlight_color, self.rect_select, rc1, rc2)
+            array = self.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, self.background_color, anchor_start, anchor_end, e.highlight_color, self.rect_select, rc1, rc2)
         log.debug(array.shape)
         t = time.clock()
         log.debug("get_image: time %f" % (t - t0))
