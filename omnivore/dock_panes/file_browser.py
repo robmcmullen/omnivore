@@ -29,7 +29,12 @@ class FileBrowserPane(DockPane):
     
     def on_selected(self, evt):
         selected_file = self.control.GetFilePath()
-        wx.CallAfter(self.task.window.application.load_file, selected_file, self.task, in_current_window=True)
+        if selected_file:
+            wx.CallAfter(self.task.window.application.load_file, selected_file, self.task, in_current_window=True)
+        else:
+            # blank file path means that a directory was double-clicked instead
+            # of a file.  Skipping the event will expand the directory.
+            evt.Skip()
 
 
 class PythonScriptBrowserPane(FileBrowserPane):
