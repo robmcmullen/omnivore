@@ -73,18 +73,17 @@ python in that VM.
 Prerequisites
 -------------
 
-* python 2.7 (but not 3.x yet)
+* python 2.7 (but not 3.x yet) capable of building C extensions
 * wxPython 3.0.x
-* optionally: Cython for graphic speedups
 
-The Enthought framework is a custom build for omnivore because I've enabled
-current support for wx.  Enthought is transitioning to Qt is their primary GUI
-toolkit and their wx support has been limited recently.  Fortunately Enthought
-was designed to be toolkit agnostic and it was relatively easy to bring their
-libraries up to date as compared to Qt.  My patches have not made it back
-to Enthought yet, which is why I have included my versions of the Enthought
-libraries in the Omnivore distribution.
+Your version of python must be able to build C extensions, which should be
+automatic in most linux and on OS X. You may have to install the python
+development packages on linux distributions like Ubuntu or Linux Mint.
 
+Windows doesn't come with a C compiler, but happily, Microsoft provides a
+cut-down version of their Visual Studio compiler just for compiling Python
+extensions! Download and install it from
+`here <https://www.microsoft.com/en-us/download/details.aspx?id=44266>`_.
 
 Virtualenv Setup -- *Linux Only*
 ----------------------------------
@@ -108,11 +107,6 @@ Begin using the virtualenv with::
 
     source $VIRTUAL_ENV/bin/activate
 
-MS Visual C++ Compiler -- *Windows Only*
-------------------------------------------
-
-Windows doesn't come with a C compiler, which is needed for some extensions in Omnivore. Happily, Microsoft provides a cut-down version of their Visual Studio compiler just for compiling Python extensions! Download and install it from `here <https://www.microsoft.com/en-us/download/details.aspx?id=44266>`_.
-
 wxPython -- *Linux*
 ---------------------
 
@@ -135,18 +129,25 @@ wxPython -- *Other Plaftorms*
 * OS X: `download the package installer <http://wxpython.org/download.php#osxdefault>`_
 * Windows: `download and run the installer http://wxpython.org/download.php#msw>`_
 
-Installing Omnivore -- *All Platforms*
-----------------------------------------
+Installing Omnivore -- *Unix-like Platforms*
+--------------------------------------------
 
 Get the source from cloning it from github::
 
     $ git clone https://github.com/robmcmullen/omnivore.git
     $ cd omnivore
+    $ ./rebuild_enthought.sh
     $ python setup.py build_ext --inplace
 
 You'll need the git package on your system, which is available through
 your package manager on linux, or from the `git homepage 
 <https://git-scm.com/downloads>`_ on other platforms.
+
+My modified versions of the Enthought libraries must be checked out before
+setup.py will work.  Because I have used a unix shell script, this won't work
+on windows.  Until I get this fixed, you can check out a source distribution
+from the `github releases <https://github.com/robmcmullen/omnivore/releases>`_
+page which has bundled all of the Enthough source.
 
 
 Running the Program -- *All Platforms*
@@ -196,13 +197,15 @@ is written in and extensible through Python.  It is built around the emacs
 concept of major modes -- different views are presented to the user depending
 on the type of data being edited.
 
-It is a rewrite of peppy (my previous editor framework), but now it's based on
-the Enthought Tasks framework instead of my old custom framework.  (Note that
-even though Enthought has moved mostly toward Qt as the supported GUI toolkit,
-I have forked Enthought's code and extended it with better wxPython support.
-Only wxPython is supported as a GUI backend for Omnivore).  The architectural
-goal is to provide a system with low coupling in order to reduce the work
-required to extend the editor with new major modes, minor modes, and sidebars.
+It is a rewrite of peppy (my previous editor framework), but now it's based
+on the Enthought Tasks framework instead of my old custom framework.  (Note
+that even though Enthought has moved mostly toward Qt as the supported GUI
+toolkit, I have forked Enthought's code and extended it with better wxPython
+support.  Only wxPython is supported as a GUI backend for Omnivore.  I have
+attempted to submit patches back to Enthough but they have not been interested
+in further wx support).  The architectural goal is to provide a system with
+low coupling in order to reduce the work required to extend the editor with
+new major modes, minor modes, and sidebars.
 
 Why a rewrite of the original peppy_ editor?
 
