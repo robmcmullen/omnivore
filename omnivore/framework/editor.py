@@ -295,7 +295,7 @@ class FrameworkEditor(Editor):
             self.refresh_panes()
     
     def set_cursor(self, index, refresh=True):
-        max_index = self.document_length()
+        max_index = self.document_length() - 1
         if index < 0:
             index = 0
         elif index > max_index:
