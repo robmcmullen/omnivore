@@ -41,19 +41,7 @@ def main(argv):
 
 if __name__ == '__main__':
     import sys
+    from omnivore.framework.application import setup_frozen_logging
     
-    # set up early py2exe logging redirection, saving any messages until the log
-    # file directory can be determined after the application is initialized.
-    frozen = getattr(sys, 'frozen', False)
-    if frozen in ('dll', 'windows_exe', 'console_exe'):
-        class Blackhole(object):
-            softspace = 0
-            saved_text = []
-            def write(self, text):
-                self.saved_text.append(text)
-            def flush(self):
-                pass
-        sys.stdout = Blackhole()
-        sys.stderr = sys.stdout
-    
+    setup_frozen_logging()
     main(sys.argv)

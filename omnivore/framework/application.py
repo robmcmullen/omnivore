@@ -661,6 +661,21 @@ class FrameworkApplication(TasksApplication):
         toolbars = window._window_backend.get_toolbars()
         window._window_backend.show_toolbars(toolbars)
 
+def setup_frozen_logging():
+    # set up early py2exe logging redirection, saving any messages until the log
+    # file directory can be determined after the application is initialized.
+    frozen = getattr(sys, 'frozen', False)
+    if frozen in ('dll', 'windows_exe', 'console_exe'):
+        class Blackhole(object):
+            softspace = 0
+            saved_text = []
+            def write(self, text):
+                self.saved_text.append(text)
+            def flush(self):
+                pass
+        sys.stdout = Blackhole()
+        sys.stderr = sys.stdout
+
 def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", application_name="", debug_log=False):
     """Start the application
     
