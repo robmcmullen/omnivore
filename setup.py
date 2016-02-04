@@ -152,10 +152,11 @@ if sys.platform.startswith("win"):
     import py2exe
     if is_64bit:
         # Help py2exe find MSVCP90.DLL from vcredist_x64
-        sys.path.append("C:/Windows/winsxs/amd64_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.6161_none_08e61857a83bc251")
+        winsxs = "C:/Windows/winsxs/amd64_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.6161_none_08e61857a83bc251"
     else:
         # Help py2exe find MSVCP90.DLL from vcredist_x86
-        sys.path.append("C:/Windows/winsxs/x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.1_none_e163563597edeada")
+        winsxs = "C:/Windows/winsxs/x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.1_none_e163563597edeada"
+    sys.path.append(winsxs)
 
 def remove_pyc(basedir):
     for curdir, dirlist, filelist in os.walk(basedir):
@@ -281,14 +282,12 @@ if 'py2exe' in sys.argv and sys.platform.startswith("win"):
     if is_64bit:
         nsis_arch = """ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64"""
-        
-        # copy manifest and app config files to work around side-by-side
-        # errors
-        for f in glob.glob(r'pyinstaller/Microsoft.VC90.CRT-9.0.30729.6161/*'):
-            print f
-            shutil.copy(f, win_dist_dir)
     else:
         nsis_arch = ""
+
+    # copy dlls from VC redistributable package
+    for f in glob.glob(r'%s/*' % winsxs):
+        shutil.copy(f, win_dist_dir)
     shutil.copy("%s/run.exe" % win_dist_dir, "%s/omnivore.exe" % win_dist_dir)
     iss_filename = "%s\\omnivore.iss" % win_dist_dir
     iss_file = open(iss_filename, "w")
