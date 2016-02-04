@@ -166,6 +166,12 @@ class ByteGridTable(Grid.PyGridTableBase):
                 col = 0
         return (row, col)
    
+    def get_page_index(self, index, segment_page_size, dir, grid):
+        if segment_page_size < 0:
+            r = grid.get_num_visible_rows()
+            page_size = r * self.GetNumberCols()
+        return index + (dir * page_size)
+
     def GetNumberRows(self):
         return self._rows
 
@@ -676,6 +682,17 @@ class ByteGrid(Grid.Grid):
                 else:
                     r = self.table.GetNumberRows() - 1
         return r, c
+    
+    def get_num_visible_rows(self):
+        ux, uy = self.GetScrollPixelsPerUnit()
+        sx, sy = self.GetViewStart()
+        w, h = self.GetGridWindow().GetClientSize().Get()
+        y = sy * uy
+        r0 = self.YToRow(y)
+        r1 = self.YToRow(y + h)
+        if r1 < 0:
+            r1 = self.table.GetNumberRows() - 1
+        return r1 - r0 - 1
  
     def on_motion(self, evt):
         e = self.editor
@@ -722,6 +739,7 @@ class ByteGrid(Grid.Grid):
         key = evt.GetKeyCode()
         log.debug("evt=%s, key=%s" % (evt, key))
         moved = False
+        index = None
         r, c = self.GetGridCursorRow(), self.GetGridCursorCol()
         if key == wx.WXK_RETURN or key == wx.WXK_TAB:
             if evt.ControlDown():   # the edit control needs this key
@@ -748,29 +766,23 @@ class ByteGrid(Grid.Grid):
             r = n - 1 if r >= n - 1 else r + 1
             moved = True
         elif key == wx.WXK_PAGEUP:
-            page_size = e.segment.page_size
-            if page_size < 0:
-                evt.Skip()
-            else:
-                index = e.set_cursor(e.cursor_index - page_size, False)
-                wx.CallAfter(e.index_clicked, index, 0, None)
+            index = self.table.get_page_index(e.cursor_index, e.segment.page_size, -1, self)
+            moved = True
         elif key == wx.WXK_PAGEDOWN:
-            page_size = e.segment.page_size
-            if page_size < 0:
-                evt.Skip()
-            else:
-                index = e.set_cursor(e.cursor_index + page_size, False)
-                wx.CallAfter(e.index_clicked, index, 0, None)
+            index = self.table.get_page_index(e.cursor_index, e.segment.page_size, 1, self)
+            moved = True
         else:
             evt.Skip()
         
         if moved:
-            index1, index2 = self.table.get_index_range(r, c)
+            if index is None:
+                index, _ = self.table.get_index_range(r, c)
             refresh_self = None if e.can_copy else self
-            e.set_cursor(index1, False)
+            e.set_cursor(index, False)
+            r, c = self.table.get_row_col(e.cursor_index)
             self.SetGridCursor(r, c)
             self.MakeCellVisible(r, c)
-            wx.CallAfter(e.index_clicked, index1, 0, refresh_self)
+            wx.CallAfter(e.index_clicked, e.cursor_index, 0, refresh_self)
 
     def cancel_edit(self):
         log.debug("cancelling edit!")

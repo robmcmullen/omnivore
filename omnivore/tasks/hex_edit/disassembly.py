@@ -96,7 +96,10 @@ class DisassemblyTable(ByteGridTable):
             attr.SetReadOnly(True)
     
     def get_index_range(self, r, c):
-        line = self.lines[r]
+        try:
+            line = self.lines[r]
+        except:
+            line = self.lines[-1]
         index = line[0] - self.start_addr
         return index, index + line[4]
     
@@ -137,6 +140,15 @@ class DisassemblyTable(ByteGridTable):
             else:
                 col = 1
         return (row, col)
+   
+    def get_page_index(self, index, segment_page_size, dir, grid):
+        r, c = self.get_row_col(index)
+        vr = grid.get_num_visible_rows() - 1
+        r += (dir * vr)
+        if r < 0:
+            r = 0
+        index, _ = self.get_index_range(r, 0)
+        return index
     
     def get_pc(self, row):
         return self.lines[row][0]
