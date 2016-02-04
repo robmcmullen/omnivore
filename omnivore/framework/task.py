@@ -462,6 +462,11 @@ class FrameworkTask(Task):
             AboutAction()
             ]
     
+    def get_actions_Menu_Help_BugReportGroup(self):
+        return [
+            OpenLogDirectoryAction(),
+            ]
+    
     def get_actions_Menu_Help_DebugGroup(self):
         return [
             SMenu(TaskAction(name='Dynamic Menu Names', method='debug',

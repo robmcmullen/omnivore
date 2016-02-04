@@ -1,4 +1,5 @@
 import os
+import sys
 import wx.lib.inspection
 
 import fs
@@ -345,6 +346,23 @@ class AboutAction(Action):
         # with the task.
         top = event.task.window.application.active_window
         AboutDialog(top.control, top.active_task)
+
+class OpenLogDirectoryAction(Action):
+    name = 'Open Log Directory in File Manager'
+    tooltip = 'Open the log directory in the desktop file manager program'
+
+    def perform(self, event):
+        app = event.task.window.application
+        filename = app.get_log_file_name("dummy")
+        dirname = os.path.dirname(filename)
+        import subprocess
+        if sys.platform.startswith("win"):
+            file_manager = 'explorer'
+        elif sys.platform == "darwin":
+            file_manager = '/usr/bin/open'
+        else:
+            file_manager = 'xdg-open'
+        subprocess.call([file_manager, dirname])
 
 class NewWindowAction(Action):
     name = 'New Window'
