@@ -537,6 +537,10 @@ class FrameworkTask(Task):
 
     def get_editor(self):
         raise NotImplementedError
+    
+    def restore_toolbars(self, window):
+        toolbars = window._window_backend.get_toolbars()
+        window._window_backend.show_toolbars(toolbars)
 
     ###########################################################################
     # Minibuffer convenience routines

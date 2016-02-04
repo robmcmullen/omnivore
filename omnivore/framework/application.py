@@ -658,8 +658,7 @@ class FrameworkApplication(TasksApplication):
         if task.id in self.perspectives:
             layout.perspective = self.perspectives[task.id]
             window.set_layout(layout)
-        toolbars = window._window_backend.get_toolbars()
-        window._window_backend.show_toolbars(toolbars)
+        task.restore_toolbars(window)
 
 def setup_frozen_logging():
     # set up early py2exe logging redirection, saving any messages until the log
