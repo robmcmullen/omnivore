@@ -492,6 +492,13 @@ class FrameworkApplication(TasksApplication):
             handler = logging.StreamHandler(sys.stderr)
             logger = logging.getLogger('')
             logger.addHandler(handler)
+        else:
+            log = self.get_log_file_name("log")
+            handler = logging.FileHandler(log)
+            formatter = logging.Formatter("%(levelname)s:%(name)s:%(msg)s")
+            handler.setFormatter(formatter)
+            logger = logging.getLogger('')
+            logger.addHandler(handler)
     
     #### Convenience methods
     
