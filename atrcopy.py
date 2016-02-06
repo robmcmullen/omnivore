@@ -244,6 +244,9 @@ class DefaultSegment(object):
         self.data[index] = value
         self._search_copy = None
     
+    def byte_bounds_offset(self):
+        return np.byte_bounds(self.data)[0]
+
     def tostring(self):
         return self.data.tostring()
     
@@ -334,6 +337,9 @@ class IndexedByteSegment(DefaultSegment):
     def __setitem__(self, index, value):
         self.data[self.order[index]] = value
         self._search_copy = None
+    
+    def byte_bounds_offset(self):
+        return np.byte_bounds(self.data)[0] + self.order[0]
     
     def tostring(self):
         return self.data[self.order[:]].tostring()
