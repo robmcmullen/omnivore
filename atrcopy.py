@@ -322,8 +322,18 @@ class RawSectorsSegment(DefaultSegment):
 
 class IndexedByteSegment(DefaultSegment):
     def __init__(self, byte_order, bytes, **kwargs):
-        data = bytes[byte_order]
-        DefaultSegment.__init__(self, 0, data, **kwargs)
+        self.order = byte_order
+        DefaultSegment.__init__(self, 0, bytes, **kwargs)
+    
+    def __getitem__(self, index):
+        return self.data[self.order[index]]
+    
+    def __setitem__(self, index, value):
+        self.data[self.order[index]] = value
+        self._search_copy = None
+    
+    def tostring(self):
+        return self.data[self.order[:]].tostring()
 
 
 class AtariDosFile(object):
