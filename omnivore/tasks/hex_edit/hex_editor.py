@@ -413,8 +413,8 @@ class HexEditor(FrameworkEditor):
         indexes = np.array([self.cursor_index, self.anchor_initial_start_index, self.anchor_start_index, self.anchor_initial_end_index, self.anchor_end_index], dtype=np.int64)
         
         # find byte index of view into master array
-        current_offset = np.byte_bounds(current_segment.data)[0]
-        new_offset = np.byte_bounds(new_segment.data)[0]
+        current_offset = current_segment.byte_bounds_offset()
+        new_offset = new_segment.byte_bounds_offset()
         
         delta = new_offset - current_offset
         indexes -= delta
