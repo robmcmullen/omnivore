@@ -232,7 +232,7 @@ class DefaultSegment(object):
         self._search_copy = None
     
     def __str__(self):
-        return "%s (%d bytes)" % (self.name, len(self.data))
+        return "%s (%d bytes)" % (self.name, len(self))
     
     def __len__(self):
         return np.alen(self.data)
@@ -324,6 +324,9 @@ class IndexedByteSegment(DefaultSegment):
     def __init__(self, byte_order, bytes, **kwargs):
         self.order = byte_order
         DefaultSegment.__init__(self, 0, bytes, **kwargs)
+    
+    def __len__(self):
+        return np.alen(self.order)
     
     def __getitem__(self, index):
         return self.data[self.order[index]]
