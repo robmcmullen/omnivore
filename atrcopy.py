@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
 
-__version__ = "1.3.0"
+__version__ = "2.0.0"
 
+import types
 
-import struct
-from cStringIO import StringIO
+import numpy as np
+
 
 class AtrError(RuntimeError):
     pass
@@ -23,7 +24,16 @@ class ByteNotInFile166(AtrError):
     pass
 
 class AtrHeader(object):
-    format = "<hhhBLLB"
+    # ATR Format described in http://www.atarimax.com/jindroush.atari.org/afmtatr.html
+    format = np.dtype([
+        ('wMagic', '<u2'),
+        ('wPars', '<u2'),
+        ('wSecSize', '<u2'),
+        ('btParsHigh', 'u1'),
+        ('dwCRC','<u4'),
+        ('unused','<u4'),
+        ('btFlags','u1'),
+        ])
     file_format = "ATR"
     
     def __init__(self, bytes=None):
@@ -40,14 +50,14 @@ class AtrHeader(object):
             return
         
         if len(bytes) == 16:
-            values = struct.unpack(self.format, bytes)
+            values = bytes.view(dtype=self.format)[0]
             if values[0] != 0x296:
                 raise InvalidAtrHeader
-            self.size_in_bytes = (values[3] * 256 * 256 + values[1]) * 16
-            self.sector_size = values[2]
-            self.crc = values[4]
-            self.unused = values[5]
-            self.flags = values[6]
+            self.size_in_bytes = (int(values[3]) * 256 * 256 + int(values[1])) * 16
+            self.sector_size = int(values[2])
+            self.crc = int(values[4])
+            self.unused = int(values[5])
+            self.flags = int(values[6])
             self.atr_header_offset = 16
         else:
             raise InvalidAtrHeader
@@ -89,7 +99,14 @@ class XfdHeader(AtrHeader):
         return "%s Disk Image (size=%d (%dx%db)" % (self.file_format, self.size_in_bytes, self.max_sectors, self.sector_size)
 
 class AtrDirent(object):
-    format = "<Bhh8s3s"
+    # ATR Dirent structure described at http://atari.kensclassics.org/dos.htm
+    format = np.dtype([
+        ('FLAG', 'u1'),
+        ('COUNT', '<u2'),
+        ('START', '<u2'),
+        ('NAME','S8'),
+        ('EXT','S3'),
+        ])
 
     def __init__(self, disk, file_num=0, bytes=None):
         self.file_num = file_num
@@ -107,7 +124,7 @@ class AtrDirent(object):
         self.ext = ""
         if bytes is None:
             return
-        values = struct.unpack(self.format, bytes)
+        values = bytes.view(dtype=self.format)[0]  
         flag = values[0]
         self.flag = flag
         self.opened_output = (flag&0x01) > 0
@@ -117,10 +134,10 @@ class AtrDirent(object):
         self.locked = (flag&0x20) > 0
         self.in_use = (flag&0x40) > 0
         self.deleted = (flag&0x80) > 0
-        self.num_sectors = values[1]
-        self.starting_sector = values[2]
-        self.filename = values[3].rstrip()
-        self.ext = values[4].rstrip()
+        self.num_sectors = int(values[1])
+        self.starting_sector = int(values[2])
+        self.filename = str(values[3]).rstrip()
+        self.ext = str(values[4]).rstrip()
         self.current_sector = 0
         self.is_sane = self.sanity_check(disk)
     
@@ -150,17 +167,29 @@ class AtrDirent(object):
         self.current_read = self.num_sectors
     
     def read_sector(self, disk):
-        raw = disk.get_raw_bytes(self.current_sector)
-        bytes = self.process_raw_sector(disk, raw)
-        return (bytes, self.current_sector == 0)
+        raw, pos, size = disk.get_raw_bytes(self.current_sector)
+        bytes, num_data_bytes = self.process_raw_sector(disk, raw)
+        return bytes, self.current_sector == 0, pos, num_data_bytes
 
     def process_raw_sector(self, disk, raw):
-        file_num = ord(raw[-3]) >> 2
+        try:
+            file_num = ord(raw[-3]) >> 2
+        except TypeError:
+            # if numpy data, don't need the ord()
+            return self.process_raw_sector_numpy(disk, raw)
         if file_num != self.file_num:
             raise FileNumberMismatchError164()
         self.current_sector = ((ord(raw[-3]) & 0x3) << 8) + ord(raw[-2])
         num_bytes = ord(raw[-1])
-        return raw[0:num_bytes]
+        return raw[0:num_bytes], num_bytes
+
+    def process_raw_sector_numpy(self, disk, raw):
+        file_num = raw[-3] >> 2
+        if file_num != self.file_num:
+            raise FileNumberMismatchError164()
+        self.current_sector = ((raw[-3] & 0x3) << 8) + raw[-2]
+        num_bytes = raw[-1]
+        return raw[0:num_bytes], num_bytes
     
     def get_filename(self):
         ext = ("." + self.ext) if self.ext else ""
@@ -181,38 +210,97 @@ class MydosDirent(AtrDirent):
 class InvalidBinaryFile(AtrError):
     pass
 
-class ObjSegment(object):
-    def __init__(self, metadata_start, data_start, start_addr, end_addr, data, name="", error=None):
-        self.name = name
-        self.metadata_start = metadata_start
-        self.data_start = data_start
-        self.start_addr = start_addr
-        self.end_addr = end_addr
+
+
+class DefaultSegment(object):
+    debug = False
+    
+    def __init__(self, start_addr=0, data=None, name="All", error=None):
+        self.start_addr = int(start_addr)  # force python int to decouple from possibly being a numpy datatype
+        if data is None:
+            data = np.fromstring("", dtype=np.uint8)
+        else:
+            data = to_numpy(data)
         self.data = data
+        self.style = np.zeros_like(self.data, dtype=np.uint8)
+        if self.debug:
+            self.style = np.arange(len(self), dtype=np.uint8)
         self.error = error
-        if name and not name.endswith(" "):
-            name += " "
         self.name = name
         self.page_size = -1
+        self.map_width = 40
+        self._search_copy = None
     
     def __str__(self):
-        s = "%s%04x-%04x (%04x @ %04x)" % (self.name, self.start_addr, self.end_addr, len(self.data), self.data_start)
+        return "%s (%d bytes)" % (self.name, len(self.data))
+    
+    def __len__(self):
+        return np.alen(self.data)
+    
+    def __getitem__(self, index):
+        return self.data[index]
+    
+    def __setitem__(self, index, value):
+        self.data[index] = value
+        self._search_copy = None
+    
+    def tostring(self):
+        return self.data.tostring()
+    
+    def get_style_bits(self, match=False, comment=False):
+        style_bits = 0
+        if match:
+            style_bits |= 1
+        if comment:
+            style_bits |= 0x80
+        return style_bits
+    
+    def get_style_mask(self, match=False, comment=False):
+        style_mask = 0xff
+        if match:
+            style_mask &= 0xfe
+        if comment:
+            style_mask &= 0x7f
+        return style_mask
+    
+    def set_style_ranges(self, ranges, **kwargs):
+        style_bits = self.get_style_bits(**kwargs)
+        s = self.style
+        for start, end in ranges:
+            s[start:end] |= style_bits
+    
+    def clear_style_bits(self, **kwargs):
+        style_mask = self.get_style_mask(**kwargs)
+        self.style &= style_mask
+    
+    def label(self, index, lower_case=True):
+        if lower_case:
+            return "%04x" % (index + self.start_addr)
+        else:
+            return "%04X" % (index + self.start_addr)
+    
+    @property
+    def search_copy(self):
+        if self._search_copy is None:
+            self._search_copy = self.data.tostring()
+        return self._search_copy
+
+class ObjSegment(DefaultSegment):
+    def __init__(self, metadata_start, data_start, start_addr, end_addr, data, name="", error=None):
+        DefaultSegment.__init__(self, start_addr, data, name, error)
+        self.metadata_start = metadata_start
+        self.data_start = data_start
+    
+    def __str__(self):
+        count = len(self)
+        s = "%s%04x-%04x (%04x @ %04x)" % (self.name, self.start_addr, self.start_addr + count, count, self.data_start)
         if self.error:
             s += " " + self.error
         return s
-    
-    def __len__(self):
-        return len(self.data)
-    
-    def __getitem__(self, val):
-        return self.data[val]
-    
-    def label(self, index):
-        return "%04x" % (index + self.start_addr)
 
-class RawSectorsSegment(ObjSegment):
+class RawSectorsSegment(DefaultSegment):
     def __init__(self, first_sector, num_sectors, count, data, **kwargs):
-        ObjSegment.__init__(self, 0, 0, 0, count, data, **kwargs)
+        DefaultSegment.__init__(self, 0, data, **kwargs)
         self.page_size = 128
         self.first_sector = first_sector
         self.num_sectors = num_sectors
@@ -226,9 +314,17 @@ class RawSectorsSegment(ObjSegment):
             s += " " + self.error
         return s
     
-    def label(self, index):
+    def label(self, index, lower_case=True):
         sector, byte = divmod(index, self.page_size)
-        return "s%03d:%02x" % (sector + self.first_sector, byte)
+        if lower_case:
+            return "s%03d:%02x" % (sector + self.first_sector, byte)
+        return "s%03d:%02X" % (sector + self.first_sector, byte)
+
+class IndexedByteSegment(DefaultSegment):
+    def __init__(self, byte_order, bytes, **kwargs):
+        data = bytes[byte_order]
+        DefaultSegment.__init__(self, 0, data, **kwargs)
+
 
 class AtariDosFile(object):
     """Parse a binary chunk into segments according to the Atari DOS object
@@ -237,8 +333,8 @@ class AtariDosFile(object):
     Ref: http://www.atarimax.com/jindroush.atari.org/afmtexe.html
     """
     def __init__(self, data):
-        self.data = data
-        self.size = len(data)
+        self.data = to_numpy(data)
+        self.size = len(self.data)
         self.segments = []
         self.parse_segments()
     
@@ -257,7 +353,7 @@ class AtariDosFile(object):
         pos = 0
         first = True
         while pos < self.size:
-            header, = struct.unpack("<H", bytes[pos:pos+2])
+            header, = bytes[pos:pos+2].view(dtype=np.uint16)
             if header == 0xffff:
                 # Apparently 0xffff header can appear in any segment, not just
                 # the first.  Regardless, it is ignored everywhere.
@@ -268,7 +364,7 @@ class AtariDosFile(object):
             if len(bytes[pos:pos + 4]) < 4:
                 self.segments.append(self.get_obj_segment(0, 0, bytes[pos:pos + 4], "Short Segment Header"))
                 break
-            start, end = struct.unpack("<HH", bytes[pos:pos + 4])
+            start, end = bytes[pos:pos + 4].view(dtype=np.uint16)
             count = end - start + 1
             found = len(bytes[pos + 4:pos + 4 + count])
             if found < count:
@@ -290,7 +386,7 @@ class AtrFileSegment(ObjSegment):
 
 class AtrDiskImage(object):
     def __init__(self, bytes):
-        self.bytes = bytes
+        self.bytes = to_numpy(bytes)
         self.header = None
         self.first_vtoc = 360
         self.num_vtoc = 1
@@ -336,7 +432,7 @@ class AtrDiskImage(object):
     
     def get_raw_bytes(self, sector):
         pos, size = self.header.get_pos(sector)
-        return self.bytes[pos:pos + size]
+        return self.bytes[pos:pos + size], pos, size
     
     def get_sectors(self, start, end=None):
         """ Get contiguous sectors
@@ -354,9 +450,14 @@ class AtrDiskImage(object):
             size += more
         return self.bytes[pos:pos + size]
     
+    vtoc_type = np.dtype([
+        ('code', 'u1'),
+        ('total','<u2'),
+        ('unused','<u2'),
+        ])
+
     def get_vtoc(self):
-        bytes = self.get_sectors(360)[0:5]
-        values = struct.unpack("<BHH", bytes)
+        values = self.get_sectors(360)[0:5].view(dtype=self.vtoc_type)[0]  
         code = values[0]
         if code == 0 or code == 2:
             num = 1
@@ -388,20 +489,13 @@ class AtrDiskImage(object):
         self.files = files
     
     def get_file(self, dirent):
-        output = StringIO()
-        dirent.start_read()
-        while True:
-            bytes, last = dirent.read_sector(self)
-            output.write(bytes)
-            if last:
-                break
-        return output.getvalue()
+        segment = self.get_file_segment(dirent)
+        return segment.tostring()
     
     def find_file(self, filename):
         for dirent in self.files:
             if filename == dirent.get_filename():
-                bytes = self.get_file(dirent)
-                return bytes
+                return self.get_file(dirent)
         return ""
     
     def get_contiguous_sectors(self, sector, num):
@@ -427,15 +521,38 @@ class AtrDiskImage(object):
         By default uses an RawSectorsSegment
         """
         return RawSectorsSegment(first_sector, num_sectors, count, data, **kwargs)
+    
+    def get_indexed_segment(self, byte_order, **kwargs):
+        """Subclass use: override this method to create a custom segment.
+        
+        By default uses an IndexedByteSegment
+        """
+        return IndexedByteSegment(byte_order, self.bytes, **kwargs)
+    
+    boot_record_type = np.dtype([
+        ('BFLAG', 'u1'),
+        ('BRCNT', 'u1'),
+        ('BLDADR', '<u2'),
+        ('BWTARR', '<u2'),
+        ('jmp', 'u1'),
+        ('XBCONT', '<u2'),
+        ('SABYTE', 'u1'),
+        ('DRVBYT', 'u1'),
+        ('unused', 'u1'),
+        ('SASA', '<u2'),
+        ('DFSFLG', 'u1'),
+        ('DFLINK', '<u2'),
+        ('BLDISP', 'u1'),
+        ('DFLADR', '<u2'),
+        ])
 
     def get_boot_segments(self):
-        bytes = self.get_sectors(1)[0:20]
-        values = struct.unpack("<BBHHBHBBBHBHBH", bytes)
-        flag = values[0]
+        values = self.get_sectors(360)[0:20].view(dtype=self.boot_record_type)[0]  
+        flag = int(values[0])
         segments = []
         if flag == 0:
-            num = values[1]
-            addr = values[2]
+            num = int(values[1])
+            addr = int(values[2])
             bytes = self.get_sectors(1, num)
             header = self.get_obj_segment(0, 0, addr, addr + 20, bytes[0:20], name="Boot Header")
             sectors = self.get_obj_segment(0, 0, addr, addr + len(bytes), bytes, name="Boot Sectors")
@@ -459,6 +576,25 @@ class AtrDiskImage(object):
         segments.append(segment)
         return segments
     
+    def get_file_segment(self, dirent):
+        byte_order = []
+        dirent.start_read()
+        while True:
+            bytes, last, pos, size = dirent.read_sector(self)
+            byte_order.extend(range(pos, pos + size))
+            if last:
+                break
+        segment = self.get_indexed_segment(byte_order, name=dirent.get_filename())
+        return segment
+    
+    def get_file_segments(self):
+        segments = []
+        self.get_directory()
+        for dirent in self.files:
+            segment = self.get_file_segment(dirent)
+            segments.append(segment)
+        return segments
+    
     def parse_segments(self):
         if self.header.size_in_bytes > 0:
             self.segments.append(self.get_obj_segment(0, 0, 0, self.header.atr_header_offset, self.bytes[0:self.header.atr_header_offset], name="%s Header" % self.header.file_format))
@@ -466,6 +602,7 @@ class AtrDiskImage(object):
         self.segments.extend(self.get_boot_segments())
         self.segments.extend(self.get_vtoc_segments())
         self.segments.extend(self.get_directory_segments())
+        self.segments.extend(self.get_file_segments())
         
 #        for dirent in self.atr.files:
 #            try:
@@ -479,6 +616,13 @@ class AtrDiskImage(object):
 #                error = "Invalid sector"
 #            a = AtrFileSegment(dirent, bytes, error)
 #            self.segments.append(AtrSegment(dirent))
+
+def to_numpy(value):
+    if type(value) is np.ndarray:
+        return value
+    elif type(value) is types.StringType:
+        return np.fromstring(value, dtype=np.uint8)
+    raise TypeError("Can't convert to numpy data")
 
 def process(dirent, options):
     skip = False

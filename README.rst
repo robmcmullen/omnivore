@@ -4,6 +4,12 @@ ATRCopy
 Utilities to list files on and extract files from Atari 8-bit emulator disk
 images.  Eventually, I hope to add support for these images to pyfilesystem.
 
+Prerequisites
+-------------
+
+* Requires numpy
+
+
 References
 ==========
 

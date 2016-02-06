@@ -28,4 +28,7 @@ setup(name="atrcopy",
       long_description=long_description,
       license="GPL",
       classifiers=classifiers,
+      install_requires = [
+          'numpy',
+          ],
       )
