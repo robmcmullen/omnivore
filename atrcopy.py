@@ -296,7 +296,7 @@ class ObjSegment(DefaultSegment):
     
     def __str__(self):
         count = len(self)
-        s = "%s%04x-%04x (%04x @ %04x)" % (self.name, self.start_addr, self.start_addr + count, count, self.data_start)
+        s = "%s $%04x-$%04x ($%04x @ $%04x)" % (self.name, self.start_addr, self.start_addr + count, count, self.data_start)
         if self.error:
             s += " " + self.error
         return s
@@ -327,6 +327,9 @@ class IndexedByteSegment(DefaultSegment):
     def __init__(self, byte_order, bytes, **kwargs):
         self.order = byte_order
         DefaultSegment.__init__(self, 0, bytes, **kwargs)
+    
+    def __str__(self):
+        return "%s ($%x @ $%x)" % (self.name, len(self), self.order[0])
     
     def __len__(self):
         return np.alen(self.order)
