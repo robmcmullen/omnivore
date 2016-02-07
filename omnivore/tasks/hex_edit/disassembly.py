@@ -34,8 +34,8 @@ class DisassemblyTable(ByteGridTable):
         self.lines = []
         self.index_to_row = []
         self._rows = 0
-        self.disassembler = editor.disassembler(segment.data, segment.start_addr, -segment.start_addr, editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
-        self.disassembler.set_pc(segment.data, segment.start_addr)
+        self.disassembler = editor.disassembler(segment, segment.start_addr, -segment.start_addr, editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
+        self.disassembler.set_pc(segment, segment.start_addr)
         self.next_row = 0
         self.start_addr = segment.start_addr
         self.disassemble_next()
@@ -53,7 +53,7 @@ class DisassemblyTable(ByteGridTable):
         if self.next_row < 0 or next_row < self.next_row:
             self.next_row = next_row
             pc = self.get_pc(self.next_row)
-            self.disassembler.set_pc(self.segment.data, pc)
+            self.disassembler.set_pc(self.segment, pc)
     
     def disassemble_next(self):
         if self.next_row < 0:

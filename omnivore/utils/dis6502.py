@@ -272,10 +272,6 @@ class TextDisassembler(BaseDisassembler):
 class Basic6502Disassembler(BaseDisassembler):
     menu_name = "Generic 6502"
     
-    def set_source(self, source):
-        self.source = source
-        self.length = source.size
-        
     def get_next(self):
         if self.pc >= self.origin + self.length:
             raise StopIteration
