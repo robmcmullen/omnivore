@@ -664,12 +664,12 @@ def process(dirent, options):
     if options.dry_run:
         action = "DRY_RUN: %s" % action
         skip = True
-    if not skip:
-        bytes = atr.get_file(dirent)
-        with open(outfilename, "wb") as fh:
-            fh.write(bytes)
     if options.extract:
         print "%s: %s %s" % (dirent, action, outfilename)
+        if not skip:
+            bytes = atr.get_file(dirent)
+            with open(outfilename, "wb") as fh:
+                fh.write(bytes)
     else:
         print dirent
 
