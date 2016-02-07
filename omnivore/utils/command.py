@@ -85,8 +85,9 @@ class UndoStack(list):
         log.debug("Ending batch %s" % self.batch)
         if self.batch != self:
             batch_command = self.batch.get_recordable_command()
-            self.batch = self
-            self.add_command(batch_command)
+            if batch_command is not None:
+                self.batch = self
+                self.add_command(batch_command)
 
     def add_command(self, command):
         self.batch.insert_at_index(command)
