@@ -1,6 +1,6 @@
 import numpy as np
 
-from atrcopy import DefaultSegment, AtrDiskImage, AtariDosFile
+from atrcopy import DefaultSegment, AtrDiskImage, AtariDosFile, InvalidBinaryFile
 
 
 class InvalidSegmentParser(Exception):
@@ -63,7 +63,7 @@ class XexSegmentParser(SegmentParser):
         self.segments.append(DefaultSegment(0, bytes))
         try:
             xex = AtariDosFile(bytes)
-        except atrcopy.InvalidBinaryFile:
+        except InvalidBinaryFile:
             raise InvalidSegmentParser
 
         self.segments.extend(xex.segments)
