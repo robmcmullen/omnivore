@@ -23,6 +23,8 @@ import wx.lib.newevent
 from pyface.action.api import Action
 from pyface.tasks.action.api import EditorAction
 
+from atrcopy import DefaultSegment
+
 from omnivore.framework.actions import *
 from omnivore.tasks.hex_edit.actions import *
 import fonts
@@ -53,13 +55,13 @@ class BitviewScroller(wx.ScrolledWindow):
         # Settings
         self.task = task
         self.editor = None
+        self.segment = None
         self.background_color = None
         self.max_zoom = 16
         self.min_zoom = 1
         self.bytes_per_row = 1
 
         # internal storage
-        self.bytes = None
         self.start_addr = 0
         self.start_byte = None
         self.end_byte = None
@@ -98,7 +100,7 @@ class BitviewScroller(wx.ScrolledWindow):
         return "<%s at 0x%x>" % (self.__class__.__name__, id(self))
     
     def is_ready_to_render(self):
-        return self.bytes is not None
+        return self.editor is not None
     
     def set_task(self, task):
         self.task = task
@@ -107,8 +109,7 @@ class BitviewScroller(wx.ScrolledWindow):
         editor = self.task.active_editor
         if editor is not None:
             self.editor = editor
-            self.bytes = editor.segment.data
-            self.style = editor.segment.style
+            self.segment = editor.segment
             self.rect_select = editor.rect_select
             self.start_addr = editor.segment.start_addr
             self.match_color = self.editor.match_background_color
@@ -288,7 +289,7 @@ class BitviewScroller(wx.ScrolledWindow):
         image, which could lead to memory problems if the image is
         really huge and the zoom factor is large.
         """
-        if self.bytes is not None:
+        if self.segment is not None:
             self.calc_scale_from_bytes()
         else:
             self.grid_width = 10
@@ -298,7 +299,7 @@ class BitviewScroller(wx.ScrolledWindow):
         self.Refresh()
     
     def calc_scale_from_bytes(self):
-        self.total_rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
+        self.total_rows = (len(self.segment) + self.bytes_per_row - 1) / self.bytes_per_row
         self.grid_width = int(8 * self.bytes_per_row) + (2 * self.border_width)
         self.grid_height = int(self.total_rows)
     
@@ -579,17 +580,17 @@ class BitmapScroller(BitviewScroller):
         nr = self.visible_rows
         self.start_byte = sr * self.bytes_per_row
         self.end_byte = self.start_byte + (nr * self.bytes_per_row)
-        if self.end_byte > self.bytes.size:
-            self.end_byte = self.bytes.size
+        if self.end_byte > len(self.segment):
+            self.end_byte = len(self.segment)
             count = self.end_byte - self.start_byte
             bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
-            bytes[0:count] = self.bytes[self.start_byte:self.end_byte]
+            bytes[0:count] = self.segment[self.start_byte:self.end_byte]
             style = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
-            style[0:count] = self.style[self.start_byte:self.end_byte]
+            style[0:count] = self.segment.style[self.start_byte:self.end_byte]
         else:
             count = self.end_byte - self.start_byte
-            bytes = self.bytes[self.start_byte:self.end_byte]
-            style = self.style[self.start_byte:self.end_byte]
+            bytes = self.segment[self.start_byte:self.end_byte]
+            style = self.segment.style[self.start_byte:self.end_byte]
         if self.bytes_per_row == 1:
             array = self.get_image_1(sr, nr, count, bytes, style)
         else:
@@ -740,7 +741,7 @@ class FontMapScroller(BitviewScroller):
         e.map_width = self.bytes_per_row
     
     def calc_scale_from_bytes(self):
-        self.total_rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
+        self.total_rows = (len(self.segment) + self.bytes_per_row - 1) / self.bytes_per_row
         self.grid_width = int(8 * self.bytes_per_row)
         self.grid_height = int(8 * self.total_rows)
     
@@ -790,15 +791,15 @@ class FontMapScroller(BitviewScroller):
         nr = self.visible_rows
         self.start_byte = sr * self.bytes_per_row
         self.end_byte = self.start_byte + (nr * self.bytes_per_row)
-        if self.end_byte > self.bytes.size:
-            self.end_byte = self.bytes.size
+        if self.end_byte > len(self.segment):
+            self.end_byte = len(self.segment)
             bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
-            bytes[0:self.end_byte - self.start_byte] = self.bytes[sr * self.bytes_per_row:self.end_byte]
+            bytes[0:self.end_byte - self.start_byte] = self.segment[sr * self.bytes_per_row:self.end_byte]
             style = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
-            style[0:self.end_byte - self.start_byte] = self.style[sr * self.bytes_per_row:self.end_byte]
+            style[0:self.end_byte - self.start_byte] = self.segment.style[sr * self.bytes_per_row:self.end_byte]
         else:
-            bytes = self.bytes[self.start_byte:self.end_byte]
-            style = self.style[self.start_byte:self.end_byte]
+            bytes = self.segment[self.start_byte:self.end_byte]
+            style = self.segment.style[self.start_byte:self.end_byte]
         bytes = bytes.reshape((nr, -1))
         style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
@@ -1056,8 +1057,7 @@ class FontMapScroller(BitviewScroller):
 class CharacterSetViewer(FontMapScroller):
     def __init__(self, parent, task, bytes_per_row=16, font_mapping=0, command=None, **kwargs):
         FontMapScroller.__init__(self, parent, task, bytes_per_row, font_mapping, command, **kwargs)
-        self.bytes = np.arange(256, dtype=np.uint8)
-        self.style = np.zeros(256, dtype=np.uint8)
+        self.segment = DefaultSegment(0, np.arange(256, dtype=np.uint8))
         self.start_addr = 0
         self.selected_char = -1
     
@@ -1140,7 +1140,7 @@ class MemoryMapScroller(BitviewScroller):
         self.zoom = 2
     
     def calc_scale_from_bytes(self):
-        self.total_rows = (self.bytes.size + self.bytes_per_row - 1) / self.bytes_per_row
+        self.total_rows = (len(self.segment) + self.bytes_per_row - 1) / self.bytes_per_row
         self.grid_width = int(self.bytes_per_row)
         self.grid_height = int(self.total_rows)
     
@@ -1173,12 +1173,12 @@ class MemoryMapScroller(BitviewScroller):
         nr = self.visible_rows
         self.start_byte = sr * self.bytes_per_row
         self.end_byte = self.start_byte + (nr * self.bytes_per_row)
-        if self.end_byte > self.bytes.size:
-            self.end_byte = self.bytes.size
+        if self.end_byte > len(self.segment):
+            self.end_byte = len(self.segment)
             bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
-            bytes[0:self.end_byte - self.start_byte] = self.bytes[sr * self.bytes_per_row:self.end_byte]
+            bytes[0:self.end_byte - self.start_byte] = self.segment[sr * self.bytes_per_row:self.end_byte]
         else:
-            bytes = self.bytes[sr * self.bytes_per_row:self.end_byte]
+            bytes = self.segment[sr * self.bytes_per_row:self.end_byte]
         bytes = bytes.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
         
