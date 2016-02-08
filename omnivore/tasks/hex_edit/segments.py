@@ -1,6 +1,10 @@
 import sys
 import wx
 
+from pyface.action.api import ActionItem
+
+from actions import SaveSegmentAsFormatAction
+
 class SegmentList(wx.ListBox):
     """Segment selector for choosing which portion of the binary data to view
     """
@@ -34,4 +38,10 @@ class SegmentList(wx.ListBox):
         event.Skip()
     
     def on_popup(self, event):
-        event.Skip()
+        actions = []
+        segment = self.task.active_editor.segment
+        for saver in segment.savers:
+            action = SaveSegmentAsFormatAction(saver=saver, task=self.task, name="Save as %s" % saver.name)
+            actions.append(action)
+        if actions:
+            self.task.active_editor.popup_context_menu_from_actions(self, actions)
