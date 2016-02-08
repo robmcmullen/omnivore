@@ -475,6 +475,31 @@ class DiskImageBase(object):
                 start = pos
             count += size
         return start, count
+    
+    def parse_segments(self):
+        if self.header.image_size > 0:
+            self.segments.append(ObjSegment(0, 0, 0, self.header.atr_header_offset, self.bytes[0:self.header.atr_header_offset], name="%s Header" % self.header.file_format))
+        self.segments.append(RawSectorsSegment(1, self.header.max_sectors, self.header.image_size, self.bytes[self.header.atr_header_offset:], name="Raw disk sectors"))
+
+
+class BootDiskImage(DiskImageBase):
+    def __str__(self):
+        return "%s Boot Disk" % (self.header)
+    
+    def check_size(self):
+        self.header.check_size(self.size)
+        start, size = self.header.get_pos(1)
+        i = self.header.atr_header_offset
+        flag = self.bytes[i:i + 2].view(dtype='<u2')[0]
+        if flag == 0xffff:
+            raise InvalidDiskImage("Appears to be an executable")
+        nsec = self.bytes[i + 1]
+        bload = self.bytes[i + 2:i + 4].view(dtype='<u2')[0]
+        binit = self.bytes[i + 4:i + 6].view(dtype='<u2')[0]
+        blen, _ = self.header.get_pos(nsec + 1)
+        print nsec, bload, binit, blen
+        if not (bload < binit < bload + blen):
+            raise InvalidDiskImage("Incorrect boot load/init parameters")
 
 
 class AtariDosDiskImage(DiskImageBase):
@@ -506,6 +531,8 @@ class AtariDosDiskImage(DiskImageBase):
         self.check_size()
         self.get_vtoc()
         self.get_directory()
+        if not self.all_sane:
+            raise InvalidDiskImage("Invalid directory entries; may be boot disk")
     
     vtoc_type = np.dtype([
         ('code', 'u1'),
@@ -743,24 +770,24 @@ if __name__ == "__main__":
     for filename in options.files:
         with open(filename, "rb") as fh:
             data = fh.read()
+            image = None
             try:
                 data = to_numpy(data)
-                atr = None
                 try:
                     header = AtrHeader(data[0:16])
-                    for format in [KBootImage, AtariDosDiskImage]:
+                    for format in [KBootImage, AtariDosDiskImage, BootDiskImage]:
                         print "trying", format.__name__
                         try:
-                            atr = format(data)
-                            print "%s: %s" % (filename, atr)
+                            image = format(data)
+                            print "%s: %s" % (filename, image)
                             break
                         except InvalidDiskImage:
                             pass
                 except InvalidAtrHeader:
                     for format in [AtariDosDiskImage]:
                         try:
-                            atr = format(data)
-                            print "%s: %s" % (filename, atr)
+                            image = format(data)
+                            print "%s: %s" % (filename, image)
                             break
                         except:
                             raise
@@ -769,16 +796,17 @@ if __name__ == "__main__":
                 raise
                 print "%s: Doesn't look like a supported disk image" % filename
                 try:
-                    xex = AtariDosFile(data)
-                    print xex
+                    image = AtariDosFile(data)
                 except InvalidBinaryFile:
                     print "%s: Doesn't look like an XEX either" % filename
                 continue
+            if image is None:
+                image = BootDiskImage(data)
             if options.segments:
-                atr.parse_segments()
-                print "\n".join([str(a) for a in atr.segments])
-            elif atr.all_sane or options.force:
-                for dirent in atr.files:
+                image.parse_segments()
+                print "\n".join([str(a) for a in image.segments])
+            elif image.files or options.force:
+                for dirent in image.files:
                     try:
                         process(dirent, options)
                     except FileNumberMismatchError164:
