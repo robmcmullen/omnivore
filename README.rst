@@ -7,7 +7,7 @@ images.  Eventually, I hope to add support for these images to pyfilesystem.
 Prerequisites
 -------------
 
-* Requires numpy
+Starting with ATRcopy 2.0, numpy is required.
 
 
 References
@@ -24,6 +24,13 @@ Supported Disk Image Formats
 
 * ``XFD``: XFormer images, basically raw disk dumps
 * ``ATR``: Nick Kennedy's disk image format; includes 16 byte header
+
+Supported Filesystem Formats
+----------------------------
+
+* XEX format: Atari executable files
+* Atari DOS in single, enhanced, and double density
+* KBoot format: a single executable file packaged up into a bootable disk image
 
 
 Example Usage
