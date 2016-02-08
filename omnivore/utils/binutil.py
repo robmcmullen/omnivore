@@ -1,6 +1,6 @@
 import numpy as np
 
-from atrcopy import DefaultSegment, AtrDiskImage, AtariDosFile, InvalidBinaryFile
+from atrcopy import DefaultSegment, KBootImage, AtariDosDiskImage, AtariDosFile, InvalidBinaryFile
 
 
 class InvalidSegmentParser(Exception):
@@ -42,13 +42,27 @@ class DefaultSegmentParser(SegmentParser):
         self.segments = [DefaultSegment(0, bytes)]
 
 
+class KBootSegmentParser(SegmentParser):
+    menu_name = "KBoot Disk Image"
+    
+    def parse(self, bytes):
+        self.segments.append(DefaultSegment(0, bytes))
+        try:
+            self.atr = KBootImage(bytes)
+        except:
+            raise InvalidSegmentParser
+        
+        self.atr.parse_segments()
+        self.segments.extend(self.atr.segments)
+
+
 class ATRSegmentParser(SegmentParser):
     menu_name = "ATR Disk Image"
     
     def parse(self, bytes):
         self.segments.append(DefaultSegment(0, bytes))
         try:
-            self.atr = AtrDiskImage(bytes)
+            self.atr = AtariDosDiskImage(bytes)
         except:
             raise InvalidSegmentParser
         
@@ -73,6 +87,7 @@ class XexSegmentParser(SegmentParser):
 
 known_segment_parsers = [
     DefaultSegmentParser,
+    KBootSegmentParser,
     ATRSegmentParser,
     XexSegmentParser,
     ]
