@@ -15,7 +15,6 @@ from omnivore import get_image_path
 from omnivore.tasks.hex_edit.hex_editor import HexEditor
 from omnivore.framework.document import Document
 from omnivore.utils.wx.bitviewscroller import FontMapScroller
-from omnivore.utils.binutil import ATRSegmentParser, XexSegmentParser
 from omnivore.utils.command import Overlay
 from omnivore.utils.searchutil import HexSearcher, CharSearcher
 from omnivore.utils.drawutil import get_bounds

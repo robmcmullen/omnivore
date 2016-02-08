@@ -56,8 +56,22 @@ class KBootSegmentParser(SegmentParser):
         self.segments.extend(self.atr.segments)
 
 
-class ATRSegmentParser(SegmentParser):
-    menu_name = "ATR Disk Image"
+class AtariDosSegmentParser(SegmentParser):
+    menu_name = "Atari DOS Disk Image"
+    
+    def parse(self, bytes):
+        self.segments.append(DefaultSegment(0, bytes))
+        try:
+            self.atr = AtariDosDiskImage(bytes)
+        except:
+            raise InvalidSegmentParser
+        
+        self.atr.parse_segments()
+        self.segments.extend(self.atr.segments)
+
+
+class AtariBootDiskSegmentParser(SegmentParser):
+    menu_name = "Atari Boot Disk Image"
     
     def parse(self, bytes):
         self.segments.append(DefaultSegment(0, bytes))
@@ -83,11 +97,33 @@ class XexSegmentParser(SegmentParser):
         self.segments.extend(xex.segments)
 
 
+def guess_parser_for(mime, bytes):
+    parsers = mime_parsers[mime]
+    found = None
+    for parser in parsers:
+        try:
+            found = parser(bytes)
+        except InvalidSegmentParser:
+            pass
+    return found
 
 
-known_segment_parsers = [
-    DefaultSegmentParser,
-    KBootSegmentParser,
-    ATRSegmentParser,
-    XexSegmentParser,
+mime_parsers = {
+    "application/vnd.atari8bit.atr": [
+        KBootSegmentParser,
+        AtariDosSegmentParser,
+        AtariBootDiskSegmentParser,
+        ],
+    "application/vnd.atari8bit.xex": [
+        XexSegmentParser,
+        ],
+    }
+
+mime_parse_order = [
+    "application/vnd.atari8bit.atr",
+    "application/vnd.atari8bit.xex",
     ]
+
+known_segment_parsers = [DefaultSegmentParser]
+for mime in mime_parse_order:
+    known_segment_parsers.extend(mime_parsers[mime])

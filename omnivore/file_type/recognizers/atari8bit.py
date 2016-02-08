@@ -2,7 +2,7 @@ from traits.api import HasTraits, provides
 
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
 from omnivore.framework.document import Document
-from omnivore.utils.binutil import InvalidSegmentParser, ATRSegmentParser, XexSegmentParser, DefaultSegment, AnticFontSegment
+from omnivore.utils.binutil import InvalidSegmentParser, guess_parser_for, DefaultSegment, AnticFontSegment
 from omnivore.tasks.map_edit.pane_layout import task_id_with_pane_layout as map_edit_task_id
 
 @provides(IFileRecognizer)
@@ -12,12 +12,9 @@ class XEXRecognizer(HasTraits):
     id = "application/vnd.atari8bit.xex"
     
     def identify(self, guess):
-        try:
-            parser = XexSegmentParser(guess.numpy)
+        parser = guess_parser_for(self.id, guess.numpy)
+        if parser is not None:
             guess.parser = parser
-        except InvalidSegmentParser:
-            pass
-        else:
             return self.id
     
     def load(self, guess):
@@ -47,12 +44,9 @@ class ATRRecognizer(HasTraits):
     id = "application/vnd.atari8bit.atr"
     
     def identify(self, guess):
-        try:
-            parser = ATRSegmentParser(guess.numpy)
+        parser = guess_parser_for(self.id, guess.numpy)
+        if parser is not None:
             guess.parser = parser
-        except InvalidSegmentParser:
-            pass
-        else:
             return self.id
     
     def load(self, guess):
