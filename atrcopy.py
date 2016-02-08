@@ -185,18 +185,6 @@ class AtrDirent(object):
         return bytes, self.current_sector == 0, pos, num_data_bytes
 
     def process_raw_sector(self, disk, raw):
-        try:
-            file_num = ord(raw[-3]) >> 2
-        except TypeError:
-            # if numpy data, don't need the ord()
-            return self.process_raw_sector_numpy(disk, raw)
-        if file_num != self.file_num:
-            raise FileNumberMismatchError164()
-        self.current_sector = ((ord(raw[-3]) & 0x3) << 8) + ord(raw[-2])
-        num_bytes = ord(raw[-1])
-        return raw[0:num_bytes], num_bytes
-
-    def process_raw_sector_numpy(self, disk, raw):
         file_num = raw[-3] >> 2
         if file_num != self.file_num:
             raise FileNumberMismatchError164()
@@ -210,14 +198,11 @@ class AtrDirent(object):
 
 class MydosDirent(AtrDirent):
     def process_raw_sector(self, disk, raw):
-        self.current_read -= 1
-        if self.current_read == 0:
-            self.current_sector = 0
-        else:
-            self.current_sector += 1
-            if self.current_sector == disk.first_vtoc:
-                self.current_sector = disk.first_data_after_vtoc
-        return raw
+        # No file number stored in the sector data; two full bytes available
+        # for next sector
+        self.current_sector = (raw[-3] << 8) + raw[-2]
+        num_bytes = raw[-1]
+        return raw[0:num_bytes], num_bytes
 
 
 class InvalidBinaryFile(AtrError):
