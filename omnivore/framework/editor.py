@@ -154,26 +154,30 @@ class FrameworkEditor(Editor):
             uri = self.document.uri
 
         try:
-            # Have to use a two-step process to write to the file: open the
-            # filesystem, then open the file.  Have to open the filesystem
-            # as writeable in case this is a virtual filesystem (like ZipFS),
-            # otherwise the write to the actual file will fail with a read-
-            # only filesystem error.
-            if uri.startswith("file://"):
-                # FIXME: workaround to allow opening of file:// URLs with the
-                # ! character
-                uri = uri.replace("file://", "")
-            fs, relpath = opener.parse(uri, writeable=True)
-            fh = fs.open(relpath, 'wb')
-            log.debug("saving to %s" % uri)
-            fh.write(self.document.bytes.tostring())
-            fh.close()
-            fs.close()
+            bytes = self.document.bytes.tostring()
+            self.save_to_uri(bytes, uri)
             self.document.undo_stack.set_save_point()
             self.document.undo_stack_changed = True
         except Exception, e:
             log.error("%s: %s" % (uri, str(e)))
             self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
+    
+    def save_to_uri(self, bytes, uri):
+        # Have to use a two-step process to write to the file: open the
+        # filesystem, then open the file.  Have to open the filesystem
+        # as writeable in case this is a virtual filesystem (like ZipFS),
+        # otherwise the write to the actual file will fail with a read-
+        # only filesystem error.
+        if uri.startswith("file://"):
+            # FIXME: workaround to allow opening of file:// URLs with the
+            # ! character
+            uri = uri.replace("file://", "")
+        fs, relpath = opener.parse(uri, writeable=True)
+        fh = fs.open(relpath, 'wb')
+        log.debug("saving to %s" % uri)
+        fh.write(self.document.bytes.tostring())
+        fh.close()
+        fs.close()
 
     def undo(self):
         """ Undoes the last action
