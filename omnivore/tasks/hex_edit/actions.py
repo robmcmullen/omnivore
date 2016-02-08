@@ -220,7 +220,7 @@ class SegmentParserAction(EditorAction):
     @on_trait_change('task.segments_changed')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.segment_parser == self.segment_parser
+            self.checked = self.active_editor.document.segment_parser.__class__ == self.segment_parser
 
 class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
     """Dynamic menu group to display the available fonts
