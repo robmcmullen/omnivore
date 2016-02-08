@@ -91,6 +91,8 @@ def isImportantChangeLogLine(text):
 
 def verify_tag(tag):
     tag = str(tag)
+    if tag == "HEAD":
+        return tag
     verify = subprocess.Popen(["git", "tag", "-l", "%s" % (tag)], stdout=subprocess.PIPE).communicate()[0]
     if not verify:
         tag += ".0"
@@ -125,7 +127,10 @@ def getChangeLogBlock(version, next_oldest_version, date, options):
     suggestions = getGitChangeLogSuggestions(version, options, next_oldest_version)
     new_block.append("%s  %s" % (date, author))
     new_block.append("")
-    new_block.append("* Released Omnivore-%s" % version)
+    if str(version) == "HEAD":
+        new_block.append("...to be included in next version:")
+    else:
+        new_block.append("* Released Omnivore-%s" % version)
     for line in suggestions:
         new_block.append(line)
     new_block.append("")
@@ -167,14 +172,19 @@ def rebuild(options):
     blocks = []
     next_oldest = StrictVersion("0.0.0")
     for line in reversed(tags.splitlines()):
-        date, _, _, tag = line.split()
+        day, _, _, tag = line.split()
         tag = tag[1:-1]
         version = StrictVersion(tag)
         if version > next_oldest:
             if options.verbose: print "found %s" % (version)
-            block = getChangeLogBlock(version, next_oldest, date, options)
+            block = getChangeLogBlock(version, next_oldest, day, options)
             blocks[0:0] = "\n".join(block) + "\n"
             next_oldest = version
+    version = "HEAD"
+    day = date.today().strftime("%Y-%m-%d")
+    block = getChangeLogBlock(version, next_oldest, day, options)
+    print "\n".join(block) + "\n"
+    
     if not options.dry_run:
         with open(options.outputfile, "w") as fh:
             for block in blocks:
