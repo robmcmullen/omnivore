@@ -282,6 +282,36 @@ class GetSegmentFromSelectionAction(EditorAction):
             e.add_user_segment(segment)
 
 
+class SaveSegmentAsFormatAction(EditorAction):
+    saver = Any
+    
+    def _name_default(self):
+        return "%s (%s)" % (self.saver.name, self.saver.extensions[0])
+    
+    def perform(self, event):
+        dialog = FileDialog(parent=event.task.window.control, action='save as', wildcard=self.saver.get_file_dialog_wildcard())
+        if dialog.open() == OK:
+            self.active_editor.save_segment(self.saver, dialog.path)
+
+class SaveSegmentGroup(TaskDynamicSubmenuGroup):
+    """ A menu for changing the active task in a task window.
+    """
+    id = 'SaveSegmentGroup'
+    
+    event_name = 'segment_selected'
+
+    def _get_items(self, event_data=None):
+        items = []
+        if event_data is not None:
+            segment_number = event_data
+            segment = self.task.active_editor.document.segments[segment_number]
+            for saver in segment.savers:
+                action = SaveSegmentAsFormatAction(saver=saver)
+                items.append(ActionItem(action=action))
+            
+        return items
+
+
 class GotoIndexAction(Action):
     addr_index = Int()
     

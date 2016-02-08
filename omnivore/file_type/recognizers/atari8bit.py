@@ -2,7 +2,7 @@ from traits.api import HasTraits, provides
 
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
 from omnivore.framework.document import Document
-from omnivore.utils.binutil import InvalidSegmentParser, guess_parser_for, DefaultSegment, AnticFontSegment
+from omnivore.utils.segmentutil import InvalidSegmentParser, guess_parser_for, DefaultSegment, AnticFontSegment
 from omnivore.tasks.map_edit.pane_layout import task_id_with_pane_layout as map_edit_task_id
 
 @provides(IFileRecognizer)

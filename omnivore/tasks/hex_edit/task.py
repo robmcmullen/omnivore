@@ -16,7 +16,7 @@ from actions import *
 import pane_layout
 import omnivore.utils.wx.fonts as fonts
 import omnivore.utils.dis6502 as dis6502
-from omnivore.utils.binutil import known_segment_parsers
+from omnivore.utils.segmentutil import known_segment_parsers
 import omnivore.utils.colors as colors
 from grid_control import ByteTable
 from disassembly import DisassemblyTable
@@ -120,6 +120,14 @@ class HexEditTask(FrameworkTask):
         return [
             FontMappingBaseAction(font_mapping=0, name="Antic Internal Codes", task=self),
             FontMappingBaseAction(font_mapping=1, name="ATASCII Codes", task=self),
+            ]
+    
+    def get_actions_Menu_File_SaveGroup(self):
+        return [
+            SaveAction(),
+            SaveAsAction(),
+            SMenu(SaveSegmentGroup(),
+                  id='SaveSegmentAsSubmenu', name="Save Segment As"),
             ]
     
     def get_actions_Menu_Edit_CopyPasteGroup(self):

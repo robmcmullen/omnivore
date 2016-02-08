@@ -9,7 +9,7 @@ from traits.api import HasTraits, Trait, TraitHandler, Int, Any, List, Set, Bool
 
 from omnivore.utils.command import UndoStack
 from omnivore.utils.file_guess import FileMetadata
-from omnivore.utils.binutil import DefaultSegment, DefaultSegmentParser, InvalidSegmentParser
+from omnivore.utils.segmentutil import DefaultSegment, DefaultSegmentParser, InvalidSegmentParser
 
 
 class TraitNumpyConverter(TraitHandler):

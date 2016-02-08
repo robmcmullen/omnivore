@@ -18,7 +18,7 @@ from omnivore.utils.file_guess import FileMetadata
 import omnivore.utils.wx.fonts as fonts
 import omnivore.utils.colors as colors
 from omnivore.utils.dis6502 import Atari800Disassembler
-from omnivore.utils.binutil import known_segment_parsers, DefaultSegment, AnticFontSegment
+from omnivore.utils.segmentutil import known_segment_parsers, DefaultSegment, AnticFontSegment
 from omnivore.utils.searchutil import known_searchers
 
 from commands import PasteCommand
@@ -399,6 +399,14 @@ class HexEditor(FrameworkEditor):
             self.view_segment_set_width(new_segment)
             self.reconfigure_panes()
             self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
+    
+    def save_segment(self, saver, uri):
+        try:
+            bytes = saver.encode_data(self.segment)
+            self.save_to_uri(bytes, uri)
+        except Exception, e:
+            log.error("%s: %s" % (uri, str(e)))
+            self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
     
     def invalidate_search(self):
         self.task.change_minibuffer_editor(self)

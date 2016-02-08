@@ -2,7 +2,6 @@ import sys
 import wx
 
 from omnivore.utils.wx.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
-from omnivore.utils.binutil import DefaultSegment
 
 from omnivore.third_party.asm6502 import assemble_text, AssemblyError
 
