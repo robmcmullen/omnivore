@@ -224,9 +224,31 @@ class InvalidBinaryFile(AtrError):
     pass
 
 
+class SegmentSaver(object):
+    name = "Raw Data"
+    extensions = [".dat"]
+    
+    @classmethod
+    def encode_data(cls, segment):
+        return segment.tostring()
+
+    @classmethod
+    def get_file_dialog_wildcard(cls):
+        # Using only the first extension
+        wildcards = []
+        if cls.extensions:
+            ext = cls.extensions[0]
+            wildcards.append("%s (*%s)|*%s" % (cls.name, ext, ext))
+        return "|".join(wildcards)
+
+class XEXSegmentSaver(SegmentSaver):
+    name = "Atari 8-bit Executable"
+    extensions = [".xex"]
+
 
 class DefaultSegment(object):
     debug = False
+    savers = [SegmentSaver]
     
     def __init__(self, start_addr=0, data=None, name="All", error=None):
         self.start_addr = int(start_addr)  # force python int to decouple from possibly being a numpy datatype
@@ -313,6 +335,9 @@ class ObjSegment(DefaultSegment):
         if self.error:
             s += " " + self.error
         return s
+
+class XexSegment(ObjSegment):
+    savers = [SegmentSaver, XEXSegmentSaver]
 
 class RawSectorsSegment(DefaultSegment):
     def __init__(self, first_sector, num_sectors, count, data, **kwargs):
@@ -708,7 +733,7 @@ class KBootImage(DiskImageBase):
         self.exe_start = start
     
     def get_file_segment(self):
-        return ObjSegment(0, 0, 0, self.exe_start, self.bytes[self.exe_start:self.exe_start + self.exe_size], name="KBoot Executable")
+        return XexSegment(0, 0, 0, self.exe_start, self.bytes[self.exe_start:self.exe_start + self.exe_size], name="KBoot Executable")
     
     def parse_segments(self):
         if self.header.image_size > 0:
