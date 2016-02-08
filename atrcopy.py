@@ -419,6 +419,7 @@ class AtrDiskImage(object):
         self.header = None
         self.first_vtoc = 360
         self.num_vtoc = 1
+        self.vtoc2 = 0
         self.first_data_after_vtoc = 369
         self.total_sectors = 0
         self.unused_sectors = 0
@@ -496,6 +497,11 @@ class AtrDiskImage(object):
         self.num_vtoc = num
         self.total_sectors = values[1]
         self.unused_sectors = values[2]
+        if self.header.image_size == 133120:
+            # enhanced density has 2nd VTOC
+            self.vtoc2 = 1024
+            extra_free = self.get_sectors(self.vtoc2)[122:124].view(dtype='<u2')[0]
+            self.unused_sectors += extra_free
     
     def get_directory(self):
         dir_bytes = self.get_sectors(361, 368)
@@ -595,6 +601,10 @@ class AtrDiskImage(object):
         start, count = self.get_contiguous_sectors(self.first_vtoc, self.num_vtoc)
         segment = self.get_raw_sectors_segment(self.first_vtoc, self.num_vtoc, count, self.bytes[start:start+count], name="VTOC")
         segments.append(segment)
+        if self.vtoc2 > 0:
+            start, count = self.get_contiguous_sectors(self.vtoc2, 1)
+            segment = self.get_raw_sectors_segment(self.vtoc2, 1, count, self.bytes[start:start+count], name="VTOC2")
+            segments.append(segment)
         return segments
     
     def get_directory_segments(self):
