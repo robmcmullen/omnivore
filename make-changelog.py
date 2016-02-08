@@ -172,8 +172,13 @@ def rebuild(options):
     blocks = []
     next_oldest = StrictVersion("0.0.0")
     for line in reversed(tags.splitlines()):
-        day, _, _, tag = line.split()
-        tag = tag[1:-1]
+        #day, _, _, tag = line.split()  # doesn't work; may list multiple tags
+        stuff = line.split()
+        day = stuff[0]
+        for tag in stuff[3:]:
+            if "." in tag:
+                break
+        tag = tag.strip("(").strip(")").strip(",")
         version = StrictVersion(tag)
         if version > next_oldest:
             if options.verbose: print "found %s" % (version)
