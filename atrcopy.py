@@ -37,7 +37,7 @@ class AtrHeader(object):
     file_format = "ATR"
     
     def __init__(self, bytes=None):
-        self.size_in_bytes = 0
+        self.image_size = 0
         self.sector_size = 0
         self.crc = 0
         self.unused = 0
@@ -53,7 +53,7 @@ class AtrHeader(object):
             values = bytes.view(dtype=self.format)[0]
             if values[0] != 0x296:
                 raise InvalidAtrHeader
-            self.size_in_bytes = (int(values[3]) * 256 * 256 + int(values[1])) * 16
+            self.image_size = (int(values[3]) * 256 * 256 + int(values[1])) * 16
             self.sector_size = int(values[2])
             self.crc = int(values[4])
             self.unused = int(values[5])
@@ -63,19 +63,26 @@ class AtrHeader(object):
             raise InvalidAtrHeader
     
     def __str__(self):
-        return "%s Disk Image (size=%d (%dx%db), crc=%d flags=%d unused=%d)" % (self.file_format, self.size_in_bytes, self.max_sectors, self.sector_size, self.crc, self.flags, self.unused)
+        return "%s Disk Image (size=%d (%dx%db), crc=%d flags=%d unused=%d)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size, self.crc, self.flags, self.unused)
 
     def check_size(self, size):
-        if self.size_in_bytes == 0:
-            if size == 92160:
-                self.size_in_bytes = size
-                self.sector_size = 128
-            elif size == 184320:
-                self.size_in_bytes = size
-                self.sector_size = 256
-        self.initial_sector_size = self.sector_size
-        self.num_initial_sectors = 0
-        self.max_sectors = self.size_in_bytes / self.sector_size
+        if size == 92160 or size == 92176:
+            self.image_size = 92160
+            self.sector_size = 128
+            self.initial_sector_size = 0
+            self.num_initial_sectors = 0
+        elif size == 184320 or size == 184336:
+            self.image_size = 184320
+            self.sector_size = 256
+            self.initial_sector_size = 0
+            self.num_initial_sectors = 0
+        elif size == 183936 or size == 183952:
+            self.image_size = 183936
+            self.sector_size = 256
+            self.initial_sector_size = 128
+            self.num_initial_sectors = 3
+        initial_bytes = self.initial_sector_size * self.num_initial_sectors
+        self.max_sectors = ((self.image_size - initial_bytes) / self.sector_size) + self.num_initial_sectors
     
     def sector_is_valid(self, sector):
         return sector > 0 and sector <= self.max_sectors
@@ -96,7 +103,7 @@ class XfdHeader(AtrHeader):
     file_format = "XFD"
     
     def __str__(self):
-        return "%s Disk Image (size=%d (%dx%db)" % (self.file_format, self.size_in_bytes, self.max_sectors, self.sector_size)
+        return "%s Disk Image (size=%d (%dx%db)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size)
 
 class AtrDirent(object):
     # ATR Dirent structure described at http://atari.kensclassics.org/dos.htm
@@ -618,9 +625,9 @@ class AtrDiskImage(object):
         return segments
     
     def parse_segments(self):
-        if self.header.size_in_bytes > 0:
+        if self.header.image_size > 0:
             self.segments.append(self.get_obj_segment(0, 0, 0, self.header.atr_header_offset, self.bytes[0:self.header.atr_header_offset], name="%s Header" % self.header.file_format))
-        self.segments.append(self.get_raw_sectors_segment(1, self.header.max_sectors, self.header.size_in_bytes, self.bytes[self.header.atr_header_offset:], name="Raw disk sectors"))
+        self.segments.append(self.get_raw_sectors_segment(1, self.header.max_sectors, self.header.image_size, self.bytes[self.header.atr_header_offset:], name="Raw disk sectors"))
         self.segments.extend(self.get_boot_segments())
         self.segments.extend(self.get_vtoc_segments())
         self.segments.extend(self.get_directory_segments())
