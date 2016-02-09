@@ -135,6 +135,7 @@ class AtrDirent(object):
         self.starting_sector = 0
         self.filename = ""
         self.ext = ""
+        self.is_sane = True
         if bytes is None:
             return
         values = bytes.view(dtype=self.format)[0]  
@@ -407,15 +408,15 @@ class AtariDosFile(object):
                 raise InvalidBinaryFile
             first = False
             if len(bytes[pos:pos + 4]) < 4:
-                self.segments.append(self.get_obj_segment(0, 0, bytes[pos:pos + 4], "Short Segment Header"))
+                self.segments.append(ObjSegment(0, 0, bytes[pos:pos + 4], "Short Segment Header"))
                 break
             start, end = bytes[pos:pos + 4].view(dtype=np.uint16)
             count = end - start + 1
             found = len(bytes[pos + 4:pos + 4 + count])
             if found < count:
-                self.segments.append(self.get_obj_segment(pos, pos + 4, start, end, bytes[pos + 4:pos + 4 + count], "Incomplete Data"))
+                self.segments.append(ObjSegment(pos, pos + 4, start, end, bytes[pos + 4:pos + 4 + count], "Incomplete Data"))
                 break
-            self.segments.append(self.get_obj_segment(pos, pos + 4, start, end, bytes[pos + 4:pos + 4 + count]))
+            self.segments.append(ObjSegment(pos, pos + 4, start, end, bytes[pos + 4:pos + 4 + count]))
             pos += 4 + count
 
 class AtrFileSegment(ObjSegment):
@@ -431,8 +432,9 @@ class AtrFileSegment(ObjSegment):
 
 
 class DiskImageBase(object):
-    def __init__(self, bytes):
+    def __init__(self, bytes, filename=""):
         self.bytes = to_numpy(bytes)
+        self.set_filename(filename)
         self.header = None
         self.total_sectors = 0
         self.unused_sectors = 0
@@ -441,10 +443,23 @@ class DiskImageBase(object):
         self.all_sane = True
         self.setup()
     
+    def set_filename(self, filename):
+        if "." in filename:
+            self.filename, self.ext = filename.rsplit(".", 1)
+        else:
+            self.filename, self.ext = filename, ""
+
     def setup(self):
         self.size = np.alen(self.bytes)
         self.read_atr_header()
         self.check_size()
+        self.get_vtoc()
+        self.get_directory()
+        self.check_sane()
+    
+    def check_sane(self):
+        if not self.all_sane:
+            raise InvalidDiskImage("Invalid directory entries; may be boot disk")
     
     def read_atr_header(self):
         bytes = self.bytes[0:16]
@@ -455,6 +470,12 @@ class DiskImageBase(object):
     
     def check_size(self):
         self.header.check_size(self.size)
+    
+    def get_vtoc(self):
+        pass
+    
+    def get_directory(self):
+        pass
     
     def get_raw_bytes(self, sector):
         pos, size = self.header.get_pos(sector)
@@ -490,6 +511,33 @@ class DiskImageBase(object):
         if self.header.image_size > 0:
             self.segments.append(ObjSegment(0, 0, 0, self.header.atr_header_offset, self.bytes[0:self.header.atr_header_offset], name="%s Header" % self.header.file_format))
         self.segments.append(RawSectorsSegment(1, self.header.max_sectors, self.header.image_size, self.bytes[self.header.atr_header_offset:], name="Raw disk sectors"))
+        self.segments.extend(self.get_boot_segments())
+        self.segments.extend(self.get_vtoc_segments())
+        self.segments.extend(self.get_directory_segments())
+        self.segments.extend(self.get_file_segments())
+    
+    def get_boot_segments(self):
+        return []
+    
+    def get_vtoc_segments(self):
+        return []
+    
+    def get_directory_segments(self):
+        return []
+    
+    def get_file(self, dirent):
+        segment = self.get_file_segment(dirent)
+        return segment.tostring()
+    
+    def get_file_segment(self, dirent):
+        pass
+    
+    def get_file_segments(self):
+        segments = []
+        for dirent in self.files:
+            segment = self.get_file_segment(dirent)
+            segments.append(segment)
+        return segments
 
 
 class BootDiskImage(DiskImageBase):
@@ -534,16 +582,6 @@ class AtariDosDiskImage(DiskImageBase):
                 lines.append(str(dirent))
         return "\n".join(lines)
     
-    def setup(self):
-        self.size = np.alen(self.bytes)
-        
-        self.read_atr_header()
-        self.check_size()
-        self.get_vtoc()
-        self.get_directory()
-        if not self.all_sane:
-            raise InvalidDiskImage("Invalid directory entries; may be boot disk")
-    
     vtoc_type = np.dtype([
         ('code', 'u1'),
         ('total','<u2'),
@@ -587,36 +625,11 @@ class AtariDosDiskImage(DiskImageBase):
             num += 1
         self.files = files
     
-    def get_file(self, dirent):
-        segment = self.get_file_segment(dirent)
-        return segment.tostring()
-    
     def find_file(self, filename):
         for dirent in self.files:
             if filename == dirent.get_filename():
                 return self.get_file(dirent)
         return ""
-    
-    def get_obj_segment(self, metadata_start, data_start, start_addr, end_addr, data, name):
-        """Subclass use: override this method to create a custom segment.
-        
-        By default uses an ObjSegment
-        """
-        return ObjSegment(metadata_start, data_start, start_addr, end_addr, data, name)
-    
-    def get_raw_sectors_segment(self, first_sector, num_sectors, count, data, **kwargs):
-        """Subclass use: override this method to create a custom segment.
-        
-        By default uses an RawSectorsSegment
-        """
-        return RawSectorsSegment(first_sector, num_sectors, count, data, **kwargs)
-    
-    def get_indexed_segment(self, byte_order, **kwargs):
-        """Subclass use: override this method to create a custom segment.
-        
-        By default uses an IndexedByteSegment
-        """
-        return IndexedByteSegment(byte_order, self.bytes, **kwargs)
     
     boot_record_type = np.dtype([
         ('BFLAG', 'u1'),
@@ -643,9 +656,9 @@ class AtariDosDiskImage(DiskImageBase):
             num = int(values[1])
             addr = int(values[2])
             bytes = self.get_sectors(1, num)
-            header = self.get_obj_segment(0, 0, addr, addr + 20, bytes[0:20], name="Boot Header")
-            sectors = self.get_obj_segment(0, 0, addr, addr + len(bytes), bytes, name="Boot Sectors")
-            code = self.get_obj_segment(0, 0, addr + 20, addr + len(bytes), bytes[20:], name="Boot Code")
+            header = ObjSegment(0, 0, addr, addr + 20, bytes[0:20], name="Boot Header")
+            sectors = ObjSegment(0, 0, addr, addr + len(bytes), bytes, name="Boot Sectors")
+            code = ObjSegment(0, 0, addr + 20, addr + len(bytes), bytes[20:], name="Boot Code")
             segments = [sectors, header, code]
         return segments
     
@@ -653,11 +666,11 @@ class AtariDosDiskImage(DiskImageBase):
         segments = []
         addr = 0
         start, count = self.get_contiguous_sectors(self.first_vtoc, self.num_vtoc)
-        segment = self.get_raw_sectors_segment(self.first_vtoc, self.num_vtoc, count, self.bytes[start:start+count], name="VTOC")
+        segment = RawSectorsSegment(self.first_vtoc, self.num_vtoc, count, self.bytes[start:start+count], name="VTOC")
         segments.append(segment)
         if self.vtoc2 > 0:
             start, count = self.get_contiguous_sectors(self.vtoc2, 1)
-            segment = self.get_raw_sectors_segment(self.vtoc2, 1, count, self.bytes[start:start+count], name="VTOC2")
+            segment = RawSectorsSegment(self.vtoc2, 1, count, self.bytes[start:start+count], name="VTOC2")
             segments.append(segment)
         return segments
     
@@ -665,7 +678,7 @@ class AtariDosDiskImage(DiskImageBase):
         segments = []
         addr = 0
         start, count = self.get_contiguous_sectors(361, 8)
-        segment = self.get_raw_sectors_segment(361, 8, count, self.bytes[start:start+count], name="Directory")
+        segment = RawSectorsSegment(361, 8, count, self.bytes[start:start+count], name="Directory")
         segments.append(segment)
         return segments
     
@@ -677,54 +690,56 @@ class AtariDosDiskImage(DiskImageBase):
             byte_order.extend(range(pos, pos + size))
             if last:
                 break
-        segment = self.get_indexed_segment(byte_order, name=dirent.get_filename())
+        segment = IndexedByteSegment(byte_order, self.bytes, name=dirent.get_filename())
         return segment
-    
-    def get_file_segments(self):
-        segments = []
-        self.get_directory()
-        for dirent in self.files:
-            segment = self.get_file_segment(dirent)
-            segments.append(segment)
-        return segments
-    
-    def parse_segments(self):
-        if self.header.image_size > 0:
-            self.segments.append(self.get_obj_segment(0, 0, 0, self.header.atr_header_offset, self.bytes[0:self.header.atr_header_offset], name="%s Header" % self.header.file_format))
-        self.segments.append(self.get_raw_sectors_segment(1, self.header.max_sectors, self.header.image_size, self.bytes[self.header.atr_header_offset:], name="Raw disk sectors"))
-        self.segments.extend(self.get_boot_segments())
-        self.segments.extend(self.get_vtoc_segments())
-        self.segments.extend(self.get_directory_segments())
-        self.segments.extend(self.get_file_segments())
+
+
+class KBootDirent(AtrDirent):
+    def __init__(self, image):
+        AtrDirent.__init__(self, image)
+        self.in_use = True
+        self.starting_sector = 4
+        self.filename = image.filename
+        if not self.filename:
+            self.filename = "KBOOT"
+        if self.filename == self.filename.upper():
+            self.ext = "XEX"
+        else:
+            self.ext = "xex"
+        start, size = image.header.get_pos(4)
+        i = image.header.atr_header_offset + 9
+        count = image.bytes[i] + 256 * image.bytes[i+1] + 256 * 256 *image.bytes[i + 2]
+        if start + count > image.size or start + count < image.size - 128:
+            self.is_sane = False
+        else:
+            self.exe_size = count
+            self.exe_start = start
+        self.num_sectors = count / 128 + 1
+
+    def process_raw_sector(self, disk, raw):
+        num_bytes = np.alen(raw)
+        return raw[0:num_bytes], num_bytes
 
 
 class KBootImage(DiskImageBase):
-    def __init__(self, bytes):
-        self.exe_start = 0
-        self.exe_size = 0
-        DiskImageBase.__init__(self, bytes)
-
     def __str__(self):
-        return "%s KBoot Format: %d byte executable" % (self.header, self.exe_size)
+        return "%s KBoot Format: %d byte executable" % (self.header, self.files[0].exe_size)
     
     def check_size(self):
         self.header.check_size(self.size)
-        start, size = self.header.get_pos(4)
-        i = self.header.atr_header_offset + 9
-        count = self.bytes[i] + 256 * self.bytes[i+1] + 256 * 256 *self.bytes[i + 2]
-        if start + count > self.size or start + count < self.size - 128:
+    
+    def check_sane(self):
+        if not self.all_sane:
             raise InvalidDiskImage("Doesn't seem to be KBoot header")
-        self.exe_size = count
-        self.exe_start = start
     
-    def get_file_segment(self):
-        return XexSegment(0, 0, 0, self.exe_start, self.bytes[self.exe_start:self.exe_start + self.exe_size], name="KBoot Executable")
-    
-    def parse_segments(self):
-        if self.header.image_size > 0:
-            self.segments.append(ObjSegment(0, 0, 0, self.header.atr_header_offset, self.bytes[0:self.header.atr_header_offset], name="%s Header" % self.header.file_format))
-        self.segments.append(RawSectorsSegment(1, self.header.max_sectors, self.header.image_size, self.bytes[self.header.atr_header_offset:], name="Raw disk sectors"))
-        self.segments.append(self.get_file_segment())
+    def get_directory(self):
+        dirent = KBootDirent(self)
+        if not dirent.is_sane:
+            self.all_sane = False
+        self.files = [dirent]
+
+    def get_file_segment(self, dirent):
+        return XexSegment(0, 0, 0, dirent.exe_start, self.bytes[dirent.exe_start:dirent.exe_start + dirent.exe_size], name="KBoot Executable")
 
 
 def to_numpy(value):
@@ -788,7 +803,7 @@ if __name__ == "__main__":
                     for format in [KBootImage, AtariDosDiskImage, BootDiskImage]:
                         print "trying", format.__name__
                         try:
-                            image = format(data)
+                            image = format(data, filename)
                             print "%s: %s" % (filename, image)
                             break
                         except InvalidDiskImage:
@@ -806,12 +821,12 @@ if __name__ == "__main__":
                 raise
                 print "%s: Doesn't look like a supported disk image" % filename
                 try:
-                    image = AtariDosFile(data)
+                    image = AtariDosFile(data, filename)
                 except InvalidBinaryFile:
                     print "%s: Doesn't look like an XEX either" % filename
                 continue
             if image is None:
-                image = BootDiskImage(data)
+                image = BootDiskImage(data, filename)
             if options.segments:
                 image.parse_segments()
                 print "\n".join([str(a) for a in image.segments])
