@@ -146,6 +146,7 @@ class FrameworkTask(Task):
             self.status_bar.message = self.name
         self.window.icon = self.icon
         self.set_keyboard_shortcuts()
+        self._active_editor_tab_change(None)
 
     def create_central_pane(self):
         """ Create the central pane: the text editor.
@@ -700,6 +701,16 @@ class FrameworkTask(Task):
         """
         close = self._prompt_for_save()
         event.veto = not close
+
+    @on_trait_change('editor_area:active_editor')
+    def _active_editor_tab_change(self, event):
+        """ Prompt the user to save when exiting.
+        """
+        active = self.active_editor
+        if active is not None:
+            self.window._title = "%s - %s %s" % (self.active_editor.name, self.about_title, self.about_version)
+        else:
+            self.window._title = "%s %s" % (self.about_title, self.about_version)
 
     #### Trait property getter/setters ########################################
 
