@@ -776,7 +776,7 @@ def process(image, dirent, options):
     else:
         print dirent
 
-if __name__ == "__main__":
+def run():
     import sys
     import argparse
     
@@ -800,8 +800,8 @@ if __name__ == "__main__":
                 data = to_numpy(data)
                 try:
                     header = AtrHeader(data[0:16])
-                    for format in [KBootImage, AtariDosDiskImage, BootDiskImage]:
-                        print "trying", format.__name__
+                    for format in [KBootImage, AtariDosDiskImage]:
+                        if options.verbose: print "trying", format.__name__
                         try:
                             image = format(data, filename)
                             print "%s: %s" % (filename, image)
@@ -818,12 +818,11 @@ if __name__ == "__main__":
                             raise
                             #pass
             except:
-                raise
-                print "%s: Doesn't look like a supported disk image" % filename
+                if options.verbose: print "%s: Doesn't look like a supported disk image" % filename
                 try:
-                    image = AtariDosFile(data, filename)
+                    image = AtariDosFile(data)
                 except InvalidBinaryFile:
-                    print "%s: Doesn't look like an XEX either" % filename
+                    if options.verbose: print "%s: Doesn't look like an XEX either" % filename
                 continue
             if image is None:
                 image = BootDiskImage(data, filename)
@@ -839,3 +838,5 @@ if __name__ == "__main__":
                     except ByteNotInFile166:
                         print "Invalid sector for: %s" % str(dirent)
 
+if __name__ == "__main__":
+    run()
