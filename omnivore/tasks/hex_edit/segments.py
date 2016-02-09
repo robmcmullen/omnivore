@@ -1,7 +1,7 @@
 import sys
 import wx
 
-from pyface.action.api import ActionItem
+from pyface.action.api import Action, ActionItem
 
 from actions import SaveSegmentAsFormatAction
 
@@ -38,8 +38,16 @@ class SegmentList(wx.ListBox):
         event.Skip()
     
     def on_popup(self, event):
-        actions = []
-        segment = self.task.active_editor.segment
+        pos = event.GetPosition()
+        selected = self.HitTest(pos)
+        if selected == -1:
+            event.Skip()
+            return
+        segment = self.task.active_editor.document.segments[selected]
+        
+        # include disabled action showing the name of the segment clicked upon
+        # because it may be different than the selected item
+        actions = [Action(name=segment.name, task=self.task, enabled=False)]
         for saver in segment.savers:
             action = SaveSegmentAsFormatAction(saver=saver, task=self.task, name="Save as %s" % saver.name)
             actions.append(action)
