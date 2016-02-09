@@ -78,7 +78,7 @@ class MouseHandler(object):
     def process_popup(self, evt):
         actions = self.get_popup_actions()
         if actions:
-            self.canvas.editor.popup_context_menu_from_actions(self, actions)
+            self.canvas.editor.popup_context_menu_from_actions(self.canvas, actions)
     
     def get_popup_actions(self):
         return None

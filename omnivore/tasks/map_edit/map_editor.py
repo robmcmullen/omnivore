@@ -187,6 +187,9 @@ class SelectMode(MouseHandler):
             self.canvas.zoom_out()
         elif amount > 0:
             self.canvas.zoom_in()
+    
+    def get_popup_actions(self):
+        return self.canvas.get_popup_actions()
 
 
 class PickTileMode(SelectMode):
