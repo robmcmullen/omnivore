@@ -400,7 +400,7 @@ class AtariDosFile(object):
         first = True
         while pos < self.size:
             if pos + 1 < self.size:
-                header, = bytes[pos:pos+2].view(dtype=np.uint16)
+                header, = bytes[pos:pos+2].view(dtype='<u2')
             else:
                 self.segments.append(ObjSegment(pos, pos + 1, 0, 1, bytes[pos:pos + 1], "Incomplete Data"))
                 break
@@ -414,7 +414,7 @@ class AtariDosFile(object):
             if len(bytes[pos:pos + 4]) < 4:
                 self.segments.append(ObjSegment(0, 0, bytes[pos:pos + 4], "Short Segment Header"))
                 break
-            start, end = bytes[pos:pos + 4].view(dtype=np.uint16)
+            start, end = bytes[pos:pos + 4].view(dtype='<u2')
             count = end - start + 1
             found = len(bytes[pos + 4:pos + 4 + count])
             if found < count:
