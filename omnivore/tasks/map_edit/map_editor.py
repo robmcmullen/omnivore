@@ -376,8 +376,12 @@ class MapEditor(HexEditor):
             self.antic_tile_map = e['tile map']
 
     def update_fonts(self):
+        self.font_map.set_font()
+        self.font_map.set_font_mapping(self.antic_font_mapping)
         self.font_map.Refresh()
-        self.tile_map.Refresh()
+        self.tile_map.recalc_view()
+        self.character_set.set_font()
+        self.character_set.set_font_mapping(self.antic_font_mapping)
         self.character_set.Refresh()
     
     def reconfigure_panes(self):

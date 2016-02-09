@@ -285,6 +285,8 @@ class HexEditor(FrameworkEditor):
         self.bitmap.recalc_view()
     
     def update_fonts(self):
+        self.font_map.set_font()
+        self.font_map.set_font_mapping(self.antic_font_mapping)
         self.font_map.Refresh()
         pane = self.window.get_dock_pane('hex_edit.font_map')
         pane.name = self.font_map.get_font_mapping_name()
@@ -317,14 +319,12 @@ class HexEditor(FrameworkEditor):
         self.font_mode = font_mode
         self.antic_font_data = font
         self.antic_font = self.get_antic_font()
-        self.font_map.set_font()
         self.set_font_mapping()
     
     def set_font_mapping(self, font_mapping=None):
         if font_mapping is None:
             font_mapping = self.antic_font_mapping
         self.antic_font_mapping = font_mapping
-        self.font_map.set_font_mapping(self.antic_font_mapping)
         self.update_fonts()
     
     def set_map_width(self, width=None):
