@@ -306,8 +306,8 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
                              style=wx.TE_PROCESS_TAB|wx.TE_PROCESS_ENTER|wx.NO_BORDER)
         log.debug("parent=%s" % parent)
         self.SetInsertionPoint(0)
-        self.Bind(wx.EVT_TEXT, self.OnText)
-        self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
+        self.Bind(wx.EVT_TEXT, self.on_text)
+        self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
         self.parentgrid=parentgrid
         self.setMode('hex')
         self.startValue=None
@@ -368,7 +368,7 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
 
         return False
 
-    def OnKeyDown(self, evt):
+    def on_key_down(self, evt):
         """
         Keyboard handler to process command keys before they are
         inserted.  Tabs, arrows, ESC, return, etc. should be handled
@@ -395,7 +395,7 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
         self.SetValue(self.startValue)
         self.parentgrid.cancel_edit()
         
-    def OnText(self, evt):
+    def on_text(self, evt):
         """
         Callback used to automatically advance to the next edit field.
         If self.autoadvance > 0, this number is used as the max number
@@ -591,12 +591,10 @@ class ByteGrid(Grid.Grid):
         self.select_extend_mode = False
         self.allow_range_select = True
         self.updateUICallback = None
-        self.Bind(Grid.EVT_GRID_CELL_LEFT_CLICK, self.OnLeftDown)
+        self.Bind(Grid.EVT_GRID_CELL_LEFT_CLICK, self.on_left_down)
         self.GetGridWindow().Bind(wx.EVT_MOTION, self.on_motion)
-        self.GetGridWindow().Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
-#        self.Bind(Grid.EVT_GRID_SELECT_CELL, self.OnSelectCell)
-#        self.Bind(Grid.EVT_GRID_RANGE_SELECT, self.OnSelectRange)
-        self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
+        self.GetGridWindow().Bind(wx.EVT_RIGHT_DOWN, self.on_right_down)
+        self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
         self.Show(True)
     
     def __repr__(self):
@@ -633,7 +631,7 @@ class ByteGrid(Grid.Grid):
     def get_default_cell_editor(self):
         return HexCellEditor(self)
 
-    def OnRightDown(self, evt):
+    def on_right_down(self, evt):
         log.debug(self.GetSelectedRows())
         r, c = self.get_rc_from_event(evt)
         actions = self.get_popup_actions(r, c)
@@ -643,7 +641,7 @@ class ByteGrid(Grid.Grid):
     def get_popup_actions(self, r, c):
         return []
 
-    def OnLeftDown(self, evt):
+    def on_left_down(self, evt):
         c, r = (evt.GetCol(), evt.GetRow())
         e = self.editor
         self.select_extend_mode = evt.ShiftDown()
@@ -729,11 +727,7 @@ class ByteGrid(Grid.Grid):
                 e.cursor_index = index1
                 wx.CallAfter(e.index_clicked, e.cursor_index, 0, None)
 
-    def OnSelectCell(self, evt):
-        log.debug("cell selected r=%d c=%d" % (evt.GetCol(), evt.GetRow()))
-        evt.Skip()
-
-    def OnKeyDown(self, evt):
+    def on_key_down(self, evt):
         e = self.editor
         key = evt.GetKeyCode()
         log.debug("evt=%s, key=%s" % (evt, key))
