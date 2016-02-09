@@ -28,7 +28,7 @@ class SegmentList(wx.ListBox):
             for i, item in enumerate(items):
                 old = self.GetString(i)
                 if old != item:
-                    self.SetString(n, item)
+                    self.SetString(i, item)
         self.SetSelection(selected)
 
     def on_click(self, event):
