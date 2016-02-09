@@ -175,7 +175,7 @@ class FrameworkEditor(Editor):
         fs, relpath = opener.parse(uri, writeable=True)
         fh = fs.open(relpath, 'wb')
         log.debug("saving to %s" % uri)
-        fh.write(self.document.bytes.tostring())
+        fh.write(bytes)
         fh.close()
         fs.close()
 

@@ -23,6 +23,9 @@ from omnivore.utils.searchutil import known_searchers
 
 from commands import PasteCommand
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class HexEditor(FrameworkEditor):
     """ The toolkit specific implementation of a HexEditor.  See the
