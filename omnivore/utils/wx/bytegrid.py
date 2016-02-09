@@ -588,12 +588,14 @@ class ByteGrid(Grid.Grid):
         self.change_is_valid = True
         self.last_change_count = 0
 
+        self.mouse_drag_started = False
         self.select_extend_mode = False
         self.allow_range_select = True
         self.updateUICallback = None
         self.Bind(Grid.EVT_GRID_CELL_LEFT_CLICK, self.on_left_down)
         self.GetGridWindow().Bind(wx.EVT_MOTION, self.on_motion)
         self.GetGridWindow().Bind(wx.EVT_RIGHT_DOWN, self.on_right_down)
+        self.GetGridWindow().Bind(wx.EVT_LEFT_UP, self.on_left_up)
         self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
         self.Show(True)
     
@@ -641,7 +643,11 @@ class ByteGrid(Grid.Grid):
     def get_popup_actions(self, r, c):
         return []
 
+    def on_left_up(self, evt):
+        self.mouse_drag_started = False
+
     def on_left_down(self, evt):
+        self.mouse_drag_started = True
         c, r = (evt.GetCol(), evt.GetRow())
         e = self.editor
         self.select_extend_mode = evt.ShiftDown()
@@ -659,7 +665,6 @@ class ByteGrid(Grid.Grid):
             e.anchor_initial_start_index, e.anchor_initial_end_index = self.table.get_index_range(r, c)
             e.anchor_start_index, e.anchor_end_index = e.anchor_initial_start_index, e.anchor_initial_end_index
             e.cursor_index = e.anchor_initial_start_index
-            evt.Skip()
         wx.CallAfter(e.index_clicked, e.cursor_index, 0, None)
 
     def get_rc_from_event(self, evt):
@@ -693,6 +698,10 @@ class ByteGrid(Grid.Grid):
         return r1 - r0 - 1
  
     def on_motion(self, evt):
+        if not self.mouse_drag_started:
+            # On windows, it's possible to get a motion event before a mouse
+            # down event, so need this flag to check
+            return
         e = self.editor
         if evt.LeftIsDown():
             r, c = self.get_rc_from_event(evt)
