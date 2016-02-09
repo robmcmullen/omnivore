@@ -285,11 +285,14 @@ class GetSegmentFromSelectionAction(EditorAction):
 class SaveSegmentAsFormatAction(EditorAction):
     saver = Any
     
+    segment_number = Int
+    
     def _name_default(self):
         return "%s (%s)" % (self.saver.name, self.saver.extensions[0])
     
     def perform(self, event):
-        dialog = FileDialog(parent=event.task.window.control, action='save as', wildcard=self.saver.get_file_dialog_wildcard())
+        segment = self.task.active_editor.document.segments[self.segment_number]
+        dialog = FileDialog(default_filename=segment.name, parent=event.task.window.control, action='save as', wildcard=self.saver.get_file_dialog_wildcard())
         if dialog.open() == OK:
             self.active_editor.save_segment(self.saver, dialog.path)
 
@@ -306,7 +309,7 @@ class SaveSegmentGroup(TaskDynamicSubmenuGroup):
             segment_number = event_data
             segment = self.task.active_editor.document.segments[segment_number]
             for saver in segment.savers:
-                action = SaveSegmentAsFormatAction(saver=saver)
+                action = SaveSegmentAsFormatAction(saver=saver, segment_number=segment_number)
                 items.append(ActionItem(action=action))
             
         return items

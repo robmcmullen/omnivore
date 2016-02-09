@@ -54,7 +54,7 @@ class SegmentList(wx.ListBox):
         # because it may be different than the selected item
         actions = [Action(name=segment.name, task=self.task, enabled=False)]
         for saver in segment.savers:
-            action = SaveSegmentAsFormatAction(saver=saver, task=self.task, name="Save as %s" % saver.name)
+            action = SaveSegmentAsFormatAction(saver=saver, segment_number=selected, task=self.task, name="Save as %s" % saver.name)
             actions.append(action)
         if actions:
             self.task.active_editor.popup_context_menu_from_actions(self, actions)
