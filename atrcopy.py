@@ -734,7 +734,7 @@ def to_numpy(value):
         return np.fromstring(value, dtype=np.uint8)
     raise TypeError("Can't convert to numpy data")
 
-def process(dirent, options):
+def process(image, dirent, options):
     skip = False
     action = "copying to"
     filename = dirent.get_filename()
@@ -755,7 +755,7 @@ def process(dirent, options):
     if options.extract:
         print "%s: %s %s" % (dirent, action, outfilename)
         if not skip:
-            bytes = atr.get_file(dirent)
+            bytes = image.get_file(dirent)
             with open(outfilename, "wb") as fh:
                 fh.write(bytes)
     else:
@@ -818,7 +818,7 @@ if __name__ == "__main__":
             elif image.files or options.force:
                 for dirent in image.files:
                     try:
-                        process(dirent, options)
+                        process(image, dirent, options)
                     except FileNumberMismatchError164:
                         print "Error 164: %s" % str(dirent)
                     except ByteNotInFile166:
