@@ -728,7 +728,6 @@ class ByteGrid(Grid.Grid):
                 e.document.change_count += 1
                 e.cursor_index = index1
                 wx.CallAfter(e.index_clicked, e.cursor_index, 0, None)
-        evt.Skip()
 
     def OnSelectCell(self, evt):
         log.debug("cell selected r=%d c=%d" % (evt.GetCol(), evt.GetRow()))
