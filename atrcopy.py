@@ -399,7 +399,11 @@ class AtariDosFile(object):
         pos = 0
         first = True
         while pos < self.size:
-            header, = bytes[pos:pos+2].view(dtype=np.uint16)
+            if pos + 1 < self.size:
+                header, = bytes[pos:pos+2].view(dtype=np.uint16)
+            else:
+                self.segments.append(ObjSegment(pos, pos + 1, 0, 1, bytes[pos:pos + 1], "Incomplete Data"))
+                break
             if header == 0xffff:
                 # Apparently 0xffff header can appear in any segment, not just
                 # the first.  Regardless, it is ignored everywhere.
@@ -821,6 +825,7 @@ def run():
                 if options.verbose: print "%s: Doesn't look like a supported disk image" % filename
                 try:
                     image = AtariDosFile(data)
+                    print "%s:\n%s" % (filename, image)
                 except InvalidBinaryFile:
                     if options.verbose: print "%s: Doesn't look like an XEX either" % filename
                 continue
