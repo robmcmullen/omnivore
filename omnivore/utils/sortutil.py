@@ -66,3 +66,24 @@ def before_after_wildcard_sort(items):
     if has_cycle:
         logger.warning('Cycle in before/after sort for items %r', items)
     return result
+    
+def collapse_overlapping_ranges(ranges):
+    """ Collapse the list of (possibly overlapping) selected ranges into
+    a monotonically increasing set of non-overlapping ranges
+    """
+    opt = []
+    start, end = None, None
+    for next_start, next_end in sorted(ranges):
+        if next_start > next_end:
+            next_start, next_end = next_end, next_start
+        if start is None:
+            start, end = next_start, next_end
+        else:
+            if next_start > end:
+                opt.append((start, end))
+                start, end = next_start, next_end
+            elif next_end > end:
+                end = next_end
+    if start is not None:
+        opt.append((start, end))
+    return opt

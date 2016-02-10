@@ -1,4 +1,5 @@
 import os
+import itertools
 
 from nose.tools import *
 
@@ -83,3 +84,25 @@ class TestWildcard(object):
         items = before_after_wildcard_sort(self.items)
         print ", ".join([i.id for i in items])
         check_sorted(items)
+
+class TestOverlappingRanges(object):
+    def setup(self):
+        self.items = [
+            ([], []),
+            ([(1, 2)], [(1, 2)]),
+            ([(50, 90), (80, 182)], [(50, 182)]),
+            ([(50, 90), (90, 182)], [(50, 182)]),
+            ([(50, 90), (91, 182)], [(50, 90), (91, 182)]),
+            ([(1, 100), (40, 82)], [(1, 100)]),
+            ([(1, 100), (40, 82), (45, 55)], [(1, 100)]),
+            ([(1, 100), (40, 82), (45, 55), (88, 200)], [(1, 200)]),
+            ([(373, 440), (486, 537), (181, 182)], [(181, 182), (373, 440), (486, 537)]),
+            ([(183, 182), (181, 182)], [(181, 183)]),
+            ]
+
+    def test_simple(self):
+        for before, after in self.items:
+            for p in itertools.permutations(before):
+                processed = collapse_overlapping_ranges(p)
+                print p, processed, after
+                assert processed == after
