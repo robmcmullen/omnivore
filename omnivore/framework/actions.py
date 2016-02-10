@@ -300,6 +300,13 @@ class SelectNoneAction(Action):
     def perform(self, event):
         event.task.active_editor.select_none()
 
+class SelectInvertAction(Action):
+    name = 'Invert Selection'
+    tooltip = 'Invert selection'
+
+    def perform(self, event):
+        event.task.active_editor.select_invert()
+
 class PreferencesAction(Action):
     name = 'Preferences...'
     accelerator = 'Ctrl+,'

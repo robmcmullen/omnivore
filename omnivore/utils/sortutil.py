@@ -87,3 +87,23 @@ def collapse_overlapping_ranges(ranges):
     if start is not None:
         opt.append((start, end))
     return opt
+    
+def invert_ranges(ranges, last):
+    """ Invert the list of (possibly overlapping) selected ranges into a
+    monotonically increasing set of non-overlapping ranges that represents the
+    opposite of the listed ranges
+    """
+    # get a monotonically increasing list
+    ranges = collapse_overlapping_ranges(ranges)
+    inverted = []
+    
+    first = 0
+    for start, end in ranges:
+        if start > first:
+            inverted.append((first, start))
+            first = end
+        else:
+            first = end
+    if first < last:
+        inverted.append((first, last))
+    return inverted

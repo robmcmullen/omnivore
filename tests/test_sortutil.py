@@ -106,3 +106,22 @@ class TestOverlappingRanges(object):
                 processed = collapse_overlapping_ranges(p)
                 print p, processed, after
                 assert processed == after
+
+class TestInvertRanges(object):
+    def setup(self):
+        self.items = [
+            ([], 10, [(0, 10)]),
+            ([(1, 2)], 10, [(0, 1), (2, 10)]),
+            ([(50, 182)], 200, [(0, 50), (182, 200)]),
+            ([(50, 90), (91, 182)], 200, [(0, 50), (90, 91), (182, 200)]),
+            ([(181, 182), (373, 440), (486, 537)], 600, [(0, 181), (182, 373), (440, 486), (537, 600)]),
+            ]
+
+    def test_simple(self):
+        for before, size, after in self.items:
+            processed = invert_ranges(before, size)
+            print size, before, processed, after
+            assert processed == after
+            processed = invert_ranges(after, size)
+            assert processed == before
+            print size, before, processed, after

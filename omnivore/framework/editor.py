@@ -10,7 +10,7 @@ from pyface.tasks.api import Editor
 from pyface.action.api import ActionEvent
 
 from omnivore.utils.command import StatusFlags
-from omnivore.utils.sortutil import collapse_overlapping_ranges
+from omnivore.utils.sortutil import collapse_overlapping_ranges, invert_ranges
 
 from document import Document
 
@@ -304,6 +304,21 @@ class FrameworkEditor(Editor):
         self.highlight_selected_ranges()
         if refresh:
             self.refresh_panes()
+
+    def select_invert(self, refresh=True):
+        """ Selects the entire document
+        """
+        self.selected_ranges = self.invert_selection_ranges(self.selected_ranges)
+        try:
+            start, end = self.selected_ranges[-1]
+        except IndexError:
+            start, end = 0
+        self.anchor_start_index = self.anchor_initial_start_index = start
+        self.anchor_end_index = self.anchor_initial_end_index = end
+        self.can_copy = (self.anchor_start_index != self.anchor_end_index)
+        self.highlight_selected_ranges()
+        if refresh:
+            self.refresh_panes()
     
     def select_range(self, start, end, add=False, extend=False):
         """ Adjust the current selection to the new start and end indexes
@@ -326,6 +341,9 @@ class FrameworkEditor(Editor):
         ranges
         """
         return collapse_overlapping_ranges(self.selected_ranges)
+    
+    def invert_selection_ranges(self, ranges):
+        return invert_ranges(ranges, len(self.document))
     
     def set_cursor(self, index, refresh=True):
         max_index = self.document_length() - 1

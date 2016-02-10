@@ -428,6 +428,7 @@ class FrameworkTask(Task):
         return [
             SelectAllAction(),
             SelectNoneAction(),
+            SelectInvertAction(),
             ]
     
     def get_actions_Menu_Edit_PrefGroup(self):
