@@ -40,6 +40,8 @@ class Document(HasTraits):
     
     bytes = Trait("", TraitNumpyConverter())
     
+    style = Trait("", TraitNumpyConverter())
+    
     segments = List
     
     segment_parser = Any
@@ -67,8 +69,11 @@ class Document(HasTraits):
     def _bytes_default(self):
         return ""
     
+    def _style_default(self):
+        return np.zeros(len(self), dtype=np.uint8)
+    
     def _segments_default(self):
-        return list([DefaultSegment(0, self.bytes)])
+        return list([DefaultSegment(self.bytes, self.style, 0)])
 
     #### trait property getters
 
@@ -106,7 +111,7 @@ class Document(HasTraits):
         parser_list.append(DefaultSegmentParser)
         for parser in parser_list:
             try:
-                s = parser(self.bytes)
+                s = parser(self)
                 break
             except InvalidSegmentParser:
                 pass

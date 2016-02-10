@@ -12,7 +12,8 @@ class XEXRecognizer(HasTraits):
     id = "application/vnd.atari8bit.xex"
     
     def identify(self, guess):
-        parser = guess_parser_for(self.id, guess.numpy)
+        doc = Document(metadata=guess.metadata, bytes=guess.numpy)
+        parser = guess_parser_for(self.id, doc)
         if parser is not None:
             guess.parser = parser
             return self.id
@@ -23,9 +24,9 @@ class XEXRecognizer(HasTraits):
         state = doc.bytes[0:6] == [0xff, 0xff, 0x80, 0x2a, 0xff, 0x8a]
         if state.all():
             print "Found getaway.xex!!!"
-            font_segment = AnticFontSegment(0x2b00, doc.bytes[0x086:0x486], name="Playfield font")
+            font_segment = AnticFontSegment(doc.bytes[0x086:0x486], doc.style[0x086:0x486], 0x2b00, name="Playfield font")
             doc.add_user_segment(font_segment)
-            segment = DefaultSegment(0x4b00, doc.bytes[0x2086:0x6086], name="Playfield map")
+            segment = DefaultSegment(doc.bytes[0x2086:0x6086], doc.style[0x2086:0x6086], 0x4b00, name="Playfield map")
             segment.map_width = 256
             doc.add_user_segment(segment)
             doc.extra_metadata = {
@@ -44,7 +45,8 @@ class ATRRecognizer(HasTraits):
     id = "application/vnd.atari8bit.atr"
     
     def identify(self, guess):
-        parser = guess_parser_for(self.id, guess.numpy)
+        doc = Document(metadata=guess.metadata, bytes=guess.numpy)
+        parser = guess_parser_for(self.id, doc)
         if parser is not None:
             guess.parser = parser
             return self.id
@@ -55,9 +57,9 @@ class ATRRecognizer(HasTraits):
         state = doc.bytes[0x10:0x19] == [0x00, 0xc1, 0x80, 0x0f, 0xcc, 0x22, 0x18, 0x60, 0x0e]
         if state.all():
             print "Found getaway.atr!!!"
-            font_segment = AnticFontSegment(0x2b00, doc.bytes[0x090:0x490], name="Playfield font")
+            font_segment = AnticFontSegment(doc.bytes[0x090:0x490], doc.style[0x090:0x490], 0x2b00, name="Playfield font")
             doc.add_user_segment(font_segment)
-            segment = DefaultSegment(0x4b00, doc.bytes[0x2090:0x6090], name="Playfield map")
+            segment = DefaultSegment(doc.bytes[0x2090:0x6090], doc.style[0x2090:0x6090], 0x4b00, name="Playfield map")
             segment.map_width = 256
             doc.add_user_segment(segment)
             doc.extra_metadata = {

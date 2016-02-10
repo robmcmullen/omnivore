@@ -1057,7 +1057,7 @@ class FontMapScroller(BitviewScroller):
 class CharacterSetViewer(FontMapScroller):
     def __init__(self, parent, task, bytes_per_row=16, font_mapping=0, command=None, **kwargs):
         FontMapScroller.__init__(self, parent, task, bytes_per_row, font_mapping, command, **kwargs)
-        self.segment = DefaultSegment(0, np.arange(256, dtype=np.uint8))
+        self.segment = DefaultSegment(np.arange(256, dtype=np.uint8), np.zeros(256, dtype=np.uint8), 0)
         self.start_addr = 0
         self.selected_char = -1
     

@@ -10,11 +10,11 @@ class InvalidSegmentParser(Exception):
 class SegmentParser(object):
     name = ""
     
-    def __init__(self, bytes):
+    def __init__(self, doc):
         self.segments = []
-        self.parse(bytes)
+        self.parse(doc)
     
-    def parse(self, bytes):
+    def parse(self, doc):
         raise NotImplementedError
 
 
@@ -38,17 +38,17 @@ class AnticFontSegment(DefaultSegment):
 class DefaultSegmentParser(SegmentParser):
     menu_name = "Raw Data"
     
-    def parse(self, bytes):
-        self.segments = [DefaultSegment(0, bytes)]
+    def parse(self, doc):
+        self.segments = [DefaultSegment(doc.bytes, doc.style, 0)]
 
 
 class KBootSegmentParser(SegmentParser):
     menu_name = "KBoot Disk Image"
     
-    def parse(self, bytes):
-        self.segments.append(DefaultSegment(0, bytes))
+    def parse(self, doc):
+        self.segments.append(DefaultSegment(doc.bytes, doc.style, 0))
         try:
-            self.atr = KBootImage(bytes)
+            self.atr = KBootImage(doc.bytes, doc.style)
         except:
             raise InvalidSegmentParser
         
@@ -59,10 +59,10 @@ class KBootSegmentParser(SegmentParser):
 class AtariDosSegmentParser(SegmentParser):
     menu_name = "Atari DOS Disk Image"
     
-    def parse(self, bytes):
-        self.segments.append(DefaultSegment(0, bytes))
+    def parse(self, doc):
+        self.segments.append(DefaultSegment(doc.bytes, doc.style, 0))
         try:
-            self.atr = AtariDosDiskImage(bytes)
+            self.atr = AtariDosDiskImage(doc.bytes, doc.style)
         except:
             raise InvalidSegmentParser
         
@@ -73,10 +73,10 @@ class AtariDosSegmentParser(SegmentParser):
 class AtariBootDiskSegmentParser(SegmentParser):
     menu_name = "Atari Boot Disk Image"
     
-    def parse(self, bytes):
-        self.segments.append(DefaultSegment(0, bytes))
+    def parse(self, doc):
+        self.segments.append(DefaultSegment(doc.bytes, doc.style, 0))
         try:
-            self.atr = AtariDosDiskImage(bytes)
+            self.atr = AtariDosDiskImage(doc.bytes, doc.style)
         except:
             raise InvalidSegmentParser
         
@@ -87,22 +87,22 @@ class AtariBootDiskSegmentParser(SegmentParser):
 class XexSegmentParser(SegmentParser):
     menu_name = "XEX (Atari 8-bit executable)"
     
-    def parse(self, bytes):
-        self.segments.append(DefaultSegment(0, bytes))
+    def parse(self, doc):
+        self.segments.append(DefaultSegment(doc.bytes, doc.style, 0))
         try:
-            xex = AtariDosFile(bytes)
+            xex = AtariDosFile(doc.bytes, doc.style)
         except InvalidBinaryFile:
             raise InvalidSegmentParser
 
         self.segments.extend(xex.segments)
 
 
-def guess_parser_for(mime, bytes):
+def guess_parser_for(mime, doc):
     parsers = mime_parsers[mime]
     found = None
     for parser in parsers:
         try:
-            found = parser(bytes)
+            found = parser(doc)
         except InvalidSegmentParser:
             pass
     return found
