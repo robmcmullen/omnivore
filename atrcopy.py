@@ -5,7 +5,10 @@ __version__ = "2.1.0"
 
 import types
 
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    raise RuntimeError("atrcopy %s requires numpy" % __version__)
 
 
 class AtrError(RuntimeError):

@@ -1,4 +1,4 @@
-ATRCopy
+atrcopy
 =======
 
 Utilities to list files on and extract files from Atari 8-bit emulator disk
@@ -7,7 +7,13 @@ images.  Eventually, I hope to add support for these images to pyfilesystem.
 Prerequisites
 -------------
 
-Starting with ATRcopy 2.0, numpy is required.
+Starting with atrcopy 2.0, numpy is required.
+
+The standard python install tool, pip, does not seem to be able to handle the
+automatic installation of numpy, so to install atrcopy, use::
+
+    pip install numpy
+    pip install atrcopy
 
 
 References

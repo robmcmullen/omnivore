@@ -5,7 +5,12 @@ try:
 except ImportError:
     from distutils.core import setup
 
-import atrcopy
+try:
+    import atrcopy
+    version = atrcopy.__version__
+except RuntimeError, e:
+    # If numpy isn't present, pull the version number from the error string
+    version = str(e).split()[1]
 
 classifiers = [
     "Programming Language :: Python :: 2",
@@ -19,7 +24,7 @@ with open("README.rst", "r") as fp:
     long_description = fp.read()
 
 setup(name="atrcopy",
-      version=atrcopy.__version__,
+      version=version,
       author="Rob McMullen",
       author_email="feedback@playermissile.com>",
       url="https://github.com/robmcmullen/atrcopy",
