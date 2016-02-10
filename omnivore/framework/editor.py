@@ -5,11 +5,12 @@ from fs.opener import opener
 import wx
 
 # Enthought library imports.
-from traits.api import on_trait_change, Any, Bool, Int, Unicode, Property, Dict
+from traits.api import on_trait_change, Any, Bool, Int, Unicode, Property, Dict, List
 from pyface.tasks.api import Editor
 from pyface.action.api import ActionEvent
 
 from omnivore.utils.command import StatusFlags
+from omnivore.utils.sortutil import collapse_overlapping_ranges
 
 from document import Document
 
@@ -64,6 +65,8 @@ class FrameworkEditor(Editor):
     anchor_initial_end_index = Int(0)
 
     anchor_end_index = Int(0)
+    
+    selected_ranges = List([])
     
     last_search_settings = Dict()
     
@@ -286,7 +289,9 @@ class FrameworkEditor(Editor):
         """
         self.anchor_start_index = self.anchor_initial_start_index = 0
         self.anchor_end_index = self.anchor_initial_end_index = len(self.document)
+        self.selected_ranges = [(self.anchor_start_index, self.anchor_end_index)]
         self.can_copy = (self.anchor_start_index != self.anchor_end_index)
+        self.highlight_selected_ranges()
         if refresh:
             self.refresh_panes()
 
@@ -295,8 +300,32 @@ class FrameworkEditor(Editor):
         """
         self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = self.cursor_index
         self.can_copy = False
+        self.selected_ranges = []
+        self.highlight_selected_ranges()
         if refresh:
             self.refresh_panes()
+    
+    def select_range(self, start, end, add=False, extend=False):
+        """ Adjust the current selection to the new start and end indexes
+        """
+        if extend:
+            self.selected_ranges[-1] = (start, end)
+        elif add:
+            self.selected_ranges.append((start, end))
+        else:
+            self.selected_ranges = [(start, end)]
+        self.anchor_start_index = start
+        self.anchor_end_index = end
+        self.highlight_selected_ranges()
+    
+    def highlight_selected_ranges(self):
+        pass
+    
+    def get_optimized_selected_ranges(self):
+        """ Get the list of monotonically increasing, non-overlapping selected
+        ranges
+        """
+        return collapse_overlapping_ranges(self.selected_ranges)
     
     def set_cursor(self, index, refresh=True):
         max_index = self.document_length() - 1

@@ -47,29 +47,22 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
             dc.DrawRectangleRect(rect)
         else:
             text, style = self.table.get_value_style(row, col)
-            
-            start, end = grid.editor.anchor_start_index, grid.editor.anchor_end_index
-            if start > end:
-                start, end = end, start
-#            print "r,c,index", row, col, index, "grid selection:", start, end
-            is_in_range = start <= index < end
-            if is_in_range:
-                dc.SetBrush(self.selected_brush)
+            if style & 0x80:
                 dc.SetPen(self.selected_pen)
+                dc.SetBrush(self.selected_brush)
                 dc.SetTextBackground(self.selected_background)
+            elif style & 1:
+                dc.SetPen(self.match_pen)
+                dc.SetBrush(self.match_brush)
+                dc.SetTextBackground(self.match_background)
+            elif style & 2:
+                dc.SetPen(self.comment_pen)
+                dc.SetBrush(self.comment_brush)
+                dc.SetTextBackground(self.comment_background)
             else:
-                if style & 1:
-                    dc.SetPen(self.match_pen)
-                    dc.SetBrush(self.match_brush)
-                    dc.SetTextBackground(self.match_background)
-                elif style & 128:
-                    dc.SetPen(self.comment_pen)
-                    dc.SetBrush(self.comment_brush)
-                    dc.SetTextBackground(self.comment_background)
-                else:
-                    dc.SetPen(self.normal_pen)
-                    dc.SetBrush(self.normal_brush)
-                    dc.SetTextBackground(self.normal_background)
+                dc.SetPen(self.normal_pen)
+                dc.SetBrush(self.normal_brush)
+                dc.SetTextBackground(self.normal_background)
             dc.DrawRectangleRect(rect)
 
             dc.SetBackgroundMode(wx.SOLID)
@@ -590,6 +583,7 @@ class ByteGrid(Grid.Grid):
 
         self.mouse_drag_started = False
         self.select_extend_mode = False
+        self.multi_select_mode = False
         self.allow_range_select = True
         self.updateUICallback = None
         self.Bind(Grid.EVT_GRID_CELL_LEFT_CLICK, self.on_left_down)
@@ -645,12 +639,19 @@ class ByteGrid(Grid.Grid):
 
     def on_left_up(self, evt):
         self.mouse_drag_started = False
+        self.select_extend_mode = False
+        self.multi_select_mode = False
 
     def on_left_down(self, evt):
         self.mouse_drag_started = True
         c, r = (evt.GetCol(), evt.GetRow())
         e = self.editor
-        self.select_extend_mode = evt.ShiftDown()
+        if evt.ControlDown():
+            self.multi_select_mode = True
+            self.select_extend_mode = False
+        elif evt.ShiftDown():
+            self.multi_select_mode = False
+            self.select_extend_mode = True
         if self.select_extend_mode:
             index1, index2 = self.table.get_index_range(r, c)
             if index1 < e.anchor_start_index:
@@ -665,6 +666,7 @@ class ByteGrid(Grid.Grid):
             e.anchor_initial_start_index, e.anchor_initial_end_index = self.table.get_index_range(r, c)
             e.anchor_start_index, e.anchor_end_index = e.anchor_initial_start_index, e.anchor_initial_end_index
             e.cursor_index = e.anchor_initial_start_index
+            e.select_range(e.anchor_start_index, e.anchor_end_index, add=self.multi_select_mode)
         wx.CallAfter(e.index_clicked, e.cursor_index, 0, None)
 
     def get_rc_from_event(self, evt):
@@ -707,32 +709,23 @@ class ByteGrid(Grid.Grid):
             r, c = self.get_rc_from_event(evt)
             index1, index2 = self.table.get_index_range(r, c)
             update = False
-            if evt.ShiftDown():
-                if not self.select_extend_mode:
-                    # Shift pressed during drag; turn into extend mode
-                    e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
+            if self.select_extend_mode:
                 if index1 < e.anchor_initial_start_index:
-                    e.anchor_start_index = index1
-                    e.anchor_end_index = e.anchor_initial_end_index
+                    e.select_range(index1, e.anchor_initial_end_index, extend=True)
                     update = True
                 else:
-                    e.anchor_start_index = e.anchor_initial_start_index
-                    e.anchor_end_index = index2
+                    e.select_range(e.anchor_initial_start_index, index2, extend=True)
                     update = True
             else:
                 if e.anchor_start_index <= index1:
                     if index2 != e.anchor_end_index:
-                        e.anchor_start_index = e.anchor_initial_start_index
-                        e.anchor_end_index = index2
+                        e.select_range(e.anchor_initial_start_index, index2, extend=self.multi_select_mode)
                         update = True
                 else:
                     if index1 != e.anchor_end_index:
-                        e.anchor_start_index = e.anchor_initial_end_index
-                        e.anchor_end_index = index1
+                        e.select_range(e.anchor_initial_end_index, index1, extend=self.multi_select_mode)
                         update = True
-            self.select_extend_mode = evt.ShiftDown()
             if update:
-                e.document.change_count += 1
                 e.cursor_index = index1
                 wx.CallAfter(e.index_clicked, e.cursor_index, 0, None)
 

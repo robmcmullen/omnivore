@@ -68,7 +68,7 @@ class ImageCache(object):
         dc.DrawBitmap(bmp, rect.x, rect.y)
     
     def draw_text_to_dc(self, dc, rect, text, style):
-        if style == -1:
+        if style & 0x80:
             dc.SetBrush(self.selected_brush)
             dc.SetPen(self.selected_pen)
             dc.SetTextBackground(self.selected_background)
@@ -76,7 +76,7 @@ class ImageCache(object):
             dc.SetPen(self.match_pen)
             dc.SetBrush(self.match_brush)
             dc.SetTextBackground(self.match_background)
-        elif style & 128:
+        elif style & 2:
             dc.SetPen(self.comment_pen)
             dc.SetBrush(self.comment_brush)
             dc.SetTextBackground(self.comment_background)
@@ -105,13 +105,6 @@ class CachingHexRenderer(Grid.PyGridCellRenderer):
             self.cache.draw_blank(dc, rect)
         else:
             text, style = self.table.get_value_style(row, col)
-            start, end = grid.editor.anchor_start_index, grid.editor.anchor_end_index
-            if start > end:
-                start, end = end, start
-#            print "r,c,index", row, col, index, "grid selection:", start, end
-            is_in_range = start <= index < end
-            if is_in_range:
-                style = -1
             self.cache.draw_text(dc, rect, text, style)
 
             r, c = self.table.get_row_col(grid.editor.cursor_index)

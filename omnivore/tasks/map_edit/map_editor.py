@@ -172,8 +172,11 @@ class SelectMode(MouseHandler):
         return extra
 
     def process_left_down(self, evt):
-        self.canvas.set_cursor_pos_from_event(evt)
+        FontMapScroller.on_left_down(self.canvas, evt)  # can't use self.canvas directly because it has an overridded method on_left_down
         self.display_coords(evt)
+
+    def process_left_up(self, evt):
+        FontMapScroller.on_left_up(self.canvas, evt)  # can't use self.canvas directly because it has an overridded method on_left_down
 
     def process_mouse_motion_down(self, evt):
         self.canvas.set_selection_from_event(evt)
@@ -447,6 +450,12 @@ class MapEditor(HexEditor):
             data_obj.SetData("%d,%d,%s" % (r2 - r1, c2 - c1, data.tostring()))
             return data_obj
         return None
+    
+    def highlight_selected_ranges(self):
+        s = self.segment
+        s.clear_style_bits(selected=True)
+        s.set_style_ranges_rect(self.selected_ranges, selected=True)
+        self.document.change_count += 1
     
     ###########################################################################
     # Trait handlers.

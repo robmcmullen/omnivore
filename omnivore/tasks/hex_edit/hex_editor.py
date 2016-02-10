@@ -436,6 +436,12 @@ class HexEditor(FrameworkEditor):
             indexes[1:5] = 0
         self.cursor_index, self.anchor_initial_start_index, self.anchor_start_index, self.anchor_initial_end_index, self.anchor_end_index = list(indexes)
     
+    def highlight_selected_ranges(self):
+        s = self.segment
+        s.clear_style_bits(selected=True)
+        s.set_style_ranges(self.selected_ranges, selected=True)
+        self.document.change_count += 1
+    
     def get_segment_from_selection(self):
         data = self.segment[self.anchor_start_index:self.anchor_end_index]
         style = self.segment.style[self.anchor_start_index:self.anchor_end_index]

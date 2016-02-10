@@ -56,7 +56,6 @@ class BitviewScroller(wx.ScrolledWindow):
         self.task = task
         self.editor = None
         self.segment = None
-        self.background_color = None
         self.max_zoom = 16
         self.min_zoom = 1
         self.bytes_per_row = 1
@@ -81,6 +80,7 @@ class BitviewScroller(wx.ScrolledWindow):
         self.rect_select = False
         
         self.select_extend_mode = False
+        self.multi_select_mode = False
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_resize)
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
@@ -112,9 +112,6 @@ class BitviewScroller(wx.ScrolledWindow):
             self.segment = editor.segment
             self.rect_select = editor.rect_select
             self.start_addr = editor.segment.start_addr
-            self.match_color = self.editor.match_background_color
-            self.comment_color = self.editor.comment_background_color
-            self.background_color = self.editor.empty_color
             self.set_colors()
             self.set_font()
             self.update_bytes_per_row()
@@ -167,52 +164,12 @@ class BitviewScroller(wx.ScrolledWindow):
         anchor_start, anchor_end = e.anchor_start_index, e.anchor_end_index
         r1 = c1 = r2 = c2 = -1
         if self.rect_select:
-            anchor_start, anchor_end, (r1, c1), (r2, c2) = self.get_rect_indexes(anchor_start, anchor_end)
+            anchor_start, anchor_end, (r1, c1), (r2, c2) = self.segment.get_rect_indexes(anchor_start, anchor_end)
         elif anchor_start > anchor_end:
             anchor_start, anchor_end = anchor_end, anchor_start
         elif anchor_start == anchor_end:
             anchor_start = e.cursor_index
             anchor_end = anchor_start + 1
-        return anchor_start, anchor_end, (r1, c1), (r2, c2)
-    
-    def get_rect_indexes(self, anchor_start, anchor_end):
-        # determine row,col of upper left and lower right of selected
-        # rectangle.  The values are inclusive, so ul=(0,0) and lr=(1,2)
-        # is 2 rows and 3 columns.  Columns need to be adjusted slightly
-        # depending on quadrant of selection because anchor indexes are
-        # measured as cursor positions, that is: positions between the
-        # bytes where as rect select needs to think of the selections as
-        # on the byte positions themselves, not in between.
-        bpr = self.bytes_per_row
-        r1, c1 = divmod(anchor_start, bpr)
-        r2, c2 = divmod(anchor_end, bpr)
-        log.debug("rect select before:       anchors=%d,%d ul=%s lr=%s" % ( anchor_start, anchor_end, (r1, c1), (r2, c2)))
-        if c1 >= c2:
-            # start column is to the right of the end column so columns
-            # need to be swapped
-            if r1 >= r2:
-                # start row is below end row, so rows swapped as well
-                c1, c2 = c2, c1 + 1
-                r1, r2 = r2, r1
-            elif c2 == 0:
-                # When the cursor is at the end of a line, anchor_end points
-                # to the first character of the next line.  Handle this
-                # special case by pointing to end of the previous line.
-                c2 = bpr
-                r2 -= 1
-            else:
-                c1, c2 = c2 - 1, c1 + 1
-        else:
-            # start column is to the left of the end column, so don't need
-            # to swap columns
-            if r1 > r2:
-                # start row is below end row
-                r1, r2 = r2, r1
-                c2 += 1
-        anchor_start = r1 * bpr + c1
-        anchor_end = r2 * bpr + c2
-        r2 += 1
-        log.debug("rect select computations: anchors=%d,%d ul=%s lr=%s" % ( anchor_start, anchor_end, (r1, c1), (r2, c2)))
         return anchor_start, anchor_end, (r1, c1), (r2, c2)
     
     def get_image(self):
@@ -245,7 +202,7 @@ class BitviewScroller(wx.ScrolledWindow):
             self.scaled_bmp = wx.EmptyBitmap(w, h)
             
             dc.SelectObject(self.scaled_bmp)
-            dc.SetBackground(wx.Brush(self.background_color))
+            dc.SetBackground(wx.Brush(self.editor.empty_color))
             dc.Clear()
             
             array = self.get_image()
@@ -385,7 +342,8 @@ class BitviewScroller(wx.ScrolledWindow):
         evt.Skip()
 
     def on_left_up(self, evt):
-        evt.Skip()
+        self.multi_select_mode = False
+        self.select_extend_mode = False
 
     def set_cursor_pos_from_event(self, evt):
         e = self.editor
@@ -405,7 +363,29 @@ class BitviewScroller(wx.ScrolledWindow):
 
     def on_left_down(self, evt):
         self.set_cursor_pos_from_event(evt)
-        evt.Skip()
+        if evt.ControlDown():
+            self.multi_select_mode = True
+            self.select_extend_mode = False
+        elif evt.ShiftDown():
+            self.multi_select_mode = False
+            self.select_extend_mode = True
+        e = self.editor
+        byte, bit, inside = self.event_coords_to_byte(evt)
+        index1 = byte
+        index2 = byte + 1
+        if self.select_extend_mode:
+            if index1 < e.anchor_start_index:
+                e.anchor_start_index = index1
+                e.cursor_index = index1
+            elif index2 > e.anchor_start_index:
+                e.anchor_end_index = index2
+                e.cursor_index = index2
+            e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
+        else:
+            e.anchor_initial_start_index, e.anchor_initial_end_index = index1, index2
+            e.anchor_start_index, e.anchor_end_index = e.anchor_initial_start_index, e.anchor_initial_end_index
+            e.cursor_index = e.anchor_initial_start_index
+            e.select_range(e.anchor_start_index, e.anchor_end_index, add=self.multi_select_mode)
 
     def on_left_dclick(self, evt):
         self.on_left_down(evt)
@@ -418,34 +398,27 @@ class BitviewScroller(wx.ScrolledWindow):
             index2 = byte + 1
 #                print index1, index2, e.anchor_start_index, e.anchor_end_index
             update = False
-            if evt.ShiftDown():
-                if not self.select_extend_mode:
-                    # Shift pressed during drag; turn into extend mode
-                    e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
+            update = False
+            if self.select_extend_mode:
                 if index1 < e.anchor_initial_start_index:
-                    e.anchor_start_index = index1
-                    e.anchor_end_index = e.anchor_initial_end_index
+                    e.select_range(index1, e.anchor_initial_end_index, extend=True)
                     e.cursor_index = index1
                     update = True
                 else:
-                    e.anchor_start_index = e.anchor_initial_start_index
-                    e.anchor_end_index = index2
+                    e.select_range(e.anchor_initial_start_index, index2, extend=True)
                     e.cursor_index = index2
                     update = True
             else:
                 if e.anchor_start_index <= index1:
                     if index2 != e.anchor_end_index:
-                        e.anchor_start_index = e.anchor_initial_start_index
-                        e.anchor_end_index = index2
+                        e.select_range(e.anchor_initial_start_index, index2, extend=self.multi_select_mode)
                         e.cursor_index = index2
                         update = True
                 else:
                     if index1 != e.anchor_end_index:
-                        e.anchor_start_index = e.anchor_initial_end_index
-                        e.anchor_end_index = index1
+                        e.select_range(e.anchor_initial_end_index, index1, extend=self.multi_select_mode)
                         e.cursor_index = index1
                         update = True
-            self.select_extend_mode = evt.ShiftDown()
             if update:
                 if self.rect_select:
                     index = byte
@@ -608,52 +581,47 @@ class BitmapScroller(BitviewScroller):
         bitwidth = 8 * self.bytes_per_row
         border = self.border_width
         width = bitwidth + 2 * border
+        
+        e = self.editor
         array = np.empty((nr, width, 3), dtype=np.uint8)
         array[:,border:border + bitwidth,0] = bits
         array[:,border:border + bitwidth,1] = bits
         array[:,border:border + bitwidth,2] = bits
-        array[:,0:border,:] = self.background_color
-        array[:,border + bitwidth:width,:] = self.background_color
-        array[count:,border:border + bitwidth,:] = self.background_color
-        e = self.editor
-        start_index, end_index, rc1, rc2 = self.get_highlight_indexes()
-        start_highlight = max(start_index - self.start_byte, 0)
-        end_highlight = min(end_index - self.start_byte, count)
-        log.debug("highlight %d-%d" % (start_highlight, end_highlight))
+        array[:,0:border,:] = e.empty_color
+        array[:,border + bitwidth:width,:] = e.empty_color
+        array[count:,border:border + bitwidth,:] = e.empty_color
         
         mask = array == (255, 255, 255)
         mask = np.all(mask, axis=2)
         
         # highlight any comments
-        match = style & 0x80
-        style_mask = match==0x80
+        match = style & 0x2
+        style_mask = match==0x2
         # This doesn't do anything! A mask of a mask apparently doesn't work
-        # array[style_mask,:,:][mask[style_mask]] = self.comment_color
+        # array[style_mask,:,:][mask[style_mask]] = e.comment_background_color
         s = np.tile(style_mask, (mask.shape[1], 1)).T
         m2 = np.logical_and(mask, s)
-        array[m2] = self.comment_color
-        array[style_mask,0:border,:] = self.comment_color
-        array[style_mask,border + bitwidth:width,:] = self.comment_color
+        array[m2] = e.comment_background_color
+        array[style_mask,0:border,:] = e.comment_background_color
+        array[style_mask,border + bitwidth:width,:] = e.comment_background_color
         
         # highlight any matches
         match = style & 0x1
         style_mask = match==0x1
         s = np.tile(style_mask, (mask.shape[1], 1)).T
         m2 = np.logical_and(mask, s)
-        array[m2] = self.match_color
-        array[style_mask,0:border,:] = self.match_color
-        array[style_mask,border + bitwidth:width,:] = self.match_color
-
-        if start_highlight < count and end_highlight >= 0:
-            # change all white pixels to the highlight color.  The mask
-            # must be collapsed on the color axis to result in one entry
-            # per row so it can be applied to the array.
-            array[start_highlight:end_highlight,:,:][mask[start_highlight:end_highlight]] = self.editor.highlight_color
-            
-            # Highlight the border areas so the selection is visible even
-            # if there's an all-filled area
-            array[start_highlight:end_highlight,0:border,:] = self.editor.highlight_color
-            array[start_highlight:end_highlight,border + bitwidth:width,:] = self.editor.highlight_color
+        array[m2] = e.match_background_color
+        array[style_mask,0:border,:] = e.match_background_color
+        array[style_mask,border + bitwidth:width,:] = e.match_background_color
+        
+        # highlight selection
+        match = style & 0x80
+        style_mask = match==0x80
+        s = np.tile(style_mask, (mask.shape[1], 1)).T
+        m2 = np.logical_and(mask, s)
+        array[m2] = e.highlight_color
+        array[style_mask,0:border,:] = e.highlight_color
+        array[style_mask,border + bitwidth:width,:] = e.highlight_color
 
         return array
     
@@ -668,38 +636,35 @@ class BitmapScroller(BitviewScroller):
         bitimage[:,:,1] = bits
         bitimage[:,:,2] = bits
         e = self.editor
-        start_index, end_index, rc1, rc2 = self.get_highlight_indexes()
-        start_highlight = max(start_index - self.start_byte, 0)
-        end_highlight = min(end_index - self.start_byte, count)
-        log.debug("highlight %d-%d" % (start_highlight, end_highlight))
         
         array = bitimage.reshape((-1, 8, 3))
-        array[count:,:,:] = self.background_color
+        array[count:,:,:] = e.empty_color
 
         mask = array == (255, 255, 255)
         mask = np.all(mask, axis=2)
         
         # highlight any comments
-        match = style & 0x80
-        style_mask = match==0x80
+        match = style & 0x2
+        style_mask = match==0x2
         # This doesn't do anything! A mask of a mask apparently doesn't work
-        # array[style_mask,:,:][mask[style_mask]] = self.comment_color
+        # array[style_mask,:,:][mask[style_mask]] = e.comment_background_color
         s = np.tile(style_mask, (mask.shape[1], 1)).T
         m2 = np.logical_and(mask, s)
-        array[m2] = self.comment_color
+        array[m2] = e.comment_background_color
         
         # highlight any matches
         match = style & 0x1
         style_mask = match==0x1
         s = np.tile(style_mask, (mask.shape[1], 1)).T
         m2 = np.logical_and(mask, s)
-        array[m2] = self.match_color
-
-        if start_highlight < count and end_highlight >= 0:
-            # change all white pixels to the highlight color.  The mask
-            # must be collapsed on the color axis to result in one entry
-            # per row so it can be applied to the array.
-            array[start_highlight:end_highlight,:,:][mask[start_highlight:end_highlight]] = self.editor.highlight_color
+        array[m2] = e.match_background_color
+        
+        # highlight selection
+        match = style & 0x80
+        style_mask = match==0x80
+        s = np.tile(style_mask, (mask.shape[1], 1)).T
+        m2 = np.logical_and(mask, s)
+        array[m2] = e.match_background_color
 
         return bitimage
     
@@ -804,12 +769,13 @@ class FontMapScroller(BitviewScroller):
         style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
         
-        anchor_start, anchor_end, rc1, rc2 = self.get_highlight_indexes()
+        e = self.editor
         if speedups is not None:
-            array = speedups.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, self.background_color, self.font, self.font_mapping, anchor_start, anchor_end, self.rect_select, rc1, rc2)
+            array = speedups.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, e.empty_color, self.font, self.font_mapping)
         else:
-            array = self.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, self.background_color, self.font, self.font_mapping, anchor_start, anchor_end, self.rect_select, rc1, rc2)
+            array = self.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, e.empty_color, self.font, self.font_mapping)
         
+        anchor_start, anchor_end, rc1, rc2 = self.get_highlight_indexes()
         self.show_highlight(array, rc1, rc2)
         
         return array
@@ -831,18 +797,19 @@ class FontMapScroller(BitviewScroller):
         ymax = array.shape[0]
         c1 = max(x1, 0)
         c2 = min(x2, xmax)
+        e = self.editor
         if y1 >= 0 and y1 < ymax and c2 > c1:
-            array[y1, c1:c2 + 1] = self.background_color
+            array[y1, c1:c2 + 1] = e.empty_color
         if y2 >= 0 and y2 < ymax and c2 > c1:
-            array[y2, c1:c2 + 1] = self.background_color
+            array[y2, c1:c2 + 1] = e.empty_color
         c1 = max(y1, 0)
         c2 = min(y2, ymax)
         if x1 >= 0 and x1 < xmax and c2 > c1:
-            array[c1:c2 + 1, x1] = self.background_color
+            array[c1:c2 + 1, x1] = e.empty_color
         if x2 >= 0 and x2 < xmax and c2 > c1:
-            array[c1:c2 + 1, x2] = self.background_color
+            array[c1:c2 + 1, x2] = e.empty_color
     
-    def get_numpy_font_map_image(self, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, font, font_mapping, anchor_start, anchor_end, rect_select, rc1, rc2):
+    def get_numpy_font_map_image(self, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, font, font_mapping):
         width = int(font.char_w * num_cols)
         height = int(num_rows * font.char_h)
         log.debug("pixel width: %dx%d" % (width, height))
@@ -856,9 +823,6 @@ class FontMapScroller(BitviewScroller):
         fh = font.highlight_font
         fm = font.match_font
         fc = font.comment_font
-        if rect_select:
-            r1, c1 = rc1
-            r2, c2 = rc2
         for j in range(num_rows):
             x = 0
             for i in range(start_col, start_col + num_cols):
@@ -866,11 +830,12 @@ class FontMapScroller(BitviewScroller):
                     array[y:y+8,x:x+8,:] = background_color
                 else:
                     c = font_mapping[bytes[j, i]]
-                    if anchor_start <= e + i < anchor_end and (not rect_select or c1 <= i < c2):
+                    s = style[j, i]
+                    if s & 0x80:
                         array[y:y+8,x:x+8,:] = fh[c]
-                    elif style[j, i] & 1:
+                    elif s & 1:
                         array[y:y+8,x:x+8,:] = fm[c]
-                    elif style[j, i] & 0x80:
+                    elif s & 2:
                         array[y:y+8,x:x+8,:] = fc[c]
                     else:
                         array[y:y+8,x:x+8,:] = f[c]
@@ -1075,7 +1040,6 @@ class CharacterSetViewer(FontMapScroller):
         editor = self.task.active_editor
         if editor is not None:
             self.editor = editor
-            self.background_color = self.editor.empty_color
             self.set_colors()
             self.set_font()
             self.set_scale()
@@ -1177,23 +1141,27 @@ class MemoryMapScroller(BitviewScroller):
             self.end_byte = len(self.segment)
             bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
             bytes[0:self.end_byte - self.start_byte] = self.segment[sr * self.bytes_per_row:self.end_byte]
+            style = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
+            style[0:self.end_byte - self.start_byte] = self.segment.style[sr * self.bytes_per_row:self.end_byte]
         else:
-            bytes = self.segment[sr * self.bytes_per_row:self.end_byte]
+            bytes = self.segment[self.start_byte:self.end_byte]
+            style = self.segment.style[self.start_byte:self.end_byte]
         bytes = bytes.reshape((nr, -1))
+        style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
         
         e = self.editor
         anchor_start, anchor_end, rc1, rc2 = self.get_highlight_indexes()
         if speedups is not None:
-            array = speedups.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, self.background_color, anchor_start, anchor_end, e.highlight_color, self.rect_select, rc1, rc2)
+            array = speedups.get_numpy_memory_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, e.empty_color, e.highlight_color)
         else:
-            array = self.get_numpy_memory_map_image(bytes, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, self.background_color, anchor_start, anchor_end, e.highlight_color, self.rect_select, rc1, rc2)
+            array = self.get_numpy_memory_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, e.empty_color, e.highlight_color)
         log.debug(array.shape)
         t = time.clock()
         log.debug("get_image: time %f" % (t - t0))
         return array
 
-    def get_numpy_memory_map_image(self, bytes, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, anchor_start, anchor_end, selected_color, rect_select, rc1, rc2):
+    def get_numpy_memory_map_image(self, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, selected_color):
         log.debug("SLOW VERSION OF get_numpy_memory_map_image!!!")
         num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) / bytes_per_row
         
@@ -1209,16 +1177,14 @@ class MemoryMapScroller(BitviewScroller):
         
         y = 0
         e = start_byte
-        if rect_select:
-            r1, c1 = rc1
-            r2, c2 = rc2
         for j in range(end_row):
             x = 0
             for i in range(start_col, end_col):
                 if e + i >= end_byte:
                     break
                 c = bytes[j, i] ^ 0xff
-                if anchor_start <= e + i < anchor_end and (not rect_select or c1 <= i < c2):
+                s = style[j, i]
+                if s & 0x80:
                     r = selected_color[0] * c >> 8
                     g = selected_color[1] * c >> 8
                     b = selected_color[2] * c >> 8
