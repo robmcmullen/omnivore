@@ -264,26 +264,25 @@ class DefaultSegment(object):
     def tostring(self):
         return self.data.tostring()
     
-    def get_style_bits(self, match=False, comment=False):
+    def get_style_bits(self, match=False, comment=False, selected=False):
         style_bits = 0
         if match:
             style_bits |= 1
         if comment:
+            style_bits |= 2
+        if selected:
             style_bits |= 0x80
         return style_bits
     
-    def get_style_mask(self, match=False, comment=False):
-        style_mask = 0xff
-        if match:
-            style_mask &= 0xfe
-        if comment:
-            style_mask &= 0x7f
-        return style_mask
+    def get_style_mask(self, **kwargs):
+        return 0xff ^ self.get_style_bits(**kwargs)
     
     def set_style_ranges(self, ranges, **kwargs):
         style_bits = self.get_style_bits(**kwargs)
         s = self.style
         for start, end in ranges:
+            if end < start:
+                start, end = end, start
             s[start:end] |= style_bits
     
     def clear_style_bits(self, **kwargs):
