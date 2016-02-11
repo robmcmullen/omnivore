@@ -123,3 +123,20 @@ class TestInvertRanges(object):
             processed = invert_ranges(after, size)
             assert processed == before
             print size, before, processed, after
+
+class TestInvertRects(object):
+    def setup(self):
+        self.items = [
+            ([[(5, 16), (8, 21)], ], 10, 50, [[(0, 0), (5, 16)], [(0, 16), (5, 21)], [(0, 21), (5, 50)], [(5, 0), (8, 16)], [(5, 21), (8, 50)], [(8, 0), (10, 16)], [(8, 16), (10, 21)], [(8, 21), (10, 50)]]),
+            ]
+
+    def test_simple(self):
+        for before, rows, cols, after in self.items:
+            processed = invert_rects(before, rows, cols)
+            print rows, cols, before, processed, after
+            assert processed == after
+
+if __name__ == "__main__":
+    t = TestInvertRects()
+    t.setup()
+    t.test_simple()

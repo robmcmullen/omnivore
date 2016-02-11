@@ -18,6 +18,7 @@ from omnivore.utils.wx.bitviewscroller import FontMapScroller
 from omnivore.utils.command import Overlay
 from omnivore.utils.searchutil import HexSearcher, CharSearcher
 from omnivore.utils.drawutil import get_bounds
+from omnivore.utils.sortutil import invert_rects
 from omnivore.tasks.hex_edit.commands import ChangeByteCommand, PasteCommand
 from omnivore.framework.mouse_handler import MouseHandler
 
@@ -456,6 +457,12 @@ class MapEditor(HexEditor):
         s.clear_style_bits(selected=True)
         s.set_style_ranges_rect(self.selected_ranges, selected=True)
         self.document.change_count += 1
+    
+    def invert_selection_ranges(self, ranges):
+        rects = [(rect[2], rect[3]) for rect in [self.segment.get_rect_indexes(r[0], r[1]) for r in ranges]]
+        inverted = invert_rects(rects, self.control.total_rows, self.control.bytes_per_row)
+        ranges = self.segment.rects_to_ranges(inverted)
+        return ranges
     
     ###########################################################################
     # Trait handlers.

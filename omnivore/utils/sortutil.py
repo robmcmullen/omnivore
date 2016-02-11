@@ -1,3 +1,5 @@
+import numpy as np
+
 from pyface.tasks.topological_sort import topological_sort
 
 def find_wildcard_matches(item_map, pattern):
@@ -107,3 +109,34 @@ def invert_ranges(ranges, last):
     if first < last:
         inverted.append((first, last))
     return inverted
+
+def invert_rects(rects, numr, numc):
+    # Purely heuristic approach.  An algorithmic approach might be based on:
+    # http://stackoverflow.com/questions/30818645 but this one breaks up the
+    # entire space into a set of rectangles with boundaries at every possible
+    # row/col boundary of all the contained rectangles.
+    
+    # Get list of all referenced rows and cols
+    rows = sorted(list(set([r[0] for rect in rects for r in rect]).union(set([0, numr]))))
+    cols = sorted(list(set([r[1] for rect in rects for r in rect]).union(set([0, numc]))))
+    
+    # create inside/outside flags for each row/col in the entire grid
+    inside = np.zeros((numr, numc), dtype=np.bool_)
+    for [(r1, c1), (r2, c2)] in rects:
+        inside[r1:r2, c1:c2] = True
+    
+    # create lo/hi values for each subdivision of the grid
+    rowpairs = [(rows[i], rows[i+1]) for i in range(len(rows) - 1)]
+    colpairs = [(cols[i], cols[i+1]) for i in range(len(cols) - 1)]
+    
+    # create a rectangle at each intersection point and if it's outside the
+    # original set of rectangles, add it to the list
+    outside = []
+    for r1, r2 in rowpairs:
+        for c1, c2 in colpairs:
+            if not inside[r1, c1]:
+                outside.append([(r1, c1), (r2, c2)])
+    
+    # optimization: merge neighboring rectangles that share common edges
+    
+    return outside
