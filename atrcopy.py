@@ -20,14 +20,24 @@ class InvalidAtrHeader(AtrError):
 class InvalidDiskImage(AtrError):
     pass
 
+class InvalidDirent(AtrError):
+    pass
+
 class LastDirent(AtrError):
     pass
 
-class FileNumberMismatchError164(AtrError):
+class InvalidFile(AtrError):
     pass
 
-class ByteNotInFile166(AtrError):
+class FileNumberMismatchError164(InvalidFile):
     pass
+
+class ByteNotInFile166(InvalidFile):
+    pass
+
+class InvalidBinaryFile(InvalidFile):
+    pass
+
 
 class AtrHeader(object):
     # ATR Format described in http://www.atarimax.com/jindroush.atari.org/afmtatr.html
@@ -139,6 +149,9 @@ class AtrDirent(object):
         self.filename = ""
         self.ext = ""
         self.is_sane = True
+        self.current_sector = 0
+        self.current_read = 0
+        self.sectors_seen = None
         if bytes is None:
             return
         values = bytes.view(dtype=self.format)[0]  
@@ -155,7 +168,6 @@ class AtrDirent(object):
         self.starting_sector = int(values[2])
         self.filename = str(values[3]).rstrip()
         self.ext = str(values[4]).rstrip()
-        self.current_sector = 0
         self.is_sane = self.sanity_check(disk)
     
     def __str__(self):
@@ -180,8 +192,11 @@ class AtrDirent(object):
         return True
     
     def start_read(self):
+        if not self.is_sane:
+            raise InvalidDirent("Invalid directory entry '%s'" % str(self))
         self.current_sector = self.starting_sector
         self.current_read = self.num_sectors
+        self.sectors_seen = set()
     
     def read_sector(self, disk):
         raw, pos, size = disk.get_raw_bytes(self.current_sector)
@@ -192,7 +207,11 @@ class AtrDirent(object):
         file_num = raw[-3] >> 2
         if file_num != self.file_num:
             raise FileNumberMismatchError164()
-        self.current_sector = ((raw[-3] & 0x3) << 8) + raw[-2]
+        self.sectors_seen.add(self.current_sector)
+        next_sector = ((raw[-3] & 0x3) << 8) + raw[-2]
+        if next_sector in self.sectors_seen:
+            raise InvalidFile("Bad sector pointer data: attempting to reread sector %d" % next_sector)
+        self.current_sector = next_sector
         num_bytes = raw[-1]
         return raw[0:num_bytes], num_bytes
     
@@ -207,10 +226,6 @@ class MydosDirent(AtrDirent):
         self.current_sector = (raw[-3] << 8) + raw[-2]
         num_bytes = raw[-1]
         return raw[0:num_bytes], num_bytes
-
-
-class InvalidBinaryFile(AtrError):
-    pass
 
 
 class SegmentSaver(object):
@@ -377,6 +392,16 @@ class DefaultSegment(object):
         if self._search_copy is None:
             self._search_copy = self.data.tostring()
         return self._search_copy
+
+class EmptySegment(DefaultSegment):
+    def __init__(self, data, style, name="", error=None):
+        DefaultSegment.__init__(self, data, style, 0, name, error)
+    
+    def __str__(self):
+        return "%s (empty file)" % (self.name, )
+    
+    def __len__(self):
+        return 0
 
 class ObjSegment(DefaultSegment):
     def __init__(self, data, style, metadata_start, data_start, start_addr, end_addr,  name="", error=None):
@@ -608,7 +633,10 @@ class DiskImageBase(object):
     def get_file_segments(self):
         segments = []
         for dirent in self.files:
-            segment = self.get_file_segment(dirent)
+            try:
+                segment = self.get_file_segment(dirent)
+            except InvalidFile, e:
+                segment = EmptySegment(self.data, style, name=dirent.get_filename(), error=str(e))
             segments.append(segment)
         return segments
 
@@ -734,7 +762,7 @@ class AtariDosDiskImage(DiskImageBase):
             addr = int(values[2])
             bytes, style = self.get_sectors(1, num)
             header = ObjSegment(bytes[0:20], style[0:20], 0, 0, addr, addr + 20, name="Boot Header")
-            sectors = ObjSegment(bytes, style, 0, 0, addr, addr + len(bytes), bytes, name="Boot Sectors")
+            sectors = ObjSegment(bytes, style, 0, 0, addr, addr + len(bytes), name="Boot Sectors")
             code = ObjSegment(bytes[20:], style[20:], 0, 0, addr + 20, addr + len(bytes), name="Boot Code")
             segments = [sectors, header, code]
         return segments
@@ -771,7 +799,10 @@ class AtariDosDiskImage(DiskImageBase):
             byte_order.extend(range(pos, pos + size))
             if last:
                 break
-        segment = IndexedByteSegment(self.bytes, self.style, byte_order, name=dirent.get_filename())
+        if len(byte_order) > 0:
+            segment = IndexedByteSegment(self.bytes, self.style, byte_order, name=dirent.get_filename())
+        else:
+            segment = EmptySegment(self.bytes, self.style, name=dirent.get_filename())
         return segment
 
 
