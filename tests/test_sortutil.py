@@ -1,8 +1,6 @@
 import os
 import itertools
 
-from nose.tools import *
-
 from pyface.tasks.topological_sort import before_after_sort
 from omnivore.utils.sortutil import *
 
