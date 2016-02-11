@@ -353,6 +353,15 @@ class DefaultSegment(object):
             indexes = np.tile(np.arange(c), r) + np.repeat(np.arange(r) * self.map_width, c) + start
             s[indexes] |= style_bits
     
+    def rects_to_ranges(self, rects):
+        ranges = []
+        bpr = self.map_width
+        for (r1, c1), (r2, c2) in rects:
+            start = r1 * bpr + c1
+            end = (r2 - 1) * bpr + c2
+            ranges.append((start, end))
+        return ranges
+    
     def clear_style_bits(self, **kwargs):
         style_mask = self.get_style_mask(**kwargs)
         self.style &= style_mask
