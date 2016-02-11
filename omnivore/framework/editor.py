@@ -343,7 +343,7 @@ class FrameworkEditor(Editor):
         return collapse_overlapping_ranges(self.selected_ranges)
     
     def invert_selection_ranges(self, ranges):
-        return invert_ranges(ranges, len(self.document))
+        return invert_ranges(ranges, len(self.segment))
     
     def set_cursor(self, index, refresh=True):
         max_index = self.document_length() - 1
