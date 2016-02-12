@@ -9,14 +9,14 @@ import subprocess
 import tempfile
 
 def create_binary(filename, num, outfile, options):
-    """Create patterned binary data with the filename interleaved with a byte
-    ramp, e.g.  A128\x00A128\x01A128\x02 etc.
+    """Create patterned binary data with the first 7 characters of the filename
+    interleaved with a byte ramp, e.g.  A128   \x00A128   \x01A128   \x02 etc.
     """
     root, _ = outfile.split(".")
-    a = np.fromstring(root + " ", dtype=np.uint8)
+    prefix = ("%s        " % root)[0:8]
+    a = np.fromstring(prefix, dtype=np.uint8)
     b = np.tile(a, (num / np.alen(a)) + 1)[0:num]
-    e = np.where(b == 32)[0]
-    b[e] = np.arange(np.alen(e), dtype=np.uint8)
+    b[7::8] = np.arange(np.alen(b) / 8, dtype=np.uint8)
     with open(filename, "wb") as fh:
         fh.write(b.tostring())
 
@@ -78,12 +78,23 @@ if __name__ == "__main__":
                 repeat, num = entry.split("*", 1)
                 num = int(num)
                 repeat = int(repeat)
+                entries = [num] * repeat
+            elif "-" in entry:
+                first, last = entry.split("-", 1)
+                first = int(first)
+                if "," in last:
+                    last, step = last.split(",", 1)
+                    step = int(step)
+                else:
+                    step = 1
+                last = int(last)
+                entries = range(first, last + 1, step)
             else:
                 num = int(entry)
-                repeat = 1
-            for i in range(repeat):
-                outfile = get_filename(num, used)
-                create_binary(binfile, num, outfile, options)
+                entries = [num]
+            for i in entries:
+                outfile = get_filename(i, used)
+                create_binary(binfile, i, outfile, options)
                 franny(out, "-A", "-i", binfile, "-o", outfile)
                 files.append(outfile)
     os.unlink(binfile)
