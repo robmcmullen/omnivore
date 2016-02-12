@@ -23,13 +23,18 @@ classifiers = [
 with open("README.rst", "r") as fp:
     long_description = fp.read()
 
+if sys.platform.startswith("win"):
+    scripts = ["scripts/atrcopy.bat"]
+else:
+    scripts = ["scripts/atrcopy"]
+
 setup(name="atrcopy",
       version=version,
       author="Rob McMullen",
       author_email="feedback@playermissile.com>",
       url="https://github.com/robmcmullen/atrcopy",
       py_modules=["atrcopy"],
-      scripts=["scripts/atrcopy"],
+      scripts=scripts,
       description="Disk image utilities for Atari 8-bit emulators",
       long_description=long_description,
       license="GPL",
