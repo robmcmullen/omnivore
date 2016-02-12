@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-__version__ = "2.1.1"
+__version__ = "2.2.0"
 
 import types
 
@@ -543,11 +543,20 @@ class DiskImageBase(object):
             self.filename, self.ext = filename.rsplit(".", 1)
         else:
             self.filename, self.ext = filename, ""
+    
+    def dir(self):
+        lines = []
+        lines.append(str(self))
+        for dirent in self.files:
+            if dirent.in_use:
+                lines.append(str(dirent))
+        return "\n".join(lines)
 
     def setup(self):
         self.size = np.alen(self.bytes)
         self.read_atr_header()
         self.check_size()
+        self.get_boot_sector_info()
         self.get_vtoc()
         self.get_directory()
         self.check_sane()
@@ -565,6 +574,9 @@ class DiskImageBase(object):
     
     def check_size(self):
         self.header.check_size(self.size)
+    
+    def get_boot_sector_info(self):
+        pass
     
     def get_vtoc(self):
         pass
@@ -623,6 +635,12 @@ class DiskImageBase(object):
     def get_directory_segments(self):
         return []
     
+    def find_file(self, filename):
+        for dirent in self.files:
+            if filename == dirent.get_filename():
+                return self.get_file(dirent)
+        return ""
+    
     def get_file(self, dirent):
         segment = self.get_file_segment(dirent)
         return segment.tostring()
@@ -672,18 +690,7 @@ class AtariDosDiskImage(DiskImageBase):
         DiskImageBase.__init__(self, bytes, style)
     
     def __str__(self):
-        if self.all_sane:
-            return "%s Atari DOS Format: %d usable sectors (%d free), %d files" % (self.header, self.total_sectors, self.unused_sectors, len(self.files))
-        else:
-            return "%s bad directory entries; possible boot disk? Use -f option to try to extract anyway" % self.header
-    
-    def dir(self):
-        lines = []
-        lines.append(str(self))
-        for dirent in self.files:
-            if dirent.in_use:
-                lines.append(str(dirent))
-        return "\n".join(lines)
+        return "%s Atari DOS Format: %d usable sectors (%d free), %d files" % (self.header, self.total_sectors, self.unused_sectors, len(self.files))
     
     vtoc_type = np.dtype([
         ('code', 'u1'),
@@ -728,12 +735,6 @@ class AtariDosDiskImage(DiskImageBase):
             i += 16
             num += 1
         self.files = files
-    
-    def find_file(self, filename):
-        for dirent in self.files:
-            if filename == dirent.get_filename():
-                return self.get_file(dirent)
-        return ""
     
     boot_record_type = np.dtype([
         ('BFLAG', 'u1'),
@@ -856,6 +857,109 @@ class KBootImage(DiskImageBase):
         return XexSegment(self.bytes[start:end], self.style[start:end], 0, 0, 0, start, name="KBoot Executable")
 
 
+class SpartaDosDiskImage(DiskImageBase):
+    def __init__(self, bytes, style=None):
+        self.first_bitmap = 0
+        self.num_bitmap = 0
+        self.root_dir = 0
+        self.fs_version = 0
+        DiskImageBase.__init__(self, bytes, style)
+    
+    def __str__(self):
+        return "%s Sparta DOS Format: %d usable sectors (%d free), %d files" % (self.header, self.total_sectors, self.unused_sectors, len(self.files))
+    
+    boot_record_type = np.dtype([
+        ('unused', 'u1'),
+        ('num_boot', 'u1'),
+        ('boot_addr', '<u2'),
+        ('init_addr', '<u2'),
+        ('jmp', 'u1'),
+        ('cont_addr', '<u2'),
+        ('root_dir','<u2'),
+        ('num_sectors','<u2'),
+        ('num_free','<u2'),
+        ('num_bitmap', 'u1'),
+        ('bitmap','<u2'),
+        ('first_free', '<u2'),
+        ('first_free_dir','<u2'),
+        ('vol_name','S8'),
+        ('num_tracks','u1'),
+        ('sector_size','u1'),
+        ('fs_version','u1'),
+        ])
+    
+    def get_boot_sector_info(self):
+        data, style = self.get_sectors(1)
+        values = data[0:33].view(dtype=self.boot_record_type)[0]
+        print values
+        self.num_boot = values['num_boot']
+        self.boot_addr = values['boot_addr']
+        self.first_bitmap = values['bitmap']
+        self.num_bitmap = values['num_bitmap']
+        self.root_dir = values['root_dir']
+        self.fs_version = values['fs_version']
+        self.sector_size = values['sector_size']
+        self.total_sectors = values['num_sectors']
+        self.unused_sectors = values['num_free']
+        num = self.header.max_sectors
+        self.is_sane = self.total_sectors == num and values['first_free'] <= num and self.first_bitmap <= num and self.root_dir <= num and self.fs_version in [0x11, 0x20, 0x21] and self.sector_size in [0, 0x80, 0x1]
+        if not self.is_sane:
+            raise InvalidDiskImage("Invalid SpartaDos parameters in boot header")
+
+    def get_vtoc(self):
+        pass
+    
+    def get_directory(self):
+        pass
+    
+    def get_boot_segments(self):
+        segments = []
+        num = min(self.num_boot, 1)
+        bytes, style = self.get_sectors(1, num)
+        addr = self.boot_addr
+        header = ObjSegment(bytes[0:43], style[0:43], 0, 0, addr, addr + 43, name="Boot Header")
+        segments.append(header)
+        if self.num_boot > 0:
+            sectors = ObjSegment(bytes, style, 0, 0, addr, addr + len(bytes), name="Boot Sectors")
+            code = ObjSegment(bytes[43:], style[43:], 0, 0, addr + 43, addr + len(bytes), name="Boot Code")
+            segments.extend([header, code])
+        return segments
+    
+    def get_vtoc_segments(self):
+        b = self.bytes
+        s = self.style
+        segments = []
+        addr = 0
+        start, count = self.get_contiguous_sectors(self.first_bitmap, self.num_bitmap)
+        segment = RawSectorsSegment(b[start:start+count], s[start:start+count], self.first_bitmap, self.num_bitmap, count, name="Bitmap")
+        segments.append(segment)
+        return segments
+    
+    def get_directory_segments(self):
+        b = self.bytes
+        s = self.style
+        segments = []
+        addr = 0
+        start, count = self.get_contiguous_sectors(361, 8)
+        segment = RawSectorsSegment(b[start:start+count], s[start:start+count], 361, 8, count, name="Directory")
+        segments.append(segment)
+        return segments
+    
+    def get_file_segment(self, dirent):
+        byte_order = []
+        dirent.start_read()
+        while True:
+            bytes, last, pos, size = dirent.read_sector(self)
+            byte_order.extend(range(pos, pos + size))
+            if last:
+                break
+        if len(byte_order) > 0:
+            segment = IndexedByteSegment(self.bytes, self.style, byte_order, name=dirent.get_filename())
+        else:
+            segment = EmptySegment(self.bytes, self.style, name=dirent.get_filename())
+        return segment
+
+
 def to_numpy(value):
     if type(value) is np.ndarray:
         return value
@@ -914,7 +1018,7 @@ def run():
                 data = to_numpy(data)
                 try:
                     header = AtrHeader(data[0:16])
-                    for format in [KBootImage, AtariDosDiskImage]:
+                    for format in [KBootImage, SpartaDosDiskImage, AtariDosDiskImage]:
                         if options.verbose: print "trying", format.__name__
                         try:
                             image = format(data, filename)
