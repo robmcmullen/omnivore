@@ -1,6 +1,6 @@
 import numpy as np
 
-from atrcopy import DefaultSegment, KBootImage, AtariDosDiskImage, AtariDosFile, InvalidBinaryFile
+from atrcopy import DefaultSegment, KBootImage, AtariDosDiskImage, SpartaDosDiskImage, AtariDosFile, InvalidBinaryFile
 
 
 class InvalidSegmentParser(Exception):
@@ -70,6 +70,21 @@ class AtariDosSegmentParser(SegmentParser):
         self.segments.extend(self.atr.segments)
 
 
+class SpartaDosSegmentParser(SegmentParser):
+    menu_name = "Sparta DOS Disk Image"
+    
+    def parse(self, doc):
+        self.segments.append(DefaultSegment(doc.bytes, doc.style, 0))
+        try:
+            self.atr = SpartaDosDiskImage(doc.bytes, doc.style)
+        except Exception, e:
+            print str(e)
+            raise InvalidSegmentParser
+        
+        self.atr.parse_segments()
+        self.segments.extend(self.atr.segments)
+
+
 class AtariBootDiskSegmentParser(SegmentParser):
     menu_name = "Atari Boot Disk Image"
     
@@ -103,6 +118,7 @@ def guess_parser_for(mime, doc):
     for parser in parsers:
         try:
             found = parser(doc)
+            break
         except InvalidSegmentParser:
             pass
     return found
@@ -111,6 +127,7 @@ def guess_parser_for(mime, doc):
 mime_parsers = {
     "application/vnd.atari8bit.atr": [
         KBootSegmentParser,
+        SpartaDosSegmentParser,
         AtariDosSegmentParser,
         AtariBootDiskSegmentParser,
         ],

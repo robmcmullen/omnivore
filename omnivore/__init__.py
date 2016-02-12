@@ -11,7 +11,7 @@ __keywords__ = "text editor, python, plugins"
 __license__ = "GPL"
 __requires__ = [
     'numpy',
-    'atrcopy>=2.0.0',
+    'atrcopy>=2.2.0',
     'jsonpickle',
     'bson',
     'fs',
