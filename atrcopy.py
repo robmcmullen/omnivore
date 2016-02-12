@@ -134,7 +134,7 @@ class AtrDirent(object):
         ('EXT','S3'),
         ])
 
-    def __init__(self, disk, file_num=0, bytes=None):
+    def __init__(self, image, file_num=0, bytes=None):
         self.file_num = file_num
         self.flag = 0
         self.opened_output = False
@@ -152,6 +152,19 @@ class AtrDirent(object):
         self.current_sector = 0
         self.current_read = 0
         self.sectors_seen = None
+        self.parse_raw_dirent(image, bytes)
+    
+    def __str__(self):
+        output = "o" if self.opened_output else "."
+        dos2 = "2" if self.dos_2 else "."
+        mydos = "m" if self.mydos else "."
+        in_use = "u" if self.in_use else "."
+        deleted = "d" if self.deleted else "."
+        locked = "*" if self.locked else " "
+        flags = "%s%s%s%s%s%s %03d" % (output, dos2, mydos, in_use, deleted, locked, self.starting_sector)
+        return "File #%-2d (%s) %-8s%-3s  %03d" % (self.file_num, flags, self.filename, self.ext, self.num_sectors)
+    
+    def parse_raw_dirent(self, image, bytes):
         if bytes is None:
             return
         values = bytes.view(dtype=self.format)[0]  
@@ -168,42 +181,30 @@ class AtrDirent(object):
         self.starting_sector = int(values[2])
         self.filename = str(values[3]).rstrip()
         self.ext = str(values[4]).rstrip()
-        self.is_sane = self.sanity_check(disk)
+        self.is_sane = self.sanity_check(image)
     
-    def __str__(self):
-        output = "o" if self.opened_output else "."
-        dos2 = "2" if self.dos_2 else "."
-        mydos = "m" if self.mydos else "."
-        in_use = "u" if self.in_use else "."
-        deleted = "d" if self.deleted else "."
-        locked = "*" if self.locked else " "
-        flags = "%s%s%s%s%s%s %03d" % (output, dos2, mydos, in_use, deleted, locked, self.starting_sector)
-        if self.in_use:
-            return "File #%-2d (%s) %-8s%-3s  %03d" % (self.file_num, flags, self.filename, self.ext, self.num_sectors)
-        return
-    
-    def sanity_check(self, disk):
+    def sanity_check(self, image):
         if not self.in_use:
             return True
-        if not disk.header.sector_is_valid(self.starting_sector):
+        if not image.header.sector_is_valid(self.starting_sector):
             return False
-        if self.num_sectors < 0 or self.num_sectors > disk.header.max_sectors:
+        if self.num_sectors < 0 or self.num_sectors > image.header.max_sectors:
             return False
         return True
     
-    def start_read(self):
+    def start_read(self, image):
         if not self.is_sane:
             raise InvalidDirent("Invalid directory entry '%s'" % str(self))
         self.current_sector = self.starting_sector
         self.current_read = self.num_sectors
         self.sectors_seen = set()
     
-    def read_sector(self, disk):
-        raw, pos, size = disk.get_raw_bytes(self.current_sector)
-        bytes, num_data_bytes = self.process_raw_sector(disk, raw)
+    def read_sector(self, image):
+        raw, pos, size = image.get_raw_bytes(self.current_sector)
+        bytes, num_data_bytes = self.process_raw_sector(image, raw)
         return bytes, self.current_sector == 0, pos, num_data_bytes
 
-    def process_raw_sector(self, disk, raw):
+    def process_raw_sector(self, image, raw):
         file_num = raw[-3] >> 2
         if file_num != self.file_num:
             raise FileNumberMismatchError164()
@@ -220,7 +221,7 @@ class AtrDirent(object):
         return self.filename + ext
 
 class MydosDirent(AtrDirent):
-    def process_raw_sector(self, disk, raw):
+    def process_raw_sector(self, image, raw):
         # No file number stored in the sector data; two full bytes available
         # for next sector
         self.current_sector = (raw[-3] << 8) + raw[-2]
@@ -264,7 +265,10 @@ class DefaultSegment(object):
         self._search_copy = None
     
     def __str__(self):
-        return "%s (%d bytes)" % (self.name, len(self))
+        s = "%s (%d bytes)" % (self.name, len(self))
+        if self.error:
+            s += " " + self.error
+        return s
     
     def __len__(self):
         return np.alen(self.data)
@@ -398,7 +402,10 @@ class EmptySegment(DefaultSegment):
         DefaultSegment.__init__(self, data, style, 0, name, error)
     
     def __str__(self):
-        return "%s (empty file)" % (self.name, )
+        s = "%s (empty file)" % (self.name, )
+        if self.error:
+            s += " " + self.error
+        return s
     
     def __len__(self):
         return 0
@@ -447,7 +454,10 @@ class IndexedByteSegment(DefaultSegment):
         DefaultSegment.__init__(self, data, style, 0, **kwargs)
     
     def __str__(self):
-        return "%s ($%x @ $%x)" % (self.name, len(self), self.order[0])
+        s = "%s ($%x @ $%x)" % (self.name, len(self), self.order[0])
+        if self.error:
+            s += " " + self.error
+        return s
     
     def __len__(self):
         return np.alen(self.order)
@@ -794,7 +804,7 @@ class AtariDosDiskImage(DiskImageBase):
     
     def get_file_segment(self, dirent):
         byte_order = []
-        dirent.start_read()
+        dirent.start_read(self)
         while True:
             bytes, last, pos, size = dirent.read_sector(self)
             byte_order.extend(range(pos, pos + size))
@@ -828,8 +838,11 @@ class KBootDirent(AtrDirent):
             self.exe_size = count
             self.exe_start = start
         self.num_sectors = count / 128 + 1
+    
+    def parse_raw_dirent(self, image, bytes):
+        pass
 
-    def process_raw_sector(self, disk, raw):
+    def process_raw_sector(self, image, raw):
         num_bytes = np.alen(raw)
         return raw[0:num_bytes], num_bytes
 
@@ -857,11 +870,96 @@ class KBootImage(DiskImageBase):
         return XexSegment(self.bytes[start:end], self.style[start:end], 0, 0, 0, start, name="KBoot Executable")
 
 
+class SpartaDosDirent(AtrDirent):
+    format = np.dtype([
+        ('status', 'u1'),
+        ('sector', '<u2'),
+        ('len_l', '<u2'),
+        ('len_h', 'i1'),
+        ('filename','S8'),
+        ('ext','S3'),
+        ('date','S3'),
+        ('time','S3'),
+        ])
+
+    def __init__(self, image, file_num=0, bytes=None, starting_sector=None):
+        self.length = 0
+        self.sector_map = None
+        self.sector_map_index = 0
+        AtrDirent.__init__(self, image, file_num, bytes=bytes)
+        if starting_sector is not None:
+            # Root directory doesn't have the starting sector in the dirent,
+            # rather the boot sector so it must be specified here.
+            self.starting_sector = starting_sector
+            self.is_sane = self.sanity_check(image)
+    
+    def __str__(self):
+        output = "o" if self.opened_output else "."
+        subdir = "D" if self.is_dir else "."
+        in_use = "u" if self.in_use else "."
+        deleted = "d" if self.deleted else "."
+        locked = "*" if self.locked else " "
+        flags = "%s%s%s%s%s %03d" % (output, subdir, in_use, deleted, locked, self.starting_sector)
+        return "File #%-2d (%s) %-8s%-3s  %8d  %s" % (self.file_num, flags, self.filename, self.ext, self.length, self.str_timestamp)
+    
+    def parse_raw_dirent(self, image, bytes):
+        if bytes is None:
+            return
+        values = bytes.view(dtype=self.format)[0]  
+        flag = values['status']
+        self.flag = flag
+        self.locked = (flag&0x1) > 0
+        self.hidden = (flag&0x10) > 0
+        self.archived = (flag&0x100) > 0
+        self.in_use = (flag&0b1000) > 0
+        self.deleted = (flag&0b10000) > 0
+        self.is_dir = (flag&0b100000) > 0
+        self.opened_output = (flag&0b10000000) > 0
+        self.starting_sector = int(values['sector'])
+        self.filename = str(values['filename']).rstrip()
+        self.ext = str(values['ext']).rstrip()
+        self.length = 256*256*values['len_h'] + values['len_l']
+        self.date_array = tuple(bytes[17:20])
+        self.time_array = tuple(bytes[20:23])
+        self.is_sane = self.sanity_check(image)
+    
+    def sanity_check(self, image):
+        if not self.in_use:
+            return True
+        if not image.header.sector_is_valid(self.starting_sector):
+            return False
+        return True
+    
+    @property
+    def str_timestamp(self):
+        str_date = "%d/%d/%d" % self.date_array
+        str_time = "%d:%d:%d" % self.time_array
+        return "%s %s" % (str_date, str_time)
+
+    def start_read(self, image):
+        if not self.is_sane:
+            print self.starting_sector
+            raise InvalidDirent("Invalid directory entry '%s'" % str(self))
+        self.sector_map = image.get_sector_map(self.starting_sector)
+        self.sector_map_index = 0
+        self.length_remaining = self.length
+    
+    def read_sector(self, image):
+        sector = self.sector_map[self.sector_map_index]
+        if sector == 0:
+            return None, True, 0, self.length_remaining
+        raw, pos, size = image.get_raw_bytes(sector)
+        num_data_bytes = min(self.length_remaining, size)
+        self.length_remaining -= num_data_bytes
+        self.sector_map_index += 1
+        return raw[0:num_data_bytes], sector == 0, pos, num_data_bytes
+
 class SpartaDosDiskImage(DiskImageBase):
     def __init__(self, bytes, style=None):
         self.first_bitmap = 0
         self.num_bitmap = 0
         self.root_dir = 0
+        self.root_dir_dirent = None
         self.fs_version = 0
         DiskImageBase.__init__(self, bytes, style)
     
@@ -891,7 +989,6 @@ class SpartaDosDiskImage(DiskImageBase):
     def get_boot_sector_info(self):
         data, style = self.get_sectors(1)
         values = data[0:33].view(dtype=self.boot_record_type)[0]
-        print values
         self.num_boot = values['num_boot']
         self.boot_addr = values['boot_addr']
         self.first_bitmap = values['bitmap']
@@ -910,7 +1007,18 @@ class SpartaDosDiskImage(DiskImageBase):
         pass
     
     def get_directory(self):
-        pass
+        self.files = []
+        dir_map = self.get_sector_map(self.root_dir)
+        sector = dir_map[0]
+        if sector == 0:
+            return
+        bytes, pos, size = self.get_raw_bytes(sector)
+        d = SpartaDosDirent(self, 0, bytes[0:23], starting_sector=self.root_dir)
+        s = self.get_file_segment(d)
+        for filenum, i in enumerate(range(23, d.length, 23)):
+            dirent = SpartaDosDirent(self, filenum + 1, s[i:i + 23])
+            self.files.append(dirent)
+        self.root_dir_dirent = d
     
     def get_boot_segments(self):
         segments = []
@@ -945,40 +1053,28 @@ class SpartaDosDiskImage(DiskImageBase):
             else:
                 m = np.hstack((m, b[4:].view(dtype='<u2')))
         return m
-        
+    
     def get_directory_segments(self):
-        dir_map = self.get_sector_map(self.root_dir)
-        print dir_map
-        b = self.bytes
-        s = self.style
-        segments = []
-        byte_order = []
-        for sector in dir_map:
-            if sector == 0:
-                break
-            bytes, pos, size = self.get_raw_bytes(sector)
-            byte_order.extend(range(pos, pos + size))
-        name = "Root Directory"
-        if len(byte_order) > 0:
-            segment = IndexedByteSegment(self.bytes, self.style, byte_order, name=name)
-        else:
-            segment = EmptySegment(self.bytes, self.style, name=name)
+        dirent = self.root_dir_dirent
+        segment = self.get_file_segment(dirent)
+        segment.name = dirent.filename
         segment.map_width = 23
-        segments.append(segment)
+        segments = [segment]
         return segments
     
     def get_file_segment(self, dirent):
         byte_order = []
-        dirent.start_read()
+        dirent.start_read(self)
         while True:
             bytes, last, pos, size = dirent.read_sector(self)
-            byte_order.extend(range(pos, pos + size))
-            if last:
+            if not last:
+                byte_order.extend(range(pos, pos + size))
+            else:
                 break
         if len(byte_order) > 0:
-            segment = IndexedByteSegment(self.bytes, self.style, byte_order, name=dirent.get_filename())
+            segment = IndexedByteSegment(self.bytes, self.style, byte_order, name=dirent.get_filename(), error=dirent.str_timestamp)
         else:
-            segment = EmptySegment(self.bytes, self.style, name=dirent.get_filename())
+            segment = EmptySegment(self.bytes, self.style, name=dirent.get_filename(), error=dirent.str_timestamp)
         return segment
 
 
@@ -1022,6 +1118,7 @@ def run():
     
     parser = argparse.ArgumentParser(description="Extract images off ATR format disks")
     parser.add_argument("-v", "--verbose", default=0, action="count")
+    parser.add_argument("-d", "--debug", action="store_true", default=False, help="debug the currently under-development parser")
     parser.add_argument("-l", "--lower", action="store_true", default=False, help="convert filenames to lower case")
     parser.add_argument("--dry-run", action="store_true", default=False, help="don't extract, just show what would have been extracted")
     parser.add_argument("-n", "--no-sys", action="store_true", default=False, help="only extract things that look like games (no DOS or .SYS files)")
@@ -1036,37 +1133,42 @@ def run():
         with open(filename, "rb") as fh:
             data = fh.read()
             image = None
-            try:
+            if options.debug:
                 data = to_numpy(data)
+                header = AtrHeader(data[0:16])
+                image = SpartaDosDiskImage(data, filename)
+            else:
                 try:
-                    header = AtrHeader(data[0:16])
-                    for format in [KBootImage, SpartaDosDiskImage, AtariDosDiskImage]:
-                        if options.verbose: print "trying", format.__name__
-                        try:
-                            image = format(data, filename)
-                            print "%s: %s" % (filename, image)
-                            break
-                        except InvalidDiskImage:
-                            pass
+                    data = to_numpy(data)
+                    try:
+                        header = AtrHeader(data[0:16])
+                        for format in [KBootImage, SpartaDosDiskImage, AtariDosDiskImage]:
+                            if options.verbose: print "trying", format.__name__
+                            try:
+                                image = format(data, filename)
+                                print "%s: %s" % (filename, image)
+                                break
+                            except InvalidDiskImage:
+                                pass
+                    except AtrError:
+                        for format in [AtariDosDiskImage]:
+                            try:
+                                image = format(data)
+                                print "%s: %s" % (filename, image)
+                                break
+                            except:
+                                raise
+                                #pass
                 except AtrError:
-                    for format in [AtariDosDiskImage]:
-                        try:
-                            image = format(data)
-                            print "%s: %s" % (filename, image)
-                            break
-                        except:
-                            raise
-                            #pass
-            except AtrError:
-                if options.verbose: print "%s: Doesn't look like a supported disk image" % filename
-                try:
-                    image = AtariDosFile(data)
-                    print "%s:\n%s" % (filename, image)
-                except InvalidBinaryFile:
-                    if options.verbose: print "%s: Doesn't look like an XEX either" % filename
-                continue
-            if image is None:
-                image = BootDiskImage(data, filename)
+                    if options.verbose: print "%s: Doesn't look like a supported disk image" % filename
+                    try:
+                        image = AtariDosFile(data)
+                        print "%s:\n%s" % (filename, image)
+                    except InvalidBinaryFile:
+                        if options.verbose: print "%s: Doesn't look like an XEX either" % filename
+                    continue
+                if image is None:
+                    image = BootDiskImage(data, filename)
             if options.segments:
                 image.parse_segments()
                 print "\n".join([str(a) for a in image.segments])
