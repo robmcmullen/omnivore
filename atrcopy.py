@@ -935,13 +935,35 @@ class SpartaDosDiskImage(DiskImageBase):
         segments.append(segment)
         return segments
     
+    def get_sector_map(self, sector):
+        m = None
+        while sector > 0:
+            b, _ = self.get_sectors(sector)
+            sector, prev = b[0:4].view(dtype='<u2')
+            if m is None:
+                m = np.copy(b[4:].view(dtype='<u2'))
+            else:
+                m = np.hstack((m, b[4:].view(dtype='<u2')))
+        return m
+        
     def get_directory_segments(self):
+        dir_map = self.get_sector_map(self.root_dir)
+        print dir_map
         b = self.bytes
         s = self.style
         segments = []
-        addr = 0
-        start, count = self.get_contiguous_sectors(361, 8)
-        segment = RawSectorsSegment(b[start:start+count], s[start:start+count], 361, 8, count, name="Directory")
+        byte_order = []
+        for sector in dir_map:
+            if sector == 0:
+                break
+            bytes, pos, size = self.get_raw_bytes(sector)
+            byte_order.extend(range(pos, pos + size))
+        name = "Root Directory"
+        if len(byte_order) > 0:
+            segment = IndexedByteSegment(self.bytes, self.style, byte_order, name=name)
+        else:
+            segment = EmptySegment(self.bytes, self.style, name=name)
+        segment.map_width = 23
         segments.append(segment)
         return segments
     
