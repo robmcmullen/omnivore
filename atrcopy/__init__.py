@@ -6,12 +6,14 @@ except ImportError:
     raise RuntimeError("atrcopy %s requires numpy" % __version__)
 
 from errors import *
-from diskimages import AtrHeader, BootDiskImage
 from ataridos import AtariDosDiskImage, AtariDosFile
+from diskimages import AtrHeader, BootDiskImage
 from kboot import KBootImage
+from segments import SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, IndexedByteSegment
 from spartados import SpartaDosDiskImage
 from utils import to_numpy
-    
+
+
 def process(image, dirent, options):
     skip = False
     action = "copying to"
@@ -108,5 +110,3 @@ def run():
                     except ByteNotInFile166:
                         print "Invalid sector for: %s" % str(dirent)
 
-if __name__ == "__main__":
-    run()

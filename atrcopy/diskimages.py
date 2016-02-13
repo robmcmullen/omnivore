@@ -1,6 +1,7 @@
 import numpy as np
 
 from errors import *
+from segments import EmptySegment, ObjSegment, RawSectorsSegment, IndexedByteSegment
 from utils import to_numpy
 
 class AtrHeader(object):
