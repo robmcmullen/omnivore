@@ -1,5 +1,7 @@
 from __future__ import with_statement
 
+import sys
+
 try:
     from setuptools import setup
 except ImportError:
@@ -33,7 +35,7 @@ setup(name="atrcopy",
       author="Rob McMullen",
       author_email="feedback@playermissile.com>",
       url="https://github.com/robmcmullen/atrcopy",
-      py_modules=["atrcopy"],
+      packages=["atrcopy"],
       scripts=scripts,
       description="Disk image utilities for Atari 8-bit emulators",
       long_description=long_description,
