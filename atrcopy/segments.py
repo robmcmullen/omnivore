@@ -77,6 +77,17 @@ class DefaultSegment(object):
                 start, end = end, start
             s[start:end] |= style_bits
     
+    def get_style_ranges(self, **kwargs):
+        style_bits = self.get_style_bits(**kwargs)
+        w = np.where(self.style & style_bits)[0]
+        # split into groups with consecutive numbers
+        groups = np.split(w, np.where(np.diff(w) != 1)[0] + 1)
+        ranges = []
+        for group in groups:
+            if np.alen(group) > 0:
+                ranges.append((int(group[0]), int(group[-1]) + 1))
+        return ranges
+    
     def get_rect_indexes(self, anchor_start, anchor_end):
         # determine row,col of upper left and lower right of selected
         # rectangle.  The values are inclusive, so ul=(0,0) and lr=(1,2)
