@@ -393,13 +393,13 @@ class HexEditor(FrameworkEditor):
         doc = self.document
         num = number if number < len(doc.segments) else 0
         if num != self.segment_number:
-            new_segment = doc.segments[num]
-            self.adjust_selection(self.segment, new_segment)
-            self.segment = new_segment
+            old_segment = self.segment
+            self.segment = doc.segments[num]
+            self.adjust_selection(old_segment)
             self.segment_number = num
             self.invalidate_search()
             self.update_segments_ui()
-            self.view_segment_set_width(new_segment)
+            self.view_segment_set_width(self.segment)
             self.reconfigure_panes()
             self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
     
@@ -414,28 +414,28 @@ class HexEditor(FrameworkEditor):
     def invalidate_search(self):
         self.task.change_minibuffer_editor(self)
     
-    def adjust_selection(self, current_segment, new_segment):
+    def adjust_selection(self, old_segment):
         """Adjust the selection of the current segment so that it is limited to the
         bounds of the new segment.
         
         If the current selection is entirely out of bounds of the new segment,
         all the selection indexes will be set to zero.
         """
-        indexes = np.array([self.cursor_index, self.anchor_initial_start_index, self.anchor_start_index, self.anchor_initial_end_index, self.anchor_end_index], dtype=np.int64)
-        
         # find byte index of view into master array
-        current_offset = current_segment.byte_bounds_offset()
-        new_offset = new_segment.byte_bounds_offset()
+        g = self.document.global_segment
+        s = self.segment
+        global_offset = g.byte_bounds_offset()
+        new_offset = s.byte_bounds_offset()
+        old_offset = old_segment.byte_bounds_offset()
         
-        delta = new_offset - current_offset
-        self.cursor_index -= delta
-        self.selected_ranges = new_segment.get_style_ranges(selected=True)
+        self.cursor_index -= new_offset - old_offset
+        self.selected_ranges = s.get_style_ranges(selected=True)
         if self.selected_ranges:
-            print self.selected_ranges
+            # Arbitrarily puth the anchor on the last selected range
             last = self.selected_ranges[-1]
             self.anchor_initial_start_index = self.anchor_start_index = last[0]
             self.anchor_initial_end_index = self.anchor_end_index = last[1]
-        self.document.global_segment.clear_style_bits(selected=True)
+        g.clear_style_bits(selected=True)
         self.document.change_count += 1
         self.highlight_selected_ranges()
     
