@@ -4,19 +4,9 @@
 # needs this should grab it from here.
 __author__ = "Rob McMullen"
 __author_email__ = "feedback@playermissile.com"
-__url__ = "https://github.com/robmcmullen/omnivore"
+__url__ = "http://playermissile.com/omnivore"
 __download_url__ = "https://github.com/robmcmullen/omnivore/archive"
 __bug_report_url__ = "https://github.com/robmcmullen/omnivore/issues"
-__keywords__ = "text editor, python, plugins"
-__license__ = "GPL"
-__requires__ = [
-    'numpy',
-    'atrcopy>=2.2.0',
-    'jsonpickle',
-    'bson',
-    'fs',
-    'configobj',
-]
 
 # The real version number is maintained in a file that's under version control
 # so I don't have to keep updating and checking in the file

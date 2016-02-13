@@ -227,7 +227,14 @@ if 'nsis' not in sys.argv:
         long_description = open('README.rst').read(),
         cmdclass = cmdclass,
         ext_modules = ext_modules,
-        install_requires = omnivore.__requires__,
+        install_requires = [
+            'numpy',
+            'atrcopy>=2.3.0',
+            'jsonpickle',
+            'bson',
+            'fs',
+            'configobj',
+            ]
         setup_requires = ["numpy"],
         license = "GPL",
         packages = packages,
