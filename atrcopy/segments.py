@@ -237,10 +237,35 @@ class RawSectorsSegment(DefaultSegment):
         return "s%03d:%02X" % (sector + self.first_sector, byte)
 
 
+class IndexedStyleWrapper(object):
+    """Wrapper for style data so that style manipulations can use normal
+    numpy syntax and still affect the style according to the byte ordering
+    """
+    def __init__(self, style, byte_order):
+        self.style = style
+        self.order = byte_order
+    
+    def __len__(self):
+        return np.alen(self.order)
+    
+    def __and__(self, other):
+        return self.style[self.order] & other
+    
+    def __iand__(self, other):
+        self.style[self.order] &= other
+        return self
+    
+    def __getitem__(self, index):
+        return self.style[self.order[index]]
+    
+    def __setitem__(self, index, value):
+        self.style[self.order[index]] = value
+
+
 class IndexedByteSegment(DefaultSegment):
     def __init__(self, data, style, byte_order, **kwargs):
         self.order = byte_order
-        DefaultSegment.__init__(self, data, style, 0, **kwargs)
+        DefaultSegment.__init__(self, data, IndexedStyleWrapper(style, byte_order), 0, **kwargs)
     
     def __str__(self):
         s = "%s ($%x @ $%x)" % (self.name, len(self), self.order[0])
