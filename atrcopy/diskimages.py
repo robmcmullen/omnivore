@@ -195,7 +195,7 @@ class DiskImageBase(object):
         i = self.header.atr_header_offset
         if self.header.image_size > 0:
             self.segments.append(ObjSegment(b[0:i], s[0:i], 0, 0, 0, i, name="%s Header" % self.header.file_format))
-        self.segments.append(RawSectorsSegment(b[i:], s[i:], 1, self.header.max_sectors, self.header.image_size, name="Raw disk sectors"))
+        self.segments.append(RawSectorsSegment(b[i:], s[i:], 1, self.header.max_sectors, self.header.image_size, 128, 3, self.header.sector_size, name="Raw disk sectors"))
         self.segments.extend(self.get_boot_segments())
         self.segments.extend(self.get_vtoc_segments())
         self.segments.extend(self.get_directory_segments())

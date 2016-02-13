@@ -123,6 +123,11 @@ class SpartaDosDiskImage(DiskImageBase):
         ('fs_version','u1'),
         ])
     
+    sector_size_map = {0: 256,
+                       1: 512,
+                       0x80: 128,
+                       }
+    
     def get_boot_sector_info(self):
         data, style = self.get_sectors(1)
         values = data[0:33].view(dtype=self.boot_record_type)[0]
@@ -132,11 +137,12 @@ class SpartaDosDiskImage(DiskImageBase):
         self.num_bitmap = values['num_bitmap']
         self.root_dir = values['root_dir']
         self.fs_version = values['fs_version']
-        self.sector_size = values['sector_size']
+        s = values['sector_size']
+        self.sector_size = self.sector_size_map.get(values['sector_size'], -1)
         self.total_sectors = values['num_sectors']
         self.unused_sectors = values['num_free']
         num = self.header.max_sectors
-        self.is_sane = self.total_sectors == num and values['first_free'] <= num and self.first_bitmap <= num and self.root_dir <= num and self.fs_version in [0x11, 0x20, 0x21] and self.sector_size in [0, 0x80, 0x1]
+        self.is_sane = self.total_sectors == num and values['first_free'] <= num and self.first_bitmap <= num and self.root_dir <= num and self.fs_version in [0x11, 0x20, 0x21] and self.sector_size != -1
         if not self.is_sane:
             raise InvalidDiskImage("Invalid SpartaDos parameters in boot header")
 
@@ -176,7 +182,13 @@ class SpartaDosDiskImage(DiskImageBase):
         segments = []
         addr = 0
         start, count = self.get_contiguous_sectors(self.first_bitmap, self.num_bitmap)
-        segment = RawSectorsSegment(b[start:start+count], s[start:start+count], self.first_bitmap, self.num_bitmap, count, name="Bitmap")
+        if self.sector_size == 512:
+            num_boot = 1
+            boot_size = 512
+        else:
+            num_boot = 3
+            boot_size = 128
+        segment = RawSectorsSegment(b[start:start+count], s[start:start+count], self.first_bitmap, self.num_bitmap, count, boot_size, num_boot, self.sector_size, name="Bitmap")
         segments.append(segment)
         return segments
     

@@ -197,9 +197,11 @@ class ObjSegment(DefaultSegment):
 
 
 class RawSectorsSegment(DefaultSegment):
-    def __init__(self, data, style, first_sector, num_sectors, count, **kwargs):
+    def __init__(self, data, style, first_sector, num_sectors, count, boot_sector_size, num_boot_sectors, sector_size, **kwargs):
         DefaultSegment.__init__(self, data, style, 0, **kwargs)
-        self.page_size = 128
+        self.boot_sector_size = boot_sector_size
+        self.num_boot_sectors = num_boot_sectors
+        self.page_size = sector_size
         self.first_sector = first_sector
         self.num_sectors = num_sectors
     
@@ -213,7 +215,12 @@ class RawSectorsSegment(DefaultSegment):
         return s
     
     def label(self, index, lower_case=True):
-        sector, byte = divmod(index, self.page_size)
+        boot_size = self.num_boot_sectors * self.boot_sector_size
+        if index >= boot_size:
+            sector, byte = divmod(index - boot_size, self.page_size)
+            sector += self.num_boot_sectors
+        else:
+            sector, byte = divmod(index, self.boot_sector_size)
         if lower_case:
             return "s%03d:%02x" % (sector + self.first_sector, byte)
         return "s%03d:%02X" % (sector + self.first_sector, byte)
