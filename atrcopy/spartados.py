@@ -188,7 +188,7 @@ class SpartaDosDiskImage(DiskImageBase):
         else:
             num_boot = 3
             boot_size = 128
-        segment = RawSectorsSegment(b[start:start+count], s[start:start+count], self.first_bitmap, self.num_bitmap, count, boot_size, num_boot, self.sector_size, name="Bitmap")
+        segment = RawSectorsSegment(b[start:start+count], s[start:start+count], self.first_bitmap, self.num_bitmap, count, 0, 0, self.sector_size, name="Bitmap")
         segments.append(segment)
         return segments
     
