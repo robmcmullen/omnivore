@@ -428,13 +428,16 @@ class HexEditor(FrameworkEditor):
         new_offset = new_segment.byte_bounds_offset()
         
         delta = new_offset - current_offset
-        indexes -= delta
-        indexes.clip(0, len(new_segment) - 1, out=indexes)
-        sel = indexes[1:5]
-        same = (sel == sel[0])
-        if same.all():
-            indexes[1:5] = 0
-        self.cursor_index, self.anchor_initial_start_index, self.anchor_start_index, self.anchor_initial_end_index, self.anchor_end_index = list(indexes)
+        self.cursor_index -= delta
+        self.selected_ranges = new_segment.get_style_ranges(selected=True)
+        if self.selected_ranges:
+            print self.selected_ranges
+            last = self.selected_ranges[-1]
+            self.anchor_initial_start_index = self.anchor_start_index = last[0]
+            self.anchor_initial_end_index = self.anchor_end_index = last[1]
+        self.document.global_segment.clear_style_bits(selected=True)
+        self.document.change_count += 1
+        self.highlight_selected_ranges()
     
     def highlight_selected_ranges(self):
         s = self.segment

@@ -123,6 +123,10 @@ class Document(HasTraits):
         self.segments.extend(parser.segments)
         self.segments.extend(self.user_segments)
     
+    @property
+    def global_segment(self):
+        return self.segments[0]
+    
     def add_user_segment(self, segment):
         self.user_segments.append(segment)
         self.segments.append(segment)
