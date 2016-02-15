@@ -209,10 +209,18 @@ class BitviewScroller(wx.ScrolledWindow):
             width = array.shape[1]
             height = array.shape[0]
             if width > 0 and height > 0:
-                image = wx.EmptyImage(width, height)
-                image.SetData(array.tostring())
                 zw, zh = self.get_zoom_factors()
-                image.Rescale(width * zw, height * zh)
+                nw = width * zw
+                nh = height * zh
+                newdims = np.asarray((nh, nw))
+                base=np.indices(newdims)
+                d = []
+                d.append(base[0]/zh)
+                d.append(base[1]/zw)
+                cd = np.array(d)
+                newarray = array[list(cd)]
+                image = wx.EmptyImage(nw, nh)
+                image.SetData(newarray.tostring())
                 bmp = wx.BitmapFromImage(image)
                 dc.DrawBitmap(bmp, 0, 0)
     
