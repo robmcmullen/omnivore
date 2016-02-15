@@ -794,6 +794,8 @@ class FontMapScroller(BitviewScroller):
     def draw_overlay(self, array, w, h, zw, zh):
         anchor_start, anchor_end, rc1, rc2 = self.get_highlight_indexes()
         self.show_highlight(array, rc1, rc2, zw, zh)
+        r, c = self.byte_to_row_col(self.editor.cursor_index)
+        self.show_highlight(array, (r, c), (r + 1, c + 1), zw, zh)
     
     def show_highlight(self, array, rc1, rc2, zw, zh):
         if rc1 is None:
