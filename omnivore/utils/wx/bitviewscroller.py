@@ -219,10 +219,16 @@ class BitviewScroller(wx.ScrolledWindow):
                 d.append(base[1]/zw)
                 cd = np.array(d)
                 newarray = array[list(cd)]
+                self.draw_overlay(newarray, width, height, zw, zh)
                 image = wx.EmptyImage(nw, nh)
                 image.SetData(newarray.tostring())
                 bmp = wx.BitmapFromImage(image)
                 dc.DrawBitmap(bmp, 0, 0)
+    
+    def draw_overlay(self, array, w, h, zw, zh):
+        """ Hook to draw overlay image on top of finished scaled image
+        """
+        pass
     
     def calc_image_size(self):
         x, y = self.GetViewStart()
@@ -783,13 +789,13 @@ class FontMapScroller(BitviewScroller):
             array = speedups.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, e.empty_color, self.font, self.font_mapping)
         else:
             array = self.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, e.empty_color, self.font, self.font_mapping)
-        
-        anchor_start, anchor_end, rc1, rc2 = self.get_highlight_indexes()
-        self.show_highlight(array, rc1, rc2)
-        
         return array
     
-    def show_highlight(self, array, rc1, rc2):
+    def draw_overlay(self, array, w, h, zw, zh):
+        anchor_start, anchor_end, rc1, rc2 = self.get_highlight_indexes()
+        self.show_highlight(array, rc1, rc2, zw, zh)
+    
+    def show_highlight(self, array, rc1, rc2, zw, zh):
         if rc1 is None:
             return
         r1, c1 = rc1
@@ -798,10 +804,10 @@ class FontMapScroller(BitviewScroller):
         er = r2 - self.start_row
         sc = c1 - self.start_col
         ec = c2 - self.start_col
-        x1 = sc * 8
-        x2 = ec * 8 - 1
-        y1 = sr * 8
-        y2 = er * 8 - 1
+        x1 = sc * 8 * zw
+        x2 = ec * 8 * zw - 1
+        y1 = sr * 8 * zh
+        y2 = er * 8 * zh - 1
         xmax = array.shape[1]
         ymax = array.shape[0]
         c1 = max(x1, 0)
