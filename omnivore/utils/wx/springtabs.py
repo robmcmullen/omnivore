@@ -20,8 +20,6 @@ from cStringIO import StringIO
 
 import wx
 import wx.stc
-#from wx.lib.pubsub import Publisher
-from wx.lib.evtmgr import eventManager
 from wx.lib.buttons import GenToggleButton
 
 try:
@@ -286,13 +284,17 @@ class SpringTabItem(GenToggleButton):
             
             # Create the window using the popup as the parent
             self.window_cb(self.popup, parent.task, **self.kwargs)
+            windowlist = self.popup.GetChildren()
+            print "Creating popup:", windowlist
+            if len(windowlist) == 0:
+                raise RuntimeError("Popup window creation failed!")
+            child = windowlist[0]
+#            child.Bind(wx.EVT_SET_FOCUS, self.OnChildFocus)
+            child.Bind(wx.EVT_KILL_FOCUS, self.OnLoseChildFocus)
         windowlist = self.popup.GetChildren()
-        print "Popping up!", windowlist
         if len(windowlist) == 0:
             raise RuntimeError("Popup window creation failed!")
         child = windowlist[0]
-        child.Bind(wx.EVT_SET_FOCUS, self.OnChildFocus)
-        child.Bind(wx.EVT_KILL_FOCUS, self.OnLoseChildFocus)
         return self.popup, child
 
     def OnActivate(self, evt):
@@ -326,9 +328,10 @@ class SpringTabItem(GenToggleButton):
     # to something other than one of the popup windows.  I can not make this
     # work at the moment, so I'm relying on a call to pubsub to do the work.
     def OnChildFocus(self, evt):
-        dprint("OnChildFocus: current: %s, new = %s, top=%s" % (self.GetLabel(), evt.GetWindow(), wx.GetApp().GetTopWindow()))
-        if evt.GetWindow() is not None:
-            wx.CallAfter(self.setPopupLoseFocusCallback)
+        popup = evt.GetEventObject()
+        dprint("OnChildFocus: tab: %s, win=%s new=%s, top=%s" % (self.GetLabel(), popup, evt.GetWindow(), wx.GetApp().GetTopWindow()))
+#        if evt.GetWindow() is not None:
+#            wx.CallAfter(self.setPopupLoseFocusCallback)
     
     @property
     def is_shown(self):
@@ -355,8 +358,10 @@ class SpringTabItem(GenToggleButton):
             self.GetParent().clearRadio()
 
     def OnLoseChildFocus(self, evt):
-        dprint("OnLoseChildFocus: current: %s, new = %s, top=%s" % (self.GetLabel(), evt.GetWindow(), wx.GetApp().GetTopWindow()))
-        if evt.GetWindow() is not None:
+        popup = evt.GetEventObject()
+        focus = evt.GetWindow()
+        dprint("OnLoseChildFocus: tab: %s, win=%s new=%s, top=%s" % (self.GetLabel(), popup, focus, wx.GetApp().GetTopWindow()))
+        if popup is not None and popup != focus:
             wx.CallAfter(self.setPopupLoseFocusCallback)
 
 
@@ -393,7 +398,6 @@ class SpringTabs(wx.Panel):
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_SIZE, self.OnSize)
-        #Publisher().subscribe(self.clearRadio, 'springtabs.remove')
     
     def getRenderer(self):
         return self._tab_renderer
@@ -541,7 +545,6 @@ if __name__ == "__main__":
     sizer.Add(tabs2, 0, wx.EXPAND)
     
     def fixFocus(evt):
-        #Publisher.sendMessage('springtabs.remove')
         evt.Skip()
     text.Bind(wx.EVT_SET_FOCUS, fixFocus)
     
