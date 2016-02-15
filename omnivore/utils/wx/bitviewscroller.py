@@ -344,6 +344,7 @@ class BitviewScroller(wx.ScrolledWindow):
     def on_left_up(self, evt):
         self.multi_select_mode = False
         self.select_extend_mode = False
+        evt.Skip()
 
     def set_cursor_pos_from_event(self, evt):
         e = self.editor
@@ -386,6 +387,7 @@ class BitviewScroller(wx.ScrolledWindow):
             e.anchor_start_index, e.anchor_end_index = e.anchor_initial_start_index, e.anchor_initial_end_index
             e.cursor_index = e.anchor_initial_start_index
             e.select_range(e.anchor_start_index, e.anchor_end_index, add=self.multi_select_mode)
+        evt.Skip()
 
     def on_left_dclick(self, evt):
         self.on_left_down(evt)
@@ -397,7 +399,6 @@ class BitviewScroller(wx.ScrolledWindow):
             index1 = byte
             index2 = byte + 1
 #                print index1, index2, e.anchor_start_index, e.anchor_end_index
-            update = False
             update = False
             if self.select_extend_mode:
                 if index1 < e.anchor_initial_start_index:
