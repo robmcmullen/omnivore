@@ -6,11 +6,37 @@ from omnivore.framework.panes import FrameworkPane
 from disassembly import DisassemblyPanel
 from segments import SegmentList
 from omnivore.utils.wx.bitviewscroller import BitmapScroller, FontMapScroller, MemoryMapScroller
+from omnivore.utils.wx.springtabs import SpringTabs
 from omnivore.framework.undo_panel import UndoHistoryPanel
 from commands import ChangeByteCommand
 
 import logging
 log = logging.getLogger(__name__)
+
+
+class MemoryMapSpringTab(MemoryMapScroller):
+    def activateSpringTab(self):
+        self.recalc_view()
+
+class SidebarPane(FrameworkPane):
+    #### TaskPane interface ###################################################
+
+    id = 'hex_edit.sidebar'
+    name = 'Sidebar'
+    
+    def MemoryMapCB(self, parent, task, **kwargs):
+        control = MemoryMapSpringTab(parent, task, size=(600,30))
+        
+    def create_contents(self, parent):
+        control = SpringTabs(parent, self.task, popup_direction="left", size=(16,500))
+        control.addTab("Page Map", self.MemoryMapCB)
+        return control
+    
+    def refresh_active(self):
+        active = self.control._radio
+        print "Active sidebar:", active
+        if active is not None and active.is_shown:
+            active.managed_window.refresh_view()
 
 
 class DisassemblyPane(FrameworkPane):
@@ -43,17 +69,6 @@ class FontMapPane(FrameworkPane):
     
     def create_contents(self, parent):
         control = FontMapScroller(parent, self.task, size=(160,500), command=ChangeByteCommand)
-        return control
-
-
-class MemoryMapPane(FrameworkPane):
-    #### TaskPane interface ###################################################
-
-    id = 'hex_edit.memory_map'
-    name = 'Page Map'
-    
-    def create_contents(self, parent):
-        control = MemoryMapScroller(parent, self.task, size=(600,30))
         return control
 
 

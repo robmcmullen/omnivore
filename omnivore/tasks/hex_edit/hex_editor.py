@@ -236,7 +236,6 @@ class HexEditor(FrameworkEditor):
         self.disassembly.recalc_view()
         self.bitmap.recalc_view()
         self.font_map.recalc_view()
-        self.memory_map.recalc_view()
     
     def check_document_change(self):
         if self.last_cursor_index != self.cursor_index or self.last_anchor_start_index != self.anchor_start_index or self.last_anchor_end_index != self.anchor_end_index:
@@ -248,7 +247,7 @@ class HexEditor(FrameworkEditor):
         self.disassembly.refresh_view()
         self.bitmap.refresh_view()
         self.font_map.refresh_view()
-        self.memory_map.refresh_view()
+        self.sidebar.refresh_active()
     
     def set_colors(self):
         if self.empty_color is None:
@@ -493,9 +492,9 @@ class HexEditor(FrameworkEditor):
         self.disassembly = self.window.get_dock_pane('hex_edit.disassembly').control
         self.bitmap = self.window.get_dock_pane('hex_edit.bitmap').control
         self.font_map = self.window.get_dock_pane('hex_edit.font_map').control
-        self.memory_map = self.window.get_dock_pane('hex_edit.memory_map').control
         self.segment_list = self.window.get_dock_pane('hex_edit.segments').control
         self.undo_history = self.window.get_dock_pane('hex_edit.undo').control
+        self.sidebar = self.window.get_dock_pane('hex_edit.sidebar')
 
         # Load the editor's contents.
         self.load()
@@ -515,6 +514,5 @@ class HexEditor(FrameworkEditor):
             self.bitmap.select_index(index)
         if control != self.font_map:
             self.font_map.select_index(index)
-        if control != self.memory_map:
-            self.memory_map.select_index(index)
+        self.sidebar.refresh_active()
         self.can_copy = (self.anchor_start_index != self.anchor_end_index)
