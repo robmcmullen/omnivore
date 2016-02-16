@@ -234,7 +234,7 @@ if 'nsis' not in sys.argv:
             'bson',
             'fs',
             'configobj',
-            ]
+            ],
         setup_requires = ["numpy"],
         license = "GPL",
         packages = packages,
