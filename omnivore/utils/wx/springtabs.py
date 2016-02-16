@@ -394,7 +394,10 @@ class SpringTabs(wx.Panel):
 
         # Using a real wx.PopupWindow seems prevent the focus from being set to
         # the window in the popup.
-        self._popup_cls = FakePopupWindow
+        if sys.platform == "darwin":
+            self._popup_cls = wx.PopupWindow
+        else:
+            self._popup_cls = FakePopupWindow
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_SIZE, self.OnSize)
