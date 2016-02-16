@@ -372,8 +372,9 @@ class SpringTabItem(GenToggleButton):
         popup = evt.GetEventObject()
         focus = evt.GetWindow()
         dprint("OnLoseChildFocus: tab: %s, win=%s new=%s, top=%s" % (self.GetLabel(), popup, focus, wx.GetApp().GetTopWindow()))
-        if popup is not None and popup != focus:
-            wx.CallAfter(self.setPopupLoseFocusCallback)
+        if popup is not None:
+            if sys.platform == "linux2" or popup != focus:
+                wx.CallAfter(self.setPopupLoseFocusCallback)
 
 
 class SpringTabs(wx.Panel):
