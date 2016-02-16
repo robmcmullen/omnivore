@@ -35,6 +35,9 @@ class FakePopupWindow(wx.MiniFrame):
         #self.Bind(wx.EVT_KEY_DOWN , self.OnKeyDown)
         self.Bind(wx.EVT_CHAR, self.OnChar)
         self.Bind(wx.EVT_SET_FOCUS, self.OnFocus)
+    
+    def fix_sizer(self, child):
+        pass
 
     def OnChar(self, evt):
         #print("OnChar: keycode=%s" % evt.GetKeyCode())
@@ -66,6 +69,13 @@ class FakePopupWindow(wx.MiniFrame):
         #dprint("OnFocus: set focus to %s" % str(self.GetParent()))
         self.ActivateParent()
         evt.Skip()
+
+
+class RealPopupWindow(wx.PopupWindow):
+    def fix_sizer(self, child):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(child, 1, wx.EXPAND)
+        self.SetSizer(sizer)
 
 
 class SpringTabItemRenderer(object):
@@ -291,6 +301,7 @@ class SpringTabItem(GenToggleButton):
             child = windowlist[0]
 #            child.Bind(wx.EVT_SET_FOCUS, self.OnChildFocus)
             child.Bind(wx.EVT_KILL_FOCUS, self.OnLoseChildFocus)
+            self.popup.fix_sizer(child)
         windowlist = self.popup.GetChildren()
         if len(windowlist) == 0:
             raise RuntimeError("Popup window creation failed!")
@@ -395,7 +406,7 @@ class SpringTabs(wx.Panel):
         # Using a real wx.PopupWindow seems prevent the focus from being set to
         # the window in the popup.
         if sys.platform == "darwin":
-            self._popup_cls = wx.PopupWindow
+            self._popup_cls = RealPopupWindow
         else:
             self._popup_cls = FakePopupWindow
 
