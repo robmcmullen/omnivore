@@ -24,6 +24,10 @@ class SidebarPane(FrameworkPane):
     id = 'hex_edit.sidebar'
     name = 'Sidebar'
     
+    movable = False
+    caption_visible = False
+    dock_layer = 9
+    
     def MemoryMapCB(self, parent, task, **kwargs):
         control = MemoryMapSpringTab(parent, task, size=(600,30))
         
