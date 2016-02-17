@@ -679,7 +679,7 @@ class BitmapScroller(BitviewScroller):
         style_mask = match==0x80
         s = np.tile(style_mask, (mask.shape[1], 1)).T
         m2 = np.logical_and(mask, s)
-        array[m2] = e.match_background_color
+        array[m2] = e.highlight_color
 
         return bitimage
     
