@@ -89,7 +89,10 @@ def collapse_overlapping_ranges(ranges):
     if start is not None:
         opt.append((start, end))
     return opt
-    
+
+def ranges_to_indexes(ranges):
+    return np.hstack((np.arange(r[0], r[1], dtype=np.uint32) for r in ranges))
+
 def invert_ranges(ranges, last):
     """ Invert the list of (possibly overlapping) selected ranges into a
     monotonically increasing set of non-overlapping ranges that represents the

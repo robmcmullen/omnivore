@@ -5,6 +5,7 @@ import numpy as np
 
 from omnivore.framework.errors import ProgressCancelError
 from omnivore.utils.command import Command, UndoInfo
+from omnivore.utils.sortutil import ranges_to_indexes
 
 import logging
 progress_log = logging.getLogger("progress")
@@ -147,86 +148,105 @@ class PasteAndRepeatCommand(PasteCommand):
         return bytes[0:orig_len]
 
 
-class ZeroCommand(ChangeByteCommand):
-    short_name = "zero"
-    pretty_name = "Zero Bytes"
+class SetRangeCommand(Command):
+    short_name = "set_range_base"
+    pretty_name = "Set Ranges Abstract Command"
     serialize_order =  [
             ('segment', 'int'),
-            ('start_index', 'int'),
-            ('end_index', 'int'),
+            ('ranges', 'int_list'),
             ]
     
-    def __init__(self, segment, start_index, end_index):
-        ChangeByteCommand.__init__(self, segment, start_index, end_index, 0)
+    def __init__(self, segment, ranges):
+        Command.__init__(self)
+        self.segment = segment
+        self.ranges = tuple(ranges)
+    
+    def __str__(self):
+        return "%s" % self.pretty_name
+    
+    def get_data(self, orig):
+        raise NotImplementedError
+    
+    def perform(self, editor):
+        indexes = ranges_to_indexes(self.ranges)
+        self.undo_info = undo = UndoInfo()
+        undo.flags.byte_values_changed = True
+        undo.flags.index_range = indexes[0], indexes[-1]
+        old_data = self.segment[indexes].copy()
+        self.segment[indexes] = self.get_data(old_data)
+        undo.data = (old_data, )
+        return undo
+
+    def undo(self, editor):
+        old_data, = self.undo_info.data
+        indexes = ranges_to_indexes(self.ranges)
+        self.segment[indexes] = old_data
+        return self.undo_info
 
 
-class FFCommand(ChangeByteCommand):
-    short_name = "ff"
-    pretty_name = "FF Bytes"
+class SetRangeValueCommand(SetRangeCommand):
+    short_name = "set_range_base"
+    pretty_name = "Set Ranges Abstract Command"
     serialize_order =  [
             ('segment', 'int'),
-            ('start_index', 'int'),
-            ('end_index', 'int'),
+            ('ranges', 'int_list'),
+            ('bytes', 'string'),
             ]
     
-    def __init__(self, segment, start_index, end_index):
-        ChangeByteCommand.__init__(self, segment, start_index, end_index, 0xff)
+    def __init__(self, segment, ranges, bytes):
+        SetRangeCommand.__init__(self, segment, ranges)
+        self.data = bytes
+    
+    def get_data(self, orig):
+        return self.data
 
 
-class SetValueCommand(ChangeByteCommand):
+class SetValueCommand(SetRangeValueCommand):
     short_name = "set_value"
     pretty_name = "Set Value"
 
 
-class SetHighBitCommand(SetDataCommand):
+class ZeroCommand(SetRangeValueCommand):
+    short_name = "zero"
+    pretty_name = "Zero Bytes"
+    
+    def __init__(self, segment, ranges):
+        SetRangeValueCommand.__init__(self, segment, ranges, 0)
+
+
+class FFCommand(SetRangeValueCommand):
+    short_name = "ff"
+    pretty_name = "FF Bytes"
+    
+    def __init__(self, segment, ranges):
+        SetRangeValueCommand.__init__(self, segment, ranges, 0xff)
+
+
+class SetHighBitCommand(SetRangeCommand):
     short_name = "set_high_bit"
     pretty_name = "Set High Bit"
-    serialize_order =  [
-            ('segment', 'int'),
-            ('start_index', 'int'),
-            ('end_index', 'int'),
-            ]
-    
-    def __init__(self, segment, start_index, end_index):
-        SetDataCommand.__init__(self, segment, start_index, end_index)
     
     def get_data(self, orig):
         return np.bitwise_or(orig, 0x80)
 
 
-class ClearHighBitCommand(SetDataCommand):
+class ClearHighBitCommand(SetRangeCommand):
     short_name = "clear_high_bit"
     pretty_name = "Clear High Bit"
-    serialize_order =  [
-            ('segment', 'int'),
-            ('start_index', 'int'),
-            ('end_index', 'int'),
-            ]
-    
-    def __init__(self, segment, start_index, end_index):
-        SetDataCommand.__init__(self, segment, start_index, end_index)
     
     def get_data(self, orig):
         return np.bitwise_and(orig, 0x7f)
 
 
-class BitwiseNotCommand(SetDataCommand):
+class BitwiseNotCommand(SetRangeCommand):
     short_name = "bitwise_not"
     pretty_name = "Bitwise NOT"
-    serialize_order =  [
-            ('segment', 'int'),
-            ('start_index', 'int'),
-            ('end_index', 'int'),
-            ]
-    
-    def __init__(self, segment, start_index, end_index):
-        SetDataCommand.__init__(self, segment, start_index, end_index)
     
     def get_data(self, orig):
         return np.invert(orig)
 
 
-class OrWithCommand(ChangeByteCommand):
+class OrWithCommand(SetRangeValueCommand):
     short_name = "or_value"
     pretty_name = "OR With"
     
@@ -234,7 +254,7 @@ class OrWithCommand(ChangeByteCommand):
         return np.bitwise_or(orig, self.data)
 
 
-class AndWithCommand(ChangeByteCommand):
+class AndWithCommand(SetRangeValueCommand):
     short_name = "and_value"
     pretty_name = "AND With"
     
@@ -242,7 +262,7 @@ class AndWithCommand(ChangeByteCommand):
         return np.bitwise_and(orig, self.data)
 
 
-class XorWithCommand(ChangeByteCommand):
+class XorWithCommand(SetRangeValueCommand):
     short_name = "xor_value"
     pretty_name = "XOR With"
     
@@ -250,73 +270,41 @@ class XorWithCommand(ChangeByteCommand):
         return np.bitwise_xor(orig, self.data)
 
 
-class LeftShiftCommand(SetDataCommand):
+class LeftShiftCommand(SetRangeCommand):
     short_name = "left_shift"
     pretty_name = "Left Shift"
-    serialize_order =  [
-            ('segment', 'int'),
-            ('start_index', 'int'),
-            ('end_index', 'int'),
-            ]
-    
-    def __init__(self, segment, start_index, end_index):
-        SetDataCommand.__init__(self, segment, start_index, end_index)
     
     def get_data(self, orig):
         return np.left_shift(orig, 1)
 
 
-class RightShiftCommand(SetDataCommand):
+class RightShiftCommand(SetRangeCommand):
     short_name = "right_shift"
     pretty_name = "Right Shift"
-    serialize_order =  [
-            ('segment', 'int'),
-            ('start_index', 'int'),
-            ('end_index', 'int'),
-            ]
-    
-    def __init__(self, segment, start_index, end_index):
-        SetDataCommand.__init__(self, segment, start_index, end_index)
     
     def get_data(self, orig):
         return np.right_shift(orig, 1)
 
 
-class LeftRotateCommand(SetDataCommand):
+class LeftRotateCommand(SetRangeCommand):
     short_name = "left_rotate"
     pretty_name = "Left Rotate"
-    serialize_order =  [
-            ('segment', 'int'),
-            ('start_index', 'int'),
-            ('end_index', 'int'),
-            ]
-    
-    def __init__(self, segment, start_index, end_index):
-        SetDataCommand.__init__(self, segment, start_index, end_index)
     
     def get_data(self, orig):
         rotated = np.right_shift(np.bitwise_and(orig, 0x80), 7)
         return np.bitwise_or(np.left_shift(orig, 1), rotated)
 
 
-class RightRotateCommand(SetDataCommand):
+class RightRotateCommand(SetRangeCommand):
     short_name = "right_rotate"
     pretty_name = "Right Rotate"
-    serialize_order =  [
-            ('segment', 'int'),
-            ('start_index', 'int'),
-            ('end_index', 'int'),
-            ]
-    
-    def __init__(self, segment, start_index, end_index):
-        SetDataCommand.__init__(self, segment, start_index, end_index)
     
     def get_data(self, orig):
         rotated = np.left_shift(np.bitwise_and(orig, 0x01), 7)
         return np.bitwise_or(np.right_shift(orig, 1), rotated)
 
 
-class RampUpCommand(ChangeByteCommand):
+class RampUpCommand(SetRangeValueCommand):
     short_name = "ramp_up"
     pretty_name = "Ramp Up"
     
@@ -325,7 +313,7 @@ class RampUpCommand(ChangeByteCommand):
         return np.arange(self.data, self.data + num)
 
 
-class RampDownCommand(ChangeByteCommand):
+class RampDownCommand(SetRangeValueCommand):
     short_name = "ramp_down"
     pretty_name = "Ramp Down"
     
@@ -334,7 +322,7 @@ class RampDownCommand(ChangeByteCommand):
         return np.arange(self.data, self.data - num, -1)
 
 
-class AddValueCommand(ChangeByteCommand):
+class AddValueCommand(SetRangeValueCommand):
     short_name = "add_value"
     pretty_name = "Add"
     
@@ -342,7 +330,7 @@ class AddValueCommand(ChangeByteCommand):
         return orig + self.data
 
 
-class SubtractValueCommand(ChangeByteCommand):
+class SubtractValueCommand(SetRangeValueCommand):
     short_name = "subtract_value"
     pretty_name = "Subtract"
     
@@ -350,7 +338,7 @@ class SubtractValueCommand(ChangeByteCommand):
         return orig - self.data
 
 
-class SubtractFromCommand(ChangeByteCommand):
+class SubtractFromCommand(SetRangeValueCommand):
     short_name = "subtract_from"
     pretty_name = "Subtract From"
     
@@ -358,7 +346,7 @@ class SubtractFromCommand(ChangeByteCommand):
         return self.data - orig
 
 
-class MultiplyCommand(ChangeByteCommand):
+class MultiplyCommand(SetRangeValueCommand):
     short_name = "multiply"
     pretty_name = "Multiply"
     
@@ -366,7 +354,7 @@ class MultiplyCommand(ChangeByteCommand):
         return orig * self.data
 
 
-class DivideByCommand(ChangeByteCommand):
+class DivideByCommand(SetRangeValueCommand):
     short_name = "divide"
     pretty_name = "Divide By"
     
@@ -374,7 +362,7 @@ class DivideByCommand(ChangeByteCommand):
         return orig / self.data
 
 
-class DivideFromCommand(ChangeByteCommand):
+class DivideFromCommand(SetRangeValueCommand):
     short_name = "divide_from"
     pretty_name = "Divide From"
     

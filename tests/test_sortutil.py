@@ -1,6 +1,8 @@
 import os
 import itertools
 
+import numpy as np
+
 from pyface.tasks.topological_sort import before_after_sort
 from omnivore.utils.sortutil import *
 
@@ -136,7 +138,22 @@ class TestInvertRects(object):
             print rows, cols, before, processed, after
             assert processed == after
 
+class TestRangeToIndex(object):
+    def setup(self):
+        self.items = [
+            ([(50, 56)], (50, 51, 52, 53, 54, 55)),
+            ([(50, 56), (60, 62)], (50, 51, 52, 53, 54, 55, 60, 61)),
+            ([(50, 56), (60, 62), (70, 73)], (50, 51, 52, 53, 54, 55, 60, 61, 70, 71, 72)),
+            ]
+
+    def test_simple(self):
+        for before, after in self.items:
+            processed = ranges_to_indexes(before)
+            after = np.asarray(after)
+            print before, processed, after
+            np.testing.assert_array_equal(processed, after)
+
 if __name__ == "__main__":
-    t = TestInvertRects()
+    t = TestRangeToIndex()
     t.setup()
     t.test_simple()

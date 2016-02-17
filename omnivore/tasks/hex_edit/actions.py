@@ -352,7 +352,8 @@ class IndexRangeAction(EditorAction):
     
     def perform(self, event):
         e = self.active_editor
-        cmd = self.cmd(e.segment, e.anchor_start_index, e.anchor_end_index)
+        ranges = e.get_optimized_selected_ranges()
+        cmd = self.cmd(e.segment, ranges)
         self.active_editor.process_command(cmd)
 
 class ZeroAction(IndexRangeAction):
@@ -395,14 +396,14 @@ class IndexRangeValueAction(IndexRangeAction):
     def show_dialog(self, e):
         value = prompt_for_hex(e.window.control, "Enter byte value: (prefix with 0x or $ for hex)", "Byte Value")
         if value is not None:
-            cmd = self.cmd(e.segment, e.anchor_start_index, e.anchor_end_index, value)
+            cmd = self.cmd(e.segment, e.selected_ranges, value)
             self.active_editor.process_command(cmd)
             
     def perform(self, event):
         wx.CallAfter(self.show_dialog, self.active_editor)
 
 class SetValueAction(IndexRangeValueAction):
-    cmd = SetValueCommand
+    cmd = SetRangeValueCommand
 
 class OrWithAction(IndexRangeValueAction):
     cmd = OrWithCommand
