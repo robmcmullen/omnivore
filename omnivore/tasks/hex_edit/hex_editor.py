@@ -128,13 +128,15 @@ class HexEditor(FrameworkEditor):
         return 1  # ATASCII
     
     def _map_width_default(self):
-        return 8  # ATASCII
+        prefs = self.task.get_preferences()
+        return prefs.map_width
     
     def _map_zoom_default(self):
         return 2
     
     def _bitmap_width_default(self):
-        return 1
+        prefs = self.task.get_preferences()
+        return prefs.bitmap_width
     
     def _bitmap_zoom_default(self):
         return 5
@@ -386,7 +388,7 @@ class HexEditor(FrameworkEditor):
         self.update_panes()
     
     def view_segment_set_width(self, segment):
-        self.map_width = 8
+        pass
     
     def view_segment_number(self, number):
         doc = self.document

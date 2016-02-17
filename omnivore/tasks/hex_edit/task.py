@@ -110,6 +110,8 @@ class HexEditTask(FrameworkTask):
         if e is not None:
             prefs = self.get_preferences()
             e.text_font = prefs.text_font
+            e.map_width = prefs.map_width
+            e.bitmap_width = prefs.bitmap_width
             self.hex_grid_lower_case = prefs.hex_grid_lower_case
             self.assembly_lower_case = prefs.assembly_lower_case
             ByteTable.update_preferences(prefs)
