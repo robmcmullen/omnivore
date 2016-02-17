@@ -432,7 +432,7 @@ class MapEditor(HexEditor):
         if extra is None:
             cmd = PasteCommand(self.segment, self.anchor_start_index, self.anchor_end_index, bytes)
         else:
-            r, c = extra
+            format_id, r, c = extra
             cmd = PasteRectangularCommand(self.segment, self.anchor_start_index, r, c, self.control.bytes_per_row, bytes)
         self.process_command(cmd)
     

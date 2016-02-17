@@ -201,18 +201,34 @@ class HexEditor(FrameworkEditor):
             value = data_obj.GetData()
             fmt = data_obj.GetPreferredFormat()
             if fmt.GetId() == "numpy,columns":
-                r, c, value = value.split(",")
-                extra = int(r), int(c)
+                r, c, value = value.split(",", 2)
+                extra = fmt.GetId(), int(r), int(c)
+            elif fmt.GetId() == "numpy,multiple":
+                i, value = value.split(",", 1)
+                i = int(i)
+                value, index_string = value[0:i], value[i:]
+                indexes = np.fromstring(index_string, dtype=np.uint32)
+                extra = fmt.GetId(), indexes
         bytes = np.fromstring(value, dtype=np.uint8)
         return bytes, extra
     
-    supported_clipboard_data_objects = [wx.CustomDataObject("numpy"), wx.CustomDataObject("numpy,columns"), wx.TextDataObject()]
+    supported_clipboard_data_objects = [wx.CustomDataObject("numpy,multiple"), wx.CustomDataObject("numpy"), wx.CustomDataObject("numpy,columns"), wx.TextDataObject()]
     
     def create_clipboard_data_object(self):
-        if self.anchor_start_index != self.anchor_end_index:
-            data = self.segment[self.anchor_start_index:self.anchor_end_index]
+        ranges, indexes = self.get_selected_ranges_and_indexes()
+        if len(ranges) == 1:
+            r = ranges[0]
+            data = self.segment[r[0]:r[1]]
             data_obj = wx.CustomDataObject("numpy")
             data_obj.SetData(data.tostring())
+            return data_obj
+        elif np.alen(indexes) > 0:
+            data = self.segment[indexes]
+            s1 = data.tostring()
+            s2 = indexes.tostring()
+            data_obj = wx.CustomDataObject("numpy,multiple")
+            s = "%d,%s%s" % (len(s1), s1, s2)
+            data_obj.SetData(s)
             return data_obj
         return None
     

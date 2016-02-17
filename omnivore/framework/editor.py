@@ -10,7 +10,7 @@ from pyface.tasks.api import Editor
 from pyface.action.api import ActionEvent
 
 from omnivore.utils.command import StatusFlags
-from omnivore.utils.sortutil import collapse_overlapping_ranges, invert_ranges
+from omnivore.utils.sortutil import collapse_overlapping_ranges, invert_ranges, ranges_to_indexes
 
 from document import Document
 
@@ -341,6 +341,10 @@ class FrameworkEditor(Editor):
         ranges
         """
         return collapse_overlapping_ranges(self.selected_ranges)
+    
+    def get_selected_ranges_and_indexes(self):
+        opt = self.get_optimized_selected_ranges()
+        return opt, ranges_to_indexes(opt)
     
     def invert_selection_ranges(self, ranges):
         return invert_ranges(ranges, len(self.segment))
