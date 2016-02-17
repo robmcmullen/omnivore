@@ -29,10 +29,10 @@ class SidebarPane(FrameworkPane):
     dock_layer = 9
     
     def MemoryMapCB(self, parent, task, **kwargs):
-        control = MemoryMapSpringTab(parent, task, size=(600,30))
+        control = MemoryMapSpringTab(parent, task)
         
     def create_contents(self, parent):
-        control = SpringTabs(parent, self.task, popup_direction="left", size=(16,500))
+        control = SpringTabs(parent, self.task, popup_direction="left")
         control.addTab("Page Map", self.MemoryMapCB)
         return control
     

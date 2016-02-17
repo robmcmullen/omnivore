@@ -1120,6 +1120,25 @@ class MemoryMapScroller(BitviewScroller):
         self.bytes_per_row = 256
         self.zoom = 2
     
+    def DoGetBestSize(self):
+        """ Base class virtual method for sizer use to get the best size
+        """
+        width = self.bytes_per_row * self.zoom
+        height = -1
+        
+        vw, vh = self.GetVirtualSizeTuple()
+        ww, wh = self.GetClientSizeTuple()
+        if wh < vh:
+            # Scrollbar is present!
+            width += wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X) + 1
+        best = wx.Size(width, height)
+
+        # Cache the best size so it doesn't need to be calculated again,
+        # at least until some properties of the window change
+        self.CacheBestSize(best)
+
+        return best
+    
     def calc_scale_from_bytes(self):
         self.total_rows = (len(self.segment) + self.bytes_per_row - 1) / self.bytes_per_row
         self.grid_width = int(self.bytes_per_row)

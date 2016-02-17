@@ -168,37 +168,48 @@ class SpringTabItemVerticalRenderer(SpringTabItemRenderer):
         else:
             dc.DrawRotatedText(label, (width-tw)/2+dx, height + dy - item.border - self.spacing_between_items/2, 90.0)
 
+    def set_popup_width(self, parent, popup, child):
+        pw, ph = popup.GetSizeTuple()
+        pcw, pch = popup.GetClientSizeTuple()
+        try:
+            cw, ch = child.DoGetBestSize()
+        except AttributeError:
+            cw, ch = child.GetSizeTuple()
+        dprint("popup size=%s  popup client size=%s  child=%s" % (str((pw, ph)), str((pcw, pch)), str((cw, ch))))
+        
+        # The client size may be smaller than the popup window if the popup
+        # has a border decoration.
+        diffwidth =  pw - pcw
+        diffheight =  ph - pch
+        
+        # The popup will be at least as tall as the SpringTabs panel
+        width, height = parent.GetSizeTuple()
+        if ph < height:
+            ph = height
+        pw = min(cw + diffwidth, parent.max_popup_width)
+        popup.SetSize(wx.Size(pw, ph))
+        return width, height, pw, ph
+
     def showPopup(self, parent, item, show=True):
         popup, child = item.getPopup()
         if show:
-            pw, ph = popup.GetSizeTuple()
-            pcw, pch = popup.GetClientSizeTuple()
-            cw, ch = child.GetSizeTuple()
-            #dprint("popup size=%s  popup client size=%s  child=%s" % (str((pw, ph)), str((pcw, pch)), str((cw, ch))))
+            if hasattr(child, 'activateSpringTab'):
+                child.activateSpringTab()
             
-            # The client size may be smaller than the popup window if the popup
-            # has a border decoration.
-            diffwidth =  pw - pcw
-            diffheight =  ph - pch
+            # Calculate the child's width twice because the popup itself may
+            # not have a valid height the first time through if the popup has
+            # never been shown before, and the popup height will be needed by
+            # the child to calculate if a scrollbar is needed.
+            self.set_popup_width(parent, popup, child)
+            width, height, pw, ph = self.set_popup_width(parent, popup, child)
             
-            # The popup will be at least as tall as the SpringTabs panel
-            width, height = parent.GetSizeTuple()
             x, y = parent.ClientToScreenXY(width, 0)
-            if ph < height:
-                ph = height
-            pw = cw + diffwidth
-            popup.SetSize(wx.Size(pw, ph))
-            
-#            # Set the child size to match the popup size
-#            ch = height - diffheight
-#            child.SetSize(cw, ch)
-            
             if self.popleft:
                 x -= width + pw
             #dprint("popping up at %s" % str((x,y)))
             child.SetPosition(wx.Point(0, 0))
             popup.SetPosition(wx.Point(x, y))
-            wx.CallAfter(item.showPopupCallback)
+            wx.CallAfter(item.setPopupFocusCallback)
         popup.Show(show)
 
 
@@ -313,17 +324,6 @@ class SpringTabItem(GenToggleButton):
         if self.popup.IsShown():
             evt.Skip()
     
-    def showPopupCallback(self):
-        """Callback used each time the popup is initially displayed to the user.
-        
-        If the child implements the activeSprintTab method, that will be called
-        to let the popup initialize its state.
-        """
-        popup, child = self.getPopup()
-        if hasattr(child, 'activateSpringTab'):
-            child.activateSpringTab()
-        self.setPopupFocusCallback()
-    
     def setPopupFocusCallback(self):
         """Callback for use within wx.CallAfter to prevent focus being set
         after the control has been removed.
@@ -378,6 +378,8 @@ class SpringTabItem(GenToggleButton):
 
 
 class SpringTabs(wx.Panel):
+    max_popup_width = 800
+
     def __init__(self, parent, task, *args, **kwargs):
         # Need to remove foreign keyword arguments
         vertical = True
