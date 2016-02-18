@@ -175,6 +175,7 @@ class HexEditor(FrameworkEditor):
         self.update_colors(old_editor.playfield_colors)
         self.set_font(old_editor.antic_font_data, old_editor.font_mode)
     
+    @property
     def document_length(self):
         return len(self.segment)
     

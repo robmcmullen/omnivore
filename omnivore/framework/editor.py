@@ -147,6 +147,7 @@ class FrameworkEditor(Editor):
         """
         pass
     
+    @property
     def document_length(self):
         return len(self.document)
 
@@ -288,7 +289,7 @@ class FrameworkEditor(Editor):
         """ Selects the entire document
         """
         self.anchor_start_index = self.anchor_initial_start_index = 0
-        self.anchor_end_index = self.anchor_initial_end_index = len(self.document)
+        self.anchor_end_index = self.anchor_initial_end_index = self.document_length
         self.selected_ranges = [(self.anchor_start_index, self.anchor_end_index)]
         self.can_copy = (self.anchor_start_index != self.anchor_end_index)
         self.highlight_selected_ranges()
@@ -347,10 +348,10 @@ class FrameworkEditor(Editor):
         return opt, ranges_to_indexes(opt)
     
     def invert_selection_ranges(self, ranges):
-        return invert_ranges(ranges, len(self.segment))
+        return invert_ranges(ranges, self.document_length)
     
     def set_cursor(self, index, refresh=True):
-        max_index = self.document_length() - 1
+        max_index = self.document_length - 1
         if index < 0:
             index = 0
         elif index > max_index:
