@@ -1,6 +1,7 @@
 import numpy as np
 
 from errors import *
+from utils import to_numpy_list
 
 
 class SegmentSaver(object):
@@ -264,7 +265,8 @@ class IndexedStyleWrapper(object):
 
 class IndexedByteSegment(DefaultSegment):
     def __init__(self, data, style, byte_order, **kwargs):
-        self.order = byte_order
+        # Convert to numpy list so fancy indexing works as argument to __getitem__
+        self.order = to_numpy_list(byte_order)
         DefaultSegment.__init__(self, data, IndexedStyleWrapper(style, byte_order), 0, **kwargs)
     
     def __str__(self):
