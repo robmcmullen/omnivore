@@ -38,7 +38,6 @@ class SidebarPane(FrameworkPane):
     
     def refresh_active(self):
         active = self.control._radio
-        print "Active sidebar:", active
         if active is not None and active.is_shown:
             active.managed_window.refresh_view()
 
