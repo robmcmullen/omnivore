@@ -190,8 +190,6 @@ class FrameworkTask(Task):
         else:
             editor.view_document(source.document, source)
         self.activated()
-        
-        self.window.application.restore_perspective(self.window, self)
     
     def find_tab_or_open(self, document):
         for editor in self.editor_area.editors:

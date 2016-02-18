@@ -340,8 +340,7 @@ class FrameworkApplication(TasksApplication):
         window = self.create_window()
         log.debug("  window=%s" % str(window))
         task = self.create_task(factory_id)
-        window.add_task(task)
-        window.activate_task(task)
+        self.add_task_to_window(window, task)
         window.open()
         task.new(guess)
         return task
@@ -349,9 +348,13 @@ class FrameworkApplication(TasksApplication):
     def create_task_in_window(self, task_id, window):
         log.debug("creating %s task" % task_id)
         task = self.create_task(task_id)
+        self.add_task_to_window(window, task)
+        return task
+    
+    def add_task_to_window(self, window, task):
         window.add_task(task)
         window.activate_task(task)
-        return task
+        self.restore_perspective(window, task)
     
     def find_active_task_of_type(self, task_id):
         # Until remove_task bug is fixed, don't create any new windows, just
