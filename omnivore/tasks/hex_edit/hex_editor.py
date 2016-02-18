@@ -178,13 +178,15 @@ class HexEditor(FrameworkEditor):
     def document_length(self):
         return len(self.segment)
     
-    def process_paste_data_object(self, data_obj, cmd_cls=PasteCommand):
+    def process_paste_data_object(self, data_obj, cmd_cls=None):
         bytes, extra = self.get_numpy_from_data_object(data_obj)
         ranges, indexes = self.get_selected_ranges_and_indexes()
         if extra and extra[0] == "numpy,multiple":
             source_indexes = extra[0]
         else:
             source_indexes = None
+        if cmd_cls is None:
+            cmd_cls = PasteCommand
         cmd = cmd_cls(self.segment, ranges, self.cursor_index, bytes, source_indexes)
         self.process_command(cmd)
     
