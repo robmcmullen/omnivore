@@ -182,7 +182,7 @@ class HexEditor(FrameworkEditor):
         bytes, extra = self.get_numpy_from_data_object(data_obj)
         ranges, indexes = self.get_selected_ranges_and_indexes()
         if extra and extra[0] == "numpy,multiple":
-            source_indexes = extra[0]
+            source_indexes = extra[1]
         else:
             source_indexes = None
         if cmd_cls is None:

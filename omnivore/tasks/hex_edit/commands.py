@@ -149,7 +149,7 @@ class PasteCommand(SetValuesAtIndexesCommand):
     def perform(self, editor):
         indexes = ranges_to_indexes(self.ranges)
         if np.alen(indexes) == 0:
-            if self.indexes:
+            if self.indexes is not None:
                 indexes = self.indexes.copy() - self.indexes[0] + self.cursor
             else:
                 indexes = np.arange(self.cursor, self.cursor + np.alen(self.data))
