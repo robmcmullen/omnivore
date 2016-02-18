@@ -180,7 +180,12 @@ class HexEditor(FrameworkEditor):
     
     def process_paste_data_object(self, data_obj):
         bytes, extra = self.get_numpy_from_data_object(data_obj)
-        cmd = PasteCommand(self.segment, self.anchor_start_index, self.anchor_end_index, bytes)
+        ranges, indexes = self.get_selected_ranges_and_indexes()
+        if extra and extra[0] == "numpy,multiple":
+            source_indexes = extra[0]
+        else:
+            source_indexes = None
+        cmd = PasteCommand(self.segment, ranges, self.cursor_index, bytes, source_indexes)
         self.process_command(cmd)
     
     def get_numpy_from_data_object(self, data_obj):

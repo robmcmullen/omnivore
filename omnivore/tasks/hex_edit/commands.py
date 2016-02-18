@@ -101,7 +101,41 @@ class MiniAssemblerCommand(ChangeByteCommand):
         return "%s @ %04x" % (self.asm, self.start_index)
 
 
-class PasteCommand(ChangeByteCommand):
+class SetValuesAtIndexesCommand(Command):
+    short_name = "set_values_at_indexes"
+    pretty_name = "Set Indexes Abstract Command"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('ranges', 'int_list'),
+            ('cursor', 'int'),
+            ('bytes', 'string'),
+            ('indexes', 'nparray'),
+            ]
+    
+    def __init__(self, segment, ranges, cursor, bytes, indexes):
+        Command.__init__(self)
+        self.segment = segment
+        self.ranges = tuple(ranges)
+        self.cursor = cursor
+        self.data = bytes
+        self.indexes = indexes
+    
+    def __str__(self):
+        return "%s" % self.pretty_name
+    
+    def get_data(self, orig):
+        raise NotImplementedError
+    
+    def perform(self, editor):
+        raise NotImplementedError
+
+    def undo(self, editor):
+        old_data, old_indexes = self.undo_info.data
+        self.segment[old_indexes] = old_data
+        return self.undo_info
+
+
+class PasteCommand(SetValuesAtIndexesCommand):
     short_name = "paste"
     pretty_name = "Paste"
     
@@ -113,28 +147,32 @@ class PasteCommand(ChangeByteCommand):
         return self.data[0:data_len]
     
     def perform(self, editor):
-        i1 = self.start_index
-        i2 = i1 + np.alen(self.data)
-        data = self.get_data(self.segment.data[i1:i2])
-        i2 = i1 + np.alen(data)  # Force end index to be length of pasted data
+        indexes = ranges_to_indexes(self.ranges)
+        if np.alen(indexes) == 0:
+            if self.indexes:
+                indexes = self.indexes.copy() - self.indexes[0] + self.cursor
+                max_index = len(self.segment)
+                indexes = indexes[indexes < max_index]
+            else:
+                indexes = np.arange(self.cursor, self.cursor + np.alen(self.data))
+        data = self.get_data(self.segment.data[indexes])
+        indexes = indexes[0:np.alen(data)]
         self.undo_info = undo = UndoInfo()
         undo.flags.byte_values_changed = True
-        undo.flags.index_range = i1, i2
+        undo.flags.index_range = indexes[0], indexes[-1]
         undo.flags.select_range = True
-        old_data = self.segment[i1:i2].copy()
-        self.segment[i1:i2] = data
-        undo.data = (old_data, )
+        old_data = self.segment[indexes].copy()
+        self.segment[indexes] = data
+        undo.data = (old_data, indexes)
         return undo
 
     def undo(self, editor):
-        old_data, = self.undo_info.data
-        i1 = self.start_index
-        i2 = i1 + np.alen(old_data)
-        self.segment[i1:i2] = old_data
+        old_data, old_indexes = self.undo_info.data
+        self.segment[old_indexes] = old_data
         return self.undo_info
 
 
-class PasteAndRepeatCommand(PasteCommand):
+class PasteAndRepeatCommand(SetValuesAtIndexesCommand):
     short_name = "paste_rep"
     pretty_name = "Paste And Repeat"
     
