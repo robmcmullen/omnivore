@@ -209,13 +209,13 @@ class FrameworkEditor(Editor):
         else:
             self.window.error("Unable to open clipboard", "Clipboard Error")
 
-    def paste(self):
+    def paste(self, cmd_cls=None):
         """ Pastes the current clipboard at the current insertion point or over
         the current selection
         """
         data_obj = self.get_paste_data_object()
         if data_obj is not None:
-            self.process_paste_data_object(data_obj)
+            self.process_paste_data_object(data_obj, cmd_cls)
         else:
             self.window.error("Unsupported data format", "Paste Error")
     
@@ -235,7 +235,7 @@ class FrameworkEditor(Editor):
             return data_obj
         return None
     
-    def process_paste_data_object(self, data_obj):
+    def process_paste_data_object(self, data_obj, cmd_cls=None):
         pass  # Override in subclass
     
     # must be a class attribute because for checking clipboard data formats of

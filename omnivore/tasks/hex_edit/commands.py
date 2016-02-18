@@ -151,10 +151,10 @@ class PasteCommand(SetValuesAtIndexesCommand):
         if np.alen(indexes) == 0:
             if self.indexes:
                 indexes = self.indexes.copy() - self.indexes[0] + self.cursor
-                max_index = len(self.segment)
-                indexes = indexes[indexes < max_index]
             else:
                 indexes = np.arange(self.cursor, self.cursor + np.alen(self.data))
+        max_index = len(self.segment)
+        indexes = indexes[indexes < max_index]
         data = self.get_data(self.segment.data[indexes])
         indexes = indexes[0:np.alen(data)]
         self.undo_info = undo = UndoInfo()
@@ -172,7 +172,7 @@ class PasteCommand(SetValuesAtIndexesCommand):
         return self.undo_info
 
 
-class PasteAndRepeatCommand(SetValuesAtIndexesCommand):
+class PasteAndRepeatCommand(PasteCommand):
     short_name = "paste_rep"
     pretty_name = "Paste And Repeat"
     
