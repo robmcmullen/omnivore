@@ -426,14 +426,17 @@ class MapEditor(HexEditor):
     def perform_idle(self):
         pass
     
-    def process_paste_data_object(self, data_obj):
+    def process_paste_data_object(self, data_obj, cmd_cls=None):
         bytes, extra = self.get_numpy_from_data_object(data_obj)
+        ranges, indexes = self.get_selected_ranges_and_indexes()
         print extra
         if extra is None:
-            cmd = PasteCommand(self.segment, self.anchor_start_index, self.anchor_end_index, bytes)
+            cmd = PasteCommand(self.segment, ranges, self.cursor_index, indexes)
         else:
+            if cmd_cls is None:
+                cmd_cls = PasteRectangularCommand
             format_id, r, c = extra
-            cmd = PasteRectangularCommand(self.segment, self.anchor_start_index, r, c, self.control.bytes_per_row, bytes)
+            cmd = cmd_cls(self.segment, self.anchor_start_index, r, c, self.control.bytes_per_row, bytes)
         self.process_command(cmd)
     
     def create_clipboard_data_object(self):
