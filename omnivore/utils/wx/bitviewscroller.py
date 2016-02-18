@@ -397,10 +397,8 @@ class BitviewScroller(wx.ScrolledWindow):
                 e.cursor_index = index2
             e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
         else:
-            e.anchor_initial_start_index, e.anchor_initial_end_index = index1, index2
-            e.anchor_start_index, e.anchor_end_index = e.anchor_initial_start_index, e.anchor_initial_end_index
-            e.cursor_index = e.anchor_initial_start_index
-            e.select_range(e.anchor_start_index, e.anchor_end_index, add=self.multi_select_mode)
+            e.anchor_initial_start_index = e.anchor_initial_end_index = e.cursor_index = index1
+            e.select_range(index1, index1, add=self.multi_select_mode)
         evt.Skip()
 
     def on_left_dclick(self, evt):

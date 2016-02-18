@@ -663,10 +663,9 @@ class ByteGrid(Grid.Grid):
             e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
         else:
             self.ClearSelection()
-            e.anchor_initial_start_index, e.anchor_initial_end_index = self.table.get_index_range(r, c)
-            e.anchor_start_index, e.anchor_end_index = e.anchor_initial_start_index, e.anchor_initial_end_index
-            e.cursor_index = e.anchor_initial_start_index
-            e.select_range(e.anchor_start_index, e.anchor_end_index, add=self.multi_select_mode)
+            index, _ = self.table.get_index_range(r, c)
+            e.anchor_initial_start_index = e.anchor_initial_end_index = e.cursor_index = index
+            e.select_range(index, index, add=self.multi_select_mode)
         wx.CallAfter(e.index_clicked, e.cursor_index, 0, None)
 
     def get_rc_from_event(self, evt):
