@@ -206,6 +206,7 @@ class HexEditTask(FrameworkTask):
                 Group(
                     DisassemblerBaseAction(disassembler=dis6502.Basic6502Disassembler),
                     DisassemblerBaseAction(disassembler=dis6502.Atari800Disassembler),
+                    DisassemblerBaseAction(disassembler=dis6502.Atari800UndocumentedDisassembler),
                     DisassemblerBaseAction(disassembler=dis6502.Atari5200Disassembler),
                     id="a1", separator=True),
                 id='FontChoiceSubmenu3', separator=True, name="Disassembler"),

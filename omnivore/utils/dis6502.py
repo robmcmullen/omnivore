@@ -7,7 +7,7 @@ import sys
 import machine_atari800
 import machine_atari5200
 
-opdict = {
+documented_mnemonics = {
 0x00: ("BRK", 0, ""),
 0x01: ("ORA ($%02x,X)", 1, "r"),
 0x05: ("ORA $%02x", 1, "r"),
@@ -161,10 +161,121 @@ opdict = {
 0xfe: ("INC $%02x%02x,X", 2, "w"),
     }
 
+# Undocumented instructions from http://nesdev.com/undocumented_opcodes.txt
+undocumented_mnemonics = {
+0x0b: ("AAC #$%02x", 1, ""),
+0x2b: ("AAC #$%02x", 1, ""),
+0x87: ("SAX $%02x", 1, "w"),
+0x97: ("SAX $%02x,Y", 1, "r"),
+0x83: ("SAX ($%02x,X)", 1, "r"),
+0x8f: ("SAX $%02x%02x", 2, "r"),
+0x6b: ("ARR #$%02x", 1, ""),
+0x4b: ("ASR #$%02x", 1, ""),
+0xab: ("ATX #$%02x", 1, ""),
+0x9f: ("SHA $%02x%02x,Y", 2, "w"),
+0x93: ("SHA ($%02x),Y", 1, "w"),
+0xcb: ("SBX #$%02x", 1, ""),
+0xc7: ("DCP $%02x", 1, "w"),
+0x95: ("DCP $%02x,X", 1, "w"),
+0xcf: ("DCP $%02x%02x", 2, "w"),
+0xdf: ("DCP $%02x%02x,X", 2, "w"),
+0xdb: ("DCP $%02x%02x,Y", 2, "w"),
+0xc3: ("DCP ($%02x,X)", 1, "w"),
+0xd3: ("DCP ($%02x),Y", 1, "w"),
+0x04: ("DOP $%02x", 1, ""),
+0x14: ("DOP $%02x,X", 1, ""),
+0x34: ("DOP $%02x,X", 1, ""),
+0x44: ("DOP $%02x", 1, ""),
+0x54: ("DOP $%02x,X", 1, ""),
+0x64: ("DOP $%02x", 1, ""),
+0x74: ("DOP $%02x,X", 1, ""),
+0x80: ("DOP #$%02x", 1, ""),
+0x82: ("DOP #$%02x", 1, ""),
+0x89: ("DOP #$%02x", 1, ""),
+0xc2: ("DOP #$%02x", 1, ""),
+0xd4: ("DOP $%02x,X", 1, ""),
+0xe2: ("DOP #$%02x", 1, ""),
+0xf4: ("DOP $%02x,X", 1, ""),
+0xe7: ("ISB $%02x", 1, "w"),
+0xf7: ("ISB $%02x,X", 1, "w"),
+0xef: ("ISB $%02x%02x", 2, "w"),
+0xff: ("ISB $%02x%02x,X", 2, "w"),
+0xfb: ("ISB $%02x%02x,Y", 2, "w"),
+0xe3: ("ISB ($%02x,X)", 1, "w"),
+0xf3: ("ISB ($%02x),Y", 1, "w"),
+0x02: ("HLT", 0, ""),
+0x12: ("HLT", 0, ""),
+0x22: ("HLT", 0, ""),
+0x32: ("HLT", 0, ""),
+0x42: ("HLT", 0, ""),
+0x52: ("HLT", 0, ""),
+0x62: ("HLT", 0, ""),
+0x72: ("HLT", 0, ""),
+0x92: ("HLT", 0, ""),
+0xb2: ("HLT", 0, ""),
+0xd2: ("HLT", 0, ""),
+0xf2: ("HLT", 0, ""),
+0xbb: ("LAR $%02x%02x,Y", 2, "w"),
+0xa7: ("LAX $%02x", 1, "w"),
+0xb7: ("LAX $%02x,Y", 1, "w"),
+0xaf: ("LAX $%02x%02x", 2, "w"),
+0xbf: ("LAX $%02x%02x,Y", 2, "w"),
+0xa3: ("LAX ($%02x,X)", 1, "w"),
+0xb3: ("LAX ($%02x),Y", 1, "w"),
+0x1a: ("NOP", 0, ""),
+0x3a: ("NOP", 0, ""),
+0x5a: ("NOP", 0, ""),
+0x7a: ("NOP", 0, ""),
+0xda: ("NOP", 0, ""),
+0xfa: ("NOP", 0, ""),
+0x27: ("RLA $%02x", 1, "w"),
+0x37: ("RLA $%02x,X", 1, "w"),
+0x2f: ("RLA $%02x%02x", 2, "w"),
+0x3f: ("RLA $%02x%02x,X", 2, "w"),
+0x3b: ("RLA $%02x%02x,Y", 2, "w"),
+0x23: ("RLA ($%02x,X)", 1, "w"),
+0x23: ("RLA ($%02x),Y", 1, "w"),
+0x67: ("RRA $%02x", 1, "w"),
+0x77: ("RRA $%02x,X", 1, "w"),
+0x6f: ("RRA $%02x%02x", 2, "w"),
+0x7f: ("RRA $%02x%02x,X", 2, "w"),
+0x7b: ("RRA $%02x%02x,Y", 2, "w"),
+0x63: ("RRA ($%02x,X)", 1, "w"),
+0x73: ("RRA ($%02x),Y", 1, "w"),
+0xeb: ("SBC #$%02x", 1, ""),
+0x07: ("SLO $%02x", 1, "w"),
+0x17: ("SLO $%02x,X", 1, "w"),
+0x0f: ("SLO $%02x%02x", 2, "w"),
+0x1f: ("SLO $%02x%02x,X", 2, "w"),
+0x1b: ("SLO $%02x%02x,Y", 2, "w"),
+0x03: ("SLO ($%02x,X)", 1, "w"),
+0x13: ("SLO ($%02x),Y", 1, "w"),
+0x47: ("SRE $%02x", 1, "w"),
+0x57: ("SRE $%02x,X", 1, "w"),
+0x4f: ("SRE $%02x%02x", 2, "w"),
+0x5f: ("SRE $%02x%02x,X", 2, "w"),
+0x5b: ("SRE $%02x%02x,Y", 2, "w"),
+0x43: ("SRE ($%02x,X)", 1, "w"),
+0x53: ("SRE ($%02x),Y", 1, "w"),
+0x9e: ("SHX $%02x%02x,Y", 2, "w"),
+0x9c: ("SHY $%02x%02x,X", 2, "w"),
+0x0c: ("TOP $%02x%02x", 2, "r"),
+0x1c: ("TOP $%02x%02x,X", 2, "r"),
+0x3c: ("TOP $%02x%02x,X", 2, "r"),
+0x5c: ("TOP $%02x%02x,X", 2, "r"),
+0x7c: ("TOP $%02x%02x,X", 2, "r"),
+0xdc: ("TOP $%02x%02x,X", 2, "r"),
+0xfc: ("TOP $%02x%02x,X", 2, "r"),
+0x8b: ("XAA #$%02x", 1, ""),
+0x9b: ("SHS $%02x%02x,Y", 2, "w"),
+}
+
 class BaseDisassembler(object):
     menu_name = "Base Disassembler"
     
     memloc_name = {}
+    
+    mnemonics = documented_mnemonics
     
     def __init__(self, source, pc=0, pc_source_offset=0, hex_lower=True, mnemonic_lower=False):
         self.set_pc(source, pc)
@@ -174,7 +285,7 @@ class BaseDisassembler(object):
     
     def get_opdict(self, hex_lower, mnemonic_lower):
         d = {}
-        for byte, (opstr, extra, rw) in opdict.iteritems():
+        for byte, (opstr, extra, rw) in self.mnemonics.iteritems():
             if " " in opstr:
                 op, addr = opstr.split(" ", 1)
                 if mnemonic_lower:
@@ -283,6 +394,14 @@ class Atari800Disassembler(Basic6502Disassembler):
     menu_name = "Atari 800"
     
     memloc_name = machine_atari800.memmap
+
+class Atari800UndocumentedDisassembler(Basic6502Disassembler):
+    menu_name = "Atari 800 (+undocumented opcodes)"
+    
+    memloc_name = machine_atari800.memmap
+    
+    mnemonics = dict(documented_mnemonics)
+    mnemonics.update(undocumented_mnemonics)
 
 class Atari5200Disassembler(Basic6502Disassembler):
     menu_name = "Atari 5200"
