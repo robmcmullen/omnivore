@@ -69,10 +69,15 @@ class HexEditTask(FrameworkTask):
         return pane_layout.pane_create()
 
     def _extra_actions_default(self):
+        machine_menu = self.create_menu("Menu", "Machine", "MachineTypeGroup", "MachineProcessorGroup", "MachineCharGroup", "MachineBitmapGroup")
         segment_menu = self.create_menu("Menu", "Segments", "SegmentParserGroup", "SegmentGroup")
         bytes_menu = self.create_menu("Menu", "Bytes", "HexModifyGroup")
         actions = [
             # Menubar additions
+            SchemaAddition(factory=lambda: machine_menu,
+                           path='MenuBar',
+                           after="Edit",
+                           ),
             SchemaAddition(factory=lambda: segment_menu,
                            path='MenuBar',
                            after="Edit",
@@ -146,7 +151,28 @@ class HexEditTask(FrameworkTask):
             FindNextAction(),
             ]
     
-    def get_common_ViewConfigGroup(self):
+    def get_actions_Menu_View_ViewConfigGroup(self):
+        return [
+            TextFontAction(),
+            ]
+    
+    def get_predefined_machines_actions(self):
+        actions = []
+        for machine in predefined_machines:
+            actions.append(PredefinedMachineAction(machine=machine))
+        return actions
+    
+    def get_actions_Menu_Machine_MachineTypeGroup(self):
+        machines = self.get_predefined_machines_actions()
+        return [
+            SMenu(
+                Group(
+                    *machines,
+                    id="a1", separator=True),
+                id='MachineChoiceSubmenu1', separator=True, name="Predefined Machines"),
+            ]
+    
+    def get_actions_Menu_Machine_MachineCharGroup(self):
         font_mapping_actions = self.get_font_mapping_actions()
         return [
             SMenu(
@@ -198,25 +224,6 @@ class HexEditTask(FrameworkTask):
                     id="a2", separator=True),
                 id='FontChoiceSubmenu2a', separator=True, name="Antic Colors"),
             ]
-    
-    def get_predefined_machines_actions(self):
-        actions = []
-        for machine in predefined_machines:
-            actions.append(PredefinedMachineAction(machine=machine))
-        return actions
-    
-    def get_actions_Menu_View_ViewConfigGroup(self):
-        actions = self.get_common_ViewConfigGroup()
-        machines = self.get_predefined_machines_actions()
-        actions.extend([
-            SMenu(
-                Group(
-                    *machines,
-                    id="a1", separator=True),
-                id='FontChoiceSubmenu3', separator=True, name="Machine"),
-            TextFontAction(),
-            ])
-        return actions
     
     def get_actions_Menu_Segments_SegmentParserGroup(self):
         segment_parser_actions = [SegmentParserAction(segment_parser=s) for s in known_segment_parsers]
