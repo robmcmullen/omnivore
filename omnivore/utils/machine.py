@@ -7,7 +7,7 @@ import numpy as np
 from traits.api import HasTraits, Any, Bool, Int, Str, List, Dict
 
 # Local imports.
-from dis6502 import Basic6502Disassembler, Undocumented6502Disassembler
+from dis6502 import Basic6502Disassembler, Undocumented6502Disassembler, Flagged6502Disassembler
 import machine_atari800
 import machine_atari5200
 
@@ -41,17 +41,20 @@ class Machine(HasTraits):
 
 
 Generic6502 = Machine(name="Generic 6502", disassembler=Basic6502Disassembler)
-Atari800 = Machine(name="Atari 800", disassembler=Basic6502Disassembler,
-                   memory_map=machine_atari800.memmap)
-Atari800Undoc = Machine(name="Atari 800 (+undocumented mnemonics)", disassembler=Undocumented6502Disassembler,
-                   memory_map=machine_atari800.memmap)
-Atari5200 = Machine(name="Atari 5200", disassembler=Basic6502Disassembler,
-                   memory_map=machine_atari5200.memmap)
+
+Atari800 = Machine(name="Atari 800", disassembler=Basic6502Disassembler, memory_map=machine_atari800.memmap)
+
+Atari800Undoc = Machine(name="Atari 800 (show undocumented opcodes)", disassembler=Undocumented6502Disassembler, memory_map=machine_atari800.memmap)
+
+Atari800Flagged = Machine(name="Atari 800 (highlight undocumented opcodes)", disassembler=Flagged6502Disassembler, memory_map=machine_atari800.memmap)
+
+Atari5200 = Machine(name="Atari 5200", disassembler=Basic6502Disassembler, memory_map=machine_atari5200.memmap)
 
 predefined_machines = [
     Generic6502,
     Atari800,
     Atari800Undoc,
+    Atari800Flagged,
     Atari5200,
     ]
 

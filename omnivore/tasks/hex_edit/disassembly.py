@@ -61,9 +61,9 @@ class DisassemblyTable(ByteGridTable):
         start_row = self.next_row
         try:
             for i in range(self.chunk_size):
-                (addr, bytes, opstr, comment) = self.disassembler.get_instruction()
+                (addr, bytes, opstr, comment, flag) = self.disassembler.get_instruction()
                 count = len(bytes)
-                data = (addr, bytes, opstr, comment, count)
+                data = (addr, bytes, opstr, comment, count, flag)
                 lines.append(data)
         except StopIteration:
             pass
@@ -171,6 +171,11 @@ class DisassemblyTable(ByteGridTable):
         if col == 0:
             return " ".join("%02X" % i for i in line[1]), style
         return str(line[col + 1]), style
+    
+    def get_style_override(self, row, col, style):
+        if self.lines[row][5]:
+            return style|0x02
+        return style
     
     def GetRowLabelValue(self, row):
         if self.lines:

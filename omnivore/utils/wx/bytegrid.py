@@ -47,6 +47,7 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
             dc.DrawRectangleRect(rect)
         else:
             text, style = self.table.get_value_style(row, col)
+            style = self.table.get_style_override(row, col, style)
             if style & 0x80:
                 dc.SetPen(self.selected_pen)
                 dc.SetBrush(self.selected_brush)
@@ -184,6 +185,10 @@ class ByteGridTable(Grid.PyGridTableBase):
         raise NotImplementedError
     
     get_value_style = get_value_style_lower
+    
+    def get_style_override(self, row, col, style):
+        """Allow subclasses to change the style"""
+        return style
     
     def GetValue(self, row, col):
         index, _ = self.get_index_range(row, col)

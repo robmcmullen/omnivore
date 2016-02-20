@@ -354,18 +354,20 @@ class BaseDisassembler(object):
             memloc = None
             dest_pc = None
         
-        return pc, bytes, opstr, memloc, rw, dest_pc
+        return pc, opcode, bytes, opstr, memloc, rw, dest_pc
 
     def get_disassembly(self):
         while True:
-            addr, bytes, opstr, memloc, rw, dest_pc = self.disasm()
+            addr, opcode, bytes, opstr, memloc, rw, dest_pc = self.disasm()
             comment = self.get_memloc_name(memloc, rw)
-            yield (addr, bytes, opstr, comment)
+            flag = self.get_flag(opcode)
+            yield (addr, bytes, opstr, comment, flag)
     
     def get_instruction(self):
-        addr, bytes, opstr, memloc, rw, dest_pc = self.disasm()
+        addr, opcode, bytes, opstr, memloc, rw, dest_pc = self.disasm()
         comment = self.get_memloc_name(memloc, rw)
-        return (addr, bytes, opstr, comment)
+        flag = self.get_flag(opcode)
+        return (addr, bytes, opstr, comment, flag)
     
     def get_memloc_name(self, memloc, rw):
         if rw == "":
@@ -375,6 +377,9 @@ class BaseDisassembler(object):
         elif memloc in self.memory_map:
             return "; " + self.memory_map[memloc]
         return ""
+    
+    def get_flag(self, opcode):
+        return 0
 
 
 class Basic6502Disassembler(BaseDisassembler):
@@ -389,6 +394,11 @@ class Basic6502Disassembler(BaseDisassembler):
 class Undocumented6502Disassembler(Basic6502Disassembler):
     mnemonics = dict(documented_mnemonics)
     mnemonics.update(undocumented_mnemonics)
+
+
+class Flagged6502Disassembler(Undocumented6502Disassembler):
+    def get_flag(self, opcode):
+        return opcode in undocumented_mnemonics
 
 
 if __name__ == "__main__":
