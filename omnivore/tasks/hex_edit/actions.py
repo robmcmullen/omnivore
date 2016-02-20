@@ -183,24 +183,24 @@ class TextFontAction(EditorAction):
             e.reconfigure_panes()
 
 
-class DisassemblerBaseAction(EditorAction):
+class PredefinedMachineAction(EditorAction):
     """Radio buttons for changing font style
     """
     # Traits
     style = 'radio'
     
-    disassembler = Any
+    machine = Any
     
     def _name_default(self):
-        return self.disassembler.menu_name
+        return self.machine.name
 
     def perform(self, event):
-        self.active_editor.set_disassembler(self.disassembler)
+        self.active_editor.set_machine(self.machine)
 
-    @on_trait_change('active_editor.disassembler')
+    @on_trait_change('active_editor.machine')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.disassembler == self.disassembler
+            self.checked = self.active_editor.machine == self.machine
 
 
 class SegmentParserAction(EditorAction):

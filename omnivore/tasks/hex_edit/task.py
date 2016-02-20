@@ -15,7 +15,7 @@ from preferences import HexEditPreferences
 from actions import *
 import pane_layout
 import omnivore.utils.wx.fonts as fonts
-import omnivore.utils.dis6502 as dis6502
+from omnivore.utils.machine import predefined_machines
 from omnivore.utils.segmentutil import known_segment_parsers
 import omnivore.utils.colors as colors
 from grid_control import ByteTable
@@ -199,17 +199,21 @@ class HexEditTask(FrameworkTask):
                 id='FontChoiceSubmenu2a', separator=True, name="Antic Colors"),
             ]
     
+    def get_predefined_machines_actions(self):
+        actions = []
+        for machine in predefined_machines:
+            actions.append(PredefinedMachineAction(machine=machine))
+        return actions
+    
     def get_actions_Menu_View_ViewConfigGroup(self):
         actions = self.get_common_ViewConfigGroup()
+        machines = self.get_predefined_machines_actions()
         actions.extend([
             SMenu(
                 Group(
-                    DisassemblerBaseAction(disassembler=dis6502.Basic6502Disassembler),
-                    DisassemblerBaseAction(disassembler=dis6502.Atari800Disassembler),
-                    DisassemblerBaseAction(disassembler=dis6502.Atari800UndocumentedDisassembler),
-                    DisassemblerBaseAction(disassembler=dis6502.Atari5200Disassembler),
+                    *machines,
                     id="a1", separator=True),
-                id='FontChoiceSubmenu3', separator=True, name="Disassembler"),
+                id='FontChoiceSubmenu3', separator=True, name="Machine"),
             TextFontAction(),
             ])
         return actions

@@ -17,7 +17,7 @@ from grid_control import HexEditControl
 from omnivore.utils.file_guess import FileMetadata
 import omnivore.utils.wx.fonts as fonts
 import omnivore.utils.colors as colors
-from omnivore.utils.dis6502 import Atari800Disassembler
+from omnivore.utils.machine import Atari800
 from omnivore.utils.segmentutil import known_segment_parsers, DefaultSegment, AnticFontSegment
 from omnivore.utils.searchutil import known_searchers
 
@@ -66,7 +66,7 @@ class HexEditor(FrameworkEditor):
     
     color_standard = Enum(0, 1)
     
-    disassembler = Any
+    machine = Any
     
     segment = Any(None)
     
@@ -108,8 +108,8 @@ class HexEditor(FrameworkEditor):
     
     ##### Default traits
     
-    def _disassembler_default(self):
-        return Atari800Disassembler
+    def _machine_default(self):
+        return Atari800
     
     def _segment_default(self):
         return DefaultSegment()
@@ -385,8 +385,8 @@ class HexEditor(FrameworkEditor):
     def get_font_from_selection(self):
         pass
     
-    def set_disassembler(self, disassembler):
-        self.disassembler = disassembler
+    def set_machine(self, machine):
+        self.machine = machine
         self.disassembly.recalc_view()
     
     def find_segment_parser(self, parsers, segment_name=None):

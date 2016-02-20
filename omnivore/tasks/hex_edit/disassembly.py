@@ -33,7 +33,7 @@ class DisassemblyTable(ByteGridTable):
         self.lines = []
         self.index_to_row = []
         self._rows = 0
-        self.disassembler = editor.disassembler(segment, segment.start_addr, -segment.start_addr, editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
+        self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
         self.disassembler.set_pc(segment, segment.start_addr)
         self.next_row = 0
         self.start_addr = segment.start_addr

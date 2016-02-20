@@ -271,16 +271,17 @@ undocumented_mnemonics = {
 }
 
 class BaseDisassembler(object):
-    menu_name = "Base Disassembler"
-    
-    memloc_name = {}
-    
     mnemonics = documented_mnemonics
     
-    def __init__(self, source, pc=0, pc_source_offset=0, hex_lower=True, mnemonic_lower=False):
-        self.set_pc(source, pc)
-        self.pc_offset = pc_source_offset  # index into source array of pc
-        self.origin = self.pc
+    def __init__(self, memory_map=None, hex_lower=True, mnemonic_lower=False):
+        self.source = None
+        self.pc = 0
+        self.pc_offset = 0
+        self.origin = None
+        if memory_map is not None:
+            self.memory_map = memory_map
+        else:
+            self.memory_map = {}
         self.get_opdict(hex_lower, mnemonic_lower)
     
     def get_opdict(self, hex_lower, mnemonic_lower):
@@ -303,6 +304,9 @@ class BaseDisassembler(object):
         self.source = source
         self.length = len(source)
         self.pc = pc
+        if self.origin is None:
+            self.origin = pc
+            self.pc_offset = -pc  # index into source array of pc
         
     def get_next(self):
         raise RuntimeError("abstract method")
@@ -366,23 +370,14 @@ class BaseDisassembler(object):
     def get_memloc_name(self, memloc, rw):
         if rw == "":
             return ""
-        elif rw == "w" and -memloc in self.memloc_name:
-            return "; " + self.memloc_name[-memloc]
-        elif memloc in self.memloc_name:
-            return "; " + self.memloc_name[memloc]
+        elif rw == "w" and -memloc in self.memory_map:
+            return "; " + self.memory_map[-memloc]
+        elif memloc in self.memory_map:
+            return "; " + self.memory_map[memloc]
         return ""
 
-class TextDisassembler(BaseDisassembler):
-    def get_next(self):
-        if self.pc >= self.origin + self.length:
-            raise StopIteration
-        opcode = ord(self.source[self.pc + self.pc_offset])
-        self.pc += 1
-        return opcode
 
 class Basic6502Disassembler(BaseDisassembler):
-    menu_name = "Generic 6502"
-    
     def get_next(self):
         if self.pc >= self.origin + self.length:
             raise StopIteration
@@ -390,23 +385,10 @@ class Basic6502Disassembler(BaseDisassembler):
         self.pc += 1
         return opcode
 
-class Atari800Disassembler(Basic6502Disassembler):
-    menu_name = "Atari 800"
-    
-    memloc_name = machine_atari800.memmap
 
-class Atari800UndocumentedDisassembler(Basic6502Disassembler):
-    menu_name = "Atari 800 (+undocumented opcodes)"
-    
-    memloc_name = machine_atari800.memmap
-    
+class Undocumented6502Disassembler(Basic6502Disassembler):
     mnemonics = dict(documented_mnemonics)
     mnemonics.update(undocumented_mnemonics)
-
-class Atari5200Disassembler(Basic6502Disassembler):
-    menu_name = "Atari 5200"
-    
-    memloc_name = machine_atari5200.memmap
 
 
 if __name__ == "__main__":
@@ -415,6 +397,6 @@ if __name__ == "__main__":
     print len(binary)
     
     pc = 0;
-    disasm = TextDisassembler(binary, pc)
+    disasm = Basic6502Disassembler(binary, pc)
     for line in disasm.get_disassembly():
         print line
