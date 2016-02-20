@@ -410,35 +410,25 @@ class BitviewScroller(wx.ScrolledWindow):
         if inside:
             index1 = byte
             index2 = byte + 1
-#                print index1, index2, e.anchor_start_index, e.anchor_end_index
             update = False
             if self.select_extend_mode:
                 if index1 < e.anchor_initial_start_index:
                     e.select_range(index1, e.anchor_initial_end_index, extend=True)
-                    e.cursor_index = index1
                     update = True
                 else:
                     e.select_range(e.anchor_initial_start_index, index2, extend=True)
-                    e.cursor_index = index2
                     update = True
             else:
                 if e.anchor_start_index <= index1:
                     if index2 != e.anchor_end_index:
                         e.select_range(e.anchor_initial_start_index, index2, extend=self.multi_select_mode)
-                        e.cursor_index = index2
                         update = True
                 else:
                     if index1 != e.anchor_end_index:
                         e.select_range(e.anchor_initial_end_index, index1, extend=self.multi_select_mode)
-                        e.cursor_index = index1
                         update = True
             if update:
-                if self.rect_select:
-                    index = byte
-                else:
-                    index = e.anchor_end_index
-                wx.CallAfter(e.index_clicked, index, bit, None)
-#                print "motion: byte, start, end", byte, e.anchor_start_index, e.anchor_end_index
+                wx.CallAfter(e.index_clicked, index1, bit, None)
  
     def on_motion(self, evt):
         if self.editor is not None and evt.LeftIsDown():

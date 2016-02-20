@@ -502,6 +502,7 @@ class MapEditor(HexEditor):
     #### wx event handlers ####################################################
     
     def index_clicked(self, index, bit, control):
+        self.cursor_index = index
         if control != self.control:
             self.control.select_index(index)
         if control != self.memory_map:
