@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+""" Python 2 version of udis
+
+"""
 import os
 import glob
 
@@ -10,27 +13,33 @@ r = 2
 w = 3
 
 def read_udis(pathname):
+    """ Read all the processor-specific opcode info and pull into a container
+    dictionary keyed on the processor name.
+    
+    The udis files have module level data, so this pulls the data from multiple
+    cpus into a single structure that can then be refereced by processor name.
+    For example, to find the opcode table in the generated dictionary for the
+    6502 processor, use:
+    
+    cpus['6502']['opcodeTable']
+    """
     files = glob.glob("%s/*.py" % pathname)
     cpus = {}
     for filename in files:
-        print filename
         with open(filename, "r") as fh:
             source = fh.read()
             if "addressModeTable" in source and "opcodeTable" in source:
                 localfile = os.path.basename(filename)
-                procname, _ = os.path.splitext(localfile)
+                cpu_name, _ = os.path.splitext(localfile)
                 g = {"pcr": 1}
                 d = {}
                 try:
                     exec(source, g, d)
                     if 'opcodeTable' in d:
-                        cpus[procname] = d
+                        cpus[cpu_name] = d
                 except SyntaxError:
                     # ignore any python 3 files
                     pass
-    print cpus.keys()
-    print cpus['6502']
-    print cpus['6502']['opcodeTable']
     return cpus
 
 
@@ -46,9 +55,9 @@ class Disassembler(object):
             self.memory_map = memory_map
         else:
             self.memory_map = {}
-        self.get_opdict(cpu_name, hex_lower, mnemonic_lower)
+        self.setup(cpu_name, hex_lower, mnemonic_lower)
     
-    def get_opdict(self, cpu_name, hex_lower, mnemonic_lower):
+    def setup(self, cpu_name, hex_lower, mnemonic_lower):
         cpu = self.supported_cpus[cpu_name]
         modes = {}
         table = cpu['addressModeTable']
@@ -61,7 +70,6 @@ class Disassembler(object):
         for opcode, optable in table.iteritems():
             try:
                 length, mnemonic, mode, flag = optable
-                print "FLAG!!!", length, mnemonic, mode, flag
             except ValueError:
                 length, mnemonic, mode = optable
                 flag = 0
