@@ -123,10 +123,18 @@ class HexEditTask(FrameworkTask):
             DisassemblyTable.update_preferences(prefs)
             e.reconfigure_panes()
 
-    def get_font_mapping_actions(self):
+    def get_font_mapping_actions(self, task=None):
+        # When actions are needed for a popup, the task must be supplied. When
+        # used from a menubar, supplying the task can mess up the EditorAction
+        # automatic trait stuff, so this hack is needed. At least it is now,
+        # after the addition of the Machine menu in b17fa9fe9. For some reason.
+        if task is not None:
+            kwargs = {'task': task}
+        else:
+            kwargs = {}
         return [
-            FontMappingBaseAction(font_mapping=0, name="Antic Internal Codes", task=self),
-            FontMappingBaseAction(font_mapping=1, name="ATASCII Codes", task=self),
+            FontMappingBaseAction(font_mapping=0, name="Antic Internal Codes", **kwargs),
+            FontMappingBaseAction(font_mapping=1, name="ATASCII Codes", **kwargs),
             ]
     
     def get_actions_Menu_File_SaveGroup(self):

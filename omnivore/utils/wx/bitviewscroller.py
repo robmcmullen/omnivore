@@ -873,7 +873,7 @@ class FontMapScroller(BitviewScroller):
     def get_popup_actions(self):
         actions = BitviewScroller.get_popup_actions(self)
         actions.extend([None, FontMappingWidthAction, FontMappingZoomAction, None])
-        actions.extend(self.task.get_font_mapping_actions())
+        actions.extend(self.task.get_font_mapping_actions(self.task))
         return actions
     
     def set_status_message(self):
