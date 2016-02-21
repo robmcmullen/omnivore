@@ -169,7 +169,7 @@ class HexEditTask(FrameworkTask):
                 Group(
                     *machines,
                     id="a1", separator=True),
-                id='MachineChoiceSubmenu1', separator=True, name="Predefined Machines"),
+                id='MachineChoiceSubmenu1', separator=False, name="Predefined Machines"),
             ]
     
     def get_actions_Menu_Machine_MachineCharGroup(self):
@@ -196,7 +196,7 @@ class HexEditTask(FrameworkTask):
                     FontStyleBaseAction(font_mode=7, name="Antic 7 (Gr 2) Uppercase and Numbers"),
                     FontStyleBaseAction(font_mode=9, name="Antic 7 (Gr 2) Lowercase and Symbols"),
                     id="a1", separator=True),
-                id='FontChoiceSubmenu2', separator=True, name="Antic Mode"),
+                id='FontChoiceSubmenu2', separator=False, name="Antic Mode"),
             SMenu(
                 Group(
                     *font_mapping_actions,
@@ -204,13 +204,13 @@ class HexEditTask(FrameworkTask):
                 Group(
                     FontMappingWidthAction(),
                     id="a3", separator=True),
-                id='FontChoiceSubmenu2a1', separator=True, name="Char Map"),
+                id='FontChoiceSubmenu2a1', separator=False, name="Char Map"),
             SMenu(
                 Group(
                     BitmapWidthAction(),
                     BitmapZoomAction(),
                     id="a1", separator=True),
-                id='FontChoiceSubmenu2a2', separator=True, name="Bitmap"),
+                id='FontChoiceSubmenu2a2', separator=False, name="Bitmap"),
             SMenu(
                 Group(
                     ColorStandardAction(name="NTSC", color_standard=0),
@@ -222,7 +222,7 @@ class HexEditTask(FrameworkTask):
                 Group(
                     AnticColorAction(),
                     id="a2", separator=True),
-                id='FontChoiceSubmenu2a', separator=True, name="Antic Colors"),
+                id='FontChoiceSubmenu2a', separator=False, name="Antic Colors"),
             ]
     
     def get_actions_Menu_Segments_SegmentParserGroup(self):
@@ -232,7 +232,7 @@ class HexEditTask(FrameworkTask):
                 Group(
                     *segment_parser_actions,
                     id="a1", separator=True),
-                id='submenu1', separator=True, name="File Type"),
+                id='submenu1', separator=False, name="File Type"),
             GetSegmentFromSelectionAction(),
             ]
     

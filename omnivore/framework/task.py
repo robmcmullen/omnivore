@@ -449,7 +449,7 @@ class FrameworkTask(Task):
         return [
             SMenu(
                 NewViewInGroup(id="a1", separator=True),
-                id='WindowTabGroupSubmenu2', separator=True, name="New View In..."),
+                id='WindowTabGroupSubmenu2', name="New View In..."),
             ]
     
     def get_actions_Menu_Window_WindowGroup(self):
