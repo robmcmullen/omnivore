@@ -176,7 +176,7 @@ undocumented_mnemonics = {
 0x93: ("SHA ($%02x),Y", 1, "w"),
 0xcb: ("SBX #$%02x", 1, ""),
 0xc7: ("DCP $%02x", 1, "w"),
-0x95: ("DCP $%02x,X", 1, "w"),
+0xd7: ("DCP $%02x,X", 1, "w"),
 0xcf: ("DCP $%02x%02x", 2, "w"),
 0xdf: ("DCP $%02x%02x,X", 2, "w"),
 0xdb: ("DCP $%02x%02x,Y", 2, "w"),
@@ -402,11 +402,46 @@ class Flagged6502Disassembler(Undocumented6502Disassembler):
 
 
 if __name__ == "__main__":
-    with open(sys.argv[1], 'rb') as fh:
-        binary = fh.read()
-    print len(binary)
-    
-    pc = 0;
-    disasm = Basic6502Disassembler(binary, pc)
-    for line in disasm.get_disassembly():
-        print line
+    if len(sys.argv) > 1:
+        with open(sys.argv[1], 'rb') as fh:
+            binary = fh.read()
+        print len(binary)
+        
+        pc = 0;
+        disasm = Basic6502Disassembler(binary, pc)
+        for line in disasm.get_disassembly():
+            print line
+    else:
+        # conversion of undocumented opcodes to udis
+        k = undocumented_mnemonics.keys()
+        k.sort()
+        mode_convert = {
+            "$%02x%02x": "absolute",
+            "$%02x%02x,x": "absolutex",
+            "$%02x%02x,y": "absolutey",
+            "#$%02x": "immediate",
+            "($%02x,x)": "indirectx",
+            "($%02x),y": "indirecty",
+            "$%02x": "zeropage",
+            "$%02x,x": "zeropagex",
+            "$%02x,y": "zeropagey",
+            }
+        op_convert = {
+            "dop": "nop",
+            "top": "nop",
+            "aac": "anc",
+            "asr": "alr",
+            "isb": "isc",
+            }
+        for i in k:
+            opstr, extra, rw = undocumented_mnemonics[i]
+            if " " in opstr:
+                op, mode = opstr.split(" ", 1)
+                mode = mode_convert[mode.lower()]
+            else:
+                op = opstr
+                mode = "implicit"
+            op = op.lower()
+            if op in op_convert:
+                op = op_convert[op]
+            print "0x%02x : [ %d, \"%s\", \"%s\", undoc                ]," % (i, extra + 1, op, mode)
