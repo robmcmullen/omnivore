@@ -25,6 +25,7 @@ import signal
 
 
 pcr = 1
+und = 2
 
 # Functions
 
@@ -47,6 +48,7 @@ parser.add_argument("filename", help="Binary file to disassemble")
 parser.add_argument("-c", "--cpu", help="Specify CPU type (defaults to 6502)", default="6502")
 parser.add_argument("-n", "--nolist", help="Don't list  instruction bytes (make output suitable for assembler)", action="store_true")
 parser.add_argument("-a", "--address", help="Specify decimal starting address (defaults to 0)", default=0, type=int)
+parser.add_argument("-u", "--undocumented", help="Allow undocumented opcodes", action="store_true")
 parser.add_argument("-i", "--invalid", help="Show invalid opcodes as ??? rather than constants", action="store_true")
 args = parser.parse_args()
 
@@ -138,6 +140,12 @@ while True:
             length = 1  # Invalid opcode
             format = ""
             mnemonic = "???"
+        
+        if flags & 2 == und and not args.undocumented:
+            # currently only handles one-byte undocumented opcodes
+            format = ""
+            mnemonic = "???"
+            
 
 # Disassembly format:
 # XXXX  XX XX XX XX XX  nop    ($1234,X)
@@ -173,7 +181,7 @@ while True:
         # Handle relative addresses. Indicated by the flag pcr being set.
         # Assumes the operand that needs to be PC relative is the last one.
         # Note: Code will need changes if more flags are added.
-        if flags == pcr:
+        if flags & 1 == pcr:
             if op[length-1] < 128:
                 op[length-1] = address + op[length-1] + length
             else:
