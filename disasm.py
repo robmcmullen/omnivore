@@ -9,8 +9,9 @@ import numpy as np
 
 # flags
 pcr = 1
-r = 2
-w = 3
+und = 2
+r = 4
+w = 8
 
 def read_udis(pathname):
     """ Read all the processor-specific opcode info and pull into a container
