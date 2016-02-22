@@ -7,47 +7,15 @@ import glob
 
 import numpy as np
 
+import cputables
 # flags
 pcr = 1
 und = 2
 r = 4
 w = 8
 
-def read_udis(pathname):
-    """ Read all the processor-specific opcode info and pull into a container
-    dictionary keyed on the processor name.
-    
-    The udis files have module level data, so this pulls the data from multiple
-    cpus into a single structure that can then be refereced by processor name.
-    For example, to find the opcode table in the generated dictionary for the
-    6502 processor, use:
-    
-    cpus['6502']['opcodeTable']
-    """
-    files = glob.glob("%s/*.py" % pathname)
-    cpus = {}
-    for filename in files:
-        with open(filename, "r") as fh:
-            source = fh.read()
-            if "addressModeTable" in source and "opcodeTable" in source:
-                localfile = os.path.basename(filename)
-                cpu_name, _ = os.path.splitext(localfile)
-                g = {"pcr": 1}
-                d = {}
-                try:
-                    exec(source, g, d)
-                    if 'opcodeTable' in d:
-                        cpus[cpu_name] = d
-                except SyntaxError:
-                    # ignore any python 3 files
-                    pass
-    return cpus
-
-
 class Disassembler(object):
-    supported_cpus = {}
-    
-    def __init__(self, cpu_name, memory_map=None, hex_lower=True, mnemonic_lower=False):
+    def __init__(self, cpu_name, memory_map=None, allow_undocumented=False, hex_lower=True, mnemonic_lower=False):
         self.source = None
         self.pc = 0
         self.pc_offset = 0
@@ -56,10 +24,10 @@ class Disassembler(object):
             self.memory_map = memory_map
         else:
             self.memory_map = {}
-        self.setup(cpu_name, hex_lower, mnemonic_lower)
+        self.setup(cpu_name, allow_undocumented, hex_lower, mnemonic_lower)
     
-    def setup(self, cpu_name, hex_lower, mnemonic_lower):
-        cpu = self.supported_cpus[cpu_name]
+    def setup(self, cpu_name, allow_undocumented, hex_lower, mnemonic_lower):
+        cpu = cputables.processors[cpu_name]
         modes = {}
         table = cpu['addressModeTable']
         for mode, fmt in table.iteritems():
@@ -81,6 +49,7 @@ class Disassembler(object):
         self.leadin = cpu['leadInBytes']
         self.maxlen = cpu['maxLength']
         self.data_byte = ".db $%02" + ("x" if hex_lower else "X")
+        self.undocumented = allow_undocumented
         
     def set_pc(self, source, pc):
         self.source = source
@@ -96,6 +65,9 @@ class Disassembler(object):
         opcode = int(self.source[self.pc + self.pc_offset])
         self.pc += 1
         return opcode
+    
+    def put_back(self):
+        self.pc -= 1
     
     def disasm(self):
         pc = self.pc
@@ -122,12 +94,19 @@ class Disassembler(object):
                 extra = length - 2
             else:
                 extra = length - 1
+        
+            if flag & 2 == und and not self.undocumented:
+                if len(bytes) == 2:
+                    self.put_back()
+                    opcode = bytes[0]
+                    bytes = (opcode)
+                extra, opstr, fmt, flag = 0, self.data_byte % opcode, "", 0
             
             next_pc = self.pc
             if extra == 1:
                 operand1 = self.get_next()
                 bytes.append(operand1)
-                if flag == pcr:
+                if flag & 1 == pcr:
                     signed = operand1 - 256 if operand1 > 127 else operand1
                     rel = pc + 2 + signed
                     opstr = opstr + " " + fmt.format(rel)
@@ -206,11 +185,10 @@ if __name__ == "__main__":
     import sys
     import argparse
     
-    Disassembler.supported_cpus = read_udis(".")
-    
     parser = argparse.ArgumentParser()
     parser.add_argument("filename", help="Binary file to disassemble")
     parser.add_argument("-c", "--cpu", help="Specify CPU type (defaults to 6502)", default="6502")
+    parser.add_argument("-u", "--undocumented", help="Allow undocumented opcodes", action="store_true")
     args = parser.parse_args()
 
     with open(args.filename, 'rb') as fh:
@@ -219,7 +197,7 @@ if __name__ == "__main__":
     print len(binary)
     
     pc = 0;
-    disasm = Disassembler(args.cpu)
+    disasm = Disassembler(args.cpu, allow_undocumented=args.undocumented)
     disasm.set_pc(binary, 0)
     for addr, bytes, opstr, comment, flag in disasm.get_disassembly():
         print "0x%04x %-12s ; %s   %s %s" % (addr, opstr, comment, bytes, flag)
