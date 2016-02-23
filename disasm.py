@@ -32,7 +32,7 @@ class Disassembler(object):
         table = cpu['addressModeTable']
         for mode, fmt in table.iteritems():
             if hex_lower:
-                fmt = fmt.replace("%02X", "%02x").replace("%04X", "%04x")
+                fmt = fmt.replace(":02X", ":02x").replace(":04X", ":04x")
             modes[mode] = fmt
         d = {}
         table = cpu['opcodeTable']
@@ -194,7 +194,6 @@ if __name__ == "__main__":
     with open(args.filename, 'rb') as fh:
         binary = fh.read()
     binary = np.fromstring(binary, dtype=np.uint8)
-    print len(binary)
     
     pc = 0;
     disasm = Disassembler(args.cpu, allow_undocumented=args.undocumented)
