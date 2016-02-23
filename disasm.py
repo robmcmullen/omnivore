@@ -2,6 +2,8 @@
 """ Python 2 version of udis
 
 """
+from __future__ import print_function
+
 import os
 import glob
 
@@ -30,13 +32,13 @@ class Disassembler(object):
         cpu = cputables.processors[cpu_name]
         modes = {}
         table = cpu['addressModeTable']
-        for mode, fmt in table.iteritems():
+        for mode, fmt in table.items():
             if hex_lower:
                 fmt = fmt.replace(":02X", ":02x").replace(":04X", ":04x")
             modes[mode] = fmt
         d = {}
         table = cpu['opcodeTable']
-        for opcode, optable in table.iteritems():
+        for opcode, optable in table.items():
             try:
                 length, mnemonic, mode, flag = optable
             except ValueError:
@@ -89,7 +91,7 @@ class Disassembler(object):
                 length, opstr, fmt, flag = self.ops[opcode]
             except KeyError:
                 length, opstr, fmt, flag = 0, self.data_byte % opcode, "", 0
-            #print "0x%x" % opcode, fmt, length, opstr, mode, flag
+            #print("0x%x" % opcode, fmt, length, opstr, mode, flag)
             if leadin:
                 extra = length - 2
             else:
@@ -199,4 +201,4 @@ if __name__ == "__main__":
     disasm = Disassembler(args.cpu, allow_undocumented=args.undocumented)
     disasm.set_pc(binary, 0)
     for addr, bytes, opstr, comment, flag in disasm.get_disassembly():
-        print "0x%04x %-12s ; %s   %s %s" % (addr, opstr, comment, bytes, flag)
+        print("0x%04x %-12s ; %s   %s %s" % (addr, opstr, comment, bytes, flag))

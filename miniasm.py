@@ -3,6 +3,8 @@
 which opcode addressing mode to use.
 
 """
+from __future__ import print_function
+
 import os
 import re
 from collections import defaultdict
@@ -90,6 +92,7 @@ class FormatSpec(object):
         if gen == operands:
             return self.get_bytes([low_byte, high_byte])
 
+
 class BruteForceMiniAssembler(object):
     def __init__(self, cpu_name, allow_undocumented=False):
         self.source = None
@@ -100,12 +103,12 @@ class BruteForceMiniAssembler(object):
         self.little = True  # all 8-bit processor little endian???
         formats = {}
         table = cpu['addressModeTable']
-        for mode, fmt in table.iteritems():
+        for mode, fmt in table.items():
             formats[mode] = fmt.lower()
             
         d = defaultdict(list)
         table = cpu['opcodeTable']
-        for opcode, optable in table.iteritems():
+        for opcode, optable in table.items():
             try:
                 num_bytes, mnemonic, mode_name, flag = optable
             except ValueError:
@@ -114,9 +117,8 @@ class BruteForceMiniAssembler(object):
             if allow_undocumented or flag & 2 == 0:
                 d[mnemonic].append(FormatSpec(formats[mode_name], opcode, num_bytes, mode_name, flag))
         d[".db"].append(FormatSpec("${0:02x}", None, 1, "data_byte", 0))
-        self.ops = dict(d)  # convert to regular dict so unknown entries won't put new items into the dict
         self.ops = {}
-        for mnemonic, modelist in d.iteritems():
+        for mnemonic, modelist in d.items():
             log.debug(mnemonic)
             modelist.sort()
             log.debug(modelist)
@@ -212,7 +214,7 @@ if __name__ == "__main__":
                 except KeyError:
                     log.debug("unrecognized", line)
                     bytes = []
-                print "%s: output=%s" % (line, str(bytes))
+                print("%s: output=%s" % (line, str(bytes)))
                 pc += len(bytes)
         else:
             binary = np.fromstring(source, dtype=np.uint8)
@@ -224,12 +226,12 @@ if __name__ == "__main__":
                 if disassembled_bytes == assembled_bytes:
                     success += 1
                     if args.verbose:
-                        print "%s:" % opstr, disassembled_bytes, assembled_bytes
+                        print("%s:" % opstr, disassembled_bytes, assembled_bytes)
                 else:
                     failure += 1
-                    print "%s:" % opstr, disassembled_bytes, assembled_bytes
+                    print("%s:" % opstr, disassembled_bytes, assembled_bytes)
     #            print "0x%04x %-12s ; %s   %s %s" % (addr, opstr, comment, bytes, flag)
-            print "%s: %d instructions matched, %d failed" % (filename, success, failure)
+            print("%s: %d instructions matched, %d failed" % (filename, success, failure))
 
     if args.string:
         source = args.string.decode("hex")
