@@ -66,12 +66,19 @@ class FormatSpec(object):
             return self.get_bytes()
     
     def check_hex_1x8(self, operands, pc, byte):
-        if self.num_args != 1:
-            return
-        gen = self.format.format(byte)
-        log.debug("  " + gen + ":" + operands)
-        if gen == operands:
-            return self.get_bytes([byte])
+        if self.num_args == 0:
+            # z80 has some hardcoded values in static opcodes, like $ff = "rst
+            # $38" that get parsed as an opcode and a byte value, so we ignore
+            # the byte value here because of it being hardcoded.
+            gen = self.format
+            log.debug("  " + gen + ":" + operands)
+            if gen == operands:
+                return self.get_bytes()
+        elif self.num_args == 1:
+            gen = self.format.format(byte)
+            log.debug("  " + gen + ":" + operands)
+            if gen == operands:
+                return self.get_bytes([byte])
     
     def check_hex_1x16(self, operands, pc, low_byte, high_byte):
         if self.num_args != 1:
