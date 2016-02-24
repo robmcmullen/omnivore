@@ -175,6 +175,16 @@ class BruteForceMiniAssembler(object):
                         bytes = f.check_hex_2x8(operands, pc, vl, vh)
                         if bytes:
                             return bytes
+            elif num == 2:
+                hexstr = values[0][1:]
+                vl = int(hexstr, 16)
+                hexstr = values[1][1:]
+                vh = int(hexstr, 16)
+                for f in format_specs:
+                    bytes = f.check_hex_2x8(operands, pc, vl, vh)
+                    if bytes:
+                        return bytes
+                
                 
         
         return []
