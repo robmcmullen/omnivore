@@ -189,7 +189,7 @@ addressModeTable = {
 "h,n"        : "h,${0:02X}",
 "hl"         : "hl",
 "hl,bc"      : "hl,bc",
-"hl,de"      : "hl,bc",
+"hl,de"      : "hl,de",
 "hl,hl"      : "hl,hl",
 "hl,indnn"   : "hl,(${1:02X}{0:02X})",
 "hl,nn"      : "hl,${1:02X}{0:02X}",
