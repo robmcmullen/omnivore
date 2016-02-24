@@ -174,6 +174,7 @@ class BruteForceMiniAssembler(object):
             operands = ""
         if ";" in operands:
             operands, _ = operands.split(";", 1)
+        operands = operands.replace(" ", "")
         opstr = opstr.lower()
         operands = operands.strip()
         log.debug("-->%s<--, -->%s<--: %s" % (opstr, operands, self.ops[opstr]))
@@ -191,7 +192,8 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--assemble", help="Only assemble", action="store_true")
     parser.add_argument("-d", "--debug", help="Show debug information as the program runs", action="store_true")
     parser.add_argument("-v", "--verbose", help="Show processed instructions as the program runs", action="store_true")
-    parser.add_argument("-s", "--string", help="Assemble a string version of hex digits")
+    parser.add_argument("-x", "--hex", help="Assemble a string version of hex digits")
+    parser.add_argument("-s", "--string", help="Assemble a single line opcode (implies -a)")
     args, extra = parser.parse_known_args()
     
     if args.debug:
@@ -234,7 +236,15 @@ if __name__ == "__main__":
             print("%s: %d instructions matched, %d failed" % (filename, success, failure))
 
     if args.string:
-        source = args.string.decode("hex")
+        source = args.string
+        args.assemble = True
+        process(source, args.string)
+    elif args.hex:
+        try:
+            source = args.string.decode("hex")
+        except TypeError:
+            print("Invalid hex digits!")
+            sys.exit()
         process(source, args.string)
     else:
         for filename in extra:
