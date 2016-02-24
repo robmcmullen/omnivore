@@ -38,7 +38,11 @@ class FormatSpec(object):
         self.num_args = len(re.findall(self.fmtargre, format))
         self.length = len(format)
         if opcode is not None:
-            self.opcode_bytes = [opcode]
+            if opcode > 255:
+                op1, op2 = divmod(opcode, 256)
+                self.opcode_bytes = [op1, op2]
+            else:
+                self.opcode_bytes = [opcode]
         else:
             self.opcode_bytes = []
         self.num_bytes = num_bytes
@@ -209,6 +213,9 @@ if __name__ == "__main__":
     if args.debug:
         log.setLevel(logging.DEBUG)
     
+    def format_hex(t):
+        return "(" + ", ".join(["%02x" % s for s in t]) + ")"
+    
     def process(source, filename):
         pc = 0
         miniasm = BruteForceMiniAssembler(args.cpu, allow_undocumented=args.undocumented)
@@ -238,10 +245,10 @@ if __name__ == "__main__":
                 if disassembled_bytes == assembled_bytes:
                     success += 1
                     if args.verbose:
-                        print("%s:" % opstr, disassembled_bytes, assembled_bytes)
+                        print("%s:" % opstr, format_hex(disassembled_bytes), format_hex(assembled_bytes))
                 else:
                     failure += 1
-                    print("%s:" % opstr, disassembled_bytes, assembled_bytes)
+                    print("%s:" % opstr, format_hex(disassembled_bytes), format_hex(assembled_bytes))
     #            print "0x%04x %-12s ; %s   %s %s" % (addr, opstr, comment, bytes, flag)
             print("%s: %d instructions matched, %d failed" % (filename, success, failure))
 
