@@ -61,7 +61,7 @@ class FormatSpec(object):
         return tuple(out)
     
     def check_exact(self, operands):
-        log.debug("checking %s for %s" % (self.mode_name, self.format))
+        log.debug("checking %s for exact match %s" % (self.mode_name, self.format))
         if self.format == operands:
             return self.get_bytes()
     
@@ -86,9 +86,12 @@ class FormatSpec(object):
         if self.flag == pcr:
             addr = low_byte + 256 * high_byte
             offset = addr - (pc + 2)
-            log.debug("checking %s for relative branch to %04x (offset=%d)" % (self.mode_name, addr, offset))
+            log.debug("checking %s for relative branch to %04x (pc=%x, offset=%x)" % (self.mode_name, addr, pc, offset))
             if -128 <= offset <= 127:
-                return self.get_bytes([offset & 0xff])  # convert to unsigned representation
+                gen = self.format.format(addr)
+                log.debug("  gen=%s operands=%s" % (gen, operands))
+                if gen == operands:
+                    return self.get_bytes([offset & 0xff])  # convert to unsigned representation
     
     def check_hex_2x8(self, operands, pc, low_byte, high_byte):
         if self.num_args != 2:
