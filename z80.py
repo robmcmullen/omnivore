@@ -340,7 +340,7 @@ opcodeTable = {
 0x1e : [ 2, "ld",   "e,n"        ],
 0x1f : [ 1, "rra",  "implied"    ],
 
-0x20 : [ 2, "jr",   "nz,n"       ],
+0x20 : [ 2, "jr",   "nz,n", pcr  ],
 0x21 : [ 3, "ld",   "hl,nn"      ],
 0x22 : [ 3, "ld",   "indnn,hl"   ],
 0x23 : [ 1, "inc",  "hl"         ],
