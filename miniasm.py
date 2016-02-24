@@ -265,7 +265,19 @@ if __name__ == "__main__":
         process(source, args.string)
     else:
         for filename in extra:
-            with open(filename, 'rb') as fh:
-                source = fh.read()
-                process(source, filename)
+            source = []
+            with open(filename, 'rb') if filename !="-" else sys.stdin as fh:
+                try:
+                    chunk_length = 1024
+                    while True:
+                        chunk = fh.read(chunk_length)
+                        source.append(chunk)
+                        if len(chunk) < chunk_length:
+                            break
+                except KeyboardInterrupt:
+                    pass
+            source = "".join(source)
+            if args.verbose:
+                print("read %d bytes" % len(source))
+            process(source, filename)
 
