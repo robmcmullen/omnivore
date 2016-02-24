@@ -241,7 +241,7 @@ if __name__ == "__main__":
         process(source, args.string)
     elif args.hex:
         try:
-            source = args.string.decode("hex")
+            source = args.hex.decode("hex")
         except TypeError:
             print("Invalid hex digits!")
             sys.exit()
