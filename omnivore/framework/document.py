@@ -57,6 +57,8 @@ class Document(HasTraits):
     byte_values_changed = Event  # but not the size of the bytes array. That's not handled yet
     
     change_count = Int()
+    
+    can_revert = Property(Bool, depends_on='metadata')
 
     #### trait default values
     
@@ -82,6 +84,9 @@ class Document(HasTraits):
 
     def _get_uri(self):
         return self.metadata.uri
+    
+    def _get_can_revert(self):
+        return self.metadata.uri != ""
     
     @property
     def menu_name(self):
