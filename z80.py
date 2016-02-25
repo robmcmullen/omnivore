@@ -274,7 +274,7 @@ addressModeTable = {
 "n,indix+d"  : "n,(ix+${0:02X})",
 "n,indiy+d"  : "n,(iy+${0:02X})",
 "nc"         : "nc",
-"nc,n"       : "nc,${0:04X}",
+"nc,pcr"     : "nc,${0:04X}",
 "nc,nn"      : "nc,${1:02X}{0:02X}",
 "nn"         : "${1:02X}{0:02X}",
 "nz"         : "nz",
