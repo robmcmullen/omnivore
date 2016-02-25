@@ -28,7 +28,7 @@ class FrameworkEditor(Editor):
 
     document = Any(None)
     
-    name = Property(Bool, depends_on='document')
+    name = Property(Unicode, depends_on='document')
 
     tooltip = Property(Unicode, depends_on='document')
     
