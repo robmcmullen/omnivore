@@ -109,7 +109,23 @@ class SpringTabItemRenderer(object):
 
     def DrawHoverDecorations(self, item, dc, width, height):
         pass
-
+    
+    def draw_notification(self, dc, x, y, w, h, num, springtabs):
+        if num > 99:
+            s = "99+"
+        else:
+            s = str(num)
+        tw, th = dc.GetTextExtent(s)
+        dc.SetBrush(springtabs.notification_brush)
+        dc.SetPen(springtabs.notification_pen)
+        dc.SetTextBackground(springtabs.notification_background)
+        dc.SetTextForeground(springtabs.notification_text)
+        if tw > w - h/2:
+            w2 = tw + h/2
+            x -= (w2 - w) / 2
+            w = w2
+        dc.DrawRoundedRectangle(x, y, w, h, h / 2)
+        dc.DrawText(s, x + w/2 - tw/2, y + h/2 - th/2)
 
 class SpringTabItemHorizontalRenderer(SpringTabItemRenderer):
     default_direction = "down"
@@ -163,10 +179,26 @@ class SpringTabItemVerticalRenderer(SpringTabItemRenderer):
         th, tw = dc.GetTextExtent(label)
         #dc.DrawText(label, (width-tw)/2+dx, (height-th)/2+dy)
         if self.popleft:
-            x = (width-tw)/2+dx + width
-            dc.DrawRotatedText(label, (width-tw)/2+dx + tw, dy + item.border + self.spacing_between_items/2, 270.0)
+            x = (width-tw)/2+dx + tw
+            y = dy + item.border + self.spacing_between_items/2
+            dc.DrawRotatedText(label, x, y, 270.0)
         else:
-            dc.DrawRotatedText(label, (width-tw)/2+dx, height + dy - item.border - self.spacing_between_items/2, 90.0)
+            x = (width-tw)/2+dx
+            y = height + dy - item.border - self.spacing_between_items/2
+            dc.DrawRotatedText(label, x, y, 90.0)
+        num = item.notification_count
+        if num > 0:
+            parent = item.GetParent()
+            dc.SetFont(parent.notification_font)
+            tw, th = dc.GetTextExtent("0123456789")
+            x = item.border
+            w = width - 2*item.border
+            h = th + 2*item.border
+            if self.popleft:
+                y = height - h - item.border
+            else:
+                y = item.border
+            self.draw_notification(dc, x, y, w, h, num, parent)
 
     def set_popup_width(self, parent, popup, child):
         pw, ph = popup.GetSizeTuple()
@@ -252,6 +284,7 @@ class SpringTabItem(GenToggleButton):
             self.Show(self.available_cb(**kwargs))
         self.kwargs = kwargs
         self.popup = None
+        self.notification_count = 0
     
     def InitColours(self):
         faceClr = self.GetBackgroundColour()
@@ -375,6 +408,16 @@ class SpringTabItem(GenToggleButton):
         if popup is not None:
             if sys.platform == "linux2" or popup != focus:
                 wx.CallAfter(self.setPopupLoseFocusCallback)
+    
+    def recalc_notification(self):
+        popup, child = self.getPopup()
+        try:
+            count = child.get_notification_count()
+            if count != self.notification_count:
+                self.notification_count = count
+                self.Refresh()
+        except AttributeError:
+            pass
 
 
 class SpringTabs(wx.Panel):
@@ -415,6 +458,15 @@ class SpringTabs(wx.Panel):
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_SIZE, self.OnSize)
+        
+        self.init_colors()
+    
+    def init_colors(self):
+        self.notification_background = wx.Colour(240, 120, 120)
+        self.notification_brush = wx.Brush(self.notification_background, wx.SOLID)
+        self.notification_pen = wx.Pen(self.notification_background, 1, wx.SOLID)
+        self.notification_text = wx.Colour(255, 255, 255)
+        self.notification_font = wx.Font(8, wx.FONTFAMILY_SWISS, wx.NORMAL, wx.NORMAL)
     
     def getRenderer(self):
         return self._tab_renderer
@@ -481,6 +533,10 @@ class SpringTabs(wx.Panel):
         for tab in self._tabs:
             tab.Destroy()
         self._tabs = []
+    
+    def update_notifications(self):
+        for tab in self._tabs:
+            tab.recalc_notification()
 
 
 
