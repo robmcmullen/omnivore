@@ -485,6 +485,16 @@ class FindPrevAction(EditorAction):
         e = self.active_editor
         event.task.show_minibuffer(NextPrevTextMinibuffer(e, FindAllCommand, FindNextCommand, FindPrevCommand, prev_match=True, initial=e.last_search_settings["find"]))
 
+class FindToSelectionAction(EditorAction):
+    name = 'Find to Selection'
+    accelerator = 'Alt+Ctrl+A'
+    tooltip = 'Convert all matched locations to multi-selection'
+
+    def perform(self, event):
+        e = self.active_editor
+        e.convert_ranges({'match':True}, {'selected':True})
+        e.refresh_panes()
+        event.task.on_hide_minibuffer_or_cancel(None)
 
 class CancelMinibufferAction(EditorAction):
     name = 'Cancel Minibuffer or current edit'

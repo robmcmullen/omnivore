@@ -157,6 +157,7 @@ class HexEditTask(FrameworkTask):
         return [
             FindAction(),
             FindNextAction(),
+            FindToSelectionAction(),
             ]
     
     def get_actions_Menu_View_ViewConfigGroup(self):
