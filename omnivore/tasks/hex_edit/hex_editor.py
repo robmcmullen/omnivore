@@ -17,7 +17,7 @@ from grid_control import HexEditControl
 from omnivore.utils.file_guess import FileMetadata
 import omnivore.utils.wx.fonts as fonts
 import omnivore.utils.colors as colors
-from omnivore.utils.machine import Atari800
+from omnivore.arch.machine import Atari800
 from omnivore.utils.segmentutil import known_segment_parsers, DefaultSegment, AnticFontSegment
 from omnivore.utils.searchutil import known_searchers
 

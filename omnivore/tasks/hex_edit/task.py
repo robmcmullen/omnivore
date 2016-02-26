@@ -15,7 +15,7 @@ from preferences import HexEditPreferences
 from actions import *
 import pane_layout
 import omnivore.utils.wx.fonts as fonts
-from omnivore.utils.machine import predefined_machines
+from omnivore.arch.machine import predefined_machines
 from omnivore.utils.segmentutil import known_segment_parsers
 import omnivore.utils.colors as colors
 from grid_control import ByteTable
