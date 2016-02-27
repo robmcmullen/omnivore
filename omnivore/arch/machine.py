@@ -12,6 +12,7 @@ import colors
 from dis6502 import Basic6502Disassembler, Undocumented6502Disassembler, Flagged6502Disassembler
 import machine_atari800
 import machine_atari5200
+import antic_renderers
 
 class Machine(HasTraits):
     """ Collection of classes that identify a machine: processor, display, etc.
@@ -37,6 +38,8 @@ class Machine(HasTraits):
     playfield_colors = Any
     
     color_standard = Enum(0, 1)
+    
+    bitmap_renderer = Any
     
     # Trait events
     
@@ -121,6 +124,9 @@ class Machine(HasTraits):
     
     def _color_standard_default(self):
         return 0  # NTSC
+    
+    def _bitmap_renderer_default(self):
+        return antic_renderers.ModeF(self)
     
     # 
     
