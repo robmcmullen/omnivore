@@ -12,7 +12,7 @@ from pyface.tasks.action.api import TaskAction, EditorAction
 
 from omnivore.framework.actions import *
 from commands import *
-from omnivore.arch.wx.antic_colors import AnticColorDialog
+from omnivore.arch.ui.antic_colors import AnticColorDialog
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string
 from omnivore.framework.minibuffer import *
 

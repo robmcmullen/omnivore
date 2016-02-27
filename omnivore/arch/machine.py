@@ -79,7 +79,10 @@ class Machine(HasTraits):
                 # bad JSON format
                 cls.font_list = []
         prefs = editor.task.get_preferences()
-        cls.text_font = prefs.text_font
+        try:
+            cls.text_font = prefs.text_font
+        except AttributeError:
+            pass
     
     @classmethod
     def remember_fonts(cls, application):
@@ -163,10 +166,21 @@ class Machine(HasTraits):
         if font is None:
             font = self.antic_font_data
         if font_renderer is not None:
+            try:
+                font_mode = int(font_renderer)
+                font_renderer = self.get_font_renderer_from_font_mode(font_mode)
+            except TypeError:
+                pass
             self.font_renderer = font_renderer
         self.antic_font_data = font
         self.antic_font = self.get_antic_font()
         self.set_font_mapping()
+    
+    def get_font_renderer_from_font_mode(self, font_mode):
+        for r in predefined_font_renderers:
+            if r.font_mode == font_mode:
+                return r
+        return predefined_font_renderers[0]
     
     def set_font_mapping(self, font_mapping=None):
         if font_mapping is None:

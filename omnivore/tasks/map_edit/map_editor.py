@@ -14,6 +14,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 from omnivore import get_image_path
 from omnivore.tasks.hex_edit.hex_editor import HexEditor
 from omnivore.framework.document import Document
+from omnivore.arch.machine import predefined_font_mappings
 from omnivore.utils.wx.bitviewscroller import FontMapScroller
 from omnivore.utils.command import Overlay
 from omnivore.utils.searchutil import HexSearcher, CharSearcher
@@ -357,9 +358,6 @@ class MapEditor(HexEditor):
     def _antic_tile_map_default(self):
         return []
     
-    def _antic_font_mapping_default(self):
-        return 0  # Internal
-    
     def _map_width_default(self):
         return 32
     
@@ -378,14 +376,13 @@ class MapEditor(HexEditor):
         e = doc.extra_metadata
         if 'tile map' in e:
             self.antic_tile_map = e['tile map']
+        self.machine.set_font_mapping(predefined_font_mappings[1])
 
     def update_fonts(self):
         self.font_map.set_font()
-        self.font_map.set_font_mapping(self.antic_font_mapping)
         self.font_map.Refresh()
         self.tile_map.recalc_view()
         self.character_set.set_font()
-        self.character_set.set_font_mapping(self.antic_font_mapping)
         self.character_set.Refresh()
     
     def reconfigure_panes(self):
@@ -480,8 +477,7 @@ class MapEditor(HexEditor):
         """ Creates the toolkit-specific control for the widget. """
 
         # Base-class constructor.
-        self.control = self.font_map = MainFontMapScroller(parent, self.task, self.map_width, self.antic_font_mapping, ChangeByteCommand)
-        self.antic_font = self.get_antic_font()
+        self.control = self.font_map = MainFontMapScroller(parent, self.task, self.map_width, ChangeByteCommand)
 
         ##########################################
         # Events.

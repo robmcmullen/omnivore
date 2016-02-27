@@ -30,12 +30,12 @@ class Tile(object):
     
     def get_height(self, parent):
         if parent.editor:  # Might get called before an editor is set
-            return parent.editor.antic_font.get_height(parent.zoom)
+            return parent.editor.machine.antic_font.get_height(parent.zoom)
         return 10
     
     def draw(self, parent, dc, rect):
         if parent.editor:  # Might get called before an editor is set
-            bmp = parent.editor.antic_font.get_image(self.tile_num, parent.zoom)
+            bmp = parent.editor.machine.antic_font.get_image(self.tile_num, parent.zoom)
             dc.DrawBitmap(bmp, rect.x+10, rect.y)
 
 
@@ -178,7 +178,7 @@ class TileButton(buttons.GenBitmapToggleButton):
     
     @classmethod
     def set_colors(cls, editor):
-        cls.faceDnClr = wx.Colour(*editor.highlight_color)
+        cls.faceDnClr = wx.Colour(*editor.machine.highlight_color)
 
 class TileWrapControl(wx.Panel):
     """
@@ -240,7 +240,7 @@ class TileWrapControl(wx.Panel):
                 for i in np.arange(np.alen(tiles)):
                     if self.editor:
                         data = tiles[i:i+1]
-                        bmp = self.editor.antic_font.get_image(data[0], self.zoom)
+                        bmp = self.editor.machine.antic_font.get_image(data[0], self.zoom)
                         btn = TileButton(panel, -1, bmp, style=wx.BORDER_NONE|wx.BU_EXACTFIT)
                         btn.tile_data = data
                         btn.Bind(wx.EVT_BUTTON, self.on_tile_clicked)
