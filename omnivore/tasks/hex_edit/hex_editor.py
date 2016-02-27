@@ -112,9 +112,9 @@ class HexEditor(FrameworkEditor):
         """
         e = doc.extra_metadata
         if 'colors' in e:
-            self.update_colors(e['colors'])
+            self.machine.update_colors(e['colors'])
         if 'font' in e:
-            self.set_font(e['font'][0], e['font'][1])
+            self.machine.set_font(e['font'][0], e['font'][1])
         if 'initial segment' in e:
             self.initial_segment = e['initial segment']
 
@@ -122,8 +122,8 @@ class HexEditor(FrameworkEditor):
         self.find_segment()
     
     def copy_view_properties(self, old_editor):
-        self.update_colors(old_editor.playfield_colors)
-        self.set_font(old_editor.antic_font_data, old_editor.font_mode)
+        self.machine.update_colors(old_editor.machine.playfield_colors)
+        self.machine.set_font(old_editor.machine.antic_font_data, old_editor.machine.font_renderer)
     
     @property
     def document_length(self):
@@ -233,10 +233,9 @@ class HexEditor(FrameworkEditor):
     @on_trait_change('machine.font_change_event')
     def update_fonts(self):
         self.font_map.set_font()
-        self.font_map.set_font_mapping(self.machine.antic_font_mapping)
         self.font_map.Refresh()
         pane = self.window.get_dock_pane('hex_edit.font_map')
-        pane.name = self.font_map.get_font_mapping_name()
+        pane.name = self.machine.font_mapping.name
         self.window._aui_manager.Update()
     
     def set_map_width(self, width=None):

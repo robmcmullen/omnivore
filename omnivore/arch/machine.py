@@ -31,15 +31,15 @@ class Machine(HasTraits):
     
     antic_font = Any
     
-    antic_font_mapping = Enum(0, 1)
-    
-    font_mode = Enum(2, 4, 5, 6, 7, 8, 9)
-    
     playfield_colors = Any
     
     color_standard = Enum(0, 1)
     
     bitmap_renderer = Any
+    
+    font_renderer = Any
+    
+    font_mapping = Any
     
     # Trait events
     
@@ -113,12 +113,6 @@ class Machine(HasTraits):
     def _antic_font_data_default(self):
         return fonts.A8DefaultFont
     
-    def _font_mode_default(self):
-        return 2  # Antic mode 2, Graphics 0
-    
-    def _antic_font_mapping_default(self):
-        return 1  # ATASCII
-    
     def _playfield_colors_default(self):
         return colors.powerup_colors()
     
@@ -127,6 +121,12 @@ class Machine(HasTraits):
     
     def _bitmap_renderer_default(self):
         return antic_renderers.ModeF(self)
+    
+    def _font_renderer_default(self):
+        return predefined_font_renderers[1]
+    
+    def _font_mapping_default(self):
+        return predefined_font_mappings[1]
     
     # 
     
@@ -154,25 +154,24 @@ class Machine(HasTraits):
         self.color_standard = std
         self.update_colors(self.playfield_colors)
     
-    def set_font(self, font=None, font_mode=None):
+    def set_font(self, font=None, font_renderer=None):
         if font is None:
             font = self.antic_font_data
-        if font_mode is None:
-            font_mode = self.font_mode
-        self.font_mode = font_mode
+        if font_renderer is not None:
+            self.font_renderer = font_renderer
         self.antic_font_data = font
         self.antic_font = self.get_antic_font()
         self.set_font_mapping()
     
     def set_font_mapping(self, font_mapping=None):
         if font_mapping is None:
-            font_mapping = self.antic_font_mapping
-        self.antic_font_mapping = font_mapping
+            font_mapping = self.font_mapping
+        self.font_mapping = font_mapping
         self.font_change_event = True
     
     def get_antic_font(self):
         color_converter = self.get_color_converter()
-        return fonts.AnticFont(self.antic_font_data, self.font_mode, self.playfield_colors, self.highlight_color, self.match_background_color, self.comment_background_color, color_converter)
+        return fonts.AnticFont(self.antic_font_data, self.font_renderer.font_mode, self.playfield_colors, self.highlight_color, self.match_background_color, self.comment_background_color, color_converter)
     
     def load_font(self, task, filename):
         try:
@@ -222,4 +221,19 @@ predefined_machines = [
 predefined_disassemblers = [
     Basic6502Disassembler,
     Undocumented6502Disassembler,
+    ]
+
+predefined_font_renderers = [
+    antic_renderers.Mode2(),
+    antic_renderers.Mode4(),
+    antic_renderers.Mode5(),
+    antic_renderers.Mode6Upper(),
+    antic_renderers.Mode6Lower(),
+    antic_renderers.Mode7Upper(),
+    antic_renderers.Mode7Lower(),
+    ]
+
+predefined_font_mappings = [
+    antic_renderers.ATASCIIFontMapping(),
+    antic_renderers.AnticFontMapping(),
     ]

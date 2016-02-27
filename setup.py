@@ -23,8 +23,8 @@ ext_modules = [
               sources = ["traits/ctraits.c"],
               extra_compile_args = ["-DNDEBUG=1", "-O3" ]#, '-DPy_LIMITED_API'],
               ),
-    Extension("omnivore.utils.wx.bitviewscroller_speedups",
-              sources=["omnivore/utils/wx/bitviewscroller_speedups.c"],
+    Extension("omnivore.arch.antic_speedups",
+              sources=["omnivore/arch/antic_speedups.c"],
               )
     ]
 

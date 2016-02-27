@@ -24,8 +24,8 @@ cmdclass = {
     }
 
 ext_modules = [
-    Extension("omnivore.utils.wx.bitviewscroller_speedups",
-              sources=["omnivore/utils/wx/bitviewscroller_speedups.pyx"],
+    Extension("omnivore.arch.antic_speedups",
+              sources=["omnivore/arch/antic_speedups.pyx"],
               include_dirs=[numpy.get_include()],
               )
     ]

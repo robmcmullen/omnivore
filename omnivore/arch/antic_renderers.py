@@ -1,7 +1,16 @@
 import numpy as np
 
+try:
+    import antic_speedups as speedups
+except ImportError:
+    speedups = None
+
+import logging
+log = logging.getLogger(__name__)
+
+
 class ModeF(object):
-    name = "Antic Mode F (Graphics 8, 1bpp)"
+    name = "Antic F (Gr 8, 1bpp)"
     
     def __init__(self, machine):
         self.machine = machine
@@ -105,3 +114,94 @@ class ModeF(object):
         array[m2] = m.highlight_color
 
         return bitimage
+
+
+def get_numpy_font_map_image(m, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols):
+    width = int(m.antic_font.char_w * num_cols)
+    height = int(num_rows * m.antic_font.char_h)
+    log.debug("pixel width: %dx%d" % (width, height))
+    array = np.empty((height, width, 3), dtype=np.uint8)
+    
+    log.debug("start byte: %s, end_byte: %s, bytes_per_row=%d num_rows=%d start_col=%d num_cols=%d" % (start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols))
+    end_col = min(bytes_per_row, start_col + num_cols)
+    y = 0
+    e = start_byte
+    f = m.antic_font.normal_font
+    fh = m.antic_font.highlight_font
+    fm = m.antic_font.match_font
+    fc = m.antic_font.comment_font
+    mapping = m.font_mapping.font_mapping
+    for j in range(num_rows):
+        x = 0
+        for i in range(start_col, start_col + num_cols):
+            if e + i >= end_byte or i >= end_col:
+                array[y:y+8,x:x+8,:] = m.background_color
+            else:
+                c = mapping[bytes[j, i]]
+                s = style[j, i]
+                if s & 0x80:
+                    array[y:y+8,x:x+8,:] = fh[c]
+                elif s & 1:
+                    array[y:y+8,x:x+8,:] = fm[c]
+                elif s & 2:
+                    array[y:y+8,x:x+8,:] = fc[c]
+                else:
+                    array[y:y+8,x:x+8,:] = f[c]
+            x += 8
+        y += 8
+        e += bytes_per_row
+    return array
+
+
+class Mode2(object):
+    name = "Antic 2 (Gr 0)"
+    font_mode = 2
+    
+    @classmethod
+    def get_image(cls, machine, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols):
+        if speedups is not None:
+            array = speedups.get_numpy_font_map_image(machine, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols)
+        else:
+            array = get_numpy_font_map_image(machine, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols)
+        return array
+
+
+class Mode4(Mode2):
+    name = "Antic 4 (40x24, 5 color)"
+    font_mode = 4
+
+
+class Mode5(Mode2):
+    name = "Antic 5 (40x12, 5 color)"
+    font_mode = 5
+
+
+class Mode6Upper(Mode2):
+    name = "Antic 6 (Gr 1) Uppercase and Numbers"
+    font_mode = 6
+
+
+class Mode6Lower(Mode2):
+    name = "Antic 6 (Gr 1) Lowercase and Symbols"
+    font_mode = 8
+
+
+class Mode7Upper(Mode2):
+    name = "Antic 7 (Gr 2) Uppercase and Numbers"
+    font_mode = 7
+
+
+class Mode7Lower(Mode2):
+    name = "Antic 7 (Gr 2) Lowercase and Symbols"
+    font_mode = 9
+
+
+class ATASCIIFontMapping(object):
+    name = "ATASCII Characters"
+    font_mapping = np.hstack([np.arange(64, 96, dtype=np.uint8),np.arange(64, dtype=np.uint8),np.arange(96, 128, dtype=np.uint8)])
+    font_mapping = np.hstack([font_mapping, font_mapping + 128])
+
+class AnticFontMapping(object):
+    name = "Antic Map"
+    font_mapping = np.arange(256, dtype=np.uint8)
+

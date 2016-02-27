@@ -16,7 +16,7 @@ from actions import *
 import pane_layout
 import omnivore.arch.fonts as fonts
 import omnivore.arch.colors as colors
-from omnivore.arch.machine import predefined_machines
+import omnivore.arch.machine as machine
 from omnivore.utils.segmentutil import known_segment_parsers
 from grid_control import ByteTable
 from disassembly import DisassemblyTable
@@ -132,10 +132,10 @@ class HexEditTask(FrameworkTask):
             kwargs = {'task': task}
         else:
             kwargs = {}
-        return [
-            FontMappingBaseAction(font_mapping=0, name="Antic Internal Codes", **kwargs),
-            FontMappingBaseAction(font_mapping=1, name="ATASCII Codes", **kwargs),
-            ]
+        actions = []
+        for m in machine.predefined_font_mappings:
+            actions.append(FontMappingAction(font_mapping=m, **kwargs))
+        return actions
     
     def get_actions_Menu_File_SaveGroup(self):
         return [
@@ -167,8 +167,8 @@ class HexEditTask(FrameworkTask):
     
     def get_predefined_machines_actions(self):
         actions = []
-        for machine in predefined_machines:
-            actions.append(PredefinedMachineAction(machine=machine))
+        for m in machine.predefined_machines:
+            actions.append(PredefinedMachineAction(machine=m))
         return actions
     
     def get_actions_Menu_Machine_MachineTypeGroup(self):
@@ -181,8 +181,15 @@ class HexEditTask(FrameworkTask):
                 id='MachineChoiceSubmenu1', separator=False, name="Predefined Machines"),
             ]
     
+    def get_font_renderer_actions(self):
+        actions = []
+        for r in machine.predefined_font_renderers:
+            actions.append(FontRendererAction(font_renderer=r))
+        return actions
+    
     def get_actions_Menu_Machine_MachineCharGroup(self):
         font_mapping_actions = self.get_font_mapping_actions()
+        font_renderer_actions = self.get_font_renderer_actions()
         return [
             SMenu(
                 Group(
@@ -197,13 +204,7 @@ class HexEditTask(FrameworkTask):
                 id='FontChoiceSubmenu1', separator=True, name="Antic Font"),
             SMenu(
                 Group(
-                    FontStyleBaseAction(font_mode=2, name="Antic 2 (Gr 0)"),
-                    FontStyleBaseAction(font_mode=4, name="Antic 4"),
-                    FontStyleBaseAction(font_mode=5, name="Antic 5"),
-                    FontStyleBaseAction(font_mode=6, name="Antic 6 (Gr 1) Uppercase and Numbers"),
-                    FontStyleBaseAction(font_mode=8, name="Antic 6 (Gr 1) Lowercase and Symbols"),
-                    FontStyleBaseAction(font_mode=7, name="Antic 7 (Gr 2) Uppercase and Numbers"),
-                    FontStyleBaseAction(font_mode=9, name="Antic 7 (Gr 2) Lowercase and Symbols"),
+                    *font_renderer_actions,
                     id="a1", separator=True),
                 id='FontChoiceSubmenu2', separator=False, name="Antic Mode"),
             SMenu(

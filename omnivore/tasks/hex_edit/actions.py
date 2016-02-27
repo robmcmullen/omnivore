@@ -61,38 +61,44 @@ class GetFontFromSelectionAction(EditorAction):
         self.active_editor.get_font_from_selection()
 
 
-class FontStyleBaseAction(EditorAction):
+class FontRendererAction(EditorAction):
     """Radio buttons for changing font style
     """
     # Traits
     style = 'radio'
     
-    font_mode = Int
+    font_renderer = Any
+    
+    def _name_default(self):
+        return self.font_renderer.name
 
     def perform(self, event):
-        self.active_editor.machine.set_font(font_mode=self.font_mode)
+        self.active_editor.machine.set_font(font_renderer=self.font_renderer)
 
-    @on_trait_change('active_editor.machine.font_mode')
+    @on_trait_change('active_editor.machine.font_renderer')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.machine.font_mode == self.font_mode
+            self.checked = self.active_editor.machine.font_renderer == self.font_renderer
 
 
-class FontMappingBaseAction(EditorAction):
+class FontMappingAction(EditorAction):
     """Radio buttons for changing font style
     """
     # Traits
     style = 'radio'
     
-    font_mapping = Int
+    font_mapping = Any
+    
+    def _name_default(self):
+        return self.font_mapping.name
 
     def perform(self, event):
         self.active_editor.machine.set_font_mapping(self.font_mapping)
 
-    @on_trait_change('active_editor.machine.antic_font_mapping')
+    @on_trait_change('active_editor.machine.font_mapping')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.machine.antic_font_mapping == self.font_mapping
+            self.checked = self.active_editor.machine.font_mapping == self.font_mapping
 
 
 class BitmapWidthAction(EditorAction):

@@ -28,11 +28,6 @@ from atrcopy import DefaultSegment
 from omnivore.framework.actions import *
 from omnivore.tasks.hex_edit.actions import *
 
-try:
-    import bitviewscroller_speedups as speedups
-except ImportError:
-    speedups = None
-
 import logging
 log = logging.getLogger(__name__)
 
@@ -579,20 +574,12 @@ class BitmapScroller(BitviewScroller):
 
 
 class FontMapScroller(BitviewScroller):
-    font_to_atascii_mapping = np.hstack([np.arange(64, 96, dtype=np.uint8),np.arange(64, dtype=np.uint8),np.arange(96, 128, dtype=np.uint8)])
-    font_to_atascii_mapping = np.hstack([font_to_atascii_mapping, font_to_atascii_mapping + 128])
-    font_mappings = [
-        (wx.NewId(), "ANTIC Map", "Internal Character Codes", np.arange(256, dtype=np.uint8)),
-        (wx.NewId(), "ATASCII", "ATASCII Characters", font_to_atascii_mapping),
-        ]
-    
-    def __init__(self, parent, task, bytes_per_row=8, font_mapping=1, command=None, **kwargs):
+    def __init__(self, parent, task, bytes_per_row=8, command=None, **kwargs):
         BitviewScroller.__init__(self, parent, task, **kwargs)
         self.zoom = 2
         self.bytes_per_row = bytes_per_row
         self.font = None
         self.command_cls = command
-        self.set_font_mapping(font_mapping)
         self.inverse = 0
         self.editing = False
     
@@ -646,13 +633,6 @@ class FontMapScroller(BitviewScroller):
     def set_font(self):
         self.font = self.editor.machine.antic_font
         self.calc_scroll_params()
-    
-    def set_font_mapping(self, index):
-        self.font_mapping_index = index
-        self.font_mapping = self.font_mappings[self.font_mapping_index][3]
-    
-    def get_font_mapping_name(self):
-        return self.font_mappings[self.font_mapping_index][1]
 
     def get_image(self):
         log.debug("get_image: fontmap: start=%d, num=%d" % (self.start_row, self.visible_rows))
@@ -674,10 +654,7 @@ class FontMapScroller(BitviewScroller):
         #log.debug("get_image: bytes", bytes)
         
         m = self.editor.machine
-        if speedups is not None:
-            array = speedups.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, m.empty_color, self.font, self.font_mapping)
-        else:
-            array = self.get_numpy_font_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, m.empty_color, self.font, self.font_mapping)
+        array = m.font_renderer.get_image(m, bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols)
         return array
     
     def draw_overlay(self, array, w, h, zw, zh):
@@ -714,41 +691,6 @@ class FontMapScroller(BitviewScroller):
             array[c1:c2 + 1, x1] = m.empty_color
         if x2 >= 0 and x2 < xmax and c2 > c1:
             array[c1:c2 + 1, x2] = m.empty_color
-    
-    def get_numpy_font_map_image(self, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, font, font_mapping):
-        width = int(font.char_w * num_cols)
-        height = int(num_rows * font.char_h)
-        log.debug("pixel width: %dx%d" % (width, height))
-        array = np.empty((height, width, 3), dtype=np.uint8)
-        
-        log.debug("start byte: %s, end_byte: %s, bytes_per_row=%d num_rows=%d start_col=%d num_cols=%d" % (start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols))
-        end_col = min(bytes_per_row, start_col + num_cols)
-        y = 0
-        e = start_byte
-        f = font.normal_font
-        fh = font.highlight_font
-        fm = font.match_font
-        fc = font.comment_font
-        for j in range(num_rows):
-            x = 0
-            for i in range(start_col, start_col + num_cols):
-                if e + i >= end_byte or i >= end_col:
-                    array[y:y+8,x:x+8,:] = background_color
-                else:
-                    c = font_mapping[bytes[j, i]]
-                    s = style[j, i]
-                    if s & 0x80:
-                        array[y:y+8,x:x+8,:] = fh[c]
-                    elif s & 1:
-                        array[y:y+8,x:x+8,:] = fm[c]
-                    elif s & 2:
-                        array[y:y+8,x:x+8,:] = fc[c]
-                    else:
-                        array[y:y+8,x:x+8,:] = f[c]
-                x += 8
-            y += 8
-            e += bytes_per_row
-        return array
 
     def event_coords_to_byte(self, evt):
         """Convert event coordinates to world coordinates.
@@ -926,8 +868,8 @@ class FontMapScroller(BitviewScroller):
 
 
 class CharacterSetViewer(FontMapScroller):
-    def __init__(self, parent, task, bytes_per_row=16, font_mapping=0, command=None, **kwargs):
-        FontMapScroller.__init__(self, parent, task, bytes_per_row, font_mapping, command, **kwargs)
+    def __init__(self, parent, task, bytes_per_row=16, command=None, **kwargs):
+        FontMapScroller.__init__(self, parent, task, bytes_per_row, command, **kwargs)
         self.segment = DefaultSegment(np.arange(256, dtype=np.uint8), np.zeros(256, dtype=np.uint8), 0)
         self.start_addr = 0
         self.selected_char = -1
