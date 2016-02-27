@@ -6,7 +6,7 @@ import wx.lib.sized_controls as sc
 import wx.lib.colourselect as csel
 import wx.lib.colourchooser.canvas as canvas
 
-from omnivore.utils import colors
+from omnivore.arch import colors
 
 
 #704  2C0  PCOLR0

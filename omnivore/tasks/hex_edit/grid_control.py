@@ -30,23 +30,24 @@ class ImageCache(object):
         self.cache = {}
     
     def set_colors(self, editor):
-        self.color = editor.text_color
-        self.font = editor.text_font
-        self.selected_background = editor.highlight_color
-        self.selected_brush = wx.Brush(editor.highlight_color, wx.SOLID)
-        self.selected_pen = wx.Pen(editor.highlight_color, 1, wx.SOLID)
-        self.normal_background = editor.background_color
-        self.normal_brush = wx.Brush(editor.background_color, wx.SOLID)
-        self.normal_pen = wx.Pen(editor.background_color, 1, wx.SOLID)
-        self.cursor_background = editor.background_color
-        self.cursor_brush = wx.Brush(editor.background_color, wx.TRANSPARENT)
-        self.cursor_pen = wx.Pen(editor.unfocused_cursor_color, 2, wx.SOLID)
-        self.match_background = editor.match_background_color
-        self.match_brush = wx.Brush(editor.match_background_color, wx.SOLID)
-        self.match_pen = wx.Pen(editor.match_background_color, 1, wx.SOLID)
-        self.comment_background = editor.comment_background_color
-        self.comment_brush = wx.Brush(editor.comment_background_color, wx.SOLID)
-        self.comment_pen = wx.Pen(editor.comment_background_color, 1, wx.SOLID)
+        m = editor.machine
+        self.color = m.text_color
+        self.font = m.text_font
+        self.selected_background = m.highlight_color
+        self.selected_brush = wx.Brush(m.highlight_color, wx.SOLID)
+        self.selected_pen = wx.Pen(m.highlight_color, 1, wx.SOLID)
+        self.normal_background = m.background_color
+        self.normal_brush = wx.Brush(m.background_color, wx.SOLID)
+        self.normal_pen = wx.Pen(m.background_color, 1, wx.SOLID)
+        self.cursor_background = m.background_color
+        self.cursor_brush = wx.Brush(m.background_color, wx.TRANSPARENT)
+        self.cursor_pen = wx.Pen(m.unfocused_cursor_color, 2, wx.SOLID)
+        self.match_background = m.match_background_color
+        self.match_brush = wx.Brush(m.match_background_color, wx.SOLID)
+        self.match_pen = wx.Pen(m.match_background_color, 1, wx.SOLID)
+        self.comment_background = m.comment_background_color
+        self.comment_brush = wx.Brush(m.comment_background_color, wx.SOLID)
+        self.comment_pen = wx.Pen(m.comment_background_color, 1, wx.SOLID)
     
     def draw_blank(self, dc, rect):
         dc.SetBrush(wx.Brush(wx.WHITE, wx.SOLID))

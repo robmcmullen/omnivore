@@ -12,23 +12,24 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
         """Render data in the specified color and font and fontsize"""
         Grid.PyGridCellRenderer.__init__(self)
         self.table = table
-        self.color = editor.text_color
-        self.font = editor.text_font
-        self.selected_background = editor.highlight_color
-        self.selected_brush = wx.Brush(editor.highlight_color, wx.SOLID)
-        self.selected_pen = wx.Pen(editor.highlight_color, 1, wx.SOLID)
-        self.normal_background = editor.background_color
-        self.normal_brush = wx.Brush(editor.background_color, wx.SOLID)
-        self.normal_pen = wx.Pen(editor.background_color, 1, wx.SOLID)
-        self.cursor_background = editor.background_color
-        self.cursor_brush = wx.Brush(editor.background_color, wx.TRANSPARENT)
-        self.cursor_pen = wx.Pen(editor.unfocused_cursor_color, 2, wx.SOLID)
-        self.match_background = editor.match_background_color
-        self.match_brush = wx.Brush(editor.match_background_color, wx.SOLID)
-        self.match_pen = wx.Pen(editor.match_background_color, 1, wx.SOLID)
-        self.comment_background = editor.comment_background_color
-        self.comment_brush = wx.Brush(editor.comment_background_color, wx.SOLID)
-        self.comment_pen = wx.Pen(editor.comment_background_color, 1, wx.SOLID)
+        m = editor.machine
+        self.color = m.text_color
+        self.font = m.text_font
+        self.selected_background = m.highlight_color
+        self.selected_brush = wx.Brush(m.highlight_color, wx.SOLID)
+        self.selected_pen = wx.Pen(m.highlight_color, 1, wx.SOLID)
+        self.normal_background = m.background_color
+        self.normal_brush = wx.Brush(m.background_color, wx.SOLID)
+        self.normal_pen = wx.Pen(m.background_color, 1, wx.SOLID)
+        self.cursor_background = m.background_color
+        self.cursor_brush = wx.Brush(m.background_color, wx.TRANSPARENT)
+        self.cursor_pen = wx.Pen(m.unfocused_cursor_color, 2, wx.SOLID)
+        self.match_background = m.match_background_color
+        self.match_brush = wx.Brush(m.match_background_color, wx.SOLID)
+        self.match_pen = wx.Pen(m.match_background_color, 1, wx.SOLID)
+        self.comment_background = m.comment_background_color
+        self.comment_brush = wx.Brush(m.comment_background_color, wx.SOLID)
+        self.comment_pen = wx.Pen(m.comment_background_color, 1, wx.SOLID)
 
     def Draw(self, grid, attr, dc, rect, row, col, isSelected):
         # Here we draw text in a grid cell using various fonts
@@ -203,7 +204,7 @@ class ByteGridTable(Grid.PyGridTableBase):
         pass
     
     def set_grid_cell_attr(self, grid, col, attr):
-        attr.SetFont(grid.editor.text_font)
+        attr.SetFont(grid.editor.machine.text_font)
         attr.SetBackgroundColour("white")
         renderer = grid.get_grid_cell_renderer(self, grid.editor)
         attr.SetRenderer(renderer)
@@ -244,7 +245,7 @@ class ByteGridTable(Grid.PyGridTableBase):
 
         # update the scrollbars and the displayed part of the grid
         dc = wx.MemoryDC()
-        dc.SetFont(grid.editor.text_font)
+        dc.SetFont(grid.editor.machine.text_font)
         (width, height) = dc.GetTextExtent("M")
         grid.SetDefaultRowSize(height)
         grid.SetColMinimalAcceptableWidth(width)
@@ -259,7 +260,7 @@ class ByteGridTable(Grid.PyGridTableBase):
         self._rows = self.GetNumberRows()
         self._cols = self.GetNumberCols()
         
-        label_font = grid.editor.text_font.Bold()
+        label_font = grid.editor.machine.text_font.Bold()
         grid.SetLabelFont(label_font)
         dc.SetFont(label_font)
         (width, height) = dc.GetTextExtent("M")

@@ -12,7 +12,7 @@ from pyface.tasks.action.api import TaskAction, EditorAction
 
 from omnivore.framework.actions import *
 from commands import *
-from omnivore.utils.wx.antic_colors import AnticColorDialog
+from omnivore.arch.wx.antic_colors import AnticColorDialog
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string
 from omnivore.framework.minibuffer import *
 
@@ -43,7 +43,7 @@ class UseFontAction(EditorAction):
         return "%s" % (self.font['name'])
     
     def perform(self, event):
-        self.active_editor.set_font(self.font)
+        self.active_editor.machine.set_font(self.font)
 
 class LoadFontAction(EditorAction):
     name = 'Load Font...'
@@ -51,7 +51,7 @@ class LoadFontAction(EditorAction):
     def perform(self, event):
         dialog = FileDialog(parent=event.task.window.control)
         if dialog.open() == OK:
-            self.active_editor.load_font(dialog.path)
+            self.active_editor.machine.load_font(event.task, dialog.path)
 
 class GetFontFromSelectionAction(EditorAction):
     name = 'Get Font From Selection'
@@ -70,12 +70,12 @@ class FontStyleBaseAction(EditorAction):
     font_mode = Int
 
     def perform(self, event):
-        self.active_editor.set_font(font_mode=self.font_mode)
+        self.active_editor.machine.set_font(font_mode=self.font_mode)
 
-    @on_trait_change('active_editor.font_mode')
+    @on_trait_change('active_editor.machine.font_mode')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.font_mode == self.font_mode
+            self.checked = self.active_editor.machine.font_mode == self.font_mode
 
 
 class FontMappingBaseAction(EditorAction):
@@ -87,12 +87,12 @@ class FontMappingBaseAction(EditorAction):
     font_mapping = Int
 
     def perform(self, event):
-        self.active_editor.set_font_mapping(self.font_mapping)
+        self.active_editor.machine.set_font_mapping(self.font_mapping)
 
-    @on_trait_change('active_editor.antic_font_mapping')
+    @on_trait_change('active_editor.machine.antic_font_mapping')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.antic_font_mapping == self.font_mapping
+            self.checked = self.active_editor.machine.antic_font_mapping == self.font_mapping
 
 
 class BitmapWidthAction(EditorAction):
@@ -142,7 +142,7 @@ class AnticColorAction(EditorAction):
         e = self.active_editor
         dlg = AnticColorDialog(event.task.window.control, e)
         if dlg.ShowModal() == wx.ID_OK:
-            e.update_colors(dlg.colors)
+            e.machine.update_colors(dlg.colors)
 
 
 class UseColorsAction(EditorAction):
@@ -150,7 +150,7 @@ class UseColorsAction(EditorAction):
     colors = Any
     
     def perform(self, event):
-        self.active_editor.update_colors(self.colors)
+        self.active_editor.machine.update_colors(self.colors)
 
 
 class ColorStandardAction(EditorAction):
@@ -159,12 +159,12 @@ class ColorStandardAction(EditorAction):
     color_standard = Int
 
     def perform(self, event):
-        self.active_editor.set_color_standard(self.color_standard)
+        self.active_editor.machine.set_color_standard(self.color_standard)
 
-    @on_trait_change('active_editor.color_standard')
+    @on_trait_change('active_editor.machine.color_standard')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.color_standard == self.color_standard
+            self.checked = self.active_editor.machine.color_standard == self.color_standard
 
 
 class TextFontAction(EditorAction):
