@@ -1017,50 +1017,11 @@ class MemoryMapScroller(BitviewScroller):
         style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
         
-        e = self.editor
-        anchor_start, anchor_end, rc1, rc2 = self.get_highlight_indexes()
-        if speedups is not None:
-            array = speedups.get_numpy_memory_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, e.empty_color, e.highlight_color)
-        else:
-            array = self.get_numpy_memory_map_image(bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols, e.empty_color, e.highlight_color)
+        m = self.editor.machine
+        array = m.page_renderer.get_image(m, bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols)
         log.debug(array.shape)
         t = time.clock()
         log.debug("get_image: time %f" % (t - t0))
-        return array
-
-    def get_numpy_memory_map_image(self, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols, background_color, selected_color):
-        log.debug("SLOW VERSION OF get_numpy_memory_map_image!!!")
-        num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) / bytes_per_row
-        
-        log.debug(str([end_byte, start_byte, (end_byte - start_byte) / bytes_per_row]))
-        end_row = min(num_rows_with_data, num_rows)
-        end_col = min(bytes_per_row, start_col + num_cols)
-        
-        width = end_col - start_col
-        height = num_rows_with_data
-        log.debug("memory map size: %dx%d, zoom=%d, rows with data=%d, rows %d, cols %d-%d" % (width, height, self.zoom, num_rows_with_data, num_rows, start_col, start_col + width - 1))
-        array = np.empty((height, width, 3), dtype=np.uint8)
-        array[:,:] = background_color
-        
-        y = 0
-        e = start_byte
-        for j in range(end_row):
-            x = 0
-            for i in range(start_col, end_col):
-                if e + i >= end_byte:
-                    break
-                c = bytes[j, i] ^ 0xff
-                s = style[j, i]
-                if s & 0x80:
-                    r = selected_color[0] * c >> 8
-                    g = selected_color[1] * c >> 8
-                    b = selected_color[2] * c >> 8
-                    array[y,x,:] = (r, g, b)
-                else:
-                    array[y,x,:] = (c, c, c)
-                x += 1
-            y += 1
-            e += bytes_per_row
         return array
 
     def event_coords_to_byte(self, evt):

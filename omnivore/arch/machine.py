@@ -41,6 +41,8 @@ class Machine(HasTraits):
     
     font_mapping = Any
     
+    page_renderer = Any
+    
     # Trait events
     
     font_change_event = Event
@@ -123,10 +125,13 @@ class Machine(HasTraits):
         return antic_renderers.ModeF(self)
     
     def _font_renderer_default(self):
-        return predefined_font_renderers[1]
+        return predefined_font_renderers[0]
     
     def _font_mapping_default(self):
-        return predefined_font_mappings[1]
+        return predefined_font_mappings[0]
+    
+    def _page_renderer_default(self):
+        return predefined_page_renderers[0]
     
     # 
     
@@ -236,4 +241,8 @@ predefined_font_renderers = [
 predefined_font_mappings = [
     antic_renderers.ATASCIIFontMapping(),
     antic_renderers.AnticFontMapping(),
+    ]
+
+predefined_page_renderers = [
+    antic_renderers.BytePerPixelMemoryMap(),
     ]
