@@ -90,6 +90,10 @@ class Disassembler(object):
             try:
                 length, opstr, fmt, flag = self.ops[opcode]
             except KeyError:
+                if len(bytes) == 2:
+                    self.put_back()
+                    opcode = bytes[0]
+                    bytes = (opcode, )
                 length, opstr, fmt, flag = 0, self.data_byte % opcode, "", 0
             #print("0x%x" % opcode, fmt, length, opstr, mode, flag)
             if leadin:
@@ -101,7 +105,7 @@ class Disassembler(object):
                 if len(bytes) == 2:
                     self.put_back()
                     opcode = bytes[0]
-                    bytes = (opcode)
+                    bytes = (opcode, )
                 extra, opstr, fmt, flag = 0, self.data_byte % opcode, "", 0
             
             next_pc = self.pc
