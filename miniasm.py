@@ -1,7 +1,10 @@
 #!/usr/bin/env python
-""" Brute force miniassembler, attempting to use pattern matching to determine
-which opcode addressing mode to use.
+""" Mini-assembler that uses the formatting strings and opcode tables from
+udis (the Universal Disassembler for 8-bit microprocessors by Jeff Tranter) to
+perform pattern matching to determine the opcode and addressing mode.
 
+Copyright (c) 2016 by Rob McMullen <feedback@playermissile.com>
+Licensed under the Apache License 2.0
 """
 from __future__ import print_function
 
@@ -30,6 +33,16 @@ r = 4
 w = 8
 
 class FormatSpec(object):
+    """ Format specifier that combines info from the udis addressModeTable and
+    the opcodeTable.
+    
+    During the brute force decoding, the patterns contained in the
+    addressModeTable format string are checked against the arguments decoded
+    from the text to be assembled. The first match is returned as the
+    assembled bytes.
+    """
+    
+    # regex to find the argument number in the format string
     fmtargre = re.compile(r'\{[0-9]:')
 
     def __init__(self, format, opcode, num_bytes, mode_name, flag):
@@ -65,11 +78,18 @@ class FormatSpec(object):
         return tuple(out)
     
     def check_exact(self, operands):
+        """ Check all the format strings that have no extra arguments, like
+        "NOP" or even 6502's "ASL A"
+        
+        """
         log.debug("checking %s for exact match %s" % (self.mode_name, self.format))
         if self.format == operands:
             return self.get_bytes()
     
     def check_hex_1x8(self, operands, pc, byte):
+        """ Check all the format strings that have one 8-bit hex value
+        
+        """
         if self.num_args == 0:
             # z80 has some hardcoded values in static opcodes, like $ff = "rst
             # $38" that get parsed as an opcode and a byte value, so we ignore
@@ -85,6 +105,10 @@ class FormatSpec(object):
                 return self.get_bytes([byte])
     
     def check_hex_1x16(self, operands, pc, low_byte, high_byte):
+        """ Check all the format strings that have one 16-bit hex value,
+        typically the PC-relative instructions.
+        
+        """
         if self.num_args != 1:
             return
         if self.flag == pcr:
@@ -98,6 +122,9 @@ class FormatSpec(object):
                     return self.get_bytes([offset & 0xff])  # convert to unsigned representation
     
     def check_hex_2x8(self, operands, pc, low_byte, high_byte):
+        """ Check all the format strings that have two 8-bit hex values
+        
+        """
         if self.num_args != 2:
             return
         log.debug("checking %s for hex values %02x, %02x" % (self.mode_name, low_byte, high_byte))
@@ -107,19 +134,29 @@ class FormatSpec(object):
             return self.get_bytes([low_byte, high_byte])
 
 
-class BruteForceMiniAssembler(object):
+class MiniAssembler(object):
     def __init__(self, cpu_name, allow_undocumented=False):
         self.source = None
         self.setup(cpu_name, allow_undocumented)
     
     def setup(self, cpu_name, allow_undocumented):
+        """ Create the opcode lookup tables that store all the possible
+        addressing modes for each opcode.
+        """
         cpu = cputables.processors[cpu_name]
-        self.little = True  # all 8-bit processor little endian???
+        self.little = True  # all 8-bit processors little endian???
+        
+        # Create temporary format dictionary that will be used in the expanded
+        # opcode lookup table
         formats = {}
         table = cpu['addressModeTable']
         for mode, fmt in table.items():
             formats[mode] = fmt.lower()
-            
+        
+        # Create the opcode lookup table that holds a list of possible
+        # addressing modes for each opcode. Stores the addressing mode format
+        # in each list entry to eliminate a lookup to another table at the
+        # cost of some extra space in this lookup table.
         d = defaultdict(list)
         table = cpu['opcodeTable']
         for opcode, optable in table.items():
@@ -131,6 +168,9 @@ class BruteForceMiniAssembler(object):
             if allow_undocumented or flag & 2 == 0:
                 d[mnemonic].append(FormatSpec(formats[mode_name], opcode, num_bytes, mode_name, flag))
         d[".db"].append(FormatSpec("${0:02x}", None, 1, "data_byte", 0))
+        
+        # Order the lookup table from smallest to largest format specifier for
+        # each opcode
         self.ops = {}
         for mnemonic, modelist in d.items():
             log.debug(mnemonic)
@@ -228,7 +268,7 @@ if __name__ == "__main__":
     
     def process(source, filename):
         pc = 0
-        miniasm = BruteForceMiniAssembler(args.cpu, allow_undocumented=args.undocumented)
+        miniasm = MiniAssembler(args.cpu, allow_undocumented=args.undocumented)
         if args.assemble:
             for line in source.splitlines():
                 if line.startswith("0x"):

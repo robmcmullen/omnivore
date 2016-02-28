@@ -1,6 +1,9 @@
 #!/usr/bin/env python
-""" Python 2 version of udis
+""" Python 2 version of udis, the Universal Disassembler for 8-bit microprocessors
 
+Python 2 version: Copyright (c) 2016 by Rob McMullen <feedback@playermissile.com>
+Python 3 version: Copyright (c) 2015-2016 Jeff Tranter
+Licensed under the Apache License 2.0
 """
 from __future__ import print_function
 
@@ -192,17 +195,31 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser()
-    parser.add_argument("filename", help="Binary file to disassemble")
     parser.add_argument("-c", "--cpu", help="Specify CPU type (defaults to 6502)", default="6502")
     parser.add_argument("-u", "--undocumented", help="Allow undocumented opcodes", action="store_true")
+    parser.add_argument("-x", "--hex", help="Disassemble a string version of hex digits")
+    parser.add_argument("filenames", metavar="filenames", nargs='*',
+                   help="Binary files(s) to disassemble")
     args = parser.parse_args()
 
-    with open(args.filename, 'rb') as fh:
-        binary = fh.read()
-    binary = np.fromstring(binary, dtype=np.uint8)
-    
-    pc = 0;
-    disasm = Disassembler(args.cpu, allow_undocumented=args.undocumented)
-    disasm.set_pc(binary, 0)
-    for addr, bytes, opstr, comment, flag in disasm.get_disassembly():
-        print("0x%04x %-12s ; %s   %s %s" % (addr, opstr, comment, bytes, flag))
+    def process(binary):
+        pc = 0;
+        disasm = Disassembler(args.cpu, allow_undocumented=args.undocumented)
+        disasm.set_pc(binary, 0)
+        for addr, bytes, opstr, comment, flag in disasm.get_disassembly():
+            print("0x%04x %-12s ; %s   %s %s" % (addr, opstr, comment, bytes, flag))
+
+    if args.hex:
+        try:
+            binary = args.hex.decode("hex")
+        except TypeError:
+            print("Invalid hex digits!")
+            sys.exit()
+        binary = np.fromstring(binary, dtype=np.uint8)
+        process(binary)
+    else:
+        for filename in args.filenames:
+            with open(args.filename, 'rb') as fh:
+                binary = fh.read()
+            binary = np.fromstring(binary, dtype=np.uint8)
+            process(binary)
