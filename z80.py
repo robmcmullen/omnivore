@@ -297,6 +297,7 @@ addressModeTable = {
 "z"          : "z",
 "z,pcr"      : "z,${0:04X}",
 "z,nn"       : "z,${1:02X}{0:02X}",
+"bit"        : "${0:02X},${1:02X}",
 }
 
 
@@ -882,7 +883,7 @@ opcodeTable = {
 
 # The below are a set of instructions that all start with 0xddcb. They
 # are not supported yet.
-0xddcb : [ 4, "unimplemented",  "implied" ],
+0xddcb : [ 4, "ixbit",  "bit"    ],
 
 0xed40 : [ 2, "in",   "b,indc"   ],
 0xed41 : [ 2, "out",  "indc,b"   ],
@@ -978,7 +979,7 @@ opcodeTable = {
 
 # The below are a set of instructions that all start with 0xfdcb. They
 # are not supported yet.
-0xfdcb : [ 4, "unimplemented",  "implied" ],
+0xfdcb : [ 4, "iybit",  "bit"     ],
 
 }
 
