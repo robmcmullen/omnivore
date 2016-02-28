@@ -14,7 +14,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 from omnivore import get_image_path
 from omnivore.tasks.hex_edit.hex_editor import HexEditor
 from omnivore.framework.document import Document
-from omnivore.arch.machine import predefined_font_mappings
+from omnivore.arch.machine import predefined
 from omnivore.utils.wx.bitviewscroller import FontMapScroller
 from omnivore.utils.command import Overlay
 from omnivore.utils.searchutil import HexSearcher, CharSearcher
@@ -376,7 +376,7 @@ class MapEditor(HexEditor):
         e = doc.extra_metadata
         if 'tile map' in e:
             self.antic_tile_map = e['tile map']
-        self.machine.set_font_mapping(predefined_font_mappings[1])
+        self.machine.set_font_mapping(predefined['font_mapping'][1])
 
     def update_fonts(self):
         self.font_map.set_font()

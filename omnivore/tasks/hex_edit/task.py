@@ -133,7 +133,7 @@ class HexEditTask(FrameworkTask):
         else:
             kwargs = {}
         actions = []
-        for m in machine.predefined_font_mappings:
+        for m in machine.predefined['font_mapping']:
             actions.append(FontMappingAction(font_mapping=m, **kwargs))
         return actions
     
@@ -167,7 +167,7 @@ class HexEditTask(FrameworkTask):
     
     def get_predefined_machines_actions(self):
         actions = []
-        for m in machine.predefined_machines:
+        for m in machine.predefined['machine']:
             actions.append(PredefinedMachineAction(machine=m))
         return actions
     
@@ -183,7 +183,7 @@ class HexEditTask(FrameworkTask):
     
     def get_font_renderer_actions(self):
         actions = []
-        for r in machine.predefined_font_renderers:
+        for r in machine.predefined['font_renderer']:
             actions.append(FontRendererAction(font_renderer=r))
         return actions
     

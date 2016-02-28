@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 # Enthought library imports.
-from traits.api import HasTraits, Any, Bool, Int, Str, List, Dict, Event, Enum
+from traits.api import HasTraits, Any, Bool, Int, Str, List, Dict, Event, Enum, DictStrStr
 
 # Local imports.
 import fonts
@@ -23,25 +23,25 @@ class Machine(HasTraits):
     
     name = Str
     
-    disassembler = Any
+    disassembler = Any(transient=True)
     
-    memory_map = Dict
+    memory_map = Dict(key_trait=Int, value_trait=Str)
     
     antic_font_data = Any
     
-    antic_font = Any
+    antic_font = Any(transient=True)
     
     playfield_colors = Any
     
     color_standard = Enum(0, 1)
     
-    bitmap_renderer = Any
+    bitmap_renderer = Any(transient=True)
     
-    font_renderer = Any
+    font_renderer = Any(transient=True)
     
-    font_mapping = Any
+    font_mapping = Any(transient=True)
     
-    page_renderer = Any
+    page_renderer = Any(transient=True)
     
     # Trait events
     
@@ -128,14 +128,52 @@ class Machine(HasTraits):
         return antic_renderers.ModeF(self)
     
     def _font_renderer_default(self):
-        return predefined_font_renderers[0]
+        return predefined['font_renderer'][0]
     
     def _font_mapping_default(self):
-        return predefined_font_mappings[0]
+        return predefined['font_mapping'][0]
     
     def _page_renderer_default(self):
-        return predefined_page_renderers[0]
+        return predefined['page_renderer'][0]
     
+    def __getstate__(self):
+        state = super(Machine, self).__getstate__()
+        
+        for name in self.all_trait_names():
+            t = self.trait(name)
+            if t.transient:
+                if name in predefined:
+                    value = getattr(self, name)
+                    state[name] = predefined[name].index(value)
+            elif name == "memory_map":
+                # convert into list of tuples so json won't mangle the integer
+                # keys into strings
+                value = getattr(self, name)
+                state[name] = value.items()
+        
+        print state.keys()
+        return state
+    
+    def __setstate__(self, state):
+        for name in self.all_trait_names():
+            t = self.trait(name)
+            if t.transient:
+                if name in predefined:
+                    index = state[name]
+                    setattr(self, name, predefined[name][index])
+            elif name == "memory_map":
+                # convert into list of tuples so json won't mangle the integer
+                # keys into strings
+                value = state[name]
+                setattr(self, name, {k:v for k,v in value})
+            else:
+                try:
+                    setattr(self, name, state[name])
+                except KeyError:
+                    pass
+    
+        # set up trait notifications
+        self._init_trait_listeners()
     # 
     
     def __eq__(self, other):
@@ -177,10 +215,10 @@ class Machine(HasTraits):
         self.set_font_mapping()
     
     def get_font_renderer_from_font_mode(self, font_mode):
-        for r in predefined_font_renderers:
+        for r in predefined['font_renderer']:
             if r.font_mode == font_mode:
                 return r
-        return predefined_font_renderers[0]
+        return predefined['font_renderer'][0]
     
     def set_font_mapping(self, font_mapping=None):
         if font_mapping is None:
@@ -221,42 +259,41 @@ class Machine(HasTraits):
 
 Generic6502 = Machine(name="Generic 6502", disassembler=Basic6502Disassembler)
 
-Atari800 = Machine(name="Atari 800", disassembler=Basic6502Disassembler, memory_map=machine_atari800.memmap)
+Atari800 = Machine(name="Atari 800", disassembler=Basic6502Disassembler, memory_map=dict(machine_atari800.memmap))
 
-Atari800Undoc = Machine(name="Atari 800 (show undocumented opcodes)", disassembler=Undocumented6502Disassembler, memory_map=machine_atari800.memmap)
+Atari800Undoc = Machine(name="Atari 800 (show undocumented opcodes)", disassembler=Undocumented6502Disassembler, memory_map=dict(machine_atari800.memmap))
 
-Atari800Flagged = Machine(name="Atari 800 (highlight undocumented opcodes)", disassembler=Flagged6502Disassembler, memory_map=machine_atari800.memmap)
+Atari800Flagged = Machine(name="Atari 800 (highlight undocumented opcodes)", disassembler=Flagged6502Disassembler, memory_map=dict(machine_atari800.memmap))
 
-Atari5200 = Machine(name="Atari 5200", disassembler=Basic6502Disassembler, memory_map=machine_atari5200.memmap)
+Atari5200 = Machine(name="Atari 5200", disassembler=Basic6502Disassembler, memory_map=dict(machine_atari5200.memmap))
 
-predefined_machines = [
-    Generic6502,
-    Atari800,
-    Atari800Undoc,
-    Atari800Flagged,
-    Atari5200,
-    ]
+predefined = {
+    "machine": [
+        Generic6502,
+        Atari800,
+        Atari800Undoc,
+        Atari800Flagged,
+        Atari5200,
+        ],
+    "disassembler": [
+        Basic6502Disassembler,
+        Undocumented6502Disassembler,
+        ],
+    "font_renderer": [
+        antic_renderers.Mode2(),
+        antic_renderers.Mode4(),
+        antic_renderers.Mode5(),
+        antic_renderers.Mode6Upper(),
+        antic_renderers.Mode6Lower(),
+        antic_renderers.Mode7Upper(),
+        antic_renderers.Mode7Lower(),
+        ],
+    "font_mapping": [
+        antic_renderers.ATASCIIFontMapping(),
+        antic_renderers.AnticFontMapping(),
+        ],
+    "page_renderer": [
+        antic_renderers.BytePerPixelMemoryMap(),
+        ],
+    }
 
-predefined_disassemblers = [
-    Basic6502Disassembler,
-    Undocumented6502Disassembler,
-    ]
-
-predefined_font_renderers = [
-    antic_renderers.Mode2(),
-    antic_renderers.Mode4(),
-    antic_renderers.Mode5(),
-    antic_renderers.Mode6Upper(),
-    antic_renderers.Mode6Lower(),
-    antic_renderers.Mode7Upper(),
-    antic_renderers.Mode7Lower(),
-    ]
-
-predefined_font_mappings = [
-    antic_renderers.ATASCIIFontMapping(),
-    antic_renderers.AnticFontMapping(),
-    ]
-
-predefined_page_renderers = [
-    antic_renderers.BytePerPixelMemoryMap(),
-    ]
