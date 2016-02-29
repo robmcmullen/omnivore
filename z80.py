@@ -300,7 +300,6 @@ addressModeTable = {
 "bit"        : "${0:02X},${1:02X}",
 }
 
-
 # Op Code Table
 # Key is numeric opcode (possibly multiple bytes)
 # Value is a list:
@@ -881,10 +880,6 @@ opcodeTable = {
 
 0xdd8e : [3,  "adc",  "indix+d"   ],
 
-# The below are a set of instructions that all start with 0xddcb. They
-# are not supported yet.
-0xddcb : [ 4, "ixbit",  "bit"    ],
-
 0xed40 : [ 2, "in",   "b,indc"   ],
 0xed41 : [ 2, "out",  "indc,b"   ],
 0xed42 : [ 2, "sbc",  "hl,bc"    ],
@@ -977,11 +972,42 @@ opcodeTable = {
 0xfdb6 : [ 3, "or",   "indiy+d"   ],
 0xfdbe : [ 3, "cp",   "indiy+d"   ],
 
-# The below are a set of instructions that all start with 0xfdcb. They
-# are not supported yet.
-0xfdcb : [ 4, "iybit",  "bit"     ],
-
+# Placeholder 2-byte leadins for the 4-byte ix/iy bit instructions fully
+# defined below. The z80bit flag triggers a special case in the disassembler
+# to look up the 4 byte instruction.
+0xddcb : [ 4, "ixbit", "implied", z80bit ],
+0xfdcb : [ 4, "iybit", "implied", z80bit ],
 }
+
+def extra_opcodes(addr_table, op_table):
+    # Create all the 0xddcb and 0xfdcb addressing modes. The modes look like [0-7],(i[xy]+*)[,[abcdehl]]?
+    for index in ['x', 'y']:
+        for bit in range(8):
+            k = "%d,indi%s+d" % (bit, index)
+            v = "%d,(i%s+${0:02X})" % (bit, index)
+            addr_table[k] = v
+            for reg in ['a', 'b', 'c', 'd', 'e', 'h', 'l']:
+                k = "%d,indi%s+d,%s" % (bit, index, reg)
+                v = "%d,(i%s+${0:02X}),%s" % (bit, index, reg)
+                addr_table[k] = v
+
+    # Create all the 0xddcb and 0xfdcb opcodes. These are all 4 byte opcodes
+    # where the 3rd byte is a -128 - +127 offset. For the purposes of using
+    # this table, the 3rd byte will be marked as zero and the disassembler will
+    # have to insert the real 3rd byte the check of the z80bit special case
+    for first_byte, x_or_y in [(0xdd, 'x'), (0xfd, 'y')]:
+        # groups of 8, expand to full 256
+        mnemonics_8 = ['rlc', 'rrc', 'rl', 'rr', 'sla', 'sra', 'sll', 'sr1'] + ['bit'] * 8 + ['res'] * 8 + ['set'] * 8
+        mnemonics = [m for mnemonic in mnemonics_8 for m in [mnemonic]*8]
+        
+        # create all 256 addressing modes, in groups of 64
+        addrmodes = ['indi%s+d' + a for a in [',b', ',c', ',d', ',e', ',h', ',l', '', ',a']] * 8 + [f % d for d in range(8) for f in ['%d,indi%%s+d'] * 8] + [f % d for d in range(8) for f in ['%d,indi%%s+d' + a for a in [',b', ',c', ',d', ',e', ',h', ',l', '', ',a']]] * 2
+        
+        for fourth_byte, (instruction, addrmode) in enumerate(zip(mnemonics, addrmodes)):
+            opcode = (first_byte << 24) + (0xcb << 16) + fourth_byte
+            op_table[opcode] = [ 4, instruction, addrmode % x_or_y ]
+extra_opcodes(addressModeTable, opcodeTable)
+del extra_opcodes
 
 # End of processor specific code
 ##########################################################################
