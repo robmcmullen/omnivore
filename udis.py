@@ -26,6 +26,7 @@ import signal
 
 pcr = 1
 und = 2
+z80bit = 4
 
 # Functions
 
@@ -195,7 +196,14 @@ while True:
         elif length == 2:
             operand = format.format(op[1])
         elif length == 3:
-            operand = format.format(op[1], op[2])
+            if flags & 4 == z80bit:
+                opcode = (opcode << 16) + op[2]
+                # reread opcode table for real format string
+                length, mnemonic, mode = opcodeTable[opcode]
+                format = addressModeTable[mode]
+                operand = format.format(op[1])
+            else:
+                operand = format.format(op[1], op[2])
         elif length == 4:
             operand = format.format(op[1], op[2], op[3])
         elif length == 5:
