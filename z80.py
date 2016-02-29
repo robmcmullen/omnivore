@@ -297,7 +297,6 @@ addressModeTable = {
 "z"          : "z",
 "z,pcr"      : "z,${0:04X}",
 "z,nn"       : "z,${1:02X}{0:02X}",
-"bit"        : "${0:02X},${1:02X}",
 }
 
 # Op Code Table
