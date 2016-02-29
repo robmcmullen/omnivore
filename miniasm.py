@@ -52,7 +52,13 @@ class FormatSpec(object):
         self.num_args = len(re.findall(self.fmtargre, format))
         self.length = len(format)
         if opcode is not None:
-            if opcode > 255:
+            if opcode >= 256 * 256 * 256:
+                op1 = (opcode & 0xff000000) >> 24
+                op2 = (opcode & 0xff0000) >> 16
+                op3 = (opcode & 0xff00) >> 8
+                op4 = opcode & 0xff
+                self.opcode_bytes = [op1, op2, op3, op4]
+            elif opcode > 255:
                 op1, op2 = divmod(opcode, 256)
                 self.opcode_bytes = [op1, op2]
             else:
@@ -83,7 +89,7 @@ class FormatSpec(object):
         "NOP" or even 6502's "ASL A"
         
         """
-        log.debug("checking %s for exact match %s" % (self.mode_name, self.format))
+        log.debug(" check_exact: %s -> %s" % (self.mode_name, self.format))
         if self.format == operands:
             return self.get_bytes()
     
@@ -96,43 +102,46 @@ class FormatSpec(object):
             # $38" that get parsed as an opcode and a byte value, so we ignore
             # the byte value here because of it being hardcoded.
             gen = self.format
-            log.debug("  " + gen + ":" + operands)
+            log.debug(" check_hex_1x8(0): " + gen + " -> " + operands)
             if gen == operands:
                 return self.get_bytes()
         elif self.num_args == 1:
             gen = self.format.format(byte)
-            log.debug("  " + gen + ":" + operands)
+            log.debug(" check_hex_1x8(1): " + gen + " -> " + operands)
             if gen == operands:
-                return self.get_bytes([byte])
+                if self.flag & z80bit:
+                    out = list(self.opcode_bytes)
+                    out[2:3] = [byte]
+                    return tuple(out)
+                else:
+                    return self.get_bytes([byte])
     
     def check_hex_1x16(self, operands, pc, low_byte, high_byte):
         """ Check all the format strings that have one 16-bit hex value,
         typically the PC-relative instructions.
         
         """
-        if self.num_args != 1:
-            return
-        if self.flag == pcr:
-            addr = low_byte + 256 * high_byte
-            offset = addr - (pc + 2)
-            log.debug("checking %s for relative branch to %04x (pc=%x, offset=%x)" % (self.mode_name, addr, pc, offset))
-            if -128 <= offset <= 127:
-                gen = self.format.format(addr)
-                log.debug("  gen=%s operands=%s" % (gen, operands))
-                if gen == operands:
-                    return self.get_bytes([offset & 0xff])  # convert to unsigned representation
+        if self.num_args == 1:
+            if self.flag == pcr:
+                addr = low_byte + 256 * high_byte
+                offset = addr - (pc + 2)
+                log.debug(" check_hex_1x16(1): %s -> %04x (pc=%x, offset=%x)" % (self.mode_name, addr, pc, offset))
+                if -128 <= offset <= 127:
+                    gen = self.format.format(addr)
+                    log.debug("  gen=%s operands=%s" % (gen, operands))
+                    if gen == operands:
+                        return self.get_bytes([offset & 0xff])  # convert to unsigned representation
     
     def check_hex_2x8(self, operands, pc, low_byte, high_byte):
         """ Check all the format strings that have two 8-bit hex values
         
         """
-        if self.num_args != 2:
-            return
-        log.debug("checking %s for hex values %02x, %02x" % (self.mode_name, low_byte, high_byte))
-        gen = self.format.format(low_byte, high_byte)
-        log.debug("  " + gen + ":" + operands)
-        if gen == operands:
-            return self.get_bytes([low_byte, high_byte])
+        if self.num_args == 2:
+            log.debug(" check_hex_2x8(2): %s -> %02x, %02x" % (self.mode_name, low_byte, high_byte))
+            gen = self.format.format(low_byte, high_byte)
+            log.debug("  " + gen + ":" + operands)
+            if gen == operands:
+                return self.get_bytes([low_byte, high_byte])
 
 
 class MiniAssembler(object):
