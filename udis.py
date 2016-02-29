@@ -182,7 +182,7 @@ while True:
         # Handle relative addresses. Indicated by the flag pcr being set.
         # Assumes the operand that needs to be PC relative is the last one.
         # Note: Code will need changes if more flags are added.
-        if flags & 1 == pcr:
+        if flags & pcr:
             if op[length-1] < 128:
                 op[length-1] = address + op[length-1] + length
             else:
@@ -196,7 +196,7 @@ while True:
         elif length == 2:
             operand = format.format(op[1])
         elif length == 3:
-            if flags & 4 == z80bit:
+            if flags & z80bit:
                 opcode = (opcode << 16) + op[2]
                 # reread opcode table for real format string
                 length, mnemonic, mode, flags = opcodeTable[opcode]
