@@ -95,7 +95,7 @@ class AnticPalette(canvas.Canvas):
         w = self.HORIZONTAL_STEP * 16 + 2 * self.BORDER
         h = self.VERTICAL_STEP * 16 + 2 * self.BORDER
         array = np.empty((h, w, 3), dtype=np.uint8)
-        array[:,:] = editor.empty_color
+        array[:,:] = editor.machine.empty_color
         for high in range(0, 256, 16):
             y = self.BORDER + (high / 16) * self.VERTICAL_STEP
             for low in range(16):
@@ -179,7 +179,7 @@ class AnticColorDialog(wx.Dialog):
     
     def init_colors(self):
         self.color_registers.calc_sizes()
-        c = list(self.editor.playfield_colors)
+        c = list(self.editor.machine.playfield_colors)
         if len(c) == 5:
             self.colors = list([0, 0, 0, 0])
             self.colors.extend(list(c))
