@@ -199,7 +199,7 @@ while True:
             if flags & 4 == z80bit:
                 opcode = (opcode << 16) + op[2]
                 # reread opcode table for real format string
-                length, mnemonic, mode = opcodeTable[opcode]
+                length, mnemonic, mode, flags = opcodeTable[opcode]
                 format = addressModeTable[mode]
                 operand = format.format(op[1])
             else:
