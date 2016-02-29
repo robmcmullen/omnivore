@@ -187,40 +187,17 @@ class HexEditTask(FrameworkTask):
             actions.append(FontRendererAction(font_renderer=r))
         return actions
     
+    def get_bitmap_renderer_actions(self):
+        actions = []
+        for r in machine.predefined['bitmap_renderer']:
+            actions.append(BitmapRendererAction(bitmap_renderer=r))
+        return actions
+    
     def get_actions_Menu_Machine_MachineCharGroup(self):
         font_mapping_actions = self.get_font_mapping_actions()
         font_renderer_actions = self.get_font_renderer_actions()
+        bitmap_renderer_actions = self.get_bitmap_renderer_actions()
         return [
-            SMenu(
-                Group(
-                    UseFontAction(font=fonts.A8DefaultFont),
-                    UseFontAction(font=fonts.A8ComputerFont),
-                    id="a1", separator=True),
-                FontChoiceGroup(id="a2", separator=True),
-                Group(
-                    LoadFontAction(),
-                    GetFontFromSelectionAction(),
-                    id="a3", separator=True),
-                id='FontChoiceSubmenu1', separator=True, name="Antic Font"),
-            SMenu(
-                Group(
-                    *font_renderer_actions,
-                    id="a1", separator=True),
-                id='FontChoiceSubmenu2', separator=False, name="Antic Mode"),
-            SMenu(
-                Group(
-                    *font_mapping_actions,
-                    id="a2", separator=True),
-                Group(
-                    FontMappingWidthAction(),
-                    id="a3", separator=True),
-                id='FontChoiceSubmenu2a1', separator=False, name="Char Map"),
-            SMenu(
-                Group(
-                    BitmapWidthAction(),
-                    BitmapZoomAction(),
-                    id="a1", separator=True),
-                id='FontChoiceSubmenu2a2', separator=False, name="Bitmap"),
             SMenu(
                 Group(
                     ColorStandardAction(name="NTSC", color_standard=0),
@@ -232,7 +209,38 @@ class HexEditTask(FrameworkTask):
                 Group(
                     AnticColorAction(),
                     id="a2", separator=True),
-                id='FontChoiceSubmenu2a', separator=False, name="Antic Colors"),
+                id='FontChoiceSubmenu2a', separator=True, name="Colors"),
+            SMenu(
+                Group(
+                    UseFontAction(font=fonts.A8DefaultFont),
+                    UseFontAction(font=fonts.A8ComputerFont),
+                    id="a1", separator=True),
+                FontChoiceGroup(id="a2", separator=True),
+                Group(
+                    LoadFontAction(),
+                    GetFontFromSelectionAction(),
+                    id="a3", separator=True),
+                id='FontChoiceSubmenu1', separator=False, name="Font"),
+            SMenu(
+                Group(
+                    *font_renderer_actions,
+                    id="a1", separator=True),
+                Group(
+                    *font_mapping_actions,
+                    id="a2", separator=True),
+                Group(
+                    FontMappingWidthAction(),
+                    id="a3", separator=True),
+                id='FontChoiceSubmenu2a1', separator=False, name="Character Display"),
+            SMenu(
+                Group(
+                    *bitmap_renderer_actions,
+                    id="a1", separator=True),
+                Group(
+                    BitmapWidthAction(),
+                    BitmapZoomAction(),
+                    id="a1", separator=True),
+                id='FontChoiceSubmenu2a2', separator=False, name="Bitmap Display"),
             ]
     
     def get_actions_Menu_Segments_SegmentParserGroup(self):

@@ -101,6 +101,26 @@ class FontMappingAction(EditorAction):
             self.checked = self.active_editor.machine.font_mapping == self.font_mapping
 
 
+class BitmapRendererAction(EditorAction):
+    """Radio buttons for changing font style
+    """
+    # Traits
+    style = 'radio'
+    
+    bitmap_renderer = Any
+    
+    def _name_default(self):
+        return self.bitmap_renderer.name
+
+    def perform(self, event):
+        self.active_editor.machine.set_bitmap_renderer(self.bitmap_renderer)
+
+    @on_trait_change('active_editor.machine.bitmap_renderer')
+    def _update_checked(self):
+        if self.active_editor:
+            self.checked = self.active_editor.machine.bitmap_renderer == self.bitmap_renderer
+
+
 class BitmapWidthAction(EditorAction):
     name = "Bitmap Width"
 

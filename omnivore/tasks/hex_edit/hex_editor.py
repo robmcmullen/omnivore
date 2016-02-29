@@ -230,6 +230,10 @@ class HexEditor(FrameworkEditor):
         self.bitmap_zoom = zoom
         self.bitmap.recalc_view()
     
+    @on_trait_change('machine.bitmap_change_event')
+    def update_bitmap(self):
+        self.bitmap.recalc_view()
+    
     @on_trait_change('machine.font_change_event')
     def update_fonts(self):
         self.font_map.set_font()

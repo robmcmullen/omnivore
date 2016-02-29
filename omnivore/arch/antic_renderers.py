@@ -12,14 +12,11 @@ log = logging.getLogger(__name__)
 class ModeF(object):
     name = "Antic F (Gr 8, 1bpp)"
     
-    def __init__(self, machine):
-        self.machine = machine
-    
-    def get_image(self, bytes_per_row, border_width, visible_rows, byte_count, bytes, style):
+    def get_image(self, m, bytes_per_row, border_width, visible_rows, byte_count, bytes, style):
         if bytes_per_row == 1:
-            array = self.get_image_1(self.machine, bytes_per_row, border_width, visible_rows, byte_count, bytes, style)
+            array = self.get_image_1(m, bytes_per_row, border_width, visible_rows, byte_count, bytes, style)
         else:
-            array = self.get_image_multi(self.machine, bytes_per_row, border_width, visible_rows, byte_count, bytes, style)
+            array = self.get_image_multi(m, bytes_per_row, border_width, visible_rows, byte_count, bytes, style)
         return array
 
     def get_image_1(self, m, bytes_per_row, border_width, nr, count, bytes, style):

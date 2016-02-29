@@ -561,7 +561,8 @@ class BitmapScroller(BitviewScroller):
             count = self.end_byte - self.start_byte
             bytes = self.segment[self.start_byte:self.end_byte]
             style = self.segment.style[self.start_byte:self.end_byte]
-        array = self.editor.machine.bitmap_renderer.get_image(self.bytes_per_row, self.border_width, nr, count, bytes, style)
+        m = self.editor.machine
+        array = m.bitmap_renderer.get_image(m, self.bytes_per_row, self.border_width, nr, count, bytes, style)
         sc = self.start_col
         nc = self.visible_cols
         clipped = array[:,sc:sc + nc,:]

@@ -47,6 +47,8 @@ class Machine(HasTraits):
     
     font_change_event = Event
     
+    bitmap_change_event = Event
+    
     # Class attributes (not traits)
     
     font_list = None
@@ -125,7 +127,7 @@ class Machine(HasTraits):
         return 0  # NTSC
     
     def _bitmap_renderer_default(self):
-        return antic_renderers.ModeF(self)
+        return predefined['bitmap_renderer'][0]
     
     def _font_renderer_default(self):
         return predefined['font_renderer'][0]
@@ -199,6 +201,10 @@ class Machine(HasTraits):
     def set_color_standard(self, std):
         self.color_standard = std
         self.update_colors(self.playfield_colors)
+    
+    def set_bitmap_renderer(self, renderer):
+        self.bitmap_renderer = renderer
+        self.bitmap_change_event = True
     
     def set_font(self, font=None, font_renderer=None):
         if font is None:
@@ -278,6 +284,9 @@ predefined = {
     "disassembler": [
         Basic6502Disassembler,
         Undocumented6502Disassembler,
+        ],
+    "bitmap_renderer": [
+        antic_renderers.ModeF(),
         ],
     "font_renderer": [
         antic_renderers.Mode2(),
