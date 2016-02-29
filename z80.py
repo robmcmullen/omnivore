@@ -1005,7 +1005,7 @@ def extra_opcodes(addr_table, op_table):
         
         for fourth_byte, (instruction, addrmode) in enumerate(zip(mnemonics, addrmodes)):
             opcode = (first_byte << 24) + (0xcb << 16) + fourth_byte
-            op_table[opcode] = [ 4, instruction, addrmode % x_or_y ]
+            op_table[opcode] = [ 4, instruction, addrmode % x_or_y, z80bit ]
 extra_opcodes(addressModeTable, opcodeTable)
 del extra_opcodes
 
