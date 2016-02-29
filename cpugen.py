@@ -9,8 +9,9 @@ import glob
 # flags
 pcr = 1
 und = 2
-r = 4
-w = 8
+z80bit = 4
+r = 64
+w = 128
 
 def read_udis(pathname):
     """ Read all the processor-specific opcode info and pull into a container
@@ -33,7 +34,7 @@ def read_udis(pathname):
                 continue
             if "addressModeTable" in source and "opcodeTable" in source:
                 cpu_name, _ = os.path.splitext(localfile)
-                g = {"pcr": pcr, "und": und, "r": r, "w": w}
+                g = {"pcr": pcr, "und": und, "r": r, "w": w, "z80bit": z80bit}
                 d = {}
                 try:
                     exec(source, g, d)

@@ -16,8 +16,9 @@ import cputables
 # flags
 pcr = 1
 und = 2
-r = 4
-w = 8
+z80bit = 4
+r = 64
+w = 128
 
 class Disassembler(object):
     def __init__(self, cpu_name, memory_map=None, allow_undocumented=False, hex_lower=True, mnemonic_lower=False):
@@ -130,8 +131,16 @@ class Disassembler(object):
                 bytes.append(operand1)
                 operand2 = self.get_next()
                 bytes.append(operand2)
-                opstr = opstr + " " + fmt.format(operand1, operand2)
-                memloc = operand1 + 256 * operand2
+                if flag & 4 == z80bit:
+                    opcode = (opcode << 16) + operand2
+                    # reread opcode table for real format string
+                    length, opstr, fmt, flag = self.ops[opcode]
+                    signed = operand1 - 256 if operand1 > 127 else operand1
+                    opstr = opstr + " " + fmt.format(signed)
+                    memloc = None
+                else:
+                    opstr = opstr + " " + fmt.format(operand1, operand2)
+                    memloc = operand1 + 256 * operand2
                 dest_pc = memloc
             elif extra == 3:
                 operand1 = self.get_next()

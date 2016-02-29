@@ -29,8 +29,9 @@ log = logging.getLogger(__name__)
 # flags
 pcr = 1
 und = 2
-r = 4
-w = 8
+z80bit = 4
+r = 64
+w = 128
 
 class FormatSpec(object):
     """ Format specifier that combines info from the udis addressModeTable and
