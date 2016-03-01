@@ -12,103 +12,34 @@ log = logging.getLogger(__name__)
 class ModeF(object):
     name = "Antic F (Gr 8, 1bpp)"
     
-    def get_image(self, m, bytes_per_row, border_width, visible_rows, byte_count, bytes, style):
-        if bytes_per_row == 1:
-            array = self.get_image_1(m, bytes_per_row, border_width, visible_rows, byte_count, bytes, style)
-        else:
-            array = self.get_image_multi(m, bytes_per_row, border_width, visible_rows, byte_count, bytes, style)
-        return array
-
-    def get_image_1(self, m, bytes_per_row, border_width, nr, count, bytes, style):
+    def get_image(self, m, bytes_per_row, nr, count, bytes, style):
         bits = np.unpackbits(bytes)
-        bits = bits.reshape((-1, 8 * bytes_per_row))
-        bits[bits==0]=255
-        bits[bits==1]=0
-        bitwidth = 8 * bytes_per_row
-        border = border_width
-        width = bitwidth + 2 * border
-        
-        array = np.empty((nr, width, 3), dtype=np.uint8)
-        array[:,border:border + bitwidth,0] = bits
-        array[:,border:border + bitwidth,1] = bits
-        array[:,border:border + bitwidth,2] = bits
-        array[:,0:border,:] = m.empty_color
-        array[:,border + bitwidth:width,:] = m.empty_color
-        array[count:,border:border + bitwidth,:] = m.empty_color
-        
-        mask = array == (255, 255, 255)
-        mask = np.all(mask, axis=2)
-        
-        # highlight any comments
-        match = style & 0x2
-        style_mask = match==0x2
-        # This doesn't do anything! A mask of a mask apparently doesn't work
-        # array[style_mask,:,:][mask[style_mask]] = m.comment_background_color
-        s = np.tile(style_mask, (mask.shape[1], 1)).T
-        m2 = np.logical_and(mask, s)
-        array[m2] = m.comment_background_color
-        array[style_mask,0:border,:] = m.comment_background_color
-        array[style_mask,border + bitwidth:width,:] = m.comment_background_color
-        
-        # highlight any matches
-        match = style & 0x1
-        style_mask = match==0x1
-        s = np.tile(style_mask, (mask.shape[1], 1)).T
-        m2 = np.logical_and(mask, s)
-        array[m2] = m.match_background_color
-        array[style_mask,0:border,:] = m.match_background_color
-        array[style_mask,border + bitwidth:width,:] = m.match_background_color
-        
-        # highlight selection
-        match = style & 0x80
-        style_mask = match==0x80
-        s = np.tile(style_mask, (mask.shape[1], 1)).T
-        m2 = np.logical_and(mask, s)
-        array[m2] = m.highlight_color
-        array[style_mask,0:border,:] = m.highlight_color
-        array[style_mask,border + bitwidth:width,:] = m.highlight_color
+        pixels = bits.reshape((-1, 8))
 
-        return array
-    
-    def get_image_multi(self, m, bytes_per_row, border_width, nr, count, bytes, style):
-        bits = np.unpackbits(bytes)
-        bits = bits.reshape((-1, 8 * bytes_per_row))
-        bits[bits==0]=255
-        bits[bits==1]=0
-        width = 8 * bytes_per_row
-        bitimage = np.empty((nr, width, 3), dtype=np.uint8)
-        bitimage[:,:,0] = bits
-        bitimage[:,:,1] = bits
-        bitimage[:,:,2] = bits
+        background = (pixels == 0)
+        color1 = (pixels == 1)
         
-        array = bitimage.reshape((-1, 8, 3))
-        array[count:,:,:] = m.empty_color
-
-        mask = array == (255, 255, 255)
-        mask = np.all(mask, axis=2)
+        bw_colors = ((0, 0, 0), (255, 255, 255))
+        h_colors = m.get_blended_color_registers(bw_colors, m.highlight_color)
+        m_colors = m.get_blended_color_registers(bw_colors, m.match_background_color)
+        c_colors = m.get_blended_color_registers(bw_colors, m.comment_background_color)
         
-        # highlight any comments
-        match = style & 0x2
-        style_mask = match==0x2
-        # This doesn't do anything! A mask of a mask apparently doesn't work
-        # array[style_mask,:,:][mask[style_mask]] = m.comment_background_color
-        s = np.tile(style_mask, (mask.shape[1], 1)).T
-        m2 = np.logical_and(mask, s)
-        array[m2] = m.comment_background_color
+        style_per_pixel = np.vstack((style, style, style, style, style, style, style, style)).T
+        normal = style_per_pixel == 0
+        highlight = (style_per_pixel & 0x80) == 0x80
+        comment = (style_per_pixel & 0x2) == 0x2
+        match = (style_per_pixel & 0x1) == 0x1
         
-        # highlight any matches
-        match = style & 0x1
-        style_mask = match==0x1
-        s = np.tile(style_mask, (mask.shape[1], 1)).T
-        m2 = np.logical_and(mask, s)
-        array[m2] = m.match_background_color
-        
-        # highlight selection
-        match = style & 0x80
-        style_mask = match==0x80
-        s = np.tile(style_mask, (mask.shape[1], 1)).T
-        m2 = np.logical_and(mask, s)
-        array[m2] = m.highlight_color
+        bitimage = np.empty((nr * bytes_per_row, 8, 3), dtype=np.uint8)
+        bitimage[background & normal] = bw_colors[0]
+        bitimage[background & comment] = c_colors[0]
+        bitimage[background & match] = m_colors[0]
+        bitimage[background & highlight] = h_colors[0]
+        bitimage[color1 & normal] = bw_colors[1]
+        bitimage[color1 & comment] = c_colors[1]
+        bitimage[color1 & match] = m_colors[1]
+        bitimage[color1 & highlight] = h_colors[1]
+        bitimage[count:,:,:] = m.empty_color
 
         return bitimage
 
@@ -116,7 +47,7 @@ class ModeF(object):
 class ModeE(object):
     name = "Antic E (Gr 7+, 2bpp)"
     
-    def get_image(self, m, bytes_per_row, border_width, nr, count, bytes, style):
+    def get_image(self, m, bytes_per_row, nr, count, bytes, style):
         bits = np.unpackbits(bytes)
         bits = bits.reshape((-1, 8))
         pixels = np.empty((nr * bytes_per_row, 4), dtype=np.uint8)

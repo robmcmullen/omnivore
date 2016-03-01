@@ -63,7 +63,6 @@ class BitviewScroller(wx.ScrolledWindow):
         self.grid_width = 0
         self.grid_height = 0
         self.zoom = 5
-        self.border_width = 1
         self.start_row = 0
         self.start_col = 0
         self.fully_visible_rows = 1
@@ -265,7 +264,7 @@ class BitviewScroller(wx.ScrolledWindow):
     
     def calc_scale_from_bytes(self):
         self.total_rows = (len(self.segment) + self.bytes_per_row - 1) / self.bytes_per_row
-        self.grid_width = int(8 * self.bytes_per_row) + (2 * self.border_width)
+        self.grid_width = int(8 * self.bytes_per_row)
         self.grid_height = int(self.total_rows)
     
     def calc_scroll_params(self):
@@ -530,9 +529,6 @@ class BitmapScroller(BitviewScroller):
         y = (evt.GetY() // self.zoom) + y
         if x < 0 or x >= self.grid_width or y < 0 or y > (self.start_row + self.visible_rows):
             inside = False
-        if self.bytes_per_row == 1:
-            # border only used on single byte width drawing
-            x -= self.border_width
         if x < 0:
             x = 0
         elif x >= 8 * self.bytes_per_row:
@@ -562,7 +558,7 @@ class BitmapScroller(BitviewScroller):
             bytes = self.segment[self.start_byte:self.end_byte]
             style = self.segment.style[self.start_byte:self.end_byte]
         m = self.editor.machine
-        array = m.bitmap_renderer.get_image(m, self.bytes_per_row, self.border_width, nr, count, bytes, style)
+        array = m.bitmap_renderer.get_image(m, self.bytes_per_row, nr, count, bytes, style)
         sc = self.start_col
         nc = self.visible_cols
         clipped = array[:,sc:sc + nc,:]

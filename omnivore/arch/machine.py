@@ -147,7 +147,7 @@ class Machine(HasTraits):
         return self.get_blended_color_registers(self.color_registers, self.comment_background_color)
 
     def _bitmap_renderer_default(self):
-        return predefined['bitmap_renderer'][1]
+        return predefined['bitmap_renderer'][0]
     
     def _font_renderer_default(self):
         return predefined['font_renderer'][0]
