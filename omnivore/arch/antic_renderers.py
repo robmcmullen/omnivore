@@ -9,8 +9,9 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class ModeF(object):
-    name = "Antic F (Gr 8, 1bpp)"
+class OneBitPerPixelB(object):
+    name = "B/W, 1bpp, on=black"
+    bw_colors = ((255, 255, 255), (0, 0, 0))
     
     def get_image(self, m, bytes_per_row, nr, count, bytes, style):
         bits = np.unpackbits(bytes)
@@ -19,10 +20,9 @@ class ModeF(object):
         background = (pixels == 0)
         color1 = (pixels == 1)
         
-        bw_colors = ((0, 0, 0), (255, 255, 255))
-        h_colors = m.get_blended_color_registers(bw_colors, m.highlight_color)
-        m_colors = m.get_blended_color_registers(bw_colors, m.match_background_color)
-        c_colors = m.get_blended_color_registers(bw_colors, m.comment_background_color)
+        h_colors = m.get_blended_color_registers(self.bw_colors, m.highlight_color)
+        m_colors = m.get_blended_color_registers(self.bw_colors, m.match_background_color)
+        c_colors = m.get_blended_color_registers(self.bw_colors, m.comment_background_color)
         
         style_per_pixel = np.vstack((style, style, style, style, style, style, style, style)).T
         normal = style_per_pixel == 0
@@ -31,17 +31,22 @@ class ModeF(object):
         match = (style_per_pixel & 0x1) == 0x1
         
         bitimage = np.empty((nr * bytes_per_row, 8, 3), dtype=np.uint8)
-        bitimage[background & normal] = bw_colors[0]
+        bitimage[background & normal] = self.bw_colors[0]
         bitimage[background & comment] = c_colors[0]
         bitimage[background & match] = m_colors[0]
         bitimage[background & highlight] = h_colors[0]
-        bitimage[color1 & normal] = bw_colors[1]
+        bitimage[color1 & normal] = self.bw_colors[1]
         bitimage[color1 & comment] = c_colors[1]
         bitimage[color1 & match] = m_colors[1]
         bitimage[color1 & highlight] = h_colors[1]
         bitimage[count:,:,:] = m.empty_color
 
         return bitimage
+
+
+class OneBitPerPixelW(OneBitPerPixelB):
+    name = "B/W, 1bpp, on=white"
+    bw_colors = ((0, 0, 0), (255, 255, 255))
 
 
 class ModeE(object):

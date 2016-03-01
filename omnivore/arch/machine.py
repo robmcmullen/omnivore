@@ -324,7 +324,8 @@ predefined = {
         Undocumented6502Disassembler,
         ],
     "bitmap_renderer": [
-        antic_renderers.ModeF(),
+        antic_renderers.OneBitPerPixelB(),
+        antic_renderers.OneBitPerPixelW(),
         antic_renderers.ModeE(),
         ],
     "font_renderer": [
