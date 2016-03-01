@@ -113,6 +113,69 @@ class ModeF(object):
         return bitimage
 
 
+class ModeE(object):
+    name = "Antic E (Gr 7+, 2bpp)"
+    
+    def get_image(self, m, bytes_per_row, border_width, nr, count, bytes, style):
+        bits = np.unpackbits(bytes)
+        bits = bits.reshape((-1, 8))
+        pixels = np.empty((nr * bytes_per_row, 4), dtype=np.uint8)
+        pixels[:,0] = bits[:,0] * 2 + bits[:,1]
+        pixels[:,1] = bits[:,2] * 2 + bits[:,3]
+        pixels[:,2] = bits[:,4] * 2 + bits[:,5]
+        pixels[:,3] = bits[:,6] * 2 + bits[:,7]
+        
+        bitimage = np.empty((nr * bytes_per_row, 4, 3), dtype=np.uint8)
+        background = np.where(pixels==0)
+        bitimage[background] = m.color_registers[4]
+        color1 = np.where(pixels==1)
+        bitimage[color1] = m.color_registers[0]
+        color2 = np.where(pixels==2)
+        bitimage[color2] = m.color_registers[1]
+        color3 = np.where(pixels==3)
+        bitimage[color3] = m.color_registers[2]
+        bitimage[count:,:,:] = m.empty_color
+
+        array = bitimage.reshape((-1, 4, 3))
+        array[count:,:,:] = m.empty_color
+        mask = array == m.color_registers[4]
+        mask = np.all(mask, axis=2)
+        
+        # highlight any comments
+        match = style & 0x2
+        style_mask = match==0x2
+        # This doesn't do anything! A mask of a mask apparently doesn't work
+        # array[style_mask,:,:][mask[style_mask]] = m.comment_background_color
+        s = np.tile(style_mask, (mask.shape[1], 1)).T
+        m2 = np.logical_and(mask, s)
+        array[m2] = m.comment_background_color
+        
+        # highlight any matches
+        match = style & 0x1
+        style_mask = match==0x1
+        s = np.tile(style_mask, (mask.shape[1], 1)).T
+        m2 = np.logical_and(mask, s)
+        array[m2] = m.match_background_color
+        
+        # highlight selection
+        match = style & 0x80
+        style_mask = match==0x80
+        s = np.tile(style_mask, (mask.shape[1], 1)).T
+        m2 = np.logical_and(mask, s)
+        array[m2] = m.highlight_color
+
+        # create a double-width image to expand the pixels to the correct
+        # aspect ratio
+        newdims = np.asarray((nr * bytes_per_row, 8))
+        base=np.indices(newdims)
+        d = []
+        d.append(base[0])
+        d.append(base[1]/2)
+        cd = np.array(d)
+        array = bitimage[list(cd)]
+        return array.reshape((nr, bytes_per_row * 8, 3))
+
+
 def get_numpy_font_map_image(m, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols):
     width = int(m.antic_font.char_w * num_cols)
     height = int(num_rows * m.antic_font.char_h)

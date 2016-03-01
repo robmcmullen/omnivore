@@ -35,6 +35,8 @@ class Machine(HasTraits):
     
     color_standard = Enum(0, 1)
     
+    color_registers = Any
+    
     bitmap_renderer = Any(transient=True)
     
     font_renderer = Any(transient=True)
@@ -126,6 +128,9 @@ class Machine(HasTraits):
     def _color_standard_default(self):
         return 0  # NTSC
     
+    def _color_registers_default(self):
+        return self.get_color_registers()
+    
     def _bitmap_renderer_default(self):
         return predefined['bitmap_renderer'][0]
     
@@ -191,7 +196,16 @@ class Machine(HasTraits):
             self.playfield_colors = colors
         else:
             self.playfield_colors = colors[4:9]
+        self.color_registers = self.get_color_registers()
         self.set_font()
+        self.bitmap_change_event = True
+    
+    def get_color_registers(self):
+        color_converter = self.get_color_converter()
+        registers = []
+        for c in self.playfield_colors:
+            registers.append(color_converter(c))
+        return registers
     
     def get_color_converter(self):
         if self.color_standard == 0:
@@ -287,6 +301,7 @@ predefined = {
         ],
     "bitmap_renderer": [
         antic_renderers.ModeF(),
+        antic_renderers.ModeE(),
         ],
     "font_renderer": [
         antic_renderers.Mode2(),
