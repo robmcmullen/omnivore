@@ -37,6 +37,12 @@ class Machine(HasTraits):
     
     color_registers = Any
     
+    color_registers_highlight = Any
+    
+    color_registers_match = Any
+    
+    color_registers_comment = Any
+    
     bitmap_renderer = Any(transient=True)
     
     font_renderer = Any(transient=True)
@@ -131,8 +137,17 @@ class Machine(HasTraits):
     def _color_registers_default(self):
         return self.get_color_registers()
     
+    def _color_registers_highlight_default(self):
+        return self.get_blended_color_registers(self.color_registers, self.highlight_color)
+    
+    def _color_registers_match_default(self):
+        return self.get_blended_color_registers(self.color_registers, self.match_background_color)
+    
+    def _color_registers_comment_default(self):
+        return self.get_blended_color_registers(self.color_registers, self.comment_background_color)
+
     def _bitmap_renderer_default(self):
-        return predefined['bitmap_renderer'][0]
+        return predefined['bitmap_renderer'][1]
     
     def _font_renderer_default(self):
         return predefined['font_renderer'][0]
@@ -197,6 +212,7 @@ class Machine(HasTraits):
         else:
             self.playfield_colors = colors[4:9]
         self.color_registers = self.get_color_registers()
+        self.color_registers_highlight = self.get_blended_color_registers(self.color_registers, highlight_color)
         self.set_font()
         self.bitmap_change_event = True
     
@@ -205,6 +221,14 @@ class Machine(HasTraits):
         registers = []
         for c in self.playfield_colors:
             registers.append(color_converter(c))
+        return registers
+    
+    def get_blended_color_registers(self, colors, blend_color):
+        registers = []
+        base_blend = [(r * 7)/8 for r in blend_color]
+        for c in colors:
+            r = [c[i]/8 + base_blend[i] for i in range(3)]
+            registers.append(r)
         return registers
     
     def get_color_converter(self):

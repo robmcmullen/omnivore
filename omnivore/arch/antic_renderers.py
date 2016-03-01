@@ -125,44 +125,35 @@ class ModeE(object):
         pixels[:,2] = bits[:,4] * 2 + bits[:,5]
         pixels[:,3] = bits[:,6] * 2 + bits[:,7]
         
+        background = (pixels == 0)
+        color1 = (pixels == 1)
+        color2 = (pixels == 2)
+        color3 = (pixels == 3)
+        
+        style_per_pixel = np.vstack((style, style, style, style)).T
+        normal = style_per_pixel == 0
+        highlight = (style_per_pixel & 0x80) == 0x80
+        comment = (style_per_pixel & 0x2) == 0x2
+        match = (style_per_pixel & 0x1) == 0x1
+        
         bitimage = np.empty((nr * bytes_per_row, 4, 3), dtype=np.uint8)
-        background = np.where(pixels==0)
-        bitimage[background] = m.color_registers[4]
-        color1 = np.where(pixels==1)
-        bitimage[color1] = m.color_registers[0]
-        color2 = np.where(pixels==2)
-        bitimage[color2] = m.color_registers[1]
-        color3 = np.where(pixels==3)
-        bitimage[color3] = m.color_registers[2]
+        bitimage[background & normal] = m.color_registers[4]
+        bitimage[background & comment] = m.color_registers_comment[4]
+        bitimage[background & match] = m.color_registers_match[4]
+        bitimage[background & highlight] = m.color_registers_highlight[4]
+        bitimage[color1 & normal] = m.color_registers[0]
+        bitimage[color1 & comment] = m.color_registers_comment[0]
+        bitimage[color1 & match] = m.color_registers_match[0]
+        bitimage[color1 & highlight] = m.color_registers_highlight[0]
+        bitimage[color2 & normal] = m.color_registers[1]
+        bitimage[color2 & comment] = m.color_registers_comment[1]
+        bitimage[color2 & match] = m.color_registers_match[1]
+        bitimage[color2 & highlight] = m.color_registers_highlight[1]
+        bitimage[color3 & normal] = m.color_registers[2]
+        bitimage[color3 & comment] = m.color_registers_comment[2]
+        bitimage[color3 & match] = m.color_registers_match[2]
+        bitimage[color3 & highlight] = m.color_registers_highlight[2]
         bitimage[count:,:,:] = m.empty_color
-
-        array = bitimage.reshape((-1, 4, 3))
-        array[count:,:,:] = m.empty_color
-        mask = array == m.color_registers[4]
-        mask = np.all(mask, axis=2)
-        
-        # highlight any comments
-        match = style & 0x2
-        style_mask = match==0x2
-        # This doesn't do anything! A mask of a mask apparently doesn't work
-        # array[style_mask,:,:][mask[style_mask]] = m.comment_background_color
-        s = np.tile(style_mask, (mask.shape[1], 1)).T
-        m2 = np.logical_and(mask, s)
-        array[m2] = m.comment_background_color
-        
-        # highlight any matches
-        match = style & 0x1
-        style_mask = match==0x1
-        s = np.tile(style_mask, (mask.shape[1], 1)).T
-        m2 = np.logical_and(mask, s)
-        array[m2] = m.match_background_color
-        
-        # highlight selection
-        match = style & 0x80
-        style_mask = match==0x80
-        s = np.tile(style_mask, (mask.shape[1], 1)).T
-        m2 = np.logical_and(mask, s)
-        array[m2] = m.highlight_color
 
         # create a double-width image to expand the pixels to the correct
         # aspect ratio
