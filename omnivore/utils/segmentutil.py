@@ -1,6 +1,6 @@
 import numpy as np
 
-from atrcopy import DefaultSegment, KBootImage, AtariDosDiskImage, SpartaDosDiskImage, AtariDosFile, InvalidBinaryFile
+from atrcopy import DefaultSegment, KBootImage, AtariDosDiskImage, SpartaDosDiskImage, BootDiskImage, AtariDosFile, InvalidBinaryFile
 
 
 class InvalidSegmentParser(Exception):
@@ -91,7 +91,7 @@ class AtariBootDiskSegmentParser(SegmentParser):
     def parse(self, doc):
         self.segments.append(DefaultSegment(doc.bytes, doc.style, 0))
         try:
-            self.atr = AtariDosDiskImage(doc.bytes, doc.style)
+            self.atr = BootDiskImage(doc.bytes, doc.style)
         except:
             raise InvalidSegmentParser
         
