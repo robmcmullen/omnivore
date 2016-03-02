@@ -212,7 +212,7 @@ class Machine(HasTraits):
         else:
             self.playfield_colors = colors[4:9]
         self.color_registers = self.get_color_registers()
-        self.color_registers_highlight = self.get_blended_color_registers(self.color_registers, highlight_color)
+        self.color_registers_highlight = self.get_blended_color_registers(self.color_registers, self.highlight_color)
         self.set_font()
         self.bitmap_change_event = True
     
