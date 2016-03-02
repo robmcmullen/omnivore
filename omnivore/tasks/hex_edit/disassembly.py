@@ -110,7 +110,7 @@ class DisassemblyTable(ByteGridTable):
             row = self.index_to_row[index]
         except:
             row = self.index_to_row[-1]
-        return row, 0
+        return row, 1
 
     def get_next_cursor_pos(self, row, col):
         col += 1
