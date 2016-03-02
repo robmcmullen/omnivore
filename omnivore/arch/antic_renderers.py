@@ -103,6 +103,62 @@ class ModeE(object):
         return array.reshape((nr, bytes_per_row * 8, 3))
 
 
+class GTIA9(object):
+    name = "GTIA 9 (4bpp, 16 luminances, 1 color)"
+    
+    def get_playfield_colors(self, m):
+        first_color = m.playfield_colors[4] & 0xf0
+        return range(first_color, first_color + 16)
+    
+    def get_image(self, m, bytes_per_row, nr, count, bytes, style):
+        bits = np.unpackbits(bytes)
+        bits = bits.reshape((-1, 8))
+        pixels = np.empty((nr * bytes_per_row, 2), dtype=np.uint8)
+        pixels[:,0] = bits[:,0] * 8 + bits[:,1] * 4 + bits[:,2] * 2 + bits[:,3]
+        pixels[:,1] = bits[:,4] * 8 + bits[:,5] * 4 + bits[:,6] * 2 + bits[:,7]
+        
+        playfield_colors = self.get_playfield_colors(m)
+        color_registers = m.get_color_registers(playfield_colors)
+        
+        h_colors = m.get_blended_color_registers(color_registers, m.highlight_color)
+        m_colors = m.get_blended_color_registers(color_registers, m.match_background_color)
+        c_colors = m.get_blended_color_registers(color_registers, m.comment_background_color)
+        
+        style_per_pixel = np.vstack((style, style)).T
+        normal = style_per_pixel == 0
+        highlight = (style_per_pixel & 0x80) == 0x80
+        comment = (style_per_pixel & 0x2) == 0x2
+        match = (style_per_pixel & 0x1) == 0x1
+        
+        bitimage = np.empty((nr * bytes_per_row, 2, 3), dtype=np.uint8)
+        for i in range(16):
+            color_is_set = (pixels == i)
+            bitimage[color_is_set & normal] = color_registers[i]
+            bitimage[color_is_set & comment] = c_colors[i]
+            bitimage[color_is_set & match] = m_colors[i]
+            bitimage[color_is_set & highlight] = h_colors[i]
+        bitimage[count:,:,:] = m.empty_color
+
+        # create a double-width image to expand the pixels to the correct
+        # aspect ratio
+        newdims = np.asarray((nr * bytes_per_row, 8))
+        base=np.indices(newdims)
+        d = []
+        d.append(base[0])
+        d.append(base[1]/4)
+        cd = np.array(d)
+        array = bitimage[list(cd)]
+        return array.reshape((nr, bytes_per_row * 8, 3))
+
+
+class GTIA11(GTIA9):
+    name = "GTIA 11 (4bpp, 1 luminace, 16 colors)"
+    
+    def get_playfield_colors(self, m):
+        first_color = m.playfield_colors[4] & 0x0f
+        return range(first_color, first_color + 256, 16)
+
+
 def get_numpy_font_map_image(m, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols):
     width = int(m.antic_font.char_w * num_cols)
     height = int(num_rows * m.antic_font.char_h)

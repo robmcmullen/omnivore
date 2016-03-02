@@ -216,10 +216,12 @@ class Machine(HasTraits):
         self.set_font()
         self.bitmap_change_event = True
     
-    def get_color_registers(self):
+    def get_color_registers(self, playfield_colors=None):
         color_converter = self.get_color_converter()
         registers = []
-        for c in self.playfield_colors:
+        if playfield_colors is None:
+            playfield_colors = self.playfield_colors
+        for c in playfield_colors:
             registers.append(color_converter(c))
         return registers
     
@@ -327,6 +329,8 @@ predefined = {
         antic_renderers.OneBitPerPixelB(),
         antic_renderers.OneBitPerPixelW(),
         antic_renderers.ModeE(),
+        antic_renderers.GTIA9(),
+        antic_renderers.GTIA11(),
         ],
     "font_renderer": [
         antic_renderers.Mode2(),
