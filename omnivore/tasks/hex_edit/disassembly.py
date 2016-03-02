@@ -151,6 +151,14 @@ class DisassemblyTable(ByteGridTable):
     
     def get_pc(self, row):
         return self.lines[row][0]
+    
+    def get_addr_dest(self, row):
+        index, _ = self.get_index_range(row, 0)
+        index_addr = self.get_pc(row)
+        d = self.editor.machine.get_disassembler(False, False)
+        d.set_pc(self.segment.data[index:], index_addr)
+        args = d.disasm()
+        return args[-1]
 
     def get_value_style_lower(self, row, col):
         line = self.lines[row]
@@ -284,10 +292,7 @@ class DisassemblyPanel(ByteGrid):
         return matches
     
     def get_goto_action(self, r, c):
-        index, _ = self.table.get_index_range(r, c)
-        index_addr = self.table.get_pc(r)
-        d = self.editor.disassembler(self.table.segment.data[index:], index_addr, -index_addr)
-        next_addr, bytes, opstr, memloc, rw, addr_dest = d.disasm()
+        addr_dest = self.table.get_addr_dest(r)
         segment_start = self.table.segment.start_addr
         segment_num = -1
         addr_index = addr_dest-segment_start
