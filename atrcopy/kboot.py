@@ -39,9 +39,6 @@ class KBootImage(DiskImageBase):
     def __str__(self):
         return "%s KBoot Format: %d byte executable" % (self.header, self.files[0].exe_size)
     
-    def check_size(self):
-        self.header.check_size(self.size)
-    
     def check_sane(self):
         if not self.all_sane:
             raise InvalidDiskImage("Doesn't seem to be KBoot header")

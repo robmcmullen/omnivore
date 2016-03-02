@@ -130,6 +130,7 @@ class DiskImageBase(object):
     def setup(self):
         self.size = np.alen(self.bytes)
         self.read_atr_header()
+        self.header.check_size(self.size)
         self.check_size()
         self.get_boot_sector_info()
         self.get_vtoc()
@@ -148,7 +149,7 @@ class DiskImageBase(object):
             self.header = XfdHeader()
     
     def check_size(self):
-        self.header.check_size(self.size)
+        pass
     
     def get_boot_sector_info(self):
         pass
@@ -239,8 +240,6 @@ class BootDiskImage(DiskImageBase):
         return "%s Boot Disk" % (self.header)
     
     def check_size(self):
-        self.header.check_size(self.size)
-        
         start, size = self.header.get_pos(1)
         b = self.bytes
         i = self.header.atr_header_offset
@@ -249,8 +248,12 @@ class BootDiskImage(DiskImageBase):
             raise InvalidDiskImage("Appears to be an executable")
         nsec = b[i + 1]
         bload = b[i + 2:i + 4].view(dtype='<u2')[0]
-        binit = b[i + 4:i + 6].view(dtype='<u2')[0]
-        blen, _ = self.header.get_pos(nsec + 1)
-        print nsec, bload, binit, blen
-        if not (bload < binit < bload + blen):
-            raise InvalidDiskImage("Incorrect boot load/init parameters")
+        
+        # Sanity check: number of sectors to be loaded can't be more than the
+        # lower 48k of ram because there's no way to bank switch or anything
+        # before the boot sectors are finished loading
+        max_ram = 0xc000
+        max_size = max_ram - bload
+        max_sectors = max_size / self.header.sector_size
+        if nsec > max_sectors:
+            raise InvalidDiskImage("Number of boot sectors out of range")
