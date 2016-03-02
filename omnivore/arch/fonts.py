@@ -36,39 +36,26 @@ class AnticFont(object):
     font_width_scale = [0, 0, 1, 0, 1, 1, 2, 2, 2, 2]
     font_height_scale = [0, 0, 1, 0, 1, 2, 1, 2, 1, 2]
     
-    def __init__(self, font_data, font_mode, playfield_colors, highlight_color, match_color, comment_color, color_converter):
+    def __init__(self, machine, font_data, font_mode, playfield_colors):
         self.char_w = font_data['char_w']
         self.char_h = font_data['char_h']
         self.scale_w = self.font_width_scale[font_mode]
         self.scale_h = self.font_height_scale[font_mode]
         
-        self.set_colors(playfield_colors, highlight_color, match_color, comment_color, color_converter)
-        self.set_fonts(font_data, font_mode)
+        self.set_colors(machine, playfield_colors)
+        self.set_fonts(machine, font_data, font_mode)
     
-    def set_colors(self, playfield_colors, highlight_color, match_color, comment_color, color_converter):
-        pfcolors = list(playfield_colors)
-        self.normal_colors = []
-        self.highlight_colors = []
-        self.match_colors = []
-        self.comment_colors = []
-        for c in pfcolors:
-            self.normal_colors.append(color_converter(c))
-            self.highlight_colors.append(color_converter(c))
-            self.match_colors.append(color_converter(c))
-            self.comment_colors.append(color_converter(c))
-        self.highlight_colors[-1] = highlight_color
-        self.match_colors[-1] = match_color
-        self.comment_colors[-1] = comment_color
-
-        fg, bg = colors.gr0_colors(pfcolors)
-        fg = color_converter(fg)
-        bg = color_converter(bg)
+    def set_colors(self, machine, playfield_colors):
+        fg, bg = colors.gr0_colors(playfield_colors)
+        conv = machine.get_color_converter()
+        fg = conv(fg)
+        bg = conv(bg)
         self.normal_gr0_colors = [fg, bg]
-        self.highlight_gr0_colors = [fg, highlight_color]
-        self.match_gr0_colors = [fg, match_color]
-        self.comment_gr0_colors = [fg, comment_color]
+        self.highlight_gr0_colors = machine.get_blended_color_registers(self.normal_gr0_colors, machine.highlight_color)
+        self.match_gr0_colors = machine.get_blended_color_registers(self.normal_gr0_colors, machine.match_background_color)
+        self.comment_gr0_colors = machine.get_blended_color_registers(self.normal_gr0_colors, machine.comment_background_color)
     
-    def set_fonts(self, font_data, font_mode):
+    def set_fonts(self, machine, font_data, font_mode):
         if 'np_data' in font_data:
             bytes = font_data['np_data']
         else:
@@ -77,10 +64,10 @@ class AnticFont(object):
         bits = bits.reshape((-1, 8, 8))
         
         bits_to_font = self.get_bits_to_font_function(font_mode)
-        self.normal_font = bits_to_font(bits, font_mode, self.normal_colors, self.normal_gr0_colors)
-        self.highlight_font = bits_to_font(bits, font_mode, self.highlight_colors, self.highlight_gr0_colors)
-        self.match_font = bits_to_font(bits, font_mode, self.match_colors, self.match_gr0_colors)
-        self.comment_font = bits_to_font(bits, font_mode, self.comment_colors, self.comment_gr0_colors)
+        self.normal_font = bits_to_font(bits, font_mode, machine.color_registers, self.normal_gr0_colors)
+        self.highlight_font = bits_to_font(bits, font_mode, machine.color_registers_highlight, self.highlight_gr0_colors)
+        self.match_font = bits_to_font(bits, font_mode, machine.color_registers_match, self.match_gr0_colors)
+        self.comment_font = bits_to_font(bits, font_mode, machine.color_registers_comment, self.comment_gr0_colors)
     
     def get_bits_to_font_function(self, font_mode):
         if font_mode == 2:
@@ -119,7 +106,7 @@ class AnticFont(object):
         return font
         
     def bits_to_gr1(self, bits, font_mode, colors, gr0_colors):
-        bg = colors[4]
+        bg = colors[8]
         if font_mode == 6 or font_mode == 7:
             half = bits[0:64,:,:]
         else:
@@ -130,7 +117,7 @@ class AnticFont(object):
         font = np.zeros((256, 8, 8, 3), dtype=np.uint8)
 
         start_char = 0
-        for i in range(4):
+        for i in range(4, 8):
             end_char = start_char + 64
             fg = colors[i]
             r[half==0] = bg[0]
@@ -150,7 +137,7 @@ class AnticFont(object):
         
         There are four possible combinations of two bits: 00, 01, 10, 11. Each combination represents a different color. The color corresponding to the bit-pair 00 is stored at location 712; the color for the bit-pair 01 is at location 708; the color for bit-pair 10 is at 709; the color for bit-pair 11 is at 710.
         """
-        pf0, pf1, pf2, pf3, bak = colors
+        _, _, _, _, pf0, pf1, pf2, pf3, bak = colors
         r = np.empty(bits.shape, dtype=np.uint8)
         g = np.empty(bits.shape, dtype=np.uint8)
         b = np.empty(bits.shape, dtype=np.uint8)
@@ -161,41 +148,30 @@ class AnticFont(object):
         c[:,:,2] = bits[:,:,4]*2 + bits[:,:,5]
         c[:,:,3] = bits[:,:,6]*2 + bits[:,:,7]
         
-        bits[:,:,0] = c[:,:,0]
-        bits[:,:,1] = c[:,:,0]
-        bits[:,:,2] = c[:,:,1]
-        bits[:,:,3] = c[:,:,1]
-        bits[:,:,4] = c[:,:,2]
-        bits[:,:,5] = c[:,:,2]
-        bits[:,:,6] = c[:,:,3]
-        bits[:,:,7] = c[:,:,3]
+        pixels = np.empty((128, 8, 4, 3), dtype=np.uint8)
+        pixels[c==0] = bak
+        pixels[c==1] = pf0
+        pixels[c==2] = pf1
+        pixels[c==3] = pf2
         
-        r[bits==0] = bak[0]
-        r[bits==1] = pf0[0]
-        r[bits==2] = pf1[0]
-        r[bits==3] = pf2[0]
-        g[bits==0] = bak[1]
-        g[bits==1] = pf0[1]
-        g[bits==2] = pf1[1]
-        g[bits==3] = pf2[1]
-        b[bits==0] = bak[2]
-        b[bits==1] = pf0[2]
-        b[bits==2] = pf1[2]
-        b[bits==3] = pf2[2]
-        
-        font = np.zeros((256, 8, 8, 3), dtype=np.uint8)
-        font[0:128,:,:,0] = r
-        font[0:128,:,:,1] = g
-        font[0:128,:,:,2] = b
+        font = np.zeros((256, 8, 4, 3), dtype=np.uint8)
+        font[0:128,:,:,:] = pixels
         
         # Inverse characters use pf3 in place of pf2
-        r[bits==3] = pf3[0]
-        g[bits==3] = pf3[1]
-        b[bits==3] = pf3[2]
-        font[128:256,:,:,0] = r
-        font[128:256,:,:,1] = g
-        font[128:256,:,:,2] = b
-        return font
+        pixels[c==3] = pf3
+        font[128:256,:,:,:] = pixels
+        
+        # create a double-width image to expand the pixels to the correct
+        # aspect ratio
+        newdims = np.asarray((256, 8, 8))
+        base=np.indices(newdims)
+        d = []
+        d.append(base[0])
+        d.append(base[1])
+        d.append(base[2]/2)
+        cd = np.array(d)
+        array = font[list(cd)]
+        return array
     
     def get_height(self, zoom):
         return self.char_h * self.scale_h * zoom
