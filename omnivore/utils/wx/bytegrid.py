@@ -593,6 +593,7 @@ class ByteGrid(Grid.Grid):
         self.allow_range_select = True
         self.updateUICallback = None
         self.Bind(Grid.EVT_GRID_CELL_LEFT_CLICK, self.on_left_down)
+        self.Bind(Grid.EVT_GRID_CELL_LEFT_DCLICK, self.on_left_dclick)
         self.GetGridWindow().Bind(wx.EVT_MOTION, self.on_motion)
         self.GetGridWindow().Bind(wx.EVT_RIGHT_DOWN, self.on_right_down)
         self.GetGridWindow().Bind(wx.EVT_LEFT_UP, self.on_left_up)
@@ -783,6 +784,10 @@ class ByteGrid(Grid.Grid):
             self.SetGridCursor(r, c)
             self.MakeCellVisible(r, c)
             wx.CallAfter(e.index_clicked, e.cursor_index, 0, refresh_self)
+ 
+    def on_left_dclick(self, evt):
+        self.EnableCellEditControl()
+        evt.Skip()
 
     def cancel_edit(self):
         log.debug("cancelling edit!")
