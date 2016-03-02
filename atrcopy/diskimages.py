@@ -202,8 +202,27 @@ class DiskImageBase(object):
         self.segments.extend(self.get_directory_segments())
         self.segments.extend(self.get_file_segments())
     
+    boot_record_type = np.dtype([
+        ('BFLAG', 'u1'),
+        ('BRCNT', 'u1'),
+        ('BLDADR', '<u2'),
+        ('BWTARR', '<u2'),
+        ])
+    
     def get_boot_segments(self):
-        return []
+        data, style = self.get_sectors(1)
+        values = data[0:6].view(dtype=self.boot_record_type)[0]  
+        flag = int(values[0])
+        segments = []
+        if flag == 0:
+            num = int(values[1])
+            addr = int(values[2])
+            bytes, style = self.get_sectors(1, num)
+            header = ObjSegment(bytes[0:6], style[0:6], 0, 0, addr, addr + 6, name="Boot Header")
+            sectors = ObjSegment(bytes, style, 0, 0, addr, addr + len(bytes), name="Boot Sectors")
+            code = ObjSegment(bytes[6:], style[6:], 0, 0, addr + 6, addr + len(bytes), name="Boot Code")
+            segments = [sectors, header, code]
+        return segments
     
     def get_vtoc_segments(self):
         return []
