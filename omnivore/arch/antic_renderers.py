@@ -73,22 +73,22 @@ class ModeE(object):
         match = (style_per_pixel & 0x1) == 0x1
         
         bitimage = np.empty((nr * bytes_per_row, 4, 3), dtype=np.uint8)
-        bitimage[background & normal] = m.color_registers[4]
-        bitimage[background & comment] = m.color_registers_comment[4]
-        bitimage[background & match] = m.color_registers_match[4]
-        bitimage[background & highlight] = m.color_registers_highlight[4]
-        bitimage[color1 & normal] = m.color_registers[0]
-        bitimage[color1 & comment] = m.color_registers_comment[0]
-        bitimage[color1 & match] = m.color_registers_match[0]
-        bitimage[color1 & highlight] = m.color_registers_highlight[0]
-        bitimage[color2 & normal] = m.color_registers[1]
-        bitimage[color2 & comment] = m.color_registers_comment[1]
-        bitimage[color2 & match] = m.color_registers_match[1]
-        bitimage[color2 & highlight] = m.color_registers_highlight[1]
-        bitimage[color3 & normal] = m.color_registers[2]
-        bitimage[color3 & comment] = m.color_registers_comment[2]
-        bitimage[color3 & match] = m.color_registers_match[2]
-        bitimage[color3 & highlight] = m.color_registers_highlight[2]
+        bitimage[background & normal] = m.color_registers[8]
+        bitimage[background & comment] = m.color_registers_comment[8]
+        bitimage[background & match] = m.color_registers_match[8]
+        bitimage[background & highlight] = m.color_registers_highlight[8]
+        bitimage[color1 & normal] = m.color_registers[4]
+        bitimage[color1 & comment] = m.color_registers_comment[4]
+        bitimage[color1 & match] = m.color_registers_match[4]
+        bitimage[color1 & highlight] = m.color_registers_highlight[4]
+        bitimage[color2 & normal] = m.color_registers[5]
+        bitimage[color2 & comment] = m.color_registers_comment[5]
+        bitimage[color2 & match] = m.color_registers_match[5]
+        bitimage[color2 & highlight] = m.color_registers_highlight[5]
+        bitimage[color3 & normal] = m.color_registers[6]
+        bitimage[color3 & comment] = m.color_registers_comment[6]
+        bitimage[color3 & match] = m.color_registers_match[6]
+        bitimage[color3 & highlight] = m.color_registers_highlight[6]
         bitimage[count:,:,:] = m.empty_color
 
         # create a double-width image to expand the pixels to the correct
@@ -106,8 +106,8 @@ class ModeE(object):
 class GTIA9(object):
     name = "GTIA 9 (4bpp, 16 luminances, 1 color)"
     
-    def get_playfield_colors(self, m):
-        first_color = m.playfield_colors[4] & 0xf0
+    def get_antic_color_registers(self, m):
+        first_color = m.antic_color_registers[8] & 0xf0
         return range(first_color, first_color + 16)
     
     def get_image(self, m, bytes_per_row, nr, count, bytes, style):
@@ -117,8 +117,8 @@ class GTIA9(object):
         pixels[:,0] = bits[:,0] * 8 + bits[:,1] * 4 + bits[:,2] * 2 + bits[:,3]
         pixels[:,1] = bits[:,4] * 8 + bits[:,5] * 4 + bits[:,6] * 2 + bits[:,7]
         
-        playfield_colors = self.get_playfield_colors(m)
-        color_registers = m.get_color_registers(playfield_colors)
+        antic_color_registers = self.get_antic_color_registers(m)
+        color_registers = m.get_color_registers(antic_color_registers)
         
         h_colors = m.get_blended_color_registers(color_registers, m.highlight_color)
         m_colors = m.get_blended_color_registers(color_registers, m.match_background_color)
@@ -151,11 +151,18 @@ class GTIA9(object):
         return array.reshape((nr, bytes_per_row * 8, 3))
 
 
+class GTIA10(GTIA9):
+    name = "GTIA 10 (4bpp, 9 colors)"
+    
+    def get_antic_color_registers(self, m):
+        return list(m.antic_color_registers[0:9]) + [0] * 7
+
+
 class GTIA11(GTIA9):
     name = "GTIA 11 (4bpp, 1 luminace, 16 colors)"
     
-    def get_playfield_colors(self, m):
-        first_color = m.playfield_colors[4] & 0x0f
+    def get_antic_color_registers(self, m):
+        first_color = m.antic_color_registers[8] & 0x0f
         return range(first_color, first_color + 256, 16)
 
 

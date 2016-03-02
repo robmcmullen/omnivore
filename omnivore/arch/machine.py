@@ -31,7 +31,7 @@ class Machine(HasTraits):
     
     antic_font = Any(transient=True)
     
-    playfield_colors = Any
+    antic_color_registers = Any
     
     color_standard = Enum(0, 1)
     
@@ -128,7 +128,7 @@ class Machine(HasTraits):
     def _antic_font_data_default(self):
         return fonts.A8DefaultFont
     
-    def _playfield_colors_default(self):
+    def _antic_color_registers_default(self):
         return colors.powerup_colors()
     
     def _color_standard_default(self):
@@ -208,20 +208,22 @@ class Machine(HasTraits):
     
     def update_colors(self, colors):
         if len(colors) == 5:
-            self.playfield_colors = colors
+            self.antic_color_registers[4:9] = colors
         else:
-            self.playfield_colors = colors[4:9]
+            self.antic_color_registers = colors
         self.color_registers = self.get_color_registers()
         self.color_registers_highlight = self.get_blended_color_registers(self.color_registers, self.highlight_color)
+        self.color_registers_match = self.get_blended_color_registers(self.color_registers, self.match_background_color)
+        self.color_registers_comment = self.get_blended_color_registers(self.color_registers, self.comment_background_color)
         self.set_font()
         self.bitmap_change_event = True
     
-    def get_color_registers(self, playfield_colors=None):
+    def get_color_registers(self, antic_color_registers=None):
         color_converter = self.get_color_converter()
         registers = []
-        if playfield_colors is None:
-            playfield_colors = self.playfield_colors
-        for c in playfield_colors:
+        if antic_color_registers is None:
+            antic_color_registers = self.antic_color_registers
+        for c in antic_color_registers:
             registers.append(color_converter(c))
         return registers
     
@@ -240,7 +242,7 @@ class Machine(HasTraits):
     
     def set_color_standard(self, std):
         self.color_standard = std
-        self.update_colors(self.playfield_colors)
+        self.update_colors(self.antic_color_registers)
     
     def set_bitmap_renderer(self, renderer):
         self.bitmap_renderer = renderer
@@ -274,7 +276,7 @@ class Machine(HasTraits):
     
     def get_antic_font(self):
         color_converter = self.get_color_converter()
-        return fonts.AnticFont(self.antic_font_data, self.font_renderer.font_mode, self.playfield_colors, self.highlight_color, self.match_background_color, self.comment_background_color, color_converter)
+        return fonts.AnticFont(self.antic_font_data, self.font_renderer.font_mode, self.antic_color_registers[4:9], self.highlight_color, self.match_background_color, self.comment_background_color, color_converter)
     
     def load_font(self, task, filename):
         try:
@@ -330,6 +332,7 @@ predefined = {
         antic_renderers.OneBitPerPixelW(),
         antic_renderers.ModeE(),
         antic_renderers.GTIA9(),
+        antic_renderers.GTIA10(),
         antic_renderers.GTIA11(),
         ],
     "font_renderer": [

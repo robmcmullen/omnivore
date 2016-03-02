@@ -85,12 +85,18 @@ gtia_ntsc_to_rgb = gtia_ntsc_to_rgb_table
 
 def powerup_colors():
     # From Mapping the Atari
-    return list([40, 202, 148, 70, 0])
+    return list([0, 0, 0, 0, 40, 202, 148, 70, 0])
 
 def gr0_colors(colors):
-    bg = colors[2]
+    if len(colors) == 5:
+        bg_index = 2
+        lm_index = 1
+    else:
+        bg_index = 6
+        lm_index = 5
+    bg = colors[bg_index]
     cr = bg & 0xf0;
-    lm = colors[1] & 0x0f
+    lm = colors[lm_index] & 0x0f
     fg = cr | lm
     return fg, bg
 

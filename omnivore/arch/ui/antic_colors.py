@@ -179,7 +179,7 @@ class AnticColorDialog(wx.Dialog):
     
     def init_colors(self):
         self.color_registers.calc_sizes()
-        c = list(self.editor.machine.playfield_colors)
+        c = list(self.editor.machine.antic_color_registers)
         if len(c) == 5:
             self.colors = list([0, 0, 0, 0])
             self.colors.extend(list(c))
@@ -252,7 +252,7 @@ if __name__ == "__main__":
     w = wx.Frame(None)
     attr = w.GetDefaultAttributes()
     class Editor(object):
-        playfield_colors = [40, 202, 148, 70, 0]
+        antic_color_registers = [40, 202, 148, 70, 0]
         empty_color = attr.colBg.Get(False)
     e = Editor()
     d = AnticColorDialog(w, e)
