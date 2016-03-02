@@ -7,7 +7,7 @@ import wx
 import numpy as np
 
 # Enthought library imports.
-from traits.api import Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides
+from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides
 from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
@@ -377,7 +377,12 @@ class MapEditor(HexEditor):
         if 'tile map' in e:
             self.antic_tile_map = e['tile map']
         self.machine.set_font_mapping(predefined['font_mapping'][1])
-
+    
+    @on_trait_change('machine.bitmap_change_event')
+    def update_bitmap(self):
+        self.control.recalc_view()
+    
+    @on_trait_change('machine.font_change_event')
     def update_fonts(self):
         self.font_map.set_font()
         self.font_map.Refresh()

@@ -52,10 +52,15 @@ class MapEditTask(HexEditTask):
         return pane_layout.pane_create()
 
     def _extra_actions_default(self):
+        machine_menu = self.create_menu("Menu", "Machine", "MachineTypeGroup", "MachineProcessorGroup", "MachineCharGroup", "MachineBitmapGroup")
         segment_menu = self.create_menu("Menu", "Segments", "SegmentParserGroup", "SegmentGroup")
         tiles_menu = self.create_menu("Menu", "Tiles", "TileModifyGroup")
         actions = [
             # Menubar additions
+            SchemaAddition(factory=lambda: machine_menu,
+                           path='MenuBar',
+                           after="Edit",
+                           ),
             SchemaAddition(factory=lambda: segment_menu,
                            path='MenuBar',
                            after="Edit",
