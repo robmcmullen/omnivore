@@ -94,7 +94,7 @@ class FrameworkTask(Task):
         menus = []
         self.add_menu(menus, "Menu", "File", "NewGroup", "OpenGroup", "SaveGroup", "RevertGroup", "PrintGroup", "ExitGroup")
         self.add_menu(menus, "Menu", "Edit", "UndoGroup", "CopyPasteGroup", "SelectGroup", "FindGroup", "PrefGroup")
-        self.add_menu(menus, "Menu", "View", "ViewChangeGroup", "ViewConfigGroup", "ViewToggleGroup", "ViewDebugGroup", "TaskGroup")
+        self.add_menu(menus, "Menu", "View", "ViewZoomGroup", "ViewChangeGroup", "ViewConfigGroup", "ViewToggleGroup", "TaskGroup", "ViewDebugGroup")
         self.add_menu(menus, "Menu", "Documents", "DocumentGroup")
         self.add_menu(menus, "Menu", "Window", "NewTaskGroup", "WindowGroup")
         self.add_menu(menus, "Menu", "Help", "AboutGroup", "DocGroup", "BugReportGroup", "DebugGroup")
@@ -103,10 +103,10 @@ class FrameworkTask(Task):
 
     def _tool_bars_default(self):
         return [ SToolBar(self.get_groups("Tool", "File", "NewGroup", "OpenGroup", "SaveGroup"),
-                          Group(UndoAction(),
-                                RedoAction(),
-                                id="Undo"),
-                          show_tool_names=False), ]
+                          self.get_groups("Tool", "Edit", "UndoGroup", "CopyPasteGroup", "SelectGroup", "FindGroup"),
+                          self.get_groups("Tool", "View", "ViewZoomGroup", "ViewChangeGroup", "ViewConfigGroup"),
+                          show_tool_names=False),
+                 ]
 
     def _status_bar_default(self):
         return FrameworkStatusBarManager(message="Hi!", debug_width=self.status_bar_debug_width)
@@ -492,6 +492,12 @@ class FrameworkTask(Task):
         return [
             SaveAction(),
             SaveAsAction(),
+            ]
+    
+    def get_actions_Tool_Edit_UndoGroup(self):
+        return [
+            UndoAction(),
+            RedoAction(),
             ]
     
     def get_keyboard_actions(self):
