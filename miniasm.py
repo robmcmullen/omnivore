@@ -121,16 +121,25 @@ class FormatSpec(object):
         typically the PC-relative instructions.
         
         """
-        if self.num_args == 1:
-            if self.flag == pcr:
-                addr = low_byte + 256 * high_byte
-                offset = addr - (pc + 2)
+        if self.flag == pcr:
+            addr = low_byte + 256 * high_byte
+            offset = addr - (pc + 2)
+            if self.num_bytes == 2:
                 log.debug(" check_hex_1x16(1): %s -> %04x (pc=%x, offset=%x)" % (self.mode_name, addr, pc, offset))
                 if -128 <= offset <= 127:
                     gen = self.format.format(addr)
                     log.debug("  gen=%s operands=%s" % (gen, operands))
                     if gen == operands:
                         return self.get_bytes([offset & 0xff])  # convert to unsigned representation
+            elif self.num_bytes == 3:
+                log.debug(" check_hex_1x16(2): %s -> %04x (pc=%x, offset=%x)" % (self.mode_name, addr, pc, offset))
+                if -32768 <= offset <= 32767:
+                    gen = self.format.format(addr)
+                    log.debug("  gen=%s operands=%s" % (gen, operands))
+                    if gen == operands:
+                        unsigned = offset & 0xffff  # convert to unsigned representation
+                        high, low = divmod(unsigned, 256)
+                        return self.get_bytes([low, high])
     
     def check_hex_2x8(self, operands, pc, low_byte, high_byte):
         """ Check all the format strings that have two 8-bit hex values
@@ -142,6 +151,17 @@ class FormatSpec(object):
             log.debug("  " + gen + ":" + operands)
             if gen == operands:
                 return self.get_bytes([low_byte, high_byte])
+    
+    def check_hex_3x8(self, operands, pc, low_byte, high_byte, bank_byte):
+        """ Check all the format strings that have two 8-bit hex values
+        
+        """
+        if self.num_args == 3:
+            log.debug(" check_hex_3x8(3): %s -> %02x, %02x, %02x" % (self.mode_name, low_byte, high_byte, bank_byte))
+            gen = self.format.format(low_byte, high_byte, bank_byte)
+            log.debug("  " + gen + ":" + operands)
+            if gen == operands:
+                return self.get_bytes([low_byte, high_byte, bank_byte])
 
 
 class MiniAssembler(object):
@@ -216,7 +236,14 @@ class MiniAssembler(object):
                         bytes = f.check_hex_1x8(operands, pc, v)
                         if bytes:
                             return bytes
-                if len(hexstr) > 2:
+                if len(hexstr) > 4:
+                    vh, vl = divmod(v, 256)
+                    vb, vh = divmod(vh, 256)
+                    for f in format_specs:
+                        bytes = f.check_hex_3x8(operands, pc, vl, vh, vb)
+                        if bytes:
+                            return bytes
+                elif len(hexstr) > 2:
                     vh, vl = divmod(v, 256)
                     for f in format_specs:
                         bytes = f.check_hex_1x16(operands, pc, vl, vh)
@@ -308,7 +335,7 @@ if __name__ == "__main__":
                         print("%s:" % opstr, format_hex(disassembled_bytes), format_hex(assembled_bytes))
                 else:
                     failure += 1
-                    print("%s:" % opstr, format_hex(disassembled_bytes), format_hex(assembled_bytes))
+                    print("%06x %s:" % (addr, opstr), format_hex(disassembled_bytes), format_hex(assembled_bytes))
     #            print "0x%04x %-12s ; %s   %s %s" % (addr, opstr, comment, bytes, flag)
             print("%s: %d instructions matched, %d failed" % (filename, success, failure))
 

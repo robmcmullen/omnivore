@@ -105,7 +105,7 @@ class Disassembler(object):
             else:
                 extra = length - 1
         
-            if flag & 2 == und and not self.undocumented:
+            if flag & und and not self.undocumented:
                 if len(bytes) == 2:
                     self.put_back()
                     opcode = bytes[0]
@@ -116,7 +116,7 @@ class Disassembler(object):
             if extra == 1:
                 operand1 = self.get_next()
                 bytes.append(operand1)
-                if flag & 1 == pcr:
+                if flag & pcr:
                     signed = operand1 - 256 if operand1 > 127 else operand1
                     rel = pc + 2 + signed
                     opstr = opstr + " " + fmt.format(rel)
@@ -131,13 +131,20 @@ class Disassembler(object):
                 bytes.append(operand1)
                 operand2 = self.get_next()
                 bytes.append(operand2)
-                if flag & 4 == z80bit:
+                if flag & z80bit:
                     opcode = (opcode << 16) + operand2
                     # reread opcode table for real format string
                     length, opstr, fmt, flag = self.ops[opcode]
                     signed = operand1 - 256 if operand1 > 127 else operand1
                     opstr = opstr + " " + fmt.format(signed)
                     memloc = None
+                elif flag & pcr:
+                    addr = operand1 + 256 * operand2
+                    signed = addr - 32768 if addr > 32768 else addr
+                    rel = pc + 2 + signed
+                    opstr = opstr + " " + fmt.format(rel)
+                    memloc = rel
+                    dest_pc = rel
                 else:
                     opstr = opstr + " " + fmt.format(operand1, operand2)
                     memloc = operand1 + 256 * operand2
@@ -228,7 +235,7 @@ if __name__ == "__main__":
         process(binary)
     else:
         for filename in args.filenames:
-            with open(args.filename, 'rb') as fh:
+            with open(filename, 'rb') as fh:
                 binary = fh.read()
             binary = np.fromstring(binary, dtype=np.uint8)
             process(binary)
