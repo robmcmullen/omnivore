@@ -289,6 +289,46 @@ class MiniAssembler(object):
         return bytes
 
 
+def process(source, filename, start_pc, cpu, assemble_only=False, undoc=False, verbose=True):
+    def format_hex(t):
+        return "(" + ", ".join(["%02x" % s for s in t]) + ")"
+    
+    pc = start_pc
+    miniasm = MiniAssembler(cpu, allow_undocumented=undoc)
+    success = failure = 0
+    if assemble_only:
+        for line in source.splitlines():
+            if line.startswith("0x"):
+                addr, line = line.split(" ", 1)
+                addr = int(addr, 16)
+                line = line.strip()
+            else:
+                addr = pc
+            try:
+                bytes = miniasm.asm(addr, line)
+                log.debug(bytes)
+            except KeyError:
+                log.debug("unrecognized", line)
+                bytes = []
+            print("%s: output=%s" % (line, str(bytes)))
+            pc += len(bytes)
+    else:
+        binary = np.fromstring(source, dtype=np.uint8)
+        disasm = Disassembler(cpu, allow_undocumented=undoc, hex_lower=True, mnemonic_lower=True)
+        disasm.set_pc(binary, start_pc)
+        for addr, disassembled_bytes, opstr, comment, flag in disasm.get_disassembly():
+            assembled_bytes = miniasm.asm(addr, opstr)
+            if disassembled_bytes == assembled_bytes:
+                success += 1
+                if verbose:
+                    print("%06x %s:" % (addr, opstr), format_hex(disassembled_bytes), format_hex(assembled_bytes))
+            else:
+                failure += 1
+                print("%06x %s:" % (addr, opstr), format_hex(disassembled_bytes), format_hex(assembled_bytes))
+#            print "0x%04x %-12s ; %s   %s %s" % (addr, opstr, comment, bytes, flag)
+        print("%s: %d instructions matched, %d failed" % (filename, success, failure))
+    return success, failure
+
 if __name__ == "__main__":
     import sys
     import argparse
@@ -307,61 +347,23 @@ if __name__ == "__main__":
     if args.debug:
         log.setLevel(logging.DEBUG)
     
-    def format_hex(t):
-        return "(" + ", ".join(["%02x" % s for s in t]) + ")"
-    
     try:
         start_pc = int(args.pc, 16)
     except ValueError:
         start_pc = int(args.pc)
     
-    def process(source, filename):
-        pc = start_pc
-        miniasm = MiniAssembler(args.cpu, allow_undocumented=args.undocumented)
-        if args.assemble:
-            for line in source.splitlines():
-                if line.startswith("0x"):
-                    addr, line = line.split(" ", 1)
-                    addr = int(addr, 16)
-                    line = line.strip()
-                else:
-                    addr = pc
-                try:
-                    bytes = miniasm.asm(addr, line)
-                    log.debug(bytes)
-                except KeyError:
-                    log.debug("unrecognized", line)
-                    bytes = []
-                print("%s: output=%s" % (line, str(bytes)))
-                pc += len(bytes)
-        else:
-            binary = np.fromstring(source, dtype=np.uint8)
-            disasm = Disassembler(args.cpu, allow_undocumented=args.undocumented, hex_lower=True, mnemonic_lower=True)
-            disasm.set_pc(binary, start_pc)
-            success = failure = 0
-            for addr, disassembled_bytes, opstr, comment, flag in disasm.get_disassembly():
-                assembled_bytes = miniasm.asm(addr, opstr)
-                if disassembled_bytes == assembled_bytes:
-                    success += 1
-                    if args.verbose:
-                        print("%06x %s:" % (addr, opstr), format_hex(disassembled_bytes), format_hex(assembled_bytes))
-                else:
-                    failure += 1
-                    print("%06x %s:" % (addr, opstr), format_hex(disassembled_bytes), format_hex(assembled_bytes))
-    #            print "0x%04x %-12s ; %s   %s %s" % (addr, opstr, comment, bytes, flag)
-            print("%s: %d instructions matched, %d failed" % (filename, success, failure))
 
     if args.string:
         source = args.string
         args.assemble = True
-        process(source, args.string)
+        process(source, args.string, start_pc, args.cpu, args.assemble, args.undocumented, args.verbose)
     elif args.hex:
         try:
             source = args.hex.decode("hex")
         except TypeError:
             print("Invalid hex digits!")
             sys.exit()
-        process(source, args.string)
+        process(source, args.string, start_pc, args.cpu, args.assemble, args.undocumented, args.verbose)
     else:
         for filename in extra:
             source = []
@@ -378,5 +380,5 @@ if __name__ == "__main__":
             source = "".join(source)
             if args.verbose:
                 print("read %d bytes" % len(source))
-            process(source, filename)
+            process(source, filename, start_pc, args.cpu, args.assemble, args.undocumented, args.verbose)
 
