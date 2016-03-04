@@ -118,7 +118,7 @@ class Disassembler(object):
                 bytes.append(operand1)
                 if flag & pcr:
                     signed = operand1 - 256 if operand1 > 127 else operand1
-                    rel = pc + 2 + signed
+                    rel = (pc + 2 + signed) & 0xffff  # limit to 64k address space
                     opstr = opstr + " " + fmt.format(rel)
                     memloc = rel
                     dest_pc = rel
@@ -141,7 +141,7 @@ class Disassembler(object):
                 elif flag & pcr:
                     addr = operand1 + 256 * operand2
                     signed = addr - 0x10000 if addr > 32768 else addr
-                    rel = pc + 2 + signed
+                    rel = (pc + 2 + signed) & 0xffff  # limit to 64k address space
                     opstr = opstr + " " + fmt.format(rel)
                     memloc = rel
                     dest_pc = rel

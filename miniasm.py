@@ -124,6 +124,12 @@ class FormatSpec(object):
         if self.flag == pcr:
             addr = low_byte + 256 * high_byte
             offset = addr - (pc + 2)
+            # offset is limited by signed 16 bit size, so find the positive or
+            # negative value that clamps to that range
+            if offset > 32767:
+                offset -= 0x10000
+            elif offset < -32768:
+                offset += 0x10000
             if self.num_bytes == 2:
                 log.debug(" check_hex_1x16(1): %s -> %04x (pc=%x, offset=%x)" % (self.mode_name, addr, pc, offset))
                 if -128 <= offset <= 127:
@@ -295,6 +301,7 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--verbose", help="Show processed instructions as the program runs", action="store_true")
     parser.add_argument("-x", "--hex", help="Assemble a string version of hex digits")
     parser.add_argument("-s", "--string", help="Assemble a single line opcode (implies -a)")
+    parser.add_argument("-p", "--pc", help="Process counter", default="0")
     args, extra = parser.parse_known_args()
     
     if args.debug:
@@ -303,8 +310,13 @@ if __name__ == "__main__":
     def format_hex(t):
         return "(" + ", ".join(["%02x" % s for s in t]) + ")"
     
+    try:
+        start_pc = int(args.pc, 16)
+    except ValueError:
+        start_pc = int(args.pc)
+    
     def process(source, filename):
-        pc = 0
+        pc = start_pc
         miniasm = MiniAssembler(args.cpu, allow_undocumented=args.undocumented)
         if args.assemble:
             for line in source.splitlines():
@@ -325,14 +337,14 @@ if __name__ == "__main__":
         else:
             binary = np.fromstring(source, dtype=np.uint8)
             disasm = Disassembler(args.cpu, allow_undocumented=args.undocumented, hex_lower=True, mnemonic_lower=True)
-            disasm.set_pc(binary, 0)
+            disasm.set_pc(binary, start_pc)
             success = failure = 0
             for addr, disassembled_bytes, opstr, comment, flag in disasm.get_disassembly():
                 assembled_bytes = miniasm.asm(addr, opstr)
                 if disassembled_bytes == assembled_bytes:
                     success += 1
                     if args.verbose:
-                        print("%s:" % opstr, format_hex(disassembled_bytes), format_hex(assembled_bytes))
+                        print("%06x %s:" % (addr, opstr), format_hex(disassembled_bytes), format_hex(assembled_bytes))
                 else:
                     failure += 1
                     print("%06x %s:" % (addr, opstr), format_hex(disassembled_bytes), format_hex(assembled_bytes))
