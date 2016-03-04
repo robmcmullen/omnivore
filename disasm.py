@@ -140,7 +140,7 @@ class Disassembler(object):
                     memloc = None
                 elif flag & pcr:
                     addr = operand1 + 256 * operand2
-                    signed = addr - 32768 if addr > 32768 else addr
+                    signed = addr - 0x10000 if addr > 32768 else addr
                     rel = pc + 2 + signed
                     opstr = opstr + " " + fmt.format(rel)
                     memloc = rel
