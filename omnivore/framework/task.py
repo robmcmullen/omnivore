@@ -5,7 +5,7 @@ import wx
 
 # Enthought library imports.
 from pyface.wx.aui import aui
-from pyface.api import ImageResource, FileDialog, YES, OK, CANCEL
+from pyface.api import ImageResource, FileDialog, YES, NO, OK, CANCEL
 from pyface.action.api import StatusBarManager, Group, Separator, ActionEvent
 from pyface.tasks.api import Task, TaskWindow, TaskLayout, TaskWindowLayout, PaneItem, IEditor, \
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
@@ -740,3 +740,38 @@ class FrameworkTask(Task):
         10 = absolute match
         """
         return 0
+
+    #### convenience functions
+    
+    def confirm(self, message, title=None, cancel=False, default=NO, no_label="", yes_label=""):
+        """ Convenience method to show a confirmation dialog. """
+
+        from pyface.confirmation_dialog import ConfirmationDialog
+
+        if title is None:
+            title = "Confirmation"
+
+        dialog = ConfirmationDialog(parent=self.window.control, message=message, cancel=cancel, default=default, title=title, no_label=no_label, yes_label=yes_label)
+
+        return dialog.open()
+
+    def information(self, message, title='Information'):
+        """ Convenience method to show an information message dialog. """
+
+        from pyface.message_dialog import information
+
+        return information(self.window.control, message, title)
+
+    def warning(self, message, title='Warning'):
+        """ Convenience method to show a warning message dialog. """
+
+        from pyface.message_dialog import warning
+
+        return warning(self.window.control, message, title)
+
+    def error(self, message, title='Error'):
+        """ Convenience method to show an error message dialog. """
+
+        from pyface.message_dialog import error
+
+        return error(self.window.control, message, title)
