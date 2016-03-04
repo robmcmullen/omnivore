@@ -249,7 +249,7 @@ class DiskImageBase(object):
             try:
                 segment = self.get_file_segment(dirent)
             except InvalidFile, e:
-                segment = EmptySegment(self.data, style, name=dirent.get_filename(), error=str(e))
+                segment = EmptySegment(self.bytes, self.style, name=dirent.get_filename(), error=str(e))
             segments.append(segment)
         return segments
 
