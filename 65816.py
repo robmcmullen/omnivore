@@ -8,7 +8,7 @@
 # AddressWidth = 16/24  # 16-bit or 24-bit addresses depending on processor mode
 
 # Maximum length of an instruction (for formatting purposes)
-maxLength = 3
+maxLength = 4
 
 # Leadin bytes for multibyte instructions
 leadInBytes = []
