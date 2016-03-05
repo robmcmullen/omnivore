@@ -15,7 +15,7 @@ CPU    Status
 
 6502   done
 
-65816  possible
+65816  done
 
 65C02  done
 
@@ -31,7 +31,7 @@ CPU    Status
 
 F8     possible
 
-Z80    done (incomplete)
+Z80    done
 
 
 
