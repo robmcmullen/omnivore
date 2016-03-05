@@ -219,8 +219,11 @@ class MiniAssembler(object):
     immediatere = re.compile(r'#?\$[0-9a-fA-F]+')
     
     def parse_operands(self, opstr, operands, pc):
-        log.debug(operands)
-        format_specs = self.ops[opstr]
+        try:
+            format_specs = self.ops[opstr]
+        except KeyError:
+            raise RuntimeError("Unknown mnemonic %s" % opstr)
+        log.debug("-->%s<--, -->%s<--: %s" % (opstr, operands, self.ops[opstr]))
         
         # Check if a single operand matches an address mode exactly
         for f in format_specs:
@@ -267,12 +270,11 @@ class MiniAssembler(object):
                     bytes = f.check_hex_2x8(operands, pc, vl, vh)
                     if bytes:
                         return bytes
-                
-                
         
         return []
     
     def asm(self, origin, text):
+        text = text.lower()
         log.debug("input: %s" % text)
         if " " in text:
             opstr, operands = text.split(" ", 1)
@@ -284,7 +286,6 @@ class MiniAssembler(object):
         operands = operands.replace(" ", "")
         opstr = opstr.lower()
         operands = operands.strip()
-        log.debug("-->%s<--, -->%s<--: %s" % (opstr, operands, self.ops[opstr]))
         bytes = self.parse_operands(opstr, operands, origin)
         return bytes
 
