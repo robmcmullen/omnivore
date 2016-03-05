@@ -193,11 +193,23 @@ class HexEditTask(FrameworkTask):
             actions.append(BitmapRendererAction(bitmap_renderer=r))
         return actions
     
+    def get_processor_type_actions(self):
+        actions = []
+        for r in machine.predefined['disassembler']:
+            actions.append(ProcessorTypeAction(disassembler=r))
+        return actions
+    
     def get_actions_Menu_Machine_MachineCharGroup(self):
         font_mapping_actions = self.get_font_mapping_actions()
         font_renderer_actions = self.get_font_renderer_actions()
         bitmap_renderer_actions = self.get_bitmap_renderer_actions()
+        processor_type_actions = self.get_processor_type_actions()
         return [
+            SMenu(
+                Group(
+                    *processor_type_actions,
+                    id="a1", separator=True),
+                id='FontChoiceSubmenu0', separator=True, name="Processor"),
             SMenu(
                 Group(
                     ColorStandardAction(name="NTSC", color_standard=0),
@@ -209,7 +221,7 @@ class HexEditTask(FrameworkTask):
                 Group(
                     AnticColorAction(),
                     id="a2", separator=True),
-                id='FontChoiceSubmenu2a', separator=True, name="Colors"),
+                id='FontChoiceSubmenu2a', separator=False, name="Colors"),
             SMenu(
                 Group(
                     UseFontAction(font=fonts.A8DefaultFont),

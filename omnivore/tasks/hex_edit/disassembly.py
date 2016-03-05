@@ -3,8 +3,6 @@ import wx
 
 from omnivore.utils.wx.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 
-from omnivore.third_party.asm6502 import assemble_text, AssemblyError
-
 from omnivore.framework.actions import *
 from actions import *
 from commands import MiniAssemblerCommand
@@ -270,13 +268,13 @@ class DisassemblyPanel(ByteGrid):
         try:
             pc = self.table.get_pc(row)
             cmd = text.upper()
-            bytes = assemble_text(cmd, pc)
+            bytes = self.table.disassembler.assemble_text(pc, cmd)
             start, _ = self.table.get_index_range(row, col)
             end = start + len(bytes)
             cmd = MiniAssemblerCommand(self.table.segment, start, end, bytes, cmd)
             self.task.active_editor.process_command(cmd)
             return True
-        except AssemblyError, e:
+        except RuntimeError, e:
             self.task.window.error(unicode(e))
             self.SetFocus()  # OS X quirk: return focus to the grid so the user can keep typing
         return False

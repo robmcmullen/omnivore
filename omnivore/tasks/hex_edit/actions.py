@@ -229,6 +229,26 @@ class PredefinedMachineAction(EditorAction):
             self.checked = self.active_editor.machine == self.machine
 
 
+class ProcessorTypeAction(EditorAction):
+    """Radio buttons for changing the processor type and therefore disassembler
+    """
+    # Traits
+    style = 'radio'
+    
+    disassembler = Any
+    
+    def _name_default(self):
+        return self.disassembler.name
+
+    def perform(self, event):
+        self.active_editor.machine.set_disassembler(self.disassembler)
+
+    @on_trait_change('active_editor.machine.disassembler')
+    def _update_checked(self):
+        if self.active_editor:
+            self.checked = self.active_editor.machine.disassembler == self.disassembler
+
+
 class SegmentParserAction(EditorAction):
     """Radio buttons for changing font style
     """

@@ -242,6 +242,10 @@ class HexEditor(FrameworkEditor):
         pane.name = self.machine.font_mapping.name
         self.window._aui_manager.Update()
     
+    @on_trait_change('machine.disassembler_change_event')
+    def update_disassembler(self):
+        self.disassembly.recalc_view()
+
     def set_map_width(self, width=None):
         if width is None:
             width = self.map_width
