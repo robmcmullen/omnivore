@@ -16,6 +16,7 @@ class SegmentList(wx.ListBox):
         self.Bind(wx.EVT_LISTBOX, self.on_click)
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.on_dclick)
         self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
+        self.Bind(wx.EVT_MOTION, self.on_tooltip)
     
     def set_task(self, task):
         self.task = task
@@ -58,3 +59,14 @@ class SegmentList(wx.ListBox):
             actions.append(action)
         if actions:
             self.task.active_editor.popup_context_menu_from_actions(self, actions)
+    
+    def on_tooltip(self, evt):
+        pos = evt.GetPosition()
+        selected = self.HitTest(pos)
+        if selected >= 0:
+            segment = self.task.active_editor.document.segments[selected]
+            self.task.status_bar.message = segment.verbose_info
+        else:
+            self.task.status_bar.message = ""
+        evt.Skip()
+        
