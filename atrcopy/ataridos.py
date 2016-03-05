@@ -37,14 +37,18 @@ class AtariDosDirent(object):
         self.parse_raw_dirent(image, bytes)
     
     def __str__(self):
+        flags = self.summary()
+        return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, flags, self.starting_sector, self.filename, self.ext, self.num_sectors)
+    
+    def summary(self):
         output = "o" if self.opened_output else "."
         dos2 = "2" if self.dos_2 else "."
         mydos = "m" if self.mydos else "."
         in_use = "u" if self.in_use else "."
         deleted = "d" if self.deleted else "."
         locked = "*" if self.locked else " "
-        flags = "%s%s%s%s%s%s %03d" % (output, dos2, mydos, in_use, deleted, locked, self.starting_sector)
-        return "File #%-2d (%s) %-8s%-3s  %03d" % (self.file_num, flags, self.filename, self.ext, self.num_sectors)
+        flags = "%s%s%s%s%s%s" % (output, dos2, mydos, in_use, deleted, locked)
+        return flags
     
     def parse_raw_dirent(self, image, bytes):
         if bytes is None:
@@ -291,7 +295,8 @@ class AtariDosDiskImage(DiskImageBase):
             if last:
                 break
         if len(byte_order) > 0:
-            segment = IndexedByteSegment(self.bytes, self.style, byte_order, name=dirent.get_filename())
+            name = "%s (%s) %ds@%d" % (dirent.get_filename(), dirent.summary(), dirent.num_sectors, dirent.starting_sector)
+            segment = IndexedByteSegment(self.bytes, self.style, byte_order, name=name)
         else:
             segment = EmptySegment(self.bytes, self.style, name=dirent.get_filename())
         return segment

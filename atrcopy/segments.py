@@ -36,9 +36,16 @@ class DefaultSegment(object):
         self._search_copy = None
     
     def __str__(self):
-        s = "%s (%d bytes)" % (self.name, len(self))
+        s = "%s ($%x bytes)" % (self.name, len(self))
         if self.error:
             s += " " + self.error
+        return s
+    
+    @property
+    def verbose_info(self):
+        s = "%s ($%x bytes)" % (self.name, len(self))
+        if self.error:
+            s += "  error='%s'" % self.error
         return s
     
     def __len__(self):
@@ -190,6 +197,13 @@ class EmptySegment(DefaultSegment):
             s += " " + self.error
         return s
     
+    @property
+    def verbose_info(self):
+        s = "%s (empty file)" % (self.name, )
+        if self.error:
+            s += "  error='%s'" % self.error
+        return s
+    
     def __len__(self):
         return 0
 
@@ -205,6 +219,14 @@ class ObjSegment(DefaultSegment):
         s = "%s $%04x-$%04x ($%04x @ $%04x)" % (self.name, self.start_addr, self.start_addr + count, count, self.data_start)
         if self.error:
             s += " " + self.error
+        return s
+    
+    @property
+    def verbose_info(self):
+        count = len(self)
+        s = "%s  address range: $%04x-$%04x ($%04x bytes), file index of first byte: $%04x" % (self.name, self.start_addr, self.start_addr + count, count, self.data_start)
+        if self.error:
+            s += "  error='%s'" % self.error
         return s
 
 
@@ -224,6 +246,17 @@ class RawSectorsSegment(DefaultSegment):
             s = "%s (sector %d)" % (self.name, self.first_sector)
         if self.error:
             s += " " + self.error
+        return s
+    
+    @property
+    def verbose_info(self):
+        if self.num_sectors > 1:
+            s = "%s (sectors %d-%d)" % (self.name, self.first_sector, self.first_sector + self.num_sectors - 1)
+        else:
+            s = "%s (sector %d)" % (self.name, self.first_sector)
+        s += " $%x bytes" % (len(self), )
+        if self.error:
+            s += "  error='%s'" % self.error
         return s
     
     def label(self, index, lower_case=True):
@@ -273,6 +306,13 @@ class IndexedByteSegment(DefaultSegment):
         s = "%s ($%x @ $%x)" % (self.name, len(self), self.order[0])
         if self.error:
             s += " " + self.error
+        return s
+    
+    @property
+    def verbose_info(self):
+        s = "%s ($%04x bytes) non-contiguous file; file index of first byte: $%04x" % (self.name, len(self), self.order[0])
+        if self.error:
+            s += "  error='%s'" % self.error
         return s
     
     def __len__(self):
