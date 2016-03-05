@@ -178,20 +178,20 @@ class Disassembler(object):
             rw = ""
         
         bytes = tuple(bytes)
-        return pc, opcode, bytes, opstr, memloc, rw, dest_pc
+        return pc, opcode, bytes, opstr, memloc, rw, dest_pc, flag
 
     def get_disassembly(self):
         while True:
-            addr, opcode, bytes, opstr, memloc, rw, dest_pc = self.disasm()
+            addr, opcode, bytes, opstr, memloc, rw, dest_pc, flag = self.disasm()
             comment = self.get_memloc_name(memloc, rw)
-            flag = self.get_flag(opcode)
-            yield (addr, bytes, opstr, comment, flag)
+            is_und = self.flag_as_undefined(flag)
+            yield (addr, bytes, opstr, comment, is_und)
     
     def get_instruction(self):
-        addr, opcode, bytes, opstr, memloc, rw, dest_pc = self.disasm()
+        addr, opcode, bytes, opstr, memloc, rw, dest_pc, flag = self.disasm()
         comment = self.get_memloc_name(memloc, rw)
-        flag = self.get_flag(opcode)
-        return (addr, bytes, opstr, comment, flag)
+        is_und = self.flag_as_undefined(flag)
+        return (addr, bytes, opstr, comment, is_und)
     
     def get_memloc_name(self, memloc, rw):
         if rw == "":
@@ -202,8 +202,8 @@ class Disassembler(object):
             return "; " + self.memory_map[memloc]
         return ""
     
-    def get_flag(self, opcode):
-        return 0
+    def flag_as_undefined(self, flag):
+        return False
 
 
 if __name__ == "__main__":
