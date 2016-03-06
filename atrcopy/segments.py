@@ -25,12 +25,13 @@ class SegmentSaver(object):
 class DefaultSegment(object):
     savers = [SegmentSaver]
     
-    def __init__(self, data, style, start_addr=0, name="All", error=None):
+    def __init__(self, data, style, start_addr=0, name="All", error=None, verbose_name=None):
         self.start_addr = int(start_addr)  # force python int to decouple from possibly being a numpy datatype
         self.data = data
         self.style = style
         self.error = error
         self.name = name
+        self.verbose_name = verbose_name
         self.page_size = -1
         self.map_width = 40
         self._search_copy = None
@@ -43,7 +44,8 @@ class DefaultSegment(object):
     
     @property
     def verbose_info(self):
-        s = "%s ($%x bytes)" % (self.name, len(self))
+        name = self.verbose_name or self.name
+        s = "%s ($%x bytes)" % (name, len(self))
         if self.error:
             s += "  error='%s'" % self.error
         return s
@@ -209,8 +211,8 @@ class EmptySegment(DefaultSegment):
 
 
 class ObjSegment(DefaultSegment):
-    def __init__(self, data, style, metadata_start, data_start, start_addr, end_addr,  name="", error=None):
-        DefaultSegment.__init__(self, data, style, start_addr, name, error)
+    def __init__(self, data, style, metadata_start, data_start, start_addr, end_addr,  name="", **kwargs):
+        DefaultSegment.__init__(self, data, style, start_addr, name, **kwargs)
         self.metadata_start = metadata_start
         self.data_start = data_start
     
@@ -224,7 +226,8 @@ class ObjSegment(DefaultSegment):
     @property
     def verbose_info(self):
         count = len(self)
-        s = "%s  address range: $%04x-$%04x ($%04x bytes), file index of first byte: $%04x" % (self.name, self.start_addr, self.start_addr + count, count, self.data_start)
+        name = self.verbose_name or self.name
+        s = "%s  address range: $%04x-$%04x ($%04x bytes), file index of first byte: $%04x" % (name, self.start_addr, self.start_addr + count, count, self.data_start)
         if self.error:
             s += "  error='%s'" % self.error
         return s
@@ -250,10 +253,11 @@ class RawSectorsSegment(DefaultSegment):
     
     @property
     def verbose_info(self):
+        name = self.verbose_name or self.name
         if self.num_sectors > 1:
-            s = "%s (sectors %d-%d)" % (self.name, self.first_sector, self.first_sector + self.num_sectors - 1)
+            s = "%s (sectors %d-%d)" % (name, self.first_sector, self.first_sector + self.num_sectors - 1)
         else:
-            s = "%s (sector %d)" % (self.name, self.first_sector)
+            s = "%s (sector %d)" % (name, self.first_sector)
         s += " $%x bytes" % (len(self), )
         if self.error:
             s += "  error='%s'" % self.error
@@ -310,7 +314,8 @@ class IndexedByteSegment(DefaultSegment):
     
     @property
     def verbose_info(self):
-        s = "%s ($%04x bytes) non-contiguous file; file index of first byte: $%04x" % (self.name, len(self), self.order[0])
+        name = self.verbose_name or self.name
+        s = "%s ($%04x bytes) non-contiguous file; file index of first byte: $%04x" % (name, len(self), self.order[0])
         if self.error:
             s += "  error='%s'" % self.error
         return s

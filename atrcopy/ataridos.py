@@ -50,6 +50,17 @@ class AtariDosDirent(object):
         flags = "%s%s%s%s%s%s" % (output, dos2, mydos, in_use, deleted, locked)
         return flags
     
+    @property
+    def verbose_info(self):
+        flags = []
+        if self.opened_output: flags.append("OUT")
+        if self.dos_2: flags.append("DOS2")
+        if self.mydos: flags.append("MYDOS")
+        if self.in_use: flags.append("IN_USE")
+        if self.deleted: flags.append("DEL")
+        if self.locked: flags.append("LOCK")
+        return "flags=[%s]" % ", ".join(flags)
+    
     def parse_raw_dirent(self, image, bytes):
         if bytes is None:
             return
@@ -295,8 +306,10 @@ class AtariDosDiskImage(DiskImageBase):
             if last:
                 break
         if len(byte_order) > 0:
-            name = "%s (%s) %ds@%d" % (dirent.get_filename(), dirent.summary(), dirent.num_sectors, dirent.starting_sector)
-            segment = IndexedByteSegment(self.bytes, self.style, byte_order, name=name)
+            name = "%s %ds@%d" % (dirent.get_filename(), dirent.num_sectors, dirent.starting_sector)
+            verbose_name = "%s (%d sectors, first@%d) %s" % (dirent.get_filename(), dirent.num_sectors, dirent.starting_sector, dirent.verbose_info)
+            print verbose_name
+            segment = IndexedByteSegment(self.bytes, self.style, byte_order, name=name, verbose_name=verbose_name)
         else:
             segment = EmptySegment(self.bytes, self.style, name=dirent.get_filename())
         return segment

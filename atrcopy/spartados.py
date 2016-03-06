@@ -38,6 +38,16 @@ class SpartaDosDirent(AtariDosDirent):
         flags = "%s%s%s%s%s %03d" % (output, subdir, in_use, deleted, locked, self.starting_sector)
         return "File #%-2d (%s) %-8s%-3s  %8d  %s" % (self.file_num, flags, self.filename, self.ext, self.length, self.str_timestamp)
     
+    @property
+    def verbose_info(self):
+        flags = []
+        if self.opened_output: flags.append("OUT")
+        if self.is_dir: flags.append("DIR")
+        if self.in_use: flags.append("IN_USE")
+        if self.deleted: flags.append("DEL")
+        if self.locked: flags.append("LOCK")
+        return "flags=[%s]" % ", ".join(flags)
+    
     def parse_raw_dirent(self, image, bytes):
         if bytes is None:
             return
@@ -53,7 +63,10 @@ class SpartaDosDirent(AtariDosDirent):
         self.opened_output = (flag&0b10000000) > 0
         self.starting_sector = int(values['sector'])
         self.filename = str(values['filename']).rstrip()
-        self.ext = str(values['ext']).rstrip()
+        if self.is_dir:
+            self.ext = ""
+        else:
+            self.ext = str(values['ext']).rstrip()
         self.length = 256*256*values['len_h'] + values['len_l']
         self.date_array = tuple(bytes[17:20])
         self.time_array = tuple(bytes[20:23])
@@ -221,7 +234,9 @@ class SpartaDosDiskImage(DiskImageBase):
             else:
                 break
         if len(byte_order) > 0:
-            segment = IndexedByteSegment(self.bytes, self.style, byte_order, name=dirent.get_filename(), error=dirent.str_timestamp)
+            name = "%s %d@%d %s" % (dirent.get_filename(), dirent.length, dirent.starting_sector, dirent.str_timestamp)
+            verbose_name = "%s (%d bytes, sector map@%d) %s %s" % (dirent.get_filename(), dirent.length, dirent.starting_sector, dirent.verbose_info, dirent.str_timestamp)
+            segment = IndexedByteSegment(self.bytes, self.style, byte_order, name=name, verbose_name=verbose_name)
         else:
             segment = EmptySegment(self.bytes, self.style, name=dirent.get_filename(), error=dirent.str_timestamp)
         return segment
