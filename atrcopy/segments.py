@@ -66,12 +66,23 @@ class DefaultSegment(object):
     def tostring(self):
         return self.data.tostring()
     
-    def get_style_bits(self, match=False, comment=False, selected=False):
+    def get_style_bits(self, match=False, comment=False, selected=False, data=False):
+        """ Return an int value that contains the specified style bits set.
+        
+        Available styles for each byte are:
+        
+        match: part of the currently matched search
+        comment: user commented area
+        selected: selected region
+        data: labeled in the disassembler as a data region (i.e. not disassembled)
+        """
         style_bits = 0
         if match:
             style_bits |= 1
         if comment:
             style_bits |= 2
+        if data:
+            style_bits |= 4
         if selected:
             style_bits |= 0x80
         return style_bits
