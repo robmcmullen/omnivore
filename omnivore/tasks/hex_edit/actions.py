@@ -531,6 +531,15 @@ class FindPrevAction(EditorAction):
         e = self.active_editor
         event.task.show_minibuffer(NextPrevTextMinibuffer(e, FindAllCommand, FindNextCommand, FindPrevCommand, prev_match=True, initial=e.last_search_settings["find"]))
 
+class FindAlgorithmAction(EditorAction):
+    name = 'Find Using Algorithm'
+    accelerator = 'Alt+Ctrl+F'
+    tooltip = 'Find bytes using logical and arithmetic comparisons'
+
+    def perform(self, event):
+        e = self.active_editor
+        event.task.show_minibuffer(NextPrevTextMinibuffer(e, FindAlgorithmCommand, FindNextCommand, FindPrevCommand, initial=e.last_search_settings["algorithm"]))
+
 class FindToSelectionAction(EditorAction):
     name = 'Find to Selection'
     accelerator = 'Alt+Ctrl+A'

@@ -84,6 +84,7 @@ class FrameworkEditor(Editor):
             "case_sensitive": False,
             "allow_inverse": False,
             "regex": False,
+            "algorithm": "",
             }
 
     #### property getters

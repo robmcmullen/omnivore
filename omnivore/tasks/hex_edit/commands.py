@@ -6,6 +6,7 @@ import numpy as np
 from omnivore.framework.errors import ProgressCancelError
 from omnivore.utils.command import Command, UndoInfo
 from omnivore.utils.sortutil import ranges_to_indexes
+from omnivore.utils.searchalgorithm import AlgorithmSearcher
 
 import logging
 progress_log = logging.getLogger("progress")
@@ -427,6 +428,9 @@ class FindAllCommand(Command):
     def get_search_string(self):
         return bytearray.fromhex(self.search_text)
     
+    def get_searchers(self, editor):
+        return editor.searchers
+    
     def perform(self, editor):
         self.all_matches = []
         self.undo_info = undo = UndoInfo()
@@ -437,7 +441,7 @@ class FindAllCommand(Command):
             errors = []
             found = []
             editor.segment.clear_style_bits(match=True)
-            for searcher_cls in editor.searchers:
+            for searcher_cls in self.get_searchers(editor):
                 try:
                     searcher = searcher_cls(editor, self.search_text)
                     found.append(searcher)
@@ -464,6 +468,8 @@ class FindAllCommand(Command):
                     undo.flags.cursor_index = match[0]
                     undo.flags.select_range = True
                     undo.flags.message = ("Match %d of %d, found at $%04x" % (self.current_match_index + 1, len(self.all_matches), match[0]))
+            elif errors:
+                undo.flags.message = " ".join(errors)
             undo.flags.refresh_needed = True
         return undo
 
@@ -516,3 +522,11 @@ class FindPrevCommand(FindNextCommand):
             match_index = len(cmd.all_matches) - 1
         cmd.current_match_index = match_index
         return match_index
+
+class FindAlgorithmCommand(FindAllCommand):
+    short_name = "findalgorithm"
+    pretty_name = "Find Algorithm"
+    
+    def get_searchers(self, editor):
+        return [AlgorithmSearcher]
+    
