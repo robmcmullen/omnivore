@@ -100,7 +100,11 @@ class DefaultSegment(object):
     
     def get_style_ranges(self, **kwargs):
         style_bits = self.get_style_bits(**kwargs)
-        w = np.where(self.style & style_bits)[0]
+        matches = (self.style & style_bits) > 0
+        return self.bool_to_ranges(matches)
+    
+    def bool_to_ranges(self, matches):
+        w = np.where(matches == True)[0]
         # split into groups with consecutive numbers
         groups = np.split(w, np.where(np.diff(w) != 1)[0] + 1)
         ranges = []
