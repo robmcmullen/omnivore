@@ -229,7 +229,7 @@ if 'nsis' not in sys.argv:
         ext_modules = ext_modules,
         install_requires = [
             'numpy',
-            'atrcopy>=2.3.0',
+            'atrcopy>=2.4.0',
             'jsonpickle',
             'bson',
             'fs',
