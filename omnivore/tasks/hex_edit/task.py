@@ -265,6 +265,8 @@ class HexEditTask(FrameworkTask):
                     id="a1", separator=True),
                 id='submenu1', separator=False, name="File Type"),
             GetSegmentFromSelectionAction(),
+            MarkSelectionAsCodeAction(),
+            MarkSelectionAsDataAction(),
             ]
     
     def get_actions_Menu_Segments_SegmentGroup(self):

@@ -54,6 +54,7 @@ class AnticFont(object):
         self.highlight_gr0_colors = machine.get_blended_color_registers(self.normal_gr0_colors, machine.highlight_color)
         self.match_gr0_colors = machine.get_blended_color_registers(self.normal_gr0_colors, machine.match_background_color)
         self.comment_gr0_colors = machine.get_blended_color_registers(self.normal_gr0_colors, machine.comment_background_color)
+        self.data_gr0_colors = machine.get_dimmed_color_registers(self.normal_gr0_colors, machine.background_color, machine.data_color)
     
     def set_fonts(self, machine, font_data, font_mode):
         if 'np_data' in font_data:
@@ -66,6 +67,7 @@ class AnticFont(object):
         bits_to_font = self.get_bits_to_font_function(font_mode)
         self.normal_font = bits_to_font(bits, font_mode, machine.color_registers, self.normal_gr0_colors)
         self.highlight_font = bits_to_font(bits, font_mode, machine.color_registers_highlight, self.highlight_gr0_colors)
+        self.data_font = bits_to_font(bits, font_mode, machine.color_registers_data, self.data_gr0_colors)
         self.match_font = bits_to_font(bits, font_mode, machine.color_registers_match, self.match_gr0_colors)
         self.comment_font = bits_to_font(bits, font_mode, machine.color_registers_comment, self.comment_gr0_colors)
     

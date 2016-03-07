@@ -21,6 +21,8 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
         self.normal_background = m.background_color
         self.normal_brush = wx.Brush(m.background_color, wx.SOLID)
         self.normal_pen = wx.Pen(m.background_color, 1, wx.SOLID)
+        self.data_background = m.data_color
+        self.data_brush = wx.Brush(m.data_color, wx.SOLID)
         self.cursor_background = m.background_color
         self.cursor_brush = wx.Brush(m.background_color, wx.TRANSPARENT)
         self.cursor_pen = wx.Pen(m.unfocused_cursor_color, 2, wx.SOLID)
@@ -61,6 +63,10 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
                 dc.SetPen(self.comment_pen)
                 dc.SetBrush(self.comment_brush)
                 dc.SetTextBackground(self.comment_background)
+            elif style & 4:
+                dc.SetPen(self.normal_pen)
+                dc.SetBrush(self.data_brush)
+                dc.SetTextBackground(self.data_background)
             else:
                 dc.SetPen(self.normal_pen)
                 dc.SetBrush(self.normal_brush)

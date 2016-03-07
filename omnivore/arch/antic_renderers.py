@@ -23,10 +23,12 @@ class OneBitPerPixelB(object):
         h_colors = m.get_blended_color_registers(self.bw_colors, m.highlight_color)
         m_colors = m.get_blended_color_registers(self.bw_colors, m.match_background_color)
         c_colors = m.get_blended_color_registers(self.bw_colors, m.comment_background_color)
+        d_colors = m.get_dimmed_color_registers(self.bw_colors, m.background_color, m.data_color)
         
         style_per_pixel = np.vstack((style, style, style, style, style, style, style, style)).T
         normal = style_per_pixel == 0
         highlight = (style_per_pixel & 0x80) == 0x80
+        data = (style_per_pixel & 0x4) == 0x4
         comment = (style_per_pixel & 0x2) == 0x2
         match = (style_per_pixel & 0x1) == 0x1
         
@@ -34,10 +36,12 @@ class OneBitPerPixelB(object):
         bitimage[background & normal] = self.bw_colors[0]
         bitimage[background & comment] = c_colors[0]
         bitimage[background & match] = m_colors[0]
+        bitimage[background & data] = d_colors[0]
         bitimage[background & highlight] = h_colors[0]
         bitimage[color1 & normal] = self.bw_colors[1]
         bitimage[color1 & comment] = c_colors[1]
         bitimage[color1 & match] = m_colors[1]
+        bitimage[color1 & data] = d_colors[1]
         bitimage[color1 & highlight] = h_colors[1]
         bitimage[count:,:,:] = m.empty_color
 
@@ -69,6 +73,7 @@ class ModeE(object):
         style_per_pixel = np.vstack((style, style, style, style)).T
         normal = style_per_pixel == 0
         highlight = (style_per_pixel & 0x80) == 0x80
+        data = (style_per_pixel & 0x4) == 0x4
         comment = (style_per_pixel & 0x2) == 0x2
         match = (style_per_pixel & 0x1) == 0x1
         
@@ -80,14 +85,17 @@ class ModeE(object):
         bitimage[color1 & normal] = m.color_registers[4]
         bitimage[color1 & comment] = m.color_registers_comment[4]
         bitimage[color1 & match] = m.color_registers_match[4]
+        bitimage[color1 & data] = m.color_registers_data[4]
         bitimage[color1 & highlight] = m.color_registers_highlight[4]
         bitimage[color2 & normal] = m.color_registers[5]
         bitimage[color2 & comment] = m.color_registers_comment[5]
         bitimage[color2 & match] = m.color_registers_match[5]
+        bitimage[color2 & data] = m.color_registers_data[5]
         bitimage[color2 & highlight] = m.color_registers_highlight[5]
         bitimage[color3 & normal] = m.color_registers[6]
         bitimage[color3 & comment] = m.color_registers_comment[6]
         bitimage[color3 & match] = m.color_registers_match[6]
+        bitimage[color3 & data] = m.color_registers_data[6]
         bitimage[color3 & highlight] = m.color_registers_highlight[6]
         bitimage[count:,:,:] = m.empty_color
 
@@ -123,10 +131,12 @@ class GTIA9(object):
         h_colors = m.get_blended_color_registers(color_registers, m.highlight_color)
         m_colors = m.get_blended_color_registers(color_registers, m.match_background_color)
         c_colors = m.get_blended_color_registers(color_registers, m.comment_background_color)
+        d_colors = m.get_dimmed_color_registers(color_registers, m.background_color, m.data_color)
         
         style_per_pixel = np.vstack((style, style)).T
         normal = style_per_pixel == 0
         highlight = (style_per_pixel & 0x80) == 0x80
+        data = (style_per_pixel & 0x4) == 0x4
         comment = (style_per_pixel & 0x2) == 0x2
         match = (style_per_pixel & 0x1) == 0x1
         
@@ -136,6 +146,7 @@ class GTIA9(object):
             bitimage[color_is_set & normal] = color_registers[i]
             bitimage[color_is_set & comment] = c_colors[i]
             bitimage[color_is_set & match] = m_colors[i]
+            bitimage[color_is_set & data] = d_colors[i]
             bitimage[color_is_set & highlight] = h_colors[i]
         bitimage[count:,:,:] = m.empty_color
 
@@ -178,6 +189,7 @@ def get_numpy_font_map_image(m, bytes, style, start_byte, end_byte, bytes_per_ro
     e = start_byte
     f = m.antic_font.normal_font
     fh = m.antic_font.highlight_font
+    fd = m.antic_font.data_font
     fm = m.antic_font.match_font
     fc = m.antic_font.comment_font
     mapping = m.font_mapping.font_mapping
@@ -195,6 +207,8 @@ def get_numpy_font_map_image(m, bytes, style, start_byte, end_byte, bytes_per_ro
                     array[y:y+8,x:x+8,:] = fm[c]
                 elif s & 2:
                     array[y:y+8,x:x+8,:] = fc[c]
+                elif s & 4:
+                    array[y:y+8,x:x+8,:] = fd[c]
                 else:
                     array[y:y+8,x:x+8,:] = f[c]
             x += 8

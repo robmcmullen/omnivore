@@ -39,6 +39,8 @@ class Machine(HasTraits):
     
     color_registers_highlight = Any
     
+    color_registers_data = Any
+    
     color_registers_match = Any
     
     color_registers_comment = Any
@@ -68,6 +70,8 @@ class Machine(HasTraits):
     unfocused_cursor_color = (128, 128, 128)
     
     background_color = (255, 255, 255)
+    
+    data_color = (224, 224, 224)
     
     match_background_color = (255, 255, 180)
     
@@ -147,6 +151,9 @@ class Machine(HasTraits):
     
     def _color_registers_comment_default(self):
         return self.get_blended_color_registers(self.color_registers, self.comment_background_color)
+    
+    def _color_registers_data_default(self):
+        return self.get_dimmed_color_registers(self.color_registers, self.background_color, self.data_color)
 
     def _bitmap_renderer_default(self):
         return predefined['bitmap_renderer'][0]
@@ -234,6 +241,14 @@ class Machine(HasTraits):
         base_blend = [(r * 7)/8 for r in blend_color]
         for c in colors:
             r = [c[i]/8 + base_blend[i] for i in range(3)]
+            registers.append(r)
+        return registers
+    
+    def get_dimmed_color_registers(self, colors, background_color, dimmed_color):
+        registers = []
+        dimmed_difference = [b - d for b, d in zip(background_color, dimmed_color)]
+        for c in colors:
+            r = [max(0, c[i]- dimmed_difference[i]) for i in range(3)]
             registers.append(r)
         return registers
     

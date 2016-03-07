@@ -75,6 +75,8 @@ def get_numpy_font_map_image(m, np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray
     cdef np.uint8_t[:,:,:,:] fast_f = f
     cdef np.ndarray[np.uint8_t, ndim=4] fh = m.antic_font.highlight_font
     cdef np.uint8_t[:,:,:,:] fast_fh = fh
+    cdef np.ndarray[np.uint8_t, ndim=4] fd = m.antic_font.data_font
+    cdef np.uint8_t[:,:,:,:] fast_fd = fd
     cdef np.ndarray[np.uint8_t, ndim=4] fm = m.antic_font.match_font
     cdef np.uint8_t[:,:,:,:] fast_fm = fm
     cdef np.ndarray[np.uint8_t, ndim=4] fc = m.antic_font.comment_font
@@ -97,6 +99,8 @@ def get_numpy_font_map_image(m, np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray
                     fast_array[y:y+8,x:x+8,:] = fast_fm[c]
                 elif s & 2:
                     fast_array[y:y+8,x:x+8,:] = fast_fc[c]
+                elif s & 4:
+                    fast_array[y:y+8,x:x+8,:] = fast_fd[c]
                 else:
                     fast_array[y:y+8,x:x+8,:] = fast_f[c]
             x += 8

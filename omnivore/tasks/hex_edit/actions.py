@@ -328,6 +328,32 @@ class GetSegmentFromSelectionAction(EditorAction):
             e.add_user_segment(segment)
 
 
+class MarkSelectionAsCodeAction(EditorAction):
+    name = 'Mark Selection As Code'
+    enabled_name = 'can_copy'
+    
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        ranges = s.get_style_ranges(selected=True)
+        s.clear_style_ranges(ranges, data=True)
+        e.document.change_count += 1
+        e.refresh_panes()
+
+
+class MarkSelectionAsDataAction(EditorAction):
+    name = 'Mark Selection As Data'
+    enabled_name = 'can_copy'
+    
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        ranges = s.get_style_ranges(selected=True)
+        s.set_style_ranges(ranges, data=True)
+        e.document.change_count += 1
+        e.refresh_panes()
+
+
 class SaveSegmentAsFormatAction(EditorAction):
     saver = Any
     
