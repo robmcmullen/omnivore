@@ -644,8 +644,10 @@ class ByteGrid(Grid.Grid):
         log.debug(self.GetSelectedRows())
         r, c = self.get_rc_from_event(evt)
         actions = self.get_popup_actions(r, c)
+        text, style = self.table.get_value_style(r, c)
+        popup_data = {'row':r, 'col':c, 'index': self.table.get_index_range(r, c)[0], 'in_selection': style&0x80}
         if actions:
-            self.editor.popup_context_menu_from_actions(self, actions)
+            self.editor.popup_context_menu_from_actions(self, actions, popup_data)
     
     def get_popup_actions(self, r, c):
         return []

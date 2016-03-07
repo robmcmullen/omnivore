@@ -500,7 +500,7 @@ class FrameworkEditor(Editor):
         cmd = context_menu_data[ret]
         self.process_command(cmd)
         
-    def popup_context_menu_from_actions(self, window, actions):
+    def popup_context_menu_from_actions(self, window, actions, popup_data=None):
         """Popup a simple context menu with menu items defined by actions.
         
         Each entry is either None to indicate a separator, or an action to be
@@ -524,7 +524,7 @@ class FrameworkEditor(Editor):
         if ret == wx.ID_NONE:
             return
         action = context_menu_data[ret]
-        action_event = ActionEvent(task=self.task)
+        action_event = ActionEvent(task=self.task, popup_data=popup_data)
         action.perform(action_event)
     
     #### Traits event handlers

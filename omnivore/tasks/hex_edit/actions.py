@@ -354,6 +354,40 @@ class MarkSelectionAsDataAction(EditorAction):
         e.refresh_panes()
 
 
+class AddCommentAction(EditorAction):
+    name = 'Add Comment'
+    accelerator = 'Alt+C'
+    
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        if e.can_copy:
+            ranges = s.get_style_ranges(selected=True)
+        else:
+            index = e.cursor_index
+            ranges = [(index, index+1)]
+        s.set_style_ranges(ranges, comment=True)
+        e.document.change_count += 1
+        e.refresh_panes()
+
+
+class AddCommentPopupAction(EditorAction):
+    name = 'Add Comment'
+    
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        if event.popup_data["in_selection"]:
+            ranges = s.get_style_ranges(selected=True)
+        else:
+            index = event.popup_data["index"]
+            ranges = [(index, index+1)]
+        if ranges:
+            s.set_style_ranges(ranges, comment=True)
+            e.document.change_count += 1
+            e.refresh_panes()
+
+
 class SaveSegmentAsFormatAction(EditorAction):
     saver = Any
     
