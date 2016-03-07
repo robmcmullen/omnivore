@@ -20,7 +20,7 @@ class Minibuffer(object):
     label = "Input:"
     error = "Bad input."
     
-    def __init__(self, editor, command_cls, label=None, initial=None, **kwargs):
+    def __init__(self, editor, command_cls, label=None, initial=None, help_text=None, help_tip=None, **kwargs):
         self.control = None
         self.editor = editor
         self.command_cls = command_cls
@@ -29,6 +29,8 @@ class Minibuffer(object):
         else:
             self.label = command_cls.pretty_name
         self.initial = initial
+        self.help_text = help_text
+        self.help_tip = help_tip
         self.kwargs = kwargs
     
     def change_editor(self, editor):
@@ -85,9 +87,13 @@ class TextMinibuffer(Minibuffer):
         prompt = wx.StaticText(self.control, -1, _(self.label))
         sizer.Add(prompt, 0, wx.CENTER)
         self.text = wx.TextCtrl(self.control, -1, size=(-1,-1), style=wx.TE_PROCESS_ENTER)
+        sizer.Add(self.text, 1, wx.EXPAND)
+        if self.help_text:
+            c = wx.StaticText(self.control, -1, self.help_text)
+            c.SetToolTip(wx.ToolTip(self.help_tip))
+            sizer.Add(c, 0, wx.ALIGN_CENTER_VERTICAL)
         self.text.Bind(wx.EVT_TEXT, self.on_text)
         self.text.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
-        sizer.Add(self.text, 1, wx.EXPAND)
         self.control.SetSizer(sizer)
 
         if self.initial:
