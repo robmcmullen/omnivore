@@ -1,4 +1,4 @@
-__version__ = "2.3.3"
+__version__ = "2.4.0"
 
 try:
     import numpy as np
