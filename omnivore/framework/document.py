@@ -90,7 +90,9 @@ class Document(HasTraits):
     
     @property
     def menu_name(self):
-        return "%s (%s)" % (self.name, self.uri)
+        if self.uri:
+            return "%s (%s)" % (self.name, self.uri)
+        return self.name
     
     @classmethod
     def get_blank(cls):
