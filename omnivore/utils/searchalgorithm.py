@@ -4,7 +4,7 @@
 # http://pyparsing.wikispaces.com/file/view/arith.py/241810293/arith.py
 import numpy as np
 
-from pyparsing import Word, nums, alphas, Combine, oneOf, Optional, \
+from pyparsing import Word, nums, hexnums, alphas, Combine, oneOf, Optional, \
     opAssoc, operatorPrecedence, ParseException
 
 from searchutil import BaseSearcher
@@ -14,13 +14,16 @@ class EvalConstant():
     def __init__(self, tokens):
         self.value = tokens[0]
     def eval(self, vars_):
-        if self.value in vars_:
-            return vars_[self.value]
+        v = self.value
+        if v in vars_:
+            return vars_[v]
         else:
-            try:
-                return int(self.value)
-            except:
-                return float(self.value)
+            if v.startswith("$"):
+                return int(v[1:], 16)
+            elif v.startswith("0x"):
+                return int(v[2:], 16)
+            else:
+                return int(v)
 
 class EvalSignOp():
     "Class to evaluate expressions with a leading + or - sign"
@@ -115,13 +118,10 @@ class EvalComparisonOp():
     
 class NumpyExpression():
     integer = Word(nums)
-#    real = ( Combine(Word(nums) + Optional("." + Word(nums))
-#                     + oneOf("E e") + Optional( oneOf('+ -')) + Word(nums))
-#             | Combine(Word(nums) + "." + Word(nums))
-#             )
+    hexint = Combine(oneOf('0x $') + Word(hexnums))
          
     variable = Word(alphas)
-    operand = integer | variable
+    operand = hexint | integer | variable
 
     signop = oneOf('+ -')
     multop = oneOf('* / // %')
@@ -163,7 +163,6 @@ class AlgorithmSearcher(BaseSearcher):
     
     def get_matches(self, editor):
         s = editor.segment
-        print "pyparsing search: %s" % self.search_text
         a = np.arange(s.start_addr, s.start_addr + len(s))
         b = np.copy(s.data)
         v = {
@@ -173,8 +172,6 @@ class AlgorithmSearcher(BaseSearcher):
         expression = NumpyExpression(v)
         try:
             result = expression.eval(self.search_text)
-            print result
-            print np.where(result == True)
             matches = s.bool_to_ranges(result)
             return matches
         except ParseException, e:
