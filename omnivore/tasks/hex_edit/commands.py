@@ -525,7 +525,7 @@ class FindPrevCommand(FindNextCommand):
 
 class FindAlgorithmCommand(FindAllCommand):
     short_name = "findalgorithm"
-    pretty_name = "Find Algorithm"
+    pretty_name = "Find using expression"
     
     def get_searchers(self, editor):
         return [AlgorithmSearcher]
