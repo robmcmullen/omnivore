@@ -556,5 +556,5 @@ class FrameworkEditor(Editor):
         return self.editor_area.task.window
 
     @property
-    def most_recent_path(self):
-        return os.path.dirname(self.document.uri)
+    def most_recent_uri(self):
+        return self.document.uri

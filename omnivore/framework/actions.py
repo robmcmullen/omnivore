@@ -97,7 +97,15 @@ class OpenAction(Action):
 
     def perform(self, event):
         if event.task.active_editor:
-            dialog = FileDialog(default_directory=event.task.active_editor.most_recent_path, parent=event.task.window.control)
+            uri = event.task.active_editor.most_recent_uri
+            most_recent = ""
+            try:
+                fs_, relpath = fs.opener.opener.parse(uri)
+                if fs_.hassyspath(relpath):
+                    most_recent = os.path.dirname(fs_.getsyspath(relpath))
+            except fs.errors.FSError:
+                pass
+            dialog = FileDialog(default_directory=most_recent, parent=event.task.window.control)
         else:
             dialog = FileDialog(parent=event.task.window.control)
         if dialog.open() == OK:
