@@ -40,6 +40,13 @@ class ProgressDialog(wx.Dialog):
               style=wx.GA_HORIZONTAL|wx.GA_SMOOTH)
         sizer.Add(self.gauge, 0, flag=wx.EXPAND|wx.ALL, border=self.border)
 
+        #self.finished = wx.lib.expando.ExpandoTextCtrl(self, -1, value="")
+        self.finished = wx.TextCtrl(self, -1, value="", size=(-1,100), style=wx.TE_MULTILINE)
+        self.finished.SetEditable(False)
+        #self.finished.SetMaxHeight(200)
+        self.finished.Bind(wx.lib.expando.EVT_ETC_LAYOUT_NEEDED, self.on_refit)
+        sizer.Add(self.finished, 0, flag=wx.EXPAND|wx.ALL, border=self.border)
+
         self.count = 0
         self.last_pulse = time.clock()
         self.time_delta = 0.1
@@ -57,6 +64,7 @@ class ProgressDialog(wx.Dialog):
         btn.Bind(wx.EVT_BUTTON, self.on_cancel)
         self.request_cancel = False
 
+        self.finished.Hide()
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.label.Layout()
@@ -66,6 +74,11 @@ class ProgressDialog(wx.Dialog):
 
     def on_cancel(self, evt):
         self.request_cancel = True
+    
+    def on_refit(self, evt):
+        # Note that there is a bug in expando that resets height to one line
+        # after the SetMaxHeight is reached.
+        self.Fit()
     
     def raise_error(self):
         raise ProgressCancelError(self.GetTitle() + " canceled by user!")
@@ -80,6 +93,15 @@ class ProgressDialog(wx.Dialog):
 
     def on_timer(self):
         self.Show()
+
+    def add_finished(self, text, time):
+        self.finished.Show()
+        self.Fit()
+        self.Layout()
+        t = self.finished.GetValue()
+        if t:
+            text = "\n" + text
+        self.finished.AppendText("%s: %fs" % (text, time))
 
     def set_ticks(self, count):
         """Set the total number of ticks that will be contained in the
@@ -149,6 +171,7 @@ class wxLogHandler(logging.Handler):
         self.level = logging.DEBUG
         self.default_title = default_title
         self.use_gui = True
+        self.time_t0 = 0
 
     def flush(self):
         """
@@ -224,6 +247,7 @@ class wxLogHandler(logging.Handler):
             return
         m = evt.message
         if m.startswith("START"):
+            self.time_t0 = time.clock()
             d = self.open_dialog()
             if "=" in m:
                 _, text = m.split("=", 1)
@@ -261,6 +285,13 @@ class wxLogHandler(logging.Handler):
             elif m == "PULSE":
                 self.force_cursor()
                 d.set_pulse()
+            elif m.startswith("TIME_DELTA"):
+                t = time.clock()
+                self.force_cursor()
+                _, text = m.split("=", 1)
+                d.add_finished(text, t - self.time_t0)
+                wx.Yield()
+                self.time_t0 = t
             else:
                 self.force_cursor()
                 d.tick(m)
@@ -286,3 +317,40 @@ class FileProgressPlugin(FrameworkPlugin):
         log.propagate = False
         handler = wxLogHandler("Progress")
         log.addHandler(handler)
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    
+    def progress_test():
+        print "HI!"
+        progress_log.info("START=First Test")
+        try:
+            progress_log.info("TITLE=Starting timer")
+            for i in range(100):
+                print i
+                progress_log.info("Trying %d" % i)
+                for j in range(10):
+                    time.sleep(.1)
+                    wx.Yield()
+                if i > 4:
+                    progress_log.info("TIME_DELTA=Finished trying %d" % i)
+                progress_log.info("PULSE")
+                wx.Yield()
+                
+        except ProgressCancelError, e:
+            error = e.message
+        finally:
+            progress_log.info("END")
+
+    p = FileProgressPlugin()
+    p.start()
+    progress_log = logging.getLogger("progress")
+    
+    app = wx.App(redirect = False)
+    frame = wx.Frame(None, title='Progress Test', size=(800,400))
+    frame.Show()
+    wx.CallLater(1000, progress_test)
+    app.MainLoop()
