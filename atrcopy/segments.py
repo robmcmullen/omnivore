@@ -98,6 +98,14 @@ class DefaultSegment(object):
                 start, end = end, start
             s[start:end] |= style_bits
     
+    def clear_style_ranges(self, ranges, **kwargs):
+        style_mask = self.get_style_mask(**kwargs)
+        s = self.style
+        for start, end in ranges:
+            if end < start:
+                start, end = end, start
+            s[start:end] &= style_mask
+    
     def get_style_ranges(self, **kwargs):
         style_bits = self.get_style_bits(**kwargs)
         matches = (self.style & style_bits) > 0
