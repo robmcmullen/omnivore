@@ -234,6 +234,11 @@ class Machine(HasTraits):
             antic_color_registers = self.antic_color_registers
         for c in antic_color_registers:
             registers.append(color_converter(c))
+        
+        # make sure there are 16 registers for 4bpp modes
+        i = len(registers)
+        for i in range(len(registers), 16):
+            registers.append((i*16, i*16, i*16))
         return registers
     
     def get_blended_color_registers(self, colors, blend_color):
@@ -367,6 +372,7 @@ predefined = {
         antic_renderers.GTIA10(),
         antic_renderers.GTIA11(),
         antic_renderers.TwoBitsPerPixel(),
+        antic_renderers.FourBitsPerPixel(),
         ],
     "font_renderer": [
         antic_renderers.Mode2(),

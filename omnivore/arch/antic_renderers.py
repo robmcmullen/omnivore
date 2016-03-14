@@ -13,6 +13,14 @@ class BaseRenderer(object):
     name = "base"
     pixels_per_byte = 8
 
+    def get_colors(self, m, registers):
+        color_registers = [m.color_registers[r] for r in registers]
+        h_colors = [m.color_registers_highlight[r] for r in registers]
+        m_colors = [m.color_registers_match[r] for r in registers]
+        c_colors = [m.color_registers_comment[r] for r in registers]
+        d_colors = [m.color_registers_data[r] for r in registers]
+        return color_registers, h_colors, m_colors, c_colors, d_colors
+
     def reshape(self, bitimage, bytes_per_row, nr):
         h, w, colors = bitimage.shape
         if w == self.pixels_per_byte:
@@ -28,6 +36,60 @@ class BaseRenderer(object):
         cd = np.array(d)
         array = bitimage[list(cd)]
         return array.reshape((nr, bytes_per_row * self.pixels_per_byte, 3))
+    
+    def get_2bpp(self, m, bytes_per_row, nr, count, bytes, style, colors):
+        bits = np.unpackbits(bytes)
+        bits = bits.reshape((-1, 8))
+        pixels = np.empty((nr * bytes_per_row, 4), dtype=np.uint8)
+        pixels[:,0] = bits[:,0] * 2 + bits[:,1]
+        pixels[:,1] = bits[:,2] * 2 + bits[:,3]
+        pixels[:,2] = bits[:,4] * 2 + bits[:,5]
+        pixels[:,3] = bits[:,6] * 2 + bits[:,7]
+        
+        style_per_pixel = np.vstack((style, style, style, style)).T
+        normal = style_per_pixel == 0
+        highlight = (style_per_pixel & 0x80) == 0x80
+        data = (style_per_pixel & 0x4) == 0x4
+        comment = (style_per_pixel & 0x2) == 0x2
+        match = (style_per_pixel & 0x1) == 0x1
+        
+        color_registers, h_colors, m_colors, c_colors, d_colors = colors
+        bitimage = np.empty((nr * bytes_per_row, 4, 3), dtype=np.uint8)
+        for i in range(4):
+            color_is_set = (pixels == i)
+            bitimage[color_is_set & normal] = color_registers[i]
+            bitimage[color_is_set & comment] = c_colors[i]
+            bitimage[color_is_set & match] = m_colors[i]
+            bitimage[color_is_set & data] = d_colors[i]
+            bitimage[color_is_set & highlight] = h_colors[i]
+        bitimage[count:,:,:] = m.empty_color
+        return bitimage
+    
+    def get_4bpp(self, m, bytes_per_row, nr, count, bytes, style, colors):
+        bits = np.unpackbits(bytes)
+        bits = bits.reshape((-1, 8))
+        pixels = np.empty((nr * bytes_per_row, 2), dtype=np.uint8)
+        pixels[:,0] = bits[:,0] * 8 + bits[:,1] * 4 + bits[:,2] * 2 + bits[:,3]
+        pixels[:,1] = bits[:,4] * 8 + bits[:,5] * 4 + bits[:,6] * 2 + bits[:,7]
+        
+        style_per_pixel = np.vstack((style, style)).T
+        normal = style_per_pixel == 0
+        highlight = (style_per_pixel & 0x80) == 0x80
+        data = (style_per_pixel & 0x4) == 0x4
+        comment = (style_per_pixel & 0x2) == 0x2
+        match = (style_per_pixel & 0x1) == 0x1
+        
+        color_registers, h_colors, m_colors, c_colors, d_colors = colors
+        bitimage = np.empty((nr * bytes_per_row, 2, 3), dtype=np.uint8)
+        for i in range(16):
+            color_is_set = (pixels == i)
+            bitimage[color_is_set & normal] = color_registers[i]
+            bitimage[color_is_set & comment] = c_colors[i]
+            bitimage[color_is_set & match] = m_colors[i]
+            bitimage[color_is_set & data] = d_colors[i]
+            bitimage[color_is_set & highlight] = h_colors[i]
+        bitimage[count:,:,:] = m.empty_color
+        return bitimage
 
 
 class OneBitPerPixelB(BaseRenderer):
@@ -78,56 +140,9 @@ class TwoBitsPerPixel(BaseRenderer):
     name = "2bpp"
     pixels_per_byte = 4
     
-    def get_2bpp(self, m, bytes_per_row, nr, count, bytes, style, registers):
-        bits = np.unpackbits(bytes)
-        bits = bits.reshape((-1, 8))
-        pixels = np.empty((nr * bytes_per_row, 4), dtype=np.uint8)
-        pixels[:,0] = bits[:,0] * 2 + bits[:,1]
-        pixels[:,1] = bits[:,2] * 2 + bits[:,3]
-        pixels[:,2] = bits[:,4] * 2 + bits[:,5]
-        pixels[:,3] = bits[:,6] * 2 + bits[:,7]
-        
-        background = (pixels == 0)
-        color1 = (pixels == 1)
-        color2 = (pixels == 2)
-        color3 = (pixels == 3)
-        
-        style_per_pixel = np.vstack((style, style, style, style)).T
-        normal = style_per_pixel == 0
-        highlight = (style_per_pixel & 0x80) == 0x80
-        data = (style_per_pixel & 0x4) == 0x4
-        comment = (style_per_pixel & 0x2) == 0x2
-        match = (style_per_pixel & 0x1) == 0x1
-        
-        bg = registers[0]
-        c1 = registers[1]
-        c2 = registers[2]
-        c3 = registers[3]
-        bitimage = np.empty((nr * bytes_per_row, 4, 3), dtype=np.uint8)
-        bitimage[background & normal] = m.color_registers[bg]
-        bitimage[background & comment] = m.color_registers_comment[bg]
-        bitimage[background & match] = m.color_registers_match[bg]
-        bitimage[background & highlight] = m.color_registers_highlight[bg]
-        bitimage[color1 & normal] = m.color_registers[c1]
-        bitimage[color1 & comment] = m.color_registers_comment[c1]
-        bitimage[color1 & match] = m.color_registers_match[c1]
-        bitimage[color1 & data] = m.color_registers_data[c1]
-        bitimage[color1 & highlight] = m.color_registers_highlight[c1]
-        bitimage[color2 & normal] = m.color_registers[c2]
-        bitimage[color2 & comment] = m.color_registers_comment[c2]
-        bitimage[color2 & match] = m.color_registers_match[c2]
-        bitimage[color2 & data] = m.color_registers_data[c2]
-        bitimage[color2 & highlight] = m.color_registers_highlight[c2]
-        bitimage[color3 & normal] = m.color_registers[c3]
-        bitimage[color3 & comment] = m.color_registers_comment[c3]
-        bitimage[color3 & match] = m.color_registers_match[c3]
-        bitimage[color3 & data] = m.color_registers_data[c3]
-        bitimage[color3 & highlight] = m.color_registers_highlight[c3]
-        bitimage[count:,:,:] = m.empty_color
-        return bitimage
-    
     def get_image(self, m, bytes_per_row, nr, count, bytes, style):
-        bitimage = self.get_2bpp(m, bytes_per_row, nr, count, bytes, style, [8, 4, 5, 6])
+        colors = self.get_colors(m, [0, 1, 2, 3])
+        bitimage = self.get_2bpp(m, bytes_per_row, nr, count, bytes, style, colors)
         return self.reshape(bitimage, bytes_per_row, nr)
 
 
@@ -136,59 +151,37 @@ class ModeE(TwoBitsPerPixel):
     pixels_per_byte = 8
     
     def get_image(self, m, bytes_per_row, nr, count, bytes, style):
-        bitimage = self.get_2bpp(m, bytes_per_row, nr, count, bytes, style, [8, 4, 5, 6])
+        colors = self.get_colors(m, [8, 4, 5, 6])
+        bitimage = self.get_2bpp(m, bytes_per_row, nr, count, bytes, style, colors)
         return self.reshape(bitimage, bytes_per_row, nr)
 
 
-class GTIA9(BaseRenderer):
+class FourBitsPerPixel(BaseRenderer):
+    name = "4bpp"
+    pixels_per_byte = 2
+    
+    def get_image(self, m, bytes_per_row, nr, count, bytes, style):
+        colors = self.get_colors(m, range(16))
+        bitimage = self.get_4bpp(m, bytes_per_row, nr, count, bytes, style, colors)
+        return self.reshape(bitimage, bytes_per_row, nr)
+
+
+class GTIA9(FourBitsPerPixel):
     name = "GTIA 9 (4bpp, 16 luminances, 1 color)"
+    pixels_per_byte = 8
     
     def get_antic_color_registers(self, m):
         first_color = m.antic_color_registers[8] & 0xf0
         return range(first_color, first_color + 16)
     
-    def get_image(self, m, bytes_per_row, nr, count, bytes, style):
-        bits = np.unpackbits(bytes)
-        bits = bits.reshape((-1, 8))
-        pixels = np.empty((nr * bytes_per_row, 2), dtype=np.uint8)
-        pixels[:,0] = bits[:,0] * 8 + bits[:,1] * 4 + bits[:,2] * 2 + bits[:,3]
-        pixels[:,1] = bits[:,4] * 8 + bits[:,5] * 4 + bits[:,6] * 2 + bits[:,7]
-        
+    def get_colors(self, m, registers):
         antic_color_registers = self.get_antic_color_registers(m)
         color_registers = m.get_color_registers(antic_color_registers)
-        
         h_colors = m.get_blended_color_registers(color_registers, m.highlight_color)
         m_colors = m.get_blended_color_registers(color_registers, m.match_background_color)
         c_colors = m.get_blended_color_registers(color_registers, m.comment_background_color)
         d_colors = m.get_dimmed_color_registers(color_registers, m.background_color, m.data_color)
-        
-        style_per_pixel = np.vstack((style, style)).T
-        normal = style_per_pixel == 0
-        highlight = (style_per_pixel & 0x80) == 0x80
-        data = (style_per_pixel & 0x4) == 0x4
-        comment = (style_per_pixel & 0x2) == 0x2
-        match = (style_per_pixel & 0x1) == 0x1
-        
-        bitimage = np.empty((nr * bytes_per_row, 2, 3), dtype=np.uint8)
-        for i in range(16):
-            color_is_set = (pixels == i)
-            bitimage[color_is_set & normal] = color_registers[i]
-            bitimage[color_is_set & comment] = c_colors[i]
-            bitimage[color_is_set & match] = m_colors[i]
-            bitimage[color_is_set & data] = d_colors[i]
-            bitimage[color_is_set & highlight] = h_colors[i]
-        bitimage[count:,:,:] = m.empty_color
-
-        # create a double-width image to expand the pixels to the correct
-        # aspect ratio
-        newdims = np.asarray((nr * bytes_per_row, 8))
-        base=np.indices(newdims)
-        d = []
-        d.append(base[0])
-        d.append(base[1]/4)
-        cd = np.array(d)
-        array = bitimage[list(cd)]
-        return array.reshape((nr, bytes_per_row * 8, 3))
+        return color_registers, h_colors, m_colors, c_colors, d_colors
 
 
 class GTIA10(GTIA9):

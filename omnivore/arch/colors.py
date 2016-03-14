@@ -84,8 +84,10 @@ def gtia_ntsc_to_rgb_table(val):
 gtia_ntsc_to_rgb = gtia_ntsc_to_rgb_table
 
 def powerup_colors():
-    # From Mapping the Atari
-    return list([0, 0, 0, 0, 40, 202, 148, 70, 0])
+    # Playfield colors are from Mapping the Atari
+    # Player/missile colors (the first 4 colors) are normally zero, but I'm
+    # specifying others here so they are distinguishable when used.
+    return list([4, 30, 68, 213, 40, 202, 148, 70, 0])
 
 def gr0_colors(colors):
     if len(colors) == 5:
