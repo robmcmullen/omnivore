@@ -9,7 +9,28 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class OneBitPerPixelB(object):
+class BaseRenderer(object):
+    name = "base"
+    pixels_per_byte = 8
+
+    def reshape(self, bitimage, bytes_per_row, nr):
+        h, w, colors = bitimage.shape
+        if w == self.pixels_per_byte:
+            return bitimage.reshape((nr, bytes_per_row * self.pixels_per_byte, 3))
+        
+        # create a double-width image to expand the pixels to the correct
+        # aspect ratio
+        newdims = np.asarray((nr * bytes_per_row, self.pixels_per_byte))
+        base=np.indices(newdims)
+        d = []
+        d.append(base[0])
+        d.append(base[1]/(self.pixels_per_byte / w))
+        cd = np.array(d)
+        array = bitimage[list(cd)]
+        return array.reshape((nr, bytes_per_row * self.pixels_per_byte, 3))
+
+
+class OneBitPerPixelB(BaseRenderer):
     name = "B/W, 1bpp, on=black"
     bw_colors = ((255, 255, 255), (0, 0, 0))
     
@@ -53,10 +74,11 @@ class OneBitPerPixelW(OneBitPerPixelB):
     bw_colors = ((0, 0, 0), (255, 255, 255))
 
 
-class ModeE(object):
-    name = "Antic E (Gr 7+, 2bpp)"
+class TwoBitsPerPixel(BaseRenderer):
+    name = "2bpp"
+    pixels_per_byte = 4
     
-    def get_image(self, m, bytes_per_row, nr, count, bytes, style):
+    def get_2bpp(self, m, bytes_per_row, nr, count, bytes, style, registers):
         bits = np.unpackbits(bytes)
         bits = bits.reshape((-1, 8))
         pixels = np.empty((nr * bytes_per_row, 4), dtype=np.uint8)
@@ -77,41 +99,48 @@ class ModeE(object):
         comment = (style_per_pixel & 0x2) == 0x2
         match = (style_per_pixel & 0x1) == 0x1
         
+        bg = registers[0]
+        c1 = registers[1]
+        c2 = registers[2]
+        c3 = registers[3]
         bitimage = np.empty((nr * bytes_per_row, 4, 3), dtype=np.uint8)
-        bitimage[background & normal] = m.color_registers[8]
-        bitimage[background & comment] = m.color_registers_comment[8]
-        bitimage[background & match] = m.color_registers_match[8]
-        bitimage[background & highlight] = m.color_registers_highlight[8]
-        bitimage[color1 & normal] = m.color_registers[4]
-        bitimage[color1 & comment] = m.color_registers_comment[4]
-        bitimage[color1 & match] = m.color_registers_match[4]
-        bitimage[color1 & data] = m.color_registers_data[4]
-        bitimage[color1 & highlight] = m.color_registers_highlight[4]
-        bitimage[color2 & normal] = m.color_registers[5]
-        bitimage[color2 & comment] = m.color_registers_comment[5]
-        bitimage[color2 & match] = m.color_registers_match[5]
-        bitimage[color2 & data] = m.color_registers_data[5]
-        bitimage[color2 & highlight] = m.color_registers_highlight[5]
-        bitimage[color3 & normal] = m.color_registers[6]
-        bitimage[color3 & comment] = m.color_registers_comment[6]
-        bitimage[color3 & match] = m.color_registers_match[6]
-        bitimage[color3 & data] = m.color_registers_data[6]
-        bitimage[color3 & highlight] = m.color_registers_highlight[6]
+        bitimage[background & normal] = m.color_registers[bg]
+        bitimage[background & comment] = m.color_registers_comment[bg]
+        bitimage[background & match] = m.color_registers_match[bg]
+        bitimage[background & highlight] = m.color_registers_highlight[bg]
+        bitimage[color1 & normal] = m.color_registers[c1]
+        bitimage[color1 & comment] = m.color_registers_comment[c1]
+        bitimage[color1 & match] = m.color_registers_match[c1]
+        bitimage[color1 & data] = m.color_registers_data[c1]
+        bitimage[color1 & highlight] = m.color_registers_highlight[c1]
+        bitimage[color2 & normal] = m.color_registers[c2]
+        bitimage[color2 & comment] = m.color_registers_comment[c2]
+        bitimage[color2 & match] = m.color_registers_match[c2]
+        bitimage[color2 & data] = m.color_registers_data[c2]
+        bitimage[color2 & highlight] = m.color_registers_highlight[c2]
+        bitimage[color3 & normal] = m.color_registers[c3]
+        bitimage[color3 & comment] = m.color_registers_comment[c3]
+        bitimage[color3 & match] = m.color_registers_match[c3]
+        bitimage[color3 & data] = m.color_registers_data[c3]
+        bitimage[color3 & highlight] = m.color_registers_highlight[c3]
         bitimage[count:,:,:] = m.empty_color
-
-        # create a double-width image to expand the pixels to the correct
-        # aspect ratio
-        newdims = np.asarray((nr * bytes_per_row, 8))
-        base=np.indices(newdims)
-        d = []
-        d.append(base[0])
-        d.append(base[1]/2)
-        cd = np.array(d)
-        array = bitimage[list(cd)]
-        return array.reshape((nr, bytes_per_row * 8, 3))
+        return bitimage
+    
+    def get_image(self, m, bytes_per_row, nr, count, bytes, style):
+        bitimage = self.get_2bpp(m, bytes_per_row, nr, count, bytes, style, [8, 4, 5, 6])
+        return self.reshape(bitimage, bytes_per_row, nr)
 
 
-class GTIA9(object):
+class ModeE(TwoBitsPerPixel):
+    name = "Antic E (Gr 7+, 2bpp)"
+    pixels_per_byte = 8
+    
+    def get_image(self, m, bytes_per_row, nr, count, bytes, style):
+        bitimage = self.get_2bpp(m, bytes_per_row, nr, count, bytes, style, [8, 4, 5, 6])
+        return self.reshape(bitimage, bytes_per_row, nr)
+
+
+class GTIA9(BaseRenderer):
     name = "GTIA 9 (4bpp, 16 luminances, 1 color)"
     
     def get_antic_color_registers(self, m):
@@ -217,7 +246,7 @@ def get_numpy_font_map_image(m, bytes, style, start_byte, end_byte, bytes_per_ro
     return array
 
 
-class Mode2(object):
+class Mode2(BaseRenderer):
     name = "Antic 2 (Gr 0)"
     font_mode = 2
     
@@ -271,7 +300,7 @@ class AnticFontMapping(object):
 
 
 
-class BytePerPixelMemoryMap(object):
+class BytePerPixelMemoryMap(BaseRenderer):
     name = "1Bpp Greyscale"
     
     def get_image(self, m, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols):

@@ -53,6 +53,7 @@ class BitviewScroller(wx.ScrolledWindow):
         self.max_zoom = 16
         self.min_zoom = 1
         self.bytes_per_row = 1
+        self.pixels_per_byte = 8
 
         # internal storage
         self.start_addr = 0
@@ -105,6 +106,7 @@ class BitviewScroller(wx.ScrolledWindow):
             self.segment = editor.segment
             self.rect_select = editor.rect_select
             self.start_addr = editor.segment.start_addr
+            self.pixels_per_byte = editor.machine.bitmap_renderer.pixels_per_byte
             self.set_colors()
             self.set_font()
             self.update_bytes_per_row()
@@ -264,7 +266,7 @@ class BitviewScroller(wx.ScrolledWindow):
     
     def calc_scale_from_bytes(self):
         self.total_rows = (len(self.segment) + self.bytes_per_row - 1) / self.bytes_per_row
-        self.grid_width = int(8 * self.bytes_per_row)
+        self.grid_width = int(self.pixels_per_byte * self.bytes_per_row)
         self.grid_height = int(self.total_rows)
     
     def calc_scroll_params(self):
@@ -531,9 +533,9 @@ class BitmapScroller(BitviewScroller):
             inside = False
         if x < 0:
             x = 0
-        elif x >= 8 * self.bytes_per_row:
-            x = 8 * self.bytes_per_row - 1
-        xbyte = (x // 8)
+        elif x >= self.pixels_per_byte * self.bytes_per_row:
+            x = self.pixels_per_byte * self.bytes_per_row - 1
+        xbyte = (x // self.pixels_per_byte)
         byte = (self.bytes_per_row * y) + xbyte
         if byte > self.end_byte:
             inside = False
@@ -595,7 +597,7 @@ class FontMapScroller(BitviewScroller):
     
     def calc_scale_from_bytes(self):
         self.total_rows = (len(self.segment) + self.bytes_per_row - 1) / self.bytes_per_row
-        self.grid_width = int(8 * self.bytes_per_row)
+        self.grid_width = int(self.pixels_per_byte * self.bytes_per_row)
         self.grid_height = int(8 * self.total_rows)
     
     def get_zoom_factors(self):
@@ -606,7 +608,7 @@ class FontMapScroller(BitviewScroller):
     def calc_scroll_params(self):
         zw, zh = self.get_zoom_factors()
         self.SetVirtualSize((self.grid_width * zw, self.grid_height * zh))
-        self.SetScrollRate(8 * zw, 8 * zh)
+        self.SetScrollRate(self.pixels_per_byte * zw, 8 * zh)
     
     def calc_image_size(self):
         x, y = self.GetViewStart()
@@ -622,7 +624,7 @@ class FontMapScroller(BitviewScroller):
         zoom_factor = 8 * zh
         self.fully_visible_rows = h / zoom_factor
         self.visible_rows = (h + zoom_factor - 1) / zoom_factor
-        zoom_factor = 8 * zw
+        zoom_factor = self.pixels_per_byte * zw
         self.fully_visible_cols = w / zoom_factor
         self.start_col, self.visible_cols = x, (w + zoom_factor - 1) / zoom_factor
         log.debug("fontmap: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.visible_cols]))
@@ -669,8 +671,8 @@ class FontMapScroller(BitviewScroller):
         er = r2 - self.start_row
         sc = c1 - self.start_col
         ec = c2 - self.start_col
-        x1 = sc * 8 * zw
-        x2 = ec * 8 * zw - 1
+        x1 = sc * self.pixels_per_byte * zw
+        x2 = ec * self.pixels_per_byte * zw - 1
         y1 = sr * 8 * zh
         y2 = er * 8 * zh - 1
         xmax = array.shape[1]
@@ -700,7 +702,7 @@ class FontMapScroller(BitviewScroller):
 
         zw, zh = self.get_zoom_factors()
         x, y = self.GetViewStart()
-        x = (evt.GetX() // zw // 8) + x
+        x = (evt.GetX() // zw // self.pixels_per_byte) + x
         y = (evt.GetY() // zh // 8) + y
         if x < 0 or x >= self.bytes_per_row or y < 0 or y > (self.start_row + self.visible_rows):
             inside = False
