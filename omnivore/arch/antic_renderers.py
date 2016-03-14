@@ -45,7 +45,7 @@ class OneBitPerPixelB(object):
         bitimage[color1 & highlight] = h_colors[1]
         bitimage[count:,:,:] = m.empty_color
 
-        return bitimage
+        return bitimage.reshape((nr, bytes_per_row * 8, 3))
 
 
 class OneBitPerPixelW(OneBitPerPixelB):
