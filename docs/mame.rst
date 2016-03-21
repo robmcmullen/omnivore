@@ -60,3 +60,24 @@ Encryption
 MAME ROMs can be encrypted, and the encryption scheme predictably got more
 complicated as time went on. Flicky uses an XOR scheme but apparently only had
 48 keys so it was reverse engineered.
+
+Looking at the AdvanceMAME 1.2 source, Flicky uses the following files::
+
+    drivers/system1.c 
+    vidhrdw/system1.c
+
+
+High Score Files
+================
+
+Flicky's high score file with one entry::
+
+    $ hexdump -C hi/flicky.hi 
+    00000000  01 36 70 00 10 00 00 09  00 00 08 00 00 07 00 00  |.6p.............|
+    00000010  06 00 00 05 00 10 03 03  03 02 02 02 52 4f 42 48  |............ROBH|
+    00000020  5c 49 49 43 49 59 5c 4b  4b 54 47 4d 5c 54 53 45  |\IICIY\KKTGM\TSE|
+    00000030  20 01 36 70                                       | .6p|
+    00000034
+
+I tried moving it over to another computer and it wasn't recognized, so I don't
+know what triggers the loading of the files.
