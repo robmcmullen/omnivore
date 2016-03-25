@@ -1,4 +1,4 @@
-__version__ = "2.4.0"
+__version__ = "2.5.0"
 
 try:
     import numpy as np
@@ -9,7 +9,7 @@ from errors import *
 from ataridos import AtariDosDiskImage, AtariDosFile
 from diskimages import AtrHeader, BootDiskImage
 from kboot import KBootImage
-from segments import SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, IndexedByteSegment
+from segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, IndexedByteSegment
 from spartados import SpartaDosDiskImage
 from utils import to_numpy
 
@@ -60,12 +60,12 @@ def run():
 
     for filename in options.files:
         with open(filename, "rb") as fh:
-            data = fh.read()
+            rawdata = SegmentData(fh.read())
+            data = rawdata.get_data()
             image = None
             if options.debug:
-                data = to_numpy(data)
                 header = AtrHeader(data[0:16])
-                image = SpartaDosDiskImage(data, filename)
+                image = SpartaDosDiskImage(rawdata, filename)
             else:
                 try:
                     data = to_numpy(data)
@@ -74,7 +74,7 @@ def run():
                         for format in [KBootImage, SpartaDosDiskImage, AtariDosDiskImage]:
                             if options.verbose: print "trying", format.__name__
                             try:
-                                image = format(data, filename)
+                                image = format(rawdata, filename)
                                 print "%s: %s" % (filename, image)
                                 break
                             except InvalidDiskImage:
@@ -82,7 +82,7 @@ def run():
                     except AtrError:
                         for format in [AtariDosDiskImage]:
                             try:
-                                image = format(data)
+                                image = format(rawdata, filename)
                                 print "%s: %s" % (filename, image)
                                 break
                             except:
@@ -91,13 +91,13 @@ def run():
                 except AtrError:
                     if options.verbose: print "%s: Doesn't look like a supported disk image" % filename
                     try:
-                        image = AtariDosFile(data)
+                        image = AtariDosFile(rawdata)
                         print "%s:\n%s" % (filename, image)
                     except InvalidBinaryFile:
                         if options.verbose: print "%s: Doesn't look like an XEX either" % filename
                     continue
                 if image is None:
-                    image = BootDiskImage(data, filename)
+                    image = BootDiskImage(rawdata, filename)
             if options.segments:
                 image.parse_segments()
                 print "\n".join([str(a) for a in image.segments])

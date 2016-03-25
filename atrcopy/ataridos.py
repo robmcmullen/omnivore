@@ -142,13 +142,11 @@ class AtariDosFile(object):
     
     Ref: http://www.atarimax.com/jindroush.atari.org/afmtexe.html
     """
-    def __init__(self, data, style=None):
-        self.bytes = to_numpy(data)
-        self.size = np.alen(self.bytes)
-        if style is None:
-            self.style = np.zeros(self.size, dtype=np.uint8)
-        else:
-            self.style = style
+    def __init__(self, rawdata):
+        self.rawdata = rawdata
+        self.bytes = rawdata.get_data()
+        self.style = rawdata.get_style()
+        self.size = len(rawdata)
         self.segments = []
         self.parse_segments()
     
@@ -156,6 +154,7 @@ class AtariDosFile(object):
         return "\n".join(str(s) for s in self.segments) + "\n"
     
     def parse_segments(self):
+        r = self.rawdata
         b = self.bytes
         s = self.style
         pos = 0
@@ -164,7 +163,7 @@ class AtariDosFile(object):
             if pos + 1 < self.size:
                 header, = b[pos:pos+2].view(dtype='<u2')
             else:
-                self.segments.append(ObjSegment(b[pos:pos + 1], s[pos:pos + 1], pos, pos + 1, 0, 1, "Incomplete Data"))
+                self.segments.append(ObjSegment(r[pos:pos + 1], pos, pos + 1, 0, 1, "Incomplete Data"))
                 break
             if header == 0xffff:
                 # Apparently 0xffff header can appear in any segment, not just
@@ -174,25 +173,25 @@ class AtariDosFile(object):
                 raise InvalidBinaryFile
             first = False
             if len(b[pos:pos + 4]) < 4:
-                self.segments.append(ObjSegment(b[pos:pos + 4], s[pos:pos + 4], 0, 0, "Short Segment Header"))
+                self.segments.append(ObjSegment(r[pos:pos + 4], 0, 0, "Short Segment Header"))
                 break
             start, end = b[pos:pos + 4].view(dtype='<u2')
             count = end - start + 1
             found = len(b[pos + 4:pos + 4 + count])
             if found < count:
-                self.segments.append(ObjSegment(b[pos + 4:pos + 4 + count], s[pos + 4:pos + 4 + count], pos, pos + 4, start, end, "Incomplete Data"))
+                self.segments.append(ObjSegment(r[pos + 4:pos + 4 + count], pos, pos + 4, start, end, "Incomplete Data"))
                 break
-            self.segments.append(ObjSegment(b[pos + 4:pos + 4 + count], s[pos + 4:pos + 4 + count], pos, pos + 4, start, end))
+            self.segments.append(ObjSegment(r[pos + 4:pos + 4 + count], pos, pos + 4, start, end))
             pos += 4 + count
 
 
 class AtariDosDiskImage(DiskImageBase):
-    def __init__(self, bytes, style=None):
+    def __init__(self, *args, **kwargs):
         self.first_vtoc = 360
         self.num_vtoc = 1
         self.vtoc2 = 0
         self.first_data_after_vtoc = 369
-        DiskImageBase.__init__(self, bytes, style)
+        DiskImageBase.__init__(self, *args, **kwargs)
     
     def __str__(self):
         return "%s Atari DOS Format: %d usable sectors (%d free), %d files" % (self.header, self.total_sectors, self.unused_sectors, len(self.files))
@@ -266,34 +265,33 @@ class AtariDosDiskImage(DiskImageBase):
         if flag == 0:
             num = int(values[1])
             addr = int(values[2])
-            bytes, style = self.get_sectors(1, num)
-            header = ObjSegment(bytes[0:20], style[0:20], 0, 0, addr, addr + 20, name="Boot Header")
-            sectors = ObjSegment(bytes, style, 0, 0, addr, addr + len(bytes), name="Boot Sectors")
-            code = ObjSegment(bytes[20:], style[20:], 0, 0, addr + 20, addr + len(bytes), name="Boot Code")
+            s = self.get_sector_slice(1, num)
+            r = self.rawdata[s]
+            header = ObjSegment(r[0:20], 0, 0, addr, addr + 20, name="Boot Header")
+            sectors = ObjSegment(r, 0, 0, addr, addr + len(r), name="Boot Sectors")
+            code = ObjSegment(r[20:], 0, 0, addr + 20, addr + len(r), name="Boot Code")
             segments = [sectors, header, code]
         return segments
     
     def get_vtoc_segments(self):
-        b = self.bytes
-        s = self.style
+        r = self.rawdata
         segments = []
         addr = 0
         start, count = self.get_contiguous_sectors(self.first_vtoc, self.num_vtoc)
-        segment = RawSectorsSegment(b[start:start+count], s[start:start+count], self.first_vtoc, self.num_vtoc, count, 128, 3, self.header.sector_size, name="VTOC")
+        segment = RawSectorsSegment(r[start:start+count], self.first_vtoc, self.num_vtoc, count, 128, 3, self.header.sector_size, name="VTOC")
         segments.append(segment)
         if self.vtoc2 > 0:
             start, count = self.get_contiguous_sectors(self.vtoc2, 1)
-            segment = RawSectorsSegment(b[start:start+count], s[start:start+count], self.vtoc2, 1, count, self.header.sector_size, name="VTOC2")
+            segment = RawSectorsSegment(r[start:start+count], self.vtoc2, 1, count, self.header.sector_size, name="VTOC2")
             segments.append(segment)
         return segments
     
     def get_directory_segments(self):
-        b = self.bytes
-        s = self.style
+        r = self.rawdata
         segments = []
         addr = 0
         start, count = self.get_contiguous_sectors(361, 8)
-        segment = RawSectorsSegment(b[start:start+count], s[start:start+count], 361, 8, count, 128, 3, self.header.sector_size, name="Directory")
+        segment = RawSectorsSegment(r[start:start+count], 361, 8, count, 128, 3, self.header.sector_size, name="Directory")
         segments.append(segment)
         return segments
     
@@ -309,7 +307,7 @@ class AtariDosDiskImage(DiskImageBase):
             name = "%s %ds@%d" % (dirent.get_filename(), dirent.num_sectors, dirent.starting_sector)
             verbose_name = "%s (%d sectors, first@%d) %s" % (dirent.get_filename(), dirent.num_sectors, dirent.starting_sector, dirent.verbose_info)
             print verbose_name
-            segment = IndexedByteSegment(self.bytes, self.style, byte_order, name=name, verbose_name=verbose_name)
+            segment = IndexedByteSegment(self.rawdata, byte_order, name=name, verbose_name=verbose_name)
         else:
-            segment = EmptySegment(self.bytes, self.style, name=dirent.get_filename())
+            segment = EmptySegment(self.rawdata, name=dirent.get_filename())
         return segment

@@ -1,7 +1,7 @@
 import numpy as np
 
 from errors import *
-from utils import to_numpy_list
+from utils import to_numpy, to_numpy_list
 
 
 class SegmentSaver(object):
@@ -22,13 +22,47 @@ class SegmentSaver(object):
         return "|".join(wildcards)
 
 
+class SegmentData(object):
+    def __init__(self, data, style=None, comments=None, debug=False):
+        self.data = to_numpy(data)
+        if style is None:
+            if debug:
+                self.style = np.arange(len(self), dtype=np.uint8)
+            else:
+                self.style = np.zeros(len(self), dtype=np.uint8)
+        else:
+            self.style = style
+        if comments is None:
+            comments = dict()
+        self.comments = comments
+    
+    def __len__(self):
+        return np.alen(self.data)
+    
+    def get_data(self):
+        return self.data
+    
+    def get_style(self):
+        return self.style
+    
+    def get_comments(self):
+        return self.comments
+    
+    def __getitem__(self, index):
+        d = self.data[index]
+        s = self.style[index]
+        c = self.comments
+        return SegmentData(d, s, c)
+    
+
 class DefaultSegment(object):
     savers = [SegmentSaver]
     
-    def __init__(self, data, style, start_addr=0, name="All", error=None, verbose_name=None):
+    def __init__(self, rawdata, start_addr=0, name="All", error=None, verbose_name=None):
         self.start_addr = int(start_addr)  # force python int to decouple from possibly being a numpy datatype
-        self.data = data
-        self.style = style
+        self.rawdata = rawdata
+        self.data = rawdata.get_data()
+        self.style = rawdata.get_style()
         self.error = error
         self.name = name
         self.verbose_name = verbose_name
@@ -51,7 +85,7 @@ class DefaultSegment(object):
         return s
     
     def __len__(self):
-        return np.alen(self.data)
+        return len(self.rawdata)
     
     def __getitem__(self, index):
         return self.data[index]
@@ -213,8 +247,8 @@ class DefaultSegment(object):
 
 
 class EmptySegment(DefaultSegment):
-    def __init__(self, data, style, name="", error=None):
-        DefaultSegment.__init__(self, data, style, 0, name, error)
+    def __init__(self, rawdata, name="", error=None):
+        DefaultSegment.__init__(self, rawdata, 0, name, error)
     
     def __str__(self):
         s = "%s (empty file)" % (self.name, )
@@ -234,8 +268,8 @@ class EmptySegment(DefaultSegment):
 
 
 class ObjSegment(DefaultSegment):
-    def __init__(self, data, style, metadata_start, data_start, start_addr, end_addr,  name="", **kwargs):
-        DefaultSegment.__init__(self, data, style, start_addr, name, **kwargs)
+    def __init__(self, rawdata, metadata_start, data_start, start_addr, end_addr,  name="", **kwargs):
+        DefaultSegment.__init__(self, rawdata, start_addr, name, **kwargs)
         self.metadata_start = metadata_start
         self.data_start = data_start
     
@@ -257,8 +291,8 @@ class ObjSegment(DefaultSegment):
 
 
 class RawSectorsSegment(DefaultSegment):
-    def __init__(self, data, style, first_sector, num_sectors, count, boot_sector_size, num_boot_sectors, sector_size, **kwargs):
-        DefaultSegment.__init__(self, data, style, 0, **kwargs)
+    def __init__(self, rawdata, first_sector, num_sectors, count, boot_sector_size, num_boot_sectors, sector_size, **kwargs):
+        DefaultSegment.__init__(self, rawdata, 0, **kwargs)
         self.boot_sector_size = boot_sector_size
         self.num_boot_sectors = num_boot_sectors
         self.page_size = sector_size
@@ -324,10 +358,11 @@ class IndexedStyleWrapper(object):
 
 
 class IndexedByteSegment(DefaultSegment):
-    def __init__(self, data, style, byte_order, **kwargs):
+    def __init__(self, rawdata, byte_order, **kwargs):
         # Convert to numpy list so fancy indexing works as argument to __getitem__
         self.order = to_numpy_list(byte_order)
-        DefaultSegment.__init__(self, data, IndexedStyleWrapper(style, byte_order), 0, **kwargs)
+        DefaultSegment.__init__(self, rawdata, **kwargs)
+        self.style = IndexedStyleWrapper(self.style, byte_order)
     
     def __str__(self):
         s = "%s ($%x @ $%x)" % (self.name, len(self), self.order[0])

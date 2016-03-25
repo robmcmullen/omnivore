@@ -179,19 +179,19 @@ class SpartaDosDiskImage(DiskImageBase):
     def get_boot_segments(self):
         segments = []
         num = min(self.num_boot, 1)
-        bytes, style = self.get_sectors(1, num)
+        s = self.get_sector_slice(1, num)
+        r = self.rawdata[s]
         addr = self.boot_addr
-        header = ObjSegment(bytes[0:43], style[0:43], 0, 0, addr, addr + 43, name="Boot Header")
+        header = ObjSegment(r[0:43], 0, 0, addr, addr + 43, name="Boot Header")
         segments.append(header)
         if self.num_boot > 0:
-            sectors = ObjSegment(bytes, style, 0, 0, addr, addr + len(bytes), name="Boot Sectors")
-            code = ObjSegment(bytes[43:], style[43:], 0, 0, addr + 43, addr + len(bytes), name="Boot Code")
+            sectors = ObjSegment(r, 0, 0, addr, addr + len(r), name="Boot Sectors")
+            code = ObjSegment(r[43:], 0, 0, addr + 43, addr + len(r), name="Boot Code")
             segments.extend([header, code])
         return segments
     
     def get_vtoc_segments(self):
-        b = self.bytes
-        s = self.style
+        r = self.rawdata
         segments = []
         addr = 0
         start, count = self.get_contiguous_sectors(self.first_bitmap, self.num_bitmap)
@@ -201,7 +201,7 @@ class SpartaDosDiskImage(DiskImageBase):
         else:
             num_boot = 3
             boot_size = 128
-        segment = RawSectorsSegment(b[start:start+count], s[start:start+count], self.first_bitmap, self.num_bitmap, count, 0, 0, self.sector_size, name="Bitmap")
+        segment = RawSectorsSegment(r[start:start+count], self.first_bitmap, self.num_bitmap, count, 0, 0, self.sector_size, name="Bitmap")
         segments.append(segment)
         return segments
     
@@ -236,7 +236,7 @@ class SpartaDosDiskImage(DiskImageBase):
         if len(byte_order) > 0:
             name = "%s %d@%d %s" % (dirent.get_filename(), dirent.length, dirent.starting_sector, dirent.str_timestamp)
             verbose_name = "%s (%d bytes, sector map@%d) %s %s" % (dirent.get_filename(), dirent.length, dirent.starting_sector, dirent.verbose_info, dirent.str_timestamp)
-            segment = IndexedByteSegment(self.bytes, self.style, byte_order, name=name, verbose_name=verbose_name)
+            segment = IndexedByteSegment(self.rawdata, byte_order, name=name, verbose_name=verbose_name)
         else:
-            segment = EmptySegment(self.bytes, self.style, name=dirent.get_filename(), error=dirent.str_timestamp)
+            segment = EmptySegment(self.rawdata, name=dirent.get_filename(), error=dirent.str_timestamp)
         return segment

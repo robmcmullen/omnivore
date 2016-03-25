@@ -1,7 +1,7 @@
 import numpy as np
 
 from errors import *
-from segments import EmptySegment, ObjSegment, RawSectorsSegment, IndexedByteSegment
+from segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment
 from utils import to_numpy
 
 class AtrHeader(object):
@@ -92,18 +92,11 @@ class XfdHeader(AtrHeader):
 
 
 class DiskImageBase(object):
-    debug = False
-
-    def __init__(self, bytes, style=None, filename=""):
-        self.bytes = to_numpy(bytes)
+    def __init__(self, rawdata, filename=""):
+        self.rawdata = rawdata
+        self.bytes = self.rawdata.get_data()
+        self.style = self.rawdata.get_style()
         self.size = np.alen(self.bytes)
-        if style is None:
-            if self.debug:
-                self.style = np.arange(self.size, dtype=np.uint8)
-            else:
-                self.style = np.zeros(self.size, dtype=np.uint8)
-        else:
-            self.style = style
         self.set_filename(filename)
         self.header = None
         self.total_sectors = 0
@@ -164,7 +157,7 @@ class DiskImageBase(object):
         pos, size = self.header.get_pos(sector)
         return self.bytes[pos:pos + size], pos, size
     
-    def get_sectors(self, start, end=None):
+    def get_sector_slice(self, start, end=None):
         """ Get contiguous sectors
         
         :param start: first sector number to read (note: numbering starts from 1)
@@ -178,7 +171,17 @@ class DiskImageBase(object):
             start += 1
             _, more = self.header.get_pos(start)
             size += more
-        return self.bytes[pos:pos + size], self.style[pos:pos + size]
+        return slice(pos, pos + size)
+    
+    def get_sectors(self, start, end=None):
+        """ Get contiguous sectors
+        
+        :param start: first sector number to read (note: numbering starts from 1)
+        :param end: last sector number to read
+        :returns: bytes
+        """
+        s = self.get_sector_slice(start, end)
+        return self.bytes[s], self.style[s]
     
     def get_contiguous_sectors(self, sector, num):
         start = 0
@@ -191,12 +194,11 @@ class DiskImageBase(object):
         return start, count
     
     def parse_segments(self):
-        b = self.bytes
-        s = self.style
+        r = self.rawdata
         i = self.header.atr_header_offset
         if self.header.image_size > 0:
-            self.segments.append(ObjSegment(b[0:i], s[0:i], 0, 0, 0, i, name="%s Header" % self.header.file_format))
-        self.segments.append(RawSectorsSegment(b[i:], s[i:], 1, self.header.max_sectors, self.header.image_size, 128, 3, self.header.sector_size, name="Raw disk sectors"))
+            self.segments.append(ObjSegment(r[0:i], 0, 0, 0, i, name="%s Header" % self.header.file_format))
+        self.segments.append(RawSectorsSegment(r[i:], 1, self.header.max_sectors, self.header.image_size, 128, 3, self.header.sector_size, name="Raw disk sectors"))
         self.segments.extend(self.get_boot_segments())
         self.segments.extend(self.get_vtoc_segments())
         self.segments.extend(self.get_directory_segments())
@@ -217,10 +219,11 @@ class DiskImageBase(object):
         if flag == 0:
             num = int(values[1])
             addr = int(values[2])
-            bytes, style = self.get_sectors(1, num)
-            header = ObjSegment(bytes[0:6], style[0:6], 0, 0, addr, addr + 6, name="Boot Header")
-            sectors = ObjSegment(bytes, style, 0, 0, addr, addr + len(bytes), name="Boot Sectors")
-            code = ObjSegment(bytes[6:], style[6:], 0, 0, addr + 6, addr + len(bytes), name="Boot Code")
+            s = self.get_sector_slice(1, num)
+            r = self.rawdata[s]
+            header = ObjSegment(r[0:6], 0, 0, addr, addr + 6, name="Boot Header")
+            sectors = ObjSegment(r, 0, 0, addr, addr + len(r), name="Boot Sectors")
+            code = ObjSegment(r[6:], 0, 0, addr + 6, addr + len(r), name="Boot Code")
             segments = [sectors, header, code]
         return segments
     
@@ -249,7 +252,7 @@ class DiskImageBase(object):
             try:
                 segment = self.get_file_segment(dirent)
             except InvalidFile, e:
-                segment = EmptySegment(self.bytes, self.style, name=dirent.get_filename(), error=str(e))
+                segment = EmptySegment(self.rawdata, name=dirent.get_filename(), error=str(e))
             segments.append(segment)
         return segments
 
