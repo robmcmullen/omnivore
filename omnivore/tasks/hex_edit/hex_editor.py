@@ -122,8 +122,7 @@ class HexEditor(FrameworkEditor):
         self.find_segment()
     
     def copy_view_properties(self, old_editor):
-        self.machine.update_colors(old_editor.machine.playfield_colors)
-        self.machine.set_font(old_editor.machine.antic_font_data, old_editor.machine.font_renderer)
+        self.machine = old_editor.machine.clone_machine()
     
     @property
     def document_length(self):

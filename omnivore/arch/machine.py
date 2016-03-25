@@ -211,8 +211,10 @@ class Machine(HasTraits):
         return self.disassembler == other.disassembler and self.memory_map == other.memory_map
 
     def clone_machine(self):
-        return self.clone_traits()
-    
+        m = self.clone_traits()
+        m.update_colors(m.antic_color_registers)
+        m.set_font()
+        return m
     #
     
     def update_colors(self, colors):
