@@ -313,6 +313,16 @@ class UseSegmentRadioAction(UseSegmentAction):
             log.debug("UseSegmentAction: checked=%s %s %s %s" % (state, str(self.segment), self.active_editor.segment_number, self.segment_number))
             self.checked = state
 
+
+class SelectSegmentInAllAction(EditorAction):
+    name = 'Show Segment in File Data'
+    
+    def perform(self, event):
+        e = self.active_editor
+        e.select_all()
+        e.view_segment_number(0)
+
+
 class GetSegmentFromSelectionAction(EditorAction):
     name = 'New Segment From Selection'
     enabled_name = 'can_copy'

@@ -1,9 +1,9 @@
 import sys
 import wx
 
-from pyface.action.api import Action, ActionItem
+from pyface.action.api import Action, ActionItem, Separator
 
-from actions import SaveSegmentAsFormatAction
+from actions import SaveSegmentAsFormatAction, SelectSegmentInAllAction
 
 class SegmentList(wx.ListBox):
     """Segment selector for choosing which portion of the binary data to view
@@ -53,7 +53,12 @@ class SegmentList(wx.ListBox):
         
         # include disabled action showing the name of the segment clicked upon
         # because it may be different than the selected item
-        actions = [Action(name=segment.name, task=self.task, enabled=False)]
+        actions = [
+            Action(name=segment.name, task=self.task, enabled=False),
+            None,
+            SelectSegmentInAllAction(task=self.task),
+            None,
+            ]
         for saver in segment.savers:
             action = SaveSegmentAsFormatAction(saver=saver, segment_number=selected, task=self.task, name="Save as %s" % saver.name)
             actions.append(action)
