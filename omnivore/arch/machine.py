@@ -317,7 +317,7 @@ class Machine(HasTraits):
                 }
             self.set_font(font)
             self.font_list.append(font)
-            self.remember_fonts(task.application)
+            self.remember_fonts(task.window.application)
             task.fonts_changed = self.font_list
         except:
             raise
