@@ -139,7 +139,7 @@ class AnticFont(object):
         
         There are four possible combinations of two bits: 00, 01, 10, 11. Each combination represents a different color. The color corresponding to the bit-pair 00 is stored at location 712; the color for the bit-pair 01 is at location 708; the color for bit-pair 10 is at 709; the color for bit-pair 11 is at 710.
         """
-        _, _, _, _, pf0, pf1, pf2, pf3, bak = colors
+        pf0, pf1, pf2, pf3, bak = colors[4:9]
         r = np.empty(bits.shape, dtype=np.uint8)
         g = np.empty(bits.shape, dtype=np.uint8)
         b = np.empty(bits.shape, dtype=np.uint8)
