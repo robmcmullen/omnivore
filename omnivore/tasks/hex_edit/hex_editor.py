@@ -292,7 +292,7 @@ class HexEditor(FrameworkEditor):
     
     def view_segment_number(self, number):
         doc = self.document
-        num = number if number < len(doc.segments) else 0
+        num = number if number < len(doc.segments) else len(doc.segments) - 1
         if num != self.segment_number:
             old_segment = self.segment
             self.segment = doc.segments[num]
@@ -364,6 +364,10 @@ class HexEditor(FrameworkEditor):
     def add_user_segment(self, segment):
         self.document.add_user_segment(segment)
         self.update_segments_ui()
+    
+    def delete_user_segment(self, segment):
+        self.document.delete_user_segment(segment)
+        self.view_segment_number(self.segment_number)
     
     def ensure_visible(self, start, end):
         self.index_clicked(start, 0, None)

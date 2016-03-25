@@ -7,6 +7,7 @@ import wx
 
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Int
+from pyface.api import YES, NO
 from pyface.action.api import Action, ActionItem
 from pyface.tasks.action.api import TaskAction, EditorAction
 
@@ -396,6 +397,17 @@ class AddCommentPopupAction(EditorAction):
             s.set_style_ranges(ranges, comment=True)
             e.document.change_count += 1
             e.refresh_panes()
+
+
+class DeleteUserSegmentAction(EditorAction):
+    name = 'Delete User Segment'
+    segment_number = Int
+    
+    def perform(self, event):
+        e = self.task.active_editor
+        segment = e.document.segments[self.segment_number]
+        if self.task.confirm("Delete user segment %s?" % segment.name, "Delete User Segment") == YES:
+            e.delete_user_segment(segment)
 
 
 class SaveSegmentAsFormatAction(EditorAction):

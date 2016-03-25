@@ -138,6 +138,13 @@ class Document(HasTraits):
         self.user_segments.append(segment)
         self.segments.append(segment)
     
+    def is_user_segment(self, segment):
+        return segment in self.user_segments
+    
+    def delete_user_segment(self, segment):
+        self.user_segments.remove(segment)
+        self.segments.remove(segment)
+    
     def find_segment_index_by_name(self, name):
         for i, s in enumerate(self.segments):
             if s.name == name:
