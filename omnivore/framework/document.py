@@ -9,7 +9,7 @@ from traits.api import HasTraits, Trait, TraitHandler, Int, Any, List, Set, Bool
 
 from omnivore.utils.command import UndoStack
 from omnivore.utils.file_guess import FileMetadata
-from omnivore.utils.segmentutil import DefaultSegment, DefaultSegmentParser, InvalidSegmentParser
+from omnivore.utils.segmentutil import SegmentData, DefaultSegment, DefaultSegmentParser, InvalidSegmentParser
 
 
 class TraitNumpyConverter(TraitHandler):
@@ -75,7 +75,8 @@ class Document(HasTraits):
         return np.zeros(len(self), dtype=np.uint8)
     
     def _segments_default(self):
-        return list([DefaultSegment(self.bytes, self.style, 0)])
+        r = SegmentData(self.bytes,self.style)
+        return list([DefaultSegment(r, 0)])
 
     #### trait property getters
 

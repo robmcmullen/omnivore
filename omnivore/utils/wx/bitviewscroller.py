@@ -23,7 +23,7 @@ import wx.lib.newevent
 from pyface.action.api import Action
 from pyface.tasks.action.api import EditorAction
 
-from atrcopy import DefaultSegment
+from atrcopy import SegmentData, DefaultSegment
 
 from omnivore.framework.actions import *
 from omnivore.tasks.hex_edit.actions import *
@@ -869,7 +869,7 @@ class FontMapScroller(BitviewScroller):
 class CharacterSetViewer(FontMapScroller):
     def __init__(self, parent, task, bytes_per_row=16, command=None, **kwargs):
         FontMapScroller.__init__(self, parent, task, bytes_per_row, command, **kwargs)
-        self.segment = DefaultSegment(np.arange(256, dtype=np.uint8), np.zeros(256, dtype=np.uint8), 0)
+        self.segment = DefaultSegment(SegmentData(np.arange(256, dtype=np.uint8), np.zeros(256, dtype=np.uint8)), 0)
         self.start_addr = 0
         self.selected_char = -1
     

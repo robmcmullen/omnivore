@@ -1,6 +1,6 @@
 import numpy as np
 
-from atrcopy import DefaultSegment, KBootImage, AtariDosDiskImage, SpartaDosDiskImage, BootDiskImage, AtariDosFile, InvalidBinaryFile
+from atrcopy import SegmentData, DefaultSegment, KBootImage, AtariDosDiskImage, SpartaDosDiskImage, BootDiskImage, AtariDosFile, InvalidBinaryFile
 
 
 class InvalidSegmentParser(Exception):
@@ -39,16 +39,18 @@ class DefaultSegmentParser(SegmentParser):
     menu_name = "Raw Data"
     
     def parse(self, doc):
-        self.segments = [DefaultSegment(doc.bytes, doc.style, 0)]
+        r = SegmentData(doc.bytes, doc.style)
+        self.segments = [DefaultSegment(r, 0)]
 
 
 class KBootSegmentParser(SegmentParser):
     menu_name = "KBoot Disk Image"
     
     def parse(self, doc):
-        self.segments.append(DefaultSegment(doc.bytes, doc.style, 0))
+        r = SegmentData(doc.bytes, doc.style)
+        self.segments.append(DefaultSegment(r, 0))
         try:
-            self.atr = KBootImage(doc.bytes, doc.style)
+            self.atr = KBootImage(r)
         except:
             raise InvalidSegmentParser
         
@@ -60,9 +62,10 @@ class AtariDosSegmentParser(SegmentParser):
     menu_name = "Atari DOS Disk Image"
     
     def parse(self, doc):
-        self.segments.append(DefaultSegment(doc.bytes, doc.style, 0))
+        r = SegmentData(doc.bytes, doc.style)
+        self.segments.append(DefaultSegment(r, 0))
         try:
-            self.atr = AtariDosDiskImage(doc.bytes, doc.style)
+            self.atr = AtariDosDiskImage(r)
         except:
             raise InvalidSegmentParser
         
@@ -74,9 +77,10 @@ class SpartaDosSegmentParser(SegmentParser):
     menu_name = "Sparta DOS Disk Image"
     
     def parse(self, doc):
-        self.segments.append(DefaultSegment(doc.bytes, doc.style, 0))
+        r = SegmentData(doc.bytes, doc.style)
+        self.segments.append(DefaultSegment(r, 0))
         try:
-            self.atr = SpartaDosDiskImage(doc.bytes, doc.style)
+            self.atr = SpartaDosDiskImage(r)
         except Exception, e:
             print str(e)
             raise InvalidSegmentParser
@@ -89,9 +93,10 @@ class AtariBootDiskSegmentParser(SegmentParser):
     menu_name = "Atari Boot Disk Image"
     
     def parse(self, doc):
-        self.segments.append(DefaultSegment(doc.bytes, doc.style, 0))
+        r = SegmentData(doc.bytes, doc.style)
+        self.segments.append(DefaultSegment(r, 0))
         try:
-            self.atr = BootDiskImage(doc.bytes, doc.style)
+            self.atr = BootDiskImage(r)
         except:
             raise InvalidSegmentParser
         
@@ -103,9 +108,10 @@ class XexSegmentParser(SegmentParser):
     menu_name = "XEX (Atari 8-bit executable)"
     
     def parse(self, doc):
-        self.segments.append(DefaultSegment(doc.bytes, doc.style, 0))
+        r = SegmentData(doc.bytes, doc.style)
+        self.segments.append(DefaultSegment(r, 0))
         try:
-            xex = AtariDosFile(doc.bytes, doc.style)
+            xex = AtariDosFile(r)
         except InvalidBinaryFile:
             raise InvalidSegmentParser
 

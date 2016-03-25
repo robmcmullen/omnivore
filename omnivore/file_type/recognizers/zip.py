@@ -6,9 +6,9 @@ from traits.api import HasTraits, provides
 
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
 from omnivore.framework.document import Document
-from omnivore.utils.segmentutil import SegmentParser, InvalidSegmentParser, guess_parser_for, DefaultSegment
+from omnivore.utils.segmentutil import SegmentParser, InvalidSegmentParser, guess_parser_for
 
-from atrcopy import DefaultSegment, ObjSegment
+from atrcopy import SegmentData, DefaultSegment, ObjSegment
 
 @provides(IFileRecognizer)
 class ZipRecognizer(HasTraits):
@@ -50,10 +50,9 @@ class ZipRecognizer(HasTraits):
 
 class MameZipParser(SegmentParser):
     def parse(self, doc):
-        b = doc.bytes
-        s = doc.style
-        self.segments.append(DefaultSegment(b, s, 0))
+        r = SegmentData(doc.bytes, doc.style)
+        self.segments.append(DefaultSegment(r, 0))
         for offset, size, name, crc in doc.zip_segment_info:
             end = offset + size
-            self.segments.append(ObjSegment(b[offset:end], s[offset:end], 0, offset, offset, end, name=name))
+            self.segments.append(ObjSegment(r[offset:end], 0, offset, offset, end, name=name))
     

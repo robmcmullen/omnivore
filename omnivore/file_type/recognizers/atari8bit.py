@@ -2,7 +2,7 @@ from traits.api import HasTraits, provides
 
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
 from omnivore.framework.document import Document
-from omnivore.utils.segmentutil import InvalidSegmentParser, guess_parser_for, DefaultSegment, AnticFontSegment
+from omnivore.utils.segmentutil import InvalidSegmentParser, guess_parser_for, DefaultSegment, AnticFontSegment, SegmentData
 from omnivore.tasks.map_edit.pane_layout import task_id_with_pane_layout as map_edit_task_id
 
 @provides(IFileRecognizer)
@@ -24,9 +24,10 @@ class XEXRecognizer(HasTraits):
         state = doc.bytes[0:6] == [0xff, 0xff, 0x80, 0x2a, 0xff, 0x8a]
         if state.all():
             print "Found getaway.xex!!!"
-            font_segment = AnticFontSegment(doc.bytes[0x086:0x486], doc.style[0x086:0x486], 0x2b00, name="Playfield font")
+            r = doc.segments[0].rawdata
+            font_segment = AnticFontSegment(r[0x086:0x486], 0x2b00, name="Playfield font")
             doc.add_user_segment(font_segment)
-            segment = DefaultSegment(doc.bytes[0x2086:0x6086], doc.style[0x2086:0x6086], 0x4b00, name="Playfield map")
+            segment = DefaultSegment(r[0x2086:0x6086], 0x4b00, name="Playfield map")
             segment.map_width = 256
             doc.add_user_segment(segment)
             doc.extra_metadata = {
@@ -57,9 +58,10 @@ class ATRRecognizer(HasTraits):
         state = doc.bytes[0x10:0x19] == [0x00, 0xc1, 0x80, 0x0f, 0xcc, 0x22, 0x18, 0x60, 0x0e]
         if state.all():
             print "Found getaway.atr!!!"
-            font_segment = AnticFontSegment(doc.bytes[0x090:0x490], doc.style[0x090:0x490], 0x2b00, name="Playfield font")
+            r = doc.segments[0].rawdata
+            font_segment = AnticFontSegment(r[0x090:0x490], 0x2b00, name="Playfield font")
             doc.add_user_segment(font_segment)
-            segment = DefaultSegment(doc.bytes[0x2090:0x6090], doc.style[0x2090:0x6090], 0x4b00, name="Playfield map")
+            segment = DefaultSegment(r[0x2090:0x6090], 0x4b00, name="Playfield map")
             segment.map_width = 256
             doc.add_user_segment(segment)
             doc.extra_metadata = {
