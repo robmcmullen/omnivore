@@ -54,6 +54,7 @@ class BitviewScroller(wx.ScrolledWindow):
         self.min_zoom = 1
         self.bytes_per_row = 1
         self.pixels_per_byte = 8
+        self.bitplanes = 1
 
         # internal storage
         self.start_addr = 0
@@ -107,6 +108,7 @@ class BitviewScroller(wx.ScrolledWindow):
             self.rect_select = editor.rect_select
             self.start_addr = editor.segment.start_addr
             self.pixels_per_byte = editor.machine.bitmap_renderer.pixels_per_byte
+            self.bitplanes = editor.machine.bitmap_renderer.bitplanes
             self.set_colors()
             self.set_font()
             self.update_bytes_per_row()
@@ -511,7 +513,7 @@ class BitviewScroller(wx.ScrolledWindow):
 
 class BitmapScroller(BitviewScroller):
     def update_bytes_per_row(self):
-        self.bytes_per_row = self.editor.bitmap_width
+        self.bytes_per_row = self.editor.machine.bitmap_renderer.validate_bytes_per_row(self.editor.bitmap_width)
     
     def update_zoom(self):
         self.set_zoom(self.editor.bitmap_zoom)
@@ -533,9 +535,9 @@ class BitmapScroller(BitviewScroller):
             inside = False
         if x < 0:
             x = 0
-        elif x >= self.pixels_per_byte * self.bytes_per_row:
-            x = self.pixels_per_byte * self.bytes_per_row - 1
-        xbyte = (x // self.pixels_per_byte)
+        elif x >= self.pixels_per_byte * self.bytes_per_row / self.bitplanes:
+            x = self.pixels_per_byte * self.bytes_per_row / self.bitplanes - 1
+        xbyte = (x // self.pixels_per_byte) * self.bitplanes
         byte = (self.bytes_per_row * y) + xbyte
         if byte > self.end_byte:
             inside = False

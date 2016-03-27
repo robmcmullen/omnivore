@@ -12,6 +12,10 @@ log = logging.getLogger(__name__)
 class BaseRenderer(object):
     name = "base"
     pixels_per_byte = 8
+    bitplanes = 1
+    
+    def validate_bytes_per_row(self, bytes_per_row):
+        return bytes_per_row
 
     def get_colors(self, m, registers):
         color_registers = [m.color_registers[r] for r in registers]
@@ -82,6 +86,41 @@ class BaseRenderer(object):
         color_registers, h_colors, m_colors, c_colors, d_colors = colors
         bitimage = np.empty((nr * bytes_per_row, 2, 3), dtype=np.uint8)
         for i in range(16):
+            color_is_set = (pixels == i)
+            bitimage[color_is_set & normal] = color_registers[i]
+            bitimage[color_is_set & comment] = c_colors[i]
+            bitimage[color_is_set & match] = m_colors[i]
+            bitimage[color_is_set & data] = d_colors[i]
+            bitimage[color_is_set & highlight] = h_colors[i]
+        bitimage[count:,:,:] = m.empty_color
+        return bitimage
+    
+    def get_bitplanes(self, m, bytes_per_row, nr, count, bytes, style, colors):
+        bitplanes = self.bitplanes
+        _, rem = divmod(np.alen(bytes), bitplanes)
+        if rem > 0:
+            bytes = np.append(bytes, np.zeros(rem, dtype=np.uint8))
+            style = np.append(style, np.zeros(rem, dtype=np.uint8))
+        bits = np.unpackbits(bytes).reshape((-1, 8))
+        pixels_per_row = 8 * bytes_per_row / bitplanes
+        pixels = np.empty((nr * bytes_per_row / bitplanes, 8), dtype=np.uint8)
+        for i in range(8):
+            pixels[:,i] = bits[0::2,i] * 2 + bits[1::2,i]
+        pixels = pixels.reshape((nr, pixels_per_row))
+        
+        s1 = style[0::2]
+        s2 = style[1::2]
+        s = s1 | s2
+        style_per_pixel = s.repeat(8).reshape((-1, pixels_per_row))
+        normal = style_per_pixel == 0
+        highlight = (style_per_pixel & 0x80) == 0x80
+        data = (style_per_pixel & 0x4) == 0x4
+        comment = (style_per_pixel & 0x2) == 0x2
+        match = (style_per_pixel & 0x1) == 0x1
+        
+        color_registers, h_colors, m_colors, c_colors, d_colors = colors
+        bitimage = np.empty((nr, pixels_per_row, 3), dtype=np.uint8)
+        for i in range(2**bitplanes):
             color_is_set = (pixels == i)
             bitimage[color_is_set & normal] = color_registers[i]
             bitimage[color_is_set & comment] = c_colors[i]
@@ -164,6 +203,24 @@ class FourBitsPerPixel(BaseRenderer):
         colors = self.get_colors(m, range(16))
         bitimage = self.get_4bpp(m, bytes_per_row, nr, count, bytes, style, colors)
         return self.reshape(bitimage, bytes_per_row, nr)
+
+
+class TwoBitPlanes(BaseRenderer):
+    name = "2 Bit Planes"
+    pixels_per_byte = 8
+    bitplanes = 2
+    
+    def validate_bytes_per_row(self, bytes_per_row):
+        _, rem = divmod(bytes_per_row, 2)
+        if rem > 0:
+            bytes_per_row += 1
+        print "bytes_per_row", bytes_per_row
+        return bytes_per_row
+    
+    def get_image(self, m, bytes_per_row, nr, count, bytes, style):
+        colors = self.get_colors(m, [0, 1, 2, 3])
+        bitimage = self.get_bitplanes(m, bytes_per_row, nr, count, bytes, style, colors)
+        return bitimage
 
 
 class GTIA9(FourBitsPerPixel):

@@ -375,6 +375,7 @@ predefined = {
         antic_renderers.GTIA11(),
         antic_renderers.TwoBitsPerPixel(),
         antic_renderers.FourBitsPerPixel(),
+        antic_renderers.TwoBitPlanes(),
         ],
     "font_renderer": [
         antic_renderers.Mode2(),
