@@ -376,6 +376,8 @@ predefined = {
         antic_renderers.TwoBitsPerPixel(),
         antic_renderers.FourBitsPerPixel(),
         antic_renderers.TwoBitPlanes(),
+        antic_renderers.ThreeBitPlanes(),
+        antic_renderers.FourBitPlanes(),
         ],
     "font_renderer": [
         antic_renderers.Mode2(),

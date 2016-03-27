@@ -104,13 +104,20 @@ class BaseRenderer(object):
         bits = np.unpackbits(bytes).reshape((-1, 8))
         pixels_per_row = 8 * bytes_per_row / bitplanes
         pixels = np.empty((nr * bytes_per_row / bitplanes, 8), dtype=np.uint8)
-        for i in range(8):
-            pixels[:,i] = bits[0::2,i] * 2 + bits[1::2,i]
+        if bitplanes == 2:
+            for i in range(8):
+                pixels[:,i] = bits[0::2,i] * 2 + bits[1::2,i]
+            s = style[0::2] | style[1::2]
+        elif bitplanes == 3:
+            for i in range(8):
+                pixels[:,i] = bits[0::3,i] * 4 + bits[1::3,i] * 2 + bits[2::3,i]
+            s = style[0::3] | style[1::3] | style[2::3]
+        elif bitplanes == 4:
+            for i in range(8):
+                pixels[:,i] = bits[0::4,i] * 8 + bits[1::4,i] * 4 + bits[2::4,i] * 2 + bits[3::4,i]
+            s = style[0::4] | style[1::4] | style[2::4] | style[3::4]
+            
         pixels = pixels.reshape((nr, pixels_per_row))
-        
-        s1 = style[0::2]
-        s2 = style[1::2]
-        s = s1 | s2
         style_per_pixel = s.repeat(8).reshape((-1, pixels_per_row))
         normal = style_per_pixel == 0
         highlight = (style_per_pixel & 0x80) == 0x80
@@ -211,16 +218,26 @@ class TwoBitPlanes(BaseRenderer):
     bitplanes = 2
     
     def validate_bytes_per_row(self, bytes_per_row):
-        _, rem = divmod(bytes_per_row, 2)
+        scale, rem = divmod(bytes_per_row, self.bitplanes)
         if rem > 0:
-            bytes_per_row += 1
+            bytes_per_row = (scale + 1) * self.bitplanes
         print "bytes_per_row", bytes_per_row
         return bytes_per_row
     
     def get_image(self, m, bytes_per_row, nr, count, bytes, style):
-        colors = self.get_colors(m, [0, 1, 2, 3])
+        colors = self.get_colors(m, range(2**self.bitplanes))
         bitimage = self.get_bitplanes(m, bytes_per_row, nr, count, bytes, style, colors)
         return bitimage
+
+
+class ThreeBitPlanes(TwoBitPlanes):
+    name = "3 Bit Planes"
+    bitplanes = 3
+
+
+class FourBitPlanes(TwoBitPlanes):
+    name = "4 Bit Planes"
+    bitplanes = 4
 
 
 class GTIA9(FourBitsPerPixel):
