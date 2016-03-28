@@ -13,6 +13,7 @@ class BaseRenderer(object):
     name = "base"
     pixels_per_byte = 8
     bitplanes = 1
+    little_endian = True
     
     def validate_bytes_per_row(self, bytes_per_row):
         return bytes_per_row
@@ -105,16 +106,28 @@ class BaseRenderer(object):
         pixels_per_row = 8 * bytes_per_row / bitplanes
         pixels = np.empty((nr * bytes_per_row / bitplanes, 8), dtype=np.uint8)
         if bitplanes == 2:
-            for i in range(8):
-                pixels[:,i] = bits[0::2,i] * 2 + bits[1::2,i]
+            if self.little_endian:
+                for i in range(8):
+                    pixels[:,i] = bits[0::2,i] + bits[1::2,i] * 2
+            else:
+                for i in range(8):
+                    pixels[:,i] = bits[0::2,i] * 2 + bits[1::2,i]
             s = style[0::2] | style[1::2]
         elif bitplanes == 3:
-            for i in range(8):
-                pixels[:,i] = bits[0::3,i] * 4 + bits[1::3,i] * 2 + bits[2::3,i]
+            if self.little_endian:
+                for i in range(8):
+                    pixels[:,i] = bits[0::3,i] * 4 + bits[1::3,i] * 2 + bits[2::3,i]
+            else:
+                for i in range(8):
+                    pixels[:,i] = bits[0::3,i] + bits[1::3,i] * 2 + bits[2::3,i] * 4
             s = style[0::3] | style[1::3] | style[2::3]
         elif bitplanes == 4:
-            for i in range(8):
-                pixels[:,i] = bits[0::4,i] * 8 + bits[1::4,i] * 4 + bits[2::4,i] * 2 + bits[3::4,i]
+            if self.little_endian:
+                for i in range(8):
+                    pixels[:,i] = bits[0::4,i] * 8 + bits[1::4,i] * 4 + bits[2::4,i] * 2 + bits[3::4,i]
+            else:
+                for i in range(8):
+                    pixels[:,i] = bits[0::4,i] + bits[1::4,i] * 2 + bits[2::4,i] * 4 + bits[3::4,i] * 8
             s = style[0::4] | style[1::4] | style[2::4] | style[3::4]
             
         pixels = pixels.reshape((nr, pixels_per_row))
@@ -212,10 +225,11 @@ class FourBitsPerPixel(BaseRenderer):
         return self.reshape(bitimage, bytes_per_row, nr)
 
 
-class TwoBitPlanes(BaseRenderer):
-    name = "2 Bit Planes"
+class TwoBitPlanesLE(BaseRenderer):
+    name = "2 Bit Planes (little endian)"
     pixels_per_byte = 8
     bitplanes = 2
+    little_endian = True
     
     def validate_bytes_per_row(self, bytes_per_row):
         scale, rem = divmod(bytes_per_row, self.bitplanes)
@@ -229,15 +243,30 @@ class TwoBitPlanes(BaseRenderer):
         bitimage = self.get_bitplanes(m, bytes_per_row, nr, count, bytes, style, colors)
         return bitimage
 
+class TwoBitPlanesBE(TwoBitPlanesLE):
+    name = "2 Bit Planes (big endian)"
+    little_endian = False
 
-class ThreeBitPlanes(TwoBitPlanes):
-    name = "3 Bit Planes"
+
+class ThreeBitPlanesLE(TwoBitPlanesLE):
+    name = "3 Bit Planes (little endian)"
     bitplanes = 3
+    little_endian = True
+
+class ThreeBitPlanesBE(ThreeBitPlanesLE):
+    name = "3 Bit Planes (big endian)"
+    bitplanes = 3
+    little_endian = False
 
 
-class FourBitPlanes(TwoBitPlanes):
-    name = "4 Bit Planes"
+class FourBitPlanesLE(TwoBitPlanesLE):
+    name = "4 Bit Planes (little endian)"
     bitplanes = 4
+    little_endian = True
+
+class FourBitPlanesBE(FourBitPlanesLE):
+    name = "4 Bit Planes (big endian)"
+    little_endian = False
 
 
 class GTIA9(FourBitsPerPixel):
