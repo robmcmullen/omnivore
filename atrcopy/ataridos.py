@@ -202,6 +202,23 @@ class AtariDosDiskImage(DiskImageBase):
         ('unused','<u2'),
         ])
 
+    def calc_vtoc_code(self):
+        # From AA post: http://atariage.com/forums/topic/179868-mydos-vtoc-size/
+        num = 1 + (self.total_sectors + 80) / (self.header.sector_size * 8)
+        if header.sector_size == 128:
+            if num == 1:
+                code = 2
+            else:
+                if num & 1:
+                    num += 1
+                code = ((num + 1) / 2) + 2
+        else:
+            if self.total_sectors < 1024:
+                code = 2
+            else:
+                code = 2 + num
+        return code
+
     def get_vtoc(self):
         data, style = self.get_sectors(360)
         values = data[0:5].view(dtype=self.vtoc_type)[0]
@@ -211,7 +228,11 @@ class AtariDosDiskImage(DiskImageBase):
         else:
             num = (code * 2) - 3
         self.first_vtoc = 360 - num + 1
+        self.assert_valid_sector(self.first_vtoc)
         self.num_vtoc = num
+        if num < 0 or num > self.calc_vtoc_code():
+            raise InvalidDiskImage("Invalid number of VTOC sectors: %d" % num)
+        
         self.total_sectors = values[1]
         self.unused_sectors = values[2]
         if self.header.image_size == 133120:
