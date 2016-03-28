@@ -243,6 +243,28 @@ class TwoBitPlanesBE(TwoBitPlanesLE):
         for i in range(8):
             pixels[:,i] = bits[0::2,i] * 2 + bits[1::2,i]
 
+class TwoBitPlanesLineLE(TwoBitPlanesLE):
+    name = "2 Bit Planes (little endian, interleave by line)"
+    
+    def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
+        pixel_rows = bytes_per_row / 2
+        for i in range(8):
+            for j in range(pixel_rows):
+                little = j
+                big = j + pixel_rows
+                pixels[j::pixel_rows,i] = bits[big::bytes_per_row,i] * 2 + bits[little::bytes_per_row,i]
+
+class TwoBitPlanesLineBE(TwoBitPlanesLE):
+    name = "2 Bit Planes (big endian, interleave by line)"
+    
+    def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
+        pixel_rows = bytes_per_row / 2
+        for i in range(8):
+            for j in range(pixel_rows):
+                little = j + pixel_rows
+                big = j
+                pixels[j::pixel_rows,i] = bits[big::bytes_per_row,i] * 2 + bits[little::bytes_per_row,i]
+
 
 class ThreeBitPlanesLE(TwoBitPlanesLE):
     name = "3 Bit Planes (little endian)"
@@ -263,6 +285,30 @@ class ThreeBitPlanesBE(ThreeBitPlanesLE):
         for i in range(8):
             pixels[:,i] = bits[0::3,i] + bits[1::3,i] * 2 + bits[2::3,i] * 4
 
+class ThreeBitPlanesLineLE(ThreeBitPlanesLE):
+    name = "3 Bit Planes (little endian, interleave by line)"
+    
+    def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
+        pixel_rows = bytes_per_row / 3
+        for i in range(8):
+            for j in range(pixel_rows):
+                little = j
+                mid = j + pixel_rows
+                big = j + (2 * pixel_rows)
+                pixels[j::pixel_rows,i] = bits[big::bytes_per_row,i] * 4 + bits[mid::bytes_per_row,i] * 2 + bits[little::bytes_per_row,i]
+
+class ThreeBitPlanesLineBE(ThreeBitPlanesBE):
+    name = "3 Bit Planes (big endian, interleave by line)"
+    
+    def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
+        pixel_rows = bytes_per_row / 3
+        for i in range(8):
+            for j in range(pixel_rows):
+                little = j + (2 * pixel_rows)
+                mid = j + pixel_rows
+                big = j
+                pixels[j::pixel_rows,i] = bits[big::bytes_per_row,i] * 4 + bits[mid::bytes_per_row,i] * 2 + bits[little::bytes_per_row,i]
+
 
 class FourBitPlanesLE(TwoBitPlanesLE):
     name = "4 Bit Planes (little endian)"
@@ -281,6 +327,33 @@ class FourBitPlanesBE(FourBitPlanesLE):
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
         for i in range(8):
             pixels[:,i] = bits[0::4,i] + bits[1::4,i] * 2 + bits[2::4,i] * 4 + bits[3::4,i] * 8
+
+class FourBitPlanesLineLE(FourBitPlanesLE):
+    name = "4 Bit Planes (little endian, interleave by line)"
+    
+    def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
+        pixel_rows = bytes_per_row / 4
+        for i in range(8):
+            for j in range(pixel_rows):
+                little = j
+                little_mid = j + pixel_rows
+                big_mid = j + (2 * pixel_rows)
+                big = j + (3 * pixel_rows)
+                pixels[j::pixel_rows,i] = bits[big::bytes_per_row,i] * 8 + bits[big_mid::bytes_per_row,i] * 4 + bits[little_mid::bytes_per_row,i] * 2 + bits[little::bytes_per_row,i]
+
+class FourBitPlanesLineBE(FourBitPlanesLE):
+    name = "4 Bit Planes (big endian, interleave by line)"
+    
+    def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
+        pixel_rows = bytes_per_row / 4
+        for i in range(8):
+            for j in range(pixel_rows):
+                little = j + (3 * pixel_rows)
+                little_mid = j + (2 * pixel_rows)
+                big_mid = j + pixel_rows 
+                big = j
+                pixels[j::pixel_rows,i] = bits[big::bytes_per_row,i] * 8 + bits[big_mid::bytes_per_row,i] * 4 + bits[little_mid::bytes_per_row,i] * 2 + bits[little::bytes_per_row,i]
+
 
 class GTIA9(FourBitsPerPixel):
     name = "GTIA 9 (4bpp, 16 luminances, 1 color)"
