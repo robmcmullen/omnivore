@@ -355,9 +355,8 @@ class HexEditor(FrameworkEditor):
         self.document.change_count += 1
     
     def get_segment_from_selection(self):
-        data = self.segment[self.anchor_start_index:self.anchor_end_index]
-        style = self.segment.style[self.anchor_start_index:self.anchor_end_index]
-        segment = DefaultSegment(data, style, self.segment.start_addr + self.anchor_start_index)
+        rawdata = self.segment.rawdata[self.anchor_start_index:self.anchor_end_index]
+        segment = DefaultSegment(rawdata, self.segment.start_addr + self.anchor_start_index)
         return segment
     
     def add_user_segment(self, segment):
