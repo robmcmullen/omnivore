@@ -60,15 +60,31 @@ class DefaultSegment(object):
     
     def __init__(self, rawdata, start_addr=0, name="All", error=None, verbose_name=None):
         self.start_addr = int(start_addr)  # force python int to decouple from possibly being a numpy datatype
-        self.rawdata = rawdata
-        self.data = rawdata.get_data()
-        self.style = rawdata.get_style()
+        self.set_raw(rawdata)
         self.error = error
         self.name = name
         self.verbose_name = verbose_name
         self.page_size = -1
         self.map_width = 40
         self._search_copy = None
+    
+    def set_raw(self, rawdata):
+        self.rawdata = rawdata
+        self.data = rawdata.get_data()
+        self.style = rawdata.get_style()
+    
+    def __getstate__(self):
+        state = dict()
+        for key in ['start_addr', 'error', 'name', 'verbose_name', 'page_size', 'map_width']:
+            state[key] = getattr(self, key)
+        state['_rawdata_bounds'] = list(self.byte_bounds_offset())
+        return state
+    
+    def reconstruct_raw(self, rawdata):
+        start, end = self._rawdata_bounds
+        r = rawdata[start:end]
+        delattr(self, '_rawdata_bounds')
+        self.set_raw(r)
     
     def __str__(self):
         s = "%s ($%x bytes)" % (self.name, len(self))
@@ -95,7 +111,11 @@ class DefaultSegment(object):
         self._search_copy = None
     
     def byte_bounds_offset(self):
-        return np.byte_bounds(self.data)[0]
+        if self.data.base is None:
+            return 0, len(self.rawdata)
+        data_start, data_end = np.byte_bounds(self.data)
+        base_start, base_end = np.byte_bounds(self.data.base)
+        return int(data_start - base_start), int(data_end - base_start)
 
     def tostring(self):
         return self.data.tostring()
@@ -364,6 +384,20 @@ class IndexedByteSegment(DefaultSegment):
         DefaultSegment.__init__(self, rawdata, **kwargs)
         self.style = IndexedStyleWrapper(self.style, byte_order)
     
+    def __getstate__(self):
+        state = super(IndexedByteSegment, self).__getstate__()
+        
+        # local byte_bounds_offset refers to first index in order; want offset
+        # into entire raw data to reconstruct properly
+        state['_rawdata_bounds'] = list(DefaultSegment.byte_bounds_offset(self))
+        state['_order_list'] = self.order.tolist()  # more compact serialization in python list
+        return state
+    
+    def reconstruct_raw(self, rawdata):
+        DefaultSegment.reconstruct_raw(self, rawdata)
+        self.order = to_numpy_list(self._order_list)
+        delattr(self, '_order_list')
+    
     def __str__(self):
         s = "%s ($%x @ $%x)" % (self.name, len(self), self.order[0])
         if self.error:
@@ -389,7 +423,8 @@ class IndexedByteSegment(DefaultSegment):
         self._search_copy = None
     
     def byte_bounds_offset(self):
-        return np.byte_bounds(self.data)[0] + self.order[0]
+        b = DefaultSegment.byte_bounds_offset(self)
+        return (b[0] + self.order[0], b[0] + self.order[-1])
     
     def tostring(self):
         return self.data[self.order[:]].tostring()
