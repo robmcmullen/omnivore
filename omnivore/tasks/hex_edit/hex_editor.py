@@ -106,11 +106,19 @@ class HexEditor(FrameworkEditor):
         self.machine.init_colors(self)
         self.task.fonts_changed = self.machine.font_list
 
-    def init_extra_metadata(self, doc):
+    def load_builtin_extra_metadata(self, doc):
+        """ see if the document matches any hardcoded document information
+        """
+        from omnivore.utils.extra_metadata import check_builtin
+        return check_builtin(doc)
+
+    def process_extra_metadata(self, doc, e):
         """ Set up any pre-calculated segments based on the type or content of
         the just-loaded document.
         """
-        e = doc.extra_metadata
+        if 'user segments' in e:
+            for s in e['user segments']:
+                doc.add_user_segment(s)
         if 'colors' in e:
             self.machine.update_colors(e['colors'])
         if 'font' in e:

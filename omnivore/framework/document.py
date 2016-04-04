@@ -100,7 +100,7 @@ class Document(HasTraits):
         return cls(bytes="")
     
     def __str__(self):
-        return self.metadata.uri
+        return "Document(id=%s): %s" % (self.document_id, self.metadata.uri)
     
     def __len__(self):
         return np.alen(self.bytes)

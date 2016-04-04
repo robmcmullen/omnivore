@@ -119,8 +119,31 @@ class FrameworkEditor(Editor):
             self.view_document(doc)
 
     def init_extra_metadata(self, doc):
-        """ Set up any pre-calculated segments based on the type or content of
-        the just-loaded document.
+        """ Hook to load any extra metadata for the given document
+        """
+        e = self.load_builtin_extra_metadata(doc)
+        if e is not None:
+            self.process_extra_metadata(doc, e)
+        e = self.load_filesystem_extra_metadata(doc)
+        if e is not None:
+            self.process_extra_metadata(doc, e)
+
+    def load_builtin_extra_metadata(self, doc):
+        """ Find any extra metadata associated with the document that is built-
+        in to the application.
+        """
+        pass
+
+    def load_filesystem_extra_metadata(self, doc):
+        """ Find any extra metadata associated with the document, typically
+        used to load an extra file off the disk.
+        
+        If successful, return a dict to be processed by init_extra_metadata
+        """
+        pass
+
+    def process_extra_metadata(self, doc, e):
+        """ Set up any additional metadata from the dict argument
         """
         pass
 
@@ -132,8 +155,6 @@ class FrameworkEditor(Editor):
         self.rebuild_document_properties()
         if old_editor is not None:
             self.copy_view_properties(old_editor)
-        else:
-            self.init_extra_metadata(doc)
         self.update_panes()
         self.document.undo_stack_changed = True
         self.task.document_changed = self.document

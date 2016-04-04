@@ -185,6 +185,7 @@ class FrameworkTask(Task):
             if source is not None:
                 self.window.application.successfully_loaded_event = source.metadata.uri
         elif hasattr(source, 'document_id'):
+            editor.init_extra_metadata(source)
             editor.view_document(source)
             self.window.application.successfully_loaded_event = source.metadata.uri
         else:

@@ -368,12 +368,11 @@ class MapEditor(HexEditor):
     # 'FrameworkEditor' interface.
     ###########################################################################
 
-    def init_extra_metadata(self, doc):
+    def process_extra_metadata(self, doc, e):
         """ Set up any pre-calculated segments based on the type or content of
         the just-loaded document.
         """
-        HexEditor.init_extra_metadata(self, doc)
-        e = doc.extra_metadata
+        HexEditor.process_extra_metadata(self, doc, e)
         if 'tile map' in e:
             self.antic_tile_map = e['tile map']
         self.machine.set_font_mapping(predefined['font_mapping'][1])
