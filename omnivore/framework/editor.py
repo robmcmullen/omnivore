@@ -3,6 +3,8 @@ import os
 # Major package imports.
 from fs.opener import opener
 import wx
+import fs
+import jsonpickle
 
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Bool, Int, Unicode, Property, Dict, List
@@ -11,6 +13,7 @@ from pyface.action.api import ActionEvent
 
 from omnivore.utils.command import StatusFlags
 from omnivore.utils.sortutil import collapse_overlapping_ranges, invert_ranges, ranges_to_indexes
+from omnivore.utils.file_guess import FileGuess
 
 from document import Document
 
@@ -140,6 +143,24 @@ class FrameworkEditor(Editor):
         
         If successful, return a dict to be processed by init_extra_metadata
         """
+        uri = self.get_filesystem_extra_metadata_uri(doc)
+        if uri is None:
+            return
+        try:
+            guess = FileGuess(uri)
+        except fs.errors.FSError, e:
+            log.error("File load error: %s" % str(e))
+            return
+        try:
+            unserialized = jsonpickle.loads(guess.bytes)
+        except ValueError, e:
+            log.error("JSON parsing error for extra metadata in %s: %s" % (uri, str(e)))
+            unserialized = None
+        return unserialized
+    
+    def get_filesystem_extra_metadata_uri(self, doc):
+        """ Get filename of file used to store extra metadata
+        """
         pass
 
     def process_extra_metadata(self, doc, e):
@@ -203,7 +224,21 @@ class FrameworkEditor(Editor):
         log.debug("saving to %s" % uri)
         fh.write(bytes)
         fh.close()
+        
+        metadata_dict = dict()
+        self.get_extra_metadata(metadata_dict)
+        if metadata_dict:
+            relpath += ".omnivore"
+            fh = fs.open(relpath, 'wb')
+            log.debug("saving extra metadata to %s" % relpath)
+            bytes = jsonpickle.dumps(metadata_dict)
+            fh.write(bytes)
+            fh.close()
+        
         fs.close()
+    
+    def get_extra_metadata(self, metadata_dict):
+        pass
 
     def undo(self):
         """ Undoes the last action

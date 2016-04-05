@@ -112,6 +112,9 @@ class HexEditor(FrameworkEditor):
         from omnivore.utils.extra_metadata import check_builtin
         return check_builtin(doc)
 
+    def get_filesystem_extra_metadata_uri(self, doc):
+        return doc.metadata.uri + ".omnivore"
+
     def process_extra_metadata(self, doc, e):
         """ Set up any pre-calculated segments based on the type or content of
         the just-loaded document.
@@ -119,12 +122,20 @@ class HexEditor(FrameworkEditor):
         if 'user segments' in e:
             for s in e['user segments']:
                 doc.add_user_segment(s)
+        if 'serialized user segments' in e:
+            first_segment = doc.segments[0]
+            for s in e['serialized user segments']:
+                s.reconstruct_raw(first_segment.rawdata) 
+                doc.add_user_segment(s)
         if 'colors' in e:
             self.machine.update_colors(e['colors'])
         if 'font' in e:
             self.machine.set_font(e['font'][0], e['font'][1])
         if 'initial segment' in e:
             self.initial_segment = e['initial segment']
+    
+    def get_extra_metadata(self, mdict):
+        mdict["serialized user segments"] = list(self.document.user_segments)
 
     def rebuild_document_properties(self):
         self.find_segment()
