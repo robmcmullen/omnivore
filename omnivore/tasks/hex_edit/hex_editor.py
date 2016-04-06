@@ -127,6 +127,13 @@ class HexEditor(FrameworkEditor):
             for s in e['serialized user segments']:
                 s.reconstruct_raw(first_segment.rawdata) 
                 doc.add_user_segment(s)
+        if 'comments' in e:
+            first_segment = doc.segments[0]
+            for k, v in e['comments']:
+                first_segment.rawdata.comments[k] = v
+        if 'comment ranges' in e:
+            first_segment = doc.segments[0]
+            first_segment.set_style_ranges(e['comment ranges'], comment=True)
         if 'colors' in e:
             self.machine.update_colors(e['colors'])
         if 'font' in e:
@@ -136,6 +143,11 @@ class HexEditor(FrameworkEditor):
     
     def get_extra_metadata(self, mdict):
         mdict["serialized user segments"] = list(self.document.user_segments)
+        base = self.document.segments[0]
+        mdict["comment ranges"] = base.get_style_ranges(comment=True)
+        
+        # json serialization doesn't allow int keys, so convert to list of pairs
+        mdict["comments"] = [[k, v] for k, v in base.rawdata.comments.iteritems()]
 
     def rebuild_document_properties(self):
         self.find_segment()

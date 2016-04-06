@@ -365,6 +365,13 @@ class MarkSelectionAsDataAction(EditorAction):
         e.refresh_panes()
 
 
+def prompt_for_comment(e, s, ranges, desc):
+    text = prompt_for_string(e.window.control, desc, "Add Comment")
+    if text is not None:
+        s.set_comment(ranges, text)
+        e.document.change_count += 1
+        e.refresh_panes()
+    
 class AddCommentAction(EditorAction):
     name = 'Add Comment'
     accelerator = 'Alt+C'
@@ -374,13 +381,12 @@ class AddCommentAction(EditorAction):
         s = e.segment
         if e.can_copy:
             ranges = s.get_style_ranges(selected=True)
+            desc = "Enter comment for range %s" % str(ranges)
         else:
             index = e.cursor_index
             ranges = [(index, index+1)]
-        s.set_style_ranges(ranges, comment=True)
-        e.document.change_count += 1
-        e.refresh_panes()
-
+            desc = "Enter comment for location %s" % index
+        prompt_for_comment(e, s, ranges, desc)
 
 class AddCommentPopupAction(EditorAction):
     name = 'Add Comment'
@@ -390,13 +396,13 @@ class AddCommentPopupAction(EditorAction):
         s = e.segment
         if event.popup_data["in_selection"]:
             ranges = s.get_style_ranges(selected=True)
+            desc = "Enter comment for range %s" % str(ranges)
         else:
             index = event.popup_data["index"]
             ranges = [(index, index+1)]
+            desc = "Enter comment for location %s" % index
         if ranges:
-            s.set_style_ranges(ranges, comment=True)
-            e.document.change_count += 1
-            e.refresh_panes()
+            prompt_for_comment(e, s, ranges, desc)
 
 
 class DeleteUserSegmentAction(EditorAction):

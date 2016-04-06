@@ -158,6 +158,17 @@ class DisassemblyTable(ByteGridTable):
         args = d.disasm()
         return args[-1]
 
+    def get_comments(self, index, line, col):
+        comments = []
+        c = str(line[col + 1])
+        if c:
+            comments.append(c)
+        for i in range(line[4]):
+            c = self.segment.get_comment(index + i)
+            if c:
+                comments.append(c)
+        return " ".join(comments)
+
     def get_value_style_lower(self, row, col):
         line = self.lines[row]
         index = line[0] - self.start_addr
@@ -165,8 +176,12 @@ class DisassemblyTable(ByteGridTable):
         for i in range(line[4]):
             style |= self.segment.style[index + i]
         if col == 0:
-            return " ".join("%02x" % i for i in line[1]), style
-        return str(line[col + 1]), style
+            text = " ".join("%02x" % i for i in line[1])
+        elif col == 2 and (style & 2):
+            text = self.get_comments(index, line, col)
+        else:
+            text = str(line[col + 1])
+        return text, style
     
     def get_value_style_upper(self, row, col):
         line = self.lines[row]
@@ -175,8 +190,12 @@ class DisassemblyTable(ByteGridTable):
         for i in range(line[4]):
             style |= self.segment.style[index + i]
         if col == 0:
-            return " ".join("%02X" % i for i in line[1]), style
-        return str(line[col + 1]), style
+            text = " ".join("%02X" % i for i in line[1])
+        elif col == 2 and (style & 2):
+            text = self.get_comments(index, line, col)
+        else:
+            text = str(line[col + 1])
+        return text, style
     
     def get_style_override(self, row, col, style):
         if self.lines[row][5]:
