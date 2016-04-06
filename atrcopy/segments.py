@@ -116,6 +116,16 @@ class DefaultSegment(object):
         data_start, data_end = np.byte_bounds(self.data)
         base_start, base_end = np.byte_bounds(self.data.base)
         return int(data_start - base_start), int(data_end - base_start)
+    
+    def get_raw_index(self, i):
+        """Get index into base array's raw data, given the index into this
+        segment
+        """
+        if self.data.base is None:
+            return i
+        data_start, data_end = np.byte_bounds(self.data)
+        base_start, base_end = np.byte_bounds(self.data.base)
+        return int(data_start - base_start + i)
 
     def tostring(self):
         return self.data.tostring()
@@ -252,6 +262,16 @@ class DefaultSegment(object):
     def clear_style_bits(self, **kwargs):
         style_mask = self.get_style_mask(**kwargs)
         self.style &= style_mask
+    
+    def set_comment(self, ranges, text):
+        self.set_style_ranges(ranges, comment=True)
+        for start, end in ranges:
+            rawindex = self.get_raw_index(start)
+            self.rawdata.comments[rawindex] = text
+    
+    def get_comment(self, index):
+        rawindex = self.get_raw_index(index)
+        return self.rawdata.comments.get(rawindex, None)
     
     def label(self, index, lower_case=True):
         if lower_case:
@@ -425,6 +445,13 @@ class IndexedByteSegment(DefaultSegment):
     def byte_bounds_offset(self):
         b = DefaultSegment.byte_bounds_offset(self)
         return (b[0] + self.order[0], b[0] + self.order[-1])
+    
+    def get_raw_index(self, i):
+        if self.data.base is None:
+            return self.order[i]
+        data_start, data_end = np.byte_bounds(self.data)
+        base_start, base_end = np.byte_bounds(self.data.base)
+        return int(data_start - base_start + self.order[i])
     
     def tostring(self):
         return self.data[self.order[:]].tostring()
