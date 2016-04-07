@@ -14,6 +14,7 @@ from pyface.action.api import ActionEvent
 from omnivore.utils.command import StatusFlags
 from omnivore.utils.sortutil import collapse_overlapping_ranges, invert_ranges, ranges_to_indexes
 from omnivore.utils.file_guess import FileGuess
+import omnivore.utils.jsonutil as jsonutil
 
 from document import Document
 
@@ -231,8 +232,10 @@ class FrameworkEditor(Editor):
             relpath += ".omnivore"
             fh = fs.open(relpath, 'wb')
             log.debug("saving extra metadata to %s" % relpath)
+            jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
             bytes = jsonpickle.dumps(metadata_dict)
-            fh.write(bytes)
+            text = jsonutil.collapse_json(bytes)
+            fh.write(text)
             fh.close()
         
         fs.close()
