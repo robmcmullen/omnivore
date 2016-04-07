@@ -176,6 +176,9 @@ class ByteGridTable(Grid.PyGridTableBase):
     def GetNumberRows(self):
         return self._rows
 
+    def get_label_at_index(self, index):
+        return "%s" % index
+
     def GetRowLabelValue(self, row):
         raise NotImplementedError
 
@@ -568,6 +571,7 @@ class ByteGrid(Grid.Grid):
     """
     View for editing in hexidecimal notation.
     """
+    short_name = "hex"
 
     def __init__(self, parent, task, table, **kwargs):
         """Create the HexEdit viewer
@@ -714,6 +718,7 @@ class ByteGrid(Grid.Grid):
         return r1 - r0 - 1
  
     def on_motion(self, evt):
+        self.on_motion_update_status(evt)
         if not self.mouse_drag_started:
             # On windows, it's possible to get a motion event before a mouse
             # down event, so need this flag to check
@@ -742,6 +747,18 @@ class ByteGrid(Grid.Grid):
             if update:
                 e.cursor_index = index1
                 wx.CallAfter(e.index_clicked, e.cursor_index, 0, None)
+    
+    def on_motion_update_status(self, evt):
+        x, y = self.CalcUnscrolledPosition(evt.GetPosition())
+        row = self.YToRow(y)
+        col = self.XToCol(x)
+        index, _ = self.table.get_index_range(row, col)
+        label = self.table.get_label_at_index(index)
+        message = self.get_status_message_at_index(index, row, col)
+        self.editor.task.status_bar.message = "%s: %s %s" % (self.short_name, label, message)
+    
+    def get_status_message_at_index(self, index, row, col):
+        return "r=%d,c=%d" % (row, col)
 
     def on_key_down(self, evt):
         e = self.editor

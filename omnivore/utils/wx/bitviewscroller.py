@@ -42,6 +42,7 @@ class BitviewEvent(wx.PyCommandEvent):
 
 class BitviewScroller(wx.ScrolledWindow):
     dbg_call_seq = 0
+    short_name = "_bitview base class"
     
     def __init__(self, parent, task, **kwargs):
         wx.ScrolledWindow.__init__(self, parent, -1, **kwargs)
@@ -428,9 +429,26 @@ class BitviewScroller(wx.ScrolledWindow):
                 wx.CallAfter(e.index_clicked, index1, bit, None)
  
     def on_motion(self, evt):
+        self.on_motion_update_status(evt)
         if self.editor is not None and evt.LeftIsDown():
             self.set_selection_from_event(evt)
         evt.Skip()
+
+    def on_motion_update_status(self, evt):
+        byte, bit, inside = self.event_coords_to_byte(evt)
+        label = self.get_label_at_index(byte)
+        message = self.get_status_message_at_index(byte, bit)
+        self.editor.task.status_bar.message = "%s: %s %s" % (self.short_name, label, message)
+    
+    def get_label_at_index(self, index):
+        try:
+            label = self.editor.control.table.get_label_at_index(index)
+        except AttributeError:
+            label = "%x" % index
+        return label
+
+    def get_status_message_at_index(self, index, bit):
+        return "bit=%d" % bit
 
     def on_paint(self, evt):
         self.dbg_call_seq += 1
@@ -512,6 +530,8 @@ class BitviewScroller(wx.ScrolledWindow):
 
 
 class BitmapScroller(BitviewScroller):
+    short_name = "bitmap"
+    
     def update_bytes_per_row(self):
         self.bytes_per_row = self.editor.machine.bitmap_renderer.validate_bytes_per_row(self.editor.bitmap_width)
     
@@ -575,6 +595,8 @@ class BitmapScroller(BitviewScroller):
 
 
 class FontMapScroller(BitviewScroller):
+    short_name = "charmap"
+    
     def __init__(self, parent, task, bytes_per_row=8, command=None, **kwargs):
         BitviewScroller.__init__(self, parent, task, **kwargs)
         self.zoom = 2
@@ -720,10 +742,7 @@ class FontMapScroller(BitviewScroller):
         actions.extend(self.task.get_font_mapping_actions(self.task))
         return actions
     
-    def set_status_message(self):
-        e = self.editor
-        if e is None:
-            return
+    def get_status_message(self):
         if not self.editing:
             message = "Double click or press F2 to begin editing text"
         else:
@@ -732,7 +751,16 @@ class FontMapScroller(BitviewScroller):
             else:
                 message = "Editing text: Press F1 for inverse"
             message += " (press F2 to stop editing or click outside the character map window)"
-        e.task.status_bar.message = message
+        return message
+
+    def get_status_message_at_index(self, index, bit):
+        return self.get_status_message()
+
+    def set_status_message(self):
+        e = self.editor
+        if e is None:
+            return
+        e.task.status_bar.message = self.get_status_message()
     
     def on_focus(self, evt):
         log.debug("on_focus!")
@@ -910,6 +938,7 @@ class CharacterSetViewer(FontMapScroller):
         evt.Skip()
     
     def on_motion(self, evt):
+        self.on_motion_update_status(evt)
         e = self.editor
         if e is not None and evt.LeftIsDown():
             byte, bit, inside = self.event_coords_to_byte(evt)

@@ -158,9 +158,12 @@ class DisassemblyTable(ByteGridTable):
         args = d.disasm()
         return args[-1]
 
-    def get_comments(self, index, line, col):
+    def get_comments(self, index, line=None):
+        if line is None:
+            row = self.index_to_row[index]
+            line = self.lines[row]
         comments = []
-        c = str(line[col + 1])
+        c = str(line[3])
         if c:
             comments.append(c)
         for i in range(line[4]):
@@ -178,7 +181,7 @@ class DisassemblyTable(ByteGridTable):
         if col == 0:
             text = " ".join("%02x" % i for i in line[1])
         elif col == 2 and (style & 2):
-            text = self.get_comments(index, line, col)
+            text = self.get_comments(index, line)
         else:
             text = str(line[col + 1])
         return text, style
@@ -192,7 +195,7 @@ class DisassemblyTable(ByteGridTable):
         if col == 0:
             text = " ".join("%02X" % i for i in line[1])
         elif col == 2 and (style & 2):
-            text = self.get_comments(index, line, col)
+            text = self.get_comments(index, line)
         else:
             text = str(line[col + 1])
         return text, style
@@ -201,13 +204,20 @@ class DisassemblyTable(ByteGridTable):
         if self.lines[row][5]:
             return style|0x02
         return style
+
+    def get_label_at_index(self, index):
+        row = self.index_to_row[index]
+        return self.get_label_at_row(row)
     
+    def get_label_at_row(self, row):
+        addr = self.get_pc(row)
+        if self.get_value_style == self.get_value_style_lower:
+            return "%04x" % addr
+        return "%04X" % addr
+
     def GetRowLabelValue(self, row):
         if self.lines:
-            addr = self.get_pc(row)
-            if self.get_value_style == self.get_value_style_lower:
-                return "%04x" % addr
-            return "%04X" % addr
+            return self.get_label_at_row(row)
         return "0000"
 
     def ResetViewProcessArgs(self, grid, editor, *args):
@@ -241,6 +251,7 @@ class DisassemblyPanel(ByteGrid):
     """
     View for editing in hexidecimal notation.
     """
+    short_name = "disasm"
 
     def __init__(self, parent, task, **kwargs):
         """Create the HexEdit viewer
@@ -265,6 +276,9 @@ class DisassemblyPanel(ByteGrid):
     
     def restart_disassembly(self, index):
         self.table.restart_disassembly(index)
+
+    def get_status_message_at_index(self, index, row, col):
+        return self.table.get_comments(index)
 
     def goto_index(self, index):
         try:
