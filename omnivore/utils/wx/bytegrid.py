@@ -171,6 +171,8 @@ class ByteGridTable(Grid.PyGridTableBase):
         if segment_page_size < 0:
             r = grid.get_num_visible_rows()
             page_size = r * self.GetNumberCols()
+        else:
+            page_size = segment_page_size
         return index + (dir * page_size)
 
     def GetNumberRows(self):
