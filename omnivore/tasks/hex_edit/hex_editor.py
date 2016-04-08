@@ -386,8 +386,18 @@ class HexEditor(FrameworkEditor):
         self.document.change_count += 1
     
     def get_segment_from_selection(self):
-        rawdata = self.segment.rawdata[self.anchor_start_index:self.anchor_end_index]
-        segment = DefaultSegment(rawdata, self.segment.start_addr + self.anchor_start_index)
+        # Since we can't handle segments with discontinuous chunks, we'll
+        # create a contiguous segment from the first byte of the first range
+        # to the last byte of the last range
+        s = self.segment
+        
+        # Get the selected ranges directly from the segment style data, because
+        # the individual range entries in self.selected_ranges can be out
+        # of order
+        ranges = s.get_style_ranges(selected=True)
+        first = ranges[0][0]
+        last = ranges[-1][1]
+        segment = DefaultSegment(s.rawdata[first:last], s.start_addr + first)
         return segment
     
     def add_user_segment(self, segment):
