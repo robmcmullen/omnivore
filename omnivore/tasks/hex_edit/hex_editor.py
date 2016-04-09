@@ -153,7 +153,10 @@ class HexEditor(FrameworkEditor):
         self.find_segment()
     
     def copy_view_properties(self, old_editor):
-        self.machine = old_editor.machine.clone_machine()
+        try:
+            self.machine = old_editor.machine.clone_machine()
+        except AttributeError:
+            self.machine = self._machine_default()
     
     @property
     def document_length(self):
