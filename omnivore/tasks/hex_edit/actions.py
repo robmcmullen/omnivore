@@ -316,7 +316,7 @@ class UseSegmentRadioAction(UseSegmentAction):
 
 
 class SelectSegmentInAllAction(EditorAction):
-    name = 'Show Segment in File Data'
+    name = 'Select This Segment in All'
     
     def perform(self, event):
         e = self.active_editor
