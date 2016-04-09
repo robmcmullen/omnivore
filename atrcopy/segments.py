@@ -271,7 +271,7 @@ class DefaultSegment(object):
     
     def get_comment(self, index):
         rawindex = self.get_raw_index(index)
-        return self.rawdata.comments.get(rawindex, None)
+        return self.rawdata.comments.get(rawindex, "")
     
     def label(self, index, lower_case=True):
         if lower_case:
