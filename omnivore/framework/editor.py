@@ -576,7 +576,10 @@ class FrameworkEditor(Editor):
                 i = wx.NewId()
                 if not hasattr(action, 'task'):
                     action = action(task=self.task)
-                item = popup.Append(i, action.name)
+                
+                # wxpython popup entries can't have empty name
+                name = action.name if action.name else " "
+                item = popup.Append(i, name)
                 item.Enable(action.enabled)
                 context_menu_data[i] = action
         ret = window.GetPopupMenuSelectionFromUser(popup)

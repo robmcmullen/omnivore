@@ -54,8 +54,11 @@ class SegmentList(wx.ListBox):
         
         # include disabled action showing the name of the segment clicked upon
         # because it may be different than the selected item
+        name = segment.name
+        if not name:
+            name = str(segment)
         actions = [
-            Action(name=segment.name, task=self.task, enabled=False),
+            Action(name=name, task=self.task, enabled=False),
             None,
             ]
         if selected > 0:
