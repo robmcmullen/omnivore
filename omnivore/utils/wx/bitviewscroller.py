@@ -448,7 +448,8 @@ class BitviewScroller(wx.ScrolledWindow):
         return label
 
     def get_status_message_at_index(self, index, bit):
-        return "bit=%d" % bit
+        comments = self.segment.get_comment(index)
+        return "bit=%d  %s" % (bit, comments)
 
     def on_paint(self, evt):
         self.dbg_call_seq += 1
@@ -754,7 +755,8 @@ class FontMapScroller(BitviewScroller):
         return message
 
     def get_status_message_at_index(self, index, bit):
-        return self.get_status_message()
+        comments = self.segment.get_comment(index)
+        return "%s %s" % (comments, self.get_status_message())
 
     def set_status_message(self):
         e = self.editor
