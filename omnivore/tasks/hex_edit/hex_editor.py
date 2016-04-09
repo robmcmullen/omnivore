@@ -102,9 +102,8 @@ class HexEditor(FrameworkEditor):
 
     def create(self, parent):
         self.control = self._create_control(parent)
-        self.machine.init_fonts(self)
-        self.machine.init_colors(self)
-        self.task.fonts_changed = self.machine.font_list
+        self.machine.one_time_init(self)
+        self.task.machine_menu_changed = self.machine
 
     def load_builtin_extra_metadata(self, doc):
         """ see if the document matches any hardcoded document information

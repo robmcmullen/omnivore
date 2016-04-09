@@ -41,7 +41,7 @@ class HexEditTask(FrameworkTask):
     
     #### Menu events ##########################################################
     
-    fonts_changed = Event
+    machine_menu_changed = Event
     
     segments_changed = Event
     
@@ -69,7 +69,7 @@ class HexEditTask(FrameworkTask):
         return pane_layout.pane_create()
 
     def _extra_actions_default(self):
-        machine_menu = self.create_menu("Menu", "Machine", "MachineTypeGroup", "MachineProcessorGroup", "MachineCharGroup", "MachineBitmapGroup")
+        machine_menu = self.create_menu("Menu", "Machine", "MachineTypeGroup", "MachineCharacteristicsGroup", "MachineEmulatorGroup")
         segment_menu = self.create_menu("Menu", "Segments", "SegmentParserGroup", "SegmentGroup")
         bytes_menu = self.create_menu("Menu", "Bytes", "HexModifyGroup")
         actions = [
@@ -200,7 +200,7 @@ class HexEditTask(FrameworkTask):
             actions.append(ProcessorTypeAction(disassembler=r))
         return actions
     
-    def get_actions_Menu_Machine_MachineCharGroup(self):
+    def get_actions_Menu_Machine_MachineCharacteristicsGroup(self):
         font_mapping_actions = self.get_font_mapping_actions()
         font_renderer_actions = self.get_font_renderer_actions()
         bitmap_renderer_actions = self.get_bitmap_renderer_actions()
@@ -254,6 +254,16 @@ class HexEditTask(FrameworkTask):
                     BitmapZoomAction(),
                     id="a1", separator=True),
                 id='FontChoiceSubmenu2a2', separator=False, name="Bitmap Display"),
+            ]
+    
+    def get_actions_Menu_Machine_MachineEmulatorGroup(self):
+        return [
+            SMenu(
+                EmulatorChoiceGroup(id="a2", separator=True),
+                Group(
+                    AddNewEmulatorAction(),
+                    id="a3", separator=True),
+                id='MachineEmulator1', separator=True, name="Emulators"),
             ]
     
     def get_actions_Menu_Segments_SegmentParserGroup(self):

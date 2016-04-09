@@ -22,7 +22,7 @@ class FontChoiceGroup(TaskDynamicSubmenuGroup):
     """
     #### 'DynamicSubmenuGroup' interface ######################################
 
-    event_name = 'fonts_changed'
+    event_name = 'machine_menu_changed'
 
     ###########################################################################
     # Private interface.
@@ -31,7 +31,7 @@ class FontChoiceGroup(TaskDynamicSubmenuGroup):
     def _get_items(self, event_data=None):
         items = []
         if event_data is not None:
-            for font in event_data:
+            for font in event_data.font_list:
                 action = UseFontAction(font=font)
                 items.append(ActionItem(action=action))
             
@@ -60,6 +60,46 @@ class GetFontFromSelectionAction(EditorAction):
     
     def perform(self, event):
         self.active_editor.get_font_from_selection()
+
+
+class EmulatorChoiceGroup(TaskDynamicSubmenuGroup):
+    """Dynamic menu group to display the available fonts
+    """
+    #### 'DynamicSubmenuGroup' interface ######################################
+
+    event_name = 'machine_menu_changed'
+
+    ###########################################################################
+    # Private interface.
+    ###########################################################################
+
+    def _get_items(self, event_data=None):
+        items = []
+        if event_data is not None:
+            for emu in event_data.emulator_list:
+                action = UseEmulatorAction(emulator=emu)
+                items.append(ActionItem(action=action))
+            
+        return items
+
+class UseEmulatorAction(EditorAction):
+    emulator = Any
+    
+    def _name_default(self):
+        return "%s" % (self.emulator['name'])
+    
+    def perform(self, event):
+        #self.active_editor.machine.set_font(self.font)
+        print "Running %s" % self.emulator
+
+class AddNewEmulatorAction(EditorAction):
+    name = 'Add New Emulator...'
+    
+    def perform(self, event):
+        cmdline = prompt_for_string(event.task.window.control, "Emulator command line", "New Emulator")
+        if cmdline:
+            name = cmdline
+            self.active_editor.machine.add_emulator(event.task, name, cmdline)
 
 
 class FontRendererAction(EditorAction):

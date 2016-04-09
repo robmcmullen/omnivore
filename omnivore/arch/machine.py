@@ -65,6 +65,8 @@ class Machine(HasTraits):
     
     font_list = None
     
+    emulator_list = None
+    
     highlight_color = (100, 200, 230)
     
     unfocused_cursor_color = (128, 128, 128)
@@ -103,12 +105,34 @@ class Machine(HasTraits):
     @classmethod
     def remember_fonts(cls, application):
         application.save_bson_data("font_list", cls.font_list)
+        
+    @classmethod
+    def init_emulators(cls, editor):
+        if cls.emulator_list is None:
+            try:
+                cls.emulator_list = editor.window.application.get_json_data("emulator_list")
+            except IOError:
+                # file not found
+                cls.emulator_list = []
+            except ValueError:
+                # bad JSON format
+                cls.emulator_list = []
+    
+    @classmethod
+    def remember_emulators(cls, application):
+        application.save_json_data("emulator_list", cls.emulator_list)
     
     @classmethod
     def init_colors(cls, editor):
         if cls.empty_color is None:
             attr = editor.control.GetDefaultAttributes()
             cls.empty_color = attr.colBg.Get(False)
+    
+    @classmethod
+    def one_time_init(cls, editor):
+        cls.init_fonts(editor)
+        cls.init_colors(editor)
+        cls.init_emulators(editor)
     
     @classmethod
     def set_text_font(cls, editor, font, color):
@@ -320,12 +344,17 @@ class Machine(HasTraits):
             self.set_font(font)
             self.font_list.append(font)
             self.remember_fonts(task.window.application)
-            task.fonts_changed = self.font_list
+            task.machine_menu_changed = self
         except:
             raise
     
-    
-    
+    def add_emulator(self, task, name, cmdline):
+        emu = {'name': name,
+               'cmdline': cmdline,
+               }
+        self.emulator_list.append(emu)
+        self.remember_emulators(task.window.application)
+        task.machine_menu_changed = self
     
     # Utility methods
     
