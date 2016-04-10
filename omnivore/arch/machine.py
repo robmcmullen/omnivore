@@ -52,6 +52,8 @@ class Machine(HasTraits):
     font_mapping = Any(transient=True)
     
     page_renderer = Any(transient=True)
+
+    emulator = Any
     
     # Trait events
     
@@ -60,6 +62,8 @@ class Machine(HasTraits):
     bitmap_change_event = Event
     
     disassembler_change_event = Event
+
+    emulator_change_event = Event
     
     # Class attributes (not traits)
     
@@ -355,6 +359,10 @@ class Machine(HasTraits):
         self.emulator_list.append(emu)
         self.remember_emulators(task.window.application)
         task.machine_menu_changed = self
+
+    def set_emulator(self, emu):
+        self.emulator = emu
+        self.emulator_change_event = True
     
     # Utility methods
     

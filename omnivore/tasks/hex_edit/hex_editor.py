@@ -42,6 +42,10 @@ class HexEditor(FrameworkEditor):
     
     segment_number = Int(0)
     
+    can_run_emulator = Bool(False)
+    
+    emulator_label = Unicode("Run Emulator")
+    
     ### View traits
     
     map_width = Int
@@ -277,6 +281,11 @@ class HexEditor(FrameworkEditor):
     @on_trait_change('machine.disassembler_change_event')
     def update_disassembler(self):
         self.disassembly.recalc_view()
+    
+    @on_trait_change('machine.emulator_change_event')
+    def update_emulator(self):
+        self.emulator_label = "Run using '%s'" % self.machine.emulator['name']
+        self.can_run_emulator = True
 
     def set_map_width(self, width=None):
         if width is None:
@@ -420,6 +429,11 @@ class HexEditor(FrameworkEditor):
 
     def mark_index_range_changed(self, index_range):
         self.disassembly.restart_disassembly(index_range[0])
+
+    def run_emulator(self):
+        emu = self.machine.emulator
+        cmdline = "%s %s" % (emu, self.document.uri)
+        print cmdline
     
     def perform_idle(self):
         self.disassembly.perform_idle()

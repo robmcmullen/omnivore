@@ -42,6 +42,8 @@ class HexEditTask(FrameworkTask):
     #### Menu events ##########################################################
     
     machine_menu_changed = Event
+
+    emulator_changed = Event
     
     segments_changed = Event
     
@@ -259,6 +261,7 @@ class HexEditTask(FrameworkTask):
     def get_actions_Menu_Machine_MachineEmulatorGroup(self):
         return [
             SMenu(
+                RunEmulatorAction(id="a1"),
                 EmulatorChoiceGroup(id="a2", separator=True),
                 Group(
                     AddNewEmulatorAction(),

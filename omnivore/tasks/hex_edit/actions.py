@@ -83,14 +83,15 @@ class EmulatorChoiceGroup(TaskDynamicSubmenuGroup):
         return items
 
 class UseEmulatorAction(EditorAction):
+    style = 'radio'
     emulator = Any
     
     def _name_default(self):
         return "%s" % (self.emulator['name'])
     
     def perform(self, event):
-        #self.active_editor.machine.set_font(self.font)
-        print "Running %s" % self.emulator
+        self.active_editor.machine.set_emulator(self.emulator)
+        print "Current emulator = %s" % self.emulator
 
 class AddNewEmulatorAction(EditorAction):
     name = 'Add New Emulator...'
@@ -100,6 +101,15 @@ class AddNewEmulatorAction(EditorAction):
         if cmdline:
             name = cmdline
             self.active_editor.machine.add_emulator(event.task, name, cmdline)
+
+class RunEmulatorAction(NameChangeAction):
+    name = 'Run Emulator'
+    accelerator = 'F5'
+    enabled_name = 'can_run_emulator'
+    menu_item_name = 'emulator_label'
+    
+    def perform(self, event):
+        self.active_editor.run_emulator()
 
 
 class FontRendererAction(EditorAction):
