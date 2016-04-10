@@ -431,6 +431,12 @@ class BaseDynamicSubmenuGroup(Group):
         
         # Get the new items, passing the event arguments to the method
         self.items = self._get_items(new_trait_val)
+        
+        # Set up parent so that radio items can determine their siblings to
+        # uncheck others when checked. (see the _checked_changed method in
+        # pyface/ui/wx/action/action_item.py)
+        for item in self.items:
+            item.parent = self
 
         # Inform our manager that it needs to be rebuilt.
         self.manager.changed = True
