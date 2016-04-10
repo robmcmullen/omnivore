@@ -18,7 +18,7 @@ from omnivore.utils.file_guess import FileMetadata
 from omnivore.arch.machine import Machine, Atari800
 from omnivore.utils.segmentutil import known_segment_parsers, DefaultSegment, AnticFontSegment
 from omnivore.utils.searchutil import known_searchers
-from omnivore.utils.processutil import run_detach_args
+from omnivore.utils.processutil import run_detach
 
 from commands import PasteCommand
 
@@ -301,21 +301,19 @@ class HexEditor(FrameworkEditor):
         emu = self.document.emulator
         if not emu:
             emu = self.machine.get_system_default_emulator()
-        if self.save():
-            exe = emu['exe']
-            args = emu['args']
-            fspath = self.document.filesystem_path()
-            if fspath is not None:
-                if "%s" in args:
-                    args.replace("%s", fspath)
-                else:
-                    args = "%s %s" % (args, fspath)
-                try:
-                    run_detach_args(exe, args)
-                except RuntimeError, e:
-                    self.window.error("Failed launching %s %s\n\nError: %s" % (exe, args, str(e)), "%s Emulator Error" % emu['name'])
-            else:
-                self.window.error("Can't run emulator on:\n\n%s\n\nDocument is not on local filesystem" % self.document.uri, "%s Emulator Error" % emu['name'])
+        if self.dirty:
+            if not self.save():
+                return
+        exe = emu['exe']
+        args = emu['args']
+        fspath = self.document.filesystem_path()
+        if fspath is not None:
+            try:
+                run_detach(exe, args, fspath, "%s")
+            except RuntimeError, e:
+                self.window.error("Failed launching %s %s\n\nError: %s" % (exe, args, str(e)), "%s Emulator Error" % emu['name'])
+        else:
+            self.window.error("Can't run emulator on:\n\n%s\n\nDocument is not on local filesystem" % self.document.uri, "%s Emulator Error" % emu['name'])
 
     def set_map_width(self, width=None):
         if width is None:

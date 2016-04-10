@@ -28,25 +28,22 @@ def which(program):
 
     return None
 
-def run_detach_string(cmdline):
-    # don't use posix so it will handle Windows backslash separators
-    args = shlex.split(cmdline, posix=False)
-
-    program = which(args[0])
-    if program is None:
-        raise RuntimeError("%s not found on system path" % args[0])
-    args[0] = program
-    if sys.platform == "win32":
-        p = subprocess.Popen(args, close_fds=True, creationflags=0x00000008|subprocess.CREATE_NEW_PROCESS_GROUP)
-    else:
-        p = subprocess.Popen(args, close_fds=True)
-    return p
-
-def run_detach_args(program, args):
+def run_detach(program, args, fspath, replace_arg=None):
     # don't use posix so it will handle Windows backslash separators
     args = shlex.split(args, posix=False)
-    args[0:0] = [program]
+    found = False
+    if replace_arg:
+        new_args = []
+        for a in args:
+            if replace_arg in a:
+                a.replace(replace_arg, fspath)
+                found = True
+            new_args.append(a)
+        args = new_args
+    if not found:
+        args.append(fspath)
     
+    args[0:0] = [program]
     program = which(program)
     if program is None:
         raise RuntimeError("%s not found on system path" % args[0])
