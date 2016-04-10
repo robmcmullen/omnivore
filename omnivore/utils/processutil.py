@@ -8,8 +8,12 @@ def which(program):
     
     From http://stackoverflow.com/questions/377017/
     """
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+    if sys.platform == "darwin":
+        def is_exe(fpath):
+            return (os.path.isdir(fpath) and fpath.endswith(".app")) or (os.path.isfile(fpath) and os.access(fpath, os.X_OK))
+    else:
+        def is_exe(fpath):
+            return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
     fpath, fname = os.path.split(program)
     if fpath:
@@ -49,6 +53,9 @@ def run_detach_args(program, args):
     args[0] = program
     if sys.platform == "win32":
         p = subprocess.Popen(args, close_fds=True, creationflags=0x00000008|subprocess.CREATE_NEW_PROCESS_GROUP)
+    elif sys.platform == "darwin":
+        args[0:0] = ["open", "-a"]
+        p = subprocess.call(args)
     else:
         p = subprocess.Popen(args, close_fds=True)
     return p
