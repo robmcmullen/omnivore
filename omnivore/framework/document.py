@@ -120,7 +120,7 @@ class Document(HasTraits):
         try:
             fs_, relpath = fs.opener.opener.parse(self.uri)
             if fs_.hassyspath(relpath):
-                return relpath
+                return fs_.getsyspath(relpath)
         except fs.errors.FSError:
             pass
         return None
