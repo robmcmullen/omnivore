@@ -14,7 +14,7 @@ from pyface.tasks.action.api import TaskAction, EditorAction
 from omnivore.framework.actions import *
 from commands import *
 from omnivore.arch.ui.antic_colors import AnticColorDialog
-from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string
+from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, prompt_for_emulator
 from omnivore.framework.minibuffer import *
 
 class FontChoiceGroup(TaskDynamicSubmenuGroup):
@@ -101,15 +101,14 @@ class AddNewEmulatorAction(EditorAction):
     name = 'Add New Emulator...'
     
     def perform(self, event):
-        cmdline = prompt_for_string(event.task.window.control, "Emulator command line\n\n(use %s as placeholder for the data file\notherwise will be added at the end)", "New Emulator")
-        if cmdline:
-            name = cmdline
-            self.active_editor.machine.add_emulator(event.task, name, cmdline)
+        
+        emu = prompt_for_emulator(event.task.window.control, "New Emulator")
+        if emu:
+            self.active_editor.machine.add_emulator(event.task, emu)
 
 class RunEmulatorAction(NameChangeAction):
     name = 'Run Emulator'
     accelerator = 'F5'
-    enabled_name = 'can_run_emulator'
     menu_item_name = 'emulator_label'
     
     def perform(self, event):

@@ -1,4 +1,5 @@
 import os
+import sys
 
 # Major package imports.
 import numpy as np
@@ -117,10 +118,19 @@ class Machine(HasTraits):
             except ValueError:
                 # bad JSON format
                 cls.emulator_list = []
+        
+        default = cls.get_system_default_emulator()
+        if not cls.is_known_emulator(default):
+            cls.emulator_list[0:0] = [default]
     
     @classmethod
     def remember_emulators(cls, application):
-        application.save_json_data("emulator_list", cls.emulator_list)
+        e_list = []
+        for emu in cls.emulator_list:
+            if not 'system default' in emu:
+                e_list.append(emu)
+        if e_list:
+            application.save_json_data("emulator_list", e_list)
     
     @classmethod
     def init_colors(cls, editor):
@@ -348,13 +358,32 @@ class Machine(HasTraits):
         except:
             raise
     
-    def add_emulator(self, task, name, cmdline):
-        emu = {'name': name,
-               'cmdline': cmdline,
-               }
+    def add_emulator(self, task, emu):
         self.emulator_list.append(emu)
         self.remember_emulators(task.window.application)
         task.machine_menu_changed = self
+    
+    @classmethod
+    def is_known_emulator(cls, emu):
+        for e in cls.emulator_list:
+            if e == emu:
+                return True
+        return False
+    
+    @classmethod
+    def get_system_default_emulator(cls):
+        if sys.platform == "win32":
+            exe = "Altirra.exe"
+        elif sys.platform == "darwin":
+            exe = "Atari800MacX"
+        else:
+            exe = "atari800"
+        emu = {'exe': exe,
+               'args': "",
+               'name': "<system default>",
+               'system default': True,
+               }
+        return emu
     
     # Utility methods
     

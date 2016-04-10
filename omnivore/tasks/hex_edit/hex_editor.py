@@ -18,7 +18,7 @@ from omnivore.utils.file_guess import FileMetadata
 from omnivore.arch.machine import Machine, Atari800
 from omnivore.utils.segmentutil import known_segment_parsers, DefaultSegment, AnticFontSegment
 from omnivore.utils.searchutil import known_searchers
-from omnivore.utils.processutil import run_detach
+from omnivore.utils.processutil import run_detach_args
 
 from commands import PasteCommand
 
@@ -42,8 +42,6 @@ class HexEditor(FrameworkEditor):
     segment_parser = Any
     
     segment_number = Int(0)
-    
-    can_run_emulator = Bool(False)
     
     emulator_label = Unicode("Run Emulator")
     
@@ -154,7 +152,9 @@ class HexEditor(FrameworkEditor):
         
         # json serialization doesn't allow int keys, so convert to list of pairs
         mdict["comments"] = [[k, v] for k, v in base.rawdata.comments.iteritems()]
-        mdict["emulator"] = self.document.emulator
+        emu = self.document.emulator
+        if emu and not 'system default' in emu:
+            mdict["emulator"] = self.document.emulator
 
     def rebuild_document_properties(self):
         self.find_segment()
@@ -290,25 +290,32 @@ class HexEditor(FrameworkEditor):
     
     @on_trait_change('document.emulator_change_event')
     def update_emulator(self):
-        state = self.document.emulator is not None
-        if state:
-            self.emulator_label = "Run using '%s'" % self.document.emulator['name']
-        else:
-            self.emulator_label = "Run in Emulator"
-        self.can_run_emulator = state
+        emu = self.document.emulator
+        if emu is None:
+            emu = self.machine.get_system_default_emulator()
+        if not self.machine.is_known_emulator(emu):
+            self.machine.add_emulator(self.task, emu)
+        self.emulator_label = "Run using '%s'" % emu['name']
 
     def run_emulator(self):
+        emu = self.document.emulator
+        if not emu:
+            emu = self.machine.get_system_default_emulator()
         if self.save():
-            emu = self.document.emulator['cmdline']
+            exe = emu['exe']
+            args = emu['args']
             fspath = self.document.filesystem_path()
             if fspath is not None:
-                cmdline = "%s %s" % (emu, fspath)
+                if "%s" in args:
+                    args.replace("%s", fspath)
+                else:
+                    args = "%s %s" % (args, fspath)
                 try:
-                    run_detach(cmdline)
+                    run_detach_args(exe, args)
                 except RuntimeError, e:
-                    self.window.error("Failed launching %s\n\nError: %s" % (self.document.emulator['cmdline'], str(e)), "Emulator Error")
+                    self.window.error("Failed launching %s %s\n\nError: %s" % (exe, args, str(e)), "%s Emulator Error" % emu['name'])
             else:
-                self.window.error("Can't run emulator on:\n\n%s\n\nDocument is not on local filesystem" % self.document.uri, "Emulator Error")
+                self.window.error("Can't run emulator on:\n\n%s\n\nDocument is not on local filesystem" % self.document.uri, "%s Emulator Error" % emu['name'])
 
     def set_map_width(self, width=None):
         if width is None:
