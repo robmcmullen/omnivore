@@ -206,9 +206,12 @@ class FrameworkEditor(Editor):
             self.save_to_uri(bytes, uri)
             self.document.undo_stack.set_save_point()
             self.document.undo_stack_changed = True
+            saved = True
         except Exception, e:
             log.error("%s: %s" % (uri, str(e)))
             self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
+            saved = False
+        return saved
     
     def save_to_uri(self, bytes, uri):
         # Have to use a two-step process to write to the file: open the
