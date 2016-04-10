@@ -90,14 +90,18 @@ class UseEmulatorAction(EditorAction):
         return "%s" % (self.emulator['name'])
     
     def perform(self, event):
-        self.active_editor.machine.set_emulator(self.emulator)
-        print "Current emulator = %s" % self.emulator
+        self.active_editor.document.set_emulator(self.emulator)
+ 
+    @on_trait_change('active_editor.document')
+    def _update_checked(self):
+        if self.active_editor:
+            self.checked = self.active_editor.document.emulator == self.emulator
 
 class AddNewEmulatorAction(EditorAction):
     name = 'Add New Emulator...'
     
     def perform(self, event):
-        cmdline = prompt_for_string(event.task.window.control, "Emulator command line", "New Emulator")
+        cmdline = prompt_for_string(event.task.window.control, "Emulator command line\n\n(use %s as placeholder for the data file\notherwise will be added at the end)", "New Emulator")
         if cmdline:
             name = cmdline
             self.active_editor.machine.add_emulator(event.task, name, cmdline)

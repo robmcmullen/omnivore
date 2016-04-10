@@ -3,6 +3,7 @@ import types
 import cStringIO as StringIO
 
 import numpy as np
+import fs
 
 # Enthought library imports.
 from traits.api import HasTraits, Trait, TraitHandler, Int, Any, List, Set, Bool, Event, Dict, Set, Unicode, Property, Str
@@ -49,6 +50,10 @@ class Document(HasTraits):
     user_segments = List
     
     extra_metadata = Dict
+    
+    emulator = Any
+
+    emulator_change_event = Event
     
     # Trait events to provide view updating
     
@@ -111,6 +116,15 @@ class Document(HasTraits):
     def to_bytes(self):
         return self.bytes.tostring()
     
+    def filesystem_path(self):
+        try:
+            fs_, relpath = fs.opener.opener.parse(self.uri)
+            if fs_.hassyspath(relpath):
+                return relpath
+        except fs.errors.FSError:
+            pass
+        return None
+    
     @property
     def bytestream(self):
         return StringIO.StringIO(self.bytes)
@@ -160,3 +174,7 @@ class Document(HasTraits):
             if addr >= s.start_addr and addr < (s.start_addr + len(s)):
                 return i, s, addr - s.start_addr
         return -1, None, None
+
+    def set_emulator(self, emu):
+        self.emulator = emu
+        self.emulator_change_event = True

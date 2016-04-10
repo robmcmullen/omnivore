@@ -18,6 +18,7 @@ from omnivore.utils.file_guess import FileMetadata
 from omnivore.arch.machine import Machine, Atari800
 from omnivore.utils.segmentutil import known_segment_parsers, DefaultSegment, AnticFontSegment
 from omnivore.utils.searchutil import known_searchers
+from omnivore.utils.processutil import run_detach
 
 from commands import PasteCommand
 
@@ -134,6 +135,8 @@ class HexEditor(FrameworkEditor):
             first_segment = doc.segments[0]
             for k, v in e['comments']:
                 first_segment.rawdata.comments[k] = v
+        if 'emulator' in e:
+            doc.emulator = e['emulator']
         if 'comment ranges' in e:
             first_segment = doc.segments[0]
             first_segment.set_style_ranges(e['comment ranges'], comment=True)
@@ -151,9 +154,12 @@ class HexEditor(FrameworkEditor):
         
         # json serialization doesn't allow int keys, so convert to list of pairs
         mdict["comments"] = [[k, v] for k, v in base.rawdata.comments.iteritems()]
+        mdict["emulator"] = self.document.emulator
 
     def rebuild_document_properties(self):
         self.find_segment()
+        self.update_emulator()
+        self.task.machine_menu_changed = self.machine
     
     def copy_view_properties(self, old_editor):
         try:
@@ -282,10 +288,27 @@ class HexEditor(FrameworkEditor):
     def update_disassembler(self):
         self.disassembly.recalc_view()
     
-    @on_trait_change('machine.emulator_change_event')
+    @on_trait_change('document.emulator_change_event')
     def update_emulator(self):
-        self.emulator_label = "Run using '%s'" % self.machine.emulator['name']
-        self.can_run_emulator = True
+        state = self.document.emulator is not None
+        if state:
+            self.emulator_label = "Run using '%s'" % self.document.emulator['name']
+        else:
+            self.emulator_label = "Run in Emulator"
+        self.can_run_emulator = state
+
+    def run_emulator(self):
+        if self.save():
+            emu = self.document.emulator['cmdline']
+            fspath = self.document.filesystem_path()
+            if fspath is not None:
+                cmdline = "%s %s" % (emu, fspath)
+                try:
+                    run_detach(cmdline)
+                except RuntimeError, e:
+                    self.window.error("Failed launching %s\n\nError: %s" % (self.document.emulator['cmdline'], str(e)), "Emulator Error")
+            else:
+                self.window.error("Can't run emulator on:\n\n%s\n\nDocument is not on local filesystem" % self.document.uri, "Emulator Error")
 
     def set_map_width(self, width=None):
         if width is None:
@@ -429,11 +452,6 @@ class HexEditor(FrameworkEditor):
 
     def mark_index_range_changed(self, index_range):
         self.disassembly.restart_disassembly(index_range[0])
-
-    def run_emulator(self):
-        emu = self.machine.emulator
-        cmdline = "%s %s" % (emu, self.document.uri)
-        print cmdline
     
     def perform_idle(self):
         self.disassembly.perform_idle()
