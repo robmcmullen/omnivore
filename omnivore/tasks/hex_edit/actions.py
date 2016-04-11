@@ -419,7 +419,8 @@ class MarkSelectionAsDataAction(EditorAction):
 
 
 def prompt_for_comment(e, s, ranges, desc):
-    text = prompt_for_string(e.window.control, desc, "Add Comment")
+    existing = s.get_first_comment(ranges)
+    text = prompt_for_string(e.window.control, desc, "Add Comment", existing)
     if text is not None:
         s.set_comment(ranges, text)
         e.document.change_count += 1
