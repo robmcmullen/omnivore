@@ -303,6 +303,26 @@ class ProcessorTypeAction(EditorAction):
             self.checked = self.active_editor.machine.disassembler == self.disassembler
 
 
+class MemoryMapAction(EditorAction):
+    """Radio buttons for changing the memory map
+    """
+    # Traits
+    style = 'radio'
+    
+    memory_map = Any
+    
+    def _name_default(self):
+        return self.memory_map.name
+
+    def perform(self, event):
+        self.active_editor.machine.set_memory_map(self.memory_map)
+
+    @on_trait_change('active_editor.machine.memory_map')
+    def _update_checked(self):
+        if self.active_editor:
+            self.checked = self.active_editor.machine.memory_map == self.memory_map
+
+
 class SegmentParserAction(EditorAction):
     """Radio buttons for changing font style
     """

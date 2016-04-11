@@ -11,8 +11,7 @@ from traits.api import HasTraits, Any, Bool, Int, Str, List, Dict, Event, Enum, 
 import fonts
 import colors
 import disasm
-import machine_atari800
-import machine_atari5200
+import memory_map
 import antic_renderers
 
 class Machine(HasTraits):
@@ -26,7 +25,7 @@ class Machine(HasTraits):
     
     disassembler = Any(transient=True)
     
-    memory_map = Dict(key_trait=Int, value_trait=Str)
+    memory_map = Any(transient=True)
     
     antic_font_data = Any
     
@@ -160,7 +159,7 @@ class Machine(HasTraits):
         return predefined['disassembler'][0]
 
     def _memory_map_default(self):
-        return {}
+        return predefined['memory_map'][0]
     
     def _antic_font_default(self):
         return self.get_antic_font()
@@ -310,6 +309,10 @@ class Machine(HasTraits):
         self.disassembler = disassembler
         self.disassembler_change_event = True
     
+    def set_memory_map(self, memory_map):
+        self.memory_map = memory_map
+        self.disassembler_change_event = True
+    
     def set_font(self, font=None, font_renderer=None):
         if font is None:
             font = self.antic_font_data
@@ -393,13 +396,13 @@ class Machine(HasTraits):
 
 Generic6502 = Machine(name="Generic 6502", disassembler=disasm.Basic6502Disassembler)
 
-Atari800 = Machine(name="Atari 800", disassembler=disasm.Basic6502Disassembler, memory_map=dict(machine_atari800.memmap))
+Atari800 = Machine(name="Atari 800", disassembler=disasm.Basic6502Disassembler, memory_map=memory_map.Atari800MemoryMap)
 
-Atari800Undoc = Machine(name="Atari 800 (show undocumented opcodes)", disassembler=disasm.Undocumented6502Disassembler, memory_map=dict(machine_atari800.memmap))
+Atari800Undoc = Machine(name="Atari 800 (show undocumented opcodes)", disassembler=disasm.Undocumented6502Disassembler, memory_map=memory_map.Atari800MemoryMap)
 
-Atari800Flagged = Machine(name="Atari 800 (highlight undocumented opcodes)", disassembler=disasm.Flagged6502Disassembler, memory_map=dict(machine_atari800.memmap))
+Atari800Flagged = Machine(name="Atari 800 (highlight undocumented opcodes)", disassembler=disasm.Flagged6502Disassembler, memory_map=memory_map.Atari800MemoryMap)
 
-Atari5200 = Machine(name="Atari 5200", disassembler=disasm.Basic6502Disassembler, memory_map=dict(machine_atari5200.memmap))
+Atari5200 = Machine(name="Atari 5200", disassembler=disasm.Basic6502Disassembler, memory_map=memory_map.Atari5200MemoryMap)
 
 
 
@@ -410,6 +413,11 @@ predefined = {
         Atari800Undoc,
         Atari800Flagged,
         Atari5200,
+        ],
+    "memory_map": [
+        memory_map.EmptyMemoryMap,
+        memory_map.Atari800MemoryMap,
+        memory_map.Atari5200MemoryMap,
         ],
     "disassembler": [
         disasm.Basic6502Disassembler,

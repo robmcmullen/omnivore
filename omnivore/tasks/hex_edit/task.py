@@ -202,17 +202,29 @@ class HexEditTask(FrameworkTask):
             actions.append(ProcessorTypeAction(disassembler=r))
         return actions
     
+    def get_memory_map_actions(self):
+        actions = []
+        for r in machine.predefined['memory_map']:
+            actions.append(MemoryMapAction(memory_map=r))
+        return actions
+    
     def get_actions_Menu_Machine_MachineCharacteristicsGroup(self):
         font_mapping_actions = self.get_font_mapping_actions()
         font_renderer_actions = self.get_font_renderer_actions()
         bitmap_renderer_actions = self.get_bitmap_renderer_actions()
         processor_type_actions = self.get_processor_type_actions()
+        memory_map_actions = self.get_memory_map_actions()
         return [
             SMenu(
                 Group(
                     *processor_type_actions,
                     id="a1", separator=True),
                 id='FontChoiceSubmenu0', separator=True, name="Processor"),
+            SMenu(
+                Group(
+                    *memory_map_actions,
+                    id="a1", separator=True),
+                id='MemoryMapSubmenu0', separator=False, name="Memory Map"),
             SMenu(
                 Group(
                     ColorStandardAction(name="NTSC", color_standard=0),

@@ -5,11 +5,14 @@ class BaseDisassembler(disasm.Disassembler):
     name = "generic disassembler"
     cpu = "undefined"
     allow_undocumented = False
+    read_instructions = set()
+    write_instructions = set()
+    rw_modes = set()
     
     cached_miniassemblers = {}
     
     def __init__(self, memory_map=None, hex_lower=True, mnemonic_lower=False):
-        disasm.Disassembler.__init__(self, self.cpu, memory_map=memory_map, allow_undocumented=self.allow_undocumented, hex_lower=hex_lower, mnemonic_lower=mnemonic_lower)
+        disasm.Disassembler.__init__(self, self.cpu, memory_map, self.allow_undocumented, hex_lower, mnemonic_lower, self.read_instructions, self.write_instructions, self.rw_modes)
     
     @classmethod
     def get_miniassembler(cls, cpu):
@@ -30,6 +33,9 @@ class BaseDisassembler(disasm.Disassembler):
 class Basic6502Disassembler(BaseDisassembler):
     name = "6502"
     cpu = "6502"
+    read_instructions = {"adc", "and", "asl", "bit", "cmp", "cpx", "cpy", "dec", "eor", "inc", "lda", "ldx", "ldy", "lsr", "ora", "rol", "ror", "sbc", "jsr", "jmp"}
+    write_instructions = {"sax", "shx", "shy", "slo", "sre", "sta", "stx", "sty"}
+    rw_modes = {"absolute", "absolutex", "absolutey", "indirect", "indirectx", "indirecty", "relative", "zeropage", "zeropagex", "zeropagey"}
 
 
 class Undocumented6502Disassembler(Basic6502Disassembler):
