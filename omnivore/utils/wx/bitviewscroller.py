@@ -464,12 +464,15 @@ class BitviewScroller(wx.ScrolledWindow):
             self.calc_image_size()
     
     def on_popup(self, evt):
+        byte, bit, inside = self.event_coords_to_byte(evt)
         actions = self.get_popup_actions()
+        style = self.segment.style[byte]
+        popup_data = {'index': byte, 'in_selection': style&0x80}
         if actions:
-            self.editor.popup_context_menu_from_actions(self, actions)
+            self.editor.popup_context_menu_from_actions(self, actions, popup_data)
     
     def get_popup_actions(self):
-        return [CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction]
+        return [CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, AddCommentPopupAction, RemoveCommentPopupAction]
     
     def on_focus(self, evt):
         log.debug("on_focus!")

@@ -347,5 +347,5 @@ class DisassemblyPanel(ByteGrid):
     
     def get_popup_actions(self, r, c):
         goto_action = self.get_goto_action(r, c)
-        return [goto_action, None, CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, AddCommentPopupAction]
+        return [goto_action, None, CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, AddCommentPopupAction, RemoveCommentPopupAction]
         
