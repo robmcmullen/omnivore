@@ -116,7 +116,7 @@ class HexEditTask(FrameworkTask):
         e = self.active_editor
         if e is not None:
             prefs = self.get_preferences()
-            e.text_font = prefs.text_font
+            e.machine.text_font = prefs.text_font
             e.map_width = prefs.map_width
             e.bitmap_width = prefs.bitmap_width
             self.hex_grid_lower_case = prefs.hex_grid_lower_case
