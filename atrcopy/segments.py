@@ -273,6 +273,13 @@ class DefaultSegment(object):
         rawindex = self.get_raw_index(index)
         return self.rawdata.comments.get(rawindex, "")
     
+    def clear_comment(self, ranges):
+        self.clear_style_ranges(ranges, comment=True)
+        for start, end in ranges:
+            rawindex = self.get_raw_index(start)
+            if rawindex in self.rawdata.comments:
+                del self.rawdata.comments[rawindex]
+    
     def label(self, index, lower_case=True):
         if lower_case:
             return "%04x" % (index + self.start_addr)
