@@ -424,6 +424,15 @@ class HexEditor(FrameworkEditor):
         self.selected_ranges = s.get_style_ranges(selected=True)
         self.document.change_count += 1
     
+    def get_label_at_index(self, index):
+        return self.control.table.get_label_at_index(index)
+    
+    def get_label_of_ranges(self, ranges):
+        labels = []
+        for start, end in ranges:
+            labels.append("%s-%s" % (self.get_label_at_index(start), self.get_label_at_index(end)))
+        return ", ".join(labels)
+    
     def get_segment_from_selection(self):
         # Since we can't handle segments with discontinuous chunks, we'll
         # create a contiguous segment from the first byte of the first range

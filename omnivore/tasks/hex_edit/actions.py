@@ -450,11 +450,11 @@ class AddCommentPopupAction(EditorAction):
         s = e.segment
         if event.popup_data["in_selection"]:
             ranges = s.get_style_ranges(selected=True)
-            desc = "Enter comment for range %s" % str(ranges)
+            desc = "Enter comment for range %s" % e.get_label_of_ranges(ranges)
         else:
             index = event.popup_data["index"]
             ranges = [(index, index+1)]
-            desc = "Enter comment for location %s" % index
+            desc = "Enter comment for location %s" % e.get_label_at_index(index)
         if ranges:
             prompt_for_comment(e, s, ranges, desc)
     
