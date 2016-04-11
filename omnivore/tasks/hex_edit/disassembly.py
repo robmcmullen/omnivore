@@ -94,11 +94,14 @@ class DisassemblyTable(ByteGridTable):
     
     def get_index_range(self, r, c):
         try:
-            line = self.lines[r]
-        except:
-            line = self.lines[-1]
-        index = line[0] - self.start_addr
-        return index, index + line[4]
+            try:
+                line = self.lines[r]
+            except:
+                line = self.lines[-1]
+            index = line[0] - self.start_addr
+            return index, index + line[4]
+        except IndexError:
+            return 0, 0
     
     def is_index_valid(self, index):
         return index < len(self.segment)

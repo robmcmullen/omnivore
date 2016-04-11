@@ -755,9 +755,10 @@ class ByteGrid(Grid.Grid):
         row = self.YToRow(y)
         col = self.XToCol(x)
         index, _ = self.table.get_index_range(row, col)
-        label = self.table.get_label_at_index(index)
-        message = self.get_status_message_at_index(index, row, col)
-        self.editor.task.status_bar.message = "%s: %s %s" % (self.short_name, label, message)
+        if self.table.is_index_valid(index):
+            label = self.table.get_label_at_index(index)
+            message = self.get_status_message_at_index(index, row, col)
+            self.editor.task.status_bar.message = "%s: %s %s" % (self.short_name, label, message)
     
     def get_status_message_at_index(self, index, row, col):
         return "r=%d,c=%d" % (row, col)
