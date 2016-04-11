@@ -21,21 +21,20 @@ r = 64
 w = 128
 
 class Disassembler(object):
-    def __init__(self, cpu_name, memory_map=None, allow_undocumented=False, hex_lower=True, mnemonic_lower=False):
+    def __init__(self, cpu_name, memory_map=None, allow_undocumented=False, hex_lower=True, mnemonic_lower=False, r_mnemonics=None, w_mnemonics=None, rw_modes=None):
         self.source = None
         self.pc = 0
         self.pc_offset = 0
         self.origin = None
-        if memory_map is not None:
-            self.memory_map = memory_map
-        else:
-            self.memory_map = {}
-        self.setup(cpu_name, allow_undocumented, hex_lower, mnemonic_lower)
+        self.memory_map = memory_map
+        self.setup(cpu_name, allow_undocumented, hex_lower, mnemonic_lower, r_mnemonics, w_mnemonics, rw_modes)
     
-    def setup(self, cpu_name, allow_undocumented, hex_lower, mnemonic_lower):
+    def setup(self, cpu_name, allow_undocumented, hex_lower, mnemonic_lower, r_mnemonics, w_mnemonics, rw_modes):
         cpu = cputables.processors[cpu_name]
         modes = {}
         table = cpu['addressModeTable']
+        if rw_modes is None:
+            rw_modes = set()
         for mode, fmt in table.items():
             if hex_lower:
                 fmt = fmt.replace(":02X", ":02x").replace(":04X", ":04x")
@@ -48,6 +47,11 @@ class Disassembler(object):
             except ValueError:
                 length, mnemonic, mode = optable
                 flag = 0
+            if mode in rw_modes:
+                if mnemonic in r_mnemonics:
+                    flag |= r
+                if mnemonic in w_mnemonics:
+                    flag |= w
             if not mnemonic_lower:
                 mnemonic = mnemonic.upper()
             d[opcode] = (length, mnemonic, modes[mode], flag)
@@ -167,12 +171,12 @@ class Disassembler(object):
             
         except StopIteration:
             self.pc = next_pc
-            opstr, extra, rw = self.data_byte % opcode, 0, ""
+            opstr, extra, flag = self.data_byte % opcode, 0, 0
             memloc = None
             dest_pc = None
-        if flag == r:
+        if flag & r:
             rw = "r"
-        elif flag == w:
+        elif flag & w:
             rw = "w"
         else:
             rw = ""
@@ -194,12 +198,12 @@ class Disassembler(object):
         return (addr, bytes, opstr, comment, is_und)
     
     def get_memloc_name(self, memloc, rw):
-        if rw == "":
+        if rw == "" or self.memory_map is None:
             return ""
-        elif rw == "w" and -memloc in self.memory_map:
-            return "; " + self.memory_map[-memloc]
-        elif memloc in self.memory_map:
-            return "; " + self.memory_map[memloc]
+        flag = rw == "w"
+        name = self.memory_map.get_name(memloc, flag)
+        if name:
+            return "; " + name
         return ""
     
     def flag_as_undefined(self, flag):
