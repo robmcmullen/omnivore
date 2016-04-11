@@ -433,7 +433,7 @@ class HexEditor(FrameworkEditor):
             labels.append("%s-%s" % (self.get_label_at_index(start), self.get_label_at_index(end)))
         return ", ".join(labels)
     
-    def get_segment_from_selection(self):
+    def get_segments_from_selection(self, size=-1):
         # Since we can't handle segments with discontinuous chunks, we'll
         # create a contiguous segment from the first byte of the first range
         # to the last byte of the last range
@@ -445,12 +445,19 @@ class HexEditor(FrameworkEditor):
         ranges = s.get_style_ranges(selected=True)
         first = ranges[0][0]
         last = ranges[-1][1]
-        segment = DefaultSegment(s.rawdata[first:last], s.start_addr + first)
-        return segment
+        if size < 0:
+            size = last - first + 1
+        segments = []
+        for seg_start in range(first, last, size):
+            seg_end = min(seg_start + size, last)
+            segment = DefaultSegment(s.rawdata[seg_start:seg_end], s.start_addr + seg_start)
+            segments.append(segment)
+        return segments
     
-    def add_user_segment(self, segment):
+    def add_user_segment(self, segment, update=True):
         self.document.add_user_segment(segment)
-        self.update_segments_ui()
+        if update:
+            self.update_segments_ui()
     
     def delete_user_segment(self, segment):
         self.document.delete_user_segment(segment)

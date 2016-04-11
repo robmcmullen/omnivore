@@ -290,6 +290,7 @@ class HexEditTask(FrameworkTask):
                     id="a1", separator=True),
                 id='submenu1', separator=False, name="File Type"),
             GetSegmentFromSelectionAction(),
+            MultipleSegmentsFromSelectionAction(),
             MarkSelectionAsCodeAction(),
             MarkSelectionAsDataAction(),
             AddCommentAction(),

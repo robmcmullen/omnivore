@@ -405,11 +405,27 @@ class GetSegmentFromSelectionAction(EditorAction):
         e = self.active_editor
         text = prompt_for_string(e.window.control, "Enter segment name", "New Segment")
         if text is not None:
-            segment = e.get_segment_from_selection()
+            segment, = e.get_segments_from_selection()
             if not text:
                 text = "%04x-%04x" % (segment.start_addr, segment.start_addr + len(segment) - 1)
             segment.name = text
             e.add_user_segment(segment)
+
+
+class MultipleSegmentsFromSelectionAction(EditorAction):
+    name = 'Multiple Segments From Selection'
+    enabled_name = 'can_copy'
+    
+    def perform(self, event):
+        e = self.active_editor
+        size = prompt_for_hex(e.window.control, "Enter number of bytes in each segment", "Multiple Segments")
+        if size is not None and size > 0:
+            segments = e.get_segments_from_selection(size)
+            for segment in segments:
+                text = "%04x-%04x" % (segment.start_addr, segment.start_addr + len(segment) - 1)
+                segment.name = text
+                e.add_user_segment(segment, False)
+            e.update_segments_ui()
 
 
 class MarkSelectionAsCodeAction(EditorAction):
