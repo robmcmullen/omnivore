@@ -281,6 +281,7 @@ class HexEditTask(FrameworkTask):
             MarkSelectionAsCodeAction(),
             MarkSelectionAsDataAction(),
             AddCommentAction(),
+            RemoveCommentAction(),
             ]
     
     def get_actions_Menu_Segments_SegmentGroup(self):

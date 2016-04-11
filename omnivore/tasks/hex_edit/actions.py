@@ -456,6 +456,39 @@ class AddCommentPopupAction(EditorAction):
             desc = "Enter comment for location %s" % index
         if ranges:
             prompt_for_comment(e, s, ranges, desc)
+    
+class RemoveCommentAction(EditorAction):
+    name = 'Remove Comment'
+    accelerator = 'Ctrl+Alt+C'
+    
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        if e.can_copy:
+            ranges = s.get_style_ranges(selected=True)
+        else:
+            index = e.cursor_index
+            ranges = [(index, index+1)]
+        if ranges:
+            s.clear_comment(ranges)
+            e.document.change_count += 1
+            e.refresh_panes()
+
+class RemoveCommentPopupAction(EditorAction):
+    name = 'Remove Comment'
+    
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        if event.popup_data["in_selection"]:
+            ranges = s.get_style_ranges(selected=True)
+        else:
+            index = event.popup_data["index"]
+            ranges = [(index, index+1)]
+        if ranges:
+            s.clear_comment(ranges)
+            e.document.change_count += 1
+            e.refresh_panes()
 
 
 class DeleteUserSegmentAction(EditorAction):
