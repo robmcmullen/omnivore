@@ -273,6 +273,11 @@ class DefaultSegment(object):
         rawindex = self.get_raw_index(index)
         return self.rawdata.comments.get(rawindex, "")
     
+    def get_first_comment(self, ranges):
+        start = reduce(min, [r[0] for r in ranges])
+        rawindex = self.get_raw_index(start)
+        return self.rawdata.comments.get(rawindex, "")
+    
     def clear_comment(self, ranges):
         self.clear_style_ranges(ranges, comment=True)
         for start, end in ranges:
