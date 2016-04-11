@@ -146,9 +146,18 @@ class Disassembler(object):
                     addr = operand1 + 256 * operand2
                     signed = addr - 0x10000 if addr > 32768 else addr
                     rel = (pc + 2 + signed) & 0xffff  # limit to 64k address space
-                    opstr = opstr + " " + fmt.format(rel)
                     memloc = rel
                     dest_pc = rel
+                    try:
+                        opstr = opstr + " " + fmt.format(rel)
+                    except IndexError:
+                        # maybe it's the 65c02 zeropagerelative where it's
+                        # actually two separate operands
+                        signed = operand2 - 256 if operand2 > 127 else operand2
+                        rel = (pc + 2 + signed) & 0xffff  # limit to 64k address space
+                        opstr = opstr + " " + fmt.format(operand1, rel)
+                        memloc = rel
+                        dest_pc = rel
                 else:
                     opstr = opstr + " " + fmt.format(operand1, operand2)
                     memloc = operand1 + 256 * operand2
