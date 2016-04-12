@@ -49,7 +49,7 @@ class MapEditTask(HexEditTask):
         return pane_layout.pane_create()
 
     def _extra_actions_default(self):
-        machine_menu = self.create_menu("Menu", "Machine", "MachineTypeGroup", "MachineProcessorGroup", "MachineCharGroup", "MachineBitmapGroup")
+        machine_menu = self.create_menu("Menu", "Machine", "MachineTypeGroup", "MachineCharacteristicsGroup", "MachineEmulatorGroup")
         segment_menu = self.create_menu("Menu", "Segments", "SegmentParserGroup", "SegmentGroup")
         tiles_menu = self.create_menu("Menu", "Tiles", "TileModifyGroup")
         actions = [
