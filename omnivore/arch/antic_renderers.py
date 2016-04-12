@@ -192,14 +192,18 @@ class TwoBitsPerPixel(BaseRenderer):
         return self.reshape(bitimage, bytes_per_row, nr)
 
 
-class ModeE(TwoBitsPerPixel):
-    name = "Antic E (Gr 7+, 2bpp)"
-    pixels_per_byte = 8
+class ModeD(TwoBitsPerPixel):
+    name = "Antic D (Gr 7, 2bpp)"
+    pixels_per_byte = 4
     
     def get_image(self, m, bytes_per_row, nr, count, bytes, style):
         colors = self.get_colors(m, [8, 4, 5, 6])
         bitimage = self.get_2bpp(m, bytes_per_row, nr, count, bytes, style, colors)
         return self.reshape(bitimage, bytes_per_row, nr)
+
+class ModeE(ModeD):
+    name = "Antic E (Gr 7+, 2bpp)"
+    pixels_per_byte = 8
 
 
 class FourBitsPerPixel(BaseRenderer):
