@@ -205,7 +205,7 @@ class AtariDosDiskImage(DiskImageBase):
     def calc_vtoc_code(self):
         # From AA post: http://atariage.com/forums/topic/179868-mydos-vtoc-size/
         num = 1 + (self.total_sectors + 80) / (self.header.sector_size * 8)
-        if header.sector_size == 128:
+        if self.header.sector_size == 128:
             if num == 1:
                 code = 2
             else:
