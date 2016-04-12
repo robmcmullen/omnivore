@@ -174,12 +174,20 @@ class FrameworkApplication(TasksApplication):
         log.debug("STARTING!!!")
         init_filesystems()
         loaded = False
-        for arg in self.command_line_args:
+        parser = argparse.ArgumentParser(description="Application parser")
+        parser.add_argument("-t", "--task_id", "--edit_with", action="store", default="", help="Use the editing mode specified by this task id for all files listed on the command line")
+        parser.add_argument("--show_editors", action="store_true", default=False, help="List all task ids")
+        options, extra_args = parser.parse_known_args(self.command_line_args)
+        if options.show_editors:
+            for factory in self.task_factories:
+                print("%s %s" % (factory.id, factory.name))
+        for arg in extra_args:
             if arg.startswith("-"):
                 log.debug("skipping flag %s" % arg)
                 continue
             log.debug("processing %s" % arg)
-            self.load_file(arg, None)
+            task_id = self.find_best_task_id(options.task_id)
+            self.load_file(arg, None, task_id=task_id)
             loaded = True
         if not loaded:
             factory = self.get_task_factory(self.startup_task)
@@ -307,7 +315,7 @@ class FrameworkApplication(TasksApplication):
     def get_possible_task_factories(self, document, task_id=""):
         possibilities = []
         for factory in self.task_factories:
-            log.debug("factory: %s" % factory.name)
+            log.debug("factory: %s=%s" % (factory.id, factory.name))
             if task_id:
                 if factory.id == task_id:
                     possibilities.append(factory)
@@ -335,6 +343,13 @@ class FrameworkApplication(TasksApplication):
             if factory.id == task_id:
                 return factory
         return None
+    
+    def find_best_task_id(self, task_id):
+        if task_id:
+            for factory in self.task_factories:
+                if factory.id == task_id or ".%s." % task_id in factory.id or ".%s" % task_id in factory.id:
+                    return factory.id
+        return ""  # empty string will result in scanning the file for the best match
     
     def create_task_from_factory_id(self, guess, factory_id):
         window = self.create_window()
