@@ -394,9 +394,9 @@ class HexEditor(FrameworkEditor):
         # find byte index of view into master array
         g = self.document.global_segment
         s = self.segment
-        global_offset, _ = g.byte_bounds_offset()
-        new_offset, _ = s.byte_bounds_offset()
-        old_offset, _ = old_segment.byte_bounds_offset()
+        global_offset = g.get_raw_index(0)
+        new_offset = s.get_raw_index(0)
+        old_offset = old_segment.get_raw_index(0)
         
         self.cursor_index -= new_offset - old_offset
         self.selected_ranges = s.get_style_ranges(selected=True)
