@@ -178,10 +178,13 @@ class DefaultSegment(object):
         start, end = self._rawdata_bounds
         r = rawdata[start:end]
         delattr(self, '_rawdata_bounds')
-        if self._order_list:
-            order = to_numpy_list(self._order_list)
-            r = r.get_indexed(order)
-            delattr(self, '_order_list')
+        try:
+            if self._order_list:
+                order = to_numpy_list(self._order_list)
+                r = r.get_indexed(order)
+                delattr(self, '_order_list')
+        except AttributeError:
+            pass
         self.set_raw(r)
     
     def __str__(self):
