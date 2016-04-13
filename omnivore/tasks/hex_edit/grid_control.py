@@ -169,10 +169,10 @@ class ByteTable(ByteGridTable):
         return "%02x" % self.segment[i], self.segment.style[i]
 
     def get_label_at_index(self, index):
-        return self.segment.label(index - self.start_offset, self.get_value_style == self.get_value_style_lower)
+        return self.segment.label(index, self.get_value_style == self.get_value_style_lower)
 
     def GetRowLabelValue(self, row):
-        return self.get_label_at_index(row*self.bytes_per_row)
+        return self.get_label_at_index(row*self.bytes_per_row - self.start_offset)
 
     def GetColLabelValue(self, col):
         if self.get_value_style == self.get_value_style_lower:
