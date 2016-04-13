@@ -1,4 +1,6 @@
-__version__ = "2.5.1"
+__version__ = "2.6.0"
+
+import logging
 
 try:
     import numpy as np
@@ -58,6 +60,13 @@ def run():
     parser.add_argument("-s", "--segments", action="store_true", default=False, help="display segments")
     options, extra_args = parser.parse_known_args()
 
+    # Turn off debug messages by default
+    log = logging.getLogger("atrcopy")
+    if options.verbose:
+        log.setLevel(logging.DEBUG)
+    else:
+        log.setLevel(logging.INFO)
+    
     for filename in options.files:
         with open(filename, "rb") as fh:
             rawdata = SegmentData(fh.read())

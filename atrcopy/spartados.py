@@ -5,6 +5,9 @@ from ataridos import AtariDosDirent, XexSegment
 from diskimages import DiskImageBase
 from segments import DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentSaver
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class SpartaDosDirent(AtariDosDirent):
     format = np.dtype([
@@ -87,7 +90,7 @@ class SpartaDosDirent(AtariDosDirent):
 
     def start_read(self, image):
         if not self.is_sane:
-            print self.starting_sector
+            log.debug("Invalid directory entry '%s', starting_sector=%s" % (str(self), self.starting_sector))
             raise InvalidDirent("Invalid directory entry '%s'" % str(self))
         self.sector_map = image.get_sector_map(self.starting_sector)
         self.sector_map_index = 0

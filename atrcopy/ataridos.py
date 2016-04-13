@@ -5,6 +5,9 @@ from diskimages import DiskImageBase
 from segments import EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentSaver
 from utils import to_numpy
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class AtariDosDirent(object):
     # ATR Dirent structure described at http://atari.kensclassics.org/dos.htm
@@ -156,12 +159,14 @@ class AtariDosFile(object):
         b = r.get_data()
         pos = 0
         first = True
+        log.debug("Initial parsing: size=%d" % self.size)
         while pos < self.size:
             if pos + 1 < self.size:
                 header, = b[pos:pos+2].view(dtype='<u2')
             else:
                 self.segments.append(ObjSegment(r[pos:pos + 1], pos, pos + 1, 0, 1, "Incomplete Data"))
                 break
+            log.debug("header parsing: header=0x%x" % header)
             if header == 0xffff:
                 # Apparently 0xffff header can appear in any segment, not just
                 # the first.  Regardless, it is ignored everywhere.
@@ -339,5 +344,5 @@ class AtariDosDiskImage(DiskImageBase):
                 binary = AtariDosFile(segment.rawdata)
                 segments_out.extend(binary.segments)
             except InvalidBinaryFile:
-                pass
+                log.debug("%s not a binary file; skipping segment generation" % str(segment))
         return segments_out
