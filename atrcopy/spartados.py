@@ -3,7 +3,7 @@ import numpy as np
 from errors import *
 from ataridos import AtariDosDirent, XexSegment
 from diskimages import DiskImageBase
-from segments import EmptySegment, ObjSegment, RawSectorsSegment, IndexedByteSegment, SegmentSaver
+from segments import DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentSaver
 
 
 class SpartaDosDirent(AtariDosDirent):
@@ -236,7 +236,8 @@ class SpartaDosDiskImage(DiskImageBase):
         if len(byte_order) > 0:
             name = "%s %d@%d %s" % (dirent.get_filename(), dirent.length, dirent.starting_sector, dirent.str_timestamp)
             verbose_name = "%s (%d bytes, sector map@%d) %s %s" % (dirent.get_filename(), dirent.length, dirent.starting_sector, dirent.verbose_info, dirent.str_timestamp)
-            segment = IndexedByteSegment(self.rawdata, byte_order, name=name, verbose_name=verbose_name)
+            raw = self.rawdata.get_indexed(byte_order)
+            segment = DefaultSegment(raw, name=name, verbose_name=verbose_name)
         else:
             segment = EmptySegment(self.rawdata, name=dirent.get_filename(), error=dirent.str_timestamp)
         return segment

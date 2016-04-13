@@ -9,7 +9,7 @@ from errors import *
 from ataridos import AtariDosDiskImage, AtariDosFile
 from diskimages import AtrHeader, BootDiskImage
 from kboot import KBootImage
-from segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, IndexedByteSegment
+from segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment
 from spartados import SpartaDosDiskImage
 from utils import to_numpy
 

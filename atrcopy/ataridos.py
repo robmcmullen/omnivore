@@ -2,7 +2,7 @@ import numpy as np
 
 from errors import *
 from diskimages import DiskImageBase
-from segments import EmptySegment, ObjSegment, RawSectorsSegment, IndexedByteSegment, SegmentSaver
+from segments import EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentSaver
 from utils import to_numpy
 
 
@@ -144,8 +144,6 @@ class AtariDosFile(object):
     """
     def __init__(self, rawdata):
         self.rawdata = rawdata
-        self.bytes = rawdata.get_data()
-        self.style = rawdata.get_style()
         self.size = len(rawdata)
         self.segments = []
         self.parse_segments()
@@ -155,8 +153,7 @@ class AtariDosFile(object):
     
     def parse_segments(self):
         r = self.rawdata
-        b = self.bytes
-        s = self.style
+        b = r.get_data()
         pos = 0
         first = True
         while pos < self.size:
@@ -327,8 +324,20 @@ class AtariDosDiskImage(DiskImageBase):
         if len(byte_order) > 0:
             name = "%s %ds@%d" % (dirent.get_filename(), dirent.num_sectors, dirent.starting_sector)
             verbose_name = "%s (%d sectors, first@%d) %s" % (dirent.get_filename(), dirent.num_sectors, dirent.starting_sector, dirent.verbose_info)
-            print verbose_name
-            segment = IndexedByteSegment(self.rawdata, byte_order, name=name, verbose_name=verbose_name)
+            raw = self.rawdata.get_indexed(byte_order)
+            segment = DefaultSegment(raw, name=name, verbose_name=verbose_name)
         else:
             segment = EmptySegment(self.rawdata, name=dirent.get_filename())
         return segment
+    
+    def get_file_segments(self):
+        segments_in = DiskImageBase.get_file_segments(self)
+        segments_out = []
+        for segment in segments_in:
+            segments_out.append(segment)
+            try:
+                binary = AtariDosFile(segment.rawdata)
+                segments_out.extend(binary.segments)
+            except InvalidBinaryFile:
+                pass
+        return segments_out
