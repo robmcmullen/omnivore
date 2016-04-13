@@ -117,7 +117,7 @@ class SegmentData(object):
         if self.is_indexed:
             i = self.order[i]
         if self.data.base is None:
-            return i
+            return int(i)
         data_start, data_end = np.byte_bounds(self.data)
         base_start, base_end = np.byte_bounds(self.data.base)
         return int(data_start - base_start + i)
