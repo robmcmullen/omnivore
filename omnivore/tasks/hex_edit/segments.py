@@ -81,4 +81,8 @@ class SegmentList(wx.ListBox):
         else:
             self.task.status_bar.message = ""
         evt.Skip()
-        
+    
+    def ensure_visible(self, segment):
+        d = self.task.active_editor.document
+        index = d.find_segment_index(segment)
+        self.EnsureVisible(index)

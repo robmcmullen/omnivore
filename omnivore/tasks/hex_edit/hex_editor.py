@@ -458,6 +458,7 @@ class HexEditor(FrameworkEditor):
         self.document.add_user_segment(segment)
         if update:
             self.update_segments_ui()
+            self.segment_list.ensure_visible(segment)
     
     def delete_user_segment(self, segment):
         self.document.delete_user_segment(segment)

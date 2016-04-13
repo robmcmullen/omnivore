@@ -160,6 +160,12 @@ class Document(HasTraits):
         self.user_segments.remove(segment)
         self.segments.remove(segment)
     
+    def find_segment_index(self, segment):
+        try:
+            return self.segments.index(segment)
+        except ValueError:
+            return -1
+    
     def find_segment_index_by_name(self, name):
         for i, s in enumerate(self.segments):
             if s.name == name:
