@@ -65,4 +65,6 @@ class HtmlViewTask(FrameworkTask):
         ...
         10 = absolute match
         """
+        if guess.metadata.mime == "text/html":
+            return 10
         return 1

@@ -329,13 +329,14 @@ class FrameworkApplication(TasksApplication):
     def find_best_task_factory(self, document, factories):
         scores = []
         for factory in factories:
+            log.debug("factory: %s=%s" % (factory.id, factory.name))
             if document.last_task_id == factory.id:
                 # short circuit if document is requesting a specific task
                 return factory
             score = factory.factory.get_match_score(document)
             scores.append((score, factory))
         scores.sort()
-        log.debug("find_best_task_factory: %s" % str([(score, p.name, p.id) for (s, p) in scores]))
+        log.debug("find_best_task_factory: %s" % str([(s, p.name, p.id) for (s, p) in scores]))
         return scores[-1][1]
     
     def get_task_factory(self, task_id):
