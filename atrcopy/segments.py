@@ -152,12 +152,12 @@ class DefaultSegment(object):
         self.verbose_name = verbose_name
         self.page_size = -1
         self.map_width = 40
-        self._search_copy = None
     
     def set_raw(self, rawdata):
         self.rawdata = rawdata
         self.data = rawdata.get_data()
         self.style = rawdata.get_style()
+        self._search_copy = None
     
     def get_raw(self):
         return self.rawdata
