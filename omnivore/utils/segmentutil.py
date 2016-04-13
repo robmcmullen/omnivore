@@ -97,10 +97,10 @@ class AtariBootDiskSegmentParser(SegmentParser):
         self.segments.append(DefaultSegment(r, 0))
         try:
             self.atr = BootDiskImage(r)
+            self.atr.parse_segments()
         except:
             raise InvalidSegmentParser
         
-        self.atr.parse_segments()
         self.segments.extend(self.atr.segments)
 
 
