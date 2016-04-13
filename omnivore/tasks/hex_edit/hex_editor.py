@@ -368,10 +368,10 @@ class HexEditor(FrameworkEditor):
             self.adjust_selection(old_segment)
             self.segment_number = num
             self.invalidate_search()
-            self.update_segments_ui()
             self.view_segment_set_width(self.segment)
             self.reconfigure_panes()
             self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
+        self.update_segments_ui()
     
     def save_segment(self, saver, uri):
         try:
