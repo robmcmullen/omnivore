@@ -148,7 +148,7 @@ class HexEditor(FrameworkEditor):
     def get_extra_metadata(self, mdict):
         mdict["serialized user segments"] = list(self.document.user_segments)
         base = self.document.segments[0]
-        mdict["comment ranges"] = base.get_style_ranges(comment=True)
+        mdict["comment ranges"] = [list(a) for a in base.get_style_ranges(comment=True)]
         
         # json serialization doesn't allow int keys, so convert to list of pairs
         mdict["comments"] = [[k, v] for k, v in base.rawdata.comments.iteritems()]

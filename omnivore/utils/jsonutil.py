@@ -1,4 +1,4 @@
-def collapse_json(text, indent=12):
+def collapse_json(text, indent=8):
     """Compacts a string of json data by collapsing whitespace after the specified
     indent level
     
