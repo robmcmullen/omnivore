@@ -438,6 +438,7 @@ class MarkSelectionAsCodeAction(EditorAction):
         ranges = s.get_style_ranges(selected=True)
         s.clear_style_ranges(ranges, data=True)
         e.document.change_count += 1
+        e.metadata_dirty = True
         e.refresh_panes()
 
 
@@ -451,6 +452,7 @@ class MarkSelectionAsDataAction(EditorAction):
         ranges = s.get_style_ranges(selected=True)
         s.set_style_ranges(ranges, data=True)
         e.document.change_count += 1
+        e.metadata_dirty = True
         e.refresh_panes()
 
 
@@ -460,6 +462,7 @@ def prompt_for_comment(e, s, ranges, desc):
     if text is not None:
         s.set_comment(ranges, text)
         e.document.change_count += 1
+        e.metadata_dirty = True
         e.refresh_panes()
     
 class AddCommentAction(EditorAction):
@@ -509,6 +512,7 @@ class RemoveCommentAction(EditorAction):
         if ranges:
             s.clear_comment(ranges)
             e.document.change_count += 1
+            e.metadata_dirty = True
             e.refresh_panes()
 
 class RemoveCommentPopupAction(EditorAction):
@@ -525,6 +529,7 @@ class RemoveCommentPopupAction(EditorAction):
         if ranges:
             s.clear_comment(ranges)
             e.document.change_count += 1
+            e.metadata_dirty = True
             e.refresh_panes()
 
 
@@ -550,6 +555,7 @@ class SetSegmentOriginAction(EditorAction):
         if org is not None:
             segment.start_addr = org
             e.update_segments_ui()
+            e.metadata_dirty = True
             e.reconfigure_panes()
 
 

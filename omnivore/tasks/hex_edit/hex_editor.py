@@ -459,10 +459,12 @@ class HexEditor(FrameworkEditor):
         if update:
             self.update_segments_ui()
             self.segment_list.ensure_visible(segment)
+        self.metadata_dirty = True
     
     def delete_user_segment(self, segment):
         self.document.delete_user_segment(segment)
         self.view_segment_number(self.segment_number)
+        self.metadata_dirty = True
     
     def ensure_visible(self, start, end):
         self.index_clicked(start, 0, None)

@@ -112,6 +112,10 @@ class Document(HasTraits):
     
     def __getitem__(self, val):
         return self.bytes[val]
+    
+    @property
+    def dirty(self):
+        return self.undo_stack.is_dirty()
 
     def to_bytes(self):
         return self.bytes.tostring()

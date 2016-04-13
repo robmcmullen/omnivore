@@ -75,6 +75,8 @@ class FrameworkEditor(Editor):
     last_search_settings = Dict()
     
     mouse_mode = Any
+    
+    _metadata_dirty = Bool(transient=True)
 
     #### trait default values
 
@@ -131,6 +133,7 @@ class FrameworkEditor(Editor):
         e = self.load_filesystem_extra_metadata(doc)
         if e is not None:
             self.process_extra_metadata(doc, e)
+        self.metadata_dirty = False
 
     def load_builtin_extra_metadata(self, doc):
         """ Find any extra metadata associated with the document that is built-
@@ -240,11 +243,21 @@ class FrameworkEditor(Editor):
             text = jsonutil.collapse_json(bytes)
             fh.write(text)
             fh.close()
+            self.metadata_dirty = False
         
         fs.close()
     
     def get_extra_metadata(self, metadata_dict):
         pass
+    
+    @property
+    def metadata_dirty(self):
+        return self._metadata_dirty
+    
+    @metadata_dirty.setter
+    def metadata_dirty(self, val):
+        self._metadata_dirty = bool(val)
+        self.dirty = self.document.dirty or self._metadata_dirty
 
     def undo(self):
         """ Undoes the last action
@@ -470,7 +483,7 @@ class FrameworkEditor(Editor):
             text = str(command).replace("&", "&&")
             self.redo_label = "Redo: %s" % text
             self.can_redo = True
-        self.dirty = self.document.undo_stack.is_dirty()
+        self.dirty = self.document.dirty or self._metadata_dirty
     
     def undo(self):
         undo = self.document.undo_stack.undo(self)
