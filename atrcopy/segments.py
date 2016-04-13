@@ -61,6 +61,13 @@ class OrderWrapper(object):
 
 class SegmentData(object):
     def __init__(self, data, style=None, comments=None, debug=False, order=None):
+        """Storage for raw data
+        
+        order is a list into the base array's data; each item in the list is an
+        index of the base array. E.g. if the base array is the 20 element list
+        containing the data [100, 101, ... 119] and the order is [10, 0, 5, 2],
+        the segment data used is [110, 100, 105, 102]
+        """
         self.order = order
         self.is_indexed = order is not None
         if self.is_indexed:
@@ -80,6 +87,7 @@ class SegmentData(object):
         if comments is None:
             comments = dict()
         self.comments = comments
+        self.reverse_index_mapping = None
     
     def __len__(self):
         return len(self.data)
@@ -139,6 +147,19 @@ class SegmentData(object):
         if self.is_indexed:
             return self[index]
         return SegmentData(self.data, self.style, self.comments, order=index)
+    
+    def get_reverse_index(self, base_index):
+        """Get index into this segment's data given the index into the base data
+        
+        Raises IndexError if the base index doesn't map to anything in this
+        segment's data
+        """
+        if not self.reverse_index_mapping:
+            self.reverse_index_mapping = dict([(k,i) for i,k in enumerate(self.order)])
+        try:
+            return self.reverse_index_mapping[base_index]
+        except KeyError:
+            raise IndexError("index %d not mapped in this segment" % base_index)
 
 
 class DefaultSegment(object):
@@ -220,11 +241,24 @@ class DefaultSegment(object):
         """
         return self.rawdata.byte_bounds_offset()
     
+    def is_valid_index(self, i):
+        return i >= 0 and i < len(self)
+    
     def get_raw_index(self, i):
         """Get index into base array's raw data, given the index into this
         segment
         """
         return self.rawdata.get_raw_index(i)
+    
+    def get_index_from_base_index(self, base_index):
+        """Get index into this array's data given the index into the base array
+        """
+        r = self.rawdata
+        if r.is_indexed:
+            index = r.get_reverse_index(base_index)
+        else:
+            index = base_index - r.get_raw_index(0)
+        return index
 
     def tostring(self):
         return self.data.tostring()
@@ -383,6 +417,9 @@ class DefaultSegment(object):
             rawindex = self.get_raw_index(start)
             if rawindex in self.rawdata.comments:
                 del self.rawdata.comments[rawindex]
+    
+    def get_sorted_comments(self):
+        return sorted([[k, v] for k, v in self.rawdata.comments.iteritems()])
     
     def label(self, index, lower_case=True):
         if lower_case:
