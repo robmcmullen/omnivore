@@ -151,7 +151,7 @@ class HexEditor(FrameworkEditor):
         mdict["comment ranges"] = [list(a) for a in base.get_style_ranges(comment=True)]
         
         # json serialization doesn't allow int keys, so convert to list of pairs
-        mdict["comments"] = [[k, v] for k, v in base.rawdata.comments.iteritems()]
+        mdict["comments"] = base.get_sorted_comments()
         emu = self.document.emulator
         if emu and not 'system default' in emu:
             mdict["emulator"] = self.document.emulator
