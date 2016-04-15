@@ -408,11 +408,16 @@ class UseSegmentRadioAction(UseSegmentAction):
 class SelectSegmentInAllAction(EditorAction):
     name = 'Select This Segment in All'
     
+    segment_number = Int
+    
     def perform(self, event):
         e = self.active_editor
-        e.select_all()
+        s = e.document.segments[self.segment_number]
         e.view_segment_number(0)
-
+        e.select_none(False)
+        s.set_style_ranges([(0, len(s))], selected=True)
+        e.adjust_selection(s)
+        e.index_clicked(e.anchor_start_index, 0, None)
 
 class GetSegmentFromSelectionAction(EditorAction):
     name = 'New Segment From Selection'

@@ -62,7 +62,7 @@ class SegmentList(wx.ListBox):
             None,
             ]
         if selected > 0:
-            actions.append(SelectSegmentInAllAction(task=self.task))
+            actions.append(SelectSegmentInAllAction(segment_number=selected, task=self.task))
             if d.is_user_segment(segment):
                 actions.append(SetSegmentOriginAction(segment_number=selected, task=self.task))
                 actions.append(DeleteUserSegmentAction(segment_number=selected, task=self.task))
