@@ -27,16 +27,19 @@ class Disassembler(object):
         self.pc_offset = 0
         self.origin = None
         self.memory_map = memory_map
-        self.setup(cpu_name, allow_undocumented, hex_lower, mnemonic_lower, r_mnemonics, w_mnemonics, rw_modes)
+        self.data_byte_opcode = ".db"
+        self.hex_lower = hex_lower
+        self.mnemonic_lower = mnemonic_lower
+        self.setup(cpu_name, allow_undocumented, r_mnemonics, w_mnemonics, rw_modes)
     
-    def setup(self, cpu_name, allow_undocumented, hex_lower, mnemonic_lower, r_mnemonics, w_mnemonics, rw_modes):
+    def setup(self, cpu_name, allow_undocumented, r_mnemonics, w_mnemonics, rw_modes):
         cpu = cputables.processors[cpu_name]
         modes = {}
         table = cpu['addressModeTable']
         if rw_modes is None:
             rw_modes = set()
         for mode, fmt in table.items():
-            if hex_lower:
+            if self.hex_lower:
                 fmt = fmt.replace(":02X", ":02x").replace(":04X", ":04x")
             modes[mode] = fmt
         d = {}
@@ -52,14 +55,18 @@ class Disassembler(object):
                     flag |= r
                 if mnemonic in w_mnemonics:
                     flag |= w
-            if not mnemonic_lower:
+            if not self.mnemonic_lower:
                 mnemonic = mnemonic.upper()
             d[opcode] = (length, mnemonic, modes[mode], flag)
         self.ops = d
         self.leadin = cpu['leadInBytes']
         self.maxlen = cpu['maxLength']
-        self.data_byte = ".db $%02" + ("x" if hex_lower else "X")
         self.undocumented = allow_undocumented
+    
+    def get_data_byte_string(self, bytes):
+        fmt = "$%02" + ("x" if self.hex_lower else "X")
+        text = ",".join([fmt % b for b in bytes])
+        return "%s %s" % (self.data_byte_opcode, text)
         
     def set_pc(self, source, pc):
         self.source = source
@@ -79,8 +86,38 @@ class Disassembler(object):
     def put_back(self):
         self.pc -= 1
     
+    def get_style(self):
+        return 0
+    
+    def is_data(self):
+        return False
+    
+    def disasm_data(self):
+        pc = self.pc
+        # Read first byte to allow for StopIteration to signal end of file
+        opcode = self.get_next()
+        bytes = [opcode]
+        try:
+            # after first byte, read until bytes run out, end of data region,
+            # or comment within data region
+            ok = self.is_data()
+            while ok:
+                opcode = self.get_next()
+                bytes.append(opcode)
+                style = self.get_style()
+                ok = style & 4 and not style & 2
+        except StopIteration:
+            pass
+        opstr = self.get_data_byte_string(bytes)
+        comment = "; $%x data byte" % len(bytes)
+        if len(bytes) > 1:
+            comment += "s"
+        return pc, bytes, opstr, comment, 0, None
+    
     def disasm(self):
         pc = self.pc
+        if self.is_data():
+            return self.disasm_data()
         opcode = self.get_next()
         bytes = [opcode]
         
@@ -102,7 +139,7 @@ class Disassembler(object):
                     self.put_back()
                     opcode = bytes[0]
                     bytes = (opcode, )
-                length, opstr, fmt, flag = 0, self.data_byte % opcode, "", 0
+                length, opstr, fmt, flag = 0, self.get_data_byte_string([opcode]), "", 0
             #print("0x%x" % opcode, fmt, length, opstr, mode, flag)
             if leadin:
                 extra = length - 2
@@ -114,7 +151,7 @@ class Disassembler(object):
                     self.put_back()
                     opcode = bytes[0]
                     bytes = (opcode, )
-                extra, opstr, fmt, flag = 0, self.data_byte % opcode, "", 0
+                extra, opstr, fmt, flag = 0, self.get_data_byte_string([opcode]), "", 0
             
             next_pc = self.pc
             if extra == 1:
@@ -180,7 +217,7 @@ class Disassembler(object):
             
         except StopIteration:
             self.pc = next_pc
-            opstr, extra, flag = self.data_byte % opcode, 0, 0
+            opstr, extra, flag = self.get_data_byte_string([opcode]), 0, 0
             memloc = None
             dest_pc = None
         if flag & r:
@@ -191,20 +228,15 @@ class Disassembler(object):
             rw = ""
         
         bytes = tuple(bytes)
-        return pc, opcode, bytes, opstr, memloc, rw, dest_pc, flag
+        comment = self.get_memloc_name(memloc, rw)
+        is_und = self.flag_as_undefined(flag)
+        return pc, bytes, opstr, comment, is_und, dest_pc
+    
+    get_instruction = disasm
 
     def get_disassembly(self):
         while True:
-            addr, opcode, bytes, opstr, memloc, rw, dest_pc, flag = self.disasm()
-            comment = self.get_memloc_name(memloc, rw)
-            is_und = self.flag_as_undefined(flag)
-            yield (addr, bytes, opstr, comment, is_und)
-    
-    def get_instruction(self):
-        addr, opcode, bytes, opstr, memloc, rw, dest_pc, flag = self.disasm()
-        comment = self.get_memloc_name(memloc, rw)
-        is_und = self.flag_as_undefined(flag)
-        return (addr, bytes, opstr, comment, is_und)
+            yield self.disasm()
     
     def get_memloc_name(self, memloc, rw):
         if rw == "" or self.memory_map is None:
@@ -235,7 +267,7 @@ if __name__ == "__main__":
         pc = 0;
         disasm = Disassembler(args.cpu, allow_undocumented=args.undocumented)
         disasm.set_pc(binary, 0)
-        for addr, bytes, opstr, comment, flag in disasm.get_disassembly():
+        for addr, bytes, opstr, comment, flag, dest_pc in disasm.get_disassembly():
             print("0x%04x %-12s ; %s   %s %s" % (addr, opstr, comment, bytes, flag))
 
     if args.hex:
