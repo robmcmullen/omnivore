@@ -14,15 +14,17 @@ class BaseDisassembler(disasm.Disassembler):
     def __init__(self, memory_map=None, hex_lower=True, mnemonic_lower=False):
         disasm.Disassembler.__init__(self, self.cpu, memory_map, self.allow_undocumented, hex_lower, mnemonic_lower, self.read_instructions, self.write_instructions, self.rw_modes)
     
-    def is_data(self):
+    def get_style(self):
         if self.pc >= self.origin + self.length:
-            return False
+            return 0
         try:
-            style = self.source.style[self.pc + self.pc_offset]
-            return style & 4
+            return self.source.style[self.pc + self.pc_offset]
         except AttributeError:
             # If there is no style parameter, assume it's all code!
-            return False
+            return 0
+    
+    def is_data(self):
+        return self.get_style() & 4
     
     @classmethod
     def get_miniassembler(cls, cpu):
