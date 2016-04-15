@@ -277,6 +277,8 @@ class HexEditTask(FrameworkTask):
                 EmulatorChoiceGroup(id="a2", separator=True),
                 Group(
                     AddNewEmulatorAction(),
+                    EditEmulatorsAction(),
+                    SetSystemDefaultEmulatorAction(),
                     id="a3", separator=True),
                 id='MachineEmulator1', separator=True, name="Emulators"),
             ]

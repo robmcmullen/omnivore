@@ -118,18 +118,36 @@ class Machine(HasTraits):
                 # bad JSON format
                 cls.emulator_list = []
         
-        default = cls.get_system_default_emulator()
+        try:
+            default = editor.window.application.get_json_data("system_default_emulator")
+        except IOError:
+            # file not found
+            default = None
+        except ValueError:
+            # bad JSON format
+            default = None
+        
+        if default is None:
+            default = cls.guess_system_default_emulator()
         if not cls.is_known_emulator(default):
             cls.emulator_list[0:0] = [default]
     
     @classmethod
     def remember_emulators(cls, application):
         e_list = []
+        default = None
         for emu in cls.emulator_list:
-            if not 'system default' in emu:
+            if 'system default' in emu:
+                default = emu
+            else:
+                if 'system default' in emu:
+                    # remove system default tags on any other emulator
+                    del emu['system default']
                 e_list.append(emu)
         if e_list:
             application.save_json_data("emulator_list", e_list)
+        if default:
+            application.save_json_data("system_default_emulator", default)
     
     @classmethod
     def init_colors(cls, editor):
@@ -374,7 +392,7 @@ class Machine(HasTraits):
         return False
     
     @classmethod
-    def get_system_default_emulator(cls):
+    def guess_system_default_emulator(cls):
         if sys.platform == "win32":
             exe = "Altirra.exe"
         elif sys.platform == "darwin":
@@ -383,10 +401,56 @@ class Machine(HasTraits):
             exe = "atari800"
         emu = {'exe': exe,
                'args': "",
-               'name': "<system default>",
+               'name': "system default: %s" % exe,
                'system default': True,
                }
         return emu
+    
+    @classmethod
+    def get_system_default_emulator(cls, task):
+        try:
+            default = cls.emulator_list[0]
+        except IndexError:
+            # somehow, all the elements have been removed!
+            default = cls.guess_system_default_emulator()
+            cls.remember_emulators(task.window.application)
+            task.machine_menu_changed = cls
+        return default
+    
+    @classmethod
+    def set_system_default_emulator(cls, task, emu):
+        emu = dict(emu)  # copy to make sure we're not referencing an item in the existing emulator_list
+        emu['system default'] = True
+        emu['name'] = "system default: %s" % emu['name']
+        default = cls.emulator_list[0]
+        if 'system default' not in default:
+            cls.emulator_list[0:0] = [emu]
+        else:
+            cls.emulator_list[0] = emu
+        cls.remember_emulators(task.window.application)
+        task.machine_menu_changed = cls
+    
+    @classmethod
+    def get_user_defined_emulator_list(cls):
+        """Return list of user defined emulators (i.e. not including the system
+        default emulator
+        """
+        emus = []
+        for e in cls.emulator_list:
+            if 'system default' not in e:
+                emus.append(e)
+        return emus
+    
+    @classmethod
+    def set_user_defined_emulator_list(cls, task, emus):
+        default = None
+        for e in cls.emulator_list:
+            if 'system default' in e:
+                default = e
+        emus[0:0] = [default]
+        cls.emulator_list = emus
+        cls.remember_emulators(task.window.application)
+        task.machine_menu_changed = cls
     
     # Utility methods
     

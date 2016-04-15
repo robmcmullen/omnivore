@@ -61,7 +61,7 @@ def prompt_for_hex(parent, message, title, default=None):
 class EmulatorDialog(wx.Dialog):
     border = 5
     
-    def __init__(self, parent, title):
+    def __init__(self, parent, title, default_emu=None):
         wx.Dialog.__init__(self, parent, -1, title)
         sizer = wx.BoxSizer(wx.VERTICAL)
         
@@ -111,6 +111,9 @@ class EmulatorDialog(wx.Dialog):
         
         # Don't call self.Fit() otherwise the dialog buttons are zero height
         sizer.Fit(self)
+        
+        if default_emu:
+            self.set_initial_data(default_emu)
 
     def on_name_changed(self, evt):
         if evt.GetEventObject() == self.name:
@@ -139,6 +142,12 @@ class EmulatorDialog(wx.Dialog):
             self.EndModal(wx.ID_CANCEL)
         evt.Skip()
 
+    def set_initial_data(self, emu):
+        self.user_changed = True
+        self.name.ChangeValue(emu['name'])
+        self.path.SetValue(emu['exe'])
+        self.args.ChangeValue(emu['args'])
+
     def show_and_get_value(self):
         result = self.ShowModal()
         if result == wx.ID_OK:
@@ -151,8 +160,8 @@ class EmulatorDialog(wx.Dialog):
         self.Destroy()
         return emu
 
-def prompt_for_emulator(parent, title):
-    d = EmulatorDialog(parent, title)
+def prompt_for_emulator(parent, title, default_emu=None):
+    d = EmulatorDialog(parent, title, default_emu)
     return d.show_and_get_value()
 
 

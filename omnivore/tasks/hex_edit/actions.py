@@ -15,6 +15,8 @@ from omnivore.framework.actions import *
 from commands import *
 from omnivore.arch.ui.antic_colors import AnticColorDialog
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, prompt_for_emulator
+from omnivore.utils.wx.dropscroller import ListReorderDialog
+from omnivore.arch.machine import Machine
 from omnivore.framework.minibuffer import *
 
 class FontChoiceGroup(TaskDynamicSubmenuGroup):
@@ -101,10 +103,25 @@ class AddNewEmulatorAction(EditorAction):
     name = 'Add New Emulator...'
     
     def perform(self, event):
-        
         emu = prompt_for_emulator(event.task.window.control, "New Emulator")
         if emu:
             self.active_editor.machine.add_emulator(event.task, emu)
+
+class EditEmulatorsAction(EditorAction):
+    name = 'Edit Emulators...'
+    
+    def perform(self, event):
+        dlg = ListReorderDialog(event.task.window.control, Machine.get_user_defined_emulator_list(), lambda a:a['name'], prompt_for_emulator, "Manage Emulators")
+        if dlg.ShowModal() == wx.ID_OK:
+            emus = dlg.get_items()
+            Machine.set_user_defined_emulator_list(event.task, emus)
+        dlg.Destroy()
+
+class SetSystemDefaultEmulatorAction(EditorAction):
+    name = 'Set Current as System Default'
+    
+    def perform(self, event):
+        Machine.set_system_default_emulator(event.task, self.active_editor.document.emulator)
 
 class RunEmulatorAction(NameChangeAction):
     name = 'Run Emulator'

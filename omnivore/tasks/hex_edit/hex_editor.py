@@ -292,7 +292,7 @@ class HexEditor(FrameworkEditor):
     def update_emulator(self):
         emu = self.document.emulator
         if emu is None:
-            emu = self.machine.get_system_default_emulator()
+            emu = self.machine.get_system_default_emulator(self.task)
         if not self.machine.is_known_emulator(emu):
             self.machine.add_emulator(self.task, emu)
         self.emulator_label = "Run using '%s'" % emu['name']
