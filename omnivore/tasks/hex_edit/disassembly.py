@@ -59,7 +59,7 @@ class DisassemblyTable(ByteGridTable):
         start_row = self.next_row
         try:
             for i in range(self.chunk_size):
-                (addr, bytes, opstr, comment, flag) = self.disassembler.get_instruction()
+                (addr, bytes, opstr, comment, flag, dest_pc) = self.disassembler.get_instruction()
                 count = len(bytes)
                 data = (addr, bytes, opstr, comment, count, flag)
                 lines.append(data)
@@ -327,10 +327,10 @@ class DisassemblyPanel(ByteGrid):
     
     def get_goto_action(self, r, c):
         addr_dest = self.table.get_addr_dest(r)
-        segment_start = self.table.segment.start_addr
-        segment_num = -1
-        addr_index = addr_dest-segment_start
         if addr_dest is not None:
+            segment_start = self.table.segment.start_addr
+            segment_num = -1
+            addr_index = addr_dest - segment_start
             if addr_dest < segment_start or addr_dest > segment_start + len(self.table.segment):
                 segment_num, segment_dest, addr_index = self.editor.document.find_segment_in_range(addr_dest)
                 if segment_dest is not None:

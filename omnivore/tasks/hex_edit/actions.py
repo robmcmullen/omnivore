@@ -456,6 +456,7 @@ class MarkSelectionAsCodeAction(EditorAction):
         s.clear_style_ranges(ranges, data=True)
         e.document.change_count += 1
         e.metadata_dirty = True
+        e.mark_index_range_changed(ranges[0])
         e.refresh_panes()
 
 
@@ -470,6 +471,11 @@ class MarkSelectionAsDataAction(EditorAction):
         s.set_style_ranges(ranges, data=True)
         e.document.change_count += 1
         e.metadata_dirty = True
+        # check if the segment can be merged with a previous data segment
+        index = ranges[0][0]
+        while index > 0 and s.style[index-1] & 4:
+            index -= 1
+        e.mark_index_range_changed((index, ranges[0][1]))
         e.refresh_panes()
 
 
