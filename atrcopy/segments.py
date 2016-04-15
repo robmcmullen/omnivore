@@ -263,7 +263,7 @@ class DefaultSegment(object):
     def tostring(self):
         return self.data.tostring()
     
-    def get_style_bits(self, match=False, comment=False, selected=False, data=False):
+    def get_style_bits(self, match=False, comment=False, selected=False, data=False, user1=False, user2=False, user3=False, user4=False):
         """ Return an int value that contains the specified style bits set.
         
         Available styles for each byte are:
@@ -280,6 +280,14 @@ class DefaultSegment(object):
             style_bits |= 2
         if data:
             style_bits |= 4
+        if user1:
+            style_bits |= 8
+        if user2:
+            style_bits |= 0x10
+        if user3:
+            style_bits |= 0x20
+        if user4:
+            style_bits |= 0x40
         if selected:
             style_bits |= 0x80
         return style_bits
