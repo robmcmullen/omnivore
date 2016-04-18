@@ -295,7 +295,15 @@ class DefaultSegment(object):
         return style_bits
     
     def get_style_mask(self, **kwargs):
-        return 0xff ^ self.get_style_bits(**kwargs)
+        """Get the bit mask that, when anded with data, will turn off the
+        selected bits
+        """
+        bits = self.get_style_bits(**kwargs)
+        if 'user' in kwargs and kwargs['user']:
+            bits |= user_bit_mask
+        else:
+            bits &= (0xff ^ user_bit_mask)
+        return 0xff ^ bits
     
     def set_style_ranges(self, ranges, **kwargs):
         style_bits = self.get_style_bits(**kwargs)
@@ -315,7 +323,7 @@ class DefaultSegment(object):
     
     def get_style_ranges(self, **kwargs):
         style_bits = self.get_style_bits(**kwargs)
-        matches = (self.style & style_bits) > 0
+        matches = (self.style & style_bits) == style_bits
         return self.bool_to_ranges(matches)
     
     def bool_to_ranges(self, matches):
