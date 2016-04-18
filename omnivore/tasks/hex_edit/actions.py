@@ -708,7 +708,7 @@ class IndexRangeValueAction(IndexRangeAction):
         wx.CallAfter(self.show_dialog, self.active_editor)
 
 class SetValueAction(IndexRangeValueAction):
-    cmd = SetRangeValueCommand
+    cmd = SetValueCommand
 
 class OrWithAction(IndexRangeValueAction):
     cmd = OrWithCommand
