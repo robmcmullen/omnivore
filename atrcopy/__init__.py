@@ -11,7 +11,7 @@ from errors import *
 from ataridos import AtariDosDiskImage, AtariDosFile
 from diskimages import AtrHeader, BootDiskImage
 from kboot import KBootImage
-from segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment
+from segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, user_bit_mask, match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask
 from spartados import SpartaDosDiskImage
 from utils import to_numpy
 

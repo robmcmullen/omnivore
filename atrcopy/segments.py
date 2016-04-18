@@ -3,6 +3,12 @@ import numpy as np
 from errors import *
 from utils import to_numpy, to_numpy_list
 
+user_bit_mask = 0x0f
+match_bit_mask = 0x10
+comment_bit_mask = 0x20
+data_bit_mask = 0x40
+selected_bit_mask = 0x80
+
 
 class SegmentSaver(object):
     name = "Raw Data"
@@ -265,7 +271,7 @@ class DefaultSegment(object):
     def tostring(self):
         return self.data.tostring()
     
-    def get_style_bits(self, match=False, comment=False, selected=False, data=False, user1=False, user2=False, user3=False, user4=False):
+    def get_style_bits(self, match=False, comment=False, selected=False, data=False, user=0):
         """ Return an int value that contains the specified style bits set.
         
         Available styles for each byte are:
@@ -276,22 +282,16 @@ class DefaultSegment(object):
         data: labeled in the disassembler as a data region (i.e. not disassembled)
         """
         style_bits = 0
+        if user:
+            style_bits |= (user & user_bit_mask)
         if match:
-            style_bits |= 1
+            style_bits |= match_bit_mask
         if comment:
-            style_bits |= 2
+            style_bits |= comment_bit_mask
         if data:
-            style_bits |= 4
-        if user1:
-            style_bits |= 8
-        if user2:
-            style_bits |= 0x10
-        if user3:
-            style_bits |= 0x20
-        if user4:
-            style_bits |= 0x40
+            style_bits |= data_bit_mask
         if selected:
-            style_bits |= 0x80
+            style_bits |= selected_bit_mask
         return style_bits
     
     def get_style_mask(self, **kwargs):
