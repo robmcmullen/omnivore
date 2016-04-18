@@ -1,5 +1,7 @@
 import numpy as np
 
+from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask
+
 try:
     import antic_speedups as speedups
 except ImportError:
@@ -52,10 +54,10 @@ class BaseRenderer(object):
         
         style_per_pixel = np.vstack((style, style, style, style)).T
         normal = style_per_pixel == 0
-        highlight = (style_per_pixel & 0x80) == 0x80
-        data = (style_per_pixel & 0x4) == 0x4
-        comment = (style_per_pixel & 0x2) == 0x2
-        match = (style_per_pixel & 0x1) == 0x1
+        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
+        data = (style_per_pixel & data_bit_mask) == data_bit_mask
+        comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
+        match = (style_per_pixel & match_bit_mask) == match_bit_mask
         
         color_registers, h_colors, m_colors, c_colors, d_colors = colors
         bitimage = np.empty((nr * bytes_per_row, 4, 3), dtype=np.uint8)
@@ -78,10 +80,10 @@ class BaseRenderer(object):
         
         style_per_pixel = np.vstack((style, style)).T
         normal = style_per_pixel == 0
-        highlight = (style_per_pixel & 0x80) == 0x80
-        data = (style_per_pixel & 0x4) == 0x4
-        comment = (style_per_pixel & 0x2) == 0x2
-        match = (style_per_pixel & 0x1) == 0x1
+        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
+        data = (style_per_pixel & data_bit_mask) == data_bit_mask
+        comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
+        match = (style_per_pixel & match_bit_mask) == match_bit_mask
         
         color_registers, h_colors, m_colors, c_colors, d_colors = colors
         bitimage = np.empty((nr * bytes_per_row, 2, 3), dtype=np.uint8)
@@ -120,10 +122,10 @@ class BaseRenderer(object):
         s = self.get_bitplane_style(style)
         style_per_pixel = s.repeat(8).reshape((-1, pixels_per_row))
         normal = style_per_pixel == 0
-        highlight = (style_per_pixel & 0x80) == 0x80
-        data = (style_per_pixel & 0x4) == 0x4
-        comment = (style_per_pixel & 0x2) == 0x2
-        match = (style_per_pixel & 0x1) == 0x1
+        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
+        data = (style_per_pixel & data_bit_mask) == data_bit_mask
+        comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
+        match = (style_per_pixel & match_bit_mask) == match_bit_mask
         
         color_registers, h_colors, m_colors, c_colors, d_colors = colors
         bitimage = np.empty((nr, pixels_per_row, 3), dtype=np.uint8)
@@ -156,10 +158,10 @@ class OneBitPerPixelB(BaseRenderer):
         
         style_per_pixel = np.vstack((style, style, style, style, style, style, style, style)).T
         normal = style_per_pixel == 0
-        highlight = (style_per_pixel & 0x80) == 0x80
-        data = (style_per_pixel & 0x4) == 0x4
-        comment = (style_per_pixel & 0x2) == 0x2
-        match = (style_per_pixel & 0x1) == 0x1
+        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
+        data = (style_per_pixel & data_bit_mask) == data_bit_mask
+        comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
+        match = (style_per_pixel & match_bit_mask) == match_bit_mask
         
         bitimage = np.empty((nr * bytes_per_row, 8, 3), dtype=np.uint8)
         bitimage[background & normal] = self.bw_colors[0]
@@ -416,13 +418,13 @@ def get_numpy_font_map_image(m, bytes, style, start_byte, end_byte, bytes_per_ro
             else:
                 c = mapping[bytes[j, i]]
                 s = style[j, i]
-                if s & 0x80:
+                if s & selected_bit_mask:
                     array[y:y+8,x:x+8,:] = fh[c]
-                elif s & 1:
+                elif s & match_bit_mask:
                     array[y:y+8,x:x+8,:] = fm[c]
-                elif s & 2:
+                elif s & comment_bit_mask:
                     array[y:y+8,x:x+8,:] = fc[c]
-                elif s & 4:
+                elif s & data_bit_mask:
                     array[y:y+8,x:x+8,:] = fd[c]
                 else:
                     array[y:y+8,x:x+8,:] = f[c]
@@ -520,7 +522,7 @@ def get_numpy_memory_map_image(m, bytes, style, start_byte, end_byte, bytes_per_
                 break
             c = bytes[j, i] ^ 0xff
             s = style[j, i]
-            if s & 0x80:
+            if s & selected_bit_mask:
                 r = selected_color[0] * c >> 8
                 g = selected_color[1] * c >> 8
                 b = selected_color[2] * c >> 8

@@ -7,9 +7,11 @@ import wx
 import wx.grid as Grid
 import wx.lib.newevent
 
-from omnivore.utils.wx.bytegrid import ByteGridTable, ByteGrid
+from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask
 
+from omnivore.utils.wx.bytegrid import ByteGridTable, ByteGrid
 from omnivore.framework.actions import *
+
 from actions import *
 from commands import ChangeByteCommand
 
@@ -71,19 +73,19 @@ class ImageCache(object):
         dc.DrawBitmap(bmp, rect.x, rect.y)
     
     def draw_text_to_dc(self, dc, rect, text, style):
-        if style & 0x80:
+        if style & selected_bit_mask:
             dc.SetBrush(self.selected_brush)
             dc.SetPen(self.selected_pen)
             dc.SetTextBackground(self.selected_background)
-        elif style & 1:
+        elif style & match_bit_mask:
             dc.SetPen(self.match_pen)
             dc.SetBrush(self.match_brush)
             dc.SetTextBackground(self.match_background)
-        elif style & 2:
+        elif style & comment_bit_mask:
             dc.SetPen(self.comment_pen)
             dc.SetBrush(self.comment_brush)
             dc.SetTextBackground(self.comment_background)
-        elif style & 4:
+        elif style & data_bit_mask:
             dc.SetPen(self.normal_pen)
             dc.SetBrush(self.data_brush)
             dc.SetTextBackground(self.data_background)

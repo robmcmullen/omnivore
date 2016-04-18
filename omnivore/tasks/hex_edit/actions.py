@@ -11,6 +11,8 @@ from pyface.api import YES, NO
 from pyface.action.api import Action, ActionItem
 from pyface.tasks.action.api import TaskAction, EditorAction
 
+from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask
+
 from omnivore.framework.actions import *
 from commands import *
 from omnivore.arch.ui.antic_colors import AnticColorDialog
@@ -478,7 +480,7 @@ class MarkSelectionAsDataAction(EditorAction):
         e.metadata_dirty = True
         # check if the segment can be merged with a previous data segment
         index = ranges[0][0]
-        while index > 0 and s.style[index-1] & 4:
+        while index > 0 and s.style[index-1] & data_bit_mask:
             index -= 1
         e.mark_index_range_changed((index, ranges[0][1]))
         e.refresh_panes()

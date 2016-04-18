@@ -1,9 +1,11 @@
 import sys
 import wx
 
-from omnivore.utils.wx.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
+from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask
 
+from omnivore.utils.wx.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 from omnivore.framework.actions import *
+
 from actions import *
 from commands import MiniAssemblerCommand
 
@@ -183,7 +185,7 @@ class DisassemblyTable(ByteGridTable):
             style |= self.segment.style[index + i]
         if col == 0:
             text = " ".join("%02x" % i for i in line[1])
-        elif col == 2 and (style & 2):
+        elif col == 2 and (style & comment_bit_mask):
             text = self.get_comments(index, line)
         else:
             text = str(line[col + 1])
@@ -197,7 +199,7 @@ class DisassemblyTable(ByteGridTable):
             style |= self.segment.style[index + i]
         if col == 0:
             text = " ".join("%02X" % i for i in line[1])
-        elif col == 2 and (style & 2):
+        elif col == 2 and (style & comment_bit_mask):
             text = self.get_comments(index, line)
         else:
             text = str(line[col + 1])
@@ -205,7 +207,7 @@ class DisassemblyTable(ByteGridTable):
     
     def get_style_override(self, row, col, style):
         if self.lines[row][5]:
-            return style|0x02
+            return style|comment_bit_mask
         return style
 
     def get_label_at_index(self, index):

@@ -3,6 +3,8 @@ import wx
 
 import wx.grid as Grid
 
+from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -51,19 +53,19 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
         else:
             text, style = self.table.get_value_style(row, col)
             style = self.table.get_style_override(row, col, style)
-            if style & 0x80:
+            if style & selected_bit_mask:
                 dc.SetPen(self.selected_pen)
                 dc.SetBrush(self.selected_brush)
                 dc.SetTextBackground(self.selected_background)
-            elif style & 1:
+            elif style & match_bit_mask:
                 dc.SetPen(self.match_pen)
                 dc.SetBrush(self.match_brush)
                 dc.SetTextBackground(self.match_background)
-            elif style & 2:
+            elif style & comment_bit_mask:
                 dc.SetPen(self.comment_pen)
                 dc.SetBrush(self.comment_brush)
                 dc.SetTextBackground(self.comment_background)
-            elif style & 4:
+            elif style & data_bit_mask:
                 dc.SetPen(self.normal_pen)
                 dc.SetBrush(self.data_brush)
                 dc.SetTextBackground(self.data_background)

@@ -1,5 +1,7 @@
 from udis import disasm, miniasm
 
+from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask
+
 
 class BaseDisassembler(disasm.Disassembler):
     name = "generic disassembler"
@@ -24,7 +26,11 @@ class BaseDisassembler(disasm.Disassembler):
             return 0
     
     def is_data(self):
-        return self.get_style() & 4
+        return self.get_style() & data_bit_mask
+    
+    def is_same_data_style(self, bytes):
+        style = self.get_style()
+        return style & data_bit_mask and not style & comment_bit_mask
     
     @classmethod
     def get_miniassembler(cls, cpu):
