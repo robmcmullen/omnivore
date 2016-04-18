@@ -1,6 +1,6 @@
 from udis import disasm, miniasm
 
-from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask
+from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, user_bit_mask
 
 
 class BaseDisassembler(disasm.Disassembler):
@@ -28,8 +28,16 @@ class BaseDisassembler(disasm.Disassembler):
     def is_data(self):
         return self.get_style() & data_bit_mask
     
-    def is_same_data_style(self, bytes):
-        style = self.get_style()
+    def get_data_comment(self, style, bytes):
+        if (style & user_bit_mask) == 1:
+            return "; " + get_antic_dl(bytes, self.hex_lower)
+        return disasm.Disassembler.get_data_comment(self, style, bytes)
+    
+    def is_same_data_style(self, style, first_style, bytes):
+        if (style & first_style & user_bit_mask) == 1:
+            # display list!
+            dl = parse_antic_dl(list(bytes))
+            return len(dl) == 1
         return style & data_bit_mask and not style & comment_bit_mask
     
     @classmethod
@@ -106,3 +114,89 @@ class Basic8080Disassembler(BaseDisassembler):
 class BasicZ80Disassembler(BaseDisassembler):
     name = "Z80"
     cpu = "z80"
+
+
+# Display list processing based on code from the atari800 project, monitor.c
+
+def parse_antic_dl(bytes):
+    groups = []
+    last = []
+    try:
+        while len(bytes) > 0:
+            byte = bytes.pop(0)
+            if (byte & 0x0f == 1) or (byte & 0xf0 == 0x40):
+                if last:
+                    groups.append(last)
+                    last = []
+                # handle JVB, JMP, LMS
+                last.append(byte)
+                lo = bytes.pop(0)
+                last.append(lo)
+                hi = bytes.pop(0)
+                last.append(hi)
+                groups.append(last)
+                last = []
+            else:
+                if last:
+                    if last[-1] == byte:
+                        last.append(byte)
+                    else:
+                        groups.append(last)
+                        last = [byte]
+                else:
+                    last = [byte]
+    except IndexError:
+        pass
+    if last:
+        groups.append(last)
+    return groups
+
+def get_antic_dl(group, hex_lower=True):
+    """Get the text version of the display list entry.
+    
+    If multiple entries are present in the group, they are assumed to be
+    identical to the first entry -- i.e. they have been processed by a call to
+    parse_antic_dl above.
+    """
+    if hex_lower:
+        op_fmt = "%s %02x%02x"
+    else:
+        op_fmt = "%s %02X%02X"
+    commands = []
+    byte = group[0]
+    count = len(group)
+    if byte & 0xf == 1:
+        if byte & 0x80:
+            commands.append("DLI")
+        if byte & 0x40:
+            op = "JVB"
+        elif byte & 0xf0 > 0:
+            op = "<invalid %02x>" % byte
+        else:
+            op = "JMP"
+        if count < 3:
+            commands.append("%s <bad addr>" % op)
+        else:
+            commands.append(op_fmt % (op, group[2], group[1]))
+    else:
+        if byte & 0xf == 0:
+            if byte & 0x80:
+                commands.append("DLI")
+            commands.append("%d BLANK" % (((byte >> 4) & 0x07) + 1))
+        else:
+            if byte & 0x80:
+                commands.append("DLI")
+            if byte & 0x40:
+                if count < 3:
+                    commands.append("LMS <bad addr>")
+                else:
+                    commands.append(op_fmt % ("LMS", group[2], group[1]))
+                count = 1
+            if byte & 0x20:
+                commands.append("VSCROL")
+            if byte & 0x10:
+                commands.append("HSCROL")
+            commands.append("MODE %X" % (byte & 0x0f))
+        if count > 1:
+            commands[0:0] = ["%dx" % count]
+    return " ".join(commands)

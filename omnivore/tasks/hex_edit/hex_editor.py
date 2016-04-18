@@ -141,6 +141,9 @@ class HexEditor(FrameworkEditor):
         if 'data ranges' in e:
             first_segment = doc.segments[0]
             first_segment.set_style_ranges(e['data ranges'], data=True)
+        if 'display list ranges' in e:
+            first_segment = doc.segments[0]
+            first_segment.set_style_ranges(e['display list ranges'], data=True, user=1)
         if 'colors' in e:
             self.machine.update_colors(e['colors'])
         if 'font' in e:
@@ -153,6 +156,7 @@ class HexEditor(FrameworkEditor):
         base = self.document.segments[0]
         mdict["comment ranges"] = [list(a) for a in base.get_style_ranges(comment=True)]
         mdict["data ranges"] = [list(a) for a in base.get_style_ranges(data=True)]
+        mdict["display list ranges"] = [list(a) for a in base.get_style_ranges(data=True, user=1)]
         
         # json serialization doesn't allow int keys, so convert to list of pairs
         mdict["comments"] = base.get_sorted_comments()

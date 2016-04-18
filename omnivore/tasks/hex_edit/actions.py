@@ -486,6 +486,21 @@ class MarkSelectionAsDataAction(EditorAction):
         e.refresh_panes()
 
 
+class MarkSelectionAsDisplayListAction(EditorAction):
+    name = 'Mark Selection As Display List'
+    enabled_name = 'can_copy'
+    
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        ranges = s.get_style_ranges(selected=True)
+        s.set_style_ranges(ranges, data=True, user=1)
+        e.document.change_count += 1
+        e.metadata_dirty = True
+        e.mark_index_range_changed(ranges[0])
+        e.refresh_panes()
+
+
 def prompt_for_comment(e, s, ranges, desc):
     existing = s.get_first_comment(ranges)
     text = prompt_for_string(e.window.control, desc, "Add Comment", existing)
