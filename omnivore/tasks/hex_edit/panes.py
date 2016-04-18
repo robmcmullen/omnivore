@@ -37,7 +37,7 @@ class CommentsPanel(wx.ListBox):
     def DoGetBestSize(self):
         """ Base class virtual method for sizer use to get the best size
         """
-        width = 300
+        width = 500
         height = -1
         best = wx.Size(width, height)
 
@@ -63,36 +63,37 @@ class CommentsPanel(wx.ListBox):
     
     def process_index(self, index):
         e = self.editor
-        item = self.items[index]
-        print "Selected item", item
-        inside = False
-        try:
-            index = e.segment.get_index_from_base_index(item[0])
-            if e.segment.is_valid_index(index):
-                inside = True
-        except IndexError:
-            pass
-        if inside:
+        segment, index, text = self.items[index]
+        if segment == self.editor.segment:
             e.index_clicked(index, 0, None)
         else:
-            if e.task.confirm("Comment not in this segment.\n\nShow in main segment?", "View Comment") == YES:
-                e.view_segment_number(0)
-                e.index_clicked(item[0], 0, None)
+            n = e.document.find_segment_index(segment)
+            e.view_segment_number(n)
+            e.index_clicked(index, 0, None)
     
     def set_items(self, items):
-        self.items = list(items)
-        self.Set([self.get_item_text(i) for i in items])
+        self.items = [self.process_comment(i) for i in items]
+        self.Set([i[2] for i in self.items])
     
-    def get_item_text(self, item):
+    def process_comment(self, item):
+        e = self.editor
         try:
-            index = self.editor.segment.get_index_from_base_index(item[0])
-            if self.editor.segment.is_valid_index(index):
-                label = self.editor.get_label_at_index(index)
-            else:
-                label = "(%s in main)" % item[0]
+            segment = e.segment
+            if segment == e.document.segments[0]:
+                # if we're currently in the main segment, check for the index
+                # in user segments first, rather than listing everything in
+                # the main segment.
+                raise IndexError
+            index = segment.get_index_from_base_index(item[0])
+            label = e.get_label_at_index(index)
         except IndexError:
-            label = "(%s in main)" % item[0]
-        return "%s: %s" % (label, item[1])
+            segment, index = e.find_in_user_segment(item[0])
+            if segment is not None:
+                label = "(%s @ %04x)" % (segment, index)
+            else:
+                index = item[0]
+                label = "(main @ %04x)" % index
+        return segment, index, "%s: %s" % (label, item[1])
 
     def recalc_view(self):
         e = self.task.active_editor

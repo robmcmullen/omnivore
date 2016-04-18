@@ -470,6 +470,15 @@ class HexEditor(FrameworkEditor):
         self.view_segment_number(self.segment_number)
         self.metadata_dirty = True
     
+    def find_in_user_segment(self, base_index):
+        for s in self.document.user_segments:
+            try:
+                index = s.get_index_from_base_index(base_index)
+                return s, index
+            except IndexError:
+                continue
+        return None, None
+    
     def ensure_visible(self, start, end):
         self.index_clicked(start, 0, None)
     
