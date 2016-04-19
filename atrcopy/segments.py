@@ -11,21 +11,12 @@ selected_bit_mask = 0x80
 
 
 class SegmentSaver(object):
-    name = "Raw Data"
-    extensions = [".dat"]
+    export_data_name = "Raw Data"
+    export_extensions = [".dat"]
     
     @classmethod
     def encode_data(cls, segment):
         return segment.tostring()
-
-    @classmethod
-    def get_file_dialog_wildcard(cls):
-        # Using only the first extension
-        wildcards = []
-        if cls.extensions:
-            ext = cls.extensions[0]
-            wildcards.append("%s (*%s)|*%s" % (cls.name, ext, ext))
-        return "|".join(wildcards)
 
 
 class OrderWrapper(object):

@@ -131,8 +131,8 @@ class MydosDirent(AtariDosDirent):
 
 
 class XexSegmentSaver(SegmentSaver):
-    name = "Atari 8-bit Executable"
-    extensions = [".xex"]
+    export_data_name = "Atari 8-bit Executable"
+    export_extensions = [".xex"]
 
 
 class XexSegment(ObjSegment):
