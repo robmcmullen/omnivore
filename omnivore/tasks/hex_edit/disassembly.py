@@ -281,6 +281,29 @@ class DisassemblyPanel(ByteGrid):
     
     def restart_disassembly(self, index):
         self.table.restart_disassembly(index)
+    
+    def get_disassembled_text(self, start, end):
+        """Returns list of lines representing the disassembly
+        
+        Raises IndexError if the disassembly hasn't reached the index yet
+        """
+        start_row = self.table.index_to_row[start]
+        end_row = self.table.index_to_row[end]
+        lines = []
+        blank_label = ""
+        org = self.table.GetRowLabelValue(start_row)
+        lines.append("%-8s.ORG $%s" % (blank_label, org))
+        for row in range(start_row, end_row):
+            label = blank_label
+            code = self.table.GetValue(row, 1)
+            comment = self.table.GetValue(row, 2)
+            if comment:
+                if not comment.startswith(";"):
+                    comment = ";" + comment
+                lines.append("%-8s%-12s %s" % (label, code, comment))
+            else:
+                lines.append("%-8s%s" % (label, code))
+        return lines
 
     def get_status_message_at_index(self, index, row, col):
         return self.table.get_comments(index)
@@ -352,5 +375,5 @@ class DisassemblyPanel(ByteGrid):
     
     def get_popup_actions(self, r, c):
         goto_action = self.get_goto_action(r, c)
-        return [goto_action, None, CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, AddCommentPopupAction, RemoveCommentPopupAction]
+        return [goto_action, None, CutAction, CopyAction, CopyDisassemblyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, AddCommentPopupAction, RemoveCommentPopupAction]
         

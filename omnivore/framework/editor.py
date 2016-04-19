@@ -277,11 +277,14 @@ class FrameworkEditor(Editor):
     def copy(self):
         """ Copies the current selection to the clipboard
         """
-        self.data_obj = self.create_clipboard_data_object()
-        if self.data_obj is None:
+        data_obj = self.create_clipboard_data_object()
+        if data_obj is None:
             return
+        self.set_clipboard_object(data_obj)
+    
+    def set_clipboard_object(self, data_obj):
         if wx.TheClipboard.Open():
-            wx.TheClipboard.SetData(self.data_obj)
+            wx.TheClipboard.SetData(data_obj)
             wx.TheClipboard.Close()
         else:
             self.window.error("Unable to open clipboard", "Clipboard Error")

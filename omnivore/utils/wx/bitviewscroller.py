@@ -472,7 +472,7 @@ class BitviewScroller(wx.ScrolledWindow):
             self.editor.popup_context_menu_from_actions(self, actions, popup_data)
     
     def get_popup_actions(self):
-        return [CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, AddCommentPopupAction, RemoveCommentPopupAction]
+        return [CutAction, CopyAction, CopyDisassemblyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, AddCommentPopupAction, RemoveCommentPopupAction]
     
     def on_focus(self, evt):
         log.debug("on_focus!")

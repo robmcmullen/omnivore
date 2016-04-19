@@ -1,6 +1,7 @@
 """ Action definitions for HexEdit task
 
 """
+import os
 import sys
 
 import wx
@@ -499,6 +500,27 @@ class MarkSelectionAsDisplayListAction(EditorAction):
         e.metadata_dirty = True
         e.mark_index_range_changed(ranges[0])
         e.refresh_panes()
+
+
+class CopyDisassemblyAction(EditorAction):
+    name = 'Copy Disassembly'
+    enabled_name = 'can_copy'
+    
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        ranges = s.get_style_ranges(selected=True)
+        lines = []
+        try:
+            for start, end in ranges:
+                lines.extend(e.disassembly.get_disassembled_text(start, end))
+        except IndexError:
+            e.window.error("Disassembly still in progress...")
+            return
+        text = os.linesep.join(lines) + os.linesep
+        data_obj = wx.TextDataObject()
+        data_obj.SetText(text)
+        e.set_clipboard_object(data_obj)
 
 
 def prompt_for_comment(e, s, ranges, desc):
