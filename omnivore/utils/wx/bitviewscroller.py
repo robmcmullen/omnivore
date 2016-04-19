@@ -25,7 +25,6 @@ from pyface.tasks.action.api import EditorAction
 
 from atrcopy import SegmentData, DefaultSegment
 
-from omnivore.framework.actions import *
 from omnivore.tasks.hex_edit.actions import *
 
 import logging
@@ -472,7 +471,7 @@ class BitviewScroller(wx.ScrolledWindow):
             self.editor.popup_context_menu_from_actions(self, actions, popup_data)
     
     def get_popup_actions(self):
-        return [CutAction, CopyAction, CopyDisassemblyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, AddCommentPopupAction, RemoveCommentPopupAction]
+        return self.editor.common_popup_actions()
     
     def on_focus(self, evt):
         log.debug("on_focus!")

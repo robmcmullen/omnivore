@@ -13,6 +13,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 # Local imports.
 from omnivore.framework.editor import FrameworkEditor
 from omnivore.framework.document import Document
+from omnivore.framework.actions import *
 from grid_control import HexEditControl
 from omnivore.utils.file_guess import FileMetadata
 from omnivore.arch.machine import Machine, Atari800
@@ -20,6 +21,7 @@ from omnivore.utils.segmentutil import known_segment_parsers, DefaultSegment, An
 from omnivore.utils.searchutil import known_searchers
 from omnivore.utils.processutil import run_detach
 
+from actions import *
 from commands import PasteCommand
 
 import logging
@@ -496,6 +498,10 @@ class HexEditor(FrameworkEditor):
     
     def perform_idle(self):
         self.disassembly.perform_idle()
+    
+    def common_popup_actions(self):
+        return [CutAction, CopyAction, CopyDisassemblyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, None, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsDisplayListAction, AddCommentPopupAction, RemoveCommentPopupAction]
+    
 
     ###########################################################################
     # Trait handlers.

@@ -1,6 +1,7 @@
 # peppy Copyright (c) 2006-2010 Rob McMullen
 # Licenced under the GPLv2; see http://peppy.flipturn.org for more info
 import os
+import sys
 import struct
 
 import wx
@@ -10,9 +11,7 @@ import wx.lib.newevent
 from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask
 
 from omnivore.utils.wx.bytegrid import ByteGridTable, ByteGrid
-from omnivore.framework.actions import *
 
-from actions import *
 from commands import ChangeByteCommand
 
 import logging
@@ -237,4 +236,4 @@ class HexEditControl(ByteGrid):
         return False
     
     def get_popup_actions(self, r, c):
-        return [CutAction, CopyAction, CopyDisassemblyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsDisplayListAction, AddCommentPopupAction, RemoveCommentPopupAction]
+        return self.editor.common_popup_actions()

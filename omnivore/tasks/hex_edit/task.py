@@ -151,6 +151,7 @@ class HexEditTask(FrameworkTask):
         return [
             CutAction(),
             CopyAction(),
+            CopyDisassemblyAction(),
             PasteAction(),
             PasteAndRepeatAction(),
             ]

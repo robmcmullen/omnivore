@@ -4,9 +4,8 @@ import wx
 from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask
 
 from omnivore.utils.wx.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
-from omnivore.framework.actions import *
 
-from actions import *
+from actions import GotoIndexAction
 from commands import MiniAssemblerCommand
 
 import logging
@@ -375,5 +374,6 @@ class DisassemblyPanel(ByteGrid):
     
     def get_popup_actions(self, r, c):
         goto_action = self.get_goto_action(r, c)
-        return [goto_action, None, CutAction, CopyAction, CopyDisassemblyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, AddCommentPopupAction, RemoveCommentPopupAction]
-        
+        actions = [goto_action, None]
+        actions.extend(self.editor.common_popup_actions())
+        return actions
