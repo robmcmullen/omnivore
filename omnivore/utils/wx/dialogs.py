@@ -164,6 +164,13 @@ def prompt_for_emulator(parent, title, default_emu=None):
     d = EmulatorDialog(parent, title, default_emu)
     return d.show_and_get_value()
 
+def get_file_dialog_wildcard(name, extension_list):
+    # Using only the first extension
+    wildcards = []
+    if extension_list:
+        ext = extension_list[0]
+        wildcards.append("%s (*%s)|*%s" % (name, ext, ext))
+    return "|".join(wildcards)
 
 if __name__ == "__main__":
     app = wx.PySimpleApp()

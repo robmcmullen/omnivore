@@ -383,13 +383,19 @@ class HexEditor(FrameworkEditor):
             self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
         self.update_segments_ui()
     
+    def get_extra_segment_savers(self, segment):
+        savers = []
+        savers.append(self.disassembly)
+        return savers
+    
     def save_segment(self, saver, uri):
         try:
             bytes = saver.encode_data(self.segment)
-            self.save_to_uri(bytes, uri)
+            self.save_to_uri(bytes, uri, save_metadata=False)
         except Exception, e:
             log.error("%s: %s" % (uri, str(e)))
-            self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
+            #self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
+            raise
     
     def invalidate_search(self):
         self.task.change_minibuffer_editor(self)

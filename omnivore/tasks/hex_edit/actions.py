@@ -17,7 +17,7 @@ from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bi
 from omnivore.framework.actions import *
 from commands import *
 from omnivore.arch.ui.antic_colors import AnticColorDialog
-from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, prompt_for_emulator
+from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, prompt_for_emulator, get_file_dialog_wildcard
 from omnivore.utils.wx.dropscroller import ListReorderDialog
 from omnivore.arch.machine import Machine
 from omnivore.framework.minibuffer import *
@@ -632,11 +632,11 @@ class SaveSegmentAsFormatAction(EditorAction):
     segment_number = Int
     
     def _name_default(self):
-        return "%s (%s)" % (self.saver.name, self.saver.extensions[0])
+        return "%s (%s)" % (self.saver.export_data_name, self.saver.export_extensions[0])
     
     def perform(self, event):
         segment = self.task.active_editor.document.segments[self.segment_number]
-        dialog = FileDialog(default_filename=segment.name, parent=event.task.window.control, action='save as', wildcard=self.saver.get_file_dialog_wildcard())
+        dialog = FileDialog(default_filename=segment.name, parent=event.task.window.control, action='save as', wildcard=get_file_dialog_wildcard(self.saver.export_data_name, self.saver.export_extensions))
         if dialog.open() == OK:
             self.active_editor.save_segment(self.saver, dialog.path)
 
@@ -652,10 +652,11 @@ class SaveSegmentGroup(TaskDynamicSubmenuGroup):
         if event_data is not None:
             segment_number = event_data
             segment = self.task.active_editor.document.segments[segment_number]
-            for saver in segment.savers:
+            savers = self.task.active_editor.get_extra_segment_savers(segment)
+            savers.extend(segment.savers)
+            for saver in savers:
                 action = SaveSegmentAsFormatAction(saver=saver, segment_number=segment_number)
                 items.append(ActionItem(action=action))
-            
         return items
 
 

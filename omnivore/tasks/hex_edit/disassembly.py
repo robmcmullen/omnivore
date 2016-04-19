@@ -1,3 +1,4 @@
+import os
 import sys
 import wx
 
@@ -256,6 +257,10 @@ class DisassemblyPanel(ByteGrid):
     View for editing in hexidecimal notation.
     """
     short_name = "disasm"
+    
+    # Segment saver interface for menu item display
+    export_data_name = "Disassembly"
+    export_extensions = [".s"]
 
     def __init__(self, parent, task, **kwargs):
         """Create the HexEdit viewer
@@ -303,6 +308,19 @@ class DisassemblyPanel(ByteGrid):
             else:
                 lines.append("%-8s%s" % (label, code))
         return lines
+    
+    def encode_data(self, segment):
+        """Segment saver interface: take a segment and produce a byte
+        representation to save to disk.
+        """
+        index = len(self.table.index_to_row) - 1
+        try:
+            lines = self.get_disassembled_text(0, index)
+            text = os.linesep.join(lines) + os.linesep
+            bytes = text.encode("utf-8")
+            return bytes
+        except IndexError:
+            raise RuntimeError("Disassembly still in progress. Try again in a few seconds.")
 
     def get_status_message_at_index(self, index, row, col):
         return self.table.get_comments(index)

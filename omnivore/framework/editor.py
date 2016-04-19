@@ -216,7 +216,7 @@ class FrameworkEditor(Editor):
             saved = False
         return saved
     
-    def save_to_uri(self, bytes, uri):
+    def save_to_uri(self, bytes, uri, save_metadata=True):
         # Have to use a two-step process to write to the file: open the
         # filesystem, then open the file.  Have to open the filesystem
         # as writeable in case this is a virtual filesystem (like ZipFS),
@@ -232,18 +232,19 @@ class FrameworkEditor(Editor):
         fh.write(bytes)
         fh.close()
         
-        metadata_dict = dict()
-        self.get_extra_metadata(metadata_dict)
-        if metadata_dict:
-            relpath += ".omnivore"
-            fh = fs.open(relpath, 'wb')
-            log.debug("saving extra metadata to %s" % relpath)
-            jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
-            bytes = jsonpickle.dumps(metadata_dict)
-            text = jsonutil.collapse_json(bytes)
-            fh.write(text)
-            fh.close()
-            self.metadata_dirty = False
+        if save_metadata:
+            metadata_dict = dict()
+            self.get_extra_metadata(metadata_dict)
+            if metadata_dict:
+                relpath += ".omnivore"
+                fh = fs.open(relpath, 'wb')
+                log.debug("saving extra metadata to %s" % relpath)
+                jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
+                bytes = jsonpickle.dumps(metadata_dict)
+                text = jsonutil.collapse_json(bytes)
+                fh.write(text)
+                fh.close()
+                self.metadata_dirty = False
         
         fs.close()
     
