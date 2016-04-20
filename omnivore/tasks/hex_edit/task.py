@@ -220,12 +220,20 @@ class HexEditTask(FrameworkTask):
                 Group(
                     *processor_type_actions,
                     id="a1", separator=True),
-                id='FontChoiceSubmenu0', separator=True, name="Processor"),
+                id='mm1', separator=True, name="Processor"),
+            SMenu(
+                AssemblerChoiceGroup(id="a2", separator=True),
+                Group(
+                    AddNewAssemblerAction(),
+                    EditAssemblersAction(),
+                    SetSystemDefaultAssemblerAction(),
+                    id="a3", separator=True),
+                id='mm2', separator=False, name="Assembler Syntax"),
             SMenu(
                 Group(
                     *memory_map_actions,
                     id="a1", separator=True),
-                id='MemoryMapSubmenu0', separator=False, name="Memory Map"),
+                id='mm3', separator=False, name="Memory Map"),
             SMenu(
                 Group(
                     ColorStandardAction(name="NTSC", color_standard=0),
@@ -237,7 +245,7 @@ class HexEditTask(FrameworkTask):
                 Group(
                     AnticColorAction(),
                     id="a2", separator=True),
-                id='FontChoiceSubmenu2a', separator=False, name="Colors"),
+                id='mm4', separator=False, name="Colors"),
             SMenu(
                 Group(
                     UseFontAction(font=fonts.A8DefaultFont),
@@ -248,7 +256,7 @@ class HexEditTask(FrameworkTask):
                     LoadFontAction(),
                     GetFontFromSelectionAction(),
                     id="a3", separator=True),
-                id='FontChoiceSubmenu1', separator=False, name="Font"),
+                id='mm5', separator=False, name="Font"),
             SMenu(
                 Group(
                     *font_renderer_actions,
@@ -259,7 +267,7 @@ class HexEditTask(FrameworkTask):
                 Group(
                     FontMappingWidthAction(),
                     id="a3", separator=True),
-                id='FontChoiceSubmenu2a1', separator=False, name="Character Display"),
+                id='mm6', separator=False, name="Character Display"),
             SMenu(
                 Group(
                     *bitmap_renderer_actions,
@@ -268,7 +276,7 @@ class HexEditTask(FrameworkTask):
                     BitmapWidthAction(),
                     BitmapZoomAction(),
                     id="a1", separator=True),
-                id='FontChoiceSubmenu2a2', separator=False, name="Bitmap Display"),
+                id='mm7', separator=False, name="Bitmap Display"),
             ]
     
     def get_actions_Menu_Machine_MachineEmulatorGroup(self):

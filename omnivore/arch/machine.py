@@ -53,6 +53,8 @@ class Machine(HasTraits):
     
     page_renderer = Any(transient=True)
     
+    assembler = Any(transient=True)
+    
     # Trait events
     
     font_change_event = Event
@@ -66,6 +68,8 @@ class Machine(HasTraits):
     font_list = None
     
     emulator_list = None
+    
+    assembler_list = None
     
     highlight_color = (100, 200, 230)
     
@@ -148,6 +152,26 @@ class Machine(HasTraits):
             application.save_json_data("emulator_list", e_list)
         if default:
             application.save_json_data("system_default_emulator", default)
+        
+    @classmethod
+    def init_assemblers(cls, editor):
+        if cls.assembler_list is None:
+            try:
+                cls.assembler_list = editor.window.application.get_json_data("assembler_list")
+            except IOError:
+                # file not found
+                cls.assembler_list = []
+            except ValueError:
+                # bad JSON format
+                cls.assembler_list = []
+        
+        if not cls.assembler_list:
+            cls.assembler_list = cls.guess_default_assemblers()
+    
+    @classmethod
+    def remember_assemblers(cls, application):
+        if cls.assembler_list:
+            application.save_json_data("assembler_list", cls.assembler_list)
     
     @classmethod
     def init_colors(cls, editor):
@@ -160,6 +184,7 @@ class Machine(HasTraits):
         cls.init_fonts(editor)
         cls.init_colors(editor)
         cls.init_emulators(editor)
+        cls.init_assemblers(editor)
     
     @classmethod
     def set_text_font(cls, editor, font, color):
@@ -172,6 +197,12 @@ class Machine(HasTraits):
     
     def _name_default(self):
         return "Generic 6502"
+    
+    def _assembler_default(self):
+        for asm in self.assembler_list:
+            if 'system default' in asm:
+                return asm
+        return self.assembler_list[0]
     
     def _disassembler_default(self):
         return predefined['disassembler'][0]
@@ -452,10 +483,82 @@ class Machine(HasTraits):
         cls.remember_emulators(task.window.application)
         task.machine_menu_changed = cls
     
+    def set_assembler(self, assembler):
+        self.assembler = assembler
+        self.disassembler_change_event = True
+    
+    @classmethod
+    def guess_default_assemblers(cls):
+        asm_list = [
+            {'comment char': ';',
+             'origin': '.org',
+             'data byte': '.byte',
+             'name': "cc65",
+             },
+            {'comment char': ';',
+             'origin': '*=',
+             'data byte': '.byte',
+             'name': "MAC/65",
+             },
+            ]
+        return [dict(asm) for asm in asm_list]  # force a copy
+    
+    @classmethod
+    def set_system_default_assembler(cls, task, asm):
+        if 'system default' in asm:
+            del asm['system default']
+        for e in cls.assembler_list:
+            if 'system default' in e:
+                del e['system default']
+        found = False
+        for e in cls.assembler_list:
+            if e == asm:
+                asm['system default'] = True
+                found = True
+                break
+        if not found:
+            cls.assembler_list[0:0] = [asm]
+        cls.remember_assemblers(task.window.application)
+        task.machine_menu_changed = cls
+    
+    @classmethod
+    def get_default_assembler(cls):
+        found = None
+        for e in cls.assembler_list:
+            if 'system default' in e:
+                found = e
+        if not found:
+            if cls.assembler_list:
+                found = cls.assembler_list[0]
+        return found
+
+    @classmethod
+    def set_assembler_list(cls, task, asms):
+        default = None
+        for e in asms:
+            if 'system default' in e:
+                if default:
+                    del e['system default']
+                else:
+                    default = e
+        cls.assembler_list = asms
+        cls.remember_assemblers(task.window.application)
+        task.machine_menu_changed = cls
+    
+    def verify_current_assembler(self):
+        found = None
+        for asm in self.assembler_list:
+            if self.assembler == asm:
+                found = asm
+                break
+        if not found:
+            asm = self.get_default_assembler()
+        self.set_assembler(asm)
+    
     # Utility methods
     
     def get_disassembler(self, hex_lower, mnemonic_lower):
-        return self.disassembler(self.memory_map, hex_lower, mnemonic_lower)
+        return self.disassembler(self.assembler, self.memory_map, hex_lower, mnemonic_lower)
 
 
 Generic6502 = Machine(name="Generic 6502", disassembler=disasm.Basic6502Disassembler)

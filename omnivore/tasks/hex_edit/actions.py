@@ -17,7 +17,7 @@ from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bi
 from omnivore.framework.actions import *
 from commands import *
 from omnivore.arch.ui.antic_colors import AnticColorDialog
-from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, prompt_for_emulator, get_file_dialog_wildcard
+from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, prompt_for_emulator, prompt_for_assembler, get_file_dialog_wildcard
 from omnivore.utils.wx.dropscroller import ListReorderDialog
 from omnivore.arch.machine import Machine
 from omnivore.framework.minibuffer import *
@@ -133,6 +133,72 @@ class RunEmulatorAction(NameChangeAction):
     
     def perform(self, event):
         self.active_editor.run_emulator()
+
+
+# Assembler syntax section
+
+class AssemblerChoiceGroup(TaskDynamicSubmenuGroup):
+    """Dynamic menu group to display the available assemblers used to display
+    the disassembly syntax
+    """
+    #### 'DynamicSubmenuGroup' interface ######################################
+
+    event_name = 'machine_menu_changed'
+
+    ###########################################################################
+    # Private interface.
+    ###########################################################################
+
+    def _get_items(self, event_data=None):
+        items = []
+        if event_data is not None:
+            for asm in event_data.assembler_list:
+                action = UseAssemblerAction(assembler=asm)
+                items.append(ActionItem(action=action))
+            
+        return items
+
+class UseAssemblerAction(EditorAction):
+    style = 'radio'
+    assembler = Any
+    
+    def _name_default(self):
+        return "%s" % (self.assembler['name'])
+    
+    def perform(self, event):
+        self.active_editor.machine.set_assembler(self.assembler)
+ 
+    @on_trait_change('active_editor.machine.assembler')
+    def _update_checked(self):
+        if self.active_editor:
+            self.checked = self.active_editor.machine.assembler == self.assembler
+
+class AddNewAssemblerAction(EditorAction):
+    name = 'Add New Assembler...'
+    
+    def perform(self, event):
+        emu = prompt_for_emulator(event.task.window.control, "New Assembler")
+        if emu:
+            self.active_editor.machine.add_emulator(event.task, emu)
+
+class EditAssemblersAction(EditorAction):
+    name = 'Edit Assemblers...'
+    accelerator = 'F12'
+    
+    def perform(self, event):
+        items = Machine.assembler_list
+        dlg = ListReorderDialog(event.task.window.control, Machine.assembler_list, lambda a:a['name'], prompt_for_assembler, "Manage Assemblers")
+        if dlg.ShowModal() == wx.ID_OK:
+            asms = dlg.get_items()
+            Machine.set_assembler_list(event.task, asms)
+            self.active_editor.machine.verify_current_assembler()
+        dlg.Destroy()
+
+class SetSystemDefaultAssemblerAction(EditorAction):
+    name = 'Set Current as System Default'
+    
+    def perform(self, event):
+        Machine.set_system_default_assembler(event.task, self.active_editor.machine.assembler)
 
 
 class FontRendererAction(EditorAction):

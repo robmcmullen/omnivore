@@ -296,7 +296,7 @@ class DisassemblyPanel(ByteGrid):
         lines = []
         blank_label = ""
         org = self.table.GetRowLabelValue(start_row)
-        lines.append("%-8s.ORG $%s" % (blank_label, org))
+        lines.append("%-8s%s $%s" % (blank_label, self.table.disassembler.asm_origin, org))
         for row in range(start_row, end_row):
             label = blank_label
             code = self.table.GetValue(row, 1)

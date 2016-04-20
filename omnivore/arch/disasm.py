@@ -13,8 +13,8 @@ class BaseDisassembler(disasm.Disassembler):
     
     cached_miniassemblers = {}
     
-    def __init__(self, memory_map=None, hex_lower=True, mnemonic_lower=False):
-        disasm.Disassembler.__init__(self, self.cpu, memory_map, self.allow_undocumented, hex_lower, mnemonic_lower, self.read_instructions, self.write_instructions, self.rw_modes)
+    def __init__(self, asm_syntax, memory_map=None, hex_lower=True, mnemonic_lower=False):
+        disasm.Disassembler.__init__(self, self.cpu, asm_syntax, memory_map, self.allow_undocumented, hex_lower, mnemonic_lower, self.read_instructions, self.write_instructions, self.rw_modes)
     
     def get_style(self):
         if self.pc >= self.origin + self.length:
