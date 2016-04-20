@@ -49,7 +49,8 @@ class SegmentList(wx.ListBox):
         if selected == -1:
             event.Skip()
             return
-        d = self.task.active_editor.document
+        e = self.task.active_editor
+        d = e.document
         segment = d.segments[selected]
         
         # include disabled action showing the name of the segment clicked upon
@@ -67,11 +68,13 @@ class SegmentList(wx.ListBox):
                 actions.append(SetSegmentOriginAction(segment_number=selected, task=self.task))
                 actions.append(DeleteUserSegmentAction(segment_number=selected, task=self.task))
             actions.append(None)
-        for saver in segment.savers:
-            action = SaveSegmentAsFormatAction(saver=saver, segment_number=selected, task=self.task, name="Save as %s" % saver.name)
+        savers = e.get_extra_segment_savers(segment)
+        savers.extend(segment.savers)
+        for saver in savers:
+            action = SaveSegmentAsFormatAction(saver=saver, segment_number=selected, task=self.task, name="Save as %s" % saver.export_data_name)
             actions.append(action)
         if actions:
-            self.task.active_editor.popup_context_menu_from_actions(self, actions)
+            e.popup_context_menu_from_actions(self, actions)
     
     def on_tooltip(self, evt):
         pos = evt.GetPosition()
