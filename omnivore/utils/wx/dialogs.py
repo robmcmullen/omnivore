@@ -61,7 +61,7 @@ def prompt_for_hex(parent, message, title, default=None):
 class DictEditDialog(wx.Dialog):
     border = 5
     
-    def __init__(self, parent, title, instructions, default=None):
+    def __init__(self, parent, title, instructions, fields, default=None):
         wx.Dialog.__init__(self, parent, -1, title)
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
@@ -69,7 +69,8 @@ class DictEditDialog(wx.Dialog):
         t = wx.StaticText(self, -1, instructions)
         sizer.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
         
-        self.add_fields()
+        self.controls = {}
+        self.add_fields(fields)
         
         btnsizer = wx.StdDialogButtonSizer()
         self.ok_btn = wx.Button(self, wx.ID_OK)
@@ -90,6 +91,24 @@ class DictEditDialog(wx.Dialog):
         if default:
             self.set_initial_data(default)
         self.ok_btn.Enable(self.can_submit())
+    
+    def add_fields(self, fields):
+        for type, key, label in fields:
+            if type == 'text':
+                control = self.create_text(label)
+            else:
+                raise NotImplementedError("Unknown field type %s for %s" % (type, key))
+            self.controls[key] = type, control
+
+    def set_initial_data(self, d):
+        for key, (type, control) in self.controls.iteritems():
+            if type == 'text':
+                control.ChangeValue(d[key])
+    
+    def get_edited_values(self, d):
+        for key, (type, control) in self.controls.iteritems():
+            if type == 'text':
+                d[key] = control.GetValue()
     
     def create_text(self, name):
         sizer = self.GetSizer()
@@ -113,12 +132,6 @@ class DictEditDialog(wx.Dialog):
     
     def can_submit(self):
         return True
-        
-    def set_initial_data(self, d):
-        raise NotImplementedError
-    
-    def get_edited_values(self, d):
-        raise NotImplementedError
 
     def show_and_get_value(self):
         result = self.ShowModal()
@@ -246,32 +259,22 @@ class AssemblerDialog(DictEditDialog):
     border = 5
     
     def __init__(self, parent, title, default=None):
-        DictEditDialog.__init__(self, parent, title, "Enter assembler information:", default)
-    
-    def add_fields(self):
-        self.name = self.create_text('Name: ')
-        self.org = self.create_text('Origin Directive: ')
-        self.byte = self.create_text('Data Byte Directive: ')
-        self.comment = self.create_text('Comment Char: ')
-
-    def set_initial_data(self, d):
-        self.name.ChangeValue(d['name'])
-        self.org.ChangeValue(d['origin'])
-        self.byte.ChangeValue(d['data byte'])
-        self.comment.ChangeValue(d['comment char'])
+        fields = [
+            ('text', 'name', 'Name: '),
+            ('text', 'origin', 'Origin Directive: '),
+            ('text', 'data byte', 'Data Byte Directive: '),
+            ('text', 'comment char', 'Comment Char: '),
+            ]
+        DictEditDialog.__init__(self, parent, title, "Enter assembler information:", fields, default)
     
     def can_submit(self):
-        return len(self.name.GetValue()) > 0
-    
-    def get_edited_values(self, d):
-        d['comment char'] = self.comment.GetValue()
-        d['origin'] = self.org.GetValue()
-        d['data byte'] = self.byte.GetValue()
-        d['name'] = self.name.GetValue()
+        type, control = self.controls['name']
+        return len(control.GetValue()) > 0
 
 def prompt_for_assembler(parent, title, default=None):
     d = AssemblerDialog(parent, title, default)
     return d.show_and_get_value()
+
 
 def get_file_dialog_wildcard(name, extension_list):
     # Using only the first extension
