@@ -177,13 +177,12 @@ class AddNewAssemblerAction(EditorAction):
     name = 'Add New Assembler...'
     
     def perform(self, event):
-        emu = prompt_for_emulator(event.task.window.control, "New Assembler")
-        if emu:
-            self.active_editor.machine.add_emulator(event.task, emu)
+        d = prompt_for_assembler(event.task.window.control, "New Assembler")
+        if d:
+            self.active_editor.machine.add_assembler(event.task, d)
 
 class EditAssemblersAction(EditorAction):
     name = 'Edit Assemblers...'
-    accelerator = 'F12'
     
     def perform(self, event):
         items = Machine.assembler_list

@@ -487,6 +487,11 @@ class Machine(HasTraits):
         self.assembler = assembler
         self.disassembler_change_event = True
     
+    def add_assembler(self, task, d):
+        self.assembler_list.append(d)
+        self.remember_assemblers(task.window.application)
+        task.machine_menu_changed = self
+    
     @classmethod
     def guess_default_assemblers(cls):
         asm_list = [

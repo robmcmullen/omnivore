@@ -58,6 +58,80 @@ def prompt_for_hex(parent, message, title, default=None):
     return d.show_and_get_value()
 
 
+class NameValuePairDialog(wx.Dialog):
+    border = 5
+    
+    def __init__(self, parent, title, default=None):
+        wx.Dialog.__init__(self, parent, -1, title)
+        sizer = self.sizer = wx.BoxSizer(wx.VERTICAL)
+        
+        t = wx.StaticText(self, -1, "Enter assembler informaton:")
+        sizer.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
+        
+        self.name = self.create_text('Name: ')
+        self.org = self.create_text('Origin Directive: ')
+        self.byte = self.create_text('Data Byte Directive: ')
+        self.comment = self.create_text('Comment Char: ')
+        
+        btnsizer = wx.StdDialogButtonSizer()
+        self.ok_btn = wx.Button(self, wx.ID_OK)
+        self.ok_btn.SetDefault()
+        btnsizer.AddButton(self.ok_btn)
+        btn = wx.Button(self, wx.ID_CANCEL)
+        btnsizer.AddButton(btn)
+        btnsizer.Realize()
+        sizer.Add(btnsizer, 1, wx.ALL|wx.EXPAND, self.border)
+        
+        self.Bind(wx.EVT_BUTTON, self.on_button)
+        self.SetSizer(sizer)
+        
+        # Don't call self.Fit() otherwise the dialog buttons are zero height
+        sizer.Fit(self)
+        
+        self.default = default
+        if default:
+            self.set_initial_data(default)
+    
+    def create_text(self, name):
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        t = wx.StaticText(self, -1, name)
+        hbox.Add(t, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, self.border)
+        entry = wx.TextCtrl(self, -1, size=(-1, -1))
+        hbox.Add(entry, 1, wx.ALL|wx.EXPAND, self.border)
+        self.sizer.Add(hbox, 1, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
+        return entry
+
+    def on_button(self, evt):
+        if evt.GetId() == wx.ID_OK:
+            self.EndModal(wx.ID_OK)
+        else:
+            self.EndModal(wx.ID_CANCEL)
+        evt.Skip()
+
+    def set_initial_data(self, d):
+        self.name.ChangeValue(d['name'])
+        self.org.ChangeValue(d['origin'])
+        self.byte.ChangeValue(d['data byte'])
+        self.comment.ChangeValue(d['comment char'])
+
+    def show_and_get_value(self):
+        result = self.ShowModal()
+        if result == wx.ID_OK:
+            # Edit the object in place by reusing the same dictionary
+            if self.default:
+                d = self.default
+            else:
+                d = dict()
+            d['comment char'] = self.comment.GetValue()
+            d['origin'] = self.org.GetValue()
+            d['data byte'] = self.byte.GetValue()
+            d['name'] = self.name.GetValue()
+        else:
+            d = None
+        self.Destroy()
+        return d
+
+
 class EmulatorDialog(wx.Dialog):
     border = 5
     
@@ -170,7 +244,8 @@ class AssemblerDialog(wx.Dialog):
     
     def __init__(self, parent, title, default=None):
         wx.Dialog.__init__(self, parent, -1, title)
-        sizer = self.sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(sizer)
         
         t = wx.StaticText(self, -1, "Enter assembler informaton:")
         sizer.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
@@ -190,7 +265,6 @@ class AssemblerDialog(wx.Dialog):
         sizer.Add(btnsizer, 1, wx.ALL|wx.EXPAND, self.border)
         
         self.Bind(wx.EVT_BUTTON, self.on_button)
-        self.SetSizer(sizer)
         
         # Don't call self.Fit() otherwise the dialog buttons are zero height
         sizer.Fit(self)
@@ -200,12 +274,13 @@ class AssemblerDialog(wx.Dialog):
             self.set_initial_data(default)
     
     def create_text(self, name):
+        sizer = self.GetSizer()
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         t = wx.StaticText(self, -1, name)
         hbox.Add(t, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, self.border)
         entry = wx.TextCtrl(self, -1, size=(-1, -1))
         hbox.Add(entry, 1, wx.ALL|wx.EXPAND, self.border)
-        self.sizer.Add(hbox, 1, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
+        sizer.Add(hbox, 1, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
         return entry
 
     def on_button(self, evt):
