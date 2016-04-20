@@ -58,20 +58,18 @@ def prompt_for_hex(parent, message, title, default=None):
     return d.show_and_get_value()
 
 
-class NameValuePairDialog(wx.Dialog):
+class DictEditDialog(wx.Dialog):
     border = 5
     
-    def __init__(self, parent, title, default=None):
+    def __init__(self, parent, title, instructions, default=None):
         wx.Dialog.__init__(self, parent, -1, title)
-        sizer = self.sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(sizer)
         
-        t = wx.StaticText(self, -1, "Enter assembler informaton:")
+        t = wx.StaticText(self, -1, instructions)
         sizer.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
         
-        self.name = self.create_text('Name: ')
-        self.org = self.create_text('Origin Directive: ')
-        self.byte = self.create_text('Data Byte Directive: ')
-        self.comment = self.create_text('Comment Char: ')
+        self.add_fields()
         
         btnsizer = wx.StdDialogButtonSizer()
         self.ok_btn = wx.Button(self, wx.ID_OK)
@@ -83,7 +81,7 @@ class NameValuePairDialog(wx.Dialog):
         sizer.Add(btnsizer, 1, wx.ALL|wx.EXPAND, self.border)
         
         self.Bind(wx.EVT_BUTTON, self.on_button)
-        self.SetSizer(sizer)
+        self.Bind(wx.EVT_TEXT, self.on_text_changed)
         
         # Don't call self.Fit() otherwise the dialog buttons are zero height
         sizer.Fit(self)
@@ -91,14 +89,16 @@ class NameValuePairDialog(wx.Dialog):
         self.default = default
         if default:
             self.set_initial_data(default)
+        self.ok_btn.Enable(self.can_submit())
     
     def create_text(self, name):
+        sizer = self.GetSizer()
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         t = wx.StaticText(self, -1, name)
         hbox.Add(t, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, self.border)
         entry = wx.TextCtrl(self, -1, size=(-1, -1))
         hbox.Add(entry, 1, wx.ALL|wx.EXPAND, self.border)
-        self.sizer.Add(hbox, 1, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
+        sizer.Add(hbox, 1, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
         return entry
 
     def on_button(self, evt):
@@ -108,11 +108,17 @@ class NameValuePairDialog(wx.Dialog):
             self.EndModal(wx.ID_CANCEL)
         evt.Skip()
 
+    def on_text_changed(self, evt):
+        self.ok_btn.Enable(self.can_submit())
+    
+    def can_submit(self):
+        return True
+        
     def set_initial_data(self, d):
-        self.name.ChangeValue(d['name'])
-        self.org.ChangeValue(d['origin'])
-        self.byte.ChangeValue(d['data byte'])
-        self.comment.ChangeValue(d['comment char'])
+        raise NotImplementedError
+    
+    def get_edited_values(self, d):
+        raise NotImplementedError
 
     def show_and_get_value(self):
         result = self.ShowModal()
@@ -122,10 +128,7 @@ class NameValuePairDialog(wx.Dialog):
                 d = self.default
             else:
                 d = dict()
-            d['comment char'] = self.comment.GetValue()
-            d['origin'] = self.org.GetValue()
-            d['data byte'] = self.byte.GetValue()
-            d['name'] = self.name.GetValue()
+            self.get_edited_values(d)
         else:
             d = None
         self.Destroy()
@@ -239,79 +242,32 @@ def prompt_for_emulator(parent, title, default_emu=None):
     return d.show_and_get_value()
 
 
-class AssemblerDialog(wx.Dialog):
+class AssemblerDialog(DictEditDialog):
     border = 5
     
     def __init__(self, parent, title, default=None):
-        wx.Dialog.__init__(self, parent, -1, title)
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        self.SetSizer(sizer)
-        
-        t = wx.StaticText(self, -1, "Enter assembler informaton:")
-        sizer.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
-        
+        DictEditDialog.__init__(self, parent, title, "Enter assembler information:", default)
+    
+    def add_fields(self):
         self.name = self.create_text('Name: ')
         self.org = self.create_text('Origin Directive: ')
         self.byte = self.create_text('Data Byte Directive: ')
         self.comment = self.create_text('Comment Char: ')
-        
-        btnsizer = wx.StdDialogButtonSizer()
-        self.ok_btn = wx.Button(self, wx.ID_OK)
-        self.ok_btn.SetDefault()
-        btnsizer.AddButton(self.ok_btn)
-        btn = wx.Button(self, wx.ID_CANCEL)
-        btnsizer.AddButton(btn)
-        btnsizer.Realize()
-        sizer.Add(btnsizer, 1, wx.ALL|wx.EXPAND, self.border)
-        
-        self.Bind(wx.EVT_BUTTON, self.on_button)
-        
-        # Don't call self.Fit() otherwise the dialog buttons are zero height
-        sizer.Fit(self)
-        
-        self.default = default
-        if default:
-            self.set_initial_data(default)
-    
-    def create_text(self, name):
-        sizer = self.GetSizer()
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
-        t = wx.StaticText(self, -1, name)
-        hbox.Add(t, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, self.border)
-        entry = wx.TextCtrl(self, -1, size=(-1, -1))
-        hbox.Add(entry, 1, wx.ALL|wx.EXPAND, self.border)
-        sizer.Add(hbox, 1, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
-        return entry
-
-    def on_button(self, evt):
-        if evt.GetId() == wx.ID_OK:
-            self.EndModal(wx.ID_OK)
-        else:
-            self.EndModal(wx.ID_CANCEL)
-        evt.Skip()
 
     def set_initial_data(self, d):
         self.name.ChangeValue(d['name'])
         self.org.ChangeValue(d['origin'])
         self.byte.ChangeValue(d['data byte'])
         self.comment.ChangeValue(d['comment char'])
-
-    def show_and_get_value(self):
-        result = self.ShowModal()
-        if result == wx.ID_OK:
-            # Edit the object in place by reusing the same dictionary
-            if self.default:
-                d = self.default
-            else:
-                d = dict()
-            d['comment char'] = self.comment.GetValue()
-            d['origin'] = self.org.GetValue()
-            d['data byte'] = self.byte.GetValue()
-            d['name'] = self.name.GetValue()
-        else:
-            d = None
-        self.Destroy()
-        return d
+    
+    def can_submit(self):
+        return len(self.name.GetValue()) > 0
+    
+    def get_edited_values(self, d):
+        d['comment char'] = self.comment.GetValue()
+        d['origin'] = self.org.GetValue()
+        d['data byte'] = self.byte.GetValue()
+        d['name'] = self.name.GetValue()
 
 def prompt_for_assembler(parent, title, default=None):
     d = AssemblerDialog(parent, title, default)
