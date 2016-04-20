@@ -113,23 +113,8 @@ class Machine(HasTraits):
     @classmethod
     def init_emulators(cls, editor):
         if cls.emulator_list is None:
-            try:
-                cls.emulator_list = editor.window.application.get_json_data("emulator_list")
-            except IOError:
-                # file not found
-                cls.emulator_list = []
-            except ValueError:
-                # bad JSON format
-                cls.emulator_list = []
-        
-        try:
-            default = editor.window.application.get_json_data("system_default_emulator")
-        except IOError:
-            # file not found
-            default = None
-        except ValueError:
-            # bad JSON format
-            default = None
+            cls.emulator_list = editor.window.application.get_json_data("emulator_list", [])
+        default = editor.window.application.get_json_data("system_default_emulator", None)
         
         if default is None:
             default = cls.guess_system_default_emulator()
@@ -156,14 +141,7 @@ class Machine(HasTraits):
     @classmethod
     def init_assemblers(cls, editor):
         if cls.assembler_list is None:
-            try:
-                cls.assembler_list = editor.window.application.get_json_data("assembler_list")
-            except IOError:
-                # file not found
-                cls.assembler_list = []
-            except ValueError:
-                # bad JSON format
-                cls.assembler_list = []
+            cls.assembler_list = editor.window.application.get_json_data("assembler_list", [])
         
         if not cls.assembler_list:
             cls.assembler_list = cls.guess_default_assemblers()

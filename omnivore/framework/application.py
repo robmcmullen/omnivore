@@ -610,22 +610,30 @@ class FrameworkApplication(TasksApplication):
             os.makedirs(dirname)
         return os.path.join(dirname, json_name)
     
-    def get_json_data(self, json_name):
-        file_path = self.get_config_dir_filename("json", json_name)
-        with open(file_path, "r") as fh:
-            raw = fh.read()
-        json_data = jsonpickle.decode(raw)
+    def get_json_data(self, json_name, default_on_error=None):
         try:
-            # new format is a list with a format identifier as the first entry
-            if json_data[0] == "format=v2":
-                decoded = json_data[1]
-        except KeyError:
-            # deprecated format was a dictionary, and was creating an extra
-            # layer of indirection by encoding the jsonpickle as another string
-            json_data = json.loads(raw)
-            encoded = json_data[json_name]
-            decoded = jsonpickle.decode(encoded)
-        return decoded
+            file_path = self.get_config_dir_filename("json", json_name)
+            with open(file_path, "r") as fh:
+                raw = fh.read()
+            json_data = jsonpickle.decode(raw)
+            try:
+                # new format is a list with a format identifier as the first entry
+                if json_data[0] == "format=v2":
+                    decoded = json_data[1]
+            except KeyError:
+                # deprecated format was a dictionary, and was creating an extra
+                # layer of indirection by encoding the jsonpickle as another string
+                json_data = json.loads(raw)
+                encoded = json_data[json_name]
+                decoded = jsonpickle.decode(encoded)
+            return decoded
+        except IOError:
+            # file not found
+            return default_on_error
+        except ValueError:
+            # bad JSON format
+            log.error("Bad JSON format in preferences file: %s" % json_name)
+            return default_on_error
     
     def save_json_data(self, json_name, data):
         file_path = self.get_config_dir_filename("json", json_name)
