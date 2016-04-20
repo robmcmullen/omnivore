@@ -96,30 +96,56 @@ class DictEditDialog(wx.Dialog):
         for type, key, label in fields:
             if type == 'text':
                 control = self.create_text(label)
+            elif type == 'file':
+                control = self.create_file(label)
+            elif type == 'static spacer below':
+                control = self.create_static_spacer_below(label)
             else:
                 raise NotImplementedError("Unknown field type %s for %s" % (type, key))
-            self.controls[key] = type, control
+            if key is not None:
+                self.controls[key] = type, control
 
     def set_initial_data(self, d):
         for key, (type, control) in self.controls.iteritems():
             if type == 'text':
                 control.ChangeValue(d[key])
+            elif type == 'file':
+                control.SetValue(d[key])
     
     def get_edited_values(self, d):
         for key, (type, control) in self.controls.iteritems():
-            if type == 'text':
+            if type == 'text' or type == 'file':
                 d[key] = control.GetValue()
     
-    def create_text(self, name):
+    def create_text(self, label):
         sizer = self.GetSizer()
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        t = wx.StaticText(self, -1, name)
+        t = wx.StaticText(self, -1, label)
         hbox.Add(t, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, self.border)
         entry = wx.TextCtrl(self, -1, size=(-1, -1))
         hbox.Add(entry, 1, wx.ALL|wx.EXPAND, self.border)
         sizer.Add(hbox, 1, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
         return entry
 
+    def create_file(self, label):
+        sizer = self.GetSizer()
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        entry = filebrowse.FileBrowseButton(self, -1, size=(450, -1), labelText=label, changeCallback=self.on_path_changed)
+        hbox.Add(entry, 0, wx.LEFT, self.border)
+        sizer.Add(hbox, 0, wx.ALL|wx.EXPAND, 0)
+        return entry
+
+    def create_static_spacer_below(self, label):
+        sizer = self.GetSizer()
+        t = wx.StaticText(self, -1, label)
+        sizer.Add(t, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, self.border)
+        t = wx.StaticText(self, -1, " ")
+        sizer.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
+    
+    def get_control(self, key):
+        type, control = self.controls[key]
+        return control
+        
     def on_button(self, evt):
         if evt.GetId() == wx.ID_OK:
             self.EndModal(wx.ID_OK)
@@ -129,6 +155,9 @@ class DictEditDialog(wx.Dialog):
 
     def on_text_changed(self, evt):
         self.ok_btn.Enable(self.can_submit())
+
+    def on_path_changed(self, evt):
+        pass
     
     def can_submit(self):
         return True
@@ -148,107 +177,41 @@ class DictEditDialog(wx.Dialog):
         return d
 
 
-class EmulatorDialog(wx.Dialog):
+class EmulatorDialog(DictEditDialog):
     border = 5
     
-    def __init__(self, parent, title, default_emu=None):
-        wx.Dialog.__init__(self, parent, -1, title)
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        
-        t = wx.StaticText(self, -1, "Enter emulator informaton:")
-        sizer.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
-        
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
-        self.path = filebrowse.FileBrowseButton(self, -1, size=(450, -1), labelText="Executable:", changeCallback=self.on_path_changed)
-        hbox.Add(self.path, 0, wx.LEFT, self.border)
-        sizer.Add(hbox, 0, wx.ALL|wx.EXPAND, 0)
-        
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
-        t = wx.StaticText(self, -1, 'Args: ')
-        hbox.Add(t, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, self.border)
-        self.args = wx.TextCtrl(self, -1, size=(-1, -1))
-        hbox.Add(self.args, 1, wx.ALL|wx.EXPAND, self.border)
-        sizer.Add(hbox, 1, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
-        
-        t = wx.StaticText(self, -1, "(use %s as placeholder for the data file or it will be added at the end)")
-        sizer.Add(t, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, self.border)
-        
-        t = wx.StaticText(self, -1, " ")
-        sizer.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
-        
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
-        t = wx.StaticText(self, -1, 'Display Name: ')
-        hbox.Add(t, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, self.border)
-        self.name = wx.TextCtrl(self, -1, size=(180, -1))
-        hbox.Add(self.name, 0, wx.LEFT, self.border)
-        sizer.Add(hbox, 0, wx.ALL|wx.EXPAND, self.border)
+    def __init__(self, parent, title, default=None):
+        fields = [
+            ('file', 'exe', 'Executable: '),
+            ('text', 'args', 'Args: '),
+            ('static spacer below', None, "(use %s as placeholder for the data file or it will be added at the end)"),
+            ('text', 'name', 'Display Name: '),
+            ]
+        DictEditDialog.__init__(self, parent, title, "Enter emulator information:", fields, default)
         
         self.user_changed = False
-        
-        btnsizer = wx.StdDialogButtonSizer()
-        self.ok_btn = wx.Button(self, wx.ID_OK)
-        self.ok_btn.SetDefault()
-        self.ok_btn.Enable(False)
-        btnsizer.AddButton(self.ok_btn)
-        btn = wx.Button(self, wx.ID_CANCEL)
-        btnsizer.AddButton(btn)
-        btnsizer.Realize()
-        sizer.Add(btnsizer, 1, wx.ALL|wx.EXPAND, self.border)
-        
-        self.Bind(wx.EVT_BUTTON, self.on_button)
-        self.Bind(wx.EVT_TEXT, self.on_name_changed)
-        self.SetSizer(sizer)
-        
-        # Don't call self.Fit() otherwise the dialog buttons are zero height
-        sizer.Fit(self)
-        
-        if default_emu:
-            self.set_initial_data(default_emu)
 
-    def on_name_changed(self, evt):
-        if evt.GetEventObject() == self.name:
+    def on_text_changed(self, evt):
+        if evt.GetEventObject() == self.get_control('name'):
             self.user_changed = True
         elif not self.user_changed:
             self.set_automatic_name()
     
     def set_automatic_name(self):
-        name = os.path.basename(self.path.GetValue())
-        args = self.args.GetValue()
+        name = os.path.basename(self.get_control('exe').GetValue())
+        args = self.get_control('args').GetValue()
         if args:
             name += " " + args
-        self.name.ChangeValue(name)
+        self.get_control('name').ChangeValue(name)
 
     def on_path_changed(self, evt):
-        path = evt.GetString()
         if not self.user_changed:
             self.set_automatic_name()
-        enabled = bool(which(path))
-        self.ok_btn.Enable(enabled)
-    
-    def on_button(self, evt):
-        if evt.GetId() == wx.ID_OK:
-            self.EndModal(wx.ID_OK)
-        else:
-            self.EndModal(wx.ID_CANCEL)
-        evt.Skip()
-
-    def set_initial_data(self, emu):
-        self.user_changed = True
-        self.name.ChangeValue(emu['name'])
-        self.path.SetValue(emu['exe'])
-        self.args.ChangeValue(emu['args'])
-
-    def show_and_get_value(self):
-        result = self.ShowModal()
-        if result == wx.ID_OK:
-            emu = {'name': self.name.GetValue(),
-                   'exe': self.path.GetValue(),
-                   'args': self.args.GetValue(),
-                   }
-        else:
-            emu = None
-        self.Destroy()
-        return emu
+        self.ok_btn.Enable(self.can_submit())
+        
+    def can_submit(self):
+        path = self.get_control('exe').GetValue()
+        return bool(which(path))
 
 def prompt_for_emulator(parent, title, default_emu=None):
     d = EmulatorDialog(parent, title, default_emu)
