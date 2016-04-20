@@ -362,7 +362,6 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
         self.Bind(wx.EVT_LIST_BEGIN_DRAG, self.on_start_drag)
         
         self.set_items(items)
-        self.set_items(items)
     
     def set_items(self, items):
         self.clear(None)
