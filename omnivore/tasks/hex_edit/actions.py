@@ -745,12 +745,17 @@ class SegmentGotoAction(EditorAction):
         e = self.active_editor
         addr = prompt_for_hex(e.window.control, "Enter address value: (prefix with 0x or $ for hex)", "Goto Address in a Segment")
         if addr is not None:
-            segment_num, segment, index = e.document.find_segment_in_range(addr)
-            if segment_num >= 0:
-                e.view_segment_number(segment_num)
+            s = e.segment
+            index = addr - s.start_addr
+            if e.segment.is_valid_index(index):
                 e.index_clicked(index, 0, None)
             else:
-                e.task.status_bar.message = "Address $%04x not valid in any segment" % addr
+                segment_num, segment, index = e.document.find_segment_in_range(addr)
+                if segment_num >= 0:
+                    e.view_segment_number(segment_num)
+                    e.index_clicked(index, 0, None)
+                else:
+                    e.task.status_bar.message = "Address $%04x not valid in any segment" % addr
 
 
 class IndexRangeAction(EditorAction):
