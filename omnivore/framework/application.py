@@ -613,16 +613,26 @@ class FrameworkApplication(TasksApplication):
     def get_json_data(self, json_name):
         file_path = self.get_config_dir_filename("json", json_name)
         with open(file_path, "r") as fh:
-            json_data = json.load(fh)
-        encoded = json_data[json_name]
-        return jsonpickle.decode(encoded)
+            raw = fh.read()
+        json_data = jsonpickle.decode(raw)
+        try:
+            # new format is a list with a format identifier as the first entry
+            if json_data[0] == "format=v2":
+                decoded = json_data[1]
+        except KeyError:
+            # deprecated format was a dictionary, and was creating an extra
+            # layer of indirection by encoding the jsonpickle as another string
+            json_data = json.loads(raw)
+            encoded = json_data[json_name]
+            decoded = jsonpickle.decode(encoded)
+        return decoded
     
     def save_json_data(self, json_name, data):
-        encoded = jsonpickle.encode(data)
-        json_data = {json_name: encoded}
         file_path = self.get_config_dir_filename("json", json_name)
+        json_data = ["format=v2", data]
+        encoded = jsonpickle.encode(json_data)
         with open(file_path, "w") as fh:
-            json.dump(json_data, fh)
+            fh.write(encoded)
     
     def get_bson_data(self, bson_name):
         import bson
