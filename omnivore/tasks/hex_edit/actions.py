@@ -757,6 +757,16 @@ class SegmentGotoAction(EditorAction):
                 else:
                     e.task.status_bar.message = "Address $%04x not valid in any segment" % addr
 
+class InsertFileAction(EditorAction):
+    name = 'Insert File...'
+    
+    def perform(self, event):
+        dialog = FileDialog(parent=event.task.window.control)
+        if dialog.open() == OK:
+            e = self.active_editor
+            cmd = InsertFileCommand(e.segment, e.cursor_index, dialog.path)
+            e.process_command(cmd)
+
 
 class IndexRangeAction(EditorAction):
     enabled_name = 'can_copy'

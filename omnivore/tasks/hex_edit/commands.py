@@ -1,12 +1,14 @@
 import re
 import bisect
 
+import fs
 import numpy as np
 
 from omnivore.framework.errors import ProgressCancelError
 from omnivore.utils.command import Command, UndoInfo
 from omnivore.utils.sortutil import ranges_to_indexes
 from omnivore.utils.searchalgorithm import AlgorithmSearcher
+from omnivore.utils.file_guess import FileGuess
 
 import logging
 progress_log = logging.getLogger("progress")
@@ -81,6 +83,50 @@ class ChangeByteCommand(SetDataCommand):
     
     def get_data(self, orig):
         return self.data
+
+
+class InsertFileCommand(SetDataCommand):
+    short_name = "in"
+    pretty_name = "Insert File"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('start_index', 'int'),
+            ('uri', 'string'),
+            ]
+    
+    def __init__(self, segment, start_index, uri):
+        SetDataCommand.__init__(self, segment, start_index, -1)
+        self.uri = uri
+        self.error = None
+    
+    def get_data(self, orig):
+        try:
+            guess = FileGuess(self.uri)
+        except fs.errors.FSError, e:
+            self.error = "File load error: %s" % str(e)
+            return
+        data = guess.numpy
+        if len(orig) < len(data):
+            data = data[0:len(orig)]
+        return data
+    
+    def perform(self, editor):
+        i1 = self.start_index
+        orig = self.segment.data[self.start_index:]
+        data = self.get_data(orig)
+        if self.error:
+            undo.flags.message = self.error
+        else:
+            i2 = i1 + len(data)
+            self.end_index = i2
+            self.undo_info = undo = UndoInfo()
+            undo.flags.byte_values_changed = True
+            undo.flags.index_range = i1, i2
+            undo.flags.select_range = True
+            old_data = self.segment[i1:i2].copy()
+            self.segment[i1:i2] = data
+            undo.data = (old_data,)
+        return undo
 
 
 class MiniAssemblerCommand(ChangeByteCommand):

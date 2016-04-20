@@ -139,6 +139,11 @@ class HexEditTask(FrameworkTask):
             actions.append(FontMappingAction(font_mapping=m, **kwargs))
         return actions
     
+    def get_actions_Menu_File_ImportGroup(self):
+        return [
+            InsertFileAction(),
+            ]
+    
     def get_actions_Menu_File_SaveGroup(self):
         return [
             SaveAction(),
