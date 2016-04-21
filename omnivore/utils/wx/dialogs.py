@@ -2,6 +2,7 @@ import os
 
 import wx
 import wx.lib.filebrowsebutton as filebrowse
+from wx.lib.expando import ExpandoTextCtrl, EVT_ETC_LAYOUT_NEEDED
 
 from omnivore.utils.processutil import which
 
@@ -69,7 +70,9 @@ class DictEditDialog(wx.Dialog):
         t = wx.StaticText(self, -1, instructions)
         sizer.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
         
+        self.types = {}
         self.controls = {}
+        self.buttons = {}
         self.add_fields(fields)
         
         btnsizer = wx.StdDialogButtonSizer()
@@ -83,6 +86,7 @@ class DictEditDialog(wx.Dialog):
         
         self.Bind(wx.EVT_BUTTON, self.on_button)
         self.Bind(wx.EVT_TEXT, self.on_text_changed)
+        self.Bind(EVT_ETC_LAYOUT_NEEDED, self.on_resize)
         
         # Don't call self.Fit() otherwise the dialog buttons are zero height
         sizer.Fit(self)
@@ -90,61 +94,98 @@ class DictEditDialog(wx.Dialog):
         self.default = default
         if default:
             self.set_initial_data(default)
-        self.ok_btn.Enable(self.can_submit())
+        self.check_enable()
     
     def add_fields(self, fields):
         for type, key, label in fields:
-            if type == 'text':
-                control = self.create_text(label)
-            elif type == 'file':
-                control = self.create_file(label)
-            elif type == 'static spacer below':
-                control = self.create_static_spacer_below(label)
-            else:
+            try:
+                func = getattr(self, "create_%s" % type.replace(" ", "_"))
+            except AttributeError:
                 raise NotImplementedError("Unknown field type %s for %s" % (type, key))
+            control = func(key, label)
             if key is not None:
-                self.controls[key] = type, control
+                self.types[key] = type
+                self.controls[key] = control
 
     def set_initial_data(self, d):
-        for key, (type, control) in self.controls.iteritems():
-            if type == 'text':
-                control.ChangeValue(d[key])
+        for key, control in self.controls.iteritems():
+            type = self.types[key]
+            if type == 'text' or type == 'verify':
+                value = self.get_default_value(d, key)
+                control.ChangeValue(value)
             elif type == 'file':
-                control.SetValue(d[key])
+                value = self.get_default_value(d, key)
+                control.SetValue(value)
+    
+    def get_default_value(self, d, key):
+        return d[key]
     
     def get_edited_values(self, d):
-        for key, (type, control) in self.controls.iteritems():
+        for key, control in self.controls.iteritems():
+            type = self.types[key]
             if type == 'text' or type == 'file':
-                d[key] = control.GetValue()
+                self.set_output_value(d, key, control.GetValue())
     
-    def create_text(self, label):
+    def set_output_value(self, d, key, value):
+        d[key] = value
+    
+    def create_text(self, key, label):
         sizer = self.GetSizer()
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         t = wx.StaticText(self, -1, label)
         hbox.Add(t, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, self.border)
         entry = wx.TextCtrl(self, -1, size=(-1, -1))
         hbox.Add(entry, 1, wx.ALL|wx.EXPAND, self.border)
-        sizer.Add(hbox, 1, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
+        sizer.Add(hbox, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
         return entry
 
-    def create_file(self, label):
+    def create_expando(self, key, label):
+        sizer = self.GetSizer()
+        status = ExpandoTextCtrl(self, style=wx.ALIGN_LEFT|wx.TE_READONLY|wx.NO_BORDER)
+        attr = self.GetDefaultAttributes()
+        status.SetBackgroundColour(attr.colBg)
+        sizer.Add(status, 1, wx.ALL|wx.EXPAND, self.border)
+        return status
+
+    def create_file(self, key, label):
         sizer = self.GetSizer()
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         entry = filebrowse.FileBrowseButton(self, -1, size=(450, -1), labelText=label, changeCallback=self.on_path_changed)
         hbox.Add(entry, 0, wx.LEFT, self.border)
         sizer.Add(hbox, 0, wx.ALL|wx.EXPAND, 0)
         return entry
+    
+    def create_verify(self, key, label):
+        sizer = self.GetSizer()
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        t = wx.StaticText(self, -1, label)
+        hbox.Add(t, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, self.border)
+        entry = wx.TextCtrl(self, -1, size=(-1, -1))
+        hbox.Add(entry, 1, wx.ALL|wx.EXPAND, self.border)
+        verify = wx.Button(self, -1, "Verify")
+        hbox.Add(verify, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND|wx.ALIGN_CENTER, self.border)
+        sizer.Add(hbox, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
+        verify.Bind(wx.EVT_BUTTON, self.on_verify)
+        self.buttons[key] = verify
+        return entry
 
-    def create_static_spacer_below(self, label):
+    def create_gauge(self, key, label):
+        sizer = self.GetSizer()
+        gauge = wx.Gauge(self, -1, 50, size=(500, 5))
+        sizer.Add(gauge, 0, wx.ALL|wx.EXPAND, self.border)
+        return gauge
+
+    def create_static(self, key, label):
+        sizer = self.GetSizer()
+        t = wx.StaticText(self, -1, label)
+        sizer.Add(t, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, self.border)
+
+    def create_static_spacer_below(self, key, label):
         sizer = self.GetSizer()
         t = wx.StaticText(self, -1, label)
         sizer.Add(t, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, self.border)
         t = wx.StaticText(self, -1, " ")
         sizer.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
-    
-    def get_control(self, key):
-        type, control = self.controls[key]
-        return control
         
     def on_button(self, evt):
         if evt.GetId() == wx.ID_OK:
@@ -158,23 +199,56 @@ class DictEditDialog(wx.Dialog):
 
     def on_path_changed(self, evt):
         pass
+
+    def on_verify(self, evt):
+        print "Verify!"
+
+    def on_resize(self, event):
+        print "resized"
+        self.Fit()
     
     def can_submit(self):
         return True
+    
+    def check_enable(self):
+        self.ok_btn.Enable(self.can_submit())
 
     def show_and_get_value(self):
         result = self.ShowModal()
         if result == wx.ID_OK:
-            # Edit the object in place by reusing the same dictionary
-            if self.default:
-                d = self.default
-            else:
-                d = dict()
+            d = self.get_result_object()
             self.get_edited_values(d)
         else:
             d = None
         self.Destroy()
         return d
+    
+    def get_result_object(self):
+        # Edit the object in place by reusing the same dictionary
+        if self.default:
+            d = self.default
+        else:
+            d = dict()
+        return d
+
+class ObjectEditDialog(DictEditDialog):
+    def __init__(self, parent, title, instructions, fields, object_class, default=None):
+        DictEditDialog.__init__(self, parent, title, instructions, fields, default)
+        self.new_object_class = object_class
+        
+    def get_default_value(self, d, key):
+        return getattr(d, key)
+    
+    def get_result_object(self):
+        # Edit the object in place by reusing the same dictionary
+        if self.default:
+            d = self.default
+        else:
+            d = self.new_object_class()
+        return d
+    
+    def set_output_value(self, d, key, value):
+        setattr(d, key, value)
 
 
 class EmulatorDialog(DictEditDialog):
@@ -187,22 +261,21 @@ class EmulatorDialog(DictEditDialog):
             ('static spacer below', None, "(use %s as placeholder for the data file or it will be added at the end)"),
             ('text', 'name', 'Display Name: '),
             ]
-        DictEditDialog.__init__(self, parent, title, "Enter emulator information:", fields, default)
-        
         self.user_changed = False
+        DictEditDialog.__init__(self, parent, title, "Enter emulator information:", fields, default)
 
     def on_text_changed(self, evt):
-        if evt.GetEventObject() == self.get_control('name'):
+        if evt.GetEventObject() == self.controls['name']:
             self.user_changed = True
         elif not self.user_changed:
             self.set_automatic_name()
     
     def set_automatic_name(self):
-        name = os.path.basename(self.get_control('exe').GetValue())
-        args = self.get_control('args').GetValue()
+        name = os.path.basename(self.controls['exe'].GetValue())
+        args = self.controls['args'].GetValue()
         if args:
             name += " " + args
-        self.get_control('name').ChangeValue(name)
+        self.controls['name'].ChangeValue(name)
 
     def on_path_changed(self, evt):
         if not self.user_changed:
@@ -210,7 +283,7 @@ class EmulatorDialog(DictEditDialog):
         self.ok_btn.Enable(self.can_submit())
         
     def can_submit(self):
-        path = self.get_control('exe').GetValue()
+        path = self.controls['exe'].GetValue()
         return bool(which(path))
 
 def prompt_for_emulator(parent, title, default_emu=None):
@@ -231,7 +304,7 @@ class AssemblerDialog(DictEditDialog):
         DictEditDialog.__init__(self, parent, title, "Enter assembler information:", fields, default)
     
     def can_submit(self):
-        type, control = self.controls['name']
+        control = self.controls['name']
         return len(control.GetValue()) > 0
 
 def prompt_for_assembler(parent, title, default=None):
