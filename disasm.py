@@ -21,15 +21,28 @@ r = 64
 w = 128
 
 class Disassembler(object):
-    def __init__(self, cpu_name, memory_map=None, allow_undocumented=False, hex_lower=True, mnemonic_lower=False, r_mnemonics=None, w_mnemonics=None, rw_modes=None):
+    def __init__(self, cpu_name, asm_syntax=None, memory_map=None, allow_undocumented=False, hex_lower=True, mnemonic_lower=False, r_mnemonics=None, w_mnemonics=None, rw_modes=None):
         self.source = None
         self.pc = 0
         self.pc_offset = 0
         self.origin = None
         self.memory_map = memory_map
-        self.data_byte_opcode = ".db"
+        if asm_syntax is None:
+            asm_syntax = {
+                'comment char': ';',
+                'origin': '.org',
+                'data byte': '.db',
+             }
         self.hex_lower = hex_lower
         self.mnemonic_lower = mnemonic_lower
+        if mnemonic_lower:
+            case_func = lambda a:a.lower()
+        else:
+            case_func = lambda a:a.upper()
+        self.data_byte_opcode = case_func(asm_syntax['data byte'])
+        self.asm_origin = case_func(asm_syntax['origin'])
+        self.comment_char = case_func(asm_syntax['comment char'])
+            
         self.setup(cpu_name, allow_undocumented, r_mnemonics, w_mnemonics, rw_modes)
     
     def setup(self, cpu_name, allow_undocumented, r_mnemonics, w_mnemonics, rw_modes):
@@ -90,28 +103,42 @@ class Disassembler(object):
         return 0
     
     def is_data(self):
+        """Check if the current PC location is a data byte"""
         return False
+    
+    def is_same_data_style(self, style, first_style, bytes):
+        """Check if current PC is the same style of data as the first data byte
+        in this block of data
+        """
+        return style == first_style
+    
+    def get_data_comment(self, style, bytes):
+        comment = "%s $%x data byte" % (self.comment_char, len(bytes))
+        if len(bytes) > 1:
+            comment += "s"
+        return comment
     
     def disasm_data(self):
         pc = self.pc
         # Read first byte to allow for StopIteration to signal end of file
+        first_style = self.get_style()
         opcode = self.get_next()
         bytes = [opcode]
         try:
             # after first byte, read until bytes run out, end of data region,
             # or comment within data region
-            ok = self.is_data()
-            while ok:
+            while True:
+                next_style = self.get_style()
                 opcode = self.get_next()
                 bytes.append(opcode)
-                style = self.get_style()
-                ok = style & 4 and not style & 2
+                if not self.is_same_data_style(next_style, first_style, bytes):
+                    self.put_back()
+                    bytes.pop()
+                    break
         except StopIteration:
             pass
         opstr = self.get_data_byte_string(bytes)
-        comment = "; $%x data byte" % len(bytes)
-        if len(bytes) > 1:
-            comment += "s"
+        comment = self.get_data_comment(first_style, bytes)
         return pc, bytes, opstr, comment, 0, None
     
     def disasm(self):
@@ -244,7 +271,7 @@ class Disassembler(object):
         flag = rw == "w"
         name = self.memory_map.get_name(memloc, flag)
         if name:
-            return "; " + name
+            return self.comment_char + " " + name
         return ""
     
     def flag_as_undefined(self, flag):
