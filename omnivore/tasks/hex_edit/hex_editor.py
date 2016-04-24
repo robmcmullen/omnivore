@@ -222,7 +222,12 @@ class HexEditor(FrameworkEditor):
         bytes = np.fromstring(value, dtype=np.uint8)
         return bytes, extra
     
-    supported_clipboard_data_objects = [wx.CustomDataObject("numpy,multiple"), wx.CustomDataObject("numpy"), wx.CustomDataObject("numpy,columns"), wx.TextDataObject()]
+    supported_clipboard_data_objects = [
+        wx.CustomDataObject("numpy,multiple"),
+        wx.CustomDataObject("numpy"),
+        wx.CustomDataObject("numpy,columns"),
+        wx.TextDataObject(),
+        ]
     
     def create_clipboard_data_object(self):
         ranges, indexes = self.get_selected_ranges_and_indexes()
@@ -231,7 +236,6 @@ class HexEditor(FrameworkEditor):
             data = self.segment[r[0]:r[1]]
             data_obj = wx.CustomDataObject("numpy")
             data_obj.SetData(data.tostring())
-            return data_obj
         elif np.alen(indexes) > 0:
             data = self.segment[indexes]
             s1 = data.tostring()
@@ -239,7 +243,16 @@ class HexEditor(FrameworkEditor):
             data_obj = wx.CustomDataObject("numpy,multiple")
             s = "%d,%s%s" % (len(s1), s1, s2)
             data_obj.SetData(s)
-            return data_obj
+        else:
+            data_obj = None
+        if data_obj is not None:
+            text = " ".join(["%02x" % i for i in data])
+            text_obj = wx.TextDataObject()
+            text_obj.SetText(text)
+            c = wx.DataObjectComposite()
+            c.Add(data_obj)
+            c.Add(text_obj)
+            return c
         return None
 
     def update_panes(self):
