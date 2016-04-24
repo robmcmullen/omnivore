@@ -260,13 +260,17 @@ if 'nsis' not in sys.argv:
                 iconfile="omnivore/icons/omnivore.icns",
                 plist=dict(
                     CFBundleName="Omnivore",
-                    CFBundleTypeExtensions=["xex", "atr", "xfd", "obx"],
-                    CFBundleTypeName="Document",
+                    CFBundleDocumentTypes=[dict(
+                        CFBundleTypeExtensions=["xex", "atr", "xfd", "obx", "omnivore"],
+                        CFBundleTypeName="Omnivore Document",
+                        CFBundleTypeRole="Editor"),
+                        ],
+                    CFBundleTypeName="Omnivore Document",
                     CFBundleTypeRole="Editor",
                     CFBundleShortVersionString=full_version,
                     CFBundleGetInfoString="Omnivore %s" % full_version,
                     CFBundleExecutable="Omnivore",
-                    CFBUndleIdentifier="com.playermissile",
+                    CFBUndleIdentifier="com.playermissile.Omnivore",
                 )
             ),
             py2exe=dict(
