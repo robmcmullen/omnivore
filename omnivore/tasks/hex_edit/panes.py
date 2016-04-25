@@ -133,7 +133,7 @@ class CommentsPanel(wx.VListBox):
             segment_font = self.italic_font
             segment, index = e.find_in_user_segment(item[0])
             if segment is not None:
-                label = "%04x" % index
+                label = segment.label(index)
             else:
                 index = item[0]
                 label = "%04x" % index
