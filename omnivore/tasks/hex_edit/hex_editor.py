@@ -483,6 +483,21 @@ class HexEditor(FrameworkEditor):
             segments.append(segment)
         return segments
     
+    def get_selected_status_message(self):
+        if not self.selected_ranges:
+            return ""
+        if len(self.selected_ranges) == 1:
+            r = self.selected_ranges
+            return "[%d bytes selected %s]" % (r[0][1] - r[0][0], self.get_label_of_ranges(r))
+        else:
+            return "[%d ranges selected]" % (len(self.selected_ranges))
+    
+    def show_status_message(self, msg):
+        s = self.get_selected_status_message()
+        if s:
+            msg = "%s %s" % (s, msg)
+        self.task.status_bar.message = msg
+    
     def add_user_segment(self, segment, update=True):
         self.document.add_user_segment(segment)
         if update:

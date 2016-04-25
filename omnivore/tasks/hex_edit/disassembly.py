@@ -323,7 +323,9 @@ class DisassemblyPanel(ByteGrid):
             raise RuntimeError("Disassembly still in progress. Try again in a few seconds.")
 
     def get_status_message_at_index(self, index, row, col):
-        return self.table.get_comments(index)
+        msg = ByteGrid.get_status_message_at_index(self, index, row, col)
+        comments = self.table.get_comments(index)
+        return "%s  %s" % (msg, comments)
 
     def goto_index(self, index):
         try:
