@@ -52,4 +52,5 @@ class KBootImage(DiskImageBase):
     def get_file_segment(self, dirent):
         start = dirent.exe_start
         end = dirent.exe_start + dirent.exe_size
-        return XexSegment(self.bytes[start:end], self.style[start:end], 0, 0, 0, start, name="KBoot Executable")
+        raw = self.rawdata[start:end]
+        return XexSegment(raw, 0, 0, start, end, name="KBoot Executable")
