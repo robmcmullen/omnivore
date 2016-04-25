@@ -21,18 +21,50 @@ class MemoryMapSpringTab(MemoryMapScroller):
     def activateSpringTab(self):
         self.recalc_view()
 
-class CommentsPanel(wx.ListBox):
+class CommentsPanel(wx.VListBox):
     def __init__(self, parent, task, **kwargs):
         self.task = task
         self.editor = None
         self.items = []
-        wx.ListBox.__init__(self, parent, wx.ID_ANY, **kwargs)
+        wx.VListBox.__init__(self, parent, wx.ID_ANY, **kwargs)
         self.Bind(wx.EVT_LEFT_DOWN, self.on_click)
+        
+        f = self.GetFont()
+        self.bold_font = wx.Font(f.GetPointSize(), f.GetFamily(),
+                                 f.GetStyle(), wx.BOLD, f.GetUnderlined(),
+                                 f.GetFaceName(), f.GetEncoding())
+        self.italic_font = wx.Font(f.GetPointSize(), f.GetFamily(),
+                                   wx.FONTSTYLE_ITALIC, wx.NORMAL, f.GetUnderlined(),
+                                   f.GetFaceName(), f.GetEncoding())
         
         # Return key not sent through to EVT_CHAR, EVT_CHAR_HOOK or
         # EVT_KEY_DOWN events in a ListBox. This is the only event handler
         # that catches a Return.
         self.Bind(wx.EVT_KEY_UP, self.on_char)
+
+    # This method must be overridden.  When called it should draw the
+    # n'th item on the dc within the rect.  How it is drawn, and what
+    # is drawn is entirely up to you.
+    def OnDrawItem(self, dc, rect, n):
+        if self.GetSelection() == n:
+            c = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
+        else:
+            c = self.GetForegroundColour()
+        item = self.items[n]
+        dc.SetFont(item[3])
+        dc.SetTextForeground(c)
+        dc.DrawLabel(item[2], rect,
+                     wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+
+    # This method must be overridden.  It should return the height
+    # required to draw the n'th item.
+    def OnMeasureItem(self, n):
+        height = 0
+        text = self.items[n][2]
+        for line in text.split('\n'):
+            w, h = self.GetTextExtent(line)
+            height += h
+        return height + 2
 
     def DoGetBestSize(self):
         """ Base class virtual method for sizer use to get the best size
@@ -58,12 +90,14 @@ class CommentsPanel(wx.ListBox):
     def on_click(self, evt):
         index = self.HitTest(evt.GetPosition())
         if index >= 0:
-            self.Select(index)
+            self.SetSelection(index)
             self.process_index(index)
+            self.set_items()
+            self.Refresh()
     
     def process_index(self, index):
         e = self.editor
-        segment, index, text = self.items[index]
+        segment, index, text, font = self.items[index]
         if segment == self.editor.segment:
             e.index_clicked(index, 0, None)
         else:
@@ -71,11 +105,17 @@ class CommentsPanel(wx.ListBox):
             e.view_segment_number(n)
             e.index_clicked(index, 0, None)
     
-    def set_items(self, items):
-        self.items = [self.process_comment(i) for i in items]
-        self.Set([i[2] for i in self.items])
+    def set_items(self, items=None):
+        if items is None:
+            items = self.input_items
+        self.input_items = items
+        seen = set()
+        self.items = []
+        for i in items:
+            self.process_comment(i, seen)
+        self.SetItemCount(len(self.items))
     
-    def process_comment(self, item):
+    def process_comment(self, item, segment_seen):
         e = self.editor
         try:
             segment = e.segment
@@ -86,14 +126,21 @@ class CommentsPanel(wx.ListBox):
                 raise IndexError
             index = segment.get_index_from_base_index(item[0])
             label = e.get_label_at_index(index)
+            font = self.GetFont()
+            segment_font = self.bold_font
         except IndexError:
+            font = self.italic_font
+            segment_font = self.italic_font
             segment, index = e.find_in_user_segment(item[0])
             if segment is not None:
-                label = "(%s @ %04x)" % (segment, index)
+                label = "%04x" % index
             else:
                 index = item[0]
-                label = "(main @ %04x)" % index
-        return segment, index, "%s: %s" % (label, item[1])
+                label = "%04x" % index
+        if segment not in segment_seen:
+            segment_seen.add(segment)
+            self.items.append((segment, 0, str(segment), segment_font))
+        self.items.append((segment, index, "  %s: %s" % (label, item[1]), font))
 
     def recalc_view(self):
         e = self.task.active_editor
