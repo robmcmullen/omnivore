@@ -743,19 +743,23 @@ class SegmentGotoAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        addr = prompt_for_hex(e.window.control, "Enter address value: (prefix with 0x or $ for hex)", "Goto Address in a Segment")
+        addr, error = prompt_for_hex(e.window.control, "Enter address value: (default hex; prefix with # for decimal)", "Goto Address in a Segment", return_error=True, default_base="hex")
         if addr is not None:
             s = e.segment
             index = addr - s.start_addr
             if e.segment.is_valid_index(index):
                 e.index_clicked(index, 0, None)
+                e.task.status_bar.message = e.get_label_at_index(index)
             else:
                 segment_num, segment, index = e.document.find_segment_in_range(addr)
                 if segment_num >= 0:
                     e.view_segment_number(segment_num)
                     e.index_clicked(index, 0, None)
+                    e.task.status_bar.message = "%s in segment %s" % (e.get_label_at_index(index), e.segment.name)
                 else:
                     e.task.status_bar.message = "Address $%04x not valid in any segment" % addr
+        else:
+            e.task.status_bar.message = error
 
 class InsertFileAction(EditorAction):
     name = 'Insert File...'

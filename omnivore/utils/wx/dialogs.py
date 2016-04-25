@@ -11,16 +11,22 @@ class SimplePromptDialog(wx.TextEntryDialog):
     """Simple subclass of wx.TextEntryDialog to convert text result to a
     specific format
     """
-    def convert_text(self, text):
-        return text
+    def convert_text(self, text, return_error=False, **kwargs):
+        if return_error:
+            return text, ""
+        else:
+            return text
 
-    def show_and_get_value(self):
+    def show_and_get_value(self, return_error=False, **kwargs):
         result = self.ShowModal()
         if result == wx.ID_OK:
             text = self.GetValue()
-            value = self.convert_text(text)
+            value = self.convert_text(text, return_error, **kwargs)
         else:
-            value = None
+            if return_error:
+                value = None, "Cancelled"
+            else:
+                value = None
         self.Destroy()
         return value
 
@@ -28,17 +34,27 @@ class HexEntryDialog(SimplePromptDialog):
     """Simple subclass of wx.TextEntryDialog to convert text result from
     hexidecimal if necessary.
     """
-    def convert_text(self, text):
+    def convert_text(self, text, return_error=False, default_base="dec", **kwargs):
         try:
             if text.startswith("0x"):
                 value = int(text[2:], 16)
             elif text.startswith("$"):
                 value = int(text[1:], 16)
+            elif text.startswith("#"):
+                value = int(text[1:], 10)
             else:
-                value = int(text)
-        except (ValueError, TypeError):
+                if default_base == "dec":
+                    value = int(text)
+                else:
+                    value = int(text, 16)
+            error = ""
+        except (ValueError, TypeError), e:
             value = None
-        return value
+            error = str(e)
+        if return_error:
+            return value, error
+        else:
+            return value
 
 def prompt_for_string(parent, message, title, default=None):
     if default is not None:
@@ -48,7 +64,7 @@ def prompt_for_string(parent, message, title, default=None):
     d = SimplePromptDialog(parent, message, title, default)
     return d.show_and_get_value()
 
-def prompt_for_hex(parent, message, title, default=None):
+def prompt_for_hex(parent, message, title, default=None, return_error=False, default_base="dec"):
     if default is not None:
         default = str(default)
     else:
@@ -56,7 +72,7 @@ def prompt_for_hex(parent, message, title, default=None):
     d = HexEntryDialog(parent, message, title, default)
     if default:
         d.SetValue(default)
-    return d.show_and_get_value()
+    return d.show_and_get_value(return_error=return_error, default_base=default_base)
 
 
 class DictEditDialog(wx.Dialog):
