@@ -843,7 +843,7 @@ class Atari800MemoryMap(EmptyMemoryMap):
         if write:
             if addr in cls.wmemmap:
                 return cls.wmemmap[addr]
-        elif addr in cls.rmemmap:
+        if addr in cls.rmemmap:
             return cls.rmemmap[addr]
         return ""
 
