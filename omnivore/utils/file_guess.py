@@ -22,12 +22,17 @@ def normalize_uri(uri):
             uri = fs.getpathurl(relpath)
         elif fs.hassyspath(relpath):
             abspath = fs.getsyspath(relpath)
-            if abspath.startswith("\\\\?\\") and len(abspath) < 260:
-                # on windows, pyfilesystem returns extended path notation to
-                # allow paths greater than 256 characters.  If the path is
-                # short, change slashes to normal and remove the prefix
-                abspath = abspath[4:].replace("\\", "/")
-            uri = "file://" + abspath
+            if abspath.startswith("\\\\?\\UNC\\"):
+                # Leave long UNC paths as raw paths because there is no
+                # accepted way to convert to URI
+                uri = abspath
+            else:
+                if abspath.startswith("\\\\?\\") and len(abspath) < 260:
+                    # on windows, pyfilesystem returns extended path notation to
+                    # allow paths greater than 256 characters.  If the path is
+                    # short, change slashes to normal and remove the prefix
+                    abspath = abspath[4:].replace("\\", "/")
+                uri = "file://" + abspath
     return uri
 
 
@@ -108,5 +113,6 @@ class FileGuess(object):
         return self.metadata.clone_traits()
 
     def get_stream(self):
-        fh = fsopen(self.metadata.uri, "rb")
+        fs, relpath = opener.parse(self.metadata.uri)
+        fh = fs.open(relpath, "rb")
         return fh
