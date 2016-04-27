@@ -526,7 +526,7 @@ class MarkSelectionAsCodeAction(EditorAction):
         e = self.active_editor
         s = e.segment
         ranges = s.get_style_ranges(selected=True)
-        s.clear_style_ranges(ranges, data=True)
+        s.clear_style_ranges(ranges, data=True, user=1)
         e.document.change_count += 1
         e.metadata_dirty = True
         e.mark_index_range_changed(ranges[0])
@@ -541,6 +541,7 @@ class MarkSelectionAsDataAction(EditorAction):
         e = self.active_editor
         s = e.segment
         ranges = s.get_style_ranges(selected=True)
+        s.clear_style_ranges(ranges, user=1)
         s.set_style_ranges(ranges, data=True)
         e.document.change_count += 1
         e.metadata_dirty = True
