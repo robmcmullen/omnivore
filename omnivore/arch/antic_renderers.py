@@ -1,6 +1,6 @@
 import numpy as np
 
-from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, not_user_bit_mask
+from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, diff_bit_mask, not_user_bit_mask
 
 try:
     import antic_speedups as speedups
@@ -15,6 +15,7 @@ class BaseRenderer(object):
     name = "base"
     pixels_per_byte = 8
     bitplanes = 1
+    ignore_mask = not_user_bit_mask & (0xff ^ diff_bit_mask)
     
     def validate_bytes_per_row(self, bytes_per_row):
         return bytes_per_row
@@ -53,7 +54,7 @@ class BaseRenderer(object):
         pixels[:,3] = bits[:,6] * 2 + bits[:,7]
         
         style_per_pixel = np.vstack((style, style, style, style)).T
-        normal = style_per_pixel == 0
+        normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
         data = (style_per_pixel & data_bit_mask) == data_bit_mask
         comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
@@ -79,7 +80,7 @@ class BaseRenderer(object):
         pixels[:,1] = bits[:,4] * 8 + bits[:,5] * 4 + bits[:,6] * 2 + bits[:,7]
         
         style_per_pixel = np.vstack((style, style)).T
-        normal = style_per_pixel == 0
+        normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
         data = (style_per_pixel & data_bit_mask) == data_bit_mask
         comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
@@ -121,7 +122,7 @@ class BaseRenderer(object):
         pixels = pixels.reshape((nr, pixels_per_row))
         s = self.get_bitplane_style(style)
         style_per_pixel = s.repeat(8).reshape((-1, pixels_per_row))
-        normal = style_per_pixel == 0
+        normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
         data = (style_per_pixel & data_bit_mask) == data_bit_mask
         comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
@@ -157,7 +158,7 @@ class OneBitPerPixelB(BaseRenderer):
         d_colors = m.get_dimmed_color_registers(self.bw_colors, m.background_color, m.data_color)
         
         style_per_pixel = np.vstack((style, style, style, style, style, style, style, style)).T
-        normal = (style_per_pixel & not_user_bit_mask) == 0
+        normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
         data = (style_per_pixel & data_bit_mask) == data_bit_mask
         comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
