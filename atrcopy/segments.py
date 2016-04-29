@@ -3,7 +3,8 @@ import numpy as np
 from errors import *
 from utils import to_numpy, to_numpy_list
 
-user_bit_mask = 0x0f
+user_bit_mask = 0x07
+diff_bit_mask = 0x08
 match_bit_mask = 0x10
 comment_bit_mask = 0x20
 data_bit_mask = 0x40
@@ -205,6 +206,15 @@ class DefaultSegment(object):
             pass
         self.set_raw(r)
     
+    def get_parallel_raw_data(self, other):
+        """ Get the raw data that is similar to the specified other segment
+        """
+        start, end = other.byte_bounds_offset()
+        r = self.rawdata[start:end]
+        if other.rawdata.is_indexed:
+            r = r.get_indexed[other.order]
+        return r
+    
     def __str__(self):
         s = "%s ($%x bytes)" % (self.name, len(self))
         if self.error:
@@ -262,7 +272,7 @@ class DefaultSegment(object):
     def tostring(self):
         return self.data.tostring()
     
-    def get_style_bits(self, match=False, comment=False, selected=False, data=False, user=0):
+    def get_style_bits(self, match=False, comment=False, selected=False, data=False, diff=False, user=0):
         """ Return an int value that contains the specified style bits set.
         
         Available styles for each byte are:
@@ -275,6 +285,8 @@ class DefaultSegment(object):
         style_bits = 0
         if user:
             style_bits |= (user & user_bit_mask)
+        if diff:
+            style_bits |= diff_bit_mask
         if match:
             style_bits |= match_bit_mask
         if comment:
@@ -441,6 +453,15 @@ class DefaultSegment(object):
         if self._search_copy is None:
             self._search_copy = self.data.tostring()
         return self._search_copy
+    
+    def compare_segment(self, other_segment):
+        self.clear_style_bits(diff=True)
+        diff = self.rawdata.data != other_segment.rawdata.data
+        print diff, diff.dtype
+        d = diff * np.uint8(diff_bit_mask)
+        print d
+        self.style |= (diff * np.uint8(diff_bit_mask))
+        print "# entries", len(diff), "# diffs:", len(np.where(diff == True)[0])
 
 
 class EmptySegment(DefaultSegment):
