@@ -455,6 +455,25 @@ class DivideFromCommand(SetRangeValueCommand):
         return self.data / orig
 
 
+class RevertToBaselineCommand(SetRangeCommand):
+    short_name = "revert_baseline"
+    pretty_name = "Revert to Baseline Data"
+    
+    def get_baseline_data(self, orig, editor, indexes):
+        r = editor.document.baseline_document.global_segment.get_parallel_raw_data(self.segment)
+        return r[indexes].data
+    
+    def perform(self, editor):
+        indexes = ranges_to_indexes(self.ranges)
+        self.undo_info = undo = UndoInfo()
+        undo.flags.byte_values_changed = True
+        undo.flags.index_range = indexes[0], indexes[-1]
+        old_data = self.segment[indexes].copy()
+        self.segment[indexes] = self.get_baseline_data(old_data, editor, indexes)
+        undo.data = (old_data, )
+        return undo
+
+
 class FindAllCommand(Command):
     short_name = "find"
     pretty_name = "Find"

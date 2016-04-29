@@ -9,7 +9,7 @@ import fs
 from traits.api import HasTraits, Trait, TraitHandler, Int, Any, List, Set, Bool, Event, Dict, Set, Unicode, Property, Str
 
 from omnivore.utils.command import UndoStack
-from omnivore.utils.file_guess import FileMetadata
+from omnivore.utils.file_guess import FileGuess, FileMetadata
 from omnivore.utils.segmentutil import SegmentData, DefaultSegment, DefaultSegmentParser, InvalidSegmentParser
 
 
@@ -36,6 +36,8 @@ class Document(HasTraits):
     uri = Property(Unicode, depends_on='metadata')
     
     document_id = Int(-1)
+    
+    baseline_document = Any(transient=True)
     
     last_task_id = Str
     
@@ -188,3 +190,19 @@ class Document(HasTraits):
     def set_emulator(self, emu):
         self.emulator = emu
         self.emulator_change_event = True
+    
+    def load_baseline(self, uri):
+        guess = FileGuess(uri)
+        print "Loading baseline", guess
+        d = Document(metadata=guess.metadata, bytes=guess.numpy)
+        d.parse_segments([])
+        self.baseline_document = d
+    
+    def update_baseline(self):
+        if self.baseline_document is not None:
+            self.change_count += 1
+            self.global_segment.compare_segment(self.baseline_document.global_segment)
+    
+    def clear_baseline(self):
+        self.change_count += 1
+        self.global_segment.clear_style_bits(diff=True)

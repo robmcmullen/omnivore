@@ -8,7 +8,7 @@ import wx
 import wx.grid as Grid
 import wx.lib.newevent
 
-from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask
+from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, diff_bit_mask
 
 from omnivore.utils.wx.bytegrid import ByteGridTable, ByteGrid
 
@@ -33,6 +33,7 @@ class ImageCache(object):
     def set_colors(self, editor):
         m = editor.machine
         self.color = m.text_color
+        self.diff_color = m.diff_text_color
         self.font = m.text_font
         self.selected_background = m.highlight_color
         self.selected_brush = wx.Brush(m.highlight_color, wx.SOLID)
@@ -94,7 +95,10 @@ class ImageCache(object):
             dc.SetTextBackground(self.normal_background)
         dc.SetBackgroundMode(wx.SOLID)
         dc.DrawRectangleRect(rect)
-        dc.SetTextForeground(self.color)
+        if style & diff_bit_mask:
+            dc.SetTextForeground(self.diff_color)
+        else:
+            dc.SetTextForeground(self.color)
         dc.SetFont(self.font)
         dc.DrawText(text, rect.x+1, rect.y+1)
 

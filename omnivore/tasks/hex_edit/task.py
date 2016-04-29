@@ -171,6 +171,7 @@ class HexEditTask(FrameworkTask):
     
     def get_actions_Menu_View_ViewConfigGroup(self):
         return [
+            ViewDiffHighlightAction(),
             TextFontAction(),
             ]
     
@@ -305,10 +306,12 @@ class HexEditTask(FrameworkTask):
                     *segment_parser_actions,
                     id="a1", separator=True),
                 id='submenu1', separator=False, name="File Type"),
+            LoadBaselineVersionAction(),
             GetSegmentFromSelectionAction(),
             MultipleSegmentsFromSelectionAction(),
             MarkSelectionAsCodeAction(),
             MarkSelectionAsDataAction(),
+            RevertToBaselineAction(),
             AddCommentAction(),
             RemoveCommentAction(),
             ]

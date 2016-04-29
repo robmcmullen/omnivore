@@ -87,6 +87,8 @@ class Machine(HasTraits):
     
     text_color = (0, 0, 0)
     
+    diff_text_color = (255, 0, 0)
+    
     text_font = None
         
     @classmethod

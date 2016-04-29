@@ -1,6 +1,6 @@
 import numpy as np
 
-from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask
+from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, not_user_bit_mask
 
 try:
     import antic_speedups as speedups
@@ -157,7 +157,7 @@ class OneBitPerPixelB(BaseRenderer):
         d_colors = m.get_dimmed_color_registers(self.bw_colors, m.background_color, m.data_color)
         
         style_per_pixel = np.vstack((style, style, style, style, style, style, style, style)).T
-        normal = style_per_pixel == 0
+        normal = (style_per_pixel & not_user_bit_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
         data = (style_per_pixel & data_bit_mask) == data_bit_mask
         comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask

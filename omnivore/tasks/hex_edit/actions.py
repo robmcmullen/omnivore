@@ -942,3 +942,43 @@ class CancelMinibufferAction(EditorAction):
 
     def perform(self, event):
         event.task.on_hide_minibuffer_or_cancel(None)
+
+class ViewDiffHighlightAction(EditorAction):
+    name = 'Show Baseline Differences'
+    tooltip = 'Show bytes that are different than the baseline version'
+    style = 'toggle'
+    enabled_name = 'baseline_present'
+
+    def perform(self, event):
+        e = self.active_editor
+        value = not e.diff_highlight
+        e.diff_highlight = value
+        print value
+        if value:
+            e.compare_to_baseline()
+        else:
+            e.document.clear_baseline()
+        e.refresh_panes()
+
+    @on_trait_change('active_editor.baseline_present')
+    def _update_checked(self):
+        if self.active_editor:
+            self.checked = self.active_editor.diff_highlight
+
+class LoadBaselineVersionAction(EditorAction):
+    name = 'Add Baseline Difference File...'
+    tooltip = 'Add baseline file to be used to show differences in current version'
+    
+    def perform(self, event):
+        dialog = FileDialog(parent=event.task.window.control)
+        if dialog.open() == OK:
+            e = self.active_editor
+            e.document.load_baseline(dialog.path)
+            e.diff_highlight = True
+            e.baseline_present = True
+            e.compare_to_baseline()
+            e.refresh_panes()
+
+class RevertToBaselineAction(IndexRangeAction):
+    cmd = RevertToBaselineCommand
+    enabled_name = 'can_copy_baseline'

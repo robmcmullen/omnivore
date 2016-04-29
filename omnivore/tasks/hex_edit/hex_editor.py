@@ -66,6 +66,12 @@ class HexEditor(FrameworkEditor):
     last_anchor_start_index = Int(0)
     
     last_anchor_end_index = Int(0)
+    
+    baseline_present = Bool
+    
+    diff_highlight = Bool
+    
+    can_copy_baseline = Bool
 
     #### Events ####
 
@@ -152,6 +158,11 @@ class HexEditor(FrameworkEditor):
             self.machine.set_font(e['font'][0], e['font'][1])
         if 'initial segment' in e:
             self.initial_segment = e['initial segment']
+        if 'baseline document' in e:
+            doc.load_baseline(e['baseline document'])
+            self.baseline_present = doc.baseline_document is not None
+        if 'diff highlight' in e:
+            self.diff_highlight = bool(e['diff highlight'])
     
     def get_extra_metadata(self, mdict):
         mdict["serialized user segments"] = list(self.document.user_segments)
@@ -165,10 +176,14 @@ class HexEditor(FrameworkEditor):
         emu = self.document.emulator
         if emu and not 'system default' in emu:
             mdict["emulator"] = self.document.emulator
+        if self.document.baseline_document is not None:
+            mdict["baseline document"] = self.document.baseline_document.metadata.uri
+            mdict["diff highlight"] = self.diff_highlight
 
     def rebuild_document_properties(self):
         self.find_segment()
         self.update_emulator()
+        self.compare_to_baseline()
         self.task.machine_menu_changed = self.machine
     
     def copy_view_properties(self, old_editor):
@@ -413,6 +428,10 @@ class HexEditor(FrameworkEditor):
     def invalidate_search(self):
         self.task.change_minibuffer_editor(self)
     
+    def compare_to_baseline(self):
+        if self.diff_highlight:
+            self.document.update_baseline()
+    
     def adjust_selection(self, old_segment):
         """Adjust the selection of the current segment so that it is limited to the
         bounds of the new segment.
@@ -443,6 +462,7 @@ class HexEditor(FrameworkEditor):
         s.clear_style_bits(selected=True)
         s.set_style_ranges(self.selected_ranges, selected=True)
         self.document.change_count += 1
+        self.can_copy_baseline = self.can_copy and self.baseline_present
     
     def convert_ranges(self, from_style, to_style):
         s = self.segment
@@ -534,7 +554,7 @@ class HexEditor(FrameworkEditor):
         self.disassembly.perform_idle()
     
     def common_popup_actions(self):
-        return [CutAction, CopyAction, CopyDisassemblyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, None, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsDisplayListAction, AddCommentPopupAction, RemoveCommentPopupAction]
+        return [CutAction, CopyAction, CopyDisassemblyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, None, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsDisplayListAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction]
     
 
     ###########################################################################
@@ -584,3 +604,4 @@ class HexEditor(FrameworkEditor):
             self.font_map.select_index(index)
         self.sidebar.refresh_active()
         self.can_copy = (self.anchor_start_index != self.anchor_end_index)
+        self.can_copy_baseline = self.can_copy and self.baseline_present

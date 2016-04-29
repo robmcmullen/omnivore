@@ -456,6 +456,10 @@ class FrameworkEditor(Editor):
         any search params should be cleared."""
         pass
     
+    def compare_to_baseline(self):
+        """Hook for subclasses to update any comparisons to the baseline data."""
+        pass
+    
     def update_mouse_mode(self):
         """Hook for subclasses to process the change to a new mouse mode 
         """
@@ -625,6 +629,7 @@ class FrameworkEditor(Editor):
     def byte_values_changed(self):
         log.debug("byte_values_changed called!!!")
         self.invalidate_search()
+        self.compare_to_baseline()
         self.refresh_panes()
 
     #### convenience functions
