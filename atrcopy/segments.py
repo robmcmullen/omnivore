@@ -1,3 +1,5 @@
+import bisect
+
 import numpy as np
 
 from errors import *
@@ -339,6 +341,27 @@ class DefaultSegment(object):
             if np.alen(group) > 0:
                 ranges.append((int(group[0]), int(group[-1]) + 1))
         return ranges
+    
+    def find_next(self, index, **kwargs):
+        ranges = self.get_style_ranges(**kwargs)
+        if len(ranges) > 0:
+            index_tuple = (index + 1, 0)
+            match_index = bisect.bisect_right(ranges, index_tuple)
+            if match_index >= len(ranges):
+                match_index = 0
+            return ranges[match_index][0]
+        return None
+    
+    def find_previous(self, index, **kwargs):
+        ranges = self.get_style_ranges(**kwargs)
+        if len(ranges) > 0:
+            index_tuple = (index - 1, 0)
+            match_index = bisect.bisect_left(ranges, index_tuple)
+            match_index -= 1
+            if match_index < 0:
+                match_index = len(ranges) - 1
+            return ranges[match_index][0]
+        return None
     
     def get_rect_indexes(self, anchor_start, anchor_end):
         # determine row,col of upper left and lower right of selected
