@@ -4,6 +4,7 @@ from errors import *
 from utils import to_numpy, to_numpy_list
 
 user_bit_mask = 0x07
+not_user_bit_mask = 0xff ^ user_bit_mask
 diff_bit_mask = 0x08
 match_bit_mask = 0x10
 comment_bit_mask = 0x20
