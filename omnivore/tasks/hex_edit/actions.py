@@ -960,7 +960,7 @@ class ViewDiffHighlightAction(EditorAction):
             e.document.clear_baseline()
         e.refresh_panes()
 
-    @on_trait_change('active_editor.baseline_present')
+    @on_trait_change('active_editor.diff_highlight')
     def _update_checked(self):
         if self.active_editor:
             self.checked = self.active_editor.diff_highlight
@@ -982,3 +982,29 @@ class LoadBaselineVersionAction(EditorAction):
 class RevertToBaselineAction(IndexRangeAction):
     cmd = RevertToBaselineCommand
     enabled_name = 'can_copy_baseline'
+
+class FindNextBaselineDiffAction(EditorAction):
+    name = 'Find Next Difference'
+    accelerator = 'Ctrl+D'
+    tooltip = 'Find next difference to the baseline'
+    enabled_name = 'diff_highlight'
+
+    def perform(self, event):
+        e = self.active_editor
+        index = e.cursor_index
+        new_index = e.segment.find_next(index, diff=True)
+        if new_index is not None:
+            e.index_clicked(new_index, 0, None)
+
+class FindPrevBaselineDiffAction(EditorAction):
+    name = 'Find Previous Difference'
+    accelerator = 'Ctrl+Shift+D'
+    tooltip = 'Find previous difference to the baseline'
+    enabled_name = 'diff_highlight'
+
+    def perform(self, event):
+        e = self.active_editor
+        index = e.cursor_index
+        new_index = e.segment.find_previous(index, diff=True)
+        if new_index is not None:
+            e.index_clicked(new_index, 0, None)

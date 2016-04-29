@@ -306,7 +306,6 @@ class HexEditTask(FrameworkTask):
                     *segment_parser_actions,
                     id="a1", separator=True),
                 id='submenu1', separator=False, name="File Type"),
-            LoadBaselineVersionAction(),
             GetSegmentFromSelectionAction(),
             MultipleSegmentsFromSelectionAction(),
             MarkSelectionAsCodeAction(),
@@ -314,6 +313,10 @@ class HexEditTask(FrameworkTask):
             RevertToBaselineAction(),
             AddCommentAction(),
             RemoveCommentAction(),
+            Separator(),
+            LoadBaselineVersionAction(),
+            FindNextBaselineDiffAction(),
+            FindPrevBaselineDiffAction(),
             ]
     
     def get_actions_Menu_Segments_SegmentGroup(self):
