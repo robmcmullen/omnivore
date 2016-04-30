@@ -113,7 +113,15 @@ class DictEditDialog(wx.Dialog):
         self.check_enable()
     
     def add_fields(self, fields):
-        for type, key, label in fields:
+        """ Calls the create_X method where X is the type of the field. Fields
+        are a list of tuples: (type, key, label) or (type, key, label, choices)
+        """
+        for field in fields:
+            try:
+                type, key, label = field
+                choices = None
+            except ValueError:
+                type, key, label, choices = field
             try:
                 func = getattr(self, "create_%s" % type.replace(" ", "_"))
             except AttributeError:
@@ -129,7 +137,10 @@ class DictEditDialog(wx.Dialog):
             if type == 'text' or type == 'verify':
                 value = self.get_default_value(d, key)
                 control.ChangeValue(value)
-            elif type == 'file':
+            elif type == 'verify list':
+                value = "\n".join(self.get_default_value(d, key))
+                control.ChangeValue(value)
+            elif type == 'file' or type == 'boolean':
                 value = self.get_default_value(d, key)
                 control.SetValue(value)
     
@@ -139,7 +150,7 @@ class DictEditDialog(wx.Dialog):
     def get_edited_values(self, d):
         for key, control in self.controls.iteritems():
             type = self.types[key]
-            if type == 'text' or type == 'file':
+            if type == 'text' or type == 'file' or type == 'boolean':
                 self.set_output_value(d, key, control.GetValue())
     
     def set_output_value(self, d, key, value):
@@ -151,6 +162,16 @@ class DictEditDialog(wx.Dialog):
         t = wx.StaticText(self, -1, label)
         hbox.Add(t, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, self.border)
         entry = wx.TextCtrl(self, -1, size=(-1, -1))
+        hbox.Add(entry, 1, wx.ALL|wx.EXPAND, self.border)
+        sizer.Add(hbox, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
+        return entry
+
+    def create_boolean(self, key, label):
+        sizer = self.GetSizer()
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        t = wx.StaticText(self, -1, label)
+        hbox.Add(t, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, self.border)
+        entry = wx.CheckBox(self, -1, size=(-1, -1))
         hbox.Add(entry, 1, wx.ALL|wx.EXPAND, self.border)
         sizer.Add(hbox, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
         return entry
@@ -180,6 +201,20 @@ class DictEditDialog(wx.Dialog):
         hbox.Add(entry, 1, wx.ALL|wx.EXPAND, self.border)
         verify = wx.Button(self, -1, "Verify")
         hbox.Add(verify, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND|wx.ALIGN_CENTER, self.border)
+        sizer.Add(hbox, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
+        verify.Bind(wx.EVT_BUTTON, self.on_verify)
+        self.buttons[key] = verify
+        return entry
+    
+    def create_verify_list(self, key, label):
+        sizer = self.GetSizer()
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        t = wx.StaticText(self, -1, label)
+        hbox.Add(t, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, self.border)
+        entry = wx.TextCtrl(self, -1, size=(-1, 100), style=wx.TE_MULTILINE|wx.HSCROLL)
+        hbox.Add(entry, 1, wx.ALL|wx.EXPAND, self.border)
+        verify = wx.Button(self, -1, "Verify")
+        hbox.Add(verify, 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER, self.border)
         sizer.Add(hbox, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
         verify.Bind(wx.EVT_BUTTON, self.on_verify)
         self.buttons[key] = verify
