@@ -11,6 +11,7 @@ from traits.api import on_trait_change, Any, Bool, Int, Unicode, Property, Dict,
 from pyface.tasks.api import Editor
 from pyface.action.api import ActionEvent
 
+from omnivore import __version__
 from omnivore.utils.command import StatusFlags
 from omnivore.utils.sortutil import collapse_overlapping_ranges, invert_ranges, ranges_to_indexes
 from omnivore.utils.file_guess import FileGuess
@@ -156,7 +157,10 @@ class FrameworkEditor(Editor):
             log.error("File load error: %s" % str(e))
             return
         try:
-            unserialized = jsonpickle.loads(guess.bytes)
+            b = guess.bytes
+            if b.startswith("#"):
+                header, b = b.split("\n", 1)
+            unserialized = jsonpickle.loads(b)
         except ValueError, e:
             log.error("JSON parsing error for extra metadata in %s: %s" % (uri, str(e)))
             unserialized = None
@@ -242,11 +246,16 @@ class FrameworkEditor(Editor):
                 jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
                 bytes = jsonpickle.dumps(metadata_dict)
                 text = jsonutil.collapse_json(bytes)
+                header = self.get_extra_metadata_header()
+                fh.write(header)
                 fh.write(text)
                 fh.close()
                 self.metadata_dirty = False
         
         fs.close()
+    
+    def get_extra_metadata_header(self):
+        return "# omnivore %s extra_metadata=v1\n" % __version__
     
     def get_extra_metadata(self, metadata_dict):
         pass
