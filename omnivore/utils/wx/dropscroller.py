@@ -525,7 +525,11 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
         self.set_items(items)
         for i, item in enumerate(self.items):
             if item in selected:  # pay for the slowdown here with O(N^2) search
-                self.SetItemState(i, 1, wx.LIST_STATE_SELECTED)
+                self.SetItemState(i, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+    
+    def deselect_all(self):
+        for i in range(self.GetItemCount()):
+            self.SetItemState(i, 0, wx.LIST_STATE_SELECTED)
 
 
 class ListReorderDialog(wx.Dialog):
@@ -533,7 +537,7 @@ class ListReorderDialog(wx.Dialog):
     """
     border = 5
     
-    def __init__(self, parent, items, get_item_text, dialog_helper=None, title="Reorder List"):
+    def __init__(self, parent, items, get_item_text, dialog_helper=None, title="Reorder List", copy_helper=None):
         wx.Dialog.__init__(self, parent, -1, title,
                            size=(700, 500), pos=wx.DefaultPosition, 
                            style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
@@ -561,13 +565,20 @@ class ListReorderDialog(wx.Dialog):
         b.Bind(wx.EVT_BUTTON, self.on_new)
         vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
         
-        b = wx.Button(self, wx.ID_EDIT, 'Edit', size=(90, -1))
+        self.edit = b = wx.Button(self, wx.ID_EDIT, 'Edit', size=(90, -1))
         b.Bind(wx.EVT_BUTTON, self.on_edit)
         vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
         
+        if copy_helper is not None:
+            self.copy = b = wx.Button(self, wx.ID_COPY, 'Copy', size=(90, -1))
+            b.Bind(wx.EVT_BUTTON, self.on_copy)
+            vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
+        else:
+            self.copy = None
+        
         vbox.AddSpacer(50)
         
-        b = wx.Button(self, wx.ID_DELETE, 'Delete', size=(90, -1))
+        self.delete = b = wx.Button(self, wx.ID_DELETE, 'Delete', size=(90, -1))
         b.Bind(wx.EVT_BUTTON, self.on_delete)
         vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
         
@@ -595,19 +606,29 @@ class ListReorderDialog(wx.Dialog):
         
         self.get_item_text = get_item_text
         self.dialog_helper = dialog_helper
+        self.copy_helper = copy_helper
         self.on_list_selection(None)
     
     def on_list_selection(self, evt):
         self.up.Enable(self.list.can_move_up)
         self.down.Enable(self.list.can_move_down)
+        state = self.list.GetSelectedItemCount() > 0
+        self.edit.Enable(state)
+        if self.copy is not None:
+            self.copy.Enable(state)
+        self.delete.Enable(state)
     
     def on_context_menu(self, evt):
         menu = wx.Menu()
         menu.Append(wx.ID_NEW, "New Item")
         menu.Append(wx.ID_EDIT, "Edit Item")
+        if self.copy is not None:
+            menu.Append(wx.ID_COPY, "Copy Item")
         menu.Append(wx.ID_DELETE, "Delete Selected Items")
         if self.list.GetSelectedItemCount() == 0:
             menu.Enable(wx.ID_EDIT, False)
+            if self.copy is not None:
+                menu.Enable(wx.ID_COPY, False)
             menu.Enable(wx.ID_DELETE, False)
         id = self.GetPopupMenuSelectionFromUser(menu)
         menu.Destroy()
@@ -617,6 +638,8 @@ class ListReorderDialog(wx.Dialog):
             self.on_delete(evt)
         elif id == wx.ID_EDIT:
             self.on_edit(evt)
+        elif id == wx.ID_COPY:
+            self.on_copy(evt)
 
     def get_items(self):
         return self.list.items
@@ -632,11 +655,18 @@ class ListReorderDialog(wx.Dialog):
     def on_new(self, evt):
         new_item = self.dialog_helper(self, "Add Item")
         if new_item is not None:
-            index = self.list.GetFirstSelected()
-            if index == -1:
-                index = len(self.list.items)
-            self.list.items[index:index] = [new_item]
-            self.list.refresh()
+            self.insert_new_item(new_item)
+    
+    def insert_new_item(self, new_item):
+        index = self.list.GetFirstSelected()
+        if index == -1:
+            index = len(self.list.items)
+        else:
+            index += 1
+        self.list.items[index:index] = [new_item]
+        self.list.refresh()
+        self.list.deselect_all()
+        self.list.SetItemState(index, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
     
     def on_edit(self, evt):
         index = self.list.GetFirstSelected()
@@ -646,6 +676,14 @@ class ListReorderDialog(wx.Dialog):
             if new_item is not None:
                 self.list.items[index] = new_item
                 self.list.refresh()
+    
+    def on_copy(self, evt):
+        index = self.list.GetFirstSelected()
+        if index >= 0:
+            item = self.list.items[index]
+            new_item = self.copy_helper(item)
+            if new_item is not None:
+                self.insert_new_item(new_item)
     
     def on_delete(self, evt):
         self.list.delete_selected()
