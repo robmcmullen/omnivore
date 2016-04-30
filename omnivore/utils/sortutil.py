@@ -2,6 +2,9 @@ import numpy as np
 
 from pyface.tasks.topological_sort import topological_sort
 
+import logging
+log = logging.getLogger(__name__)
+
 def find_wildcard_matches(item_map, pattern):
     if pattern.endswith("*"):
         pattern = pattern[:-1]
@@ -66,7 +69,7 @@ def before_after_wildcard_sort(items):
     # Now perform the actual sort.
     result, has_cycle = topological_sort(pairs)
     if has_cycle:
-        logger.warning('Cycle in before/after sort for items %r', items)
+        log.error('Indeterminate result; cycle in before/after sort for items %r', items)
     return result
     
 def collapse_overlapping_ranges(ranges):

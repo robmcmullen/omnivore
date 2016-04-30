@@ -76,6 +76,11 @@ class FileGuess(object):
     
     def __init__(self, uri):
         log.debug("Attempting to load %s" % uri)
+        self.reload(uri)
+    
+    def reload(self, uri=None):
+        if uri is None:
+            uri = self.metadata.uri
         if uri.startswith("file://"):
             # FIXME: workaround to allow opening of file:// URLs with the
             # ! character

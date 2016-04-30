@@ -57,6 +57,8 @@ recognizers.append(PoundBangTextRecognizer())
 recognizers.append(XMLTextRecognizer())
 from zip import ZipRecognizer
 recognizers.append(ZipRecognizer())
+from meta import OmnivoreRecognizer
+recognizers.append(OmnivoreRecognizer())
 from atari8bit import ATRRecognizer, XEXRecognizer
 recognizers.append(ATRRecognizer())
 recognizers.append(XEXRecognizer())
