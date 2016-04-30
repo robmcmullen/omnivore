@@ -159,10 +159,13 @@ class HexEditor(FrameworkEditor):
         if 'initial segment' in e:
             self.initial_segment = e['initial segment']
         if 'baseline document' in e:
-            doc.load_baseline(e['baseline document'])
+            try:
+                doc.load_baseline(e['baseline document'])
+            except Exception, e_:
+                self.window.error("Failed opening baseline document file\n\n%s\n\nError: %s" % (e['baseline document'], str(e_)), "Baseline Document Loading Error")
             self.baseline_present = doc.baseline_document is not None
         if 'diff highlight' in e:
-            self.diff_highlight = bool(e['diff highlight'])
+            self.diff_highlight = self.baseline_present and bool(e['diff highlight'])
     
     def get_extra_metadata(self, mdict):
         mdict["serialized user segments"] = list(self.document.user_segments)
