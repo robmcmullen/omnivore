@@ -67,10 +67,6 @@ class HexEditor(FrameworkEditor):
     
     last_anchor_end_index = Int(0)
     
-    baseline_present = Bool
-    
-    diff_highlight = Bool
-    
     can_copy_baseline = Bool
 
     #### Events ####
@@ -159,13 +155,9 @@ class HexEditor(FrameworkEditor):
         if 'initial segment' in e:
             self.initial_segment = e['initial segment']
         if 'baseline document' in e:
-            try:
-                doc.load_baseline(e['baseline document'])
-            except Exception, e_:
-                self.window.error("Failed opening baseline document file\n\n%s\n\nError: %s" % (e['baseline document'], str(e_)), "Baseline Document Loading Error")
-            self.baseline_present = doc.baseline_document is not None
+            self.load_baseline(e['baseline document'], doc)
         if 'diff highlight' in e:
-            self.diff_highlight = self.baseline_present and bool(e['diff highlight'])
+            self.diff_highlight = doc.has_baseline and bool(e['diff highlight'])
     
     def get_extra_metadata(self, mdict):
         mdict["serialized user segments"] = list(self.document.user_segments)
@@ -184,6 +176,7 @@ class HexEditor(FrameworkEditor):
             mdict["diff highlight"] = self.diff_highlight
 
     def rebuild_document_properties(self):
+        FrameworkEditor.rebuild_document_properties(self)
         self.find_segment()
         self.update_emulator()
         self.compare_to_baseline()

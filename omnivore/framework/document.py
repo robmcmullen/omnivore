@@ -191,12 +191,13 @@ class Document(HasTraits):
         self.emulator = emu
         self.emulator_change_event = True
     
-    def load_baseline(self, uri):
-        guess = FileGuess(uri)
-        print "Loading baseline", guess
-        d = Document(metadata=guess.metadata, bytes=guess.numpy)
+    def init_baseline(self, metadata, bytes):
+        d = Document(metadata=metadata, bytes=bytes)
         d.parse_segments([])
         self.baseline_document = d
+    
+    def del_baseline(self):
+        self.baseline_document = None
     
     def update_baseline(self):
         if self.baseline_document is not None:
@@ -206,3 +207,8 @@ class Document(HasTraits):
     def clear_baseline(self):
         self.change_count += 1
         self.global_segment.clear_style_bits(diff=True)
+    
+    @property
+    def has_baseline(self):
+        return self.baseline_document is not None
+

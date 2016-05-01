@@ -973,9 +973,7 @@ class LoadBaselineVersionAction(EditorAction):
         dialog = FileDialog(parent=event.task.window.control)
         if dialog.open() == OK:
             e = self.active_editor
-            e.document.load_baseline(dialog.path)
-            e.diff_highlight = True
-            e.baseline_present = True
+            e.load_baseline(dialog.path)
             e.compare_to_baseline()
             e.refresh_panes()
 

@@ -1,6 +1,7 @@
 import os
 
 # Major package imports.
+import numpy as np
 from fs.opener import opener
 import wx
 import fs
@@ -8,6 +9,7 @@ import jsonpickle
 
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Bool, Int, Unicode, Property, Dict, List
+from pyface.api import YES, NO
 from pyface.tasks.api import Editor
 from pyface.action.api import ActionEvent
 
@@ -76,6 +78,10 @@ class FrameworkEditor(Editor):
     last_search_settings = Dict()
     
     mouse_mode = Any
+    
+    baseline_present = Bool
+    
+    diff_highlight = Bool
     
     _metadata_dirty = Bool(transient=True)
 
@@ -175,6 +181,34 @@ class FrameworkEditor(Editor):
         """ Set up any additional metadata from the dict argument
         """
         pass
+    
+    def load_baseline(self, uri, doc=None):
+        if doc is None:
+            doc = self.document
+        try:
+            guess = FileGuess(uri)
+        except Exception, e:
+            self.window.error("Failed opening baseline document file\n\n%s\n\nError: %s" % (uri, str(e)), "Baseline Document Loading Error")
+            return
+        bytes = guess.numpy
+        difference = len(bytes) - len(doc)
+        if difference > 0:
+            if self.task.confirm("Truncate baseline data by %d bytes?" % difference, "Baseline Size Difference") == YES:
+                bytes = bytes[0:len(doc)]
+            else:
+                bytes = []
+        elif difference < 0:
+            if self.task.confirm("Pad baseline data with %d zeros?" % (-difference), "Baseline Size Difference") == YES:
+                bytes = np.pad(bytes, (0, -difference), "constant", constant_values=0)
+            else:
+                bytes = []
+        if len(bytes) > 0:
+            doc.init_baseline(guess.metadata, bytes)
+        else:
+            doc.del_baseline()
+        if doc == self.document:
+            self.baseline_present = doc.has_baseline
+            self.diff_highlight = self.baseline_present
 
     def view_document(self, doc, old_editor=None):
         """ Change the view to the specified document
@@ -191,7 +225,8 @@ class FrameworkEditor(Editor):
     def rebuild_document_properties(self):
         """ Recreate any editor attributes for the new document
         """
-        pass
+        self.baseline_present = self.document.has_baseline
+        self.diff_highlight = self.diff_highlight and self.baseline_present
     
     def copy_view_properties(self, old_editor):
         """ Copy editor properties to the new view
