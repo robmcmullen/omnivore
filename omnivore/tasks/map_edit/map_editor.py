@@ -208,6 +208,8 @@ class PickTileMode(SelectMode):
     def process_left_down(self, evt):
         c = self.canvas
         index, bit, inside = c.event_coords_to_byte(evt)
+        if not inside:
+            return
         e = c.editor
         value = e.segment[index]
         if self.last_index != index:
@@ -467,6 +469,9 @@ class MapEditor(HexEditor):
         inverted = invert_rects(rects, self.control.total_rows, self.control.bytes_per_row)
         ranges = self.segment.rects_to_ranges(inverted)
         return ranges
+    
+    def get_extra_segment_savers(self, segment):
+        return []
     
     ###########################################################################
     # Trait handlers.
