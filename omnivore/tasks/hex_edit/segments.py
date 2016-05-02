@@ -13,6 +13,7 @@ class SegmentList(wx.ListBox):
         self.task = task
         
         wx.ListBox.__init__(self, parent, style=wx.LB_SINGLE, **kwargs)
+        self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.Bind(wx.EVT_LISTBOX, self.on_click)
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.on_dclick)
         self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
@@ -32,12 +33,26 @@ class SegmentList(wx.ListBox):
                     self.SetString(i, item)
         self.SetSelection(selected)
 
+    def on_left_down(self, event):
+        item = self.HitTest(event.GetPosition())
+        if item >= 0:
+            selected = self.GetSelection()
+            if selected != item:
+                editor = self.task.active_editor
+                wx.CallAfter(editor.view_segment_number, item)
+        event.Skip()
+
     def on_click(self, event):
+        # BUG: doesn't seem to get called when selecting a segment, using the
+        # comments sidebar to jump to another segment, then attempting to
+        # select that previous segment. This function never gets called in
+        # that case, so I had to add the check on EVT_LEFT_DOWN
         selected = event.GetExtraLong()
         if selected:
             item = event.GetSelection()
             editor = self.task.active_editor
-            wx.CallAfter(editor.view_segment_number, item)
+            if item != editor.segment_number:
+                wx.CallAfter(editor.view_segment_number, item)
         event.Skip()
     
     def on_dclick(self, event):
