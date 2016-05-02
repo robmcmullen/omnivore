@@ -382,6 +382,10 @@ class BitmapEditor(HexEditor):
     def update_fonts(self):
         pass
     
+    @on_trait_change('machine.disassembler_change_event')
+    def update_disassembler(self):
+        pass
+    
     def reconfigure_panes(self):
         self.control.recalc_view()
     
