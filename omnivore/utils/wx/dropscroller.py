@@ -573,7 +573,7 @@ class ListReorderDialog(wx.Dialog):
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.list = ReorderableList(self, items, get_item_text)
+        self.list = ReorderableList(self, items, get_item_text, size=(-1,500))
         self.list.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_list_selection)
         self.list.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.on_list_selection)
         sizer.Add(self.list, 1, wx.EXPAND)
@@ -611,7 +611,6 @@ class ListReorderDialog(wx.Dialog):
         b.Bind(wx.EVT_BUTTON, self.on_delete)
         vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
         
-        vbox.AddSpacer(200)
         vbox.AddStretchSpacer()
         
         btnsizer = wx.StdDialogButtonSizer()
