@@ -344,31 +344,55 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
     """Simple list control that provides a drop target and uses
     the new mixin for automatic scrolling.
     """
-    def __init__(self, parent, items, get_item_text, size=(400,400)):
-        wx.ListCtrl.__init__(self, parent, size=size, style=wx.LC_REPORT|wx.LC_NO_HEADER)
+    def __init__(self, parent, items, get_item_text, columns=None, resize_column=0, allow_drop=True, size=(400,400)):
+        if columns is None:
+            header_style = wx.LC_NO_HEADER
+        else:
+            header_style = 0
+        wx.ListCtrl.__init__(self, parent, size=size, style=wx.LC_REPORT|header_style)
         listctrl.ListCtrlAutoWidthMixin.__init__(self)
-#        wx.ListCtrl.__init__(self, parent, size=size, style=wx.LC_REPORT|wx.LC_NO_HEADER)
         self.debug = False
         self.get_item_text = get_item_text
 
         # The mixin needs to be initialized
         ListDropScrollerMixin.__init__(self, interval=200)
-        self.InsertColumn(0, "column")
-        self.setResizeColumn(0)
-        self.resizeLastColumn(0) 
+        self.set_columns(columns, resize_column)
         
-        self.drop_target = PickledDropTarget(self)
-        self.SetDropTarget(self.drop_target)
+        if allow_drop:
+            self.drop_target = PickledDropTarget(self)
+            self.SetDropTarget(self.drop_target)
         self.Bind(wx.EVT_LIST_BEGIN_DRAG, self.on_start_drag)
         
         self.set_items(items)
     
+    def set_columns(self, columns, resize_column):
+        if columns is None:
+            columns = ["items"]
+        for i, title in enumerate(columns):
+            self.InsertColumn(i, title)
+        self.setResizeColumn(resize_column)
+        self.resizeLastColumn(0) 
+    
     def set_items(self, items):
         self.clear(None)
         for item in items:
-            self.items.append(item)
-            text = self.get_item_text(item)
-            self.InsertStringItem(sys.maxint, text)
+            self.insert_item(sys.maxint, item)
+        self.resizeLastColumn(0) 
+    
+    def insert_item(self, index, item):
+        index = self.InsertStringItem(index, "placeholder")
+        self.set_item_text(index, item)
+        self.items[index:index] = [item]
+    
+    def set_item_text(self, index, item):
+        text = self.get_item_text(item)
+        c = self.GetColumnCount()
+        if c > 1:
+            for i in range(c):
+                self.SetStringItem(index, i, text[i])
+        else:
+            self.SetStringItem(index, 0, text)
+        #self.SetItemData(index, sid)
 
     def on_start_drag(self, evt):
         index = evt.GetIndex()
@@ -380,9 +404,9 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
         items = []
         index = self.GetFirstSelected()
         while index != -1:
-            items.append(index)
+            items.append((index, self.items[index]))
             index = self.GetNextSelected(index)
-        data.SetData(pickle.dumps(items,-1))
+        data.SetData(pickle.dumps((id(self), items),-1))
 
         # And finally, create the drop source and begin the drag
         # and drop opperation
@@ -392,23 +416,35 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
         result = drop_source.DoDragDrop(wx.Drag_AllowMove)
         #print "DragDrop completed: %d\n" % result
 
-    def add_dropped_items(self, x, y, items):
+    def add_dropped_items(self, x, y, data):
+        src, items = data
         start_index = self.getDropIndex(x, y)
         if self.debug: print "At (%d,%d), index=%d, adding %s" % (x, y, start_index, items)
+        if start_index == -1:
+            start_index = 0
 
         list_count = self.GetItemCount()
-        new_order = range(list_count)
-        index = start_index
-        for item in items:
-            if item < start_index:
-                start_index -= 1
-            new_order.remove(item)
-        if self.debug: print("inserting %s into %s at %d" % (str(items), str(new_order), start_index))
-        new_order[start_index:start_index] = items
-        if self.debug: print("orig list = %s" % str(range(list_count)))
-        if self.debug: print(" new list = %s" % str(new_order))
         
-        self.change_list(new_order, items)
+        if src == id(self):
+            # reordering items in the same list!
+            new_order = range(list_count)
+            new_indexes = []
+            for index, item in items:
+                if index < start_index:
+                    start_index -= 1
+                new_order.remove(index)
+                new_indexes.append(index)
+            if self.debug: print("inserting %s into %s at %d" % (str(items), str(new_order), start_index))
+            new_order[start_index:start_index] = new_indexes
+            if self.debug: print("orig list = %s" % str(range(list_count)))
+            if self.debug: print(" new list = %s" % str(new_order))
+            
+            self.change_list(new_order, new_indexes)
+        else:
+            # dropping items from another list
+            for _, item in items:
+                self.insert_item(start_index, item)
+                start_index += 1
     
     def delete_selected(self):
         list_count = self.GetItemCount()
@@ -471,25 +507,15 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
         @param make_selected: optional list showing indexes of original order
         that should be marked as selected in the new list.
         """
-        saved = {}
         new_selection = []
         new_count = len(new_order)
         new_items = []
         for i in range(new_count):
             new_i = new_order[i]
-            new_items.append(self.items[new_i])
+            new_item = self.items[new_i]
+            new_items.append(new_item)
             if i != new_i:
-                src = self.GetItem(i)
-                if new_i in saved:
-                    text = saved[new_i]
-                else:
-                    text = self.GetItem(new_i).GetText()
-                
-                # save the value that's about to be overwritten
-                if i not in saved:
-                    saved[i] = self.GetItem(i).GetText()
-                if self.debug: print("setting %d to value from %d: %s" % (i, new_i, text))
-                self.SetStringItem(i, 0, text)
+                self.set_item_text(i, new_item)
                 
                 # save the new highlight position
                 if new_i in make_selected:
@@ -509,6 +535,9 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
             self.SetItemState(i, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
         
         self.items = new_items
+        if self.debug:
+            for i, item in enumerate(self.items):
+                print i, item, self.get_item_text(item)
     
     def clear(self, evt):
         self.DeleteAllItems()
@@ -761,7 +790,7 @@ if __name__ == '__main__':
 
             self.list1 = TestList(self, "left", 100)
             self.list2 = TestList(self, "right", 10)
-            self.SplitVertically(self.list1, self.list2)
+            self.SplitVertically(self.list1, self.list2, 200)
             self.Layout()
     
     def showDialog(parent):

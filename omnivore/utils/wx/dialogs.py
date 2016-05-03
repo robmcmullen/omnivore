@@ -9,7 +9,7 @@ from wx.lib.expando import ExpandoTextCtrl, EVT_ETC_LAYOUT_NEEDED
 
 from omnivore.utils.processutil import which
 from omnivore.utils.textutil import text_to_int
-from omnivore.utils.wx.dropscroller import ListDropScrollerMixin, PickledDropTarget, PickledDataObject
+from omnivore.utils.wx.dropscroller import ReorderableList, ListDropScrollerMixin, PickledDropTarget, PickledDataObject
 
 
 class SimplePromptDialog(wx.TextEntryDialog):
@@ -367,85 +367,6 @@ def get_file_dialog_wildcard(name, extension_list):
     return "|".join(wildcards)
 
 
-class SegmentList(wx.ListCtrl, ListDropScrollerMixin):
-    """Simple list control that provides a drop target and uses
-    the new mixin for automatic scrolling.
-    """
-    
-    def __init__(self, parent, name, segment_map, segment_ids, allow_drop=True, **kwargs):
-        wx.ListCtrl.__init__(self, parent, style=wx.LC_REPORT, **kwargs)
-
-        # The mixin needs to be initialized
-        ListDropScrollerMixin.__init__(self, interval=200)
-        
-        if allow_drop:
-            self.drop_target=PickledDropTarget(self)
-            self.SetDropTarget(self.drop_target)
-
-        self.segment_map = segment_map
-        self.create(name, segment_ids)
-        
-        self.Bind(wx.EVT_LIST_BEGIN_DRAG, self.on_start_drag)
-
-    def create(self, name, segment_ids):
-        """Set up some test data."""
-        
-        self.InsertColumn(0, "Name")
-        self.InsertColumn(1, "Size")
-        self.InsertColumn(2, "Origin")
-        for sid in segment_ids:
-            self.insert_segment_by_id(sys.maxint, sid)
-    
-    def insert_segment_by_id(self, index, sid):
-        s = self.segment_map[sid]
-        index = self.InsertStringItem(index, s.name)
-        self.SetStringItem(index, 1, "%x" % len(s))
-        self.SetStringItem(index, 2, "%x" % s.start_addr)
-        self.SetItemData(index, sid)
-
-    def on_start_drag(self, evt):
-        index = evt.GetIndex()
-        print "beginning drag of item %d" % index
-
-        # Create the data object containing all currently selected
-        # items
-        data = PickledDataObject()
-        items = []
-        index = self.GetFirstSelected()
-        while index != -1:
-            items.append(self.GetItemData(index))
-            index = self.GetNextSelected(index)
-        data.SetData(pickle.dumps(items,-1))
-
-        # And finally, create the drop source and begin the drag
-        # and drop opperation
-        drop_source = wx.DropSource(self)
-        drop_source.SetData(data)
-        print "Begining DragDrop\n"
-        result = drop_source.DoDragDrop(wx.Drag_AllowMove)
-        print "DragDrop completed: %d\n" % result
-
-    def add_dropped_items(self, x, y, items):
-        index = self.getDropIndex(x, y)
-        print "At (%d,%d), index=%d, adding %s" % (x, y, index, items)
-
-        list_count = self.GetItemCount()
-        for sid in items:
-            if index == -1:
-                index = 0
-            self.insert_segment_by_id(index, sid)
-            index += 1
-    
-    def clear(self, evt=None):
-        self.DeleteAllItems()
-    
-    def get_segments(self):
-        s = []
-        for index in range(self.GetItemCount()):
-            sid = self.GetItemData(index)
-            s.append(self.segment_map[sid])
-        return s
-
 class SegmentOrderDialog(wx.Dialog):
     border = 5
     instructions = "Drag segments to the right-hand list to create an executable"
@@ -466,16 +387,16 @@ class SegmentOrderDialog(wx.Dialog):
         vbox1 = wx.BoxSizer(wx.VERTICAL)
         t = wx.StaticText(self, -1, "All Segments")
         vbox1.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
-        self.source = SegmentList(self, "src", self.segment_map, self.segment_map.keys(), False, size=(400,300))
+        self.source = ReorderableList(self, self.segment_map.keys(), self.get_item_text, columns=["Origin", "Size", "Name"], resize_column=3, allow_drop=False, size=(400,300))
         vbox1.Add(self.source, 1, wx.ALL|wx.EXPAND, self.border)
-        hbox.Add(vbox1, 1, wx.ALL|wx.EXPAND, self.border)
+        hbox.Add(vbox1, 1, wx.ALL|wx.EXPAND, 0)
 
         vbox2 = wx.BoxSizer(wx.VERTICAL)
         t = wx.StaticText(self, -1, "Segments In Executable")
         vbox2.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
-        self.dest = SegmentList(self, "dest", self.segment_map, [], size=(400,300))
+        self.dest = ReorderableList(self, [], self.get_item_text, columns=["Origin", "Size", "Name"], resize_column=3, size=(400,300))
         vbox2.Add(self.dest, 1, wx.ALL|wx.EXPAND, self.border)
-        hbox.Add(vbox2, 1, wx.ALL|wx.EXPAND, self.border)
+        hbox.Add(vbox2, 1, wx.ALL|wx.EXPAND, 0)
         
         vbox = wx.BoxSizer(wx.VERTICAL)
         
@@ -490,7 +411,7 @@ class SegmentOrderDialog(wx.Dialog):
         b.Bind(wx.EVT_BUTTON, self.on_clear)
         vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
         
-        vbox.AddSpacer(50)
+        vbox.AddStretchSpacer()
         
         btnsizer = wx.StdDialogButtonSizer()
         self.ok_btn = wx.Button(self, wx.ID_OK)
@@ -509,6 +430,10 @@ class SegmentOrderDialog(wx.Dialog):
         # Don't call self.Fit() otherwise the dialog buttons are zero height
         sizer.Fit(self)
         self.check_enable()
+    
+    def get_item_text(self, sid):
+        s = self.segment_map[sid]
+        return "%x" % s.start_addr, "%x" % len(s), s.name
         
     def on_button(self, evt):
         if evt.GetId() == wx.ID_OK:
@@ -542,9 +467,15 @@ class SegmentOrderDialog(wx.Dialog):
     
     def check_enable(self):
         self.ok_btn.Enable(self.can_submit())
+    
+    def get_segments(self):
+        s = []
+        for sid in self.dest.items:
+            s.append(self.segment_map[sid])
+        return s
 
     def get_bytes(self):
-        segments = self.dest.get_segments()
+        segments = self.get_segments()
         total = 2
         for s in segments:
             total += 4 + len(s)
