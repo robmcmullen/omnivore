@@ -264,6 +264,24 @@ def text2HtmlParagraph(text, font_size=None):
     text = "<html>\n<body>\n" + body + "</body>\n</html>"
     return text
 
+
+def text_to_int(text, default_base="dec"):
+    """ Convert text to int, raising exeception on invalid input
+    """
+    if text.startswith("0x"):
+        value = int(text[2:], 16)
+    elif text.startswith("$"):
+        value = int(text[1:], 16)
+    elif text.startswith("#"):
+        value = int(text[1:], 10)
+    else:
+        if default_base == "dec":
+            value = int(text)
+        else:
+            value = int(text, 16)
+    return value
+
+
 if __name__ == "__main__":
     import sys
     

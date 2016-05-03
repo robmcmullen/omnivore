@@ -144,6 +144,11 @@ class HexEditTask(FrameworkTask):
             InsertFileAction(),
             ]
     
+    def get_actions_Menu_File_ExportGroup(self):
+        return [
+            SaveAsXEXAction(),
+            ]
+    
     def get_actions_Menu_File_SaveGroup(self):
         return [
             SaveAction(),

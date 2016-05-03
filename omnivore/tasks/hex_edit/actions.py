@@ -17,7 +17,7 @@ from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bi
 from omnivore.framework.actions import *
 from commands import *
 from omnivore.arch.ui.antic_colors import AnticColorDialog
-from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, prompt_for_emulator, prompt_for_assembler, get_file_dialog_wildcard
+from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, prompt_for_emulator, prompt_for_assembler, get_file_dialog_wildcard, SegmentOrderDialog
 from omnivore.utils.wx.dropscroller import ListReorderDialog
 from omnivore.arch.machine import Machine
 from omnivore.framework.minibuffer import *
@@ -690,6 +690,21 @@ class SetSegmentOriginAction(EditorAction):
             e.update_segments_ui()
             e.metadata_dirty = True
             e.reconfigure_panes()
+
+
+class SaveAsXEXAction(EditorAction):
+    name = 'Export as XEX...'
+    tooltip = 'Create executable from segments'
+
+    def perform(self, event):
+        e = self.active_editor
+        dlg = SegmentOrderDialog(e.window.control, "Create Executable", e.document.segments[1:])
+        if dlg.ShowModal() == wx.ID_OK:
+            bytes = dlg.get_bytes()
+            dialog = FileDialog(default_filename="test.xex", parent=e.window.control, action='save as')
+            if dialog.open() == OK:
+                self.active_editor.save_to_uri(bytes, dialog.path, False)
+        dlg.Destroy()
 
 
 class SaveSegmentAsFormatAction(EditorAction):

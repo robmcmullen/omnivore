@@ -1,10 +1,15 @@
 import os
+import sys
+import pickle
 
+import numpy as np
 import wx
 import wx.lib.filebrowsebutton as filebrowse
 from wx.lib.expando import ExpandoTextCtrl, EVT_ETC_LAYOUT_NEEDED
 
 from omnivore.utils.processutil import which
+from omnivore.utils.textutil import text_to_int
+from omnivore.utils.wx.dropscroller import ListDropScrollerMixin, PickledDropTarget, PickledDataObject
 
 
 class SimplePromptDialog(wx.TextEntryDialog):
@@ -36,17 +41,7 @@ class HexEntryDialog(SimplePromptDialog):
     """
     def convert_text(self, text, return_error=False, default_base="dec", **kwargs):
         try:
-            if text.startswith("0x"):
-                value = int(text[2:], 16)
-            elif text.startswith("$"):
-                value = int(text[1:], 16)
-            elif text.startswith("#"):
-                value = int(text[1:], 10)
-            else:
-                if default_base == "dec":
-                    value = int(text)
-                else:
-                    value = int(text, 16)
+            value = text_to_int(text, default_base)
             error = ""
         except (ValueError, TypeError), e:
             value = None
@@ -370,6 +365,206 @@ def get_file_dialog_wildcard(name, extension_list):
         ext = extension_list[0]
         wildcards.append("%s (*%s)|*%s" % (name, ext, ext))
     return "|".join(wildcards)
+
+
+class SegmentList(wx.ListCtrl, ListDropScrollerMixin):
+    """Simple list control that provides a drop target and uses
+    the new mixin for automatic scrolling.
+    """
+    
+    def __init__(self, parent, name, segment_map, segment_ids, allow_drop=True, **kwargs):
+        wx.ListCtrl.__init__(self, parent, style=wx.LC_REPORT, **kwargs)
+
+        # The mixin needs to be initialized
+        ListDropScrollerMixin.__init__(self, interval=200)
+        
+        if allow_drop:
+            self.drop_target=PickledDropTarget(self)
+            self.SetDropTarget(self.drop_target)
+
+        self.segment_map = segment_map
+        self.create(name, segment_ids)
+        
+        self.Bind(wx.EVT_LIST_BEGIN_DRAG, self.on_start_drag)
+
+    def create(self, name, segment_ids):
+        """Set up some test data."""
+        
+        self.InsertColumn(0, "Name")
+        self.InsertColumn(1, "Size")
+        self.InsertColumn(2, "Origin")
+        for sid in segment_ids:
+            self.insert_segment_by_id(sys.maxint, sid)
+    
+    def insert_segment_by_id(self, index, sid):
+        s = self.segment_map[sid]
+        index = self.InsertStringItem(index, s.name)
+        self.SetStringItem(index, 1, "%x" % len(s))
+        self.SetStringItem(index, 2, "%x" % s.start_addr)
+        self.SetItemData(index, sid)
+
+    def on_start_drag(self, evt):
+        index = evt.GetIndex()
+        print "beginning drag of item %d" % index
+
+        # Create the data object containing all currently selected
+        # items
+        data = PickledDataObject()
+        items = []
+        index = self.GetFirstSelected()
+        while index != -1:
+            items.append(self.GetItemData(index))
+            index = self.GetNextSelected(index)
+        data.SetData(pickle.dumps(items,-1))
+
+        # And finally, create the drop source and begin the drag
+        # and drop opperation
+        drop_source = wx.DropSource(self)
+        drop_source.SetData(data)
+        print "Begining DragDrop\n"
+        result = drop_source.DoDragDrop(wx.Drag_AllowMove)
+        print "DragDrop completed: %d\n" % result
+
+    def add_dropped_items(self, x, y, items):
+        index = self.getDropIndex(x, y)
+        print "At (%d,%d), index=%d, adding %s" % (x, y, index, items)
+
+        list_count = self.GetItemCount()
+        for sid in items:
+            if index == -1:
+                index = 0
+            self.insert_segment_by_id(index, sid)
+            index += 1
+    
+    def clear(self, evt=None):
+        self.DeleteAllItems()
+    
+    def get_segments(self):
+        s = []
+        for index in range(self.GetItemCount()):
+            sid = self.GetItemData(index)
+            s.append(self.segment_map[sid])
+        return s
+
+class SegmentOrderDialog(wx.Dialog):
+    border = 5
+    instructions = "Drag segments to the right-hand list to create an executable"
+    
+    def __init__(self, parent, title, segments):
+        wx.Dialog.__init__(self, parent, -1, title, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+        
+        self.segment_map = {k:v for k,v in enumerate(segments)}
+        
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(sizer)
+        
+        t = wx.StaticText(self, -1, self.instructions)
+        sizer.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
+        
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        
+        vbox1 = wx.BoxSizer(wx.VERTICAL)
+        t = wx.StaticText(self, -1, "All Segments")
+        vbox1.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
+        self.source = SegmentList(self, "src", self.segment_map, self.segment_map.keys(), False, size=(400,300))
+        vbox1.Add(self.source, 1, wx.ALL|wx.EXPAND, self.border)
+        hbox.Add(vbox1, 1, wx.ALL|wx.EXPAND, self.border)
+
+        vbox2 = wx.BoxSizer(wx.VERTICAL)
+        t = wx.StaticText(self, -1, "Segments In Executable")
+        vbox2.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
+        self.dest = SegmentList(self, "dest", self.segment_map, [], size=(400,300))
+        vbox2.Add(self.dest, 1, wx.ALL|wx.EXPAND, self.border)
+        hbox.Add(vbox2, 1, wx.ALL|wx.EXPAND, self.border)
+        
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        
+        t = wx.StaticText(self, -1, "Run Address")
+        vbox.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
+        self.run_addr = wx.TextCtrl(self, -1, size=(-1, -1))
+        vbox.Add(self.run_addr, 0, wx.ALL|wx.EXPAND, self.border)
+        
+        vbox.AddSpacer(50)
+        
+        self.clear = b = wx.Button(self, wx.ID_DOWN, 'Clear List', size=(90, -1))
+        b.Bind(wx.EVT_BUTTON, self.on_clear)
+        vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
+        
+        vbox.AddSpacer(50)
+        
+        btnsizer = wx.StdDialogButtonSizer()
+        self.ok_btn = wx.Button(self, wx.ID_OK)
+        self.ok_btn.SetDefault()
+        btnsizer.AddButton(self.ok_btn)
+        btn = wx.Button(self, wx.ID_CANCEL)
+        btnsizer.AddButton(btn)
+        btnsizer.Realize()
+        vbox.Add(btnsizer, 0, wx.ALL|wx.EXPAND, self.border)
+        hbox.Add(vbox, 0, wx.EXPAND, 0)
+        sizer.Add(hbox, 1, wx.EXPAND, 0)
+        
+        self.Bind(wx.EVT_BUTTON, self.on_button)
+        self.Bind(wx.EVT_TEXT, self.on_text_changed)
+        
+        # Don't call self.Fit() otherwise the dialog buttons are zero height
+        sizer.Fit(self)
+        self.check_enable()
+        
+    def on_button(self, evt):
+        if evt.GetId() == wx.ID_OK:
+            self.EndModal(wx.ID_OK)
+        else:
+            self.EndModal(wx.ID_CANCEL)
+        evt.Skip()
+
+    def on_text_changed(self, evt):
+        self.ok_btn.Enable(self.can_submit())
+
+    def on_clear(self, evt):
+        self.dest.clear()
+
+    def on_resize(self, event):
+        print "resized"
+        self.Fit()
+    
+    def get_run_addr(self):
+        text = self.run_addr.GetValue()
+        try:
+            addr = text_to_int(text, "hex")
+            if addr < 0 or addr > 0xffff:
+                addr = None
+        except (ValueError, TypeError), e:
+            addr = None
+        return addr
+    
+    def can_submit(self):
+        return self.get_run_addr() is not None and self.dest.GetItemCount() > 0
+    
+    def check_enable(self):
+        self.ok_btn.Enable(self.can_submit())
+
+    def get_bytes(self):
+        segments = self.dest.get_segments()
+        total = 2
+        for s in segments:
+            total += 4 + len(s)
+        total += 6
+        bytes = np.zeros([total], dtype=np.uint8)
+        bytes[0:2] = 0xff # FFFF header
+        i = 2
+        for s in segments:
+            words = bytes[i:i+4].view(dtype='<u2')
+            words[0] = s.start_addr
+            words[1] = s.start_addr + len(s) - 1
+            i += 4
+            bytes[i:i + len(s)] = s[:]
+            i += len(s)
+        words = bytes[i:i+6].view(dtype='<u2')
+        words[0] = 0x2e0
+        words[1] = 0x2e1
+        words[2] = self.get_run_addr()
+        return bytes
+
 
 if __name__ == "__main__":
     app = wx.PySimpleApp()
