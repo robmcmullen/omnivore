@@ -17,8 +17,7 @@ from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bi
 from omnivore.framework.actions import *
 from commands import *
 from omnivore.arch.ui.antic_colors import AnticColorDialog
-from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, prompt_for_emulator, prompt_for_assembler, get_file_dialog_wildcard, SegmentOrderDialog
-from omnivore.utils.wx.dropscroller import ListReorderDialog
+from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, prompt_for_emulator, prompt_for_assembler, get_file_dialog_wildcard, SegmentOrderDialog, ListReorderDialog
 from omnivore.arch.machine import Machine
 from omnivore.framework.minibuffer import *
 

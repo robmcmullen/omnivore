@@ -9,7 +9,7 @@ from wx.lib.expando import ExpandoTextCtrl, EVT_ETC_LAYOUT_NEEDED
 
 from omnivore.utils.processutil import which
 from omnivore.utils.textutil import text_to_int
-from omnivore.utils.wx.dropscroller import ReorderableList, ListDropScrollerMixin, PickledDropTarget, PickledDataObject
+from omnivore.utils.wx.dropscroller import ReorderableList, PickledDropTarget, PickledDataObject
 
 
 class SimplePromptDialog(wx.TextEntryDialog):
@@ -497,11 +497,171 @@ class SegmentOrderDialog(wx.Dialog):
         return bytes
 
 
+class ListReorderDialog(wx.Dialog):
+    """Simple dialog to return a list of items that can be reordered by the user.
+    """
+    border = 5
+    
+    def __init__(self, parent, items, get_item_text, dialog_helper=None, title="Reorder List", copy_helper=None):
+        wx.Dialog.__init__(self, parent, -1, title,
+                           size=(700, 500), pos=wx.DefaultPosition, 
+                           style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.list = ReorderableList(self, items, get_item_text, size=(-1,500))
+        self.list.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_list_selection)
+        self.list.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.on_list_selection)
+        sizer.Add(self.list, 1, wx.EXPAND)
+
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        
+        self.up = b = wx.Button(self, wx.ID_UP, 'Up', size=(90, -1))
+        b.Bind(wx.EVT_BUTTON, self.on_up)
+        vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
+        
+        self.down = b = wx.Button(self, wx.ID_DOWN, 'Down', size=(90, -1))
+        b.Bind(wx.EVT_BUTTON, self.on_down)
+        vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
+        
+        vbox.AddSpacer(50)
+        
+        b = wx.Button(self, wx.ID_NEW, 'New', size=(90, -1))
+        b.Bind(wx.EVT_BUTTON, self.on_new)
+        vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
+        
+        self.edit = b = wx.Button(self, wx.ID_EDIT, 'Edit', size=(90, -1))
+        b.Bind(wx.EVT_BUTTON, self.on_edit)
+        vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
+        
+        if copy_helper is not None:
+            self.copy = b = wx.Button(self, wx.ID_COPY, 'Copy', size=(90, -1))
+            b.Bind(wx.EVT_BUTTON, self.on_copy)
+            vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
+        else:
+            self.copy = None
+        
+        vbox.AddSpacer(50)
+        
+        self.delete = b = wx.Button(self, wx.ID_DELETE, 'Delete', size=(90, -1))
+        b.Bind(wx.EVT_BUTTON, self.on_delete)
+        vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
+        
+        vbox.AddStretchSpacer()
+        
+        btnsizer = wx.StdDialogButtonSizer()
+        btn = wx.Button(self, wx.ID_OK)
+        btn.SetDefault()
+        btnsizer.AddButton(btn)
+        btn = wx.Button(self, wx.ID_CANCEL)
+        btnsizer.AddButton(btn)
+        btnsizer.Realize()
+        vbox.Add(btnsizer, 0, wx.ALL|wx.EXPAND, self.border)
+        sizer.Add(vbox, 0, wx.EXPAND, 0)
+
+        self.SetSizer(sizer)
+        sizer.Fit(self)
+
+        self.Layout()
+        
+        self.Bind(wx.EVT_CONTEXT_MENU, self.on_context_menu)
+        self.delete_id = wx.NewId()
+        self.Bind(wx.EVT_MENU, self.on_delete, id=self.delete_id)
+        
+        self.get_item_text = get_item_text
+        self.dialog_helper = dialog_helper
+        self.copy_helper = copy_helper
+        self.on_list_selection(None)
+    
+    def on_list_selection(self, evt):
+        self.up.Enable(self.list.can_move_up)
+        self.down.Enable(self.list.can_move_down)
+        state = self.list.GetSelectedItemCount() > 0
+        self.edit.Enable(state)
+        if self.copy is not None:
+            self.copy.Enable(state)
+        self.delete.Enable(state)
+    
+    def on_context_menu(self, evt):
+        menu = wx.Menu()
+        menu.Append(wx.ID_NEW, "New Item")
+        menu.Append(wx.ID_EDIT, "Edit Item")
+        if self.copy is not None:
+            menu.Append(wx.ID_COPY, "Copy Item")
+        menu.Append(wx.ID_DELETE, "Delete Selected Items")
+        if self.list.GetSelectedItemCount() == 0:
+            menu.Enable(wx.ID_EDIT, False)
+            if self.copy is not None:
+                menu.Enable(wx.ID_COPY, False)
+            menu.Enable(wx.ID_DELETE, False)
+        id = self.GetPopupMenuSelectionFromUser(menu)
+        menu.Destroy()
+        if id == wx.ID_NEW:
+            self.on_new(evt)
+        elif id == wx.ID_DELETE:
+            self.on_delete(evt)
+        elif id == wx.ID_EDIT:
+            self.on_edit(evt)
+        elif id == wx.ID_COPY:
+            self.on_copy(evt)
+
+    def get_items(self):
+        return self.list.items
+    
+    def on_up(self, evt):
+        if self.list.can_move_up:
+            self.list.move_selected(-1)
+    
+    def on_down(self, evt):
+        if self.list.can_move_down:
+            self.list.move_selected(1)
+    
+    def on_new(self, evt):
+        new_item = self.dialog_helper(self, "Add Item")
+        if new_item is not None:
+            self.insert_new_item(new_item)
+    
+    def insert_new_item(self, new_item):
+        index = self.list.GetFirstSelected()
+        if index == -1:
+            index = len(self.list.items)
+        else:
+            index += 1
+        self.list.items[index:index] = [new_item]
+        self.list.refresh()
+        self.list.deselect_all()
+        self.list.SetItemState(index, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+    
+    def on_edit(self, evt):
+        index = self.list.GetFirstSelected()
+        if index >= 0:
+            item = self.list.items[index]
+            new_item = self.dialog_helper(self, "Edit %s" % self.get_item_text(item), item)
+            if new_item is not None:
+                self.list.items[index] = new_item
+                self.list.refresh()
+    
+    def on_copy(self, evt):
+        index = self.list.GetFirstSelected()
+        if index >= 0:
+            item = self.list.items[index]
+            new_item = self.copy_helper(item)
+            if new_item is not None:
+                self.insert_new_item(new_item)
+    
+    def on_delete(self, evt):
+        self.list.delete_selected()
+
+
 if __name__ == "__main__":
     app = wx.PySimpleApp()
 
     frame = wx.Frame(None, -1, "Dialog test")
-    dialog = EmulatorDialog(frame, "Test")
-    dialog.ShowModal()
+#    dialog = EmulatorDialog(frame, "Test")
+#    dialog.ShowModal()
+    dlg = ListReorderDialog(frame, [chr(i + 65) for i in range(26)], lambda a:str(a))
+    if dlg.ShowModal() == wx.ID_OK:
+        print dlg.get_items()
+    dlg.Destroy()
 
     app.MainLoop()
