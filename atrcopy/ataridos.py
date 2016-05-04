@@ -175,7 +175,7 @@ class AtariDosFile(object):
                 raise InvalidBinaryFile
             first = False
             if len(b[pos:pos + 4]) < 4:
-                self.segments.append(ObjSegment(r[pos:pos + 4], 0, 0, "Short Segment Header"))
+                self.segments.append(ObjSegment(r[pos:pos + 4], 0, 0, 0, len(b[pos:pos + 4]), "Short Segment Header"))
                 break
             start, end = b[pos:pos + 4].view(dtype='<u2')
             count = end - start + 1
