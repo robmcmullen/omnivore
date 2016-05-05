@@ -17,15 +17,15 @@ class AtrHeader(object):
         ])
     file_format = "ATR"
     
-    def __init__(self, bytes=None):
+    def __init__(self, bytes=None, sector_size=128, initial_sectors=3):
         self.image_size = 0
-        self.sector_size = 0
+        self.sector_size = sector_size
         self.crc = 0
         self.unused = 0
         self.flags = 0
         self.atr_header_offset = 0
-        self.initial_sector_size = 0
-        self.num_initial_sectors = 0
+        self.initial_sector_size = sector_size
+        self.num_initial_sectors = initial_sectors
         self.max_sectors = 0
         if bytes is None:
             return
@@ -45,6 +45,20 @@ class AtrHeader(object):
     
     def __str__(self):
         return "%s Disk Image (size=%d (%dx%db), crc=%d flags=%d unused=%d)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size, self.crc, self.flags, self.unused)
+    
+    def to_array(self):
+        raw = np.zeros([16], dtype=np.uint8)
+        values = raw.view(dtype=self.format)[0]
+        values[0] = 0x296
+        paragraphs = self.image_size / 16
+        parshigh, pars = divmod(paragraphs, 256*256)
+        values[1] = pars
+        values[2] = self.sector_size
+        values[3] = parshigh
+        values[4] = self.crc
+        values[5] = self.unused
+        values[6] = self.flags
+        return raw
 
     def check_size(self, size):
         if size == 92160 or size == 92176:
@@ -89,6 +103,10 @@ class XfdHeader(AtrHeader):
     
     def __str__(self):
         return "%s Disk Image (size=%d (%dx%db)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size)
+    
+    def to_array(self):
+        raw = np.zeros([0], dtype=np.uint8)
+        return raw
 
 
 class DiskImageBase(object):
@@ -129,6 +147,26 @@ class DiskImageBase(object):
         self.get_vtoc()
         self.get_directory()
         self.check_sane()
+    
+    def rebuild_header(self):
+        header = AtrHeader()
+        header.check_size(self.size)
+        self.header = header
+    
+    def save(self, filename=""):
+        if not filename:
+            filename = self.filename
+            if self.ext:
+                filename += "." + self.ext
+        if not filename:
+            raise RuntimeError("No filename specified for save!")
+        bytes = self.bytes[:]
+        with open(filename, "wb") as fh:
+            h = self.header.to_array()
+            print h
+            if len(h) > 0:
+                h.tofile(fh)
+            bytes.tofile(fh)
     
     def assert_valid_sector(self, sector):
         if not self.header.sector_is_valid(sector):
@@ -266,6 +304,8 @@ class BootDiskImage(DiskImageBase):
         return "%s Boot Disk" % (self.header)
     
     def check_size(self):
+        if self.header is None:
+            return
         start, size = self.header.get_pos(1)
         b = self.bytes
         i = self.header.atr_header_offset
