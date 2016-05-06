@@ -17,7 +17,7 @@ class AtrHeader(object):
         ])
     file_format = "ATR"
     
-    def __init__(self, bytes=None, sector_size=128, initial_sectors=3):
+    def __init__(self, bytes=None, sector_size=128, initial_sectors=3, create=False):
         self.image_size = 0
         self.sector_size = sector_size
         self.crc = 0
@@ -27,6 +27,9 @@ class AtrHeader(object):
         self.initial_sector_size = sector_size
         self.num_initial_sectors = initial_sectors
         self.max_sectors = 0
+        if create:
+            self.atr_header_offset = 16
+            self.check_size(0)
         if bytes is None:
             return
         
@@ -45,6 +48,9 @@ class AtrHeader(object):
     
     def __str__(self):
         return "%s Disk Image (size=%d (%dx%db), crc=%d flags=%d unused=%d)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size, self.crc, self.flags, self.unused)
+    
+    def __len__(self):
+        return self.atr_header_offset
     
     def to_array(self):
         raw = np.zeros([16], dtype=np.uint8)
@@ -104,6 +110,9 @@ class XfdHeader(AtrHeader):
     def __str__(self):
         return "%s Disk Image (size=%d (%dx%db)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size)
     
+    def __len__(self):
+        return 0
+    
     def to_array(self):
         raw = np.zeros([0], dtype=np.uint8)
         return raw
@@ -141,17 +150,31 @@ class DiskImageBase(object):
     def setup(self):
         self.size = np.alen(self.bytes)
         self.read_atr_header()
-        self.header.check_size(self.size)
+        self.header.check_size(self.size - len(self.header))
         self.check_size()
         self.get_boot_sector_info()
         self.get_vtoc()
         self.get_directory()
         self.check_sane()
     
-    def rebuild_header(self):
-        header = AtrHeader()
-        header.check_size(self.size)
-        self.header = header
+    @classmethod
+    def new_header(cls, diskimage, format="ATR"):
+        if format.lower() == "atr":
+            header = AtrHeader(create=True)
+            header.check_size(diskimage.size)
+        else:
+            raise RuntimeError("Unknown header type %s" % format)
+        return header
+    
+    def as_new_format(self, format="ATR"):
+        """ Create a new disk image in the specified format
+        """
+        first_data = len(self.header)
+        raw = self.rawdata[first_data:]
+        data = add_atr_header(raw)
+        newraw = SegmentData(data)
+        image = self.__class__(newraw)
+        return image
     
     def save(self, filename=""):
         if not filename:
@@ -162,10 +185,6 @@ class DiskImageBase(object):
             raise RuntimeError("No filename specified for save!")
         bytes = self.bytes[:]
         with open(filename, "wb") as fh:
-            h = self.header.to_array()
-            print h
-            if len(h) > 0:
-                h.tofile(fh)
             bytes.tofile(fh)
     
     def assert_valid_sector(self, sector):
@@ -323,3 +342,12 @@ class BootDiskImage(DiskImageBase):
         max_sectors = max_size / self.header.sector_size
         if nsec > max_sectors:
             raise InvalidDiskImage("Number of boot sectors out of range")
+
+def add_atr_header(bytes):
+    header = AtrHeader(create=True)
+    header.check_size(len(bytes))
+    hlen = len(header)
+    data = np.empty([hlen + len(bytes)], dtype=np.uint8)
+    data[0:hlen] = header.to_array()
+    data[hlen:] = bytes
+    return data
