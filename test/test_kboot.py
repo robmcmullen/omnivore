@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 
-from atrcopy import KBootImage, add_kboot_header
+from atrcopy import SegmentData, KBootImage, add_xexboot_header
 
 
 class TestKbootHeader(object):
@@ -10,10 +10,24 @@ class TestKbootHeader(object):
         pass
 
     def check_size(self, data):
-        size = np.alen(data)
-        image = add_kboot_header(data)
-        assert int(image[2:4].view(dtype='<u2')) == ((size + 127) / 128) * 128 / 16
-        assert int(image[16 + 9:16 + 9 + 2].view('<u2')) == size
+        xex_size = len(data)
+        bytes = add_xexboot_header(data)
+        rawdata = SegmentData(bytes)
+        size = len(rawdata)
+        atr = KBootImage(rawdata)
+        atr.rebuild_header()
+        header_data = atr.header.to_array()
+        print header_data
+        newdata = np.append(header_data, atr.bytes)
+        newrawdata = SegmentData(newdata)
+        atr = KBootImage(newrawdata)
+        atr.rebuild_header()
+        image = atr.bytes
+        print image[0:16]
+        paragraphs = size / 16
+        print atr.header, paragraphs
+        assert int(image[2:4].view(dtype='<u2')) == paragraphs
+        assert int(image[16 + 9:16 + 9 + 2].view('<u2')) == xex_size
         return image
 
     def test_simple(self):
