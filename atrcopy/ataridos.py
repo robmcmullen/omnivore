@@ -346,3 +346,24 @@ class AtariDosDiskImage(DiskImageBase):
             except InvalidBinaryFile:
                 log.debug("%s not a binary file; skipping segment generation" % str(segment))
         return segments_out
+
+def get_xex(segments, runaddr):
+    total = 2
+    for s in segments:
+        total += 4 + len(s)
+    total += 6
+    bytes = np.zeros([total], dtype=np.uint8)
+    bytes[0:2] = 0xff # FFFF header
+    i = 2
+    for s in segments:
+        words = bytes[i:i+4].view(dtype='<u2')
+        words[0] = s.start_addr
+        words[1] = s.start_addr + len(s) - 1
+        i += 4
+        bytes[i:i + len(s)] = s[:]
+        i += len(s)
+    words = bytes[i:i+6].view(dtype='<u2')
+    words[0] = 0x2e0
+    words[1] = 0x2e1
+    words[2] = runaddr
+    return bytes
