@@ -147,6 +147,7 @@ class HexEditTask(FrameworkTask):
     def get_actions_Menu_File_ExportGroup(self):
         return [
             SaveAsXEXAction(),
+            SaveAsXEXBootAction(),
             ]
     
     def get_actions_Menu_File_SaveGroup(self):

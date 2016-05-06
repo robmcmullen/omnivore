@@ -12,7 +12,7 @@ from pyface.api import YES, NO
 from pyface.action.api import Action, ActionItem
 from pyface.tasks.action.api import TaskAction, EditorAction
 
-from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask
+from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, add_xexboot_header, add_atr_header, BootDiskImage, SegmentData
 
 from omnivore.framework.actions import *
 from commands import *
@@ -694,16 +694,37 @@ class SetSegmentOriginAction(EditorAction):
 class SaveAsXEXAction(EditorAction):
     name = 'Export as XEX...'
     tooltip = 'Create executable from segments'
+    title = 'Create Executable'
+    file_ext = "xex"
+
+    def get_bytes(self, dlg):
+        return dlg.get_bytes()
 
     def perform(self, event):
         e = self.active_editor
-        dlg = SegmentOrderDialog(e.window.control, "Create Executable", e.document.segments[1:])
+        dlg = SegmentOrderDialog(e.window.control, self.title, e.document.segments[1:])
         if dlg.ShowModal() == wx.ID_OK:
-            bytes = dlg.get_bytes()
-            dialog = FileDialog(default_filename="test.xex", parent=e.window.control, action='save as')
+            bytes = self.get_bytes(dlg)
+            dialog = FileDialog(default_filename="test.%s" % self.file_ext, parent=e.window.control, action='save as')
             if dialog.open() == OK:
                 self.active_editor.save_to_uri(bytes, dialog.path, False)
         dlg.Destroy()
+
+
+class SaveAsXEXBootAction(SaveAsXEXAction):
+    name = 'Export as Boot Disk...'
+    tooltip = 'Create a bootable disk from segments'
+    title = 'Create Boot Disk'
+    file_ext = "atr"
+
+    def get_bytes(self, dlg):
+        xex = dlg.get_bytes()
+        bytes = add_xexboot_header(xex)
+        bytes = add_atr_header(bytes)
+        rawdata = SegmentData(bytes)
+        atr = BootDiskImage(rawdata)
+        print atr.header
+        return atr.bytes.tostring()
 
 
 class SaveSegmentAsFormatAction(EditorAction):
