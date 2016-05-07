@@ -292,7 +292,13 @@ class DisassemblyPanel(ByteGrid):
         Raises IndexError if the disassembly hasn't reached the index yet
         """
         start_row = self.table.index_to_row[start]
-        end_row = self.table.index_to_row[end]
+        try:
+            end_row = self.table.index_to_row[end]
+        except IndexError:
+            # check if entire segment selected; if so, end will be one past last
+            # allowable entry in index_to_row
+            end -= 1
+            end_row = self.table.index_to_row[end]
         lines = []
         blank_label = ""
         org = self.table.GetRowLabelValue(start_row)
