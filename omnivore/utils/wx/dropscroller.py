@@ -539,7 +539,7 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
             for i, item in enumerate(self.items):
                 print i, item, self.get_item_text(item)
     
-    def clear(self, evt):
+    def clear(self, evt=None):
         self.DeleteAllItems()
         self.items = []
     
