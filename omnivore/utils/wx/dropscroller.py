@@ -362,6 +362,7 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
             self.drop_target = PickledDropTarget(self)
             self.SetDropTarget(self.drop_target)
         self.Bind(wx.EVT_LIST_BEGIN_DRAG, self.on_start_drag)
+        self.Bind(wx.EVT_CONTEXT_MENU, self.on_context_menu)
         
         self.set_items(items)
     
@@ -415,6 +416,17 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
         #print "Begining DragDrop\n"
         result = drop_source.DoDragDrop(wx.Drag_AllowMove)
         #print "DragDrop completed: %d\n" % result
+    
+    def on_context_menu(self, evt):
+        menu = wx.Menu()
+        menu.Append(wx.ID_SELECTALL, "Select All")
+        menu.Append(wx.ID_CLEAR, "Deselect All")
+        id = self.GetPopupMenuSelectionFromUser(menu)
+        menu.Destroy()
+        if id == wx.ID_SELECTALL:
+            self.select_all()
+        elif id == wx.ID_CLEAR:
+            self.deselect_all()
 
     def add_dropped_items(self, x, y, data):
         src, items = data
@@ -555,6 +567,10 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
         for i, item in enumerate(self.items):
             if item in selected:  # pay for the slowdown here with O(N^2) search
                 self.SetItemState(i, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+    
+    def select_all(self):
+        for i in range(self.GetItemCount()):
+            self.SetItemState(i, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
     
     def deselect_all(self):
         for i in range(self.GetItemCount()):
