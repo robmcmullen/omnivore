@@ -118,7 +118,7 @@ class ListDropScrollerMixin(object):
                 
                 # Append to the end of the list or return an invalid index
                 if insert:
-                    index = sys.maxint
+                    index = self.GetItemCount()
                 else:
                     index = self.GetItemCount() - 1
                 #print "getDropIndex: append to end of list: index=%d" % index
