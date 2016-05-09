@@ -564,7 +564,7 @@ class ListReorderDialog(wx.Dialog):
 
         self.Layout()
         
-        self.Bind(wx.EVT_CONTEXT_MENU, self.on_context_menu)
+        self.list.Bind(wx.EVT_CONTEXT_MENU, self.on_context_menu)
         self.delete_id = wx.NewId()
         self.Bind(wx.EVT_MENU, self.on_delete, id=self.delete_id)
         
@@ -574,26 +574,30 @@ class ListReorderDialog(wx.Dialog):
         self.on_list_selection(None)
     
     def on_list_selection(self, evt):
+        one_selected = self.list.GetSelectedItemCount() == 1
+        any_selected = self.list.GetSelectedItemCount() > 0
         self.up.Enable(self.list.can_move_up)
         self.down.Enable(self.list.can_move_down)
-        state = self.list.GetSelectedItemCount() > 0
-        self.edit.Enable(state)
+        self.edit.Enable(one_selected)
         if self.copy is not None:
-            self.copy.Enable(state)
-        self.delete.Enable(state)
+            self.copy.Enable(one_selected)
+        self.delete.Enable(any_selected)
     
     def on_context_menu(self, evt):
+        one_selected = self.list.GetSelectedItemCount() == 1
+        any_selected = self.list.GetSelectedItemCount() > 0
         menu = wx.Menu()
         menu.Append(wx.ID_NEW, "New Item")
         menu.Append(wx.ID_EDIT, "Edit Item")
+        menu.Enable(wx.ID_EDIT, one_selected)
         if self.copy is not None:
             menu.Append(wx.ID_COPY, "Copy Item")
+            menu.Enable(wx.ID_COPY, one_selected)
+        menu.AppendSeparator()
+        menu.Append(wx.ID_SELECTALL, "Select All")
+        menu.Append(wx.ID_CLEAR, "Deselect All")
         menu.Append(wx.ID_DELETE, "Delete Selected Items")
-        if self.list.GetSelectedItemCount() == 0:
-            menu.Enable(wx.ID_EDIT, False)
-            if self.copy is not None:
-                menu.Enable(wx.ID_COPY, False)
-            menu.Enable(wx.ID_DELETE, False)
+        menu.Enable(wx.ID_DELETE, any_selected)
         id = self.GetPopupMenuSelectionFromUser(menu)
         menu.Destroy()
         if id == wx.ID_NEW:
@@ -604,6 +608,10 @@ class ListReorderDialog(wx.Dialog):
             self.on_edit(evt)
         elif id == wx.ID_COPY:
             self.on_copy(evt)
+        if id == wx.ID_SELECTALL:
+            self.list.select_all()
+        elif id == wx.ID_CLEAR:
+            self.list.deselect_all()
 
     def get_items(self):
         return self.list.items
