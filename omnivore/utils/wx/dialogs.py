@@ -661,15 +661,115 @@ class ListReorderDialog(wx.Dialog):
         self.list.delete_selected()
 
 
+class CheckItemDialog(wx.Dialog):
+    """Simple dialog to return a list of items that can be reordered by the user.
+    """
+    border = 5
+    
+    def __init__(self, parent, items, get_item_text, dialog_helper=None, title="Select Items", instructions=""):
+        wx.Dialog.__init__(self, parent, -1, title,
+                           size=(700, 500), pos=wx.DefaultPosition, 
+                           style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.get_item_text = get_item_text
+        self.dialog_helper = dialog_helper
+
+        if instructions:
+            t = wx.StaticText(self, -1, instructions)
+            sizer.Add(t, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, self.border)
+
+        # Use multi-select to make sure no initial item is selecte. Single
+        # select forces the first item to be selected.
+        self.list = wx.CheckListBox(self, size=(-1,500), style=wx.LB_MULTIPLE)
+        
+        # Both EVT_LISTBOX and EVT_CHECKLISTBOX cancel each other out when
+        # clicking on the check box itself. Clicking only on item text causes
+        # EVT_LISTBOX event only.
+#        self.list.Bind(wx.EVT_LISTBOX, self.on_list_selection)
+        self.list.Bind(wx.EVT_CHECKLISTBOX, self.on_list_check)
+        self.list.Bind(wx.EVT_CONTEXT_MENU, self.on_context_menu)
+        sizer.Add(self.list, 1, wx.EXPAND)
+        self.set_items(items)
+        
+        btnsizer = wx.StdDialogButtonSizer()
+        btn = wx.Button(self, wx.ID_OK)
+        btn.SetDefault()
+        btnsizer.AddButton(btn)
+        btn = wx.Button(self, wx.ID_CANCEL)
+        btnsizer.AddButton(btn)
+        btnsizer.Realize()
+        sizer.Add(btnsizer, 0, wx.EXPAND, 0)
+
+        self.SetSizer(sizer)
+        sizer.Fit(self)
+
+        self.Layout()
+        
+        self.Bind(wx.EVT_CONTEXT_MENU, self.on_context_menu)
+        self.delete_id = wx.NewId()
+    
+    def set_items(self, items):
+        self.clear()
+        for item in items:
+            self.insert_item(self.list.GetCount(), item)
+    
+    def insert_item(self, index, item):
+        self.list.Insert("placeholder", index)
+        self.set_item_text(index, item)
+        self.items[index:index] = [item]
+    
+    def set_item_text(self, index, item):
+        text = self.get_item_text(item)
+        self.list.SetString(index, text)
+    
+    def on_list_selection(self, evt):
+        index = evt.GetInt()
+        self.list.Check(index, not self.list.IsChecked(index))
+        self.list.SetSelection(index)
+    
+    def on_list_check(self, evt):
+        index = evt.GetInt()
+    
+    def on_context_menu(self, evt):
+        menu = wx.Menu()
+        menu.Append(wx.ID_SELECTALL, "Select All")
+        menu.Append(wx.ID_CLEAR, "Deselect All")
+        id = self.GetPopupMenuSelectionFromUser(menu)
+        menu.Destroy()
+        if id == wx.ID_SELECTALL:
+            self.select_all()
+        elif id == wx.ID_CLEAR:
+            self.deselect_all()
+
+    def select_all(self):
+        self.list.SetChecked(range(self.list.GetCount()))
+    
+    def deselect_all(self):
+        self.list.SetChecked([])
+
+    def get_items(self):
+        return self.items
+    
+    def get_checked_items(self):
+        return [self.items[i] for i in self.list.GetChecked()]
+    
+    def clear(self, evt=None):
+        self.list.Clear()
+        self.items = []
+
+
 if __name__ == "__main__":
     app = wx.PySimpleApp()
 
     frame = wx.Frame(None, -1, "Dialog test")
 #    dialog = EmulatorDialog(frame, "Test")
 #    dialog.ShowModal()
-    dlg = ListReorderDialog(frame, [chr(i + 65) for i in range(26)], lambda a:str(a))
+#    dlg = ListReorderDialog(frame, [chr(i + 65) for i in range(26)], lambda a:str(a))
+    dlg = CheckItemDialog(frame, [chr(i + 65) for i in range(26)], lambda a:str(a))
     if dlg.ShowModal() == wx.ID_OK:
-        print dlg.get_items()
+        print dlg.get_checked_items()
     dlg.Destroy()
 
     app.MainLoop()
