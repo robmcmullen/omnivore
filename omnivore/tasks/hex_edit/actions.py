@@ -859,7 +859,7 @@ class IndexRangeValueAction(IndexRangeAction):
         return self.cmd.pretty_name + "..."
     
     def show_dialog(self, e):
-        value = prompt_for_hex(e.window.control, "Enter byte value: (prefix with 0x or $ for hex)", self.cmd.pretty_name)
+        value = prompt_for_hex(e.window.control, "Enter byte value: (prefix with 0x or $ for hex, % for binary)", self.cmd.pretty_name)
         if value is not None:
             cmd = self.cmd(e.segment, e.selected_ranges, value)
             self.active_editor.process_command(cmd)

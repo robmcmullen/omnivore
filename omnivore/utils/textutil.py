@@ -274,6 +274,8 @@ def text_to_int(text, default_base="dec"):
         value = int(text[1:], 16)
     elif text.startswith("#"):
         value = int(text[1:], 10)
+    elif text.startswith("%"):
+        value = int(text[1:], 2)
     else:
         if default_base == "dec":
             value = int(text)
