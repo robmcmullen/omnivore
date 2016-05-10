@@ -250,7 +250,9 @@ class FrameworkEditor(Editor):
             self.document.undo_stack_changed = True
             saved = True
         except Exception, e:
-            log.error("%s: %s" % (uri, str(e)))
+            import traceback
+            stack = traceback.format_exc()
+            log.error("%s:\n%s" % (uri, stack))
             self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
             saved = False
         return saved
@@ -276,12 +278,12 @@ class FrameworkEditor(Editor):
             self.get_extra_metadata(metadata_dict)
             if metadata_dict:
                 relpath += ".omnivore"
-                fh = fs.open(relpath, 'wb')
                 log.debug("saving extra metadata to %s" % relpath)
                 jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
                 bytes = jsonpickle.dumps(metadata_dict)
                 text = jsonutil.collapse_json(bytes)
                 header = self.get_extra_metadata_header()
+                fh = fs.open(relpath, 'wb')
                 fh.write(header)
                 fh.write(text)
                 fh.close()
