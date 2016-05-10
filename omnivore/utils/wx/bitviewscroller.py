@@ -436,9 +436,10 @@ class BitviewScroller(wx.ScrolledWindow):
 
     def on_motion_update_status(self, evt):
         byte, bit, inside = self.event_coords_to_byte(evt)
-        label = self.get_label_at_index(byte)
-        message = self.get_status_message_at_index(byte, bit)
-        self.editor.show_status_message("%s: %s %s" % (self.short_name, label, message))
+        if inside:
+            label = self.get_label_at_index(byte)
+            message = self.get_status_message_at_index(byte, bit)
+            self.editor.show_status_message("%s: %s %s" % (self.short_name, label, message))
     
     def get_label_at_index(self, index):
         try:
@@ -563,7 +564,7 @@ class BitmapScroller(BitviewScroller):
             x = self.pixels_per_byte * self.bytes_per_row / self.bitplanes - 1
         xbyte = (x // self.pixels_per_byte) * self.bitplanes
         byte = (self.bytes_per_row * y) + xbyte
-        if byte > self.end_byte:
+        if byte >= self.end_byte:
             inside = False
         bit = 7 - (x & 7)
         return byte, bit, inside
@@ -735,7 +736,7 @@ class FontMapScroller(BitviewScroller):
         if x < 0 or x >= self.bytes_per_row or y < 0 or y > (self.start_row + self.visible_rows):
             inside = False
         byte = (self.bytes_per_row * y) + x
-        if byte > self.end_byte:
+        if byte >= self.end_byte:
             inside = False
         bit = 7 - (y & 7)
         return byte, bit, inside
@@ -1075,7 +1076,7 @@ class MemoryMapScroller(BitviewScroller):
         if x < 0 or x >= self.bytes_per_row or y < 0 or y > (self.start_row + self.visible_rows):
             inside = False
         byte = (self.bytes_per_row * y) + x
-        if byte > self.end_byte:
+        if byte >= self.end_byte:
             inside = False
         return byte, 0, inside
 
