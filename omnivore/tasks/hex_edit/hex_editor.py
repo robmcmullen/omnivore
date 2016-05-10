@@ -479,23 +479,24 @@ class HexEditor(FrameworkEditor):
         return ", ".join(labels)
     
     def get_segments_from_selection(self, size=-1):
-        # Since we can't handle segments with discontinuous chunks, we'll
-        # create a contiguous segment from the first byte of the first range
-        # to the last byte of the last range
         s = self.segment
+        segments = []
         
         # Get the selected ranges directly from the segment style data, because
-        # the individual range entries in self.selected_ranges can be out
-        # of order
+        # the individual range entries in self.selected_ranges can be out of
+        # order or overlapping
         ranges = s.get_style_ranges(selected=True)
-        first = ranges[0][0]
-        last = ranges[-1][1]
-        if size < 0:
-            size = last - first + 1
-        segments = []
-        for seg_start in range(first, last, size):
-            seg_end = min(seg_start + size, last)
+        if len(ranges) == 1:
+            seg_start, seg_end = ranges[0]
             segment = DefaultSegment(s.rawdata[seg_start:seg_end], s.start_addr + seg_start)
+            segments.append(segment)
+        elif len(ranges) > 1:
+            # If there are multiple selections, use an indexed segment
+            indexes = []
+            for start, end in ranges:
+                indexes.extend(range(start, end))
+            raw = s.rawdata.get_indexed(indexes)
+            segment = DefaultSegment(raw, s.start_addr + indexes[0])
             segments.append(segment)
         return segments
     
