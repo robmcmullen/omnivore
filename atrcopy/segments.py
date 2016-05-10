@@ -90,6 +90,9 @@ class SegmentData(object):
         self.comments = comments
         self.reverse_index_mapping = None
     
+    def __str__(self):
+        return "SegmentData id=%x indexed=%s data=%s" % (id(self), self.is_indexed, type(self.data))
+    
     def __len__(self):
         return len(self.data)
     
@@ -124,7 +127,7 @@ class SegmentData(object):
         segment
         """
         if self.is_indexed:
-            i = self.order[i]
+            return int(self.order[i])
         if self.data.base is None:
             return int(i)
         data_start, data_end = np.byte_bounds(self.data)
@@ -147,7 +150,19 @@ class SegmentData(object):
         index = to_numpy_list(index)
         if self.is_indexed:
             return self[index]
-        return SegmentData(self.data, self.style, self.comments, order=index)
+        
+        # check to make sure all indexes are valid, raises IndexError if not
+        check = self.data[index]
+        
+        # index needs to be relative to the base array
+        base_index = index + self.get_raw_index(0)
+        if self.data.base is None:
+            data_base = self.data
+            style_base = self.style
+        else:
+            data_base = self.data.base
+            style_base = self.style.base
+        return SegmentData(data_base, style_base, self.comments, order=base_index)
     
     def get_reverse_index(self, base_index):
         """Get index into this segment's data given the index into the base data
