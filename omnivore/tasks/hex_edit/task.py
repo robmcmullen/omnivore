@@ -72,11 +72,16 @@ class HexEditTask(FrameworkTask):
 
     def _extra_actions_default(self):
         machine_menu = self.create_menu("Menu", "Machine", "MachineTypeGroup", "MachineCharacteristicsGroup", "MachineEmulatorGroup")
-        segment_menu = self.create_menu("Menu", "Segments", "SegmentParserGroup", "SegmentGroup")
+        data_menu = self.create_menu("Menu", "Disk Image", "ParserGroup", "ActionGroup")
+        segment_menu = self.create_menu("Menu", "Segments", "SegmentGroup")
         bytes_menu = self.create_menu("Menu", "Bytes", "HexModifyGroup")
         actions = [
             # Menubar additions
             SchemaAddition(factory=lambda: machine_menu,
+                           path='MenuBar',
+                           after="Edit",
+                           ),
+            SchemaAddition(factory=lambda: data_menu,
                            path='MenuBar',
                            after="Edit",
                            ),
@@ -304,7 +309,7 @@ class HexEditTask(FrameworkTask):
                 id='MachineEmulator1', separator=True, name="Emulators"),
             ]
     
-    def get_actions_Menu_Segments_SegmentParserGroup(self):
+    def get_actions_Menu_DiskImage_ParserGroup(self):
         segment_parser_actions = [SegmentParserAction(segment_parser=s) for s in known_segment_parsers]
         return [
             SMenu(
@@ -312,6 +317,10 @@ class HexEditTask(FrameworkTask):
                     *segment_parser_actions,
                     id="a1", separator=True),
                 id='submenu1', separator=False, name="File Type"),
+            ]
+    
+    def get_actions_Menu_DiskImage_ActionGroup(self):
+        return [
             GetSegmentFromSelectionAction(),
             MultipleSegmentsFromSelectionAction(),
             MarkSelectionAsCodeAction(),
@@ -323,12 +332,12 @@ class HexEditTask(FrameworkTask):
             LoadBaselineVersionAction(),
             FindNextBaselineDiffAction(),
             FindPrevBaselineDiffAction(),
+            Separator(),
+            SegmentGotoAction(),
             ]
     
     def get_actions_Menu_Segments_SegmentGroup(self):
         return [
-            Separator(),
-            SegmentGotoAction(),
             SegmentChoiceGroup(id="a2", separator=True),
             ]
     
