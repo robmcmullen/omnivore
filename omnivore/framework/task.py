@@ -367,7 +367,9 @@ class FrameworkTask(Task):
         return actions
 
     def get_actions(self, location, menu_name, group_name):
-        method_name = "get_actions_%s_%s_%s" % (location, menu_name, group_name)
+        # allow spaces in menu names by removing them for function lookup
+        menu_lookup = menu_name.replace(" ","")
+        method_name = "get_actions_%s_%s_%s" % (location, menu_lookup, group_name)
         try:
             method = getattr(self, method_name)
             actions = method()
