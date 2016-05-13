@@ -332,6 +332,7 @@ class HexEditTask(FrameworkTask):
             LoadBaselineVersionAction(),
             FindNextBaselineDiffAction(),
             FindPrevBaselineDiffAction(),
+            ListDiffAction(),
             Separator(),
             SegmentGotoAction(),
             ]

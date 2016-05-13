@@ -5,6 +5,7 @@ import os
 import sys
 
 import wx
+import wx.lib.dialogs
 
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Int
@@ -1041,3 +1042,29 @@ class FindPrevBaselineDiffAction(EditorAction):
         new_index = e.segment.find_previous(index, diff=True)
         if new_index is not None:
             e.index_clicked(new_index, 0, None)
+
+class ListDiffAction(EditorAction):
+    name = 'List Differences'
+    tooltip = 'Show a text representation of the differences'
+    enabled_name = 'diff_highlight'
+
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        ranges = s.get_style_ranges(diff=True)
+        d = e.machine.get_disassembler(e.task.hex_grid_lower_case, e.task.assembly_lower_case)
+        d.set_pc(s, s.start_addr)
+        lines = []
+        blank_label = ""
+        for start, end in ranges:
+            bytes = list(s[start:end])
+            origin = s.label(start, e.task.hex_grid_lower_case)
+            comment = s.get_comment(start)
+            if comment:
+                lines.append("%-8s; %s" % (blank_label, comment))
+            lines.append("%-8s%s $%s" % (blank_label, d.asm_origin, origin))
+            lines.append("%-8s%s" % (blank_label, d.get_data_byte_string(bytes)))
+            lines.append("")
+        text = "\n".join(lines) + "\n"
+        dlg = wx.lib.dialogs.ScrolledMessageDialog(e.task.window.control, text, "Summary of Differences")
+        dlg.ShowModal()
