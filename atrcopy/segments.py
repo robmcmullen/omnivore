@@ -134,6 +134,18 @@ class SegmentData(object):
         base_start, base_end = np.byte_bounds(self.data.base)
         return int(data_start - base_start + i)
     
+    def get_indexes_from_base(self):
+        """Get array of indexes from the base array, as if this raw data were
+        indexed. 
+        """
+        if self.is_indexed:
+            return np.copy(self.order[i])
+        if self.data.base is None:
+            i = 0
+        else:
+            i = self.get_raw_index(0)
+        return np.arange(i, i + len(self), dtype=np.uint32)
+    
     def __getitem__(self, index):
         if self.is_indexed:
             order = self.data.sub_index(index)
@@ -146,6 +158,15 @@ class SegmentData(object):
         c = self.comments
         return SegmentData(d, s, c, order=order)
     
+    def get_bases(self):
+        if self.data.base is None:
+            data_base = self.data
+            style_base = self.style
+        else:
+            data_base = self.data.base
+            style_base = self.style.base
+        return data_base, style_base
+    
     def get_indexed(self, index):
         index = to_numpy_list(index)
         if self.is_indexed:
@@ -156,12 +177,7 @@ class SegmentData(object):
         
         # index needs to be relative to the base array
         base_index = index + self.get_raw_index(0)
-        if self.data.base is None:
-            data_base = self.data
-            style_base = self.style
-        else:
-            data_base = self.data.base
-            style_base = self.style.base
+        data_base, style_base = self.get_bases()
         return SegmentData(data_base, style_base, self.comments, order=base_index)
     
     def get_reverse_index(self, base_index):
@@ -587,3 +603,33 @@ class RawSectorsSegment(DefaultSegment):
         if lower_case:
             return "s%03d:%02x" % (sector + self.first_sector, byte)
         return "s%03d:%02X" % (sector + self.first_sector, byte)
+
+def interleave_indexes(segments, num_bytes):
+    num_segments = len(segments)
+    size = len(segments[0])
+    for s in segments[1:]:
+        if size != len(s):
+            raise ValueError("All segments to interleave must be the same size")
+    _, rem = divmod(size, num_bytes)
+    if rem != 0:
+        raise ValueError("Segment size must be a multiple of the byte interleave")
+    interleave = np.empty(size * num_segments, dtype=np.uint32)
+    factor = num_bytes * num_segments
+    start = 0
+    for s in segments:
+        order = s.rawdata.get_indexes_from_base()
+        for i in range(num_bytes):
+            interleave[start::factor] = order[i::num_bytes]
+            start += 1
+    return interleave
+
+def interleave_segments(segments, num_bytes):
+    new_index = interleave_indexes(segments, num_bytes)
+    data_base, style_base = segments[0].rawdata.get_bases()
+    for s in segments[1:]:
+        d, s = s.rawdata.get_bases()
+        if id(d) != id(data_base) or id(s) != id(style_base):
+            raise ValueError("Can't interleave segments with different base arrays")
+    raw = SegmentData(data_base, style_base, segments[0].rawdata.comments, order=new_index)
+    segment = DefaultSegment(raw, 0)
+    return segment
