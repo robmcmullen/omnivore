@@ -370,6 +370,7 @@ def get_file_dialog_wildcard(name, extension_list):
 class SegmentOrderDialog(wx.Dialog):
     border = 5
     instructions = "Drag segments to the right-hand list to create an executable"
+    dest_list_title = "Segments in Executable"
     
     def __init__(self, parent, title, segments):
         wx.Dialog.__init__(self, parent, -1, title, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
@@ -392,7 +393,7 @@ class SegmentOrderDialog(wx.Dialog):
         hbox.Add(vbox1, 1, wx.ALL|wx.EXPAND, 0)
 
         vbox2 = wx.BoxSizer(wx.VERTICAL)
-        t = wx.StaticText(self, -1, "Segments In Executable")
+        t = wx.StaticText(self, -1, self.dest_list_title)
         vbox2.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
         self.dest = ReorderableList(self, [], self.get_item_text, columns=["Origin", "Size", "Name"], resize_column=3, size=(400,300))
         vbox2.Add(self.dest, 1, wx.ALL|wx.EXPAND, self.border)
@@ -400,16 +401,7 @@ class SegmentOrderDialog(wx.Dialog):
         
         vbox = wx.BoxSizer(wx.VERTICAL)
         
-        t = wx.StaticText(self, -1, "Run Address")
-        vbox.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
-        self.run_addr = wx.TextCtrl(self, -1, size=(-1, -1))
-        vbox.Add(self.run_addr, 0, wx.ALL|wx.EXPAND, self.border)
-        
-        vbox.AddSpacer(50)
-        
-        self.clear = b = wx.Button(self, wx.ID_DOWN, 'Clear List', size=(90, -1))
-        b.Bind(wx.EVT_BUTTON, self.on_clear)
-        vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
+        self.add_command_area(vbox)
         
         vbox.AddStretchSpacer()
         
@@ -430,6 +422,18 @@ class SegmentOrderDialog(wx.Dialog):
         # Don't call self.Fit() otherwise the dialog buttons are zero height
         sizer.Fit(self)
         self.check_enable()
+    
+    def add_command_area(self, vbox):
+        t = wx.StaticText(self, -1, "Run Address")
+        vbox.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
+        self.run_addr = wx.TextCtrl(self, -1, size=(-1, -1))
+        vbox.Add(self.run_addr, 0, wx.ALL|wx.EXPAND, self.border)
+        
+        vbox.AddSpacer(50)
+        
+        self.clear = b = wx.Button(self, wx.ID_DOWN, 'Clear List', size=(90, -1))
+        b.Bind(wx.EVT_BUTTON, self.on_clear)
+        vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
     
     def get_item_text(self, sid):
         s = self.segment_map[sid]
@@ -495,6 +499,47 @@ class SegmentOrderDialog(wx.Dialog):
         words[1] = 0x2e1
         words[2] = self.get_run_addr()
         return bytes
+
+
+class SegmentInterleaveDialog(SegmentOrderDialog):
+    instructions = "Drag segments to the right-hand list to determine interleave order. Then, choose interleave factor in bytes."
+    dest_list_title = "Interleave Order"
+
+    def add_command_area(self, vbox):
+        t = wx.StaticText(self, -1, "Interleave Bytes")
+        vbox.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
+        self.intervleave = wx.TextCtrl(self, -1, size=(-1, -1))
+        vbox.Add(self.intervleave, 0, wx.ALL|wx.EXPAND, self.border)
+        
+        vbox.AddSpacer(50)
+        
+        self.clear = b = wx.Button(self, wx.ID_DOWN, 'Clear List', size=(90, -1))
+        b.Bind(wx.EVT_BUTTON, self.on_clear)
+        vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
+    
+    def get_length(self):
+        segments = self.get_segments()
+        if len(segments) == 0:
+            return -1
+        common = len(segments[0])
+        for s in segments[1:]:
+            if len(s) != common:
+                return -1
+        return common
+    
+    def get_interleave(self):
+        text = self.intervleave.GetValue()
+        length = self.get_length()
+        try:
+            num = text_to_int(text, "hex")
+            if num < 0 or num > length:
+                num = 0
+        except (ValueError, TypeError), e:
+            num = 0
+        return num
+    
+    def can_submit(self):
+        return self.get_length() > 0 and self.get_interleave() > 0
 
 
 class ListReorderDialog(wx.Dialog):

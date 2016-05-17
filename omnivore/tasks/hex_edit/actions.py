@@ -13,12 +13,12 @@ from pyface.api import YES, NO
 from pyface.action.api import Action, ActionItem
 from pyface.tasks.action.api import TaskAction, EditorAction
 
-from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, add_xexboot_header, add_atr_header, BootDiskImage, SegmentData
+from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, add_xexboot_header, add_atr_header, BootDiskImage, SegmentData, interleave_segments
 
 from omnivore.framework.actions import *
 from commands import *
 from omnivore.arch.ui.antic_colors import AnticColorDialog
-from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, prompt_for_emulator, prompt_for_assembler, get_file_dialog_wildcard, SegmentOrderDialog, ListReorderDialog
+from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, prompt_for_emulator, prompt_for_assembler, get_file_dialog_wildcard, SegmentOrderDialog, ListReorderDialog, SegmentInterleaveDialog
 from omnivore.arch.machine import Machine
 from omnivore.framework.minibuffer import *
 
@@ -516,6 +516,28 @@ class MultipleSegmentsFromSelectionAction(EditorAction):
                 segment.name = text
                 e.add_user_segment(segment, False)
             e.update_segments_ui()
+
+
+class InterleaveSegmentsAction(EditorAction):
+    name = 'Interleave Segments'
+    tooltip = 'Create new segment by interleaving segments'
+    accelerator = 'F12'
+
+    def get_bytes(self, dlg):
+        return dlg.get_bytes()
+
+    def perform(self, event):
+        e = self.active_editor
+        dlg = SegmentInterleaveDialog(e.window.control, "Interleave Segments", e.document.segments[1:])
+        if dlg.ShowModal() == wx.ID_OK:
+            s = dlg.get_segments()
+            print s
+            factor = dlg.get_interleave()
+            print factor
+            segment = interleave_segments(s, factor)
+            e.add_user_segment(segment, False)
+            e.update_segments_ui()
+        dlg.Destroy()
 
 
 class MarkSelectionAsCodeAction(EditorAction):

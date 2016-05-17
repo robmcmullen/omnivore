@@ -323,6 +323,8 @@ class HexEditTask(FrameworkTask):
         return [
             GetSegmentFromSelectionAction(),
             MultipleSegmentsFromSelectionAction(),
+            InterleaveSegmentsAction(),
+            Separator(),
             MarkSelectionAsCodeAction(),
             MarkSelectionAsDataAction(),
             RevertToBaselineAction(),
