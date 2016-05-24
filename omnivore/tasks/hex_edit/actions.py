@@ -1090,3 +1090,21 @@ class ListDiffAction(EditorAction):
         text = "\n".join(lines) + "\n"
         dlg = wx.lib.dialogs.ScrolledMessageDialog(e.task.window.control, text, "Summary of Differences")
         dlg.ShowModal()
+
+class UndoCursorPositionAction(EditorAction):
+    name = 'Previous Cursor Position'
+    accelerator = 'Ctrl+-'
+    tooltip = 'Go to previous cursor position in cursor history'
+
+    def perform(self, event):
+        e = self.active_editor
+        e.undo_cursor_history()
+
+class RedoCursorPositionAction(EditorAction):
+    name = 'Next Cursor Position'
+    accelerator = 'Shift+Ctrl+-'
+    tooltip = 'Go to next cursor position in cursor history'
+
+    def perform(self, event):
+        e = self.active_editor
+        e.redo_cursor_history()

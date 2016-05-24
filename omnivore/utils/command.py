@@ -9,19 +9,68 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class UndoStack(list):
+class HistoryList(list):
     def __init__(self, *args, **kwargs):
         list.__init__(self, *args, **kwargs)
         self.insert_index = 0
         self.save_point_index = 0
-        self.batch = self
+
+    def __str__(self):
+        text = ""
+        for i, s in enumerate(self.history_list()):
+            if i == self.insert_index:
+                text += "  ---> insert index\n"
+            text += s + "\n"
+        if self.insert_index == len(self):
+            text += "  ---> insert index\n"
+        return text
     
     def is_dirty(self):
         return self.insert_index != self.save_point_index
     
     def set_save_point(self):
         self.save_point_index = self.insert_index
+
+    def can_undo(self):
+        return self.insert_index > 0
     
+    def can_redo(self):
+        return self.insert_index < len(self)
+    
+    def history_list(self):
+        h = [str(c) for c in self]
+        return h
+    
+    def get_undo_command(self):
+        if self.can_undo():
+            return self[self.insert_index - 1]
+    
+    def get_redo_command(self):
+        if self.can_redo():
+            return self[self.insert_index]
+
+    def add_command(self, command):
+        self[self.insert_index:] = [command]
+        self.insert_index += 1
+
+    def prev_command(self):
+        cmd = self.get_undo_command()
+        if cmd is not None:
+            self.insert_index -= 1
+        return cmd
+
+    def next_command(self):
+        cmd = self.get_redo_command()
+        if cmd is not None:
+            self.insert_index += 1
+        return cmd
+
+
+class UndoStack(HistoryList):
+    def __init__(self, *args, **kwargs):
+        HistoryList.__init__(self, *args, **kwargs)
+        self.batch = self
+
     def perform_setup(self, editor):
         pass
     
@@ -42,13 +91,6 @@ class UndoStack(list):
                 self.add_command(cmd)
             cmd.last_flags = undo_info.flags
         return undo_info
-
-    def can_undo(self):
-        return self.insert_index > 0
-    
-    def get_undo_command(self):
-        if self.can_undo():
-            return self[self.insert_index - 1]
     
     def undo(self, editor):
         cmd = self.get_undo_command()
@@ -59,13 +101,6 @@ class UndoStack(list):
             self.insert_index -= 1
         cmd.last_flags = undo_info.flags
         return undo_info
-    
-    def can_redo(self):
-        return self.insert_index < len(self)
-    
-    def get_redo_command(self):
-        if self.can_redo():
-            return self[self.insert_index]
     
     def redo(self, editor):
         cmd = self.get_redo_command()
@@ -106,10 +141,6 @@ class UndoStack(list):
             self.insert_index -= 1
             self[self.insert_index:self.insert_index + 1] = []
         return last
-    
-    def history_list(self):
-        h = [str(c) for c in self]
-        return h
     
     def serialize(self):
         s = Serializer()

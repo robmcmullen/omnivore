@@ -14,7 +14,7 @@ from pyface.tasks.api import Editor
 from pyface.action.api import ActionEvent
 
 from omnivore import __version__
-from omnivore.utils.command import StatusFlags
+from omnivore.utils.command import HistoryList, StatusFlags
 from omnivore.utils.sortutil import collapse_overlapping_ranges, invert_ranges, ranges_to_indexes
 from omnivore.utils.file_guess import FileGuess
 import omnivore.utils.jsonutil as jsonutil
@@ -62,6 +62,8 @@ class FrameworkEditor(Editor):
     # after the last byte
     
     cursor_index = Int(0)
+
+    cursor_history = Any
     
     # Anchor indexes behave like cursor positions: they indicate positions
     # between bytes
@@ -89,6 +91,9 @@ class FrameworkEditor(Editor):
 
     def _document_default(self):
         return Document()
+
+    def _cursor_history_default(self):
+        return HistoryList()
     
     def _last_search_settings_default(self):
         return {
@@ -490,7 +495,40 @@ class FrameworkEditor(Editor):
             self.refresh_panes()
         
         return index
-    
+
+    def update_cursor_history(self):
+        state = self.get_cursor_state()
+        last = self.cursor_history.get_undo_command()
+        if last is None or last != state:
+            cmd = self.cursor_history.get_redo_command()
+            if cmd is None or cmd != state:
+                self.cursor_history.add_command(state)
+            print self.cursor_history
+
+    def get_cursor_state(self):
+        return self.cursor_index
+
+    def undo_cursor_history(self):
+        if not self.cursor_history.can_redo():
+            # at the end of the history list, the last item will be the current position, so skip it
+            _ = self.cursor_history.prev_command()
+        cmd = self.cursor_history.prev_command()
+        if cmd is None:
+            return
+        self.restore_cursor_state(cmd)
+
+    def redo_cursor_history(self):
+        if not self.cursor_history.can_undo():
+            # at the start of the history list, the last item will be the current position, so skip it
+            _ = self.cursor_history.next_command()
+        cmd = self.cursor_history.next_command()
+        if cmd is None:
+            return
+        self.restore_cursor_state(cmd)
+
+    def restore_cursor_state(self, state):
+        self.set_cursor(state)
+
     def mark_index_range_changed(self, index_range):
         """Hook for subclasses to be informed when bytes within the specified
         index range have changed.

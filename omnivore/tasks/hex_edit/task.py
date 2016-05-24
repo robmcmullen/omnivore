@@ -377,6 +377,8 @@ class HexEditTask(FrameworkTask):
         return [
             FindPrevAction(),
             CancelMinibufferAction(),
+            UndoCursorPositionAction(),
+            RedoCursorPositionAction(),
             ]
 
     ###

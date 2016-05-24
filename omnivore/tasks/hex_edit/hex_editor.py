@@ -285,6 +285,21 @@ class HexEditor(FrameworkEditor):
     def check_document_change(self):
         if self.last_cursor_index != self.cursor_index or self.last_anchor_start_index != self.anchor_start_index or self.last_anchor_end_index != self.anchor_end_index:
             self.document.change_count += 1
+            self.update_cursor_history()
+
+    def get_cursor_state(self):
+        return self.segment, self.cursor_index
+
+    def restore_cursor_state(self, state):
+        segment, index = state
+        number = self.document.find_segment_index(segment)
+        if number < 0:
+            log.error("tried to restore cursor to a deleted segment? %s" % segment)
+        else:
+            if number != self.segment_number:
+                self.view_segment_number(number)
+            self.index_clicked(index, 0, None)
+        print self.cursor_history
     
     def refresh_panes(self):
         self.check_document_change()
