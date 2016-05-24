@@ -374,7 +374,7 @@ class FrameworkTask(Task):
             method = getattr(self, method_name)
             actions = method()
         except AttributeError:
-            log.warning("%s actions not found for %s/%s" % (location, menu_name, group_name))
+            log.warning("%s actions not found for %s/%s in %s" % (location, menu_name, group_name, self.id))
             actions = []
         return actions
     
