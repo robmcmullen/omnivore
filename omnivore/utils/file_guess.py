@@ -78,7 +78,7 @@ class FileGuess(object):
         log.debug("Attempting to load %s" % uri)
         self.reload(uri)
     
-    def reload(self, uri=None):
+    def get_fs(self, uri=None):
         if uri is None:
             uri = self.metadata.uri
         if uri.startswith("file://"):
@@ -88,6 +88,10 @@ class FileGuess(object):
         fs, relpath = opener.parse(uri)
         log.debug("Filesystem: %s" % fs)
         fh = fs.open(relpath, "rb")
+        return fh, fs, relpath
+
+    def reload(self, uri=None):
+        fh, fs, relpath = self.get_fs(uri)
         
         # In order to handle arbitrarily sized files, only read the first
         # header bytes.  If the file is bigger, it will be read by the task
@@ -118,6 +122,5 @@ class FileGuess(object):
         return self.metadata.clone_traits()
 
     def get_stream(self):
-        fs, relpath = opener.parse(self.metadata.uri)
-        fh = fs.open(relpath, "rb")
+        fh, fs, relpath = self.get_fs()
         return fh
