@@ -108,13 +108,13 @@ class SpartaDosDirent(AtariDosDirent):
 
 
 class SpartaDosDiskImage(DiskImageBase):
-    def __init__(self, bytes, style=None):
+    def __init__(self, *args, **kwargs):
         self.first_bitmap = 0
         self.num_bitmap = 0
         self.root_dir = 0
         self.root_dir_dirent = None
         self.fs_version = 0
-        DiskImageBase.__init__(self, bytes, style)
+        DiskImageBase.__init__(self, *args, **kwargs)
     
     def __str__(self):
         return "%s Sparta DOS Format: %d usable sectors (%d free), %d files" % (self.header, self.total_sectors, self.unused_sectors, len(self.files))

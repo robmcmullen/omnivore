@@ -18,7 +18,7 @@ class KBootDirent(AtariDosDirent):
         else:
             self.ext = "xex"
         start, size = image.header.get_pos(4)
-        i = image.header.atr_header_offset + 9
+        i = image.header.header_offset + 9
         count = image.bytes[i] + 256 * image.bytes[i+1] + 256 * 256 *image.bytes[i + 2]
         if start + count > image.size or start + count < image.size - 128:
             self.is_sane = False

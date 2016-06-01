@@ -149,7 +149,7 @@ class AtariDosFile(object):
         self.rawdata = rawdata
         self.size = len(rawdata)
         self.segments = []
-        self.parse_segments()
+        self.files = []
     
     def __str__(self):
         return "\n".join(str(s) for s in self.segments) + "\n"

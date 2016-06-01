@@ -13,6 +13,7 @@ from diskimages import AtrHeader, BootDiskImage, add_atr_header
 from kboot import KBootImage, add_xexboot_header
 from segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, user_bit_mask, match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, diff_bit_mask, not_user_bit_mask, interleave_segments
 from spartados import SpartaDosDiskImage
+from parsers import SegmentParser, DefaultSegmentParser, guess_parser_for, known_segment_parsers, mime_parse_order
 from utils import to_numpy
 
 
@@ -69,53 +70,29 @@ def run():
     
     for filename in options.files:
         with open(filename, "rb") as fh:
+            if options.verbose:
+                print "Loading file %s" % filename
             rawdata = SegmentData(fh.read())
-            data = rawdata.get_data()
-            image = None
-            if options.debug:
-                header = AtrHeader(data[0:16])
-                image = SpartaDosDiskImage(rawdata, filename)
-            else:
-                try:
-                    data = to_numpy(data)
-                    try:
-                        header = AtrHeader(data[0:16])
-                        for format in [KBootImage, SpartaDosDiskImage, AtariDosDiskImage]:
-                            if options.verbose: print "trying", format.__name__
-                            try:
-                                image = format(rawdata, filename)
-                                print "%s: %s" % (filename, image)
-                                break
-                            except InvalidDiskImage:
-                                pass
-                    except AtrError:
-                        for format in [AtariDosDiskImage]:
-                            try:
-                                image = format(rawdata, filename)
-                                print "%s: %s" % (filename, image)
-                                break
-                            except:
-                                raise
-                                #pass
-                except AtrError:
-                    if options.verbose: print "%s: Doesn't look like a supported disk image" % filename
-                    try:
-                        image = AtariDosFile(rawdata)
-                        print "%s:\n%s" % (filename, image)
-                    except InvalidBinaryFile:
-                        if options.verbose: print "%s: Doesn't look like an XEX either" % filename
+            parser = None
+            for mime in mime_parse_order:
+                if options.verbose:
+                    print "Trying MIME type %s" % mime
+                parser = guess_parser_for(mime, rawdata)
+                if parser is None:
                     continue
-                if image is None:
-                    image = BootDiskImage(rawdata, filename)
-            if options.segments:
-                image.parse_segments()
-                print "\n".join([str(a) for a in image.segments])
-            elif image.files or options.force:
-                for dirent in image.files:
-                    try:
-                        process(image, dirent, options)
-                    except FileNumberMismatchError164:
-                        print "Error 164: %s" % str(dirent)
-                    except ByteNotInFile166:
-                        print "Invalid sector for: %s" % str(dirent)
-
+                if options.verbose:
+                    print "Found parser %s" % parser.menu_name
+                print "%s: %s" % (filename, parser.image)
+                if options.segments:
+                    print "\n".join([str(a) for a in parser.segments])
+                elif parser.image.files or options.force:
+                    for dirent in parser.image.files:
+                        try:
+                            process(parser.image, dirent, options)
+                        except FileNumberMismatchError164:
+                            print "Error 164: %s" % str(dirent)
+                        except ByteNotInFile166:
+                            print "Invalid sector for: %s" % str(dirent)
+                break
+            if parser is None:
+                print "%s: Unknown file type" % filename

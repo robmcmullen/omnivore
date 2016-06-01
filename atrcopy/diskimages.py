@@ -23,12 +23,12 @@ class AtrHeader(object):
         self.crc = 0
         self.unused = 0
         self.flags = 0
-        self.atr_header_offset = 0
+        self.header_offset = 0
         self.initial_sector_size = sector_size
         self.num_initial_sectors = initial_sectors
         self.max_sectors = 0
         if create:
-            self.atr_header_offset = 16
+            self.header_offset = 16
             self.check_size(0)
         if bytes is None:
             return
@@ -42,7 +42,7 @@ class AtrHeader(object):
             self.crc = int(values[4])
             self.unused = int(values[5])
             self.flags = int(values[6])
-            self.atr_header_offset = 16
+            self.header_offset = 16
         else:
             raise InvalidAtrHeader
     
@@ -50,7 +50,7 @@ class AtrHeader(object):
         return "%s Disk Image (size=%d (%dx%db), crc=%d flags=%d unused=%d)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size, self.crc, self.flags, self.unused)
     
     def __len__(self):
-        return self.atr_header_offset
+        return self.header_offset
     
     def to_array(self):
         raw = np.zeros([16], dtype=np.uint8)
@@ -100,7 +100,7 @@ class AtrHeader(object):
         else:
             pos = self.num_initial_sectors * self.initial_sector_size + (sector - 1 - self.num_initial_sectors) * self.sector_size
             size = self.sector_size
-        pos += self.atr_header_offset
+        pos += self.header_offset
         return pos, size
 
 
@@ -149,7 +149,7 @@ class DiskImageBase(object):
 
     def setup(self):
         self.size = np.alen(self.bytes)
-        self.read_atr_header()
+        self.read_header()
         self.header.check_size(self.size - len(self.header))
         self.check_size()
         self.get_boot_sector_info()
@@ -195,7 +195,7 @@ class DiskImageBase(object):
         if not self.all_sane:
             raise InvalidDiskImage("Invalid directory entries; may be boot disk")
     
-    def read_atr_header(self):
+    def read_header(self):
         bytes = self.bytes[0:16]
         try:
             self.header = AtrHeader(bytes)
@@ -256,7 +256,7 @@ class DiskImageBase(object):
     
     def parse_segments(self):
         r = self.rawdata
-        i = self.header.atr_header_offset
+        i = self.header.header_offset
         if self.header.image_size > 0:
             self.segments.append(ObjSegment(r[0:i], 0, 0, 0, i, name="%s Header" % self.header.file_format))
         self.segments.append(RawSectorsSegment(r[i:], 1, self.header.max_sectors, self.header.image_size, 128, 3, self.header.sector_size, name="Raw disk sectors"))
@@ -327,7 +327,7 @@ class BootDiskImage(DiskImageBase):
             return
         start, size = self.header.get_pos(1)
         b = self.bytes
-        i = self.header.atr_header_offset
+        i = self.header.header_offset
         flag = b[i:i + 2].view(dtype='<u2')[0]
         if flag == 0xffff:
             raise InvalidDiskImage("Appears to be an executable")

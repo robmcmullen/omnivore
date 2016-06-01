@@ -24,3 +24,6 @@ class ByteNotInFile166(InvalidFile):
 
 class InvalidBinaryFile(InvalidFile):
     pass
+
+class InvalidSegmentParser(AtrError):
+    pass
