@@ -8,6 +8,8 @@ def to_numpy(value):
         return value
     elif type(value) is types.StringType:
         return np.fromstring(value, dtype=np.uint8)
+    elif type(value) is types.ListType:
+    	return np.asarray(value, dtype=np.uint8)
     raise TypeError("Can't convert to numpy data")
 
 

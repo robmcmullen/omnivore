@@ -4,6 +4,9 @@ class AtrError(RuntimeError):
 class InvalidAtrHeader(AtrError):
     pass
 
+class InvalidCartHeader(AtrError):
+    pass
+
 class InvalidDiskImage(AtrError):
     pass
 

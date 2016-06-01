@@ -166,18 +166,21 @@ class AtariDosFile(object):
             else:
                 self.segments.append(ObjSegment(r[pos:pos + 1], pos, pos + 1, 0, 1, "Incomplete Data"))
                 break
-            log.debug("header parsing: header=0x%x" % header)
             if header == 0xffff:
                 # Apparently 0xffff header can appear in any segment, not just
                 # the first.  Regardless, it is ignored everywhere.
                 pos += 2
+                first = False
+                continue
             elif first:
                 raise InvalidBinaryFile
-            first = False
+            log.debug("header parsing: header=0x%x" % header)
             if len(b[pos:pos + 4]) < 4:
                 self.segments.append(ObjSegment(r[pos:pos + 4], 0, 0, 0, len(b[pos:pos + 4]), "Short Segment Header"))
                 break
             start, end = b[pos:pos + 4].view(dtype='<u2')
+            if end < start:
+                raise InvalidBinaryFile
             count = end - start + 1
             found = len(b[pos + 4:pos + 4 + count])
             if found < count:
