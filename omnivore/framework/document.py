@@ -8,9 +8,10 @@ import fs
 # Enthought library imports.
 from traits.api import HasTraits, Trait, TraitHandler, Int, Any, List, Set, Bool, Event, Dict, Set, Unicode, Property, Str
 
+from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, InvalidSegmentParser
+
 from omnivore.utils.command import UndoStack
 from omnivore.utils.file_guess import FileGuess, FileMetadata
-from omnivore.utils.segmentutil import SegmentData, DefaultSegment, DefaultSegmentParser, InvalidSegmentParser
 
 
 class TraitNumpyConverter(TraitHandler):
@@ -139,7 +140,8 @@ class Document(HasTraits):
         parser_list.append(DefaultSegmentParser)
         for parser in parser_list:
             try:
-                s = parser(self)
+                r = SegmentData(self.bytes, self.style)
+                s = parser(r)
                 break
             except InvalidSegmentParser:
                 pass
