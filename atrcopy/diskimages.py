@@ -340,8 +340,10 @@ class BootDiskImage(DiskImageBase):
         max_ram = 0xc000
         max_size = max_ram - bload
         max_sectors = max_size / self.header.sector_size
-        if nsec > max_sectors:
+        if nsec > max_sectors or nsec < 3:
             raise InvalidDiskImage("Number of boot sectors out of range")
+        if bload < 0x200 or bload > (0xc000 - (nsec * self.header.sector_size)):
+            raise InvalidDiskImage("Bad boot load address")
 
 def add_atr_header(bytes):
     header = AtrHeader(create=True)
