@@ -13,7 +13,8 @@ from diskimages import AtrHeader, BootDiskImage, add_atr_header
 from kboot import KBootImage, add_xexboot_header
 from segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, user_bit_mask, match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, diff_bit_mask, not_user_bit_mask, interleave_segments
 from spartados import SpartaDosDiskImage
-from parsers import SegmentParser, DefaultSegmentParser, guess_parser_for, known_segment_parsers, mime_parse_order
+from cartridge import A8CartHeader
+from parsers import SegmentParser, DefaultSegmentParser, guess_parser_for_mime, guess_parser_for_system, known_segment_parsers, mime_parse_order
 from utils import to_numpy
 
 
@@ -77,7 +78,7 @@ def run():
             for mime in mime_parse_order:
                 if options.verbose:
                     print "Trying MIME type %s" % mime
-                parser = guess_parser_for(mime, rawdata)
+                parser = guess_parser_for_mime(mime, rawdata)
                 if parser is None:
                     continue
                 if options.verbose:

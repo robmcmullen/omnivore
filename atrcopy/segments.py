@@ -541,7 +541,7 @@ class EmptySegment(DefaultSegment):
 
 
 class ObjSegment(DefaultSegment):
-    def __init__(self, rawdata, metadata_start, data_start, start_addr, end_addr,  name="", **kwargs):
+    def __init__(self, rawdata, metadata_start, data_start, start_addr, end_addr=0,  name="", **kwargs):
         DefaultSegment.__init__(self, rawdata, start_addr, name, **kwargs)
         self.metadata_start = metadata_start
         self.data_start = data_start

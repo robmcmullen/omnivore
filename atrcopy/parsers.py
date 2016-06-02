@@ -5,6 +5,7 @@ from diskimages import BootDiskImage
 from kboot import KBootImage
 from ataridos import AtariDosDiskImage, AtariDosFile
 from spartados import SpartaDosDiskImage
+from cartridge import AtariCartImage, get_known_carts
 from errors import *
 
 
@@ -20,11 +21,14 @@ class SegmentParser(object):
     def parse(self, r):
         self.segments.append(DefaultSegment(r, 0))
         try:
-            self.image = self.image_type(r)
+            self.image = self.get_image(r)
             self.image.parse_segments()
         except AtrError:
             raise InvalidSegmentParser
         self.segments.extend(self.image.segments)
+
+    def get_image(self, r):
+        return self.image_type(r)
 
 
 class DefaultSegmentParser(SegmentParser):
@@ -59,7 +63,17 @@ class XexSegmentParser(SegmentParser):
     image_type = AtariDosFile
 
 
-def guess_parser_for(mime, r):
+class AtariCartSegmentParser(SegmentParser):
+    menu_name = "temp"
+    image_type = AtariCartImage
+    cart_index = 0
+    cart_info = None
+
+    def get_image(self, r):
+        return self.image_type(r, self.cart_index)
+
+
+def guess_parser_for_mime(mime, r):
     parsers = mime_parsers[mime]
     found = None
     for parser in parsers:
@@ -69,6 +83,14 @@ def guess_parser_for(mime, r):
         except InvalidSegmentParser:
             pass
     return found
+
+def guess_parser_for_system(mime_base, r):
+    for mime in mime_parse_order:
+        if mime.startswith(mime_base):
+            p = guess_parser_for_mime(mime, r)
+            if p is not None:
+                return mime, p
+    return None, None
 
 
 mime_parsers = {
@@ -87,6 +109,21 @@ mime_parse_order = [
     "application/vnd.atari8bit.atr",
     "application/vnd.atari8bit.xex",
     ]
+
+grouped_carts = get_known_carts()
+sizes = sorted(grouped_carts.keys())
+print sizes
+for k in sizes:
+    if k >= 1024:
+        key = "application/vnd.atari8bit.%dmb_cart" % (k / 1024)
+    else:
+        key = "application/vnd.atari8bit.%dkb_cart" % k
+    mime_parse_order.append(key)
+    mime_parsers[key] = []
+    for i, c in grouped_carts[k]:
+        kclass = type("AtariCartSegmentParser%d" % i, (AtariCartSegmentParser,), {'cart_index': i, 'cart_info': c, 'menu_name': "%s Cartridge" % c[1]})
+        mime_parsers[key].append(kclass)
+
 
 known_segment_parsers = [DefaultSegmentParser]
 for mime in mime_parse_order:

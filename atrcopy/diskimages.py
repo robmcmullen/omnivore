@@ -132,6 +132,9 @@ class DiskImageBase(object):
         self.segments = []
         self.all_sane = True
         self.setup()
+
+    def __len__(self):
+        return len(self.rawdata)
     
     def set_filename(self, filename):
         if "." in filename:
