@@ -479,6 +479,9 @@ class BitmapEditor(HexEditor):
         # Base-class constructor.
         self.control = MainBitmapScroller(parent, self.task)
 
+        # create attribute so HexEditor parent will reference the bitmap
+        self.bitmap = self.control
+
         ##########################################
         # Events.
         ##########################################
