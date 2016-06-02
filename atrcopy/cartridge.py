@@ -7,6 +7,10 @@ from segments import SegmentData, EmptySegment, ObjSegment
 from diskimages import DiskImageBase
 from utils import to_numpy
 
+import logging
+log = logging.getLogger(__name__)
+
+
 # From atari800 source
 known_cart_types = [
 # (note: all size units in KB)
@@ -19,74 +23,74 @@ known_cart_types = [
 # banked size
 # banked offset (for bank zero)
 # banked address
-    (0, "", 0,),
-    (1, "Standard 8K", 8, 8, 0, 0xa000),
-    (2, "Standard 16K", 16, 16, 0, 0x8000),
-    (3, "OSS 16K", 16, 4, 12, 0xb000, 4, 0, 0xa000),
-    (4, "5200 32K", 32, 32, 0, 0x4000),
-    (5, "DB 32K", 32,),
-    (6, "5200 EE 16K", 16,),
-    (7, "5200 BBSB 40K", 40,),
-    (8, "WILL 64K", 64,),
-    (9, "EXP_64K", 64,),
-    (10, "DIAMOND_64K", 64,),
-    (11, "SDX_64K", 64,),
-    (12, "XEGS_32K", 32,  8, 24, 0xa000, 8, 0, 0x8000),
-    (13, "XEGS_64_07K", 64,  8, 56, 0xa000, 8, 0, 0x8000),
-    (14, "XEGS_128K", 128, 8, 120, 0xa000, 8, 0, 0x8000),
-    (15, "OSS_M091_16K", 16,),
-    (16, "5200_NS_16K", 16,),
-    (17, "ATRAX_128K", 128,),
-    (18, "BBSB_40K", 40,),
-    (19, "5200_8K", 8, 8, 0, 0x8000),
-    (20, "5200_4K", 4, 4, 0, 0x8000),
-    (21, "RIGHT_8K", 8,),
-    (22, "WILL_32K", 32,),
-    (23, "XEGS_256K", 256, 8, 248, 0xa000, 8, 0, 0x8000),
-    (24, "XEGS_512K", 512, 8, 504, 0xa000, 8, 0, 0x8000),
-    (25, "XEGS_1024K", 1024, 8, 1016, 0xa000, 8, 0, 0x8000 ),
-    (26, "MEGA_16K", 16,),
-    (27, "MEGA_32K", 32,),
-    (28, "MEGA_64K", 64,),
-    (29, "MEGA_128K", 128,),
-    (30, "MEGA_256K", 256,),
-    (31, "MEGA_512K", 512,),
-    (32, "MEGA_1024K", 1024,),
-    (33, "SWXEGS_32K", 32,  8, 24, 0xa000, 8, 0, 0x8000),
-    (34, "SWXEGS_64K", 64,  8, 56, 0xa000, 8, 0, 0x8000),
-    (35, "SWXEGS_128K", 128, 8, 120, 0xa000, 8, 0, 0x8000),
-    (36, "SWXEGS_256K", 256, 8, 248, 0xa000, 8, 0, 0x8000),
-    (37, "SWXEGS_512K", 512, 8, 504, 0xa000, 8, 0, 0x8000),
-    (38, "SWXEGS_1024K", 1024, 8, 1016, 0xa000, 8, 0, 0x8000 ),
-    (39, "PHOENIX_8K", 8,),
-    (40, "BLIZZARD_16K", 16, 16, 0, 0x8000),
-    (41, "ATMAX_128K", 128,),
-    (42, "ATMAX_1024K", 1024,),
-    (43, "SDX_128K", 128,),
-    (44, "OSS_8K", 8,),
-    (45, "OSS_043M_16K", 16, 4, 12, 0xb000, 4, 0, 0xa000),
-    (46, "BLIZZARD_4K", 4,),
-    (47, "AST_32K", 32,),
-    (48, "ATRAX_SDX_64K", 64,),
-    (49, "ATRAX_SDX_128K", 128,),
-    (50, "TURBOSOFT_64K", 64,),
-    (51, "TURBOSOFT_128K", 128,),
-    (52, "ULTRACART_32K", 32,),
-    (53, "LOW_BANK_8K", 8, 8, 0, 0x8000),
-    (54, "SIC_128K", 128,),
-    (55, "SIC_256K", 256,),
-    (56, "SIC_512K", 512,),
-    (57, "Standard 2K", 2, 2, 0, 0xb800),
-    (58, "Standard 4K", 4, 4, 0, 0xb000),
-    (59, "Right 4K", 4, 4, 4, 0, 0x9000),
-    (60, "TURBO_HIT_32K", 32,),
-    (61, "MEGA_2048K", 2048,),
-    (62, "THECART_128MK", 128*1024,),
-    (63, "MEGA_4096K", 4096,),
-    (64, "MEGA_2048K", 2048,),
-    (65, "THECART_32MK", 32*1024,),
-    (66, "THECART_64MK", 64*1024,),
-    (67, "XEGS_64_8FK", 64),
+    (0,  "", 0,),
+    (1,  "Standard 8 KB", 8, 8, 0, 0xa000),
+    (2,  "Standard 16 KB", 16, 16, 0, 0x8000),
+    (3,  "OSS two chip (034M) 16 KB", 16, 4, 12, 0xb000, 4, 0, 0xa000),
+    (4,  "Standard 32 KB 5200", 32, 32, 0, 0x4000),
+    (5,  "DB 32 KB", 32,),
+    (6,  "Two chip 16 KB 5200", 16,),
+    (7,  "Bounty Bob 40 KB 5200", 40,),
+    (8,  "Williams 64 KB", 64,),
+    (9,  "Express 64 KB", 64,),
+    (10, "Diamond 64 KB", 64,),
+    (11, "SpartaDOS X 64 KB", 64,),
+    (12, "XEGS 32 KB", 32,  8, 24, 0xa000, 8, 0, 0x8000),
+    (13, "XEGS (banks 0-7) 64 KB", 64, 8, 56, 0xa000, 8, 0, 0x8000),
+    (14, "XEGS 128 KB", 128, 8, 120, 0xa000, 8, 0, 0x8000),
+    (15, "OSS one chip 16 KB", 16,),
+    (16, "One chip 16 KB 5200", 16,),
+    (17, "Atrax 128 KB", 128,),
+    (18, "Bounty Bob 40 KB", 40,),
+    (19, "Standard 8 KB 5200", 8, 8, 0, 0x8000),
+    (20, "Standard 4 KB 5200", 4, 4, 0, 0x8000),
+    (21, "Right slot 8 KB", 8,),
+    (22, "Williams 32 KB", 32,),
+    (23, "XEGS 256 KB", 256, 8, 248, 0xa000, 8, 0, 0x8000),
+    (24, "XEGS 512 KB", 512, 8, 504, 0xa000, 8, 0, 0x8000),
+    (25, "XEGS 1 MB", 1024, 8, 1016, 0xa000, 8, 0, 0x8000 ),
+    (26, "MegaCart 16 KB", 16,),
+    (27, "MegaCart 32 KB", 32,),
+    (28, "MegaCart 64 KB", 64,),
+    (29, "MegaCart 128 KB", 128,),
+    (30, "MegaCart 256 KB", 256,),
+    (31, "MegaCart 512 KB", 512,),
+    (32, "MegaCart 1 MB", 1024,),
+    (33, "Switchable XEGS 32 KB", 32,  8, 24, 0xa000, 8, 0, 0x8000),
+    (34, "Switchable XEGS 64 KB", 64,  8, 56, 0xa000, 8, 0, 0x8000),
+    (35, "Switchable XEGS 128 KB", 128, 8, 120, 0xa000, 8, 0, 0x8000),
+    (36, "Switchable XEGS 256 KB", 256, 8, 248, 0xa000, 8, 0, 0x8000),
+    (37, "Switchable XEGS 512 KB", 512, 8, 504, 0xa000, 8, 0, 0x8000),
+    (38, "Switchable XEGS 1 MB", 1024, 8, 1016, 0xa000, 8, 0, 0x8000 ),
+    (39, "Phoenix 8 KB", 8,),
+    (40, "Blizzard 16 KB", 16, 16, 0, 0x8000),
+    (41, "Atarimax 128 KB Flash", 128,),
+    (42, "Atarimax 1 MB Flash", 1024,),
+    (43, "SpartaDOS X 128 KB", 128,),
+    (44, "OSS 8 KB", 8,),
+    (45, "OSS two chip (043M) 16 KB", 16, 4, 12, 0xb000, 4, 0, 0xa000),
+    (46, "Blizzard 4 KB", 4,),
+    (47, "AST 32 KB", 32,),
+    (48, "Atrax SDX 64 KB", 64,),
+    (49, "Atrax SDX 128 KB", 128,),
+    (50, "Turbosoft 64 KB", 64,),
+    (51, "Turbosoft 128 KB", 128,),
+    (52, "Ultracart 32 KB", 32,),
+    (53, "Low bank 8 KB", 8, 8, 0, 0x8000),
+    (54, "SIC! 128 KB", 128,),
+    (55, "SIC! 256 KB", 256,),
+    (56, "SIC! 512 KB", 512,),
+    (57, "Standard 2 KB", 2, 2, 0, 0xb800),
+    (58, "Standard 4 KB", 4, 4, 0, 0xb000),
+    (59, "Right slot 4 KB", 4, 4, 4, 0, 0x9000),
+    (60, "Blizzard 32 KB", 32,),
+    (61, "MegaMax 2 MB", 2048,),
+    (62, "The!Cart 128 MB", 128*1024,),
+    (63, "Flash MegaCart 4 MB", 4096,),
+    (64, "MegaCart 2 MB", 2048,),
+    (65, "The!Cart 32 MB", 32*1024,),
+    (66, "The!Cart 64 MB", 64*1024,),
+    (67, "XEGS (banks 8-15) 64 KB", 64, 8, 56, 0xa000, 8, 0, 0x8000),
 ]
 
 def get_known_carts():
@@ -156,11 +160,11 @@ class A8CartHeader(object):
         return raw
 
     def set_type(self, cart_type):
-        print "TYPE", cart_type
         self.cart_type = cart_type
         c = known_cart_types[cart_type]
         self.cart_name = c[1]
         self.cart_size = c[2]
+        self.main_size = self.cart_size
         if len(c) >= 6:
             self.main_size, self.main_offset, self.main_origin = c[3:6]
         if len(c) >= 9:
@@ -197,15 +201,23 @@ class AtariCartImage(DiskImageBase):
         except InvalidCartHeader:
             self.header = A8CartHeader()
             self.header.set_type(self.cart_type)
+
+    def strict_check(self):
         if self.header.cart_type != self.cart_type:
             raise InvalidDiskImage("Cart type doesn't match type defined in header")
+
+    def relaxed_check(self):
+        if self.header.cart_type != self.cart_type:
+            # force the header to be the specified cart type
+            self.header = A8CartHeader()
+            self.header.set_type(self.cart_type)
     
     def check_size(self):
         if self.header is None:
             return
         k, rem = divmod((len(self) - len(self.header)), 1024)
         c = known_cart_types[self.cart_type]
-        print "checking %s:" % c[1], k, rem, c[2]
+        log.debug("checking %s:" % c[1], k, rem, c[2])
         if rem > 0:
             raise InvalidDiskImage("Cart not multiple of 1K")
         if k != c[2]:
@@ -227,7 +239,6 @@ class AtariCartImage(DiskImageBase):
         return [s]
 
     def get_banked_segments(self):
-        print "HI", self.header.banks
         segments = []
         r = self.rawdata
         for i, offset in enumerate(self.header.banks):

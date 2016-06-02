@@ -153,6 +153,12 @@ class AtariDosFile(object):
     
     def __str__(self):
         return "\n".join(str(s) for s in self.segments) + "\n"
+
+    def strict_check(self):
+        pass
+
+    def relaxed_check(self):
+        pass
     
     def parse_segments(self):
         r = self.rawdata

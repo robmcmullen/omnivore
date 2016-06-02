@@ -87,6 +87,9 @@ class AtrHeader(object):
             self.sector_size = 128
         initial_bytes = self.initial_sector_size * self.num_initial_sectors
         self.max_sectors = ((self.image_size - initial_bytes) / self.sector_size) + self.num_initial_sectors
+
+    def strict_check(self, image):
+        pass
     
     def sector_is_valid(self, sector):
         return sector > 0 and sector <= self.max_sectors
@@ -116,6 +119,12 @@ class XfdHeader(AtrHeader):
     def to_array(self):
         raw = np.zeros([0], dtype=np.uint8)
         return raw
+
+    def strict_check(self, image):
+        size = len(image)
+        if size in [92160, 133120, 183936, 184320]:
+            return
+        raise InvalidDiskImage("Uncommon size of XFD file")
 
 
 class DiskImageBase(object):
@@ -159,6 +168,16 @@ class DiskImageBase(object):
         self.get_vtoc()
         self.get_directory()
         self.check_sane()
+
+    def strict_check(self):
+        """Perform the strictest of checks to verify the data is valid """
+        self.header.strict_check(self)
+
+    def relaxed_check(self):
+        """Conform as much as possible to get the data to work with this
+        format.
+        """
+        pass
     
     @classmethod
     def new_header(cls, diskimage, format="ATR"):

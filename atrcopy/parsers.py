@@ -13,15 +13,17 @@ class SegmentParser(object):
     menu_name = ""
     image_type = None
     
-    def __init__(self, segment_data):
+    def __init__(self, segment_data, strict=False):
         self.image = None
         self.segments = []
+        self.strict = strict
         self.parse(segment_data)
-    
+
     def parse(self, r):
         self.segments.append(DefaultSegment(r, 0))
         try:
             self.image = self.get_image(r)
+            self.check_image()
             self.image.parse_segments()
         except AtrError:
             raise InvalidSegmentParser
@@ -29,6 +31,15 @@ class SegmentParser(object):
 
     def get_image(self, r):
         return self.image_type(r)
+
+    def check_image(self):
+        if self.strict:
+            try:
+                self.image.strict_check()
+            except AtrError:
+                raise InvalidSegmentParser
+        else:
+            self.image.relaxed_check()
 
 
 class DefaultSegmentParser(SegmentParser):
@@ -78,7 +89,7 @@ def guess_parser_for_mime(mime, r):
     found = None
     for parser in parsers:
         try:
-            found = parser(r)
+            found = parser(r, True)
             break
         except InvalidSegmentParser:
             pass
@@ -112,7 +123,6 @@ mime_parse_order = [
 
 grouped_carts = get_known_carts()
 sizes = sorted(grouped_carts.keys())
-print sizes
 for k in sizes:
     if k >= 1024:
         key = "application/vnd.atari8bit.%dmb_cart" % (k / 1024)
