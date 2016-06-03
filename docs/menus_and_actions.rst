@@ -97,6 +97,23 @@ trait, e.g.  setting a checkbox initial state::
         self.checked = self.active_editor.control.bounding_boxes_shown
 
 
+Menu Bar Manager
+================
+
+Found this useful tidbit in pyface/pyface/tasks/tests/test__dock_pane_toggle_group.py:
+
+        # Fish the dock pane toggle group from the menu bar manager.
+        dock_pane_toggle_group = []
+        def find_doc_pane_toggle(item):
+            if item.id == 'tests.bogus_task.DockPaneToggleGroup':
+                dock_pane_toggle_group.append(item)
+
+        self.task_state.menu_bar_manager.walk(find_doc_pane_toggle)
+
+        self.dock_pane_toggle_group = dock_pane_toggle_group[0]
+
+
+
 Tool Bars and Enable/Visible states
 ===================================
 
