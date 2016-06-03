@@ -1,4 +1,5 @@
 import bisect
+import cStringIO
 
 import numpy as np
 
@@ -95,6 +96,11 @@ class SegmentData(object):
     
     def __len__(self):
         return len(self.data)
+
+    @property
+    def stringio(self):
+        buf = cStringIO.StringIO(self.data[:])
+        return buf
     
     def get_data(self):
         return self.data

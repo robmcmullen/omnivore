@@ -14,7 +14,7 @@ from kboot import KBootImage, add_xexboot_header
 from segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, user_bit_mask, match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, diff_bit_mask, not_user_bit_mask, interleave_segments
 from spartados import SpartaDosDiskImage
 from cartridge import A8CartHeader
-from parsers import SegmentParser, DefaultSegmentParser, guess_parser_for_mime, guess_parser_for_system, iter_known_segment_parsers, mime_parse_order
+from parsers import SegmentParser, DefaultSegmentParser, guess_parser_for_mime, guess_parser_for_system, iter_parsers, iter_known_segment_parsers, mime_parse_order
 from utils import to_numpy
 
 
