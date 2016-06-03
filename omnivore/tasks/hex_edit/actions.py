@@ -629,6 +629,21 @@ class CopyDisassemblyAction(EditorAction):
         e.set_clipboard_object(data_obj)
 
 
+class CopyAsReprAction(EditorAction):
+    name = 'Copy as Escaped String'
+    enabled_name = 'can_copy'
+    
+    def perform(self, event):
+        e = self.active_editor
+        ranges, indexes = e.get_selected_ranges_and_indexes()
+        data = e.segment[indexes]
+        s1 = data.tostring()
+        text = repr(s1)[1:-1]  # remove leading/trailing quotes
+        data_obj = wx.TextDataObject()
+        data_obj.SetText(text)
+        e.set_clipboard_object(data_obj)
+
+
 def prompt_for_comment(e, s, ranges, desc):
     existing = s.get_first_comment(ranges)
     text = prompt_for_string(e.window.control, desc, "Add Comment", existing)

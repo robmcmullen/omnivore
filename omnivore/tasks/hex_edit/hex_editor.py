@@ -572,7 +572,7 @@ class HexEditor(FrameworkEditor):
         self.disassembly.perform_idle()
     
     def common_popup_actions(self):
-        return [CutAction, CopyAction, CopyDisassemblyAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, None, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsDisplayListAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction]
+        return [CutAction, CopyAction, CopyDisassemblyAction, CopyAsReprAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, None, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsDisplayListAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction]
     
 
     ###########################################################################
