@@ -26,7 +26,7 @@ known_cart_types = [
     (0,  "", 0,),
     (57, "Standard 2 KB", 2, 2, 0, 0xb800),
     (58, "Standard 4 KB", 4, 4, 0, 0xb000),
-    (59, "Right slot 4 KB", 4, 4, 4, 0, 0x9000),
+    (59, "Right slot 4 KB", 4, 4, 0, 0, 0x9000),
     (1,  "Standard 8 KB", 8, 8, 0, 0xa000),
     (21, "Right slot 8 KB", 8,),
     (2,  "Standard 16 KB", 16, 16, 0, 0x8000),
@@ -103,7 +103,10 @@ def get_known_carts():
     return grouped
 
 def get_cart(cart_type):
-    return known_cart_types[known_cart_type_map[cart_type]]
+    try:
+        return known_cart_types[known_cart_type_map[cart_type]]
+    except KeyError:
+        raise InvalidDiskImage("Unsupported cart type %d" % cart_type)
 
 
 class A8CartHeader(object):
@@ -222,7 +225,7 @@ class AtariCartImage(DiskImageBase):
             return
         k, rem = divmod((len(self) - len(self.header)), 1024)
         c = get_cart(self.cart_type)
-        log.debug("checking %s:" % c[1], k, rem, c[2])
+        log.debug("checking type=%d, k=%d, rem=%d for %s, %s" % (self.cart_type, k, rem, c[1], c[2]))
         if rem > 0:
             raise InvalidDiskImage("Cart not multiple of 1K")
         if k != c[2]:
