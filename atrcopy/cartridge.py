@@ -24,26 +24,25 @@ known_cart_types = [
 # banked offset (for bank zero)
 # banked address
     (0,  "", 0,),
+    (57, "Standard 2 KB", 2, 2, 0, 0xb800),
+    (58, "Standard 4 KB", 4, 4, 0, 0xb000),
+    (59, "Right slot 4 KB", 4, 4, 4, 0, 0x9000),
     (1,  "Standard 8 KB", 8, 8, 0, 0xa000),
     (2,  "Standard 16 KB", 16, 16, 0, 0x8000),
+    (15, "OSS one chip 16 KB", 16,),
     (3,  "OSS two chip (034M) 16 KB", 16, 4, 12, 0xb000, 4, 0, 0xa000),
-    (4,  "Standard 32 KB 5200", 32, 32, 0, 0x4000),
+    (45, "OSS two chip (043M) 16 KB", 16, 4, 12, 0xb000, 4, 0, 0xa000),
     (5,  "DB 32 KB", 32,),
-    (6,  "Two chip 16 KB 5200", 16,),
-    (7,  "Bounty Bob 40 KB 5200", 40,),
     (8,  "Williams 64 KB", 64,),
     (9,  "Express 64 KB", 64,),
     (10, "Diamond 64 KB", 64,),
     (11, "SpartaDOS X 64 KB", 64,),
     (12, "XEGS 32 KB", 32,  8, 24, 0xa000, 8, 0, 0x8000),
     (13, "XEGS (banks 0-7) 64 KB", 64, 8, 56, 0xa000, 8, 0, 0x8000),
+    (67, "XEGS (banks 8-15) 64 KB", 64, 8, 56, 0xa000, 8, 0, 0x8000),
     (14, "XEGS 128 KB", 128, 8, 120, 0xa000, 8, 0, 0x8000),
-    (15, "OSS one chip 16 KB", 16,),
-    (16, "One chip 16 KB 5200", 16,),
     (17, "Atrax 128 KB", 128,),
     (18, "Bounty Bob 40 KB", 40,),
-    (19, "Standard 8 KB 5200", 8, 8, 0, 0x8000),
-    (20, "Standard 4 KB 5200", 4, 4, 0, 0x8000),
     (21, "Right slot 8 KB", 8,),
     (22, "Williams 32 KB", 32,),
     (23, "XEGS 256 KB", 256, 8, 248, 0xa000, 8, 0, 0x8000),
@@ -68,7 +67,6 @@ known_cart_types = [
     (42, "Atarimax 1 MB Flash", 1024,),
     (43, "SpartaDOS X 128 KB", 128,),
     (44, "OSS 8 KB", 8,),
-    (45, "OSS two chip (043M) 16 KB", 16, 4, 12, 0xb000, 4, 0, 0xa000),
     (46, "Blizzard 4 KB", 4,),
     (47, "AST 32 KB", 32,),
     (48, "Atrax SDX 64 KB", 64,),
@@ -80,9 +78,6 @@ known_cart_types = [
     (54, "SIC! 128 KB", 128,),
     (55, "SIC! 256 KB", 256,),
     (56, "SIC! 512 KB", 512,),
-    (57, "Standard 2 KB", 2, 2, 0, 0xb800),
-    (58, "Standard 4 KB", 4, 4, 0, 0xb000),
-    (59, "Right slot 4 KB", 4, 4, 4, 0, 0x9000),
     (60, "Blizzard 32 KB", 32,),
     (61, "MegaMax 2 MB", 2048,),
     (62, "The!Cart 128 MB", 128*1024,),
@@ -90,15 +85,25 @@ known_cart_types = [
     (64, "MegaCart 2 MB", 2048,),
     (65, "The!Cart 32 MB", 32*1024,),
     (66, "The!Cart 64 MB", 64*1024,),
-    (67, "XEGS (banks 8-15) 64 KB", 64, 8, 56, 0xa000, 8, 0, 0x8000),
+    (20, "Standard 4 KB 5200", 4, 4, 0, 0x8000),
+    (19, "Standard 8 KB 5200", 8, 8, 0, 0x8000),
+    (4,  "Standard 32 KB 5200", 32, 32, 0, 0x4000),
+    (16, "One chip 16 KB 5200", 16,),
+    (6,  "Two chip 16 KB 5200", 16,),
+    (7,  "Bounty Bob 40 KB 5200", 40,),
 ]
+
+known_cart_type_map = {c[0]:i for i, c in enumerate(known_cart_types)}
 
 def get_known_carts():
     grouped = defaultdict(list)
-    for i, c in enumerate(known_cart_types[1:], 1):
+    for c in known_cart_types[1:]:
         size = c[2]
-        grouped[size].append((i, c))
+        grouped[size].append(c)
     return grouped
+
+def get_cart(cart_type):
+    return known_cart_types[known_cart_type_map[cart_type]]
 
 
 class A8CartHeader(object):
@@ -161,7 +166,7 @@ class A8CartHeader(object):
 
     def set_type(self, cart_type):
         self.cart_type = cart_type
-        c = known_cart_types[cart_type]
+        c = get_cart(cart_type)
         self.cart_name = c[1]
         self.cart_size = c[2]
         self.main_size = self.cart_size
@@ -216,7 +221,7 @@ class AtariCartImage(DiskImageBase):
         if self.header is None:
             return
         k, rem = divmod((len(self) - len(self.header)), 1024)
-        c = known_cart_types[self.cart_type]
+        c = get_cart(self.cart_type)
         log.debug("checking %s:" % c[1], k, rem, c[2])
         if rem > 0:
             raise InvalidDiskImage("Cart not multiple of 1K")

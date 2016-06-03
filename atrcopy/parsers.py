@@ -77,11 +77,11 @@ class XexSegmentParser(SegmentParser):
 class AtariCartSegmentParser(SegmentParser):
     menu_name = "temp"
     image_type = AtariCartImage
-    cart_index = 0
+    cart_type = 0
     cart_info = None
 
     def get_image(self, r):
-        return self.image_type(r, self.cart_index)
+        return self.image_type(r, self.cart_type)
 
 
 def guess_parser_for_mime(mime, r):
@@ -130,8 +130,9 @@ for k in sizes:
         key = "application/vnd.atari8bit.%dkb_cart" % k
     mime_parse_order.append(key)
     mime_parsers[key] = []
-    for i, c in grouped_carts[k]:
-        kclass = type("AtariCartSegmentParser%d" % i, (AtariCartSegmentParser,), {'cart_index': i, 'cart_info': c, 'menu_name': "%s Cartridge" % c[1]})
+    for c in grouped_carts[k]:
+        t = c[0]
+        kclass = type("AtariCartSegmentParser%d" % t, (AtariCartSegmentParser,), {'cart_type': t, 'cart_info': c, 'menu_name': "%s Cartridge" % c[1]})
         mime_parsers[key].append(kclass)
 
 
