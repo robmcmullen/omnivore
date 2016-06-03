@@ -19,7 +19,6 @@ getaway_defaults = {
     }
 
 def Getaway(doc):
-    print "HI!!!"
     state = doc.bytes[0:6] == [0xff, 0xff, 0x80, 0x2a, 0xff, 0x8a]
     if state.all():
         print "Found getaway.xex!!!"

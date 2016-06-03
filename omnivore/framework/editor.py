@@ -503,7 +503,6 @@ class FrameworkEditor(Editor):
             cmd = self.cursor_history.get_redo_command()
             if cmd is None or cmd != state:
                 self.cursor_history.add_command(state)
-            print self.cursor_history
 
     def get_cursor_state(self):
         return self.cursor_index
