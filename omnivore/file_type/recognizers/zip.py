@@ -6,7 +6,7 @@ from traits.api import HasTraits, provides
 
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
 from omnivore.framework.document import Document
-from omnivore.utils.segmentutil import SegmentParser, InvalidSegmentParser, guess_parser_for
+from omnivore.utils.segmentutil import SegmentParser, InvalidSegmentParser
 
 from atrcopy import SegmentData, DefaultSegment, ObjSegment
 

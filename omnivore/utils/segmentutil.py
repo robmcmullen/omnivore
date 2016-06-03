@@ -1,6 +1,6 @@
 import numpy as np
 
-from atrcopy import SegmentData, SegmentParser, InvalidSegmentParser, DefaultSegment, known_segment_parsers, guess_parser_for
+from atrcopy import SegmentData, SegmentParser, InvalidSegmentParser, DefaultSegment, known_segment_parsers
 
 
 class AnticFontSegment(DefaultSegment):

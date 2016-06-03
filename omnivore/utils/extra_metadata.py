@@ -1,4 +1,4 @@
-from segmentutil import InvalidSegmentParser, guess_parser_for, DefaultSegment, AnticFontSegment, SegmentData
+from segmentutil import DefaultSegment, AnticFontSegment, SegmentData
 from omnivore.tasks.map_edit.pane_layout import task_id_with_pane_layout as map_edit_task_id
 
 getaway_defaults = {
