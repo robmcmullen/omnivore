@@ -314,6 +314,7 @@ class HexEditTask(FrameworkTask):
         for mime, pretty, parsers in iter_known_segment_parsers():
             actions = [SegmentParserAction(segment_parser=s) for s in parsers]
             if not pretty:
+                groups.append(Group(CurrentSegmentParserAction(), separator=True))
                 groups.append(Group(*actions, separator=True))
             else:
                 groups.append(SMenu(Group(*actions, separator=True), name=pretty))

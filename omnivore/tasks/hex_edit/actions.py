@@ -408,6 +408,20 @@ class MemoryMapAction(EditorAction):
             self.checked = self.active_editor.machine.memory_map == self.memory_map
 
 
+class CurrentSegmentParserAction(NameChangeAction):
+    name = '<current parser>'
+    enabled = False
+    enabled_name = None
+    menu_item_name = 'segment_parser_label'
+
+    def perform(self, event):
+        pass
+
+    def _enabled_update(self):
+        # override the lookup of the enabled_name trait and simply force it to
+        # be disabled
+        self.enabled = False
+
 class SegmentParserAction(EditorAction):
     """Radio buttons for changing font style
     """

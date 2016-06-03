@@ -46,6 +46,8 @@ class HexEditor(FrameworkEditor):
     segment_number = Int(0)
     
     emulator_label = Unicode("Run Emulator")
+
+    segment_parser_label = Unicode("<parser type>")
     
     ### View traits
     
@@ -273,6 +275,10 @@ class HexEditor(FrameworkEditor):
     
     def update_segments_ui(self):
         self.segment_list.set_segments(self.document.segments, self.segment_number)
+        if self.segment_parser is not None:
+            self.segment_parser_label = self.segment_parser.menu_name
+        else:
+            self.segment_parser_label = "No parser"
         self.task.segments_changed = self.document.segments
         self.task.segment_selected = self.segment_number
     
