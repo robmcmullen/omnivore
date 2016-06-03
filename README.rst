@@ -38,6 +38,12 @@ Supported Filesystem Formats
 * Atari DOS in single, enhanced, and double density
 * KBoot format: a single executable file packaged up into a bootable disk image
 
+Other Supported Formats
+-----------------------
+
+* Atari ROM cartridges (both plain binary and Atari800 .CAR format)
+* MAME ROM zipfiles
+
 
 Example Usage
 =============
