@@ -369,10 +369,10 @@ def get_file_dialog_wildcard(name, extension_list):
 
 class SegmentOrderDialog(wx.Dialog):
     border = 5
-    instructions = "Drag segments to the right-hand list to create an executable"
+    instructions = "Drag segments to the right-hand list to create the output segment order"
     dest_list_title = "Segments in Executable"
     
-    def __init__(self, parent, title, segments):
+    def __init__(self, parent, title, segments, list_title=None, credits=False):
         wx.Dialog.__init__(self, parent, -1, title, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         
         self.segment_map = {k:v for k,v in enumerate(segments)}
@@ -393,7 +393,9 @@ class SegmentOrderDialog(wx.Dialog):
         hbox.Add(vbox1, 1, wx.ALL|wx.EXPAND, 0)
 
         vbox2 = wx.BoxSizer(wx.VERTICAL)
-        t = wx.StaticText(self, -1, self.dest_list_title)
+        if list_title is None:
+            list_title = self.dest_list_title
+        t = wx.StaticText(self, -1, list_title)
         vbox2.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
         self.dest = ReorderableList(self, [], self.get_item_text, columns=["Origin", "Size", "Name"], resize_column=3, size=(400,300))
         vbox2.Add(self.dest, 1, wx.ALL|wx.EXPAND, self.border)
@@ -401,7 +403,7 @@ class SegmentOrderDialog(wx.Dialog):
         
         vbox = wx.BoxSizer(wx.VERTICAL)
         
-        self.add_command_area(vbox)
+        self.add_command_area(vbox, credits)
         
         vbox.AddStretchSpacer()
         
@@ -423,12 +425,27 @@ class SegmentOrderDialog(wx.Dialog):
         sizer.Fit(self)
         self.check_enable()
     
-    def add_command_area(self, vbox):
+    def add_command_area(self, vbox, credits):
         t = wx.StaticText(self, -1, "Run Address")
-        vbox.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
+        vbox.Add(t, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
         self.run_addr = wx.TextCtrl(self, -1, size=(-1, -1))
-        vbox.Add(self.run_addr, 0, wx.ALL|wx.EXPAND, self.border)
+        vbox.Add(self.run_addr, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, self.border)
         
+        if credits:
+            t = wx.StaticText(self, -1, "Title (20 chars)")
+            vbox.Add(t, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
+            self.title_20 = wx.TextCtrl(self, -1, size=(-1, -1))
+            self.title_20.SetMaxLength(20)
+            vbox.Add(self.title_20, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, self.border)
+
+            t = wx.StaticText(self, -1, "Author (20 chars)")
+            vbox.Add(t, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
+            self.author_20 = wx.TextCtrl(self, -1, size=(-1, -1))
+            self.author_20.SetMaxLength(20)
+            vbox.Add(self.author_20, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, self.border)
+        else:
+            self.title_20 = self.author_20 = None
+
         vbox.AddSpacer(50)
         
         self.clear = b = wx.Button(self, wx.ID_DOWN, 'Clear List', size=(90, -1))
@@ -499,6 +516,14 @@ class SegmentOrderDialog(wx.Dialog):
         words[1] = 0x2e1
         words[2] = self.get_run_addr()
         return bytes
+
+    def get_extra_text(self):
+        lines = []
+        if self.title_20 is not None:
+            lines.append(self.title_20.GetValue())
+        if self.author_20 is not None:
+            lines.append(self.author_20.GetValue())
+        return lines
 
 
 class SegmentInterleaveDialog(SegmentOrderDialog):

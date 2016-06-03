@@ -756,9 +756,12 @@ class SaveAsXEXAction(EditorAction):
     def get_bytes(self, dlg):
         return dlg.get_bytes()
 
+    def get_dialog(self, e):
+        return SegmentOrderDialog(e.window.control, self.title, e.document.segments[1:])
+
     def perform(self, event):
         e = self.active_editor
-        dlg = SegmentOrderDialog(e.window.control, self.title, e.document.segments[1:])
+        dlg = self.get_dialog(e)
         if dlg.ShowModal() == wx.ID_OK:
             bytes = self.get_bytes(dlg)
             dialog = FileDialog(default_filename="test.%s" % self.file_ext, parent=e.window.control, action='save as')
@@ -775,12 +778,17 @@ class SaveAsXEXBootAction(SaveAsXEXAction):
 
     def get_bytes(self, dlg):
         xex = dlg.get_bytes()
-        bytes = add_xexboot_header(xex)
+        title, author = dlg.get_extra_text()[0:2]
+        print title, author
+        bytes = add_xexboot_header(xex, title=title, author=author)
         bytes = add_atr_header(bytes)
         rawdata = SegmentData(bytes)
         atr = BootDiskImage(rawdata)
         print atr.header
         return atr.bytes.tostring()
+
+    def get_dialog(self, e):
+        return SegmentOrderDialog(e.window.control, self.title, e.document.segments[1:], "Segment Order for Boot Disk", True)
 
 
 class SaveSegmentAsFormatAction(EditorAction):
