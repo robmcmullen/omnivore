@@ -51,16 +51,14 @@
 recognizers = []
 from image import ImageRecognizer
 recognizers.append(ImageRecognizer())
+from atrcopy_parsers import AtrcopyRecognizer
+recognizers.append(AtrcopyRecognizer())
 from text import PlainTextRecognizer, PoundBangTextRecognizer, XMLTextRecognizer
 recognizers.append(PlainTextRecognizer())
 recognizers.append(PoundBangTextRecognizer())
 recognizers.append(XMLTextRecognizer())
-from zip import ZipRecognizer
-recognizers.append(ZipRecognizer())
 from meta import OmnivoreRecognizer
 recognizers.append(OmnivoreRecognizer())
-from atari8bit import AtariRecognizer
-recognizers.append(AtariRecognizer())
 # [[[end]]]
 
 from envisage.api import Plugin

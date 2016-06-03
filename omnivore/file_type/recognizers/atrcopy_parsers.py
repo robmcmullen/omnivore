@@ -1,20 +1,20 @@
 from traits.api import HasTraits, provides
 
-from atrcopy import guess_parser_for_system, SegmentData
+from atrcopy import iter_parsers, SegmentData
 
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
 from omnivore.framework.document import Document
 
 
 @provides(IFileRecognizer)
-class AtariRecognizer(HasTraits):
-    name = "Atari 8-bit Disk Image"
+class AtrcopyRecognizer(HasTraits):
+    name = "Atrcopy Disk Image"
     
-    id = "application/vnd.atari8bit"
+    id = "application/vnd.atrcopy"
     
     def identify(self, guess):
         r = SegmentData(guess.numpy)
-        mime, parser = guess_parser_for_system(self.id, r)
+        mime, parser = iter_parsers(r)
         if parser is not None:
             guess.parser = parser
             return mime
