@@ -17,7 +17,7 @@ import pane_layout
 import omnivore.arch.fonts as fonts
 import omnivore.arch.colors as colors
 import omnivore.arch.machine as machine
-from omnivore.utils.segmentutil import known_segment_parsers
+from omnivore.utils.segmentutil import iter_known_segment_parsers
 from grid_control import ByteTable
 from disassembly import DisassemblyTable
 
@@ -310,12 +310,16 @@ class HexEditTask(FrameworkTask):
             ]
     
     def get_actions_Menu_DiskImage_ParserGroup(self):
-        segment_parser_actions = [SegmentParserAction(segment_parser=s) for s in known_segment_parsers]
+        groups = []
+        for mime, pretty, parsers in iter_known_segment_parsers():
+            actions = [SegmentParserAction(segment_parser=s) for s in parsers]
+            if not pretty:
+                groups.append(Group(*actions, separator=True))
+            else:
+                groups.append(SMenu(Group(*actions, separator=True), name=pretty))
         return [
             SMenu(
-                Group(
-                    *segment_parser_actions,
-                    id="a1", separator=True),
+                *groups,
                 id='submenu1', separator=False, name="File Type"),
             ]
     

@@ -412,7 +412,7 @@ class SegmentParserAction(EditorAction):
     """Radio buttons for changing font style
     """
     # Traits
-    style = 'radio'
+    style = 'toggle'
     
     segment_parser = Any
     
@@ -425,7 +425,11 @@ class SegmentParserAction(EditorAction):
     @on_trait_change('task.segments_changed')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.document.segment_parser.__class__ == self.segment_parser
+            new_state = self.active_editor.document.segment_parser.__class__ == self.segment_parser
+            # workaround to force reset of state because sometimes the toggle
+            # is not turned off otherwise
+            self.checked = not new_state
+            self.checked = new_state
 
 class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
     """Dynamic menu group to display the available fonts

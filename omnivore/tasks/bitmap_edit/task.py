@@ -18,7 +18,6 @@ from commands import *
 from omnivore.tasks.hex_edit.task import HexEditTask
 from omnivore.tasks.hex_edit.actions import *
 import pane_layout
-from omnivore.utils.segmentutil import known_segment_parsers
 from omnivore.framework.toolbar import get_toolbar_group
 
 
