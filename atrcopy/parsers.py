@@ -121,15 +121,24 @@ mime_parse_order = [
     "application/vnd.atari8bit.xex",
     ]
 
+pretty_mime = {
+    "application/vnd.atari8bit.atr": "Atari 8-bit Disk Image",
+    "application/vnd.atari8bit.xex": "Atari 8-bit Executable",
+}
+
 grouped_carts = get_known_carts()
 sizes = sorted(grouped_carts.keys())
 for k in sizes:
-    if k >= 1024:
-        key = "application/vnd.atari8bit.%dmb_cart" % (k / 1024)
+    if k > 128:
+        key = "application/vnd.atari8bit.large_cart"
+        pretty = "Atari 8-bit Large Cartridge"
     else:
         key = "application/vnd.atari8bit.%dkb_cart" % k
-    mime_parse_order.append(key)
-    mime_parsers[key] = []
+        pretty = "Atari 8-bit %dKB Cartridge" % k
+    if key not in mime_parsers:
+        mime_parse_order.append(key)
+        pretty_mime[key] = pretty
+        mime_parsers[key] = []
     for c in grouped_carts[k]:
         t = c[0]
         kclass = type("AtariCartSegmentParser%d" % t, (AtariCartSegmentParser,), {'cart_type': t, 'cart_info': c, 'menu_name': "%s Cartridge" % c[1]})
@@ -139,3 +148,8 @@ for k in sizes:
 known_segment_parsers = [DefaultSegmentParser]
 for mime in mime_parse_order:
     known_segment_parsers.extend(mime_parsers[mime])
+
+def iter_known_segment_parsers():
+    yield "application/octet-stream", "", [DefaultSegmentParser]
+    for mime in mime_parse_order:
+        yield mime, pretty_mime[mime], mime_parsers[mime]
