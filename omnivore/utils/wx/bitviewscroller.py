@@ -391,8 +391,9 @@ class BitviewScroller(wx.ScrolledWindow):
                 e.cursor_index = index1
             elif index2 > e.anchor_start_index:
                 e.anchor_end_index = index2
-                e.cursor_index = index2
+                e.cursor_index = index2 - 1
             e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
+            e.select_range(e.anchor_start_index, e.anchor_end_index, add=self.multi_select_mode)
         else:
             e.anchor_initial_start_index, e.anchor_initial_end_index = index1, index2
             e.cursor_index = index1
