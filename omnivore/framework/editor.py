@@ -444,7 +444,7 @@ class FrameworkEditor(Editor):
         try:
             start, end = self.selected_ranges[-1]
         except IndexError:
-            start, end = 0
+            start, end = 0, 0
         self.anchor_start_index = self.anchor_initial_start_index = start
         self.anchor_end_index = self.anchor_initial_end_index = end
         self.can_copy = (self.anchor_start_index != self.anchor_end_index)
