@@ -346,6 +346,7 @@ class HexEditTask(FrameworkTask):
             GetSegmentFromSelectionAction(),
             MultipleSegmentsFromSelectionAction(),
             InterleaveSegmentsAction(),
+            SetSegmentOriginAction(),
             Separator(),
             AddCommentAction(),
             RemoveCommentAction(),
