@@ -18,26 +18,39 @@ class BaseDisassembler(disasm.Disassembler):
     
     def get_style(self):
         if self.pc >= self.origin + self.length:
-            return 0
+            return 0, 0
         try:
-            return self.source.style[self.pc + self.pc_offset]
+            style = self.source.style[self.pc + self.pc_offset]
+            if style & user_bit_mask:
+                user_type = self.source.get_user_data(self.pc + self.pc_offset, 1)
+            else:
+                user_type = 0
+            return style, user_type
         except AttributeError:
             # If there is no style parameter, assume it's all code!
-            return 0
+            return 0, 0
     
     def is_data(self):
-        return self.get_style() & data_bit_mask
+        return self.get_style()[0] & data_bit_mask
     
-    def get_data_comment(self, style, bytes):
+    def get_data_comment(self, style_tuple, bytes):
+        style, user_type = style_tuple
         if (style & user_bit_mask) == 1:
-            return "; " + get_antic_dl(bytes, self.hex_lower)
+            user_parser, user_disasm = user_disassemblers[user_type]
+            return "; " + user_disasm(bytes, self.hex_lower)
         return disasm.Disassembler.get_data_comment(self, style, bytes)
     
-    def is_same_data_style(self, style, first_style, bytes):
+    def is_same_data_style(self, style_tuple, first_style_tuple, bytes):
+        style, user_type = style_tuple
+        first_style, first_user_type = first_style_tuple
         if (style & first_style & user_bit_mask) == 1:
-            # display list!
-            dl = parse_antic_dl(list(bytes))
-            return len(dl) == 1
+            if user_type == first_user_type:
+                # display list! check to see if the byte is still part of the same
+                # line in the display list disassembly
+                user_parser, user_disasm = user_disassemblers[user_type]
+                dl = user_parser(list(bytes))
+                return len(dl) == 1
+            return False
         return style & data_bit_mask and not style & comment_bit_mask
     
     @classmethod
@@ -200,3 +213,130 @@ def get_antic_dl(group, hex_lower=True):
         if count > 1:
             commands[0:0] = ["%dx" % count]
     return " ".join(commands)
+
+jumpman_commands = {
+    0xfc: (2, "type $ADDR"),
+    0xfd: (3, "draw x=%s y=%s len=%s"),
+    0xfe: (2, "spacing dx=%s dy=%s"),
+    0xff: (0, "end"),
+}
+
+def parse_jumpman_level(bytes):
+    groups = []
+    count = 0
+    data = []
+    while len(bytes) > 0:
+        byte = bytes.pop(0)
+        if count == 0:
+            if byte in jumpman_commands:
+                count = jumpman_commands[byte][0]
+                data = [byte]
+            else:
+                groups.append([byte])
+                data = []
+        else:
+            data.append(byte)
+            count -= 1
+
+        if count == 0:
+            groups.append(data)
+            data = []
+    if data:
+        groups.append(data)
+    return groups
+
+def get_jumpman_level(group, hex_lower=True):
+    """Get the text version of the display list entry.
+    
+    If multiple entries are present in the group, they are assumed to be
+    identical to the first entry -- i.e. they have been processed by a call to
+    parse_antic_dl above.
+    """
+    if hex_lower:
+        op_fmt = "%02x"
+        addr_fmt = "%04x"
+    else:
+        op_fmt = "%02X"
+        addr_fmt = "%04X"
+    commands = []
+    byte = group[0]
+    if byte in jumpman_commands:
+        count, text = jumpman_commands[byte]
+        if "ADDR" in text:
+            if len(group[1:]) == 2:
+                addr = addr_fmt % (group[1] + 256 * group[2])
+            else:
+                addr = "<bad addr>"
+            text = text.replace("ADDR", addr)
+        else:
+            values = [op_fmt % g for g in group[1:]]
+            if len(values) < count:
+                values.extend(["<missing>" for i in range(count - len(values))])
+            print text
+            print values
+            text = text % tuple(values)
+    else:
+        text = "<invalid command %s>" % (op_fmt % byte)
+    return text
+
+def parse_jumpman_harvest(bytes):
+    groups = []
+    count = 7
+    data = []
+    while len(bytes) > 0:
+        byte = bytes.pop(0)
+        if count == 7 and byte == 0xff:
+            data = [byte]
+            break
+        data.append(byte)
+        count -= 1
+
+        if count == 0:
+            groups.append(data)
+            data = []
+            count = 7
+    if data:
+        groups.append(data)
+    return groups
+
+def get_jumpman_harvest(group, hex_lower=True):
+    """Get the text version of the display list entry.
+    
+    If multiple entries are present in the group, they are assumed to be
+    identical to the first entry -- i.e. they have been processed by a call to
+    parse_antic_dl above.
+    """
+    if hex_lower:
+        op_fmt = "%02x"
+        addr_fmt = "%04x"
+    else:
+        op_fmt = "%02X"
+        addr_fmt = "%04X"
+    commands = []
+    byte = group[0]
+    if byte == 0xff:
+        text = "end"
+    else:
+        text = "enc=%s x=%s y=%s take=$%s paint=$%s"
+        values = ["<missing>" for i in range(5)]
+        if len(group) >= 1:
+            values[0] = op_fmt % group[0]
+        if len(group) >= 2:
+            values[1] = op_fmt % group[1]
+        if len(group) >= 3:
+            values[2] = op_fmt % group[2]
+        if len(group) >= 5:
+            values[3] = addr_fmt % (group[3] + 256 * group[4])
+        if len(group) >= 7:
+            values[4] = addr_fmt % (group[5] + 256 * group[6])
+        text = text % tuple(values)
+    return text
+
+ANTIC_DISASM = 0
+JUMPMAN_LEVEL = 1
+JUMPMAN_HARVEST = 2
+user_disassemblers = {
+    ANTIC_DISASM: (parse_antic_dl, get_antic_dl),
+    JUMPMAN_LEVEL: (parse_jumpman_level, get_jumpman_level),
+    JUMPMAN_HARVEST: (parse_jumpman_harvest, get_jumpman_harvest),
+}

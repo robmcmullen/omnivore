@@ -17,6 +17,7 @@ from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bi
 
 from omnivore.framework.actions import *
 from commands import *
+from omnivore.arch.disasm import ANTIC_DISASM, JUMPMAN_LEVEL, JUMPMAN_HARVEST
 from omnivore.arch.ui.antic_colors import AnticColorDialog
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, prompt_for_emulator, prompt_for_assembler, get_file_dialog_wildcard, SegmentOrderDialog, ListReorderDialog, SegmentInterleaveDialog
 from omnivore.arch.machine import Machine
@@ -593,19 +594,35 @@ class MarkSelectionAsDataAction(EditorAction):
         e.refresh_panes()
 
 
-class MarkSelectionAsDisplayListAction(EditorAction):
-    name = 'Mark Selection As Display List'
+class CustomDisassemblerAction(EditorAction):
+    name = 'Mark Selection As <custom>'
     enabled_name = 'can_copy'
-    
+    disassembly_type = 0
+
     def perform(self, event):
         e = self.active_editor
         s = e.segment
         ranges = s.get_style_ranges(selected=True)
         s.set_style_ranges(ranges, data=True, user=1)
+        s.set_user_data(ranges, 1, self.disassembly_type)
         e.document.change_count += 1
         e.metadata_dirty = True
         e.mark_index_range_changed(ranges[0])
         e.refresh_panes()
+
+class MarkSelectionAsDisplayListAction(CustomDisassemblerAction):
+    name = 'Mark Selection As Display List'
+    disassembly_type = ANTIC_DISASM
+
+class MarkSelectionAsJumpmanLevelAction(CustomDisassemblerAction):
+    name = 'Mark Selection As Jumpman Level Data'
+    enabled_name = 'can_copy'
+    disassembly_type = JUMPMAN_LEVEL
+
+class MarkSelectionAsJumpmanHarvestAction(CustomDisassemblerAction):
+    name = 'Mark Selection As Jumpman Harvest Table'
+    enabled_name = 'can_copy'
+    disassembly_type = JUMPMAN_HARVEST
 
 
 class CopyDisassemblyAction(EditorAction):

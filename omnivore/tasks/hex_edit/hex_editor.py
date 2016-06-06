@@ -138,7 +138,7 @@ class HexEditor(FrameworkEditor):
         if 'comments' in e:
             first_segment = doc.segments[0]
             for k, v in e['comments']:
-                first_segment.rawdata.comments[k] = v
+                first_segment.rawdata.extra.comments[k] = v
         if 'emulator' in e:
             doc.emulator = e['emulator']
         if 'comment ranges' in e:
@@ -572,7 +572,7 @@ class HexEditor(FrameworkEditor):
         self.disassembly.perform_idle()
     
     def common_popup_actions(self):
-        return [CutAction, CopyAction, CopyDisassemblyAction, CopyAsReprAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, None, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsDisplayListAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction]
+        return [CutAction, CopyAction, CopyDisassemblyAction, CopyAsReprAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, None, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsDisplayListAction, MarkSelectionAsJumpmanLevelAction, MarkSelectionAsJumpmanHarvestAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction]
     
 
     ###########################################################################
