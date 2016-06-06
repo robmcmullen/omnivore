@@ -64,6 +64,8 @@ class UserExtraData(object):
     def __init__(self):
         self.comments = dict()
         self.user_data = dict()
+        for i in range(1, user_bit_mask):
+            self.user_data[i] = dict()
 
 
 class SegmentData(object):
@@ -256,7 +258,48 @@ class DefaultSegment(object):
         if other.rawdata.is_indexed:
             r = r.get_indexed[other.order]
         return r
-    
+
+    def serialize_extra_to_dict(self, mdict):
+        """Save extra metadata to a dict so that it can be serialized
+
+        This is not saved by __getstate__ because child segments will point to
+        the same data and this allows it to only be saved for the base segment.
+        As well as allowing it to be pulled out of the main json so that it can
+        be more easily edited by hand if desired.
+        """
+        mdict["comment ranges"] = [list(a) for a in self.get_style_ranges(comment=True)]
+        mdict["data ranges"] = [list(a) for a in self.get_style_ranges(data=True)]
+        for i in range(1, user_bit_mask):
+            r = self.get_sorted_user_data(i)
+            if r:
+                slot = "user ranges %d" % i
+                mdict[slot] = r
+        
+        # json serialization doesn't allow int keys, so convert to list of
+        # pairs
+        mdict["comments"] = self.get_sorted_comments()
+
+    def restore_extra_from_dict(self, e):
+        if 'comments' in e:
+            for k, v in e['comments']:
+                self.rawdata.extra.comments[k] = v
+        if 'comment ranges' in e:
+            self.set_style_ranges(e['comment ranges'], comment=True)
+        if 'data ranges' in e:
+            self.set_style_ranges(e['data ranges'], data=True)
+        if 'display list ranges' in e:
+            # DEPRECATED, but supported on read. Converts display list to
+            # disassembly type 0 for user index 1
+            self.set_style_ranges(e['display list ranges'], data=True, user=1)
+            self.set_user_data(e['display list ranges'], 1, 0)
+        for i in range(1, user_bit_mask):
+            slot = "user ranges %d" % i
+            if slot in e:
+                for r, val in e[slot]:
+                    self.set_style_ranges([r], user=i)
+                    self.set_user_data([r], i, val)
+
+
     def __str__(self):
         s = "%s ($%x bytes)" % (self.name, len(self))
         if self.error:
@@ -485,14 +528,33 @@ class DefaultSegment(object):
             # FIXME: this is slow
             for i in range(start, end):
                 rawindex = self.get_raw_index(i)
-                self.rawdata.extra.user_data[rawindex] = user_data
+                self.rawdata.extra.user_data[user_index][rawindex] = user_data
     
     def get_user_data(self, index, user_index):
         rawindex = self.get_raw_index(index)
         try:
-            return self.rawdata.extra.user_data[rawindex]
+            return self.rawdata.extra.user_data[user_index][rawindex]
         except KeyError:
             return 0
+    
+    def get_sorted_user_data(self, user_index):
+        d = self.rawdata.extra.user_data[user_index]
+        indexes = sorted(d.keys())
+        ranges = []
+        start, end, current = None, None, None
+        for i in indexes:
+            if start is None:
+                start = i
+                current = d[i]
+            else:
+                if d[i] != current or i != end:
+                    ranges.append([[start, end], current])
+                    start = i
+                    current = d[i]
+            end = i + 1
+        if start is not None:
+            ranges.append([[start, end], current])
+        return ranges
     
     def set_comment(self, ranges, text):
         self.set_style_ranges(ranges, comment=True)
