@@ -130,26 +130,14 @@ class HexEditor(FrameworkEditor):
         if 'user segments' in e:
             for s in e['user segments']:
                 doc.add_user_segment(s)
+        first_segment = doc.segments[0]
         if 'serialized user segments' in e:
-            first_segment = doc.segments[0]
             for s in e['serialized user segments']:
                 s.reconstruct_raw(first_segment.rawdata) 
                 doc.add_user_segment(s)
-        if 'comments' in e:
-            first_segment = doc.segments[0]
-            for k, v in e['comments']:
-                first_segment.rawdata.extra.comments[k] = v
+        first_segment.restore_extra_from_dict(e)
         if 'emulator' in e:
             doc.emulator = e['emulator']
-        if 'comment ranges' in e:
-            first_segment = doc.segments[0]
-            first_segment.set_style_ranges(e['comment ranges'], comment=True)
-        if 'data ranges' in e:
-            first_segment = doc.segments[0]
-            first_segment.set_style_ranges(e['data ranges'], data=True)
-        if 'display list ranges' in e:
-            first_segment = doc.segments[0]
-            first_segment.set_style_ranges(e['display list ranges'], data=True, user=1)
         if 'colors' in e:
             self.machine.update_colors(e['colors'])
         if 'font' in e:
@@ -164,12 +152,8 @@ class HexEditor(FrameworkEditor):
     def get_extra_metadata(self, mdict):
         mdict["serialized user segments"] = list(self.document.user_segments)
         base = self.document.segments[0]
-        mdict["comment ranges"] = [list(a) for a in base.get_style_ranges(comment=True)]
-        mdict["data ranges"] = [list(a) for a in base.get_style_ranges(data=True)]
-        mdict["display list ranges"] = [list(a) for a in base.get_style_ranges(data=True, user=1)]
-        
-        # json serialization doesn't allow int keys, so convert to list of pairs
-        mdict["comments"] = base.get_sorted_comments()
+        base.serialize_extra_to_dict(mdict)
+
         emu = self.document.emulator
         if emu and not 'system default' in emu:
             mdict["emulator"] = self.document.emulator
