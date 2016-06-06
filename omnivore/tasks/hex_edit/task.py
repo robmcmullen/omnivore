@@ -71,17 +71,12 @@ class HexEditTask(FrameworkTask):
         return pane_layout.pane_create()
 
     def _extra_actions_default(self):
-        machine_menu = self.create_menu("Menu", "Machine", "MachineTypeGroup", "MachineCharacteristicsGroup", "MachineEmulatorGroup")
-        data_menu = self.create_menu("Menu", "Disk Image", "ParserGroup", "ActionGroup")
+        data_menu = self.create_menu("Menu", "Disk Image", "ParserGroup", "EmulatorGroup", "ActionGroup")
         segment_menu = self.create_menu("Menu", "Segments", "SegmentGroup")
         bytes_menu = self.create_menu("Menu", "Bytes", "HexModifyGroup")
         actions = [
             # Menubar additions
-            SchemaAddition(factory=lambda: machine_menu,
-                           path='MenuBar',
-                           after="Edit",
-                           ),
-            SchemaAddition(factory=lambda: data_menu,
+            SchemaAddition(factory=lambda: bytes_menu,
                            path='MenuBar',
                            after="Edit",
                            ),
@@ -89,7 +84,7 @@ class HexEditTask(FrameworkTask):
                            path='MenuBar',
                            after="Edit",
                            ),
-            SchemaAddition(factory=lambda: bytes_menu,
+            SchemaAddition(factory=lambda: data_menu,
                            path='MenuBar',
                            after="Edit",
                            ),
@@ -162,6 +157,13 @@ class HexEditTask(FrameworkTask):
             SMenu(SaveSegmentGroup(),
                   id='SaveSegmentAsSubmenu', name="Save Segment As"),
             ]
+
+    def get_actions_Menu_Edit_UndoGroup(self):
+        return [
+            UndoAction(),
+            RedoAction(),
+            RevertToBaselineAction(),
+            ]
     
     def get_actions_Menu_Edit_CopyPasteGroup(self):
         return [
@@ -171,6 +173,20 @@ class HexEditTask(FrameworkTask):
             CopyAsReprAction(),
             PasteAction(),
             PasteAndRepeatAction(),
+            ]
+    
+    def get_actions_Menu_Edit_SelectGroup(self):
+        return [
+            SelectAllAction(),
+            SelectNoneAction(),
+            SelectInvertAction(),
+            SMenu(
+                MarkSelectionAsCodeAction(name="Code"),
+                MarkSelectionAsDataAction(name="Data"),
+                MarkSelectionAsDisplayListAction(name="ANTIC Display List"),
+                MarkSelectionAsJumpmanLevelAction(name="Jumpman Level Description"),
+                MarkSelectionAsJumpmanHarvestAction(name="Jumpman Harvest Table"),
+                id="mark1", name="Mark Selection As"),
             ]
     
     def get_actions_Menu_Edit_FindGroup(self):
@@ -193,7 +209,7 @@ class HexEditTask(FrameworkTask):
             actions.append(PredefinedMachineAction(machine=m))
         return actions
     
-    def get_actions_Menu_Machine_MachineTypeGroup(self):
+    def get_actions_Menu_View_ViewPredefinedGroup(self):
         machines = self.get_predefined_machines_actions()
         return [
             SMenu(
@@ -227,7 +243,7 @@ class HexEditTask(FrameworkTask):
             actions.append(MemoryMapAction(memory_map=r))
         return actions
     
-    def get_actions_Menu_Machine_MachineCharacteristicsGroup(self):
+    def get_actions_Menu_View_ViewChangeGroup(self):
         font_mapping_actions = self.get_font_mapping_actions()
         font_renderer_actions = self.get_font_renderer_actions()
         bitmap_renderer_actions = self.get_bitmap_renderer_actions()
@@ -297,17 +313,17 @@ class HexEditTask(FrameworkTask):
                 id='mm7', separator=False, name="Bitmap Display"),
             ]
     
-    def get_actions_Menu_Machine_MachineEmulatorGroup(self):
+    def get_actions_Menu_DiskImage_EmulatorGroup(self):
         return [
+            RunEmulatorAction(id="a3"),
             SMenu(
-                RunEmulatorAction(id="a1"),
-                EmulatorChoiceGroup(id="a2", separator=True),
+                EmulatorChoiceGroup(id="a2"),
                 Group(
                     AddNewEmulatorAction(),
                     EditEmulatorsAction(),
                     SetSystemDefaultEmulatorAction(),
                     id="a3", separator=True),
-                id='MachineEmulator1', separator=True, name="Emulators"),
+                id='MachineEmulator1', name="Emulators"),
             ]
     
     def get_actions_Menu_DiskImage_ParserGroup(self):
@@ -331,9 +347,6 @@ class HexEditTask(FrameworkTask):
             MultipleSegmentsFromSelectionAction(),
             InterleaveSegmentsAction(),
             Separator(),
-            MarkSelectionAsCodeAction(),
-            MarkSelectionAsDataAction(),
-            RevertToBaselineAction(),
             AddCommentAction(),
             RemoveCommentAction(),
             Separator(),
