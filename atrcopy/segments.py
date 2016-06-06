@@ -60,9 +60,14 @@ class OrderWrapper(object):
         """
         return self.order[index]
 
+class UserExtraData(object):
+    def __init__(self):
+        self.comments = dict()
+        self.user_data = dict()
+
 
 class SegmentData(object):
-    def __init__(self, data, style=None, comments=None, debug=False, order=None):
+    def __init__(self, data, style=None, extra=None, debug=False, order=None):
         """Storage for raw data
         
         order is a list into the base array's data; each item in the list is an
@@ -86,9 +91,9 @@ class SegmentData(object):
                 self.style = OrderWrapper(style, order)
             else:
                 self.style = style
-        if comments is None:
-            comments = dict()
-        self.comments = comments
+        if extra is None:
+            extra = UserExtraData()
+        self.extra = extra
         self.reverse_index_mapping = None
     
     def __str__(self):
@@ -107,9 +112,6 @@ class SegmentData(object):
     
     def get_style(self):
         return self.style
-    
-    def get_comments(self):
-        return self.comments
     
     def byte_bounds_offset(self):
         """Return start and end offsets of this segment's data into the
@@ -161,8 +163,8 @@ class SegmentData(object):
             order = None
             d = self.data[index]
             s = self.style[index]
-        c = self.comments
-        return SegmentData(d, s, c, order=order)
+        e = self.extra
+        return SegmentData(d, s, e, order=order)
     
     def get_bases(self):
         if self.data.base is None:
@@ -184,7 +186,7 @@ class SegmentData(object):
         # index needs to be relative to the base array
         base_index = index + self.get_raw_index(0)
         data_base, style_base = self.get_bases()
-        return SegmentData(data_base, style_base, self.comments, order=base_index)
+        return SegmentData(data_base, style_base, self.extra, order=base_index)
     
     def get_reverse_index(self, base_index):
         """Get index into this segment's data given the index into the base data
@@ -478,30 +480,44 @@ class DefaultSegment(object):
         style_mask = self.get_style_mask(**kwargs)
         self.style &= style_mask
     
+    def set_user_data(self, ranges, user_index, user_data):
+        for start, end in ranges:
+            # FIXME: this is slow
+            for i in range(start, end):
+                rawindex = self.get_raw_index(i)
+                self.rawdata.extra.user_data[rawindex] = user_data
+    
+    def get_user_data(self, index, user_index):
+        rawindex = self.get_raw_index(index)
+        try:
+            return self.rawdata.extra.user_data[rawindex]
+        except KeyError:
+            return 0
+    
     def set_comment(self, ranges, text):
         self.set_style_ranges(ranges, comment=True)
         for start, end in ranges:
             rawindex = self.get_raw_index(start)
-            self.rawdata.comments[rawindex] = text
+            self.rawdata.extra.comments[rawindex] = text
     
     def get_comment(self, index):
         rawindex = self.get_raw_index(index)
-        return self.rawdata.comments.get(rawindex, "")
+        return self.rawdata.extra.comments.get(rawindex, "")
     
     def get_first_comment(self, ranges):
         start = reduce(min, [r[0] for r in ranges])
         rawindex = self.get_raw_index(start)
-        return self.rawdata.comments.get(rawindex, "")
+        return self.rawdata.extra.comments.get(rawindex, "")
     
     def clear_comment(self, ranges):
         self.clear_style_ranges(ranges, comment=True)
         for start, end in ranges:
             rawindex = self.get_raw_index(start)
-            if rawindex in self.rawdata.comments:
-                del self.rawdata.comments[rawindex]
+            if rawindex in self.rawdata.extra.comments:
+                del self.rawdata.extra.comments[rawindex]
     
     def get_sorted_comments(self):
-        return sorted([[k, v] for k, v in self.rawdata.comments.iteritems()])
+        return sorted([[k, v] for k, v in self.rawdata.extra.comments.iteritems()])
     
     def label(self, index, lower_case=True):
         if lower_case:
@@ -636,6 +652,6 @@ def interleave_segments(segments, num_bytes):
         d, s = s.rawdata.get_bases()
         if id(d) != id(data_base) or id(s) != id(style_base):
             raise ValueError("Can't interleave segments with different base arrays")
-    raw = SegmentData(data_base, style_base, segments[0].rawdata.comments, order=new_index)
+    raw = SegmentData(data_base, style_base, segments[0].rawdata.extra, order=new_index)
     segment = DefaultSegment(raw, 0)
     return segment
