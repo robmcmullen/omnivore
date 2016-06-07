@@ -111,6 +111,7 @@ class OmnivoreMainPlugin(FrameworkPlugin):
         from omnivore.tasks.image_edit import ImageEditPreferencesPane
         from omnivore.tasks.hex_edit import HexEditPreferencesPane
         from omnivore.tasks.bitmap_edit import BitmapEditPreferencesPane
+        from omnivore.tasks.jumpman import JumpmanPreferencesPane
         from omnivore.tasks.html_view import HtmlViewPreferencesPane
         return [ FrameworkPreferencesPane, TextEditPreferencesPane, ImageEditPreferencesPane, HexEditPreferencesPane, BitmapEditPreferencesPane, HtmlViewPreferencesPane]
 
@@ -121,6 +122,7 @@ class OmnivoreMainPlugin(FrameworkPlugin):
         from omnivore.tasks.map_edit import MapEditTask
         from omnivore.tasks.bitmap_edit import BitmapEditTask
         from omnivore.tasks.html_view import HtmlViewTask
+        from omnivore.tasks.jumpman import JumpmanEditTask
 
         return self.task_factories_from_tasks([
             TextEditTask,
@@ -128,6 +130,7 @@ class OmnivoreMainPlugin(FrameworkPlugin):
             HexEditTask,
             MapEditTask,
             BitmapEditTask,
+            JumpmanEditTask,
             HtmlViewTask,
             ])
 
