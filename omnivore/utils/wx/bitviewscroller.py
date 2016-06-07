@@ -104,7 +104,7 @@ class BitviewScroller(wx.ScrolledWindow):
         editor = self.task.active_editor
         if editor is not None:
             self.editor = editor
-            self.segment = editor.segment
+            self.segment = self.get_segment(editor)
             self.rect_select = editor.rect_select
             self.start_addr = editor.segment.start_addr
             self.pixels_per_byte = editor.machine.bitmap_renderer.pixels_per_byte
@@ -114,6 +114,12 @@ class BitviewScroller(wx.ScrolledWindow):
             self.update_bytes_per_row()
             self.update_zoom()
             self.set_scale()
+
+    def get_segment(self, editor):
+        """Get segment from editor; provided for subclasses that use
+        a computed segment to represent the segment data (like Jumpman)
+        """
+        return editor.segment
     
     def refresh_view(self):
         editor = self.task.active_editor

@@ -5,6 +5,7 @@ import os
 # Major package imports.
 import wx
 import numpy as np
+from atrcopy import SegmentData, DefaultSegment
 
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides
@@ -28,7 +29,9 @@ from commands import *
 
 
 class JumpmanLevelView(MainBitmapScroller):
-    pass
+    def get_segment(self, editor):
+        return editor.screen
+
 
 class JumpmanEditor(BitmapEditor):
     """ The toolkit specific implementation of a HexEditor.  See the
@@ -159,6 +162,11 @@ class JumpmanEditor(BitmapEditor):
 
         # create attribute so HexEditor parent will reference the bitmap
         self.bitmap = self.control
+
+        data = np.zeros(40 * 90, dtype=np.uint8)
+        data[::41] = 255
+        r = SegmentData(data)
+        self.screen = DefaultSegment(r, 0x7000)
 
         ##########################################
         # Events.
