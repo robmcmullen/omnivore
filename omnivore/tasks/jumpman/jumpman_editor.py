@@ -22,6 +22,7 @@ from omnivore.utils.command import Overlay
 from omnivore.utils.searchutil import HexSearcher, CharSearcher
 from omnivore.utils.drawutil import get_bounds
 from omnivore.utils.sortutil import invert_rects
+from omnivore.utils.jumpman import JumpmanLevelBuilder
 from omnivore.tasks.hex_edit.commands import ChangeByteCommand, PasteCommand
 from omnivore.framework.mouse_handler import MouseHandler
 
@@ -31,6 +32,35 @@ from commands import *
 class JumpmanLevelView(MainBitmapScroller):
     def get_segment(self, editor):
         return editor.screen
+
+    def compute_image(self):
+        source = self.editor.segment
+        start = source.start_addr
+        print "compute_image!", start
+        index = source[0x38]*256 + source[0x37]
+        print "level def table", hex(index)
+        if index > start:
+            index -= start
+        if index < len(source):
+            table = source[index:]
+            print list(table)
+            end = np.nonzero(table==255)[0]
+            print end
+            if len(end) > 0:
+                print end
+                end = end[0] + 1
+            else:
+                end = len(source)
+            print start, index, end
+            commands = source[index:index + end]
+        else:
+            commands = source[index:index]
+        print commands
+        parser = JumpmanLevelBuilder(self.segment, commands)
+
+    def get_image(self):
+        self.compute_image()
+        return MainBitmapScroller.get_image(self)
 
 
 class JumpmanEditor(BitmapEditor):
