@@ -107,11 +107,10 @@ class JumpmanEditor(BitmapEditor):
         self.control.refresh_view()
     
     def rebuild_document_properties(self):
-        self.find_segment("Playfield map")
         self.control.set_mouse_mode(SelectMode)
     
     def copy_view_properties(self, old_editor):
-        pass
+        self.find_segment(segment=old_editor.segment)
     
     def view_segment_set_width(self, segment):
         self.bitmap_width = segment.map_width
