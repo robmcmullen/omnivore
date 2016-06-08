@@ -376,7 +376,7 @@ class BitmapEditor(HexEditor):
     
     @on_trait_change('machine.bitmap_change_event')
     def update_bitmap(self):
-        self.control.recalc_view()
+        self.bitmap.recalc_view()
     
     @on_trait_change('machine.font_change_event')
     def update_fonts(self):
@@ -387,20 +387,20 @@ class BitmapEditor(HexEditor):
         pass
     
     def reconfigure_panes(self):
-        self.control.recalc_view()
+        self.bitmap.recalc_view()
     
     def refresh_panes(self):
-        self.control.refresh_view()
+        self.bitmap.refresh_view()
     
     def rebuild_document_properties(self):
         self.find_segment("Playfield map")
-        self.control.set_mouse_mode(SelectMode)
+        self.bitmap.set_mouse_mode(SelectMode)
     
     def view_segment_set_width(self, segment):
         self.bitmap_width = segment.map_width
     
     def update_mouse_mode(self):
-        self.control.set_mouse_mode(self.mouse_mode)
+        self.bitmap.set_mouse_mode(self.mouse_mode)
     
     def set_current_draw_pattern(self, pattern, control):
         try:
@@ -430,14 +430,14 @@ class BitmapEditor(HexEditor):
             if cmd_cls is None:
                 cmd_cls = PasteRectangularCommand
             format_id, r, c = extra
-            cmd = cmd_cls(self.segment, self.anchor_start_index, r, c, self.control.bytes_per_row, bytes)
+            cmd = cmd_cls(self.segment, self.anchor_start_index, r, c, self.bitmap.bytes_per_row, bytes)
         self.process_command(cmd)
     
     def create_clipboard_data_object(self):
         if self.anchor_start_index != self.anchor_end_index:
-            anchor_start, anchor_end, (r1, c1), (r2, c2) = self.control.get_highlight_indexes()
+            anchor_start, anchor_end, (r1, c1), (r2, c2) = self.bitmap.get_highlight_indexes()
             print anchor_start, anchor_end, (r1, c1), (r2, c2)
-            bpr = self.control.bytes_per_row
+            bpr = self.bitmap.bytes_per_row
             last = r2 * bpr
             print last
             d = self.segment[:last].reshape(-1, bpr)
@@ -457,7 +457,7 @@ class BitmapEditor(HexEditor):
     
     def invert_selection_ranges(self, ranges):
         rects = [(rect[2], rect[3]) for rect in [self.segment.get_rect_indexes(r[0], r[1]) for r in ranges]]
-        inverted = invert_rects(rects, self.control.total_rows, self.control.bytes_per_row)
+        inverted = invert_rects(rects, self.bitmap.total_rows, self.bitmap.bytes_per_row)
         ranges = self.segment.rects_to_ranges(inverted)
         return ranges
     
@@ -477,10 +477,7 @@ class BitmapEditor(HexEditor):
         """ Creates the toolkit-specific control for the widget. """
 
         # Base-class constructor.
-        self.control = MainBitmapScroller(parent, self.task)
-
-        # create attribute so HexEditor parent will reference the bitmap
-        self.bitmap = self.control
+        self.bitmap = MainBitmapScroller(parent, self.task)
 
         ##########################################
         # Events.
@@ -493,12 +490,12 @@ class BitmapEditor(HexEditor):
         # Load the editor's contents.
         self.load()
 
-        return self.control
+        return self.bitmap
 
     #### wx event handlers ####################################################
     
     def index_clicked(self, index, bit, control):
         self.cursor_index = index
-        if control != self.control:
-            self.control.select_index(index)
+        if control != self.bitmap:
+            self.bitmap.select_index(index)
         self.can_copy = (self.anchor_start_index != self.anchor_end_index)

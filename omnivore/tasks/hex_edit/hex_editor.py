@@ -267,7 +267,7 @@ class HexEditor(FrameworkEditor):
         self.task.segment_selected = self.segment_number
     
     def reconfigure_panes(self):
-        self.control.recalc_view()
+        self.hex_edit.recalc_view()
         self.disassembly.recalc_view()
         self.bitmap.recalc_view()
         self.font_map.recalc_view()
@@ -293,7 +293,7 @@ class HexEditor(FrameworkEditor):
     
     def refresh_panes(self):
         self.check_document_change()
-        self.control.refresh_view()
+        self.hex_edit.refresh_view()
         self.disassembly.refresh_view()
         self.bitmap.refresh_view()
         self.font_map.refresh_view()
@@ -477,7 +477,7 @@ class HexEditor(FrameworkEditor):
         self.document.change_count += 1
     
     def get_label_at_index(self, index):
-        return self.control.table.get_label_at_index(index)
+        return self.hex_edit.table.get_label_at_index(index)
     
     def get_label_of_ranges(self, ranges):
         labels = []
@@ -574,7 +574,7 @@ class HexEditor(FrameworkEditor):
         """ Creates the toolkit-specific control for the widget. """
 
         # Base-class constructor.
-        self.control = HexEditControl(parent, self.task)
+        self.hex_edit = HexEditControl(parent, self.task)
 
         ##########################################
         # Events.
@@ -591,15 +591,15 @@ class HexEditor(FrameworkEditor):
         # Load the editor's contents.
         self.load()
 
-        return self.control
+        return self.hex_edit
 
     #### wx event handlers ####################################################
     
     def index_clicked(self, index, bit, control):
         self.cursor_index = index
         self.check_document_change()
-        if control != self.control:
-            self.control.select_index(index)
+        if control != self.hex_edit:
+            self.hex_edit.select_index(index)
         if control != self.disassembly:
             self.disassembly.select_index(index)
         if control != self.bitmap:

@@ -13,10 +13,10 @@ from traits.api import on_trait_change, Property, Instance, Any, Event, Int
 
 from omnivore.framework.actions import *
 from jumpman_editor import JumpmanEditor
-from preferences import JumpmanPreferences
 from commands import *
 from omnivore.tasks.hex_edit.task import HexEditTask
 from omnivore.tasks.hex_edit.actions import *
+from omnivore.tasks.hex_edit.preferences import HexEditPreferences
 import omnivore.arch.colors as colors
 import pane_layout
 from omnivore.framework.toolbar import get_toolbar_group
@@ -33,7 +33,7 @@ class JumpmanEditTask(HexEditTask):
     id = pane_layout.task_id_with_pane_layout
     name = 'Jumpman Level Editor'
     
-    preferences_helper = JumpmanPreferences
+    preferences_helper = HexEditPreferences
     
     #### Menu events ##########################################################
     
@@ -51,9 +51,6 @@ class JumpmanEditTask(HexEditTask):
     ###########################################################################
     # 'FrameworkTask' interface.
     ###########################################################################
-    
-    def initialize_class_preferences(self):
-        prefs = self.get_preferences()
 
     def get_editor(self, guess=None):
         """ Opens a new empty window

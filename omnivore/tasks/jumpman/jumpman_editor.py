@@ -90,7 +90,8 @@ class JumpmanEditor(BitmapEditor):
     
     @on_trait_change('machine.bitmap_change_event')
     def update_bitmap(self):
-        self.control.recalc_view()
+        self.hex_edit.recalc_view()
+        self.bitmap.recalc_view()
     
     @on_trait_change('machine.font_change_event')
     def update_fonts(self):
@@ -101,20 +102,22 @@ class JumpmanEditor(BitmapEditor):
         pass
     
     def reconfigure_panes(self):
-        self.control.recalc_view()
+        self.hex_edit.recalc_view()
+        self.bitmap.recalc_view()
     
     def refresh_panes(self):
-        self.control.refresh_view()
+        self.hex_edit.refresh_view()
+        self.bitmap.refresh_view()
     
     def rebuild_document_properties(self):
-        self.control.set_mouse_mode(SelectMode)
+        self.bitmap.set_mouse_mode(SelectMode)
     
     def copy_view_properties(self, old_editor):
         self.find_segment(segment=old_editor.segment)
     
     def view_segment_set_width(self, segment):
         self.bitmap_width = 40
-        colors = self.segment[0x2e:0x33].copy()
+        colors = segment[0x2e:0x33].copy()
         # on some levels, the bombs are set to color 0 because they are cycled
         # to produce a glowing effect, but that's not visible here so we force
         # it to be bright white
@@ -123,7 +126,7 @@ class JumpmanEditor(BitmapEditor):
         self.machine.update_colors(colors)
     
     def update_mouse_mode(self):
-        self.control.set_mouse_mode(self.mouse_mode)
+        self.bitmap.set_mouse_mode(self.mouse_mode)
     
     def set_current_draw_pattern(self, pattern, control):
         try:
@@ -144,45 +147,10 @@ class JumpmanEditor(BitmapEditor):
         pass
     
     def process_paste_data_object(self, data_obj, cmd_cls=None):
-        bytes, extra = self.get_numpy_from_data_object(data_obj)
-        ranges, indexes = self.get_selected_ranges_and_indexes()
-        print extra
-        if extra is None:
-            cmd = PasteCommand(self.segment, ranges, self.cursor_index, indexes)
-        else:
-            if cmd_cls is None:
-                cmd_cls = PasteRectangularCommand
-            format_id, r, c = extra
-            cmd = cmd_cls(self.segment, self.anchor_start_index, r, c, self.control.bytes_per_row, bytes)
-        self.process_command(cmd)
+        pass
     
     def create_clipboard_data_object(self):
-        if self.anchor_start_index != self.anchor_end_index:
-            anchor_start, anchor_end, (r1, c1), (r2, c2) = self.control.get_highlight_indexes()
-            print anchor_start, anchor_end, (r1, c1), (r2, c2)
-            bpr = self.control.bytes_per_row
-            last = r2 * bpr
-            print last
-            d = self.segment[:last].reshape(-1, bpr)
-            print d
-            data = d[r1:r2, c1:c2]
-            print data
-            data_obj = wx.CustomDataObject("numpy,columns")
-            data_obj.SetData("%d,%d,%s" % (r2 - r1, c2 - c1, data.tostring()))
-            return data_obj
-        return None
-    
-    def highlight_selected_ranges(self):
-        s = self.segment
-        s.clear_style_bits(selected=True)
-        s.set_style_ranges_rect(self.selected_ranges, selected=True)
-        self.document.change_count += 1
-    
-    def invert_selection_ranges(self, ranges):
-        rects = [(rect[2], rect[3]) for rect in [self.segment.get_rect_indexes(r[0], r[1]) for r in ranges]]
-        inverted = invert_rects(rects, self.control.total_rows, self.control.bytes_per_row)
-        ranges = self.segment.rects_to_ranges(inverted)
-        return ranges
+        return HexEditor.create_clipboard_data_object(self)
     
     def get_extra_segment_savers(self, segment):
         return []
@@ -200,10 +168,7 @@ class JumpmanEditor(BitmapEditor):
         """ Creates the toolkit-specific control for the widget. """
 
         # Base-class constructor.
-        self.control = JumpmanLevelView(parent, self.task)
-
-        # create attribute so HexEditor parent will reference the bitmap
-        self.bitmap = self.control
+        self.bitmap = JumpmanLevelView(parent, self.task)
 
         data = np.zeros(40 * 90, dtype=np.uint8)
         data[::41] = 255
@@ -215,18 +180,19 @@ class JumpmanEditor(BitmapEditor):
         ##########################################
 
         # Get related controls
-        self.segment_list = self.window.get_dock_pane('jumpman_edit.segments').control
-        self.undo_history = self.window.get_dock_pane('jumpman_edit.undo').control
+        self.segment_list = self.window.get_dock_pane('jumpman.segments').control
+        self.undo_history = self.window.get_dock_pane('jumpman.undo').control
+        self.hex_edit = self.window.get_dock_pane('jumpman.hex').control
 
         # Load the editor's contents.
         self.load()
 
-        return self.control
+        return self.bitmap
 
     #### wx event handlers ####################################################
     
     def index_clicked(self, index, bit, control):
         self.cursor_index = index
-        if control != self.control:
-            self.control.select_index(index)
+        if control != self.hex_edit:
+            self.hex_edit.select_index(index)
         self.can_copy = (self.anchor_start_index != self.anchor_end_index)

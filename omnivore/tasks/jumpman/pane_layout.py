@@ -18,7 +18,7 @@ import panes
 # is only updated when quitting the application; if the application is killed
 # (or crashes!) the saved state is not updated.
 
-task_id_with_pane_layout = 'omnivore.jumpman_edit.v1'
+task_id_with_pane_layout = 'omnivore.jumpman.v1'
 
 def pane_layout():
     """ Create the default task layout, which is overridded by the user's save
@@ -26,8 +26,12 @@ def pane_layout():
     """
     return TaskLayout(
         left=VSplitter(
-            PaneItem('jumpman_edit.segments'),
-            PaneItem('jumpman_edit.undo'),
+            PaneItem('jumpman.segments'),
+            PaneItem('jumpman.undo'),
+        ),
+        right=HSplitter(
+            PaneItem('jumpman.sidebar'),
+            PaneItem('jumpman.hex'),
         ),
         )
 
@@ -39,4 +43,6 @@ def pane_create():
     return [
         panes.SegmentsPane(),
         panes.UndoPane(),
+        panes.HexPane(),
+        panes.SidebarPane(),
         ]
