@@ -197,7 +197,7 @@ class Machine(HasTraits):
         return fonts.A8DefaultFont
     
     def _antic_color_registers_default(self):
-        return colors.powerup_colors()
+        return list(colors.powerup_colors())
     
     def _color_standard_default(self):
         return 0  # NTSC
@@ -280,10 +280,13 @@ class Machine(HasTraits):
     #
     
     def update_colors(self, colors):
+        # need to operate on a copy of the colors to make sure we're not
+        # changing some global value
         if len(colors) == 5:
-            self.antic_color_registers[4:9] = colors
-        else:
-            self.antic_color_registers = colors
+            c = list(self.antic_color_registers)
+            c[4:9] = colors
+            colors = c
+        self.antic_color_registers = list(colors)
         self.color_registers = self.get_color_registers()
         self.color_registers_highlight = self.get_blended_color_registers(self.color_registers, self.highlight_color)
         self.color_registers_match = self.get_blended_color_registers(self.color_registers, self.match_background_color)
