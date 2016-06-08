@@ -113,7 +113,14 @@ class JumpmanEditor(BitmapEditor):
         self.find_segment(segment=old_editor.segment)
     
     def view_segment_set_width(self, segment):
-        self.bitmap_width = segment.map_width
+        self.bitmap_width = 40
+        colors = self.segment[0x2e:0x33].copy()
+        # on some levels, the bombs are set to color 0 because they are cycled
+        # to produce a glowing effect, but that's not visible here so we force
+        # it to be bright white
+        fg = colors[0:4]
+        fg[fg == 0] = 15
+        self.machine.update_colors(colors)
     
     def update_mouse_mode(self):
         self.control.set_mouse_mode(self.mouse_mode)
