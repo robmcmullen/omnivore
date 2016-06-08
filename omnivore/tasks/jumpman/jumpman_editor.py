@@ -28,35 +28,33 @@ from omnivore.framework.mouse_handler import MouseHandler
 
 from commands import *
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class JumpmanLevelView(MainBitmapScroller):
+    def __init__(self, *args, **kwargs):
+        MainBitmapScroller.__init__(self, *args, **kwargs)
+        self.level_builder = None
+
     def get_segment(self, editor):
+        self.level_builder = JumpmanLevelBuilder(editor.document.user_segments)
         return editor.screen
 
     def compute_image(self):
+        if self.level_builder is None:
+            return
         source = self.editor.segment
         start = source.start_addr
-        print "compute_image!", start
         index = source[0x38]*256 + source[0x37]
-        print "level def table", hex(index)
+        log.debug("level def table: %x" % index)
         if index > start:
             index -= start
         if index < len(source):
-            table = source[index:]
-            print list(table)
-            end = np.nonzero(table==255)[0]
-            print end
-            if len(end) > 0:
-                print end
-                end = end[0] + 1
-            else:
-                end = len(source)
-            print start, index, end
-            commands = source[index:index + end]
+            commands = source[index:index + 500]  # arbitrary max number of bytes
         else:
             commands = source[index:index]
-        print commands
-        parser = JumpmanLevelBuilder(self.segment, commands)
+        self.level_builder.draw_commands(self.segment, commands, current_segment=source)
 
     def get_image(self):
         self.compute_image()
