@@ -272,8 +272,6 @@ def get_jumpman_level(group, hex_lower=True):
             values = [op_fmt % g for g in group[1:]]
             if len(values) < count:
                 values.extend(["<missing>" for i in range(count - len(values))])
-            print text
-            print values
             text = text % tuple(values)
     else:
         text = "<invalid command %s>" % (op_fmt % byte)
