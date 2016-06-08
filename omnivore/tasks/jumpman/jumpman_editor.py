@@ -16,7 +16,7 @@ from omnivore import get_image_path
 from omnivore.tasks.hex_edit.hex_editor import HexEditor
 from omnivore.tasks.bitmap_edit.bitmap_editor import MainBitmapScroller, SelectMode, BitmapEditor
 from omnivore.framework.document import Document
-from omnivore.arch.machine import predefined
+from omnivore.arch.machine import Machine, predefined
 from omnivore.utils.wx.bitviewscroller import BitmapScroller
 from omnivore.utils.command import Overlay
 from omnivore.utils.searchutil import HexSearcher, CharSearcher
@@ -69,6 +69,11 @@ class JumpmanEditor(BitmapEditor):
     
     valid_mouse_modes = [SelectMode]
     
+    ##### Default traits
+    
+    def _machine_default(self):
+        return Machine(name="Jumpman", bitmap_renderer=predefined['bitmap_renderer'][2])
+
     def _map_width_default(self):
         return 40
     
@@ -104,6 +109,9 @@ class JumpmanEditor(BitmapEditor):
     def rebuild_document_properties(self):
         self.find_segment("Playfield map")
         self.control.set_mouse_mode(SelectMode)
+    
+    def copy_view_properties(self, old_editor):
+        pass
     
     def view_segment_set_width(self, segment):
         self.bitmap_width = segment.map_width
