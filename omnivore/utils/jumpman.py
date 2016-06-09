@@ -7,11 +7,7 @@ class JumpmanLevelBuilder(object):
     def __init__(self, segments):
         self.segments = segments
 
-    def clear_screen(self, screen):
-        screen[:] = 0
-
     def draw_commands(self, screen, commands, current_segment=None):
-        self.clear_screen(screen)
         self.clear_object_code_cache()
         x = y = dx = dy = num = 0
         addr = None

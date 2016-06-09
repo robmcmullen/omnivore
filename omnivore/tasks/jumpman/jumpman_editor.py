@@ -44,8 +44,11 @@ class JumpmanLevelView(MainBitmapScroller):
     def compute_image(self):
         if self.level_builder is None:
             return
+        self.segment[:] = 0  # clear screen
         source = self.editor.segment
         start = source.start_addr
+        if len(source) < 0x38:
+            return
         index = source[0x38]*256 + source[0x37]
         log.debug("level def table: %x" % index)
         if index > start:
