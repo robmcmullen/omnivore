@@ -301,7 +301,11 @@ class DefaultSegment(object):
 
 
     def __str__(self):
-        s = "%s ($%x bytes)" % (self.name, len(self))
+        if self.start_addr > 0:
+            origin = " @ %04x" % (self.start_addr)
+        else:
+            origin = ""
+        s = "%s ($%x bytes%s)" % (self.name, len(self), origin)
         if self.error:
             s += " " + self.error
         return s
