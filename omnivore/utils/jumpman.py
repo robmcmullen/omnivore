@@ -49,7 +49,7 @@ class JumpmanLevelBuilder(object):
         while index < last:
             prefix = codes[index:index + 3]
             if len(prefix) < 3:
-                if prefix[0] != 0xff:
+                if len(prefix) == 0 or prefix[0] != 0xff:
                     log.warning("  short prefix: %s" % str(prefix))
                 break
             n , xoffset, yoffset = prefix.view(dtype=np.int8)
