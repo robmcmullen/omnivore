@@ -279,14 +279,15 @@ class Machine(HasTraits):
         return m
     #
     
-    def update_colors(self, colors):
+    def update_colors(self, c):
+        baseline = list(colors.powerup_colors())
         # need to operate on a copy of the colors to make sure we're not
         # changing some global value
-        if len(colors) == 5:
-            c = list(self.antic_color_registers)
-            c[4:9] = colors
-            colors = c
-        self.antic_color_registers = list(colors)
+        if len(c) == 5:
+            baseline[4:9] = c
+        else:
+            baseline[0:len(c)] = c
+        self.antic_color_registers = baseline
         self.color_registers = self.get_color_registers()
         self.color_registers_highlight = self.get_blended_color_registers(self.color_registers, self.highlight_color)
         self.color_registers_match = self.get_blended_color_registers(self.color_registers, self.match_background_color)
