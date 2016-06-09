@@ -53,6 +53,8 @@ class TestJumpmanScreen(object):
         ]
 
         for c in commands:
+            text_commands = self.builder.parse_commands(c)
+            print "\n".join([str(a) for a in text_commands])
             self.builder.draw_commands(self.screen, c)
 
 if __name__ == "__main__":

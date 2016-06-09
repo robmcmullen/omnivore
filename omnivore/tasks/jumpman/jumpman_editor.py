@@ -111,7 +111,7 @@ class AnticDSelectMode(JumpmanSelectMode):
         if pick >= 0:
             e = self.canvas.editor
             e.index_clicked(pick, 0, None)
-            e.select_range(pick - 3, pick + 1)
+            e.select_range(pick, pick + 4)
             wx.CallAfter(e.index_clicked, pick, 0, None)
 
     def process_left_down(self, evt):
