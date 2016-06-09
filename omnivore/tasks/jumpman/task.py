@@ -48,6 +48,12 @@ class JumpmanEditTask(HexEditTask):
     def create_dock_panes(self):
         return pane_layout.pane_create()
 
+    def _tool_bars_default(self):
+        toolbars = []
+        toolbars.append(get_toolbar_group("Modes", JumpmanEditor.valid_mouse_modes))
+        toolbars.extend(HexEditTask._tool_bars_default(self))
+        return toolbars
+
     ###########################################################################
     # 'FrameworkTask' interface.
     ###########################################################################

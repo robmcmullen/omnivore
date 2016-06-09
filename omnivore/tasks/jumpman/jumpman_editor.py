@@ -67,13 +67,13 @@ class JumpmanLevelView(MainBitmapScroller):
 
     def get_image(self):
         self.compute_image()
-        return MainBitmapScroller.get_image(self)
+        bitimage = MainBitmapScroller.get_image(self)
+        self.mouse_mode.draw_overlay(bitimage)
+        return bitimage
 
-
-class AnticDSelectMode(SelectMode):
-    icon = "select.png"
-    menu_item_name = "Select"
-    menu_item_tooltip = "Select regions"
+class JumpmanSelectMode(SelectMode):
+    def draw_overlay(self, bitimage):
+        return
     
     def get_xy(self, evt):
         c = self.canvas
@@ -90,6 +90,12 @@ class AnticDSelectMode(SelectMode):
             return index, x, y, pick
         return None, None, None, None
 
+
+class AnticDSelectMode(JumpmanSelectMode):
+    icon = "select.png"
+    menu_item_name = "Select"
+    menu_item_tooltip = "Select regions"
+
     def display_coords(self, evt, extra=None):
         c = self.canvas
         e = c.editor
@@ -99,17 +105,6 @@ class AnticDSelectMode(SelectMode):
             if extra:
                 msg += " " + extra
             e.task.status_bar.message = msg
-    
-    def get_display_rect(self):
-        c = self.canvas
-        anchor_start, anchor_end, (r1, c1), (r2, c2) = c.get_highlight_indexes()
-        extra = None
-        if r1 >= 0:
-            w = c2 - c1
-            h = r2 - r1
-            if w > 0 or h > 0:
-                extra = "rectangle: width=%d (0x%x), height=%d (0x%x)" % (w, w, h, h)
-        return extra
 
     def highlight_pick(self, evt):
         index, x, y, pick = self.get_xy(evt)
@@ -134,13 +129,115 @@ class AnticDSelectMode(SelectMode):
         self.display_coords(evt)
 
 
+class PeanutCheckMode(JumpmanSelectMode):
+    icon = "jumpman_peanut_check.png"
+    menu_item_name = "Peanut Check"
+    menu_item_tooltip = "Check for valid peanut positions"
+
+    def __init__(self, *args, **kwargs):
+        JumpmanSelectMode.__init__(self, *args, **kwargs)
+        self.mouse_down = (0, 0)
+        self.batch = None
+
+    def get_harvest_offset(self):
+        source = self.canvas.editor.segment
+        if len(source) < 0x47:
+            hx = hy = 0, 0
+        else:
+            hx = source[0x46]
+            hy = source[0x47]
+        return hx, hy
+
+    def draw_overlay(self, bitimage):
+        hx, hy = self.get_harvest_offset()
+        w = 160
+        h = 88
+        bad = (203, 144, 161)
+        orig = bitimage.copy()
+        
+        # Original (slow) algorithm to determine bad locations:
+        #
+        # def is_allergic(x, y, hx, hy):
+        #     return (x + 0x30 + hx) & 0x1f < 7 or (2 * y + 0x20 + hy) & 0x1f < 5
+        #
+        # Note that in the originial 6502 code, the y coord is in player
+        # coords, which is has twice the resolution of graphics 7. That's the
+        # factor of two in the y part. Simplifying, the bad locations can be
+        # defined in sets of 32 columns and 16 rows:
+        #
+        # x: 16 - hx, 16 - hx + 6 inclusive
+        # y: 0 - hy/2, 0 - hy/2 + 2 inclusive
+        hx = hx & 0x1f
+        hy = (hy & 0x1f) / 2
+        startx = (16 - hx) & 0x1f
+        starty = (0 - hy) & 0xf
+
+        # Don't know how to set multiple ranges simultaneously in numpy, so use
+        # a slow python loop
+        for x in range(startx, startx + 7):
+            x = x & 0x1f
+            bitimage[0:h:, x::32] = orig[0:h:, x::32] / 8 + bad
+        for y in range(starty, starty + 3):
+            y = y & 0xf
+            bitimage[y:h:16,:] = orig[y:h:16,:] / 8 + bad
+
+    def display_coords(self, evt, extra=None):
+        c = self.canvas
+        e = c.editor
+        if e is not None:
+            hx, hy = self.get_harvest_offset()
+            msg = "harvest offset: x=%d (0x%x) y=%d (0x%x)" % (hx, hx, hy, hy)
+            e.task.status_bar.message = msg
+
+    def change_harvest_offset(self, evt, start=False):
+        c = self.canvas
+        e = c.editor
+        if e is None:
+            return
+        index, x, y, pick = self.get_xy(evt)
+        if start:
+            self.batch = Overlay()
+            hx, hy = self.get_harvest_offset()
+            self.mouse_down = hx + x, hy + y
+        else:
+            dx = (self.mouse_down[0] - x) & 0x1f
+            dy = (self.mouse_down[1] - y) & 0x1f
+            self.display_coords(evt)
+            values = [dx, dy]
+            source = self.canvas.editor.segment
+            cmd = ChangeByteCommand(source, 0x46, 0x48, values)
+            e.process_command(cmd, self.batch)
+        self.display_coords(evt)
+
+    def process_left_down(self, evt):
+        self.change_harvest_offset(evt, True)
+
+    def process_left_up(self, evt):
+        c = self.canvas
+        e = c.editor
+        if e is None:
+            return
+        e.end_batch()
+        self.batch = None
+
+        # Force updating of the hex view
+        e.document.change_count += 1
+        e.refresh_panes()
+
+    def process_mouse_motion_down(self, evt):
+        self.change_harvest_offset(evt)
+
+    def process_mouse_motion_up(self, evt):
+        self.display_coords(evt)
+
+
 class JumpmanEditor(BitmapEditor):
     """ The toolkit specific implementation of a HexEditor.  See the
     IHexEditor interface for the API documentation.
     """
     ##### class attributes
     
-    valid_mouse_modes = [AnticDSelectMode]
+    valid_mouse_modes = [AnticDSelectMode, PeanutCheckMode]
     
     ##### Default traits
     
@@ -200,6 +297,7 @@ class JumpmanEditor(BitmapEditor):
     
     def update_mouse_mode(self):
         self.bitmap.set_mouse_mode(self.mouse_mode)
+        self.bitmap.refresh_view()
     
     def set_current_draw_pattern(self, pattern, control):
         try:
