@@ -573,7 +573,8 @@ class BitmapScroller(BitviewScroller):
         byte = (self.bytes_per_row * y) + xbyte
         if byte >= self.end_byte:
             inside = False
-        bit = 7 - (x & 7)
+        bitmask = self.pixels_per_byte - 1
+        bit = bitmask - (x & bitmask)
         return byte, bit, inside
     
     def get_image(self):
