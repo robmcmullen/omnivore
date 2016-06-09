@@ -223,9 +223,11 @@ class JumpmanEditor(BitmapEditor):
         pass
     
     def process_paste_data_object(self, data_obj, cmd_cls=None):
-        pass
+        # Don't use bitmap editor's paste, we want it to paste in hex
+        return HexEditor.process_paste_data_object(self, data_obj, cmd_cls)
     
     def create_clipboard_data_object(self):
+        # Don't use bitmap editor's clipboard, we want hex bytes
         return HexEditor.create_clipboard_data_object(self)
     
     def get_extra_segment_savers(self, segment):
