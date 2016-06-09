@@ -39,12 +39,17 @@ class JumpmanLevelView(MainBitmapScroller):
 
     def get_segment(self, editor):
         self.level_builder = JumpmanLevelBuilder(editor.document.user_segments)
+        self.pick_buffer = editor.pick_buffer
         return editor.screen
+
+    def clear_screen(self):
+        self.segment[:] = 0
+        self.pick_buffer[:] = -1
 
     def compute_image(self):
         if self.level_builder is None:
             return
-        self.segment[:] = 0  # clear screen
+        self.clear_screen()
         source = self.editor.segment
         start = source.start_addr
         if len(source) < 0x38:
@@ -57,11 +62,76 @@ class JumpmanLevelView(MainBitmapScroller):
             commands = source[index:index + 500]  # arbitrary max number of bytes
         else:
             commands = source[index:index]
-        self.level_builder.draw_commands(self.segment, commands, current_segment=source)
+        self.level_builder.draw_commands(self.segment, commands, current_segment=source, pick_buffer=self.pick_buffer)
+        self.pick_buffer[self.pick_buffer >= 0] += index
 
     def get_image(self):
         self.compute_image()
         return MainBitmapScroller.get_image(self)
+
+
+class AnticDSelectMode(SelectMode):
+    icon = "select.png"
+    menu_item_name = "Select"
+    menu_item_tooltip = "Select regions"
+    
+    def get_xy(self, evt):
+        c = self.canvas
+        e = c.editor
+        if e is not None:
+            index, bit, inside = c.event_coords_to_byte(evt)
+            r0, c0 = c.byte_to_row_col(index)
+            x = c0 * 4 + (3 - bit)
+            y = r0
+            if y < e.antic_lines:
+                pick = e.pick_buffer[x, y]
+            else:
+                pick = -1
+            return index, x, y, pick
+        return None, None, None, None
+
+    def display_coords(self, evt, extra=None):
+        c = self.canvas
+        e = c.editor
+        if e is not None:
+            index, x, y, pick = self.get_xy(evt)
+            msg = "x=%d (0x%x) y=%d (0x%x) index=%d (0x%x) pick=%d" % (x, x, y, y, index, index, pick)
+            if extra:
+                msg += " " + extra
+            e.task.status_bar.message = msg
+    
+    def get_display_rect(self):
+        c = self.canvas
+        anchor_start, anchor_end, (r1, c1), (r2, c2) = c.get_highlight_indexes()
+        extra = None
+        if r1 >= 0:
+            w = c2 - c1
+            h = r2 - r1
+            if w > 0 or h > 0:
+                extra = "rectangle: width=%d (0x%x), height=%d (0x%x)" % (w, w, h, h)
+        return extra
+
+    def highlight_pick(self, evt):
+        index, x, y, pick = self.get_xy(evt)
+        if pick >= 0:
+            e = self.canvas.editor
+            e.index_clicked(pick, 0, None)
+            e.select_range(pick - 3, pick + 1)
+            wx.CallAfter(e.index_clicked, pick, 0, None)
+
+    def process_left_down(self, evt):
+        self.highlight_pick(evt)
+        self.display_coords(evt)
+
+    def process_left_up(self, evt):
+        self.display_coords(evt)
+
+    def process_mouse_motion_down(self, evt):
+        self.highlight_pick(evt)
+        self.display_coords(evt)
+
+    def process_mouse_motion_up(self, evt):
+        self.display_coords(evt)
 
 
 class JumpmanEditor(BitmapEditor):
@@ -70,7 +140,7 @@ class JumpmanEditor(BitmapEditor):
     """
     ##### class attributes
     
-    valid_mouse_modes = [SelectMode]
+    valid_mouse_modes = [AnticDSelectMode]
     
     ##### Default traits
     
@@ -113,7 +183,7 @@ class JumpmanEditor(BitmapEditor):
         self.bitmap.refresh_view()
     
     def rebuild_document_properties(self):
-        self.bitmap.set_mouse_mode(SelectMode)
+        self.bitmap.set_mouse_mode(AnticDSelectMode)
     
     def copy_view_properties(self, old_editor):
         self.find_segment(segment=old_editor.segment)
@@ -142,6 +212,9 @@ class JumpmanEditor(BitmapEditor):
             self.tile_map.clear_tile_selection()
         if control != self.character_set:
             self.character_set.clear_tile_selection()
+    
+    def highlight_selected_ranges(self):
+        HexEditor.highlight_selected_ranges(self)
 
     def mark_index_range_changed(self, index_range):
         pass
@@ -173,10 +246,12 @@ class JumpmanEditor(BitmapEditor):
         # Base-class constructor.
         self.bitmap = JumpmanLevelView(parent, self.task)
 
-        data = np.zeros(40 * 90, dtype=np.uint8)
+        self.antic_lines = 90
+        data = np.zeros(40 * self.antic_lines, dtype=np.uint8)
         data[::41] = 255
         r = SegmentData(data)
         self.screen = DefaultSegment(r, 0x7000)
+        self.pick_buffer = np.zeros((160, self.antic_lines), dtype=np.int32)
 
         ##########################################
         # Events.

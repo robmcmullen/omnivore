@@ -7,7 +7,7 @@ class JumpmanLevelBuilder(object):
     def __init__(self, segments):
         self.segments = segments
 
-    def draw_commands(self, screen, commands, current_segment=None):
+    def draw_commands(self, screen, commands, current_segment=None, pick_buffer=None):
         self.clear_object_code_cache()
         x = y = dx = dy = num = 0
         addr = None
@@ -17,10 +17,11 @@ class JumpmanLevelBuilder(object):
         while index < last:
             c = commands[index]
             log.debug("index=%d, command=%x" % (index, c))
+            pick_index = index
             index += 1
             if c < 0xfb:
                 if addr is not None:
-                    self.draw_codes(screen, addr, x, y, dx, dy, c, current_segment)
+                    self.draw_codes(screen, addr, x, y, dx, dy, c, current_segment, pick_buffer, pick_index)
             elif index + 1 < last:
                 arg1 = commands[index]
                 arg2 = commands[index + 1]
@@ -36,7 +37,7 @@ class JumpmanLevelBuilder(object):
                 elif c == 0xff:
                     return
 
-    def draw_codes(self, screen, addr, x, y, dx, dy, repeat, current_segment):
+    def draw_codes(self, screen, addr, x, y, dx, dy, repeat, current_segment, pick_buffer, pick_index):
         log.debug("addr=%x x=%d y=%d dx=%d dy=%d, num=%d" % (addr, x, y, dx, dy, repeat))
         codes = self.get_object_code(addr, current_segment)
         if codes is None:
@@ -64,7 +65,10 @@ class JumpmanLevelBuilder(object):
         for i in range(repeat):
             for n, xoffset, yoffset, pixels in lines:
                 for i, c in enumerate(pixels):
-                    self.draw_pixel(screen, x + xoffset + i, y + yoffset, c)
+                    px = x + xoffset + i
+                    py = y + yoffset
+                    if self.draw_pixel(screen, px, py, c):
+                        pick_buffer[px,py] = pick_index
             x += dx
             y += dy
 
@@ -76,9 +80,10 @@ class JumpmanLevelBuilder(object):
         color = color << self.bit_offset[x_bit]
         index = y * 40 + x_byte
         if index < 0 or index > len(screen):
-            return
+            return False
         screen[index] &= self.mask[x_bit]
         screen[index] |= color
+        return True
 
     def clear_object_code_cache(self):
         self.object_code_cache = {}
