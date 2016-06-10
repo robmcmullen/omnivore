@@ -271,31 +271,31 @@ class DrawMode(JumpmanSelectMode):
 class DrawGirderMode(DrawMode):
     icon = "jumpman_girder.png"
     menu_item_name = "Draw Girder"
-    menu_item_tooltip = "Draw stuff"
+    menu_item_tooltip = "Draw girders"
     drawing_object = Girder
 
 class DrawLadderMode(DrawMode):
     icon = "jumpman_ladder.png"
     menu_item_name = "Draw Ladder"
-    menu_item_tooltip = "Draw stuff"
+    menu_item_tooltip = "Draw ladders (vertical only)"
     drawing_object = Ladder
 
 class DrawUpRopeMode(DrawMode):
     icon = "jumpman_uprope.png"
-    menu_item_name = "Draw Ladder"
-    menu_item_tooltip = "Draw stuff"
+    menu_item_name = "Draw Up Rope"
+    menu_item_tooltip = "Draw up ropes (vertical only)"
     drawing_object = UpRope
 
 class DrawDownRopeMode(DrawMode):
     icon = "jumpman_downrope.png"
-    menu_item_name = "Draw Ladder"
-    menu_item_tooltip = "Draw stuff"
+    menu_item_name = "Draw Down Rope"
+    menu_item_tooltip = "Draw down ropes (vertical only)"
     drawing_object = DownRope
 
 class DrawPeanutMode(DrawMode):
     icon = "jumpman_peanut.png"
-    menu_item_name = "Draw Ladder"
-    menu_item_tooltip = "Draw stuff"
+    menu_item_name = "Draw Peanuts"
+    menu_item_tooltip = "Draw peanuts (single only)"
     drawing_object = Peanut
 
 
