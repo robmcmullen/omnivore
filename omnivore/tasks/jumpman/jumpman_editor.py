@@ -22,7 +22,7 @@ from omnivore.utils.command import Overlay
 from omnivore.utils.searchutil import HexSearcher, CharSearcher
 from omnivore.utils.drawutil import get_bounds
 from omnivore.utils.sortutil import invert_rects
-from omnivore.utils.jumpman import JumpmanLevelBuilder
+from omnivore.utils.jumpman import *
 from omnivore.tasks.hex_edit.commands import ChangeByteCommand, PasteCommand
 from omnivore.framework.mouse_handler import MouseHandler
 
@@ -62,16 +62,20 @@ class JumpmanLevelView(MainBitmapScroller):
             commands = source[index:index + 500]  # arbitrary max number of bytes
         else:
             commands = source[index:index]
-        self.level_builder.draw_commands(self.segment, commands, current_segment=source, pick_buffer=self.pick_buffer)
+        self.level_builder.parse_and_draw(self.segment, commands, current_segment=source, pick_buffer=self.pick_buffer)
         self.pick_buffer[self.pick_buffer >= 0] += index
 
     def get_image(self):
         self.compute_image()
+        self.mouse_mode.draw_extra_commands(self.level_builder, self.segment, self.editor.segment)
         bitimage = MainBitmapScroller.get_image(self)
         self.mouse_mode.draw_overlay(bitimage)
         return bitimage
 
 class JumpmanSelectMode(SelectMode):
+    def draw_extra_commands(self, lever_builder, screen, current_segment):
+        return
+
     def draw_overlay(self, bitimage):
         return
     
@@ -90,12 +94,6 @@ class JumpmanSelectMode(SelectMode):
             return index, x, y, pick
         return None, None, None, None
 
-
-class AnticDSelectMode(JumpmanSelectMode):
-    icon = "select.png"
-    menu_item_name = "Select"
-    menu_item_tooltip = "Select regions"
-
     def display_coords(self, evt, extra=None):
         c = self.canvas
         e = c.editor
@@ -105,6 +103,24 @@ class AnticDSelectMode(JumpmanSelectMode):
             if extra:
                 msg += " " + extra
             e.task.status_bar.message = msg
+
+    def process_left_down(self, evt):
+        self.display_coords(evt)
+
+    def process_left_up(self, evt):
+        self.display_coords(evt)
+
+    def process_mouse_motion_down(self, evt):
+        self.display_coords(evt)
+
+    def process_mouse_motion_up(self, evt):
+        self.display_coords(evt)
+
+
+class AnticDSelectMode(JumpmanSelectMode):
+    icon = "select.png"
+    menu_item_name = "Select"
+    menu_item_tooltip = "Select regions"
 
     def highlight_pick(self, evt):
         index, x, y, pick = self.get_xy(evt)
@@ -118,14 +134,8 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.highlight_pick(evt)
         self.display_coords(evt)
 
-    def process_left_up(self, evt):
-        self.display_coords(evt)
-
     def process_mouse_motion_down(self, evt):
         self.highlight_pick(evt)
-        self.display_coords(evt)
-
-    def process_mouse_motion_up(self, evt):
         self.display_coords(evt)
 
 
@@ -227,8 +237,85 @@ class PeanutCheckMode(JumpmanSelectMode):
     def process_mouse_motion_down(self, evt):
         self.change_harvest_offset(evt)
 
-    def process_mouse_motion_up(self, evt):
+
+class DrawMode(JumpmanSelectMode):
+    icon = "select.png"
+    menu_item_name = "Draw"
+    menu_item_tooltip = "Draw stuff"
+    drawing_object = Girder
+
+    def __init__(self, *args, **kwargs):
+        JumpmanSelectMode.__init__(self, *args, **kwargs)
+        self.mouse_down = (0, 0)
+        self.commands = []
+
+    def draw_extra_commands(self, level_builder, screen, current_segment):
+        level_builder.draw_commands(screen, self.commands, current_segment)
+
+    def create_commands(self, evt, start=False):
+        c = self.canvas
+        e = c.editor
+        if e is None:
+            return
+        index, x, y, pick = self.get_xy(evt)
+        if start:
+            self.mouse_down = x, y
+        dx = x - self.mouse_down[0]
+        dy = y - self.mouse_down[1]
+        obj = self.drawing_object(-1)
+        if obj.vertical_only:
+            sx = 0
+            sy = obj.y_spacing if dy > 0 else -obj.y_spacing
+            num = max((dy + sy - 1) / sy, 1)
+        else:
+            if abs(dx) > abs(dy):
+                sx = obj.x_spacing if dx > 0 else -obj.x_spacing
+                num = max((abs(dx) + abs(sx) - 1) / abs(sx), 1)
+                sy = dy / obj.y_spacing / num
+            else:
+                sy = obj.y_spacing if dy > 0 else -obj.y_spacing
+                num = max((abs(dy) + abs(sy) - 1) / abs(sy), 1)
+                sx = dx / obj.x_spacing / num
+        self.commands = [
+            Spacing(-1, sx, sy),
+            obj,
+            DrawObject(-1, self.mouse_down[0], self.mouse_down[1], num),
+            End(-1),
+        ]
         self.display_coords(evt)
+
+    def process_left_down(self, evt):
+        self.create_commands(evt, True)
+        self.canvas.Refresh()
+        self.display_coords(evt)
+
+    def process_left_up(self, evt):
+        # Record the command!
+        self.commands = []
+        self.display_coords(evt)
+
+    def process_mouse_motion_down(self, evt):
+        self.create_commands(evt)
+        self.canvas.Refresh()
+        self.display_coords(evt)
+
+    def process_mouse_motion_up(self, evt):
+        self.create_commands(evt, True)
+        self.canvas.Refresh()
+        self.display_coords(evt)
+
+class DrawGirderMode(DrawMode):
+    icon = "select.png"
+    menu_item_name = "Draw Girder"
+    menu_item_tooltip = "Draw stuff"
+    drawing_object = Girder
+
+class DrawLadderMode(DrawMode):
+    icon = "select.png"
+    menu_item_name = "Draw Ladder"
+    menu_item_tooltip = "Draw stuff"
+    drawing_object = Ladder
+
 
 
 class JumpmanEditor(BitmapEditor):
@@ -237,7 +324,7 @@ class JumpmanEditor(BitmapEditor):
     """
     ##### class attributes
     
-    valid_mouse_modes = [AnticDSelectMode, PeanutCheckMode]
+    valid_mouse_modes = [AnticDSelectMode, PeanutCheckMode, DrawGirderMode, DrawLadderMode]
     
     ##### Default traits
     

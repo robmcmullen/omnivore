@@ -79,6 +79,13 @@ class ScreenObject(JumpmanCommand):
 class StaticObject(ScreenObject):
     name = "staticobject"
     addr = None
+    x_spacing = 4
+    y_spacing = 4
+    single = False
+    vertical_only = False
+
+    def process_args(self, *args):
+        pass
 
     def format_args(self):
         return ""
@@ -86,10 +93,13 @@ class StaticObject(ScreenObject):
 class Girder(StaticObject):
     name = "girder"
     addr = 0x4000
+    y_spacing = 3
 
 class Ladder(StaticObject):
     name = "ladder"
     addr = 0x402c
+    x_spacing = 8
+    vertical_only = True
 
     def update_table(self, state):
         state.add_ladder()
@@ -97,10 +107,12 @@ class Ladder(StaticObject):
 class UpRope(StaticObject):
     name = "uprope"
     addr = 0x40af
+    vertical_only = True
 
 class DownRope(StaticObject):
     name = "downrope"
     addr = 0x40c0
+    vertical_only = True
 
     def update_table(self, state):
         state.add_downrope()
@@ -108,6 +120,8 @@ class DownRope(StaticObject):
 class Peanut(StaticObject):
     name = "peanut"
     addr = 0x4083
+    y_spacing = 3
+    single = True
 
 class EraseGirder(StaticObject):
     name = "girder_erase"
@@ -307,9 +321,12 @@ class JumpmanLevelBuilder(object):
                 break
         return found(pick, addr)
 
-    def draw_commands(self, screen, data, current_segment=None, pick_buffer=None):
-        state = ScreenState(self.segments, current_segment, screen, pick_buffer)
+    def parse_and_draw(self, screen, data, current_segment=None, pick_buffer=None):
         commands = self.parse_commands(data)
+        self.draw_commands(screen, commands, current_segment, pick_buffer)
+
+    def draw_commands(self, screen, commands, current_segment=None, pick_buffer=None):
+        state = ScreenState(self.segments, current_segment, screen, pick_buffer)
         for c in commands:
             log.debug("Processing command %s" % c)
             c.execute(state)
