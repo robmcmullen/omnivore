@@ -30,6 +30,8 @@ class MainBitmapScroller(BitmapScroller):
     """Subclass adapts the mouse interface to the MouseHandler class
     
     """
+    default_mouse_handler = MouseHandler
+
     def __init__(self, *args, **kwargs):
         BitmapScroller.__init__(self, *args, **kwargs)
 
@@ -38,7 +40,7 @@ class MainBitmapScroller(BitmapScroller):
         p = get_image_path("icons/hand_closed.ico")
         self.hand_closed_cursor = wx.Cursor(p, wx.BITMAP_TYPE_ICO, 16, 16)
         self.forced_cursor = None
-        self.set_mouse_mode(MouseHandler)  # dummy initial mouse handler
+        self.set_mouse_mode(self.default_mouse_handler)  # dummy initial mouse handler
         self.default_pan_mode = SelectMode(self)
         self.batch = None
 

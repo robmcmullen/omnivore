@@ -32,46 +32,6 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class JumpmanLevelView(MainBitmapScroller):
-    def __init__(self, *args, **kwargs):
-        MainBitmapScroller.__init__(self, *args, **kwargs)
-        self.level_builder = None
-
-    def get_segment(self, editor):
-        self.level_builder = JumpmanLevelBuilder(editor.document.user_segments)
-        self.pick_buffer = editor.pick_buffer
-        return editor.screen
-
-    def clear_screen(self):
-        self.segment[:] = 0
-        self.pick_buffer[:] = -1
-
-    def compute_image(self):
-        if self.level_builder is None:
-            return
-        self.clear_screen()
-        source = self.editor.segment
-        start = source.start_addr
-        if len(source) < 0x38:
-            return
-        index = source[0x38]*256 + source[0x37]
-        log.debug("level def table: %x" % index)
-        if index > start:
-            index -= start
-        if index < len(source):
-            commands = source[index:index + 500]  # arbitrary max number of bytes
-        else:
-            commands = source[index:index]
-        self.level_builder.parse_and_draw(self.segment, commands, current_segment=source, pick_buffer=self.pick_buffer)
-        self.pick_buffer[self.pick_buffer >= 0] += index
-
-    def get_image(self):
-        self.compute_image()
-        self.mouse_mode.draw_extra_commands(self.level_builder, self.segment, self.editor.segment)
-        bitimage = MainBitmapScroller.get_image(self)
-        self.mouse_mode.draw_overlay(bitimage)
-        return bitimage
-
 class JumpmanSelectMode(SelectMode):
     def draw_extra_commands(self, lever_builder, screen, current_segment):
         return
@@ -338,6 +298,48 @@ class DrawPeanutMode(DrawMode):
     menu_item_tooltip = "Draw stuff"
     drawing_object = Peanut
 
+
+class JumpmanLevelView(MainBitmapScroller):
+    default_mouse_handler = JumpmanSelectMode
+
+    def __init__(self, *args, **kwargs):
+        MainBitmapScroller.__init__(self, *args, **kwargs)
+        self.level_builder = None
+
+    def get_segment(self, editor):
+        self.level_builder = JumpmanLevelBuilder(editor.document.user_segments)
+        self.pick_buffer = editor.pick_buffer
+        return editor.screen
+
+    def clear_screen(self):
+        self.segment[:] = 0
+        self.pick_buffer[:] = -1
+
+    def compute_image(self):
+        if self.level_builder is None:
+            return
+        self.clear_screen()
+        source = self.editor.segment
+        start = source.start_addr
+        if len(source) < 0x38:
+            return
+        index = source[0x38]*256 + source[0x37]
+        log.debug("level def table: %x" % index)
+        if index > start:
+            index -= start
+        if index < len(source):
+            commands = source[index:index + 500]  # arbitrary max number of bytes
+        else:
+            commands = source[index:index]
+        self.level_builder.parse_and_draw(self.segment, commands, current_segment=source, pick_buffer=self.pick_buffer)
+        self.pick_buffer[self.pick_buffer >= 0] += index
+
+    def get_image(self):
+        self.compute_image()
+        self.mouse_mode.draw_extra_commands(self.level_builder, self.segment, self.editor.segment)
+        bitimage = MainBitmapScroller.get_image(self)
+        self.mouse_mode.draw_overlay(bitimage)
+        return bitimage
 
 
 class JumpmanEditor(BitmapEditor):
