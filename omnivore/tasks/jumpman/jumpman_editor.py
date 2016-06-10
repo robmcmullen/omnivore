@@ -267,15 +267,19 @@ class DrawMode(JumpmanSelectMode):
             sx = 0
             sy = obj.y_spacing if dy > 0 else -obj.y_spacing
             num = max((dy + sy - 1) / sy, 1)
+        elif obj.single:
+            sx = obj.x_spacing
+            sy = 0
+            num = 1
         else:
-            if abs(dx) > abs(dy):
+            if abs(dx) >= abs(dy):
                 sx = obj.x_spacing if dx > 0 else -obj.x_spacing
                 num = max((abs(dx) + abs(sx) - 1) / abs(sx), 1)
-                sy = dy / obj.y_spacing / num
+                sy = dy / num
             else:
                 sy = obj.y_spacing if dy > 0 else -obj.y_spacing
                 num = max((abs(dy) + abs(sy) - 1) / abs(sy), 1)
-                sx = dx / obj.x_spacing / num
+                sx = dx / num
         self.commands = [
             Spacing(-1, sx, sy),
             obj,
@@ -305,16 +309,34 @@ class DrawMode(JumpmanSelectMode):
         self.display_coords(evt)
 
 class DrawGirderMode(DrawMode):
-    icon = "select.png"
+    icon = "jumpman_girder.png"
     menu_item_name = "Draw Girder"
     menu_item_tooltip = "Draw stuff"
     drawing_object = Girder
 
 class DrawLadderMode(DrawMode):
-    icon = "select.png"
+    icon = "jumpman_ladder.png"
     menu_item_name = "Draw Ladder"
     menu_item_tooltip = "Draw stuff"
     drawing_object = Ladder
+
+class DrawUpRopeMode(DrawMode):
+    icon = "jumpman_uprope.png"
+    menu_item_name = "Draw Ladder"
+    menu_item_tooltip = "Draw stuff"
+    drawing_object = UpRope
+
+class DrawDownRopeMode(DrawMode):
+    icon = "jumpman_downrope.png"
+    menu_item_name = "Draw Ladder"
+    menu_item_tooltip = "Draw stuff"
+    drawing_object = DownRope
+
+class DrawPeanutMode(DrawMode):
+    icon = "jumpman_peanut.png"
+    menu_item_name = "Draw Ladder"
+    menu_item_tooltip = "Draw stuff"
+    drawing_object = Peanut
 
 
 
@@ -324,7 +346,7 @@ class JumpmanEditor(BitmapEditor):
     """
     ##### class attributes
     
-    valid_mouse_modes = [AnticDSelectMode, PeanutCheckMode, DrawGirderMode, DrawLadderMode]
+    valid_mouse_modes = [AnticDSelectMode, PeanutCheckMode, DrawGirderMode, DrawLadderMode, DrawUpRopeMode, DrawDownRopeMode, DrawPeanutMode]
     
     ##### Default traits
     
