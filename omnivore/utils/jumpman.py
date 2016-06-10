@@ -29,6 +29,9 @@ class JumpmanCommand(object):
     def update_state(self, state):
         pass
 
+    def update_table(self, state):
+        pass
+
     def execute(self, state):
         self.update_state(state)
         if self.draw:
@@ -71,6 +74,7 @@ class ScreenObject(JumpmanCommand):
 
     def update_state(self, state):
         state.addr = self.addr
+        state.last_object = self
 
 class StaticObject(ScreenObject):
     name = "staticobject"
@@ -87,28 +91,34 @@ class Ladder(StaticObject):
     name = "ladder"
     addr = 0x402c
 
+    def update_table(self, state):
+        state.add_ladder()
+
 class UpRope(StaticObject):
-    name = "up_rope"
+    name = "uprope"
     addr = 0x40af
 
 class DownRope(StaticObject):
-    name = "down_rope"
+    name = "downrope"
     addr = 0x40c0
+
+    def update_table(self, state):
+        state.add_downrope()
 
 class Peanut(StaticObject):
     name = "peanut"
     addr = 0x4083
 
 class EraseGirder(StaticObject):
-    name = "erase_girder"
+    name = "girder_erase"
     addr = 0x4016
 
 class EraseLadder(StaticObject):
-    name = "erase_ladder"
+    name = "ladder_erase"
     addr = 0x4056
 
 class EraseRope(StaticObject):
-    name = "erase_rope"
+    name = "rope_erase"
     addr = 0x40d1
 
 class PositionObject(JumpmanCommand):
@@ -148,6 +158,8 @@ class ScreenState(object):
         self.x = self.y = self.dx = self.dy = self.count = 0
         self.pick_index = -1
         self.addr = None
+        self.last_object = None
+
         self.object_code_cache = {}
         self.search_order = []
         self.current_segment = current_segment
@@ -157,6 +169,15 @@ class ScreenState(object):
         self.screen = screen
         self.pick_buffer = pick_buffer
 
+        self.ladder_positions = set()
+        self.downrope_positions = set()
+
+    def add_ladder(self):
+        self.ladder_positions.add(self.x + 0x30)
+
+    def add_downrope(self):
+        self.downrope_positions.add(self.x + 0x2e)
+
     def draw_codes(self):
         if self.addr is None:
             return
@@ -164,6 +185,8 @@ class ScreenState(object):
         codes = self.get_object_code(self.addr)
         if codes is None:
             return
+        if self.last_object:
+            self.last_object.update_table(self)
         log.debug("  found codes: %s" % str(codes))
         index = 0
         last = len(codes)
@@ -290,3 +313,4 @@ class JumpmanLevelBuilder(object):
         for c in commands:
             log.debug("Processing command %s" % c)
             c.execute(state)
+        return state
