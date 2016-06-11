@@ -32,6 +32,7 @@ def pane_layout():
         right=HSplitter(
             PaneItem('jumpman.sidebar'),
             PaneItem('jumpman.hex'),
+            PaneItem('jumpman.level_data'),
         ),
         )
 
@@ -45,4 +46,5 @@ def pane_create():
         panes.UndoPane(),
         panes.HexPane(),
         panes.SidebarPane(),
+        panes.LevelDataPane(),
         ]

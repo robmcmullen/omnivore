@@ -6,6 +6,7 @@ from omnivore.tasks.hex_edit.grid_control import HexEditControl
 from omnivore.tasks.hex_edit.panes import CommentsPanel
 from omnivore.framework.undo_panel import UndoHistoryPanel
 from omnivore.utils.wx.springtabs import SpringTabs
+from omnivore.utils.wx.info_panels import InfoPanel
 
 import logging
 log = logging.getLogger(__name__)
@@ -41,6 +42,26 @@ class HexPane(FrameworkPane):
     
     def create_contents(self, parent):
         control = HexEditControl(parent, self.task, size=(300, 150))
+        return control
+
+
+class LevelDataPane(FrameworkPane):
+    #### TaskPane interface ###################################################
+
+    id = 'jumpman.level_data'
+    name = 'Level Data'
+    
+    def create_contents(self, parent):
+        fields = [
+            ("text", "Level Number", 0x00, 2),
+            ("text", "Level Name", 0x3ec, 20),
+            ("colors", "Game Colors", 0x2a, 9),
+            ("int", "Points per Peanut", 0x33, 2),
+            ("int", "Peanuts Needed", 0x3e, 1),
+            ("int", "Bonus Value", 0x35, 2),
+            ("int", "Number of Bullets", 0x3d, 1),
+        ]
+        control = InfoPanel(parent, self.task, fields, size=(300, 150))
         return control
 
 

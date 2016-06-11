@@ -385,10 +385,12 @@ class JumpmanEditor(BitmapEditor):
     def reconfigure_panes(self):
         self.hex_edit.recalc_view()
         self.bitmap.recalc_view()
+        self.level_data.recalc_view()
     
     def refresh_panes(self):
         self.hex_edit.refresh_view()
         self.bitmap.refresh_view()
+        self.level_data.refresh_view()
     
     def rebuild_document_properties(self):
         self.bitmap.set_mouse_mode(AnticDSelectMode)
@@ -472,6 +474,7 @@ class JumpmanEditor(BitmapEditor):
         self.segment_list = self.window.get_dock_pane('jumpman.segments').control
         self.undo_history = self.window.get_dock_pane('jumpman.undo').control
         self.hex_edit = self.window.get_dock_pane('jumpman.hex').control
+        self.level_data = self.window.get_dock_pane('jumpman.level_data').control
 
         # Load the editor's contents.
         self.load()

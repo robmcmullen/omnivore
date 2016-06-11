@@ -560,6 +560,13 @@ class HexEditor(FrameworkEditor):
     def common_popup_actions(self):
         return [CutAction, CopyAction, CopyDisassemblyAction, CopyAsReprAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, None, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsDisplayListAction, MarkSelectionAsJumpmanLevelAction, MarkSelectionAsJumpmanHarvestAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction]
     
+    def change_bytes(self, start, end, bytes):
+        """Convenience function to perform a ChangeBytesCommand
+        """
+        print "changing bytes %d-%d to %s" % (start, end, repr(bytes))
+        self.document.change_count += 1
+        cmd = ChangeByteCommand(self.segment, start, end, bytes)
+        self.process_command(cmd)
 
     ###########################################################################
     # Trait handlers.
