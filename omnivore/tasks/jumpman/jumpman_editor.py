@@ -305,6 +305,8 @@ class JumpmanLevelView(MainBitmapScroller):
     def __init__(self, *args, **kwargs):
         MainBitmapScroller.__init__(self, *args, **kwargs)
         self.level_builder = None
+        self.cached_screen = None
+        self.last_commands = None
 
     def get_segment(self, editor):
         self.level_builder = JumpmanLevelBuilder(editor.document.user_segments)
@@ -315,14 +317,11 @@ class JumpmanLevelView(MainBitmapScroller):
         self.segment[:] = 0
         self.pick_buffer[:] = -1
 
-    def compute_image(self):
-        if self.level_builder is None:
-            return
-        self.clear_screen()
+    def get_level_definition(self):
         source = self.editor.segment
         start = source.start_addr
         if len(source) < 0x38:
-            return
+            return np.zeros([], dtype=np.uint8)
         index = source[0x38]*256 + source[0x37]
         log.debug("level def table: %x" % index)
         if index > start:
@@ -331,8 +330,20 @@ class JumpmanLevelView(MainBitmapScroller):
             commands = source[index:index + 500]  # arbitrary max number of bytes
         else:
             commands = source[index:index]
-        self.level_builder.parse_and_draw(self.segment, commands, current_segment=source, pick_buffer=self.pick_buffer)
-        self.pick_buffer[self.pick_buffer >= 0] += index
+        return commands, index
+
+    def compute_image(self):
+        if self.level_builder is None:
+            return
+        commands, index = self.get_level_definition()
+        if np.array_equal(commands, self.last_commands):
+            self.segment[:] = self.cached_screen
+        else:
+            self.clear_screen()
+            self.level_builder.parse_and_draw(self.segment, commands, current_segment=self.editor.segment, pick_buffer=self.pick_buffer)
+            self.pick_buffer[self.pick_buffer >= 0] += index
+            self.cached_screen = self.segment[:].copy()
+            self.last_commands = commands[:]
 
     def get_image(self):
         self.compute_image()
