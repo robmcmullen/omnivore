@@ -75,6 +75,11 @@ def add_xexboot_header(bytes, bootcode=None, title="DEMO", author="an atari user
     
     if bootcode is None:
         bootcode = np.fromstring(xexboot_header, dtype=np.uint8)
+    else:
+        # don't insert title or author in user supplied bootcode; would have to
+        # assume that the user supplied everything desired in their own code!
+        title = ""
+        author = ""
     bootsize = np.alen(bootcode)
     v = bootcode[9:11].view(dtype="<u2")
     v[0] = xex_size
