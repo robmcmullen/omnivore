@@ -333,6 +333,7 @@ class InfoPanel(PANELTYPE):
         
         self.fields = fields
         self.focus_on_input = None
+        self.last_change_count = -1
 
         PANELTYPE.__init__(self, parent)
         
@@ -359,8 +360,17 @@ class InfoPanel(PANELTYPE):
         if editor is not None:
             if self.editor != editor:
                 self.recalc_view()
+            elif self.IsShown():
+                if self.last_change_count == editor.document.change_count:
+                    log.debug("skipping refresh; document change count=%d" % self.last_change_count)
+                else:
+                    log.debug("refreshing! document change count=%d" % self.last_change_count)
+                    # FIXME: save position of cursor
+                    self.recalc_view()
+                    self.Refresh()
+                    self.last_change_count = editor.document.change_count
             else:
-                self.Refresh()
+                log.debug("skipping refresh of hidden %s" % self)
 
     def init_fields(self, fields):
         self.sizer.AddSpacer(self.LABEL_SPACING)

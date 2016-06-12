@@ -711,6 +711,7 @@ class FrameworkEditor(Editor):
     @on_trait_change('document:byte_values_changed')
     def byte_values_changed(self):
         log.debug("byte_values_changed called!!!")
+        self.document.change_count += 1
         self.invalidate_search()
         self.compare_to_baseline()
         self.refresh_panes()

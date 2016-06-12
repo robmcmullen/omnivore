@@ -565,7 +565,7 @@ class HexEditor(FrameworkEditor):
         """
         print "changing bytes %d-%d to %s" % (start, end, repr(bytes))
         self.document.change_count += 1
-        cmd = ChangeByteCommand(self.segment, start, end, bytes)
+        cmd = CoalescingChangeByteCommand(self.segment, start, end, bytes)
         self.process_command(cmd)
 
     ###########################################################################

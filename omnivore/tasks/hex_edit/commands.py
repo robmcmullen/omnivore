@@ -85,6 +85,16 @@ class ChangeByteCommand(SetDataCommand):
         return self.data
 
 
+class CoalescingChangeByteCommand(ChangeByteCommand):
+    short_name = "ccb"
+    
+    def coalesce(self, next_command):
+        n = next_command
+        if n.__class__ == self.__class__ and n.segment == self.segment and n.start_index == self.start_index and n.end_index == self.end_index:
+            self.data = n.data
+            return True
+
+
 class InsertFileCommand(SetDataCommand):
     short_name = "in"
     pretty_name = "Insert File"
