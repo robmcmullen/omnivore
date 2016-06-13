@@ -112,7 +112,7 @@ class InfoField(object):
         if (editor is None):
             raw = np.zeros([], dtype=np.uint8)
         else:
-            raw = editor.segment[self.byte_offset:self.byte_offset+self.byte_count]
+            raw = editor.segment[self.byte_offset:self.byte_offset+self.byte_count].copy()
         return raw
     
     def is_valid(self):
