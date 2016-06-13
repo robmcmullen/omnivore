@@ -9,6 +9,7 @@ import wx.lib.scrolledpanel
 from wx.lib.expando import ExpandoTextCtrl
 
 from omnivore.arch.atascii import internal_to_atascii, atascii_to_internal
+from omnivore.arch.ui.antic_colors import AnticColorDialog
 from omnivore.utils.runtime import get_all_subclasses
 
 import logging
@@ -290,6 +291,36 @@ class UIntEditField(TextEditField):
             v = raw.view(dtype='<u2')
             v[0] = parsed_data
         return raw
+
+class AnticColorsField(InfoField):
+    keyword = "antic_colors"
+    same_line = True
+    register_names = ["%x %s" % (i + 0x282a, n) for i, n in enumerate([
+    "(unused)",
+    "Jumpman Shadow",
+    "Player 2",
+    "Player 3",
+    "Girder & up ropes",
+    "Ladder & down ropes",
+    "Peanuts",
+    "Bullets",
+    "Background",
+    ])]
+
+    def create_control(self):
+        c = wx.Button(self.parent, -1, "Set Colors")
+        c.Bind(wx.EVT_BUTTON, self.on_colors)
+        return c
+
+    def fill_data(self, editor):
+        pass
+    
+    def on_colors(self, evt):
+        editor = self.panel.editor
+        raw = self.get_source_bytes(editor)
+        dlg = AnticColorDialog(self.ctrl, raw, self.register_names)
+        if dlg.ShowModal() == wx.ID_OK:
+            editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, dlg.colors)
 
 class AnchorPointField(InfoField):
     same_line = True

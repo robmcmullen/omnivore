@@ -306,7 +306,7 @@ class AnticColorAction(EditorAction):
     
     def perform(self, event):
         e = self.active_editor
-        dlg = AnticColorDialog(event.task.window.control, e)
+        dlg = AnticColorDialog(event.task.window.control, e.machine.antic_color_registers)
         if dlg.ShowModal() == wx.ID_OK:
             e.machine.update_colors(dlg.colors)
 

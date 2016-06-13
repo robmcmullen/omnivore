@@ -400,6 +400,9 @@ class JumpmanEditor(BitmapEditor):
     
     def refresh_panes(self):
         self.hex_edit.refresh_view()
+        p = self.get_level_colors()
+        if p != self.machine.antic_color_registers:
+            self.machine.update_colors(p)
         self.bitmap.refresh_view()
         self.level_data.refresh_view()
     
@@ -411,13 +414,18 @@ class JumpmanEditor(BitmapEditor):
     
     def view_segment_set_width(self, segment):
         self.bitmap_width = 40
-        colors = segment[0x2e:0x33].copy()
+        self.machine.update_colors(self.get_level_colors(segment))
+
+    def get_level_colors(self, segment=None):
+        if segment is None:
+            segment = self.segment
+        colors = segment[0x2a:0x33].copy()
         # on some levels, the bombs are set to color 0 because they are cycled
         # to produce a glowing effect, but that's not visible here so we force
         # it to be bright white
-        fg = colors[0:4]
+        fg = colors[4:8]
         fg[fg == 0] = 15
-        self.machine.update_colors(colors)
+        return list(colors)
     
     def update_mouse_mode(self):
         self.bitmap.set_mouse_mode(self.mouse_mode)

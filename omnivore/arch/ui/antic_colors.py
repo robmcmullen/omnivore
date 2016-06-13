@@ -7,6 +7,7 @@ import wx.lib.colourselect as csel
 import wx.lib.colourchooser.canvas as canvas
 
 from omnivore.arch import colors
+from omnivore.arch.machine import Machine
 
 
 #704  2C0  PCOLR0
@@ -19,30 +20,35 @@ from omnivore.arch import colors
 #711  2C7  COLOR3
 #712  2C8  COLOR4 (Background/Border)
 
+default_color_register_names = ["%d (%x) %s" % (i + 704, i + 704, n) for i, n in enumerate([
+    "Player 0",
+    "Player 1",
+    "Player 2",
+    "Player 3",
+    "Playfield 0",
+    "Playfield 1",
+    "Playfield 2",
+    "Playfield 3",
+    "Background",
+    ])]
+
 class ColorListBox(wx.VListBox):
-    memory_map_label = [
-        "Player 0",
-        "Player 1",
-        "Player 2",
-        "Player 3",
-        "Playfield 0",
-        "Playfield 1",
-        "Playfield 2",
-        "Playfield 3",
-        "Background",
-        ]
-    
     def calc_sizes(self):
         self.max_w = 0
-        for n in range(len(self.memory_map_label)):
-            label = self.get_label(n)
+        n = 0
+        while True:
+            try:
+                label = self.get_label(n)
+            except IndexError:
+                break
             w, h = self.GetTextExtent(label)
             if w > self.max_w:
                 self.max_w = w
+            n += 1
     
     def get_label(self, n):
-        reg = n + 704
-        return "%d (%x) %s" % (reg, reg, self.memory_map_label[n])
+        names = self.GetParent().color_register_names
+        return names[n]
     
     # This method must be overridden.  When called it should draw the
     # n'th item on the dc within the rect.  How it is drawn, and what
@@ -79,7 +85,7 @@ class AnticPalette(canvas.Canvas):
     BORDER = 4
     HIGHLIGHT_WIDTH = 5
 
-    def __init__(self, parent, editor):
+    def __init__(self, parent):
         """Creates a palette object."""
         # Load the pre-generated palette XPM
         
@@ -88,14 +94,14 @@ class AnticPalette(canvas.Canvas):
         # handlers, IAW RD
         #wx.InitAllImageHandlers()
         
-        self.palette = self.init_palette(editor)
+        self.palette = self.init_palette()
         canvas.Canvas.__init__(self, parent, -1, size=self.palette.GetSize(), style=wx.SIMPLE_BORDER)
 
-    def init_palette(self, editor):
+    def init_palette(self):
         w = self.HORIZONTAL_STEP * 16 + 2 * self.BORDER
         h = self.VERTICAL_STEP * 16 + 2 * self.BORDER
         array = np.empty((h, w, 3), dtype=np.uint8)
-        array[:,:] = editor.machine.empty_color
+        array[:,:] = Machine.empty_color
         for high in range(0, 256, 16):
             y = self.BORDER + (high / 16) * self.VERTICAL_STEP
             for low in range(16):
@@ -140,10 +146,13 @@ class AnticPalette(canvas.Canvas):
         return high * 16 + low
 
 class AnticColorDialog(wx.Dialog):
-    def __init__(self, parent, editor):
+    def __init__(self, parent, antic_color_registers, color_register_names=None):
         wx.Dialog.__init__(self, parent, -1, "Choose ANTIC Colors")
-        self.editor = editor
         self.num_cols = 17
+        if color_register_names is None:
+            self.color_register_names = default_color_register_names
+        else:
+            self.color_register_names = color_register_names
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         
@@ -153,7 +162,7 @@ class AnticColorDialog(wx.Dialog):
         box = wx.BoxSizer(wx.HORIZONTAL)
         self.color_registers = ColorListBox(self, -1, style=wx.VSCROLL, size=(200, -1))
         box.Add(self.color_registers, 0, wx.EXPAND|wx.ALL, 4)
-        self.palette = AnticPalette(self, editor)
+        self.palette = AnticPalette(self)
         box.Add(self.palette, 1, wx.ALL, 4)
         sizer.Add(box, 1, wx.GROW|wx.ALL, 5)
         
@@ -168,7 +177,7 @@ class AnticColorDialog(wx.Dialog):
         self.palette.Bind(wx.EVT_LEFT_UP, self.onPaletteUp)
         self.palette.Bind(wx.EVT_MOTION, self.onPaletteMotion)
 
-        self.init_colors()
+        self.init_colors(antic_color_registers)
 
         # Need SetSizeHints to force the window to fit the size of the sizer. From
         # http://wxpython.org/Phoenix/docs/html/sizers_overview.html#sizers-overview
@@ -177,9 +186,9 @@ class AnticColorDialog(wx.Dialog):
         self.Layout()
         self.Fit()
     
-    def init_colors(self):
+    def init_colors(self, antic_color_registers):
         self.color_registers.calc_sizes()
-        c = list(self.editor.machine.antic_color_registers)
+        c = list(antic_color_registers)
         if len(c) == 5:
             self.colors = list([0, 0, 0, 0])
             self.colors.extend(list(c))
@@ -251,10 +260,8 @@ if __name__ == "__main__":
     wx.lib.inspection.InspectionTool().Show()
     w = wx.Frame(None)
     attr = w.GetDefaultAttributes()
-    class Editor(object):
-        antic_color_registers = [40, 202, 148, 70, 0]
-        empty_color = attr.colBg.Get(False)
-    e = Editor()
-    d = AnticColorDialog(w, e)
+    antic_color_registers = [40, 202, 148, 70, 0]
+    Machine.empty_color = attr.colBg.Get(False)
+    d = AnticColorDialog(w, antic_color_registers)
     d.Show()
     a.MainLoop()
