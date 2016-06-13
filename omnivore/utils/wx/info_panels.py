@@ -98,6 +98,15 @@ class InfoField(object):
     
     def fill_data(self, editor):
         raise NotImplementedError
+
+    def has_focus(self, focused):
+        return focused == self.ctrl
+
+    def get_focus_params(self, focused):
+        pass
+
+    def set_focus_params(self, focused, params):
+        pass
         
     def get_source_bytes(self, editor):
         if (editor is None):
@@ -161,6 +170,12 @@ class TextEditField(InfoField):
         self.ctrl.ChangeValue(text)
         self.is_valid()
     
+    def get_focus_params(self):
+        return self.ctrl.GetInsertionPoint()
+
+    def set_focus_params(self, cursor):
+        self.ctrl.SetInsertionPoint(cursor)
+
     def is_valid(self):
         c = self.ctrl
         c.SetBackgroundColour("#FFFFFF")
@@ -365,7 +380,6 @@ class InfoPanel(PANELTYPE):
                     log.debug("skipping refresh; document change count=%d" % self.last_change_count)
                 else:
                     log.debug("refreshing! document change count=%d" % self.last_change_count)
-                    # FIXME: save position of cursor
                     self.recalc_view()
                     self.Refresh()
                     self.last_change_count = editor.document.change_count
@@ -412,11 +426,17 @@ class InfoPanel(PANELTYPE):
     
     def set_fields(self):
         e = self.editor
+        if e is None:
+            return
         focus = None
         for field in self.current_fields:
-            if e is not None:
-                field.fill_data(e)
-            if field.wants_focus():
+            if field.has_focus(self.FindFocus()):
+                params = field.get_focus_params()
+            else:
+                params = None
+            field.fill_data(e)
+            if params is not None:
+                field.set_focus_params(params)
                 focus = field
         self.constrain_size(focus)
     
