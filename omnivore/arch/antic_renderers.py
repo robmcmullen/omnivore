@@ -2,6 +2,7 @@ import numpy as np
 
 from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, diff_bit_mask, not_user_bit_mask
 
+from atascii import internal_to_atascii, atascii_to_internal
 try:
     import antic_speedups as speedups
 except ImportError:
@@ -480,8 +481,7 @@ class Mode7Lower(Mode2):
 
 class ATASCIIFontMapping(object):
     name = "ATASCII Characters"
-    font_mapping = np.hstack([np.arange(64, 96, dtype=np.uint8),np.arange(64, dtype=np.uint8),np.arange(96, 128, dtype=np.uint8)])
-    font_mapping = np.hstack([font_mapping, font_mapping + 128])
+    font_mapping = atascii_to_internal
 
 class AnticFontMapping(object):
     name = "Antic Map"

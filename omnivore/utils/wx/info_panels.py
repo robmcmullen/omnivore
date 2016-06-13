@@ -8,7 +8,7 @@ import wx.lib.buttons as buttons
 import wx.lib.scrolledpanel
 from wx.lib.expando import ExpandoTextCtrl
 
-
+from omnivore.arch.atascii import internal_to_atascii, atascii_to_internal
 from omnivore.utils.runtime import get_all_subclasses
 
 import logging
@@ -99,13 +99,13 @@ class InfoField(object):
     def fill_data(self, editor):
         raise NotImplementedError
 
-    def has_focus(self, focused):
-        return focused == self.ctrl
+    def has_focus(self):
+        return self.ctrl.FindFocus() == self.ctrl
 
-    def get_focus_params(self, focused):
+    def get_focus_params(self):
         pass
 
-    def set_focus_params(self, focused, params):
+    def set_focus_params(self, params):
         pass
         
     def get_source_bytes(self, editor):
@@ -145,9 +145,14 @@ class LabelField(InfoField):
 class TextEditField(InfoField):
     keyword = "text"
     same_line = True
+    wide = False
 
     def create_control(self):
-        c = wx.TextCtrl(self.parent)
+        if self.wide:
+            size = (200, -1)
+        else:
+            size = (-1, -1)
+        c = wx.TextCtrl(self.parent, size=size)
         c.Bind(wx.EVT_TEXT, self.on_text_changed)
         c.SetEditable(True)
         return c
@@ -201,23 +206,61 @@ class TextEditField(InfoField):
         self.ctrl.SetInsertionPointEnd()#(self.ctrl.GetLastPosition())
         
     def bytes_to_control_data(self, raw):
-        raw[raw < 32] = 32
-        raw[raw > 96] = 32
-        text = raw.tostring()
+        raw = self.map_bytes_to_text(raw)
+        text = raw.tostring().lstrip()
+        if self.has_focus():
+            data = self.parse_from_control()
+            text = text[0:len(data)]
+        else:
+            text = text.rstrip()
         return text
+
+    def map_bytes_to_text(self, raw):
+        raw[raw < 32] = 32
+        r = raw > 95
+        raw[r] = raw[r] - 32  # convert lower case to upper
+        raw[raw > 96] = 32
+        return raw
     
     def parsed_to_bytes(self, parsed_data):
         raw = np.zeros([self.byte_count],dtype=np.uint8)
         text = np.fromstring(parsed_data, dtype=np.uint8)
         text = text[0:self.byte_count]
+        text = self.map_parsed_to_bytes(text)
         raw[0:len(text)] = text
         return raw
+
+    def map_parsed_to_bytes(self, text):
+        return text
 
     def process_text_change(self, editor):
         if self.is_valid():
             data = self.parse_from_control()
             raw = self.parsed_to_bytes(data)
             editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw)
+
+class AtasciiC0(TextEditField):
+    keyword = "atascii_gr2_0xc0"
+    high_bits = 0xc0
+    wide = True
+
+    def parsed_to_bytes(self, parsed_data):
+        raw = np.zeros([self.byte_count],dtype=np.uint8) | self.high_bits
+        text = np.fromstring(parsed_data, dtype=np.uint8)
+        text = text[0:self.byte_count]
+        text = self.map_parsed_to_bytes(text)
+        # Center text
+        i = (self.byte_count - len(text)) / 2
+        raw[i:i + len(text)] = text
+        return raw
+
+    def map_bytes_to_text(self, raw):
+        raw = raw & 0x3f
+        return internal_to_atascii[raw]
+    
+    def map_parsed_to_bytes(self, text):
+        text = atascii_to_internal[text]
+        return text | self.high_bits
 
 class UIntEditField(TextEditField):
     keyword = "uint"
@@ -435,7 +478,7 @@ class InfoPanel(PANELTYPE):
             return
         focus = None
         for field in self.current_fields:
-            if field.has_focus(self.FindFocus()):
+            if field.has_focus():
                 params = field.get_focus_params()
             else:
                 params = None
