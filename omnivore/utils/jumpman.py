@@ -291,7 +291,7 @@ class JumpmanLevelBuilder(object):
                         # change it into a draw command
                         command = DrawObject(command.index, command.x, command.y, c)
                     else:
-                        command = Show(command.index, c)
+                        command = Show(index, c)
                 except IndexError:
                     pass
             elif c >= 0xfc and c <= 0xfe:

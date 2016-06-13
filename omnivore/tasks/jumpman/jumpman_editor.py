@@ -321,7 +321,7 @@ class JumpmanLevelView(MainBitmapScroller):
         source = self.editor.segment
         start = source.start_addr
         if len(source) < 0x38:
-            return np.zeros([], dtype=np.uint8)
+            return np.zeros([0], dtype=np.uint8), 0
         index = source[0x38]*256 + source[0x37]
         log.debug("level def table: %x" % index)
         if index > start:
