@@ -478,7 +478,7 @@ class JumpmanEditor(BitmapEditor):
         # Base-class constructor.
         self.bitmap = JumpmanLevelView(parent, self.task)
 
-        self.antic_lines = 90
+        self.antic_lines = 88
         data = np.zeros(40 * self.antic_lines, dtype=np.uint8)
         data[::41] = 255
         r = SegmentData(data)
