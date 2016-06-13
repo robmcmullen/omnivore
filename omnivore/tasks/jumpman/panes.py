@@ -56,10 +56,10 @@ class LevelDataPane(FrameworkPane):
             ("text", "Level Number", 0x00, 2),
             ("text", "Level Name", 0x3ec, 20),
             ("colors", "Game Colors", 0x2a, 9),
-            ("int", "Points per Peanut", 0x33, 2),
-            ("int", "Peanuts Needed", 0x3e, 1),
-            ("int", "Bonus Value", 0x35, 2),
-            ("int", "Number of Bullets", 0x3d, 1),
+            ("uint", "Points per Peanut", 0x33, 2),
+            ("uint", "Peanuts Needed", 0x3e, 1),
+            ("uint", "Bonus Value", 0x35, 2),
+            ("uint", "Number of Bullets", 0x3d, 1),
         ]
         control = InfoPanel(parent, self.task, fields, size=(300, 150))
         return control

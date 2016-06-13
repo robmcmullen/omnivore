@@ -219,8 +219,8 @@ class TextEditField(InfoField):
             raw = self.parsed_to_bytes(data)
             editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw)
 
-class IntEditField(TextEditField):
-    keyword = "int"
+class UIntEditField(TextEditField):
+    keyword = "uint"
     same_line = True
 
     def set_control_limits(self):
@@ -232,7 +232,12 @@ class IntEditField(TextEditField):
         return text
     
     def parse_from_control(self):
-        return int(self.ctrl.GetValue())
+        value = int(self.ctrl.GetValue())
+        if self.byte_count == 1 and value >=0 and value < 256:
+            return value
+        elif self.byte_count == 2 and value >=0 and value < 256 * 256:
+            return value
+        raise ValueError("%d out of range for %d bytes")
 
     def parsed_to_bytes(self, parsed_data):
         raw = np.empty([self.byte_count], dtype=np.uint8)
