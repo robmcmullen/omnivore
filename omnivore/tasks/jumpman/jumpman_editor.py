@@ -204,6 +204,12 @@ class DrawPeanutMode(DrawMode):
         self.is_bad_location = False
         self.batch = None
 
+    def get_cursor(self):
+        if self.is_bad_location:
+            return wx.StockCursor(wx.CURSOR_HAND)
+        else:
+            return wx.StockCursor(wx.CURSOR_ARROW)
+
     def get_harvest_offset(self):
         source = self.canvas.editor.segment
         if len(source) < 0x47:
