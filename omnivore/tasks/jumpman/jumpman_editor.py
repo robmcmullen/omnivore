@@ -295,6 +295,54 @@ class DrawPeanutMode(DrawMode):
     menu_item_tooltip = "Draw peanuts (single only)"
     drawing_object = Peanut
 
+    # FIXME! Merge PeanutCheckMode into here, so if the mouse is over the grid:
+    # 1) the peanut disappears
+    # 2) the mouse changes into a grabber and
+    # 3) the grid can be grabbed and moved
+    #
+    # but if it's in an empty space, the peanut can be placed.
+    def get_harvest_offset(self):
+        source = self.canvas.editor.segment
+        if len(source) < 0x47:
+            hx = hy = 0, 0
+        else:
+            hx = source[0x46]
+            hy = source[0x47]
+        return hx, hy
+
+    def draw_overlay(self, bitimage):
+        hx, hy = self.get_harvest_offset()
+        w = 160
+        h = 88
+        bad = (203, 144, 161)
+        orig = bitimage.copy()
+        
+        # Original (slow) algorithm to determine bad locations:
+        #
+        # def is_allergic(x, y, hx, hy):
+        #     return (x + 0x30 + hx) & 0x1f < 7 or (2 * y + 0x20 + hy) & 0x1f < 5
+        #
+        # Note that in the originial 6502 code, the y coord is in player
+        # coords, which is has twice the resolution of graphics 7. That's the
+        # factor of two in the y part. Simplifying, the bad locations can be
+        # defined in sets of 32 columns and 16 rows:
+        #
+        # x: 16 - hx, 16 - hx + 6 inclusive
+        # y: 0 - hy/2, 0 - hy/2 + 2 inclusive
+        hx = hx & 0x1f
+        hy = (hy & 0x1f) / 2
+        startx = (16 - hx) & 0x1f
+        starty = (0 - hy) & 0xf
+
+        # Don't know how to set multiple ranges simultaneously in numpy, so use
+        # a slow python loop
+        for x in range(startx, startx + 7):
+            x = x & 0x1f
+            bitimage[0:h:, x::32] = orig[0:h:, x::32] / 8 + bad
+        for y in range(starty, starty + 3):
+            y = y & 0xf
+            bitimage[y:h:16,:] = orig[y:h:16,:] / 8 + bad
+
 
 class JumpmanLevelView(MainBitmapScroller):
     default_mouse_handler = JumpmanSelectMode
