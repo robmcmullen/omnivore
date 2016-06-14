@@ -99,105 +99,6 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.display_coords(evt)
 
 
-class PeanutCheckMode(JumpmanSelectMode):
-    icon = "jumpman_peanut_check.png"
-    menu_item_name = "Peanut Check"
-    menu_item_tooltip = "Check for valid peanut positions"
-
-    def __init__(self, *args, **kwargs):
-        JumpmanSelectMode.__init__(self, *args, **kwargs)
-        self.mouse_down = (0, 0)
-        self.batch = None
-
-    def get_harvest_offset(self):
-        source = self.canvas.editor.segment
-        if len(source) < 0x47:
-            hx = hy = 0, 0
-        else:
-            hx = source[0x46]
-            hy = source[0x47]
-        return hx, hy
-
-    def draw_overlay(self, bitimage):
-        hx, hy = self.get_harvest_offset()
-        w = 160
-        h = 88
-        bad = (203, 144, 161)
-        orig = bitimage.copy()
-        
-        # Original (slow) algorithm to determine bad locations:
-        #
-        # def is_allergic(x, y, hx, hy):
-        #     return (x + 0x30 + hx) & 0x1f < 7 or (2 * y + 0x20 + hy) & 0x1f < 5
-        #
-        # Note that in the originial 6502 code, the y coord is in player
-        # coords, which is has twice the resolution of graphics 7. That's the
-        # factor of two in the y part. Simplifying, the bad locations can be
-        # defined in sets of 32 columns and 16 rows:
-        #
-        # x: 16 - hx, 16 - hx + 6 inclusive
-        # y: 0 - hy/2, 0 - hy/2 + 2 inclusive
-        hx = hx & 0x1f
-        hy = (hy & 0x1f) / 2
-        startx = (16 - hx) & 0x1f
-        starty = (0 - hy) & 0xf
-
-        # Don't know how to set multiple ranges simultaneously in numpy, so use
-        # a slow python loop
-        for x in range(startx, startx + 7):
-            x = x & 0x1f
-            bitimage[0:h:, x::32] = orig[0:h:, x::32] / 8 + bad
-        for y in range(starty, starty + 3):
-            y = y & 0xf
-            bitimage[y:h:16,:] = orig[y:h:16,:] / 8 + bad
-
-    def display_coords(self, evt, extra=None):
-        c = self.canvas
-        e = c.editor
-        if e is not None:
-            hx, hy = self.get_harvest_offset()
-            msg = "harvest offset: x=%d (0x%x) y=%d (0x%x)" % (hx, hx, hy, hy)
-            e.task.status_bar.message = msg
-
-    def change_harvest_offset(self, evt, start=False):
-        c = self.canvas
-        e = c.editor
-        if e is None:
-            return
-        index, x, y, pick = self.get_xy(evt)
-        if start:
-            self.batch = Overlay()
-            hx, hy = self.get_harvest_offset()
-            self.mouse_down = hx + x, hy + y
-        else:
-            dx = (self.mouse_down[0] - x) & 0x1f
-            dy = (self.mouse_down[1] - y) & 0x1f
-            self.display_coords(evt)
-            values = [dx, dy]
-            source = self.canvas.editor.segment
-            cmd = ChangeByteCommand(source, 0x46, 0x48, values)
-            e.process_command(cmd, self.batch)
-        self.display_coords(evt)
-
-    def process_left_down(self, evt):
-        self.change_harvest_offset(evt, True)
-
-    def process_left_up(self, evt):
-        c = self.canvas
-        e = c.editor
-        if e is None:
-            return
-        e.end_batch()
-        self.batch = None
-
-        # Force updating of the hex view
-        e.document.change_count += 1
-        e.refresh_panes()
-
-    def process_mouse_motion_down(self, evt):
-        self.change_harvest_offset(evt)
-
-
 class DrawMode(JumpmanSelectMode):
     icon = "select.png"
     menu_item_name = "Draw"
@@ -241,9 +142,12 @@ class DrawMode(JumpmanSelectMode):
                 num = max((abs(dy) + abs(sy) - 1) / abs(sy), 1)
                 sx = dx / num
         self.objects = [
-            obj(-1, self.mouse_down[0], self.mouse_down[1], num, sx, sy),
+            obj(-1, self.mouse_down[0] - obj.default_dx/2, self.mouse_down[1] - obj.default_dy/2, num, sx, sy),
         ]
-        self.display_coords(evt)
+        self.check_objects(x, y)
+
+    def check_objects(self, x, y):
+        pass
 
     def process_left_down(self, evt):
         self.create_objects(evt, True)
@@ -295,12 +199,11 @@ class DrawPeanutMode(DrawMode):
     menu_item_tooltip = "Draw peanuts (single only)"
     drawing_object = Peanut
 
-    # FIXME! Merge PeanutCheckMode into here, so if the mouse is over the grid:
-    # 1) the peanut disappears
-    # 2) the mouse changes into a grabber and
-    # 3) the grid can be grabbed and moved
-    #
-    # but if it's in an empty space, the peanut can be placed.
+    def __init__(self, *args, **kwargs):
+        DrawMode.__init__(self, *args, **kwargs)
+        self.is_bad_location = False
+        self.batch = None
+
     def get_harvest_offset(self):
         source = self.canvas.editor.segment
         if len(source) < 0x47:
@@ -309,6 +212,19 @@ class DrawPeanutMode(DrawMode):
             hx = source[0x46]
             hy = source[0x47]
         return hx, hy
+
+    def is_allergic(self, x, y):
+        hx, hy = self.get_harvest_offset()
+        hx = hx & 0x1f
+        hy = (hy & 0x1f) / 2
+        startx = (16 - hx) & 0x1f
+        starty = (0 - hy) & 0xf
+        x = x & 0x1f
+        y = y & 0xf
+        return (x >= startx and x < startx + 7) or (y >= starty and y < starty + 3)
+
+    def check_objects(self, x, y):
+        self.is_bad_location = self.is_allergic(x, y)
 
     def draw_overlay(self, bitimage):
         hx, hy = self.get_harvest_offset()
@@ -342,6 +258,63 @@ class DrawPeanutMode(DrawMode):
         for y in range(starty, starty + 3):
             y = y & 0xf
             bitimage[y:h:16,:] = orig[y:h:16,:] / 8 + bad
+
+    def change_harvest_offset(self, evt, start=False):
+        c = self.canvas
+        e = c.editor
+        if e is None:
+            return
+        index, x, y, pick = self.get_xy(evt)
+        if start:
+            self.batch = Overlay()
+            hx, hy = self.get_harvest_offset()
+            self.mouse_down = hx + x, hy + y
+        else:
+            dx = (self.mouse_down[0] - x) & 0x1f
+            dy = (self.mouse_down[1] - y) & 0x1f
+            self.display_coords(evt)
+            values = [dx, dy]
+            source = self.canvas.editor.segment
+            cmd = ChangeByteCommand(source, 0x46, 0x48, values)
+            e.process_command(cmd, self.batch)
+
+    def process_left_down(self, evt):
+        self.create_objects(evt, True)
+        if self.is_bad_location:
+            self.change_harvest_offset(evt, True)
+            self.objects = []
+        else:
+            self.canvas.Refresh()
+        self.display_coords(evt)
+
+    def process_left_up(self, evt):
+        if self.batch is not None:
+            c = self.canvas
+            e = c.editor
+            if e is None:
+                return
+            e.end_batch()
+            self.batch = None
+
+            # Force updating of the hex view
+            e.document.change_count += 1
+            e.refresh_panes()
+        else:
+            self.objects = []
+        self.display_coords(evt)
+
+    def process_mouse_motion_down(self, evt):
+        if self.batch is not None:
+            self.change_harvest_offset(evt)
+        else:
+            self.create_objects(evt)
+            self.canvas.Refresh()
+        self.display_coords(evt)
+
+    def process_mouse_motion_up(self, evt):
+        self.create_objects(evt, True)
+        self.canvas.Refresh()
+        self.display_coords(evt)
 
 
 class JumpmanLevelView(MainBitmapScroller):
@@ -404,7 +377,7 @@ class JumpmanEditor(BitmapEditor):
     """
     ##### class attributes
     
-    valid_mouse_modes = [AnticDSelectMode, PeanutCheckMode, DrawGirderMode, DrawLadderMode, DrawUpRopeMode, DrawDownRopeMode, DrawPeanutMode]
+    valid_mouse_modes = [AnticDSelectMode, DrawGirderMode, DrawLadderMode, DrawUpRopeMode, DrawDownRopeMode, DrawPeanutMode]
     
     ##### Default traits
     
