@@ -218,6 +218,21 @@ class JumpmanLevelBuilder(object):
                 break
         return found(pick, x, y, c, dx, dy, addr)
 
+    def parse_harvest_table(self, commands, origin, h):
+        data = np.array(h, dtype=np.uint8)
+        last = len(data)
+        index = 0
+        entries = []
+        while index < last:
+            c = data[index]
+            if c == 0xff:
+                break
+            entry = data[index:index + 7]
+            print "harvest entry: %s" % str(entry)
+
+            entries.append(entry)
+            index += 7
+
     def parse_and_draw(self, screen, data, current_segment=None, pick_buffer=None):
         objects = self.parse_objects(data)
         self.draw_objects(screen, objects, current_segment, pick_buffer)
