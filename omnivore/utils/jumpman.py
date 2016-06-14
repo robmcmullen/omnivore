@@ -23,9 +23,17 @@ class JumpmanDrawObject(object):
         self.pick_index = pick_index
         self.dx = self.x_spacing if dx is None else dx
         self.dy = self.y_spacing if dy is None else dy
+        self.trigger_function = None
+        self.trigger_painting = None
 
     def __str__(self):
-        return "draw %x x=%x y=%x dx=%d dy=%d count=%d" % (self.addr, self.x, self.y, self.dx, self.dy, self.count)
+        extra = ""
+        if self.trigger_function is not None:
+            extra = " trigger_func=%x" % self.trigger_function
+        if self.trigger_painting is not None:
+            prefix = "\n  trigger_paint: "
+            extra += prefix + prefix.join(str(obj) for obj in self.trigger_painting)
+        return "draw %x x=%x y=%x dx=%d dy=%d count=%d%s" % (self.addr, self.x, self.y, self.dx, self.dy, self.count, extra)
 
     def update_table(self, state):
         pass
@@ -218,19 +226,26 @@ class JumpmanLevelBuilder(object):
                 break
         return found(pick, x, y, c, dx, dy, addr)
 
-    def parse_harvest_table(self, commands, origin, h):
+    def parse_harvest_table(self, objects, origin, h):
+        objmap = {(obj.x, obj.y):obj for obj in objects if obj.single}
         data = np.array(h, dtype=np.uint8)
         last = len(data)
         index = 0
-        entries = []
         while index < last:
             c = data[index]
             if c == 0xff:
                 break
             entry = data[index:index + 7]
             print "harvest entry: %s" % str(entry)
-
-            entries.append(entry)
+            try:
+                obj = objmap[entry[1], entry[2]]
+                obj.trigger_function = entry[3] + 256*entry[4]
+                addr = entry[5] + 256*entry[6]
+                if addr >= origin and addr <= origin + len(h):
+                    obj.trigger_painting = self.parse_objects(h[addr - origin:])
+                print obj
+            except KeyError:
+                log.error("Invalid harvest table entry %s" % (str(entry)))
             index += 7
 
     def parse_and_draw(self, screen, data, current_segment=None, pick_buffer=None):
