@@ -223,6 +223,8 @@ class FrameworkEditor(Editor):
         self.rebuild_document_properties()
         if old_editor is not None:
             self.copy_view_properties(old_editor)
+        else:
+            self.init_view_properties()
         self.update_panes()
         self.document.undo_stack_changed = True
         self.task.document_changed = self.document
@@ -233,6 +235,11 @@ class FrameworkEditor(Editor):
         self.baseline_present = self.document.has_baseline
         self.diff_highlight = self.diff_highlight and self.baseline_present
     
+    def init_view_properties(self):
+        """ Set up editor properties when loading a new file
+        """
+        pass
+
     def copy_view_properties(self, old_editor):
         """ Copy editor properties to the new view
         """

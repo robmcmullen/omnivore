@@ -376,6 +376,9 @@ class HexEditor(FrameworkEditor):
     def find_segment_parser(self, parsers, segment_name=None):
         self.document.parse_segments(parsers)
         self.find_segment(segment_name)
+
+    def find_first_valid_segment_index(self):
+        return 0
     
     def find_segment(self, segment_name=None, segment=None):
         if segment_name is not None:
@@ -383,7 +386,7 @@ class HexEditor(FrameworkEditor):
         elif segment is not None:
             index = self.document.find_segment_index(segment)
         else:
-            index = 0
+            index = self.find_first_valid_segment_index()
         if index < 0:
             index = 0
         self.segment_number = index

@@ -432,9 +432,35 @@ class JumpmanEditor(BitmapEditor):
     
     def rebuild_document_properties(self):
         self.bitmap.set_mouse_mode(AnticDSelectMode)
+
+    def check_valid_segment(self, segment):
+        if len(segment) >= 0x38:
+            # check for sane level definition table
+            index = segment[0x38]*256 + segment[0x37] - segment.start_addr
+            return index >=0 and index < len(segment)
+        return False
+
+    def find_first_valid_segment_index(self):
+        # Find list of matches meeting minimum criteria
+        possible = []
+        for i, segment in enumerate(self.document.segments):
+            if self.check_valid_segment(segment):
+                possible.append(i)
+                if len(segment) == 0x800:
+                    return i
+        if possible:
+            return possible[0]
+        return 0
     
+    def init_view_properties(self):
+        self.find_segment()
+
     def copy_view_properties(self, old_editor):
-        self.find_segment(segment=old_editor.segment)
+        segment = old_editor.segment
+        if self.check_valid_segment(segment):
+            if len(segment) != 0x800:
+                segment = None
+        self.find_segment(segment=segment)
     
     def view_segment_set_width(self, segment):
         self.bitmap_width = 40
