@@ -4,176 +4,80 @@ from omnivore.utils.runtime import get_all_subclasses
 
 import logging
 log = logging.getLogger(__name__)
+#log.setLevel(logging.DEBUG)
 
-class JumpmanCommand(object):
-    flag = None
-    name = ""
-    draw = False
 
-    def __init__(self, index, *args):
-        self.index = index
-        self.process_args(*args)
-
-    def __str__(self):
-        a = self.format_args()
-        if a:
-            a = " " + a
-        return "%s%s" % (self.name, a)
-
-    def format_args(self):
-        return ""
-
-    def process_args(self, *args):
-        pass
-
-    def update_state(self, state):
-        pass
-
-    def update_table(self, state):
-        pass
-
-    def execute(self, state):
-        self.update_state(state)
-        if self.draw:
-            state.draw_codes()
-
-class Show(JumpmanCommand):
-    name = "show"
-
-    def process_args(self, flag):
-        self.flag = flag
-
-class End(JumpmanCommand):
-    flag = 0xff
-    name = "end"
-
-class Spacing(JumpmanCommand):
-    flag = 0xfe
-    name = "spacing"
-
-    def format_args(self):
-        return "%d %d" % (self.x, self.y)
-
-    def process_args(self, x, y):
-        self.x = x
-        self.y = y
-
-    def update_state(self, state):
-        state.dx = self.x
-        state.dy = self.y
-
-class ScreenObject(JumpmanCommand):
-    flag = 0xfc
+class JumpmanDrawObject(object):
     name = "object"
-
-    def format_args(self):
-        return "%x" % (self.addr)
-
-    def process_args(self, addr):
-        self.addr = addr
-
-    def update_state(self, state):
-        state.addr = self.addr
-        state.last_object = self
-
-class StaticObject(ScreenObject):
-    name = "staticobject"
-    addr = None
-    x_spacing = 4
-    y_spacing = 4
-    single = False
+    default_addr = None
+    default_dx = 4
+    default_dy = 4
     vertical_only = False
+    single = False
 
-    def process_args(self, *args):
-        pass
-
-    def format_args(self):
-        return ""
-
-class Girder(StaticObject):
-    name = "girder"
-    addr = 0x4000
-    y_spacing = 3
-
-class Ladder(StaticObject):
-    name = "ladder"
-    addr = 0x402c
-    x_spacing = 8
-    vertical_only = True
-
-    def update_table(self, state):
-        state.add_ladder()
-
-class UpRope(StaticObject):
-    name = "uprope"
-    addr = 0x40af
-    vertical_only = True
-
-class DownRope(StaticObject):
-    name = "downrope"
-    addr = 0x40c0
-    vertical_only = True
-
-    def update_table(self, state):
-        state.add_downrope()
-
-class Peanut(StaticObject):
-    name = "peanut"
-    addr = 0x4083
-    y_spacing = 3
-    single = True
-
-class EraseGirder(StaticObject):
-    name = "girder_erase"
-    addr = 0x4016
-
-class EraseLadder(StaticObject):
-    name = "ladder_erase"
-    addr = 0x4056
-
-class EraseRope(StaticObject):
-    name = "rope_erase"
-    addr = 0x40d1
-
-class PositionObject(JumpmanCommand):
-    flag = 0xfd
-    name = "position"
-
-    def format_args(self):
-        return "%d %d" % (self.x, self.y)
-
-    def process_args(self, x, y):
-        self.x = x
-        self.y = y
-
-    def update_state(self, state):
-        state.x = self.x
-        state.y = self.y
-        state.pick_index = self.index
-
-class DrawObject(PositionObject):
-    name = "draw"
-    draw = True
-
-    def format_args(self):
-        return "%d %d %d" % (self.x, self.y, self.count)
-
-    def process_args(self, x, y, count):
+    def __init__(self, pick_index, x, y, count, dx=None, dy=None, addr=None):
         self.x = x
         self.y = y
         self.count = count
+        self.addr = self.default_addr if addr is None else addr
+        self.pick_index = pick_index
+        self.dx = self.x_spacing if dx is None else dx
+        self.dy = self.y_spacing if dy is None else dy
 
-    def update_state(self, state):
-        PositionObject.update_state(self, state)
-        state.count = self.count
+    def __str__(self):
+        return "draw %x x=%x y=%x dx=%d dy=%d count=%d" % (self.addr, self.x, self.y, self.dx, self.dy, self.count)
+
+    def update_table(self, state):
+        pass
+
+class Girder(JumpmanDrawObject):
+    name = "girder"
+    default_addr = 0x4000
+    default_dy = 3
+
+class Ladder(JumpmanDrawObject):
+    name = "ladder"
+    default_addr = 0x402c
+    default_dx = 8
+    vertical_only = True
+
+    def update_table(self, state):
+        state.add_ladder(self)
+
+class UpRope(JumpmanDrawObject):
+    name = "uprope"
+    default_addr = 0x40af
+    vertical_only = True
+
+class DownRope(JumpmanDrawObject):
+    name = "downrope"
+    default_addr = 0x40c0
+    vertical_only = True
+
+    def update_table(self, state):
+        state.add_downrope(self)
+
+class Peanut(JumpmanDrawObject):
+    name = "peanut"
+    default_addr = 0x4083
+    default_dy = 3
+    single = True
+
+class EraseGirder(JumpmanDrawObject):
+    name = "girder_erase"
+    default_addr = 0x4016
+
+class EraseLadder(JumpmanDrawObject):
+    name = "ladder_erase"
+    default_addr = 0x4056
+
+class EraseRope(JumpmanDrawObject):
+    name = "rope_erase"
+    default_addr = 0x40d1
+
 
 class ScreenState(object):
     def __init__(self, segments, current_segment, screen, pick_buffer):
-        self.x = self.y = self.dx = self.dy = self.count = 0
-        self.pick_index = -1
-        self.addr = None
-        self.last_object = None
-
         self.object_code_cache = {}
         self.search_order = []
         self.current_segment = current_segment
@@ -183,24 +87,23 @@ class ScreenState(object):
         self.screen = screen
         self.pick_buffer = pick_buffer
 
+        self.pick_dict = dict()
         self.ladder_positions = set()
         self.downrope_positions = set()
 
-    def add_ladder(self):
-        self.ladder_positions.add(self.x + 0x30)
+    def add_ladder(self, obj):
+        self.ladder_positions.add(obj.x + 0x30)
 
-    def add_downrope(self):
-        self.downrope_positions.add(self.x + 0x2e)
+    def add_downrope(self, obj):
+        self.downrope_positions.add(obj.x + 0x2e)
 
-    def draw_codes(self):
-        if self.addr is None:
+    def draw_object(self, obj):
+        if obj.addr is None:
             return
-        log.debug("addr=%x x=%d y=%d dx=%d dy=%d, num=%d" % (self.addr, self.x, self.y, self.dx, self.dy, self.count))
-        codes = self.get_object_code(self.addr)
+        log.debug("addr=%x x=%d y=%d dx=%d dy=%d, num=%d" % (obj.addr, obj.x, obj.y, obj.dx, obj.dy, obj.count))
+        codes = self.get_object_code(obj.addr)
         if codes is None:
             return
-        if self.last_object:
-            self.last_object.update_table(self)
         log.debug("  found codes: %s" % str(codes))
         index = 0
         last = len(codes)
@@ -221,18 +124,20 @@ class ScreenState(object):
             lines.append((n, xoffset, yoffset, pixels))
             index += n
 
-        x = self.x
-        y = self.y
-        for i in range(self.count):
+        x = obj.x
+        y = obj.y
+        for i in range(obj.count):
             for n, xoffset, yoffset, pixels in lines:
                 for i, c in enumerate(pixels):
                     px = x + xoffset + i
                     py = y + yoffset
                     if self.draw_pixel(px, py, c):
                         if self.pick_buffer is not None:
-                            self.pick_buffer[px,py] = self.pick_index
-            x += self.dx
-            y += self.dy
+                            self.pick_buffer[px,py] = obj.pick_index
+            x += obj.dx
+            y += obj.dy
+        self.pick_dict[obj.pick_index] = obj
+        obj.update_table(self)
 
     bit_offset = [6, 4, 2, 0]
     mask = [0b00111111, 0b11001111, 0b11110011, 0b11111100]
@@ -268,13 +173,14 @@ class ScreenState(object):
                 return codes
 
 
-
 class JumpmanLevelBuilder(object):
     def __init__(self, segments):
         self.segments = segments
 
-    def parse_commands(self, data):
-        commands = []
+    def parse_objects(self, data):
+        x = y = dx = dy = count = 0
+        addr = None
+        objects = []
         data = np.array(data, dtype=np.uint8)
         last = len(data)
         index = 0
@@ -285,49 +191,40 @@ class JumpmanLevelBuilder(object):
             index += 1
             command = None
             if c < 0xfb:
-                try:
-                    if commands[-1].name == "position":
-                        command = commands.pop()
-                        # change it into a draw command
-                        command = DrawObject(command.index, command.x, command.y, c)
-                    else:
-                        command = Show(index, c)
-                except IndexError:
-                    pass
+                if addr is not None:
+                    obj = self.get_object(pick_index, x, y, c, dx, dy, addr)
+                    objects.append(obj)
             elif c >= 0xfc and c <= 0xfe:
                 arg1 = data[index]
                 arg2 = data[index + 1]
                 index += 2
                 if c == 0xfc:
-                    command = self.get_object(pick_index, arg2 * 256 + arg1)
+                    addr = arg2 * 256 + arg1
                 elif c == 0xfd:
-                    command = PositionObject(pick_index, arg1, arg2)
+                    x = arg1
+                    y = arg2
                 else:
                     dx = int(np.int8(arg1))  # signed!
                     dy = int(np.int8(arg2))
-                    command = Spacing(pick_index, dx, dy)
             elif c == 0xff:
-                command = End(pick_index)
                 last = 0  # force the end
-            if command is not None:
-                commands.append(command)
-        return commands
+        return objects
 
-    def get_object(self, pick, addr):
-        found = ScreenObject
-        for kls in get_all_subclasses(StaticObject):
-            if kls.addr == addr:
+    def get_object(self, pick, x, y, c, dx, dy, addr):
+        found = JumpmanDrawObject
+        for kls in get_all_subclasses(JumpmanDrawObject):
+            if kls.default_addr == addr:
                 found = kls
                 break
-        return found(pick, addr)
+        return found(pick, x, y, c, dx, dy, addr)
 
     def parse_and_draw(self, screen, data, current_segment=None, pick_buffer=None):
-        commands = self.parse_commands(data)
-        self.draw_commands(screen, commands, current_segment, pick_buffer)
+        objects = self.parse_objects(data)
+        self.draw_objects(screen, objects, current_segment, pick_buffer)
 
-    def draw_commands(self, screen, commands, current_segment=None, pick_buffer=None):
+    def draw_objects(self, screen, objects, current_segment=None, pick_buffer=None):
         state = ScreenState(self.segments, current_segment, screen, pick_buffer)
-        for c in commands:
-            log.debug("Processing command %s" % c)
-            c.execute(state)
+        for obj in objects:
+            log.debug("Processing draw object %s" % obj)
+            state.draw_object(obj)
         return state

@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 
 
 class JumpmanSelectMode(SelectMode):
-    def draw_extra_commands(self, lever_builder, screen, current_segment):
+    def draw_extra_objects(self, lever_builder, screen, current_segment):
         return
 
     def draw_overlay(self, bitimage):
@@ -207,12 +207,12 @@ class DrawMode(JumpmanSelectMode):
     def __init__(self, *args, **kwargs):
         JumpmanSelectMode.__init__(self, *args, **kwargs)
         self.mouse_down = (0, 0)
-        self.commands = []
+        self.objects = []
 
-    def draw_extra_commands(self, level_builder, screen, current_segment):
-        level_builder.draw_commands(screen, self.commands, current_segment)
+    def draw_extra_objects(self, level_builder, screen, current_segment):
+        level_builder.draw_objects(screen, self.objects, current_segment)
 
-    def create_commands(self, evt, start=False):
+    def create_objects(self, evt, start=False):
         c = self.canvas
         e = c.editor
         if e is None:
@@ -222,49 +222,46 @@ class DrawMode(JumpmanSelectMode):
             self.mouse_down = x, y
         dx = x - self.mouse_down[0]
         dy = y - self.mouse_down[1]
-        obj = self.drawing_object(-1)
+        obj = self.drawing_object
         if obj.vertical_only:
             sx = 0
-            sy = obj.y_spacing if dy > 0 else -obj.y_spacing
+            sy = obj.default_dy if dy > 0 else -obj.default_dy
             num = max((dy + sy - 1) / sy, 1)
         elif obj.single:
-            sx = obj.x_spacing
+            sx = obj.default_dx
             sy = 0
             num = 1
         else:
             if abs(dx) >= abs(dy):
-                sx = obj.x_spacing if dx > 0 else -obj.x_spacing
+                sx = obj.default_dx if dx > 0 else -obj.default_dx
                 num = max((abs(dx) + abs(sx) - 1) / abs(sx), 1)
                 sy = dy / num
             else:
-                sy = obj.y_spacing if dy > 0 else -obj.y_spacing
+                sy = obj.default_dy if dy > 0 else -obj.default_dy
                 num = max((abs(dy) + abs(sy) - 1) / abs(sy), 1)
                 sx = dx / num
-        self.commands = [
-            Spacing(-1, sx, sy),
-            obj,
-            DrawObject(-1, self.mouse_down[0], self.mouse_down[1], num),
-            End(-1),
+        self.objects = [
+            obj(-1, self.mouse_down[0], self.mouse_down[1], num, sx, sy),
         ]
         self.display_coords(evt)
 
     def process_left_down(self, evt):
-        self.create_commands(evt, True)
+        self.create_objects(evt, True)
         self.canvas.Refresh()
         self.display_coords(evt)
 
     def process_left_up(self, evt):
         # Record the command!
-        self.commands = []
+        self.objects = []
         self.display_coords(evt)
 
     def process_mouse_motion_down(self, evt):
-        self.create_commands(evt)
+        self.create_objects(evt)
         self.canvas.Refresh()
         self.display_coords(evt)
 
     def process_mouse_motion_up(self, evt):
-        self.create_commands(evt, True)
+        self.create_objects(evt, True)
         self.canvas.Refresh()
         self.display_coords(evt)
 
@@ -347,7 +344,7 @@ class JumpmanLevelView(MainBitmapScroller):
 
     def get_image(self):
         self.compute_image()
-        self.mouse_mode.draw_extra_commands(self.level_builder, self.segment, self.editor.segment)
+        self.mouse_mode.draw_extra_objects(self.level_builder, self.segment, self.editor.segment)
         bitimage = MainBitmapScroller.get_image(self)
         self.mouse_mode.draw_overlay(bitimage)
         return bitimage
