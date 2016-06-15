@@ -14,6 +14,7 @@ class JumpmanDrawObject(object):
     default_dy = 4
     vertical_only = False
     single = False
+    sort_order = 0
 
     def __init__(self, pick_index, x, y, count, dx=None, dy=None, addr=None):
         self.x = x
@@ -33,7 +34,7 @@ class JumpmanDrawObject(object):
         if self.trigger_painting is not None:
             prefix = "\n  trigger_paint: "
             extra += prefix + prefix.join(str(obj) for obj in self.trigger_painting)
-        return "draw %x x=%x y=%x dx=%d dy=%d count=%d%s" % (self.addr, self.x, self.y, self.dx, self.dy, self.count, extra)
+        return "%s %x x=%x y=%x dx=%d dy=%d count=%d%s" % (self.name, self.addr, self.x, self.y, self.dx, self.dy, self.count, extra)
 
     def update_table(self, state):
         pass
@@ -42,12 +43,14 @@ class Girder(JumpmanDrawObject):
     name = "girder"
     default_addr = 0x4000
     default_dy = 3
+    sort_order = 0
 
 class Ladder(JumpmanDrawObject):
     name = "ladder"
     default_addr = 0x402c
     default_dx = 8
     vertical_only = True
+    sort_order = 10
 
     def update_table(self, state):
         state.add_ladder(self)
@@ -56,11 +59,13 @@ class UpRope(JumpmanDrawObject):
     name = "uprope"
     default_addr = 0x40af
     vertical_only = True
+    sort_order = 20
 
 class DownRope(JumpmanDrawObject):
     name = "downrope"
     default_addr = 0x40c0
     vertical_only = True
+    sort_order = 30
 
     def update_table(self, state):
         state.add_downrope(self)
@@ -70,18 +75,22 @@ class Peanut(JumpmanDrawObject):
     default_addr = 0x4083
     default_dy = 3
     single = True
+    sort_order = 40
 
 class EraseGirder(JumpmanDrawObject):
     name = "girder_erase"
     default_addr = 0x4016
+    sort_order = 35
 
 class EraseLadder(JumpmanDrawObject):
     name = "ladder_erase"
     default_addr = 0x4056
+    sort_order = 36
 
 class EraseRope(JumpmanDrawObject):
     name = "rope_erase"
     default_addr = 0x40d1
+    sort_order = 37
 
 
 class ScreenState(object):
@@ -184,6 +193,7 @@ class ScreenState(object):
 class JumpmanLevelBuilder(object):
     def __init__(self, segments):
         self.segments = segments
+        self.objects = []
 
     def parse_objects(self, data):
         x = y = dx = dy = count = 0
@@ -249,8 +259,8 @@ class JumpmanLevelBuilder(object):
             index += 7
 
     def parse_and_draw(self, screen, data, current_segment=None, pick_buffer=None):
-        objects = self.parse_objects(data)
-        self.draw_objects(screen, objects, current_segment, pick_buffer)
+        self.objects = self.parse_objects(data)
+        self.draw_objects(screen, self.objects, current_segment, pick_buffer)
 
     def draw_objects(self, screen, objects, current_segment=None, pick_buffer=None):
         state = ScreenState(self.segments, current_segment, screen, pick_buffer)
@@ -258,3 +268,43 @@ class JumpmanLevelBuilder(object):
             log.debug("Processing draw object %s" % obj)
             state.draw_object(obj)
         return state
+
+    def add_objects(self, new_objects, objects=None):
+        if objects is None:
+            objects = self.objects
+        objects.extend(new_objects)
+        objects.sort(key=lambda a:a.sort_order)
+
+    def group_objects(self, objects):
+        groups = []
+        current = []
+        for obj in objects:
+            print "processing %s" % obj
+            if not current or current[-1].__class__ == obj.__class__:
+                current.append(obj)
+            else:
+                groups.append(current)
+                current = [obj]
+        groups.append(current)
+        return groups
+
+    def create_level_definition(self, objects=None):
+        if objects is None:
+            objects = self.objects
+        groups = self.group_objects(objects)
+        print groups
+        dx = dy = 999999
+        level_data = []
+        harvest_data = []
+        for group in groups:
+            obj = group[0]
+            hi, low = divmod(obj.addr, 256)
+            level_data.extend([0xfc, low, hi])
+            for obj in group:
+                if obj.dx != dx or obj.dy != dy:
+                    dx, dy = obj.dx, obj.dy
+                    level_data.extend([0xfe, dx, dy])
+                level_data.extend([0xfd, obj.x, obj.y, obj.count])
+        level_data.append(0xff)
+        return np.asarray(level_data, dtype=np.uint8), np.asarray(harvest_data, dtype=np.uint8)
+

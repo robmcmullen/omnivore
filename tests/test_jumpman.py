@@ -5,7 +5,7 @@ import numpy as np
 from atrcopy import DefaultSegment, SegmentData
 
 from omnivore.arch.disasm import parse_jumpman_level, get_jumpman_level, parse_jumpman_harvest, get_jumpman_harvest
-from omnivore.utils.jumpman import JumpmanLevelBuilder
+from omnivore.utils.jumpman import *
 
 class TestJumpmanLevel(object):
     def setup(self):
@@ -53,18 +53,31 @@ class TestJumpmanScreen(object):
                 np.fromstring("\xfe\x04\x00\xfc\x00@\xfd\x04\t\x05\xfd$\t\x06\xfdd\t\x06\xfd\x88\t\x05\xfd(\x19\x04\xfdh\x19\x04\xfd\x04\x1d\x05\xfdD\x1d\x06\xfd\x88\x1d\x05\xfd\x04-\x05\xfd$-\x02\xfd8-\x0c\xfdt-\x02\xfd\x88-\x05\xfd8=\x0c\xfd\x04E\x06\xfd\x84E\x06\xfd\x04U&\xfdHR\x04\xfe\x04\xff\xfd\x18\n\x01\xfd|\n\x01\xfd\x1c\x0b\x02\xfd\x80\x0b\x02\xfd<\x08\x03\xfd\\\x1c\x03\xfd\x1cD\x07\xfe\x04\x01\xfdX\x06\x03\xfd8\x1a\x03\xfdh>\x07\xfe\x00\x04\xfc,@\xfd\x0c\x05\x0b\xfd\x0cA\x05\xfd,\x05\x05\xfd<)\x05\xfdL\x19\x05\xfd\\)\x05\xfdl\x05\x05\xfd\x8c\x05\x0b\xfd\x8cA\x05\xfc\xaf@\xfd'0\x02\xfdw0\x02\xfc\x83@\xfd\x04\x06\x01\xfdD\x03\x01\xfdX\x03\x01\xfd\x98\x06\x01\xfd\x04\x15\x01\xfd\x98\x15\x01\xfd$%\x01\xfdx%\x01\xfd\x04R\x01\xfd@G\x01\xfd\\G\x01\xfd\x98R\x01\xff", dtype=np.uint8),
                 0x2ce9,
                 np.fromstring("\x22\x04\x06K(T-bD\x03K(L(\x82X\x03K(L(\xc2\x98\x06K(d-$\x04\x15K(>-\xc4\x98\x15K(I-F$%K(L(\xa6x%K(L(,\x04RK(L(j@GK(L(\x8a\\GK(L(\xcc\x98RK(L(\xff\xfe\x00\x04\xfcV@\xfd\x0c!\x02\xff\xfe\x00\x04\xfcV@\xfd\x8c!\x02\xff\xfc\x16@\xfd\x18\n\x01\xfd\x1c\x0b\x01\xfd \n\x01\xff\xfc\x16@\xfd|\n\x01\xfd\x80\x0b\x01\xfd\x84\n\x01\xff", dtype=np.uint8),
+                [
+                Girder(-1, 50, 20, 5, 4, 0, 0xfff0),
+                Ladder(-1, 60, 20, 5, 0, 4, 0xfff1),
+                UpRope(-1, 70, 20, 5, 0, 4, 0xfff2),
+                DownRope(-1, 80, 20, 5, 0, 4, 0xfff3),
+                ],
             ),
             # np.fromstring("\xfe\x00\x04\xfcV@\xfd\n \x04\xfd\x8e \x04\xff", dtype=np.uint8),
             # np.fromstring("\xfe\x04\x00\xfc\x16@\xfd\x10?\x0e\xff", dtype=np.uint8),
         ]
 
-        for d, haddr, h in level_defs:
+        for d, haddr, h, objects in level_defs:
             c = self.builder.parse_objects(d)
             print "\n".join([str(a) for a in c])
             state = self.builder.draw_objects(self.screen, c)
             self.builder.parse_harvest_table(c, haddr, h)
             print state.ladder_positions
             print state.downrope_positions
+            self.builder.add_objects(objects, c)
+            print "\n".join([str(a) for a in c])
+            ld, hd = self.builder.create_level_definition(c)
+            print ld
+            print hd
+            d2 = self.builder.parse_objects(d)
+            print "\n".join([str(a) for a in c])
 
 if __name__ == "__main__":
     t = TestJumpmanScreen()
