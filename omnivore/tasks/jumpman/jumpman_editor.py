@@ -23,7 +23,7 @@ from omnivore.utils.searchutil import HexSearcher, CharSearcher
 from omnivore.utils.drawutil import get_bounds
 from omnivore.utils.sortutil import invert_rects
 from omnivore.utils.jumpman import *
-from omnivore.tasks.hex_edit.commands import ChangeByteCommand, PasteCommand
+from omnivore.tasks.hex_edit.commands import ChangeByteCommand, SetValueCommand
 from omnivore.framework.mouse_handler import MouseHandler
 
 from commands import *
@@ -155,7 +155,7 @@ class DrawMode(JumpmanSelectMode):
         self.display_coords(evt)
 
     def process_left_up(self, evt):
-        # Record the command!
+        self.canvas.save_objects(self.objects)
         self.objects = []
         self.display_coords(evt)
 
@@ -306,7 +306,8 @@ class DrawPeanutMode(DrawMode):
             e.document.change_count += 1
             e.refresh_panes()
         else:
-            self.objects = []
+            DrawMode.process_left_up(evt)
+            return
         self.display_coords(evt)
 
     def process_mouse_motion_down(self, evt):
@@ -341,33 +342,31 @@ class JumpmanLevelView(MainBitmapScroller):
         self.segment[:] = 0
         self.pick_buffer[:] = -1
 
-    def get_level_definition(self):
+    def get_level_addrs(self):
         source = self.editor.segment
         start = source.start_addr
-        if len(source) < 0x38:
-            return np.zeros([0], dtype=np.uint8), 0
-        index = source[0x38]*256 + source[0x37]
-        log.debug("level def table: %x" % index)
-        if index > start:
-            index -= start
-        if index < len(source):
-            commands = source[index:index + 500]  # arbitrary max number of bytes
-        else:
-            commands = source[index:index]
-        return commands, index
+        level_addr = source[0x37] + source[0x38]*256
+        harvest_addr = source[0x4e] + source[0x4f]*256
+        log.debug("level def table: %x, harvest table: %x" % (level_addr, harvest_addr))
+        last = source.start_addr + len(source)
+        if level_addr > start and harvest_addr > start and level_addr < last and harvest_addr < last:
+            return source, level_addr, harvest_addr
+        raise IndexError
 
     def compute_image(self):
         if self.level_builder is None:
             return
-        commands, index = self.get_level_definition()
-        if np.array_equal(commands, self.last_commands):
+        source, level_addr, harvest_addr = self.get_level_addrs()
+        index = level_addr - source.start_addr
+        command_checksum = source[index:index + 512]  # representative sample
+        if np.array_equal(command_checksum, self.last_commands):
             self.segment[:] = self.cached_screen
         else:
             self.clear_screen()
-            self.level_builder.parse_and_draw(self.segment, commands, current_segment=self.editor.segment, pick_buffer=self.pick_buffer)
+            self.level_builder.parse_and_draw(self.segment, source, level_addr, harvest_addr, pick_buffer=self.pick_buffer)
             self.pick_buffer[self.pick_buffer >= 0] += index
             self.cached_screen = self.segment[:].copy()
-            self.last_commands = commands[:]
+            self.last_commands = command_checksum.copy()
 
     def get_image(self):
         self.compute_image()
@@ -375,6 +374,18 @@ class JumpmanLevelView(MainBitmapScroller):
         bitimage = MainBitmapScroller.get_image(self)
         self.mouse_mode.draw_overlay(bitimage)
         return bitimage
+
+    def save_objects(self, objects):
+        self.level_builder.add_objects(objects)
+        source, level_addr, old_harvest_addr = self.get_level_addrs()
+        level_data, harvest_addr, ropeladder_data = self.level_builder.create_level_definition(level_addr, source[0x46], source[0x47])
+        index = level_addr - source.start_addr
+        ranges = [(0x18,0x2a), (0x4e,0x50), (index,index + len(level_data))]
+        hdata = np.empty([2], dtype=np.uint8)
+        hdata.view(dtype="<u2")[0] = harvest_addr
+        data = np.hstack([ropeladder_data, hdata, level_data])
+        cmd = SetValueCommand(source, ranges, data)
+        self.editor.process_command(cmd)
 
 
 class JumpmanEditor(BitmapEditor):
@@ -434,7 +445,7 @@ class JumpmanEditor(BitmapEditor):
         self.bitmap.set_mouse_mode(AnticDSelectMode)
 
     def check_valid_segment(self, segment):
-        if len(segment) >= 0x38:
+        if len(segment) >= 0x50:
             # check for sane level definition table
             index = segment[0x38]*256 + segment[0x37] - segment.start_addr
             return index >=0 and index < len(segment)
