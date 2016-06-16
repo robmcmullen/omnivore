@@ -306,7 +306,7 @@ class DrawPeanutMode(DrawMode):
             e.document.change_count += 1
             e.refresh_panes()
         else:
-            DrawMode.process_left_up(evt)
+            DrawMode.process_left_up(self, evt)
             return
         self.display_coords(evt)
 
