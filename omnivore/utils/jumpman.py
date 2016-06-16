@@ -196,6 +196,9 @@ class ScreenState(object):
         self.pick_dict[obj.pick_index] = obj
         obj.update_table(self)
 
+    def get_picked(self, pick_index):
+        return self.pick_dict[pick_index]
+
     bit_offset = [6, 4, 2, 0]
     mask = [0b00111111, 0b11001111, 0b11110011, 0b11111100]
 
@@ -325,7 +328,7 @@ class JumpmanLevelBuilder(object):
     def parse_and_draw(self, screen, segment, level_addr, harvest_addr, pick_buffer=None):
         self.objects = self.parse_objects(segment[level_addr - segment.start_addr:])
         self.parse_harvest_table(segment, segment.start_addr, harvest_addr)
-        self.draw_objects(screen, self.objects, segment, pick_buffer)
+        return self.draw_objects(screen, self.objects, segment, pick_buffer)
 
     def draw_objects(self, screen, objects, current_segment=None, pick_buffer=None):
         state = ScreenState(self.segments, current_segment, screen, pick_buffer)

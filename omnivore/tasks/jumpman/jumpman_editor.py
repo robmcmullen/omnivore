@@ -82,20 +82,51 @@ class AnticDSelectMode(JumpmanSelectMode):
     menu_item_name = "Select"
     menu_item_tooltip = "Select regions"
 
+    def __init__(self, *args, **kwargs):
+        JumpmanSelectMode.__init__(self, *args, **kwargs)
+        self.mouse_down = (0, 0)
+        self.overlay_screen = np.zeros(40 * self.canvas.editor.antic_lines, dtype=np.uint8)
+        self.selected_objects = []
+
+    def draw_extra_objects(self, level_builder, screen, current_segment):
+        print self.selected_objects
+        level_builder.draw_objects(screen, self.selected_objects, current_segment)
+
     def highlight_pick(self, evt):
         index, x, y, pick = self.get_xy(evt)
+        self.mouse_down = x, y
         if pick >= 0:
-            e = self.canvas.editor
-            e.index_clicked(pick, 0, None)
-            e.select_range(pick, pick + 4)
-            wx.CallAfter(e.index_clicked, pick, 0, None)
+            obj = self.canvas.screen_state.get_picked(pick)
+            self.selected_objects = [obj]
+        else:
+            self.selected_objects = []
+
+    def move_pick(self, evt):
+        if self.selected_objects:
+            index, x, y, pick = self.get_xy(evt)
+            dx = x - self.mouse_down[0]
+            dy = y - self.mouse_down[1]
+            for obj in self.selected_objects:
+                obj.x += dx
+                obj.y += dy
+            self.mouse_down = x, y
 
     def process_left_down(self, evt):
         self.highlight_pick(evt)
+        self.canvas.Refresh()
         self.display_coords(evt)
 
     def process_mouse_motion_down(self, evt):
-        self.highlight_pick(evt)
+        self.move_pick(evt)
+        self.canvas.Refresh()
+        self.display_coords(evt)
+
+    def process_left_up(self, evt):
+        self.canvas.save_changes()
+        self.selected_objects = []
+        self.display_coords(evt)
+
+    def process_mouse_motion_up(self, evt):
         self.display_coords(evt)
 
 
@@ -332,6 +363,7 @@ class JumpmanLevelView(MainBitmapScroller):
         self.level_builder = None
         self.cached_screen = None
         self.last_commands = None
+        self.screen_state = None
 
     def get_segment(self, editor):
         self.level_builder = JumpmanLevelBuilder(editor.document.user_segments)
@@ -363,8 +395,7 @@ class JumpmanLevelView(MainBitmapScroller):
             self.segment[:] = self.cached_screen
         else:
             self.clear_screen()
-            self.level_builder.parse_and_draw(self.segment, source, level_addr, harvest_addr, pick_buffer=self.pick_buffer)
-            self.pick_buffer[self.pick_buffer >= 0] += index
+            self.screen_state = self.level_builder.parse_and_draw(self.segment, source, level_addr, harvest_addr, pick_buffer=self.pick_buffer)
             self.cached_screen = self.segment[:].copy()
             self.last_commands = command_checksum.copy()
 
@@ -378,8 +409,15 @@ class JumpmanLevelView(MainBitmapScroller):
         self.mouse_mode.draw_overlay(bitimage)
         return bitimage
 
+    def update_objects(self, objects):
+        self.level_builder.update_objects(objects)
+        self.save_changes()
+
     def save_objects(self, objects):
         self.level_builder.add_objects(objects)
+        self.save_changes()
+
+    def save_changes(self):
         source, level_addr, old_harvest_addr = self.get_level_addrs()
         level_data, harvest_addr, ropeladder_data = self.level_builder.create_level_definition(level_addr, source[0x46], source[0x47])
         index = level_addr - source.start_addr
