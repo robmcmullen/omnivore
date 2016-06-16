@@ -369,7 +369,10 @@ class JumpmanLevelView(MainBitmapScroller):
             self.last_commands = command_checksum.copy()
 
     def get_image(self):
-        self.compute_image()
+        try:
+            self.compute_image()
+        except IndexError:
+            pass
         self.mouse_mode.draw_extra_objects(self.level_builder, self.segment, self.editor.segment)
         bitimage = MainBitmapScroller.get_image(self)
         self.mouse_mode.draw_overlay(bitimage)
