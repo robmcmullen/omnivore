@@ -5,7 +5,7 @@ import os
 # Major package imports.
 import wx
 import numpy as np
-from atrcopy import SegmentData, DefaultSegment
+from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_mask
 
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides
@@ -285,12 +285,11 @@ class DrawPeanutMode(DrawMode):
     def check_objects(self, x, y):
         self.is_bad_location = self.is_allergic(x, y)
 
-    def draw_overlay(self, bitimage):
+    def draw_extra_objects(self, level_builder, screen, current_segment):
+        level_builder.draw_objects(screen, self.objects, current_segment)
         hx, hy = self.get_harvest_offset()
         w = 160
         h = 88
-        bad = (203, 144, 161)
-        orig = bitimage.copy()
         
         # Original (slow) algorithm to determine bad locations:
         #
@@ -311,12 +310,14 @@ class DrawPeanutMode(DrawMode):
 
         # Don't know how to set multiple ranges simultaneously in numpy, so use
         # a slow python loop
+        s = screen.style.reshape((h, w))
+        s[:] = 0
         for x in range(startx, startx + 7):
             x = x & 0x1f
-            bitimage[0:h:, x::32] = orig[0:h:, x::32] / 8 + bad
+            s[0:h:, x::32] = comment_bit_mask
         for y in range(starty, starty + 3):
             y = y & 0xf
-            bitimage[y:h:16,:] = orig[y:h:16,:] / 8 + bad
+            s[y:h:16,:] = comment_bit_mask
 
     def change_harvest_offset(self, evt, start=False):
         c = self.canvas
@@ -475,12 +476,14 @@ class JumpmanPlayfieldRenderer(BaseRenderer):
     def get_image(self, m, bytes_per_row, nr, count, bytes, style):
         normal = style == 0
         highlight = (style & selected_bit_mask) == selected_bit_mask
+        comment = (style & comment_bit_mask) == comment_bit_mask
         
         color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(m, range(16))
         bitimage = np.empty((nr * bytes_per_row, 3), dtype=np.uint8)
         for i in range(16):
             color_is_set = (bytes == i)
             bitimage[color_is_set & normal] = color_registers[i]
+            bitimage[color_is_set & comment] = c_colors[i]
             bitimage[color_is_set & highlight] = h_colors[i]
         bitimage[count:,:] = m.empty_color
         return bitimage.reshape((nr, bytes_per_row, 3))
