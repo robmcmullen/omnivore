@@ -654,8 +654,15 @@ class CopyAsReprAction(EditorAction):
         e = self.active_editor
         ranges, indexes = e.get_selected_ranges_and_indexes()
         data = e.segment[indexes]
-        s1 = data.tostring()
-        text = repr(s1)[1:-1]  # remove leading/trailing quotes
+        s1 = repr(data.tostring())
+        q = s1[0]
+        text = s1[1:-1]  # remove leading/trailing quotes
+        if q == "'":
+            # double quotes are literal, single quotes are escaped
+            text = text.replace('"', "\\x22").replace("\\'", "\\x27")
+        else:
+            # single quotes are literal, double are escaped
+            text = text.replace("'", "\\x27").replace('\\"', "\\x22")
         data_obj = wx.TextDataObject()
         data_obj.SetText(text)
         e.set_clipboard_object(data_obj)
