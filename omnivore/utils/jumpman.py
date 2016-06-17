@@ -1,5 +1,7 @@
 import numpy as np
 
+from atrcopy import selected_bit_mask
+
 from omnivore.utils.runtime import get_all_subclasses
 
 import logging
@@ -154,7 +156,7 @@ class ScreenState(object):
     def add_downrope(self, obj):
         self.downrope_positions.add(obj.x + 0x2e)
 
-    def draw_object(self, obj):
+    def draw_object(self, obj, highlight=False):
         if obj.addr is None:
             return
         log.debug("addr=%x x=%d y=%d dx=%d dy=%d, num=%d" % (obj.addr, obj.x, obj.y, obj.dx, obj.dy, obj.count))
@@ -188,7 +190,7 @@ class ScreenState(object):
                 for i, c in enumerate(pixels):
                     px = x + xoffset + i
                     py = y + yoffset
-                    if self.draw_pixel(px, py, c):
+                    if self.draw_pixel(px, py, c, highlight):
                         if self.pick_buffer is not None:
                             self.pick_buffer[px,py] = obj.pick_index
             x += obj.dx
@@ -199,17 +201,15 @@ class ScreenState(object):
     def get_picked(self, pick_index):
         return self.pick_dict[pick_index]
 
-    bit_offset = [6, 4, 2, 0]
-    mask = [0b00111111, 0b11001111, 0b11110011, 0b11111100]
+    color_map = {0:8, 1:4, 2:5, 3:6}  # map color numbers to antic register order
 
-    def draw_pixel(self, x, y, color):
-        x_byte, x_bit = divmod(x, 4)
-        color = color << self.bit_offset[x_bit]
-        index = y * 40 + x_byte
-        if index < 0 or index > len(self.screen):
+    def draw_pixel(self, x, y, color, highlight):
+        index = y * 160 + x
+        if index < 0 or index >= len(self.screen):
             return False
-        self.screen[index] &= self.mask[x_bit]
-        self.screen[index] |= color
+        self.screen[index] = self.color_map[color]
+        if highlight:
+            self.screen.style[index] = selected_bit_mask
         return True
 
     def get_object_code(self, addr):
@@ -334,12 +334,8 @@ class JumpmanLevelBuilder(object):
         state = ScreenState(self.segments, current_segment, screen, pick_buffer)
         highlight = set(highlight)
         for obj in objects:
-            if obj not in highlight:
-                log.debug("Processing draw object %s" % obj)
-                state.draw_object(obj)
-            else:
-                log.debug("Highlighting draw object %s" % obj)
-                state.draw_object(obj)
+            log.debug("Processing draw object %s" % obj)
+            state.draw_object(obj, obj in highlight)
         return state
 
     def add_objects(self, new_objects, objects=None):

@@ -17,6 +17,7 @@ from omnivore.tasks.hex_edit.hex_editor import HexEditor
 from omnivore.tasks.bitmap_edit.bitmap_editor import MainBitmapScroller, SelectMode, BitmapEditor
 from omnivore.framework.document import Document
 from omnivore.arch.machine import Machine, predefined
+from omnivore.arch.antic_renderers import BaseRenderer
 from omnivore.utils.wx.bitviewscroller import BitmapScroller
 from omnivore.utils.command import Overlay
 from omnivore.utils.searchutil import HexSearcher, CharSearcher
@@ -53,9 +54,7 @@ class JumpmanSelectMode(SelectMode):
         e = c.editor
         if e is not None:
             index, bit, inside = c.event_coords_to_byte(evt)
-            r0, c0 = c.byte_to_row_col(index)
-            x = c0 * 4 + (3 - bit)
-            y = r0
+            y, x = c.byte_to_row_col(index)
             if y < e.antic_lines:
                 pick = e.pick_buffer[x, y]
             else:
@@ -95,9 +94,11 @@ class AnticDSelectMode(JumpmanSelectMode):
         if not self.objects:
             return
 
+        e = self.canvas.editor
         level_builder = self.canvas.level_builder
-        playfield = self.canvas.editor.get_playfield_segment()
-        level_builder.draw_objects(playfield, level_builder.objects, self.canvas.editor.segment, highlight=self.objects)
+        playfield = e.get_playfield_segment()
+        e.clear_playfield(playfield)
+        level_builder.draw_objects(playfield, level_builder.objects, e.segment, highlight=self.objects)
         bitimage = self.canvas.get_rendered_image(playfield)
         return bitimage
 
@@ -376,7 +377,7 @@ class JumpmanLevelView(MainBitmapScroller):
         return editor.screen
 
     def clear_screen(self):
-        self.segment[:] = 0
+        self.editor.clear_playfield()
         self.pick_buffer[:] = -1
 
     def get_level_addrs(self):
@@ -440,6 +441,35 @@ class JumpmanLevelView(MainBitmapScroller):
         self.editor.process_command(cmd)
 
 
+class JumpmanPlayfieldRenderer(BaseRenderer):
+    """ Custom renderer instead of Antic Mode D renderer. Need to display
+    highlighting on a per-pixel level which isn't possible with the Mode D
+    renderer because the styling info is applied at the byte level and there
+    are 4 pixels per byte in Mode D.
+
+    So this renderer is one byte per pixel, but only uses the first 16 colors.
+    It is mapped to the ANTIC color register order, so the first 4 colors are
+    player colors, then the 5 playfield colors. A blank screen corresponds to
+    the index value of 8, so the last playfield color.
+    """
+    name = "Jumpman 1 Byte Per Pixel"
+    pixels_per_byte = 1
+    bitplanes = 1
+
+    def get_image(self, m, bytes_per_row, nr, count, bytes, style):
+        normal = style == 0
+        highlight = (style & selected_bit_mask) == selected_bit_mask
+        
+        color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(m, range(16))
+        bitimage = np.empty((nr * bytes_per_row, 3), dtype=np.uint8)
+        for i in range(16):
+            color_is_set = (bytes == i)
+            bitimage[color_is_set & normal] = color_registers[i]
+            bitimage[color_is_set & highlight] = h_colors[i]
+        bitimage[count:,:] = m.empty_color
+        return bitimage.reshape((nr, bytes_per_row, 3))
+
+
 class JumpmanEditor(BitmapEditor):
     """ The toolkit specific implementation of a HexEditor.  See the
     IHexEditor interface for the API documentation.
@@ -451,10 +481,10 @@ class JumpmanEditor(BitmapEditor):
     ##### Default traits
     
     def _machine_default(self):
-        return Machine(name="Jumpman", bitmap_renderer=predefined['bitmap_renderer'][2])
+        return Machine(name="Jumpman", bitmap_renderer=JumpmanPlayfieldRenderer())
 
     def _map_width_default(self):
-        return 40
+        return 40 * 4
     
     def _draw_pattern_default(self):
         return [0]
@@ -526,7 +556,7 @@ class JumpmanEditor(BitmapEditor):
         self.find_segment(segment=segment)
     
     def view_segment_set_width(self, segment):
-        self.bitmap_width = 40
+        self.bitmap_width = 40 * 4
         self.machine.update_colors(self.get_level_colors(segment))
 
     def get_level_colors(self, segment=None):
@@ -577,8 +607,7 @@ class JumpmanEditor(BitmapEditor):
         return []
 
     def get_playfield(self):
-        data = np.zeros(40 * self.antic_lines, dtype=np.uint8)
-        data[::41] = 255  # test pattern!
+        data = np.empty(40 * 4 * self.antic_lines, dtype=np.uint8)
         return data
 
     def get_playfield_segment(self, playfield=None):
@@ -586,6 +615,12 @@ class JumpmanEditor(BitmapEditor):
             playfield = self.get_playfield()
         r = SegmentData(playfield)
         return DefaultSegment(r, 0x7000)
+
+    def clear_playfield(self, playfield=None):
+        if playfield is None:
+            playfield = self.screen
+        playfield[:] = 8  # background is the 9th ANTIC color register
+        playfield.style[:] = 0
     
     ###########################################################################
     # Trait handlers.
