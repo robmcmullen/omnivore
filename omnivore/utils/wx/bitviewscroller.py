@@ -175,7 +175,7 @@ class BitviewScroller(wx.ScrolledWindow):
             anchor_end = anchor_start + 1
         return anchor_start, anchor_end, (r1, c1), (r2, c2)
     
-    def get_image(self):
+    def get_image(self, segment=None):
         raise NotImplementedError
 
     def copy_to_clipboard(self):
@@ -577,23 +577,25 @@ class BitmapScroller(BitviewScroller):
         bit = bitmask - (x & bitmask)
         return byte, bit, inside
     
-    def get_image(self):
+    def get_image(self, segment=None):
+        if segment is None:
+            segment = self.segment
         log.debug("get_image: bit image: start=%d, num=%d" % (self.start_row, self.visible_rows))
         sr = self.start_row
         nr = self.visible_rows
         self.start_byte = sr * self.bytes_per_row
         self.end_byte = self.start_byte + (nr * self.bytes_per_row)
-        if self.end_byte > len(self.segment):
-            self.end_byte = len(self.segment)
+        if self.end_byte > len(segment):
+            self.end_byte = len(segment)
             count = self.end_byte - self.start_byte
             bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
-            bytes[0:count] = self.segment[self.start_byte:self.end_byte]
+            bytes[0:count] = segment[self.start_byte:self.end_byte]
             style = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
-            style[0:count] = self.segment.style[self.start_byte:self.end_byte]
+            style[0:count] = segment.style[self.start_byte:self.end_byte]
         else:
             count = self.end_byte - self.start_byte
-            bytes = self.segment[self.start_byte:self.end_byte]
-            style = self.segment.style[self.start_byte:self.end_byte]
+            bytes = segment[self.start_byte:self.end_byte]
+            style = segment.style[self.start_byte:self.end_byte]
         m = self.editor.machine
         array = m.bitmap_renderer.get_image(m, self.bytes_per_row, nr, count, bytes, style)
         sc = self.start_col
@@ -670,21 +672,23 @@ class FontMapScroller(BitviewScroller):
         self.font = self.editor.machine.antic_font
         self.calc_scroll_params()
 
-    def get_image(self):
+    def get_image(self, segment=None):
+        if segment is None:
+            segment = self.segment
         log.debug("get_image: fontmap: start=%d, num=%d" % (self.start_row, self.visible_rows))
         sr = self.start_row
         nr = self.visible_rows
         self.start_byte = sr * self.bytes_per_row
         self.end_byte = self.start_byte + (nr * self.bytes_per_row)
-        if self.end_byte > len(self.segment):
-            self.end_byte = len(self.segment)
+        if self.end_byte > len(segment):
+            self.end_byte = len(segment)
             bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
-            bytes[0:self.end_byte - self.start_byte] = self.segment[sr * self.bytes_per_row:self.end_byte]
+            bytes[0:self.end_byte - self.start_byte] = segment[sr * self.bytes_per_row:self.end_byte]
             style = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
-            style[0:self.end_byte - self.start_byte] = self.segment.style[sr * self.bytes_per_row:self.end_byte]
+            style[0:self.end_byte - self.start_byte] = segment.style[sr * self.bytes_per_row:self.end_byte]
         else:
-            bytes = self.segment[self.start_byte:self.end_byte]
-            style = self.segment.style[self.start_byte:self.end_byte]
+            bytes = segment[self.start_byte:self.end_byte]
+            style = segment.style[self.start_byte:self.end_byte]
         bytes = bytes.reshape((nr, -1))
         style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
@@ -1041,22 +1045,24 @@ class MemoryMapScroller(BitviewScroller):
         self.start_col, self.visible_cols = x, (w + z - 1) / z
         log.debug("memory map: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.visible_cols]))
 
-    def get_image(self):
+    def get_image(self, segment=None):
+        if segment is None:
+            segment = self.segment
         log.debug("get_image: memory map: start=%d, num=%d" % (self.start_row, self.visible_rows))
         t0 = time.clock()
         sr = self.start_row
         nr = self.visible_rows
         self.start_byte = sr * self.bytes_per_row
         self.end_byte = self.start_byte + (nr * self.bytes_per_row)
-        if self.end_byte > len(self.segment):
-            self.end_byte = len(self.segment)
+        if self.end_byte > len(segment):
+            self.end_byte = len(segment)
             bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
-            bytes[0:self.end_byte - self.start_byte] = self.segment[sr * self.bytes_per_row:self.end_byte]
+            bytes[0:self.end_byte - self.start_byte] = segment[sr * self.bytes_per_row:self.end_byte]
             style = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
-            style[0:self.end_byte - self.start_byte] = self.segment.style[sr * self.bytes_per_row:self.end_byte]
+            style[0:self.end_byte - self.start_byte] = segment.style[sr * self.bytes_per_row:self.end_byte]
         else:
-            bytes = self.segment[self.start_byte:self.end_byte]
-            style = self.segment.style[self.start_byte:self.end_byte]
+            bytes = segment[self.start_byte:self.end_byte]
+            style = segment.style[self.start_byte:self.end_byte]
         bytes = bytes.reshape((nr, -1))
         style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
