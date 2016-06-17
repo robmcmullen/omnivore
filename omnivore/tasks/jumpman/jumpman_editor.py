@@ -17,6 +17,7 @@ from omnivore.tasks.hex_edit.hex_editor import HexEditor
 from omnivore.tasks.bitmap_edit.bitmap_editor import MainBitmapScroller, SelectMode, BitmapEditor
 from omnivore.framework.document import Document
 from omnivore.arch.machine import Machine, predefined
+from omnivore.arch.colors import powerup_colors
 from omnivore.arch.antic_renderers import BaseRenderer
 from omnivore.utils.wx.bitviewscroller import BitmapScroller
 from omnivore.utils.command import Overlay
@@ -413,6 +414,8 @@ class JumpmanLevelView(MainBitmapScroller):
         self.pick_buffer[:] = -1
 
     def get_level_addrs(self):
+        if not self.editor.valid_jumpman_segment:
+            raise IndexError
         source = self.editor.segment
         start = source.start_addr
         level_addr = source[0x37] + source[0x38]*256
@@ -437,6 +440,13 @@ class JumpmanLevelView(MainBitmapScroller):
             self.cached_screen = self.segment[:].copy()
             self.last_commands = command_checksum.copy()
 
+    def bad_image(self):
+        self.segment[:] = 0
+        self.last_commands = None
+        s = self.segment.style.reshape((self.editor.antic_lines, -1))
+        s[::2,::2] = comment_bit_mask
+        s[1::2,1::2] = comment_bit_mask
+
     def get_rendered_image(self, segment=None):
         return MainBitmapScroller.get_image(self, segment)
 
@@ -447,7 +457,9 @@ class JumpmanLevelView(MainBitmapScroller):
         try:
             self.compute_image()
         except IndexError:
-            pass
+            self.bad_image()
+            bitimage = MainBitmapScroller.get_image(self)
+            return bitimage
         self.mouse_mode.draw_extra_objects(self.level_builder, self.segment, self.editor.segment)
         bitimage = MainBitmapScroller.get_image(self)
         self.mouse_mode.draw_overlay(bitimage)
@@ -508,6 +520,8 @@ class JumpmanEditor(BitmapEditor):
     """ The toolkit specific implementation of a HexEditor.  See the
     IHexEditor interface for the API documentation.
     """
+    valid_jumpman_segment = Bool
+
     ##### class attributes
     
     valid_mouse_modes = [AnticDSelectMode, DrawGirderMode, DrawLadderMode, DrawUpRopeMode, DrawDownRopeMode, DrawPeanutMode]
@@ -522,6 +536,9 @@ class JumpmanEditor(BitmapEditor):
     
     def _draw_pattern_default(self):
         return [0]
+    
+    def _valid_jumpman_segment_default(self):
+        return False
 
     ###########################################################################
     # 'FrameworkEditor' interface.
@@ -561,7 +578,11 @@ class JumpmanEditor(BitmapEditor):
         self.bitmap.set_mouse_mode(AnticDSelectMode)
 
     def check_valid_segment(self, segment):
-        if len(segment) >= 0x50:
+        # 283f is always 4c (JMP) because it and the next two bytes are a jump target from the game loop
+        # 2848: always 20 (i.e. JSR)
+        # 284b: always 60 (i.e. RTS)
+        # 284c: always FF (target for harvest table if no action to be taken)
+        if len(segment) >= 0x800 and segment[0x3f] == 0x4c and segment[0x48] == 0x20 and segment[0x4b] == 0x60 and segment[0x4c] == 0xff:
             # check for sane level definition table
             index = segment[0x38]*256 + segment[0x37] - segment.start_addr
             return index >=0 and index < len(segment)
@@ -590,18 +611,22 @@ class JumpmanEditor(BitmapEditor):
         self.find_segment(segment=segment)
     
     def view_segment_set_width(self, segment):
+        self.valid_jumpman_segment = self.check_valid_segment(segment)
         self.bitmap_width = 40 * 4
         self.machine.update_colors(self.get_level_colors(segment))
 
     def get_level_colors(self, segment=None):
         if segment is None:
             segment = self.segment
-        colors = segment[0x2a:0x33].copy()
-        # on some levels, the bombs are set to color 0 because they are cycled
-        # to produce a glowing effect, but that's not visible here so we force
-        # it to be bright white
-        fg = colors[4:8]
-        fg[fg == 0] = 15
+        if self.check_valid_segment(segment):
+            colors = segment[0x2a:0x33].copy()
+            # on some levels, the bombs are set to color 0 because they are
+            # cycled to produce a glowing effect, but that's not visible here
+            # so we force it to be bright white
+            fg = colors[4:8]
+            fg[fg == 0] = 15
+        else:
+            colors = powerup_colors()
         return list(colors)
     
     def update_mouse_mode(self):
