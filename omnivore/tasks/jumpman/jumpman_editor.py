@@ -89,6 +89,7 @@ class AnticDSelectMode(JumpmanSelectMode):
     icon = "select.png"
     menu_item_name = "Select"
     menu_item_tooltip = "Select regions"
+    min_mouse_distance = 2
 
     def get_image_override(self):
         if not self.objects:
@@ -108,6 +109,7 @@ class AnticDSelectMode(JumpmanSelectMode):
         if pick >= 0:
             obj = self.canvas.screen_state.get_picked(pick)
             self.objects = [obj]
+            self.check_tolerance = True
         else:
             self.objects = []
 
@@ -116,6 +118,9 @@ class AnticDSelectMode(JumpmanSelectMode):
             index, x, y, pick = self.get_xy(evt)
             dx = x - self.mouse_down[0]
             dy = y - self.mouse_down[1]
+            if self.check_tolerance and abs(dx) + abs(dy) <  self.min_mouse_distance:
+                return
+            self.check_tolerance = False
             for obj in self.objects:
                 obj.x += dx
                 obj.y += dy
@@ -132,9 +137,8 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.display_coords(evt)
 
     def process_left_up(self, evt):
-        if self.objects:
+        if self.objects and not self.check_tolerance:
             self.canvas.save_changes()
-            self.objects = []
         self.display_coords(evt)
 
     def process_mouse_motion_up(self, evt):
