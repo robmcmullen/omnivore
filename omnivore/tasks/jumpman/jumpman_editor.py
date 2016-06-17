@@ -112,6 +112,8 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.mouse_down = x, y
         if pick >= 0:
             obj = self.canvas.screen_state.get_picked(pick)
+            obj.orig_x = obj.x
+            obj.orig_y = obj.y
             if evt.ShiftDown():
                 self.objects.append(obj)
             elif obj not in self.objects:
@@ -132,9 +134,8 @@ class AnticDSelectMode(JumpmanSelectMode):
                 return
             self.check_tolerance = False
             for obj in self.objects:
-                obj.x += dx
-                obj.y += dy
-            self.mouse_down = x, y
+                obj.x = (obj.orig_x + dx) & obj.valid_x_mask
+                obj.y = obj.orig_y + dy
 
     def process_left_down(self, evt):
         self.highlight_pick(evt)
