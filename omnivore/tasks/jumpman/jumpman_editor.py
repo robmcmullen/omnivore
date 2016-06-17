@@ -201,8 +201,10 @@ class DrawMode(JumpmanSelectMode):
                 sy = obj.default_dy if dy > 0 else -obj.default_dy
                 num = max((abs(dy) + abs(sy) - 1) / abs(sy), 1)
                 sx = dx / num
+        screen_x = (self.mouse_down[0] - obj.default_dx/2) & obj.valid_x_mask
+        screen_y = self.mouse_down[1] - obj.default_dy/2
         self.objects = [
-            obj(-1, self.mouse_down[0] - obj.default_dx/2, self.mouse_down[1] - obj.default_dy/2, num, sx, sy),
+            obj(-1, screen_x, screen_y, num, sx, sy),
         ]
         self.check_objects(x, y)
 

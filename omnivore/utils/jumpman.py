@@ -17,6 +17,7 @@ class JumpmanDrawObject(object):
     vertical_only = False
     single = False
     sort_order = 0
+    valid_x_mask = 0xff
 
     def __init__(self, pick_index, x, y, count, dx=None, dy=None, addr=None):
         self.x = x
@@ -108,6 +109,7 @@ class DownRope(JumpmanDrawObject):
     default_addr = 0x40c0
     vertical_only = True
     sort_order = 30
+    valid_x_mask = 0xfe  # Even pixels only
 
     def update_table(self, state):
         state.add_downrope(self)
