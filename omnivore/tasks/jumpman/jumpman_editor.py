@@ -407,6 +407,7 @@ class JumpmanLevelView(MainBitmapScroller):
     def get_segment(self, editor):
         self.level_builder = JumpmanLevelBuilder(editor.document.user_segments)
         self.pick_buffer = editor.pick_buffer
+        self.last_commands = None
         return editor.screen
 
     def clear_screen(self):
@@ -451,9 +452,10 @@ class JumpmanLevelView(MainBitmapScroller):
         return MainBitmapScroller.get_image(self, segment)
 
     def get_image(self):
-        override = self.mouse_mode.get_image_override()
-        if override is not None:
-            return override
+        if self.editor.valid_jumpman_segment:
+            override = self.mouse_mode.get_image_override()
+            if override is not None:
+                return override
         try:
             self.compute_image()
         except IndexError:
@@ -540,6 +542,9 @@ class JumpmanEditor(BitmapEditor):
     def _valid_jumpman_segment_default(self):
         return False
 
+    def _mouse_mode_default(self):
+        return AnticDSelectMode
+
     ###########################################################################
     # 'FrameworkEditor' interface.
     ###########################################################################
@@ -614,6 +619,7 @@ class JumpmanEditor(BitmapEditor):
         self.valid_jumpman_segment = self.check_valid_segment(segment)
         self.bitmap_width = 40 * 4
         self.machine.update_colors(self.get_level_colors(segment))
+        self.bitmap.set_mouse_mode(self.mouse_mode)
 
     def get_level_colors(self, segment=None):
         if segment is None:
