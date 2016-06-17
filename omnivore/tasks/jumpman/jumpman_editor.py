@@ -114,7 +114,10 @@ class AnticDSelectMode(JumpmanSelectMode):
                 self.objects = [obj]
             self.check_tolerance = True
         else:
-            self.objects = []
+            # don't kill multiple selection if user clicks on empty space by
+            # mistake
+            if not evt.ShiftDown():
+                self.objects = []
 
     def move_pick(self, evt):
         if self.objects:
