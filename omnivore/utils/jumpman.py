@@ -330,11 +330,16 @@ class JumpmanLevelBuilder(object):
         self.parse_harvest_table(segment, segment.start_addr, harvest_addr)
         return self.draw_objects(screen, self.objects, segment, pick_buffer)
 
-    def draw_objects(self, screen, objects, current_segment=None, pick_buffer=None):
+    def draw_objects(self, screen, objects, current_segment=None, pick_buffer=None, highlight=[]):
         state = ScreenState(self.segments, current_segment, screen, pick_buffer)
+        highlight = set(highlight)
         for obj in objects:
-            log.debug("Processing draw object %s" % obj)
-            state.draw_object(obj)
+            if obj not in highlight:
+                log.debug("Processing draw object %s" % obj)
+                state.draw_object(obj)
+            else:
+                log.debug("Highlighting draw object %s" % obj)
+                state.draw_object(obj)
         return state
 
     def add_objects(self, new_objects, objects=None):

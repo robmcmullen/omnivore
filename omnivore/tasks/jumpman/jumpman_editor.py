@@ -33,6 +33,15 @@ log = logging.getLogger(__name__)
 
 
 class JumpmanSelectMode(SelectMode):
+    def __init__(self, *args, **kwargs):
+        SelectMode.__init__(self, *args, **kwargs)
+        self.mouse_down = (0, 0)
+        self.objects = []
+
+    def get_image_override(self):
+        """ Replace the entire bit image generation in JumpmanLevelView """
+        return None
+
     def draw_extra_objects(self, lever_builder, screen, current_segment):
         return
 
@@ -82,31 +91,31 @@ class AnticDSelectMode(JumpmanSelectMode):
     menu_item_name = "Select"
     menu_item_tooltip = "Select regions"
 
-    def __init__(self, *args, **kwargs):
-        JumpmanSelectMode.__init__(self, *args, **kwargs)
-        self.mouse_down = (0, 0)
-        self.overlay_screen = np.zeros(40 * self.canvas.editor.antic_lines, dtype=np.uint8)
-        self.selected_objects = []
+    def get_image_override(self):
+        if not self.objects:
+            return
 
-    def draw_extra_objects(self, level_builder, screen, current_segment):
-        print self.selected_objects
-        level_builder.draw_objects(screen, self.selected_objects, current_segment)
+        level_builder = self.canvas.level_builder
+        playfield = self.canvas.editor.get_playfield_segment()
+        level_builder.draw_objects(playfield, level_builder.objects, self.canvas.editor.segment, highlight=self.objects)
+        bitimage = self.canvas.get_rendered_image(playfield)
+        return bitimage
 
     def highlight_pick(self, evt):
         index, x, y, pick = self.get_xy(evt)
         self.mouse_down = x, y
         if pick >= 0:
             obj = self.canvas.screen_state.get_picked(pick)
-            self.selected_objects = [obj]
+            self.objects = [obj]
         else:
-            self.selected_objects = []
+            self.objects = []
 
     def move_pick(self, evt):
-        if self.selected_objects:
+        if self.objects:
             index, x, y, pick = self.get_xy(evt)
             dx = x - self.mouse_down[0]
             dy = y - self.mouse_down[1]
-            for obj in self.selected_objects:
+            for obj in self.objects:
                 obj.x += dx
                 obj.y += dy
             self.mouse_down = x, y
@@ -122,8 +131,9 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.display_coords(evt)
 
     def process_left_up(self, evt):
-        self.canvas.save_changes()
-        self.selected_objects = []
+        if self.objects:
+            self.canvas.save_changes()
+            self.objects = []
         self.display_coords(evt)
 
     def process_mouse_motion_up(self, evt):
@@ -135,11 +145,6 @@ class DrawMode(JumpmanSelectMode):
     menu_item_name = "Draw"
     menu_item_tooltip = "Draw stuff"
     drawing_object = Girder
-
-    def __init__(self, *args, **kwargs):
-        JumpmanSelectMode.__init__(self, *args, **kwargs)
-        self.mouse_down = (0, 0)
-        self.objects = []
 
     def draw_extra_objects(self, level_builder, screen, current_segment):
         level_builder.draw_objects(screen, self.objects, current_segment)
@@ -399,7 +404,13 @@ class JumpmanLevelView(MainBitmapScroller):
             self.cached_screen = self.segment[:].copy()
             self.last_commands = command_checksum.copy()
 
+    def get_rendered_image(self, segment=None):
+        return MainBitmapScroller.get_image(self, segment)
+
     def get_image(self):
+        override = self.mouse_mode.get_image_override()
+        if override is not None:
+            return override
         try:
             self.compute_image()
         except IndexError:
@@ -564,6 +575,17 @@ class JumpmanEditor(BitmapEditor):
     
     def get_extra_segment_savers(self, segment):
         return []
+
+    def get_playfield(self):
+        data = np.zeros(40 * self.antic_lines, dtype=np.uint8)
+        data[::41] = 255  # test pattern!
+        return data
+
+    def get_playfield_segment(self, playfield=None):
+        if playfield is None:
+            playfield = self.get_playfield()
+        r = SegmentData(playfield)
+        return DefaultSegment(r, 0x7000)
     
     ###########################################################################
     # Trait handlers.
@@ -581,10 +603,7 @@ class JumpmanEditor(BitmapEditor):
         self.bitmap = JumpmanLevelView(parent, self.task)
 
         self.antic_lines = 88
-        data = np.zeros(40 * self.antic_lines, dtype=np.uint8)
-        data[::41] = 255
-        r = SegmentData(data)
-        self.screen = DefaultSegment(r, 0x7000)
+        self.screen = self.get_playfield_segment()
         self.pick_buffer = np.zeros((160, self.antic_lines), dtype=np.int32)
 
         ##########################################
