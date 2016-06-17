@@ -348,7 +348,10 @@ class JumpmanLevelBuilder(object):
         if objects is None:
             objects = self.objects
         for obj in to_remove:
-            objects.remove(obj)
+            try:
+                objects.remove(obj)
+            except ValueError:
+                log.error("Attempting to remove object not in list: %s" % obj)
         objects.sort(key=lambda a:a.sort_order)
 
     def group_objects(self, objects):
