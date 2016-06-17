@@ -85,7 +85,9 @@ class MainBitmapScroller(BitmapScroller):
             self.ReleaseMouse()
 
     def on_left_down(self, evt):
-        # self.SetFocus() # why would it not be focused?
+        # ScrolledWindow won't take focus (and therefore won't get keyboard
+        # events) unless focus explicitly set
+        self.SetFocus()
         mode = self.get_effective_tool_mode(evt)
         self.forced_cursor = None
         self.selection_box_is_being_defined = False
@@ -110,7 +112,7 @@ class MainBitmapScroller(BitmapScroller):
         self.set_cursor(mode)
 
     def on_left_dclick(self, evt):
-        # self.SetFocus() # why would it not be focused?
+        self.SetFocus() # see comment in on_left_click
         mode = self.get_effective_tool_mode(evt)
         mode.process_left_dclick(evt)
         self.set_cursor(mode)
@@ -133,7 +135,7 @@ class MainBitmapScroller(BitmapScroller):
         self.SetCursor(wx.StockCursor(wx.CURSOR_ARROW))
         self.mouse_mode.process_mouse_leave(evt)
 
-    def on_key_char(self, evt):
+    def on_char(self, evt):
         mode = self.get_effective_tool_mode(evt)
         self.set_cursor(mode)
         
