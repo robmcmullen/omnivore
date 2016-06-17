@@ -94,6 +94,7 @@ class Ladder(JumpmanDrawObject):
     default_dx = 8
     vertical_only = True
     sort_order = 10
+    valid_x_mask = 0xfe  # Even pixels only
 
     def update_table(self, state):
         state.add_ladder(self)
@@ -130,6 +131,7 @@ class EraseLadder(JumpmanDrawObject):
     name = "ladder_erase"
     default_addr = 0x4056
     sort_order = 36
+    valid_x_mask = 0xfe  # Even pixels only
 
 class EraseRope(JumpmanDrawObject):
     name = "rope_erase"
