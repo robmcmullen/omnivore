@@ -39,6 +39,9 @@ class JumpmanSelectMode(SelectMode):
         self.mouse_down = (0, 0)
         self.objects = []
 
+    def cleanup(self):
+        pass
+
     def get_image_override(self):
         """ Replace the entire bit image generation in JumpmanLevelView """
         return None
@@ -260,6 +263,9 @@ class DrawPeanutMode(DrawMode):
         self.is_bad_location = False
         self.batch = None
 
+    def cleanup(self):
+        self.canvas.editor.screen.style[:] = 0
+
     def get_cursor(self):
         if self.is_bad_location:
             return wx.StockCursor(wx.CURSOR_HAND)
@@ -390,6 +396,12 @@ class JumpmanLevelView(MainBitmapScroller):
         self.cached_screen = None
         self.last_commands = None
         self.screen_state = None
+
+    def set_mouse_mode(self, handler):
+        if hasattr(self, 'mouse_mode'):
+            self.mouse_mode.cleanup()
+        self.release_mouse()
+        self.mouse_mode = handler(self)
 
     def get_segment(self, editor):
         self.level_builder = JumpmanLevelBuilder(editor.document.user_segments)
