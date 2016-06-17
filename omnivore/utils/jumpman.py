@@ -344,6 +344,13 @@ class JumpmanLevelBuilder(object):
         objects.extend(new_objects)
         objects.sort(key=lambda a:a.sort_order)
 
+    def delete_objects(self, to_remove, objects=None):
+        if objects is None:
+            objects = self.objects
+        for obj in to_remove:
+            objects.remove(obj)
+        objects.sort(key=lambda a:a.sort_order)
+
     def group_objects(self, objects):
         groups = []
         current = []

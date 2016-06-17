@@ -140,8 +140,10 @@ class MouseHandler(object):
         c = self.canvas
         if (evt.GetKeyCode() == wx.WXK_ESCAPE):
             self.esc_key_pressed()
-        elif (evt.GetKeyCode() == wx.WXK_BACK):
+        elif evt.GetKeyCode() == wx.WXK_DELETE:
             self.delete_key_pressed()
+        elif evt.GetKeyCode() == wx.WXK_BACK:
+            self.backspace_key_pressed()
         else:
             evt.Skip()
     
@@ -149,4 +151,7 @@ class MouseHandler(object):
         self.canvas.project.clear_all_selections()
     
     def delete_key_pressed(self):
+        pass
+    
+    def backspace_key_pressed(self):
         pass

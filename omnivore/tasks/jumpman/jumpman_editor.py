@@ -146,6 +146,15 @@ class AnticDSelectMode(JumpmanSelectMode):
 
     def process_mouse_motion_up(self, evt):
         self.display_coords(evt)
+    
+    def delete_key_pressed(self):
+        if self.objects:
+            self.canvas.delete_objects(self.objects)
+            self.objects = []
+        self.canvas.Refresh()
+
+    def backspace_key_pressed(self):
+        self.delete_key_pressed()
 
 
 class DrawMode(JumpmanSelectMode):
@@ -428,8 +437,8 @@ class JumpmanLevelView(MainBitmapScroller):
         self.mouse_mode.draw_overlay(bitimage)
         return bitimage
 
-    def update_objects(self, objects):
-        self.level_builder.update_objects(objects)
+    def delete_objects(self, objects):
+        self.level_builder.delete_objects(objects)
         self.save_changes()
 
     def save_objects(self, objects):
