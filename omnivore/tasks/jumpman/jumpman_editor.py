@@ -108,7 +108,10 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.mouse_down = x, y
         if pick >= 0:
             obj = self.canvas.screen_state.get_picked(pick)
-            self.objects = [obj]
+            if evt.ShiftDown():
+                self.objects.append(obj)
+            elif obj not in self.objects:
+                self.objects = [obj]
             self.check_tolerance = True
         else:
             self.objects = []
