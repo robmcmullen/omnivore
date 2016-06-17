@@ -292,7 +292,14 @@ class JumpmanLevelBuilder(object):
         harvest_info = []
         while index < last:
             c = data[index]
-            if c == 0xff:
+            if c >= 0xf0:
+                # ordinarily, the table is suppost to be delimited by an 0xff,
+                # but Grand Puzzle II has a bug in the harvest table definition
+                # and starts right up with the painting table without an 0xff.
+                # But as it turns out, because the code to generate the
+                # checksum ands the checksum with 0xee, a checksum value can
+                # never be 0xfx. Checking for that case should be sufficient to
+                # stop processing
                 break
             entry = data[index:index + 7]
             print "harvest entry: ck=%x x=%x y=%x trig=%02x%02x paint=%02x%02x" % (entry[0], entry[1], entry[2], entry[4], entry[3], entry[6], entry[5])
