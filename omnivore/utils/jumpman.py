@@ -194,9 +194,9 @@ class ScreenState(object):
                 for i, c in enumerate(pixels):
                     px = x + xoffset + i
                     py = y + yoffset
-                    if self.draw_pixel(px, py, c, highlight):
-                        if self.pick_buffer is not None:
-                            self.pick_buffer[px,py] = obj.pick_index
+                    index = self.draw_pixel(px, py, c, highlight)
+                    if index is not None and self.pick_buffer is not None:
+                        self.pick_buffer[index] = obj.pick_index
             x += obj.dx
             y += obj.dy
         self.pick_dict[obj.pick_index] = obj
@@ -210,11 +210,11 @@ class ScreenState(object):
     def draw_pixel(self, x, y, color, highlight):
         index = y * 160 + x
         if index < 0 or index >= len(self.screen):
-            return False
+            return None
         self.screen[index] = self.color_map[color]
         if highlight:
             self.screen.style[index] = selected_bit_mask
-        return True
+        return index
 
     def get_object_code(self, addr):
         if addr in self.object_code_cache:

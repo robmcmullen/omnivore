@@ -60,7 +60,7 @@ class JumpmanSelectMode(SelectMode):
             index, bit, inside = c.event_coords_to_byte(evt)
             y, x = c.byte_to_row_col(index)
             if y < e.antic_lines:
-                pick = e.pick_buffer[x, y]
+                pick = e.pick_buffer[index]
             else:
                 pick = -1
             return index, x, y, pick
@@ -707,7 +707,7 @@ class JumpmanEditor(BitmapEditor):
 
         self.antic_lines = 88
         self.screen = self.get_playfield_segment()
-        self.pick_buffer = np.zeros((160, self.antic_lines), dtype=np.int32)
+        self.pick_buffer = np.zeros((160 * self.antic_lines), dtype=np.int32)
 
         ##########################################
         # Events.
