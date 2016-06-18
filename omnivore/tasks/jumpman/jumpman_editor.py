@@ -95,6 +95,9 @@ class AnticDSelectMode(JumpmanSelectMode):
     menu_item_tooltip = "Select regions"
     min_mouse_distance = 2
 
+    def init_post_hook(self):
+        self.pending_remove = None
+
     def get_image_override(self):
         if not self.objects:
             return
@@ -103,7 +106,8 @@ class AnticDSelectMode(JumpmanSelectMode):
         level_builder = self.canvas.level_builder
         playfield = e.get_playfield_segment()
         e.clear_playfield(playfield)
-        level_builder.draw_objects(playfield, level_builder.objects, e.segment, highlight=self.objects)
+        e.pick_buffer[:] = -1
+        level_builder.draw_objects(playfield, level_builder.objects, e.segment, highlight=self.objects, pick_buffer=e.pick_buffer)
         bitimage = self.canvas.get_rendered_image(playfield)
         return bitimage
 
@@ -112,17 +116,23 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.mouse_down = x, y
         if pick >= 0:
             obj = self.canvas.screen_state.get_picked(pick)
-            obj.orig_x = obj.x
-            obj.orig_y = obj.y
-            if evt.ShiftDown():
-                self.objects.append(obj)
-            elif obj not in self.objects:
-                self.objects = [obj]
+            if obj in self.objects:
+                if evt.ControlDown():
+                    self.pending_remove = obj
+                else:
+                    self.pending_remove = True
+            else:
+                obj.orig_x = obj.x
+                obj.orig_y = obj.y
+                if evt.ControlDown():
+                    self.objects.append(obj)
+                else:
+                    self.objects = [obj]
             self.check_tolerance = True
         else:
             # don't kill multiple selection if user clicks on empty space by
             # mistake
-            if not evt.ShiftDown():
+            if not evt.ControlDown():
                 self.objects = []
 
     def move_pick(self, evt):
@@ -134,8 +144,10 @@ class AnticDSelectMode(JumpmanSelectMode):
                 return
             self.check_tolerance = False
             for obj in self.objects:
-                obj.x = (obj.orig_x + dx) & obj.valid_x_mask
+                _, obj.x = divmod(obj.orig_x + dx, 160)
+                obj.x &= obj.valid_x_mask
                 obj.y = obj.orig_y + dy
+            self.pending_remove = None
 
     def process_left_down(self, evt):
         self.highlight_pick(evt)
@@ -148,8 +160,16 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.display_coords(evt)
 
     def process_left_up(self, evt):
+        if self.pending_remove is True:
+            self.objects = []
+        elif self.pending_remove is not None:
+            self.objects.remove(self.pending_remove)
+        self.pending_remove = None
         if self.objects and not self.check_tolerance:
             self.canvas.save_changes()
+            self.objects = self.canvas.level_builder.find_equivalent(self.objects)
+        else:
+            self.canvas.Refresh()
         self.display_coords(evt)
 
     def process_mouse_motion_up(self, evt):
@@ -419,7 +439,7 @@ class JumpmanLevelView(MainBitmapScroller):
 
     def get_level_addrs(self):
         if not self.editor.valid_jumpman_segment:
-            raise IndexError
+            raise RuntimeError
         source = self.editor.segment
         start = source.start_addr
         level_addr = source[0x37] + source[0x38]*256
@@ -428,14 +448,16 @@ class JumpmanLevelView(MainBitmapScroller):
         last = source.start_addr + len(source)
         if level_addr > start and harvest_addr > start and level_addr < last and harvest_addr < last:
             return source, level_addr, harvest_addr
-        raise IndexError
+        raise RuntimeError
 
-    def compute_image(self):
+    def compute_image(self, force=False):
         if self.level_builder is None:
             return
         source, level_addr, harvest_addr = self.get_level_addrs()
         index = level_addr - source.start_addr
         command_checksum = source[index:index + 512]  # representative sample
+        if force:
+            self.last_commands = None
         if np.array_equal(command_checksum, self.last_commands):
             self.segment[:] = self.cached_screen
         else:
@@ -461,7 +483,7 @@ class JumpmanLevelView(MainBitmapScroller):
                 return override
         try:
             self.compute_image()
-        except IndexError:
+        except RuntimeError:
             self.bad_image()
             bitimage = MainBitmapScroller.get_image(self)
             return bitimage
@@ -488,6 +510,7 @@ class JumpmanLevelView(MainBitmapScroller):
         data = np.hstack([ropeladder_data, hdata, level_data])
         cmd = SetValueCommand(source, ranges, data)
         self.editor.process_command(cmd)
+        self.compute_image(True)
 
 
 class JumpmanPlayfieldRenderer(BaseRenderer):

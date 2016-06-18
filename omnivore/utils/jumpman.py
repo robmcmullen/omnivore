@@ -306,7 +306,7 @@ class JumpmanLevelBuilder(object):
                 # stop processing
                 break
             entry = data[index:index + 7]
-            print "harvest entry: ck=%x x=%x y=%x trig=%02x%02x paint=%02x%02x" % (entry[0], entry[1], entry[2], entry[4], entry[3], entry[6], entry[5])
+            log.debug("harvest entry: ck=%x x=%x y=%x trig=%02x%02x paint=%02x%02x" % (entry[0], entry[1], entry[2], entry[4], entry[3], entry[6], entry[5]))
 
             addr = entry[5] + 256*entry[6]
             paint_objs = []
@@ -316,7 +316,7 @@ class JumpmanLevelBuilder(object):
                     if obj.single:
                         objmap[(obj.x, obj.y)] = obj
             elif addr != 0x284c:
-                print "  trigger paint addr %04x not found in segment!" % addr
+                log.error("  trigger paint addr %04x not found in segment!" % addr)
 
             addr = entry[3] + 256*entry[4]
             if addr == 0x284b:
@@ -331,15 +331,32 @@ class JumpmanLevelBuilder(object):
                 obj = objmap[entry[1], entry[2]]
                 obj.trigger_function = addr
                 obj.trigger_painting = paint_objs
-                print obj
             except KeyError:
-                print "  above entry is INVALID!!!"
                 log.error("Invalid harvest table entry %s" % (str(entry)))
 
     def parse_and_draw(self, screen, segment, level_addr, harvest_addr, pick_buffer=None):
         self.objects = self.parse_objects(segment[level_addr - segment.start_addr:])
         self.parse_harvest_table(segment, segment.start_addr, harvest_addr)
         return self.draw_objects(screen, self.objects, segment, pick_buffer)
+
+    def find_equivalent(self, old_objects):
+        """ Find the equivalent objects in the current list. JumpmanDrawObjects
+        will get regenerated after each call to parse_objects, so they will get
+        new object IDs. The select UI in JumpmanEditor keeps track of objects,
+        but after the call to parse_objects they won't match object IDs. This
+        function compares each of the specified objects in the argument list to
+        the newly created objects to find equivalents that can be highlighted
+        in the UI.
+        """
+        found = []
+        for old in old_objects:
+            for obj in self.objects:
+                if old == obj:
+                    obj.orig_x = obj.x
+                    obj.orig_y = obj.y
+                    found.append(obj)
+                    break
+        return found
 
     def draw_objects(self, screen, objects, current_segment=None, pick_buffer=None, highlight=[]):
         state = ScreenState(self.segments, current_segment, screen, pick_buffer)
@@ -369,7 +386,6 @@ class JumpmanLevelBuilder(object):
         groups = []
         current = []
         for obj in objects:
-            print "processing %s" % obj
             if not current or current[-1].__class__ == obj.__class__:
                 current.append(obj)
             else:
@@ -421,9 +437,9 @@ class JumpmanLevelBuilder(object):
                 harvest_data.extend(h)
             harvest_data.append(0xff)
 
-            print "level:", self.level_data
-            print "painting:", painting_data
-            print "harvest:", harvest_data
+            # print "level:", self.level_data
+            # print "painting:", painting_data
+            # print "harvest:", harvest_data
 
             data = self.level_data + painting_data + harvest_data
 
@@ -440,7 +456,6 @@ class JumpmanLevelBuilder(object):
         if objects is None:
             objects = self.objects
         groups = self.group_objects(objects)
-        print groups
         dx = dy = 999999
         if levdef is None:
             levdef = JumpmanLevelBuilder.LevelDef(level_data_origin)
