@@ -411,6 +411,47 @@ class DrawPeanutMode(DrawMode):
         self.display_coords(evt)
 
 
+class JumpmanRespawnMode(DrawMode):
+    icon = "jumpman_respawn.png"
+    menu_item_name = "Set Jumpman Start"
+    menu_item_tooltip = "Set jumpman respawn position"
+    drawing_object = JumpmanRespawn
+
+    def init_post_hook(self):
+        x, y = self.get_respawn_point()
+        self.current = JumpmanRespawn(-1, x, y, 1, 0, 0)
+        self.objects = []
+
+    def get_respawn_point(self):
+        source = self.canvas.editor.segment
+        x = source[0x39]
+        y = source[0x3a]
+        return x - 0x30, (y - 0x18) / 2
+
+    def draw_extra_objects(self, level_builder, screen, current_segment):
+        objects = [self.current]
+        objects.extend(self.objects)
+        level_builder.draw_objects(screen, objects, current_segment)
+
+    def change_jumpman_respawn(self, evt):
+        c = self.canvas
+        e = c.editor
+        if e is None:
+            return
+        obj = self.objects[0]
+        values = [obj.x + 0x30, (obj.y * 2) + 0x18]
+        e.change_bytes(0x39, 0x3b, values)
+
+    def process_left_up(self, evt):
+        self.change_jumpman_respawn(evt)
+        self.init_post_hook()
+        self.display_coords(evt)
+        self.canvas.editor.refresh_panes()
+
+    def process_mouse_motion_down(self, evt):
+        self.process_mouse_motion_up(evt)
+
+
 class JumpmanLevelView(MainBitmapScroller):
     default_mouse_handler = JumpmanSelectMode
 
@@ -552,7 +593,7 @@ class JumpmanEditor(BitmapEditor):
 
     ##### class attributes
     
-    valid_mouse_modes = [AnticDSelectMode, DrawGirderMode, DrawLadderMode, DrawUpRopeMode, DrawDownRopeMode, DrawPeanutMode]
+    valid_mouse_modes = [AnticDSelectMode, DrawGirderMode, DrawLadderMode, DrawUpRopeMode, DrawDownRopeMode, DrawPeanutMode, JumpmanRespawnMode]
     
     ##### Default traits
     

@@ -18,6 +18,7 @@ class JumpmanDrawObject(object):
     single = False
     sort_order = 0
     valid_x_mask = 0xff
+    drawing_codes = None
 
     def __init__(self, pick_index, x, y, count, dx=None, dy=None, addr=None):
         self.x = x
@@ -63,7 +64,11 @@ class JumpmanDrawObject(object):
         if self.trigger_painting:
             prefix = "\n  trigger_paint: "
             extra += prefix + prefix.join(str(obj) for obj in self.trigger_painting)
-        return "%s %x x=%x y=%x dx=%d dy=%d count=%d%s" % (self.name, self.addr, self.x, self.y, self.dx, self.dy, self.count, extra)
+        if self.addr is None:
+            addr = "BUILTIN"
+        else:
+            addr = "%04x" % self.addr
+        return "%s %s x=%x y=%x dx=%d dy=%d count=%d%s" % (self.name, addr, self.x, self.y, self.dx, self.dy, self.count, extra)
 
     def __eq__(self, other):
         if (self.x, self.y, self.count, self.dx, self.dy, self.trigger_function) == (other.x, other.y, other.count, other.dx, other.dy, other.trigger_function):
@@ -81,6 +86,20 @@ class JumpmanDrawObject(object):
     def harvest_checksum(self, hx, hy):
         return ((self.x + 0x30 + hx) & 0xe0) | (((self.y * 2) + 0x20 + hy) & 0xe0)/0x10
 
+class JumpmanRespawn(JumpmanDrawObject):
+    name = "jumpman"
+    drawing_codes = np.asarray([
+        8, 0, -5,  4, 4, 0, 0, 0, 0, 4, 4,
+        8, 0, -4,  0, 4, 4, 0, 0, 4, 4, 0,
+        8, 0, -3,  0, 0, 4, 4, 4, 4, 0, 0,
+        8, 0, -2,  0, 0, 4, 4, 4, 4, 0, 0,
+        8, 0, -1,  0, 4, 4, 0, 0, 4, 4, 0,
+        8, 0,  0,  4, 4, 0, 0, 0, 0, 4, 4,
+        0xff
+    ], dtype=np.uint8)
+    default_dx = 8
+    default_dy = 0
+    valid_x_mask = 0xfe  # Even pixels only
 
 class Girder(JumpmanDrawObject):
     name = "girder"
@@ -161,13 +180,18 @@ class ScreenState(object):
         self.downrope_positions.add(obj.x + 0x2e)
 
     def draw_object(self, obj, highlight=False):
-        if obj.addr is None:
-            return
-        log.debug("addr=%x x=%d y=%d dx=%d dy=%d, num=%d" % (obj.addr, obj.x, obj.y, obj.dx, obj.dy, obj.count))
-        codes = self.get_object_code(obj.addr)
-        if codes is None:
-            return
-        log.debug("  found codes: %s" % str(codes))
+        if obj.drawing_codes is None:
+            if obj.addr is None:
+                return
+            log.debug("addr=%x x=%d y=%d dx=%d dy=%d, num=%d" % (obj.addr, obj.x, obj.y, obj.dx, obj.dy, obj.count))
+            codes = self.get_object_code(obj.addr)
+            if codes is None:
+                return
+            log.debug("  found codes: %s" % str(codes))
+        else:
+            codes = obj.drawing_codes
+            log.debug("addr=BUILTIN x=%d y=%d dx=%d dy=%d, num=%d" % (obj.x, obj.y, obj.dx, obj.dy, obj.count))
+            log.debug("  found codes: %s" % str(codes))
         index = 0
         last = len(codes)
         lines = []
@@ -205,7 +229,13 @@ class ScreenState(object):
     def get_picked(self, pick_index):
         return self.pick_dict[pick_index]
 
-    color_map = {0:8, 1:4, 2:5, 3:6}  # map color numbers to antic register order
+    # map color numbers in drawing codes to ANTIC register order
+    # jumpman color numbers are 0 - 3
+    # color number 4 is used to draw Jumpman
+    # ANTIC player color registers are 0 - 3
+    # ANTIC playfield color registers are 4 - 7
+    # ANTIC background color is 8
+    color_map = {0:8, 1:4, 2:5, 3:6, 4:0}
 
     def draw_pixel(self, x, y, color, highlight):
         index = y * 160 + x
