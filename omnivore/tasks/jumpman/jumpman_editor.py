@@ -754,6 +754,12 @@ class JumpmanEditor(BitmapEditor):
         playfield[:] = 8  # background is the 9th ANTIC color register
         playfield.style[:] = 0
     
+    def undo_post_hook(self):
+        self.update_mouse_mode()
+    
+    def redo_post_hook(self):
+        self.update_mouse_mode()
+
     ###########################################################################
     # Trait handlers.
     ###########################################################################

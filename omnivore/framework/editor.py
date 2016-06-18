@@ -587,11 +587,19 @@ class FrameworkEditor(Editor):
         undo = self.document.undo_stack.undo(self)
         self.process_flags(undo.flags)
         self.document.undo_stack_changed = True
+        self.undo_post_hook()
+
+    def undo_post_hook(self):
+        pass
     
     def redo(self):
         undo = self.document.undo_stack.redo(self)
         self.process_flags(undo.flags)
         self.document.undo_stack_changed = True
+        self.redo_post_hook()
+
+    def redo_post_hook(self):
+        pass
     
     def end_batch(self):
         self.document.undo_stack.end_batch()
