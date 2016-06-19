@@ -398,6 +398,9 @@ class FrameworkEditor(Editor):
         """
         pass
 
+    def made_current_active_editor(self):
+        pass
+
     def update_panes(self):
         """Called when each pane should be rebuilt from the (possibly new)
         document, or when the document formatting or structure has changed.

@@ -721,6 +721,10 @@ class FrameworkTask(Task):
         active = self.active_editor
         if active is not None:
             self.window._title = "%s - %s %s" % (self.active_editor.name, self.about_title, self.about_version)
+            # Can't call the following during the trait handler because the
+            # trait handlers for the toolbar actions won't be completed yet.
+            # When delayed until afterwards, the toolbar update works properly.
+            wx.CallAfter(active.made_current_active_editor)
         else:
             self.window._title = "%s %s" % (self.about_title, self.about_version)
 
