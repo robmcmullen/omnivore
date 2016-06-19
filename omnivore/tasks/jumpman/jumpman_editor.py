@@ -504,6 +504,9 @@ class JumpmanLevelView(MainBitmapScroller):
         else:
             self.clear_screen()
             self.screen_state = self.level_builder.parse_and_draw(self.segment, source, level_addr, harvest_addr, pick_buffer=self.pick_buffer)
+            log.debug("draw objects: %s" % self.level_builder.objects)
+            if self.screen_state.missing_object_codes:
+                log.error("missing draw codes: %s" % (sorted(self.screen_state.missing_object_codes)))
             self.cached_screen = self.segment[:].copy()
             self.last_commands = command_checksum.copy()
 

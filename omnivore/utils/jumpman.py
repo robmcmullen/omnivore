@@ -106,6 +106,7 @@ class Girder(JumpmanDrawObject):
     default_addr = 0x4000
     default_dy = 3
     sort_order = 0
+    drawing_codes = np.fromstring("\x04\x00\x00\x01\x01\x01\x01\x04\x00\x01\x01\x00\x01\x00\x04\x00\x02\x01\x01\x01\x01\xff", dtype=np.uint8)
 
 class Ladder(JumpmanDrawObject):
     name = "ladder"
@@ -114,6 +115,7 @@ class Ladder(JumpmanDrawObject):
     vertical_only = True
     sort_order = 10
     valid_x_mask = 0xfe  # Even pixels only
+    drawing_codes = np.fromstring("\x02\x00\x00\x02\x02\x02\x06\x00\x02\x02\x02\x00\x01\x02\x02\x02\x06\x01\x02\x02\x08\x00\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x00\x03\x02\x02\x02\x06\x03\x02\x02\xff", dtype=np.uint8)
 
     def update_table(self, state):
         state.add_ladder(self)
@@ -123,6 +125,7 @@ class UpRope(JumpmanDrawObject):
     default_addr = 0x40af
     vertical_only = True
     sort_order = 20
+    drawing_codes = np.fromstring("\x01\x00\x00\x01\x01\x01\x01\x01\x01\x00\x02\x01\x01\x01\x03\x01\xff", dtype=np.uint8)
 
 class DownRope(JumpmanDrawObject):
     name = "downrope"
@@ -130,6 +133,7 @@ class DownRope(JumpmanDrawObject):
     vertical_only = True
     sort_order = 30
     valid_x_mask = 0xfe  # Even pixels only
+    drawing_codes = np.fromstring("\x01\x00\x00\x02\x01\x00\x01\x02\x01\x01\x02\x02\x01\x01\x03\x02\xff", dtype=np.uint8)
 
     def update_table(self, state):
         state.add_downrope(self)
@@ -140,27 +144,32 @@ class Peanut(JumpmanDrawObject):
     default_dy = 3
     single = True
     sort_order = 40
+    drawing_codes = np.fromstring("\x04\x00\x00\x00\x03\x03\x00\x04\x00\x01\x03\x00\x00\x03\x04\x00\x02\x00\x03\x03\x00\xff", dtype=np.uint8)
 
 class EraseGirder(JumpmanDrawObject):
     name = "girder_erase"
     default_addr = 0x4016
     sort_order = 35
+    drawing_codes = np.fromstring("\x04\x00\x00\x00\x00\x00\x00\x04\x00\x01\x00\x00\x00\x00\x04\x00\x02\x00\x00\x00\x00\xff", dtype=np.uint8)
 
 class EraseLadder(JumpmanDrawObject):
     name = "ladder_erase"
     default_addr = 0x4056
     sort_order = 36
     valid_x_mask = 0xfe  # Even pixels only
+    drawing_codes = np.fromstring("\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\xff", dtype=np.uint8)
 
 class EraseRope(JumpmanDrawObject):
     name = "rope_erase"
     default_addr = 0x40d1
     sort_order = 37
+    drawing_codes = np.fromstring("\x02\x00\x00\x00\x00\x02\x00\x01\x00\x00\x02\x00\x02\x00\x00\x02\x00\x03\x00\x00\xff", dtype=np.uint8)
 
 
 class ScreenState(object):
     def __init__(self, segments, current_segment, screen, pick_buffer):
         self.object_code_cache = {}
+        self.missing_object_codes = set()
         self.search_order = []
         self.current_segment = current_segment
         if current_segment is not None:
@@ -172,6 +181,9 @@ class ScreenState(object):
         self.pick_dict = dict()
         self.ladder_positions = set()
         self.downrope_positions = set()
+
+    def __str__(self):
+        return "current segment: %s\nsearch order: %s\nladders: %s\ndownropes: %s" % (self.current_segment, self.search_order, self.ladder_positions, self.downrope_positions)
 
     def add_ladder(self, obj):
         self.ladder_positions.add(obj.x + 0x30)
@@ -249,6 +261,8 @@ class ScreenState(object):
     def get_object_code(self, addr):
         if addr in self.object_code_cache:
             return self.object_code_cache[addr]
+        if addr in self.missing_object_codes:
+            return None
         for s in self.search_order:
             log.debug("checking segment %s for object code %x" % (s.name, addr))
             index = addr - s.start_addr
@@ -265,6 +279,7 @@ class ScreenState(object):
                 codes = s[index:index + end]
                 self.object_code_cache[addr] = codes
                 return codes
+        self.missing_object_codes.add(addr)
 
 
 class JumpmanLevelBuilder(object):
