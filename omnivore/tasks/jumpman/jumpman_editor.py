@@ -313,7 +313,7 @@ class DrawPeanutMode(DrawMode):
         starty = (0 - hy) & 0xf
         x = x & 0x1f
         y = y & 0xf
-        return (x >= startx and x < startx + 7) or (y >= starty and y < starty + 3)
+        return (x >= startx and x < startx + 8) or (y >= starty and y < starty + 4)
 
     def check_objects(self, x, y):
         self.is_bad_location = self.is_allergic(x, y)
@@ -345,10 +345,10 @@ class DrawPeanutMode(DrawMode):
         # a slow python loop
         s = screen.style.reshape((h, w))
         s[:] = 0
-        for x in range(startx, startx + 7):
+        for x in range(startx, startx + 8):
             x = x & 0x1f
             s[0:h:, x::32] = comment_bit_mask
-        for y in range(starty, starty + 3):
+        for y in range(starty, starty + 4):
             y = y & 0xf
             s[y:h:16,:] = comment_bit_mask
 
