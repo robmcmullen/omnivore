@@ -1,5 +1,6 @@
 from segmentutil import DefaultSegment, AnticFontSegment, SegmentData
 from omnivore.tasks.map_edit.pane_layout import task_id_with_pane_layout as map_edit_task_id
+from omnivore.tasks.jumpman.pane_layout import task_id_with_pane_layout as jumpman_task_id
 
 getaway_defaults = {
     'colors': [0x46, 0xD6, 0x74, 0x0C, 0x14, 0x86, 0x02, 0xB6, 0xBA],
@@ -55,8 +56,31 @@ def Getaway(doc):
         doc.last_task_id = map_edit_task_id
         return extra_metadata
 
+def JumpmanLevelBuilder(doc):
+    state = doc.bytes[0:5] == [0x96, 0x02 , 0xd0 , 0x05 , 0x80]
+    if not state.all():
+        return
+    # Check invariant bytes in the level data to make sure
+    s = doc.bytes[0x0196:0x0296]
+    if s[0x3f] == 0x4c and s[0x48] == 0x20 and s[0x4b] == 0x60 and s[0x4c] == 0xff:
+        print "Found jumpman level builder!!!"
+        r = doc.segments[0].rawdata
+        found_level = False
+        user_segments = []
+        for s in doc.segments:
+            if s.start_addr == 0x2800 and len(s) == 0x800:
+                found_level = True
+        if not found_level:
+            user_segments.append(DefaultSegment(r[0x0196:0x0996], 0x2800, name="Jumpman Level Data"))
+        extra_metadata = {
+            'user segments': user_segments,
+            'initial segment': user_segments[0],
+            }
+        doc.last_task_id = jumpman_task_id
+        return extra_metadata
+
 def check_builtin(doc):
-    for match in [Getaway]:
+    for match in [Getaway, JumpmanLevelBuilder]:
         e = match(doc)
         if e is not None:
             return e
