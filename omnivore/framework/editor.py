@@ -617,6 +617,7 @@ class FrameworkEditor(Editor):
         if undo.flags.success:
             self.process_flags(f)
             self.document.undo_stack_changed = True
+        self.refresh_toolbar_state()
         return undo
         
     def process_batch_command(self, command, f, batch=None):
@@ -725,6 +726,7 @@ class FrameworkEditor(Editor):
         log.debug("undo_stack_changed called!!!")
         self.update_undo_redo()
         self.update_history()
+        wx.CallAfter(self.refresh_toolbar_state)
     
     @on_trait_change('document:byte_values_changed')
     def byte_values_changed(self):
@@ -733,6 +735,20 @@ class FrameworkEditor(Editor):
         self.invalidate_search()
         self.compare_to_baseline()
         self.refresh_panes()
+
+    #### wx hacks
+
+    def refresh_toolbar_state(self):
+        """The toolbar doesn't seem to refresh itself when its state is changed
+        programmatically. This is provided as a convenience function to update
+        any tools that are trait-dependent.
+        """
+        #for toolbar in self.window.tool_bar_managers:
+        #    name = toolbar.id
+        #    info = self.window._aui_manager.GetPane(name)
+        #    tool_bar = info.window
+        #    tool_bar.Refresh(False)
+        self.window._aui_manager.Update()
 
     #### convenience functions
     
