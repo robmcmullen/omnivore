@@ -79,7 +79,7 @@ class FrameworkEditor(Editor):
     
     last_search_settings = Dict()
     
-    mouse_mode = Any
+    mouse_mode_factory = Any
     
     baseline_present = Bool
     
@@ -553,7 +553,7 @@ class FrameworkEditor(Editor):
         """Hook for subclasses to update any comparisons to the baseline data."""
         pass
     
-    def update_mouse_mode(self):
+    def update_mouse_mode(self, mouse_handler=None):
         """Hook for subclasses to process the change to a new mouse mode 
         """
         pass

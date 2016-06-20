@@ -619,6 +619,10 @@ class JumpmanEditor(BitmapEditor):
     # 'FrameworkEditor' interface.
     ###########################################################################
 
+    def made_current_active_editor(self):
+        self.update_mouse_mode(AnticDSelectMode)
+        self.refresh_toolbar_state()
+
     def process_extra_metadata(self, doc, e):
         HexEditor.process_extra_metadata(self, doc, e)
         pass
@@ -650,7 +654,7 @@ class JumpmanEditor(BitmapEditor):
         self.level_data.refresh_view()
     
     def rebuild_document_properties(self):
-        self.bitmap.set_mouse_mode(AnticDSelectMode)
+        self.update_mouse_mode(AnticDSelectMode)
 
     def check_valid_segment(self, segment):
         # 283f is always 4c (JMP) because it and the next two bytes are a jump target from the game loop
@@ -689,7 +693,7 @@ class JumpmanEditor(BitmapEditor):
         self.valid_jumpman_segment = self.check_valid_segment(segment)
         self.bitmap_width = 40 * 4
         self.machine.update_colors(self.get_level_colors(segment))
-        self.bitmap.set_mouse_mode(self.mouse_mode)
+        self.update_mouse_mode()
 
     def get_level_colors(self, segment=None):
         if segment is None:
@@ -705,8 +709,8 @@ class JumpmanEditor(BitmapEditor):
             colors = powerup_colors()
         return list(colors)
     
-    def update_mouse_mode(self):
-        self.bitmap.set_mouse_mode(self.mouse_mode)
+    def update_mouse_mode(self, mouse_handler=None):
+        BitmapEditor.update_mouse_mode(self, mouse_handler)
         self.bitmap.refresh_view()
     
     def set_current_draw_pattern(self, pattern, control):

@@ -403,13 +403,15 @@ class MapEditor(HexEditor):
     
     def rebuild_document_properties(self):
         self.find_segment("Playfield map")
-        self.control.set_mouse_mode(SelectMode)
+        self.update_mouse_mode(SelectMode)
     
     def view_segment_set_width(self, segment):
         self.map_width = segment.map_width
     
-    def update_mouse_mode(self):
-        self.control.set_mouse_mode(self.mouse_mode)
+    def update_mouse_mode(self, mouse_handler=None):
+        if mouse_handler is not None:
+            self.mouse_mode_factory = mouse_handler
+        self.control.set_mouse_mode(self.mouse_mode_factory)
     
     def set_current_draw_pattern(self, pattern, control):
         try:
