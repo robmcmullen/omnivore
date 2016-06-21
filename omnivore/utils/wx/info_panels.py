@@ -104,6 +104,9 @@ class InfoField(object):
     def fill_data(self, editor):
         raise NotImplementedError
 
+    def clear_data(self):
+        raise NotImplementedError
+
     def has_focus(self):
         return self.ctrl.FindFocus() == self.ctrl
 
@@ -179,6 +182,9 @@ class TextEditField(InfoField):
             self.ctrl.Enable(False)
         self.ctrl.ChangeValue(text)
         self.is_valid()
+
+    def clear_data(self):
+        self.ctrl.ChangeValue("")
     
     def get_focus_params(self):
         return self.ctrl.GetInsertionPoint()
@@ -317,6 +323,9 @@ class AnticColorsField(InfoField):
         return c
 
     def fill_data(self, editor):
+        pass
+
+    def clear_data(self):
         pass
     
     def on_colors(self, evt):
@@ -518,10 +527,13 @@ class InfoPanel(PANELTYPE):
                 params = field.get_focus_params()
             else:
                 params = None
-            field.fill_data(e)
-            if params is not None:
-                field.set_focus_params(params)
-                focus = field
+            if enabled:
+                field.fill_data(e)
+                if params is not None:
+                    field.set_focus_params(params)
+                    focus = field
+            else:
+                field.clear_data()
             field.enable(enabled)
         self.constrain_size(focus)
     
