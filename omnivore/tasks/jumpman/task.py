@@ -26,7 +26,7 @@ class JumpmanEditTask(HexEditTask):
     """ Jumpman level display decoder
     """
 
-    new_file_text = "Bitmap File"
+    new_file_text = "Jumpman Level"
 
     #### Task interface #######################################################
 
