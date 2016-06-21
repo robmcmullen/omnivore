@@ -49,6 +49,10 @@ class InfoField(object):
 
     def hide(self):
         self.show(False)
+
+    def enable(self, state=True):
+        self.parent.Enable(state)
+        self.ctrl.Enable(state)
     
     def create(self):
         self.parent = wx.Window(self.panel)
@@ -507,6 +511,7 @@ class InfoPanel(PANELTYPE):
         e = self.editor
         if e is None:
             return
+        enabled = self.is_valid_data()
         focus = None
         for field in self.current_fields:
             if field.has_focus():
@@ -517,6 +522,7 @@ class InfoPanel(PANELTYPE):
             if params is not None:
                 field.set_focus_params(params)
                 focus = field
+            field.enable(enabled)
         self.constrain_size(focus)
     
     def constrain_size(self, focus=None):

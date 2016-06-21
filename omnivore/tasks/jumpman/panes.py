@@ -45,6 +45,11 @@ class HexPane(FrameworkPane):
         return control
 
 
+class JumpmanInfoPanel(InfoPanel):
+    def is_valid_data(self):
+        return self.editor.check_valid_segment()
+
+
 class LevelDataPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
@@ -61,7 +66,7 @@ class LevelDataPane(FrameworkPane):
             ("uint", "Number of Bullets", 0x3d, 1),
             ("antic_colors", "Game Colors", 0x2a, 9),
         ]
-        control = InfoPanel(parent, self.task, fields, size=(350, 150))
+        control = JumpmanInfoPanel(parent, self.task, fields, size=(350, 150))
         return control
 
 

@@ -656,7 +656,9 @@ class JumpmanEditor(BitmapEditor):
     def rebuild_document_properties(self):
         self.update_mouse_mode(AnticDSelectMode)
 
-    def check_valid_segment(self, segment):
+    def check_valid_segment(self, segment=None):
+        if segment is None:
+            segment = self.segment
         # 283f is always 4c (JMP) because it and the next two bytes are a jump target from the game loop
         # 2848: always 20 (i.e. JSR)
         # 284b: always 60 (i.e. RTS)
