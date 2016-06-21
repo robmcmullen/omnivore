@@ -47,15 +47,7 @@ class HexPane(FrameworkPane):
 
 class JumpmanInfoPanel(InfoPanel):
     def is_valid_data(self):
-        valid = self.editor.check_valid_segment()
-        if valid:
-            print self.editor.bitmap.level_builder.objects
-            harvest_state = self.editor.bitmap.level_builder.get_harvest_state()
-            print harvest_state
-            self.num_ladders = len(harvest_state.ladder_positions)
-            self.num_downropes = len(harvest_state.downrope_positions)
-            valid = bool(self.editor.bitmap.level_builder.objects)
-        return valid
+        return self.editor.valid_jumpman_segment and bool(self.editor.bitmap.level_builder.objects)
 
 
 class LevelDataPane(FrameworkPane):
@@ -69,7 +61,8 @@ class LevelDataPane(FrameworkPane):
             ("text", "Level Number", 0x00, 2),
             ("atascii_gr2_0xc0", "Level Name", 0x3ec, 20),
             ("uint", "Points per Peanut", 0x33, 2),
-            ("uint", "Peanuts Needed", 0x3e, 1),
+            ("label", "# Peanuts", "num_peanuts", 1000),
+            ("peanuts_needed", "Peanuts Needed", 0x3e, 1),
             ("uint", "Bonus Value", 0x35, 2),
             ("uint", "Number of Bullets", 0x3d, 1),
             ("antic_colors", "Game Colors", 0x2a, 9),

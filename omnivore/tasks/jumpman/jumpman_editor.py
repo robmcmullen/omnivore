@@ -517,9 +517,7 @@ class JumpmanLevelView(MainBitmapScroller):
             self.cached_screen = self.segment[:].copy()
             self.last_commands = command_checksum.copy()
 
-            # FIXME: force redraw of level data here because it depends on the
-            # level builder objects so it can count the number of items
-            self.editor.level_data.refresh_view()
+            self.editor.update_harvest_state()
 
     def bad_image(self):
         self.segment[:] = 0
@@ -557,12 +555,17 @@ class JumpmanLevelView(MainBitmapScroller):
 
     def save_changes(self):
         source, level_addr, old_harvest_addr = self.editor.get_level_addrs()
-        level_data, harvest_addr, ropeladder_data = self.level_builder.create_level_definition(level_addr, source[0x46], source[0x47])
+        level_data, harvest_addr, ropeladder_data, num_peanuts = self.level_builder.create_level_definition(level_addr, source[0x46], source[0x47])
         index = level_addr - source.start_addr
-        ranges = [(0x18,0x2a), (0x4e,0x50), (index,index + len(level_data))]
+        ranges = [(0x18,0x2a), (0x3e,0x3f), (0x4e,0x50), (index,index + len(level_data))]
+        pdata = np.empty([1], dtype=np.uint8)
+        if self.editor.peanut_harvest_diff < 0:
+            pdata[0] = num_peanuts
+        else:
+            pdata[0] = max(0, num_peanuts - self.editor.peanut_harvest_diff)
         hdata = np.empty([2], dtype=np.uint8)
         hdata.view(dtype="<u2")[0] = harvest_addr
-        data = np.hstack([ropeladder_data, hdata, level_data])
+        data = np.hstack([ropeladder_data, pdata, hdata, level_data])
         cmd = SetValueCommand(source, ranges, data)
         self.editor.process_command(cmd)
         self.compute_image(True)
@@ -604,6 +607,14 @@ class JumpmanEditor(BitmapEditor):
     IHexEditor interface for the API documentation.
     """
     valid_jumpman_segment = Bool
+
+    peanut_harvest_diff = Int(-1)
+
+    num_ladders = Int(-1)
+
+    num_downropes = Int(-1)
+
+    num_peanuts = Int(-1)
 
     ##### class attributes
     
@@ -662,7 +673,7 @@ class JumpmanEditor(BitmapEditor):
         if p != self.machine.antic_color_registers:
             self.machine.update_colors(p)
         self.bitmap.refresh_view()
-        self.level_data.refresh_view()
+        # level_data is refreshed with call to update_harvest_state
     
     def rebuild_document_properties(self):
         self.update_mouse_mode(AnticDSelectMode)
@@ -720,6 +731,19 @@ class JumpmanEditor(BitmapEditor):
         self.bitmap_width = 40 * 4
         self.machine.update_colors(self.get_level_colors(segment))
         self.update_mouse_mode()
+        self.peanut_harvest_diff = -1
+    
+    def update_harvest_state(self):
+        if not self.valid_jumpman_segment:
+            return
+        harvest_state = self.bitmap.level_builder.get_harvest_state()
+        self.num_ladders = len(harvest_state.ladder_positions)
+        self.num_downropes = len(harvest_state.downrope_positions)
+        self.num_peanuts = len(harvest_state.harvest_objects)
+        
+        # FIXME: force redraw of level data here because it depends on the
+        # level builder objects so it can count the number of items
+        self.level_data.refresh_view()
 
     def get_level_colors(self, segment=None):
         if segment is None:

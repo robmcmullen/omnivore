@@ -545,4 +545,4 @@ class JumpmanLevelBuilder(object):
         # Create harvest table and painting tables now that the length of
         # everything is known
         level_data, harvest_index, ropeladder_data = levdef.process_harvest()
-        return level_data, level_data_origin + harvest_index, ropeladder_data
+        return level_data, level_data_origin + harvest_index, ropeladder_data, len(levdef.harvest_entries)

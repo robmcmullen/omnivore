@@ -43,6 +43,8 @@ class InfoField(object):
         self.field_name = args[0]
         self.byte_offset = args[1]
         self.byte_count = args[2]
+        if len(args) > 3:
+            self.attr_name_max_val = args[3]
 
     def is_displayed(self, editor):
         return True
@@ -74,6 +76,8 @@ class InfoField(object):
             hbox.Add(self.ctrl, 0, wx.ALIGN_CENTER)
             for extra in self.extra_ctrls:
                 hbox.Add(extra, 0, wx.ALIGN_CENTER)
+            if self.extra_vertical_spacing > 0:
+                self.box.AddSpacer(self.extra_vertical_spacing)
             self.box.Add(hbox, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, self.panel.SIDE_SPACING)
             if self.extra_vertical_spacing > 0:
                 self.box.AddSpacer(self.extra_vertical_spacing)
@@ -150,7 +154,7 @@ class InfoField(object):
 class LabelField(InfoField):
     keyword = "label"
     same_line = True
-    extra_vertical_spacing = 5
+    extra_vertical_spacing = 3
 
     def set_args(self, args):
         print args
@@ -163,7 +167,7 @@ class LabelField(InfoField):
         return c
 
     def fill_data(self, editor):
-        value = getattr(self.panel, self.attr_name)
+        value = getattr(self.panel.editor, self.attr_name)
         self.ctrl.SetLabel(str(value))
         self.set_background(value <= self.max_val)
 
@@ -316,11 +320,15 @@ class UIntEditField(TextEditField):
     
     def parse_from_control(self):
         value = int(self.ctrl.GetValue())
+        if hasattr(self, "attr_name_max_val") and hasattr(self.panel.editor, self.attr_name_max_val):
+            maxval = getattr(self.panel.editor, self.attr_name_max_val)
+            if value > maxval:
+                raise ValueError("%d out of range for attribute %s max of %d" % (value, self.attr_name_max_val, maxval))
         if self.byte_count == 1 and value >=0 and value < 256:
             return value
         elif self.byte_count == 2 and value >=0 and value < 256 * 256:
             return value
-        raise ValueError("%d out of range for %d bytes")
+        raise ValueError("%d out of range for %d bytes" % (value, self.byte_count))
 
     def parsed_to_bytes(self, parsed_data):
         raw = np.empty([self.byte_count], dtype=np.uint8)
@@ -395,8 +403,12 @@ class DropDownField(InfoField):
     def fill_data(self, editor):
         choices = self.get_choices(editor)
         self.ctrl.SetItems(choices)
-        default_choice = self.bytes_to_control_data(editor)
-        self.ctrl.SetSelection(choices.index(default_choice))
+        raw = self.get_source_bytes(editor)
+        default_choice = self.bytes_to_control_data(raw)
+        self.ctrl.SetSelection(default_choice)
+
+    def clear_data(self):
+        pass
     
     def create_control(self):
         c = wx.Choice(self.parent, choices=[])
@@ -406,21 +418,35 @@ class DropDownField(InfoField):
     def drop_down_changed(self, event):
         pass
 
-class DepthUnitField(DropDownField):
+class PeanutsNeededField(DropDownField):
+    keyword = "peanuts_needed"
     same_line = True
+    choices = ["All", "All except 1", "All except 2", "All except 3", "All except 4"]
 
     def get_choices(self, editor):
-        return ["unknown", "meters", "feet", "fathoms"]
+        return self.choices
     
-    def bytes_to_control_data(self, editor):
-        return editor.depth_unit
+    def bytes_to_control_data(self, raw):
+        e = self.panel.editor
+        if not hasattr(e, 'num_peanuts'):
+            return 0
+        value = reduce(lambda x, y: x + (y << 8), raw)  #  convert to little endian
+        diff = e.num_peanuts - value
+        if diff < 0:
+            diff = 0
+        diff = min(diff, len(self.choices) - 1)
+
+        if e.peanut_harvest_diff < 0:
+            # First time! Calculate the offset to use subsequently
+            e.peanut_harvest_diff = diff
+        return diff
         
     def drop_down_changed(self, event):
-        editor = self.panel.editor.editor_tree_control.get_selected_editor()
-        if (editor is None):
-            return
-        editor.depth_unit = self.ctrl.GetString(self.ctrl.GetSelection())
-        
+        e = self.panel.editor
+        e.peanut_harvest_diff = self.ctrl.GetSelection()
+        raw = np.zeros([self.byte_count],dtype=np.uint8)
+        raw[0] = max(0, e.num_peanuts - e.peanut_harvest_diff)
+        e.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw)
 
 
 class ColorPickerField(InfoField):
