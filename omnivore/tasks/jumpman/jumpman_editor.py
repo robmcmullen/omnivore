@@ -498,23 +498,10 @@ class JumpmanLevelView(MainBitmapScroller):
         self.editor.clear_playfield()
         self.pick_buffer[:] = -1
 
-    def get_level_addrs(self):
-        if not self.editor.valid_jumpman_segment:
-            raise RuntimeError
-        source = self.editor.segment
-        start = source.start_addr
-        level_addr = source[0x37] + source[0x38]*256
-        harvest_addr = source[0x4e] + source[0x4f]*256
-        log.debug("level def table: %x, harvest table: %x" % (level_addr, harvest_addr))
-        last = source.start_addr + len(source)
-        if level_addr > start and harvest_addr > start and level_addr < last and harvest_addr < last:
-            return source, level_addr, harvest_addr
-        raise RuntimeError
-
     def compute_image(self, force=False):
         if self.level_builder is None:
             return
-        source, level_addr, harvest_addr = self.get_level_addrs()
+        source, level_addr, harvest_addr = self.editor.get_level_addrs()
         index = level_addr - source.start_addr
         command_checksum = source[index:index + 512]  # representative sample
         if force:
@@ -529,6 +516,10 @@ class JumpmanLevelView(MainBitmapScroller):
                 log.error("missing draw codes: %s" % (sorted(self.screen_state.missing_object_codes)))
             self.cached_screen = self.segment[:].copy()
             self.last_commands = command_checksum.copy()
+
+            # FIXME: force redraw of level data here because it depends on the
+            # level builder objects so it can count the number of items
+            self.editor.level_data.refresh_view()
 
     def bad_image(self):
         self.segment[:] = 0
@@ -565,7 +556,7 @@ class JumpmanLevelView(MainBitmapScroller):
         self.save_changes()
 
     def save_changes(self):
-        source, level_addr, old_harvest_addr = self.get_level_addrs()
+        source, level_addr, old_harvest_addr = self.editor.get_level_addrs()
         level_data, harvest_addr, ropeladder_data = self.level_builder.create_level_definition(level_addr, source[0x46], source[0x47])
         index = level_addr - source.start_addr
         ranges = [(0x18,0x2a), (0x4e,0x50), (index,index + len(level_data))]
@@ -688,6 +679,19 @@ class JumpmanEditor(BitmapEditor):
             index = segment[0x38]*256 + segment[0x37] - segment.start_addr
             return index >=0 and index < len(segment)
         return False
+
+    def get_level_addrs(self):
+        if not self.valid_jumpman_segment:
+            raise RuntimeError
+        source = self.segment
+        start = source.start_addr
+        level_addr = source[0x37] + source[0x38]*256
+        harvest_addr = source[0x4e] + source[0x4f]*256
+        log.debug("level def table: %x, harvest table: %x" % (level_addr, harvest_addr))
+        last = source.start_addr + len(source)
+        if level_addr > start and harvest_addr > start and level_addr < last and harvest_addr < last:
+            return source, level_addr, harvest_addr
+        raise RuntimeError
 
     def find_first_valid_segment_index(self):
         # Find list of matches meeting minimum criteria

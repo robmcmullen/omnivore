@@ -181,6 +181,7 @@ class ScreenState(object):
         self.pick_dict = dict()
         self.ladder_positions = set()
         self.downrope_positions = set()
+        self.harvest_objects = set()
 
     def __str__(self):
         return "current segment: %s\nsearch order: %s\nladders: %s\ndownropes: %s" % (self.current_segment, self.search_order, self.ladder_positions, self.downrope_positions)
@@ -237,6 +238,11 @@ class ScreenState(object):
             y += obj.dy
         self.pick_dict[obj.pick_index] = obj
         obj.update_table(self)
+
+    def check_object(self, obj):
+        obj.update_table(self)
+        if obj.single:
+            self.harvest_objects.add(obj)
 
     def get_picked(self, pick_index):
         return self.pick_dict[pick_index]
@@ -409,6 +415,18 @@ class JumpmanLevelBuilder(object):
         for obj in objects:
             log.debug("Processing draw object %s" % obj)
             state.draw_object(obj, obj in highlight)
+        return state
+
+    def get_harvest_state(self, objects=None, state=None):
+        if objects is None:
+            objects = self.objects
+        if state is None:
+            state = ScreenState([], None, None, None)
+        for obj in objects:
+            state.check_object(obj)
+
+            # recurse into trigger painting objects
+            self.get_harvest_state(obj.trigger_painting, state)
         return state
 
     def add_objects(self, new_objects, objects=None):

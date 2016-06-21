@@ -7,6 +7,7 @@ import wx.combo
 import wx.lib.buttons as buttons
 import wx.lib.scrolledpanel
 from wx.lib.expando import ExpandoTextCtrl
+from wx.lib.stattext import GenStaticText  # standard static text can't set background color on some platforms
 
 from omnivore.arch.atascii import internal_to_atascii, atascii_to_internal
 from omnivore.arch.ui.antic_colors import AnticColorDialog
@@ -29,6 +30,8 @@ class InfoField(object):
     default_width = 100
     
     popup_width = 300
+
+    extra_vertical_spacing = 0
     
     def __init__(self, panel, info):
         self.panel = panel
@@ -72,6 +75,8 @@ class InfoField(object):
             for extra in self.extra_ctrls:
                 hbox.Add(extra, 0, wx.ALIGN_CENTER)
             self.box.Add(hbox, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, self.panel.SIDE_SPACING)
+            if self.extra_vertical_spacing > 0:
+                self.box.AddSpacer(self.extra_vertical_spacing)
         else:
             if self.display_label:
                 self.box.Add(self.label, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, self.panel.SIDE_SPACING)
@@ -145,10 +150,34 @@ class InfoField(object):
 class LabelField(InfoField):
     keyword = "label"
     same_line = True
+    extra_vertical_spacing = 5
+
+    def set_args(self, args):
+        print args
+        self.field_name = args[0]
+        self.attr_name = args[1]
+        self.max_val = args[2]
     
     def create_control(self):
-        c = wx.StaticText(self.parent, style=wx.ALIGN_RIGHT)
+        c = GenStaticText(self.parent, style=wx.ALIGN_RIGHT)
         return c
+
+    def fill_data(self, editor):
+        value = getattr(self.panel, self.attr_name)
+        self.ctrl.SetLabel(str(value))
+        self.set_background(value <= self.max_val)
+
+    def set_background(self, valid):
+        if valid:
+            attr = self.ctrl.GetDefaultAttributes()
+            color = attr.colBg.Get(False)
+        else:
+            color = "#FF8080"
+        self.ctrl.SetBackgroundColour(color)
+
+    def clear_data(self):
+        self.ctrl.SetLabel("")
+        self.set_background(True)
 
 class TextEditField(InfoField):
     keyword = "text"
