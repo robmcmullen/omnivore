@@ -76,11 +76,11 @@ class MouseHandler(object):
         evt.Skip()
 
     def process_popup(self, evt):
-        actions = self.get_popup_actions()
+        actions = self.get_popup_actions(evt)
         if actions:
             self.canvas.editor.popup_context_menu_from_actions(self.canvas, actions)
     
-    def get_popup_actions(self):
+    def get_popup_actions(self, evt):
         return None
         
     def process_mouse_wheel(self, evt):

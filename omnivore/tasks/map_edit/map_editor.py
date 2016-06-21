@@ -193,7 +193,7 @@ class SelectMode(MouseHandler):
         elif amount > 0:
             self.canvas.zoom_in()
     
-    def get_popup_actions(self):
+    def get_popup_actions(self, evt):
         return self.canvas.get_popup_actions()
 
 
