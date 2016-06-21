@@ -61,7 +61,10 @@ def prompt_for_string(parent, message, title, default=None):
 
 def prompt_for_hex(parent, message, title, default=None, return_error=False, default_base="dec"):
     if default is not None:
-        default = str(default)
+        if default_base == "hex":
+            default = hex(int(default))[2:]
+        else:
+            default = str(int(default))
     else:
         default = ""
     d = HexEntryDialog(parent, message, title, default)
