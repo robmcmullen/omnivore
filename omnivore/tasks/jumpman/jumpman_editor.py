@@ -29,6 +29,7 @@ from omnivore.tasks.hex_edit.commands import ChangeByteCommand, SetValueCommand
 from omnivore.framework.mouse_handler import MouseHandler
 
 from commands import *
+from actions import *
 
 import logging
 log = logging.getLogger(__name__)
@@ -87,6 +88,19 @@ class JumpmanSelectMode(SelectMode):
 
     def process_mouse_motion_up(self, evt):
         self.display_coords(evt)
+
+    def get_trigger_popup_actions(self, evt):
+        index, x, y, pick = self.get_xy(evt)
+        if pick >= 0:
+            obj = self.canvas.screen_state.get_picked(pick)
+            if not obj.single:
+                obj = None
+        else:
+            obj = None
+        clear_trigger = ClearTriggerAction(enabled=obj is not None and obj.trigger_function is not None, picked=obj, task=self.canvas.editor.task)
+        trigger_action = TriggerAction(enabled=obj is not None, picked=obj, task=self.canvas.editor.task)
+        actions = [clear_trigger, trigger_action]
+        return actions
 
 
 class AnticDSelectMode(JumpmanSelectMode):
@@ -183,6 +197,9 @@ class AnticDSelectMode(JumpmanSelectMode):
 
     def backspace_key_pressed(self):
         self.delete_key_pressed()
+
+    def get_popup_actions(self, evt):
+        return self.get_trigger_popup_actions(evt)
 
 
 class DrawMode(JumpmanSelectMode):
@@ -409,6 +426,9 @@ class DrawPeanutMode(DrawMode):
         self.create_objects(evt, True)
         self.canvas.Refresh()
         self.display_coords(evt)
+
+    def get_popup_actions(self, evt):
+        return self.get_trigger_popup_actions(evt)
 
 
 class JumpmanRespawnMode(DrawMode):
