@@ -122,6 +122,9 @@ class AnticDSelectMode(JumpmanSelectMode):
         e.clear_playfield(playfield)
         e.pick_buffer[:] = -1
         level_builder.draw_objects(playfield, level_builder.objects, e.segment, highlight=self.objects, pick_buffer=e.pick_buffer)
+        for obj in self.objects:
+            level_builder.draw_objects(playfield, obj.trigger_painting, e.segment, highlight=[], pick_buffer=e.pick_buffer)
+
         bitimage = self.canvas.get_rendered_image(playfield)
         return bitimage
 
