@@ -6,6 +6,7 @@ from fs.opener import opener, fsopen
 from fs.errors import FSError
 
 from traits.api import HasTraits, Str, Unicode, Trait, TraitHandler, Property
+from traits.trait_base import get_resource_path
 
 import logging
 log = logging.getLogger(__name__)
@@ -124,3 +125,17 @@ class FileGuess(object):
     def get_stream(self):
         fh, fs, relpath = self.get_fs()
         return fh
+
+    @classmethod
+    def get_packaged_file(cls, name):
+        path = get_resource_path(2)
+        print path, name
+        pathname = os.path.normpath("%s/%s" % (path, name))
+        if os.path.exists(pathname):
+            uri = "about://%s" % os.path.basename(name)
+            print pathname, uri
+            source = open(pathname).read()
+            fh = opener.open(uri, "wb")
+            fh.write(source)
+            fh.close()
+            return cls(uri)

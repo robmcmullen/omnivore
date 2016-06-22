@@ -26,7 +26,8 @@ class NewFileAction(Action):
     
     def perform(self, event=None):
         task = event.task.window.application.find_or_create_task_of_type(self.task_id)
-        task.new()
+        guess = FileGuess.get_packaged_file("%s/%s" % (task.relative_path_to_packaged_files, self.name))
+        task.new(guess)
 
     def _get_tooltip(self):
         return u'Open a new %s' % self.name
