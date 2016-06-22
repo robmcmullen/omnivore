@@ -27,6 +27,7 @@ from omnivore.utils.sortutil import invert_rects
 from omnivore.utils.jumpman import *
 from omnivore.tasks.hex_edit.commands import ChangeByteCommand, SetValueCommand
 from omnivore.framework.mouse_handler import MouseHandler
+from omnivore.templates import get_template
 
 from commands import *
 from actions import *
@@ -584,6 +585,21 @@ class JumpmanLevelView(MainBitmapScroller):
         cmd = SetValueCommand(source, ranges, data)
         self.editor.process_command(cmd)
         self.compute_image(True)
+    
+    # Segment saver interface for menu item display
+    export_data_name = "Jumpman Level Tester ATR"
+    export_extensions = [".atr"]
+    
+    def encode_data(self, segment):
+        """Segment saver interface: take a segment and produce a byte
+        representation to save to disk.
+        """
+        image = get_template("Jumpman Level")
+        if image is None:
+            raise RuntimeError("Can't find Jumpman Level template file")
+        raw = np.fromstring(image, dtype=np.uint8)
+        raw[0x0196:0x0996] = segment[:]
+        return raw.tostring()
 
 
 class JumpmanPlayfieldRenderer(BaseRenderer):
@@ -808,7 +824,9 @@ class JumpmanEditor(BitmapEditor):
         return HexEditor.create_clipboard_data_object(self)
     
     def get_extra_segment_savers(self, segment):
-        return []
+        savers = []
+        savers.append(self.bitmap)
+        return savers
 
     def get_playfield(self):
         data = np.empty(40 * 4 * self.antic_lines, dtype=np.uint8)

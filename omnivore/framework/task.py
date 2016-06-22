@@ -30,8 +30,6 @@ class FrameworkTask(Task):
     # Class properties (not traits!) because they must be available in a TaskFactory 
     
     new_file_text = ''
-
-    relative_path_to_packaged_files = "../templates"
     
     about_application = "about://omnivore"  # URL to load if no document specified on the command line
 
