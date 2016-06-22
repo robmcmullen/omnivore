@@ -89,10 +89,13 @@ class JumpmanSelectMode(SelectMode):
     def process_mouse_motion_up(self, evt):
         self.display_coords(evt)
 
+    def get_picked(self, pick):
+        return self.canvas.screen_state.get_picked(pick)
+
     def get_trigger_popup_actions(self, evt):
         index, x, y, pick = self.get_xy(evt)
         if pick >= 0:
-            obj = self.canvas.screen_state.get_picked(pick)
+            obj = self.get_picked(pick)
             if not obj.single:
                 obj = None
         else:
@@ -111,9 +114,11 @@ class AnticDSelectMode(JumpmanSelectMode):
 
     def init_post_hook(self):
         self.pending_remove = None
+        self.override_state = None
 
     def get_image_override(self):
         if not self.objects:
+            self.override_state = None
             return
 
         e = self.canvas.editor
@@ -121,18 +126,25 @@ class AnticDSelectMode(JumpmanSelectMode):
         playfield = e.get_playfield_segment()
         e.clear_playfield(playfield)
         e.pick_buffer[:] = -1
-        level_builder.draw_objects(playfield, level_builder.objects, e.segment, highlight=self.objects, pick_buffer=e.pick_buffer)
+        state = level_builder.draw_objects(playfield, level_builder.objects, e.segment, highlight=self.objects, pick_buffer=e.pick_buffer)
         for obj in self.objects:
-            level_builder.draw_objects(playfield, obj.trigger_painting, e.segment, highlight=[], pick_buffer=e.pick_buffer)
-
+            level_builder.draw_objects(playfield, obj.trigger_painting, e.segment, highlight=[], pick_buffer=e.pick_buffer, state=state)
+        self.override_state = state
         bitimage = self.canvas.get_rendered_image(playfield)
         return bitimage
+
+    def get_picked(self, pick):
+        if self.override_state:
+            state = self.override_state
+        else:
+            state = self.canvas.screen_state
+        return state.get_picked(pick)
 
     def highlight_pick(self, evt):
         index, x, y, pick = self.get_xy(evt)
         self.mouse_down = x, y
         if pick >= 0:
-            obj = self.canvas.screen_state.get_picked(pick)
+            obj = self.get_picked(pick)
             if obj in self.objects:
                 if evt.ControlDown():
                     self.pending_remove = obj

@@ -236,10 +236,10 @@ class ScreenState(object):
                         self.pick_buffer[index] = obj.pick_index
             x += obj.dx
             y += obj.dy
-        self.pick_dict[obj.pick_index] = obj
-        obj.update_table(self)
+        self.check_object(obj)
 
     def check_object(self, obj):
+        self.pick_dict[obj.pick_index] = obj
         obj.update_table(self)
         if obj.single:
             self.harvest_objects.add(obj)
@@ -409,8 +409,9 @@ class JumpmanLevelBuilder(object):
                     break
         return found
 
-    def draw_objects(self, screen, objects, current_segment=None, pick_buffer=None, highlight=[]):
-        state = ScreenState(self.segments, current_segment, screen, pick_buffer)
+    def draw_objects(self, screen, objects, current_segment=None, pick_buffer=None, highlight=[], state=None):
+        if state is None:
+            state = ScreenState(self.segments, current_segment, screen, pick_buffer)
         highlight = set(highlight)
         for obj in objects:
             log.debug("Processing draw object %s" % obj)
