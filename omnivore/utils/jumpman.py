@@ -155,6 +155,7 @@ class EraseGirder(JumpmanDrawObject):
 class EraseLadder(JumpmanDrawObject):
     name = "ladder_erase"
     default_addr = 0x4056
+    vertical_only = True
     sort_order = 36
     valid_x_mask = 0xfe  # Even pixels only
     drawing_codes = np.fromstring("\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\xff", dtype=np.uint8)
@@ -162,6 +163,7 @@ class EraseLadder(JumpmanDrawObject):
 class EraseRope(JumpmanDrawObject):
     name = "rope_erase"
     default_addr = 0x40d1
+    vertical_only = True
     sort_order = 37
     drawing_codes = np.fromstring("\x02\x00\x00\x00\x00\x02\x00\x01\x00\x00\x02\x00\x02\x00\x00\x02\x00\x03\x00\x00\xff", dtype=np.uint8)
 

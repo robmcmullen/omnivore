@@ -309,6 +309,24 @@ class DrawDownRopeMode(DrawMode):
     menu_item_tooltip = "Draw down ropes (vertical only)"
     drawing_object = DownRope
 
+class EraseGirderMode(DrawMode):
+    icon = "jumpman_erase_girder.png"
+    menu_item_name = "Erase Girder"
+    menu_item_tooltip = "Erase girders"
+    drawing_object = EraseGirder
+
+class EraseLadderMode(DrawMode):
+    icon = "jumpman_erase_ladder.png"
+    menu_item_name = "Erase Ladder"
+    menu_item_tooltip = "Erase ladders (vertical only)"
+    drawing_object = EraseLadder
+
+class EraseRopeMode(DrawMode):
+    icon = "jumpman_erase_rope.png"
+    menu_item_name = "Erase Rope"
+    menu_item_tooltip = "Erase ropes (vertical only)"
+    drawing_object = EraseRope
+
 class DrawPeanutMode(DrawMode):
     icon = "jumpman_peanut.png"
     menu_item_name = "Draw Peanuts"
@@ -649,7 +667,7 @@ class JumpmanEditor(BitmapEditor):
 
     ##### class attributes
     
-    valid_mouse_modes = [AnticDSelectMode, DrawGirderMode, DrawLadderMode, DrawUpRopeMode, DrawDownRopeMode, DrawPeanutMode, JumpmanRespawnMode]
+    valid_mouse_modes = [AnticDSelectMode, DrawGirderMode, DrawLadderMode, DrawUpRopeMode, DrawDownRopeMode, DrawPeanutMode, EraseGirderMode, EraseLadderMode, EraseRopeMode, JumpmanRespawnMode]
     
     ##### Default traits
     
