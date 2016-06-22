@@ -379,11 +379,23 @@ class AnticColorsField(InfoField):
             editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, dlg.colors)
 
 class DropDownField(InfoField):
+    keyword = "dropdown"
+    same_line = True
+
+    def set_args(self, args):
+        print args
+        self.field_name = args[0]
+        self.byte_offset = args[1]
+        self.byte_count = args[2]
+        self.choices = args[3]
+
     def get_choices(self, editor):
-        return []
+        return self.choices
     
-    def bytes_to_control_data(self, editor):
-        return ""
+    def bytes_to_control_data(self, raw):
+        value = reduce(lambda x, y: x + (y << 8), raw)  #  convert to little endian
+        value = min(value, len(self.choices) - 1)
+        return value
         
     def fill_data(self, editor):
         choices = self.get_choices(editor)
@@ -401,16 +413,14 @@ class DropDownField(InfoField):
         return c
         
     def drop_down_changed(self, event):
-        pass
+        raw = np.zeros([self.byte_count],dtype=np.uint8)
+        raw[0] = self.ctrl.GetSelection()
+        self.panel.editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw)
 
 class PeanutsNeededField(DropDownField):
     keyword = "peanuts_needed"
     same_line = True
-    choices = ["All", "All except 1", "All except 2", "All except 3", "All except 4"]
 
-    def get_choices(self, editor):
-        return self.choices
-    
     def bytes_to_control_data(self, raw):
         e = self.panel.editor
         if not hasattr(e, 'num_peanuts'):
