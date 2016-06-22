@@ -67,6 +67,9 @@ data_files.extend(omnivore.get_py2exe_data_files(traitsui, excludes=["*/qt4/*"])
 import pyface
 data_files.extend(omnivore.get_py2exe_data_files(pyface, excludes=["*/qt4/*", "*/pyface/images/*.jpg"]))
 
+# Include template files in bundled app
+data_files.append(("omnivore/templates", glob.glob("omnivore/templates/*")))
+
 common_includes = [
     "ctypes",
     "ctypes.util",
