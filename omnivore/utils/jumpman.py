@@ -166,8 +166,79 @@ class EraseRope(JumpmanDrawObject):
     drawing_codes = np.fromstring("\x02\x00\x00\x00\x00\x02\x00\x01\x00\x00\x02\x00\x02\x00\x00\x02\x00\x03\x00\x00\xff", dtype=np.uint8)
 
 
-class ScreenState(object):
+class LevelDef(object):
+    def __init__(self, origin):
+        self.origin = origin
+        self.level_data = []
+        self.harvest_entries = []
+        self.painting_entries = []
+        self.ladder_positions = set()
+        self.downrope_positions = set()
+        self.peanuts = set()
+        self.pick_dict = dict()
+
+    def add_ladder(self, obj):
+        self.ladder_positions.add(obj.x + 0x30)
+
+    def add_downrope(self, obj):
+        self.downrope_positions.add(obj.x + 0x2e)
+
+    def check_object(self, obj):
+        self.pick_dict[obj.pick_index] = obj
+        obj.update_table(self)
+        if obj.single:
+            self.peanuts.add(obj)
+
+    def get_picked(self, pick_index):
+        return self.pick_dict[pick_index]
+
+    def add_level_data(self, commands):
+        self.level_data.extend(commands)
+
+    def add_harvest_entry(self, h, sublevdef):
+        self.harvest_entries.append((h, sublevdef))
+
+    def process_harvest(self):
+        for h, sublevdef in self.harvest_entries:
+            sublevdef.process_harvest()
+            self.painting_entries.append((h, sublevdef.level_data))
+            self.ladder_positions.update(sublevdef.ladder_positions)
+            self.downrope_positions.update(sublevdef.downrope_positions)
+            self.peanuts.update(sublevdef.peanuts)
+
+        painting_data = []
+        harvest_data = []
+        painting_index = len(self.level_data)
+        for h, painting in self.painting_entries:
+            if len(painting) > 1:
+                addr = self.origin + painting_index
+                painting_data.extend(painting)
+                painting_index += len(painting)
+            else:
+                addr = 0x284c
+            hi, low = divmod(addr, 256)
+            h.extend([low, hi])
+            harvest_data.extend(h)
+        harvest_data.append(0xff)
+
+        # print "level:", self.level_data
+        # print "painting:", painting_data
+        # print "harvest:", harvest_data
+
+        data = self.level_data + painting_data + harvest_data
+
+        ropeladder_data = np.zeros([18], dtype=np.uint8)
+        d = sorted(self.ladder_positions)[0:12]
+        ropeladder_data[0:len(d)] = d
+        d = sorted(self.downrope_positions)[0:6]
+        ropeladder_data[12:12 + len(d)] = d
+
+        return np.asarray(data, dtype=np.uint8), painting_index, ropeladder_data, len(self.peanuts)
+
+
+class ScreenState(LevelDef):
     def __init__(self, segments, current_segment, screen, pick_buffer):
+        LevelDef.__init__(self, -1)
         self.object_code_cache = {}
         self.missing_object_codes = set()
         self.search_order = []
@@ -178,19 +249,8 @@ class ScreenState(object):
         self.screen = screen
         self.pick_buffer = pick_buffer
 
-        self.pick_dict = dict()
-        self.ladder_positions = set()
-        self.downrope_positions = set()
-        self.peanuts = set()
-
     def __str__(self):
         return "current segment: %s\nsearch order: %s\nladders: %s\ndownropes: %s" % (self.current_segment, self.search_order, self.ladder_positions, self.downrope_positions)
-
-    def add_ladder(self, obj):
-        self.ladder_positions.add(obj.x + 0x30)
-
-    def add_downrope(self, obj):
-        self.downrope_positions.add(obj.x + 0x2e)
 
     def draw_object(self, obj, highlight=False):
         if obj.drawing_codes is None:
@@ -237,15 +297,6 @@ class ScreenState(object):
             x += obj.dx
             y += obj.dy
         self.check_object(obj)
-
-    def check_object(self, obj):
-        self.pick_dict[obj.pick_index] = obj
-        obj.update_table(self)
-        if obj.single:
-            self.peanuts.add(obj)
-
-    def get_picked(self, pick_index):
-        return self.pick_dict[pick_index]
 
     # map color numbers in drawing codes to ANTIC register order
     # jumpman color numbers are 0 - 3
@@ -459,78 +510,13 @@ class JumpmanLevelBuilder(object):
         groups.append(current)
         return groups
 
-    class LevelDef(object):
-        def __init__(self, origin):
-            self.origin = origin
-            self.level_data = []
-            self.harvest_entries = []
-            self.painting_entries = []
-            self.ladder_positions = set()
-            self.downrope_positions = set()
-            self.peanuts = set()
-
-        def add_ladder(self, obj):
-            self.ladder_positions.add(obj.x + 0x30)
-
-        def add_downrope(self, obj):
-            self.downrope_positions.add(obj.x + 0x2e)
-
-        def check_object(self, obj):
-            obj.update_table(self)
-            if obj.single:
-                self.peanuts.add(obj)
-
-        def add_level_data(self, commands):
-            self.level_data.extend(commands)
-
-        def add_harvest_entry(self, h, sublevdef):
-            self.harvest_entries.append((h, sublevdef))
-
-        def process_harvest(self):
-            for h, sublevdef in self.harvest_entries:
-                sublevdef.process_harvest()
-                self.painting_entries.append((h, sublevdef.level_data))
-                self.ladder_positions.update(sublevdef.ladder_positions)
-                self.downrope_positions.update(sublevdef.downrope_positions)
-                self.peanuts.update(sublevdef.peanuts)
-
-            painting_data = []
-            harvest_data = []
-            painting_index = len(self.level_data)
-            for h, painting in self.painting_entries:
-                if len(painting) > 1:
-                    addr = self.origin + painting_index
-                    painting_data.extend(painting)
-                    painting_index += len(painting)
-                else:
-                    addr = 0x284c
-                hi, low = divmod(addr, 256)
-                h.extend([low, hi])
-                harvest_data.extend(h)
-            harvest_data.append(0xff)
-
-            # print "level:", self.level_data
-            # print "painting:", painting_data
-            # print "harvest:", harvest_data
-
-            data = self.level_data + painting_data + harvest_data
-
-            ropeladder_data = np.zeros([18], dtype=np.uint8)
-            d = sorted(self.ladder_positions)[0:12]
-            ropeladder_data[0:len(d)] = d
-            d = sorted(self.downrope_positions)[0:6]
-            ropeladder_data[12:12 + len(d)] = d
-
-            return np.asarray(data, dtype=np.uint8), painting_index, ropeladder_data, len(self.peanuts)
-
-
     def create_level_definition(self, level_data_origin, hx, hy, objects=None, levdef=None):
         if objects is None:
             objects = self.objects
         groups = self.group_objects(objects)
         dx = dy = 999999
         if levdef is None:
-            levdef = JumpmanLevelBuilder.LevelDef(level_data_origin)
+            levdef = LevelDef(level_data_origin)
         if groups[0]:
             for group in groups:
                 obj = group[0]
@@ -546,7 +532,7 @@ class JumpmanLevelBuilder(object):
                         # one until length of level data is known since it's stored
                         # right after that
                         h = [obj.harvest_checksum(hx, hy), obj.x, obj.y, obj.trigger_function_low, obj.trigger_function_hi]
-                        sublevdef = JumpmanLevelBuilder.LevelDef(level_data_origin)
+                        sublevdef = LevelDef(level_data_origin)
                         self.create_level_definition(level_data_origin, hx, hy, obj.trigger_painting, sublevdef)
                         levdef.add_harvest_entry(h, sublevdef)
             levdef.add_level_data([0xff])
