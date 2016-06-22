@@ -64,7 +64,7 @@ class LevelDataPane(FrameworkPane):
             ("label", "# Peanuts", "num_peanuts", 1000),
             ("peanuts_needed", "Peanuts Needed", 0x3e, 1),
             ("uint", "Bonus Value", 0x35, 2),
-            ("uint", "Number of Bullets", 0x3d, 1),
+            ("uint", "Number of Bullets", 0x3d, 1, 4),
             ("antic_colors", "Game Colors", 0x2a, 9),
             ("label", "# Columns with Ladders", "num_ladders", 12),
             ("label", "# Columns with Downropes", "num_downropes", 6),

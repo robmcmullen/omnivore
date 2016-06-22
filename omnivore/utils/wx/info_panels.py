@@ -39,12 +39,15 @@ class InfoField(object):
         self.create()
 
     def set_args(self, args):
-        print args
         self.field_name = args[0]
         self.byte_offset = args[1]
         self.byte_count = args[2]
         if len(args) > 3:
-            self.attr_name_max_val = args[3]
+            val = args[3]
+            try:
+                self.max_val = int(val)
+            except ValueError:
+                self.attr_name_max_val = val
 
     def is_displayed(self, editor):
         return True
@@ -324,6 +327,9 @@ class UIntEditField(TextEditField):
             maxval = getattr(self.panel.editor, self.attr_name_max_val)
             if value > maxval:
                 raise ValueError("%d out of range for attribute %s max of %d" % (value, self.attr_name_max_val, maxval))
+        if hasattr(self, "max_val"):
+            if value > self.max_val:
+                raise ValueError("%d greater than %d" % (value, self.maxval))
         if self.byte_count == 1 and value >=0 and value < 256:
             return value
         elif self.byte_count == 2 and value >=0 and value < 256 * 256:
