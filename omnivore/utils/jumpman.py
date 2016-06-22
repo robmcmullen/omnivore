@@ -181,7 +181,7 @@ class ScreenState(object):
         self.pick_dict = dict()
         self.ladder_positions = set()
         self.downrope_positions = set()
-        self.harvest_objects = set()
+        self.peanuts = set()
 
     def __str__(self):
         return "current segment: %s\nsearch order: %s\nladders: %s\ndownropes: %s" % (self.current_segment, self.search_order, self.ladder_positions, self.downrope_positions)
@@ -242,7 +242,7 @@ class ScreenState(object):
         self.pick_dict[obj.pick_index] = obj
         obj.update_table(self)
         if obj.single:
-            self.harvest_objects.add(obj)
+            self.peanuts.add(obj)
 
     def get_picked(self, pick_index):
         return self.pick_dict[pick_index]
@@ -427,6 +427,7 @@ class JumpmanLevelBuilder(object):
             state.check_object(obj)
 
             # recurse into trigger painting objects
+            print "harvest state", obj, "painting:", obj.trigger_painting
             self.get_harvest_state(obj.trigger_painting, state)
         return state
 
@@ -466,12 +467,18 @@ class JumpmanLevelBuilder(object):
             self.painting_entries = []
             self.ladder_positions = set()
             self.downrope_positions = set()
+            self.peanuts = set()
 
         def add_ladder(self, obj):
             self.ladder_positions.add(obj.x + 0x30)
 
         def add_downrope(self, obj):
             self.downrope_positions.add(obj.x + 0x2e)
+
+        def check_object(self, obj):
+            obj.update_table(self)
+            if obj.single:
+                self.peanuts.add(obj)
 
         def add_level_data(self, commands):
             self.level_data.extend(commands)
@@ -485,6 +492,7 @@ class JumpmanLevelBuilder(object):
                 self.painting_entries.append((h, sublevdef.level_data))
                 self.ladder_positions.update(sublevdef.ladder_positions)
                 self.downrope_positions.update(sublevdef.downrope_positions)
+                self.peanuts.update(sublevdef.peanuts)
 
             painting_data = []
             harvest_data = []
@@ -513,7 +521,7 @@ class JumpmanLevelBuilder(object):
             d = sorted(self.downrope_positions)[0:6]
             ropeladder_data[12:12 + len(d)] = d
 
-            return np.asarray(data, dtype=np.uint8), painting_index, ropeladder_data
+            return np.asarray(data, dtype=np.uint8), painting_index, ropeladder_data, len(self.peanuts)
 
 
     def create_level_definition(self, level_data_origin, hx, hy, objects=None, levdef=None):
@@ -532,7 +540,7 @@ class JumpmanLevelBuilder(object):
                         dx, dy = obj.dx, obj.dy
                         levdef.add_level_data([0xfe, dx, dy])
                     levdef.add_level_data([0xfd, obj.x, obj.y, obj.count])
-                    obj.update_table(levdef)
+                    levdef.check_object(obj)
                     if obj.single:
                         # create temporary harvest table entry; can't create full
                         # one until length of level data is known since it's stored
@@ -545,5 +553,5 @@ class JumpmanLevelBuilder(object):
 
         # Create harvest table and painting tables now that the length of
         # everything is known
-        level_data, harvest_index, ropeladder_data = levdef.process_harvest()
-        return level_data, level_data_origin + harvest_index, ropeladder_data, len(levdef.harvest_entries)
+        level_data, harvest_index, ropeladder_data, num_peanuts = levdef.process_harvest()
+        return level_data, level_data_origin + harvest_index, ropeladder_data, num_peanuts

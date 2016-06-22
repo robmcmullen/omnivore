@@ -770,7 +770,7 @@ class JumpmanEditor(BitmapEditor):
         harvest_state = self.bitmap.level_builder.get_harvest_state()
         self.num_ladders = len(harvest_state.ladder_positions)
         self.num_downropes = len(harvest_state.downrope_positions)
-        self.num_peanuts = len(harvest_state.harvest_objects)
+        self.num_peanuts = len(harvest_state.peanuts)
         
         # FIXME: force redraw of level data here because it depends on the
         # level builder objects so it can count the number of items
