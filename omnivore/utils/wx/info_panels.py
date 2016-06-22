@@ -372,27 +372,6 @@ class AnticColorsField(InfoField):
         if dlg.ShowModal() == wx.ID_OK:
             editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, dlg.colors)
 
-class AnchorPointField(InfoField):
-    same_line = True
-    
-    def fill_data(self, editor):
-        self.ctrl.SetSelection(editor.anchor_point_index)
-    
-    def create_control(self):
-        names = [str(s) for s in range(9)]
-        c = wx.ComboBox(self.parent, -1, "",
-                        size=(self.default_width, -1), choices=names, style=wx.CB_READONLY)
-        c.Bind(wx.EVT_COMBOBOX, self.anchor_changed)
-        return c
-        
-    def anchor_changed(self, event):
-        editor = self.panel.editor.editor_tree_control.get_selected_editor()
-        if (editor is None):
-            return
-        item = event.GetSelection()
-        cmd = SetAnchorCommand(editor, item)
-        self.process_command(cmd)
-
 class DropDownField(InfoField):
     def get_choices(self, editor):
         return []
@@ -447,36 +426,6 @@ class PeanutsNeededField(DropDownField):
         raw = np.zeros([self.byte_count],dtype=np.uint8)
         raw[0] = max(0, e.num_peanuts - e.peanut_harvest_diff)
         e.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw)
-
-
-class ColorPickerField(InfoField):
-    keyword = "color"
-    same_line = True
-    
-    def bytes_to_control_data(self, editor):
-        return ""
-        
-    def fill_data(self, editor):
-        color = tuple(int(255 * c) for c in int_to_color_floats(self.bytes_to_control_data(editor))[0:3])
-        self.ctrl.SetColour(color)
-    
-    def create_control(self):
-        import wx.lib.colourselect as csel
-        color = (0, 0, 0)
-        c = csel.ColourSelect(self.parent, -1, "", color, size=(self.default_width,-1))
-        c.Bind(csel.EVT_COLOURSELECT, self.color_changed)
-        return c
-        
-    def color_changed(self, event):
-        color = [float(c/255.0) for c in event.GetValue()]
-        color.append(1.0)
-        int_color = color_floats_to_int(*color)
-        editor = self.panel.editor.editor_tree_control.get_selected_editor()
-        if (editor is None):
-            return
-        style = self.get_style(int_color)
-        cmd = StyleChangeCommand(editor, style)
-        self.process_command(cmd)
 
 
 PANELTYPE = wx.lib.scrolledpanel.ScrolledPanel
