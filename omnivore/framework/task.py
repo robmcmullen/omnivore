@@ -133,6 +133,9 @@ class FrameworkTask(Task):
     def initialized(self):
         self.window.application.remember_perspectives(self.window)
         self.initialize_class_preferences()
+        c = self.editor_area.control
+        c.Bind(aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN, self.on_tab_context_menu)
+        c.Bind(aui.EVT_AUINOTEBOOK_BG_RIGHT_DOWN, self.on_tab_background_context_menu)
     
     def initialize_class_preferences(self):
         pass
@@ -751,6 +754,14 @@ class FrameworkTask(Task):
         10 = absolute match
         """
         return 0
+
+    #### wx event handlers
+
+    def on_tab_context_menu(self, evt):
+        pass
+
+    def on_tab_background_context_menu(self, evt):
+        pass
 
     #### convenience functions
     
