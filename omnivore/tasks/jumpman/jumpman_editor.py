@@ -5,7 +5,7 @@ import os
 # Major package imports.
 import wx
 import numpy as np
-from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_mask
+from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_mask, data_bit_mask, match_bit_mask
 
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides
@@ -639,6 +639,8 @@ class JumpmanPlayfieldRenderer(BaseRenderer):
         normal = style == 0
         highlight = (style & selected_bit_mask) == selected_bit_mask
         comment = (style & comment_bit_mask) == comment_bit_mask
+        data = (style & data_bit_mask) == data_bit_mask
+        match = (style & match_bit_mask) == match_bit_mask
         
         color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(m, range(16))
         bitimage = np.empty((nr * bytes_per_row, 3), dtype=np.uint8)
@@ -646,6 +648,8 @@ class JumpmanPlayfieldRenderer(BaseRenderer):
             color_is_set = (bytes == i)
             bitimage[color_is_set & normal] = color_registers[i]
             bitimage[color_is_set & comment] = c_colors[i]
+            bitimage[color_is_set & match] = m_colors[i]
+            bitimage[color_is_set & data] = d_colors[i]
             bitimage[color_is_set & highlight] = h_colors[i]
         bitimage[count:,:] = m.empty_color
         return bitimage.reshape((nr, bytes_per_row, 3))

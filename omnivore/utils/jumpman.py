@@ -1,6 +1,6 @@
 import numpy as np
 
-from atrcopy import selected_bit_mask
+from atrcopy import selected_bit_mask, match_bit_mask, data_bit_mask
 
 from omnivore.utils.runtime import get_all_subclasses
 
@@ -254,6 +254,14 @@ class ScreenState(LevelDef):
     def __str__(self):
         return "current segment: %s\nsearch order: %s\nladders: %s\ndownropes: %s" % (self.current_segment, self.search_order, self.ladder_positions, self.downrope_positions)
 
+    # The following commented out code generates the text string
+    #circle = np.zeros((7, 8), dtype=np.uint8)
+    #circle[0,2:6] = circle[6,2:6] = circle[2:5,0] = circle[2:5,7] = circle[1,1] = circle[1,6] = circle[5,6] = circle[5,1] = match_bit_mask
+    circle = np.fromstring('\x00\x00\x10\x10\x10\x10\x00\x00\x00\x10\x00\x00\x00\x00\x10\x00\x10\x00\x00\x00\x00\x00\x00\x10\x10\x00\x00\x00\x00\x00\x00\x10\x10\x00\x00\x00\x00\x00\x00\x10\x00\x10\x00\x00\x00\x00\x10\x00\x00\x00\x10\x10\x10\x10\x00\x00', dtype=np.uint8).reshape((7,8))
+    trigger_circle = np.zeros((7,160), dtype=np.uint8)
+    trigger_circle[0:7,0:8] = circle
+    trigger_circle = trigger_circle.flatten()
+
     def draw_object(self, obj, highlight=False):
         if obj.drawing_codes is None:
             if obj.addr is None:
@@ -288,16 +296,36 @@ class ScreenState(LevelDef):
 
         x = obj.x
         y = obj.y
+        has_trigger_function = bool(obj.trigger_function)
         for i in range(obj.count):
             for n, xoffset, yoffset, pixels in lines:
                 for i, c in enumerate(pixels):
                     px = x + xoffset + i
                     py = y + yoffset
-                    index = self.draw_pixel(px, py, c, highlight)
+                    index = self.draw_pixel(px, py, c, highlight, has_trigger_function)
                     if index is not None and self.pick_buffer is not None:
                         self.pick_buffer[index] = obj.pick_index
             x += obj.dx
             y += obj.dy
+
+        # Draw extra highlight around peanut if has trigger painting functions
+        if obj.trigger_painting:
+            index = (obj.y - 2) * 160 + obj.x - 2
+            if index > len(self.screen):
+                return
+            if index < 0:
+                cindex = -index
+                index = 0
+            else:
+                cindex = 0
+            cend = len(self.trigger_circle)
+            if index + cend > len(self.screen):
+                iend = len(self.screen)
+                cend = cindex + iend - index
+            else:
+                iend = index + cend - cindex
+            self.screen.style[index:iend] |= self.trigger_circle[cindex:cend]
+
         self.check_object(obj)
 
     # map color numbers in drawing codes to ANTIC register order
@@ -308,13 +336,17 @@ class ScreenState(LevelDef):
     # ANTIC background color is 8
     color_map = {0:8, 1:4, 2:5, 3:6, 4:0}
 
-    def draw_pixel(self, x, y, color, highlight):
+    def draw_pixel(self, x, y, color, highlight, trigger):
         index = y * 160 + x
         if index < 0 or index >= len(self.screen):
             return None
         self.screen[index] = self.color_map[color]
+        s = 0
         if highlight:
-            self.screen.style[index] = selected_bit_mask
+            s = selected_bit_mask
+        if trigger:
+            s |= match_bit_mask
+        self.screen.style[index] = s
         return index
 
     def get_object_code(self, addr):
