@@ -379,7 +379,7 @@ class MapEditor(HexEditor):
             self.antic_tile_map = e['tile map']
         self.machine.set_font_mapping(predefined['font_mapping'][1])
     
-    @on_trait_change('machine.bitmap_change_event')
+    @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self):
         self.control.recalc_view()
     

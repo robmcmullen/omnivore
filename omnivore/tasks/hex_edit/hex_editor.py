@@ -311,7 +311,7 @@ class HexEditor(FrameworkEditor):
         self.bitmap_zoom = zoom
         self.bitmap.recalc_view()
     
-    @on_trait_change('machine.bitmap_change_event')
+    @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self):
         self.bitmap.recalc_view()
     

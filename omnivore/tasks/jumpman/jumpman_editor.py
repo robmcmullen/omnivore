@@ -45,6 +45,9 @@ class JumpmanSelectMode(SelectMode):
     def cleanup(self):
         pass
 
+    def resync_objects(self):
+        pass
+
     def get_image_override(self):
         """ Replace the entire bit image generation in JumpmanLevelView """
         return None
@@ -116,6 +119,14 @@ class AnticDSelectMode(JumpmanSelectMode):
     def init_post_hook(self):
         self.pending_remove = None
         self.override_state = None
+
+    def resync_objects(self):
+        """ After a redraw when the level builder has been rebuilt from the hex
+        data, the objects stored locally will no longer point to current
+        jumpman objects. We need to find the current objects that match up to
+        the stored objects.
+        """
+        self.objects = self.canvas.level_builder.find_equivalent(self.objects)
 
     def get_image_override(self):
         if not self.objects:
@@ -197,7 +208,6 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.pending_remove = None
         if self.objects and not self.check_tolerance:
             self.canvas.save_changes()
-            self.objects = self.canvas.level_builder.find_equivalent(self.objects)
         else:
             self.canvas.Refresh()
         self.display_coords(evt)
@@ -223,6 +233,10 @@ class DrawMode(JumpmanSelectMode):
     menu_item_name = "Draw"
     menu_item_tooltip = "Draw stuff"
     drawing_object = Girder
+
+    def resync_objects(self):
+        # objects here are only temporary, so no need to search
+        pass
 
     def draw_extra_objects(self, level_builder, screen, current_segment):
         level_builder.draw_objects(screen, self.objects, current_segment)
@@ -602,7 +616,6 @@ class JumpmanLevelView(MainBitmapScroller):
         data = np.hstack([ropeladder_data, pdata, hdata, level_data])
         cmd = SetValueCommand(source, ranges, data)
         self.editor.process_command(cmd)
-        self.compute_image(True)
     
     # Segment saver interface for menu item display
     export_data_name = "Jumpman Level Tester ATR"
@@ -702,10 +715,15 @@ class JumpmanEditor(BitmapEditor):
         HexEditor.process_extra_metadata(self, doc, e)
         pass
     
-    @on_trait_change('machine.bitmap_change_event')
+    @on_trait_change('machine.bitmap_shape_change_event')
     def update_bitmap(self):
         self.hex_edit.recalc_view()
         self.bitmap.recalc_view()
+    
+    @on_trait_change('machine.bitmap_color_change_event')
+    def update_bitmap(self):
+        self.bitmap.compute_image(True)
+        self.bitmap.mouse_mode.resync_objects()
     
     @on_trait_change('machine.font_change_event')
     def update_fonts(self):

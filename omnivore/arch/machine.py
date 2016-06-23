@@ -59,7 +59,9 @@ class Machine(HasTraits):
     
     font_change_event = Event
     
-    bitmap_change_event = Event
+    bitmap_shape_change_event = Event
+    
+    bitmap_color_change_event = Event
     
     disassembler_change_event = Event
     
@@ -293,7 +295,7 @@ class Machine(HasTraits):
         self.color_registers_match = self.get_blended_color_registers(self.color_registers, self.match_background_color)
         self.color_registers_comment = self.get_blended_color_registers(self.color_registers, self.comment_background_color)
         self.set_font()
-        self.bitmap_change_event = True
+        self.bitmap_color_change_event = True
     
     def get_color_registers(self, antic_color_registers=None):
         color_converter = self.get_color_converter()
@@ -336,7 +338,7 @@ class Machine(HasTraits):
     
     def set_bitmap_renderer(self, renderer):
         self.bitmap_renderer = renderer
-        self.bitmap_change_event = True
+        self.bitmap_shape_change_event = True
     
     def set_disassembler(self, disassembler):
         self.disassembler = disassembler

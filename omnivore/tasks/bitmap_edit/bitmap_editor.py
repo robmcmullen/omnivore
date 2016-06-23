@@ -378,7 +378,7 @@ class BitmapEditor(HexEditor):
         HexEditor.process_extra_metadata(self, doc, e)
         pass
     
-    @on_trait_change('machine.bitmap_change_event')
+    @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self):
         self.bitmap.recalc_view()
     
