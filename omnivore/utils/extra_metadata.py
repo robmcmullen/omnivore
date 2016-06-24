@@ -72,6 +72,9 @@ def JumpmanLevelBuilder(doc):
                 found_level = True
         if not found_level:
             user_segments.append(DefaultSegment(r[0x0196:0x0996], 0x2800, name="Jumpman Level Data"))
+            user_segments.append(DefaultSegment(r[2458:3994], 0x0a00, name="Code at $0a00"))
+            user_segments.append(DefaultSegment(r[3998:6046], 0x2000, name="Code at $2000"))
+            user_segments.append(DefaultSegment(r[6050:22434], 0x3000, name="Code at $3000"))
         extra_metadata = {
             'user segments': user_segments,
             'initial segment': user_segments[0],
