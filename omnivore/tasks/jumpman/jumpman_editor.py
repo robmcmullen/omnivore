@@ -722,7 +722,10 @@ class JumpmanEditor(BitmapEditor):
     
     @on_trait_change('machine.bitmap_color_change_event')
     def update_bitmap(self):
-        self.bitmap.compute_image(True)
+        try:
+            self.bitmap.compute_image(True)
+        except RuntimeError:
+            pass
         self.bitmap.mouse_mode.resync_objects()
     
     @on_trait_change('machine.font_change_event')
