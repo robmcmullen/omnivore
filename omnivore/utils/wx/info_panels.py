@@ -485,16 +485,9 @@ class InfoPanel(PANELTYPE):
     def refresh_view(self):
         editor = self.task.active_editor
         if editor is not None:
-            if self.editor != editor:
+            if self.IsShown():
+                log.debug("refreshing %s" % self)
                 self.recalc_view()
-            elif self.IsShown():
-                if self.last_change_count == editor.document.change_count:
-                    log.debug("skipping refresh; document change count=%d" % self.last_change_count)
-                else:
-                    log.debug("refreshing! document change count=%d" % self.last_change_count)
-                    self.recalc_view()
-                    self.Refresh()
-                    self.last_change_count = editor.document.change_count
             else:
                 log.debug("skipping refresh of hidden %s" % self)
 
