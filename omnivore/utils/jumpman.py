@@ -346,7 +346,7 @@ class ScreenState(LevelDef):
             s = selected_bit_mask
         if trigger:
             s |= match_bit_mask
-        self.screen.style[index] = s
+        self.screen.style[index] |= s
         return index
 
     def get_object_code(self, addr):
