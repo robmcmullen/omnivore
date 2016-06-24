@@ -82,8 +82,67 @@ def JumpmanLevelBuilder(doc):
         doc.last_task_id = jumpman_task_id
         return extra_metadata
 
+level_names = [
+    "01: easy does it",
+    "02: robots I",
+    "03: bombs away",
+    "04: jumping blocks",
+    "05: vampire",
+    "06: invasion",
+    "07: GP I",
+    "08: builder",
+    "09: look out below",
+    "10: hotfoot",
+    "11: runaway",
+    "12: robots II",
+    "13: hailstones",
+    "14: dragonslayer",
+    "15: GP II",
+    "16: ride around",
+    "17: roost",
+    "18: roll me over",
+    "19: ladder challenge",
+    "20: figureit",
+    "21: jump n run",
+    "22: freeze",
+    "23: follow the leader",
+    "24: the jungle",
+    "25a: mystery maze #1",
+    "25b: mystery maze #2",
+    "25c: mystery maze #3",
+    "26: gunfighter",
+    "27: robots III",
+    "28: now you see it",
+    "29: going down",
+    "30: GP III",
+]
+
+def JumpmanFullAtr(doc):
+    state = doc.bytes[0:5] == [0x96, 0x02 , 0x80 , 0x16 , 0x80]
+    if not state.all():
+        return
+    # Check invariant bytes in the level data to make sure
+    s = doc.bytes[0x0810:0x0910]
+    if s[0x3f] == 0x4c and s[0x48] == 0x20 and s[0x4b] == 0x60 and s[0x4c] == 0xff:
+        print "Found jumpman ATR!!!"
+        r = doc.segments[0].rawdata
+        found_level = False
+        user_segments = []
+        start = 0x0810
+        for i in range(32):
+            user_segments.append(DefaultSegment(r[start:start+0x800], 0x2800, name=level_names[i]))
+            start += 0x800
+        user_segments.append(DefaultSegment(r[70032:71568], 0x0a00, name="Code"))
+        user_segments.append(DefaultSegment(r[71568:92048], 0x2000, name="Code"))
+        extra_metadata = {
+            'user segments': user_segments,
+            'initial segment': user_segments[0],
+            }
+        doc.last_task_id = jumpman_task_id
+        return extra_metadata
+
 def check_builtin(doc):
-    for match in [Getaway, JumpmanLevelBuilder]:
+    for match in [Getaway, JumpmanLevelBuilder, JumpmanFullAtr]:
         e = match(doc)
         if e is not None:
             return e
