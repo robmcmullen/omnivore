@@ -129,12 +129,12 @@ class HexEditor(FrameworkEditor):
         """
         if 'user segments' in e:
             for s in e['user segments']:
-                doc.add_user_segment(s)
+                doc.add_user_segment(s, replace=True)
         first_segment = doc.segments[0]
         if 'serialized user segments' in e:
             for s in e['serialized user segments']:
                 s.reconstruct_raw(first_segment.rawdata) 
-                doc.add_user_segment(s)
+                doc.add_user_segment(s, replace=True)
         first_segment.restore_extra_from_dict(e)
         if 'emulator' in e:
             doc.emulator = e['emulator']

@@ -157,7 +157,10 @@ class Document(HasTraits):
     def global_segment(self):
         return self.segments[0]
     
-    def add_user_segment(self, segment):
+    def add_user_segment(self, segment, replace=False):
+        if replace:
+            if self.find_matching_user_segment(segment):
+                return
         self.user_segments.append(segment)
         self.segments.append(segment)
     
@@ -167,6 +170,12 @@ class Document(HasTraits):
     def delete_user_segment(self, segment):
         self.user_segments.remove(segment)
         self.segments.remove(segment)
+
+    def find_matching_user_segment(self, segment):
+        for s in self.user_segments:
+            if len(s) == len(segment) and s.start_addr == segment.start_addr and s.name == segment.name:
+                return True
+        return False
     
     def find_segment_index(self, segment):
         try:
