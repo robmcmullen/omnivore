@@ -503,7 +503,7 @@ class JumpmanLevelBuilder(object):
             state.draw_object(obj, obj in highlight)
         return state
 
-    def get_harvest_state(self, objects=None, state=None):
+    def get_harvest_state(self, objects=None, state=None, indent=""):
         if objects is None:
             objects = self.objects
         if state is None:
@@ -512,8 +512,8 @@ class JumpmanLevelBuilder(object):
             state.check_object(obj)
 
             # recurse into trigger painting objects
-            print "harvest state", obj, "painting:", obj.trigger_painting
-            self.get_harvest_state(obj.trigger_painting, state)
+            log.debug("%sharvest state %s, painting: %s" % (indent, obj, obj.trigger_painting))
+            self.get_harvest_state(obj.trigger_painting, state, indent + "  ")
         return state
 
     def add_objects(self, new_objects, objects=None):
