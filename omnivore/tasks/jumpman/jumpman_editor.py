@@ -208,6 +208,7 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.pending_remove = None
         if self.objects and not self.check_tolerance:
             self.canvas.save_changes()
+            self.resync_objects()
         else:
             self.canvas.Refresh()
         self.display_coords(evt)
