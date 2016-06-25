@@ -903,12 +903,18 @@ class JumpmanEditor(BitmapEditor):
     ##### Copy/Paste support
 
     def process_paste_data_object(self, data_obj, cmd_cls=None):
-        value = data_obj.GetData()
-        fmt = data_obj.GetPreferredFormat()
-        if fmt.GetId() == "jumpman,objects":
-            objects = pickle.loads(value)
-            print objects
-            self.bitmap.save_objects(objects)
+        mouse_mode = self.bitmap.mouse_mode
+        if mouse_mode.can_paste and mouse_mode.objects:
+            value = data_obj.GetData()
+            fmt = data_obj.GetPreferredFormat()
+            if fmt.GetId() == "jumpman,objects":
+                objects = pickle.loads(value)
+                for o in objects:
+                    # offset slightly so the pasted objects are seen
+                    o.x += 1
+                    o.y += 1
+                mouse_mode.objects = objects
+                self.bitmap.save_objects(objects)
     
     supported_clipboard_data_objects = [
         wx.CustomDataObject("jumpman,objects"),
@@ -918,8 +924,6 @@ class JumpmanEditor(BitmapEditor):
         mouse_mode = self.bitmap.mouse_mode
         if mouse_mode.can_paste and mouse_mode.objects:
             data = mouse_mode.objects
-            print data
-
             data_obj = wx.CustomDataObject("jumpman,objects")
             data_obj.SetData(pickle.dumps(data))
             return data_obj
