@@ -86,6 +86,28 @@ class JumpmanEditTask(HexEditTask):
         if e is not None:
             prefs = self.get_preferences()
 
+    def get_actions_Menu_Edit_UndoGroup(self):
+        return [
+            UndoAction(),
+            RedoAction(),
+            ]
+    
+    def get_actions_Menu_Edit_CopyPasteGroup(self):
+        return [
+            CutAction(),
+            CopyAction(),
+            PasteAction(),
+            ]
+    
+    def get_actions_Menu_Edit_SelectGroup(self):
+        return [
+            SelectAllAction(),
+            SelectNoneAction(),
+            ]
+    
+    def get_actions_Menu_Edit_FindGroup(self):
+        return []
+
     def get_actions_Menu_View_ViewPredefinedGroup(self):
         return []
 

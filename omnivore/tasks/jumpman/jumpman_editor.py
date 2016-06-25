@@ -1,6 +1,7 @@
 # Standard library imports.
 import sys
 import os
+import cPickle as pickle
 
 # Major package imports.
 import wx
@@ -37,6 +38,8 @@ log = logging.getLogger(__name__)
 
 
 class JumpmanSelectMode(SelectMode):
+    can_paste = False
+
     def __init__(self, *args, **kwargs):
         SelectMode.__init__(self, *args, **kwargs)
         self.mouse_down = (0, 0)
@@ -115,6 +118,7 @@ class AnticDSelectMode(JumpmanSelectMode):
     menu_item_name = "Select"
     menu_item_tooltip = "Select regions"
     min_mouse_distance = 2
+    can_paste = True
 
     def init_post_hook(self):
         self.pending_remove = None
@@ -234,6 +238,7 @@ class DrawMode(JumpmanSelectMode):
     menu_item_name = "Draw"
     menu_item_tooltip = "Draw stuff"
     drawing_object = Girder
+    can_paste = False
 
     def resync_objects(self):
         # objects here are only temporary, so no need to search
@@ -857,7 +862,8 @@ class JumpmanEditor(BitmapEditor):
         pass
     
     def perform_idle(self):
-        pass
+        mouse_mode = self.bitmap.mouse_mode
+        self.can_copy = mouse_mode.can_paste and bool(mouse_mode.objects)
     
     def process_paste_data_object(self, data_obj, cmd_cls=None):
         # Don't use bitmap editor's paste, we want it to paste in hex
@@ -893,6 +899,31 @@ class JumpmanEditor(BitmapEditor):
     
     def redo_post_hook(self):
         self.update_mouse_mode()
+
+    ##### Copy/Paste support
+
+    def process_paste_data_object(self, data_obj, cmd_cls=None):
+        value = data_obj.GetData()
+        fmt = data_obj.GetPreferredFormat()
+        if fmt.GetId() == "jumpman,objects":
+            objects = pickle.loads(value)
+            print objects
+            self.bitmap.save_objects(objects)
+    
+    supported_clipboard_data_objects = [
+        wx.CustomDataObject("jumpman,objects"),
+        ]
+    
+    def create_clipboard_data_object(self):
+        mouse_mode = self.bitmap.mouse_mode
+        if mouse_mode.can_paste and mouse_mode.objects:
+            data = mouse_mode.objects
+            print data
+
+            data_obj = wx.CustomDataObject("jumpman,objects")
+            data_obj.SetData(pickle.dumps(data))
+            return data_obj
+        return None
 
     ###########################################################################
     # Trait handlers.
@@ -934,4 +965,3 @@ class JumpmanEditor(BitmapEditor):
         self.cursor_index = index
         if control != self.hex_edit:
             self.hex_edit.select_index(index)
-        self.can_copy = (self.anchor_start_index != self.anchor_end_index)
