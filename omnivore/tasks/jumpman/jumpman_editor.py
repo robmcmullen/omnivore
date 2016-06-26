@@ -929,6 +929,30 @@ class JumpmanEditor(BitmapEditor):
             return data_obj
         return None
 
+    def select_all(self, refresh=True):
+        """ Selects the entire document
+        """
+        mouse_mode = self.bitmap.mouse_mode
+        if mouse_mode.can_paste:
+            mouse_mode.objects = list(self.bitmap.level_builder.objects)
+            if refresh:
+                self.refresh_panes()
+
+    def select_none(self, refresh=True):
+        """ Clears any selection in the document
+        """
+        mouse_mode = self.bitmap.mouse_mode
+        if mouse_mode.can_paste:
+            mouse_mode.objects = []
+            if refresh:
+                self.refresh_panes()
+
+    def select_invert(self, refresh=True):
+        """ Selects the entire document
+        """
+        if refresh:
+            self.refresh_panes()
+
     ###########################################################################
     # Trait handlers.
     ###########################################################################
