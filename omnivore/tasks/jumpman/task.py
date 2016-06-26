@@ -103,6 +103,7 @@ class JumpmanEditTask(HexEditTask):
         return [
             SelectAllAction(),
             SelectNoneAction(),
+            SelectInvertAction(),
             ]
     
     def get_actions_Menu_Edit_FindGroup(self):

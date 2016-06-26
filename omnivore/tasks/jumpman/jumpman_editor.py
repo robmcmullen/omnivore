@@ -167,18 +167,21 @@ class AnticDSelectMode(JumpmanSelectMode):
                 else:
                     self.pending_remove = True
             else:
-                obj.orig_x = obj.x
-                obj.orig_y = obj.y
-                if evt.ControlDown():
-                    self.objects.append(obj)
-                else:
-                    self.objects = [obj]
+                self.add_to_selection(obj, evt.ControlDown())
             self.check_tolerance = True
         else:
             # don't kill multiple selection if user clicks on empty space by
             # mistake
             if not evt.ControlDown():
                 self.objects = []
+
+    def add_to_selection(self, obj, append=False):
+        obj.orig_x = obj.x
+        obj.orig_y = obj.y
+        if append:
+            self.objects.append(obj)
+        else:
+            self.objects = [obj]
 
     def move_pick(self, evt):
         if self.objects:
@@ -934,7 +937,10 @@ class JumpmanEditor(BitmapEditor):
         """
         mouse_mode = self.bitmap.mouse_mode
         if mouse_mode.can_paste:
-            mouse_mode.objects = list(self.bitmap.level_builder.objects)
+            first = True
+            for obj in self.bitmap.level_builder.objects:
+                mouse_mode.add_to_selection(obj, not first)
+                first = False
             if refresh:
                 self.refresh_panes()
 
@@ -950,8 +956,16 @@ class JumpmanEditor(BitmapEditor):
     def select_invert(self, refresh=True):
         """ Selects the entire document
         """
-        if refresh:
-            self.refresh_panes()
+        mouse_mode = self.bitmap.mouse_mode
+        if mouse_mode.can_paste:
+            first = True
+            current = set(mouse_mode.objects)
+            for obj in self.bitmap.level_builder.objects:
+                if obj not in current:
+                    mouse_mode.add_to_selection(obj, not first)
+                    first = False
+            if refresh:
+                self.refresh_panes()
 
     ###########################################################################
     # Trait handlers.
