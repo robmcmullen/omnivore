@@ -73,8 +73,9 @@ class FileGuess(object):
 
     """
     # Arbitrary size header, but should be large enough that binary files can
-    # be scanned for a signature
-    head_size = 1024*1024
+    # be scanned for a signature. Make sure it's not a multiple of 1k for naive
+    # parsers that rely on size detection
+    head_size = 1024*1024 - 1
     
     def __init__(self, uri):
         log.debug("Attempting to load %s" % uri)
