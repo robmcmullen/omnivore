@@ -132,6 +132,12 @@ class AnticDSelectMode(JumpmanSelectMode):
         """
         self.objects = self.canvas.level_builder.find_equivalent(self.objects)
 
+    def delete_objects(self):
+        if self.objects:
+            self.canvas.delete_objects(self.objects)
+            self.objects = []
+        self.canvas.Refresh()
+
     def get_image_override(self):
         if not self.objects:
             self.override_state = None
@@ -224,13 +230,10 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.display_coords(evt)
     
     def delete_key_pressed(self):
-        if self.objects:
-            self.canvas.delete_objects(self.objects)
-            self.objects = []
-        self.canvas.Refresh()
+        self.delete_objects()
 
     def backspace_key_pressed(self):
-        self.delete_key_pressed()
+        self.delete_objects()
 
     def get_popup_actions(self, evt):
         return self.get_trigger_popup_actions(evt)
@@ -866,7 +869,7 @@ class JumpmanEditor(BitmapEditor):
     
     def perform_idle(self):
         mouse_mode = self.bitmap.mouse_mode
-        self.can_copy = mouse_mode.can_paste and bool(mouse_mode.objects)
+        self.can_copy = self.can_cut = mouse_mode.can_paste and bool(mouse_mode.objects)
     
     def process_paste_data_object(self, data_obj, cmd_cls=None):
         # Don't use bitmap editor's paste, we want it to paste in hex
@@ -905,9 +908,15 @@ class JumpmanEditor(BitmapEditor):
 
     ##### Copy/Paste support
 
+    def cut(self):
+        """ Cuts the current selection to the clipboard
+        """
+        if self.copy():
+            self.bitmap.mouse_mode.delete_objects()
+
     def process_paste_data_object(self, data_obj, cmd_cls=None):
         mouse_mode = self.bitmap.mouse_mode
-        if mouse_mode.can_paste and mouse_mode.objects:
+        if mouse_mode.can_paste:
             value = data_obj.GetData()
             fmt = data_obj.GetPreferredFormat()
             if fmt.GetId() == "jumpman,objects":

@@ -338,15 +338,17 @@ class FrameworkEditor(Editor):
         """
         data_obj = self.create_clipboard_data_object()
         if data_obj is None:
-            return
-        self.set_clipboard_object(data_obj)
+            return False
+        return self.set_clipboard_object(data_obj)
     
     def set_clipboard_object(self, data_obj):
         if wx.TheClipboard.Open():
             wx.TheClipboard.SetData(data_obj)
             wx.TheClipboard.Close()
+            return True
         else:
             self.window.error("Unable to open clipboard", "Clipboard Error")
+            return False
 
     def paste(self, cmd_cls=None):
         """ Pastes the current clipboard at the current insertion point or over
