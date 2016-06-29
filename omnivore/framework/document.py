@@ -68,6 +68,8 @@ class Document(HasTraits):
     
     can_revert = Property(Bool, depends_on='metadata')
 
+    permute = Any
+
     #### trait default values
     
     def _metadata_default(self):
@@ -122,7 +124,11 @@ class Document(HasTraits):
 
     def to_bytes(self):
         return self.bytes.tostring()
-    
+
+    def load_permute(self, editor):
+        if self.permute:
+            self.permute.load(self, editor)
+
     def filesystem_path(self):
         try:
             fs_, relpath = fs.opener.opener.parse(self.uri)

@@ -53,9 +53,10 @@ from image import ImageRecognizer
 recognizers.append(ImageRecognizer())
 from atrcopy_parsers import AtrcopyRecognizer
 recognizers.append(AtrcopyRecognizer())
-from text import PlainTextRecognizer, PoundBangTextRecognizer, XMLTextRecognizer
+from text import PlainTextRecognizer, PoundBangTextRecognizer, PrivateTextRecognizer, XMLTextRecognizer
 recognizers.append(PlainTextRecognizer())
 recognizers.append(PoundBangTextRecognizer())
+recognizers.append(PrivateTextRecognizer())
 recognizers.append(XMLTextRecognizer())
 from meta import OmnivoreRecognizer
 recognizers.append(OmnivoreRecognizer())
