@@ -42,3 +42,16 @@ class TextEditTask(FrameworkTask):
     @classmethod
     def can_edit(cls, document):
         return document.metadata.mime.startswith("text/")
+    
+    @classmethod
+    def get_match_score(cls, document):
+        """Return a number based on how good of a match this task is to the
+        incoming Document.
+        
+        0 = generic match
+        ...
+        10 = absolute match
+        """
+        if document.metadata.mime.startswith("text/"):
+            return 10
+        return 0
