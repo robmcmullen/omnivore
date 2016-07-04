@@ -53,5 +53,6 @@ class TextEditTask(FrameworkTask):
         10 = absolute match
         """
         if document.metadata.mime.startswith("text/"):
-            return 10
+            # Leave 10 for exact matches, like text/html for HtmlView mode
+            return 9
         return 0
