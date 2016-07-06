@@ -538,6 +538,7 @@ class JumpmanLevelView(MainBitmapScroller):
     def __init__(self, *args, **kwargs):
         MainBitmapScroller.__init__(self, *args, **kwargs)
         self.level_builder = None
+        self.trigger_root = None
         self.cached_screen = None
         self.last_commands = None
         self.screen_state = None
@@ -550,6 +551,7 @@ class JumpmanLevelView(MainBitmapScroller):
 
     def get_segment(self, editor):
         self.level_builder = JumpmanLevelBuilder(editor.document.user_segments)
+        self.trigger_root = None
         self.pick_buffer = editor.pick_buffer
         self.last_commands = None
         return editor.screen
@@ -557,6 +559,12 @@ class JumpmanLevelView(MainBitmapScroller):
     def clear_screen(self):
         self.editor.clear_playfield()
         self.pick_buffer[:] = -1
+
+    def set_trigger_root(self, root):
+        if root is not None:
+            root = self.level_builder.find_equivalent([root])[0]
+        self.trigger_root = root
+        self.last_commands = None
 
     def compute_image(self, force=False):
         if self.level_builder is None:
@@ -571,6 +579,14 @@ class JumpmanLevelView(MainBitmapScroller):
         else:
             self.clear_screen()
             self.screen_state = self.level_builder.parse_and_draw(self.segment, source, level_addr, harvest_addr, pick_buffer=self.pick_buffer)
+            if self.trigger_root is not None:
+                self.segment.style[:] = 0
+                self.level_builder.fade_screen(self.segment)
+                self.pick_buffer[:] = -1  # only allow picking of triggered objects
+                root = [self.trigger_root]
+                state = self.level_builder.draw_objects(self.segment, root, source, highlight=root, pick_buffer=self.pick_buffer)
+                self.level_builder.draw_objects(self.segment, self.trigger_root.trigger_painting, source, pick_buffer=self.pick_buffer, state=state)
+
             log.debug("draw objects: %s" % self.level_builder.objects)
             if self.screen_state.missing_object_codes:
                 log.error("missing draw codes: %s" % (sorted(self.screen_state.missing_object_codes)))
@@ -667,9 +683,9 @@ class JumpmanPlayfieldRenderer(BaseRenderer):
         data = (style & data_bit_mask) == data_bit_mask
         match = (style & match_bit_mask) == match_bit_mask
         
-        color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(m, range(16))
+        color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(m, range(32))
         bitimage = np.empty((nr * bytes_per_row, 3), dtype=np.uint8)
-        for i in range(16):
+        for i in range(32):
             color_is_set = (bytes == i)
             bitimage[color_is_set & normal] = color_registers[i]
             bitimage[color_is_set & comment] = c_colors[i]
@@ -752,6 +768,7 @@ class JumpmanEditor(BitmapEditor):
         self.hex_edit.recalc_view()
         self.bitmap.recalc_view()
         self.level_data.recalc_view()
+        self.trigger_list.recalc_view()
     
     def refresh_panes(self):
         self.hex_edit.refresh_view()
@@ -759,6 +776,7 @@ class JumpmanEditor(BitmapEditor):
         if p != self.machine.antic_color_registers:
             self.machine.update_colors(p)
         self.bitmap.refresh_view()
+        self.trigger_list.refresh_view()
         # level_data is refreshed with call to update_harvest_state
     
     def rebuild_document_properties(self):
@@ -830,6 +848,7 @@ class JumpmanEditor(BitmapEditor):
         # FIXME: force redraw of level data here because it depends on the
         # level builder objects so it can count the number of items
         self.level_data.refresh_view()
+        self.trigger_list.refresh_view()
 
     def get_level_colors(self, segment=None):
         if segment is None:
@@ -976,6 +995,20 @@ class JumpmanEditor(BitmapEditor):
             if refresh:
                 self.refresh_panes()
 
+    def set_trigger_view(self, trigger_root):
+        mouse_mode = self.bitmap.mouse_mode
+        # if not mouse_mode.can_paste:
+        #     self.update_mouse_mode(AnticDSelectMode)
+        # if trigger_root:
+        #     trigger_root = self.bitmap.level_builder.find_equivalent([trigger_root])[0]
+        #     mouse_mode.add_to_selection(trigger_root, False)
+        # else:
+        #     mouse_mode.objects = []
+        if mouse_mode.can_paste:
+            mouse_mode.objects = []
+        self.bitmap.set_trigger_root(trigger_root)
+        self.refresh_panes()
+
     ###########################################################################
     # Trait handlers.
     ###########################################################################
@@ -1004,6 +1037,7 @@ class JumpmanEditor(BitmapEditor):
         self.undo_history = self.window.get_dock_pane('jumpman.undo').control
         self.hex_edit = self.window.get_dock_pane('jumpman.hex').control
         self.level_data = self.window.get_dock_pane('jumpman.level_data').control
+        self.trigger_list = self.window.get_dock_pane('jumpman.triggers').control
 
         # Load the editor's contents.
         self.load()

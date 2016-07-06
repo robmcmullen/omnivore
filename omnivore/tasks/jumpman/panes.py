@@ -8,6 +8,8 @@ from omnivore.framework.undo_panel import UndoHistoryPanel
 from omnivore.utils.wx.springtabs import SpringTabs
 from omnivore.utils.wx.info_panels import InfoPanel
 
+from peanuts import TriggerList
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -42,6 +44,17 @@ class HexPane(FrameworkPane):
     
     def create_contents(self, parent):
         control = HexEditControl(parent, self.task, size=(350, 150))
+        return control
+
+
+class TriggerPane(FrameworkPane):
+    #### TaskPane interface ###################################################
+
+    id = 'jumpman.triggers'
+    name = 'Trigger Painting'
+    
+    def create_contents(self, parent):
+        control = TriggerList(parent, self.task, size=(350,150))
         return control
 
 

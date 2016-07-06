@@ -503,6 +503,10 @@ class JumpmanLevelBuilder(object):
             state.draw_object(obj, obj in highlight)
         return state
 
+    def fade_screen(self, screen):
+        # +16 activates the dim color palette
+        screen[:] |= 0x10
+
     def get_harvest_state(self, objects=None, state=None, indent=""):
         if objects is None:
             objects = self.objects

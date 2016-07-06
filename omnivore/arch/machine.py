@@ -309,6 +309,12 @@ class Machine(HasTraits):
         i = len(registers)
         for i in range(len(registers), 16):
             registers.append((i*16, i*16, i*16))
+
+        # Extend to 32 for dimmed copies of the 16 colors
+        dim = []
+        for r in registers:
+            dim.append((r[0]/2 + 64, r[1]/2 + 64, r[2]/2 + 64))
+        registers.extend(dim)
         return registers
     
     def get_blended_color_registers(self, colors, blend_color):
