@@ -728,12 +728,12 @@ class JumpmanEditor(BitmapEditor):
         pass
     
     @on_trait_change('machine.bitmap_shape_change_event')
-    def update_bitmap(self):
+    def update_bitmap_shape(self):
         self.hex_edit.recalc_view()
         self.bitmap.recalc_view()
     
     @on_trait_change('machine.bitmap_color_change_event')
-    def update_bitmap(self):
+    def update_bitmap_colors(self):
         try:
             self.bitmap.compute_image(True)
         except RuntimeError:
