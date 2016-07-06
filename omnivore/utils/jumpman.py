@@ -57,6 +57,15 @@ class JumpmanDrawObject(object):
         hi, low = divmod(addr, 256)
         return hi
 
+    @property
+    def distance(self):
+        """Proportional value to distance from upper left corner, used for
+        sorting
+        """
+        x = int(self.x)  # make sure the math is not done on uint8!
+        y = int(self.y)
+        return x * x + y * y
+
     def __str__(self):
         extra = ""
         if self.trigger_function is not None:
@@ -71,13 +80,16 @@ class JumpmanDrawObject(object):
         return "%s %s x=%x y=%x dx=%d dy=%d count=%d%s" % (self.name, addr, self.x, self.y, self.dx, self.dy, self.count, extra)
 
     def __eq__(self, other):
-        if (self.x, self.y, self.count, self.dx, self.dy, self.trigger_function) == (other.x, other.y, other.count, other.dx, other.dy, other.trigger_function):
-            for sp, op in zip(self.trigger_painting, other.trigger_painting):
-                if sp == op:  # have to use == rather than != because __neq__ isn't defined
-                    continue
-                else:
-                    return False
-            return True
+        try:
+            if (self.x, self.y, self.count, self.dx, self.dy, self.trigger_function) == (other.x, other.y, other.count, other.dx, other.dy, other.trigger_function):
+                for sp, op in zip(self.trigger_painting, other.trigger_painting):
+                    if sp == op:  # have to use == rather than != because __neq__ isn't defined
+                        continue
+                    else:
+                        return False
+                return True
+        except AttributeError:
+            pass
         return False
 
     def update_table(self, state):
@@ -178,6 +190,10 @@ class LevelDef(object):
         self.downrope_positions = set()
         self.peanuts = set()
         self.pick_dict = dict()
+
+    @property
+    def sorted_peanuts(self):
+        return sorted(self.peanuts, key=lambda a:a.distance)
 
     def add_ladder(self, obj):
         self.ladder_positions.add(obj.x + 0x30)
