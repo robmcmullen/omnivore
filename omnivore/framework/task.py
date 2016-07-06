@@ -105,7 +105,7 @@ class FrameworkTask(Task):
         return [ SToolBar(self.get_groups("Tool", "File", "NewGroup", "OpenGroup", "SaveGroup"),
                           self.get_groups("Tool", "Edit", "UndoGroup", "CopyPasteGroup", "SelectGroup", "FindGroup"),
                           self.get_groups("Tool", "View", "ViewZoomGroup", "ViewChangeGroup", "ViewConfigGroup"),
-                          show_tool_names=False),
+                          show_tool_names=False, id="%s:ToolBar" % self.id),
                  ]
 
     def _status_bar_default(self):

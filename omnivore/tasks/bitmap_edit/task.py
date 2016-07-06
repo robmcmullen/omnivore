@@ -65,7 +65,7 @@ class BitmapEditTask(HexEditTask):
 
     def _tool_bars_default(self):
         toolbars = []
-        toolbars.append(get_toolbar_group("Modes", BitmapEditor.valid_mouse_modes))
+        toolbars.append(get_toolbar_group("%s:Modes" % self.id, BitmapEditor.valid_mouse_modes))
         toolbars.extend(HexEditTask._tool_bars_default(self))
         return toolbars
 
