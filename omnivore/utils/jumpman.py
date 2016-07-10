@@ -503,14 +503,20 @@ class JumpmanLevelBuilder(object):
         return self.draw_objects(screen, self.objects, segment, pick_buffer)
 
     def find_equivalent(self, old_objects):
-        """ Find the equivalent objects in the current list. JumpmanDrawObjects
-        will get regenerated after each call to parse_objects, so they will get
-        new object IDs. The select UI in JumpmanEditor keeps track of objects,
-        but after the call to parse_objects they won't match object IDs. This
-        function compares each of the specified objects in the argument list to
+        """ Find the equivalent object (or objects if given a list).
+
+        JumpmanDrawObjects get regenerated after each call to parse_objects, so
+        they will get new object IDs. The select UI in JumpmanEditor keeps
+        track of objects, but after the call to parse_objects they won't match
+        object IDs. This function compares each objects in the argument list to
         the newly created objects to find equivalents that can be highlighted
         in the UI.
         """
+        if isinstance(old_objects, JumpmanDrawObject):
+            old_objects = [old_objects]
+            single = True
+        else:
+            single = False
         found = []
         for old in old_objects:
             for obj in self.objects:
@@ -519,7 +525,13 @@ class JumpmanLevelBuilder(object):
                     obj.orig_y = obj.y
                     found.append(obj)
                     break
-        return found
+        if single:
+            if found:
+                return found[0]
+            else:
+                return None
+        else:
+            return found
 
     def draw_objects(self, screen, objects, current_segment=None, pick_buffer=None, highlight=[], state=None):
         if state is None:
