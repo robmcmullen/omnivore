@@ -44,7 +44,7 @@ class TriggerList(wx.ListBox):
         state = self.editor.bitmap.screen_state
         if state is not None:
             for peanut in state.sorted_peanuts:
-                items.append(str(peanut))
+                items.append(peanut.trigger_str)
                 triggers.append(peanut)
                 if peanut == selected:
                     selected_index = index

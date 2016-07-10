@@ -66,6 +66,17 @@ class JumpmanDrawObject(object):
         y = int(self.y)
         return x * x + y * y
 
+    @property
+    def trigger_str(self):
+        n = len(self.trigger_painting)
+        if n > 0:
+            paint = ": %d painted object" % n
+            if n > 1:
+                paint += "s"
+        else:
+            paint = ""
+        return "x=%d y=%d%s" % (self.x, self.y, paint)
+
     def __str__(self):
         extra = ""
         if self.trigger_function is not None:
