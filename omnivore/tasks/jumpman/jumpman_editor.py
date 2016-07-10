@@ -562,7 +562,7 @@ class JumpmanLevelView(MainBitmapScroller):
 
     def set_trigger_root(self, root):
         if root is not None:
-            root = self.level_builder.find_equivalent([root])[0]
+            root = self.level_builder.find_equivalent(root)
         self.trigger_root = root
         self.last_commands = None
 
@@ -621,12 +621,24 @@ class JumpmanLevelView(MainBitmapScroller):
         self.mouse_mode.draw_overlay(bitimage)
         return bitimage
 
+    def get_save_location(self):
+        if self.trigger_root is not None:
+            equiv = self.level_builder.find_equivalent(self.trigger_root)
+            parent = equiv.trigger_painting
+        else:
+            parent = None
+        return parent
+
     def delete_objects(self, objects):
-        self.level_builder.delete_objects(objects)
+        save_location = self.get_save_location()
+        self.level_builder.delete_objects(objects, save_location)
         self.save_changes()
 
     def save_objects(self, objects):
-        self.level_builder.add_objects(objects)
+        save_location = self.get_save_location()
+        self.level_builder.add_objects(objects, save_location)
+        print save_location, id(save_location)
+        print self.trigger_root, id(self.trigger_root), id(self.trigger_root.trigger_painting)
         self.save_changes()
 
     def save_changes(self):
@@ -644,6 +656,17 @@ class JumpmanLevelView(MainBitmapScroller):
         data = np.hstack([ropeladder_data, pdata, hdata, level_data])
         cmd = SetValueCommand(source, ranges, data)
         self.editor.process_command(cmd)
+
+        # Extra help needed when trigger root is active
+        if self.trigger_root is not None:
+            # always need to find current pointer to trigger root because
+            # rebuild level causes the objects to be regenerated
+            self.trigger_root = self.level_builder.find_equivalent(self.trigger_root)
+            # force update of trigger painting list
+            self.editor.trigger_list.recalc_view()
+            # force refresh of screen
+            self.last_commands = None
+            self.refresh_view()
     
     # Segment saver interface for menu item display
     export_data_name = "Jumpman Level Tester ATR"

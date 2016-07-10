@@ -97,7 +97,67 @@ class TestJumpmanScreen(object):
             self.builder.add_objects(objects, c)
             print "\n".join([str(a) for a in c])
 
-            d2, haddr2, rl = self.builder.create_level_definition(addr, 0, 6, c)
+            d2, haddr2, rl, num_p = self.builder.create_level_definition(addr, 0, 6, c)
+            print d2[0:haddr2 - addr]
+            print d2[haddr2 - addr:]
+            print rl
+            c2 = self.builder.parse_objects(d2)
+            self.builder.parse_harvest_table(d2, addr, haddr2, c2)
+            print "\n".join([str(a) for a in c2])
+            for a1, a2 in zip(c, c2):
+                print a1 == a2
+                print " 1)", a1
+                print " 2)", a2
+                if not a1 == a2:
+                    for h1, h2 in zip(a1.trigger_painting, a2.trigger_painting):
+                        print "  ", h1 == h2
+                        print "  h1: %s" % h1
+                        print "  h2: %s" % h2
+                print
+            print c == c2
+
+class TestJumpmanAdd(object):
+    def setup(self):
+        self.builder = JumpmanLevelBuilder(None)
+
+    def test_simple(self):
+        level_defs = [
+            (
+                "\xfe\x04\x00\xfc\x00@\xfd\x04\t\x05\xfc\x83@\xfd\x04\x06\x01\xfd\x44\x46\x01\xff",
+                "\x22\x04\x06K(T-\xff",
+                [(0x2d54, "\xfc\x16@\xfd\x18\n\x01\xfd\x1c\x0b\x01\xfd \n\x01\xff"),
+                ],
+                [
+                Girder(-1, 50, 20, 5, 4, 0),
+                Ladder(-1, 60, 20, 5, 0, 4),
+                UpRope(-1, 70, 20, 5, 0, 4),
+                DownRope(-1, 80, 20, 5, 0, 4),
+                ],
+            ),
+
+        ]
+
+        for obj_data, harvest_data, paint_data, objects in level_defs:
+            d = np.zeros((512,), dtype=np.uint8)
+            addr = 0x2c00
+            haddr = addr + len(obj_data)
+            t = np.fromstring(obj_data + harvest_data, dtype=np.uint8)
+            d[0:len(t)] = t
+            for a, t in paint_data:
+                t = np.fromstring(t, dtype=np.uint8)
+                d[a - addr:a - addr + len(t)] = t
+            c = self.builder.parse_objects(d)
+            print "\n".join([str(a) for a in c])
+            #state = self.builder.draw_objects(self.screen, c)
+            self.builder.parse_harvest_table(d, addr, haddr, c)
+            for a in c:
+                print a
+                if a.single and not a.trigger_painting:
+                    self.builder.add_objects(objects, a.trigger_painting)
+            #self.builder.add_objects(objects, c)
+            print "\n".join([str(a) for a in c])
+
+            d2, haddr2, rl, num_p = self.builder.create_level_definition(addr, 0, 6, c)
             print d2[0:haddr2 - addr]
             print d2[haddr2 - addr:]
             print rl
@@ -117,6 +177,6 @@ class TestJumpmanScreen(object):
             print c == c2
 
 if __name__ == "__main__":
-    t = TestJumpmanScreen()
+    t = TestJumpmanAdd()
     t.setup()
     t.test_simple()
