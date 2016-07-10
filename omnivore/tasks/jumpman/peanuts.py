@@ -66,7 +66,7 @@ class TriggerList(wx.ListBox):
             selected = self.GetSelection()
             if selected != item:
                 e = self.editor
-                wx.CallAfter(e.set_trigger_view, self.triggers[selected])
+                wx.CallAfter(e.set_trigger_view, self.triggers[item])
         event.Skip()
 
     def on_click(self, event):
