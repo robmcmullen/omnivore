@@ -103,6 +103,14 @@ class JumpmanDrawObject(object):
             pass
         return False
 
+    def equal_except_painting(self, other):
+        try:
+            if (self.x, self.y, self.count, self.dx, self.dy, self.trigger_function) == (other.x, other.y, other.count, other.dx, other.dy, other.trigger_function):
+                return True
+        except AttributeError:
+            pass
+        return False
+
     def update_table(self, state):
         pass
 
@@ -502,7 +510,7 @@ class JumpmanLevelBuilder(object):
         self.parse_harvest_table(segment, segment.start_addr, harvest_addr)
         return self.draw_objects(screen, self.objects, segment, pick_buffer)
 
-    def find_equivalent(self, old_objects):
+    def find_equivalent(self, old_objects, painting_change=False):
         """ Find the equivalent object (or objects if given a list).
 
         JumpmanDrawObjects get regenerated after each call to parse_objects, so
@@ -520,11 +528,18 @@ class JumpmanLevelBuilder(object):
         found = []
         for old in old_objects:
             for obj in self.objects:
-                if old == obj:
-                    obj.orig_x = obj.x
-                    obj.orig_y = obj.y
-                    found.append(obj)
-                    break
+                if painting_change:
+                    if obj.equal_except_painting(old):
+                        obj.orig_x = obj.x
+                        obj.orig_y = obj.y
+                        found.append(obj)
+                        break
+                else:
+                    if old == obj:
+                        obj.orig_x = obj.x
+                        obj.orig_y = obj.y
+                        found.append(obj)
+                        break
         if single:
             if found:
                 return found[0]

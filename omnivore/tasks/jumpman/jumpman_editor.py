@@ -637,8 +637,9 @@ class JumpmanLevelView(MainBitmapScroller):
     def save_objects(self, objects):
         save_location = self.get_save_location()
         self.level_builder.add_objects(objects, save_location)
-        print save_location, id(save_location)
-        print self.trigger_root, id(self.trigger_root), id(self.trigger_root.trigger_painting)
+        if self.trigger_root is not None:
+            print save_location, id(save_location)
+            print self.trigger_root, id(self.trigger_root), id(self.trigger_root.trigger_painting)
         self.save_changes()
 
     def save_changes(self):
@@ -659,14 +660,14 @@ class JumpmanLevelView(MainBitmapScroller):
 
         # Extra help needed when trigger root is active
         if self.trigger_root is not None:
-            # always need to find current pointer to trigger root because
-            # rebuild level causes the objects to be regenerated
-            self.trigger_root = self.level_builder.find_equivalent(self.trigger_root)
-            # force update of trigger painting list
-            self.editor.trigger_list.recalc_view()
             # force refresh of screen
             self.last_commands = None
             self.refresh_view()
+            # force update of trigger painting list. Always need to find
+            # current pointer to trigger root because rebuild level causes the
+            # objects to be regenerated
+            self.trigger_root = self.level_builder.find_equivalent(self.trigger_root, painting_change=True)
+            self.editor.trigger_list.recalc_view()
     
     # Segment saver interface for menu item display
     export_data_name = "Jumpman Level Tester ATR"
