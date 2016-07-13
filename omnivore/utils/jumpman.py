@@ -120,15 +120,15 @@ class JumpmanDrawObject(object):
 class JumpmanRespawn(JumpmanDrawObject):
     name = "jumpman"
     drawing_codes = np.asarray([
-        8, 0, -5,  4, 4, 0, 0, 0, 0, 4, 4,
-        8, 0, -4,  0, 4, 4, 0, 0, 4, 4, 0,
-        8, 0, -3,  0, 0, 4, 4, 4, 4, 0, 0,
-        8, 0, -2,  0, 0, 4, 4, 4, 4, 0, 0,
-        8, 0, -1,  0, 4, 4, 0, 0, 4, 4, 0,
-        8, 0,  0,  4, 4, 0, 0, 0, 0, 4, 4,
+        6, 0, -5,  4, 4, 4, 4, 4, 4,
+        6, 0, -4,  4, 0, 0, 0, 0, 4,
+        6, 0, -3,  4, 0, 0, 0, 0, 4,
+        6, 0, -2,  4, 0, 0, 0, 0, 4,
+        6, 0, -1,  4, 0, 0, 0, 0, 4,
+        6, 0,  0,  4, 4, 4, 4, 4, 4,
         0xff
     ], dtype=np.uint8)
-    default_dx = 8
+    default_dx = 6
     default_dy = 0
     valid_x_mask = 0xfe  # Even pixels only
 
