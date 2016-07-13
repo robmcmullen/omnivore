@@ -224,8 +224,10 @@ class LevelDef(object):
     def add_downrope(self, obj):
         self.downrope_positions.add(obj.x + 0x2e)
 
-    def check_object(self, obj):
+    def add_pick(self, obj):
         self.pick_dict[obj.pick_index] = obj
+
+    def check_object(self, obj):
         obj.update_table(self)
         if obj.single:
             self.peanuts.add(obj)
@@ -402,6 +404,7 @@ class ScreenState(LevelDef):
 
         x = obj.x
         y = obj.y
+        self.add_pick(obj)
         has_trigger_function = bool(obj.trigger_function)
         for i in range(obj.count):
             for n, xoffset, yoffset, pixels in lines:
@@ -483,6 +486,7 @@ class JumpmanLevelBuilder(object):
     def __init__(self, segments):
         self.segments = segments
         self.objects = []
+        self.pick_index = 0
 
     def parse_objects(self, data):
         x = y = dx = dy = count = 0
@@ -494,12 +498,12 @@ class JumpmanLevelBuilder(object):
         while index < last:
             c = data[index]
             log.debug("index=%d, command=%x" % (index, c))
-            pick_index = index
+            self.pick_index += 1
             index += 1
             command = None
             if c < 0xfb:
                 if addr is not None:
-                    obj = self.get_object(pick_index, x, y, c, dx, dy, addr)
+                    obj = self.get_object(self.pick_index, x, y, c, dx, dy, addr)
                     objects.append(obj)
             elif c >= 0xfc and c <= 0xfe:
                 arg1 = data[index]
@@ -576,10 +580,10 @@ class JumpmanLevelBuilder(object):
             except KeyError:
                 log.error("Invalid harvest table entry %s" % (str(entry)))
 
-    def parse_and_draw(self, screen, segment, level_addr, harvest_addr, pick_buffer=None):
+    def parse_level_data(self, segment, level_addr, harvest_addr):
+        self.pick_index = 0
         self.objects = self.parse_objects(segment[level_addr - segment.start_addr:])
         self.parse_harvest_table(segment, segment.start_addr, harvest_addr)
-        return self.draw_objects(screen, self.objects, segment, pick_buffer)
 
     def find_equivalent(self, old_objects):
         """ Find the equivalent objects
@@ -620,7 +624,9 @@ class JumpmanLevelBuilder(object):
                 break
         return found
 
-    def draw_objects(self, screen, objects, current_segment=None, pick_buffer=None, highlight=[], state=None):
+    def draw_objects(self, screen, objects=None, current_segment=None, pick_buffer=None, highlight=[], state=None):
+        if objects is None:
+            objects = self.objects
         if state is None:
             state = ScreenState(self.segments, current_segment, screen, pick_buffer)
         highlight = set(highlight)

@@ -144,14 +144,8 @@ class AnticDSelectMode(JumpmanSelectMode):
             return
 
         e = self.canvas.editor
-        level_builder = self.canvas.level_builder
-        playfield = e.get_playfield_segment()
-        e.clear_playfield(playfield)
-        e.pick_buffer[:] = -1
-        state = level_builder.draw_objects(playfield, level_builder.objects, e.segment, highlight=self.objects, pick_buffer=e.pick_buffer)
-        for obj in self.objects:
-            level_builder.draw_objects(playfield, obj.trigger_painting, e.segment, highlight=[], pick_buffer=e.pick_buffer, state=state)
-        self.override_state = state
+        playfield = e.get_playfield_segment()  # use new, temporary playfield
+        _, _, self.override_state = self.canvas.redraw_current(playfield, self.objects)
         bitimage = self.canvas.get_rendered_image(playfield)
         return bitimage
 
@@ -159,7 +153,7 @@ class AnticDSelectMode(JumpmanSelectMode):
         if self.override_state:
             state = self.override_state
         else:
-            state = self.canvas.screen_state
+            state = self.canvas.get_screen_state()
         return state.get_picked(pick)
 
     def highlight_pick(self, evt):
@@ -228,7 +222,17 @@ class AnticDSelectMode(JumpmanSelectMode):
 
     def process_mouse_motion_up(self, evt):
         self.display_coords(evt)
-    
+
+    def check_trigger_pick(self, evt):
+        index, x, y, pick = self.get_xy(evt)
+        if pick >= 0:
+            obj = self.get_picked(pick)
+            if obj.single:
+                self.canvas.editor.set_trigger_view(obj)
+
+    def process_left_dclick(self, evt):
+        self.check_trigger_pick(evt)
+
     def delete_key_pressed(self):
         self.delete_objects()
 
@@ -542,6 +546,7 @@ class JumpmanLevelView(MainBitmapScroller):
         self.cached_screen = None
         self.last_commands = None
         self.screen_state = None
+        self.trigger_state = None
 
     def set_mouse_mode(self, handler):
         if hasattr(self, 'mouse_mode'):
@@ -565,6 +570,39 @@ class JumpmanLevelView(MainBitmapScroller):
             root = self.level_builder.find_equivalent_peanut(root)
         self.trigger_root = root
         self.last_commands = None
+        self.trigger_state = None
+
+    def get_screen_state(self):
+        if self.trigger_state is not None:
+            return self.trigger_state
+        return self.screen_state
+
+    def redraw_current(self, screen, overlay_objects=[]):
+        e = self.editor
+        e.clear_playfield(screen)
+        self.pick_buffer[:] = -1
+        main_state = self.level_builder.draw_objects(screen, None, e.segment, highlight=overlay_objects, pick_buffer=self.pick_buffer)
+        log.debug("draw objects: %s" % self.level_builder.objects)
+        if main_state.missing_object_codes:
+            log.error("missing draw codes: %s" % (sorted(main_state.missing_object_codes)))
+        if self.trigger_root is not None:
+            screen.style[:] = 0
+            self.level_builder.fade_screen(screen)
+            root = [self.trigger_root]
+            self.level_builder.draw_objects(screen, root, e.segment, highlight=root, pick_buffer=self.pick_buffer)
+
+            # replace screen state so that the only pickable objects are
+            # those in the triggered layer
+            self.pick_buffer[:] = -1
+            trigger_state = self.level_builder.draw_objects(screen, self.trigger_root.trigger_painting, e.segment, highlight=overlay_objects, pick_buffer=self.pick_buffer)
+            active_state = trigger_state
+        else:
+            active_state = main_state
+            trigger_state = None
+        for obj in overlay_objects:
+            print "overlay object", obj
+            self.level_builder.draw_objects(screen, obj.trigger_painting, e.segment, highlight=[], pick_buffer=self.pick_buffer, state=active_state)
+        return main_state, trigger_state, active_state
 
     def compute_image(self, force=False):
         if self.level_builder is None:
@@ -577,19 +615,8 @@ class JumpmanLevelView(MainBitmapScroller):
         if np.array_equal(command_checksum, self.last_commands):
             self.segment[:] = self.cached_screen
         else:
-            self.clear_screen()
-            self.screen_state = self.level_builder.parse_and_draw(self.segment, source, level_addr, harvest_addr, pick_buffer=self.pick_buffer)
-            if self.trigger_root is not None:
-                self.segment.style[:] = 0
-                self.level_builder.fade_screen(self.segment)
-                self.pick_buffer[:] = -1  # only allow picking of triggered objects
-                root = [self.trigger_root]
-                state = self.level_builder.draw_objects(self.segment, root, source, highlight=root, pick_buffer=self.pick_buffer)
-                self.level_builder.draw_objects(self.segment, self.trigger_root.trigger_painting, source, pick_buffer=self.pick_buffer, state=state)
-
-            log.debug("draw objects: %s" % self.level_builder.objects)
-            if self.screen_state.missing_object_codes:
-                log.error("missing draw codes: %s" % (sorted(self.screen_state.missing_object_codes)))
+            self.level_builder.parse_level_data(source, level_addr, harvest_addr)
+            self.screen_state, self.trigger_state, _ = self.redraw_current(self.segment)
             self.cached_screen = self.segment[:].copy()
             self.last_commands = command_checksum.copy()
 
