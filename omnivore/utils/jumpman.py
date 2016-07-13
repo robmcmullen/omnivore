@@ -26,8 +26,8 @@ class JumpmanDrawObject(object):
         self.count = count
         self.addr = self.default_addr if addr is None else addr
         self.pick_index = pick_index
-        self.dx = self.x_spacing if dx is None else dx
-        self.dy = self.y_spacing if dy is None else dy
+        self.dx = self.default_dx if dx is None else dx
+        self.dy = self.default_dy if dy is None else dy
         self.trigger_function = None
         self.trigger_painting = []
 
@@ -177,6 +177,10 @@ class Peanut(JumpmanDrawObject):
     sort_order = 40
     drawing_codes = np.fromstring("\x04\x00\x00\x00\x03\x03\x00\x04\x00\x01\x03\x00\x00\x03\x04\x00\x02\x00\x03\x03\x00\xff", dtype=np.uint8)
 
+    def harvest_entry(self, hx, hy):
+        # default to empty painting table list at 0x284c
+        return [self.harvest_checksum(hx, hy), self.x, self.y, self.trigger_function_low, self.trigger_function_hi, 0x4c, 0x28]
+
 class EraseGirder(JumpmanDrawObject):
     name = "girder_erase"
     default_addr = 0x4016
@@ -229,48 +233,115 @@ class LevelDef(object):
     def get_picked(self, pick_index):
         return self.pick_dict[pick_index]
 
-    def add_level_data(self, commands):
-        self.level_data.extend(commands)
-
-    def add_harvest_entry(self, h, sublevdef):
-        self.harvest_entries.append((h, sublevdef))
-
-    def process_harvest(self):
-        for h, sublevdef in self.harvest_entries:
-            sublevdef.process_harvest()
-            self.painting_entries.append((h, sublevdef.level_data))
-            self.ladder_positions.update(sublevdef.ladder_positions)
-            self.downrope_positions.update(sublevdef.downrope_positions)
-            self.peanuts.update(sublevdef.peanuts)
-
-        painting_data = []
-        harvest_data = []
-        painting_index = len(self.level_data)
-        for h, painting in self.painting_entries:
-            if len(painting) > 1:
-                addr = self.origin + painting_index
-                painting_data.extend(painting)
-                painting_index += len(painting)
+    def group_objects(self, objects):
+        groups = []
+        current = []
+        for obj in objects:
+            if not current or current[-1].__class__ == obj.__class__:
+                current.append(obj)
             else:
-                addr = 0x284c
-            hi, low = divmod(addr, 256)
-            h.extend([low, hi])
-            harvest_data.extend(h)
-        harvest_data.append(0xff)
+                groups.append(current)
+                current = [obj]
+        groups.append(current)
+        return groups
 
-        # print "level:", self.level_data
-        # print "painting:", painting_data
-        # print "harvest:", harvest_data
+    def get_painting_table(self, objects):
+        """Create bytes that define the level.
 
-        data = self.level_data + painting_data + harvest_data
+        Orders the objects into groups (sorted by the sort_order) and returns a
+        list of bytes terminated with 0xff
+        """
+        groups = self.group_objects(objects)
+        dx = dy = 999999
+        level_data = []
+        if groups[0]:
+            for group in groups:
+                obj = group[0]
+                level_data.extend([0xfc, obj.addr_low, obj.addr_hi])
+                for obj in group:
+                    if obj.dx != dx or obj.dy != dy:
+                        dx, dy = obj.dx, obj.dy
+                        level_data.extend([0xfe, dx, dy])
+                    level_data.extend([0xfd, obj.x, obj.y, obj.count])
+        level_data.append(0xff)
+        return level_data
 
+    def get_harvest_entry(self, obj, hx, hy):
+        entries = []
+        self.check_object(obj)
+        harvest_entry = obj.harvest_entry(hx, hy)
+        if obj.trigger_painting:
+            painting_data = self.get_painting_table(obj.trigger_painting)
+            entries.append([harvest_entry, painting_data])
+            for sub_obj in obj.trigger_painting:
+                self.check_object(sub_obj)
+                if sub_obj.single:
+                    entries.extend(self.get_harvest_entry(sub_obj, hx, hy))
+        else:
+            entries.append([harvest_entry, []])
+        return entries
+
+    def get_ropeladder_data(self):
         ropeladder_data = np.zeros([18], dtype=np.uint8)
         d = sorted(self.ladder_positions)[0:12]
         ropeladder_data[0:len(d)] = d
         d = sorted(self.downrope_positions)[0:6]
         ropeladder_data[12:12 + len(d)] = d
+        return ropeladder_data
 
-        return np.asarray(data, dtype=np.uint8), painting_index, ropeladder_data, len(self.peanuts)
+    def process_objects(self, objects, hx, hy):
+        main_level_data = self.get_painting_table(objects)
+
+        # process any object characteristics
+        trigger_objects = []
+        for obj in objects:
+            self.check_object(obj)
+            if obj.single:
+                trigger_objects.append(obj)
+
+        # At this point, the main layer level definition is complete. We
+        # now need to create the harvest table entries and painting table
+        # entries from the peanuts that have triggers
+        harvest_entries = []
+        for obj in trigger_objects:
+            h = self.get_harvest_entry(obj, hx, hy)
+            print "harvest entry for", obj, h
+            harvest_entries.extend(h)
+
+        # Step 1: gather harvest table and painting table entries to determine
+        # total length of harvest table so that addresses can be calculated.
+        level_data = list(main_level_data)
+        harvest_data = []
+        painting_data = []
+        harvest_index = len(level_data)
+
+        # Step 2: start of painting table is after all harvest table entries,
+        # plus an additional 0xff byte marking the end of the table
+        painting_index = harvest_index + (len(harvest_entries) * 7) + 1
+
+        # Step 3: create the harvest table and modify each entry to point to
+        # the painting table entries
+        for harvest, painting in harvest_entries:
+            # painting table entries consisting of only 0xff will be ignored,
+            # pointing to the default 0x284c
+            print "processing", harvest, painting
+            if len(painting) > 1:
+                addr = self.origin + painting_index
+                hi, low = divmod(addr, 256)
+                harvest[5:7] = [low, hi]
+                painting_data.extend(painting)
+                painting_index += len(painting)
+            harvest_data.extend(harvest)
+        harvest_data.append(0xff)
+
+        print "level data", level_data
+        print "harvest table", harvest_data
+        print "painting table", painting_data
+
+        level_data.extend(harvest_data)
+        level_data.extend(painting_data)
+
+        return np.asarray(level_data, dtype=np.uint8), self.origin + harvest_index, self.get_ropeladder_data(), len(self.peanuts)
 
 
 class ScreenState(LevelDef):
@@ -510,8 +581,8 @@ class JumpmanLevelBuilder(object):
         self.parse_harvest_table(segment, segment.start_addr, harvest_addr)
         return self.draw_objects(screen, self.objects, segment, pick_buffer)
 
-    def find_equivalent(self, old_objects, painting_change=False):
-        """ Find the equivalent object (or objects if given a list).
+    def find_equivalent(self, old_objects):
+        """ Find the equivalent objects
 
         JumpmanDrawObjects get regenerated after each call to parse_objects, so
         they will get new object IDs. The select UI in JumpmanEditor keeps
@@ -520,33 +591,34 @@ class JumpmanLevelBuilder(object):
         the newly created objects to find equivalents that can be highlighted
         in the UI.
         """
-        if isinstance(old_objects, JumpmanDrawObject):
-            old_objects = [old_objects]
-            single = True
-        else:
-            single = False
         found = []
         for old in old_objects:
             for obj in self.objects:
-                if painting_change:
-                    if obj.equal_except_painting(old):
-                        obj.orig_x = obj.x
-                        obj.orig_y = obj.y
-                        found.append(obj)
-                        break
-                else:
-                    if old == obj:
-                        obj.orig_x = obj.x
-                        obj.orig_y = obj.y
-                        found.append(obj)
-                        break
-        if single:
-            if found:
-                return found[0]
-            else:
-                return None
-        else:
-            return found
+                if old == obj:
+                    obj.orig_x = obj.x
+                    obj.orig_y = obj.y
+                    found.append(obj)
+                    break
+        return found
+
+    def find_equivalent_peanut(self, old, objects=None):
+        """ Find the equivalent peanut object.
+
+        (see find_equivalent for more info on why this is necessary)
+        """
+        found = None
+        if objects is None:
+            objects = self.objects
+        for obj in objects:
+            if obj.equal_except_painting(old):
+                obj.orig_x = obj.x
+                obj.orig_y = obj.y
+                found = obj
+                break
+            found = self.find_equivalent_peanut(old, obj.trigger_painting)
+            if found is not None:
+                break
+        return found
 
     def draw_objects(self, screen, objects, current_segment=None, pick_buffer=None, highlight=[], state=None):
         if state is None:
@@ -590,46 +662,8 @@ class JumpmanLevelBuilder(object):
                 log.error("Attempting to remove object not in list: %s" % obj)
         objects.sort(key=lambda a:a.sort_order)
 
-    def group_objects(self, objects):
-        groups = []
-        current = []
-        for obj in objects:
-            if not current or current[-1].__class__ == obj.__class__:
-                current.append(obj)
-            else:
-                groups.append(current)
-                current = [obj]
-        groups.append(current)
-        return groups
-
-    def create_level_definition(self, level_data_origin, hx, hy, objects=None, levdef=None):
+    def create_level_definition(self, level_data_origin, hx, hy, objects=None):
         if objects is None:
             objects = self.objects
-        groups = self.group_objects(objects)
-        dx = dy = 999999
-        if levdef is None:
-            levdef = LevelDef(level_data_origin)
-        if groups[0]:
-            for group in groups:
-                obj = group[0]
-                levdef.add_level_data([0xfc, obj.addr_low, obj.addr_hi])
-                for obj in group:
-                    if obj.dx != dx or obj.dy != dy:
-                        dx, dy = obj.dx, obj.dy
-                        levdef.add_level_data([0xfe, dx, dy])
-                    levdef.add_level_data([0xfd, obj.x, obj.y, obj.count])
-                    levdef.check_object(obj)
-                    if obj.single:
-                        # create temporary harvest table entry; can't create full
-                        # one until length of level data is known since it's stored
-                        # right after that
-                        h = [obj.harvest_checksum(hx, hy), obj.x, obj.y, obj.trigger_function_low, obj.trigger_function_hi]
-                        sublevdef = LevelDef(level_data_origin)
-                        self.create_level_definition(level_data_origin, hx, hy, obj.trigger_painting, sublevdef)
-                        levdef.add_harvest_entry(h, sublevdef)
-            levdef.add_level_data([0xff])
-
-        # Create harvest table and painting tables now that the length of
-        # everything is known
-        level_data, harvest_index, ropeladder_data, num_peanuts = levdef.process_harvest()
-        return level_data, level_data_origin + harvest_index, ropeladder_data, num_peanuts
+        levdef = LevelDef(level_data_origin)
+        return levdef.process_objects(objects, hx, hy)

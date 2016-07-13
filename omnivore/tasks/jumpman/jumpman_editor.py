@@ -562,7 +562,7 @@ class JumpmanLevelView(MainBitmapScroller):
 
     def set_trigger_root(self, root):
         if root is not None:
-            root = self.level_builder.find_equivalent(root)
+            root = self.level_builder.find_equivalent_peanut(root)
         self.trigger_root = root
         self.last_commands = None
 
@@ -623,7 +623,7 @@ class JumpmanLevelView(MainBitmapScroller):
 
     def get_save_location(self):
         if self.trigger_root is not None:
-            equiv = self.level_builder.find_equivalent(self.trigger_root)
+            equiv = self.level_builder.find_equivalent_peanut(self.trigger_root)
             parent = equiv.trigger_painting
         else:
             parent = None
@@ -666,7 +666,7 @@ class JumpmanLevelView(MainBitmapScroller):
             # force update of trigger painting list. Always need to find
             # current pointer to trigger root because rebuild level causes the
             # objects to be regenerated
-            self.trigger_root = self.level_builder.find_equivalent(self.trigger_root, painting_change=True)
+            self.trigger_root = self.level_builder.find_equivalent_peanut(self.trigger_root)
             self.editor.trigger_list.recalc_view()
     
     # Segment saver interface for menu item display
@@ -1021,13 +1021,6 @@ class JumpmanEditor(BitmapEditor):
 
     def set_trigger_view(self, trigger_root):
         mouse_mode = self.bitmap.mouse_mode
-        # if not mouse_mode.can_paste:
-        #     self.update_mouse_mode(AnticDSelectMode)
-        # if trigger_root:
-        #     trigger_root = self.bitmap.level_builder.find_equivalent([trigger_root])[0]
-        #     mouse_mode.add_to_selection(trigger_root, False)
-        # else:
-        #     mouse_mode.objects = []
         if mouse_mode.can_paste:
             mouse_mode.objects = []
         self.bitmap.set_trigger_root(trigger_root)

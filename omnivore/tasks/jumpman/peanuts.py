@@ -36,6 +36,17 @@ class TriggerList(wx.ListBox):
             else:
                 log.debug("skipping refresh of hidden %s" % self)
    
+    def parse_peanuts(self, peanuts, items, triggers, indent=""):
+        for peanut in peanuts:
+            items.append(indent + peanut.trigger_str)
+            triggers.append(peanut)
+            children = []
+            for p in peanut.trigger_painting:
+                if p.single:
+                    children.append(p)
+            if children:
+                self.parse_peanuts(children, items, triggers, indent + "    ")
+
     def set_peanuts(self, selected=None):
         items = ["Main Level"]
         triggers = [None]
@@ -43,12 +54,10 @@ class TriggerList(wx.ListBox):
         selected_index = 0
         state = self.editor.bitmap.screen_state
         if state is not None:
-            for peanut in state.sorted_peanuts:
-                items.append(peanut.trigger_str)
-                triggers.append(peanut)
-                if peanut == selected:
+            self.parse_peanuts(state.sorted_peanuts, items, triggers)
+            for index, trigger in enumerate(triggers):
+                if trigger == selected:
                     selected_index = index
-                index += 1
         if len(items) != self.GetCount():
             self.SetItems(items)
         else:
