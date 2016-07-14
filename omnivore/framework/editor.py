@@ -546,6 +546,12 @@ class FrameworkEditor(Editor):
         """
         pass
     
+    def rebuild_display_objects(self):
+        """Hook for subclasses to get notified when the document is changed and
+        to rebuild any objects necessary for display before the call to
+        refresh_panes."""
+        pass
+    
     def invalidate_search(self):
         """Hook for subclasses to get notified if the document is changed and
         any search params should be cleared."""
@@ -736,6 +742,7 @@ class FrameworkEditor(Editor):
         self.document.change_count += 1
         self.invalidate_search()
         self.compare_to_baseline()
+        self.rebuild_display_objects()
         self.refresh_panes()
 
     #### wx hacks
