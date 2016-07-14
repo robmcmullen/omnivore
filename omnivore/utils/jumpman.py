@@ -88,7 +88,7 @@ class JumpmanDrawObject(object):
             addr = "BUILTIN"
         else:
             addr = "%04x" % self.addr
-        return "%s %s x=%x y=%x dx=%d dy=%d count=%d%s" % (self.name, addr, self.x, self.y, self.dx, self.dy, self.count, extra)
+        return "%s %x %s x=%x y=%x dx=%d dy=%d count=%d%s" % (self.name, id(self), addr, self.x, self.y, self.dx, self.dy, self.count, extra)
 
     def __eq__(self, other):
         try:
@@ -504,6 +504,7 @@ class JumpmanLevelBuilder(object):
             if c < 0xfb:
                 if addr is not None:
                     obj = self.get_object(self.pick_index, x, y, c, dx, dy, addr)
+                    print "parse_objects: new", obj
                     objects.append(obj)
             elif c >= 0xfc and c <= 0xfe:
                 arg1 = data[index]
@@ -581,11 +582,25 @@ class JumpmanLevelBuilder(object):
                 log.error("Invalid harvest table entry %s" % (str(entry)))
 
     def parse_level_data(self, segment, level_addr, harvest_addr):
+        print "parse level data", segment
         self.pick_index = 0
         self.objects = self.parse_objects(segment[level_addr - segment.start_addr:])
         self.parse_harvest_table(segment, segment.start_addr, harvest_addr)
 
-    def find_equivalent(self, old_objects):
+    def find_equivalent_object(self, old, objects=None):
+        found = None
+        if objects is None:
+            objects = self.objects
+        for obj in objects:
+            if obj.pick_index == old.pick_index:
+                found = obj
+                break
+            found = self.find_equivalent_object(old, obj.trigger_painting)
+            if found is not None:
+                break
+        return found
+
+    def find_equivalent(self, old_objects, objects=None):
         """ Find the equivalent objects
 
         JumpmanDrawObjects get regenerated after each call to parse_objects, so
@@ -596,13 +611,17 @@ class JumpmanLevelBuilder(object):
         in the UI.
         """
         found = []
+        if objects is None:
+            objects = self.objects
         for old in old_objects:
-            for obj in self.objects:
+            for obj in objects:
                 if old == obj:
                     obj.orig_x = obj.x
                     obj.orig_y = obj.y
                     found.append(obj)
                     break
+                if obj.single:
+                    found.extend(self.find_equivalent(old_objects, obj.trigger_painting))
         return found
 
     def find_equivalent_peanut(self, old, objects=None):

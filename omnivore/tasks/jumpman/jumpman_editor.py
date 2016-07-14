@@ -192,6 +192,8 @@ class AnticDSelectMode(JumpmanSelectMode):
                 return
             self.check_tolerance = False
             for obj in self.objects:
+                print "moving", obj
+                print " equiv", self.canvas.level_builder.find_equivalent_object(obj)
                 _, obj.x = divmod(obj.orig_x + dx, 160)
                 obj.x &= obj.valid_x_mask
                 obj.y = obj.orig_y + dy
@@ -544,7 +546,7 @@ class JumpmanLevelView(MainBitmapScroller):
         self.level_builder = None
         self.trigger_root = None
         self.cached_screen = None
-        self.last_commands = None
+        self.force_refresh = True
         self.screen_state = None
         self.trigger_state = None
 
@@ -558,8 +560,15 @@ class JumpmanLevelView(MainBitmapScroller):
         self.level_builder = JumpmanLevelBuilder(editor.document.user_segments)
         self.trigger_root = None
         self.pick_buffer = editor.pick_buffer
-        self.last_commands = None
+        self.force_refresh = True
+        self.generate_display_objects()
         return editor.screen
+
+    def generate_display_objects(self):
+        source, level_addr, harvest_addr = self.editor.get_level_addrs()
+        index = level_addr - source.start_addr
+        self.level_builder.parse_level_data(source, level_addr, harvest_addr)
+        self.force_refresh = True
 
     def clear_screen(self):
         self.editor.clear_playfield()
@@ -569,7 +578,7 @@ class JumpmanLevelView(MainBitmapScroller):
         if root is not None:
             root = self.level_builder.find_equivalent_peanut(root)
         self.trigger_root = root
-        self.last_commands = None
+        self.force_refresh = True
         self.trigger_state = None
 
     def get_screen_state(self):
@@ -607,24 +616,19 @@ class JumpmanLevelView(MainBitmapScroller):
     def compute_image(self, force=False):
         if self.level_builder is None:
             return
-        source, level_addr, harvest_addr = self.editor.get_level_addrs()
-        index = level_addr - source.start_addr
-        command_checksum = source[index:index + 512]  # representative sample
         if force:
-            self.last_commands = None
-        if np.array_equal(command_checksum, self.last_commands):
-            self.segment[:] = self.cached_screen
-        else:
-            self.level_builder.parse_level_data(source, level_addr, harvest_addr)
+            self.force_refresh = True
+        if self.force_refresh:
             self.screen_state, self.trigger_state, _ = self.redraw_current(self.segment)
             self.cached_screen = self.segment[:].copy()
-            self.last_commands = command_checksum.copy()
-
+            self.force_refresh = False
             self.editor.update_harvest_state()
+        else:
+            self.segment[:] = self.cached_screen
 
     def bad_image(self):
         self.segment[:] = 0
-        self.last_commands = None
+        self.force_refresh = True
         s = self.segment.style.reshape((self.editor.antic_lines, -1))
         s[::2,::2] = comment_bit_mask
         s[1::2,1::2] = comment_bit_mask
@@ -688,7 +692,7 @@ class JumpmanLevelView(MainBitmapScroller):
         # Extra help needed when trigger root is active
         if self.trigger_root is not None:
             # force refresh of screen
-            self.last_commands = None
+            self.force_refresh = True
             self.refresh_view()
             # force update of trigger painting list. Always need to find
             # current pointer to trigger root because rebuild level causes the
@@ -814,6 +818,10 @@ class JumpmanEditor(BitmapEditor):
     @on_trait_change('machine.disassembler_change_event')
     def update_disassembler(self):
         pass
+
+    def rebuild_display_objects(self):
+        print "Rebuilding!"
+        self.bitmap.generate_display_objects()
     
     def reconfigure_panes(self):
         self.hex_edit.recalc_view()
