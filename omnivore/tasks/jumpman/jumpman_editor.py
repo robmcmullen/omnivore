@@ -635,9 +635,6 @@ class JumpmanLevelView(MainBitmapScroller):
         else:
             active_state = main_state
             trigger_state = None
-        for obj in overlay_objects:
-            print "overlay object", obj
-            self.level_builder.draw_objects(screen, obj.trigger_painting, e.segment, highlight=[], pick_buffer=self.pick_buffer, state=active_state)
         return main_state, trigger_state, active_state
 
     def compute_image(self, force=False):
