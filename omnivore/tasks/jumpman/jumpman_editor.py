@@ -575,6 +575,9 @@ class JumpmanLevelView(MainBitmapScroller):
             self.level_builder.parse_level_data(source, level_addr, harvest_addr)
             self.force_refresh = True
             self.valid_level = True
+            if self.trigger_root is not None:
+                self.trigger_root = self.level_builder.find_equivalent_peanut(self.trigger_root)
+                self.editor.trigger_list.recalc_view()
         except RuntimeError:
             self.valid_level = False
 
@@ -695,17 +698,6 @@ class JumpmanLevelView(MainBitmapScroller):
         data = np.hstack([ropeladder_data, pdata, hdata, level_data])
         cmd = SetValueCommand(source, ranges, data)
         self.editor.process_command(cmd)
-
-        # Extra help needed when trigger root is active
-        if self.trigger_root is not None:
-            # force refresh of screen
-            self.force_refresh = True
-            self.refresh_view()
-            # force update of trigger painting list. Always need to find
-            # current pointer to trigger root because rebuild level causes the
-            # objects to be regenerated
-            self.trigger_root = self.level_builder.find_equivalent_peanut(self.trigger_root)
-            self.editor.trigger_list.recalc_view()
     
     # Segment saver interface for menu item display
     export_data_name = "Jumpman Level Tester ATR"
@@ -986,9 +978,11 @@ class JumpmanEditor(BitmapEditor):
         playfield.style[:] = 0
     
     def undo_post_hook(self):
+        self.rebuild_display_objects()
         self.update_mouse_mode()
     
     def redo_post_hook(self):
+        self.rebuild_display_objects()
         self.update_mouse_mode()
 
     ##### Copy/Paste support
