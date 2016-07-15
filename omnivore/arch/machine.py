@@ -313,7 +313,7 @@ class Machine(HasTraits):
         # Extend to 32 for dimmed copies of the 16 colors
         dim = []
         for r in registers:
-            dim.append((r[0]/2 + 64, r[1]/2 + 64, r[2]/2 + 64))
+            dim.append((r[0]/4 + 64, r[1]/4 + 64, r[2]/4 + 64))
         registers.extend(dim)
         return registers
     
