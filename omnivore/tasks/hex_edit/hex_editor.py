@@ -339,7 +339,7 @@ class HexEditor(FrameworkEditor):
     def run_emulator(self):
         emu = self.document.emulator
         if not emu:
-            emu = self.machine.get_system_default_emulator()
+            emu = self.machine.get_system_default_emulator(self.task)
         if self.dirty:
             if not self.save():
                 return
