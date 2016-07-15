@@ -27,6 +27,11 @@ class MouseHandler(object):
         self.after_first_mouse_up = False
         self.mouse_up_too_close = False
         self.can_snap = False
+
+        # left_up events can be called after double click on some platforms, so
+        # this parameter can be set by the parent of the handler if the handler
+        # wants to differentiate response to left_up
+        self.num_clicks = 0
         
         # Optional (only OS X at this point) mouse wheel event filter
         self.wheel_scroll_count = 0

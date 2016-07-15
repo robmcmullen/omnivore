@@ -90,6 +90,9 @@ class JumpmanSelectMode(SelectMode):
     def process_left_up(self, evt):
         self.display_coords(evt)
 
+    def process_left_dclick(self, evt):
+        print "dclick"
+
     def process_mouse_motion_down(self, evt):
         self.display_coords(evt)
 
@@ -210,6 +213,8 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.display_coords(evt)
 
     def process_left_up(self, evt):
+        if self.num_clicks == 2:
+            return
         if self.pending_remove is True:
             self.objects = []
         elif self.pending_remove is not None:
@@ -234,6 +239,7 @@ class AnticDSelectMode(JumpmanSelectMode):
 
     def process_left_dclick(self, evt):
         self.check_trigger_pick(evt)
+        evt.Skip()
 
     def delete_key_pressed(self):
         self.delete_objects()
@@ -303,6 +309,8 @@ class DrawMode(JumpmanSelectMode):
         self.display_coords(evt)
 
     def process_left_up(self, evt):
+        if self.num_clicks == 2:
+            return
         self.canvas.save_objects(self.objects)
         self.objects = []
         self.display_coords(evt)
@@ -464,6 +472,8 @@ class DrawPeanutMode(DrawMode):
         self.display_coords(evt)
 
     def process_left_up(self, evt):
+        if self.num_clicks == 2:
+            return
         if self.batch is not None:
             c = self.canvas
             e = c.editor
@@ -529,6 +539,8 @@ class JumpmanRespawnMode(DrawMode):
         e.change_bytes(0x39, 0x3b, values)
 
     def process_left_up(self, evt):
+        if self.num_clicks == 2:
+            return
         self.change_jumpman_respawn(evt)
         self.init_post_hook()
         self.display_coords(evt)

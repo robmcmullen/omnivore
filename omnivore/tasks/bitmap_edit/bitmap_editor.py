@@ -93,7 +93,7 @@ class MainBitmapScroller(BitmapScroller):
         self.selection_box_is_being_defined = False
         self.mouse_down_position = evt.GetPosition()
         self.mouse_move_position = self.mouse_down_position
-
+        mode.num_clicks = 1
         mode.process_left_down(evt)
         self.set_cursor(mode)
 
@@ -114,6 +114,7 @@ class MainBitmapScroller(BitmapScroller):
     def on_left_dclick(self, evt):
         self.SetFocus() # see comment in on_left_click
         mode = self.get_effective_tool_mode(evt)
+        mode.num_clicks = 2
         mode.process_left_dclick(evt)
         self.set_cursor(mode)
 
