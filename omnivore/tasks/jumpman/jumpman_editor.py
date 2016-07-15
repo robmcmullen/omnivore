@@ -606,10 +606,14 @@ class JumpmanLevelView(MainBitmapScroller):
         if main_state.missing_object_codes:
             log.error("missing draw codes: %s" % (sorted(main_state.missing_object_codes)))
         if self.trigger_root is not None:
-            screen.style[:] = 0
             self.level_builder.fade_screen(screen)
             root = [self.trigger_root]
             self.level_builder.draw_objects(screen, root, e.segment, highlight=root, pick_buffer=self.pick_buffer)
+            # change highlight to comment color for selected trigger peanut so
+            # you don't get confused with any objects actually selected
+            old_highlight = np.where(screen.style == selected_bit_mask)
+            screen.style[old_highlight] |= comment_bit_mask
+            screen.style[:] &= (0xff ^ (match_bit_mask|selected_bit_mask))
 
             # replace screen state so that the only pickable objects are
             # those in the triggered layer
