@@ -35,7 +35,9 @@ class Document(HasTraits):
     name = Property(Unicode, depends_on='metadata')
 
     uri = Property(Unicode, depends_on='metadata')
-    
+
+    read_only = Property(Bool, depends_on='metadata')
+
     document_id = Int(-1)
     
     baseline_document = Any(transient=True)
@@ -95,6 +97,15 @@ class Document(HasTraits):
 
     def _get_uri(self):
         return self.metadata.uri
+
+    def _set_uri(self, uri):
+        self.metadata.uri = uri
+
+    def _get_read_only(self):
+        return self.metadata.read_only
+
+    def _set_read_only(self, read_only):
+        self.metadata.read_only = read_only
     
     def _get_can_revert(self):
         return self.metadata.uri != ""

@@ -38,6 +38,8 @@ class FrameworkEditor(Editor):
     name = Property(Unicode, depends_on='document')
 
     tooltip = Property(Unicode, depends_on='document')
+
+    can_save = Bool(True)
     
     can_undo = Bool(False)  # has to be a property of Editor because EditorActions need to refer to this trait
     
@@ -259,6 +261,13 @@ class FrameworkEditor(Editor):
             bytes = self.document.bytes.tostring()
             self.save_to_uri(bytes, uri)
             self.document.undo_stack.set_save_point()
+
+            # force an update to the document name as the URI may have changed
+            self.document.uri = uri
+
+            # force update: just got saved, can't be read only!
+            self.document.read_only = False
+
             self.document.undo_stack_changed = True
             saved = True
         except Exception, e:
@@ -317,6 +326,7 @@ class FrameworkEditor(Editor):
     def metadata_dirty(self, val):
         self._metadata_dirty = bool(val)
         self.dirty = self.document.dirty or self._metadata_dirty
+        self.can_save = not self.document.read_only and self.dirty
 
     def undo(self):
         """ Undoes the last action
@@ -593,6 +603,7 @@ class FrameworkEditor(Editor):
             self.redo_label = "Redo: %s" % text
             self.can_redo = True
         self.dirty = self.document.dirty or self._metadata_dirty
+        self.can_save = not self.document.read_only and self.dirty
     
     def undo(self):
         undo = self.document.undo_stack.undo(self)

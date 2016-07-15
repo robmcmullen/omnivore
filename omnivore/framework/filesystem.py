@@ -158,6 +158,7 @@ examples:
         if cls.about_fs is None:
             from fs.memoryfs import MemoryFS
             cls.about_fs = MemoryFS()
+            cls.about_fs.read_only_fs = True
         memfs = cls.about_fs
         if create_dir:
             memfs = memfs.makeopendir(fs_path)

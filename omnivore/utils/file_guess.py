@@ -5,7 +5,7 @@ import numpy as np
 from fs.opener import opener, fsopen
 from fs.errors import FSError
 
-from traits.api import HasTraits, Str, Unicode, Trait, TraitHandler, Property
+from traits.api import HasTraits, Bool, Str, Unicode, Trait, TraitHandler, Property
 
 from omnivore.templates import get_template
 
@@ -60,6 +60,8 @@ class FileMetadata(HasTraits):
     mime = Str(default="application/octet-stream")
     
     name = Property(Unicode, depends_on='uri')
+
+    read_only = Bool(False)
     
     def __str__(self):
         return "uri=%s, mime=%s" % (self.uri, self.mime)
@@ -105,6 +107,10 @@ class FileGuess(object):
         
         # Use the default mime type until it is recognized
         self.metadata = FileMetadata(uri=uri)
+        try:
+            self.metadata.read_only = fs.read_only_fs
+        except AttributeError:
+            pass
         
         # Release filesystem resources
         fs.close()
