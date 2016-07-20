@@ -7,6 +7,7 @@ from ataridos import AtariDosDiskImage, AtariDosFile
 from spartados import SpartaDosDiskImage
 from cartridge import AtariCartImage, get_known_carts
 from mame import MameZipImage
+from dos33 import Dos33DiskImage
 from errors import *
 
 
@@ -90,6 +91,11 @@ class MameZipParser(SegmentParser):
     image_type = MameZipImage
 
 
+class Dos33SegmentParser(SegmentParser):
+    menu_name = "DOS 3.3 Disk Image"
+    image_type = Dos33DiskImage
+
+
 def guess_parser_for_mime(mime, r):
     parsers = mime_parsers[mime]
     found = None
@@ -130,6 +136,9 @@ mime_parsers = {
     "application/vnd.mame_rom": [
         MameZipParser,
         ],
+    "application/vnd.apple2.dsk": [
+        Dos33SegmentParser,
+        ],
     }
 
 mime_parse_order = [
@@ -137,12 +146,14 @@ mime_parse_order = [
     "application/vnd.atari8bit.xex",
     "CARTS", # Will get filled in below
     "application/vnd.mame_rom",
+    "application/vnd.apple2.dsk",
     ]
 
 pretty_mime = {
     "application/vnd.atari8bit.atr": "Atari 8-bit Disk Image",
     "application/vnd.atari8bit.xex": "Atari 8-bit Executable",
-    "application/vnd.mame_rom": "MAME"
+    "application/vnd.mame_rom": "MAME",
+    "application/vnd.apple2.dsk": "Apple ][ Disk Image",
 }
 
 grouped_carts = get_known_carts()
