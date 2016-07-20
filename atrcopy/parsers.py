@@ -7,7 +7,7 @@ from ataridos import AtariDosDiskImage, AtariDosFile
 from spartados import SpartaDosDiskImage
 from cartridge import AtariCartImage, get_known_carts
 from mame import MameZipImage
-from dos33 import Dos33DiskImage
+from dos33 import Dos33DiskImage, ProdosDiskImage
 from errors import *
 
 
@@ -96,6 +96,11 @@ class Dos33SegmentParser(SegmentParser):
     image_type = Dos33DiskImage
 
 
+class ProdosSegmentParser(SegmentParser):
+    menu_name = "ProDOS Disk Image"
+    image_type = ProdosDiskImage
+
+
 def guess_parser_for_mime(mime, r):
     parsers = mime_parsers[mime]
     found = None
@@ -138,6 +143,7 @@ mime_parsers = {
         ],
     "application/vnd.apple2.dsk": [
         Dos33SegmentParser,
+        ProdosSegmentParser,
         ],
     }
 
