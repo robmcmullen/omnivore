@@ -84,7 +84,6 @@ class AtrHeader(object):
             self.num_initial_sectors = 3
         else:
             self.image_size = size
-            self.sector_size = 128
         initial_bytes = self.initial_sector_size * self.num_initial_sectors
         self.max_sectors = ((self.image_size - initial_bytes) / self.sector_size) + self.num_initial_sectors
 
