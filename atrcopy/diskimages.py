@@ -24,6 +24,7 @@ class AtrHeader(object):
         self.unused = 0
         self.flags = 0
         self.header_offset = 0
+        self.starting_sector_label = 1
         self.initial_sector_size = sector_size
         self.num_initial_sectors = initial_sectors
         self.max_sectors = 0
@@ -280,7 +281,7 @@ class DiskImageBase(object):
         i = self.header.header_offset
         if self.header.image_size > 0:
             self.segments.append(ObjSegment(r[0:i], 0, 0, 0, i, name="%s Header" % self.header.file_format))
-        self.segments.append(RawSectorsSegment(r[i:], 1, self.header.max_sectors, self.header.image_size, 128, 3, self.header.sector_size, name="Raw disk sectors"))
+        self.segments.append(RawSectorsSegment(r[i:], self.header.starting_sector_label, self.header.max_sectors, self.header.image_size, self.header.initial_sector_size, self.header.num_initial_sectors, self.header.sector_size, name="Raw disk sectors"))
         self.segments.extend(self.get_boot_segments())
         self.segments.extend(self.get_vtoc_segments())
         self.segments.extend(self.get_directory_segments())

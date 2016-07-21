@@ -107,7 +107,7 @@ class Dos33Dirent(object):
                     break
                 sector_list.append(image.header.sector_from_track(t, s))
         self.sector_map = sector_list
-    
+
     def start_read(self, image):
         if not self.is_sane:
             raise InvalidDirent("Invalid directory entry '%s'" % str(self))
@@ -136,6 +136,7 @@ class Dos33Header(AtrHeader):
 
     def __init__(self):
         AtrHeader.__init__(self, None, 256, 0)
+        self.starting_sector_label = 0
         self.header_offset = 0
         self.sector_order = range(16)
         self.vtoc_sector = 17 * 16
