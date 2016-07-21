@@ -720,7 +720,6 @@ class FontMapScroller(BitviewScroller):
         x2 = ec * self.pixels_per_byte * zw - 1
         y1 = sr * self.pixels_per_row * zh
         y2 = er * self.pixels_per_row * zh - 1
-        print x1, x2, self.pixels_per_byte, y1, y2, self.pixels_per_row
         xmax = array.shape[1]
         ymax = array.shape[0]
         c1 = max(x1, 0)
