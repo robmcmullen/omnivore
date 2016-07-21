@@ -438,7 +438,8 @@ def get_numpy_font_map_image(m, bytes, style, start_byte, end_byte, bytes_per_ro
 
 class Mode2(BaseRenderer):
     name = "Antic 2 (Gr 0)"
-    font_mode = 2
+    scale_width = 1
+    scale_height = 1
     
     @classmethod
     def get_image(cls, machine, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols):
@@ -447,36 +448,148 @@ class Mode2(BaseRenderer):
         else:
             array = get_numpy_font_map_image(machine, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols)
         return array
+        
+    def bits_to_font(self, bits, colors, gr0_colors):
+        fg, bg = gr0_colors
+        r = np.empty(bits.shape, dtype=np.uint8)
+        r[bits==0] = bg[0]
+        r[bits==1] = fg[0]
+        g = np.empty(bits.shape, dtype=np.uint8)
+        g[bits==0] = bg[1]
+        g[bits==1] = fg[1]
+        b = np.empty(bits.shape, dtype=np.uint8)
+        b[bits==0] = bg[2]
+        b[bits==1] = fg[2]
+        font = np.zeros((256, 8, 8, 3), dtype=np.uint8)
+        font[0:128,:,:,0] = r
+        font[0:128,:,:,1] = g
+        font[0:128,:,:,2] = b
+        
+        # Inverse characters when high bit set
+        r[bits==0] = fg[0]
+        r[bits==1] = bg[0]
+        g[bits==0] = fg[1]
+        g[bits==1] = bg[1]
+        b[bits==0] = fg[2]
+        b[bits==1] = bg[2]
+        font[128:256,:,:,0] = r
+        font[128:256,:,:,1] = g
+        font[128:256,:,:,2] = b
+        return font
 
 
 class Mode4(Mode2):
     name = "Antic 4 (40x24, 5 color)"
-    font_mode = 4
+
+    def bits_to_font(self, bits, colors, gr0_colors):
+        """ http://www.atarimagazines.com/compute/issue49/419_1_Graphics_0_Text_In_Four_Colors.php
+        
+        There are four possible combinations of two bits: 00, 01, 10, 11. Each combination represents a different color. The color corresponding to the bit-pair 00 is stored at location 712; the color for the bit-pair 01 is at location 708; the color for bit-pair 10 is at 709; the color for bit-pair 11 is at 710.
+        """
+        pf0, pf1, pf2, pf3, bak = colors[4:9]
+        r = np.empty(bits.shape, dtype=np.uint8)
+        g = np.empty(bits.shape, dtype=np.uint8)
+        b = np.empty(bits.shape, dtype=np.uint8)
+        
+        c = np.empty((128, 8, 4), dtype=np.uint8)
+        c[:,:,0] = bits[:,:,0]*2 + bits[:,:,1]
+        c[:,:,1] = bits[:,:,2]*2 + bits[:,:,3]
+        c[:,:,2] = bits[:,:,4]*2 + bits[:,:,5]
+        c[:,:,3] = bits[:,:,6]*2 + bits[:,:,7]
+        
+        pixels = np.empty((128, 8, 4, 3), dtype=np.uint8)
+        pixels[c==0] = bak
+        pixels[c==1] = pf0
+        pixels[c==2] = pf1
+        pixels[c==3] = pf2
+        
+        font = np.zeros((256, 8, 4, 3), dtype=np.uint8)
+        font[0:128,:,:,:] = pixels
+        
+        # Inverse characters use pf3 in place of pf2
+        pixels[c==3] = pf3
+        font[128:256,:,:,:] = pixels
+        
+        # create a double-width image to expand the pixels to the correct
+        # aspect ratio
+        newdims = np.asarray((256, 8, 8))
+        base=np.indices(newdims)
+        d = []
+        d.append(base[0])
+        d.append(base[1])
+        d.append(base[2]/2)
+        cd = np.array(d)
+        array = font[list(cd)]
+        return array
 
 
-class Mode5(Mode2):
+class Mode5(Mode4):
     name = "Antic 5 (40x12, 5 color)"
-    font_mode = 5
+    scale_height = 2
 
 
-class Mode6Upper(Mode2):
+class Mode6Base(Mode2):
+    name = "Antic 6 (base class)"
+    scale_width = 2
+    
+    def get_half(self, bits):
+        """Return which half of the character set is used by this mode
+        """
+        raise NotImplementedError
+
+    def bits_to_font(self, bits, colors, gr0_colors):
+        bg = colors[8]
+        half = self.get_half(bits)
+        r = np.empty(half.shape, dtype=np.uint8)
+        g = np.empty(half.shape, dtype=np.uint8)
+        b = np.empty(half.shape, dtype=np.uint8)
+        font = np.zeros((256, 8, 8, 3), dtype=np.uint8)
+
+        start_char = 0
+        for i in range(4, 8):
+            end_char = start_char + 64
+            fg = colors[i]
+            r[half==0] = bg[0]
+            r[half==1] = fg[0]
+            g[half==0] = bg[1]
+            g[half==1] = fg[1]
+            b[half==0] = bg[2]
+            b[half==1] = fg[2]
+            font[start_char:end_char,:,:,0] = r
+            font[start_char:end_char,:,:,1] = g
+            font[start_char:end_char,:,:,2] = b
+            start_char = end_char
+        return font
+
+
+class Mode6Upper(Mode6Base):
     name = "Antic 6 (Gr 1) Uppercase and Numbers"
-    font_mode = 6
+
+    def get_half(self, bits):
+        return bits[0:64,:,:]
 
 
-class Mode6Lower(Mode2):
+class Mode6Lower(Mode6Base):
     name = "Antic 6 (Gr 1) Lowercase and Symbols"
-    font_mode = 8
+
+    def get_half(self, bits):
+        return bits[64:128,:,:]
 
 
-class Mode7Upper(Mode2):
+class Mode7Upper(Mode6Base):
     name = "Antic 7 (Gr 2) Uppercase and Numbers"
-    font_mode = 7
+    scale_height = 2
+
+    def get_half(self, bits):
+        return bits[0:64,:,:]
 
 
-class Mode7Lower(Mode2):
+class Mode7Lower(Mode6Base):
     name = "Antic 7 (Gr 2) Lowercase and Symbols"
-    font_mode = 9
+    scale_height = 2
+
+    def get_half(self, bits):
+        return bits[64:128,:,:]
 
 
 class ATASCIIFontMapping(object):

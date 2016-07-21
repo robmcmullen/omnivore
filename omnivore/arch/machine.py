@@ -382,7 +382,7 @@ class Machine(HasTraits):
     
     def get_antic_font(self):
         color_converter = self.get_color_converter()
-        return fonts.AnticFont(self, self.antic_font_data, self.font_renderer.font_mode, self.antic_color_registers[4:9])
+        return fonts.AnticFont(self, self.antic_font_data, self.font_renderer, self.antic_color_registers[4:9])
     
     def load_font(self, task, filename):
         try:

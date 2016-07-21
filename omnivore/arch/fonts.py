@@ -33,17 +33,14 @@ A8ComputerFont = {
 
 
 class AnticFont(object):
-    font_width_scale = [0, 0, 1, 0, 1, 1, 2, 2, 2, 2]
-    font_height_scale = [0, 0, 1, 0, 1, 2, 1, 2, 1, 2]
-    
-    def __init__(self, machine, font_data, font_mode, playfield_colors):
+    def __init__(self, machine, font_data, font_renderer, playfield_colors):
         self.char_w = font_data['char_w']
         self.char_h = font_data['char_h']
-        self.scale_w = self.font_width_scale[font_mode]
-        self.scale_h = self.font_height_scale[font_mode]
+        self.scale_w = font_renderer.scale_width
+        self.scale_h = font_renderer.scale_height
         
         self.set_colors(machine, playfield_colors)
-        self.set_fonts(machine, font_data, font_mode)
+        self.set_fonts(machine, font_data, font_renderer)
     
     def set_colors(self, machine, playfield_colors):
         fg, bg = colors.gr0_colors(playfield_colors)
@@ -56,7 +53,7 @@ class AnticFont(object):
         self.comment_gr0_colors = machine.get_blended_color_registers(self.normal_gr0_colors, machine.comment_background_color)
         self.data_gr0_colors = machine.get_dimmed_color_registers(self.normal_gr0_colors, machine.background_color, machine.data_color)
     
-    def set_fonts(self, machine, font_data, font_mode):
+    def set_fonts(self, machine, font_data, font_renderer):
         if 'np_data' in font_data:
             bytes = font_data['np_data']
         else:
@@ -64,116 +61,11 @@ class AnticFont(object):
         bits = np.unpackbits(bytes)
         bits = bits.reshape((-1, 8, 8))
         
-        bits_to_font = self.get_bits_to_font_function(font_mode)
-        self.normal_font = bits_to_font(bits, font_mode, machine.color_registers, self.normal_gr0_colors)
-        self.highlight_font = bits_to_font(bits, font_mode, machine.color_registers_highlight, self.highlight_gr0_colors)
-        self.data_font = bits_to_font(bits, font_mode, machine.color_registers_data, self.data_gr0_colors)
-        self.match_font = bits_to_font(bits, font_mode, machine.color_registers_match, self.match_gr0_colors)
-        self.comment_font = bits_to_font(bits, font_mode, machine.color_registers_comment, self.comment_gr0_colors)
-    
-    def get_bits_to_font_function(self, font_mode):
-        if font_mode == 2:
-            return self.bits_to_gr0
-        elif font_mode < 6:
-            return self.bits_to_antic4
-        else:
-            return self.bits_to_gr1
-        
-    def bits_to_gr0(self, bits, font_mode, colors, gr0_colors):
-        fg, bg = gr0_colors
-        r = np.empty(bits.shape, dtype=np.uint8)
-        r[bits==0] = bg[0]
-        r[bits==1] = fg[0]
-        g = np.empty(bits.shape, dtype=np.uint8)
-        g[bits==0] = bg[1]
-        g[bits==1] = fg[1]
-        b = np.empty(bits.shape, dtype=np.uint8)
-        b[bits==0] = bg[2]
-        b[bits==1] = fg[2]
-        font = np.zeros((256, 8, 8, 3), dtype=np.uint8)
-        font[0:128,:,:,0] = r
-        font[0:128,:,:,1] = g
-        font[0:128,:,:,2] = b
-        
-        # Inverse characters when high bit set
-        r[bits==0] = fg[0]
-        r[bits==1] = bg[0]
-        g[bits==0] = fg[1]
-        g[bits==1] = bg[1]
-        b[bits==0] = fg[2]
-        b[bits==1] = bg[2]
-        font[128:256,:,:,0] = r
-        font[128:256,:,:,1] = g
-        font[128:256,:,:,2] = b
-        return font
-        
-    def bits_to_gr1(self, bits, font_mode, colors, gr0_colors):
-        bg = colors[8]
-        if font_mode == 6 or font_mode == 7:
-            half = bits[0:64,:,:]
-        else:
-            half = bits[64:128,:,:]
-        r = np.empty(half.shape, dtype=np.uint8)
-        g = np.empty(half.shape, dtype=np.uint8)
-        b = np.empty(half.shape, dtype=np.uint8)
-        font = np.zeros((256, 8, 8, 3), dtype=np.uint8)
-
-        start_char = 0
-        for i in range(4, 8):
-            end_char = start_char + 64
-            fg = colors[i]
-            r[half==0] = bg[0]
-            r[half==1] = fg[0]
-            g[half==0] = bg[1]
-            g[half==1] = fg[1]
-            b[half==0] = bg[2]
-            b[half==1] = fg[2]
-            font[start_char:end_char,:,:,0] = r
-            font[start_char:end_char,:,:,1] = g
-            font[start_char:end_char,:,:,2] = b
-            start_char = end_char
-        return font
-        
-    def bits_to_antic4(self, bits, font_mode, colors, gr0_colors):
-        """ http://www.atarimagazines.com/compute/issue49/419_1_Graphics_0_Text_In_Four_Colors.php
-        
-        There are four possible combinations of two bits: 00, 01, 10, 11. Each combination represents a different color. The color corresponding to the bit-pair 00 is stored at location 712; the color for the bit-pair 01 is at location 708; the color for bit-pair 10 is at 709; the color for bit-pair 11 is at 710.
-        """
-        pf0, pf1, pf2, pf3, bak = colors[4:9]
-        r = np.empty(bits.shape, dtype=np.uint8)
-        g = np.empty(bits.shape, dtype=np.uint8)
-        b = np.empty(bits.shape, dtype=np.uint8)
-        
-        c = np.empty((128, 8, 4), dtype=np.uint8)
-        c[:,:,0] = bits[:,:,0]*2 + bits[:,:,1]
-        c[:,:,1] = bits[:,:,2]*2 + bits[:,:,3]
-        c[:,:,2] = bits[:,:,4]*2 + bits[:,:,5]
-        c[:,:,3] = bits[:,:,6]*2 + bits[:,:,7]
-        
-        pixels = np.empty((128, 8, 4, 3), dtype=np.uint8)
-        pixels[c==0] = bak
-        pixels[c==1] = pf0
-        pixels[c==2] = pf1
-        pixels[c==3] = pf2
-        
-        font = np.zeros((256, 8, 4, 3), dtype=np.uint8)
-        font[0:128,:,:,:] = pixels
-        
-        # Inverse characters use pf3 in place of pf2
-        pixels[c==3] = pf3
-        font[128:256,:,:,:] = pixels
-        
-        # create a double-width image to expand the pixels to the correct
-        # aspect ratio
-        newdims = np.asarray((256, 8, 8))
-        base=np.indices(newdims)
-        d = []
-        d.append(base[0])
-        d.append(base[1])
-        d.append(base[2]/2)
-        cd = np.array(d)
-        array = font[list(cd)]
-        return array
+        self.normal_font = font_renderer.bits_to_font(bits, machine.color_registers, self.normal_gr0_colors)
+        self.highlight_font = font_renderer.bits_to_font(bits, machine.color_registers_highlight, self.highlight_gr0_colors)
+        self.data_font = font_renderer.bits_to_font(bits, machine.color_registers_data, self.data_gr0_colors)
+        self.match_font = font_renderer.bits_to_font(bits, machine.color_registers_match, self.match_gr0_colors)
+        self.comment_font = font_renderer.bits_to_font(bits, machine.color_registers_comment, self.comment_gr0_colors)
     
     def get_height(self, zoom):
         return self.char_h * self.scale_h * zoom

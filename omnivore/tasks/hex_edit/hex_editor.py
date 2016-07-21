@@ -141,6 +141,7 @@ class HexEditor(FrameworkEditor):
         if 'colors' in e:
             self.machine.update_colors(e['colors'])
         if 'font' in e:
+            # FIXME: I don't think 'font' is set anywhere, so this never gets called
             self.machine.set_font(e['font'][0], e['font'][1])
         if 'initial segment' in e:
             self.initial_segment = e['initial segment']
