@@ -941,6 +941,9 @@ class RightRotateAction(IndexRangeAction):
     cmd = RightRotateCommand
     accelerator = 'Ctrl+>'
 
+class ReverseBitsAction(IndexRangeAction):
+    cmd = ReverseBitsCommand
+
 
 class IndexRangeValueAction(IndexRangeAction):
     def _name_default(self):

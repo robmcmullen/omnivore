@@ -381,6 +381,7 @@ class HexEditTask(FrameworkTask):
             RightShiftAction(),
             LeftRotateAction(),
             RightRotateAction(),
+            ReverseBitsAction(),
             Separator(),
             AddValueAction(),
             SubtractValueAction(),
