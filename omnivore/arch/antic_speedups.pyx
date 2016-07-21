@@ -56,14 +56,14 @@ def get_numpy_memory_map_image(m, np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarr
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def get_numpy_font_map_image(m, np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray[np.uint8_t, ndim=2] style, int start_byte, int end_byte, int bytes_per_row, int num_rows, int start_col, int num_cols):
+def get_numpy_font_map_image(m, antic_font, np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray[np.uint8_t, ndim=2] style, int start_byte, int end_byte, int bytes_per_row, int num_rows, int start_col, int num_cols):
     cdef int num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) // bytes_per_row
     cdef np.uint8_t bgr = m.background_color[0]
     cdef np.uint8_t bgg = m.background_color[1]
     cdef np.uint8_t bgb = m.background_color[2]
     
-    cdef int char_w = m.antic_font.char_w
-    cdef int char_h = m.antic_font.char_h
+    cdef int char_w = antic_font.char_w
+    cdef int char_h = antic_font.char_h
     cdef int end_col = min(bytes_per_row, start_col + num_cols)
     cdef int width = char_w * num_cols
     cdef int height = num_rows * char_h
@@ -73,15 +73,15 @@ def get_numpy_font_map_image(m, np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray
     cdef int y = 0
     cdef int e = start_byte
     cdef int x, i, j
-    cdef np.ndarray[np.uint8_t, ndim=4] f = m.antic_font.normal_font
+    cdef np.ndarray[np.uint8_t, ndim=4] f = antic_font.normal_font
     cdef np.uint8_t[:,:,:,:] fast_f = f
-    cdef np.ndarray[np.uint8_t, ndim=4] fh = m.antic_font.highlight_font
+    cdef np.ndarray[np.uint8_t, ndim=4] fh = antic_font.highlight_font
     cdef np.uint8_t[:,:,:,:] fast_fh = fh
-    cdef np.ndarray[np.uint8_t, ndim=4] fd = m.antic_font.data_font
+    cdef np.ndarray[np.uint8_t, ndim=4] fd = antic_font.data_font
     cdef np.uint8_t[:,:,:,:] fast_fd = fd
-    cdef np.ndarray[np.uint8_t, ndim=4] fm = m.antic_font.match_font
+    cdef np.ndarray[np.uint8_t, ndim=4] fm = antic_font.match_font
     cdef np.uint8_t[:,:,:,:] fast_fm = fm
-    cdef np.ndarray[np.uint8_t, ndim=4] fc = m.antic_font.comment_font
+    cdef np.ndarray[np.uint8_t, ndim=4] fc = antic_font.comment_font
     cdef np.uint8_t[:,:,:,:] fast_fc = fc
     cdef np.uint8_t s
     cdef np.ndarray[np.uint8_t] mapping = m.font_mapping.font_mapping

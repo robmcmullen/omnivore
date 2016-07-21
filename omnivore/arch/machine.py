@@ -375,6 +375,9 @@ class Machine(HasTraits):
         self.antic_font_data = font
         self.antic_font = self.get_antic_font()
         self.set_font_mapping()
+
+    def get_blinking_font(self, index):
+        return self.antic_font
     
     def get_font_renderer_from_font_mode(self, font_mode):
         for r in predefined['font_renderer']:

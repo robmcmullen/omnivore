@@ -698,7 +698,8 @@ class FontMapScroller(BitviewScroller):
         #log.debug("get_image: bytes", bytes)
         
         m = self.editor.machine
-        array = m.font_renderer.get_image(m, bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols)
+        font = m.get_blinking_font(0)
+        array = m.font_renderer.get_image(m, font, bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols)
         return array
     
     def draw_overlay(self, array, w, h, zw, zh):

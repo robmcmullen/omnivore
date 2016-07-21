@@ -396,9 +396,9 @@ class GTIA11(GTIA9):
         return range(first_color, first_color + 256, 16)
 
 
-def get_numpy_font_map_image(m, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols):
-    width = int(m.antic_font.char_w * num_cols)
-    height = int(num_rows * m.antic_font.char_h)
+def get_numpy_font_map_image(m, antic_font, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols):
+    width = int(antic_font.char_w * num_cols)
+    height = int(num_rows * antic_font.char_h)
     log.debug("pixel width: %dx%d" % (width, height))
     array = np.empty((height, width, 3), dtype=np.uint8)
     
@@ -406,13 +406,13 @@ def get_numpy_font_map_image(m, bytes, style, start_byte, end_byte, bytes_per_ro
     end_col = min(bytes_per_row, start_col + num_cols)
     y = 0
     e = start_byte
-    f = m.antic_font.normal_font
-    fh = m.antic_font.highlight_font
-    fd = m.antic_font.data_font
-    fm = m.antic_font.match_font
-    fc = m.antic_font.comment_font
-    char_w = m.antic_font.char_w
-    char_h = m.antic_font.char_h
+    f = antic_font.normal_font
+    fh = antic_font.highlight_font
+    fd = antic_font.data_font
+    fm = antic_font.match_font
+    fc = antic_font.comment_font
+    char_w = antic_font.char_w
+    char_h = antic_font.char_h
     mapping = m.font_mapping.font_mapping
     for j in range(num_rows):
         x = 0
@@ -446,11 +446,11 @@ class Mode2(BaseRenderer):
     scale_height = 1
     
     @classmethod
-    def get_image(cls, machine, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols):
+    def get_image(cls, machine, antic_font, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols):
         if speedups is not None:
-            array = speedups.get_numpy_font_map_image(machine, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols)
+            array = speedups.get_numpy_font_map_image(machine, antic_font, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols)
         else:
-            array = get_numpy_font_map_image(machine, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols)
+            array = get_numpy_font_map_image(machine, antic_font, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols)
         return array
         
     def bits_to_font(self, bits, colors, gr0_colors):
