@@ -248,7 +248,20 @@ class Dos33DiskImage(DiskImageBase):
         self.files = files
 
     def get_boot_segments(self):
-        return []
+        segments = []
+        s = self.get_sector_slice(0, 0)
+        r = self.rawdata[s]
+        boot1 = ObjSegment(r, 0, 0, 0x800, name="Boot 1")
+        s = self.get_sector_slice(1, 9)
+        r = self.rawdata[s]
+        boot2 = ObjSegment(r, 0, 0, 0x3700, name="Boot 2")
+        s = self.get_sector_slice(0x0a, 0x0b)
+        r = self.rawdata[s]
+        relocator = ObjSegment(r, 0, 0, 0x1b00, name="Relocator")
+        s = self.get_sector_slice(0x0c, 0x0c + 25)
+        r = self.rawdata[s]
+        boot3 = ObjSegment(r, 0, 0, 0x1d00, name="Boot 3")
+        return [boot1, boot2, relocator, boot3]
     
     def get_vtoc_segments(self):
         r = self.rawdata
