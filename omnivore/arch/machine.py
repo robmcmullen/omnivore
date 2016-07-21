@@ -638,3 +638,6 @@ predefined = {
         ],
     }
 
+
+Apple2 = Machine(name="Apple ][", disassembler=disasm.Basic6502Disassembler, antic_font_data=fonts.A2ComputerFont, font_renderer=predefined['font_renderer'][7], antic_color_registers=[4, 30, 68, 213, 15, 202, 148, 70, 0])
+predefined['machine'].append(Apple2)

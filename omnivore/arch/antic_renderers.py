@@ -601,7 +601,8 @@ class Apple2TextMode(Mode2):
     char_bit_width = 7
 
     def bits_to_font(self, bits, colors, gr0_colors):
-        fg, bg = gr0_colors
+        bg = colors[8]
+        fg = colors[4]
         r = np.empty(bits.shape, dtype=np.uint8)
         r[bits==0] = bg[0]
         r[bits==1] = fg[0]
