@@ -22,6 +22,8 @@ class Machine(HasTraits):
     # Traits
     
     name = Str
+
+    mime_prefix = Str("application/octet-stream")
     
     disassembler = Any(transient=True)
     
@@ -174,6 +176,12 @@ class Machine(HasTraits):
         cls.text_font = font
         prefs = editor.task.get_preferences()
         prefs.text_font = font
+
+    @classmethod
+    def find_machine_by_mime(cls, mime):
+        for m in predefined['machine']:
+            if mime.startswith(m.mime_prefix):
+                return m
     
     # Trait initializers
     
@@ -560,13 +568,13 @@ class Machine(HasTraits):
 
 Generic6502 = Machine(name="Generic 6502", disassembler=disasm.Basic6502Disassembler)
 
-Atari800 = Machine(name="Atari 800", disassembler=disasm.Basic6502Disassembler, memory_map=memory_map.Atari800MemoryMap)
+Atari800 = Machine(name="Atari 800", mime_prefix="application/vnd.atari8bit", disassembler=disasm.Basic6502Disassembler, memory_map=memory_map.Atari800MemoryMap)
 
-Atari800Undoc = Machine(name="Atari 800 (show undocumented opcodes)", disassembler=disasm.Undocumented6502Disassembler, memory_map=memory_map.Atari800MemoryMap)
+Atari800Undoc = Machine(name="Atari 800 (show undocumented opcodes)", mime_prefix="application/vnd.atari8bit", disassembler=disasm.Undocumented6502Disassembler, memory_map=memory_map.Atari800MemoryMap)
 
-Atari800Flagged = Machine(name="Atari 800 (highlight undocumented opcodes)", disassembler=disasm.Flagged6502Disassembler, memory_map=memory_map.Atari800MemoryMap)
+Atari800Flagged = Machine(name="Atari 800 (highlight undocumented opcodes)", mime_prefix="application/vnd.atari8bit", disassembler=disasm.Flagged6502Disassembler, memory_map=memory_map.Atari800MemoryMap)
 
-Atari5200 = Machine(name="Atari 5200", disassembler=disasm.Basic6502Disassembler, memory_map=memory_map.Atari5200MemoryMap)
+Atari5200 = Machine(name="Atari 5200", mime_prefix="application/vnd.atari8bit", disassembler=disasm.Basic6502Disassembler, memory_map=memory_map.Atari5200MemoryMap)
 
 
 
@@ -639,5 +647,5 @@ predefined = {
     }
 
 
-Apple2 = Machine(name="Apple ][", disassembler=disasm.Basic6502Disassembler, antic_font_data=fonts.A2ComputerFont, font_renderer=predefined['font_renderer'][7], antic_color_registers=[4, 30, 68, 213, 15, 202, 148, 70, 0])
+Apple2 = Machine(name="Apple ][", mime_prefix="application/vnd.apple2", disassembler=disasm.Basic6502Disassembler, antic_font_data=fonts.A2ComputerFont, font_renderer=predefined['font_renderer'][7], antic_color_registers=[4, 30, 68, 213, 15, 202, 148, 70, 0])
 predefined['machine'].append(Apple2)

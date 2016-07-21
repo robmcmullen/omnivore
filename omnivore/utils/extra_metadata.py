@@ -146,3 +146,4 @@ def check_builtin(doc):
         e = match(doc)
         if e is not None:
             return e
+    return dict()

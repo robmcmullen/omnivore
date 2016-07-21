@@ -118,7 +118,10 @@ class HexEditor(FrameworkEditor):
         """ see if the document matches any hardcoded document information
         """
         from omnivore.utils.extra_metadata import check_builtin
-        return check_builtin(doc)
+        e = check_builtin(doc)
+        if 'machine mime' not in e:
+            e['machine mime'] = doc.metadata.mime
+        return e
 
     def get_filesystem_extra_metadata_uri(self, doc):
         return doc.metadata.uri + ".omnivore"
@@ -127,6 +130,12 @@ class HexEditor(FrameworkEditor):
         """ Set up any pre-calculated segments based on the type or content of
         the just-loaded document.
         """
+        if 'machine mime' in e:
+            mime = e['machine mime']
+            if not mime.startswith(self.machine.mime_prefix):
+                m = self.machine.find_machine_by_mime(mime)
+                if m is not None:
+                    self.machine = m
         if 'user segments' in e:
             for s in e['user segments']:
                 doc.add_user_segment(s, replace=True)
