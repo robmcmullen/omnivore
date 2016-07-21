@@ -62,9 +62,11 @@ def get_numpy_font_map_image(m, np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray
     cdef np.uint8_t bgg = m.background_color[1]
     cdef np.uint8_t bgb = m.background_color[2]
     
+    cdef int char_w = m.antic_font.char_w
+    cdef int char_h = m.antic_font.char_h
     cdef int end_col = min(bytes_per_row, start_col + num_cols)
-    cdef int width = m.antic_font.char_w * num_cols
-    cdef int height = num_rows * m.antic_font.char_h
+    cdef int width = char_w * num_cols
+    cdef int height = num_rows * char_h
     cdef np.ndarray[np.uint8_t, ndim=3] array = np.empty([height, width, 3], dtype=np.uint8)
     cdef np.uint8_t[:,:,:] fast_array = array
 
@@ -87,24 +89,24 @@ def get_numpy_font_map_image(m, np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray
         x = 0
         for i in range(start_col, start_col + num_cols):
             if e + i >= end_byte or i >= end_col:
-                fast_array[y:y+8,x:x+8,0] = bgr
-                fast_array[y:y+8,x:x+8,1] = bgg
-                fast_array[y:y+8,x:x+8,2] = bgb
+                fast_array[y:y+char_h,x:x+char_w,0] = bgr
+                fast_array[y:y+char_h,x:x+char_w,1] = bgg
+                fast_array[y:y+char_h,x:x+char_w,2] = bgb
             else:
                 c = mapping[bytes[j, i]]
                 s = style[j, i]
                 if s & 0x80:
-                    fast_array[y:y+8,x:x+8,:] = fast_fh[c]
+                    fast_array[y:y+char_h,x:x+char_w,:] = fast_fh[c]
                 elif s & 0x10:
-                    fast_array[y:y+8,x:x+8,:] = fast_fm[c]
+                    fast_array[y:y+char_h,x:x+char_w,:] = fast_fm[c]
                 elif s & 0x20:
-                    fast_array[y:y+8,x:x+8,:] = fast_fc[c]
+                    fast_array[y:y+char_h,x:x+char_w,:] = fast_fc[c]
                 elif s & 0x40:
-                    fast_array[y:y+8,x:x+8,:] = fast_fd[c]
+                    fast_array[y:y+char_h,x:x+char_w,:] = fast_fd[c]
                 else:
-                    fast_array[y:y+8,x:x+8,:] = fast_f[c]
-            x += 8
-        y += 8
+                    fast_array[y:y+char_h,x:x+char_w,:] = fast_f[c]
+            x += char_w
+        y += char_h
         e += bytes_per_row
 
     return array

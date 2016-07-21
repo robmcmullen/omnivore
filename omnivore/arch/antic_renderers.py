@@ -411,33 +411,37 @@ def get_numpy_font_map_image(m, bytes, style, start_byte, end_byte, bytes_per_ro
     fd = m.antic_font.data_font
     fm = m.antic_font.match_font
     fc = m.antic_font.comment_font
+    char_w = m.antic_font.char_w
+    char_h = m.antic_font.char_h
     mapping = m.font_mapping.font_mapping
     for j in range(num_rows):
         x = 0
         for i in range(start_col, start_col + num_cols):
             if e + i >= end_byte or i >= end_col:
-                array[y:y+8,x:x+8,:] = m.background_color
+                array[y:y+char_h,x:x+char_w,:] = m.background_color
             else:
                 c = mapping[bytes[j, i]]
                 s = style[j, i]
                 if s & selected_bit_mask:
-                    array[y:y+8,x:x+8,:] = fh[c]
+                    array[y:y+char_h,x:x+char_w,:] = fh[c]
                 elif s & match_bit_mask:
-                    array[y:y+8,x:x+8,:] = fm[c]
+                    array[y:y+char_h,x:x+char_w,:] = fm[c]
                 elif s & comment_bit_mask:
-                    array[y:y+8,x:x+8,:] = fc[c]
+                    array[y:y+char_h,x:x+char_w,:] = fc[c]
                 elif s & data_bit_mask:
-                    array[y:y+8,x:x+8,:] = fd[c]
+                    array[y:y+char_h,x:x+char_w,:] = fd[c]
                 else:
-                    array[y:y+8,x:x+8,:] = f[c]
-            x += 8
-        y += 8
+                    array[y:y+char_h,x:x+char_w,:] = f[c]
+            x += char_w
+        y += char_h
         e += bytes_per_row
     return array
 
 
 class Mode2(BaseRenderer):
     name = "Antic 2 (Gr 0)"
+    char_bit_width = 8
+    char_bit_height = 8
     scale_width = 1
     scale_height = 1
     
@@ -590,6 +594,46 @@ class Mode7Lower(Mode6Base):
 
     def get_half(self, bits):
         return bits[64:128,:,:]
+
+
+class Apple2TextMode(Mode2):
+    name = "Apple ]["
+    char_bit_width = 7
+
+    def bits_to_font(self, bits, colors, gr0_colors):
+        fg, bg = gr0_colors
+        r = np.empty(bits.shape, dtype=np.uint8)
+        r[bits==0] = bg[0]
+        r[bits==1] = fg[0]
+        g = np.empty(bits.shape, dtype=np.uint8)
+        g[bits==0] = bg[1]
+        g[bits==1] = fg[1]
+        b = np.empty(bits.shape, dtype=np.uint8)
+        b[bits==0] = bg[2]
+        b[bits==1] = fg[2]
+        font = np.zeros((256, 8, 7, 3), dtype=np.uint8)
+
+        # Normal characters have high bit set
+        font[128:256,:,:,0] = r[:,:,0:7]
+        font[128:256,:,:,1] = g[:,:,0:7]
+        font[128:256,:,:,2] = b[:,:,0:7]
+
+        # First 64 are inversed
+        r[bits==0] = fg[0]
+        r[bits==1] = bg[0]
+        g[bits==0] = fg[1]
+        g[bits==1] = bg[1]
+        b[bits==0] = fg[2]
+        b[bits==1] = bg[2]
+        font[0:64,:,:,0] = r[0:64,:,0:7]
+        font[0:64,:,:,1] = g[0:64,:,0:7]
+        font[0:64,:,:,2] = b[0:64,:,0:7]
+        
+        # Next 64 are blinking! Hmmm.
+        font[64:128,:,:,0] = r[0:64,:,0:7]
+        font[64:128,:,:,1] = g[0:64,:,0:7]
+        font[64:128,:,:,2] = b[0:64,:,0:7]
+        return font
 
 
 class ATASCIIFontMapping(object):

@@ -34,8 +34,8 @@ A8ComputerFont = {
 
 class AnticFont(object):
     def __init__(self, machine, font_data, font_renderer, playfield_colors):
-        self.char_w = font_data['char_w']
-        self.char_h = font_data['char_h']
+        self.char_w = font_renderer.char_bit_width
+        self.char_h = font_renderer.char_bit_height
         self.scale_w = font_renderer.scale_width
         self.scale_h = font_renderer.scale_height
         

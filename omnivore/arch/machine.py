@@ -627,6 +627,7 @@ predefined = {
         antic_renderers.Mode6Lower(),
         antic_renderers.Mode7Upper(),
         antic_renderers.Mode7Lower(),
+        antic_renderers.Apple2TextMode(),
         ],
     "font_mapping": [
         antic_renderers.ATASCIIFontMapping(),
