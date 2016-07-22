@@ -604,6 +604,7 @@ predefined = {
         memory_map.EmptyMemoryMap,
         memory_map.Atari800MemoryMap,
         memory_map.Atari5200MemoryMap,
+        memory_map.Apple2MemoryMap,
         ],
     "disassembler": [
         disasm.Basic6502Disassembler,
@@ -661,5 +662,5 @@ predefined = {
     }
 
 
-Apple2 = Machine(name="Apple ][", mime_prefix="application/vnd.apple2", disassembler=disasm.Basic6502Disassembler, antic_font_data=fonts.A2DefaultFont, font_renderer=predefined['font_renderer'][7], font_mapping=predefined['font_mapping'][1], antic_color_registers=[4, 30, 68, 213, 15, 202, 148, 70, 0])
+Apple2 = Machine(name="Apple ][", mime_prefix="application/vnd.apple2", disassembler=disasm.Basic65C02Disassembler, antic_font_data=fonts.A2DefaultFont, font_renderer=predefined['font_renderer'][7], font_mapping=predefined['font_mapping'][1], antic_color_registers=[4, 30, 68, 213, 15, 202, 148, 70, 0], memory_map=memory_map.Apple2MemoryMap)
 predefined['machine'].append(Apple2)

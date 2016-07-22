@@ -89,12 +89,12 @@ class Flagged6502Disassembler(Undocumented6502Disassembler):
         return flag & disasm.und
 
 
-class Basic65C02Disassembler(BaseDisassembler):
+class Basic65C02Disassembler(Basic6502Disassembler):
     name = "65c02"
     cpu = "65c02"
 
 
-class Basic65816Disassembler(BaseDisassembler):
+class Basic65816Disassembler(Basic6502Disassembler):
     name = "65816"
     cpu = "65816"
 

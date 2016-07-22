@@ -5,8 +5,16 @@
 class EmptyMemoryMap(object):
     name = "No Memory Map"
     
+    rmemmap = {}
+    wmemmap = {}
+      
     @classmethod
     def get_name(cls, addr, write=False):
+        if write:
+            if addr in cls.wmemmap:
+                return cls.wmemmap[addr]
+        if addr in cls.rmemmap:
+            return cls.rmemmap[addr]
         return ""
 
 
@@ -837,15 +845,7 @@ class Atari800MemoryMap(EmptyMemoryMap):
         0xd20e: "IRQEN",
         0xd20f: "SKCTL",
         }
-      
-    @classmethod
-    def get_name(cls, addr, write=False):
-        if write:
-            if addr in cls.wmemmap:
-                return cls.wmemmap[addr]
-        if addr in cls.rmemmap:
-            return cls.rmemmap[addr]
-        return ""
+
 
 class Atari5200MemoryMap(Atari800MemoryMap):
     name = "Atari 5200"
@@ -1005,3 +1005,70 @@ class Atari5200MemoryMap(Atari800MemoryMap):
         0xe80e: "IRQEN",
         0xe80f: "SKCTL",
         }
+
+
+class Apple2MemoryMap(EmptyMemoryMap):
+    name = "Apple ]["
+    
+    rmemmap = {
+        0xC000: "KEYBOARD",       # keyboard data (latched) (RD-only)
+        0xC001: "SET80COL",
+        0xC002: "CLRAUXRD",       # read from auxilliary 48K
+        0xC003: "SETAUXRD",
+        0xC004: "CLRAUXWR",       # write to auxilliary 48K
+        0xC005: "SETAUXWR",
+        0xC006: "CLRCXROM",       # use external slot ROM
+        0xC007: "SETCXROM",
+        0xC008: "CLRAUXZP",       # use auxilliary ZP, stack, & LC
+        0xC009: "SETAUXZP",
+        0xC00A: "CLRC3ROM",       # use external slot C3 ROM
+        0xC00B: "SETC3ROM",
+        0xC00C: "CLR80VID",       # use 80-column display mode
+        0xC00D: "SET80VID",
+        0xC00E: "CLRALTCH",       # use alternate character set ROM
+        0xC00F: "SETALTCH",
+        0xC010: "STROBE",       # strobe (unlatch) keyboard data
+        0xC011: "RDLCBNK2",       # reading from LC bank $Dx 2
+        0xC012: "RDLCRAM",       # reading from LC RAM
+        0xC013: "RDRAMRD",       # reading from auxilliary 48K
+        0xC014: "RDRAMWR",       # writing to auxilliary 48K
+        0xC015: "RDCXROM",       # using external slot ROM
+        0xC016: "RDAUXZP",       # using auxilliary ZP, stack, & LC
+        0xC017: "RDC3ROM",       # using external slot C3 ROM
+        0xC018: "RD80COL",       # using 80-column memory mapping
+        0xC019: "RDVBLBAR",       # not VBL (VBL signal low)
+        0xC01A: "RDTEXT",       # using text mode
+        0xC01B: "RDMIXED",       # using mixed mode
+        0xC01C: "RDPAGE2",       # using text/graphics page2
+        0xC01D: "RDHIRES",       # using Hi-res graphics mode
+        0xC01E: "RDALTCH",       # using alternate character set ROM
+        0xC01F: "RD80VID",       # using 80-column display mode
+        0xC030: "SPEAKER",       # toggle speaker diaphragm
+        0xC050: "CLRTEXT",       # enable text-only mode
+        0xC051: "SETTEXT",
+        0xC052: "CLRMIXED",       # enable graphics/text mixed mode
+        0xC053: "SETMIXED",
+        0xC054: "TXTPAGE1",       # select page1/2 (or page1/1x)
+        0xC055: "TXTPAGE2",
+        0xC056: "CLRHIRES",       # enable Hi-res graphics
+        0xC057: "SETHIRES",
+        0xC058: "SETAN0",       # 4-bit annunciator inputs
+        0xC059: "CLRAN0",
+        0xC05A: "SETAN1",
+        0xC05B: "CLRAN1",
+        0xC05C: "SETAN2",
+        0xC05D: "CLRAN2",
+        0xC05E: "SETAN3",
+        0xC05F: "CLRAN3",
+        0xC061: "OPNAPPLE",       # open apple (command) key data
+        0xC062: "CLSAPPLE",       # closed apple (option) key data
+        0xC070: "PDLTRIG",       # trigger paddles
+        0xC081: "ROMIN",       # RD ROM, WR-enable LC RAM
+        0xC083: "LCBANK2",       # RD LC RAM bank2, WR-enable LC RAM
+        0xC08B: "LCBANK1",       # RD LC RAM bank1, WR-enable LC RAM
+        0xCFFF: "CLRC8ROM",       # switch out slot C8 ROM
+    }
+
+    wmemmap = {
+        0xC000: "CLR80COL",       # use 80-column memory mapping (WR-only)
+    }
