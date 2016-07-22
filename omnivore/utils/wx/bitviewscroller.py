@@ -621,6 +621,13 @@ class FontMapScroller(BitviewScroller):
         self.command_cls = command
         self.inverse = 0
         self.editing = False
+        self.blink_index = 0
+        self.blink_timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.update, self.blink_timer)
+
+    def update(self, event):
+        self.blink_index = (self.blink_index + 1) % 2
+        self.Refresh()
     
     def is_ready_to_render(self):
         return self.font is not None
@@ -675,6 +682,10 @@ class FontMapScroller(BitviewScroller):
         self.pixels_per_byte = self.editor.machine.font_renderer.char_bit_width
         self.pixels_per_row = self.editor.machine.font_renderer.char_bit_height
         self.calc_scroll_params()
+        if self.editor.machine.use_blinking:
+            self.blink_timer.Start(267)  # on/off cycle in 1.87 Hz
+        else:
+            self.blink_timer.Stop()
 
     def get_image(self, segment=None):
         if segment is None:
@@ -698,7 +709,7 @@ class FontMapScroller(BitviewScroller):
         #log.debug("get_image: bytes", bytes)
         
         m = self.editor.machine
-        font = m.get_blinking_font(0)
+        font = m.get_blinking_font(self.blink_index)
         array = m.font_renderer.get_image(m, font, bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols)
         return array
     

@@ -453,8 +453,10 @@ class Mode2(BaseRenderer):
             array = get_numpy_font_map_image(machine, antic_font, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols)
         return array
         
-    def bits_to_font(self, bits, colors, gr0_colors):
+    def bits_to_font(self, bits, colors, gr0_colors, reverse=False):
         fg, bg = gr0_colors
+        if reverse:
+            fg, bg = bg, fg
         r = np.empty(bits.shape, dtype=np.uint8)
         r[bits==0] = bg[0]
         r[bits==1] = fg[0]
@@ -485,7 +487,7 @@ class Mode2(BaseRenderer):
 class Mode4(Mode2):
     name = "Antic 4 (40x24, 5 color)"
 
-    def bits_to_font(self, bits, colors, gr0_colors):
+    def bits_to_font(self, bits, colors, gr0_colors, reverse=False):
         """ http://www.atarimagazines.com/compute/issue49/419_1_Graphics_0_Text_In_Four_Colors.php
         
         There are four possible combinations of two bits: 00, 01, 10, 11. Each combination represents a different color. The color corresponding to the bit-pair 00 is stored at location 712; the color for the bit-pair 01 is at location 708; the color for bit-pair 10 is at 709; the color for bit-pair 11 is at 710.
@@ -541,7 +543,7 @@ class Mode6Base(Mode2):
         """
         raise NotImplementedError
 
-    def bits_to_font(self, bits, colors, gr0_colors):
+    def bits_to_font(self, bits, colors, gr0_colors, reverse=False):
         bg = colors[8]
         half = self.get_half(bits)
         r = np.empty(half.shape, dtype=np.uint8)
@@ -600,7 +602,7 @@ class Apple2TextMode(Mode2):
     name = "Apple ]["
     char_bit_width = 7
 
-    def bits_to_font(self, bits, colors, gr0_colors):
+    def bits_to_font(self, bits, colors, gr0_colors, reverse=False):
         bg = colors[8]
         fg = colors[4]
         r = np.empty(bits.shape, dtype=np.uint8)
@@ -631,6 +633,14 @@ class Apple2TextMode(Mode2):
         font[0:64,:,:,2] = b[0:64,:,0:7]
         
         # Next 64 are blinking! Hmmm.
+        if reverse:
+            fg, bg = bg, fg
+        r[bits==0] = fg[0]
+        r[bits==1] = bg[0]
+        g[bits==0] = fg[1]
+        g[bits==1] = bg[1]
+        b[bits==0] = fg[2]
+        b[bits==1] = bg[2]
         font[64:128,:,:,0] = r[0:64,:,0:7]
         font[64:128,:,:,1] = g[0:64,:,0:7]
         font[64:128,:,:,2] = b[0:64,:,0:7]

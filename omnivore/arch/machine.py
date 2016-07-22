@@ -33,6 +33,10 @@ class Machine(HasTraits):
     
     antic_font = Any(transient=True)
     
+    use_blinking = Bool(False)
+
+    blinking_antic_font = Any(transient=True)
+    
     antic_color_registers = Any
     
     color_standard = Enum(0, 1)
@@ -202,6 +206,9 @@ class Machine(HasTraits):
     
     def _antic_font_default(self):
         return self.get_antic_font()
+    
+    def _blinking_antic_font_default(self):
+        return self.get_antic_font(True)
     
     def _antic_font_data_default(self):
         return fonts.A8DefaultFont
@@ -374,10 +381,15 @@ class Machine(HasTraits):
             self.font_renderer = font_renderer
         self.antic_font_data = font
         self.antic_font = self.get_antic_font()
+        if self.use_blinking:
+            self.blinking_antic_font = self.get_antic_font(True)
         self.set_font_mapping()
 
     def get_blinking_font(self, index):
-        return self.antic_font
+        if self.use_blinking and index == 1 and self.blinking_antic_font is not None:
+            return self.blinking_antic_font
+        else:
+            return self.antic_font
     
     def get_font_renderer_from_font_mode(self, font_mode):
         for r in predefined['font_renderer']:
@@ -391,9 +403,8 @@ class Machine(HasTraits):
         self.font_mapping = font_mapping
         self.font_change_event = True
     
-    def get_antic_font(self):
-        color_converter = self.get_color_converter()
-        return fonts.AnticFont(self, self.antic_font_data, self.font_renderer, self.antic_color_registers[4:9])
+    def get_antic_font(self, reverse=False):
+        return fonts.AnticFont(self, self.antic_font_data, self.font_renderer, self.antic_color_registers[4:9], reverse)
     
     def load_font(self, task, filename):
         try:
@@ -650,5 +661,5 @@ predefined = {
     }
 
 
-Apple2 = Machine(name="Apple ][", mime_prefix="application/vnd.apple2", disassembler=disasm.Basic6502Disassembler, antic_font_data=fonts.A2ComputerFont, font_renderer=predefined['font_renderer'][7], font_mapping=predefined['font_mapping'][1], antic_color_registers=[4, 30, 68, 213, 15, 202, 148, 70, 0])
+Apple2 = Machine(name="Apple ][", mime_prefix="application/vnd.apple2", disassembler=disasm.Basic6502Disassembler, antic_font_data=fonts.A2ComputerFont, font_renderer=predefined['font_renderer'][7], font_mapping=predefined['font_mapping'][1], antic_color_registers=[4, 30, 68, 213, 15, 202, 148, 70, 0], use_blinking=True)
 predefined['machine'].append(Apple2)
