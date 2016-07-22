@@ -467,20 +467,27 @@ class Mode2(BaseRenderer):
         b[bits==0] = bg[2]
         b[bits==1] = fg[2]
         font = np.zeros((256, 8, 8, 3), dtype=np.uint8)
-        font[0:128,:,:,0] = r
-        font[0:128,:,:,1] = g
-        font[0:128,:,:,2] = b
-        
-        # Inverse characters when high bit set
-        r[bits==0] = fg[0]
-        r[bits==1] = bg[0]
-        g[bits==0] = fg[1]
-        g[bits==1] = bg[1]
-        b[bits==0] = fg[2]
-        b[bits==1] = bg[2]
-        font[128:256,:,:,0] = r
-        font[128:256,:,:,1] = g
-        font[128:256,:,:,2] = b
+        if bits.shape[0] == 256:
+            # all 256 chars are defined, so just store them
+            font[:,:,:,0] = r
+            font[:,:,:,1] = g
+            font[:,:,:,2] = b
+        else:
+            # store the 128 chars as the normal chars
+            font[0:128,:,:,0] = r
+            font[0:128,:,:,1] = g
+            font[0:128,:,:,2] = b
+            
+            # create inverse characters from first 128 chars
+            r[bits==0] = fg[0]
+            r[bits==1] = bg[0]
+            g[bits==0] = fg[1]
+            g[bits==1] = bg[1]
+            b[bits==0] = fg[2]
+            b[bits==1] = bg[2]
+            font[128:256,:,:,0] = r
+            font[128:256,:,:,1] = g
+            font[128:256,:,:,2] = b
         return font
 
 
@@ -615,35 +622,42 @@ class Apple2TextMode(Mode2):
         b[bits==0] = bg[2]
         b[bits==1] = fg[2]
         font = np.zeros((256, 8, 7, 3), dtype=np.uint8)
+        if bits.shape[0] == 256:
+            # all 256 chars are defined, so just store them
+            font[:,:,:,0] = r[:,:,0:7]
+            font[:,:,:,1] = g[:,:,0:7]
+            font[:,:,:,2] = b[:,:,0:7]
+        else:
+            # only 128 chars are present, so create inversed/blink copies
 
-        # Normal characters have high bit set
-        font[128:256,:,:,0] = r[:,:,0:7]
-        font[128:256,:,:,1] = g[:,:,0:7]
-        font[128:256,:,:,2] = b[:,:,0:7]
+            # Normal characters get stored in 2nd 128 char positions
+            font[128:256,:,:,0] = r[:,:,0:7]
+            font[128:256,:,:,1] = g[:,:,0:7]
+            font[128:256,:,:,2] = b[:,:,0:7]
 
-        # First 64 are inversed
-        r[bits==0] = fg[0]
-        r[bits==1] = bg[0]
-        g[bits==0] = fg[1]
-        g[bits==1] = bg[1]
-        b[bits==0] = fg[2]
-        b[bits==1] = bg[2]
-        font[0:64,:,:,0] = r[0:64,:,0:7]
-        font[0:64,:,:,1] = g[0:64,:,0:7]
-        font[0:64,:,:,2] = b[0:64,:,0:7]
-        
-        # Next 64 are blinking! Hmmm.
-        if reverse:
-            fg, bg = bg, fg
-        r[bits==0] = fg[0]
-        r[bits==1] = bg[0]
-        g[bits==0] = fg[1]
-        g[bits==1] = bg[1]
-        b[bits==0] = fg[2]
-        b[bits==1] = bg[2]
-        font[64:128,:,:,0] = r[0:64,:,0:7]
-        font[64:128,:,:,1] = g[0:64,:,0:7]
-        font[64:128,:,:,2] = b[0:64,:,0:7]
+            # First 64 are inversed
+            r[bits==0] = fg[0]
+            r[bits==1] = bg[0]
+            g[bits==0] = fg[1]
+            g[bits==1] = bg[1]
+            b[bits==0] = fg[2]
+            b[bits==1] = bg[2]
+            font[0:64,:,:,0] = r[0:64,:,0:7]
+            font[0:64,:,:,1] = g[0:64,:,0:7]
+            font[0:64,:,:,2] = b[0:64,:,0:7]
+            
+            # Next 64 are blinking!
+            if reverse:
+                fg, bg = bg, fg
+            r[bits==0] = fg[0]
+            r[bits==1] = bg[0]
+            g[bits==0] = fg[1]
+            g[bits==1] = bg[1]
+            b[bits==0] = fg[2]
+            b[bits==1] = bg[2]
+            font[64:128,:,:,0] = r[0:64,:,0:7]
+            font[64:128,:,:,1] = g[0:64,:,0:7]
+            font[64:128,:,:,2] = b[0:64,:,0:7]
         return font
 
 

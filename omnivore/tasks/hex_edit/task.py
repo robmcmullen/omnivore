@@ -284,7 +284,8 @@ class HexEditTask(FrameworkTask):
                 Group(
                     UseFontAction(font=fonts.A8DefaultFont),
                     UseFontAction(font=fonts.A8ComputerFont),
-                    UseFontAction(font=fonts.A2ComputerFont),
+                    UseFontAction(font=fonts.A2DefaultFont),
+                    UseFontAction(font=fonts.A2MouseTextFont),
                     id="a1", separator=True),
                 FontChoiceGroup(id="a2", separator=True),
                 Group(

@@ -661,5 +661,5 @@ predefined = {
     }
 
 
-Apple2 = Machine(name="Apple ][", mime_prefix="application/vnd.apple2", disassembler=disasm.Basic6502Disassembler, antic_font_data=fonts.A2ComputerFont, font_renderer=predefined['font_renderer'][7], font_mapping=predefined['font_mapping'][1], antic_color_registers=[4, 30, 68, 213, 15, 202, 148, 70, 0])
+Apple2 = Machine(name="Apple ][", mime_prefix="application/vnd.apple2", disassembler=disasm.Basic6502Disassembler, antic_font_data=fonts.A2DefaultFont, font_renderer=predefined['font_renderer'][7], font_mapping=predefined['font_mapping'][1], antic_color_registers=[4, 30, 68, 213, 15, 202, 148, 70, 0])
 predefined['machine'].append(Apple2)
