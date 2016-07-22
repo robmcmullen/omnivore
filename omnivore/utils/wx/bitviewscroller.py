@@ -682,7 +682,7 @@ class FontMapScroller(BitviewScroller):
         self.pixels_per_byte = self.editor.machine.font_renderer.char_bit_width
         self.pixels_per_row = self.editor.machine.font_renderer.char_bit_height
         self.calc_scroll_params()
-        if self.editor.machine.use_blinking:
+        if self.font.use_blinking:
             self.blink_timer.Start(267)  # on/off cycle in 1.87 Hz
         else:
             self.blink_timer.Stop()

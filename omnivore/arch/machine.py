@@ -32,8 +32,6 @@ class Machine(HasTraits):
     antic_font_data = Any
     
     antic_font = Any(transient=True)
-    
-    use_blinking = Bool(False)
 
     blinking_antic_font = Any(transient=True)
     
@@ -381,12 +379,14 @@ class Machine(HasTraits):
             self.font_renderer = font_renderer
         self.antic_font_data = font
         self.antic_font = self.get_antic_font()
-        if self.use_blinking:
+        if self.antic_font.use_blinking:
             self.blinking_antic_font = self.get_antic_font(True)
+        else:
+            self.blinking_antic_font = None
         self.set_font_mapping()
 
     def get_blinking_font(self, index):
-        if self.use_blinking and index == 1 and self.blinking_antic_font is not None:
+        if self.antic_font.use_blinking and index == 1 and self.blinking_antic_font is not None:
             return self.blinking_antic_font
         else:
             return self.antic_font
@@ -661,5 +661,5 @@ predefined = {
     }
 
 
-Apple2 = Machine(name="Apple ][", mime_prefix="application/vnd.apple2", disassembler=disasm.Basic6502Disassembler, antic_font_data=fonts.A2ComputerFont, font_renderer=predefined['font_renderer'][7], font_mapping=predefined['font_mapping'][1], antic_color_registers=[4, 30, 68, 213, 15, 202, 148, 70, 0], use_blinking=True)
+Apple2 = Machine(name="Apple ][", mime_prefix="application/vnd.apple2", disassembler=disasm.Basic6502Disassembler, antic_font_data=fonts.A2ComputerFont, font_renderer=predefined['font_renderer'][7], font_mapping=predefined['font_mapping'][1], antic_color_registers=[4, 30, 68, 213, 15, 202, 148, 70, 0])
 predefined['machine'].append(Apple2)

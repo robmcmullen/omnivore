@@ -36,11 +36,13 @@ A2ComputerFont = {
     'name': "7x8 Apple ][ Font",
     'char_w': 7,
     'char_h': 8,
+    'blink': True,
     }
 
 
 class AnticFont(object):
     def __init__(self, machine, font_data, font_renderer, playfield_colors, reverse=False):
+        self.use_blinking = font_data.get('blink', False)
         self.char_w = font_renderer.char_bit_width
         self.char_h = font_renderer.char_bit_height
         self.scale_w = font_renderer.scale_width
