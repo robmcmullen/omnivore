@@ -784,7 +784,7 @@ class JumpmanEditor(BitmapEditor):
     ##### Default traits
     
     def _machine_default(self):
-        return Machine(name="Jumpman", bitmap_renderer=JumpmanPlayfieldRenderer())
+        return Machine(name="Jumpman", bitmap_renderer=JumpmanPlayfieldRenderer(), mime_prefix="application/vnd.atari8bit")
 
     def _map_width_default(self):
         return 40 * 4
