@@ -227,6 +227,85 @@ class OneBitPerPixelApple2(BaseRenderer):
         return bitimage.reshape((nr, bytes_per_row * 7, 3))
 
 
+class OneBitPerPixelApple2Artifacting(BaseRenderer):
+    name = "Apple 2 (artifacting colors)"
+    bw_colors = ((255, 255, 255), (0, 0, 0))
+
+    # 0 0000000 0 0000000  # black 0, 0, 0
+    # 0 0101010 0 1010101  # green 32, 192, 0
+    # 0 1010101 0 0101010  # purple 159, 0, 253
+    # 0 1111111 0 1111111  # white 255, 255, 255
+    # 1 0000000 1 0000000  # black 0, 0, 0
+    # 1 0101010 1 1010101  # orange 240, 80, 0
+    # 1 1010101 1 0101010  # blue 0, 128, 255
+    # 1 1111111 1 1111111  # white 255, 255, 255
+    #
+    # From https://groups.google.com/forum/#!msg/comp.sys.apple2.programmer/vxtFo6QEYGg/9kh1RfovGQAJ
+    # bit # 
+    # 0 1 2 3 4 5 6 7   0 1 2 3 4 5 6 7 
+
+    #          color bit          color bit 
+    #               |                 |     
+    # 0 0 0 0 0 0 0 0   0 0 0 0 0 0 0 0 
+    # |_| |_| |_| |_____| |_| |_| |_| 
+
+    #  0   1   2     3     4   5   6 
+
+    # every 2 bytes starting on an even number ($2000.2001) gives seven pixels.
+    # As you can see, pixel #3 uses a bit from byte $2000 and byte 2001 to form
+    # a pixel. if any two bits are consecutive (except the color bit) you get
+    # two white pixels. with color bit clear, each group of bits will show
+    # violet or green. with color bit set, each group of bits will show blue or
+    # orange.
+
+    # color bit clear 
+    # bits-color 
+    # 00 - black 
+    # 10 - violet 
+    # 01 - green 
+    # 11 - white 
+
+    # color bit set 
+    # 00 - black 
+    # 10 - blue 
+    # 01 - orange 
+    # 11 - white 
+
+    def get_image(self, m, bytes_per_row, nr, count, bytes, style):
+        bits = np.unpackbits(bit_reverse_table[bytes])
+        pixels = bits.reshape((-1, 8))
+
+        background = (pixels[:,0:7] == 0)
+        color1 = (pixels[:,0:7] == 1)
+        
+        h_colors = m.get_blended_color_registers(self.bw_colors, m.highlight_color)
+        m_colors = m.get_blended_color_registers(self.bw_colors, m.match_background_color)
+        c_colors = m.get_blended_color_registers(self.bw_colors, m.comment_background_color)
+        d_colors = m.get_dimmed_color_registers(self.bw_colors, m.background_color, m.data_color)
+        
+        style_per_pixel = np.vstack((style, style, style, style, style, style, style)).T
+        normal = (style_per_pixel & self.ignore_mask) == 0
+        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
+        data = (style_per_pixel & data_bit_mask) == data_bit_mask
+        comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
+        match = (style_per_pixel & match_bit_mask) == match_bit_mask
+        
+        bitimage = np.empty((nr * bytes_per_row, 7, 3), dtype=np.uint8)
+        bitimage[background & normal] = self.bw_colors[0]
+        bitimage[background & comment] = c_colors[0]
+        bitimage[background & match] = m_colors[0]
+        bitimage[background & data] = d_colors[0]
+        bitimage[background & highlight] = h_colors[0]
+        bitimage[color1 & normal] = self.bw_colors[1]
+        bitimage[color1 & comment] = c_colors[1]
+        bitimage[color1 & match] = m_colors[1]
+        bitimage[color1 & data] = d_colors[1]
+        bitimage[color1 & highlight] = h_colors[1]
+        bitimage[count:,:,:] = m.empty_color
+
+        return bitimage.reshape((nr, bytes_per_row * 7, 3))
+
+
 class TwoBitsPerPixel(BaseRenderer):
     name = "2bpp"
     pixels_per_byte = 4
