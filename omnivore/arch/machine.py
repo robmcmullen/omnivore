@@ -622,6 +622,7 @@ predefined = {
     "bitmap_renderer": [
         antic_renderers.OneBitPerPixelB(),
         antic_renderers.OneBitPerPixelW(),
+        antic_renderers.OneBitPerPixelApple2(),
         antic_renderers.ModeD(),
         antic_renderers.ModeE(),
         antic_renderers.GTIA9(),

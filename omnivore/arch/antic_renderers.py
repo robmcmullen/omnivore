@@ -2,6 +2,8 @@ import numpy as np
 
 from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, diff_bit_mask, not_user_bit_mask
 
+from omnivore.utils.permute import bit_reverse_table
+
 from atascii import internal_to_atascii, atascii_to_internal
 try:
     import antic_speedups as speedups
@@ -184,6 +186,45 @@ class OneBitPerPixelB(BaseRenderer):
 class OneBitPerPixelW(OneBitPerPixelB):
     name = "B/W, 1bpp, on=white"
     bw_colors = ((0, 0, 0), (255, 255, 255))
+
+
+class OneBitPerPixelApple2(BaseRenderer):
+    name = "B/W, Apple 2"
+    bw_colors = ((255, 255, 255), (0, 0, 0))
+    
+    def get_image(self, m, bytes_per_row, nr, count, bytes, style):
+        bits = np.unpackbits(bit_reverse_table[bytes])
+        pixels = bits.reshape((-1, 8))
+
+        background = (pixels[:,0:7] == 0)
+        color1 = (pixels[:,0:7] == 1)
+        
+        h_colors = m.get_blended_color_registers(self.bw_colors, m.highlight_color)
+        m_colors = m.get_blended_color_registers(self.bw_colors, m.match_background_color)
+        c_colors = m.get_blended_color_registers(self.bw_colors, m.comment_background_color)
+        d_colors = m.get_dimmed_color_registers(self.bw_colors, m.background_color, m.data_color)
+        
+        style_per_pixel = np.vstack((style, style, style, style, style, style, style)).T
+        normal = (style_per_pixel & self.ignore_mask) == 0
+        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
+        data = (style_per_pixel & data_bit_mask) == data_bit_mask
+        comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
+        match = (style_per_pixel & match_bit_mask) == match_bit_mask
+        
+        bitimage = np.empty((nr * bytes_per_row, 7, 3), dtype=np.uint8)
+        bitimage[background & normal] = self.bw_colors[0]
+        bitimage[background & comment] = c_colors[0]
+        bitimage[background & match] = m_colors[0]
+        bitimage[background & data] = d_colors[0]
+        bitimage[background & highlight] = h_colors[0]
+        bitimage[color1 & normal] = self.bw_colors[1]
+        bitimage[color1 & comment] = c_colors[1]
+        bitimage[color1 & match] = m_colors[1]
+        bitimage[color1 & data] = d_colors[1]
+        bitimage[color1 & highlight] = h_colors[1]
+        bitimage[count:,:,:] = m.empty_color
+
+        return bitimage.reshape((nr, bytes_per_row * 7, 3))
 
 
 class TwoBitsPerPixel(BaseRenderer):
