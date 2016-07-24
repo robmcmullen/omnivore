@@ -270,7 +270,6 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.pending_remove = None
         if self.objects and not self.check_tolerance:
             self.canvas.save_changes()
-            self.resync_objects()
         else:
             self.canvas.Refresh()
         self.display_coords(evt)
@@ -589,7 +588,7 @@ class JumpmanLevelView(MainBitmapScroller):
         self.generate_display_objects()
         return editor.screen
 
-    def generate_display_objects(self):
+    def generate_display_objects(self, resync=False):
         try:
             source, level_addr, harvest_addr = self.editor.get_level_addrs()
             index = level_addr - source.start_addr
@@ -599,6 +598,8 @@ class JumpmanLevelView(MainBitmapScroller):
             if self.trigger_root is not None:
                 self.trigger_root = self.level_builder.find_equivalent_peanut(self.trigger_root)
                 self.editor.trigger_list.recalc_view()
+            if resync:
+                self.mouse_mode.resync_objects()
         except RuntimeError:
             self.valid_level = False
 
@@ -842,7 +843,7 @@ class JumpmanEditor(BitmapEditor):
 
     def rebuild_display_objects(self):
         print "Rebuilding!"
-        self.bitmap.generate_display_objects()
+        self.bitmap.generate_display_objects(True)
     
     def reconfigure_panes(self):
         self.hex_edit.recalc_view()
