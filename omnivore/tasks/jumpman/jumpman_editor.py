@@ -60,6 +60,48 @@ class JumpmanSelectMode(SelectMode):
 
     def draw_overlay(self, bitimage):
         return
+
+    def get_harvest_offset(self):
+        source = self.canvas.editor.segment
+        if len(source) < 0x47:
+            hx = hy = 0, 0
+        else:
+            hx = source[0x46]
+            hy = source[0x47]
+        return hx, hy
+
+    def draw_harvest_grid(self, screen):
+        hx, hy = self.get_harvest_offset()
+        w = 160
+        h = 88
+        
+        # Original (slow) algorithm to determine bad locations:
+        #
+        # def is_allergic(x, y, hx, hy):
+        #     return (x + 0x30 + hx) & 0x1f < 7 or (2 * y + 0x20 + hy) & 0x1f < 5
+        #
+        # Note that in the originial 6502 code, the y coord is in player
+        # coords, which is has twice the resolution of graphics 7. That's the
+        # factor of two in the y part. Simplifying, the bad locations can be
+        # defined in sets of 32 columns and 16 rows:
+        #
+        # x: 16 - hx, 16 - hx + 6 inclusive
+        # y: 0 - hy/2, 0 - hy/2 + 2 inclusive
+        hx = hx & 0x1f
+        hy = (hy & 0x1f) / 2
+        startx = (16 - hx) & 0x1f
+        starty = (0 - hy) & 0xf
+
+        # Don't know how to set multiple ranges simultaneously in numpy, so use
+        # a slow python loop
+        s = screen.style.reshape((h, w))
+#        s[:] = 0
+        for x in range(startx, startx + 8):
+            x = x & 0x1f
+            s[0:h:, x::32] |= comment_bit_mask
+        for y in range(starty, starty + 4):
+            y = y & 0xf
+            s[y:h:16,:] |= comment_bit_mask
     
     def get_xy(self, evt):
         c = self.canvas
@@ -149,6 +191,12 @@ class AnticDSelectMode(JumpmanSelectMode):
         e = self.canvas.editor
         playfield = e.get_playfield_segment()  # use new, temporary playfield
         _, _, self.override_state = self.canvas.redraw_current(playfield, self.objects)
+
+        # Draw the harvest grid if a peanut is selected
+        for obj in self.objects:
+            if obj.single:
+                self.draw_harvest_grid(playfield)
+                break
         bitimage = self.canvas.get_rendered_image(playfield)
         return bitimage
 
@@ -387,15 +435,6 @@ class DrawPeanutMode(DrawMode):
         else:
             return wx.StockCursor(wx.CURSOR_ARROW)
 
-    def get_harvest_offset(self):
-        source = self.canvas.editor.segment
-        if len(source) < 0x47:
-            hx = hy = 0, 0
-        else:
-            hx = source[0x46]
-            hy = source[0x47]
-        return hx, hy
-
     def is_allergic(self, x, y):
         hx, hy = self.get_harvest_offset()
         hx = hx & 0x1f
@@ -411,37 +450,7 @@ class DrawPeanutMode(DrawMode):
 
     def draw_extra_objects(self, level_builder, screen, current_segment):
         level_builder.draw_objects(screen, self.objects, current_segment)
-        hx, hy = self.get_harvest_offset()
-        w = 160
-        h = 88
-        
-        # Original (slow) algorithm to determine bad locations:
-        #
-        # def is_allergic(x, y, hx, hy):
-        #     return (x + 0x30 + hx) & 0x1f < 7 or (2 * y + 0x20 + hy) & 0x1f < 5
-        #
-        # Note that in the originial 6502 code, the y coord is in player
-        # coords, which is has twice the resolution of graphics 7. That's the
-        # factor of two in the y part. Simplifying, the bad locations can be
-        # defined in sets of 32 columns and 16 rows:
-        #
-        # x: 16 - hx, 16 - hx + 6 inclusive
-        # y: 0 - hy/2, 0 - hy/2 + 2 inclusive
-        hx = hx & 0x1f
-        hy = (hy & 0x1f) / 2
-        startx = (16 - hx) & 0x1f
-        starty = (0 - hy) & 0xf
-
-        # Don't know how to set multiple ranges simultaneously in numpy, so use
-        # a slow python loop
-        s = screen.style.reshape((h, w))
-        s[:] = 0
-        for x in range(startx, startx + 8):
-            x = x & 0x1f
-            s[0:h:, x::32] = comment_bit_mask
-        for y in range(starty, starty + 4):
-            y = y & 0xf
-            s[y:h:16,:] = comment_bit_mask
+        self.draw_harvest_grid(screen)
 
     def change_harvest_offset(self, evt, start=False):
         c = self.canvas
