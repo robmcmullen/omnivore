@@ -21,6 +21,7 @@ class InfoField(object):
     keyword = ""
     same_line = False
     display_label = True
+    use_edit_timer = False
     
     # wx.Sizer proportion of the main control (not the label).  See the
     # wx.Sizer docs, but basically 0 will fix vertical size to initial size, >
@@ -32,6 +33,8 @@ class InfoField(object):
     popup_width = 300
 
     extra_vertical_spacing = 0
+
+    edit_timer_delay = 300  # ms
     
     def __init__(self, panel, info):
         self.panel = panel
@@ -94,12 +97,28 @@ class InfoField(object):
         self.box.AddSpacer(self.panel.VALUE_SPACING)
     
     def create_all_controls(self):
+        if self.use_edit_timer:
+            self.create_edit_timer()
         self.ctrl = self.create_control()
         if sys.platform.startswith("win"):
             self.ctrl.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel_scroll)
         self.extra_ctrls = self.create_extra_controls()
         self.set_control_limits()
-    
+
+    def create_edit_timer(self):
+        self.edit_timer = wx.Timer(self.panel)
+        self.panel.Bind(wx.EVT_TIMER, self.on_edit_timer_elapsed, self.edit_timer)
+
+    def start_edit_timer(self, evt=None):
+        self.edit_timer.Start(self.edit_timer_delay, oneShot=True)
+
+    def on_edit_timer_elapsed(self, evt):
+        self.edit_timer_callback()
+        evt.Skip()
+
+    def edit_timer_callback(self):
+        raise RuntimeError("no edit timer callback set")
+
     def is_editable_control(self, ctrl):
         return ctrl == self.ctrl
 
@@ -190,6 +209,7 @@ class TextEditField(InfoField):
     keyword = "text"
     same_line = True
     wide = False
+    use_edit_timer = True
 
     def create_control(self):
         if self.wide:
@@ -197,9 +217,13 @@ class TextEditField(InfoField):
         else:
             size = (-1, -1)
         c = wx.TextCtrl(self.parent, size=size)
-        c.Bind(wx.EVT_TEXT, self.on_text_changed)
+        c.Bind(wx.EVT_TEXT, self.start_edit_timer)
         c.SetEditable(True)
         return c
+
+    def edit_timer_callback(self):
+        editor = self.panel.editor
+        self.process_text_change(editor)
 
     def set_control_limits(self):
         if self.byte_count > 0:
@@ -243,10 +267,6 @@ class TextEditField(InfoField):
     
     def parse_from_control(self):
         return self.ctrl.GetValue()
-    
-    def on_text_changed(self, evt):
-        editor = self.panel.editor
-        self.process_text_change(editor)
     
     def initial_text_input(self, text):
         self.ctrl.ChangeValue(text)
