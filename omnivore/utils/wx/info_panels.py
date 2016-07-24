@@ -41,6 +41,10 @@ class InfoField(object):
         self.set_args(info)
         self.create()
 
+    @property
+    def undo_label(self):
+        return "Change %s" % self.field_name
+
     def set_args(self, args):
         self.field_name = args[0]
         self.byte_offset = args[1]
@@ -304,7 +308,7 @@ class TextEditField(InfoField):
         if self.is_valid():
             data = self.parse_from_control()
             raw = self.parsed_to_bytes(data)
-            editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw)
+            editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw, self.undo_label)
 
 class AtasciiC0(TextEditField):
     keyword = "atascii_gr2_0xc0"
@@ -396,7 +400,7 @@ class AnticColorsField(InfoField):
         raw = self.get_source_bytes(editor)
         dlg = AnticColorDialog(self.ctrl, raw, self.register_names)
         if dlg.ShowModal() == wx.ID_OK:
-            editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, dlg.colors)
+            editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, dlg.colors, self.undo_label)
 
 class DropDownField(InfoField):
     keyword = "dropdown"
@@ -435,7 +439,7 @@ class DropDownField(InfoField):
     def drop_down_changed(self, event):
         raw = np.zeros([self.byte_count],dtype=np.uint8)
         raw[0] = self.ctrl.GetSelection()
-        self.panel.editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw)
+        self.panel.editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw, self.undo_label)
 
 class PeanutsNeededField(DropDownField):
     keyword = "peanuts_needed"
@@ -461,7 +465,7 @@ class PeanutsNeededField(DropDownField):
         e.peanut_harvest_diff = self.ctrl.GetSelection()
         raw = np.zeros([self.byte_count],dtype=np.uint8)
         raw[0] = max(0, e.num_peanuts - e.peanut_harvest_diff)
-        e.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw)
+        e.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw, self.undo_label)
 
 
 PANELTYPE = wx.lib.scrolledpanel.ScrolledPanel

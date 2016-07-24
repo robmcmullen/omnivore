@@ -37,6 +37,11 @@ import logging
 log = logging.getLogger(__name__)
 
 
+class MoveObjectCommand(SetValueCommand):
+    short_name = "move_jumpman_obj"
+    pretty_name = "Move Object"
+
+
 class JumpmanSelectMode(SelectMode):
     can_paste = False
 
@@ -544,7 +549,7 @@ class JumpmanRespawnMode(DrawMode):
             return
         obj = self.objects[0]
         values = [obj.x + 0x30, (obj.y * 2) + 0x18]
-        e.change_bytes(0x39, 0x3b, values)
+        e.change_bytes(0x39, 0x3b, values, "Change Respawn Point")
 
     def process_left_up(self, evt):
         if self.num_clicks == 2:
@@ -719,7 +724,7 @@ class JumpmanLevelView(MainBitmapScroller):
         hdata = np.empty([2], dtype=np.uint8)
         hdata.view(dtype="<u2")[0] = harvest_addr
         data = np.hstack([ropeladder_data, pdata, hdata, level_data])
-        cmd = SetValueCommand(source, ranges, data)
+        cmd = MoveObjectCommand(source, ranges, data)
         self.editor.process_command(cmd)
     
     # Segment saver interface for menu item display
