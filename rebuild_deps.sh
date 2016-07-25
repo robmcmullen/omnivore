@@ -8,9 +8,10 @@
 # solution I could come up with -- at least this way, Omnivore doesn't have any
 # external deps that can't be handled by pip (apart from wxPython 3.0).
 
-REPOS="https://github.com/robmcmullen/traits.git https://github.com/robmcmullen/pyface.git https://github.com/robmcmullen/traitsui.git https://github.com/enthought/apptools.git https://github.com/robmcmullen/envisage.git"
+REPOS="https://github.com/robmcmullen/traits.git https://github.com/robmcmullen/pyface.git https://github.com/robmcmullen/traitsui.git https://github.com/enthought/apptools.git https://github.com/robmcmullen/envisage.git https://github.com/robmcmullen/atrcopy.git https://github.com/robmcmullen/pyfilesystem.git"
 
-TOPDIR=$PWD/enthought
+DEPDIR=deps
+TOPDIR=$PWD/$DEPDIR
 mkdir -p $TOPDIR
 
 for URL in $REPOS
@@ -26,11 +27,14 @@ do
         echo "Updating $REPO in $SUBDIR"
         cd $REPODIR
         git pull
+        python setup.py build_ext
     else
         echo "Cloning $REPO in $SUBDIR"
         cd $TOPDIR
         git clone $URL
+        cd $REPODIR
+        python setup.py build_ext
     fi
     cd $TOPDIR/..
-    ln -fs enthought/$REPODIR/$REPODIR
+    ln -fs $DEPDIR/$REPODIR/$REPODIR
 done
