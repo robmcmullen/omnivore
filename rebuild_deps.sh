@@ -22,6 +22,11 @@ do
     REPO=`basename $URL`
     REPODIR=`basename -s .git $REPO`
     SUBDIR="$TOPDIR/$REPODIR"
+    CODEDIR="$REPODIR"
+    if [ $CODEDIR = "pyfilesystem" ]
+    then
+        CODEDIR="fs"
+    fi
     if [ -d $REPODIR ]
     then
         echo "Updating $REPO in $SUBDIR"
@@ -36,5 +41,5 @@ do
         python setup.py build_ext
     fi
     cd $TOPDIR/..
-    ln -fs $DEPDIR/$REPODIR/$REPODIR
+    ln -fs $DEPDIR/$REPODIR/$CODEDIR
 done
