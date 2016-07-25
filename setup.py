@@ -28,6 +28,19 @@ ext_modules = [
               )
     ]
 
+if 'conda' not in sys.version:
+    install_requires = []
+else:
+    install_requires = [
+        'numpy',
+        'atrcopy>=2.5.0',
+        'jsonpickle',
+        'bson<1.0.0',
+        'configobj',
+        'pyparsing',
+        ]
+
+
 cmdclass = dict()
 
 from setuptools.command.build_ext import build_ext as _build_ext
@@ -230,15 +243,7 @@ if 'nsis' not in sys.argv:
         long_description = open('README.rst').read(),
         cmdclass = cmdclass,
         ext_modules = ext_modules,
-        install_requires = [
-            'numpy',
-            'atrcopy>=2.5.0',
-            'jsonpickle',
-            'bson',
-            'fs',
-            'configobj',
-            'pyparsing',
-            ],
+        install_requires = install_requires,
         setup_requires = ["numpy"],
         license = "GPL",
         packages = packages,
