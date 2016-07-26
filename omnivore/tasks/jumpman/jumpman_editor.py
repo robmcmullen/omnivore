@@ -588,6 +588,15 @@ class JumpmanLevelView(MainBitmapScroller):
     def is_ready_to_render(self):
         return self.editor is not None and self.level_builder is not None and self.segment is not None
 
+    def update_zoom(self):
+        # force zoom so that entire screen fits in window
+        w, h = self.GetClientSizeTuple()
+        sw = w / 160
+        sh = h / 88
+        zoom = min(sh, sw)
+        zoom = max(zoom, 1)  # make sure it's visible, at least!
+        self.set_zoom(zoom)
+
     def set_mouse_mode(self, handler):
         if hasattr(self, 'mouse_mode'):
             self.mouse_mode.cleanup()
