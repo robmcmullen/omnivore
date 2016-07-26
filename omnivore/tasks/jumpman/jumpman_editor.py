@@ -834,6 +834,10 @@ class JumpmanEditor(BitmapEditor):
     ###########################################################################
     # 'FrameworkEditor' interface.
     ###########################################################################
+    
+    # Segment saver interface for menu item display
+    export_data_name = "Jumpman Level Tester ATR"
+    export_extensions = [".atr"]
 
     def made_current_active_editor(self):
         self.update_mouse_mode(AnticDSelectMode)

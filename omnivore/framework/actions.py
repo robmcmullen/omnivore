@@ -12,6 +12,7 @@ from traits.api import on_trait_change, Property, Instance, Bool, Str, Unicode, 
 
 from omnivore.framework.about import AboutDialog
 from omnivore.utils.file_guess import FileGuess
+from omnivore.utils.wx.dialogs import get_file_dialog_wildcard
 
 import logging
 log = logging.getLogger(__name__)
@@ -106,9 +107,9 @@ class OpenAction(Action):
                     most_recent = os.path.dirname(fs_.getsyspath(relpath))
             except fs.errors.FSError:
                 pass
-            dialog = FileDialog(default_directory=most_recent, parent=event.task.window.control)
+            dialog = FileDialog(default_directory=most_recent, parent=event.task.window.control, title="Open File")
         else:
-            dialog = FileDialog(parent=event.task.window.control)
+            dialog = FileDialog(parent=event.task.window.control, title="Open File")
         if dialog.open() == OK:
             event.task.window.application.load_file(dialog.path, event.task)
 
@@ -129,9 +130,10 @@ class SaveAsAction(EditorAction):
     image = ImageResource('file_save_as')
 
     def perform(self, event):
-        dialog = FileDialog(parent=event.task.window.control, action='save as')
+
+        dialog = FileDialog(default_filename=self.active_editor.document.name, parent=event.task.window.control, action='save as', title="Save File As", wildcard=get_file_dialog_wildcard(self.active_editor.export_data_name, self.active_editor.export_extensions))
         if dialog.open() == OK:
-            self.active_editor.save(dialog.path)
+            self.active_editor.save(dialog.path, saver=self.active_editor.encode_data)
 
 class RevertAction(EditorAction):
     name = 'Revert'
@@ -175,7 +177,7 @@ class SaveAsPDFAction(EditorAction):
     enabled_name = 'printable'
 
     def perform(self, event):
-        dialog = FileDialog(parent=event.task.window.control, action='save as')
+        dialog = FileDialog(parent=event.task.window.control, action='save as', title="Save PDF")
         if dialog.open() == OK:
             self.active_editor.save_as_pdf(dialog.path)
 

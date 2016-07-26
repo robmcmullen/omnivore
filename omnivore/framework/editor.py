@@ -251,14 +251,17 @@ class FrameworkEditor(Editor):
     def document_length(self):
         return len(self.document)
 
-    def save(self, uri=None):
+    def save(self, uri=None, saver=None):
         """ Saves the contents of the editor.
         """
         if uri is None:
             uri = self.document.uri
 
         try:
-            bytes = self.document.bytes.tostring()
+            if saver is None:
+                bytes = self.document.bytes.tostring()
+            else:
+                bytes = saver(self.document)
             self.save_to_uri(bytes, uri)
             self.document.undo_stack.set_save_point()
 
@@ -311,6 +314,17 @@ class FrameworkEditor(Editor):
                 self.metadata_dirty = False
         
         fs.close()
+    
+    # Segment saver interface for menu item display
+    export_data_name = "Any"
+    export_extensions = [".*"]
+    
+    def encode_data(self, document):
+        """Document saver interface: take a document and produce a byte
+        representation to save to disk.
+        """
+        data = document.bytes.tostring()
+        return data
     
     def get_extra_metadata_header(self):
         return "# omnivore %s extra_metadata=v1\n" % __version__
