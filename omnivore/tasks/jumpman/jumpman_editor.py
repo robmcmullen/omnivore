@@ -247,12 +247,19 @@ class AnticDSelectMode(JumpmanSelectMode):
             if self.check_tolerance and abs(dx) + abs(dy) <  self.min_mouse_distance:
                 return
             self.check_tolerance = False
+            bad_move = False
             for obj in self.objects:
                 print "moving", obj
                 print " equiv", self.canvas.level_builder.find_equivalent_object(obj)
+                obj.last_x, obj.last_y = obj.x, obj.y
                 _, obj.x = divmod(obj.orig_x + dx, 160)
                 obj.x &= obj.valid_x_mask
                 obj.y = obj.orig_y + dy
+                if obj.is_offscreen():
+                    bad_move = True
+            if bad_move:
+                for obj in self.objects:
+                    obj.x, obj.y = obj.last_x, obj.last_y
             self.pending_remove = None
 
     def process_left_down(self, evt):
