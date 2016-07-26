@@ -52,3 +52,12 @@ def pane_create():
         panes.LevelDataPane(),
         panes.TriggerPane(),
         ]
+
+def pane_initially_visible():
+    """ List of initial pane visibility.  Any panes not listed will use the
+    last saved state.
+    """
+    
+    return {
+        'jumpman.hex': False,
+        }

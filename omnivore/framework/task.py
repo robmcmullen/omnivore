@@ -150,6 +150,13 @@ class FrameworkTask(Task):
         self.window.icon = self.icon
         self.set_keyboard_shortcuts()
         self._active_editor_tab_change(None)
+        visible = self.pane_layout_initial_visibility()
+        for pane in self.window.dock_panes:
+            if pane.id in visible:
+                pane.visible = visible[pane.id]
+
+    def pane_layout_initial_visibility(self):
+        return {}
 
     def create_central_pane(self):
         """ Create the central pane: the text editor.

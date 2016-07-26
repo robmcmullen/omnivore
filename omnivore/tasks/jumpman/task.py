@@ -70,6 +70,9 @@ class JumpmanEditTask(HexEditTask):
         toolbars.extend(HexEditTask._tool_bars_default(self))
         return toolbars
 
+    def pane_layout_initial_visibility(self):
+        return pane_layout.pane_initially_visible()
+
     ###########################################################################
     # 'FrameworkTask' interface.
     ###########################################################################
