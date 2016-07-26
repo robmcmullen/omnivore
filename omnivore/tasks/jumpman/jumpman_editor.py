@@ -347,9 +347,11 @@ class DrawMode(JumpmanSelectMode):
                 sx = dx / num
         screen_x = (self.mouse_down[0] - obj.default_dx/2) & obj.valid_x_mask
         screen_y = self.mouse_down[1] - obj.default_dy/2
-        self.objects = [
-            obj(-1, screen_x, screen_y, num, sx, sy),
-        ]
+
+        self.objects = []
+        item = obj(-1, screen_x, screen_y, num, sx, sy)
+        if not item.is_offscreen():
+            self.objects.append(item)
         self.check_objects(x, y)
 
     def check_objects(self, x, y):

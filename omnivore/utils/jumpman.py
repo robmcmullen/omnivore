@@ -13,7 +13,7 @@ class JumpmanDrawObject(object):
     name = "object"
     default_addr = None
     default_dx = 4
-    default_dy = 4
+    default_dy = 3
     vertical_only = False
     single = False
     sort_order = 0
@@ -117,6 +117,21 @@ class JumpmanDrawObject(object):
     def harvest_checksum(self, hx, hy):
         return ((self.x + 0x30 + hx) & 0xe0) | (((self.y * 2) + 0x20 + hy) & 0xe0)/0x10
 
+    def is_offscreen(self):
+        # check bounds of starting item
+        x = self.x
+        y = self.y
+        if y < 0 or y + abs(self.default_dy) > 88 or x < 0 or x + abs(self.default_dx) > 160:
+            return True
+
+        # check bounds of last item
+        x = self.x + (self.count - 1) * self.dx
+        y = self.y + (self.count - 1) * self.dy
+        if y < 0 or y + abs(self.default_dy) > 88 or x < 0 or x + abs(self.default_dx) > 160:
+            return True
+        return False
+
+
 class JumpmanRespawn(JumpmanDrawObject):
     name = "jumpman"
     drawing_codes = np.asarray([
@@ -143,6 +158,7 @@ class Ladder(JumpmanDrawObject):
     name = "ladder"
     default_addr = 0x402c
     default_dx = 8
+    default_dy = 4
     vertical_only = True
     sort_order = 10
     valid_x_mask = 0xfe  # Even pixels only
@@ -154,6 +170,8 @@ class Ladder(JumpmanDrawObject):
 class UpRope(JumpmanDrawObject):
     name = "uprope"
     default_addr = 0x40af
+    default_dx = 2
+    default_dy = 4
     vertical_only = True
     sort_order = 20
     drawing_codes = np.fromstring("\x01\x00\x00\x01\x01\x01\x01\x01\x01\x00\x02\x01\x01\x01\x03\x01\xff", dtype=np.uint8)
@@ -161,6 +179,8 @@ class UpRope(JumpmanDrawObject):
 class DownRope(JumpmanDrawObject):
     name = "downrope"
     default_addr = 0x40c0
+    default_dx = 2
+    default_dy = 4
     vertical_only = True
     sort_order = 30
     valid_x_mask = 0xfe  # Even pixels only
@@ -190,6 +210,8 @@ class EraseGirder(JumpmanDrawObject):
 class EraseLadder(JumpmanDrawObject):
     name = "ladder_erase"
     default_addr = 0x4056
+    default_dx = 8
+    default_dy = 4
     vertical_only = True
     sort_order = 36
     valid_x_mask = 0xfe  # Even pixels only
@@ -198,6 +220,8 @@ class EraseLadder(JumpmanDrawObject):
 class EraseRope(JumpmanDrawObject):
     name = "rope_erase"
     default_addr = 0x40d1
+    default_dx = 2
+    default_dy = 4
     vertical_only = True
     sort_order = 37
     drawing_codes = np.fromstring("\x02\x00\x00\x00\x00\x02\x00\x01\x00\x00\x02\x00\x02\x00\x00\x02\x00\x03\x00\x00\xff", dtype=np.uint8)
