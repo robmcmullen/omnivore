@@ -19,6 +19,7 @@ class JumpmanDrawObject(object):
     sort_order = 0
     valid_x_mask = 0xff
     drawing_codes = None
+    _pixel_list = None
 
     def __init__(self, pick_index, x, y, count, dx=None, dy=None, addr=None):
         self.x = x
@@ -77,6 +78,12 @@ class JumpmanDrawObject(object):
             paint = ""
         return "x=%d y=%d%s" % (self.x, self.y, paint)
 
+    @property
+    def pixel_list(self):
+        if self.__class__._pixel_list is None:
+            self.__class__._pixel_list = self.generate_pixel_list(self.drawing_codes)
+        return self.__class__._pixel_list
+
     def __str__(self):
         extra = ""
         if self.trigger_function is not None:
@@ -102,6 +109,28 @@ class JumpmanDrawObject(object):
         except AttributeError:
             pass
         return False
+
+    def generate_pixel_list(self, codes):
+        log.debug("generating pixel list from codes: %s" % str(codes))
+        index = 0
+        last = len(codes)
+        lines = []
+        while index < last:
+            prefix = codes[index:index + 3]
+            if len(prefix) < 3:
+                if len(prefix) == 0 or prefix[0] != 0xff:
+                    log.warning("  short prefix: %s" % str(prefix))
+                break
+            n , xoffset, yoffset = prefix.view(dtype=np.int8)
+            index += 3
+            pixels = list(codes[index:index + n])
+            if len(pixels) < n:
+                log.debug("  %d pixels expected, %d found" % (n, len(pixels)))
+                return
+            log.debug("pixels: n=%d x=%d y=%d pixels=%s" % (n, xoffset, yoffset, pixels))
+            lines.append((n, xoffset, yoffset, pixels))
+            index += n
+        return lines
 
     def equal_except_painting(self, other):
         try:
@@ -401,37 +430,19 @@ class ScreenState(LevelDef):
             log.debug("addr=%x x=%d y=%d dx=%d dy=%d, num=%d" % (obj.addr, obj.x, obj.y, obj.dx, obj.dy, obj.count))
             codes = self.get_object_code(obj.addr)
             if codes is None:
+                log.warning("  no drawing codes found for %s" % str(obj.addr))
                 return
-            log.debug("  found codes: %s" % str(codes))
+            pixel_list = obj.generate_pixel_list(codes)
         else:
-            codes = obj.drawing_codes
             log.debug("addr=BUILTIN x=%d y=%d dx=%d dy=%d, num=%d" % (obj.x, obj.y, obj.dx, obj.dy, obj.count))
-            log.debug("  found codes: %s" % str(codes))
-        index = 0
-        last = len(codes)
-        lines = []
-        while index < last:
-            prefix = codes[index:index + 3]
-            if len(prefix) < 3:
-                if len(prefix) == 0 or prefix[0] != 0xff:
-                    log.warning("  short prefix: %s" % str(prefix))
-                break
-            n , xoffset, yoffset = prefix.view(dtype=np.int8)
-            index += 3
-            pixels = list(codes[index:index + n])
-            if len(pixels) < n:
-                log.debug("  %d pixels expected, %d found" % (n, len(pixels)))
-                return
-            log.debug("pixels: n=%d x=%d y=%d pixels=%s" % (n, xoffset, yoffset, pixels))
-            lines.append((n, xoffset, yoffset, pixels))
-            index += n
+            pixel_list = obj.pixel_list
 
         x = obj.x
         y = obj.y
         self.add_pick(obj)
         has_trigger_function = bool(obj.trigger_function)
         for i in range(obj.count):
-            for n, xoffset, yoffset, pixels in lines:
+            for n, xoffset, yoffset, pixels in pixel_list:
                 for i, c in enumerate(pixels):
                     px = x + xoffset + i
                     py = y + yoffset
