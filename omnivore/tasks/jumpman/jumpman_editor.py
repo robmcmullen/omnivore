@@ -415,18 +415,21 @@ class EraseGirderMode(DrawMode):
     menu_item_name = "Erase Girder"
     menu_item_tooltip = "Erase girders"
     drawing_object = EraseGirder
+    editor_trait_for_enabled = 'can_erase_objects'
 
 class EraseLadderMode(DrawMode):
     icon = "jumpman_erase_ladder.png"
     menu_item_name = "Erase Ladder"
     menu_item_tooltip = "Erase ladders (vertical only)"
     drawing_object = EraseLadder
+    editor_trait_for_enabled = 'can_erase_objects'
 
 class EraseRopeMode(DrawMode):
     icon = "jumpman_erase_rope.png"
     menu_item_name = "Erase Rope"
     menu_item_tooltip = "Erase ropes (vertical only)"
     drawing_object = EraseRope
+    editor_trait_for_enabled = 'can_erase_objects'
 
 class DrawPeanutMode(DrawMode):
     icon = "jumpman_peanut.png"
@@ -816,6 +819,8 @@ class JumpmanEditor(BitmapEditor):
 
     num_peanuts = Int(-1)
 
+    can_erase_objects = Bool(False)
+
     ##### class attributes
     
     valid_mouse_modes = [AnticDSelectMode, DrawGirderMode, DrawLadderMode, DrawUpRopeMode, DrawDownRopeMode, DrawPeanutMode, EraseGirderMode, EraseLadderMode, EraseRopeMode, JumpmanRespawnMode]
@@ -1116,7 +1121,9 @@ class JumpmanEditor(BitmapEditor):
         if mouse_mode.can_paste:
             mouse_mode.objects = []
         self.bitmap.set_trigger_root(trigger_root)
+        self.can_erase_objects = trigger_root is not None
         self.refresh_panes()
+        self.refresh_toolbar_state()
 
     ###########################################################################
     # Trait handlers.

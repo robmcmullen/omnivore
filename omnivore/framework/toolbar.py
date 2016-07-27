@@ -16,7 +16,9 @@ class MouseHandlerBaseAction(EditorAction):
     handler = Any
     
     style = 'radio'
-    
+
+    enabled_name = ''
+
     def _name_default(self):
         return self.handler.menu_item_name
     
@@ -39,7 +41,7 @@ def get_toolbar_group(toolbar_name, mouse_handlers):
     """Create the toolbar groups with buttons in the order specified in the
     valid_mouse_modes dict.
     """
-    actions = [MouseHandlerBaseAction(handler=mode) for mode in mouse_handlers]
+    actions = [MouseHandlerBaseAction(handler=mode, enabled_name=mode.editor_trait_for_enabled) for mode in mouse_handlers]
     return SToolBar(Group(*actions),
                     show_tool_names=False,
                     # image_size=(22,22),
