@@ -63,7 +63,7 @@ if "sdist" in sys.argv:
         def run(self):
             # Make sure the compiled Cython files in the distribution are up-to-date
             from Cython.Build import cythonize
-            cythonize(["omnivore/utils/wx/bitviewscroller_speedups.pyx"])
+            cythonize(["omnivore/arch/antic_speedups.pyx"])
             _sdist.run(self)
     cmdclass["sdist"] = sdist
 
