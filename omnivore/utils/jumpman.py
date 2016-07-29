@@ -20,6 +20,15 @@ class JumpmanDrawObject(object):
     valid_x_mask = 0xff
     drawing_codes = None
     _pixel_list = None
+    error_drawing_codes = np.asarray([
+        6, 0, -1,  3, 3, 0, 0, 3, 3,
+        6, 0,  0,  0, 3, 3, 3, 3, 0,
+        6, 0,  1,  0, 0, 3, 3, 0, 0,
+        6, 0,  2,  0, 3, 3, 3, 3, 0,
+        6, 0,  3,  3, 3, 0, 0, 3, 3,
+        0xff
+    ], dtype=np.uint8)
+    _error_pixel_list = None
 
     def __init__(self, pick_index, x, y, count, dx=None, dy=None, addr=None):
         self.x = x
@@ -84,6 +93,12 @@ class JumpmanDrawObject(object):
         if self.__class__._pixel_list is None:
             self.__class__._pixel_list = self.generate_pixel_list(self.drawing_codes)
         return self.__class__._pixel_list
+
+    @property
+    def error_pixel_list(self):
+        if self.__class__._error_pixel_list is None:
+            self.__class__._error_pixel_list = self.generate_pixel_list(self.error_drawing_codes)
+        return self.__class__._error_pixel_list
 
     def __str__(self):
         extra = ""
@@ -442,13 +457,13 @@ class ScreenState(LevelDef):
         y = obj.y
         self.add_pick(obj)
         if obj.error:
-            # make the error object solid and red
+            pixel_list = obj.error_pixel_list
             for i in range(obj.count):
                 for n, xoffset, yoffset, pixels in pixel_list:
                     for i, c in enumerate(pixels):
                         px = x + xoffset + i
                         py = y + yoffset
-                        index = self.draw_pixel(px, py, 3, highlight, False, True)
+                        index = self.draw_pixel(px, py, c, highlight, False)
                         if index is not None and self.pick_buffer is not None:
                             self.pick_buffer[index] = obj.pick_index
                 x += obj.dx
@@ -494,7 +509,7 @@ class ScreenState(LevelDef):
     # ANTIC background color is 8
     color_map = {0:8, 1:4, 2:5, 3:6, 4:0}
 
-    def draw_pixel(self, x, y, color, highlight, trigger, error=False):
+    def draw_pixel(self, x, y, color, highlight, trigger):
         index = y * 160 + x
         if index < 0 or index >= len(self.screen):
             return None
@@ -504,8 +519,6 @@ class ScreenState(LevelDef):
             s = selected_bit_mask
         if trigger:
             s |= match_bit_mask
-        if error:
-            s |= comment_bit_mask
         self.screen.style[index] |= s
         return index
 
