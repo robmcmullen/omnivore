@@ -33,11 +33,12 @@ if 'conda' not in sys.version:
 else:
     install_requires = [
         'numpy',
-        'atrcopy>=2.5.0',
+        'atrcopy>=3.1.0',
         'jsonpickle',
         'bson<1.0.0',
         'configobj',
         'pyparsing',
+        'pycrypto',
         ]
 
 
