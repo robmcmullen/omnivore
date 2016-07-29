@@ -655,6 +655,7 @@ class JumpmanLevelView(MainBitmapScroller):
         e = self.editor
         e.clear_playfield(screen)
         self.pick_buffer[:] = -1
+        self.level_builder.set_harvest_offset(self.mouse_mode.get_harvest_offset())
         main_state = self.level_builder.draw_objects(screen, None, e.segment, highlight=overlay_objects, pick_buffer=self.pick_buffer)
         log.debug("draw objects: %s" % self.level_builder.objects)
         if main_state.missing_object_codes:

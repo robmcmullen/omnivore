@@ -1,6 +1,6 @@
 import numpy as np
 
-from atrcopy import selected_bit_mask, match_bit_mask, data_bit_mask
+from atrcopy import selected_bit_mask, match_bit_mask, data_bit_mask, comment_bit_mask
 
 from omnivore.utils.runtime import get_all_subclasses
 
@@ -31,6 +31,7 @@ class JumpmanDrawObject(object):
         self.dy = self.default_dy if dy is None else dy
         self.trigger_function = None
         self.trigger_painting = []
+        self.error = False
 
     @property
     def addr_low(self):
@@ -440,35 +441,48 @@ class ScreenState(LevelDef):
         x = obj.x
         y = obj.y
         self.add_pick(obj)
-        has_trigger_function = bool(obj.trigger_function)
-        for i in range(obj.count):
-            for n, xoffset, yoffset, pixels in pixel_list:
-                for i, c in enumerate(pixels):
-                    px = x + xoffset + i
-                    py = y + yoffset
-                    index = self.draw_pixel(px, py, c, highlight, has_trigger_function)
-                    if index is not None and self.pick_buffer is not None:
-                        self.pick_buffer[index] = obj.pick_index
-            x += obj.dx
-            y += obj.dy
+        if obj.error:
+            # make the error object solid and red
+            for i in range(obj.count):
+                for n, xoffset, yoffset, pixels in pixel_list:
+                    for i, c in enumerate(pixels):
+                        px = x + xoffset + i
+                        py = y + yoffset
+                        index = self.draw_pixel(px, py, 3, highlight, False, True)
+                        if index is not None and self.pick_buffer is not None:
+                            self.pick_buffer[index] = obj.pick_index
+                x += obj.dx
+                y += obj.dy
+        else:
+            has_trigger_function = bool(obj.trigger_function)
+            for i in range(obj.count):
+                for n, xoffset, yoffset, pixels in pixel_list:
+                    for i, c in enumerate(pixels):
+                        px = x + xoffset + i
+                        py = y + yoffset
+                        index = self.draw_pixel(px, py, c, highlight, has_trigger_function)
+                        if index is not None and self.pick_buffer is not None:
+                            self.pick_buffer[index] = obj.pick_index
+                x += obj.dx
+                y += obj.dy
 
-        # Draw extra highlight around peanut if has trigger painting functions
-        if obj.trigger_painting:
-            index = (obj.y - 2) * 160 + obj.x - 2
-            if index > len(self.screen):
-                return
-            if index < 0:
-                cindex = -index
-                index = 0
-            else:
-                cindex = 0
-            cend = len(self.trigger_circle)
-            if index + cend > len(self.screen):
-                iend = len(self.screen)
-                cend = cindex + iend - index
-            else:
-                iend = index + cend - cindex
-            self.screen.style[index:iend] |= self.trigger_circle[cindex:cend]
+            # Draw extra highlight around peanut if has trigger painting functions
+            if obj.trigger_painting:
+                index = (obj.y - 2) * 160 + obj.x - 2
+                if index > len(self.screen):
+                    return
+                if index < 0:
+                    cindex = -index
+                    index = 0
+                else:
+                    cindex = 0
+                cend = len(self.trigger_circle)
+                if index + cend > len(self.screen):
+                    iend = len(self.screen)
+                    cend = cindex + iend - index
+                else:
+                    iend = index + cend - cindex
+                self.screen.style[index:iend] |= self.trigger_circle[cindex:cend]
 
         self.check_object(obj)
 
@@ -480,7 +494,7 @@ class ScreenState(LevelDef):
     # ANTIC background color is 8
     color_map = {0:8, 1:4, 2:5, 3:6, 4:0}
 
-    def draw_pixel(self, x, y, color, highlight, trigger):
+    def draw_pixel(self, x, y, color, highlight, trigger, error=False):
         index = y * 160 + x
         if index < 0 or index >= len(self.screen):
             return None
@@ -490,6 +504,8 @@ class ScreenState(LevelDef):
             s = selected_bit_mask
         if trigger:
             s |= match_bit_mask
+        if error:
+            s |= comment_bit_mask
         self.screen.style[index] |= s
         return index
 
@@ -522,6 +538,40 @@ class JumpmanLevelBuilder(object):
         self.segments = segments
         self.objects = []
         self.pick_index = 0
+        self.harvest_offset = (0, 0)
+        self.harvest_offset_seen = set()
+        self.harvest_offset_dups = set()
+
+    def set_harvest_offset(self, offset):
+        self.harvest_offset = tuple(offset)
+        self.harvest_offset_seen = set()
+        self.harvest_offset_dups = set()
+        self.check_harvest()
+
+    def check_harvest(self):
+        self.check_invalid_harvest(self.objects)
+        self.check_peanut_grid(self.objects)
+
+    def check_invalid_harvest(self, objs):
+        for obj in objs:
+            if obj.single:
+                grid = obj.harvest_checksum(*self.harvest_offset)
+                if grid in self.harvest_offset_seen:
+                    self.harvest_offset_dups.add(grid)
+                else:
+                    self.harvest_offset_seen.add(grid)
+            if obj.trigger_painting:
+                self.check_invalid_harvest(obj.trigger_painting)
+
+    def check_peanut_grid(self, objs):
+        for obj in objs:
+            if obj.single:
+                grid = obj.harvest_checksum(*self.harvest_offset)
+                obj.error = grid in self.harvest_offset_dups
+                if obj.error:
+                    print "found duplicate peanut @ ", grid
+            if obj.trigger_painting:
+                self.check_peanut_grid(obj.trigger_painting)
 
     def parse_objects(self, data):
         x = y = dx = dy = count = 0
