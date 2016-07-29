@@ -112,11 +112,16 @@ class Dos33Dirent(object):
         if not self.is_sane:
             raise InvalidDirent("Invalid directory entry '%s'" % str(self))
         self.get_track_sector_list(image)
+        log.debug("start_read: %s, t/s list: %s" % (str(self), str(self.sector_map)))
         self.current_sector_index = 0
         self.current_read = self.num_sectors
     
     def read_sector(self, image):
-        sector = self.sector_map[self.current_sector_index]
+        log.debug("read_sector: index=%d in %s" % (self.current_sector_index, str(self)))
+        try:
+            sector = self.sector_map[self.current_sector_index]
+        except IndexError:
+            sector = -1
         last = (self.current_sector_index == len(self.sector_map) - 1)
         raw, pos, size = image.get_raw_bytes(sector)
         bytes, num_data_bytes = self.process_raw_sector(image, raw)
