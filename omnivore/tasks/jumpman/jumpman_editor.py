@@ -415,18 +415,21 @@ class EraseGirderMode(DrawMode):
     menu_item_name = "Erase Girder"
     menu_item_tooltip = "Erase girders"
     drawing_object = EraseGirder
+    editor_trait_for_enabled = 'can_erase_objects'
 
 class EraseLadderMode(DrawMode):
     icon = "jumpman_erase_ladder.png"
     menu_item_name = "Erase Ladder"
     menu_item_tooltip = "Erase ladders (vertical only)"
     drawing_object = EraseLadder
+    editor_trait_for_enabled = 'can_erase_objects'
 
 class EraseRopeMode(DrawMode):
     icon = "jumpman_erase_rope.png"
     menu_item_name = "Erase Rope"
     menu_item_tooltip = "Erase ropes (vertical only)"
     drawing_object = EraseRope
+    editor_trait_for_enabled = 'can_erase_objects'
 
 class DrawPeanutMode(DrawMode):
     icon = "jumpman_peanut.png"
@@ -587,6 +590,13 @@ class JumpmanLevelView(MainBitmapScroller):
     
     def is_ready_to_render(self):
         return self.editor is not None and self.level_builder is not None and self.segment is not None
+    
+    def on_resize(self, evt):
+        # Automatically resize image to a best fit when resized
+        if self.is_ready_to_render():
+            self.update_zoom()
+            self.calc_image_size()
+            self.set_scale()
 
     def update_zoom(self):
         # force zoom so that entire screen fits in window
@@ -594,7 +604,6 @@ class JumpmanLevelView(MainBitmapScroller):
         sw = w / 160
         sh = h / 88
         zoom = min(sh, sw)
-        zoom = max(zoom, 1)  # make sure it's visible, at least!
         self.set_zoom(zoom)
 
     def set_mouse_mode(self, handler):
@@ -646,6 +655,7 @@ class JumpmanLevelView(MainBitmapScroller):
         e = self.editor
         e.clear_playfield(screen)
         self.pick_buffer[:] = -1
+        self.level_builder.set_harvest_offset(self.mouse_mode.get_harvest_offset())
         main_state = self.level_builder.draw_objects(screen, None, e.segment, highlight=overlay_objects, pick_buffer=self.pick_buffer)
         log.debug("draw objects: %s" % self.level_builder.objects)
         if main_state.missing_object_codes:
@@ -809,6 +819,8 @@ class JumpmanEditor(BitmapEditor):
     num_downropes = Int(-1)
 
     num_peanuts = Int(-1)
+
+    can_erase_objects = Bool(False)
 
     ##### class attributes
     
@@ -1110,7 +1122,9 @@ class JumpmanEditor(BitmapEditor):
         if mouse_mode.can_paste:
             mouse_mode.objects = []
         self.bitmap.set_trigger_root(trigger_root)
+        self.can_erase_objects = trigger_root is not None
         self.refresh_panes()
+        self.refresh_toolbar_state()
 
     ###########################################################################
     # Trait handlers.

@@ -1,6 +1,6 @@
 import numpy as np
 
-from atrcopy import selected_bit_mask, match_bit_mask, data_bit_mask
+from atrcopy import selected_bit_mask, match_bit_mask, data_bit_mask, comment_bit_mask
 
 from omnivore.utils.runtime import get_all_subclasses
 
@@ -19,6 +19,16 @@ class JumpmanDrawObject(object):
     sort_order = 0
     valid_x_mask = 0xff
     drawing_codes = None
+    _pixel_list = None
+    error_drawing_codes = np.asarray([
+        6, 0, -1,  3, 3, 0, 0, 3, 3,
+        6, 0,  0,  0, 3, 3, 3, 3, 0,
+        6, 0,  1,  0, 0, 3, 3, 0, 0,
+        6, 0,  2,  0, 3, 3, 3, 3, 0,
+        6, 0,  3,  3, 3, 0, 0, 3, 3,
+        0xff
+    ], dtype=np.uint8)
+    _error_pixel_list = None
 
     def __init__(self, pick_index, x, y, count, dx=None, dy=None, addr=None):
         self.x = x
@@ -30,6 +40,7 @@ class JumpmanDrawObject(object):
         self.dy = self.default_dy if dy is None else dy
         self.trigger_function = None
         self.trigger_painting = []
+        self.error = False
 
     @property
     def addr_low(self):
@@ -77,6 +88,18 @@ class JumpmanDrawObject(object):
             paint = ""
         return "x=%d y=%d%s" % (self.x, self.y, paint)
 
+    @property
+    def pixel_list(self):
+        if self.__class__._pixel_list is None:
+            self.__class__._pixel_list = self.generate_pixel_list(self.drawing_codes)
+        return self.__class__._pixel_list
+
+    @property
+    def error_pixel_list(self):
+        if self.__class__._error_pixel_list is None:
+            self.__class__._error_pixel_list = self.generate_pixel_list(self.error_drawing_codes)
+        return self.__class__._error_pixel_list
+
     def __str__(self):
         extra = ""
         if self.trigger_function is not None:
@@ -102,6 +125,28 @@ class JumpmanDrawObject(object):
         except AttributeError:
             pass
         return False
+
+    def generate_pixel_list(self, codes):
+        log.debug("generating pixel list from codes: %s" % str(codes))
+        index = 0
+        last = len(codes)
+        lines = []
+        while index < last:
+            prefix = codes[index:index + 3]
+            if len(prefix) < 3:
+                if len(prefix) == 0 or prefix[0] != 0xff:
+                    log.warning("  short prefix: %s" % str(prefix))
+                break
+            n , xoffset, yoffset = prefix.view(dtype=np.int8)
+            index += 3
+            pixels = list(codes[index:index + n])
+            if len(pixels) < n:
+                log.debug("  %d pixels expected, %d found" % (n, len(pixels)))
+                return
+            log.debug("pixels: n=%d x=%d y=%d pixels=%s" % (n, xoffset, yoffset, pixels))
+            lines.append((n, xoffset, yoffset, pixels))
+            index += n
+        return lines
 
     def equal_except_painting(self, other):
         try:
@@ -401,63 +446,58 @@ class ScreenState(LevelDef):
             log.debug("addr=%x x=%d y=%d dx=%d dy=%d, num=%d" % (obj.addr, obj.x, obj.y, obj.dx, obj.dy, obj.count))
             codes = self.get_object_code(obj.addr)
             if codes is None:
+                log.warning("  no drawing codes found for %s" % str(obj.addr))
                 return
-            log.debug("  found codes: %s" % str(codes))
+            pixel_list = obj.generate_pixel_list(codes)
         else:
-            codes = obj.drawing_codes
             log.debug("addr=BUILTIN x=%d y=%d dx=%d dy=%d, num=%d" % (obj.x, obj.y, obj.dx, obj.dy, obj.count))
-            log.debug("  found codes: %s" % str(codes))
-        index = 0
-        last = len(codes)
-        lines = []
-        while index < last:
-            prefix = codes[index:index + 3]
-            if len(prefix) < 3:
-                if len(prefix) == 0 or prefix[0] != 0xff:
-                    log.warning("  short prefix: %s" % str(prefix))
-                break
-            n , xoffset, yoffset = prefix.view(dtype=np.int8)
-            index += 3
-            pixels = list(codes[index:index + n])
-            if len(pixels) < n:
-                log.debug("  %d pixels expected, %d found" % (n, len(pixels)))
-                return
-            log.debug("pixels: n=%d x=%d y=%d pixels=%s" % (n, xoffset, yoffset, pixels))
-            lines.append((n, xoffset, yoffset, pixels))
-            index += n
+            pixel_list = obj.pixel_list
 
         x = obj.x
         y = obj.y
         self.add_pick(obj)
-        has_trigger_function = bool(obj.trigger_function)
-        for i in range(obj.count):
-            for n, xoffset, yoffset, pixels in lines:
-                for i, c in enumerate(pixels):
-                    px = x + xoffset + i
-                    py = y + yoffset
-                    index = self.draw_pixel(px, py, c, highlight, has_trigger_function)
-                    if index is not None and self.pick_buffer is not None:
-                        self.pick_buffer[index] = obj.pick_index
-            x += obj.dx
-            y += obj.dy
+        if obj.error:
+            pixel_list = obj.error_pixel_list
+            for i in range(obj.count):
+                for n, xoffset, yoffset, pixels in pixel_list:
+                    for i, c in enumerate(pixels):
+                        px = x + xoffset + i
+                        py = y + yoffset
+                        index = self.draw_pixel(px, py, c, highlight, False)
+                        if index is not None and self.pick_buffer is not None:
+                            self.pick_buffer[index] = obj.pick_index
+                x += obj.dx
+                y += obj.dy
+        else:
+            has_trigger_function = bool(obj.trigger_function)
+            for i in range(obj.count):
+                for n, xoffset, yoffset, pixels in pixel_list:
+                    for i, c in enumerate(pixels):
+                        px = x + xoffset + i
+                        py = y + yoffset
+                        index = self.draw_pixel(px, py, c, highlight, has_trigger_function)
+                        if index is not None and self.pick_buffer is not None:
+                            self.pick_buffer[index] = obj.pick_index
+                x += obj.dx
+                y += obj.dy
 
-        # Draw extra highlight around peanut if has trigger painting functions
-        if obj.trigger_painting:
-            index = (obj.y - 2) * 160 + obj.x - 2
-            if index > len(self.screen):
-                return
-            if index < 0:
-                cindex = -index
-                index = 0
-            else:
-                cindex = 0
-            cend = len(self.trigger_circle)
-            if index + cend > len(self.screen):
-                iend = len(self.screen)
-                cend = cindex + iend - index
-            else:
-                iend = index + cend - cindex
-            self.screen.style[index:iend] |= self.trigger_circle[cindex:cend]
+            # Draw extra highlight around peanut if has trigger painting functions
+            if obj.trigger_painting:
+                index = (obj.y - 2) * 160 + obj.x - 2
+                if index > len(self.screen):
+                    return
+                if index < 0:
+                    cindex = -index
+                    index = 0
+                else:
+                    cindex = 0
+                cend = len(self.trigger_circle)
+                if index + cend > len(self.screen):
+                    iend = len(self.screen)
+                    cend = cindex + iend - index
+                else:
+                    iend = index + cend - cindex
+                self.screen.style[index:iend] |= self.trigger_circle[cindex:cend]
 
         self.check_object(obj)
 
@@ -511,6 +551,40 @@ class JumpmanLevelBuilder(object):
         self.segments = segments
         self.objects = []
         self.pick_index = 0
+        self.harvest_offset = (0, 0)
+        self.harvest_offset_seen = set()
+        self.harvest_offset_dups = set()
+
+    def set_harvest_offset(self, offset):
+        self.harvest_offset = tuple(offset)
+        self.harvest_offset_seen = set()
+        self.harvest_offset_dups = set()
+        self.check_harvest()
+
+    def check_harvest(self):
+        self.check_invalid_harvest(self.objects)
+        self.check_peanut_grid(self.objects)
+
+    def check_invalid_harvest(self, objs):
+        for obj in objs:
+            if obj.single:
+                grid = obj.harvest_checksum(*self.harvest_offset)
+                if grid in self.harvest_offset_seen:
+                    self.harvest_offset_dups.add(grid)
+                else:
+                    self.harvest_offset_seen.add(grid)
+            if obj.trigger_painting:
+                self.check_invalid_harvest(obj.trigger_painting)
+
+    def check_peanut_grid(self, objs):
+        for obj in objs:
+            if obj.single:
+                grid = obj.harvest_checksum(*self.harvest_offset)
+                obj.error = grid in self.harvest_offset_dups
+                if obj.error:
+                    print "found duplicate peanut @ ", grid
+            if obj.trigger_painting:
+                self.check_peanut_grid(obj.trigger_painting)
 
     def parse_objects(self, data):
         x = y = dx = dy = count = 0

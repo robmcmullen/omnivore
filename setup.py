@@ -33,11 +33,12 @@ if 'conda' not in sys.version:
 else:
     install_requires = [
         'numpy',
-        'atrcopy>=2.5.0',
+        'atrcopy>=3.1.0',
         'jsonpickle',
         'bson<1.0.0',
         'configobj',
         'pyparsing',
+        'pycrypto',
         ]
 
 
@@ -63,7 +64,7 @@ if "sdist" in sys.argv:
         def run(self):
             # Make sure the compiled Cython files in the distribution are up-to-date
             from Cython.Build import cythonize
-            cythonize(["omnivore/utils/wx/bitviewscroller_speedups.pyx"])
+            cythonize(["omnivore/arch/antic_speedups.pyx"])
             _sdist.run(self)
     cmdclass["sdist"] = sdist
 
