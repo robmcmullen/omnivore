@@ -137,12 +137,9 @@ def get_image_path(rel_path, module=None, file=None, up_one_level=False, exclude
     image_path = os.path.join(os.path.dirname(path), rel_path)
     if frozen:
         if frozen == True:
-            # fixme: MEIPASS not actually needed? the path is actually set to
-            # the executable path?
-            
-            # root = sys._MEIPASS
-            path = os.path.dirname(path)
-            image_path = os.path.join(path, rel_path)
+            # pyinstaller sets frozen=True and uses sys._MEIPASS
+            root = sys._MEIPASS
+            image_path = os.path.join(root, image_path)
         elif frozen in ('macosx_app'):
             #print "FROZEN!!! %s" % frozen
             root = os.environ['RESOURCEPATH']
