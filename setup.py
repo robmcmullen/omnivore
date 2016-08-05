@@ -28,18 +28,15 @@ ext_modules = [
               )
     ]
 
-if 'conda' not in sys.version:
-    install_requires = []
-else:
-    install_requires = [
-        'numpy',
-        'atrcopy>=3.1.0',
-        'jsonpickle',
-        'bson<1.0.0',
-        'configobj',
-        'pyparsing',
-        'pycrypto',
-        ]
+install_requires = [
+    'numpy',
+    'atrcopy>=3.1.0',
+    'jsonpickle',
+    'bson<1.0.0',
+    'configobj',
+    'pyparsing',
+    'pycrypto',
+    ]
 
 
 cmdclass = dict()
