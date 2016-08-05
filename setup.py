@@ -72,18 +72,6 @@ import omnivore
 full_version = omnivore.__version__
 spaceless_version = full_version.replace(" ", "_")
 
-data_files = []
-data_files.extend(omnivore.get_py2exe_data_files())
-
-import traitsui
-data_files.extend(omnivore.get_py2exe_data_files(traitsui, excludes=["*/qt4/*"]))
-
-import pyface
-data_files.extend(omnivore.get_py2exe_data_files(pyface, excludes=["*/qt4/*", "*/pyface/images/*.jpg"]))
-
-# Include template files in bundled app
-data_files.append(("omnivore/templates", glob.glob("omnivore/templates/*")))
-
 common_includes = [
     "ctypes",
     "ctypes.util",
@@ -234,6 +222,80 @@ if 'nsis' not in sys.argv:
     elif sys.platform.startswith('darwin'):
         shutil.rmtree(mac_dist_dir, ignore_errors=True)
 
+    if 'py2exe' in sys.argv:
+        options = dict(
+            py2exe=dict(
+                dist_dir=win_dist_dir,
+                optimize=2,
+                skip_archive=True,
+                compressed=False,
+                packages=[],
+                includes=common_includes,
+                excludes=common_excludes + py2exe_excludes,
+            ),
+            build=dict(compiler="msvc",) if sys.platform.startswith("win") else {},
+        )
+    elif 'py2app' in sys.argv:
+        options = dict(
+            py2app=dict(
+                dist_dir=mac_dist_dir,
+                argv_emulation=True,
+                packages=[],
+                optimize=2,  # Equivalent to running "python -OO".
+                semi_standalone=False,
+                includes=common_includes + py2app_includes,
+                excludes=common_excludes,
+                frameworks=[],
+                iconfile="omnivore/icons/omnivore.icns",
+                plist=dict(
+                    CFBundleName="Omnivore",
+                    CFBundleDocumentTypes=[dict(
+                        CFBundleTypeExtensions=["xex", "atr", "xfd", "obx", "omnivore"],
+                        CFBundleTypeName="Omnivore Document",
+                        CFBundleTypeRole="Editor"),
+                        ],
+                    CFBundleTypeName="Omnivore Document",
+                    CFBundleTypeRole="Editor",
+                    CFBundleShortVersionString=full_version,
+                    CFBundleGetInfoString="Omnivore %s" % full_version,
+                    CFBundleExecutable="Omnivore",
+                    CFBUndleIdentifier="com.playermissile.Omnivore",
+                )
+            ),
+        )
+    else:
+        options = {}
+
+    data_files = []
+    if options:
+        # data files are only needed when building an app bundle, and in fact
+        # if supplied to pip for a normal install, it seems to install them
+        # incorrectly! It chops off the first character of the directory in
+        # some cases:
+        #
+        # ls -l
+        # total 4
+        # drwxr-xr-x 2 rob 340 Aug  5 12:08 bin/
+        # drwxr-xr-x 2 rob  60 Aug  5 11:36 include/
+        # drwxr-xr-x 3 rob  60 Aug  5 11:36 lib/
+        # lrwxrwxrwx 1 rob   3 Aug  5 11:36 lib64 -> lib/
+        # drwxr-xr-x 3 rob  60 Aug  5 11:37 mnivore/
+        # drwxr-xr-x 3 rob  60 Aug  5 11:37 omnivore/
+        # -rw-r--r-- 1 rob  60 Aug  5 11:37 pip-selfcheck.json
+        # drwxr-xr-x 4 rob  80 Aug  5 11:37 raitsui/
+        # drwxr-xr-x 3 rob  60 Aug  5 12:08 src/
+        # drwxr-xr-x 8 rob 160 Aug  5 11:37 yface/
+        data_files.extend(omnivore.get_py2exe_data_files())
+
+        import traitsui
+        data_files.extend(omnivore.get_py2exe_data_files(traitsui, excludes=["*/qt4/*"]))
+
+        import pyface
+        data_files.extend(omnivore.get_py2exe_data_files(pyface, excludes=["*/qt4/*", "*/pyface/images/*.jpg"]))
+
+        # Include template files in bundled app
+        data_files.append(("omnivore/templates", glob.glob("omnivore/templates/*")))
+
     setup(
         name = 'Omnivore',
         version = full_version,
@@ -270,43 +332,7 @@ if 'nsis' not in sys.argv:
             script="run.py",
             icon_resources=[(1, "omnivore/icons/omnivore.ico")],
         )],
-        options=dict(
-            py2app=dict(
-                dist_dir=mac_dist_dir,
-                argv_emulation=True,
-                packages=[],
-                optimize=2,  # Equivalent to running "python -OO".
-                semi_standalone=False,
-                includes=common_includes + py2app_includes,
-                excludes=common_excludes,
-                frameworks=[],
-                iconfile="omnivore/icons/omnivore.icns",
-                plist=dict(
-                    CFBundleName="Omnivore",
-                    CFBundleDocumentTypes=[dict(
-                        CFBundleTypeExtensions=["xex", "atr", "xfd", "obx", "omnivore"],
-                        CFBundleTypeName="Omnivore Document",
-                        CFBundleTypeRole="Editor"),
-                        ],
-                    CFBundleTypeName="Omnivore Document",
-                    CFBundleTypeRole="Editor",
-                    CFBundleShortVersionString=full_version,
-                    CFBundleGetInfoString="Omnivore %s" % full_version,
-                    CFBundleExecutable="Omnivore",
-                    CFBUndleIdentifier="com.playermissile.Omnivore",
-                )
-            ),
-            py2exe=dict(
-                dist_dir=win_dist_dir,
-                optimize=2,
-                skip_archive=True,
-                compressed=False,
-                packages=[],
-                includes=common_includes,
-                excludes=common_excludes + py2exe_excludes,
-            ),
-            build=dict(compiler="msvc",) if sys.platform.startswith("win") else {},
-            ),
+        options=options,
         platforms = ["Windows", "Linux", "Mac OS-X", "Unix"],
         zip_safe = False,
         )
