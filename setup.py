@@ -155,6 +155,20 @@ package_data = {
                  'wx/images/*',
                  'qt4/images/*',
                  ],
+    'pyface': ['images/*',
+               'dock/images/*',
+               'tree/images/*',
+               'tests/images/*',
+               'action/images/*',
+               'ui/wx/images/*',
+               'ui/wx/grid/images/*',
+               ],
+    'omnivore': ['icons/*.png',
+                 'icons/*.ico',
+                 'icons/*.icns',
+                 'utils/*.png',
+                 'templates/*',
+                 ],
     }
 
 packages = find_packages()
