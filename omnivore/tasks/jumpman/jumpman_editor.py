@@ -480,7 +480,7 @@ class DrawPeanutMode(DrawMode):
             self.mouse_down = hx + x, hy + y
         else:
             dx = (self.mouse_down[0] - x) & 0x1f
-            dy = (self.mouse_down[1] - y) & 0x1f
+            dy = ((self.mouse_down[1] - y) & 0xf) * 2
             self.display_coords(evt)
             values = [dx, dy]
             source = self.canvas.editor.segment
