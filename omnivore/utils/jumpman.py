@@ -162,6 +162,17 @@ class JumpmanDrawObject(object):
     def harvest_checksum(self, hx, hy):
         return ((self.x + 0x30 + hx) & 0xe0) | (((self.y * 2) + 0x20 + hy) & 0xe0)/0x10
 
+    def is_bad_location(self, hx, hy):
+        hx = hx & 0x1f
+        hy = (hy & 0x1f) / 2
+        startx = (16 - hx) & 0x1f
+        starty = (0 - hy) & 0xf
+        x1 = self.x & 0x1f
+        y1 = self.y & 0xf
+        x2 = (self.x + self.default_dx - 1) & 0x1f
+        y2 = (self.y + self.default_dy - 1) & 0xf
+        return (x1 >= startx and x1 < startx + 8) or (y1 >= starty and y1 < starty + 4) or (x2 >= startx and x2 < startx + 8) or (y2 >= starty and y2 < starty + 4)
+
     def is_offscreen(self):
         # check bounds of starting item
         x = self.x
@@ -583,6 +594,10 @@ class JumpmanLevelBuilder(object):
                 obj.error = grid in self.harvest_offset_dups
                 if obj.error:
                     print "found duplicate peanut @ ", grid
+                else:
+                    obj.error = obj.is_bad_location(*self.harvest_offset)
+                    if obj.error:
+                        print "found bad object location"
             if obj.trigger_painting:
                 self.check_peanut_grid(obj.trigger_painting)
 
