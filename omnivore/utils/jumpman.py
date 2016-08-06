@@ -21,11 +21,9 @@ class JumpmanDrawObject(object):
     drawing_codes = None
     _pixel_list = None
     error_drawing_codes = np.asarray([
-        6, 0, -1,  3, 3, 0, 0, 3, 3,
-        6, 0,  0,  0, 3, 3, 3, 3, 0,
-        6, 0,  1,  0, 0, 3, 3, 0, 0,
-        6, 0,  2,  0, 3, 3, 3, 3, 0,
-        6, 0,  3,  3, 3, 0, 0, 3, 3,
+        4, 0,  0,  3, 0, 0, 3,
+        4, 0,  1,  0, 3, 3, 0,
+        4, 0,  2,  3, 0, 0, 3,
         0xff
     ], dtype=np.uint8)
     _error_pixel_list = None
