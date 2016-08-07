@@ -459,6 +459,8 @@ class DrawPeanutMode(DrawMode):
         self.is_bad_location = self.is_allergic(x, y)
 
     def draw_extra_objects(self, level_builder, screen, current_segment):
+        if self.objects:
+            self.objects[0].error = self.is_bad_location
         level_builder.draw_objects(screen, self.objects, current_segment)
         self.draw_harvest_grid(screen)
 
