@@ -453,13 +453,7 @@ class DrawPeanutMode(DrawMode):
 
     def is_allergic(self, x, y):
         hx, hy = self.get_harvest_offset()
-        hx = hx & 0x1f
-        hy = (hy & 0x1f) / 2
-        startx = (16 - hx) & 0x1f
-        starty = (0 - hy) & 0xf
-        x = x & 0x1f
-        y = y & 0xf
-        return (x >= startx and x < startx + 8) or (y >= starty and y < starty + 4)
+        return is_bad_harvest_position(x, y, hx, hy)
 
     def check_objects(self, x, y):
         self.is_bad_location = self.is_allergic(x, y)

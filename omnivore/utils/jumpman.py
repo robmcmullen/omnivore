@@ -9,6 +9,33 @@ log = logging.getLogger(__name__)
 #log.setLevel(logging.DEBUG)
 
 
+def is_bad_harvest_position(x, y, hx, hy):
+    hx = hx & 0x1f
+    hy = (hy & 0x1f) / 2
+    startx = (16 - hx) & 0x1f
+    starty = (0 - hy) & 0xf
+    endx = (startx + 8) & 0x1f
+    endy = (starty + 4) & 0xf
+    x = x & 0x1f
+    y = y & 0xf
+    #print "harvest_location: hx=%d x=%d startx=%d  hy=%d y=%d starty=%d" % (hx, x, startx, hy, y, starty)
+    if endx > startx:
+        if x >= startx and x < endx:
+            return True
+    else:
+        # the grid is wrapped around, e.g. XX------------------------XXXXXX
+        if x >= startx or x < endx:
+            return True
+
+    if endy > starty:
+        if y >= starty and y < endy:
+            return True
+    else:
+        if y >= starty or y < endy:
+            return True
+    
+    return False
+
 class JumpmanDrawObject(object):
     name = "object"
     default_addr = None
@@ -163,15 +190,7 @@ class JumpmanDrawObject(object):
         return ((self.x + 0x30 + hx) & 0xe0) | (((self.y * 2) + 0x20 + hy) & 0xe0)/0x10
 
     def is_bad_location(self, hx, hy):
-        hx = hx & 0x1f
-        hy = (hy & 0x1f) / 2
-        startx = (16 - hx) & 0x1f
-        starty = (0 - hy) & 0xf
-        x1 = self.x & 0x1f
-        y1 = self.y & 0xf
-        x2 = (self.x + self.default_dx - 1) & 0x1f
-        y2 = (self.y + self.default_dy - 1) & 0xf
-        return (x1 >= startx and x1 < startx + 8) or (y1 >= starty and y1 < starty + 4) or (x2 >= startx and x2 < startx + 8) or (y2 >= starty and y2 < starty + 4)
+        return is_bad_harvest_position(self.x, self.y, hx, hy) or is_bad_harvest_position(self.x + self.default_dx - 1, self.y + self.default_dy - 1, hx, hy)
 
     def is_offscreen(self):
         # check bounds of starting item
