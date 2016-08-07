@@ -451,12 +451,12 @@ class DrawPeanutMode(DrawMode):
         else:
             return wx.StockCursor(wx.CURSOR_ARROW)
 
-    def is_allergic(self, x, y):
-        hx, hy = self.get_harvest_offset()
-        return is_bad_harvest_position(x, y, hx, hy)
-
     def check_objects(self, x, y):
-        self.is_bad_location = self.is_allergic(x, y)
+        hx, hy = self.get_harvest_offset()
+        if self.objects:
+            self.is_bad_location = self.objects[0].is_bad_location(hx, hy)
+        else:
+            self.is_bad_location = is_bad_harvest_position(x, y, hx, hy)
 
     def draw_extra_objects(self, level_builder, screen, current_segment):
         if self.objects:
