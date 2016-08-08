@@ -10,7 +10,7 @@ from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_
 
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides
-from pyface.key_pressed_event import KeyPressedEvent
+from pyface.api import YES, NO
 
 # Local imports.
 from omnivore import get_image_path
@@ -851,6 +851,14 @@ class JumpmanEditor(BitmapEditor):
     # Segment saver interface for menu item display
     export_data_name = "Jumpman Level Tester ATR"
     export_extensions = [".atr"]
+
+    def is_valid_for_save(self):
+        all_ok = True
+        if not self.bitmap.level_builder.harvest_ok:
+            reason = self.bitmap.level_builder.harvest_reason()
+            answer = self.task.confirm("%s\n\nSave Anyway?" % reason, "Bad Peanut Grid")
+            all_ok = (answer == YES)
+        return all_ok
 
     def made_current_active_editor(self):
         self.update_mouse_mode(AnticDSelectMode)

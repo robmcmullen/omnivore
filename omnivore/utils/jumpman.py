@@ -584,16 +584,28 @@ class JumpmanLevelBuilder(object):
         self.harvest_offset = (0, 0)
         self.harvest_offset_seen = set()
         self.harvest_offset_dups = set()
+        self.harvest_bad_locations = 0
+        self.harvest_ok = True
 
     def set_harvest_offset(self, offset):
         self.harvest_offset = tuple(offset)
         self.harvest_offset_seen = set()
         self.harvest_offset_dups = set()
+        self.harvest_bad_locations = 0
         self.check_harvest()
 
     def check_harvest(self):
         self.check_invalid_harvest(self.objects)
         self.check_peanut_grid(self.objects)
+        self.harvest_ok = not bool(self.harvest_offset_dups) and not bool(self.harvest_bad_locations)
+
+    def harvest_reason(self):
+        reasons = []
+        if self.harvest_offset_dups:
+            reasons.append("* Multiple peanuts in same grid square!\nJumpman will not collect those peanuts properly.")
+        if self.harvest_bad_locations:
+            reasons.append("* Peanuts in border area between grid squares!\nGame will crash when collecting those peanuts.")
+        return "\n\n".join(reasons)
 
     def check_invalid_harvest(self, objs):
         for obj in objs:
@@ -603,6 +615,8 @@ class JumpmanLevelBuilder(object):
                     self.harvest_offset_dups.add(grid)
                 else:
                     self.harvest_offset_seen.add(grid)
+                if obj.is_bad_location(*self.harvest_offset):
+                    self.harvest_bad_locations += 1
             if obj.trigger_painting:
                 self.check_invalid_harvest(obj.trigger_painting)
 
