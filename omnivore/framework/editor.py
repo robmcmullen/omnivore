@@ -257,6 +257,10 @@ class FrameworkEditor(Editor):
         if uri is None:
             uri = self.document.uri
 
+        if not self.is_valid_for_save():
+            self.document.undo_stack_changed = True
+            return
+
         try:
             if saver is None:
                 bytes = self.document.bytes.tostring()
@@ -314,6 +318,12 @@ class FrameworkEditor(Editor):
                 self.metadata_dirty = False
         
         fs.close()
+
+    def is_valid_for_save(self):
+        """Hook for subclasses to implement a validity check before saving
+        file
+        """
+        return True
     
     # Segment saver interface for menu item display
     export_data_name = "Any"
