@@ -460,7 +460,12 @@ class DrawPeanutMode(DrawMode):
 
     def draw_extra_objects(self, level_builder, screen, current_segment):
         if self.objects:
-            self.objects[0].error = self.is_bad_location
+            obj = self.objects[0]
+            obj.error = self.is_bad_location
+            if not obj.error:
+                hx, hy = self.get_harvest_offset()
+                grid = obj.harvest_checksum(hx, hy)
+                obj.error = grid in level_builder.harvest_offset_seen
         level_builder.draw_objects(screen, self.objects, current_segment)
         self.draw_harvest_grid(screen)
 
