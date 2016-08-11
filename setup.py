@@ -409,6 +409,6 @@ elif 'py2app' in sys.argv and sys.platform.startswith('darwin'):
     subprocess.call(['/usr/bin/ditto', '-arch', 'x86_64', fat_app_name, app_name])
     cwd = os.getcwd()
     os.chdir(mac_dist_dir)
-    subprocess.call(['/usr/bin/zip', '-r', '-9', '-q', "Omnivore-%s-darwin.zip" % spaceless_version, 'Omnivore.app', ])
+    subprocess.call(['/usr/bin/tar', 'cfj', "Omnivore-%s-darwin.tbz" % spaceless_version, 'Omnivore.app', ])
     os.chdir(cwd)
     shutil.rmtree(fat_app_name)
