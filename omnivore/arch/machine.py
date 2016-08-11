@@ -371,11 +371,8 @@ class Machine(HasTraits):
         if font is None:
             font = self.antic_font_data
         if font_renderer is not None:
-            try:
-                font_mode = int(font_renderer)
-                font_renderer = self.get_font_renderer_from_font_mode(font_mode)
-            except TypeError:
-                pass
+            if isinstance(font_renderer, str):
+                font_renderer = self.get_font_renderer_from_font_name(font_renderer)
             self.font_renderer = font_renderer
         self.antic_font_data = font
         self.antic_font = self.get_antic_font()
@@ -391,9 +388,9 @@ class Machine(HasTraits):
         else:
             return self.antic_font
     
-    def get_font_renderer_from_font_mode(self, font_mode):
+    def get_font_renderer_from_font_name(self, font_name):
         for r in predefined['font_renderer']:
-            if r.font_mode == font_mode:
+            if r.name.startswith(font_name):
                 return r
         return predefined['font_renderer'][0]
     

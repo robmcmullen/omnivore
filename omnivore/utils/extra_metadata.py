@@ -30,7 +30,7 @@ def Getaway(doc):
         segment.map_width = 256
         #doc.add_user_segment(segment)
         extra_metadata = {
-            'font': (font_segment.antic_font, 5),
+            'font': (font_segment.antic_font, "Antic 5"),
             'user segments': [font_segment, segment],
             'initial segment': segment,
             }
@@ -48,7 +48,7 @@ def Getaway(doc):
         segment.map_width = 256
         #doc.add_user_segment(segment)
         extra_metadata = {
-            'font': (font_segment.antic_font, 5),
+            'font': (font_segment.antic_font, "Antic 5"),
             'user segments': [font_segment, segment],
             'initial segment': segment,
             }
