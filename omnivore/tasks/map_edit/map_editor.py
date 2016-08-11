@@ -160,19 +160,8 @@ class SelectMode(MouseHandler):
             msg = "row=%d (0x%x) col=%d (0x%x) index=%d (0x%x)" % (r0, r0, c0, c0, index, index)
             if extra:
                 msg += " " + extra
-            e.task.status_bar.message = msg
+            e.show_status_message(msg)
     
-    def get_display_rect(self):
-        c = self.canvas
-        anchor_start, anchor_end, (r1, c1), (r2, c2) = c.get_highlight_indexes()
-        extra = None
-        if r1 >= 0:
-            w = c2 - c1
-            h = r2 - r1
-            if w > 0 or h > 0:
-                extra = "rectangle: width=%d (0x%x), height=%d (0x%x)" % (w, w, h, h)
-        return extra
-
     def process_left_down(self, evt):
         FontMapScroller.on_left_down(self.canvas, evt)  # can't use self.canvas directly because it has an overridded method on_left_down
         self.display_coords(evt)
@@ -182,7 +171,7 @@ class SelectMode(MouseHandler):
 
     def process_mouse_motion_down(self, evt):
         self.canvas.set_selection_from_event(evt)
-        self.display_coords(evt, self.get_display_rect())
+        self.display_coords(evt)
 
     def process_mouse_motion_up(self, evt):
         self.display_coords(evt)
@@ -431,6 +420,17 @@ class MapEditor(HexEditor):
     def perform_idle(self):
         pass
     
+    def get_selected_status_message(self):
+        anchor_start, anchor_end, (r1, c1), (r2, c2) = self.control.get_highlight_indexes()
+        extra = ""
+        if r1 >= 0:
+            w = c2 - c1
+            h = r2 - r1
+            if w > 0 or h > 0:
+                extra = "; current width=%d (0x%x), height=%d (0x%x)" % (w, w, h, h)
+        r = "rect" if len(self.selected_ranges) == 1 else "rects"
+        return "[%d %s selected%s]" % (len(self.selected_ranges), r, extra)
+
     def process_paste_data_object(self, data_obj, cmd_cls=None):
         bytes, extra = self.get_numpy_from_data_object(data_obj)
         ranges, indexes = self.get_selected_ranges_and_indexes()
