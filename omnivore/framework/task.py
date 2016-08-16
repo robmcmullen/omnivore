@@ -58,6 +58,10 @@ class FrameworkTask(Task):
     document_changed = Event
     
     keyboard_shortcuts = Any
+
+    # class attribute
+
+    activated_task_ids = set()
     
     #### 'IAbout' interface ###################################################
     
@@ -154,6 +158,15 @@ class FrameworkTask(Task):
         for pane in self.window.dock_panes:
             if pane.id in visible:
                 pane.visible = visible[pane.id]
+
+        if self.id not in self.activated_task_ids:
+            self.activated_task_ids.add(self.id)
+            self.first_time_activated()
+
+    def first_time_activated(self):
+        """ Called the first time a task is activated in the application.
+        """
+        pass
 
     def pane_layout_initial_visibility(self):
         return {}
