@@ -156,6 +156,14 @@ class HexEditor(FrameworkEditor):
             self.load_baseline(e['baseline document'], doc)
         if 'diff highlight' in e:
             self.diff_highlight = doc.has_baseline and bool(e['diff highlight'])
+        if 'map width' in e:
+            self.map_width = e['map width']
+        if 'map zoom' in e:
+            self.map_zoom = e['map zoom']
+        if 'bitmap width' in e:
+            self.bitmap_width = e['bitmap width']
+        if 'bitmap zoom' in e:
+            self.bitmap_zoom = e['bitmap zoom']
         self.machine.restore_extra_from_dict(e)
     
     def get_extra_metadata(self, mdict):
@@ -169,6 +177,10 @@ class HexEditor(FrameworkEditor):
         if self.document.baseline_document is not None:
             mdict["baseline document"] = self.document.baseline_document.metadata.uri
             mdict["diff highlight"] = self.diff_highlight
+        mdict["map width"] = self.map_width
+        mdict["map zoom"] = self.map_zoom
+        mdict["bitmap width"] = self.bitmap_width
+        mdict["bitmap zoom"] = self.bitmap_zoom
         self.machine.serialize_extra_to_dict(mdict)
 
     def rebuild_document_properties(self):
