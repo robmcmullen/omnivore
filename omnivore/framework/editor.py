@@ -275,8 +275,19 @@ class FrameworkEditor(Editor):
             # force update: just got saved, can't be read only!
             self.document.read_only = False
 
+            # Update tab name.  Note that dirty must be changed in order for
+            # the trait to be updated, so force a change if needed.  Also,
+            # update the URI first because trait callbacks happen immediately
+            # and because properties are used for the editor name, no trait
+            # event gets called on updating the metadata URI.
+            if not self.dirty:
+                self.dirty = True
+
             self.document.undo_stack_changed = True
             saved = True
+            
+            # refresh window name in case filename has changed
+            self.task._active_editor_tab_change(None)
         except Exception, e:
             import traceback
             stack = traceback.format_exc()
