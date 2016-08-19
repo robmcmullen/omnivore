@@ -39,15 +39,15 @@ class Machine(HasTraits):
     
     color_standard = Enum(0, 1)
     
-    color_registers = Any
+    color_registers = Any(transient=True)
     
-    color_registers_highlight = Any
+    color_registers_highlight = Any(transient=True)
     
-    color_registers_data = Any
+    color_registers_data = Any(transient=True)
     
-    color_registers_match = Any
+    color_registers_match = Any(transient=True)
     
-    color_registers_comment = Any
+    color_registers_comment = Any(transient=True)
     
     bitmap_renderer = Any(transient=True)
     
