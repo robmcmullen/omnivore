@@ -147,8 +147,6 @@ class HexEditor(FrameworkEditor):
         first_segment.restore_extra_from_dict(e)
         if 'emulator' in e:
             doc.emulator = e['emulator']
-        if 'colors' in e:
-            self.machine.update_colors(e['colors'])
         if 'font' in e:
             # FIXME: I don't think 'font' is set anywhere, so this never gets called
             self.machine.set_font(e['font'][0], e['font'][1])
@@ -158,6 +156,7 @@ class HexEditor(FrameworkEditor):
             self.load_baseline(e['baseline document'], doc)
         if 'diff highlight' in e:
             self.diff_highlight = doc.has_baseline and bool(e['diff highlight'])
+        self.machine.restore_extra_from_dict(e)
     
     def get_extra_metadata(self, mdict):
         mdict["serialized user segments"] = list(self.document.user_segments)
@@ -170,6 +169,7 @@ class HexEditor(FrameworkEditor):
         if self.document.baseline_document is not None:
             mdict["baseline document"] = self.document.baseline_document.metadata.uri
             mdict["diff highlight"] = self.diff_highlight
+        self.machine.serialize_extra_to_dict(mdict)
 
     def rebuild_document_properties(self):
         FrameworkEditor.rebuild_document_properties(self)

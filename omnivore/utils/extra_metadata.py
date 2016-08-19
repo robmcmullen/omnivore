@@ -3,7 +3,7 @@ from omnivore.tasks.map_edit.pane_layout import task_id_with_pane_layout as map_
 from omnivore.tasks.jumpman.pane_layout import task_id_with_pane_layout as jumpman_task_id
 
 getaway_defaults = {
-    'colors': [0x46, 0xD6, 0x74, 0x0C, 0x14, 0x86, 0x02, 0xB6, 0xBA],
+    'antic_color_registers': [0x46, 0xD6, 0x74, 0x0C, 0x14, 0x86, 0x02, 0xB6, 0xBA],
     'tile map': [
         ("road", [0x70]),
         ("trees", range(0x80, 0x96), range(0x01, 0x16),),

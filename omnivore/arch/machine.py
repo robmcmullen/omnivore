@@ -262,8 +262,11 @@ class Machine(HasTraits):
         print state.keys()
         return state
     
-    def __setstate__(self, state):
+    def state_to_traits(self, state):
         for name in self.all_trait_names():
+            if name not in state:
+                # skip missing trait definitions
+                continue
             t = self.trait(name)
             if t.transient:
                 if name in predefined:
@@ -279,7 +282,9 @@ class Machine(HasTraits):
                     setattr(self, name, state[name])
                 except KeyError:
                     pass
-    
+
+    def __setstate__(self, state):
+        self.state_to_traits(state)
         # set up trait notifications
         self._init_trait_listeners()
     # 
@@ -292,6 +297,16 @@ class Machine(HasTraits):
         m.update_colors(m.antic_color_registers)
         m.set_font()
         return m
+
+    def serialize_extra_to_dict(self, mdict):
+        """Save extra metadata to a dict so that it can be serialized
+        """
+        s = self.__getstate__()
+        mdict.update(s)
+
+    def restore_extra_from_dict(self, e):
+        self.state_to_traits(e)
+        self.update_colors(self.antic_color_registers)
     #
     
     def update_colors(self, c):
