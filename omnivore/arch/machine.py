@@ -14,6 +14,10 @@ import disasm
 import memory_map
 import antic_renderers
 
+import logging
+log = logging.getLogger(__name__)
+
+
 class Machine(HasTraits):
     """ Collection of classes that identify a machine: processor, display, etc.
     
@@ -252,7 +256,10 @@ class Machine(HasTraits):
             if t.transient:
                 if name in predefined:
                     value = getattr(self, name)
-                    state[name] = predefined[name].index(value)
+                    try:
+                        state[name] = predefined[name].index(value)
+                    except ValueError:
+                        log.warning("No matching index for predefined[%s]; will use default upon load instead of %s" % (name, value))
             elif name == "memory_map":
                 # convert into list of tuples so json won't mangle the integer
                 # keys into strings
@@ -312,11 +319,12 @@ class Machine(HasTraits):
     def update_colors(self, c):
         baseline = list(colors.powerup_colors())
         # need to operate on a copy of the colors to make sure we're not
-        # changing some global value
+        # changing some global value. Also force as python int so we're not
+        # mixing numpy and python values.
         if len(c) == 5:
-            baseline[4:9] = c
+            baseline[4:9] = [int(i) for i in c]
         else:
-            baseline[0:len(c)] = c
+            baseline[0:len(c)] = [int(i) for i in c]
         self.antic_color_registers = baseline
         self.color_registers = self.get_color_registers()
         self.color_registers_highlight = self.get_blended_color_registers(self.color_registers, self.highlight_color)
