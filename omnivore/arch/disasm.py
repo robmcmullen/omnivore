@@ -1,4 +1,4 @@
-from udis import disasm, miniasm
+from udis import disasm, miniasm, cputables
 
 from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, user_bit_mask
 
@@ -15,6 +15,11 @@ class BaseDisassembler(disasm.Disassembler):
     
     def __init__(self, asm_syntax, memory_map=None, hex_lower=True, mnemonic_lower=False):
         disasm.Disassembler.__init__(self, self.cpu, asm_syntax, memory_map, self.allow_undocumented, hex_lower, mnemonic_lower, self.read_instructions, self.write_instructions, self.rw_modes)
+
+    @classmethod
+    def get_nop(cls):
+        cpu = cputables.processors[cls.cpu]
+        return cpu['nop']
     
     def get_style(self):
         if self.pc >= self.origin + self.length:

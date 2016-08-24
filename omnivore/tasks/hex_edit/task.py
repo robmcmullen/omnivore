@@ -370,6 +370,7 @@ class HexEditTask(FrameworkTask):
         return [
             ZeroAction(),
             FFAction(),
+            NOPAction(),
             SetValueAction(),
             Separator(),
             SetHighBitAction(),

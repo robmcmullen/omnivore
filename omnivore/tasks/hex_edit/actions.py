@@ -902,11 +902,14 @@ class IndexRangeAction(EditorAction):
     
     def _name_default(self):
         return self.cmd.pretty_name
+
+    def get_cmd(self, editor, segment, ranges):
+        return self.cmd(segment, ranges)
     
     def perform(self, event):
         e = self.active_editor
         ranges = e.get_optimized_selected_ranges()
-        cmd = self.cmd(e.segment, ranges)
+        cmd = self.get_cmd(e, e.segment, ranges)
         self.active_editor.process_command(cmd)
 
 class ZeroAction(IndexRangeAction):
@@ -916,6 +919,14 @@ class ZeroAction(IndexRangeAction):
 class FFAction(IndexRangeAction):
     cmd = FFCommand
     accelerator = 'Ctrl+9'
+
+class NOPAction(IndexRangeAction):
+    cmd = NOPCommand
+    accelerator = 'Ctrl+3'
+
+    def get_cmd(self, editor, segment, ranges):
+        nop = editor.machine.get_nop()
+        return self.cmd(segment, ranges, nop)
 
 class SetHighBitAction(IndexRangeAction):
     cmd = SetHighBitCommand

@@ -599,6 +599,9 @@ class Machine(HasTraits):
     def get_disassembler(self, hex_lower, mnemonic_lower):
         return self.disassembler(self.assembler, self.memory_map, hex_lower, mnemonic_lower)
 
+    def get_nop(self):
+        return self.disassembler.get_nop()
+
 
 Generic6502 = Machine(name="Generic 6502", disassembler=disasm.Basic6502Disassembler)
 

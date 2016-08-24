@@ -318,6 +318,11 @@ class FFCommand(SetRangeValueCommand):
         SetRangeValueCommand.__init__(self, segment, ranges, 0xff)
 
 
+class NOPCommand(SetRangeValueCommand):
+    short_name = "nop"
+    pretty_name = "NOP Bytes"
+
+
 class SetHighBitCommand(SetRangeCommand):
     short_name = "set_high_bit"
     pretty_name = "Set High Bit"
