@@ -13,6 +13,22 @@ z80bit = 4
 r = 64
 w = 128
 
+def find_nop(cpu):
+    table = cpu['opcodeTable']
+    possibilities = []
+    nop = 0x00
+    for opcode, optable in table.items():
+        try:
+            length, mnemonic, mode, flag = optable
+        except ValueError:
+            length, mnemonic, mode = optable
+            flag = 0
+        if mnemonic == "nop" and flag == 0:
+            nop = opcode
+            break
+    return nop
+
+
 def read_udis(pathname):
     """ Read all the processor-specific opcode info and pull into a container
     dictionary keyed on the processor name.
@@ -40,6 +56,8 @@ def read_udis(pathname):
                     exec(source, g, d)
                     if 'opcodeTable' in d:
                         cpus[cpu_name] = d
+                        nop = find_nop(d)
+                        cpus[cpu_name]["nop"] = nop
                 except SyntaxError:
                     # ignore any python 3 files
                     pass
