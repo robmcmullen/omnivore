@@ -865,8 +865,11 @@ class JumpmanEditor(BitmapEditor):
         self.refresh_toolbar_state()
 
     def process_extra_metadata(self, doc, e):
-        HexEditor.process_extra_metadata(self, doc, e)
-        pass
+        # ignore bitmap renderer in restore because we always want to use the
+        # JumpmanPlayfieldRenderer in Jumpman level edit mode
+        if 'bitmap_renderer' in e:
+            del e['bitmap_renderer']
+        BitmapEditor.process_extra_metadata(self, doc, e)
     
     @on_trait_change('machine.bitmap_shape_change_event')
     def update_bitmap_shape(self):
