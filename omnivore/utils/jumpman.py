@@ -36,6 +36,41 @@ def is_bad_harvest_position(x, y, hx, hy):
     
     return False
 
+class DrawObjectBounds(object):
+    def __init__(self, bounds=None):
+        if bounds is None:
+            self.xmin, self.ymin = None, None
+            self.xmax, self.ymax = None, None
+        else:
+            (self.xmin, self.ymin), (self.xmax, self.ymax) = bounds
+
+    def __str__(self):
+        return "(%d,%d -> %d,%d)" % (self.xmin, self.ymin, self.xmax, self.ymax)
+
+    def get_offset(self, x, y):
+        if self.xmin is None:
+            return DrawObjectBounds()
+        return DrawObjectBounds(((x + self.xmin, y + self.ymin), (x + self.xmax, y + self.ymax)))
+
+    def add_point(self, x, y):
+        if self.xmin is None:
+            self.xmin = self.ymin = x
+            self.xmax = self.ymax = y
+        else:
+            if x < self.xmin:
+                self.xmin = x
+            elif x > self.xmax:
+                self.xmax = x
+            if y < self.ymin:
+                self.ymin = y
+            elif y > self.ymax:
+                self.ymax = y
+
+    def is_inside(self, other):
+        if self.xmin is None or other.xmin is None:
+            return False
+        return self.xmin >= other.xmin and self.xmax <= other.xmax and self.ymin >= other.ymin and self.ymax <= other.ymax
+
 class JumpmanDrawObject(object):
     name = "object"
     default_addr = None
@@ -56,6 +91,7 @@ class JumpmanDrawObject(object):
         0xff
     ], dtype=np.uint8)
     _error_pixel_list = None
+    screen_bounds = DrawObjectBounds(((0, 0), (159, 87)))
 
     def __init__(self, pick_index, x, y, count, dx=None, dy=None, addr=None):
         self.x = x
@@ -68,6 +104,7 @@ class JumpmanDrawObject(object):
         self.trigger_function = None
         self.trigger_painting = []
         self.error = False
+        self._local_bounds = self.get_local_bounds()
 
     @property
     def addr_low(self):
@@ -103,6 +140,10 @@ class JumpmanDrawObject(object):
         x = int(self.x)  # make sure the math is not done on uint8!
         y = int(self.y)
         return x * x + y * y
+
+    @property
+    def bounds(self):
+        return self._local_bounds.get_offset(self.x, self.y)
 
     @property
     def trigger_str(self):
@@ -192,19 +233,15 @@ class JumpmanDrawObject(object):
     def is_bad_location(self, hx, hy):
         return is_bad_harvest_position(self.x, self.y, hx, hy) or is_bad_harvest_position(self.x + self.default_dx - 1, self.y + self.default_dy - 1, hx, hy)
 
-    def is_offscreen(self):
-        # check bounds of starting item
-        x = self.x
-        y = self.y
-        if y < 0 or y + abs(self.default_dy) > 88 or x < 0 or x + abs(self.default_dx) > 160:
-            return True
+    def get_local_bounds(self):
+        bounds = DrawObjectBounds()
+        bounds.add_point(0, 0)
+        bounds.add_point(self.default_dx, self.default_dy)
+        bounds.add_point(self.count * self.dx - 1, self.count * self.dy - 1)
+        return bounds
 
-        # check bounds of last item
-        x = self.x + (self.count - 1) * self.dx
-        y = self.y + (self.count - 1) * self.dy
-        if y < 0 or y + abs(self.default_dy) > 88 or x < 0 or x + abs(self.default_dx) > 160:
-            return True
-        return False
+    def is_offscreen(self):
+        return not self.bounds.is_inside(self.screen_bounds)
 
 
 class JumpmanRespawn(JumpmanDrawObject):
