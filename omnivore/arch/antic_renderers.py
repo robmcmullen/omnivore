@@ -146,7 +146,9 @@ class BaseRenderer(object):
 
 class OneBitPerPixelB(BaseRenderer):
     name = "B/W, 1bpp, on=black"
-    bw_colors = ((255, 255, 255), (0, 0, 0))
+
+    def get_bw_colors(self, m):
+        return ((255, 255, 255), (0, 0, 0))
     
     def get_image(self, m, bytes_per_row, nr, count, bytes, style):
         bits = np.unpackbits(bytes)
@@ -155,10 +157,11 @@ class OneBitPerPixelB(BaseRenderer):
         background = (pixels == 0)
         color1 = (pixels == 1)
         
-        h_colors = m.get_blended_color_registers(self.bw_colors, m.highlight_color)
-        m_colors = m.get_blended_color_registers(self.bw_colors, m.match_background_color)
-        c_colors = m.get_blended_color_registers(self.bw_colors, m.comment_background_color)
-        d_colors = m.get_dimmed_color_registers(self.bw_colors, m.background_color, m.data_color)
+        bw_colors = self.get_bw_colors(m)
+        h_colors = m.get_blended_color_registers(bw_colors, m.highlight_color)
+        m_colors = m.get_blended_color_registers(bw_colors, m.match_background_color)
+        c_colors = m.get_blended_color_registers(bw_colors, m.comment_background_color)
+        d_colors = m.get_dimmed_color_registers(bw_colors, m.background_color, m.data_color)
         
         style_per_pixel = np.vstack((style, style, style, style, style, style, style, style)).T
         normal = (style_per_pixel & self.ignore_mask) == 0
@@ -168,29 +171,61 @@ class OneBitPerPixelB(BaseRenderer):
         match = (style_per_pixel & match_bit_mask) == match_bit_mask
         
         bitimage = np.empty((nr * bytes_per_row, 8, 3), dtype=np.uint8)
-        bitimage[background & normal] = self.bw_colors[0]
+        bitimage[background & normal] = bw_colors[0]
         bitimage[background & comment] = c_colors[0]
         bitimage[background & match] = m_colors[0]
         bitimage[background & data] = d_colors[0]
         bitimage[background & highlight] = h_colors[0]
-        bitimage[color1 & normal] = self.bw_colors[1]
+        bitimage[color1 & normal] = bw_colors[1]
         bitimage[color1 & comment] = c_colors[1]
         bitimage[color1 & match] = m_colors[1]
         bitimage[color1 & data] = d_colors[1]
         bitimage[color1 & highlight] = h_colors[1]
         bitimage[count:,:,:] = m.empty_color
 
-        return bitimage.reshape((nr, bytes_per_row * 8, 3))
+        return self.reshape(bitimage, bytes_per_row, nr)
 
 
 class OneBitPerPixelW(OneBitPerPixelB):
     name = "B/W, 1bpp, on=white"
-    bw_colors = ((0, 0, 0), (255, 255, 255))
+
+    def get_bw_colors(self, m):
+        return ((0, 0, 0), (255, 255, 255))
+
+
+class OneBitPerPixelPM1(OneBitPerPixelB):
+    name = "Player/Missile, normal width"
+    pixels_per_byte = 16
+
+
+class OneBitPerPixelPM2(OneBitPerPixelB):
+    name = "Player/Missile, double width"
+    pixels_per_byte = 32
+
+
+class OneBitPerPixelPM4(OneBitPerPixelB):
+    name = "Player/Missile, quad width"
+    pixels_per_byte = 64
+
+
+class ModeB(OneBitPerPixelB):
+    name = "Antic B (Gr 6, 1bpp)"
+
+    def get_bw_colors(self, m):
+        color_registers = [m.color_registers[r] for r in [8, 4]]
+        return color_registers
+
+
+class ModeC(ModeB):
+    name = "Antic C (Gr 6+, 1bpp)"
+    pixels_per_byte = 16
 
 
 class OneBitPerPixelApple2(BaseRenderer):
     name = "B/W, Apple 2"
-    bw_colors = ((255, 255, 255), (0, 0, 0))
+
+    def get_bw_colors(self, m):
+        return ((255, 255, 255), (0, 0, 0))
     
     def get_image(self, m, bytes_per_row, nr, count, bytes, style):
         bits = np.unpackbits(bit_reverse_table[bytes])
@@ -199,10 +234,11 @@ class OneBitPerPixelApple2(BaseRenderer):
         background = (pixels[:,0:7] == 0)
         color1 = (pixels[:,0:7] == 1)
         
-        h_colors = m.get_blended_color_registers(self.bw_colors, m.highlight_color)
-        m_colors = m.get_blended_color_registers(self.bw_colors, m.match_background_color)
-        c_colors = m.get_blended_color_registers(self.bw_colors, m.comment_background_color)
-        d_colors = m.get_dimmed_color_registers(self.bw_colors, m.background_color, m.data_color)
+        bw_colors = self.get_bw_colors(m)
+        h_colors = m.get_blended_color_registers(bw_colors, m.highlight_color)
+        m_colors = m.get_blended_color_registers(bw_colors, m.match_background_color)
+        c_colors = m.get_blended_color_registers(bw_colors, m.comment_background_color)
+        d_colors = m.get_dimmed_color_registers(bw_colors, m.background_color, m.data_color)
         
         style_per_pixel = np.vstack((style, style, style, style, style, style, style)).T
         normal = (style_per_pixel & self.ignore_mask) == 0
@@ -212,12 +248,12 @@ class OneBitPerPixelApple2(BaseRenderer):
         match = (style_per_pixel & match_bit_mask) == match_bit_mask
         
         bitimage = np.empty((nr * bytes_per_row, 7, 3), dtype=np.uint8)
-        bitimage[background & normal] = self.bw_colors[0]
+        bitimage[background & normal] = bw_colors[0]
         bitimage[background & comment] = c_colors[0]
         bitimage[background & match] = m_colors[0]
         bitimage[background & data] = d_colors[0]
         bitimage[background & highlight] = h_colors[0]
-        bitimage[color1 & normal] = self.bw_colors[1]
+        bitimage[color1 & normal] = bw_colors[1]
         bitimage[color1 & comment] = c_colors[1]
         bitimage[color1 & match] = m_colors[1]
         bitimage[color1 & data] = d_colors[1]
@@ -229,7 +265,9 @@ class OneBitPerPixelApple2(BaseRenderer):
 
 class OneBitPerPixelApple2Artifacting(BaseRenderer):
     name = "Apple 2 (artifacting colors)"
-    bw_colors = ((255, 255, 255), (0, 0, 0))
+
+    def get_bw_colors(self, m):
+        return ((255, 255, 255), (0, 0, 0))
 
     # 0 0000000 0 0000000  # black 0, 0, 0
     # 0 0101010 0 1010101  # green 32, 192, 0
@@ -278,10 +316,11 @@ class OneBitPerPixelApple2Artifacting(BaseRenderer):
         background = (pixels[:,0:7] == 0)
         color1 = (pixels[:,0:7] == 1)
         
-        h_colors = m.get_blended_color_registers(self.bw_colors, m.highlight_color)
-        m_colors = m.get_blended_color_registers(self.bw_colors, m.match_background_color)
-        c_colors = m.get_blended_color_registers(self.bw_colors, m.comment_background_color)
-        d_colors = m.get_dimmed_color_registers(self.bw_colors, m.background_color, m.data_color)
+        bw_colors = self.get_bw_colors(m)
+        h_colors = m.get_blended_color_registers(bw_colors, m.highlight_color)
+        m_colors = m.get_blended_color_registers(bw_colors, m.match_background_color)
+        c_colors = m.get_blended_color_registers(bw_colors, m.comment_background_color)
+        d_colors = m.get_dimmed_color_registers(bw_colors, m.background_color, m.data_color)
         
         style_per_pixel = np.vstack((style, style, style, style, style, style, style)).T
         normal = (style_per_pixel & self.ignore_mask) == 0
@@ -291,12 +330,12 @@ class OneBitPerPixelApple2Artifacting(BaseRenderer):
         match = (style_per_pixel & match_bit_mask) == match_bit_mask
         
         bitimage = np.empty((nr * bytes_per_row, 7, 3), dtype=np.uint8)
-        bitimage[background & normal] = self.bw_colors[0]
+        bitimage[background & normal] = bw_colors[0]
         bitimage[background & comment] = c_colors[0]
         bitimage[background & match] = m_colors[0]
         bitimage[background & data] = d_colors[0]
         bitimage[background & highlight] = h_colors[0]
-        bitimage[color1 & normal] = self.bw_colors[1]
+        bitimage[color1 & normal] = bw_colors[1]
         bitimage[color1 & comment] = c_colors[1]
         bitimage[color1 & match] = m_colors[1]
         bitimage[color1 & data] = d_colors[1]
