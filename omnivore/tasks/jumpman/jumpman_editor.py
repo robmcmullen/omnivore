@@ -37,11 +37,6 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class MoveObjectCommand(SetValueCommand):
-    short_name = "move_jumpman_obj"
-    pretty_name = "Move Object"
-
-
 class JumpmanSelectMode(SelectMode):
     can_paste = False
 
@@ -740,7 +735,7 @@ class JumpmanLevelView(MainBitmapScroller):
             print self.trigger_root, id(self.trigger_root), id(self.trigger_root.trigger_painting)
         self.save_changes()
 
-    def save_changes(self):
+    def save_changes(self, command_cls=MoveObjectCommand):
         source, level_addr, old_harvest_addr = self.editor.get_level_addrs()
         level_data, harvest_addr, ropeladder_data, num_peanuts = self.level_builder.create_level_definition(level_addr, source[0x46], source[0x47])
         index = level_addr - source.start_addr
@@ -753,7 +748,7 @@ class JumpmanLevelView(MainBitmapScroller):
         hdata = np.empty([2], dtype=np.uint8)
         hdata.view(dtype="<u2")[0] = harvest_addr
         data = np.hstack([ropeladder_data, pdata, hdata, level_data])
-        cmd = MoveObjectCommand(source, ranges, data)
+        cmd = command_cls(source, ranges, data)
         self.editor.process_command(cmd)
     
     # Segment saver interface for menu item display
@@ -820,6 +815,8 @@ class JumpmanEditor(BitmapEditor):
     num_downropes = Int(-1)
 
     num_peanuts = Int(-1)
+
+    can_select_objects = Bool(False)
 
     can_erase_objects = Bool(False)
 
@@ -998,6 +995,7 @@ class JumpmanEditor(BitmapEditor):
     
     def update_mouse_mode(self, mouse_handler=None):
         BitmapEditor.update_mouse_mode(self, mouse_handler)
+        self.can_select_objects = self.bitmap.mouse_mode.can_paste
         self.bitmap.refresh_view()
     
     def set_current_draw_pattern(self, pattern, control):

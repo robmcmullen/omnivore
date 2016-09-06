@@ -196,6 +196,52 @@ class TestJumpmanPainting(object):
         print rl
         print num_p
 
+class TestJumpmanBounds(object):
+    def setup(self):
+        pass
+
+    def test_simple(self):
+        level_defs = [
+            (
+                DrawObjectBounds(((50, 20), (81, 39))),
+                [
+                Girder(-1, 50, 20, 5, 4, 0),
+                Ladder(-1, 60, 20, 5, 0, 4),
+                UpRope(-1, 70, 20, 5, 0, 4),
+                DownRope(-1, 80, 20, 5, 0, 4),
+                ],
+            ),
+            (
+                DrawObjectBounds(((50, 20), (69, 22))),
+                [
+                Girder(-1, 50, 20, 5, 4, 0),
+                ],
+            ),
+            (
+                DrawObjectBounds(((34, 20), (53, 22))),
+                [
+                Girder(-1, 50, 20, 5, -4, 0),
+                ],
+            ),
+
+        ]
+
+        for expected, objects in level_defs:
+            print objects
+            bounds = DrawObjectBounds.get_bounds(objects)
+            print bounds
+            print expected
+            assert expected == bounds
+            print "works"
+
+            for o in objects:
+                o.flip_vertical(bounds)
+                print o
+
+            flipped_bounds = DrawObjectBounds.get_bounds(objects)
+            print "flipped bounds", flipped_bounds
+            assert bounds == flipped_bounds
+
 if __name__ == "__main__":
     t = TestJumpmanScreen()
     t.setup()
@@ -206,3 +252,14 @@ if __name__ == "__main__":
     t = TestJumpmanPainting()
     t.setup()
     t.test_simple()
+    t = TestJumpmanBounds()
+    t.setup()
+    t.test_simple()
+
+    o = Girder(-1, 50, 20, 5, -4, -1)
+    print "object", o
+    bounds = DrawObjectBounds.get_bounds([o])
+    print "bounds", bounds
+    o.flip_vertical(bounds)
+    flipped_bounds = DrawObjectBounds.get_bounds([o])
+    print "flipped bounds", flipped_bounds

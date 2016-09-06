@@ -37,6 +37,13 @@ def is_bad_harvest_position(x, y, hx, hy):
     return False
 
 class DrawObjectBounds(object):
+    @classmethod
+    def get_bounds(cls, objects):
+        bounds = DrawObjectBounds()
+        for o in objects:
+            bounds.add_bounds(o.bounds)
+        return bounds
+
     def __init__(self, bounds=None):
         if bounds is None:
             self.xmin, self.ymin = None, None
@@ -45,7 +52,16 @@ class DrawObjectBounds(object):
             (self.xmin, self.ymin), (self.xmax, self.ymax) = bounds
 
     def __str__(self):
+        if self.xmin is None:
+            return "(undefined bounds)"
         return "(%d,%d -> %d,%d)" % (self.xmin, self.ymin, self.xmax, self.ymax)
+
+    def __eq__(self, other):
+        try:
+            return (self.xmin, self.ymin, self.xmax, self.ymax) == (other.xmin, other.ymin, other.xmax, other.ymax)
+        except AttributeError:
+            pass
+        return False
 
     def get_offset(self, x, y):
         if self.xmin is None:
@@ -65,6 +81,13 @@ class DrawObjectBounds(object):
                 self.ymin = y
             elif y > self.ymax:
                 self.ymax = y
+
+    def add_bounds(self, other):
+        if self.xmin is None:
+            self.xmin, self.ymin, self.xmax, self.ymax = other.xmin, other.ymin, other.xmax, other.ymax
+        elif other.xmin is not None:
+            self.add_point(other.xmin, other.ymin)
+            self.add_point(other.xmax, other.ymax)
 
     def is_inside(self, other):
         if self.xmin is None or other.xmin is None:
@@ -236,12 +259,44 @@ class JumpmanDrawObject(object):
     def get_local_bounds(self):
         bounds = DrawObjectBounds()
         bounds.add_point(0, 0)
-        bounds.add_point(self.default_dx, self.default_dy)
-        bounds.add_point(self.count * self.dx - 1, self.count * self.dy - 1)
+        bounds.add_point(self.default_dx - 1, self.default_dy - 1)
+        if self.count > 1:
+            c = self.count - 1
+            lx = c * self.dx
+            ly = c * self.dy
+            if lx < 0:
+                px = lx
+            else:
+                px = self.default_dx - 1 + lx
+            if ly < 0:
+                py = ly
+            else:
+                py = self.default_dy - 1 + ly
+            bounds.add_point(px, py)
         return bounds
 
     def is_offscreen(self):
         return not self.bounds.is_inside(self.screen_bounds)
+
+    def flip_vertical(self, bounds):
+        """Reflect the object vertically (i.e. top to bottom). The X
+        coordinates stay the same; the Y coordinates are flipped within the
+        bounding box of the given area
+        """
+        self.y = bounds.ymax - (self.y - bounds.ymin) - self.default_dy + 1
+        self.orig_y = self.y
+        self.dy = -self.dy
+        self._local_bounds = self.get_local_bounds()
+
+    def flip_horizontal(self, bounds):
+        """Reflect the object horizontally (i.e. left to right). The Y
+        coordinates stay the same; the X coordinates are flipped within the
+        bounding box of the given area
+        """
+        self.x = bounds.xmax - (self.x - bounds.xmin) - self.default_dx + 1
+        self.orig_x = self.x
+        self.dx = -self.dx
+        self._local_bounds = self.get_local_bounds()
 
 
 class JumpmanRespawn(JumpmanDrawObject):

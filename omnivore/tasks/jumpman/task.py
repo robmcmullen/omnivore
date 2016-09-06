@@ -12,14 +12,16 @@ from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
 from traits.api import on_trait_change, Property, Instance, Any, Event, Int
 
 from omnivore.framework.actions import *
-from jumpman_editor import JumpmanEditor
-from commands import *
 from omnivore.tasks.hex_edit.task import HexEditTask
 from omnivore.tasks.hex_edit.actions import *
 from omnivore.tasks.hex_edit.preferences import HexEditPreferences
 import omnivore.arch.colors as colors
-import pane_layout
 from omnivore.framework.toolbar import get_toolbar_group
+
+from jumpman_editor import JumpmanEditor
+from commands import *
+import pane_layout
+from actions import *
 
 
 class JumpmanEditTask(HexEditTask):
@@ -104,13 +106,16 @@ class JumpmanEditTask(HexEditTask):
     
     def get_actions_Menu_Edit_SelectGroup(self):
         return [
-            SelectAllAction(),
-            SelectNoneAction(),
-            SelectInvertAction(),
+            SelectAllJumpmanAction(),
+            SelectNoneJumpmanAction(),
+            SelectInvertJumpmanAction(),
             ]
     
     def get_actions_Menu_Edit_FindGroup(self):
-        return []
+        return [
+            FlipVerticalAction(),
+            FlipHorizontalAction(),
+            ]
 
     def get_actions_Menu_View_ViewPredefinedGroup(self):
         return []
