@@ -142,11 +142,13 @@ class FrameworkEditor(Editor):
         """ Hook to load any extra metadata for the given document
         """
         e = self.load_builtin_extra_metadata(doc)
-        if e is not None:
-            self.process_extra_metadata(doc, e)
+        if e is None:
+            e = {}
+        self.process_extra_metadata(doc, e)
         e = self.load_filesystem_extra_metadata(doc)
-        if e is not None:
-            self.process_extra_metadata(doc, e)
+        if e is None:
+            e = {}
+        self.process_extra_metadata(doc, e)
         self.metadata_dirty = False
 
     def load_builtin_extra_metadata(self, doc):
@@ -189,14 +191,14 @@ class FrameworkEditor(Editor):
         """
         pass
     
-    def load_baseline(self, uri, doc=None):
+    def load_baseline(self, uri, doc=None, ignore_error=False):
         if doc is None:
             doc = self.document
         try:
             guess = FileGuess(uri)
         except Exception, e:
-            self.window.error("Failed opening baseline document file\n\n%s\n\nError: %s" % (uri, str(e)), "Baseline Document Loading Error")
-            return
+            if not ignore_error:
+                self.window.error("Failed opening baseline document file\n\n%s\n\nError: %s" % (uri, str(e)), "Baseline Document Loading Error")
         bytes = guess.numpy
         difference = len(bytes) - len(doc)
         if difference > 0:
@@ -213,6 +215,16 @@ class FrameworkEditor(Editor):
             doc.init_baseline(guess.metadata, bytes)
         else:
             doc.del_baseline()
+        if doc == self.document:
+            self.baseline_present = doc.has_baseline
+            self.diff_highlight = self.baseline_present
+
+    def use_self_as_baseline(self, doc=None):
+        if doc is None:
+            doc = self.document
+        bytes = np.copy(doc.bytes)
+        print "SELF AS BASELINE!!!!!", bytes
+        doc.init_baseline(doc.metadata, bytes)
         if doc == self.document:
             self.baseline_present = doc.has_baseline
             self.diff_highlight = self.baseline_present

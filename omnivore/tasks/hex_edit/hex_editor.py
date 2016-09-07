@@ -153,7 +153,9 @@ class HexEditor(FrameworkEditor):
         if 'initial segment' in e:
             self.initial_segment = e['initial segment']
         if 'baseline document' in e:
-            self.load_baseline(e['baseline document'], doc)
+            self.load_baseline(e['baseline document'], doc, ignore_error=True)
+        if not doc.has_baseline:
+            self.use_self_as_baseline(doc)
         if 'diff highlight' in e:
             self.diff_highlight = doc.has_baseline and bool(e['diff highlight'])
         if 'map width' in e:
@@ -176,7 +178,7 @@ class HexEditor(FrameworkEditor):
             mdict["emulator"] = self.document.emulator
         if self.document.baseline_document is not None:
             mdict["baseline document"] = self.document.baseline_document.metadata.uri
-            mdict["diff highlight"] = self.diff_highlight
+        mdict["diff highlight"] = self.diff_highlight
         mdict["map width"] = self.map_width
         mdict["map zoom"] = self.map_zoom
         mdict["bitmap width"] = self.bitmap_width
