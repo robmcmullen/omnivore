@@ -187,13 +187,13 @@ class JumpmanLevelView(MainBitmapScroller):
         self.level_builder.delete_objects(objects, save_location)
         self.save_changes()
 
-    def save_objects(self, objects):
+    def save_objects(self, objects, command_cls=CreateObjectCommand):
         save_location = self.get_save_location()
         self.level_builder.add_objects(objects, save_location)
         if self.trigger_root is not None:
             print save_location, id(save_location)
             print self.trigger_root, id(self.trigger_root), id(self.trigger_root.trigger_painting)
-        self.save_changes()
+        self.save_changes(command_cls)
 
     def save_changes(self, command_cls=MoveObjectCommand):
         source, level_addr, old_harvest_addr = self.editor.get_level_addrs()

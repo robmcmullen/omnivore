@@ -8,6 +8,11 @@ import logging
 progress_log = logging.getLogger("progress")
 
 
+class CreateObjectCommand(SetValueCommand):
+    short_name = "create_jumpman_obj"
+    pretty_name = "Create Object"
+
+
 class MoveObjectCommand(SetValueCommand):
     short_name = "move_jumpman_obj"
     pretty_name = "Move Object"
