@@ -69,7 +69,7 @@ class FrameworkTask(Task):
     
     about_version = Unicode
     
-    about_description = Unicode('Byte into the meat of Atari Software!')
+    about_description = Unicode('Byte into the meat of 8-bit Software!\n\nSend feedback to: feedback@playermissile.com')
     
     about_website = Str('http://playermissile.com/omnivore')
     
