@@ -249,7 +249,8 @@ class AtariDosDiskImage(DiskImageBase):
         if self.header.image_size == 133120:
             # enhanced density has 2nd VTOC
             self.vtoc2 = 1024
-            extra_free = self.get_sectors(self.vtoc2)[122:124].view(dtype='<u2')[0]
+            data, style = self.get_sectors(self.vtoc2)
+            extra_free = data[122:124].view(dtype='<u2')[0]
             self.unused_sectors += extra_free
     
     def get_directory(self):
@@ -314,7 +315,7 @@ class AtariDosDiskImage(DiskImageBase):
         segments.append(segment)
         if self.vtoc2 > 0:
             start, count = self.get_contiguous_sectors(self.vtoc2, 1)
-            segment = RawSectorsSegment(r[start:start+count], self.vtoc2, 1, count, self.header.sector_size, name="VTOC2")
+            segment = RawSectorsSegment(r[start:start+count], self.vtoc2, 1, count, 128, 3, self.header.sector_size, name="VTOC2")
             segments.append(segment)
         return segments
     
