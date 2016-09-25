@@ -1011,6 +1011,57 @@ class Apple2MemoryMap(EmptyMemoryMap):
     name = "Apple ]["
     
     rmemmap = {
+ #Monitor Zero Page locations   
+        0x0020: "WNDLFT",       # Left column of the Scroll Window
+        0x0021: "WNDWDTH",       # Width of the Scroll Window
+        0x0022: "WNDTOP",       # Top line of the Scroll Window
+        0x0023: "WNDBTM",       # Bottom line of Scroll Window
+        0x0024: "CH",       # Displacement from WNDLFT
+        0x0025: "CV",
+        0x0026: "GBASL",
+        0x0027: "GBASH",
+        0x0028: "BASL",
+        0x0029: "BASH",
+        0x002A: "BAS2L",
+        0x002B: "BAS2H",
+        0x002C: "H2",
+        0x002D: "V2",
+        0x002F: "LASTIN",
+        0x0030: "COLOR",
+        0x0031: "MODE",
+        0x0032: "INVFLG",
+        0x0033: "PROMPT",
+        0x0034: "YSAV",
+        0x0035: "YSAV1",
+        0x0036: "CSWL",
+        0x0037: "CSWH",
+        0x0038: "KSWL",
+        0x0039: "KSWH",
+        0x003A: "PCL",
+        0x003B: "PCH",
+        0x003C: "A1L",
+        0x003D: "A1H",
+        0x003E: "A2L",
+        0x003F: "A2H",
+        0x0040: "A3L",
+        0x0041: "A3H",
+        0x0042: "A4L",
+        0x0043: "A4H",
+        0x0044: "A5L",
+        0x0045: "A5H",
+        0x0046: "XREG",
+        0x0047: "YREG",
+        0x0048: "STATUS",
+        0x0049: "SPNT",
+        0x004E: "RNDL",
+        0x004F: "RNDH",
+        0x0050: "ACL",
+        0x0051: "ACH",
+        0x0052: "XTNDL",
+        0x0053: "XTNDH",
+        0x0054: "AUXL",
+        0x0055: "AUXH",
+# IO registers    
         0xC000: "KEYBOARD",       # keyboard data (latched) (RD-only)
         0xC001: "SET80COL",
         0xC002: "CLRAUXRD",       # read from auxilliary 48K
@@ -1060,6 +1111,7 @@ class Apple2MemoryMap(EmptyMemoryMap):
         0xC05D: "CLRAN2",
         0xC05E: "SETAN3",
         0xC05F: "CLRAN3",
+        0xC060: "CASSETTE",			# Cassette input
         0xC061: "OPNAPPLE",       # open apple (command) key data
         0xC062: "CLSAPPLE",       # closed apple (option) key data
         0xC070: "PDLTRIG",       # trigger paddles
@@ -1067,8 +1119,179 @@ class Apple2MemoryMap(EmptyMemoryMap):
         0xC083: "LCBANK2",       # RD LC RAM bank2, WR-enable LC RAM
         0xC08B: "LCBANK1",       # RD LC RAM bank1, WR-enable LC RAM
         0xCFFF: "CLRC8ROM",       # switch out slot C8 ROM
+#Keyboard-related ROM routines, from Monitors Peeled
+        0xFD0C: "RDKEY",	# Set screen to blink at cursor saving original character in A-reg. from (BASL),Y
+        0xFD18: "RDKEY",	# Jump Indirect (KSWL) to KEYIN
+        0xFD1B: "KEYIN",	# Increment random number at RNDL,H while polling keyboard register.
+        0xFD26: "KEYIN",	# Store A-reg to (BASL),Y (clear blink set by RDKEY routine).
+        0xFD28: "KEYIN",	# Load A-reg from Keyboard register
+        0xFD2F: "ESC",	# Call RDKEY for Escape key service
+        0xFD32: "ESC",	# Call ESC1 with char in A-reg to do indicated function.
+        0xFD35: "RDCHAR",	# Call RDKEY to get next char into A. Compare to $93. =, br to ESC to call for next char and do ESC
+        0xFC2C: "ESC1",	# Using character in A-reg, br to FC2C 64556 -980 ESC1 routine for Escape key service.
+        0xFD3D: "NOTCR",	#Echo keyboard input thru COUT to screen, from IN,X , with INVFLG temporarily set to $FF.
+        0xFD4D: "NOTCR",	#Pickup char from IN,X; if $88 goto BCKSPC; if $98 goto CANCEL; if X-reg (input index) greater than $F7 fall into FD5C.; Otherwise to NOTCR1, bypass Bell
+        0xFD5C: "NOTCR",	#Sound bell if X indicates 248+ input characters.
+        0xFD5F: "NOTCR1",	#Increment X ; If X not zero goto NXTCHAR; If x=o fall into CANCEL
+        0xFD62: "CANCEL",	#Load $DC (backslash) into A-reg to indicate cancelled input.
+        0xFD64: "CANCEL",	#Call COUT to print A-reg then fall into GETLNZ
+        0xFD67: "GETLNZ",	#Print Carriage Return thru COUT 
+        0xFD6A: "GETLN",	#Load PROMPT into A-reg 
+        0xFD6C: "GETLN",	#Call COUT to print A-reg 
+        0xFD6F: "GETLN",	#Load X-reg with $01 for passage thru backspace operation.
+        0xFD71: "BCKSPC",	#If x=o goto GETLNZ to start over. else decrement X, fall into NXTCHAR
+        0xFD75: "NXTCHAR",	#Call RDCHAR to get next character If character gotten is $95 (ctrlU cursor right arrow) pick up screen character from (BASL), Y to replace it.
+        0xFD84: "ADDINP",	#store A-reg to input area at IN,X Compare to return.
+#Cassette-related ROM routines, from Monitors Peeled
+        0xFECD: "WRITE ",	#
+        0xFEFD: "READ ",	#
+        0xFCC9: "HEADR ",	#
+        0xFCFA: "RD2BIT",	#
+        0xFCFD: "RDBIT ",	#
+        0xFCEC: "RDBYTE",	#
+        0xFCD6: "WRBIT ",	#
+        0xFEED: "WRBYTE",	#
+#programming aids routines, from Monitors Peeled
+        0xFDED: "COUT",	#Write byte in A to screen at CV,CH
+        0xFD8E: "CROUT",	#Print Carriage Return thru COUT
+        0xF948: "PRBLNK ",	#Print three blanks thru COUT
+        0xF94A: "PRBL2",	#Print eX) blanks thru COUT
+        0xF94C: "PRBL3",	#Print character in A followed by (X )-1 blanks
+        0xFF3A: "BELL",	#Print BELL code thru COUT
+        0xFF2D: "PRERR",	#Print "ERR" and BELL thru COUT
+        0xFDE3: "PRHEX",	#Print low nibble of A as hex char
+        0xFDDA: "PRBYTE",	#Print A-reg as 2 hex nibbles
+        0xF940: "PRNTYX",	#Print hex of Y,X regs
+        0xF941: "PRNTAX",	#Print hex of A,X regs
+        0xF944: "PRNTX",	#Print hex of X reg
+        0xFD96: "PRYX2",	#Print CR, then hex of Y,X regs, then minus sign or dash 
+        0xFD99: "PRHEX",	#Print hex of Y,X regs, then dash  
+        0xFD92: "PRA1",	#Print CR, hex of A1H,A1L, and dash  
+        0xFDA3: "XAM8",	#Print memory as hex with preceeding address from mmmm to mmm7 where mmmm is contents of A1L,H on entry.
+        0xFDB3: "XAM",	#Print memory as hex from (A1L,H) to (A2L,H) inclusive.
+        0xFF4A: "SAVE",	#Save A,X,Y,P,S regs at $45-49  
+        0xFAD7: "REGDSP",	#Display registers with names from  $45-49 as SAVEd, with preceeding carriage return.
+        0xFADA: "RGDSP1",	#Display regs as above without CR  
+        0xFF3F: "RESTORE",	#Restore regs A,X,Y,P not S from $45  
+        0xFA43: "STEP",	#Execute one instruction at (PCL,H)  
+        0xFE2C: "MOVE",	#Move memory contents to (A4L,H) from (A1L,H) thru (A2L,H) 
+        0xFE36: "VFY",	#Compare memory contents (A4L,H) to (A1L,H) thru (A2L,H), differences are displayed.
+        0xFCB4: "NXTA4",	#Increment A4L,H ($42,43) and
+        0xFCBA: "NXTA1",	#Inc A1L,H (3C,D), set carry if A2L,H not less than A1L,H
+# Output Subroutines, from Assembly Lines
+        0xFDED: "COUT",	#Output a character
+        0xFDF0: "COUT1",	#Output to screen 
+        0xFE80: "SETINV",	#Set Inverse mode 
+        0xFE84: "SETNORM",	#Set Normal Mode
+        0xFD8E: "CROUT",	# Generate a <RETURN>
+        0xFD8B: "CROUT1",	# <RETURN> with clear
+        0xFDDA: "PRBYTE",	# Print a hexadecimal byte
+        0xFDE3: "PRHEX",	# Print a hexadecimal digit
+        0xF941: "PRNTAX",	# Print A and X in hexadecimal
+        0xF948: "PRBLNK",	#Print 3 spaces 
+        0xF94A: "PRBL2",	#Print many spaces
+        0xFF3A: "BELL",	#Output a “bell” character
+        0xFBDD: "BELL1",	# Bep the Apple’s speaker
+# Input Subroutines, from Assembly Lines
+        0xFD0C: "RDKEY",	#Get an input character 
+        0xFD35: "RDCHAR",	#Get an input character or escape code
+        0xFD1B: "KEYIN",	#Read the Apple’s keyboard 
+        0xFD6A: "GETLN",	#Get an input line with prompt
+        0xFD67: "GETLNZ",	#Get an input line 
+        0xFD6F: "GETLN1",	#Get an input line, no prompt
+#Low-Res Graphics Subroutines, from Assembly Lines
+        0xF864: "SETCOL",	#Set low-res graphics color
+        0xF85F: "NEXTCOL",	#Increment colorby 3 
+        0xF800: "PLOT",		#Plot a block on the Low-Res Screen
+        0xF819: "HLINE",	#Draw a horizontal line of blocks
+        0xF828: "VLINE",	#Draw a vertical line of blocks 
+        0xF832: "CLRSCR",	#Clear the entire low-res screen 
+        0xF836: "CLRTOP",	#Clear the top ofthe low-res Screen
+        0xF871: "SCRN",	#Read the low-res screen 
+# Hi-Res Graphics Subroutines, from Assembly Lines
+        0xF3E2: "HGR ",	#Hi-res page 1
+        0xF3D8: "HGR2",	#Hi-res page 2
+        0xF3F2: "HCLR",	#Clear to black
+        0xF3F6: "BKGND",	#Clear to color
+        0xF6F0: "HCOLOR",	#Set color
+        0xF411: "HPOSN",	#Position the cursor
+        0xF457: "HPLOT",	#Plot at cursor
+        0xF5CB: "HFIND",	#Return the cursor position
+        0xF53A: "HLIN",	#Draw a line
+        0xF730: "SHNUM",	#Load shape number
+        0xF601: "DRAW",	#Draw a shape
+        0xF65D: "XDRAW",	#Erase a shape (draw XOR)
+# Floating Point Accumulator routines, from Assembly Lines
+        0xEBAF: "ABS",	#Absolute value
+        0xEC23: "INT",	#INT function
+        0xEFAE: "RND",	#Random number
+        0xEB82: "SIGN",	#Sign of FAC (in Accumulator)
+        0xEB90: "SGN",	#Sign of FAC (in FAC)
+        0xEE8D: "SQR",	#Square root
+        0xEF09: "EXP",	#Exponentiation
+        0xE941: "LOG",	#Logarithm base e
+        0xEE97: "FPWRT",	#Raise ARG to the FAC power (base e)
+        0xEBB2: "FCOMP",	#Compare FAC to memory
+        0xEED0: "NEGOP",	#Multiply by -1
+        0xE7A0: "FADDH",	#Add 0.5
+        0xEA55: "DIV10",	#Divide by 10
+        0xEA39: "MUL10",	#Multiply by 10
+# Trig functions, from Assembly Lines
+        0xEFEA: "COS",	#the cosine function of FAC.
+        0xEFFA: "SIN",	#the sine function of FAC.
+        0xEFF1: "TAN",	#the tangent function of FAC.
+        0xF09E: "ATN",	#the arctangent of FAC.
+        0xED34: "FOUT",	#Create a string at the start of the stack
+# Other Subroutines, from Assembly Lines
+        0xFCA8: "WAIT",	#Delay
+        0xFB1E: "PREAD",	#Read a game controller
+        0xFF2D: "PRERR",	#Print “ERR”
+        0xFF4A: "IOSAVE",	#Save all registers
+        0xFF3F: "IOREST"	#Restore all registers
     }
 
     wmemmap = {
-        0xC000: "CLR80COL",       # use 80-column memory mapping (WR-only)
+        0xC000: "CLR80COL"       # use 80-column memory mapping (WR-only)
     }
+
+class KIM1MemoryMap(EmptyMemoryMap):
+    name = "KIM-1"
+    
+    rmemmap = {
+        0x00EF: "PCL"  ,     # Program Counter - Low Order Byte   
+        0x00F0: "PGH"  ,     # Program Counter - High Order Byte  
+        0x00F1: "P"    ,   # Status Register                    
+        0x00F2: "SF"   ,    # Stack Pointer                       
+        0x00F3: "A"    ,   # Accumulator                        
+        0x00F4: "Y"    ,   # Y-Index Register                   
+        0x00F5: "X"    ,   # X-Index Register                   
+        0x1700: "PAD"  ,     # 6530-003 A Data Register           
+        0x1701: "PADD" ,      # 6530-003 A Data Direction Register 
+        0x1702: "PBD"  ,     # 6530-003 B Data Register           
+        0x1703: "PBDD" ,      # 6530-003 B Data Direction Register 
+        0x1704: "TIMER",       # 	 6530-003 Interval Timer            
+        0x170F: "TIMER2",       #	                                    
+        0x17F5: "SAL"  ,     # Starting Address - Low Order Byte  
+        0x17F6: "SAH"  ,     # Starting Address - High Order Byte 
+        0x17F7: "EAL"  ,     # Ending Address - Low Order Byte    
+        0x17F8: "EAH"  ,     # Ending Address - High Order Byte   
+        0x17F9: "ID"   ,    # File Identification Number         
+        0x17FA: "NMIL" ,      # NMI Vector - Low Order Byte        
+        0x17FB: "NMIH" ,      # NMI Vector - High Order Byte       
+        0x17FC: "RSTL" ,      # RST Vector - Low Order Byte                 	                                    
+        0x17FD: "RSTH" ,      # RST Vector - High Order Byte       
+        0x17FE: "IRQL" ,      # IRQ Vector - Low Order Byte        
+        0x17FF: "IRQH" ,      # IRQ Vector - High Order Byte       
+        0x1800: "DUMPT",       #	Start Address - Audio Tape Dump   
+        0x1873: "LOADT",       #Start Address - Audio Tape Load   
+        0x1C00: "NMI"  ,     #Start Address for NMI using KIM "Save Nachine" Routine (Load in 17FA & 17FB)                      
+        0x17F7: "EAL"  ,     #Ending Address - Low Order Byte   
+        0x17F8: "EAH"       #Ending Address - High Order Byte  
+	}	
+
+    wmemmap = {
+    }
+
+
+
+
