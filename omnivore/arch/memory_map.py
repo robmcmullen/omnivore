@@ -1,3 +1,4 @@
+#  -*- coding: utf-8 -*-
 # Atari constants from the atari800 project, GPL licensed.  Transformed using
 # the find regex: \{(\".+\"),\s*(0x[0-9a-fA-F]+).*$ and replace regex: \2: \1,
 
