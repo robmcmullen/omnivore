@@ -37,9 +37,9 @@ class MameZipImage(DiskImageBase):
     
     def check_zip_size(self, zf):
         for item in zf.infolist():
-            _, r = divmod(item.file_size, 256)
+            _, r = divmod(item.file_size, 16)
             if r > 0:
-                raise InvalidDiskImage("zip entry not 256 byte multiple")
+                raise InvalidDiskImage("zip entry not 16 byte multiple")
 
     def create_rawdata(self, zf):
         roms = []
