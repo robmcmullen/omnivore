@@ -46,6 +46,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 <li>Wade Ripkowski of <a href=\"http://inverseatascii.info\">Inverse ATASCII, the Atari 8-bit Productivity Podcast</a> for beta testing
 <li>David Beazley, author of <a href=\"http://dabeaz.com\">Python Cookbook, 3rd Ed. and more</a>, for the 6502 mini assembler
 <li>Jeff Tranter, for <a href=\"https://github.com/robmcmullen/udis\">udis</a>, the Universal Disassembler for 8-bit microprocessors
+<li>Charles Mangin for the Apple ][ and KIM-1 memory maps
 </ul>""",
     }
 substitutes['copyright'] = 'Copyright (c) %(yearrange)s %(author)s (%(author_email)s)' % substitutes
