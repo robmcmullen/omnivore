@@ -179,14 +179,14 @@ class AtariDosFile(object):
                 first = False
                 continue
             elif first:
-                raise InvalidBinaryFile
+                raise InvalidBinaryFile("Object file doesn't start with 0xffff")
             log.debug("header parsing: header=0x%x" % header)
             if len(b[pos:pos + 4]) < 4:
                 self.segments.append(ObjSegment(r[pos:pos + 4], 0, 0, 0, len(b[pos:pos + 4]), "Short Segment Header"))
                 break
             start, end = b[pos:pos + 4].view(dtype='<u2')
             if end < start:
-                raise InvalidBinaryFile
+                raise InvalidBinaryFile("Nonsensical start and end addresses")
             count = end - start + 1
             found = len(b[pos + 4:pos + 4 + count])
             if found < count:

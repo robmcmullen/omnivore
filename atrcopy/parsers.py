@@ -10,6 +10,9 @@ from mame import MameZipImage
 from dos33 import Dos33DiskImage, ProdosDiskImage
 from errors import *
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class SegmentParser(object):
     menu_name = ""
@@ -27,8 +30,8 @@ class SegmentParser(object):
             self.image = self.get_image(r)
             self.check_image()
             self.image.parse_segments()
-        except AtrError:
-            raise InvalidSegmentParser
+        except AtrError, e:
+            raise InvalidSegmentParser(e)
         self.segments.extend(self.image.segments)
 
     def get_image(self, r):
@@ -38,8 +41,8 @@ class SegmentParser(object):
         if self.strict:
             try:
                 self.image.strict_check()
-            except AtrError:
-                raise InvalidSegmentParser
+            except AtrError, e:
+                raise InvalidSegmentParser(e)
         else:
             self.image.relaxed_check()
 
@@ -101,14 +104,16 @@ class ProdosSegmentParser(SegmentParser):
     image_type = ProdosDiskImage
 
 
-def guess_parser_for_mime(mime, r):
+def guess_parser_for_mime(mime, r, verbose=False):
     parsers = mime_parsers[mime]
     found = None
     for parser in parsers:
         try:
             found = parser(r, True)
             break
-        except InvalidSegmentParser:
+        except InvalidSegmentParser, e:
+            if verbose:
+                log.info("parser isn't %s: %s" % (parser.__name__, str(e)))
             pass
     return found
 

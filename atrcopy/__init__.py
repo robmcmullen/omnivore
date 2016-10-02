@@ -78,7 +78,7 @@ def run():
             for mime in mime_parse_order:
                 if options.verbose:
                     print "Trying MIME type %s" % mime
-                parser = guess_parser_for_mime(mime, rawdata)
+                parser = guess_parser_for_mime(mime, rawdata, options.verbose)
                 if parser is None:
                     continue
                 if options.verbose:
