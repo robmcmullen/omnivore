@@ -628,6 +628,7 @@ predefined = {
         memory_map.Atari800MemoryMap,
         memory_map.Atari5200MemoryMap,
         memory_map.Apple2MemoryMap,
+        memory_map.KIM1MemoryMap,
         ],
     "disassembler": [
         disasm.Basic6502Disassembler,
