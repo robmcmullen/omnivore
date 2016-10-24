@@ -199,6 +199,8 @@ class FrameworkEditor(Editor):
         except Exception, e:
             if not ignore_error:
                 self.window.error("Failed opening baseline document file\n\n%s\n\nError: %s" % (uri, str(e)), "Baseline Document Loading Error")
+            log.error("Problem loading baseline file %s; using self as baseline" % uri)
+            return
         bytes = guess.numpy
         difference = len(bytes) - len(doc)
         if difference > 0:
