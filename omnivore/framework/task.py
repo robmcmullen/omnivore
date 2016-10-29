@@ -140,6 +140,7 @@ class FrameworkTask(Task):
         c = self.editor_area.control
         c.Bind(aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN, self.on_tab_context_menu)
         c.Bind(aui.EVT_AUINOTEBOOK_BG_RIGHT_DOWN, self.on_tab_background_context_menu)
+        c.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.on_tab_pane_close)
     
     def initialize_class_preferences(self):
         pass
@@ -783,6 +784,12 @@ class FrameworkTask(Task):
 
     def on_tab_background_context_menu(self, evt):
         pass
+
+    def on_tab_pane_close(self, evt):
+        notebook = evt.GetEventObject()
+        if notebook.GetPageCount() == 1:
+            evt.Veto()
+
 
     #### convenience functions
     
