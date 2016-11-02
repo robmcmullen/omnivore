@@ -2,7 +2,7 @@
 #define COMPAT_H
 
 #ifdef MSVC
-#define snprintf(buf,sz,format,x) _snprintf(buf,sz,format,x)
+#define snprintf _snprintf
 #define STRCASECMP(a,b) _stricmp((a),(b))
 #define STRNCASECMP(a,b,c) _strnicmp((a),(b),(c))
 #else
