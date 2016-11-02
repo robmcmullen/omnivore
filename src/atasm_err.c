@@ -98,7 +98,7 @@ int errCheck(unsigned int id, unsigned int num) {
  * parameters: err - the error message
  *             tp  - the error severity (0=warning, else fatal error)
  *
- * generates an error/warning message to stderr, including the position
+ * generates an error/warning message to errFile, including the position
  * of the error
  *=========================================================================*/
 jmp_buf ex_buf__;
@@ -120,16 +120,16 @@ int atasm_error(char *err, int tp) {
       errAdd(crc,fin->line);
 
     if (!invoked)
-      fprintf(stderr,"\nIn %s, line %d--\n ",fin->name,fin->line);
+      fprintf(errFile,"\nIn %s, line %d--\n ",fin->name,fin->line);
     else
-      fprintf(stderr,"\nIn %s, line %d--[while expanding macro '%s']\n ",fin->name,fin->line,invoked->orig->name);
+      fprintf(errFile,"\nIn %s, line %d--[while expanding macro '%s']\n ",fin->name,fin->line,invoked->orig->name);
   }
   if (tp) {
-    fprintf(stderr,"Error: ");
+    fprintf(errFile,"Error: ");
   } else {
-    fprintf(stderr,"Warning: ");
+    fprintf(errFile,"Warning: ");
   }
-  fprintf(stderr,"%s\n",err);
+  fprintf(errFile,"%s\n",err);
   if (tp) {
     /* return to CATCH block instead of exiting */
     THROW;

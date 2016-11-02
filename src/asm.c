@@ -152,6 +152,7 @@ int bankID;
 char *outline;  /* the line of text written out in verbose mode */
 
 FILE *listFile;
+FILE *errFile;
 /*=========================================================================*
  * function kill_banks
  * removes all banks
@@ -237,6 +238,7 @@ int init_asm() {
   unkLabels=NULL;
   banks=NULL;
   bankID=-1;
+  errFile=stderr;
 
   for(i=0;i<HSIZE;i++)  /* clear symbol table */
     hash[i]=NULL;

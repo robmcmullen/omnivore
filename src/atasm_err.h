@@ -49,6 +49,7 @@ typedef struct options {  /* structure to hold user preferences */
 extern options opt;
 extern ihashNode *ihash[ISIZE];
 extern int numwarn;
+extern FILE *errFile;
 
 unsigned int err_crc32(const unsigned char *s, unsigned int len);
 int atasm_error(char *err, int tp);
