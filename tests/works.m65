@@ -68,13 +68,6 @@ z6	lda #.DEF BOB
 	lda #.DEF JOHN
 	lda #[3+7]*3+2
 
-?loc=$567
-?loc2=$4444
-	 lda ?loc
-	 sta ?loc2
-	 .local
-?loc=$123
-	 lda ?loc
 	 lda #<7+6*5+[3+value]
 	 lda #>table*20
 	 lda #>$4000
