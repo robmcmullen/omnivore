@@ -30,8 +30,8 @@
 
 #include "compat.h"
 #include "symbol.h"
+#include "atasm_err.h"
 
-int error(char *err, int tp);
 int yyparse();
 extern int rval;
 int vnum, nums[64];

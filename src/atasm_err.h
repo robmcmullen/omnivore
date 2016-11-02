@@ -51,6 +51,7 @@ extern ihashNode *ihash[ISIZE];
 extern int numwarn;
 
 unsigned int err_crc32(const unsigned char *s, unsigned int len);
-int error(char *err, int tp);
+int atasm_error(char *err, int tp);
+#define error atasm_error
 
 #endif

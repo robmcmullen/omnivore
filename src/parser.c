@@ -22,9 +22,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "atasm_err.h"
 /*=========================================================================*/
 int yylex();
-void error(char *s, int tp);
 extern int nums[];
 extern int vnum;
 int rval;

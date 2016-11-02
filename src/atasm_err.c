@@ -103,7 +103,7 @@ int errCheck(unsigned int id, unsigned int num) {
  *=========================================================================*/
 jmp_buf ex_buf__;
 
-int error(char *err, int tp) {
+int atasm_error(char *err, int tp) {
   if ((!opt.warn)&&(!tp)) { /* Suppress warnings, if option no warn set */
     numwarn++;
     return 1;
