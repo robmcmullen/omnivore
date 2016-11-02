@@ -30,6 +30,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "compat.h"
 #include "symbol.h"
 #include "inc_path.h"
 #include "atasm_err.h"

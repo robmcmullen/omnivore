@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "compat.h"
 #include "atasm_err.h"
 #include "symbol.h"
 
