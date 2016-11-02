@@ -37,9 +37,29 @@ if "sdist" in sys.argv:
             _sdist.run(self)
     cmdclass["sdist"] = sdist
 
+execfile('pyatasm/_metadata.py')
+
 setup(
   name = "pyatasm",
-  version = "1.0",
+  version = __version__,
+  author = __author__,
+  author_email = __author_email__,
+  url = __url__,
+  classifiers = [c.strip() for c in """\
+    Development Status :: 5 - Production/Stable
+    Intended Audience :: Developers
+    License :: OSI Approved :: GNU General Public License (GPL)
+    Operating System :: MacOS
+    Operating System :: Microsoft :: Windows
+    Operating System :: OS Independent
+    Operating System :: POSIX
+    Operating System :: Unix
+    Programming Language :: Python
+    Topic :: Utilities
+    Topic :: Software Development :: Assemblers
+    """.splitlines() if len(c.strip()) > 0],
+  description = "Python wrapper for ATasm, a 6502 cross-assembler using MAC/65 syntax",
+  long_description = open('README.rst').read(),
   cmdclass = cmdclass,
   ext_modules = extensions,
   packages = ["pyatasm"],
