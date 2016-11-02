@@ -101,6 +101,8 @@ int errCheck(unsigned int id, unsigned int num) {
  * generates an error/warning message to stderr, including the position
  * of the error
  *=========================================================================*/
+jmp_buf ex_buf__;
+
 int error(char *err, int tp) {
   if ((!opt.warn)&&(!tp)) { /* Suppress warnings, if option no warn set */
     numwarn++;
@@ -129,9 +131,8 @@ int error(char *err, int tp) {
   }
   fprintf(stderr,"%s\n",err);
   if (tp) {
-    if (listFile)
-      fclose(listFile);
-    exit(tp);
+    /* return to CATCH block instead of exiting */
+    THROW;
   }
   numwarn++;
   return 0;

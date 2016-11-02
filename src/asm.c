@@ -2277,11 +2277,11 @@ int find_extension(char *name) {
  *=========================================================================*/
 int main(int argc, char *argv[]) {
   char outfile[256],fname[256],snap[256],xname[256],labelfile[256],listfile[256];
-  int dsymbol,i,state;
+  int dsymbol,i,state,success;
 
   fprintf(stderr,"ATasm %d.%.2d%s(A mostly Mac65 compatible 6502 cross-assembler)\n",MAJOR_VER,MINOR_VER,BETA_VER?" beta ":" ");
 
-  dsymbol=state=0;
+  dsymbol=state=success=0;
   strcpy(snap,"atari800.a8s");
   fname[0]=outfile[0]=labelfile[0]=listfile[0]='\0';
   opt.savetp=opt.verbose=opt.MAElocals=0;
@@ -2389,16 +2389,24 @@ int main(int argc, char *argv[]) {
   }
 
   init_asm();
-  assemble(fname);
+  TRY {
+    assemble(fname);
 
-  if (dsymbol)
-    dump_symbols();
+    if (dsymbol)
+      dump_symbols();
 
-  if (labelfile[0])
-    dump_labels(labelfile);
+    if (labelfile[0])
+      dump_labels(labelfile);
 
-  fputs("\nAssembly successful\n",stderr);
-  fprintf(stderr,"  Compiled %d bytes (~%dk)\n",bsize,bsize/1024);
+    fputs("\nAssembly successful\n",stderr);
+    fprintf(stderr,"  Compiled %d bytes (~%dk)\n",bsize,bsize/1024);
+    success=1;
+  }
+  CATCH {
+    /* don't produce any symbol or labels on error */
+    success=0;
+  }
+  END_TRY;
 
   if (listFile) {
     fclose(listFile);
@@ -2413,6 +2421,7 @@ int main(int argc, char *argv[]) {
     strcat(fname,(opt.savetp)&2 ? ".bin" : ".65o");
     strcpy(outfile, fname);
   }
+  if (success) {
   if (opt.savetp&2)
     save_raw(outfile,opt.fillByte);
   else
@@ -2429,6 +2438,14 @@ int main(int argc, char *argv[]) {
     } else {
       save_state(snap,fname);
     }
+  }
+  }
+  else {
+    /* 
+    remove output file on error to prevent old file from being confused with
+    successful assembly
+    */
+    remove(outfile);
   }
 
   clean_up();

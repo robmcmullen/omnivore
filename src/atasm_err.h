@@ -21,6 +21,13 @@
 #ifndef ATASM_ERR_H
 #define ATASM_ERR_H
 
+#include <setjmp.h>
+extern jmp_buf ex_buf__;
+#define TRY do{ if( !setjmp(ex_buf__) ){
+#define CATCH } else {
+#define END_TRY } }while(0)
+#define THROW longjmp(ex_buf__, 1)
+
 #define ISIZE 128
 
 typedef struct ihashNode {
