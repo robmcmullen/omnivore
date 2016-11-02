@@ -1,0 +1,6 @@
+ *= $F000
+
+ .OPT ILL
+ TYA
+ ANC #25
+ ARR #25

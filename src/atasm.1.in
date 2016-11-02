@@ -1,0 +1,77 @@
+.\"
+.\" This file may be copied under the conditions described
+.\" in the LDP GENERAL PUBLIC LICENSE, Version 1, September 1998
+.\" that should have been distributed together with this file.
+.\"
+.TH ATASM 1 "April 2015" "Contributed Software"
+.SH NAME
+atasm \- assembler targeted for the 6502 CPU with Atari-specific features
+.SH SYNOPSIS
+.BI "atasm [" options "] " filename
+.SH DESCRIPTION
+.B atasm
+assembles 6502 code to an Atari DOS executable, an Atari XFD
+disk image, or a raw binary file.
+.PP
+The syntax used is compatible with the Atari 8-bit assembler MAC/65,
+with a few extensions (notably 6502 illegal opcode support)
+.SH OPTIONS
+.TP
+.BI "\-o" filename
+saves the object file to
+.IR filename
+instead of
+.IR sourcefile
+[.65o]
+
+.TP
+.BI "\-D" symbol=value
+Defines
+.IR symbol
+to
+.IR value
+before assembly begins. This is equivalent to inserting a line like
+.BR symbol=value
+before the first line of the source file.
+
+.TP
+.BI "\-I" directory
+specifies a search directory for .INCLUDE directives
+
+.TP
+.BI "\-v"
+prints assembly trace.
+
+.TP
+.BI "\-s"
+prints symbol table when assembly is completed.
+
+.TP
+.BI "\-u"
+enables undocumented opcodes.  This is equivalent to using the
+.BR .OPT ILL
+in the source file.  Notice that this command-line paramter is overriden by any directives
+in the source files.
+
+.TP
+.BI "\-m" filename
+defines the template emulator state file.
+
+.TP
+.BI "\-x" filename
+saves object file to .XFD image
+.IR filename
+
+.TP
+.BI "\-r"
+saves object code as a raw binary image
+
+.TP
+.BI "\-f" value
+set the raw binary fill byte to
+.IR value
+.  Note that if you specify this value in hex, it will probably need to be escaped.
+
+.SH NOTES
+This man page is nowhere near complete. For full documentation, see
+.B %%DOCDIR%%/atasm.txt
