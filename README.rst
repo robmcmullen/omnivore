@@ -50,8 +50,12 @@ extensions! Download and install it from
 Developers
 ----------
 
-If you want to modify pyatasm and change the .pyx file, you'll need Cython to
-rebuild the C file.
+If you check out the pyatasm source from the git repository or you want to
+modify pyatasm and change the .pyx file, you'll need Cython. The .pyx file is
+compiled to C as a side effect of using the command::
+
+    python setup.py sdist
+
 
 
 Usage
