@@ -69,7 +69,8 @@ int dump_all(FILE *out) {
 int py_assemble(char *fname, char *listfile, char *errfile) {
   int exitval = 0;
 
-  opt.savetp=opt.verbose=opt.MAElocals=0;
+  opt.savetp=opt.verbose=0;
+  opt.MAElocals=1;
   opt.fillByte=0xff;
 
   includes=init_include();
