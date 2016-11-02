@@ -10,7 +10,8 @@ else:
 
 extensions = [
   Extension("pyatasm.pyatasm_mac65",
-    sources = ["src/pyatasm_mac65.pyx",
+    sources = ["pyatasm/pyatasm_mac65.pyx",
+               "pyatasm/cython_interface.c",
                "src/asm.c",
                "src/symbol.c",
                "src/parser.c",
@@ -18,7 +19,6 @@ extensions = [
                "src/inc_path.c",
                "src/crc32.c",
                "src/atasm_err.c",
-               "src/cython_interface.c",
               ],
     extra_compile_args = extra_compile_args,
     include_dirs = ["src"],
