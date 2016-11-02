@@ -1046,7 +1046,7 @@ int num_cvt(char *num) {
     txt=num+1;
     if (num[0]=='$')
       tp=1;
-    else if (num[0]=='~')
+    else if ((num[0]=='~') || (num[0]=='%'))
       tp=2;
     else {
       tp=0; /* remove annoying compiler warning */

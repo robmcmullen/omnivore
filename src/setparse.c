@@ -208,7 +208,7 @@ int get_signed_expression(char *str, int tp) {
       snprintf(work,256,"%d",v);
       strcpy(walk,work);
       walk+=strlen(work);
-    } else if (*look=='~') {  /* binary value */
+    } else if ((*look=='~')||(*look=='%')) {  /* binary value */
       w=work;
       *w++=*look++;
       while(ISDIGIT(*look))
