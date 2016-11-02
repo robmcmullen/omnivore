@@ -102,7 +102,7 @@ int errCheck(unsigned int id, unsigned int num) {
  *=========================================================================*/
 int error(char *err, int tp) {
   if ((!opt.warn)&&(!tp)) { /* Suppress warnings, if option no warn set */
-    warn++;
+    numwarn++;
     return 1;
   }
   if (fin) {
@@ -132,7 +132,7 @@ int error(char *err, int tp) {
       fclose(listFile);
     exit(tp);
   }
-  warn++;
+  numwarn++;
   return 0;
 }
 /*=========================================================================*/

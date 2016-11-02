@@ -140,7 +140,7 @@ int init_pc;          /* pc orig flag */
 int pass;             /* assembly pass number */
 int eq, verbose;      /* assignment flag, verbosity flag */
 /* eq of 1 =; eq of 2 .= */
-int local,warn,bsize; /* number of local regions, number of warnings
+int local,numwarn,bsize; /* number of local regions, number of warnings
        size in bytes of compiled code */
 str_list *includes;   /* list of dirs to search for .INCLUDEd files */
 str_list *predefs;    /* predefined stuff (like -dfoo=1) */
@@ -230,7 +230,7 @@ int init_asm() {
   int i,ops;
   symbol *sym;
 
-  pass=warn=bsize=repass=double_fwd=0;
+  pass=numwarn=bsize=repass=double_fwd=0;
   fin=NULL;
   macro_list=NULL;
   invoked=NULL;
@@ -2001,7 +2001,7 @@ int assemble(char *fname) {
     if ((verbose)&&(pass==1))
       fprintf(stderr,"\n");
     if ((!verbose)||(!pass)) {
-      fprintf(stderr,"Success. (%d warnings",warn);
+      fprintf(stderr,"Success. (%d warnings",numwarn);
       if (zlabels) {
         fprintf(stderr,"/%d label",zlabels);
         if (zlabels>1)

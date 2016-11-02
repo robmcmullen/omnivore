@@ -111,7 +111,7 @@ typedef struct macro_call {
 extern unsigned short pc;   /* program counter */
 extern int pass; /* pass number */
 extern int eq, verbose;  /* assignment flag, verbosity flag */
-extern int local,warn,bsize;
+extern int local,numwarn,bsize;
 extern int repass;  /* flag indicating that a referenced label changed size */
 extern file_stack *fin;
 extern macro *macro_list;
