@@ -337,7 +337,7 @@ void aprintf(char *msg, ...) {
       strncpy(buf,line+3,2);
       strncpy(buf+2,line,2);
       buf[4]=0;
-      fprintf(listFile,"%d %s%s",fin->line,buf,line+5);
+      fprintf(listFile,"%05d %s%s",fin->line,buf,line+5);
     }
   }
 }
@@ -359,6 +359,7 @@ void aprintf(char *msg, ...) {
  *=========================================================================*/
 char *get_nxt_word(int tp) {
   static char buf[256], line[256], *fget=NULL;
+  static char line2[257];
   char l,*look,*walk;
   int instr,i,len;
   file_stack *kill;
@@ -401,8 +402,11 @@ char *get_nxt_word(int tp) {
       fget=NULL;
     }
     return buf;
-  } else if (tp==2)
-    return line;
+  } else if (tp==2) {
+    line2[0] = ' ';
+    strcpy(&line2[1], line);
+    return line2;
+  }
 
   /* skip over empty space, blank lines and comments */
   do {
@@ -1180,7 +1184,7 @@ int do_float() {
 
     if ((pass)&&(verbose)&&(c==2)) {
       if (!p) {
-        aprintf("%s %s\n",outline,get_nxt_word(2));
+        aprintf("%-24s%s\n",outline,get_nxt_word(2));
         p=1;
       } else {
         aprintf("%s\n",outline);
@@ -1192,7 +1196,7 @@ int do_float() {
 
   if ((pass)&&(verbose)&&(c)) {
     if (!p) {
-      aprintf("%s %s\n",outline,get_nxt_word(2));
+      aprintf("%-24s%s\n",outline,get_nxt_word(2));
     } else {
       aprintf("%s\n",outline);
     }
@@ -1270,7 +1274,7 @@ int do_xword(int tp) {
     }
     if ((pass)&&(verbose)&&(c==3)) {
       if (!p) {
-        aprintf("%s %s\n",outline,get_nxt_word(2));
+        aprintf("%-24s%s\n",outline,get_nxt_word(2));
         p=1;
       } else {
         aprintf("%s\n",outline);
@@ -1281,7 +1285,7 @@ int do_xword(int tp) {
   }
   if ((pass)&&(verbose)&&(c)) {
     if (!p) {
-      aprintf("%s %s\n",outline,get_nxt_word(2));
+      aprintf("%-24s%s\n",outline,get_nxt_word(2));
     } else {
       aprintf("%s\n",outline);
     }
@@ -1365,7 +1369,7 @@ int do_xbyte(int tp) {
           c++;
           if ((pass)&&(verbose)&&(c==6)) {
             if (!p) {
-              aprintf("%s %s\n",outline,get_nxt_word(2));
+              aprintf("%-24s%s\n",outline,get_nxt_word(2));
               p=1;
             } else {
               aprintf("%s\n",outline);
@@ -1399,7 +1403,7 @@ int do_xbyte(int tp) {
 
     if ((pass)&&(verbose)&&(c==5)) {
       if (!p) {
-        aprintf("%s %s\n",outline,get_nxt_word(2));
+        aprintf("%-24s%s\n",outline,get_nxt_word(2));
         p=1;
       } else {
         aprintf("%s\n",outline);
@@ -1410,7 +1414,7 @@ int do_xbyte(int tp) {
   }
   if ((pass)&&(verbose)&&(c)) {
     if (!p) {
-      aprintf("%s %s\n",outline,get_nxt_word(2));
+      aprintf("%-24s%s\n",outline,get_nxt_word(2));
     } else {
       aprintf("%s\n",outline);
     }
@@ -1539,7 +1543,7 @@ int proc_sym(symbol *sym) {
       while(strlen(outline)<16)
         strcat(outline," ");
       line=get_nxt_word(2);
-      aprintf("%s%s\n",outline,line);
+      aprintf("%-24s%s\n",outline,line);
       /*      if (invoked) {
   printf("\t\t[inside %s]\n",invoked->orig->name);
       } else {
