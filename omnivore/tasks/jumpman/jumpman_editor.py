@@ -7,6 +7,7 @@ import cPickle as pickle
 import wx
 import numpy as np
 from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_mask, data_bit_mask, match_bit_mask
+from pyatasm import Assemble
 
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides
@@ -280,6 +281,8 @@ class JumpmanEditor(BitmapEditor):
 
     can_erase_objects = Bool(False)
 
+    assembly_source = Str
+
     ##### class attributes
     
     valid_mouse_modes = [AnticDSelectMode, DrawGirderMode, DrawLadderMode, DrawUpRopeMode, DrawDownRopeMode, DrawPeanutMode, EraseGirderMode, EraseLadderMode, EraseRopeMode, JumpmanRespawnMode]
@@ -311,6 +314,9 @@ class JumpmanEditor(BitmapEditor):
 
     def is_valid_for_save(self):
         all_ok = True
+        self.compile_assembly_source()
+        if self.assembly_results:
+            self.save_assembly()
         if not self.bitmap.level_builder.harvest_ok:
             reason = self.bitmap.level_builder.harvest_reason()
             answer = self.task.confirm("%s\n\nSave Anyway?" % reason, "Bad Peanut Grid")
@@ -326,8 +332,14 @@ class JumpmanEditor(BitmapEditor):
         # JumpmanPlayfieldRenderer in Jumpman level edit mode
         if 'bitmap_renderer' in e:
             del e['bitmap_renderer']
+        if 'assembly_source' in e:
+            self.assembly_source = e['assembly_source']
         BitmapEditor.process_extra_metadata(self, doc, e)
-    
+        
+    def get_extra_metadata(self, mdict):
+        mdict["assembly_source"] = self.assembly_source
+        BitmapEditor.get_extra_metadata(self, mdict)
+
     @on_trait_change('machine.bitmap_shape_change_event')
     def update_bitmap_shape(self):
         self.hex_edit.recalc_view()
@@ -348,6 +360,57 @@ class JumpmanEditor(BitmapEditor):
     @on_trait_change('machine.disassembler_change_event')
     def update_disassembler(self):
         pass
+
+    def set_assembly_source(self, src):
+        """Assembly source file is required to be in the same directory as the
+        jumpman disk image. It's also assumed to be on the local filesystem
+        since pyatasm can't handle the virtual filesystem.
+        """
+        self.assembly_source = src
+        self.metadata_dirty = True
+        self.compile_assembly_source()
+
+    def compile_assembly_source(self):
+        self.assembly_results = None
+        if not self.assembly_source:
+            return
+        dirname = os.path.dirname(self.document.filesystem_path())
+        if dirname:
+            src = os.path.join(dirname, self.assembly_source)
+            asm = Assemble(src)
+            if asm:
+                self.assembly_results = asm
+            else:
+                log.error("Assembly error: %s" % asm.errors)
+                self.window.error(asm.errors, "Assembly Error")
+
+    label_storage = {
+        "vbi1": 0x2802,
+        "vbi2": 0x2804,
+        "vbi3": 0x2806,
+        "vbi4": 0x2808,
+    }
+
+    def save_assembly(self):
+        asm = self.assembly_results
+        if not asm:
+            return
+        source, level_addr, harvest_addr = self.get_level_addrs()
+        ranges = []
+        data = []
+        for first, last, raw in asm.segments:
+            ranges.append((first - source.start_addr, last - source.start_addr))
+            data.extend(raw)
+        for label, addr in asm.labels.iteritems():
+            if label in self.label_storage:
+                index = self.label_storage[label] - source.start_addr
+                ranges.append((index, index + 2))
+                hi, lo = divmod(addr, 256)
+                data.extend([lo, hi])
+
+        print "saving assembly:", ranges, data
+        cmd = MoveObjectCommand(source, ranges, data)
+        self.process_command(cmd)
 
     def rebuild_display_objects(self):
         print "Rebuilding!"
@@ -370,6 +433,7 @@ class JumpmanEditor(BitmapEditor):
     
     def rebuild_document_properties(self):
         self.update_mouse_mode(AnticDSelectMode)
+        self.compile_assembly_source()
 
     def check_valid_segment(self, segment=None):
         if segment is None:

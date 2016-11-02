@@ -9,7 +9,7 @@ import wx
 # Enthought library imports.
 from pyface.tasks.action.api import EditorAction
 
-from omnivore.utils.wx.dialogs import prompt_for_hex
+from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string
 from omnivore.framework.actions import SelectAllAction, SelectNoneAction, SelectInvertAction
 from omnivore.utils.jumpman import DrawObjectBounds
 
@@ -35,6 +35,41 @@ class TriggerAction(EditorAction):
         if addr is not None:
             self.picked.trigger_function = addr
             e.bitmap.save_changes()
+
+class ClearTriggerSelectionAction(EditorAction):
+    name = "Clear Trigger Function"
+    enabled_name = 'can_copy'
+    command = ClearTriggerCommand
+
+    def get_addr(self, objects):
+        return None
+
+    def permute_object(self, obj, addr):
+        obj.trigger_function = addr
+
+    def perform(self, event):
+        e = self.active_editor
+        objects = e.bitmap.mouse_mode.objects
+        try:
+            addr = self.get_addr(objects)
+            for o in objects:
+                self.permute_object(o, addr)
+            e.bitmap.save_changes(self.command)
+            e.bitmap.mouse_mode.resync_objects()
+        except ValueError:
+            pass
+
+class SetTriggerSelectionAction(ClearTriggerSelectionAction):
+    name = "Set Trigger Function"
+    command = SetTriggerCommand
+
+    def get_addr(self, objects):
+        e = self.active_editor
+        addr, error = prompt_for_hex(e.window.control, "Enter trigger subroutine address: (default hex; prefix with # for decimal)", "Function to be Activated", return_error=True, default_base="hex")
+        if addr is not None:
+            return addr
+        raise ValueError("Cancelled!")
+
 
 class SelectAllJumpmanAction(EditorAction):
     name = 'Select All'
@@ -88,3 +123,13 @@ class FlipHorizontalAction(FlipVerticalAction):
 
     def permute_object(self, obj, bounds):
         obj.flip_horizontal(bounds)
+
+
+class AssemblySourceAction(EditorAction):
+    name = 'Custom Code...'
+
+    def perform(self, event):
+        e = self.active_editor
+        filename = prompt_for_string(e.window.control, "Enter MAC/65 assembly source filename for custom code", "Source File For Custom Code", e.assembly_source)
+        if filename is not None:
+            e.set_assembly_source(filename)

@@ -26,3 +26,12 @@ class FlipVerticalCommand(SetValueCommand):
 class FlipHorizontalCommand(SetValueCommand):
     short_name = "hflip_jumpman_obj"
     pretty_name = "Flip Horizontally"
+
+
+class ClearTriggerCommand(SetValueCommand):
+    short_name = "cleartrigger_jumpman_obj"
+    pretty_name = "Clear Trigger Function"
+
+class SetTriggerCommand(SetValueCommand):
+    short_name = "settrigger_jumpman_obj"
+    pretty_name = "Set Trigger Function"
