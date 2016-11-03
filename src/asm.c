@@ -150,6 +150,7 @@ file_stack *fin;
 memBank *banks, *activeBank;
 int bankID;
 char *outline;  /* the line of text written out in verbose mode */
+char *nxt_char; /* character pointer saved between calls of get_nxt_word */
 
 FILE *listFile;
 FILE *errFile;
@@ -239,6 +240,7 @@ int init_asm() {
   banks=NULL;
   bankID=-1;
   errFile=stderr;
+  nxt_char=NULL;
 
   for(i=0;i<HSIZE;i++)  /* clear symbol table */
     hash[i]=NULL;
@@ -358,7 +360,7 @@ void aprintf(char *msg, ...) {
  * Strings are returned verbatim (including spaces)
  *=========================================================================*/
 char *get_nxt_word(int tp) {
-  static char buf[256], line[256], *fget=NULL;
+  static char buf[256], line[256];
   static char line2[257];
   char l,*look,*walk;
   int instr,i,len;
@@ -367,7 +369,7 @@ char *get_nxt_word(int tp) {
   macro_line *lkill;
 
   if (tp==6) {
-    look=fget;
+    look=nxt_char;
     instr=0;
     while(*look) {
       if ((*look==',')&&(!instr)&&(*(look-1)!='\''))
@@ -383,9 +385,9 @@ char *get_nxt_word(int tp) {
   *look=0;
 
   if ((tp==1)||(tp==3)) {
-    if (!fget)
+    if (!nxt_char)
       return buf;
-    strcpy(buf,fget);
+    strcpy(buf,nxt_char);
     instr=0;
     len=strlen(buf);
     for(i=0;i<len;i++) {
@@ -399,7 +401,7 @@ char *get_nxt_word(int tp) {
       }
     }
     if (tp==1) {
-      fget=NULL;
+      nxt_char=NULL;
     }
     return buf;
   } else if (tp==2) {
@@ -410,7 +412,7 @@ char *get_nxt_word(int tp) {
 
   /* skip over empty space, blank lines and comments */
   do {
-    while ((!fget)||(!(*fget))) {
+    while ((!nxt_char)||(!(*nxt_char))) {
       if (tp==4) {
         buf[0]=0;
         return buf;
@@ -472,43 +474,43 @@ char *get_nxt_word(int tp) {
         *walk=0;
         walk--;
       }
-      fget=line;
+      nxt_char=line;
       if ((feof(fin->in))&&(!strlen(line))) {  /* fixed early close -- 05/25/02 mws */
         kill=fin;
         fin=fin->nxt;
         fclose(kill->in);
         free(kill->name);
         free(kill);
-        fget=NULL;
+        nxt_char=NULL;
         if (!fin)
           return NULL;
       }
     }
-    while(ISSPACE(*fget)) {
-      fget++;
+    while(ISSPACE(*nxt_char)) {
+      nxt_char++;
     }
-    if (((fget)&&(!(*fget)))||(*fget==';')) {
-      fget=NULL;
+    if (((nxt_char)&&(!(*nxt_char)))||(*nxt_char==';')) {
+      nxt_char=NULL;
     }
-  } while ((!fget)||(!(*fget)));
+  } while ((!nxt_char)||(!(*nxt_char)));
 
   instr=0;
 
   /* Get next token (one word or string) */
   do {
-    l=*fget;
+    l=*nxt_char;
     if (l)
-      fget++;
+      nxt_char++;
     if (l==34)
       instr^=1;
     if (!instr) {
       if (l=='=') {
         l=0;
         eq=1;
-      } else if ((l=='.')&&(*fget=='=')) {
+      } else if ((l=='.')&&(*nxt_char=='=')) {
         l=0;
         eq=2;
-        fget++;
+        nxt_char++;
       }
     }
     *look++=l;
@@ -525,18 +527,18 @@ char *get_nxt_word(int tp) {
 
   if (l) {
     /* Skip to next token if available */
-    while((fget)&&(ISSPACE(*fget))) {
-      fget++;
+    while((nxt_char)&&(ISSPACE(*nxt_char))) {
+      nxt_char++;
     }
     /* Check for '=' or '.=' */
-    if (fget) {
-      if (*fget=='=') {
+    if (nxt_char) {
+      if (*nxt_char=='=') {
         eq=1;
-        fget++;
-      } else if ((*fget=='.')&&(*(fget+1)=='=')) {
+        nxt_char++;
+      } else if ((*nxt_char=='.')&&(*(nxt_char+1)=='=')) {
         eq=2;
-        fget+=2;
-      } else fget--;
+        nxt_char+=2;
+      } else nxt_char--;
     }
   }
 
