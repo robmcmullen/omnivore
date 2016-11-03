@@ -1,4 +1,4 @@
-__version__ = "1.1"
+__version__ = "1.2"
 __author__ = "Rob McMullen"
 __author_email__ = "feedback@playermissile.com"
 __url__ = "https://github.com/robmcmullen/pyatasm"
