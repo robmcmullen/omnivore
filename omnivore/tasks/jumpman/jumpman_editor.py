@@ -384,32 +384,14 @@ class JumpmanEditor(BitmapEditor):
                 log.error("Assembly error: %s" % asm.errors)
                 self.window.error(asm.errors, "Assembly Error")
 
-    label_storage = {
-        "vbi1": 0x2802,
-        "vbi2": 0x2804,
-        "vbi3": 0x2806,
-        "vbi4": 0x2808,
-    }
-
     def save_assembly(self):
         asm = self.assembly_results
         if not asm:
             return
         source, level_addr, harvest_addr = self.get_level_addrs()
-        ranges = []
-        data = []
-        for first, last, raw in asm.segments:
-            ranges.append((first - source.start_addr, last - source.start_addr))
-            data.extend(raw)
-        for label, addr in asm.labels.iteritems():
-            if label in self.label_storage:
-                index = self.label_storage[label] - source.start_addr
-                ranges.append((index, index + 2))
-                hi, lo = divmod(addr, 256)
-                data.extend([lo, hi])
-
-        print "saving assembly:", ranges, data
-        cmd = MoveObjectCommand(source, ranges, data)
+        code = JumpmanCustomCode(asm, source)
+        print "saving assembly:", code.ranges, code.data
+        cmd = MoveObjectCommand(source, code.ranges, code.data)
         self.process_command(cmd)
 
     def rebuild_display_objects(self):

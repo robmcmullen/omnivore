@@ -930,3 +930,87 @@ class JumpmanLevelBuilder(object):
             objects = self.objects
         levdef = LevelDef(level_data_origin)
         return levdef.process_objects(objects, hx, hy)
+
+
+class JumpmanCustomCode(object):
+    label_storage = {
+        "vbi1": 0x2802,
+        "vbi2": 0x2804,
+        "vbi3": 0x2806,
+        "vbi4": 0x2808,
+        "dead_begin": 0x2810,
+        "dead_at_bottom": 0x2812,
+        "dead_falling": 0x2814,
+        "gameloop": 0x283b,
+        "out_of_lives": 0x2840,
+        "level_complete": 0x2844,
+        "collect_callback": 0x2849,
+    }
+
+    label_defaults = {
+        0x2802: 0x311b,
+        0x2804: 0x311b,
+        0x2806: 0x311b,
+        0x2808: 0x49a0,
+        0x2810: 0x4200,
+        0x2812: 0x4580,
+        0x2814: 0x311b,
+        0x2816: 0x30e0,
+        0x2840: 0x4ffd,
+        0x2844: 0x4c00,
+        0x2849: 0x284b,
+    }
+
+    std_gameloop = [ord(x) for x in " \xd0I \x00K\xad>(\xc9\x00\xf0\x11\xad\xbe0\xc9\x08\x90\xef\xad\xf00\xc9\xff\xd0\xe5L?(lD("]
+
+    def __init__(self, asm, segment):
+        self.ranges = []
+        self.data = []
+        self.labels_used = set()
+        self.vectors_used = set()
+        self.get_ranges(asm, segment)
+
+    def add_vector(self, vector, subroutine, segment):
+        self.vectors_used.add(vector)
+        index = vector - segment.start_addr
+        self.ranges.append((index, index + 2))
+        hi, lo = divmod(subroutine, 256)
+        self.data.extend([lo, hi])
+        print "vector: %x with value %x" % (vector, subroutine)
+
+    def get_ranges(self, asm, segment):
+        for first, last, raw in asm.segments:
+            self.ranges.append((first - segment.start_addr, last - segment.start_addr))
+            self.data.extend(raw)
+        for label, addr in asm.labels.iteritems():
+            if label in self.label_storage:
+                self.labels_used.add(label)
+                vector = self.label_storage[label]
+                self.add_vector(vector, addr, segment)
+
+        # force unused labels to revert to default values. This is needed, for
+        # example, to overwrite a label that is unused in the current
+        # development iteration but was present in the prior iteration. Without
+        # overwriting this, the old vector would still be present in the data
+        # and it would get called even though the current code doesn't use that
+        # vector.
+        for vector, default in self.label_defaults.iteritems():
+            if vector in self.vectors_used:
+                continue
+            self.add_vector(vector, default, segment)
+
+        # check for a gameloop, otherwise add the standard gameloop
+        if "gameloop" not in self.labels_used:
+            vector = self.label_storage["gameloop"]
+            first = 0x2860
+            self.add_vector(vector, first, segment)
+            last = first + len(self.std_gameloop)
+            self.ranges.append((first - segment.start_addr, last - segment.start_addr))
+            self.data.extend(self.std_gameloop)
+
+        print self.ranges
+        print self.data
+
+
+
+
