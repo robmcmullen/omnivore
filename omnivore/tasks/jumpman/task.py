@@ -150,6 +150,7 @@ class JumpmanEditTask(HexEditTask):
     def get_actions_Menu_Jumpman_CustomCodeGroup(self):
         return [
             AssemblySourceAction(),
+            RecompileAction(),
             ]
 
     ###

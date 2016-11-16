@@ -367,13 +367,13 @@ class JumpmanEditor(BitmapEditor):
         since pyatasm can't handle the virtual filesystem.
         """
         self.assembly_source = src
-        self.metadata_dirty = True
         self.compile_assembly_source()
 
     def compile_assembly_source(self):
         self.assembly_results = None
         if not self.assembly_source:
             return
+        self.metadata_dirty = True
         dirname = os.path.dirname(self.document.filesystem_path())
         if dirname:
             src = os.path.join(dirname, self.assembly_source)

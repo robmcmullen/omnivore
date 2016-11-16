@@ -133,3 +133,11 @@ class AssemblySourceAction(EditorAction):
         filename = prompt_for_string(e.window.control, "Enter MAC/65 assembly source filename for custom code", "Source File For Custom Code", e.assembly_source)
         if filename is not None:
             e.set_assembly_source(filename)
+
+
+class RecompileAction(EditorAction):
+    name = 'Recompile Code'
+
+    def perform(self, event):
+        e = self.active_editor
+        e.compile_assembly_source()
