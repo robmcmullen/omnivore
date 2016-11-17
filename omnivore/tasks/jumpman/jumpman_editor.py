@@ -283,6 +283,8 @@ class JumpmanEditor(BitmapEditor):
 
     assembly_source = Str
 
+    assembly_results = Any(None)
+
     ##### class attributes
     
     valid_mouse_modes = [AnticDSelectMode, DrawGirderMode, DrawLadderMode, DrawUpRopeMode, DrawDownRopeMode, DrawPeanutMode, EraseGirderMode, EraseLadderMode, EraseRopeMode, JumpmanRespawnMode]
@@ -383,6 +385,18 @@ class JumpmanEditor(BitmapEditor):
             else:
                 log.error("Assembly error: %s" % asm.errors)
                 self.window.error(asm.errors, "Assembly Error")
+
+    def get_triggers(self):
+        if self.assembly_results is None:
+            self.compile_assembly_source()
+        asm = self.assembly_results
+        if asm is None:
+            return []
+        triggers = {}
+        for label, addr in asm.labels.iteritems():
+            if label.startswith("trigger") or True:
+                triggers[label] = addr
+        return triggers
 
     def save_assembly(self):
         asm = self.assembly_results
