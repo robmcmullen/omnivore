@@ -7,7 +7,6 @@ import cPickle as pickle
 import wx
 import numpy as np
 from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_mask, data_bit_mask, match_bit_mask
-from pyatasm import Assemble
 
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides
@@ -283,7 +282,7 @@ class JumpmanEditor(BitmapEditor):
 
     assembly_source = Str
 
-    assembly_results = Any(None)
+    custom_code = Any(None)
 
     ##### class attributes
     
@@ -317,7 +316,7 @@ class JumpmanEditor(BitmapEditor):
     def is_valid_for_save(self):
         all_ok = True
         self.compile_assembly_source()
-        if self.assembly_results:
+        if self.custom_code:
             self.save_assembly()
         if not self.bitmap.level_builder.harvest_ok:
             reason = self.bitmap.level_builder.harvest_reason()
@@ -372,40 +371,35 @@ class JumpmanEditor(BitmapEditor):
         self.compile_assembly_source()
 
     def compile_assembly_source(self):
-        self.assembly_results = None
+        self.custom_code = None
         if not self.assembly_source:
             return
         self.metadata_dirty = True
         dirname = os.path.dirname(self.document.filesystem_path())
         if dirname:
-            src = os.path.join(dirname, self.assembly_source)
-            asm = Assemble(src)
-            if asm:
-                self.assembly_results = asm
-            else:
-                log.error("Assembly error: %s" % asm.errors)
-                self.window.error(asm.errors, "Assembly Error")
+            filename = os.path.join(dirname, self.assembly_source)
+            try:
+                self.custom_code = JumpmanCustomCode(filename)
+            except SyntaxError, e:
+                log.error("Assembly error: %s" % e.errors)
+                self.window.error(e.errors, "Assembly Error")
 
     def get_triggers(self):
-        if self.assembly_results is None:
+        if self.custom_code is None:
             self.compile_assembly_source()
-        asm = self.assembly_results
-        if asm is None:
+        code = self.custom_code
+        if code is None:
             return []
-        triggers = {}
-        for label, addr in asm.labels.iteritems():
-            if label.startswith("trigger") or True:
-                triggers[label] = addr
-        return triggers
+        return code.triggers
 
     def save_assembly(self):
-        asm = self.assembly_results
-        if not asm:
+        code = self.custom_code
+        if not code:
             return
         source, level_addr, harvest_addr = self.get_level_addrs()
-        code = JumpmanCustomCode(asm, source)
-        print "saving assembly:", code.ranges, code.data
-        cmd = MoveObjectCommand(source, code.ranges, code.data)
+        ranges, data = code.get_ranges(source)
+        print "saving assembly:", ranges, data
+        cmd = MoveObjectCommand(source, ranges, data)
         self.process_command(cmd)
 
     def rebuild_display_objects(self):

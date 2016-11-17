@@ -1,5 +1,7 @@
 import numpy as np
 
+from pyatasm import Assemble
+
 from atrcopy import selected_bit_mask, match_bit_mask, data_bit_mask, comment_bit_mask
 
 from omnivore.utils.runtime import get_all_subclasses
@@ -963,30 +965,36 @@ class JumpmanCustomCode(object):
 
     std_gameloop = [ord(x) for x in " \xd0I \x00K\xad>(\xc9\x00\xf0\x11\xad\xbe0\xc9\x08\x90\xef\xad\xf00\xc9\xff\xd0\xe5L?(lD("]
 
-    def __init__(self, asm, segment):
+    def __init__(self, filename):
+        asm = Assemble(filename)
+        if not asm:
+            raise SyntaxError(asm.errors)
+        self.asm = asm
         self.ranges = []
         self.data = []
         self.labels_used = set()
         self.vectors_used = set()
-        self.get_ranges(asm, segment)
+        self.triggers = {}
+        self.parse()
 
-    def add_vector(self, vector, subroutine, segment):
+    def add_vector(self, vector, subroutine):
         self.vectors_used.add(vector)
-        index = vector - segment.start_addr
-        self.ranges.append((index, index + 2))
+        self.ranges.append((vector, vector + 2))
         hi, lo = divmod(subroutine, 256)
         self.data.extend([lo, hi])
         print "vector: %x with value %x" % (vector, subroutine)
 
-    def get_ranges(self, asm, segment):
-        for first, last, raw in asm.segments:
-            self.ranges.append((first - segment.start_addr, last - segment.start_addr))
+    def parse(self):
+        for first, last, raw in self.asm.segments:
+            self.ranges.append((first, last))
             self.data.extend(raw)
-        for label, addr in asm.labels.iteritems():
+        for label, addr in self.asm.labels.iteritems():
             if label in self.label_storage:
                 self.labels_used.add(label)
                 vector = self.label_storage[label]
-                self.add_vector(vector, addr, segment)
+                self.add_vector(vector, addr)
+            elif label.startswith("trigger"):
+                self.triggers[label] = addr
 
         # force unused labels to revert to default values. This is needed, for
         # example, to overwrite a label that is unused in the current
@@ -997,20 +1005,24 @@ class JumpmanCustomCode(object):
         for vector, default in self.label_defaults.iteritems():
             if vector in self.vectors_used:
                 continue
-            self.add_vector(vector, default, segment)
+            self.add_vector(vector, default)
 
         # check for a gameloop, otherwise add the standard gameloop
         if "gameloop" not in self.labels_used:
             vector = self.label_storage["gameloop"]
             first = 0x2860
-            self.add_vector(vector, first, segment)
+            self.add_vector(vector, first)
             last = first + len(self.std_gameloop)
-            self.ranges.append((first - segment.start_addr, last - segment.start_addr))
+            self.ranges.append((first, last))
             self.data.extend(self.std_gameloop)
 
         print self.ranges
         print self.data
 
+    def get_ranges(self, segment):
+        ranges = []
+        for first, last in self.ranges:
+            ranges.append((first - segment.start_addr, last - segment.start_addr))
 
-
+        return ranges, self.data
 

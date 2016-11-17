@@ -242,6 +242,16 @@ class TestJumpmanBounds(object):
             print "flipped bounds", flipped_bounds
             assert bounds == flipped_bounds
 
+
+class TestJumpmanTriggers(object):
+    def setup(self):
+        self.code = JumpmanCustomCode("lasers.s")
+
+    def test_simple(self):
+        t = self.code.triggers
+        assert len(t) == 1
+        
+
 if __name__ == "__main__":
     t = TestJumpmanScreen()
     t.setup()
