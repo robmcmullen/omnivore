@@ -252,12 +252,48 @@ class TestJumpmanBounds(object):
 
 class TestJumpmanTriggers(object):
     def setup(self):
-        self.code = JumpmanCustomCode("lasers.s")
+        self.builder = JumpmanLevelBuilder(None)
+        self.addr = 0x2c00
 
-    def test_simple(self):
-        t = self.code.triggers
-        assert len(t) == 1
-        
+    def get_sample_objects(self):
+        p1 = Peanut(1, 10, 10, 1)
+        p1.trigger_function = 0x2910
+        p2 = Peanut(2, 20, 20, 1)
+        p2.trigger_function = 0x2920
+        p3 = Peanut(3, 30, 30, 1)
+        p3.trigger_function = 0x2930
+        p1.trigger_painting = [p2]
+        p2.trigger_painting = [p3]
+        p4 = Peanut(4, 40, 40, 1)
+        p4.trigger_function = 0x2940
+        objects = [p1, p4]
+        d2, haddr2, rl, num_p = self.builder.create_level_definition(self.addr, 0, 6, objects)
+        print d2[0:haddr2 - self.addr]
+        print d2[haddr2 - self.addr:]
+        print rl
+        print num_p
+        assert num_p == 4
+        c2 = self.builder.parse_objects(d2)
+        self.builder.parse_harvest_table(d2, self.addr, haddr2, c2)
+        print c2
+        return c2
+
+    def test_address_mapping(self):
+        code1 = JumpmanCustomCode("triggers1.s")
+        code2 = JumpmanCustomCode("triggers2.s")
+        t = code1.triggers
+        assert len(t) == 4
+        t = code2.triggers
+        assert len(t) == 4
+        c2 = self.get_sample_objects()
+        old_map = code1.triggers
+        new_map = code2.triggers
+        changed, errors = self.builder.update_triggers(old_map, new_map, c2)
+        print changed
+        print errors
+        assert len(changed) == 4
+        assert len(errors) == 0
+
 
 if __name__ == "__main__":
     t = TestJumpmanScreen()

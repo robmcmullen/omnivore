@@ -35,3 +35,8 @@ class ClearTriggerCommand(SetValueCommand):
 class SetTriggerCommand(SetValueCommand):
     short_name = "settrigger_jumpman_obj"
     pretty_name = "Set Trigger Function"
+
+
+class AssemblyChangedCommand(SetValueCommand):
+    short_name = "jumpman_custom_code"
+    pretty_name = "Reassemble Custom Code"

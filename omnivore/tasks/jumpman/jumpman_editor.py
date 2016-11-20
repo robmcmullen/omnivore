@@ -9,7 +9,7 @@ import numpy as np
 from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_mask, data_bit_mask, match_bit_mask
 
 # Enthought library imports.
-from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides
+from traits.api import on_trait_change, Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, File, Unicode, Property, provides
 from pyface.api import YES, NO
 
 # Local imports.
@@ -195,6 +195,15 @@ class JumpmanLevelView(MainBitmapScroller):
             print self.trigger_root, id(self.trigger_root), id(self.trigger_root.trigger_painting)
         self.save_changes(command_cls)
 
+    def update_triggers(self, old_map, new_map):
+        print "old map", old_map
+        print "new_map", new_map
+        if old_map != new_map:
+            print "UPDATING trigger map!"
+            self.level_builder.update_triggers(old_map, new_map)
+            # FIXME: what about undo and the trigger mapping?
+            self.save_changes(AssemblyChangedCommand)
+
     def save_changes(self, command_cls=MoveObjectCommand):
         source, level_addr, old_harvest_addr = self.editor.get_level_addrs()
         level_data, harvest_addr, ropeladder_data, num_peanuts = self.level_builder.create_level_definition(level_addr, source[0x46], source[0x47])
@@ -283,6 +292,8 @@ class JumpmanEditor(BitmapEditor):
     assembly_source = Str
 
     custom_code = Any(None)
+
+    old_trigger_mapping = Dict
 
     ##### class attributes
     
@@ -383,13 +394,23 @@ class JumpmanEditor(BitmapEditor):
             except SyntaxError, e:
                 log.error("Assembly error: %s" % e.msg)
                 self.window.error(e.msg, "Assembly Error")
+            self.update_trigger_mapping()
+
+    def update_trigger_mapping(self):
+        # only create old trigger mapping if one doesn't exist
+        if not self.old_trigger_mapping:
+            self.old_trigger_mapping = dict(self.get_triggers())
+        else:
+            new_triggers = self.get_triggers()
+            self.bitmap.update_triggers(self.old_trigger_mapping, new_triggers)
+            self.old_trigger_mapping = new_triggers
 
     def get_triggers(self):
         if self.custom_code is None:
             self.compile_assembly_source()
         code = self.custom_code
         if code is None:
-            return []
+            return {}
         return code.triggers
 
     def save_assembly(self):

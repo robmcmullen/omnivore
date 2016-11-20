@@ -933,6 +933,34 @@ class JumpmanLevelBuilder(object):
         levdef = LevelDef(level_data_origin)
         return levdef.process_objects(objects, hx, hy)
 
+    def change_trigger(self, objs, rev_old_map, new_map, changed, errors):
+        for obj in objs:
+            if obj.single:
+                t = obj.trigger_function
+                if t in rev_old_map:
+                    name = rev_old_map[t]
+                    if name in new_map:
+                        new_t = new_map[name]
+                        if t != new_t:
+                            print "changed %s trigger function to $%04x" % (obj, new_t)
+                            obj.trigger_function = new_map[name]
+                            changed.append(obj)
+                    else:
+                        errors.append((obj, "Trigger function %s not in new assembly code" % name))
+                else:
+                    errors.append((obj, "Trigger function address $%04x doesn't correspond to an assembly label" % t))
+            if obj.trigger_painting:
+                self.change_trigger(obj.trigger_painting, rev_old_map, new_map, changed, errors)
+
+    def update_triggers(self, old_map, new_map, objects=None):
+        if objects is None:
+            objects = self.objects
+        rev_old_map = {v: k for k, v in old_map.iteritems()}
+        errors = []
+        changed = []
+        self.change_trigger(objects, rev_old_map, new_map, changed, errors)
+        return changed, errors
+
 
 class JumpmanCustomCode(object):
     label_storage = {
