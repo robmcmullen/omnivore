@@ -381,8 +381,8 @@ class JumpmanEditor(BitmapEditor):
             try:
                 self.custom_code = JumpmanCustomCode(filename)
             except SyntaxError, e:
-                log.error("Assembly error: %s" % e.errors)
-                self.window.error(e.errors, "Assembly Error")
+                log.error("Assembly error: %s" % e.msg)
+                self.window.error(e.msg, "Assembly Error")
 
     def get_triggers(self):
         if self.custom_code is None:
