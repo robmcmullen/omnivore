@@ -252,6 +252,50 @@ class TestJumpmanBounds(object):
 
 class TestJumpmanTriggers(object):
     def setup(self):
+        with open("triggers1.s", "w") as fh:
+            fh.write("""
+*=$2910
+
+trigger1
+        RTS
+
+*=$2920
+
+trigger2
+        RTS
+
+*=$2930
+
+trigger3
+        RTS
+
+*=$2940
+
+trigger4
+        RTS
+                """)
+        with open("triggers2.s", "w") as fh:
+            fh.write("""
+*=$2d10
+
+trigger1
+        RTS
+
+*=$2d20
+
+trigger2
+        RTS
+
+*=$2d30
+
+trigger3
+        RTS
+
+*=$2d40
+
+trigger4
+        RTS
+                """)
         self.builder = JumpmanLevelBuilder(None)
         self.addr = 0x2c00
 
