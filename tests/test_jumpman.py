@@ -296,6 +296,23 @@ trigger3
 trigger4
         RTS
                 """)
+        with open("triggers3.s", "w") as fh:
+            fh.write("""
+*=$2e10
+
+trigger1
+        RTS
+
+*=$2e20
+
+trigger2
+        RTS
+
+*=$2e30
+
+trigger3
+        RTS
+                """)
         self.builder = JumpmanLevelBuilder(None)
         self.addr = 0x2c00
 
@@ -310,13 +327,15 @@ trigger4
         p2.trigger_painting = [p3]
         p4 = Peanut(4, 40, 40, 1)
         p4.trigger_function = 0x2940
-        objects = [p1, p4]
+        p5 = Peanut(5, 50, 50, 1)
+        p5.trigger_function = 0x4fff  # not pointing to anything in assembly
+        objects = [p1, p4, p5]
         d2, haddr2, rl, num_p = self.builder.create_level_definition(self.addr, 0, 6, objects)
         print d2[0:haddr2 - self.addr]
         print d2[haddr2 - self.addr:]
         print rl
         print num_p
-        assert num_p == 4
+        assert num_p == 5
         c2 = self.builder.parse_objects(d2)
         self.builder.parse_harvest_table(d2, self.addr, haddr2, c2)
         print c2
@@ -332,11 +351,37 @@ trigger4
         c2 = self.get_sample_objects()
         old_map = code1.triggers
         new_map = code2.triggers
-        changed, errors = self.builder.update_triggers(old_map, new_map, c2)
+        changed, orphaned, not_labeled = self.builder.update_triggers(old_map, new_map, c2)
         print changed
-        print errors
+        print orphaned
+        print not_labeled
         assert len(changed) == 4
-        assert len(errors) == 0
+        assert len(orphaned) == 0
+        assert len(not_labeled) == 1
+        p1, p4, p5 = c2
+        assert p1.trigger_function == 0x2d10
+        assert p4.trigger_function == 0x2d40
+
+    def test_address_mapping_missing(self):
+        code1 = JumpmanCustomCode("triggers1.s")
+        code2 = JumpmanCustomCode("triggers3.s")
+        t = code1.triggers
+        assert len(t) == 4
+        t = code2.triggers
+        assert len(t) == 3
+        c2 = self.get_sample_objects()
+        old_map = code1.triggers
+        new_map = code2.triggers
+        changed, orphaned, not_labeled = self.builder.update_triggers(old_map, new_map, c2)
+        print changed
+        print orphaned
+        print not_labeled
+        assert len(changed) == 3
+        assert len(orphaned) == 1
+        assert len(not_labeled) == 1
+        p1, p4, p5 = c2
+        assert p1.trigger_function == 0x2e10
+        assert p4.trigger_function == 0x2940
 
 
 if __name__ == "__main__":
