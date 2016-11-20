@@ -9,7 +9,8 @@ import wx
 # Enthought library imports.
 from pyface.tasks.action.api import EditorAction
 
-from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string
+from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, ChooseOnePlusCustomDialog
+from omnivore.utils.textutil import text_to_int
 from omnivore.framework.actions import SelectAllAction, SelectNoneAction, SelectInvertAction
 from omnivore.utils.jumpman import DrawObjectBounds
 
@@ -33,10 +34,26 @@ class TriggerAction(EditorAction):
         e = self.active_editor
         possible_labels = e.get_triggers()
         print possible_labels
-        addr, error = prompt_for_hex(e.window.control, "Enter trigger subroutine address: (default hex; prefix with # for decimal)", "Function to be Activated", self.picked.trigger_function, return_error=True, default_base="hex")
-        if addr is not None:
-            self.picked.trigger_function = addr
-            e.bitmap.save_changes()
+        dlg = ChooseOnePlusCustomDialog(event.task.window.control, possible_labels.keys(), "Choose Trigger Function", "Trigger Addr (hex)")
+        if dlg.ShowModal() == wx.ID_OK:
+            label, addr = dlg.get_selected()
+            if label is not None:
+                addr = possible_labels[label]
+            else:
+                try:
+                    addr = text_to_int(addr, "hex")
+                except ValueError:
+                    event.task.window.error("Invalid address %s" % addr)
+                    addr = None
+            if addr:
+                print "Setting trigger address:", hex(addr)
+                self.picked.trigger_function = addr
+        dlg.Destroy()
+
+        # addr, error = prompt_for_hex(e.window.control, "Enter trigger subroutine address: (default hex; prefix with # for decimal)", "Function to be Activated", self.picked.trigger_function, return_error=True, default_base="hex")
+        # if addr is not None:
+        #     self.picked.trigger_function = addr
+        #     e.bitmap.save_changes()
 
 class ClearTriggerSelectionAction(EditorAction):
     name = "Clear Trigger Function"

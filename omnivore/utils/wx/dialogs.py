@@ -833,6 +833,76 @@ class CheckItemDialog(wx.Dialog):
         self.items = []
 
 
+class ChooseOnePlusCustomDialog(wx.Dialog):
+    """Simple dialog to return a choice from a list or a custom value
+    """
+    border = 5
+    
+    def __init__(self, parent, items, title="Select Items", instructions="", custom_value_label="Custom Value"):
+        wx.Dialog.__init__(self, parent, -1, title,
+                           size=(700, 500), pos=wx.DefaultPosition, 
+                           style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        if instructions:
+            t = wx.StaticText(self, -1, instructions)
+            sizer.Add(t, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, self.border)
+
+        # custom item will be last in the list
+        self.custom_item_index = len(items)
+        items.append("Custom")
+
+        self.list = wx.ListBox(self, choices=items, size=(-1,200), style=wx.LB_SINGLE)
+        self.list.SetSelection(0)
+        
+        # Both EVT_LISTBOX and EVT_CHECKLISTBOX cancel each other out when
+        # clicking on the check box itself. Clicking only on item text causes
+        # EVT_LISTBOX event only.
+        self.list.Bind(wx.EVT_LISTBOX, self.on_list_selection)
+        sizer.Add(self.list, 1, wx.EXPAND)
+
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        t = wx.StaticText(self, -1, custom_value_label + ":")
+        hbox.Add(t, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, self.border)
+        self.custom_value = wx.TextCtrl(self, -1, size=(-1, -1))
+        hbox.Add(self.custom_value, 1, wx.ALL|wx.EXPAND, self.border)
+        sizer.Add(hbox, 0, wx.EXPAND)
+        
+        btnsizer = wx.StdDialogButtonSizer()
+        btn = wx.Button(self, wx.ID_OK)
+        btn.SetDefault()
+        btnsizer.AddButton(btn)
+        btn = wx.Button(self, wx.ID_CANCEL)
+        btnsizer.AddButton(btn)
+        btnsizer.Realize()
+        sizer.Add(btnsizer, 0, wx.EXPAND, 0)
+
+        self.SetSizer(sizer)
+        sizer.Fit(self)
+
+        self.Layout()
+    
+    def on_list_selection(self, evt):
+        index = evt.GetInt()
+        print "here", index
+        if index == self.custom_item_index:
+            print "focus"
+            wx.CallAfter(self.custom_value.SetFocus)
+        evt.Skip()
+    
+    def get_selected(self):
+        index = self.list.GetSelection()
+        if index == self.custom_item_index:
+            # custom value
+            label = None
+            custom = self.custom_value.GetValue()
+        else:
+            label = self.list.GetString(index)
+            custom = None
+        return label, custom
+
+
 if __name__ == "__main__":
     app = wx.PySimpleApp()
 
@@ -840,9 +910,12 @@ if __name__ == "__main__":
 #    dialog = EmulatorDialog(frame, "Test")
 #    dialog.ShowModal()
 #    dlg = ListReorderDialog(frame, [chr(i + 65) for i in range(26)], lambda a:str(a))
-    dlg = CheckItemDialog(frame, [chr(i + 65) for i in range(26)], lambda a:str(a))
+    # dlg = CheckItemDialog(frame, [chr(i + 65) for i in range(26)], lambda a:str(a))
+    # if dlg.ShowModal() == wx.ID_OK:
+    #     print dlg.get_checked_items()
+    dlg = ChooseOnePlusCustomDialog(frame, ["one", "two"], "instructions")
     if dlg.ShowModal() == wx.ID_OK:
-        print dlg.get_checked_items()
+        print "Selected", dlg.get_selected()
     dlg.Destroy()
 
     app.MainLoop()
