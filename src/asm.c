@@ -151,6 +151,7 @@ memBank *banks, *activeBank;
 int bankID;
 char *outline;  /* the line of text written out in verbose mode */
 char *nxt_char; /* character pointer saved between calls of get_nxt_word */
+char *lfin; /* last filename encountered, used in aprintf */
 
 FILE *listFile;
 FILE *errFile;
@@ -241,6 +242,7 @@ int init_asm() {
   bankID=-1;
   errFile=stderr;
   nxt_char=NULL;
+  lfin=NULL;
 
   for(i=0;i<HSIZE;i++)  /* clear symbol table */
     hash[i]=NULL;
@@ -311,7 +313,6 @@ int open_file(char *fname) {
  *=========================================================================*/
 void aprintf(char *msg, ...) {
   char buf[256], line[256];
-  static char *lfin=0;
 
   va_list args;
 
