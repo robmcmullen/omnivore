@@ -195,6 +195,13 @@ class TestJumpmanPainting(object):
         print d2[haddr2 - self.addr:]
         print rl
         print num_p
+        assert num_p == 3
+        c2 = self.builder.parse_objects(d2)
+        self.builder.parse_harvest_table(d2, self.addr, haddr2, c2)
+        print c2
+        assert len(c2) == 1
+        assert len(c2[0].trigger_painting) == 1
+        assert len(c2[0].trigger_painting[0].trigger_painting) == 1
 
 class TestJumpmanBounds(object):
     def setup(self):
