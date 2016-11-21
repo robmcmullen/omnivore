@@ -151,4 +151,4 @@ class RecompileAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        e.compile_assembly_source()
+        e.compile_assembly_source(True)

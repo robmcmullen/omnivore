@@ -375,7 +375,7 @@ class JumpmanEditor(BitmapEditor):
         self.assembly_source = src
         self.compile_assembly_source()
 
-    def compile_assembly_source(self):
+    def compile_assembly_source(self, show_info=False):
         self.custom_code = None
         if not self.assembly_source:
             return
@@ -389,6 +389,9 @@ class JumpmanEditor(BitmapEditor):
                 log.error("Assembly error: %s" % e.msg)
                 self.window.error(e.msg, "Assembly Error")
             self.update_trigger_mapping()
+            if show_info:
+                dlg = wx.lib.dialogs.ScrolledMessageDialog(self.window.control, self.custom_code.info, "Assembly Results")
+                dlg.ShowModal()
 
     def update_trigger_mapping(self):
         # only create old trigger mapping if one doesn't exist

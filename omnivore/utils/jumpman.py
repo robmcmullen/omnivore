@@ -964,7 +964,7 @@ class JumpmanLevelBuilder(object):
 
 
 class JumpmanCustomCode(object):
-    label_storage = {
+    vector_storage = {
         "vbi1": 0x2802,
         "vbi2": 0x2804,
         "vbi3": 0x2806,
@@ -978,7 +978,7 @@ class JumpmanCustomCode(object):
         "collect_callback": 0x2849,
     }
 
-    label_defaults = {
+    vector_defaults = {
         0x2802: 0x311b,
         0x2804: 0x311b,
         0x2806: 0x311b,
@@ -1002,9 +1002,35 @@ class JumpmanCustomCode(object):
         self.ranges = []
         self.data = []
         self.labels_used = set()
+        self.vector_labels_used = set()
         self.vectors_used = set()
         self.triggers = {}
+        self.custom_gameloop = False
         self.parse()
+
+    @property
+    def info(self):
+        ranges = []
+        total = 0
+        for first, last, raw in self.asm.segments:
+            ranges.append("$%04x-$%04x" % (first, last))
+            total += len(raw)
+        v = sorted(self.vector_labels_used)
+        t = sorted(self.triggers.keys())
+        lb = sorted(self.labels_used)
+
+        text = """\
+Total bytes: %d
+Ranges: %s
+Custom game loop? %s
+Vectors used:
+  %s
+Triggers defined:
+  %s
+Labels defined:
+  %s
+""" % (total, ",".join(ranges), "YES" if self.custom_gameloop else "NO, using standard game loop", "\n  ".join(v), "\n  ".join(t), "\n  ".join(lb))
+        return text
 
     def add_vector(self, vector, subroutine):
         self.vectors_used.add(vector)
@@ -1018,12 +1044,14 @@ class JumpmanCustomCode(object):
             self.ranges.append((first, last))
             self.data.extend(raw)
         for label, addr in self.asm.labels.iteritems():
-            if label in self.label_storage:
-                self.labels_used.add(label)
-                vector = self.label_storage[label]
+            if label in self.vector_storage:
+                self.vector_labels_used.add(label)
+                vector = self.vector_storage[label]
                 self.add_vector(vector, addr)
             elif label.startswith("trigger"):
                 self.triggers[label] = addr
+            else:
+                self.labels_used.add(label)
 
         # force unused labels to revert to default values. This is needed, for
         # example, to overwrite a label that is unused in the current
@@ -1031,19 +1059,21 @@ class JumpmanCustomCode(object):
         # overwriting this, the old vector would still be present in the data
         # and it would get called even though the current code doesn't use that
         # vector.
-        for vector, default in self.label_defaults.iteritems():
+        for vector, default in self.vector_defaults.iteritems():
             if vector in self.vectors_used:
                 continue
             self.add_vector(vector, default)
 
         # check for a gameloop, otherwise add the standard gameloop
         if "gameloop" not in self.labels_used:
-            vector = self.label_storage["gameloop"]
+            vector = self.vector_storage["gameloop"]
             first = 0x2860
             self.add_vector(vector, first)
             last = first + len(self.std_gameloop)
             self.ranges.append((first, last))
             self.data.extend(self.std_gameloop)
+        else:
+            self.custom_gameloop = True
 
         print self.ranges
         print self.data
@@ -1054,4 +1084,3 @@ class JumpmanCustomCode(object):
             ranges.append((first - segment.start_addr, last - segment.start_addr))
 
         return ranges, self.data
-
