@@ -126,15 +126,24 @@ class JumpmanSelectMode(SelectMode):
         return self.canvas.screen_state.get_picked(pick)
 
     def get_trigger_popup_actions(self, evt):
-        index, x, y, pick = self.get_xy(evt)
-        if pick >= 0:
-            obj = self.get_picked(pick)
-            if not obj.single:
+        e = self.canvas.editor
+        obj = e.bitmap.mouse_mode.objects
+        if len(obj) == 0:
+            index, x, y, pick = self.get_xy(evt)
+            if pick >= 0:
+                p = self.get_picked(pick)
+                if p.single:
+                    obj = [p]
+                else:
+                    obj = None
+            else:
                 obj = None
+        if obj is not None:
+            clearable = any(o.trigger_function is not None for o in obj)
         else:
-            obj = None
-        clear_trigger = ClearTriggerAction(enabled=obj is not None and obj.trigger_function is not None, picked=obj, task=self.canvas.editor.task)
-        trigger_action = TriggerAction(enabled=obj is not None, picked=obj, task=self.canvas.editor.task)
+            clearable = False
+        clear_trigger = ClearTriggerAction(enabled=obj is not None and clearable, picked=obj, task=self.canvas.editor.task)
+        trigger_action = SetTriggerAction(enabled=obj is not None, picked=obj, task=self.canvas.editor.task)
         actions = [clear_trigger, trigger_action]
         return actions
 

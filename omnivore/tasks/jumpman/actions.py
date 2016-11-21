@@ -42,33 +42,15 @@ def trigger_dialog(event, e, obj):
 
 class ClearTriggerAction(EditorAction):
     name = "Clear Trigger Function"
-    command = ClearTriggerCommand
-
-    picked = None
-
-    def perform(self, event):
-        self.picked.trigger_function = None
-        self.active_editor.bitmap.save_changes(self.command)
-
-class TriggerAction(EditorAction):
-    name = "Set Trigger Function..."
-    command = SetTriggerCommand
-
-    picked = None
-
-    def perform(self, event):
-        e = self.active_editor
-        addr = trigger_dialog(event, e, self.picked)
-        if addr:
-            print "Setting trigger address:", hex(addr)
-            self.picked.trigger_function = addr
-            e.bitmap.save_changes(self.command)
-
-
-class ClearTriggerSelectionAction(EditorAction):
-    name = "Clear Trigger Function"
     enabled_name = 'can_copy'
     command = ClearTriggerCommand
+
+    picked = None
+
+    def get_objects(self):
+        if self.picked is not None:
+            return self.picked
+        return self.active_editor.bitmap.mouse_mode.objects
 
     def get_addr(self, event, objects):
         return None
@@ -78,7 +60,7 @@ class ClearTriggerSelectionAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        objects = e.bitmap.mouse_mode.objects
+        objects = self.get_objects()
         try:
             addr = self.get_addr(event, objects)
             for o in objects:
@@ -88,8 +70,8 @@ class ClearTriggerSelectionAction(EditorAction):
         except ValueError:
             pass
 
-class SetTriggerSelectionAction(ClearTriggerSelectionAction):
-    name = "Set Trigger Function"
+class SetTriggerAction(ClearTriggerAction):
+    name = "Set Trigger Function..."
     command = SetTriggerCommand
 
     def get_addr(self, event, objects):

@@ -143,8 +143,8 @@ class JumpmanEditTask(HexEditTask):
     
     def get_actions_Menu_Jumpman_SelectionGroup(self):
         return [
-            ClearTriggerSelectionAction(),
-            SetTriggerSelectionAction(),
+            ClearTriggerAction(),
+            SetTriggerAction(),
             ]
     
     def get_actions_Menu_Jumpman_CustomCodeGroup(self):
