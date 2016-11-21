@@ -37,6 +37,8 @@ def trigger_dialog(event, e, obj):
             except ValueError:
                 event.task.window.error("Invalid address %s" % addr)
                 addr = None
+    else:
+        addr = None
     dlg.Destroy()
     return addr
 
