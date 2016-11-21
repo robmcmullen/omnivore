@@ -17,6 +17,29 @@ from omnivore.utils.jumpman import DrawObjectBounds
 from commands import *
 
 
+def trigger_dialog(event, e, obj):
+    possible_labels = e.get_triggers()
+    label = e.get_trigger_label(obj.trigger_function)
+    if label is None and obj.trigger_function:
+        custom_value = "%04x" % obj.trigger_function
+    else:
+        custom_value = ""
+    print obj
+    print possible_labels
+    dlg = ChooseOnePlusCustomDialog(event.task.window.control, possible_labels.keys(), label, custom_value, "Choose Trigger Function", "Select one trigger function or enter custom address", "Trigger Addr (hex)")
+    if dlg.ShowModal() == wx.ID_OK:
+        label, addr = dlg.get_selected()
+        if label is not None:
+            addr = possible_labels[label]
+        else:
+            try:
+                addr = text_to_int(addr, "hex")
+            except ValueError:
+                event.task.window.error("Invalid address %s" % addr)
+                addr = None
+    dlg.Destroy()
+    return addr
+
 class ClearTriggerAction(EditorAction):
     name = "Clear Trigger Function"
     command = ClearTriggerCommand
@@ -35,37 +58,19 @@ class TriggerAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        possible_labels = e.get_triggers()
-        label = e.get_trigger_label(self.picked.trigger_function)
-        if label is None and self.picked.trigger_function:
-            custom_value = "%04x" % self.picked.trigger_function
-        else:
-            custom_value = ""
-        print self.picked
-        print possible_labels
-        dlg = ChooseOnePlusCustomDialog(event.task.window.control, possible_labels.keys(), label, custom_value, "Choose Trigger Function", "Select one trigger function or enter custom address", "Trigger Addr (hex)")
-        if dlg.ShowModal() == wx.ID_OK:
-            label, addr = dlg.get_selected()
-            if label is not None:
-                addr = possible_labels[label]
-            else:
-                try:
-                    addr = text_to_int(addr, "hex")
-                except ValueError:
-                    event.task.window.error("Invalid address %s" % addr)
-                    addr = None
-            if addr:
-                print "Setting trigger address:", hex(addr)
-                self.picked.trigger_function = addr
-                e.bitmap.save_changes(self.command)
-        dlg.Destroy()
+        addr = trigger_dialog(event, e, self.picked)
+        if addr:
+            print "Setting trigger address:", hex(addr)
+            self.picked.trigger_function = addr
+            e.bitmap.save_changes(self.command)
+
 
 class ClearTriggerSelectionAction(EditorAction):
     name = "Clear Trigger Function"
     enabled_name = 'can_copy'
     command = ClearTriggerCommand
 
-    def get_addr(self, objects):
+    def get_addr(self, event, objects):
         return None
 
     def permute_object(self, obj, addr):
@@ -75,7 +80,7 @@ class ClearTriggerSelectionAction(EditorAction):
         e = self.active_editor
         objects = e.bitmap.mouse_mode.objects
         try:
-            addr = self.get_addr(objects)
+            addr = self.get_addr(event, objects)
             for o in objects:
                 self.permute_object(o, addr)
             e.bitmap.save_changes(self.command)
@@ -87,9 +92,9 @@ class SetTriggerSelectionAction(ClearTriggerSelectionAction):
     name = "Set Trigger Function"
     command = SetTriggerCommand
 
-    def get_addr(self, objects):
+    def get_addr(self, event, objects):
         e = self.active_editor
-        addr, error = prompt_for_hex(e.window.control, "Enter trigger subroutine address: (default hex; prefix with # for decimal)", "Function to be Activated", return_error=True, default_base="hex")
+        addr = trigger_dialog(event, e, objects[0])
         if addr is not None:
             return addr
         raise ValueError("Cancelled!")
