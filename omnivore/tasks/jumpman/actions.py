@@ -24,6 +24,7 @@ class ClearTriggerAction(EditorAction):
 
     def perform(self, event):
         self.picked.trigger_function = None
+        self.active_editor.bitmap.save_changes()
 
 class TriggerAction(EditorAction):
     name = "Set Trigger Function..."
@@ -33,8 +34,14 @@ class TriggerAction(EditorAction):
     def perform(self, event):
         e = self.active_editor
         possible_labels = e.get_triggers()
+        label = e.get_trigger_label(self.picked.trigger_function)
+        if label is None and self.picked.trigger_function:
+            custom_value = "%04x" % self.picked.trigger_function
+        else:
+            custom_value = ""
+        print self.picked
         print possible_labels
-        dlg = ChooseOnePlusCustomDialog(event.task.window.control, possible_labels.keys(), "Choose Trigger Function", "Trigger Addr (hex)")
+        dlg = ChooseOnePlusCustomDialog(event.task.window.control, possible_labels.keys(), label, custom_value, "Choose Trigger Function", "Select one trigger function or enter custom address", "Trigger Addr (hex)")
         if dlg.ShowModal() == wx.ID_OK:
             label, addr = dlg.get_selected()
             if label is not None:
@@ -48,6 +55,7 @@ class TriggerAction(EditorAction):
             if addr:
                 print "Setting trigger address:", hex(addr)
                 self.picked.trigger_function = addr
+                e.bitmap.save_changes()
         dlg.Destroy()
 
         # addr, error = prompt_for_hex(e.window.control, "Enter trigger subroutine address: (default hex; prefix with # for decimal)", "Function to be Activated", self.picked.trigger_function, return_error=True, default_base="hex")

@@ -195,15 +195,6 @@ class JumpmanLevelView(MainBitmapScroller):
             print self.trigger_root, id(self.trigger_root), id(self.trigger_root.trigger_painting)
         self.save_changes(command_cls)
 
-    def update_triggers(self, old_map, new_map):
-        print "old map", old_map
-        print "new_map", new_map
-        if old_map != new_map:
-            print "UPDATING trigger map!"
-            self.level_builder.update_triggers(old_map, new_map)
-            # FIXME: what about undo and the trigger mapping?
-            self.save_changes(AssemblyChangedCommand)
-
     def save_changes(self, command_cls=MoveObjectCommand):
         source, level_addr, old_harvest_addr = self.editor.get_level_addrs()
         level_data, harvest_addr, ropeladder_data, num_peanuts = self.level_builder.create_level_definition(level_addr, source[0x46], source[0x47])
@@ -346,10 +337,13 @@ class JumpmanEditor(BitmapEditor):
             del e['bitmap_renderer']
         if 'assembly_source' in e:
             self.assembly_source = e['assembly_source']
+        if 'old_trigger_mapping' in e:
+            self.old_trigger_mapping = e['old_trigger_mapping']
         BitmapEditor.process_extra_metadata(self, doc, e)
         
     def get_extra_metadata(self, mdict):
         mdict["assembly_source"] = self.assembly_source
+        mdict["old_trigger_mapping"] = dict(self.old_trigger_mapping)  # so we don't try to pickle a TraitDictObject
         BitmapEditor.get_extra_metadata(self, mdict)
 
     @on_trait_change('machine.bitmap_shape_change_event')
@@ -401,9 +395,16 @@ class JumpmanEditor(BitmapEditor):
         if not self.old_trigger_mapping:
             self.old_trigger_mapping = dict(self.get_triggers())
         else:
-            new_triggers = self.get_triggers()
-            self.bitmap.update_triggers(self.old_trigger_mapping, new_triggers)
-            self.old_trigger_mapping = new_triggers
+            old_map = self.old_trigger_mapping
+            new_map = self.get_triggers()
+            print "old map", old_map
+            print "new_map", new_map
+            if old_map != new_map:
+                print "UPDATING trigger map!"
+                self.bitmap.level_builder.update_triggers(old_map, new_map)
+                # FIXME: what about undo and the trigger mapping?
+                self.bitmap.save_changes(AssemblyChangedCommand)
+                self.old_trigger_mapping = new_map
 
     def get_triggers(self):
         if self.custom_code is None:
@@ -412,6 +413,12 @@ class JumpmanEditor(BitmapEditor):
         if code is None:
             return {}
         return code.triggers
+
+    def get_trigger_label(self, addr):
+        rev_old_map = {v: k for k, v in self.old_trigger_mapping.iteritems()}
+        if addr in rev_old_map:
+            return rev_old_map[addr]
+        return None
 
     def save_assembly(self):
         code = self.custom_code

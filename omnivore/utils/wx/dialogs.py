@@ -838,7 +838,7 @@ class ChooseOnePlusCustomDialog(wx.Dialog):
     """
     border = 5
     
-    def __init__(self, parent, items, title="Select Items", instructions="", custom_value_label="Custom Value"):
+    def __init__(self, parent, items, default=None, default_custom_value="", title="Select Items", instructions="", custom_value_label="Custom Value"):
         wx.Dialog.__init__(self, parent, -1, title,
                            size=(700, 500), pos=wx.DefaultPosition, 
                            style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
@@ -854,7 +854,14 @@ class ChooseOnePlusCustomDialog(wx.Dialog):
         items.append("Custom")
 
         self.list = wx.ListBox(self, choices=items, size=(-1,200), style=wx.LB_SINGLE)
-        self.list.SetSelection(0)
+        try:
+            index = items.index(default)
+        except ValueError:
+            if default_custom_value:
+                index = self.custom_item_index
+            else:
+                index = 0
+        self.list.SetSelection(index)
         
         # Both EVT_LISTBOX and EVT_CHECKLISTBOX cancel each other out when
         # clicking on the check box itself. Clicking only on item text causes
@@ -865,7 +872,7 @@ class ChooseOnePlusCustomDialog(wx.Dialog):
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         t = wx.StaticText(self, -1, custom_value_label + ":")
         hbox.Add(t, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, self.border)
-        self.custom_value = wx.TextCtrl(self, -1, size=(-1, -1))
+        self.custom_value = wx.TextCtrl(self, -1, default_custom_value, size=(-1, -1))
         hbox.Add(self.custom_value, 1, wx.ALL|wx.EXPAND, self.border)
         sizer.Add(hbox, 0, wx.EXPAND)
         
@@ -889,6 +896,9 @@ class ChooseOnePlusCustomDialog(wx.Dialog):
         if index == self.custom_item_index:
             print "focus"
             wx.CallAfter(self.custom_value.SetFocus)
+            self.custom_value.Enable(True)
+        else:
+            self.custom_value.Enable(False)
         evt.Skip()
     
     def get_selected(self):
