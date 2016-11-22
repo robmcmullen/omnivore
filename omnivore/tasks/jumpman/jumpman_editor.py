@@ -388,6 +388,10 @@ class JumpmanEditor(BitmapEditor):
             except SyntaxError, e:
                 log.error("Assembly error: %s" % e.msg)
                 self.window.error(e.msg, "Assembly Error")
+            except ImportError:
+                log.error("Please install pyatasm to compile custom code.")
+                self.assembly_source = ""
+                self.old_trigger_mapping = dict()
             self.update_trigger_mapping()
             if show_info:
                 dlg = wx.lib.dialogs.ScrolledMessageDialog(self.window.control, self.custom_code.info, "Assembly Results")

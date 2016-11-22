@@ -1,7 +1,5 @@
 import numpy as np
 
-from pyatasm import Assemble
-
 from atrcopy import selected_bit_mask, match_bit_mask, data_bit_mask, comment_bit_mask
 
 from omnivore.utils.runtime import get_all_subclasses
@@ -995,6 +993,8 @@ class JumpmanCustomCode(object):
     std_gameloop = [ord(x) for x in " \xd0I \x00K\xad>(\xc9\x00\xf0\x11\xad\xbe0\xc9\x08\x90\xef\xad\xf00\xc9\xff\xd0\xe5L?(lD("]
 
     def __init__(self, filename):
+        # raise ImportError and let caller handle it
+        from pyatasm import Assemble
         asm = Assemble(filename)
         if not asm:
             raise SyntaxError(asm.errors)
