@@ -284,6 +284,8 @@ class JumpmanEditor(BitmapEditor):
 
     custom_code = Any(None)
 
+    manual_recompile_needed = Bool(False)
+
     old_trigger_mapping = Dict
 
     ##### class attributes
@@ -317,8 +319,12 @@ class JumpmanEditor(BitmapEditor):
 
     def is_valid_for_save(self):
         all_ok = True
-        self.compile_assembly_source()
-        if self.custom_code:
+        if self.manual_recompile_needed:
+            answer = self.task.confirm("Error in assembly code\n\nSave Anyway?" , "Bad Assembly Code")
+            all_ok = (answer == YES)
+        else:
+            self.compile_assembly_source()
+        if all_ok and self.custom_code and not self.manual_recompile_needed:
             self.save_assembly()
         if not self.bitmap.level_builder.harvest_ok:
             reason = self.bitmap.level_builder.harvest_reason()
@@ -373,6 +379,7 @@ class JumpmanEditor(BitmapEditor):
         since pyatasm can't handle the virtual filesystem.
         """
         self.assembly_source = src
+        self.manual_recompile_needed = False
         self.compile_assembly_source()
 
     def compile_assembly_source(self, show_info=False):
@@ -385,17 +392,20 @@ class JumpmanEditor(BitmapEditor):
             filename = os.path.join(dirname, self.assembly_source)
             try:
                 self.custom_code = JumpmanCustomCode(filename)
+                self.manual_recompile_needed = False
             except SyntaxError, e:
                 log.error("Assembly error: %s" % e.msg)
                 self.window.error(e.msg, "Assembly Error")
+                self.manual_recompile_needed = True
             except ImportError:
                 log.error("Please install pyatasm to compile custom code.")
                 self.assembly_source = ""
                 self.old_trigger_mapping = dict()
-            self.update_trigger_mapping()
-            if show_info:
-                dlg = wx.lib.dialogs.ScrolledMessageDialog(self.window.control, self.custom_code.info, "Assembly Results")
-                dlg.ShowModal()
+            if self.custom_code:
+                self.update_trigger_mapping()
+                if show_info:
+                    dlg = wx.lib.dialogs.ScrolledMessageDialog(self.window.control, self.custom_code.info, "Assembly Results")
+                    dlg.ShowModal()
 
     def update_trigger_mapping(self):
         # only create old trigger mapping if one doesn't exist
@@ -414,7 +424,7 @@ class JumpmanEditor(BitmapEditor):
                 self.old_trigger_mapping = new_map
 
     def get_triggers(self):
-        if self.custom_code is None:
+        if self.custom_code is None and self.manual_recompile_needed == False:
             self.compile_assembly_source()
         code = self.custom_code
         if code is None:
@@ -458,6 +468,7 @@ class JumpmanEditor(BitmapEditor):
     
     def rebuild_document_properties(self):
         self.update_mouse_mode(AnticDSelectMode)
+        self.manual_recompile_needed = False
         self.compile_assembly_source()
 
     def check_valid_segment(self, segment=None):
