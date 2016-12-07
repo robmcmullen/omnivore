@@ -18,6 +18,7 @@ class BaseRequest(object):
         self.url = "no url"
         self.data = None
         self.error = None
+        self.is_started = False
         self.is_finished = False
         self.is_skippable = True
     
@@ -34,6 +35,7 @@ class BaseRequest(object):
         return self.error is not None
     
     def get_data_using_thread(self):
+        self.is_started = True
         self.get_data_from_server()
         self.is_finished = True
     
