@@ -63,11 +63,12 @@ from envisage.ui.tasks.api import TasksApplication
 from envisage.ui.tasks.task_window_event import TaskWindowEvent, VetoableTaskWindowEvent
 from pyface.api import ImageResource
 from pyface.tasks.api import Task, TaskWindowLayout
-from traits.api import provides, Bool, Instance, List, Property, Str, Unicode, Event, Dict, Int, Float, Tuple
+from traits.api import provides, Bool, Instance, List, Property, Str, Unicode, Event, Dict, Int, Float, Tuple, Any
 
 # Local imports.
 from omnivore.framework.preferences import FrameworkPreferences, \
     FrameworkPreferencesPane
+from omnivore.utils.background_http import BackgroundHttpDownloader
 
 
 def _task_window_wx_on_mousewheel(self, event):
@@ -131,6 +132,8 @@ class FrameworkApplication(TasksApplication):
     default_window_size = (800, 600)
     
     last_window_size = Tuple(default_window_size)
+
+    downloader = Any
 
     ###########################################################################
     # Private interface.
@@ -198,6 +201,11 @@ class FrameworkApplication(TasksApplication):
         app.tasks_application = self
         
         app.Bind(wx.EVT_IDLE, self.on_idle)
+    
+    def _application_exiting_fired(self):
+        log.debug("CLEANING UP!!!")
+        if self.downloader:
+            self.downloader = None
     
     def on_idle(self, evt):
         evt.Skip()
@@ -703,6 +711,12 @@ class FrameworkApplication(TasksApplication):
             layout.perspective = self.perspectives[task.id]
             window.set_layout(layout)
         task.restore_toolbars(window)
+
+    def get_downloader(self):
+        if self.downloader is None:
+            self.downloader = BackgroundHttpDownloader()
+        return self.downloader
+
 
 def setup_frozen_logging():
     # set up early py2exe logging redirection, saving any messages until the log
