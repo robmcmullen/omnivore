@@ -24,7 +24,7 @@ class DownloadURLRequest(BaseRequest):
 
     debug = False
 
-    def __init__(self, url, path, threadsafe_progress_callback=None, threadsafe_finished_callback=None):
+    def __init__(self, url, path, threadsafe_progress_callback=None, finished_callback=None):
         BaseRequest.__init__(self)
         self.url = url
         self.is_skippable = False
@@ -34,9 +34,9 @@ class DownloadURLRequest(BaseRequest):
         self.is_cancelled = False
         self.path = path
         self._threadsafe_progress_callback = None
-        self._threadsafe_finished_callback = None
+        self._finished_callback = None
         self.threadsafe_progress_callback = threadsafe_progress_callback
-        self.threadsafe_finished_callback = threadsafe_finished_callback
+        self.finished_callback = finished_callback
 
     @property
     def threadsafe_progress_callback(self):
@@ -50,15 +50,15 @@ class DownloadURLRequest(BaseRequest):
             self._threadsafe_progress_callback = NoCallback()()
 
     @property
-    def threadsafe_finished_callback(self):
-        return self._threadsafe_finished_callback
+    def finished_callback(self):
+        return self._finished_callback
     
-    @threadsafe_finished_callback.setter
-    def threadsafe_finished_callback(self, callback):
+    @finished_callback.setter
+    def finished_callback(self, callback):
         if callback is not None:
-            self._threadsafe_finished_callback = callback
+            self._finished_callback = callback
         else:
-            self._threadsafe_finished_callback = NoCallback()()
+            self._finished_callback = NoCallback()()
 
     def __str__(self):
         if not self.is_started:
@@ -122,9 +122,8 @@ class DownloadURLRequest(BaseRequest):
         self.is_finished = True
         self.threadsafe_progress_callback(self)
         self.threadsafe_progress_callback = None
-        if self.error is None:
-            self.threadsafe_finished_callback(self)
-        self.threadsafe_finished_callback = None
+        wx.CallAfter(self.finished_callback, self, self.error)
+        self.finished_callback = None
 
     def get_gauge_value(self):
         if self.expected_size == 0:
@@ -177,11 +176,37 @@ class DownloadControl(scrolled.ScrolledPanel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_ALWAYS)
         self.SetupScrolling(scroll_x=False)
+        self.header = wx.StaticText(self, -1, "")
+        sizer.Add(self.header, 0, flag=wx.EXPAND)
         self.SetSizer(sizer)
         sizer.Layout()
         self.Fit()
         self.downloader = downloader
         self.req_map = {}
+        self.update_header()
+
+    @property
+    def num_active(self):
+        count = 0
+        for req in self.req_map.keys():
+            if not req.is_finished:
+                count += 1
+        return count
+
+    def update_header(self):
+        count = self.num_active
+        if count == 0:
+            text = "No active downloads"
+        elif count == 1:
+            text = "1 active download"
+        else:
+            text = "1 active download, %d queued" % (count - 1)
+        self.header.SetLabel(text)
+
+    def request_download(self, url, filename, callback):
+        req = DownloadURLRequest(url, filename, finished_callback=callback)
+        self.add_request(req)
+        return req
 
     def add_request(self, req):
         rc = RequestStatusControl(self, req)
@@ -196,6 +221,7 @@ class DownloadControl(scrolled.ScrolledPanel):
     def threadsafe_progress_callback(self, req):
         rc = self.req_map[req]
         wx.CallAfter(rc.update)
+        wx.CallAfter(self.update_header)
 
 
 if __name__ == "__main__":
@@ -214,22 +240,22 @@ if __name__ == "__main__":
             self.dlframe.Centre()
             return True
 
-    def threadsafe_finished_callback(req):
+    def finished_callback(req, error):
         print "FINISHED!", req
 
     app = MyApp(0)
     downloader = BackgroundHttpDownloader()
     app.dlframe.dlcontrol.downloader = downloader
     DownloadURLRequest.blocksize = 1024
-    req = DownloadURLRequest('http://playermissile.com', "index.html", threadsafe_finished_callback=threadsafe_finished_callback)
+    req = DownloadURLRequest('http://playermissile.com', "index.html", finished_callback=finished_callback)
     wx.CallAfter(app.dlframe.dlcontrol.add_request, req)
-    req2 = DownloadURLRequest('http://playermissile.com/mame', "mame-index.html", threadsafe_finished_callback=threadsafe_finished_callback)
+    req2 = DownloadURLRequest('http://playermissile.com/mame', "mame-index.html", finished_callback=finished_callback)
     wx.CallAfter(app.dlframe.dlcontrol.add_request, req2)
-    req3 = DownloadURLRequest('http://playermissile.com/jumpman', "jumpman-index.html", threadsafe_finished_callback=threadsafe_finished_callback)
+    req3 = DownloadURLRequest('http://playermissile.com/jumpman', "jumpman-index.html", finished_callback=finished_callback)
     wx.CallAfter(app.dlframe.dlcontrol.add_request, req3)
-    req4 = DownloadURLRequest('http://playermissile.com/jumpman', "jumpman-index.html", threadsafe_finished_callback=threadsafe_finished_callback)
+    req4 = DownloadURLRequest('http://playermissile.com/jumpman', "jumpman-index.html", finished_callback=finished_callback)
     wx.CallAfter(app.dlframe.dlcontrol.add_request, req4)
-    req5 = DownloadURLRequest('http://playermissile.com/jumpman', "jumpman-index.html", threadsafe_finished_callback=threadsafe_finished_callback)
+    req5 = DownloadURLRequest('http://playermissile.com/jumpman', "jumpman-index.html", finished_callback=finished_callback)
     wx.CallAfter(app.dlframe.dlcontrol.add_request, req5)
     app.MainLoop()
 
