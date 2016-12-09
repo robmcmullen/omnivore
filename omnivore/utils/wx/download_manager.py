@@ -139,7 +139,7 @@ class RequestStatusControl(wx.Panel):
         self.req = req
         hbox = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(hbox)
-        self.text = wx.StaticText(self, -1, req.url)
+        self.text = wx.StaticText(self, -1, req.url, style=wx.ST_ELLIPSIZE_START)
         hbox.Add(self.text, 0, flag=wx.EXPAND|wx.ALL, border=self.border)
         vbox = wx.BoxSizer(wx.HORIZONTAL)
         self.gauge = wx.Gauge(self, -1)
