@@ -176,11 +176,20 @@ class DownloadControl(scrolled.ScrolledPanel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_ALWAYS)
         self.SetupScrolling(scroll_x=False)
+
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
         self.header = wx.StaticText(self, -1, "")
-        sizer.Add(self.header, 0, flag=wx.EXPAND)
+        hbox.Add(self.header, 1, flag=wx.ALIGN_CENTER)
+        self.setdir = wx.Button(self, -1, "Download Dir")
+        self.setdir.Bind(wx.EVT_BUTTON, self.on_setdir)
+        hbox.Add(self.setdir, 0, flag=wx.EXPAND|wx.ALL)
+        sizer.Add(hbox, 0, flag=wx.EXPAND)
         self.SetSizer(sizer)
         sizer.Layout()
         self.Fit()
+
+        self.path = os.getcwd()
+        self.path = "/tmp"
         self.downloader = downloader
         self.req_map = {}
         self.update_header()
@@ -204,6 +213,9 @@ class DownloadControl(scrolled.ScrolledPanel):
         self.header.SetLabel(text)
 
     def request_download(self, url, filename, callback):
+        if not os.path.isabs(filename):
+            filename = os.path.normpath(os.path.join(self.path, filename))
+        print "request_download", filename
         req = DownloadURLRequest(url, filename, finished_callback=callback)
         self.add_request(req)
         return req
@@ -222,6 +234,13 @@ class DownloadControl(scrolled.ScrolledPanel):
         rc = self.req_map[req]
         wx.CallAfter(rc.update)
         wx.CallAfter(self.update_header)
+
+    def on_setdir(self, evt):
+        dlg = wx.DirDialog(self, "Choose the download directory:", style=wx.DD_DEFAULT_STYLE)
+        dlg.SetPath(self.path)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.path = dlg.GetPath()
+        dlg.Destroy()
 
 
 if __name__ == "__main__":
@@ -243,20 +262,19 @@ if __name__ == "__main__":
     def finished_callback(req, error):
         print "FINISHED!", req
 
+    def do_download(dlc):
+        req = dlc.request_download('http://playermissile.com', "index.html", finished_callback)
+        req2 = dlc.request_download('http://playermissile.com/mame', "mame-index.html", finished_callback)
+        req3 = dlc.request_download('http://playermissile.com/jumpman', "jumpman-index.html", finished_callback)
+        req4 = dlc.request_download('http://playermissile.com/jumpman', "jumpman-index.html", finished_callback)
+        req5 = dlc.request_download('http://playermissile.com/jumpman', "jumpman-index.html", finished_callback)
+
     app = MyApp(0)
     downloader = BackgroundHttpDownloader()
     app.dlframe.dlcontrol.downloader = downloader
+    dlc = app.dlframe.dlcontrol
     DownloadURLRequest.blocksize = 1024
-    req = DownloadURLRequest('http://playermissile.com', "index.html", finished_callback=finished_callback)
-    wx.CallAfter(app.dlframe.dlcontrol.add_request, req)
-    req2 = DownloadURLRequest('http://playermissile.com/mame', "mame-index.html", finished_callback=finished_callback)
-    wx.CallAfter(app.dlframe.dlcontrol.add_request, req2)
-    req3 = DownloadURLRequest('http://playermissile.com/jumpman', "jumpman-index.html", finished_callback=finished_callback)
-    wx.CallAfter(app.dlframe.dlcontrol.add_request, req3)
-    req4 = DownloadURLRequest('http://playermissile.com/jumpman', "jumpman-index.html", finished_callback=finished_callback)
-    wx.CallAfter(app.dlframe.dlcontrol.add_request, req4)
-    req5 = DownloadURLRequest('http://playermissile.com/jumpman', "jumpman-index.html", finished_callback=finished_callback)
-    wx.CallAfter(app.dlframe.dlcontrol.add_request, req5)
+    wx.CallAfter(do_download, dlc)
     app.MainLoop()
 
     downloader = None
