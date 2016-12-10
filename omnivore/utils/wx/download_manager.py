@@ -171,7 +171,7 @@ class DownloadControl(scrolled.ScrolledPanel):
     View of list of downloaded items
     """
 
-    def __init__(self, parent, downloader, **kwargs):
+    def __init__(self, parent, downloader, path=None, **kwargs):
         scrolled.ScrolledPanel.__init__(self, parent, -1, **kwargs)
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_ALWAYS)
@@ -188,8 +188,10 @@ class DownloadControl(scrolled.ScrolledPanel):
         sizer.Layout()
         self.Fit()
 
-        self.path = os.getcwd()
-        self.path = "/tmp"
+        if path:
+            self.path = path
+        else:
+            self.path = ""
         self.downloader = downloader
         self.req_map = {}
         self.update_header()
