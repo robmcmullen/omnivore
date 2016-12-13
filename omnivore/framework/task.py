@@ -793,6 +793,7 @@ class FrameworkTask(Task):
             wx.CallAfter(self.close_dirty_tab)
             evt.Veto()
         if notebook.GetPageCount() == 1:
+            wx.CallAfter(self.replace_last_tab, notebook)
             evt.Veto()
 
     def close_dirty_tab(self):
@@ -801,6 +802,16 @@ class FrameworkTask(Task):
             default=NO, title='Save Changes?')
         if result == YES:
             active.close()
+
+    def replace_last_tab(self, notebook):
+        # Mac seems to have problems with notebook with no tabs, so create a
+        # blank tab before removing the old one. The Freeze/Thaw prevents an
+        # ugly flicker when the tabs are getting moved around.
+        notebook.Freeze()
+        active = self.active_editor
+        self.new()
+        active.close()
+        notebook.Thaw()
 
     #### convenience functions
     
