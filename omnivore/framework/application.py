@@ -279,6 +279,11 @@ class FrameworkApplication(TasksApplication):
             if active_task is not None:
                 active_task.window.error(str(e), "File Load Error")
             return
+
+        if len(guess.bytes) == 0:
+            if active_task is not None:
+                active_task.window.error("Zero length file!\nUnable to determine file type.", "File Load Error")
+            return
         
         # Attempt to classify the guess using the file recognizer service
         document = service.recognize(guess)
