@@ -142,8 +142,9 @@ def JumpmanFullAtr(doc):
         return extra_metadata
 
 def check_builtin(doc):
-    for match in [Getaway, JumpmanLevelBuilder, JumpmanFullAtr]:
-        e = match(doc)
-        if e is not None:
-            return e
+    if len(doc.bytes) > 0:
+        for match in [Getaway, JumpmanLevelBuilder, JumpmanFullAtr]:
+            e = match(doc)
+            if e is not None:
+                return e
     return dict()
