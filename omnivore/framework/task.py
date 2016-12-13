@@ -789,14 +789,15 @@ class FrameworkTask(Task):
         # Close button only appears on active tab, so we can assume the tab
         # being closed is the currenty active tab
         notebook = evt.GetEventObject()
-        if self.active_editor.dirty:
-            wx.CallAfter(self.close_dirty_tab, notebook, notebook.GetPageCount() == 1)
-            evt.Veto()
+        wx.CallAfter(self.close_dirty_tab, notebook, notebook.GetPageCount() == 1)
+        evt.Veto()
 
     def close_dirty_tab(self, notebook, replace=False):
         active = self.active_editor
-        result = self.confirm('This file has unsaved changes. Close anyway?', 
-            default=NO, title='Save Changes?')
+        if active.dirty:
+            result = self.confirm('This file has unsaved changes. Close anyway?', default=NO, title='Save Changes?')
+        else:
+            result = YES
         if result == YES:
             notebook.Freeze()
             if replace:
