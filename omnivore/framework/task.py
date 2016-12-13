@@ -786,10 +786,21 @@ class FrameworkTask(Task):
         pass
 
     def on_tab_pane_close(self, evt):
+        # Close button only appears on active tab, so we can assume the tab
+        # being closed is the currenty active tab
         notebook = evt.GetEventObject()
+        if self.active_editor.dirty:
+            wx.CallAfter(self.close_dirty_tab)
+            evt.Veto()
         if notebook.GetPageCount() == 1:
             evt.Veto()
 
+    def close_dirty_tab(self):
+        active = self.active_editor
+        result = self.confirm('This file has unsaved changes. Close anyway?', 
+            default=NO, title='Save Changes?')
+        if result == YES:
+            active.close()
 
     #### convenience functions
     
