@@ -60,6 +60,9 @@ class OrderWrapper(object):
         """
         return self.order[index]
 
+    def tostring(self):
+        return self.np_data[self.order].tostring()
+
 class UserExtraData(object):
     def __init__(self):
         self.comments = dict()
