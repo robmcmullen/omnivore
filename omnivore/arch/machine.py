@@ -154,6 +154,13 @@ class Machine(HasTraits):
     def init_assemblers(cls, editor):
         if cls.assembler_list is None:
             cls.assembler_list = editor.window.application.get_json_data("assembler_list", [])
+
+            # With built-in MAC/65 compilation support, fix the list of default
+            # assemblers to change the default assembler to MAC/65 if the user
+            # hasn't made an alteration to the list.
+            a = cls.assembler_list
+            if len(a) == 2 and a[0]['name'] == "cc65" and a[1]['name'] == "MAC/65":
+                cls.assembler_list = None
         
         if not cls.assembler_list:
             cls.assembler_list = cls.guess_default_assemblers()
@@ -530,14 +537,14 @@ class Machine(HasTraits):
     def guess_default_assemblers(cls):
         asm_list = [
             {'comment char': ';',
-             'origin': '.org',
-             'data byte': '.byte',
-             'name': "cc65",
-             },
-            {'comment char': ';',
              'origin': '*=',
              'data byte': '.byte',
              'name': "MAC/65",
+             },
+            {'comment char': ';',
+             'origin': '.org',
+             'data byte': '.byte',
+             'name': "cc65",
              },
             ]
         return [dict(asm) for asm in asm_list]  # force a copy
