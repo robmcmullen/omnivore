@@ -1,7 +1,5 @@
 import numpy as np
 
-from hardcoded_parse_6502 import parse_instruction
-
 def parse_instruction_sample(pc, src):
     opcode = src[0]
     print "%04x" % pc,
@@ -48,6 +46,7 @@ def parse_instruction_sample(pc, src):
 if __name__ == "__main__":
     import sys
     import argparse
+    import importlib
     
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--cpu", help="Specify CPU type (defaults to 6502)", default="6502")
@@ -57,12 +56,20 @@ if __name__ == "__main__":
                    help="Binary files(s) to disassemble")
     args = parser.parse_args()
 
+    mod_name = "hardcoded_parse_%s" % args.cpu
+    try:
+        parse_mod = importlib.import_module(mod_name)
+    except ImportError:
+        from disasm_gen_py import gen_cpu
+        gen_cpu(args.cpu)
+        parse_mod = importlib.import_module(mod_name)
+
     def process(binary):
         pc = 0;
         size = len(binary)
         i = 0
         while i < size:
-            count = parse_instruction(pc, binary[i:i+4], pc+size)
+            count = parse_mod.parse_instruction(pc, binary[i:i+4], pc+size)
             pc += count
             i += count
 
