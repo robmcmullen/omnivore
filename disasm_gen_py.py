@@ -22,6 +22,7 @@ import cputables
 pcr = 1
 und = 2
 z80bit = 4
+lbl = 8 # subroutine/jump target; candidate for a label
 r = 64
 w = 128
 
@@ -65,7 +66,7 @@ class DisassemblerGenerator(object):
             self.address_modes[mode] = fmt
         self.opcode_table = cpu['opcodeTable']
 
-    def gen_switch(self, lines, table, leadin=0, leadin_offset=0, indent="    "):
+    def gen_py_print(self, lines, table, leadin=0, leadin_offset=0, indent="    "):
         first = True
         multibyte = dict()
 
@@ -179,6 +180,7 @@ class DisassemblerGenerator(object):
                         out("    addr = op1 + 256 * op2")
                         out("    signed = addr - 0x10000 if addr > 32768 else addr")
                         out("    rel = (pc + 2 + signed) & 0xffff  # limit to 64k address space")
+                        out("    print '%s'.format(rel)" % fmt)
                     else:
                         out("    print '%s'.format(op1, op2)" % fmt)
             elif length == 4:
@@ -216,12 +218,191 @@ class DisassemblerGenerator(object):
         out("    print '.byte $%02x' % opcode")
         out("return count")
 
-    def generate(self):
+    def generate_py_print(self):
         lines = ["def parse_instruction(pc, src, last_pc):"]
         lines.append("    opcode = src[0]")
         lines.append("    print '%04x' % pc,")
-        self.gen_switch(lines, self.opcode_table)
+        self.gen_py_print(lines, self.opcode_table)
         
+        self.lines = lines
+
+    def gen_numpy(self, lines, table, leadin=0, leadin_offset=0, indent="    "):
+        """Store in numpy array of strings:
+
+        0000 00 00 00 00 L0000 lda #$30
+        """
+        first = True
+        multibyte = dict()
+        byte_loc = 5
+        label_loc = 17
+        op_loc = 23
+
+        def out(str):
+            lines.append(indent + str)
+
+        def op1():
+            out("    op1 = src[%d]" % (1 + leadin_offset))
+
+        def op2():
+            out("    op2 = src[%d]" % (2 + leadin_offset))
+
+        def op3():
+            out("    op3 = src[%d]" % (3 + leadin_offset))
+
+        def bytes1(opcode):
+            if leadin_offset == 0:
+                out("    put_bytes('%02x', %d, wrap)" % (opcode, byte_loc))
+            else:
+                out("    put_bytes('%02x %02x', %d, wrap)" % (leadin, opcode, byte_loc))
+
+        def bytes2(opcode):
+            if leadin_offset == 0:
+                out("    put_bytes('%02x %%02x' %% op1, %d, wrap)" % (opcode, byte_loc))
+            else:
+                out("    put_bytes('%02x %02x %%02x' %% op1, %d, wrap)" % (leadin, opcode, byte_loc))
+
+        def bytes3(opcode):
+            if leadin_offset == 0:
+                out("    put_bytes('%02x %%02x %%02x' %% (op1, op2), %d, wrap)" % (opcode, byte_loc))
+            else:
+                out("    put_bytes('%02x %02x %%02x %%02x' %% (op1, op2), %d, wrap)" % (leadin, opcode, byte_loc))
+
+        def bytes4(opcode):
+            if leadin_offset == 0:
+                out("    put_bytes('%02x %%02x %%02x %%02x' %% (op1, op2, op3), %d, wrap)" % (opcode, byte_loc))
+            else: # z80 only
+                out("    put_bytes('%02x %02x %%02x %%02x' %% (op1, op2), %d, wrap)" % (leadin, opcode, byte_loc))
+
+        for opcode, optable in table.items():
+            if opcode > 65536:
+                print("found z80 multibyte %x, l=%d" % (opcode, leadin_offset))
+                leadin = opcode >> 16
+                opcode = opcode & 0xff
+                if leadin not in multibyte:
+                    multibyte[leadin] = dict()
+                multibyte[leadin][opcode] = optable
+                continue
+            elif opcode > 255:
+                print("found multibyte %x, l=%d" % (opcode, leadin_offset))
+                leadin = opcode // 256
+                opcode = opcode & 0xff
+                if leadin not in multibyte:
+                    multibyte[leadin] = dict()
+                multibyte[leadin][opcode] = optable
+                continue
+            try:
+                length, mnemonic, mode, flag = optable
+            except ValueError:
+                length, mnemonic, mode = optable
+                flag = 0
+            if flag & und and not self.allow_undocumented:
+                continue
+            if mode in self.rw_modes:
+                if mnemonic in self.r_mnemonics:
+                    flag |= r
+                if mnemonic in self.w_mnemonics:
+                    flag |= w
+            if not self.mnemonic_lower:
+                mnemonic = mnemonic.upper()
+
+            fmt = self.address_modes[mode]
+            print("Processing %x, %s" % (opcode, fmt))
+            if first:
+                iftext = "if"
+            else:
+                iftext = "elif"
+            out("%s opcode == 0x%x:" % (iftext, opcode))
+            if length - leadin_offset == 1:
+                out("    count = %d" % length)
+                bytes1(opcode)
+                out("    put_bytes(label, %d, wrap)" % label_loc)
+                if fmt:
+                    out("    put_bytes('%s %s', %d, wrap)" % (mnemonic, fmt, op_loc))
+                else:
+                    out("    put_bytes('%s', %d, wrap)" % (mnemonic, op_loc))
+            elif length - leadin_offset == 2:
+                out("    count = %d" % length)
+                out("    if pc + count >= last_pc: return 0")
+                op1()
+                bytes2(opcode)
+                out("    put_bytes(label, %d, wrap)" % label_loc)
+                if fmt:
+                    if flag & pcr:
+                        out("    signed = op1 - 256 if op1 > 127 else op1")
+                        out("    rel = (pc + 2 + signed) & 0xffff  # limit to 64k address space")
+                        out("    put_bytes('%s %s'.format(rel), %d, wrap)" % (mnemonic, fmt, op_loc))
+                    else:
+                        out("    put_bytes('%s %s'.format(op1), %d, wrap)" % (mnemonic, fmt, op_loc))
+                else:
+                    out("    print '%s'" % mnemonic)
+            elif length - leadin_offset == 3:
+                out("    count = %d" % length)
+                out("    if pc + count >= last_pc: return 0")
+                op1()
+                op2()
+                bytes3(opcode)
+                out("    put_bytes(label, %d, wrap)" % label_loc)
+                if fmt:
+                    if flag & pcr:
+                        out("    addr = op1 + 256 * op2")
+                        out("    signed = addr - 0x10000 if addr > 32768 else addr")
+                        out("    rel = (pc + 2 + signed) & 0xffff  # limit to 64k address space")
+                        out("    put_bytes('%s %s'.format(rel), %d, wrap)" % (mnemonic, fmt, op_loc))
+                    else:
+                        out("    put_bytes('%s %s'.format(op1, op2), %d, wrap)" % (mnemonic, fmt, op_loc))
+            elif length == 4:
+                out("    count = %d" % length)
+                out("    if pc + count >= last_pc: return 0")
+                op1()
+                op2()
+                if flag & z80bit:
+                    bytes4(opcode)
+                    out("    put_bytes(label, %d, wrap)" % label_loc)
+                    out("    signed = op1 - 256 if op1 > 127 else op1")
+                    out("    put_bytes('%s %s'.format(signed), %d, wrap)" % (mnemonic, fmt, op_loc))
+                else:
+                    op3()
+                    bytes4(opcode)
+                    out("    put_bytes(label, %d, wrap)" % label_loc)
+                    out("    put_bytes('%s %s'.format(op1, op2, op3), %d, wrap)" % (mnemonic, fmt, op_loc))
+            first = False
+
+        for leadin, group in multibyte.items():
+            if leadin > 256:
+                out("elif (opcode & 0xffff0000) == 0x%x0000:" % (leadin))
+                out("    opcode = opcode & 0xff")
+            else:
+                out("elif (opcode // 256) == 0x%x:" % (leadin))
+                out("    opcode = opcode & 0xff")
+            print("starting multibyte with leadin %x" % leadin)
+            self.gen_switch(lines, group, leadin, 1, indent=indent+"    ")
+
+        out("else:")
+        out("    count = 1")
+        out("    put_bytes('%%02x' %% opcode, %d, wrap)" % byte_loc)
+        out("    put_bytes(label, %d, wrap)" % label_loc)
+        out("    put_bytes('.byte $%%02x' %% opcode, %d, wrap)" % op_loc)
+        out("return count")
+
+    def generate(self):
+        # lines = ["def parse_instruction(pc, src, last_pc):"]
+        # lines.append("    opcode = src[0]")
+        # lines.append("    print '%04x' % pc,")
+        # self.gen_switch(lines, self.opcode_table)
+        preamble = """
+def put_bytes(str, loc, dest):
+    for a in str:
+        dest[loc] = ord(a)
+        loc += 1
+
+def parse_instruction_numpy(wrap, pc, src, last_pc):
+    opcode = src[0]
+    put_bytes('%04x' % pc, 0, wrap)
+    label = 'L0000'
+"""
+        lines = preamble.splitlines()
+        self.gen_numpy(lines, self.opcode_table)
+
         self.lines = lines
 
 def gen_cpu(cpu, undoc=False):
