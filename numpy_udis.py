@@ -82,7 +82,6 @@ if __name__ == "__main__":
         while pc < last:
             storage_wrapper.clear()
             pc, i = chunk_processor(storage_wrapper, binary, pc, last, i)
-            print storage_wrapper.storage[0]
 
             for r in range(storage_wrapper.row):
                 line = storage[r]
