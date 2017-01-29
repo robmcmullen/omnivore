@@ -4,7 +4,7 @@ import numpy as np
 cimport numpy as np
 
 cdef extern:
-    int parse_instruction_c(char *wrap, int pc, char *src, int last_pc)
+    int parse_instruction_c(char *wrap, int pc, char *src, int last_pc, np.uint16_t *labels)
 
 
 @cython.boundscheck(False)
@@ -16,6 +16,8 @@ def get_disassembled_chunk_fast(storage_wrapper, np.ndarray[char, ndim=1, mode="
     cdef int c_index = index_of_pc
     cdef char *binary = binary_array.data + c_index
     cdef int c_pc, c_last, count, row, max_rows
+    cdef np.ndarray[np.uint16_t, ndim=1] labels_array = storage_wrapper.labels
+    cdef np.uint16_t *labels = <np.uint16_t *>labels_array.data
 
     c_pc = pc
     c_last = last
@@ -24,7 +26,7 @@ def get_disassembled_chunk_fast(storage_wrapper, np.ndarray[char, ndim=1, mode="
 
     # fast loop in C
     while c_pc < c_last and row < max_rows:
-        count = parse_instruction_c(storage, c_pc, binary, c_last)
+        count = parse_instruction_c(storage, c_pc, binary, c_last, labels)
         if count == 0:
             break
         c_pc += count

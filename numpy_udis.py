@@ -7,6 +7,7 @@ class StorageWrapper(object):
         self.row = 0
         self.num_rows = storage.shape[0]
         self.strsize = storage.itemsize
+        self.labels = np.zeros([256*256], dtype=np.uint16)
 
         # strings are immutable, so get a view of bytes that we can change
         self.data = storage.view(dtype=np.uint8).reshape((self.num_rows, self.strsize))
@@ -87,6 +88,12 @@ if __name__ == "__main__":
                 line = storage[r]
                 if line.strip():
                     print line
+
+        addr = 0
+        for w in storage_wrapper.labels:
+            if w > 0:
+                print "label: %04x" % addr
+            addr += 1
 
     if args.hex:
         try:

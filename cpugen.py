@@ -10,6 +10,7 @@ import glob
 pcr = 1
 und = 2
 z80bit = 4
+lbl = 8
 r = 64
 w = 128
 
@@ -50,7 +51,7 @@ def read_udis(pathname):
                 continue
             if "addressModeTable" in source and "opcodeTable" in source:
                 cpu_name, _ = os.path.splitext(localfile)
-                g = {"pcr": pcr, "und": und, "r": r, "w": w, "z80bit": z80bit}
+                g = {"pcr": pcr, "und": und, "r": r, "w": w, "z80bit": z80bit, "lbl": lbl}
                 d = {}
                 try:
                     exec(source, g, d)

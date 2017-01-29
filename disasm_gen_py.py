@@ -331,6 +331,7 @@ class DisassemblerGenerator(object):
                         out("    signed = op1 - 256 if op1 > 127 else op1")
                         out("    rel = (pc + 2 + signed) & 0xffff  # limit to 64k address space")
                         out("    put_bytes('%s %s'.format(rel), %d, wrap)" % (mnemonic, fmt, op_loc))
+                        out("    wrap.labels[rel] = 1")
                     else:
                         out("    put_bytes('%s %s'.format(op1), %d, wrap)" % (mnemonic, fmt, op_loc))
                 else:
@@ -348,8 +349,12 @@ class DisassemblerGenerator(object):
                         out("    signed = addr - 0x10000 if addr > 32768 else addr")
                         out("    rel = (pc + 2 + signed) & 0xffff  # limit to 64k address space")
                         out("    put_bytes('%s %s'.format(rel), %d, wrap)" % (mnemonic, fmt, op_loc))
+                        out("    wrap.labels[rel] = 1")
                     else:
                         out("    put_bytes('%s %s'.format(op1, op2), %d, wrap)" % (mnemonic, fmt, op_loc))
+                        if flag & lbl:
+                            out("    addr = op1 + 256 * op2")
+                            out("    wrap.labels[addr] = 1")
             elif length == 4:
                 out("    count = %d" % length)
                 out("    if pc + count >= last_pc: return 0")
@@ -507,8 +512,9 @@ class DisassemblerGenerator(object):
                 bstr, bvars = bytes2(opcode)
                 if fmt:
                     if flag & pcr:
-                        out("    signed = op1 - 256 if op1 > 127 else op1")
-                        out("    rel = (pc + 2 + signed) & 0xffff  # limit to 64k address space")
+                        out("    dist = op1 - 256 if op1 > 127 else op1")
+                        out("    rel = (pc + 2 + dist) & 0xffff  # limit to 64k address space")
+                        out("    wrap.labels[rel] = 1")
                 if bvars:
                     bvars.extend(argorder)
                     outstr = "'%s       %s %s' %% (%s)" % (bstr, mnemonic, fmt, ", ".join(bvars))
@@ -524,8 +530,12 @@ class DisassemblerGenerator(object):
                 if fmt:
                     if flag & pcr:
                         out("    addr = op1 + 256 * op2")
-                        out("    signed = addr - 0x10000 if addr > 32768 else addr")
+                        out("    if addr > 32768: addr -= 0x10000")
                         out("    rel = (pc + 2 + signed) & 0xffff  # limit to 64k address space")
+                        out("    wrap.labels[rel] = 1")
+                    elif flag & lbl:
+                        out("    addr = op1 + 256 * op2")
+                        out("    wrap.labels[addr] = 1")
                 if bvars:
                     bvars.extend(argorder)
                     outstr = "'%s       %s %s' %% (%s)" % (bstr, mnemonic, fmt, ", ".join(bvars))
@@ -581,7 +591,6 @@ def put_bytes(str, loc, dest):
 def parse_instruction_numpy(wrap, pc, src, last_pc):
     opcode = src[0]
     put_bytes('%04x' % pc, 0, wrap)
-    label = 'L0000'
 """
         lines = preamble.splitlines()
         self.gen_numpy_single_print(lines, self.opcode_table)
@@ -714,6 +723,7 @@ class CDisassemblerGenerator(DisassemblerGenerator):
                         out("    if (op1 > 127) dist = op1 - 256; else dist = op1")
                         # limit relative branch to 64k address space
                         out("    rel = (pc + 2 + dist) & 0xffff")
+                        out("    labels[rel] = 1")
                 if bvars:
                     bvars.extend(argorder)
                     outstr = "\"%s       %s %s\", %s" % (bstr, mnemonic, fmt, ", ".join(bvars))
@@ -732,6 +742,10 @@ class CDisassemblerGenerator(DisassemblerGenerator):
                         out("    if (addr > 32768) addr -= 0x10000")
                         # limit relative branch to 64k address space
                         out("    rel = (pc + 2 + addr) & 0xffff")
+                        out("    labels[rel] = 1")
+                    elif flag & lbl:
+                        out("    addr = op1 + 256 * op2")
+                        out("    labels[addr] = 1")
                 if bvars:
                     bvars.extend(argorder)
                     outstr = "\"%s       %s %s\", %s" % (bstr, mnemonic, fmt, ", ".join(bvars))
@@ -784,8 +798,9 @@ class CDisassemblerGenerator(DisassemblerGenerator):
         preamble = """
 #include <stdio.h>
 
-int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src, unsigned int last_pc) {
+int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src, unsigned int last_pc, unsigned short *labels) {
     int count, rel, dist;
+    short addr;
     unsigned char opcode, op1, op2, op3;
 
     opcode = *src++;
