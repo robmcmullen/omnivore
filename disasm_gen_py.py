@@ -389,7 +389,7 @@ class DisassemblerGenerator(object):
         out("    put_bytes('.byte $%%02x' %% opcode, %d, wrap)" % op_loc)
         out("return count")
 
-    def gen_numpy_single_print(self, lines, table, leadin=0, leadin_offset=0, indent="    "):
+    def gen_numpy_single_print(self, lines, table, leadin=0, leadin_offset=0, indent="    ", z80_2nd_byte=None):
         """Store in numpy array of strings:
 
         0000 00 00 00 00       lda #$30
@@ -432,38 +432,60 @@ class DisassemblerGenerator(object):
                 return "%02x %02x %%02x %%02x" % (leadin, opcode), ["op1", "op2"]
 
         def bytes4(opcode):
-            if leadin_offset == 0:
-                return "%02x %%02x %%02x %%02x" % (leadin, opcode), ["op1", "op2", "op3"]
-            else: # z80 only
-                return "%02x %02x %%02x %%02x" % (leadin, opcode), ["op1", "op2"]
+            return "%02x %%02x %%02x %%02x" % (opcode), ["op1", "op2", "op3"]
 
         def convert_fmt(fmt):
-            if "{1:02x}{0:02x}" in fmt:
-                fmt = fmt.replace("{1:02x}{0:02x}", "%02x%02x")
-                argorder = ["op2", "op1"]
+            if "{0:02x}" in fmt and "{1:02x}" in fmt:
+                # determine order of args by which comes first in the format string
+                i0 = fmt.index("{0:02x}")
+                i1 = fmt.index("{1:02x}")
+                if i0 < i1:
+                    argorder = ["op1", "op2"]
+                else:
+                    argorder = ["op2", "op1"]
+                fmt = fmt.replace("{0:02x}", "%02x").replace("{1:02x}", "%02x")
             elif "{0:02x}" in fmt:
                 fmt = fmt.replace("{0:02x}", "%02x")
                 argorder = ["op1"]
             elif "{0:04x}" in fmt:
                 fmt = fmt.replace("{0:04x}", "%04x")
                 argorder = ["rel"]
-            elif "{0:02x}{1:02x}" in fmt:
-                fmt = fmt.replace("{0:02x}{1:02x}", "%02x%02x")
-                argorder = ["op1", "op2"]
             else:
                 argorder = []
+
+            if "'" in fmt:
+                fmt = fmt.replace("'", "\\'")
             return fmt, argorder
 
         for opcode, optable in table.items():
+            if first:
+                iftext = "if"
+            else:
+                iftext = "elif"
+
             if opcode > 65536:
                 print("found z80 multibyte %x, l=%d" % (opcode, leadin_offset))
-                leadin = opcode >> 16
-                opcode = opcode & 0xff
+                leadin = opcode >> 24
+                second_byte = (opcode >> 16) & 0xff
                 if leadin not in multibyte:
                     multibyte[leadin] = dict()
-                multibyte[leadin][opcode] = optable
+                if second_byte not in multibyte[leadin]:
+                    multibyte[leadin][second_byte] = dict()
+                fourth_byte = opcode & 0xff
+                multibyte[leadin][second_byte][fourth_byte] = optable
                 continue
             elif opcode > 255:
+                try:
+                    length, mnemonic, mode, flag = optable
+                    # check for placeholder z80 instructions & ignore them the
+                    # real instructions for ddcb and fdcb will have 4 byte
+                    # opcodes
+                    if flag & z80bit and (opcode == 0xddcb or opcode == 0xfdcb):
+                        continue
+                except ValueError:
+                    # no flag, can't have the z80bit set, so it's a valid
+                    # opcode
+                    pass
                 print("found multibyte %x, l=%d" % (opcode, leadin_offset))
                 leadin = opcode // 256
                 opcode = opcode & 0xff
@@ -474,8 +496,21 @@ class DisassemblerGenerator(object):
             try:
                 length, mnemonic, mode, flag = optable
             except ValueError:
-                length, mnemonic, mode = optable
-                flag = 0
+                try:
+                    length, mnemonic, mode = optable
+                    flag = 0
+                except ValueError:
+                    # process z80 4-byte commands
+                    print("z80 4 byte: %x %x" % (leadin, opcode))
+                    out("%s opcode == 0x%x:" % (iftext, opcode))
+                    out("    op1 = src[2]")
+                    out("    op2 = src[3]")
+                    out("    count = %d" % length)
+                    out("    if pc + count >= last_pc: return 0")
+                    out("    dist = op1 - 256 if op1 > 127 else op1")
+                    out("    rel = (pc + 2 + dist) & 0xffff  # limit to 64k address space")
+                    self.gen_numpy_single_print(lines, optable, leadin, 2, indent=indent+"    ", z80_2nd_byte=opcode)
+
             if flag & und and not self.allow_undocumented:
                 continue
             if mode in self.rw_modes:
@@ -489,10 +524,14 @@ class DisassemblerGenerator(object):
             fmt = self.address_modes[mode]
             print("Processing %x, %s" % (opcode, fmt))
             fmt, argorder = convert_fmt(fmt)
-            if first:
-                iftext = "if"
-            else:
-                iftext = "elif"
+            if z80_2nd_byte is not None:
+                out("%s op2 == 0x%x:" % (iftext, opcode))
+                bstr, bvars = "%02x %02x %%02x %02x" % (leadin, z80_2nd_byte, opcode), ["op1"]
+                bvars.append("rel")
+                outstr = "'%s       %s %s' %% (%s)" % (bstr, mnemonic, fmt, ", ".join(bvars))
+                out("    put_bytes(%s, %d, wrap)" % (outstr, byte_loc))
+                first = False
+                continue
             out("%s opcode == 0x%x:" % (iftext, opcode))
             if length - leadin_offset == 1:
                 out("    count = %d" % length)
@@ -547,34 +586,29 @@ class DisassemblerGenerator(object):
                 out("    if pc + count >= last_pc: return 0")
                 op1()
                 op2()
+                op3()
                 bstr, bvars = bytes4(opcode)
-                if flag & z80bit:
-                    out("    signed = op1 - 256 if op1 > 127 else op1")
-                    bvars.append("signed")
-                else:
-                    op3()
                 outstr = "'%s       %s %s' %% (%s)" % (bstr, mnemonic, fmt, ", ".join(bvars))
                 out("    put_bytes(%s, %d, wrap)" % (outstr, byte_loc))
             first = False
 
         for leadin, group in multibyte.items():
-            if leadin > 256:
-                out("elif (opcode & 0xffff0000) == 0x%x0000:" % (leadin))
-                out("    opcode = opcode & 0xff")
-            else:
-                out("elif (opcode // 256) == 0x%x:" % (leadin))
-                out("    opcode = opcode & 0xff")
+            out("elif opcode == 0x%x:" % (leadin))
+            out("    leadin = opcode")
+            out("    opcode = src[1]")
             print("starting multibyte with leadin %x" % leadin)
-            self.gen_switch(lines, group, leadin, 1, indent=indent+"    ")
+            print(group)
+            self.gen_numpy_single_print(lines, group, leadin, 1, indent=indent+"    ")
 
-        out("else:")
-        out("    count = 1")
-        bstr = "%02x __ __ __"
-        bvars = ["opcode", "opcode"]
-        mnemonic = ".byte"
-        fmt = "%02x"
-        outstr = "'%s       %s %s' %% (%s)" % (bstr, mnemonic, fmt, ", ".join(bvars))
-        out("    put_bytes(%s, %d, wrap)" % (outstr, byte_loc))
+        if not z80_2nd_byte:
+            out("else:")
+            out("    count = 1")
+            bstr = "%02x __ __ __"
+            bvars = ["opcode", "opcode"]
+            mnemonic = ".byte"
+            fmt = "%02x"
+            outstr = "'%s       %s %s' %% (%s)" % (bstr, mnemonic, fmt, ", ".join(bvars))
+            out("    put_bytes(%s, %d, wrap)" % (outstr, byte_loc))
         out("return count")
 
     def generate(self):
@@ -775,7 +809,7 @@ class CDisassemblerGenerator(DisassemblerGenerator):
                 out("elif (opcode // 256) == 0x%x:" % (leadin))
                 out("    opcode = opcode & 0xff")
             print("starting multibyte with leadin %x" % leadin)
-            self.gen_switch(lines, group, leadin, 1, indent=indent+"    ")
+            self.gen_c(lines, group, leadin, 1, indent=indent+"    ")
 
         out("default:")
         out("    count = 1")
