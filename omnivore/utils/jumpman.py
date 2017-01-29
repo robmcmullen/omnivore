@@ -1001,8 +1001,8 @@ class JumpmanCustomCode(object):
         self.asm = asm
         self.ranges = []
         self.data = []
-        self.labels_used = set()
-        self.vector_labels_used = set()
+        self.labels_used = {}
+        self.vector_labels_used = {}
         self.vectors_used = set()
         self.triggers = {}
         self.custom_gameloop = False
@@ -1015,9 +1015,9 @@ class JumpmanCustomCode(object):
         for first, last, raw in self.asm.segments:
             ranges.append("$%04x-$%04x" % (first, last))
             total += len(raw)
-        v = sorted(self.vector_labels_used)
-        t = sorted(self.triggers.keys())
-        lb = sorted(self.labels_used)
+        v = sorted(["%04x %s" % (addr, name) for name, addr in self.vector_labels_used.iteritems()])
+        t = sorted(["%04x %s" % (addr, name) for name, addr in self.triggers.iteritems()])
+        lb = sorted(["%04x %s" % (addr, name) for name, addr in self.labels_used.iteritems()])
 
         text = """\
 Total bytes: %d
@@ -1045,13 +1045,13 @@ Labels defined:
             self.data.extend(raw)
         for label, addr in self.asm.labels.iteritems():
             if label in self.vector_storage:
-                self.vector_labels_used.add(label)
+                self.vector_labels_used[label] = addr
                 vector = self.vector_storage[label]
                 self.add_vector(vector, addr)
             elif label.startswith("trigger"):
                 self.triggers[label] = addr
             else:
-                self.labels_used.add(label)
+                self.labels_used[label] = addr
 
         # force unused labels to revert to default values. This is needed, for
         # example, to overwrite a label that is unused in the current
