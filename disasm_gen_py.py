@@ -700,9 +700,9 @@ class CDisassemblerGenerator(DisassemblerGenerator):
                     fmt = ""
                 if bvars:
                     bvars.extend(argorder) # should be null operation; 1 byte length opcodes shouldn't have any arguments
-                    outstr = "'%s       %s %s', %s" % (bstr, mnemonic, fmt, bvars)
+                    outstr = "\"%s       %s %s\", %s" % (bstr, mnemonic, fmt, bvars)
                 else:
-                    outstr = "'%s       %s %s'" % (bstr, mnemonic, fmt)
+                    outstr = "\"%s       %s %s\"" % (bstr, mnemonic, fmt)
                 out("    sprintf(wrap, %s)" % outstr)
             elif length - leadin_offset == 2:
                 out("    count = %d" % length)
@@ -711,14 +711,14 @@ class CDisassemblerGenerator(DisassemblerGenerator):
                 bstr, bvars = bytes2(opcode)
                 if fmt:
                     if flag & pcr:
-                        out("    if (op1 > 127) signed = op1 - 256; else signed = op1")
+                        out("    if (op1 > 127) dist = op1 - 256; else dist = op1")
                         # limit relative branch to 64k address space
-                        out("    rel = (pc + 2 + signed) & 0xffff")
+                        out("    rel = (pc + 2 + dist) & 0xffff")
                 if bvars:
                     bvars.extend(argorder)
-                    outstr = "'%s       %s %s', %s" % (bstr, mnemonic, fmt, ", ".join(bvars))
+                    outstr = "\"%s       %s %s\", %s" % (bstr, mnemonic, fmt, ", ".join(bvars))
                 else:
-                    outstr = "'%s       %s %s'" % (bstr, mnemonic, fmt)
+                    outstr = "\"%s       %s %s\"" % (bstr, mnemonic, fmt)
                 out("    sprintf(wrap, %s)" % outstr)
             elif length - leadin_offset == 3:
                 out("    count = %d" % length)
@@ -734,9 +734,9 @@ class CDisassemblerGenerator(DisassemblerGenerator):
                         out("    rel = (pc + 2 + addr) & 0xffff")
                 if bvars:
                     bvars.extend(argorder)
-                    outstr = "'%s       %s %s', %s" % (bstr, mnemonic, fmt, ", ".join(bvars))
+                    outstr = "\"%s       %s %s\", %s" % (bstr, mnemonic, fmt, ", ".join(bvars))
                 else:
-                    outstr = "'%s       %s %s'" % (bstr, mnemonic, fmt)
+                    outstr = "\"%s       %s %s\"" % (bstr, mnemonic, fmt)
                 out("    sprintf(wrap, %s)" % outstr)
             elif length == 4:
                 out("    count = %d" % length)
@@ -745,11 +745,11 @@ class CDisassemblerGenerator(DisassemblerGenerator):
                 op2()
                 bstr, bvars = bytes4(opcode)
                 if flag & z80bit:
-                    out("    if (op1 > 127) signed = op1 - 256; else signed = op1")
-                    bvars.append("signed")
+                    out("    if (op1 > 127) dist = op1 - 256; else dist = op1")
+                    bvars.append("dist")
                 else:
                     op3()
-                outstr = "'%s       %s %s', %s" % (bstr, mnemonic, fmt, ", ".join(bvars))
+                outstr = "\"%s       %s %s\", %s" % (bstr, mnemonic, fmt, ", ".join(bvars))
                 out("    sprintf(wrap, %s)" % outstr)
             out("    break")
 
@@ -769,7 +769,7 @@ class CDisassemblerGenerator(DisassemblerGenerator):
         bvars = ["opcode", "opcode"]
         mnemonic = ".byte"
         fmt = "%02x"
-        outstr = "'%s       %s %s' %% (%s)" % (bstr, mnemonic, fmt, ", ".join(bvars))
+        outstr = "\"%s       %s %s\", %s" % (bstr, mnemonic, fmt, ", ".join(bvars))
         out("    sprintf(wrap, %s)" % outstr)
         out("    break")
         out("}")
@@ -782,12 +782,14 @@ class CDisassemblerGenerator(DisassemblerGenerator):
         # lines.append("    print '%04x' % pc,")
         # self.gen_switch(lines, self.opcode_table)
         preamble = """
+#include <stdio.h>
+
 int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src, unsigned int last_pc) {
-    int count;
+    int count, rel, dist;
     unsigned char opcode, op1, op2, op3;
 
     opcode = *src++;
-    sprintf(wrap, '%04x', pc);
+    sprintf(wrap, "%04x " , pc);
     wrap += 5;
 """
         lines = preamble.splitlines()

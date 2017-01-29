@@ -40,6 +40,7 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--cpu", help="Specify CPU type (defaults to 6502)", default="6502")
     parser.add_argument("-u", "--undocumented", help="Allow undocumented opcodes", action="store_true")
     parser.add_argument("-x", "--hex", help="Disassemble a string version of hex digits")
+    parser.add_argument("-f", "--fast", action="store_true", help="Use C code for disassembly generation", default=False)
     parser.add_argument("filenames", metavar="filenames", nargs='*',
                    help="Binary files(s) to disassemble")
     args = parser.parse_args()
@@ -54,28 +55,37 @@ if __name__ == "__main__":
         gen_cpu(args.cpu)
         parse_mod = importlib.import_module(mod_name)
 
+    def get_disassembled_chunk(storage_wrapper, binary, pc, last, index_of_pc):
+        while pc < last:
+            count = parse_mod.parse_instruction_numpy(storage_wrapper, pc, binary[index_of_pc:index_of_pc+4], last)
+            if count > 0:
+                pc += count
+                index_of_pc += count
+                if not storage_wrapper.next():
+                    break
+            else:
+                break
+        return pc, index_of_pc
+
+    if args.fast:
+        import disasm_speedups
+        chunk_processor = disasm_speedups.get_disassembled_chunk_fast
+    else:
+        chunk_processor = get_disassembled_chunk
+
     def process(binary):
         pc = 0;
         size = len(binary)
         last = pc + size
         i = 0
         while pc < last:
-            while pc < last:
-                count = parse_mod.parse_instruction_numpy(storage_wrapper, pc, binary[i:i+4], last)
-                if count > 0:
-                    pc += count
-                    i += count
-                    if not storage_wrapper.next():
-                        break
-                else:
-                    break
+            storage_wrapper.clear()
+            pc, i = chunk_processor(storage_wrapper, binary, pc, last, i)
 
             for r in range(storage_wrapper.row):
                 line = storage[r]
                 if line.strip():
                     print line
-
-            storage_wrapper.clear()
 
     if args.hex:
         try:
