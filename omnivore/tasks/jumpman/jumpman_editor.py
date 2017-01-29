@@ -387,6 +387,12 @@ class JumpmanEditor(BitmapEditor):
         if not self.assembly_source:
             return
         self.metadata_dirty = True
+        path = self.document.filesystem_path()
+        if not path:
+            if show_info:
+                # only display error message on user-initiated compilation
+                self.window.error("Please save the level before\ncompiling the assembly source", "Assembly Error")
+            return
         dirname = os.path.dirname(self.document.filesystem_path())
         if dirname:
             filename = os.path.join(dirname, self.assembly_source)
