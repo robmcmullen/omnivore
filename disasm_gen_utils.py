@@ -239,7 +239,7 @@ class PrintC(PrintNumpy):
 int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src, unsigned int last_pc, unsigned short *labels) {
     int count, rel, dist;
     short addr;
-    unsigned char opcode, op1, op2, op3;
+    unsigned char opcode, leadin, op1, op2, op3;
 
     opcode = *src++;
     sprintf(wrap, "%04x " , pc);
@@ -251,18 +251,12 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
             s += ";"
         self.lines.append(self.indent + s)
 
-    @property
-    def iftext(self):
-        if self.first:
-            return "if"
-        return "elif"
-
     def z80_4byte_intro(self, opcode):
         self.out("case 0x%x:" % (opcode))
         self.out("    op1 = *src++")
         self.out("    op2 = *src++")
         self.out("    count = 4")
-        self.out("    if pc + count > last_pc: return 0")
+        self.out("    if (pc + count > last_pc) return 0")
         self.out("    if (op1 > 127) dist = op1 - 256; else dist = op1")
         self.out("    rel = (pc + 2 + dist) & 0xffff")
         self.out("    switch(op2) {")
@@ -271,7 +265,7 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
         self.out("case 0x%x:" % (opcode))
         bstr, bvars = "%02x %02x %%02x %02x" % (self.leadin, z80_2nd_byte, opcode), ["op1"]
         bvars.append("rel")
-        outstr = "'%s       %s %s', %s" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
+        outstr = "\"%s       %s %s\", %s" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
         self.out("    sprintf(wrap, %s)" % (outstr))
         self.out("    break")
         self.first = False
