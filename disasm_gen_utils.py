@@ -235,7 +235,7 @@ def parse_instruction_numpy(wrap, pc, src, last_pc):
         bvars = ["opcode", "opcode"]
         mnemonic = ".byte"
         fmt = "%02x"
-        outstr = "'%s       %s %s' %% (%s)" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
+        outstr = "'%s       %s %s' %% (%s)" % (bstr, mnemonic, fmt, ", ".join(bvars))
         self.out("    put_bytes(%s, %d, wrap)" % (outstr, byte_loc))
 
     def start_multibyte_leadin(self, leadin):
