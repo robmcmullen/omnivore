@@ -152,23 +152,34 @@ class DisassemblerGenerator(object):
 
 
 def gen_cpu(cpu, undoc=False):
+    if undoc:
+        file_root = "hardcoded_parse_%sundoc" % cpu
+    else:
+        file_root = "hardcoded_parse_%s" % cpu
     disasm = DisassemblerGenerator(cpu, PrintNumpy, allow_undocumented=undoc)
-    with open("hardcoded_parse_%s.py" % cpu, "w") as fh:
+    with open("%s.py" % file_root, "w") as fh:
         fh.write("\n".join(disasm.lines))
         fh.write("\n")
     disasm = DisassemblerGenerator(cpu, PrintC, allow_undocumented=undoc)
-    with open("hardcoded_parse_%s.c" % cpu, "w") as fh:
+    with open("%s.c" % file_root, "w") as fh:
         fh.write("\n".join(disasm.lines))
         fh.write("\n")
 
+def gen_all():
+    for cpu in cputables.processors.keys():
+        gen_cpu(cpu)
+    gen_cpu("6502", True)
 
 if __name__ == "__main__":
     import sys
     import argparse
     
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--cpu", help="Specify CPU type (defaults to 6502)", default="6502")
+    parser.add_argument("-c", "--cpu", help="Specify CPU type (defaults to 6502)", default="")
     parser.add_argument("-u", "--undocumented", help="Allow undocumented opcodes", action="store_true")
     args = parser.parse_args()
 
-    gen_cpu(args.cpu)
+    if args.cpu:
+        gen_cpu(args.cpu)
+    else:
+        gen_all()
