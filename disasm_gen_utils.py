@@ -34,6 +34,13 @@ label_loc = 17
 op_loc = 23
 
 class PrintBase(object):
+    def __init__(self, lines, indent, leadin, leadin_offset):
+        self.lines = lines
+        self.indent = indent
+        self.leadin = leadin
+        self.leadin_offset = leadin_offset
+        self.first = True
+
     def bytes1(self, opcode):
         if self.leadin_offset == 0:
             return "%02x __ __ __" % opcode, []
@@ -76,7 +83,7 @@ class PrintBase(object):
         return self.flag & und
 
     def process(self, opcode):
-        self.out_if(opcode)
+        self.start_if_clause(opcode)
         if self.length - self.leadin_offset == 1:
             self.check_pc()
             self.opcode1(opcode)
@@ -89,16 +96,21 @@ class PrintBase(object):
         elif self.length == 4:
             self.check_pc()
             self.opcode4(opcode)
+        self.end_if_clause()
         self.first = False
 
 
 class PrintNumpy(PrintBase):
-    def __init__(self, lines, indent, leadin, leadin_offset):
-        self.lines = lines
-        self.indent = indent
-        self.leadin = leadin
-        self.leadin_offset = leadin_offset
-        self.first = True
+    preamble = """
+def put_bytes(str, loc, dest):
+    for a in str:
+        dest[loc] = ord(a)
+        loc += 1
+
+def parse_instruction_numpy(wrap, pc, src, last_pc):
+    opcode = src[0]
+    put_bytes('%04x' % pc, 0, wrap)
+"""
 
     def out(self, text):
         self.lines.append(self.indent + text)
@@ -126,6 +138,9 @@ class PrintNumpy(PrintBase):
         self.out("    put_bytes(%s, %d, wrap)" % (outstr, byte_loc))
         self.first = False
 
+    def z80_4byte_outro(self):
+        pass
+
     def op1(self):
         self.out("    op1 = src[%d]" % (1 + self.leadin_offset))
 
@@ -135,8 +150,11 @@ class PrintNumpy(PrintBase):
     def op3(self):
         self.out("    op3 = src[%d]" % (3 + self.leadin_offset))
 
-    def out_if(self, opcode):
+    def start_if_clause(self, opcode):
         self.out("%s opcode == 0x%x:" % (self.iftext, opcode))
+
+    def end_if_clause(self):
+        pass
 
     def check_pc(self):
         self.out("    count = %d" % self.length)
@@ -213,3 +231,159 @@ class PrintNumpy(PrintBase):
 
     def end_subroutine(self):
         self.out("return count")
+
+
+class PrintC(PrintNumpy):
+    preamble = """#include <stdio.h>
+
+int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src, unsigned int last_pc, unsigned short *labels) {
+    int count, rel, dist;
+    short addr;
+    unsigned char opcode, op1, op2, op3;
+
+    opcode = *src++;
+    sprintf(wrap, "%04x " , pc);
+    wrap += 5;
+"""
+
+    def out(self, s):
+        if not s.endswith(":") and not s.endswith("{") and not s.endswith("}"):
+            s += ";"
+        self.lines.append(self.indent + s)
+
+    @property
+    def iftext(self):
+        if self.first:
+            return "if"
+        return "elif"
+
+    def z80_4byte_intro(self, opcode):
+        self.out("case 0x%x:" % (opcode))
+        self.out("    op1 = *src++")
+        self.out("    op2 = *src++")
+        self.out("    count = 4")
+        self.out("    if pc + count > last_pc: return 0")
+        self.out("    if (op1 > 127) dist = op1 - 256; else dist = op1")
+        self.out("    rel = (pc + 2 + dist) & 0xffff")
+        self.out("    switch(op2) {")
+
+    def z80_4byte(self, z80_2nd_byte, opcode):
+        self.out("case 0x%x:" % (opcode))
+        bstr, bvars = "%02x %02x %%02x %02x" % (self.leadin, z80_2nd_byte, opcode), ["op1"]
+        bvars.append("rel")
+        outstr = "'%s       %s %s', %s" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
+        self.out("    sprintf(wrap, %s)" % (outstr))
+        self.out("    break")
+        self.first = False
+
+    def z80_4byte_outro(self):
+        pass
+
+    def op1(self):
+        self.out("    op1 = *src++")
+
+    def op2(self):
+        self.out("    op2 = *src++")
+
+    def op3(self):
+        self.out("    op3 = *src++")
+
+    def start_if_clause(self, opcode):
+        if self.first:
+            self.out("switch(opcode) {")
+            self.first = False
+        self.out("case 0x%x:" % (opcode))
+
+    def end_if_clause(self):
+        self.out("    break")
+
+    def check_pc(self):
+        self.out("    count = %d" % self.length)
+        if self.length > 1:
+            self.out("    if (pc + count > last_pc) return 0")
+
+    def opcode1(self, opcode):
+        bstr, bvars = self.bytes1(opcode)
+        if bvars:
+            bvars.extend(self.argorder) # should be null operation; 1 byte length opcodes shouldn't have any arguments
+            outstr = "\"%s       %s %s\", %s" % (bstr, self.mnemonic, self.fmt, bvars)
+        else:
+            outstr = "\"%s       %s %s\"" % (bstr, self.mnemonic, self.fmt)
+        self.out("    sprintf(wrap, %s)" % outstr)
+
+    def opcode2(self, opcode):
+        self.op1()
+        bstr, bvars = self.bytes2(opcode)
+        if self.fmt:
+            if self.flag & pcr:
+                self.out("    if (op1 > 127) dist = op1 - 256; else dist = op1")
+                self.out("    rel = (pc + 2 + dist) & 0xffff")
+                self.out("    labels[rel] = 1")
+        if bvars:
+            bvars.extend(self.argorder)
+            outstr = "\"%s       %s %s\", %s" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
+        else:
+            outstr = "\"%s       %s %s\"" % (bstr, self.mnemonic, self.fmt)
+        self.out("    sprintf(wrap, %s)" % outstr)
+
+    def opcode3(self, opcode):
+        self.op1()
+        self.op2()
+        bstr, bvars = self.bytes3(opcode)
+        if self.fmt:
+            if self.flag & pcr:
+                self.out("    addr = op1 + 256 * op2")
+                self.out("    if (addr > 32768) addr -= 0x10000")
+                self.out("    rel = (pc + 2 + signed) & 0xffff")
+                self.out("    labels[rel] = 1")
+            elif self.flag & lbl:
+                self.out("    addr = op1 + 256 * op2")
+                self.out("    labels[addr] = 1")
+        if bvars:
+            bvars.extend(self.argorder)
+            outstr = "\"%s       %s %s\", %s" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
+        else:
+            outstr = "\"%s       %s %s\"" % (bstr, self.mnemonic, self.fmt)
+        self.out("    sprintf(wrap, %s)" % outstr)
+
+    def opcode4(self, opcode):
+        self.op1()
+        self.op2()
+        self.op3()
+        bstr, bvars = self.bytes4(opcode)
+        outstr = "\"%s       %s %s\", %s" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
+        self.out("    sprintf(wrap, %s)" % outstr)
+
+    def unknown_opcode(self):
+        self.out("default:")
+        if self.leadin_offset == 0:
+            self.out("    count = 1")
+            bstr = "%02x __ __ __"
+            bvars = ["opcode", "opcode"]
+            mnemonic = ".byte"
+            fmt = "%02x"
+            outstr = "\"%s       %s %s\", %s" % (bstr, mnemonic, fmt, ", ".join(bvars))
+        elif self.leadin_offset == 1:
+            self.out("    count = 2")
+            bstr = "%02x %02x __ __"
+            bvars = ["leadin", "opcode", "leadin", "opcode"]
+            mnemonic = ".byte"
+            fmt = "%02x, %02x"
+            outstr = "\"%s       %s %s\", %s" % (bstr, mnemonic, fmt, ", ".join(bvars))
+
+        self.out("    sprintf(wrap, %s)" % outstr)
+        self.out("    break")
+
+    def start_multibyte_leadin(self, leadin):
+        self.out("case 0x%x:" % (leadin))
+        self.out("    leadin = opcode")
+        self.out("    opcode = *src++")
+        print("starting multibyte with leadin %x" % leadin)
+
+    def end_subroutine(self):
+        self.out("}")
+        if self.leadin_offset == 0:
+            self.out("return count")
+            self.lines.append("}") # no indent for closing brace
+        else:
+            self.out("break")
