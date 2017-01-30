@@ -7,7 +7,17 @@ r = 64
 w = 128
 
 def convert_fmt(fmt):
-    if "{0:02x}" in fmt and "{1:02x}" in fmt:
+    if "{0:02x}" in fmt and "{1:02x}" and "{2:02x}" in fmt:
+        # determine order of args by which comes first in the format string
+        indexes = [
+            (fmt.index("{0:02x}"), "op1"),
+            (fmt.index("{1:02x}"), "op2"),
+            (fmt.index("{2:02x}"), "op3"),
+            ]
+        indexes.sort()
+        argorder = [i[1] for i in indexes]
+        fmt = fmt.replace("{0:02x}", "%02x").replace("{1:02x}", "%02x").replace("{2:02x}", "%02x")
+    elif "{0:02x}" in fmt and "{1:02x}" in fmt:
         # determine order of args by which comes first in the format string
         i0 = fmt.index("{0:02x}")
         i1 = fmt.index("{1:02x}")
@@ -193,7 +203,8 @@ def parse_instruction_numpy(wrap, pc, src, last_pc):
             if self.flag & pcr:
                 self.out("    addr = op1 + 256 * op2")
                 self.out("    if addr > 32768: addr -= 0x10000")
-                self.out("    rel = (pc + 2 + signed) & 0xffff  # limit to 64k address space")
+                # limit relative address to 64k address space
+                self.out("    rel = (pc + 2 + addr) & 0xffff")
                 self.out("    wrap.labels[rel] = 1")
             elif self.flag & lbl:
                 self.out("    addr = op1 + 256 * op2")
@@ -210,7 +221,11 @@ def parse_instruction_numpy(wrap, pc, src, last_pc):
         self.op2()
         self.op3()
         bstr, bvars = self.bytes4(opcode)
-        outstr = "'%s       %s %s' %% (%s)" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
+        if bvars:
+            bvars.extend(self.argorder)
+            outstr = "'%s       %s %s' %% (%s)" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
+        else:
+            outstr = "'%s       %s %s' %% (%s)" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
         self.out("    put_bytes(%s, %d, wrap)" % (outstr, byte_loc))
 
     def unknown_opcode(self):
@@ -328,7 +343,8 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
             if self.flag & pcr:
                 self.out("    addr = op1 + 256 * op2")
                 self.out("    if (addr > 32768) addr -= 0x10000")
-                self.out("    rel = (pc + 2 + signed) & 0xffff")
+                # limit relative address to 64k address space
+                self.out("    rel = (pc + 2 + addr) & 0xffff")
                 self.out("    labels[rel] = 1")
             elif self.flag & lbl:
                 self.out("    addr = op1 + 256 * op2")
@@ -345,7 +361,11 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
         self.op2()
         self.op3()
         bstr, bvars = self.bytes4(opcode)
-        outstr = "\"%s       %s %s\", %s" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
+        if bvars:
+            bvars.extend(self.argorder)
+            outstr = "\"%s       %s %s\", %s" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
+        else:
+            outstr = "\"%s       %s %s\"" % (bstr, self.mnemonic, self.fmt)
         self.out("    sprintf(wrap, %s)" % outstr)
 
     def unknown_opcode(self):
