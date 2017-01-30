@@ -75,25 +75,36 @@ if __name__ == "__main__":
     else:
         chunk_processor = get_disassembled_chunk
 
-    def process(binary):
+    def process(binary, show=False):
         pc = 0;
         size = len(binary)
         last = pc + size
         i = 0
-        while pc < last:
+        incomplete = False
+        count = 0
+        while pc < last or incomplete:
             storage_wrapper.clear()
-            pc, i = chunk_processor(storage_wrapper, binary, pc, last, i)
+            next_pc, i = chunk_processor(storage_wrapper, binary, pc, last, i)
+            if next_pc == pc:
+                incomplete = True
+                break
+            pc = next_pc
 
-            for r in range(storage_wrapper.row):
-                line = storage[r]
-                if line.strip():
-                    print line
+            count += storage_wrapper.row
+            if show:
+                for r in range(storage_wrapper.row):
+                    line = storage[r]
+                    if line.strip():
+                        print line
 
-        addr = 0
-        for w in storage_wrapper.labels:
-            if w > 0:
-                print "label: %04x" % addr
-            addr += 1
+        if show:
+            addr = 0
+            for w in storage_wrapper.labels:
+                if w > 0:
+                    print "label: %04x" % addr
+                addr += 1
+
+        print "total instructions: %d" % count
 
     if args.hex:
         try:
