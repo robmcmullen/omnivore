@@ -153,9 +153,9 @@ class DisassemblerGenerator(object):
 
 def gen_cpu(cpu, undoc=False):
     if undoc:
-        file_root = "hardcoded_parse_%sundoc" % cpu
+        file_root = "udis_fast/hardcoded_parse_%sundoc" % cpu
     else:
-        file_root = "hardcoded_parse_%s" % cpu
+        file_root = "udis_fast/hardcoded_parse_%s" % cpu
     disasm = DisassemblerGenerator(cpu, PrintNumpy, allow_undocumented=undoc)
     with open("%s.py" % file_root, "w") as fh:
         fh.write("\n".join(disasm.lines))

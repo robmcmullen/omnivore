@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
     storage = np.empty((1000,), dtype="|S48")
     storage_wrapper = StorageWrapper(storage)
-    mod_name = "hardcoded_parse_%s" % args.cpu
+    mod_name = "udis_fast.hardcoded_parse_%s" % args.cpu
     try:
         parse_mod = importlib.import_module(mod_name)
     except ImportError:
@@ -69,7 +69,7 @@ if __name__ == "__main__":
         return pc, index_of_pc
 
     if args.fast:
-        mod_name = "disasm_speedups_%s" % args.cpu
+        mod_name = "udis_fast.disasm_speedups_%s" % args.cpu
         parse_mod = importlib.import_module(mod_name)
         chunk_processor = parse_mod.get_disassembled_chunk_fast
     else:
