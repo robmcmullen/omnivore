@@ -69,8 +69,9 @@ if __name__ == "__main__":
         return pc, index_of_pc
 
     if args.fast:
-        import disasm_speedups
-        chunk_processor = disasm_speedups.get_disassembled_chunk_fast
+        mod_name = "disasm_speedups_%s" % args.cpu
+        parse_mod = importlib.import_module(mod_name)
+        chunk_processor = parse_mod.get_disassembled_chunk_fast
     else:
         chunk_processor = get_disassembled_chunk
 

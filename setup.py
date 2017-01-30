@@ -1,4 +1,5 @@
 import sys
+import glob
 from setuptools import setup, find_packages, Extension
 
 if sys.platform.startswith("win"):
@@ -8,15 +9,25 @@ else:
 
 import numpy
 
-extensions = [
-  Extension("disasm_speedups",
-    sources = ["disasm_speedups.c",
-               "hardcoded_parse_6502.c",
+extensions = []
+for parser in glob.glob("hardcoded_parse_*.c"):
+    print parser
+    cpu = parser.replace("hardcoded_parse_", "").replace(".c", "")
+    mod_name = "disasm_speedups_%s" % cpu
+    mod_file = "%s.c" % mod_name
+    with open("disasm_speedups.c", "r") as fh:
+        src = fh.read()
+        src = src.replace("disasm_speedups", mod_name)
+        with open(mod_file, "w") as wfh:
+            wfh.write(src)
+    e = Extension(mod_name,
+    sources = [mod_file,
+               "hardcoded_parse_%s.c" % cpu,
               ],
     extra_compile_args = extra_compile_args,
     include_dirs = [numpy.get_include()],
     )
-]
+    extensions.append(e)
 
 cmdclass = dict()
 
