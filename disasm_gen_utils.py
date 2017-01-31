@@ -255,6 +255,7 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
     int count, rel, dist;
     short addr;
     unsigned char opcode, leadin, op1, op2, op3;
+    unsigned int num_printed = 0;
 
     opcode = *src++;
     sprintf(wrap, "%04x " , pc);
@@ -281,7 +282,7 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
         bstr, bvars = "%02x %02x %%02x %02x" % (self.leadin, z80_2nd_byte, opcode), ["op1"]
         bvars.append("rel")
         outstr = "\"%s       %s %s\", %s" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
-        self.out("    sprintf(wrap, %s)" % (outstr))
+        self.out("    num_printed = sprintf(wrap, %s)" % (outstr))
         self.out("    break")
         self.first = False
 
@@ -318,7 +319,7 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
             outstr = "\"%s       %s %s\", %s" % (bstr, self.mnemonic, self.fmt, bvars)
         else:
             outstr = "\"%s       %s %s\"" % (bstr, self.mnemonic, self.fmt)
-        self.out("    sprintf(wrap, %s)" % outstr)
+        self.out("    num_printed = sprintf(wrap, %s)" % outstr)
 
     def opcode2(self, opcode):
         self.op1()
@@ -333,7 +334,7 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
             outstr = "\"%s       %s %s\", %s" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
         else:
             outstr = "\"%s       %s %s\"" % (bstr, self.mnemonic, self.fmt)
-        self.out("    sprintf(wrap, %s)" % outstr)
+        self.out("    num_printed = sprintf(wrap, %s)" % outstr)
 
     def opcode3(self, opcode):
         self.op1()
@@ -354,7 +355,7 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
             outstr = "\"%s       %s %s\", %s" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
         else:
             outstr = "\"%s       %s %s\"" % (bstr, self.mnemonic, self.fmt)
-        self.out("    sprintf(wrap, %s)" % outstr)
+        self.out("    num_printed = sprintf(wrap, %s)" % outstr)
 
     def opcode4(self, opcode):
         self.op1()
@@ -366,7 +367,7 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
             outstr = "\"%s       %s %s\", %s" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
         else:
             outstr = "\"%s       %s %s\"" % (bstr, self.mnemonic, self.fmt)
-        self.out("    sprintf(wrap, %s)" % outstr)
+        self.out("    num_printed = sprintf(wrap, %s)" % outstr)
 
     def unknown_opcode(self):
         self.out("default:")
@@ -385,7 +386,7 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
             fmt = "%02x, %02x"
             outstr = "\"%s       %s %s\", %s" % (bstr, mnemonic, fmt, ", ".join(bvars))
 
-        self.out("    sprintf(wrap, %s)" % outstr)
+        self.out("    num_printed = sprintf(wrap, %s)" % outstr)
         self.out("    break")
 
     def start_multibyte_leadin(self, leadin):
@@ -397,6 +398,9 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
     def end_subroutine(self):
         self.out("}")
         if self.leadin_offset == 0:
+            # Get rid of trailing zero that is always appended by sprintf
+            # http://stackoverflow.com/questions/357068
+            self.out("if (num_printed > 0) wrap[num_printed]=' '")
             self.out("return count")
             self.lines.append("}") # no indent for closing brace
         else:
