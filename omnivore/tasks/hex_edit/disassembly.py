@@ -53,6 +53,7 @@ class DisassemblyTable(ByteGridTable):
         info = disasm.get_all(self.segment.rawdata.unindexed_view, pc, 0)
         self.index_to_row = info.index
         self.lines = info.instructions
+        self._rows = info.num_instructions
     
     def set_grid_cell_attr(self, grid, col, attr):
         ByteGridTable.set_grid_cell_attr(self, grid, col, attr)
@@ -65,15 +66,17 @@ class DisassemblyTable(ByteGridTable):
         try:
             try:
                 line = self.lines[r]
-            except:
+            except IndexError:
                 line = self.lines[-1]
+            except TypeError:
+                return 0, 0
             index = line["pc"] - self.start_addr
             return index, index + line["count"]
         except IndexError:
             return 0, 0
     
     def is_index_valid(self, index):
-        return index < len(self.segment)
+        return self._rows > 0 and index < len(self.segment)
     
     def get_row_col(self, index):
         try:
@@ -204,7 +207,6 @@ class DisassemblyTable(ByteGridTable):
     def ResetViewProcessArgs(self, grid, editor, *args):
         if editor is not None:
             self.set_editor(editor)
-        self._rows = len(self.lines)
 
 
 class AssemblerTextCtrl(HexTextCtrl):
