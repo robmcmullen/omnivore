@@ -581,9 +581,6 @@ class HexEditor(FrameworkEditor):
     def mark_index_range_changed(self, index_range):
         self.disassembly.restart_disassembly(index_range[0])
     
-    def perform_idle(self):
-        self.disassembly.perform_idle()
-    
     def common_popup_actions(self):
         return [CutAction, CopyAction, CopyDisassemblyAction, CopyAsReprAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, None, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsDisplayListAction, MarkSelectionAsJumpmanLevelAction, MarkSelectionAsJumpmanHarvestAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction]
     

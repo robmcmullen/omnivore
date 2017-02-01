@@ -19,74 +19,41 @@ class DisassemblyTable(ByteGridTable):
     
     def __init__(self):
         ByteGridTable.__init__(self)
-        self.lines = []
+        self.lines = None
         self._rows = 0
         self.index_to_row = []
         self.start_addr = 0
-        self.next_row = -1
         self.chunk_size = 256
         self.disassembler = None
 
     def set_editor(self, editor):
         self.editor = editor
         self.segment = segment = self.editor.segment
-        self.lines = []
+        self.lines = None
         self.index_to_row = []
         self._rows = 0
         self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
-        self.disassembler.set_pc(segment, segment.start_addr)
-        self.next_row = 0
         self.start_addr = segment.start_addr
-        self.disassemble_next()
+        self.restart_disassembly(0)
     
     def restart_disassembly(self, index):
-        try:
+        if index > 0 and False:
             next_row = self.index_to_row[index]
-        except IndexError:
-            # requesting an index that has yet to be disassembled, so it will
-            # get there when it gets there! Be patient!
-            return
-        
-        # don't reset starting point if the requested index is already in the
-        # region to be rebuilt
-        if self.next_row < 0 or next_row < self.next_row:
-            self.next_row = next_row
-            pc = self.get_pc(self.next_row)
-            self.disassembler.set_pc(self.segment, pc)
-    
-    def disassemble_next(self):
-        if self.next_row < 0:
-            return
-        lines = []
-        start_row = self.next_row
-        try:
-            for i in range(self.chunk_size):
-                (addr, bytes, opstr, comment, flag, dest_pc) = self.disassembler.get_instruction()
-                count = len(bytes)
-                data = (addr, bytes, opstr, comment, count, flag)
-                lines.append(data)
-        except StopIteration:
-            pass
-        if lines:
-            n = len(lines)
-            self.lines[start_row:start_row+n] = lines
-            start_index, index_to_row = self.get_index_to_row(lines, start_row)
-            self.index_to_row[start_index:start_index+len(index_to_row)] = index_to_row
-            self.next_row += n
+            pc = self.get_pc(next_row)
+            self.lines[next_row:-1] = []
         else:
-            self.lines[self.next_row:] = []
-            self.next_row = -1
-    
-    def get_index_to_row(self, lines, start_row):
-        row = start_row
-        index = lines[0][0] - self.start_addr
-        counts = [d[4] for d in lines]
-        index_to_row = []
-        for c in counts:
-            index_to_row.extend([row] * c)
-            row += 1
-        return index, index_to_row
+            next_row = -1
+            pc = self.segment.start_addr
+            self.lines = None
         
+        # old format: (addr, bytes, opstr, comment, count, flag)
+        self.disassembler.set_pc(self.segment, pc)
+        last_pc = pc + len(self.segment)
+        disasm = self.disassembler.fast
+        info = disasm.get_all(self.segment.rawdata.unindexed_view, pc, 0)
+        self.index_to_row = info.index
+        self.lines = info.instructions
+    
     def set_grid_cell_attr(self, grid, col, attr):
         ByteGridTable.set_grid_cell_attr(self, grid, col, attr)
         if col == 1:
@@ -100,8 +67,8 @@ class DisassemblyTable(ByteGridTable):
                 line = self.lines[r]
             except:
                 line = self.lines[-1]
-            index = line[0] - self.start_addr
-            return index, index + line[4]
+            index = line["pc"] - self.start_addr
+            return index, index + line["count"]
         except IndexError:
             return 0, 0
     
@@ -153,7 +120,10 @@ class DisassemblyTable(ByteGridTable):
         return index
     
     def get_pc(self, row):
-        return self.lines[row][0]
+        try:
+            return self.lines[row]["pc"]
+        except IndexError:
+            return 0
     
     def get_addr_dest(self, row):
         index, _ = self.get_index_range(row, 0)
@@ -168,10 +138,10 @@ class DisassemblyTable(ByteGridTable):
             row = self.index_to_row[index]
             line = self.lines[row]
         comments = []
-        c = str(line[3])
+        c = "" # str(line[3])
         if c:
             comments.append(c)
-        for i in range(line[4]):
+        for i in range(line["count"]):
             c = self.segment.get_comment(index + i)
             if c:
                 comments.append(c)
@@ -179,34 +149,40 @@ class DisassemblyTable(ByteGridTable):
 
     def get_value_style_lower(self, row, col):
         line = self.lines[row]
-        index = line[0] - self.start_addr
+        index = line["pc"] - self.start_addr
         style = 0
-        for i in range(line[4]):
+        for i in range(line["count"]):
             style |= self.segment.style[index + i]
         if col == 0:
-            text = " ".join("%02x" % i for i in line[1])
-        elif col == 2 and (style & comment_bit_mask):
-            text = self.get_comments(index, line)
+            text = " ".join("%02x" % self.segment[index + i] for i in range(line["count"]))
+        elif col == 2:
+            if (style & comment_bit_mask):
+                text = self.get_comments(index, line)
+            else:
+                text = ""
         else:
-            text = str(line[col + 1])
+            text = str(line["mnemonic"].rstrip() + " " + line["operand"].rstrip())
         return text, style
     
     def get_value_style_upper(self, row, col):
         line = self.lines[row]
-        index = line[0] - self.start_addr
+        index = line["pc"] - self.start_addr
         style = 0
-        for i in range(line[4]):
+        for i in range(line["count"]):
             style |= self.segment.style[index + i]
         if col == 0:
-            text = " ".join("%02X" % i for i in line[1])
+            text = " ".join("%02x" % self.segment[index + i] for i in range(line["count"]))
         elif col == 2 and (style & comment_bit_mask):
-            text = self.get_comments(index, line)
+            if (style & comment_bit_mask):
+                text = self.get_comments(index, line)
+            else:
+                text = ""
         else:
-            text = str(line[col + 1])
+            text = str(line["mnemonic"]).strip() + " " + str(line["operand"])
         return text, style
     
     def get_style_override(self, row, col, style):
-        if self.lines[row][5]:
+        if self.lines[row]["flag"]:
             return style|comment_bit_mask
         return style
 
@@ -221,15 +197,14 @@ class DisassemblyTable(ByteGridTable):
         return "%04X" % addr
 
     def GetRowLabelValue(self, row):
-        if self.lines:
+        if self.lines is not None:
             return self.get_label_at_row(row)
         return "0000"
 
     def ResetViewProcessArgs(self, grid, editor, *args):
         if editor is not None:
             self.set_editor(editor)
-        else:
-            self._rows = len(self.lines)
+        self._rows = len(self.lines)
 
 
 class AssemblerTextCtrl(HexTextCtrl):
@@ -276,13 +251,6 @@ class DisassemblyPanel(ByteGrid):
     def get_default_cell_editor(self):
         return AssemblerEditor(self)
 
-    def perform_idle(self):
-        if self.table.next_row >= 0:
-            self.table.disassemble_next()
-            self.table.ResetView(self, None)
-            if self.pending_index >= 0:
-                self.goto_index(self.pending_index)
-    
     def restart_disassembly(self, index):
         self.table.restart_disassembly(index)
     
