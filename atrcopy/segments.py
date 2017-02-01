@@ -60,6 +60,10 @@ class OrderWrapper(object):
         """
         return self.order[index]
 
+    @property
+    def unindexed(self):
+        return self.np_data[self.order]
+
     def tostring(self):
         return self.np_data[self.order].tostring()
 
@@ -117,6 +121,12 @@ class SegmentData(object):
     
     def get_style(self):
         return self.style
+
+    @property
+    def unindexed_view(self):
+        if self.is_indexed:
+            return self.data.unindexed
+        return self.data
     
     def byte_bounds_offset(self):
         """Return start and end offsets of this segment's data into the
