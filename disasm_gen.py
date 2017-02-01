@@ -160,7 +160,11 @@ def gen_cpu(cpu, undoc=False):
     with open("%s.py" % file_root, "w") as fh:
         fh.write("\n".join(disasm.lines))
         fh.write("\n")
-    disasm = DisassemblerGenerator(cpu, PrintC, allow_undocumented=undoc)
+    # disasm = DisassemblerGenerator(cpu, PrintC, allow_undocumented=undoc)
+    # with open("%s.c" % file_root, "w") as fh:
+    #     fh.write("\n".join(disasm.lines))
+    #     fh.write("\n")
+    disasm = DisassemblerGenerator(cpu, RawC, allow_undocumented=undoc)
     with open("%s.c" % file_root, "w") as fh:
         fh.write("\n".join(disasm.lines))
         fh.write("\n")

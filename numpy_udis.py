@@ -3,7 +3,6 @@ import numpy as np
 import udis_fast
 
 
-
 if __name__ == "__main__":
     import sys
     import argparse
@@ -19,9 +18,12 @@ if __name__ == "__main__":
                    help="Binary files(s) to disassemble")
     args = parser.parse_args()
 
-    disasm = udis_fast.DisassemblerWrapper(args.cpu, args.fast)
+    disasm = udis_fast.DisassemblerWrapper(args.cpu, fast=args.fast)
 
     def process(binary, show=False):
+        if args.fast:
+            process_fast(binary, show)
+            return
         pc = 0;
         size = len(binary)
         last = pc + size
@@ -38,10 +40,16 @@ if __name__ == "__main__":
 
             count += disasm.rows
             if show:
-                for r in range(disasm.rows):
-                    line = disasm.storage[r]
-                    if line.strip():
+                if args.fast:
+                    for r in range(disasm.rows):
+                        data = disasm.storage_wrapper.view(r)
+                        line = "%d %s %s" % (data['pc'], data['mnemonic'], data['operand'])
                         print line
+                else:
+                    for r in range(disasm.rows):
+                        line = disasm.storage[r]
+                        if line.strip():
+                            print line
 
         if show:
             addr = 0
@@ -51,6 +59,24 @@ if __name__ == "__main__":
                 addr += 1
 
         print "total instructions: %d" % count
+
+    def process_fast(binary, show=False):
+        pc = 0;
+        size = len(binary)
+        last = pc + size
+        i = 0
+        info = disasm.get_all(binary, pc, i)
+        if show:
+            row = 0
+            while (row < info.num_instructions):
+                data = info.instructions[row]
+                line = "%d %s %s" % (data['pc'], data['mnemonic'], data['operand'])
+                print line
+                row += 1
+
+        print "total instructions: %d" % info.num_instructions
+        print info.index[0:1000]
+        print np.where(info.labels > 0)
 
     if args.hex:
         try:

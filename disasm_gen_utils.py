@@ -405,3 +405,150 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
             self.lines.append("}") # no indent for closing brace
         else:
             self.out("break")
+
+class RawC(PrintC):
+    max_mnemonic_length = 5
+    max_operand_length = 32 - 4 - 4 - 1 - 1 - max_mnemonic_length
+
+    preamble = """#include <stdio.h>
+#include <string.h>
+
+/* 32 byte structure */
+typedef struct {
+    int pc;
+    int dest_pc; /* address pointed to by this opcode; -1 if not applicable */
+    unsigned char count;
+    unsigned char flag;
+    char mnemonic[%d]; /* max length of opcode string is currently 5 */
+    char operand[%d];
+} asm_entry;
+
+int parse_instruction_c(asm_entry *wrap, unsigned int pc, unsigned char *src, unsigned int last_pc, unsigned short *labels) {
+    int count, rel, dist;
+    short addr;
+    unsigned char opcode, leadin, op1, op2, op3;
+    unsigned int num_printed = 0;
+
+    opcode = *src++;
+    wrap->pc = pc;
+""" % (max_mnemonic_length, max_operand_length)
+
+    def out(self, s):
+        if not s.endswith(":") and not s.endswith("{") and not s.endswith("}"):
+            s += ";"
+        self.lines.append(self.indent + s)
+
+    def z80_4byte_intro(self, opcode):
+        self.out("case 0x%x:" % (opcode))
+        self.out("    op1 = *src++")
+        self.out("    op2 = *src++")
+        self.out("    wrap->count = 4")
+        self.out("    if (pc + wrap->count > last_pc) return 0")
+        self.out("    if (op1 > 127) dist = op1 - 256; else dist = op1")
+        self.out("    rel = (pc + 2 + dist) & 0xffff")
+        self.out("    switch(op2) {")
+
+    def z80_4byte(self, z80_2nd_byte, opcode):
+        self.out("case 0x%x:" % (opcode))
+        self.fmt = ["rel"]
+        self.opcode1(opcode)
+        self.first = False
+
+    def z80_4byte_outro(self):
+        pass
+
+    def op1(self):
+        self.out("    op1 = *src++")
+
+    def op2(self):
+        self.out("    op2 = *src++")
+
+    def op3(self):
+        self.out("    op3 = *src++")
+
+    def start_if_clause(self, opcode):
+        if self.first:
+            self.out("switch(opcode) {")
+            self.first = False
+        self.out("case 0x%x:" % (opcode))
+
+    def end_if_clause(self):
+        self.out("    break")
+
+    def check_pc(self):
+        self.out("    wrap->count = %d" % self.length)
+        if self.length > 1:
+            self.out("    if (pc + wrap->count > last_pc) return 0")
+
+    def opcode1(self, opcode):
+        padding = " "*(self.max_mnemonic_length - len(self.mnemonic))
+        self.out("    strncpy(wrap->mnemonic, \"%s\", %d)" % (self.mnemonic + padding, self.max_mnemonic_length))
+        if self.argorder:
+            print self.argorder
+            outstr = "\"%s\", %s" % (self.fmt, ", ".join(self.argorder))
+            self.out("    num_printed = sprintf(wrap->operand, %s)" % outstr)
+        else:
+            outstr = self.fmt
+            if outstr:
+                self.out("    strncpy(wrap->operand, \"%s\", %d)" % (outstr, len(outstr)))
+
+    def opcode2(self, opcode):
+        self.op1()
+        if self.fmt:
+            if self.flag & pcr:
+                self.out("    if (op1 > 127) dist = op1 - 256; else dist = op1")
+                self.out("    rel = (pc + 2 + dist) & 0xffff")
+                self.out("    labels[rel] = 1")
+        self.opcode1(opcode)
+
+    def opcode3(self, opcode):
+        self.op1()
+        self.op2()
+        if self.fmt:
+            if self.flag & pcr:
+                self.out("    addr = op1 + 256 * op2")
+                self.out("    if (addr > 32768) addr -= 0x10000")
+                # limit relative address to 64k address space
+                self.out("    rel = (pc + 2 + addr) & 0xffff")
+                self.out("    labels[rel] = 1")
+            elif self.flag & lbl:
+                self.out("    addr = op1 + 256 * op2")
+                self.out("    labels[addr] = 1")
+        self.opcode1(opcode)
+
+    def opcode4(self, opcode):
+        self.op1()
+        self.op2()
+        self.op3()
+        self.opcode1(opcode)
+
+    def unknown_opcode(self):
+        self.out("default:")
+        if self.leadin_offset == 0:
+            self.out("    wrap->count = 1")
+            self.mnemonic = ".byte"
+            self.fmt = "%02x"
+            self.argorder = ["op1"]
+        elif self.leadin_offset == 1:
+            self.out("    wrap->count = 2")
+            self.mnemonic = ".byte"
+            self.fmt = "%02x, %02x"
+            self.argorder = ["leadin", "opcode"]
+        self.opcode1(0)
+        self.out("    break")
+
+    def start_multibyte_leadin(self, leadin):
+        self.out("case 0x%x:" % (leadin))
+        self.out("    leadin = opcode")
+        self.out("    opcode = *src++")
+        print("starting multibyte with leadin %x" % leadin)
+
+    def end_subroutine(self):
+        self.out("}")
+        if self.leadin_offset == 0:
+            self.out("wrap->flag = 0")
+            self.out("memset(wrap->operand + num_printed, ' ', %d - num_printed)" % self.max_operand_length)
+            self.out("return wrap->count")
+            self.lines.append("}") # no indent for closing brace
+        else:
+            self.out("break")
