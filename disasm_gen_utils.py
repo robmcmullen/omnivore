@@ -424,8 +424,9 @@ typedef struct {
 } asm_entry;
 
 int parse_instruction_c(asm_entry *wrap, unsigned int pc, unsigned char *src, unsigned int last_pc, unsigned short *labels) {
-    int count, rel, dist;
-    short addr;
+    int count, dist;
+    unsigned int rel;
+    unsigned short addr;
     unsigned char opcode, leadin, op1, op2, op3;
     unsigned int num_printed = 0;
 
