@@ -21,6 +21,9 @@ import cputables
 
 from disasm_gen_utils import *
 
+import logging
+log = logging.getLogger(__name__)
+
 # flags
 pcr = 1
 und = 2
@@ -81,7 +84,7 @@ class DisassemblerGenerator(object):
 
         for opcode, optable in table.items():
             if opcode > 65536:
-                print("found z80 multibyte %x, l=%d" % (opcode, leadin_offset))
+                log.debug("found z80 multibyte %x, l=%d" % (opcode, leadin_offset))
                 leadin = opcode >> 24
                 second_byte = (opcode >> 16) & 0xff
                 if leadin not in multibyte:
@@ -103,7 +106,7 @@ class DisassemblerGenerator(object):
                     # no flag, can't have the z80bit set, so it's a valid
                     # opcode
                     pass
-                print("found multibyte %x, l=%d" % (opcode, leadin_offset))
+                log.debug("found multibyte %x, l=%d" % (opcode, leadin_offset))
                 leadin = opcode // 256
                 opcode = opcode & 0xff
                 if leadin not in multibyte:
@@ -114,7 +117,7 @@ class DisassemblerGenerator(object):
                 formatter.set_current(optable, self)
             except ValueError:
                 # process z80 4-byte commands
-                print("z80 4 byte: %x %x" % (leadin, opcode))
+                log.debug("z80 4 byte: %x %x" % (leadin, opcode))
                 formatter.z80_4byte_intro(opcode)
                 self.gen_numpy_single_print(lines, optable, leadin, 2, indent=indent+"    ", z80_2nd_byte=opcode)
                 formatter.z80_4byte_outro()
@@ -123,7 +126,7 @@ class DisassemblerGenerator(object):
             if formatter.undocumented and not self.allow_undocumented:
                 continue
 
-            print("Processing %x, %s" % (opcode, formatter.fmt))
+            log.debug("Processing %x, %s" % (opcode, formatter.fmt))
             if z80_2nd_byte is not None:
                 formatter.z80_4byte(z80_2nd_byte, opcode)
                 continue
@@ -132,8 +135,8 @@ class DisassemblerGenerator(object):
 
         for leadin, group in multibyte.items():
             formatter.start_multibyte_leadin(leadin)
-            print("starting multibyte with leadin %x" % leadin)
-            print(group)
+            log.debug("starting multibyte with leadin %x" % leadin)
+            log.debug(group)
             self.gen_numpy_single_print(lines, group, leadin, 1, indent=indent+"    ")
 
         if not z80_2nd_byte:
@@ -156,6 +159,7 @@ def gen_cpu(cpu, undoc=False):
         file_root = "udis_fast/hardcoded_parse_%sundoc" % cpu
     else:
         file_root = "udis_fast/hardcoded_parse_%s" % cpu
+    print("Generating %s" % file_root)
     disasm = DisassemblerGenerator(cpu, PrintNumpy, allow_undocumented=undoc)
     with open("%s.py" % file_root, "w") as fh:
         fh.write("\n".join(disasm.lines))

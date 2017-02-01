@@ -1,3 +1,6 @@
+import logging
+log = logging.getLogger(__name__)
+
 # flags
 pcr = 1
 und = 2
@@ -242,7 +245,7 @@ def parse_instruction_numpy(wrap, pc, src, last_pc):
         self.out("elif opcode == 0x%x:" % (leadin))
         self.out("    leadin = opcode")
         self.out("    opcode = src[1]")
-        print("starting multibyte with leadin %x" % leadin)
+        log.debug("starting multibyte with leadin %x" % leadin)
 
     def end_subroutine(self):
         self.out("return count")
@@ -393,7 +396,7 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
         self.out("case 0x%x:" % (leadin))
         self.out("    leadin = opcode")
         self.out("    opcode = *src++")
-        print("starting multibyte with leadin %x" % leadin)
+        log.debug("starting multibyte with leadin %x" % leadin)
 
     def end_subroutine(self):
         self.out("}")
@@ -485,7 +488,6 @@ int parse_instruction_c(asm_entry *wrap, unsigned int pc, unsigned char *src, un
         padding = " "*(self.max_mnemonic_length - len(self.mnemonic))
         self.out("    strncpy(wrap->mnemonic, \"%s\", %d)" % (self.mnemonic + padding, self.max_mnemonic_length))
         if self.argorder:
-            print self.argorder
             outstr = "\"%s\", %s" % (self.fmt, ", ".join(self.argorder))
             self.out("    num_printed = sprintf(wrap->operand, %s)" % outstr)
         else:
@@ -542,7 +544,7 @@ int parse_instruction_c(asm_entry *wrap, unsigned int pc, unsigned char *src, un
         self.out("case 0x%x:" % (leadin))
         self.out("    leadin = opcode")
         self.out("    opcode = *src++")
-        print("starting multibyte with leadin %x" % leadin)
+        log.debug("starting multibyte with leadin %x" % leadin)
 
     def end_subroutine(self):
         self.out("}")
