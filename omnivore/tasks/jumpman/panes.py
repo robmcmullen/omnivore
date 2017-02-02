@@ -74,7 +74,7 @@ class LevelDataPane(FrameworkPane):
             ("text", "Level Number", 0x00, 2),
             ("atascii_gr2_0xc0", "Level Name", 0x3ec, 20),
             ("uint", "Points per Peanut", 0x33, 2, 250),
-            ("label", "# Peanuts", "num_peanuts", 1000),
+            ("label", "# Peanuts", "num_peanuts", 42),
             ("peanuts_needed", "Peanuts Needed", 0x3e, 1, ["All", "All except 1", "All except 2", "All except 3", "All except 4"]),
             ("uint", "Bonus Value", 0x35, 2, 2500),
             ("dropdown", "Number of Bullets", 0x3d, 1, ["None", "1", "2", "3", "4"]),
