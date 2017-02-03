@@ -164,7 +164,7 @@ class DisassemblyTable(ByteGridTable):
             else:
                 text = ""
         else:
-            text = str(line["mnemonic"].rstrip() + " " + line["operand"].rstrip())
+            text = line["mnemonic"].rstrip()+ " " + line["operand"].rstrip()
         return text, style
     
     def get_value_style_upper(self, row, col):
@@ -174,14 +174,14 @@ class DisassemblyTable(ByteGridTable):
         for i in range(line["count"]):
             style |= self.segment.style[index + i]
         if col == 0:
-            text = " ".join("%02x" % self.segment[index + i] for i in range(line["count"]))
-        elif col == 2 and (style & comment_bit_mask):
+            text = " ".join("%02X" % self.segment[index + i] for i in range(line["count"]))
+        elif col == 2:
             if (style & comment_bit_mask):
                 text = self.get_comments(index, line)
             else:
                 text = ""
         else:
-            text = str(line["mnemonic"]).strip() + " " + str(line["operand"])
+            text = line["mnemonic"].rstrip()+ " " + line["operand"].rstrip()
         return text, style
     
     def get_style_override(self, row, col, style):
