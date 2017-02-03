@@ -153,7 +153,9 @@ class DisassemblyTable(ByteGridTable):
                 comments.append(c)
         return " ".join(comments)
 
-    def get_operand_label(self, operand, operand_labels_start_pc, operand_labels_end_pc):
+    def get_operand_label(self, operand, operand_labels_start_pc, operand_labels_end_pc, offset_operand_labels):
+        """Find the label that the operand points to.
+        """
         dollar = operand.find("$")
         if dollar >=0 and "#" not in operand:
             print operand, dollar, operand_labels_start_pc, operand_labels_end_pc,
@@ -163,16 +165,16 @@ class DisassemblyTable(ByteGridTable):
             else:
                 size = 2
             print text_hex, size,
-            target = int(text_hex[0:size], 16)
-            print target
-            if target >= operand_labels_start_pc and target <= operand_labels_end_pc:
-                #print operand, dollar, text_hex, target, operand_labels_start_pc, operand_labels_end_pc
-                label = "L" + text_hex
+            target_pc = int(text_hex[0:size], 16)
+            print target_pc
+            if target_pc >= operand_labels_start_pc and target_pc <= operand_labels_end_pc:
+                #print operand, dollar, text_hex, target_pc, operand_labels_start_pc, operand_labels_end_pc
+                label = offset_operand_labels.get(target_pc, "L" + text_hex)
                 operand = operand[0:dollar] + label + operand[dollar+1+size:]
-                return operand, target, label
+                return operand, target_pc, label
         return operand, -1, ""
 
-    def get_value_style_lower(self, row, col, operand_labels_start_pc=-1, operand_labels_end_pc=-1, extra_labels={}):
+    def get_value_style_lower(self, row, col, operand_labels_start_pc=-1, operand_labels_end_pc=-1, extra_labels={}, offset_operand_labels={}):
         line = self.lines[row]
         pc = line["pc"]
         index = pc - self.start_addr
@@ -197,11 +199,21 @@ class DisassemblyTable(ByteGridTable):
                 text = extra_labels.get(pc, "     ")
             operand = line["operand"].rstrip()
             if count > 1 and operand_labels_start_pc >= 0:
-                operand, target, label = self.get_operand_label(operand, operand_labels_start_pc, operand_labels_end_pc)
+                operand, target_pc, label = self.get_operand_label(operand, operand_labels_start_pc, operand_labels_end_pc, offset_operand_labels)
             text += " " + line["mnemonic"].rstrip()+ " " + operand
         return text, style
     
     get_value_style_upper = get_value_style_lower
+
+    def get_prior_valid_opcode_start(self, target_pc):
+        index = target_pc - self.start_addr
+        row = self.index_to_row[index]
+        while index > 0:
+            row_above = self.index_to_row[index - 1]
+            if row_above < row:
+                break
+            index -= 1
+        return index + self.start_addr
     
     def get_style_override(self, row, col, style):
         if self.lines[row]["flag"]:
@@ -294,20 +306,28 @@ class DisassemblyPanel(ByteGrid):
 
         # pass 1: find any new labels
         extra_labels = {}
+        offset_operand_labels = {}
         for row in range(start_row, end_row + 1):
             index, _ = t.get_index_range(row, 0)
             operand = t.lines[row]["operand"]
-            operand, target, label = t.get_operand_label(operand, start_pc, end_pc)
-            if target >= 0:
-                extra_labels[target] = label
+            operand, target_pc, label = t.get_operand_label(operand, start_pc, end_pc, {})
+            if target_pc >= 0:
+                extra_labels[target_pc] = label
+
+                good_opcode_target_pc = t.get_prior_valid_opcode_start(target_pc)
+                diff = target_pc - good_opcode_target_pc
+                if diff > 0:
+                    offset_operand_labels[target_pc] = "L%04X+%d" % (good_opcode_target_pc, diff)
+                    print "mapping %04X to %s" % (target_pc, offset_operand_labels[target_pc])
         print extra_labels
+        print offset_operand_labels
         lines = []
         org = t.GetRowLabelValue(start_row)
         lines.append("        %s $%s" % (t.disassembler.asm_origin, org))
         for row in range(start_row, end_row + 1):
             index, _ = t.get_index_range(row, 0)
             pc = t.get_pc(row)
-            code, _ = t.get_value_style(row, 1, start_pc, end_pc, extra_labels)
+            code, _ = t.get_value_style(row, 1, start_pc, end_pc, extra_labels, offset_operand_labels)
             # expand to 8 spaces
             code = code[0:5] + "  " + code[5:]
             comment, _ = t.get_value_style(row, 2)
