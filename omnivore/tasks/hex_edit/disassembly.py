@@ -25,6 +25,7 @@ class DisassemblyTable(ByteGridTable):
         self.start_addr = 0
         self.chunk_size = 256
         self.disassembler = None
+        self.use_labels_on_operands = False
 
     def set_editor(self, editor):
         self.editor = editor
@@ -33,6 +34,7 @@ class DisassemblyTable(ByteGridTable):
         self.index_to_row = []
         self._rows = 0
         self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
+        self.hex_lower = editor.task.hex_grid_lower_case
         self.start_addr = segment.start_addr
         self.restart_disassembly(0)
     
@@ -54,6 +56,7 @@ class DisassemblyTable(ByteGridTable):
         self.index_to_row = info.index
         self.lines = info.instructions
         self._rows = info.num_instructions
+        self.jump_targets = info.labels
     
     def set_grid_cell_attr(self, grid, col, attr):
         ByteGridTable.set_grid_cell_attr(self, grid, col, attr)
@@ -154,35 +157,40 @@ class DisassemblyTable(ByteGridTable):
         line = self.lines[row]
         index = line["pc"] - self.start_addr
         style = 0
-        for i in range(line["count"]):
+        count = line["count"]
+        for i in range(count):
             style |= self.segment.style[index + i]
         if col == 0:
-            text = " ".join("%02x" % self.segment[index + i] for i in range(line["count"]))
+            if self.hex_lower:
+                text = " ".join("%02x" % self.segment[index + i] for i in range(count))
+            else:
+                text = " ".join("%02X" % self.segment[index + i] for i in range(count))
         elif col == 2:
             if (style & comment_bit_mask):
                 text = self.get_comments(index, line)
             else:
                 text = ""
         else:
-            text = line["mnemonic"].rstrip()+ " " + line["operand"].rstrip()
+            if self.jump_targets[line["pc"]]:
+                text = ("L%04X " % line["pc"])
+            else:
+                text = "      "
+            operand = line["operand"].rstrip()
+            if count > 1 and self.use_labels_on_operands:
+                dollar = operand.find("$")
+                if dollar >=0 and "#" not in operand:
+                    if count == 2:
+                        size = 2
+                    else:
+                        size = 4
+                    text_hex = operand[dollar+1:dollar+1+size]
+                    target = int(text_hex, 16)
+                    print operand, dollar, text_hex, target
+                    operand = operand[0:dollar] + "L" + text_hex + operand[dollar+1+size:]
+            text += line["mnemonic"].rstrip()+ " " + operand
         return text, style
     
-    def get_value_style_upper(self, row, col):
-        line = self.lines[row]
-        index = line["pc"] - self.start_addr
-        style = 0
-        for i in range(line["count"]):
-            style |= self.segment.style[index + i]
-        if col == 0:
-            text = " ".join("%02X" % self.segment[index + i] for i in range(line["count"]))
-        elif col == 2:
-            if (style & comment_bit_mask):
-                text = self.get_comments(index, line)
-            else:
-                text = ""
-        else:
-            text = line["mnemonic"].rstrip()+ " " + line["operand"].rstrip()
-        return text, style
+    get_value_style_upper = get_value_style_lower
     
     def get_style_override(self, row, col, style):
         if self.lines[row]["flag"]:
