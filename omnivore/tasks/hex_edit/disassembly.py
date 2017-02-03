@@ -153,9 +153,29 @@ class DisassemblyTable(ByteGridTable):
                 comments.append(c)
         return " ".join(comments)
 
-    def get_value_style_lower(self, row, col):
+    def get_operand_label(self, operand, operand_labels_start_pc, operand_labels_end_pc):
+        dollar = operand.find("$")
+        if dollar >=0 and "#" not in operand:
+            print operand, dollar, operand_labels_start_pc, operand_labels_end_pc,
+            text_hex = operand[dollar+1:dollar+1+4]
+            if len(text_hex) > 2 and text_hex[2] in "0123456789abcdefABCDEF":
+                size = 4
+            else:
+                size = 2
+            print text_hex, size,
+            target = int(text_hex[0:size], 16)
+            print target
+            if target >= operand_labels_start_pc and target <= operand_labels_end_pc:
+                #print operand, dollar, text_hex, target, operand_labels_start_pc, operand_labels_end_pc
+                label = "L" + text_hex
+                operand = operand[0:dollar] + label + operand[dollar+1+size:]
+                return operand, target, label
+        return operand, -1, ""
+
+    def get_value_style_lower(self, row, col, operand_labels_start_pc=-1, operand_labels_end_pc=-1, extra_labels={}):
         line = self.lines[row]
-        index = line["pc"] - self.start_addr
+        pc = line["pc"]
+        index = pc - self.start_addr
         style = 0
         count = line["count"]
         for i in range(count):
@@ -171,23 +191,14 @@ class DisassemblyTable(ByteGridTable):
             else:
                 text = ""
         else:
-            if self.jump_targets[line["pc"]]:
-                text = ("L%04X " % line["pc"])
+            if self.jump_targets[pc]:
+                text = ("L%04X" % pc)
             else:
-                text = "      "
+                text = extra_labels.get(pc, "     ")
             operand = line["operand"].rstrip()
-            if count > 1 and self.use_labels_on_operands:
-                dollar = operand.find("$")
-                if dollar >=0 and "#" not in operand:
-                    if count == 2:
-                        size = 2
-                    else:
-                        size = 4
-                    text_hex = operand[dollar+1:dollar+1+size]
-                    target = int(text_hex, 16)
-                    print operand, dollar, text_hex, target
-                    operand = operand[0:dollar] + "L" + text_hex + operand[dollar+1+size:]
-            text += line["mnemonic"].rstrip()+ " " + operand
+            if count > 1 and operand_labels_start_pc >= 0:
+                operand, target, label = self.get_operand_label(operand, operand_labels_start_pc, operand_labels_end_pc)
+            text += " " + line["mnemonic"].rstrip()+ " " + operand
         return text, style
     
     get_value_style_upper = get_value_style_lower
@@ -269,28 +280,43 @@ class DisassemblyPanel(ByteGrid):
         
         Raises IndexError if the disassembly hasn't reached the index yet
         """
-        start_row = self.table.index_to_row[start]
+        t = self.table
+        start_row = t.index_to_row[start]
         try:
-            end_row = self.table.index_to_row[end]
+            end_row = t.index_to_row[end]
         except IndexError:
             # check if entire segment selected; if so, end will be one past last
             # allowable entry in index_to_row
             end -= 1
-            end_row = self.table.index_to_row[end]
-        lines = []
-        blank_label = ""
-        org = self.table.GetRowLabelValue(start_row)
-        lines.append("%-8s%s $%s" % (blank_label, self.table.disassembler.asm_origin, org))
+            end_row = t.index_to_row[end]
+        start_pc = t.get_pc(start_row)
+        end_pc = t.get_pc(end_row)
+
+        # pass 1: find any new labels
+        extra_labels = {}
         for row in range(start_row, end_row + 1):
-            label = blank_label
-            code = self.table.GetValue(row, 1)
-            comment = self.table.GetValue(row, 2)
+            index, _ = t.get_index_range(row, 0)
+            operand = t.lines[row]["operand"]
+            operand, target, label = t.get_operand_label(operand, start_pc, end_pc)
+            if target >= 0:
+                extra_labels[target] = label
+        print extra_labels
+        lines = []
+        org = t.GetRowLabelValue(start_row)
+        lines.append("        %s $%s" % (t.disassembler.asm_origin, org))
+        for row in range(start_row, end_row + 1):
+            index, _ = t.get_index_range(row, 0)
+            pc = t.get_pc(row)
+            code, _ = t.get_value_style(row, 1, start_pc, end_pc, extra_labels)
+            # expand to 8 spaces
+            code = code[0:5] + "  " + code[5:]
+            comment, _ = t.get_value_style(row, 2)
             if comment:
                 if not comment.startswith(";"):
                     comment = ";" + comment
-                lines.append("%-8s%-12s %s" % (label, code, comment))
+                lines.append("%s %s" % (code, comment))
             else:
-                lines.append("%-8s%s" % (label, code))
+                lines.append(code)
         return lines
     
     def encode_data(self, segment):
@@ -298,13 +324,10 @@ class DisassemblyPanel(ByteGrid):
         representation to save to disk.
         """
         index = len(self.table.index_to_row) - 1
-        try:
-            lines = self.get_disassembled_text(0, index)
-            text = os.linesep.join(lines) + os.linesep
-            bytes = text.encode("utf-8")
-            return bytes
-        except IndexError:
-            raise RuntimeError("Disassembly still in progress. Try again in a few seconds.")
+        lines = self.get_disassembled_text(0, index)
+        text = os.linesep.join(lines) + os.linesep
+        data = text.encode("utf-8")
+        return data
 
     def get_status_message_at_index(self, index, row, col):
         msg = ByteGrid.get_status_message_at_index(self, index, row, col)
