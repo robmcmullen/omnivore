@@ -3,13 +3,18 @@ import cython
 import numpy as np
 cimport numpy as np
 
+ctypedef int (*parse_func_t)(char *, int, char *, int, np.uint16_t *)
+
 cdef extern:
-    int parse_instruction_c(char *wrap, int pc, char *src, int last_pc, np.uint16_t *labels)
+    int parse_instruction_c_LL(char *wrap, int pc, char *src, int last_pc, np.uint16_t *labels)
+    int parse_instruction_c_LU(char *wrap, int pc, char *src, int last_pc, np.uint16_t *labels)
+    int parse_instruction_c_UL(char *wrap, int pc, char *src, int last_pc, np.uint16_t *labels)
+    int parse_instruction_c_UU(char *wrap, int pc, char *src, int last_pc, np.uint16_t *labels)
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def get_disassembled_chunk_fast(storage_wrapper, np.ndarray[char, ndim=1, mode="c"] binary_array, pc, last, index_of_pc):
+def get_disassembled_chunk_fast(storage_wrapper, np.ndarray[char, ndim=1, mode="c"] binary_array, pc, last, index_of_pc, mnemonic_lower, hex_lower):
 
     cdef np.ndarray storage_wrapper_array = storage_wrapper.storage
     cdef itemsize = storage_wrapper_array.itemsize
@@ -21,15 +26,26 @@ def get_disassembled_chunk_fast(storage_wrapper, np.ndarray[char, ndim=1, mode="
     cdef np.uint16_t *labels = <np.uint16_t *>labels_array.data
     cdef np.ndarray[np.uint32_t, ndim=1] index_array = storage_wrapper.index
     cdef np.uint32_t *index = <np.uint32_t *>index_array.data
+    cdef parse_func_t parse_func
 
     c_pc = pc
     c_last = last
     row = storage_wrapper.row
     max_rows = storage_wrapper.num_rows
+    if mnemonic_lower:
+        if hex_lower:
+            parse_func = parse_instruction_c_LL
+        else:
+            parse_func = parse_instruction_c_LU
+    else:
+        if hex_lower:
+            parse_func = parse_instruction_c_UL
+        else:
+            parse_func = parse_instruction_c_UU
 
     # fast loop in C
     while c_pc < c_last and row < max_rows:
-        count = parse_instruction_c(storage, c_pc, binary, c_last, labels)
+        count = parse_func(storage, c_pc, binary, c_last, labels)
         if count == 0:
             break
         elif count == 1:

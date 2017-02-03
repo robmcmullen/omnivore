@@ -9,7 +9,8 @@ lbl = 8 # subroutine/jump target; candidate for a label
 r = 64
 w = 128
 
-def convert_fmt(fmt):
+def convert_fmt(fmt, mnemonic_lower = True, hex_lower=True):
+    fmt = fmt.lower()
     if "{0:02x}" in fmt and "{1:02x}" and "{2:02x}" in fmt:
         # determine order of args by which comes first in the format string
         indexes = [
@@ -40,6 +41,13 @@ def convert_fmt(fmt):
 
     if "'" in fmt:
         fmt = fmt.replace("'", "\\'")
+    if mnemonic_lower:
+        if not hex_lower:
+            fmt = fmt.replace("%02x", "%02X").replace("%04x", "%04X")
+    else:
+        fmt = fmt.upper()
+        if hex_lower:
+            fmt = fmt.replace("%02X", "%02x").replace("%04X", "%04x")
     return fmt, argorder
 
 byte_loc = 5
@@ -82,13 +90,15 @@ class PrintBase(object):
             self.length, self.mnemonic, self.mode = optable
             self.flag = 0
         fmt = parser.address_modes[self.mode]
-        self.fmt, self.argorder = convert_fmt(fmt)
+        self.fmt, self.argorder = convert_fmt(fmt, parser.mnemonic_lower, parser.hex_lower)
         if self.mode in parser.rw_modes:
             if self.mnemonic in parser.r_mnemonics:
                 self.flag |= r
             if self.mnemonic in parser.w_mnemonics:
                 self.flag |= w
-        if not parser.mnemonic_lower:
+        if parser.mnemonic_lower:
+            self.mnemonic = self.mnemonic.lower()
+        else:
             self.mnemonic = self.mnemonic.upper()
 
     @property
@@ -114,12 +124,14 @@ class PrintBase(object):
 
 
 class PrintNumpy(PrintBase):
-    preamble = """
+    preamble_header = """
 def put_bytes(str, loc, dest):
     for a in str:
         dest[loc] = ord(a)
         loc += 1
+"""
 
+    preamble = """
 def parse_instruction_numpy(wrap, pc, src, last_pc):
     opcode = src[0]
     put_bytes('%04x' % pc, 0, wrap)
@@ -252,8 +264,10 @@ def parse_instruction_numpy(wrap, pc, src, last_pc):
 
 
 class PrintC(PrintNumpy):
-    preamble = """#include <stdio.h>
+    preamble_header = """#include <stdio.h>
+"""
 
+    preamble = """
 int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src, unsigned int last_pc, unsigned short *labels) {
     int count, rel, dist;
     short addr;
@@ -413,7 +427,7 @@ class RawC(PrintC):
     max_mnemonic_length = 5
     max_operand_length = 32 - 4 - 4 - 1 - 1 - max_mnemonic_length
 
-    preamble = """#include <stdio.h>
+    preamble_header = """#include <stdio.h>
 #include <string.h>
 
 /* 32 byte structure */
@@ -425,8 +439,10 @@ typedef struct {
     char mnemonic[%d]; /* max length of opcode string is currently 5 */
     char operand[%d];
 } asm_entry;
+""" % (max_mnemonic_length, max_operand_length)
 
-int parse_instruction_c(asm_entry *wrap, unsigned int pc, unsigned char *src, unsigned int last_pc, unsigned short *labels) {
+    preamble = """
+int parse_instruction_c%s(asm_entry *wrap, unsigned int pc, unsigned char *src, unsigned int last_pc, unsigned short *labels) {
     int count, dist;
     unsigned int rel;
     unsigned short addr;
@@ -435,7 +451,7 @@ int parse_instruction_c(asm_entry *wrap, unsigned int pc, unsigned char *src, un
 
     opcode = *src++;
     wrap->pc = pc;
-""" % (max_mnemonic_length, max_operand_length)
+"""
 
     def out(self, s):
         if not s.endswith(":") and not s.endswith("{") and not s.endswith("}"):

@@ -89,9 +89,11 @@ def get_disassembled_chunk(parse_mod, storage_wrapper, binary, pc, last, index_o
 
 
 class DisassemblerWrapper(object):
-    def __init__(self, cpu, lines=65536, fast=True):
+    def __init__(self, cpu, lines=65536, fast=True, mnemonic_lower=False, hex_lower=True):
         self.disasm, strsize = self.get_disassembler(cpu, fast)
         self.storage_wrapper = StorageWrapper(lines, strsize)
+        self.mnemonic_lower = mnemonic_lower
+        self.hex_lower = hex_lower
 
     def get_disassembler(self, cpu, fast=True):
         try:
@@ -125,11 +127,11 @@ class DisassemblerWrapper(object):
         self.storage_wrapper.clear()
 
     def next_chunk(self, binary, pc, last, i):
-        return self.chunk_processor(self.storage_wrapper, binary, pc, last, i)
+        return self.chunk_processor(self.storage_wrapper, binary, pc, last, i, self.mnemonic_lower , self.hex_lower)
 
     def get_all(self, binary, pc, i):
         self.clear()
         num_bytes = pc - i + len(binary)
-        self.chunk_processor(self.storage_wrapper, binary, pc, pc + len(binary), i)
+        self.chunk_processor(self.storage_wrapper, binary, pc, pc + len(binary), i, self.mnemonic_lower , self.hex_lower)
         info = DisassemblyInfo(self, pc, num_bytes)
         return info
