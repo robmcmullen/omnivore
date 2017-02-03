@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 class DisassemblyTable(ByteGridTable):
     column_labels = ["Bytes", "Disassembly", "Comment"]
-    column_sizes = [8, 12, 20]
+    column_sizes = [11, 18, 30]
     
     def __init__(self):
         ByteGridTable.__init__(self)
