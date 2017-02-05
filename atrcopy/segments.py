@@ -427,10 +427,35 @@ class DefaultSegment(object):
             s[start:end] &= style_mask
     
     def get_style_ranges(self, **kwargs):
+        """Return a list of start, end pairs that match the specified style
+        """
         style_bits = self.get_style_bits(**kwargs)
         matches = (self.style & style_bits) == style_bits
         return self.bool_to_ranges(matches)
     
+    def get_entire_style_ranges(self, **kwargs):
+        """Find sections of the segment that have the same style value.
+
+        The arguments to this function are used as a mask for the style to
+        determine where to split the styles. Style bits that aren't included in
+        the list will be ignored when splitting. The returned list covers the
+        entire length of the segment.
+
+        Returns a list of tuples, each tuple containing two items: a start, end
+        tuple; and an integer with the style value.
+        """
+        style_bits = self.get_style_bits(**kwargs)
+        matches = self.style & style_bits
+        groups = np.split(matches, np.where(np.diff(matches) != 0)[0] + 1)
+        # split into groups with the same numbers
+        ranges = []
+        last_end = 0
+        for group in groups:
+            next_end = last_end + len(group)
+            ranges.append(((last_end, next_end), matches[last_end]))
+            last_end = next_end
+        return ranges
+
     def bool_to_ranges(self, matches):
         w = np.where(matches == True)[0]
         # split into groups with consecutive numbers
