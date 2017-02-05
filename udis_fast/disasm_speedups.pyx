@@ -18,19 +18,20 @@ def get_disassembled_chunk_fast(storage_wrapper, np.ndarray[char, ndim=1, mode="
 
     cdef np.ndarray storage_wrapper_array = storage_wrapper.storage
     cdef itemsize = storage_wrapper_array.itemsize
+    cdef row = storage_wrapper.row
     cdef char *storage = storage_wrapper_array.data
     cdef int c_index = index_of_pc
     cdef char *binary = binary_array.data + c_index
-    cdef int c_pc, c_last, count, row, max_rows, i
+    cdef int c_pc, c_last, count, max_rows, i
     cdef np.ndarray[np.uint16_t, ndim=1] labels_array = storage_wrapper.labels
     cdef np.uint16_t *labels = <np.uint16_t *>labels_array.data
     cdef np.ndarray[np.uint32_t, ndim=1] index_array = storage_wrapper.index
     cdef np.uint32_t *index = <np.uint32_t *>index_array.data
     cdef parse_func_t parse_func
 
+    storage += (row * itemsize)
     c_pc = pc
     c_last = last
-    row = storage_wrapper.row
     max_rows = storage_wrapper.num_rows
     if mnemonic_lower:
         if hex_lower:
