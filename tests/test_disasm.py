@@ -20,7 +20,7 @@ class TestFastDisasm(object):
         self.disasm = Basic6502Disassembler()
         self.fast = self.disasm.fast
 
-    def test_simple(self):
+    def test_ranges(self):
         self.editor.find_segment("02: robots I")
         s = self.editor.segment
         r = s.get_entire_style_ranges(data=True, user=1)
@@ -37,6 +37,9 @@ class TestFastDisasm(object):
         ((1710, 1792), 0),
         ((1792, 1954), 64),
         ((1954, 2048), 0)]
-        info = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0)
-        for line in info.instructions:
-            print line
+        info_all = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0)
+        #print info_all.instructions[0:20]
+        info_sections = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
+        #print info_sections.instructions[0:20]
+        assert len(info_all.instructions) == len(info_sections.instructions)
+        assert np.all(info_all.index - info_sections.index == 0)
