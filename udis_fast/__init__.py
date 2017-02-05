@@ -23,8 +23,8 @@ class StorageWrapper(object):
         self.row = 0
         self.num_rows = self.storage.shape[0]
         self.strsize = self.storage.itemsize
-        self.labels = np.zeros([4*256*256], dtype=np.uint16)
-        self.index = np.zeros([16*256*256], dtype=np.uint32)
+        self.labels = np.zeros([256*256], dtype=np.uint16)
+        self.index = np.zeros([256*256], dtype=np.uint32)
 
         # strings are immutable, so get a view of bytes that we can change
         self.data = self.storage.view(dtype=np.uint8).reshape((self.num_rows, self.strsize))
@@ -56,8 +56,8 @@ class StorageWrapper(object):
         c = np.empty([count], dtype=rawdtype)
         c1 = c.view(dtype=np.uint8).reshape([count, self.strsize])
         c1[:] = self.data[:count]
-        l = np.empty([count], dtype=self.labels.dtype)
-        l[:] = self.labels[:count]
+        l = np.empty([self.labels.shape[0]], dtype=self.labels.dtype)
+        l[:] = self.labels[:]
         i = np.empty([num_bytes], dtype=self.index.dtype)
         i[:] = self.index[:num_bytes]
         return c, l, i
@@ -131,7 +131,7 @@ class DisassemblerWrapper(object):
 
     def get_all(self, binary, pc, i):
         self.clear()
-        num_bytes = pc - i + len(binary)
-        self.chunk_processor(self.storage_wrapper, binary, pc, pc + len(binary), i, self.mnemonic_lower , self.hex_lower)
+        num_bytes =  min(len(binary) - i, 65536)
+        self.chunk_processor(self.storage_wrapper, binary, pc, pc + num_bytes, i, self.mnemonic_lower , self.hex_lower)
         info = DisassemblyInfo(self, pc, num_bytes)
         return info
