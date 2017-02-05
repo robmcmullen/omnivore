@@ -17,7 +17,7 @@ from omnivore.framework.actions import *
 from grid_control import HexEditControl
 from omnivore.utils.file_guess import FileMetadata
 from omnivore.arch.machine import Machine, Atari800
-from omnivore.utils.segmentutil import DefaultSegment, AnticFontSegment
+from omnivore.utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
 from omnivore.utils.searchutil import known_searchers
 from omnivore.utils.processutil import run_detach
 
@@ -89,7 +89,8 @@ class HexEditor(FrameworkEditor):
         return Atari800
     
     def _segment_default(self):
-        return DefaultSegment()
+        rawdata = SegmentData([])
+        return DefaultSegment(rawdata)
     
     def _map_width_default(self):
         prefs = self.task.get_preferences()
