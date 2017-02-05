@@ -129,9 +129,13 @@ class DisassemblerWrapper(object):
     def next_chunk(self, binary, pc, last, i):
         return self.chunk_processor(self.storage_wrapper, binary, pc, last, i, self.mnemonic_lower , self.hex_lower)
 
-    def get_all(self, binary, pc, i):
+    def get_all(self, binary, pc, i, ranges=[]):
         self.clear()
-        num_bytes =  min(len(binary) - i, 65536)
-        self.chunk_processor(self.storage_wrapper, binary, pc, pc + num_bytes, i, self.mnemonic_lower , self.hex_lower)
+        # limit to 64k at once since we're dealing with 8-bit machines
+        num_bytes = min(len(binary) - i, 65536)
+        if not ranges:
+            ranges = [((0, num_bytes), 0)]
+        for (start_index, end_index), chunk_type in ranges:
+            self.chunk_processor(self.storage_wrapper, binary, pc + start_index, pc + end_index, start_index, self.mnemonic_lower , self.hex_lower)
         info = DisassemblyInfo(self, pc, num_bytes)
         return info

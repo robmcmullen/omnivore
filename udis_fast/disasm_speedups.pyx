@@ -26,7 +26,7 @@ def get_disassembled_chunk_fast(storage_wrapper, np.ndarray[char, ndim=1, mode="
     cdef np.ndarray[np.uint16_t, ndim=1] labels_array = storage_wrapper.labels
     cdef np.uint16_t *labels = <np.uint16_t *>labels_array.data
     cdef np.ndarray[np.uint32_t, ndim=1] index_array = storage_wrapper.index
-    cdef np.uint32_t *index = <np.uint32_t *>index_array.data
+    cdef np.uint32_t *index = <np.uint32_t *>index_array.data + c_index
     cdef parse_func_t parse_func
 
     storage += (row * itemsize)
