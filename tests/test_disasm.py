@@ -106,5 +106,19 @@ class TestChunkBreak(object):
         s = self.get_break(8)
         r = s.get_entire_style_ranges(data=True, user=1)
         info_sections = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
-        print info_sections.instructions
+        inst = info_sections.instructions
+        print inst
+        assert inst[1]["instruction"].startswith("STA")
+        assert inst[2]["instruction"].startswith(".byte")
+        assert inst[10]["instruction"].startswith("CALL")
+        assert inst[11]["instruction"].startswith("CALL")
+        s = self.get_break(9)
+        r = s.get_entire_style_ranges(data=True, user=1)
+        info_sections = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
+        inst = info_sections.instructions
+        print inst
+        assert inst[1]["instruction"].startswith("STA")
+        assert inst[2]["instruction"].startswith("STA")
+        assert inst[9]["instruction"].startswith("CALL")
+        assert inst[10]["instruction"].startswith(".byte")
 
