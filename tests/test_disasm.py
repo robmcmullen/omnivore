@@ -24,6 +24,8 @@ class TestFastDisasm(object):
         self.fast = self.disasm.fast
 
     def test_ranges(self):
+        # force the use of the normal disassembler for the other style
+        self.disasm.fast.chunk_type_processor[64] = self.disasm.fast.chunk_processor
         self.editor.find_segment("02: robots I")
         s = self.editor.segment
         r = s.get_entire_style_ranges(data=True, user=1)
@@ -43,10 +45,34 @@ class TestFastDisasm(object):
         info_all = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0)
         #print info_all.instructions[0:20]
         info_sections = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
-        #print info_sections.instructions[0:20]
-        print info_sections.instructions
+        for i in range(info_sections.num_instructions):
+            print info_sections[i].instruction
         assert len(info_all.instructions) == len(info_sections.instructions)
         assert np.all(info_all.index - info_sections.index == 0)
+
+    def test_ranges2(self):
+        self.editor.find_segment("02: robots I")
+        s = self.editor.segment
+        r = s.get_entire_style_ranges(data=True, user=1)
+        assert r == [
+        ((0, 84), 64),
+        ((84, 497), 0),
+        ((497, 524), 64),
+        ((524, 602), 0),
+        ((602, 690), 64),
+        ((690, 1004), 0),
+        ((1004, 1024), 64),
+        ((1024, 1536), 0),
+        ((1536, 1710), 64),
+        ((1710, 1792), 0),
+        ((1792, 1954), 64),
+        ((1954, 2048), 0)]
+        info_all = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0)
+        #print info_all.instructions[0:20]
+        info_sections = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
+        for i in range(info_sections.num_instructions):
+            print info_sections[i].instruction
+        assert len(info_all.instructions) < len(info_sections.instructions)
 
 class TestFastDisasmMulti(object):
     def get_disasm(self):
@@ -107,7 +133,9 @@ class TestChunkBreak(object):
         r = s.get_entire_style_ranges(data=True, user=1)
         info = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
         inst = info.instructions
-        print inst
+        for i in range(info.num_instructions):
+            print info[i].instruction
+
         assert info[1].instruction.startswith("STA")
         assert info[2].instruction.startswith(".byte")
         assert info[10].instruction.startswith("CALL")
