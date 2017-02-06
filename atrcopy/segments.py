@@ -450,6 +450,9 @@ class DefaultSegment(object):
         # split into groups with the same numbers
         ranges = []
         last_end = 0
+        if len(groups) == 1 and len(groups[0]) == 0:
+            # check for degenerate case
+            return
         for group in groups:
             next_end = last_end + len(group)
             ranges.append(((last_end, next_end), matches[last_end]))
