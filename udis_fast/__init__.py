@@ -87,28 +87,35 @@ def get_disassembled_chunk(parse_mod, storage_wrapper, binary, pc, last, index_o
             break
     return pc, index_of_pc
 
+def get_disassembler(cpu, fast=True):
+    try:
+        if not fast:
+            raise RuntimeError
+        mod_name = "udis_fast.disasm_speedups_%s" % cpu
+        parse_mod = importlib.import_module(mod_name)
+        processor = parse_mod.get_disassembled_chunk_fast
+        strsize = 32
+    except RuntimeError:
+        mod_name = "udis_fast.hardcoded_parse_%s" % cpu
+        parse_mod = importlib.import_module(mod_name)
+        processor = functools.partial(get_disassembled_chunk, parse_mod)
+        strsize = 48
+    return processor, parse_mod, strsize
+
+
 
 class DisassemblerWrapper(object):
-    def __init__(self, cpu, lines=65536, fast=True, mnemonic_lower=False, hex_lower=True):
-        self.disasm, strsize = self.get_disassembler(cpu, fast)
+    def __init__(self, cpu, lines=65536, fast=True, mnemonic_lower=False, hex_lower=True, extra_disassemblers=None):
+        processor, parse_mod, strsize = get_disassembler(cpu, fast)
+        self.chunk_processor = processor
         self.storage_wrapper = StorageWrapper(lines, strsize)
         self.mnemonic_lower = mnemonic_lower
         self.hex_lower = hex_lower
-
-    def get_disassembler(self, cpu, fast=True):
-        try:
-            if not fast:
-                raise RuntimeError
-            mod_name = "udis_fast.disasm_speedups_%s" % cpu
-            parse_mod = importlib.import_module(mod_name)
-            self.chunk_processor = parse_mod.get_disassembled_chunk_fast
-            strsize = 32
-        except RuntimeError:
-            mod_name = "udis_fast.hardcoded_parse_%s" % cpu
-            parse_mod = importlib.import_module(mod_name)
-            self.chunk_processor = functools.partial(get_disassembled_chunk, parse_mod)
-            strsize = 48
-        return parse_mod, strsize
+        if extra_disassemblers is None:
+            extra_disassemblers = {}
+        self.chunk_type_processor = extra_disassemblers
+        # default chunk processor is the normal disassembler
+        self.chunk_type_processor[0] = self.chunk_processor
 
     @property
     def rows(self):
@@ -136,6 +143,7 @@ class DisassemblerWrapper(object):
         if not ranges:
             ranges = [((0, num_bytes), 0)]
         for (start_index, end_index), chunk_type in ranges:
-            self.chunk_processor(self.storage_wrapper, binary, pc + start_index, pc + end_index, start_index, self.mnemonic_lower , self.hex_lower)
+            processor = self.chunk_type_processor.get(chunk_type, self.chunk_processor)
+            processor(self.storage_wrapper, binary, pc + start_index, pc + end_index, start_index, self.mnemonic_lower , self.hex_lower)
         info = DisassemblyInfo(self, pc, num_bytes)
         return info
