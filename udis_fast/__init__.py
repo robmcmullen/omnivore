@@ -14,7 +14,7 @@ import numpy as np
 #     char operand[17];
 # } asm_entry;
 
-rawdtype = [('pc', '<i4'), ('dest_pc', '<i4'), ('count', 'u1'), ('flag', 'u1'), ('mnemonic', 'S5'), ('operand', 'S17')]
+rawdtype = [('pc', '<i4'), ('dest_pc', '<i4'), ('count', 'u1'), ('flag', 'u1'), ('instruction', 'S22')]
 
 class StorageWrapper(object):
     def __init__(self, lines=1000, strsize=48):
@@ -72,7 +72,7 @@ class DisassemblyInfo(object):
     def print_instructions(self, start, count):
         for i in range(start, start+count):
             data = self.instructions[i]
-            line = "%d %s %s" % (data['pc'], data['mnemonic'], data['operand'])
+            line = "%d %s" % (data['pc'], data['instruction'])
             print line
 
 def get_disassembled_chunk(parse_mod, storage_wrapper, binary, pc, last, index_of_pc):

@@ -424,8 +424,7 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
             self.out("break")
 
 class RawC(PrintC):
-    max_mnemonic_length = 5
-    max_operand_length = 32 - 4 - 4 - 1 - 1 - max_mnemonic_length
+    max_instruction_length = 32 - 4 - 4 - 1 - 1
 
     preamble_header = """#include <stdio.h>
 #include <string.h>
@@ -436,10 +435,9 @@ typedef struct {
     int dest_pc; /* address pointed to by this opcode; -1 if not applicable */
     unsigned char count;
     unsigned char flag;
-    char mnemonic[%d]; /* max length of opcode string is currently 5 */
-    char operand[%d];
+    char instruction[%d];
 } asm_entry;
-""" % (max_mnemonic_length, max_operand_length)
+""" % (max_instruction_length)
 
     preamble = """
 int parse_instruction_c%s(asm_entry *wrap, unsigned int pc, unsigned char *src, unsigned int last_pc, unsigned short *labels) {
@@ -501,15 +499,11 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned int pc, unsigned char *src, 
             self.out("    if (pc + wrap->count > last_pc) return 0")
 
     def opcode1(self, opcode):
-        padding = " "*(self.max_mnemonic_length - len(self.mnemonic))
-        self.out("    strncpy(wrap->mnemonic, \"%s\", %d)" % (self.mnemonic + padding, self.max_mnemonic_length))
         if self.argorder:
-            outstr = "\"%s\", %s" % (self.fmt, ", ".join(self.argorder))
-            self.out("    num_printed = sprintf(wrap->operand, %s)" % outstr)
+            outstr = "\"%s %s\", %s" % (self.mnemonic, self.fmt, ", ".join(self.argorder))
         else:
-            outstr = self.fmt
-            if outstr:
-                self.out("    strncpy(wrap->operand, \"%s\", %d)" % (outstr, len(outstr)))
+            outstr = "\"%s %s\"" % (self.mnemonic, self.fmt)
+        self.out("    num_printed = sprintf(wrap->instruction, %s)" % outstr)
 
     def opcode2(self, opcode):
         self.op1()
@@ -566,7 +560,7 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned int pc, unsigned char *src, 
         self.out("}")
         if self.leadin_offset == 0:
             self.out("wrap->flag = 0")
-            self.out("memset(wrap->operand + num_printed, ' ', %d - num_printed)" % self.max_operand_length)
+            self.out("memset(wrap->instruction + num_printed, ' ', %d - num_printed)" % self.max_instruction_length)
             self.out("return wrap->count")
             self.lines.append("}") # no indent for closing brace
         else:
