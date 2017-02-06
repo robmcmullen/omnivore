@@ -54,7 +54,7 @@ class DisassemblyTable(ByteGridTable):
         disasm = self.disassembler.fast
         info = disasm.get_all(self.segment.rawdata.unindexed_view, pc, 0)
         self.index_to_row = info.index
-        self.lines = info.instructions
+        self.lines = info
         self._rows = info.num_instructions
         self.jump_targets = info.labels
     
@@ -73,8 +73,8 @@ class DisassemblyTable(ByteGridTable):
                 line = self.lines[-1]
             except TypeError:
                 return 0, 0
-            index = line["pc"] - self.start_addr
-            return index, index + line["count"]
+            index = line.pc - self.start_addr
+            return index, index + line.num_bytes
         except IndexError:
             return 0, 0
     
@@ -127,7 +127,8 @@ class DisassemblyTable(ByteGridTable):
     
     def get_pc(self, row):
         try:
-            return self.lines[row]["pc"]
+            row = self.lines[row]
+            return row.pc
         except IndexError:
             return 0
     
@@ -147,7 +148,7 @@ class DisassemblyTable(ByteGridTable):
         c = "" # str(line[3])
         if c:
             comments.append(c)
-        for i in range(line["count"]):
+        for i in range(line.num_bytes):
             c = self.segment.get_comment(index + i)
             if c:
                 comments.append(c)
@@ -176,10 +177,10 @@ class DisassemblyTable(ByteGridTable):
 
     def get_value_style_lower(self, row, col, operand_labels_start_pc=-1, operand_labels_end_pc=-1, extra_labels={}, offset_operand_labels={}):
         line = self.lines[row]
-        pc = line["pc"]
+        pc = line.pc
         index = pc - self.start_addr
         style = 0
-        count = line["count"]
+        count = line.num_bytes
         for i in range(count):
             style |= self.segment.style[index + i]
         if col == 0:
@@ -197,7 +198,7 @@ class DisassemblyTable(ByteGridTable):
                 text = ("L%04X" % pc)
             else:
                 text = extra_labels.get(pc, "     ")
-            operand = line["instruction"].rstrip()
+            operand = line.instruction.rstrip()
             if count > 1 and operand_labels_start_pc >= 0:
                 operand, target_pc, label = self.get_operand_label(operand, operand_labels_start_pc, operand_labels_end_pc, offset_operand_labels)
             text += " " + operand
@@ -216,7 +217,7 @@ class DisassemblyTable(ByteGridTable):
         return index + self.start_addr
     
     def get_style_override(self, row, col, style):
-        if self.lines[row]["flag"]:
+        if self.lines[row].flag:
             return style|comment_bit_mask
         return style
 
