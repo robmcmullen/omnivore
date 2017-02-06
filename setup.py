@@ -9,7 +9,13 @@ else:
 
 import numpy
 
-extensions = []
+extensions = [
+    Extension("udis_fast.disasm_info",
+        sources = ["udis_fast/disasm_info.c"],
+        extra_compile_args = extra_compile_args,
+        include_dirs = [numpy.get_include()],
+        )]
+
 for parser in glob.glob("udis_fast/hardcoded_parse_*.c"):
     print parser
     cpu = parser.replace("udis_fast/hardcoded_parse_", "").replace(".c", "")

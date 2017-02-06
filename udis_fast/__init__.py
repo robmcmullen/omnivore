@@ -62,7 +62,6 @@ class StorageWrapper(object):
         metadata = np.empty([count], dtype=rawdtype)
         m = metadata.view(dtype=np.uint8).reshape([count, self.strsize])
         m[:] = self.data[:count]
-        print metadata[0]
         text = np.empty([self.last_strpos], dtype='S1')
         text[:] = self.instructions[:self.last_strpos]
         labels = np.empty([self.labels.shape[0]], dtype=self.labels.dtype)
@@ -71,7 +70,7 @@ class StorageWrapper(object):
         index[:] = self.index[:num_bytes]
         return metadata, text, labels, index
 
-class DisassemblyRow(object):
+class SlowDisassemblyRow(object):
     def __init__(self, info, row):
         data = info.metadata[row]
         self.pc = data['pc']
@@ -83,7 +82,7 @@ class DisassemblyRow(object):
         self.num_bytes = data['count']
         self.dest_pc = data['dest_pc']
 
-class DisassemblyInfo(object):
+class SlowDisassemblyInfo(object):
     def __init__(self, wrapper, first_pc, num_bytes):
         self.first_pc = first_pc
         self.num_bytes = num_bytes
@@ -127,7 +126,7 @@ def get_disassembler(cpu, fast=True):
         strsize = 48
     return processor, parse_mod, strsize
 
-
+import disasm_info
 
 class DisassemblerWrapper(object):
     def __init__(self, cpu, lines=65536, fast=True, mnemonic_lower=False, hex_lower=True, extra_disassemblers=None):
@@ -170,5 +169,5 @@ class DisassemblerWrapper(object):
         for (start_index, end_index), chunk_type in ranges:
             processor = self.chunk_type_processor.get(chunk_type, self.chunk_processor)
             processor(self.metadata_wrapper, binary, pc + start_index, pc + end_index, start_index, self.mnemonic_lower , self.hex_lower)
-        info = DisassemblyInfo(self, pc, num_bytes)
+        info = disasm_info.DisassemblyInfo(self, pc, num_bytes)
         return info
