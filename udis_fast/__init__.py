@@ -3,31 +3,36 @@ import functools
 
 import numpy as np
 
-# mimicking the 32 byte C structure:
+# mimicking the 12 byte C structure:
 # 
+# /* 12 byte structure */
 # typedef struct {
-#     int pc;
-#     int dest_pc; /* address pointed to by this opcode; -1 if not applicable */
+#     unsigned short pc;
+#     unsigned short dest_pc; /* address pointed to by this opcode; if applicable */
 #     unsigned char count;
 #     unsigned char flag;
-#     char mnemonic[5]; /* max length of opcode string is currently 5 */
-#     char operand[17];
+#     unsigned char strlen;
+#     unsigned char reserved;
+#     int strpos; /* position of start of text in instruction array */
 # } asm_entry;
 
-rawdtype = [('pc', '<i4'), ('dest_pc', '<i4'), ('count', 'u1'), ('flag', 'u1'), ('instruction', 'S22')]
+rawdtype = [('pc', 'u2'), ('dest_pc', 'u2'), ('count', 'u1'), ('flag', 'u1'), ('strlen', 'u1'), ('unused', 'u1'), ('strpos', 'i4')]
 
 class StorageWrapper(object):
-    def __init__(self, lines=1000, strsize=48):
+    def __init__(self, lines=65536, strsize=12):
         # string array
-        self.storage = np.empty((lines,), dtype="|S%d" % strsize)
+        self.metadata = np.empty((lines,), dtype="|S%d" % strsize)
         self.row = 0
-        self.num_rows = self.storage.shape[0]
-        self.strsize = self.storage.itemsize
+        self.num_rows = self.metadata.shape[0]
+        self.strsize = self.metadata.itemsize
         self.labels = np.zeros([256*256], dtype=np.uint16)
         self.index = np.zeros([256*256], dtype=np.uint32)
+        self.max_strpos = 2000000
+        self.instructions = np.empty([self.max_strpos], dtype='S1')
+        self.last_strpos = 0
 
         # strings are immutable, so get a view of bytes that we can change
-        self.data = self.storage.view(dtype=np.uint8).reshape((self.num_rows, self.strsize))
+        self.data = self.metadata.view(dtype=np.uint8).reshape((self.num_rows, self.strsize))
         self.clear()
 
     def clear(self):
@@ -35,6 +40,7 @@ class StorageWrapper(object):
         self.labels[:] = 0
         self.index[:] = 0
         self.row = 0
+        self.last_strpos = 0
 
     def __getitem__(self, index):
         return self.data[self.row, index]
@@ -49,30 +55,34 @@ class StorageWrapper(object):
         return True
 
     def view(self, row):
-        return self.storage.view(dtype=rawdtype)[row]
+        return self.metadata.view(dtype=rawdtype)[row]
 
     def copy_resize(self, num_bytes):
         count = self.row
-        c = np.empty([count], dtype=rawdtype)
-        c1 = c.view(dtype=np.uint8).reshape([count, self.strsize])
-        c1[:] = self.data[:count]
-        l = np.empty([self.labels.shape[0]], dtype=self.labels.dtype)
-        l[:] = self.labels[:]
-        i = np.empty([num_bytes], dtype=self.index.dtype)
-        i[:] = self.index[:num_bytes]
-        return c, l, i
+        metadata = np.empty([count], dtype=rawdtype)
+        m = metadata.view(dtype=np.uint8).reshape([count, self.strsize])
+        m[:] = self.data[:count]
+        print metadata[0]
+        text = np.empty([self.last_strpos], dtype='S1')
+        text[:] = self.instructions[:self.last_strpos]
+        labels = np.empty([self.labels.shape[0]], dtype=self.labels.dtype)
+        labels[:] = self.labels[:]
+        index = np.empty([num_bytes], dtype=self.index.dtype)
+        index[:] = self.index[:num_bytes]
+        return metadata, text, labels, index
 
 class DisassemblyInfo(object):
     def __init__(self, wrapper, first_pc, num_bytes):
         self.first_pc = first_pc
         self.num_bytes = num_bytes
-        self.instructions, self.labels, self.index = wrapper.storage_wrapper.copy_resize(num_bytes)
-        self.num_instructions = len(self.instructions)
+        self.metadata, self.instructions, self.labels, self.index = wrapper.metadata_wrapper.copy_resize(num_bytes)
+        self.num_instructions = len(self.metadata)
 
     def print_instructions(self, start, count):
         for i in range(start, start+count):
-            data = self.instructions[i]
-            line = "%d %s" % (data['pc'], data['instruction'])
+            data = self.metadata[i]
+            instruction = self.instructions[data['strpos']:data['strpos']+data['strlen']].view('S%d' % data['strlen'])
+            line = "%d %s" % (data['pc'], instruction)
             print line
 
 def get_disassembled_chunk(parse_mod, storage_wrapper, binary, pc, last, index_of_pc):
@@ -94,7 +104,7 @@ def get_disassembler(cpu, fast=True):
         mod_name = "udis_fast.disasm_speedups_%s" % cpu
         parse_mod = importlib.import_module(mod_name)
         processor = parse_mod.get_disassembled_chunk_fast
-        strsize = 32
+        strsize = 12
     except RuntimeError:
         mod_name = "udis_fast.hardcoded_parse_%s" % cpu
         parse_mod = importlib.import_module(mod_name)
@@ -108,7 +118,7 @@ class DisassemblerWrapper(object):
     def __init__(self, cpu, lines=65536, fast=True, mnemonic_lower=False, hex_lower=True, extra_disassemblers=None):
         processor, parse_mod, strsize = get_disassembler(cpu, fast)
         self.chunk_processor = processor
-        self.storage_wrapper = StorageWrapper(lines, strsize)
+        self.metadata_wrapper = StorageWrapper(lines, strsize)
         self.mnemonic_lower = mnemonic_lower
         self.hex_lower = hex_lower
         if extra_disassemblers is None:
@@ -119,22 +129,22 @@ class DisassemblerWrapper(object):
 
     @property
     def rows(self):
-        return self.storage_wrapper.row
+        return self.metadata_wrapper.row
 
     @property
     def labels(self):
-        return self.storage_wrapper.labels
+        return self.metadata_wrapper.labels
 
     @property
     def storage(self):
-        return self.storage_wrapper.storage
+        return self.metadata_wrapper.metadata
     
     
     def clear(self):
-        self.storage_wrapper.clear()
+        self.metadata_wrapper.clear()
 
     def next_chunk(self, binary, pc, last, i):
-        return self.chunk_processor(self.storage_wrapper, binary, pc, last, i, self.mnemonic_lower , self.hex_lower)
+        return self.chunk_processor(self.metadata_wrapper, binary, pc, last, i, self.mnemonic_lower , self.hex_lower)
 
     def get_all(self, binary, pc, i, ranges=[]):
         self.clear()
@@ -144,6 +154,6 @@ class DisassemblerWrapper(object):
             ranges = [((0, num_bytes), 0)]
         for (start_index, end_index), chunk_type in ranges:
             processor = self.chunk_type_processor.get(chunk_type, self.chunk_processor)
-            processor(self.storage_wrapper, binary, pc + start_index, pc + end_index, start_index, self.mnemonic_lower , self.hex_lower)
+            processor(self.metadata_wrapper, binary, pc + start_index, pc + end_index, start_index, self.mnemonic_lower , self.hex_lower)
         info = DisassemblyInfo(self, pc, num_bytes)
         return info

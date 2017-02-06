@@ -424,23 +424,23 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
             self.out("break")
 
 class RawC(PrintC):
-    max_instruction_length = 32 - 4 - 4 - 1 - 1
-
     preamble_header = """#include <stdio.h>
 #include <string.h>
 
-/* 32 byte structure */
+/* 12 byte structure */
 typedef struct {
-    int pc;
-    int dest_pc; /* address pointed to by this opcode; -1 if not applicable */
+    unsigned short pc;
+    unsigned short dest_pc; /* address pointed to by this opcode; if applicable */
     unsigned char count;
     unsigned char flag;
-    char instruction[%d];
+    unsigned char strlen;
+    unsigned char reserved;
+    int strpos; /* position of start of text in instruction array */
 } asm_entry;
-""" % (max_instruction_length)
+"""
 
     preamble = """
-int parse_instruction_c%s(asm_entry *wrap, unsigned int pc, unsigned char *src, unsigned int last_pc, unsigned short *labels) {
+int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
     int count, dist;
     unsigned int rel;
     unsigned short addr;
@@ -448,7 +448,8 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned int pc, unsigned char *src, 
     unsigned int num_printed = 0;
 
     opcode = *src++;
-    wrap->pc = pc;
+    wrap->pc = (unsigned short)pc;
+    wrap->strpos = strpos;
 """
 
     def out(self, s):
@@ -503,7 +504,7 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned int pc, unsigned char *src, 
             outstr = "\"%s %s\", %s" % (self.mnemonic, self.fmt, ", ".join(self.argorder))
         else:
             outstr = "\"%s %s\"" % (self.mnemonic, self.fmt)
-        self.out("    num_printed = sprintf(wrap->instruction, %s)" % outstr)
+        self.out("    num_printed = sprintf(instructions, %s)" % outstr)
 
     def opcode2(self, opcode):
         self.op1()
@@ -560,7 +561,7 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned int pc, unsigned char *src, 
         self.out("}")
         if self.leadin_offset == 0:
             self.out("wrap->flag = 0")
-            self.out("memset(wrap->instruction + num_printed, ' ', %d - num_printed)" % self.max_instruction_length)
+            self.out("wrap->strlen = num_printed")
             self.out("return wrap->count")
             self.lines.append("truncated:")
             self.out("wrap->count = 1")
@@ -568,7 +569,7 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned int pc, unsigned char *src, 
             self.fmt = "$%02x"
             self.argorder = ["opcode"]
             self.opcode1(0)
-            self.out("memset(wrap->instruction + num_printed, ' ', %d - num_printed)" % self.max_instruction_length)
+            self.out("wrap->strlen = num_printed")
             self.out("return wrap->count")
             self.lines.append("}") # no indent for closing brace
         else:
