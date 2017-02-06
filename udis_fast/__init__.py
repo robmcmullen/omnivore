@@ -127,6 +127,7 @@ def get_disassembler(cpu, fast=True):
     return processor, parse_mod, strsize
 
 import disasm_info
+import disasm_speedups_data
 
 class DisassemblerWrapper(object):
     def __init__(self, cpu, lines=65536, fast=True, mnemonic_lower=False, hex_lower=True, extra_disassemblers=None):
@@ -140,6 +141,9 @@ class DisassemblerWrapper(object):
         self.chunk_type_processor = extra_disassemblers
         # default chunk processor is the normal disassembler
         self.chunk_type_processor[0] = self.chunk_processor
+
+    def add_data_processor(self, chunk_type):
+        self.chunk_type_processor[chunk_type] = disasm_speedups_data.get_disassembled_chunk_fast
 
     @property
     def rows(self):
@@ -166,8 +170,17 @@ class DisassemblerWrapper(object):
         num_bytes = min(len(binary) - i, 65536)
         if not ranges:
             ranges = [((0, num_bytes), 0)]
+        last = False
         for (start_index, end_index), chunk_type in ranges:
+            # get some fun segfaults if this isn't limited to 64k; it wraps
+            # around some of the arrays, but steps over the boundary of others.
+            # Bad stuff.
+            if end_index > 65536:
+                last = True
+                end_index = 65536
             processor = self.chunk_type_processor.get(chunk_type, self.chunk_processor)
             processor(self.metadata_wrapper, binary, pc + start_index, pc + end_index, start_index, self.mnemonic_lower , self.hex_lower)
+            if last:
+                break
         info = disasm_info.DisassemblyInfo(self, pc, num_bytes)
         return info
