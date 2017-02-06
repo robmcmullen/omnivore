@@ -20,11 +20,11 @@ class BaseDisassembler(disasm.Disassembler):
     
     cached_miniassemblers = {}
     
-    def __init__(self, asm_syntax=None, memory_map=None, hex_lower=True, mnemonic_lower=False):
+    def __init__(self, asm_syntax=None, memory_map=None, hex_lower=True, mnemonic_lower=False, extra_disassemblers=None):
         if asm_syntax is None:
             asm_syntax = self.default_assembler
         disasm.Disassembler.__init__(self, self.cpu, asm_syntax, memory_map, self.allow_undocumented, hex_lower, mnemonic_lower, self.read_instructions, self.write_instructions, self.rw_modes)
-        self.fast = udis.udis_fast.DisassemblerWrapper(self.cpu, fast=True, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower)
+        self.fast = udis.udis_fast.DisassemblerWrapper(self.cpu, fast=True, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, extra_disassemblers=extra_disassemblers)
 
     @classmethod
     def get_nop(cls):
