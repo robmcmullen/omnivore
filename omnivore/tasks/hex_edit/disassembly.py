@@ -34,25 +34,24 @@ class DisassemblyTable(ByteGridTable):
         self.index_to_row = []
         self._rows = 0
         self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
+        disasm = self.disassembler.fast
+        disasm.add_data_processor(1)
+        disasm.add_data_processor(64)
+        disasm.add_data_processor(65)
         self.hex_lower = editor.task.hex_grid_lower_case
         self.start_addr = segment.start_addr
         self.restart_disassembly(0)
     
     def restart_disassembly(self, index):
-        if index > 0 and False:
-            next_row = self.index_to_row[index]
-            pc = self.get_pc(next_row)
-            self.lines[next_row:-1] = []
-        else:
-            next_row = -1
-            pc = self.segment.start_addr
-            self.lines = None
-        
+        pc = self.segment.start_addr
+        self.lines = None
+
         # old format: (addr, bytes, opstr, comment, count, flag)
         self.disassembler.set_pc(self.segment, pc)
         last_pc = pc + len(self.segment)
         disasm = self.disassembler.fast
-        info = disasm.get_all(self.segment.rawdata.unindexed_view, pc, 0)
+        r = self.segment.get_entire_style_ranges(data=True, user=1)
+        info = disasm.get_all(self.segment.rawdata.unindexed_view, pc, 0, r)
         self.index_to_row = info.index
         self.lines = info
         self._rows = info.num_instructions
