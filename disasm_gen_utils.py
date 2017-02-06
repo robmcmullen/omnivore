@@ -541,12 +541,12 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, 
         if self.leadin_offset == 0:
             self.out("    wrap->count = 1")
             self.mnemonic = ".byte"
-            self.fmt = "%02x"
-            self.argorder = ["op1"]
+            self.fmt = "$%02x"
+            self.argorder = ["opcode"]
         elif self.leadin_offset == 1:
             self.out("    wrap->count = 2")
             self.mnemonic = ".byte"
-            self.fmt = "%02x, %02x"
+            self.fmt = "$%02x, $%02x"
             self.argorder = ["leadin", "opcode"]
         self.opcode1(0)
         self.out("    break")
