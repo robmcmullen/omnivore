@@ -496,7 +496,7 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned int pc, unsigned char *src, 
     def check_pc(self):
         self.out("    wrap->count = %d" % self.length)
         if self.length > 1:
-            self.out("    if (pc + wrap->count > last_pc) return 0")
+            self.out("    if (pc + wrap->count > last_pc) goto truncated")
 
     def opcode1(self, opcode):
         if self.argorder:
@@ -560,6 +560,14 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned int pc, unsigned char *src, 
         self.out("}")
         if self.leadin_offset == 0:
             self.out("wrap->flag = 0")
+            self.out("memset(wrap->instruction + num_printed, ' ', %d - num_printed)" % self.max_instruction_length)
+            self.out("return wrap->count")
+            self.lines.append("truncated:")
+            self.out("wrap->count = 1")
+            self.mnemonic = ".byte"
+            self.fmt = "$%02x"
+            self.argorder = ["opcode"]
+            self.opcode1(0)
             self.out("memset(wrap->instruction + num_printed, ' ', %d - num_printed)" % self.max_instruction_length)
             self.out("return wrap->count")
             self.lines.append("}") # no indent for closing brace
