@@ -27,24 +27,24 @@ cdef class DisassemblyInfo:
     cdef public int first_pc
     cdef public int num_bytes
     cdef public int num_instructions
-    cdef np.ndarray metadata_array
-    cdef np.ndarray instructions_array
+    cdef public np.ndarray metadata
+    cdef public np.ndarray instructions
     cdef public np.ndarray labels
     cdef public np.ndarray index
     cdef CurrentRow current
     cdef int itemsize
-    cdef unsigned char *metadata
-    cdef char *instructions
+    cdef unsigned char *metadata_raw
+    cdef char *instructions_raw
 
     def __init__(self, wrapper, first_pc, num_bytes):
         self.first_pc = first_pc
         self.num_bytes = num_bytes
-        self.metadata_array, self.instructions_array, self.labels, self.index = wrapper.metadata_wrapper.copy_resize(num_bytes)
-        self.num_instructions = len(self.metadata_array)
-        self.itemsize = self.metadata_array.itemsize
+        self.metadata, self.instructions, self.labels, self.index = wrapper.metadata_wrapper.copy_resize(num_bytes)
+        self.num_instructions = len(self.metadata)
+        self.itemsize = self.metadata.itemsize
 
-        self.metadata = <unsigned char *>self.metadata_array.data
-        self.instructions = self.instructions_array.data
+        self.metadata_raw = <unsigned char *>self.metadata.data
+        self.instructions_raw = self.instructions.data
         self.current = CurrentRow()
 
     def __getitem__(self, int index):
@@ -66,7 +66,7 @@ cdef class DisassemblyInfo:
         #     int strpos; /* position of start of text in instruction array */
         # } asm_entry;
 
-        m = self.metadata + (index * self.itemsize)
+        m = self.metadata_raw + (index * self.itemsize)
         sptr = <unsigned short *>m
         self.current.pc = sptr[0]
         self.current.dest_pc = sptr[1]
@@ -76,6 +76,6 @@ cdef class DisassemblyInfo:
         iptr = <int *>(m + 8)
         strpos = iptr[0]
 
-        self.current.instruction = self.instructions[strpos:strpos + strlen]
+        self.current.instruction = self.instructions_raw[strpos:strpos + strlen]
         return self.current
 
