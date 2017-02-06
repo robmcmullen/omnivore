@@ -69,12 +69,8 @@ if __name__ == "__main__":
         if show:
             row = 0
             while (row < info.num_instructions):
-                data = info.metadata[row]
-                start = data['strpos']
-                strlen = data['strlen']
-                end = start + strlen
-                instruction = info.instructions[start:end].view('S%d' % strlen)
-                line = "%s: %d %s" % (data, data['pc'], instruction)
+                data = info[row]
+                line = "%d %s" % (data.pc, data.instruction)
                 print line
                 row += 1
 

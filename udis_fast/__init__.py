@@ -71,6 +71,18 @@ class StorageWrapper(object):
         index[:] = self.index[:num_bytes]
         return metadata, text, labels, index
 
+class DisassemblyRow(object):
+    def __init__(self, info, row):
+        data = info.metadata[row]
+        self.pc = data['pc']
+        start = data['strpos']
+        strlen = data['strlen']
+        end = start + strlen
+        self.instruction = info.instructions[start:end].view('S%d' % strlen)[0]
+        self.flag = data['flag']
+        self.num_bytes = data['count']
+        self.dest_pc = data['dest_pc']
+
 class DisassemblyInfo(object):
     def __init__(self, wrapper, first_pc, num_bytes):
         self.first_pc = first_pc
@@ -78,12 +90,15 @@ class DisassemblyInfo(object):
         self.metadata, self.instructions, self.labels, self.index = wrapper.metadata_wrapper.copy_resize(num_bytes)
         self.num_instructions = len(self.metadata)
 
+    def __getitem__(self, index):
+        return DisassemblyRow(self, index)
+
     def print_instructions(self, start, count):
         for i in range(start, start+count):
-            data = self.metadata[i]
-            instruction = self.instructions[data['strpos']:data['strpos']+data['strlen']].view('S%d' % data['strlen'])
-            line = "%d %s" % (data['pc'], instruction)
+            data = self[i]
+            line = "%d %s" % (data.pc, data.instruction)
             print line
+
 
 def get_disassembled_chunk(parse_mod, storage_wrapper, binary, pc, last, index_of_pc):
     while pc < last:
