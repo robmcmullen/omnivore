@@ -197,10 +197,10 @@ class DisassemblyTable(ByteGridTable):
                 text = ("L%04X" % pc)
             else:
                 text = extra_labels.get(pc, "     ")
-            operand = line["operand"].rstrip()
+            operand = line["instruction"].rstrip()
             if count > 1 and operand_labels_start_pc >= 0:
                 operand, target_pc, label = self.get_operand_label(operand, operand_labels_start_pc, operand_labels_end_pc, offset_operand_labels)
-            text += " " + line["mnemonic"].rstrip()+ " " + operand
+            text += " " + operand
         return text, style
     
     get_value_style_upper = get_value_style_lower
@@ -309,7 +309,7 @@ class DisassemblyPanel(ByteGrid):
         offset_operand_labels = {}
         for row in range(start_row, end_row + 1):
             index, _ = t.get_index_range(row, 0)
-            operand = t.lines[row]["operand"]
+            operand = t.lines[row]["instruction"]
             operand, target_pc, label = t.get_operand_label(operand, start_pc, end_pc, {})
             if target_pc >= 0:
                 extra_labels[target_pc] = label
