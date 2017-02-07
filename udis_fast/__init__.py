@@ -128,6 +128,7 @@ def get_disassembler(cpu, fast=True):
 
 import disasm_info
 import disasm_speedups_data
+import disasm_speedups_antic_dl
 
 class DisassemblerWrapper(object):
     def __init__(self, cpu, lines=65536, fast=True, mnemonic_lower=False, hex_lower=True, extra_disassemblers=None):
@@ -144,6 +145,9 @@ class DisassemblerWrapper(object):
 
     def add_data_processor(self, chunk_type):
         self.chunk_type_processor[chunk_type] = disasm_speedups_data.get_disassembled_chunk_fast
+
+    def add_antic_dl_processor(self, chunk_type):
+        self.chunk_type_processor[chunk_type] = disasm_speedups_antic_dl.get_disassembled_chunk_fast
 
     @property
     def rows(self):
