@@ -22,9 +22,9 @@ int parse_instruction_c_LL(asm_entry *wrap, unsigned char *src, unsigned int pc,
     wrap->strpos = strpos;
     wrap->flag = 0;
     wrap->count = 1;
-    opcode = src[wrap->count - 1];
+    opcode = src[0];
 
-    if ((opcode & 0x0f == 1) || (opcode & 0xf0 == 0x40)) {
+    if (((opcode & 0x0f) == 1) || ((opcode & 0xf0) == 0x40)) {
         wrap->count = 3;
         if (pc + wrap->count > last_pc) {
             wrap->count = pc + wrap->count - last_pc;
@@ -43,18 +43,18 @@ int parse_instruction_c_LL(asm_entry *wrap, unsigned char *src, unsigned int pc,
         else if (opcode & 0xf0 > 0) mnemonic = "<invalid>";
         else mnemonic = "JMP";
         if (wrap->count < 3) num_printed += sprintf(instructions + num_printed, "%s <bad addr>", mnemonic);
-        else num_printed += sprintf(instructions + num_printed, "%s %02x%02x", mnemonic, src[2], src[1]);
+        else num_printed += sprintf(instructions + num_printed, "%s $%02x%02x", mnemonic, src[2], src[1]);
     }
     else {
-        if (opcode & 0xf == 0) {
+        if ((opcode & 0xf) == 0) {
             if (wrap->count > 1) num_printed += sprintf(instructions + num_printed, "%dx", wrap->count);
             if (opcode & 0x80) num_printed += sprintf(instructions + num_printed, "DLI ");
             num_printed += sprintf(instructions + num_printed, "%d BLANK", (((opcode >> 4) & 0x07) + 1));
         }
         else {
-            if (opcode & 0x40) {
+            if ((opcode & 0xf0) == 0x40) {
                 if (wrap->count < 3) num_printed += sprintf(instructions + num_printed, "LMS <bad addr> ");
-                else num_printed += sprintf(instructions + num_printed, "LMS %02x%02x", src[2], src[1]);
+                else num_printed += sprintf(instructions + num_printed, "LMS $%02x%02x ", src[2], src[1]);
             }
             else if (wrap->count > 1) num_printed += sprintf(instructions + num_printed, "%dx", wrap->count);
 
