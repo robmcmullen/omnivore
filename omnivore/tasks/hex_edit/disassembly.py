@@ -35,9 +35,9 @@ class DisassemblyTable(ByteGridTable):
         self._rows = 0
         self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
         disasm = self.disassembler.fast
-        disasm.add_data_processor(1)
+        disasm.add_antic_dl_processor(1)
         disasm.add_data_processor(64)
-        disasm.add_data_processor(65)
+        disasm.add_antic_dl_processor(65)
         self.hex_lower = editor.task.hex_grid_lower_case
         self.start_addr = segment.start_addr
         self.restart_disassembly(0)
@@ -144,8 +144,9 @@ class DisassemblyTable(ByteGridTable):
             row = self.index_to_row[index]
             line = self.lines[row]
         comments = []
-        c = "" # str(line[3])
-        if c:
+        c = line.instruction
+        if ";" in c:
+            _, c = c.split(";", 1)
             comments.append(c)
         for i in range(line.num_bytes):
             c = self.segment.get_comment(index + i)
@@ -190,6 +191,8 @@ class DisassemblyTable(ByteGridTable):
         elif col == 2:
             if (style & comment_bit_mask):
                 text = self.get_comments(index, line)
+            elif ";" in line.instruction:
+                _, text = line.instruction.split(";", 1)
             else:
                 text = ""
         else:
@@ -387,6 +390,7 @@ class DisassemblyPanel(ByteGrid):
         return False
     
     def search(self, search_text, match_case=False):
+        # FIXME! search broken with udis_fast
         lines = self.table.lines
         s = self.table.start_addr
         if not match_case:
