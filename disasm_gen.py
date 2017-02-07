@@ -32,7 +32,50 @@ lbl = 8 # subroutine/jump target; candidate for a label
 r = 64
 w = 128
 
-class DisassemblerGenerator(object):
+class DataGenerator(object):
+    def __init__(self, formatter_class, hex_lower=True, mnemonic_lower=False, first_of_set=True, **kwargs):
+        self.formatter_class = formatter_class
+        self.hex_lower = hex_lower
+        self.mnemonic_lower = mnemonic_lower
+        self.data_op = ".byte" if mnemonic_lower else ".BYTE"
+        self.fmt_op = "$%02x" if hex_lower else "$%02X"
+        
+        self.setup(**kwargs)
+        self.generate(first_of_set)
+
+    def setup(self, bytes_per_line=4, **kwargs):
+        self.bytes_per_line = bytes_per_line
+
+    def gen_numpy_single_print(self, lines, *args, **kwargs):
+        formatter = self.formatter_class(lines)
+        for count in range(self.bytes_per_line, 0, -1): # down to 1
+            formatter.process(count, self.data_op, self.fmt_op)
+        formatter.end_subroutine()
+
+    def start_formatter(self, lines):
+        self.gen_numpy_single_print(lines)
+
+    def generate(self, first_of_set):
+        # lines = ["def parse_instruction(pc, src, last_pc):"]
+        # lines.append("    opcode = src[0]")
+        # lines.append("    print '%04x' % pc,")
+        # self.gen_switch(lines, self.opcode_table)
+        text = self.formatter_class.preamble
+        if "%s" in text:
+            c1 = "L" if self.mnemonic_lower else "U"
+            c2 = "L" if self.hex_lower else "U"
+            suffix = "_%s%s" % (c1, c2)
+            print(suffix)
+            text = text.replace("%s", suffix)
+        if first_of_set:
+            text = self.formatter_class.preamble_header + text
+        lines = text.splitlines()
+
+        self.start_formatter(lines)
+
+        self.lines = lines
+
+class DisassemblerGenerator(DataGenerator):
     def __init__(self, cpu_name, formatter_class, allow_undocumented=False, hex_lower=True, mnemonic_lower=False, r_mnemonics=None, w_mnemonics=None, rw_modes=None, first_of_set=True):
         self.formatter_class = formatter_class
         self.hex_lower = hex_lower
@@ -129,25 +172,8 @@ class DisassemblerGenerator(object):
             formatter.unknown_opcode()
         formatter.end_subroutine()
 
-    def generate(self, first_of_set):
-        # lines = ["def parse_instruction(pc, src, last_pc):"]
-        # lines.append("    opcode = src[0]")
-        # lines.append("    print '%04x' % pc,")
-        # self.gen_switch(lines, self.opcode_table)
-        text = self.formatter_class.preamble
-        if "%s" in text:
-            c1 = "L" if self.mnemonic_lower else "U"
-            c2 = "L" if self.hex_lower else "U"
-            suffix = "_%s%s" % (c1, c2)
-            print(suffix)
-            text = text.replace("%s", suffix)
-        if first_of_set:
-            text = self.formatter_class.preamble_header + text
-        lines = text.splitlines()
-
+    def start_formatter(self, lines):
         self.gen_numpy_single_print(lines, self.opcode_table)
-
-        self.lines = lines
 
 
 def gen_cpu(cpu, undoc=False, all_case_combos=False):
@@ -171,6 +197,23 @@ def gen_cpu(cpu, undoc=False, all_case_combos=False):
                 fh.write("\n")
 
 
+def gen_others(all_case_combos=False):
+    file_root = "udis_fast/hardcoded_parse_data"
+    print("Generating %s" % file_root)
+    for ext, formatter, generator in [("c", DataC, DataGenerator)]:
+        with open("%s.%s" % (file_root, ext), "w") as fh:
+            if all_case_combos:
+                first = True
+                for mnemonic_lower, hex_lower in [(True, True), (True, False), (False, True), (False, False)]:
+                    disasm = generator(formatter, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, first_of_set=first)
+                    fh.write("\n".join(disasm.lines))
+                    fh.write("\n")
+                    first = False
+            else:
+                disasm = generator(formatter)
+                fh.write("\n".join(disasm.lines))
+                fh.write("\n")
+
 def gen_all(all_case_combos=False):
     for cpu in cputables.processors.keys():
         gen_cpu(cpu, False, all_case_combos)
@@ -190,3 +233,4 @@ if __name__ == "__main__":
         gen_cpu(args.cpu, args.undocumented, args.all_cases)
     else:
         gen_all(args.all_cases)
+    gen_others(args.all_cases)

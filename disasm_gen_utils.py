@@ -574,3 +574,60 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, 
             self.lines.append("}") # no indent for closing brace
         else:
             self.out("break")
+
+class DataC(RawC):
+    preamble_header = """#include <stdio.h>
+#include <string.h>
+
+/* 12 byte structure */
+typedef struct {
+    unsigned short pc;
+    unsigned short dest_pc; /* address pointed to by this opcode; if applicable */
+    unsigned char count;
+    unsigned char flag;
+    unsigned char strlen;
+    unsigned char reserved;
+    int strpos; /* position of start of text in instruction array */
+} asm_entry;
+"""
+
+    preamble = """
+int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
+    unsigned int num_printed = 0;
+
+    wrap->pc = (unsigned short)pc;
+    wrap->strpos = strpos;
+    wrap->count = 4;
+    wrap->flag = 0;
+    if (pc + wrap->count > last_pc) {
+        wrap->count = pc + wrap->count - last_pc;
+        if (wrap->count == 0) {
+            wrap->strlen = 0;
+            return 0;
+        }
+    }
+    switch(wrap->count) {
+"""
+    def __init__(self, lines):
+        self.lines = lines
+        self.first = True
+        self.indent = "    "
+
+    def print_bytes(self, count, data_op, fmt_op):
+        fmt = ", ".join([fmt_op] * count)
+        args = ", ".join(["src[%d]" % i for i in range(count)])
+        self.out("    num_printed = sprintf(instructions, \"%s %s\", %s)" % (data_op, fmt, args))
+
+    def process(self, count, data_op, fmt_op):
+        if count > 1:
+            self.out("case %d:" % count)
+        else:
+            self.out("default:")
+        self.print_bytes(count, data_op, fmt_op)
+        self.out("    break")
+
+    def end_subroutine(self):
+        self.out("}")
+        self.out("wrap->strlen = num_printed")
+        self.out("return wrap->count")
+        self.lines.append("}") # no indent for closing brace
