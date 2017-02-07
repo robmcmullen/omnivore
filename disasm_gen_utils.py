@@ -62,6 +62,9 @@ class PrintBase(object):
         self.leadin_offset = leadin_offset
         self.first = True
 
+    def set_case(self, mnemonic_lower, hex_lower):
+        pass
+
     def bytes1(self, opcode):
         if self.leadin_offset == 0:
             return "%02x __ __ __" % opcode, []
@@ -265,6 +268,18 @@ def parse_instruction_numpy(wrap, pc, src, last_pc):
 
 class PrintC(PrintNumpy):
     preamble_header = """#include <stdio.h>
+#include <string.h>
+
+/* 12 byte structure */
+typedef struct {
+    unsigned short pc;
+    unsigned short dest_pc; /* address pointed to by this opcode; if applicable */
+    unsigned char count;
+    unsigned char flag;
+    unsigned char strlen;
+    unsigned char reserved;
+    int strpos; /* position of start of text in instruction array */
+} asm_entry;
 """
 
     preamble = """
@@ -424,21 +439,6 @@ int parse_instruction_c(unsigned char *wrap, unsigned int pc, unsigned char *src
             self.out("break")
 
 class RawC(PrintC):
-    preamble_header = """#include <stdio.h>
-#include <string.h>
-
-/* 12 byte structure */
-typedef struct {
-    unsigned short pc;
-    unsigned short dest_pc; /* address pointed to by this opcode; if applicable */
-    unsigned char count;
-    unsigned char flag;
-    unsigned char strlen;
-    unsigned char reserved;
-    int strpos; /* position of start of text in instruction array */
-} asm_entry;
-"""
-
     preamble = """
 int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
     int count, dist;
@@ -626,8 +626,109 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, 
         self.print_bytes(count, data_op, fmt_op)
         self.out("    break")
 
+    def gen_cases(self, parser):
+        for count in range(parser.bytes_per_line, 0, -1): # down to 1
+            self.process(count, parser.data_op, parser.fmt_op)
+
     def end_subroutine(self):
         self.out("}")
         self.out("wrap->strlen = num_printed")
         self.out("return wrap->count")
         self.lines.append("}") # no indent for closing brace
+
+class AnticC(RawC):
+    preamble = """
+int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
+    unsigned char opcode;
+    unsigned int num_printed = 0;
+    int i, dli = 0;
+    char *mnemonic;
+
+    wrap->pc = (unsigned short)pc;
+    wrap->strpos = strpos;
+    wrap->flag = 0;
+    wrap->count = 1;
+    opcode = src[0];
+
+    if (((opcode & 0x0f) == 1) || ((opcode & 0xf0) == 0x40)) {
+        wrap->count = 3;
+        if (pc + wrap->count > last_pc) {
+            wrap->count = pc + wrap->count - last_pc;
+        }
+    }
+    else {
+        while (pc + wrap->count < last_pc) {
+            if (src[wrap->count] == opcode) wrap->count += 1;
+            else break;
+        }
+    }
+"""
+
+    main = """
+    switch(wrap->count) {
+    case 3:
+        num_printed = sprintf(instructions, "$BYTE $HEX, $HEX, $HEX ; ", src[0], src[1], src[2]);
+        break;
+    case 2:
+        num_printed = sprintf(instructions, "$BYTE $HEX, $HEX      ; ", src[0], src[1]);
+        break;
+    case 1:
+        num_printed = sprintf(instructions, "$BYTE $HEX           ; ", src[0]);
+        break;
+    default:
+        num_printed = sprintf(instructions, "$BYTE $HEX", src[0]);
+        for (i=1; i<wrap->count; i++) {
+            num_printed += sprintf(instructions + num_printed, ", $HEX", src[i]);
+        }
+        num_printed += sprintf(instructions + num_printed, "; ", src[i]);
+        break;
+    }
+ 
+
+    if ((opcode & 0xf) == 1) {
+        if (opcode & 0x80) num_printed += sprintf(instructions + num_printed, "DLI ");
+        if (opcode & 0x40) mnemonic = "JVB";
+        else if ((opcode & 0xf0) > 0) mnemonic = "<invalid>";
+        else mnemonic = "JMP";
+        if (wrap->count < 3) num_printed += sprintf(instructions + num_printed, "%s <bad addr>", mnemonic);
+        else num_printed += sprintf(instructions + num_printed, "%s $HEX%02x", mnemonic, src[2], src[1]);
+    }
+    else {
+        if ((opcode & 0xf) == 0) {
+            if (wrap->count > 1) num_printed += sprintf(instructions + num_printed, "%dx", wrap->count);
+            if (opcode & 0x80) num_printed += sprintf(instructions + num_printed, "DLI ");
+            num_printed += sprintf(instructions + num_printed, "%d BLANK", (((opcode >> 4) & 0x07) + 1));
+        }
+        else {
+            if ((opcode & 0xf0) == 0x40) {
+                if (wrap->count < 3) num_printed += sprintf(instructions + num_printed, "LMS <bad addr> ");
+                else num_printed += sprintf(instructions + num_printed, "LMS $HEX%02x ", src[2], src[1]);
+            }
+            else if (wrap->count > 1) num_printed += sprintf(instructions + num_printed, "%dx", wrap->count);
+
+            if (opcode & 0x80) num_printed += sprintf(instructions + num_printed, "DLI ");
+            if (opcode & 0x20) num_printed += sprintf(instructions + num_printed, "VSCROL ");
+            if (opcode & 0x10) num_printed += sprintf(instructions + num_printed, "HSCROL ");
+
+            num_printed += sprintf(instructions + num_printed, "MODE %X", (opcode & 0x0f));
+        }
+    }
+
+    wrap->strlen = num_printed;
+    return wrap->count;
+}
+"""
+    def __init__(self, lines):
+        self.lines = lines
+        self.first = True
+        self.indent = "    "
+
+    def process(self, count, data_op, fmt_op):
+        text = self.main.replace("$BYTE", data_op).replace("$HEX", fmt_op)
+        self.lines.extend(text.splitlines())
+
+    def gen_cases(self, parser):
+        self.process(0, parser.data_op, parser.fmt_op)
+
+    def end_subroutine(self):
+        pass

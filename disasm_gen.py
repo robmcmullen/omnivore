@@ -48,8 +48,7 @@ class DataGenerator(object):
 
     def gen_numpy_single_print(self, lines, *args, **kwargs):
         formatter = self.formatter_class(lines)
-        for count in range(self.bytes_per_line, 0, -1): # down to 1
-            formatter.process(count, self.data_op, self.fmt_op)
+        formatter.gen_cases(self)
         formatter.end_subroutine()
 
     def start_formatter(self, lines):
@@ -198,9 +197,9 @@ def gen_cpu(cpu, undoc=False, all_case_combos=False):
 
 
 def gen_others(all_case_combos=False):
-    file_root = "udis_fast/hardcoded_parse_data"
-    print("Generating %s" % file_root)
-    for ext, formatter, generator in [("c", DataC, DataGenerator)]:
+    for name, ext, formatter, generator in [("data", "c", DataC, DataGenerator), ("antic_dl", "c", AnticC, DataGenerator)]:
+        file_root = "udis_fast/hardcoded_parse_%s" % name
+        print("Generating %s" % file_root)
         with open("%s.%s" % (file_root, ext), "w") as fh:
             if all_case_combos:
                 first = True
@@ -229,7 +228,9 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--all-cases", help="Generate 4 separate functions for the lower/upper combinations", action="store_true", default=False)
     args = parser.parse_args()
 
-    if args.cpu:
+    if args.cpu is None or args.cpu.lower() == "none":
+        pass
+    elif args.cpu:
         gen_cpu(args.cpu, args.undocumented, args.all_cases)
     else:
         gen_all(args.all_cases)
