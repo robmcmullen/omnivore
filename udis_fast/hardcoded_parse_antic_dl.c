@@ -15,7 +15,7 @@ typedef struct {
 int parse_instruction_c_LL(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
     unsigned char opcode;
     unsigned int num_printed = 0;
-    int dli = 0;
+    int i, dli = 0;
     char *mnemonic;
 
     wrap->pc = (unsigned short)pc;
@@ -37,10 +37,30 @@ int parse_instruction_c_LL(asm_entry *wrap, unsigned char *src, unsigned int pc,
         }
     }
 
+    switch(wrap->count) {
+    case 3:
+        num_printed = sprintf(instructions, ".byte $%02x, $%02x, $%02x ; ", src[0], src[1], src[2]);
+        break;
+    case 2:
+        num_printed = sprintf(instructions, ".byte $%02x, $%02x      ; ", src[0], src[1]);
+        break;
+    case 1:
+        num_printed = sprintf(instructions, ".byte $%02x           ; ", src[0]);
+        break;
+    default:
+        num_printed = sprintf(instructions, ".byte $%02x", src[0]);
+        for (i=1; i<wrap->count; i++) {
+            num_printed += sprintf(instructions + num_printed, ", $%02x", src[i]);
+        }
+        num_printed += sprintf(instructions + num_printed, "; ", src[i]);
+        break;
+    }
+ 
+
     if ((opcode & 0xf) == 1) {
         if (opcode & 0x80) num_printed += sprintf(instructions + num_printed, "DLI ");
         if (opcode & 0x40) mnemonic = "JVB";
-        else if (opcode & 0xf0 > 0) mnemonic = "<invalid>";
+        else if ((opcode & 0xf0) > 0) mnemonic = "<invalid>";
         else mnemonic = "JMP";
         if (wrap->count < 3) num_printed += sprintf(instructions + num_printed, "%s <bad addr>", mnemonic);
         else num_printed += sprintf(instructions + num_printed, "%s $%02x%02x", mnemonic, src[2], src[1]);
