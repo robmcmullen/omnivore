@@ -55,6 +55,16 @@ class NewFileGroup(Group):
     # Private interface.
     ###########################################################################
 
+    def destroy(self):
+        """ Called when the action is no longer required.
+
+        Remove all the task listeners.
+
+        """
+
+        self.application.on_trait_change(self._rebuild, 'task_factories[]', remove=True)
+        super(NewFileGroup, self).destroy()
+
     def _get_items(self):
         items = []
         for factory in self.application.task_factories:
@@ -423,6 +433,15 @@ class BaseDynamicSubmenuGroup(Group):
     ###########################################################################
     # Private interface.
     ###########################################################################
+
+    def destroy(self):
+        """ Called when the action is no longer required.
+
+        Remove all the task listeners.
+        """
+        t = self._get_trait_for_event()
+        t.on_trait_change(self._rebuild, self.event_name, remove=True)
+        super(BaseDynamicSubmenuGroup, self).destroy()
 
     def _get_items(self, event_data=None):
         # Override this in your subclass to return the list of actions
