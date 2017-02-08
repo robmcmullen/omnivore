@@ -209,12 +209,19 @@ class SegmentData(object):
         Raises IndexError if the base index doesn't map to anything in this
         segment's data
         """
-        if not self.reverse_index_mapping:
-            self.reverse_index_mapping = dict([(k,i) for i,k in enumerate(self.order)])
-        try:
-            return self.reverse_index_mapping[base_index]
-        except KeyError:
-            raise IndexError("index %d not mapped in this segment" % base_index)
+        if self.is_indexed:
+            if not self.reverse_index_mapping:
+                self.reverse_index_mapping = dict([(k,i) for i,k in enumerate(self.order)])
+            try:
+                return self.reverse_index_mapping[base_index]
+            except KeyError:
+                raise IndexError("index %d not mapped in this segment" % base_index)
+        else:
+            if self.data.base is None:
+                return int(base_index)
+            data_start, data_end = np.byte_bounds(self.data)
+            base_start, base_end = np.byte_bounds(self.data.base)
+            return int(base_start + base_index - data_start)
 
 
 class DefaultSegment(object):
@@ -625,6 +632,14 @@ class DefaultSegment(object):
     
     def get_sorted_comments(self):
         return sorted([[k, v] for k, v in self.rawdata.extra.comments.iteritems()])
+
+    def iter_comments_in_segment(self):
+        start = self.start_addr
+        start_index = self.get_raw_index(0)
+        end_index = self.get_raw_index(len(self.rawdata))
+        for k, v in self.rawdata.extra.comments.iteritems():
+            if k >= start_index and k < end_index:
+                yield self.rawdata.get_reverse_index(k), v
     
     def label(self, index, lower_case=True):
         if lower_case:
