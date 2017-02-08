@@ -312,7 +312,7 @@ class DisassemblyPanel(ByteGrid):
         offset_operand_labels = {}
         for row in range(start_row, end_row + 1):
             index, _ = t.get_index_range(row, 0)
-            operand = t.lines[row]["instruction"]
+            operand = t.lines[row].instruction
             operand, target_pc, label = t.get_operand_label(operand, start_pc, end_pc, {})
             if target_pc >= 0:
                 extra_labels[target_pc] = label
@@ -320,8 +320,10 @@ class DisassemblyPanel(ByteGrid):
                 good_opcode_target_pc = t.get_prior_valid_opcode_start(target_pc)
                 diff = target_pc - good_opcode_target_pc
                 if diff > 0:
-                    offset_operand_labels[target_pc] = "L%04X+%d" % (good_opcode_target_pc, diff)
+                    good_label = "L%04X" % good_opcode_target_pc
+                    offset_operand_labels[target_pc] = "%s+%d" % (good_label, diff)
                     print "mapping %04X to %s" % (target_pc, offset_operand_labels[target_pc])
+                    extra_labels[good_opcode_target_pc] = good_label
         print extra_labels
         print offset_operand_labels
         lines = []
