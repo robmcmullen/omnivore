@@ -541,6 +541,20 @@ class FindAllCommand(Command):
                 for searcher in found:
                     self.all_matches.extend(searcher.matches)
                 self.all_matches.sort()
+
+                # remove entries that duplicate the start point, finding the
+                # match of largest size if two are coincident
+                dups = {}
+                dups_removed = []
+                for match in self.all_matches:
+                    start = match[0]
+                    if start not in dups:
+                        dups_removed.append(match)
+                        dups[start] = match[1]
+                    elif dups[start] < match[1]:
+                        dups[start] = match[1]
+                self.all_matches = [m if m[0] in dups and dups[m[0]] < m[1] else (m[0], dups[m[0]]) for m in dups_removed]
+
                 #print "Find:", self.all_matches
                 if len(self.all_matches) == 0:
                     undo.flags.message = "Not found"
