@@ -47,6 +47,9 @@ cdef class DisassemblyInfo:
         self.instructions_raw = self.instructions.data
         self.current = CurrentRow()
 
+    def __len__(self):
+        return self.num_instructions
+
     def __getitem__(self, int index):
         cdef char *text
         cdef unsigned char *m
@@ -65,6 +68,9 @@ cdef class DisassemblyInfo:
         #     unsigned char reserved;
         #     int strpos; /* position of start of text in instruction array */
         # } asm_entry;
+
+        if index < 0 or index > self.num_instructions:
+            raise IndexError("Index %d invalid; number of instructions = %d" % (index, self.num_instructions))
 
         m = self.metadata_raw + (index * self.itemsize)
         sptr = <unsigned short *>m

@@ -78,6 +78,10 @@ if __name__ == "__main__":
         print info.index[0:1000]
         print np.where(info.labels > 0)
 
+        for i, entry in enumerate(info):
+            pass
+        print "getitem test (looping count): %d" % i
+
     if args.hex:
         try:
             binary = args.hex.decode("hex")
