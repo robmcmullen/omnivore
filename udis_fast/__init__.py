@@ -116,7 +116,11 @@ def get_disassembler(cpu, fast=True):
         if not fast:
             raise RuntimeError
         mod_name = "udis_fast.disasm_speedups_%s" % cpu
-        parse_mod = importlib.import_module(mod_name)
+        try:
+            parse_mod = importlib.import_module(mod_name)
+        except ImportError:
+            mod_name = "udis.udis_fast.disasm_speedups_%s" % cpu
+            parse_mod = importlib.import_module(mod_name)
         processor = parse_mod.get_disassembled_chunk_fast
         strsize = 12
     except RuntimeError:
