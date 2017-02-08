@@ -69,7 +69,7 @@ cdef class DisassemblyInfo:
         #     int strpos; /* position of start of text in instruction array */
         # } asm_entry;
 
-        if index < 0 or index > self.num_instructions:
+        if index < 0 or index >= self.num_instructions:
             raise IndexError("Index %d invalid; number of instructions = %d" % (index, self.num_instructions))
 
         m = self.metadata_raw + (index * self.itemsize)
