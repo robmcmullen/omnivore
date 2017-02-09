@@ -52,8 +52,12 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
             dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
             dc.DrawRectangleRect(rect)
         else:
-            text, style = self.table.get_value_style(row, col)
-            style = self.table.get_style_override(row, col, style)
+            try:
+                text, style = self.table.get_value_style(row, col)
+                style = self.table.get_style_override(row, col, style)
+            except IndexError, e:
+                log.error("Scrolled to invalid row somehow! %s" % str(e))
+                text, style = "", 0
             if style & selected_bit_mask:
                 dc.SetPen(self.selected_pen)
                 dc.SetBrush(self.selected_brush)
