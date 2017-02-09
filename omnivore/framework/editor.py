@@ -107,6 +107,9 @@ class FrameworkEditor(Editor):
             "algorithm": "",
             }
 
+    def _selected_ranges_default(self):
+        return [(0, 0)]
+
     #### property getters
 
     def _get_name(self):
@@ -503,7 +506,7 @@ class FrameworkEditor(Editor):
         """
         self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = self.cursor_index
         self.can_copy = False
-        self.selected_ranges = []
+        self.selected_ranges = [(self.cursor_index, self.cursor_index)]
         self.highlight_selected_ranges()
         if refresh:
             self.refresh_panes()
