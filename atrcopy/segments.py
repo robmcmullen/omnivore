@@ -608,6 +608,20 @@ class DefaultSegment(object):
             ranges.append([[start, end], current])
         return ranges
     
+    def get_style_at_indexes(self, indexes):
+        return self.style[indexes]
+
+    def get_comments_at_indexes(self, indexes):
+        s = self.style[indexes]
+        has_comments = np.where(s & comment_bit_mask > 0)[0]
+        print "has_comments", has_comments
+        comments = []
+        for where_index in has_comments:
+            raw = self.get_raw_index(indexes[where_index])
+            comment = self.get_comment(indexes[where_index])
+            comments.append((where_index, comment))
+        return comments
+
     def set_comment(self, ranges, text):
         self.set_style_ranges(ranges, comment=True)
         for start, end in ranges:
