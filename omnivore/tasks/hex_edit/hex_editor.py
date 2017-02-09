@@ -5,6 +5,7 @@ import os
 # Major package imports.
 import wx
 import numpy as np
+import json
 
 # Enthought library imports.
 from traits.api import Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides, on_trait_change
@@ -206,13 +207,13 @@ class HexEditor(FrameworkEditor):
     def process_paste_data_object(self, data_obj, cmd_cls=None):
         bytes, extra = self.get_numpy_from_data_object(data_obj)
         ranges, indexes = self.get_selected_ranges_and_indexes()
-        if extra and extra[0] == "numpy,multiple":
-            source_indexes = extra[1]
+        if extra and (extra[0] == "numpy,multiple" or extra[0] == "numpy"):
+            source_indexes, style, comments = extra[1:4]
         else:
             source_indexes = None
         if cmd_cls is None:
             cmd_cls = PasteCommand
-        cmd = cmd_cls(self.segment, ranges, self.cursor_index, bytes, source_indexes)
+        cmd = cmd_cls(self.segment, ranges, self.cursor_index, bytes, source_indexes, style, comments)
         self.process_command(cmd)
     
     def get_numpy_from_data_object(self, data_obj):
@@ -235,12 +236,22 @@ class HexEditor(FrameworkEditor):
             if fmt.GetId() == "numpy,columns":
                 r, c, value = value.split(",", 2)
                 extra = fmt.GetId(), int(r), int(c)
+            elif fmt.GetId() == "numpy":
+                len1, value = value.split(",", 1)
+                len1 = int(len1)
+                value, j = value[0:len1], value[len1:]
+                style, comments = self.restore_selected_index_metadata(j)
+                extra = fmt.GetId(), None, style, comments
             elif fmt.GetId() == "numpy,multiple":
-                i, value = value.split(",", 1)
-                i = int(i)
-                value, index_string = value[0:i], value[i:]
+                len1, len2, value = value.split(",", 2)
+                len1 = int(len1)
+                len2 = int(len2)
+                split1 = len1
+                split2 = len1 + len2
+                value, index_string, j = value[0:split1], value[split1:split2], value[split2:]
                 indexes = np.fromstring(index_string, dtype=np.uint32)
-                extra = fmt.GetId(), indexes
+                style, comments = self.restore_selected_index_metadata(j)
+                extra = fmt.GetId(), indexes, style, comments
         bytes = np.fromstring(value, dtype=np.uint8)
         return bytes, extra
     
@@ -253,17 +264,22 @@ class HexEditor(FrameworkEditor):
     
     def create_clipboard_data_object(self):
         ranges, indexes = self.get_selected_ranges_and_indexes()
+        metadata = self.get_selected_index_metadata(indexes)
         if len(ranges) == 1:
             r = ranges[0]
             data = self.segment[r[0]:r[1]]
+            s1 = data.tostring()
+            metadata = self.get_selected_index_metadata(indexes)
             data_obj = wx.CustomDataObject("numpy")
-            data_obj.SetData(data.tostring())
+            s = "%d,%s%s" % (len(s1), s1, metadata)
+            data_obj.SetData(s)
         elif np.alen(indexes) > 0:
             data = self.segment[indexes]
             s1 = data.tostring()
             s2 = indexes.tostring()
+            metadata = self.get_selected_index_metadata(indexes)
             data_obj = wx.CustomDataObject("numpy,multiple")
-            s = "%d,%s%s" % (len(s1), s1, s2)
+            s = "%d,%d,%s%s%s" % (len(s1), len(s2), s1, s2, metadata)
             data_obj.SetData(s)
         else:
             data_obj = None
@@ -276,6 +292,24 @@ class HexEditor(FrameworkEditor):
             c.Add(text_obj)
             return c
         return None
+
+    def get_selected_index_metadata(self, indexes):
+        """Return serializable string containing style information"""
+        print "indexes!", indexes
+        style = self.segment.get_style_at_indexes(indexes)
+        print style
+        r_orig = self.segment.get_style_ranges(comment=True)
+        comments = self.segment.get_comments_at_indexes(indexes)
+        print comments
+        metadata = [style.tolist(), comments]
+        j = json.dumps(metadata)
+        return j
+
+    def restore_selected_index_metadata(self, metastr):
+        metadata = json.loads(metastr)
+        style = np.asarray(metadata[0], dtype=np.uint8)
+        comments = metadata[1]
+        return style, comments
 
     def update_panes(self):
         self.segment = self.document.segments[self.segment_number]

@@ -170,13 +170,15 @@ class SetValuesAtIndexesCommand(Command):
             ('indexes', 'nparray'),
             ]
     
-    def __init__(self, segment, ranges, cursor, bytes, indexes):
+    def __init__(self, segment, ranges, cursor, bytes, indexes, style=None, comments=None):
         Command.__init__(self)
         self.segment = segment
         self.ranges = tuple(ranges)
         self.cursor = cursor
         self.data = bytes
         self.indexes = indexes
+        self.style = style
+        self.comments = comments
     
     def __str__(self):
         return "%s" % self.pretty_name
@@ -188,8 +190,9 @@ class SetValuesAtIndexesCommand(Command):
         raise NotImplementedError
 
     def undo(self, editor):
-        old_data, old_indexes = self.undo_info.data
+        old_data, old_indexes, old_style = self.undo_info.data
         self.segment[old_indexes] = old_data
+        self.segment.style[old_indexes] = old_style
         return self.undo_info
 
 
@@ -203,7 +206,7 @@ class PasteCommand(SetValuesAtIndexesCommand):
         if data_len > orig_len > 1:
             data_len = orig_len
         return self.data[0:data_len]
-    
+
     def perform(self, editor):
         indexes = ranges_to_indexes(self.ranges)
         if np.alen(indexes) == 0:
@@ -214,20 +217,18 @@ class PasteCommand(SetValuesAtIndexesCommand):
         max_index = len(self.segment)
         indexes = indexes[indexes < max_index]
         data = self.get_data(self.segment.data[indexes])
+        style = self.style[0:np.alen(data)]
         indexes = indexes[0:np.alen(data)]
         self.undo_info = undo = UndoInfo()
         undo.flags.byte_values_changed = True
         undo.flags.index_range = indexes[0], indexes[-1]
         undo.flags.select_range = True
         old_data = self.segment[indexes].copy()
+        old_style = self.segment.style[indexes].copy()
         self.segment[indexes] = data
-        undo.data = (old_data, indexes)
+        self.segment.style[indexes] = style
+        undo.data = (old_data, indexes, old_style)
         return undo
-
-    def undo(self, editor):
-        old_data, old_indexes = self.undo_info.data
-        self.segment[old_indexes] = old_data
-        return self.undo_info
 
 
 class PasteAndRepeatCommand(PasteCommand):
