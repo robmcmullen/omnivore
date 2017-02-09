@@ -23,6 +23,7 @@ class DisassemblyTable(ByteGridTable):
         self._rows = 0
         self.index_to_row = []
         self.start_addr = 0
+        self.end_addr = 0
         self.chunk_size = 256
         self.disassembler = None
         self.use_labels_on_operands = False
@@ -40,6 +41,7 @@ class DisassemblyTable(ByteGridTable):
         disasm.add_antic_dl_processor(65)
         self.hex_lower = editor.task.hex_grid_lower_case
         self.start_addr = segment.start_addr
+        self.end_addr = self.start_addr + len(segment)
         self.restart_disassembly(0)
     
     def restart_disassembly(self, index):
@@ -48,7 +50,6 @@ class DisassemblyTable(ByteGridTable):
 
         # old format: (addr, bytes, opstr, comment, count, flag)
         self.disassembler.set_pc(self.segment, pc)
-        last_pc = pc + len(self.segment)
         disasm = self.disassembler.fast
         r = self.segment.get_entire_style_ranges(data=True, user=1)
         info = disasm.get_all(self.segment.rawdata.unindexed_view, pc, 0, r)
@@ -159,20 +160,21 @@ class DisassemblyTable(ByteGridTable):
         """
         dollar = operand.find("$")
         if dollar >=0 and "#" not in operand:
-            print operand, dollar, operand_labels_start_pc, operand_labels_end_pc,
             text_hex = operand[dollar+1:dollar+1+4]
             if len(text_hex) > 2 and text_hex[2] in "0123456789abcdefABCDEF":
                 size = 4
             else:
                 size = 2
-            print text_hex, size,
             target_pc = int(text_hex[0:size], 16)
-            print target_pc
-            if target_pc >= operand_labels_start_pc and target_pc <= operand_labels_end_pc:
+
+            # check for memory map label first, then branch label
+            label = self.disassembler.memory_map.rmemmap.get(target_pc, "")
+            if not label and target_pc >= operand_labels_start_pc and target_pc <= operand_labels_end_pc:
                 #print operand, dollar, text_hex, target_pc, operand_labels_start_pc, operand_labels_end_pc
                 label = offset_operand_labels.get(target_pc, "L" + text_hex)
+            if label:
                 operand = operand[0:dollar] + label + operand[dollar+1+size:]
-                return operand, target_pc, label
+            return operand, target_pc, label
         return operand, -1, ""
 
     def get_value_style_lower(self, row, col, operand_labels_start_pc=-1, operand_labels_end_pc=-1, extra_labels={}, offset_operand_labels={}):
@@ -201,7 +203,11 @@ class DisassemblyTable(ByteGridTable):
             else:
                 text = extra_labels.get(pc, "     ")
             operand = line.instruction.rstrip()
-            if count > 1 and operand_labels_start_pc >= 0:
+            if count > 1:
+                if operand_labels_start_pc < 0:
+                    operand_labels_start_pc = self.start_addr
+                if operand_labels_end_pc < 0:
+                    operand_labels_end_pc = self.end_addr
                 operand, target_pc, label = self.get_operand_label(operand, operand_labels_start_pc, operand_labels_end_pc, offset_operand_labels)
             text += " " + operand
         return text, style

@@ -3,6 +3,8 @@ import udis.udis_fast
 
 from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, user_bit_mask
 
+from memory_map import EmptyMemoryMap
+
 
 class BaseDisassembler(disasm.Disassembler):
     name = "generic disassembler"
@@ -25,6 +27,7 @@ class BaseDisassembler(disasm.Disassembler):
             asm_syntax = self.default_assembler
         disasm.Disassembler.__init__(self, self.cpu, asm_syntax, memory_map, self.allow_undocumented, hex_lower, mnemonic_lower, self.read_instructions, self.write_instructions, self.rw_modes)
         self.fast = udis.udis_fast.DisassemblerWrapper(self.cpu, fast=True, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, extra_disassemblers=extra_disassemblers)
+        self.memory_map = memory_map if memory_map is not None else memory_map.EmptyMemoryMap()
 
     @classmethod
     def get_nop(cls):
