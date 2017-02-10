@@ -208,7 +208,7 @@ class HexEditor(FrameworkEditor):
         bytes, extra = self.get_numpy_from_data_object(data_obj)
         ranges, indexes = self.get_selected_ranges_and_indexes()
         if extra and (extra[0] == "numpy,multiple" or extra[0] == "numpy"):
-            source_indexes, style, comments = extra[1:4]
+            source_indexes, style, where_comments, comments = extra[1:5]
         else:
             source_indexes = None
         if cmd_cls is None:
@@ -240,8 +240,8 @@ class HexEditor(FrameworkEditor):
                 len1, value = value.split(",", 1)
                 len1 = int(len1)
                 value, j = value[0:len1], value[len1:]
-                style, comments = self.restore_selected_index_metadata(j)
-                extra = fmt.GetId(), None, style, comments
+                style, where_comments, comments = self.restore_selected_index_metadata(j)
+                extra = fmt.GetId(), None, style, where_comments, comments
             elif fmt.GetId() == "numpy,multiple":
                 len1, len2, value = value.split(",", 2)
                 len1 = int(len1)
@@ -250,8 +250,8 @@ class HexEditor(FrameworkEditor):
                 split2 = len1 + len2
                 value, index_string, j = value[0:split1], value[split1:split2], value[split2:]
                 indexes = np.fromstring(index_string, dtype=np.uint32)
-                style, comments = self.restore_selected_index_metadata(j)
-                extra = fmt.GetId(), indexes, style, comments
+                style, where_comments, comments = self.restore_selected_index_metadata(j)
+                extra = fmt.GetId(), indexes, style, where_comments, comments
         bytes = np.fromstring(value, dtype=np.uint8)
         return bytes, extra
     
@@ -299,17 +299,17 @@ class HexEditor(FrameworkEditor):
         style = self.segment.get_style_at_indexes(indexes)
         print style
         r_orig = self.segment.get_style_ranges(comment=True)
-        comments = self.segment.get_comments_at_indexes(indexes)
+        comments = self.segment.get_nonblank_comments_at_indexes(indexes)
         print comments
-        metadata = [style.tolist(), comments]
+        metadata = [style.tolist(), comments[0].tolist(), comments[1]]
         j = json.dumps(metadata)
         return j
 
     def restore_selected_index_metadata(self, metastr):
         metadata = json.loads(metastr)
         style = np.asarray(metadata[0], dtype=np.uint8)
-        comments = metadata[1]
-        return style, comments
+        where_comments = np.asarray(metadata[1], dtype=np.int32)
+        return style, where_comments, metadata[2]
 
     def update_panes(self):
         self.segment = self.document.segments[self.segment_number]

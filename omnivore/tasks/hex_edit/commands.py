@@ -190,9 +190,12 @@ class SetValuesAtIndexesCommand(Command):
         raise NotImplementedError
 
     def undo(self, editor):
-        old_data, old_indexes, old_style = self.undo_info.data
+        old_data, old_indexes, old_style, old_comment_info = self.undo_info.data
         self.segment[old_indexes] = old_data
         self.segment.style[old_indexes] = old_style
+        old_comment_indexes, old_comments = old_comment_info
+        self.segment.remove_comments_at_indexes(old_indexes)
+        self.segment.set_comments_at_indexes(old_comment_indexes, old_comments)
         return self.undo_info
 
 
@@ -225,9 +228,10 @@ class PasteCommand(SetValuesAtIndexesCommand):
         undo.flags.select_range = True
         old_data = self.segment[indexes].copy()
         old_style = self.segment.style[indexes].copy()
+        old_comment_info = self.segment.get_comments_at_indexes(indexes)
         self.segment[indexes] = data
         self.segment.style[indexes] = style
-        undo.data = (old_data, indexes, old_style)
+        undo.data = (old_data, indexes, old_style, old_comment_info)
         return undo
 
 
