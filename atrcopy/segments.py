@@ -611,7 +611,17 @@ class DefaultSegment(object):
     def get_style_at_indexes(self, indexes):
         return self.style[indexes]
 
+    def remove_comments_at_indexes(self, indexes):
+        for where_index in indexes:
+            self.remove_comment(where_index)
+
+    def set_comments_at_indexes(self, indexes, comments):
+        for where_index, comment in zip(indexes, comments):
+            rawindex = self.get_raw_index(where_index)
+            self.rawdata.extra.comments[rawindex] = comment
+
     def get_comments_at_indexes(self, indexes):
+        """Get a list of comments at specified indexes"""
         s = self.style[indexes]
         has_comments = np.where(s & comment_bit_mask > 0)[0]
         print "has_comments", has_comments
@@ -619,8 +629,39 @@ class DefaultSegment(object):
         for where_index in has_comments:
             raw = self.get_raw_index(indexes[where_index])
             comment = self.get_comment(indexes[where_index])
-            comments.append((where_index, comment))
-        return comments
+            comments.append(comment)
+        return has_comments, comments
+
+    def get_nonblank_comments_at_indexes(self, indexes):
+        """Get a list of comments at specified indexes, but if blank, search
+        backward in that comment block to find the first index which should
+        have the comment.
+        """
+        s = self.style[indexes]
+        has_comments = np.where(s & comment_bit_mask > 0)[0]
+        print "has_comments", has_comments
+        comments = []
+        for where_index in has_comments:
+            raw = self.get_raw_index(indexes[where_index])
+            comment = self.get_comment(indexes[where_index])
+            if not comment:
+                # naive method: search backward until we find the comment at
+                # the start of the comment block and transfer that to the new
+                # block
+                start_index = indexes[where_index]
+                while start_index > 0:
+                    last = comment
+                    start_index -= 1
+                    comment = self.get_comment(start_index)
+                    if comment:
+                        break
+                    elif (self.style[start_index] & comment_bit_mask) == 0:
+                        comment = last
+                        break
+                if start_index == 0:
+                    comment = self.get_comment(0)
+            comments.append(comment)
+        return has_comments, comments
 
     def set_comment(self, ranges, text):
         self.set_style_ranges(ranges, comment=True)
@@ -631,6 +672,13 @@ class DefaultSegment(object):
     def get_comment(self, index):
         rawindex = self.get_raw_index(index)
         return self.rawdata.extra.comments.get(rawindex, "")
+
+    def remove_comment(self, index):
+        rawindex = self.get_raw_index(index)
+        try:
+            del self.rawdata.extra.comments[rawindex]
+        except KeyError:
+            pass
     
     def get_first_comment(self, ranges):
         start = reduce(min, [r[0] for r in ranges])
