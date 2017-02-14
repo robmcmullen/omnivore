@@ -616,7 +616,9 @@ class ByteGrid(Grid.Grid):
         self.updateUICallback = None
         self.Bind(Grid.EVT_GRID_CELL_LEFT_CLICK, self.on_left_down)
         self.Bind(Grid.EVT_GRID_CELL_LEFT_DCLICK, self.on_left_dclick)
+        self.Bind(Grid.EVT_GRID_LABEL_LEFT_CLICK, self.on_left_down_label)
         self.GetGridWindow().Bind(wx.EVT_MOTION, self.on_motion)
+        self.GetGridRowLabelWindow().Bind(wx.EVT_MOTION, self.on_motion)
         self.GetGridWindow().Bind(wx.EVT_RIGHT_DOWN, self.on_right_down)
         self.GetGridWindow().Bind(wx.EVT_LEFT_UP, self.on_left_up)
         self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
@@ -658,7 +660,7 @@ class ByteGrid(Grid.Grid):
 
     def on_right_down(self, evt):
         log.debug(self.GetSelectedRows())
-        r, c = self.get_rc_from_event(evt)
+        r, c, _, _ = self.get_rc_from_event(evt)
         actions = self.get_popup_actions(r, c)
         text, style = self.table.get_value_style(r, c)
         popup_data = {'row':r, 'col':c, 'index': self.table.get_index_range(r, c)[0], 'in_selection': style&0x80}
@@ -673,9 +675,17 @@ class ByteGrid(Grid.Grid):
         self.select_extend_mode = False
         self.multi_select_mode = False
 
-    def on_left_down(self, evt):
+    def on_left_down(self, evt, selecting_rows=False):
+        # checking for event object window being the row labels in order to set
+        # the 'selecting_rows' flag doesn't work here even though it works in
+        # motion events.
         self.mouse_drag_started = True
         c, r = (evt.GetCol(), evt.GetRow())
+        if c < 0 or selecting_rows:
+            c = 0
+            selecting_rows = True
+        else:
+            selecting_rows = False
         e = self.editor
         if evt.ControlDown():
             self.multi_select_mode = True
@@ -696,10 +706,15 @@ class ByteGrid(Grid.Grid):
         else:
             self.ClearSelection()
             index1, index2 = self.table.get_index_range(r, c)
+            if selecting_rows:
+                index2 = index1 + self.table.GetNumberCols()
             e.anchor_initial_start_index, e.anchor_initial_end_index = index1, index2
             e.cursor_index = index1
-            e.select_range(index1, index1, add=self.multi_select_mode)
+            e.select_range(index1, index2, add=self.multi_select_mode)
         wx.CallAfter(e.index_clicked, e.cursor_index, 0, None)
+
+    def on_left_down_label(self, evt):
+        self.on_left_down(evt, True)
 
     def get_rc_from_event(self, evt):
         x, y = evt.GetPosition()
@@ -718,7 +733,7 @@ class ByteGrid(Grid.Grid):
                     r = 0
                 else:
                     r = self.table.GetNumberRows() - 1
-        return r, c
+        return r, c, x1, y1
     
     def get_num_visible_rows(self):
         ux, uy = self.GetScrollPixelsPerUnit()
@@ -730,8 +745,9 @@ class ByteGrid(Grid.Grid):
         if r1 < 0:
             r1 = self.table.GetNumberRows() - 1
         return r1 - r0 - 1
- 
+
     def on_motion(self, evt):
+        selecting_rows = evt.GetEventObject() == self.GetGridRowLabelWindow()
         self.on_motion_update_status(evt)
         if not self.mouse_drag_started:
             # On windows, it's possible to get a motion event before a mouse
@@ -739,7 +755,10 @@ class ByteGrid(Grid.Grid):
             return
         e = self.editor
         if evt.LeftIsDown():
-            r, c = self.get_rc_from_event(evt)
+            r, c, x, y = self.get_rc_from_event(evt)
+            if selecting_rows or x < 0:
+                selecting_rows = True
+                c = 0
             index1, index2 = self.table.get_index_range(r, c)
             update = False
             if self.select_extend_mode:
@@ -751,6 +770,8 @@ class ByteGrid(Grid.Grid):
                     update = True
             else:
                 if e.anchor_start_index <= index1:
+                    if selecting_rows:
+                        index2 = index1 + self.table.GetNumberCols()
                     if index2 != e.anchor_end_index:
                         e.select_range(e.anchor_initial_start_index, index2, extend=self.multi_select_mode)
                         update = True
