@@ -121,6 +121,8 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
 class ByteGridTable(Grid.PyGridTableBase):
     column_labels = [""]
     column_sizes = [4]
+    column_pixel_sizes = {}
+    extra_column_padding = 4
     
     @classmethod
     def update_preferences(cls, prefs):
@@ -128,6 +130,9 @@ class ByteGridTable(Grid.PyGridTableBase):
             cls.get_value_style = cls.get_value_style_lower
         else:
             cls.get_value_style = cls.get_value_style_upper
+
+    def set_default_col_size(self, col, pixel_size):
+        self.__class__.column_pixel_sizes[col] = pixel_size
     
     def __init__(self):
         Grid.PyGridTableBase.__init__(self)
@@ -148,8 +153,13 @@ class ByteGridTable(Grid.PyGridTableBase):
     def is_index_valid(self, index):
         return index < self._rows * self._cols
     
-    def get_col_size(self, c):
-        return self.column_sizes[c]
+    def get_col_size(self, c, char_width=8):
+        try:
+            s = self.column_pixel_sizes[c]
+        except KeyError:
+            s = (self.column_sizes[c] * char_width) + self.extra_column_padding
+            self.set_default_col_size(c, s)
+        return s
     
     def get_col_type(self, c):
         return "hex"
@@ -235,7 +245,7 @@ class ByteGridTable(Grid.PyGridTableBase):
         self.set_grid_cell_attr(grid, col, attr)
         log.debug("hexcol %d width=%d" % (col, char_width))
         grid.SetColMinimalWidth(col, 0)
-        grid.SetColSize(col, (char_width * self.get_col_size(col)) + 4)
+        grid.SetColSize(col, (self.get_col_size(col, char_width)))
         grid.SetColAttr(col, attr)
 
     def ResetView(self, grid, *args):
@@ -617,6 +627,8 @@ class ByteGrid(Grid.Grid):
         self.Bind(Grid.EVT_GRID_CELL_LEFT_CLICK, self.on_left_down)
         self.Bind(Grid.EVT_GRID_CELL_LEFT_DCLICK, self.on_left_dclick)
         self.Bind(Grid.EVT_GRID_LABEL_LEFT_CLICK, self.on_left_down_label)
+        self.Bind(Grid.EVT_GRID_COL_SIZE, self.on_col_size)
+        #self.Bind(Grid.EVT_GRID_COL_AUTO_SIZE, self.on_col_autosize) wxPython phoenix only, seemingly
         self.GetGridWindow().Bind(wx.EVT_MOTION, self.on_motion)
         self.GetGridRowLabelWindow().Bind(wx.EVT_MOTION, self.on_motion)
         self.GetGridWindow().Bind(wx.EVT_RIGHT_DOWN, self.on_right_down)
@@ -853,6 +865,13 @@ class ByteGrid(Grid.Grid):
  
     def on_left_dclick(self, evt):
         self.EnableCellEditControl()
+        evt.Skip()
+
+    def on_col_size(self, evt):
+        col = evt.GetRowOrCol()
+        size = self.GetColSize(col)
+        print "sizing column", col, "pos", evt.GetPosition(), size
+        self.table.set_default_col_size(col, size)
         evt.Skip()
 
     def cancel_edit(self):

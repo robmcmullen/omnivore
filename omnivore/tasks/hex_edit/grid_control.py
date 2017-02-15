@@ -162,8 +162,8 @@ class ByteTable(ByteGridTable):
     def is_index_valid(self, index):
         return 0 <= index < len(self.segment)
     
-    def get_col_size(self, col):
-        return 2
+    def get_col_size(self, col, char_width=8):
+        return 2 * char_width + self.extra_column_padding
 
     def get_value_style_upper(self, row, col):
         i, _ = self.get_index_range(row, col)
