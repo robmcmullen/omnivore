@@ -708,6 +708,10 @@ class ByteGrid(Grid.Grid):
             index1, index2 = self.table.get_index_range(r, c)
             if selecting_rows:
                 index2 = index1 + self.table.GetNumberCols()
+            else:
+                # initial click when not selecting rows should move the cursor,
+                # not select the grid square.
+                index2 = index1
             e.anchor_initial_start_index, e.anchor_initial_end_index = index1, index2
             e.cursor_index = index1
             e.select_range(index1, index2, add=self.multi_select_mode)
