@@ -295,12 +295,9 @@ class HexEditor(FrameworkEditor):
 
     def get_selected_index_metadata(self, indexes):
         """Return serializable string containing style information"""
-        print "indexes!", indexes
         style = self.segment.get_style_at_indexes(indexes)
-        print style
         r_orig = self.segment.get_style_ranges(comment=True)
         comments = self.segment.get_nonblank_comments_at_indexes(indexes)
-        print comments
         metadata = [style.tolist(), comments[0].tolist(), comments[1]]
         j = json.dumps(metadata)
         return j

@@ -223,10 +223,7 @@ class PasteCommand(SetValuesAtIndexesCommand):
         data = self.get_data(self.segment.data[indexes])
         style = self.style[0:np.alen(data)]
         indexes = indexes[0:np.alen(data)]
-        print "relative", self.relative_comment_indexes
-        print "rel in range", self.relative_comment_indexes[self.relative_comment_indexes < np.alen(indexes)]
         comment_indexes = indexes[self.relative_comment_indexes[self.relative_comment_indexes < np.alen(indexes)]]
-        print "absolute", comment_indexes
         self.undo_info = undo = UndoInfo()
         undo.flags.byte_values_changed = True
         undo.flags.index_range = indexes[0], indexes[-1]
