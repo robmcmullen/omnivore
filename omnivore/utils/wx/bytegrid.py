@@ -620,6 +620,7 @@ class ByteGrid(Grid.Grid):
         self.GetGridWindow().Bind(wx.EVT_MOTION, self.on_motion)
         self.GetGridRowLabelWindow().Bind(wx.EVT_MOTION, self.on_motion)
         self.GetGridWindow().Bind(wx.EVT_RIGHT_DOWN, self.on_right_down)
+        self.GetGridRowLabelWindow().Bind(wx.EVT_RIGHT_DOWN, self.on_right_down)
         self.GetGridWindow().Bind(wx.EVT_LEFT_UP, self.on_left_up)
         self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
         self.Show(True)
