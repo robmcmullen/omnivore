@@ -170,7 +170,7 @@ class SetValuesAtIndexesCommand(Command):
             ('indexes', 'nparray'),
             ]
     
-    def __init__(self, segment, ranges, cursor, bytes, indexes, style=None, comments=None):
+    def __init__(self, segment, ranges, cursor, bytes, indexes, style=None, comment_indexes=None, comments=None):
         Command.__init__(self)
         self.segment = segment
         self.ranges = tuple(ranges)
@@ -178,6 +178,7 @@ class SetValuesAtIndexesCommand(Command):
         self.data = bytes
         self.indexes = indexes
         self.style = style
+        self.relative_comment_indexes = comment_indexes
         self.comments = comments
     
     def __str__(self):
@@ -222,6 +223,10 @@ class PasteCommand(SetValuesAtIndexesCommand):
         data = self.get_data(self.segment.data[indexes])
         style = self.style[0:np.alen(data)]
         indexes = indexes[0:np.alen(data)]
+        print "relative", self.relative_comment_indexes
+        print "rel in range", self.relative_comment_indexes[self.relative_comment_indexes < np.alen(indexes)]
+        comment_indexes = indexes[self.relative_comment_indexes[self.relative_comment_indexes < np.alen(indexes)]]
+        print "absolute", comment_indexes
         self.undo_info = undo = UndoInfo()
         undo.flags.byte_values_changed = True
         undo.flags.index_range = indexes[0], indexes[-1]
@@ -231,6 +236,7 @@ class PasteCommand(SetValuesAtIndexesCommand):
         old_comment_info = self.segment.get_comments_at_indexes(indexes)
         self.segment[indexes] = data
         self.segment.style[indexes] = style
+        self.segment.set_comments_at_indexes(comment_indexes, self.comments)
         undo.data = (old_data, indexes, old_style, old_comment_info)
         return undo
 
