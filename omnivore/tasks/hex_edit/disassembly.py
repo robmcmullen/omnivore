@@ -17,6 +17,19 @@ class DisassemblyTable(ByteGridTable):
     column_labels = ["Bytes", "Disassembly", "Comment"]
     column_sizes = [11, 18, 30]
     
+    @classmethod
+    def update_preferences(cls, prefs):
+        # Can't call ByteGridTable.update_preferences(prefs) because the
+        # get_value_style method would be assigned from the base class and not
+        # this DisassemblyTable
+        if prefs.hex_grid_lower_case:
+            cls.get_value_style = cls.get_value_style_lower
+        else:
+            cls.get_value_style = cls.get_value_style_upper
+        for i, w in enumerate(prefs.disassembly_column_widths):
+            if w > 0:
+                cls.column_pixel_sizes[i] = w
+
     def __init__(self):
         ByteGridTable.__init__(self)
         self.lines = None
@@ -289,6 +302,13 @@ class DisassemblyPanel(ByteGrid):
         # value is saved here so the view can be scrolled there once it does
         # get disassembled.
         self.pending_index = -1
+    
+    def save_prefs(self):
+        prefs = self.task.get_preferences()
+        widths = [0] * len(prefs.disassembly_column_widths)
+        for i, w in self.table.column_pixel_sizes.iteritems():
+            widths[i] = w
+        prefs.disassembly_column_widths = tuple(widths)
     
     def get_default_cell_editor(self):
         return AssemblerEditor(self)

@@ -3,7 +3,7 @@ import sys
 # Enthought library imports.
 from envisage.ui.tasks.api import PreferencesPane, TaskFactory
 from apptools.preferences.api import PreferencesHelper
-from traits.api import Bool, Dict, Enum, List, Str, Unicode, Int, Font, Range
+from traits.api import Bool, Dict, Enum, List, Str, Unicode, Int, Font, Range, Tuple
 from traitsui.api import FontEditor, HGroup, VGroup, Item, Label, \
     View, RangeEditor
 
@@ -40,6 +40,8 @@ class HexEditPreferences(PreferencesHelper):
     hex_grid_lower_case = Bool(True)
     
     assembly_lower_case = Bool(False)
+
+    disassembly_column_widths = Tuple(0, 0, 0)
 
 
 class HexEditPreferencesPane(PreferencesPane):

@@ -640,6 +640,9 @@ class ByteGrid(Grid.Grid):
     def __repr__(self):
         return "<%s at 0x%x>" % (self.__class__.__name__, id(self))
     
+    def save_prefs(self):
+        pass
+
     def get_grid_cell_renderer(self, table, editor):
         return ByteGridRenderer(table, editor)
 
@@ -872,6 +875,7 @@ class ByteGrid(Grid.Grid):
         size = self.GetColSize(col)
         print "sizing column", col, "pos", evt.GetPosition(), size
         self.table.set_default_col_size(col, size)
+        self.save_prefs()
         evt.Skip()
 
     def cancel_edit(self):
