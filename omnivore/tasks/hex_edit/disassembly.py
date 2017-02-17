@@ -53,6 +53,12 @@ class DisassemblyTable(ByteGridTable):
         disasm.add_data_processor(64)
         disasm.add_antic_dl_processor(65)
         self.hex_lower = editor.task.hex_grid_lower_case
+        if self.hex_lower:
+            self.fmt_hex2 = "%02x"
+            self.fmt_hex4 = "%04x"
+        else:
+            self.fmt_hex2 = "%02X"
+            self.fmt_hex4 = "%04X"
         self.start_addr = segment.start_addr
         self.end_addr = self.start_addr + len(segment)
         self.restart_disassembly(0)
@@ -201,10 +207,7 @@ class DisassemblyTable(ByteGridTable):
         for i in range(count):
             style |= self.segment.style[index + i]
         if col == 0:
-            if self.hex_lower:
-                text = " ".join("%02x" % self.segment[index + i] for i in range(count))
-            else:
-                text = " ".join("%02X" % self.segment[index + i] for i in range(count))
+            text = " ".join(self.fmt_hex2 % self.segment[index + i] for i in range(count))
         elif col == 2:
             if (style & comment_bit_mask):
                 text = self.get_comments(index, line)
@@ -214,7 +217,7 @@ class DisassemblyTable(ByteGridTable):
                 text = ""
         else:
             if self.jump_targets[pc]:
-                text = ("L%04X" % pc)
+                text = "L" + (self.fmt_hex4 % pc)
             else:
                 text = extra_labels.get(pc, "     ")
             operand = line.instruction.rstrip()
