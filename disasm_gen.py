@@ -175,13 +175,15 @@ class DisassemblerGenerator(DataGenerator):
         self.gen_numpy_single_print(lines, self.opcode_table)
 
 
-def gen_cpu(cpu, undoc=False, all_case_combos=False):
+def gen_cpu(cpu, undoc=False, all_case_combos=False, do_py=False, do_c=True):
     if undoc:
         file_root = "udis_fast/hardcoded_parse_%sundoc" % cpu
     else:
         file_root = "udis_fast/hardcoded_parse_%s" % cpu
     print("Generating %s" % file_root)
-    for ext, formatter in [("py", PrintNumpy), ("c", RawC)]:
+    for ext, formatter, do_it in [("py", PrintNumpy, do_py), ("c", RawC, do_c)]:
+        if not do_it:
+            continue
         with open("%s.%s" % (file_root, ext), "w") as fh:
             if all_case_combos:
                 first = True
@@ -224,6 +226,7 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--cpu", help="Specify CPU type (defaults to 6502)", default="")
+    parser.add_argument("-p", "--py", help="Also create python code", action="store_true", default=False)
     parser.add_argument("-u", "--undocumented", help="Allow undocumented opcodes", action="store_true")
     parser.add_argument("-a", "--all-cases", help="Generate 4 separate functions for the lower/upper combinations", action="store_true", default=False)
     args = parser.parse_args()
@@ -231,7 +234,7 @@ if __name__ == "__main__":
     if args.cpu is None or args.cpu.lower() == "none":
         pass
     elif args.cpu:
-        gen_cpu(args.cpu, args.undocumented, args.all_cases)
+        gen_cpu(args.cpu, args.undocumented, args.all_cases, args.py)
     else:
         gen_all(args.all_cases)
     gen_others(args.all_cases)
