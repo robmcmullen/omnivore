@@ -2,7 +2,7 @@ import numpy as np
 
 import wx
 
-from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, diff_bit_mask, not_user_bit_mask
+from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, diff_bit_mask, user_bit_mask, not_user_bit_mask
 
 from omnivore.utils.permute import bit_reverse_table
 
@@ -61,7 +61,7 @@ class BaseRenderer(object):
         style_per_pixel = np.vstack((style, style, style, style)).T
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
-        data = (style_per_pixel & data_bit_mask) == data_bit_mask
+        data = (style_per_pixel & user_bit_mask) > 0
         comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
         match = (style_per_pixel & match_bit_mask) == match_bit_mask
         
@@ -87,7 +87,7 @@ class BaseRenderer(object):
         style_per_pixel = np.vstack((style, style)).T
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
-        data = (style_per_pixel & data_bit_mask) == data_bit_mask
+        data = (style_per_pixel & user_bit_mask) > 0
         comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
         match = (style_per_pixel & match_bit_mask) == match_bit_mask
         
@@ -129,7 +129,7 @@ class BaseRenderer(object):
         style_per_pixel = s.repeat(8).reshape((-1, pixels_per_row))
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
-        data = (style_per_pixel & data_bit_mask) == data_bit_mask
+        data = (style_per_pixel & user_bit_mask) > 0
         comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
         match = (style_per_pixel & match_bit_mask) == match_bit_mask
         
@@ -168,7 +168,7 @@ class OneBitPerPixelB(BaseRenderer):
         style_per_pixel = np.vstack((style, style, style, style, style, style, style, style)).T
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
-        data = (style_per_pixel & data_bit_mask) == data_bit_mask
+        data = (style_per_pixel & user_bit_mask) > 0
         comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
         match = (style_per_pixel & match_bit_mask) == match_bit_mask
         
@@ -245,7 +245,7 @@ class OneBitPerPixelApple2(BaseRenderer):
         style_per_pixel = np.vstack((style, style, style, style, style, style, style)).T
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
-        data = (style_per_pixel & data_bit_mask) == data_bit_mask
+        data = (style_per_pixel & user_bit_mask) > 0
         comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
         match = (style_per_pixel & match_bit_mask) == match_bit_mask
         
@@ -327,7 +327,7 @@ class OneBitPerPixelApple2Artifacting(BaseRenderer):
         style_per_pixel = np.vstack((style, style, style, style, style, style, style)).T
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
-        data = (style_per_pixel & data_bit_mask) == data_bit_mask
+        data = (style_per_pixel & user_bit_mask) > 0
         comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
         match = (style_per_pixel & match_bit_mask) == match_bit_mask
         
@@ -589,7 +589,7 @@ def get_numpy_font_map_image(m, antic_font, bytes, style, start_byte, end_byte, 
                     array[y:y+char_h,x:x+char_w,:] = fm[c]
                 elif s & comment_bit_mask:
                     array[y:y+char_h,x:x+char_w,:] = fc[c]
-                elif s & data_bit_mask:
+                elif s & user_bit_mask:
                     array[y:y+char_h,x:x+char_w,:] = fd[c]
                 else:
                     array[y:y+char_h,x:x+char_w,:] = f[c]

@@ -2,7 +2,7 @@ import os
 import sys
 import wx
 
-from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask
+from atrcopy import comment_bit_mask, user_bit_mask
 
 from omnivore.utils.wx.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 
@@ -49,9 +49,9 @@ class DisassemblyTable(ByteGridTable):
         self._rows = 0
         self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
         disasm = self.disassembler.fast
-        disasm.add_antic_dl_processor(1)
-        disasm.add_data_processor(64)
-        disasm.add_antic_dl_processor(65)
+        disasm.add_data_processor(1)
+        disasm.add_antic_dl_processor(2)
+        disasm.add_jumpman_level_processor(3)
         self.hex_lower = editor.task.hex_grid_lower_case
         if self.hex_lower:
             self.fmt_hex2 = "%02x"
@@ -70,7 +70,7 @@ class DisassemblyTable(ByteGridTable):
         # old format: (addr, bytes, opstr, comment, count, flag)
         self.disassembler.set_pc(self.segment, pc)
         disasm = self.disassembler.fast
-        r = self.segment.get_entire_style_ranges(data=True, user=1)
+        r = self.segment.get_entire_style_ranges(user=user_bit_mask)
         info = disasm.get_all(self.segment.rawdata.unindexed_view, pc, 0, r)
         self.index_to_row = info.index
         self.lines = info

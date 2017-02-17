@@ -97,11 +97,11 @@ def get_numpy_font_map_image(m, antic_font, np.ndarray[np.uint8_t, ndim=2] bytes
                 s = style[j, i]
                 if s & 0x80:
                     fast_array[y:y+char_h,x:x+char_w,:] = fast_fh[c]
-                elif s & 0x10:
-                    fast_array[y:y+char_h,x:x+char_w,:] = fast_fm[c]
                 elif s & 0x20:
-                    fast_array[y:y+char_h,x:x+char_w,:] = fast_fc[c]
+                    fast_array[y:y+char_h,x:x+char_w,:] = fast_fm[c]
                 elif s & 0x40:
+                    fast_array[y:y+char_h,x:x+char_w,:] = fast_fc[c]
+                elif s & 0x07:
                     fast_array[y:y+char_h,x:x+char_w,:] = fast_fd[c]
                 else:
                     fast_array[y:y+char_h,x:x+char_w,:] = fast_f[c]

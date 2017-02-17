@@ -4,7 +4,7 @@ import os
 
 # Major package imports.
 import numpy as np
-from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_mask, data_bit_mask, match_bit_mask
+from atrcopy import SegmentData, DefaultSegment, comment_bit_mask
 
 # Local imports.
 from omnivore.tasks.bitmap_edit.bitmap_editor import SelectMode

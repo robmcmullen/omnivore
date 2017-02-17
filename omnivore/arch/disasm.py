@@ -1,7 +1,7 @@
 from udis import disasm, miniasm, cputables
 import udis.udis_fast
 
-from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, user_bit_mask
+from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bit_mask
 
 from memory_map import EmptyMemoryMap
 
@@ -49,7 +49,7 @@ class BaseDisassembler(disasm.Disassembler):
             return 0, 0
     
     def is_data(self):
-        return self.get_style()[0] & data_bit_mask
+        return self.get_style()[0] & user_bit_mask
     
     def get_data_comment(self, style_tuple, bytes):
         style, user_type = style_tuple
@@ -69,7 +69,7 @@ class BaseDisassembler(disasm.Disassembler):
                 dl = user_parser(list(bytes))
                 return len(dl) == 1
             return False
-        return style & data_bit_mask and not style & comment_bit_mask
+        return style & user_bit_mask and not style & comment_bit_mask
     
     @classmethod
     def get_miniassembler(cls, cpu):
@@ -348,9 +348,9 @@ def get_jumpman_harvest(group, hex_lower=True):
         text = text % tuple(values)
     return text
 
-ANTIC_DISASM = 0
-JUMPMAN_LEVEL = 1
-JUMPMAN_HARVEST = 2
+ANTIC_DISASM = 2
+JUMPMAN_LEVEL = 3
+JUMPMAN_HARVEST = 4
 user_disassemblers = {
     ANTIC_DISASM: (parse_antic_dl, get_antic_dl),
     JUMPMAN_LEVEL: (parse_jumpman_level, get_jumpman_level),

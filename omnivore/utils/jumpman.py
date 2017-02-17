@@ -1,6 +1,6 @@
 import numpy as np
 
-from atrcopy import selected_bit_mask, match_bit_mask, data_bit_mask, comment_bit_mask
+from atrcopy import selected_bit_mask, match_bit_mask, comment_bit_mask
 
 from omnivore.utils.runtime import get_all_subclasses
 

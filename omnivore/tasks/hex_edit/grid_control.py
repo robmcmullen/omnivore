@@ -8,7 +8,7 @@ import wx
 import wx.grid as Grid
 import wx.lib.newevent
 
-from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, diff_bit_mask
+from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
 
 from omnivore.utils.wx.bytegrid import ByteGridTable, ByteGrid
 
@@ -85,7 +85,7 @@ class ImageCache(object):
             dc.SetPen(self.comment_pen)
             dc.SetBrush(self.comment_brush)
             dc.SetTextBackground(self.comment_background)
-        elif style & data_bit_mask:
+        elif style & user_bit_mask:
             dc.SetPen(self.normal_pen)
             dc.SetBrush(self.data_brush)
             dc.SetTextBackground(self.data_background)

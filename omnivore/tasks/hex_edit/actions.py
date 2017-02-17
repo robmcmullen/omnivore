@@ -13,7 +13,7 @@ from pyface.api import YES, NO
 from pyface.action.api import Action, ActionItem
 from pyface.tasks.action.api import TaskAction, EditorAction
 
-from atrcopy import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, add_xexboot_header, add_atr_header, BootDiskImage, SegmentData, interleave_segments
+from atrcopy import user_bit_mask, data_style, add_xexboot_header, add_atr_header, BootDiskImage, SegmentData, interleave_segments
 
 from omnivore.framework.actions import *
 from commands import *
@@ -582,13 +582,13 @@ class MarkSelectionAsDataAction(EditorAction):
         e = self.active_editor
         s = e.segment
         ranges = s.get_style_ranges(selected=True)
-        s.clear_style_ranges(ranges, user=1)
+        s.clear_style_ranges(ranges, user=user_bit_mask)
         s.set_style_ranges(ranges, data=True)
         e.document.change_count += 1
         e.metadata_dirty = True
         # check if the segment can be merged with a previous data segment
         index = ranges[0][0]
-        while index > 0 and s.style[index-1] & data_bit_mask:
+        while index > 0 and (s.style[index-1] & user_bit_mask) == data_style:
             index -= 1
         e.mark_index_range_changed((index, ranges[0][1]))
         e.refresh_panes()
@@ -603,8 +603,8 @@ class CustomDisassemblerAction(EditorAction):
         e = self.active_editor
         s = e.segment
         ranges = s.get_style_ranges(selected=True)
-        s.set_style_ranges(ranges, data=True, user=1)
-        s.set_user_data(ranges, 1, self.disassembly_type)
+        s.clear_style_ranges(ranges, user=user_bit_mask)
+        s.set_style_ranges(ranges, user=self.disassembly_type)
         e.document.change_count += 1
         e.metadata_dirty = True
         e.mark_index_range_changed(ranges[0])
