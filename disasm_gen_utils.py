@@ -6,6 +6,7 @@ pcr = 1
 und = 2
 z80bit = 4
 lbl = 8 # subroutine/jump target; candidate for a label
+comment = 16 # instruction should be displayed as a comment, not an assembler command for
 r = 64
 w = 128
 
@@ -103,6 +104,8 @@ class PrintBase(object):
             self.mnemonic = self.mnemonic.lower()
         else:
             self.mnemonic = self.mnemonic.upper()
+        self.fmt_op = parser.fmt_op
+        self.data_op = parser.data_op
 
     @property
     def undocumented(self):
@@ -342,11 +345,32 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, 
         if self.length > 1:
             self.out("    if (pc + wrap->count > last_pc) goto truncated")
 
+    comment_argorder = ["opcode", "op1", "op2", "op3"]
+
+    def get_comment(self, count, argorder):
+        newargs = []
+        prefix = ""
+        if self.flag & comment:
+            prefix = "%s " % self.data_op
+            for i in range(4):
+                if count > i:
+                    prefix += "%s" % self.fmt_op
+                    if count > i + 1:
+                        prefix += ", "
+                    else:
+                        prefix += "  "
+                    newargs.append(self.comment_argorder[i])
+                else:
+                    prefix += "     "
+            prefix += "; "
+            argorder[0:0] = newargs
+        return prefix
+
     def opcode1(self, opcode):
+        prefix = self.get_comment(self.length, self.argorder)
+        outstr = "\"%s%s %s\"" % (prefix, self.mnemonic, self.fmt)
         if self.argorder:
-            outstr = "\"%s %s\", %s" % (self.mnemonic, self.fmt, ", ".join(self.argorder))
-        else:
-            outstr = "\"%s %s\"" % (self.mnemonic, self.fmt)
+            outstr += ", %s" % (", ".join(self.argorder))
         self.out("    num_printed = sprintf(instructions, %s)" % outstr)
 
     def opcode2(self, opcode):

@@ -35,13 +35,15 @@ w = 128
 class DataGenerator(object):
     def __init__(self, formatter_class, hex_lower=True, mnemonic_lower=False, first_of_set=True, **kwargs):
         self.formatter_class = formatter_class
+        self.set_case(hex_lower, mnemonic_lower)
+        self.setup(**kwargs)
+        self.generate(first_of_set)
+
+    def set_case(self, hex_lower, mnemonic_lower):
         self.hex_lower = hex_lower
         self.mnemonic_lower = mnemonic_lower
         self.data_op = ".byte" if mnemonic_lower else ".BYTE"
         self.fmt_op = "$%02x" if hex_lower else "$%02X"
-        
-        self.setup(**kwargs)
-        self.generate(first_of_set)
 
     def setup(self, bytes_per_line=4, **kwargs):
         self.bytes_per_line = bytes_per_line
@@ -77,9 +79,7 @@ class DataGenerator(object):
 class DisassemblerGenerator(DataGenerator):
     def __init__(self, cpu_name, formatter_class, allow_undocumented=False, hex_lower=True, mnemonic_lower=False, r_mnemonics=None, w_mnemonics=None, rw_modes=None, first_of_set=True):
         self.formatter_class = formatter_class
-        self.hex_lower = hex_lower
-        self.mnemonic_lower = mnemonic_lower
-        
+        self.set_case(hex_lower, mnemonic_lower)
         self.setup(cpu_name, allow_undocumented, r_mnemonics, w_mnemonics, rw_modes)
         self.generate(first_of_set)
 
