@@ -171,6 +171,8 @@ class DisassemblyTable(ByteGridTable):
     def get_operand_label(self, operand, operand_labels_start_pc, operand_labels_end_pc, offset_operand_labels):
         """Find the label that the operand points to.
         """
+        if ".byte" in operand or ".BYTE" in operand:
+            return operand, -1, ""
         dollar = operand.find("$")
         if dollar >=0 and "#" not in operand:
             text_hex = operand[dollar+1:dollar+1+4]
