@@ -7,11 +7,11 @@ from errors import *
 from utils import to_numpy, to_numpy_list
 
 user_bit_mask = 0x07
+data_style = 0x1
 not_user_bit_mask = 0xff ^ user_bit_mask
-diff_bit_mask = 0x08
-match_bit_mask = 0x10
-comment_bit_mask = 0x20
-data_bit_mask = 0x40
+diff_bit_mask = 0x10
+match_bit_mask = 0x20
+comment_bit_mask = 0x40
 selected_bit_mask = 0x80
 
 
@@ -290,9 +290,9 @@ class DefaultSegment(object):
         mdict["comment ranges"] = [list(a) for a in self.get_style_ranges(comment=True)]
         mdict["data ranges"] = [list(a) for a in self.get_style_ranges(data=True)]
         for i in range(1, user_bit_mask):
-            r = self.get_sorted_user_data(i)
+            r = [list(a) for a in self.get_style_ranges(user=i)]
             if r:
-                slot = "user ranges %d" % i
+                slot = "user style %d" % i
                 mdict[slot] = r
         
         # json serialization doesn't allow int keys, so convert to list of
@@ -306,18 +306,22 @@ class DefaultSegment(object):
         if 'comment ranges' in e:
             self.set_style_ranges(e['comment ranges'], comment=True)
         if 'data ranges' in e:
-            self.set_style_ranges(e['data ranges'], data=True)
+            self.set_style_ranges(e['data ranges'], user=data_style)
         if 'display list ranges' in e:
             # DEPRECATED, but supported on read. Converts display list to
             # disassembly type 0 for user index 1
             self.set_style_ranges(e['display list ranges'], data=True, user=1)
             self.set_user_data(e['display list ranges'], 1, 0)
+        if 'user ranges 1' in e:
+            # DEPRECATED, but supported on read. Converts user extra data 0
+            # (antic dl), 1 (jumpman level), and 2 (jumpman harvest) to user
+            # styles 2, 3, and 4. Data is now user style 1.
+            for r, val in e['user ranges 1']:
+                self.set_style_ranges([r], user=val + 2)
         for i in range(1, user_bit_mask):
-            slot = "user ranges %d" % i
+            slot = "user style %d" % i
             if slot in e:
-                for r, val in e[slot]:
-                    self.set_style_ranges([r], user=i)
-                    self.set_user_data([r], i, val)
+                self.set_style_ranges(e[slot], user=i)
 
 
     def __str__(self):
@@ -401,7 +405,7 @@ class DefaultSegment(object):
         if comment:
             style_bits |= comment_bit_mask
         if data:
-            style_bits |= data_bit_mask
+            style_bits |= (data_style & user_bit_mask)
         if selected:
             style_bits |= selected_bit_mask
         return style_bits
