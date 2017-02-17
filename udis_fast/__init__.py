@@ -134,6 +134,7 @@ import disasm_info
 import disasm_speedups_data
 import disasm_speedups_antic_dl
 import disasm_speedups_jumpman_level
+import disasm_speedups_jumpman_harvest
 
 class DisassemblerWrapper(object):
     def __init__(self, cpu, lines=65536, fast=True, mnemonic_lower=False, hex_lower=True, extra_disassemblers=None):
@@ -156,6 +157,9 @@ class DisassemblerWrapper(object):
 
     def add_jumpman_level_processor(self, chunk_type):
         self.chunk_type_processor[chunk_type] = disasm_speedups_jumpman_level.get_disassembled_chunk_fast
+
+    def add_jumpman_harvest_processor(self, chunk_type):
+        self.chunk_type_processor[chunk_type] = disasm_speedups_jumpman_harvest.get_disassembled_chunk_fast
 
     @property
     def rows(self):

@@ -197,7 +197,7 @@ def gen_cpu(cpu, undoc=False, all_case_combos=False):
 
 
 def gen_others(all_case_combos=False):
-    for name, ext, formatter, generator in [("data", "c", DataC, DataGenerator), ("antic_dl", "c", AnticC, DataGenerator)]:
+    for name, ext, formatter, generator in [("data", "c", DataC, DataGenerator), ("antic_dl", "c", AnticC, DataGenerator), ("jumpman_harvest", "c", JumpmanHarvestC, DataGenerator)]:
         file_root = "udis_fast/hardcoded_parse_%s" % name
         print("Generating %s" % file_root)
         with open("%s.%s" % (file_root, ext), "w") as fh:

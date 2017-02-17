@@ -599,3 +599,52 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, 
 
     def end_subroutine(self):
         pass
+
+class JumpmanHarvestC(RawC):
+    preamble = """
+int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
+    unsigned char opcode;
+    unsigned int num_printed = 0;
+    int i, dli = 0;
+    char *mnemonic;
+
+    wrap->pc = (unsigned short)pc;
+    wrap->strpos = strpos;
+    wrap->flag = 0;
+    opcode = src[0];
+"""
+
+    main = """
+    if (opcode == 0xff) {
+        wrap->count = 1;
+        if (pc + wrap->count > last_pc) {
+            wrap->count = pc + wrap->count - last_pc;
+        }
+        num_printed = sprintf(instructions, "$BYTE $HEX                               ; ", src[0]);
+    }
+    else {
+        wrap->count = 7;
+        if (pc + wrap->count > last_pc) {
+            wrap->count = pc + wrap->count - last_pc;
+        }
+        num_printed = sprintf(instructions, "$BYTE $HEX, $HEX, $HEX, $HEX, $HEX, $HEX, $HEX ; ", src[0], src[1], src[2], src[3], src[4], src[5], src[6]);
+    }
+
+    wrap->strlen = num_printed;
+    return wrap->count;
+}
+"""
+    def __init__(self, lines):
+        self.lines = lines
+        self.first = True
+        self.indent = "    "
+
+    def process(self, count, data_op, fmt_op):
+        text = self.main.replace("$BYTE", data_op).replace("$HEX", fmt_op)
+        self.lines.extend(text.splitlines())
+
+    def gen_cases(self, parser):
+        self.process(0, parser.data_op, parser.fmt_op)
+
+    def end_subroutine(self):
+        pass
