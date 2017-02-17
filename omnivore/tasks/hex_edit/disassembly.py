@@ -220,7 +220,10 @@ class DisassemblyTable(ByteGridTable):
                 text = "L" + (self.fmt_hex4 % pc)
             else:
                 text = extra_labels.get(pc, "     ")
-            operand = line.instruction.rstrip()
+            if ";" in line.instruction:
+                operand, _ = line.instruction.split(";", 1)
+            else:
+                operand = line.instruction.rstrip()
             if count > 1:
                 if operand_labels_start_pc < 0:
                     operand_labels_start_pc = self.start_addr
