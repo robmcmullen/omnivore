@@ -52,6 +52,7 @@ class DisassemblyTable(ByteGridTable):
         disasm.add_data_processor(1)
         disasm.add_antic_dl_processor(2)
         disasm.add_jumpman_level_processor(3)
+        disasm.add_jumpman_harvest_processor(4)
         self.hex_lower = editor.task.hex_grid_lower_case
         if self.hex_lower:
             self.fmt_hex2 = "%02x"
