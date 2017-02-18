@@ -44,6 +44,7 @@ class DataGenerator(object):
         self.mnemonic_lower = mnemonic_lower
         self.data_op = ".byte" if mnemonic_lower else ".BYTE"
         self.fmt_op = "$%02x" if hex_lower else "$%02X"
+        self.fmt_2op = "$%02x%02x" if hex_lower else "$%02X%02X"
 
     def setup(self, bytes_per_line=4, **kwargs):
         self.bytes_per_line = bytes_per_line
