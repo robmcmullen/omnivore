@@ -68,8 +68,6 @@ class DisassemblyTable(ByteGridTable):
         pc = self.segment.start_addr
         self.lines = None
 
-        # old format: (addr, bytes, opstr, comment, count, flag)
-        self.disassembler.set_pc(self.segment, pc)
         disasm = self.disassembler.fast
         r = self.segment.get_entire_style_ranges(user=user_bit_mask)
         info = disasm.get_all(self.segment.rawdata.unindexed_view, pc, 0, r)
