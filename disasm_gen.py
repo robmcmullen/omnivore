@@ -249,7 +249,7 @@ class PyxGenerator(object):
         prototype_arglist = "(char *wrap, char *src, int pc, int last_pc, np.uint16_t *labels, char *instructions, int strpos)"
         externlist = []
         for n in self.function_name_list:
-            externlist.append("    %s%s" % (n, prototype_arglist))
+            externlist.append("    int %s%s" % (n, prototype_arglist))
         deftemplate = """
     elif cpu == "$CPU":
         if mnemonic_lower:
@@ -279,18 +279,6 @@ $EXTERNLIST
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def get_disassembled_chunk_fast(cpu, storage_wrapper, np.ndarray[char, ndim=1, mode="c"] binary_array, pc, last, index_of_pc, mnemonic_lower, hex_lower):
-    cdef parse_func_t parse_func
-
-    if cpu is None:
-        raise TypeError("Must specify CPU type")
-$DEFLIST
-    else:
-        raise TypeError("Unknown CPU type %s" % cpu)
-    return disassemble(storage_wrapper, np.ndarray[char, ndim=1, mode="c"] binary_array, pc, last, parse_func)
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def disassemble(storage_wrapper, np.ndarray[char, ndim=1, mode="c"] binary_array, pc, last, index_of_pc, parse_func_t parse_func):
 
     cdef np.ndarray metadata_array = storage_wrapper.metadata
     cdef itemsize = metadata_array.itemsize
@@ -308,6 +296,13 @@ def disassemble(storage_wrapper, np.ndarray[char, ndim=1, mode="c"] binary_array
     cdef int strpos = storage_wrapper.last_strpos
     cdef int max_strpos = storage_wrapper.max_strpos
     cdef int retval
+    cdef parse_func_t parse_func
+
+    if cpu is None:
+        raise TypeError("Must specify CPU type")
+$DEFLIST
+    else:
+        raise TypeError("Unknown CPU type %s" % cpu)
 
     metadata += (row * itemsize)
     instructions += strpos
@@ -395,5 +390,6 @@ if __name__ == "__main__":
     gen_others(pyx, args.all_cases, args.monolithic)
 
     print("generated:", "\n".join(pyx.function_name_list))
-    text = pyx.gen_pyx()
-    print(text)
+    if args.monolithic:
+        text = pyx.gen_pyx()
+        print(text)

@@ -111,7 +111,12 @@ def get_disassembled_chunk(parse_mod, storage_wrapper, binary, pc, last, index_o
             break
     return pc, index_of_pc
 
-def get_disassembler(cpu, fast=True):
+def get_disassembler(cpu, fast=True, monolithic=True):
+    if monolithic:
+        import disasm_speedups_monolithic
+        processor = functools.partial(disasm_speedups_monolithic.get_disassembled_chunk_fast, cpu)
+        strsize = 12
+        return processor, cpu, strsize
     try:
         if not fast:
             raise RuntimeError
@@ -131,14 +136,12 @@ def get_disassembler(cpu, fast=True):
     return processor, parse_mod, strsize
 
 import disasm_info
-import disasm_speedups_data
-import disasm_speedups_antic_dl
-import disasm_speedups_jumpman_level
-import disasm_speedups_jumpman_harvest
 
 class DisassemblerWrapper(object):
-    def __init__(self, cpu, lines=65536, fast=True, mnemonic_lower=False, hex_lower=True, extra_disassemblers=None):
-        processor, parse_mod, strsize = get_disassembler(cpu, fast)
+    def __init__(self, cpu, lines=65536, fast=True, mnemonic_lower=False, hex_lower=True, extra_disassemblers=None, monolithic=True):
+        processor, parse_mod, strsize = get_disassembler(cpu, fast, monolithic)
+        self.fast = fast
+        self.monolithic = monolithic
         self.chunk_processor = processor
         self.metadata_wrapper = StorageWrapper(lines, strsize)
         self.mnemonic_lower = mnemonic_lower
@@ -149,17 +152,8 @@ class DisassemblerWrapper(object):
         # default chunk processor is the normal disassembler
         self.chunk_type_processor[0] = self.chunk_processor
 
-    def add_data_processor(self, chunk_type):
-        self.chunk_type_processor[chunk_type] = disasm_speedups_data.get_disassembled_chunk_fast
-
-    def add_antic_dl_processor(self, chunk_type):
-        self.chunk_type_processor[chunk_type] = disasm_speedups_antic_dl.get_disassembled_chunk_fast
-
-    def add_jumpman_level_processor(self, chunk_type):
-        self.chunk_type_processor[chunk_type] = disasm_speedups_jumpman_level.get_disassembled_chunk_fast
-
-    def add_jumpman_harvest_processor(self, chunk_type):
-        self.chunk_type_processor[chunk_type] = disasm_speedups_jumpman_harvest.get_disassembled_chunk_fast
+    def add_chunk_processor(self, cpu, chunk_type):
+        self.chunk_type_processor[chunk_type] = get_disassembler(cpu, self.fast, self.monolithic)[0]
 
     @property
     def rows(self):

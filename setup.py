@@ -17,6 +17,8 @@ extensions = [
         )]
 
 for parser in glob.glob("udis_fast/hardcoded_parse_*.c"):
+    if "monolithic" in parser:
+        continue
     print parser
     cpu = parser.replace("udis_fast/hardcoded_parse_", "").replace(".c", "")
     cpu_root = "disasm_speedups_%s" % cpu
@@ -42,6 +44,16 @@ for parser in glob.glob("udis_fast/hardcoded_parse_*.c"):
     include_dirs = [numpy.get_include()],
     )
     extensions.append(e)
+
+e = Extension("udis_fast.disasm_speedups_monolithic",
+    sources = [
+    "udis_fast/disasm_speedups_monolithic.c",
+    "udis_fast/hardcoded_parse_monolithic.c",
+    ],
+    extra_compile_args = extra_compile_args,
+    include_dirs = [numpy.get_include()],
+    )
+extensions.append(e)
 
 cmdclass = dict()
 
