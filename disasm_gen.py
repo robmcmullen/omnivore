@@ -33,7 +33,7 @@ r = 64
 w = 128
 
 class DataGenerator(object):
-    def __init__(self, formatter_class, hex_lower=True, mnemonic_lower=False, first_of_set=True, **kwargs):
+    def __init__(self, cpu, cpu_name, formatter_class, hex_lower=True, mnemonic_lower=False, first_of_set=True, **kwargs):
         self.formatter_class = formatter_class
         self.set_case(hex_lower, mnemonic_lower)
         self.setup(**kwargs)
@@ -78,20 +78,21 @@ class DataGenerator(object):
         self.lines = lines
 
 class DisassemblerGenerator(DataGenerator):
-    def __init__(self, cpu_name, formatter_class, allow_undocumented=False, hex_lower=True, mnemonic_lower=False, r_mnemonics=None, w_mnemonics=None, rw_modes=None, first_of_set=True):
+    def __init__(self, cpu, cpu_name, formatter_class, allow_undocumented=False, hex_lower=True, mnemonic_lower=False, r_mnemonics=None, w_mnemonics=None, rw_modes=None, first_of_set=True):
         self.formatter_class = formatter_class
         self.set_case(hex_lower, mnemonic_lower)
-        self.setup(cpu_name, allow_undocumented, r_mnemonics, w_mnemonics, rw_modes)
+        self.setup(cpu, cpu_name, allow_undocumented, r_mnemonics, w_mnemonics, rw_modes)
         self.generate(first_of_set)
 
-    def setup(self, cpu_name, allow_undocumented, r_mnemonics, w_mnemonics, rw_modes):
+    def setup(self, cpu, cpu_name, allow_undocumented, r_mnemonics, w_mnemonics, rw_modes):
         self.r_mnemonics = r_mnemonics
         self.w_mnemonics = w_mnemonics
         self.allow_undocumented = allow_undocumented
         self.rw_modes = rw_modes
+        self.cpu = cpu
         self.cpu_name = cpu_name
 
-        cpu = cputables.processors[cpu_name]
+        cpu = cputables.processors[cpu]
         self.address_modes = {}
         table = cpu['addressModeTable']
         if self.rw_modes is None:
@@ -175,51 +176,57 @@ class DisassemblerGenerator(DataGenerator):
     def start_formatter(self, lines):
         self.gen_numpy_single_print(lines, self.opcode_table)
 
-
-def gen_cpu(cpu, undoc=False, all_case_combos=False, do_py=False, do_c=True):
-    if undoc:
-        file_root = "udis_fast/hardcoded_parse_%sundoc" % cpu
+def get_file(cpu_name, ext, monolithic, first=False):
+    if monolithic:
+        file_root = "udis_fast/hardcoded_parse_monolithic"
+        if first:
+            mode = "w"
+        else:
+            mode = "a"
     else:
-        file_root = "udis_fast/hardcoded_parse_%s" % cpu
-    print("Generating %s" % file_root)
+        file_root = "udis_fast/hardcoded_parse_%s" % cpu_name
+        mode = "w"
+    print("Generating %s in %s" % (cpu_name, file_root))
+    return open("%s.%s" % (file_root, ext), mode)
+
+def gen_cpu(cpu, undoc=False, all_case_combos=False, do_py=False, do_c=True, monolithic=False):
+    cpu_name = "%sundoc" % cpu if undoc else cpu
     for ext, formatter, do_it in [("py", PrintNumpy, do_py), ("c", RawC, do_c)]:
         if not do_it:
             continue
-        with open("%s.%s" % (file_root, ext), "w") as fh:
+        with get_file(cpu_name, ext, monolithic) as fh:
+            first = not monolithic
             if all_case_combos:
-                first = True
                 for mnemonic_lower, hex_lower in [(True, True), (True, False), (False, True), (False, False)]:
-                    disasm = DisassemblerGenerator(cpu, formatter, allow_undocumented=undoc, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, first_of_set=first)
+                    disasm = DisassemblerGenerator(cpu, cpu_name, formatter, allow_undocumented=undoc, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, first_of_set=first)
                     fh.write("\n".join(disasm.lines))
                     fh.write("\n")
                     first = False
             else:
-                disasm = DisassemblerGenerator(cpu, formatter, allow_undocumented=undoc)
+                disasm = DisassemblerGenerator(cpu, cpu_name, formatter, allow_undocumented=undoc, first_of_set=first)
                 fh.write("\n".join(disasm.lines))
                 fh.write("\n")
 
 
-def gen_others(all_case_combos=False):
+def gen_others(all_case_combos=False, monolithic=False):
     for name, ext, formatter, generator in [("data", "c", DataC, DataGenerator), ("antic_dl", "c", AnticC, DataGenerator), ("jumpman_harvest", "c", JumpmanHarvestC, DataGenerator)]:
-        file_root = "udis_fast/hardcoded_parse_%s" % name
-        print("Generating %s" % file_root)
-        with open("%s.%s" % (file_root, ext), "w") as fh:
+        with get_file(name, ext, monolithic) as fh:
+            first = not monolithic
             if all_case_combos:
-                first = True
                 for mnemonic_lower, hex_lower in [(True, True), (True, False), (False, True), (False, False)]:
-                    disasm = generator(formatter, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, first_of_set=first)
+                    disasm = generator(name, name, formatter, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, first_of_set=first)
                     fh.write("\n".join(disasm.lines))
                     fh.write("\n")
                     first = False
             else:
-                disasm = generator(formatter)
+                disasm = generator(name, name, formatter, first_of_set=first)
                 fh.write("\n".join(disasm.lines))
                 fh.write("\n")
 
-def gen_all(all_case_combos=False):
+def gen_all(all_case_combos=False, monolithic=False):
     for cpu in cputables.processors.keys():
-        gen_cpu(cpu, False, all_case_combos)
-    gen_cpu("6502", True, all_case_combos)
+        gen_cpu(cpu, False, all_case_combos, monolithic=monolithic)
+    gen_cpu("6502", True, all_case_combos, monolithic=monolithic)
 
 if __name__ == "__main__":
     import sys
@@ -230,12 +237,17 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--py", help="Also create python code", action="store_true", default=False)
     parser.add_argument("-u", "--undocumented", help="Allow undocumented opcodes", action="store_true")
     parser.add_argument("-a", "--all-cases", help="Generate 4 separate functions for the lower/upper combinations", action="store_true", default=False)
+    parser.add_argument("-m", "--monolithic", help="Put all disassemblers in one file", action="store_true")
     args = parser.parse_args()
+
+    if args.monolithic:
+        with get_file(None, "c", True, True) as fh:
+            fh.write(c_preamble_header)
 
     if args.cpu is None or args.cpu.lower() == "none":
         pass
     elif args.cpu:
-        gen_cpu(args.cpu, args.undocumented, args.all_cases, args.py)
+        gen_cpu(args.cpu, args.undocumented, args.all_cases, args.py, monolithic=args.monolithic)
     else:
-        gen_all(args.all_cases)
-    gen_others(args.all_cases)
+        gen_all(args.all_cases, args.monolithic)
+    gen_others(args.all_cases, args.monolithic)

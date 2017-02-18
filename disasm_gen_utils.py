@@ -269,8 +269,7 @@ def parse_instruction_numpy(wrap, pc, src, last_pc):
         self.out("return count")
 
 
-class RawC(PrintNumpy):
-    preamble_header = """#include <stdio.h>
+c_preamble_header = """#include <stdio.h>
 #include <string.h>
 
 /* 12 byte structure */
@@ -284,6 +283,10 @@ typedef struct {
     int strpos; /* position of start of text in instruction array */
 } asm_entry;
 """
+
+
+class RawC(PrintNumpy):
+    preamble_header = c_preamble_header
 
     preamble = """
 int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
@@ -443,20 +446,7 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, 
             self.out("break")
 
 class DataC(RawC):
-    preamble_header = """#include <stdio.h>
-#include <string.h>
-
-/* 12 byte structure */
-typedef struct {
-    unsigned short pc;
-    unsigned short dest_pc; /* address pointed to by this opcode; if applicable */
-    unsigned char count;
-    unsigned char flag;
-    unsigned char strlen;
-    unsigned char reserved;
-    int strpos; /* position of start of text in instruction array */
-} asm_entry;
-"""
+    preamble_header = c_preamble_header
 
     preamble = """
 int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
