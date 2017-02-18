@@ -289,7 +289,7 @@ class RawC(PrintNumpy):
     preamble_header = c_preamble_header
 
     preamble = """
-int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
     int count, dist;
     unsigned int rel;
     unsigned short addr;
@@ -449,7 +449,7 @@ class DataC(RawC):
     preamble_header = c_preamble_header
 
     preamble = """
-int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
     unsigned int num_printed = 0;
 
     wrap->pc = (unsigned short)pc;
@@ -495,7 +495,7 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, 
 
 class AnticC(RawC):
     preamble = """
-int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
     unsigned char opcode;
     unsigned int num_printed = 0;
     int i, dli = 0;
@@ -592,7 +592,7 @@ int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, 
 
 class JumpmanHarvestC(RawC):
     preamble = """
-int parse_instruction_c%s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, unsigned char *instructions, int strpos) {
     unsigned char opcode;
     unsigned int num_printed = 0;
 

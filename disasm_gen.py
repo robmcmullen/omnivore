@@ -34,6 +34,7 @@ w = 128
 
 class DataGenerator(object):
     def __init__(self, cpu, cpu_name, formatter_class, hex_lower=True, mnemonic_lower=False, first_of_set=True, **kwargs):
+        self.cpu_name = cpu_name
         self.formatter_class = formatter_class
         self.set_case(hex_lower, mnemonic_lower)
         self.setup(**kwargs)
@@ -57,6 +58,13 @@ class DataGenerator(object):
     def start_formatter(self, lines):
         self.gen_numpy_single_print(lines)
 
+    @property
+    def function_name(self):
+        c1 = "L" if self.mnemonic_lower else "U"
+        c2 = "L" if self.hex_lower else "U"
+        text = "parse_instruction_c_%s_%s%s" % (self.cpu_name, c1, c2)
+        return text
+
     def generate(self, first_of_set):
         # lines = ["def parse_instruction(pc, src, last_pc):"]
         # lines.append("    opcode = src[0]")
@@ -64,11 +72,7 @@ class DataGenerator(object):
         # self.gen_switch(lines, self.opcode_table)
         text = self.formatter_class.preamble
         if "%s" in text:
-            c1 = "L" if self.mnemonic_lower else "U"
-            c2 = "L" if self.hex_lower else "U"
-            suffix = "_%s%s" % (c1, c2)
-            print(suffix)
-            text = text.replace("%s", suffix)
+            text = text.replace("%s", self.function_name)
         if first_of_set:
             text = self.formatter_class.preamble_header + text
         lines = text.splitlines()
@@ -189,11 +193,12 @@ def get_file(cpu_name, ext, monolithic, first=False):
     print("Generating %s in %s" % (cpu_name, file_root))
     return open("%s.%s" % (file_root, ext), mode)
 
-def gen_cpu(cpu, undoc=False, all_case_combos=False, do_py=False, do_c=True, monolithic=False):
+def gen_cpu(pyx, cpu, undoc=False, all_case_combos=False, do_py=False, do_c=True, monolithic=False):
     cpu_name = "%sundoc" % cpu if undoc else cpu
     for ext, formatter, do_it in [("py", PrintNumpy, do_py), ("c", RawC, do_c)]:
         if not do_it:
             continue
+        pyx.cpus.add(cpu)
         with get_file(cpu_name, ext, monolithic) as fh:
             first = not monolithic
             if all_case_combos:
@@ -202,14 +207,17 @@ def gen_cpu(cpu, undoc=False, all_case_combos=False, do_py=False, do_c=True, mon
                     fh.write("\n".join(disasm.lines))
                     fh.write("\n")
                     first = False
+                    pyx.function_name_list.append(disasm.function_name)
             else:
                 disasm = DisassemblerGenerator(cpu, cpu_name, formatter, allow_undocumented=undoc, first_of_set=first)
                 fh.write("\n".join(disasm.lines))
                 fh.write("\n")
+                pyx.function_name_list.append(disasm.function_name)
 
 
-def gen_others(all_case_combos=False, monolithic=False):
+def gen_others(pyx, all_case_combos=False, monolithic=False):
     for name, ext, formatter, generator in [("data", "c", DataC, DataGenerator), ("antic_dl", "c", AnticC, DataGenerator), ("jumpman_harvest", "c", JumpmanHarvestC, DataGenerator)]:
+        pyx.cpus.add(name)
         with get_file(name, ext, monolithic) as fh:
             first = not monolithic
             if all_case_combos:
@@ -218,15 +226,148 @@ def gen_others(all_case_combos=False, monolithic=False):
                     fh.write("\n".join(disasm.lines))
                     fh.write("\n")
                     first = False
+                    pyx.function_name_list.append(disasm.function_name)
             else:
                 disasm = generator(name, name, formatter, first_of_set=first)
                 fh.write("\n".join(disasm.lines))
                 fh.write("\n")
+                pyx.function_name_list.append(disasm.function_name)
 
-def gen_all(all_case_combos=False, monolithic=False):
+def gen_all(pyx, all_case_combos=False, monolithic=False):
     for cpu in cputables.processors.keys():
-        gen_cpu(cpu, False, all_case_combos, monolithic=monolithic)
-    gen_cpu("6502", True, all_case_combos, monolithic=monolithic)
+        gen_cpu(pyx, cpu, False, all_case_combos, monolithic=monolithic)
+    gen_cpu(pyx, "6502", True, all_case_combos, monolithic=monolithic)
+
+
+class PyxGenerator(object):
+    def __init__(self):
+        self.cpus = set()
+        self.function_name_list = []
+
+    def gen_pyx(self):
+        filename = "udis_fast/disasm_speedups_monolithic.pyx"
+        prototype_arglist = "(char *wrap, char *src, int pc, int last_pc, np.uint16_t *labels, char *instructions, int strpos)"
+        externlist = []
+        for n in self.function_name_list:
+            externlist.append("    %s%s" % (n, prototype_arglist))
+        deftemplate = """
+    elif cpu == "$CPU":
+        if mnemonic_lower:
+            if hex_lower:
+                parse_func = parse_instruction_c_$CPU_LL
+            else:
+                parse_func = parse_instruction_c_$CPU_LU
+        else:
+            if hex_lower:
+                parse_func = parse_instruction_c_$CPU_UL
+            else:
+                parse_func = parse_instruction_c_$CPU_UU"""
+        deflist = []
+        for cpu in self.cpus:
+            deflist.append(deftemplate.replace("$CPU", cpu))
+
+        text = """from __future__ import division
+import cython
+import numpy as np
+cimport numpy as np
+
+ctypedef int (*parse_func_t)(char *, char *, int, int, np.uint16_t *, char *, int)
+
+cdef extern:
+$EXTERNLIST
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def get_disassembled_chunk_fast(cpu, storage_wrapper, np.ndarray[char, ndim=1, mode="c"] binary_array, pc, last, index_of_pc, mnemonic_lower, hex_lower):
+    cdef parse_func_t parse_func
+
+    if cpu is None:
+        raise TypeError("Must specify CPU type")
+$DEFLIST
+    else:
+        raise TypeError("Unknown CPU type %s" % cpu)
+    return disassemble(storage_wrapper, np.ndarray[char, ndim=1, mode="c"] binary_array, pc, last, parse_func)
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def disassemble(storage_wrapper, np.ndarray[char, ndim=1, mode="c"] binary_array, pc, last, index_of_pc, parse_func_t parse_func):
+
+    cdef np.ndarray metadata_array = storage_wrapper.metadata
+    cdef itemsize = metadata_array.itemsize
+    cdef row = storage_wrapper.row
+    cdef char *metadata = metadata_array.data
+    cdef int c_index = index_of_pc
+    cdef char *binary = binary_array.data + c_index
+    cdef int c_pc, c_last, count, max_rows, i
+    cdef np.ndarray[np.uint16_t, ndim=1] labels_array = storage_wrapper.labels
+    cdef np.uint16_t *labels = <np.uint16_t *>labels_array.data
+    cdef np.ndarray[np.uint32_t, ndim=1] index_array = storage_wrapper.index
+    cdef np.uint32_t *index = <np.uint32_t *>index_array.data + c_index
+    cdef np.ndarray instructions_array = storage_wrapper.instructions
+    cdef char *instructions = instructions_array.data
+    cdef int strpos = storage_wrapper.last_strpos
+    cdef int max_strpos = storage_wrapper.max_strpos
+    cdef int retval
+
+    metadata += (row * itemsize)
+    instructions += strpos
+    c_pc = pc
+    c_last = last
+    max_rows = storage_wrapper.num_rows
+
+    # fast loop in C
+    while c_pc < c_last and row < max_rows and strpos < max_strpos:
+        count = parse_func(metadata, binary, c_pc, c_last, labels, instructions, strpos)
+        if count == 0:
+            break
+        elif count == 1:
+            index[0] = row
+            index += 1
+        elif count == 2:
+            index[0] = row
+            index += 1
+            index[0] = row
+            index += 1
+        elif count == 3:
+            index[0] = row
+            index += 1
+            index[0] = row
+            index += 1
+            index[0] = row
+            index += 1
+        elif count == 4:
+            index[0] = row
+            index += 1
+            index[0] = row
+            index += 1
+            index[0] = row
+            index += 1
+            index[0] = row
+            index += 1
+        else:
+            for i in range(count):
+                index[0] = row
+                index += 1
+        strlen = <int>metadata[6]
+        c_pc += count
+        c_index += count
+        metadata += itemsize
+        binary += count
+        strpos += strlen
+        instructions += strlen
+        row += 1
+
+    # get data back out in python vars
+    pc = c_pc
+    index_of_pc = c_index
+    storage_wrapper.row = row
+    storage_wrapper.last_strpos = strpos
+    return pc, index_of_pc
+""".replace("$EXTERNLIST", "\n".join(externlist)).replace("$DEFLIST", "\n".join(deflist))
+        with open(filename, "w") as fh:
+            fh.write(text)
+        return text
+
 
 if __name__ == "__main__":
     import sys
@@ -244,10 +385,15 @@ if __name__ == "__main__":
         with get_file(None, "c", True, True) as fh:
             fh.write(c_preamble_header)
 
+    pyx = PyxGenerator()
     if args.cpu is None or args.cpu.lower() == "none":
         pass
     elif args.cpu:
-        gen_cpu(args.cpu, args.undocumented, args.all_cases, args.py, monolithic=args.monolithic)
+        gen_cpu(pyx, args.cpu, args.undocumented, args.all_cases, args.py, monolithic=args.monolithic)
     else:
-        gen_all(args.all_cases, args.monolithic)
-    gen_others(args.all_cases, args.monolithic)
+        gen_all(pyx, args.all_cases, args.monolithic)
+    gen_others(pyx, args.all_cases, args.monolithic)
+
+    print("generated:", "\n".join(pyx.function_name_list))
+    text = pyx.gen_pyx()
+    print(text)
