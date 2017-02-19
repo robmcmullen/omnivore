@@ -159,6 +159,11 @@ class ByteGridTable(Grid.PyGridTableBase):
 
     def is_index_valid(self, index):
         return index < self._rows * self._cols
+
+    def is_row_col_valid(self, r, c):
+        print r, c
+        index = self.get_index_range(r, c)[0]
+        return self.is_index_valid(index)
     
     def get_col_size(self, c, char_width=8):
         try:
@@ -687,8 +692,13 @@ class ByteGrid(Grid.Grid):
         log.debug(self.GetSelectedRows())
         r, c, _, _ = self.get_rc_from_event(evt)
         actions = self.get_popup_actions(r, c)
-        text, style = self.table.get_value_style(r, c)
-        popup_data = {'row':r, 'col':c, 'index': self.table.get_index_range(r, c)[0], 'in_selection': style&0x80}
+        if self.table.is_row_col_valid(r, c):
+            text, style = self.table.get_value_style(r, c)
+            index = self.table.get_index_range(r, c)[0]
+        else:
+            style = 0
+            index = -1
+        popup_data = {'row':r, 'col':c, 'index': index, 'in_selection': style&0x80}
         if actions:
             self.editor.popup_context_menu_from_actions(self, actions, popup_data)
     
