@@ -632,6 +632,7 @@ class ByteGrid(Grid.Grid):
         self.SetDefaultEditor(e)
         self.change_is_valid = True
         self.last_change_count = 0
+        self.restore_upper_left = -1
 
         self.mouse_drag_started = False
         self.select_extend_mode = False
@@ -788,6 +789,14 @@ class ByteGrid(Grid.Grid):
         if r1 < 0:
             r1 = self.table.GetNumberRows() - 1
         return r1 - r0 - 1
+    
+    def get_first_visible_row(self):
+        ux, uy = self.GetScrollPixelsPerUnit()
+        sx, sy = self.GetViewStart()
+        w, h = self.GetGridWindow().GetClientSize().Get()
+        y = sy * uy
+        r0 = self.YToRow(y)
+        return r0
 
     def on_motion(self, evt):
         selecting_rows = evt.GetEventObject() == self.GetGridRowLabelWindow()
@@ -918,6 +927,12 @@ class ByteGrid(Grid.Grid):
     def goto_index(self, index):
         row, col = self.table.get_row_col(index)
         self.SetGridCursor(row, col)
+        ul = self.restore_upper_left
+        if ul >= 0:
+            num = self.get_num_visible_rows()
+            self.MakeCellVisible(ul + num, 0)
+            self.MakeCellVisible(ul, 0)
+            self.restore_upper_left = -1
         self.MakeCellVisible(row,col)
 
     def select_index(self, cursor):

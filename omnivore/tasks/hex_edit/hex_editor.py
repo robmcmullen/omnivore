@@ -464,6 +464,9 @@ class HexEditor(FrameworkEditor):
         num = number if number < len(doc.segments) else len(doc.segments) - 1
         if num != self.segment_number:
             old_segment = self.segment
+            if old_segment is not None:
+                old_segment.cursor_save = self.cursor_index
+                old_segment.index_of_first_visible = self.hex_edit.get_first_visible_row()
             self.segment = doc.segments[num]
             self.adjust_selection(old_segment)
             self.segment_number = num
@@ -508,7 +511,14 @@ class HexEditor(FrameworkEditor):
         new_offset = s.get_raw_index(0)
         old_offset = old_segment.get_raw_index(0)
         
-        self.cursor_index -= new_offset - old_offset
+        print repr(s)
+        print dir(s)
+        if s.cursor_save >= 0:
+            self.cursor_index = s.cursor_save
+        else:
+            self.cursor_index -= new_offset - old_offset
+        if s.index_of_first_visible >= 0:
+            self.hex_edit.restore_upper_left = s.index_of_first_visible
         self.selected_ranges = s.get_style_ranges(selected=True)
         if self.selected_ranges:
             # Arbitrarily puth the anchor on the last selected range

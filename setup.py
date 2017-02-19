@@ -30,7 +30,7 @@ ext_modules = [
 
 install_requires = [
     'numpy',
-    'atrcopy>=3.3.0',
+    'atrcopy>=3.4.0',
     'pyatasm>=1.3',
     'jsonpickle',
     'bson<1.0.0',
