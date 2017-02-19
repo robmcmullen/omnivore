@@ -12,6 +12,7 @@ from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bi
 
 from omnivore.utils.wx.bytegrid import ByteGridTable, ByteGrid
 
+from actions import GotoIndexAction
 from commands import ChangeByteCommand
 
 import logging
@@ -165,7 +166,13 @@ class ByteTable(ByteGridTable):
 
     def is_index_valid(self, index):
         return 0 <= index < len(self.segment)
-    
+
+    def get_addr_dest(self, r, c):
+        index = self.get_index_range(r, c)[0]
+        if self.is_index_valid(index):
+            return index + self.segment.start_addr
+        return -1
+
     def get_col_size(self, col, char_width=8):
         return 2 * char_width + self.extra_column_padding
 
@@ -244,5 +251,28 @@ class HexEditControl(ByteGrid):
             pass
         return False
     
+    def get_goto_actions(self, r, c):
+        goto_actions = []
+        addr_dest = self.table.get_addr_dest(r, c)
+        if addr_dest >= 0:
+            segment_start = self.table.segment.start_addr
+            segment_num = -1
+            addr_index = addr_dest - segment_start
+            segments = self.editor.document.find_segments_in_range(addr_dest)
+            for segment_num, segment_dest, addr_index in segments:
+                print segment_dest
+                if segment_dest == self.table.segment:
+                    continue
+                elif addr_dest >= segment_start and addr_dest < segment_start + len(self.table.segment):
+                    goto_actions.append(GotoIndexAction(name=str(segment_dest), enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.task, active_editor=self.task.active_editor))
+        if goto_actions:
+            goto_actions[0:0] = ["Go to $%04x in Other Segment..." % addr_dest]
+            return [goto_actions]
+        return goto_actions
+    
     def get_popup_actions(self, r, c):
-        return self.editor.common_popup_actions()
+        actions = self.get_goto_actions(r, c)
+        if actions:
+            actions.append(None)
+        actions.extend(self.editor.common_popup_actions())
+        return actions
