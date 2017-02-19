@@ -270,9 +270,12 @@ class HexEditControl(ByteGrid):
             return [goto_actions]
         return goto_actions
     
-    def get_popup_actions(self, r, c):
-        actions = self.get_goto_actions(r, c)
-        if actions:
-            actions.append(None)
+    def get_popup_actions(self, r, c, inside):
+        if not inside:
+            actions = []
+        else:
+            actions = self.get_goto_actions(r, c)
+            if actions:
+                actions.append(None)
         actions.extend(self.editor.common_popup_actions())
         return actions

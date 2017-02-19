@@ -690,9 +690,9 @@ class ByteGrid(Grid.Grid):
 
     def on_right_down(self, evt):
         log.debug(self.GetSelectedRows())
-        r, c, _, _ = self.get_rc_from_event(evt)
-        actions = self.get_popup_actions(r, c)
-        if self.table.is_row_col_valid(r, c):
+        r, c, _, _, inside = self.get_rc_from_event(evt)
+        actions = self.get_popup_actions(r, c, inside)
+        if inside and self.table.is_row_col_valid(r, c):
             text, style = self.table.get_value_style(r, c)
             index = self.table.get_index_range(r, c)[0]
         else:
@@ -702,7 +702,7 @@ class ByteGrid(Grid.Grid):
         if actions:
             self.editor.popup_context_menu_from_actions(self, actions, popup_data)
     
-    def get_popup_actions(self, r, c):
+    def get_popup_actions(self, r, c, inside):
         return []
 
     def on_left_up(self, evt):
@@ -759,7 +759,9 @@ class ByteGrid(Grid.Grid):
         x, y = evt.GetPosition()
         x1, y1 = self.CalcUnscrolledPosition(x, y)
         r, c = self.XYToCell(x1, y1)
+        print r, c
         if r < 0:
+            inside_grid = False
             # XYToCell fails with (-1, -1) when the mouse is not within
             # the grid of cells.  XToCol with the second param True will
             # return a valid result when it's off the edge, but there's no
@@ -772,7 +774,9 @@ class ByteGrid(Grid.Grid):
                     r = 0
                 else:
                     r = self.table.GetNumberRows() - 1
-        return r, c, x1, y1
+        else:
+            inside_grid = True
+        return r, c, x1, y1, inside_grid
     
     def get_num_visible_rows(self):
         ux, uy = self.GetScrollPixelsPerUnit()
@@ -794,7 +798,7 @@ class ByteGrid(Grid.Grid):
             return
         e = self.editor
         if evt.LeftIsDown():
-            r, c, x, y = self.get_rc_from_event(evt)
+            r, c, x, y, _ = self.get_rc_from_event(evt)
             if selecting_rows or x < 0:
                 selecting_rows = True
                 c = 0

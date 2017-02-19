@@ -473,7 +473,7 @@ class BitviewScroller(wx.ScrolledWindow):
     def on_popup(self, evt):
         byte, bit, inside = self.event_coords_to_byte(evt)
         actions = self.get_popup_actions()
-        style = self.segment.style[byte]
+        style = self.segment.style[byte] if inside else 0
         popup_data = {'index': byte, 'in_selection': style&0x80}
         if actions:
             self.editor.popup_context_menu_from_actions(self, actions, popup_data)

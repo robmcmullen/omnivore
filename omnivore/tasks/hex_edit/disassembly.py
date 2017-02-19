@@ -491,7 +491,7 @@ class DisassemblyPanel(ByteGrid):
             goto_actions.append(GotoIndexAction(name=msg, enabled=False, task=self.task))
         return goto_actions
     
-    def get_popup_actions(self, r, c):
+    def get_popup_actions(self, r, c, inside):
         actions = self.get_goto_actions(r, c)
         actions.append(None)
         actions.extend(self.editor.common_popup_actions())
