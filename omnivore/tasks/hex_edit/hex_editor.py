@@ -541,7 +541,9 @@ class HexEditor(FrameworkEditor):
     def get_label_of_ranges(self, ranges):
         labels = []
         for start, end in ranges:
-            labels.append("%s-%s" % (self.get_label_at_index(start), self.get_label_at_index(end)))
+            if start > end:
+                start, end = end, start
+            labels.append("%s-%s" % (self.get_label_at_index(start), self.get_label_at_index(end - 1)))
         return ", ".join(labels)
     
     def get_segments_from_selection(self, size=-1):
@@ -565,13 +567,19 @@ class HexEditor(FrameworkEditor):
             segment = DefaultSegment(raw, s.start_addr + indexes[0])
             segments.append(segment)
         return segments
-    
+
     def get_selected_status_message(self):
         if not self.selected_ranges:
             return ""
         if len(self.selected_ranges) == 1:
             r = self.selected_ranges
-            return "[%d bytes selected %s]" % (r[0][1] - r[0][0], self.get_label_of_ranges(r))
+            first = r[0][0]
+            last = r[0][1]
+            num = abs(last - first)
+            if num == 1: # python style, 4:5 indicates a single byte
+                return "[1 byte selected %s]" % self.get_label_of_ranges(r)
+            elif num > 0:
+                return "[%d bytes selected %s]" % (num, self.get_label_of_ranges(r))
         else:
             return "[%d ranges selected]" % (len(self.selected_ranges))
     
