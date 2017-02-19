@@ -765,19 +765,32 @@ class FrameworkEditor(Editor):
         """
         popup = wx.Menu()
         context_menu_data = dict()
-        for action in actions:
-            if action is None:
-                popup.AppendSeparator()
-            else:
-                i = wx.NewId()
-                if not hasattr(action, 'task'):
-                    action = action(task=self.task)
-                
-                # wxpython popup entries can't have empty name
-                name = action.name if action.name else " "
-                item = popup.Append(i, name)
-                item.Enable(action.enabled)
-                context_menu_data[i] = action
+
+        def add_to_menu(menu, action, context_menu_data):
+            i = wx.NewId()
+            if not hasattr(action, 'task'):
+                action = action(task=self.task)
+            
+            # wxpython popup entries can't have empty name
+            name = action.name if action.name else " "
+            item = menu.Append(i, name)
+            item.Enable(action.enabled)
+            context_menu_data[i] = action
+
+        def loop_over_actions(popup, actions):
+            for action in actions:
+                if action is None:
+                    popup.AppendSeparator()
+                elif hasattr(action, '__iter__'):
+                    submenu = wx.Menu()
+                    title = action[0]
+                    popup.AppendMenu(wx.NewId(), title, submenu)
+                    loop_over_actions(submenu, action[1:])
+                else:
+                    add_to_menu(popup, action, context_menu_data)
+
+        loop_over_actions(popup, actions)
+
         ret = window.GetPopupMenuSelectionFromUser(popup)
         if ret == wx.ID_NONE:
             return

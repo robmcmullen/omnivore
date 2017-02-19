@@ -206,14 +206,15 @@ class Document(HasTraits):
                 return i
         return -1
     
-    def find_segment_in_range(self, addr):
+    def find_segments_in_range(self, addr):
         """Assuming segments had a start_addr param, find first segment that
         has addr as a valid address
         """
+        found = []
         for i, s in enumerate(self.segments):
             if addr >= s.start_addr and addr < (s.start_addr + len(s)):
-                return i, s, addr - s.start_addr
-        return -1, None, None
+                found.append((i, s, addr - s.start_addr))
+        return found
 
     def set_emulator(self, emu):
         self.emulator = emu

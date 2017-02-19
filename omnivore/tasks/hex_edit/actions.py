@@ -875,13 +875,18 @@ class SegmentGotoAction(EditorAction):
                 e.index_clicked(index, 0, None)
                 e.task.status_bar.message = e.get_label_at_index(index)
             else:
-                segment_num, segment, index = e.document.find_segment_in_range(addr)
-                if segment_num >= 0:
+                segments = e.document.find_segments_in_range(addr)
+                if len(segments) > 1:
+                    segments = segments[1:] # Skip ALL segment if other segments exist
+                if len(segments) == 0:
+                    e.task.status_bar.message = "Address $%04x not valid in any segment" % addr
+                else:
+                    if len(segments) > 1:
+                        segments = segments[1:] # Skip ALL segment if others are available
+                    segment_num, segment, index = segments[0]
                     e.view_segment_number(segment_num)
                     e.index_clicked(index, 0, None)
                     e.task.status_bar.message = "%s in segment %s" % (e.get_label_at_index(index), e.segment.name)
-                else:
-                    e.task.status_bar.message = "Address $%04x not valid in any segment" % addr
         else:
             e.task.status_bar.message = error
 

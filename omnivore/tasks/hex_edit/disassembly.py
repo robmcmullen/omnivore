@@ -452,31 +452,47 @@ class DisassemblyPanel(ByteGrid):
                     matches.append((instruction_index, instruction_index + line.num_bytes))
         return matches
     
-    def get_goto_action(self, r, c):
+    def get_goto_actions(self, r, c):
+        goto_actions = []
         addr_dest = self.table.get_addr_dest(r)
         if addr_dest >= 0:
             segment_start = self.table.segment.start_addr
             segment_num = -1
             addr_index = addr_dest - segment_start
+            segments = self.editor.document.find_segments_in_range(addr_dest)
             if addr_dest < segment_start or addr_dest > segment_start + len(self.table.segment):
-                segment_num, segment_dest, addr_index = self.editor.document.find_segment_in_range(addr_dest)
-                if segment_dest is not None:
-                    msg = "Go to address $%04x in segment %s" % (addr_dest, str(segment_dest))
-                else:
+                # segment_num, segment_dest, addr_index = self.editor.document.find_segment_in_range(addr_dest)
+                if not segments:
                     msg = "Address $%04x not in any segment" % addr_dest
                     addr_dest = -1
+                else:
+                    # Don't chose a default segment, just show the sub menu
+                    msg = None
             else:
-                msg = "Go to address $%04x" % addr_dest
+                msg = "Go to $%04x" % addr_dest
+            print "other segments", segments
         else:
             msg = "No address to jump to"
         if addr_dest >= 0:
-            goto_action = GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.task, active_editor=self.task.active_editor)
+            if msg is not None:
+                goto_actions.append(GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.task, active_editor=self.task.active_editor))
+            if len(segments) > 0:
+                other_segment_actions = ["Go to $%04x in Other Segment..." % addr_dest]
+                for segment_num, segment_dest, addr_index in segments:
+                    if segment_dest == self.table.segment:
+                        continue
+                    msg = str(segment_dest)
+                    action = GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.task, active_editor=self.task.active_editor)
+                    other_segment_actions.append(action)
+                if len(other_segment_actions) > 1:
+                    # found another segment other than itself
+                    goto_actions.append(other_segment_actions)
         else:
-            goto_action = GotoIndexAction(name=msg, enabled=False, task=self.task)
-        return goto_action
+            goto_actions.append(GotoIndexAction(name=msg, enabled=False, task=self.task))
+        return goto_actions
     
     def get_popup_actions(self, r, c):
-        goto_action = self.get_goto_action(r, c)
-        actions = [goto_action, None]
+        actions = self.get_goto_actions(r, c)
+        actions.append(None)
         actions.extend(self.editor.common_popup_actions())
         return actions
