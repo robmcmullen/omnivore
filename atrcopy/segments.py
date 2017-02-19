@@ -235,6 +235,8 @@ class DefaultSegment(object):
         self.verbose_name = verbose_name
         self.page_size = -1
         self.map_width = 40
+        self.cursor_save = -1
+        self.index_of_first_visible = -1
     
     def set_raw(self, rawdata):
         self.rawdata = rawdata
@@ -247,7 +249,7 @@ class DefaultSegment(object):
     
     def __getstate__(self):
         state = dict()
-        for key in ['start_addr', 'error', 'name', 'verbose_name', 'page_size', 'map_width']:
+        for key in ['start_addr', 'error', 'name', 'verbose_name', 'page_size', 'map_width', 'cursor_save', 'index_of_first_visible']:
             state[key] = getattr(self, key)
         r = self.rawdata
         state['_rawdata_bounds'] = list(r.byte_bounds_offset())
