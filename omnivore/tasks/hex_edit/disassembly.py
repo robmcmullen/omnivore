@@ -156,14 +156,6 @@ class DisassemblyTable(ByteGridTable):
             return row.pc
         except IndexError:
             return 0
-    
-    def get_addr_dest(self, row):
-        index, _ = self.get_index_range(row, 0)
-        index_addr = self.get_pc(row)
-        d = self.editor.machine.get_disassembler(False, False)
-        d.set_pc(self.segment.data[index:], index_addr)
-        args = d.disasm()
-        return args[-1]
 
     def get_comments(self, index, line=None):
         if line is None:
@@ -203,6 +195,11 @@ class DisassemblyTable(ByteGridTable):
                 operand = operand[0:dollar] + label + operand[dollar+1+size:]
             return operand, target_pc, label
         return operand, -1, ""
+
+    def get_addr_dest(self, row):
+        operand = self.lines[row].instruction
+        _, target_pc, _ = self.get_operand_label(operand, -1, -1, None)
+        return target_pc
 
     def get_value_style_lower(self, row, col, operand_labels_start_pc=-1, operand_labels_end_pc=-1, extra_labels={}, offset_operand_labels={}):
         line = self.lines[row]
@@ -457,7 +454,7 @@ class DisassemblyPanel(ByteGrid):
     
     def get_goto_action(self, r, c):
         addr_dest = self.table.get_addr_dest(r)
-        if addr_dest is not None:
+        if addr_dest >= 0:
             segment_start = self.table.segment.start_addr
             segment_num = -1
             addr_index = addr_dest - segment_start
@@ -467,12 +464,12 @@ class DisassemblyPanel(ByteGrid):
                     msg = "Go to address $%04x in segment %s" % (addr_dest, str(segment_dest))
                 else:
                     msg = "Address $%04x not in any segment" % addr_dest
-                    addr_dest = None
+                    addr_dest = -1
             else:
                 msg = "Go to address $%04x" % addr_dest
         else:
             msg = "No address to jump to"
-        if addr_dest is not None:
+        if addr_dest >= 0:
             goto_action = GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.task, active_editor=self.task.active_editor)
         else:
             goto_action = GotoIndexAction(name=msg, enabled=False, task=self.task)
