@@ -537,7 +537,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         for (i=1; i<wrap->count; i++) {
             num_printed += sprintf(instructions + num_printed, ", $HEX", src[i]);
         }
-        num_printed += sprintf(instructions + num_printed, "; ", src[i]);
+        num_printed += sprintf(instructions + num_printed, "; ");
         break;
     }
  
