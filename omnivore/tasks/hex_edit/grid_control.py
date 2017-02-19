@@ -141,13 +141,17 @@ class ByteTable(ByteGridTable):
         self.bytes_per_row = bytes_per_row
         self._cols = self.bytes_per_row
         self._rows = 0
+        self.editor = None
+        self.start_offset = 0
 
     def set_editor(self, editor):
         self.editor = editor
         self.segment = segment = self.editor.segment
         self.start_offset = segment.start_addr & 0x0f
-        self._rows=((self.start_offset + len(segment) - 1) / self.bytes_per_row) + 1
         log.debug("segment %s: rows=%d cols=%d len=%d" % (segment, self._rows, self.bytes_per_row, len(segment)))
+
+    def get_data_rows(self):
+        return 0 if self.editor is None else ((self.start_offset + len(self.editor.segment) - 1) / self.bytes_per_row) + 1
     
     def get_index_range(self, row, col):
         """Get the byte offset from start of file given row, col

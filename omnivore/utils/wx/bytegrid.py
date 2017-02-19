@@ -139,6 +139,13 @@ class ByteGridTable(Grid.PyGridTableBase):
         
         self._rows = 1
         self._cols = len(self.column_labels)
+
+    def get_data_rows(self):
+        """Return current number of rows as calculated from the size of the
+        data in the table.
+
+        """
+        return 1
     
     def get_index_range(self, row, col):
         """Get the byte offset from start of file given row, col
@@ -248,29 +255,34 @@ class ByteGridTable(Grid.PyGridTableBase):
         grid.SetColSize(col, (self.get_col_size(col, char_width)))
         grid.SetColAttr(col, attr)
 
-    def ResetView(self, grid, *args):
+    def ResetView(self, grid, *args, **kwargs):
         """
         (Grid) -> Reset the grid view.   Call this to
         update the grid if rows and columns have been added or deleted
         """
-        oldrows=self._rows
-        oldcols=self._cols
-        self.ResetViewProcessArgs(grid, *args)
-        log.debug("resetting view for %s" % grid)
-        
+        current_rows, current_cols = self._rows, self._cols
+        self.ResetViewProcessArgs(grid, *args, **kwargs)
+        new_rows, new_cols = self.get_data_rows(), self._cols
+        log.debug("resetting view for %s: old rows=%s, new_rows=%s" % (grid, current_rows, new_rows))
+
+        self._rows = new_rows
+        self._cols = new_cols
+
         grid.BeginBatch()
 
         for current, new, delmsg, addmsg in [
-            (oldrows, self._rows, Grid.GRIDTABLE_NOTIFY_ROWS_DELETED, Grid.GRIDTABLE_NOTIFY_ROWS_APPENDED),
-            (oldcols, self._cols, Grid.GRIDTABLE_NOTIFY_COLS_DELETED, Grid.GRIDTABLE_NOTIFY_COLS_APPENDED),
+            (current_rows, new_rows, Grid.GRIDTABLE_NOTIFY_ROWS_DELETED, Grid.GRIDTABLE_NOTIFY_ROWS_APPENDED),
+            (current_cols, new_cols, Grid.GRIDTABLE_NOTIFY_COLS_DELETED, Grid.GRIDTABLE_NOTIFY_COLS_APPENDED),
         ]:
 
             if new < current:
                 msg = Grid.GridTableMessage(self,delmsg,new,current-new)
                 grid.ProcessTableMessage(msg)
+                log.debug("Fewer %s: old=%d new=%d" % ("cols" if delmsg == Grid.GRIDTABLE_NOTIFY_COLS_DELETED else "rows", current, new))
             elif new > current:
                 msg = Grid.GridTableMessage(self,addmsg,new-current)
                 grid.ProcessTableMessage(msg)
+                log.debug("More %s: old=%d new=%d" % ("cols" if delmsg == Grid.GRIDTABLE_NOTIFY_COLS_DELETED else "rows", current, new))
                 self.UpdateValues(grid)
         grid.EndBatch()
 
@@ -287,9 +299,6 @@ class ByteGridTable(Grid.PyGridTableBase):
             # freeing them.  So, have to individually allocate the attrs for
             # each column
             self.set_col_attr(grid, col, width)
-
-        self._rows = self.GetNumberRows()
-        self._cols = self.GetNumberCols()
         
         label_font = grid.editor.machine.text_font.Bold()
         grid.SetLabelFont(label_font)

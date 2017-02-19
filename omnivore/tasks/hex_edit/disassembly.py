@@ -46,7 +46,6 @@ class DisassemblyTable(ByteGridTable):
         self.segment = segment = self.editor.segment
         self.lines = None
         self.index_to_row = []
-        self._rows = 0
         self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
         disasm = self.disassembler.fast
         disasm.add_chunk_processor("data", 1)
@@ -62,9 +61,9 @@ class DisassemblyTable(ByteGridTable):
             self.fmt_hex4 = "%04X"
         self.start_addr = segment.start_addr
         self.end_addr = self.start_addr + len(segment)
-        self.restart_disassembly(0)
+        self.disassemble_from(0)
     
-    def restart_disassembly(self, index):
+    def disassemble_from(self, index, refresh=False):
         pc = self.segment.start_addr
         self.lines = None
 
@@ -73,8 +72,16 @@ class DisassemblyTable(ByteGridTable):
         info = disasm.get_all(self.segment.rawdata.unindexed_view, pc, 0, r)
         self.index_to_row = info.index
         self.lines = info
-        self._rows = info.num_instructions
         self.jump_targets = info.labels
+        grid = self.editor.disassembly
+        if refresh:
+            # Fixed double resize bug if called from set_editor. Only if
+            # refresh requested, like from a UI interaction, should the reset
+            # get called
+            self.ResetView(grid, None)
+
+    def get_data_rows(self):
+        return 0 if self.lines is None else self.lines.num_instructions
     
     def set_grid_cell_attr(self, grid, col, attr):
         ByteGridTable.set_grid_cell_attr(self, grid, col, attr)
@@ -206,7 +213,7 @@ class DisassemblyTable(ByteGridTable):
         for i in range(count):
             style |= self.segment.style[index + i]
         if col == 0:
-            text = " ".join(self.fmt_hex2 % self.segment[index + i] for i in range(count))
+            text = str(row) + " " +" ".join(self.fmt_hex2 % self.segment[index + i] for i in range(count))
         elif col == 2:
             if (style & comment_bit_mask):
                 text = self.get_comments(index, line)
@@ -264,7 +271,7 @@ class DisassemblyTable(ByteGridTable):
             return self.get_label_at_row(row)
         return "0000"
 
-    def ResetViewProcessArgs(self, grid, editor, *args):
+    def ResetViewProcessArgs(self, grid, editor, *args, **kwargs):
         if editor is not None:
             self.set_editor(editor)
 
@@ -321,7 +328,7 @@ class DisassemblyPanel(ByteGrid):
         return AssemblerEditor(self)
 
     def restart_disassembly(self, index):
-        self.table.restart_disassembly(index)
+        self.table.disassemble_from(index, True)
     
     def get_disassembled_text(self, start, end):
         """Returns list of lines representing the disassembly
