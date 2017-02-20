@@ -338,13 +338,7 @@ class DisassemblyPanel(ByteGrid):
         """
         t = self.table
         start_row = t.index_to_row[start]
-        try:
-            end_row = t.index_to_row[end]
-        except IndexError:
-            # check if entire segment selected; if so, end will be one past last
-            # allowable entry in index_to_row
-            end -= 1
-            end_row = t.index_to_row[end]
+        end_row = t.index_to_row[end - 1] # end is python style range, want actual last byte
         start_pc = t.get_pc(start_row)
         end_pc = t.get_pc(end_row)
 
