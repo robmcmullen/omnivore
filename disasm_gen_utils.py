@@ -318,7 +318,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
 
     def z80_4byte(self, z80_2nd_byte, opcode):
         self.out("case 0x%x:" % (opcode))
-        self.fmt = ["rel"]
+        self.argorder = ["rel"]
         self.opcode1(opcode)
         self.first = False
 
