@@ -9,6 +9,8 @@ else:
 
 import numpy
 
+MONOLITHIC = True
+
 extensions = [
     Extension("udis_fast.disasm_info",
         sources = ["udis_fast/disasm_info.c"],
@@ -16,44 +18,46 @@ extensions = [
         include_dirs = [numpy.get_include()],
         )]
 
-for parser in glob.glob("udis_fast/hardcoded_parse_*.c"):
-    if "monolithic" in parser:
-        continue
-    print parser
-    cpu = parser.replace("udis_fast/hardcoded_parse_", "").replace(".c", "")
-    cpu_root = "disasm_speedups_%s" % cpu
-    mod_name = "udis_fast.%s" % cpu_root
-    mod_file = ("%s.c" % mod_name).replace("udis_fast.", "udis_fast/")
-
-    # each CPU's disassembler is a separate module, and each has to have its
-    # own Cython file using the name of the module. Using one pyx for all the
-    # files results in "dynamic module does not define init function" because
-    # it's looking for e.g. initdisasm_speedups_6502 and only finds the generic
-    # initdisasm_speedups. Changing all the references in the generated C file
-    # works, no need to cythonize different versions.
-    with open("udis_fast/disasm_speedups.c", "r") as fh:
-        src = fh.read()
-        src = src.replace("disasm_speedups", cpu_root)
-        with open(mod_file, "w") as wfh:
-            wfh.write(src)
-    e = Extension(mod_name,
-    sources = [mod_file,
-               "udis_fast/hardcoded_parse_%s.c" % cpu,
-              ],
-    extra_compile_args = extra_compile_args,
-    include_dirs = [numpy.get_include()],
-    )
+if MONOLITHIC:
+    e = Extension("udis_fast.disasm_speedups_monolithic",
+        sources = [
+        "udis_fast/disasm_speedups_monolithic.c",
+        "udis_fast/hardcoded_parse_monolithic.c",
+        ],
+        extra_compile_args = extra_compile_args,
+        include_dirs = [numpy.get_include()],
+        )
     extensions.append(e)
+else:
+    for parser in glob.glob("udis_fast/hardcoded_parse_*.c"):
+        if "monolithic" in parser:
+            continue
+        print parser
+        cpu = parser.replace("udis_fast/hardcoded_parse_", "").replace(".c", "")
+        cpu_root = "disasm_speedups_%s" % cpu
+        mod_name = "udis_fast.%s" % cpu_root
+        mod_file = ("%s.c" % mod_name).replace("udis_fast.", "udis_fast/")
 
-e = Extension("udis_fast.disasm_speedups_monolithic",
-    sources = [
-    "udis_fast/disasm_speedups_monolithic.c",
-    "udis_fast/hardcoded_parse_monolithic.c",
-    ],
-    extra_compile_args = extra_compile_args,
-    include_dirs = [numpy.get_include()],
-    )
-extensions.append(e)
+        # When not in monolithic mode, each CPU's disassembler is a separate
+        # module, and each has to have its own Cython file using the name of
+        # the module. Using one pyx for all the files results in "dynamic
+        # module does not define init function" because it's looking for e.g.
+        # initdisasm_speedups_6502 and only finds the generic
+        # initdisasm_speedups. Changing all the references in the generated C
+        # file works, no need to cythonize different versions.
+        with open("udis_fast/disasm_speedups.c", "r") as fh:
+            src = fh.read()
+            src = src.replace("disasm_speedups", cpu_root)
+            with open(mod_file, "w") as wfh:
+                wfh.write(src)
+        e = Extension(mod_name,
+        sources = [mod_file,
+                   "udis_fast/hardcoded_parse_%s.c" % cpu,
+                  ],
+        extra_compile_args = extra_compile_args,
+        include_dirs = [numpy.get_include()],
+        )
+        extensions.append(e)
 
 cmdclass = dict()
 

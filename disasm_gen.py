@@ -190,7 +190,8 @@ def get_file(cpu_name, ext, monolithic, first=False):
     else:
         file_root = "udis_fast/hardcoded_parse_%s" % cpu_name
         mode = "w"
-    print("Generating %s in %s" % (cpu_name, file_root))
+    if cpu_name is not None:
+        print("Generating %s in %s" % (cpu_name, file_root))
     return open("%s.%s" % (file_root, ext), mode)
 
 def gen_cpu(pyx, cpu, undoc=False, all_case_combos=False, do_py=False, do_c=True, monolithic=False):
@@ -374,6 +375,7 @@ if __name__ == "__main__":
     parser.add_argument("-u", "--undocumented", help="Allow undocumented opcodes", action="store_true")
     parser.add_argument("-a", "--all-cases", help="Generate 4 separate functions for the lower/upper combinations", action="store_true", default=False)
     parser.add_argument("-m", "--monolithic", help="Put all disassemblers in one file", action="store_true")
+    parser.add_argument("-v", "--verbose", help="Show verbose progress", action="store_true", default=False)
     args = parser.parse_args()
 
     if args.monolithic:
@@ -389,7 +391,7 @@ if __name__ == "__main__":
         gen_all(pyx, args.all_cases, args.monolithic)
     gen_others(pyx, args.all_cases, args.monolithic)
 
-    print("generated:", "\n".join(pyx.function_name_list))
+    if args.verbose:
+        print("generated:\n", "\n".join(pyx.function_name_list))
     if args.monolithic:
         text = pyx.gen_pyx()
-        print(text)
