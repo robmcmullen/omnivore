@@ -514,7 +514,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         }
     }
     else {
-        while (pc + wrap->count < last_pc) {
+        while ((pc + wrap->count < last_pc) && (wrap->count < 8)) {
             if (src[wrap->count] == opcode) wrap->count += 1;
             else break;
         }
