@@ -258,6 +258,19 @@ class DefaultSegment(object):
         else:
             state['_order_list'] = None
         return state
+
+    def reconstruct_missing(self):
+        """Any instance attributes set in __init__, but added after some save
+        files exist in the wild should be checked for and given default values
+        if not present.
+
+        The use of jsonpickle to recreate objects doesn't go through __init__,
+        so newer attributes won't exist.
+        """
+        if not hasattr(self, 'cursor_save'):
+            self.cursor_save = -1
+        if not hasattr(self, 'index_of_first_visible'):
+            self.index_of_first_visible = -1
     
     def reconstruct_raw(self, rawdata):
         start, end = self._rawdata_bounds
@@ -271,6 +284,7 @@ class DefaultSegment(object):
         except AttributeError:
             pass
         self.set_raw(r)
+        self.reconstruct_missing()
     
     def get_parallel_raw_data(self, other):
         """ Get the raw data that is similar to the specified other segment
