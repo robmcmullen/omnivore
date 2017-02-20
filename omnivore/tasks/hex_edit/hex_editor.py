@@ -511,8 +511,6 @@ class HexEditor(FrameworkEditor):
         new_offset = s.get_raw_index(0)
         old_offset = old_segment.get_raw_index(0)
         
-        print repr(s)
-        print dir(s)
         if s.cursor_save >= 0:
             self.cursor_index = s.cursor_save
         else:

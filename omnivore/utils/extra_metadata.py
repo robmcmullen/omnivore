@@ -1,4 +1,6 @@
-from segmentutil import DefaultSegment, AnticFontSegment, SegmentData
+from atrcopy import DefaultSegment
+
+from segmentutil import AnticFontSegment
 from omnivore.tasks.map_edit.pane_layout import task_id_with_pane_layout as map_edit_task_id
 from omnivore.tasks.jumpman.pane_layout import task_id_with_pane_layout as jumpman_task_id
 
@@ -130,14 +132,22 @@ def JumpmanFullAtr(doc):
         user_segments = []
         start = 0x0810
         for i in range(32):
-            user_segments.append(DefaultSegment(r[start:start+0x800], 0x2800, name=level_names[i]))
+            s = DefaultSegment(r[start:start+0x800], 0x2800, name=level_names[i])
+            if not doc.find_matching_segment(s):
+                print "DIDN'T FIND %s" % s
+                user_segments.append(s)
             start += 0x800
-        user_segments.append(DefaultSegment(r[70032:71568], 0x0a00, name="Code"))
-        user_segments.append(DefaultSegment(r[71568:92048], 0x2000, name="Code"))
+        for s in [DefaultSegment(r[70032:71568], 0x0a00, name="Code"), DefaultSegment(r[71568:92048], 0x2000, name="Code")]:
+            if not doc.find_matching_segment(s):
+                print "DIDN'T FIND %s" % s
+                user_segments.append(s)
+
         extra_metadata = {
             'user segments': user_segments,
             'initial segment': user_segments[0],
             }
+        for s in user_segments:
+            print s.name, dir(s)
         doc.last_task_id = jumpman_task_id
         return extra_metadata
 

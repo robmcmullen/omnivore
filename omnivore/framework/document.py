@@ -188,6 +188,12 @@ class Document(HasTraits):
         self.user_segments.remove(segment)
         self.segments.remove(segment)
 
+    def find_matching_segment(self, segment):
+        for s in self.segments:
+            if len(s) == len(segment) and s.start_addr == segment.start_addr and s.name == segment.name:
+                return True
+        return False
+
     def find_matching_user_segment(self, segment):
         for s in self.user_segments:
             if len(s) == len(segment) and s.start_addr == segment.start_addr and s.name == segment.name:
