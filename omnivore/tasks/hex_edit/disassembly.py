@@ -104,7 +104,11 @@ class DisassemblyTable(ByteGridTable):
             return 0, 0
     
     def is_index_valid(self, index):
-        return self._rows > 0 and index < len(self.segment)
+        return self._rows > 0 and index >= 0 and index < len(self.segment)
+    
+    def is_pc_valid(self, pc):
+        index = pc - self.start_addr
+        return self.is_index_valid(index)
     
     def get_row_col(self, index):
         try:
@@ -351,7 +355,7 @@ class DisassemblyPanel(ByteGrid):
             index, _ = t.get_index_range(row, 0)
             operand = t.lines[row].instruction
             operand, target_pc, label = t.get_operand_label(operand, start_pc, end_pc, {})
-            if target_pc >= 0:
+            if t.is_pc_valid(target_pc):
                 extra_labels[target_pc] = label
 
                 good_opcode_target_pc = t.get_prior_valid_opcode_start(target_pc)

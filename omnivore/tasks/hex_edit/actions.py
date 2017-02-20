@@ -638,7 +638,7 @@ class CopyDisassemblyAction(EditorAction):
             for start, end in ranges:
                 lines.extend(e.disassembly.get_disassembled_text(start, end))
         except IndexError:
-            e.window.error("Disassembly still in progress...")
+            e.window.error("Disassembly tried to jump to an address outside this segment.")
             return
         text = os.linesep.join(lines) + os.linesep
         data_obj = wx.TextDataObject()
