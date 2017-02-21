@@ -657,6 +657,12 @@ class ByteGrid(Grid.Grid):
     def save_prefs(self):
         pass
 
+    def get_view_params(self):
+        return self.get_first_visible_row()
+
+    def restore_view_params(self, data):
+        self.restore_upper_left = data
+
     def get_grid_cell_renderer(self, table, editor):
         return ByteGridRenderer(table, editor)
 

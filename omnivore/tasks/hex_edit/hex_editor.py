@@ -470,7 +470,7 @@ class HexEditor(FrameworkEditor):
     def save_segment_view_params(self, segment):
         d = {
             'cursor_index': self.cursor_index,
-            'hex_edit': self.hex_edit.get_first_visible_row(),
+            'hex_edit': self.hex_edit.get_view_params(),
         }
         self.segment_view_params[segment.uuid] = d
 
@@ -478,10 +478,12 @@ class HexEditor(FrameworkEditor):
         try:
             d = self.segment_view_params[segment.uuid]
         except KeyError:
+            log.debug("no view params for %s" % segment.uuid)
             return
+        log.debug("restoring view params for %s" % segment.uuid)
         self.cursor_index = d['cursor_index']
         if 'hex_edit' in d:
-            self.hex_edit.restore_upper_left = d['hex_edit']
+            self.hex_edit.restore_view_params(d['hex_edit'])
 
     def view_segment_number(self, number):
         doc = self.document
