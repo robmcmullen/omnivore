@@ -1,5 +1,6 @@
 import bisect
 import cStringIO
+import uuid
 
 import numpy as np
 
@@ -235,8 +236,7 @@ class DefaultSegment(object):
         self.verbose_name = verbose_name
         self.page_size = -1
         self.map_width = 40
-        self.cursor_save = -1
-        self.index_of_first_visible = -1
+        self.uuid = str(uuid.uuid4())
     
     def set_raw(self, rawdata):
         self.rawdata = rawdata
@@ -249,7 +249,7 @@ class DefaultSegment(object):
     
     def __getstate__(self):
         state = dict()
-        for key in ['start_addr', 'error', 'name', 'verbose_name', 'page_size', 'map_width', 'cursor_save', 'index_of_first_visible']:
+        for key in ['start_addr', 'error', 'name', 'verbose_name', 'page_size', 'map_width', 'uuid']:
             state[key] = getattr(self, key)
         r = self.rawdata
         state['_rawdata_bounds'] = list(r.byte_bounds_offset())
@@ -267,10 +267,8 @@ class DefaultSegment(object):
         The use of jsonpickle to recreate objects doesn't go through __init__,
         so newer attributes won't exist.
         """
-        if not hasattr(self, 'cursor_save'):
-            self.cursor_save = -1
-        if not hasattr(self, 'index_of_first_visible'):
-            self.index_of_first_visible = -1
+        if not hasattr(self, 'uuid'):
+            self.uuid = str(uuid.uuid4())
     
     def reconstruct_raw(self, rawdata):
         start, end = self._rawdata_bounds
