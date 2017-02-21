@@ -8,7 +8,7 @@ import numpy as np
 import json
 
 # Enthought library imports.
-from traits.api import Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides, on_trait_change
+from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, File, Unicode, Property, provides, on_trait_change
 from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
@@ -71,6 +71,8 @@ class HexEditor(FrameworkEditor):
     last_anchor_end_index = Int(0)
     
     can_copy_baseline = Bool
+
+    segment_view_params = Dict
 
     #### Events ####
 
@@ -168,6 +170,10 @@ class HexEditor(FrameworkEditor):
             self.bitmap_width = e['bitmap width']
         if 'bitmap zoom' in e:
             self.bitmap_zoom = e['bitmap zoom']
+        if 'document uuid' in e:
+            doc.uuid = e['document uuid']
+        if 'segment view params' in e:
+            self.segment_view_params = e['segment view params']
         self.machine.restore_extra_from_dict(e)
     
     def get_extra_metadata(self, mdict):
@@ -185,6 +191,8 @@ class HexEditor(FrameworkEditor):
         mdict["map zoom"] = self.map_zoom
         mdict["bitmap width"] = self.bitmap_width
         mdict["bitmap zoom"] = self.bitmap_zoom
+        mdict["document uuid"] = self.document.uuid
+        mdict["segment view params"] = dict(self.segment_view_params) # shallow copy, but only need to get rid of Traits dict wrapper
         self.machine.serialize_extra_to_dict(mdict)
 
     def rebuild_document_properties(self):
@@ -459,14 +467,29 @@ class HexEditor(FrameworkEditor):
     def view_segment_set_width(self, segment):
         pass
     
+    def save_segment_view_params(self, segment):
+        d = {
+            'cursor_index': self.cursor_index,
+            'hex_edit': self.hex_edit.get_first_visible_row(),
+        }
+        self.segment_view_params[segment.uuid] = d
+
+    def restore_segment_view_params(self, segment):
+        try:
+            d = self.segment_view_params[segment.uuid]
+        except KeyError:
+            return
+        self.cursor_index = d['cursor_index']
+        if 'hex_edit' in d:
+            self.hex_edit.restore_upper_left = d['hex_edit']
+
     def view_segment_number(self, number):
         doc = self.document
         num = number if number < len(doc.segments) else len(doc.segments) - 1
         if num != self.segment_number:
             old_segment = self.segment
             if old_segment is not None:
-                old_segment.cursor_save = self.cursor_index
-                old_segment.index_of_first_visible = self.hex_edit.get_first_visible_row()
+                self.save_segment_view_params(old_segment)
             self.segment = doc.segments[num]
             self.adjust_selection(old_segment)
             self.segment_number = num
@@ -511,12 +534,7 @@ class HexEditor(FrameworkEditor):
         new_offset = s.get_raw_index(0)
         old_offset = old_segment.get_raw_index(0)
         
-        if s.cursor_save >= 0:
-            self.cursor_index = s.cursor_save
-        else:
-            self.cursor_index -= new_offset - old_offset
-        if s.index_of_first_visible >= 0:
-            self.hex_edit.restore_upper_left = s.index_of_first_visible
+        self.restore_segment_view_params(s)
         self.selected_ranges = s.get_style_ranges(selected=True)
         if self.selected_ranges:
             # Arbitrarily puth the anchor on the last selected range

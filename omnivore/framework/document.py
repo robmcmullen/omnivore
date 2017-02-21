@@ -1,6 +1,7 @@
 import os
 import types
 import cStringIO as StringIO
+import uuid
 
 import numpy as np
 import fs
@@ -39,7 +40,9 @@ class Document(HasTraits):
     read_only = Property(Bool, depends_on='metadata')
 
     document_id = Int(-1)
-    
+
+    uuid = Str
+
     baseline_document = Any(transient=True)
     
     last_task_id = Str
@@ -89,6 +92,9 @@ class Document(HasTraits):
     def _segments_default(self):
         r = SegmentData(self.bytes,self.style)
         return list([DefaultSegment(r, 0)])
+
+    def _uuid_default(self):
+        return str(uuid.uuid4())
 
     #### trait property getters
 
