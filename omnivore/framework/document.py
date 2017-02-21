@@ -14,6 +14,9 @@ from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, InvalidSe
 from omnivore.utils.command import UndoStack
 from omnivore.utils.file_guess import FileGuess, FileMetadata
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class TraitNumpyConverter(TraitHandler):
     """Trait validator to convert bytes to numpy array"""
@@ -182,7 +185,10 @@ class Document(HasTraits):
     
     def add_user_segment(self, segment, replace=False):
         if replace:
-            if self.find_matching_user_segment(segment):
+            current = self.find_matching_user_segment(segment)
+            if current is not None:
+                log.debug("replacing %s with %s" % (current, segment))
+                self.replace_user_segment(current, segment)
                 return
         self.user_segments.append(segment)
         self.segments.append(segment)
@@ -193,6 +199,15 @@ class Document(HasTraits):
     def delete_user_segment(self, segment):
         self.user_segments.remove(segment)
         self.segments.remove(segment)
+    
+    def replace_user_segment(self, current_segment, segment):
+        try:
+            i = self.user_segments.index(current_segment)
+            self.user_segments[i:i+1] = [segment]
+            i = self.segments.index(current_segment)
+            self.segments[i:i+1] = [segment]
+        except ValueError:
+            log.error("Attempted to replace segment %s that isn't here!")
 
     def find_matching_segment(self, segment):
         for s in self.segments:
@@ -203,8 +218,8 @@ class Document(HasTraits):
     def find_matching_user_segment(self, segment):
         for s in self.user_segments:
             if len(s) == len(segment) and s.start_addr == segment.start_addr and s.name == segment.name:
-                return True
-        return False
+                return s
+        return None
     
     def find_segment_index(self, segment):
         try:

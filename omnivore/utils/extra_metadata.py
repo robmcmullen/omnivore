@@ -137,10 +137,12 @@ def JumpmanFullAtr(doc):
         for i in range(32):
             s = DefaultSegment(r[start:start+0x800], 0x2800, name=level_names[i])
             if not doc.find_matching_segment(s):
+                log.debug("adding %s" % s)
                 user_segments.append(s)
             start += 0x800
         for s in [DefaultSegment(r[70032:71568], 0x0a00, name="Code"), DefaultSegment(r[71568:92048], 0x2000, name="Code")]:
             if not doc.find_matching_segment(s):
+                log.debug("adding %s" % s)
                 user_segments.append(s)
 
         extra_metadata = {
