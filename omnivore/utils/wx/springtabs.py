@@ -22,11 +22,8 @@ import wx
 import wx.stc
 from wx.lib.buttons import GenToggleButton
 
-try:
-    from peppy.debug import *
-except:
-    def dprint(txt=""):
-        print txt
+import logging
+log = logging.getLogger(__name__)
 
 
 class FakePopupWindow(wx.MiniFrame):
@@ -66,7 +63,7 @@ class FakePopupWindow(wx.MiniFrame):
         @param evt: event that called this handler
 
         """
-        #dprint("OnFocus: set focus to %s" % str(self.GetParent()))
+        #log.debug("OnFocus: set focus to %s" % str(self.GetParent()))
         self.ActivateParent()
         evt.Skip()
 
@@ -100,7 +97,7 @@ class SpringTabItemRenderer(object):
         item.DrawLabel(dc, width, height)
         self.DrawHoverDecorations(item, dc, width, height)
         
-        #dprint("button %s: pressed=%s" % (item.GetLabel(), not item.up))
+        #log.debug("button %s: pressed=%s" % (item.GetLabel(), not item.up))
     
     def DrawHoverBackground(self, item, dc):
         brush = wx.Brush(item.faceDnClr, wx.SOLID)
@@ -166,7 +163,7 @@ class SpringTabItemVerticalRenderer(SpringTabItemRenderer):
         h, w, useMin = item._GetLabelSize()
         width = w + 2 * item.border + item.bezelWidth - 1
         height = h + 2 * item.border + item.bezelWidth - 1 + self.spacing_between_items
-        #dprint("width=%d height=%d" % (width, height))
+        #log.debug("width=%d height=%d" % (width, height))
         return (width, height)
 
     def DrawLabel(self, item, dc, width, height, dx=0, dy=0):
@@ -207,7 +204,7 @@ class SpringTabItemVerticalRenderer(SpringTabItemRenderer):
             cw, ch = child.DoGetBestSize()
         except AttributeError:
             cw, ch = child.GetSizeTuple()
-        dprint("popup size=%s  popup client size=%s  child=%s" % (str((pw, ph)), str((pcw, pch)), str((cw, ch))))
+        log.debug("popup size=%s  popup client size=%s  child=%s" % (str((pw, ph)), str((pcw, pch)), str((cw, ch))))
         
         # The client size may be smaller than the popup window if the popup
         # has a border decoration.
@@ -238,7 +235,7 @@ class SpringTabItemVerticalRenderer(SpringTabItemRenderer):
             x, y = parent.ClientToScreenXY(width, 0)
             if self.popleft:
                 x -= width + pw
-            #dprint("popping up at %s" % str((x,y)))
+            #log.debug("popping up at %s" % str((x,y)))
             child.SetPosition(wx.Point(0, 0))
             popup.SetPosition(wx.Point(x, y))
             wx.CallAfter(item.setPopupFocusCallback)
@@ -290,7 +287,7 @@ class SpringTabItem(GenToggleButton):
         faceClr = self.GetBackgroundColour()
         r, g, b = faceClr.Get()
         fr, fg, fb = max(0,r-32), max(0,g-32), max(0,b-32)
-        #dprint(str((fr, fg, fb)))
+        #log.debug(str((fr, fg, fb)))
         self.faceDnClr = wx.Colour(fr, fg, fb)
         sr, sg, sb = max(0,r-32), max(0,g-32), max(0,b-32)
         self.shadowPen = wx.Pen(wx.Colour(sr,sg,sb), 1, wx.SOLID)
@@ -339,7 +336,7 @@ class SpringTabItem(GenToggleButton):
             # Create the window using the popup as the parent
             self.window_cb(self.popup, parent.task, **self.kwargs)
             windowlist = self.popup.GetChildren()
-            print "Creating popup:", windowlist
+            log.debug("Creating popup: %s" % windowlist)
             if len(windowlist) == 0:
                 raise RuntimeError("Popup window creation failed!")
             child = windowlist[0]
@@ -353,7 +350,7 @@ class SpringTabItem(GenToggleButton):
         return self.popup, child
 
     def OnActivate(self, evt):
-        #dprint("Activating %s: %s, shown=%s" % (self.GetLabel(), evt.GetActive(), self.popup.IsShown()))
+        #log.debug("Activating %s: %s, shown=%s" % (self.GetLabel(), evt.GetActive(), self.popup.IsShown()))
         if self.popup.IsShown():
             evt.Skip()
     
@@ -361,10 +358,9 @@ class SpringTabItem(GenToggleButton):
         """Callback for use within wx.CallAfter to prevent focus being set
         after the control has been removed.
         """
-        #dprint()
         popup, child = self.getPopup()
         if popup.IsShown():
-            #dprint("setting focus to %s" % self.GetLabel())
+            #log.debug("setting focus to %s" % self.GetLabel())
             child.SetFocus()
 
     # FIXME: This attempt, using OnChildFocus, setPopupsLoseFocusCallback, and
@@ -373,7 +369,7 @@ class SpringTabItem(GenToggleButton):
     # work at the moment, so I'm relying on a call to pubsub to do the work.
     def OnChildFocus(self, evt):
         popup = evt.GetEventObject()
-        dprint("OnChildFocus: tab: %s, win=%s new=%s, top=%s" % (self.GetLabel(), popup, evt.GetWindow(), wx.GetApp().GetTopWindow()))
+        log.debug("OnChildFocus: tab: %s, win=%s new=%s, top=%s" % (self.GetLabel(), popup, evt.GetWindow(), wx.GetApp().GetTopWindow()))
 #        if evt.GetWindow() is not None:
 #            wx.CallAfter(self.setPopupLoseFocusCallback)
     
@@ -395,16 +391,15 @@ class SpringTabItem(GenToggleButton):
         """Callback for use within wx.CallAfter to prevent focus being set
         after the control has been removed.
         """
-        dprint()
         popup, child = self.getPopup()
         if popup.IsShown():
-            dprint("removing focus from %s" % self.GetLabel())
+            log.debug("removing focus from %s" % self.GetLabel())
             self.GetParent().clearRadio()
 
     def OnLoseChildFocus(self, evt):
         popup = evt.GetEventObject()
         focus = evt.GetWindow()
-        dprint("OnLoseChildFocus: tab: %s, win=%s new=%s, top=%s" % (self.GetLabel(), popup, focus, wx.GetApp().GetTopWindow()))
+        log.debug("OnLoseChildFocus: tab: %s, win=%s new=%s, top=%s" % (self.GetLabel(), popup, focus, wx.GetApp().GetTopWindow()))
         if popup is not None:
             if sys.platform == "linux2" or popup != focus:
                 wx.CallAfter(self.setPopupLoseFocusCallback)
@@ -485,15 +480,15 @@ class SpringTabs(wx.Panel):
     
     def popupItem(self, item):
         self._radio = item
-        #dprint("Popping up %s" % item.GetLabel())
+        #log.debug("Popping up %s" % item.GetLabel())
         self._tab_renderer.showPopup(self, item)
     
     def clearRadio(self, data=None):
         # uncomment this to show where the clearRadio is being called
         #import traceback
-        #dprint("".join(traceback.format_stack()))
+        #log.debug("".join(traceback.format_stack()))
         if self._radio is not None:
-            #dprint("Removing popup %s" % self._radio.GetLabel())
+            #log.debug("Removing popup %s" % self._radio.GetLabel())
             self._tab_renderer.showPopup(self, self._radio, False)
             self._radio.SetToggle(False, check_popup=False)
         self._radio = None
@@ -569,7 +564,7 @@ if __name__ == "__main__":
             self.SetSizer(sizer)
             self.Fit()
             self.Layout()
-            dprint(self.GetSize())
+            log.debug(self.GetSize())
 
             self.lb1.SetSelection(0)
             self.OnSelect(None)

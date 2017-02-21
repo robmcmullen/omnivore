@@ -498,7 +498,7 @@ class LevelDef(object):
         harvest_entries = []
         for obj in trigger_objects:
             h = self.get_harvest_entry(obj, hx, hy)
-            print "harvest entry for", obj, h
+            log.debug("harvest entry for %s: %s" % (obj, h))
             harvest_entries.extend(h)
 
         # Step 1: gather harvest table and painting table entries to determine
@@ -517,7 +517,7 @@ class LevelDef(object):
         for harvest, painting in harvest_entries:
             # painting table entries consisting of only 0xff will be ignored,
             # pointing to the default 0x284c
-            print "processing", harvest, painting
+            log.debug("processing %s %s" % (harvest, painting))
             if len(painting) > 1:
                 addr = self.origin + painting_index
                 hi, low = divmod(addr, 256)
@@ -527,9 +527,9 @@ class LevelDef(object):
             harvest_data.extend(harvest)
         harvest_data.append(0xff)
 
-        print "level data", level_data
-        print "harvest table", harvest_data
-        print "painting table", painting_data
+        log.debug("level data %s" % (level_data))
+        log.debug("harvest table %s" % (harvest_data))
+        log.debug("painting table %s" % (painting_data))
 
         level_data.extend(harvest_data)
         level_data.extend(painting_data)
@@ -718,11 +718,11 @@ class JumpmanLevelBuilder(object):
                 grid = obj.harvest_checksum(*self.harvest_offset)
                 obj.error = grid in self.harvest_offset_dups
                 if obj.error:
-                    print "found duplicate peanut @ ", grid
+                    log.error("found duplicate peanut @ %s" % grid)
                 else:
                     obj.error = obj.is_bad_location(*self.harvest_offset)
                     if obj.error:
-                        print "found bad object location"
+                        log.error("found bad object location")
             if obj.trigger_painting:
                 self.check_peanut_grid(obj.trigger_painting)
 
@@ -742,7 +742,6 @@ class JumpmanLevelBuilder(object):
             if c < 0xfb:
                 if addr is not None:
                     obj = self.get_object(self.pick_index, x, y, c, dx, dy, addr)
-                    print "parse_objects: new", obj
                     objects.append(obj)
             elif c >= 0xfc and c <= 0xfe:
                 arg1 = data[index]
@@ -820,7 +819,6 @@ class JumpmanLevelBuilder(object):
                 log.error("Invalid harvest table entry %s" % (str(entry)))
 
     def parse_level_data(self, segment, level_addr, harvest_addr):
-        print "parse level data", segment
         self.pick_index = 0
         self.objects = self.parse_objects(segment[level_addr - segment.start_addr:])
         self.parse_harvest_table(segment, segment.start_addr, harvest_addr)
@@ -940,7 +938,7 @@ class JumpmanLevelBuilder(object):
                     if name in new_map:
                         new_t = new_map[name]
                         if t != new_t:
-                            print "changed %s trigger function to $%04x" % (obj, new_t)
+                            log.debug("changed %s trigger function to $%04x" % (obj, new_t))
                             obj.trigger_function = new_map[name]
                             changed.append(obj)
                     else:
@@ -1037,7 +1035,6 @@ Labels defined:
         self.ranges.append((vector, vector + 2))
         hi, lo = divmod(subroutine, 256)
         self.data.extend([lo, hi])
-        print "vector: %x with value %x" % (vector, subroutine)
 
     def parse(self):
         for first, last, raw in self.asm.segments:
@@ -1074,9 +1071,6 @@ Labels defined:
             self.data.extend(self.std_gameloop)
         else:
             self.custom_gameloop = True
-
-        print self.ranges
-        print self.data
 
     def get_ranges(self, segment):
         ranges = []

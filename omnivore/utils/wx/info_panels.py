@@ -183,7 +183,6 @@ class LabelField(InfoField):
     extra_vertical_spacing = 3
 
     def set_args(self, args):
-        print args
         self.field_name = args[0]
         self.attr_name = args[1]
         self.max_val = args[2]
@@ -263,7 +262,7 @@ class TextEditField(InfoField):
             self.parse_from_control()
             valid = True
         except Exception as e:
-            print e
+            log.debug("TextEditField: %s" % e)
             c.SetBackgroundColour("#FF8080")
             valid = False
         self.ctrl.Refresh()
@@ -407,7 +406,6 @@ class DropDownField(InfoField):
     same_line = True
 
     def set_args(self, args):
-        print args
         self.field_name = args[0]
         self.byte_offset = args[1]
         self.byte_count = args[2]
@@ -526,7 +524,7 @@ class InfoPanel(PANELTYPE):
         for info in fields:
             field = self.create_field(info)
             if field is None:
-                print "Skipping %s" % str(info)
+                log.debug("init_fields: Skipping %s" % str(info))
                 continue
             field.add_to_parent()
             if e is not None:
@@ -545,12 +543,10 @@ class InfoPanel(PANELTYPE):
         keyword = field_info[0]
         field = None
         subclasses = get_all_subclasses(InfoField)
-        print subclasses
         for kls in get_all_subclasses(InfoField):
             if keyword == kls.keyword:
                 field = kls(self, field_info[1:])
                 break
-        print field_info, field
         return field
     
     def set_fields(self):

@@ -114,7 +114,7 @@ class JumpmanSelectMode(SelectMode):
         self.display_coords(evt)
 
     def process_left_dclick(self, evt):
-        print "dclick"
+        pass
 
     def process_mouse_motion_down(self, evt):
         self.display_coords(evt)
@@ -234,8 +234,7 @@ class AnticDSelectMode(JumpmanSelectMode):
             self.check_tolerance = False
             bad_move = False
             for obj in self.objects:
-                print "moving", obj
-                print " equiv", self.canvas.level_builder.find_equivalent_object(obj)
+                log.debug("moving %s, equiv %s" % (obj, self.canvas.level_builder.find_equivalent_object(obj)))
                 obj.last_x, obj.last_y = obj.x, obj.y
                 _, obj.x = divmod(obj.orig_x + dx, 160)
                 obj.x &= obj.valid_x_mask

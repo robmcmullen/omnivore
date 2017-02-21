@@ -4,6 +4,9 @@ from segmentutil import AnticFontSegment
 from omnivore.tasks.map_edit.pane_layout import task_id_with_pane_layout as map_edit_task_id
 from omnivore.tasks.jumpman.pane_layout import task_id_with_pane_layout as jumpman_task_id
 
+import logging
+log = logging.getLogger(__name__)
+
 getaway_defaults = {
     'antic_color_registers': [0x46, 0xD6, 0x74, 0x0C, 0x14, 0x86, 0x02, 0xB6, 0xBA],
     'tile map': [
@@ -24,7 +27,7 @@ getaway_defaults = {
 def Getaway(doc):
     state = doc.bytes[0:6] == [0xff, 0xff, 0x80, 0x2a, 0xff, 0x8a]
     if state.all():
-        print "Found getaway.xex!!!"
+        log.debug("Found getaway.xex!!!")
         r = doc.segments[0].rawdata
         font_segment = AnticFontSegment(r[0x086:0x486], 0x2b00, name="Playfield font")
         #doc.add_user_segment(font_segment)
@@ -42,7 +45,7 @@ def Getaway(doc):
     
     state = doc.bytes[0x10:0x19] == [0x00, 0xc1, 0x80, 0x0f, 0xcc, 0x22, 0x18, 0x60, 0x0e]
     if state.all():
-        print "Found getaway.atr!!!"
+        log.debug("Found getaway.atr!!!")
         r = doc.segments[0].rawdata
         font_segment = AnticFontSegment(r[0x090:0x490], 0x2b00, name="Playfield font")
         #doc.add_user_segment(font_segment)
@@ -65,7 +68,7 @@ def JumpmanLevelBuilder(doc):
     # Check invariant bytes in the level data to make sure
     s = doc.bytes[0x0196:0x0296]
     if s[0x3f] == 0x4c and s[0x48] == 0x20 and s[0x4b] == 0x60 and s[0x4c] == 0xff:
-        print "Found jumpman level builder!!!"
+        log.debug("Found jumpman level builder!!!")
         r = doc.segments[0].rawdata
         found_level = False
         user_segments = []
@@ -126,7 +129,7 @@ def JumpmanFullAtr(doc):
     # Check invariant bytes in the level data to make sure
     s = doc.bytes[0x0810:0x0910]
     if s[0x3f] == 0x4c and s[0x48] == 0x20 and s[0x4b] == 0x60 and s[0x4c] == 0xff:
-        print "Found jumpman ATR!!!"
+        log.debug("Found jumpman ATR!!!")
         r = doc.segments[0].rawdata
         found_level = False
         user_segments = []
@@ -134,20 +137,16 @@ def JumpmanFullAtr(doc):
         for i in range(32):
             s = DefaultSegment(r[start:start+0x800], 0x2800, name=level_names[i])
             if not doc.find_matching_segment(s):
-                print "DIDN'T FIND %s" % s
                 user_segments.append(s)
             start += 0x800
         for s in [DefaultSegment(r[70032:71568], 0x0a00, name="Code"), DefaultSegment(r[71568:92048], 0x2000, name="Code")]:
             if not doc.find_matching_segment(s):
-                print "DIDN'T FIND %s" % s
                 user_segments.append(s)
 
         extra_metadata = {
             'user segments': user_segments,
             'initial segment': user_segments[0],
             }
-        for s in user_segments:
-            print s.name, dir(s)
         doc.last_task_id = jumpman_task_id
         return extra_metadata
 

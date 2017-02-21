@@ -250,10 +250,9 @@ class DictEditDialog(wx.Dialog):
         pass
 
     def on_verify(self, evt):
-        print "Verify!"
+        pass
 
     def on_resize(self, event):
-        print "resized"
         self.Fit()
     
     def can_submit(self):
@@ -473,7 +472,6 @@ class SegmentOrderDialog(wx.Dialog):
         self.dest.clear()
 
     def on_resize(self, event):
-        print "resized"
         self.Fit()
     
     def get_run_addr(self):
@@ -892,9 +890,7 @@ class ChooseOnePlusCustomDialog(wx.Dialog):
     
     def on_list_selection(self, evt):
         index = evt.GetInt()
-        print "here", index
         if index == self.custom_item_index:
-            print "focus"
             wx.CallAfter(self.custom_value.SetFocus)
             self.custom_value.Enable(True)
         else:

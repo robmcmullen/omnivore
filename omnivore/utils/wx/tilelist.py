@@ -123,7 +123,6 @@ class TileListControl(wx.Panel):
     def on_tile_clicked(self, event):
         p = event.GetPosition()
         index = self.tile_list.HitTest(p)
-        print p, index, self.items[index]
         e = self.editor
         if e is not None:
             self.current_tile = index
@@ -136,7 +135,6 @@ class TileListControl(wx.Panel):
     
     def on_tile(self, event):
         index = event.GetInt()
-        print index, self.items[index]
         self.change_tile(self.items[index])
         
     def change_tile(self, tile):
@@ -261,7 +259,6 @@ class TileWrapControl(wx.Panel):
         sppu_x, sppu_y = self.panel.GetScrollPixelsPerUnit()
         vs_x, vs_y = self.panel.GetViewStart()
         cr = label.GetRect()
-        print cr
         self.panel.Scroll(0, vs_y + (cr.y / sppu_y))
     
     def on_tile_clicked(self, event):
@@ -283,7 +280,6 @@ class TileWrapControl(wx.Panel):
     
     def on_tile(self, event):
         index = event.GetInt()
-        print index, self.items[index]
         self.change_tile(self.items[index])
         
     def change_tile(self, tile):

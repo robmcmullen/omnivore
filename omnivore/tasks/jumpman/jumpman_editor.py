@@ -190,9 +190,6 @@ class JumpmanLevelView(MainBitmapScroller):
     def save_objects(self, objects, command_cls=CreateObjectCommand):
         save_location = self.get_save_location()
         self.level_builder.add_objects(objects, save_location)
-        if self.trigger_root is not None:
-            print save_location, id(save_location)
-            print self.trigger_root, id(self.trigger_root), id(self.trigger_root.trigger_painting)
         self.save_changes(command_cls)
 
     def save_changes(self, command_cls=MoveObjectCommand):
@@ -420,10 +417,10 @@ class JumpmanEditor(BitmapEditor):
         else:
             old_map = self.old_trigger_mapping
             new_map = self.get_triggers()
-            print "old map", old_map
-            print "new_map", new_map
             if old_map != new_map:
-                print "UPDATING trigger map!"
+                log.debug("UPDATING trigger map!")
+                log.debug("old map %s" % old_map)
+                log.debug("new_map %s" % new_map)
                 self.bitmap.level_builder.update_triggers(old_map, new_map)
                 # FIXME: what about undo and the trigger mapping?
                 self.bitmap.save_changes(AssemblyChangedCommand)
@@ -449,12 +446,10 @@ class JumpmanEditor(BitmapEditor):
             return
         source, level_addr, harvest_addr = self.get_level_addrs()
         ranges, data = code.get_ranges(source)
-        print "saving assembly:", ranges, data
         cmd = MoveObjectCommand(source, ranges, data)
         self.process_command(cmd)
 
     def rebuild_display_objects(self):
-        print "Rebuilding!"
         self.bitmap.generate_display_objects(True)
     
     def reconfigure_panes(self):

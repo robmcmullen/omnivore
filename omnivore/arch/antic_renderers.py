@@ -397,7 +397,6 @@ class TwoBitPlanesLE(BaseRenderer):
         scale, rem = divmod(bytes_per_row, self.bitplanes)
         if rem > 0:
             bytes_per_row = (scale + 1) * self.bitplanes
-        print "bytes_per_row", bytes_per_row
         return bytes_per_row
     
     def get_image(self, m, bytes_per_row, nr, count, bytes, style):

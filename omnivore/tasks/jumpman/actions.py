@@ -24,8 +24,6 @@ def trigger_dialog(event, e, obj):
         custom_value = "%04x" % obj.trigger_function
     else:
         custom_value = ""
-    print obj
-    print possible_labels
     dlg = ChooseOnePlusCustomDialog(event.task.window.control, possible_labels.keys(), label, custom_value, "Choose Trigger Function", "Select one trigger function or enter custom address", "Trigger Addr (hex)")
     if dlg.ShowModal() == wx.ID_OK:
         label, addr = dlg.get_selected()
@@ -123,7 +121,6 @@ class FlipVerticalAction(EditorAction):
         e = self.active_editor
         objects = e.bitmap.mouse_mode.objects
         bounds = DrawObjectBounds.get_bounds(objects)
-        print "mirroring objects: %s" % objects, "bounds", bounds
         for o in e.bitmap.mouse_mode.objects:
             self.permute_object(o, bounds)
         e.bitmap.save_changes(self.command)

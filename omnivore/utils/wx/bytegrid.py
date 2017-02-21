@@ -161,7 +161,6 @@ class ByteGridTable(Grid.PyGridTableBase):
         return index < self._rows * self._cols
 
     def is_row_col_valid(self, r, c):
-        print r, c
         index = self.get_index_range(r, c)[0]
         return self.is_index_valid(index)
     
@@ -463,7 +462,7 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
                 # changes to be skipped over.  Need some flag in grid
                 # to see if we're editing, or to delay updates until a
                 # certain period of calmness, or something.
-                print "advancing after edit"
+                log.debug("advancing after edit")
                 wx.CallAfter(self.parentgrid.advance_cursor)
 
 
@@ -760,7 +759,6 @@ class ByteGrid(Grid.Grid):
         x, y = evt.GetPosition()
         x1, y1 = self.CalcUnscrolledPosition(x, y)
         r, c = self.XYToCell(x1, y1)
-        print r, c
         if r < 0:
             inside_grid = False
             # XYToCell fails with (-1, -1) when the mouse is not within
@@ -905,7 +903,6 @@ class ByteGrid(Grid.Grid):
     def on_col_size(self, evt):
         col = evt.GetRowOrCol()
         size = self.GetColSize(col)
-        print "sizing column", col, "pos", evt.GetPosition(), size
         self.table.set_default_col_size(col, size)
         self.save_prefs()
         evt.Skip()

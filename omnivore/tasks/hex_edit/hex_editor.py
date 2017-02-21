@@ -345,7 +345,7 @@ class HexEditor(FrameworkEditor):
             if number != self.segment_number:
                 self.view_segment_number(number)
             self.index_clicked(index, 0, None)
-        print self.cursor_history
+        log.debug(self.cursor_history)
     
     def refresh_panes(self):
         self.check_document_change()
@@ -635,7 +635,6 @@ class HexEditor(FrameworkEditor):
     def change_bytes(self, start, end, bytes, pretty=None):
         """Convenience function to perform a ChangeBytesCommand
         """
-        print "changing bytes %d-%d to %s" % (start, end, repr(bytes))
         self.document.change_count += 1
         cmd = CoalescingChangeByteCommand(self.segment, start, end, bytes)
         if pretty:

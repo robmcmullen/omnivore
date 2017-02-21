@@ -355,12 +355,11 @@ class DisassemblyPanel(ByteGrid):
                 good_opcode_target_pc = t.get_prior_valid_opcode_start(target_pc)
                 diff = target_pc - good_opcode_target_pc
                 if diff > 0:
+                    # if no existing label at the target, reference it using
+                    # offset in bytes from the nearest previous label
                     good_label = "L%04X" % good_opcode_target_pc
                     offset_operand_labels[target_pc] = "%s+%d" % (good_label, diff)
-                    print "mapping %04X to %s" % (target_pc, offset_operand_labels[target_pc])
                     extra_labels[good_opcode_target_pc] = good_label
-        print extra_labels
-        print offset_operand_labels
         lines = []
         org = t.GetRowLabelValue(start_row)
         lines.append("        %s $%s" % (t.disassembler.asm_origin, org))
@@ -468,7 +467,6 @@ class DisassemblyPanel(ByteGrid):
                     msg = None
             else:
                 msg = "Go to $%04x" % addr_dest
-            print "other segments", segments
         else:
             msg = "No address to jump to"
         if addr_dest >= 0:
