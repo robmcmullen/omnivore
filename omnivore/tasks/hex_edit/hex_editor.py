@@ -472,6 +472,12 @@ class HexEditor(FrameworkEditor):
             'cursor_index': self.cursor_index,
             'hex_edit': self.hex_edit.get_view_params(),
         }
+        for pane in self.task.iter_panes():
+            try:
+                d[pane.id] = pane.control.get_view_params()
+            except AttributeError:
+                pass
+
         self.segment_view_params[segment.uuid] = d
 
     def restore_segment_view_params(self, segment):
@@ -484,6 +490,15 @@ class HexEditor(FrameworkEditor):
         self.cursor_index = d['cursor_index']
         if 'hex_edit' in d:
             self.hex_edit.restore_view_params(d['hex_edit'])
+        for pane in self.task.iter_panes():
+            try:
+                params = d[pane.id]
+            except KeyError:
+                continue
+            try:
+                pane.control.restore_view_params(params)
+            except AttributeError:
+                continue
 
     def view_segment_number(self, number):
         doc = self.document

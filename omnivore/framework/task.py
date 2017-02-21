@@ -156,7 +156,7 @@ class FrameworkTask(Task):
         self.set_keyboard_shortcuts()
         self._active_editor_tab_change(None)
         visible = self.pane_layout_initial_visibility()
-        for pane in self.window.dock_panes:
+        for pane in self.iter_panes():
             if pane.id in visible:
                 pane.visible = visible[pane.id]
 
@@ -185,6 +185,10 @@ class FrameworkTask(Task):
         handler = lambda: self.window.application.load_file(browser.selected_file, self)
         browser.on_trait_change(handler, 'activated')
         return [ browser ]
+
+    def iter_panes(self):
+        for pane in self.window.dock_panes:
+            yield pane
     
     def prepare_destroy(self):
         self.window.application.remember_perspectives(self.window)
