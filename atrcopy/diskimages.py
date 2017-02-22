@@ -377,6 +377,14 @@ class DiskImageBase(object):
 
     # file writing methods
 
+    def begin_transaction(self):
+        state = self.bytes[:], self.style[:]
+        return state
+
+    def rollback_transaction(self, state):
+        self.bytes[:], self.style[:] = state
+        return
+
     def write_file(self, filename, filetype, data):
         """Write data to a file on disk
 
@@ -384,18 +392,25 @@ class DiskImageBase(object):
         not enough space on disk or a free entry is not available in the
         catalog.
         """
-        directory = self.directory_class(self.bytes_per_sector)
-        self.get_directory(directory)
-        dirent = directory.add_dirent(filename, filetype)
-        data = to_numpy(data)
-        sector_list = self.sector_list_class(self.bytes_per_sector, self.payload_bytes_per_sector, data, self.writeable_sector_class)
-        vtoc_segments = self.get_vtoc_segments()
-        vtoc = self.vtoc_class(self.bytes_per_sector, vtoc_segments)
-        directory.save_dirent(dirent, vtoc, sector_list)
-        self.write_sector_list(sector_list)
-        self.write_sector_list(vtoc)
-        self.write_sector_list(directory)
-        self.get_metadata()
+        state = self.begin_transaction()
+        try:
+            directory = self.directory_class(self.bytes_per_sector)
+            self.get_directory(directory)
+            dirent = directory.add_dirent(filename, filetype)
+            data = to_numpy(data)
+            sector_list = self.sector_list_class(self.bytes_per_sector, self.payload_bytes_per_sector, data, self.writeable_sector_class)
+            vtoc_segments = self.get_vtoc_segments()
+            vtoc = self.vtoc_class(self.bytes_per_sector, vtoc_segments)
+            directory.save_dirent(dirent, vtoc, sector_list)
+            self.write_sector_list(sector_list)
+            self.write_sector_list(vtoc)
+            self.write_sector_list(directory)
+            self.get_metadata()
+        except AtrError:
+            self.rollback_transaction(state)
+            raise
+        finally:
+            self.get_metadata()
 
     def write_sector_list(self, sector_list):
         for sector in sector_list:
@@ -404,17 +419,24 @@ class DiskImageBase(object):
             self.bytes[pos:pos + size] = sector.data
 
     def delete_file(self, filename):
-        directory = self.directory_class(self.bytes_per_sector)
-        self.get_directory(directory)
-        dirent = directory.find_dirent(filename)
-        sector_list = dirent.get_sector_list(self)
-        vtoc_segments = self.get_vtoc_segments()
-        vtoc = self.vtoc_class(self.bytes_per_sector, vtoc_segments)
-        directory.remove_dirent(dirent, vtoc, sector_list)
-        self.write_sector_list(sector_list)
-        self.write_sector_list(vtoc)
-        self.write_sector_list(directory)
-        self.get_metadata()
+        state = self.begin_transaction()
+        try:
+            directory = self.directory_class(self.bytes_per_sector)
+            self.get_directory(directory)
+            dirent = directory.find_dirent(filename)
+            sector_list = dirent.get_sector_list(self)
+            vtoc_segments = self.get_vtoc_segments()
+            vtoc = self.vtoc_class(self.bytes_per_sector, vtoc_segments)
+            directory.remove_dirent(dirent, vtoc, sector_list)
+            self.write_sector_list(sector_list)
+            self.write_sector_list(vtoc)
+            self.write_sector_list(directory)
+            self.get_metadata()
+        except AtrError:
+            self.rollback_transaction(state)
+            raise
+        finally:
+            self.get_metadata()
 
 
 class WriteableSector(object):
