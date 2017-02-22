@@ -348,11 +348,15 @@ class DiskImageBase(object):
     def get_directory_segments(self):
         return []
     
-    def find_file(self, filename):
+    def find_dirent(self, filename):
         for dirent in self.files:
             if filename == dirent.get_filename():
-                return self.get_file(dirent)
-        return ""
+                return dirent
+        raise FileNotFound("%s not found on disk" % filename)
+    
+    def find_file(self, filename):
+        dirent = self.find_dirent(filename)
+        return self.get_file(dirent)
     
     def get_file(self, dirent):
         segment = self.get_file_segment(dirent)
@@ -387,8 +391,7 @@ class DiskImageBase(object):
         sector_list = self.sector_list_class(self.bytes_per_sector, self.payload_bytes_per_sector, data, self.writeable_sector_class)
         vtoc_segments = self.get_vtoc_segments()
         vtoc = self.vtoc_class(self.bytes_per_sector, vtoc_segments)
-        sector_list.calc_sector_map(dirent, vtoc)
-        directory.save_dirent(dirent, sector_list)
+        directory.save_dirent(dirent, vtoc, sector_list)
         self.write_sector_list(sector_list)
         self.write_sector_list(vtoc)
         self.write_sector_list(directory)
@@ -400,10 +403,23 @@ class DiskImageBase(object):
             log.debug("writing: %s" % sector)
             self.bytes[pos:pos + size] = sector.data
 
+    def delete_file(self, filename):
+        directory = self.directory_class(self.bytes_per_sector)
+        self.get_directory(directory)
+        dirent = directory.find_dirent(filename)
+        sector_list = dirent.get_sector_list(self)
+        vtoc_segments = self.get_vtoc_segments()
+        vtoc = self.vtoc_class(self.bytes_per_sector, vtoc_segments)
+        directory.remove_dirent(dirent, vtoc, sector_list)
+        self.write_sector_list(sector_list)
+        self.write_sector_list(vtoc)
+        self.write_sector_list(directory)
+        self.get_metadata()
+
 
 class WriteableSector(object):
-    def __init__(self, sector_size, data=None):
-        self._sector_num = -1
+    def __init__(self, sector_size, data=None, num=-1):
+        self._sector_num = num
         self._next_sector = 0
         self.sector_size = sector_size
         self.file_num = 0
@@ -491,12 +507,17 @@ class Directory(BaseSectorList):
 
     def get_free_dirent(self):
         used = set()
-        for i, d in self.dirents.iteritems():
-            if not d.in_use:
+        d = self.dirents.items()
+        d.sort()
+        for i, dirent in d:
+            if not dirent.in_use:
                 return i
             used.add(i)
-        if len(used) >= self.num_dirents:
+        if self.num_dirents > 0 and (len(used) >= self.num_dirents):
             raise NoSpaceInDirectory()
+        i += 1
+        used.add(i)
+        return i
 
     def add_dirent(self, filename, filetype):
         index = self.get_free_dirent()
@@ -505,15 +526,45 @@ class Directory(BaseSectorList):
         self.set(index, dirent)
         return dirent
 
-    def save_dirent(self, dirent, sector_list):
+    def find_dirent(self, filename):
+        for dirent in self.dirents.values():
+            if filename == dirent.get_filename():
+                return dirent
+        raise FileNotFound("%s not found on disk" % filename)
+
+    def save_dirent(self, dirent, vtoc, sector_list):
+        self.place_sector_list(dirent, vtoc, sector_list)
         dirent.update_sector_info(sector_list)
         self.calc_sectors()
 
-    def set_location(self, sector):
-        raise NotImplementedError
+    def place_sector_list(self, dirent, vtoc, sector_list):
+        """ Map out the sectors and link the sectors together
 
-    def set_size(self, size):
-        raise NotImplementedError
+        raises NotEnoughSpaceOnDisk if the whole file won't fit. It will not
+        allow partial writes.
+        """
+        sector_list.calc_extra_sectors()
+        num = len(sector_list)
+        order = vtoc.reserve_space(num)
+        if len(order) != num:
+            raise InvalidFile("VTOC reserved space for %d sectors. Sectors needed: %d" % (len(order), num))
+        file_length = 0
+        last_sector = None
+        for sector, sector_num in zip(sector_list.sectors, order):
+            sector.sector_num = sector_num
+            sector.file_num = dirent.file_num
+            file_length += sector.used
+            if last_sector is not None:
+                last_sector.next_sector_num = sector_num
+            last_sector = sector
+        if last_sector is not None:
+            last_sector.next_sector_num = 0
+        sector_list.file_length = file_length
+
+    def remove_dirent(self, dirent, vtoc, sector_list):
+        vtoc.free_sector_list(sector_list)
+        dirent.mark_deleted()
+        self.calc_sectors()
 
     @property
     def dirent_class(self):
@@ -596,6 +647,10 @@ class VTOC(BaseSectorList):
     def calc_bitmap(self):
         raise NotImplementedError
 
+    def free_sector_list(self, sector_list):
+        for sector in sector_list:
+            self.sector_map[sector.sector_num] = 1
+
 
 class SectorList(BaseSectorList):
     def __init__(self, bytes_per_sector, usable, data, sector_class):
@@ -612,29 +667,6 @@ class SectorList(BaseSectorList):
             sector = sector_class(self.bytes_per_sector, self.data[index:index + count])
             self.sectors.append(sector)
             index += count
-
-    def calc_sector_map(self, dirent, vtoc):
-        """ Map out the sectors and link the sectors together
-
-        raises NotEnoughSpaceOnDisk if the whole file won't fit. It will not
-        allow partial writes.
-        """
-        self.calc_extra_sectors()
-        num = len(self.sectors)
-        order = vtoc.reserve_space(num)
-        if len(order) != len(self.sectors):
-            raise InvalidFile("VTOC reserved space for %d sectors. Sectors needed: %d" % (len(order), len(self.sectors)))
-        self.file_length = 0
-        last_sector = None
-        for sector, sector_num in zip(self.sectors, order):
-            sector.sector_num = sector_num
-            sector.file_num = dirent.file_num
-            self.file_length += sector.used
-            if last_sector is not None:
-                last_sector.next_sector_num = sector_num
-            last_sector = sector
-        if last_sector is not None:
-            last_sector.next_sector_num = 0
 
 
     def calc_extra_sectors(self):

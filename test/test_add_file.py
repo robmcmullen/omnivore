@@ -12,11 +12,12 @@ class TestAtariDosSDImage(object):
         rawdata = SegmentData(data)
         self.image = AtariDosDiskImage(rawdata)
 
-    def check_entries(self, entries, save_image_name=None):
+    def check_entries(self, entries, prefix="TEST", save=None):
         orig_num_files = len(self.image.files)
+        filenames = []
         count = 1
         for data in entries:
-            filename = "TEST%d.BIN" % count
+            filename = "%s%d.BIN" % (prefix, count)
             self.image.write_file(filename, None, data)
             assert len(self.image.files) == orig_num_files + count
             data2 = self.image.find_file(filename)
@@ -26,13 +27,16 @@ class TestAtariDosSDImage(object):
         # loop over them again to make sure data wasn't overwritten
         count = 1
         for data in entries:
-            filename = "TEST%d.BIN" % count
+            filename = "%s%d.BIN" % (prefix, count)
             data2 = self.image.find_file(filename)
             assert data.tostring() == data2
             count += 1
+            filenames.append(filename)
 
-        if save_image_name is not None:
-            self.image.save(save_image_name)
+        if save is not None:
+            self.image.save(save)
+
+        return filenames
 
     def test_small(self):
         assert len(self.image.files) == 5
@@ -68,7 +72,7 @@ class TestAtariDosSDImage(object):
             np.arange(9*1024, dtype=np.uint8),
             np.arange(10*1024, dtype=np.uint8),
             ]
-        self.check_entries(entries, "many_small.atr")
+        self.check_entries(entries, save="many_small.atr")
 
     def test_big_failure(self):
         assert len(self.image.files) == 5
@@ -79,6 +83,36 @@ class TestAtariDosSDImage(object):
         with pytest.raises(NotEnoughSpaceOnDisk):
             self.image.write_file("RAMP50K2.BIN", None, data)
         assert len(self.image.files) == 6
+
+    def test_delete(self):
+        entries1 = [
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(10*1024, dtype=np.uint8),
+            np.arange(10*1024, dtype=np.uint8),
+            ]
+        entries2 = [
+            np.arange(10*1024, dtype=np.uint8),
+            np.arange(11*1024, dtype=np.uint8),
+        ]
+        
+        filenames = self.check_entries(entries1, "FIRST")
+        assert len(self.image.files) == 16
+        self.image.delete_file(filenames[2])
+        self.image.delete_file(filenames[5])
+        self.image.delete_file(filenames[0])
+        self.image.delete_file(filenames[8])
+        assert len(self.image.files) == 12
+
+        filename = self.check_entries(entries2, "SECOND", save="test_delete.atr")
+        assert len(self.image.files) == 14
 
 
 if __name__ == "__main__":

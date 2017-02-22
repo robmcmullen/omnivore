@@ -1,7 +1,7 @@
 import numpy as np
 
 from errors import *
-from diskimages import DiskImageBase, Directory, VTOC, WriteableSector
+from diskimages import DiskImageBase, Directory, VTOC, WriteableSector, BaseSectorList
 from segments import EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentSaver
 from utils import to_numpy
 
@@ -139,8 +139,6 @@ class AtariDosDirent(object):
     def encode_dirent(self):
         data = np.zeros([16], dtype=np.uint8)
         values = data.view(dtype=self.format)[0]
-        self.dos_2 = True
-        self.in_use = True
         flag = (1 * int(self.opened_output)) | (2 * int(self.dos_2)) | (4 * int(self.mydos)) | (0x10 * int(self.is_dir)) | (0x20 * int(self.locked)) | (0x40 * int(self.in_use)) | (0x80 * int(self.deleted))
         values[0] = flag
         values[1] = self.num_sectors
@@ -148,6 +146,10 @@ class AtariDosDirent(object):
         values[3] = self.filename
         values[4] = self.ext
         return data
+
+    def mark_deleted(self):
+        self.deleted = True
+        self.in_use = False
 
     def update_sector_info(self, sector_list):
         self.num_sectors = sector_list.num_sectors
@@ -162,6 +164,17 @@ class AtariDosDirent(object):
             return False
         return True
     
+    def get_sector_list(self, image):
+        sector_list = BaseSectorList(image.bytes_per_sector)
+        self.start_read(image)
+        while True:
+            sector = WriteableSector(image.bytes_per_sector, None, self.current_sector)
+            sector_list.append(sector)
+            _, last, _, _ = self.read_sector(image)
+            if last:
+                break
+        return sector_list
+
     def start_read(self, image):
         if not self.is_sane:
             raise InvalidDirent("Invalid directory entry '%s'" % str(self))
@@ -198,6 +211,8 @@ class AtariDosDirent(object):
         self.filename = "%-8s" % filename[0:8]
         self.ext = ext
         self.file_num = index
+        self.dos_2 = True
+        self.in_use = True
 
 
 class MydosDirent(AtariDosDirent):
@@ -362,14 +377,15 @@ class AtariDosDiskImage(DiskImageBase):
             if dirent.mydos:
                 dirent = MydosDirent(self, num, dir_bytes[i:i+16])
             
-            if directory is not None:
-                directory.set(num, dirent)
             if dirent.in_use:
                 files.append(dirent)
                 if not dirent.is_sane:
                     self.all_sane = False
+                    log.debug("dirent %d not sane: %s" % (num, dirent))
             elif dirent.flag == 0:
                 break
+            if directory is not None:
+                directory.set(num, dirent)
             i += 16
             num += 1
         self.files = files

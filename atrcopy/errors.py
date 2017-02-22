@@ -36,3 +36,6 @@ class NoSpaceInDirectory(AtrError):
 
 class NotEnoughSpaceOnDisk(AtrError):
     pass
+
+class FileNotFound(AtrError):
+    pass
