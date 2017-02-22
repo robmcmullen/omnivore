@@ -48,7 +48,7 @@ class Dos33Directory(Directory):
         for sector in self.sectors:
             sector.sector_num = num
             num = image.get_next_directory_sector(num)
-            t, s = image.pair_from_sector(num)
+            t, s = image.header.track_from_sector(num)
             sector.data[1] = t
             sector.data[2] = s
 
@@ -137,7 +137,9 @@ class Dos33Dirent(object):
         values[0] = self.track
         values[1] = self.sector
         values[2] = self.flag
-        values[3] = self.filename
+        n = min(len(self.filename), 30)
+        data[3:3+n] = np.fromstring(self.filename, dtype=np.uint8) | 0x80
+        data[3+n:] = ord(' ') | 0x80
         values[4] = self.num_sectors
         return data
 
@@ -237,6 +239,7 @@ class Dos33Header(AtrHeader):
         self.header_offset = 0
         self.sector_order = range(16)
         self.vtoc_sector = 17 * 16
+        self.max_sectors = 35 * 16
     
     def __str__(self):
         return "%s Disk Image (size=%d (%dx%db)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size)
@@ -267,7 +270,7 @@ class Dos33Header(AtrHeader):
     def sector_from_track(self, track, sector):
         return track * 16 + sector
 
-    def pair_from_sector(self, sector):
+    def track_from_sector(self, sector):
         track, sector = divmod(sector, 16)
         return track, sector
 
@@ -416,12 +419,13 @@ class Dos33DiskImage(DiskImageBase):
     def get_next_directory_sector(self, sector):
         if sector == -1:
             sector = self.first_catalog
-        self.assert_valid_sector(sector)
         print "reading catalog sector", sector
+        self.assert_valid_sector(sector)
         raw, _, _ = self.get_raw_bytes(sector)
         next_sector = self.header.sector_from_track(raw[1], raw[2])
         if next_sector == 0:
             raise NoSpaceInDirectory("No space left in catalog")
+        return next_sector
     
     def get_file_segment(self, dirent):
         byte_order = []
