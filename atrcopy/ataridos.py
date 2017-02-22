@@ -1,12 +1,65 @@
 import numpy as np
 
 from errors import *
-from diskimages import DiskImageBase
+from diskimages import DiskImageBase, Directory, VTOC, WriteableSector
 from segments import EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentSaver
 from utils import to_numpy
 
 import logging
 log = logging.getLogger(__name__)
+
+
+class AtariDosWriteableSector(WriteableSector):
+    @property
+    def next_sector_num(self):
+        return self._next_sector_num
+
+    @next_sector_num.setter
+    def next_sector_num(self, value):
+        self._next_sector_num = value
+        index = self.sector_size - 3
+        hi, lo = divmod(value, 256)
+        self.data[index] = self.used
+        self.data[index + 1] = lo
+        self.data[index + 2] = hi
+        log.debug("sector metadata for %d: %s" % (self._sector_num, self.data[index:index + 3]))
+        # file number will be added later when known.
+
+
+class AtariDosVTOC(VTOC):
+    def parse_segments(self, segments):
+        self.vtoc1 = segments[0].data
+        bits = np.unpackbits(self.vtoc1[0x0a:0x64])
+        log.debug("vtoc before: %s" % bits)
+        self.sector_map[0:720] = bits
+
+    def calc_bitmap(self):
+        log.debug("vtoc after: %s" % self.sector_map[0:720])
+        packed = np.packbits(self.sector_map[0:720])
+        self.vtoc1[0x0a:0x64] = packed
+        s = WriteableSector(self.bytes_per_sector, self.vtoc1)
+        s.sector_num = 360
+        self.sectors.append(s)
+
+
+class AtariDosDirectory(Directory):
+    @property
+    def dirent_class(self):
+        return AtariDosDirent
+
+    def encode_empty(self):
+        return np.zeros([16], dtype=np.uint8)
+
+    def encode_dirent(self, dirent):
+        data = dirent.encode_dirent()
+        log.debug("encoded dirent: %s" % data)
+        return data
+
+    def set_sector_numbers(self):
+        num = 361
+        for sector in self.sectors:
+            sector.sector_num = num
+            num += 1
 
 
 class AtariDosDirent(object):
@@ -82,6 +135,23 @@ class AtariDosDirent(object):
         self.filename = str(values[3]).rstrip()
         self.ext = str(values[4]).rstrip()
         self.is_sane = self.sanity_check(image)
+
+    def encode_dirent(self):
+        data = np.zeros([16], dtype=np.uint8)
+        values = data.view(dtype=self.format)[0]
+        self.dos_2 = True
+        self.in_use = True
+        flag = (1 * int(self.opened_output)) | (2 * int(self.dos_2)) | (4 * int(self.mydos)) | (0x10 * int(self.is_dir)) | (0x20 * int(self.locked)) | (0x40 * int(self.in_use)) | (0x80 * int(self.deleted))
+        values[0] = flag
+        values[1] = self.num_sectors
+        values[2] = self.starting_sector
+        values[3] = self.filename
+        values[4] = self.ext
+        return data
+
+    def update_sector_info(self, sector_list):
+        self.num_sectors = sector_list.num_sectors
+        self.starting_sector = sector_list.first_sector
     
     def sanity_check(self, image):
         if not self.in_use:
@@ -119,6 +189,15 @@ class AtariDosDirent(object):
     def get_filename(self):
         ext = ("." + self.ext) if self.ext else ""
         return self.filename + ext
+
+    def set_values(self, filename, filetype, index):
+        if "." in filename:
+            filename, ext = filename.split(".", 1)
+        else:
+            ext = "   "
+        self.filename = "%-8s" % filename[0:8]
+        self.ext = ext
+        self.file_num = index
 
 
 class MydosDirent(AtariDosDirent):
@@ -204,6 +283,26 @@ class AtariDosDiskImage(DiskImageBase):
         self.first_data_after_vtoc = 369
         DiskImageBase.__init__(self, *args, **kwargs)
     
+    @property
+    def bytes_per_sector(self):
+        return self.header.sector_size
+
+    @property
+    def payload_bytes_per_sector(self):
+        return self.header.sector_size - 3
+
+    @property
+    def writeable_sector_class(self):
+        return AtariDosWriteableSector
+
+    @property
+    def vtoc_class(self):
+        return AtariDosVTOC
+
+    @property
+    def directory_class(self):
+        return AtariDosDirectory
+
     def __str__(self):
         return "%s Atari DOS Format: %d usable sectors (%d free), %d files" % (self.header, self.total_sectors, self.unused_sectors, len(self.files))
     
@@ -253,7 +352,7 @@ class AtariDosDiskImage(DiskImageBase):
             extra_free = data[122:124].view(dtype='<u2')[0]
             self.unused_sectors += extra_free
     
-    def get_directory(self):
+    def get_directory(self, directory=None):
         dir_bytes, style = self.get_sectors(361, 368)
         i = 0
         num = 0
@@ -263,6 +362,8 @@ class AtariDosDiskImage(DiskImageBase):
             if dirent.mydos:
                 dirent = MydosDirent(self, num, dir_bytes[i:i+16])
             
+            if directory is not None:
+                directory.set(num, dirent)
             if dirent.in_use:
                 files.append(dirent)
                 if not dirent.is_sane:
@@ -356,6 +457,7 @@ class AtariDosDiskImage(DiskImageBase):
             except InvalidBinaryFile:
                 log.debug("%s not a binary file; skipping segment generation" % str(segment))
         return segments_out
+
 
 def get_xex(segments, runaddr):
     total = 2

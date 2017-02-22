@@ -4,6 +4,10 @@ from errors import *
 from segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment
 from utils import to_numpy
 
+import logging
+log = logging.getLogger(__name__)
+
+
 class AtrHeader(object):
     # ATR Format described in http://www.atarimax.com/jindroush.atari.org/afmtatr.html
     format = np.dtype([
@@ -137,13 +141,37 @@ class DiskImageBase(object):
         self.header = None
         self.total_sectors = 0
         self.unused_sectors = 0
-        self.files = []
+        self.files = [] # all dirents that show up in a normal dir listing
         self.segments = []
         self.all_sane = True
         self.setup()
 
     def __len__(self):
         return len(self.rawdata)
+
+    @property
+    def bytes_per_sector(self):
+        raise NotImplementedError
+
+    @property
+    def payload_bytes_per_sector(self):
+        raise NotImplementedError
+
+    @property
+    def writeable_sector_class(self):
+        return WriteableSector
+
+    @property
+    def vtoc_class(self):
+        return VTOC
+
+    @property
+    def directory_class(self):
+        return Directory
+
+    @property
+    def sector_list_class(self):
+        return SectorList
     
     def set_filename(self, filename):
         if "." in filename:
@@ -164,6 +192,9 @@ class DiskImageBase(object):
         self.read_header()
         self.header.check_size(self.size - len(self.header))
         self.check_size()
+        self.get_metadata()
+
+    def get_metadata(self):
         self.get_boot_sector_info()
         self.get_vtoc()
         self.get_directory()
@@ -231,9 +262,10 @@ class DiskImageBase(object):
         pass
     
     def get_vtoc(self):
+        """Get information from VTOC and populate the VTOC object"""
         pass
     
-    def get_directory(self):
+    def get_directory(self, directory=None):
         pass
     
     def get_raw_bytes(self, sector):
@@ -312,7 +344,7 @@ class DiskImageBase(object):
     
     def get_vtoc_segments(self):
         return []
-    
+
     def get_directory_segments(self):
         return []
     
@@ -338,6 +370,279 @@ class DiskImageBase(object):
                 segment = EmptySegment(self.rawdata, name=dirent.get_filename(), error=str(e))
             segments.append(segment)
         return segments
+
+    # file writing methods
+
+    def write_file(self, filename, filetype, data):
+        """Write data to a file on disk
+
+        This throws various exceptions on failures, for instance if there is
+        not enough space on disk or a free entry is not available in the
+        catalog.
+        """
+        directory = self.directory_class(self.bytes_per_sector)
+        self.get_directory(directory)
+        dirent = directory.add_dirent(filename, filetype)
+        data = to_numpy(data)
+        sector_list = self.sector_list_class(self.bytes_per_sector, self.payload_bytes_per_sector, data, self.writeable_sector_class)
+        vtoc_segments = self.get_vtoc_segments()
+        vtoc = self.vtoc_class(self.bytes_per_sector, vtoc_segments)
+        sector_list.calc_sector_map(vtoc)
+        directory.save_dirent(dirent, sector_list)
+        self.write_sector_list(sector_list)
+        self.write_sector_list(vtoc)
+        self.write_sector_list(directory)
+        self.get_metadata()
+
+    def write_sector_list(self, sector_list):
+        for sector in sector_list:
+            pos, size = self.header.get_pos(sector.sector_num)
+            log.debug("writing: %s" % sector)
+            self.bytes[pos:pos + size] = sector.data
+
+
+class WriteableSector(object):
+    def __init__(self, sector_size, data=None):
+        self._sector_num = -1
+        self._next_sector = 0
+        self.sector_size = sector_size
+        self.data = np.zeros([sector_size], dtype=np.uint8)
+        self.used = 0
+        self.ptr = self.used
+        if data is not None:
+            self.add_data(data)
+
+    def __str__(self):
+        return "sector=%d next=%d size=%d used=%d" % (self._sector_num, self._next_sector, self.sector_size, self.used)
+
+    @property
+    def sector_num(self):
+        return self._sector_num
+
+    @sector_num.setter
+    def sector_num(self, value):
+        self._sector_num = value
+
+    @property
+    def next_sector_num(self):
+        return self._next_sector_num
+
+    @sector_num.setter
+    def next_sector_num(self, value):
+        self._next_sector_num = value
+
+    @property
+    def space_remaining(self):
+        return self.sector_size - self.ptr
+
+    @property
+    def is_empty(self):
+        return self.ptr == 0
+
+    def add_data(self, data):
+        count = len(data)
+        if self.ptr + count > self.sector_size:
+            count = self.space_remaining
+        self.data[self.ptr:self.ptr + count] = data[0:count]
+        self.ptr += count
+        self.used += count
+        return data[count:]
+
+
+class BaseSectorList(object):
+    def __init__(self, bytes_per_sector):
+        self.bytes_per_sector = bytes_per_sector
+        self.sectors = []
+
+    def __len__(self):
+        return len(self.sectors)
+
+    def __getitem__(self, index):
+        if index < 0 or index >= len(self):
+            raise IndexError
+        return self.sectors[index]
+
+    @property
+    def num_sectors(self):
+        return len(self.sectors)
+
+    @property
+    def first_sector(self):
+        if self.sectors:
+            return self.sectors[0].sector_num
+        return -1
+
+    def append(self, sector):
+        self.sectors.append(sector)
+
+
+class Directory(BaseSectorList):
+    def __init__(self, bytes_per_sector, num_dirents=-1, sector_class=WriteableSector):
+        BaseSectorList.__init__(self, bytes_per_sector)
+        self.sector_class = sector_class
+        self.num_dirents = num_dirents
+        # number of dirents may be unlimited, so use a dict instead of a list
+        self.dirents = {}
+
+    def set(self, index, dirent):
+        self.dirents[index] = dirent
+        log.debug("set dirent #%d: %s" % (index, dirent))
+
+    def get_free_dirent(self):
+        used = set()
+        for i, d in self.dirents.iteritems():
+            if not d.in_use:
+                return i
+            used.add(i)
+        if len(used) >= self.num_dirents:
+            raise NoSpaceInDirectory()
+
+    def add_dirent(self, filename, filetype):
+        index = self.get_free_dirent()
+        dirent = self.dirent_class(None)
+        dirent.set_values(filename, filetype, index)
+        self.set(index, dirent)
+        return dirent
+
+    def save_dirent(self, dirent, sector_list):
+        dirent.update_sector_info(sector_list)
+        self.calc_sectors()
+
+    def set_location(self, sector):
+        raise NotImplementedError
+
+    def set_size(self, size):
+        raise NotImplementedError
+
+    @property
+    def dirent_class(self):
+        raise NotImplementedError
+
+    def calc_sectors(self):
+        self.sectors = []
+        self.current_sector = self.sector_class(self.bytes_per_sector)
+        self.encode_index = 0
+
+        d = self.dirents.items()
+        d.sort()
+        # there may be gaps, so fill in missing entries with blanks
+        current = 0
+        for index, dirent in d:
+            for missing in range(current, index):
+                log.debug("Encoding empty dirent at %d" % missing)
+                data = self.encode_empty()
+                self.store_encoded(data)
+            log.debug("Encoding dirent: %s" % dirent)
+            data = self.encode_dirent(dirent)
+            self.store_encoded(data)
+            current = index + 1
+        self.finish_encoding()
+
+    def encode_empty(self):
+        raise NotImplementedError
+
+    def encode_dirent(self, dirent):
+        raise NotImplementedError
+
+    def store_encoded(self, data):
+        while True:
+            log.debug("store_encoded: %d bytes in %s" % (len(data), self.current_sector))
+            data = self.current_sector.add_data(data)
+            if len(data) > 0:
+                self.sectors.append(self.current_sector)
+                self.current_sector = self.sector_class(self.bytes_per_sector)
+            else:
+                break
+
+    def finish_encoding(self):
+        if not self.current_sector.is_empty:
+            self.sectors.append(self.current_sector)
+        self.set_sector_numbers()
+
+    def set_sector_numbers(self):
+        raise NotImplementedError
+
+
+class VTOC(BaseSectorList):
+    def __init__(self, bytes_per_sector, segments=None):
+        BaseSectorList.__init__(self, bytes_per_sector)
+
+        # sector map: 1 is free, 0 is allocated
+        self.sector_map = np.zeros([1280], dtype=np.uint8)
+        if segments is not None:
+            self.parse_segments(segments)
+
+    def parse_segments(self, segments):
+        raise NotImplementedError
+
+    def reserve_space(self, num):
+        order = []
+        for i in range(num):
+            order.append(self.get_next_free_sector())
+        log.debug("Sectors reserved: %s" % order)
+        self.calc_bitmap()
+        return order
+
+    def get_next_free_sector(self):
+        free = np.nonzero(self.sector_map)[0]
+        if len(free) > 0:
+            num = free[0]
+            log.debug("Found sector %d free" % num)
+            self.sector_map[num] = 0
+            return num
+        raise NotEnoughSpaceOnDisk("No space left in VTOC")
+
+    def calc_bitmap(self):
+        raise NotImplementedError
+
+
+class SectorList(BaseSectorList):
+    def __init__(self, bytes_per_sector, usable, data, sector_class):
+        BaseSectorList.__init__(self, bytes_per_sector)
+        self.data = to_numpy(data)
+        self.usable_bytes = usable
+        self.split_into_sectors(sector_class)
+        self.file_length = -1
+
+    def split_into_sectors(self, sector_class):
+        index = 0
+        while index < len(self.data):
+            count = min(self.usable_bytes, len(self.data) - index)
+            sector = sector_class(self.bytes_per_sector, self.data[index:index + count])
+            self.sectors.append(sector)
+            index += count
+
+    def calc_sector_map(self, vtoc):
+        """ Map out the sectors and link the sectors together
+
+        raises NotEnoughSpaceOnDisk if the whole file won't fit. It will not
+        allow partial writes.
+        """
+        self.calc_extra_sectors()
+        num = len(self.sectors)
+        order = vtoc.reserve_space(num)
+        if len(order) != len(self.sectors):
+            raise InvalidFile("VTOC reserved space for %d sectors. Sectors needed: %d" % (len(order), len(self.sectors)))
+        self.file_length = 0
+        last_sector = None
+        for sector, sector_num in zip(self.sectors, order):
+            sector.sector_num = sector_num
+            self.file_length += sector.used
+            if last_sector is not None:
+                last_sector.next_sector_num = sector_num
+            last_sector = sector
+        if last_sector is not None:
+            last_sector.next_sector_num = 0
+
+
+    def calc_extra_sectors(self):
+        """ Add extra sectors to the list.
+
+        For example, DOS 3.3 uses a track/sector list at the beginning of the
+        file
+        """
+        pass
+
 
 
 class BootDiskImage(DiskImageBase):

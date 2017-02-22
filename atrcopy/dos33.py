@@ -186,6 +186,14 @@ class Dos33DiskImage(DiskImageBase):
     
     def read_header(self):
         self.header = Dos33Header()
+
+    @property
+    def bytes_per_sector(self):
+        return 256
+
+    @property
+    def payload_bytes_per_sector(self):
+        return 256
     
     def get_boot_sector_info(self):
         # based on logic from a2server

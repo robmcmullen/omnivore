@@ -30,3 +30,9 @@ class InvalidBinaryFile(InvalidFile):
 
 class InvalidSegmentParser(AtrError):
     pass
+
+class NoSpaceInDirectory(AtrError):
+    pass
+
+class NotEnoughSpaceOnDisk(AtrError):
+    pass
