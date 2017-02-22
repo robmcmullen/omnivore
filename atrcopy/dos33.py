@@ -1,11 +1,56 @@
 import numpy as np
 
 from errors import *
-from diskimages import AtrHeader, DiskImageBase
+from diskimages import AtrHeader, DiskImageBase, Directory, VTOC, WriteableSector, BaseSectorList
 from segments import DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentSaver
 
 import logging
 log = logging.getLogger(__name__)
+
+
+class Dos33VTOC(VTOC):
+    def parse_segments(self, segments):
+        self.vtoc1 = segments[0].data
+        bits = np.unpackbits(self.vtoc1[0x0a:0x64])
+        log.debug("vtoc before: %s" % bits)
+        self.sector_map[0:720] = bits
+
+    def calc_bitmap(self):
+        log.debug("vtoc after: %s" % self.sector_map[0:720])
+        packed = np.packbits(self.sector_map[0:720])
+        self.vtoc1[0x0a:0x64] = packed
+        s = WriteableSector(self.bytes_per_sector, self.vtoc1)
+        s.sector_num = 360
+        self.sectors.append(s)
+
+
+class Dos33Directory(Directory):
+    @property
+    def dirent_class(self):
+        return Dos33Dirent
+
+    def get_dirent_sector(self):
+        s = self.sector_class(self.bytes_per_sector)
+        data = np.zeros([0x0b], dtype=np.uint8)
+        s.add_data(data)
+        return s
+
+    def encode_empty(self):
+        return np.zeros([Dos33Dirent.format.itemsize], dtype=np.uint8)
+
+    def encode_dirent(self, dirent):
+        data = dirent.encode_dirent()
+        log.debug("encoded dirent: %s" % data)
+        return data
+
+    def set_sector_numbers(self, image):
+        num = image.get_next_directory_sector(-1)
+        for sector in self.sectors:
+            sector.sector_num = num
+            num = image.get_next_directory_sector(num)
+            t, s = image.pair_from_sector(num)
+            sector.data[1] = t
+            sector.data[2] = s
 
 
 class Dos33Dirent(object):
@@ -44,8 +89,8 @@ class Dos33Dirent(object):
         0x4: "B",
         0x8: "S",
         0x10: "R",
-        0x20: "A",
-        0x40: "B",
+        0x20: "new A",
+        0x40: "new B",
     }
 
     def summary(self):
@@ -76,6 +121,25 @@ class Dos33Dirent(object):
         self.filename = (bytes[3:0x20] - 0x80).tostring().rstrip()
         self.num_sectors = int(values[4])
         self.is_sane = self.sanity_check(image)
+
+    def encode_dirent(self):
+        data = np.zeros([self.format.itemsize], dtype=np.uint8)
+        values = data.view(dtype=self.format)[0]
+        flag = (1 * int(self.opened_output)) | (2 * int(self.dos_2)) | (4 * int(self.mydos)) | (0x10 * int(self.is_dir)) | (0x20 * int(self.locked)) | (0x40 * int(self.in_use)) | (0x80 * int(self.locked))
+        values[0] = flag
+        values[1] = self.num_sectors
+        values[2] = self.starting_sector
+        values[3] = self.filename
+        values[4] = self.ext
+        return data
+
+    def mark_deleted(self):
+        self.deleted = True
+        self.in_use = False
+
+    def update_sector_info(self, sector_list):
+        self.num_sectors = sector_list.num_sectors
+        self.starting_sector = sector_list.first_sector
     
     def sanity_check(self, image):
         if self.deleted:
@@ -107,6 +171,20 @@ class Dos33Dirent(object):
                     break
                 sector_list.append(image.header.sector_from_track(t, s))
         self.sector_map = sector_list
+    
+    def get_sector_list(self, image):
+        sector_list = BaseSectorList(image.bytes_per_sector)
+        self.start_read(image)
+        sector_num = image.header.sector_from_track(self.track, self.sector)
+        while sector_num > 0:
+            sector = WriteableSector(image.bytes_per_sector, None, sector_num)
+            sector_list.append(sector)
+            values, style = image.get_sectors(sector_num)
+            sector = image.header.sector_from_track(values[1], values[2])
+        for sector_num in sector_list:
+            sector = WriteableSector(image.bytes_per_sector, None, sector_num)
+            sector_list.append(sector)
+        return sector_list
 
     def start_read(self, image):
         if not self.is_sane:
@@ -134,6 +212,11 @@ class Dos33Dirent(object):
     
     def get_filename(self):
         return self.filename
+
+    def set_values(self, filename, filetype, index):
+        self.filename = "%-30s" % filename[0:30]
+        self.flag = self.type_map.get(filetype, 0x04)
+        self.locked = False
 
 
 class Dos33Header(AtrHeader):
@@ -174,6 +257,10 @@ class Dos33Header(AtrHeader):
 
     def sector_from_track(self, track, sector):
         return track * 16 + sector
+
+    def pair_from_sector(self, sector):
+        track, sector = divmod(sector, 16)
+        return track, sector
 
 
 class Dos33DiskImage(DiskImageBase):
@@ -300,6 +387,14 @@ class Dos33DiskImage(DiskImageBase):
         segment = DefaultSegment(raw, name="Catalog")
         segments.append(segment)
         return segments
+
+    def get_next_directory_sector(self, sector):
+        self.assert_valid_sector(sector)
+        print "reading catalog sector", sector
+        raw, _, _ = self.get_raw_bytes(sector)
+        next_sector = self.header.sector_from_track(raw[1], raw[2])
+        if next_sector == 0:
+            # need to figure out where the next sector should be
     
     def get_file_segment(self, dirent):
         byte_order = []

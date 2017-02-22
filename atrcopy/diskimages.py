@@ -401,7 +401,7 @@ class DiskImageBase(object):
             sector_list = self.sector_list_class(self.bytes_per_sector, self.payload_bytes_per_sector, data, self.writeable_sector_class)
             vtoc_segments = self.get_vtoc_segments()
             vtoc = self.vtoc_class(self.bytes_per_sector, vtoc_segments)
-            directory.save_dirent(dirent, vtoc, sector_list)
+            directory.save_dirent(self, dirent, vtoc, sector_list)
             self.write_sector_list(sector_list)
             self.write_sector_list(vtoc)
             self.write_sector_list(directory)
@@ -427,7 +427,7 @@ class DiskImageBase(object):
             sector_list = dirent.get_sector_list(self)
             vtoc_segments = self.get_vtoc_segments()
             vtoc = self.vtoc_class(self.bytes_per_sector, vtoc_segments)
-            directory.remove_dirent(dirent, vtoc, sector_list)
+            directory.remove_dirent(self, dirent, vtoc, sector_list)
             self.write_sector_list(sector_list)
             self.write_sector_list(vtoc)
             self.write_sector_list(directory)
@@ -554,10 +554,10 @@ class Directory(BaseSectorList):
                 return dirent
         raise FileNotFound("%s not found on disk" % filename)
 
-    def save_dirent(self, dirent, vtoc, sector_list):
+    def save_dirent(self, image, dirent, vtoc, sector_list):
         self.place_sector_list(dirent, vtoc, sector_list)
         dirent.update_sector_info(sector_list)
-        self.calc_sectors()
+        self.calc_sectors(image)
 
     def place_sector_list(self, dirent, vtoc, sector_list):
         """ Map out the sectors and link the sectors together
@@ -583,18 +583,18 @@ class Directory(BaseSectorList):
             last_sector.next_sector_num = 0
         sector_list.file_length = file_length
 
-    def remove_dirent(self, dirent, vtoc, sector_list):
+    def remove_dirent(self, image, dirent, vtoc, sector_list):
         vtoc.free_sector_list(sector_list)
         dirent.mark_deleted()
-        self.calc_sectors()
+        self.calc_sectors(image)
 
     @property
     def dirent_class(self):
         raise NotImplementedError
 
-    def calc_sectors(self):
+    def calc_sectors(self, image):
         self.sectors = []
-        self.current_sector = self.sector_class(self.bytes_per_sector)
+        self.current_sector = self.get_dirent_sector()
         self.encode_index = 0
 
         d = self.dirents.items()
@@ -610,7 +610,10 @@ class Directory(BaseSectorList):
             data = self.encode_dirent(dirent)
             self.store_encoded(data)
             current = index + 1
-        self.finish_encoding()
+        self.finish_encoding(image)
+
+    def get_dirent_sector(self):
+        return self.sector_class(self.bytes_per_sector)
 
     def encode_empty(self):
         raise NotImplementedError
@@ -624,16 +627,16 @@ class Directory(BaseSectorList):
             data = self.current_sector.add_data(data)
             if len(data) > 0:
                 self.sectors.append(self.current_sector)
-                self.current_sector = self.sector_class(self.bytes_per_sector)
+                self.current_sector = self.get_dirent_sector()
             else:
                 break
 
-    def finish_encoding(self):
+    def finish_encoding(self, image):
         if not self.current_sector.is_empty:
             self.sectors.append(self.current_sector)
-        self.set_sector_numbers()
+        self.set_sector_numbers(image)
 
-    def set_sector_numbers(self):
+    def set_sector_numbers(self, image):
         raise NotImplementedError
 
 

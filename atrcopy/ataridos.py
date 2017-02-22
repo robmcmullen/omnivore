@@ -55,7 +55,7 @@ class AtariDosDirectory(Directory):
         log.debug("encoded dirent: %s" % data)
         return data
 
-    def set_sector_numbers(self):
+    def set_sector_numbers(self, image):
         num = 361
         for sector in self.sectors:
             sector.sector_num = num
@@ -137,7 +137,7 @@ class AtariDosDirent(object):
         self.is_sane = self.sanity_check(image)
 
     def encode_dirent(self):
-        data = np.zeros([16], dtype=np.uint8)
+        data = np.zeros([self.format.itemsize], dtype=np.uint8)
         values = data.view(dtype=self.format)[0]
         flag = (1 * int(self.opened_output)) | (2 * int(self.dos_2)) | (4 * int(self.mydos)) | (0x10 * int(self.is_dir)) | (0x20 * int(self.locked)) | (0x40 * int(self.in_use)) | (0x80 * int(self.deleted))
         values[0] = flag
