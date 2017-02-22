@@ -57,14 +57,14 @@ class Dos33Dirent(object):
     format = np.dtype([
         ('track', 'u1'),
         ('sector', 'u1'),
-        ('flags', 'u1'),
+        ('flag', 'u1'),
         ('name','S30'),
         ('num_sectors','<u2'),
         ])
 
     def __init__(self, image, file_num=0, bytes=None):
         self.file_num = file_num
-        self.flags = 0
+        self.file_type = 0
         self.locked = False
         self.deleted = False
         self.track = 0
@@ -79,8 +79,8 @@ class Dos33Dirent(object):
         self.parse_raw_dirent(image, bytes)
     
     def __str__(self):
-        flags = self.summary()
-        return "File #%-2d (%s) %03d %-30s %03d %03d" % (self.file_num, flags, self.num_sectors, self.filename, self.track, self.sector)
+        flag = self.summary()
+        return "File #%-2d (%s) %03d %-30s %03d %03d" % (self.file_num, flag, self.num_sectors, self.filename, self.track, self.sector)
     
     type_map = {
         0x0: "T",
@@ -94,18 +94,25 @@ class Dos33Dirent(object):
     }
 
     def summary(self):
-        locked = "*" if self.flags else " "
-        f = self.flags & 0x7f
+        locked = "*" if self.locked else " "
         try:
-            file_type = self.type_map[f]
+            file_type = self.type_map[self.file_type]
         except KeyError:
             file_type = "?"
-        flags = "%s%s" % (locked, file_type)
-        return flags
+        flag = "%s%s" % (locked, file_type)
+        return flag
     
     @property
     def verbose_info(self):
         return self.summary
+
+    @property
+    def in_use(self):
+        return not self.deleted
+
+    @property
+    def flag(self):
+        return 0xff if self.deleted else self.file_type | (0x80 * int(self.locked))
     
     def parse_raw_dirent(self, image, bytes):
         if bytes is None:
@@ -114,10 +121,12 @@ class Dos33Dirent(object):
         self.track = values[0]
         if self.track == 0xff:
             self.deleted = True
+            self.track = bytes[0x20]
         else:
             self.deleted = False
         self.sector = values[1]
-        self.flags = values[2]
+        self.file_type = values[2] & 0x7f
+        self.locked = values[2] & 0x80
         self.filename = (bytes[3:0x20] - 0x80).tostring().rstrip()
         self.num_sectors = int(values[4])
         self.is_sane = self.sanity_check(image)
@@ -125,12 +134,11 @@ class Dos33Dirent(object):
     def encode_dirent(self):
         data = np.zeros([self.format.itemsize], dtype=np.uint8)
         values = data.view(dtype=self.format)[0]
-        flag = (1 * int(self.opened_output)) | (2 * int(self.dos_2)) | (4 * int(self.mydos)) | (0x10 * int(self.is_dir)) | (0x20 * int(self.locked)) | (0x40 * int(self.in_use)) | (0x80 * int(self.locked))
-        values[0] = flag
-        values[1] = self.num_sectors
-        values[2] = self.starting_sector
+        values[0] = self.track
+        values[1] = self.sector
+        values[2] = self.flag
         values[3] = self.filename
-        values[4] = self.ext
+        values[4] = self.num_sectors
         return data
 
     def mark_deleted(self):
@@ -215,8 +223,9 @@ class Dos33Dirent(object):
 
     def set_values(self, filename, filetype, index):
         self.filename = "%-30s" % filename[0:30]
-        self.flag = self.type_map.get(filetype, 0x04)
+        self.file_type = self.type_map.get(filetype, 0x04)
         self.locked = False
+        self.deleted = False
 
 
 class Dos33Header(AtrHeader):
@@ -281,6 +290,14 @@ class Dos33DiskImage(DiskImageBase):
     @property
     def payload_bytes_per_sector(self):
         return 256
+
+    @property
+    def vtoc_class(self):
+        return Dos33VTOC
+
+    @property
+    def directory_class(self):
+        return Dos33Directory
     
     def get_boot_sector_info(self):
         # based on logic from a2server
@@ -326,7 +343,7 @@ class Dos33DiskImage(DiskImageBase):
         self.total_sectors = int(values['num_tracks']) * int(values['sectors_per_track'])
         self.dos_release = values['dos_release']
     
-    def get_directory(self):
+    def get_directory(self, directory=None):
         sector = self.first_catalog
         num = 0
         files = []
@@ -338,10 +355,14 @@ class Dos33DiskImage(DiskImageBase):
             i = 0xb
             while i < 256:
                 dirent = Dos33Dirent(self, num, values[i:i+0x23])
-                if not dirent.is_sane:
-                    sector = 0
+                if dirent.flag == 0:
                     break
-                files.append(dirent)
+                if not dirent.is_sane:
+                    self.all_sane = False
+                else:
+                    files.append(dirent)
+                if directory is not None:
+                    directory.set(num, dirent)
                 print dirent
                 i += 0x23
                 num += 1
@@ -389,12 +410,14 @@ class Dos33DiskImage(DiskImageBase):
         return segments
 
     def get_next_directory_sector(self, sector):
+        if sector == -1:
+            sector = self.first_catalog
         self.assert_valid_sector(sector)
         print "reading catalog sector", sector
         raw, _, _ = self.get_raw_bytes(sector)
         next_sector = self.header.sector_from_track(raw[1], raw[2])
         if next_sector == 0:
-            # need to figure out where the next sector should be
+            raise NoSpaceInDirectory("No space left in catalog")
     
     def get_file_segment(self, dirent):
         byte_order = []
