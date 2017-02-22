@@ -2,7 +2,7 @@ import numpy as np
 
 from errors import *
 from diskimages import AtrHeader, DiskImageBase, Directory, VTOC, WriteableSector, BaseSectorList
-from segments import DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentSaver
+from segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver
 
 import logging
 log = logging.getLogger(__name__)
@@ -299,6 +299,10 @@ class Dos33DiskImage(DiskImageBase):
     def directory_class(self):
         return Dos33Directory
     
+    @property
+    def raw_sector_class(self):
+        return RawTrackSectorSegment
+
     def get_boot_sector_info(self):
         # based on logic from a2server
         data, style = self.get_sectors(0)
@@ -389,7 +393,7 @@ class Dos33DiskImage(DiskImageBase):
         segments = []
         addr = 0
         start, count = self.get_contiguous_sectors(self.header.vtoc_sector, 1)
-        segment = RawSectorsSegment(r[start:start+count], self.header.vtoc_sector, 1, count, 0, 0, self.header.sector_size, name="VTOC")
+        segment = RawTrackSectorSegment(r[start:start+count], self.header.vtoc_sector, 1, count, 0, 0, self.header.sector_size, name="VTOC")
         segments.append(segment)
         return segments
     

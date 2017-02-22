@@ -162,6 +162,10 @@ class DiskImageBase(object):
         return WriteableSector
 
     @property
+    def raw_sector_class(self):
+        return RawSectorsSegment
+
+    @property
     def vtoc_class(self):
         return VTOC
 
@@ -313,7 +317,7 @@ class DiskImageBase(object):
         i = self.header.header_offset
         if self.header.image_size > 0:
             self.segments.append(ObjSegment(r[0:i], 0, 0, 0, i, name="%s Header" % self.header.file_format))
-        self.segments.append(RawSectorsSegment(r[i:], self.header.starting_sector_label, self.header.max_sectors, self.header.image_size, self.header.initial_sector_size, self.header.num_initial_sectors, self.header.sector_size, name="Raw disk sectors"))
+        self.segments.append(self.raw_sector_class(r[i:], self.header.starting_sector_label, self.header.max_sectors, self.header.image_size, self.header.initial_sector_size, self.header.num_initial_sectors, self.header.sector_size, name="Raw disk sectors"))
         self.segments.extend(self.get_boot_segments())
         self.segments.extend(self.get_vtoc_segments())
         self.segments.extend(self.get_directory_segments())

@@ -828,6 +828,21 @@ class RawSectorsSegment(DefaultSegment):
             return "s%03d:%02x" % (sector + self.first_sector, byte)
         return "s%03d:%02X" % (sector + self.first_sector, byte)
 
+
+class RawTrackSectorSegment(RawSectorsSegment):
+    def label(self, index, lower_case=True):
+        boot_size = self.num_boot_sectors * self.boot_sector_size
+        if index >= boot_size:
+            sector, byte = divmod(index - boot_size, self.page_size)
+            sector += self.num_boot_sectors
+        else:
+            sector, byte = divmod(index, self.boot_sector_size)
+        sector += self.first_sector
+        t, s = divmod(sector, 16)
+        if lower_case:
+            return "t%02ds%02d:%02x" % (t, s, byte)
+        return "t%02ds%02d:%02X" % (t, s, byte)
+
 def interleave_indexes(segments, num_bytes):
     num_segments = len(segments)
     size = len(segments[0])
