@@ -387,7 +387,7 @@ class DiskImageBase(object):
         sector_list = self.sector_list_class(self.bytes_per_sector, self.payload_bytes_per_sector, data, self.writeable_sector_class)
         vtoc_segments = self.get_vtoc_segments()
         vtoc = self.vtoc_class(self.bytes_per_sector, vtoc_segments)
-        sector_list.calc_sector_map(vtoc)
+        sector_list.calc_sector_map(dirent, vtoc)
         directory.save_dirent(dirent, sector_list)
         self.write_sector_list(sector_list)
         self.write_sector_list(vtoc)
@@ -406,6 +406,7 @@ class WriteableSector(object):
         self._sector_num = -1
         self._next_sector = 0
         self.sector_size = sector_size
+        self.file_num = 0
         self.data = np.zeros([sector_size], dtype=np.uint8)
         self.used = 0
         self.ptr = self.used
@@ -612,7 +613,7 @@ class SectorList(BaseSectorList):
             self.sectors.append(sector)
             index += count
 
-    def calc_sector_map(self, vtoc):
+    def calc_sector_map(self, dirent, vtoc):
         """ Map out the sectors and link the sectors together
 
         raises NotEnoughSpaceOnDisk if the whole file won't fit. It will not
@@ -627,6 +628,7 @@ class SectorList(BaseSectorList):
         last_sector = None
         for sector, sector_num in zip(self.sectors, order):
             sector.sector_num = sector_num
+            sector.file_num = dirent.file_num
             self.file_length += sector.used
             if last_sector is not None:
                 last_sector.next_sector_num = sector_num

@@ -19,9 +19,9 @@ class AtariDosWriteableSector(WriteableSector):
         self._next_sector_num = value
         index = self.sector_size - 3
         hi, lo = divmod(value, 256)
-        self.data[index] = self.used
+        self.data[index + 0] = (self.file_num << 2) | (hi & 0x03)
         self.data[index + 1] = lo
-        self.data[index + 2] = hi
+        self.data[index + 2] = self.used
         log.debug("sector metadata for %d: %s" % (self._sector_num, self.data[index:index + 3]))
         # file number will be added later when known.
 
@@ -177,7 +177,7 @@ class AtariDosDirent(object):
     def process_raw_sector(self, image, raw):
         file_num = raw[-3] >> 2
         if file_num != self.file_num:
-            raise FileNumberMismatchError164()
+            raise FileNumberMismatchError164("Expecting file %d, found %d" % (self.file_num, file_num))
         self.sectors_seen.add(self.current_sector)
         next_sector = ((raw[-3] & 0x3) << 8) + raw[-2]
         if next_sector in self.sectors_seen:

@@ -14,9 +14,12 @@ class TestAtariDosSDImage(object):
     def test_small(self):
         assert len(self.image.files) == 5
 
-        data = [0xff, 0xff, 0x00, 0x60, 0x01, 0x60, 1, 2]
+        data = np.asarray([0xff, 0xff, 0x00, 0x60, 0x01, 0x60, 1, 2], dtype=np.uint8)
         self.image.write_file("TEST.XEX", None, data)
         assert len(self.image.files) == 6
+
+        data2 = self.image.find_file("TEST.XEX")
+        assert data.tostring() == data2
 
 
 if __name__ == "__main__":
