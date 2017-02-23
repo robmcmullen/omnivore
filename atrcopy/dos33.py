@@ -1,7 +1,7 @@
 import numpy as np
 
 from errors import *
-from diskimages import BaseHeader, DiskImageBase, Directory, VTOC, WriteableSector, BaseSectorList
+from diskimages import BaseHeader, DiskImageBase, Directory, VTOC, WriteableSector, BaseSectorList, SectorBuilder
 from segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver
 
 import logging
@@ -232,16 +232,16 @@ class Dos33Dirent(object):
         self.sector_map = sector_list
     
     def get_sector_list(self, image):
-        sector_list = BaseSectorList(image.bytes_per_sector)
+        sector_list = BaseSectorList(image.header.bytes_per_sector)
         self.start_read(image)
         sector_num = image.header.sector_from_track(self.track, self.sector)
         while sector_num > 0:
-            sector = WriteableSector(image.bytes_per_sector, None, sector_num)
+            sector = WriteableSector(image.header.bytes_per_sector, None, sector_num)
             sector_list.append(sector)
             values, style = image.get_sectors(sector_num)
             sector = image.header.sector_from_track(values[1], values[2])
         for sector_num in sector_list:
-            sector = WriteableSector(image.bytes_per_sector, None, sector_num)
+            sector = WriteableSector(image.header.bytes_per_sector, None, sector_num)
             sector_list.append(sector)
         return sector_list
 
@@ -277,6 +277,14 @@ class Dos33Dirent(object):
         self.file_type = self.type_map.get(filetype, 0x04)
         self.locked = False
         self.deleted = False
+
+
+class Dos33SectorBuilder(SectorBuilder):
+    def calc_extra_sectors(self):
+        """Add track/sector list
+        """
+        for ts_group_start in range(0, len(self), self.header.ts_pairs):
+            print ts_group_start
 
 
 class Dos33Header(BaseHeader):
@@ -331,6 +339,10 @@ class Dos33DiskImage(DiskImageBase):
     def raw_sector_class(self):
         return RawTrackSectorSegment
 
+    @property
+    def sector_builder_class(self):
+        return Dos33SectorBuilder
+
     def get_boot_sector_info(self):
         # based on logic from a2server
         data, style = self.get_sectors(0)
@@ -370,12 +382,13 @@ class Dos33DiskImage(DiskImageBase):
     def get_vtoc(self):
         data, style = self.get_sectors(self.header.first_vtoc)
         values = data[0:self.vtoc_type.itemsize].view(dtype=self.vtoc_type)[0]
-        self.first_directory = self.header.sector_from_track(values['cat_track'], values['cat_sector'])
-        self.sector_size = int(values['bytes_per_sector'])
-        self.max_sectors = int(values['num_tracks']) * int(values['sectors_per_track'])
-        self.dos_release = values['dos_release']
-        self.last_track_num = values['last_track']
-        self.track_alloc_dir = values['track_dir']
+        self.header.first_directory = self.header.sector_from_track(values['cat_track'], values['cat_sector'])
+        self.header.sector_size = int(values['bytes_per_sector'])
+        self.header.max_sectors = int(values['num_tracks']) * int(values['sectors_per_track'])
+        self.header.ts_pairs = int(values['max_pairs'])
+        self.header.dos_release = values['dos_release']
+        self.header.last_track_num = values['last_track']
+        self.header.track_alloc_dir = values['track_dir']
         self.assert_valid_sector(self.first_directory)
     
     def get_directory(self, directory=None):
