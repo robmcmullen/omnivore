@@ -299,6 +299,7 @@ class Dos33Header(BaseHeader):
     def check_size(self, size):
         if size != 143360:
             raise InvalidDiskImage("Incorrect size for DOS 3.3 image")
+        self.image_size = size
         self.first_vtoc = 17 * 16
         self.num_vtoc = 1
         self.first_directory = self.first_vtoc + 15
@@ -310,7 +311,6 @@ class Dos33Header(BaseHeader):
 
 class Dos33DiskImage(DiskImageBase):
     def __init__(self, rawdata, filename=""):
-        self.first_directory = 0
         DiskImageBase.__init__(self, rawdata, filename)
 
     def __str__(self):
@@ -359,7 +359,7 @@ class Dos33DiskImage(DiskImageBase):
             else:
                 raise InvalidDiskImage("Invalid VTOC location for DOS 3.3")
 
-        print "swap", swap_order
+        log.debug("DOS 3.3 byte swap: %s" % swap_order)
     
     vtoc_type = np.dtype([
         ('unused1', 'S1'),
@@ -389,10 +389,10 @@ class Dos33DiskImage(DiskImageBase):
         self.header.dos_release = values['dos_release']
         self.header.last_track_num = values['last_track']
         self.header.track_alloc_dir = values['track_dir']
-        self.assert_valid_sector(self.first_directory)
+        self.assert_valid_sector(self.header.first_directory)
     
     def get_directory(self, directory=None):
-        sector = self.first_directory
+        sector = self.header.first_directory
         num = 0
         files = []
         while sector > 0:
@@ -445,7 +445,7 @@ class Dos33DiskImage(DiskImageBase):
         byte_order = []
         r = self.rawdata
         segments = []
-        sector = self.first_directory
+        sector = self.header.first_directory
         while sector > 0:
             self.assert_valid_sector(sector)
             print "reading catalog sector", sector
@@ -459,7 +459,7 @@ class Dos33DiskImage(DiskImageBase):
 
     def get_next_directory_sector(self, sector):
         if sector == -1:
-            sector = self.first_directory
+            sector = self.header.first_directory
         print "reading catalog sector", sector
         self.assert_valid_sector(sector)
         raw, _, _ = self.get_raw_bytes(sector)
