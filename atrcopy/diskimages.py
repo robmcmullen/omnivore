@@ -8,7 +8,74 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class AtrHeader(object):
+class BaseHeader(object):
+    file_format = "generic"  # text descriptor of file format
+
+    def __init__(self, sector_size=256, initial_sectors=0, vtoc_sector=0, starting_sector_label=0):
+        self.image_size = 0
+        self.sector_size = sector_size
+        self.initial_sector_size = 0
+        self.num_initial_sectors = 0
+        self.crc = 0
+        self.unused = 0
+        self.flags = 0
+        self.header_offset = 0
+        self.starting_sector_label = starting_sector_label
+        self.max_sectors = 0  # number of sectors, -1 is unlimited
+        self.tracks_per_disk = 0
+        self.sectors_per_track = 0
+        self.first_vtoc = vtoc_sector
+        self.num_vtoc = 1
+        self.extra_vtoc = []
+        self.first_directory = 0
+        self.num_directory = 0
+    
+    def __len__(self):
+        return self.header_offset
+    
+    def to_array(self):
+        header_bytes = np.zeros([self.header_offset], dtype=np.uint8)
+        self.encode(header_bytes)
+        return header_bytes
+
+    def encode(self, header_bytes):
+        """Subclasses should override this to put the byte values into the
+        header.
+        """
+        return
+
+    def sector_is_valid(self, sector):
+        return (self.max_sectors < 0) | (sector >= self.starting_sector_label and sector < (self.max_sectors + self.starting_sector_label))
+    
+    def get_pos(self, sector):
+        """Get index (into the raw data of the disk image) of start of sector
+
+        This base class method assumes the sectors are one after another, in
+        order starting from the beginning of the raw data.
+        """
+        if not self.sector_is_valid(sector):
+            raise ByteNotInFile166("Sector %d out of range" % sector)
+        pos = sector * self.sector_size + self.header_offset
+        size = self.sector_size
+        return pos, size
+
+    def sector_from_track(self, track, sector):
+        return (track * self.sectors_per_track) + sector
+
+    def track_from_sector(self, sector):
+        track, sector = divmod(sector, self.sectors_per_track)
+        return track, sector
+
+    def check_size(self, size):
+        raise InvalidDiskImage("BaseHeader subclasses need custom checks for size")
+
+    def strict_check(self, image):
+        pass
+
+
+
+
+class AtrHeader(BaseHeader):
     # ATR Format described in http://www.atarimax.com/jindroush.atari.org/afmtatr.html
     format = np.dtype([
         ('wMagic', '<u2'),
@@ -22,16 +89,7 @@ class AtrHeader(object):
     file_format = "ATR"
     
     def __init__(self, bytes=None, sector_size=128, initial_sectors=3, create=False):
-        self.image_size = 0
-        self.sector_size = sector_size
-        self.crc = 0
-        self.unused = 0
-        self.flags = 0
-        self.header_offset = 0
-        self.starting_sector_label = 1
-        self.initial_sector_size = sector_size
-        self.num_initial_sectors = initial_sectors
-        self.max_sectors = 0
+        BaseHeader.__init__(self, sector_size, initial_sectors, 360)
         if create:
             self.header_offset = 16
             self.check_size(0)
@@ -54,11 +112,7 @@ class AtrHeader(object):
     def __str__(self):
         return "%s Disk Image (size=%d (%dx%db), crc=%d flags=%d unused=%d)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size, self.crc, self.flags, self.unused)
     
-    def __len__(self):
-        return self.header_offset
-    
-    def to_array(self):
-        raw = np.zeros([16], dtype=np.uint8)
+    def encode(self, raw):
         values = raw.view(dtype=self.format)[0]
         values[0] = 0x296
         paragraphs = self.image_size / 16
@@ -89,14 +143,14 @@ class AtrHeader(object):
             self.num_initial_sectors = 3
         else:
             self.image_size = size
+        self.first_vtoc = 360
+        self.num_vtoc = 1
+        self.first_directory = 361
+        self.num_directory = 8
+        self.tracks_per_disk = 40
+        self.sectors_per_track = 18
         initial_bytes = self.initial_sector_size * self.num_initial_sectors
         self.max_sectors = ((self.image_size - initial_bytes) / self.sector_size) + self.num_initial_sectors
-
-    def strict_check(self, image):
-        pass
-    
-    def sector_is_valid(self, sector):
-        return sector > 0 and sector <= self.max_sectors
     
     def get_pos(self, sector):
         if not self.sector_is_valid(sector):

@@ -1,7 +1,7 @@
 import numpy as np
 
 from errors import *
-from diskimages import AtrHeader, DiskImageBase, Directory, VTOC, WriteableSector, BaseSectorList
+from diskimages import BaseHeader, DiskImageBase, Directory, VTOC, WriteableSector, BaseSectorList
 from segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver
 
 import logging
@@ -279,59 +279,30 @@ class Dos33Dirent(object):
         self.deleted = False
 
 
-class Dos33Header(AtrHeader):
+class Dos33Header(BaseHeader):
     file_format = "DOS 3.3"
 
     def __init__(self):
-        AtrHeader.__init__(self, None, 256, 0)
-        self.starting_sector_label = 0
-        self.header_offset = 0
-        self.sector_order = range(16)
-        self.vtoc_sector = 17 * 16
-        self.tracks_per_disk = 0
-        self.sectors_per_track = 0
-        self.max_sectors = -1
+        BaseHeader.__init__(self, 256)
     
     def __str__(self):
         return "%s Disk Image (size=%d (%dx%db)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size)
-    
-    def __len__(self):
-        return 0
-    
-    def to_array(self):
-        raw = np.zeros([0], dtype=np.uint8)
-        return raw
 
     def check_size(self, size):
-        AtrHeader.check_size(self, size)
         if size != 143360:
             raise InvalidDiskImage("Incorrect size for DOS 3.3 image")
+        self.first_vtoc = 17 * 16
+        self.num_vtoc = 1
+        self.first_directory = self.first_vtoc + 15
+        self.num_directory = 8
         self.tracks_per_disk = 35
         self.sectors_per_track = 16
         self.max_sectors = self.tracks_per_disk * self.sectors_per_track
 
-    def sector_is_valid(self, sector):
-        # DOS 3.3 sectors count from 0
-        return (self.max_sectors < 0) | (sector >= 0 and sector < self.max_sectors)
-    
-    def get_pos(self, sector):
-        if not self.sector_is_valid(sector):
-            raise ByteNotInFile166("Sector %d out of range" % sector)
-        pos = sector * self.sector_size
-        size = self.sector_size
-        return pos, size
-
-    def sector_from_track(self, track, sector):
-        return track * 16 + sector
-
-    def track_from_sector(self, sector):
-        track, sector = divmod(sector, 16)
-        return track, sector
-
 
 class Dos33DiskImage(DiskImageBase):
     def __init__(self, rawdata, filename=""):
-        self.first_catalog = 0
+        self.first_directory = 0
         DiskImageBase.__init__(self, rawdata, filename)
 
     def __str__(self):
@@ -367,10 +338,10 @@ class Dos33DiskImage(DiskImageBase):
         if (magic == [1, 56, 176, 3]).all():
             raise InvalidDiskImage("ProDOS format found; not DOS 3.3 image")
         swap_order = False
-        data, style = self.get_sectors(self.header.vtoc_sector)
+        data, style = self.get_sectors(self.header.first_vtoc)
         if data[3] == 3:
             if data[1] < 35 and data[2] < 16:
-                data, style = self.get_sectors(self.header.vtoc_sector + 14)
+                data, style = self.get_sectors(self.header.first_vtoc + 14)
                 if data[2] != 13:
                     swap_order = True
             else:
@@ -397,17 +368,18 @@ class Dos33DiskImage(DiskImageBase):
         ])
 
     def get_vtoc(self):
-        data, style = self.get_sectors(self.header.vtoc_sector)
+        data, style = self.get_sectors(self.header.first_vtoc)
         values = data[0:self.vtoc_type.itemsize].view(dtype=self.vtoc_type)[0]
-        self.first_catalog = self.header.sector_from_track(values[1], values[2])
-        self.assert_valid_sector(self.first_catalog)
-        self.total_sectors = int(values['num_tracks']) * int(values['sectors_per_track'])
+        self.first_directory = self.header.sector_from_track(values['cat_track'], values['cat_sector'])
+        self.sector_size = int(values['bytes_per_sector'])
+        self.max_sectors = int(values['num_tracks']) * int(values['sectors_per_track'])
         self.dos_release = values['dos_release']
         self.last_track_num = values['last_track']
         self.track_alloc_dir = values['track_dir']
+        self.assert_valid_sector(self.first_directory)
     
     def get_directory(self, directory=None):
-        sector = self.first_catalog
+        sector = self.first_directory
         num = 0
         files = []
         while sector > 0:
@@ -451,8 +423,8 @@ class Dos33DiskImage(DiskImageBase):
         r = self.rawdata
         segments = []
         addr = 0
-        start, count = self.get_contiguous_sectors(self.header.vtoc_sector, 1)
-        segment = RawTrackSectorSegment(r[start:start+count], self.header.vtoc_sector, 1, count, 0, 0, self.header.sector_size, name="VTOC")
+        start, count = self.get_contiguous_sectors(self.header.first_vtoc, 1)
+        segment = RawTrackSectorSegment(r[start:start+count], self.header.first_vtoc, 1, count, 0, 0, self.header.sector_size, name="VTOC")
         segments.append(segment)
         return segments
     
@@ -460,7 +432,7 @@ class Dos33DiskImage(DiskImageBase):
         byte_order = []
         r = self.rawdata
         segments = []
-        sector = self.first_catalog
+        sector = self.first_directory
         while sector > 0:
             self.assert_valid_sector(sector)
             print "reading catalog sector", sector
@@ -474,7 +446,7 @@ class Dos33DiskImage(DiskImageBase):
 
     def get_next_directory_sector(self, sector):
         if sector == -1:
-            sector = self.first_catalog
+            sector = self.first_directory
         print "reading catalog sector", sector
         self.assert_valid_sector(sector)
         raw, _, _ = self.get_raw_bytes(sector)
