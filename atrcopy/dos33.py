@@ -9,16 +9,64 @@ log = logging.getLogger(__name__)
 
 
 class Dos33VTOC(VTOC):
+    max_tracks = (256 - 0x38) / 4  # 50, but kept here in case sector size changed
+    max_sectors = max_tracks * 16
+        reorder_index = np.tile(np.arange(7, -1, -1), max_tracks * 2) + (np.repeat(np.arange(max_tracks * 2), 8) * 8)
+
     def parse_segments(self, segments):
-        self.vtoc1 = segments[0].data
-        bits = np.unpackbits(self.vtoc1[0x0a:0x64])
-        log.debug("vtoc before: %s" % bits)
-        self.sector_map[0:720] = bits
+        # VTOC stored in groups of 4 bytes starting at 0x38
+        # in bits, the sector used data is stored by track:
+        #
+        # FEDCBA98 76543210 xxxxxxxx xxxxxxxx
+        #
+        # where the x values are ignored (should be zeros). Track 0 info is
+        # found starting at 0x38, track 1 is found at 0x3c, etc.
+        #
+        # Want to convert this to an array that is a list of bits by
+        # track/sector number, i.e.:
+        #
+        # t0s0 t0s1 t0s2 t0s3 t0s4 t0s5 t0s6 t0s7 ... t1s0 t1s1 ... etc
+        #
+        # Problem: the bits are stored backwards, so a straight unpackbits will
+        # produce:
+        #
+        # t0sf t0se t0sd ...
+        #
+        # i.e. each group of 16 bits needs to be reversed.
+        self.vtoc = segments[0].data
+
+        # create a view using little-endian 16 bit values, skipping every other
+        # 16 bit value. This gets us 76543210FEDCBA98 76543210FEDCBA98 ... etc
+        expanded = self.vtoc[0x38:].view(dtype="<u2")
+        used = expanded[0::2]
+
+        # need to operate on a copy of the 16 bit values, because skipping
+        # every 2 and attempting to view as bytes results in a ValueError: "new
+        # type not compatible with array"
+        usedcopy = np.zeros([used.shape[0]], dtype="<u2")
+        usedcopy[:] = used
+        print repr(usedcopy)
+
+        # now convert to bytes, giving us 76543210 FEDCBA98 76543210 FEDCBA98
+        # ... etc, and unpack that to bits giving us a zero or one representing
+        # sectors 7 6 5 4 3 2 1 0 F E D ...
+        usedbytes = usedcopy.view(dtype=np.uint8)
+        bits = np.unpackbits(usedbytes)
+
+        # and now we need to reverse the order of each group of 8 numbers
+        self.sector_map[0:self.max_sectors] = bits[reorder_index]
+        log.debug("vtoc before: %s" % self.sector_map[0:35*16])
 
     def calc_bitmap(self):
-        log.debug("vtoc after: %s" % self.sector_map[0:720])
-        packed = np.packbits(self.sector_map[0:720])
-        self.vtoc1[0x0a:0x64] = packed
+        log.debug("vtoc after: %s" % self.sector_map[0:35*16])
+
+        # bits inside bytes will be in the right order after this, but the
+        # bytes are still swapped and there are no gaps
+        packed = np.packbits(self.sector_map[self.reorder_index])
+        print packed
+
+        # FIXME
+        self.vtoc[0x38:] = packed
         s = WriteableSector(self.bytes_per_sector, self.vtoc1)
         s.sector_num = 360
         self.sectors.append(s)
@@ -239,7 +287,9 @@ class Dos33Header(AtrHeader):
         self.header_offset = 0
         self.sector_order = range(16)
         self.vtoc_sector = 17 * 16
-        self.max_sectors = 35 * 16
+        self.tracks_per_disk = 0
+        self.sectors_per_track = 0
+        self.max_sectors = -1
     
     def __str__(self):
         return "%s Disk Image (size=%d (%dx%db)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size)
@@ -255,10 +305,13 @@ class Dos33Header(AtrHeader):
         AtrHeader.check_size(self, size)
         if size != 143360:
             raise InvalidDiskImage("Incorrect size for DOS 3.3 image")
-    
+        self.tracks_per_disk = 35
+        self.sectors_per_track = 16
+        self.max_sectors = self.tracks_per_disk * self.sectors_per_track
+
     def sector_is_valid(self, sector):
         # DOS 3.3 sectors count from 0
-        return sector >= 0 and sector < self.max_sectors
+        return (self.max_sectors < 0) | (sector >= 0 and sector < self.max_sectors)
     
     def get_pos(self, sector):
         if not self.sector_is_valid(sector):
@@ -344,11 +397,13 @@ class Dos33DiskImage(DiskImageBase):
 
     def get_vtoc(self):
         data, style = self.get_sectors(self.header.vtoc_sector)
-        values = data[0:56].view(dtype=self.vtoc_type)[0]
+        values = data[0:self.vtoc_type.itemsize].view(dtype=self.vtoc_type)[0]
         self.first_catalog = self.header.sector_from_track(values[1], values[2])
         self.assert_valid_sector(self.first_catalog)
         self.total_sectors = int(values['num_tracks']) * int(values['sectors_per_track'])
         self.dos_release = values['dos_release']
+        self.last_track_num = values['last_track']
+        self.track_alloc_dir = values['track_dir']
     
     def get_directory(self, directory=None):
         sector = self.first_catalog
