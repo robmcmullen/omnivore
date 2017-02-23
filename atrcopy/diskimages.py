@@ -189,7 +189,7 @@ class DiskImageBase(object):
             raise InvalidDiskImage("Invalid directory entries; may be boot disk")
     
     def read_header(self):
-        raise NotImplementedError
+        return BaseHeader()
     
     def check_size(self):
         pass
@@ -373,32 +373,3 @@ class DiskImageBase(object):
             raise
         finally:
             self.get_metadata()
-
-
-
-class BootDiskImage(DiskImageBase):
-    def __str__(self):
-        return "%s Boot Disk" % (self.header)
-    
-    def check_size(self):
-        if self.header is None:
-            return
-        start, size = self.header.get_pos(1)
-        b = self.bytes
-        i = self.header.header_offset
-        flag = b[i:i + 2].view(dtype='<u2')[0]
-        if flag == 0xffff:
-            raise InvalidDiskImage("Appears to be an executable")
-        nsec = b[i + 1]
-        bload = b[i + 2:i + 4].view(dtype='<u2')[0]
-        
-        # Sanity check: number of sectors to be loaded can't be more than the
-        # lower 48k of ram because there's no way to bank switch or anything
-        # before the boot sectors are finished loading
-        max_ram = 0xc000
-        max_size = max_ram - bload
-        max_sectors = max_size / self.header.sector_size
-        if nsec > max_sectors or nsec < 1:
-            raise InvalidDiskImage("Number of boot sectors out of range")
-        if bload < 0x200 or bload > (0xc000 - (nsec * self.header.sector_size)):
-            raise InvalidDiskImage("Bad boot load address")

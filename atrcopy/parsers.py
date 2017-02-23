@@ -1,9 +1,8 @@
 import numpy as np
 
 from segments import SegmentData, DefaultSegment
-from diskimages import BootDiskImage
 from kboot import KBootImage
-from ataridos import AtariDosDiskImage, AtariDosFile
+from ataridos import AtariDosDiskImage, BootDiskImage, AtariDosFile
 from spartados import SpartaDosDiskImage
 from cartridge import AtariCartImage, get_known_carts
 from mame import MameZipImage
@@ -35,6 +34,7 @@ class SegmentParser(object):
         self.segments.extend(self.image.segments)
 
     def get_image(self, r):
+        print self.image_type
         return self.image_type(r)
 
     def check_image(self):

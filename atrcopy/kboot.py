@@ -1,8 +1,7 @@
 import numpy as np
 
 from errors import *
-from ataridos import AtariDosDirent, XexSegment
-from diskimages import DiskImageBase
+from ataridos import AtariDosDirent, AtariDosDiskImage, XexSegment
 
 
 class KBootDirent(AtariDosDirent):
@@ -35,7 +34,7 @@ class KBootDirent(AtariDosDirent):
         return raw[0:num_bytes], num_bytes
 
 
-class KBootImage(DiskImageBase):
+class KBootImage(AtariDosDiskImage):
     def __str__(self):
         return "%s KBoot Format: %d byte executable" % (self.header, self.files[0].exe_size)
     

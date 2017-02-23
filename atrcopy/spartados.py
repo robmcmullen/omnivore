@@ -1,8 +1,7 @@
 import numpy as np
 
 from errors import *
-from ataridos import AtariDosDirent, XexSegment
-from diskimages import DiskImageBase
+from ataridos import AtariDosDirent, AtariDosDiskImage, XexSegment
 from segments import DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentSaver
 
 import logging
@@ -107,14 +106,14 @@ class SpartaDosDirent(AtariDosDirent):
         return raw[0:num_data_bytes], sector == 0, pos, num_data_bytes
 
 
-class SpartaDosDiskImage(DiskImageBase):
+class SpartaDosDiskImage(AtariDosDiskImage):
     def __init__(self, *args, **kwargs):
         self.first_bitmap = 0
         self.num_bitmap = 0
         self.root_dir = 0
         self.root_dir_dirent = None
         self.fs_version = 0
-        DiskImageBase.__init__(self, *args, **kwargs)
+        AtariDosDiskImage.__init__(self, *args, **kwargs)
     
     def __str__(self):
         return "%s Sparta DOS Format: %d usable sectors (%d free), %d files" % (self.header, self.total_sectors, self.unused_sectors, len(self.files))
