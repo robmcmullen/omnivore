@@ -1,9 +1,9 @@
 import numpy as np
 
 from errors import *
-from diskimages import DiskImageBase, Directory, VTOC, WriteableSector, BaseSectorList
+from diskimages import DiskImageBase, BaseHeader
 from segments import EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentSaver
-from utils import to_numpy
+from utils import *
 
 import logging
 log = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ class AtariDosVTOC(VTOC):
         log.debug("vtoc after: %s" % self.sector_map[0:720])
         packed = np.packbits(self.sector_map[0:720])
         self.vtoc1[0x0a:0x64] = packed
-        s = WriteableSector(self.bytes_per_sector, self.vtoc1)
+        s = WriteableSector(self.sector_size, self.vtoc1)
         s.sector_num = 360
         self.sectors.append(s)
 
@@ -165,10 +165,10 @@ class AtariDosDirent(object):
         return True
     
     def get_sector_list(self, image):
-        sector_list = BaseSectorList(image.bytes_per_sector)
+        sector_list = BaseSectorList(image.header.sector_size)
         self.start_read(image)
         while True:
-            sector = WriteableSector(image.bytes_per_sector, None, self.current_sector)
+            sector = WriteableSector(image.header.sector_size, None, self.current_sector)
             sector_list.append(sector)
             _, last, _, _ = self.read_sector(image)
             if last:
@@ -213,6 +213,7 @@ class AtariDosDirent(object):
         self.file_num = index
         self.dos_2 = True
         self.in_use = True
+        log.debug("set_values: %s" % self)
 
 
 class MydosDirent(AtariDosDirent):
@@ -290,6 +291,118 @@ class AtariDosFile(object):
             pos += 4 + count
 
 
+class AtrHeader(BaseHeader):
+    sector_class = AtariDosWriteableSector
+
+    # ATR Format described in http://www.atarimax.com/jindroush.atari.org/afmtatr.html
+    format = np.dtype([
+        ('wMagic', '<u2'),
+        ('wPars', '<u2'),
+        ('wSecSize', '<u2'),
+        ('btParsHigh', 'u1'),
+        ('dwCRC','<u4'),
+        ('unused','<u4'),
+        ('btFlags','u1'),
+        ])
+    file_format = "ATR"
+    
+    def __init__(self, bytes=None, sector_size=128, initial_sectors=3, create=False):
+        BaseHeader.__init__(self, sector_size, initial_sectors, 360)
+        if create:
+            self.header_offset = 16
+            self.check_size(0)
+        if bytes is None:
+            return
+        
+        if len(bytes) == 16:
+            values = bytes.view(dtype=self.format)[0]
+            if values[0] != 0x296:
+                raise InvalidAtrHeader
+            self.image_size = (int(values[3]) * 256 * 256 + int(values[1])) * 16
+            self.sector_size = int(values[2])
+            self.crc = int(values[4])
+            self.unused = int(values[5])
+            self.flags = int(values[6])
+            self.header_offset = 16
+        else:
+            raise InvalidAtrHeader
+    
+    def __str__(self):
+        return "%s Disk Image (size=%d (%dx%db), crc=%d flags=%d unused=%d)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size, self.crc, self.flags, self.unused)
+    
+    def encode(self, raw):
+        values = raw.view(dtype=self.format)[0]
+        values[0] = 0x296
+        paragraphs = self.image_size / 16
+        parshigh, pars = divmod(paragraphs, 256*256)
+        values[1] = pars
+        values[2] = self.sector_size
+        values[3] = parshigh
+        values[4] = self.crc
+        values[5] = self.unused
+        values[6] = self.flags
+        return raw
+
+    def check_size(self, size):
+        if size == 92160 or size == 92176:
+            self.image_size = 92160
+            self.sector_size = 128
+            self.initial_sector_size = 0
+            self.num_initial_sectors = 0
+        elif size == 184320 or size == 184336:
+            self.image_size = 184320
+            self.sector_size = 256
+            self.initial_sector_size = 0
+            self.num_initial_sectors = 0
+        elif size == 183936 or size == 183952:
+            self.image_size = 183936
+            self.sector_size = 256
+            self.initial_sector_size = 128
+            self.num_initial_sectors = 3
+        else:
+            self.image_size = size
+        self.first_vtoc = 360
+        self.num_vtoc = 1
+        self.first_directory = 361
+        self.num_directory = 8
+        self.tracks_per_disk = 40
+        self.sectors_per_track = 18
+        initial_bytes = self.initial_sector_size * self.num_initial_sectors
+        self.max_sectors = ((self.image_size - initial_bytes) / self.sector_size) + self.num_initial_sectors
+    
+    def get_pos(self, sector):
+        if not self.sector_is_valid(sector):
+            raise ByteNotInFile166("Sector %d out of range" % sector)
+        if sector <= self.num_initial_sectors:
+            pos = self.num_initial_sectors * (sector - 1)
+            size = self.initial_sector_size
+        else:
+            pos = self.num_initial_sectors * self.initial_sector_size + (sector - 1 - self.num_initial_sectors) * self.sector_size
+            size = self.sector_size
+        pos += self.header_offset
+        return pos, size
+
+
+class XfdHeader(AtrHeader):
+    file_format = "XFD"
+    
+    def __str__(self):
+        return "%s Disk Image (size=%d (%dx%db)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size)
+    
+    def __len__(self):
+        return 0
+    
+    def to_array(self):
+        raw = np.zeros([0], dtype=np.uint8)
+        return raw
+
+    def strict_check(self, image):
+        size = len(image)
+        if size in [92160, 133120, 183936, 184320]:
+            return
+        raise InvalidDiskImage("Uncommon size of XFD file")
+
+
 class AtariDosDiskImage(DiskImageBase):
     def __init__(self, *args, **kwargs):
         self.first_vtoc = 360
@@ -321,11 +434,37 @@ class AtariDosDiskImage(DiskImageBase):
     def __str__(self):
         return "%s Atari DOS Format: %d usable sectors (%d free), %d files" % (self.header, self.total_sectors, self.unused_sectors, len(self.files))
     
+    @classmethod
+    def new_header(cls, diskimage, format="ATR"):
+        if format.lower() == "atr":
+            header = AtrHeader(create=True)
+            header.check_size(diskimage.size)
+        else:
+            raise RuntimeError("Unknown header type %s" % format)
+        return header
+    
+    def as_new_format(self, format="ATR"):
+        """ Create a new disk image in the specified format
+        """
+        first_data = len(self.header)
+        raw = self.rawdata[first_data:]
+        data = add_atr_header(raw)
+        newraw = SegmentData(data)
+        image = self.__class__(newraw)
+        return image
+    
     vtoc_type = np.dtype([
         ('code', 'u1'),
         ('total','<u2'),
         ('unused','<u2'),
         ])
+    
+    def read_header(self):
+        bytes = self.bytes[0:16]
+        try:
+            self.header = AtrHeader(bytes)
+        except InvalidAtrHeader:
+            self.header = XfdHeader()
 
     def calc_vtoc_code(self):
         # From AA post: http://atariage.com/forums/topic/179868-mydos-vtoc-size/
@@ -495,3 +634,12 @@ def get_xex(segments, runaddr):
     words[1] = 0x2e1
     words[2] = runaddr
     return bytes
+
+def add_atr_header(bytes):
+    header = AtrHeader(create=True)
+    header.check_size(len(bytes))
+    hlen = len(header)
+    data = np.empty([hlen + len(bytes)], dtype=np.uint8)
+    data[0:hlen] = header.to_array()
+    data[hlen:] = bytes
+    return data

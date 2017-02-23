@@ -121,7 +121,7 @@ class BaseFilesystemModifyTest(object):
 # class TestAtariDosSDImage(BaseFilesystemModifyTest):
 #     diskimage_type = AtariDosDiskImage
 #     sample_file = "../test_data/dos_sd_test1.atr"
-#     num_files_in_sample
+#     num_files_in_sample = 5
 
 class TestDos33Image(BaseFilesystemModifyTest):
     diskimage_type = Dos33DiskImage

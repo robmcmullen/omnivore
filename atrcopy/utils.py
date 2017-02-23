@@ -2,6 +2,9 @@ import types
 
 import numpy as np
 
+import logging
+log = logging.getLogger(__name__)
+
 
 def to_numpy(value):
     if type(value) is np.ndarray:
@@ -69,8 +72,8 @@ class WriteableSector(object):
 
 
 class BaseSectorList(object):
-    def __init__(self, bytes_per_sector):
-        self.bytes_per_sector = bytes_per_sector
+    def __init__(self, sector_size):
+        self.sector_size = sector_size
         self.sectors = []
 
     def __len__(self):
@@ -97,7 +100,7 @@ class BaseSectorList(object):
 
 class Directory(BaseSectorList):
     def __init__(self, header, num_dirents=-1, sector_class=WriteableSector):
-        BaseSectorList.__init__(self, header.bytes_per_sector)
+        BaseSectorList.__init__(self, header.sector_size)
         self.sector_class = sector_class
         self.num_dirents = num_dirents
         # number of dirents may be unlimited, so use a dict instead of a list
@@ -193,7 +196,7 @@ class Directory(BaseSectorList):
         self.finish_encoding(image)
 
     def get_dirent_sector(self):
-        return self.sector_class(self.bytes_per_sector)
+        return self.sector_class(self.sector_size)
 
     def encode_empty(self):
         raise NotImplementedError
@@ -222,7 +225,7 @@ class Directory(BaseSectorList):
 
 class VTOC(BaseSectorList):
     def __init__(self, header, segments=None):
-        BaseSectorList.__init__(self, header.bytes_per_sector)
+        BaseSectorList.__init__(self, header.sector_size)
 
         # sector map: 1 is free, 0 is allocated
         self.sector_map = np.zeros([1280], dtype=np.uint8)
@@ -259,7 +262,7 @@ class VTOC(BaseSectorList):
 
 class SectorBuilder(BaseSectorList):
     def __init__(self, header, usable, data, sector_class):
-        BaseSectorList.__init__(self, header.bytes_per_sector)
+        BaseSectorList.__init__(self, header.sector_size)
         self.data = to_numpy(data)
         self.usable_bytes = usable
         self.split_into_sectors(header)

@@ -68,7 +68,7 @@ class Dos33VTOC(VTOC):
 
         # FIXME
         self.vtoc[0x38:] = vtoc.flatten()
-        s = WriteableSector(self.bytes_per_sector, self.vtoc)
+        s = WriteableSector(self.sector_size, self.vtoc)
         s.sector_num = 17 * 16
         self.sectors.append(s)
 
@@ -79,7 +79,7 @@ class Dos33Directory(Directory):
         return Dos33Dirent
 
     def get_dirent_sector(self):
-        s = self.sector_class(self.bytes_per_sector)
+        s = self.sector_class(self.sector_size)
         data = np.zeros([0x0b], dtype=np.uint8)
         s.add_data(data)
         return s
@@ -232,16 +232,16 @@ class Dos33Dirent(object):
         self.sector_map = sector_list
     
     def get_sector_list(self, image):
-        sector_list = BaseSectorList(image.header.bytes_per_sector)
+        sector_list = BaseSectorList(image.header.sector_size)
         self.start_read(image)
         sector_num = image.header.sector_from_track(self.track, self.sector)
         while sector_num > 0:
-            sector = WriteableSector(image.header.bytes_per_sector, None, sector_num)
+            sector = WriteableSector(image.header.sector_size, None, sector_num)
             sector_list.append(sector)
             values, style = image.get_sectors(sector_num)
             sector = image.header.sector_from_track(values[1], values[2])
         for sector_num in sector_list:
-            sector = WriteableSector(image.header.bytes_per_sector, None, sector_num)
+            sector = WriteableSector(image.header.sector_size, None, sector_num)
             sector_list.append(sector)
         return sector_list
 
@@ -320,11 +320,11 @@ class Dos33DiskImage(DiskImageBase):
         self.header = Dos33Header()
 
     @property
-    def bytes_per_sector(self):
+    def sector_size(self):
         return 256
 
     @property
-    def payload_bytes_per_sector(self):
+    def payload_sector_size(self):
         return 256
 
     @property
@@ -376,14 +376,14 @@ class Dos33DiskImage(DiskImageBase):
         ('unused5', 'S2'),
         ('num_tracks', 'u1'),
         ('sectors_per_track', 'u1'),
-        ('bytes_per_sector', 'u2'),
+        ('sector_size', 'u2'),
         ])
 
     def get_vtoc(self):
         data, style = self.get_sectors(self.header.first_vtoc)
         values = data[0:self.vtoc_type.itemsize].view(dtype=self.vtoc_type)[0]
         self.header.first_directory = self.header.sector_from_track(values['cat_track'], values['cat_sector'])
-        self.header.sector_size = int(values['bytes_per_sector'])
+        self.header.sector_size = int(values['sector_size'])
         self.header.max_sectors = int(values['num_tracks']) * int(values['sectors_per_track'])
         self.header.ts_pairs = int(values['max_pairs'])
         self.header.dos_release = values['dos_release']

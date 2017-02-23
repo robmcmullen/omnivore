@@ -77,117 +77,6 @@ class BaseHeader(object):
         return self.sector_class(self.sector_size, data)
 
 
-
-class AtrHeader(BaseHeader):
-    # ATR Format described in http://www.atarimax.com/jindroush.atari.org/afmtatr.html
-    format = np.dtype([
-        ('wMagic', '<u2'),
-        ('wPars', '<u2'),
-        ('wSecSize', '<u2'),
-        ('btParsHigh', 'u1'),
-        ('dwCRC','<u4'),
-        ('unused','<u4'),
-        ('btFlags','u1'),
-        ])
-    file_format = "ATR"
-    
-    def __init__(self, bytes=None, sector_size=128, initial_sectors=3, create=False):
-        BaseHeader.__init__(self, sector_size, initial_sectors, 360)
-        if create:
-            self.header_offset = 16
-            self.check_size(0)
-        if bytes is None:
-            return
-        
-        if len(bytes) == 16:
-            values = bytes.view(dtype=self.format)[0]
-            if values[0] != 0x296:
-                raise InvalidAtrHeader
-            self.image_size = (int(values[3]) * 256 * 256 + int(values[1])) * 16
-            self.sector_size = int(values[2])
-            self.crc = int(values[4])
-            self.unused = int(values[5])
-            self.flags = int(values[6])
-            self.header_offset = 16
-        else:
-            raise InvalidAtrHeader
-    
-    def __str__(self):
-        return "%s Disk Image (size=%d (%dx%db), crc=%d flags=%d unused=%d)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size, self.crc, self.flags, self.unused)
-    
-    def encode(self, raw):
-        values = raw.view(dtype=self.format)[0]
-        values[0] = 0x296
-        paragraphs = self.image_size / 16
-        parshigh, pars = divmod(paragraphs, 256*256)
-        values[1] = pars
-        values[2] = self.sector_size
-        values[3] = parshigh
-        values[4] = self.crc
-        values[5] = self.unused
-        values[6] = self.flags
-        return raw
-
-    def check_size(self, size):
-        if size == 92160 or size == 92176:
-            self.image_size = 92160
-            self.sector_size = 128
-            self.initial_sector_size = 0
-            self.num_initial_sectors = 0
-        elif size == 184320 or size == 184336:
-            self.image_size = 184320
-            self.sector_size = 256
-            self.initial_sector_size = 0
-            self.num_initial_sectors = 0
-        elif size == 183936 or size == 183952:
-            self.image_size = 183936
-            self.sector_size = 256
-            self.initial_sector_size = 128
-            self.num_initial_sectors = 3
-        else:
-            self.image_size = size
-        self.first_vtoc = 360
-        self.num_vtoc = 1
-        self.first_directory = 361
-        self.num_directory = 8
-        self.tracks_per_disk = 40
-        self.sectors_per_track = 18
-        initial_bytes = self.initial_sector_size * self.num_initial_sectors
-        self.max_sectors = ((self.image_size - initial_bytes) / self.sector_size) + self.num_initial_sectors
-    
-    def get_pos(self, sector):
-        if not self.sector_is_valid(sector):
-            raise ByteNotInFile166("Sector %d out of range" % sector)
-        if sector <= self.num_initial_sectors:
-            pos = self.num_initial_sectors * (sector - 1)
-            size = self.initial_sector_size
-        else:
-            pos = self.num_initial_sectors * self.initial_sector_size + (sector - 1 - self.num_initial_sectors) * self.sector_size
-            size = self.sector_size
-        pos += self.header_offset
-        return pos, size
-
-
-class XfdHeader(AtrHeader):
-    file_format = "XFD"
-    
-    def __str__(self):
-        return "%s Disk Image (size=%d (%dx%db)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size)
-    
-    def __len__(self):
-        return 0
-    
-    def to_array(self):
-        raw = np.zeros([0], dtype=np.uint8)
-        return raw
-
-    def strict_check(self, image):
-        size = len(image)
-        if size in [92160, 133120, 183936, 184320]:
-            return
-        raise InvalidDiskImage("Uncommon size of XFD file")
-
-
 class DiskImageBase(object):
     def __init__(self, rawdata, filename=""):
         self.rawdata = rawdata
@@ -273,22 +162,12 @@ class DiskImageBase(object):
     
     @classmethod
     def new_header(cls, diskimage, format="ATR"):
-        if format.lower() == "atr":
-            header = AtrHeader(create=True)
-            header.check_size(diskimage.size)
-        else:
-            raise RuntimeError("Unknown header type %s" % format)
-        return header
+        raise NotImplementedError
     
     def as_new_format(self, format="ATR"):
         """ Create a new disk image in the specified format
         """
-        first_data = len(self.header)
-        raw = self.rawdata[first_data:]
-        data = add_atr_header(raw)
-        newraw = SegmentData(data)
-        image = self.__class__(newraw)
-        return image
+        raise NotImplementedError
     
     def save(self, filename=""):
         if not filename:
@@ -310,11 +189,7 @@ class DiskImageBase(object):
             raise InvalidDiskImage("Invalid directory entries; may be boot disk")
     
     def read_header(self):
-        bytes = self.bytes[0:16]
-        try:
-            self.header = AtrHeader(bytes)
-        except InvalidAtrHeader:
-            self.header = XfdHeader()
+        raise NotImplementedError
     
     def check_size(self):
         pass
@@ -461,7 +336,7 @@ class DiskImageBase(object):
             data = to_numpy(data)
             sector_list = self.sector_builder_class(self.header, self.payload_bytes_per_sector, data, self.writeable_sector_class)
             vtoc_segments = self.get_vtoc_segments()
-            vtoc = self.vtoc_class(self.bytes_per_sector, vtoc_segments)
+            vtoc = self.vtoc_class(self.header, vtoc_segments)
             directory.save_dirent(self, dirent, vtoc, sector_list)
             self.write_sector_list(sector_list)
             self.write_sector_list(vtoc)
@@ -476,7 +351,7 @@ class DiskImageBase(object):
     def write_sector_list(self, sector_list):
         for sector in sector_list:
             pos, size = self.header.get_pos(sector.sector_num)
-            log.debug("writing: %s" % sector)
+            log.debug("writing: %s at %d" % (sector, pos))
             self.bytes[pos:pos + size] = sector.data
 
     def delete_file(self, filename):
@@ -527,12 +402,3 @@ class BootDiskImage(DiskImageBase):
             raise InvalidDiskImage("Number of boot sectors out of range")
         if bload < 0x200 or bload > (0xc000 - (nsec * self.header.sector_size)):
             raise InvalidDiskImage("Bad boot load address")
-
-def add_atr_header(bytes):
-    header = AtrHeader(create=True)
-    header.check_size(len(bytes))
-    hlen = len(header)
-    data = np.empty([hlen + len(bytes)], dtype=np.uint8)
-    data[0:hlen] = header.to_array()
-    data[hlen:] = bytes
-    return data

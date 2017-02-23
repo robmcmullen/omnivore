@@ -8,9 +8,9 @@ except ImportError:
     raise RuntimeError("atrcopy %s requires numpy" % __version__)
 
 from errors import *
-from ataridos import AtariDosDiskImage, AtariDosFile, get_xex
+from ataridos import AtrHeader, AtariDosDiskImage, AtariDosFile, get_xex, add_atr_header
 from dos33 import Dos33DiskImage
-from diskimages import AtrHeader, BootDiskImage, add_atr_header
+from diskimages import BootDiskImage
 from kboot import KBootImage, add_xexboot_header
 from segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, user_bit_mask, match_bit_mask, comment_bit_mask, data_style, selected_bit_mask, diff_bit_mask, not_user_bit_mask, interleave_segments
 from spartados import SpartaDosDiskImage
