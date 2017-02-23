@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 class Dos33VTOC(VTOC):
     max_tracks = (256 - 0x38) / 4  # 50, but kept here in case sector size changed
     max_sectors = max_tracks * 16
-        reorder_index = np.tile(np.arange(7, -1, -1), max_tracks * 2) + (np.repeat(np.arange(max_tracks * 2), 8) * 8)
+    vtoc_bit_reorder_index = np.tile(np.arange(15, -1, -1), max_tracks) + (np.repeat(np.arange(max_tracks), 16) * 16)
 
     def parse_segments(self, segments):
         # VTOC stored in groups of 4 bytes starting at 0x38
@@ -35,40 +35,41 @@ class Dos33VTOC(VTOC):
         # i.e. each group of 16 bits needs to be reversed.
         self.vtoc = segments[0].data
 
-        # create a view using little-endian 16 bit values, skipping every other
-        # 16 bit value. This gets us 76543210FEDCBA98 76543210FEDCBA98 ... etc
-        expanded = self.vtoc[0x38:].view(dtype="<u2")
-        used = expanded[0::2]
+        # create a view starting at 0x38 where out of every 4 bytes, the first
+        # two are used and the second 2 are skipped. Regular slicing doesn't
+        # work like this, so thanks to stackoverflow.com/questions/33801170,
+        # reshaping it to a 2d array with 4 elements in each row, doing a slice
+        # *there* to skip the last 2 entries in each row, then flattening it
+        # gives us what we need.
+        usedbytes = self.vtoc[0x38:].reshape((-1, 4))[:,:2].flatten()
 
-        # need to operate on a copy of the 16 bit values, because skipping
-        # every 2 and attempting to view as bytes results in a ValueError: "new
-        # type not compatible with array"
-        usedcopy = np.zeros([used.shape[0]], dtype="<u2")
-        usedcopy[:] = used
-        print repr(usedcopy)
-
-        # now convert to bytes, giving us 76543210 FEDCBA98 76543210 FEDCBA98
-        # ... etc, and unpack that to bits giving us a zero or one representing
-        # sectors 7 6 5 4 3 2 1 0 F E D ...
-        usedbytes = usedcopy.view(dtype=np.uint8)
+        # The bits here are still ordered backwards for each track, e.g. F E D
+        # C B A 9 8 7 6 5 4 3 2 1 0
         bits = np.unpackbits(usedbytes)
 
-        # and now we need to reverse the order of each group of 8 numbers
-        self.sector_map[0:self.max_sectors] = bits[reorder_index]
+        # so we need to reorder them using numpy's indexing before stuffing
+        # them into the sector map
+        self.sector_map[0:self.max_sectors] = bits[self.vtoc_bit_reorder_index]
         log.debug("vtoc before: %s" % self.sector_map[0:35*16])
 
     def calc_bitmap(self):
         log.debug("vtoc after: %s" % self.sector_map[0:35*16])
 
-        # bits inside bytes will be in the right order after this, but the
-        # bytes are still swapped and there are no gaps
-        packed = np.packbits(self.sector_map[self.reorder_index])
-        print packed
+        # reverse the process from above, so swap the order of every 16 bits,
+        # turn them into bytes, then stuff them back into the vtoc. The bit
+        # reorder list is commutative, so we don't need another order here.
+        packed = np.packbits(self.sector_map[self.vtoc_bit_reorder_index])
+        vtoc = self.vtoc[0x38:].reshape((-1, 4))
+        print vtoc
+        packed = packed.reshape((-1, 2))
+        vtoc[:,:2] = packed[:,:]
+
+        print vtoc
 
         # FIXME
-        self.vtoc[0x38:] = packed
-        s = WriteableSector(self.bytes_per_sector, self.vtoc1)
-        s.sector_num = 360
+        self.vtoc[0x38:] = vtoc.flatten()
+        s = WriteableSector(self.bytes_per_sector, self.vtoc)
+        s.sector_num = 17 * 16
         self.sectors.append(s)
 
 
