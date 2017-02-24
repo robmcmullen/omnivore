@@ -91,6 +91,7 @@ class DiskImageBase(object):
         self.files = [] # all dirents that show up in a normal dir listing
         self.segments = []
         self.all_sane = True
+        self.default_filetype = ""
         self.setup()
 
     def __len__(self):

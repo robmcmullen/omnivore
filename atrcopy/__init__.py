@@ -45,21 +45,118 @@ def process(image, dirent, options):
     else:
         print dirent
 
+def find_diskimage(filename):
+    with open(filename, "rb") as fh:
+        if options.verbose:
+            print "Loading file %s" % filename
+        rawdata = SegmentData(fh.read())
+        parser = None
+        for mime in mime_parse_order:
+            if options.verbose:
+                print "Trying MIME type %s" % mime
+            parser = guess_parser_for_mime(mime, rawdata, options.verbose)
+            if parser is None:
+                continue
+            if options.verbose:
+                print "Found parser %s" % parser.menu_name
+            print "%s: %s" % (filename, parser.image)
+            break
+        if parser is None:
+            print "%s: Unknown disk image type" % filename
+    parser.image.filename = filename
+    parser.image.ext = ""
+    return parser
+
+def extract_all(image):
+    if image.files or options.force:
+        for dirent in image.files:
+            try:
+                process(image, dirent)
+            except FileNumberMismatchError164:
+                print "Error 164: %s" % str(dirent)
+            except ByteNotInFile166:
+                print "Invalid sector for: %s" % str(dirent)
+
+def extract_files(image, files):
+    for name in files:
+        try:
+            dirent = image.find_dirent(name)
+        except FileNotFound:
+            print "%s not in %s" % (name, image)
+            continue
+        print "extracting %s" % name
+        if not options.dry_run:
+            data = image.get_file(dirent)
+            with open(name, "wb") as fh:
+                fh.write(data)
+
+def add_files(image, files):
+    filetype = options.filetype
+    if not filetype:
+        filetype = image.default_filetype
+    changed = False
+    for name in files:
+        try:
+            dirent = image.find_dirent(name)
+            if options.force:
+                image.delete_file(name)
+            else:
+                print "skipping %s, use -f to overwrite" % (name)
+                continue
+        except FileNotFound:
+            pass
+        print "copying %s to %s" % (name, image)
+        if not options.dry_run:
+            with open(name, "rb") as fh:
+                data = fh.read()
+            image.write_file(name, filetype, data)
+            changed = True
+    if changed:
+        image.save()
+
+def remove_files(image, files):
+    changed = False
+    for name in files:
+        try:
+            dirent = image.find_dirent(name)
+        except FileNotFound:
+            print "%s not in %s" % (name, image)
+            continue
+        print "removing %s from %s" % (name, image)
+        if not options.dry_run:
+            image.delete_file(name)
+            changed = True
+    if changed:
+        image.save()
+
+def list_files(image, files):
+    files = set(files)
+    for dirent in image.files:
+        if not files or dirent.filename in files:
+            print dirent
+
+
 def run():
     import sys
     import argparse
+
+    global options
     
-    parser = argparse.ArgumentParser(description="Extract images off ATR format disks")
+    parser = argparse.ArgumentParser(description="Manipulate files on several types of 8-bit computer disk images")
     parser.add_argument("-v", "--verbose", default=0, action="count")
     parser.add_argument("-d", "--debug", action="store_true", default=False, help="debug the currently under-development parser")
     parser.add_argument("-l", "--lower", action="store_true", default=False, help="convert filenames to lower case")
     parser.add_argument("--dry-run", action="store_true", default=False, help="don't extract, just show what would have been extracted")
     parser.add_argument("-n", "--no-sys", action="store_true", default=False, help="only extract things that look like games (no DOS or .SYS files)")
-    parser.add_argument("-x", "--extract", action="store_true", default=False, help="extract files")
+    parser.add_argument("--all", action="store_true", default=False, help="extract all files")
     parser.add_argument("--xex", action="store_true", default=False, help="add .xex extension")
-    parser.add_argument("-f", "--force", action="store_true", default=False, help="force operation on disk images that have bad directory entries or look like boot disks")
-    parser.add_argument("files", metavar="ATR", nargs="+", help="an ATR image file [or a list of them]")
+    parser.add_argument("-f", "--force", action="store_true", default=False, help="force operation, allowing file overwrites and operation on non-standard disk images")
+    parser.add_argument("files", metavar="IMAGE", nargs="+", help="a disk image file [or a list of them]")
     parser.add_argument("-s", "--segments", action="store_true", default=False, help="display segments")
+    parser.add_argument("-x", "-e", "--extract", action="store_true", default=False, help="extract named files")
+    parser.add_argument("-a", "--add", action="store_true", default=False, help="add files to image")
+    parser.add_argument("-r", "--remove", action="store_true", default=False, help="remove named files from image")
+    parser.add_argument("-t", "--filetype", action="store", default="", help="file type metadata for writing to disk images that require it")
     options, extra_args = parser.parse_known_args()
 
     # Turn off debug messages by default
@@ -69,31 +166,24 @@ def run():
     else:
         log.setLevel(logging.INFO)
     
+    file_list = []
+    if options.add or options.extract or options.remove:
+        image = options.files.pop()
+        file_list = options.files
+        options.files = [image]
+
     for filename in options.files:
-        with open(filename, "rb") as fh:
-            if options.verbose:
-                print "Loading file %s" % filename
-            rawdata = SegmentData(fh.read())
-            parser = None
-            for mime in mime_parse_order:
-                if options.verbose:
-                    print "Trying MIME type %s" % mime
-                parser = guess_parser_for_mime(mime, rawdata, options.verbose)
-                if parser is None:
-                    continue
-                if options.verbose:
-                    print "Found parser %s" % parser.menu_name
-                print "%s: %s" % (filename, parser.image)
-                if options.segments:
-                    print "\n".join([str(a) for a in parser.segments])
-                elif parser.image.files or options.force:
-                    for dirent in parser.image.files:
-                        try:
-                            process(parser.image, dirent, options)
-                        except FileNumberMismatchError164:
-                            print "Error 164: %s" % str(dirent)
-                        except ByteNotInFile166:
-                            print "Invalid sector for: %s" % str(dirent)
-                break
-            if parser is None:
-                print "%s: Unknown file type" % filename
+        parser = find_diskimage(filename)
+        if parser and parser.image:
+            if options.all:
+                extract_all(parser.image)
+            elif options.segments:
+                print "\n".join([str(a) for a in parser.segments])
+            elif options.add:
+                add_files(parser.image, file_list)
+            elif options.extract:
+                extract_files(parser.image, file_list)
+            elif options.remove:
+                remove_files(parser.image, file_list)
+            else:
+                list_files(parser.image, file_list)

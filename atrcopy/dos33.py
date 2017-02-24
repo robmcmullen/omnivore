@@ -357,6 +357,7 @@ class Dos33Header(BaseHeader):
 class Dos33DiskImage(DiskImageBase):
     def __init__(self, rawdata, filename=""):
         DiskImageBase.__init__(self, rawdata, filename)
+        self.default_filetype = "B"
 
     def __str__(self):
         return str(self.header)
