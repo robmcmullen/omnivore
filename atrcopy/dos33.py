@@ -102,11 +102,8 @@ class Dos33VTOC(VTOC):
         # reorder list is commutative, so we don't need another order here.
         packed = np.packbits(self.sector_map[self.vtoc_bit_reorder_index])
         vtoc = self.vtoc[0x38:].reshape((-1, 4))
-        print vtoc
         packed = packed.reshape((-1, 2))
         vtoc[:,:2] = packed[:,:]
-
-        print vtoc
 
         # FIXME
         self.vtoc[0x38:] = vtoc.flatten()
@@ -187,11 +184,15 @@ class Dos33Dirent(object):
     }
 
     def summary(self):
-        locked = "*" if self.locked else " "
-        try:
-            file_type = self.type_map[self.file_type]
-        except KeyError:
-            file_type = "?"
+        if self.deleted:
+            locked = "D"
+            file_type = " "
+        else:
+            locked = "*" if self.locked else " "
+            try:
+                file_type = self.type_map[self.file_type]
+            except KeyError:
+                file_type = "?"
         flag = "%s%s" % (locked, file_type)
         return flag
     
@@ -227,12 +228,14 @@ class Dos33Dirent(object):
     def encode_dirent(self):
         data = np.zeros([self.format.itemsize], dtype=np.uint8)
         values = data.view(dtype=self.format)[0]
-        values[0] = self.track
+        values[0] = 0xff if self.deleted else self.track
         values[1] = self.sector
         values[2] = self.flag
         n = min(len(self.filename), 30)
         data[3:3+n] = np.fromstring(self.filename, dtype=np.uint8) | 0x80
         data[3+n:] = ord(' ') | 0x80
+        if self.deleted:
+            data[0x20] = self.track
         values[4] = self.num_sectors
         return data
 
@@ -283,7 +286,7 @@ class Dos33Dirent(object):
             sector_map.extend(sector.get_tslist())
             tslist.append(sector)
             sector_num = sector.next_sector_num
-        self.sector_map = sector_map
+        self.sector_map = sector_map[0:self.num_sectors - len(tslist)]
         self.track_sector_list = tslist
     
     def get_sectors_in_vtoc(self, image):
@@ -304,11 +307,11 @@ class Dos33Dirent(object):
         self.current_read = self.num_sectors
     
     def read_sector(self, image):
-        log.debug("read_sector: index=%d in %s" % (self.current_sector_index, str(self)))
         try:
             sector = self.sector_map[self.current_sector_index]
         except IndexError:
-            sector = -1
+            sector = -1  # force ByteNotInFile166 error at next read
+        log.debug("read_sector: index %d=%d in %s" % (self.current_sector_index,sector, str(self)))
         last = (self.current_sector_index == len(self.sector_map) - 1)
         raw, pos, size = image.get_raw_bytes(sector)
         bytes, num_data_bytes = self.process_raw_sector(image, raw)
@@ -438,7 +441,7 @@ class Dos33DiskImage(DiskImageBase):
                 if not dirent.is_sane:
                     print "not sane: %s" % dirent
                     self.all_sane = False
-                else:
+                elif not dirent.deleted:
                     files.append(dirent)
                 if directory is not None:
                     directory.set(num, dirent)

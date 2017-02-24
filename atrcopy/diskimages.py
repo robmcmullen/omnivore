@@ -330,7 +330,6 @@ class DiskImageBase(object):
             self.write_sector_list(sector_list)
             self.write_sector_list(vtoc)
             self.write_sector_list(directory)
-            self.get_metadata()
         except AtrError:
             self.rollback_transaction(state)
             raise
@@ -366,7 +365,6 @@ class DiskImageBase(object):
             directory.remove_dirent(self, dirent, vtoc, sector_list)
             self.write_sector_list(vtoc)
             self.write_sector_list(directory)
-            self.get_metadata()
         except AtrError:
             self.rollback_transaction(state)
             raise
