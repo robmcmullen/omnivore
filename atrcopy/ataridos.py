@@ -154,6 +154,11 @@ class AtariDosDirent(object):
     def update_sector_info(self, sector_list):
         self.num_sectors = sector_list.num_sectors
         self.starting_sector = sector_list.first_sector
+
+    def add_metadata_sectors(self, vtoc, sector_list, header):
+        # no extra sectors are needed for an Atari DOS file; the links to the
+        # next sector is contained in the sector.
+        pass
     
     def sanity_check(self, image):
         if not self.in_use:
@@ -367,6 +372,7 @@ class AtrHeader(BaseHeader):
         self.num_directory = 8
         self.tracks_per_disk = 40
         self.sectors_per_track = 18
+        self.payload_bytes = self.sector_size - 3
         initial_bytes = self.initial_sector_size * self.num_initial_sectors
         self.max_sectors = ((self.image_size - initial_bytes) / self.sector_size) + self.num_initial_sectors
     
@@ -410,14 +416,6 @@ class AtariDosDiskImage(DiskImageBase):
         self.vtoc2 = 0
         self.first_data_after_vtoc = 369
         DiskImageBase.__init__(self, *args, **kwargs)
-    
-    @property
-    def bytes_per_sector(self):
-        return self.header.sector_size
-
-    @property
-    def payload_bytes_per_sector(self):
-        return self.header.sector_size - 3
 
     @property
     def writeable_sector_class(self):

@@ -1,11 +1,40 @@
 import numpy as np
 
 from errors import *
-from diskimages import BaseHeader, DiskImageBase, Directory, VTOC, WriteableSector, BaseSectorList, SectorBuilder
+from diskimages import BaseHeader, DiskImageBase, Directory, VTOC, WriteableSector, BaseSectorList
 from segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver
 
 import logging
 log = logging.getLogger(__name__)
+
+
+class Dos33TSSector(WriteableSector):
+    def __init__(self, header, sector_list, start, end):
+        WriteableSector.__init__(self, header.sector_size)
+        self.header = header
+        self.used = header.sector_size
+        self.set_tslist(sector_list, start, end)
+
+    def set_tslist(self, sector_list, start, end):
+        index = 0xc
+        for i in range(start, end):
+            sector = sector_list[i]
+            t, s = self.header.track_from_sector(sector.sector_num)
+            self.data[index] = t
+            self.data[index + 1] = s
+            log.debug("tslist entry #%d: %d, %d" % (index, t, s))
+            index += 2
+
+    @property
+    def next_sector_num(self):
+        return self._next_sector_num
+
+    @next_sector_num.setter
+    def next_sector_num(self, value):
+        self._next_sector_num = value
+        t, s = self.header.track_from_sector(value)
+        self.data[1] = t
+        self.data[2] = s
 
 
 class Dos33VTOC(VTOC):
@@ -199,6 +228,22 @@ class Dos33Dirent(object):
     def update_sector_info(self, sector_list):
         self.num_sectors = sector_list.num_sectors
         self.starting_sector = sector_list.first_sector
+
+    def add_metadata_sectors(self, vtoc, sector_list, header):
+        """Add track/sector list
+        """
+        tslist = BaseSectorList(header.sector_size)
+        for start in range(0, len(sector_list), header.ts_pairs):
+            end = min(start + header.ts_pairs, len(sector_list))
+            log.debug("ts: %d-%d" % (start, end))
+            s = Dos33TSSector(header, sector_list, start, end)
+            s.ts_start, s.ts_end = start, end
+            tslist.append(s)
+        self.num_tslists = len(tslist)
+        vtoc.assign_sector_numbers(self, tslist)
+        sector_list.extend(tslist)
+        self.track, self.sector = header.track_from_sector(tslist[0].sector_num)
+        log.debug("track/sector lists:\n%s" % str(tslist))
     
     def sanity_check(self, image):
         if self.deleted:
@@ -279,14 +324,6 @@ class Dos33Dirent(object):
         self.deleted = False
 
 
-class Dos33SectorBuilder(SectorBuilder):
-    def calc_extra_sectors(self):
-        """Add track/sector list
-        """
-        for ts_group_start in range(0, len(self), self.header.ts_pairs):
-            print ts_group_start
-
-
 class Dos33Header(BaseHeader):
     file_format = "DOS 3.3"
 
@@ -320,14 +357,6 @@ class Dos33DiskImage(DiskImageBase):
         self.header = Dos33Header()
 
     @property
-    def sector_size(self):
-        return 256
-
-    @property
-    def payload_sector_size(self):
-        return 256
-
-    @property
     def vtoc_class(self):
         return Dos33VTOC
 
@@ -338,10 +367,6 @@ class Dos33DiskImage(DiskImageBase):
     @property
     def raw_sector_class(self):
         return RawTrackSectorSegment
-
-    @property
-    def sector_builder_class(self):
-        return Dos33SectorBuilder
 
     def get_boot_sector_info(self):
         # based on logic from a2server
@@ -406,6 +431,7 @@ class Dos33DiskImage(DiskImageBase):
                 if dirent.flag == 0:
                     break
                 if not dirent.is_sane:
+                    print "not sane: %s" % dirent
                     self.all_sane = False
                 else:
                     files.append(dirent)

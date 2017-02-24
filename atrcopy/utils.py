@@ -2,6 +2,8 @@ import types
 
 import numpy as np
 
+from errors import *
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -79,6 +81,9 @@ class BaseSectorList(object):
     def __len__(self):
         return len(self.sectors)
 
+    def __str__(self):
+        return "\n".join(" %d: %s" % (i, str(s)) for i, s in enumerate(self))
+
     def __getitem__(self, index):
         if index < 0 or index >= len(self):
             raise IndexError
@@ -94,8 +99,18 @@ class BaseSectorList(object):
             return self.sectors[0].sector_num
         return -1
 
+    @property
+    def bytes_used(self):
+        size = 0
+        for s in self:
+            size += s.used
+        return size
+
     def append(self, sector):
         self.sectors.append(sector)
+
+    def extend(self, sectors):
+        self.sectors.extend(sectors)
 
 
 class Directory(BaseSectorList):
@@ -138,33 +153,10 @@ class Directory(BaseSectorList):
         raise FileNotFound("%s not found on disk" % filename)
 
     def save_dirent(self, image, dirent, vtoc, sector_list):
-        self.place_sector_list(dirent, vtoc, sector_list)
+        vtoc.assign_sector_numbers(dirent, sector_list)
+        dirent.add_metadata_sectors(vtoc, sector_list, image.header)
         dirent.update_sector_info(sector_list)
         self.calc_sectors(image)
-
-    def place_sector_list(self, dirent, vtoc, sector_list):
-        """ Map out the sectors and link the sectors together
-
-        raises NotEnoughSpaceOnDisk if the whole file won't fit. It will not
-        allow partial writes.
-        """
-        sector_list.calc_extra_sectors()
-        num = len(sector_list)
-        order = vtoc.reserve_space(num)
-        if len(order) != num:
-            raise InvalidFile("VTOC reserved space for %d sectors. Sectors needed: %d" % (len(order), num))
-        file_length = 0
-        last_sector = None
-        for sector, sector_num in zip(sector_list.sectors, order):
-            sector.sector_num = sector_num
-            sector.file_num = dirent.file_num
-            file_length += sector.used
-            if last_sector is not None:
-                last_sector.next_sector_num = sector_num
-            last_sector = sector
-        if last_sector is not None:
-            last_sector.next_sector_num = 0
-        sector_list.file_length = file_length
 
     def remove_dirent(self, image, dirent, vtoc, sector_list):
         vtoc.free_sector_list(sector_list)
@@ -235,6 +227,29 @@ class VTOC(BaseSectorList):
     def parse_segments(self, segments):
         raise NotImplementedError
 
+    def assign_sector_numbers(self, dirent, sector_list):
+        """ Map out the sectors and link the sectors together
+
+        raises NotEnoughSpaceOnDisk if the whole file won't fit. It will not
+        allow partial writes.
+        """
+        num = len(sector_list)
+        order = self.reserve_space(num)
+        if len(order) != num:
+            raise InvalidFile("VTOC reserved space for %d sectors. Sectors needed: %d" % (len(order), num))
+        file_length = 0
+        last_sector = None
+        for sector, sector_num in zip(sector_list.sectors, order):
+            sector.sector_num = sector_num
+            sector.file_num = dirent.file_num
+            file_length += sector.used
+            if last_sector is not None:
+                last_sector.next_sector_num = sector_num
+            last_sector = sector
+        if last_sector is not None:
+            last_sector.next_sector_num = 0
+        sector_list.file_length = file_length
+
     def reserve_space(self, num):
         order = []
         for i in range(num):
@@ -258,32 +273,3 @@ class VTOC(BaseSectorList):
     def free_sector_list(self, sector_list):
         for sector in sector_list:
             self.sector_map[sector.sector_num] = 1
-
-
-class SectorBuilder(BaseSectorList):
-    def __init__(self, header, usable, data, sector_class):
-        BaseSectorList.__init__(self, header.sector_size)
-        self.data = to_numpy(data)
-        self.usable_bytes = usable
-        self.split_into_sectors(header)
-        self.file_length = -1
-
-    def split_into_sectors(self, header):
-        index = 0
-        while index < len(self.data):
-            count = min(self.usable_bytes, len(self.data) - index)
-            sector = header.create_sector(self.data[index:index + count])
-            self.sectors.append(sector)
-            index += count
-
-
-    def calc_extra_sectors(self):
-        """ Add extra sectors to the list.
-
-        For example, DOS 3.3 uses a track/sector list at the beginning
-        of the file
-
-        Sectors will have their sector assignments when this function is
-        called.
-        """
-        pass

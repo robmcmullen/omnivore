@@ -15,6 +15,7 @@ class BaseHeader(object):
     def __init__(self, sector_size=256, initial_sectors=0, vtoc_sector=0, starting_sector_label=0):
         self.image_size = 0
         self.sector_size = sector_size
+        self.payload_bytes = sector_size
         self.initial_sector_size = 0
         self.num_initial_sectors = 0
         self.crc = 0
@@ -96,14 +97,6 @@ class DiskImageBase(object):
         return len(self.rawdata)
 
     @property
-    def bytes_per_sector(self):
-        raise NotImplementedError
-
-    @property
-    def payload_bytes_per_sector(self):
-        raise NotImplementedError
-
-    @property
     def writeable_sector_class(self):
         return WriteableSector
 
@@ -118,10 +111,6 @@ class DiskImageBase(object):
     @property
     def directory_class(self):
         return Directory
-
-    @property
-    def sector_builder_class(self):
-        return SectorBuilder
     
     def set_filename(self, filename):
         if "." in filename:
@@ -334,7 +323,7 @@ class DiskImageBase(object):
             self.get_directory(directory)
             dirent = directory.add_dirent(filename, filetype)
             data = to_numpy(data)
-            sector_list = self.sector_builder_class(self.header, self.payload_bytes_per_sector, data, self.writeable_sector_class)
+            sector_list = self.build_sectors(data)
             vtoc_segments = self.get_vtoc_segments()
             vtoc = self.vtoc_class(self.header, vtoc_segments)
             directory.save_dirent(self, dirent, vtoc, sector_list)
@@ -347,6 +336,17 @@ class DiskImageBase(object):
             raise
         finally:
             self.get_metadata()
+
+    def build_sectors(self, data):
+        data = to_numpy(data)
+        sectors = BaseSectorList(self.header.sector_size)
+        index = 0
+        while index < len(data):
+            count = min(self.header.payload_bytes, len(data) - index)
+            sector = self.header.create_sector(data[index:index + count])
+            sectors.append(sector)
+            index += count
+        return sectors
 
     def write_sector_list(self, sector_list):
         for sector in sector_list:
