@@ -24,16 +24,16 @@ class BaseFilesystemModifyTest(object):
             filename = "%s%d.BIN" % (prefix, count)
             self.image.write_file(filename, None, data)
             assert len(self.image.files) == orig_num_files + count
-            data2 = self.image.find_file(filename)
-            assert data.tostring() == data2
+            data2 = np.fromstring(self.image.find_file(filename), dtype=np.uint8)
+            assert np.array_equal(data, data2[0:len(data)])
             count += 1
 
         # loop over them again to make sure data wasn't overwritten
         count = 1
         for data in entries:
             filename = "%s%d.BIN" % (prefix, count)
-            data2 = self.image.find_file(filename)
-            assert data.tostring() == data2
+            data2 = np.fromstring(self.image.find_file(filename), dtype=np.uint8)
+            assert np.array_equal(data, data2[0:len(data)])
             count += 1
             filenames.append(filename)
 
@@ -49,8 +49,8 @@ class BaseFilesystemModifyTest(object):
         self.image.write_file("TEST.XEX", None, data)
         assert len(self.image.files) == self.num_files_in_sample + 1
 
-        data2 = self.image.find_file("TEST.XEX")
-        assert data.tostring() == data2
+        data2 = np.fromstring(self.image.find_file("TEST.XEX"), dtype=np.uint8)
+        assert np.array_equal(data, data2[0:len(data)])
 
     def test_50k(self):
         assert len(self.image.files) == self.num_files_in_sample
@@ -118,10 +118,10 @@ class BaseFilesystemModifyTest(object):
         filename = self.check_entries(entries2, "SECOND", save="test_delete.atr")
         assert len(self.image.files) == self.num_files_in_sample + 9
 
-# class TestAtariDosSDImage(BaseFilesystemModifyTest):
-#     diskimage_type = AtariDosDiskImage
-#     sample_file = "../test_data/dos_sd_test1.atr"
-#     num_files_in_sample = 5
+class TestAtariDosSDImage(BaseFilesystemModifyTest):
+    diskimage_type = AtariDosDiskImage
+    sample_file = "../test_data/dos_sd_test1.atr"
+    num_files_in_sample = 5
 
 class TestDos33Image(BaseFilesystemModifyTest):
     diskimage_type = Dos33DiskImage
