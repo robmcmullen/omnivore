@@ -118,6 +118,25 @@ class BaseFilesystemModifyTest(object):
         filename = self.check_entries(entries2, "SECOND", save="test_delete.atr")
         assert len(self.image.files) == self.num_files_in_sample + 9
 
+    def test_delete_all(self):
+        entries1 = [
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(3*1024, dtype=np.uint8),
+            np.arange(10*1024, dtype=np.uint8),
+            np.arange(11*1024, dtype=np.uint8),
+            np.arange(12*1024, dtype=np.uint8),
+        ]
+        for dirent in self.image.files:
+            self.image.delete_file(dirent.filename)
+        assert len(self.image.files) == 0
+
 class TestAtariDosSDImage(BaseFilesystemModifyTest):
     diskimage_type = AtariDosDiskImage
     sample_file = "../test_data/dos_sd_test1.atr"
