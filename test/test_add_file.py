@@ -104,7 +104,7 @@ class BaseFilesystemModifyTest(object):
             ]
         entries2 = [
             np.arange(10*1024, dtype=np.uint8),
-            np.arange(11*1024, dtype=np.uint8),
+            np.arange(5*1024, dtype=np.uint8),
         ]
         
         filenames = self.check_entries(entries1, "FIRST")
