@@ -642,7 +642,6 @@ class DefaultSegment(object):
         """Get a list of comments at specified indexes"""
         s = self.style[indexes]
         has_comments = np.where(s & comment_bit_mask > 0)[0]
-        print "has_comments", has_comments
         comments = []
         for where_index in has_comments:
             raw = self.get_raw_index(indexes[where_index])
@@ -657,7 +656,6 @@ class DefaultSegment(object):
         """
         s = self.style[indexes]
         has_comments = np.where(s & comment_bit_mask > 0)[0]
-        print "has_comments", has_comments
         comments = []
         for where_index in has_comments:
             raw = self.get_raw_index(indexes[where_index])

@@ -280,7 +280,7 @@ class Dos33Dirent(object):
         sector_map = []
         while sector_num > 0:
             image.assert_valid_sector(sector_num)
-            print "reading track/sector list", sector_num
+            log.debug("reading track/sector list at %d for %s" % (sector_num, self))
             data, _ = image.get_sectors(sector_num)
             sector = Dos33TSSector(image.header, data=data)
             sector_map.extend(sector.get_tslist())
@@ -430,7 +430,7 @@ class Dos33DiskImage(DiskImageBase):
         files = []
         while sector > 0:
             self.assert_valid_sector(sector)
-            print "reading catalog sector", sector
+            log.debug("reading catalog sector: %d" % sector)
             values, style = self.get_sectors(sector)
             sector = self.header.sector_from_track(values[1], values[2])
             i = 0xb
@@ -439,13 +439,13 @@ class Dos33DiskImage(DiskImageBase):
                 if dirent.flag == 0:
                     break
                 if not dirent.is_sane:
-                    print "not sane: %s" % dirent
+                    log.warning("Illegally formatted directory entry %s" % dirent)
                     self.all_sane = False
                 elif not dirent.deleted:
                     files.append(dirent)
                 if directory is not None:
                     directory.set(num, dirent)
-                print dirent
+                log.debug("valid directory entry %s" % dirent)
                 i += 0x23
                 num += 1
         self.files = files
@@ -482,7 +482,7 @@ class Dos33DiskImage(DiskImageBase):
         sector = self.header.first_directory
         while sector > 0:
             self.assert_valid_sector(sector)
-            print "reading catalog sector", sector
+            log.debug("loading directory segment from catalog sector %d" % sector)
             raw, pos, size = self.get_raw_bytes(sector)
             byte_order.extend(range(pos, pos + size))
             sector = self.header.sector_from_track(raw[1], raw[2])
@@ -494,10 +494,10 @@ class Dos33DiskImage(DiskImageBase):
     def get_directory_sector_links(self, sector_num):
         if sector_num == -1:
             sector_num = self.header.first_directory
-        print "checking directory sector", sector_num
         self.assert_valid_sector(sector_num)
         raw, _, _ = self.get_raw_bytes(sector_num)
         next_sector = self.header.sector_from_track(raw[1], raw[2])
+        log.debug("checking catalog sector %d, next catalog sector: %d" % (sector_num, next_sector))
         if next_sector == 0:
             raise NoSpaceInDirectory("No space left in catalog")
         return sector_num, next_sector

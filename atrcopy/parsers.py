@@ -34,7 +34,6 @@ class SegmentParser(object):
         self.segments.extend(self.image.segments)
 
     def get_image(self, r):
-        print self.image_type
         return self.image_type(r)
 
     def check_image(self):
