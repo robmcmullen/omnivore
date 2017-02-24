@@ -92,10 +92,10 @@ class Dos33VTOC(VTOC):
         # so we need to reorder them using numpy's indexing before stuffing
         # them into the sector map
         self.sector_map[0:self.max_sectors] = bits[self.vtoc_bit_reorder_index]
-        log.debug("vtoc before: %s" % self.sector_map[0:35*16])
+        log.debug("vtoc before: %s (%d free)" % (self.sector_map[0:35*16], self.num_free_sectors))
 
     def calc_bitmap(self):
-        log.debug("vtoc after: %s" % self.sector_map[0:35*16])
+        log.debug("vtoc after: %s (%d free)" % (self.sector_map[0:35*16], self.num_free_sectors))
 
         # reverse the process from above, so swap the order of every 16 bits,
         # turn them into bytes, then stuff them back into the vtoc. The bit

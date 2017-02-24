@@ -224,6 +224,11 @@ class VTOC(BaseSectorList):
         if segments is not None:
             self.parse_segments(segments)
 
+    @property
+    def num_free_sectors(self):
+        free = np.where(self.sector_map == 1)[0]
+        return len(free)
+
     def parse_segments(self, segments):
         raise NotImplementedError
 
