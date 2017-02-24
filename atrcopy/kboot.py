@@ -41,6 +41,9 @@ class KBootImage(AtariDosDiskImage):
     def check_sane(self):
         if not self.all_sane:
             raise InvalidDiskImage("Doesn't seem to be KBoot header")
+
+    def get_vtoc(self):
+        pass
     
     def get_directory(self):
         dirent = KBootDirent(self)
