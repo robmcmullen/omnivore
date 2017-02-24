@@ -122,13 +122,15 @@ class Dos33Directory(Directory):
         return data
 
     def set_sector_numbers(self, image):
-        num = image.get_next_directory_sector(-1)
+        current_sector = -1
         for sector in self.sectors:
-            sector.sector_num = num
-            num = image.get_next_directory_sector(num)
-            t, s = image.header.track_from_sector(num)
+            current_sector, next_sector = image.get_directory_sector_links(current_sector)
+            sector.sector_num = current_sector
+            t, s = image.header.track_from_sector(next_sector)
             sector.data[1] = t
             sector.data[2] = s
+            log.debug("directory sector %d -> next = %d" % (sector.sector_num, next_sector))
+            current_sector = next_sector
 
 
 class Dos33Dirent(object):
@@ -483,16 +485,16 @@ class Dos33DiskImage(DiskImageBase):
         segments.append(segment)
         return segments
 
-    def get_next_directory_sector(self, sector):
-        if sector == -1:
-            sector = self.header.first_directory
-        print "reading catalog sector", sector
-        self.assert_valid_sector(sector)
-        raw, _, _ = self.get_raw_bytes(sector)
+    def get_directory_sector_links(self, sector_num):
+        if sector_num == -1:
+            sector_num = self.header.first_directory
+        print "checking directory sector", sector_num
+        self.assert_valid_sector(sector_num)
+        raw, _, _ = self.get_raw_bytes(sector_num)
         next_sector = self.header.sector_from_track(raw[1], raw[2])
         if next_sector == 0:
             raise NoSpaceInDirectory("No space left in catalog")
-        return next_sector
+        return sector_num, next_sector
     
     def get_file_segment(self, dirent):
         byte_order = []
