@@ -9,10 +9,10 @@ class KBootDirent(AtariDosDirent):
         AtariDosDirent.__init__(self, image)
         self.in_use = True
         self.starting_sector = 4
-        self.filename = image.filename
-        if not self.filename:
-            self.filename = "KBOOT"
-        if self.filename == self.filename.upper():
+        self.basename = image.filename
+        if not self.basename:
+            self.basename = "KBOOT"
+        if self.basename == self.basename.upper():
             self.ext = "XEX"
         else:
             self.ext = "xex"

@@ -511,12 +511,12 @@ class Dos33DiskImage(DiskImageBase):
             if last:
                 break
         if len(byte_order) > 0:
-            name = "%s %ds@%d" % (dirent.get_filename(), dirent.num_sectors, dirent.sector_map[0])
-            verbose_name = "%s (%d sectors, first@%d) %s" % (dirent.get_filename(), dirent.num_sectors, dirent.sector_map[0], dirent.verbose_info)
+            name = "%s %ds@%d" % (dirent.filename, dirent.num_sectors, dirent.sector_map[0])
+            verbose_name = "%s (%d sectors, first@%d) %s" % (dirent.filename, dirent.num_sectors, dirent.sector_map[0], dirent.verbose_info)
             raw = self.rawdata.get_indexed(byte_order)
             segment = DefaultSegment(raw, name=name, verbose_name=verbose_name)
         else:
-            segment = EmptySegment(self.rawdata, name=dirent.get_filename())
+            segment = EmptySegment(self.rawdata, name=dirent.filename)
         return segment
 
 

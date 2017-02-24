@@ -275,7 +275,7 @@ class DiskImageBase(object):
     
     def find_dirent(self, filename):
         for dirent in self.files:
-            if filename == dirent.get_filename():
+            if filename == dirent.filename:
                 return dirent
         raise FileNotFound("%s not found on disk" % filename)
     
@@ -296,7 +296,7 @@ class DiskImageBase(object):
             try:
                 segment = self.get_file_segment(dirent)
             except InvalidFile, e:
-                segment = EmptySegment(self.rawdata, name=dirent.get_filename(), error=str(e))
+                segment = EmptySegment(self.rawdata, name=dirent.filename, error=str(e))
             segments.append(segment)
         return segments
 

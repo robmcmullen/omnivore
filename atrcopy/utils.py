@@ -148,7 +148,7 @@ class Directory(BaseSectorList):
 
     def find_dirent(self, filename):
         for dirent in self.dirents.values():
-            if filename == dirent.get_filename():
+            if filename == dirent.filename:
                 return dirent
         raise FileNotFound("%s not found on disk" % filename)
 

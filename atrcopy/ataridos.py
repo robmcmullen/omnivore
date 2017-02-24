@@ -84,7 +84,7 @@ class AtariDosDirent(object):
         self.deleted = False
         self.num_sectors = 0
         self.starting_sector = 0
-        self.filename = ""
+        self.basename = ""
         self.ext = ""
         self.is_sane = True
         self.current_sector = 0
@@ -94,7 +94,12 @@ class AtariDosDirent(object):
     
     def __str__(self):
         flags = self.summary()
-        return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, flags, self.starting_sector, self.filename, self.ext, self.num_sectors)
+        return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, flags, self.starting_sector, self.basename, self.ext, self.num_sectors)
+
+    @property
+    def filename(self):
+        ext = ("." + self.ext) if self.ext else ""
+        return self.basename + ext
     
     def summary(self):
         output = "o" if self.opened_output else "."
@@ -132,7 +137,7 @@ class AtariDosDirent(object):
         self.deleted = (flag&0x80) > 0
         self.num_sectors = int(values[1])
         self.starting_sector = int(values[2])
-        self.filename = str(values[3]).rstrip()
+        self.basename = str(values[3]).rstrip()
         self.ext = str(values[4]).rstrip()
         self.is_sane = self.sanity_check(image)
 
@@ -143,7 +148,7 @@ class AtariDosDirent(object):
         values[0] = flag
         values[1] = self.num_sectors
         values[2] = self.starting_sector
-        values[3] = self.filename
+        values[3] = self.basename
         values[4] = self.ext
         return data
 
@@ -203,17 +208,13 @@ class AtariDosDirent(object):
         self.current_sector = next_sector
         num_bytes = raw[-1]
         return raw[0:num_bytes], num_bytes
-    
-    def get_filename(self):
-        ext = ("." + self.ext) if self.ext else ""
-        return self.filename + ext
 
     def set_values(self, filename, filetype, index):
         if "." in filename:
             filename, ext = filename.split(".", 1)
         else:
             ext = "   "
-        self.filename = "%-8s" % filename[0:8]
+        self.basename = "%-8s" % filename[0:8]
         self.ext = ext
         self.file_num = index
         self.dos_2 = True
@@ -591,12 +592,12 @@ class AtariDosDiskImage(DiskImageBase):
             if last:
                 break
         if len(byte_order) > 0:
-            name = "%s %ds@%d" % (dirent.get_filename(), dirent.num_sectors, dirent.starting_sector)
-            verbose_name = "%s (%d sectors, first@%d) %s" % (dirent.get_filename(), dirent.num_sectors, dirent.starting_sector, dirent.verbose_info)
+            name = "%s %ds@%d" % (dirent.filename, dirent.num_sectors, dirent.starting_sector)
+            verbose_name = "%s (%d sectors, first@%d) %s" % (dirent.filename, dirent.num_sectors, dirent.starting_sector, dirent.verbose_info)
             raw = self.rawdata.get_indexed(byte_order)
             segment = DefaultSegment(raw, name=name, verbose_name=verbose_name)
         else:
-            segment = EmptySegment(self.rawdata, name=dirent.get_filename())
+            segment = EmptySegment(self.rawdata, name=dirent.filename)
         return segment
     
     def get_file_segments(self):
