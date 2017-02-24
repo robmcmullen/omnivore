@@ -9,11 +9,12 @@ log = logging.getLogger(__name__)
 
 
 class Dos33TSSector(WriteableSector):
-    def __init__(self, header, sector_list, start, end):
-        WriteableSector.__init__(self, header.sector_size)
+    def __init__(self, header, sector_list=None, start=None, end=None, data=None):
+        WriteableSector.__init__(self, header.sector_size, data)
         self.header = header
         self.used = header.sector_size
-        self.set_tslist(sector_list, start, end)
+        if data is None:
+            self.set_tslist(sector_list, start, end)
 
     def set_tslist(self, sector_list, start, end):
         index = 0xc
@@ -25,9 +26,21 @@ class Dos33TSSector(WriteableSector):
             log.debug("tslist entry #%d: %d, %d" % (index, t, s))
             index += 2
 
+    def get_tslist(self):
+        index = 0xc
+        sector_list = []
+        while index < self.header.sector_size:
+            t = self.data[index]
+            s = self.data[index + 1]
+            sector_list.append(self.header.sector_from_track(t, s))
+            index += 2
+        return sector_list
+
     @property
     def next_sector_num(self):
-        return self._next_sector_num
+        t = self.data[1]
+        s = self.data[2]
+        return self.header.sector_from_track(t, s)
 
     @next_sector_num.setter
     def next_sector_num(self, value):
@@ -225,7 +238,6 @@ class Dos33Dirent(object):
 
     def mark_deleted(self):
         self.deleted = True
-        self.in_use = False
 
     def update_sector_info(self, sector_list):
         self.num_sectors = sector_list.num_sectors
@@ -260,37 +272,28 @@ class Dos33Dirent(object):
         return True
 
     def get_track_sector_list(self, image):
-        sector = image.header.sector_from_track(self.track, self.sector)
-        sector_list = []
-        while sector > 0:
-            image.assert_valid_sector(sector)
-            print "reading track/sector list", sector
-            values, style = image.get_sectors(sector)
-            sector = image.header.sector_from_track(values[1], values[2])
-            i = 0x0c
-            while i < 256:
-                t = values[i]
-                s = values[i + 1]
-                i += 2
-                if t == 0:
-                    sector = 0
-                    break
-                sector_list.append(image.header.sector_from_track(t, s))
-        self.sector_map = sector_list
-    
-    def get_sector_list(self, image):
-        sector_list = BaseSectorList(image.header.sector_size)
-        self.start_read(image)
+        tslist = BaseSectorList(image.header.sector_size)
         sector_num = image.header.sector_from_track(self.track, self.sector)
+        sector_map = []
         while sector_num > 0:
+            image.assert_valid_sector(sector_num)
+            print "reading track/sector list", sector_num
+            data, _ = image.get_sectors(sector_num)
+            sector = Dos33TSSector(image.header, data=data)
+            sector_map.extend(sector.get_tslist())
+            tslist.append(sector)
+            sector_num = sector.next_sector_num
+        self.sector_map = sector_map
+        self.track_sector_list = tslist
+    
+    def get_sectors_in_vtoc(self, image):
+        self.get_track_sector_list(image)
+        sectors = []
+        sectors.extend(self.track_sector_list)
+        for sector_num in self.sector_map:
             sector = WriteableSector(image.header.sector_size, None, sector_num)
-            sector_list.append(sector)
-            values, style = image.get_sectors(sector_num)
-            sector = image.header.sector_from_track(values[1], values[2])
-        for sector_num in sector_list:
-            sector = WriteableSector(image.header.sector_size, None, sector_num)
-            sector_list.append(sector)
-        return sector_list
+            sectors.append(sector)
+        return sectors
 
     def start_read(self, image):
         if not self.is_sane:

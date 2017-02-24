@@ -169,7 +169,7 @@ class AtariDosDirent(object):
             return False
         return True
     
-    def get_sector_list(self, image):
+    def get_sectors_in_vtoc(self, image):
         sector_list = BaseSectorList(image.header.sector_size)
         self.start_read(image)
         while True:
