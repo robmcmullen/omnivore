@@ -2,7 +2,7 @@ import numpy as np
 
 from errors import *
 from diskimages import DiskImageBase, BaseHeader
-from segments import EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentSaver
+from segments import EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentSaver, get_style_bits
 from utils import *
 
 import logging
@@ -264,7 +264,9 @@ class AtariDosFile(object):
     def parse_segments(self):
         r = self.rawdata
         b = r.get_data()
+        s = r.get_style()
         pos = 0
+        style_pos = 0
         first = True
         log.debug("Initial parsing: size=%d" % self.size)
         while pos < self.size:
@@ -286,6 +288,7 @@ class AtariDosFile(object):
                 self.segments.append(ObjSegment(r[pos:pos + 4], 0, 0, 0, len(b[pos:pos + 4]), "Short Segment Header"))
                 break
             start, end = b[pos:pos + 4].view(dtype='<u2')
+            s[style_pos:pos + 4] = get_style_bits(data=True)
             if end < start:
                 raise InvalidBinaryFile("Nonsensical start and end addresses")
             count = end - start + 1
@@ -295,6 +298,7 @@ class AtariDosFile(object):
                 break
             self.segments.append(ObjSegment(r[pos + 4:pos + 4 + count], pos, pos + 4, start, end))
             pos += 4 + count
+            style_pos = pos
 
 
 class AtrHeader(BaseHeader):
