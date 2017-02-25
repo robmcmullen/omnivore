@@ -160,6 +160,7 @@ def run():
     options, extra_args = parser.parse_known_args()
 
     # Turn off debug messages by default
+    logging.basicConfig(level=logging.WARNING)
     log = logging.getLogger("atrcopy")
     if options.verbose:
         log.setLevel(logging.DEBUG)
