@@ -524,8 +524,14 @@ class Dos33DiskImage(DiskImageBase):
 class ProdosHeader(Dos33Header):
     file_format = "ProDOS"
 
+    def __str__(self):
+        return "%s Disk Image (size=%d) THIS FORMAT IS NOT SUPPORTED YET!" % (self.file_format, self.image_size)
 
-class ProdosDiskImage(Dos33DiskImage):
+
+class ProdosDiskImage(DiskImageBase):
+    def __str__(self):
+        return str(self.header)
+
     def read_header(self):
         self.header = ProdosHeader()
 
