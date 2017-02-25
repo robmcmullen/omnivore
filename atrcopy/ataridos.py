@@ -93,14 +93,14 @@ class AtariDosDirent(object):
         self.parse_raw_dirent(image, bytes)
     
     def __str__(self):
-        flags = self.summary()
-        return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, flags, self.starting_sector, self.basename, self.ext, self.num_sectors)
+        return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, self.summary, self.starting_sector, self.basename, self.ext, self.num_sectors)
 
     @property
     def filename(self):
         ext = ("." + self.ext) if self.ext else ""
         return self.basename + ext
     
+    @property
     def summary(self):
         output = "o" if self.opened_output else "."
         dos2 = "2" if self.dos_2 else "."

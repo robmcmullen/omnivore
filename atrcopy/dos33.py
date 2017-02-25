@@ -154,7 +154,7 @@ class Dos33Dirent(object):
 
     def __init__(self, image, file_num=0, bytes=None):
         self.file_num = file_num
-        self.file_type = 0
+        self._file_type = 0
         self.locked = False
         self.deleted = False
         self.track = 0
@@ -169,30 +169,32 @@ class Dos33Dirent(object):
         self.parse_raw_dirent(image, bytes)
     
     def __str__(self):
-        flag = self.summary()
-        return "File #%-2d (%s) %03d %-30s %03d %03d" % (self.file_num, flag, self.num_sectors, self.filename, self.track, self.sector)
+        return "File #%-2d (%s) %03d %-30s %03d %03d" % (self.file_num, self.summary, self.num_sectors, self.filename, self.track, self.sector)
     
     type_map = {
-        0x0: "T",
-        0x1: "I",
-        0x2: "A",
-        0x4: "B",
-        0x8: "S",
-        0x10: "R",
-        0x20: "new A",
-        0x40: "new B",
+        0x0: "T",  # text
+        0x1: "I",  # integer basic
+        0x2: "A",  # applesoft basic
+        0x4: "B",  # binary
+        0x8: "S",  # ?
+        0x10: "R",  # relocatable object module
+        0x20: "a",  # ?
+        0x40: "b",  # ?
     }
 
+    @property
+    def file_type(self):
+        """User friendly version of file type, not the binary number"""
+        return self.type_map.get(self._file_type, "?")
+
+    @property
     def summary(self):
         if self.deleted:
             locked = "D"
             file_type = " "
         else:
             locked = "*" if self.locked else " "
-            try:
-                file_type = self.type_map[self.file_type]
-            except KeyError:
-                file_type = "?"
+            file_type = self.file_type
         flag = "%s%s" % (locked, file_type)
         return flag
     
@@ -206,7 +208,7 @@ class Dos33Dirent(object):
 
     @property
     def flag(self):
-        return 0xff if self.deleted else self.file_type | (0x80 * int(self.locked))
+        return 0xff if self.deleted else self._file_type | (0x80 * int(self.locked))
     
     def parse_raw_dirent(self, image, bytes):
         if bytes is None:
@@ -219,7 +221,7 @@ class Dos33Dirent(object):
         else:
             self.deleted = False
         self.sector = values[1]
-        self.file_type = values[2] & 0x7f
+        self._file_type = values[2] & 0x7f
         self.locked = values[2] & 0x80
         self.filename = (bytes[3:0x20] - 0x80).tostring().rstrip()
         self.num_sectors = int(values[4])
@@ -327,9 +329,16 @@ class Dos33Dirent(object):
 
     def set_values(self, filename, filetype, index):
         self.filename = "%-30s" % filename[0:30]
-        self.file_type = self.type_map.get(filetype, 0x04)
+        self._file_type = self.type_map.get(filetype, 0x04)
         self.locked = False
         self.deleted = False
+
+    def get_binary_start_address(self, image):
+        self.start_read(image)
+        data, _, _, _ = self.read_sector(image)
+        addr = int(data[0]) + 256 * int(data[1])
+        print "found addr", addr
+        return addr
 
 
 class Dos33Header(BaseHeader):
@@ -512,10 +521,18 @@ class Dos33DiskImage(DiskImageBase):
             if last:
                 break
         if len(byte_order) > 0:
-            name = "%s %ds@%d" % (dirent.filename, dirent.num_sectors, dirent.sector_map[0])
+            name = "%s %03d %s" % (dirent.summary, dirent.num_sectors, dirent.filename)
             verbose_name = "%s (%d sectors, first@%d) %s" % (dirent.filename, dirent.num_sectors, dirent.sector_map[0], dirent.verbose_info)
             raw = self.rawdata.get_indexed(byte_order)
-            segment = DefaultSegment(raw, name=name, verbose_name=verbose_name)
+            print dirent.file_type, dirent.filename
+            if dirent.file_type == "B":
+                addr = dirent.get_binary_start_address(self) - 4 # factor in 4 byte header
+            else:
+                addr = 0
+            segment = DefaultSegment(raw, start_addr=addr, name=name, verbose_name=verbose_name)
+            if addr > 0:
+                style = segment.get_style_bits(data=True)
+                segment.style[0:4] = style
         else:
             segment = EmptySegment(self.rawdata, name=dirent.filename)
         return segment
