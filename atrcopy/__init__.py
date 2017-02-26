@@ -90,27 +90,32 @@ def extract_files(image, files):
             with open(name, "wb") as fh:
                 fh.write(data)
 
+def save_file(image, name, filetype, data):
+    try:
+        dirent = image.find_dirent(name)
+        if options.force:
+            image.delete_file(name)
+        else:
+            print "skipping %s, use -f to overwrite" % (name)
+            return False
+    except FileNotFound:
+        pass
+    print "copying %s to %s" % (name, image)
+    if not options.dry_run:
+        image.write_file(name, filetype, data)
+        return True
+    return False
+
+
 def add_files(image, files):
     filetype = options.filetype
     if not filetype:
         filetype = image.default_filetype
     changed = False
     for name in files:
-        try:
-            dirent = image.find_dirent(name)
-            if options.force:
-                image.delete_file(name)
-            else:
-                print "skipping %s, use -f to overwrite" % (name)
-                continue
-        except FileNotFound:
-            pass
-        print "copying %s to %s" % (name, image)
-        if not options.dry_run:
-            with open(name, "rb") as fh:
-                data = fh.read()
-            image.write_file(name, filetype, data)
-            changed = True
+        with open(name, "rb") as fh:
+            data = fh.read()
+        changed = save_file(image, name, filetype, data)
     if changed:
         image.save()
 
@@ -135,6 +140,32 @@ def list_files(image, files):
         if not files or dirent.filename in files:
             print dirent
 
+def assemble(image, files):
+    try:
+        import pyatasm
+    except ImportError:
+        raise AtrError("Please install pyatasm to compile code.")
+    changed = False
+    segments = []
+    print files
+    for name in files:
+        try:
+            asm = pyatasm.Assemble(name)
+        except SyntaxError, e:
+            raise AtrError("Assembly error: %s" % e.msg)
+        for first, last, object_code in asm.segments:
+            print "%04x - %04x, size=%04x" % (first, last, len(object_code))
+            rawdata = SegmentData(object_code)
+            s = DefaultSegment(rawdata, first, name)
+            segments.append(s)
+    if options.verbose:
+        for s in segments:
+            print "%s - %04x)" % (str(s)[:-1], s.start_addr + len(s))
+    file_data, filetype = image.create_executable_file_image(segments)
+    changed = save_file(image, options.output, filetype, file_data)
+    if changed:
+        image.save()
+
 
 def run():
     import sys
@@ -152,12 +183,15 @@ def run():
     parser.add_argument("--xex", action="store_true", default=False, help="add .xex extension")
     parser.add_argument("-f", "--force", action="store_true", default=False, help="force operation, allowing file overwrites and operation on non-standard disk images")
     parser.add_argument("files", metavar="IMAGE", nargs="+", help="a disk image file [or a list of them]")
-    parser.add_argument("-s", "--segments", action="store_true", default=False, help="display segments")
+    parser.add_argument("-g", "--segments", action="store_true", default=False, help="display segments")
     parser.add_argument("-x", "-e", "--extract", action="store_true", default=False, help="extract named files")
     parser.add_argument("-a", "--add", action="store_true", default=False, help="add files to image")
     parser.add_argument("-r", "--remove", action="store_true", default=False, help="remove named files from image")
     parser.add_argument("-t", "--filetype", action="store", default="", help="file type metadata for writing to disk images that require it")
+    parser.add_argument("-s", "--asm", nargs="+", action="append", help="source file(s) to assemble using pyatasm (requires -o to specify filename stored on disk image)")
+    parser.add_argument("-o", "--output", action="store", default="", help="output file name for those commands that need it")
     options, extra_args = parser.parse_known_args()
+    print options, extra_args
 
     # Turn off debug messages by default
     logging.basicConfig(level=logging.WARNING)
@@ -186,5 +220,7 @@ def run():
                 extract_files(parser.image, file_list)
             elif options.remove:
                 remove_files(parser.image, file_list)
+            elif options.asm:
+                assemble(parser.image, options.asm[0])
             else:
                 list_files(parser.image, file_list)

@@ -537,6 +537,28 @@ class Dos33DiskImage(DiskImageBase):
             segment = EmptySegment(self.rawdata, name=dirent.filename)
         return segment
 
+    def create_executable_file_image(self, segments):
+        origin = 100000000
+        last = -1
+        for s in segments:
+            origin = min(origin, s.start_addr)
+            last = max(last, s.start_addr + len(s))
+            print "contiguous bytes needed: %04x - %04x" % (origin, last)
+        size = last - origin
+        image = np.zeros([size + 4], dtype=np.uint8)
+        words = image[0:4].view(dtype="<u2")  # always little endian
+        words[0] = origin
+        words[1] = size
+        for s in segments:
+            index = s.start_addr - origin + 4
+            print "setting data for %04x - %04x at %04x" % (s.start_addr, s.start_addr + len(s), index)
+            image[index:index + len(s)] = s.data
+        return image, 'B'
+
+
+
+
+
 
 class ProdosHeader(Dos33Header):
     file_format = "ProDOS"

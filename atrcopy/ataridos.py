@@ -2,7 +2,7 @@ import numpy as np
 
 from errors import *
 from diskimages import DiskImageBase, BaseHeader
-from segments import EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentSaver, get_style_bits
+from segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentSaver, get_style_bits
 from utils import *
 
 import logging
@@ -616,6 +616,9 @@ class AtariDosDiskImage(DiskImageBase):
                 log.debug("%s not a binary file; skipping segment generation" % str(segment))
         return segments_out
 
+    def create_executable_file_image(self, segments,run_addr=None):
+        return get_xex(segments, run_addr), "XEX"
+
 
 class BootDiskImage(AtariDosDiskImage):
     def __str__(self):
@@ -645,11 +648,22 @@ class BootDiskImage(AtariDosDiskImage):
             raise InvalidDiskImage("Bad boot load address")
 
 
-def get_xex(segments, runaddr):
+def get_xex(segments, runaddr=None):
     total = 2
+    runad = False
     for s in segments:
         total += 4 + len(s)
-    total += 6
+        if s.start_addr == 0x2e0:
+            runad = True
+    if not runad:
+        words = np.empty([1], dtype='<u2')
+        if not runaddr:
+            runaddr = segments[0].start_addr
+        words[0] = runaddr
+        r = SegmentData(words.view(dtype=np.uint8))
+        s = DefaultSegment(r, 0x2e0)
+        segments[0:0] = [s]
+        total += 6
     bytes = np.zeros([total], dtype=np.uint8)
     bytes[0:2] = 0xff # FFFF header
     i = 2
@@ -660,10 +674,6 @@ def get_xex(segments, runaddr):
         i += 4
         bytes[i:i + len(s)] = s[:]
         i += len(s)
-    words = bytes[i:i+6].view(dtype='<u2')
-    words[0] = 0x2e0
-    words[1] = 0x2e1
-    words[2] = runaddr
     return bytes
 
 def add_atr_header(bytes):

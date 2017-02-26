@@ -301,6 +301,9 @@ class DiskImageBase(object):
             segments.append(segment)
         return segments
 
+    def create_executable_file_image(self, segments):
+        raise NotImplementedError
+
     # file writing methods
 
     def begin_transaction(self):
