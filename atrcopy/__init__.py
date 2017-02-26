@@ -67,16 +67,6 @@ def find_diskimage(filename):
     parser.image.ext = ""
     return parser
 
-def extract_all(image):
-    if image.files or options.force:
-        for dirent in image.files:
-            try:
-                process(image, dirent)
-            except FileNumberMismatchError164:
-                print "Error 164: %s" % str(dirent)
-            except ByteNotInFile166:
-                print "Invalid sector for: %s" % str(dirent)
-
 def extract_files(image, files):
     for name in files:
         try:
@@ -87,7 +77,7 @@ def extract_files(image, files):
         print "extracting %s" % name
         if not options.dry_run:
             data = image.get_file(dirent)
-            with open(name, "wb") as fh:
+            with open(dirent.filename, "wb") as fh:
                 fh.write(data)
 
 def save_file(image, name, filetype, data):
@@ -193,7 +183,7 @@ def run():
     parser.add_argument("-l", "--lower", action="store_true", default=False, help="convert filenames to lower case")
     parser.add_argument("--dry-run", action="store_true", default=False, help="don't extract, just show what would have been extracted")
     parser.add_argument("-n", "--no-sys", action="store_true", default=False, help="only extract things that look like games (no DOS or .SYS files)")
-    parser.add_argument("--all", action="store_true", default=False, help="extract all files")
+    parser.add_argument("--all", action="store_true", default=False, help="operate on all files on disk image")
     parser.add_argument("--xex", action="store_true", default=False, help="add .xex extension")
     parser.add_argument("-f", "--force", action="store_true", default=False, help="force operation, allowing file overwrites and operation on non-standard disk images")
     parser.add_argument("files", metavar="IMAGE", nargs="+", help="a disk image file [or a list of them]")
@@ -223,12 +213,17 @@ def run():
         file_list = options.files
         options.files = [image]
 
+    if options.all and file_list:
+            raise AtrError("Specifying a list of files and --all doesn't make sense.")
+
     for filename in options.files:
         parser = find_diskimage(filename)
         if parser and parser.image:
             if options.all:
-                extract_all(parser.image)
-            elif options.segments:
+                file_list = list(parser.image.files)
+                print file_list
+
+            if options.segments:
                 print "\n".join([str(a) for a in parser.segments])
             elif options.add:
                 add_files(parser.image, file_list)
