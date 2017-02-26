@@ -48,6 +48,13 @@ class BaseHeader(object):
 
     def sector_is_valid(self, sector):
         return (self.max_sectors < 0) | (sector >= self.starting_sector_label and sector < (self.max_sectors + self.starting_sector_label))
+
+    def iter_sectors(self):
+        i = self.starting_sector_label
+        while self.sector_is_valid(i):
+            pos, size = self.get_pos(i)
+            yield i, pos, size
+            i += 1
     
     def get_pos(self, sector):
         """Get index (into the raw data of the disk image) of start of sector
@@ -369,6 +376,20 @@ class DiskImageBase(object):
             directory.remove_dirent(self, dirent, vtoc, sector_list)
             self.write_sector_list(vtoc)
             self.write_sector_list(directory)
+        except AtrError:
+            self.rollback_transaction(state)
+            raise
+        finally:
+            self.get_metadata()
+
+    def shred(self, fill_value=0):
+        state = self.begin_transaction()
+        try:
+            vtoc_segments = self.get_vtoc_segments()
+            vtoc = self.vtoc_class(self.header, vtoc_segments)
+            for sector_num, pos, size in vtoc.iter_free_sectors(self.header):
+                log.debug("shredding: sector %s at %d, fill value=%d" % (sector_num, pos, fill_value))
+                self.bytes[pos:pos + size] = fill_value
         except AtrError:
             self.rollback_transaction(state)
             raise

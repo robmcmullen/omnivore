@@ -248,6 +248,11 @@ class VTOC(BaseSectorList):
         free = np.where(self.sector_map == 1)[0]
         return len(free)
 
+    def iter_free_sectors(self, header):
+        for i, pos, size in header.iter_sectors():
+            if self.sector_map[i] == 1:
+                yield i, pos, size
+
     def parse_segments(self, segments):
         raise NotImplementedError
 

@@ -174,6 +174,12 @@ def assemble(image, source_files, data_files):
     if changed:
         image.save()
 
+def shred_image(image, value=0):
+    print "shredding: free sectors from %s filled with %d" % (image, value)
+    if not options.dry_run:
+        image.shred()
+        image.save()
+
 
 def run():
     import sys
@@ -199,6 +205,7 @@ def run():
     parser.add_argument("-s", "--asm", nargs="+", action="append", help="source file(s) to assemble using pyatasm (requires -o to specify filename stored on disk image)")
     parser.add_argument("-b", "--bytes", nargs="+", action="append", help="data file(s) to add to assembly, specify as file@addr (requires -o to specify filename stored on disk image)")
     parser.add_argument("-o", "--output", action="store", default="", help="output file name for those commands that need it")
+    parser.add_argument("--shred", action="store_true", default=False, help="fill empty sectors with 0")
     options, extra_args = parser.parse_known_args()
     print options, extra_args
 
@@ -235,3 +242,6 @@ def run():
                 assemble(parser.image, asm, datafiles)
             else:
                 list_files(parser.image, file_list)
+
+            if options.shred:
+                shred_image(parser.image)
