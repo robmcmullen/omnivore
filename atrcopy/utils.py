@@ -133,6 +133,35 @@ class BaseSectorList(object):
         self.sectors.extend(sectors)
 
 
+class Dirent(object):
+    """Abstract base class for a directory entry
+
+    """
+    def __init__(self, file_num=0):
+        self.file_num = file_num
+
+    def __eq__(self, other):
+        raise NotImplementedError
+
+    def mark_deleted(self):
+        raise NotImplementedError
+
+    def parse_raw_dirent(self, image, bytes):
+        raise NotImplementedError
+
+    def encode_dirent(self):
+        raise NotImplementedError
+
+    def get_sectors_in_vtoc(self, image):
+        raise NotImplementedError
+
+    def start_read(self, image):
+        raise NotImplementedError
+
+    def read_sector(self, image):
+        raise NotImplementedError
+
+
 class Directory(BaseSectorList):
     def __init__(self, header, num_dirents=-1, sector_class=WriteableSector):
         BaseSectorList.__init__(self, header)
@@ -167,9 +196,15 @@ class Directory(BaseSectorList):
         return dirent
 
     def find_dirent(self, filename):
-        for dirent in self.dirents.values():
-            if filename == dirent.filename:
-                return dirent
+        if hasattr(filename, "filename"):
+            # we've been passed a dirent instead of a filename
+            for dirent in self.dirents.values():
+                if dirent == filename:
+                    return dirent
+        else:
+            for dirent in self.dirents.values():
+                if filename == dirent.filename:
+                    return dirent
         raise FileNotFound("%s not found on disk" % filename)
 
     def save_dirent(self, image, dirent, vtoc, sector_list):

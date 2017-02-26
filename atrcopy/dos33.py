@@ -1,7 +1,8 @@
 import numpy as np
 
 from errors import *
-from diskimages import BaseHeader, DiskImageBase, Directory, VTOC, WriteableSector, BaseSectorList
+from diskimages import BaseHeader, DiskImageBase
+from utils import Directory, VTOC, WriteableSector, BaseSectorList, Dirent
 from segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver
 
 import logging
@@ -143,7 +144,7 @@ class Dos33Directory(Directory):
             current_sector = next_sector
 
 
-class Dos33Dirent(object):
+class Dos33Dirent(Dirent):
     format = np.dtype([
         ('track', 'u1'),
         ('sector', 'u1'),
@@ -153,7 +154,7 @@ class Dos33Dirent(object):
         ])
 
     def __init__(self, image, file_num=0, bytes=None):
-        self.file_num = file_num
+        Dirent.__init__(self, file_num)
         self._file_type = 0
         self.locked = False
         self.deleted = False
@@ -170,6 +171,9 @@ class Dos33Dirent(object):
     
     def __str__(self):
         return "File #%-2d (%s) %03d %-30s %03d %03d" % (self.file_num, self.summary, self.num_sectors, self.filename, self.track, self.sector)
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and self.filename == other.filename and self.track == other.track and self.sector == other.sector and self.num_sectors == other.num_sectors
     
     type_map = {
         0x0: "T",  # text

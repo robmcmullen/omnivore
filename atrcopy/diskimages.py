@@ -282,8 +282,11 @@ class DiskImageBase(object):
         return []
     
     def find_dirent(self, filename):
+        # check if we've been passed a dirent instead of a filename
+        if hasattr(filename, "filename"):
+            return filename
         for dirent in self.files:
-            if filename == dirent.filename:
+            if filename_or_dirent == dirent.filename:
                 return dirent
         raise FileNotFound("%s not found on disk" % filename)
     

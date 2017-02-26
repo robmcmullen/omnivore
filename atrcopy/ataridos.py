@@ -62,7 +62,7 @@ class AtariDosDirectory(Directory):
             num += 1
 
 
-class AtariDosDirent(object):
+class AtariDosDirent(Dirent):
     # ATR Dirent structure described at http://atari.kensclassics.org/dos.htm
     format = np.dtype([
         ('FLAG', 'u1'),
@@ -73,7 +73,7 @@ class AtariDosDirent(object):
         ])
 
     def __init__(self, image, file_num=0, bytes=None):
-        self.file_num = file_num
+        Dirent.__init__(self, file_num)
         self.flag = 0
         self.opened_output = False
         self.dos_2 = False
@@ -94,6 +94,9 @@ class AtariDosDirent(object):
     
     def __str__(self):
         return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, self.summary, self.starting_sector, self.basename, self.ext, self.num_sectors)
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and self.filename == other.filename and self.starting_sector == other.starting_sector and self.num_sectors == other.num_sectors
 
     @property
     def filename(self):
