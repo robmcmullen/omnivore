@@ -196,6 +196,7 @@ def run():
     parser.add_argument("-b", "--bytes", nargs="+", action="append", help="data file(s) to add to assembly, specify as file@addr (requires -o to specify filename stored on disk image)")
     parser.add_argument("-o", "--output", action="store", default="", help="output file name for those commands that need it")
     parser.add_argument("--shred", action="store_true", default=False, help="fill empty sectors with 0")
+    parser.add_argument("--vtoc", action="store_true", default=False, help="show the VTOC")
     options, extra_args = parser.parse_known_args()
     print options, extra_args
 
@@ -240,3 +241,7 @@ def run():
 
             if options.shred:
                 shred_image(parser.image)
+
+            if options.vtoc:
+                vtoc = parser.image.get_vtoc_object()
+                print vtoc

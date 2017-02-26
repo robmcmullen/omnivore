@@ -324,6 +324,11 @@ class DiskImageBase(object):
         self.bytes[:], self.style[:] = state
         return
 
+    def get_vtoc_object(self):
+        vtoc_segments = self.get_vtoc_segments()
+        vtoc = self.vtoc_class(self.header, vtoc_segments)
+        return vtoc
+
     def write_file(self, filename, filetype, data):
         """Write data to a file on disk
 
@@ -338,8 +343,7 @@ class DiskImageBase(object):
             dirent = directory.add_dirent(filename, filetype)
             data = to_numpy(data)
             sector_list = self.build_sectors(data)
-            vtoc_segments = self.get_vtoc_segments()
-            vtoc = self.vtoc_class(self.header, vtoc_segments)
+            vtoc = self.get_vtoc_object()
             directory.save_dirent(self, dirent, vtoc, sector_list)
             self.write_sector_list(sector_list)
             self.write_sector_list(vtoc)
@@ -374,8 +378,7 @@ class DiskImageBase(object):
             self.get_directory(directory)
             dirent = directory.find_dirent(filename)
             sector_list = dirent.get_sectors_in_vtoc(self)
-            vtoc_segments = self.get_vtoc_segments()
-            vtoc = self.vtoc_class(self.header, vtoc_segments)
+            vtoc = self.get_vtoc_object()
             directory.remove_dirent(self, dirent, vtoc, sector_list)
             self.write_sector_list(vtoc)
             self.write_sector_list(directory)
@@ -388,8 +391,7 @@ class DiskImageBase(object):
     def shred(self, fill_value=0):
         state = self.begin_transaction()
         try:
-            vtoc_segments = self.get_vtoc_segments()
-            vtoc = self.vtoc_class(self.header, vtoc_segments)
+            vtoc = self.get_vtoc_object()
             for sector_num, pos, size in vtoc.iter_free_sectors():
                 log.debug("shredding: sector %s at %d, fill value=%d" % (sector_num, pos, fill_value))
                 self.bytes[pos:pos + size] = fill_value
