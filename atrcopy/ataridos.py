@@ -320,7 +320,7 @@ class AtrHeader(BaseHeader):
     file_format = "ATR"
     
     def __init__(self, bytes=None, sector_size=128, initial_sectors=3, create=False):
-        BaseHeader.__init__(self, sector_size, initial_sectors, 360)
+        BaseHeader.__init__(self, sector_size, initial_sectors, 360, 1)
         if create:
             self.header_offset = 16
             self.check_size(0)
