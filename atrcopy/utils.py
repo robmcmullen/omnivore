@@ -341,3 +341,4 @@ class VTOC(BaseSectorList):
     def free_sector_list(self, sector_list):
         for sector in sector_list:
             self.sector_map[sector.sector_num] = 1
+        self.calc_bitmap()
