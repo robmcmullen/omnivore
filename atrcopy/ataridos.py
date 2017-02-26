@@ -30,11 +30,11 @@ class AtariDosVTOC(VTOC):
     def parse_segments(self, segments):
         self.vtoc1 = segments[0].data
         bits = np.unpackbits(self.vtoc1[0x0a:0x64])
-        log.debug("vtoc before: %s" % bits)
         self.sector_map[0:720] = bits
+        log.debug("vtoc before:\n%s" % str(self))
 
     def calc_bitmap(self):
-        log.debug("vtoc after: %s" % self.sector_map[0:720])
+        log.debug("vtoc after:\n%s" % str(self))
         packed = np.packbits(self.sector_map[0:720])
         self.vtoc1[0x0a:0x64] = packed
         s = WriteableSector(self.sector_size, self.vtoc1)
@@ -175,7 +175,7 @@ class AtariDosDirent(object):
         return True
     
     def get_sectors_in_vtoc(self, image):
-        sector_list = BaseSectorList(image.header.sector_size)
+        sector_list = BaseSectorList(image.header)
         self.start_read(image)
         while True:
             sector = WriteableSector(image.header.sector_size, None, self.current_sector)

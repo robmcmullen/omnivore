@@ -92,10 +92,10 @@ class Dos33VTOC(VTOC):
         # so we need to reorder them using numpy's indexing before stuffing
         # them into the sector map
         self.sector_map[0:self.max_sectors] = bits[self.vtoc_bit_reorder_index]
-        log.debug("vtoc before: %s (%d free)" % (self.sector_map[0:35*16], self.num_free_sectors))
+        log.debug("vtoc before:\n%s" % str(self))
 
     def calc_bitmap(self):
-        log.debug("vtoc after: %s (%d free)" % (self.sector_map[0:35*16], self.num_free_sectors))
+        log.debug("vtoc after:\n%s" % str(self))
 
         # reverse the process from above, so swap the order of every 16 bits,
         # turn them into bytes, then stuff them back into the vtoc. The bit
@@ -251,7 +251,7 @@ class Dos33Dirent(object):
     def add_metadata_sectors(self, vtoc, sector_list, header):
         """Add track/sector list
         """
-        tslist = BaseSectorList(header.sector_size)
+        tslist = BaseSectorList(header)
         for start in range(0, len(sector_list), header.ts_pairs):
             end = min(start + header.ts_pairs, len(sector_list))
             log.debug("ts: %d-%d" % (start, end))
@@ -277,7 +277,7 @@ class Dos33Dirent(object):
         return True
 
     def get_track_sector_list(self, image):
-        tslist = BaseSectorList(image.header.sector_size)
+        tslist = BaseSectorList(image.header)
         sector_num = image.header.sector_from_track(self.track, self.sector)
         sector_map = []
         while sector_num > 0:

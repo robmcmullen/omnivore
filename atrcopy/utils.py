@@ -93,8 +93,9 @@ class WriteableSector(object):
 
 
 class BaseSectorList(object):
-    def __init__(self, sector_size):
-        self.sector_size = sector_size
+    def __init__(self, header):
+        self.header = header
+        self.sector_size = header.sector_size
         self.sectors = []
 
     def __len__(self):
@@ -134,7 +135,7 @@ class BaseSectorList(object):
 
 class Directory(BaseSectorList):
     def __init__(self, header, num_dirents=-1, sector_class=WriteableSector):
-        BaseSectorList.__init__(self, header.sector_size)
+        BaseSectorList.__init__(self, header)
         self.sector_class = sector_class
         self.num_dirents = num_dirents
         # number of dirents may be unlimited, so use a dict instead of a list
@@ -236,20 +237,23 @@ class Directory(BaseSectorList):
 
 class VTOC(BaseSectorList):
     def __init__(self, header, segments=None):
-        BaseSectorList.__init__(self, header.sector_size)
+        BaseSectorList.__init__(self, header)
 
         # sector map: 1 is free, 0 is allocated
         self.sector_map = np.zeros([1280], dtype=np.uint8)
         if segments is not None:
             self.parse_segments(segments)
 
+    def __str__(self):
+        return "%s\n (%d free)" % ("\n".join(["track %02d: %s" % (i, line) for i, line in enumerate(str(self.sector_map[0:self.header.tracks_per_disk*self.header.sectors_per_track].reshape([self.header.tracks_per_disk,self.header.sectors_per_track])).splitlines())]), self.num_free_sectors)
+
     @property
     def num_free_sectors(self):
         free = np.where(self.sector_map == 1)[0]
         return len(free)
 
-    def iter_free_sectors(self, header):
-        for i, pos, size in header.iter_sectors():
+    def iter_free_sectors(self):
+        for i, pos, size in self.header.iter_sectors():
             if self.sector_map[i] == 1:
                 yield i, pos, size
 

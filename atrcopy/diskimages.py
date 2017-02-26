@@ -387,7 +387,7 @@ class DiskImageBase(object):
         try:
             vtoc_segments = self.get_vtoc_segments()
             vtoc = self.vtoc_class(self.header, vtoc_segments)
-            for sector_num, pos, size in vtoc.iter_free_sectors(self.header):
+            for sector_num, pos, size in vtoc.iter_free_sectors():
                 log.debug("shredding: sector %s at %d, fill value=%d" % (sector_num, pos, fill_value))
                 self.bytes[pos:pos + size] = fill_value
         except AtrError:
