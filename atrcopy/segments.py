@@ -876,3 +876,14 @@ def interleave_segments(segments, num_bytes):
     raw = SegmentData(data_base, style_base, segments[0].rawdata.extra, order=new_index)
     segment = DefaultSegment(raw, 0)
     return segment
+
+
+class SegmentList(list):
+    def add_segment(self, data, start_addr=0, name=None):
+        last = start_addr + len(data)
+        if name is None:
+            name = "%04x - %04x, size=%04x" % (start_addr, last, len(data))
+        rawdata = SegmentData(data)
+        s = DefaultSegment(rawdata, start_addr, name)
+        self.append(s)
+        return s

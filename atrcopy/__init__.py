@@ -11,11 +11,11 @@ from errors import *
 from ataridos import AtrHeader, AtariDosDiskImage, BootDiskImage, AtariDosFile, get_xex, add_atr_header
 from dos33 import Dos33DiskImage
 from kboot import KBootImage, add_xexboot_header
-from segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, user_bit_mask, match_bit_mask, comment_bit_mask, data_style, selected_bit_mask, diff_bit_mask, not_user_bit_mask, interleave_segments
+from segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, user_bit_mask, match_bit_mask, comment_bit_mask, data_style, selected_bit_mask, diff_bit_mask, not_user_bit_mask, interleave_segments, SegmentList
 from spartados import SpartaDosDiskImage
 from cartridge import A8CartHeader, AtariCartImage
 from parsers import SegmentParser, DefaultSegmentParser, guess_parser_for_mime, guess_parser_for_system, iter_parsers, iter_known_segment_parsers, mime_parse_order
-from utils import to_numpy
+from utils import to_numpy, text_to_int
 
 
 def process(image, dirent, options):
@@ -140,24 +140,32 @@ def list_files(image, files):
         if not files or dirent.filename in files:
             print dirent
 
-def assemble(image, files):
-    try:
-        import pyatasm
-    except ImportError:
-        raise AtrError("Please install pyatasm to compile code.")
+def assemble(image, source_files, data_files):
+    if source_files:
+        try:
+            import pyatasm
+        except ImportError:
+            raise AtrError("Please install pyatasm to compile code.")
     changed = False
-    segments = []
-    print files
-    for name in files:
+    segments = SegmentList()
+    print source_files, data_files
+    for name in source_files:
         try:
             asm = pyatasm.Assemble(name)
         except SyntaxError, e:
             raise AtrError("Assembly error: %s" % e.msg)
         for first, last, object_code in asm.segments:
-            print "%04x - %04x, size=%04x" % (first, last, len(object_code))
-            rawdata = SegmentData(object_code)
-            s = DefaultSegment(rawdata, first, name)
-            segments.append(s)
+            s = segments.add_segment(object_code, first)
+            print s.name
+    for name in data_files:
+        if "@" not in name:
+            raise AtrError("Data files must include a load address specified with the @ char")
+        name, addr = name.rsplit("@", 1)
+        first = text_to_int(addr)
+        with open(name, 'rb') as fh:
+            data = fh.read()
+            s = segments.add_segment(data, first)
+            print s.name
     if options.verbose:
         for s in segments:
             print "%s - %04x)" % (str(s)[:-1], s.start_addr + len(s))
@@ -189,6 +197,7 @@ def run():
     parser.add_argument("-r", "--remove", action="store_true", default=False, help="remove named files from image")
     parser.add_argument("-t", "--filetype", action="store", default="", help="file type metadata for writing to disk images that require it")
     parser.add_argument("-s", "--asm", nargs="+", action="append", help="source file(s) to assemble using pyatasm (requires -o to specify filename stored on disk image)")
+    parser.add_argument("-b", "--bytes", nargs="+", action="append", help="data file(s) to add to assembly, specify as file@addr (requires -o to specify filename stored on disk image)")
     parser.add_argument("-o", "--output", action="store", default="", help="output file name for those commands that need it")
     options, extra_args = parser.parse_known_args()
     print options, extra_args
@@ -220,7 +229,9 @@ def run():
                 extract_files(parser.image, file_list)
             elif options.remove:
                 remove_files(parser.image, file_list)
-            elif options.asm:
-                assemble(parser.image, options.asm[0])
+            elif options.asm or options.bytes:
+                asm = options.asm[0] if options.asm else []
+                datafiles = options.bytes[0] if options.bytes else []
+                assemble(parser.image, asm, datafiles)
             else:
                 list_files(parser.image, file_list)
