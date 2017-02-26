@@ -286,7 +286,7 @@ class DiskImageBase(object):
         if hasattr(filename, "filename"):
             return filename
         for dirent in self.files:
-            if filename_or_dirent == dirent.filename:
+            if filename == dirent.filename:
                 return dirent
         raise FileNotFound("%s not found on disk" % filename)
     
