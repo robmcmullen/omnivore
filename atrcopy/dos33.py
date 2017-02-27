@@ -175,7 +175,7 @@ class Dos33Dirent(Dirent):
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.filename == other.filename and self.track == other.track and self.sector == other.sector and self.num_sectors == other.num_sectors
     
-    type_map = {
+    type_to_text = {
         0x0: "T",  # text
         0x1: "I",  # integer basic
         0x2: "A",  # applesoft basic
@@ -185,11 +185,12 @@ class Dos33Dirent(Dirent):
         0x20: "a",  # ?
         0x40: "b",  # ?
     }
+    text_to_type = {v: k for k, v in type_to_text.iteritems()}
 
     @property
     def file_type(self):
         """User friendly version of file type, not the binary number"""
-        return self.type_map.get(self._file_type, "?")
+        return self.type_to_text.get(self._file_type, "?")
 
     @property
     def summary(self):
@@ -342,7 +343,7 @@ class Dos33Dirent(Dirent):
 
     def set_values(self, filename, filetype, index):
         self.filename = "%-30s" % filename[0:30]
-        self._file_type = self.type_map.get(filetype, 0x04)
+        self._file_type = self.text_to_type.get(filetype, 0x04)
         self.locked = False
         self.deleted = False
 
