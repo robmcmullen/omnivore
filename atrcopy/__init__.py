@@ -140,7 +140,6 @@ def assemble(image, source_files, data_files):
             raise AtrError("Please install pyatasm to compile code.")
     changed = False
     segments = SegmentList()
-    print source_files, data_files
     for name in source_files:
         try:
             asm = pyatasm.Assemble(name)
@@ -181,7 +180,6 @@ def run():
     
     parser = argparse.ArgumentParser(description="Manipulate files on several types of 8-bit computer disk images")
     parser.add_argument("-v", "--verbose", default=0, action="count")
-    parser.add_argument("-d", "--debug", action="store_true", default=False, help="debug the currently under-development parser")
     parser.add_argument("-l", "--lower", action="store_true", default=False, help="convert filenames to lower case")
     parser.add_argument("--dry-run", action="store_true", default=False, help="don't extract, just show what would have been extracted")
     parser.add_argument("-n", "--no-sys", action="store_true", default=False, help="only extract things that look like games (no DOS or .SYS files)")
@@ -192,7 +190,7 @@ def run():
     parser.add_argument("-g", "--segments", action="store_true", default=False, help="display segments")
     parser.add_argument("-x", "-e", "--extract", action="store_true", default=False, help="extract named files")
     parser.add_argument("-a", "--add", action="store_true", default=False, help="add files to image")
-    parser.add_argument("-r", "--remove", action="store_true", default=False, help="remove named files from image")
+    parser.add_argument("-d", "--delete", action="store_true", default=False, help="remove named files from image")
     parser.add_argument("-t", "--filetype", action="store", default="", help="file type metadata for writing to disk images that require it")
     parser.add_argument("-s", "--asm", nargs="+", action="append", help="source file(s) to assemble using pyatasm (requires -o to specify filename stored on disk image)")
     parser.add_argument("-b", "--bytes", nargs="+", action="append", help="data file(s) to add to assembly, specify as file@addr (requires -o to specify filename stored on disk image)")
@@ -211,7 +209,7 @@ def run():
         log.setLevel(logging.INFO)
     
     file_list = []
-    if options.add or options.extract or options.remove:
+    if options.add or options.extract or options.delete:
         image = options.files.pop()
         file_list = options.files
         options.files = [image]
@@ -231,7 +229,7 @@ def run():
                 add_files(parser.image, file_list)
             elif options.extract:
                 extract_files(parser.image, file_list)
-            elif options.remove:
+            elif options.delete:
                 remove_files(parser.image, file_list)
             elif options.asm or options.bytes:
                 asm = options.asm[0] if options.asm else []
