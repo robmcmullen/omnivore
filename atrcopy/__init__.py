@@ -180,14 +180,8 @@ def run():
     
     parser = argparse.ArgumentParser(description="Manipulate files on several types of 8-bit computer disk images")
     parser.add_argument("-v", "--verbose", default=0, action="count")
-    parser.add_argument("-l", "--lower", action="store_true", default=False, help="convert filenames to lower case")
-    parser.add_argument("--dry-run", action="store_true", default=False, help="don't extract, just show what would have been extracted")
-    parser.add_argument("-n", "--no-sys", action="store_true", default=False, help="only extract things that look like games (no DOS or .SYS files)")
-    parser.add_argument("--all", action="store_true", default=False, help="operate on all files on disk image")
-    parser.add_argument("--xex", action="store_true", default=False, help="add .xex extension")
-    parser.add_argument("-f", "--force", action="store_true", default=False, help="force operation, allowing file overwrites and operation on non-standard disk images")
-    parser.add_argument("files", metavar="IMAGE", nargs="+", help="a disk image file [or a list of them]")
-    parser.add_argument("-g", "--segments", action="store_true", default=False, help="display segments")
+    parser.add_argument("--dry-run", action="store_true", default=False, help="don't perform operation, just show what would have happened")
+
     parser.add_argument("-x", "-e", "--extract", action="store_true", default=False, help="extract named files")
     parser.add_argument("-a", "--add", action="store_true", default=False, help="add files to image")
     parser.add_argument("-d", "--delete", action="store_true", default=False, help="remove named files from image")
@@ -195,9 +189,17 @@ def run():
     parser.add_argument("-s", "--asm", nargs="+", action="append", help="source file(s) to assemble using pyatasm (requires -o to specify filename stored on disk image)")
     parser.add_argument("-b", "--bytes", nargs="+", action="append", help="data file(s) to add to assembly, specify as file@addr (requires -o to specify filename stored on disk image)")
     parser.add_argument("-o", "--output", action="store", default="", help="output file name for those commands that need it")
+    parser.add_argument("-f", "--force", action="store_true", default=False, help="force operation, allowing file overwrites or attempt operation on non-standard disk images")
+    parser.add_argument("--all", action="store_true", default=False, help="operate on all files on disk image")
+
+    parser.add_argument("-l", "--lower", action="store_true", default=False, help="convert extracted filenames to lower case")
+    parser.add_argument("-n", "--no-sys", action="store_true", default=False, help="only extract things that look like games (no DOS or .SYS files)")
+    parser.add_argument("--xex", action="store_true", default=False, help="add .xex extension")
+    parser.add_argument("-g", "--segments", action="store_true", default=False, help="display segments")
     parser.add_argument("--shred", action="store_true", default=False, help="fill empty sectors with 0")
     parser.add_argument("--vtoc", action="store_true", default=False, help="show the VTOC")
     parser.add_argument("-m", "--metadata", action="store_true", default=False, help="show extra metadata for named files")
+    parser.add_argument("files", metavar="IMAGE", nargs="+", help="a disk image file [or a list of them]")
     options, extra_args = parser.parse_known_args()
 
     # Turn off debug messages by default
