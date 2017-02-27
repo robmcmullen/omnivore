@@ -180,14 +180,17 @@ class Directory(BaseSectorList):
     def get_free_dirent(self):
         used = set()
         d = self.dirents.items()
-        d.sort()
-        for i, dirent in d:
-            if not dirent.in_use:
-                return i
-            used.add(i)
-        if self.num_dirents > 0 and (len(used) >= self.num_dirents):
-            raise NoSpaceInDirectory()
-        i += 1
+        if d:
+            d.sort()
+            for i, dirent in d:
+                if not dirent.in_use:
+                    return i
+                used.add(i)
+            if self.num_dirents > 0 and (len(used) >= self.num_dirents):
+                raise NoSpaceInDirectory()
+            i += 1
+        else:
+            i = 0
         used.add(i)
         return i
 
