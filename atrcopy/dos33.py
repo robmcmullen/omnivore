@@ -350,7 +350,6 @@ class Dos33Dirent(Dirent):
         self.start_read(image)
         data, _, _, _ = self.read_sector(image)
         addr = int(data[0]) + 256 * int(data[1])
-        print "found addr", addr
         return addr
 
 
@@ -537,7 +536,6 @@ class Dos33DiskImage(DiskImageBase):
             name = "%s %03d %s" % (dirent.summary, dirent.num_sectors, dirent.filename)
             verbose_name = "%s (%d sectors, first@%d) %s" % (dirent.filename, dirent.num_sectors, dirent.sector_map[0], dirent.verbose_info)
             raw = self.rawdata.get_indexed(byte_order)
-            print dirent.file_type, dirent.filename
             if dirent.file_type == "B":
                 addr = dirent.get_binary_start_address(self) - 4 # factor in 4 byte header
             else:

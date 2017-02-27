@@ -201,7 +201,6 @@ def run():
     parser.add_argument("--vtoc", action="store_true", default=False, help="show the VTOC")
     parser.add_argument("-m", "--metadata", action="store_true", default=False, help="show extra metadata for named files")
     options, extra_args = parser.parse_known_args()
-    print options, extra_args
 
     # Turn off debug messages by default
     logging.basicConfig(level=logging.WARNING)
@@ -225,7 +224,6 @@ def run():
         if parser and parser.image:
             if options.all:
                 file_list = list(parser.image.files)
-                print file_list
 
             if options.segments:
                 print "\n".join([str(a) for a in parser.segments])
