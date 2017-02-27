@@ -143,6 +143,9 @@ class Dirent(object):
     def __eq__(self, other):
         raise NotImplementedError
 
+    def extra_metadata(self, image):
+        raise NotImplementedError
+
     def mark_deleted(self):
         raise NotImplementedError
 

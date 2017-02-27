@@ -213,6 +213,13 @@ class Dos33Dirent(Dirent):
     @property
     def flag(self):
         return 0xff if self.deleted else self._file_type | (0x80 * int(self.locked))
+
+    def extra_metadata(self, image):
+        lines = []
+        ts = self.get_track_sector_list(image)
+        lines.append("track/sector list at: " + str(ts))
+        lines.append("sector map: " + str(self.sector_map))
+        return "\n".join(lines)
     
     def parse_raw_dirent(self, image, bytes):
         if bytes is None:
@@ -289,15 +296,17 @@ class Dos33Dirent(Dirent):
             log.debug("reading track/sector list at %d for %s" % (sector_num, self))
             data, _ = image.get_sectors(sector_num)
             sector = Dos33TSSector(image.header, data=data)
+            sector.sector_num = sector_num
             sector_map.extend(sector.get_tslist())
             tslist.append(sector)
             sector_num = sector.next_sector_num
         self.sector_map = sector_map[0:self.num_sectors - len(tslist)]
         self.track_sector_list = tslist
+        return tslist
     
     def get_sectors_in_vtoc(self, image):
         self.get_track_sector_list(image)
-        sectors = []
+        sectors = BaseSectorList(image.header)
         sectors.extend(self.track_sector_list)
         for sector_num in self.sector_map:
             sector = WriteableSector(image.header.sector_size, None, sector_num)

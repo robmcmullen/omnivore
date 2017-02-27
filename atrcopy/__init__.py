@@ -129,6 +129,8 @@ def list_files(image, files):
     for dirent in image.files:
         if not files or dirent.filename in files:
             print dirent
+            if options.metadata:
+                print dirent.extra_metadata(image)
 
 def assemble(image, source_files, data_files):
     if source_files:
@@ -197,6 +199,7 @@ def run():
     parser.add_argument("-o", "--output", action="store", default="", help="output file name for those commands that need it")
     parser.add_argument("--shred", action="store_true", default=False, help="fill empty sectors with 0")
     parser.add_argument("--vtoc", action="store_true", default=False, help="show the VTOC")
+    parser.add_argument("-m", "--metadata", action="store_true", default=False, help="show extra metadata for named files")
     options, extra_args = parser.parse_known_args()
     print options, extra_args
 

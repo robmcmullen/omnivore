@@ -124,7 +124,10 @@ class AtariDosDirent(Dirent):
         if self.deleted: flags.append("DEL")
         if self.locked: flags.append("LOCK")
         return "flags=[%s]" % ", ".join(flags)
-    
+
+    def extra_metadata(self, image):
+        return self.verbose_info
+
     def parse_raw_dirent(self, image, bytes):
         if bytes is None:
             return
