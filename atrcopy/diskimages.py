@@ -356,7 +356,7 @@ class DiskImageBase(object):
 
     def build_sectors(self, data):
         data = to_numpy(data)
-        sectors = BaseSectorList(self.header.sector_size)
+        sectors = BaseSectorList(self.header)
         index = 0
         while index < len(data):
             count = min(self.header.payload_bytes, len(data) - index)
