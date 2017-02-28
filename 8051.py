@@ -60,7 +60,7 @@ addressModeTable = {
 "direct,@r1"       : "${0:02X},@r1",
 "direct,a"         : "${0:02X},a",
 "direct,direct"    : "${0:02X},${1:02X}",
-"direct,immed"     : "${0:02X},#{1:02X}",
+"direct,immed"     : "${0:02X},#${1:02X}",
 "direct,offset"    : "${0:02X},${1:02X}",
 "direct,r0"        : "${0:02X},r0",
 "direct,r1"        : "${0:02X},r1",
