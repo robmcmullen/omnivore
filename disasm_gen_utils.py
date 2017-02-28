@@ -369,12 +369,15 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
             argorder[0:0] = newargs
         return prefix
 
+    def opcode_line_out(self, outstr, argorder):
+        if argorder:
+            outstr += ", %s" % (", ".join(argorder))
+        self.out("    num_printed = sprintf(instructions, %s)" % outstr)
+
     def opcode1(self, opcode):
         prefix = self.get_comment(self.length, self.argorder)
         outstr = "\"%s%s %s\"" % (prefix, self.mnemonic, self.fmt)
-        if self.argorder:
-            outstr += ", %s" % (", ".join(self.argorder))
-        self.out("    num_printed = sprintf(instructions, %s)" % outstr)
+        self.opcode_line_out(outstr, self.argorder)
 
     def opcode2(self, opcode):
         self.op1()
@@ -444,6 +447,129 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
             self.lines.append("}") # no indent for closing brace
         else:
             self.out("break")
+
+
+class UnrolledC(RawC):
+    preamble_header = c_preamble_header
+
+    preamble = """
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *instructions, int strpos, int mnemonic_lower, char *hexdigits) {
+    int dist;
+    unsigned int rel;
+    unsigned short addr;
+    unsigned char opcode, leadin, op1, op2, op3;
+    char *first_instruction_ptr, *h;
+
+    first_instruction_ptr = instructions;
+    opcode = *src++;
+    wrap->pc = (unsigned short)pc;
+    wrap->strpos = strpos;
+"""
+
+    def opcode1(self, opcode):
+        prefix = self.get_comment(self.length, self.argorder)
+        outstr = "%s%s %s" % (prefix, self.mnemonic, self.fmt)
+        self.opcode_line_out(outstr.rstrip(), self.argorder)
+
+    def opcode_line_out(self, outstr, argorder):
+        print outstr, argorder
+
+        def flush_mixed(diffs):
+            self.out("    if (mnemonic_lower) {")
+            for c in diffs:
+                self.out("        *instructions++ = '%s'" % c.lower())
+            self.out("    }")
+            self.out("    else {")
+            for c in diffs:
+                self.out("        *instructions++ = '%s'" % c.upper())
+            self.out("    }")
+            return []
+
+        def flush_text(text):
+            diffs = []
+            for l, u in zip(text.lower(), text.upper()):
+                if l == u:
+                    print "l==u: -->%s<-- -->%s<--: diffs=%s" % (l, u, diffs)
+                    if len(diffs) > 0:
+                        diffs = flush_mixed(diffs)
+                    self.out("    *instructions++ = '%s'" %  u)
+                else:
+                    diffs.append(u)
+                    print "l!=u: -->%s<-- -->%s<--: diffs=%s" % (l, u, diffs)
+            if len(diffs) > 0:
+                flush_mixed(diffs)
+            return ""
+
+        def flush_hex(operand):
+            self.out("    h = &hexdigits[%s*2]" % operand)
+            self.out("    *instructions++ = *h++")
+            self.out("    *instructions++ = *h++")
+
+        def flush_hex16(operand):
+            self.out("    h = &hexdigits[((%s>>8)&0xff)*2]" % operand)
+            self.out("    *instructions++ = *h++")
+            self.out("    *instructions++ = *h++")
+            self.out("    h = &hexdigits[(%s&0xff)*2]" % operand)
+            self.out("    *instructions++ = *h++")
+            self.out("    *instructions++ = *h++")
+
+        i = 0
+        text = ""
+        fmt = ""
+        while i < len(outstr):
+            tail = outstr[i:]
+            if tail.startswith("#$%02x%02x"):
+                text = text + "#$"
+                text = flush_text(text)
+                flush_hex(argorder.pop(0))
+                flush_hex(argorder.pop(0))
+                i += 10
+            elif tail.startswith("#$%02x"):
+                text = text + "#$"
+                text = flush_text(text)
+                flush_hex(argorder.pop(0))
+                i += 6
+            elif tail.startswith("$%02x%02x"):
+                text = text + "$"
+                text = flush_text(text)
+                flush_hex(argorder.pop(0))
+                flush_hex(argorder.pop(0))
+                i += 9
+            elif tail.startswith("$%02x"):
+                text = text + "$"
+                text = flush_text(text)
+                flush_hex(argorder.pop(0))
+                i += 5
+            elif tail.startswith("$%04x"):
+                text = text + "$"
+                text = flush_text(text)
+                flush_hex16(argorder.pop(0))
+                i += 5
+            elif tail.startswith("$%"):
+                raise RuntimeError("Unsupported operand format: %s" % tail)
+            else:
+                text += outstr[i]
+                i += 1
+        flush_text(text)
+
+    def end_subroutine(self):
+        self.out("}")
+        if self.leadin_offset == 0:
+            self.out("wrap->flag = 0")
+            self.out("wrap->strlen = (int)(instructions - first_instruction_ptr)")
+            self.out("return wrap->count")
+            self.lines.append("truncated:")
+            self.out("wrap->count = 1")
+            self.mnemonic = ".byte"
+            self.fmt = "$%02x"
+            self.argorder = ["opcode"]
+            self.opcode1(0)
+            self.out("wrap->strlen = (int)(instructions - first_instruction_ptr)")
+            self.out("return wrap->count")
+            self.lines.append("}") # no indent for closing brace
+        else:
+            self.out("break")
+
 
 class DataC(RawC):
     preamble_header = c_preamble_header

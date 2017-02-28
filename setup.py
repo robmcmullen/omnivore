@@ -10,6 +10,7 @@ else:
 import numpy
 
 MONOLITHIC = True
+DEV = True
 
 extensions = [
     Extension("udis_fast.disasm_info",
@@ -18,7 +19,17 @@ extensions = [
         include_dirs = [numpy.get_include()],
         )]
 
-if MONOLITHIC:
+if DEV:
+    e = Extension("udis_fast.disasm_speedups_dev",
+        sources = [
+        "udis_fast/disasm_speedups_dev.c",
+        "udis_fast/hardcoded_parse_dev.c",
+        ],
+        extra_compile_args = extra_compile_args,
+        include_dirs = [numpy.get_include()],
+        )
+    extensions.append(e)
+elif MONOLITHIC:
     e = Extension("udis_fast.disasm_speedups_monolithic",
         sources = [
         "udis_fast/disasm_speedups_monolithic.c",

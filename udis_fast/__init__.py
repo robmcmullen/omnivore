@@ -112,6 +112,11 @@ def get_disassembled_chunk(parse_mod, storage_wrapper, binary, pc, last, index_o
     return pc, index_of_pc
 
 def get_disassembler(cpu, fast=True, monolithic=True):
+    if cpu == "dev":
+        import disasm_speedups_dev
+        processor = functools.partial(disasm_speedups_dev.get_disassembled_chunk_fast, cpu)
+        strsize = 12
+        return processor, cpu, strsize
     if monolithic:
         import disasm_speedups_monolithic
         processor = functools.partial(disasm_speedups_monolithic.get_disassembled_chunk_fast, cpu)

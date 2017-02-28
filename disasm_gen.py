@@ -33,16 +33,17 @@ r = 64
 w = 128
 
 class DataGenerator(object):
-    def __init__(self, cpu, cpu_name, formatter_class, hex_lower=True, mnemonic_lower=False, first_of_set=True, **kwargs):
+    def __init__(self, cpu, cpu_name, formatter_class, hex_lower=True, mnemonic_lower=False, first_of_set=True, cases_in_filename=False, **kwargs):
         self.cpu_name = cpu_name
         self.formatter_class = formatter_class
-        self.set_case(hex_lower, mnemonic_lower)
+        self.set_case(hex_lower, mnemonic_lower, cases_in_filename)
         self.setup(**kwargs)
         self.generate(first_of_set)
 
-    def set_case(self, hex_lower, mnemonic_lower):
+    def set_case(self, hex_lower, mnemonic_lower, cases):
         self.hex_lower = hex_lower
         self.mnemonic_lower = mnemonic_lower
+        self.cases_in_filename = cases
         self.data_op = ".byte" if mnemonic_lower else ".BYTE"
         self.fmt_op = "$%02x" if hex_lower else "$%02X"
         self.fmt_2op = "$%02x%02x" if hex_lower else "$%02X%02X"
@@ -60,9 +61,13 @@ class DataGenerator(object):
 
     @property
     def function_name(self):
-        c1 = "L" if self.mnemonic_lower else "U"
-        c2 = "L" if self.hex_lower else "U"
-        text = "parse_instruction_c_%s_%s%s" % (self.cpu_name, c1, c2)
+        if self.cases_in_filename:
+            suffix = "_"
+            suffix += "L" if self.mnemonic_lower else "U"
+            suffix += "L" if self.hex_lower else "U"
+        else:
+            suffix = ""
+        text = "parse_instruction_c_%s%s" % (self.cpu_name, suffix)
         return text
 
     def generate(self, first_of_set):
@@ -82,9 +87,9 @@ class DataGenerator(object):
         self.lines = lines
 
 class DisassemblerGenerator(DataGenerator):
-    def __init__(self, cpu, cpu_name, formatter_class, allow_undocumented=False, hex_lower=True, mnemonic_lower=False, r_mnemonics=None, w_mnemonics=None, rw_modes=None, first_of_set=True):
+    def __init__(self, cpu, cpu_name, formatter_class, allow_undocumented=False, hex_lower=True, mnemonic_lower=False, r_mnemonics=None, w_mnemonics=None, rw_modes=None, first_of_set=True, cases_in_filename=False):
         self.formatter_class = formatter_class
-        self.set_case(hex_lower, mnemonic_lower)
+        self.set_case(hex_lower, mnemonic_lower, cases_in_filename)
         self.setup(cpu, cpu_name, allow_undocumented, r_mnemonics, w_mnemonics, rw_modes)
         self.generate(first_of_set)
 
@@ -194,9 +199,12 @@ def get_file(cpu_name, ext, monolithic, first=False):
         print("Generating %s in %s" % (cpu_name, file_root))
     return open("%s.%s" % (file_root, ext), mode)
 
-def gen_cpu(pyx, cpu, undoc=False, all_case_combos=False, do_py=False, do_c=True, monolithic=False):
-    cpu_name = "%sundoc" % cpu if undoc else cpu
-    for ext, formatter, do_it in [("py", PrintNumpy, do_py), ("c", RawC, do_c)]:
+def gen_cpu(pyx, cpu, undoc=False, all_case_combos=False, do_py=False, do_c=True, monolithic=False, dev=False):
+    if dev:
+        cpu_name = "dev"
+    else:
+        cpu_name = "%sundoc" % cpu if undoc else cpu
+    for ext, formatter, do_it in [("py", PrintNumpy, do_py), ("c", UnrolledC, do_c)]:
         if not do_it:
             continue
         pyx.cpus.add(cpu)
@@ -371,6 +379,7 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--cpu", help="Specify CPU type (defaults to 6502)", default="")
+    parser.add_argument("-d", "--dev", help="Build for development testing", action="store_true", default=False)
     parser.add_argument("-p", "--py", help="Also create python code", action="store_true", default=False)
     parser.add_argument("-u", "--undocumented", help="Allow undocumented opcodes", action="store_true")
     parser.add_argument("-a", "--all-cases", help="Generate 4 separate functions for the lower/upper combinations", action="store_true", default=False)
@@ -382,11 +391,15 @@ if __name__ == "__main__":
         with get_file(None, "c", True, True) as fh:
             fh.write(c_preamble_header)
 
+    if args.dev:
+        args.all_cases = False
+        args.monolithic = False
+
     pyx = PyxGenerator()
     if args.cpu is None or args.cpu.lower() == "none":
         pass
     elif args.cpu:
-        gen_cpu(pyx, args.cpu, args.undocumented, args.all_cases, args.py, monolithic=args.monolithic)
+        gen_cpu(pyx, args.cpu, args.undocumented, args.all_cases, args.py, monolithic=args.monolithic, dev=args.dev)
     else:
         gen_all(pyx, args.all_cases, args.monolithic)
     gen_others(pyx, args.all_cases, args.monolithic)
