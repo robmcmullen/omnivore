@@ -143,7 +143,7 @@ opcodeTable = {
 0x8a : [ 2, "ora",  "immediate"      ],
 0x8b : [ 2, "add",  "immediate"      ],
 0x8c : [ 3, "cpx",  "immediatex"     ],
-0x8d : [ 2, "bsr",  "relative"       ],
+0x8d : [ 2, "bsr",  "relative", pcr  ],
 0x8e : [ 3, "lds",  "immediatex"     ],
 
 0x90 : [ 2, "sub",  "direct"         ],
