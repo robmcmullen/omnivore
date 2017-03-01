@@ -10,7 +10,11 @@ else:
 import numpy
 
 MONOLITHIC = True
-DEV = False
+if "--dev" in sys.argv:
+    DEV = True
+    sys.argv.remove("--dev")
+else:
+    DEV = False
 
 extensions = [
     Extension("udis_fast.disasm_info",
