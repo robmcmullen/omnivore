@@ -136,17 +136,12 @@ class DisassemblerGenerator(DataGenerator):
                 multibyte[leadin][second_byte][fourth_byte] = optable
                 continue
             elif opcode > 255:
-                try:
-                    length, mnemonic, mode, flag = optable
-                    # check for placeholder z80 instructions & ignore them the
-                    # real instructions for ddcb and fdcb will have 4 byte
-                    # opcodes
-                    if flag & z80bit and (opcode == 0xddcb or opcode == 0xfdcb):
-                        continue
-                except ValueError:
-                    # no flag, can't have the z80bit set, so it's a valid
-                    # opcode
-                    pass
+                length, mnemonic, mode, flag = optable
+                # check for placeholder z80 instructions & ignore them the
+                # real instructions for ddcb and fdcb will have 4 byte
+                # opcodes
+                if flag & z80bit and (opcode == 0xddcb or opcode == 0xfdcb):
+                    continue
                 log.debug("found multibyte %x, l=%d" % (opcode, leadin_offset))
                 leadin = opcode // 256
                 opcode = opcode & 0xff

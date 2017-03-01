@@ -90,11 +90,7 @@ class PrintBase(object):
         return "%02x %%02x %%02x %%02x" % (opcode), ["op1", "op2", "op3"]
 
     def set_current(self, optable, parser):
-        try:
-            self.length, self.mnemonic, self.mode, self.flag = optable
-        except ValueError:
-            self.length, self.mnemonic, self.mode = optable
-            self.flag = 0
+        self.length, self.mnemonic, self.mode, self.flag = optable
         fmt = parser.address_modes[self.mode]
         self.fmt, self.argorder = convert_fmt(fmt, parser.mnemonic_lower, parser.hex_lower, self.escape_strings)
         if self.mode in parser.rw_modes:
@@ -478,7 +474,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         self.opcode_line_out(outstr.rstrip(), self.argorder)
 
     def opcode_line_out(self, outstr, argorder):
-        print outstr, argorder
+        log.debug("opcode_line_out: %s %s" % (outstr, argorder))
 
         def flush_mixed(diffs):
             self.out("    if (mnemonic_lower) {")

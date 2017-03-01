@@ -15,19 +15,25 @@ comment = 16
 r = 64
 w = 128
 
-def find_nop(cpu):
+def fix_opcode_table(cpu):
+    """ Find the NOP opcode and add the 'flag' variable if it doesn't exist so
+    calling programs don't have to use a try statement to see if there are 3 or
+    4 values in the tuple.
+    """
     table = cpu['opcodeTable']
     possibilities = []
     nop = 0x00
+    fixed_table = {}
     for opcode, optable in table.items():
         try:
             length, mnemonic, mode, flag = optable
         except ValueError:
             length, mnemonic, mode = optable
             flag = 0
+        fixed_table[opcode] = (length, mnemonic, mode, flag)
         if mnemonic == "nop" and flag == 0:
             nop = opcode
-            break
+    cpu['opcodeTable'] = fixed_table
     return nop
 
 
@@ -58,7 +64,7 @@ def read_udis(pathname):
                     exec(source, g, d)
                     if 'opcodeTable' in d:
                         cpus[cpu_name] = d
-                        nop = find_nop(d)
+                        nop = fix_opcode_table(d)
                         cpus[cpu_name]["nop"] = nop
                 except SyntaxError:
                     # ignore any python 3 files
