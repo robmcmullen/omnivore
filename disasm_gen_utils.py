@@ -58,12 +58,13 @@ op_loc = 23
 class PrintBase(object):
     escape_strings = True
 
-    def __init__(self, lines, indent, leadin, leadin_offset):
+    def __init__(self, generator, lines, indent="    ", leadin=0, leadin_offset=0):
         self.lines = lines
         self.indent = indent
         self.leadin = leadin
         self.leadin_offset = leadin_offset
         self.first = True
+        self.generator = generator
 
     def set_case(self, mnemonic_lower, hex_lower):
         pass
@@ -89,21 +90,20 @@ class PrintBase(object):
     def bytes4(self, opcode):
         return "%02x %%02x %%02x %%02x" % (opcode), ["op1", "op2", "op3"]
 
-    def set_current(self, optable, parser):
+    def set_current(self, optable):
         self.length, self.mnemonic, self.mode, self.flag = optable
-        fmt = parser.address_modes[self.mode]
-        self.fmt, self.argorder = convert_fmt(fmt, parser.mnemonic_lower, parser.hex_lower, self.escape_strings)
-        if self.mode in parser.rw_modes:
-            if self.mnemonic in parser.r_mnemonics:
+        gen = self.generator
+        fmt = gen.address_modes[self.mode]
+        self.fmt, self.argorder = convert_fmt(fmt, gen.mnemonic_lower, gen.hex_lower, self.escape_strings)
+        if self.mode in gen.rw_modes:
+            if self.mnemonic in gen.r_mnemonics:
                 self.flag |= r
-            if self.mnemonic in parser.w_mnemonics:
+            if self.mnemonic in gen.w_mnemonics:
                 self.flag |= w
-        if parser.mnemonic_lower:
+        if gen.mnemonic_lower:
             self.mnemonic = self.mnemonic.lower()
         else:
             self.mnemonic = self.mnemonic.upper()
-        self.fmt_op = parser.fmt_op
-        self.data_op = parser.data_op
 
     @property
     def undocumented(self):
@@ -254,9 +254,8 @@ def parse_instruction_numpy(wrap, pc, src, last_pc):
         self.out("    count = 1")
         bstr = "%02x __ __ __"
         bvars = ["opcode", "opcode"]
-        mnemonic = ".byte"
         fmt = "%02x"
-        outstr = "'%s       %s %s' %% (%s)" % (bstr, mnemonic, fmt, ", ".join(bvars))
+        outstr = "'%s       %s %s' %% (%s)" % (bstr, self.generator.data_op, fmt, ", ".join(bvars))
         self.out("    put_bytes(%s, %d, wrap)" % (outstr, byte_loc))
 
     def start_multibyte_leadin(self, leadin):
@@ -354,10 +353,10 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         newargs = []
         prefix = ""
         if self.flag & comment:
-            prefix = "%s " % self.data_op
+            prefix = "%s " % self.generator.data_op
             for i in range(4):
                 if count > i:
-                    prefix += "%s" % self.fmt_op
+                    prefix += "%s" % self.generator.fmt_op
                     if count > i + 1:
                         prefix += ", "
                     else:
@@ -415,12 +414,12 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         self.out("default:")
         if self.leadin_offset == 0:
             self.out("    wrap->count = 1")
-            self.mnemonic = ".byte"
+            self.mnemonic = self.generator.data_op
             self.fmt = "$%02x"
             self.argorder = ["opcode"]
         elif self.leadin_offset == 1:
             self.out("    wrap->count = 2")
-            self.mnemonic = ".byte"
+            self.mnemonic = self.generator.data_op
             self.fmt = "$%02x, $%02x"
             self.argorder = ["leadin", "opcode"]
         self.opcode1(0)
@@ -440,7 +439,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
             self.out("return wrap->count")
             self.lines.append("truncated:")
             self.out("wrap->count = 1")
-            self.mnemonic = ".byte"
+            self.mnemonic = self.generator.data_op
             self.fmt = "$%02x"
             self.argorder = ["opcode"]
             self.opcode1(0)
@@ -569,7 +568,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
             self.out("return wrap->count")
             self.lines.append("truncated:")
             self.out("wrap->count = 1")
-            self.mnemonic = ".byte"
+            self.mnemonic = self.generator.data_op
             self.fmt = "$%02x"
             self.argorder = ["opcode"]
             self.opcode1(0)
@@ -600,27 +599,22 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     }
     switch(wrap->count) {
 """
-    def __init__(self, lines):
-        self.lines = lines
-        self.first = True
-        self.indent = "    "
-
     def print_bytes(self, count, data_op, fmt_op):
         fmt = ", ".join([fmt_op] * count)
         args = ", ".join(["src[%d]" % i for i in range(count)])
         self.out("    num_printed = sprintf(txt, \"%s %s\", %s)" % (data_op, fmt, args))
 
-    def process(self, count, data_op, fmt_op):
+    def process(self, count):
         if count > 1:
             self.out("case %d:" % count)
         else:
             self.out("default:")
-        self.print_bytes(count, data_op, fmt_op)
+        self.print_bytes(count, self.generator.data_op, self.generator.fmt_op)
         self.out("    break")
 
-    def gen_cases(self, parser):
-        for count in range(parser.bytes_per_line, 0, -1): # down to 1
-            self.process(count, parser.data_op, parser.fmt_op)
+    def gen_cases(self):
+        for count in range(self.generator.bytes_per_line, 0, -1): # down to 1
+            self.process(count)
 
     def end_subroutine(self):
         self.out("}")
@@ -710,17 +704,12 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     return wrap->count;
 }
 """
-    def __init__(self, lines):
-        self.lines = lines
-        self.first = True
-        self.indent = "    "
-
-    def process(self, count, data_op, fmt_op):
-        text = self.main.replace("$BYTE", data_op).replace("$HEX", fmt_op)
+    def process(self, count):
+        text = self.main.replace("$BYTE", self.generator.data_op).replace("$HEX", self.generator.fmt_op)
         self.lines.extend(text.splitlines())
 
-    def gen_cases(self, parser):
-        self.process(0, parser.data_op, parser.fmt_op)
+    def gen_cases(self):
+        self.process(0)
 
     def end_subroutine(self):
         pass
@@ -758,17 +747,12 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     return wrap->count;
 }
 """
-    def __init__(self, lines):
-        self.lines = lines
-        self.first = True
-        self.indent = "    "
-
-    def process(self, count, data_op, fmt_op, fmt_2op):
-        text = self.main.replace("$BYTE", data_op).replace("$HEX", fmt_op).replace("$2HEX", fmt_2op)
+    def process(self, count):
+        text = self.main.replace("$BYTE", self.generator.data_op).replace("$HEX", self.generator.fmt_op).replace("$2HEX", self.generator.fmt_2op)
         self.lines.extend(text.splitlines())
 
-    def gen_cases(self, parser):
-        self.process(0, parser.data_op, parser.fmt_op, parser.fmt_2op)
+    def gen_cases(self):
+        self.process(0)
 
     def end_subroutine(self):
         pass

@@ -51,7 +51,7 @@ class DataGenerator(object):
         self.hex_lower = hex_lower
         self.mnemonic_lower = mnemonic_lower
         self.cases_in_filename = cases
-        self.data_op = ".byte" if mnemonic_lower else ".BYTE"
+        self.data_op = ".db" if mnemonic_lower else ".DB"
         self.fmt_op = "$%02x" if hex_lower else "$%02X"
         self.fmt_2op = "$%02x%02x" if hex_lower else "$%02X%02X"
 
@@ -59,8 +59,8 @@ class DataGenerator(object):
         self.bytes_per_line = bytes_per_line
 
     def gen_numpy_single_print(self, lines, *args, **kwargs):
-        formatter = self.formatter_class(lines)
-        formatter.gen_cases(self)
+        formatter = self.formatter_class(self, lines)
+        formatter.gen_cases()
         formatter.end_subroutine()
 
     def start_formatter(self, lines):
@@ -127,7 +127,7 @@ class DisassemblerGenerator(DataGenerator):
         0000 00 00 00 00       lda #$30
                          ^^^^^ space for a 5 character label, to be placed later
         """
-        formatter = self.formatter_class(lines, indent, leadin, leadin_offset)
+        formatter = self.formatter_class(self, lines, indent, leadin, leadin_offset)
         multibyte = dict()
 
         for opcode, optable in table.items():
@@ -157,7 +157,7 @@ class DisassemblerGenerator(DataGenerator):
                 multibyte[leadin][opcode] = optable
                 continue
             try:
-                formatter.set_current(optable, self)
+                formatter.set_current(optable)
             except ValueError:
                 # process z80 4-byte commands
                 log.debug("z80 4 byte: %x %x" % (leadin, opcode))
