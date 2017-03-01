@@ -340,7 +340,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         if self.first:
             self.out("switch(opcode) {")
             self.first = False
-        self.out("case 0x%x:" % (opcode))
+        self.out("case 0x%x: /* %s %s */" % (opcode, self.mnemonic, self.fmt))
 
     def end_if_clause(self):
         self.out("    break")
