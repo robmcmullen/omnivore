@@ -16,6 +16,7 @@ log = logging.getLogger(__name__)
 class DisassemblyTable(ByteGridTable):
     column_labels = ["Bytes", "Disassembly", "Comment"]
     column_sizes = [11, 18, 30]
+    label_format = "L%04x"
     
     @classmethod
     def update_preferences(cls, prefs):
@@ -24,8 +25,10 @@ class DisassemblyTable(ByteGridTable):
         # this DisassemblyTable
         if prefs.hex_grid_lower_case:
             cls.get_value_style = cls.get_value_style_lower
+            cls.label_format = "L%04x"
         else:
             cls.get_value_style = cls.get_value_style_upper
+            cls.label_format = "L%04X"
         for i, w in enumerate(prefs.disassembly_column_widths):
             if w > 0:
                 cls.column_pixel_sizes[i] = w
@@ -194,7 +197,7 @@ class DisassemblyTable(ByteGridTable):
             label = self.disassembler.memory_map.rmemmap.get(target_pc, "")
             if not label and target_pc >= operand_labels_start_pc and target_pc <= operand_labels_end_pc:
                 #print operand, dollar, text_hex, target_pc, operand_labels_start_pc, operand_labels_end_pc
-                label = offset_operand_labels.get(target_pc, "L" + text_hex)
+                label = offset_operand_labels.get(target_pc, self.label_format % target_pc)
             if label:
                 operand = operand[0:dollar] + label + operand[dollar+1+size:]
             return operand, target_pc, label
