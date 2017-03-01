@@ -206,6 +206,8 @@ class DisassemblyTable(ByteGridTable):
                         # if no existing label at the target, reference it using
                         # offset in bytes from the nearest previous label
                         label = "L%04X+%d" % (good_opcode_target_pc, diff)
+                    else:
+                        label = "L%04X" % (target_pc)
             if label:
                 operand = operand[0:dollar] + label + operand[dollar+1+size:]
             return operand, target_pc, label
@@ -350,34 +352,14 @@ class DisassemblyPanel(ByteGrid):
         t = self.table
         start_row = t.index_to_row[start]
         end_row = t.index_to_row[end - 1] # end is python style range, want actual last byte
-        start_pc = t.get_pc(start_row)
-        end_pc = t.get_pc(end_row)
 
-        # pass 1: find any new labels
-        extra_labels = {}
-        offset_operand_labels = {}
-        for row in range(start_row, end_row + 1):
-            index, _ = t.get_index_range(row, 0)
-            operand = t.lines[row].instruction
-            operand, target_pc, label = t.get_operand_label(operand, start_pc, end_pc, {})
-            if t.is_pc_valid(target_pc):
-                extra_labels[target_pc] = label
-
-                good_opcode_target_pc = t.get_prior_valid_opcode_start(target_pc)
-                diff = target_pc - good_opcode_target_pc
-                if diff > 0:
-                    # if no existing label at the target, reference it using
-                    # offset in bytes from the nearest previous label
-                    good_label = "L%04X" % good_opcode_target_pc
-                    offset_operand_labels[target_pc] = "%s+%d" % (good_label, diff)
-                    extra_labels[good_opcode_target_pc] = good_label
         lines = []
         org = t.GetRowLabelValue(start_row)
         lines.append("        %s $%s" % (t.disassembler.asm_origin, org))
         for row in range(start_row, end_row + 1):
             index, _ = t.get_index_range(row, 0)
             pc = t.get_pc(row)
-            code, _ = t.get_value_style(row, 1, start_pc, end_pc, extra_labels, offset_operand_labels)
+            code, _ = t.get_value_style(row, 1)
             # expand to 8 spaces
             code = code[0:5] + "  " + code[5:]
             comment, _ = t.get_value_style(row, 2)
