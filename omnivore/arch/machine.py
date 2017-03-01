@@ -546,6 +546,11 @@ class Machine(HasTraits):
              'data byte': '.byte',
              'name': "cc65",
              },
+            {'comment char': ';',
+             'origin': '.org',
+             'data byte': '.byte',
+             'name': "MADS",
+             },
             ]
         return [dict(asm) for asm in asm_list]  # force a copy
     
