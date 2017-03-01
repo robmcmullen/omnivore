@@ -22,7 +22,7 @@ class BaseDisassembler(object):
     
     cached_miniassemblers = {}
     
-    def __init__(self, asm_syntax=None, memory_map=None, hex_lower=True, mnemonic_lower=False):
+    def __init__(self, asm_syntax=None, memory_map=None, hex_lower=True, mnemonic_lower=False, byte_mnemonic=".byte"):
         if asm_syntax is None:
             asm_syntax = self.default_assembler
         self.hex_lower = hex_lower
@@ -34,7 +34,7 @@ class BaseDisassembler(object):
         self.data_byte_opcode = case_func(asm_syntax['data byte'])
         self.asm_origin = case_func(asm_syntax['origin'])
         self.comment_char = case_func(asm_syntax['comment char'])
-        self.fast = udis.udis_fast.DisassemblerWrapper(self.cpu, fast=True, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower)
+        self.fast = udis.udis_fast.DisassemblerWrapper(self.cpu, fast=True, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, byte_mnemonic=byte_mnemonic)
         self.memory_map = memory_map if memory_map is not None else memory_map.EmptyMemoryMap()
 
     @classmethod
