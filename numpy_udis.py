@@ -15,6 +15,7 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--fast", action="store_true", help="Use C code for disassembly generation", default=True)
     parser.add_argument("--slow", action="store_false", dest="fast", help="Use C code for disassembly generation", default=True)
     parser.add_argument("-s", "--show", action="store_true", help="Show disassembly", default=False)
+    parser.add_argument("-p", "--pc", action="store", help="set PC at start", default="0")
     parser.add_argument("filenames", metavar="filenames", nargs='*',
                    help="Binary files(s) to disassemble")
     args = parser.parse_args()
@@ -62,7 +63,7 @@ if __name__ == "__main__":
         print "total instructions: %d" % count
 
     def process_fast(binary, show=False):
-        pc = 0;
+        pc = int(args.pc, 16)
         size = len(binary)
         last = pc + size
         i = 0
@@ -71,17 +72,36 @@ if __name__ == "__main__":
             row = 0
             while (row < info.num_instructions):
                 data = info[row]
-                line = "%d %s" % (data.pc, data.instruction)
+                line = "%04x %s" % (data.pc, data.instruction)
                 print line
                 row += 1
 
-        print "total instructions: %d" % info.num_instructions
-        print info.index[0:1000]
+        np.set_printoptions(formatter={'int':hex})
+        print "total instructions: %d, bytes: %d" % (info.num_instructions, size)
+        print repr(info.index[0:1000])
+        print repr(info.labels[pc:pc + size])
         print np.where(info.labels > 0)
 
         for i, entry in enumerate(info):
             pass
         print "getitem test (looping count): %d" % i
+
+        # add a label to an opcode if there exists a label that points to a
+        # byte in the middle of that instruction, i.e. after that opcode but
+        # before the next opcode.
+        i = size
+        while i > 0:
+            i -= 1
+            has_label = info.labels[pc + i]
+            if has_label:
+                print "Found label %04x, info.index[%d]=%d" % (pc + i, i, info.index[i])
+                while info.index[i - 1] == info.index[i]:
+                    i -= 1
+                if info.labels[pc + i] == 0:
+                    print "  added label at %04x" % (pc + i)
+                info.labels[pc + i] = 1
+        print np.where(info.labels > 0)
+
 
     if args.hex:
         try:
