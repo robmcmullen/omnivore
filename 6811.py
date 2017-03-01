@@ -37,6 +37,11 @@ addressModeTable = {
 "relative"   : "${0:04X}",
 }
 
+# Address modes that reference an address
+# Any opcodes that use one of these address modes refer to an absolute
+# address in memory, and are a candidate to be replaced by a label
+labelTargets = set(["direct", "direct2", "direct3", "extended", "indexedx", "indexedx2", "indexedx3", "indexedy", "indexedy2", "indexedy3"])
+
 # Op Code Table
 # Key is numeric opcode (possibly multiple bytes)
 # Value is a list:

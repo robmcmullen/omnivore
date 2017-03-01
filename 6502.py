@@ -31,6 +31,11 @@ addressModeTable = {
 "zeropagey"   : "${0:02X},y",
 }
 
+# Address modes that reference an address
+# Any opcodes that use one of these address modes refer to an absolute
+# address in memory, and are a candidate to be replaced by a label
+labelTargets = set(["absolute", "absolutex", "absolutey", "indirect", "indirectx", "indirecty", "zeropage", "zeropagex", "zeropagey"])
+
 # Op Code Table
 # Key is numeric opcode (possibly multiple bytes)
 # Value is a list:
@@ -73,7 +78,7 @@ opcodeTable = {
 0x1e : [ 3, "asl", "absolutex"       ],
 0x1f : [ 3, "slo", "absolutex", und  ],
 
-0x20 : [ 3, "jsr", "absolute", lbl   ],
+0x20 : [ 3, "jsr", "absolute"        ],
 0x21 : [ 2, "and", "indirectx"       ],
 0x22 : [ 1, "hlt", "implicit", und   ],
 0x23 : [ 2, "rla", "indirecty", und  ],
@@ -118,7 +123,7 @@ opcodeTable = {
 0x49 : [ 2, "eor", "immediate"       ],
 0x4a : [ 1, "lsr", "accumulator"     ],
 0x4b : [ 2, "alr", "immediate", und  ],
-0x4c : [ 3, "jmp", "absolute", lbl   ],
+0x4c : [ 3, "jmp", "absolute"        ],
 0x4d : [ 3, "eor", "absolute"        ],
 0x4e : [ 3, "lsr", "absolute"        ],
 0x4f : [ 3, "sre", "absolute", und   ],

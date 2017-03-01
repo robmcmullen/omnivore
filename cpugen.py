@@ -21,6 +21,10 @@ def fix_opcode_table(cpu):
     4 values in the tuple.
     """
     table = cpu['opcodeTable']
+    try:
+        labels = cpu['labelTargets']
+    except KeyError:
+        labels = {}
     possibilities = []
     nop = 0x00
     fixed_table = {}
@@ -30,6 +34,8 @@ def fix_opcode_table(cpu):
         except ValueError:
             length, mnemonic, mode = optable
             flag = 0
+        if mode in labels:
+            flag |= lbl
         fixed_table[opcode] = (length, mnemonic, mode, flag)
         if mnemonic == "nop" and flag == 0:
             nop = opcode

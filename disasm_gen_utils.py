@@ -207,6 +207,8 @@ def parse_instruction_numpy(wrap, pc, src, last_pc):
                 self.out("    dist = op1 - 256 if op1 > 127 else op1")
                 self.out("    rel = (pc + 2 + dist) & 0xffff  # limit to 64k address space")
                 self.out("    wrap.labels[rel] = 1")
+            elif self.flag & lbl:
+                self.out("    wrap.labels[op1] = 1")
         if bvars:
             bvars.extend(self.argorder)
             outstr = "'%s       %s %s' %% (%s)" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
@@ -384,6 +386,8 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
                 self.out("    if (op1 > 127) dist = op1 - 256; else dist = op1")
                 self.out("    rel = (pc + 2 + dist) & 0xffff")
                 self.out("    labels[rel] = 1")
+            elif self.flag & lbl:
+                self.out("    labels[op1] = 1")
         self.opcode1(opcode)
 
     def opcode3(self, opcode):
