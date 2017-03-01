@@ -289,7 +289,7 @@ class RawC(PrintNumpy):
     preamble_header = c_preamble_header
 
     preamble = """
-int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *instructions, int strpos) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos) {
     int dist;
     unsigned int rel;
     unsigned short addr;
@@ -372,7 +372,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     def opcode_line_out(self, outstr, argorder):
         if argorder:
             outstr += ", %s" % (", ".join(argorder))
-        self.out("    num_printed = sprintf(instructions, %s)" % outstr)
+        self.out("    num_printed = sprintf(txt, %s)" % outstr)
 
     def opcode1(self, opcode):
         prefix = self.get_comment(self.length, self.argorder)
@@ -459,14 +459,14 @@ class UnrolledC(RawC):
    
 
     preamble = """
-int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *instructions, int strpos, int mnemonic_lower, char *hexdigits) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits) {
     int dist;
     unsigned int rel;
     unsigned short addr;
     unsigned char opcode, leadin, op1, op2, op3;
     char *first_instruction_ptr, *h;
 
-    first_instruction_ptr = instructions;
+    first_instruction_ptr = txt;
     opcode = *src++;
     wrap->pc = (unsigned short)pc;
     wrap->strpos = strpos;
@@ -481,13 +481,13 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         log.debug("opcode_line_out: %s %s" % (outstr, argorder))
 
         def flush_mixed(diffs):
-            self.out("    if (mnemonic_lower) {")
+            self.out("    if (lc) {")
             for c in diffs:
-                self.out("        *instructions++ = '%s'" % c.lower())
+                self.out("        *txt++ = '%s'" % c.lower())
             self.out("    }")
             self.out("    else {")
             for c in diffs:
-                self.out("        *instructions++ = '%s'" % c.upper())
+                self.out("        *txt++ = '%s'" % c.upper())
             self.out("    }")
             return []
 
@@ -499,9 +499,9 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
                     if len(diffs) > 0:
                         diffs = flush_mixed(diffs)
                     if u == "'" or u == "\\":
-                        self.out("    *instructions++ = '\\%s'" %  u)
+                        self.out("    *txt++ = '\\%s'" %  u)
                     else:
-                        self.out("    *instructions++ = '%s'" %  u)
+                        self.out("    *txt++ = '%s'" %  u)
                 else:
                     diffs.append(u)
                     #print "l!=u: -->%s<-- -->%s<--: diffs=%s" % (l, u, diffs)
@@ -511,16 +511,16 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
 
         def flush_hex(operand):
             self.out("    h = &hexdigits[%s*2]" % operand)
-            self.out("    *instructions++ = *h++")
-            self.out("    *instructions++ = *h++")
+            self.out("    *txt++ = *h++")
+            self.out("    *txt++ = *h++")
 
         def flush_hex16(operand):
             self.out("    h = &hexdigits[((%s>>8)&0xff)*2]" % operand)
-            self.out("    *instructions++ = *h++")
-            self.out("    *instructions++ = *h++")
+            self.out("    *txt++ = *h++")
+            self.out("    *txt++ = *h++")
             self.out("    h = &hexdigits[(%s&0xff)*2]" % operand)
-            self.out("    *instructions++ = *h++")
-            self.out("    *instructions++ = *h++")
+            self.out("    *txt++ = *h++")
+            self.out("    *txt++ = *h++")
 
         i = 0
         text = ""
@@ -565,7 +565,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         self.out("}")
         if self.leadin_offset == 0:
             self.out("wrap->flag = 0")
-            self.out("wrap->strlen = (int)(instructions - first_instruction_ptr)")
+            self.out("wrap->strlen = (int)(txt - first_instruction_ptr)")
             self.out("return wrap->count")
             self.lines.append("truncated:")
             self.out("wrap->count = 1")
@@ -573,7 +573,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
             self.fmt = "$%02x"
             self.argorder = ["opcode"]
             self.opcode1(0)
-            self.out("wrap->strlen = (int)(instructions - first_instruction_ptr)")
+            self.out("wrap->strlen = (int)(txt - first_instruction_ptr)")
             self.out("return wrap->count")
             self.lines.append("}") # no indent for closing brace
         else:
@@ -584,7 +584,7 @@ class DataC(RawC):
     preamble_header = c_preamble_header
 
     preamble = """
-int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *instructions, int strpos) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos) {
     unsigned int num_printed = 0;
 
     wrap->pc = (unsigned short)pc;
@@ -608,7 +608,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     def print_bytes(self, count, data_op, fmt_op):
         fmt = ", ".join([fmt_op] * count)
         args = ", ".join(["src[%d]" % i for i in range(count)])
-        self.out("    num_printed = sprintf(instructions, \"%s %s\", %s)" % (data_op, fmt, args))
+        self.out("    num_printed = sprintf(txt, \"%s %s\", %s)" % (data_op, fmt, args))
 
     def process(self, count, data_op, fmt_op):
         if count > 1:
@@ -630,7 +630,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
 
 class AnticC(RawC):
     preamble = """
-int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *instructions, int strpos) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos) {
     unsigned char opcode;
     unsigned int num_printed = 0;
     int i;
@@ -659,50 +659,50 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     main = """
     switch(wrap->count) {
     case 3:
-        num_printed = sprintf(instructions, "$BYTE $HEX, $HEX, $HEX ; ", src[0], src[1], src[2]);
+        num_printed = sprintf(txt, "$BYTE $HEX, $HEX, $HEX ; ", src[0], src[1], src[2]);
         break;
     case 2:
-        num_printed = sprintf(instructions, "$BYTE $HEX, $HEX      ; ", src[0], src[1]);
+        num_printed = sprintf(txt, "$BYTE $HEX, $HEX      ; ", src[0], src[1]);
         break;
     case 1:
-        num_printed = sprintf(instructions, "$BYTE $HEX           ; ", src[0]);
+        num_printed = sprintf(txt, "$BYTE $HEX           ; ", src[0]);
         break;
     default:
-        num_printed = sprintf(instructions, "$BYTE $HEX", src[0]);
+        num_printed = sprintf(txt, "$BYTE $HEX", src[0]);
         for (i=1; i<wrap->count; i++) {
-            num_printed += sprintf(instructions + num_printed, ", $HEX", src[i]);
+            num_printed += sprintf(txt + num_printed, ", $HEX", src[i]);
         }
-        num_printed += sprintf(instructions + num_printed, "; ");
+        num_printed += sprintf(txt + num_printed, "; ");
         break;
     }
  
 
     if ((opcode & 0xf) == 1) {
-        if (opcode & 0x80) num_printed += sprintf(instructions + num_printed, "DLI ");
+        if (opcode & 0x80) num_printed += sprintf(txt + num_printed, "DLI ");
         if (opcode & 0x40) mnemonic = "JVB";
         else if ((opcode & 0xf0) > 0) mnemonic = "<invalid>";
         else mnemonic = "JMP";
-        if (wrap->count < 3) num_printed += sprintf(instructions + num_printed, "%s <bad addr>", mnemonic);
-        else num_printed += sprintf(instructions + num_printed, "%s $HEX%02x", mnemonic, src[2], src[1]);
+        if (wrap->count < 3) num_printed += sprintf(txt + num_printed, "%s <bad addr>", mnemonic);
+        else num_printed += sprintf(txt + num_printed, "%s $HEX%02x", mnemonic, src[2], src[1]);
     }
     else {
         if ((opcode & 0xf) == 0) {
-            if (wrap->count > 1) num_printed += sprintf(instructions + num_printed, "%dx", wrap->count);
-            if (opcode & 0x80) num_printed += sprintf(instructions + num_printed, "DLI ");
-            num_printed += sprintf(instructions + num_printed, "%d BLANK", (((opcode >> 4) & 0x07) + 1));
+            if (wrap->count > 1) num_printed += sprintf(txt + num_printed, "%dx", wrap->count);
+            if (opcode & 0x80) num_printed += sprintf(txt + num_printed, "DLI ");
+            num_printed += sprintf(txt + num_printed, "%d BLANK", (((opcode >> 4) & 0x07) + 1));
         }
         else {
             if ((opcode & 0xf0) == 0x40) {
-                if (wrap->count < 3) num_printed += sprintf(instructions + num_printed, "LMS <bad addr> ");
-                else num_printed += sprintf(instructions + num_printed, "LMS $HEX%02x ", src[2], src[1]);
+                if (wrap->count < 3) num_printed += sprintf(txt + num_printed, "LMS <bad addr> ");
+                else num_printed += sprintf(txt + num_printed, "LMS $HEX%02x ", src[2], src[1]);
             }
-            else if (wrap->count > 1) num_printed += sprintf(instructions + num_printed, "%dx", wrap->count);
+            else if (wrap->count > 1) num_printed += sprintf(txt + num_printed, "%dx", wrap->count);
 
-            if (opcode & 0x80) num_printed += sprintf(instructions + num_printed, "DLI ");
-            if (opcode & 0x20) num_printed += sprintf(instructions + num_printed, "VSCROL ");
-            if (opcode & 0x10) num_printed += sprintf(instructions + num_printed, "HSCROL ");
+            if (opcode & 0x80) num_printed += sprintf(txt + num_printed, "DLI ");
+            if (opcode & 0x20) num_printed += sprintf(txt + num_printed, "VSCROL ");
+            if (opcode & 0x10) num_printed += sprintf(txt + num_printed, "HSCROL ");
 
-            num_printed += sprintf(instructions + num_printed, "MODE %X", (opcode & 0x0f));
+            num_printed += sprintf(txt + num_printed, "MODE %X", (opcode & 0x0f));
         }
     }
 
@@ -727,7 +727,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
 
 class JumpmanHarvestC(RawC):
     preamble = """
-int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *instructions, int strpos) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos) {
     unsigned char opcode;
     unsigned int num_printed = 0;
 
@@ -743,15 +743,15 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         if (pc + wrap->count > last_pc) {
             wrap->count = pc + wrap->count - last_pc;
         }
-        num_printed = sprintf(instructions, "$BYTE $HEX                               ; end", src[0]);
+        num_printed = sprintf(txt, "$BYTE $HEX                               ; end", src[0]);
     }
     else if (pc + 7 <= last_pc) {
         wrap->count = 7;
-        num_printed = sprintf(instructions, "$BYTE $HEX, $HEX, $HEX, $HEX, $HEX, $HEX, $HEX ; enc=$HEX x=$HEX y=$HEX take=$2HEX paint=$2HEX", src[0], src[1], src[2], src[3], src[4], src[5], src[6], src[0], src[1], src[2], src[4], src[3], src[6], src[5]);
+        num_printed = sprintf(txt, "$BYTE $HEX, $HEX, $HEX, $HEX, $HEX, $HEX, $HEX ; enc=$HEX x=$HEX y=$HEX take=$2HEX paint=$2HEX", src[0], src[1], src[2], src[3], src[4], src[5], src[6], src[0], src[1], src[2], src[4], src[3], src[6], src[5]);
     }
     else {
         wrap->count = 1;
-        num_printed = sprintf(instructions, "$BYTE $HEX                               ; [incomplete]", src[0]);
+        num_printed = sprintf(txt, "$BYTE $HEX                               ; [incomplete]", src[0]);
     }
 
     wrap->strlen = num_printed;
