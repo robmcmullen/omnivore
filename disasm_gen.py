@@ -32,6 +32,13 @@ lbl = 8 # subroutine/jump target; candidate for a label
 r = 64
 w = 128
 
+disclaimer = """Warning! This is generated code.
+
+Any edits will be overwritten with the next call to disasm_gen.py
+"""
+c_disclaimer = "/***************************************************************\n%s***************************************************************/\n\n\n" % disclaimer
+py_disclaimer = "\n".join("# %s" % line for line in disclaimer.splitlines()) + "\n\n"
+
 class DataGenerator(object):
     def __init__(self, cpu, cpu_name, formatter_class, hex_lower=True, mnemonic_lower=False, first_of_set=True, cases_in_filename=False, **kwargs):
         self.cpu_name = cpu_name
@@ -207,6 +214,8 @@ def gen_cpu(pyx, cpu, undoc=False, all_case_combos=False, do_py=False, do_c=True
         pyx.cpus.add(cpu)
         with get_file(cpu_name, ext, monolithic) as fh:
             first = not monolithic
+            if first:
+                fh.write(c_disclaimer)
             if all_case_combos:
                 for mnemonic_lower, hex_lower in [(True, True), (True, False), (False, True), (False, False)]:
                     disasm = DisassemblerGenerator(cpu, cpu_name, formatter, allow_undocumented=undoc, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, first_of_set=first)
@@ -364,6 +373,7 @@ $DEFLIST
     return pc, index_of_pc
 """.replace("$EXTERNLIST", "\n".join(externlist)).replace("$DEFLIST", "\n".join(deflist))
         with open(filename, "w") as fh:
+            fh.write(py_disclaimer)
             fh.write(text)
         return text
 
@@ -384,6 +394,7 @@ if __name__ == "__main__":
 
     if args.monolithic:
         with get_file(None, "c", True, True) as fh:
+            fh.write(c_disclaimer)
             fh.write(c_preamble_header)
 
     if args.dev:
