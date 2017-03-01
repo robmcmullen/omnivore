@@ -197,7 +197,15 @@ class DisassemblyTable(ByteGridTable):
             label = self.disassembler.memory_map.rmemmap.get(target_pc, "")
             if not label and target_pc >= operand_labels_start_pc and target_pc <= operand_labels_end_pc:
                 #print operand, dollar, text_hex, target_pc, operand_labels_start_pc, operand_labels_end_pc
-                label = offset_operand_labels.get(target_pc, self.label_format % target_pc)
+                if label in offset_operand_labels:
+                    label = offset_operand_labels[target_pc]
+                else:
+                    good_opcode_target_pc = self.get_prior_valid_opcode_start(target_pc)
+                    diff = target_pc - good_opcode_target_pc
+                    if diff > 0:
+                        # if no existing label at the target, reference it using
+                        # offset in bytes from the nearest previous label
+                        label = "L%04X+%d" % (good_opcode_target_pc, diff)
             if label:
                 operand = operand[0:dollar] + label + operand[dollar+1+size:]
             return operand, target_pc, label
