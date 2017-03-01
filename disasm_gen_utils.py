@@ -458,7 +458,7 @@ class UnrolledC(RawC):
    
 
     preamble = """
-int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits, char *lc_byte_mnemonic, char *uc_byte_mnemonic) {
     int dist;
     unsigned int rel;
     unsigned short addr;
@@ -476,18 +476,23 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         outstr = "%s%s %s" % (prefix, self.mnemonic, self.fmt)
         self.opcode_line_out(outstr.rstrip(), self.argorder)
 
-    def opcode_line_out(self, outstr, argorder):
+    def opcode_line_out(self, outstr, argorder=[], force_case=False):
         log.debug("opcode_line_out: %s %s" % (outstr, argorder))
+        print("opcode_line_out: %s %s" % (outstr, argorder))
 
         def flush_mixed(diffs):
-            self.out("    if (lc) {")
-            for c in diffs:
-                self.out("        *txt++ = '%s'" % c.lower())
-            self.out("    }")
-            self.out("    else {")
-            for c in diffs:
-                self.out("        *txt++ = '%s'" % c.upper())
-            self.out("    }")
+            if force_case:
+                for c in diffs:
+                    self.out("        *txt++ = '%s'" % c)
+            else:
+                self.out("    if (lc) {")
+                for c in diffs:
+                    self.out("        *txt++ = '%s'" % c.lower())
+                self.out("    }")
+                self.out("    else {")
+                for c in diffs:
+                    self.out("        *txt++ = '%s'" % c.upper())
+                self.out("    }")
             return []
 
         def flush_text(text):
@@ -508,18 +513,35 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
                 flush_mixed(diffs)
             return ""
 
+        def flush_nibble(operand):
+            self.out("    h = &hexdigits[(%s & 0xff)*2] + 1" % operand)
+            self.out("    *txt++ = *h++")
+
         def flush_hex(operand):
-            self.out("    h = &hexdigits[%s*2]" % operand)
+            self.out("    h = &hexdigits[(%s & 0xff)*2]" % operand)
             self.out("    *txt++ = *h++")
             self.out("    *txt++ = *h++")
 
         def flush_hex16(operand):
-            self.out("    h = &hexdigits[((%s>>8)&0xff)*2]" % operand)
-            self.out("    *txt++ = *h++")
-            self.out("    *txt++ = *h++")
-            self.out("    h = &hexdigits[(%s&0xff)*2]" % operand)
-            self.out("    *txt++ = *h++")
-            self.out("    *txt++ = *h++")
+            flush_hex("(%s>>8)" % operand)
+            flush_hex("%s" % operand)
+            # self.out("    h = &hexdigits[((%s>>8)&0xff)*2]" % operand)
+            # self.out("    *txt++ = *h++")
+            # self.out("    *txt++ = *h++")
+            # self.out("    h = &hexdigits[(%s&0xff)*2]" % operand)
+            # self.out("    *txt++ = *h++")
+            # self.out("    *txt++ = *h++")
+
+        def flush_dec(operand):
+            self.out("    txt += sprintf(txt, \"%%d\", %s)" % operand)
+
+        def flush_raw(operand):
+            self.out("    *txt++ = %s" % operand)
+
+        def flush_data_op():
+            self.out("    if (lc) h = lc_byte_mnemonic")
+            self.out("    else h = uc_byte_mnemonic")
+            self.out("    while (*h) *txt++ = *h++")
 
         i = 0
         text = ""
@@ -553,8 +575,26 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
                 text = flush_text(text)
                 flush_hex16(argorder.pop(0))
                 i += 5
+            elif tail.startswith("%1x"):
+                text = flush_text(text)
+                flush_nibble(argorder.pop(0))
+                i += 3
+            elif tail.startswith("%d"):
+                text = flush_text(text)
+                flush_dec(argorder.pop(0))
+                i += 2
+            elif tail.startswith("\\"):
+                text = flush_text(text)
+                i += 1
+                flush_raw(ord(outstr[i]))
+                i += 1
             elif tail.startswith("$%"):
                 raise RuntimeError("Unsupported operand format: %s" % tail)
+            elif tail.startswith(self.generator.data_op.lower()):
+                print self.generator.data_op
+                text = flush_text(text)
+                flush_data_op()
+                i += len(self.generator.data_op)
             else:
                 text += outstr[i]
                 i += 1
@@ -579,13 +619,15 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
             self.out("break")
 
 
-class DataC(RawC):
+class DataC(UnrolledC):
     preamble_header = c_preamble_header
 
     preamble = """
-int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits, char *lc_byte_mnemonic, char *uc_byte_mnemonic) {
     unsigned int num_printed = 0;
+    char *first_instruction_ptr, *h;
 
+    first_instruction_ptr = txt;
     wrap->pc = (unsigned short)pc;
     wrap->strpos = strpos;
     wrap->count = 4;
@@ -600,9 +642,9 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     switch(wrap->count) {
 """
     def print_bytes(self, count, data_op, fmt_op):
-        fmt = ", ".join([fmt_op] * count)
-        args = ", ".join(["src[%d]" % i for i in range(count)])
-        self.out("    num_printed = sprintf(txt, \"%s %s\", %s)" % (data_op, fmt, args))
+        outstr = self.generator.data_op + " " + ", ".join(["$%02x"] * count)
+        argorder = ["src[%d]" % i for i in range(count)]
+        self.opcode_line_out(outstr, argorder)
 
     def process(self, count):
         if count > 1:
@@ -618,18 +660,20 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
 
     def end_subroutine(self):
         self.out("}")
-        self.out("wrap->strlen = num_printed")
+        self.out("wrap->strlen = (int)(txt - first_instruction_ptr)")
         self.out("return wrap->count")
         self.lines.append("}") # no indent for closing brace
 
-class AnticC(RawC):
+class AnticC(DataC):
     preamble = """
-int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits, char *lc_byte_mnemonic, char *uc_byte_mnemonic) {
     unsigned char opcode;
     unsigned int num_printed = 0;
     int i;
     char *mnemonic;
+    char *first_instruction_ptr, *h;
 
+    first_instruction_ptr = txt;
     wrap->pc = (unsigned short)pc;
     wrap->strpos = strpos;
     wrap->flag = 0;
@@ -649,64 +693,76 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         }
     }
 """
-
-    main = """
-    switch(wrap->count) {
-    case 3:
-        num_printed = sprintf(txt, "$BYTE $HEX, $HEX, $HEX ; ", src[0], src[1], src[2]);
-        break;
-    case 2:
-        num_printed = sprintf(txt, "$BYTE $HEX, $HEX      ; ", src[0], src[1]);
-        break;
-    case 1:
-        num_printed = sprintf(txt, "$BYTE $HEX           ; ", src[0]);
-        break;
-    default:
-        num_printed = sprintf(txt, "$BYTE $HEX", src[0]);
-        for (i=1; i<wrap->count; i++) {
-            num_printed += sprintf(txt + num_printed, ", $HEX", src[i]);
-        }
-        num_printed += sprintf(txt + num_printed, "; ");
-        break;
-    }
- 
-
-    if ((opcode & 0xf) == 1) {
-        if (opcode & 0x80) num_printed += sprintf(txt + num_printed, "DLI ");
-        if (opcode & 0x40) mnemonic = "JVB";
-        else if ((opcode & 0xf0) > 0) mnemonic = "<invalid>";
-        else mnemonic = "JMP";
-        if (wrap->count < 3) num_printed += sprintf(txt + num_printed, "%s <bad addr>", mnemonic);
-        else num_printed += sprintf(txt + num_printed, "%s $HEX%02x", mnemonic, src[2], src[1]);
-    }
-    else {
-        if ((opcode & 0xf) == 0) {
-            if (wrap->count > 1) num_printed += sprintf(txt + num_printed, "%dx", wrap->count);
-            if (opcode & 0x80) num_printed += sprintf(txt + num_printed, "DLI ");
-            num_printed += sprintf(txt + num_printed, "%d BLANK", (((opcode >> 4) & 0x07) + 1));
-        }
-        else {
-            if ((opcode & 0xf0) == 0x40) {
-                if (wrap->count < 3) num_printed += sprintf(txt + num_printed, "LMS <bad addr> ");
-                else num_printed += sprintf(txt + num_printed, "LMS $HEX%02x ", src[2], src[1]);
-            }
-            else if (wrap->count > 1) num_printed += sprintf(txt + num_printed, "%dx", wrap->count);
-
-            if (opcode & 0x80) num_printed += sprintf(txt + num_printed, "DLI ");
-            if (opcode & 0x20) num_printed += sprintf(txt + num_printed, "VSCROL ");
-            if (opcode & 0x10) num_printed += sprintf(txt + num_printed, "HSCROL ");
-
-            num_printed += sprintf(txt + num_printed, "MODE %X", (opcode & 0x0f));
-        }
-    }
-
-    wrap->strlen = num_printed;
-    return wrap->count;
-}
-"""
     def process(self, count):
-        text = self.main.replace("$BYTE", self.generator.data_op).replace("$HEX", self.generator.fmt_op)
-        self.lines.extend(text.splitlines())
+        self.out("switch(wrap->count) {")
+        for count in range(3, 0, -1): # down to 1
+            if count > 1:
+                self.out("    case %d:" % count)
+            else:
+                self.out("    default:")
+            self.print_bytes(count, self.generator.data_op, self.generator.fmt_op)
+            self.out("    break")
+        self.out("}")
+        self.opcode_line_out("; ");
+        self.out("    if ((opcode & 0xf) == 1) {")
+        self.out("        if (opcode & 0x80) {")
+        self.opcode_line_out("DLI ", force_case=True);
+        self.out("        }")
+        self.out("        if (opcode & 0x40) {")
+        self.opcode_line_out("JVB ", force_case=True)
+        self.out("        }")
+        self.out("        else if ((opcode & 0xf0) > 0) {")
+        self.opcode_line_out("<invalid>", force_case=True)
+        self.out("        }")
+        self.out("        else {")
+        self.opcode_line_out("JMP ", force_case=True)
+        self.out("        }")
+        self.out("        if (wrap->count < 3) {")
+        self.opcode_line_out("<bad addr>", force_case=True)
+        self.out("        }")
+        self.out("        else {")
+        self.opcode_line_out("$%02x%02x", ["src[1]", "src[2]"])
+        self.out("        }")
+
+        self.out("    }")
+        self.out("    else {")
+        self.out("        if ((opcode & 0xf) == 0) {")
+        self.out("            if (wrap->count > 1) {")
+        self.opcode_line_out("%d\\x", ["wrap->count"])
+        self.out("            }")
+        self.out("            if (opcode & 0x80) {")
+        self.opcode_line_out("DLI ", force_case=True)
+        self.out("            }")
+        self.opcode_line_out("%d BLANK", ["(((opcode >> 4) & 0x07) + 1)"], force_case=True)
+        self.out("        }")
+        self.out("        else {")
+        self.out("            if ((opcode & 0xf0) == 0x40) {")
+        self.out("                if (wrap->count < 3) {")
+        self.opcode_line_out("LMS <bad addr> ", force_case=True)
+        self.out("                }")
+        self.out("                else {")
+        self.opcode_line_out("LMS $%02x%02x ", ["src[2]", "src[1]"], force_case=True)
+        self.out("                }")
+        self.out("            }")
+        self.out("            else if (wrap->count > 1) {")
+        self.opcode_line_out("%d\\x", ["wrap->count"])
+        self.out("            }")
+        self.out("            if (opcode & 0x80) {")
+        self.opcode_line_out("DLI ", force_case=True)
+        self.out("            }")
+        self.out("            if (opcode & 0x20) {")
+        self.opcode_line_out("VSCROLL ", force_case=True)
+        self.out("            }")
+        self.out("            if (opcode & 0x10) {")
+        self.opcode_line_out("HSCROLL ", force_case=True)
+        self.out("            }")
+        self.opcode_line_out("MODE %1x", ["(opcode & 0x0f)"], force_case=True)
+        self.out("        }")
+        self.out("    }")
+
+        self.out("    wrap->strlen = (int)(txt - first_instruction_ptr)")
+        self.out("    return wrap->count")
+        self.out("}")
 
     def gen_cases(self):
         self.process(0)
@@ -714,42 +770,52 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     def end_subroutine(self):
         pass
 
-class JumpmanHarvestC(RawC):
+class JumpmanHarvestC(UnrolledC):
     preamble = """
-int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits, char *lc_byte_mnemonic, char *uc_byte_mnemonic) {
     unsigned char opcode;
-    unsigned int num_printed = 0;
+    char *mnemonic;
+    char *first_instruction_ptr, *h;
 
+    first_instruction_ptr = txt;
     wrap->pc = (unsigned short)pc;
     wrap->strpos = strpos;
     wrap->flag = 0;
     opcode = src[0];
 """
 
-    main = """
+    footer = """
+    }
+    wrap->strlen = (int)(txt - first_instruction_ptr);
+    return wrap->count;
+}
+"""
+
+    def process(self, count):
+        sections = [("""
+    if (lc) mnemonic = lc_byte_mnemonic;
+    else mnemonic = uc_byte_mnemonic;
     if (opcode == 0xff) {
         wrap->count = 1;
         if (pc + wrap->count > last_pc) {
             wrap->count = pc + wrap->count - last_pc;
         }
-        num_printed = sprintf(txt, "$BYTE $HEX                               ; end", src[0]);
+        """, self.generator.data_op + " $%02x                               ; end", ["src[0]"]),
+    ("""
     }
     else if (pc + 7 <= last_pc) {
         wrap->count = 7;
-        num_printed = sprintf(txt, "$BYTE $HEX, $HEX, $HEX, $HEX, $HEX, $HEX, $HEX ; enc=$HEX x=$HEX y=$HEX take=$2HEX paint=$2HEX", src[0], src[1], src[2], src[3], src[4], src[5], src[6], src[0], src[1], src[2], src[4], src[3], src[6], src[5]);
+        """, self.generator.data_op + " $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x ; enc=$%02x x=$%02x y=$%02x take=$%02x%02x paint=$%02x%02x", ["src[0]", "src[1]", "src[2]", "src[3]", "src[4]", "src[5]", "src[6]", "src[0]", "src[1]", "src[2]", "src[4]", "src[3]", "src[6]", "src[5]"]),
+    ("""
     }
     else {
         wrap->count = 1;
-        num_printed = sprintf(txt, "$BYTE $HEX                               ; [incomplete]", src[0]);
-    }
-
-    wrap->strlen = num_printed;
-    return wrap->count;
-}
-"""
-    def process(self, count):
-        text = self.main.replace("$BYTE", self.generator.data_op).replace("$HEX", self.generator.fmt_op).replace("$2HEX", self.generator.fmt_2op)
-        self.lines.extend(text.splitlines())
+        """, self.generator.data_op + " $%02x                               ; [incomplete]", ["src[0]"]),
+    ]
+        for code, outstr, argorder in sections:
+            self.lines.extend(code.splitlines())
+            self.opcode_line_out(outstr, argorder)
+        self.lines.extend(self.footer.splitlines())
 
     def gen_cases(self):
         self.process(0)

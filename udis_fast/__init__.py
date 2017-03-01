@@ -143,7 +143,7 @@ def get_disassembler(cpu, fast=True, monolithic=True):
 import disasm_info
 
 class DisassemblerWrapper(object):
-    def __init__(self, cpu, lines=65536, fast=True, mnemonic_lower=False, hex_lower=True, extra_disassemblers=None, monolithic=True):
+    def __init__(self, cpu, lines=65536, fast=True, mnemonic_lower=False, hex_lower=True, extra_disassemblers=None, monolithic=True, byte_mnemonic=".byte"):
         processor, parse_mod, strsize = get_disassembler(cpu, fast, monolithic)
         self.fast = fast
         self.monolithic = monolithic
@@ -151,6 +151,7 @@ class DisassemblerWrapper(object):
         self.metadata_wrapper = StorageWrapper(lines, strsize)
         self.mnemonic_lower = mnemonic_lower
         self.hex_lower = hex_lower
+        self.byte_mnemonic = byte_mnemonic
         if extra_disassemblers is None:
             extra_disassemblers = {}
         self.chunk_type_processor = extra_disassemblers
@@ -177,7 +178,7 @@ class DisassemblerWrapper(object):
         self.metadata_wrapper.clear()
 
     def next_chunk(self, binary, pc, last, i):
-        return self.chunk_processor(self.metadata_wrapper, binary, pc, last, i, self.mnemonic_lower , self.hex_lower)
+        return self.chunk_processor(self.metadata_wrapper, binary, pc, last, i, self.mnemonic_lower , self.hex_lower, self.byte_mnemonic)
 
     def get_all(self, binary, pc, i, ranges=[]):
         self.clear()
@@ -194,7 +195,7 @@ class DisassemblerWrapper(object):
                 last = True
                 end_index = 65536
             processor = self.chunk_type_processor.get(chunk_type, self.chunk_processor)
-            processor(self.metadata_wrapper, binary, pc + start_index, pc + end_index, start_index, self.mnemonic_lower , self.hex_lower)
+            processor(self.metadata_wrapper, binary, pc + start_index, pc + end_index, start_index, self.mnemonic_lower , self.hex_lower, self.byte_mnemonic)
             if last:
                 break
         info = disasm_info.DisassemblyInfo(self, pc, num_bytes)
