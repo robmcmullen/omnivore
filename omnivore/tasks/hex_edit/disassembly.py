@@ -50,6 +50,7 @@ class DisassemblyTable(ByteGridTable):
         self.lines = None
         self.index_to_row = []
         self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
+        self.assembler_formatting = editor.machine.assembler
         disasm = self.disassembler.fast
         disasm.add_chunk_processor("data", 1)
         disasm.add_chunk_processor("antic_dl", 2)
@@ -182,8 +183,6 @@ class DisassemblyTable(ByteGridTable):
     def get_operand_label(self, operand, operand_labels_start_pc, operand_labels_end_pc, offset_operand_labels):
         """Find the label that the operand points to.
         """
-        if ".byte" in operand or ".BYTE" in operand:
-            return operand, -1, ""
         dollar = operand.find("$")
         if dollar >=0 and "#" not in operand:
             text_hex = operand[dollar+1:dollar+1+4]
@@ -244,7 +243,10 @@ class DisassemblyTable(ByteGridTable):
                 operand, _ = line.instruction.split(";", 1)
             else:
                 operand = line.instruction.rstrip()
-            if count > 1:
+            if ".db" in operand:
+                index = operand.lower().index(".db")
+                operand = operand[0:index] + self.assembler_formatting['data byte'] + operand[index+3:]
+            elif count > 1:
                 if operand_labels_start_pc < 0:
                     operand_labels_start_pc = self.start_addr
                 if operand_labels_end_pc < 0:
