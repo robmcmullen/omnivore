@@ -10,7 +10,7 @@ else:
 import numpy
 
 MONOLITHIC = True
-DEV = True
+DEV = False
 
 extensions = [
     Extension("udis_fast.disasm_info",

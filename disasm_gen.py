@@ -110,6 +110,8 @@ class DisassemblerGenerator(DataGenerator):
             if self.hex_lower:
                 fmt = fmt.replace(":02X", ":02x").replace(":04X", ":04x")
             self.address_modes[mode] = fmt
+            if "'" in fmt:
+                print(fmt)
         self.opcode_table = cpu['opcodeTable']
 
     def gen_numpy_single_print(self, lines, table, leadin=0, leadin_offset=0, indent="    ", z80_2nd_byte=None):
@@ -261,16 +263,7 @@ class PyxGenerator(object):
             externlist.append("    int %s%s" % (n, prototype_arglist))
         deftemplate = """
     elif cpu == "$CPU":
-        if mnemonic_lower:
-            if hex_lower:
-                parse_func = parse_instruction_c_$CPU_LL
-            else:
-                parse_func = parse_instruction_c_$CPU_LU
-        else:
-            if hex_lower:
-                parse_func = parse_instruction_c_$CPU_UL
-            else:
-                parse_func = parse_instruction_c_$CPU_UU"""
+        parse_func = parse_instruction_c_$CPU"""
         deflist = []
         for cpu in self.cpus:
             deflist.append(deftemplate.replace("$CPU", cpu))

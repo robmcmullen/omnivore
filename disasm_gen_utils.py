@@ -10,7 +10,7 @@ comment = 16 # instruction should be displayed as a comment, not an assembler co
 r = 64
 w = 128
 
-def convert_fmt(fmt, mnemonic_lower = True, hex_lower=True):
+def convert_fmt(fmt, mnemonic_lower = True, hex_lower=True, escape_strings=True):
     fmt = fmt.lower()
     if "{0:02x}" in fmt and "{1:02x}" and "{2:02x}" in fmt:
         # determine order of args by which comes first in the format string
@@ -40,7 +40,7 @@ def convert_fmt(fmt, mnemonic_lower = True, hex_lower=True):
     else:
         argorder = []
 
-    if "'" in fmt:
+    if escape_strings and "'" in fmt:
         fmt = fmt.replace("'", "\\'")
     if mnemonic_lower:
         if not hex_lower:
@@ -56,6 +56,8 @@ label_loc = 17
 op_loc = 23
 
 class PrintBase(object):
+    escape_strings = True
+
     def __init__(self, lines, indent, leadin, leadin_offset):
         self.lines = lines
         self.indent = indent
@@ -94,7 +96,7 @@ class PrintBase(object):
             self.length, self.mnemonic, self.mode = optable
             self.flag = 0
         fmt = parser.address_modes[self.mode]
-        self.fmt, self.argorder = convert_fmt(fmt, parser.mnemonic_lower, parser.hex_lower)
+        self.fmt, self.argorder = convert_fmt(fmt, parser.mnemonic_lower, parser.hex_lower, self.escape_strings)
         if self.mode in parser.rw_modes:
             if self.mnemonic in parser.r_mnemonics:
                 self.flag |= r
@@ -450,7 +452,11 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
 
 
 class UnrolledC(RawC):
+    escape_strings = False
+
     preamble_header = c_preamble_header
+
+   
 
     preamble = """
 int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *instructions, int strpos, int mnemonic_lower, char *hexdigits) {
@@ -489,13 +495,16 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
             diffs = []
             for l, u in zip(text.lower(), text.upper()):
                 if l == u:
-                    print "l==u: -->%s<-- -->%s<--: diffs=%s" % (l, u, diffs)
+                    #print "l==u: -->%s<-- -->%s<--: diffs=%s" % (l, u, diffs)
                     if len(diffs) > 0:
                         diffs = flush_mixed(diffs)
-                    self.out("    *instructions++ = '%s'" %  u)
+                    if u == "'" or u == "\\":
+                        self.out("    *instructions++ = '\\%s'" %  u)
+                    else:
+                        self.out("    *instructions++ = '%s'" %  u)
                 else:
                     diffs.append(u)
-                    print "l!=u: -->%s<-- -->%s<--: diffs=%s" % (l, u, diffs)
+                    #print "l!=u: -->%s<-- -->%s<--: diffs=%s" % (l, u, diffs)
             if len(diffs) > 0:
                 flush_mixed(diffs)
             return ""
@@ -517,7 +526,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         text = ""
         fmt = ""
         while i < len(outstr):
-            tail = outstr[i:]
+            tail = outstr[i:].lower()
             if tail.startswith("#$%02x%02x"):
                 text = text + "#$"
                 text = flush_text(text)
