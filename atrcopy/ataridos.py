@@ -653,6 +653,18 @@ class BootDiskImage(AtariDosDiskImage):
         if bload < 0x200 or bload > (0xc000 - (nsec * self.header.sector_size)):
             raise InvalidDiskImage("Bad boot load address")
 
+    def get_vtoc(self):
+        pass
+
+    def get_directory(self, directory=None):
+        pass
+
+    def get_vtoc_segments(self):
+        return []
+
+    def get_directory_segments(self):
+        return []
+
 
 def get_xex(segments, runaddr=None):
     total = 2
