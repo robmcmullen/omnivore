@@ -653,11 +653,37 @@ class BootDiskImage(AtariDosDiskImage):
         if bload < 0x200 or bload > (0xc000 - (nsec * self.header.sector_size)):
             raise InvalidDiskImage("Bad boot load address")
 
+    def get_boot_sector_info(self):
+        pass
+
     def get_vtoc(self):
         pass
 
     def get_directory(self, directory=None):
         pass
+    
+    boot_record_type = np.dtype([
+        ('BFLAG', 'u1'),
+        ('BRCNT', 'u1'),
+        ('BLDADR', '<u2'),
+        ('BWTARR', '<u2'),
+        ])
+    
+    def get_boot_segments(self):
+        data, style = self.get_sectors(1)
+        values = data[0:6].view(dtype=self.boot_record_type)[0]  
+        flag = int(values[0])
+        segments = []
+        if flag == 0:
+            num = int(values[1])
+            addr = int(values[2])
+            s = self.get_sector_slice(1, num)
+            r = self.rawdata[s]
+            header = ObjSegment(r[0:6], 0, 0, addr, addr + 6, name="Boot Header")
+            sectors = ObjSegment(r, 0, 0, addr, addr + len(r), name="Boot Sectors")
+            code = ObjSegment(r[6:], 0, 0, addr + 6, addr + len(r), name="Boot Code")
+            segments = [sectors, header, code]
+        return segments
 
     def get_vtoc_segments(self):
         return []
