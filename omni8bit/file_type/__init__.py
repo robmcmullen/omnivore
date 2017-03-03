@@ -26,12 +26,14 @@
 #cog.msg("working dir : %s" % cwd)
 #path = os.path.dirname(os.path.join(cwd, cog.inFile))
 #cog.msg("scanning dir: %s" % path)
-#top = os.path.abspath(os.path.join(path, "../../..")) # so absolute imports of omnivore will work
+#top = os.path.abspath(os.path.join(path, "../..")) # so absolute imports of maproom will work
 #sys.path.append(top)
 #cog.msg("top dir     : %s" % top)
 #import glob
 #cog.outl("recognizers = []")
-#for filename in glob.iglob(os.path.join(path, "*.py")):
+#source_files = glob.glob(os.path.join(path, "*.py"))
+#source_files.sort()
+#for filename in source_files:
 #    if filename.endswith("__init__.py"):
 #        continue
 #    modname = filename.split(".py")[0].split("/")[-1]
@@ -49,33 +51,26 @@
 #           cog.outl("recognizers.append(%s())" % name)
 # ]]]*/
 recognizers = []
-from image import ImageRecognizer
-recognizers.append(ImageRecognizer())
-from meta import OmnivoreRecognizer
-recognizers.append(OmnivoreRecognizer())
-from text import PlainTextRecognizer, PoundBangTextRecognizer, PrivateTextRecognizer, XMLTextRecognizer
-recognizers.append(PlainTextRecognizer())
-recognizers.append(PoundBangTextRecognizer())
-recognizers.append(PrivateTextRecognizer())
-recognizers.append(XMLTextRecognizer())
+from atrcopy_parsers import AtrcopyRecognizer
+recognizers.append(AtrcopyRecognizer())
 # [[[end]]]
 
 from envisage.api import Plugin
 from traits.api import List
 
-class BuiltinFileRecognizerPlugin(Plugin):
+class OmnivoreBinaryFileRecognizerPlugin(Plugin):
     """ A plugin that contributes to the omnivore.file_type.recognizer extension point. """
 
     #### 'IPlugin' interface ##################################################
 
     # The plugin's unique identifier.
-    id = 'omnivore.file_type.recognizer.builtin'
+    id = 'omnivore.binary.file_type.builtin'
 
     # The plugin's name (suitable for displaying to the user).
-    name = 'Builtin File Recognizer Plugin'
+    name = 'Omnivore Binary File Recognizer Plugin'
 
     # This tells us that the plugin contributes the value of this trait to the
     # 'greetings' extension point.
     recognizer = List(recognizers, contributes_to='omnivore.file_recognizer')
 
-plugins = [BuiltinFileRecognizerPlugin()]
+plugins = [OmnivoreBinaryFileRecognizerPlugin()]

@@ -56,8 +56,14 @@ def main(argv):
         argv.pop(i)
         sys.settrace(trace_calls)
 
+    from omni8bit.plugin import OmnivoreEditorPlugin
+    plugins = [OmnivoreEditorPlugin()]
+    
+    import omni8bit.file_type
+    plugins.extend(omni8bit.file_type.plugins)
+ 
     from omnivore.framework.application import run
-    run(egg_path=EGG_PATH)
+    run(plugins=plugins, egg_path=EGG_PATH)
 
     logging.shutdown()
 
