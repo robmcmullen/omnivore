@@ -46,6 +46,7 @@ cdef class DisassemblyInfo:
         self.metadata_raw = <unsigned char *>self.metadata.data
         self.instructions_raw = self.instructions.data
         self.current = CurrentRow()
+        self.fix_offset_labels()
 
     def __len__(self):
         return self.num_instructions
@@ -85,3 +86,22 @@ cdef class DisassemblyInfo:
         self.current.instruction = self.instructions_raw[strpos:strpos + strlen]
         return self.current
 
+    cdef fix_offset_labels(self):
+        # fast loop in C to check for references to addresses that are in the
+        # middle of an instruction. If found, a label is generated at the first
+        # byte of the instruction
+        cdef int pc = self.first_pc
+        cdef int i = self.num_bytes
+        cdef np.uint16_t *labels = <np.uint16_t *>self.labels.data
+        cdef np.uint32_t *index = <np.uint32_t *>self.index.data
+
+        print "pc=%04x, last=%04x, i=%04x" % (pc, pc + i, i)
+        while i > 0:
+            i -= 1
+            if labels[pc + i]:
+                print "disasm_info: found label %04x, index[%04x]=%04x" % (pc + i, i, index[i])
+                while index[i - 1] == index[i] and i > 1:
+                    i -= 1
+                if labels[pc + i] == 0:
+                    print "  disasm_info: added label at %04x" % (pc + i)
+                labels[pc + i] = 1

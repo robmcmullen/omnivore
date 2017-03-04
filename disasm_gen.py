@@ -369,23 +369,6 @@ $DEFLIST
         instructions += strlen
         row += 1
 
-    # fast loop in C to check for references to addresses that are in the
-    # middle of an instruction. If found, a label is generated at the first
-    # byte of the instruction
-    c_pc = pc
-    c_index = index_of_pc
-    i = c_last - c_pc
-    index = <np.uint32_t *>index_array.data + c_index
-    while i > 0:
-        i -= 1
-        if labels[c_pc + i]:
-            #print "disasm_speedups_dev: found label %04x, index[%d]=%d" % (c_pc + i, i, index[i])
-            while index[i - 1] == index[i] and i > 1:
-                i -= 1
-            #if labels[c_pc + i] == 0:
-            #    print "  disasm_speedups_dev: added label at %04x" % (c_pc + i)
-            labels[c_pc + i] = 1
-
     # get data back out in python vars
     pc = c_pc
     index_of_pc = c_index
