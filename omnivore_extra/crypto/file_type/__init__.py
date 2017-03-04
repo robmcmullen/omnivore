@@ -49,32 +49,26 @@
 #           cog.outl("recognizers.append(%s())" % name)
 # ]]]*/
 recognizers = []
-from image import ImageRecognizer
-recognizers.append(ImageRecognizer())
-from text import PlainTextRecognizer, PoundBangTextRecognizer, XMLTextRecognizer
-recognizers.append(PlainTextRecognizer())
-recognizers.append(PoundBangTextRecognizer())
-recognizers.append(XMLTextRecognizer())
-from meta import OmnivoreRecognizer
-recognizers.append(OmnivoreRecognizer())
+from text import PrivateTextRecognizer
+recognizers.append(PrivateTextRecognizer())
 # [[[end]]]
 
 from envisage.api import Plugin
 from traits.api import List
 
-class BuiltinFileRecognizerPlugin(Plugin):
+class CryptoFileRecognizerPlugin(Plugin):
     """ A plugin that contributes to the omnivore.file_type.recognizer extension point. """
 
     #### 'IPlugin' interface ##################################################
 
     # The plugin's unique identifier.
-    id = 'omnivore.file_type.recognizer.builtin'
+    id = 'omnivore.crypto.file_type.plugin'
 
     # The plugin's name (suitable for displaying to the user).
-    name = 'Builtin File Recognizer Plugin'
+    name = 'Crypto File Recognizer Plugin'
 
     # This tells us that the plugin contributes the value of this trait to the
     # 'greetings' extension point.
     recognizer = List(recognizers, contributes_to='omnivore.file_recognizer')
 
-plugins = [BuiltinFileRecognizerPlugin()]
+plugins = [CryptoFileRecognizerPlugin()]

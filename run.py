@@ -61,7 +61,12 @@ def main(argv):
     
     import omni8bit.file_type
     plugins.extend(omni8bit.file_type.plugins)
- 
+
+    # Crypto is separated to make it easy to make it optional for those
+    # framework users who don't want the extra dependencies
+    import omnivore_extra.crypto.file_type
+    plugins.extend(omnivore_extra.crypto.file_type.plugins)
+
     from omnivore.framework.application import run
     run(plugins=plugins, egg_path=EGG_PATH)
 
