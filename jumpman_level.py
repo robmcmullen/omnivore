@@ -18,8 +18,8 @@ leadInBytes = []
 addressModeTable = {
 "implicit"    : "",
 "type"        : "${1:02X}{0:02X}",
-"draw"        : "x=#${0:02X} y=#${1:02X} len=#${2:02X}",
-"spacing"     : "dx=#${0:02X} dy=#${1:02X}",
+"draw"        : "x=${0:02X} y=${1:02X} len=${2:02X}",
+"spacing"     : "dx=${0:02X} dy=${1:02X}",
 }
 
 # Op Code Table
