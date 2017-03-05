@@ -523,7 +523,7 @@ class HexEditor(FrameworkEditor):
     
     def save_segment(self, saver, uri):
         try:
-            bytes = saver.encode_data(self.segment)
+            bytes = saver.encode_data(self.segment, self)
             self.save_to_uri(bytes, uri, save_metadata=False)
         except Exception, e:
             log.error("%s: %s" % (uri, str(e)))

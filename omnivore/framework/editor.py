@@ -282,7 +282,7 @@ class FrameworkEditor(Editor):
             if saver is None:
                 bytes = self.document.bytes.tostring()
             else:
-                bytes = saver(self.document)
+                bytes = saver(self.document, self)
             self.save_to_uri(bytes, uri)
             self.document.undo_stack.set_save_point()
 
@@ -357,7 +357,7 @@ class FrameworkEditor(Editor):
     export_data_name = "Any"
     export_extensions = [".*"]
     
-    def encode_data(self, document):
+    def encode_data(self, document, editor):
         """Document saver interface: take a document and produce a byte
         representation to save to disk.
         """

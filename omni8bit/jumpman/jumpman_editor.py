@@ -212,7 +212,7 @@ class JumpmanLevelView(MainBitmapScroller):
     export_data_name = "Jumpman Level Tester ATR"
     export_extensions = [".atr"]
     
-    def encode_data(self, segment):
+    def encode_data(self, segment, editor):
         """Segment saver interface: take a segment and produce a byte
         representation to save to disk.
         """
