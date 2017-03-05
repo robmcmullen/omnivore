@@ -9,7 +9,6 @@ from memory_map import EmptyMemoryMap
 class BaseDisassembler(object):
     name = "generic disassembler"
     cpu = "undefined"
-    allow_undocumented = False
     read_instructions = set()
     write_instructions = set()
     rw_modes = set()
@@ -45,7 +44,7 @@ class BaseDisassembler(object):
     @classmethod
     def get_miniassembler(cls, cpu):
         if not cpu in cls.cached_miniassemblers:
-            asm = miniasm.MiniAssembler(cpu, allow_undocumented=cls.allow_undocumented)
+            asm = miniasm.MiniAssembler(cpu)
             cls.cached_miniassemblers[cpu] = asm
 
         return cls.cached_miniassemblers[cpu]
@@ -68,7 +67,7 @@ class Basic6502Disassembler(BaseDisassembler):
 
 class Undocumented6502Disassembler(Basic6502Disassembler):
     name = "6502 (with undocumented opcodes)"
-    allow_undocumented = True
+    cpu = "6502undoc"
 
 
 class Flagged6502Disassembler(Undocumented6502Disassembler):

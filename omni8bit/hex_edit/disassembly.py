@@ -2,7 +2,8 @@ import os
 import sys
 import wx
 
-from atrcopy import comment_bit_mask, user_bit_mask
+from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask
+from udis_fast import flag_jump, flag_branch, flag_rts, flag_store, flag_undoc, flag_data_bytes
 
 from omni8bit.ui.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 
@@ -265,8 +266,8 @@ class DisassemblyTable(ByteGridTable):
         return index + self.start_addr
     
     def get_style_override(self, row, col, style):
-        if self.lines[row].flag:
-            return style|comment_bit_mask
+        if self.lines[row].flag & flag_undoc:
+            return style|diff_bit_mask
         return style
 
     def get_label_at_index(self, index):
