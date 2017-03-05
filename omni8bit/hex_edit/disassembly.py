@@ -51,7 +51,7 @@ class DisassemblyTable(ByteGridTable):
         self.lines = None
         self.index_to_row = []
         self.assembler_formatting = editor.machine.assembler
-        self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case, self.assembler_formatting['data byte'])
+        self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
         disasm = self.disassembler.fast
         disasm.add_chunk_processor("data", 1)
         disasm.add_chunk_processor("antic_dl", 2)
@@ -231,7 +231,7 @@ class DisassemblyTable(ByteGridTable):
             operand, _ = line.instruction.split(";", 1)
         else:
             operand = line.instruction.rstrip()
-        if count > 1 and self.assembler_formatting['data byte'] not in operand.lower():
+        if count > 1 and not line.flag & flag_data_bytes:
             if operand_labels_start_pc < 0:
                 operand_labels_start_pc = self.start_addr
             if operand_labels_end_pc < 0:
@@ -266,7 +266,8 @@ class DisassemblyTable(ByteGridTable):
         for i in range(count):
             style |= self.segment.style[index + i]
         if col == 0:
-            text = " ".join(self.fmt_hex2 % self.segment[index + i] for i in range(count))
+            text = "%02x|" % line.flag + "".join("%02x" % self.segment[index + i] for i in range(count))
+            #text = " ".join(self.fmt_hex2 % self.segment[index + i] for i in range(count))
         elif col == 2:
             if (style & comment_bit_mask):
                 text = self.get_comments(index, line)
@@ -283,7 +284,7 @@ class DisassemblyTable(ByteGridTable):
                 operand, _ = line.instruction.split(";", 1)
             else:
                 operand = line.instruction.rstrip()
-            if count > 1 and self.assembler_formatting['data byte'] not in operand.lower():
+            if count > 1 and not line.flag & flag_data_bytes:
                 if operand_labels_start_pc < 0:
                     operand_labels_start_pc = self.start_addr
                 if operand_labels_end_pc < 0:
@@ -413,13 +414,11 @@ class DisassemblyPanel(ByteGrid):
         start_row = t.index_to_row[start]
         org = t.GetRowLabelValue(start_row)
         lines.append("        %s $%s" % (t.disassembler.asm_origin, org))
-        for index, row, pc, hex_bytes, code, comment in t.iter_row_text(start, end):
+        for line, hex_bytes, code, comment in t.iter_row_text(start, end):
+            text = code
             if comment:
-                if not comment.startswith(";"):
-                    comment = ";" + comment
-                lines.append("%s %s" % (code, comment))
-            else:
-                lines.append(code)
+                text += ";" + comment
+            lines.append(text)
         return lines
     
     def encode_data(self, segment, editor):

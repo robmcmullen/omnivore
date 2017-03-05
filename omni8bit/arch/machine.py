@@ -613,8 +613,8 @@ class Machine(HasTraits):
     
     # Utility methods
     
-    def get_disassembler(self, hex_lower, mnemonic_lower, byte_mnemonic):
-        return self.disassembler(self.assembler, self.memory_map, hex_lower, mnemonic_lower, byte_mnemonic)
+    def get_disassembler(self, hex_lower, mnemonic_lower):
+        return self.disassembler(self.assembler, self.memory_map, hex_lower, mnemonic_lower)
 
     def get_nop(self):
         return self.disassembler.get_nop()
