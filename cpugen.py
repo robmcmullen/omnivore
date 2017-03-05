@@ -15,7 +15,7 @@ comment = 16
 r = 64
 w = 128
 
-def fix_opcode_table(cpu):
+def fix_opcode_table(cpu, allow_undoc=False):
     """ Find the NOP opcode and add the 'flag' variable if it doesn't exist so
     calling programs don't have to use a try statement to see if there are 3 or
     4 values in the tuple.
@@ -27,6 +27,7 @@ def fix_opcode_table(cpu):
         labels = {}
     possibilities = []
     nop = 0x00
+    found_undoc = False
     fixed_table = {}
     for opcode, optable in table.items():
         try:
@@ -34,13 +35,17 @@ def fix_opcode_table(cpu):
         except ValueError:
             length, mnemonic, mode = optable
             flag = 0
+        if flag & und:
+            found_undoc = True
+            if not allow_undoc:
+                continue
         if mode in labels:
             flag |= lbl
         fixed_table[opcode] = (length, mnemonic, mode, flag)
         if mnemonic == "nop" and flag == 0:
             nop = opcode
     cpu['opcodeTable'] = fixed_table
-    return nop
+    return nop, found_undoc
 
 
 def read_udis(pathname):
@@ -70,8 +75,16 @@ def read_udis(pathname):
                     exec(source, g, d)
                     if 'opcodeTable' in d:
                         cpus[cpu_name] = d
-                        nop = fix_opcode_table(d)
+                        nop, found_undoc = fix_opcode_table(d, False)
                         cpus[cpu_name]["nop"] = nop
+                        if found_undoc:
+                            # reload because dict was modified in fix_opcode_table
+                            d = {}
+                            exec(source, g, d)
+                            cpu_name = "%sundoc" % cpu_name
+                            cpus[cpu_name] = d
+                            nop, found_undoc = fix_opcode_table(d, True)
+                            cpus[cpu_name]["nop"] = nop
                 except SyntaxError:
                     # ignore any python 3 files
                     pass

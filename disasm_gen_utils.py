@@ -386,6 +386,8 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         self.out("    num_printed = sprintf(txt, %s)" % outstr)
 
     def opcode1(self, opcode):
+        if self.undocumented:
+            self.out("    wrap->flag |= FLAG_UNDOC")
         prefix = self.get_comment(self.length, self.argorder)
         outstr = "\"%s%s %s\"" % (prefix, self.mnemonic, self.fmt)
         self.opcode_line_out(outstr, self.argorder)
@@ -486,6 +488,8 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
 """
 
     def opcode1(self, opcode):
+        if self.undocumented:
+            self.out("    wrap->flag |= FLAG_UNDOC")
         prefix = self.get_comment(self.length, self.argorder)
         outstr = "%s%s %s" % (prefix, self.mnemonic, self.fmt)
         self.opcode_line_out(outstr.rstrip(), self.argorder)

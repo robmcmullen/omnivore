@@ -94,16 +94,15 @@ class DataGenerator(object):
         self.lines = lines
 
 class DisassemblerGenerator(DataGenerator):
-    def __init__(self, cpu, cpu_name, formatter_class, allow_undocumented=False, hex_lower=True, mnemonic_lower=False, r_mnemonics=None, w_mnemonics=None, rw_modes=None, first_of_set=True, cases_in_filename=False):
+    def __init__(self, cpu, cpu_name, formatter_class, hex_lower=True, mnemonic_lower=False, r_mnemonics=None, w_mnemonics=None, rw_modes=None, first_of_set=True, cases_in_filename=False):
         self.formatter_class = formatter_class
         self.set_case(hex_lower, mnemonic_lower, cases_in_filename)
-        self.setup(cpu, cpu_name, allow_undocumented, r_mnemonics, w_mnemonics, rw_modes)
+        self.setup(cpu, cpu_name, r_mnemonics, w_mnemonics, rw_modes)
         self.generate(first_of_set)
 
-    def setup(self, cpu, cpu_name, allow_undocumented, r_mnemonics, w_mnemonics, rw_modes):
+    def setup(self, cpu, cpu_name, r_mnemonics, w_mnemonics, rw_modes):
         self.r_mnemonics = r_mnemonics
         self.w_mnemonics = w_mnemonics
-        self.allow_undocumented = allow_undocumented
         self.rw_modes = rw_modes
         self.cpu = cpu
         self.cpu_name = cpu_name
@@ -166,9 +165,6 @@ class DisassemblerGenerator(DataGenerator):
                 formatter.z80_4byte_outro()
                 continue
 
-            if formatter.undocumented and not self.allow_undocumented:
-                continue
-
             log.debug("Processing %x, %s" % (opcode, formatter.fmt))
             if z80_2nd_byte is not None:
                 formatter.z80_4byte(z80_2nd_byte, opcode)
@@ -203,11 +199,11 @@ def get_file(cpu_name, ext, monolithic, first=False):
         print("Generating %s in %s" % (cpu_name, file_root))
     return open("%s.%s" % (file_root, ext), mode)
 
-def gen_cpu(pyx, cpu, undoc=False, all_case_combos=False, do_py=False, do_c=True, monolithic=False, dev=False):
+def gen_cpu(pyx, cpu, all_case_combos=False, do_py=False, do_c=True, monolithic=False, dev=False):
     if dev:
         cpu_name = "dev"
     else:
-        cpu_name = "%sundoc" % cpu if undoc else cpu
+        cpu_name = cpu
     for ext, formatter, do_it in [("py", PrintNumpy, do_py), ("c", UnrolledC, do_c)]:
         if not do_it:
             continue
@@ -218,13 +214,13 @@ def gen_cpu(pyx, cpu, undoc=False, all_case_combos=False, do_py=False, do_c=True
                 fh.write(c_disclaimer)
             if all_case_combos:
                 for mnemonic_lower, hex_lower in [(True, True), (True, False), (False, True), (False, False)]:
-                    disasm = DisassemblerGenerator(cpu, cpu_name, formatter, allow_undocumented=undoc, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, first_of_set=first)
+                    disasm = DisassemblerGenerator(cpu, cpu_name, formatter, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, first_of_set=first)
                     fh.write("\n".join(disasm.lines))
                     fh.write("\n")
                     first = False
                     pyx.function_name_list.append(disasm.function_name)
             else:
-                disasm = DisassemblerGenerator(cpu, cpu_name, formatter, allow_undocumented=undoc, first_of_set=first)
+                disasm = DisassemblerGenerator(cpu, cpu_name, formatter, first_of_set=first)
                 fh.write("\n".join(disasm.lines))
                 fh.write("\n")
                 pyx.function_name_list.append(disasm.function_name)
@@ -250,8 +246,7 @@ def gen_others(pyx, all_case_combos=False, monolithic=False):
 
 def gen_all(pyx, all_case_combos=False, monolithic=False):
     for cpu in cputables.processors.keys():
-        gen_cpu(pyx, cpu, False, all_case_combos, monolithic=monolithic)
-    gen_cpu(pyx, "6502", True, all_case_combos, monolithic=monolithic)
+        gen_cpu(pyx, cpu, all_case_combos, monolithic=monolithic)
 
 
 class PyxGenerator(object):
@@ -390,7 +385,6 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--cpu", help="Specify CPU type (defaults to 6502)", default="")
     parser.add_argument("-d", "--dev", help="Build for development testing", action="store_true", default=False)
     parser.add_argument("-p", "--py", help="Also create python code", action="store_true", default=False)
-    parser.add_argument("-u", "--undocumented", help="Allow undocumented opcodes", action="store_true")
     parser.add_argument("-a", "--all-cases", help="Generate 4 separate functions for the lower/upper combinations", action="store_true", default=False)
     parser.add_argument("-m", "--monolithic", help="Put all disassemblers in one file", action="store_true")
     parser.add_argument("-v", "--verbose", help="Show verbose progress", action="store_true", default=False)
@@ -409,7 +403,7 @@ if __name__ == "__main__":
     if args.cpu is None or args.cpu.lower() == "none":
         pass
     elif args.cpu:
-        gen_cpu(pyx, args.cpu, args.undocumented, args.all_cases, args.py, monolithic=args.monolithic, dev=args.dev)
+        gen_cpu(pyx, args.cpu, args.all_cases, args.py, monolithic=args.monolithic, dev=args.dev)
     else:
         gen_all(pyx, args.all_cases, args.monolithic)
     gen_others(pyx, args.all_cases, args.monolithic)
