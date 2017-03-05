@@ -57,7 +57,7 @@ class SegmentSaver(object):
     export_extensions = [".dat"]
     
     @classmethod
-    def encode_data(cls, segment):
+    def encode_data(cls, segment, ui_control):
         return segment.tostring()
 
 
