@@ -365,17 +365,10 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         newargs = []
         prefix = ""
         if self.flag & comment:
-            prefix = "%s " % self.generator.data_op
             for i in range(4):
                 if count > i:
-                    prefix += "%s" % self.generator.fmt_op
-                    if count > i + 1:
-                        prefix += ", "
-                    else:
-                        prefix += "  "
+                    prefix += self.generator.data_op
                     newargs.append(self.comment_argorder[i])
-                else:
-                    prefix += "     "
             prefix += "; "
             argorder[0:0] = newargs
         return prefix
@@ -385,12 +378,16 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
             outstr += ", %s" % (", ".join(argorder))
         self.out("    num_printed = sprintf(txt, %s)" % outstr)
 
+    def wrap_quotes(self, outstr):
+        return "\"%s\"" % outstr
+
     def opcode1(self, opcode):
         if self.undocumented:
             self.out("    wrap->flag |= FLAG_UNDOC")
         prefix = self.get_comment(self.length, self.argorder)
-        outstr = "\"%s%s %s\"" % (prefix, self.mnemonic, self.fmt)
-        self.opcode_line_out(outstr, self.argorder)
+        outstr = "%s%s %s" % (prefix, self.mnemonic, self.fmt)
+        outstr = self.wrap_quotes(outstr.lstrip())
+        self.opcode_line_out(outstr.rstrip(), self.argorder)
 
     def opcode2(self, opcode):
         self.op1()
@@ -429,13 +426,13 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         self.out("    wrap->flag = FLAG_DATA_BYTES")
         if self.leadin_offset == 0:
             self.out("    wrap->count = 1")
-            self.mnemonic = self.generator.data_op
-            self.fmt = "$%02x"
+            self.mnemonic = ""
+            self.fmt = self.generator.data_op
             self.argorder = ["opcode"]
         elif self.leadin_offset == 1:
             self.out("    wrap->count = 2")
-            self.mnemonic = self.generator.data_op
-            self.fmt = "$%02x, $%02x"
+            self.mnemonic = ""
+            self.fmt = self.generator.data_op * 2
             self.argorder = ["leadin", "opcode"]
         self.opcode1(0)
         self.out("    break")
@@ -454,8 +451,8 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
             self.lines.append("truncated:")
             self.out("wrap->flag = FLAG_DATA_BYTES")
             self.out("wrap->count = 1")
-            self.mnemonic = self.generator.data_op
-            self.fmt = "$%02x"
+            self.mnemonic = ""
+            self.fmt = self.generator.data_op
             self.argorder = ["opcode"]
             self.opcode1(0)
             self.out("wrap->strlen = num_printed")
@@ -473,7 +470,7 @@ class UnrolledC(RawC):
    
 
     preamble = """
-int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits, char *lc_byte_mnemonic, char *uc_byte_mnemonic) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits) {
     int dist;
     unsigned int rel;
     unsigned short addr;
@@ -487,16 +484,12 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     wrap->flag = 0;
 """
 
-    def opcode1(self, opcode):
-        if self.undocumented:
-            self.out("    wrap->flag |= FLAG_UNDOC")
-        prefix = self.get_comment(self.length, self.argorder)
-        outstr = "%s%s %s" % (prefix, self.mnemonic, self.fmt)
-        self.opcode_line_out(outstr.rstrip(), self.argorder)
+    def wrap_quotes(self, outstr):
+        # doesn't need quotes
+        return outstr
 
     def opcode_line_out(self, outstr, argorder=[], force_case=False):
         log.debug("opcode_line_out: %s %s" % (outstr, argorder))
-        print("opcode_line_out: %s %s" % (outstr, argorder))
 
         def flush_mixed(diffs):
             if force_case:
@@ -556,11 +549,6 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         def flush_raw(operand):
             self.out("    *txt++ = %s" % operand)
 
-        def flush_data_op():
-            self.out("    if (lc) h = lc_byte_mnemonic")
-            self.out("    else h = uc_byte_mnemonic")
-            self.out("    while (*h) *txt++ = *h++")
-
         i = 0
         text = ""
         fmt = ""
@@ -593,6 +581,10 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
                 text = flush_text(text)
                 flush_hex16(argorder.pop(0))
                 i += 5
+            elif tail.startswith("%02x"):
+                text = flush_text(text)
+                flush_hex(argorder.pop(0))
+                i += 4
             elif tail.startswith("%1x"):
                 text = flush_text(text)
                 flush_nibble(argorder.pop(0))
@@ -608,11 +600,6 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
                 i += 1
             elif tail.startswith("$%"):
                 raise RuntimeError("Unsupported operand format: %s" % tail)
-            elif tail.startswith(self.generator.data_op.lower()):
-                print self.generator.data_op
-                text = flush_text(text)
-                flush_data_op()
-                i += len(self.generator.data_op)
             else:
                 text += outstr[i]
                 i += 1
@@ -626,8 +613,8 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
             self.lines.append("truncated:")
             self.out("wrap->flag = FLAG_DATA_BYTES")
             self.out("wrap->count = 1")
-            self.mnemonic = self.generator.data_op
-            self.fmt = "$%02x"
+            self.mnemonic = ""
+            self.fmt = self.generator.data_op
             self.argorder = ["opcode"]
             self.opcode1(0)
             self.out("wrap->strlen = (int)(txt - first_instruction_ptr)")
@@ -641,7 +628,7 @@ class DataC(UnrolledC):
     preamble_header = c_preamble_header
 
     preamble = """
-int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits, char *lc_byte_mnemonic, char *uc_byte_mnemonic) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits) {
     unsigned int num_printed = 0;
     char *first_instruction_ptr, *h;
 
@@ -659,8 +646,8 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     }
     switch(wrap->count) {
 """
-    def print_bytes(self, count, data_op, fmt_op):
-        outstr = self.generator.data_op + " " + ", ".join(["$%02x"] * count)
+    def print_bytes(self, count, data_op):
+        outstr = data_op * count
         argorder = ["src[%d]" % i for i in range(count)]
         self.opcode_line_out(outstr, argorder)
 
@@ -669,7 +656,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
             self.out("case %d:" % count)
         else:
             self.out("default:")
-        self.print_bytes(count, self.generator.data_op, self.generator.fmt_op)
+        self.print_bytes(count, self.generator.data_op)
         self.out("    break")
 
     def gen_cases(self):
@@ -684,7 +671,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
 
 class AnticC(DataC):
     preamble = """
-int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits, char *lc_byte_mnemonic, char *uc_byte_mnemonic) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits) {
     unsigned char opcode;
     unsigned int num_printed = 0;
     int i;
@@ -718,7 +705,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
                 self.out("    case %d:" % count)
             else:
                 self.out("    default:")
-            self.print_bytes(count, self.generator.data_op, self.generator.fmt_op)
+            self.print_bytes(count, self.generator.data_op)
             self.out("    break")
         self.out("}")
         self.opcode_line_out("; ");
@@ -790,7 +777,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
 
 class JumpmanHarvestC(UnrolledC):
     preamble = """
-int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits, char *lc_byte_mnemonic, char *uc_byte_mnemonic) {
+int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits) {
     unsigned char opcode;
     char *mnemonic;
     char *first_instruction_ptr, *h;
@@ -798,7 +785,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     first_instruction_ptr = txt;
     wrap->pc = (unsigned short)pc;
     wrap->strpos = strpos;
-    wrap->flag = 0;
+    wrap->flag = FLAG_DATA_BYTES;
     opcode = src[0];
 """
 
@@ -811,24 +798,22 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
 
     def process(self, count):
         sections = [("""
-    if (lc) mnemonic = lc_byte_mnemonic;
-    else mnemonic = uc_byte_mnemonic;
     if (opcode == 0xff) {
         wrap->count = 1;
         if (pc + wrap->count > last_pc) {
             wrap->count = pc + wrap->count - last_pc;
         }
-        """, self.generator.data_op + " $%02x                               ; end", ["src[0]"]),
+        """, "%02x ; end", ["src[0]"]),
     ("""
     }
     else if (pc + 7 <= last_pc) {
         wrap->count = 7;
-        """, self.generator.data_op + " $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x ; enc=$%02x x=$%02x y=$%02x take=$%02x%02x paint=$%02x%02x", ["src[0]", "src[1]", "src[2]", "src[3]", "src[4]", "src[5]", "src[6]", "src[0]", "src[1]", "src[2]", "src[4]", "src[3]", "src[6]", "src[5]"]),
+        """, "%02x"*7 + " ; enc=$%02x x=$%02x y=$%02x take=$%02x%02x paint=$%02x%02x", ["src[0]", "src[1]", "src[2]", "src[3]", "src[4]", "src[5]", "src[6]", "src[0]", "src[1]", "src[2]", "src[4]", "src[3]", "src[6]", "src[5]"]),
     ("""
     }
     else {
         wrap->count = 1;
-        """, self.generator.data_op + " $%02x                               ; [incomplete]", ["src[0]"]),
+        """, "%02x ; [incomplete]", ["src[0]"]),
     ]
         for code, outstr, argorder in sections:
             self.lines.extend(code.splitlines())
