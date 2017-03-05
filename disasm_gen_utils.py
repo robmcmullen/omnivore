@@ -1,7 +1,7 @@
 import logging
 log = logging.getLogger(__name__)
 
-# flags
+# mnemonic flags
 pcr = 1
 und = 2
 z80bit = 4
@@ -9,6 +9,15 @@ lbl = 8 # subroutine/jump target; candidate for a label
 comment = 16 # instruction should be displayed as a comment, not an assembler command for
 r = 64
 w = 128
+
+# output flags
+c_define_flags = ""
+import udis_fast
+for flag_name in dir(udis_fast):
+    if flag_name.startswith("flag_"):
+        flag_val = getattr(udis_fast, flag_name)
+        c_define_flags += "#define %s %s\n" % (flag_name.upper(), flag_val)
+
 
 def convert_fmt(fmt, mnemonic_lower = True, hex_lower=True, escape_strings=True):
     fmt = fmt.lower()
@@ -271,6 +280,8 @@ def parse_instruction_numpy(wrap, pc, src, last_pc):
 c_preamble_header = """#include <stdio.h>
 #include <string.h>
 
+%s
+
 /* 12 byte structure */
 typedef struct {
     unsigned short pc;
@@ -281,7 +292,7 @@ typedef struct {
     unsigned char reserved;
     int strpos; /* position of start of text in instruction array */
 } asm_entry;
-"""
+""" % c_define_flags
 
 
 class RawC(PrintNumpy):
@@ -298,6 +309,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     opcode = *src++;
     wrap->pc = (unsigned short)pc;
     wrap->strpos = strpos;
+    wrap->flag = 0;
 """
 
     def out(self, s):
@@ -412,6 +424,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
 
     def unknown_opcode(self):
         self.out("default:")
+        self.out("    wrap->flag = FLAG_DATA_BYTES")
         if self.leadin_offset == 0:
             self.out("    wrap->count = 1")
             self.mnemonic = self.generator.data_op
@@ -434,10 +447,10 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     def end_subroutine(self):
         self.out("}")
         if self.leadin_offset == 0:
-            self.out("wrap->flag = 0")
             self.out("wrap->strlen = num_printed")
             self.out("return wrap->count")
             self.lines.append("truncated:")
+            self.out("wrap->flag = FLAG_DATA_BYTES")
             self.out("wrap->count = 1")
             self.mnemonic = self.generator.data_op
             self.fmt = "$%02x"
@@ -469,6 +482,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     opcode = *src++;
     wrap->pc = (unsigned short)pc;
     wrap->strpos = strpos;
+    wrap->flag = 0;
 """
 
     def opcode1(self, opcode):
@@ -603,10 +617,10 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     def end_subroutine(self):
         self.out("}")
         if self.leadin_offset == 0:
-            self.out("wrap->flag = 0")
             self.out("wrap->strlen = (int)(txt - first_instruction_ptr)")
             self.out("return wrap->count")
             self.lines.append("truncated:")
+            self.out("wrap->flag = FLAG_DATA_BYTES")
             self.out("wrap->count = 1")
             self.mnemonic = self.generator.data_op
             self.fmt = "$%02x"
@@ -631,7 +645,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     wrap->pc = (unsigned short)pc;
     wrap->strpos = strpos;
     wrap->count = 4;
-    wrap->flag = 0;
+    wrap->flag = FLAG_DATA_BYTES;
     if (pc + wrap->count > last_pc) {
         wrap->count = pc + wrap->count - last_pc;
         if (wrap->count == 0) {
@@ -676,7 +690,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     first_instruction_ptr = txt;
     wrap->pc = (unsigned short)pc;
     wrap->strpos = strpos;
-    wrap->flag = 0;
+    wrap->flag = FLAG_DATA_BYTES;
     wrap->count = 1;
     opcode = src[0];
 

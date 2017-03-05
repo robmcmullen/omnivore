@@ -18,6 +18,13 @@ import numpy as np
 
 rawdtype = [('pc', 'u2'), ('dest_pc', 'u2'), ('count', 'u1'), ('flag', 'u1'), ('strlen', 'u1'), ('unused', 'u1'), ('strpos', 'i4')]
 
+flag_jump = 1
+flag_branch = 2
+flag_rts = 4
+flag_store = 32  # is this a store operation? default is load
+flag_undoc =  64
+flag_data_bytes = 128
+
 class StorageWrapper(object):
     def __init__(self, lines=65536, strsize=12):
         # string array
