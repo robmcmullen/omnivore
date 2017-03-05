@@ -218,8 +218,47 @@ class DisassemblyTable(ByteGridTable):
         _, target_pc, _ = self.get_operand_label(operand, -1, -1, None)
         return target_pc
 
-    def get_value_style_lower(self, row, col, operand_labels_start_pc=-1, operand_labels_end_pc=-1, extra_labels={}, offset_operand_labels={}):
-        line = self.lines[row]
+    def get_label_instruction(self, pc, line=None):
+        if line is None:
+            index = pc - self.start_addr
+            row = self.index_to_row(index)
+            line = self.lines[row]
+        if self.jump_targets[pc]:
+            label = "L" + (self.fmt_hex4 % pc)
+        else:
+            label = extra_labels.get(pc, "     ")
+        if ";" in line.instruction:
+            operand, _ = line.instruction.split(";", 1)
+        else:
+            operand = line.instruction.rstrip()
+        if count > 1 and self.assembler_formatting['data byte'] not in operand.lower():
+            if operand_labels_start_pc < 0:
+                operand_labels_start_pc = self.start_addr
+            if operand_labels_end_pc < 0:
+                operand_labels_end_pc = self.end_addr
+            operand, target_pc, label = self.get_operand_label(operand, operand_labels_start_pc, operand_labels_end_pc, offset_operand_labels)
+        return label, operand
+
+    def get_comment(self, pc, line=None):
+        if line is None:
+            index = pc - self.start_addr
+            row = self.index_to_row(index)
+            line = self.lines[row]
+        style = 0
+        count = line.num_bytes
+        for i in range(count):
+            style |= self.segment.style[index + i]
+        if (style & comment_bit_mask):
+            text = self.get_comments(index, line)
+        elif ";" in line.instruction:
+            _, text = line.instruction.split(";", 1)
+        else:
+            text = ""
+        return text
+
+    def get_value_style_lower(self, row, col, operand_labels_start_pc=-1, operand_labels_end_pc=-1, extra_labels={}, offset_operand_labels={}, line=None):
+        if line is None:
+            line = self.lines[row]
         pc = line.pc
         index = pc - self.start_addr
         style = 0
@@ -289,6 +328,26 @@ class DisassemblyTable(ByteGridTable):
         if editor is not None:
             self.set_editor(editor)
 
+    def iter_row_text(self, start=0, end=-1):
+        """iterates over the rows representing the disassembly
+        
+        Return information designed to be used by program list formatters.
+        """
+        if end < 0:
+            end = len(self.index_to_row) - 1
+
+        start_row = self.index_to_row[start]
+        end_row = self.index_to_row[end - 1] # end is python style range, want actual last byte
+
+        for row in range(start_row, end_row + 1):
+            line = self.lines[row]
+            hex_bytes, _ = self.get_value_style(row, 0)
+            code, _ = self.get_value_style(row, 1)
+            # expand to 8 spaces
+            code = code[0:5] + "  " + code[5:]
+            comment, _ = self.get_value_style(row, 2)
+            yield line, hex_bytes, code, comment
+
 
 class AssemblerTextCtrl(HexTextCtrl):
     def setMode(self, mode):
@@ -344,25 +403,17 @@ class DisassemblyPanel(ByteGrid):
     def restart_disassembly(self, index):
         self.table.disassemble_from(index, True)
     
-    def get_disassembled_text(self, start, end):
+    def get_disassembled_text(self, start=0, end=-1):
         """Returns list of lines representing the disassembly
         
         Raises IndexError if the disassembly hasn't reached the index yet
         """
         t = self.table
-        start_row = t.index_to_row[start]
-        end_row = t.index_to_row[end - 1] # end is python style range, want actual last byte
-
         lines = []
+        start_row = t.index_to_row[start]
         org = t.GetRowLabelValue(start_row)
         lines.append("        %s $%s" % (t.disassembler.asm_origin, org))
-        for row in range(start_row, end_row + 1):
-            index, _ = t.get_index_range(row, 0)
-            pc = t.get_pc(row)
-            code, _ = t.get_value_style(row, 1)
-            # expand to 8 spaces
-            code = code[0:5] + "  " + code[5:]
-            comment, _ = t.get_value_style(row, 2)
+        for index, row, pc, hex_bytes, code, comment in t.iter_row_text(start, end):
             if comment:
                 if not comment.startswith(";"):
                     comment = ";" + comment
@@ -375,8 +426,7 @@ class DisassemblyPanel(ByteGrid):
         """Segment saver interface: take a segment and produce a byte
         representation to save to disk.
         """
-        index = len(self.table.index_to_row) - 1
-        lines = self.get_disassembled_text(0, index)
+        lines = self.get_disassembled_text()
         text = os.linesep.join(lines) + os.linesep
         data = text.encode("utf-8")
         return data
@@ -485,3 +535,42 @@ class DisassemblyPanel(ByteGrid):
         actions.append(None)
         actions.extend(self.editor.common_popup_actions())
         return actions
+
+
+
+class DisassemblyListSaver(object):
+    """ Segment saver interface for ATasm assembler output listing file,
+    includes line number and program counter at each instruction.
+    """
+    export_data_name = "ATasm LST file"
+    export_extensions = [".lst"]
+    
+    @classmethod
+    def get_atasm_lst_text(cls, segment, table):
+        """Returns list of lines representing the disassembly
+        
+        Raises IndexError if the disassembly hasn't reached the index yet
+        """
+        lines = []
+        lines.append("Source: %s" % (segment.name))
+        line_num = 2
+        for line, hex_bytes, code, comment in table.iter_row_text():
+            text = "%d %04X  %s %s" % (line_num, line.pc, hex_bytes, code)
+            if comment:
+                if not comment.startswith(";"):
+                    comment = ";" + comment
+                text += " " + comment
+            else:
+                lines.append(text)
+            line_num += 1
+        return lines
+    
+    @classmethod
+    def encode_data(cls, segment, editor):
+        """Segment saver interface: take a segment and produce a byte
+        representation to save to disk.
+        """
+        lines = cls.get_atasm_lst_text(segment, editor.disassembly.table)
+        text = os.linesep.join(lines) + os.linesep
+        data = text.encode("utf-8")
+        return data

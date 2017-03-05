@@ -24,6 +24,7 @@ from omnivore.utils.processutil import run_detach
 
 from actions import *
 from commands import PasteCommand
+from disassembly import DisassemblyListSaver
 
 import logging
 log = logging.getLogger(__name__)
@@ -519,6 +520,7 @@ class HexEditor(FrameworkEditor):
     def get_extra_segment_savers(self, segment):
         savers = []
         savers.append(self.disassembly)
+        savers.append(DisassemblyListSaver)
         return savers
     
     def save_segment(self, saver, uri):
