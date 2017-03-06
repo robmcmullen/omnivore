@@ -53,7 +53,7 @@ jumpOpcodes = set(["jmp"])
 branchModes = set(["relative", "relativelong"])
 branchOpcodes = set(["jsr"])
 modesExclude = set(["indirect", "absoluteindexedindirect"])
-returnOpcodes = set(["rts", "rti"])
+returnOpcodes = set(["rts", "rti", "brk"])
 
 # Op Code Table
 # Key is numeric opcode (possibly multiple bytes)
