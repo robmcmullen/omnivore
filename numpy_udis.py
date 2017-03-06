@@ -2,6 +2,8 @@ import numpy as np
 
 import udis_fast
 
+from flags import *
+
 
 if __name__ == "__main__":
     import sys
@@ -45,7 +47,9 @@ if __name__ == "__main__":
                 if args.fast:
                     for r in range(disasm.rows):
                         data = disasm.storage_wrapper.view(r)
-                        line = "%d %s %s" % (data['pc'], data['mnemonic'], data['operand'])
+                        line = "%04x %s %s" % (data['pc'], data['mnemonic'], data['operand'])
+                        if data['dest_pc'] > 0:
+                            line += " -> %04x" % data['dest_pc']
                         print line
                 else:
                     for r in range(disasm.rows):
@@ -73,6 +77,14 @@ if __name__ == "__main__":
             while (row < info.num_instructions):
                 data = info[row]
                 line = "%04x %s" % (data.pc, data.instruction)
+                if data.dest_pc > 0:
+                    line += " -> %04x %x" % (data.dest_pc, data.flag)
+                    if data.flag & flag_branch:
+                        line += " (branch)"
+                    if data.flag & flag_jump:
+                        line += " (jump)"
+                if data.flag & flag_return:
+                    line += " (return)"
                 print line
                 row += 1
 

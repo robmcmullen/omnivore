@@ -300,6 +300,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
 
     opcode = *src++;
     wrap->pc = (unsigned short)pc;
+    wrap->dest_pc = 0;
     wrap->strpos = strpos;
     wrap->flag = 0;
 """
@@ -374,6 +375,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         return "\"%s\"" % outstr
 
     def opcode1(self, opcode):
+        self.out("    wrap->flag |= %d" % (self.flag & 0xff))
         if self.undocumented:
             self.out("    wrap->flag |= FLAG_UNDOC")
         prefix = self.get_comment(self.length, self.argorder)
@@ -388,8 +390,10 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
                 self.out("    if (op1 > 127) dist = op1 - 256; else dist = op1")
                 self.out("    rel = (pc + 2 + dist) & 0xffff")
                 self.out("    labels[rel] = 1")
+                self.out("    wrap->dest_pc = rel")
             elif self.flag & lbl:
                 self.out("    labels[op1] = 1")
+                self.out("    wrap->dest_pc = op1")
         self.opcode1(opcode)
 
     def opcode3(self, opcode):
@@ -402,9 +406,13 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
                 # limit relative address to 64k address space
                 self.out("    rel = (pc + 2 + addr) & 0xffff")
                 self.out("    labels[rel] = 1")
+                self.out("    wrap->dest_pc = rel")
+                self.out("    wrap->flag |= %d" % (self.flag & 0xff))
             elif self.flag & lbl:
                 self.out("    addr = op1 + 256 * op2")
                 self.out("    labels[addr] = 1")
+                self.out("    wrap->dest_pc = addr")
+                self.out("    wrap->flag |= %d" % (self.flag & 0xff))
         self.opcode1(opcode)
 
     def opcode4(self, opcode):
@@ -472,6 +480,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     first_instruction_ptr = txt;
     opcode = *src++;
     wrap->pc = (unsigned short)pc;
+    wrap->dest_pc = 0;
     wrap->strpos = strpos;
     wrap->flag = 0;
 """
@@ -626,6 +635,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
 
     first_instruction_ptr = txt;
     wrap->pc = (unsigned short)pc;
+    wrap->dest_pc = 0;
     wrap->strpos = strpos;
     wrap->count = 4;
     wrap->flag = FLAG_DATA_BYTES;
@@ -672,6 +682,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
 
     first_instruction_ptr = txt;
     wrap->pc = (unsigned short)pc;
+    wrap->dest_pc = 0;
     wrap->strpos = strpos;
     wrap->flag = FLAG_DATA_BYTES;
     wrap->count = 1;
@@ -776,6 +787,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
 
     first_instruction_ptr = txt;
     wrap->pc = (unsigned short)pc;
+    wrap->dest_pc = 0;
     wrap->strpos = strpos;
     wrap->flag = FLAG_DATA_BYTES;
     opcode = src[0];
