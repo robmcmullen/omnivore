@@ -200,5 +200,65 @@ class DisassemblerWrapper(object):
             processor(self.metadata_wrapper, binary, pc + start_index, pc + end_index, start_index, self.mnemonic_lower , self.hex_lower)
             if last:
                 break
-        info = disasm_info.DisassemblyInfo(self, pc, num_bytes)
-        return info
+        self.info = disasm_info.DisassemblyInfo(self, pc, num_bytes)
+        return self.info
+
+    def trace_disassembly(self, start_points):
+        info = self.info
+        stack = set(start_points)
+        last_pc = info.first_pc + info.num_bytes
+        seen = np.zeros([last_pc], dtype=np.uint8)
+        pc_to_row = np.zeros([last_pc], dtype=np.uint32)
+        pc_to_row[info.first_pc:] = info.index[:]
+        print pc_to_row
+        out_of_range_start_points = []
+
+        def valid_pc(dest_pc):
+            return dest_pc >= info.first_pc and dest_pc < last_pc
+
+        while stack:
+            pc = stack.pop()
+            if pc < info.first_pc or pc >= last_pc:
+                print "skipping trace of %04x: not in disassembled range." % pc
+                out_of_range_start_points.append(pc)
+                continue
+            if seen[pc]:
+                print "skipping trace of %04x: already checked it" % pc
+                continue
+            print "starting trace at %04x" % pc
+            while pc < last_pc:
+                if seen[pc]:
+                    break
+                row = pc_to_row[pc]
+                line = info[row]
+                if line.flag & flag_data_bytes:
+                    print "%04x: disassembled into marked data; moving to next entry point" % pc
+                    break
+                next_pc = pc + line.num_bytes
+                for i in range(line.num_bytes):
+                    seen[pc + i] = 1
+                if line.dest_pc > 0:
+                    if line.flag & flag_branch:
+                        if not valid_pc(line.dest_pc):
+                            print "%04x: found branch to %04x, but not in disassembled range" % (pc, line.dest_pc)
+                        elif seen[line.dest_pc]:
+                            print "%04x: found branch to %04x, but already checked it" % (pc, line.dest_pc)
+                        elif line.dest_pc in stack:
+                            print "%04x: found branch to %04x, but already in list to be checked" % (pc, line.dest_pc)
+                        else:
+                            print "%04x: found branch to %04x" % (pc, line.dest_pc)
+                            stack.add(line.dest_pc)
+                    if line.flag & flag_jump:
+                        if not valid_pc(line.dest_pc):
+                            print "%04x: found jump to %04x, but not in disassembled range" % (pc, line.dest_pc)
+                            break
+                        elif seen[line.dest_pc]:
+                            print "%04x: found jump to %04x, but already checked it" % (pc, line.dest_pc)
+                            break
+                        print "%04x: jumping to %04x" % (pc, line.dest_pc)
+                        next_pc = line.dest_pc
+                if line.flag & flag_return:
+                    print "%04x: end of this trace; moving to next entry point" % (pc)
+                    break
+                pc = next_pc
+        print seen[info.first_pc:last_pc]

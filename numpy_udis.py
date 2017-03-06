@@ -18,6 +18,7 @@ if __name__ == "__main__":
     parser.add_argument("--slow", action="store_false", dest="fast", help="Use C code for disassembly generation", default=True)
     parser.add_argument("-s", "--show", action="store_true", help="Show disassembly", default=False)
     parser.add_argument("-p", "--pc", action="store", help="set PC at start", default="0")
+    parser.add_argument("-e", "--entry-points", nargs='+', help="PC of entry points")
     parser.add_argument("filenames", metavar="filenames", nargs='*',
                    help="Binary files(s) to disassemble")
     args = parser.parse_args()
@@ -114,6 +115,11 @@ if __name__ == "__main__":
                 info.labels[pc + i] = 1
         print np.where(info.labels > 0)
 
+        start_points = [pc]
+        if args.entry_points:
+            for spc in args.entry_points:
+                start_points.append(int(spc, 16))
+        disasm.trace_disassembly(start_points)
 
     if args.hex:
         try:
