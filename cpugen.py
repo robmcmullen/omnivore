@@ -6,14 +6,8 @@ known processors and save it into cputables.py
 import os
 import glob
 
-# flags
-pcr = 1
-und = 2
-z80bit = 4
-lbl = 8
-comment = 16
-r = 64
-w = 128
+from flags import *
+
 
 def fix_opcode_table(cpu, allow_undoc=False):
     """ Find the NOP opcode and add the 'flag' variable if it doesn't exist so
@@ -25,6 +19,26 @@ def fix_opcode_table(cpu, allow_undoc=False):
         labels = cpu['labelTargets']
     except KeyError:
         labels = {}
+    try:
+        jump = cpu['jumpOpcodes']
+    except KeyError:
+        jump = set()
+    try:
+        branch = cpu['branchOpcodes']
+    except KeyError:
+        branch = set()
+    try:
+        branch_modes = cpu['branchModes']
+    except KeyError:
+        branch_modes = set()
+    try:
+        exclude_modes = cpu['modesExclude']
+    except KeyError:
+        exclude_modes = set()
+    try:
+        ret = cpu['returnOpcodes']
+    except KeyError:
+        ret = set()
     possibilities = []
     nop = 0x00
     found_undoc = False
@@ -40,7 +54,14 @@ def fix_opcode_table(cpu, allow_undoc=False):
             if not allow_undoc:
                 continue
         if mode in labels:
-            flag |= lbl
+            flag |= flag_label
+        if mnemonic in ret:
+            flag |= flag_return
+        elif mode not in exclude_modes:
+            if mnemonic in jump:
+                flag |= flag_jump
+            elif mnemonic in branch or mode in branch_modes:
+                flag |= flag_branch
         fixed_table[opcode] = (length, mnemonic, mode, flag)
         if mnemonic == "nop" and flag == 0:
             nop = opcode
@@ -69,7 +90,7 @@ def read_udis(pathname):
                 continue
             if "addressModeTable" in source and "opcodeTable" in source:
                 cpu_name, _ = os.path.splitext(localfile)
-                g = {"pcr": pcr, "und": und, "r": r, "w": w, "z80bit": z80bit, "lbl": lbl, "comment": comment}
+                g = {"pcr": pcr, "und": und, "z80bit": z80bit, "lbl": lbl, "comment": comment}
                 d = {}
                 try:
                     exec(source, g, d)

@@ -24,13 +24,8 @@ from disasm_gen_utils import *
 import logging
 log = logging.getLogger(__name__)
 
-# flags
-pcr = 1
-und = 2
-z80bit = 4
-lbl = 8 # subroutine/jump target; candidate for a label
-r = 64
-w = 128
+from flags import *
+
 
 disclaimer = """Warning! This is generated code.
 

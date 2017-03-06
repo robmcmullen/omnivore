@@ -2,20 +2,12 @@ import logging
 log = logging.getLogger(__name__)
 
 # mnemonic flags
-pcr = 1
-und = 2
-z80bit = 4
-lbl = 8 # subroutine/jump target; candidate for a label
-comment = 16 # instruction should be displayed as a comment, not an assembler command for
-r = 64
-w = 128
+from flags import *
 
 # output flags
 c_define_flags = ""
-import udis_fast
-for flag_name in dir(udis_fast):
+for flag_name, flag_val in list(locals().items()):
     if flag_name.startswith("flag_"):
-        flag_val = getattr(udis_fast, flag_name)
         c_define_flags += "#define %s %s\n" % (flag_name.upper(), flag_val)
 
 

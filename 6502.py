@@ -36,6 +36,12 @@ addressModeTable = {
 # address in memory, and are a candidate to be replaced by a label
 labelTargets = set(["absolute", "absolutex", "absolutey", "indirect", "indirectx", "indirecty", "zeropage", "zeropagex", "zeropagey"])
 
+jumpOpcodes = set(["jmp"])
+branchModes = set(["relative"])
+branchOpcodes = set(["jsr"])
+modesExclude = set(["indirect"])
+returnOpcodes = set(["rts", "rti"])
+
 # Op Code Table
 # Key is numeric opcode (possibly multiple bytes)
 # Value is a list:
