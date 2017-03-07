@@ -93,6 +93,10 @@ class PrintBase(object):
 
     def set_current(self, optable):
         self.length, self.mnemonic, self.mode, self.flag = optable
+        # only low 8 bits of flags is saved in output, so convert any that are
+        # needed
+        if self.flag & comment:
+            self.flag |= flag_data_bytes
         gen = self.generator
         fmt = gen.address_modes[self.mode]
         self.fmt, self.argorder = convert_fmt(fmt, gen.mnemonic_lower, gen.hex_lower, self.escape_strings)
