@@ -2,8 +2,8 @@ import os
 import sys
 import wx
 
-from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask
-from udis_fast import flag_jump, flag_branch, flag_rts, flag_store, flag_undoc, flag_data_bytes
+from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
+from udis_fast import flag_jump, flag_branch, flag_return, flag_store, flag_undoc, flag_data_bytes
 
 from omni8bit.ui.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 
@@ -50,7 +50,6 @@ class DisassemblyTable(ByteGridTable):
         self.segment = segment = self.editor.segment
         self.lines = None
         self.index_to_row = []
-        self.assembler_formatting = editor.machine.assembler
         self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
         disasm = self.disassembler.fast
         disasm.add_chunk_processor("data", 1)
@@ -64,6 +63,10 @@ class DisassemblyTable(ByteGridTable):
         else:
             self.fmt_hex2 = "%02X"
             self.fmt_hex4 = "%04X"
+        f = editor.machine.assembler
+        self.fmt_hex_directive = f['data byte']
+        self.fmt_hex_digits = f['data byte prefix'] + "%c%c"
+        self.fmt_hex_digit_separator = f['data byte separator']
         self.start_addr = segment.start_addr
         self.end_addr = self.start_addr + len(segment)
         self.disassemble_from(0)
@@ -256,6 +259,14 @@ class DisassemblyTable(ByteGridTable):
             text = ""
         return text
 
+    def format_data_bytes(self, digits):
+        """ Split string of hex digits into format used by chosen assembler
+
+        """
+        count = len(digits) / 2
+        fmt = self.fmt_hex_digit_separator.join(self.fmt_hex_digits for i in range(count))
+        return self.fmt_hex_directive + " " + fmt % tuple(digits[0:count*2])
+
     def get_value_style_lower(self, row, col, operand_labels_start_pc=-1, operand_labels_end_pc=-1, extra_labels={}, offset_operand_labels={}, line=None):
         if line is None:
             line = self.lines[row]
@@ -284,7 +295,9 @@ class DisassemblyTable(ByteGridTable):
                 operand, _ = line.instruction.split(";", 1)
             else:
                 operand = line.instruction.rstrip()
-            if count > 1 and not line.flag & flag_data_bytes:
+            if line.flag & flag_data_bytes:
+                operand = self.format_data_bytes(operand)
+            elif count > 1:
                 if operand_labels_start_pc < 0:
                     operand_labels_start_pc = self.start_addr
                 if operand_labels_end_pc < 0:
