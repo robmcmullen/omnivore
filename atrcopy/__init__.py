@@ -46,26 +46,31 @@ def process(image, dirent, options):
         print dirent
 
 def find_diskimage(filename):
-    with open(filename, "rb") as fh:
-        if options.verbose:
-            print "Loading file %s" % filename
-        rawdata = SegmentData(fh.read())
-        parser = None
-        for mime in mime_parse_order:
+    try:
+        with open(filename, "rb") as fh:
             if options.verbose:
-                print "Trying MIME type %s" % mime
-            parser = guess_parser_for_mime(mime, rawdata, options.verbose)
+                print "Loading file %s" % filename
+            rawdata = SegmentData(fh.read())
+            parser = None
+            for mime in mime_parse_order:
+                if options.verbose:
+                    print "Trying MIME type %s" % mime
+                parser = guess_parser_for_mime(mime, rawdata, options.verbose)
+                if parser is None:
+                    continue
+                if options.verbose:
+                    print "Found parser %s" % parser.menu_name
+                print "%s: %s" % (filename, parser.image)
+                break
             if parser is None:
-                continue
-            if options.verbose:
-                print "Found parser %s" % parser.menu_name
-            print "%s: %s" % (filename, parser.image)
-            break
-        if parser is None:
-            print "%s: Unknown disk image type" % filename
-    parser.image.filename = filename
-    parser.image.ext = ""
-    return parser
+                print "%s: Unknown disk image type" % filename
+    except UnsupportedDiskImage, e:
+        print "%s: %s" % (filename, e)
+        return None
+    else:
+        parser.image.filename = filename
+        parser.image.ext = ""
+        return parser
 
 def extract_files(image, files):
     for name in files:
@@ -219,7 +224,19 @@ def run():
     if options.all and file_list:
             raise AtrError("Specifying a list of files and --all doesn't make sense.")
 
+    image_files = []
     for filename in options.files:
+        if filename == "-":
+            import fileinput
+
+            for line in fileinput.input(["-"]):
+                line = line.rstrip()
+                print "-->%s<--" % line
+                image_files.append(line)
+        else:
+            image_files.append(filename)
+
+    for filename in image_files:
         parser = find_diskimage(filename)
         if parser and parser.image:
             if options.all:

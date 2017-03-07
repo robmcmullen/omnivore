@@ -8,6 +8,18 @@ class InvalidCartHeader(AtrError):
     pass
 
 class InvalidDiskImage(AtrError):
+    """ Disk image is not recognized by a parser.
+
+    Usually a signal to try the next parser; this error doesn't propagate out
+    to the user much.
+    """
+    pass
+
+class UnsupportedDiskImage(AtrError):
+    """ Disk image is recognized by a parser but it isn't supported yet.
+
+    This error does propagate out to the user.
+    """
     pass
 
 class InvalidDirent(AtrError):

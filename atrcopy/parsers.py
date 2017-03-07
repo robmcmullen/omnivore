@@ -29,6 +29,8 @@ class SegmentParser(object):
             self.image = self.get_image(r)
             self.check_image()
             self.image.parse_segments()
+        except UnsupportedDiskImage:
+            raise
         except AtrError, e:
             raise InvalidSegmentParser(e)
         self.segments.extend(self.image.segments)

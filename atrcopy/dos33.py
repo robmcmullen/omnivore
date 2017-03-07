@@ -602,4 +602,13 @@ class ProdosDiskImage(DiskImageBase):
                 if prodos == "PRODOS":
                     swap_order = True
                 else:
-                    raise InvalidDiskImage("No ProDOS header info found")
+                    # FIXME: this doesn't seem to be the only way to identify a
+                    # PRODOS disk. I have example images where PRODOS occurs at
+                    # 0x21 - 0x27 in t0s14 and 0x11 - 0x16 in t0s01. Using 3 -
+                    # 9 as magic bytes was from the cppo script from
+                    # https://github.com/RasppleII/a2server but it seems that
+                    # more magic bytes might be acceptable?
+
+                    #raise InvalidDiskImage("No ProDOS header info found")
+                    pass
+            raise UnsupportedDiskImage("ProDOS format found but not supported")
