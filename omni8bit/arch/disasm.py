@@ -34,7 +34,7 @@ class BaseDisassembler(object):
         self.asm_origin = case_func(asm_syntax['origin'])
         self.comment_char = case_func(asm_syntax['comment char'])
         self.fast = udis.udis_fast.DisassemblerWrapper(self.cpu, fast=True, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower)
-        self.memory_map = memory_map if memory_map is not None else memory_map.EmptyMemoryMap()
+        self.memory_map = memory_map if memory_map is not None else EmptyMemoryMap()
 
     @classmethod
     def get_nop(cls):
