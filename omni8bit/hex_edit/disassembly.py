@@ -3,7 +3,7 @@ import sys
 import wx
 
 from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
-from udis_fast import flag_jump, flag_branch, flag_return, flag_store, flag_undoc, flag_data_bytes
+from udis.udis_fast import flag_jump, flag_branch, flag_return, flag_store, flag_undoc, flag_data_bytes
 
 from omni8bit.ui.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 
