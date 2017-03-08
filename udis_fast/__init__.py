@@ -18,7 +18,7 @@ import numpy as np
 
 rawdtype = [('pc', 'u2'), ('dest_pc', 'u2'), ('count', 'u1'), ('flag', 'u1'), ('strlen', 'u1'), ('unused', 'u1'), ('strpos', 'i4')]
 
-from flags import *
+from ..flags import *
 
 
 class StorageWrapper(object):
