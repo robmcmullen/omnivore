@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
         np.set_printoptions(formatter={'int':hex})
         print "total instructions: %d, bytes: %d" % (info.num_instructions, size)
-        print repr(info.index[0:1000])
+        print repr(info.index_to_row[0:1000])
         print repr(info.labels[pc:pc + size])
         print np.where(info.labels > 0)
 
@@ -107,8 +107,8 @@ if __name__ == "__main__":
             i -= 1
             has_label = info.labels[pc + i]
             if has_label:
-                print "Found label %04x, info.index[%d]=%d" % (pc + i, i, info.index[i])
-                while info.index[i - 1] == info.index[i]:
+                print "Found label %04x, info.index_to_row[%d]=%d" % (pc + i, i, info.index_to_row[i])
+                while info.index_to_row[i - 1] == info.index_to_row[i]:
                     i -= 1
                 if info.labels[pc + i] == 0:
                     print "  added label at %04x" % (pc + i)

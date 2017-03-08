@@ -29,7 +29,7 @@ class StorageWrapper(object):
         self.num_rows = self.metadata.shape[0]
         self.strsize = self.metadata.itemsize
         self.labels = np.zeros([256*256], dtype=np.uint16)
-        self.index = np.zeros([256*256], dtype=np.uint32)
+        self.index_to_row = np.zeros([256*256], dtype=np.uint32)
         self.max_strpos = 2000000
         self.instructions = np.empty([self.max_strpos], dtype='S1')
         self.last_strpos = 0
@@ -41,7 +41,7 @@ class StorageWrapper(object):
     def clear(self):
         self.data[:,:] = ord(" ")
         self.labels[:] = 0
-        self.index[:] = 0
+        self.index_to_row[:] = 0
         self.row = 0
         self.last_strpos = 0
 
@@ -69,8 +69,8 @@ class StorageWrapper(object):
         text[:] = self.instructions[:self.last_strpos]
         labels = np.empty([self.labels.shape[0]], dtype=self.labels.dtype)
         labels[:] = self.labels[:]
-        index = np.empty([num_bytes], dtype=self.index.dtype)
-        index[:] = self.index[:num_bytes]
+        index = np.empty([num_bytes], dtype=self.index_to_row.dtype)
+        index[:] = self.index_to_row[:num_bytes]
         return metadata, text, labels, index
 
 class SlowDisassemblyRow(object):
@@ -89,7 +89,7 @@ class SlowDisassemblyInfo(object):
     def __init__(self, wrapper, first_pc, num_bytes):
         self.first_pc = first_pc
         self.num_bytes = num_bytes
-        self.metadata, self.instructions, self.labels, self.index = wrapper.metadata_wrapper.copy_resize(num_bytes)
+        self.metadata, self.instructions, self.labels, self.index_to_row = wrapper.metadata_wrapper.copy_resize(num_bytes)
         self.num_instructions = len(self.metadata)
 
     def __getitem__(self, index):
@@ -182,10 +182,10 @@ class DisassemblerWrapper(object):
     def next_chunk(self, binary, pc, last, i):
         return self.chunk_processor(self.metadata_wrapper, binary, pc, last, i, self.mnemonic_lower , self.hex_lower)
 
-    def get_all(self, binary, pc, i, ranges=[]):
+    def get_all(self, binary, pc, index_of_pc, ranges=[]):
         self.clear()
         # limit to 64k at once since we're dealing with 8-bit machines
-        num_bytes = min(len(binary) - i, 65536)
+        num_bytes = min(len(binary) - index_of_pc, 65536)
         if not ranges:
             ranges = [((0, num_bytes), 0)]
         last = False
@@ -209,7 +209,7 @@ class DisassemblerWrapper(object):
         last_pc = info.first_pc + info.num_bytes
         seen = np.zeros([last_pc], dtype=np.uint8)
         pc_to_row = np.zeros([last_pc], dtype=np.uint32)
-        pc_to_row[info.first_pc:] = info.index[:]
+        pc_to_row[info.first_pc:] = info.index_to_row[:]
         print pc_to_row
         out_of_range_start_points = []
 
