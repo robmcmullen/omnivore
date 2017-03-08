@@ -2,7 +2,7 @@ import os
 
 import jsonpickle
 
-import omnivore.arch.machine as machine
+import omni8bit.arch.machine as machine
 
 
 class TestJsonPickle(object):

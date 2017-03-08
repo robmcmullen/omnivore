@@ -4,8 +4,8 @@ import numpy as np
 
 from atrcopy import DefaultSegment, SegmentData
 
-from omnivore.arch.disasm import parse_jumpman_level, get_jumpman_level, parse_jumpman_harvest, get_jumpman_harvest
-from omnivore.utils.jumpman import *
+from omni8bit.arch.disasm import parse_jumpman_level, get_jumpman_level, parse_jumpman_harvest, get_jumpman_harvest
+from omni8bit.utils.jumpman import *
 
 class TestJumpmanLevel(object):
     def setup(self):

@@ -31,22 +31,28 @@ from traits.api import HasTraits, Str, Event
 import numpy as np
 from numpy.testing import assert_almost_equal
 
-from omnivore.tasks.hex_edit.hex_editor import HexEditor
+from omni8bit.document import SegmentedDocument
+from omni8bit.hex_edit.hex_editor import HexEditor
 
 def null(self, *args, **kwargs):
     pass
 
-class MockTask(HasTraits):
-    id = Str("mock")
-    machine_menu_changed = Event
-
-class MockEditorArea(HasTraits):
-    task = MockTask()
+class MockApplicationSink(object):
+    document_class = SegmentedDocument
 
 class MockWindowSink(object):
     recalc_view = null
     set_font = null
     Refresh = null
+    application = MockApplicationSink
+
+class MockTask(HasTraits):
+    id = Str("mock")
+    machine_menu_changed = Event
+    window = MockWindowSink
+
+class MockEditorArea(HasTraits):
+    task = MockTask()
 
 class MockHexEditor(HexEditor):
     editor_area = MockEditorArea()

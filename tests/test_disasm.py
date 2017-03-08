@@ -7,7 +7,7 @@ import pytest
 from mock import MockHexEditor
 
 from omnivore.utils.file_guess import FileGuess
-from omnivore.arch.disasm import *
+from omni8bit.arch.disasm import *
 
 from atrcopy import SegmentData, DefaultSegment
 
@@ -18,7 +18,7 @@ class TestFastDisasm(object):
 
     def setup(self):
         self.editor = MockHexEditor()
-        guess = FileGuess("../test_data/Jumpman-2016-commented.atr")
+        guess = FileGuess("../test_data/pytest.atr")
         self.editor.load(guess)
         self.disasm = self.get_disasm()
         self.fast = self.disasm.fast
@@ -29,63 +29,38 @@ class TestFastDisasm(object):
         self.editor.find_segment("02: robots I")
         s = self.editor.segment
         r = s.get_entire_style_ranges(data=True, user=1)
+        print r
         assert r == [
-        ((0, 84), 64),
-        ((84, 497), 0),
-        ((497, 524), 64),
+        ((0, 497), 0),
+        ((497, 524), 1),
         ((524, 602), 0),
-        ((602, 690), 64),
+        ((602, 690), 1),
         ((690, 1004), 0),
-        ((1004, 1024), 64),
+        ((1004, 1024), 1),
         ((1024, 1536), 0),
-        ((1536, 1710), 64),
+        ((1536, 1710), 1),
         ((1710, 1792), 0),
-        ((1792, 1954), 64),
+        ((1792, 1954), 1),
         ((1954, 2048), 0)]
         info_all = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0)
         #print info_all.instructions[0:20]
         info_sections = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
-        for i in range(info_sections.num_instructions):
-            print info_sections[i].instruction
+        # for i in range(info_sections.num_instructions):
+        #     print info_sections[i].instruction
         assert len(info_all.instructions) == len(info_sections.instructions)
         assert np.all(info_all.index - info_sections.index == 0)
-
-    def test_ranges2(self):
-        self.editor.find_segment("02: robots I")
-        s = self.editor.segment
-        r = s.get_entire_style_ranges(data=True, user=1)
-        assert r == [
-        ((0, 84), 64),
-        ((84, 497), 0),
-        ((497, 524), 64),
-        ((524, 602), 0),
-        ((602, 690), 64),
-        ((690, 1004), 0),
-        ((1004, 1024), 64),
-        ((1024, 1536), 0),
-        ((1536, 1710), 64),
-        ((1710, 1792), 0),
-        ((1792, 1954), 64),
-        ((1954, 2048), 0)]
-        info_all = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0)
-        #print info_all.instructions[0:20]
-        info_sections = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
-        for i in range(info_sections.num_instructions):
-            print info_sections[i].instruction
-        assert len(info_all.instructions) < len(info_sections.instructions)
 
 class TestFastDisasmMulti(object):
     def get_disasm(self):
         z = BasicZ80Disassembler()
         parent = Basic6502Disassembler()
         # Use the Z80 processor for style type 64
-        parent.fast.chunk_type_processor[64] = z.fast.chunk_processor
-        parent.fast.chunk_type_processor[65] = z.fast.chunk_processor
+        parent.fast.chunk_type_processor[1] = z.fast.chunk_processor
         return parent
 
     def setup(self):
         self.editor = MockHexEditor()
-        guess = FileGuess("../test_data/Jumpman-2016-commented.atr")
+        guess = FileGuess("../test_data/pytest.atr")
         self.editor.load(guess)
         self.disasm = self.get_disasm()
         self.fast = self.disasm.fast
@@ -96,9 +71,9 @@ class TestFastDisasmMulti(object):
         r = s.get_entire_style_ranges(data=True, user=1)
         print r
         assert r == [((0, 238), 0),
-           ((238, 268), 65),
+           ((238, 268), 1),
            ((268, 332), 0),
-           ((332, 464), 64),
+           ((332, 464), 1),
            ((464, 512), 0)]
 
         info_sections = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
@@ -108,9 +83,8 @@ class TestChunkBreak(object):
     def get_disasm(self):
         z = BasicZ80Disassembler()
         parent = Basic6502Disassembler()
-        # Use the Z80 processor for style type 64
-        parent.fast.chunk_type_processor[64] = z.fast.chunk_processor
-        parent.fast.chunk_type_processor[65] = z.fast.chunk_processor
+        # Use the Z80 processor for style type 1
+        parent.fast.chunk_type_processor[1] = z.fast.chunk_processor
         return parent
 
     def get_break(self, section_break):
@@ -119,7 +93,7 @@ class TestChunkBreak(object):
         data[section_break:] = 0xfc
         style = np.empty(32, dtype=np.uint8)
         style[0:section_break] = 0
-        style[section_break:] = 64
+        style[section_break:] = 1
         raw = SegmentData(data, style)
         segment = DefaultSegment(raw, 0)
         return segment
@@ -131,22 +105,28 @@ class TestChunkBreak(object):
     def test_simple(self):
         s = self.get_break(8)
         r = s.get_entire_style_ranges(data=True, user=1)
+        print r
         info = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
         inst = info.instructions
         for i in range(info.num_instructions):
             print info[i].instruction
 
         assert info[1].instruction.startswith("STA")
-        assert info[2].instruction.startswith(".byte")
+        assert info[2].instruction.startswith("8d")
         assert info[10].instruction.startswith("CALL")
         assert info[11].instruction.startswith("CALL")
         s = self.get_break(9)
         r = s.get_entire_style_ranges(data=True, user=1)
         info = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
         inst = info.instructions
-        print inst
+        for i in range(info.num_instructions):
+            print info[i].instruction
         assert info[1].instruction.startswith("STA")
         assert info[2].instruction.startswith("STA")
         assert info[9].instruction.startswith("CALL")
-        assert info[10].instruction.startswith(".byte")
+        assert info[10].instruction.startswith("fc")
 
+if __name__ == "__main__":
+    t = TestChunkBreak()
+    t.setup()
+    t.test_simple()
