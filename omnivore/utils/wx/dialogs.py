@@ -147,9 +147,12 @@ class DictEditDialog(wx.Dialog):
     
     def get_edited_values(self, d):
         for key, control in self.controls.iteritems():
-            type = self.types[key]
-            if type == 'text' or type == 'file' or type == 'boolean':
-                self.set_output_value(d, key, control.GetValue())
+            try:
+                value = control.GetValue()
+                self.set_output_value(d, key, value)
+            except AttributeError:
+                log.error("Error setting output value for %s %s" % (key, control))
+                continue
     
     def set_output_value(self, d, key, value):
         d[key] = value
