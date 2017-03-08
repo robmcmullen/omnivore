@@ -1,5 +1,5 @@
 from udis import miniasm, cputables
-import udis.udis_fast
+import udis.udis_fast as udis_fast
 
 from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bit_mask
 
@@ -26,15 +26,25 @@ class BaseDisassembler(object):
             asm_syntax = self.default_assembler
         self.hex_lower = hex_lower
         self.mnemonic_lower = mnemonic_lower
+        if self.hex_lower:
+            self.fmt_hex2 = "%02x"
+            self.fmt_hex4 = "%04x"
+        else:
+            self.fmt_hex2 = "%02X"
+            self.fmt_hex4 = "%04X"
         if mnemonic_lower:
             case_func = lambda a:a.lower()
         else:
             case_func = lambda a:a.upper()
-        self.data_byte_opcode = case_func(asm_syntax['data byte'])
+        self.fmt_hex_directive = asm_syntax['data byte']
+        self.fmt_hex_digits = asm_syntax['data byte prefix'] + "%c%c"
+        self.fmt_hex_digit_separator = asm_syntax['data byte separator']
         self.asm_origin = case_func(asm_syntax['origin'])
         self.comment_char = case_func(asm_syntax['comment char'])
-        self.fast = udis.udis_fast.DisassemblerWrapper(self.cpu, fast=True, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower)
+        self.fast = udis_fast.DisassemblerWrapper(self.cpu, fast=True, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower)
         self.memory_map = memory_map if memory_map is not None else EmptyMemoryMap()
+        self.segment = None
+        self.info = None
 
     @classmethod
     def get_nop(cls):
@@ -55,6 +65,211 @@ class BaseDisassembler(object):
         if not bytes:
             raise RuntimeError("Unknown addressing mode")
         return bytes
+
+    def add_chunk_processor(self, disassembler_name, style):
+        self.fast.add_chunk_processor(disassembler_name, style)
+
+    def disassemble_segment(self, segment):
+        self.segment = segment
+        self.start_addr = segment.start_addr
+        self.end_addr = self.start_addr + len(segment)
+        pc = self.start_addr
+        r = segment.get_entire_style_ranges(user=user_bit_mask)
+        self.info = self.fast.get_all(segment.rawdata.unindexed_view, pc, 0, r)
+        return self.info
+
+    def get_comments(self, index, line=None):
+        info = self.info
+        if line is None:
+            row = info.index[index]
+            line = info[row]
+        comments = []
+        c = line.instruction
+        if ";" in c:
+            _, c = c.split(";", 1)
+            comments.append(c)
+        for i in range(line.num_bytes):
+            c = self.segment.get_comment(index + i)
+            if c:
+                comments.append(c)
+        if comments:
+            return " ".join(comments)
+        return ""
+
+    def get_prior_valid_opcode_start(self, target_pc):
+        index = target_pc - self.start_addr
+        row = self.info.index[index]
+        while index > 0:
+            row_above = self.info.index[index - 1]
+            if row_above < row:
+                break
+            index -= 1
+        return index + self.start_addr
+
+    def get_operand_label(self, operand):
+        """Find the label that the operand points to.
+        """
+        dollar = operand.find("$")
+        if dollar >=0 and "#" not in operand:
+            text_hex = operand[dollar+1:dollar+1+4]
+            if len(text_hex) > 2 and text_hex[2] in "0123456789abcdefABCDEF":
+                size = 4
+            else:
+                size = 2
+            target_pc = int(text_hex[0:size], 16)
+
+            # check for memory map label first, then branch label
+            label = self.memory_map.get_name(target_pc)
+            if not label and target_pc >= self.start_addr and target_pc <= self.end_addr:
+                #print operand, dollar, text_hex, target_pc, operand_labels_start_pc, operand_labels_end_pc
+                good_opcode_target_pc = self.get_prior_valid_opcode_start(target_pc)
+                diff = target_pc - good_opcode_target_pc
+                if diff > 0:
+                    # if no existing label at the target, reference it using
+                    # offset in bytes from the nearest previous label
+                    label = "L%04X+%d" % (good_opcode_target_pc, diff)
+                else:
+                    label = "L%04X" % (target_pc)
+            if label:
+                operand = operand[0:dollar] + label + operand[dollar+1+size:]
+            return operand, target_pc, label
+        return operand, -1, ""
+
+    def get_addr_dest(self, row):
+        operand = self.info[row].instruction
+        _, target_pc, _ = self.get_operand_label(operand)
+        return target_pc
+
+    def get_label_instruction(self, pc, line=None):
+        if line is None:
+            index = pc - self.start_addr
+            row = self.info.index(index)
+            line = self.info[row]
+        if self.info.labels[pc]:
+            label = "L" + (self.fmt_hex4 % pc)
+        else:
+            label = extra_labels.get(pc, "     ")
+        if ";" in line.instruction:
+            operand, _ = line.instruction.split(";", 1)
+        else:
+            operand = line.instruction.rstrip()
+        if count > 1 and not line.flag & udis_fast.flag_data_bytes:
+            if operand_labels_start_pc < 0:
+                operand_labels_start_pc = self.start_addr
+            if operand_labels_end_pc < 0:
+                operand_labels_end_pc = self.end_addr
+            operand, target_pc, label = self.get_operand_label(operand, operand_labels_start_pc, operand_labels_end_pc, offset_operand_labels)
+        return label, operand
+
+    def format_row_label(self, line):
+        return self.fmt_hex4 % line.pc
+
+    def format_data_list_bytes(self, index, line):
+        return " ".join(self.fmt_hex2 % self.segment[index + i] for i in range(line.num_bytes))
+
+    def format_data_directive_bytes(self, digits):
+        """ Split string of hex digits into format used by chosen assembler
+
+        """
+        count = len(digits) / 2
+        fmt = self.fmt_hex_digit_separator.join(self.fmt_hex_digits for i in range(count))
+        return self.fmt_hex_directive + " " + fmt % tuple(digits[0:count*2])
+
+    def format_instruction(self, index, line):
+        count = line.num_bytes
+        pc = line.pc
+        if self.info.labels[pc]:
+            text = "L" + (self.fmt_hex4 % pc)
+        else:
+            text = self.memory_map.get_name(pc)
+            if not text:
+                text = "     "
+        if ";" in line.instruction:
+            operand, _ = line.instruction.split(";", 1)
+        else:
+            operand = line.instruction.rstrip()
+        if line.flag & udis_fast.flag_data_bytes:
+            operand = self.format_data_directive_bytes(operand)
+        elif count > 1:
+            operand, target_pc, label = self.get_operand_label(operand)
+        text += " " + operand
+        return text
+
+    def format_comment(self, index, line=None):
+        info = self.info
+        if line is None:
+            row = info.index[index]
+            line = info[row]
+        comments = []
+        c = line.instruction
+        if ";" in c:
+            _, c = c.split(";", 1)
+            comments.append(c)
+        for i in range(line.num_bytes):
+            c = self.segment.get_comment(index + i)
+            if c:
+                comments.append(c)
+        if comments:
+            return " ".join(comments)
+        return ""
+
+    def iter_row_text(self, start=0, end=-1):
+        """iterates over the rows representing the disassembly
+        
+        Return information designed to be used by program list formatters.
+        """
+        if end < 0:
+            end = len(self.info.index) - 1
+
+        start_row = self.info.index[start]
+        end_row = self.info.index[end - 1] # end is python style range, want actual last byte
+
+        for row in range(start_row, end_row + 1):
+            line = self.info[row]
+            index = line.pc - self.start_addr
+            hex_bytes = self.format_data_list_bytes(index, line)
+            code = self.format_instruction(index, line)
+            # expand to 8 spaces
+            code = code[0:5] + "  " + code[5:]
+            comment = self.format_comment(index, line)
+            yield line, hex_bytes, code, comment
+    
+    def get_disassembled_text(self, start=0, end=-1):
+        """Returns list of lines representing the disassembly
+        
+        Raises IndexError if the disassembly hasn't reached the index yet
+        """
+        lines = []
+        start_row = self.info.index[start]
+        line = self.info[start_row]
+        org = self.format_row_label(line)
+        lines.append("        %s $%s" % (self.asm_origin, org))
+        for line, hex_bytes, code, comment in self.iter_row_text(start, end):
+            if comment:
+                text = "%-30s; %s" % (code, comment)
+            else:
+                text = code
+            lines.append(text)
+        return lines
+
+    def get_atasm_lst_text(self):
+        """Returns list of lines representing the disassembly
+        
+        Raises IndexError if the disassembly hasn't reached the index yet
+        """
+        lines = []
+        lines.append("Source: %s" % (self.segment.name))
+        line_num = 2
+        for line, hex_bytes, code, comment in self.iter_row_text():
+            text = "%d %04X  %s %s" % (line_num, line.pc, hex_bytes, code)
+            if comment:
+                if not comment.startswith(";"):
+                    comment = ";" + comment
+                text += " " + comment
+            else:
+                lines.append(text)
+            line_num += 1
+        return lines
 
 
 class Basic6502Disassembler(BaseDisassembler):
