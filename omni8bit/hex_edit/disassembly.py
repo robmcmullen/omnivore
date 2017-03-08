@@ -277,8 +277,7 @@ class DisassemblyTable(ByteGridTable):
         for i in range(count):
             style |= self.segment.style[index + i]
         if col == 0:
-            text = "%02x|" % line.flag + "".join("%02x" % self.segment[index + i] for i in range(count))
-            #text = " ".join(self.fmt_hex2 % self.segment[index + i] for i in range(count))
+            text = " ".join(self.fmt_hex2 % self.segment[index + i] for i in range(count))
         elif col == 2:
             if (style & comment_bit_mask):
                 text = self.get_comments(index, line)
