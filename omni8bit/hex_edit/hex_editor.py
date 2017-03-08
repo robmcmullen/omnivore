@@ -13,7 +13,6 @@ from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
 from omnivore.framework.editor import FrameworkEditor
-from omnivore.framework.document import Document
 from omnivore.framework.actions import *
 from grid_control import HexEditControl
 from omnivore.utils.file_guess import FileMetadata

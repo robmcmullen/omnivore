@@ -1,7 +1,6 @@
-from traits.api import HasTraits, provides, List, Instance
+from traits.api import HasTraits, provides, List, Instance, Any
 
 from omnivore.utils.sortutil import before_after_wildcard_sort
-from omnivore.framework.document import Document
 
 from i_file_recognizer import IFileRecognizer, IFileRecognizerDriver
 
@@ -14,13 +13,15 @@ class FileRecognizerDriver(HasTraits):
     
     """
     
+    application = Any
+
     recognizers = List(Instance(IFileRecognizer))
     
     def recognize(self, guess):
         """Using the list of known recognizers, attempt to set the MIME of a FileGuess
         """
         if guess.bytes is None:
-            return Document(metadata=guess.metadata, bytes="")
+            return self.application.document_class(metadata=guess.metadata, bytes="")
         
         document = None
         log.debug("trying %d recognizers " % len(self.recognizers))
@@ -40,7 +41,7 @@ class FileRecognizerDriver(HasTraits):
             guess.metadata.mime = "application/octet-stream"
             log.info("Not recognized; default is %s" % guess.metadata.mime)
         if document is None:
-            document = Document(metadata=guess.metadata, bytes=guess.numpy)
+            document = self.application.document_class(metadata=guess.metadata, bytes=guess.numpy)
         return document
 
     def _recognizers_changed(self, old, new):

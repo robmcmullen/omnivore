@@ -9,7 +9,7 @@ from datetime import datetime
 import fs
 
 from filesystem import init_filesystems
-from document import Document
+from document import BaseDocument
 
 import logging
 log = logging.getLogger(__name__)
@@ -120,6 +120,8 @@ class FrameworkApplication(TasksApplication):
     cache_dir = Str
     
     next_document_id = Int(0)
+
+    document_class = Any
     
     documents = List
     
@@ -163,6 +165,9 @@ class FrameworkApplication(TasksApplication):
 
     def _preferences_helper_default(self):
         return FrameworkPreferences(preferences = self.preferences)
+
+    def _document_class_default(self):
+        return BaseDocument
 
     #### Trait property getter/setters ########################################
 
@@ -305,7 +310,7 @@ class FrameworkApplication(TasksApplication):
         
         # Attempt to classify the guess using the file recognizer service
         document = service.recognize(guess)
-        log.debug("created document %s (mime=%s) %d segments from parser %s" % (document, document.metadata.mime, len(document.segments), document.segment_parser.__class__.__name__))
+        log.debug("created document %s (mime=%s)" % (document, document.metadata.mime))
         
         # Short circuit: if the file can be edited by the active task, use that!
         if active_task is not None and active_task.can_edit(document):
@@ -323,7 +328,7 @@ class FrameworkApplication(TasksApplication):
             # Ask the active task if it's OK to load a different editor
             if not active_task.allow_different_task(guess, best.factory):
                 return
-            dummy = Document(metadata="application/octet-stream")
+            dummy = self.document_class(metadata="application/octet-stream")
             if active_task.can_edit(document) and active_task.ask_attempt_loading_as_octet_stream(guess, best.factory):
                 log.debug("Active task %s allows application/octet-stream" % active_task.id)
                 active_task.new(document, **kwargs)
@@ -756,7 +761,7 @@ def setup_frozen_logging():
         sys.stdout = Blackhole()
         sys.stderr = sys.stdout
 
-def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", application_name="", debug_log=False):
+def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", application_name="", debug_log=False, document_class=None):
     """Start the application
     
     :param plugins: list of user plugins
@@ -841,6 +846,8 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", 
         kwargs['startup_task'] = startup_task
     if application_name:
         kwargs['name'] = application_name
+    if document_class:
+        kwargs['document_class'] = document_class
     app = FrameworkApplication(plugin_manager=plugin_manager, command_line_args=extra_args, **kwargs)
     
     # Create a debugging log

@@ -19,8 +19,6 @@ from omnivore.utils.sortutil import collapse_overlapping_ranges, invert_ranges, 
 from omnivore.utils.file_guess import FileGuess
 import omnivore.utils.jsonutil as jsonutil
 
-from document import Document
-
 import logging
 log = logging.getLogger(__name__)
 
@@ -92,7 +90,7 @@ class FrameworkEditor(Editor):
     #### trait default values
 
     def _document_default(self):
-        return Document()
+        return self.task.window.application.document_class()
 
     def _cursor_history_default(self):
         return HistoryList()
@@ -131,13 +129,13 @@ class FrameworkEditor(Editor):
         """ Loads the contents of the editor.
         """
         if source is None:
-            doc = Document()
+            doc = self.task.window.application.document_class()
         elif hasattr(source, 'document_id'):
             self.view_document(source)
         else:
             metadata = source.get_metadata()
             bytes = source.get_utf8()
-            doc = Document(metadata=metadata, bytes=bytes)
+            doc = self.task.window.application.document_class(metadata=metadata, bytes=bytes)
             self.init_extra_metadata(doc)
             self.view_document(doc)
 

@@ -1,7 +1,7 @@
 from traits.api import HasTraits, provides
 
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
-from omnivore.framework.document import Document
+from omnivore.framework.document import BaseDocument
 
 from omnivore_extra.crypto.utils.permute import PermutePrivate
 
@@ -25,7 +25,7 @@ class PrivateTextRecognizer(HasTraits):
     
     def load(self, guess):
         start = len(self.header)
-        doc = Document(metadata=guess.metadata, bytes=guess.numpy[start:])
+        doc = BaseDocument(metadata=guess.metadata, bytes=guess.numpy[start:])
         doc.permute = PermutePrivate()
         print "loading %s: %s" % (self.id, doc)
         return doc

@@ -15,7 +15,6 @@ from pyface.api import YES, NO
 # Local imports.
 from omni8bit.hex_edit.hex_editor import HexEditor
 from omni8bit.bitmap_edit.bitmap_editor import MainBitmapScroller, BitmapEditor
-from omnivore.framework.document import Document
 from omni8bit.arch.machine import Machine, predefined
 from omni8bit.arch.colors import powerup_colors
 from omni8bit.arch.antic_renderers import BaseRenderer

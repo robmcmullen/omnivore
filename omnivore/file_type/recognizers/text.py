@@ -2,7 +2,6 @@ from traits.api import HasTraits, provides
 
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
 from omnivore.utils.textutil import guessBinary
-from omnivore.framework.document import Document
 
 @provides(IFileRecognizer)
 class PlainTextRecognizer(HasTraits):

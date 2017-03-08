@@ -3,7 +3,7 @@ from traits.api import HasTraits, provides
 from atrcopy import iter_parsers, SegmentData, UnsupportedDiskImage
 
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
-from omnivore.framework.document import Document
+from omni8bit.document import SegmentedDocument
 
 
 @provides(IFileRecognizer)
@@ -23,7 +23,7 @@ class AtrcopyRecognizer(HasTraits):
             return mime
     
     def load(self, guess):
-        doc = Document(metadata=guess.metadata, bytes=guess.numpy)
+        doc = SegmentedDocument(metadata=guess.metadata, bytes=guess.numpy)
         doc.set_segments(guess.parser)
         from omni8bit.utils.extra_metadata import check_builtin
         check_builtin(doc)

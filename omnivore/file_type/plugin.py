@@ -66,4 +66,4 @@ class FileTypePlugin(Plugin):
         # Lazy importing, even though this is a fundamental service and
         # therefore doesn't buy us anything.  But as an example it's useful.
         from .driver import FileRecognizerDriver
-        return FileRecognizerDriver(recognizers=self.recognizers)
+        return FileRecognizerDriver(recognizers=self.recognizers, application=self.application)

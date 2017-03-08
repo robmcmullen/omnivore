@@ -68,7 +68,8 @@ def main(argv):
     plugins.extend(omnivore_extra.crypto.file_type.plugins)
 
     from omnivore.framework.application import run
-    run(plugins=plugins, egg_path=EGG_PATH)
+    from omni8bit.document import SegmentedDocument
+    run(plugins=plugins, egg_path=EGG_PATH, document_class=SegmentedDocument)
 
     logging.shutdown()
 

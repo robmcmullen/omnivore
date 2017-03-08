@@ -13,7 +13,6 @@ from pyface.key_pressed_event import KeyPressedEvent
 # Local imports.
 from omnivore import get_image_path
 from omni8bit.hex_edit.hex_editor import HexEditor
-from omnivore.framework.document import Document
 from omni8bit.arch.machine import predefined
 from omni8bit.ui.bitviewscroller import FontMapScroller
 from omnivore.utils.command import Overlay
