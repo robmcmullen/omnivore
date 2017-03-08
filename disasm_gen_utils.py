@@ -733,7 +733,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
         self.opcode_line_out("<bad addr>", force_case=True)
         self.out("        }")
         self.out("        else {")
-        self.opcode_line_out("$%02x%02x", ["src[1]", "src[2]"])
+        self.opcode_line_out("$%02x%02x", ["src[2]", "src[1]"])
         self.out("        }")
 
         self.out("    }")
