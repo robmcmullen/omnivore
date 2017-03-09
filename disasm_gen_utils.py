@@ -644,7 +644,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     wrap->count = 4;
     wrap->flag = FLAG_DATA_BYTES;
     if (pc + wrap->count > last_pc) {
-        wrap->count = pc + wrap->count - last_pc;
+        wrap->count = last_pc - pc;
         if (wrap->count == 0) {
             wrap->strlen = 0;
             return 0;
@@ -695,7 +695,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     if (((opcode & 0x0f) == 1) || ((opcode & 0xf0) == 0x40)) {
         wrap->count = 3;
         if (pc + wrap->count > last_pc) {
-            wrap->count = pc + wrap->count - last_pc;
+            wrap->count = last_pc - pc;
         }
     }
     else {
@@ -704,17 +704,13 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
             else break;
         }
     }
+    for (i=0; i<wrap->count; i++) {
+        h = &hexdigits[(src[i] & 0xff)*2];
+        *txt++ = *h++;
+        *txt++ = *h++;
+    }
 """
     def process(self, count):
-        self.out("switch(wrap->count) {")
-        for count in range(3, 0, -1): # down to 1
-            if count > 1:
-                self.out("    case %d:" % count)
-            else:
-                self.out("    default:")
-            self.print_bytes(count, self.generator.data_op)
-            self.out("    break")
-        self.out("}")
         self.opcode_line_out("; ");
         self.out("    if ((opcode & 0xf) == 1) {")
         self.out("        if (opcode & 0x80) {")
@@ -809,7 +805,7 @@ int %s(asm_entry *wrap, unsigned char *src, unsigned int pc, unsigned int last_p
     if (opcode == 0xff) {
         wrap->count = 1;
         if (pc + wrap->count > last_pc) {
-            wrap->count = pc + wrap->count - last_pc;
+            wrap->count = last_pc - pc;
         }
         """, "%02x ; end", ["src[0]"]),
     ("""
