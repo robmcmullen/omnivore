@@ -18,7 +18,7 @@ import numpy as np
 
 rawdtype = [('pc', 'u2'), ('dest_pc', 'u2'), ('count', 'u1'), ('flag', 'u1'), ('strlen', 'u1'), ('unused', 'u1'), ('strpos', 'i4')]
 
-from ..flags import *
+from flags import *
 
 
 class StorageWrapper(object):
@@ -143,8 +143,6 @@ def get_disassembler(cpu, fast=True, monolithic=True):
         strsize = 48
     return processor, parse_mod, strsize
 
-import disasm_info
-
 class DisassemblerWrapper(object):
     def __init__(self, cpu, lines=65536, fast=True, mnemonic_lower=False, hex_lower=True, extra_disassemblers=None, monolithic=True):
         processor, parse_mod, strsize = get_disassembler(cpu, fast, monolithic)
@@ -183,6 +181,8 @@ class DisassemblerWrapper(object):
         return self.chunk_processor(self.metadata_wrapper, binary, pc, last, i, self.mnemonic_lower , self.hex_lower)
 
     def get_all(self, binary, pc, index_of_pc, ranges=[]):
+        import disasm_info
+
         self.clear()
         # limit to 64k at once since we're dealing with 8-bit machines
         num_bytes = min(len(binary) - index_of_pc, 65536)
