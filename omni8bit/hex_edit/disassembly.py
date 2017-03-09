@@ -174,7 +174,7 @@ class DisassemblyTable(ByteGridTable):
         for i in range(count):
             style |= self.segment.style[index + i]
         if col == 0:
-            text = self.disassembler.format_data_list_bytes(index, line)
+            text = self.disassembler.format_data_list_bytes(index, line.num_bytes)
         elif col == 2:
             text = self.disassembler.format_comment(index, line)
         else:

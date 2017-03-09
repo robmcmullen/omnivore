@@ -166,8 +166,8 @@ class BaseDisassembler(object):
     def format_row_label(self, line):
         return self.fmt_hex4 % line.pc
 
-    def format_data_list_bytes(self, index, line):
-        return " ".join(self.fmt_hex2 % self.segment[index + i] for i in range(line.num_bytes))
+    def format_data_list_bytes(self, index, num):
+        return " ".join(self.fmt_hex2 % self.segment[index + i] for i in range(num))
 
     def format_data_directive_bytes(self, digits):
         """ Split string of hex digits into format used by chosen assembler
@@ -177,8 +177,7 @@ class BaseDisassembler(object):
         fmt = self.fmt_hex_digit_separator.join(self.fmt_hex_digits for i in range(count))
         return self.fmt_hex_directive + " " + fmt % tuple(digits[0:count*2])
 
-    def format_instruction(self, index, line):
-        count = line.num_bytes
+    def format_label(self, line):
         pc = line.pc
         if self.info.labels[pc]:
             text = "L" + (self.fmt_hex4 % pc)
@@ -186,16 +185,27 @@ class BaseDisassembler(object):
             text = self.memory_map.get_name(pc)
             if not text:
                 text = "     "
-        if ";" in line.instruction:
-            operand, _ = line.instruction.split(";", 1)
+        return text
+
+    def get_operand_from_instruction(self, text):
+        if ";" in text:
+            operand, _ = text.split(";", 1)
         else:
-            operand = line.instruction.rstrip()
+            operand = text.rstrip()
+        return operand
+
+    def format_operand(self, line, operand):
         if line.flag & udis_fast.flag_data_bytes:
             operand = self.format_data_directive_bytes(operand)
-        elif count > 1:
+        elif line.num_bytes > 1:
             operand, target_pc, label = self.get_operand_label(operand)
-        text += " " + operand
-        return text
+        return operand
+
+    def format_instruction(self, index, line):
+        label = self.format_label(line)
+        operand = self.get_operand_from_instruction(line.instruction)
+        operand = self.format_operand(line, operand)
+        return label + " " + operand
 
     def format_comment(self, index, line=None):
         info = self.info
@@ -215,7 +225,7 @@ class BaseDisassembler(object):
             return " ".join(comments)
         return ""
 
-    def iter_row_text(self, start=0, end=-1):
+    def iter_row_text(self, start=0, end=-1, max_bytes_per_line=8):
         """iterates over the rows representing the disassembly
         
         Return information designed to be used by program list formatters.
@@ -229,12 +239,27 @@ class BaseDisassembler(object):
         for row in range(start_row, end_row + 1):
             line = self.info[row]
             index = line.pc - self.start_addr
-            hex_bytes = self.format_data_list_bytes(index, line)
-            code = self.format_instruction(index, line)
-            # expand to 8 spaces
-            code = code[0:5] + "  " + code[5:]
+            label = self.format_label(line)
             comment = self.format_comment(index, line)
-            yield line, hex_bytes, code, comment
+            operand = self.get_operand_from_instruction(line.instruction)
+            if line.flag & udis_fast.flag_data_bytes and line.num_bytes > max_bytes_per_line:
+                first = True
+                for i in range(0, line.num_bytes, max_bytes_per_line):
+                    count = min(line.num_bytes, i + max_bytes_per_line) - i
+                    hex_bytes = self.format_data_list_bytes(index + i, count)
+                    subset = operand[i*2:(i+count)*2]
+                    code = self.format_data_directive_bytes(subset)
+                    yield line, hex_bytes, label + "   " + code, comment, count
+                    if first:
+                        label = "     "
+                        comment = ""
+                        first = False
+            else:
+                hex_bytes = self.format_data_list_bytes(index, line.num_bytes)
+                code = self.format_operand(line, operand)
+                # expand to 8 spaces
+                code = label + "   " + code
+                yield line, hex_bytes, code, comment, line.num_bytes
     
     def get_disassembled_text(self, start=0, end=-1):
         """Returns list of lines representing the disassembly
@@ -246,7 +271,7 @@ class BaseDisassembler(object):
         line = self.info[start_row]
         org = self.format_row_label(line)
         lines.append("        %s $%s" % (self.asm_origin, org))
-        for line, hex_bytes, code, comment in self.iter_row_text(start, end):
+        for line, hex_bytes, code, comment, num_bytes in self.iter_row_text(start, end):
             if comment:
                 text = "%-30s; %s" % (code, comment)
             else:
@@ -262,24 +287,26 @@ class BaseDisassembler(object):
         lines = [""]
         lines.append("Source: %s.s" % (self.segment.name))
         line_num = 2
-        for line, hex_bytes, code, comment in self.iter_row_text():
+        pc = self.segment.start_addr
+        for line, hex_bytes, code, comment, num_bytes in self.iter_row_text():
             if comment:
                 code = "%-30s; %s" % (code, comment)
             if ".byte" in code:
                 count = 0
                 hex_bytes = hex_bytes.upper()
                 text = ""
-                while count < line.num_bytes:
+                while count < num_bytes:
                     sub_bytes = hex_bytes[count * 3:count * 3 + 6].rstrip()
                     if count == 0:
-                        text = "%05d %04X  %-17s %s" % (line_num, line.pc, sub_bytes, code)
+                        text = "%05d %04X  %-17s %s" % (line_num, pc, sub_bytes, code)
                     else:
-                        text += "\n%05d %04X  %s " % (line_num, line.pc + count, sub_bytes)
+                        text += "\n%05d %04X  %s " % (line_num, pc + count, sub_bytes)
                     count += 2
             else:
                 text = "%05d %04X  %-17s %s" % (line_num, line.pc, hex_bytes.upper(), code)
             lines.append(text)
             line_num += 1
+            pc += num_bytes
         return lines
 
 

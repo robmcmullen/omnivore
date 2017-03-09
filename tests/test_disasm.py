@@ -48,7 +48,7 @@ class TestFastDisasm(object):
         # for i in range(info_sections.num_instructions):
         #     print info_sections[i].instruction
         assert len(info_all.instructions) == len(info_sections.instructions)
-        assert np.all(info_all.index - info_sections.index == 0)
+        assert np.all(info_all.index_to_row - info_sections.index_to_row == 0)
 
 class TestFastDisasmMulti(object):
     def get_disasm(self):
@@ -179,10 +179,14 @@ class TestChunkBreak(object):
         inst = info.instructions
         for i in range(info.num_instructions):
             print info[i].instruction
+        text = self.disasm.get_disassembled_text()
+        print "\n".join(text)
 
+        text = self.disasm.get_atasm_lst_text()
+        print "\n".join(text)
 
 
 if __name__ == "__main__":
     t = TestChunkBreak()
     t.setup()
-    t.test_bad()
+    t.test_recompile()
