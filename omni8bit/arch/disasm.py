@@ -259,17 +259,26 @@ class BaseDisassembler(object):
         
         Raises IndexError if the disassembly hasn't reached the index yet
         """
-        lines = []
-        lines.append("Source: %s" % (self.segment.name))
+        lines = [""]
+        lines.append("Source: %s.s" % (self.segment.name))
         line_num = 2
         for line, hex_bytes, code, comment in self.iter_row_text():
-            text = "%d %04X  %s %s" % (line_num, line.pc, hex_bytes, code)
             if comment:
-                if not comment.startswith(";"):
-                    comment = ";" + comment
-                text += " " + comment
+                code = "%-30s; %s" % (code, comment)
+            if ".byte" in code:
+                count = 0
+                hex_bytes = hex_bytes.upper()
+                text = ""
+                while count < line.num_bytes:
+                    sub_bytes = hex_bytes[count * 3:count * 3 + 6].rstrip()
+                    if count == 0:
+                        text = "%d %04X  %s  %s" % (line_num, line.pc, sub_bytes, code)
+                    else:
+                        text += "\n%d %04X  %s " % (line_num, line.pc + count, sub_bytes)
+                    count += 2
             else:
-                lines.append(text)
+                text = "%d %04X  %-8s %s" % (line_num, line.pc, hex_bytes.upper(), code)
+            lines.append(text)
             line_num += 1
         return lines
 

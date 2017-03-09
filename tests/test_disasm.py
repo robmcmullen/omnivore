@@ -157,7 +157,19 @@ class TestChunkBreak(object):
         assert info[4].instruction == "00"
         assert info[5].instruction.startswith("7070707070;")
 
+    def test_recompile(self):
+        self.editor.find_segment("modified boot")
+        s = self.editor.segment
+        info = self.disasm.disassemble_segment(s)
+        disasm = self.disasm.get_disassembled_text()
+        with open("%s.s" % s.name, "w") as fh:
+            fh.write("\n".join(disasm) + "\n")
+        text1 = self.disasm.get_atasm_lst_text()
+        with open("%s.omnivore-lst" % s.name, "w") as fh:
+            fh.write("\n".join(text1) + "\n")
+
+
 if __name__ == "__main__":
     t = TestChunkBreak()
     t.setup()
-    t.test_simple()
+    t.test_recompile()
