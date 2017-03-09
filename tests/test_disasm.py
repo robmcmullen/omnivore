@@ -28,7 +28,7 @@ class TestFastDisasm(object):
         self.disasm.fast.chunk_type_processor[64] = self.disasm.fast.chunk_processor
         self.editor.find_segment("02: robots I")
         s = self.editor.segment
-        r = s.get_entire_style_ranges(data=True, user=1)
+        r = s.get_entire_style_ranges(user=user_bit_mask)
         print r
         assert r == [
         ((0, 497), 0),
@@ -68,10 +68,10 @@ class TestFastDisasmMulti(object):
     def test_ranges(self):
         self.editor.find_segment("boot code at $0800")
         s = self.editor.segment
-        r = s.get_entire_style_ranges(data=True, user=1)
+        r = s.get_entire_style_ranges(user=user_bit_mask)
         print r
         assert r == [((0, 238), 0),
-           ((238, 268), 1),
+           ((238, 268), 2),
            ((268, 332), 0),
            ((332, 464), 1),
            ((464, 512), 0)]
@@ -104,7 +104,7 @@ class TestDisassemblerChange(object):
 
     def test_simple(self):
         s = self.get_break(8)
-        r = s.get_entire_style_ranges(data=True, user=1)
+        r = s.get_entire_style_ranges(user=user_bit_mask)
         print r
         info = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
         inst = info.instructions
@@ -116,7 +116,7 @@ class TestDisassemblerChange(object):
         assert info[10].instruction.startswith("CALL")
         assert info[11].instruction.startswith("CALL")
         s = self.get_break(9)
-        r = s.get_entire_style_ranges(data=True, user=1)
+        r = s.get_entire_style_ranges(user=user_bit_mask)
         info = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
         inst = info.instructions
         for i in range(info.num_instructions):
@@ -145,7 +145,7 @@ class TestChunkBreak(object):
     def test_simple(self):
         self.editor.find_segment("chunk type changes")
         s = self.editor.segment
-        r = s.get_entire_style_ranges(data=True, user=1)
+        r = s.get_entire_style_ranges(user=user_bit_mask)
         print r
         info = self.disasm.disassemble_segment(s)
         inst = info.instructions
