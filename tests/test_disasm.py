@@ -168,8 +168,21 @@ class TestChunkBreak(object):
         with open("%s.omnivore-lst" % s.name, "w") as fh:
             fh.write("\n".join(text1) + "\n")
 
+    def test_bad(self):
+        data = np.fromstring("\x8dp0L\xaa8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00pppM\x00p\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\x8d\x8d\x06\x16\x8e\r", dtype=np.uint8)
+        style = np.empty(len(data), dtype=np.uint8)
+        style[0:17] = 0
+        style[17:] = 2
+        raw = SegmentData(data, style)
+        s = DefaultSegment(raw, 0x3bef)
+        info = self.disasm.disassemble_segment(s)
+        inst = info.instructions
+        for i in range(info.num_instructions):
+            print info[i].instruction
+
+
 
 if __name__ == "__main__":
     t = TestChunkBreak()
     t.setup()
-    t.test_recompile()
+    t.test_bad()

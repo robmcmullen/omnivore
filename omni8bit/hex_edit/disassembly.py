@@ -73,7 +73,7 @@ class DisassemblyTable(ByteGridTable):
     def disassemble_from(self, index, refresh=False):
         self.lines = None
         info = self.disassembler.disassemble_segment(self.segment)
-        self.index_to_row = info.index
+        self.index_to_row = info.index_to_row
         self.lines = info
         self.jump_targets = info.labels
         grid = self.editor.disassembly

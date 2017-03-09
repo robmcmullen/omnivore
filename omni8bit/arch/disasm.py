@@ -83,7 +83,7 @@ class BaseDisassembler(object):
     def get_comments(self, index, line=None):
         info = self.info
         if line is None:
-            row = info.index[index]
+            row = info.index_to_row[index]
             line = info[row]
         comments = []
         c = line.instruction
@@ -100,9 +100,9 @@ class BaseDisassembler(object):
 
     def get_prior_valid_opcode_start(self, target_pc):
         index = target_pc - self.start_addr
-        row = self.info.index[index]
+        row = self.info.index_to_row[index]
         while index > 0:
-            row_above = self.info.index[index - 1]
+            row_above = self.info.index_to_row[index - 1]
             if row_above < row:
                 break
             index -= 1
@@ -145,7 +145,7 @@ class BaseDisassembler(object):
     def get_label_instruction(self, pc, line=None):
         if line is None:
             index = pc - self.start_addr
-            row = self.info.index(index)
+            row = self.info.index_to_row(index)
             line = self.info[row]
         if self.info.labels[pc]:
             label = "L" + (self.fmt_hex4 % pc)
@@ -200,7 +200,7 @@ class BaseDisassembler(object):
     def format_comment(self, index, line=None):
         info = self.info
         if line is None:
-            row = info.index[index]
+            row = info.index_to_row[index]
             line = info[row]
         comments = []
         c = line.instruction
@@ -221,10 +221,10 @@ class BaseDisassembler(object):
         Return information designed to be used by program list formatters.
         """
         if end < 0:
-            end = len(self.info.index) - 1
+            end = len(self.info.index_to_row) - 1
 
-        start_row = self.info.index[start]
-        end_row = self.info.index[end - 1] # end is python style range, want actual last byte
+        start_row = self.info.index_to_row[start]
+        end_row = self.info.index_to_row[end - 1] # end is python style range, want actual last byte
 
         for row in range(start_row, end_row + 1):
             line = self.info[row]
@@ -242,7 +242,7 @@ class BaseDisassembler(object):
         Raises IndexError if the disassembly hasn't reached the index yet
         """
         lines = []
-        start_row = self.info.index[start]
+        start_row = self.info.index_to_row[start]
         line = self.info[start_row]
         org = self.format_row_label(line)
         lines.append("        %s $%s" % (self.asm_origin, org))
