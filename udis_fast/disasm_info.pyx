@@ -65,8 +65,7 @@ cdef class DisassemblyInfo:
         #     unsigned short dest_pc; /* address pointed to by this opcode; if applicable */
         #     unsigned char count;
         #     unsigned char flag;
-        #     unsigned char strlen;
-        #     unsigned char reserved;
+        #     unsigned short strlen;
         #     int strpos; /* position of start of text in instruction array */
         # } asm_entry;
 
@@ -79,7 +78,7 @@ cdef class DisassemblyInfo:
         self.current.dest_pc = sptr[1]
         self.current.num_bytes = m[4]
         self.current.flag = m[5]
-        strlen = m[6]
+        strlen = sptr[3]
         iptr = <int *>(m + 8)
         strpos = iptr[0]
 

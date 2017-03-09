@@ -284,6 +284,7 @@ def get_disassembled_chunk_fast(cpu, storage_wrapper, np.ndarray[char, ndim=1, m
     cdef itemsize = metadata_array.itemsize
     cdef row = storage_wrapper.row
     cdef char *metadata = metadata_array.data
+    cdef unsigned short *strlen_ptr
     cdef int c_index = index_of_pc
     cdef char *binary = binary_array.data + c_index
     cdef int c_pc, c_last, count, max_rows, i
@@ -347,7 +348,8 @@ $DEFLIST
             for i in range(count):
                 index[0] = row
                 index += 1
-        strlen = <int>metadata[6]
+        strlen_ptr = <unsigned short *>&metadata[6]
+        strlen = strlen_ptr[0]
         c_pc += count
         c_index += count
         metadata += itemsize

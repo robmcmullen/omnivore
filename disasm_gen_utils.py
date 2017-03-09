@@ -284,8 +284,7 @@ typedef struct {
     unsigned short dest_pc; /* address pointed to by this opcode; if applicable */
     unsigned char count;
     unsigned char flag;
-    unsigned char strlen;
-    unsigned char reserved;
+    unsigned short strlen;
     int strpos; /* position of start of text in instruction array */
 } asm_entry;
 """ % c_define_flags
