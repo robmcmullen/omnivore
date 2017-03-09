@@ -272,12 +272,12 @@ class BaseDisassembler(object):
                 while count < line.num_bytes:
                     sub_bytes = hex_bytes[count * 3:count * 3 + 6].rstrip()
                     if count == 0:
-                        text = "%d %04X  %s  %s" % (line_num, line.pc, sub_bytes, code)
+                        text = "%05d %04X  %-17s %s" % (line_num, line.pc, sub_bytes, code)
                     else:
-                        text += "\n%d %04X  %s " % (line_num, line.pc + count, sub_bytes)
+                        text += "\n%05d %04X  %s " % (line_num, line.pc + count, sub_bytes)
                     count += 2
             else:
-                text = "%d %04X  %-8s %s" % (line_num, line.pc, hex_bytes.upper(), code)
+                text = "%05d %04X  %-17s %s" % (line_num, line.pc, hex_bytes.upper(), code)
             lines.append(text)
             line_num += 1
         return lines
