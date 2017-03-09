@@ -30,7 +30,7 @@ cdef class DisassemblyInfo:
     cdef public np.ndarray metadata
     cdef public np.ndarray instructions
     cdef public np.ndarray labels
-    cdef public np.ndarray index
+    cdef public np.ndarray index_to_row
     cdef CurrentRow current
     cdef int itemsize
     cdef unsigned char *metadata_raw
@@ -39,7 +39,7 @@ cdef class DisassemblyInfo:
     def __init__(self, wrapper, first_pc, num_bytes):
         self.first_pc = first_pc
         self.num_bytes = num_bytes
-        self.metadata, self.instructions, self.labels, self.index = wrapper.metadata_wrapper.copy_resize(num_bytes)
+        self.metadata, self.instructions, self.labels, self.index_to_row = wrapper.metadata_wrapper.copy_resize(num_bytes)
         self.num_instructions = len(self.metadata)
         self.itemsize = self.metadata.itemsize
 
@@ -92,14 +92,14 @@ cdef class DisassemblyInfo:
         cdef int pc = self.first_pc
         cdef int i = self.num_bytes
         cdef np.uint16_t *labels = <np.uint16_t *>self.labels.data
-        cdef np.uint32_t *index = <np.uint32_t *>self.index.data
+        cdef np.uint32_t *index_to_row = <np.uint32_t *>self.index_to_row.data
 
         print "pc=%04x, last=%04x, i=%04x" % (pc, pc + i, i)
         while i > 0:
             i -= 1
             if labels[pc + i]:
-                print "disasm_info: found label %04x, index[%04x]=%04x" % (pc + i, i, index[i])
-                while index[i - 1] == index[i] and i > 1:
+                print "disasm_info: found label %04x, index_to_row[%04x]=%04x" % (pc + i, i, index_to_row[i])
+                while index_to_row[i - 1] == index_to_row[i] and i > 1:
                     i -= 1
                 if labels[pc + i] == 0:
                     print "  disasm_info: added label at %04x" % (pc + i)

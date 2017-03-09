@@ -291,7 +291,7 @@ def get_disassembled_chunk_fast(cpu, storage_wrapper, np.ndarray[char, ndim=1, m
     cdef np.ndarray[np.uint16_t, ndim=1] labels_array = storage_wrapper.labels
     cdef np.uint16_t *labels = <np.uint16_t *>labels_array.data
     cdef np.ndarray[np.uint32_t, ndim=1] index_array = storage_wrapper.index_to_row
-    cdef np.uint32_t *index = <np.uint32_t *>index_array.data + c_index
+    cdef np.uint32_t *index_to_row = <np.uint32_t *>index_array.data + c_index
     cdef np.ndarray instructions_array = storage_wrapper.instructions
     cdef char *instructions = instructions_array.data
     cdef int strpos = storage_wrapper.last_strpos
@@ -321,33 +321,33 @@ $DEFLIST
         if count == 0:
             break
         elif count == 1:
-            index[0] = row
-            index += 1
+            index_to_row[0] = row
+            index_to_row += 1
         elif count == 2:
-            index[0] = row
-            index += 1
-            index[0] = row
-            index += 1
+            index_to_row[0] = row
+            index_to_row += 1
+            index_to_row[0] = row
+            index_to_row += 1
         elif count == 3:
-            index[0] = row
-            index += 1
-            index[0] = row
-            index += 1
-            index[0] = row
-            index += 1
+            index_to_row[0] = row
+            index_to_row += 1
+            index_to_row[0] = row
+            index_to_row += 1
+            index_to_row[0] = row
+            index_to_row += 1
         elif count == 4:
-            index[0] = row
-            index += 1
-            index[0] = row
-            index += 1
-            index[0] = row
-            index += 1
-            index[0] = row
-            index += 1
+            index_to_row[0] = row
+            index_to_row += 1
+            index_to_row[0] = row
+            index_to_row += 1
+            index_to_row[0] = row
+            index_to_row += 1
+            index_to_row[0] = row
+            index_to_row += 1
         else:
             for i in range(count):
-                index[0] = row
-                index += 1
+                index_to_row[0] = row
+                index_to_row += 1
         strlen_ptr = <unsigned short *>&metadata[6]
         strlen = strlen_ptr[0]
         c_pc += count
