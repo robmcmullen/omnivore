@@ -16,6 +16,8 @@ class BaseDisassembler(object):
         'comment char': ';',
         'origin': '*=',
         'data byte': '.byte',
+        'data byte prefix': '$',
+        'data byte separator': ', ',
         'name': "MAC/65",
         }
     

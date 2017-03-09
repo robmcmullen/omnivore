@@ -79,7 +79,7 @@ class TestFastDisasmMulti(object):
         info_sections = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
         #print info_sections.instructions
         
-class TestChunkBreak(object):
+class TestDisassemblerChange(object):
     def get_disasm(self):
         z = BasicZ80Disassembler()
         parent = Basic6502Disassembler()
@@ -125,6 +125,37 @@ class TestChunkBreak(object):
         assert info[2].instruction.startswith("STA")
         assert info[9].instruction.startswith("CALL")
         assert info[10].instruction.startswith("fc")
+
+        
+class TestChunkBreak(object):
+    def get_disasm(self):
+        disasm = Basic6502Disassembler()
+        disasm.add_chunk_processor("data", 1)
+        disasm.add_chunk_processor("antic_dl", 2)
+        disasm.add_chunk_processor("jumpman_level", 3)
+        disasm.add_chunk_processor("jumpman_harvest", 4)
+        return disasm
+
+    def setup(self):
+        self.disasm = self.get_disasm()
+        self.editor = MockHexEditor()
+        guess = FileGuess("../test_data/pytest.atr")
+        self.editor.load(guess)
+
+    def test_simple(self):
+        self.editor.find_segment("chunk type changes")
+        s = self.editor.segment
+        r = s.get_entire_style_ranges(data=True, user=1)
+        print r
+        info = self.disasm.disassemble_segment(s)
+        inst = info.instructions
+        for i in range(info.num_instructions):
+            print info[i].instruction
+
+        assert info[0].instruction.startswith("DEX")
+        assert info[2].instruction.startswith("RTS")
+        assert info[4].instruction == "00"
+        assert info[5].instruction.startswith("7070707070;")
 
 if __name__ == "__main__":
     t = TestChunkBreak()
