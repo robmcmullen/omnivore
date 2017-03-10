@@ -19,7 +19,7 @@ from omnivore.framework.actions import *
 from commands import *
 from omni8bit.arch.disasm import ANTIC_DISASM, JUMPMAN_LEVEL, JUMPMAN_HARVEST
 from omni8bit.arch.ui.antic_colors import AnticColorDialog
-from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
+from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
 from omni8bit.ui.dialogs import prompt_for_emulator, prompt_for_assembler, SegmentOrderDialog, SegmentInterleaveDialog
 from omni8bit.arch.machine import Machine
 from omnivore.framework.minibuffer import *
@@ -267,7 +267,7 @@ class BitmapWidthAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        width = prompt_for_hex(e.window.control, 'Enter new bitmap width in bytes', 'Set Bitmap Width', e.bitmap_width)
+        width = prompt_for_dec(e.window.control, 'Enter new bitmap width in bytes', 'Set Bitmap Width', e.bitmap_width)
         if width is not None and width > 0:
             wx.CallAfter(e.set_bitmap_width, width)
 
@@ -277,7 +277,7 @@ class BitmapZoomAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        width = prompt_for_hex(e.window.control, 'Enter new pixel zoom factor', 'Set Bitmap Zoom', e.bitmap_zoom)
+        width = prompt_for_dec(e.window.control, 'Enter new pixel zoom factor', 'Set Bitmap Zoom', e.bitmap_zoom)
         if width is not None and width > 0:
             wx.CallAfter(e.set_bitmap_zoom, width)
 
@@ -287,7 +287,7 @@ class FontMappingWidthAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        width = prompt_for_hex(e.window.control, 'Enter new map width in bytes', 'Set Map Width', str(e.map_width))
+        width = prompt_for_dec(e.window.control, 'Enter new map width in bytes', 'Set Map Width', str(e.map_width))
         if width is not None and width > 0:
             wx.CallAfter(e.set_map_width, width)
 
@@ -297,7 +297,7 @@ class FontMappingZoomAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        width = prompt_for_hex(e.window.control, 'Enter new pixel zoom factor', 'Set Map Zoom', e.map_zoom)
+        width = prompt_for_dec(e.window.control, 'Enter new pixel zoom factor', 'Set Map Zoom', e.map_zoom)
         if width is not None and width > 0:
             wx.CallAfter(e.set_map_zoom, width)
 
@@ -528,7 +528,7 @@ class MultipleSegmentsFromSelectionAction(EditorAction):
     
     def perform(self, event):
         e = self.active_editor
-        size = prompt_for_hex(e.window.control, "Enter number of bytes in each segment", "Multiple Segments")
+        size = prompt_for_hex(e.window.control, "Enter number of bytes in each segment\n(default hex, prefix with # for decimal, %% for binary)", "Multiple Segments")
         if size is not None and size > 0:
             segments = e.get_segments_from_selection(size)
             for segment in segments:
@@ -762,7 +762,7 @@ class SetSegmentOriginAction(EditorAction):
     def perform(self, event):
         e = self.active_editor
         segment = e.document.segments[self.segment_number]
-        org = prompt_for_hex(e.window.control, "Enter origin address for %s" % segment.name, "Set Segment Origin")
+        org = prompt_for_hex(e.window.control, "Enter origin address for %s\n(default hex, prefix with # for decimal, %% for binary)" % segment.name, "Set Segment Origin")
         if org is not None:
             segment.start_addr = org
             e.update_segments_ui()
@@ -864,7 +864,7 @@ class SegmentGotoAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        addr, error = prompt_for_hex(e.window.control, "Enter address value: (default hex; prefix with # for decimal)", "Goto Address in a Segment", return_error=True, default_base="hex")
+        addr, error = prompt_for_hex(e.window.control, "Enter address value:\n(default hex; prefix with # for decimal)", "Goto Address in a Segment", return_error=True, default_base="hex")
         if addr is not None:
             s = e.segment
             index = addr - s.start_addr
@@ -963,7 +963,7 @@ class IndexRangeValueAction(IndexRangeAction):
         return self.cmd.pretty_name + "..."
     
     def show_dialog(self, e):
-        value = prompt_for_hex(e.window.control, "Enter byte value: (prefix with 0x or $ for hex, % for binary)", self.cmd.pretty_name)
+        value = prompt_for_hex(e.window.control, "Enter byte value: (default hex, prefix with # for decimal, %% for binary)", self.cmd.pretty_name)
         if value is not None:
             cmd = self.cmd(e.segment, e.selected_ranges, value)
             self.active_editor.process_command(cmd)
