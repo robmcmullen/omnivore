@@ -20,6 +20,9 @@ rawdtype = [('pc', 'u2'), ('dest_pc', 'u2'), ('count', 'u1'), ('flag', 'u1'), ('
 
 from flags import *
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class StorageWrapper(object):
     def __init__(self, lines=65536, strsize=12):
@@ -243,20 +246,20 @@ class DisassemblerWrapper(object):
         while stack:
             pc = stack.pop()
             if pc < info.first_pc or pc >= last_pc:
-                print "skipping trace of %04x: not in disassembled range." % pc
+                log.debug("skipping trace of %04x: not in disassembled range." % pc)
                 self.trace_info.out_of_range_start_points.append(pc)
                 continue
             if self.trace_info[pc]:
-                print "skipping trace of %04x: already checked it" % pc
+                log.debug("skipping trace of %04x: already checked it" % pc)
                 continue
-            print "starting trace at %04x" % pc
+            log.debug("starting trace at %04x" % pc)
             while pc < last_pc:
                 if self.trace_info[pc]:
                     break
                 row = pc_to_row[pc]
                 line = info[row]
                 if line.flag & flag_data_bytes:
-                    print "%04x: disassembled into marked data; moving to next entry point" % pc
+                    log.debug("%04x: disassembled into marked data; moving to next entry point" % pc)
                     break
                 next_pc = pc + line.num_bytes
                 for i in range(line.num_bytes):
@@ -264,25 +267,25 @@ class DisassemblerWrapper(object):
                 if line.dest_pc > 0:
                     if line.flag & flag_branch:
                         if not valid_pc(line.dest_pc):
-                            print "%04x: found branch to %04x, but not in disassembled range" % (pc, line.dest_pc)
+                            log.debug("%04x: found branch to %04x, but not in disassembled range" % (pc, line.dest_pc))
                         elif self.trace_info[line.dest_pc]:
-                            print "%04x: found branch to %04x, but already checked it" % (pc, line.dest_pc)
+                            log.debug("%04x: found branch to %04x, but already checked it" % (pc, line.dest_pc))
                         elif line.dest_pc in stack:
-                            print "%04x: found branch to %04x, but already in list to be checked" % (pc, line.dest_pc)
+                            log.debug("%04x: found branch to %04x, but already in list to be checked" % (pc, line.dest_pc))
                         else:
-                            print "%04x: found branch to %04x" % (pc, line.dest_pc)
+                            log.debug("%04x: found branch to %04x" % (pc, line.dest_pc))
                             stack.add(line.dest_pc)
                     if line.flag & flag_jump:
                         if not valid_pc(line.dest_pc):
-                            print "%04x: found jump to %04x, but not in disassembled range" % (pc, line.dest_pc)
+                            log.debug("%04x: found jump to %04x, but not in disassembled range" % (pc, line.dest_pc))
                             break
                         elif self.trace_info[line.dest_pc]:
-                            print "%04x: found jump to %04x, but already checked it" % (pc, line.dest_pc)
+                            log.debug("%04x: found jump to %04x, but already checked it" % (pc, line.dest_pc))
                             break
-                        print "%04x: jumping to %04x" % (pc, line.dest_pc)
+                        log.debug("%04x: jumping to %04x" % (pc, line.dest_pc))
                         next_pc = line.dest_pc
                 if line.flag & flag_return:
-                    print "%04x: end of this trace; moving to next entry point" % (pc)
+                    log.debug("%04x: end of this trace; moving to next entry point" % (pc))
                     break
                 pc = next_pc
-        print self.trace_info[info.first_pc:last_pc]
+        log.debug(self.trace_info[info.first_pc:last_pc])

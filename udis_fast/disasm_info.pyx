@@ -94,13 +94,13 @@ cdef class DisassemblyInfo:
         cdef np.uint16_t *labels = <np.uint16_t *>self.labels.data
         cdef np.uint32_t *index_to_row = <np.uint32_t *>self.index_to_row.data
 
-        print "pc=%04x, last=%04x, i=%04x" % (pc, pc + i, i)
+        #print "pc=%04x, last=%04x, i=%04x" % (pc, pc + i, i)
         while i > 0:
             i -= 1
             if labels[pc + i]:
-                print "disasm_info: found label %04x, index_to_row[%04x]=%04x" % (pc + i, i, index_to_row[i])
+                #print "disasm_info: found label %04x, index_to_row[%04x]=%04x" % (pc + i, i, index_to_row[i])
                 while index_to_row[i - 1] == index_to_row[i] and i > 1:
                     i -= 1
-                if labels[pc + i] == 0:
-                    print "  disasm_info: added label at %04x" % (pc + i)
+                #if labels[pc + i] == 0:
+                #    print "  disasm_info: added label at %04x" % (pc + i)
                 labels[pc + i] = 1
