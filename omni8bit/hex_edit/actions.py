@@ -1196,7 +1196,7 @@ class StartTraceAction(EditorAction):
     def perform(self, event):
         e = self.active_editor
         s = e.segment
-        s.set_style_ranges([(0, len(s))], match=True)
+        e.disassembly.start_trace()
         e.document.change_count += 1
         e.refresh_panes()
 
