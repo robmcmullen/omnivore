@@ -119,7 +119,10 @@ if __name__ == "__main__":
         if args.entry_points:
             for spc in args.entry_points:
                 start_points.append(int(spc, 16))
-        disasm.trace_disassembly(start_points)
+        disasm.start_trace()
+        for i, pc in enumerate(start_points):
+            print "start point #%d: %04x" % (i, pc)
+            disasm.trace_disassembly([pc])
 
     if args.hex:
         try:
