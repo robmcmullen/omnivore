@@ -541,7 +541,6 @@ class MultipleSegmentsFromSelectionAction(EditorAction):
 class InterleaveSegmentsAction(EditorAction):
     name = 'Interleave Segments'
     tooltip = 'Create new segment by interleaving segments'
-    accelerator = 'F12'
 
     def get_bytes(self, dlg):
         return dlg.get_bytes()
@@ -1188,3 +1187,28 @@ class RedoCursorPositionAction(EditorAction):
     def perform(self, event):
         e = self.active_editor
         e.redo_cursor_history()
+
+
+class StartTraceAction(EditorAction):
+    name = "Start Disassembly Trace"
+    accelerator = 'F12'
+
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        s.set_style_ranges([(0, len(s))], match=True)
+        e.document.change_count += 1
+        e.refresh_panes()
+
+
+class AddTraceStartPointAction(EditorAction):
+    name = "Add Trace Start Point"
+    accelerator = 'F11'
+
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        pc = e.cursor_index + s.start_addr
+        e.disassembly.trace_disassembly(pc)
+        e.document.change_count += 1
+        e.refresh_panes()

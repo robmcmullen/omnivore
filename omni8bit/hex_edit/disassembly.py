@@ -257,6 +257,10 @@ class DisassemblyPanel(ByteGrid):
             widths[i] = w
         prefs.disassembly_column_widths = tuple(widths)
     
+    def recalc_view(self):
+        ByteGrid.recalc_view(self)
+        self.update_trace_in_segment()
+
     def get_default_cell_editor(self):
         return AssemblerEditor(self)
 
@@ -265,6 +269,23 @@ class DisassemblyPanel(ByteGrid):
     
     def get_disassembled_text(self, start=0, end=-1):
         return self.table.disassembler.get_disassembled_text(start, end)
+
+    def start_trace(self):
+        self.table.disassembler.fast.start_trace()
+        self.update_trace_in_segment(self)
+
+    def update_trace_in_segment(self):
+        s = self.table.segment
+        mask = s.get_style_mask(match=True)
+        match_bit = s.get_style_bits(match=True)
+        is_data = self.table.disassembler.fast.get_trace_marked_data()
+        if is_data is not None:
+            s.style[:] &= mask
+            s.style[:] |= is_data[s.start_addr:s.start_addr + len(s)] * match_bit
+
+    def trace_disassembly(self, pc):
+        self.table.disassembler.fast.trace_disassembly([pc])
+        self.update_trace_in_segment()
 
     def encode_data(self, segment, editor):
         """Segment saver interface: take a segment and produce a byte
