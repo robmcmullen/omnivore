@@ -404,6 +404,7 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
             # set self.userpressed before SetValue, because it appears
             # that the OnText callback happens immediately and the
             # keystroke won't be flagged as one that the user caused.
+            log.debug("insert_first_key: found valid key: '%s'" % ch)
             self.userpressed=True
             self.SetValue(ch)
             self.SetInsertionPointEnd()
@@ -523,7 +524,7 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         grid.editor.select_none(False)
         self.startValue = grid.GetTable().GetValue(row, col)
         mode = self.parentgrid.table.get_col_type(col)
-        log.debug("row,col=(%d,%d), mode=%s" % (row, col, mode))
+        log.debug("begin edit: row,col=(%d,%d), mode=%s" % (row, col, mode))
         self._tc.editingNewCell(self.startValue,mode)
 
     def EndEdit(self, row, col, grid, old_val):
@@ -532,7 +533,7 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         has changed.  If necessary, the control may be destroyed.
         *Must Override*
         """
-        log.debug("row,col=(%d,%d)" % (row, col))
+        log.debug("end edit: row,col=(%d,%d)" % (row, col))
 
         val = self._tc.GetValue()
         if val != self.startValue:
@@ -561,21 +562,22 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         version only checks that the event has no modifiers.  F2 is special
         and will always start the editor.
         """
-        log.debug("keycode=%d" % (evt.GetKeyCode()))
+        log.debug("IsAcceptedKey: keycode=%d" % (evt.GetKeyCode()))
 
         ## We can ask the base class to do it
         #return self.base_IsAcceptedKey(evt)
 
+
+
         # or do it ourselves
-        return (not (evt.ControlDown() or evt.AltDown()) and
-                evt.GetKeyCode() != wx.WXK_SHIFT)
+        return (evt.GetKeyCode() < 256 and not (evt.ControlDown() or evt.AltDown()) and evt.GetKeyCode() != wx.WXK_SHIFT)
 
     def StartingKey(self, evt):
         """
         If the editor is enabled by pressing keys on the grid, this will be
         called to let the editor do something about that first key if desired.
         """
-        log.debug("keycode=%d" % evt.GetKeyCode())
+        log.debug("StartingKey: keycode=%d" % evt.GetKeyCode())
         key = evt.GetKeyCode()
         if not self._tc.insertFirstKey(key):
             evt.Skip()
