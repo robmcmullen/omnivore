@@ -224,7 +224,7 @@ class DisassemblerWrapper(object):
         return self.info
 
     def start_trace(self):
-        self.trace_info = None
+        self.trace_info = TraceInfo(self.max_bytes)
 
     def get_trace_marked_data(self):
         if self.trace_info:
@@ -236,7 +236,7 @@ class DisassemblerWrapper(object):
         stack = set(start_points)
         last_pc = info.first_pc + info.num_bytes
         if self.trace_info is None:
-            self.trace_info = TraceInfo(self.max_bytes)
+            self.start_trace()
         pc_to_row = np.zeros([last_pc], dtype=np.uint32)
         pc_to_row[info.first_pc:] = info.index_to_row[:]
 
