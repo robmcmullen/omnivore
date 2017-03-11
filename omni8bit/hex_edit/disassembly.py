@@ -274,15 +274,28 @@ class DisassemblyPanel(ByteGrid):
         self.table.disassembler.fast.start_trace()
         self.update_trace_in_segment()
 
-    def update_trace_in_segment(self):
+    def get_trace(self, save=False):
+        if save:
+            kwargs = {'user': True}
+        else:
+            kwargs = {'match': True}
         s = self.table.segment
-        mask = s.get_style_mask(match=True)
-        match_bit = s.get_style_bits(match=True)
+        mask = s.get_style_mask(**kwargs)
+        style = s.get_style_bits(**kwargs)
         is_data = self.table.disassembler.fast.get_trace_marked_data()
         if is_data is not None:
             size = min(len(is_data), len(s))
+            trace = is_data[s.start_addr:s.start_addr + size] * style
+            return trace, mask
+        return None, None
+
+    def update_trace_in_segment(self, save=False):
+        trace, mask = self.get_trace(save)
+        if trace is not None:
+            s = self.table.segment
+            size = len(trace)
             s.style[0:size] &= mask
-            s.style[0:size] |= is_data[s.start_addr:s.start_addr + size] * match_bit
+            s.style[0:size] |= trace
 
     def trace_disassembly(self, pc):
         self.table.disassembler.fast.trace_disassembly([pc])

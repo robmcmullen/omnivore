@@ -1190,7 +1190,7 @@ class RedoCursorPositionAction(EditorAction):
 
 
 class StartTraceAction(EditorAction):
-    name = "Start Disassembly Trace"
+    name = "Start New Disassembly Trace"
     accelerator = 'F12'
 
     def perform(self, event):
@@ -1199,11 +1199,13 @@ class StartTraceAction(EditorAction):
         e.disassembly.start_trace()
         e.document.change_count += 1
         e.refresh_panes()
+        e.can_trace = True
 
 
 class AddTraceStartPointAction(EditorAction):
     name = "Add Trace Start Point"
     accelerator = 'F11'
+    enabled_name = 'can_trace'
 
     def perform(self, event):
         e = self.active_editor
@@ -1212,3 +1214,25 @@ class AddTraceStartPointAction(EditorAction):
         e.disassembly.trace_disassembly(pc)
         e.document.change_count += 1
         e.refresh_panes()
+
+
+class ApplyTraceSegmentAction(EditorAction):
+    name = "Apply Trace to Segment"
+    accelerator = 'F10'
+    tooltip = 'Copy the results of the trace to the current segment'
+    enabled_name = 'can_trace'
+
+    def perform(self, event):
+        cmd = ApplyTraceSegmentCommand(self.active_editor.segment)
+        self.active_editor.process_command(cmd)
+
+
+class ClearTraceAction(EditorAction):
+    name = "Clear Trace"
+    accelerator = 'F9'
+    tooltip = 'Clear the current trace'
+    enabled_name = 'can_trace'
+
+    def perform(self, event):
+        cmd = ClearTraceCommand(self.active_editor.document.global_segment)
+        self.active_editor.process_command(cmd)

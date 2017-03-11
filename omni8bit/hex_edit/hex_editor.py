@@ -72,6 +72,8 @@ class HexEditor(FrameworkEditor):
     
     can_copy_baseline = Bool
 
+    can_trace = Bool(False)
+
     segment_view_params = Dict
 
     #### Events ####

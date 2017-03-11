@@ -640,4 +640,77 @@ class FindAlgorithmCommand(FindAllCommand):
     
     def get_searchers(self, editor):
         return [AlgorithmSearcher]
+
+
+class ChangeStyleCommand(SetDataCommand):
+    short_name = "cs"
+    pretty_name = "Change Style"
+    serialize_order =  [
+            ('segment', 'int'),
+            ]
     
+    def __init__(self, segment):
+        start_index = 0
+        end_index = len(segment)
+        SetDataCommand.__init__(self, segment, start_index, end_index)
+
+    def get_style(self, editor):
+        style = self.segment.style[self.start_index:self.end_index].copy()
+        return style
+
+    def clip(self, style):
+        if len(style) < self.end_index - self.start_index:
+            self.end_index = self.start_index + len(style)
+
+    def update_can_trace(self, editor):
+        pass
+
+    def set_undo_flags(self):
+        self.undo_info.flags.byte_style_changed = True
+
+    def perform(self, editor):
+        self.undo_info = undo = UndoInfo()
+        self.set_undo_flags()
+        old_can_trace = editor.can_trace
+        new_style = self.get_style(editor)
+        self.clip(new_style)
+        old_style = self.segment.style[self.start_index:self.end_index].copy()
+        self.segment.style[self.start_index:self.end_index] = new_style
+        self.update_can_trace(editor)
+        editor.document.change_count += 1
+        undo.data = (old_style, old_can_trace)
+        return undo
+
+    def undo(self, editor):
+        old_style, old_can_trace = self.undo_info.data
+        self.segment.style[self.start_index:self.end_index] = old_style
+        editor.can_trace = old_can_trace
+        return self.undo_info
+
+
+class ApplyTraceSegmentCommand(ChangeStyleCommand):
+    short_name = "applytrace"
+    pretty_name = "Apply Trace to Segment"
+    
+    def get_style(self, editor):
+        trace, mask = editor.disassembly.get_trace(save=True)
+        self.clip(trace)
+        style_data = (self.segment.style[self.start_index:self.end_index].copy() & mask) | trace
+        return style_data
+
+    def set_undo_flags(self):
+        self.undo_info.flags.byte_values_changed = True
+        self.undo_info.flags.index_range = self.start_index, self.end_index
+
+
+class ClearTraceCommand(ChangeStyleCommand):
+    short_name = "cleartrace"
+    pretty_name = "Clear Current Trace Results"
+    
+    def get_style(self, editor):
+        mask = self.segment.get_style_mask(match=True)
+        style_data = (self.segment.style[:].copy() & mask)
+        return style_data
+
+    def update_can_trace(self, editor):
+        editor.can_trace = False

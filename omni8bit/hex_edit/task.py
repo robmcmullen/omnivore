@@ -355,6 +355,8 @@ class HexEditTask(FrameworkTask):
             Separator(),
             StartTraceAction(),
             AddTraceStartPointAction(),
+            ApplyTraceSegmentAction(),
+            ClearTraceAction(),
             Separator(),
             LoadBaselineVersionAction(),
             FindNextBaselineDiffAction(),
