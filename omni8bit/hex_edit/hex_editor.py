@@ -515,6 +515,7 @@ class HexEditor(FrameworkEditor):
             self.invalidate_search()
             self.view_segment_set_width(self.segment)
             self.reconfigure_panes()
+            self.show_trace()
             self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
         self.update_segments_ui()
     
@@ -533,6 +534,14 @@ class HexEditor(FrameworkEditor):
             #self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
             raise
     
+    def show_trace(self):
+        """Highlight the current trace after switching to a new segment
+
+        """
+        if self.can_trace:
+            self.disassembly.update_trace_in_segment()
+            self.document.change_count += 1
+
     def invalidate_search(self):
         self.task.change_minibuffer_editor(self)
     

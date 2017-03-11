@@ -3,7 +3,7 @@ import sys
 import wx
 
 from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
-from udis.udis_fast import flag_jump, flag_branch, flag_return, flag_store, flag_undoc, flag_data_bytes
+from udis.udis_fast import flag_jump, flag_branch, flag_return, flag_store, flag_undoc, flag_data_bytes, TraceInfo
 
 from omni8bit.ui.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 
@@ -44,6 +44,7 @@ class DisassemblyTable(ByteGridTable):
         self.chunk_size = 256
         self.disassembler = None
         self.use_labels_on_operands = False
+        self.trace_info = TraceInfo()
 
     def set_editor(self, editor):
         self.editor = editor
@@ -259,7 +260,8 @@ class DisassemblyPanel(ByteGrid):
     
     def recalc_view(self):
         ByteGrid.recalc_view(self)
-        self.update_trace_in_segment()
+        if self.table.editor.can_trace:
+            self.update_trace_in_segment()
 
     def get_default_cell_editor(self):
         return AssemblerEditor(self)
@@ -271,7 +273,7 @@ class DisassemblyPanel(ByteGrid):
         return self.table.disassembler.get_disassembled_text(start, end)
 
     def start_trace(self):
-        self.table.disassembler.fast.start_trace()
+        self.table.trace_info = TraceInfo()
         self.update_trace_in_segment()
 
     def get_trace(self, save=False):
@@ -282,23 +284,22 @@ class DisassemblyPanel(ByteGrid):
         s = self.table.segment
         mask = s.get_style_mask(**kwargs)
         style = s.get_style_bits(**kwargs)
-        is_data = self.table.disassembler.fast.get_trace_marked_data()
-        if is_data is not None:
-            size = min(len(is_data), len(s))
-            trace = is_data[s.start_addr:s.start_addr + size] * style
-            return trace, mask
-        return None, None
+        is_data = self.table.trace_info.marked_as_data
+        size = min(len(is_data), len(s))
+        trace = is_data[s.start_addr:s.start_addr + size] * style
+        print "get_trace", s.start_addr, size, trace
+        return trace, mask
 
     def update_trace_in_segment(self, save=False):
         trace, mask = self.get_trace(save)
-        if trace is not None:
-            s = self.table.segment
-            size = len(trace)
-            s.style[0:size] &= mask
-            s.style[0:size] |= trace
+        print self.table.segment, trace
+        s = self.table.segment
+        size = len(trace)
+        s.style[0:size] &= mask
+        s.style[0:size] |= trace
 
     def trace_disassembly(self, pc):
-        self.table.disassembler.fast.trace_disassembly([pc])
+        self.table.disassembler.fast.trace_disassembly(self.table.trace_info, [pc])
         self.update_trace_in_segment()
 
     def encode_data(self, segment, editor):
