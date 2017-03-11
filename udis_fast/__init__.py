@@ -146,10 +146,12 @@ def get_disassembler(cpu, fast=True, monolithic=True):
         strsize = 48
     return processor, parse_mod, strsize
 
+
 class TraceInfo(object):
-    def __init__(self, num_bytes):
+    def __init__(self, num_bytes=65536):
         self.seen = np.zeros([num_bytes], dtype=np.uint8)
-        self.out_of_range_start_points = []
+        self.start_points = set()
+        self.out_of_range_start_points = set()
     
     def __len__(self):
         return len(self.seen)
@@ -160,6 +162,10 @@ class TraceInfo(object):
     def __setitem__(self, index, value):
         self.seen[index] = value
 
+    @property
+    def marked_as_data(self):
+        return 1 - self.seen
+
 
 class DisassemblerWrapper(object):
     def __init__(self, cpu, lines=65536, fast=True, mnemonic_lower=False, hex_lower=True, extra_disassemblers=None, monolithic=True):
@@ -169,7 +175,6 @@ class DisassemblerWrapper(object):
         self.monolithic = monolithic
         self.chunk_processor = processor
         self.metadata_wrapper = StorageWrapper(lines, strsize)
-        self.trace_info = None
         self.mnemonic_lower = mnemonic_lower
         self.hex_lower = hex_lower
         if extra_disassemblers is None:
@@ -223,20 +228,10 @@ class DisassemblerWrapper(object):
         self.info = disasm_info.DisassemblyInfo(self, pc, num_bytes)
         return self.info
 
-    def start_trace(self):
-        self.trace_info = TraceInfo(self.max_bytes)
-
-    def get_trace_marked_data(self):
-        if self.trace_info:
-            return 1 - self.trace_info.seen
-        return None
-
-    def trace_disassembly(self, start_points):
+    def trace_disassembly(self, trace_info, start_points):
         info = self.info
         stack = set(start_points)
         last_pc = info.first_pc + info.num_bytes
-        if self.trace_info is None:
-            self.start_trace()
         pc_to_row = np.zeros([last_pc], dtype=np.uint32)
         pc_to_row[info.first_pc:] = info.index_to_row[:]
 
@@ -247,14 +242,15 @@ class DisassemblerWrapper(object):
             pc = stack.pop()
             if pc < info.first_pc or pc >= last_pc:
                 log.debug("skipping trace of %04x: not in disassembled range." % pc)
-                self.trace_info.out_of_range_start_points.append(pc)
+                trace_info.out_of_range_start_points.add(pc)
                 continue
-            if self.trace_info[pc]:
+            if trace_info[pc]:
                 log.debug("skipping trace of %04x: already checked it" % pc)
                 continue
             log.debug("starting trace at %04x" % pc)
+            trace_info.start_points.add(pc)
             while pc < last_pc:
-                if self.trace_info[pc]:
+                if trace_info[pc]:
                     break
                 row = pc_to_row[pc]
                 line = info[row]
@@ -262,13 +258,13 @@ class DisassemblerWrapper(object):
                     log.debug("%04x: disassembled into marked data; moving to next entry point" % pc)
                     break
                 next_pc = pc + line.num_bytes
-                for i in range(line.num_bytes):
-                    self.trace_info[pc + i] = 1
+                trace_info[pc:next_pc] = 1
                 if line.dest_pc > 0:
                     if line.flag & flag_branch:
                         if not valid_pc(line.dest_pc):
                             log.debug("%04x: found branch to %04x, but not in disassembled range" % (pc, line.dest_pc))
-                        elif self.trace_info[line.dest_pc]:
+                            trace_info.out_of_range_start_points.add(line.dest_pc)
+                        elif trace_info[line.dest_pc]:
                             log.debug("%04x: found branch to %04x, but already checked it" % (pc, line.dest_pc))
                         elif line.dest_pc in stack:
                             log.debug("%04x: found branch to %04x, but already in list to be checked" % (pc, line.dest_pc))
@@ -278,8 +274,9 @@ class DisassemblerWrapper(object):
                     if line.flag & flag_jump:
                         if not valid_pc(line.dest_pc):
                             log.debug("%04x: found jump to %04x, but not in disassembled range" % (pc, line.dest_pc))
+                            trace_info.out_of_range_start_points.add(line.dest_pc)
                             break
-                        elif self.trace_info[line.dest_pc]:
+                        elif trace_info[line.dest_pc]:
                             log.debug("%04x: found jump to %04x, but already checked it" % (pc, line.dest_pc))
                             break
                         log.debug("%04x: jumping to %04x" % (pc, line.dest_pc))
@@ -288,4 +285,4 @@ class DisassemblerWrapper(object):
                     log.debug("%04x: end of this trace; moving to next entry point" % (pc))
                     break
                 pc = next_pc
-        log.debug(self.trace_info[info.first_pc:last_pc])
+        log.debug(trace_info[info.first_pc:last_pc])

@@ -119,10 +119,12 @@ if __name__ == "__main__":
         if args.entry_points:
             for spc in args.entry_points:
                 start_points.append(int(spc, 16))
-        disasm.start_trace()
+        trace_info = udis_fast.TraceInfo()
         for i, pc in enumerate(start_points):
             print "start point #%d: %04x" % (i, pc)
-            disasm.trace_disassembly([pc])
+            disasm.trace_disassembly(trace_info, [pc])
+        print "start points:", ", ".join(["%04x" % a for a in sorted(trace_info.start_points)])
+        print "out of range:", ", ".join(["%04x" % a for a in sorted(trace_info.out_of_range_start_points)])
 
     if args.hex:
         try:
