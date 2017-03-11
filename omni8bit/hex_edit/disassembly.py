@@ -1,5 +1,7 @@
 import os
 import sys
+
+import numpy as np
 import wx
 
 from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
@@ -287,7 +289,13 @@ class DisassemblyPanel(ByteGrid):
         is_data = self.table.trace_info.marked_as_data
         size = min(len(is_data), len(s))
         trace = is_data[s.start_addr:s.start_addr + size] * style
-        print "get_trace", s.start_addr, size, trace
+        if save:
+            # don't change data flags for stuff that's already marked as data
+            s = self.table.segment
+            already_data = np.logical_and(s.style[0:size] & user_bit_mask > 0, trace > 0)
+            indexes = np.where(already_data)[0]
+            previous = s.style[indexes]
+            trace[indexes] = previous
         return trace, mask
 
     def update_trace_in_segment(self, save=False):
