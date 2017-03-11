@@ -721,7 +721,9 @@ class FrameworkEditor(Editor):
             self.task.status_bar.message = flags.message
         
         if flags.byte_values_changed:
-            d.byte_values_changed = True  # also handles refresh
+            d.byte_values_changed = True  # also handles style changes and refresh
+        elif flags.byte_style_changed:
+            d.byte_style_changed = True  # also handles refresh
         elif flags.refresh_needed:
             self.refresh_panes()
         
@@ -815,6 +817,13 @@ class FrameworkEditor(Editor):
         self.document.change_count += 1
         self.invalidate_search()
         self.compare_to_baseline()
+        self.rebuild_display_objects()
+        self.refresh_panes()
+    
+    @on_trait_change('document:byte_style_changed')
+    def byte_style_changed(self):
+        log.debug("byte_style_changed called!!!")
+        self.document.change_count += 1
         self.rebuild_display_objects()
         self.refresh_panes()
 

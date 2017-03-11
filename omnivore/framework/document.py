@@ -58,6 +58,8 @@ class BaseDocument(HasTraits):
     
     byte_values_changed = Event  # but not the size of the bytes array. That's not handled yet
     
+    byte_style_changed = Event  # only styling info may have changed, not any of the data byte values
+    
     change_count = Int()
     
     can_revert = Property(Bool, depends_on='metadata')

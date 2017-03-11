@@ -178,6 +178,9 @@ class StatusFlags(object):
         # has any data values changed, forcing all views to be refreshed?
         self.byte_values_changed = False
         
+        # has any data style changed, forcing all views to be refreshed?
+        self.byte_style_changed = False
+        
         # set to True if the all views of the data need to be refreshed
         self.refresh_needed = False
         
@@ -204,6 +207,8 @@ class StatusFlags(object):
             self.errors.append("")
         if flags.byte_values_changed:
             self.byte_values_changed = True
+        if flags.byte_style_changed:
+            self.byte_style_changed = True
         if flags.refresh_needed:
             self.refresh_needed = True
         if flags.select_range:
