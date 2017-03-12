@@ -797,5 +797,5 @@ class HexEditor(FrameworkEditor):
         if control != self.font_map:
             self.font_map.select_index(index)
         self.sidebar.refresh_active()
-        self.can_copy = len(self.selected_ranges) > 0 or (bool(self.selected_ranges) and (self.selected_ranges[0][0] != self.selected_ranges[0][1]))
+        self.can_copy = len(self.selected_ranges) > 1 or (bool(self.selected_ranges) and (self.selected_ranges[0][0] != self.selected_ranges[0][1]))
         self.can_copy_baseline = self.can_copy and self.baseline_present
