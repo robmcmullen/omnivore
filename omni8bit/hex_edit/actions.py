@@ -685,6 +685,8 @@ class AddCommentAction(EditorAction):
             ranges = s.get_style_ranges(selected=True)
             desc = "Enter comment for range %s" % str(ranges)
         else:
+            ranges = []
+        if not ranges:
             index = e.cursor_index
             ranges = [(index, index+1)]
             desc = "Enter comment for location %s" % index
