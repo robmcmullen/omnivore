@@ -235,6 +235,10 @@ class DisassemblerWrapper(object):
         pc_to_row = np.zeros([last_pc], dtype=np.uint32)
         pc_to_row[info.first_pc:] = info.index_to_row[:]
 
+        # always start a trace when it's user specified to allow tracing of an
+        # instruction that has its first byte marked as seen
+        user_specified = set(start_points)
+
         def valid_pc(dest_pc):
             return dest_pc >= info.first_pc and dest_pc < last_pc
 
@@ -244,14 +248,17 @@ class DisassemblerWrapper(object):
                 log.debug("skipping trace of %04x: not in disassembled range." % pc)
                 trace_info.out_of_range_start_points.add(pc)
                 continue
-            if trace_info[pc]:
+            if trace_info[pc] and pc not in user_specified:
                 log.debug("skipping trace of %04x: already checked it" % pc)
                 continue
             log.debug("starting trace at %04x" % pc)
+            user_specified.discard(pc)
             trace_info.start_points.add(pc)
+            first = True
             while pc < last_pc:
-                if trace_info[pc]:
+                if trace_info[pc] and not first:
                     break
+                first = False
                 row = pc_to_row[pc]
                 line = info[row]
                 if line.flag & flag_data_bytes:
