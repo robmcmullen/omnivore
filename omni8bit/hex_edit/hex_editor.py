@@ -675,6 +675,49 @@ class HexEditor(FrameworkEditor):
 
     def mark_index_range_changed(self, index_range):
         self.disassembly.restart_disassembly(index_range[0])
+
+    def get_goto_action_in_segment(self, addr_dest):
+        if addr_dest >= 0:
+            segment_start = self.segment.start_addr
+            segment_num = -1
+            addr_index = addr_dest - segment_start
+            segments = self.document.find_segments_in_range(addr_dest)
+            if addr_dest < segment_start or addr_dest > segment_start + len(self.segment):
+                # segment_num, segment_dest, addr_index = self.editor.document.find_segment_in_range(addr_dest)
+                if not segments:
+                    msg = "Address $%04x not in any segment" % addr_dest
+                    addr_dest = -1
+                else:
+                    # Don't chose a default segment, just show the sub menu
+                    msg = None
+            else:
+                msg = "Go to $%04x" % addr_dest
+            if msg:
+                action = GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.task, active_editor=self)
+            else:
+                action = None
+        else:
+            msg = "No address to jump to"
+            action = GotoIndexAction(name=msg, enabled=False, task=self.task)
+        return action
+
+    def get_goto_actions_other_segments(self, addr_dest):
+        """Add sub-menu to popup list for segments that have the same address
+        """
+        goto_actions = []
+        segments = self.document.find_segments_in_range(addr_dest)
+        if len(segments) > 0:
+            other_segment_actions = ["Go to $%04x in Other Segment..." % addr_dest]
+            for segment_num, segment_dest, addr_index in segments:
+                if segment_dest == self.segment:
+                    continue
+                msg = str(segment_dest)
+                action = GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.task, active_editor=self)
+                other_segment_actions.append(action)
+            if len(other_segment_actions) > 1:
+                # found another segment other than itself
+                goto_actions.append(other_segment_actions)
+        return goto_actions
     
     def common_popup_actions(self):
         return [CutAction, CopyAction, CopyDisassemblyAction, CopyAsReprAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, None, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsDisplayListAction, MarkSelectionAsJumpmanLevelAction, MarkSelectionAsJumpmanHarvestAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction]
