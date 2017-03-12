@@ -464,7 +464,7 @@ class DefaultSegment(object):
         matches = (self.style & style_bits) == style_bits
         return self.bool_to_ranges(matches)
     
-    def get_entire_style_ranges(self, **kwargs):
+    def get_entire_style_ranges(self, split_comments=None, **kwargs):
         """Find sections of the segment that have the same style value.
 
         The arguments to this function are used as a mask for the style to
@@ -477,6 +477,10 @@ class DefaultSegment(object):
         """
         style_bits = self.get_style_bits(**kwargs)
         matches = self.style & style_bits
+        if split_comments is None:
+            split_comments = set()
+        else:
+            split_comments = set(split_comments)
         groups = np.split(matches, np.where(np.diff(matches) != 0)[0] + 1)
         # split into groups with the same numbers
         ranges = []
@@ -486,7 +490,18 @@ class DefaultSegment(object):
             return
         for group in groups:
             next_end = last_end + len(group)
-            ranges.append(((last_end, next_end), matches[last_end]))
+            style = matches[last_end]
+            if style in split_comments:
+                comment_list = self.get_comments_in_range(last_end, next_end)
+                for index in sorted(comment_list.keys()):
+                    if last_end == index:
+                        # skip if the comment is at the start point because it
+                        # will always be split at the start point
+                        continue
+                    ranges.append(((last_end, index), style))
+                    last_end = index
+            if last_end < next_end:
+                ranges.append(((last_end, next_end), style))
             last_end = next_end
         return ranges
 
@@ -654,6 +669,21 @@ class DefaultSegment(object):
             comment = self.get_comment(indexes[where_index])
             comments.append(comment)
         return has_comments, comments
+
+    def get_comments_in_range(self, start, end):
+        """Get a list of comments at specified indexes"""
+        comments = {}
+
+        # Naive way, but maybe it's fast enough: loop over all comments
+        # gathering those within the bounds
+        for rawindex, comment in self.rawdata.extra.comments.iteritems():
+            try:
+                index = self.get_index_from_base_index(rawindex)
+            except IndexError:
+                continue
+            if index >= start and index < end:
+                comments[index] = comment
+        return comments
 
     def get_nonblank_comments_at_indexes(self, indexes):
         """Get a list of comments at specified indexes, but if blank, search
