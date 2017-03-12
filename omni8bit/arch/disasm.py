@@ -1,7 +1,7 @@
 from udis import miniasm, cputables
 import udis.udis_fast as udis_fast
 
-from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bit_mask
+from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bit_mask, data_style
 
 from memory_map import EmptyMemoryMap
 
@@ -76,7 +76,7 @@ class BaseDisassembler(object):
         self.start_addr = segment.start_addr
         self.end_addr = self.start_addr + len(segment)
         pc = self.start_addr
-        r = segment.get_entire_style_ranges(user=user_bit_mask)
+        r = segment.get_entire_style_ranges(user=user_bit_mask, split_comments=[data_style])
         self.info = self.fast.get_all(segment.rawdata.unindexed_view, pc, 0, r)
         return self.info
 

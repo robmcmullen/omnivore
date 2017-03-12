@@ -825,7 +825,8 @@ class FrameworkEditor(Editor):
         log.debug("byte_style_changed called!!!")
         self.document.change_count += 1
         self.rebuild_display_objects()
-        self.refresh_panes()
+        # styling can affect formatting, so rebuild display contents
+        self.reconfigure_panes()
 
     #### wx hacks
 

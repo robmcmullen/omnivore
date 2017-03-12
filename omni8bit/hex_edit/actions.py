@@ -671,9 +671,8 @@ def prompt_for_comment(e, s, ranges, desc):
     text = prompt_for_string(e.window.control, desc, "Add Comment", existing)
     if text is not None:
         s.set_comment(ranges, text)
-        e.document.change_count += 1
         e.metadata_dirty = True
-        e.refresh_panes()
+        e.document.byte_style_changed = True  # event; handles refresh
     
 class AddCommentAction(EditorAction):
     name = 'Add Comment'
