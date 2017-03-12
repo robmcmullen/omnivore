@@ -252,8 +252,12 @@ class HexEditControl(ByteGrid):
         return False
 
     def get_goto_actions(self, r, c):
+        actions = []
         addr_dest = self.table.get_addr_dest(r, c)
-        return self.editor.get_goto_actions_other_segments(addr_dest)
+        actions.extend(self.editor.get_goto_actions_other_segments(addr_dest))
+        index, _ = self.table.get_index_range(r, c)
+        actions.extend(self.editor.get_goto_actions_same_byte(index))
+        return actions
     
     def get_popup_actions(self, r, c, inside):
         if not inside:

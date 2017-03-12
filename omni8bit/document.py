@@ -117,6 +117,24 @@ class SegmentedDocument(BaseDocument):
             if addr >= s.start_addr and addr < (s.start_addr + len(s)):
                 found.append((i, s, addr - s.start_addr))
         return found
+    
+    def find_segments_with_raw_index(self, raw_index):
+        """Find all segments that contain the specified raw index
+
+        The raw index points to a specific byte, so this will return all
+        segments that have a view of this byte. This function ignores the
+        segment start address because different views may have different start
+        addresses; to find segments that contain a specific address, use
+        find_segment_in_range.
+        """
+        found = []
+        for i, s in enumerate(self.segments):
+            try:
+                index = s.get_index_from_base_index(raw_index)
+                found.append((i, s, index))
+            except IndexError:
+                pass
+        return found
 
     def set_emulator(self, emu):
         self.emulator = emu

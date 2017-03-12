@@ -718,6 +718,26 @@ class HexEditor(FrameworkEditor):
                 # found another segment other than itself
                 goto_actions.append(other_segment_actions)
         return goto_actions
+
+    def get_goto_actions_same_byte(self, index):
+        """Add sub-menu to popup list for for segments that have the same raw
+        index (index into the base array) as the index into the current segment
+        """
+        goto_actions = []
+        raw_index = self.segment.get_raw_index(index)
+        segments = self.document.find_segments_with_raw_index(raw_index)
+        if len(segments) > 0:
+            other_segment_actions = ["Go to Same Byte in Other Segment..."]
+            for segment_num, segment_dest, addr_index in segments:
+                if segment_dest == self.segment:
+                    continue
+                msg = str(segment_dest)
+                action = GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.task, active_editor=self)
+                other_segment_actions.append(action)
+            if len(other_segment_actions) > 1:
+                # found another segment other than itself
+                goto_actions.append(other_segment_actions)
+        return goto_actions
     
     def common_popup_actions(self):
         return [CutAction, CopyAction, CopyDisassemblyAction, CopyAsReprAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, None, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsDisplayListAction, MarkSelectionAsJumpmanLevelAction, MarkSelectionAsJumpmanHarvestAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction]

@@ -381,13 +381,15 @@ class DisassemblyPanel(ByteGrid):
         return matches
     
     def get_goto_actions(self, r, c):
-        goto_actions = []
+        actions = []
         addr_dest = self.table.disassembler.get_addr_dest(r)
         action = self.editor.get_goto_action_in_segment(addr_dest)
         if action:
-            goto_actions.append(action)
-        goto_actions.extend(self.editor.get_goto_actions_other_segments(addr_dest))
-        return goto_actions
+            actions.append(action)
+        actions.extend(self.editor.get_goto_actions_other_segments(addr_dest))
+        index, _ = self.table.get_index_range(r, c)
+        actions.extend(self.editor.get_goto_actions_same_byte(index))
+        return actions
     
     def get_popup_actions(self, r, c, inside):
         actions = self.get_goto_actions(r, c)
