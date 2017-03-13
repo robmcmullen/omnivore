@@ -38,10 +38,17 @@ class TestSegment1(object):
 
     def test_copy(self):
         for s in self.segments:
-            c = s.rawdata.copy()
-            print c.data.shape, c.is_indexed
-            print c.data.np_data, s.data.np_data
-            assert np.all((c.data - s.data) == 0)
+            d = s.rawdata
+            print "orig:", d.data.shape, d.is_indexed, d.data, id(d.data)
+            c = d.copy()
+            print "copy", c.data.shape, c.is_indexed, c.data, id(c.data)
+            assert c.data.shape == s.data.shape
+            assert id(c) != id(s)
+            assert np.all((c.data[:] - s.data[:]) == 0)
+            c.data[0:100] = 1
+            print d.data
+            print c.data
+            assert not np.all((c.data[:] - s.data[:]) == 0)
 
 
 class TestIndexed(object):
@@ -180,7 +187,7 @@ if __name__ == "__main__":
     t.test_indexed()
     t.test_indexed_sub()
     t.test_interleave()
-    #t = TestSegment1()
-    #t.setup()
-    #t.test_xex()
+    t = TestSegment1()
+    t.setup()
+    t.test_xex()
     t.test_copy()

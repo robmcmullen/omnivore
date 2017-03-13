@@ -228,8 +228,8 @@ class SegmentData(object):
             s = self.style.np_data.copy()
             copy = SegmentData(d, s, order=self.order)
         else:
-            d = self.data
-            s = self.style
+            d = self.data.copy()
+            s = self.style.copy()
             start, end = self.byte_bounds_offset()
             copy = SegmentData(d[start:end], s[start:end])
         return copy
