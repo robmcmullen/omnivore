@@ -30,11 +30,11 @@ class TestSegment1(object):
             bytes = get_xex(s, 0xbeef)
             assert tuple(bytes[0:2]) == (0xff, 0xff)
             # 2 bytes for the ffff
-            # 6 bytes for the last segment run address
             # 4 bytes per segment for start, end address
+            # An extra segment has been inserted for the run address!
             size = reduce(lambda a, b:a + 4 + len(b), s, 0)
             print size, len(bytes)
-            assert len(bytes) == 2 + 6 + size
+            assert len(bytes) == 2 + size
 
     def test_copy(self):
         for s in self.segments:
