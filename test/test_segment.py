@@ -261,6 +261,75 @@ class TestComments(object):
         print r
         assert r == [((0, 38), 0), ((38, 48), 1), ((48, 73), 1), ((73, 78), 1), ((78, 118), 2), ((118, 158), 3), ((158, 198), 4), ((198, 200), 5)]
 
+    def test_restore_comments(self):
+        s = self.segment
+        s.set_style_ranges([[0,1000]], data=True)
+        for i in range(0, len(s), 5):
+            s.set_comment([[i,i+1]], "comment at %d" % i)
+
+        s1 = self.segment
+        print len(s1)
+        indexes = [7,12]
+        r = s1.get_comment_restore_data([indexes])
+        print r
+        # force clear comments
+        s1.rawdata.extra.comments = {}
+        s1.style[indexes[0]:indexes[1]] = 0
+        r0 = s1.get_comment_restore_data([indexes])
+        print r0
+        for start, end, style, items in r0:
+            print style
+            assert np.all(style == 0)
+            for rawindex, comment in items:
+                assert not comment
+        s1.restore_comments(r)
+        r1 = s1.get_comment_restore_data([indexes])
+        print r1
+        for item1, item2 in zip(r, r1):
+            print item1
+            print item2
+            for a1, a2 in zip(item1, item2):
+                print a1, a2
+                if hasattr(a1, "shape"):
+                    assert np.all(a1 - a2 == 0)
+                else:
+                    assert a1 == a2
+
+        s2 = self.sub_segment
+        print len(s2)
+        indexes = [5,10]
+        r = s2.get_comment_restore_data([indexes])
+        print r
+        # force clear comments
+        s2.rawdata.extra.comments = {}
+        s2.style[indexes[0]:indexes[1]] = 0
+        r0 = s2.get_comment_restore_data([indexes])
+        print r0
+        for start, end, style, items in r0:
+            print style
+            assert np.all(style == 0)
+            for rawindex, comment in items:
+                assert not comment
+        s2.restore_comments(r)
+        r2 = s2.get_comment_restore_data([indexes])
+        print r2
+        for item1, item2 in zip(r, r2):
+            print item1
+            print item2
+            for a1, a2 in zip(item1, item2):
+                print a1, a2
+                if hasattr(a1, "shape"):
+                    assert np.all(a1 - a2 == 0)
+                else:
+                    assert a1 == a2
+
+        for item1, item2 in zip(r1, r2):
+            print item1
+            print item2
+            # indexes won't be the same, but rawindexes and comments will
+            assert np.all(item1[2] - item2[2] == 0)
+            assert item1[3] == item2[3]
+
 
 if __name__ == "__main__":
     t = TestIndexed()
@@ -275,3 +344,4 @@ if __name__ == "__main__":
     t = TestComments()
     t.setup()
     t.test_split_data_at_comment()
+    t.test_restore_comments()

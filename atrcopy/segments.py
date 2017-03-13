@@ -717,9 +717,38 @@ class DefaultSegment(object):
         comments = []
         for where_index in has_comments:
             raw = self.get_raw_index(indexes[where_index])
-            comment = self.get_comment(indexes[where_index])
+            comment = self.rawdata.extra.comments[rawindex]
             comments.append(comment)
         return has_comments, comments
+
+    def get_comment_restore_data(self, ranges):
+        """Get a chunk of data (designed to be opaque) containing comments,
+        styles & locations that can be used to recreate the comments on an undo
+        """
+        restore_data = []
+        for start, end in ranges:
+            styles = self.style[start:end].copy()
+            items = []
+            for i in range(start, end):
+                rawindex = self.get_raw_index(i)
+                comment = self.rawdata.extra.comments.get(rawindex, "")
+                items.append((rawindex, comment))
+            restore_data.append((start, end, styles, items))
+        return restore_data
+
+    def restore_comments(self, restore_data):
+        """Restore comment styles and data
+        """
+        for start, end, styles, items in restore_data:
+            self.style[start:end] = styles
+            for rawindex, comment in items:
+                if comment:
+                    self.rawdata.extra.comments[rawindex] = comment
+                else:
+                    try:
+                        del self.rawdata.extra.comments[rawindex]
+                    except KeyError:
+                        pass
 
     def get_comments_in_range(self, start, end):
         """Get a list of comments at specified indexes"""
