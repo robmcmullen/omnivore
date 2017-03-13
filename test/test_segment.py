@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pytest
 
-from atrcopy import DefaultSegment, SegmentData, get_xex, interleave_segments
+from atrcopy import DefaultSegment, SegmentData, get_xex, interleave_segments, user_bit_mask
 
 
 def get_indexed(segment, num, scale):
@@ -181,6 +181,87 @@ class TestIndexed(object):
         assert not np.all((c.data[:] - s.data[:]) == 0)
 
 
+class TestComments(object):
+    def setup(self):
+        data = np.ones([4000], dtype=np.uint8)
+        r = SegmentData(data)
+        self.segment = DefaultSegment(r, 0)
+        self.sub_segment = DefaultSegment(r[2:202], 2)
+
+    def test_locations(self):
+        s = self.segment
+        s.set_comment([[4,5]], "test1")
+        s.set_comment([[40,50]], "test2")
+        s.set_style_ranges([[2,100]], comment=True)
+        s.set_style_ranges([[200, 299]], data=True)
+        for i in range(1,4):
+            for j in range(1, 4):
+                # create some with overlapping regions, some without
+                r = [500*j, 500*j + 200*i + 200]
+                s.set_style_ranges([r], user=i)
+                s.set_user_data([r], i, i*10 + j)
+        r = [100, 200]
+        s.set_style_ranges([r], user=4)
+        s.set_user_data([r], 4, 99)
+        r = [3100, 3200]
+        s.set_style_ranges([r], user=4)
+        s.set_user_data([r], 4, 99)
+
+        s2 = self.sub_segment
+        print len(s2)
+        copy = s2.get_comment_locations()
+        print copy
+        # comments at 4 and 40 in the original means 2 and 38 in the copy
+        orig = s.get_comment_locations()
+        assert copy[2] == orig[4]
+        assert copy[28] == orig[38]
+
+    def test_split_data_at_comment(self):
+        s = self.segment
+        s.set_style_ranges([[0,1000]], data=True)
+        for i in range(0, len(s), 25):
+            s.set_comment([[i,i+1]], "comment at %d" % i)
+
+        s2 = self.sub_segment
+        print len(s2)
+        copy = s2.get_comment_locations()
+        print copy
+        # comments at 4 and 40 in the original means 2 and 38 in the copy
+        orig = s.get_comment_locations()
+        print orig[0:200]
+        assert copy[2] == orig[4]
+        assert copy[28] == orig[38]
+
+        r = s2.get_entire_style_ranges([1], user=True)
+        print r
+        assert r == [((0, 23), 1), ((23, 48), 1), ((48, 73), 1), ((73, 98), 1), ((98, 123), 1), ((123, 148), 1), ((148, 173), 1), ((173, 198), 1), ((198, 200), 1)]
+
+    def test_split_data_at_comment2(self):
+        s = self.segment
+        start = 0
+        i = 0
+        for end in range(40, 1000, 40):
+            s.set_style_ranges([[start, end]], user=i)
+            start = end
+            i = (i + 1) % 8
+        for i in range(0, len(s), 25):
+            s.set_comment([[i,i+1]], "comment at %d" % i)
+
+        s2 = self.sub_segment
+        print len(s2)
+        copy = s2.get_comment_locations()
+        print copy
+        # comments at 4 and 40 in the original means 2 and 38 in the copy
+        orig = s.get_comment_locations()
+        print orig[0:200]
+        assert copy[2] == orig[4]
+        assert copy[28] == orig[38]
+
+        r = s2.get_entire_style_ranges([1], user=user_bit_mask)
+        print r
+        assert r == [((0, 38), 0), ((38, 48), 1), ((48, 73), 1), ((73, 78), 1), ((78, 118), 2), ((118, 158), 3), ((158, 198), 4), ((198, 200), 5)]
+
+
 if __name__ == "__main__":
     t = TestIndexed()
     t.setup()
@@ -191,3 +272,6 @@ if __name__ == "__main__":
     t.setup()
     t.test_xex()
     t.test_copy()
+    t = TestComments()
+    t.setup()
+    t.test_split_data_at_comment()

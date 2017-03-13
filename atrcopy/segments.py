@@ -156,6 +156,14 @@ class SegmentData(object):
     def stringio(self):
         buf = cStringIO.StringIO(self.data[:])
         return buf
+
+    @property
+    def data_base(self):
+        return self.data.base if self.data.base is not None else self.data
+
+    @property
+    def style_base(self):
+        return self.style.base if self.style.base is not None else self.style
     
     def get_data(self):
         return self.data
@@ -227,10 +235,17 @@ class SegmentData(object):
             d = self.data.np_data.copy()
             s = self.style.np_data.copy()
             copy = SegmentData(d, s, order=self.order)
-        else:
+        elif self.data.base is None:
+            # if there is no base array, we aren't looking at a slice so we
+            # must be copying the entire array.
             d = self.data.copy()
             s = self.style.copy()
+            copy = SegmentData(d, s)
+        else:
+            d = self.data.base.copy()
+            s = self.style.base.copy()
             start, end = self.byte_bounds_offset()
+            print "copy: start, end =", start, end
             copy = SegmentData(d[start:end], s[start:end])
         return copy
     
@@ -480,6 +495,17 @@ class DefaultSegment(object):
         matches = (self.style & style_bits) == style_bits
         return self.bool_to_ranges(matches)
     
+    def get_comment_locations(self, **kwargs):
+        style_bits = self.get_style_bits(**kwargs)
+        r = self.rawdata.copy()
+        print len(r.style)
+        print len(r.style_base)
+        base = r.style_base & style_bits
+        comment_indexes = np.asarray(self.rawdata.extra.comments.keys(), dtype=np.uint32)
+        print comment_indexes
+        base[comment_indexes] |= comment_bit_mask
+        return r.style
+
     def get_entire_style_ranges(self, split_comments=None, **kwargs):
         """Find sections of the segment that have the same style value.
 
@@ -492,32 +518,41 @@ class DefaultSegment(object):
         tuple; and an integer with the style value.
         """
         style_bits = self.get_style_bits(**kwargs)
-        matches = self.style & style_bits
-        if split_comments is None:
-            split_comments = set()
-        else:
-            split_comments = set(split_comments)
+        matches = self.get_comment_locations(**kwargs)
         groups = np.split(matches, np.where(np.diff(matches) != 0)[0] + 1)
+        # print groups
         # split into groups with the same numbers
         ranges = []
         last_end = 0
         if len(groups) == 1 and len(groups[0]) == 0:
             # check for degenerate case
             return
+        last_style = -1
         for group in groups:
-            next_end = last_end + len(group)
+            # each group is guaranteed to have the same style
+            size = len(group)
+            next_end = last_end + size
             style = matches[last_end]
-            if style in split_comments:
-                comment_list = self.get_comments_in_range(last_end, next_end)
-                for index in sorted(comment_list.keys()):
-                    if last_end == index:
-                        # skip if the comment is at the start point because it
-                        # will always be split at the start point
-                        continue
-                    ranges.append(((last_end, index), style))
-                    last_end = index
-            if last_end < next_end:
-                ranges.append(((last_end, next_end), style))
+            masked_style = style & style_bits
+            # print last_end, next_end, style, masked_style, size, group
+            if style & comment_bit_mask:
+                if masked_style in split_comments:
+                    # print "interesting comment", last_end, next_end
+                    ranges.append(((last_end, next_end), masked_style))
+                else:
+                    # print "non-interesting comment", last_end, next_end
+                    if last_style == masked_style:
+                        ((prev_end, _), _) = ranges.pop()
+                        ranges.append(((prev_end, next_end), masked_style))
+                    else:
+                        ranges.append(((last_end, next_end), masked_style))
+            else:
+                if last_style == masked_style:
+                    ((prev_end, _), _) = ranges.pop()
+                    ranges.append(((prev_end, next_end), masked_style))
+                else:
+                    ranges.append(((last_end, next_end), masked_style))
+            last_style = masked_style
             last_end = next_end
         return ranges
 
