@@ -159,6 +159,64 @@ class MiniAssemblerCommand(ChangeByteCommand):
         return "%s @ %04x" % (self.asm, self.start_index)
 
 
+class SetCommentCommand(Command):
+    short_name = "set_comment"
+    pretty_name = "Comment"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('ranges', 'int_list'),
+            ('comment', 'string'),
+            ]
+    
+    def __init__(self, segment, ranges, comment):
+        Command.__init__(self)
+        self.segment = segment
+        self.ranges = tuple(ranges)
+        self.comment = comment
+        indexes = ranges_to_indexes(self.ranges)
+        self.index_range = indexes[0], indexes[-1]
+        if len(ranges) == 1:
+            self.pretty_name = "%s @ %04x" % (self.pretty_name, self.segment.start_addr + indexes[0])
+    
+    def __str__(self):
+        if len(self.comment) > 20:
+            text = self.comment[:20] + "..."
+        else:
+            text = self.comment
+        return "%s: %s" % (self.pretty_name, text)
+    
+    def change_comments(self):
+        self.segment.set_comment(self.ranges, self.comment)
+
+    def perform(self, editor):
+        self.undo_info = undo = UndoInfo()
+        undo.flags.byte_style_changed = True
+        undo.flags.index_range = self.index_range
+        old_data = self.segment.get_comment_restore_data(self.ranges)
+        self.change_comments()
+        undo.data = (old_data, )
+        return undo
+
+    def undo(self, editor):
+        old_data, = self.undo_info.data
+        self.segment.restore_comments(old_data)
+        return self.undo_info
+
+
+class ClearCommentCommand(SetCommentCommand):
+    short_name = "clear_comment"
+    pretty_name = "Remove Comment"
+    
+    def __init__(self, segment, ranges):
+        SetCommentCommand.__init__(self, segment, ranges, "")
+    
+    def __str__(self):
+        return self.pretty_name
+
+    def change_comments(self):
+        self.segment.clear_comment(self.ranges)
+
+
 class SetValuesAtIndexesCommand(Command):
     short_name = "set_values_at_indexes"
     pretty_name = "Set Indexes Abstract Command"

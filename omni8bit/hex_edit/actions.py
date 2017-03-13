@@ -670,9 +670,8 @@ def prompt_for_comment(e, s, ranges, desc):
     existing = s.get_first_comment(ranges)
     text = prompt_for_string(e.window.control, desc, "Add Comment", existing)
     if text is not None:
-        s.set_comment(ranges, text)
-        e.metadata_dirty = True
-        e.document.byte_style_changed = True  # event; handles refresh
+        cmd = SetCommentCommand(s, ranges, text)
+        e.process_command(cmd)
     
 class AddCommentAction(EditorAction):
     name = 'Add Comment'
@@ -721,10 +720,8 @@ class RemoveCommentAction(EditorAction):
             index = e.cursor_index
             ranges = [(index, index+1)]
         if ranges:
-            s.clear_comment(ranges)
-            e.document.change_count += 1
-            e.metadata_dirty = True
-            e.refresh_panes()
+            cmd = ClearCommentCommand(s, ranges)
+            e.process_command(cmd)
 
 class RemoveCommentPopupAction(EditorAction):
     name = 'Remove Comment'
@@ -738,10 +735,8 @@ class RemoveCommentPopupAction(EditorAction):
             index = event.popup_data["index"]
             ranges = [(index, index+1)]
         if ranges:
-            s.clear_comment(ranges)
-            e.document.change_count += 1
-            e.metadata_dirty = True
-            e.refresh_panes()
+            cmd = ClearCommentCommand(s, ranges)
+            e.process_command(cmd)
 
 
 class DeleteUserSegmentAction(EditorAction):
