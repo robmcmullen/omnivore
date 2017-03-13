@@ -98,6 +98,10 @@ class OrderWrapper(object):
         return self.order[index]
 
     @property
+    def shape(self):
+        return (len(self),)
+
+    @property
     def unindexed(self):
         return self.np_data[self.order]
 
@@ -217,6 +221,18 @@ class SegmentData(object):
             s = self.style[index]
         e = self.extra
         return SegmentData(d, s, e, order=order)
+
+    def copy(self):
+        if self.is_indexed:
+            d = self.data.np_data.copy()
+            s = self.style.np_data.copy()
+            copy = SegmentData(d, s, order=self.order)
+        else:
+            d = self.data
+            s = self.style
+            start, end = self.byte_bounds_offset()
+            copy = SegmentData(d[start:end], s[start:end])
+        return copy
     
     def get_bases(self):
         if self.data.base is None:
@@ -226,7 +242,7 @@ class SegmentData(object):
             data_base = self.data.base
             style_base = self.style.base
         return data_base, style_base
-    
+
     def get_indexed(self, index):
         index = to_numpy_list(index)
         if self.is_indexed:

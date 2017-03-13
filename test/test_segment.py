@@ -16,7 +16,7 @@ class TestSegment1(object):
     def setup(self):
         self.segments = []
         for i in range(8):
-            data = np.ones([1024], dtype=np.uint8) * i
+            data = np.arange(1024, dtype=np.uint8) * i
             r = SegmentData(data)
             self.segments.append(DefaultSegment(r, i * 1024))
 
@@ -33,7 +33,15 @@ class TestSegment1(object):
             # 6 bytes for the last segment run address
             # 4 bytes per segment for start, end address
             size = reduce(lambda a, b:a + 4 + len(b), s, 0)
+            print size, len(bytes)
             assert len(bytes) == 2 + 6 + size
+
+    def test_copy(self):
+        for s in self.segments:
+            c = s.rawdata.copy()
+            print c.data.shape, c.is_indexed
+            print c.data.np_data, s.data.np_data
+            assert np.all((c.data - s.data) == 0)
 
 
 class TestIndexed(object):
@@ -154,6 +162,17 @@ class TestIndexed(object):
         a[5::6] = s2[2::3]
         assert np.array_equal(s[:], a)
 
+    def test_copy(self):
+        s, indexes = get_indexed(self.segment, 1024, 3)
+        c = s.rawdata.copy()
+        print c.data.shape, c.is_indexed
+        print id(c.data.np_data), id(s.data.np_data)
+        assert c.data.shape == s.data.shape
+        assert id(c) != id(s)
+        assert np.all((c.data[:] - s.data[:]) == 0)
+        c.data[0:100] = 1
+        assert not np.all((c.data[:] - s.data[:]) == 0)
+
 
 if __name__ == "__main__":
     t = TestIndexed()
@@ -161,3 +180,7 @@ if __name__ == "__main__":
     t.test_indexed()
     t.test_indexed_sub()
     t.test_interleave()
+    #t = TestSegment1()
+    #t.setup()
+    #t.test_xex()
+    t.test_copy()
