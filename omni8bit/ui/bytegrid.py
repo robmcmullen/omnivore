@@ -154,7 +154,7 @@ class ByteGridTable(Grid.PyGridTableBase):
         index = row * self.bytes_per_row + col
         return index, index
 
-    def get_row_col(self, index):
+    def get_row_col(self, index, col=0):
         return divmod(index, self.bytes_per_row)
 
     def is_index_valid(self, index):
@@ -758,7 +758,7 @@ class ByteGrid(Grid.Grid):
             e.anchor_initial_start_index, e.anchor_initial_end_index = index1, index2
             e.cursor_index = index1
             e.select_range(index1, index2, add=self.multi_select_mode)
-        wx.CallAfter(e.index_clicked, e.cursor_index, 0, None)
+        wx.CallAfter(e.index_clicked, e.cursor_index, c, None)
 
     def on_left_down_label(self, evt):
         self.on_left_down(evt, True)
@@ -899,10 +899,10 @@ class ByteGrid(Grid.Grid):
                 index, _ = self.table.get_index_range(r, c)
             refresh_self = None if e.can_copy else self
             e.set_cursor(index, False)
-            r, c = self.table.get_row_col(e.cursor_index)
+            r, c = self.table.get_row_col(e.cursor_index, c)
             self.SetGridCursor(r, c)
             self.MakeCellVisible(r, c)
-            wx.CallAfter(e.index_clicked, e.cursor_index, 0, refresh_self)
+            wx.CallAfter(e.index_clicked, e.cursor_index, c, refresh_self)
  
     def on_left_dclick(self, evt):
         self.EnableCellEditControl()
@@ -929,8 +929,15 @@ class ByteGrid(Grid.Grid):
         e.set_cursor(index1, False)
         self.EnableCellEditControl()
 
-    def goto_index(self, index):
-        row, col = self.table.get_row_col(index)
+    def clamp_column(self, col_from_index, col_from_user):
+        return col_from_index
+
+    def goto_index(self, index, col_from_user=None):
+        row, c = self.table.get_row_col(index)
+        if col_from_user is None:
+            col = c
+        else:
+            col = self.clamp_column(c, col)
         self.SetGridCursor(row, col)
         ul = self.restore_upper_left
         if ul >= 0:
@@ -940,9 +947,9 @@ class ByteGrid(Grid.Grid):
             self.restore_upper_left = -1
         self.MakeCellVisible(row,col)
 
-    def select_index(self, cursor):
+    def select_index(self, cursor, col_from_user=None):
         self.ClearSelection()
-        self.goto_index(cursor)
+        self.goto_index(cursor, col_from_user)
         self.refresh_view()
     
     def change_value(self, row, col, text):

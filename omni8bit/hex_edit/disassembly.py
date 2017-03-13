@@ -10,7 +10,7 @@ from udis.udis_fast import flag_jump, flag_branch, flag_return, flag_store, flag
 from omni8bit.ui.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 
 from actions import GotoIndexAction
-from commands import MiniAssemblerCommand
+from commands import MiniAssemblerCommand, SetCommentCommand
 
 import logging
 log = logging.getLogger(__name__)
@@ -91,7 +91,7 @@ class DisassemblyTable(ByteGridTable):
     
     def set_grid_cell_attr(self, grid, col, attr):
         ByteGridTable.set_grid_cell_attr(self, grid, col, attr)
-        if col == 1:
+        if col > 0:
             attr.SetReadOnly(False)
         else:
             attr.SetReadOnly(True)
@@ -116,12 +116,12 @@ class DisassemblyTable(ByteGridTable):
         index = pc - self.start_addr
         return self.is_index_valid(index)
     
-    def get_row_col(self, index):
+    def get_row_col(self, index, col=1):
         try:
             row = self.index_to_row[index]
         except:
             row = self.index_to_row[-1]
-        return row, 1
+        return row, col
 
     def get_next_cursor_pos(self, row, col):
         col += 1
@@ -136,8 +136,11 @@ class DisassemblyTable(ByteGridTable):
     def get_next_editable_pos(self, row, col):
         if col < 1:
             col = 1
-        else:
+        elif col == 1:
             col = 1
+            row += 1
+        elif col == 2:
+            col = 2
             row += 1
         return (row, col)
    
@@ -324,14 +327,23 @@ class DisassemblyPanel(ByteGrid):
         comments = self.table.disassembler.format_comment(index)
         return "%s  %s" % (msg, comments)
 
-    def goto_index(self, index):
+    def clamp_column(self, col_from_index, col_from_user):
+        if col_from_user <= 1:
+            return 1
+        return 2
+
+    def goto_index(self, index, col_from_user=None):
+        row, c = self.table.get_row_col(index)
+        if col_from_user is None:
+            col = c
+        else:
+            col = self.clamp_column(c, col_from_user)
         try:
             row = self.table.index_to_row[index]
             self.pending_index = -1
         except IndexError:
             self.pending_index = index
         else:
-            row, col = self.table.get_row_col(index)
             self.SetGridCursor(row, col)
             self.MakeCellVisible(row,col)
         
@@ -344,11 +356,15 @@ class DisassemblyPanel(ByteGrid):
         """
         try:
             pc = self.table.get_pc(row)
-            cmd = text.upper()
-            bytes = self.table.disassembler.assemble_text(pc, cmd)
-            start, _ = self.table.get_index_range(row, col)
-            end = start + len(bytes)
-            cmd = MiniAssemblerCommand(self.table.segment, start, end, bytes, cmd)
+            if col == 1:
+                cmd = text.upper()
+                bytes = self.table.disassembler.assemble_text(pc, cmd)
+                start, _ = self.table.get_index_range(row, col)
+                end = start + len(bytes)
+                cmd = MiniAssemblerCommand(self.table.segment, start, end, bytes, cmd)
+            else:
+                start, _ = self.table.get_index_range(row, col)
+                cmd = SetCommentCommand(self.table.segment, [(start, start + 1)], text)
             self.task.active_editor.process_command(cmd)
             return True
         except RuntimeError, e:

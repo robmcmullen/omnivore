@@ -791,7 +791,7 @@ class HexEditor(FrameworkEditor):
         if control != self.hex_edit:
             self.hex_edit.select_index(index)
         if control != self.disassembly:
-            self.disassembly.select_index(index)
+            self.disassembly.select_index(index, bit)
         if control != self.bitmap:
             self.bitmap.select_index(index)
         if control != self.font_map:

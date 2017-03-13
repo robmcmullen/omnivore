@@ -161,7 +161,7 @@ class ByteTable(ByteGridTable):
         index = row * self.bytes_per_row + col - self.start_offset
         return index, index + 1
 
-    def get_row_col(self, index):
+    def get_row_col(self, index, col=0):
         return divmod(index + self.start_offset, self.bytes_per_row)
 
     def is_index_valid(self, index):
