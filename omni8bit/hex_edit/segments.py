@@ -5,6 +5,10 @@ from pyface.action.api import Action, ActionItem, Separator
 
 from actions import *
 
+import logging
+log = logging.getLogger(__name__)
+
+
 class SegmentList(wx.ListBox):
     """Segment selector for choosing which portion of the binary data to view
     """
@@ -18,6 +22,9 @@ class SegmentList(wx.ListBox):
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.on_dclick)
         self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
         self.Bind(wx.EVT_MOTION, self.on_tooltip)
+        if sys.platform.startswith("linux"):
+            self.ui_action = wx.UIActionSimulator()
+            self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook_find_hack)
     
     def set_task(self, task):
         self.task = task
@@ -32,6 +39,19 @@ class SegmentList(wx.ListBox):
                 if old != item:
                     self.SetString(i, item)
         self.SetSelection(selected)
+    
+    def on_char_hook_find_hack(self, evt):
+        log.debug("on_char_hook_find_hack! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
+        if evt.GetUniChar() == 70 and evt.ControlDown():
+            log.debug("on_char_hook_find_hack! redirecting to %s" % self.task.active_editor.control)
+            # On linux/GTK, the ctrl-F is bound to the list's own find command,
+            # which is useless for us. By redirecting it to the main window,
+            # omnivore's find command can be called.
+            wx.CallAfter(self.task.active_editor.control.SetFocus)
+            wx.CallAfter(self.ui_action.KeyDown, evt.GetKeyCode(),evt.GetModifiers())
+            wx.CallAfter(self.ui_action.KeyUp, evt.GetKeyCode(),evt.GetModifiers())
+        else:
+            evt.Skip()
 
     def on_left_down(self, event):
         item = self.HitTest(event.GetPosition())
