@@ -150,8 +150,12 @@ class DictEditDialog(wx.Dialog):
     
     def get_edited_values(self, d):
         for key, control in self.controls.iteritems():
+            type = self.types[key]
             try:
-                value = control.GetValue()
+                if type == 'verify list':
+                    value = control.GetValue().splitlines()
+                else:
+                    value = control.GetValue()
                 self.set_output_value(d, key, value)
             except AttributeError:
                 log.error("Error setting output value for %s %s" % (key, control))
