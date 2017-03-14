@@ -127,7 +127,7 @@ class DictEditDialog(wx.Dialog):
                 func = getattr(self, "create_%s" % type.replace(" ", "_"))
             except AttributeError:
                 raise NotImplementedError("Unknown field type %s for %s" % (type, key))
-            control = func(key, label)
+            control = func(key, label, choices)
             if key is not None:
                 self.types[key] = type
                 self.controls[key] = control
@@ -144,6 +144,9 @@ class DictEditDialog(wx.Dialog):
             elif type == 'file' or type == 'boolean':
                 value = self.get_default_value(d, key)
                 control.SetValue(value)
+            elif type == 'dropdown':
+                value = self.get_default_value(d, key)
+                control.SetStringSelection(value)
     
     def get_default_value(self, d, key):
         return d[key]
@@ -154,6 +157,8 @@ class DictEditDialog(wx.Dialog):
             try:
                 if type == 'verify list':
                     value = control.GetValue().splitlines()
+                elif type == 'dropdown':
+                    value = control.GetStringSelection()
                 else:
                     value = control.GetValue()
                 self.set_output_value(d, key, value)
@@ -164,7 +169,7 @@ class DictEditDialog(wx.Dialog):
     def set_output_value(self, d, key, value):
         d[key] = value
     
-    def create_text(self, key, label):
+    def create_text(self, key, label, choices=None):
         sizer = self.GetSizer()
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         t = wx.StaticText(self, -1, label)
@@ -174,7 +179,7 @@ class DictEditDialog(wx.Dialog):
         sizer.Add(hbox, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
         return entry
 
-    def create_boolean(self, key, label):
+    def create_boolean(self, key, label, choices=None):
         sizer = self.GetSizer()
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         t = wx.StaticText(self, -1, label)
@@ -184,7 +189,7 @@ class DictEditDialog(wx.Dialog):
         sizer.Add(hbox, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
         return entry
 
-    def create_expando(self, key, label):
+    def create_expando(self, key, label, choices=None):
         sizer = self.GetSizer()
         status = ExpandoTextCtrl(self, style=wx.ALIGN_LEFT|wx.TE_READONLY|wx.NO_BORDER)
         attr = self.GetDefaultAttributes()
@@ -192,7 +197,7 @@ class DictEditDialog(wx.Dialog):
         sizer.Add(status, 1, wx.ALL|wx.EXPAND, self.border)
         return status
 
-    def create_file(self, key, label):
+    def create_file(self, key, label, choices=None):
         sizer = self.GetSizer()
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         entry = filebrowse.FileBrowseButton(self, -1, size=(450, -1), labelText=label, changeCallback=self.on_path_changed)
@@ -200,7 +205,7 @@ class DictEditDialog(wx.Dialog):
         sizer.Add(hbox, 0, wx.ALL|wx.EXPAND, 0)
         return entry
     
-    def create_verify(self, key, label):
+    def create_verify(self, key, label, choices=None):
         sizer = self.GetSizer()
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         t = wx.StaticText(self, -1, label)
@@ -214,7 +219,7 @@ class DictEditDialog(wx.Dialog):
         self.buttons[key] = verify
         return entry
     
-    def create_verify_list(self, key, label):
+    def create_verify_list(self, key, label, choices=None):
         sizer = self.GetSizer()
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         t = wx.StaticText(self, -1, label)
@@ -228,23 +233,33 @@ class DictEditDialog(wx.Dialog):
         self.buttons[key] = verify
         return entry
 
-    def create_gauge(self, key, label):
+    def create_gauge(self, key, label, choices=None):
         sizer = self.GetSizer()
         gauge = wx.Gauge(self, -1, 50, size=(500, 5))
         sizer.Add(gauge, 0, wx.ALL|wx.EXPAND, self.border)
         return gauge
 
-    def create_static(self, key, label):
+    def create_static(self, key, label, choices=None):
         sizer = self.GetSizer()
         t = wx.StaticText(self, -1, label)
         sizer.Add(t, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, self.border)
 
-    def create_static_spacer_below(self, key, label):
+    def create_static_spacer_below(self, key, label, choices=None):
         sizer = self.GetSizer()
         t = wx.StaticText(self, -1, label)
         sizer.Add(t, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, self.border)
         t = wx.StaticText(self, -1, " ")
         sizer.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
+
+    def create_dropdown(self, key, label, choices):
+        sizer = self.GetSizer()
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        t = wx.StaticText(self, -1, label)
+        hbox.Add(t, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, self.border)
+        entry = wx.Choice(self, -1, choices=choices, size=(-1, -1))
+        hbox.Add(entry, 1, wx.ALL|wx.EXPAND, self.border)
+        sizer.Add(hbox, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
+        return entry
         
     def on_button(self, evt):
         if evt.GetId() == wx.ID_OK:
@@ -669,9 +684,39 @@ if __name__ == "__main__":
     # dlg = CheckItemDialog(frame, [chr(i + 65) for i in range(26)], lambda a:str(a))
     # if dlg.ShowModal() == wx.ID_OK:
     #     print dlg.get_checked_items()
-    dlg = ChooseOnePlusCustomDialog(frame, ["one", "two"], "instructions")
-    if dlg.ShowModal() == wx.ID_OK:
-        print "Selected", dlg.get_selected()
-    dlg.Destroy()
+    # dlg = ChooseOnePlusCustomDialog(frame, ["one", "two"], "instructions")
+    # if dlg.ShowModal() == wx.ID_OK:
+    #     print "Selected", dlg.get_selected()
+    # dlg.Destroy()
+    class TestObj(object):
+        def __init__(self):
+            self.name = "aoeu"
+            self._state = False
+
+        @property
+        def state(self):
+            return 'state true' if self._state else 'state false'
+
+        @state.setter
+        def state(self, value):
+            print "Setting to:", value
+            self._state = (value == 'state true')
+        
+
+    class TestSetattrDialog(ObjectEditDialog):
+        def __init__(self, parent, title, default=None):
+            fields = [
+                ('text', 'name', 'Server Name: '),
+                ('dropdown', 'state', 'State choice', ['state true', 'state false']),
+                ]
+            ObjectEditDialog.__init__(self, parent, title, "Setattr test", fields, TestObj, default)
+
+    test_obj = TestObj()
+    dlg = TestSetattrDialog(frame, "Test", test_obj)
+    dlg.show_and_get_value()
+    print test_obj.state
+    dlg = TestSetattrDialog(frame, "Test", test_obj)
+    dlg.show_and_get_value()
+    print test_obj.state
 
     app.MainLoop()
