@@ -110,7 +110,7 @@ class DictEditDialog(wx.Dialog):
         
         self.default = default
         if default:
-            self.set_initial_data(default)
+            self.set_initial_values(default)
         self.check_enable()
     
     def add_fields(self, fields):
@@ -132,39 +132,46 @@ class DictEditDialog(wx.Dialog):
                 self.types[key] = type
                 self.controls[key] = control
 
-    def set_initial_data(self, d):
-        for key, control in self.controls.iteritems():
-            type = self.types[key]
-            if type == 'text' or type == 'verify':
-                value = self.get_default_value(d, key)
-                control.ChangeValue(value)
-            elif type == 'verify list':
-                value = "\n".join(self.get_default_value(d, key))
-                control.ChangeValue(value)
-            elif type == 'file' or type == 'boolean':
-                value = self.get_default_value(d, key)
-                control.SetValue(value)
-            elif type == 'dropdown':
-                value = self.get_default_value(d, key)
-                control.SetStringSelection(value)
+    def set_initial_values(self, d):
+        for key in self.controls.keys():
+            self.set_initial_value_of(d, key)
+
+    def set_initial_value_of(self, d, key):
+        control = self.controls[key]
+        type = self.types[key]
+        if type == 'text' or type == 'verify':
+            value = self.get_default_value(d, key)
+            control.ChangeValue(value)
+        elif type == 'verify list':
+            value = "\n".join(self.get_default_value(d, key))
+            control.ChangeValue(value)
+        elif type == 'file' or type == 'boolean':
+            value = self.get_default_value(d, key)
+            control.SetValue(value)
+        elif type == 'dropdown':
+            value = self.get_default_value(d, key)
+            control.SetStringSelection(value)
     
     def get_default_value(self, d, key):
         return d[key]
     
     def get_edited_values(self, d):
-        for key, control in self.controls.iteritems():
-            type = self.types[key]
-            try:
-                if type == 'verify list':
-                    value = control.GetValue().splitlines()
-                elif type == 'dropdown':
-                    value = control.GetStringSelection()
-                else:
-                    value = control.GetValue()
-                self.set_output_value(d, key, value)
-            except AttributeError:
-                log.error("Error setting output value for %s %s" % (key, control))
-                continue
+        for key in self.controls.keys():
+            self.get_edited_value_of(d, key)
+
+    def get_edited_value_of(self, d, key):
+        control = self.controls[key]
+        type = self.types[key]
+        try:
+            if type == 'verify list':
+                value = control.GetValue().splitlines()
+            elif type == 'dropdown':
+                value = control.GetStringSelection()
+            else:
+                value = control.GetValue()
+            self.set_output_value(d, key, value)
+        except AttributeError:
+            log.error("Error setting output value for %s %s" % (key, control))
     
     def set_output_value(self, d, key, value):
         d[key] = value
@@ -301,8 +308,11 @@ class DictEditDialog(wx.Dialog):
         if self.default:
             d = self.default
         else:
-            d = dict()
+            d = self.get_new_object()
         return d
+
+    def get_new_object(self):
+        return dict()
 
 class ObjectEditDialog(DictEditDialog):
     def __init__(self, parent, title, instructions, fields, object_class, default=None):
@@ -312,13 +322,8 @@ class ObjectEditDialog(DictEditDialog):
     def get_default_value(self, d, key):
         return getattr(d, key)
     
-    def get_result_object(self):
-        # Edit the object in place by reusing the same dictionary
-        if self.default:
-            d = self.default
-        else:
-            d = self.new_object_class()
-        return d
+    def get_new_object(self):
+        return self.new_object_class()
     
     def set_output_value(self, d, key, value):
         setattr(d, key, value)
