@@ -717,7 +717,7 @@ class DefaultSegment(object):
         comments = []
         for where_index in has_comments:
             raw = self.get_raw_index(indexes[where_index])
-            comment = self.rawdata.extra.comments[rawindex]
+            comment = self.rawdata.extra.comments[raw]
             comments.append(comment)
         return has_comments, comments
 
