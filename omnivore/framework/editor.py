@@ -407,10 +407,33 @@ class FrameworkEditor(Editor):
         if wx.TheClipboard.Open():
             wx.TheClipboard.SetData(data_obj)
             wx.TheClipboard.Close()
+            self.show_data_object_stats(data_obj)
             return True
         else:
             self.window.error("Unable to open clipboard", "Clipboard Error")
             return False
+
+    def get_data_object_by_format(self, data_obj, fmt):
+        # First try a composite object, then simple: have to handle both
+        # cases
+        try:
+            d = data_obj.GetObject(fmt)
+        except AttributeError:
+            d = data_obj
+        return d
+
+    def show_data_object_stats(self, data_obj, copy=True):
+        if wx.DF_TEXT in data_obj.GetAllFormats():
+            fmt = wx.DataFormat(wx.DF_TEXT)
+        elif wx.DF_UNICODETEXT in data_obj.GetAllFormats():  # for windows
+            fmt = wx.DataFormat(wx.DF_UNICODETEXT)
+        else:
+            fmt = None
+
+        if fmt is not None:
+            d = self.get_data_object_by_format(data_obj, fmt)
+            size = d.GetDataSize()
+            self.task.status_bar.message = "%s %d text characters" % ("Copied" if copy else "Pasted", size)
 
     def paste(self, cmd_cls=None):
         """ Pastes the current clipboard at the current insertion point or over
@@ -419,6 +442,7 @@ class FrameworkEditor(Editor):
         data_obj = self.get_paste_data_object()
         if data_obj is not None:
             self.process_paste_data_object(data_obj, cmd_cls)
+            self.show_data_object_stats(data_obj, False)
         else:
             self.window.error("Unsupported data format", "Paste Error")
     

@@ -303,6 +303,31 @@ class HexEditor(FrameworkEditor):
             return c
         return None
 
+    def show_data_object_stats(self, data_obj, copy=True):
+        try:
+            fmt = data_obj.GetFormat()
+        except AttributeError:
+            fmt = data_obj.GetPreferredFormat()
+        if fmt.GetId() == "numpy,columns":
+            d = self.get_data_object_by_format(data_obj, fmt)
+            value = d.GetDataHere()
+            r, c, value = value.split(",", 2)
+            size = r * c
+        elif fmt.GetId() == "numpy":
+            d = self.get_data_object_by_format(data_obj, fmt)
+            value = d.GetDataHere()
+            size, _ = value.split(",", 1)
+            size = int(size)
+        elif fmt.GetId() == "numpy,multiple":
+            d = self.get_data_object_by_format(data_obj, fmt)
+            value = d.GetDataHere()
+            size, _, _ = value.split(",", 2)
+            size = int(size)
+        else:
+            FrameworkEditor.show_data_object_stats(self, data_obj)
+            return
+        self.task.status_bar.message = "%s $%x bytes (%d decimal)" % ("Copied" if copy else "Pasted", size, size)
+
     def get_selected_index_metadata(self, indexes):
         """Return serializable string containing style information"""
         style = self.segment.get_style_at_indexes(indexes)
