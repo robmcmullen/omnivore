@@ -421,6 +421,8 @@ class FrameworkTask(Task):
         return [
             SaveAction(),
             SaveAsAction(),
+            Separator(),
+            SaveAsImageAction(),
             ]
     
     def get_actions_Menu_File_RevertGroup(self):

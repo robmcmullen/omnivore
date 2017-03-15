@@ -49,6 +49,8 @@ class FrameworkEditor(Editor):
     
     printable = Bool(False)
     
+    imageable = Bool(False)
+    
     can_cut = Bool(False)
     
     can_copy = Bool(False)
@@ -453,6 +455,34 @@ class FrameworkEditor(Editor):
         raise NotImplementedError
     
     def save_as_pdf(self, path=None):
+        raise NotImplementedError
+
+    def save_as_image(self, path):
+        """ Saves the contents of the editor in a maproom project file
+        """
+        valid = {
+            '.png': wx.BITMAP_TYPE_PNG,
+            '.tif': wx.BITMAP_TYPE_TIFF,
+            '.tiff': wx.BITMAP_TYPE_TIFF,
+            '.jpg': wx.BITMAP_TYPE_JPEG,
+            '.jpeg': wx.BITMAP_TYPE_JPEG,
+            }
+        _, ext = os.path.splitext(path)
+        if ext not in valid:
+            path += ".png"
+            t = wx.BITMAP_TYPE_PNG
+        else:
+            t = valid[ext]
+
+        raw_data = self.get_numpy_image()
+        h, w, depth = raw_data.shape
+        bitmap = wx.BitmapFromBuffer(width=w, height=h, dataBuffer=raw_data)
+        image = wx.ImageFromBitmap(bitmap)
+        image.SaveFile(path, t)
+
+    def get_numpy_image(self):
+        """Get a numpy array in RGB format to be saved to a file
+        """
         raise NotImplementedError
     
     def update_history(self):

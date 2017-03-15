@@ -181,6 +181,16 @@ class SaveAsPDFAction(EditorAction):
         if dialog.open() == OK:
             self.active_editor.save_as_pdf(dialog.path)
 
+class SaveAsImageAction(EditorAction):
+    name = 'Save As Image...'
+    tooltip = 'Save the current view as an image'
+    enabled_name = 'imageable'
+
+    def perform(self, event):
+        dialog = FileDialog(parent=event.task.window.control, action='save as', title="Save Image")
+        if dialog.open() == OK:
+            self.active_editor.save_as_image(dialog.path)
+
 class ExitAction(Action):
     name = 'Quit'
     accelerator = 'Ctrl+Q'
