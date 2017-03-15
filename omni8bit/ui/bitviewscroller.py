@@ -23,7 +23,7 @@ import wx.lib.newevent
 from pyface.action.api import Action
 from pyface.tasks.action.api import EditorAction
 
-from atrcopy import SegmentData, DefaultSegment
+from atrcopy import SegmentData, DefaultSegment, get_style_mask
 
 from omni8bit.hex_edit.actions import *
 
@@ -720,6 +720,45 @@ class FontMapScroller(BitviewScroller):
         m = self.editor.machine
         font = m.get_blinking_font(self.blink_index)
         array = m.font_renderer.get_image(m, font, bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols)
+        return array
+
+    def get_full_image(self, segment=None):
+        if segment is None:
+            segment = self.segment
+        log.debug("get_full_image: fontmap: start=%d, num=%d" % (self.start_row, self.visible_rows))
+        sr = 0
+        nr = self.total_rows
+        start_byte = 0
+        end_byte = self.total_rows * self.bytes_per_row
+        if end_byte > len(segment):
+            end_byte = len(segment)
+            bytes = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
+            bytes[0:end_byte - start_byte] = segment[sr * self.bytes_per_row:end_byte]
+            style = np.zeros((nr * self.bytes_per_row), dtype=np.uint8)
+            style[0:end_byte - start_byte] = segment.style[sr * self.bytes_per_row:self.end_byte]
+        else:
+            bytes = segment[start_byte:end_byte].copy()
+            style = segment.style[start_byte:end_byte].copy()
+        # turn off any selections
+        style &= get_style_mask(selected=True)
+
+        bytes = bytes.reshape((nr, -1))
+        style = style.reshape((nr, -1))
+        #log.debug("get_image: bytes", bytes)
+        
+        m = self.editor.machine
+        font = m.get_blinking_font(0)
+        array = m.font_renderer.get_image(m, font, bytes, style, start_byte, end_byte, self.bytes_per_row, nr, 0, self.bytes_per_row)
+        if self.font.scale_h > 1 or self.font.scale_w > 1:
+            h, w, depth = array.shape
+            newdims = np.asarray((h * self.font.scale_h, w * self.font.scale_w))
+            base=np.indices(newdims)
+            d = []
+            d.append(base[0]/self.font.scale_h)
+            d.append(base[1]/self.font.scale_w)
+            cd = np.array(d)
+            resized = array[list(cd)]
+            array = resized
         return array
     
     def draw_overlay(self, array, w, h, zw, zh):

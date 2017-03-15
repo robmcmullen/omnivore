@@ -156,6 +156,7 @@ class HexEditTask(FrameworkTask):
             SaveAsAction(),
             SMenu(SaveSegmentGroup(),
                   id='SaveSegmentAsSubmenu', name="Save Segment As"),
+            SaveAsImageAction(),
             ]
 
     def get_actions_Menu_Edit_UndoGroup(self):

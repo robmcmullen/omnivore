@@ -332,6 +332,8 @@ class MapEditor(HexEditor):
     valid_mouse_modes = [SelectMode, PickTileMode, DrawMode, LineMode, SquareMode, FilledSquareMode]
     
     ##### traits
+
+    imageable = True
     
     antic_tile_map = Any
     
@@ -474,6 +476,9 @@ class MapEditor(HexEditor):
     def get_extra_segment_savers(self, segment):
         return []
     
+    def get_numpy_image(self):
+        return self.font_map.get_full_image()
+
     ###########################################################################
     # Trait handlers.
     ###########################################################################
