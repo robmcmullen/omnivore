@@ -2,6 +2,8 @@ import re
 
 
 class BaseSearcher(object):
+    pretty_name = "<base class>"
+
     def __init__(self, editor, search_text, **kwargs):
         self.search_text = self.get_search_text(search_text)
         if len(self.search_text) > 0:
@@ -23,6 +25,8 @@ class BaseSearcher(object):
         editor.segment.set_style_ranges(self.matches, match=True)
 
 class HexSearcher(BaseSearcher):
+    pretty_name = "hex"
+
     def __str__(self):
         return "hex matches: %s" % str(self.matches)
     
@@ -30,6 +34,8 @@ class HexSearcher(BaseSearcher):
         return bytearray.fromhex(text)
 
 class CharSearcher(BaseSearcher):
+    pretty_name = "text"
+    
     def __init__(self, editor, search_text, match_case=False, find_inverse=True, **kwargs):
         self.match_case = match_case
         self.find_inverse = find_inverse
@@ -39,6 +45,8 @@ class CharSearcher(BaseSearcher):
         return "char matches: %s" % str(self.matches)
 
 class DisassemblySearcher(BaseSearcher):
+    pretty_name = "disasm"
+
     def __init__(self, editor, search_text, match_case=False, find_inverse=True, **kwargs):
         self.match_case = match_case
         self.find_inverse = find_inverse

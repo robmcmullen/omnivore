@@ -588,6 +588,7 @@ class FindAllCommand(Command):
     
     def perform(self, editor):
         self.all_matches = []
+        self.match_ids = {}
         self.undo_info = undo = UndoInfo()
         undo.flags.changed_document = False
         if self.error:
@@ -606,6 +607,12 @@ class FindAllCommand(Command):
             if found:
                 for searcher in found:
                     self.all_matches.extend(searcher.matches)
+                    for match in searcher.matches:
+                        start = match[0]
+                        if start in self.match_ids:
+                            self.match_ids[start] +=", %s" % searcher.pretty_name
+                        else:
+                            self.match_ids[start] = searcher.pretty_name
                 self.all_matches.sort()
 
                 # remove entries that duplicate the start point, finding the
@@ -632,11 +639,12 @@ class FindAllCommand(Command):
                     if self.current_match_index >= len(self.all_matches):
                         self.current_match_index = 0
                     match = self.all_matches[self.current_match_index]
+                    start = match[0]
                     print self.current_match_index, match, cursor_tuple
                     undo.flags.index_range = match
-                    undo.flags.cursor_index = match[0]
+                    undo.flags.cursor_index = start
                     undo.flags.select_range = True
-                    undo.flags.message = ("Match %d of %d, found at $%04x" % (self.current_match_index + 1, len(self.all_matches), match[0]))
+                    undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (self.current_match_index + 1, len(self.all_matches), start, self.match_ids[start]))
             elif errors:
                 undo.flags.message = " ".join(errors)
             undo.flags.refresh_needed = True
@@ -669,10 +677,11 @@ class FindNextCommand(Command):
         #print "FindNext:", all_matches
         try:
             match = all_matches[index]
+            start = match[0]
             undo.flags.index_range = match
-            undo.flags.cursor_index = match[0]
+            undo.flags.cursor_index = start
             undo.flags.select_range = True
-            undo.flags.message = ("Match %d of %d, found at $%04x" % (index + 1, len(all_matches), match[0]))
+            undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (index + 1, len(all_matches), start, self.search_command.match_ids[start]))
         except IndexError:
             pass
         undo.flags.refresh_needed = True
