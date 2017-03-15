@@ -889,12 +889,12 @@ class FrameworkEditor(Editor):
         programmatically. This is provided as a convenience function to update
         any tools that are trait-dependent.
         """
-        #for toolbar in self.window.tool_bar_managers:
-        #    name = toolbar.id
-        #    info = self.window._aui_manager.GetPane(name)
-        #    tool_bar = info.window
-        #    tool_bar.Refresh(False)
-        self.window._aui_manager.Update()
+        # Instead of calling AUI manager refresh (which was taking over 50% of
+        # the refresh time) just refresh the toolbars themselves
+        for pane in self.window._aui_manager._panes:
+            if pane.IsToolbar():
+                pane.window.Refresh()
+
 
     #### convenience functions
     
