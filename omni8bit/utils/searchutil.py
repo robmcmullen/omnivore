@@ -62,8 +62,40 @@ class DisassemblySearcher(BaseSearcher):
         matches = editor.disassembly.search(self.search_text, self.match_case)
         return matches
 
+class CommentSearcher(BaseSearcher):
+    pretty_name = "comments"
+
+    def __init__(self, editor, search_text, match_case=False, find_inverse=True, **kwargs):
+        self.match_case = match_case
+        self.find_inverse = find_inverse
+        BaseSearcher.__init__(self, editor, search_text)
+    
+    def __str__(self):
+        return "comment matches: %s" % str(self.matches)
+    
+    def get_search_text(self, text):
+        return text
+    
+    def get_matches(self, editor):
+        segment = editor.segment
+        match_case = self.match_case
+        s = segment.start_addr
+        matches = []
+        if match_case:
+            search_text = self.search_text
+            for index, comment in segment.iter_comments_in_segment():
+                if search_text in comment:
+                    matches.append((index, index + 1))
+        else:
+            search_text = self.search_text.lower()
+            for index, comment in segment.iter_comments_in_segment():
+                if search_text in comment.lower():
+                    matches.append((index, index + 1))
+        return matches
+
 known_searchers = [
     HexSearcher,
     CharSearcher,
     DisassemblySearcher,
+    CommentSearcher,
     ]

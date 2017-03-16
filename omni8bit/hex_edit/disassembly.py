@@ -373,7 +373,6 @@ class DisassemblyPanel(ByteGrid):
         return False
     
     def search(self, search_text, match_case=False):
-        # FIXME! search broken with udis_fast
         lines = self.table.lines
         s = self.table.start_addr
         if not match_case:
@@ -381,19 +380,6 @@ class DisassemblyPanel(ByteGrid):
             matches = [(t.pc - s, t.pc - s + t.num_bytes) for t in lines if search_text in t.instruction.lower()]
         else:
             matches = [(t.pc - s, t.pc - s + t.num_bytes) for t in lines if search_text in t.instruction]
-
-        for index, comment in self.table.segment.iter_comments_in_segment():
-            if index < lines.num_bytes:
-                if not match_case:
-                    matched = search_text in comment.lower()
-                else:
-                    matched = search_text in comment
-                if matched:
-                    row = self.table.index_to_row[index]
-                    line = lines[row]
-                    instruction_index = line.pc - s
-                    #print "Matched! ->%s<-" % comment, hex(index), hex(instruction_index), hex(line.pc), line.instruction
-                    matches.append((instruction_index, instruction_index + line.num_bytes))
         return matches
     
     def get_goto_actions(self, r, c):
