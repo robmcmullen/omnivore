@@ -769,7 +769,11 @@ class FrameworkEditor(Editor):
                 self.anchor_end_index = self.anchor_initial_end_index = flags.index_range[1]
                 d.change_count += 1
             visible_range = True
-            self.mark_index_range_changed(flags.index_range)
+
+            # mark_index_range_changed should be called only when a value/style
+            # changes, not if a range is simply selected.
+            if flags.byte_values_changed or flags.byte_style_changed:
+                self.mark_index_range_changed(flags.index_range)
         
         if flags.message:
             self.task.status_bar.message = flags.message
