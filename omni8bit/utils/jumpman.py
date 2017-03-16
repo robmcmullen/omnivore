@@ -556,7 +556,7 @@ class ScreenState(LevelDef):
     # The following commented out code generates the text string
     #circle = np.zeros((7, 8), dtype=np.uint8)
     #circle[0,2:6] = circle[6,2:6] = circle[2:5,0] = circle[2:5,7] = circle[1,1] = circle[1,6] = circle[5,6] = circle[5,1] = match_bit_mask
-    circle = np.fromstring('\x00\x00\x10\x10\x10\x10\x00\x00\x00\x10\x00\x00\x00\x00\x10\x00\x10\x00\x00\x00\x00\x00\x00\x10\x10\x00\x00\x00\x00\x00\x00\x10\x10\x00\x00\x00\x00\x00\x00\x10\x00\x10\x00\x00\x00\x00\x10\x00\x00\x00\x10\x10\x10\x10\x00\x00', dtype=np.uint8).reshape((7,8))
+    circle = np.fromstring('\x00\x00    \x00\x00\x00 \x00\x00\x00\x00 \x00 \x00\x00\x00\x00\x00\x00  \x00\x00\x00\x00\x00\x00  \x00\x00\x00\x00\x00\x00 \x00 \x00\x00\x00\x00 \x00\x00\x00    \x00\x00', dtype=np.uint8).reshape((7,8))
     trigger_circle = np.zeros((7,160), dtype=np.uint8)
     trigger_circle[0:7,0:8] = circle
     trigger_circle = trigger_circle.flatten()
