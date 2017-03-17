@@ -6,6 +6,11 @@ from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bi
 from memory_map import EmptyMemoryMap
 
 
+def fast_get_entire_style_ranges(segment, split_comments=[data_style], **kwargs):
+    style_copy = segment.get_comment_locations(**kwargs)
+    print "FAST_GET_ENTIRE", style_copy
+
+
 class BaseDisassembler(object):
     name = "generic disassembler"
     cpu = "undefined"
@@ -76,6 +81,7 @@ class BaseDisassembler(object):
         self.start_addr = segment.start_addr
         self.end_addr = self.start_addr + len(segment)
         pc = self.start_addr
+        r = fast_get_entire_style_ranges(segment, user=user_bit_mask, split_comments=[data_style])
         r = segment.get_entire_style_ranges(user=user_bit_mask, split_comments=[data_style])
         self.info = self.fast.get_all(segment.rawdata.unindexed_view, pc, 0, r)
         return self.info
