@@ -220,7 +220,7 @@ class HexEditor(FrameworkEditor):
         if extra and (extra[0] == "numpy,multiple" or extra[0] == "numpy"):
             source_indexes, style, where_comments, comments = extra[1:5]
         else:
-            source_indexes = where_comments = comments = None
+            source_indexes = style = where_comments = comments = None
         if cmd_cls is None:
             cmd_cls = PasteCommand
         cmd = cmd_cls(self.segment, ranges, self.cursor_index, bytes, source_indexes, style, where_comments, comments)
