@@ -499,11 +499,11 @@ class DefaultSegment(object):
     def get_comment_locations(self, **kwargs):
         style_bits = self.get_style_bits(**kwargs)
         r = self.rawdata.copy()
-        print len(r.style)
-        print len(r.style_base)
+        #print len(r.style)
+        #print len(r.style_base)
         r.style_base[:] &= style_bits
         comment_indexes = np.asarray(self.rawdata.extra.comments.keys(), dtype=np.uint32)
-        print comment_indexes
+        #print comment_indexes
         r.style_base[comment_indexes] |= comment_bit_mask
         return r.style
 
