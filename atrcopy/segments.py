@@ -3,6 +3,7 @@ import cStringIO
 import uuid
 
 import numpy as np
+from profilehooks import coverage
 
 from errors import *
 from utils import to_numpy, to_numpy_list
@@ -500,10 +501,10 @@ class DefaultSegment(object):
         r = self.rawdata.copy()
         print len(r.style)
         print len(r.style_base)
-        base = r.style_base & style_bits
+        r.style_base[:] &= style_bits
         comment_indexes = np.asarray(self.rawdata.extra.comments.keys(), dtype=np.uint32)
         print comment_indexes
-        base[comment_indexes] |= comment_bit_mask
+        r.style_base[comment_indexes] |= comment_bit_mask
         return r.style
 
     def get_entire_style_ranges(self, split_comments=None, **kwargs):
