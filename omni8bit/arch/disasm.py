@@ -1,4 +1,5 @@
 import numpy as np
+from profilehooks import profile
 
 from udis import miniasm, cputables
 import udis.udis_fast as udis_fast
@@ -21,6 +22,7 @@ def fast_get_entire_style_ranges(segment, split_comments=[data_style], **kwargs)
                 print
                 print "comment type: %02x" % s,
                 last = s
+    print
     num_bytes = len(style_copy)
     if num_bytes < 1:
         return []
@@ -33,20 +35,20 @@ def fast_get_entire_style_ranges(segment, split_comments=[data_style], **kwargs)
     for i in range(1, num_bytes):
         s = style_copy[i]
         s2 = s & user_bit_mask
-        if s2 == base_style: # or s == first_style:
-#            print "same", i, s
-            continue
+        print "%04x" % i, s, s2,
         if s & comment_bit_mask:
             if s2 == base_style and s2 not in split_comments:
-#                print "same w/skippable commen1", i, s, s2
+                print "same w/skippable comment"
                 continue
-        print "break here", "%04x" % i, s
+        elif s2 == base_style: # or s == first_style:
+            print "same"
+            continue
         ranges.append(((first_index, i), base_style))
+        print "last\nbreak here -> %x:%x = %s" % ((ranges[-1][0][0], ranges[-1][0][1], ranges[-1][1]))
         first_index = i
         first_style = s
         base_style = s2
-    if first_index < i:
-        ranges.append(((first_index, i+1), base_style))
+    ranges.append(((first_index, i+1), base_style))
     return ranges, style_copy
 
 
@@ -121,6 +123,7 @@ class BaseDisassembler(object):
         print ", ".join("((%04x, %04x), %02x)" % (i[0][0], i[0][1], i[1]) for i in r)
         print
 
+    @profile
     def disassemble_segment(self, segment):
         self.segment = segment
         self.start_addr = segment.start_addr
