@@ -199,24 +199,36 @@ class TestSmall(object):
         disasm.add_chunk_processor("jumpman_harvest", 4)
         return disasm
 
+    def load(self, path, segment="All"):
+        guess = FileGuess(path)
+        self.editor.load(guess)
+        self.editor.find_segment("All")
+        return self.editor.segment
+
     def setup(self):
         self.disasm = self.get_disasm()
         self.editor = MockHexEditor()
-        guess = FileGuess("../test_data/style32.dat")
-        self.editor.load(guess)
 
     def test_simple(self):
-        self.editor.find_segment("All")
-        s = self.editor.segment
-        r, style = fast_get_entire_style_ranges(s, user=user_bit_mask, split_comments=[data_style])
-        print_r(r)
+        tests = [
+            ("../test_data/style32.dat", {'user': user_bit_mask}, [data_style],
+                [((0x0000, 0x000b), 0), ((0x000b, 0x000c), 1), ((0x000c, 0x000d), 1), ((0x000d, 0x000e), 1), ((0x000e, 0x000f), 0), ((0x000f, 0x0012), 1), ((0x0012, 0x0014), 0), ((0x0014, 0x0017), 1), ((0x0017, 0x0018), 0), ((0x0018, 0x001b), 1), ((0x001b, 0x001d), 1), ((0x001d, 0x001e), 1), ((0x001e, 0x001f), 1), ((0x001f, 0x0020), 0x0)]
+                ),
+            ("../test_data/style32-comment-group.dat", {'user': user_bit_mask}, [data_style], "same as above"
+                ),
 
-        match = [((0x0000, 0x000b), 0), ((0x000b, 0x000c), 1), ((0x000c, 0x000d), 1), ((0x000d, 0x000e), 1), ((0x000e, 0x000f), 0), ((0x000f, 0x0012), 1), ((0x0012, 0x0014), 0), ((0x0014, 0x0017), 1), ((0x0017, 0x0018), 0), ((0x0018, 0x001b), 1), ((0x001b, 0x001d), 1), ((0x001d, 0x001e), 1), ((0x001e, 0x001f), 1), ((0x001f, 0x0020), 0x0)
-]
-        print_r(match)
+        ]
+        last_expected = None
+        for path, kwargs, split_comments, expected in tests:
+            if expected == "same as above":
+                expected = last_expected
+            s = self.load("../test_data/style32.dat")
+            r, style = fast_get_entire_style_ranges(s, user=user_bit_mask, split_comments=[data_style])
+            print_r(r)
+            print_r(expected)
 
-        assert r == match
-
+            assert r == expected
+            last_expected = expected
 
 
 if __name__ == "__main__":
