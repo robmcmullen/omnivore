@@ -160,11 +160,11 @@ class SegmentData(object):
 
     @property
     def data_base(self):
-        return self.data.base if self.data.base is not None else self.data
+        return self.data.np_data if self.is_indexed else self.data.base if self.data.base is not None else self.data
 
     @property
     def style_base(self):
-        return self.style.base if self.style.base is not None else self.style
+        return self.style.np_data if self.is_indexed else self.style.base if self.style.base is not None else self.style
     
     def get_data(self):
         return self.data
