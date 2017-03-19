@@ -546,6 +546,7 @@ class HexEditor(FrameworkEditor):
             self.view_segment_set_width(self.segment)
             self.reconfigure_panes()
             self.show_trace()
+            self.segment_list.SetSelection(self.segment_number)
             self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
         self.task.segment_selected = self.segment_number
     
