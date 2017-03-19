@@ -21,9 +21,11 @@ class SegmentParser(object):
         self.image = None
         self.segments = []
         self.strict = strict
-        self.parse(segment_data)
+        self.segment_data = segment_data
+        self.parse()
 
-    def parse(self, r):
+    def parse(self):
+        r = self.segment_data
         self.segments.append(DefaultSegment(r, 0))
         try:
             self.image = self.get_image(r)
@@ -51,8 +53,8 @@ class SegmentParser(object):
 class DefaultSegmentParser(SegmentParser):
     menu_name = "Raw Data"
     
-    def parse(self, r):
-        self.segments = [DefaultSegment(r, 0)]
+    def parse(self):
+        self.segments = [DefaultSegment(self.segment_data, 0)]
 
 
 class KBootSegmentParser(SegmentParser):
