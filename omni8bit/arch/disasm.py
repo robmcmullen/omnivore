@@ -3,11 +3,11 @@ from profilehooks import profile
 
 from udis import miniasm, cputables
 import udis.udis_fast as udis_fast
+from udis.udis_fast.disasm_info import DisassemblyInfo, fast_disassemble_segment
 
 from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bit_mask, data_style
 
 from memory_map import EmptyMemoryMap
-
 
 def fast_get_entire_style_ranges(segment, split_comments=[data_style], **kwargs):
     style_copy = segment.get_comment_locations(**kwargs)
@@ -48,8 +48,6 @@ def fast_get_entire_style_ranges(segment, split_comments=[data_style], **kwargs)
         base_style = s2
     ranges.append(((first_index, i+1), base_style))
     return ranges
-
-
 
 
 class BaseDisassembler(object):
@@ -117,24 +115,12 @@ class BaseDisassembler(object):
     def add_chunk_processor(self, disassembler_name, style):
         self.fast.add_chunk_processor(disassembler_name, style)
 
-    def print_r(self, r):
-        print ", ".join("((%04x, %04x), %02x)" % (i[0][0], i[0][1], i[1]) for i in r)
-        print
-
     @profile
     def disassemble_segment(self, segment):
         self.segment = segment
         self.start_addr = segment.start_addr
         self.end_addr = self.start_addr + len(segment)
-        pc = self.start_addr
-        matches = segment.get_comment_locations(user=user_bit_mask)
-        r = fast_get_entire_style_ranges(segment, user=user_bit_mask, split_comments=[data_style])
-        #print "FAST:", self.print_r(rf)
-        #r = segment.get_entire_style_ranges(user=user_bit_mask, split_comments=[data_style])
-        #print "SLOW:", self.print_r(r)
-        #print "FAST:", self.print_r(rf)
-        #assert rf == r
-        self.info = self.fast.get_all(segment.rawdata.unindexed_view, pc, 0, r)
+        self.info = fast_disassemble_segment(self.fast, segment)
         return self.info
 
     def get_comments(self, index, line=None):
