@@ -60,9 +60,17 @@ class NewFileGroup(Group):
         for factory in self.application.task_factories:
             if hasattr(factory.factory, 'new_file_text'):
                 task_cls = factory.factory
-                if task_cls.new_file_text:
-                    action = NewFileAction(name=task_cls.new_file_text, task_id=factory.id)
-                    items.append((task_cls.new_file_text, ActionItem(action=action)))
+                template_names = task_cls.new_file_text
+
+                # accept either a text string or a list of text strings that
+                # refer to a filename in the templates directory
+                if template_names:
+                    if isinstance(template_names, basestring):
+                        template_names = [template_names]
+                    log.debug(template_names)
+                    for name in template_names:
+                        action = NewFileAction(name=name, task_id=factory.id)
+                        items.append((name, ActionItem(action=action)))
         items.sort()
         items = [i[1] for i in items]
         return items

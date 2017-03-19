@@ -26,7 +26,7 @@ class HexEditTask(FrameworkTask):
     """ Binary file editor
     """
 
-    new_file_text = "Binary File"
+    new_file_text = ["Blank Atari DOS 2 SD (90K) Image", "Blank Atari DOS 2 DD (180K) Image", "Blank Atari DOS 3 (130K) Image", "Blank Apple DOS 3.3 Image"]
     
     hex_grid_lower_case = Bool(True)
     
