@@ -47,6 +47,7 @@ cdef class DisassemblyInfo:
         self.instructions_raw = self.instructions.data
         self.current = CurrentRow()
         self.fix_offset_labels()
+        wrapper.info = self  # update the info object in the wrapper
 
     def __len__(self):
         return self.num_instructions

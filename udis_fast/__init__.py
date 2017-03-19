@@ -182,6 +182,7 @@ class DisassemblerWrapper(object):
         self.chunk_type_processor = extra_disassemblers
         # default chunk processor is the normal disassembler
         self.chunk_type_processor[0] = self.chunk_processor
+        self.info = None
 
     def add_chunk_processor(self, cpu, chunk_type):
         self.chunk_type_processor[chunk_type] = get_disassembler(cpu, self.fast, self.monolithic)[0]
@@ -227,6 +228,13 @@ class DisassemblerWrapper(object):
                 break
         self.info = disasm_info.DisassemblyInfo(self, pc, num_bytes)
         return self.info
+
+    def find_callers(self, dest_pc):
+        info = self.info
+        records = info.metadata.view(dtype=rawdtype)
+        row_with_dest_pc = np.where(records['dest_pc'] == dest_pc)[0]
+        found = records['pc'][row_with_dest_pc]
+        return found
 
     def trace_disassembly(self, trace_info, start_points):
         info = self.info
