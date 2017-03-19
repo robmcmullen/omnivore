@@ -1,9 +1,52 @@
+import numpy as np
+
 from udis import miniasm, cputables
 import udis.udis_fast as udis_fast
+from udis.udis_fast.disasm_info import DisassemblyInfo, fast_disassemble_segment
 
 from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bit_mask, data_style
 
 from memory_map import EmptyMemoryMap
+
+def fast_get_entire_style_ranges(segment, split_comments=[data_style], **kwargs):
+    style_copy = segment.get_comment_locations(**kwargs)
+    # print "FAST_GET_ENTIRE", style_copy
+    # last = -1
+    # for i in range(len(style_copy)):
+    #     s = style_copy[i]
+    #     if s & comment_bit_mask:
+    #         if last == s:
+    #             print "%04x" % i,
+    #         else:
+    #             print
+    #             print "comment type: %02x" % s,
+    #             last = s
+    # print
+    num_bytes = len(style_copy)
+    if num_bytes < 1:
+        return []
+    first_index = 0
+    first_style = style_copy[0]
+    base_style = style_copy[0] & user_bit_mask
+    ranges = []
+    for i in range(1, num_bytes):
+        s = style_copy[i]
+        s2 = s & user_bit_mask
+        # print "%04x" % i, s, s2,
+        if s & comment_bit_mask:
+            if s2 == base_style and s2 not in split_comments:
+                # print "same w/skippable comment"
+                continue
+        elif s2 == base_style: # or s == first_style:
+            # print "same"
+            continue
+        ranges.append(((first_index, i), base_style))
+        # print "last\nbreak here -> %x:%x = %s" % ((ranges[-1][0][0], ranges[-1][0][1], ranges[-1][1]))
+        first_index = i
+        first_style = s
+        base_style = s2
+    ranges.append(((first_index, i+1), base_style))
+    return ranges
 
 
 class BaseDisassembler(object):
@@ -75,9 +118,7 @@ class BaseDisassembler(object):
         self.segment = segment
         self.start_addr = segment.start_addr
         self.end_addr = self.start_addr + len(segment)
-        pc = self.start_addr
-        r = segment.get_entire_style_ranges(user=user_bit_mask, split_comments=[data_style])
-        self.info = self.fast.get_all(segment.rawdata.unindexed_view, pc, 0, r)
+        self.info = fast_disassemble_segment(self.fast, segment)
         return self.info
 
     def get_comments(self, index, line=None):

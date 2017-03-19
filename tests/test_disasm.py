@@ -28,7 +28,7 @@ class TestFastDisasm(object):
         self.disasm.fast.chunk_type_processor[64] = self.disasm.fast.chunk_processor
         self.editor.find_segment("02: robots I")
         s = self.editor.segment
-        r = s.get_entire_style_ranges(user=user_bit_mask)
+        r = fast_get_entire_style_ranges(s, user=user_bit_mask, split_comments=[])
         print r
         assert r == [
         ((0, 497), 0),
@@ -68,7 +68,7 @@ class TestFastDisasmMulti(object):
     def test_ranges(self):
         self.editor.find_segment("boot code at $0800")
         s = self.editor.segment
-        r = s.get_entire_style_ranges(user=user_bit_mask)
+        r = fast_get_entire_style_ranges(s, user=user_bit_mask, split_comments=[])
         print r
         assert r == [((0, 238), 0),
            ((238, 268), 2),
@@ -104,7 +104,7 @@ class TestDisassemblerChange(object):
 
     def test_simple(self):
         s = self.get_break(8)
-        r = s.get_entire_style_ranges(user=user_bit_mask)
+        r = fast_get_entire_style_ranges(s, user=user_bit_mask, split_comments=[])
         print r
         info = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
         inst = info.instructions
@@ -116,7 +116,7 @@ class TestDisassemblerChange(object):
         assert info[10].instruction.startswith("CALL")
         assert info[11].instruction.startswith("CALL")
         s = self.get_break(9)
-        r = s.get_entire_style_ranges(user=user_bit_mask)
+        r = fast_get_entire_style_ranges(s, user=user_bit_mask)
         info = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
         inst = info.instructions
         for i in range(info.num_instructions):
@@ -145,7 +145,7 @@ class TestChunkBreak(object):
     def test_simple(self):
         self.editor.find_segment("chunk type changes")
         s = self.editor.segment
-        r = s.get_entire_style_ranges(user=user_bit_mask)
+        r = fast_get_entire_style_ranges(s, user=user_bit_mask)
         print r
         info = self.disasm.disassemble_segment(s)
         inst = info.instructions
@@ -185,8 +185,53 @@ class TestChunkBreak(object):
         text = self.disasm.get_atasm_lst_text()
         print "\n".join(text)
 
+def print_r(r):
+    print r
+    print ", ".join("((0x%04x, 0x%04x), 0x%x)" % (i[0][0], i[0][1], i[1]) for i in r)
+    print
+
+class TestSmall(object):
+    def get_disasm(self):
+        disasm = Basic6502Disassembler()
+        disasm.add_chunk_processor("data", 1)
+        disasm.add_chunk_processor("antic_dl", 2)
+        disasm.add_chunk_processor("jumpman_level", 3)
+        disasm.add_chunk_processor("jumpman_harvest", 4)
+        return disasm
+
+    def load(self, path, segment="All"):
+        guess = FileGuess(path)
+        self.editor.load(guess)
+        self.editor.find_segment("All")
+        return self.editor.segment
+
+    def setup(self):
+        self.disasm = self.get_disasm()
+        self.editor = MockHexEditor()
+
+    def test_simple(self):
+        tests = [
+            ("../test_data/style32.dat", {'user': user_bit_mask}, [data_style],
+                [((0x0000, 0x000b), 0), ((0x000b, 0x000c), 1), ((0x000c, 0x000d), 1), ((0x000d, 0x000e), 1), ((0x000e, 0x000f), 0), ((0x000f, 0x0012), 1), ((0x0012, 0x0014), 0), ((0x0014, 0x0017), 1), ((0x0017, 0x0018), 0), ((0x0018, 0x001b), 1), ((0x001b, 0x001d), 1), ((0x001d, 0x001e), 1), ((0x001e, 0x001f), 1), ((0x001f, 0x0020), 0x0)]
+                ),
+            ("../test_data/style32-comment-group.dat", {'user': user_bit_mask}, [data_style], "same as above"
+                ),
+
+        ]
+        last_expected = None
+        for path, kwargs, split_comments, expected in tests:
+            if expected == "same as above":
+                expected = last_expected
+            s = self.load("../test_data/style32.dat")
+            r = fast_get_entire_style_ranges(s, user=user_bit_mask, split_comments=[data_style])
+            print_r(r)
+            print_r(expected)
+
+            assert r == expected
+            last_expected = expected
+
 
 if __name__ == "__main__":
-    t = TestChunkBreak()
+    t = TestSmall()
     t.setup()
-    t.test_recompile()
+    t.test_simple()

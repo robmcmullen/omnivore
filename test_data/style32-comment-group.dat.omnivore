@@ -1,0 +1,73 @@
+# omnivore 0.14.90 extra_metadata=v1
+{
+    "__traits_version__": "4.6.0.dev423", 
+    "antic_color_registers": [
+        4,
+        30,
+        68,
+        213,
+        40,
+        202,
+        148,
+        70,
+        0
+    ], 
+    "antic_font_data": {
+        "char_h": 8,
+        "char_w": 8,
+        "data": {"py/b64": "AAAAAAAAAAAAGBgYGAAYAABmZmYAAAAAAGb/Zmb/ZgAYPmA8BnwYAABmbBgwZkYAHDYcOG9mOwAA\nGBgYAAAAAAAOHBgYHA4AAHA4GBg4cAAAZjz/PGYAAAAYGH4YGAAAAAAAAAAYGDAAAAB+AAAAAAAA\nAAAAGBgAAAYMGDBgQAAAPGZudmY8AAAYOBgYGH4AADxmDBgwfgAAfgwYDGY8AAAMHDxsfgwAAH5g\nfAZmPAAAPGB8ZmY8AAB+BgwYMDAAADxmPGZmPAAAPGY+Bgw4AAAAGBgAGBgAAAAYGAAYGDAGDBgw\nGAwGAAAAfgAAfgAAYDAYDBgwYAAAPGYMGAAYAAA8Zm5uYD4AABg8ZmZ+ZgAAfGZ8ZmZ8AAA8ZmBg\nZjwAAHhsZmZseAAAfmB8YGB+AAB+YHxgYGAAAD5gYG5mPgAAZmZ+ZmZmAAB+GBgYGH4AAAYGBgZm\nPAAAZmx4eGxmAABgYGBgYH4AAGN3f2tjYwAAZnZ+fm5mAAA8ZmZmZjwAAHxmZnxgYAAAPGZmZmw2\nAAB8ZmZ8bGYAADxgPAYGPAAAfhgYGBgYAABmZmZmZn4AAGZmZmY8GAAAY2Nrf3djAABmZjw8ZmYA\nAGZmPBgYGAAAfgwYMGB+AAAeGBgYGB4AAEBgMBgMBgAAeBgYGBh4AAAIHDZjAAAAAAAAAAAA/wAA\nNn9/PhwIABgYGB8fGBgYAwMDAwMDAwMYGBj4+AAAABgYGPj4GBgYAAAA+PgYGBgDBw4cOHDgwMDg\ncDgcDgcDAQMHDx8/f/8AAAAADw8PD4DA4PD4/P7/Dw8PDwAAAADw8PDwAAAAAP//AAAAAAAAAAAA\nAAAA//8AAAAA8PDw8AAcHHd3CBwAAAAAHx8YGBgAAAD//wAAABgYGP//GBgYAAA8fn5+PAAAAAAA\n/////8DAwMDAwMDAAAAA//8YGBgYGBj//wAAAPDw8PDw8PDwGBgYHx8AAAB4YHhgfhgeAAAYPH4Y\nGBgAABgYGH48GAAAGDB+MBgAAAAYDH4MGAAAABg8fn48GAAAADwGPmY+AABgYHxmZnwAAAA8YGBg\nPAAABgY+ZmY+AAAAPGZ+YDwAAA4YPhgYGAAAAD5mZj4GfABgYHxmZmYAABgAOBgYPAAABgAGBgYG\nPABgYGx4bGYAADgYGBgYPAAAAGZ/f2tjAAAAfGZmZmYAAAA8ZmZmPAAAAHxmZnxgYAAAPmZmPgYG\nAAB8ZmBgYAAAAD5gPAZ8AAAYfhgYGA4AAABmZmZmPgAAAGZmZjwYAAAAY2t/PjYAAABmPBg8ZgAA\nAGZmZj4MeAAAfgwYMH4AABg8fn4YPAAYGBgYGBgYGAB+eHxuZgYACBg4eDgYCAAQGBweHBgQAA==\n"},
+        "name": "8x8 Atari Default Font"
+    }, 
+    "baseline document": "file:///noaa/maproom-deps/omnivore/test_data/style32-comment-blocks.dat", 
+    "bitmap width": 1, 
+    "bitmap zoom": 5, 
+    "bitmap_renderer": 0, 
+    "color_standard": 0, 
+    "comment ranges": [
+        [2, 5],
+        [7, 10],
+        [11, 14],
+        [24, 28],
+        [29, 31]
+    ], 
+    "comments": [
+        [2, "test02"],
+        [3, "test03"],
+        [4, "test04"],
+        [7, "test07"],
+        [8, "test08"],
+        [9, "test09"],
+        [11, "test0b"],
+        [12, "test0c"],
+        [13, "test0d"],
+        [24, "test18"],
+        [27, "test1b"],
+        [29, "test1d"],
+        [30, "test1e"]
+    ], 
+    "data ranges": [
+        [11, 14],
+        [15, 18],
+        [20, 23],
+        [24, 31]
+    ], 
+    "diff highlight": false, 
+    "disassembler": 0, 
+    "document uuid": "11035846-5dcb-49db-924f-3ac56c1ab37a", 
+    "font_mapping": 0, 
+    "font_renderer": 0, 
+    "map width": 16, 
+    "map zoom": 2, 
+    "memory_map": 0, 
+    "mime_prefix": "application/octet-stream", 
+    "name": "Generic 6502", 
+    "page_renderer": 0, 
+    "segment view params": {}, 
+    "serialized user segments": [], 
+    "user style 1": [
+        [11, 14],
+        [15, 18],
+        [20, 23],
+        [24, 31]
+    ]
+}
