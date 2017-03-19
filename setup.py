@@ -23,8 +23,8 @@ ext_modules = [
               sources = ["traits/ctraits.c"],
               extra_compile_args = ["-DNDEBUG=1", "-O3" ]#, '-DPy_LIMITED_API'],
               ),
-    Extension("omni8bit.arch.antic_speedups",
-              sources=["omni8bit/arch/antic_speedups.c"],
+    Extension("omnivore8bit.arch.antic_speedups",
+              sources=["omnivore8bit/arch/antic_speedups.c"],
               )
     ]
 

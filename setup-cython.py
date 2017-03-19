@@ -24,8 +24,8 @@ cmdclass = {
     }
 
 ext_modules = [
-    Extension("omni8bit.arch.antic_speedups",
-              sources=["omni8bit/arch/antic_speedups.pyx"],
+    Extension("omnivore8bit.arch.antic_speedups",
+              sources=["omnivore8bit/arch/antic_speedups.pyx"],
               include_dirs=[numpy.get_include()],
               )
     ]

@@ -1,6 +1,6 @@
 import os
 
-from omni8bit.arch.disasm import parse_antic_dl, get_antic_dl
+from omnivore8bit.arch.disasm import parse_antic_dl, get_antic_dl
 
 
 class TestDisplayList(object):

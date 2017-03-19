@@ -56,11 +56,11 @@ def main(argv):
         argv.pop(i)
         sys.settrace(trace_calls)
 
-    from omni8bit.plugin import OmnivoreEditorPlugin
+    from omnivore8bit.plugin import OmnivoreEditorPlugin
     plugins = [OmnivoreEditorPlugin()]
     
-    import omni8bit.file_type
-    plugins.extend(omni8bit.file_type.plugins)
+    import omnivore8bit.file_type
+    plugins.extend(omnivore8bit.file_type.plugins)
 
     # Crypto is separated to make it easy to make it optional for those
     # framework users who don't want the extra dependencies
@@ -68,7 +68,7 @@ def main(argv):
     plugins.extend(omnivore_extra.crypto.file_type.plugins)
 
     from omnivore.framework.application import run
-    from omni8bit.document import SegmentedDocument
+    from omnivore8bit.document import SegmentedDocument
     run(plugins=plugins, egg_path=EGG_PATH, document_class=SegmentedDocument)
 
     logging.shutdown()

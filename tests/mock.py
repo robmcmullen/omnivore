@@ -31,8 +31,8 @@ from traits.api import HasTraits, Str, Event
 import numpy as np
 from numpy.testing import assert_almost_equal
 
-from omni8bit.document import SegmentedDocument
-from omni8bit.hex_edit.hex_editor import HexEditor
+from omnivore8bit.document import SegmentedDocument
+from omnivore8bit.hex_edit.hex_editor import HexEditor
 
 def null(self, *args, **kwargs):
     pass

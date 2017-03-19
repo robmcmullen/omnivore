@@ -7,7 +7,7 @@ import pytest
 from mock import MockHexEditor
 
 from omnivore.utils.file_guess import FileGuess
-from omni8bit.arch.disasm import *
+from omnivore8bit.arch.disasm import *
 
 from atrcopy import SegmentData, DefaultSegment
 

@@ -9,7 +9,7 @@ from mock import MockHexEditor
 
 from omnivore.utils.file_guess import FileGuess
 from omnivore.utils.sortutil import ranges_to_indexes
-from omni8bit.hex_edit.commands import PasteCommand
+from omnivore8bit.hex_edit.commands import PasteCommand
 
 from atrcopy import SegmentData, DefaultSegment
 

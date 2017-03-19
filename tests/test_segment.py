@@ -7,7 +7,7 @@ import pytest
 from mock import MockHexEditor
 
 from omnivore.utils.file_guess import FileGuess
-from omni8bit.arch.disasm import Basic6502Disassembler
+from omnivore8bit.arch.disasm import Basic6502Disassembler
 
 from atrcopy import SegmentData, DefaultSegment, user_bit_mask
 
