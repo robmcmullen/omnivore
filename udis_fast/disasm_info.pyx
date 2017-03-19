@@ -152,7 +152,7 @@ def fast_disassemble_segment(disassembly_wrapper, segment, split_comments=[data_
         chunk_type = base_style
         # print "last\nbreak here -> %x:%x = %s" % (start_index, end_index, chunk_type)
         processor = disassembly_wrapper.chunk_type_processor.get(chunk_type, disassembly_wrapper.chunk_processor)
-        processor(disassembly_wrapper.metadata_wrapper, segment.rawdata.unindexed_view, pc + start_index, pc + end_index, start_index, disassembly_wrapper.mnemonic_lower , disassembly_wrapper.hex_lower)
+        processor(disassembly_wrapper.metadata_wrapper, segment.rawdata.unindexed_data, pc + start_index, pc + end_index, start_index, disassembly_wrapper.mnemonic_lower , disassembly_wrapper.hex_lower)
 
         first_index = i
         base_style = s2
@@ -162,6 +162,6 @@ def fast_disassemble_segment(disassembly_wrapper, segment, split_comments=[data_
     end_index = i + 1
     chunk_type = base_style
     processor = disassembly_wrapper.chunk_type_processor.get(chunk_type, disassembly_wrapper.chunk_processor)
-    processor(disassembly_wrapper.metadata_wrapper, segment.rawdata.unindexed_view, pc + start_index, pc + end_index, start_index, disassembly_wrapper.mnemonic_lower , disassembly_wrapper.hex_lower)
+    processor(disassembly_wrapper.metadata_wrapper, segment.rawdata.unindexed_data, pc + start_index, pc + end_index, start_index, disassembly_wrapper.mnemonic_lower , disassembly_wrapper.hex_lower)
 
     return DisassemblyInfo(disassembly_wrapper, pc, num_bytes)
