@@ -173,10 +173,16 @@ class SegmentData(object):
         return self.style
 
     @property
-    def unindexed_view(self):
+    def unindexed_data(self):
         if self.is_indexed:
             return self.data.unindexed
         return self.data
+
+    @property
+    def unindexed_style(self):
+        if self.is_indexed:
+            return self.style.unindexed
+        return self.style
     
     def byte_bounds_offset(self):
         """Return start and end offsets of this segment's data into the
@@ -505,7 +511,7 @@ class DefaultSegment(object):
         comment_indexes = np.asarray(self.rawdata.extra.comments.keys(), dtype=np.uint32)
         #print comment_indexes
         r.style_base[comment_indexes] |= comment_bit_mask
-        return r.style
+        return r.unindexed_style[:]
 
     def get_entire_style_ranges(self, split_comments=None, **kwargs):
         """Find sections of the segment that have the same style value.
