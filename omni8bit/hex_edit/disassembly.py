@@ -74,8 +74,6 @@ class DisassemblyTable(ByteGridTable):
         self.disassemble_from(0)
     
     def disassemble_from(self, index, refresh=False):
-        import traceback
-        traceback.print_stack()
         self.lines = None
         info = self.disassembler.disassemble_segment(self.segment)
         self.index_to_row = info.index_to_row

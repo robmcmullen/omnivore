@@ -1,5 +1,4 @@
 import numpy as np
-from profilehooks import profile
 
 from udis import miniasm, cputables
 import udis.udis_fast as udis_fast
@@ -115,7 +114,6 @@ class BaseDisassembler(object):
     def add_chunk_processor(self, disassembler_name, style):
         self.fast.add_chunk_processor(disassembler_name, style)
 
-    @profile
     def disassemble_segment(self, segment):
         self.segment = segment
         self.start_addr = segment.start_addr
