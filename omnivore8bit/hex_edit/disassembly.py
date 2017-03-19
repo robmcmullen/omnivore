@@ -120,7 +120,10 @@ class DisassemblyTable(ByteGridTable):
         try:
             row = self.index_to_row[index]
         except:
-            row = self.index_to_row[-1]
+            try:
+                row = self.index_to_row[-1]
+            except IndexError:
+                return 0, 0
         return row, col
 
     def get_next_cursor_pos(self, row, col):
@@ -205,7 +208,7 @@ class DisassemblyTable(ByteGridTable):
         return "%04X" % addr
 
     def GetRowLabelValue(self, row):
-        if self.lines is not None:
+        if self.get_data_rows() > 0:
             line = self.lines[row]
             return self.disassembler.format_row_label(line)
         return "0000"
@@ -400,6 +403,8 @@ class DisassemblyPanel(ByteGrid):
         return goto_actions
     
     def get_goto_actions(self, r, c):
+        if self.table.get_data_rows() == 0:
+            return []
         actions = []
         addr_dest = self.table.disassembler.get_addr_dest(r)
         action = self.editor.get_goto_action_in_segment(addr_dest)
