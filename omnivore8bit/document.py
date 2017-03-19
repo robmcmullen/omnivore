@@ -5,7 +5,7 @@ from omnivore.framework.document import BaseDocument, TraitNumpyConverter
 # Enthought library imports.
 from traits.api import Trait, Any, List, Event, Dict
 
-from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, InvalidSegmentParser
+from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, InvalidSegmentParser, iter_parsers
 
 import logging
 log = logging.getLogger(__name__)
@@ -39,9 +39,9 @@ class SegmentedDocument(BaseDocument):
 
     def parse_segments(self, parser_list):
         parser_list.append(DefaultSegmentParser)
+        r = SegmentData(self.bytes, self.style)
         for parser in parser_list:
             try:
-                r = SegmentData(self.bytes, self.style)
                 s = parser(r)
                 break
             except InvalidSegmentParser:
@@ -53,6 +53,13 @@ class SegmentedDocument(BaseDocument):
         self.segments = []
         self.segments.extend(parser.segments)
         self.segments.extend(self.user_segments)
+
+    def parse_sub_segments(self, segment):
+        mime, parser = iter_parsers(segment.rawdata)
+        if parser is not None:
+            index = self.find_segment_index(segment)
+            self.segments[index + 1:index + 1] = parser.segments[1:] # Skip the "All" segment as it would just be a duplicate of the expanded segment
+        return parser
     
     @property
     def global_segment(self):

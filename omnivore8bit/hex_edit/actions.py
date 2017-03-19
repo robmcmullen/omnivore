@@ -493,6 +493,19 @@ class UseSegmentRadioAction(UseSegmentAction):
             self.checked = state
 
 
+class ParseSubSegmentsAction(EditorAction):
+    name = 'Expand Segment'
+    
+    segment_number = Int
+    
+    def perform(self, event):
+        e = self.active_editor
+        s = e.document.segments[self.segment_number]
+        parser = e.document.parse_sub_segments(s)
+        if parser is not None:
+            e.added_segment(s)
+
+
 class SelectSegmentInAllAction(EditorAction):
     name = 'Select This Segment in All'
     
