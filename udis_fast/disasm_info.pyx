@@ -104,3 +104,64 @@ cdef class DisassemblyInfo:
                 #if labels[pc + i] == 0:
                 #    print "  disasm_info: added label at %04x" % (pc + i)
                 labels[pc + i] = 1
+
+cdef int data_style = 1
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def fast_disassemble_segment(disassembly_wrapper, segment, split_comments=[data_style]):
+    cdef int i
+    cdef np.uint8_t s, s2
+    cdef int user_bit_mask = 0x7
+    cdef int comment_bit_mask = 0x40
+    cdef np.uint8_t c_split_comments[8]
+    for i in range(8):
+        c_split_comments[i] = 1 if i in split_comments else 0
+
+    cdef np.ndarray style_copy = segment.get_comment_locations(user=user_bit_mask)
+    cdef np.uint8_t *c_style = <np.uint8_t *>style_copy.data
+    cdef num_bytes = min(len(style_copy), disassembly_wrapper.max_bytes)
+
+    cdef int start_addr = segment.start_addr
+    cdef int end_addr = start_addr + len(segment)
+    cdef int pc = start_addr
+
+    disassembly_wrapper.clear()
+    if num_bytes < 1:
+        return DisassemblyInfo(disassembly_wrapper, pc, 0)
+    cdef int first_index = 0
+    cdef int base_style = c_style[0] & user_bit_mask
+    cdef int start_index, end_index, chunk_type
+    # print "CYTHON FAST_GET_ENTIRE", style_copy
+    ranges = []
+    for i in range(1, num_bytes):
+        s = style_copy[i]
+        s2 = s & user_bit_mask
+        # print "%04x" % i, s, s2,
+        if s & comment_bit_mask:
+            if s2 == base_style and not c_split_comments[s2]:
+                # print "same w/skippable comment"
+                continue
+        elif s2 == base_style:
+            # print "same"
+            continue
+
+        # process chuck here:
+        start_index = first_index
+        end_index = i
+        chunk_type = base_style
+        # print "last\nbreak here -> %x:%x = %s" % (start_index, end_index, chunk_type)
+        processor = disassembly_wrapper.chunk_type_processor.get(chunk_type, disassembly_wrapper.chunk_processor)
+        processor(disassembly_wrapper.metadata_wrapper, segment.rawdata.unindexed_view, pc + start_index, pc + end_index, start_index, disassembly_wrapper.mnemonic_lower , disassembly_wrapper.hex_lower)
+
+        first_index = i
+        base_style = s2
+
+    # process last chunk
+    start_index = first_index
+    end_index = i + 1
+    chunk_type = base_style
+    processor = disassembly_wrapper.chunk_type_processor.get(chunk_type, disassembly_wrapper.chunk_processor)
+    processor(disassembly_wrapper.metadata_wrapper, segment.rawdata.unindexed_view, pc + start_index, pc + end_index, start_index, disassembly_wrapper.mnemonic_lower , disassembly_wrapper.hex_lower)
+
+    return DisassemblyInfo(disassembly_wrapper, pc, num_bytes)
