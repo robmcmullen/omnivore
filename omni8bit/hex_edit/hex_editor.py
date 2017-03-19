@@ -349,6 +349,11 @@ class HexEditor(FrameworkEditor):
         self.update_segments_ui()
     
     def update_segments_ui(self):
+        # Note: via profiling, it turns out that this is a very heavyweight
+        # call, producing hundreds of thousands of trait notifier events. This
+        # should only be called when the number of segments or document has
+        # changed. If only the segment being viewed is changed, just set the
+        # task.segment_selected trait
         self.segment_list.set_segments(self.document.segments, self.segment_number)
         if self.segment_parser is not None:
             self.segment_parser_label = self.segment_parser.menu_name
@@ -482,10 +487,10 @@ class HexEditor(FrameworkEditor):
             index = 0
         self.segment_number = index
         self.segment_parser = self.document.segment_parser
-        self.update_segments_ui()
         self.segment = self.document.segments[index]
         self.view_segment_set_width(self.segment)
         self.select_none(refresh=False)
+        self.task.segment_selected = self.segment_number
     
     def set_segment_parser(self, parser):
         self.find_segment_parser([parser])
@@ -542,7 +547,7 @@ class HexEditor(FrameworkEditor):
             self.reconfigure_panes()
             self.show_trace()
             self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
-        self.update_segments_ui()
+        self.task.segment_selected = self.segment_number
     
     def get_extra_segment_savers(self, segment):
         savers = []
