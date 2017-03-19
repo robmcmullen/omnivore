@@ -758,6 +758,7 @@ class FrameworkEditor(Editor):
         """
         d = self.document
         visible_range = False
+        do_refresh = flags.refresh_needed
         
         if flags.cursor_index is not None:
             self.cursor_index = self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = flags.cursor_index
@@ -780,15 +781,22 @@ class FrameworkEditor(Editor):
         
         if flags.byte_values_changed:
             d.byte_values_changed = True  # also handles style changes and refresh
+            do_refresh = False
         elif flags.byte_style_changed:
             d.byte_style_changed = True  # also handles refresh
-        elif flags.refresh_needed:
-            self.refresh_panes()
+            do_refresh = False
         
         if visible_range:
-            # Only update the range on the current editor, not other views which
-            # are allowed to remain where they are
+            # Only update the range on the current editor, not other views
+            # which are allowed to remain where they are
             self.ensure_visible(self.anchor_start_index, self.anchor_end_index)
+
+            # Prevent a double refresh since ensure_visible does a refresh as a
+            # side effect.
+            do_refresh = False
+
+        if do_refresh:
+            self.refresh_panes()
             
     def popup_context_menu_from_commands(self, window, commands):
         """Popup a simple context menu with menu items defined by commands.
