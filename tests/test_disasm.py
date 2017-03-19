@@ -42,9 +42,9 @@ class TestFastDisasm(object):
         ((1710, 1792), 0),
         ((1792, 1954), 1),
         ((1954, 2048), 0)]
-        info_all = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0)
+        info_all = self.fast.get_all(s.rawdata.unindexed_data, s.start_addr, 0)
         #print info_all.instructions[0:20]
-        info_sections = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
+        info_sections = self.fast.get_all(s.rawdata.unindexed_data, s.start_addr, 0, r)
         # for i in range(info_sections.num_instructions):
         #     print info_sections[i].instruction
         assert len(info_all.instructions) == len(info_sections.instructions)
@@ -76,7 +76,7 @@ class TestFastDisasmMulti(object):
            ((332, 464), 1),
            ((464, 512), 0)]
 
-        info_sections = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
+        info_sections = self.fast.get_all(s.rawdata.unindexed_data, s.start_addr, 0, r)
         #print info_sections.instructions
         
 class TestDisassemblerChange(object):
@@ -106,7 +106,7 @@ class TestDisassemblerChange(object):
         s = self.get_break(8)
         r = fast_get_entire_style_ranges(s, user=user_bit_mask, split_comments=[])
         print r
-        info = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
+        info = self.fast.get_all(s.rawdata.unindexed_data, s.start_addr, 0, r)
         inst = info.instructions
         for i in range(info.num_instructions):
             print info[i].instruction
@@ -117,7 +117,7 @@ class TestDisassemblerChange(object):
         assert info[11].instruction.startswith("CALL")
         s = self.get_break(9)
         r = fast_get_entire_style_ranges(s, user=user_bit_mask)
-        info = self.fast.get_all(s.rawdata.unindexed_view, s.start_addr, 0, r)
+        info = self.fast.get_all(s.rawdata.unindexed_data, s.start_addr, 0, r)
         inst = info.instructions
         for i in range(info.num_instructions):
             print info[i].instruction
