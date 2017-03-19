@@ -521,6 +521,8 @@ class DefaultSegment(object):
         style_bits = self.get_style_bits(**kwargs)
         matches = self.get_comment_locations(**kwargs)
         groups = np.split(matches, np.where(np.diff(matches) != 0)[0] + 1)
+        if split_comments is None:
+            split_comments = []
         # print groups
         # split into groups with the same numbers
         ranges = []
