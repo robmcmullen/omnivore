@@ -381,6 +381,23 @@ class DisassemblyPanel(ByteGrid):
         else:
             matches = [(t.pc - s, t.pc - s + t.num_bytes) for t in lines if search_text in t.instruction]
         return matches
+
+    def get_goto_caller_actions(self, addr_called):
+        goto_actions = []
+        callers = self.table.disassembler.fast.find_callers(addr_called)
+        if len(callers) > 0:
+            s = self.table.segment
+            caller_actions = ["Go to Caller..."]
+            for pc in callers:
+                if self.table.is_pc_valid(pc):
+                    msg = "$%04x" % pc
+                    addr_index = pc - s.start_addr
+                    action = GotoIndexAction(name=msg, enabled=True, segment_num=self.editor.segment_number, addr_index=addr_index, task=self.task, active_editor=self.editor)
+                    caller_actions.append(action)
+            goto_actions.append(caller_actions)
+        else:
+            goto_actions.append(GotoIndexAction(name="No callers of $%04x" % addr_called, enabled=False, task=self.task))
+        return goto_actions
     
     def get_goto_actions(self, r, c):
         actions = []
@@ -388,8 +405,10 @@ class DisassemblyPanel(ByteGrid):
         action = self.editor.get_goto_action_in_segment(addr_dest)
         if action:
             actions.append(action)
-        actions.extend(self.editor.get_goto_actions_other_segments(addr_dest))
         index, _ = self.table.get_index_range(r, c)
+        addr_called = index + self.table.start_addr
+        actions.extend(self.get_goto_caller_actions(addr_called))
+        actions.extend(self.editor.get_goto_actions_other_segments(addr_dest))
         actions.extend(self.editor.get_goto_actions_same_byte(index))
         return actions
     
