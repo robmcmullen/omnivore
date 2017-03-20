@@ -494,7 +494,7 @@ class UseSegmentRadioAction(UseSegmentAction):
 
 
 class ParseSubSegmentsAction(EditorAction):
-    name = 'Expand Segment'
+    name = 'Show Sub-Segments'
     
     segment_number = Int
     
