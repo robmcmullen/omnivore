@@ -154,7 +154,8 @@ class RevertAction(EditorAction):
             return
         elif result == YES:
             guess = FileGuess(self.active_editor.document.metadata.uri)
-            self.active_editor.load(guess)
+            document = event.task.window.application.guess_document(guess)
+            self.active_editor.load(document)
 
 class PageSetupAction(Action):
     name = 'Page Setup...'

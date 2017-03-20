@@ -289,10 +289,16 @@ class FrameworkApplication(TasksApplication):
 
     #### API
 
-    def load_file(self, uri, active_task=None, task_id="", in_current_window=False, **kwargs):
+    def guess_document(self, guess):
         service = self.get_service("omnivore.file_type.i_file_recognizer.IFileRecognizerDriver")
         log.debug("SERVICE!!! %s" % service)
         
+        # Attempt to classify the guess using the file recognizer service
+        document = service.recognize(guess)
+        log.debug("created document %s (mime=%s)" % (document, document.metadata.mime))
+        return document
+        
+    def load_file(self, uri, active_task=None, task_id="", in_current_window=False, **kwargs):
         from omnivore.utils.file_guess import FileGuess
         # The FileGuess loads the first part of the file and tries to identify it.
         try:
@@ -309,8 +315,7 @@ class FrameworkApplication(TasksApplication):
             return
         
         # Attempt to classify the guess using the file recognizer service
-        document = service.recognize(guess)
-        log.debug("created document %s (mime=%s)" % (document, document.metadata.mime))
+        document = self.guess_document(guess)
         
         # Short circuit: if the file can be edited by the active task, use that!
         if active_task is not None and active_task.can_edit(document):

@@ -133,6 +133,7 @@ class FrameworkEditor(Editor):
         if source is None:
             doc = self.task.window.application.document_class()
         elif hasattr(source, 'document_id'):
+            self.init_extra_metadata(source)
             self.view_document(source)
         else:
             metadata = source.get_metadata()
