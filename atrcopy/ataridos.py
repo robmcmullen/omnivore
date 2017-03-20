@@ -577,6 +577,7 @@ class AtariDosDiskImage(DiskImageBase):
         addr = 0
         start, count = self.get_contiguous_sectors(self.first_vtoc, self.num_vtoc)
         segment = RawSectorsSegment(r[start:start+count], self.first_vtoc, self.num_vtoc, count, 128, 3, self.header.sector_size, name="VTOC")
+        segment.style[:] = get_style_bits(data=True)
         segments.append(segment)
         if self.vtoc2 > 0:
             start, count = self.get_contiguous_sectors(self.vtoc2, 1)
@@ -590,6 +591,7 @@ class AtariDosDiskImage(DiskImageBase):
         addr = 0
         start, count = self.get_contiguous_sectors(361, 8)
         segment = RawSectorsSegment(r[start:start+count], 361, 8, count, 128, 3, self.header.sector_size, name="Directory")
+        segment.style[:] = get_style_bits(data=True)
         segments.append(segment)
         return segments
     

@@ -3,7 +3,7 @@ import numpy as np
 from errors import *
 from diskimages import BaseHeader, DiskImageBase
 from utils import Directory, VTOC, WriteableSector, BaseSectorList, Dirent
-from segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver
+from segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver, get_style_bits
 
 import logging
 log = logging.getLogger(__name__)
@@ -495,6 +495,7 @@ class Dos33DiskImage(DiskImageBase):
         addr = 0
         start, count = self.get_contiguous_sectors(self.header.first_vtoc, 1)
         segment = RawTrackSectorSegment(r[start:start+count], self.header.first_vtoc, 1, count, 0, 0, self.header.sector_size, name="VTOC")
+        segment.style[:] = get_style_bits(data=True)
         segments.append(segment)
         return segments
     
@@ -511,6 +512,7 @@ class Dos33DiskImage(DiskImageBase):
             sector = self.header.sector_from_track(raw[1], raw[2])
         raw = self.rawdata.get_indexed(byte_order)
         segment = DefaultSegment(raw, name="Catalog")
+        segment.style[:] = get_style_bits(data=True)
         segments.append(segment)
         return segments
 
