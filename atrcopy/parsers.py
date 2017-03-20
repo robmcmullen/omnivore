@@ -26,7 +26,7 @@ class SegmentParser(object):
 
     def parse(self):
         r = self.segment_data
-        self.segments.append(DefaultSegment(r, 0))
+        self.segments.append(DefaultSegment(r, 0, name=self.menu_name))
         try:
             self.image = self.get_image(r)
             self.check_image()
