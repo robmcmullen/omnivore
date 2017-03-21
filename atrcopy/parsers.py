@@ -146,6 +146,10 @@ mime_parsers = {
     "application/vnd.atari8bit.xex": [
         XexSegmentParser,
         ],
+    "application/vnd.atari8bit.cart": [
+        ],
+    "application/vnd.atari8bit.5200_cart": [
+        ],
     "application/vnd.mame_rom": [
         MameZipParser,
         ],
@@ -158,7 +162,8 @@ mime_parsers = {
 mime_parse_order = [
     "application/vnd.atari8bit.atr",
     "application/vnd.atari8bit.xex",
-    "CARTS", # Will get filled in below
+    "application/vnd.atari8bit.cart",
+    "application/vnd.atari8bit.5200_cart",
     "application/vnd.mame_rom",
     "application/vnd.apple2.dsk",
     ]
@@ -166,30 +171,24 @@ mime_parse_order = [
 pretty_mime = {
     "application/vnd.atari8bit.atr": "Atari 8-bit Disk Image",
     "application/vnd.atari8bit.xex": "Atari 8-bit Executable",
+    "application/vnd.atari8bit.cart": "Atari 8-bit Cartridge",
+    "application/vnd.atari8bit.5200_cart":"Atari 5200 Cartridge",
     "application/vnd.mame_rom": "MAME",
     "application/vnd.apple2.dsk": "Apple ][ Disk Image",
 }
 
 grouped_carts = get_known_carts()
 sizes = sorted(grouped_carts.keys())
-cart_order = []
 for k in sizes:
-    if k > 128:
-        key = "application/vnd.atari8bit.large_cart"
-        pretty = "Atari 8-bit Large Cartridge"
-    else:
-        key = "application/vnd.atari8bit.%dkb_cart" % k
-        pretty = "Atari 8-bit %dKB Cartridge" % k
-    if key not in mime_parsers:
-        cart_order.append(key)
-        pretty_mime[key] = pretty
-        mime_parsers[key] = []
     for c in grouped_carts[k]:
         t = c[0]
-        kclass = type("AtariCartSegmentParser%d" % t, (AtariCartSegmentParser,), {'cart_type': t, 'cart_info': c, 'menu_name': "%s Cartridge" % c[1]})
+        name = c[1]
+        kclass = type("AtariCartSegmentParser%d" % t, (AtariCartSegmentParser,), {'cart_type': t, 'cart_info': c, 'menu_name': "%s Cartridge" % name})
+        if "5200" in name:
+            key = "application/vnd.atari8bit.5200_cart"
+        else:
+            key = "application/vnd.atari8bit.cart"
         mime_parsers[key].append(kclass)
-i = mime_parse_order.index("CARTS")
-mime_parse_order[i:i+1] = cart_order
 
 
 known_segment_parsers = [DefaultSegmentParser]
