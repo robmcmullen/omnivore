@@ -311,6 +311,10 @@ class DefaultSegment(object):
         self.page_size = -1
         self.map_width = 40
         self.uuid = str(uuid.uuid4())
+
+        # Some segments may not have a standard place in memory, so this flag
+        # can be used to skip the memory map lookup when displaying disassembly
+        self.use_origin = False
     
     def set_raw(self, rawdata):
         self.rawdata = rawdata
@@ -895,6 +899,7 @@ class ObjSegment(DefaultSegment):
         DefaultSegment.__init__(self, rawdata, start_addr, name, **kwargs)
         self.metadata_start = metadata_start
         self.data_start = data_start
+        self.use_origin = True
     
     def __str__(self):
         count = len(self)

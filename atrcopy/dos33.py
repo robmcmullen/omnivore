@@ -578,7 +578,7 @@ class Dos33DiskImage(DiskImageBase):
                 addr = dirent.get_binary_start_address(self) - 4 # factor in 4 byte header
             else:
                 addr = 0
-            segment = DefaultSegment(raw, start_addr=addr, name=name, verbose_name=verbose_name)
+            segment = ObjSegment(raw, 0, 0, start_addr=addr, name=name, verbose_name=verbose_name)
             if addr > 0:
                 style = segment.get_style_bits(data=True)
                 segment.style[0:4] = style
