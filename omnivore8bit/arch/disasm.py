@@ -66,7 +66,7 @@ class BaseDisassembler(object):
     
     cached_miniassemblers = {}
     
-    def __init__(self, asm_syntax=None, memory_map=None, hex_lower=True, mnemonic_lower=False, byte_mnemonic=".byte"):
+    def __init__(self, asm_syntax=None, memory_map=None, hex_lower=True, mnemonic_lower=False, use_labels=True):
         if asm_syntax is None:
             asm_syntax = self.default_assembler
         self.hex_lower = hex_lower
@@ -88,6 +88,7 @@ class BaseDisassembler(object):
         self.comment_char = case_func(asm_syntax['comment char'])
         self.fast = udis_fast.DisassemblerWrapper(self.cpu, fast=True, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower)
         self.memory_map = memory_map if memory_map is not None else EmptyMemoryMap()
+        self.use_labels = use_labels
         self.segment = None
         self.info = None
 
@@ -152,6 +153,8 @@ class BaseDisassembler(object):
     def get_operand_label(self, operand):
         """Find the label that the operand points to.
         """
+        if not self.use_labels:
+            return operand, -1, ""
         dollar = operand.find("$")
         if dollar >=0 and "#" not in operand:
             text_hex = operand[dollar+1:dollar+1+4]
@@ -183,27 +186,6 @@ class BaseDisassembler(object):
         _, target_pc, _ = self.get_operand_label(operand)
         return target_pc
 
-    def get_label_instruction(self, pc, line=None):
-        if line is None:
-            index = pc - self.start_addr
-            row = self.info.index_to_row(index)
-            line = self.info[row]
-        if self.info.labels[pc]:
-            label = "L" + (self.fmt_hex4 % pc)
-        else:
-            label = extra_labels.get(pc, "     ")
-        if ";" in line.instruction:
-            operand, _ = line.instruction.split(";", 1)
-        else:
-            operand = line.instruction.rstrip()
-        if count > 1 and not line.flag & udis_fast.flag_data_bytes:
-            if operand_labels_start_pc < 0:
-                operand_labels_start_pc = self.start_addr
-            if operand_labels_end_pc < 0:
-                operand_labels_end_pc = self.end_addr
-            operand, target_pc, label = self.get_operand_label(operand, operand_labels_start_pc, operand_labels_end_pc, offset_operand_labels)
-        return label, operand
-
     def format_row_label(self, line):
         return self.fmt_hex4 % line.pc
 
@@ -219,6 +201,8 @@ class BaseDisassembler(object):
         return self.fmt_hex_directive + " " + fmt % tuple(digits[0:count*2])
 
     def format_label(self, line):
+        if not self.use_labels:
+            return "     "
         pc = line.pc
         if self.info.labels[pc]:
             text = "L" + (self.fmt_hex4 % pc)

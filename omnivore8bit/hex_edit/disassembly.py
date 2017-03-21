@@ -45,7 +45,6 @@ class DisassemblyTable(ByteGridTable):
         self.end_addr = 0
         self.chunk_size = 256
         self.disassembler = None
-        self.use_labels_on_operands = False
         self.trace_info = TraceInfo()
 
     def set_editor(self, editor):
@@ -53,7 +52,7 @@ class DisassemblyTable(ByteGridTable):
         self.segment = segment = self.editor.segment
         self.lines = None
         self.index_to_row = []
-        self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
+        self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case, self.segment.use_origin)
         self.disassembler.add_chunk_processor("data", 1)
         self.disassembler.add_chunk_processor("antic_dl", 2)
         self.disassembler.add_chunk_processor("jumpman_level", 3)
