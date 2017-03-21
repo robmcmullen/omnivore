@@ -140,16 +140,6 @@ class BaseDisassembler(object):
             return " ".join(comments)
         return ""
 
-    def get_prior_valid_opcode_start(self, target_pc):
-        index = target_pc - self.start_addr
-        row = self.info.index_to_row[index]
-        while index > 0:
-            row_above = self.info.index_to_row[index - 1]
-            if row_above < row:
-                break
-            index -= 1
-        return index + self.start_addr
-
     def get_operand_label(self, operand):
         """Find the label that the operand points to.
         """
@@ -168,7 +158,7 @@ class BaseDisassembler(object):
             label = self.memory_map.get_name(target_pc)
             if not label and target_pc >= self.start_addr and target_pc <= self.end_addr:
                 #print operand, dollar, text_hex, target_pc, operand_labels_start_pc, operand_labels_end_pc
-                good_opcode_target_pc = self.get_prior_valid_opcode_start(target_pc)
+                good_opcode_target_pc = self.info.get_instruction_start_pc(target_pc)
                 diff = target_pc - good_opcode_target_pc
                 if diff > 0:
                     # if no existing label at the target, reference it using
