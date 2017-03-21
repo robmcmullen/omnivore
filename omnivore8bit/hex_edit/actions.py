@@ -1215,12 +1215,21 @@ class AddTraceStartPointAction(EditorAction):
     name = "Add Trace Start Point"
     accelerator = 'F11'
     enabled_name = 'can_trace'
+    tooltip = 'Start a trace at the cursor or at all instructions in the selected ranges'
 
     def perform(self, event):
         e = self.active_editor
+        # check if selected a range:
+        ranges, indexes = e.get_selected_ranges_and_indexes()
+        if len(indexes) == 0:
+            indexes = [e.cursor_index]
         s = e.segment
-        pc = e.cursor_index + s.start_addr
-        e.disassembly.trace_disassembly(pc)
+        checked = set()
+        for i in indexes:
+            pc = e.disassembly.table.lines.get_instruction_start_pc(i + s.start_addr)
+            if pc not in checked:
+                e.disassembly.trace_disassembly(pc)
+                checked.add(pc)
         e.document.change_count += 1
         e.refresh_panes()
 
