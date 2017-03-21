@@ -52,7 +52,7 @@ cdef class DisassemblyInfo:
     def __len__(self):
         return self.num_instructions
 
-    def __getitem__(self, int index):
+    def __getitem__(self, int row):
         cdef char *text
         cdef unsigned char *m
         cdef unsigned short *sptr
@@ -70,10 +70,10 @@ cdef class DisassemblyInfo:
         #     int strpos; /* position of start of text in instruction array */
         # } asm_entry;
 
-        if index < 0 or index >= self.num_instructions:
-            raise IndexError("Index %d invalid; number of instructions = %d" % (index, self.num_instructions))
+        if row < 0 or row >= self.num_instructions:
+            raise IndexError("Row %d invalid; number of instructions = %d" % (row, self.num_instructions))
 
-        m = self.metadata_raw + (index * self.itemsize)
+        m = self.metadata_raw + (row * self.itemsize)
         sptr = <unsigned short *>m
         self.current.pc = sptr[0]
         self.current.dest_pc = sptr[1]
@@ -85,6 +85,21 @@ cdef class DisassemblyInfo:
 
         self.current.instruction = self.instructions_raw[strpos:strpos + strlen]
         return self.current
+
+    def get_instruction_start_pc(self, int pc):
+        cdef int index = pc - self.first_pc
+
+        if index < 0 or index >= self.num_bytes:
+            raise IndexError("PC %d out of range: %d - %d" % (pc, self.first_pc, self.first_pc + self.num_bytes))
+
+        cdef int row = self.index_to_row[index]
+        cdef unsigned char *m
+        cdef unsigned short *sptr
+
+        m = self.metadata_raw + (row * self.itemsize)
+        sptr = <unsigned short *>m
+        pc = sptr[0]
+        return pc
 
     cdef fix_offset_labels(self):
         # fast loop in C to check for references to addresses that are in the
