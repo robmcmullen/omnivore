@@ -62,7 +62,7 @@ class SegmentedDocument(BaseDocument):
         return parser
     
     @property
-    def global_segment(self):
+    def container_segment(self):
         return self.segments[0]
     
     def add_user_segment(self, segment, replace=False):
@@ -158,11 +158,11 @@ class SegmentedDocument(BaseDocument):
     def update_baseline(self):
         if self.baseline_document is not None:
             self.change_count += 1
-            self.global_segment.compare_segment(self.baseline_document.global_segment)
+            self.container_segment.compare_segment(self.baseline_document.container_segment)
     
     def clear_baseline(self):
         self.change_count += 1
-        self.global_segment.clear_style_bits(diff=True)
+        self.container_segment.clear_style_bits(diff=True)
     
     @property
     def has_baseline(self):

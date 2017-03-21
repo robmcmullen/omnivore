@@ -1243,5 +1243,5 @@ class ClearTraceAction(EditorAction):
     enabled_name = 'can_trace'
 
     def perform(self, event):
-        cmd = ClearTraceCommand(self.active_editor.document.global_segment)
+        cmd = ClearTraceCommand(self.active_editor.document.container_segment)
         self.active_editor.process_command(cmd)

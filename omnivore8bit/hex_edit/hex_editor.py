@@ -588,7 +588,7 @@ class HexEditor(FrameworkEditor):
         all the selection indexes will be set to zero.
         """
         # find byte index of view into master array
-        g = self.document.global_segment
+        g = self.document.container_segment
         s = self.segment
         global_offset = g.get_raw_index(0)
         new_offset = s.get_raw_index(0)

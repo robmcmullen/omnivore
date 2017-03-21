@@ -550,7 +550,7 @@ class RevertToBaselineCommand(SetRangeCommand):
     pretty_name = "Revert to Baseline Data"
     
     def get_baseline_data(self, orig, editor, indexes):
-        r = editor.document.baseline_document.global_segment.get_parallel_raw_data(self.segment)
+        r = editor.document.baseline_document.container_segment.get_parallel_raw_data(self.segment)
         return r[indexes].data
     
     def perform(self, editor):
