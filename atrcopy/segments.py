@@ -804,11 +804,14 @@ class DefaultSegment(object):
             comments.append(comment)
         return has_comments, comments
 
+    def set_comment_at(self, index, text):
+        rawindex = self.get_raw_index(index)
+        self.rawdata.extra.comments[rawindex] = text
+
     def set_comment(self, ranges, text):
         self.set_style_ranges(ranges, comment=True)
         for start, end in ranges:
-            rawindex = self.get_raw_index(start)
-            self.rawdata.extra.comments[rawindex] = text
+            self.set_comment_at(start, text)
     
     def get_comment(self, index):
         rawindex = self.get_raw_index(index)

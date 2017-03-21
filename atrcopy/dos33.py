@@ -496,6 +496,25 @@ class Dos33DiskImage(DiskImageBase):
         start, count = self.get_contiguous_sectors(self.header.first_vtoc, 1)
         segment = RawTrackSectorSegment(r[start:start+count], self.header.first_vtoc, 1, count, 0, 0, self.header.sector_size, name="VTOC")
         segment.style[:] = get_style_bits(data=True)
+        segment.set_comment_at(0x00, "unused")
+        segment.set_comment_at(0x01, "Track number of next catalog sector")
+        segment.set_comment_at(0x02, "Sector number of next catalog sector")
+        segment.set_comment_at(0x03, "Release number of DOS used to format")
+        segment.set_comment_at(0x04, "unused")
+        segment.set_comment_at(0x06, "Volume number")
+        segment.set_comment_at(0x07, "unused")
+        segment.set_comment_at(0x27, "Number of track/sector pairs per t/s list sector")
+        segment.set_comment_at(0x28, "unused")
+        segment.set_comment_at(0x30, "Last track that sectors allocated")
+        segment.set_comment_at(0x31, "Track allocation direction")
+        segment.set_comment_at(0x32, "unused")
+        segment.set_comment_at(0x34, "Tracks per disk")
+        segment.set_comment_at(0x35, "Sectors per track")
+        segment.set_comment_at(0x36, "Bytes per sector")
+        index = 0x38
+        for track in range(35):
+            segment.set_comment_at(index, "Free sectors in track %d" % track)
+            index += 4
         segments.append(segment)
         return segments
     
@@ -513,6 +532,22 @@ class Dos33DiskImage(DiskImageBase):
         raw = self.rawdata.get_indexed(byte_order)
         segment = DefaultSegment(raw, name="Catalog")
         segment.style[:] = get_style_bits(data=True)
+        index = 0
+        filenum = 0
+        while index < len(segment):
+            segment.set_comment_at(index + 0x00, "unused")
+            segment.set_comment_at(index + 0x01, "Track number of next catalog sector")
+            segment.set_comment_at(index + 0x02, "Sector number of next catalog sector")
+            segment.set_comment_at(index + 0x03, "unused")
+            index += 0x0b
+            for i in range(7):
+                segment.set_comment_at(index + 0x00, "FILE #%d: Track number of next catalog sector" % filenum)
+                segment.set_comment_at(index + 0x01, "FILE #%d: Sector number of next catalog sector" % filenum)
+                segment.set_comment_at(index + 0x02, "FILE #%d: File type" % filenum)
+                segment.set_comment_at(index + 0x03, "FILE #%d: Filename" % filenum)
+                segment.set_comment_at(index + 0x21, "FILE #%d: Number of sectors in file" % filenum)
+                index += 0x23
+                filenum += 1
         segments.append(segment)
         return segments
 

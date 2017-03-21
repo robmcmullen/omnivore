@@ -578,10 +578,22 @@ class AtariDosDiskImage(DiskImageBase):
         start, count = self.get_contiguous_sectors(self.first_vtoc, self.num_vtoc)
         segment = RawSectorsSegment(r[start:start+count], self.first_vtoc, self.num_vtoc, count, 128, 3, self.header.sector_size, name="VTOC")
         segment.style[:] = get_style_bits(data=True)
+        segment.set_comment_at(0x00, "Type code")
+        segment.set_comment_at(0x01, "Total number of sectors")
+        segment.set_comment_at(0x03, "Number of free sectors")
+        segment.set_comment_at(0x05, "reserved")
+        segment.set_comment_at(0x06, "unused")
+        segment.set_comment_at(0x0a, "Sector bit map")
+        segment.set_comment_at(0x64, "unused")
         segments.append(segment)
         if self.vtoc2 > 0:
             start, count = self.get_contiguous_sectors(self.vtoc2, 1)
             segment = RawSectorsSegment(r[start:start+count], self.vtoc2, 1, count, 128, 3, self.header.sector_size, name="VTOC2")
+            segment.style[:] = get_style_bits(data=True)
+            segment.set_comment_at(0x00, "Repeat of sectors 48-719")
+            segment.set_comment_at(0x44, "Sector bit map 720-1023")
+            segment.set_comment_at(0x7a, "Number of free sectors above 720")
+            segment.set_comment_at(0x7c, "unused")
             segments.append(segment)
         return segments
     
@@ -592,6 +604,14 @@ class AtariDosDiskImage(DiskImageBase):
         start, count = self.get_contiguous_sectors(361, 8)
         segment = RawSectorsSegment(r[start:start+count], 361, 8, count, 128, 3, self.header.sector_size, name="Directory")
         segment.style[:] = get_style_bits(data=True)
+        index = 0
+        for filenum in range(64):
+            segment.set_comment_at(index + 0x00, "FILE #%d: Flag" % filenum)
+            segment.set_comment_at(index + 0x01, "FILE #%d: Number of sectors in file" % filenum)
+            segment.set_comment_at(index + 0x03, "FILE #%d: Starting sector number" % filenum)
+            segment.set_comment_at(index + 0x05, "FILE #%d: Filename" % filenum)
+            segment.set_comment_at(index + 0x0d, "FILE #%d: Extension" % filenum)
+            index += 16
         segments.append(segment)
         return segments
     
