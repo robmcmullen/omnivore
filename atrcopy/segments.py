@@ -153,10 +153,44 @@ class SegmentData(object):
     def __len__(self):
         return len(self.data)
 
+    def resize(self, newsize):
+        if self.data.base is None:
+            try:
+                newdata = np.resize(self.data, (newsize,))
+                newstyle = np.resize(self.style, (newsize,))
+            except:
+                raise
+            else:
+                self.data = newdata
+                self.style = newstyle
+
+    def replace_arrays(self, base_raw):
+        newsize = len(base_raw)
+        oldsize = len(self.data_base)
+        if newsize < oldsize:
+            raise NotImplementedError("Can't truncate yet")
+        if self.is_indexed:
+            self.data.np_data = base_raw.data
+            self.data.base = base_raw.data.base
+            self.style.np_data = base_raw.style
+            self.style.base = base_raw.style.base
+        elif self.data.base is not None:
+            # if there is no base array, we aren't looking at a slice so we
+            # must be copying the entire array.
+            start, end = self.byte_bounds_offset()
+            self.data = base_raw.data[start:end]
+            self.style = base_raw.style[start:end]
+        else:
+            raise ValueError("The base SegmentData object should use the resize method to replace arrays")
+
     @property
     def stringio(self):
         buf = cStringIO.StringIO(self.data[:])
         return buf
+
+    @property
+    def is_base(self):
+        return not self.is_indexed and self.data.base is None
 
     @property
     def data_base(self):
@@ -301,6 +335,8 @@ class SegmentData(object):
 
 class DefaultSegment(object):
     savers = [SegmentSaver]
+    use_origin_default = False
+    can_resize_default = False
     
     def __init__(self, rawdata, start_addr=0, name="All", error=None, verbose_name=None):
         self.start_addr = int(start_addr)  # force python int to decouple from possibly being a numpy datatype
@@ -314,7 +350,11 @@ class DefaultSegment(object):
 
         # Some segments may not have a standard place in memory, so this flag
         # can be used to skip the memory map lookup when displaying disassembly
-        self.use_origin = False
+        self.use_origin = self.__class__.use_origin_default
+
+        # Some segments may be resized to contain additional segments not
+        # present when the segment was created.
+        self.can_resize = self.__class__.can_resize_default
     
     def set_raw(self, rawdata):
         self.rawdata = rawdata
@@ -324,10 +364,43 @@ class DefaultSegment(object):
     
     def get_raw(self):
         return self.rawdata
+
+    def resize(self, newsize, zeros=True):
+        """ Resize the data arrays.
+
+        This can only be performed on the container segment. Child segments
+        must adjust their rawdata to point to the correct place.
+
+        Since segments don't keep references to other segments, it is the
+        user's responsibility to update any child segments that point to this
+        segment's data.
+
+        Numpy can't do an in-place resize on an array that has a view, so the
+        data must be replaced and all segments that point to that raw data must
+        also be changed. This has to happen outside this method because it
+        doesn't know the segment list of segments using itself as a base.
+        """
+        if not self.can_resize:
+            raise ValueError("Segment %s can't be resized" % str(self))
+        # only makes sense for the container (outermost) object
+        if not self.rawdata.is_base:
+            raise ValueError("Only container segments can be resized")
+        origsize = len(self)
+        self.rawdata.resize(newsize)
+        self.set_raw(self.rawdata)  # force attributes to be reset
+        newsize = len(self)
+        if zeros:
+            if newsize > origsize:
+                self.data[origsize:] = 0
+                self.style[origsize:] = 0
+        return origsize, newsize
+
+    def replace_data(self, container):
+        self.rawdata.replace_arrays(container.rawdata)
     
     def __getstate__(self):
         state = dict()
-        for key in ['start_addr', 'error', 'name', 'verbose_name', 'page_size', 'map_width', 'uuid']:
+        for key in ['start_addr', 'error', 'name', 'verbose_name', 'page_size', 'map_width', 'uuid', 'use_origin', 'can_resize']:
             state[key] = getattr(self, key)
         r = self.rawdata
         state['_rawdata_bounds'] = list(r.byte_bounds_offset())
@@ -347,6 +420,10 @@ class DefaultSegment(object):
         """
         if not hasattr(self, 'uuid'):
             self.uuid = str(uuid.uuid4())
+        if not hasattr(self, 'use_origin'):
+            self.use_origin = self.__class__.use_origin_default
+        if not hasattr(self, 'can_resize'):
+            self.can_resize = self.__class__.can_resize_default
     
     def reconstruct_raw(self, rawdata):
         start, end = self._rawdata_bounds
@@ -916,6 +993,10 @@ class ObjSegment(DefaultSegment):
         if self.error:
             s += "  error='%s'" % self.error
         return s
+
+
+class SegmentedFileSegment(ObjSegment):
+    can_resize_default = True
 
 
 class RawSectorsSegment(DefaultSegment):

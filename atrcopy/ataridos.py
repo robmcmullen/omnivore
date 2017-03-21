@@ -2,7 +2,7 @@ import numpy as np
 
 from errors import *
 from diskimages import DiskImageBase, BaseHeader
-from segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentSaver, get_style_bits
+from segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentedFileSegment, SegmentSaver, get_style_bits
 from utils import *
 
 import logging
@@ -240,6 +240,10 @@ class MydosDirent(AtariDosDirent):
 class XexSegmentSaver(SegmentSaver):
     export_data_name = "Atari 8-bit Executable"
     export_extensions = [".xex"]
+
+
+class XexContainerSegment(DefaultSegment):
+    can_resize_default = True
 
 
 class XexSegment(ObjSegment):

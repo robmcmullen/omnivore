@@ -2,7 +2,7 @@ import numpy as np
 
 from segments import SegmentData, DefaultSegment
 from kboot import KBootImage
-from ataridos import AtariDosDiskImage, BootDiskImage, AtariDosFile
+from ataridos import AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment
 from spartados import SpartaDosDiskImage
 from cartridge import AtariCartImage, get_known_carts
 from mame import MameZipImage
@@ -16,6 +16,7 @@ log = logging.getLogger(__name__)
 class SegmentParser(object):
     menu_name = ""
     image_type = None
+    container_segment = DefaultSegment
     
     def __init__(self, segment_data, strict=False):
         self.image = None
@@ -26,7 +27,7 @@ class SegmentParser(object):
 
     def parse(self):
         r = self.segment_data
-        self.segments.append(DefaultSegment(r, 0, name=self.menu_name))
+        self.segments.append(self.container_segment(r, 0, name=self.menu_name))
         try:
             self.image = self.get_image(r)
             self.check_image()
@@ -80,6 +81,7 @@ class AtariBootDiskSegmentParser(SegmentParser):
 class XexSegmentParser(SegmentParser):
     menu_name = "XEX (Atari 8-bit executable)"
     image_type = AtariDosFile
+    container_segment = XexContainerSegment
 
 
 class AtariCartSegmentParser(SegmentParser):

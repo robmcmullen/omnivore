@@ -331,6 +331,71 @@ class TestComments(object):
             assert item1[3] == item2[3]
 
 
+class TestResize(object):
+    def setup(self):
+        data = np.arange(4096, dtype=np.uint8)
+        data[1::2] = np.repeat(np.arange(16, dtype=np.uint8), 128)
+        r = SegmentData(data)
+        self.container = DefaultSegment(r, 0)
+        self.container.can_resize = True
+
+    def test_subset(self):
+        c = self.container
+        assert not c.rawdata.is_indexed
+        offset = 1000
+        s = DefaultSegment(c.rawdata[offset:offset + offset], 0)
+        assert not s.rawdata.is_indexed
+        for i in range(offset):
+            assert s[i] == c[i + offset]
+        requested = 8192
+        oldraw = s.rawdata.copy()
+        oldid = id(s.rawdata)
+        oldsize, newsize = c.resize(requested)
+        assert newsize == requested
+        s.replace_data(c)
+        assert id(s.rawdata) == oldid
+        assert id(oldraw.order) == id(s.rawdata.order)
+        for i in range(offset):
+            assert s[i] == c[i + offset]
+        newbase = c.rawdata
+        newsub = s.rawdata
+        print c.rawdata.data
+        print s.rawdata.data[:]
+        s.rawdata.data[:] = 111
+        print c.rawdata.data
+        print s.rawdata.data[:]
+        for i in range(offset):
+            assert s[i] == c[i + offset]
+
+    def test_indexed(self):
+        c = self.container
+        assert not c.rawdata.is_indexed
+        s, indexes = get_indexed(self.container, 1024, 3)
+        assert s.rawdata.is_indexed
+        for i in range(len(indexes)):
+            assert s.get_raw_index(i) == indexes[i]
+        requested = 8192
+        oldraw = s.rawdata.copy()
+        oldid = id(s.rawdata)
+        oldsize, newsize = c.resize(requested)
+        assert newsize == requested
+        s.replace_data(c)
+        assert id(s.rawdata) == oldid
+        assert id(oldraw.order) == id(s.rawdata.order)
+        for i in range(len(indexes)):
+            assert s.get_raw_index(i) == indexes[i]
+        newbase = c.rawdata
+        newsub = s.rawdata
+        print c.rawdata.data
+        print s.rawdata.data[:]
+        s.rawdata.data[:] = 111
+        print c.rawdata.data
+        print s.rawdata.data[:]
+        for i in range(len(indexes)):
+            assert c.rawdata.data[indexes[i]] == s.rawdata.data[i]
+
+
+
 if __name__ == "__main__":
     t = TestIndexed()
     t.setup()
