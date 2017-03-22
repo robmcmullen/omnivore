@@ -733,7 +733,8 @@ class JumpmanEditor(BitmapEditor):
 
     #### wx event handlers ####################################################
     
-    def index_clicked(self, index, bit, control):
+    def index_clicked(self, index, bit, from_control, refresh_from=True):
         self.cursor_index = index
-        if control != self.hex_edit:
-            self.hex_edit.select_index(index)
+        skip_control = None if refresh_from else from_control
+        if skip_control != self.hex_edit:
+            self.hex_edit.select_index(from_control, index)

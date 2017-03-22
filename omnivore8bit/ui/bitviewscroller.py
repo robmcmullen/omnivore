@@ -306,7 +306,7 @@ class BitviewScroller(wx.ScrolledWindow):
         c = addr - (r * self.bytes_per_row)
         return r, c
     
-    def select_index(self, rel_pos):
+    def select_index(self, from_control, rel_pos):
         r, c = self.byte_to_row_col(rel_pos)
 #        print "r, c, start, vis", r, c, self.start_row, self.fully_visible_rows
         last_row = self.start_row + self.fully_visible_rows - 1
@@ -344,7 +344,7 @@ class BitviewScroller(wx.ScrolledWindow):
     
     def select_addr(self, addr):
         rel_pos = addr - self.start_addr
-        self.select_index(rel_pos)
+        self.select_index(self, rel_pos)
 
     def on_mouse_wheel(self, evt):
         """Driver to process mouse events.
@@ -385,7 +385,7 @@ class BitviewScroller(wx.ScrolledWindow):
                 e.cursor_index = byte
             else:
                 e.set_cursor(byte, False)
-            wx.CallAfter(e.index_clicked, byte, bit, None)
+            wx.CallAfter(e.index_clicked, byte, bit, self, True)
 
     def on_left_down(self, evt):
         if evt.ControlDown():
@@ -412,7 +412,7 @@ class BitviewScroller(wx.ScrolledWindow):
             e.cursor_index = index1
             e.select_range(index1, index1, add=self.multi_select_mode)
         evt.Skip()
-        wx.CallAfter(e.index_clicked, e.cursor_index, bit, None)
+        wx.CallAfter(e.index_clicked, e.cursor_index, bit, self, True)
 
     def on_left_dclick(self, evt):
         self.on_left_down(evt)
@@ -441,7 +441,7 @@ class BitviewScroller(wx.ScrolledWindow):
                         e.select_range(e.anchor_initial_end_index, index1, extend=self.multi_select_mode)
                         update = True
             if update:
-                wx.CallAfter(e.index_clicked, index1, bit, None)
+                wx.CallAfter(e.index_clicked, index1, bit, self, True)
  
     def on_motion(self, evt):
         self.on_motion_update_status(evt)
@@ -533,8 +533,8 @@ class BitviewScroller(wx.ScrolledWindow):
     def process_delta_index(self, delta_index):
         e = self.editor
         index = e.set_cursor(e.cursor_index + delta_index, False)
-        wx.CallAfter(self.select_index, index)
-        wx.CallAfter(e.index_clicked, index, 0, self)
+        wx.CallAfter(self.select_index, self, index)
+        wx.CallAfter(e.index_clicked, index, 0, self, False)
     
     def on_char_hook(self, evt):
         log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
@@ -863,7 +863,7 @@ class FontMapScroller(BitviewScroller):
         byte, bit, inside = self.event_coords_to_byte(evt)
         if inside:
             e.set_cursor(byte, False)
-            wx.CallAfter(e.index_clicked, byte, bit, None)
+            wx.CallAfter(e.index_clicked, byte, bit, self, True)
             self.editing = True
             self.set_status_message()
         evt.Skip()
@@ -926,8 +926,8 @@ class FontMapScroller(BitviewScroller):
         elif delta_index is not None:
             e = self.editor
             index = e.set_cursor(e.cursor_index + delta_index, False)
-            wx.CallAfter(self.select_index, index)
-            wx.CallAfter(e.index_clicked, index, 0, self)
+            wx.CallAfter(self.select_index, self, index)
+            wx.CallAfter(e.index_clicked, index, 0, self, False)
         else:
             evt.Skip()
 

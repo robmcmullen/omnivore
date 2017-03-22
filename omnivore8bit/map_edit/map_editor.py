@@ -512,10 +512,11 @@ class MapEditor(HexEditor):
 
     #### wx event handlers ####################################################
     
-    def index_clicked(self, index, bit, control):
+    def index_clicked(self, index, bit, from_control, refresh_from=True):
         self.cursor_index = index
-        if control != self.control:
-            self.control.select_index(index)
-        if control != self.memory_map:
-            self.memory_map.select_index(index)
+        skip_control = None if refresh_from else from_control
+        if skip_control != self.control:
+            self.control.select_index(from_control, index)
+        if skip_control != self.memory_map:
+            self.memory_map.select_index(from_control, index)
         self.can_copy = (self.anchor_start_index != self.anchor_end_index)

@@ -334,12 +334,21 @@ class DisassemblyPanel(ByteGrid):
             return 1
         return 2
 
-    def goto_index(self, index, col_from_user=None):
+    def goto_index(self, from_control, index, col_from_user=None):
         row, c = self.table.get_row_col(index)
-        if col_from_user is None:
-            col = c
+        
+        # user can click on whatever column when clicking in the disassembly
+        # window, but on events coming from other windows it should not use the
+        # column and instead force the opcode to be displayed
+        print from_control
+        if from_control == self:
+            if col_from_user:
+                col = self.clamp_column(c, col_from_user)
+            else:
+                col = c
         else:
-            col = self.clamp_column(c, col_from_user)
+            col = 0
+
         try:
             row = self.table.index_to_row[index]
             self.pending_index = -1

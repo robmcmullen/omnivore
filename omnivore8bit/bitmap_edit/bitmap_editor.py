@@ -219,7 +219,7 @@ class PickTileMode(SelectMode):
         if self.last_index != index:
             e.set_cursor(index, False)
             e.character_set.set_selected_char(value)
-            e.index_clicked(index, bit, None)
+            e.index_clicked(index, bit, self, True)
             e.character_set.Refresh()
         self.last_index = index
         self.display_coords(evt, "tile=%d" % value)
@@ -500,8 +500,9 @@ class BitmapEditor(HexEditor):
 
     #### wx event handlers ####################################################
     
-    def index_clicked(self, index, bit, control):
+    def index_clicked(self, index, bit, from_control, refresh_from=True):
         self.cursor_index = index
-        if control != self.bitmap:
-            self.bitmap.select_index(index)
+        skip_control = None if refresh_from else from_control
+        if skip_control != self.bitmap:
+            self.bitmap.select_index(from_control, index)
         self.can_copy = (self.anchor_start_index != self.anchor_end_index)

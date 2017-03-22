@@ -674,7 +674,7 @@ class ByteGrid(Grid.Grid):
             self.editor = editor
             self.table.ResetView(self, editor)
             self.table.UpdateValues(self)
-            self.goto_index(editor.cursor_index)
+            self.goto_index(self, editor.cursor_index)
             self.last_change_count = editor.document.change_count
     
     def refresh_view(self):
@@ -758,7 +758,7 @@ class ByteGrid(Grid.Grid):
                 # not select the grid square
                 index2 = index1
             e.select_range(index1, index2, add=self.multi_select_mode)
-        wx.CallAfter(e.index_clicked, e.cursor_index, c, None)
+        wx.CallAfter(e.index_clicked, e.cursor_index, c, self, True)
 
     def on_left_down_label(self, evt):
         self.on_left_down(evt, True)
@@ -839,7 +839,7 @@ class ByteGrid(Grid.Grid):
                         update = True
             if update:
                 e.cursor_index = index1
-                wx.CallAfter(e.index_clicked, e.cursor_index, 0, None)
+                wx.CallAfter(e.index_clicked, e.cursor_index, 0, self, True)
     
     def on_motion_update_status(self, evt):
         x, y = self.CalcUnscrolledPosition(evt.GetPosition())
@@ -897,12 +897,12 @@ class ByteGrid(Grid.Grid):
         if moved:
             if index is None:
                 index, _ = self.table.get_index_range(r, c)
-            refresh_self = None if e.can_copy else self
+            refresh_self = e.can_copy
             e.set_cursor(index, False)
             r, c = self.table.get_row_col(e.cursor_index, c)
             self.SetGridCursor(r, c)
             self.MakeCellVisible(r, c)
-            wx.CallAfter(e.index_clicked, e.cursor_index, c, refresh_self)
+            wx.CallAfter(e.index_clicked, e.cursor_index, c, self, refresh_self)
  
     def on_left_dclick(self, evt):
         self.EnableCellEditControl()
@@ -932,7 +932,7 @@ class ByteGrid(Grid.Grid):
     def clamp_column(self, col_from_index, col_from_user):
         return col_from_index
 
-    def goto_index(self, index, col_from_user=None):
+    def goto_index(self, from_control, index, col_from_user=None):
         row, c = self.table.get_row_col(index)
         if col_from_user is None:
             col = c
@@ -947,9 +947,9 @@ class ByteGrid(Grid.Grid):
             self.restore_upper_left = -1
         self.MakeCellVisible(row,col)
 
-    def select_index(self, cursor, col_from_user=None):
+    def select_index(self, from_control, cursor, col_from_user=None):
         self.ClearSelection()
-        self.goto_index(cursor, col_from_user)
+        self.goto_index(from_control, cursor, col_from_user)
         self.refresh_view()
     
     def change_value(self, row, col, text):

@@ -822,17 +822,18 @@ class HexEditor(FrameworkEditor):
 
     #### wx event handlers ####################################################
     
-    def index_clicked(self, index, bit, control):
+    def index_clicked(self, index, bit, from_control, refresh_from=True):
         self.cursor_index = index
         self.check_document_change()
-        if control != self.hex_edit:
-            self.hex_edit.select_index(index)
-        if control != self.disassembly:
-            self.disassembly.select_index(index, bit)
-        if control != self.bitmap:
-            self.bitmap.select_index(index)
-        if control != self.font_map:
-            self.font_map.select_index(index)
+        skip_control = None if refresh_from else from_control
+        if skip_control != self.hex_edit:
+            self.hex_edit.select_index(from_control, index)
+        if skip_control != self.disassembly:
+            self.disassembly.select_index(from_control, index, bit)
+        if skip_control != self.bitmap:
+            self.bitmap.select_index(from_control, index)
+        if skip_control != self.font_map:
+            self.font_map.select_index(from_control, index)
         self.sidebar.refresh_active()
         self.can_copy = len(self.selected_ranges) > 1 or (bool(self.selected_ranges) and (self.selected_ranges[0][0] != self.selected_ranges[0][1]))
         self.can_copy_baseline = self.can_copy and self.baseline_present
