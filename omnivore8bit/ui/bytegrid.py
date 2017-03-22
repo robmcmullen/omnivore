@@ -5,6 +5,9 @@ import wx.grid as Grid
 
 from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
 
+from selection_mixin import SelectionMixin
+
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -604,7 +607,7 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         return HexCellEditor(self.parentgrid)
 
     
-class ByteGrid(Grid.Grid):
+class ByteGrid(Grid.Grid, SelectionMixin):
     """
     View for editing in hexidecimal notation.
     """
@@ -614,6 +617,7 @@ class ByteGrid(Grid.Grid):
         """Create the HexEdit viewer
         """
         Grid.Grid.__init__(self, parent, -1, **kwargs)
+        SelectionMixin.__init__(self)
         self.task = task
         self.editor = None
         self.table = table
@@ -635,10 +639,6 @@ class ByteGrid(Grid.Grid):
         self.last_change_count = 0
         self.restore_upper_left = -1
 
-        self.mouse_drag_started = False
-        self.select_extend_mode = False
-        self.multi_select_mode = False
-        self.allow_range_select = True
         self.updateUICallback = None
         self.Bind(Grid.EVT_GRID_CELL_LEFT_CLICK, self.on_left_down)
         self.Bind(Grid.EVT_GRID_CELL_LEFT_DCLICK, self.on_left_dclick)
@@ -698,7 +698,7 @@ class ByteGrid(Grid.Grid):
 
     def on_right_down(self, evt):
         log.debug(self.GetSelectedRows())
-        r, c, _, _, inside = self.get_rc_from_event(evt)
+        r, c, _, _, inside = self.get_location_from_event(evt)
         actions = self.get_popup_actions(r, c, inside)
         if inside and self.table.is_row_col_valid(r, c):
             text, style = self.table.get_value_style(r, c)
@@ -714,77 +714,55 @@ class ByteGrid(Grid.Grid):
         return []
 
     def on_left_up(self, evt):
-        self.mouse_drag_started = False
-        self.select_extend_mode = False
-        self.multi_select_mode = False
+        self.handle_select_end(self.editor, evt)
 
-    def on_left_down(self, evt, selecting_rows=False):
+    def get_index_range_from_event(self, evt):
+        c, r = (evt.GetCol(), evt.GetRow())
+        index1, index2 = self.table.get_index_range(r, c)
+        return index1, index2
+
+    def on_left_down(self, evt):
         # checking for event object window being the row labels in order to set
         # the 'selecting_rows' flag doesn't work here even though it works in
         # motion events.
-        self.mouse_drag_started = True
-        c, r = (evt.GetCol(), evt.GetRow())
-        if c < 0 or selecting_rows:
-            c = 0
-            selecting_rows = True
-        else:
-            selecting_rows = False
-        e = self.editor
-        if evt.ControlDown():
-            self.multi_select_mode = True
-            self.select_extend_mode = False
-        elif evt.ShiftDown():
-            self.multi_select_mode = False
-            self.select_extend_mode = True
-        if self.select_extend_mode:
-            index1, index2 = self.table.get_index_range(r, c)
-            if index1 < e.anchor_start_index:
-                e.anchor_start_index = index1
-                e.cursor_index = index1
-            elif index2 > e.anchor_start_index:
-                e.anchor_end_index = index2
-                e.cursor_index = index2 - 1
-            e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
-            e.select_range(e.anchor_start_index, e.anchor_end_index, add=self.multi_select_mode)
-        else:
-            self.ClearSelection()
-            index1, index2 = self.table.get_index_range(r, c)
-            if selecting_rows:
-                index2 = index1 + self.table.GetNumberCols()
-            e.anchor_initial_start_index, e.anchor_initial_end_index = index1, index2
-            e.cursor_index = index1
-            if not selecting_rows:
-                # initial click when not selecting rows should move the cursor,
-                # not select the grid square
-                index2 = index1
-            e.select_range(index1, index2, add=self.multi_select_mode)
-        wx.CallAfter(e.index_clicked, e.cursor_index, c, self, True)
+        self.handle_select_start(self.editor, evt)
 
     def on_left_down_label(self, evt):
-        self.on_left_down(evt, True)
+        self.handle_select_start(self.editor, evt, selecting_rows=True)
 
-    def get_rc_from_event(self, evt):
+    def get_location_from_event(self, evt):
         x, y = evt.GetPosition()
         x1, y1 = self.CalcUnscrolledPosition(x, y)
-        r, c = self.XYToCell(x1, y1)
-        if r < 0:
-            inside_grid = False
-            # XYToCell fails with (-1, -1) when the mouse is not within
-            # the grid of cells.  XToCol with the second param True will
-            # return a valid result when it's off the edge, but there's no
-            # equivalent in YToRow (at least in 3.0 classic.  In Phoenix,
-            # YToRow does support that param).
-            c = self.XToCol(x1, True)
-            r = self.YToRow(y1)
+        inside_grid = True
+        try:
+            r, c = (evt.GetRow(), evt.GetCol())
+        except AttributeError:
+            r, c = self.XYToCell(x1, y1)
             if r < 0:
-                if y1 < 0:
-                    r = 0
-                else:
-                    r = self.table.GetNumberRows() - 1
-        else:
-            inside_grid = True
-        return r, c, x1, y1, inside_grid
+                inside_grid = False
+                # XYToCell fails with (-1, -1) when the mouse is not within
+                # the grid of cells.  XToCol with the second param True will
+                # return a valid result when it's off the edge, but there's no
+                # equivalent in YToRow (at least in 3.0 classic.  In Phoenix,
+                # YToRow does support that param).
+                c = self.XToCol(x1, True)
+                r = self.YToRow(y1)
+                if r < 0:
+                    if y1 < 0:
+                        r = 0
+                    else:
+                        r = self.table.GetNumberRows() - 1
+        if c < 0:
+            c = 0
+        inside_grid = inside_grid and x1 >= 0 and y1 >=0
+        index1, index2 = self.table.get_index_range(r, c)
+        return r, c, index1, index2, inside_grid
     
+    def get_start_end_index_of_row(self, row):
+        index1, _ = self.table.get_index_range(row, 0)
+        _, index2 = self.table.get_index_range(row, self.table.GetNumberCols() - 1)
+        return index1, index2
+
     def get_num_visible_rows(self):
         ux, uy = self.GetScrollPixelsPerUnit()
         sx, sy = self.GetViewStart()
@@ -805,41 +783,11 @@ class ByteGrid(Grid.Grid):
         return r0
 
     def on_motion(self, evt):
-        selecting_rows = evt.GetEventObject() == self.GetGridRowLabelWindow()
         self.on_motion_update_status(evt)
-        if not self.mouse_drag_started:
-            # On windows, it's possible to get a motion event before a mouse
-            # down event, so need this flag to check
-            return
         e = self.editor
         if evt.LeftIsDown():
-            r, c, x, y, _ = self.get_rc_from_event(evt)
-            if selecting_rows or x < 0:
-                selecting_rows = True
-                c = 0
-            index1, index2 = self.table.get_index_range(r, c)
-            update = False
-            if self.select_extend_mode:
-                if index1 < e.anchor_initial_start_index:
-                    e.select_range(index1, e.anchor_initial_end_index, extend=True)
-                    update = True
-                else:
-                    e.select_range(e.anchor_initial_start_index, index2, extend=True)
-                    update = True
-            else:
-                if e.anchor_start_index <= index1:
-                    if selecting_rows:
-                        index2 = index1 + self.table.GetNumberCols()
-                    if index2 != e.anchor_end_index:
-                        e.select_range(e.anchor_initial_start_index, index2, extend=self.multi_select_mode)
-                        update = True
-                else:
-                    if index1 != e.anchor_end_index:
-                        e.select_range(e.anchor_initial_end_index, index1, extend=self.multi_select_mode)
-                        update = True
-            if update:
-                e.cursor_index = index1
-                wx.CallAfter(e.index_clicked, e.cursor_index, 0, self, True)
+            selecting_rows = evt.GetEventObject() == self.GetGridRowLabelWindow()
+            self.handle_select_motion(self.editor, evt, selecting_rows)
     
     def on_motion_update_status(self, evt):
         x, y = self.CalcUnscrolledPosition(evt.GetPosition())

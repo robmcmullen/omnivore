@@ -27,6 +27,8 @@ from atrcopy import SegmentData, DefaultSegment, get_style_mask
 
 from omnivore8bit.hex_edit.actions import *
 
+from selection_mixin import SelectionMixin
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -39,12 +41,13 @@ class BitviewEvent(wx.PyCommandEvent):
         self.bit = bit
 
 
-class BitviewScroller(wx.ScrolledWindow):
+class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
     dbg_call_seq = 0
     short_name = "_bitview base class"
     
     def __init__(self, parent, task, **kwargs):
         wx.ScrolledWindow.__init__(self, parent, -1, **kwargs)
+        SelectionMixin.__init__(self)
 
         # Settings
         self.task = task
@@ -73,9 +76,6 @@ class BitviewScroller(wx.ScrolledWindow):
         self.visible_cols = 1
 
         self.rect_select = False
-        
-        self.select_extend_mode = False
-        self.multi_select_mode = False
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_resize)
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
@@ -301,13 +301,18 @@ class BitviewScroller(wx.ScrolledWindow):
         """
         raise NotImplementedError
     
-    def byte_to_row_col(self, addr):
-        r = addr // self.bytes_per_row
-        c = addr - (r * self.bytes_per_row)
-        return r, c
+    def get_index_range(self, row, col):
+        """Get the byte offset from start of file given row, col
+        position.
+        """
+        index = row * self.bytes_per_row + col
+        return index, index + 1
+    
+    def index_to_row_col(self, index):
+        return divmod(index, self.bytes_per_row)
     
     def select_index(self, from_control, rel_pos):
-        r, c = self.byte_to_row_col(rel_pos)
+        r, c = self.index_to_row_col(rel_pos)
 #        print "r, c, start, vis", r, c, self.start_row, self.fully_visible_rows
         last_row = self.start_row + self.fully_visible_rows - 1
         last_col = self.start_col + self.fully_visible_cols - 1
@@ -367,9 +372,7 @@ class BitviewScroller(wx.ScrolledWindow):
         evt.Skip()
 
     def on_left_up(self, evt):
-        self.multi_select_mode = False
-        self.select_extend_mode = False
-        evt.Skip()
+        self.handle_select_end(self.editor, evt)
 
     def set_cursor_pos_from_event(self, evt):
         e = self.editor
@@ -387,66 +390,27 @@ class BitviewScroller(wx.ScrolledWindow):
                 e.set_cursor(byte, False)
             wx.CallAfter(e.index_clicked, byte, bit, self, True)
 
-    def on_left_down(self, evt):
-        if evt.ControlDown():
-            self.multi_select_mode = True
-            self.select_extend_mode = False
-        elif evt.ShiftDown():
-            self.multi_select_mode = False
-            self.select_extend_mode = True
-        e = self.editor
+    def get_location_from_event(self, evt):
         byte, bit, inside = self.event_coords_to_byte(evt)
         index1 = byte
         index2 = byte + 1
-        if self.select_extend_mode:
-            if index1 < e.anchor_start_index:
-                e.anchor_start_index = index1
-                e.cursor_index = index1
-            elif index2 > e.anchor_start_index:
-                e.anchor_end_index = index2
-                e.cursor_index = index2 - 1
-            e.anchor_initial_start_index, e.anchor_initial_end_index = e.anchor_start_index, e.anchor_end_index
-            e.select_range(e.anchor_start_index, e.anchor_end_index, add=self.multi_select_mode)
-        else:
-            e.anchor_initial_start_index, e.anchor_initial_end_index = index1, index2
-            e.cursor_index = index1
-            e.select_range(index1, index1, add=self.multi_select_mode)
-        evt.Skip()
-        wx.CallAfter(e.index_clicked, e.cursor_index, bit, self, True)
+        return byte // self.bytes_per_row, bit, index1, index2, inside
+    
+    def get_start_end_index_of_row(self, row):
+        index1, _ = self.get_index_range(row, 0)
+        _, index2 = self.get_index_range(row, self.bytes_per_row - 1)
+        return index1, index2
+
+    def on_left_down(self, evt):
+        self.handle_select_start(self.editor, evt)
 
     def on_left_dclick(self, evt):
         self.on_left_down(evt)
  
-    def set_selection_from_event(self, evt):
-        e = self.editor
-        byte, bit, inside = self.event_coords_to_byte(evt)
-        if inside:
-            index1 = byte
-            index2 = byte + 1
-            update = False
-            if self.select_extend_mode:
-                if index1 < e.anchor_initial_start_index:
-                    e.select_range(index1, e.anchor_initial_end_index, extend=True)
-                    update = True
-                else:
-                    e.select_range(e.anchor_initial_start_index, index2, extend=True)
-                    update = True
-            else:
-                if e.anchor_start_index <= index1:
-                    if index2 != e.anchor_end_index:
-                        e.select_range(e.anchor_initial_start_index, index2, extend=self.multi_select_mode)
-                        update = True
-                else:
-                    if index1 != e.anchor_end_index:
-                        e.select_range(e.anchor_initial_end_index, index1, extend=self.multi_select_mode)
-                        update = True
-            if update:
-                wx.CallAfter(e.index_clicked, index1, bit, self, True)
- 
     def on_motion(self, evt):
         self.on_motion_update_status(evt)
         if self.editor is not None and evt.LeftIsDown():
-            self.set_selection_from_event(evt)
+            self.handle_select_motion(self.editor, evt)
         evt.Skip()
 
     def on_motion_update_status(self, evt):
@@ -764,7 +728,7 @@ class FontMapScroller(BitviewScroller):
     def draw_overlay(self, array, w, h, zw, zh):
         anchor_start, anchor_end, rc1, rc2 = self.get_highlight_indexes()
         self.show_highlight(array, rc1, rc2, zw, zh)
-        r, c = self.byte_to_row_col(self.editor.cursor_index)
+        r, c = self.index_to_row_col(self.editor.cursor_index)
         self.show_highlight(array, (r, c), (r + 1, c + 1), zw, zh)
     
     def show_highlight(self, array, rc1, rc2, zw, zh):
@@ -814,8 +778,7 @@ class FontMapScroller(BitviewScroller):
         byte = (self.bytes_per_row * y) + x
         if byte >= self.end_byte:
             inside = False
-        bit = 7 - (y & 7)
-        return byte, bit, inside
+        return byte, x, inside
     
     def get_popup_actions(self):
         actions = BitviewScroller.get_popup_actions(self)
