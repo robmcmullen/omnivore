@@ -3,7 +3,7 @@ import numpy as np
 from omnivore.framework.document import BaseDocument, TraitNumpyConverter
 
 # Enthought library imports.
-from traits.api import Trait, Any, List, Event, Dict
+from traits.api import Trait, Any, List, Event, Dict, Property, Bool
 
 from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, InvalidSegmentParser, iter_parsers
 
@@ -25,6 +25,8 @@ class SegmentedDocument(BaseDocument):
     emulator = Any
 
     emulator_change_event = Event
+    
+    can_resize = Property(Bool, depends_on='segments')
 
     #### trait default values
     
@@ -36,6 +38,13 @@ class SegmentedDocument(BaseDocument):
         return list([DefaultSegment(r, 0)])
 
 
+    #### trait property getters
+
+    def _get_can_resize(self):
+        return self.segments and self.container_segment.can_resize
+
+
+    #### convenience methods
 
     def parse_segments(self, parser_list):
         parser_list.append(DefaultSegmentParser)
@@ -64,6 +73,22 @@ class SegmentedDocument(BaseDocument):
     @property
     def container_segment(self):
         return self.segments[0]
+
+    @property
+    def contained_segments(self):
+        return iter(self.segments[1:])
+
+    def expand_container(self, size):
+        c = self.container_segment
+        if c.can_resize:
+            oldsize, newsize = c.resize(size)
+            for s in self.contained_segments:
+                s.replace_data(c)
+            self.bytes = c.data
+            start, end = oldsize, newsize
+            r = c.rawdata[start:end]
+            s = DefaultSegment(r, 0)
+            return s
     
     def add_user_segment(self, segment, replace=False):
         if replace:

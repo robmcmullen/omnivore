@@ -72,7 +72,7 @@ class HexEditTask(FrameworkTask):
 
     def _extra_actions_default(self):
         data_menu = self.create_menu("Menu", "Disk Image", "ParserGroup", "EmulatorGroup", "ActionGroup")
-        segment_menu = self.create_menu("Menu", "Segments", "SegmentGroup")
+        segment_menu = self.create_menu("Menu", "Segments", "ActionGroup", "ListGroup")
         bytes_menu = self.create_menu("Menu", "Bytes", "HexModifyGroup")
         actions = [
             # Menubar additions
@@ -367,7 +367,12 @@ class HexEditTask(FrameworkTask):
             SegmentGotoAction(),
             ]
     
-    def get_actions_Menu_Segments_SegmentGroup(self):
+    def get_actions_Menu_Segments_ActionGroup(self):
+        return [
+            ExpandDocumentAction(),
+            ]
+    
+    def get_actions_Menu_Segments_ListGroup(self):
         return [
             SegmentChoiceGroup(id="a2", separator=True),
             ]

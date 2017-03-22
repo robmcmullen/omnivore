@@ -570,6 +570,21 @@ class InterleaveSegmentsAction(EditorAction):
         dlg.Destroy()
 
 
+class ExpandDocumentAction(EditorAction):
+    name = 'Expand Document'
+    tooltip = 'Resize the document to add extra data at the end'
+    enabled_name = 'can_resize_document'
+    
+    def perform(self, event):
+        e = self.active_editor
+        d = e.document
+        s = d.expand_container(len(d) + 0x400)
+        s.name = "Expanded %x bytes" % len(s)
+        e.add_user_segment(s, False)
+        e.find_segment(segment=s)
+        e.update_segments_ui()
+
+
 class MarkSelectionAsCodeAction(EditorAction):
     name = 'Mark Selection As Code'
     enabled_name = 'can_copy'

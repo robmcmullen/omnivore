@@ -74,6 +74,8 @@ class HexEditor(FrameworkEditor):
 
     can_trace = Bool(False)
 
+    can_resize_document = Bool(False)
+
     segment_view_params = Dict
 
     #### Events ####
@@ -202,6 +204,7 @@ class HexEditor(FrameworkEditor):
         self.find_segment()
         self.update_emulator()
         self.compare_to_baseline()
+        self.can_resize_document = self.document.can_resize
         self.task.machine_menu_changed = self.machine
     
     def copy_view_properties(self, old_editor):
@@ -677,7 +680,7 @@ class HexEditor(FrameworkEditor):
     
     def add_user_segment(self, segment, update=True):
         self.document.add_user_segment(segment)
-        self.added_segment(self, segment, update)
+        self.added_segment(segment, update)
 
     def added_segment(self, segment, update=True):
         if update:
