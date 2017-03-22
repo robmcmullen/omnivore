@@ -96,11 +96,9 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
 
     def get_view_params(self):
         s = self.GetViewStart()
-        print "view params", s, type(s)
         return [s[0], s[1]]  # might be a wx.Point, so ensure it's a list for json serialization
 
     def restore_view_params(self, data):
-        print "restoring", data
         self.Scroll(*data)
     
     def is_ready_to_render(self):

@@ -435,7 +435,6 @@ class MapEditor(HexEditor):
     def process_paste_data_object(self, data_obj, cmd_cls=None):
         bytes, extra = self.get_numpy_from_data_object(data_obj)
         ranges, indexes = self.get_selected_ranges_and_indexes()
-        print extra
         if extra is None:
             cmd = PasteCommand(self.segment, ranges, self.cursor_index, indexes)
         else:
@@ -448,14 +447,10 @@ class MapEditor(HexEditor):
     def create_clipboard_data_object(self):
         if self.anchor_start_index != self.anchor_end_index:
             anchor_start, anchor_end, (r1, c1), (r2, c2) = self.control.get_highlight_indexes()
-            print anchor_start, anchor_end, (r1, c1), (r2, c2)
             bpr = self.control.bytes_per_row
             last = r2 * bpr
-            print last
             d = self.segment[:last].reshape(-1, bpr)
-            print d
             data = d[r1:r2, c1:c2]
-            print data
             data_obj = wx.CustomDataObject("numpy,columns")
             data_obj.SetData("%d,%d,%s" % (r2 - r1, c2 - c1, data.tostring()))
             return data_obj

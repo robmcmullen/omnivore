@@ -305,7 +305,6 @@ class DisassemblyPanel(ByteGrid):
 
     def update_trace_in_segment(self, save=False):
         trace, mask = self.get_trace(save)
-        print self.table.segment, trace
         s = self.table.segment
         size = len(trace)
         s.style[0:size] &= mask
@@ -340,7 +339,6 @@ class DisassemblyPanel(ByteGrid):
         # user can click on whatever column when clicking in the disassembly
         # window, but on events coming from other windows it should not use the
         # column and instead force the opcode to be displayed
-        print from_control
         if from_control == self:
             if col_from_user:
                 col = self.clamp_column(c, col_from_user)

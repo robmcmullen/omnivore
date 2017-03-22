@@ -273,7 +273,6 @@ class Machine(HasTraits):
                 value = getattr(self, name)
                 state[name] = value.items()
         
-        print state.keys()
         return state
     
     def state_to_traits(self, state):
