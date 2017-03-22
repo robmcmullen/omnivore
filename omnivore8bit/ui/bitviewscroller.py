@@ -388,7 +388,6 @@ class BitviewScroller(wx.ScrolledWindow):
             wx.CallAfter(e.index_clicked, byte, bit, None)
 
     def on_left_down(self, evt):
-        self.set_cursor_pos_from_event(evt)
         if evt.ControlDown():
             self.multi_select_mode = True
             self.select_extend_mode = False
@@ -413,6 +412,7 @@ class BitviewScroller(wx.ScrolledWindow):
             e.cursor_index = index1
             e.select_range(index1, index1, add=self.multi_select_mode)
         evt.Skip()
+        wx.CallAfter(e.index_clicked, e.cursor_index, bit, None)
 
     def on_left_dclick(self, evt):
         self.on_left_down(evt)
