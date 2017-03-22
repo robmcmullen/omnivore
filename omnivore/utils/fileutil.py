@@ -1,6 +1,7 @@
 import os
 import glob
 
+
 def get_latest_file(pathspec):
     files = glob.glob(pathspec)
     if files:

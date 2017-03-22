@@ -27,10 +27,10 @@ class ImageCache(object):
         self.width = width
         self.height = height
         self.cache = {}
-    
+
     def invalidate(self):
         self.cache = {}
-    
+
     def set_colors(self, editor):
         m = editor.machine
         self.color = m.text_color
@@ -53,12 +53,12 @@ class ImageCache(object):
         self.comment_background = m.comment_background_color
         self.comment_brush = wx.Brush(m.comment_background_color, wx.SOLID)
         self.comment_pen = wx.Pen(m.comment_background_color, 1, wx.SOLID)
-    
+
     def draw_blank(self, dc, rect):
         dc.SetBrush(wx.Brush(wx.WHITE, wx.SOLID))
         dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
         dc.DrawRectangleRect(rect)
-    
+
     def draw_text(self, dc, rect, text, style):
         k = (text, style, rect.width, rect.height)
         try:
@@ -72,7 +72,7 @@ class ImageCache(object):
             del mdc  # force the bitmap painting by deleting the gc
             self.cache[k] = bmp
         dc.DrawBitmap(bmp, rect.x, rect.y)
-    
+
     def draw_text_to_dc(self, dc, rect, text, style):
         if style & selected_bit_mask:
             dc.SetBrush(self.selected_brush)
@@ -137,7 +137,7 @@ class CachingHexRenderer(Grid.PyGridCellRenderer):
 class ByteTable(ByteGridTable):
     def __init__(self, bytes_per_row=16):
         ByteGridTable.__init__(self)
-        
+
         self._debug=False
         self.bytes_per_row = bytes_per_row
         self._cols = self.bytes_per_row
@@ -153,7 +153,7 @@ class ByteTable(ByteGridTable):
 
     def get_data_rows(self):
         return 0 if self.editor is None else ((self.start_offset + len(self.editor.segment) - 1) / self.bytes_per_row) + 1
-    
+
     def get_index_range(self, row, col):
         """Get the byte offset from start of file given row, col
         position.
@@ -224,15 +224,15 @@ class HexEditControl(ByteGrid):
         table = ByteTable()
         ByteGrid.__init__(self, parent, task, table, **kwargs)
         self.image_cache = ImageCache()
-    
+
     def get_grid_cell_renderer(self, table, editor):
         return CachingHexRenderer(table, editor, self.image_cache)
-    
+
     def get_status_message_at_index(self, index, row, col):
         msg = ByteGrid.get_status_message_at_index(self, index, row, col)
         comments = self.table.segment.get_comment(index)
         return "%s  %s" % (msg, comments)
-    
+
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.
         
@@ -258,7 +258,7 @@ class HexEditControl(ByteGrid):
         index, _ = self.table.get_index_range(r, c)
         actions.extend(self.editor.get_goto_actions_same_byte(index))
         return actions
-    
+
     def get_popup_actions(self, r, c, inside):
         if not inside:
             actions = []

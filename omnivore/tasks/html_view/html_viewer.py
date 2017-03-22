@@ -11,6 +11,7 @@ from traits.api import Bool, Event, Instance, File, Unicode, Property, provides
 # Local imports.
 from omnivore.framework.editor import FrameworkEditor
 
+
 class HtmlWindow(PyClickableHtmlWindow):
     def OnCellMouseHover(self, cell, x, y):
         # Without access to the task window, search the control hierarchy to
@@ -25,6 +26,7 @@ class HtmlWindow(PyClickableHtmlWindow):
                     parent.SetStatusText("")
                 return
             parent = parent.GetParent()
+
 
 class HtmlViewer(FrameworkEditor):
     """ The toolkit specific implementation of a simple HTML viewer

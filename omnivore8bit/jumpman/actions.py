@@ -40,6 +40,7 @@ def trigger_dialog(event, e, obj):
     dlg.Destroy()
     return addr
 
+
 class ClearTriggerAction(EditorAction):
     name = "Clear Trigger Function"
     enabled_name = 'can_copy'
@@ -70,6 +71,7 @@ class ClearTriggerAction(EditorAction):
         except ValueError:
             pass
 
+
 class SetTriggerAction(ClearTriggerAction):
     name = "Set Trigger Function..."
     command = SetTriggerCommand
@@ -91,6 +93,7 @@ class SelectAllJumpmanAction(EditorAction):
     def perform(self, event):
         event.task.active_editor.select_all()
 
+
 class SelectNoneJumpmanAction(EditorAction):
     name = 'Select None'
     accelerator = 'Shift+Ctrl+A'
@@ -100,6 +103,7 @@ class SelectNoneJumpmanAction(EditorAction):
     def perform(self, event):
         event.task.active_editor.select_none()
 
+
 class SelectInvertJumpmanAction(EditorAction):
     name = 'Invert Selection'
     tooltip = 'Invert selection'
@@ -107,6 +111,7 @@ class SelectInvertJumpmanAction(EditorAction):
 
     def perform(self, event):
         event.task.active_editor.select_invert()
+
 
 class FlipVerticalAction(EditorAction):
     name = "Flip Selection Vertically"

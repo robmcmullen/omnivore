@@ -16,6 +16,7 @@ class SimplePromptDialog(wx.TextEntryDialog):
     """Simple subclass of wx.TextEntryDialog to convert text result to a
     specific format
     """
+
     def convert_text(self, text, return_error=False, **kwargs):
         if return_error:
             return text, ""
@@ -35,10 +36,12 @@ class SimplePromptDialog(wx.TextEntryDialog):
         self.Destroy()
         return value
 
+
 class HexEntryDialog(SimplePromptDialog):
     """Simple subclass of wx.TextEntryDialog to convert text result from
     hexidecimal if necessary.
     """
+
     def convert_text(self, text, return_error=False, default_base="dec", **kwargs):
         try:
             value = text_to_int(text, default_base)
@@ -51,6 +54,7 @@ class HexEntryDialog(SimplePromptDialog):
         else:
             return value
 
+
 def prompt_for_string(parent, message, title, default=None):
     if default is not None:
         default = str(default)
@@ -58,6 +62,7 @@ def prompt_for_string(parent, message, title, default=None):
         default = ""
     d = SimplePromptDialog(parent, message, title, default)
     return d.show_and_get_value()
+
 
 def prompt_for_hex(parent, message, title, default=None, return_error=False, default_base="hex"):
     if default is not None:
@@ -72,26 +77,27 @@ def prompt_for_hex(parent, message, title, default=None, return_error=False, def
         d.SetValue(default)
     return d.show_and_get_value(return_error=return_error, default_base=default_base)
 
+
 def prompt_for_dec(parent, message, title, default=None, return_error=False, default_base="dec"):
     return prompt_for_hex(parent, message, title, default, return_error, default_base)
 
 
 class DictEditDialog(wx.Dialog):
     border = 5
-    
+
     def __init__(self, parent, title, instructions, fields, default=None):
         wx.Dialog.__init__(self, parent, -1, title)
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
-        
+
         t = wx.StaticText(self, -1, instructions)
         sizer.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
-        
+
         self.types = {}
         self.controls = {}
         self.buttons = {}
         self.add_fields(fields)
-        
+
         btnsizer = wx.StdDialogButtonSizer()
         self.ok_btn = wx.Button(self, wx.ID_OK)
         self.ok_btn.SetDefault()
@@ -100,19 +106,19 @@ class DictEditDialog(wx.Dialog):
         btnsizer.AddButton(btn)
         btnsizer.Realize()
         sizer.Add(btnsizer, 1, wx.ALL|wx.EXPAND, self.border)
-        
+
         self.Bind(wx.EVT_BUTTON, self.on_button)
         self.Bind(wx.EVT_TEXT, self.on_text_changed)
         self.Bind(EVT_ETC_LAYOUT_NEEDED, self.on_resize)
-        
+
         # Don't call self.Fit() otherwise the dialog buttons are zero height
         sizer.Fit(self)
-        
+
         self.default = default
         if default:
             self.set_initial_values(default)
         self.check_enable()
-    
+
     def add_fields(self, fields):
         """ Calls the create_X method where X is the type of the field. Fields
         are a list of tuples: (type, key, label) or (type, key, label, choices)
@@ -151,10 +157,10 @@ class DictEditDialog(wx.Dialog):
         elif type == 'dropdown':
             value = self.get_default_value(d, key)
             control.SetStringSelection(value)
-    
+
     def get_default_value(self, d, key):
         return d[key]
-    
+
     def get_edited_values(self, d):
         for key in self.controls.keys():
             self.get_edited_value_of(d, key)
@@ -172,10 +178,10 @@ class DictEditDialog(wx.Dialog):
             self.set_output_value(d, key, value)
         except AttributeError:
             log.error("Error setting output value for %s %s" % (key, control))
-    
+
     def set_output_value(self, d, key, value):
         d[key] = value
-    
+
     def create_text(self, key, label, choices=None):
         sizer = self.GetSizer()
         hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -211,7 +217,7 @@ class DictEditDialog(wx.Dialog):
         hbox.Add(entry, 0, wx.LEFT, self.border)
         sizer.Add(hbox, 0, wx.ALL|wx.EXPAND, 0)
         return entry
-    
+
     def create_verify(self, key, label, choices=None):
         sizer = self.GetSizer()
         hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -225,7 +231,7 @@ class DictEditDialog(wx.Dialog):
         verify.Bind(wx.EVT_BUTTON, self.on_verify)
         self.buttons[key] = verify
         return entry
-    
+
     def create_verify_list(self, key, label, choices=None):
         sizer = self.GetSizer()
         hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -267,7 +273,7 @@ class DictEditDialog(wx.Dialog):
         hbox.Add(entry, 1, wx.ALL|wx.EXPAND, self.border)
         sizer.Add(hbox, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
         return entry
-        
+
     def on_button(self, evt):
         if evt.GetId() == wx.ID_OK:
             self.EndModal(wx.ID_OK)
@@ -286,10 +292,10 @@ class DictEditDialog(wx.Dialog):
 
     def on_resize(self, event):
         self.Fit()
-    
+
     def can_submit(self):
         return True
-    
+
     def check_enable(self):
         self.ok_btn.Enable(self.can_submit())
 
@@ -302,7 +308,7 @@ class DictEditDialog(wx.Dialog):
             d = None
         self.Destroy()
         return d
-    
+
     def get_result_object(self):
         # Edit the object in place by reusing the same dictionary
         if self.default:
@@ -314,17 +320,18 @@ class DictEditDialog(wx.Dialog):
     def get_new_object(self):
         return dict()
 
+
 class ObjectEditDialog(DictEditDialog):
     def __init__(self, parent, title, instructions, fields, object_class, default=None):
         DictEditDialog.__init__(self, parent, title, instructions, fields, default)
         self.new_object_class = object_class
-        
+
     def get_default_value(self, d, key):
         return getattr(d, key)
-    
+
     def get_new_object(self):
         return self.new_object_class()
-    
+
     def set_output_value(self, d, key, value):
         setattr(d, key, value)
 
@@ -342,10 +349,10 @@ class ListReorderDialog(wx.Dialog):
     """Simple dialog to return a list of items that can be reordered by the user.
     """
     border = 5
-    
+
     def __init__(self, parent, items, get_item_text, dialog_helper=None, title="Reorder List", copy_helper=None):
         wx.Dialog.__init__(self, parent, -1, title,
-                           size=(700, 500), pos=wx.DefaultPosition, 
+                           size=(700, 500), pos=wx.DefaultPosition,
                            style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -356,40 +363,40 @@ class ListReorderDialog(wx.Dialog):
         sizer.Add(self.list, 1, wx.EXPAND)
 
         vbox = wx.BoxSizer(wx.VERTICAL)
-        
+
         self.up = b = wx.Button(self, wx.ID_UP, 'Up', size=(90, -1))
         b.Bind(wx.EVT_BUTTON, self.on_up)
         vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
-        
+
         self.down = b = wx.Button(self, wx.ID_DOWN, 'Down', size=(90, -1))
         b.Bind(wx.EVT_BUTTON, self.on_down)
         vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
-        
+
         vbox.AddSpacer(50)
-        
+
         b = wx.Button(self, wx.ID_NEW, 'New', size=(90, -1))
         b.Bind(wx.EVT_BUTTON, self.on_new)
         vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
-        
+
         self.edit = b = wx.Button(self, wx.ID_EDIT, 'Edit', size=(90, -1))
         b.Bind(wx.EVT_BUTTON, self.on_edit)
         vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
-        
+
         if copy_helper is not None:
             self.copy = b = wx.Button(self, wx.ID_COPY, 'Copy', size=(90, -1))
             b.Bind(wx.EVT_BUTTON, self.on_copy)
             vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
         else:
             self.copy = None
-        
+
         vbox.AddSpacer(50)
-        
+
         self.delete = b = wx.Button(self, wx.ID_DELETE, 'Delete', size=(90, -1))
         b.Bind(wx.EVT_BUTTON, self.on_delete)
         vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
-        
+
         vbox.AddStretchSpacer()
-        
+
         btnsizer = wx.StdDialogButtonSizer()
         btn = wx.Button(self, wx.ID_OK)
         btn.SetDefault()
@@ -404,16 +411,16 @@ class ListReorderDialog(wx.Dialog):
         sizer.Fit(self)
 
         self.Layout()
-        
+
         self.list.Bind(wx.EVT_CONTEXT_MENU, self.on_context_menu)
         self.delete_id = wx.NewId()
         self.Bind(wx.EVT_MENU, self.on_delete, id=self.delete_id)
-        
+
         self.get_item_text = get_item_text
         self.dialog_helper = dialog_helper
         self.copy_helper = copy_helper
         self.on_list_selection(None)
-    
+
     def on_list_selection(self, evt):
         one_selected = self.list.GetSelectedItemCount() == 1
         any_selected = self.list.GetSelectedItemCount() > 0
@@ -423,7 +430,7 @@ class ListReorderDialog(wx.Dialog):
         if self.copy is not None:
             self.copy.Enable(one_selected)
         self.delete.Enable(any_selected)
-    
+
     def on_context_menu(self, evt):
         one_selected = self.list.GetSelectedItemCount() == 1
         any_selected = self.list.GetSelectedItemCount() > 0
@@ -456,20 +463,20 @@ class ListReorderDialog(wx.Dialog):
 
     def get_items(self):
         return self.list.items
-    
+
     def on_up(self, evt):
         if self.list.can_move_up:
             self.list.move_selected(-1)
-    
+
     def on_down(self, evt):
         if self.list.can_move_down:
             self.list.move_selected(1)
-    
+
     def on_new(self, evt):
         new_item = self.dialog_helper(self, "Add Item")
         if new_item is not None:
             self.insert_new_item(new_item)
-    
+
     def insert_new_item(self, new_item):
         index = self.list.GetFirstSelected()
         if index == -1:
@@ -480,7 +487,7 @@ class ListReorderDialog(wx.Dialog):
         self.list.refresh()
         self.list.deselect_all()
         self.list.SetItemState(index, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
-    
+
     def on_edit(self, evt):
         index = self.list.GetFirstSelected()
         if index >= 0:
@@ -489,7 +496,7 @@ class ListReorderDialog(wx.Dialog):
             if new_item is not None:
                 self.list.items[index] = new_item
                 self.list.refresh()
-    
+
     def on_copy(self, evt):
         index = self.list.GetFirstSelected()
         if index >= 0:
@@ -497,7 +504,7 @@ class ListReorderDialog(wx.Dialog):
             new_item = self.copy_helper(item)
             if new_item is not None:
                 self.insert_new_item(new_item)
-    
+
     def on_delete(self, evt):
         self.list.delete_selected()
 
@@ -506,10 +513,10 @@ class CheckItemDialog(wx.Dialog):
     """Simple dialog to return a list of items that can be reordered by the user.
     """
     border = 5
-    
+
     def __init__(self, parent, items, get_item_text, dialog_helper=None, title="Select Items", instructions=""):
         wx.Dialog.__init__(self, parent, -1, title,
-                           size=(700, 500), pos=wx.DefaultPosition, 
+                           size=(700, 500), pos=wx.DefaultPosition,
                            style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -524,7 +531,7 @@ class CheckItemDialog(wx.Dialog):
         # Use multi-select to make sure no initial item is selecte. Single
         # select forces the first item to be selected.
         self.list = wx.CheckListBox(self, size=(-1,500), style=wx.LB_MULTIPLE)
-        
+
         # Both EVT_LISTBOX and EVT_CHECKLISTBOX cancel each other out when
         # clicking on the check box itself. Clicking only on item text causes
         # EVT_LISTBOX event only.
@@ -533,7 +540,7 @@ class CheckItemDialog(wx.Dialog):
         self.list.Bind(wx.EVT_CONTEXT_MENU, self.on_context_menu)
         sizer.Add(self.list, 1, wx.EXPAND)
         self.set_items(items)
-        
+
         btnsizer = wx.StdDialogButtonSizer()
         btn = wx.Button(self, wx.ID_OK)
         btn.SetDefault()
@@ -547,32 +554,32 @@ class CheckItemDialog(wx.Dialog):
         sizer.Fit(self)
 
         self.Layout()
-        
+
         self.Bind(wx.EVT_CONTEXT_MENU, self.on_context_menu)
         self.delete_id = wx.NewId()
-    
+
     def set_items(self, items):
         self.clear()
         for item in items:
             self.insert_item(self.list.GetCount(), item)
-    
+
     def insert_item(self, index, item):
         self.list.Insert("placeholder", index)
         self.set_item_text(index, item)
         self.items[index:index] = [item]
-    
+
     def set_item_text(self, index, item):
         text = self.get_item_text(item)
         self.list.SetString(index, text)
-    
+
     def on_list_selection(self, evt):
         index = evt.GetInt()
         self.list.Check(index, not self.list.IsChecked(index))
         self.list.SetSelection(index)
-    
+
     def on_list_check(self, evt):
         index = evt.GetInt()
-    
+
     def on_context_menu(self, evt):
         menu = wx.Menu()
         menu.Append(wx.ID_SELECTALL, "Select All")
@@ -586,16 +593,16 @@ class CheckItemDialog(wx.Dialog):
 
     def select_all(self):
         self.list.SetChecked(range(self.list.GetCount()))
-    
+
     def deselect_all(self):
         self.list.SetChecked([])
 
     def get_items(self):
         return self.items
-    
+
     def get_checked_items(self):
         return [self.items[i] for i in self.list.GetChecked()]
-    
+
     def clear(self, evt=None):
         self.list.Clear()
         self.items = []
@@ -605,10 +612,10 @@ class ChooseOnePlusCustomDialog(wx.Dialog):
     """Simple dialog to return a choice from a list or a custom value
     """
     border = 5
-    
+
     def __init__(self, parent, items, default=None, default_custom_value="", title="Select Items", instructions="", custom_value_label="Custom Value"):
         wx.Dialog.__init__(self, parent, -1, title,
-                           size=(700, 500), pos=wx.DefaultPosition, 
+                           size=(700, 500), pos=wx.DefaultPosition,
                            style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -630,7 +637,7 @@ class ChooseOnePlusCustomDialog(wx.Dialog):
             else:
                 index = 0
         self.list.SetSelection(index)
-        
+
         # Both EVT_LISTBOX and EVT_CHECKLISTBOX cancel each other out when
         # clicking on the check box itself. Clicking only on item text causes
         # EVT_LISTBOX event only.
@@ -643,7 +650,7 @@ class ChooseOnePlusCustomDialog(wx.Dialog):
         self.custom_value = wx.TextCtrl(self, -1, default_custom_value, size=(-1, -1))
         hbox.Add(self.custom_value, 1, wx.ALL|wx.EXPAND, self.border)
         sizer.Add(hbox, 0, wx.EXPAND)
-        
+
         btnsizer = wx.StdDialogButtonSizer()
         btn = wx.Button(self, wx.ID_OK)
         btn.SetDefault()
@@ -657,7 +664,7 @@ class ChooseOnePlusCustomDialog(wx.Dialog):
         sizer.Fit(self)
 
         self.Layout()
-    
+
     def on_list_selection(self, evt):
         index = evt.GetInt()
         if index == self.custom_item_index:
@@ -666,7 +673,7 @@ class ChooseOnePlusCustomDialog(wx.Dialog):
         else:
             self.custom_value.Enable(False)
         evt.Skip()
-    
+
     def get_selected(self):
         index = self.list.GetSelection()
         if index == self.custom_item_index:
@@ -693,6 +700,7 @@ if __name__ == "__main__":
     # if dlg.ShowModal() == wx.ID_OK:
     #     print "Selected", dlg.get_selected()
     # dlg.Destroy()
+
     class TestObj(object):
         def __init__(self):
             self.name = "aoeu"
@@ -706,7 +714,6 @@ if __name__ == "__main__":
         def state(self, value):
             print "Setting to:", value
             self._state = (value == 'state true')
-        
 
     class TestSetattrDialog(ObjectEditDialog):
         def __init__(self, parent, title, default=None):

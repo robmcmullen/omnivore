@@ -12,17 +12,17 @@ class PrivateTextRecognizer(HasTraits):
     
     """
     id = "text/private"
-    
+
     before = "text/poundbang"
 
     header = "#!omnivore-private\n"
-    
+
     def identify(self, guess):
         byte_stream = guess.get_utf8()
         if not byte_stream.startswith(self.header):
             return
         return self.id
-    
+
     def load(self, guess):
         start = len(self.header)
         doc = BaseDocument(metadata=guess.metadata, bytes=guess.numpy[start:])

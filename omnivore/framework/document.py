@@ -18,6 +18,7 @@ log = logging.getLogger(__name__)
 
 class TraitNumpyConverter(TraitHandler):
     """Trait validator to convert bytes to numpy array"""
+
     def validate(self, object, name, value):
         if type(value) is np.ndarray:
             return value
@@ -31,7 +32,7 @@ class TraitNumpyConverter(TraitHandler):
 
 class BaseDocument(HasTraits):
     undo_stack = Any
-    
+
     metadata = Any
 
     name = Property(Unicode, depends_on='metadata')
@@ -43,37 +44,37 @@ class BaseDocument(HasTraits):
     document_id = Int(-1)
 
     uuid = Str
-    
+
     last_task_id = Str
-    
+
     bytes = Trait("", TraitNumpyConverter())
-    
+
     segments = List
-    
+
     extra_metadata = Dict
-    
+
     # Trait events to provide view updating
-    
+
     undo_stack_changed = Event
-    
+
     byte_values_changed = Event  # but not the size of the bytes array. That's not handled yet
-    
+
     byte_style_changed = Event  # only styling info may have changed, not any of the data byte values
-    
+
     change_count = Int()
-    
+
     can_revert = Property(Bool, depends_on='metadata')
 
     permute = Any
 
     #### trait default values
-    
+
     def _metadata_default(self):
         return FileMetadata(uri="")
-    
+
     def _undo_stack_default(self):
         return UndoStack()
-    
+
     def _bytes_default(self):
         return ""
 
@@ -96,29 +97,29 @@ class BaseDocument(HasTraits):
 
     def _set_read_only(self, read_only):
         self.metadata.read_only = read_only
-    
+
     def _get_can_revert(self):
         return self.metadata.uri != ""
-    
+
     @property
     def menu_name(self):
         if self.uri:
             return "%s (%s)" % (self.name, self.uri)
         return self.name
-    
+
     @classmethod
     def get_blank(cls):
         return cls(bytes="")
-    
+
     def __str__(self):
         return "Document(id=%s): %s" % (self.document_id, self.metadata.uri)
-    
+
     def __len__(self):
         return np.alen(self.bytes)
-    
+
     def __getitem__(self, val):
         return self.bytes[val]
-    
+
     @property
     def dirty(self):
         return self.undo_stack.is_dirty()
@@ -138,7 +139,7 @@ class BaseDocument(HasTraits):
         except fs.errors.FSError:
             pass
         return None
-    
+
     @property
     def bytestream(self):
         return StringIO.StringIO(self.bytes)

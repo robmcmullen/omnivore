@@ -9,9 +9,9 @@ from pyface.api import Dialog, OK
 
 
 class FrameworkPreferenceDialog(Dialog):
-    
+
     application = Instance(IApplication)
-    
+
     def _create_dialog_area(self, parent):
         from envisage.ui.tasks.preferences_dialog import \
             PreferencesDialog
@@ -19,7 +19,7 @@ class FrameworkPreferenceDialog(Dialog):
         dialog = self.application.get_service(PreferencesDialog)
         self.prefs_ui = dialog.edit_traits(parent=parent, scrollable=True, kind='subpanel')
         return self.prefs_ui.control
-    
+
     @on_trait_change('closed')
     def delete_prefs_ui(self):
         if self.return_code == OK:

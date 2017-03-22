@@ -23,7 +23,7 @@ class SetDataCommand(Command):
             ('start_index', 'int'),
             ('end_index', 'int'),
             ]
-    
+
     def __init__(self, segment, start_index, end_index):
         Command.__init__(self)
         self.segment = segment
@@ -33,16 +33,16 @@ class SetDataCommand(Command):
         self.end_index = end_index
         self.cursor_at_end = False
         self.ignore_if_same_bytes = False
-    
+
     def __str__(self):
         if self.end_index - self.start_index > 1:
             return "%s @ %04x-%04x" % (self.pretty_name, self.start_index + self.segment.start_addr, self.end_index + self.segment.start_addr)
         else:
             return "%s @ %04x" % (self.pretty_name, self.start_index)
-    
+
     def get_data(self, orig):
         raise NotImplementedError
-    
+
     def perform(self, editor):
         i1 = self.start_index
         i2 = self.end_index
@@ -75,20 +75,20 @@ class ChangeByteCommand(SetDataCommand):
             ('cursor_at_end', 'bool'),
             ('ignore_if_same_bytes', 'bool'),
             ]
-    
+
     def __init__(self, segment, start_index, end_index, bytes, cursor_at_end=False, ignore_if_same_bytes=False):
         SetDataCommand.__init__(self, segment, start_index, end_index)
         self.data = bytes
         self.cursor_at_end = cursor_at_end
         self.ignore_if_same_bytes = ignore_if_same_bytes
-    
+
     def get_data(self, orig):
         return self.data
 
 
 class CoalescingChangeByteCommand(ChangeByteCommand):
     short_name = "ccb"
-    
+
     def coalesce(self, next_command):
         n = next_command
         if n.__class__ == self.__class__ and n.segment == self.segment and n.start_index == self.start_index and n.end_index == self.end_index:
@@ -104,12 +104,12 @@ class InsertFileCommand(SetDataCommand):
             ('start_index', 'int'),
             ('uri', 'string'),
             ]
-    
+
     def __init__(self, segment, start_index, uri):
         SetDataCommand.__init__(self, segment, start_index, -1)
         self.uri = uri
         self.error = None
-    
+
     def get_data(self, orig):
         try:
             guess = FileGuess(self.uri)
@@ -120,7 +120,7 @@ class InsertFileCommand(SetDataCommand):
         if len(orig) < len(data):
             data = data[0:len(orig)]
         return data
-    
+
     def perform(self, editor):
         i1 = self.start_index
         orig = self.segment.data[self.start_index:]
@@ -150,11 +150,11 @@ class MiniAssemblerCommand(ChangeByteCommand):
             ('bytes', 'string'),
             ('asm', 'string'),
             ]
-    
+
     def __init__(self, segment, start_index, end_index, bytes, asm):
         ChangeByteCommand.__init__(self, segment, start_index, end_index, bytes)
         self.asm = asm
-    
+
     def __str__(self):
         return "%s @ %04x" % (self.asm, self.start_index)
 
@@ -167,7 +167,7 @@ class SetCommentCommand(Command):
             ('ranges', 'int_list'),
             ('comment', 'string'),
             ]
-    
+
     def __init__(self, segment, ranges, comment):
         Command.__init__(self)
         self.segment = segment
@@ -177,14 +177,14 @@ class SetCommentCommand(Command):
         self.index_range = indexes[0], indexes[-1]
         if len(ranges) == 1:
             self.pretty_name = "%s @ %04x" % (self.pretty_name, self.segment.start_addr + indexes[0])
-    
+
     def __str__(self):
         if len(self.comment) > 20:
             text = self.comment[:20] + "..."
         else:
             text = self.comment
         return "%s: %s" % (self.pretty_name, text)
-    
+
     def change_comments(self):
         self.segment.set_comment(self.ranges, self.comment)
 
@@ -206,10 +206,10 @@ class SetCommentCommand(Command):
 class ClearCommentCommand(SetCommentCommand):
     short_name = "clear_comment"
     pretty_name = "Remove Comment"
-    
+
     def __init__(self, segment, ranges):
         SetCommentCommand.__init__(self, segment, ranges, "")
-    
+
     def __str__(self):
         return self.pretty_name
 
@@ -227,7 +227,7 @@ class SetValuesAtIndexesCommand(Command):
             ('bytes', 'string'),
             ('indexes', 'nparray'),
             ]
-    
+
     def __init__(self, segment, ranges, cursor, bytes, indexes, style=None, comment_indexes=None, comments=None):
         Command.__init__(self)
         self.segment = segment
@@ -238,13 +238,13 @@ class SetValuesAtIndexesCommand(Command):
         self.style = style
         self.relative_comment_indexes = comment_indexes
         self.comments = comments
-    
+
     def __str__(self):
         return "%s" % self.pretty_name
-    
+
     def get_data(self, orig):
         raise NotImplementedError
-    
+
     def perform(self, editor):
         raise NotImplementedError
 
@@ -261,7 +261,7 @@ class SetValuesAtIndexesCommand(Command):
 class PasteCommand(SetValuesAtIndexesCommand):
     short_name = "paste"
     pretty_name = "Paste"
-    
+
     def get_data(self, orig):
         data_len = np.alen(self.data)
         orig_len = np.alen(orig)
@@ -299,7 +299,7 @@ class PasteCommand(SetValuesAtIndexesCommand):
 class PasteAndRepeatCommand(PasteCommand):
     short_name = "paste_rep"
     pretty_name = "Paste And Repeat"
-    
+
     def get_data(self, orig):
         bytes = self.data
         data_len = np.alen(bytes)
@@ -317,18 +317,18 @@ class SetRangeCommand(Command):
             ('segment', 'int'),
             ('ranges', 'int_list'),
             ]
-    
+
     def __init__(self, segment, ranges):
         Command.__init__(self)
         self.segment = segment
         self.ranges = tuple(ranges)
-    
+
     def __str__(self):
         return "%s" % self.pretty_name
-    
+
     def get_data(self, orig):
         raise NotImplementedError
-    
+
     def perform(self, editor):
         indexes = ranges_to_indexes(self.ranges)
         self.undo_info = undo = UndoInfo()
@@ -354,11 +354,11 @@ class SetRangeValueCommand(SetRangeCommand):
             ('ranges', 'int_list'),
             ('bytes', 'string'),
             ]
-    
+
     def __init__(self, segment, ranges, bytes):
         SetRangeCommand.__init__(self, segment, ranges)
         self.data = bytes
-    
+
     def get_data(self, orig):
         return self.data
 
@@ -371,7 +371,7 @@ class SetValueCommand(SetRangeValueCommand):
 class ZeroCommand(SetRangeValueCommand):
     short_name = "zero"
     pretty_name = "Zero Bytes"
-    
+
     def __init__(self, segment, ranges):
         SetRangeValueCommand.__init__(self, segment, ranges, 0)
 
@@ -379,7 +379,7 @@ class ZeroCommand(SetRangeValueCommand):
 class FFCommand(SetRangeValueCommand):
     short_name = "ff"
     pretty_name = "FF Bytes"
-    
+
     def __init__(self, segment, ranges):
         SetRangeValueCommand.__init__(self, segment, ranges, 0xff)
 
@@ -392,7 +392,7 @@ class NOPCommand(SetRangeValueCommand):
 class SetHighBitCommand(SetRangeCommand):
     short_name = "set_high_bit"
     pretty_name = "Set High Bit"
-    
+
     def get_data(self, orig):
         return np.bitwise_or(orig, 0x80)
 
@@ -400,7 +400,7 @@ class SetHighBitCommand(SetRangeCommand):
 class ClearHighBitCommand(SetRangeCommand):
     short_name = "clear_high_bit"
     pretty_name = "Clear High Bit"
-    
+
     def get_data(self, orig):
         return np.bitwise_and(orig, 0x7f)
 
@@ -408,7 +408,7 @@ class ClearHighBitCommand(SetRangeCommand):
 class BitwiseNotCommand(SetRangeCommand):
     short_name = "bitwise_not"
     pretty_name = "Bitwise NOT"
-    
+
     def get_data(self, orig):
         return np.invert(orig)
 
@@ -416,7 +416,7 @@ class BitwiseNotCommand(SetRangeCommand):
 class OrWithCommand(SetRangeValueCommand):
     short_name = "or_value"
     pretty_name = "OR With"
-    
+
     def get_data(self, orig):
         return np.bitwise_or(orig, self.data)
 
@@ -424,7 +424,7 @@ class OrWithCommand(SetRangeValueCommand):
 class AndWithCommand(SetRangeValueCommand):
     short_name = "and_value"
     pretty_name = "AND With"
-    
+
     def get_data(self, orig):
         return np.bitwise_and(orig, self.data)
 
@@ -432,7 +432,7 @@ class AndWithCommand(SetRangeValueCommand):
 class XorWithCommand(SetRangeValueCommand):
     short_name = "xor_value"
     pretty_name = "XOR With"
-    
+
     def get_data(self, orig):
         return np.bitwise_xor(orig, self.data)
 
@@ -440,7 +440,7 @@ class XorWithCommand(SetRangeValueCommand):
 class LeftShiftCommand(SetRangeCommand):
     short_name = "left_shift"
     pretty_name = "Left Shift"
-    
+
     def get_data(self, orig):
         return np.left_shift(orig, 1)
 
@@ -448,7 +448,7 @@ class LeftShiftCommand(SetRangeCommand):
 class RightShiftCommand(SetRangeCommand):
     short_name = "right_shift"
     pretty_name = "Right Shift"
-    
+
     def get_data(self, orig):
         return np.right_shift(orig, 1)
 
@@ -456,7 +456,7 @@ class RightShiftCommand(SetRangeCommand):
 class LeftRotateCommand(SetRangeCommand):
     short_name = "left_rotate"
     pretty_name = "Left Rotate"
-    
+
     def get_data(self, orig):
         rotated = np.right_shift(np.bitwise_and(orig, 0x80), 7)
         return np.bitwise_or(np.left_shift(orig, 1), rotated)
@@ -465,7 +465,7 @@ class LeftRotateCommand(SetRangeCommand):
 class RightRotateCommand(SetRangeCommand):
     short_name = "right_rotate"
     pretty_name = "Right Rotate"
-    
+
     def get_data(self, orig):
         rotated = np.left_shift(np.bitwise_and(orig, 0x01), 7)
         return np.bitwise_or(np.right_shift(orig, 1), rotated)
@@ -474,7 +474,7 @@ class RightRotateCommand(SetRangeCommand):
 class ReverseBitsCommand(SetRangeCommand):
     short_name = "reverse_bits"
     pretty_name = "Reverse Bits"
-    
+
     def get_data(self, orig):
         return bit_reverse_table[orig]
 
@@ -482,7 +482,7 @@ class ReverseBitsCommand(SetRangeCommand):
 class RampUpCommand(SetRangeValueCommand):
     short_name = "ramp_up"
     pretty_name = "Ramp Up"
-    
+
     def get_data(self, orig):
         num = np.alen(orig)
         return np.arange(self.data, self.data + num)
@@ -491,7 +491,7 @@ class RampUpCommand(SetRangeValueCommand):
 class RampDownCommand(SetRangeValueCommand):
     short_name = "ramp_down"
     pretty_name = "Ramp Down"
-    
+
     def get_data(self, orig):
         num = np.alen(orig)
         return np.arange(self.data, self.data - num, -1)
@@ -500,7 +500,7 @@ class RampDownCommand(SetRangeValueCommand):
 class AddValueCommand(SetRangeValueCommand):
     short_name = "add_value"
     pretty_name = "Add"
-    
+
     def get_data(self, orig):
         return orig + self.data
 
@@ -508,7 +508,7 @@ class AddValueCommand(SetRangeValueCommand):
 class SubtractValueCommand(SetRangeValueCommand):
     short_name = "subtract_value"
     pretty_name = "Subtract"
-    
+
     def get_data(self, orig):
         return orig - self.data
 
@@ -516,7 +516,7 @@ class SubtractValueCommand(SetRangeValueCommand):
 class SubtractFromCommand(SetRangeValueCommand):
     short_name = "subtract_from"
     pretty_name = "Subtract From"
-    
+
     def get_data(self, orig):
         return self.data - orig
 
@@ -524,7 +524,7 @@ class SubtractFromCommand(SetRangeValueCommand):
 class MultiplyCommand(SetRangeValueCommand):
     short_name = "multiply"
     pretty_name = "Multiply"
-    
+
     def get_data(self, orig):
         return orig * self.data
 
@@ -532,7 +532,7 @@ class MultiplyCommand(SetRangeValueCommand):
 class DivideByCommand(SetRangeValueCommand):
     short_name = "divide"
     pretty_name = "Divide By"
-    
+
     def get_data(self, orig):
         return orig / self.data
 
@@ -540,7 +540,7 @@ class DivideByCommand(SetRangeValueCommand):
 class DivideFromCommand(SetRangeValueCommand):
     short_name = "divide_from"
     pretty_name = "Divide From"
-    
+
     def get_data(self, orig):
         return self.data / orig
 
@@ -548,11 +548,11 @@ class DivideFromCommand(SetRangeValueCommand):
 class RevertToBaselineCommand(SetRangeCommand):
     short_name = "revert_baseline"
     pretty_name = "Revert to Baseline Data"
-    
+
     def get_baseline_data(self, orig, editor, indexes):
         r = editor.document.baseline_document.container_segment.get_parallel_raw_data(self.segment)
         return r[indexes].data
-    
+
     def perform(self, editor):
         indexes = ranges_to_indexes(self.ranges)
         self.undo_info = undo = UndoInfo()
@@ -567,7 +567,7 @@ class RevertToBaselineCommand(SetRangeCommand):
 class FindAllCommand(Command):
     short_name = "find"
     pretty_name = "Find"
-    
+
     def __init__(self, start_cursor_index, search_text, error, repeat=False, reverse=False):
         Command.__init__(self)
         self.start_cursor_index = start_cursor_index
@@ -576,16 +576,16 @@ class FindAllCommand(Command):
         self.repeat = repeat
         self.reverse = reverse
         self.current_match_index = -1
-    
+
     def __str__(self):
         return "%s %s" % (self.pretty_name, repr(self.search_text))
-    
+
     def get_search_string(self):
         return bytearray.fromhex(self.search_text)
-    
+
     def get_searchers(self, editor):
         return editor.searchers
-    
+
     def perform(self, editor):
         self.all_matches = []
         self.match_ids = {}
@@ -603,7 +603,7 @@ class FindAllCommand(Command):
                     found.append(searcher)
                 except ValueError, e:
                     errors.append(str(e))
-            
+
             if found:
                 for searcher in found:
                     self.all_matches.extend(searcher.matches)
@@ -650,14 +650,15 @@ class FindAllCommand(Command):
             undo.flags.refresh_needed = True
         return undo
 
+
 class FindNextCommand(Command):
     short_name = "findnext"
     pretty_name = "Find Next"
-    
+
     def __init__(self, search_command):
         Command.__init__(self)
         self.search_command = search_command
-    
+
     def get_index(self, editor):
         cmd = self.search_command
         cursor_tuple = (editor.cursor_index, 0)
@@ -668,7 +669,7 @@ class FindNextCommand(Command):
             match_index = 0
         cmd.current_match_index = match_index
         return match_index
-    
+
     def perform(self, editor):
         self.undo_info = undo = UndoInfo()
         undo.flags.changed_document = False
@@ -687,10 +688,11 @@ class FindNextCommand(Command):
         undo.flags.refresh_needed = True
         return undo
 
+
 class FindPrevCommand(FindNextCommand):
     short_name = "findprev"
     pretty_name = "Find Previous"
-    
+
     def get_index(self, editor):
         cmd = self.search_command
         cursor_tuple = (editor.cursor_index, 0)
@@ -701,10 +703,11 @@ class FindPrevCommand(FindNextCommand):
         cmd.current_match_index = match_index
         return match_index
 
+
 class FindAlgorithmCommand(FindAllCommand):
     short_name = "findalgorithm"
     pretty_name = "Find using expression"
-    
+
     def get_searchers(self, editor):
         return [AlgorithmSearcher]
 
@@ -715,7 +718,7 @@ class ChangeStyleCommand(SetDataCommand):
     serialize_order =  [
             ('segment', 'int'),
             ]
-    
+
     def __init__(self, segment):
         start_index = 0
         end_index = len(segment)
@@ -758,7 +761,7 @@ class ChangeStyleCommand(SetDataCommand):
 class ApplyTraceSegmentCommand(ChangeStyleCommand):
     short_name = "applytrace"
     pretty_name = "Apply Trace to Segment"
-    
+
     def get_style(self, editor):
         trace, mask = editor.disassembly.get_trace(save=True)
         self.clip(trace)
@@ -773,7 +776,7 @@ class ApplyTraceSegmentCommand(ChangeStyleCommand):
 class ClearTraceCommand(ChangeStyleCommand):
     short_name = "cleartrace"
     pretty_name = "Clear Current Trace Results"
-    
+
     def get_style(self, editor):
         mask = self.segment.get_style_mask(match=True)
         style_data = (self.segment.style[:].copy() & mask)

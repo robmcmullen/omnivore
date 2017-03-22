@@ -20,6 +20,7 @@ import panes
 
 task_id_with_pane_layout = 'omnivore.hex_edit.v3'
 
+
 def pane_layout():
     """ Create the default task layout, which is overridded by the user's save
     state if it exists.
@@ -36,6 +37,7 @@ def pane_layout():
             PaneItem('hex_edit.bitmap'),
             ),
         )
+
 
 def pane_create():
     """ Create all the pane objects available for the task (regardless

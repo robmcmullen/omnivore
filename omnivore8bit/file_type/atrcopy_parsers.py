@@ -9,9 +9,9 @@ from omnivore8bit.document import SegmentedDocument
 @provides(IFileRecognizer)
 class AtrcopyRecognizer(HasTraits):
     name = "Atrcopy Disk Image"
-    
+
     id = "application/vnd.atrcopy"
-    
+
     def identify(self, guess):
         r = SegmentData(guess.numpy)
         try:
@@ -21,7 +21,7 @@ class AtrcopyRecognizer(HasTraits):
         if parser is not None:
             guess.parser = parser
             return mime
-    
+
     def load(self, guess):
         doc = SegmentedDocument(metadata=guess.metadata, bytes=guess.numpy)
         doc.set_segments(guess.parser)

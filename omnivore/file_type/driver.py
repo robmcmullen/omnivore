@@ -7,22 +7,23 @@ from i_file_recognizer import IFileRecognizer, IFileRecognizerDriver
 import logging
 log = logging.getLogger(__name__)
 
+
 @provides(IFileRecognizerDriver)
 class FileRecognizerDriver(HasTraits):
     """ Identify files using the available FileRecognizer extension point contributors
     
     """
-    
+
     application = Any
 
     recognizers = List(Instance(IFileRecognizer))
-    
+
     def recognize(self, guess):
         """Using the list of known recognizers, attempt to set the MIME of a FileGuess
         """
         if guess.bytes is None:
             return self.application.document_class(metadata=guess.metadata, bytes="")
-        
+
         document = None
         log.debug("trying %d recognizers " % len(self.recognizers))
         for recognizer in self.recognizers:
@@ -36,7 +37,7 @@ class FileRecognizerDriver(HasTraits):
                 except AttributeError:
                     document = None
                 break
-        
+
         if mime is None:
             guess.metadata.mime = "application/octet-stream"
             log.info("Not recognized; default is %s" % guess.metadata.mime)

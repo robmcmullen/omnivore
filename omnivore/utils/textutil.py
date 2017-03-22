@@ -11,6 +11,7 @@ import re
 import logging
 log = logging.getLogger(__name__)
 
+
 def piglatin(text):
     """Translate string to pig latin.
     
@@ -25,7 +26,7 @@ def piglatin(text):
             i += 1
         start = w[0:i]
         w = w[i:]
-        
+
         if w[0] in 'aeiouAEIOU':
             prefix = w
             suffix = 'way'
@@ -36,18 +37,19 @@ def piglatin(text):
             else:
                 prefix = w[1:]
                 suffix = w[0].lower() + 'ay'
-        
+
         # Move any trailing non-alphabetic characters to the end
         i = len(prefix) - 1
         while i >= 0 and not prefix[i].isalpha():
             i -= 1
         end = prefix[i + 1:]
         prefix = prefix[0:i + 1]
-        
+
         word = start + prefix + suffix + end
         #print "preprefix=%s, prefix=%s, suffix=%s, word=%s" % (preprefix, prefix, suffix, word)
         words.append(word)
     return u' '.join(words)
+
 
 def getMagicComments(bytes, headersize=1024):
     """Given a byte string, get the first two lines.
@@ -63,6 +65,7 @@ def getMagicComments(bytes, headersize=1024):
     lines = header.splitlines()
     return lines[0:2]
 
+
 def detectBOM(bytes):
     """Search for unicode Byte Order Marks (BOM)
     """
@@ -74,11 +77,12 @@ def detectBOM(bytes):
         'utf-32-be': '\x00\x00\xfe\xff',
         }
     # FIXME: utf-32 is not available in python 2.5, only 2.6 and later.
-    
+
     for encoding, bom in boms.iteritems():
         if bytes.startswith(bom):
             return encoding, bom
     return None, None
+
 
 def detectEncoding(bytes):
     """Search for "magic comments" that specify the encoding
@@ -102,6 +106,7 @@ def detectEncoding(bytes):
             return match.group(1), None
     return None, None
 
+
 def encodedBytesToUnicode(bytes, encoding, bom):
     if bom:
         start = len(bom)
@@ -109,6 +114,7 @@ def encodedBytesToUnicode(bytes, encoding, bom):
         start = 0
     unicodestring = bytes[start:].decode(encoding)
     return unicodestring
+
 
 def parseEmacs(header):
     """Determine if the header specifies a major mode.
@@ -126,13 +132,14 @@ def parseEmacs(header):
     @rtype: tuple
     """
     import emacsutil
-    
+
     lines = getMagicComments(header)
     for line in lines:
         mode, vars = emacsutil.parseModeline(line)
         if mode:
             return mode, vars
     return None, None
+
 
 def guessBinary(text, percentage=5):
     """Guess if this is a text or binary file.
@@ -204,13 +211,13 @@ def guessSpacesPerIndent(text):
                 elif c == '\t':
                     tabsizes[0] += 1
                 newline = False
-    
+
     # find maximum non-zero indent
     index = -1
     for i, size in enumerate(tabsizes):
         if size > 0 and (index == -1 or size > tabsizes[index]):
             index = i
-    
+
     return index
 
 # HTML converters from Chris Barker:
@@ -220,10 +227,12 @@ def guessSpacesPerIndent(text):
 # the stuff ion webhelpers, instead of writting this all from scratch:
 # http://webhelpers.groovie.org/
 
+
 def wrapFont(text, font_size=None):
     if font_size is not None:
         text = "<font size=%d>%s</font>" % (font_size, text)
     return text
+
 
 def text2HtmlPlain(text, font_size=None):
     """
@@ -238,6 +247,7 @@ def text2HtmlPlain(text, font_size=None):
     text = "<html>\n<body>\n" + body + "</body>\n</html>"
     return text
 
+
 def text2HtmlFixed(text, font_size=None):
     """
     Takes raw text, and returns html with newlines converted, etc., using a fixed width font.
@@ -249,6 +259,7 @@ def text2HtmlFixed(text, font_size=None):
     body = wrapFont("<p>\n" + text + "\n</p>\n", font_size)
     text = "<html>\n<body>\n<tt>\n" + body + "</tt></body>\n</html>"
     return text
+
 
 def text2HtmlParagraph(text, font_size=None):
     """
@@ -286,7 +297,7 @@ def text_to_int(text, default_base="dec"):
 
 if __name__ == "__main__":
     import sys
-    
+
     for file in sys.argv[1:]:
         fh = open(file)
         text = fh.read()

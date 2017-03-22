@@ -22,7 +22,7 @@ class HtmlViewPreferences(PreferencesHelper):
 
     # Font name for monospace rendering
     fixed_face = Str("")
-    
+
     # Default font size
     font_size = Int(10)
 

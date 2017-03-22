@@ -28,6 +28,7 @@ from omnivore.framework.editor import FrameworkEditor
 from i_styled_text_editor import IStyledTextEditor
 from pyface.key_pressed_event import KeyPressedEvent
 
+
 @provides(IStyledTextEditor)
 class StyledTextEditor(FrameworkEditor):
     """ The toolkit specific implementation of a StyledTextEditor.  See the
@@ -60,7 +61,7 @@ class StyledTextEditor(FrameworkEditor):
 
     def undo(self):
         self.control.Undo()
-    
+
     def redo(self):
         self.control.Redo()
 

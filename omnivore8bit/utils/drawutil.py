@@ -18,30 +18,30 @@ def get_line(start_index, end_index, map_width):
     y2, x2 = divmod(end_index, map_width)
     dx = x2 - x1
     dy = y2 - y1
- 
+
     # Determine how steep the line is
     is_steep = abs(dy) > abs(dx)
- 
+
     # Rotate line
     if is_steep:
         x1, y1 = y1, x1
         x2, y2 = y2, x2
- 
+
     # Swap start and end points if necessary and store swap state
     swapped = False
     if x1 > x2:
         x1, x2 = x2, x1
         y1, y2 = y2, y1
         swapped = True
- 
+
     # Recalculate differentials
     dx = x2 - x1
     dy = y2 - y1
- 
+
     # Calculate error
     error = int(dx / 2.0)
     ystep = 1 if y1 < y2 else -1
- 
+
     # Iterate over bounding box generating points between start and end
     y = y1
     points = []
@@ -52,25 +52,27 @@ def get_line(start_index, end_index, map_width):
         if error < 0:
             y += ystep
             error += dx
- 
+
     # Reverse the list if the coordinates were swapped
     if swapped:
         points.reverse()
     return points
 
+
 def get_bounds(start_index, end_index, map_width):
     y1, x1 = divmod(start_index, map_width)
     y2, x2 = divmod(end_index, map_width)
- 
+
     if x1 > x2:
         x1, x2 = x2, x1
     if y1 > y2:
         y1, y2 = y2, y1
     return (x1, y1), (x2, y2)
 
+
 def get_rectangle(start_index, end_index, map_width):
     (x1, y1), (x2, y2) = get_bounds(start_index, end_index, map_width)
-    
+
     points = []
     for x in range(x1, x2 + 1):
         points.append(y1 * map_width + x)
@@ -83,9 +85,10 @@ def get_rectangle(start_index, end_index, map_width):
             points.append(y2 * map_width + x)
     return points
 
+
 def get_filled_rectangle(start_index, end_index, map_width):
     (x1, y1), (x2, y2) = get_bounds(start_index, end_index, map_width)
-    
+
     points = []
     for y in range(y1, y2 + 1):
         index = y * map_width + x1

@@ -55,7 +55,7 @@ class JumpmanSelectMode(SelectMode):
         hx, hy = self.get_harvest_offset()
         w = 160
         h = 88
-        
+
         # Original (slow) algorithm to determine bad locations:
         #
         # def is_allergic(x, y, hx, hy):
@@ -83,7 +83,7 @@ class JumpmanSelectMode(SelectMode):
         for y in range(starty, starty + 4):
             y = y & 0xf
             s[y:h:16,:] |= comment_bit_mask
-    
+
     def get_xy(self, evt):
         c = self.canvas
         e = c.editor
@@ -370,11 +370,13 @@ class DrawMode(JumpmanSelectMode):
         self.canvas.Refresh()
         self.display_coords(evt)
 
+
 class DrawGirderMode(DrawMode):
     icon = "jumpman_girder.png"
     menu_item_name = "Draw Girder"
     menu_item_tooltip = "Draw girders"
     drawing_object = Girder
+
 
 class DrawLadderMode(DrawMode):
     icon = "jumpman_ladder.png"
@@ -382,17 +384,20 @@ class DrawLadderMode(DrawMode):
     menu_item_tooltip = "Draw ladders (vertical only)"
     drawing_object = Ladder
 
+
 class DrawUpRopeMode(DrawMode):
     icon = "jumpman_uprope.png"
     menu_item_name = "Draw Up Rope"
     menu_item_tooltip = "Draw up ropes (vertical only)"
     drawing_object = UpRope
 
+
 class DrawDownRopeMode(DrawMode):
     icon = "jumpman_downrope.png"
     menu_item_name = "Draw Down Rope"
     menu_item_tooltip = "Draw down ropes (vertical only)"
     drawing_object = DownRope
+
 
 class EraseGirderMode(DrawMode):
     icon = "jumpman_erase_girder.png"
@@ -401,6 +406,7 @@ class EraseGirderMode(DrawMode):
     drawing_object = EraseGirder
     editor_trait_for_enabled = 'can_erase_objects'
 
+
 class EraseLadderMode(DrawMode):
     icon = "jumpman_erase_ladder.png"
     menu_item_name = "Erase Ladder"
@@ -408,12 +414,14 @@ class EraseLadderMode(DrawMode):
     drawing_object = EraseLadder
     editor_trait_for_enabled = 'can_erase_objects'
 
+
 class EraseRopeMode(DrawMode):
     icon = "jumpman_erase_rope.png"
     menu_item_name = "Erase Rope"
     menu_item_tooltip = "Erase ropes (vertical only)"
     drawing_object = EraseRope
     editor_trait_for_enabled = 'can_erase_objects'
+
 
 class DrawPeanutMode(DrawMode):
     icon = "jumpman_peanut.png"

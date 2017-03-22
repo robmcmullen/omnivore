@@ -21,12 +21,12 @@ class FileBrowserPane(DockPane):
 
     # The list of wildcard filters for filenames.
     filters = List(Str)
-    
+
     def create_contents(self, parent):
         control = wx.GenericDirCtrl(parent, -1, size=(200,-1), style=wx.NO_BORDER)
         control.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.on_selected)
         return control
-    
+
     def on_selected(self, evt):
         selected_file = self.control.GetFilePath()
         if selected_file:

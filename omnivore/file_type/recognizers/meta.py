@@ -8,13 +8,13 @@ class OmnivoreRecognizer(HasTraits):
     """Meta recognizer that forces the loading of a disk image when the
     .omnivore file is selected instead
     """
-    
+
     name = "Omnivore Extra Metadata File"
-    
+
     id = "text/vnd.omnivore.extra_metadata"
-    
+
     before = "application/vnd.*"
-    
+
     def identify(self, guess):
         uri = guess.metadata.uri
         if uri.endswith(".omnivore"):

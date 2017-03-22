@@ -34,12 +34,11 @@ class JumpmanEditTask(HexEditTask):
 
     id = pane_layout.task_id_with_pane_layout
     name = 'Jumpman Level Editor'
-    
+
     preferences_helper = HexEditPreferences
-    
+
     #### Menu events ##########################################################
-    
-    
+
     ###########################################################################
     # 'Task' interface.
     ###########################################################################
@@ -101,21 +100,21 @@ class JumpmanEditTask(HexEditTask):
             UndoAction(),
             RedoAction(),
             ]
-    
+
     def get_actions_Menu_Edit_CopyPasteGroup(self):
         return [
             CutAction(),
             CopyAction(),
             PasteAction(),
             ]
-    
+
     def get_actions_Menu_Edit_SelectGroup(self):
         return [
             SelectAllJumpmanAction(),
             SelectNoneJumpmanAction(),
             SelectInvertJumpmanAction(),
             ]
-    
+
     def get_actions_Menu_Edit_FindGroup(self):
         return [
             FlipVerticalAction(),
@@ -140,13 +139,13 @@ class JumpmanEditTask(HexEditTask):
                     id="a2", separator=True),
                 id='mm4', separator=False, name="Colors"),
             ]
-    
+
     def get_actions_Menu_Jumpman_SelectionGroup(self):
         return [
             ClearTriggerAction(),
             SetTriggerAction(),
             ]
-    
+
     def get_actions_Menu_Jumpman_CustomCodeGroup(self):
         return [
             AssemblySourceAction(),
@@ -157,7 +156,7 @@ class JumpmanEditTask(HexEditTask):
     @classmethod
     def can_edit(cls, document):
         return document.metadata.mime == "application/octet-stream" or document.segments
-    
+
     @classmethod
     def get_match_score(cls, document):
         """Return a number based on how good of a match this task is to the

@@ -28,7 +28,7 @@ class OSXMenuBarPlugin(Plugin):
     """Plugin providing the minimal menu when the Mac application has no
     windows open.
     """
-    
+
     OSX_MINIMAL_MENU = 'omnivore.osx_minimal_menu'
 
     #### 'IPlugin' interface ##################################################
@@ -38,7 +38,7 @@ class OSXMenuBarPlugin(Plugin):
 
     # The plugin's name (suitable for displaying to the user).
     name = 'OSX Menu'
-    
+
     #### Extension points offered by this plugin ##############################
 
     minimal_menu_actions = ExtensionPoint(
@@ -73,12 +73,12 @@ class OSXMenuBarPlugin(Plugin):
         window = TaskWindow(application=self.application)
         log.debug("OSXMenuBarPlugin: minimal menu extra items: %s" % str(self.minimal_menu_actions))
         task = OSXMinimalTask(menu_bar=menubar, window=window, extra_actions=self.minimal_menu_actions)
-        
+
         t = TaskActionManagerBuilder(task=task)
         mgr = t.create_menu_bar_manager()
         control = mgr.create_menu_bar(app)
         wx.MenuBar.MacSetCommonMenuBar(control)
-        
+
         # Prevent wx from exiting when the last window is closed
         app.SetExitOnFrameDelete(False)
 

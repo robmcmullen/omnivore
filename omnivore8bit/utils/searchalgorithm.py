@@ -9,10 +9,13 @@ from pyparsing import Word, nums, hexnums, alphas, Combine, oneOf, Optional, \
 
 from searchutil import BaseSearcher
 
+
 class EvalConstant():
     "Class to evaluate a parsed constant or variable"
+
     def __init__(self, tokens):
         self.value = tokens[0]
+
     def eval(self, vars_):
         v = self.value
         if v in vars_:
@@ -25,13 +28,17 @@ class EvalConstant():
             else:
                 return int(v)
 
+
 class EvalSignOp():
     "Class to evaluate expressions with a leading + or - sign"
+
     def __init__(self, tokens):
         self.sign, self.value = tokens[0]
+
     def eval(self, vars_):
         mult = {'+':1, '-':-1}[self.sign]
         return mult * self.value.eval(vars_)
+
 
 def operatorOperands(tokenlist):
     "generator to extract operators and operands in pairs"
@@ -43,11 +50,14 @@ def operatorOperands(tokenlist):
             yield (o1, o2)
         except StopIteration:
             break
-            
+
+
 class EvalMultOp():
     "Class to evaluate multiplication and division expressions"
+
     def __init__(self, tokens):
         self.value = tokens[0]
+
     def eval(self, vars_ ):
         prod = self.value[0].eval(vars_)
         for op,val in operatorOperands(self.value[1:]):
@@ -60,11 +70,14 @@ class EvalMultOp():
             if op == '%':
                 prod %= val.eval(vars_)
         return prod
-    
+
+
 class EvalAddOp():
     "Class to evaluate addition and subtraction expressions"
+
     def __init__(self, tokens):
         self.value = tokens[0]
+
     def eval(self, vars_ ):
         sum = self.value[0].eval(vars_)
         for op,val in operatorOperands(self.value[1:]):
@@ -73,17 +86,21 @@ class EvalAddOp():
             if op == '-':
                 sum -= val.eval(vars_)
         return sum
-    
+
+
 class EvalAndOp():
     "Class to evaluate addition and subtraction expressions"
+
     def __init__(self, tokens):
         self.value = tokens[0]
+
     def eval(self, vars_ ):
         val1 = self.value[0].eval(vars_)
         for op,val in operatorOperands(self.value[1:]):
             val2 = val.eval(vars_)
             val1 = val1 & val2
         return val1
+
 
 class EvalComparisonOp():
     "Class to evaluate comparison expressions"
@@ -95,8 +112,10 @@ class EvalComparisonOp():
         "==" : lambda a,b : a == b,
         "!=" : lambda a,b : a != b,
         }
+
     def __init__(self, tokens):
         self.value = tokens[0]
+
     def eval(self, vars_ ):
         val1 = self.value[0].eval(vars_)
         if type(val1) is np.ndarray:
@@ -115,11 +134,12 @@ class EvalComparisonOp():
             else:
                 return True
             return False
-    
+
+
 class NumpyExpression():
     integer = Word(nums)
     hexint = Combine(oneOf('0x $') + Word(hexnums))
-         
+
     variable = Word(alphas)
     operand = hexint | integer | variable
 
@@ -157,10 +177,10 @@ class NumpyExpression():
 class AlgorithmSearcher(BaseSearcher):
     def __str__(self):
         return "pyparsing matches: %s" % str(self.matches)
-    
+
     def get_search_text(self, text):
         return text
-    
+
     def get_matches(self, editor):
         s = editor.segment
         a = np.arange(s.start_addr, s.start_addr + len(s))
@@ -178,7 +198,7 @@ class AlgorithmSearcher(BaseSearcher):
             raise ValueError(e)
 
 
-if __name__=='__main__': 
+if __name__=='__main__':
     a = np.arange(256*256)
     b = np.arange(256*256)
     #v = {"a": 5, "b": 10}

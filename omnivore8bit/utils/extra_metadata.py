@@ -17,12 +17,13 @@ getaway_defaults = {
         ("water", range(0x2e, 0x41),),
         ("bridges", range(0x69, 0x6d),),
         ("vehicles", range(0x51, 0x59),),
-        ("airport", range(0x60, 0x68), [0x5f], range(0x59, 0x5d), range(0xd9, 0xdd)), 
+        ("airport", range(0x60, 0x68), [0x5f], range(0x59, 0x5d), range(0xd9, 0xdd)),
         ("golf", range(0xa9, 0xae),),
         ("other", [0x20, 0x25, 0x26, ]),
-        ("special", range(0x21, 0x25), range(0x74, 0x76),), 
+        ("special", range(0x21, 0x25), range(0x74, 0x76),),
         ]
     }
+
 
 def Getaway(doc):
     state = doc.bytes[0:6] == [0xff, 0xff, 0x80, 0x2a, 0xff, 0x8a]
@@ -42,7 +43,7 @@ def Getaway(doc):
         extra_metadata.update(getaway_defaults)
         doc.last_task_id = map_edit_task_id
         return extra_metadata
-    
+
     state = doc.bytes[0x10:0x19] == [0x00, 0xc1, 0x80, 0x0f, 0xcc, 0x22, 0x18, 0x60, 0x0e]
     if state.all():
         log.debug("Found getaway.atr!!!")
@@ -60,6 +61,7 @@ def Getaway(doc):
         extra_metadata.update(getaway_defaults)
         doc.last_task_id = map_edit_task_id
         return extra_metadata
+
 
 def JumpmanLevelBuilder(doc):
     state = doc.bytes[0:5] == [0x96, 0x02 , 0xd0 , 0x05 , 0x80]
@@ -86,6 +88,7 @@ def JumpmanLevelBuilder(doc):
             }
         doc.last_task_id = jumpman_task_id
         return extra_metadata
+
 
 level_names = [
     "01: easy does it",
@@ -122,6 +125,7 @@ level_names = [
     "30: GP III",
 ]
 
+
 def JumpmanFullAtr(doc):
     state = doc.bytes[0:5] == [0x96, 0x02 , 0x80 , 0x16 , 0x80]
     if not state.all():
@@ -151,6 +155,7 @@ def JumpmanFullAtr(doc):
             }
         doc.last_task_id = jumpman_task_id
         return extra_metadata
+
 
 def check_builtin(doc):
     if len(doc.bytes) > 0:

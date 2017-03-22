@@ -24,6 +24,7 @@ from omnivore8bit.ui.dialogs import prompt_for_emulator, prompt_for_assembler, S
 from omnivore8bit.arch.machine import Machine
 from omnivore.framework.minibuffer import *
 
+
 class FontChoiceGroup(TaskDynamicSubmenuGroup):
     """Dynamic menu group to display the available fonts
     """
@@ -41,30 +42,33 @@ class FontChoiceGroup(TaskDynamicSubmenuGroup):
             for font in event_data.font_list:
                 action = UseFontAction(font=font)
                 items.append(ActionItem(action=action))
-            
+
         return items
+
 
 class UseFontAction(EditorAction):
     font = Any
-    
+
     def _name_default(self):
         return "%s" % (self.font['name'])
-    
+
     def perform(self, event):
         self.active_editor.machine.set_font(self.font)
 
+
 class LoadFontAction(EditorAction):
     name = 'Load Font...'
-    
+
     def perform(self, event):
         dialog = FileDialog(parent=event.task.window.control)
         if dialog.open() == OK:
             self.active_editor.machine.load_font(event.task, dialog.path)
 
+
 class GetFontFromSelectionAction(EditorAction):
     name = 'Get Font From Selection'
     enabled_name = 'grid_range_selected'
-    
+
     def perform(self, event):
         self.active_editor.get_font_from_selection()
 
@@ -86,35 +90,38 @@ class EmulatorChoiceGroup(TaskDynamicSubmenuGroup):
             for emu in event_data.emulator_list:
                 action = UseEmulatorAction(emulator=emu)
                 items.append(ActionItem(action=action))
-            
+
         return items
+
 
 class UseEmulatorAction(EditorAction):
     style = 'radio'
     emulator = Any
-    
+
     def _name_default(self):
         return "%s" % (self.emulator['name'])
-    
+
     def perform(self, event):
         self.active_editor.document.set_emulator(self.emulator)
- 
+
     @on_trait_change('active_editor.document')
     def _update_checked(self):
         if self.active_editor:
             self.checked = self.active_editor.document.emulator == self.emulator
 
+
 class AddNewEmulatorAction(EditorAction):
     name = 'Add New Emulator...'
-    
+
     def perform(self, event):
         emu = prompt_for_emulator(event.task.window.control, "New Emulator")
         if emu:
             self.active_editor.machine.add_emulator(event.task, emu)
 
+
 class EditEmulatorsAction(EditorAction):
     name = 'Edit Emulators...'
-    
+
     def perform(self, event):
         dlg = ListReorderDialog(event.task.window.control, Machine.get_user_defined_emulator_list(), lambda a:a['name'], prompt_for_emulator, "Manage Emulators")
         if dlg.ShowModal() == wx.ID_OK:
@@ -122,17 +129,19 @@ class EditEmulatorsAction(EditorAction):
             Machine.set_user_defined_emulator_list(event.task, emus)
         dlg.Destroy()
 
+
 class SetSystemDefaultEmulatorAction(EditorAction):
     name = 'Set Current as System Default'
-    
+
     def perform(self, event):
         Machine.set_system_default_emulator(event.task, self.active_editor.document.emulator)
+
 
 class RunEmulatorAction(NameChangeAction):
     name = 'Run Emulator'
     accelerator = 'F5'
     menu_item_name = 'emulator_label'
-    
+
     def perform(self, event):
         self.active_editor.run_emulator()
 
@@ -157,35 +166,38 @@ class AssemblerChoiceGroup(TaskDynamicSubmenuGroup):
             for asm in event_data.assembler_list:
                 action = UseAssemblerAction(assembler=asm)
                 items.append(ActionItem(action=action))
-            
+
         return items
+
 
 class UseAssemblerAction(EditorAction):
     style = 'radio'
     assembler = Any
-    
+
     def _name_default(self):
         return "%s" % (self.assembler['name'])
-    
+
     def perform(self, event):
         self.active_editor.machine.set_assembler(self.assembler)
- 
+
     @on_trait_change('active_editor.machine.assembler')
     def _update_checked(self):
         if self.active_editor:
             self.checked = self.active_editor.machine.assembler == self.assembler
 
+
 class AddNewAssemblerAction(EditorAction):
     name = 'Add New Assembler...'
-    
+
     def perform(self, event):
         d = prompt_for_assembler(event.task.window.control, "New Assembler")
         if d:
             self.active_editor.machine.add_assembler(event.task, d)
 
+
 class EditAssemblersAction(EditorAction):
     name = 'Edit Assemblers...'
-    
+
     def perform(self, event):
         items = Machine.assembler_list
         dlg = ListReorderDialog(event.task.window.control, Machine.assembler_list, lambda a:a['name'], prompt_for_assembler, "Manage Assemblers")
@@ -195,9 +207,10 @@ class EditAssemblersAction(EditorAction):
             self.active_editor.machine.verify_current_assembler()
         dlg.Destroy()
 
+
 class SetSystemDefaultAssemblerAction(EditorAction):
     name = 'Set Current as System Default'
-    
+
     def perform(self, event):
         Machine.set_system_default_assembler(event.task, self.active_editor.machine.assembler)
 
@@ -207,9 +220,9 @@ class FontRendererAction(EditorAction):
     """
     # Traits
     style = 'radio'
-    
+
     font_renderer = Any
-    
+
     def _name_default(self):
         return self.font_renderer.name
 
@@ -227,9 +240,9 @@ class FontMappingAction(EditorAction):
     """
     # Traits
     style = 'radio'
-    
+
     font_mapping = Any
-    
+
     def _name_default(self):
         return self.font_mapping.name
 
@@ -247,9 +260,9 @@ class BitmapRendererAction(EditorAction):
     """
     # Traits
     style = 'radio'
-    
+
     bitmap_renderer = Any
-    
+
     def _name_default(self):
         return self.bitmap_renderer.name
 
@@ -304,7 +317,7 @@ class FontMappingZoomAction(EditorAction):
 
 class AnticColorAction(EditorAction):
     name = 'Choose Colors...'
-    
+
     def perform(self, event):
         e = self.active_editor
         dlg = AnticColorDialog(event.task.window.control, e.machine.antic_color_registers)
@@ -315,14 +328,14 @@ class AnticColorAction(EditorAction):
 class UseColorsAction(EditorAction):
     name = 'Use Colors'
     colors = Any
-    
+
     def perform(self, event):
         self.active_editor.machine.update_colors(self.colors)
 
 
 class ColorStandardAction(EditorAction):
     style = 'radio'
-    
+
     color_standard = Int
 
     def perform(self, event):
@@ -336,7 +349,7 @@ class ColorStandardAction(EditorAction):
 
 class TextFontAction(EditorAction):
     name = 'Text Font...'
-    
+
     def perform(self, event):
         e = self.active_editor
         data = wx.FontData()
@@ -355,9 +368,9 @@ class PredefinedMachineAction(EditorAction):
     """
     # Traits
     style = 'radio'
-    
+
     machine = Any
-    
+
     def _name_default(self):
         return self.machine.name
 
@@ -375,9 +388,9 @@ class ProcessorTypeAction(EditorAction):
     """
     # Traits
     style = 'radio'
-    
+
     disassembler = Any
-    
+
     def _name_default(self):
         return self.disassembler.name
 
@@ -395,9 +408,9 @@ class MemoryMapAction(EditorAction):
     """
     # Traits
     style = 'radio'
-    
+
     memory_map = Any
-    
+
     def _name_default(self):
         return self.memory_map.name
 
@@ -424,14 +437,15 @@ class CurrentSegmentParserAction(NameChangeAction):
         # be disabled
         self.enabled = False
 
+
 class SegmentParserAction(EditorAction):
     """Radio buttons for changing font style
     """
     # Traits
     style = 'toggle'
-    
+
     segment_parser = Any
-    
+
     def _name_default(self):
         return self.segment_parser.menu_name
 
@@ -446,6 +460,7 @@ class SegmentParserAction(EditorAction):
             # is not turned off otherwise
             self.checked = not new_state
             self.checked = new_state
+
 
 class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
     """Dynamic menu group to display the available fonts
@@ -468,19 +483,21 @@ class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
                     action = UseSegmentRadioAction(segment=segment, segment_number=i, task=self.task, checked=False)
                 log.debug("SegmentChoiceGroup: created %s for %s, num=%d" % (action, str(segment), i))
                 items.append(ActionItem(action=action, parent=self))
-            
+
         return items
+
 
 class UseSegmentAction(EditorAction):
     segment = Any
-    
+
     segment_number = Int
-    
+
     def _name_default(self):
         return str(self.segment)
-    
+
     def perform(self, event):
         self.active_editor.view_segment_number(self.segment_number)
+
 
 class UseSegmentRadioAction(UseSegmentAction):
     style = 'radio'
@@ -495,9 +512,9 @@ class UseSegmentRadioAction(UseSegmentAction):
 
 class ParseSubSegmentsAction(EditorAction):
     name = 'Show Sub-Segments'
-    
+
     segment_number = Int
-    
+
     def perform(self, event):
         e = self.active_editor
         s = e.document.segments[self.segment_number]
@@ -508,9 +525,9 @@ class ParseSubSegmentsAction(EditorAction):
 
 class SelectSegmentInAllAction(EditorAction):
     name = 'Select This Segment in All'
-    
+
     segment_number = Int
-    
+
     def perform(self, event):
         e = self.active_editor
         s = e.document.segments[self.segment_number]
@@ -520,10 +537,11 @@ class SelectSegmentInAllAction(EditorAction):
         e.adjust_selection(s)
         e.index_clicked(e.anchor_start_index, 0, None)
 
+
 class GetSegmentFromSelectionAction(EditorAction):
     name = 'New Segment From Selection'
     enabled_name = 'can_copy'
-    
+
     def perform(self, event):
         e = self.active_editor
         text = prompt_for_string(e.window.control, "Enter segment name", "New Segment")
@@ -538,7 +556,7 @@ class GetSegmentFromSelectionAction(EditorAction):
 class MultipleSegmentsFromSelectionAction(EditorAction):
     name = 'Multiple Segments From Selection'
     enabled_name = 'can_copy'
-    
+
     def perform(self, event):
         e = self.active_editor
         size = prompt_for_hex(e.window.control, "Enter number of bytes in each segment\n(default hex, prefix with # for decimal, %% for binary)", "Multiple Segments")
@@ -574,7 +592,7 @@ class ExpandDocumentAction(EditorAction):
     name = 'Expand Document'
     tooltip = 'Resize the document to add extra data at the end'
     enabled_name = 'can_resize_document'
-    
+
     def perform(self, event):
         e = self.active_editor
         d = e.document
@@ -588,7 +606,7 @@ class ExpandDocumentAction(EditorAction):
 class MarkSelectionAsCodeAction(EditorAction):
     name = 'Mark Selection As Code'
     enabled_name = 'can_copy'
-    
+
     def perform(self, event):
         e = self.active_editor
         s = e.segment
@@ -603,7 +621,7 @@ class MarkSelectionAsCodeAction(EditorAction):
 class MarkSelectionAsDataAction(EditorAction):
     name = 'Mark Selection As Data'
     enabled_name = 'can_copy'
-    
+
     def perform(self, event):
         e = self.active_editor
         s = e.segment
@@ -636,14 +654,17 @@ class CustomDisassemblerAction(EditorAction):
         e.mark_index_range_changed(ranges[0])
         e.refresh_panes()
 
+
 class MarkSelectionAsDisplayListAction(CustomDisassemblerAction):
     name = 'Mark Selection As Display List'
     disassembly_type = ANTIC_DISASM
+
 
 class MarkSelectionAsJumpmanLevelAction(CustomDisassemblerAction):
     name = 'Mark Selection As Jumpman Level Data'
     enabled_name = 'can_copy'
     disassembly_type = JUMPMAN_LEVEL
+
 
 class MarkSelectionAsJumpmanHarvestAction(CustomDisassemblerAction):
     name = 'Mark Selection As Jumpman Harvest Table'
@@ -654,7 +675,7 @@ class MarkSelectionAsJumpmanHarvestAction(CustomDisassemblerAction):
 class CopyDisassemblyAction(EditorAction):
     name = 'Copy Disassembly'
     enabled_name = 'can_copy'
-    
+
     def perform(self, event):
         e = self.active_editor
         s = e.segment
@@ -675,7 +696,7 @@ class CopyDisassemblyAction(EditorAction):
 class CopyAsReprAction(EditorAction):
     name = 'Copy as Escaped String'
     enabled_name = 'can_copy'
-    
+
     def perform(self, event):
         e = self.active_editor
         ranges, indexes = e.get_selected_ranges_and_indexes()
@@ -700,11 +721,12 @@ def prompt_for_comment(e, s, ranges, desc):
     if text is not None:
         cmd = SetCommentCommand(s, ranges, text)
         e.process_command(cmd)
-    
+
+
 class AddCommentAction(EditorAction):
     name = 'Add Comment'
     accelerator = 'Alt+C'
-    
+
     def perform(self, event):
         e = self.active_editor
         s = e.segment
@@ -719,9 +741,10 @@ class AddCommentAction(EditorAction):
             desc = "Enter comment for location %s" % index
         prompt_for_comment(e, s, ranges, desc)
 
+
 class AddCommentPopupAction(EditorAction):
     name = 'Add Comment'
-    
+
     def perform(self, event):
         e = self.active_editor
         s = e.segment
@@ -734,11 +757,12 @@ class AddCommentPopupAction(EditorAction):
             desc = "Enter comment for location %s" % e.get_label_at_index(index)
         if ranges:
             prompt_for_comment(e, s, ranges, desc)
-    
+
+
 class RemoveCommentAction(EditorAction):
     name = 'Remove Comment'
     accelerator = 'Ctrl+Alt+C'
-    
+
     def perform(self, event):
         e = self.active_editor
         s = e.segment
@@ -751,9 +775,10 @@ class RemoveCommentAction(EditorAction):
             cmd = ClearCommentCommand(s, ranges)
             e.process_command(cmd)
 
+
 class RemoveCommentPopupAction(EditorAction):
     name = 'Remove Comment'
-    
+
     def perform(self, event):
         e = self.active_editor
         s = e.segment
@@ -770,7 +795,7 @@ class RemoveCommentPopupAction(EditorAction):
 class DeleteUserSegmentAction(EditorAction):
     name = 'Delete User Segment'
     segment_number = Int
-    
+
     def perform(self, event):
         e = self.task.active_editor
         segment = e.document.segments[self.segment_number]
@@ -781,7 +806,7 @@ class DeleteUserSegmentAction(EditorAction):
 class SetSegmentOriginAction(EditorAction):
     name = 'Set Segment Origin'
     segment_number = Int
-    
+
     def perform(self, event):
         e = self.active_editor
         segment = e.document.segments[self.segment_number]
@@ -837,23 +862,24 @@ class SaveAsXEXBootAction(SaveAsXEXAction):
 
 class SaveSegmentAsFormatAction(EditorAction):
     saver = Any
-    
+
     segment_number = Int
-    
+
     def _name_default(self):
         return "%s (%s)" % (self.saver.export_data_name, self.saver.export_extensions[0])
-    
+
     def perform(self, event):
         segment = self.task.active_editor.document.segments[self.segment_number]
         dialog = FileDialog(default_filename=segment.name, parent=event.task.window.control, action='save as', wildcard=get_file_dialog_wildcard(self.saver.export_data_name, self.saver.export_extensions))
         if dialog.open() == OK:
             self.active_editor.save_segment(self.saver, dialog.path)
 
+
 class SaveSegmentGroup(TaskDynamicSubmenuGroup):
     """ A menu for changing the active task in a task window.
     """
     id = 'SaveSegmentGroup'
-    
+
     event_name = 'segment_selected'
 
     def _get_items(self, event_data=None):
@@ -871,9 +897,9 @@ class SaveSegmentGroup(TaskDynamicSubmenuGroup):
 
 class GotoIndexAction(Action):
     addr_index = Int()
-    
+
     segment_num = Int()
-    
+
     def perform(self, event):
         e = self.active_editor
         if self.segment_num >= 0:
@@ -910,9 +936,10 @@ class SegmentGotoAction(EditorAction):
         else:
             e.task.status_bar.message = error
 
+
 class InsertFileAction(EditorAction):
     name = 'Insert File...'
-    
+
     def perform(self, event):
         dialog = FileDialog(parent=event.task.window.control)
         if dialog.open() == OK:
@@ -924,26 +951,29 @@ class InsertFileAction(EditorAction):
 class IndexRangeAction(EditorAction):
     enabled_name = 'can_copy'
     cmd = None
-    
+
     def _name_default(self):
         return self.cmd.pretty_name
 
     def get_cmd(self, editor, segment, ranges):
         return self.cmd(segment, ranges)
-    
+
     def perform(self, event):
         e = self.active_editor
         ranges = e.get_optimized_selected_ranges()
         cmd = self.get_cmd(e, e.segment, ranges)
         self.active_editor.process_command(cmd)
 
+
 class ZeroAction(IndexRangeAction):
     cmd = ZeroCommand
     accelerator = 'Ctrl+0'
 
+
 class FFAction(IndexRangeAction):
     cmd = FFCommand
     accelerator = 'Ctrl+9'
+
 
 class NOPAction(IndexRangeAction):
     cmd = NOPCommand
@@ -953,29 +983,37 @@ class NOPAction(IndexRangeAction):
         nop = editor.machine.get_nop()
         return self.cmd(segment, ranges, nop)
 
+
 class SetHighBitAction(IndexRangeAction):
     cmd = SetHighBitCommand
 
+
 class ClearHighBitAction(IndexRangeAction):
     cmd = ClearHighBitCommand
+
 
 class BitwiseNotAction(IndexRangeAction):
     cmd = BitwiseNotCommand
     accelerator = 'Ctrl+1'
 
+
 class LeftShiftAction(IndexRangeAction):
     cmd = LeftShiftCommand
 
+
 class RightShiftAction(IndexRangeAction):
     cmd = RightShiftCommand
+
 
 class LeftRotateAction(IndexRangeAction):
     cmd = LeftRotateCommand
     accelerator = 'Ctrl+<'
 
+
 class RightRotateAction(IndexRangeAction):
     cmd = RightRotateCommand
     accelerator = 'Ctrl+>'
+
 
 class ReverseBitsAction(IndexRangeAction):
     cmd = ReverseBitsCommand
@@ -984,56 +1022,68 @@ class ReverseBitsAction(IndexRangeAction):
 class IndexRangeValueAction(IndexRangeAction):
     def _name_default(self):
         return self.cmd.pretty_name + "..."
-    
+
     def show_dialog(self, e):
         value = prompt_for_hex(e.window.control, "Enter byte value: (default hex, prefix with # for decimal, %% for binary)", self.cmd.pretty_name)
         if value is not None:
             cmd = self.cmd(e.segment, e.selected_ranges, value)
             self.active_editor.process_command(cmd)
-            
+
     def perform(self, event):
         wx.CallAfter(self.show_dialog, self.active_editor)
 
+
 class SetValueAction(IndexRangeValueAction):
     cmd = SetValueCommand
+
 
 class OrWithAction(IndexRangeValueAction):
     cmd = OrWithCommand
     accelerator = 'Ctrl+\\'
 
+
 class AndWithAction(IndexRangeValueAction):
     cmd = AndWithCommand
     accelerator = 'Ctrl+7'
+
 
 class XorWithAction(IndexRangeValueAction):
     cmd = XorWithCommand
     accelerator = 'Ctrl+6'
 
+
 class RampUpAction(IndexRangeValueAction):
     cmd = RampUpCommand
 
+
 class RampDownAction(IndexRangeValueAction):
     cmd = RampDownCommand
+
 
 class AddValueAction(IndexRangeValueAction):
     cmd = AddValueCommand
     accelerator = 'Ctrl+='
 
+
 class SubtractValueAction(IndexRangeValueAction):
     cmd = SubtractValueCommand
     accelerator = 'Ctrl+-'
+
 
 class SubtractFromAction(IndexRangeValueAction):
     cmd = SubtractFromCommand
     accelerator = 'Shift+Ctrl+-'
 
+
 class MultiplyAction(IndexRangeValueAction):
     cmd = MultiplyCommand
     accelerator = 'Ctrl+8'
 
+
 class DivideByAction(IndexRangeValueAction):
     cmd = DivideByCommand
     accelerator = 'Ctrl+/'
+
 
 class DivideFromAction(IndexRangeValueAction):
     cmd = DivideFromCommand
@@ -1045,7 +1095,7 @@ class PasteAndRepeatAction(EditorAction):
     accelerator = 'Shift+Ctrl+V'
     tooltip = 'Paste and repeat clipboard data until current selection is filled'
     enabled_name = 'can_copy'
-    
+
     def perform(self, event):
         self.active_editor.paste(PasteAndRepeatCommand)
 
@@ -1059,6 +1109,7 @@ class FindAction(EditorAction):
         e = self.active_editor
         event.task.show_minibuffer(NextPrevTextMinibuffer(e, FindAllCommand, FindNextCommand, FindPrevCommand, initial=e.last_search_settings["find"]))
 
+
 class FindNextAction(EditorAction):
     name = 'Find Next'
     accelerator = 'Ctrl+G'
@@ -1067,6 +1118,7 @@ class FindNextAction(EditorAction):
     def perform(self, event):
         e = self.active_editor
         event.task.show_minibuffer(NextPrevTextMinibuffer(e, FindAllCommand, FindNextCommand, FindPrevCommand, next_match=True, initial=e.last_search_settings["find"]))
+
 
 class FindPrevAction(EditorAction):
     name = 'Find Previous'
@@ -1077,6 +1129,7 @@ class FindPrevAction(EditorAction):
         e = self.active_editor
         event.task.show_minibuffer(NextPrevTextMinibuffer(e, FindAllCommand, FindNextCommand, FindPrevCommand, prev_match=True, initial=e.last_search_settings["find"]))
 
+
 class FindAlgorithmAction(EditorAction):
     name = 'Find Using Expression'
     accelerator = 'Alt+Ctrl+F'
@@ -1085,6 +1138,7 @@ class FindAlgorithmAction(EditorAction):
     def perform(self, event):
         e = self.active_editor
         event.task.show_minibuffer(NextPrevTextMinibuffer(e, FindAlgorithmCommand, FindNextCommand, FindPrevCommand, initial=e.last_search_settings["algorithm"], help_text=" Use variable 'a' for address, 'b' for byte values. (Mouse over for examples)", help_tip="Examples:\n\nAll bytes after the 10th byte: a > 10\n\nBytes with values > 128 but only after the 10th byte: (b > 128) & (a > 10)\n\n"))
+
 
 class FindToSelectionAction(EditorAction):
     name = 'Find to Selection'
@@ -1097,6 +1151,7 @@ class FindToSelectionAction(EditorAction):
         e.refresh_panes()
         event.task.on_hide_minibuffer_or_cancel(None)
 
+
 class CancelMinibufferAction(EditorAction):
     name = 'Cancel Minibuffer or current edit'
     accelerator = 'ESC'
@@ -1104,6 +1159,7 @@ class CancelMinibufferAction(EditorAction):
 
     def perform(self, event):
         event.task.on_hide_minibuffer_or_cancel(None)
+
 
 class ViewDiffHighlightAction(EditorAction):
     name = 'Show Baseline Differences'
@@ -1126,10 +1182,11 @@ class ViewDiffHighlightAction(EditorAction):
         if self.active_editor:
             self.checked = self.active_editor.diff_highlight
 
+
 class LoadBaselineVersionAction(EditorAction):
     name = 'Add Baseline Difference File...'
     tooltip = 'Add baseline file to be used to show differences in current version'
-    
+
     def perform(self, event):
         dialog = FileDialog(parent=event.task.window.control)
         if dialog.open() == OK:
@@ -1138,9 +1195,11 @@ class LoadBaselineVersionAction(EditorAction):
             e.compare_to_baseline()
             e.refresh_panes()
 
+
 class RevertToBaselineAction(IndexRangeAction):
     cmd = RevertToBaselineCommand
     enabled_name = 'can_copy_baseline'
+
 
 class FindNextBaselineDiffAction(EditorAction):
     name = 'Find Next Difference'
@@ -1155,6 +1214,7 @@ class FindNextBaselineDiffAction(EditorAction):
         if new_index is not None:
             e.index_clicked(new_index, 0, None)
 
+
 class FindPrevBaselineDiffAction(EditorAction):
     name = 'Find Previous Difference'
     accelerator = 'Ctrl+Shift+D'
@@ -1167,6 +1227,7 @@ class FindPrevBaselineDiffAction(EditorAction):
         new_index = e.segment.find_previous(index, diff=True)
         if new_index is not None:
             e.index_clicked(new_index, 0, None)
+
 
 class ListDiffAction(EditorAction):
     name = 'List Differences'
@@ -1194,6 +1255,7 @@ class ListDiffAction(EditorAction):
         dlg = wx.lib.dialogs.ScrolledMessageDialog(e.task.window.control, text, "Summary of Differences")
         dlg.ShowModal()
 
+
 class UndoCursorPositionAction(EditorAction):
     name = 'Previous Cursor Position'
     accelerator = 'Ctrl+-'
@@ -1202,6 +1264,7 @@ class UndoCursorPositionAction(EditorAction):
     def perform(self, event):
         e = self.active_editor
         e.undo_cursor_history()
+
 
 class RedoCursorPositionAction(EditorAction):
     name = 'Next Cursor Position'

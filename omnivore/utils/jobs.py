@@ -3,13 +3,11 @@ import os, time, logging, threading, multiprocessing, Queue
 # Utilities for thread and process based jobs
 
 
-
 # Don't use the logger module in anything using multiprocessing! It can cause
 # deadlocks.  I.e. don't use this:
 #### log = logging.getLogger("dinoteeth.job")
 
 log = multiprocessing.log_to_stderr()
-
 
 
 class Job(object):
@@ -20,10 +18,10 @@ class Job(object):
         self.children_scheduled = []
         self.error = None
         self.exception = None
-    
+
     def debug(self, s):
         log.debug(s)
-    
+
     def __str__(self):
         status = self.get_name()
         if not self.success():
@@ -32,19 +30,19 @@ class Job(object):
             else:
                 status += " Exception: %s" % self.exception
         return status
-    
+
     def success(self):
         return self.error is None and self.exception is None
-    
+
     def get_name(self):
         return self.__class__.__name__
-        
+
     def _start(self, dispatcher):
         raise RuntimeError("Abstract method")
-    
+
     def _success_message(self):
         return None
-    
+
     def _failed_message(self):
         return None
 
@@ -53,7 +51,7 @@ class Job(object):
             return self._success_message()
         else:
             return self._failed_message()
-    
+
     def success_callback(self):
         """Called in main thread if job completes successfully.
         
@@ -61,7 +59,7 @@ class Job(object):
         be safely called.
         """
         pass
-    
+
     def failure_callback(self):
         """Called in main thread if job fails during the thread processing.
         
@@ -81,14 +79,13 @@ class LargeMemoryJob(Job):
         raise RuntimeError("Abstract method")
 
 
-
 class Worker(multiprocessing.Process):
     def __init__(self, job_queue, progress_queue):
         multiprocessing.Process.__init__(self)
         self._jobs = job_queue
         self._progress = progress_queue
         self.start()
-    
+
     def _progress_update(self, item):
         update = ProgressReport(item)
         self._progress.put(update)
@@ -111,7 +108,6 @@ class Worker(multiprocessing.Process):
             self._progress.put(Finished(job))
 
 
-
 class JobDispatcher(object):
     def __init__(self, share_input_queue_with=None):
         self._want_abort = False
@@ -119,17 +115,17 @@ class JobDispatcher(object):
             self._queue = share_input_queue_with._queue
         else:
             self._queue = Queue.Queue()
-    
+
     def set_manager(self, manager):
         self._manager = manager
-    
+
     def start_processing(self):
         raise RuntimeError("Abstract method")
-    
+
     @classmethod
     def can_handle(self, job):
         return False
-    
+
     def add_job(self, job):
         self._queue.put(job)
 
@@ -138,20 +134,21 @@ class JobDispatcher(object):
         self._want_abort = True
         self._queue.put(None)
 
+
 class ThreadJobDispatcher(threading.Thread, JobDispatcher):
     def __init__(self, share_input_queue_with=None):
         threading.Thread.__init__(self)
         JobDispatcher.__init__(self, share_input_queue_with)
         self.log = log
-    
+
     def start_processing(self):
 #        self.setDaemon(True)
         self.start()
-    
+
     @classmethod
     def can_handle(self, job):
         return isinstance(job, ThreadJob)
-    
+
     def run(self):
         log.debug("starting thread...")
         while True:
@@ -174,17 +171,17 @@ class ProcessJobDispatcher(ThreadJobDispatcher):
         self._multiprocessing_progress = multiprocessing.Queue()
         self._worker = Worker(self._multiprocessing_jobs, self._multiprocessing_progress)
         log.debug("worker %s: status = %s" % (self._worker, self._worker.exitcode))
-        
+
     @classmethod
     def can_handle(self, job):
         return isinstance(job, ProcessJob)
-    
+
     def run(self):
         log.debug("%s: starting process job dispatcher thread..." % self.name)
         while True:
             log.debug("%s: waiting for jobs..." % self.name)
             job = self._queue.get(True) # blocking
-            
+
             # Send job to worker and wait for it to finish
             log.debug("%s: sending job '%s' to process %s" % (self.name, job, self._worker))
             self._multiprocessing_jobs.put(job)
@@ -198,7 +195,7 @@ class ProcessJobDispatcher(ThreadJobDispatcher):
                     break
                 else:
                     self._manager._progress_report(progress.report)
-            
+
             if job is None:
                 log.debug("%s: Stopping process %s" % (self.name, self._worker))
                 self._worker.join()
@@ -210,19 +207,23 @@ class ProgressReport(object):
     def __init__(self, job_id=None, report=None):
         self.job_id = job_id
         self.report = report
-    
+
     def is_finished(self):
         return False
 
+
 class Shutdown(ProgressReport):
     pass
+
 
 class Finished(ProgressReport):
     def is_finished(self):
         return True
 
+
 class Running(ProgressReport):
     pass
+
 
 class Terminated(ProgressReport):
     pass
@@ -233,7 +234,7 @@ class LargeMemoryWorker(multiprocessing.Process):
         multiprocessing.Process.__init__(self)
         self._job = job
         self._progress = progress_queue
-    
+
     def _progress_update(self, item):
         self._progress.put(item)
 
@@ -246,6 +247,7 @@ class LargeMemoryWorker(multiprocessing.Process):
             self._job.exception = traceback.format_exc()
         self._progress.put(None)
 
+
 class LargeMemoryJobDispatcher(ThreadJobDispatcher):
     def __init__(self, *args, **kwargs):
         ThreadJobDispatcher.__init__(self, *args, **kwargs)
@@ -253,16 +255,16 @@ class LargeMemoryJobDispatcher(ThreadJobDispatcher):
         self._worker = None
         self._is_running = False
         self._timeout = 5
-        
+
     @classmethod
     def can_handle(self, job):
         return isinstance(job, LargeMemoryJob)
-    
+
     def add_job(self, job):
         self._worker = LargeMemoryWorker(job, self._multiprocessing_progress)
         log.debug("LARGEMEM: worker %s: status = %s" % (self._worker, self._worker.exitcode))
         self.start()
-    
+
     def run(self):
         log.debug("LARGEMEM: %s: starting %s..." % (self.name, self._worker))
         self._worker.start()
@@ -342,10 +344,10 @@ class JobManager(object):
         self.dispatchers = []
         self.dispatcher_classes = [LargeMemoryJobDispatcher]
         self.timer = Timer(event_callback)
-    
+
     def start_ticks(self, resolution, expire_time):
         self.timer.start_ticks(resolution, expire_time)
-    
+
     def stop_ticks(self):
         self.timer.stop_ticks()
 
@@ -359,13 +361,13 @@ class JobManager(object):
                 dispatcher.set_manager(self)
                 return dispatcher
         return None
-            
+
     def start_dispatcher(self, dispatcher):
         log.debug("Adding dispatcher %s" % str(dispatcher))
         dispatcher.set_manager(self)
         dispatcher.start_processing()
         self.dispatchers.append(dispatcher)
-            
+
     def add_job(self, job):
         dispatcher = self.find_dispatcher(job)
         if dispatcher is not None:
@@ -374,7 +376,7 @@ class JobManager(object):
         else:
             log.debug("No dispatcher for job %s" % str(job))
         return dispatcher is not None
-    
+
     def _progress_report(self, progress_report):
         """Called from threads to report milestones as the job works
         
@@ -384,7 +386,7 @@ class JobManager(object):
         log.debug("progress report in thread: %s" % repr(progress_report))
         if self.event_callback is not None:
             self.event_callback(progress_report)
-    
+
     def _job_done(self, job, dispatcher=None):
         """Called from threads to report completed jobs
         
@@ -401,7 +403,7 @@ class JobManager(object):
             else:
                 message = None
             self.event_callback(message)
-    
+
     def get_finished(self):
         done = set()
         try:
@@ -428,7 +430,7 @@ class JobManager(object):
             else:
                 job.failure_callback()
         return done
-    
+
     def shutdown(self):
         for dispatcher in self.dispatchers:
             dispatcher.abort()
@@ -436,10 +438,10 @@ class JobManager(object):
         for dispatcher in self.dispatchers:
             dispatcher.join()
         self.timer.join()
-    
+
     def register_job_id_callback(self, job_id, callback):
         self.job_id_handlers[job_id] = callback
-    
+
     def handle_job_id_callback(self, event):
         if hasattr(event, 'job_id'):
             job_id = event.job_id
@@ -457,11 +459,14 @@ class JobManager(object):
 
 
 GlobalJobManager = None
+
+
 def create_global_job_manager(callback):
     global GlobalJobManager
     if GlobalJobManager is None:
         GlobalJobManager = JobManager(callback)
     return GlobalJobManager
+
 
 def get_global_job_manager():
     global GlobalJobManager
@@ -470,16 +475,16 @@ def get_global_job_manager():
 
 if __name__ == '__main__':
     import functools
-    
+
     class TestProcessSleepJob(ProcessJob):
         def __init__(self, num, sleep):
             Job.__init__(self)
             self.num = num
             self.sleep = sleep
-        
+
         def get_name(self):
             return "process sleep job #%d, delay=%ss" % (self.num, self.sleep)
-            
+
         def _start(self, dispatcher):
             log.debug("%s starting!" % self.get_name())
             time.sleep(self.sleep)
@@ -491,11 +496,11 @@ if __name__ == '__main__':
 
     def post_event(event_name, *args):
         print "event: %s.  args=%s" % (event_name, str(args))
-        
+
     def get_event_callback(event):
         callback = functools.partial(post_event, event)
         return callback
-    
+
     def test_sleep():
         callback = get_event_callback("on_status_change")
         manager = JobManager(callback)
@@ -504,7 +509,7 @@ if __name__ == '__main__':
         for i in range(3):
             dispatcher_i = ProcessJobDispatcher(dispatcher3)
             manager.start_dispatcher(dispatcher_i)
-        
+
         manager.add_job(TestProcessSleepJob(10, .1))
         manager.add_job(TestProcessSleepJob(11, .1))
         manager.add_job(TestProcessSleepJob(12, .3))

@@ -39,37 +39,37 @@ class HexEditor(FrameworkEditor):
     obj = Instance(File)
 
     #### traits
-    
+
     grid_range_selected = Bool
-    
+
     segment_parser = Any
-    
+
     segment_number = Int(0)
-    
+
     emulator_label = Unicode("Run Emulator")
 
     segment_parser_label = Unicode("<parser type>")
-    
+
     ### View traits
-    
+
     map_width = Int
-    
+
     map_zoom = Int
-    
+
     bitmap_width = Int
-    
+
     bitmap_zoom = Int
-    
+
     machine = Any
-    
+
     segment = Any(None)
-    
+
     last_cursor_index = Int(0)
-    
+
     last_anchor_start_index = Int(0)
-    
+
     last_anchor_end_index = Int(0)
-    
+
     can_copy_baseline = Bool
 
     can_trace = Bool(False)
@@ -83,33 +83,33 @@ class HexEditor(FrameworkEditor):
     changed = Event
 
     key_pressed = Event(KeyPressedEvent)
-    
+
     # Class attributes (not traits)
-    
+
     searchers = known_searchers
-    
+
     rect_select = False
-    
+
     ##### Default traits
-    
+
     def _machine_default(self):
         return Atari800
-    
+
     def _segment_default(self):
         rawdata = SegmentData([])
         return DefaultSegment(rawdata)
-    
+
     def _map_width_default(self):
         prefs = self.task.get_preferences()
         return prefs.map_width
-    
+
     def _map_zoom_default(self):
         return 2
-    
+
     def _bitmap_width_default(self):
         prefs = self.task.get_preferences()
         return prefs.bitmap_width
-    
+
     def _bitmap_zoom_default(self):
         return 5
 
@@ -150,7 +150,7 @@ class HexEditor(FrameworkEditor):
         first_segment = doc.segments[0]
         if 'serialized user segments' in e:
             for s in e['serialized user segments']:
-                s.reconstruct_raw(first_segment.rawdata) 
+                s.reconstruct_raw(first_segment.rawdata)
                 doc.add_user_segment(s, replace=True)
         first_segment.restore_extra_from_dict(e)
         if 'emulator' in e:
@@ -179,7 +179,7 @@ class HexEditor(FrameworkEditor):
         if 'segment view params' in e:
             self.segment_view_params = e['segment view params']
         self.machine.restore_extra_from_dict(e)
-    
+
     def get_extra_metadata(self, mdict):
         mdict["serialized user segments"] = list(self.document.user_segments)
         base = self.document.segments[0]
@@ -206,17 +206,17 @@ class HexEditor(FrameworkEditor):
         self.compare_to_baseline()
         self.can_resize_document = self.document.can_resize
         self.task.machine_menu_changed = self.machine
-    
+
     def copy_view_properties(self, old_editor):
         try:
             self.machine = old_editor.machine.clone_machine()
         except AttributeError:
             self.machine = self._machine_default()
-    
+
     @property
     def document_length(self):
         return len(self.segment)
-    
+
     def process_paste_data_object(self, data_obj, cmd_cls=None):
         bytes, extra = self.get_numpy_from_data_object(data_obj)
         ranges, indexes = self.get_selected_ranges_and_indexes()
@@ -228,7 +228,7 @@ class HexEditor(FrameworkEditor):
             cmd_cls = PasteCommand
         cmd = cmd_cls(self.segment, ranges, self.cursor_index, bytes, source_indexes, style, where_comments, comments)
         self.process_command(cmd)
-    
+
     def get_numpy_from_data_object(self, data_obj):
         # Full list of valid data formats:
         #
@@ -267,14 +267,14 @@ class HexEditor(FrameworkEditor):
                 extra = fmt.GetId(), indexes, style, where_comments, comments
         bytes = np.fromstring(value, dtype=np.uint8)
         return bytes, extra
-    
+
     supported_clipboard_data_objects = [
         wx.CustomDataObject("numpy,multiple"),
         wx.CustomDataObject("numpy"),
         wx.CustomDataObject("numpy,columns"),
         wx.TextDataObject(),
         ]
-    
+
     def create_clipboard_data_object(self):
         ranges, indexes = self.get_selected_ranges_and_indexes()
         metadata = self.get_selected_index_metadata(indexes)
@@ -350,7 +350,7 @@ class HexEditor(FrameworkEditor):
         self.segment = self.document.segments[self.segment_number]
         self.reconfigure_panes()
         self.update_segments_ui()
-    
+
     def update_segments_ui(self):
         # Note: via profiling, it turns out that this is a very heavyweight
         # call, producing hundreds of thousands of trait notifier events. This
@@ -364,13 +364,13 @@ class HexEditor(FrameworkEditor):
             self.segment_parser_label = "No parser"
         self.task.segments_changed = self.document.segments
         self.task.segment_selected = self.segment_number
-    
+
     def reconfigure_panes(self):
         self.hex_edit.recalc_view()
         self.disassembly.recalc_view()
         self.bitmap.recalc_view()
         self.font_map.recalc_view()
-    
+
     def check_document_change(self):
         if self.last_cursor_index != self.cursor_index or self.last_anchor_start_index != self.anchor_start_index or self.last_anchor_end_index != self.anchor_end_index:
             self.document.change_count += 1
@@ -389,7 +389,7 @@ class HexEditor(FrameworkEditor):
                 self.view_segment_number(number)
             self.index_clicked(index, 0, None)
         log.debug(self.cursor_history)
-    
+
     def refresh_panes(self):
         self.check_document_change()
         self.hex_edit.refresh_view()
@@ -397,23 +397,23 @@ class HexEditor(FrameworkEditor):
         self.bitmap.refresh_view()
         self.font_map.refresh_view()
         self.sidebar.refresh_active()
-    
+
     def set_bitmap_width(self, width=None):
         if width is None:
             width = self.bitmap_width
         self.bitmap_width = width
         self.bitmap.recalc_view()
-    
+
     def set_bitmap_zoom(self, zoom=None):
         if zoom is None:
             zoom = self.bitmap_zoom
         self.bitmap_zoom = zoom
         self.bitmap.recalc_view()
-    
+
     @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self):
         self.bitmap.recalc_view()
-    
+
     @on_trait_change('machine.font_change_event')
     def update_fonts(self):
         self.font_map.set_font()
@@ -421,11 +421,11 @@ class HexEditor(FrameworkEditor):
         pane = self.window.get_dock_pane('hex_edit.font_map')
         pane.name = self.machine.font_mapping.name
         self.window._aui_manager.Update()
-    
+
     @on_trait_change('machine.disassembler_change_event')
     def update_disassembler(self):
         self.disassembly.recalc_view()
-    
+
     @on_trait_change('document.emulator_change_event')
     def update_emulator(self):
         emu = self.document.emulator
@@ -458,27 +458,27 @@ class HexEditor(FrameworkEditor):
             width = self.map_width
         self.map_width = width
         self.font_map.recalc_view()
-    
+
     def set_map_zoom(self, zoom=None):
         if zoom is None:
             zoom = self.map_zoom
         self.map_zoom = zoom
         self.font_map.recalc_view()
-    
+
     def get_font_from_selection(self):
         pass
-    
+
     def set_machine(self, machine):
         self.machine = machine
         self.reconfigure_panes()
-    
+
     def find_segment_parser(self, parsers, segment_name=None):
         self.document.parse_segments(parsers)
         self.find_segment(segment_name)
 
     def find_first_valid_segment_index(self):
         return 0
-    
+
     def find_segment(self, segment_name=None, segment=None):
         if segment_name is not None:
             index = self.document.find_segment_index_by_name(segment_name)
@@ -494,14 +494,14 @@ class HexEditor(FrameworkEditor):
         self.view_segment_set_width(self.segment)
         self.select_none(refresh=False)
         self.task.segment_selected = self.segment_number
-    
+
     def set_segment_parser(self, parser):
         self.find_segment_parser([parser])
         self.update_panes()
-    
+
     def view_segment_set_width(self, segment):
         pass
-    
+
     def save_segment_view_params(self, segment):
         d = {
             'cursor_index': self.cursor_index,
@@ -552,13 +552,13 @@ class HexEditor(FrameworkEditor):
             self.segment_list.SetSelection(self.segment_number)
             self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
         self.task.segment_selected = self.segment_number
-    
+
     def get_extra_segment_savers(self, segment):
         savers = []
         savers.append(self.disassembly)
         savers.append(DisassemblyListSaver)
         return savers
-    
+
     def save_segment(self, saver, uri):
         try:
             bytes = saver.encode_data(self.segment, self)
@@ -567,7 +567,7 @@ class HexEditor(FrameworkEditor):
             log.error("%s: %s" % (uri, str(e)))
             #self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
             raise
-    
+
     def show_trace(self):
         """Highlight the current trace after switching to a new segment
 
@@ -578,11 +578,11 @@ class HexEditor(FrameworkEditor):
 
     def invalidate_search(self):
         self.task.change_minibuffer_editor(self)
-    
+
     def compare_to_baseline(self):
         if self.diff_highlight:
             self.document.update_baseline()
-    
+
     def adjust_selection(self, old_segment):
         """Adjust the selection of the current segment so that it is limited to the
         bounds of the new segment.
@@ -596,7 +596,7 @@ class HexEditor(FrameworkEditor):
         global_offset = g.get_raw_index(0)
         new_offset = s.get_raw_index(0)
         old_offset = old_segment.get_raw_index(0)
-        
+
         self.restore_segment_view_params(s)
         self.selected_ranges = s.get_style_ranges(selected=True)
         if self.selected_ranges:
@@ -607,14 +607,14 @@ class HexEditor(FrameworkEditor):
         g.clear_style_bits(selected=True)
         self.document.change_count += 1
         self.highlight_selected_ranges()
-    
+
     def highlight_selected_ranges(self):
         s = self.segment
         s.clear_style_bits(selected=True)
         s.set_style_ranges(self.selected_ranges, selected=True)
         self.document.change_count += 1
         self.can_copy_baseline = self.can_copy and self.baseline_present
-    
+
     def convert_ranges(self, from_style, to_style):
         s = self.segment
         ranges = s.get_style_ranges(**from_style)
@@ -623,10 +623,10 @@ class HexEditor(FrameworkEditor):
         s.set_style_ranges(ranges, **to_style)
         self.selected_ranges = s.get_style_ranges(selected=True)
         self.document.change_count += 1
-    
+
     def get_label_at_index(self, index):
         return self.hex_edit.table.get_label_at_index(index)
-    
+
     def get_label_of_ranges(self, ranges):
         labels = []
         for start, end in ranges:
@@ -634,11 +634,11 @@ class HexEditor(FrameworkEditor):
                 start, end = end, start
             labels.append("%s-%s" % (self.get_label_at_index(start), self.get_label_at_index(end - 1)))
         return ", ".join(labels)
-    
+
     def get_segments_from_selection(self, size=-1):
         s = self.segment
         segments = []
-        
+
         # Get the selected ranges directly from the segment style data, because
         # the individual range entries in self.selected_ranges can be out of
         # order or overlapping
@@ -671,13 +671,13 @@ class HexEditor(FrameworkEditor):
                 return "[%d bytes selected %s]" % (num, self.get_label_of_ranges(r))
         else:
             return "[%d ranges selected]" % (len(self.selected_ranges))
-    
+
     def show_status_message(self, msg):
         s = self.get_selected_status_message()
         if s:
             msg = "%s %s" % (s, msg)
         self.task.status_bar.message = msg
-    
+
     def add_user_segment(self, segment, update=True):
         self.document.add_user_segment(segment)
         self.added_segment(segment, update)
@@ -687,12 +687,12 @@ class HexEditor(FrameworkEditor):
             self.update_segments_ui()
             self.segment_list.ensure_visible(segment)
         self.metadata_dirty = True
-    
+
     def delete_user_segment(self, segment):
         self.document.delete_user_segment(segment)
         self.view_segment_number(self.segment_number)
         self.metadata_dirty = True
-    
+
     def find_in_user_segment(self, base_index):
         for s in self.document.user_segments:
             try:
@@ -701,10 +701,10 @@ class HexEditor(FrameworkEditor):
             except IndexError:
                 continue
         return None, None
-    
+
     def ensure_visible(self, start, end):
         self.index_clicked(start, 0, None)
-    
+
     def update_history(self):
 #        history = document.undo_stack.serialize()
 #        self.window.application.save_log(str(history), "command_log", ".log")
@@ -775,10 +775,10 @@ class HexEditor(FrameworkEditor):
                 # found another segment other than itself
                 goto_actions.append(other_segment_actions)
         return goto_actions
-    
+
     def common_popup_actions(self):
         return [CutAction, CopyAction, CopyDisassemblyAction, CopyAsReprAction, PasteAction, None, SelectAllAction, SelectNoneAction, GetSegmentFromSelectionAction, None, MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsDisplayListAction, MarkSelectionAsJumpmanLevelAction, MarkSelectionAsJumpmanHarvestAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction]
-    
+
     def change_bytes(self, start, end, bytes, pretty=None):
         """Convenience function to perform a ChangeBytesCommand
         """
@@ -791,7 +791,6 @@ class HexEditor(FrameworkEditor):
     ###########################################################################
     # Trait handlers.
     ###########################################################################
-
 
     ###########################################################################
     # Private interface.
@@ -821,7 +820,7 @@ class HexEditor(FrameworkEditor):
         return self.hex_edit
 
     #### wx event handlers ####################################################
-    
+
     def index_clicked(self, index, bit, from_control, refresh_from=True):
         self.cursor_index = index
         self.check_document_change()

@@ -7,6 +7,7 @@ import logging
 log = logging.getLogger(__name__)
 mouselog = logging.getLogger("mouse")
 
+
 class MouseHandler(object):
     """
     Processing of mouse events, separate from the rendering window
@@ -17,7 +18,7 @@ class MouseHandler(object):
     menu_item_name = "Generic Mouse Handler"
     menu_item_tooltip = "Tooltip for generic mouse handler"
     editor_trait_for_enabled = ""
-    
+
     mouse_too_close_pixel_tolerance = 5
 
     def __init__(self, window):
@@ -32,16 +33,16 @@ class MouseHandler(object):
         # this parameter can be set by the parent of the handler if the handler
         # wants to differentiate response to left_up
         self.num_clicks = 0
-        
+
         # Optional (only OS X at this point) mouse wheel event filter
         self.wheel_scroll_count = 0
         self.use_every_nth_wheel_scroll = 5
-        
+
         self.init_post_hook()
-    
+
     def init_post_hook(self):
         pass
-    
+
     def get_cursor(self):
         return wx.StockCursor(wx.CURSOR_ARROW)
 
@@ -50,18 +51,18 @@ class MouseHandler(object):
 
     def get_position(self, evt):
         return evt.GetPosition()
-    
+
     def process_mouse_motion_up(self, evt):
         self.canvas.release_mouse()
         evt.Skip()
 
     def process_mouse_motion_down(self, evt):
         evt.Skip()
-    
+
     def reset_early_mouse_params(self):
         self.mouse_up_too_close = False
         self.after_first_mouse_up = False
-    
+
     def check_early_mouse_release(self, evt):
         c = self.canvas
         p = evt.GetPosition()
@@ -84,10 +85,10 @@ class MouseHandler(object):
         actions = self.get_popup_actions(evt)
         if actions:
             self.canvas.editor.popup_context_menu_from_actions(self.canvas, actions)
-    
+
     def get_popup_actions(self, evt):
         return None
-        
+
     def process_mouse_wheel(self, evt):
         c = self.canvas
         e = c.editor
@@ -107,7 +108,7 @@ class MouseHandler(object):
             # handling is performed in the usual manner on OS X it produces a
             # strange back-and-forth zooming in/zooming out.  So, this extra
             # hack is needed to operate like the other platforms.
-            
+
             # add extra to the rotation so the minimum amount is 1 or -1
             extra = delta if rotation > 0 else -delta
             amount = (rotation + extra) / delta
@@ -117,15 +118,15 @@ class MouseHandler(object):
             self.wheel_scroll_count = self.use_every_nth_wheel_scroll
         else:
             amount = rotation / delta
-        
+
         if evt.ControlDown():
             self.zoom_mouse_wheel(evt, amount)
         else:
             self.pan_mouse_wheel(evt, amount)
-    
+
     def zoom_mouse_wheel(self, evt, amount):
         pass
-    
+
     def pan_mouse_wheel(self, evt, amount):
         evt.Skip()
 
@@ -151,12 +152,12 @@ class MouseHandler(object):
             self.backspace_key_pressed()
         else:
             evt.Skip()
-    
+
     def esc_key_pressed(self):
         self.canvas.project.clear_all_selections()
-    
+
     def delete_key_pressed(self):
         pass
-    
+
     def backspace_key_pressed(self):
         pass

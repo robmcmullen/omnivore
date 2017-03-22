@@ -12,7 +12,7 @@ progress_log = logging.getLogger("progress")
 class DrawBatchCommand(Batch):
     short_name = "draw"
     pretty_name = "Draw"
-    
+
     def __str__(self):
         if self.commands:
             return "%s %dx%s" % (self.pretty_name, len(self.commands), str(self.commands[0]))
@@ -31,23 +31,23 @@ class LineCommand(Command):
             ('start_index', 'int'),
             ('end_index', 'int'),
             ]
-    
+
     def __init__(self, segment, start_index, end_index, bytes):
         Command.__init__(self)
         self.segment = segment
         self.start_index = start_index
         self.end_index = end_index
         self.data = bytes
-    
+
     def __str__(self):
         return "%s @ %04x-%04x" % (self.pretty_name, self.start_index + self.segment.start_addr, self.end_index + self.segment.start_addr)
-    
+
     def get_data(self, orig):
         return self.data
-    
+
     def get_points(self, i1, i2, map_width):
         return get_line(i1, i2, map_width)
-    
+
     def perform(self, editor):
         i1 = self.start_index
         i2 = self.end_index
@@ -74,7 +74,7 @@ class LineCommand(Command):
 class SquareCommand(LineCommand):
     short_name = "square"
     pretty_name = "Square"
-    
+
     def get_points(self, i1, i2, map_width):
         return get_rectangle(i1, i2, map_width)
 
@@ -82,7 +82,7 @@ class SquareCommand(LineCommand):
 class FilledSquareCommand(LineCommand):
     short_name = "filled_square"
     pretty_name = "Filled Square"
-    
+
     def get_points(self, i1, i2, map_width):
         return get_filled_rectangle(i1, i2, map_width)
 
@@ -98,7 +98,7 @@ class PasteRectangularCommand(Command):
             ('bytes_per_row', 'int'),
             ('bytes', 'string'),
             ]
-    
+
     def __init__(self, segment, start_index, rows, cols, bytes_per_row, bytes):
         Command.__init__(self)
         self.segment = segment
@@ -107,10 +107,10 @@ class PasteRectangularCommand(Command):
         self.cols = cols
         self.bytes_per_row = bytes_per_row
         self.bytes = bytes
-    
+
     def __str__(self):
         return "%s @ %04x (%dx%d)" % (self.pretty_name, self.start_index + self.segment.start_addr, self.cols, self.rows)
-    
+
     def perform(self, editor):
         i1 = self.start_index
         bpr = self.bytes_per_row

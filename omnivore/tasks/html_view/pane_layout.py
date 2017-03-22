@@ -20,6 +20,7 @@ import panes
 
 task_id_with_pane_layout = 'omnivore.htmlview.v1'
 
+
 def pane_layout():
     """ Create the default task layout, which is overridded by the user's save
     state if it exists.
@@ -29,6 +30,7 @@ def pane_layout():
             PaneItem('omnivore.framework.file_browser_pane'),
         ),
         )
+
 
 def pane_create():
     """ Create all the pane objects available for the task (regardless

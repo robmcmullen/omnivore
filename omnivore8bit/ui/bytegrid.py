@@ -48,7 +48,7 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
 
         # clear the background
         dc.SetBackgroundMode(wx.SOLID)
-        
+
         index, _ = self.table.get_index_range(row, col)
         if not self.table.is_index_valid(index):
             dc.SetBrush(wx.Brush(wx.WHITE, wx.SOLID))
@@ -98,13 +98,13 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
             # when the text is larger than the grid cell
 
             width, height = dc.GetTextExtent(text)
-            
+
             if width > rect.width-2:
                 width, height = dc.GetTextExtent("...")
                 x = rect.x+1 + rect.width-2 - width
                 dc.DrawRectangle(x, rect.y+1, width+1, height)
                 dc.DrawText("...", x, rect.y+1)
-            
+
             r, c = self.table.get_row_col(grid.editor.cursor_index)
             if row == r and col == c:
                 dc.SetPen(self.cursor_pen)
@@ -126,7 +126,7 @@ class ByteGridTable(Grid.PyGridTableBase):
     column_sizes = [4]
     column_pixel_sizes = {}
     extra_column_padding = 4
-    
+
     @classmethod
     def update_preferences(cls, prefs):
         if prefs.hex_grid_lower_case:
@@ -136,10 +136,10 @@ class ByteGridTable(Grid.PyGridTableBase):
 
     def set_default_col_size(self, col, pixel_size):
         self.__class__.column_pixel_sizes[col] = pixel_size
-    
+
     def __init__(self):
         Grid.PyGridTableBase.__init__(self)
-        
+
         self._rows = 1
         self._cols = len(self.column_labels)
 
@@ -149,7 +149,7 @@ class ByteGridTable(Grid.PyGridTableBase):
 
         """
         return 1
-    
+
     def get_index_range(self, row, col):
         """Get the byte offset from start of file given row, col
         position.
@@ -166,7 +166,7 @@ class ByteGridTable(Grid.PyGridTableBase):
     def is_row_col_valid(self, r, c):
         index = self.get_index_range(r, c)[0]
         return self.is_index_valid(index)
-    
+
     def get_col_size(self, c, char_width=8):
         try:
             s = self.column_pixel_sizes[c]
@@ -174,7 +174,7 @@ class ByteGridTable(Grid.PyGridTableBase):
             s = (self.column_sizes[c] * char_width) + self.extra_column_padding
             self.set_default_col_size(c, s)
         return s
-    
+
     def get_col_type(self, c):
         return "hex"
 
@@ -187,10 +187,10 @@ class ByteGridTable(Grid.PyGridTableBase):
             else:
                 col = self._cols - 1
         return (row, col)
-    
+
     def get_next_editable_pos(self, row, col):
         return self.get_next_cursor_pos(row, col)
-   
+
     def get_prev_cursor_pos(self, row, col):
         col -= 1
         if col < 0:
@@ -200,7 +200,7 @@ class ByteGridTable(Grid.PyGridTableBase):
             else:
                 col = 0
         return (row, col)
-   
+
     def get_page_index(self, index, segment_page_size, dir, grid):
         if segment_page_size < 0:
             r = grid.get_num_visible_rows()
@@ -223,19 +223,19 @@ class ByteGridTable(Grid.PyGridTableBase):
 
     def GetColLabelValue(self, col):
         return self.column_labels[col]
-    
+
     def get_value_style_upper(self, row, col):
         raise NotImplementedError
-    
+
     def get_value_style_lower(self, row, col):
         raise NotImplementedError
-    
+
     get_value_style = get_value_style_lower
-    
+
     def get_style_override(self, row, col, style):
         """Allow subclasses to change the style"""
         return style
-    
+
     def GetValue(self, row, col):
         index, _ = self.get_index_range(row, col)
         if self.is_index_valid(index):
@@ -247,13 +247,13 @@ class ByteGridTable(Grid.PyGridTableBase):
 
     def ResetViewProcessArgs(self, grid, *args):
         pass
-    
+
     def set_grid_cell_attr(self, grid, col, attr):
         attr.SetFont(grid.editor.machine.text_font)
         attr.SetBackgroundColour("white")
         renderer = grid.get_grid_cell_renderer(self, grid.editor)
         attr.SetRenderer(renderer)
-    
+
     def set_col_attr(self, grid, col, char_width):
         attr = Grid.GridCellAttr()
         self.set_grid_cell_attr(grid, col, attr)
@@ -306,7 +306,7 @@ class ByteGridTable(Grid.PyGridTableBase):
             # freeing them.  So, have to individually allocate the attrs for
             # each column
             self.set_col_attr(grid, col, width)
-        
+
         label_font = grid.editor.machine.text_font.Bold()
         grid.SetLabelFont(label_font)
         dc.SetFont(label_font)
@@ -314,7 +314,7 @@ class ByteGridTable(Grid.PyGridTableBase):
         grid.SetColLabelSize(height + 4)
         text = self.GetRowLabelValue(self._rows - 1)
         grid.SetRowLabelSize(width * len(text) + 4)
-        
+
         grid.AdjustScrollbars()
         grid.ForceRefresh()
 
@@ -326,11 +326,11 @@ class ByteGridTable(Grid.PyGridTableBase):
 
 
 class HexDigitMixin(object):
-    keypad=[ wx.WXK_NUMPAD0, wx.WXK_NUMPAD1, wx.WXK_NUMPAD2, wx.WXK_NUMPAD3, 
-             wx.WXK_NUMPAD4, wx.WXK_NUMPAD5, wx.WXK_NUMPAD6, wx.WXK_NUMPAD7, 
+    keypad=[ wx.WXK_NUMPAD0, wx.WXK_NUMPAD1, wx.WXK_NUMPAD2, wx.WXK_NUMPAD3,
+             wx.WXK_NUMPAD4, wx.WXK_NUMPAD5, wx.WXK_NUMPAD6, wx.WXK_NUMPAD7,
              wx.WXK_NUMPAD8, wx.WXK_NUMPAD9
              ]
-    
+
     def isValidHexDigit(self,key):
         return key in HexDigitMixin.keypad or (key>=ord('0') and key<=ord('9')) or (key>=ord('A') and key<=ord('F')) or (key>=ord('a') and key<=ord('f'))
 
@@ -426,7 +426,7 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
         """
         log.debug("key down before evt=%s" % evt.GetKeyCode())
         key=evt.GetKeyCode()
-        
+
         if key==wx.WXK_TAB:
             wx.CallAfter(self.parentgrid.advance_cursor)
             return
@@ -441,7 +441,7 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
         log.debug("cancelling edit in hex cell editor!")
         self.SetValue(self.startValue)
         self.parentgrid.cancel_edit()
-        
+
     def on_text(self, evt):
         """
         Callback used to automatically advance to the next edit field.
@@ -453,7 +453,7 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
         @param evt: CommandEvent
         """
         log.debug("evt=%s str=%s cursor=%d" % (evt,evt.GetString(),self.GetInsertionPoint()))
-        
+
         # NOTE: we check that GetInsertionPoint returns 1 less than
         # the desired number because the insertion point hasn't been
         # updated yet and won't be until after this event handler
@@ -475,6 +475,7 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
     Cell editor for the grid, based on GridCustEditor.py from the
     wxPython demo.
     """
+
     def __init__(self,grid):
         Grid.PyGridCellEditor.__init__(self)
         self.parentgrid=grid
@@ -570,8 +571,6 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         ## We can ask the base class to do it
         #return self.base_IsAcceptedKey(evt)
 
-
-
         # or do it ourselves
         return (evt.GetKeyCode() < 256 and not (evt.ControlDown() or evt.AltDown()) and evt.GetKeyCode() != wx.WXK_SHIFT)
 
@@ -606,7 +605,7 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         log.debug("")
         return HexCellEditor(self.parentgrid)
 
-    
+
 class ByteGrid(Grid.Grid, SelectionMixin):
     """
     View for editing in hexidecimal notation.
@@ -652,10 +651,10 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         self.GetGridWindow().Bind(wx.EVT_LEFT_UP, self.on_left_up)
         self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
         self.Show(True)
-    
+
     def __repr__(self):
         return "<%s at 0x%x>" % (self.__class__.__name__, id(self))
-    
+
     def save_prefs(self):
         pass
 
@@ -676,7 +675,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             self.table.UpdateValues(self)
             self.goto_index(self, editor.cursor_index)
             self.last_change_count = editor.document.change_count
-    
+
     def refresh_view(self):
         editor = self.task.active_editor
         if editor is not None:
@@ -692,7 +691,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
                     self.last_change_count = editor.document.change_count
             else:
                 log.debug("skipping refresh of hidden %s" % self)
-    
+
     def get_default_cell_editor(self):
         return HexCellEditor(self)
 
@@ -709,7 +708,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         popup_data = {'row':r, 'col':c, 'index': index, 'in_selection': style&0x80}
         if actions:
             self.editor.popup_context_menu_from_actions(self, actions, popup_data)
-    
+
     def get_popup_actions(self, r, c, inside):
         return []
 
@@ -757,7 +756,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         inside_grid = inside_grid and x1 >= 0 and y1 >=0
         index1, index2 = self.table.get_index_range(r, c)
         return r, c, index1, index2, inside_grid
-    
+
     def get_start_end_index_of_row(self, row):
         index1, _ = self.table.get_index_range(row, 0)
         _, index2 = self.table.get_index_range(row, self.table.GetNumberCols() - 1)
@@ -773,7 +772,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         if r1 < 0:
             r1 = self.table.GetNumberRows() - 1
         return r1 - r0 - 1
-    
+
     def get_first_visible_row(self):
         ux, uy = self.GetScrollPixelsPerUnit()
         sx, sy = self.GetViewStart()
@@ -788,7 +787,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         if evt.LeftIsDown():
             selecting_rows = evt.GetEventObject() == self.GetGridRowLabelWindow()
             self.handle_select_motion(self.editor, evt, selecting_rows)
-    
+
     def on_motion_update_status(self, evt):
         x, y = self.CalcUnscrolledPosition(evt.GetPosition())
         row = self.YToRow(y)
@@ -798,7 +797,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             label = self.table.get_label_at_index(index)
             message = self.get_status_message_at_index(index, row, col)
             self.editor.show_status_message("%s: %s %s" % (self.short_name, label, message))
-    
+
     def get_status_message_at_index(self, index, row, col):
         return "r=%d,c=%d" % (row, col)
 
@@ -841,7 +840,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             moved = True
         else:
             evt.Skip()
-        
+
         if moved:
             if index is None:
                 index, _ = self.table.get_index_range(r, c)
@@ -851,7 +850,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             self.SetGridCursor(r, c)
             self.MakeCellVisible(r, c)
             wx.CallAfter(e.index_clicked, e.cursor_index, c, self, refresh_self)
- 
+
     def on_left_dclick(self, evt):
         self.EnableCellEditControl()
         evt.Skip()
@@ -899,7 +898,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         self.ClearSelection()
         self.goto_index(from_control, cursor, col_from_user)
         self.refresh_view()
-    
+
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.
         

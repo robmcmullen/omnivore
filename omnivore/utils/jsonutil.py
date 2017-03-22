@@ -53,11 +53,11 @@ def collapse_json(text, indent=8):
 
 if __name__ == "__main__":
     import json
-    
+
     s = {"zero": ["first", {"second": 2, "third": 3, "fourth": 4, "items": [[1,2,3,4], [5,6,7,8], 9, 10, [11, [12, [13, [14, 15]]]]]}]}
-    
+
     text = json.dumps(s, indent=4)
-    
+
     for level in range(0, 21, 4):
         processed = collapse_json(text, indent=level)
         print level

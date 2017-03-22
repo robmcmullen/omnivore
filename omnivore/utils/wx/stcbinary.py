@@ -5,6 +5,7 @@ import numpy as np
 
 from stcinterface import STCInterface, STCBinaryMixin
 
+
 class BinarySTC(STCInterface, STCBinaryMixin):
     """
     Methods that a data source object must implement in order to be
@@ -15,17 +16,18 @@ class BinarySTC(STCInterface, STCBinaryMixin):
     STC<http://www.yellowbrain.com/stc/index.html>} for more info on
     the rest of the STC methods.
     """
+
     def __init__(self):
         self.data = None
-        
+
     def GetReadOnly(self):
         """Is the instance read-only (non-editable) or editable?"""
         return False
-    
+
     def CanSave(self):
         """Can this STC instance save its contents?"""
         return True
-    
+
     def Clear(self):
         pass
 
@@ -67,12 +69,12 @@ class BinarySTC(STCInterface, STCBinaryMixin):
 
     def GetText(self):
         return ''
-    
+
     def GetLength(self):
         if self.data is not None:
             return self.data.size
         return 0
-    
+
     GetTextLength = GetLength
 
     def GetModify(self):
@@ -169,7 +171,7 @@ class BinarySTC(STCInterface, STCBinaryMixin):
         
         """
         pass
-    
+
     def openFileForWriting(self, url):
         """Return a file handle that has been opened for writing"""
         return None
@@ -181,11 +183,11 @@ class BinarySTC(STCInterface, STCBinaryMixin):
         @param url: the url that was used to open the file-like object
         """
         pass
-    
+
     def closeFileAfterWriting(self, fh):
         """Close the opened file handle and perform any other cleanup"""
         pass
-    
+
     def getProperties(self):
         """Return a list of properties to be displayed as text to the user
         
@@ -243,7 +245,7 @@ class BinarySTC(STCInterface, STCBinaryMixin):
         @param callback: event handler to execute on event
         """
         pass
-        
+
     def addDocumentChangeEvent(self, callback):
         """Add the equivalent to EVT_STC_CHANGE event for document changes.
 
@@ -257,7 +259,7 @@ class BinarySTC(STCInterface, STCBinaryMixin):
         @param callback: event handler to execute on event
         """
         pass
-    
+
     def removeDocumentChangeEvent(self):
         """Remove the document change event.
         

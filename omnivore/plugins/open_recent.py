@@ -16,6 +16,7 @@ from omnivore.framework.actions import ApplicationDynamicSubmenuGroup
 import logging
 log = logging.getLogger(__name__)
 
+
 class OpenRecentPreferences(PreferencesHelper):
     """ The preferences helper for the Framework application.
     """
@@ -29,12 +30,12 @@ class OpenRecentPreferences(PreferencesHelper):
 
     # Controls where the new files are added: top or bottom
     add_at_top = Bool(True)
-    
+
     list_max = 50 # not a trait, can't seem to programmically pull out the max value of the range object
-    
+
     # Maximum number of files to retain in the list
     list_length = Range(low=4, high=list_max, value=10)
-    
+
     def max_list_length(self):
         # No easy way to get the maximum value of a Range object
         t = self.trait('list_length')
@@ -67,25 +68,26 @@ class OpenRecentPreferencesPane(PreferencesPane):
 #
 #class RecentFiles(HasTraits):
 #    """Open a file from the list of recently opened files.
-#    
+#
 #    Maintains a list of the most recently opened files so that the next time
 #    you start the application you can see what you were editing last time.
 #    This list is automatically maintained, so every time you open a new file,
 #    it is added to the list.  This list is limited in size by the classpref
 #    'list_length' in L{RecentFilesPlugin}.
 #    """
-#    
+#
 #    # Preferences aren't duplicated here; instead, reference the helper so they
 #    # can be lookup up every time they are needed.
 #    helper = Instance(OpenRecentPreferences)
-#    
+#
 #    # location to serialize the list to persist across application runs
 #    serialize_uri = Unicode
-#    
+#
 #    storage_flag = Bool
-#    
+#
 #    updated = Event
-        
+
+
 class RecentFiles(object):
     """Open a file from the list of recently opened files.
     
@@ -95,12 +97,12 @@ class RecentFiles(object):
     it is added to the list.  This list is limited in size by the classpref
     'list_length' in L{RecentFilesPlugin}.
     """
-    
+
     def __init__(self, helper, serialize_uri):
         self.helper = helper
         self.serialize_uri = serialize_uri
         self._storage_flag_default()
-        
+
     #### Trait initializers ###################################################
 
     def _storage_flag_default(self):
@@ -108,16 +110,16 @@ class RecentFiles(object):
         self.storage = []
         log.debug("STORAGE_FLAG!!! %s" % self.storage_flag)
         self.unserialize()
-    
+
     def is_acceptable_uri(self, uri):
         # skip files with the about: protocol
         #return uri.scheme != 'about' and uri.scheme != 'mem'
         return True
-    
+
     def iter_items(self):
         for item in self.storage[0:self.helper.list_length]:
             yield item
-    
+
     def serialize(self):
         """Serialize the current items to the file"""
         log.debug("SERIALIZING: %s" % str(self.storage))
@@ -129,7 +131,7 @@ class RecentFiles(object):
                     fh.write("%s%s" % (item.encode('utf8'),os.linesep))
             except:
                 pass
-            
+
     def unserialize(self):
         """Unserialize items from the file into a list"""
         log.debug("UNSERIALIZING: %s" % str(self.serialize_uri))
@@ -142,7 +144,7 @@ class RecentFiles(object):
                         self.storage.append(trimmed)
         except:
             pass
-    
+
     def append_uri(self, uri, extra=None):
         if self.is_acceptable_uri(uri):
             item = unicode(uri)
@@ -163,10 +165,10 @@ class RecentFiles(object):
 
 class OpenRecentAction(Action):
     uri = Unicode
-    
+
     def _name_default(self):
         return self.uri
-    
+
     def perform(self, event):
         event.task.window.application.load_file(self.uri, event.task)
 
@@ -178,9 +180,9 @@ class OpenRecentGroup(ApplicationDynamicSubmenuGroup):
     #### 'ActionManager' interface ############################################
 
     id = 'NewFileGroup'
-    
+
     event_name = 'plugin_event'
-    
+
     ###########################################################################
     # Private interface.
     ###########################################################################
@@ -193,7 +195,7 @@ class OpenRecentGroup(ApplicationDynamicSubmenuGroup):
             for uri in recent_files.iter_items():
                 action = OpenRecentAction(uri=uri)
                 items.append(ActionItem(action=action))
-            
+
         return items
 
 
@@ -243,7 +245,7 @@ class OpenRecentPlugin(FrameworkPlugin):
 
     def _preferences_panes_default(self):
         return [ OpenRecentPreferencesPane ]
-    
+
     def start(self):
         helper = self.get_helper(OpenRecentPreferences)
 

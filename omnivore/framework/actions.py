@@ -24,7 +24,7 @@ class NewFileAction(Action):
     tooltip = Property(Unicode, depends_on='name')
 
     task_id = Any
-    
+
     def perform(self, event=None):
         task = event.task.window.application.find_or_create_task_of_type(self.task_id)
         guess = FileGuess.get_packaged_file(self.name)
@@ -33,6 +33,7 @@ class NewFileAction(Action):
     def _get_tooltip(self):
         return u'Open a new %s' % self.name
 
+
 class NewFileGroup(Group):
     """ A menu for creating a new file for each type of task
     """
@@ -40,7 +41,7 @@ class NewFileGroup(Group):
     #### 'ActionManager' interface ############################################
 
     id = 'NewFileGroup'
-    
+
     items = List
 
     #### 'TaskChangeMenuManager' interface ####################################
@@ -50,7 +51,7 @@ class NewFileGroup(Group):
 
     # The window that contains the group.
     application = Instance('envisage.ui.tasks.api.TasksApplication')
-        
+
     ###########################################################################
     # Private interface.
     ###########################################################################
@@ -82,7 +83,7 @@ class NewFileGroup(Group):
 
         # Inform our manager that it needs to be rebuilt.
         self.manager.changed = True
-        
+
     #### Trait initializers ###################################################
 
     def _items_default(self):
@@ -94,7 +95,7 @@ class NewFileGroup(Group):
         while isinstance(manager, Group):
             manager = manager.parent
         return manager
-    
+
     def _application_default(self):
         return self.manager.controller.task.window.application
 
@@ -121,6 +122,7 @@ class OpenAction(Action):
         if dialog.open() == OK:
             event.task.window.application.load_file(dialog.path, event.task)
 
+
 class SaveAction(EditorAction):
     name = 'Save'
     accelerator = 'Ctrl+S'
@@ -130,6 +132,7 @@ class SaveAction(EditorAction):
 
     def perform(self, event):
         self.active_editor.save(None)
+
 
 class SaveAsAction(EditorAction):
     name = 'Save As...'
@@ -142,6 +145,7 @@ class SaveAsAction(EditorAction):
         dialog = FileDialog(default_filename=self.active_editor.document.name, parent=event.task.window.control, action='save as', title="Save File As", wildcard=get_file_dialog_wildcard(self.active_editor.export_data_name, self.active_editor.export_extensions))
         if dialog.open() == OK:
             self.active_editor.save(dialog.path, saver=self.active_editor.encode_data)
+
 
 class RevertAction(EditorAction):
     name = 'Revert'
@@ -157,12 +161,14 @@ class RevertAction(EditorAction):
             document = event.task.window.application.guess_document(guess)
             self.active_editor.load(document)
 
+
 class PageSetupAction(Action):
     name = 'Page Setup...'
     tooltip = 'Choose options for printing'
 
     def perform(self, event):
         event.task.page_setup()
+
 
 class PrintPreviewAction(EditorAction):
     name = 'Print Preview'
@@ -172,6 +178,7 @@ class PrintPreviewAction(EditorAction):
     def perform(self, event):
         self.active_editor.print_preview()
 
+
 class PrintAction(EditorAction):
     name = 'Print...'
     tooltip = 'Print the current view to a printer'
@@ -179,6 +186,7 @@ class PrintAction(EditorAction):
 
     def perform(self, event):
         self.active_editor.print_page()
+
 
 class SaveAsPDFAction(EditorAction):
     name = 'Export As PDF...'
@@ -190,6 +198,7 @@ class SaveAsPDFAction(EditorAction):
         if dialog.open() == OK:
             self.active_editor.save_as_pdf(dialog.path)
 
+
 class SaveAsImageAction(EditorAction):
     name = 'Save As Image...'
     tooltip = 'Save the current view as an image'
@@ -200,6 +209,7 @@ class SaveAsImageAction(EditorAction):
         if dialog.open() == OK:
             self.active_editor.save_as_image(dialog.path)
 
+
 class ExitAction(Action):
     name = 'Quit'
     accelerator = 'Ctrl+Q'
@@ -208,6 +218,7 @@ class ExitAction(Action):
 
     def perform(self, event):
         event.task.window.application.exit()
+
 
 class NameChangeAction(EditorAction):
     """Extension to the EditorAction that provides a user-updatable menu item
@@ -258,12 +269,13 @@ class NameChangeAction(EditorAction):
     def _menu_item_update(self):
         if self.menu_item_name:
             if self.object:
-                self.name = str(self._get_attr(self.object, 
+                self.name = str(self._get_attr(self.object,
                                                self.menu_item_name, 'Undo'))
             else:
                 self.name = 'Undo'
         else:
             self.name = 'Undo'
+
 
 class UndoAction(NameChangeAction):
     name = 'Undo'
@@ -276,6 +288,7 @@ class UndoAction(NameChangeAction):
     def perform(self, event):
         self.active_editor.undo()
 
+
 class RedoAction(NameChangeAction):
     name = 'Redo'
     accelerator = 'Ctrl+Shift+Z'
@@ -287,6 +300,7 @@ class RedoAction(NameChangeAction):
     def perform(self, event):
         self.active_editor.redo()
 
+
 class CutAction(EditorAction):
     name = 'Cut'
     accelerator = 'Ctrl+X'
@@ -295,6 +309,7 @@ class CutAction(EditorAction):
 
     def perform(self, event):
         self.active_editor.cut()
+
 
 class CopyAction(EditorAction):
     name = 'Copy'
@@ -305,6 +320,7 @@ class CopyAction(EditorAction):
     def perform(self, event):
         self.active_editor.copy()
 
+
 class PasteAction(EditorAction):
     name = 'Paste'
     accelerator = 'Ctrl+V'
@@ -314,6 +330,7 @@ class PasteAction(EditorAction):
     def perform(self, event):
         self.active_editor.paste()
 
+
 class SelectAllAction(Action):
     name = 'Select All'
     accelerator = 'Ctrl+A'
@@ -321,6 +338,7 @@ class SelectAllAction(Action):
 
     def perform(self, event):
         event.task.active_editor.select_all()
+
 
 class SelectNoneAction(Action):
     name = 'Select None'
@@ -330,12 +348,14 @@ class SelectNoneAction(Action):
     def perform(self, event):
         event.task.active_editor.select_none()
 
+
 class SelectInvertAction(Action):
     name = 'Invert Selection'
     tooltip = 'Invert selection'
 
     def perform(self, event):
         event.task.active_editor.select_invert()
+
 
 class PreferencesAction(Action):
     name = 'Preferences...'
@@ -362,15 +382,16 @@ class PreferencesAction(Action):
             window = event.task.window
             dialog = window.application.get_service(PreferencesDialog)
             ui = dialog.edit_traits(parent=window.control, kind='livemodal')
-            
+
             if ui.result:
                 window.application.preferences.save()
-        
+
         from omnivore.framework.preferences import FrameworkPreferenceDialog
         dialog = FrameworkPreferenceDialog(application=event.task.window.application, style="modal")
         status = dialog.open()
         if status == OK:
             event.task.window.application.preferences_changed_event = True
+
 
 class AboutAction(Action):
     name = 'About...'
@@ -383,6 +404,7 @@ class AboutAction(Action):
         # with the task.
         top = event.task.window.application.active_window
         AboutDialog(top.control, top.active_task)
+
 
 class OpenLogDirectoryAction(Action):
     name = 'Open Log Directory in File Manager'
@@ -401,12 +423,14 @@ class OpenLogDirectoryAction(Action):
             file_manager = 'xdg-open'
         subprocess.call([file_manager, dirname])
 
+
 class NewWindowAction(Action):
     name = 'New Window'
     tooltip = 'Open a new window'
 
     def perform(self, event):
         event.task.new_window()
+
 
 class WidgetInspectorAction(Action):
     name = 'Widget Inspector'
@@ -436,9 +460,9 @@ class BaseDynamicSubmenuGroup(Group):
     #
     # active_editor = Property(Instance(IEditor),
     #                         depends_on='task.active_editor')
-    
+
     event_name = Str('change this to the Event trait')
-        
+
     ###########################################################################
     # Private interface.
     ###########################################################################
@@ -450,10 +474,10 @@ class BaseDynamicSubmenuGroup(Group):
     def _rebuild(self, new_trait_val):
         # Clear out the old group, then build the new one.
         self.destroy()
-        
+
         # Get the new items, passing the event arguments to the method
         self.items = self._get_items(new_trait_val)
-        
+
         # Set up parent so that radio items can determine their siblings to
         # uncheck others when checked. (see the _checked_changed method in
         # pyface/ui/wx/action/action_item.py)
@@ -462,7 +486,7 @@ class BaseDynamicSubmenuGroup(Group):
 
         # Inform our manager that it needs to be rebuilt.
         self.manager.changed = True
-        
+
     #### Trait initializers ###################################################
 
     def _items_default(self):
@@ -480,7 +504,7 @@ class BaseDynamicSubmenuGroup(Group):
             manager = manager.parent
         log.debug("DYNAMICGROUP: _manager_default=%s!!!" % manager)
         return manager
-    
+
     # ENTHOUGHT QUIRK: This doesn't work: the trait change decorator never
     # seems to get called, however specifying the on_trait_change in the
     # _items_default method works.
@@ -498,16 +522,16 @@ class TaskDynamicSubmenuGroup(BaseDynamicSubmenuGroup):
     # The task instance must be passed in as an attribute creation argument
     # because we need to bind on a task trait change to update the menu
     task = Instance('omnivore.framework.task.FrameworkTask')
-        
+
     ###########################################################################
     # Private interface.
     ###########################################################################
 
     def _get_trait_for_event(self):
         return self.task
-        
+
     #### Trait initializers ###################################################
-    
+
     def _task_default(self):
         log.debug("DYNAMICGROUP: _task_default=%s!!!" % self.manager.controller.task)
         return self.manager.controller.task
@@ -525,7 +549,7 @@ class ApplicationDynamicSubmenuGroup(BaseDynamicSubmenuGroup):
         return self.application
 
     #### Trait initializers ###################################################
-    
+
     def _application_default(self):
         log.debug("DYNAMICGROUP: _application_default=%s!!!" % self.manager.controller.task.window.application)
         return self.manager.controller.task.window.application
@@ -533,9 +557,9 @@ class ApplicationDynamicSubmenuGroup(BaseDynamicSubmenuGroup):
 
 class SwitchDocumentAction(Action):
     document_id = Int
-    
+
     name = Str
-    
+
     def perform(self, event):
         app = event.task.window.application
         doc = app.get_document(self.document_id)
@@ -550,7 +574,7 @@ class DocumentSelectGroup(ApplicationDynamicSubmenuGroup):
     """
 
     event_name = 'successfully_loaded_event'
-    
+
     ###########################################################################
     # Private interface.
     ###########################################################################
@@ -566,7 +590,7 @@ class DocumentSelectGroup(ApplicationDynamicSubmenuGroup):
 
 class NewViewInNewTaskAction(Action):
     factory_id = Str
-    
+
     def perform(self, event):
         event.task.window.application.create_task_from_factory_id(event.task.active_editor, self.factor_id)
 
@@ -578,7 +602,7 @@ class NewViewInGroup(TaskDynamicSubmenuGroup):
 
     def perform(self, event):
         event.task.new_window(view=event.task.active_editor)
-    
+
     @on_trait_change('task.document_changed')
     def _update_name(self):
         if self.task.active_editor:
@@ -599,4 +623,3 @@ class NewViewInGroup(TaskDynamicSubmenuGroup):
                 action = NewViewInNewTaskAction(name="In a %s Window" % factory.name, factor_id=factory.id)
                 items.append(ActionItem(action=action))
         return items
-

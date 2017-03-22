@@ -46,6 +46,7 @@ def get_py2exe_toolkit_includes(module=None, toolkit="wx"):
             includes.append(mod_name)
     return includes
 
+
 def get_py2exe_data_files(module=None, excludes=[]):
     """Get a list of data files that should be included in a py2exe/py2app
     distribution's data files parameter.
@@ -60,7 +61,7 @@ def get_py2exe_data_files(module=None, excludes=[]):
     """
     # added .zip files for pyface image libraries
     extensions = [".png", ".jpg", ".ico", ".zip"]
-    
+
     if module is None:
         path = __file__
     else:
@@ -88,6 +89,7 @@ def get_py2exe_data_files(module=None, excludes=[]):
         if needed:
             data_files.append((mod_root, needed))
     return data_files
+
 
 def get_image_path(rel_path, module=None, file=None, up_one_level=False, excludes=[]):
     """Get the image path for static images relative to the specified module

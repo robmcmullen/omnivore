@@ -20,7 +20,7 @@ class DisassemblyTable(ByteGridTable):
     column_labels = ["Bytes", "Disassembly", "Comment"]
     column_sizes = [11, 18, 30]
     label_format = "L%04x"
-    
+
     @classmethod
     def update_preferences(cls, prefs):
         # Can't call ByteGridTable.update_preferences(prefs) because the
@@ -71,7 +71,7 @@ class DisassemblyTable(ByteGridTable):
         self.start_addr = segment.start_addr
         self.end_addr = self.start_addr + len(segment)
         self.disassemble_from(0)
-    
+
     def disassemble_from(self, index, refresh=False):
         self.lines = None
         info = self.disassembler.disassemble_segment(self.segment)
@@ -87,14 +87,14 @@ class DisassemblyTable(ByteGridTable):
 
     def get_data_rows(self):
         return 0 if self.lines is None else self.lines.num_instructions
-    
+
     def set_grid_cell_attr(self, grid, col, attr):
         ByteGridTable.set_grid_cell_attr(self, grid, col, attr)
         if col > 0:
             attr.SetReadOnly(False)
         else:
             attr.SetReadOnly(True)
-    
+
     def get_index_range(self, r, c):
         try:
             try:
@@ -107,14 +107,14 @@ class DisassemblyTable(ByteGridTable):
             return index, index + line.num_bytes
         except IndexError:
             return 0, 0
-    
+
     def is_index_valid(self, index):
         return self._rows > 0 and index >= 0 and index < len(self.segment)
-    
+
     def is_pc_valid(self, pc):
         index = pc - self.start_addr
         return self.is_index_valid(index)
-    
+
     def get_row_col(self, index, col=1):
         try:
             row = self.index_to_row[index]
@@ -145,7 +145,7 @@ class DisassemblyTable(ByteGridTable):
             col = 2
             row += 1
         return (row, col)
-   
+
     def get_prev_cursor_pos(self, row, col):
         col -= 1
         if col < 1:
@@ -155,7 +155,7 @@ class DisassemblyTable(ByteGridTable):
             else:
                 col = 1
         return (row, col)
-   
+
     def get_page_index(self, index, segment_page_size, dir, grid):
         r, c = self.get_row_col(index)
         vr = grid.get_num_visible_rows() - 1
@@ -164,7 +164,7 @@ class DisassemblyTable(ByteGridTable):
             r = 0
         index, _ = self.get_index_range(r, 0)
         return index
-    
+
     def get_pc(self, row):
         try:
             row = self.lines[row]
@@ -188,9 +188,9 @@ class DisassemblyTable(ByteGridTable):
         else:
             text = self.disassembler.format_instruction(index, line)
         return text, style
-    
+
     get_value_style_upper = get_value_style_lower
-    
+
     def get_style_override(self, row, col, style):
         if self.lines[row].flag & flag_undoc:
             return style|diff_bit_mask
@@ -199,7 +199,7 @@ class DisassemblyTable(ByteGridTable):
     def get_label_at_index(self, index):
         row = self.index_to_row[index]
         return self.get_label_at_row(row)
-    
+
     def get_label_at_row(self, row):
         addr = self.get_pc(row)
         if self.get_value_style == self.get_value_style_lower:
@@ -224,6 +224,7 @@ class AssemblerTextCtrl(HexTextCtrl):
         self.autoadvance=0
         self.userpressed=False
 
+
 class AssemblerEditor(HexCellEditor):
     def Create(self, parent, id, evtHandler):
         """
@@ -242,7 +243,7 @@ class DisassemblyPanel(ByteGrid):
     View for editing in hexidecimal notation.
     """
     short_name = "disasm"
-    
+
     # Segment saver interface for menu item display
     export_data_name = "Disassembly"
     export_extensions = [".s"]
@@ -252,19 +253,19 @@ class DisassemblyPanel(ByteGrid):
         """
         table = DisassemblyTable()
         ByteGrid.__init__(self, parent, task, table, **kwargs)
-        
+
         # During idle-time disassembly, an index may not yet be visible.  The
         # value is saved here so the view can be scrolled there once it does
         # get disassembled.
         self.pending_index = -1
-    
+
     def save_prefs(self):
         prefs = self.task.get_preferences()
         widths = [0] * len(prefs.disassembly_column_widths)
         for i, w in self.table.column_pixel_sizes.iteritems():
             widths[i] = w
         prefs.disassembly_column_widths = tuple(widths)
-    
+
     def recalc_view(self):
         ByteGrid.recalc_view(self)
         if self.table.editor.can_trace:
@@ -275,7 +276,7 @@ class DisassemblyPanel(ByteGrid):
 
     def restart_disassembly(self, index):
         self.table.disassemble_from(index, True)
-    
+
     def get_disassembled_text(self, start=0, end=-1):
         return self.table.disassembler.get_disassembled_text(start, end)
 
@@ -335,7 +336,7 @@ class DisassemblyPanel(ByteGrid):
 
     def goto_index(self, from_control, index, col_from_user=None):
         row, c = self.table.get_row_col(index)
-        
+
         # user can click on whatever column when clicking in the disassembly
         # window, but on events coming from other windows it should not use the
         # column and instead force the opcode to be displayed
@@ -355,7 +356,7 @@ class DisassemblyPanel(ByteGrid):
         else:
             self.SetGridCursor(row, col)
             self.MakeCellVisible(row,col)
-        
+
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.
         
@@ -380,7 +381,7 @@ class DisassemblyPanel(ByteGrid):
             self.task.window.error(unicode(e))
             self.SetFocus()  # OS X quirk: return focus to the grid so the user can keep typing
         return False
-    
+
     def search(self, search_text, match_case=False):
         lines = self.table.lines
         s = self.table.start_addr
@@ -407,7 +408,7 @@ class DisassemblyPanel(ByteGrid):
         else:
             goto_actions.append(GotoIndexAction(name="No callers of $%04x" % addr_called, enabled=False, task=self.task))
         return goto_actions
-    
+
     def get_goto_actions(self, r, c):
         if self.table.get_data_rows() == 0:
             return []
@@ -422,13 +423,12 @@ class DisassemblyPanel(ByteGrid):
         actions.extend(self.editor.get_goto_actions_other_segments(addr_dest))
         actions.extend(self.editor.get_goto_actions_same_byte(index))
         return actions
-    
+
     def get_popup_actions(self, r, c, inside):
         actions = self.get_goto_actions(r, c)
         actions.append(None)
         actions.extend(self.editor.common_popup_actions())
         return actions
-
 
 
 class DisassemblyListSaver(object):
@@ -437,7 +437,7 @@ class DisassemblyListSaver(object):
     """
     export_data_name = "ATasm LST file"
     export_extensions = [".lst"]
-    
+
     @classmethod
     def encode_data(cls, segment, editor):
         """Segment saver interface: take a segment and produce a byte

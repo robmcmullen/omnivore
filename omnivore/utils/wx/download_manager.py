@@ -12,12 +12,14 @@ from omnivore.utils.background_http import BaseRequest, BackgroundHttpMultiDownl
 import logging
 log = logging.getLogger(__name__)
 
+
 class NoCallback(object):
     def __call__(self):
         def no_callback(req):
             print "no callback for", req
             return
         return no_callback
+
 
 class DownloadURLRequest(BaseRequest):
     blocksize = 64 * 1024
@@ -41,7 +43,7 @@ class DownloadURLRequest(BaseRequest):
     @property
     def threadsafe_progress_callback(self):
         return self._threadsafe_progress_callback
-    
+
     @threadsafe_progress_callback.setter
     def threadsafe_progress_callback(self, callback):
         if callback is not None:
@@ -52,7 +54,7 @@ class DownloadURLRequest(BaseRequest):
     @property
     def finished_callback(self):
         return self._finished_callback
-    
+
     @finished_callback.setter
     def finished_callback(self, callback):
         if callback is not None:

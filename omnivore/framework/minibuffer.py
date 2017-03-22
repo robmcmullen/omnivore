@@ -19,7 +19,7 @@ class Minibuffer(object):
     """
     label = "Input:"
     error = "Bad input."
-    
+
     def __init__(self, editor, command_cls, label=None, initial=None, help_text=None, help_tip=None, **kwargs):
         self.control = None
         self.editor = editor
@@ -32,10 +32,10 @@ class Minibuffer(object):
         self.help_text = help_text
         self.help_tip = help_tip
         self.kwargs = kwargs
-    
+
     def change_editor(self, editor):
         self.editor = editor
-        
+
     def create_control(self, parent, **kwargs):
         """
         Create a window that represents the minibuffer, and set
@@ -47,7 +47,7 @@ class Minibuffer(object):
         panel.SetSize((500, 40))
         panel.SetBackgroundColour('blue')
         self.control = panel
-    
+
     def destroy_control(self):
         if self.control is not None:
             self.control.Destroy()
@@ -60,14 +60,14 @@ class Minibuffer(object):
         """
         log.debug("focus!!!")
         self.control.SetFocus()
-    
+
     def perform(self):
         """Execute the command associatied with this minibuffer"""
         pass
-    
+
     def is_repeat(self, other):
         return self.__class__ == other.__class__ and self.command_cls == other.command_cls and self.editor == other.editor
-    
+
     def repeat(self):
         """Shortcut to perform the same action again."""
         pass
@@ -79,10 +79,10 @@ class TextMinibuffer(Minibuffer):
     """
     label = "Text"
     error = "Bad input."
-    
+
     def create_control(self, parent, **kwargs):
         self.control = wx.Panel(parent, style=wx.NO_BORDER|wx.TAB_TRAVERSAL)
-        
+
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         prompt = wx.StaticText(self.control, -1, _(self.label))
         sizer.Add(prompt, 0, wx.CENTER)
@@ -98,8 +98,8 @@ class TextMinibuffer(Minibuffer):
 
         if self.initial:
             self.text.ChangeValue(self.initial)
-            self.text.SetInsertionPointEnd() 
-            self.text.SetSelection(0, self.text.GetLastPosition()) 
+            self.text.SetInsertionPointEnd()
+            self.text.SetSelection(0, self.text.GetLastPosition())
 
     def focus(self):
         """
@@ -123,16 +123,16 @@ class TextMinibuffer(Minibuffer):
         if keycode == wx.WXK_RETURN:
             self.repeat()
         evt.Skip()
-        
+
     def convert(self, text):
         return text
-    
+
     def get_raw_value(self):
         """Hook for subclasses to be able to modify the text control's value
         before being processed by getResult
         """
         return self.text.GetValue()
-    
+
     def get_result(self, show_error=True):
         text = self.get_raw_value()
         error = None
@@ -145,7 +145,7 @@ class TextMinibuffer(Minibuffer):
                 self.mode.frame.SetStatusText(error)
             text = None
         return text, error
-    
+
     def clear_selection(self):
         # When text is selected, the insertion point is set to start of
         # selection.  Want to set it to the end of selection so the user can
@@ -156,13 +156,13 @@ class TextMinibuffer(Minibuffer):
             p = s2
         self.text.SetSelection(p, p)
         self.text.SetInsertionPoint(p)
-    
+
     def perform(self):
         """Execute the command associatied with this minibuffer"""
         value, error = self.get_result()
         cmd = self.command_cls(value, error, **self.kwargs)
         self.editor.process_command(cmd)
-    
+
     def repeat(self, minibuffer=None):
         """Shortcut to perform the same action again."""
         value, error = self.get_result()
@@ -184,7 +184,7 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         self.next_match = next_match
         self.prev_match = prev_match
         self.segment = editor.segment
-    
+
     def create_control(self, parent, **kwargs):
         TextMinibuffer.create_control(self, parent, **kwargs)
 
@@ -194,16 +194,16 @@ class NextPrevTextMinibuffer(TextMinibuffer):
             # start over again
             self.text.SetInsertionPointEnd()
             self.text.SetSelection(0, self.text.GetLastPosition())
-    
+
     def change_editor(self, editor):
         self.segment.clear_style_bits(match=True)
         self.editor = editor
         self.segment = editor.segment
         self.search_command = None
-    
+
     def is_repeat(self, other):
         return self.__class__ == other.__class__ and self.command_cls == other.command_cls and self.editor == other.editor and self.segment == other.segment and self.search_command is not None
-        
+
     def on_key_down(self, evt):
         keycode = evt.GetKeyCode()
         mods = evt.GetModifiers()
@@ -214,19 +214,19 @@ class NextPrevTextMinibuffer(TextMinibuffer):
             else:
                 self.next()
         evt.Skip()
-    
+
     def next(self):
         if self.search_command is not None:
             cmd = self.next_cls(self.search_command)
             self.editor.process_command(cmd)
             self.clear_selection()
-    
+
     def prev(self):
         if self.search_command is not None:
             cmd = self.prev_cls(self.search_command)
             self.editor.process_command(cmd)
             self.clear_selection()
-    
+
     def perform(self):
         """Execute the command associatied with this minibuffer"""
         value, error = self.get_result()
@@ -238,7 +238,7 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         self.editor.last_search_settings["find"] = value
         print self.editor.last_search_settings
         self.clear_selection()
-    
+
     def repeat(self, minibuffer=None):
         if minibuffer is not None:
             if minibuffer.next_match:
@@ -259,7 +259,7 @@ class IntMinibuffer(TextMinibuffer):
     """
     label = "Integer"
     error = "Not an integer expression."
-    
+
     # Regular expression that matches MSW hex format
     msw_hex = re.compile("[0-9a-fA-F]+h")
 
@@ -270,6 +270,7 @@ class IntMinibuffer(TextMinibuffer):
         number = int(eval(text))
         log.debug("number=%s" % number)
         return number
+
 
 class IntRangeMinibuffer(IntMinibuffer):
     """Dedicated subclass of Minibuffer that prompts for a pair of integers.
@@ -292,6 +293,7 @@ class IntRangeMinibuffer(IntMinibuffer):
             return pair
         raise ValueError("Didn't specify a range")
 
+
 class FloatMinibuffer(TextMinibuffer):
     """
     Dedicated subclass of Minibuffer that prompts for a floating point
@@ -299,7 +301,7 @@ class FloatMinibuffer(TextMinibuffer):
     """
     label = "Floating Point"
     error = "Not a numeric expression."
-    
+
     def convert(self, text):
         number = float(eval(self.text.GetValue()))
         log.debug("number=%s" % number)
@@ -317,9 +319,10 @@ class InPlaceCompletionMinibuffer(TextMinibuffer):
     This class doesn't implement the complete method, leaving its
     implementation to subclasses.
     """
+
     def create_control(self, parent, **kwargs):
         self.control = wx.Panel(parent, style=wx.NO_BORDER|wx.TAB_TRAVERSAL)
-        
+
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         prompt = wx.StaticText(self.control, -1, _(self.label))
         sizer.Add(prompt, 0, wx.CENTER)
@@ -335,7 +338,7 @@ class InPlaceCompletionMinibuffer(TextMinibuffer):
 
         self.control.saveSetFocus = self.control.SetFocus
         self.control.SetFocus = self.SetFocus
-        
+
     def SetFocus(self):
         self.dprint(self)
         self.control.saveSetFocus()
@@ -375,9 +378,10 @@ class CompletionMinibuffer(TextMinibuffer):
     'highlight_initial' kwarg can be passed to the constructor (which in turn
     passes it to create_control).
     """
+
     def create_control(self, parent, **kwargs):
         self.control = wx.Panel(parent, style=wx.NO_BORDER|wx.TAB_TRAVERSAL)
-        
+
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         prompt = wx.StaticText(self.control, -1, _(self.label))
         sizer.Add(prompt, 0, wx.CENTER)
@@ -404,12 +408,12 @@ class CompletionMinibuffer(TextMinibuffer):
         # method
         self.control.saveSetFocus = self.control.SetFocus
         self.control.SetFocus = self.SetFocus
-        
+
     def SetFocus(self):
         #dprint(self)
         self.control.saveSetFocus()
         self.OnFocus(None)
-    
+
     def OnFocus(self, evt):
         #dprint()
         if self.highlight_initial and self.text.GetValue() == self.initial:
@@ -419,7 +423,7 @@ class CompletionMinibuffer(TextMinibuffer):
 
     def complete(self, text):
         raise NotImplementedError
-        
+
     def setDynamicChoices(self):
         ctrl = self.text
         text = ctrl.GetValue()
@@ -428,7 +432,7 @@ class CompletionMinibuffer(TextMinibuffer):
         self.dprint(choices)
         if choices != current_choices:
             ctrl.SetChoices(choices)
-    
+
     def getRawTextValue(self):
         """Get either the value from the dropdown list if it is selected, or the
         value from the text control.
@@ -444,16 +448,16 @@ class StaticListCompletionMinibuffer(CompletionMinibuffer):
     handle cases like searching through the filesystem where a new
     list of matches is generated when you hit a new directory.
     """
-    
+
     allow_tab_complete_key_processing = True
-    
+
     def __init__(self, *args, **kwargs):
         if 'list' in kwargs:
             self.sorted = kwargs['list']
         else:
             self.sorted = []
         CompletionMinibuffer.__init__(self, *args, **kwargs)
-        
+
     def complete(self, text):
         """Return the list of completions that start with the given text"""
         found = []
@@ -465,10 +469,10 @@ class StaticListCompletionMinibuffer(CompletionMinibuffer):
 
 class LocalFileMinibuffer(CompletionMinibuffer):
     allow_tab_complete_key_processing = True
-    
+
     def setDynamicChoices(self):
         text = self.text.GetValue()
-        
+
         # NOTE: checking for ~ here rather than in OnKeyDown, because
         # OnKeyDown uses keyboard codes instead of strings.  On most
         # keyboards "~" is a shifted value and doesn't show up in the
@@ -522,7 +526,7 @@ class LocalFileMinibuffer(CompletionMinibuffer):
             #dprint(path)
             if replace > 0:
                 path = "~" + os.sep + path[replace:]
-            
+
             # Always return unicode, so convert if necessary
             if utf8:
                 paths.append(path.decode('utf-8'))

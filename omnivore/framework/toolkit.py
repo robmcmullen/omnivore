@@ -4,16 +4,19 @@ import sys
 
 _toolkit_backend_name = None
 
+
 def _init_toolkit():
     from pyface.toolkit import _toolkit_backend
     backend = _toolkit_backend.strip(".").split(".")[-1]
-    
+
     global _toolkit_backend_name
     _toolkit_backend_name = "_" + backend
+
 
 # Do this once then disappear.
 _init_toolkit()
 del _init_toolkit
+
 
 def toolkit_object(mname, oname):
     """Add the toolkit specific object with the given name to the namespace given by mname.

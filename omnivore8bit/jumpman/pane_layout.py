@@ -20,6 +20,7 @@ import panes
 
 task_id_with_pane_layout = 'omnivore.jumpman.v3'
 
+
 def pane_layout():
     """ Create the default task layout, which is overridded by the user's save
     state if it exists.
@@ -39,6 +40,7 @@ def pane_layout():
         ),
         )
 
+
 def pane_create():
     """ Create all the pane objects available for the task (regardless
     of visibility -- visibility is handled in the task activation method
@@ -53,11 +55,12 @@ def pane_create():
         panes.TriggerPane(),
         ]
 
+
 def pane_initially_visible():
     """ List of initial pane visibility.  Any panes not listed will use the
     last saved state.
     """
-    
+
     return {
         'jumpman.hex': False,
         }

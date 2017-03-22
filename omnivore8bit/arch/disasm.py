@@ -8,6 +8,7 @@ from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bi
 
 from memory_map import EmptyMemoryMap
 
+
 def fast_get_entire_style_ranges(segment, split_comments=[data_style], **kwargs):
     style_copy = segment.get_comment_locations(**kwargs)
     # print "FAST_GET_ENTIRE", style_copy
@@ -63,9 +64,9 @@ class BaseDisassembler(object):
         'data byte separator': ', ',
         'name': "MAC/65",
         }
-    
+
     cached_miniassemblers = {}
-    
+
     def __init__(self, asm_syntax=None, memory_map=None, hex_lower=True, mnemonic_lower=False, use_labels=True):
         if asm_syntax is None:
             asm_syntax = self.default_assembler
@@ -96,7 +97,7 @@ class BaseDisassembler(object):
     def get_nop(cls):
         cpu = cputables.processors[cls.cpu]
         return cpu['nop']
-    
+
     @classmethod
     def get_miniassembler(cls, cpu):
         if not cpu in cls.cached_miniassemblers:
@@ -104,7 +105,7 @@ class BaseDisassembler(object):
             cls.cached_miniassemblers[cpu] = asm
 
         return cls.cached_miniassemblers[cpu]
-    
+
     def assemble_text(self, pc, cmd):
         miniasm = self.get_miniassembler(self.cpu)
         bytes = miniasm.asm(pc, cmd)
@@ -275,7 +276,7 @@ class BaseDisassembler(object):
                 # expand to 8 spaces
                 code = label + "   " + code
                 yield line, hex_bytes, code, comment, line.num_bytes
-    
+
     def get_disassembled_text(self, start=0, end=-1):
         """Returns list of lines representing the disassembly
         
@@ -340,7 +341,7 @@ class Undocumented6502Disassembler(Basic6502Disassembler):
 
 class Flagged6502Disassembler(Undocumented6502Disassembler):
     name = "6502 (highlighted undocumented opcodes)"
-    
+
     def get_flag(self, flag):
         return flag & disasm.und
 
@@ -383,6 +384,7 @@ class Basic8080Disassembler(BaseDisassembler):
 class BasicZ80Disassembler(BaseDisassembler):
     name = "Z80"
     cpu = "z80"
+
 
 # Style numbers for other disassemblers
 ANTIC_DISASM = 2

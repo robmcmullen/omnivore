@@ -84,14 +84,14 @@ about = {
 #        wx.InputStream.__init__(self)
 #        self.fh = fh
 #        self.cursor = 0
-#        
+#
 #    def OnSysRead(self, *args):
 #        log.error("OnSysRead!!!!!")
 
 class WxAboutFileSystemHandler(wx.FileSystemHandler):
     def CanOpen(self, location):
         return self.GetProtocol(location) == "about"
-    
+
     def OpenFile(self, fs, location):
         # For some reason, the actual path shows up as the right location
         # rather than left, and it includes the leading slashes.
@@ -106,7 +106,7 @@ class WxAboutFileSystemHandler(wx.FileSystemHandler):
                 return None
             log.debug("Created %s in wxMemoryFS" % path)
             wx.MemoryFSHandler.AddFile(path, fh.read())
-            
+
             fsfile = wxfs.OpenFile("memory:%s" % path)
         else:
             log.debug("Found %s in wxMemoryFS" % path)
@@ -140,8 +140,10 @@ def parse_with_about(self, fs_url, default_fs_name=None, writeable=False, create
             fs_url = "about://!%s" % url2
     return self.old_parse(fs_url, default_fs_name, writeable, create_dir, cache_hint)
 
+
 OpenerRegistry.old_parse = OpenerRegistry.parse
 OpenerRegistry.parse = parse_with_about
+
 
 class AboutOpener(Opener):
     names = ['about']
@@ -151,7 +153,7 @@ examples:
 * about:// (opens a new memory filesystem)
 * about://foo/bar (opens a new memory filesystem with subdirectory /foo/bar)
     """
-    
+
     about_fs = None
 
     @classmethod
@@ -165,12 +167,13 @@ examples:
             memfs = memfs.makeopendir(fs_path)
         return memfs, None
 
+
 def init_filesystems():
     wx.FileSystem.AddHandler(WxAboutFileSystemHandler())
     wx.FileSystem.AddHandler(wx.MemoryFSHandler())
 
     init_about_filesystem()
-#    
+#
 #    for name in about.iterkeys():
 #        url = "about://%s" % name
 #        fh = opener.open(url, "rb")
@@ -181,6 +184,7 @@ def init_filesystems():
 #        print "url=%s, stuff=%s" % (url, str(stuff))
 #        fs, path = opener.parse(url)
 #        print "fs=%s (%s), path=%s" % (fs, id(fs), path)
+
 
 def init_about_filesystem():
     opener.add(AboutOpener)

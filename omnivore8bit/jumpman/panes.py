@@ -19,7 +19,7 @@ class SegmentsPane(FrameworkPane):
 
     id = 'jumpman.segments'
     name = 'Segments'
-    
+
     def create_contents(self, parent):
         control = SegmentList(parent, self.task, size=(64,150))
         return control
@@ -30,7 +30,7 @@ class UndoPane(FrameworkPane):
 
     id = 'jumpman.undo'
     name = 'Undo History'
-    
+
     def create_contents(self, parent):
         control = UndoHistoryPanel(parent, self.task, size=(64,150))
         return control
@@ -41,7 +41,7 @@ class HexPane(FrameworkPane):
 
     id = 'jumpman.hex'
     name = 'Raw Level Data'
-    
+
     def create_contents(self, parent):
         control = HexEditControl(parent, self.task, size=(350, 150))
         return control
@@ -52,7 +52,7 @@ class TriggerPane(FrameworkPane):
 
     id = 'jumpman.triggers'
     name = 'Trigger Painting'
-    
+
     def create_contents(self, parent):
         control = TriggerList(parent, self.task, size=(350,150))
         return control
@@ -68,7 +68,7 @@ class LevelDataPane(FrameworkPane):
 
     id = 'jumpman.level_data'
     name = 'Level Data'
-    
+
     def create_contents(self, parent):
         fields = [
             ("text", "Level Number", 0x00, 2),
@@ -91,19 +91,19 @@ class SidebarPane(FrameworkPane):
 
     id = 'jumpman.sidebar'
     name = 'Sidebar'
-    
+
     movable = False
     caption_visible = False
     dock_layer = 9
-    
+
     def comments_cb(self, parent, task, **kwargs):
         control = CommentsPanel(parent, task)
-        
+
     def create_contents(self, parent):
         control = SpringTabs(parent, self.task, popup_direction="left")
         control.addTab("Comments", self.comments_cb)
         return control
-    
+
     def refresh_active(self):
         active = self.control._radio
         if active is not None and active.is_shown:

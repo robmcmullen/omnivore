@@ -26,7 +26,6 @@ if PY3:
     unicode = str
 
 
-
 def user_data_dir(appname=None, appauthor=None, version=None, roaming=False):
     r"""Return full path to the user-specific data dir for this application.
 
@@ -228,6 +227,7 @@ def site_config_dir(appname=None, appauthor=None, version=None, multipath=False)
             path = pathlist[0]
     return path
 
+
 def user_cache_dir(appname=None, appauthor=None, version=None, opinion=True):
     r"""Return full path to the user-specific cache dir for this application.
 
@@ -280,6 +280,7 @@ def user_cache_dir(appname=None, appauthor=None, version=None, opinion=True):
         path = os.path.join(path, version)
     return path
 
+
 def user_log_dir(appname=None, appauthor=None, version=None, opinion=True):
     r"""Return full path to the user-specific log dir for this application.
 
@@ -330,6 +331,7 @@ def user_log_dir(appname=None, appauthor=None, version=None, opinion=True):
 
 class AppDirs(object):
     """Convenience wrapper for getting application dirs."""
+
     def __init__(self, appname, appauthor=None, version=None,
                     roaming=False, multipath=False):
         self.appname = appname
@@ -337,32 +339,36 @@ class AppDirs(object):
         self.version = version
         self.roaming = roaming
         self.multipath = multipath
+
     @property
     def user_data_dir(self):
         return user_data_dir(self.appname, self.appauthor,
             version=self.version, roaming=self.roaming)
+
     @property
     def site_data_dir(self):
         return site_data_dir(self.appname, self.appauthor,
             version=self.version, multipath=self.multipath)
+
     @property
     def user_config_dir(self):
         return user_config_dir(self.appname, self.appauthor,
             version=self.version, roaming=self.roaming)
+
     @property
     def site_config_dir(self):
         return site_data_dir(self.appname, self.appauthor,
             version=self.version, multipath=self.multipath)
+
     @property
     def user_cache_dir(self):
         return user_cache_dir(self.appname, self.appauthor,
             version=self.version)
+
     @property
     def user_log_dir(self):
         return user_log_dir(self.appname, self.appauthor,
             version=self.version)
-
-
 
 
 #---- internal support stuff
@@ -384,6 +390,7 @@ def _get_win_folder_from_registry(csidl_name):
         r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders")
     dir, type = _winreg.QueryValueEx(key, shell_folder_name)
     return dir
+
 
 def _get_win_folder_with_pywin32(csidl_name):
     from win32com.shell import shellcon, shell
@@ -411,6 +418,7 @@ def _get_win_folder_with_pywin32(csidl_name):
         pass
     return dir
 
+
 def _get_win_folder_with_ctypes(csidl_name):
     import ctypes
 
@@ -437,6 +445,7 @@ def _get_win_folder_with_ctypes(csidl_name):
 
     return buf.value
 
+
 if sys.platform == "win32":
     try:
         import win32com.shell
@@ -447,7 +456,6 @@ if sys.platform == "win32":
             _get_win_folder = _get_win_folder_with_ctypes
         except ImportError:
             _get_win_folder = _get_win_folder_from_registry
-
 
 
 #---- self test code
@@ -474,4 +482,3 @@ if __name__ == "__main__":
     dirs = AppDirs(appname)
     for prop in props:
         print("%s: %s" % (prop, getattr(dirs, prop)))
-

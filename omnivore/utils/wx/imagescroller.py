@@ -145,7 +145,7 @@ class MouseSelector(object):
     when this occurs.
     """
     cursor = wx.CURSOR_ARROW
-    
+
     def __init__(self, scroller, ev=None):
         self.scroller = scroller
         self.world_coords = None
@@ -186,7 +186,7 @@ class MouseSelector(object):
             self.finishEvent(ev)
             return False
         return True
-        
+
     def startEvent(self, ev):
         """Set up the initial state to begin event processing.
 
@@ -202,7 +202,7 @@ class MouseSelector(object):
         self.handleEventPostHook(ev)
         # dprint("ev: (%d,%d), coords: (%d,%d)" % (ev.GetX(), ev.GetY(), coords[0], coords[1]))
         self.want_autoscroll = True
-        
+
     def handleEvent(self, ev):
         """General event handler.
 
@@ -216,7 +216,7 @@ class MouseSelector(object):
             self.draw()
             self.handleEventPostHook(ev)
         #dprint("ev: (%d,%d), coords: (%d,%d)" % (ev.GetX(), ev.GetY(), coords[0], coords[1]))
-        
+
     def handleEventPostHook(self, ev):
         """Hook called during every event handled by L{handleEvent}
         
@@ -241,7 +241,7 @@ class MouseSelector(object):
         self.scroller.ReleaseMouse()
         self.cleanup()
         self.finishEventPostHook(ev)
-    
+
     def finishEventPostHook(self, ev):
         """Hook that gets called when the selector has been dismissed.
         
@@ -256,7 +256,7 @@ class MouseSelector(object):
             dc, odc = self.getOverlayDC()
             self.drawSelector(dc)
             del odc # workaround big in python wrappers; delete overlay dc first
-    
+
     def cleanup(self):
         dc = wx.ClientDC(self.scroller)
         odc = wx.DCOverlay(self.scroller.overlay, dc)
@@ -268,7 +268,7 @@ class MouseSelector(object):
 
     def recalc(self):
         self.setWorldCoordsFromImageCoords(*self.last_img_coords)
-    
+
     def recalc_and_draw(self):
         #print("recalc and draw")
         self.scroller.overlay.Reset()
@@ -289,7 +289,7 @@ class MouseSelector(object):
         xoff = xView * xDelta
         yoff = yView * yDelta
         return -xoff, -yoff
-    
+
     def setWorldCoordsFromImageCoords(self, x, y):
         self.last_img_coords = (x, y)
         zoom = self.scroller.zoom
@@ -302,16 +302,18 @@ class MouseSelector(object):
 class NullSelector(MouseSelector):
     def startEvent(self, ev):
         pass
-        
+
     def handleEvent(self, ev):
         pass
 
     def draw(self):
         pass
-    
+
+
 # create a new Event class and a EVT binder function for a crosshair
 # motion event
 (CrosshairMotionEvent, EVT_CROSSHAIR_MOTION) = wx.lib.newevent.NewEvent()
+
 
 class Crosshair(MouseSelector):
     def __init__(self, scroller, ev=None):
@@ -322,7 +324,7 @@ class Crosshair(MouseSelector):
 
         if ev is not None:
             self.startEvent(ev)
-        
+
     def handleEventPostHook(self, ev):
         x, y = self.last_img_coords
         if self.scroller.crop is not None:
@@ -332,7 +334,7 @@ class Crosshair(MouseSelector):
         cev = CrosshairMotionEvent(imageCoords = (x, y),
                                    uncroppedImageCoords = (x + dx, y + dy))
         wx.PostEvent(self.scroller, cev)
-    
+
     def drawCrossBox(self, x, y, xoff, yoff, dc):
         dc.DrawRectangle(self.crossbox[0] + xoff, self.crossbox[1] + yoff,
                          self.crossbox[2], self.crossbox[3])
@@ -379,6 +381,7 @@ class Crosshair(MouseSelector):
 (RubberBandSizeEvent, EVT_RUBBERBAND_SIZE) = wx.lib.newevent.NewEvent()
 (RubberBandMotionEvent, EVT_RUBBERBAND_MOTION) = wx.lib.newevent.NewEvent()
 
+
 class RubberBand(MouseSelector):
     move_cursor = wx.CURSOR_SIZING
     resize_cursors = [wx.CURSOR_SIZENWSE,
@@ -390,7 +393,7 @@ class RubberBand(MouseSelector):
                       wx.CURSOR_SIZENESW,
                       wx.CURSOR_SIZEWE
                       ]
-    
+
     def __init__(self, scroller, ev=None):
         MouseSelector.__init__(self, scroller)
 
@@ -421,7 +424,7 @@ class RubberBand(MouseSelector):
             # no mouse buttons; change cursor if over resize box
             self.handleCursorChanges(ev)
         return True
-        
+
     def startEvent(self, ev):
         """Driver for new event.
 
@@ -462,7 +465,7 @@ class RubberBand(MouseSelector):
         self.normalizeImageCoords()
         self.move_img_coords = self.scroller.getImageCoords(*coords)
         # dprint("%s: starting from %s" % (self.event_type, self.move_img_coords))
-        
+
     def handleEvent(self, ev):
         if self.event_type == "resize":
             self.handleResizeEvent(ev)
@@ -482,7 +485,7 @@ class RubberBand(MouseSelector):
             self.resizeWorldCoordsFromImageCoords(*img_coords)
             self.draw()
             self.handleEventPostHook(ev)
-        
+
     def handleMoveEvent(self, ev):
         coords = self.scroller.convertEventCoords(ev)
         img_coords = self.scroller.getImageCoords(coords[0],
@@ -493,7 +496,7 @@ class RubberBand(MouseSelector):
             self.moveWorldCoordsFromImageCoords(*img_coords)
             self.draw()
             self.handleEventPostHook(ev)
-        
+
     def handleCursorChanges(self, ev):
         coords = self.scroller.convertEventCoords(ev)
         # dprint("mouse=%s world=%s" % (coords, self.world_coords))
@@ -701,7 +704,7 @@ class RubberBand(MouseSelector):
         if y0 > y1:
             y0, y1 = y1, y0
         return (x0, y0, x1 - x0 + 1, y1 - y0 + 1)
-        
+
     def setSelection(self, x0, y0, x1, y1):
         """Programmatically set the selection rectangle.
         """
@@ -713,7 +716,7 @@ class RubberBand(MouseSelector):
 
 class ImageScroller(wx.ScrolledWindow):
     dbg_call_seq = 0
-    
+
     def __init__(self, parent, task, selector=Crosshair):
         wx.ScrolledWindow.__init__(self, parent, -1)
         self.task = task
@@ -735,14 +738,14 @@ class ImageScroller(wx.ScrolledWindow):
         self.height = 0
         self.zoom = 1.0
         self.crop = None
-        
+
         # hacks
         self.just_scrolled = False
-        
+
         # cursors
         self.default_cursor = wx.CURSOR_ARROW
         self.save_cursor = None
-        
+
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
         # selectors and related storage
@@ -753,14 +756,14 @@ class ImageScroller(wx.ScrolledWindow):
         self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvent)
 
         self.setSelector(selector)
-    
+
     def recalc_view(self):
         editor = self.task.active_editor
         if editor is not None:
             self.editor = editor
             self.document = editor.document
             self.set_data()
-    
+
     def set_data(self):
         img = wx.EmptyImage(1,1)
         if not img.LoadMimeStream(self.document.bytestream, self.document.metadata.mime):
@@ -773,7 +776,7 @@ class ImageScroller(wx.ScrolledWindow):
         if self.zoom > self.max_zoom:
             self.zoom = self.max_zoom
         self._scaleImage()
-        
+
     def zoomOut(self, zoom=2):
         self.zoom /= zoom
         if self.zoom < self.min_zoom:
@@ -839,7 +842,7 @@ class ImageScroller(wx.ScrolledWindow):
             self.scaled_bmp = wx.EmptyBitmap(w, h)
             dc.SelectObject(self.scaled_bmp)
             self._drawBackground(dc, w, h)
-            
+
             # For very large bitmaps, the memory consumption of the
             # BitmapFromImage call can cause memory errors.  So, here
             # it breaks up the source image into chunks and only calls
@@ -871,7 +874,7 @@ class ImageScroller(wx.ScrolledWindow):
         if self.selector:
             self.selector.recalc()
         self.Refresh()
-        
+
     def setImage(self, img=None, zoom=None, rot=None,
                  vmirror=False, hmirror=False, crop=None):
         """Sets the control to contain a new image.
@@ -979,7 +982,7 @@ class ImageScroller(wx.ScrolledWindow):
 
     def getBoundedCoords(self, x, y):
         """Return image coordinates clipped to boundary of image."""
-        
+
         if x<0: x=0
         elif x>=self.img.GetWidth(): x=self.img.GetWidth()-1
         if y<0: y=0
@@ -1061,7 +1064,7 @@ class ImageScroller(wx.ScrolledWindow):
                 y += self.crop[1]
             return (x, y)
         return None
-    
+
     #### - Automatic scrolling  FIXME: doesn't work yet
 
     def autoScroll(self, ev):
@@ -1099,7 +1102,7 @@ class ImageScroller(wx.ScrolledWindow):
         self.use_selector = selector
         self.setCursor(self.use_selector.cursor)
         self.save_cursor = None
-    
+
     def startSelector(self, ev=None):
         self.selector = self.use_selector(self, ev)
 
@@ -1125,7 +1128,7 @@ class ImageScroller(wx.ScrolledWindow):
         """
         if self.img:
             inside = self.isEventInClientArea(ev)
-            
+
             try:
                 # First, process the event itself or start it up if it has
                 # been triggered.
@@ -1158,7 +1161,7 @@ class ImageScroller(wx.ScrolledWindow):
             # Note that the drawing actually happens when the dc goes
             # out of scope and is destroyed.
             self.OnPaintHook(evt, dc)
-            
+
             # FIXME: This check for MSW is because it gets multiple onpaint
             # events, so make sure it's only called once for consecutive
             # repaints.  HACK!
@@ -1182,7 +1185,7 @@ if __name__ == '__main__':
     app   = wx.PySimpleApp()
     frame = wx.Frame(None, -1, title='ImageScroller Test', size=(500,500))
     frame.CreateStatusBar()
-    
+
     # Add a panel that the rubberband will work on.
     panel = ImageScroller(frame)
     img = wx.ImageFromBitmap(wx.ArtProvider_GetBitmap(wx.ART_WARNING, wx.ART_OTHER, wx.Size(48, 48)))
@@ -1193,11 +1196,13 @@ if __name__ == '__main__':
         x, y = ev.imageCoords
         frame.SetStatusText("x=%d y=%d" % (x, y))
     panel.Bind(EVT_CROSSHAIR_MOTION, crosshairCallback)
+
     def rubberbandMotionCallback(ev):
         x0, y0 = ev.upperLeftImageCoords
         x1, y1 = ev.lowerRightImageCoords
         frame.SetStatusText("moving rubberband: ul = (%d,%d) lr = (%d,%d)" % (x0, y0, x1, y1))
     panel.Bind(EVT_RUBBERBAND_MOTION, rubberbandMotionCallback)
+
     def rubberbandSizeCallback(ev):
         x0, y0 = ev.upperLeftImageCoords
         x1, y1 = ev.lowerRightImageCoords
@@ -1207,7 +1212,7 @@ if __name__ == '__main__':
     # Layout the frame
     sizer = wx.BoxSizer(wx.VERTICAL)
     sizer.Add(panel,  1, wx.EXPAND | wx.ALL, 5)
-    
+
     def buttonHandler(ev):
         id = ev.GetId()
         if id == 100:
@@ -1274,7 +1279,7 @@ if __name__ == '__main__':
     button = wx.Button(frame, 103, 'Select')
     frame.Bind(wx.EVT_BUTTON, buttonHandler, button)
     buttonsizer.Add(button, 0, wx.EXPAND, 0)
-    
+
     buttonsizer = wx.BoxSizer(wx.HORIZONTAL)
     sizer.Add(buttonsizer, 0, wx.EXPAND | wx.ALL, 5)
     button = wx.Button(frame, 104, 'Crop')

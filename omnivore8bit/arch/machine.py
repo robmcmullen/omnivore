@@ -22,85 +22,85 @@ class Machine(HasTraits):
     """ Collection of classes that identify a machine: processor, display, etc.
     
     """
-    
+
     # Traits
-    
+
     name = Str
 
     mime_prefix = Str("application/octet-stream")
-    
+
     disassembler = Any(transient=True)
-    
+
     memory_map = Any(transient=True)
-    
+
     antic_font_data = Any
-    
+
     antic_font = Any(transient=True)
 
     blinking_antic_font = Any(transient=True)
-    
+
     antic_color_registers = Any
-    
+
     color_standard = Enum(0, 1)
-    
+
     color_registers = Any(transient=True)
-    
+
     color_registers_highlight = Any(transient=True)
-    
+
     color_registers_data = Any(transient=True)
-    
+
     color_registers_match = Any(transient=True)
-    
+
     color_registers_comment = Any(transient=True)
-    
+
     bitmap_renderer = Any(transient=True)
-    
+
     font_renderer = Any(transient=True)
-    
+
     font_mapping = Any(transient=True)
-    
+
     page_renderer = Any(transient=True)
-    
+
     assembler = Any(transient=True)
-    
+
     # Trait events
-    
+
     font_change_event = Event
-    
+
     bitmap_shape_change_event = Event
-    
+
     bitmap_color_change_event = Event
-    
+
     disassembler_change_event = Event
-    
+
     # Class attributes (not traits)
-    
+
     font_list = None
-    
+
     emulator_list = None
-    
+
     assembler_list = None
-    
+
     highlight_color = (100, 200, 230)
-    
+
     unfocused_cursor_color = (128, 128, 128)
-    
+
     background_color = (255, 255, 255)
-    
+
     data_color = (224, 224, 224)
-    
+
     match_background_color = (255, 255, 180)
-    
+
     comment_background_color = (255, 180, 200)
-    
+
     empty_color = None
-    
+
     text_color = (0, 0, 0)
-    
+
     diff_text_color = (255, 0, 0)
-    
+
     text_font = None
-        
+
     @classmethod
     def init_fonts(cls, editor):
         if cls.font_list is None:
@@ -117,22 +117,22 @@ class Machine(HasTraits):
             cls.text_font = prefs.text_font
         except AttributeError:
             pass
-    
+
     @classmethod
     def remember_fonts(cls, application):
         application.save_bson_data("font_list", cls.font_list)
-        
+
     @classmethod
     def init_emulators(cls, editor):
         if cls.emulator_list is None:
             cls.emulator_list = editor.window.application.get_json_data("emulator_list", [])
         default = editor.window.application.get_json_data("system_default_emulator", None)
-        
+
         if default is None:
             default = cls.guess_system_default_emulator()
         if not cls.is_known_emulator(default):
             cls.emulator_list[0:0] = [default]
-    
+
     @classmethod
     def remember_emulators(cls, application):
         e_list = []
@@ -149,7 +149,7 @@ class Machine(HasTraits):
             application.save_json_data("emulator_list", e_list)
         if default:
             application.save_json_data("system_default_emulator", default)
-        
+
     @classmethod
     def init_assemblers(cls, editor):
         if cls.assembler_list is None:
@@ -161,28 +161,28 @@ class Machine(HasTraits):
             a = cls.assembler_list
             if len(a) == 2 and a[0]['name'] == "cc65" and a[1]['name'] == "MAC/65":
                 cls.assembler_list = None
-        
+
         if not cls.assembler_list:
             cls.assembler_list = cls.guess_default_assemblers()
-    
+
     @classmethod
     def remember_assemblers(cls, application):
         if cls.assembler_list:
             application.save_json_data("assembler_list", cls.assembler_list)
-    
+
     @classmethod
     def init_colors(cls, editor):
         if cls.empty_color is None:
             attr = editor.control.GetDefaultAttributes()
             cls.empty_color = attr.colBg.Get(False)
-    
+
     @classmethod
     def one_time_init(cls, editor):
         cls.init_fonts(editor)
         cls.init_colors(editor)
         cls.init_emulators(editor)
         cls.init_assemblers(editor)
-    
+
     @classmethod
     def set_text_font(cls, editor, font, color):
         cls.text_color = color
@@ -195,69 +195,69 @@ class Machine(HasTraits):
         for m in predefined['machine']:
             if mime.startswith(m.mime_prefix):
                 return m
-    
+
     # Trait initializers
-    
+
     def _name_default(self):
         return "Generic 6502"
-    
+
     def _assembler_default(self):
         for asm in self.assembler_list:
             if 'system default' in asm:
                 return asm
         return self.assembler_list[0]
-    
+
     def _disassembler_default(self):
         return predefined['disassembler'][0]
 
     def _memory_map_default(self):
         return predefined['memory_map'][0]
-    
+
     def _antic_font_default(self):
         return self.get_antic_font()
-    
+
     def _blinking_antic_font_default(self):
         return self.get_antic_font(True)
-    
+
     def _antic_font_data_default(self):
         return fonts.A8DefaultFont
-    
+
     def _antic_color_registers_default(self):
         return list(colors.powerup_colors())
-    
+
     def _color_standard_default(self):
         return 0  # NTSC
-    
+
     def _color_registers_default(self):
         return self.get_color_registers()
-    
+
     def _color_registers_highlight_default(self):
         return self.get_blended_color_registers(self.color_registers, self.highlight_color)
-    
+
     def _color_registers_match_default(self):
         return self.get_blended_color_registers(self.color_registers, self.match_background_color)
-    
+
     def _color_registers_comment_default(self):
         return self.get_blended_color_registers(self.color_registers, self.comment_background_color)
-    
+
     def _color_registers_data_default(self):
         return self.get_dimmed_color_registers(self.color_registers, self.background_color, self.data_color)
 
     def _bitmap_renderer_default(self):
         return predefined['bitmap_renderer'][0]
-    
+
     def _font_renderer_default(self):
         return predefined['font_renderer'][0]
-    
+
     def _font_mapping_default(self):
         return predefined['font_mapping'][0]
-    
+
     def _page_renderer_default(self):
         return predefined['page_renderer'][0]
-    
+
     def __getstate__(self):
         state = super(Machine, self).__getstate__()
-        
+
         for name in self.all_trait_names():
             t = self.trait(name)
             if t.transient:
@@ -272,9 +272,9 @@ class Machine(HasTraits):
                 # keys into strings
                 value = getattr(self, name)
                 state[name] = value.items()
-        
+
         return state
-    
+
     def state_to_traits(self, state):
         for name in self.all_trait_names():
             if name not in state:
@@ -300,8 +300,8 @@ class Machine(HasTraits):
         self.state_to_traits(state)
         # set up trait notifications
         self._init_trait_listeners()
-    # 
-    
+    #
+
     def __eq__(self, other):
         return self.disassembler == other.disassembler and self.memory_map == other.memory_map
 
@@ -321,7 +321,7 @@ class Machine(HasTraits):
         self.state_to_traits(e)
         self.update_colors(self.antic_color_registers)
     #
-    
+
     def update_colors(self, c):
         baseline = list(colors.powerup_colors())
         # need to operate on a copy of the colors to make sure we're not
@@ -338,7 +338,7 @@ class Machine(HasTraits):
         self.color_registers_comment = self.get_blended_color_registers(self.color_registers, self.comment_background_color)
         self.set_font()
         self.bitmap_color_change_event = True
-    
+
     def get_color_registers(self, antic_color_registers=None):
         color_converter = self.get_color_converter()
         registers = []
@@ -346,7 +346,7 @@ class Machine(HasTraits):
             antic_color_registers = self.antic_color_registers
         for c in antic_color_registers:
             registers.append(color_converter(c))
-        
+
         # make sure there are 16 registers for 4bpp modes
         i = len(registers)
         for i in range(len(registers), 16):
@@ -358,7 +358,7 @@ class Machine(HasTraits):
             dim.append((r[0]/4 + 64, r[1]/4 + 64, r[2]/4 + 64))
         registers.extend(dim)
         return registers
-    
+
     def get_blended_color_registers(self, colors, blend_color):
         registers = []
         base_blend = [(r * 7)/8 for r in blend_color]
@@ -366,7 +366,7 @@ class Machine(HasTraits):
             r = [c[i]/8 + base_blend[i] for i in range(3)]
             registers.append(r)
         return registers
-    
+
     def get_dimmed_color_registers(self, colors, background_color, dimmed_color):
         registers = []
         dimmed_difference = [b - d for b, d in zip(background_color, dimmed_color)]
@@ -374,28 +374,28 @@ class Machine(HasTraits):
             r = [max(0, c[i]- dimmed_difference[i]) for i in range(3)]
             registers.append(r)
         return registers
-    
+
     def get_color_converter(self):
         if self.color_standard == 0:
             return colors.gtia_ntsc_to_rgb
         return colors.gtia_pal_to_rgb
-    
+
     def set_color_standard(self, std):
         self.color_standard = std
         self.update_colors(self.antic_color_registers)
-    
+
     def set_bitmap_renderer(self, renderer):
         self.bitmap_renderer = renderer
         self.bitmap_shape_change_event = True
-    
+
     def set_disassembler(self, disassembler):
         self.disassembler = disassembler
         self.disassembler_change_event = True
-    
+
     def set_memory_map(self, memory_map):
         self.memory_map = memory_map
         self.disassembler_change_event = True
-    
+
     def set_font(self, font=None, font_renderer=None):
         if font is None:
             font = self.antic_font_data
@@ -416,22 +416,22 @@ class Machine(HasTraits):
             return self.blinking_antic_font
         else:
             return self.antic_font
-    
+
     def get_font_renderer_from_font_name(self, font_name):
         for r in predefined['font_renderer']:
             if r.name.startswith(font_name):
                 return r
         return predefined['font_renderer'][0]
-    
+
     def set_font_mapping(self, font_mapping=None):
         if font_mapping is None:
             font_mapping = self.font_mapping
         self.font_mapping = font_mapping
         self.font_change_event = True
-    
+
     def get_antic_font(self, reverse=False):
         return fonts.AnticFont(self, self.antic_font_data, self.font_renderer, self.antic_color_registers[4:9], reverse)
-    
+
     def load_font(self, task, filename):
         try:
             fh = open(filename, 'rb')
@@ -449,19 +449,19 @@ class Machine(HasTraits):
             task.machine_menu_changed = self
         except:
             raise
-    
+
     def add_emulator(self, task, emu):
         self.emulator_list.append(emu)
         self.remember_emulators(task.window.application)
         task.machine_menu_changed = self
-    
+
     @classmethod
     def is_known_emulator(cls, emu):
         for e in cls.emulator_list:
             if e == emu:
                 return True
         return False
-    
+
     @classmethod
     def guess_system_default_emulator(cls):
         if sys.platform == "win32":
@@ -476,7 +476,7 @@ class Machine(HasTraits):
                'system default': True,
                }
         return emu
-    
+
     @classmethod
     def get_system_default_emulator(cls, task):
         try:
@@ -487,7 +487,7 @@ class Machine(HasTraits):
             cls.remember_emulators(task.window.application)
             task.machine_menu_changed = cls
         return default
-    
+
     @classmethod
     def set_system_default_emulator(cls, task, emu):
         emu = dict(emu)  # copy to make sure we're not referencing an item in the existing emulator_list
@@ -500,7 +500,7 @@ class Machine(HasTraits):
             cls.emulator_list[0] = emu
         cls.remember_emulators(task.window.application)
         task.machine_menu_changed = cls
-    
+
     @classmethod
     def get_user_defined_emulator_list(cls):
         """Return list of user defined emulators (i.e. not including the system
@@ -511,7 +511,7 @@ class Machine(HasTraits):
             if 'system default' not in e:
                 emus.append(e)
         return emus
-    
+
     @classmethod
     def set_user_defined_emulator_list(cls, task, emus):
         default = None
@@ -522,16 +522,16 @@ class Machine(HasTraits):
         cls.emulator_list = emus
         cls.remember_emulators(task.window.application)
         task.machine_menu_changed = cls
-    
+
     def set_assembler(self, assembler):
         self.assembler = assembler
         self.disassembler_change_event = True
-    
+
     def add_assembler(self, task, d):
         self.assembler_list.append(d)
         self.remember_assemblers(task.window.application)
         task.machine_menu_changed = self
-    
+
     @classmethod
     def guess_default_assemblers(cls):
         asm_list = [
@@ -565,7 +565,7 @@ class Machine(HasTraits):
              },
             ]
         return [dict(asm) for asm in asm_list]  # force a copy
-    
+
     @classmethod
     def set_system_default_assembler(cls, task, asm):
         if 'system default' in asm:
@@ -583,7 +583,7 @@ class Machine(HasTraits):
             cls.assembler_list[0:0] = [asm]
         cls.remember_assemblers(task.window.application)
         task.machine_menu_changed = cls
-    
+
     @classmethod
     def get_default_assembler(cls):
         found = None
@@ -607,7 +607,7 @@ class Machine(HasTraits):
         cls.assembler_list = asms
         cls.remember_assemblers(task.window.application)
         task.machine_menu_changed = cls
-    
+
     def verify_current_assembler(self):
         found = None
         for asm in self.assembler_list:
@@ -617,9 +617,9 @@ class Machine(HasTraits):
         if not found:
             asm = self.get_default_assembler()
         self.set_assembler(asm)
-    
+
     # Utility methods
-    
+
     def get_disassembler(self, hex_lower, mnemonic_lower, use_labels=True):
         return self.disassembler(self.assembler, self.memory_map, hex_lower, mnemonic_lower, use_labels)
 
@@ -636,7 +636,6 @@ Atari800Undoc = Machine(name="Atari 800 (show undocumented opcodes)", mime_prefi
 Atari800Flagged = Machine(name="Atari 800 (highlight undocumented opcodes)", mime_prefix="application/vnd.atari8bit", disassembler=disasm.Flagged6502Disassembler, memory_map=memory_map.Atari800MemoryMap)
 
 Atari5200 = Machine(name="Atari 5200", mime_prefix="application/vnd.atari8bit", disassembler=disasm.Basic6502Disassembler, memory_map=memory_map.Atari5200MemoryMap)
-
 
 
 predefined = {

@@ -21,6 +21,7 @@ class MemoryMapSpringTab(MemoryMapScroller):
     def activateSpringTab(self):
         self.recalc_view()
 
+
 class CommentsPanel(wx.VListBox):
     def __init__(self, parent, task, **kwargs):
         self.task = task
@@ -28,7 +29,7 @@ class CommentsPanel(wx.VListBox):
         self.items = []
         wx.VListBox.__init__(self, parent, wx.ID_ANY, **kwargs)
         self.Bind(wx.EVT_LEFT_DOWN, self.on_click)
-        
+
         f = self.GetFont()
         self.bold_font = wx.Font(f.GetPointSize(), f.GetFamily(),
                                  f.GetStyle(), wx.BOLD, f.GetUnderlined(),
@@ -36,7 +37,7 @@ class CommentsPanel(wx.VListBox):
         self.italic_font = wx.Font(f.GetPointSize(), f.GetFamily(),
                                    wx.FONTSTYLE_ITALIC, wx.NORMAL, f.GetUnderlined(),
                                    f.GetFaceName(), f.GetEncoding())
-        
+
         # Return key not sent through to EVT_CHAR, EVT_CHAR_HOOK or
         # EVT_KEY_DOWN events in a ListBox. This is the only event handler
         # that catches a Return.
@@ -78,7 +79,7 @@ class CommentsPanel(wx.VListBox):
         self.CacheBestSize(best)
 
         return best
-    
+
     def on_char(self, evt):
         keycode = evt.GetKeyCode()
         log.debug("key down: %s" % keycode)
@@ -94,7 +95,7 @@ class CommentsPanel(wx.VListBox):
             self.process_index(index)
             self.set_items()
             self.Refresh()
-    
+
     def process_index(self, index):
         e = self.editor
         segment, index, text, font = self.items[index]
@@ -104,7 +105,7 @@ class CommentsPanel(wx.VListBox):
             n = e.document.find_segment_index(segment)
             e.view_segment_number(n)
             e.index_clicked(index, 0, None)
-    
+
     def set_items(self, items=None):
         if items is None:
             items = self.input_items
@@ -114,7 +115,7 @@ class CommentsPanel(wx.VListBox):
         for i in items:
             self.process_comment(i, seen)
         self.SetItemCount(len(self.items))
-    
+
     def process_comment(self, item, segment_seen):
         e = self.editor
         try:
@@ -147,7 +148,7 @@ class CommentsPanel(wx.VListBox):
         self.editor = e
         if e is not None:
             self.set_items(e.document.segments[0].get_sorted_comments())
-    
+
     def refresh_view(self):
         editor = self.task.active_editor
         if editor is not None:
@@ -155,36 +156,37 @@ class CommentsPanel(wx.VListBox):
                 self.recalc_view()
             else:
                 self.Refresh()
-        
+
     def activateSpringTab(self):
         self.recalc_view()
-    
+
     def get_notification_count(self):
         self.recalc_view()
         return len(self.items)
+
 
 class SidebarPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
     id = 'hex_edit.sidebar'
     name = 'Sidebar'
-    
+
     movable = False
     caption_visible = False
     dock_layer = 9
-    
+
     def MemoryMapCB(self, parent, task, **kwargs):
         control = MemoryMapSpringTab(parent, task)
-    
+
     def comments_cb(self, parent, task, **kwargs):
         control = CommentsPanel(parent, task)
-        
+
     def create_contents(self, parent):
         control = SpringTabs(parent, self.task, popup_direction="left")
         control.addTab("Page Map", self.MemoryMapCB)
         control.addTab("Comments", self.comments_cb)
         return control
-    
+
     def refresh_active(self):
         active = self.control._radio
         if active is not None and active.is_shown:
@@ -196,7 +198,7 @@ class DisassemblyPane(FrameworkPane):
 
     id = 'hex_edit.disassembly'
     name = 'Disassembly'
-    
+
     def create_contents(self, parent):
         control = DisassemblyPanel(parent, self.task, size=(300,500))
         return control
@@ -207,7 +209,7 @@ class BitmapPane(FrameworkPane):
 
     id = 'hex_edit.bitmap'
     name = 'Bitmap'
-    
+
     def create_contents(self, parent):
         control = BitmapScroller(parent, self.task, size=(64,500))
         return control
@@ -218,7 +220,7 @@ class FontMapPane(FrameworkPane):
 
     id = 'hex_edit.font_map'
     name = 'Char Map'
-    
+
     def create_contents(self, parent):
         control = FontMapScroller(parent, self.task, size=(160,500), command=ChangeByteCommand)
         return control
@@ -229,7 +231,7 @@ class SegmentsPane(FrameworkPane):
 
     id = 'hex_edit.segments'
     name = 'Segments'
-    
+
     def create_contents(self, parent):
         control = SegmentList(parent, self.task, size=(64,150))
         return control
@@ -240,7 +242,7 @@ class UndoPane(FrameworkPane):
 
     id = 'hex_edit.undo'
     name = 'Undo History'
-    
+
     def create_contents(self, parent):
         control = UndoHistoryPanel(parent, self.task, size=(64,150))
         return control

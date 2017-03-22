@@ -32,61 +32,61 @@ class FrameworkEditor(Editor):
     #### 'IProjectEditor' interface ############################################
 
     document = Any(None)
-    
+
     name = Property(Unicode, depends_on='document')
 
     tooltip = Property(Unicode, depends_on='document')
 
     can_save = Bool(True)
-    
+
     can_undo = Bool(False)  # has to be a property of Editor because EditorActions need to refer to this trait
-    
+
     undo_label = Unicode("Undo")
-    
+
     can_redo = Bool(False)
-    
+
     redo_label = Unicode("Redo")
-    
+
     printable = Bool(False)
-    
+
     imageable = Bool(False)
-    
+
     can_cut = Bool(False)
-    
+
     can_copy = Bool(False)
-    
+
     # can_paste is set by the idle handler of the FrameworkApplication for the
     # active window
     can_paste = Bool(False)
-    
+
     # Cursor index points to positions between bytes, so zero is before the
     # first byte and the max index is the number of bytes, which points to
     # after the last byte
-    
+
     cursor_index = Int(0)
 
     cursor_history = Any
-    
+
     # Anchor indexes behave like cursor positions: they indicate positions
     # between bytes
     anchor_start_index = Int(0)
-    
+
     anchor_initial_start_index = Int(0)
-    
+
     anchor_initial_end_index = Int(0)
 
     anchor_end_index = Int(0)
-    
+
     selected_ranges = List([])
-    
+
     last_search_settings = Dict()
-    
+
     mouse_mode_factory = Any
-    
+
     baseline_present = Bool
-    
+
     diff_highlight = Bool
-    
+
     _metadata_dirty = Bool(transient=True)
 
     #### trait default values
@@ -96,7 +96,7 @@ class FrameworkEditor(Editor):
 
     def _cursor_history_default(self):
         return HistoryList()
-    
+
     def _last_search_settings_default(self):
         return {
             "find": "",
@@ -184,7 +184,7 @@ class FrameworkEditor(Editor):
             log.error("JSON parsing error for extra metadata in %s: %s" % (uri, str(e)))
             unserialized = None
         return unserialized
-    
+
     def get_filesystem_extra_metadata_uri(self, doc):
         """ Get filename of file used to store extra metadata
         """
@@ -194,7 +194,7 @@ class FrameworkEditor(Editor):
         """ Set up any additional metadata from the dict argument
         """
         pass
-    
+
     def load_baseline(self, uri, doc=None, ignore_error=False):
         if doc is None:
             doc = self.document
@@ -248,13 +248,13 @@ class FrameworkEditor(Editor):
         self.update_panes()
         self.document.undo_stack_changed = True
         self.task.document_changed = self.document
-    
+
     def rebuild_document_properties(self):
         """ Recreate any editor attributes for the new document
         """
         self.baseline_present = self.document.has_baseline
         self.diff_highlight = self.diff_highlight and self.baseline_present
-    
+
     def init_view_properties(self):
         """ Set up editor properties when loading a new file
         """
@@ -264,7 +264,7 @@ class FrameworkEditor(Editor):
         """ Copy editor properties to the new view
         """
         pass
-    
+
     @property
     def document_length(self):
         return len(self.document)
@@ -303,7 +303,7 @@ class FrameworkEditor(Editor):
 
             self.document.undo_stack_changed = True
             saved = True
-            
+
             # refresh window name in case filename has changed
             self.task._active_editor_tab_change(None)
         except Exception, e:
@@ -313,7 +313,7 @@ class FrameworkEditor(Editor):
             self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
             saved = False
         return saved
-    
+
     def save_to_uri(self, bytes, uri, save_metadata=True):
         # Have to use a two-step process to write to the file: open the
         # filesystem, then open the file.  Have to open the filesystem
@@ -329,7 +329,7 @@ class FrameworkEditor(Editor):
         log.debug("saving to %s" % uri)
         fh.write(bytes)
         fh.close()
-        
+
         if save_metadata:
             metadata_dict = dict()
             self.get_extra_metadata(metadata_dict)
@@ -345,7 +345,7 @@ class FrameworkEditor(Editor):
                 fh.write(text)
                 fh.close()
                 self.metadata_dirty = False
-        
+
         fs.close()
 
     def is_valid_for_save(self):
@@ -353,28 +353,28 @@ class FrameworkEditor(Editor):
         file
         """
         return True
-    
+
     # Segment saver interface for menu item display
     export_data_name = "Any"
     export_extensions = [".*"]
-    
+
     def encode_data(self, document, editor):
         """Document saver interface: take a document and produce a byte
         representation to save to disk.
         """
         data = document.bytes.tostring()
         return data
-    
+
     def get_extra_metadata_header(self):
         return "# omnivore %s extra_metadata=v1\n" % __version__
-    
+
     def get_extra_metadata(self, metadata_dict):
         pass
-    
+
     @property
     def metadata_dirty(self):
         return self._metadata_dirty
-    
+
     @metadata_dirty.setter
     def metadata_dirty(self, val):
         self._metadata_dirty = bool(val)
@@ -403,7 +403,7 @@ class FrameworkEditor(Editor):
         if data_obj is None:
             return False
         return self.set_clipboard_object(data_obj)
-    
+
     def set_clipboard_object(self, data_obj):
         if wx.TheClipboard.Open():
             wx.TheClipboard.SetData(data_obj)
@@ -446,10 +446,10 @@ class FrameworkEditor(Editor):
             self.show_data_object_stats(data_obj, False)
         else:
             self.window.error("Unsupported data format", "Paste Error")
-    
+
     def get_paste_data_object(self):
         data_objs = self.supported_clipboard_data_objects
-        
+
         if wx.TheClipboard.Open():
             for data_obj in data_objs:
                 success = wx.TheClipboard.GetData(data_obj)
@@ -462,23 +462,23 @@ class FrameworkEditor(Editor):
         if success:
             return data_obj
         return None
-    
+
     def process_paste_data_object(self, data_obj, cmd_cls=None):
         pass  # Override in subclass
-    
+
     # must be a class attribute because for checking clipboard data formats of
     # custom objects, data formats must be singletons
     supported_clipboard_data_objects = [wx.TextDataObject()]
-    
+
     def create_clipboard_data_object(self):
         return wx.TextDataObject("Omnivore!")
-    
+
     def print_preview(self):
         raise NotImplementedError
-    
+
     def print_page(self):
         raise NotImplementedError
-    
+
     def save_as_pdf(self, path=None):
         raise NotImplementedError
 
@@ -509,7 +509,7 @@ class FrameworkEditor(Editor):
         """Get a numpy array in RGB format to be saved to a file
         """
         raise NotImplementedError
-    
+
     def update_history(self):
         """Hook to update any undo history list and/or save history log to a file
         """
@@ -523,7 +523,7 @@ class FrameworkEditor(Editor):
         document, or when the document formatting or structure has changed.
         """
         pass
-    
+
     def refresh_panes(self):
         """Called when the panes should be repainted.
         
@@ -531,13 +531,13 @@ class FrameworkEditor(Editor):
         but the document formatting or structure hasn't changed.
         """
         pass
-    
+
     def reconfigure_panes(self):
         """Called when the panes should be updated after a possible document
         formatting or structure change.
         """
         pass
-    
+
     def ensure_visible(self, start, end):
         """Make sure the current range of indexes is shown
         """
@@ -578,7 +578,7 @@ class FrameworkEditor(Editor):
         self.highlight_selected_ranges()
         if refresh:
             self.refresh_panes()
-    
+
     def select_range(self, start, end, add=False, extend=False):
         """ Adjust the current selection to the new start and end indexes
         """
@@ -591,23 +591,23 @@ class FrameworkEditor(Editor):
         self.anchor_start_index = start
         self.anchor_end_index = end
         self.highlight_selected_ranges()
-    
+
     def highlight_selected_ranges(self):
         pass
-    
+
     def get_optimized_selected_ranges(self):
         """ Get the list of monotonically increasing, non-overlapping selected
         ranges
         """
         return collapse_overlapping_ranges(self.selected_ranges)
-    
+
     def get_selected_ranges_and_indexes(self):
         opt = self.get_optimized_selected_ranges()
         return opt, ranges_to_indexes(opt)
-    
+
     def invert_selection_ranges(self, ranges):
         return invert_ranges(ranges, self.document_length)
-    
+
     def set_cursor(self, index, refresh=True):
         max_index = self.document_length - 1
         if index < 0:
@@ -619,7 +619,7 @@ class FrameworkEditor(Editor):
         self.anchor_end_index = self.anchor_initial_end_index = index
         if refresh:
             self.refresh_panes()
-        
+
         return index
 
     def update_cursor_history(self):
@@ -659,33 +659,33 @@ class FrameworkEditor(Editor):
         index range have changed.
         """
         pass
-    
+
     def rebuild_display_objects(self):
         """Hook for subclasses to get notified when the document is changed and
         to rebuild any objects necessary for display before the call to
         refresh_panes."""
         pass
-    
+
     def invalidate_search(self):
         """Hook for subclasses to get notified if the document is changed and
         any search params should be cleared."""
         pass
-    
+
     def compare_to_baseline(self):
         """Hook for subclasses to update any comparisons to the baseline data."""
         pass
-    
+
     def update_mouse_mode(self, mouse_handler=None):
         """Hook for subclasses to process the change to a new mouse mode 
         """
         pass
-    
+
     def perform_idle(self):
         """Hook for subclasses to do some (small!) processing during UI idle
         time.
         """
         pass
-    
+
     # Command processor
 
     def update_undo_redo(self):
@@ -697,7 +697,7 @@ class FrameworkEditor(Editor):
             text = str(command).replace("&", "&&")
             self.undo_label = "Undo: %s" % text
             self.can_undo = True
-            
+
         command = self.document.undo_stack.get_redo_command()
         if command is None:
             self.redo_label = "Redo"
@@ -708,7 +708,7 @@ class FrameworkEditor(Editor):
             self.can_redo = True
         self.dirty = self.document.dirty or self._metadata_dirty
         self.can_save = not self.document.read_only and self.dirty
-    
+
     def undo(self):
         undo = self.document.undo_stack.undo(self)
         self.process_flags(undo.flags)
@@ -717,7 +717,7 @@ class FrameworkEditor(Editor):
 
     def undo_post_hook(self):
         pass
-    
+
     def redo(self):
         undo = self.document.undo_stack.redo(self)
         self.process_flags(undo.flags)
@@ -726,11 +726,11 @@ class FrameworkEditor(Editor):
 
     def redo_post_hook(self):
         pass
-    
+
     def end_batch(self):
         self.document.undo_stack.end_batch()
         self.document.undo_stack_changed = True
-    
+
     def process_command(self, command, batch=None):
         """Process a single command and immediately update the UI to reflect
         the results of the command.
@@ -742,7 +742,7 @@ class FrameworkEditor(Editor):
             self.document.undo_stack_changed = True
         self.refresh_toolbar_state()
         return undo
-        
+
     def process_batch_command(self, command, f, batch=None):
         """Process a single command but don't update the UI immediately.
         Instead, update the batch flags to reflect the changes needed to
@@ -752,7 +752,7 @@ class FrameworkEditor(Editor):
         undo = self.document.undo_stack.perform(command, self, batch)
         f.add_flags(undo.flags, command)
         return undo
-    
+
     def process_flags(self, flags):
         """Perform the UI updates given the StatusFlags or BatchFlags flags
         
@@ -760,11 +760,11 @@ class FrameworkEditor(Editor):
         d = self.document
         visible_range = False
         do_refresh = flags.refresh_needed
-        
+
         if flags.cursor_index is not None:
             self.cursor_index = self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = flags.cursor_index
             visible_range = True
-            
+
         if flags.index_range is not None:
             if flags.select_range:
                 self.anchor_start_index = self.anchor_initial_start_index = flags.index_range[0]
@@ -776,17 +776,17 @@ class FrameworkEditor(Editor):
             # changes, not if a range is simply selected.
             if flags.byte_values_changed or flags.byte_style_changed:
                 self.mark_index_range_changed(flags.index_range)
-        
+
         if flags.message:
             self.task.status_bar.message = flags.message
-        
+
         if flags.byte_values_changed:
             d.byte_values_changed = True  # also handles style changes and refresh
             do_refresh = False
         elif flags.byte_style_changed:
             d.byte_style_changed = True  # also handles refresh
             do_refresh = False
-        
+
         if visible_range:
             # Only update the range on the current editor, not other views
             # which are allowed to remain where they are
@@ -798,7 +798,7 @@ class FrameworkEditor(Editor):
 
         if do_refresh:
             self.refresh_panes()
-            
+
     def popup_context_menu_from_commands(self, window, commands):
         """Popup a simple context menu with menu items defined by commands.
         
@@ -821,7 +821,7 @@ class FrameworkEditor(Editor):
             return
         cmd = context_menu_data[ret]
         self.process_command(cmd)
-        
+
     def popup_context_menu_from_actions(self, window, actions, popup_data=None):
         """Popup a simple context menu with menu items defined by actions.
         
@@ -837,7 +837,7 @@ class FrameworkEditor(Editor):
             i = wx.NewId()
             if not hasattr(action, 'task'):
                 action = action(task=self.task)
-            
+
             # wxpython popup entries can't have empty name
             name = action.name if action.name else " "
             item = menu.Append(i, name)
@@ -864,20 +864,20 @@ class FrameworkEditor(Editor):
         action = context_menu_data[ret]
         action_event = ActionEvent(task=self.task, popup_data=popup_data)
         action.perform(action_event)
-    
+
     #### Traits event handlers
-    
+
     # Trait event handlers are used instead of calling these functions directly
     # because multiple views of the document might exist and all editors will
     # be informed of the update via the trait event on the document.
-    
+
     @on_trait_change('document:undo_stack_changed')
     def undo_stack_changed(self):
         log.debug("undo_stack_changed called!!!")
         self.update_undo_redo()
         self.update_history()
         wx.CallAfter(self.refresh_toolbar_state)
-    
+
     @on_trait_change('document:byte_values_changed')
     def byte_values_changed(self):
         log.debug("byte_values_changed called!!!")
@@ -886,7 +886,7 @@ class FrameworkEditor(Editor):
         self.compare_to_baseline()
         self.rebuild_display_objects()
         self.refresh_panes()
-    
+
     @on_trait_change('document:byte_style_changed')
     def byte_style_changed(self):
         log.debug("byte_style_changed called!!!")
@@ -908,13 +908,12 @@ class FrameworkEditor(Editor):
             if pane.IsToolbar():
                 pane.window.Refresh()
 
-
     #### convenience functions
-    
+
     @property
     def task(self):
         return self.editor_area.task
-    
+
     @property
     def window(self):
         return self.editor_area.task.window

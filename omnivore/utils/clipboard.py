@@ -21,6 +21,7 @@ import wx
 # platform supports true X11 style primary selection.
 use_x11_primary_selection = None
 
+
 def setAllowX11PrimarySelection(default=True):
     global use_x11_primary_selection
     try:
@@ -33,6 +34,7 @@ def setAllowX11PrimarySelection(default=True):
     except:
         use_x11_primary_selection = False
 
+
 # Initialize the value for use_x11_primary_selection
 if use_x11_primary_selection is None:
     setAllowX11PrimarySelection()
@@ -43,6 +45,7 @@ if use_x11_primary_selection is None:
 # a selection event (i.e.  in response to a left mouse up event), the middle
 # mouse usage can be simulated on a non-X11 platform.
 non_x11_primary_selection = None
+
 
 def GetClipboardText(primary_selection=False):
     """Returns the current clipboard value.
@@ -75,6 +78,7 @@ def GetClipboardText(primary_selection=False):
     if success:
         return do.GetText()
     return None
+
 
 def SetClipboardText(txt, primary_selection=False):
     """Sets the current clipboard value to the given text.
@@ -116,5 +120,6 @@ def SetClipboardText(txt, primary_selection=False):
     else:
         eprint("Can't open clipboard!")
     return 0
+
 
 __all__ = ['GetClipboardText', 'SetClipboardText']

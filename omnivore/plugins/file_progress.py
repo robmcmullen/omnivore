@@ -23,11 +23,11 @@ wxLogEvent, EVT_WX_LOG_EVENT = wx.lib.newevent.NewEvent()
 class ProgressDialog(wx.Dialog):
     def __init__(self, parent, title="Progress", delay=1000):
         wx.Dialog.__init__(self, parent, -1, title,
-                           size=wx.DefaultSize, pos=wx.DefaultPosition, 
+                           size=wx.DefaultSize, pos=wx.DefaultPosition,
                            style=wx.DEFAULT_DIALOG_STYLE)
         self.border = 20
         self.delay = delay
-        
+
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.label = wx.StaticText(self, -1, "Working...")
@@ -74,12 +74,12 @@ class ProgressDialog(wx.Dialog):
 
     def on_cancel(self, evt):
         self.request_cancel = True
-    
+
     def on_refit(self, evt):
         # Note that there is a bug in expando that resets height to one line
         # after the SetMaxHeight is reached.
         self.Fit()
-    
+
     def raise_error(self):
         raise ProgressCancelError(self.GetTitle() + " canceled by user!")
 
@@ -156,11 +156,11 @@ class wxLogHandler(logging.Handler):
     """
     A handler class which sends log strings to a wx object
     """
-    
+
     progress_dialog = None
-    
+
     disabler = None
-    
+
     def __init__(self, default_title=""):
         """
         Initialize the handler
@@ -201,20 +201,20 @@ class wxLogHandler(logging.Handler):
             raise
         except:
             self.handleError(record)
-    
+
     @classmethod
     def get_dialog(cls):
         if cls.progress_dialog is None or not cls.progress_dialog:
             top = wx.GetApp().GetTopWindow()
             cls.progress_dialog = ProgressDialog(top)
         return cls.progress_dialog
-    
+
     @classmethod
     def get_dialog_if_open(cls):
         if cls.progress_dialog is None or not cls.progress_dialog:
             return None
         return cls.progress_dialog
-    
+
     @classmethod
     def open_dialog(cls):
         d = cls.get_dialog()
@@ -223,7 +223,7 @@ class wxLogHandler(logging.Handler):
         cls.disabler = wx.WindowDisabler(d)
         wx.BeginBusyCursor()
         return d
-    
+
     @classmethod
     def close_dialog(cls):
         d = cls.get_dialog_if_open()
@@ -234,13 +234,13 @@ class wxLogHandler(logging.Handler):
             wx.Yield()
             wx.EndBusyCursor()  # fails in wx 3.0 before Yield
         cls.progress_dialog = None
-    
+
     def force_cursor(self):
         # OS X resets the busy cursor when the cursor moves out of the dialog,
         # so at every tick call this method to reset it to the wait cursor.
         # Other platforms don't have this problem.
         wx.SetCursor(wx.StockCursor(wx.CURSOR_WAIT))
-    
+
     def post(self, evt):
         if not self.use_gui:
             print "NO GUI: message=%s" % evt.message
@@ -323,7 +323,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
-    
+
     def progress_test():
         print "HI!"
         progress_log.info("START=First Test")
@@ -339,7 +339,7 @@ if __name__ == '__main__':
                     progress_log.info("TIME_DELTA=Finished trying %d" % i)
                 progress_log.info("PULSE")
                 wx.Yield()
-                
+
         except ProgressCancelError, e:
             error = e.message
         finally:
@@ -348,7 +348,7 @@ if __name__ == '__main__':
     p = FileProgressPlugin()
     p.start()
     progress_log = logging.getLogger("progress")
-    
+
     app = wx.App(redirect = False)
     frame = wx.Frame(None, title='Progress Test', size=(800,400))
     frame.Show()

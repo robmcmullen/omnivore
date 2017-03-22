@@ -1,6 +1,7 @@
 # Enthought library imports.
 from traits.api import Interface, Str, List, Instance
 
+
 class IFileRecognizer(Interface):
     """File recognizers must implement this AND be added to the list of known
     recognizers via a plugin that contributes to 'omnivore.file_recognizer'.
@@ -25,6 +26,7 @@ class IFileRecognizer(Interface):
         
         If the file type is not matched by this recognizer, returns None
         """
+
 
 class IFileRecognizerDriver(Interface):
     """ File type identifier service.

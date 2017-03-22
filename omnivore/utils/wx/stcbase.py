@@ -58,7 +58,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
                wx.stc.STC_EOL_CRLF: '\r\n',
                wx.stc.STC_EOL_LF: '\n',
                }
-    
+
     def __init__(self, parent, refstc=None, copy=None, **kwargs):
         """Initialize the styled text control with peppy extensions.
         
@@ -73,7 +73,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         """
         wx.stc.StyledTextCtrl.__init__(self, parent, -1, pos=(9000,9000), **kwargs)
         self.ClearAll()
-        
+
         if refstc is not None:
             self.refstc = refstc
             self.docptr = self.refstc.docptr
@@ -109,7 +109,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         for view in self.subordinates:
             classes[view.__class__] = True
         self.stc_classses = classes.keys()
-    
+
     def getSharedClassInfo(self, cls):
         """Get the dict that can be used to store data common to viewers of
         the specified class.
@@ -138,7 +138,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         """
         fh = buffer.getBufferedReader()
         self.readThreaded(fh, buffer, message)
-    
+
     def revertEncoding(self, buffer, url=None, message=None, encoding=None, allow_undo=False):
         if url is None:
             url = buffer.url
@@ -169,20 +169,20 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
             # file.  Peppy needs to reflect that it hasn't been saved by
             # setting its initial state to be 'modified'
             buffer.setInitialStateIsModified()
-    
+
     def openSuccess(self, buffer, headersize=1024, encoding=None):
         bytes = self.tempstore.getvalue()
-        
+
         self.resetText(bytes, headersize, encoding)
-        
+
         del self.tempstore
-    
+
     def resetText(self, bytes, headersize=1024, encoding=None):
         numbytes = len(bytes)
         if headersize > numbytes:
             headersize = numbytes
         header = bytes[0:headersize]
-        
+
         if encoding:
             # Normalize the encoding name by running it through the codecs list
             self.refstc.encoding = codecs.lookup(encoding).name
@@ -191,7 +191,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         self.decodeText(bytes)
         log.debug("found encoding = %s" % self.refstc.encoding)
         self.detectLineEndings()
-    
+
     def readFrom(self, fh, amount=None, chunk=65536, length=0, message=None):
         """Read a chunk of the file from the file-like object.
         
@@ -214,7 +214,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
                     # pulse mode
                     #Publisher().sendMessage(message, (total*100)/length)
                     pass
-                
+
                 if isinstance(txt, unicode):
                     # This only seems to happen for unicode files written
                     # to the mem: filesystem, but if it does happen to be
@@ -227,7 +227,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
                 # stop when we reach the end.  An exception will be
                 # handled outside this class
                 break
-    
+
     def decodeText(self, bytes):
         """Check for the file encoding and convert in place.
         
@@ -246,7 +246,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
                 self.refstc.badencoding = self.refstc.encoding
                 self.refstc.encoding = None
                 self.refstc.bom = None
-        
+
         # If there's no encoding or an error in the decoding, stuff the binary
         # bytes in the stc.  The only way to load binary data into scintilla
         # is to convert it to two bytes per character: first byte is the
@@ -254,7 +254,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         self.SetText('')
         styledtxt = '\0'.join(bytes)+'\0'
         self.AddStyledText(styledtxt)
-    
+
     def prepareEncoding(self):
         """Prepare the file for encoding.
         
@@ -285,12 +285,12 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
                 # string at the first zero character.
                 numchars = self.GetTextLength()
                 bytes = self.GetStyledText(0, numchars)[0:numchars*2:2]
-            
+
             self.refstc.encoded = bytes
         except:
             self.refstc.encoded = None
             raise
-    
+
     def openFileForWriting(self, url):
         return vfs.open_write(url)
 
@@ -302,7 +302,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         txt = self.refstc.encoded
         if txt is None:
             raise IOError("Invalid encoded string -- this should never happen")
-        
+
         #dprint("writing %d bytes to %s" % (len(txt), fh))
 
         try:
@@ -313,7 +313,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
 
     def closeFileAfterWriting(self, fh):
         fh.close()
-        
+
     def getAutosaveTemporaryFilename(self, buffer):
         """Hook to allow STC to override autosave filename"""
         return wx.GetApp().autosave.getFilename(buffer.url)
@@ -336,24 +336,24 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
                 self.detectLineEndings(self.GetText())
                 #Publisher().sendMessage('resetStatusBar')
             self.maybe_undo_eolmode = None
-        
+
     def Undo(self):
         """Override of base Undo command to add our additional checks."""
         wx.stc.StyledTextCtrl.Undo(self)
         self.checkUndoEOL()
-        
+
     def Redo(self):
         """Override of base Redo command to add our additional checks."""
         wx.stc.StyledTextCtrl.Redo(self)
         self.checkUndoEOL()
-        
+
     ## STCInterface additions
     def CanCopy(self):
         return True
 
     def CanCut(self):
         return True
-    
+
     def SelectAll(self):
         self.SetSelectionStart(0)
         self.SetSelectionEnd(self.GetLength())
@@ -374,7 +374,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         if end == -1:
             end = self.GetTextLength()
         return self.GetStyledText(start,end)[::2]
-    
+
     def SetBinaryData(self, loc, locend, bytes):
         """Replace the binary data in the specified range.
         
@@ -415,7 +415,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         data = self.GetStyledText(start, end)
         self.SetSelection(start, end)
         self.ReplaceSelection('')
-        
+
         styled = '\0'.join(bytes) + '\0'
         gap1 = loc - start
         gap2 = gap1 + locend - loc
@@ -456,7 +456,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         if binary>(endpos/percentage):
             return True
         return False
-    
+
     def GetSelection2(self):
         """Get the current region, but don't return an empty last line if the
         cursor is at column zero of the last line.
@@ -480,7 +480,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
             if newend > start:
                 return start, newend
         return start, end
-        
+
     def GetOneLineTarget(self):
         """Create a target encompassing the current line
         
@@ -508,7 +508,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         self.SetTargetStart(start)
         self.SetTargetEnd(end)
         return True
-        
+
     def GetLineRegion(self):
         """Get current region, extending to current line if no region
         selected.
@@ -523,7 +523,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         else:
             linestart = self.LineFromPosition(start)
             lineend = self.LineFromPosition(end - 1)
-        
+
         start -= self.GetColumn(start)
         end = self.GetLineEndPosition(lineend)
         self.SetSelection(start, end)
@@ -554,7 +554,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
                     self.InsertText(self.GetTextLength(), self.getLinesep())
                 start = pos = self.PositionFromLine(line)
                 last = self.GetLineEndPosition(line)
-                
+
                 # FIXME: doesn't work with tabs
                 if (pos + col) > last:
                     # need to insert spaces before the rectangular area
@@ -587,22 +587,22 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
                 return '\n'
             else:# cr_ is mx:
                 return '\r'
-        
+
         if header is None:
             header = self.GetText()
         linesep = whichLinesep(header)
         mode = self.eol2int[linesep]
         self.SetEOLMode(mode)
-    
+
     def getNativeEOLMode(self):
         try:
             return self.eol2int[os.linesep]
         except KeyError:
             raise RuntimeError("Unsupported native line separator")
-    
+
     def isNativeEOLMode(self):
         return self.GetEOLMode() == self.getNativeEOLMode()
-    
+
     def forceNativeEOLMode(self):
         mode = self.getNativeEOLMode()
         self.ConvertEOLs(mode)
@@ -617,7 +617,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         """
         mode = self.GetEOLMode()
         return self.int2eol[mode]
-    
+
     def convertStringEOL(self, text):
         """Convert a string to the target EOL format of this STC"""
         target = self.getLinesep()
@@ -630,7 +630,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         return text
 
     # Styling stuff
-    
+
     def showStyle(self, linenum=None):
         if linenum is None:
             linenum = self.GetCurrentLine()
@@ -640,10 +640,10 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         # actual indention of current line
         ind = self.GetLineIndentation(linenum) # columns
         pos = self.GetLineIndentPosition(linenum) # absolute character position
-        
+
         # folding says this should be the current indention
         fold = self.GetFoldLevel(linenum)&wx.stc.STC_FOLDLEVELNUMBERMASK - wx.stc.STC_FOLDLEVELBASE
-        
+
         # get line without indention
         line = self.GetLine(linenum)
         dprint("linenum=%d fold=%d cursor=%d line=%s" % (linenum, fold, self.GetCurrentPos(), repr(line)))
@@ -662,13 +662,13 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         """
         # expand folding if any
         self.EnsureVisible(line)
-        
+
         # Make line appear at the top of the screen.  ScrollToLine doesn't seem
         # to work when applied right after a GotoLine, but moving to the end
         # of the document and then back does seem to put the line at the top
         # of the screen
         self.GotoLine(self.GetLineCount())
-        
+
         # If there is an offset from the top of the screen, some extra lines
         # are displayed between the top of the screen and the line with the
         # cursor.
@@ -683,7 +683,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         self.ScrollToColumn(0)
 
     # --- line indentation stuff
-    
+
     def FoldAll(self):
         """Fold or unfold all items.
         
@@ -779,7 +779,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
             text = ind*' '
         #dprint("requested: %d, text=%s" % (ind, repr(text)))
         return text
-    
+
     ##### Utility methods for modifying the contents of the STC
     def addLinePrefixAndSuffix(self, start, end, prefix='', suffix=''):
         """Add a prefix and/or suffix to the line specified by start and end.
@@ -845,7 +845,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         start = self.WordStartPosition(pos, True)
         word = self.GetTextRange(start, end)
         return (word, start, end)
-    
+
     def selectBraces(self, pos=None, braces=None):
         """Given a point, find the region contained by the innermost set of braces.
         
@@ -860,14 +860,14 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         """
         if pos is None:
             pos = self.GetCurrentPos()
-        
+
         if braces is None:
             braces = "([{"
         braces = braces.replace(')', '(').replace(']', '[').replace('}', '{')
         matching = {'(': ')', ')': '(',
                     '[': ']', ']': '[',
                     '{': '}', '}': '{'}
-        
+
         # use regex to search forward for all brace chars
         pattern = "[\(\[\{\)\]\}]"
         pairs = {u'(': 0, u'[': 0, u'{': 0}
@@ -910,10 +910,10 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
                 pairs[c] += 1
                 #dprint("-->: opening brace %s at %d: pairs=%s" % (c, i, str(pairs)))
             i += 1
-        
+
         #dprint("brace type = %s at %d" % (braceopen, i))
         last = i
-        
+
         # Can't use regular expressions searching backward (scintilla
         # limitation), so have to use the slow char-by-char method.
         i = pos
@@ -953,7 +953,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         """
         if pos is None:
             pos = self.GetCurrentPos()
-        
+
         mask = (2**self.GetStyleBits()) - 1
         style = self.GetStyleAt(pos) & mask
 
@@ -965,7 +965,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
                 break
             i += 1
         last = i
-        
+
         i = pos
         while i > 0:
             s = self.GetStyleAt(i - 1) & mask
@@ -974,14 +974,14 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
             i -= 1
         first = i
         return first, last
-    
+
     ##### Revert hooks
     def getViewPositionData(self):
         return {'top': self.GetFirstVisibleLine(),
                 'pos': self.GetCurrentPos(),
                 'line': self.GetCurrentLine(),
                 }
-    
+
     def setViewPositionData(self, data):
         if 'top' in data:
             line = min(data['top'], self.GetLineCount() - 1)
@@ -992,7 +992,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         if 'pos' in data:
             pos = min(data['pos'], self.GetLength() - 1)
             self.GotoPos(pos)
-            
+
             # Hack to fix #505.  For some reason, the internal scintilla cursor
             # column isn't correct after setting a cursor position manually.
             # Moving the cursor left and then back seems to fix it.
@@ -1007,7 +1007,7 @@ class PeppySTC(PeppyBaseSTC):
     This class contains all the GUI callbacks and mouse bindings on top of
     L{PeppyBaseSTC}
     """
-    
+
     def __init__(self, parent, refstc=None, copy=None, **kwargs):
         """Initialize the styled text control with peppy extensions.
         
@@ -1033,23 +1033,23 @@ class PeppySTC(PeppyBaseSTC):
         else:
             cmd_key_clear_all = True
         PeppyBaseSTC.__init__(self, parent, refstc=refstc, copy=copy, **kwargs)
-        
+
         # Only bind events on STCs used as user interface elements.  The
         # reference STC that is not shown doesn't have any way for the user to
         # generate events on it, so event bindings aren't needed.  Plus, this
         # can lead to multiple events and problems deleting the view (bug #770)
         if refstc is not None:
             self.addSTCEventBindings()
-        
+
         self.modified_callbacks = []
-        
+
         # Remove all default scintilla keybindings so they will be replaced by
         # peppy actions.
         if cmd_key_clear_all:
             self.CmdKeyClearAll()
 
         self.debug_dnd=False
-    
+
     def addSTCEventBindings(self):
         self.Bind(wx.stc.EVT_STC_DO_DROP, self.OnDoDrop)
         self.Bind(wx.stc.EVT_STC_DRAG_OVER, self.OnDragOver)
@@ -1070,13 +1070,13 @@ class PeppySTC(PeppyBaseSTC):
 
     def addUpdateUIEvent(self, callback):
         self.Bind(wx.stc.EVT_STC_UPDATEUI, callback)
-        
+
     def addDocumentChangeEvent(self, callback):
         self.Bind(wx.stc.EVT_STC_CHANGE, callback)
-        
+
     def removeDocumentChangeEvent(self):
         self.Unbind(wx.stc.EVT_STC_CHANGE)
-        
+
     def OnDestroy(self, evt):
         """
         Event handler for EVT_WINDOW_DESTROY. Preserve the clipboard
@@ -1105,7 +1105,7 @@ class PeppySTC(PeppyBaseSTC):
             num = -num
         self.LineScroll(0, num)
         #evt.Skip()
-    
+
     def OnMousePaste(self, evt):
         """Paste the primary selection (on unix) at the mouse cursor location
         
@@ -1144,7 +1144,6 @@ class PeppySTC(PeppyBaseSTC):
             evt.SetDragText("DRAGGED TEXT") # you can change what is dragged
             #evt.SetDragText("")             # or prevent the drag with empty text
 
-
     def OnDragOver(self, evt):
         log.debug(
             "OnDragOver: x,y=(%d, %d)  pos: %d  DragResult: %d\n"
@@ -1153,7 +1152,6 @@ class PeppySTC(PeppyBaseSTC):
 
         if self.debug_dnd and evt.GetPosition() < 250:
             evt.SetDragResult(wx.DragNone)   # prevent dropping at the beginning of the buffer
-
 
     def OnDoDrop(self, evt):
         log.debug("OnDoDrop: x,y=(%d, %d)  pos: %d  DragResult: %d\n"
@@ -1169,9 +1167,6 @@ class PeppySTC(PeppyBaseSTC):
 
             #evt.SetPosition(25)             # Can also change position, but I'm not sure why
                                              # you would want to...
-
-
-
 
     def OnModified(self, evt):
         # NOTE: on really big insertions, evt.GetText can cause a
@@ -1200,21 +1195,20 @@ class PeppySTC(PeppyBaseSTC):
         for cb in self.modified_callbacks:
             cb(evt)
         evt.Skip()
-    
+
     def addModifyCallback(self, func):
         self.modified_callbacks.append(func)
-    
+
     def removeModifyCallback(self, func):
         if func in self.modified_callbacks:
             self.modified_callbacks.remove(func)
-    
+
     def OnFoldChanged(self, evt):
         pass
 
     def OnUpdateUI(self, evt):
         log.debug("(%s) at %d: text=%s" % (self.transModType(evt.GetModificationType()),evt.GetPosition(), repr(evt.GetText())))
         evt.Skip()
-
 
     def transModType(self, modType):
         st = ""

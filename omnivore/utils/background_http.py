@@ -21,7 +21,7 @@ class BaseRequest(object):
         self.is_started = False
         self.is_finished = False
         self.is_skippable = True
-    
+
     def __str__(self):
         if self.data is None:
             if self.error is None:
@@ -30,15 +30,15 @@ class BaseRequest(object):
                 return "%s returned error: %s" % (self.url, self.error)
         else:
             return "%s returned %d bytes" % (self.url, len(self.data))
-    
+
     def has_error(self):
         return self.error is not None
-    
+
     def get_data_using_thread(self):
         self.is_started = True
         self.get_data_from_server()
         self.is_finished = True
-    
+
     def get_data_from_server(self):
         self.data = "testing..."
 
@@ -86,12 +86,11 @@ class HttpThread(threading.Thread):
             req = self.get_next()
             if req is None:
                 break
-            
+
             log.debug("%s: loading from %s" % (self.name, req))
             req.get_data_using_thread()
             log.debug("%s: result from %s" % (self.name, req))
             self.out_q.put(req)
-            
 
 
 class OnlyLatestHttpThread(HttpThread):
@@ -119,17 +118,17 @@ class BackgroundHttpDownloader(object):
         self.thread = OnlyLatestHttpThread(self.requests, self.results)
         self.thread.start()
         self.get_server_config()
-    
+
     def __del__(self):
         self.requests.put(None)
         self.thread.join()
-    
+
     def get_server_config(self):
         pass
-    
+
     def send_request(self, req):
         self.requests.put(req)
-    
+
     def get_finished(self):
         finished = []
         try:
@@ -151,19 +150,19 @@ class BackgroundHttpMultiDownloader(object):
             thread.start()
             self.threads.append(thread)
         self.get_server_config()
-    
+
     def __del__(self):
         for t in self.threads:
             self.requests.put(None)
         for t in self.threads:
             t.join()
-    
+
     def get_server_config(self):
         pass
-    
+
     def send_request(self, req):
         self.requests.put(req)
-    
+
     def get_finished(self):
         finished = []
         try:
@@ -176,7 +175,6 @@ class BackgroundHttpMultiDownloader(object):
 
 
 if __name__ == "__main__":
-    
 
     downloader = BackgroundHttpDownloader()
     downloader.send_request(URLRequest('http://www.python.org/'))
@@ -198,5 +196,5 @@ if __name__ == "__main__":
             downloader.send_request(URLRequest('http://playermissile.com'))
             first = False
         time.sleep(1)
-            
+
     downloader = None

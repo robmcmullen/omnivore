@@ -15,6 +15,7 @@ from panes import Pane1, Pane2, Pane3
 from image_editor import ImageEditor
 from preferences import ImageEditPreferences
 
+
 class ImageEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
     """
@@ -25,7 +26,7 @@ class ImageEditTask(FrameworkTask):
 
     id = 'omnivore.framework.image_edit_task'
     name = 'Image Editor'
-    
+
     preferences_helper = ImageEditPreferences
 
     ###########################################################################

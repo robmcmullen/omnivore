@@ -21,6 +21,7 @@ from omnivore.framework.plugin import FrameworkPlugin
 def _(text):
     return text
 
+
 def FormatErrorMessage(task, err):
     """Returns a string of the systems information
     @return: System information string
@@ -53,6 +54,7 @@ def FormatErrorMessage(task, err):
     info.append("")
     return os.linesep.join(info)
 
+
 def ExceptionHook(exctype, value, trace):
     """Handler for all unhandled exceptions
     @param exctype: Exception Type
@@ -82,6 +84,7 @@ def ExceptionHook(exctype, value, trace):
     if not ErrorDialog.REPORTER_ACTIVE and not ErrorDialog.ABORT:
         ErrorDialog(ftrace)
 
+
 def FormatTrace(etype, value, trace):
     """Formats the given traceback
     @return: Formatted string of traceback with attached timestamp
@@ -89,6 +92,7 @@ def FormatTrace(etype, value, trace):
     """
     exc = traceback.format_exception(etype, value, trace)
     return u"".join(exc)
+
 
 def TimeStamp():
     """Create a formatted time stamp of current time
@@ -100,12 +104,13 @@ def TimeStamp():
     now = time.asctime(now)
     return now
 
+
 def send_email_via_gmail(subject, message, sender, passwd, recipient):
     import smtplib
 
     # Import the email modules we'll need
     from email.mime.text import MIMEText
-    
+
     responses = []
     sent = False
     try:
@@ -136,9 +141,11 @@ def send_email_via_gmail(subject, message, sender, passwd, recipient):
     text = "\n".join([str(r) for r in responses])
     return sent, text
 
+
 def message_body_encode(body):
     import urllib
     return urllib.quote_plus(body).encode("utf-8")
+
 
 def send_email_via_webbrowser(subject, message, recipient):
     import webbrowser
@@ -148,7 +155,7 @@ def send_email_via_webbrowser(subject, message, recipient):
     try:
         msg = message_body_encode(message)
         url = 'mailto:%s?subject=%s&body=%s' % (recipient, subject, msg)
-        
+
         webbrowser.open(url)
         sent = True
     except Exception, e:
@@ -166,6 +173,7 @@ class ErrorReporter(object):
     """
     instance = None
     _first = True
+
     def __init__(self):
         """Initialize the reporter
         @note: The ErrorReporter is a singleton.
@@ -210,11 +218,14 @@ class ErrorReporter(object):
         """
         if len(self._sessionerr):
             return self._sessionerr[-1]
-        
+
 #-----------------------------------------------------------------------------#
+
 
 ID_SEND = wx.NewId()
 ID_IGNORE = wx.NewId()
+
+
 class ErrorDialog(wx.Dialog):
     """Dialog for showing errors and and notifying developers should the
     user choose so.
@@ -222,29 +233,29 @@ class ErrorDialog(wx.Dialog):
     """
     ABORT = False
     REPORTER_ACTIVE = False
-    
+
     application = None
-    
+
     user_requested_ignore = {}
-    
+
     @classmethod
     def ignore(cls, message):
         return message in cls.user_requested_ignore
-    
+
     def __init__(self, message):
         """Initialize the dialog
         @param message: Error message to display
 
         """
         self.task = self.application.active_window.active_task
-        
+
         ErrorDialog.REPORTER_ACTIVE = True
-        wx.Dialog.__init__(self, None, title=_("%s Error/Crash Reporter" % self.task.about_title), 
+        wx.Dialog.__init__(self, None, title=_("%s Error/Crash Reporter" % self.task.about_title),
                            style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
-        
+
         # Save message in case the user wants to ignore further occurrences
         self._message = message
-        
+
         # Add timestamp and give message to ErrorReporter
         message = u"*** %s ***%s" % (TimeStamp(), os.linesep) + message
         ErrorReporter().AddMessage(message)
@@ -323,8 +334,10 @@ class ErrorDialog(wx.Dialog):
 
 #-----------------------------------------------------------------------------#
 
+
 class ErrorPanel(wx.Panel):
     """Error Reporter panel"""
+
     def __init__(self, parent, msg):
         """Create the panel
         @param parent: wx.Window
@@ -334,14 +347,14 @@ class ErrorPanel(wx.Panel):
         wx.Panel.__init__(self, parent)
 
         self.err_msg = msg
-        
+
         self.__DoLayout()
 
     def __DoLayout(self):
         """Layout the control"""
-        icon = wx.StaticBitmap(self, 
+        icon = wx.StaticBitmap(self,
                                bitmap=wx.ArtProvider.GetBitmap(wx.ART_ERROR))
-        mainmsg = wx.StaticText(self, 
+        mainmsg = wx.StaticText(self,
                                 label=_("Error: Something unexpected happened.  You can attempt to continue,\nabort the program, or send an error report."))
         t_lbl = wx.StaticText(self, label=_("Error Traceback:"))
         tctrl = wx.TextCtrl(self, value=self.err_msg, size=(700, -1),
@@ -405,7 +418,7 @@ class ExceptionHandlerPlugin(FrameworkPlugin):
 
     # The plugin's name (suitable for displaying to the user).
     name = 'Exception Handler'
-    
+
     # Extension point IDs.
     TASK_EXTENSIONS   = 'envisage.ui.tasks.task_extensions'
 
@@ -426,10 +439,9 @@ class ExceptionHandlerPlugin(FrameworkPlugin):
     def start(self):
         self.save_hook = sys.excepthook
         sys.excepthook = ExceptionHook
-        
+
         # Probably a better way to get this info; maybe services?
         ErrorDialog.application = self.application
-
 
     def stop(self):
         sys.excepthook = self.save_hook

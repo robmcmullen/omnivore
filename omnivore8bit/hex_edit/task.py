@@ -27,26 +27,26 @@ class HexEditTask(FrameworkTask):
     """
 
     new_file_text = ["Blank Atari DOS 2 SD (90K) Image", "Blank Atari DOS 2 DD (180K) Image", "Blank Atari DOS 3 (130K) Image", "Blank Apple DOS 3.3 Image"]
-    
+
     hex_grid_lower_case = Bool(True)
-    
+
     assembly_lower_case = Bool(False)
 
     #### Task interface #######################################################
 
     id = pane_layout.task_id_with_pane_layout
     name = 'Hex Editor'
-    
+
     preferences_helper = HexEditPreferences
-    
+
     #### Menu events ##########################################################
-    
+
     machine_menu_changed = Event
 
     emulator_changed = Event
-    
+
     segments_changed = Event
-    
+
     # Must use different trait event in order for actions populated in the
     # dynamic menu (set by segments_changed event above) to have their radio
     # buttons updated properly
@@ -55,11 +55,11 @@ class HexEditTask(FrameworkTask):
     ###########################################################################
     # 'Task' interface.
     ###########################################################################
-    
+
     def _hex_grid_lower_case_default(self):
         prefs = self.get_preferences()
         return prefs.hex_grid_lower_case
-    
+
     def _assembly_lower_case_default(self):
         prefs = self.get_preferences()
         return prefs.assembly_lower_case
@@ -99,7 +99,7 @@ class HexEditTask(FrameworkTask):
     ###########################################################################
     # 'FrameworkTask' interface.
     ###########################################################################
-    
+
     def initialize_class_preferences(self):
         prefs = self.get_preferences()
         ByteTable.update_preferences(prefs)
@@ -138,18 +138,18 @@ class HexEditTask(FrameworkTask):
         for m in machine.predefined['font_mapping']:
             actions.append(FontMappingAction(font_mapping=m, **kwargs))
         return actions
-    
+
     def get_actions_Menu_File_ImportGroup(self):
         return [
             InsertFileAction(),
             ]
-    
+
     def get_actions_Menu_File_ExportGroup(self):
         return [
             SaveAsXEXAction(),
             SaveAsXEXBootAction(),
             ]
-    
+
     def get_actions_Menu_File_SaveGroup(self):
         return [
             SaveAction(),
@@ -165,7 +165,7 @@ class HexEditTask(FrameworkTask):
             RedoAction(),
             RevertToBaselineAction(),
             ]
-    
+
     def get_actions_Menu_Edit_CopyPasteGroup(self):
         return [
             CutAction(),
@@ -175,7 +175,7 @@ class HexEditTask(FrameworkTask):
             PasteAction(),
             PasteAndRepeatAction(),
             ]
-    
+
     def get_actions_Menu_Edit_SelectGroup(self):
         return [
             SelectAllAction(),
@@ -189,7 +189,7 @@ class HexEditTask(FrameworkTask):
                 MarkSelectionAsJumpmanHarvestAction(name="Jumpman Harvest Table"),
                 id="mark1", name="Mark Selection As"),
             ]
-    
+
     def get_actions_Menu_Edit_FindGroup(self):
         return [
             FindAction(),
@@ -197,19 +197,19 @@ class HexEditTask(FrameworkTask):
             FindNextAction(),
             FindToSelectionAction(),
             ]
-    
+
     def get_actions_Menu_View_ViewConfigGroup(self):
         return [
             ViewDiffHighlightAction(),
             TextFontAction(),
             ]
-    
+
     def get_predefined_machines_actions(self):
         actions = []
         for m in machine.predefined['machine']:
             actions.append(PredefinedMachineAction(machine=m))
         return actions
-    
+
     def get_actions_Menu_View_ViewPredefinedGroup(self):
         machines = self.get_predefined_machines_actions()
         return [
@@ -219,31 +219,31 @@ class HexEditTask(FrameworkTask):
                     id="a1", separator=True),
                 id='MachineChoiceSubmenu1', separator=False, name="Predefined Machines"),
             ]
-    
+
     def get_font_renderer_actions(self):
         actions = []
         for r in machine.predefined['font_renderer']:
             actions.append(FontRendererAction(font_renderer=r))
         return actions
-    
+
     def get_bitmap_renderer_actions(self):
         actions = []
         for r in machine.predefined['bitmap_renderer']:
             actions.append(BitmapRendererAction(bitmap_renderer=r))
         return actions
-    
+
     def get_processor_type_actions(self):
         actions = []
         for r in machine.predefined['disassembler']:
             actions.append(ProcessorTypeAction(disassembler=r))
         return actions
-    
+
     def get_memory_map_actions(self):
         actions = []
         for r in machine.predefined['memory_map']:
             actions.append(MemoryMapAction(memory_map=r))
         return actions
-    
+
     def get_actions_Menu_View_ViewChangeGroup(self):
         font_mapping_actions = self.get_font_mapping_actions()
         font_renderer_actions = self.get_font_renderer_actions()
@@ -315,7 +315,7 @@ class HexEditTask(FrameworkTask):
                     id="a1", separator=True),
                 id='mm7', separator=False, name="Bitmap Display"),
             ]
-    
+
     def get_actions_Menu_DiskImage_EmulatorGroup(self):
         return [
             RunEmulatorAction(id="a3"),
@@ -328,7 +328,7 @@ class HexEditTask(FrameworkTask):
                     id="a3", separator=True),
                 id='MachineEmulator1', name="Emulators"),
             ]
-    
+
     def get_actions_Menu_DiskImage_ParserGroup(self):
         groups = []
         for mime, pretty, parsers in iter_known_segment_parsers():
@@ -343,7 +343,7 @@ class HexEditTask(FrameworkTask):
                 *groups,
                 id='submenu1', separator=False, name="File Type"),
             ]
-    
+
     def get_actions_Menu_DiskImage_ActionGroup(self):
         return [
             GetSegmentFromSelectionAction(),
@@ -366,17 +366,17 @@ class HexEditTask(FrameworkTask):
             Separator(),
             SegmentGotoAction(),
             ]
-    
+
     def get_actions_Menu_Segments_ActionGroup(self):
         return [
             ExpandDocumentAction(),
             ]
-    
+
     def get_actions_Menu_Segments_ListGroup(self):
         return [
             SegmentChoiceGroup(id="a2", separator=True),
             ]
-    
+
     def get_actions_Menu_Bytes_HexModifyGroup(self):
         return [
             ZeroAction(),
@@ -420,7 +420,7 @@ class HexEditTask(FrameworkTask):
     @classmethod
     def can_edit(cls, document):
         return document.metadata.mime == "application/octet-stream" or document.segments
-    
+
     @classmethod
     def get_match_score(cls, document):
         """Return a number based on how good of a match this task is to the

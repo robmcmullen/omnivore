@@ -29,6 +29,7 @@ class MainFontMapScroller(FontMapScroller):
     """Subclass adapts the mouse interface to the MouseHandler class
     
     """
+
     def __init__(self, *args, **kwargs):
         FontMapScroller.__init__(self, *args, **kwargs)
 
@@ -44,7 +45,7 @@ class MainFontMapScroller(FontMapScroller):
     def set_mouse_mode(self, handler):
         self.release_mouse()
         self.mouse_mode = handler(self)
-    
+
     def set_cursor(self, mode=None):
         if (self.forced_cursor is not None):
             self.SetCursor(self.forced_cursor)
@@ -133,13 +134,13 @@ class MainFontMapScroller(FontMapScroller):
     def on_key_char(self, evt):
         mode = self.get_effective_tool_mode(evt)
         self.set_cursor(mode)
-        
+
         mode.process_key_char(evt)
-    
+
     def on_focus(self, evt):
         mode = self.get_effective_tool_mode(evt)
         mode.process_focus(evt)
-    
+
     def on_focus_lost(self, evt):
         mode = self.get_effective_tool_mode(evt)
         mode.process_focus_lost(evt)
@@ -149,7 +150,7 @@ class SelectMode(MouseHandler):
     icon = "select.png"
     menu_item_name = "Select"
     menu_item_tooltip = "Select regions"
-    
+
     def display_coords(self, evt, extra=None):
         c = self.canvas
         e = c.editor
@@ -160,7 +161,7 @@ class SelectMode(MouseHandler):
             if extra:
                 msg += " " + extra
             e.show_status_message(msg)
-    
+
     def process_left_down(self, evt):
         FontMapScroller.on_left_down(self.canvas, evt)  # can't use self.canvas directly because it has an overridded method on_left_down
         self.display_coords(evt)
@@ -174,13 +175,13 @@ class SelectMode(MouseHandler):
 
     def process_mouse_motion_up(self, evt):
         self.display_coords(evt)
-    
+
     def zoom_mouse_wheel(self, evt, amount):
         if amount < 0:
             self.canvas.zoom_out()
         elif amount > 0:
             self.canvas.zoom_in()
-    
+
     def get_popup_actions(self, evt):
         return self.canvas.get_popup_actions()
 
@@ -189,7 +190,7 @@ class PickTileMode(SelectMode):
     icon = "eyedropper.png"
     menu_item_name = "Pick Tile"
     menu_item_tooltip = "Pick a tile from the map and use as the current draw tile"
-    
+
     def init_post_hook(self):
         self.last_index = None
 
@@ -256,7 +257,7 @@ class DrawMode(SelectMode):
 
 class OverlayMode(SelectMode):
     command = None
-    
+
     def get_display_rect(self, index):
         c = self.canvas
         i1 = self.start_index
@@ -270,7 +271,7 @@ class OverlayMode(SelectMode):
         if w > 0 or h > 0:
             extra = "rectangle: width=%d (0x%x), height=%d (0x%x)" % (w, w, h, h)
         return extra
-    
+
     def draw(self, evt, start=False):
         c = self.canvas
         e = c.editor
@@ -304,17 +305,20 @@ class OverlayMode(SelectMode):
         e.end_batch()
         self.batch = None
 
+
 class LineMode(OverlayMode):
     icon = "shape_line.png"
     menu_item_name = "Line"
     menu_item_tooltip = "Draw line with current tile"
     command = LineCommand
 
+
 class SquareMode(OverlayMode):
     icon = "shape_hollow_square.png"
     menu_item_name = "Square"
     menu_item_tooltip = "Draw square with current tile"
     command = SquareCommand
+
 
 class FilledSquareMode(OverlayMode):
     icon = "shape_filled_square.png"
@@ -328,31 +332,31 @@ class MapEditor(HexEditor):
     IHexEditor interface for the API documentation.
     """
     ##### class attributes
-    
+
     valid_mouse_modes = [SelectMode, PickTileMode, DrawMode, LineMode, SquareMode, FilledSquareMode]
-    
+
     ##### traits
 
     imageable = True
-    
+
     antic_tile_map = Any
-    
+
     draw_pattern = Any(None)
-    
+
     # Class attributes (not traits)
-    
+
     rect_select = True
-    
+
     searchers = [HexSearcher, CharSearcher]
-    
+
     ##### Default traits
-    
+
     def _antic_tile_map_default(self):
         return []
-    
+
     def _map_width_default(self):
         return 32
-    
+
     def _draw_pattern_default(self):
         return [0]
 
@@ -368,11 +372,11 @@ class MapEditor(HexEditor):
         if 'tile map' in e:
             self.antic_tile_map = e['tile map']
         self.machine.set_font_mapping(predefined['font_mapping'][1])
-    
+
     @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self):
         self.control.recalc_view()
-    
+
     @on_trait_change('machine.font_change_event')
     def update_fonts(self):
         self.font_map.set_font()
@@ -380,29 +384,29 @@ class MapEditor(HexEditor):
         self.tile_map.recalc_view()
         self.character_set.set_font()
         self.character_set.Refresh()
-    
+
     def reconfigure_panes(self):
         self.control.recalc_view()
         self.memory_map.recalc_view()
         self.tile_map.recalc_view()
         self.character_set.recalc_view()
-    
+
     def refresh_panes(self):
         self.control.refresh_view()
         self.memory_map.refresh_view()
-    
+
     def rebuild_document_properties(self):
         self.find_segment("Playfield map")
         self.update_mouse_mode(SelectMode)
-    
+
     def view_segment_set_width(self, segment):
         self.map_width = segment.map_width
-    
+
     def update_mouse_mode(self, mouse_handler=None):
         if mouse_handler is not None:
             self.mouse_mode_factory = mouse_handler
         self.control.set_mouse_mode(self.mouse_mode_factory)
-    
+
     def set_current_draw_pattern(self, pattern, control):
         try:
             iter(pattern)
@@ -417,10 +421,10 @@ class MapEditor(HexEditor):
 
     def mark_index_range_changed(self, index_range):
         pass
-    
+
     def perform_idle(self):
         pass
-    
+
     def get_selected_status_message(self):
         anchor_start, anchor_end, (r1, c1), (r2, c2) = self.control.get_highlight_indexes()
         extra = ""
@@ -443,7 +447,7 @@ class MapEditor(HexEditor):
             format_id, r, c = extra
             cmd = cmd_cls(self.segment, self.anchor_start_index, r, c, self.control.bytes_per_row, bytes)
         self.process_command(cmd)
-    
+
     def create_clipboard_data_object(self):
         if self.anchor_start_index != self.anchor_end_index:
             anchor_start, anchor_end, (r1, c1), (r2, c2) = self.control.get_highlight_indexes()
@@ -455,29 +459,28 @@ class MapEditor(HexEditor):
             data_obj.SetData("%d,%d,%s" % (r2 - r1, c2 - c1, data.tostring()))
             return data_obj
         return None
-    
+
     def highlight_selected_ranges(self):
         s = self.segment
         s.clear_style_bits(selected=True)
         s.set_style_ranges_rect(self.selected_ranges, selected=True)
         self.document.change_count += 1
-    
+
     def invert_selection_ranges(self, ranges):
         rects = [(rect[2], rect[3]) for rect in [self.segment.get_rect_indexes(r[0], r[1]) for r in ranges]]
         inverted = invert_rects(rects, self.control.total_rows, self.control.bytes_per_row)
         ranges = self.segment.rects_to_ranges(inverted)
         return ranges
-    
+
     def get_extra_segment_savers(self, segment):
         return []
-    
+
     def get_numpy_image(self):
         return self.font_map.get_full_image()
 
     ###########################################################################
     # Trait handlers.
     ###########################################################################
-
 
     ###########################################################################
     # Private interface.
@@ -506,7 +509,7 @@ class MapEditor(HexEditor):
         return self.control
 
     #### wx event handlers ####################################################
-    
+
     def index_clicked(self, index, bit, from_control, refresh_from=True):
         self.cursor_index = index
         skip_control = None if refresh_from else from_control

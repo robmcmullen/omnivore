@@ -14,14 +14,15 @@ class STCInterface(object):
     STC<http://www.yellowbrain.com/stc/index.html>} for more info on
     the rest of the STC methods.
     """
+
     def GetReadOnly(self):
         """Is the instance read-only (non-editable) or editable?"""
         return False
-    
+
     def CanSave(self):
         """Can this STC instance save its contents?"""
         return True
-    
+
     def Clear(self):
         pass
 
@@ -63,10 +64,10 @@ class STCInterface(object):
 
     def GetText(self):
         return ''
-    
+
     def GetLength(self):
         return 0
-    
+
     GetTextLength = GetLength
 
     def GetModify(self):
@@ -163,7 +164,7 @@ class STCInterface(object):
         
         """
         pass
-    
+
     def openFileForWriting(self, url):
         """Return a file handle that has been opened for writing"""
         return None
@@ -175,11 +176,11 @@ class STCInterface(object):
         @param url: the url that was used to open the file-like object
         """
         pass
-    
+
     def closeFileAfterWriting(self, fh):
         """Close the opened file handle and perform any other cleanup"""
         pass
-    
+
     def getProperties(self):
         """Return a list of properties to be displayed as text to the user
         
@@ -237,7 +238,7 @@ class STCInterface(object):
         @param callback: event handler to execute on event
         """
         pass
-        
+
     def addDocumentChangeEvent(self, callback):
         """Add the equivalent to EVT_STC_CHANGE event for document changes.
 
@@ -251,7 +252,7 @@ class STCInterface(object):
         @param callback: event handler to execute on event
         """
         pass
-    
+
     def removeDocumentChangeEvent(self):
         """Remove the document change event.
         
@@ -267,6 +268,7 @@ class STCBinaryMixin(object):
     """Interface that major modes must implement to be editable with the HexEdit
     mode.
     """
+
     def GetBinaryData(self, start, end=-1):
         """Return the raw bytes between the given locations.
         
@@ -301,6 +303,7 @@ class STCProxy(object):
     object and reassigning methods as appropriate for the display is
     the way to go.
     """
+
     def __init__(self, stc):
         self.stc = stc
 
@@ -319,9 +322,10 @@ class NonResidentSTC(STCInterface):
     Base version of a non-memory resident storage space that
     implements the STC interface.
     """
+
     def __init__(self, parent=None, copy=None):
         self.filename = None
-    
+
     def Destroy(self):
         pass
 
@@ -335,7 +339,7 @@ class UndoableItem(object):
         L{UndoMixin.undoMixinSaveUndoableItem}
         """
         raise NotImplementedError
-    
+
     def redo(self, stc):
         """Override this in subclass to perform a redo operation
         
@@ -345,14 +349,16 @@ class UndoableItem(object):
         """
         raise NotImplementedError
 
+
 class UndoMixin(object):
     """Mixin class to support undo operations in an STC that doesn't natively
     support them.
     
     """
+
     def __init__(self):
         self.EmptyUndoBuffer()
-        
+
     def EmptyUndoBuffer(self):
         self._undo_list = []
         self._undo_save_point = 0
@@ -381,7 +387,7 @@ class UndoMixin(object):
 
     def GetModify(self):
         return self._undo_save_point != self._undo_index
-    
+
     def undoMixinSaveUndoableItem(self, obj):
         """Save an item in the undo history.
         
@@ -403,6 +409,6 @@ class UndoMixin(object):
         # of the undo list
         if len(self._undo_list) > self._undo_index:
             self._undo_list = self._undo_list[:self._undo_index]
-        
+
         self._undo_list.append(obj)
         self._undo_index += 1

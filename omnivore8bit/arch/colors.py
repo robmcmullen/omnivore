@@ -5,6 +5,7 @@ import math
 #
 # Color swatches http://atariage.com/forums/topic/243369-atari-128-color-palettes/
 
+
 def clamp(val):
     if val < 0.0:
         return 0
@@ -12,11 +13,14 @@ def clamp(val):
         return 255
     return int(val)
 
+
 def ntsc_phase(cr):
     return ((cr-1)*25 - 58) * (2 * math.pi / 360);
 
+
 def pal_phase(cr):
     return ((cr-1)*25.7 - 15) * (2 * math.pi / 360);
+
 
 def gtia_to_rgb(val, phasefunc):
     # http://atariage.com/forums/topic/107853-need-the-256-colors/page-2#entry1312467
@@ -39,11 +43,14 @@ def gtia_to_rgb(val, phasefunc):
 
     return clamp(r), clamp(g), clamp(b)
 
+
 def gtia_ntsc_to_rgb(val):
     return gtia_to_rgb(val, ntsc_phase)
 
+
 def gtia_pal_to_rgb(val):
     return gtia_to_rgb(val, pal_phase)
+
 
 ntsc_iq_lookup = [
     [  0.000,  0.000 ],
@@ -64,6 +71,7 @@ ntsc_iq_lookup = [
     [  0.124, -0.089 ],
     ]
 
+
 def gtia_ntsc_to_rgb_table(val):
     # This is a better representation of the NTSC colors using a lookup table
     # rather than the phase calculations. Also from the same thread:
@@ -81,13 +89,16 @@ def gtia_ntsc_to_rgb_table(val):
 
     return clamp(r), clamp(g), clamp(b)
 
+
 gtia_ntsc_to_rgb = gtia_ntsc_to_rgb_table
+
 
 def powerup_colors():
     # Playfield colors are from Mapping the Atari
     # Player/missile colors (the first 4 colors) are normally zero, but I'm
     # specifying others here so they are distinguishable when used.
     return list([4, 30, 68, 213, 40, 202, 148, 70, 0])
+
 
 def gr0_colors(colors):
     if len(colors) == 5:
@@ -102,7 +113,8 @@ def gr0_colors(colors):
     fg = cr | lm
     return fg, bg
 
-# Don't export the utility functions 
+
+# Don't export the utility functions
 __all__ = ['atari_color_to_rgb', 'powerup_colors', 'gr0_colors']
 
 

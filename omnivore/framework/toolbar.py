@@ -3,6 +3,7 @@ from pyface.action.api import Group
 from pyface.tasks.action.api import SToolBar, EditorAction
 from traits.api import on_trait_change, Any
 
+
 class MouseHandlerBaseAction(EditorAction):
     """Save a bit of boilerplate with a base class for toolbar mouse mode buttons
     
@@ -14,17 +15,17 @@ class MouseHandlerBaseAction(EditorAction):
     """
     # Traits
     handler = Any
-    
+
     style = 'radio'
 
     enabled_name = ''
 
     def _name_default(self):
         return self.handler.menu_item_name
-    
+
     def _tooltip_default(self):
         return self.handler.menu_item_tooltip
-    
+
     def _image_default(self):
         return ImageResource(self.handler.icon)
 
@@ -36,6 +37,7 @@ class MouseHandlerBaseAction(EditorAction):
     def _update_checked(self):
         if self.active_editor:
             self.checked = self.active_editor.mouse_mode_factory == self.handler
+
 
 def get_toolbar_group(toolbar_name, mouse_handlers):
     """Create the toolbar groups with buttons in the order specified in the

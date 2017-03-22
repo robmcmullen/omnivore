@@ -10,6 +10,7 @@ variables<http://www.gnu.org/software/emacs/manual/html_node/emacs/Specifying-Fi
 """
 import re
 
+
 def parseModeline(line):
     """Determine if line specifies a major mode.
     
@@ -70,9 +71,9 @@ def applyEmacsFileLocalSettings(stc):
     if modeline.startswith("#!") and stc.GetLineCount() > 1:
         modeline = stc.GetLine(1)
     mode, vars = parseModeline(modeline)
-    
+
     settings_changed = []
-    
+
     # check for integers.  int_mapping takes the emacs string to the name of
     # the stc getter/setter function.
     int_mapping = {'fill-column': 'EdgeColumn',
@@ -84,7 +85,7 @@ def applyEmacsFileLocalSettings(stc):
             func = getattr(stc, "Set%s" % setting)
             func(int(vars[name]))
             settings_changed.append(setting)
-    
+
     # check for booleans -- emacs uses 'nil' for false, everything else for true
     bool_mapping = {'use-tabs': 'UseTabs',
                     }
@@ -93,7 +94,7 @@ def applyEmacsFileLocalSettings(stc):
             func = getattr(stc, "Set%s" % setting)
             func(vars[name] != 'nil')
             settings_changed.append(setting)
-    
+
     # check for more complicated settings
     if 'cursor-type' in vars:
         text = vars['cursor-type']
@@ -102,5 +103,5 @@ def applyEmacsFileLocalSettings(stc):
             width = int(match.group(1))
             stc.SetCaretWidth(width)
             settings_changed.append('CaretWidth')
-    
+
     return settings_changed, vars

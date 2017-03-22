@@ -32,6 +32,7 @@ default_color_register_names = ["%d (%x) %s" % (i + 704, i + 704, n) for i, n in
     "Background",
     ])]
 
+
 class ColorListBox(wx.VListBox):
     def calc_sizes(self):
         self.max_w = 0
@@ -45,11 +46,11 @@ class ColorListBox(wx.VListBox):
             if w > self.max_w:
                 self.max_w = w
             n += 1
-    
+
     def get_label(self, n):
         names = self.GetParent().color_register_names
         return names[n]
-    
+
     # This method must be overridden.  When called it should draw the
     # n'th item on the dc within the rect.  How it is drawn, and what
     # is drawn is entirely up to you.
@@ -88,12 +89,12 @@ class AnticPalette(canvas.Canvas):
     def __init__(self, parent):
         """Creates a palette object."""
         # Load the pre-generated palette XPM
-        
+
         # Leaving this in causes warning messages in some cases.
         # It is the responsibility of the app to init the image
         # handlers, IAW RD
         #wx.InitAllImageHandlers()
-        
+
         self.palette = self.init_palette()
         canvas.Canvas.__init__(self, parent, -1, size=self.palette.GetSize(), style=wx.SIMPLE_BORDER)
 
@@ -130,7 +131,7 @@ class AnticPalette(canvas.Canvas):
     def highlight_color(self, c):
         high, low = divmod(c, 16)
         return self.highlight(high, low)
-    
+
     def highlight(self, high, low):
         colour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
         self.buffer.SetPen(wx.Pen(colour, self.HIGHLIGHT_WIDTH, wx.SOLID))
@@ -145,6 +146,7 @@ class AnticPalette(canvas.Canvas):
         self.Refresh()
         return high * 16 + low
 
+
 class AnticColorDialog(wx.Dialog):
     def __init__(self, parent, antic_color_registers, color_register_names=None):
         wx.Dialog.__init__(self, parent, -1, "Choose ANTIC Colors")
@@ -155,7 +157,7 @@ class AnticColorDialog(wx.Dialog):
             self.color_register_names = color_register_names
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        
+
         self.name = wx.StaticText(self, -1, "Editing Color")
         sizer.Add(self.name, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
 
@@ -165,7 +167,7 @@ class AnticColorDialog(wx.Dialog):
         self.palette = AnticPalette(self)
         box.Add(self.palette, 1, wx.ALL, 4)
         sizer.Add(box, 1, wx.GROW|wx.ALL, 5)
-        
+
         btn_sizer = self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL)
         sizer.Add(btn_sizer, 0, wx.GROW|wx.ALL, 12)
 
@@ -185,7 +187,7 @@ class AnticColorDialog(wx.Dialog):
         self.SetSizer(sizer)
         self.Layout()
         self.Fit()
-    
+
     def init_colors(self, antic_color_registers):
         self.color_registers.calc_sizes()
         c = list(antic_color_registers)
@@ -197,7 +199,7 @@ class AnticColorDialog(wx.Dialog):
         self.color_registers.SetItemCount(9)
         self.current_register = 4
         self.color_registers.SetSelection(self.current_register)
-    
+
     def get_color(self, register):
         return colors.gtia_ntsc_to_rgb(self.colors[register])
 
@@ -212,13 +214,13 @@ class AnticColorDialog(wx.Dialog):
     def on_close(self, event):
         self.EndModal(wx.ID_CANCEL)
         event.Skip()
-    
+
     def on_set_register(self, event):
         self.current_register = event.GetSelection()
         color = self.colors[self.current_register]
         self.palette.ReDraw()
         self.palette.highlight_color(color)
-    
+
     def on_set_color(self, event):
         id = event.GetId()
         b, c = self.toggles[id]
@@ -250,6 +252,7 @@ class AnticColorDialog(wx.Dialog):
         c = self.palette.highlight_xy(m_x, m_y)
         self.colors[self.current_register] = c
         self.color_registers.Refresh()
+
 
 if __name__ == "__main__":
     """

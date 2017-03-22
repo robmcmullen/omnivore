@@ -4,6 +4,7 @@ import wx
 import logging
 log = logging.getLogger(__name__)
 
+
 class TriggerList(wx.ListBox):
     """Trigger selector for choosing which trigger actions to edit
     """
@@ -11,22 +12,22 @@ class TriggerList(wx.ListBox):
     def __init__(self, parent, task, **kwargs):
         self.task = task
         self.triggers = None
-        
+
         wx.ListBox.__init__(self, parent, style=wx.LB_SINGLE, **kwargs)
         self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.Bind(wx.EVT_LISTBOX, self.on_click)
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.on_dclick)
         self.Bind(wx.EVT_MOTION, self.on_tooltip)
-    
+
     def set_task(self, task):
         self.task = task
-     
+
     def recalc_view(self):
         self.editor = e = self.task.active_editor
         if e is not None:
             selected = e.bitmap.trigger_root
             self.set_peanuts(selected)
-    
+
     def refresh_view(self):
         e = self.editor
         if e is not None:
@@ -35,7 +36,7 @@ class TriggerList(wx.ListBox):
                 self.recalc_view()
             else:
                 log.debug("skipping refresh of hidden %s" % self)
-   
+
     def parse_peanuts(self, peanuts, items, triggers, indent=""):
         for peanut in peanuts:
             items.append(indent + peanut.trigger_str)
@@ -89,10 +90,10 @@ class TriggerList(wx.ListBox):
             e = self.editor
             wx.CallAfter(e.set_trigger_view, self.triggers[selected])
         event.Skip()
-    
+
     def on_dclick(self, event):
         event.Skip()
-    
+
     def on_tooltip(self, evt):
         pos = evt.GetPosition()
         selected = self.HitTest(pos)

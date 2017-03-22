@@ -3,15 +3,16 @@ from traits.api import HasTraits, provides
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
 import imghdr
 
+
 @provides(IFileRecognizer)
 class ImageRecognizer(HasTraits):
     """Recognizer for common image formats
     
     """
     id = "image/common"
-    
+
     before = "text/plain"
-    
+
     mime_map = {
         'rgb': 'x-rgb',
         'pbm': 'x-portable-bitmap',
@@ -20,7 +21,7 @@ class ImageRecognizer(HasTraits):
         'rast': 'x-cmu-raster',
         'xbm': 'x-xbitmap,'
         }
-    
+
     def identify(self, guess):
         name = imghdr.what("", h=guess.get_utf8())
         if name is None:

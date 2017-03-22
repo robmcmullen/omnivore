@@ -31,12 +31,11 @@ class BitmapEditTask(HexEditTask):
 
     id = pane_layout.task_id_with_pane_layout
     name = 'Bitmap Editor'
-    
+
     preferences_helper = BitmapEditPreferences
-    
+
     #### Menu events ##########################################################
-    
-    
+
     ###########################################################################
     # 'Task' interface.
     ###########################################################################
@@ -72,7 +71,7 @@ class BitmapEditTask(HexEditTask):
     ###########################################################################
     # 'FrameworkTask' interface.
     ###########################################################################
-    
+
     def initialize_class_preferences(self):
         prefs = self.get_preferences()
 
@@ -87,7 +86,7 @@ class BitmapEditTask(HexEditTask):
         e = self.active_editor
         if e is not None:
             prefs = self.get_preferences()
-    
+
     def get_actions_Menu_View_ViewConfigGroup(self):
         return self.get_common_ViewConfigGroup()
 
@@ -95,7 +94,7 @@ class BitmapEditTask(HexEditTask):
     @classmethod
     def can_edit(cls, document):
         return document.metadata.mime == "application/octet-stream" or document.segments
-    
+
     @classmethod
     def get_match_score(cls, document):
         """Return a number based on how good of a match this task is to the

@@ -15,7 +15,7 @@ from omnivore.utils.wx.dialogs import DictEditDialog
 
 class EmulatorDialog(DictEditDialog):
     border = 5
-    
+
     def __init__(self, parent, title, default=None):
         fields = [
             ('file', 'exe', 'Executable: '),
@@ -31,7 +31,7 @@ class EmulatorDialog(DictEditDialog):
             self.user_changed = True
         elif not self.user_changed:
             self.set_automatic_name()
-    
+
     def set_automatic_name(self):
         name = os.path.basename(self.controls['exe'].GetValue())
         args = self.controls['args'].GetValue()
@@ -43,10 +43,11 @@ class EmulatorDialog(DictEditDialog):
         if not self.user_changed:
             self.set_automatic_name()
         self.ok_btn.Enable(self.can_submit())
-        
+
     def can_submit(self):
         path = self.controls['exe'].GetValue()
         return bool(which(path))
+
 
 def prompt_for_emulator(parent, title, default_emu=None):
     d = EmulatorDialog(parent, title, default_emu)
@@ -55,7 +56,7 @@ def prompt_for_emulator(parent, title, default_emu=None):
 
 class AssemblerDialog(DictEditDialog):
     border = 5
-    
+
     def __init__(self, parent, title, default=None):
         fields = [
             ('text', 'name', 'Name: '),
@@ -64,10 +65,11 @@ class AssemblerDialog(DictEditDialog):
             ('text', 'comment char', 'Comment Char: '),
             ]
         DictEditDialog.__init__(self, parent, title, "Enter assembler information:", fields, default)
-    
+
     def can_submit(self):
         control = self.controls['name']
         return len(control.GetValue()) > 0
+
 
 def prompt_for_assembler(parent, title, default=None):
     d = AssemblerDialog(parent, title, default)
@@ -87,20 +89,20 @@ class SegmentOrderDialog(wx.Dialog):
     border = 5
     instructions = "Drag segments to the right-hand list to create the output segment order"
     dest_list_title = "Segments in Executable"
-    
+
     def __init__(self, parent, title, segments, list_title=None, credits=False):
         wx.Dialog.__init__(self, parent, -1, title, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
-        
+
         self.segment_map = {k:v for k,v in enumerate(segments)}
-        
+
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
-        
+
         t = wx.StaticText(self, -1, self.instructions)
         sizer.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
-        
+
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        
+
         vbox1 = wx.BoxSizer(wx.VERTICAL)
         t = wx.StaticText(self, -1, "All Segments")
         vbox1.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
@@ -116,13 +118,13 @@ class SegmentOrderDialog(wx.Dialog):
         self.dest = ReorderableList(self, [], self.get_item_text, columns=["Origin", "Size", "Name"], resize_column=3, size=(400,300))
         vbox2.Add(self.dest, 1, wx.ALL|wx.EXPAND, self.border)
         hbox.Add(vbox2, 1, wx.ALL|wx.EXPAND, 0)
-        
+
         vbox = wx.BoxSizer(wx.VERTICAL)
-        
+
         self.add_command_area(vbox, credits)
-        
+
         vbox.AddStretchSpacer()
-        
+
         btnsizer = wx.StdDialogButtonSizer()
         self.ok_btn = wx.Button(self, wx.ID_OK)
         self.ok_btn.SetDefault()
@@ -133,20 +135,20 @@ class SegmentOrderDialog(wx.Dialog):
         vbox.Add(btnsizer, 0, wx.ALL|wx.EXPAND, self.border)
         hbox.Add(vbox, 0, wx.EXPAND, 0)
         sizer.Add(hbox, 1, wx.EXPAND, 0)
-        
+
         self.Bind(wx.EVT_BUTTON, self.on_button)
         self.Bind(wx.EVT_TEXT, self.on_text_changed)
-        
+
         # Don't call self.Fit() otherwise the dialog buttons are zero height
         sizer.Fit(self)
         self.check_enable()
-    
+
     def add_command_area(self, vbox, credits):
         t = wx.StaticText(self, -1, "Run Address")
         vbox.Add(t, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
         self.run_addr = wx.TextCtrl(self, -1, size=(-1, -1))
         vbox.Add(self.run_addr, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, self.border)
-        
+
         if credits:
             t = wx.StaticText(self, -1, "Title (20 chars)")
             vbox.Add(t, 0, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, self.border)
@@ -163,15 +165,15 @@ class SegmentOrderDialog(wx.Dialog):
             self.title_20 = self.author_20 = None
 
         vbox.AddSpacer(50)
-        
+
         self.clear = b = wx.Button(self, wx.ID_DOWN, 'Clear List', size=(90, -1))
         b.Bind(wx.EVT_BUTTON, self.on_clear)
         vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
-    
+
     def get_item_text(self, sid):
         s = self.segment_map[sid]
         return "%x" % s.start_addr, "%x" % len(s), s.name
-        
+
     def on_button(self, evt):
         if evt.GetId() == wx.ID_OK:
             self.EndModal(wx.ID_OK)
@@ -187,7 +189,7 @@ class SegmentOrderDialog(wx.Dialog):
 
     def on_resize(self, event):
         self.Fit()
-    
+
     def get_run_addr(self):
         text = self.run_addr.GetValue()
         try:
@@ -197,13 +199,13 @@ class SegmentOrderDialog(wx.Dialog):
         except (ValueError, TypeError), e:
             addr = None
         return addr
-    
+
     def can_submit(self):
         return self.get_run_addr() is not None and self.dest.GetItemCount() > 0
-    
+
     def check_enable(self):
         self.ok_btn.Enable(self.can_submit())
-    
+
     def get_segments(self):
         s = []
         for sid in self.dest.items:
@@ -250,13 +252,13 @@ class SegmentInterleaveDialog(SegmentOrderDialog):
         vbox.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
         self.intervleave = wx.TextCtrl(self, -1, size=(-1, -1))
         vbox.Add(self.intervleave, 0, wx.ALL|wx.EXPAND, self.border)
-        
+
         vbox.AddSpacer(50)
-        
+
         self.clear = b = wx.Button(self, wx.ID_DOWN, 'Clear List', size=(90, -1))
         b.Bind(wx.EVT_BUTTON, self.on_clear)
         vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
-    
+
     def get_length(self):
         segments = self.get_segments()
         if len(segments) == 0:
@@ -266,7 +268,7 @@ class SegmentInterleaveDialog(SegmentOrderDialog):
             if len(s) != common:
                 return -1
         return common
-    
+
     def get_interleave(self):
         text = self.intervleave.GetValue()
         length = self.get_length()
@@ -277,7 +279,7 @@ class SegmentInterleaveDialog(SegmentOrderDialog):
         except (ValueError, TypeError), e:
             num = 0
         return num
-    
+
     def can_submit(self):
         return self.get_length() > 0 and self.get_interleave() > 0
 

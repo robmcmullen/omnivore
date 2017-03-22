@@ -28,7 +28,7 @@ class HtmlViewTask(FrameworkTask):
 
     id = pane_layout.task_id_with_pane_layout
     name = 'HTML Viewer'
-    
+
     preferences_helper = HtmlViewPreferences
 
     ###########################################################################
@@ -50,12 +50,12 @@ class HtmlViewTask(FrameworkTask):
         """
         editor = HtmlViewer()
         return editor
-    
+
     ###
     @classmethod
     def can_edit(cls, document):
         return document.metadata.mime == "text/html"
-    
+
     @classmethod
     def get_match_score(cls, guess):
         """Return a number based on how good of a match this task is to the

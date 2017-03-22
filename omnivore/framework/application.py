@@ -19,6 +19,8 @@ log = logging.getLogger(__name__)
 # patching wx.GetApp() to add MacOpenFile (etc) doesn't seem to work, so we
 # have to have these routines at app creation time.
 import wx
+
+
 class EnthoughtWxApp(wx.App):
     def MacOpenFiles(self, filenames):
         """OSX specific routine to handle files that are dropped on the icon
@@ -36,9 +38,9 @@ class EnthoughtWxApp(wx.App):
                 self.tasks_application.load_file(filename, None)
         else:
             log.debug("MacOpenFile: skipping %s because it's a command line argument" % filename)
-    
+
     throw_out_next_wheel_rotation = False
-    
+
     def FilterEvent(self, evt):
         if hasattr(evt, "GetWheelRotation"):
             print "FILTEREVENT!!!", evt.GetWheelRotation(), evt
@@ -51,6 +53,7 @@ class EnthoughtWxApp(wx.App):
         if hasattr(evt, "GetKeyCode"):
             print "FILTEREVENT!!! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers()))
         return -1
+
 
 from traits.etsconfig.api import ETSConfig
 
@@ -76,6 +79,7 @@ def _task_window_wx_on_mousewheel(self, event):
         log.debug("calling mousewheel in task %s" % self.active_task)
         self.active_task._wx_on_mousewheel_from_window(event)
 
+
 class FrameworkApplication(TasksApplication):
     """ The sample framework Tasks application.
     """
@@ -100,39 +104,39 @@ class FrameworkApplication(TasksApplication):
     #### 'FrameworkApplication' interface ####################################
 
     preferences_helper = Instance(FrameworkPreferences)
-    
+
     startup_task = Str('omnivore.framework.text_edit_task')
-    
+
     successfully_loaded_event = Event
-    
+
     plugin_event = Event
-    
+
     preferences_changed_event = Event
-    
+
     plugin_data = {}
-    
+
     command_line_args = List
-    
+
     log_dir = Str
-    
+
     log_file_ext = Str
-    
+
     cache_dir = Str
-    
+
     next_document_id = Int(0)
 
     document_class = Any
-    
+
     documents = List
-    
+
     last_clipboard_check_time = Float(-1)
-    
+
     clipboard_check_interval = Float(.75)
-    
+
     perspectives = Dict
-    
+
     default_window_size = (800, 600)
-    
+
     last_window_size = Tuple(default_window_size)
 
     downloader = Any
@@ -142,10 +146,10 @@ class FrameworkApplication(TasksApplication):
     ###########################################################################
 
     #### Trait initializers ###################################################
-    
+
     def _about_title_default(self):
         return self.name
-    
+
     def _about_version_default(self):
         from omnivore import __version__
         return __version__
@@ -175,9 +179,8 @@ class FrameworkApplication(TasksApplication):
         #return self.preferences_helper.always_use_default_layout
         return True
 
-
     #### Trait event handlers
-    
+
     def _application_initialized_fired(self):
         log.debug("STARTING!!!")
         init_filesystems()
@@ -204,14 +207,14 @@ class FrameworkApplication(TasksApplication):
                 self.load_file(url)
         app = wx.GetApp()
         app.tasks_application = self
-        
+
         app.Bind(wx.EVT_IDLE, self.on_idle)
-    
+
     def _application_exiting_fired(self):
         log.debug("CLEANING UP!!!")
         if self.downloader:
             self.downloader = None
-    
+
     def on_idle(self, evt):
         evt.Skip()
         if not self.active_window:
@@ -224,7 +227,7 @@ class FrameworkApplication(TasksApplication):
             wx.CallAfter(self.check_clipboard_can_paste, editor)
             self.last_clipboard_check_time = time.time()
         editor.perform_idle()
-    
+
     def check_clipboard_can_paste(self, editor):
         data_formats = [o.GetFormat() for o in editor.supported_clipboard_data_objects]
         log.debug("Checking clipboard formats %s" % str(data_formats))
@@ -240,29 +243,29 @@ class FrameworkApplication(TasksApplication):
                 if wx.TheClipboard.IsOpened():
                     wx.TheClipboard.Close()
             editor.can_paste = supported
-        
+
     def _window_created_fired(self, event):
         """The toolkit window doesn't exist yet.
         """
         self.init_perspectives()
-    
+
     def _window_opened_fired(self, event):
         """The toolkit window does exist here.
         """
         log.debug("WINDOW OPENED!!! %s, size=%s" % (event.window.control, str(self.last_window_size)))
         event.window.size = tuple(self.last_window_size)
-        
+
         # Check to see that there's at least one task.  If a bad application
         # memento (~/.config/Omnivore/tasks/wx/application_memento), the window
         # may be blank in which case we need to add the default task.
         if not event.window.tasks:
             self.create_task_in_window(self.startup_task, event.window)
             log.debug("EMPTY WINDOW OPENED!!! Created task.")
-        
+
         task = event.window.active_task
         if task.active_editor is None and task.start_new_editor_in_new_window:
             task.new()
-        
+
         if sys.platform.startswith("win"):
             # monkey patch to include mousewheel handler on the TaskWindow
             import types
@@ -292,12 +295,12 @@ class FrameworkApplication(TasksApplication):
     def guess_document(self, guess):
         service = self.get_service("omnivore.file_type.i_file_recognizer.IFileRecognizerDriver")
         log.debug("SERVICE!!! %s" % service)
-        
+
         # Attempt to classify the guess using the file recognizer service
         document = service.recognize(guess)
         log.debug("created document %s (mime=%s)" % (document, document.metadata.mime))
         return document
-        
+
     def load_file(self, uri, active_task=None, task_id="", in_current_window=False, **kwargs):
         from omnivore.utils.file_guess import FileGuess
         # The FileGuess loads the first part of the file and tries to identify it.
@@ -313,22 +316,22 @@ class FrameworkApplication(TasksApplication):
             if active_task is not None:
                 active_task.window.error("Zero length file!\nUnable to determine file type.", "File Load Error")
             return
-        
+
         # Attempt to classify the guess using the file recognizer service
         document = self.guess_document(guess)
-        
+
         # Short circuit: if the file can be edited by the active task, use that!
         if active_task is not None and active_task.can_edit(document):
             log.debug("active task %s can edit %s" % (active_task, document))
             active_task.new(document, **kwargs)
             return
-        
+
         possibilities = self.get_possible_task_factories(document, task_id)
         if not possibilities:
             log.debug("no editor for %s" % uri)
             return
         best = self.find_best_task_factory(document, possibilities)
-        
+
         if active_task is not None:
             # Ask the active task if it's OK to load a different editor
             if not active_task.allow_different_task(guess, best.factory):
@@ -349,10 +352,10 @@ class FrameworkApplication(TasksApplication):
             log.debug("Found task %s in current window" % best.id)
             task.new(document, **kwargs)
             return
-        
+
         log.debug("Creating task %s in current window" % best.id)
         self.create_task_from_factory_id(document, best.id)
-    
+
     def get_possible_task_factories(self, document, task_id=""):
         possibilities = []
         for factory in self.task_factories:
@@ -366,7 +369,7 @@ class FrameworkApplication(TasksApplication):
                     possibilities.append(factory)
         log.debug("get_possible_task_factories: %s" % str([(p.name, p.id) for p in possibilities]))
         return possibilities
-    
+
     def find_best_task_factory(self, document, factories):
         scores = []
         for factory in factories:
@@ -379,20 +382,20 @@ class FrameworkApplication(TasksApplication):
         scores.sort()
         log.debug("find_best_task_factory: %s" % str([(s, p.name, p.id) for (s, p) in scores]))
         return scores[-1][1]
-    
+
     def get_task_factory(self, task_id):
         for factory in self.task_factories:
             if factory.id == task_id:
                 return factory
         return None
-    
+
     def find_best_task_id(self, task_id):
         if task_id:
             for factory in self.task_factories:
                 if factory.id == task_id or ".%s." % task_id in factory.id or ".%s" % task_id in factory.id:
                     return factory.id
         return ""  # empty string will result in scanning the file for the best match
-    
+
     def create_task_from_factory_id(self, guess, factory_id):
         window = self.create_window()
         log.debug("  window=%s" % str(window))
@@ -401,18 +404,18 @@ class FrameworkApplication(TasksApplication):
         window.open()
         task.new(guess)
         return task
-    
+
     def create_task_in_window(self, task_id, window):
         log.debug("creating %s task" % task_id)
         task = self.create_task(task_id)
         self.add_task_to_window(window, task)
         return task
-    
+
     def add_task_to_window(self, window, task):
         window.add_task(task)
         window.activate_task(task)
         self.restore_perspective(window, task)
-    
+
     def find_active_task_of_type(self, task_id):
         # Until remove_task bug is fixed, don't create any new windows, just
         # add a new task to the current window unless the task already exists
@@ -427,7 +430,7 @@ class FrameworkApplication(TasksApplication):
             w.pop(i)
         except ValueError:
             pass
-        
+
         for window in w:
             for t in window.tasks:
                 if t.id == task_id:
@@ -445,7 +448,7 @@ class FrameworkApplication(TasksApplication):
 #            w.pop(i)
 #        except ValueError:
 #            pass
-#        
+#
 #        for window in w:
 #            log.debug("window: %s" % window)
 #            log.debug("  active task: %s" % window.active_task)
@@ -526,14 +529,14 @@ class FrameworkApplication(TasksApplication):
         if not os.path.exists(dirname):
             os.makedirs(dirname)
         self.log_dir = dirname
-        
+
         self.log_file_ext = "-%s" % datetime.now().strftime("%Y%m%d-%H%M%S")
 
         dirname = user_cache_dir(self.name)
         if not os.path.exists(dirname):
             os.makedirs(dirname)
         self.cache_dir = dirname
-        
+
         # Prevent py2exe from creating a dialog box on exit saying that there
         # are error messages.  It thinks that anything written to stderr is an
         # error, and the python logging module redirects everything to stderr.
@@ -547,7 +550,7 @@ class FrameworkApplication(TasksApplication):
             if hasattr(oldlog, "saved_text"):
                 sys.stdout.write("".join(oldlog.saved_text))
             sys.stderr = sys.stdout
-            
+
             # The logging module won't redirect to the new stderr without help
             handler = logging.StreamHandler(sys.stderr)
             logger = logging.getLogger('')
@@ -559,9 +562,9 @@ class FrameworkApplication(TasksApplication):
             handler.setFormatter(formatter)
             logger = logging.getLogger('')
             logger.addHandler(handler)
-    
+
     #### Convenience methods
-    
+
     def add_document(self, document):
         """Add document to the application list of open documents
         
@@ -570,12 +573,12 @@ class FrameworkApplication(TasksApplication):
         existing = self.get_document(document.document_id)
         if existing:
             return existing
-        
+
         document.document_id = self.next_document_id
         self.next_document_id += 1
         self.documents.append(document)
         return document
-    
+
     def get_document(self, document_id):
         """Find an existing document given the document_id
         """
@@ -583,10 +586,10 @@ class FrameworkApplication(TasksApplication):
             if doc.document_id == document_id:
                 return doc
         return None
-    
+
     def get_plugin_data(self, plugin_id):
         return self.plugin_data[plugin_id]
-    
+
     def get_preferences(self, helper_object, debug=True):
         """Get preferences for a particular PreferenceHelper object.
         
@@ -623,7 +626,7 @@ class FrameworkApplication(TasksApplication):
                 self.preferences.dump()
             helper = helper_object(preferences=self.preferences)
         return helper
-    
+
     def get_log_file_name(self, log_file_name_base, ext=""):
         filename = log_file_name_base + self.log_file_ext
         if ext:
@@ -634,23 +637,23 @@ class FrameworkApplication(TasksApplication):
             filename += ".log"
         filename = os.path.join(self.log_dir, filename)
         return filename
-    
+
     def save_log(self, text, log_file_name_base, ext=""):
         filename = self.get_log_file_name(log_file_name_base, ext)
-        
+
         try:
             with open(filename, "wb") as fh:
                 fh.write(text)
         except IOError:
             log.error("Failed writing %s to %s" % (log_file_name_base, filename))
-    
+
     def get_config_dir_filename(self, subdir, json_name):
         config_dir = ETSConfig.application_home
         dirname = os.path.join(config_dir, subdir)
         if not os.path.exists(dirname):
             os.makedirs(dirname)
         return os.path.join(dirname, json_name)
-    
+
     def get_json_data(self, json_name, default_on_error=None):
         try:
             file_path = self.get_config_dir_filename("json", json_name)
@@ -675,17 +678,17 @@ class FrameworkApplication(TasksApplication):
             # bad JSON format
             log.error("Bad JSON format in preferences file: %s" % json_name)
             return default_on_error
-    
+
     def save_json_data(self, json_name, data):
         file_path = self.get_config_dir_filename("json", json_name)
         json_data = ["format=v2", data]
         encoded = jsonpickle.encode(json_data)
         with open(file_path, "w") as fh:
             fh.write(encoded)
-    
+
     def get_bson_data(self, bson_name):
         import bson
-        
+
         file_path = self.get_config_dir_filename("bson", bson_name)
         with open(file_path, "r") as fh:
             raw = fh.read()
@@ -695,20 +698,20 @@ class FrameworkApplication(TasksApplication):
         else:
             raise IOError("Blank BSON data")
         return data
-    
+
     def save_bson_data(self, bson_name, data):
         import bson
-        
+
         file_path = self.get_config_dir_filename("bson", bson_name)
         bson_data = {bson_name: data}
         raw = bson.dumps(bson_data)
         with open(file_path, "w") as fh:
             fh.write(raw)
-    
+
     # class attributes
-    
+
     perspectives_loaded = False
-    
+
     def init_perspectives(self):
         if self.perspectives_loaded:
             return
@@ -720,7 +723,7 @@ class FrameworkApplication(TasksApplication):
         self.perspectives = data.get("perspectives", {})
         self.last_window_size = tuple(data.get("window_size", self.default_window_size))
         log.debug("init_perspectives: size=%s" % str(self.last_window_size))
-    
+
     def remember_perspectives(self, window):
         layout = window.get_layout()
         if layout is not None:
@@ -759,12 +762,15 @@ def setup_frozen_logging():
         class Blackhole(object):
             softspace = 0
             saved_text = []
+
             def write(self, text):
                 self.saved_text.append(text)
+
             def flush(self):
                 pass
         sys.stdout = Blackhole()
         sys.stderr = sys.stdout
+
 
 def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", application_name="", debug_log=False, document_class=None):
     """Start the application
@@ -778,28 +784,28 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", 
     # Enthought library imports.
     from envisage.api import PluginManager
     from envisage.core_plugin import CorePlugin
-    
+
     # Local imports.
     from omnivore.framework.plugin import OmnivoreTasksPlugin, OmnivoreMainPlugin
     from omnivore.file_type.plugin import FileTypePlugin
     from omnivore import get_image_path
     from omnivore.utils.jobs import get_global_job_manager
-    
+
     # Include standard plugins
     core_plugins = [ CorePlugin(), OmnivoreTasksPlugin(), OmnivoreMainPlugin(), FileTypePlugin() ]
     if sys.platform == "darwin":
         from omnivore.framework.osx_plugin import OSXMenuBarPlugin
         core_plugins.append(OSXMenuBarPlugin())
-    
+
     import omnivore.file_type.recognizers
     core_plugins.extend(omnivore.file_type.recognizers.plugins)
-    
+
     import omnivore.plugins
     core_plugins.extend(omnivore.plugins.plugins)
-    
+
     # Add the user's plugins
     core_plugins.extend(plugins)
-    
+
     # Check basic command line args
     default_parser = argparse.ArgumentParser(description="Default Parser")
     default_parser.add_argument("--no-eggs", dest="use_eggs", action="store_false", default=True, help="Do not load plugins from python eggs")
@@ -815,7 +821,7 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", 
         from pkg_resources import Environment, working_set
         from envisage.api import EggPluginManager
         from envisage.composite_plugin_manager import CompositePluginManager
-        
+
         # Find all additional eggs and add them to the working set
         environment = Environment(egg_path)
         distributions, errors = working_set.find_plugins(environment)
@@ -831,7 +837,7 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", 
                 'omnivore.tasks',
             ]
         )
-        
+
         plugin_manager = CompositePluginManager(
             plugin_managers=[default, egg]
         )
@@ -854,7 +860,7 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", 
     if document_class:
         kwargs['document_class'] = document_class
     app = FrameworkApplication(plugin_manager=plugin_manager, command_line_args=extra_args, **kwargs)
-    
+
     # Create a debugging log
     if debug_log:
         filename = app.get_log_file_name("debug")
@@ -862,13 +868,13 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", 
         logger = logging.getLogger('')
         logger.addHandler(handler)
         logger.setLevel(logging.DEBUG)
-    
+
     # Turn off omnivore log debug messages by default
     log = logging.getLogger("omnivore")
     log.setLevel(logging.INFO)
 
     app.run()
-    
+
     job_manager = get_global_job_manager()
     if job_manager is not None:
         job_manager.shutdown()

@@ -15,6 +15,7 @@ from omnivore.framework.task import FrameworkTask
 from styled_text_editor import StyledTextEditor
 from preferences import TextEditPreferences
 
+
 class TextEditTask(FrameworkTask):
     """ A simple task for opening a blank editor.
     """
@@ -25,7 +26,7 @@ class TextEditTask(FrameworkTask):
 
     id = 'omnivore.framework.text_edit_task'
     name = 'Text Editor'
-    
+
     preferences_helper = TextEditPreferences
 
     ###########################################################################
@@ -42,7 +43,7 @@ class TextEditTask(FrameworkTask):
     @classmethod
     def can_edit(cls, document):
         return document.metadata.mime.startswith("text/")
-    
+
     @classmethod
     def get_match_score(cls, document):
         """Return a number based on how good of a match this task is to the

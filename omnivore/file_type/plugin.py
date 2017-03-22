@@ -10,6 +10,7 @@ from i_file_recognizer import IFileRecognizer, IFileRecognizerDriver
 import logging
 log = logging.getLogger(__name__)
 
+
 class FileTypePlugin(Plugin):
     """ Plugin for identifying file types
     """

@@ -12,27 +12,28 @@ log = logging.getLogger(__name__)
 class TileCategory(object):
     def __init__(self, name):
         self.name = name
-    
+
     def get_height(self, parent):
         w, h = parent.GetTextExtent(self.name)
         return h + 5
-    
+
     def draw(self, font, dc, rect):
         dc.DrawLabel(self.name, rect, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+
 
 class Tile(object):
     def __init__(self, tile_num, keystroke):
         self.tile_num = tile_num
         self.keystroke = keystroke
-    
+
     def get_bytes(self):
         return [self.tile_num]
-    
+
     def get_height(self, parent):
         if parent.editor:  # Might get called before an editor is set
             return parent.editor.machine.antic_font.get_height(parent.zoom)
         return 10
-    
+
     def draw(self, parent, dc, rect):
         if parent.editor:  # Might get called before an editor is set
             bmp = parent.editor.machine.antic_font.get_image(self.tile_num, parent.zoom)
@@ -71,7 +72,7 @@ class TileListControl(wx.Panel):
         self.task = task
         self.editor = None
         self.command_cls = command
-        
+
         self.tile_list = TileListBox(self, -1, style=wx.VSCROLL)
         self.tile_list.Bind(wx.EVT_LEFT_DOWN, self.on_tile_clicked)
         self.tile_list.Bind(wx.EVT_LISTBOX, self.on_tile)
@@ -83,7 +84,7 @@ class TileListControl(wx.Panel):
         sizer.Add(self.tile_list, 1, wx.EXPAND, 0)
         self.SetSizer(sizer)
         self.Fit()
-        
+
         self.parse_tile_map([("test", np.arange(0,10, dtype=np.uint8))])
         self.current_tile = -1
         self.setup_tiles()
@@ -95,7 +96,7 @@ class TileListControl(wx.Panel):
             self.editor = editor
             self.parse_tile_map(editor.antic_tile_map)
             self.setup_tiles()
-    
+
     def parse_tile_map(self, tile_map):
         self.tile_map = tile_map
         self.categories = []
@@ -107,19 +108,19 @@ class TileListControl(wx.Panel):
             for i in np.arange(np.alen(tiles)):
                 item = Tile(tiles[i:i+1], "")
                 self.items.append(item)
-    
+
     def setup_tiles(self):
         cats = [c[0].name for c in self.categories]
         self.cat.Set(cats)
         self.cat.SetSelection(0)
         self.tile_list.SetItemCount(len(self.items))
         self.tile_list.SetSelection(self.current_tile)
-    
+
     def on_category(self, event):
         cat = event.GetSelection()
         item, index = self.categories[cat]
         self.tile_list.ScrollToRow(index)
-    
+
     def on_tile_clicked(self, event):
         p = event.GetPosition()
         index = self.tile_list.HitTest(p)
@@ -128,15 +129,15 @@ class TileListControl(wx.Panel):
             self.current_tile = index
             e.set_current_draw_pattern(self.items[index].get_bytes(), self)
             self.tile_list.SetSelection(index)
-    
+
     def clear_tile_selection(self):
         self.current_tile = -1
         self.tile_list.SetSelection(-1)
-    
+
     def on_tile(self, event):
         index = event.GetInt()
         self.change_tile(self.items[index])
-        
+
     def change_tile(self, tile):
         e = self.editor
         if e is None:
@@ -157,7 +158,7 @@ class TileButton(buttons.GenBitmapToggleButton):
     labelDelta = 0
     label_border = 4
     faceDnClr = wx.Colour(100, 200, 230)
-    
+
     def DoGetBestSize(self):
         """
         Overridden base class virtual.  Determines the best size of the
@@ -167,16 +168,17 @@ class TileButton(buttons.GenBitmapToggleButton):
         width = w + self.label_border + 2 * self.bezelWidth + 4 * int(self.useFocusInd)
         height = h + self.label_border + 2 * self.bezelWidth + 4 * int(self.useFocusInd)
         return (width, height)
-    
+
     def InitColours(self):
         pass
 
     def DrawBezel(self, dc, x1, y1, x2, y2):
         pass
-    
+
     @classmethod
     def set_colors(cls, editor):
         cls.faceDnClr = wx.Colour(*editor.machine.highlight_color)
+
 
 class TileWrapControl(wx.Panel):
     """
@@ -188,7 +190,7 @@ class TileWrapControl(wx.Panel):
         self.task = task
         self.editor = None
         self.command_cls = command
-        
+
         self.cat = wx.Choice(self, -1)
         self.cat.Bind(wx.EVT_CHOICE, self.on_category)
         self.panel = scrolled.ScrolledPanel(self, -1, style=wx.VSCROLL)
@@ -203,12 +205,12 @@ class TileWrapControl(wx.Panel):
         sizer.Add(self.panel, 1, wx.EXPAND, 0)
         self.SetSizer(sizer)
         self.Fit()
-        
+
         self.parse_tile_map(self.panel, [("test", np.arange(0,10, dtype=np.uint8))])
         self.current_tile = None
         self.setup_tiles()
         self.zoom = 2
-    
+
     def panel_size(self, evt):
         size = self.panel.GetSize()
         vsize = self.panel.GetVirtualSize()
@@ -221,7 +223,7 @@ class TileWrapControl(wx.Panel):
             self.parse_tile_map(self.panel, editor.antic_tile_map)
             self.setup_tiles()
             TileButton.set_colors(editor)
-    
+
     def parse_tile_map(self, panel, tile_map):
         sizer = panel.GetSizer()
         sizer.DeleteWindows()
@@ -246,12 +248,12 @@ class TileWrapControl(wx.Panel):
                         self.items.append(btn)
             sizer.Add(w, 0, wx.EXPAND, 0)
         self.Layout()
-    
+
     def setup_tiles(self):
         cats = [str(c.GetLabelText()) for c in self.categories]
         self.cat.Set(cats)
         self.cat.SetSelection(0)
-    
+
     def on_category(self, event):
         cat = event.GetSelection()
         label = self.categories[cat]
@@ -260,7 +262,7 @@ class TileWrapControl(wx.Panel):
         vs_x, vs_y = self.panel.GetViewStart()
         cr = label.GetRect()
         self.panel.Scroll(0, vs_y + (cr.y / sppu_y))
-    
+
     def on_tile_clicked(self, event):
         btn = event.GetEventObject()
         e = self.editor
@@ -268,20 +270,20 @@ class TileWrapControl(wx.Panel):
             self.current_tile = btn
             e.set_current_draw_pattern(btn.tile_data, self)
             self.clear_toggle_except(btn)
-    
+
     def clear_tile_selection(self):
         self.current_tile = None
         self.clear_toggle_except()
-    
+
     def clear_toggle_except(self, btn=None):
         for b in self.items:
             if b != btn:
                 b.SetToggle(False)
-    
+
     def on_tile(self, event):
         index = event.GetInt()
         self.change_tile(self.items[index])
-        
+
     def change_tile(self, tile):
         e = self.editor
         if e is None:
@@ -298,24 +300,21 @@ class TileWrapControl(wx.Panel):
         e.process_command(cmd)
 
 
-
-
 if __name__ == '__main__':
     import sys
     sys.path[0:0] = [".."]
     print sys.path
     import fonts
     import colors
-    
+
     class Wrapper(object):
         def __init__(self, **kwargs):
             for k, v in kwargs.iteritems():
                 setattr(self, k, v)
-        
+
         def set_current_draw_pattern(self, *args, **kwargs):
             pass
-        
-    
+
     class MyFrame(wx.Frame):
         def __init__(self, parent, id, title):
             wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.DefaultSize)
@@ -327,10 +326,10 @@ if __name__ == '__main__':
             ("water", range(0x2e, 0x41),),
             ("bridges", range(0x69, 0x6d),),
             ("vehicles", range(0x51, 0x59),),
-            ("airport", range(0x60, 0x68), [0x5f], range(0x59, 0x5d), range(0xd9, 0xdd)), 
+            ("airport", range(0x60, 0x68), [0x5f], range(0x59, 0x5d), range(0xd9, 0xdd)),
             ("golf", range(0xa9, 0xae),),
             ("other", [0x20, 0x25, 0x26, ]),
-            ("special", range(0x21, 0x25), range(0x74, 0x76),), 
+            ("special", range(0x21, 0x25), range(0x74, 0x76),),
                 ]
             color_converter = colors.gtia_ntsc_to_rgb
             highlight_color = (100, 200, 230)

@@ -22,15 +22,16 @@ from omnivore.framework.status_bar_manager import FrameworkStatusBarManager
 import logging
 log = logging.getLogger(__name__)
 
+
 @provides(IAbout)
 class FrameworkTask(Task):
     """ A simple task for opening a blank editor.
     """
-    
-    # Class properties (not traits!) because they must be available in a TaskFactory 
-    
+
+    # Class properties (not traits!) because they must be available in a TaskFactory
+
     new_file_text = ''
-    
+
     about_application = "about://omnivore"  # URL to load if no document specified on the command line
 
     #### Task interface #######################################################
@@ -44,53 +45,53 @@ class FrameworkTask(Task):
                              depends_on='editor_area.active_editor')
 
     editor_area = Instance(IEditorAreaPane)
-    
+
     #### FrameworkTask interface ##############################################
-    
+
     preferences_helper = Instance(PreferencesHelper)
-    
+
     status_bar_debug_width = Int(150)
-    
+
     start_new_editor_in_new_window = Bool(False)
-    
+
     print_data = Any
-    
+
     document_changed = Event
-    
+
     keyboard_shortcuts = Any
 
     # class attribute
 
     activated_task_ids = set()
-    
+
     #### 'IAbout' interface ###################################################
-    
+
     about_title = Unicode('Omnivore XL')
-    
+
     about_version = Unicode
-    
+
     about_description = Unicode('Byte into the meat of 8-bit Software!\n\nSend feedback to: feedback@playermissile.com')
-    
+
     about_website = Str('http://playermissile.com/omnivore')
-    
+
     about_image = Instance(ImageResource, ImageResource('omnivore256'))
-    
+
     #### 'IErrorReporter' interface ###########################################
-    
+
     error_email_from = Str
-    
+
     error_email_passwd = Str
-    
+
     error_email_to = Str
-    
+
     def _about_version_default(self):
         from omnivore import __version__
         return __version__
-    
+
     ###########################################################################
     # 'Task' interface.
     ###########################################################################
-    
+
     def _icon_default(self):
         return ImageResource('omnivore')
 
@@ -102,7 +103,7 @@ class FrameworkTask(Task):
         self.add_menu(menus, "Menu", "Documents", "DocumentGroup")
         self.add_menu(menus, "Menu", "Window", "NewTaskGroup", "WindowGroup")
         self.add_menu(menus, "Menu", "Help", "AboutGroup", "DocGroup", "BugReportGroup", "DebugGroup")
-        
+
         return SMenuBar(*menus)
 
     def _tool_bars_default(self):
@@ -120,10 +121,10 @@ class FrameworkTask(Task):
             left=VSplitter(
                 PaneItem('omnivore.framework.file_browser_pane'),
                 ))
-    
+
     def _keyboard_shortcuts_default(self):
         actions = []
-        
+
         # Give each keyboard action a wx ID so that it can be identified in the
         # menu callback
         for action in self.get_keyboard_actions():
@@ -141,7 +142,7 @@ class FrameworkTask(Task):
         c.Bind(aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN, self.on_tab_context_menu)
         c.Bind(aui.EVT_AUINOTEBOOK_BG_RIGHT_DOWN, self.on_tab_background_context_menu)
         c.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.on_tab_pane_close)
-    
+
     def initialize_class_preferences(self):
         pass
 
@@ -189,7 +190,7 @@ class FrameworkTask(Task):
     def iter_panes(self):
         for pane in self.window.dock_panes:
             yield pane
-    
+
     def prepare_destroy(self):
         self.window.application.remember_perspectives(self.window)
         self.destroy_minibuffer()
@@ -220,7 +221,7 @@ class FrameworkTask(Task):
         else:
             editor.view_document(source.document, source)
         self.activated()
-    
+
     def find_tab_or_open(self, document):
         for editor in self.editor_area.editors:
             if editor.document == document:
@@ -263,7 +264,7 @@ class FrameworkTask(Task):
         log.debug("  returned factory: %s" % self.window.application._get_task_factory(task_id))
         for factory in self.window.application.task_factories:
             log.debug("    factory: %s, %s" % (factory.id, factory))
-        
+
         task = self.window.application.create_task(task_id)
         log.debug("  created task: %s" % task)
         window.add_task(task)
@@ -336,7 +337,7 @@ class FrameworkTask(Task):
     ###########################################################################
     # 'FrameworkTask' convenience functions.
     ###########################################################################
-    
+
     def get_preferences(self):
         return self.window.application.get_preferences(self.preferences_helper)
 
@@ -357,7 +358,7 @@ class FrameworkTask(Task):
         group_suffix = ""
         group_index = 0
         current = []
-        
+
         for item in actions:
             if isinstance(item, Group) or isinstance(item, SMenu):
                 if current:
@@ -381,7 +382,7 @@ class FrameworkTask(Task):
     def get_group(self, location, menu_name, group_name):
         actions = self.get_actions_wrapper(location, menu_name, group_name)
         return Group(*actions, id=group_name)
-    
+
     def get_groups(self, location, menu_name, *group_names):
         actions = []
         for group_name in group_names:
@@ -406,17 +407,17 @@ class FrameworkTask(Task):
             log.info("%s actions not found for %s/%s in %s" % (location, menu_name, group_name, self.id))
             actions = []
         return actions
-    
+
     def get_actions_Menu_File_NewGroup(self):
         return [
             SMenu(NewFileGroup(), id="NewFileGroup", name="New"),
             ]
-    
+
     def get_actions_Menu_File_OpenGroup(self):
         return [
             OpenAction(),
             ]
-    
+
     def get_actions_Menu_File_SaveGroup(self):
         return [
             SaveAction(),
@@ -424,24 +425,24 @@ class FrameworkTask(Task):
             Separator(),
             SaveAsImageAction(),
             ]
-    
+
     def get_actions_Menu_File_RevertGroup(self):
         return [
             RevertAction(),
             ]
-    
+
     def get_actions_Menu_File_PrintGroup(self):
         return [
             PageSetupAction(),
             PrintPreviewAction(),
             PrintAction(),
             ]
-    
+
     def get_actions_Menu_File_ExportGroup(self):
         return [
             SaveAsPDFAction(),
             ]
-    
+
     def get_actions_Menu_File_ExitGroup(self):
         return [
             ExitAction(),
@@ -452,59 +453,59 @@ class FrameworkTask(Task):
             UndoAction(),
             RedoAction(),
             ]
-    
+
     def get_actions_Menu_Edit_CopyPasteGroup(self):
         return [
             CutAction(),
             CopyAction(),
             PasteAction(),
             ]
-    
+
     def get_actions_Menu_Edit_SelectGroup(self):
         return [
             SelectAllAction(),
             SelectNoneAction(),
             SelectInvertAction(),
             ]
-    
+
     def get_actions_Menu_Edit_PrefGroup(self):
         return [
             Group(PreferencesAction(), absolute_position="last"),
             ]
-    
+
     def get_actions_Menu_View_TaskGroup(self):
         return [
             DockPaneToggleGroup(),
             TaskToggleGroup(),
             ]
-    
+
     def get_actions_Menu_Documents_DocumentGroup(self):
         return [
             DocumentSelectGroup(),
             ]
-    
+
     def get_actions_Menu_Window_NewTaskGroup(self):
         return [
             SMenu(
                 NewViewInGroup(id="a1", separator=True),
                 id='WindowTabGroupSubmenu2', name="New View In..."),
             ]
-    
+
     def get_actions_Menu_Window_WindowGroup(self):
         return [
             NewWindowAction(),
             ]
-    
+
     def get_actions_Menu_Help_AboutGroup(self):
         return [
             AboutAction()
             ]
-    
+
     def get_actions_Menu_Help_BugReportGroup(self):
         return [
             OpenLogDirectoryAction(),
             ]
-    
+
     def get_actions_Menu_Help_DebugGroup(self):
         return [
             SMenu(TaskAction(name='Dynamic Menu Names', method='debug',
@@ -513,44 +514,44 @@ class FrameworkTask(Task):
                   WidgetInspectorAction(),
                   id="Debug", name="Debug"),
             ]
-    
+
     def get_actions_Tool_File_NewGroup(self):
         return [
             TaskAction(method='new',
                        tooltip='New file',
                        image=ImageResource('file_new')),
             ]
-    
+
     def get_actions_Tool_File_OpenGroup(self):
         return [
             OpenAction(),
             ]
-    
+
     def get_actions_Tool_File_SaveGroup(self):
         return [
             SaveAction(),
             SaveAsAction(),
             ]
-    
+
     def get_actions_Tool_Edit_UndoGroup(self):
         return [
             UndoAction(),
             RedoAction(),
             ]
-    
+
     def get_keyboard_actions(self):
         """Return a list of actions to be used as keyboard shortcuts only, not
         appearing in a menubar or toolbar
         """
         return []
-    
+
     def parse_accelerator(self, text, id):
         if text:
             entry = wx.AcceleratorEntry(cmdID=id)
             entry.FromString(text)
             return entry
         return None
-    
+
     def create_accelerator_table(self):
         shortcut_map = {}
         table_entries = []
@@ -562,7 +563,7 @@ class FrameworkTask(Task):
                 table_entries.append(table_entry)
         log.debug("Accelerator table entries: %s" % str([t.ToString() for t in table_entries]))
         return shortcut_map, wx.AcceleratorTable(table_entries)
-    
+
     def on_keyboard_shortcut(self, event):
         id = event.GetId()
         log.debug("Keyboard shortcut! %s", id)
@@ -576,7 +577,7 @@ class FrameworkTask(Task):
         # EditorActions) will be available
         action.task = self
         action.perform(event)
-    
+
     def set_keyboard_shortcuts(self):
         shortcut_map, table = self.create_accelerator_table()
         self.window.control.SetAcceleratorTable(table)
@@ -586,7 +587,7 @@ class FrameworkTask(Task):
 
     def get_editor(self):
         raise NotImplementedError
-    
+
     def restore_toolbars(self, window):
         toolbars = window._window_backend.get_toolbars()
         window._window_backend.show_toolbars(toolbars)
@@ -594,9 +595,9 @@ class FrameworkTask(Task):
     ###########################################################################
     # Minibuffer convenience routines
     ###########################################################################
-    
+
     minibuffer_pane_name = "omnivore.framework.minibuffer"
-    
+
     def create_minibuffer_info(self):
         log.debug("Creating space for minibuffer")
         info = aui.AuiPaneInfo()
@@ -611,7 +612,7 @@ class FrameworkTask(Task):
         info.CaptionVisible(False)  # hides the caption bar & close button
         info.minibuffer = None
         return info
-    
+
     def show_minibuffer(self, minibuffer, **kwargs):
         # minibuffer_pane_info is stored in the TaskWindow instance because all
         # tasks use the same minibuffer pane in the AUI manager
@@ -654,7 +655,7 @@ class FrameworkTask(Task):
         if not info.IsShown():
             info.Show()
             self.window._aui_manager.Update()
-    
+
     def find_cancel_edit(self, control):
         while control is not None:
             if hasattr(control, "cancel_edit"):
@@ -662,7 +663,7 @@ class FrameworkTask(Task):
                 return
             else:
                 control = control.GetParent()
-    
+
     def on_hide_minibuffer_or_cancel(self, event):
         try:
             info = self.window.minibuffer_pane_info
@@ -674,7 +675,7 @@ class FrameworkTask(Task):
         else:
             info.Hide()
             self.window._aui_manager.Update()
-    
+
     def change_minibuffer_editor(self, editor):
         """Inform the currently open minibuffer that the editor has changed
         so it can update its internal state to match
@@ -685,7 +686,7 @@ class FrameworkTask(Task):
             return
         if info.minibuffer is not None:
             info.minibuffer.change_editor(editor)
-    
+
     def destroy_minibuffer(self):
         try:
             info = self.window.minibuffer_pane_info
@@ -766,12 +767,11 @@ class FrameworkTask(Task):
             return self.editor_area.active_editor
         return None
 
-
     ###
     @classmethod
     def can_edit(cls, document):
         raise NotImplementedError
-    
+
     @classmethod
     def get_match_score(cls, document):
         """Return a number based on how good of a match this task is to the
@@ -812,7 +812,7 @@ class FrameworkTask(Task):
             notebook.Thaw()
 
     #### convenience functions
-    
+
     def confirm(self, message, title=None, cancel=False, default=NO, no_label="", yes_label=""):
         """ Convenience method to show a confirmation dialog. """
 

@@ -46,6 +46,7 @@ A2MouseTextFont = {
     'char_h': 8,
     }
 
+
 class AnticFont(object):
     def __init__(self, machine, font_data, font_renderer, playfield_colors, reverse=False):
         self.use_blinking = font_data.get('blink', False)
@@ -53,10 +54,10 @@ class AnticFont(object):
         self.char_h = font_renderer.char_bit_height
         self.scale_w = font_renderer.scale_width
         self.scale_h = font_renderer.scale_height
-        
+
         self.set_colors(machine, playfield_colors)
         self.set_fonts(machine, font_data, font_renderer, reverse)
-    
+
     def set_colors(self, machine, playfield_colors):
         fg, bg = colors.gr0_colors(playfield_colors)
         conv = machine.get_color_converter()
@@ -67,7 +68,7 @@ class AnticFont(object):
         self.match_gr0_colors = machine.get_blended_color_registers(self.normal_gr0_colors, machine.match_background_color)
         self.comment_gr0_colors = machine.get_blended_color_registers(self.normal_gr0_colors, machine.comment_background_color)
         self.data_gr0_colors = machine.get_dimmed_color_registers(self.normal_gr0_colors, machine.background_color, machine.data_color)
-    
+
     def set_fonts(self, machine, font_data, font_renderer, reverse):
         if 'np_data' in font_data:
             bytes = font_data['np_data']
@@ -75,16 +76,16 @@ class AnticFont(object):
             bytes = np.fromstring(font_data['data'], dtype=np.uint8)
         bits = np.unpackbits(bytes)
         bits = bits.reshape((-1, 8, 8))
-        
+
         self.normal_font = font_renderer.bits_to_font(bits, machine.color_registers, self.normal_gr0_colors, reverse)
         self.highlight_font = font_renderer.bits_to_font(bits, machine.color_registers_highlight, self.highlight_gr0_colors, reverse)
         self.data_font = font_renderer.bits_to_font(bits, machine.color_registers_data, self.data_gr0_colors, reverse)
         self.match_font = font_renderer.bits_to_font(bits, machine.color_registers_match, self.match_gr0_colors, reverse)
         self.comment_font = font_renderer.bits_to_font(bits, machine.color_registers_comment, self.comment_gr0_colors, reverse)
-    
+
     def get_height(self, zoom):
         return self.char_h * self.scale_h * zoom
-    
+
     def get_image(self, char_index, zoom, highlight=False):
         f = self.highlight_font if highlight else self.normal_font
         array = f[char_index]

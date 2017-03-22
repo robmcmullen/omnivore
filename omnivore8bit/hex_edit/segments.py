@@ -15,7 +15,7 @@ class SegmentList(wx.ListBox):
 
     def __init__(self, parent, task, **kwargs):
         self.task = task
-        
+
         wx.ListBox.__init__(self, parent, style=wx.LB_SINGLE, **kwargs)
         self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.Bind(wx.EVT_LISTBOX, self.on_click)
@@ -25,10 +25,10 @@ class SegmentList(wx.ListBox):
         if sys.platform.startswith("linux"):
             self.ui_action = wx.UIActionSimulator()
             self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook_find_hack)
-    
+
     def set_task(self, task):
         self.task = task
-    
+
     def set_segments(self, segments, selected=0):
         items = [str(s) for s in segments]
         if len(items) != self.GetCount():
@@ -39,7 +39,7 @@ class SegmentList(wx.ListBox):
                 if old != item:
                     self.SetString(i, item)
         self.SetSelection(selected)
-    
+
     def on_char_hook_find_hack(self, evt):
         log.debug("on_char_hook_find_hack! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
         if evt.GetUniChar() == 70 and evt.ControlDown():
@@ -74,10 +74,10 @@ class SegmentList(wx.ListBox):
             if item != editor.segment_number:
                 wx.CallAfter(editor.view_segment_number, item)
         event.Skip()
-    
+
     def on_dclick(self, event):
         event.Skip()
-    
+
     def on_popup(self, event):
         pos = event.GetPosition()
         selected = self.HitTest(pos)
@@ -87,7 +87,7 @@ class SegmentList(wx.ListBox):
         e = self.task.active_editor
         d = e.document
         segment = d.segments[selected]
-        
+
         # include disabled action showing the name of the segment clicked upon
         # because it may be different than the selected item
         name = segment.name
@@ -111,7 +111,7 @@ class SegmentList(wx.ListBox):
             actions.append(action)
         if actions:
             e.popup_context_menu_from_actions(self, actions)
-    
+
     def on_tooltip(self, evt):
         pos = evt.GetPosition()
         selected = self.HitTest(pos)
@@ -121,7 +121,7 @@ class SegmentList(wx.ListBox):
         else:
             self.task.status_bar.message = ""
         evt.Skip()
-    
+
     def ensure_visible(self, segment):
         d = self.task.active_editor.document
         index = d.find_segment_index(segment)

@@ -22,20 +22,20 @@ class InfoField(object):
     same_line = False
     display_label = True
     use_edit_timer = False
-    
+
     # wx.Sizer proportion of the main control (not the label).  See the
     # wx.Sizer docs, but basically 0 will fix vertical size to initial size, >
     # 0 will fill available space based on the total proportion in the sizer.
     vertical_proportion = 0
-    
+
     default_width = 100
-    
+
     popup_width = 300
 
     extra_vertical_spacing = 0
 
     edit_timer_delay = 300  # ms
-    
+
     def __init__(self, panel, info):
         self.panel = panel
         self.set_args(info)
@@ -58,7 +58,7 @@ class InfoField(object):
 
     def is_displayed(self, editor):
         return True
-    
+
     def show(self, state=True):
         self.parent.Show(state)
 
@@ -68,7 +68,7 @@ class InfoField(object):
     def enable(self, state=True):
         self.parent.Enable(state)
         self.ctrl.Enable(state)
-    
+
     def create(self):
         self.parent = wx.Window(self.panel)
         self.box =  wx.BoxSizer(wx.VERTICAL)
@@ -99,7 +99,7 @@ class InfoField(object):
             for extra in self.extra_ctrls:
                 hbox.Add(extra, 0, wx.ALIGN_CENTER)
         self.box.AddSpacer(self.panel.VALUE_SPACING)
-    
+
     def create_all_controls(self):
         if self.use_edit_timer:
             self.create_edit_timer()
@@ -128,14 +128,14 @@ class InfoField(object):
 
     def set_control_limits(self):
         pass
-    
+
     def create_extra_controls(self):
         return []
 
     def add_to_parent(self):
         self.panel.sizer.Add(self.parent, self.vertical_proportion, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.ALIGN_TOP, 0)
         self.show(True)
-    
+
     def fill_data(self, editor):
         raise NotImplementedError
 
@@ -150,20 +150,20 @@ class InfoField(object):
 
     def set_focus_params(self, params):
         pass
-        
+
     def get_source_bytes(self, editor):
         if (editor is None):
             raw = np.zeros([], dtype=np.uint8)
         else:
             raw = editor.segment[self.byte_offset:self.byte_offset+self.byte_count].copy()
         return raw
-    
+
     def is_valid(self):
         return True
-    
+
     def wants_focus(self):
         return False
-    
+
     def set_focus(self):
         pass
 
@@ -174,8 +174,9 @@ class InfoField(object):
 #            print "Mouse not over info panel %s: trying map!" % self
             self.panel.editor.control.on_mouse_wheel_scroll(event)
             return
-        
+
         event.Skip()
+
 
 class LabelField(InfoField):
     keyword = "label"
@@ -186,7 +187,7 @@ class LabelField(InfoField):
         self.field_name = args[0]
         self.attr_name = args[1]
         self.max_val = args[2]
-    
+
     def create_control(self):
         c = GenStaticText(self.parent, style=wx.ALIGN_RIGHT)
         return c
@@ -207,6 +208,7 @@ class LabelField(InfoField):
     def clear_data(self):
         self.ctrl.SetLabel("")
         self.set_background(True)
+
 
 class TextEditField(InfoField):
     keyword = "text"
@@ -248,7 +250,7 @@ class TextEditField(InfoField):
 
     def clear_data(self):
         self.ctrl.ChangeValue("")
-    
+
     def get_focus_params(self):
         return self.ctrl.GetInsertionPoint()
 
@@ -267,14 +269,14 @@ class TextEditField(InfoField):
             valid = False
         self.ctrl.Refresh()
         return valid
-    
+
     def parse_from_control(self):
         return self.ctrl.GetValue()
-    
+
     def initial_text_input(self, text):
         self.ctrl.ChangeValue(text)
         self.ctrl.SetInsertionPointEnd()#(self.ctrl.GetLastPosition())
-        
+
     def bytes_to_control_data(self, raw):
         raw = self.map_bytes_to_text(raw)
         text = raw.tostring().lstrip()
@@ -291,7 +293,7 @@ class TextEditField(InfoField):
         raw[r] = raw[r] - 32  # convert lower case to upper
         raw[raw > 96] = 32
         return raw
-    
+
     def parsed_to_bytes(self, parsed_data):
         raw = np.zeros([self.byte_count],dtype=np.uint8)
         text = np.fromstring(parsed_data, dtype=np.uint8)
@@ -308,6 +310,7 @@ class TextEditField(InfoField):
             data = self.parse_from_control()
             raw = self.parsed_to_bytes(data)
             editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw, self.undo_label)
+
 
 class AtasciiC0(TextEditField):
     keyword = "atascii_gr2_0xc0"
@@ -327,10 +330,11 @@ class AtasciiC0(TextEditField):
     def map_bytes_to_text(self, raw):
         raw = raw & 0x3f
         return internal_to_atascii[raw]
-    
+
     def map_parsed_to_bytes(self, text):
         text = atascii_to_internal[text]
         return text | self.high_bits
+
 
 class UIntEditField(TextEditField):
     keyword = "uint"
@@ -343,7 +347,7 @@ class UIntEditField(TextEditField):
         value = reduce(lambda x, y: x + (y << 8), raw)  #  convert to little endian
         text = str(value)
         return text
-    
+
     def parse_from_control(self):
         value = int(self.ctrl.GetValue())
         if hasattr(self, "attr_name_max_val") and hasattr(self.panel.editor, self.attr_name_max_val):
@@ -367,6 +371,7 @@ class UIntEditField(TextEditField):
             v = raw.view(dtype='<u2')
             v[0] = parsed_data
         return raw
+
 
 class AnticColorsField(InfoField):
     keyword = "antic_colors"
@@ -393,13 +398,14 @@ class AnticColorsField(InfoField):
 
     def clear_data(self):
         pass
-    
+
     def on_colors(self, evt):
         editor = self.panel.editor
         raw = self.get_source_bytes(editor)
         dlg = AnticColorDialog(self.ctrl, raw, self.register_names)
         if dlg.ShowModal() == wx.ID_OK:
             editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, dlg.colors, self.undo_label)
+
 
 class DropDownField(InfoField):
     keyword = "dropdown"
@@ -413,12 +419,12 @@ class DropDownField(InfoField):
 
     def get_choices(self, editor):
         return self.choices
-    
+
     def bytes_to_control_data(self, raw):
         value = reduce(lambda x, y: x + (y << 8), raw)  #  convert to little endian
         value = min(value, len(self.choices) - 1)
         return value
-        
+
     def fill_data(self, editor):
         choices = self.get_choices(editor)
         self.ctrl.SetItems(choices)
@@ -428,16 +434,17 @@ class DropDownField(InfoField):
 
     def clear_data(self):
         pass
-    
+
     def create_control(self):
         c = wx.Choice(self.parent, choices=[])
         c.Bind(wx.EVT_CHOICE, self.drop_down_changed)
         return c
-        
+
     def drop_down_changed(self, event):
         raw = np.zeros([self.byte_count],dtype=np.uint8)
         raw[0] = self.ctrl.GetSelection()
         self.panel.editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw, self.undo_label)
+
 
 class PeanutsNeededField(DropDownField):
     keyword = "peanuts_needed"
@@ -457,7 +464,7 @@ class PeanutsNeededField(DropDownField):
             # First time! Calculate the offset to use subsequently
             e.peanut_harvest_diff = diff
         return diff
-        
+
     def drop_down_changed(self, event):
         e = self.panel.editor
         e.peanut_harvest_diff = self.ctrl.GetSelection()
@@ -467,6 +474,8 @@ class PeanutsNeededField(DropDownField):
 
 
 PANELTYPE = wx.lib.scrolledpanel.ScrolledPanel
+
+
 class InfoPanel(PANELTYPE):
 
     """
@@ -479,31 +488,31 @@ class InfoPanel(PANELTYPE):
     def __init__(self, parent, task, fields, **kwargs):
         self.task = task
         self.editor = None
-        
+
         self.fields = fields
         self.focus_on_input = None
         self.last_change_count = -1
 
         PANELTYPE.__init__(self, parent)
-        
+
         # Mac/Win needs this, otherwise background color is black
         attr = self.GetDefaultAttributes()
         self.SetBackgroundColour(attr.colBg)
-        
+
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
 
         self.init_fields(fields)
-    
+
     def set_task(self, task):
         self.task = task
-    
+
     def recalc_view(self):
         e = self.task.active_editor
         self.editor = e
         if e is not None:
             self.set_fields()
-    
+
     def refresh_view(self):
         editor = self.task.active_editor
         if editor is not None:
@@ -548,7 +557,7 @@ class InfoPanel(PANELTYPE):
                 field = kls(self, field_info[1:])
                 break
         return field
-    
+
     def set_fields(self):
         e = self.editor
         if e is None:
@@ -569,14 +578,14 @@ class InfoPanel(PANELTYPE):
                 field.clear_data()
             field.enable(enabled)
         self.constrain_size(focus)
-    
+
     def constrain_size(self, focus=None):
         self.sizer.Layout()
         self.focus_on_input = focus
         if focus is not None:
             self.ScrollChildIntoView(focus.ctrl)
         self.SetupScrolling(scroll_x=False, scrollToTop=False, scrollIntoView=True)
-    
+
     def process_initial_key(self, event, text):
         """ Uses keyboard input from another control to set the focus to the
         previously noted info field and process the text there.

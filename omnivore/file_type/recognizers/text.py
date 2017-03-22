@@ -3,16 +3,18 @@ from traits.api import HasTraits, provides
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
 from omnivore.utils.textutil import guessBinary
 
+
 @provides(IFileRecognizer)
 class PlainTextRecognizer(HasTraits):
     """Default plain text identifier based on percentage of non-ASCII bytes.
     
     """
     id = "text/plain"
-    
+
     def identify(self, guess):
         if not guessBinary(guess.get_utf8()):
             return "text/plain"
+
 
 @provides(IFileRecognizer)
 class XMLTextRecognizer(HasTraits):
@@ -20,9 +22,9 @@ class XMLTextRecognizer(HasTraits):
     
     """
     id = "text/xml"
-    
+
     before = "text/plain"
-    
+
     def identify(self, guess):
         byte_stream = guess.get_utf8().strip()
         if not byte_stream.startswith("<"):
@@ -36,9 +38,10 @@ class XMLTextRecognizer(HasTraits):
         byte_stream = byte_stream.lower()
         if "<!doctype html" in byte_stream or "<html" in byte_stream:
             return "text/html"
-        
+
         if found_xml:
             return "text/xml"
+
 
 @provides(IFileRecognizer)
 class PoundBangTextRecognizer(HasTraits):
@@ -46,9 +49,9 @@ class PoundBangTextRecognizer(HasTraits):
     
     """
     id = "text/poundbang"
-    
+
     before = "text/plain"
-    
+
     def identify(self, guess):
         byte_stream = guess.get_utf8()
         if not byte_stream.startswith("#!"):

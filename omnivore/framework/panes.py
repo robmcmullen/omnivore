@@ -7,7 +7,7 @@ log = logging.getLogger(__name__)
 
 class FrameworkPane(DockPane):
     #### trait change handlers
-    
+
     def _task_changed(self):
         log.debug("Task changed to %s in pane %s" % (self.task, self.id))
         if self.control:

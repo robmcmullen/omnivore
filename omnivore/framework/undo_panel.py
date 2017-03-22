@@ -9,7 +9,7 @@ class UndoHistoryPanel(wx.Panel):
     def __init__(self, parent, task, **kwargs):
         self.task = task
         wx.Panel.__init__(self, parent, wx.ID_ANY, **kwargs)
-        
+
         # Mac/Win needs this, otherwise background color is black
         attr = self.GetDefaultAttributes()
         self.SetBackgroundColour(attr.colBg)
@@ -23,7 +23,7 @@ class UndoHistoryPanel(wx.Panel):
         self.SetSizer(self.sizer)
         self.sizer.Layout()
         self.Fit()
-    
+
     def set_task(self, task):
         self.task = task
 

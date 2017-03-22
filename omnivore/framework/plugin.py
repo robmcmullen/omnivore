@@ -17,6 +17,7 @@ class OmnivoreTasksPlugin(TasksPlugin):
     def _my_task_extensions_default(self):
         return []
 
+
 class FrameworkPlugin(Plugin):
     """ The sample framework plugin.
     """
@@ -31,12 +32,12 @@ class FrameworkPlugin(Plugin):
             task = cls()
             factory = TaskFactory(id=task.id, name=task.name, factory=cls)
             factories.append(factory)
-        
+
         return factories
 
     def get_helper(self, helper_object, debug=True):
         return self.application.get_preferences(helper_object, debug)
-    
+
     def set_plugin_data(self, data):
         """Store some plugin data in the application so that objects outside
         the plugin can have access to it
@@ -46,7 +47,7 @@ class FrameworkPlugin(Plugin):
         Enthought, haven't checked yet.)
         """
         self.application.plugin_data[self.id] = data
-    
+
     def get_plugin_data(self):
         """Return the plugin data previously stored by a call to
         :py:meth:`set_plugin_data`
@@ -125,7 +126,7 @@ class OmnivoreMainPlugin(FrameworkPlugin):
 
     def _osx_actions_default(self):
         from omnivore.framework.actions import NewFileGroup
-        
+
         submenu = lambda: SMenu(
             id='NewFileSubmenu', name="New"
         )
@@ -138,6 +139,5 @@ class OmnivoreMainPlugin(FrameworkPlugin):
                            path='MenuBar/File/NewFileSubmenu',
                            ),
             ]
-        
-        return actions
 
+        return actions

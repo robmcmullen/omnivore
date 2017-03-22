@@ -5,6 +5,7 @@ from pyface.tasks.topological_sort import topological_sort
 import logging
 log = logging.getLogger(__name__)
 
+
 def find_wildcard_matches(item_map, pattern):
     if pattern.endswith("*"):
         pattern = pattern[:-1]
@@ -12,6 +13,7 @@ def find_wildcard_matches(item_map, pattern):
         for id, item in item_map.iteritems():
             if id.startswith(pattern):
                 yield item
+
 
 def before_after_wildcard_sort(items):
     """ Sort a sequence of items with 'before', 'after', and 'id' attributes.
@@ -71,7 +73,8 @@ def before_after_wildcard_sort(items):
     if has_cycle:
         log.error('Indeterminate result; cycle in before/after sort for items %r', items)
     return result
-    
+
+
 def collapse_overlapping_ranges(ranges):
     """ Collapse the list of (possibly overlapping) selected ranges into
     a monotonically increasing set of non-overlapping ranges
@@ -93,8 +96,10 @@ def collapse_overlapping_ranges(ranges):
         opt.append((start, end))
     return opt
 
+
 def ranges_to_indexes(ranges):
     return np.hstack((np.arange(r[0], r[1], dtype=np.uint32) for r in ranges))
+
 
 def invert_ranges(ranges, last):
     """ Invert the list of (possibly overlapping) selected ranges into a
@@ -104,7 +109,7 @@ def invert_ranges(ranges, last):
     # get a monotonically increasing list
     ranges = collapse_overlapping_ranges(ranges)
     inverted = []
-    
+
     first = 0
     for start, end in ranges:
         if start > first:
@@ -116,25 +121,26 @@ def invert_ranges(ranges, last):
         inverted.append((first, last))
     return inverted
 
+
 def invert_rects(rects, numr, numc):
     # Purely heuristic approach.  An algorithmic approach might be based on:
     # http://stackoverflow.com/questions/30818645 but this one breaks up the
     # entire space into a set of rectangles with boundaries at every possible
     # row/col boundary of all the contained rectangles.
-    
+
     # Get list of all referenced rows and cols
     rows = sorted(list(set([r[0] for rect in rects for r in rect]).union(set([0, numr]))))
     cols = sorted(list(set([r[1] for rect in rects for r in rect]).union(set([0, numc]))))
-    
+
     # create inside/outside flags for each row/col in the entire grid
     inside = np.zeros((numr, numc), dtype=np.bool_)
     for [(r1, c1), (r2, c2)] in rects:
         inside[r1:r2, c1:c2] = True
-    
+
     # create lo/hi values for each subdivision of the grid
     rowpairs = [(rows[i], rows[i+1]) for i in range(len(rows) - 1)]
     colpairs = [(cols[i], cols[i+1]) for i in range(len(cols) - 1)]
-    
+
     # create a rectangle at each intersection point and if it's outside the
     # original set of rectangles, add it to the list
     outside = []
@@ -142,7 +148,7 @@ def invert_rects(rects, numr, numc):
         for c1, c2 in colpairs:
             if not inside[r1, c1]:
                 outside.append([(r1, c1), (r2, c2)])
-    
+
     # optimization: merge neighboring rectangles that share common edges
-    
+
     return outside

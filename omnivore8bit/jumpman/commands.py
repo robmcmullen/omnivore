@@ -32,6 +32,7 @@ class ClearTriggerCommand(SetValueCommand):
     short_name = "cleartrigger_jumpman_obj"
     pretty_name = "Clear Trigger Function"
 
+
 class SetTriggerCommand(SetValueCommand):
     short_name = "settrigger_jumpman_obj"
     pretty_name = "Set Trigger Function"

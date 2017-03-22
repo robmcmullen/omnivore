@@ -3,6 +3,7 @@ import sys
 import subprocess
 import shlex
 
+
 def which(program):
     """ find program on system environment path.
     
@@ -28,6 +29,7 @@ def which(program):
 
     return None
 
+
 def run_detach(program, args, fspath, replace_arg=None):
     # don't use posix so it will handle Windows backslash separators
     args = shlex.split(args, posix=False)
@@ -42,7 +44,7 @@ def run_detach(program, args, fspath, replace_arg=None):
         args = new_args
     if not found:
         args.append(fspath)
-    
+
     args[0:0] = [program]
     program = which(program)
     if program is None:

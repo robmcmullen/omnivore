@@ -24,6 +24,7 @@ import wx
 from traits.api import Any, HasTraits, List, Property, Str, Unicode, Int
 from pyface.action.api import StatusBarManager
 
+
 class FrameworkStatusBarManager(StatusBarManager):
     """ A status bar manager realizes itself in a status bar control. """
 
@@ -32,7 +33,7 @@ class FrameworkStatusBarManager(StatusBarManager):
 
     # The message to be displayed in debug field of the status bar
     debug = Unicode
-    
+
     debug_width = Int(200)
 
     # The toolkit-specific control that represents the status bar.

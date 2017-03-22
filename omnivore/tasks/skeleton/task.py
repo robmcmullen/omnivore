@@ -11,6 +11,7 @@ from traits.api import on_trait_change, Property, Instance
 
 from panes import SkeletonPane1, SkeletonPane2, SkeletonPane3
 
+
 class SkeletonTask(Task):
     """ A simple task for opening a blank editor.
     """

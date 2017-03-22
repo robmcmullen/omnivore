@@ -14,6 +14,7 @@ from omnivore.framework.editor import FrameworkEditor
 from i_image_editor import IImageEditor
 from omnivore.utils.wx.imagescroller import ImageScroller
 
+
 @provides(IImageEditor)
 class ImageEditor(FrameworkEditor):
     """ The toolkit specific implementation of a ImageEditor.  See the
@@ -51,16 +52,16 @@ class ImageEditor(FrameworkEditor):
 
     def rebuild_document_properties(self):
         pass
-    
+
     def copy_view_properties(self, old_editor):
         pass
 
     def update_panes(self):
         self.reconfigure_panes()
-    
+
     def reconfigure_panes(self):
         self.control.recalc_view()
-    
+
     ###########################################################################
     # Trait handlers.
     ###########################################################################
@@ -85,4 +86,3 @@ class ImageEditor(FrameworkEditor):
         return self.control
 
     #### wx event handlers ####################################################
-

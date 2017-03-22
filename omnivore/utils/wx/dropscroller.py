@@ -20,6 +20,7 @@ import sys, pickle
 
 import wx
 
+
 class ListDropScrollerMixin(object):
     """Automatic scrolling for ListCtrls for use when using drag and drop.
 
@@ -40,6 +41,7 @@ class ListDropScrollerMixin(object):
     width of the list.  If positive, the width will be that number of
     pixels, and zero means to display no indicator.
     """
+
     def __init__(self, interval=200, width=-1):
         """Don't forget to call this mixin's init method in your List.
 
@@ -54,7 +56,7 @@ class ListDropScrollerMixin(object):
         self._auto_scroll_last_index = -1
         self._auto_scroll_indicator_line = True
         self.Bind(wx.EVT_TIMER, self.OnAutoScrollTimer)
-        
+
     def clearAllSelected(self):
         """clear all selected items"""
         list_count = self.GetItemCount()
@@ -112,10 +114,10 @@ class ListDropScrollerMixin(object):
 
         # Not clicked on an item
         if index == wx.NOT_FOUND:
-            
+
             # If it's an empty list or below the last item
             if (flags & (wx.LIST_HITTEST_NOWHERE|wx.LIST_HITTEST_ABOVE|wx.LIST_HITTEST_BELOW)):
-                
+
                 # Append to the end of the list or return an invalid index
                 if insert:
                     index = self.GetItemCount()
@@ -131,7 +133,7 @@ class ListDropScrollerMixin(object):
                     #print "getDropIndex: after last item: index=%d" % index
                 else:
                     index = self.GetItemCount() - 1
-                    
+
         # Otherwise, we've clicked on an item.  If we're in insert mode, check
         # to see if the cursor is between items
         elif insert:
@@ -148,7 +150,7 @@ class ListDropScrollerMixin(object):
             # y returned by GetItemRect are offset by a certain amount
             # on GTK.  The HitTest's y=0 in GTK corresponds to the top
             # of the first item, while y=0 on MSW is in the header.
-            
+
             # From Robin Dunn: use GetMainWindow on the list to find
             # the actual window on which to draw
             if self != self.GetMainWindow():
@@ -180,13 +182,13 @@ class ListDropScrollerMixin(object):
         else:
             self._startAutoScrollTimer(direction)
         self._auto_scroll_indicator_line = line
-            
+
         drop_index = self.getDropIndex(x, y, index=index, flags=flags)
         if line:
             self._processLineIndicator(x, y, drop_index)
         else:
             self._processHighlightIndicator(drop_index)
-    
+
     def _processLineIndicator(self, x, y, drop_index):
         count = self.GetItemCount()
         if drop_index >= count:
@@ -225,7 +227,7 @@ class ListDropScrollerMixin(object):
                 self.SetItemState(self._auto_scroll_last_index, 0, wx.LIST_STATE_SELECTED)
             self._auto_scroll_last_state = selected
             self._auto_scroll_last_index = index
-    
+
     def finishListScroll(self):
         """Clean up timer resource and erase indicator.
         """
@@ -233,7 +235,7 @@ class ListDropScrollerMixin(object):
         self._eraseIndicator()
         self._auto_scroll_last_index = -1
         self._auto_scroll_last_state = 0
-        
+
     def OnAutoScrollTimer(self, evt):
         """Timer event handler to scroll the list in the requested
         direction.
@@ -275,13 +277,15 @@ class ListDropScrollerMixin(object):
 
 class PickledDataObject(wx.CustomDataObject):
     """Sample custom data object storing indexes of the selected items"""
+
     def __init__(self):
         wx.CustomDataObject.__init__(self, "Pickled")
+
 
 class PickledDropTarget(wx.PyDropTarget):
     """Custom drop target modified from the wxPython demo."""
     debug = False
-    
+
     def __init__(self, window):
         wx.PyDropTarget.__init__(self)
         self.dv = window
@@ -338,12 +342,15 @@ class PickledDropTarget(wx.PyDropTarget):
         # case we just return the suggested value given to us.
         return d
 
+
 from wx.lib.mixins import listctrl
+
 
 class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScrollerMixin):
     """Simple list control that provides a drop target and uses
     the new mixin for automatic scrolling.
     """
+
     def __init__(self, parent, items, get_item_text, columns=None, resize_column=0, allow_drop=True, size=(400,400)):
         if columns is None:
             header_style = wx.LC_NO_HEADER
@@ -357,34 +364,34 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
         # The mixin needs to be initialized
         ListDropScrollerMixin.__init__(self, interval=200)
         self.set_columns(columns, resize_column)
-        
+
         if allow_drop:
             self.drop_target = PickledDropTarget(self)
             self.SetDropTarget(self.drop_target)
         self.Bind(wx.EVT_LIST_BEGIN_DRAG, self.on_start_drag)
         self.Bind(wx.EVT_CONTEXT_MENU, self.on_context_menu)
-        
+
         self.set_items(items)
-    
+
     def set_columns(self, columns, resize_column):
         if columns is None:
             columns = ["items"]
         for i, title in enumerate(columns):
             self.InsertColumn(i, title)
         self.setResizeColumn(resize_column)
-        self.resizeLastColumn(0) 
-    
+        self.resizeLastColumn(0)
+
     def set_items(self, items):
         self.clear(None)
         for item in items:
             self.insert_item(sys.maxint, item)
-        self.resizeLastColumn(0) 
-    
+        self.resizeLastColumn(0)
+
     def insert_item(self, index, item):
         index = self.InsertStringItem(index, "placeholder")
         self.set_item_text(index, item)
         self.items[index:index] = [item]
-    
+
     def set_item_text(self, index, item):
         text = self.get_item_text(item)
         c = self.GetColumnCount()
@@ -416,7 +423,7 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
         #print "Begining DragDrop\n"
         result = drop_source.DoDragDrop(wx.Drag_AllowMove)
         #print "DragDrop completed: %d\n" % result
-    
+
     def on_context_menu(self, evt):
         menu = wx.Menu()
         menu.Append(wx.ID_SELECTALL, "Select All")
@@ -436,7 +443,7 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
             start_index = 0
 
         list_count = self.GetItemCount()
-        
+
         if src == id(self):
             # reordering items in the same list!
             new_order = range(list_count)
@@ -450,14 +457,14 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
             new_order[start_index:start_index] = new_indexes
             if self.debug: print("orig list = %s" % str(range(list_count)))
             if self.debug: print(" new list = %s" % str(new_order))
-            
+
             self.change_list(new_order, new_indexes)
         else:
             # dropping items from another list
             for _, item in items:
                 self.insert_item(start_index, item)
                 start_index += 1
-    
+
     def delete_selected(self):
         list_count = self.GetItemCount()
         new_order = range(list_count)
@@ -468,18 +475,18 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
         if self.debug: print("orig list = %s" % str(range(list_count)))
         if self.debug: print(" new list = %s" % str(new_order))
         self.change_list(new_order)
-    
+
     @property
     def can_move_up(self):
         return self.GetFirstSelected() > 0
-    
+
     @property
     def can_move_down(self):
         # There's no convenient way to get all selected items, so as long as
         # the selected item isn't the last one, it can be moved down
         num = self.GetItemCount()
         return num > 0 and self.GetSelectedItemCount() > 0 and not self.IsSelected(num - 1)
-    
+
     def move_selected(self, delta=-1):
         list_count = self.GetItemCount()
         index_map = [None for i in range(list_count)]
@@ -504,7 +511,7 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
         if self.debug: print("orig list = %s" % str(range(list_count)))
         if self.debug: print(" new list = %s" % str(new_order))
         self.change_list(new_order, make_selected)
-    
+
     def change_list(self, new_order, make_selected=[]):
         """Reorder the list given the new list of indexes.
         
@@ -528,33 +535,33 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
             new_items.append(new_item)
             if i != new_i:
                 self.set_item_text(i, new_item)
-                
+
                 # save the new highlight position
                 if new_i in make_selected:
                     new_selection.append(i)
-            
+
             # Selection stays with the index even when the item text changes,
             # so remove the selection from all items for the moment
             self.SetItemState(i, 0, wx.LIST_STATE_SELECTED)
-        
+
         # if the list size has been reduced, clean up any extra items
         list_count = self.GetItemCount()
         for i in range(new_count, list_count):
             self.DeleteItem(new_count)
-        
+
         # Turn the selection back on for the new positions of the moved items
         for i in new_selection:
             self.SetItemState(i, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
-        
+
         self.items = new_items
         if self.debug:
             for i, item in enumerate(self.items):
                 print i, item, self.get_item_text(item)
-    
+
     def clear(self, evt=None):
         self.DeleteAllItems()
         self.items = []
-    
+
     def refresh(self):
         selected = list()  # can't use dict because items might be unhashable
         index = self.GetFirstSelected()
@@ -567,11 +574,11 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
         for i, item in enumerate(self.items):
             if item in selected:  # pay for the slowdown here with O(N^2) search
                 self.SetItemState(i, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
-    
+
     def select_all(self):
         for i in range(self.GetItemCount()):
             self.SetItemState(i, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
-    
+
     def deselect_all(self):
         for i in range(self.GetItemCount()):
             self.SetItemState(i, 0, wx.LIST_STATE_SELECTED)
@@ -582,23 +589,23 @@ if __name__ == '__main__':
         """Simple list control that provides a drop target and uses
         the new mixin for automatic scrolling.
         """
-        
+
         def __init__(self, parent, name, count=100):
             wx.ListCtrl.__init__(self, parent, style=wx.LC_REPORT)
 
             # The mixin needs to be initialized
             ListDropScrollerMixin.__init__(self, interval=200)
-            
+
             self.drop_target=PickledDropTarget(self)
             self.SetDropTarget(self.drop_target)
 
             self.create(name, count)
-            
+
             self.Bind(wx.EVT_LIST_BEGIN_DRAG, self.on_start_drag)
 
         def create(self, name, count):
             """Set up some test data."""
-            
+
             self.InsertColumn(0, "#")
             self.InsertColumn(1, "Title")
             for i in range(count):
@@ -639,7 +646,7 @@ if __name__ == '__main__':
                 index = self.InsertStringItem(index, item[0])
                 self.SetStringItem(index, 1, item[1])
                 index += 1
-        
+
         def clear(self, evt):
             self.DeleteAllItems()
 
@@ -655,7 +662,7 @@ if __name__ == '__main__':
     app   = wx.PySimpleApp()
     frame = wx.Frame(None, -1, title='List Drag Test', size=(400,500))
     frame.CreateStatusBar()
-    
+
     panel = ListPanel(frame)
     label = wx.StaticText(frame, -1, "Drag items from a list to either list.\nThe lists will scroll when the cursor\nis near the first and last visible items")
 
@@ -670,9 +677,9 @@ if __name__ == '__main__':
     hsizer.Add(btn1, 1, wx.EXPAND)
     hsizer.Add(btn2, 1, wx.EXPAND)
     sizer.Add(hsizer, 0, wx.EXPAND)
-    
+
     frame.SetAutoLayout(1)
     frame.SetSizer(sizer)
     frame.Show(1)
-    
+
     app.MainLoop()

@@ -42,10 +42,10 @@ class JumpmanLevelView(MainBitmapScroller):
         self.force_refresh = True
         self.screen_state = None
         self.trigger_state = None
-    
+
     def is_ready_to_render(self):
         return self.editor is not None and self.level_builder is not None and self.segment is not None
-    
+
     def on_resize(self, evt):
         # Automatically resize image to a best fit when resized
         if self.is_ready_to_render():
@@ -206,11 +206,11 @@ class JumpmanLevelView(MainBitmapScroller):
         data = np.hstack([ropeladder_data, pdata, hdata, level_data])
         cmd = command_cls(source, ranges, data)
         self.editor.process_command(cmd)
-    
+
     # Segment saver interface for menu item display
     export_data_name = "Jumpman Level Tester ATR"
     export_extensions = [".atr"]
-    
+
     def encode_data(self, segment, editor):
         """Segment saver interface: take a segment and produce a byte
         representation to save to disk.
@@ -244,7 +244,7 @@ class JumpmanPlayfieldRenderer(BaseRenderer):
         comment = (style & comment_bit_mask) == comment_bit_mask
         data = (style & user_bit_mask) > 0
         match = (style & match_bit_mask) == match_bit_mask
-        
+
         color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(m, range(32))
         bitimage = np.empty((nr * bytes_per_row, 3), dtype=np.uint8)
         for i in range(32):
@@ -285,20 +285,20 @@ class JumpmanEditor(BitmapEditor):
     old_trigger_mapping = Dict
 
     ##### class attributes
-    
+
     valid_mouse_modes = [AnticDSelectMode, DrawGirderMode, DrawLadderMode, DrawUpRopeMode, DrawDownRopeMode, DrawPeanutMode, EraseGirderMode, EraseLadderMode, EraseRopeMode, JumpmanRespawnMode]
-    
+
     ##### Default traits
-    
+
     def _machine_default(self):
         return Machine(name="Jumpman", bitmap_renderer=JumpmanPlayfieldRenderer(), mime_prefix="application/vnd.atari8bit")
 
     def _map_width_default(self):
         return 40 * 4
-    
+
     def _draw_pattern_default(self):
         return [0]
-    
+
     def _valid_jumpman_segment_default(self):
         return False
 
@@ -308,7 +308,7 @@ class JumpmanEditor(BitmapEditor):
     ###########################################################################
     # 'FrameworkEditor' interface.
     ###########################################################################
-    
+
     # Segment saver interface for menu item display
     export_data_name = "Jumpman Level Tester ATR"
     export_extensions = [".atr"]
@@ -342,7 +342,7 @@ class JumpmanEditor(BitmapEditor):
         if 'old_trigger_mapping' in e:
             self.old_trigger_mapping = e['old_trigger_mapping']
         BitmapEditor.process_extra_metadata(self, doc, e)
-        
+
     def get_extra_metadata(self, mdict):
         mdict["assembly_source"] = self.assembly_source
         mdict["old_trigger_mapping"] = dict(self.old_trigger_mapping)  # so we don't try to pickle a TraitDictObject
@@ -352,7 +352,7 @@ class JumpmanEditor(BitmapEditor):
     def update_bitmap_shape(self):
         self.hex_edit.recalc_view()
         self.bitmap.recalc_view()
-    
+
     @on_trait_change('machine.bitmap_color_change_event')
     def update_bitmap_colors(self):
         try:
@@ -360,11 +360,11 @@ class JumpmanEditor(BitmapEditor):
         except RuntimeError:
             pass
         self.bitmap.mouse_mode.resync_objects()
-    
+
     @on_trait_change('machine.font_change_event')
     def update_fonts(self):
         pass
-    
+
     @on_trait_change('machine.disassembler_change_event')
     def update_disassembler(self):
         pass
@@ -450,13 +450,13 @@ class JumpmanEditor(BitmapEditor):
 
     def rebuild_display_objects(self):
         self.bitmap.generate_display_objects(True)
-    
+
     def reconfigure_panes(self):
         self.hex_edit.recalc_view()
         self.bitmap.recalc_view()
         self.level_data.recalc_view()
         self.trigger_list.recalc_view()
-    
+
     def refresh_panes(self):
         self.hex_edit.refresh_view()
         p = self.get_level_colors()
@@ -465,7 +465,7 @@ class JumpmanEditor(BitmapEditor):
         self.bitmap.refresh_view()
         self.trigger_list.refresh_view()
         # level_data is refreshed with call to update_harvest_state
-    
+
     def rebuild_document_properties(self):
         self.update_mouse_mode(AnticDSelectMode)
         self.manual_recompile_needed = False
@@ -508,7 +508,7 @@ class JumpmanEditor(BitmapEditor):
         if possible:
             return possible[0]
         return 0
-    
+
     def init_view_properties(self):
         self.find_segment()
 
@@ -518,14 +518,14 @@ class JumpmanEditor(BitmapEditor):
             if len(segment) != 0x800:
                 segment = None
         self.find_segment(segment=segment)
-    
+
     def view_segment_set_width(self, segment):
         self.valid_jumpman_segment = self.check_valid_segment(segment)
         self.bitmap_width = 40 * 4
         self.machine.update_colors(self.get_level_colors(segment))
         self.update_mouse_mode()
         self.peanut_harvest_diff = -1
-    
+
     def update_harvest_state(self):
         if not self.valid_jumpman_segment:
             return
@@ -533,7 +533,7 @@ class JumpmanEditor(BitmapEditor):
         self.num_ladders = len(harvest_state.ladder_positions)
         self.num_downropes = len(harvest_state.downrope_positions)
         self.num_peanuts = len(harvest_state.peanuts)
-        
+
         # FIXME: force redraw of level data here because it depends on the
         # level builder objects so it can count the number of items
         self.level_data.refresh_view()
@@ -552,12 +552,12 @@ class JumpmanEditor(BitmapEditor):
         else:
             colors = powerup_colors()
         return list(colors)
-    
+
     def update_mouse_mode(self, mouse_handler=None):
         BitmapEditor.update_mouse_mode(self, mouse_handler)
         self.can_select_objects = self.bitmap.mouse_mode.can_paste
         self.bitmap.refresh_view()
-    
+
     def set_current_draw_pattern(self, pattern, control):
         try:
             iter(pattern)
@@ -569,25 +569,25 @@ class JumpmanEditor(BitmapEditor):
             self.tile_map.clear_tile_selection()
         if control != self.character_set:
             self.character_set.clear_tile_selection()
-    
+
     def highlight_selected_ranges(self):
         HexEditor.highlight_selected_ranges(self)
 
     def mark_index_range_changed(self, index_range):
         pass
-    
+
     def perform_idle(self):
         mouse_mode = self.bitmap.mouse_mode
         self.can_copy = self.can_cut = mouse_mode.can_paste and bool(mouse_mode.objects)
-    
+
     def process_paste_data_object(self, data_obj, cmd_cls=None):
         # Don't use bitmap editor's paste, we want it to paste in hex
         return HexEditor.process_paste_data_object(self, data_obj, cmd_cls)
-    
+
     def create_clipboard_data_object(self):
         # Don't use bitmap editor's clipboard, we want hex bytes
         return HexEditor.create_clipboard_data_object(self)
-    
+
     def get_extra_segment_savers(self, segment):
         savers = []
         savers.append(self.bitmap)
@@ -608,11 +608,11 @@ class JumpmanEditor(BitmapEditor):
             playfield = self.screen
         playfield[:] = 8  # background is the 9th ANTIC color register
         playfield.style[:] = 0
-    
+
     def undo_post_hook(self):
         self.rebuild_display_objects()
         self.update_mouse_mode()
-    
+
     def redo_post_hook(self):
         self.rebuild_display_objects()
         self.update_mouse_mode()
@@ -638,11 +638,11 @@ class JumpmanEditor(BitmapEditor):
                     o.y += 1
                 mouse_mode.objects = objects
                 self.bitmap.save_objects(objects)
-    
+
     supported_clipboard_data_objects = [
         wx.CustomDataObject("jumpman,objects"),
         ]
-    
+
     def create_clipboard_data_object(self):
         mouse_mode = self.bitmap.mouse_mode
         if mouse_mode.can_paste and mouse_mode.objects:
@@ -700,7 +700,6 @@ class JumpmanEditor(BitmapEditor):
     # Trait handlers.
     ###########################################################################
 
-
     ###########################################################################
     # Private interface.
     ###########################################################################
@@ -732,7 +731,7 @@ class JumpmanEditor(BitmapEditor):
         return self.bitmap
 
     #### wx event handlers ####################################################
-    
+
     def index_clicked(self, index, bit, from_control, refresh_from=True):
         self.cursor_index = index
         skip_control = None if refresh_from else from_control

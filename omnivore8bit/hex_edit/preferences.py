@@ -25,20 +25,20 @@ class HexEditPreferences(PreferencesHelper):
     preferences_path = 'omnivore.task.hex_edit'
 
     #### Preferences ##########################################################
-    
+
     map_width_low = 1
     map_width_high = 256
     map_width = Range(low=map_width_low, high=map_width_high, value=16)
-    
+
     bitmap_width_low = 1
     bitmap_width_high = 16
     bitmap_width = Range(low=bitmap_width_low, high=bitmap_width_high, value=1)
 
     # Font used for hex/disassembly
     text_font = Font(def_font)
-    
+
     hex_grid_lower_case = Bool(True)
-    
+
     assembly_lower_case = Bool(False)
 
     disassembly_column_widths = Tuple(0, 0, 0)
