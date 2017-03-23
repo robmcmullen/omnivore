@@ -168,13 +168,13 @@ class Dos33Dirent(Dirent):
         self.sectors_seen = None
         self.sector_map = None
         self.parse_raw_dirent(image, bytes)
-    
+
     def __str__(self):
         return "File #%-2d (%s) %03d %-30s %03d %03d" % (self.file_num, self.summary, self.num_sectors, self.filename, self.track, self.sector)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.filename == other.filename and self.track == other.track and self.sector == other.sector and self.num_sectors == other.num_sectors
-    
+
     type_to_text = {
         0x0: "T",  # text
         0x1: "I",  # integer basic
@@ -202,7 +202,7 @@ class Dos33Dirent(Dirent):
             file_type = self.file_type
         flag = "%s%s" % (locked, file_type)
         return flag
-    
+
     @property
     def verbose_info(self):
         return self.summary
@@ -221,7 +221,7 @@ class Dos33Dirent(Dirent):
         lines.append("track/sector list at: " + str(ts))
         lines.append("sector map: " + str(self.sector_map))
         return "\n".join(lines)
-    
+
     def parse_raw_dirent(self, image, bytes):
         if bytes is None:
             return
@@ -275,7 +275,7 @@ class Dos33Dirent(Dirent):
         sector_list.extend(tslist)
         self.track, self.sector = header.track_from_sector(tslist[0].sector_num)
         log.debug("track/sector lists:\n%s" % str(tslist))
-    
+
     def sanity_check(self, image):
         if self.deleted:
             return True
@@ -304,7 +304,7 @@ class Dos33Dirent(Dirent):
         self.sector_map = sector_map[0:self.num_sectors - len(tslist)]
         self.track_sector_list = tslist
         return tslist
-    
+
     def get_sectors_in_vtoc(self, image):
         self.get_track_sector_list(image)
         sectors = BaseSectorList(image.header)
@@ -321,7 +321,7 @@ class Dos33Dirent(Dirent):
         log.debug("start_read: %s, t/s list: %s" % (str(self), str(self.sector_map)))
         self.current_sector_index = 0
         self.current_read = self.num_sectors
-    
+
     def read_sector(self, image):
         try:
             sector = self.sector_map[self.current_sector_index]
@@ -337,7 +337,7 @@ class Dos33Dirent(Dirent):
         self.current_sector_index += 1
         num_bytes = len(raw)
         return raw[0:num_bytes], num_bytes
-    
+
     def get_filename(self):
         return self.filename
 
@@ -359,7 +359,7 @@ class Dos33Header(BaseHeader):
 
     def __init__(self):
         BaseHeader.__init__(self, 256)
-    
+
     def __str__(self):
         return "%s Disk Image (size=%d (%dx%db)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size)
 
@@ -383,7 +383,7 @@ class Dos33DiskImage(DiskImageBase):
 
     def __str__(self):
         return str(self.header)
-    
+
     def read_header(self):
         self.header = Dos33Header()
 
@@ -394,7 +394,7 @@ class Dos33DiskImage(DiskImageBase):
     @property
     def directory_class(self):
         return Dos33Directory
-    
+
     @property
     def raw_sector_class(self):
         return RawTrackSectorSegment
@@ -416,7 +416,7 @@ class Dos33DiskImage(DiskImageBase):
                 raise InvalidDiskImage("Invalid VTOC location for DOS 3.3")
 
         log.debug("DOS 3.3 byte swap: %s" % swap_order)
-    
+
     vtoc_type = np.dtype([
         ('unused1', 'S1'),
         ('cat_track','u1'),
@@ -446,7 +446,7 @@ class Dos33DiskImage(DiskImageBase):
         self.header.last_track_num = values['last_track']
         self.header.track_alloc_dir = values['track_dir']
         self.assert_valid_sector(self.header.first_directory)
-    
+
     def get_directory(self, directory=None):
         sector = self.header.first_directory
         num = 0
@@ -488,7 +488,7 @@ class Dos33DiskImage(DiskImageBase):
         r = self.rawdata[s]
         boot3 = ObjSegment(r, 0, 0, 0x1d00, name="Boot 3")
         return [boot1, boot2, relocator, boot3]
-    
+
     def get_vtoc_segments(self):
         r = self.rawdata
         segments = []
@@ -517,7 +517,7 @@ class Dos33DiskImage(DiskImageBase):
             index += 4
         segments.append(segment)
         return segments
-    
+
     def get_directory_segments(self):
         byte_order = []
         r = self.rawdata
@@ -561,7 +561,7 @@ class Dos33DiskImage(DiskImageBase):
         if next_sector == 0:
             raise NoSpaceInDirectory("No space left in catalog")
         return sector_num, next_sector
-    
+
     def get_file_segment(self, dirent):
         byte_order = []
         dirent.start_read(self)
@@ -603,10 +603,6 @@ class Dos33DiskImage(DiskImageBase):
             print "setting data for %04x - %04x at %04x" % (s.start_addr, s.start_addr + len(s), index)
             image[index:index + len(s)] = s.data
         return image, 'B'
-
-
-
-
 
 
 class ProdosHeader(Dos33Header):

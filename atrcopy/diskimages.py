@@ -31,10 +31,10 @@ class BaseHeader(object):
         self.extra_vtoc = []
         self.first_directory = 0
         self.num_directory = 0
-    
+
     def __len__(self):
         return self.header_offset
-    
+
     def to_array(self):
         header_bytes = np.zeros([self.header_offset], dtype=np.uint8)
         self.encode(header_bytes)
@@ -55,7 +55,7 @@ class BaseHeader(object):
             pos, size = self.get_pos(i)
             yield i, pos, size
             i += 1
-    
+
     def get_pos(self, sector):
         """Get index (into the raw data of the disk image) of start of sector
 
@@ -119,13 +119,13 @@ class DiskImageBase(object):
     @property
     def directory_class(self):
         return Directory
-    
+
     def set_filename(self, filename):
         if "." in filename:
             self.filename, self.ext = filename.rsplit(".", 1)
         else:
             self.filename, self.ext = filename, ""
-    
+
     def dir(self):
         lines = []
         lines.append(str(self))
@@ -156,16 +156,16 @@ class DiskImageBase(object):
         format.
         """
         pass
-    
+
     @classmethod
     def new_header(cls, diskimage, format="ATR"):
         raise NotImplementedError
-    
+
     def as_new_format(self, format="ATR"):
         """ Create a new disk image in the specified format
         """
         raise NotImplementedError
-    
+
     def save(self, filename=""):
         if not filename:
             filename = self.filename
@@ -176,35 +176,35 @@ class DiskImageBase(object):
         bytes = self.bytes[:]
         with open(filename, "wb") as fh:
             bytes.tofile(fh)
-    
+
     def assert_valid_sector(self, sector):
         if not self.header.sector_is_valid(sector):
             raise ByteNotInFile166("Sector %d out of range" % sector)
-    
+
     def check_sane(self):
         if not self.all_sane:
             raise InvalidDiskImage("Invalid directory entries; may be boot disk")
-    
+
     def read_header(self):
         return BaseHeader()
-    
+
     def check_size(self):
         pass
-    
+
     def get_boot_sector_info(self):
         pass
-    
+
     def get_vtoc(self):
         """Get information from VTOC and populate the VTOC object"""
         pass
-    
+
     def get_directory(self, directory=None):
         pass
-    
+
     def get_raw_bytes(self, sector):
         pos, size = self.header.get_pos(sector)
         return self.bytes[pos:pos + size], pos, size
-    
+
     def get_sector_slice(self, start, end=None):
         """ Get contiguous sectors
         
@@ -220,7 +220,7 @@ class DiskImageBase(object):
             _, more = self.header.get_pos(start)
             size += more
         return slice(pos, pos + size)
-    
+
     def get_sectors(self, start, end=None):
         """ Get contiguous sectors
         
@@ -230,7 +230,7 @@ class DiskImageBase(object):
         """
         s = self.get_sector_slice(start, end)
         return self.bytes[s], self.style[s]
-    
+
     def get_contiguous_sectors(self, sector, num):
         start = 0
         count = 0
@@ -240,7 +240,7 @@ class DiskImageBase(object):
                 start = pos
             count += size
         return start, count
-    
+
     def parse_segments(self):
         r = self.rawdata
         i = self.header.header_offset
@@ -251,16 +251,16 @@ class DiskImageBase(object):
         self.segments.extend(self.get_vtoc_segments())
         self.segments.extend(self.get_directory_segments())
         self.segments.extend(self.get_file_segments())
-    
+
     def get_boot_segments(self):
         return []
-    
+
     def get_vtoc_segments(self):
         return []
 
     def get_directory_segments(self):
         return []
-    
+
     def find_dirent(self, filename):
         # check if we've been passed a dirent instead of a filename
         if hasattr(filename, "filename"):
@@ -269,18 +269,18 @@ class DiskImageBase(object):
             if filename == dirent.filename:
                 return dirent
         raise FileNotFound("%s not found on disk" % filename)
-    
+
     def find_file(self, filename):
         dirent = self.find_dirent(filename)
         return self.get_file(dirent)
-    
+
     def get_file(self, dirent):
         segment = self.get_file_segment(dirent)
         return segment.tostring()
-    
+
     def get_file_segment(self, dirent):
         pass
-    
+
     def get_file_segments(self):
         segments = []
         for dirent in self.files:

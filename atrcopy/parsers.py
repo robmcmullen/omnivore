@@ -17,7 +17,7 @@ class SegmentParser(object):
     menu_name = ""
     image_type = None
     container_segment = DefaultSegment
-    
+
     def __init__(self, segment_data, strict=False):
         self.image = None
         self.segments = []
@@ -53,7 +53,7 @@ class SegmentParser(object):
 
 class DefaultSegmentParser(SegmentParser):
     menu_name = "Raw Data"
-    
+
     def parse(self):
         self.segments = [DefaultSegment(self.segment_data, 0)]
 
@@ -122,6 +122,7 @@ def guess_parser_for_mime(mime, r, verbose=False):
             pass
     return found
 
+
 def guess_parser_for_system(mime_base, r):
     for mime in mime_parse_order:
         if mime.startswith(mime_base):
@@ -129,6 +130,7 @@ def guess_parser_for_system(mime_base, r):
             if p is not None:
                 return mime, p
     return None, None
+
 
 def iter_parsers(r):
     for mime in mime_parse_order:
@@ -196,6 +198,7 @@ for k in sizes:
 known_segment_parsers = [DefaultSegmentParser]
 for mime in mime_parse_order:
     known_segment_parsers.extend(mime_parsers[mime])
+
 
 def iter_known_segment_parsers():
     yield "application/octet-stream", "", [DefaultSegmentParser]

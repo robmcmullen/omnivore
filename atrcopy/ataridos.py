@@ -91,7 +91,7 @@ class AtariDosDirent(Dirent):
         self.current_read = 0
         self.sectors_seen = None
         self.parse_raw_dirent(image, bytes)
-    
+
     def __str__(self):
         return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, self.summary, self.starting_sector, self.basename, self.ext, self.num_sectors)
 
@@ -102,7 +102,7 @@ class AtariDosDirent(Dirent):
     def filename(self):
         ext = ("." + self.ext) if self.ext else ""
         return self.basename + ext
-    
+
     @property
     def summary(self):
         output = "o" if self.opened_output else "."
@@ -113,7 +113,7 @@ class AtariDosDirent(Dirent):
         locked = "*" if self.locked else " "
         flags = "%s%s%s%s%s%s" % (output, dos2, mydos, in_use, deleted, locked)
         return flags
-    
+
     @property
     def verbose_info(self):
         flags = []
@@ -131,7 +131,7 @@ class AtariDosDirent(Dirent):
     def parse_raw_dirent(self, image, bytes):
         if bytes is None:
             return
-        values = bytes.view(dtype=self.format)[0]  
+        values = bytes.view(dtype=self.format)[0]
         flag = values[0]
         self.flag = flag
         self.opened_output = (flag&0x01) > 0
@@ -170,7 +170,7 @@ class AtariDosDirent(Dirent):
         # no extra sectors are needed for an Atari DOS file; the links to the
         # next sector is contained in the sector.
         pass
-    
+
     def sanity_check(self, image):
         if not self.in_use:
             return True
@@ -179,7 +179,7 @@ class AtariDosDirent(Dirent):
         if self.num_sectors < 0 or self.num_sectors > image.header.max_sectors:
             return False
         return True
-    
+
     def get_sectors_in_vtoc(self, image):
         sector_list = BaseSectorList(image.header)
         self.start_read(image)
@@ -197,7 +197,7 @@ class AtariDosDirent(Dirent):
         self.current_sector = self.starting_sector
         self.current_read = self.num_sectors
         self.sectors_seen = set()
-    
+
     def read_sector(self, image):
         raw, pos, size = image.get_raw_bytes(self.current_sector)
         bytes, num_data_bytes = self.process_raw_sector(image, raw)
@@ -256,12 +256,13 @@ class AtariDosFile(object):
     
     Ref: http://www.atarimax.com/jindroush.atari.org/afmtexe.html
     """
+
     def __init__(self, rawdata):
         self.rawdata = rawdata
         self.size = len(rawdata)
         self.segments = []
         self.files = []
-    
+
     def __str__(self):
         return "\n".join(str(s) for s in self.segments) + "\n"
 
@@ -270,7 +271,7 @@ class AtariDosFile(object):
 
     def relaxed_check(self):
         pass
-    
+
     def parse_segments(self):
         r = self.rawdata
         b = r.get_data()
@@ -325,7 +326,7 @@ class AtrHeader(BaseHeader):
         ('btFlags','u1'),
         ])
     file_format = "ATR"
-    
+
     def __init__(self, bytes=None, sector_size=128, initial_sectors=3, create=False):
         BaseHeader.__init__(self, sector_size, initial_sectors, 360, 1)
         if create:
@@ -333,7 +334,7 @@ class AtrHeader(BaseHeader):
             self.check_size(0)
         if bytes is None:
             return
-        
+
         if len(bytes) == 16:
             values = bytes.view(dtype=self.format)[0]
             if values[0] != 0x296:
@@ -346,10 +347,10 @@ class AtrHeader(BaseHeader):
             self.header_offset = 16
         else:
             raise InvalidAtrHeader
-    
+
     def __str__(self):
         return "%s Disk Image (size=%d (%dx%db), crc=%d flags=%d unused=%d)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size, self.crc, self.flags, self.unused)
-    
+
     def encode(self, raw):
         values = raw.view(dtype=self.format)[0]
         values[0] = 0x296
@@ -390,7 +391,7 @@ class AtrHeader(BaseHeader):
         self.payload_bytes = self.sector_size - 3
         initial_bytes = self.initial_sector_size * self.num_initial_sectors
         self.max_sectors = ((self.image_size - initial_bytes) / self.sector_size) + self.num_initial_sectors
-    
+
     def get_pos(self, sector):
         if not self.sector_is_valid(sector):
             raise ByteNotInFile166("Sector %d out of range" % sector)
@@ -406,13 +407,13 @@ class AtrHeader(BaseHeader):
 
 class XfdHeader(AtrHeader):
     file_format = "XFD"
-    
+
     def __str__(self):
         return "%s Disk Image (size=%d (%dx%db)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size)
-    
+
     def __len__(self):
         return 0
-    
+
     def to_array(self):
         raw = np.zeros([0], dtype=np.uint8)
         return raw
@@ -446,7 +447,7 @@ class AtariDosDiskImage(DiskImageBase):
 
     def __str__(self):
         return "%s Atari DOS Format: %d usable sectors (%d free), %d files" % (self.header, self.total_sectors, self.unused_sectors, len(self.files))
-    
+
     @classmethod
     def new_header(cls, diskimage, format="ATR"):
         if format.lower() == "atr":
@@ -455,7 +456,7 @@ class AtariDosDiskImage(DiskImageBase):
         else:
             raise RuntimeError("Unknown header type %s" % format)
         return header
-    
+
     def as_new_format(self, format="ATR"):
         """ Create a new disk image in the specified format
         """
@@ -465,13 +466,13 @@ class AtariDosDiskImage(DiskImageBase):
         newraw = SegmentData(data)
         image = self.__class__(newraw)
         return image
-    
+
     vtoc_type = np.dtype([
         ('code', 'u1'),
         ('total','<u2'),
         ('unused','<u2'),
         ])
-    
+
     def read_header(self):
         bytes = self.bytes[0:16]
         try:
@@ -509,7 +510,7 @@ class AtariDosDiskImage(DiskImageBase):
         self.num_vtoc = num
         if num < 0 or num > self.calc_vtoc_code():
             raise InvalidDiskImage("Invalid number of VTOC sectors: %d" % num)
-        
+
         self.total_sectors = values[1]
         self.unused_sectors = values[2]
         if self.header.image_size == 133120:
@@ -518,7 +519,7 @@ class AtariDosDiskImage(DiskImageBase):
             data, style = self.get_sectors(self.vtoc2)
             extra_free = data[122:124].view(dtype='<u2')[0]
             self.unused_sectors += extra_free
-    
+
     def get_directory(self, directory=None):
         dir_bytes, style = self.get_sectors(361, 368)
         i = 0
@@ -528,7 +529,7 @@ class AtariDosDiskImage(DiskImageBase):
             dirent = AtariDosDirent(self, num, dir_bytes[i:i+16])
             if dirent.mydos:
                 dirent = MydosDirent(self, num, dir_bytes[i:i+16])
-            
+
             if dirent.in_use:
                 files.append(dirent)
                 if not dirent.is_sane:
@@ -541,7 +542,7 @@ class AtariDosDiskImage(DiskImageBase):
             i += 16
             num += 1
         self.files = files
-    
+
     boot_record_type = np.dtype([
         ('BFLAG', 'u1'),
         ('BRCNT', 'u1'),
@@ -561,7 +562,7 @@ class AtariDosDiskImage(DiskImageBase):
 
     def get_boot_segments(self):
         data, style = self.get_sectors(360)
-        values = data[0:20].view(dtype=self.boot_record_type)[0]  
+        values = data[0:20].view(dtype=self.boot_record_type)[0]
         flag = int(values[0])
         segments = []
         if flag == 0:
@@ -574,7 +575,7 @@ class AtariDosDiskImage(DiskImageBase):
             code = ObjSegment(r[20:], 0, 0, addr + 20, addr + len(r), name="Boot Code")
             segments = [sectors, header, code]
         return segments
-    
+
     def get_vtoc_segments(self):
         r = self.rawdata
         segments = []
@@ -600,7 +601,7 @@ class AtariDosDiskImage(DiskImageBase):
             segment.set_comment_at(0x7c, "unused")
             segments.append(segment)
         return segments
-    
+
     def get_directory_segments(self):
         r = self.rawdata
         segments = []
@@ -618,7 +619,7 @@ class AtariDosDiskImage(DiskImageBase):
             index += 16
         segments.append(segment)
         return segments
-    
+
     def get_file_segment(self, dirent):
         byte_order = []
         dirent.start_read(self)
@@ -635,7 +636,7 @@ class AtariDosDiskImage(DiskImageBase):
         else:
             segment = EmptySegment(self.rawdata, name=dirent.filename)
         return segment
-    
+
     def get_file_segments(self):
         segments_in = DiskImageBase.get_file_segments(self)
         segments_out = []
@@ -655,7 +656,7 @@ class AtariDosDiskImage(DiskImageBase):
 class BootDiskImage(AtariDosDiskImage):
     def __str__(self):
         return "%s Boot Disk" % (self.header)
-    
+
     def check_size(self):
         if self.header is None:
             return
@@ -667,7 +668,7 @@ class BootDiskImage(AtariDosDiskImage):
             raise InvalidDiskImage("Appears to be an executable")
         nsec = b[i + 1]
         bload = b[i + 2:i + 4].view(dtype='<u2')[0]
-        
+
         # Sanity check: number of sectors to be loaded can't be more than the
         # lower 48k of ram because there's no way to bank switch or anything
         # before the boot sectors are finished loading
@@ -687,17 +688,17 @@ class BootDiskImage(AtariDosDiskImage):
 
     def get_directory(self, directory=None):
         pass
-    
+
     boot_record_type = np.dtype([
         ('BFLAG', 'u1'),
         ('BRCNT', 'u1'),
         ('BLDADR', '<u2'),
         ('BWTARR', '<u2'),
         ])
-    
+
     def get_boot_segments(self):
         data, style = self.get_sectors(1)
-        values = data[0:6].view(dtype=self.boot_record_type)[0]  
+        values = data[0:6].view(dtype=self.boot_record_type)[0]
         flag = int(values[0])
         segments = []
         if flag == 0:
@@ -745,6 +746,7 @@ def get_xex(segments, runaddr=None):
         bytes[i:i + len(s)] = s[:]
         i += len(s)
     return bytes
+
 
 def add_atr_header(bytes):
     header = AtrHeader(create=True)

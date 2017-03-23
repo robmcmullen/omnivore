@@ -95,12 +95,14 @@ known_cart_types = [
 
 known_cart_type_map = {c[0]:i for i, c in enumerate(known_cart_types)}
 
+
 def get_known_carts():
     grouped = defaultdict(list)
     for c in known_cart_types[1:]:
         size = c[2]
         grouped[size].append(c)
     return grouped
+
 
 def get_cart(cart_type):
     try:
@@ -118,7 +120,7 @@ class A8CartHeader(object):
         ('unused','>u4')
         ])
     file_format = "Cart"
-    
+
     def __init__(self, bytes=None, create=False):
         self.image_size = 0
         self.cart_type = -1
@@ -140,7 +142,7 @@ class A8CartHeader(object):
             self.check_size(0)
         if bytes is None:
             return
-        
+
         if len(bytes) == 16:
             values = bytes.view(dtype=self.format)[0]
             if values[0] != 'CART':
@@ -151,13 +153,13 @@ class A8CartHeader(object):
             self.set_type(self.cart_type)
         else:
             raise InvalidCartHeader
-    
+
     def __str__(self):
         return "%s Cartridge (atari800 type=%d size=%d, %d banks, crc=%d)" % (self.cart_name, self.cart_type, self.cart_size, self.bank_size, self.crc)
-    
+
     def __len__(self):
         return self.header_offset
-    
+
     def to_array(self):
         raw = np.zeros([16], dtype=np.uint8)
         values = raw.view(dtype=self.format)[0]
@@ -201,7 +203,7 @@ class AtariCartImage(DiskImageBase):
 
     def __str__(self):
         return str(self.header)
-    
+
     def read_header(self):
         bytes = self.bytes[0:16]
         try:
@@ -219,7 +221,7 @@ class AtariCartImage(DiskImageBase):
             # force the header to be the specified cart type
             self.header = A8CartHeader()
             self.header.set_type(self.cart_type)
-    
+
     def check_size(self):
         if self.header is None:
             return
@@ -230,7 +232,7 @@ class AtariCartImage(DiskImageBase):
             raise InvalidDiskImage("Cart not multiple of 1K")
         if k != c[2]:
             raise InvalidDiskImage("Image size %d doesn't match cart type %d size %d" % (k, self.cart_type, c[2]))
-    
+
     def parse_segments(self):
         r = self.rawdata
         i = self.header.header_offset

@@ -16,6 +16,7 @@ match_bit_mask = 0x20
 comment_bit_mask = 0x40
 selected_bit_mask = 0x80
 
+
 def get_style_bits(match=False, comment=False, selected=False, data=False, diff=False, user=0):
     """ Return an int value that contains the specified style bits set.
     
@@ -41,6 +42,7 @@ def get_style_bits(match=False, comment=False, selected=False, data=False, diff=
         style_bits |= selected_bit_mask
     return style_bits
 
+
 def get_style_mask(**kwargs):
     """Get the bit mask that, when anded with data, will turn off the
     selected bits
@@ -51,12 +53,12 @@ def get_style_mask(**kwargs):
     else:
         bits &= (0xff ^ user_bit_mask)
     return 0xff ^ bits
-    
+
 
 class SegmentSaver(object):
     export_data_name = "Raw Data"
     export_extensions = [".dat"]
-    
+
     @classmethod
     def encode_data(cls, segment, ui_control):
         return segment.tostring()
@@ -70,27 +72,28 @@ class OrderWrapper(object):
     intermediate layer is needed that defines the __setitem__ method that
     explicitly references the byte ordering in the data array.
     """
+
     def __init__(self, data, byte_order):
         self.np_data = data
         self.base = data.base  # base array for numpy bounds determination
         self.order = byte_order
-    
+
     def __len__(self):
         return np.alen(self.order)
-    
+
     def __and__(self, other):
         return self.np_data[self.order] & other
-    
+
     def __iand__(self, other):
         self.np_data[self.order] &= other
         return self
-    
+
     def __getitem__(self, index):
         return self.np_data[self.order[index]]
-    
+
     def __setitem__(self, index, value):
         self.np_data[self.order[index]] = value
-    
+
     def sub_index(self, index):
         """Return index of index so it can be used directly in a new
         SegmentData object, rather than propagating multiple index lookups by
@@ -108,6 +111,7 @@ class OrderWrapper(object):
 
     def tostring(self):
         return self.np_data[self.order].tostring()
+
 
 class UserExtraData(object):
     def __init__(self):
@@ -146,10 +150,10 @@ class SegmentData(object):
             extra = UserExtraData()
         self.extra = extra
         self.reverse_index_mapping = None
-    
+
     def __str__(self):
         return "SegmentData id=%x indexed=%s data=%s" % (id(self), self.is_indexed, type(self.data))
-    
+
     def __len__(self):
         return len(self.data)
 
@@ -199,10 +203,10 @@ class SegmentData(object):
     @property
     def style_base(self):
         return self.style.np_data if self.is_indexed else self.style.base if self.style.base is not None else self.style
-    
+
     def get_data(self):
         return self.data
-    
+
     def get_style(self):
         return self.style
 
@@ -217,7 +221,7 @@ class SegmentData(object):
         if self.is_indexed:
             return self.style.unindexed
         return self.style
-    
+
     def byte_bounds_offset(self):
         """Return start and end offsets of this segment's data into the
         base array's data.
@@ -234,7 +238,7 @@ class SegmentData(object):
         data_start, data_end = np.byte_bounds(self.data)
         base_start, base_end = np.byte_bounds(self.data.base)
         return int(data_start - base_start), int(data_end - base_start)
-    
+
     def get_raw_index(self, i):
         """Get index into base array's raw data, given the index into this
         segment
@@ -246,7 +250,7 @@ class SegmentData(object):
         data_start, data_end = np.byte_bounds(self.data)
         base_start, base_end = np.byte_bounds(self.data.base)
         return int(data_start - base_start + i)
-    
+
     def get_indexes_from_base(self):
         """Get array of indexes from the base array, as if this raw data were
         indexed. 
@@ -258,7 +262,7 @@ class SegmentData(object):
         else:
             i = self.get_raw_index(0)
         return np.arange(i, i + len(self), dtype=np.uint32)
-    
+
     def __getitem__(self, index):
         if self.is_indexed:
             order = self.data.sub_index(index)
@@ -289,7 +293,7 @@ class SegmentData(object):
             print "copy: start, end =", start, end
             copy = SegmentData(d[start:end], s[start:end])
         return copy
-    
+
     def get_bases(self):
         if self.data.base is None:
             data_base = self.data
@@ -303,15 +307,15 @@ class SegmentData(object):
         index = to_numpy_list(index)
         if self.is_indexed:
             return self[index]
-        
+
         # check to make sure all indexes are valid, raises IndexError if not
         check = self.data[index]
-        
+
         # index needs to be relative to the base array
         base_index = index + self.get_raw_index(0)
         data_base, style_base = self.get_bases()
         return SegmentData(data_base, style_base, self.extra, order=base_index)
-    
+
     def get_reverse_index(self, base_index):
         """Get index into this segment's data given the index into the base data
         
@@ -337,7 +341,7 @@ class DefaultSegment(object):
     savers = [SegmentSaver]
     use_origin_default = False
     can_resize_default = False
-    
+
     def __init__(self, rawdata, start_addr=0, name="All", error=None, verbose_name=None):
         self.start_addr = int(start_addr)  # force python int to decouple from possibly being a numpy datatype
         self.set_raw(rawdata)
@@ -355,13 +359,13 @@ class DefaultSegment(object):
         # Some segments may be resized to contain additional segments not
         # present when the segment was created.
         self.can_resize = self.__class__.can_resize_default
-    
+
     def set_raw(self, rawdata):
         self.rawdata = rawdata
         self.data = rawdata.get_data()
         self.style = rawdata.get_style()
         self._search_copy = None
-    
+
     def get_raw(self):
         return self.rawdata
 
@@ -397,7 +401,7 @@ class DefaultSegment(object):
 
     def replace_data(self, container):
         self.rawdata.replace_arrays(container.rawdata)
-    
+
     def __getstate__(self):
         state = dict()
         for key in ['start_addr', 'error', 'name', 'verbose_name', 'page_size', 'map_width', 'uuid', 'use_origin', 'can_resize']:
@@ -424,7 +428,7 @@ class DefaultSegment(object):
             self.use_origin = self.__class__.use_origin_default
         if not hasattr(self, 'can_resize'):
             self.can_resize = self.__class__.can_resize_default
-    
+
     def reconstruct_raw(self, rawdata):
         start, end = self._rawdata_bounds
         r = rawdata[start:end]
@@ -438,7 +442,7 @@ class DefaultSegment(object):
             pass
         self.set_raw(r)
         self.reconstruct_missing()
-    
+
     def get_parallel_raw_data(self, other):
         """ Get the raw data that is similar to the specified other segment
         """
@@ -463,7 +467,7 @@ class DefaultSegment(object):
             if r:
                 slot = "user style %d" % i
                 mdict[slot] = r
-        
+
         # json serialization doesn't allow int keys, so convert to list of
         # pairs
         mdict["comments"] = self.get_sorted_comments()
@@ -492,7 +496,6 @@ class DefaultSegment(object):
             if slot in e:
                 self.set_style_ranges(e[slot], user=i)
 
-
     def __str__(self):
         if self.start_addr > 0:
             origin = " @ %04x" % (self.start_addr)
@@ -502,7 +505,7 @@ class DefaultSegment(object):
         if self.error:
             s += " " + self.error
         return s
-    
+
     @property
     def verbose_info(self):
         name = self.verbose_name or self.name
@@ -513,32 +516,32 @@ class DefaultSegment(object):
         if self.error:
             s += "  error='%s'" % self.error
         return s
-    
+
     def __len__(self):
         return len(self.rawdata)
-    
+
     def __getitem__(self, index):
         return self.data[index]
-    
+
     def __setitem__(self, index, value):
         self.data[index] = value
         self._search_copy = None
-    
+
     def byte_bounds_offset(self):
         """Return start and end offsets of this segment's data into the
         base array's data
         """
         return self.rawdata.byte_bounds_offset()
-    
+
     def is_valid_index(self, i):
         return i >= 0 and i < len(self)
-    
+
     def get_raw_index(self, i):
         """Get index into base array's raw data, given the index into this
         segment
         """
         return self.rawdata.get_raw_index(i)
-    
+
     def get_index_from_base_index(self, base_index):
         """Get index into this array's data given the index into the base array
         """
@@ -553,13 +556,13 @@ class DefaultSegment(object):
 
     def tostring(self):
         return self.data.tostring()
-    
+
     def get_style_bits(self, **kwargs):
         return get_style_bits(**kwargs)
-    
+
     def get_style_mask(self, **kwargs):
         return get_style_mask(**kwargs)
-    
+
     def set_style_ranges(self, ranges, **kwargs):
         style_bits = self.get_style_bits(**kwargs)
         s = self.style
@@ -567,7 +570,7 @@ class DefaultSegment(object):
             if end < start:
                 start, end = end, start
             s[start:end] |= style_bits
-    
+
     def clear_style_ranges(self, ranges, **kwargs):
         style_mask = self.get_style_mask(**kwargs)
         s = self.style
@@ -575,14 +578,14 @@ class DefaultSegment(object):
             if end < start:
                 start, end = end, start
             s[start:end] &= style_mask
-    
+
     def get_style_ranges(self, **kwargs):
         """Return a list of start, end pairs that match the specified style
         """
         style_bits = self.get_style_bits(**kwargs)
         matches = (self.style & style_bits) == style_bits
         return self.bool_to_ranges(matches)
-    
+
     def get_comment_locations(self, **kwargs):
         style_bits = self.get_style_bits(**kwargs)
         r = self.rawdata.copy()
@@ -655,7 +658,7 @@ class DefaultSegment(object):
             if np.alen(group) > 0:
                 ranges.append((int(group[0]), int(group[-1]) + 1))
         return ranges
-    
+
     def find_next(self, index, **kwargs):
         ranges = self.get_style_ranges(**kwargs)
         if len(ranges) > 0:
@@ -665,7 +668,7 @@ class DefaultSegment(object):
                 match_index = 0
             return ranges[match_index][0]
         return None
-    
+
     def find_previous(self, index, **kwargs):
         ranges = self.get_style_ranges(**kwargs)
         if len(ranges) > 0:
@@ -676,7 +679,7 @@ class DefaultSegment(object):
                 match_index = len(ranges) - 1
             return ranges[match_index][0]
         return None
-    
+
     def get_rect_indexes(self, anchor_start, anchor_end):
         # determine row,col of upper left and lower right of selected
         # rectangle.  The values are inclusive, so ul=(0,0) and lr=(1,2)
@@ -714,7 +717,7 @@ class DefaultSegment(object):
         anchor_end = r2 * bpr + c2
         r2 += 1
         return anchor_start, anchor_end, (r1, c1), (r2, c2)
-    
+
     def set_style_ranges_rect(self, ranges, **kwargs):
         style_bits = self.get_style_bits(**kwargs)
         s = self.style
@@ -741,7 +744,7 @@ class DefaultSegment(object):
             c = c2 - c1
             indexes = np.tile(np.arange(c), r) + np.repeat(np.arange(r) * self.map_width, c) + start
             s[indexes] |= style_bits
-    
+
     def rects_to_ranges(self, rects):
         ranges = []
         bpr = self.map_width
@@ -750,25 +753,25 @@ class DefaultSegment(object):
             end = (r2 - 1) * bpr + c2
             ranges.append((start, end))
         return ranges
-    
+
     def clear_style_bits(self, **kwargs):
         style_mask = self.get_style_mask(**kwargs)
         self.style &= style_mask
-    
+
     def set_user_data(self, ranges, user_index, user_data):
         for start, end in ranges:
             # FIXME: this is slow
             for i in range(start, end):
                 rawindex = self.get_raw_index(i)
                 self.rawdata.extra.user_data[user_index][rawindex] = user_data
-    
+
     def get_user_data(self, index, user_index):
         rawindex = self.get_raw_index(index)
         try:
             return self.rawdata.extra.user_data[user_index][rawindex]
         except KeyError:
             return 0
-    
+
     def get_sorted_user_data(self, user_index):
         d = self.rawdata.extra.user_data[user_index]
         indexes = sorted(d.keys())
@@ -787,7 +790,7 @@ class DefaultSegment(object):
         if start is not None:
             ranges.append([[start, end], current])
         return ranges
-    
+
     def get_style_at_indexes(self, indexes):
         return self.style[indexes]
 
@@ -893,7 +896,7 @@ class DefaultSegment(object):
         self.set_style_ranges(ranges, comment=True)
         for start, end in ranges:
             self.set_comment_at(start, text)
-    
+
     def get_comment(self, index):
         rawindex = self.get_raw_index(index)
         return self.rawdata.extra.comments.get(rawindex, "")
@@ -904,19 +907,19 @@ class DefaultSegment(object):
             del self.rawdata.extra.comments[rawindex]
         except KeyError:
             pass
-    
+
     def get_first_comment(self, ranges):
         start = reduce(min, [r[0] for r in ranges])
         rawindex = self.get_raw_index(start)
         return self.rawdata.extra.comments.get(rawindex, "")
-    
+
     def clear_comment(self, ranges):
         self.clear_style_ranges(ranges, comment=True)
         for start, end in ranges:
             rawindex = self.get_raw_index(start)
             if rawindex in self.rawdata.extra.comments:
                 del self.rawdata.extra.comments[rawindex]
-    
+
     def get_sorted_comments(self):
         return sorted([[k, v] for k, v in self.rawdata.extra.comments.iteritems()])
 
@@ -927,19 +930,19 @@ class DefaultSegment(object):
         for k, v in self.rawdata.extra.comments.iteritems():
             if k >= start_index and k < end_index:
                 yield self.rawdata.get_reverse_index(k), v
-    
+
     def label(self, index, lower_case=True):
         if lower_case:
             return "%04x" % (index + self.start_addr)
         else:
             return "%04X" % (index + self.start_addr)
-    
+
     @property
     def search_copy(self):
         if self._search_copy is None:
             self._search_copy = self.data.tostring()
         return self._search_copy
-    
+
     def compare_segment(self, other_segment):
         self.clear_style_bits(diff=True)
         diff = self.rawdata.data != other_segment.rawdata.data
@@ -953,20 +956,20 @@ class DefaultSegment(object):
 class EmptySegment(DefaultSegment):
     def __init__(self, rawdata, name="", error=None):
         DefaultSegment.__init__(self, rawdata, 0, name, error)
-    
+
     def __str__(self):
         s = "%s (empty file)" % (self.name, )
         if self.error:
             s += " " + self.error
         return s
-    
+
     @property
     def verbose_info(self):
         s = "%s (empty file)" % (self.name, )
         if self.error:
             s += "  error='%s'" % self.error
         return s
-    
+
     def __len__(self):
         return 0
 
@@ -977,14 +980,14 @@ class ObjSegment(DefaultSegment):
         self.metadata_start = metadata_start
         self.data_start = data_start
         self.use_origin = True
-    
+
     def __str__(self):
         count = len(self)
         s = "%s $%04x-$%04x ($%04x @ $%04x)" % (self.name, self.start_addr, self.start_addr + count, count, self.data_start)
         if self.error:
             s += " " + self.error
         return s
-    
+
     @property
     def verbose_info(self):
         count = len(self)
@@ -1007,7 +1010,7 @@ class RawSectorsSegment(DefaultSegment):
         self.page_size = sector_size
         self.first_sector = first_sector
         self.num_sectors = num_sectors
-    
+
     def __str__(self):
         if self.num_sectors > 1:
             s = "%s (sectors %d-%d)" % (self.name, self.first_sector, self.first_sector + self.num_sectors - 1)
@@ -1016,7 +1019,7 @@ class RawSectorsSegment(DefaultSegment):
         if self.error:
             s += " " + self.error
         return s
-    
+
     @property
     def verbose_info(self):
         name = self.verbose_name or self.name
@@ -1028,7 +1031,7 @@ class RawSectorsSegment(DefaultSegment):
         if self.error:
             s += "  error='%s'" % self.error
         return s
-    
+
     def label(self, index, lower_case=True):
         boot_size = self.num_boot_sectors * self.boot_sector_size
         if index >= boot_size:
@@ -1055,6 +1058,7 @@ class RawTrackSectorSegment(RawSectorsSegment):
             return "t%02ds%02d:%02x" % (t, s, byte)
         return "t%02ds%02d:%02X" % (t, s, byte)
 
+
 def interleave_indexes(segments, num_bytes):
     num_segments = len(segments)
     size = len(segments[0])
@@ -1073,6 +1077,7 @@ def interleave_indexes(segments, num_bytes):
             interleave[start::factor] = order[i::num_bytes]
             start += 1
     return interleave
+
 
 def interleave_segments(segments, num_bytes):
     new_index = interleave_indexes(segments, num_bytes)

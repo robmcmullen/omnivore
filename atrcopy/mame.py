@@ -34,7 +34,7 @@ class MameZipImage(DiskImageBase):
 
     def relaxed_check(self):
         pass
-    
+
     def check_zip_size(self, zf):
         for item in zf.infolist():
             _, r = divmod(item.file_size, 16)
@@ -56,7 +56,7 @@ class MameZipImage(DiskImageBase):
 
     def check_size(self):
         pass
-    
+
     def parse_segments(self):
         r = self.rawdata
         self.segments = []

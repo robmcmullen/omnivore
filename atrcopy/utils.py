@@ -137,6 +137,7 @@ class Dirent(object):
     """Abstract base class for a directory entry
 
     """
+
     def __init__(self, file_num=0):
         self.file_num = file_num
 

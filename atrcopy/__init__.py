@@ -32,7 +32,7 @@ def process(image, dirent, options):
             outfilename = "%s%s.XEX" % (dirent.filename, dirent.ext)
     if options.lower:
         outfilename = outfilename.lower()
-    
+
     if options.dry_run:
         action = "DRY_RUN: %s" % action
         skip = True
@@ -44,6 +44,7 @@ def process(image, dirent, options):
                 fh.write(bytes)
     else:
         print dirent
+
 
 def find_diskimage(filename):
     try:
@@ -72,6 +73,7 @@ def find_diskimage(filename):
         parser.image.ext = ""
         return parser
 
+
 def extract_files(image, files):
     for name in files:
         try:
@@ -84,6 +86,7 @@ def extract_files(image, files):
             data = image.get_file(dirent)
             with open(dirent.filename, "wb") as fh:
                 fh.write(data)
+
 
 def save_file(image, name, filetype, data):
     try:
@@ -114,6 +117,7 @@ def add_files(image, files):
     if changed:
         image.save()
 
+
 def remove_files(image, files):
     changed = False
     for name in files:
@@ -129,6 +133,7 @@ def remove_files(image, files):
     if changed:
         image.save()
 
+
 def list_files(image, files):
     files = set(files)
     for dirent in image.files:
@@ -136,6 +141,7 @@ def list_files(image, files):
             print dirent
             if options.metadata:
                 print dirent.extra_metadata(image)
+
 
 def assemble(image, source_files, data_files):
     if source_files:
@@ -170,6 +176,7 @@ def assemble(image, source_files, data_files):
     if changed:
         image.save()
 
+
 def shred_image(image, value=0):
     print "shredding: free sectors from %s filled with %d" % (image, value)
     if not options.dry_run:
@@ -182,7 +189,7 @@ def run():
     import argparse
 
     global options
-    
+
     parser = argparse.ArgumentParser(description="Manipulate files on several types of 8-bit computer disk images")
     parser.add_argument("-v", "--verbose", default=0, action="count")
     parser.add_argument("--dry-run", action="store_true", default=False, help="don't perform operation, just show what would have happened")
@@ -214,7 +221,7 @@ def run():
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.INFO)
-    
+
     file_list = []
     if options.add or options.extract or options.delete:
         image = options.files.pop()

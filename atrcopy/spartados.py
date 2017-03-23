@@ -30,7 +30,7 @@ class SpartaDosDirent(AtariDosDirent):
             # rather the boot sector so it must be specified here.
             self.starting_sector = starting_sector
             self.is_sane = self.sanity_check(image)
-    
+
     def __str__(self):
         output = "o" if self.opened_output else "."
         subdir = "D" if self.is_dir else "."
@@ -39,7 +39,7 @@ class SpartaDosDirent(AtariDosDirent):
         locked = "*" if self.locked else " "
         flags = "%s%s%s%s%s %03d" % (output, subdir, in_use, deleted, locked, self.starting_sector)
         return "File #%-2d (%s) %-8s%-3s  %8d  %s" % (self.file_num, flags, self.filename, self.ext, self.length, self.str_timestamp)
-    
+
     @property
     def verbose_info(self):
         flags = []
@@ -49,11 +49,11 @@ class SpartaDosDirent(AtariDosDirent):
         if self.deleted: flags.append("DEL")
         if self.locked: flags.append("LOCK")
         return "flags=[%s]" % ", ".join(flags)
-    
+
     def parse_raw_dirent(self, image, bytes):
         if bytes is None:
             return
-        values = bytes.view(dtype=self.format)[0]  
+        values = bytes.view(dtype=self.format)[0]
         flag = values['status']
         self.flag = flag
         self.locked = (flag&0x1) > 0
@@ -73,14 +73,14 @@ class SpartaDosDirent(AtariDosDirent):
         self.date_array = tuple(bytes[17:20])
         self.time_array = tuple(bytes[20:23])
         self.is_sane = self.sanity_check(image)
-    
+
     def sanity_check(self, image):
         if not self.in_use:
             return True
         if not image.header.sector_is_valid(self.starting_sector):
             return False
         return True
-    
+
     @property
     def str_timestamp(self):
         str_date = "%d/%d/%d" % self.date_array
@@ -94,7 +94,7 @@ class SpartaDosDirent(AtariDosDirent):
         self.sector_map = image.get_sector_map(self.starting_sector)
         self.sector_map_index = 0
         self.length_remaining = self.length
-    
+
     def read_sector(self, image):
         sector = self.sector_map[self.sector_map_index]
         if sector == 0:
@@ -114,10 +114,10 @@ class SpartaDosDiskImage(AtariDosDiskImage):
         self.root_dir_dirent = None
         self.fs_version = 0
         AtariDosDiskImage.__init__(self, *args, **kwargs)
-    
+
     def __str__(self):
         return "%s Sparta DOS Format: %d usable sectors (%d free), %d files" % (self.header, self.total_sectors, self.unused_sectors, len(self.files))
-    
+
     boot_record_type = np.dtype([
         ('unused', 'u1'),
         ('num_boot', 'u1'),
@@ -137,12 +137,12 @@ class SpartaDosDiskImage(AtariDosDiskImage):
         ('sector_size','u1'),
         ('fs_version','u1'),
         ])
-    
+
     sector_size_map = {0: 256,
                        1: 512,
                        0x80: 128,
                        }
-    
+
     def get_boot_sector_info(self):
         data, style = self.get_sectors(1)
         values = data[0:33].view(dtype=self.boot_record_type)[0]
@@ -163,7 +163,7 @@ class SpartaDosDiskImage(AtariDosDiskImage):
 
     def get_vtoc(self):
         pass
-    
+
     def get_directory(self):
         self.files = []
         dir_map = self.get_sector_map(self.root_dir)
@@ -177,7 +177,7 @@ class SpartaDosDiskImage(AtariDosDiskImage):
             dirent = SpartaDosDirent(self, filenum + 1, s[i:i + 23])
             self.files.append(dirent)
         self.root_dir_dirent = d
-    
+
     def get_boot_segments(self):
         segments = []
         num = min(self.num_boot, 1)
@@ -191,7 +191,7 @@ class SpartaDosDiskImage(AtariDosDiskImage):
             code = ObjSegment(r[43:], 0, 0, addr + 43, addr + len(r), name="Boot Code")
             segments.extend([header, code])
         return segments
-    
+
     def get_vtoc_segments(self):
         r = self.rawdata
         segments = []
@@ -206,7 +206,7 @@ class SpartaDosDiskImage(AtariDosDiskImage):
         segment = RawSectorsSegment(r[start:start+count], self.first_bitmap, self.num_bitmap, count, 0, 0, self.sector_size, name="Bitmap")
         segments.append(segment)
         return segments
-    
+
     def get_sector_map(self, sector):
         m = None
         while sector > 0:
@@ -217,7 +217,7 @@ class SpartaDosDiskImage(AtariDosDiskImage):
             else:
                 m = np.hstack((m, b[4:].view(dtype='<u2')))
         return m
-    
+
     def get_directory_segments(self):
         dirent = self.root_dir_dirent
         segment = self.get_file_segment(dirent)
@@ -225,7 +225,7 @@ class SpartaDosDiskImage(AtariDosDiskImage):
         segment.map_width = 23
         segments = [segment]
         return segments
-    
+
     def get_file_segment(self, dirent):
         byte_order = []
         dirent.start_read(self)

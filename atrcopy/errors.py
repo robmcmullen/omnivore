@@ -1,11 +1,14 @@
 class AtrError(RuntimeError):
     pass
 
+
 class InvalidAtrHeader(AtrError):
     pass
 
+
 class InvalidCartHeader(AtrError):
     pass
+
 
 class InvalidDiskImage(AtrError):
     """ Disk image is not recognized by a parser.
@@ -15,6 +18,7 @@ class InvalidDiskImage(AtrError):
     """
     pass
 
+
 class UnsupportedDiskImage(AtrError):
     """ Disk image is recognized by a parser but it isn't supported yet.
 
@@ -22,32 +26,42 @@ class UnsupportedDiskImage(AtrError):
     """
     pass
 
+
 class InvalidDirent(AtrError):
     pass
+
 
 class LastDirent(AtrError):
     pass
 
+
 class InvalidFile(AtrError):
     pass
+
 
 class FileNumberMismatchError164(InvalidFile):
     pass
 
+
 class ByteNotInFile166(InvalidFile):
     pass
+
 
 class InvalidBinaryFile(InvalidFile):
     pass
 
+
 class InvalidSegmentParser(AtrError):
     pass
+
 
 class NoSpaceInDirectory(AtrError):
     pass
 
+
 class NotEnoughSpaceOnDisk(AtrError):
     pass
+
 
 class FileNotFound(AtrError):
     pass
