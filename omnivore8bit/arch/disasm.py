@@ -306,7 +306,7 @@ class BaseDisassembler(object):
         pc = self.segment.start_addr
         for line, hex_bytes, code, comment, num_bytes in self.iter_row_text():
             if comment:
-                code = "%-30s; %s" % (code, comment)
+                code = "%-30s; %s" % (code, comment.rstrip())
             if ".byte" in code:
                 count = 0
                 hex_bytes = hex_bytes.upper()
