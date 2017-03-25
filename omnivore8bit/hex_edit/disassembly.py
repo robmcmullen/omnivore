@@ -52,7 +52,7 @@ class DisassemblyTable(ByteGridTable):
         self.segment = segment = self.editor.segment
         self.lines = None
         self.index_to_row = []
-        self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case, self.segment.use_origin)
+        self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
         self.disassembler.add_chunk_processor("data", 1)
         self.disassembler.add_chunk_processor("antic_dl", 2)
         self.disassembler.add_chunk_processor("jumpman_level", 3)
@@ -359,7 +359,7 @@ class DisassemblyPanel(ByteGrid):
 
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.
-        
+
         Can use this to override the default handler.  Return True if the grid
         should be updated, or False if the value is invalid or the grid will
         be updated some other way.

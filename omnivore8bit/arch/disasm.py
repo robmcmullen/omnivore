@@ -67,7 +67,7 @@ class BaseDisassembler(object):
 
     cached_miniassemblers = {}
 
-    def __init__(self, asm_syntax=None, memory_map=None, hex_lower=True, mnemonic_lower=False, use_labels=True):
+    def __init__(self, asm_syntax=None, memory_map=None, hex_lower=True, mnemonic_lower=False):
         if asm_syntax is None:
             asm_syntax = self.default_assembler
         self.hex_lower = hex_lower
@@ -89,7 +89,6 @@ class BaseDisassembler(object):
         self.comment_char = case_func(asm_syntax['comment char'])
         self.fast = udis_fast.DisassemblerWrapper(self.cpu, fast=True, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower)
         self.memory_map = memory_map if memory_map is not None else EmptyMemoryMap()
-        self.use_labels = use_labels
         self.segment = None
         self.info = None
 
@@ -121,6 +120,7 @@ class BaseDisassembler(object):
         self.start_addr = segment.start_addr
         self.end_addr = self.start_addr + len(segment)
         self.info = fast_disassemble_segment(self.fast, segment)
+        self.use_labels = self.start_addr > 0
         return self.info
 
     def get_comments(self, index, line=None):
@@ -243,7 +243,7 @@ class BaseDisassembler(object):
 
     def iter_row_text(self, start=0, end=-1, max_bytes_per_line=8):
         """iterates over the rows representing the disassembly
-        
+
         Return information designed to be used by program list formatters.
         """
         if end < 0:
@@ -279,7 +279,7 @@ class BaseDisassembler(object):
 
     def get_disassembled_text(self, start=0, end=-1):
         """Returns list of lines representing the disassembly
-        
+
         Raises IndexError if the disassembly hasn't reached the index yet
         """
         lines = []
@@ -297,7 +297,7 @@ class BaseDisassembler(object):
 
     def get_atasm_lst_text(self):
         """Returns list of lines representing the disassembly
-        
+
         Raises IndexError if the disassembly hasn't reached the index yet
         """
         lines = [""]

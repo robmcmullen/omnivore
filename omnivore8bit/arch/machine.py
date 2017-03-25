@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 class Machine(HasTraits):
     """ Collection of classes that identify a machine: processor, display, etc.
-    
+
     """
 
     # Traits
@@ -621,7 +621,7 @@ class Machine(HasTraits):
     # Utility methods
 
     def get_disassembler(self, hex_lower, mnemonic_lower, use_labels=True):
-        return self.disassembler(self.assembler, self.memory_map, hex_lower, mnemonic_lower, use_labels)
+        return self.disassembler(self.assembler, self.memory_map, hex_lower, mnemonic_lower)
 
     def get_nop(self):
         return self.disassembler.get_nop()
