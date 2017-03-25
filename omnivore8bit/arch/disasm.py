@@ -247,7 +247,7 @@ class BaseDisassembler(object):
         Return information designed to be used by program list formatters.
         """
         if end < 0:
-            end = len(self.info.index_to_row) - 1
+            end = len(self.info.index_to_row)
 
         start_row = self.info.index_to_row[start]
         end_row = self.info.index_to_row[end - 1] # end is python style range, want actual last byte
