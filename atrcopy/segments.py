@@ -19,9 +19,9 @@ selected_bit_mask = 0x80
 
 def get_style_bits(match=False, comment=False, selected=False, data=False, diff=False, user=0):
     """ Return an int value that contains the specified style bits set.
-    
+
     Available styles for each byte are:
-    
+
     match: part of the currently matched search
     comment: user commented area
     selected: selected region
@@ -67,7 +67,7 @@ class SegmentSaver(object):
 class OrderWrapper(object):
     """Wrapper for numpy data so that manipulations can use normal numpy syntax
     and still affect the data according to the byte ordering.
-    
+
     Numpy's fancy indexing can't be used for setting set values, so this
     intermediate layer is needed that defines the __setitem__ method that
     explicitly references the byte ordering in the data array.
@@ -124,7 +124,7 @@ class UserExtraData(object):
 class SegmentData(object):
     def __init__(self, data, style=None, extra=None, debug=False, order=None):
         """Storage for raw data
-        
+
         order is a list into the base array's data; each item in the list is an
         index of the base array. E.g. if the base array is the 20 element list
         containing the data [100, 101, ... 119] and the order is [10, 0, 5, 2],
@@ -225,7 +225,7 @@ class SegmentData(object):
     def byte_bounds_offset(self):
         """Return start and end offsets of this segment's data into the
         base array's data.
-        
+
         This ignores the byte order index. Arrays using the byte order index
         will have the entire base array's raw data.
         """
@@ -253,7 +253,7 @@ class SegmentData(object):
 
     def get_indexes_from_base(self):
         """Get array of indexes from the base array, as if this raw data were
-        indexed. 
+        indexed.
         """
         if self.is_indexed:
             return np.copy(self.order[i])
@@ -318,7 +318,7 @@ class SegmentData(object):
 
     def get_reverse_index(self, base_index):
         """Get index into this segment's data given the index into the base data
-        
+
         Raises IndexError if the base index doesn't map to anything in this
         segment's data
         """
@@ -339,7 +339,6 @@ class SegmentData(object):
 
 class DefaultSegment(object):
     savers = [SegmentSaver]
-    use_origin_default = False
     can_resize_default = False
 
     def __init__(self, rawdata, start_addr=0, name="All", error=None, verbose_name=None):
@@ -351,10 +350,6 @@ class DefaultSegment(object):
         self.page_size = -1
         self.map_width = 40
         self.uuid = str(uuid.uuid4())
-
-        # Some segments may not have a standard place in memory, so this flag
-        # can be used to skip the memory map lookup when displaying disassembly
-        self.use_origin = self.__class__.use_origin_default
 
         # Some segments may be resized to contain additional segments not
         # present when the segment was created.
@@ -404,7 +399,7 @@ class DefaultSegment(object):
 
     def __getstate__(self):
         state = dict()
-        for key in ['start_addr', 'error', 'name', 'verbose_name', 'page_size', 'map_width', 'uuid', 'use_origin', 'can_resize']:
+        for key in ['start_addr', 'error', 'name', 'verbose_name', 'page_size', 'map_width', 'uuid', 'can_resize']:
             state[key] = getattr(self, key)
         r = self.rawdata
         state['_rawdata_bounds'] = list(r.byte_bounds_offset())
@@ -424,8 +419,6 @@ class DefaultSegment(object):
         """
         if not hasattr(self, 'uuid'):
             self.uuid = str(uuid.uuid4())
-        if not hasattr(self, 'use_origin'):
-            self.use_origin = self.__class__.use_origin_default
         if not hasattr(self, 'can_resize'):
             self.can_resize = self.__class__.can_resize_default
 
@@ -979,7 +972,6 @@ class ObjSegment(DefaultSegment):
         DefaultSegment.__init__(self, rawdata, start_addr, name, **kwargs)
         self.metadata_start = metadata_start
         self.data_start = data_start
-        self.use_origin = True
 
     def __str__(self):
         count = len(self)
