@@ -309,6 +309,8 @@ $DEFLIST
     instructions += strpos
     c_pc = pc
     c_last = last
+    if c_last > 0xffff:
+        c_last = 0x10000
     max_rows = storage_wrapper.num_rows
     if hex_lower:
         hexdigits_for_case = hexdigits_lower
