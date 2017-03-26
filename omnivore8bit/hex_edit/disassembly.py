@@ -5,7 +5,7 @@ import numpy as np
 import wx
 
 from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
-from udis.udis_fast import flag_jump, flag_branch, flag_return, flag_store, flag_undoc, flag_data_bytes, TraceInfo
+from udis.udis_fast import TraceInfo
 
 from omnivore8bit.ui.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 
@@ -57,6 +57,7 @@ class DisassemblyTable(ByteGridTable):
         self.disassembler.add_chunk_processor("antic_dl", 2)
         self.disassembler.add_chunk_processor("jumpman_level", 3)
         self.disassembler.add_chunk_processor("jumpman_harvest", 4)
+        self.highlight_flags = self.disassembler.highlight_flags
         self.hex_lower = editor.task.hex_grid_lower_case
         if self.hex_lower:
             self.fmt_hex2 = "%02x"
@@ -192,7 +193,7 @@ class DisassemblyTable(ByteGridTable):
     get_value_style_upper = get_value_style_lower
 
     def get_style_override(self, row, col, style):
-        if self.lines[row].flag & flag_undoc:
+        if self.lines[row].flag & self.highlight_flags:
             return style|diff_bit_mask
         return style
 

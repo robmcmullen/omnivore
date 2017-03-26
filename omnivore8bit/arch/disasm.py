@@ -56,6 +56,7 @@ class BaseDisassembler(object):
     read_instructions = set()
     write_instructions = set()
     rw_modes = set()
+    highlight_flags = 0
     default_assembler = {
         'comment char': ';',
         'origin': '*=',
@@ -341,9 +342,7 @@ class Undocumented6502Disassembler(Basic6502Disassembler):
 
 class Flagged6502Disassembler(Undocumented6502Disassembler):
     name = "6502 (highlighted undocumented opcodes)"
-
-    def get_flag(self, flag):
-        return flag & disasm.und
+    highlight_flags = udis_fast.flag_undoc
 
 
 class Basic65C02Disassembler(Basic6502Disassembler):
