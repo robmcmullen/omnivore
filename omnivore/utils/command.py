@@ -243,6 +243,7 @@ class UndoInfo(object):
 
 class Command(object):
     short_name = None
+    pretty_name = "<unnamed command>"
     serialize_order = [
         ]
 
@@ -251,7 +252,7 @@ class Command(object):
         self.last_flags = None
 
     def __str__(self):
-        return "<unnamed command>"
+        return self.pretty_name
 
     def get_serialized_name(self):
         if self.short_name is None:
@@ -278,13 +279,11 @@ class Batch(Command):
     """A batch is immutable once created, so there's no need to allow
     intermediate index points.
     """
+    pretty_name = "<batch>"
 
     def __init__(self):
         Command.__init__(self)
         self.commands = []
-
-    def __str__(self):
-        return "<batch>"
 
     def get_recordable_command(self):
         return self
@@ -313,12 +312,11 @@ class Batch(Command):
 
 
 class Overlay(Command):
+    pretty_name = "<overlay>"
+
     def __init__(self):
         Command.__init__(self)
         self.last_command = None
-
-    def __str__(self):
-        return "<overlay>"
 
     def get_recordable_command(self):
         return self.last_command

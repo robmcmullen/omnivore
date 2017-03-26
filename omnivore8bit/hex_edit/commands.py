@@ -210,9 +210,6 @@ class ClearCommentCommand(SetCommentCommand):
     def __init__(self, segment, ranges):
         SetCommentCommand.__init__(self, segment, ranges, "")
 
-    def __str__(self):
-        return self.pretty_name
-
     def change_comments(self):
         self.segment.clear_comment(self.ranges)
 
@@ -238,9 +235,6 @@ class SetValuesAtIndexesCommand(Command):
         self.style = style
         self.relative_comment_indexes = comment_indexes
         self.comments = comments
-
-    def __str__(self):
-        return "%s" % self.pretty_name
 
     def get_data(self, orig):
         raise NotImplementedError
@@ -322,9 +316,6 @@ class SetRangeCommand(Command):
         Command.__init__(self)
         self.segment = segment
         self.ranges = tuple(ranges)
-
-    def __str__(self):
-        return "%s" % self.pretty_name
 
     def get_data(self, orig):
         raise NotImplementedError
