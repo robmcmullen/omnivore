@@ -720,6 +720,10 @@ class BootDiskImage(AtariDosDiskImage):
 
 
 def get_xex(segments, runaddr=None):
+    segments_copy = [s for s in segments]  # don't affect the original list!
+    main_segment = None
+    sub_segments = []
+    data_style = get_style_bits(data=True)
     total = 2
     runad = False
     for s in segments:
@@ -733,19 +737,28 @@ def get_xex(segments, runaddr=None):
         words[0] = runaddr
         r = SegmentData(words.view(dtype=np.uint8))
         s = DefaultSegment(r, 0x2e0)
-        segments[0:0] = [s]
+        segments_copy[0:0] = [s]
         total += 6
     bytes = np.zeros([total], dtype=np.uint8)
-    bytes[0:2] = 0xff # FFFF header
+    rawdata = SegmentData(bytes)
+    main_segment = DefaultSegment(rawdata)
+    main_segment.data[0:2] = 0xff  # FFFF header
+    main_segment.style[0:2] = data_style
     i = 2
-    for s in segments:
-        words = bytes[i:i+4].view(dtype='<u2')
+    for s in segments_copy:
+        # create new sub-segment inside new main segment that duplicates the
+        # original segment's data/style
+        new_s = DefaultSegment(rawdata[i:i+4+len(s)], s.start_addr)
+        words = new_s.data[0:4].view(dtype='<u2')
         words[0] = s.start_addr
         words[1] = s.start_addr + len(s) - 1
-        i += 4
-        bytes[i:i + len(s)] = s[:]
-        i += len(s)
-    return bytes
+        new_s.style[0:4] = data_style
+        new_s.data[4:4+len(s)] = s[:]
+        new_s.style[4:4+len(s)] = s.style[:]
+        i += 4 + len(s)
+        new_s.copy_user_data(s, 4)
+        sub_segments.append(new_s)
+    return main_segment, sub_segments
 
 
 def add_atr_header(bytes):

@@ -924,6 +924,15 @@ class DefaultSegment(object):
             if k >= start_index and k < end_index:
                 yield self.rawdata.get_reverse_index(k), v
 
+    def copy_user_data(self, source, index_offset=0):
+        """Copy comments and other user data from the source segment to this
+        segment.
+
+        The index offset is the offset into self based on the index of source.
+        """
+        for index, comment in source.iter_comments_in_segment():
+            self.set_comment_at(index + index_offset, comment)
+
     def label(self, index, lower_case=True):
         if lower_case:
             return "%04x" % (index + self.start_addr)

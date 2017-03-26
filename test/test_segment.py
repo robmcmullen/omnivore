@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pytest
 
-from atrcopy import DefaultSegment, SegmentData, get_xex, interleave_segments, user_bit_mask
+from atrcopy import DefaultSegment, SegmentData, get_xex, interleave_segments, user_bit_mask, diff_bit_mask
 
 
 def get_indexed(segment, num, scale):
@@ -27,14 +27,23 @@ class TestSegment1(object):
         
         for indexes, stuff in items:
             s = [self.segments[i] for i in indexes]
-            bytes = get_xex(s, 0xbeef)
-            assert tuple(bytes[0:2]) == (0xff, 0xff)
+            s[1].style[0:500] = diff_bit_mask
+            s[1].set_comment_at(0, "comment 0")
+            s[1].set_comment_at(10, "comment 10")
+            s[1].set_comment_at(100, "comment 100")
+            print list(s[1].iter_comments_in_segment())
+            seg, subseg = get_xex(s, 0xbeef)
+            assert tuple(seg.data[0:2]) == (0xff, 0xff)
             # 2 bytes for the ffff
             # 4 bytes per segment for start, end address
             # An extra segment has been inserted for the run address!
-            size = reduce(lambda a, b:a + 4 + len(b), s, 0)
-            print size, len(bytes)
-            assert len(bytes) == 2 + size
+            size = reduce(lambda a, b:a + len(b), subseg, 0)
+            assert len(seg) == 2 + size
+            print id(s[1]), list(s[1].iter_comments_in_segment())
+            print id(subseg[2]), list(subseg[2].iter_comments_in_segment())
+            for i, c in s[1].iter_comments_in_segment():
+                assert c == subseg[2].get_comment(i + 4)
+            assert np.all(s[1].style[:] == subseg[2].style[4:])
 
     def test_copy(self):
         for s in self.segments:
@@ -397,16 +406,16 @@ class TestResize(object):
 
 
 if __name__ == "__main__":
-    t = TestIndexed()
-    t.setup()
-    t.test_indexed()
-    t.test_indexed_sub()
-    t.test_interleave()
+    # t = TestIndexed()
+    # t.setup()
+    # t.test_indexed()
+    # t.test_indexed_sub()
+    # t.test_interleave()
     t = TestSegment1()
     t.setup()
     t.test_xex()
-    t.test_copy()
-    t = TestComments()
-    t.setup()
-    t.test_split_data_at_comment()
-    t.test_restore_comments()
+    # t.test_copy()
+    # t = TestComments()
+    # t.setup()
+    # t.test_split_data_at_comment()
+    # t.test_restore_comments()
