@@ -63,17 +63,17 @@ class SelectionMixin(object):
                 editor.select_range(editor.anchor_initial_start_index, index2, extend=True)
                 update = True
         else:
-            if editor.anchor_start_index <= index1:
+            if index2 >= editor.anchor_initial_end_index:
                 if selecting_rows:
                     index1, index2 = self.get_start_end_index_of_row(r)
                 if index2 != editor.anchor_end_index:
                     editor.select_range(editor.anchor_initial_start_index, index2, extend=self.multi_select_mode)
                     update = True
-            else:
+            elif index1 <= editor.anchor_initial_start_index:
                 if selecting_rows:
                     index1, index2 = self.get_start_end_index_of_row(r)
-                if index1 != editor.anchor_end_index:
-                    editor.select_range(editor.anchor_initial_end_index, index1, extend=self.multi_select_mode)
+                if index1 != editor.anchor_start_index:
+                    editor.select_range(index1, editor.anchor_initial_end_index, extend=self.multi_select_mode)
                     update = True
         if update:
             editor.cursor_index = index1
