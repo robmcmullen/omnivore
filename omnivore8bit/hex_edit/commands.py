@@ -775,3 +775,34 @@ class ClearTraceCommand(ChangeStyleCommand):
 
     def update_can_trace(self, editor):
         editor.can_trace = False
+
+
+class SetSegmentOriginCommand(Command):
+    short_name = "setsegorg"
+    pretty_name = "Segment Origin"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('origin', 'int'),
+            ]
+
+    def __init__(self, segment, origin):
+        Command.__init__(self)
+        self.segment = segment
+        self.origin = origin
+
+    def __str__(self):
+        return "%s: $%04x" % (self.pretty_name, self.origin)
+
+    def perform(self, editor):
+        self.undo_info = undo = UndoInfo()
+        old_origin = self.segment.start_addr
+        self.segment.start_addr = self.origin
+        undo.data = (old_origin, )
+        undo.flags.metadata_dirty = True
+        undo.flags.rebuild_ui = True
+        return undo
+
+    def undo(self, editor):
+        old_origin, = self.undo_info.data
+        self.segment.start_addr = old_origin
+        return self.undo_info

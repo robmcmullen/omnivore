@@ -812,10 +812,8 @@ class SetSegmentOriginAction(EditorAction):
         segment = e.document.segments[self.segment_number]
         org = prompt_for_hex(e.window.control, "Enter origin address for %s\n(default hex, prefix with # for decimal, %% for binary)" % segment.name, "Set Segment Origin")
         if org is not None:
-            segment.start_addr = org
-            e.update_segments_ui()
-            e.metadata_dirty = True
-            e.reconfigure_panes()
+            cmd = SetSegmentOriginCommand(segment, org)
+            e.process_command(cmd)
 
 
 class SaveAsXEXAction(EditorAction):
