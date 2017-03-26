@@ -56,7 +56,7 @@ class ImageEditor(FrameworkEditor):
     def copy_view_properties(self, old_editor):
         pass
 
-    def update_panes(self):
+    def rebuild_ui(self):
         self.reconfigure_panes()
 
     def reconfigure_panes(self):

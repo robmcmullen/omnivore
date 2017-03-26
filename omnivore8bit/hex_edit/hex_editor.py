@@ -346,7 +346,7 @@ class HexEditor(FrameworkEditor):
         where_comments = np.asarray(metadata[1], dtype=np.int32)
         return style, where_comments, metadata[2]
 
-    def update_panes(self):
+    def rebuild_ui(self):
         self.segment = self.document.segments[self.segment_number]
         self.reconfigure_panes()
         self.update_segments_ui()
@@ -497,7 +497,7 @@ class HexEditor(FrameworkEditor):
 
     def set_segment_parser(self, parser):
         self.find_segment_parser([parser])
-        self.update_panes()
+        self.rebuild_ui()
 
     def view_segment_set_width(self, segment):
         pass

@@ -193,8 +193,25 @@ class StatusFlags(object):
         # set cursor index to position
         self.cursor_index = None
 
+        # set if document properties have changed, but not the actual data
+        self.metadata_dirty = None
+
+        # set if user interface needs to be updated (very heavyweight call!)
+        self.rebuild_ui = None
+
         for flags in args:
             self.add_flags(flags)
+
+    def __str__(self):
+        flags = []
+        for name in dir(self):
+            if name.startswith("_"):
+                continue
+            val = getattr(self, name)
+            if val is None or not val or hasattr(val, "__call__"):
+                continue
+            flags.append("%s=%s" % (name, val))
+        return ", ".join(flags)
 
     def add_flags(self, flags, cmd=None):
         if flags.message is not None:
@@ -213,6 +230,10 @@ class StatusFlags(object):
             self.refresh_needed = True
         if flags.select_range:
             self.select_range = True
+        if flags.metadata_dirty:
+            self.metadata_dirty = True
+        if flags.rebuild_ui:
+            self.rebuild_ui = True
 
         # Expand the index range to include the new range specified in flags
         if flags.index_range is not None:

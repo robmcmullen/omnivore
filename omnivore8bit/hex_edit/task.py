@@ -94,7 +94,7 @@ class HexEditTask(FrameworkTask):
     def _active_editor_changed(self, editor):
         # Make sure it's a valid document before refreshing
         if editor is not None and editor.document.segments:
-            editor.update_panes()
+            editor.rebuild_ui()
 
     ###########################################################################
     # 'FrameworkTask' interface.

@@ -245,7 +245,7 @@ class FrameworkEditor(Editor):
             self.copy_view_properties(old_editor)
         else:
             self.init_view_properties()
-        self.update_panes()
+        self.rebuild_ui()
         self.document.undo_stack_changed = True
         self.task.document_changed = self.document
 
@@ -518,7 +518,7 @@ class FrameworkEditor(Editor):
     def made_current_active_editor(self):
         pass
 
-    def update_panes(self):
+    def rebuild_ui(self):
         """Called when each pane should be rebuilt from the (possibly new)
         document, or when the document formatting or structure has changed.
         """
@@ -757,6 +757,7 @@ class FrameworkEditor(Editor):
         """Perform the UI updates given the StatusFlags or BatchFlags flags
         
         """
+        log.debug("processing flags: %s" % str(flags))
         d = self.document
         visible_range = False
         do_refresh = flags.refresh_needed
@@ -780,6 +781,9 @@ class FrameworkEditor(Editor):
         if flags.message:
             self.task.status_bar.message = flags.message
 
+        if flags.metadata_dirty:
+            self.metadata_dirty = True
+
         if flags.byte_values_changed:
             d.byte_values_changed = True  # also handles style changes and refresh
             do_refresh = False
@@ -796,7 +800,9 @@ class FrameworkEditor(Editor):
             # side effect.
             do_refresh = False
 
-        if do_refresh:
+        if flags.rebuild_ui:
+            self.rebuild_ui()
+        elif do_refresh:
             self.refresh_panes()
 
     def popup_context_menu_from_commands(self, window, commands):
