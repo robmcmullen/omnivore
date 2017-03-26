@@ -20,18 +20,12 @@ except ImportError:
     raise RuntimeError("Generate cputables.py using cpugen.py before using the miniassembler")
 
 from disasm import Disassembler
+from udis_fast.flags import flag_undoc, pcr
 
 import logging
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger(__name__)
 
-
-# flags
-pcr = 1
-und = 2
-z80bit = 4
-r = 64
-w = 128
 
 class FormatSpec(object):
     """ Format specifier that combines info from the udis addressModeTable and
@@ -121,7 +115,7 @@ class FormatSpec(object):
         typically the PC-relative instructions.
         
         """
-        if self.flag == pcr:
+        if self.flag & pcr:
             addr = low_byte + 256 * high_byte
             offset = addr - (pc + 2)
             # offset is limited by signed 16 bit size, so find the positive or
@@ -201,17 +195,19 @@ class MiniAssembler(object):
             except ValueError:
                 num_bytes, mnemonic, mode_name = optable
                 flag = 0
-            if allow_undocumented or flag & 2 == 0:
+            log.debug("%x: %s %s %d bytes, %x" % (opcode, mnemonic, mode_name, num_bytes, flag))
+            if allow_undocumented or not flag & flag_undoc:
                 d[mnemonic].append(FormatSpec(formats[mode_name], opcode, num_bytes, mode_name, flag))
+            else:
+                log.debug("Skipping %s %s" % (opcode, mnemonic))
         d[".db"].append(FormatSpec("${0:02x}", None, 1, "data_byte", 0))
         
         # Order the lookup table from smallest to largest format specifier for
         # each opcode
         self.ops = {}
-        for mnemonic, modelist in d.items():
-            log.debug(mnemonic)
+        for mnemonic, modelist in sorted(d.items()):
             modelist.sort()
-            log.debug(modelist)
+            log.debug("%s: %s" % (mnemonic, modelist))
             self.ops[mnemonic] = modelist
         self.undocumented = allow_undocumented
     

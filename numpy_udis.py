@@ -2,7 +2,7 @@ import numpy as np
 
 import udis_fast
 
-from udis_fast.flags import *
+from udis_fast.flags import flag_branch, flag_jump, flag_return
 
 
 if __name__ == "__main__":

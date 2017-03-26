@@ -24,7 +24,7 @@ from disasm_gen_utils import *
 import logging
 log = logging.getLogger(__name__)
 
-from flags import *
+from udis_fast.flags import *
 
 
 disclaimer = """Warning! This is generated code.

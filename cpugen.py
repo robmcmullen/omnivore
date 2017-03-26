@@ -6,7 +6,7 @@ known processors and save it into cputables.py
 import os
 import glob
 
-from flags import *
+from udis_fast.flags import pcr, und, z80bit, lbl, comment, flag_label, flag_return, flag_jump, flag_branch
 
 
 def fix_opcode_table(cpu, allow_undoc=False):
