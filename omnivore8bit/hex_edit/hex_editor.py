@@ -691,6 +691,7 @@ class HexEditor(FrameworkEditor):
     def delete_user_segment(self, segment):
         self.document.delete_user_segment(segment)
         self.view_segment_number(self.segment_number)
+        self.update_segments_ui()
         self.metadata_dirty = True
 
     def find_in_user_segment(self, base_index):
