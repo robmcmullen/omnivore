@@ -168,14 +168,17 @@ class HexEditor(FrameworkEditor):
             self.segment_view_params = e['segment view params']
         self.machine.restore_extra_from_dict(e)
 
-    def get_extra_metadata(self, mdict):
-        self.document.serialize_extra_to_dict(mdict)
+    def get_extra_metadata(self, mdict, document):
+        document.serialize_extra_to_dict(mdict)
         mdict["diff highlight"] = self.diff_highlight
         mdict["map width"] = self.map_width
         mdict["map zoom"] = self.map_zoom
         mdict["bitmap width"] = self.bitmap_width
         mdict["bitmap zoom"] = self.bitmap_zoom
-        mdict["segment view params"] = dict(self.segment_view_params) # shallow copy, but only need to get rid of Traits dict wrapper
+        if document == self.document:
+            # If we're saving the document currently displayed, save the
+            # display parameters too.
+            mdict["segment view params"] = dict(self.segment_view_params)  # shallow copy, but only need to get rid of Traits dict wrapper
         self.machine.serialize_extra_to_dict(mdict)
 
     def rebuild_document_properties(self):

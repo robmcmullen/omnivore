@@ -269,39 +269,49 @@ class FrameworkEditor(Editor):
     def document_length(self):
         return len(self.document)
 
-    def save(self, uri=None, saver=None):
-        """ Saves the contents of the editor.
-        """
-        if uri is None:
-            uri = self.document.uri
+    def save(self, uri=None, saver=None, document=None):
+        """ Saves a document.
 
-        if not self.is_valid_for_save():
-            self.document.undo_stack_changed = True
-            return
+        It can be used 3 ways:
+
+        1) save the contents of the editor
+        2) save the specified document using the save format of this editor.
+        3) save a document using the specified save conversion routine
+        """
+        if document is None:
+            document = self.document
+
+            # only check validity if saving the current document
+            if not self.is_valid_for_save():
+                document.undo_stack_changed = True
+                return
+
+        if uri is None:
+            uri = document.uri
 
         try:
             if saver is None:
-                bytes = self.document.bytes.tostring()
+                bytes = document.bytes.tostring()
             else:
-                bytes = saver(self.document, self)
-            self.save_to_uri(bytes, uri)
-            self.document.undo_stack.set_save_point()
+                bytes = saver(document, self)
+            self.save_to_uri(bytes, uri, document=document)
+            document.undo_stack.set_save_point()
 
             # force an update to the document name as the URI may have changed
-            self.document.uri = uri
+            document.uri = uri
 
             # force update: just got saved, can't be read only!
-            self.document.read_only = False
+            document.read_only = False
 
             # Update tab name.  Note that dirty must be changed in order for
             # the trait to be updated, so force a change if needed.  Also,
             # update the URI first because trait callbacks happen immediately
             # and because properties are used for the editor name, no trait
             # event gets called on updating the metadata URI.
-            if not self.dirty:
+            if document == self.document and not self.dirty:
                 self.dirty = True
 
-            self.document.undo_stack_changed = True
+            document.undo_stack_changed = True
             saved = True
 
             # refresh window name in case filename has changed
@@ -314,12 +324,14 @@ class FrameworkEditor(Editor):
             saved = False
         return saved
 
-    def save_to_uri(self, bytes, uri, save_metadata=True):
+    def save_to_uri(self, bytes, uri, save_metadata=True, document=None):
         # Have to use a two-step process to write to the file: open the
         # filesystem, then open the file.  Have to open the filesystem
         # as writeable in case this is a virtual filesystem (like ZipFS),
         # otherwise the write to the actual file will fail with a read-
         # only filesystem error.
+        if document is None:
+            document = self.document
         if uri.startswith("file://"):
             # FIXME: workaround to allow opening of file:// URLs with the
             # ! character
@@ -332,7 +344,7 @@ class FrameworkEditor(Editor):
 
         if save_metadata:
             metadata_dict = dict()
-            self.get_extra_metadata(metadata_dict)
+            self.get_extra_metadata(metadata_dict, document)
             if metadata_dict:
                 relpath += ".omnivore"
                 log.debug("saving extra metadata to %s" % relpath)
@@ -344,7 +356,8 @@ class FrameworkEditor(Editor):
                 fh.write(header)
                 fh.write(text)
                 fh.close()
-                self.metadata_dirty = False
+                if document == self.document:
+                    self.metadata_dirty = False
 
         fs.close()
 
@@ -368,7 +381,7 @@ class FrameworkEditor(Editor):
     def get_extra_metadata_header(self):
         return "# omnivore %s extra_metadata=v1\n" % __version__
 
-    def get_extra_metadata(self, metadata_dict):
+    def get_extra_metadata(self, metadata_dict, document):
         pass
 
     @property
