@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 import numpy as np
 
 from omnivore.framework.document import BaseDocument, TraitNumpyConverter
@@ -166,6 +168,12 @@ class SegmentedDocument(BaseDocument):
                 return i
         return -1
 
+    def find_segment_by_name(self, name):
+        for s in self.segments:
+            if s.name == name:
+                return s
+        raise ValueError("No segment with name %s" % name)
+
     def find_segments_in_range(self, addr):
         """Assuming segments had a start_addr param, find first segment that
         has addr as a valid address
@@ -218,3 +226,13 @@ class SegmentedDocument(BaseDocument):
     @property
     def has_baseline(self):
         return self.baseline_document is not None
+
+    @classmethod
+    def create_from_segments(cls, root, user_segments):
+        doc = cls(bytes=root.data, style=root.style)
+        Parser = namedtuple("Parser", ['segments'])
+        segs = [root]
+        p = Parser(segments=segs)
+        doc.user_segments = list(user_segments)
+        doc.set_segments(p)
+        return doc

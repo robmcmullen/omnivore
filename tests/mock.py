@@ -50,6 +50,7 @@ class MockTask(HasTraits):
     id = Str("mock")
     machine_menu_changed = Event
     window = MockWindowSink
+    _active_editor_tab_change = null
 
 class MockEditorArea(HasTraits):
     task = MockTask()

@@ -7,10 +7,14 @@ import wx
 import wx.lib.filebrowsebutton as filebrowse
 from wx.lib.expando import ExpandoTextCtrl, EVT_ETC_LAYOUT_NEEDED
 
+from atrcopy import get_xex
+
 from omnivore.utils.processutil import which
 from omnivore.utils.textutil import text_to_int
 from omnivore.utils.wx.dropscroller import ReorderableList, PickledDropTarget, PickledDataObject
 from omnivore.utils.wx.dialogs import DictEditDialog
+
+from omnivore8bit.document import SegmentedDocument
 
 
 class EmulatorDialog(DictEditDialog):
@@ -212,27 +216,15 @@ class SegmentOrderDialog(wx.Dialog):
             s.append(self.segment_map[sid])
         return s
 
-    def get_bytes(self):
+    def get_document(self):
         segments = self.get_segments()
-        total = 2
-        for s in segments:
-            total += 4 + len(s)
-        total += 6
-        bytes = np.zeros([total], dtype=np.uint8)
-        bytes[0:2] = 0xff # FFFF header
-        i = 2
-        for s in segments:
-            words = bytes[i:i+4].view(dtype='<u2')
-            words[0] = s.start_addr
-            words[1] = s.start_addr + len(s) - 1
-            i += 4
-            bytes[i:i + len(s)] = s[:]
-            i += len(s)
-        words = bytes[i:i+6].view(dtype='<u2')
-        words[0] = 0x2e0
-        words[1] = 0x2e1
-        words[2] = self.get_run_addr()
-        return bytes
+        root, segs = get_xex(segments)
+        doc = SegmentedDocument(bytes=root.bytes, style=root.style)
+        Parser = namedtuple("Parser", ['segments'])
+        segs[0:0] = [root]
+        p = Parser(segments=segs)
+        doc.set_segments(p)
+        return doc
 
     def get_extra_text(self):
         lines = []

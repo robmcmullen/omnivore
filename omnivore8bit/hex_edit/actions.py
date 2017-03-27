@@ -13,7 +13,7 @@ from pyface.api import YES, NO
 from pyface.action.api import Action, ActionItem
 from pyface.tasks.action.api import TaskAction, EditorAction
 
-from atrcopy import user_bit_mask, data_style, add_xexboot_header, add_atr_header, BootDiskImage, SegmentData, interleave_segments
+from atrcopy import user_bit_mask, data_style, add_xexboot_header, add_atr_header, BootDiskImage, SegmentData, interleave_segments, get_xex
 
 from omnivore.framework.actions import *
 from commands import *
@@ -22,6 +22,7 @@ from omnivore8bit.arch.ui.antic_colors import AnticColorDialog
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
 from omnivore8bit.ui.dialogs import prompt_for_emulator, prompt_for_assembler, SegmentOrderDialog, SegmentInterleaveDialog
 from omnivore8bit.arch.machine import Machine
+from omnivore8bit.document import SegmentedDocument
 from omnivore.framework.minibuffer import *
 
 
@@ -822,8 +823,11 @@ class SaveAsXEXAction(EditorAction):
     title = 'Create Executable'
     file_ext = "xex"
 
-    def get_bytes(self, dlg):
-        return dlg.get_bytes()
+    def get_document(self, dlg):
+        segments = dlg.get_segments()
+        root, segs = get_xex(segments)
+        doc = SegmentedDocument.create_from_segments(root, segs)
+        return doc
 
     def get_dialog(self, e):
         return SegmentOrderDialog(e.window.control, self.title, e.document.segments[1:])
@@ -832,10 +836,10 @@ class SaveAsXEXAction(EditorAction):
         e = self.active_editor
         dlg = self.get_dialog(e)
         if dlg.ShowModal() == wx.ID_OK:
-            bytes = self.get_bytes(dlg)
+            doc = self.get_document(dlg)
             dialog = FileDialog(default_filename="test.%s" % self.file_ext, parent=e.window.control, action='save as')
             if dialog.open() == OK:
-                self.active_editor.save_to_uri(bytes, dialog.path, False)
+                self.active_editor.save(dialog.path, document=doc)
         dlg.Destroy()
 
 
