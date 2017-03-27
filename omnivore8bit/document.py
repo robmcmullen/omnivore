@@ -52,7 +52,7 @@ class SegmentedDocument(BaseDocument):
             mdict["emulator"] = self.emulator
         if self.baseline_document is not None:
             mdict["baseline document"] = self.baseline_document.metadata.uri
-        mdict["document uuid"] = self.document.uuid
+        mdict["document uuid"] = self.uuid
 
     def restore_extra_from_dict(self, e):
         if 'user segments' in e:
