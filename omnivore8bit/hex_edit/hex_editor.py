@@ -138,23 +138,13 @@ class HexEditor(FrameworkEditor):
         """ Set up any pre-calculated segments based on the type or content of
         the just-loaded document.
         """
+        doc.restore_extra_from_dict(e)
         if 'machine mime' in e:
             mime = e['machine mime']
             if not mime.startswith(self.machine.mime_prefix):
                 m = self.machine.find_machine_by_mime(mime)
                 if m is not None:
                     self.machine = m
-        if 'user segments' in e:
-            for s in e['user segments']:
-                doc.add_user_segment(s, replace=True)
-        first_segment = doc.segments[0]
-        if 'serialized user segments' in e:
-            for s in e['serialized user segments']:
-                s.reconstruct_raw(first_segment.rawdata)
-                doc.add_user_segment(s, replace=True)
-        first_segment.restore_extra_from_dict(e)
-        if 'emulator' in e:
-            doc.emulator = e['emulator']
         if 'font' in e:
             # FIXME: I don't think 'font' is set anywhere, so this never gets called
             self.machine.set_font(e['font'][0], e['font'][1])
@@ -174,28 +164,17 @@ class HexEditor(FrameworkEditor):
             self.bitmap_width = e['bitmap width']
         if 'bitmap zoom' in e:
             self.bitmap_zoom = e['bitmap zoom']
-        if 'document uuid' in e:
-            doc.uuid = e['document uuid']
         if 'segment view params' in e:
             self.segment_view_params = e['segment view params']
         self.machine.restore_extra_from_dict(e)
 
     def get_extra_metadata(self, mdict):
-        mdict["serialized user segments"] = list(self.document.user_segments)
-        base = self.document.segments[0]
-        base.serialize_extra_to_dict(mdict)
-
-        emu = self.document.emulator
-        if emu and not 'system default' in emu:
-            mdict["emulator"] = self.document.emulator
-        if self.document.baseline_document is not None:
-            mdict["baseline document"] = self.document.baseline_document.metadata.uri
+        self.document.serialize_extra_to_dict(mdict)
         mdict["diff highlight"] = self.diff_highlight
         mdict["map width"] = self.map_width
         mdict["map zoom"] = self.map_zoom
         mdict["bitmap width"] = self.bitmap_width
         mdict["bitmap zoom"] = self.bitmap_zoom
-        mdict["document uuid"] = self.document.uuid
         mdict["segment view params"] = dict(self.segment_view_params) # shallow copy, but only need to get rid of Traits dict wrapper
         self.machine.serialize_extra_to_dict(mdict)
 

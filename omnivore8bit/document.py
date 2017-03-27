@@ -20,8 +20,6 @@ class SegmentedDocument(BaseDocument):
 
     user_segments = List
 
-    extra_metadata = Dict
-
     emulator = Any
 
     emulator_change_event = Event
@@ -41,6 +39,36 @@ class SegmentedDocument(BaseDocument):
 
     def _get_can_resize(self):
         return self.segments and self.container_segment.can_resize
+
+    #### serialization methods
+
+    def serialize_extra_to_dict(self, mdict):
+        """Save extra metadata to a dict so that it can be serialized
+        """
+        mdict["serialized user segments"] = list(self.user_segments)
+        self.container_segment.serialize_extra_to_dict(mdict)
+        emu = self.emulator
+        if emu and not 'system default' in emu:
+            mdict["emulator"] = self.emulator
+        if self.baseline_document is not None:
+            mdict["baseline document"] = self.baseline_document.metadata.uri
+        mdict["document uuid"] = self.document.uuid
+
+    def restore_extra_from_dict(self, e):
+        if 'user segments' in e:
+            # Segment objects created by the utils.extra_metadata module
+            for s in e['user segments']:
+                self.add_user_segment(s, replace=True)
+        if 'serialized user segments' in e:
+            # Segments that need to be restored via deserialization
+            for s in e['serialized user segments']:
+                s.reconstruct_raw(self.container_segment.rawdata)
+                self.add_user_segment(s, replace=True)
+        self.container_segment.restore_extra_from_dict(e)
+        if 'emulator' in e:
+            self.emulator = e['emulator']
+        if 'document uuid' in e:
+            self.uuid = e['document uuid']
 
     #### convenience methods
 

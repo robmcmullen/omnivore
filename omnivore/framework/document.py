@@ -51,8 +51,6 @@ class BaseDocument(HasTraits):
 
     segments = List
 
-    extra_metadata = Dict
-
     # Trait events to provide view updating
 
     undo_stack_changed = Event
