@@ -160,7 +160,7 @@ class SelectMode(MouseHandler):
         e = c.editor
         if e is not None:
             index, bit, inside = c.event_coords_to_byte(evt)
-            r0, c0 = c.byte_to_row_col(index)
+            r0, c0 = c.index_to_row_col(index)
             msg = "row=%d (0x%x) col=%d (0x%x) index=%d (0x%x)" % (r0, r0, c0, c0, index, index)
             if extra:
                 msg += " " + extra
@@ -185,7 +185,7 @@ class SelectMode(MouseHandler):
         BitmapScroller.on_left_up(self.canvas, evt)  # can't use self.canvas directly because it has an overridded method on_left_down
 
     def process_mouse_motion_down(self, evt):
-        self.canvas.set_selection_from_event(evt)
+        self.canvas.handle_select_motion(self.canvas.editor, evt)
         self.display_coords(evt, self.get_display_rect())
 
     def process_mouse_motion_up(self, evt):

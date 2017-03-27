@@ -89,7 +89,7 @@ class JumpmanSelectMode(SelectMode):
         e = c.editor
         if e is not None:
             index, bit, inside = c.event_coords_to_byte(evt)
-            y, x = c.byte_to_row_col(index)
+            y, x = c.index_to_row_col(index)
             if y < e.antic_lines:
                 pick = e.pick_buffer[index]
             else:
