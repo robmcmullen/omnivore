@@ -341,7 +341,7 @@ class DefaultSegment(object):
     savers = [SegmentSaver]
     can_resize_default = False
 
-    def __init__(self, rawdata, start_addr=0, name="All", error=None, verbose_name=None):
+    def __init__(self, rawdata, start_addr=0, name="All", error=None, verbose_name=None, memory_map=None):
         self.start_addr = int(start_addr)  # force python int to decouple from possibly being a numpy datatype
         self.set_raw(rawdata)
         self.error = error
@@ -350,6 +350,9 @@ class DefaultSegment(object):
         self.page_size = -1
         self.map_width = 40
         self.uuid = str(uuid.uuid4())
+        if memory_map is None:
+            memory_map = {}
+        self.memory_map = memory_map
 
         # Some segments may be resized to contain additional segments not
         # present when the segment was created.
@@ -407,7 +410,12 @@ class DefaultSegment(object):
             state['_order_list'] = r.order.tolist()  # more compact serialization in python list
         else:
             state['_order_list'] = None
+        state['memory_map'] = sorted([list(i) for i in self.memory_map.iteritems()])
         return state
+
+    def __setstate__(self, state):
+        self.memory_map = dict(state.pop('memory_map', []))
+        self.__dict__.update(state)
 
     def reconstruct_missing(self):
         """Any instance attributes set in __init__, but added after some save
