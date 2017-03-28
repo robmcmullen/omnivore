@@ -620,8 +620,16 @@ class Machine(HasTraits):
 
     # Utility methods
 
-    def get_disassembler(self, hex_lower, mnemonic_lower, use_labels=True):
-        return self.disassembler(self.assembler, self.memory_map, hex_lower, mnemonic_lower)
+    def get_disassembler(self, hex_lower, mnemonic_lower, priority_memory_map=None):
+        if not priority_memory_map:  # either None or empty dict
+            mmap = self.mmap
+        else:
+            # Create a merged memory map with the priority map taking
+            # precedence when there are duplicates
+            parent = memory_map.EmptyMemoryMap
+            mmap = parent.__class__("CustomMemoryMap", (parent,), {"rmemmap": dict(self.memory_map.rmemmap), "wmemmap": dict(self.memory_map.wmemmap)})
+            mmap.rmemmap.update(priority_memory_map)
+        return self.disassembler(self.assembler, mmap, hex_lower, mnemonic_lower)
 
     def get_nop(self):
         return self.disassembler.get_nop()

@@ -52,7 +52,7 @@ class DisassemblyTable(ByteGridTable):
         self.segment = segment = self.editor.segment
         self.lines = None
         self.index_to_row = []
-        self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case)
+        self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case, self.editor.document.program_memory_map)
         self.disassembler.add_chunk_processor("data", 1)
         self.disassembler.add_chunk_processor("antic_dl", 2)
         self.disassembler.add_chunk_processor("jumpman_level", 3)
