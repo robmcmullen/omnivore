@@ -28,7 +28,7 @@ class SegmentedDocument(BaseDocument):
 
     can_resize = Property(Bool, depends_on='segments')
 
-    program_memory_map = Dict
+    document_memory_map = Dict
 
     #### trait default values
 
@@ -60,7 +60,7 @@ class SegmentedDocument(BaseDocument):
         if self.baseline_document is not None:
             mdict["baseline document"] = self.baseline_document.metadata.uri
         mdict["document uuid"] = self.uuid
-        mdict["program memory map"] = sorted([[k, v] for k, v in self.program_memory_map])  # save as list of pairs because json doesn't allow int keys for dict
+        mdict["document memory map"] = sorted([list(i) for i in self.program_memory_map.iteritems()])  # save as list of pairs because json doesn't allow int keys for dict
 
     def restore_extra_from_dict(self, e):
         if 'user segments' in e:
@@ -77,8 +77,8 @@ class SegmentedDocument(BaseDocument):
             self.emulator = e['emulator']
         if 'document uuid' in e:
             self.uuid = e['document uuid']
-        if 'program memory map' in e:
-            self.program_memory_map = dict(e['program memory map'])
+        if 'document memory map' in e:
+            self.document_memory_map = dict(e['document memory map'])
 
     #### convenience methods
 
