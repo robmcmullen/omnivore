@@ -622,7 +622,7 @@ class Machine(HasTraits):
 
     def get_disassembler(self, hex_lower, mnemonic_lower, priority_memory_map=None):
         if not priority_memory_map:  # either None or empty dict
-            mmap = self.mmap
+            mmap = self.memory_map
         else:
             # Create a merged memory map with the priority map taking
             # precedence when there are duplicates
