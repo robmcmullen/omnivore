@@ -165,7 +165,10 @@ class BaseDisassembler(object):
                 if diff > 0:
                     # if no existing label at the target, reference it using
                     # offset in bytes from the nearest previous label
-                    label = "L%04X+%d" % (good_opcode_target_pc, diff)
+                    nearest_label = self.memory_map.get_name(good_opcode_target_pc)
+                    if not nearest_label:
+                        nearest_label = "L%04X" % good_opcode_target_pc
+                    label = "%s+%d" % (nearest_label, diff)
                 else:
                     label = "L%04X" % (target_pc)
             if label:
@@ -196,11 +199,11 @@ class BaseDisassembler(object):
         if not self.use_labels:
             return "     "
         pc = line.pc
-        if self.info.labels[pc]:
-            text = "L" + (self.fmt_hex4 % pc)
-        else:
-            text = self.memory_map.get_name(pc)
-            if not text:
+        text = self.memory_map.get_name(pc)
+        if not text:
+            if self.info.labels[pc]:
+                text = "L" + (self.fmt_hex4 % pc)
+            else:
                 text = "     "
         return text
 
