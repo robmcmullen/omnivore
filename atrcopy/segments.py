@@ -401,6 +401,16 @@ class DefaultSegment(object):
         self.rawdata.replace_arrays(container.rawdata)
 
     def __getstate__(self):
+        """Custom jsonpickle state save routine
+
+        This routine culls down the list of attributes that should be
+        serialized, and in some cases changes their format slightly so they
+        have a better mapping to json objects. For instance, json can't handle
+        dicts with integer keys, so dicts are turned into lists of lists.
+        Tuples are also turned into lists because tuples don't have a direct
+        representation in json, while lists have a compact representation in
+        json.
+        """
         state = dict()
         for key in ['start_addr', 'error', 'name', 'verbose_name', 'page_size', 'map_width', 'uuid', 'can_resize']:
             state[key] = getattr(self, key)
@@ -414,23 +424,24 @@ class DefaultSegment(object):
         return state
 
     def __setstate__(self, state):
-        self.memory_map = dict(state.pop('memory_map', []))
-        self.__dict__.update(state)
-
-    def reconstruct_missing(self):
-        """Any instance attributes set in __init__, but added after some save
-        files exist in the wild should be checked for and given default values
-        if not present.
+        """Custom jsonpickle state restore routine
 
         The use of jsonpickle to recreate objects doesn't go through __init__,
-        so newer attributes won't exist.
+        so there will be missing attributes when restoring old versions of the
+        json. Once a version gets out in the wild and additional attributes are
+        added to a segment, a default value should be applied here.
         """
-        if not hasattr(self, 'uuid'):
-            self.uuid = str(uuid.uuid4())
-        if not hasattr(self, 'can_resize'):
-            self.can_resize = self.__class__.can_resize_default
+        self.memory_map = dict(state.pop('memory_map', []))
+        self.uuid = state.pop('uuid', uuid.uuid4())
+        self.can_resize = state.pop('can_resize', self.__class__.can_resize_default)
+        self.__dict__.update(state)
 
     def reconstruct_raw(self, rawdata):
+        """Reconstruct the pointers to the parent data arrays
+
+        Each segment is a view into the primary segment's data, so those
+        pointers and the order must be restored in the child segments.
+        """
         start, end = self._rawdata_bounds
         r = rawdata[start:end]
         delattr(self, '_rawdata_bounds')
@@ -442,7 +453,6 @@ class DefaultSegment(object):
         except AttributeError:
             pass
         self.set_raw(r)
-        self.reconstruct_missing()
 
     def get_parallel_raw_data(self, other):
         """ Get the raw data that is similar to the specified other segment
