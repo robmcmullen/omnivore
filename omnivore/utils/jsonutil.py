@@ -51,6 +51,17 @@ def collapse_json(text, indent=8):
     return "\n".join(out)
 
 
+def dict_to_list(d):
+    """Return a sorted list of lists that represent the dictionary.
+
+    Only strings are allowed as keys in a json dictionary, so this transform
+    the dictionary into a list of lists that can be serialized in as small
+    amount of text as possible. Tuples would be more efficient in python terms,
+    but json can't serialize tuples directly either.
+    """
+    return sorted([list(i) for i in d.iteritems()])
+
+
 if __name__ == "__main__":
     import json
 
