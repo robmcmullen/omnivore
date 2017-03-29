@@ -593,7 +593,7 @@ class InterleaveSegmentsAction(EditorAction):
 
 
 class ExpandDocumentAction(EditorAction):
-    name = 'Expand Document'
+    name = 'Expand Disk Image'
     tooltip = 'Resize the document to add extra data at the end'
     enabled_name = 'can_resize_document'
 
