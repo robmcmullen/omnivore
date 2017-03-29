@@ -106,6 +106,16 @@ class BaseDisassembler(object):
 
         return cls.cached_miniassemblers[cpu]
 
+    @property
+    def label_dict(self):
+        d = {}
+        if self.info:
+            all_pcs = np.where(self.info.labels > 0)[0]
+            inside = np.where((self.start_addr <= all_pcs) & (all_pcs < self.end_addr))[0]
+            pcs = all_pcs[inside]
+            d = {pc:"L%04x" % pc for pc in pcs}
+        return d
+
     def assemble_text(self, pc, cmd):
         miniasm = self.get_miniassembler(self.cpu)
         bytes = miniasm.asm(pc, cmd)

@@ -365,6 +365,15 @@ class HexEditTask(FrameworkTask):
             Separator(),
             AddCommentAction(),
             RemoveCommentAction(),
+            SMenu(
+                Group(
+                    ImportSegmentLabelsAction(name="Import"),
+                    id="sl1", separator=True),
+                Group(
+                    ExportSegmentLabelsAction(name="Export User Defined Labels"),
+                    ExportSegmentLabelsAction(name="Export All Labels", include_disassembly_labels=True),
+                    id="sl2", separator=True),
+                id='segmentlabels1', separator=False, name="Segment Labels"),
             Separator(),
             StartTraceAction(),
             AddTraceStartPointAction(),

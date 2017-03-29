@@ -64,6 +64,39 @@ class SetDataCommand(Command):
         return self.undo_info
 
 
+class ChangeMetadataCommand(Command):
+    short_name = "metadata_base"
+    pretty_name = "Change Metadata Abstract Command"
+    serialize_order =  [
+            ('segment', 'int'),
+            ]
+
+    def __init__(self, segment):
+        Command.__init__(self)
+        self.segment = segment
+
+    def change_metadata(self, editor):
+        raise NotImplementedError
+
+    def restore_metadata(self, editor, old_data):
+        raise NotImplementedError
+
+    def set_undo_flags(self):
+        self.undo_info.flags.byte_style_changed = True
+
+    def perform(self, editor):
+        self.undo_info = undo = UndoInfo()
+        old_data = self.change_metadata(editor)
+        undo.data = (old_data, )
+        self.set_undo_flags()
+        return undo
+
+    def undo(self, editor):
+        old_data, = self.undo_info.data
+        self.restore_metadata(editor, old_data)
+        return self.undo_info
+
+
 class ChangeByteCommand(SetDataCommand):
     short_name = "cb"
     pretty_name = "Change Bytes"
@@ -806,3 +839,24 @@ class SetSegmentOriginCommand(Command):
         old_origin, = self.undo_info.data
         self.segment.start_addr = old_origin
         return self.undo_info
+
+
+class SegmentMemoryMapCommand(ChangeMetadataCommand):
+    short_name = "seg_memmap"
+    pretty_name = "Segment Memory Map"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('memory_map', 'dict'),
+            ]
+
+    def __init__(self, segment, memory_map):
+        ChangeMetadataCommand.__init__(self, segment)
+        self.memory_map = memory_map
+
+    def change_metadata(self, editor):
+        old_data = dict(editor.segment.memory_map)
+        editor.segment.memory_map = self.memory_map
+        return old_data
+
+    def restore_metadata(self, editor, old_data):
+        editor.segment.memory_map = old_data

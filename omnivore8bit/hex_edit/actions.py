@@ -8,7 +8,7 @@ import wx
 import wx.lib.dialogs
 
 # Enthought library imports.
-from traits.api import on_trait_change, Any, Int
+from traits.api import on_trait_change, Any, Int, Bool
 from pyface.api import YES, NO
 from pyface.action.api import Action, ActionItem
 from pyface.tasks.action.api import TaskAction, EditorAction
@@ -24,6 +24,9 @@ from omnivore8bit.ui.dialogs import prompt_for_emulator, prompt_for_assembler, S
 from omnivore8bit.arch.machine import Machine
 from omnivore8bit.document import SegmentedDocument
 from omnivore.framework.minibuffer import *
+from omnivore.utils.textutil import parse_int_label_dict
+from omnivore.utils.nputil import count_in_range
+from omnivore.utils.jsonutil import dict_to_list
 
 
 class FontChoiceGroup(TaskDynamicSubmenuGroup):
@@ -671,6 +674,54 @@ class MarkSelectionAsJumpmanHarvestAction(CustomDisassemblerAction):
     name = 'Mark Selection As Jumpman Harvest Table'
     enabled_name = 'can_copy'
     disassembly_type = JUMPMAN_HARVEST
+
+
+class ImportSegmentLabelsAction(EditorAction):
+    name = 'Import Segment Labels'
+
+    def perform(self, event):
+        dialog = FileDialog(parent=event.task.window.control, title="Import Segment Labels")
+        if dialog.open() == OK:
+            e = self.active_editor
+            with open(dialog.path, "r") as fh:
+                text = fh.read()
+            d = parse_int_label_dict(text)
+            s = e.segment
+            start, end = s.start_addr, s.start_addr + len(s)
+            below, above = count_in_range(d.keys(), start, end)
+            if below + above > 0:
+                msg = ""
+                if below > 0:
+                    msg += "\n%d below $%04x\n" % (below, start)
+                if above > 0:
+                    msg += "\n%d above $%04x\n" % (above, end)
+                if self.task.confirm("Some labels out of range.\n%s\nUse this set of labels anyway?" % msg, "Labels Out of Range") != YES:
+                    return
+            cmd = SegmentMemoryMapCommand(s, d)
+            e.process_command(cmd)
+
+
+class ExportSegmentLabelsAction(EditorAction):
+    name = 'Export Segment Labels'
+
+    include_disassembly_labels = Bool(False)
+
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        if s.memory_map or self.include_disassembly_labels:
+            d = {}
+            if self.include_disassembly_labels:
+                d.update(e.disassembly.table.disassembler.label_dict)
+            d.update(s.memory_map)
+            tmp = dict_to_list(d)
+            if tmp:
+                dialog = FileDialog(parent=event.task.window.control, action="save as", title="Export Segment Labels")
+                if dialog.open() == OK:
+                    with open(dialog.path, "w") as fh:
+                        fh.write("\n".join(["0x%04x %s" % (k, v) for k, v in tmp]) + "\n")
+                    return
+        e.show_status_message("No labels in segment")
 
 
 class CopyDisassemblyAction(EditorAction):
