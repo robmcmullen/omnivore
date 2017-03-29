@@ -72,7 +72,7 @@ class HexEditTask(FrameworkTask):
 
     def _extra_actions_default(self):
         data_menu = self.create_menu("Menu", "Disk Image", "ParserGroup", "EmulatorGroup", "ActionGroup")
-        segment_menu = self.create_menu("Menu", "Segments", "ActionGroup", "ListGroup")
+        segment_menu = self.create_menu("Menu", "Segments", "ListGroup", "ActionGroup")
         bytes_menu = self.create_menu("Menu", "Bytes", "HexModifyGroup")
         actions = [
             # Menubar additions
@@ -346,6 +346,18 @@ class HexEditTask(FrameworkTask):
 
     def get_actions_Menu_DiskImage_ActionGroup(self):
         return [
+            ExpandDocumentAction(),
+            Separator(),
+            LoadBaselineVersionAction(),
+            FindNextBaselineDiffAction(),
+            FindPrevBaselineDiffAction(),
+            ListDiffAction(),
+            Separator(),
+            SegmentGotoAction(),
+            ]
+
+    def get_actions_Menu_Segments_ActionGroup(self):
+        return [
             GetSegmentFromSelectionAction(),
             MultipleSegmentsFromSelectionAction(),
             InterleaveSegmentsAction(),
@@ -358,23 +370,13 @@ class HexEditTask(FrameworkTask):
             AddTraceStartPointAction(),
             ApplyTraceSegmentAction(),
             ClearTraceAction(),
-            Separator(),
-            LoadBaselineVersionAction(),
-            FindNextBaselineDiffAction(),
-            FindPrevBaselineDiffAction(),
-            ListDiffAction(),
-            Separator(),
-            SegmentGotoAction(),
-            ]
-
-    def get_actions_Menu_Segments_ActionGroup(self):
-        return [
-            ExpandDocumentAction(),
             ]
 
     def get_actions_Menu_Segments_ListGroup(self):
         return [
-            SegmentChoiceGroup(id="a2", separator=True),
+            SMenu(
+                SegmentChoiceGroup(id="a2", separator=True),
+                id='segmentlist1', separator=False, name="View Segment"),
             ]
 
     def get_actions_Menu_Bytes_HexModifyGroup(self):
