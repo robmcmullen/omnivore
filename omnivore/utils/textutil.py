@@ -295,6 +295,29 @@ def text_to_int(text, default_base="dec"):
     return value
 
 
+def parse_int_label_dict(text, base=10):
+    """Parse a multi-line text string into a dict keyed on integers with a
+    keyword value
+
+    For each line, it tries to find the first integer-looking thing and use
+    that as the key, and the first label-looking thing (alphanumeric, starting
+    with a letter or _, and stopping at the first non-alphanumeric or
+    whitespace) and use that as the label.
+    """
+    regex = re.compile("^(0x|\$)?([0-9a-fA-F]+)[^a-zA-Z]+([a-z_]\w+)")
+    d = {}
+    for line in text.splitlines():
+        match = regex.search(line)
+        if match:
+            key = match.group(2)
+            value = match.group(3)
+            b = match.group(1)
+            line_base = 16 if b == "$" or b == "0x" else 10 if b == "#" else base
+            key = int(key, line_base)
+            d[key] = value
+    return d
+
+
 if __name__ == "__main__":
     import sys
 
