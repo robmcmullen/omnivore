@@ -247,6 +247,56 @@ class ClearCommentCommand(SetCommentCommand):
         self.segment.clear_comment(self.ranges)
 
 
+class SetLabelCommand(ChangeMetadataCommand):
+    short_name = "set_comment"
+    pretty_name = "Label"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('addr', 'addr'),
+            ('label', 'string'),
+            ]
+
+    def __init__(self, segment, addr, label):
+        ChangeMetadataCommand.__init__(self, segment)
+        self.addr = addr
+        self.label = label
+
+    def __str__(self):
+        if len(self.label) > 20:
+            text = self.label[:20] + "..."
+        else:
+            text = self.label
+        return "%s: %s" % (self.pretty_name, text)
+
+    def change_metadata(self, editor):
+        old = self.segment.memory_map.get(self.addr, None)
+        self.segment.memory_map[self.addr] = self.label
+        return old
+
+    def restore_metadata(self, editor, old_data):
+        if old_data is None:
+            self.segment.memory_map.pop(self.addr, "")
+        else:
+            self.segment.memory_map[self.addr] = old_data
+
+
+class ClearLabelCommand(SetLabelCommand):
+    short_name = "clear_comment"
+    pretty_name = "Remove Label"
+
+    def __init__(self, segment, addr):
+        SetLabelCommand.__init__(self, segment, addr, "")
+
+    def change_metadata(self, editor):
+        old = self.segment.memory_map.get(self.addr, None)
+        self.segment.memory_map.pop(self.addr, "")
+        return old
+
+    def restore_metadata(self, editor, old_data):
+        if old_data is not None:
+            self.segment.memory_map[self.addr] = old_data
+
+
 class SetValuesAtIndexesCommand(Command):
     short_name = "set_values_at_indexes"
     pretty_name = "Set Indexes Abstract Command"

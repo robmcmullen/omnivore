@@ -844,6 +844,72 @@ class RemoveCommentPopupAction(EditorAction):
             e.process_command(cmd)
 
 
+def prompt_for_label(e, s, addr, desc):
+    existing = s.memory_map.get(addr, "")
+    text = prompt_for_string(e.window.control, desc, "Add Label", existing)
+    if text is not None:
+        cmd = SetLabelCommand(s, addr, text)
+        e.process_command(cmd)
+
+
+class AddLabelAction(EditorAction):
+    name = 'Add Label'
+    accelerator = 'Alt+L'
+
+    def get_ranges(self, editor, segment, event):
+        if editor.can_copy:
+            ranges = segment.get_style_ranges(selected=True)
+        else:
+            ranges = []
+        return ranges
+
+    def process(self, editor, segment, addr):
+        desc = "Enter label for address $%04x" % addr
+        prompt_for_label(editor, segment, addr, desc)
+
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        ranges = self.get_ranges(e, s, event)
+        if ranges:
+            index = ranges[0][0]
+        else:
+            index = e.cursor_index
+        addr = index + s.start_addr
+        self.process(e, s, addr)
+
+
+class AddLabelPopupAction(AddLabelAction):
+    def get_ranges(self, editor, segment, event):
+        if event.popup_data["in_selection"]:
+            ranges = segment.get_style_ranges(selected=True)
+        else:
+            index = event.popup_data["index"]
+            ranges = [(index, index+1)]
+        return ranges
+
+
+class RemoveLabelAction(AddLabelAction):
+    name = 'Remove Label'
+    accelerator = 'Ctrl+Alt+L'
+
+    def process(self, editor, segment, addr):
+        existing = segment.memory_map.get(addr, "")
+        if existing:
+            cmd = ClearLabelCommand(segment, addr)
+            editor.process_command(cmd)
+
+
+class RemoveLabelPopupAction(RemoveLabelAction):
+    def get_ranges(self, editor, segment, event):
+        if event.popup_data["in_selection"]:
+            ranges = segment.get_style_ranges(selected=True)
+        else:
+            index = event.popup_data["index"]
+            ranges = [(index, index+1)]
+        return ranges
+
+
 class DeleteUserSegmentAction(EditorAction):
     name = 'Delete User Segment'
     segment_number = Int
