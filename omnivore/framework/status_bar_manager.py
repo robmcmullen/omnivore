@@ -47,10 +47,12 @@ class FrameworkStatusBar(wx.StatusBar):
         self.Bind(wx.EVT_TIMER, self.on_timer, self.expire_timer)
         self.Bind(wx.EVT_SIZE, self.on_size)
 
-        attr = parent.GetDefaultAttributes()
-        bg = tuple(attr.colBg)
-        bg = (255, bg[1]/3, bg[2]/3)
-        self.error_control.SetBackgroundColour(bg)
+        f = self.GetFont()
+        self.error_control.SetFont(wx.Font(f.GetPointSize(), f.GetFamily(),
+                                 f.GetStyle(), wx.BOLD, f.GetUnderlined(),
+                                 f.GetFaceName(), f.GetEncoding()))
+        self.error_control.SetForegroundColour((255, 255, 255))
+        self.error_control.SetBackgroundColour((211, 72, 54))
 
     def on_size(self, event):
         self.reposition_controls()
@@ -63,7 +65,7 @@ class FrameworkStatusBar(wx.StatusBar):
         self.error_control.SetRect(rect)
 
     def show_error(self, text):
-        self.error_control.SetLabel(text)
+        self.error_control.SetLabel(" " + text)
         rect = self.GetFieldRect(0)
         self.error_control.SetRect(rect)
         self.error_control.Show()
