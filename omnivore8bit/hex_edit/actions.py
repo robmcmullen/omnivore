@@ -721,7 +721,7 @@ class ExportSegmentLabelsAction(EditorAction):
                     with open(dialog.path, "w") as fh:
                         fh.write("\n".join(["0x%04x %s" % (k, v) for k, v in tmp]) + "\n")
                     return
-        e.show_status_message("No labels in segment")
+        e.task.status_bar.error = "No labels in segment"
 
 
 class CopyDisassemblyAction(EditorAction):
