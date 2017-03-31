@@ -85,7 +85,8 @@ class UndoStack(HistoryList):
                     self.end_batch()
                 self.start_batch(batch)
         self.batch.perform_setup(editor)
-        undo_info = cmd.perform(editor)
+        undo_info = UndoInfo()
+        cmd.perform(editor, undo_info)
         if undo_info.flags.changed_document:
             if undo_info.flags.success:
                 self.add_command(cmd)
@@ -280,8 +281,37 @@ class Command(object):
             return self.__class__.__name__
         return self.short_name
 
-    def coalesce(self, next_command):
+    def can_coalesce(self, next_command):
+        """Evaluate whether or not the next command can be merged into this
+        command.
+
+        The difference between this and coalesce below is coalesce will take
+        care of the very basics of comparisons and only send on commands that
+        are of the same class.
+        """
         return False
+
+    def coalesce_merge(self, next_command):
+        """Merge the next command into self
+
+        Takes the details of next_command and combines them into the current
+        instance. This is very implementation dependent, but the key is that
+        the merged command must be undoable to the state before the current
+        command.
+        """
+        raise NotImplementedError
+
+    def coalesce(self, next_command):
+        """If the next command can be merged with this one, merge them.
+
+        Checks if the next command can be merged, and if so will merge the
+        details of the next command into self. The default implementation calls
+        can_coalesce to check if it can be merged, and if so calls
+        coalesce_merge to actually merge the commands.
+        """
+        if next_command.__class__ == self.__class__:
+            if self.can_coalesce(next_command):
+                self.coalesce_merge(next_command)
 
     def is_recordable(self):
         return True
@@ -289,11 +319,25 @@ class Command(object):
     def perform_setup(self, document):
         pass
 
-    def perform(self, document):
+    def do_change(self, editor, undo_info):
+        raise NotImplementedError
+
+    def set_undo_flags(self, flags):
         pass
 
-    def undo(self, document):
-        pass
+    def perform(self, editor, undo_info):
+        old_data = self.do_change(editor, undo_info)
+        undo_info.data = (old_data, )
+        self.set_undo_flags(undo_info.flags)
+        self.undo_info = undo_info
+
+    def undo_change(self, editor, old_data):
+        raise NotImplementedError
+
+    def undo(self, editor):
+        old_data, = self.undo_info.data
+        self.undo_change(editor, old_data)
+        return self.undo_info
 
 
 class Batch(Command):
@@ -309,14 +353,12 @@ class Batch(Command):
     def get_recordable_command(self):
         return self
 
-    def perform(self, document):
+    def perform(self, document, undo_info):
         flags = StatusFlags()
         for c in self.commands:
             undo = c.perform(document)
             flags.add_flags(undo.flags)
-        undo = UndoInfo()
-        undo.flags = flags
-        return undo
+        undo_info.flags = flags
 
     def undo(self, document):
         flags = StatusFlags()

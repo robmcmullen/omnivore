@@ -48,12 +48,11 @@ class LineCommand(SegmentCommand):
     def get_points(self, i1, i2, map_width):
         return get_line(i1, i2, map_width)
 
-    def perform(self, editor):
+    def perform(self, editor, undo):
         i1 = self.start_index
         i2 = self.end_index
         if i2 < i1:
             i1, i2 = i2, i1
-        self.undo_info = undo = UndoInfo()
         undo.flags.byte_values_changed = True
         undo.flags.index_range = i1, i2
         undo.flags.cursor_index = self.end_index
@@ -63,7 +62,7 @@ class LineCommand(SegmentCommand):
         if (self.segment[line] == old_data).all():
             undo.flags.success = False
         undo.data = (line, old_data)
-        return undo
+        self.undo_info = undo
 
     def undo(self, editor):
         line, old_data = self.undo_info.data
@@ -110,7 +109,7 @@ class PasteRectangularCommand(SegmentCommand):
     def __str__(self):
         return "%s @ %04x (%dx%d)" % (self.pretty_name, self.start_index + self.segment.start_addr, self.cols, self.rows)
 
-    def perform(self, editor):
+    def perform(self, editor, undo):
         i1 = self.start_index
         bpr = self.bytes_per_row
         r1, c1 = divmod(i1, bpr)
@@ -120,14 +119,13 @@ class PasteRectangularCommand(SegmentCommand):
         d = self.segment[:last].reshape(-1, bpr)
         r2 = min(r2, d.shape[0])
         c2 = min(c2, d.shape[1])
-        self.undo_info = undo = UndoInfo()
         undo.flags.byte_values_changed = True
         #undo.flags.index_range = i1, i2
         old_data = d[r1:r2,c1:c2].copy()
         new_data = np.fromstring(self.bytes, dtype=np.uint8).reshape(self.rows, self.cols)
         d[r1:r2, c1:c2] = new_data[0:r2 - r1, 0:c2 - c1]
         undo.data = (r1, c1, r2, c2, last, old_data, )
-        return undo
+        self.undo_info = undo
 
     def undo(self, editor):
         r1, c1, r2, c2, last, old_data, = self.undo_info.data

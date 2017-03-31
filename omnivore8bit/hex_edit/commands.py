@@ -16,32 +16,6 @@ import logging
 progress_log = logging.getLogger("progress")
 
 
-class ChangeMetadataCommand(SegmentCommand):
-    short_name = "metadata_base"
-    pretty_name = "Change Metadata Abstract Command"
-
-    def change_metadata(self, editor):
-        raise NotImplementedError
-
-    def restore_metadata(self, editor, old_data):
-        raise NotImplementedError
-
-    def set_undo_flags(self):
-        self.undo_info.flags.byte_style_changed = True
-
-    def perform(self, editor):
-        self.undo_info = undo = UndoInfo()
-        old_data = self.change_metadata(editor)
-        undo.data = (old_data, )
-        self.set_undo_flags()
-        return undo
-
-    def undo(self, editor):
-        old_data, = self.undo_info.data
-        self.restore_metadata(editor, old_data)
-        return self.undo_info
-
-
 class ChangeByteCommand(SetDataCommand):
     short_name = "cb"
     pretty_name = "Change Bytes"
@@ -67,11 +41,11 @@ class ChangeByteCommand(SetDataCommand):
 class CoalescingChangeByteCommand(ChangeByteCommand):
     short_name = "ccb"
 
-    def coalesce(self, next_command):
-        n = next_command
-        if n.__class__ == self.__class__ and n.segment == self.segment and n.start_index == self.start_index and n.end_index == self.end_index:
-            self.data = n.data
-            return True
+    def can_coalesce(self, next_command):
+        return next_command.start_index == self.start_index and next_command.end_index == self.end_index
+
+    def coalesce_merge(self, next_command):
+        self.data = next_command.data
 
 
 class InsertFileCommand(SetDataCommand):
@@ -137,7 +111,7 @@ class MiniAssemblerCommand(ChangeByteCommand):
         return "%s @ %04x" % (self.asm, self.start_index)
 
 
-class SetCommentCommand(SegmentCommand):
+class SetCommentCommand(ChangeMetadataCommand):
     short_name = "set_comment"
     pretty_name = "Comment"
     serialize_order =  [
@@ -147,7 +121,7 @@ class SetCommentCommand(SegmentCommand):
             ]
 
     def __init__(self, segment, ranges, comment):
-        SegmentCommand.__init__(self, segment)
+        ChangeMetadataCommand.__init__(self, segment)
         self.ranges = tuple(ranges)
         self.comment = comment
         indexes = ranges_to_indexes(self.ranges)
@@ -162,22 +136,20 @@ class SetCommentCommand(SegmentCommand):
             text = self.comment
         return "%s: %s" % (self.pretty_name, text)
 
+    def set_undo_flags(self, flags):
+        flags.byte_style_changed = True
+        flags.index_range = self.index_range
+
     def change_comments(self):
         self.segment.set_comment(self.ranges, self.comment)
 
-    def perform(self, editor):
-        self.undo_info = undo = UndoInfo()
-        undo.flags.byte_style_changed = True
-        undo.flags.index_range = self.index_range
+    def do_change(self, editor, undo):
         old_data = self.segment.get_comment_restore_data(self.ranges)
         self.change_comments()
-        undo.data = (old_data, )
-        return undo
+        return old_data
 
-    def undo(self, editor):
-        old_data, = self.undo_info.data
+    def undo_change(self, editor, old_data):
         self.segment.restore_comments(old_data)
-        return self.undo_info
 
 
 class ClearCommentCommand(SetCommentCommand):
@@ -212,12 +184,12 @@ class SetLabelCommand(ChangeMetadataCommand):
             text = self.label
         return "%s: %s" % (self.pretty_name, text)
 
-    def change_metadata(self, editor):
+    def do_change(self, editor, undo):
         old = self.segment.memory_map.get(self.addr, None)
         self.segment.memory_map[self.addr] = self.label
         return old
 
-    def restore_metadata(self, editor, old_data):
+    def undo_change(self, editor, old_data):
         if old_data is None:
             self.segment.memory_map.pop(self.addr, "")
         else:
@@ -231,12 +203,12 @@ class ClearLabelCommand(SetLabelCommand):
     def __init__(self, segment, addr):
         SetLabelCommand.__init__(self, segment, addr, "")
 
-    def change_metadata(self, editor):
+    def do_change(self, editor, undo):
         old = self.segment.memory_map.get(self.addr, None)
         self.segment.memory_map.pop(self.addr, "")
         return old
 
-    def restore_metadata(self, editor, old_data):
+    def undo_change(self, editor, old_data):
         if old_data is not None:
             self.segment.memory_map[self.addr] = old_data
 
@@ -244,39 +216,6 @@ class ClearLabelCommand(SetLabelCommand):
 class PasteCommand(SetValuesAtIndexesCommand):
     short_name = "paste"
     pretty_name = "Paste"
-
-    def get_data(self, orig):
-        data_len = np.alen(self.data)
-        orig_len = np.alen(orig)
-        if data_len > orig_len > 1:
-            data_len = orig_len
-        return self.data[0:data_len]
-
-    def perform(self, editor):
-        indexes = ranges_to_indexes(self.ranges)
-        if np.alen(indexes) == 0:
-            if self.indexes is not None:
-                indexes = self.indexes.copy() - self.indexes[0] + self.cursor
-            else:
-                indexes = np.arange(self.cursor, self.cursor + np.alen(self.data))
-        max_index = len(self.segment)
-        indexes = indexes[indexes < max_index]
-        data = self.get_data(self.segment.data[indexes])
-        style = self.style[0:np.alen(data)]
-        indexes = indexes[0:np.alen(data)]
-        comment_indexes = indexes[self.relative_comment_indexes[self.relative_comment_indexes < np.alen(indexes)]]
-        self.undo_info = undo = UndoInfo()
-        undo.flags.byte_values_changed = True
-        undo.flags.index_range = indexes[0], indexes[-1]
-        undo.flags.select_range = True
-        old_data = self.segment[indexes].copy()
-        old_style = self.segment.style[indexes].copy()
-        old_comment_info = self.segment.get_comments_at_indexes(indexes)
-        self.segment[indexes] = data
-        self.segment.style[indexes] = style
-        self.segment.set_comments_at_indexes(comment_indexes, self.comments)
-        undo.data = (old_data, indexes, old_style, old_comment_info)
-        return undo
 
 
 class PasteAndRepeatCommand(PasteCommand):
@@ -483,15 +422,12 @@ class RevertToBaselineCommand(SetRangeCommand):
         r = editor.document.baseline_document.container_segment.get_parallel_raw_data(self.segment)
         return r[indexes].data
 
-    def perform(self, editor):
+    def do_change(self, editor, undo):
         indexes = ranges_to_indexes(self.ranges)
-        self.undo_info = undo = UndoInfo()
-        undo.flags.byte_values_changed = True
         undo.flags.index_range = indexes[0], indexes[-1]
         old_data = self.segment[indexes].copy()
         self.segment[indexes] = self.get_baseline_data(old_data, editor, indexes)
-        undo.data = (old_data, )
-        return undo
+        return old_data
 
 
 class FindAllCommand(Command):
@@ -516,10 +452,9 @@ class FindAllCommand(Command):
     def get_searchers(self, editor):
         return editor.searchers
 
-    def perform(self, editor):
+    def perform(self, editor, undo):
         self.all_matches = []
         self.match_ids = {}
-        self.undo_info = undo = UndoInfo()
         undo.flags.changed_document = False
         if self.error:
             undo.flags.message = self.error
@@ -578,7 +513,7 @@ class FindAllCommand(Command):
             elif errors:
                 undo.flags.message = " ".join(errors)
             undo.flags.refresh_needed = True
-        return undo
+        self.undo_info = undo
 
 
 class FindNextCommand(Command):
@@ -652,9 +587,9 @@ class ApplyTraceSegmentCommand(ChangeStyleCommand):
         style_data = (self.segment.style[self.start_index:self.end_index].copy() & mask) | trace
         return style_data
 
-    def set_undo_flags(self):
-        self.undo_info.flags.byte_values_changed = True
-        self.undo_info.flags.index_range = self.start_index, self.end_index
+    def set_undo_flags(self, flags):
+        flags.byte_values_changed = True
+        flags.index_range = self.start_index, self.end_index
 
 
 class ClearTraceCommand(ChangeStyleCommand):
@@ -685,19 +620,17 @@ class SetSegmentOriginCommand(SegmentCommand):
     def __str__(self):
         return "%s: $%04x" % (self.pretty_name, self.origin)
 
-    def perform(self, editor):
-        self.undo_info = undo = UndoInfo()
+    def set_undo_flags(self, flags):
+        flags.metadata_dirty = True
+        flags.rebuild_ui = True
+
+    def do_change(self, editor, undo):
         old_origin = self.segment.start_addr
         self.segment.start_addr = self.origin
-        undo.data = (old_origin, )
-        undo.flags.metadata_dirty = True
-        undo.flags.rebuild_ui = True
-        return undo
+        return old_origin
 
-    def undo(self, editor):
-        old_origin, = self.undo_info.data
-        self.segment.start_addr = old_origin
-        return self.undo_info
+    def undo_change(self, editor, old_data):
+        self.segment.start_addr = old_data
 
 
 class SegmentMemoryMapCommand(ChangeMetadataCommand):
@@ -712,10 +645,10 @@ class SegmentMemoryMapCommand(ChangeMetadataCommand):
         ChangeMetadataCommand.__init__(self, segment)
         self.memory_map = memory_map
 
-    def change_metadata(self, editor):
+    def do_change(self, editor, undo):
         old_data = dict(editor.segment.memory_map)
         editor.segment.memory_map = self.memory_map
         return old_data
 
-    def restore_metadata(self, editor, old_data):
+    def undo_change(self, editor, old_data):
         editor.segment.memory_map = old_data

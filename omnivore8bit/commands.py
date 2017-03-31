@@ -21,34 +21,29 @@ class SegmentCommand(Command):
         Command.__init__(self)
         self.segment = segment
 
+    def coalesce(self, next_command):
+        if next_command.__class__ == self.__class__ and next_command.segment == self.segment:
+            if self.can_coalesce(next_command):
+                self.coalesce_merge(next_command)
+
+
+class ChangeByteValuesCommand(SegmentCommand):
+    short_name = "metadata_base"
+    pretty_name = "Change Metadata Abstract Command"
+
+    def set_undo_flags(self, flags):
+        flags.byte_values_changed = True
+
 
 class ChangeMetadataCommand(SegmentCommand):
     short_name = "metadata_base"
     pretty_name = "Change Metadata Abstract Command"
 
-    def change_metadata(self, editor):
-        raise NotImplementedError
-
-    def restore_metadata(self, editor, old_data):
-        raise NotImplementedError
-
-    def set_undo_flags(self):
-        self.undo_info.flags.byte_style_changed = True
-
-    def perform(self, editor):
-        self.undo_info = undo = UndoInfo()
-        old_data = self.change_metadata(editor)
-        undo.data = (old_data, )
-        self.set_undo_flags()
-        return undo
-
-    def undo(self, editor):
-        old_data, = self.undo_info.data
-        self.restore_metadata(editor, old_data)
-        return self.undo_info
+    def set_undo_flags(self, flags):
+        flags.byte_style_changed = True
 
 
-class SetDataCommand(SegmentCommand):
+class SetDataCommand(ChangeByteValuesCommand):
     short_name = "get_data_base"
     pretty_name = "Set Data Abstract Command"
     serialize_order =  [
@@ -75,11 +70,9 @@ class SetDataCommand(SegmentCommand):
     def get_data(self, orig):
         raise NotImplementedError
 
-    def perform(self, editor):
+    def do_change(self, editor, undo):
         i1 = self.start_index
         i2 = self.end_index
-        self.undo_info = undo = UndoInfo()
-        undo.flags.byte_values_changed = True
         undo.flags.index_range = i1, i2
         if self.cursor_at_end:
             undo.flags.cursor_index = i2
@@ -87,16 +80,14 @@ class SetDataCommand(SegmentCommand):
         self.segment[i1:i2] = self.get_data(old_data)
         if self.ignore_if_same_bytes and self.segment[i1:i2] == old_data:
             undo.flags.success = False
-        undo.data = (old_data, )
-        return undo
+        return (old_data, )
 
-    def undo(self, editor):
-        old_data, = self.undo_info.data
+    def undo_change(self, editor, old_data):
+        old_data, = old_data
         self.segment[self.start_index:self.end_index] = old_data
-        return self.undo_info
 
 
-class SetValuesAtIndexesCommand(SegmentCommand):
+class SetValuesAtIndexesCommand(ChangeByteValuesCommand):
     short_name = "set_values_at_indexes"
     pretty_name = "Set Indexes Abstract Command"
     serialize_order =  [
@@ -118,10 +109,34 @@ class SetValuesAtIndexesCommand(SegmentCommand):
         self.comments = comments
 
     def get_data(self, orig):
-        raise NotImplementedError
+        data_len = np.alen(self.data)
+        orig_len = np.alen(orig)
+        if data_len > orig_len > 1:
+            data_len = orig_len
+        return self.data[0:data_len]
 
-    def perform(self, editor):
-        raise NotImplementedError
+    def do_change(self, editor, undo):
+        indexes = ranges_to_indexes(self.ranges)
+        if np.alen(indexes) == 0:
+            if self.indexes is not None:
+                indexes = self.indexes.copy() - self.indexes[0] + self.cursor
+            else:
+                indexes = np.arange(self.cursor, self.cursor + np.alen(self.data))
+        max_index = len(self.segment)
+        indexes = indexes[indexes < max_index]
+        data = self.get_data(self.segment.data[indexes])
+        style = self.style[0:np.alen(data)]
+        indexes = indexes[0:np.alen(data)]
+        comment_indexes = indexes[self.relative_comment_indexes[self.relative_comment_indexes < np.alen(indexes)]]
+        undo.flags.index_range = indexes[0], indexes[-1]
+        undo.flags.select_range = True
+        old_data = self.segment[indexes].copy()
+        old_style = self.segment.style[indexes].copy()
+        old_comment_info = self.segment.get_comments_at_indexes(indexes)
+        self.segment[indexes] = data
+        self.segment.style[indexes] = style
+        self.segment.set_comments_at_indexes(comment_indexes, self.comments)
+        return (old_data, indexes, old_style, old_comment_info)
 
     def undo(self, editor):
         old_data, old_indexes, old_style, old_comment_info = self.undo_info.data
@@ -133,7 +148,7 @@ class SetValuesAtIndexesCommand(SegmentCommand):
         return self.undo_info
 
 
-class SetRangeCommand(SegmentCommand):
+class SetRangeCommand(ChangeByteValuesCommand):
     short_name = "set_range_base"
     pretty_name = "Set Ranges Abstract Command"
     serialize_order =  [
@@ -148,21 +163,16 @@ class SetRangeCommand(SegmentCommand):
     def get_data(self, orig):
         raise NotImplementedError
 
-    def perform(self, editor):
+    def do_change(self, editor, undo):
         indexes = ranges_to_indexes(self.ranges)
-        self.undo_info = undo = UndoInfo()
-        undo.flags.byte_values_changed = True
         undo.flags.index_range = indexes[0], indexes[-1]
         old_data = self.segment[indexes].copy()
         self.segment[indexes] = self.get_data(old_data)
-        undo.data = (old_data, )
-        return undo
+        return old_data
 
-    def undo(self, editor):
-        old_data, = self.undo_info.data
+    def undo_change(self, editor, old_data):
         indexes = ranges_to_indexes(self.ranges)
         self.segment[indexes] = old_data
-        return self.undo_info
 
 
 class SetRangeValueCommand(SetRangeCommand):
@@ -191,6 +201,9 @@ class ChangeStyleCommand(SetDataCommand):
         end_index = len(segment)
         SetDataCommand.__init__(self, segment, start_index, end_index)
 
+    def set_undo_flags(self, flags):
+        flags.byte_style_changed = True
+
     def get_style(self, editor):
         style = self.segment.style[self.start_index:self.end_index].copy()
         return style
@@ -202,12 +215,7 @@ class ChangeStyleCommand(SetDataCommand):
     def update_can_trace(self, editor):
         pass
 
-    def set_undo_flags(self):
-        self.undo_info.flags.byte_style_changed = True
-
-    def perform(self, editor):
-        self.undo_info = undo = UndoInfo()
-        self.set_undo_flags()
+    def do_change(self, editor, undo):
         old_can_trace = editor.can_trace
         new_style = self.get_style(editor)
         self.clip(new_style)
@@ -215,11 +223,9 @@ class ChangeStyleCommand(SetDataCommand):
         self.segment.style[self.start_index:self.end_index] = new_style
         self.update_can_trace(editor)
         editor.document.change_count += 1
-        undo.data = (old_style, old_can_trace)
-        return undo
+        return (old_style, old_can_trace)
 
-    def undo(self, editor):
-        old_style, old_can_trace = self.undo_info.data
+    def undo_change(self, editor, old_data):
+        old_style, old_can_trace = old_data
         self.segment.style[self.start_index:self.end_index] = old_style
         editor.can_trace = old_can_trace
-        return self.undo_info
