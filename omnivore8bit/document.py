@@ -60,7 +60,7 @@ class SegmentedDocument(BaseDocument):
         if self.baseline_document is not None:
             mdict["baseline document"] = self.baseline_document.metadata.uri
         mdict["document uuid"] = self.uuid
-        mdict["document memory map"] = sorted([list(i) for i in self.program_memory_map.iteritems()])  # save as list of pairs because json doesn't allow int keys for dict
+        mdict["document memory map"] = sorted([list(i) for i in self.document_memory_map.iteritems()])  # save as list of pairs because json doesn't allow int keys for dict
 
     def restore_extra_from_dict(self, e):
         if 'user segments' in e:
