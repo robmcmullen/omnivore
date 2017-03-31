@@ -2,6 +2,7 @@ import numpy as np
 
 from omnivore.framework.errors import ProgressCancelError
 from omnivore.utils.command import Batch, Command, UndoInfo
+from omnivore8bit.commands import SegmentCommand
 from omnivore8bit.hex_edit.commands import ChangeByteCommand
 from omnivore8bit.utils.drawutil import *
 
@@ -23,7 +24,7 @@ class DrawBatchCommand(Batch):
         return cmd
 
 
-class LineCommand(Command):
+class LineCommand(SegmentCommand):
     short_name = "line"
     pretty_name = "Line"
     serialize_order =  [
@@ -33,8 +34,7 @@ class LineCommand(Command):
             ]
 
     def __init__(self, segment, start_index, end_index, bytes):
-        Command.__init__(self)
-        self.segment = segment
+        SegmentCommand.__init__(self, segment)
         self.start_index = start_index
         self.end_index = end_index
         self.data = bytes
@@ -87,7 +87,7 @@ class FilledSquareCommand(LineCommand):
         return get_filled_rectangle(i1, i2, map_width)
 
 
-class PasteRectangularCommand(Command):
+class PasteRectangularCommand(SegmentCommand):
     short_name = "paste_rect"
     pretty_name = "Paste Rectangular"
     serialize_order =  [
@@ -100,8 +100,7 @@ class PasteRectangularCommand(Command):
             ]
 
     def __init__(self, segment, start_index, rows, cols, bytes_per_row, bytes):
-        Command.__init__(self)
-        self.segment = segment
+        SegmentCommand.__init__(self, segment)
         self.start_index = start_index
         self.rows = rows
         self.cols = cols

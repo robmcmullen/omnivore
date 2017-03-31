@@ -1,8 +1,6 @@
 import numpy as np
 
-from omnivore.framework.errors import ProgressCancelError
-from omnivore.utils.command import Batch, Command, UndoInfo
-from omnivore8bit.hex_edit.commands import ChangeByteCommand, SetValueCommand
+from omnivore8bit.hex_edit.commands import SetValueCommand
 
 import logging
 progress_log = logging.getLogger("progress")
