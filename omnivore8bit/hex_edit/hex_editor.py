@@ -487,7 +487,7 @@ class HexEditor(FrameworkEditor):
     def save_segment_view_params(self, segment):
         d = {
             'cursor_index': self.cursor_index,
-            'hex_edit': self.hex_edit.get_view_params(),
+            'main_window': self.control.get_view_params(),
         }
         for pane in self.task.iter_panes():
             try:
@@ -505,8 +505,8 @@ class HexEditor(FrameworkEditor):
             return
         log.debug("restoring view params for %s" % segment.uuid)
         self.cursor_index = d['cursor_index']
-        if 'hex_edit' in d:
-            self.hex_edit.restore_view_params(d['hex_edit'])
+        if 'main_window' in d:
+            self.control.restore_view_params(d['main_window'])
         for pane in self.task.iter_panes():
             try:
                 params = d[pane.id]
