@@ -20,7 +20,7 @@ except ImportError:
     raise RuntimeError("Generate cputables.py using cpugen.py before using the miniassembler")
 
 from disasm import Disassembler
-from udis_fast.flags import flag_undoc, pcr
+from udis_fast.flags import flag_undoc, pcr, z80bit
 
 import logging
 logging.basicConfig(level=logging.WARNING)
