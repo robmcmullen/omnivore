@@ -11,12 +11,11 @@ import numpy as np
 #     unsigned short dest_pc; /* address pointed to by this opcode; if applicable */
 #     unsigned char count;
 #     unsigned char flag;
-#     unsigned char strlen;
-#     unsigned char reserved;
+#     unsigned short strlen;
 #     int strpos; /* position of start of text in instruction array */
 # } asm_entry;
 
-rawdtype = [('pc', 'u2'), ('dest_pc', 'u2'), ('count', 'u1'), ('flag', 'u1'), ('strlen', 'u1'), ('unused', 'u1'), ('strpos', 'i4')]
+rawdtype = [('pc', 'u2'), ('dest_pc', 'u2'), ('count', 'u1'), ('flag', 'u1'), ('strlen', 'u2'), ('strpos', 'i4')]
 
 from flags import *
 
