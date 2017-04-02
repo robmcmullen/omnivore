@@ -173,7 +173,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         anchor_start, anchor_end = e.anchor_start_index, e.anchor_end_index
         r1 = c1 = r2 = c2 = -1
         if self.rect_select:
-            anchor_start, anchor_end, (r1, c1), (r2, c2) = self.segment.get_rect_indexes(anchor_start, anchor_end)
+            anchor_start, anchor_end, (r1, c1), (r2, c2) = self.segment.get_rect_indexes(anchor_start, anchor_end, self.bytes_per_row)
         elif anchor_start > anchor_end:
             anchor_start, anchor_end = anchor_end, anchor_start
         elif anchor_start == anchor_end:

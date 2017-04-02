@@ -456,13 +456,13 @@ class BitmapEditor(HexEditor):
     def highlight_selected_ranges(self):
         s = self.segment
         s.clear_style_bits(selected=True)
-        s.set_style_ranges_rect(self.selected_ranges, selected=True)
+        s.set_style_ranges_rect(self.selected_ranges, self.bitmap.bytes_per_row, selected=True)
         self.document.change_count += 1
 
     def invert_selection_ranges(self, ranges):
-        rects = [(rect[2], rect[3]) for rect in [self.segment.get_rect_indexes(r[0], r[1]) for r in ranges]]
+        rects = [(rect[2], rect[3]) for rect in [self.segment.get_rect_indexes(r[0], r[1], self.bitmap.bytes_per_row) for r in ranges]]
         inverted = invert_rects(rects, self.bitmap.total_rows, self.bitmap.bytes_per_row)
-        ranges = self.segment.rects_to_ranges(inverted)
+        ranges = self.segment.rects_to_ranges(inverted, self.bitmap.bytes_per_row)
         return ranges
 
     def get_extra_segment_savers(self, segment):

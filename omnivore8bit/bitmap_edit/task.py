@@ -22,7 +22,7 @@ from omnivore.framework.toolbar import get_toolbar_group
 
 
 class BitmapEditTask(HexEditTask):
-    """ Tile-based map editor
+    """ Pixel-level graphic editor
     """
 
     new_file_text = "Bitmap File"
@@ -47,14 +47,9 @@ class BitmapEditTask(HexEditTask):
         return pane_layout.pane_create()
 
     def _extra_actions_default(self):
-        machine_menu = self.create_menu("Menu", "Machine", "MachineTypeGroup", "MachineCharacteristicsGroup", "MachineEmulatorGroup")
-        segment_menu = self.create_menu("Menu", "Segments", "SegmentParserGroup", "SegmentGroup")
+        segment_menu = self.create_menu("Menu", "Segments", "ListGroup", "ActionGroup")
         actions = [
             # Menubar additions
-            SchemaAddition(factory=lambda: machine_menu,
-                           path='MenuBar',
-                           after="Edit",
-                           ),
             SchemaAddition(factory=lambda: segment_menu,
                            path='MenuBar',
                            after="Edit",
