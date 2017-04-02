@@ -753,7 +753,12 @@ class DefaultSegment(object):
             r = r2 - r1
             c = c2 - c1
             indexes = np.tile(np.arange(c), r) + np.repeat(np.arange(r) * bytes_per_row, c) + start
-            s[indexes] |= style_bits
+
+            # Limit the indexes actually used to the size of the array, because
+            # if the region has an incomplete last line, the style setting
+            # would fail because it isn't be a perfect rectangle
+            clamped = indexes[np.where(np.less(indexes, len(self)))[0]]
+            s[clamped] |= style_bits
 
     def rects_to_ranges(self, rects, bytes_per_row):
         ranges = []
