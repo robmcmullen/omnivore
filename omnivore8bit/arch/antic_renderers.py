@@ -70,9 +70,9 @@ class BaseRenderer(object):
         for i in range(4):
             color_is_set = (pixels == i)
             bitimage[color_is_set & normal] = color_registers[i]
+            bitimage[color_is_set & data] = d_colors[i]
             bitimage[color_is_set & comment] = c_colors[i]
             bitimage[color_is_set & match] = m_colors[i]
-            bitimage[color_is_set & data] = d_colors[i]
             bitimage[color_is_set & highlight] = h_colors[i]
         bitimage[count:,:,:] = m.empty_color
         return bitimage
@@ -96,9 +96,9 @@ class BaseRenderer(object):
         for i in range(16):
             color_is_set = (pixels == i)
             bitimage[color_is_set & normal] = color_registers[i]
+            bitimage[color_is_set & data] = d_colors[i]
             bitimage[color_is_set & comment] = c_colors[i]
             bitimage[color_is_set & match] = m_colors[i]
-            bitimage[color_is_set & data] = d_colors[i]
             bitimage[color_is_set & highlight] = h_colors[i]
         bitimage[count:,:,:] = m.empty_color
         return bitimage
@@ -138,9 +138,9 @@ class BaseRenderer(object):
         for i in range(2**bitplanes):
             color_is_set = (pixels == i)
             bitimage[color_is_set & normal] = color_registers[i]
+            bitimage[color_is_set & data] = d_colors[i]
             bitimage[color_is_set & comment] = c_colors[i]
             bitimage[color_is_set & match] = m_colors[i]
-            bitimage[color_is_set & data] = d_colors[i]
             bitimage[color_is_set & highlight] = h_colors[i]
         bitimage[count:,:,:] = m.empty_color
         return bitimage
@@ -174,14 +174,14 @@ class OneBitPerPixelB(BaseRenderer):
 
         bitimage = np.empty((nr * bytes_per_row, 8, 3), dtype=np.uint8)
         bitimage[background & normal] = bw_colors[0]
+        bitimage[background & data] = d_colors[0]
         bitimage[background & comment] = c_colors[0]
         bitimage[background & match] = m_colors[0]
-        bitimage[background & data] = d_colors[0]
         bitimage[background & highlight] = h_colors[0]
         bitimage[color1 & normal] = bw_colors[1]
+        bitimage[color1 & data] = d_colors[1]
         bitimage[color1 & comment] = c_colors[1]
         bitimage[color1 & match] = m_colors[1]
-        bitimage[color1 & data] = d_colors[1]
         bitimage[color1 & highlight] = h_colors[1]
         bitimage[count:,:,:] = m.empty_color
 
@@ -251,14 +251,14 @@ class OneBitPerPixelApple2(BaseRenderer):
 
         bitimage = np.empty((nr * bytes_per_row, 7, 3), dtype=np.uint8)
         bitimage[background & normal] = bw_colors[0]
+        bitimage[background & data] = d_colors[0]
         bitimage[background & comment] = c_colors[0]
         bitimage[background & match] = m_colors[0]
-        bitimage[background & data] = d_colors[0]
         bitimage[background & highlight] = h_colors[0]
         bitimage[color1 & normal] = bw_colors[1]
+        bitimage[color1 & data] = d_colors[1]
         bitimage[color1 & comment] = c_colors[1]
         bitimage[color1 & match] = m_colors[1]
-        bitimage[color1 & data] = d_colors[1]
         bitimage[color1 & highlight] = h_colors[1]
         bitimage[count:,:,:] = m.empty_color
 
@@ -333,14 +333,14 @@ class OneBitPerPixelApple2Artifacting(BaseRenderer):
 
         bitimage = np.empty((nr * bytes_per_row, 7, 3), dtype=np.uint8)
         bitimage[background & normal] = bw_colors[0]
+        bitimage[background & data] = d_colors[0]
         bitimage[background & comment] = c_colors[0]
         bitimage[background & match] = m_colors[0]
-        bitimage[background & data] = d_colors[0]
         bitimage[background & highlight] = h_colors[0]
         bitimage[color1 & normal] = bw_colors[1]
+        bitimage[color1 & data] = d_colors[1]
         bitimage[color1 & comment] = c_colors[1]
         bitimage[color1 & match] = m_colors[1]
-        bitimage[color1 & data] = d_colors[1]
         bitimage[color1 & highlight] = h_colors[1]
         bitimage[count:,:,:] = m.empty_color
 
