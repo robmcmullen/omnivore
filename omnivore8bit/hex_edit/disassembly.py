@@ -5,9 +5,10 @@ import numpy as np
 import wx
 
 from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
-from udis.udis_fast import TraceInfo
+from udis.udis_fast import TraceInfo, flag_origin
 
 from omnivore8bit.ui.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
+from omnivore8bit.arch.disasm import ANTIC_DISASM, JUMPMAN_LEVEL, JUMPMAN_HARVEST, UNINITIALIZED_DATA
 
 from actions import GotoIndexAction
 from commands import MiniAssemblerCommand, SetCommentCommand
@@ -54,9 +55,10 @@ class DisassemblyTable(ByteGridTable):
         self.index_to_row = []
         self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case, self.editor.document.document_memory_map, self.segment.memory_map)
         self.disassembler.add_chunk_processor("data", 1)
-        self.disassembler.add_chunk_processor("antic_dl", 2)
-        self.disassembler.add_chunk_processor("jumpman_level", 3)
-        self.disassembler.add_chunk_processor("jumpman_harvest", 4)
+        self.disassembler.add_chunk_processor("antic_dl", ANTIC_DISASM)
+        self.disassembler.add_chunk_processor("jumpman_level", JUMPMAN_LEVEL)
+        self.disassembler.add_chunk_processor("jumpman_harvest", JUMPMAN_HARVEST)
+        self.disassembler.add_chunk_processor("uninitialized data", UNINITIALIZED_DATA)
         self.highlight_flags = self.disassembler.highlight_flags
         self.hex_lower = editor.task.hex_grid_lower_case
         if self.hex_lower:
@@ -183,7 +185,10 @@ class DisassemblyTable(ByteGridTable):
         for i in range(count):
             style |= self.segment.style[index + i]
         if col == 0:
-            text = self.disassembler.format_data_list_bytes(index, line.num_bytes)
+            if self.lines[row].flag & flag_origin:
+                text = ""
+            else:
+                text = self.disassembler.format_data_list_bytes(index, line.num_bytes)
         elif col == 2:
             text = self.disassembler.format_comment(index, line)
         else:

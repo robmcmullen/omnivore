@@ -17,7 +17,7 @@ from atrcopy import user_bit_mask, data_style, add_xexboot_header, add_atr_heade
 
 from omnivore.framework.actions import *
 from commands import *
-from omnivore8bit.arch.disasm import ANTIC_DISASM, JUMPMAN_LEVEL, JUMPMAN_HARVEST
+from omnivore8bit.arch.disasm import ANTIC_DISASM, JUMPMAN_LEVEL, JUMPMAN_HARVEST, UNINITIALIZED_DATA
 from omnivore8bit.arch.ui.antic_colors import AnticColorDialog
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
 from omnivore8bit.ui.dialogs import prompt_for_emulator, prompt_for_assembler, SegmentOrderDialog, SegmentInterleaveDialog
@@ -674,6 +674,12 @@ class MarkSelectionAsJumpmanHarvestAction(CustomDisassemblerAction):
     name = 'Mark Selection As Jumpman Harvest Table'
     enabled_name = 'can_copy'
     disassembly_type = JUMPMAN_HARVEST
+
+
+class MarkSelectionAsUninitializedDataAction(CustomDisassemblerAction):
+    name = 'Mark Selection As Uninitialized Data'
+    enabled_name = 'can_copy'
+    disassembly_type = UNINITIALIZED_DATA
 
 
 class ImportSegmentLabelsAction(EditorAction):

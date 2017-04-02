@@ -9,6 +9,13 @@ from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bi
 from memory_map import EmptyMemoryMap
 
 
+# Style numbers for other disassemblers
+ANTIC_DISASM = 2
+JUMPMAN_LEVEL = 3
+JUMPMAN_HARVEST = 4
+UNINITIALIZED_DATA = 5
+
+
 def fast_get_entire_style_ranges(segment, split_comments=[data_style], **kwargs):
     style_copy = segment.get_comment_locations(**kwargs)
     # print "FAST_GET_ENTIRE", style_copy
@@ -134,6 +141,9 @@ class BaseDisassembler(object):
         self.use_labels = self.start_addr > 0
         return self.info
 
+    def get_origin(self, pc):
+        return "%s $%s" % (self.asm_origin, self.fmt_hex4 % pc)
+
     def get_comments(self, index, line=None):
         info = self.info
         if line is None:
@@ -225,7 +235,9 @@ class BaseDisassembler(object):
         return operand
 
     def format_operand(self, line, operand):
-        if line.flag & udis_fast.flag_data_bytes:
+        if line.flag == udis_fast.flag_origin:
+            operand = self.get_origin(line.dest_pc)
+        elif line.flag & udis_fast.flag_data_bytes:
             operand = self.format_data_directive_bytes(operand)
         elif line.num_bytes > 1:
             operand, target_pc, label = self.get_operand_label(operand)
@@ -285,7 +297,10 @@ class BaseDisassembler(object):
                         comment = ""
                         first = False
             else:
-                hex_bytes = self.format_data_list_bytes(index, line.num_bytes)
+                if line.flag == udis_fast.flag_origin:
+                    hex_bytes = ""
+                else:
+                    hex_bytes = self.format_data_list_bytes(index, line.num_bytes)
                 code = self.format_operand(line, operand)
                 # expand to 8 spaces
                 code = label + "   " + code
@@ -299,8 +314,7 @@ class BaseDisassembler(object):
         lines = []
         start_row = self.info.index_to_row[start]
         line = self.info[start_row]
-        org = self.format_row_label(line)
-        lines.append("        %s $%s" % (self.asm_origin, org))
+        lines.append("        " + self.get_origin(line.pc))
         for line, hex_bytes, code, comment, num_bytes in self.iter_row_text(start, end):
             if comment:
                 text = "%-30s; %s" % (code, comment)
@@ -319,6 +333,10 @@ class BaseDisassembler(object):
         line_num = 2
         pc = self.segment.start_addr
         for line, hex_bytes, code, comment, num_bytes in self.iter_row_text():
+            if line.flag == udis_fast.flag_origin:
+                line_num += 1
+                continue
+            pc = line.pc
             if comment:
                 code = "%-30s; %s" % (code, comment.rstrip())
             if ".byte" in code:
@@ -336,7 +354,6 @@ class BaseDisassembler(object):
                 text = "%05d %04X  %-17s %s" % (line_num, line.pc, hex_bytes.upper(), code)
             lines.append(text)
             line_num += 1
-            pc += num_bytes
         return lines
 
 
@@ -396,9 +413,3 @@ class Basic8080Disassembler(BaseDisassembler):
 class BasicZ80Disassembler(BaseDisassembler):
     name = "Z80"
     cpu = "z80"
-
-
-# Style numbers for other disassemblers
-ANTIC_DISASM = 2
-JUMPMAN_LEVEL = 3
-JUMPMAN_HARVEST = 4

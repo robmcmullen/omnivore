@@ -184,6 +184,7 @@ class HexEditTask(FrameworkTask):
             SMenu(
                 MarkSelectionAsCodeAction(name="Code"),
                 MarkSelectionAsDataAction(name="Data"),
+                MarkSelectionAsUninitializedDataAction(name="Uninitialized Data"),
                 MarkSelectionAsDisplayListAction(name="ANTIC Display List"),
                 MarkSelectionAsJumpmanLevelAction(name="Jumpman Level Description"),
                 MarkSelectionAsJumpmanHarvestAction(name="Jumpman Harvest Table"),
