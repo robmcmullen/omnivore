@@ -264,7 +264,8 @@ class BaseDisassembler(object):
             if c:
                 comments.append(c)
         if comments:
-            return " ".join(comments)
+            text = " ".join(comments)
+            return text.replace("\r", "").replace("\n", "")
         return ""
 
     def iter_row_text(self, start=0, end=-1, max_bytes_per_line=8):
