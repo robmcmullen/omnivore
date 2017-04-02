@@ -116,16 +116,39 @@ def get_disassembled_chunk(parse_mod, storage_wrapper, binary, pc, last, index_o
             break
     return pc, index_of_pc
 
+
+def uninitialized_data_processor(metadata_wrapper, binary, start_addr, end_addr, start_index, mnemonic_lower , hex_lower):
+    """Simple chunk processor that treats everything as undefined and
+    creates one line with the origin of the next chunk.
+
+    Note that no text is added for this line, it's marked as flag_origin and
+    dest_pc contains the origin address.
+    """
+    count = end_addr - start_addr
+    row = metadata_wrapper.row
+    metadata = metadata_wrapper.view(row)
+    metadata['pc'] = start_addr
+    metadata['dest_pc'] = end_addr
+    metadata['count'] = count
+    metadata['flag'] = flag_origin
+    metadata['strlen'] = 0
+    metadata['strpos'] = metadata_wrapper.last_strpos
+    metadata_wrapper.index_to_row[start_index:start_index + count] = row
+    metadata_wrapper.row = row + 1
+
+
 def get_disassembler(cpu, fast=True, monolithic=True):
+    strsize = 12
     if cpu == "dev":
         import disasm_speedups_dev
         processor = functools.partial(disasm_speedups_dev.get_disassembled_chunk_fast, cpu)
-        strsize = 12
+        return processor, cpu, strsize
+    elif cpu == "uninitialized data":
+        processor = uninitialized_data_processor
         return processor, cpu, strsize
     if monolithic:
         import disasm_speedups_monolithic
         processor = functools.partial(disasm_speedups_monolithic.get_disassembled_chunk_fast, cpu)
-        strsize = 12
         return processor, cpu, strsize
     try:
         if not fast:
@@ -137,7 +160,6 @@ def get_disassembler(cpu, fast=True, monolithic=True):
             mod_name = "udis.udis_fast.disasm_speedups_%s" % cpu
             parse_mod = importlib.import_module(mod_name)
         processor = parse_mod.get_disassembled_chunk_fast
-        strsize = 12
     except RuntimeError:
         mod_name = "udis_fast.hardcoded_parse_%s" % cpu
         parse_mod = importlib.import_module(mod_name)
@@ -274,6 +296,11 @@ class DisassemblerWrapper(object):
                 next_pc = pc + line.num_bytes
                 trace_info[pc:next_pc] = 1
                 if line.dest_pc > 0:
+                    if line.flag == flag_origin:
+                        # Normally shouldn't be able to reach an origin change,
+                        # but if we do by accidently jumping there the trace
+                        # should stop.
+                        log.debug("%04x: found origin change; moving to next entry point" % (pc))
                     if line.flag & flag_branch:
                         if not valid_pc(line.dest_pc):
                             log.debug("%04x: found branch to %04x, but not in disassembled range" % (pc, line.dest_pc))
