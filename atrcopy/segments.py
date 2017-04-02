@@ -691,7 +691,7 @@ class DefaultSegment(object):
             return ranges[match_index][0]
         return None
 
-    def get_rect_indexes(self, anchor_start, anchor_end):
+    def get_rect_indexes(self, anchor_start, anchor_end, bytes_per_row):
         # determine row,col of upper left and lower right of selected
         # rectangle.  The values are inclusive, so ul=(0,0) and lr=(1,2)
         # is 2 rows and 3 columns.  Columns need to be adjusted slightly
@@ -699,9 +699,8 @@ class DefaultSegment(object):
         # measured as cursor positions, that is: positions between the
         # bytes where as rect select needs to think of the selections as
         # on the byte positions themselves, not in between.
-        bpr = self.map_width
-        r1, c1 = divmod(anchor_start, bpr)
-        r2, c2 = divmod(anchor_end, bpr)
+        r1, c1 = divmod(anchor_start, bytes_per_row)
+        r2, c2 = divmod(anchor_end, bytes_per_row)
         if c1 >= c2:
             # start column is to the right of the end column so columns
             # need to be swapped
@@ -713,7 +712,7 @@ class DefaultSegment(object):
                 # When the cursor is at the end of a line, anchor_end points
                 # to the first character of the next line.  Handle this
                 # special case by pointing to end of the previous line.
-                c2 = bpr
+                c2 = bytes_per_row
                 r2 -= 1
             else:
                 c1, c2 = c2 - 1, c1 + 1
@@ -724,16 +723,16 @@ class DefaultSegment(object):
                 # start row is below end row
                 r1, r2 = r2, r1
                 c2 += 1
-        anchor_start = r1 * bpr + c1
-        anchor_end = r2 * bpr + c2
+        anchor_start = r1 * bytes_per_row + c1
+        anchor_end = r2 * bytes_per_row + c2
         r2 += 1
         return anchor_start, anchor_end, (r1, c1), (r2, c2)
 
-    def set_style_ranges_rect(self, ranges, **kwargs):
+    def set_style_ranges_rect(self, ranges, bytes_per_row, **kwargs):
         style_bits = self.get_style_bits(**kwargs)
         s = self.style
         for start, end in ranges:
-            start, end, (r1, c1), (r2, c2) = self.get_rect_indexes(start, end)
+            start, end, (r1, c1), (r2, c2) = self.get_rect_indexes(start, end, bytes_per_row)
             # Numpy tricks!
             # >>> c1 = 15
             # >>> r = 4 # r2 - r1
@@ -753,15 +752,14 @@ class DefaultSegment(object):
             #       101, 102, 103, 104, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144])
             r = r2 - r1
             c = c2 - c1
-            indexes = np.tile(np.arange(c), r) + np.repeat(np.arange(r) * self.map_width, c) + start
+            indexes = np.tile(np.arange(c), r) + np.repeat(np.arange(r) * bytes_per_row, c) + start
             s[indexes] |= style_bits
 
-    def rects_to_ranges(self, rects):
+    def rects_to_ranges(self, rects, bytes_per_row):
         ranges = []
-        bpr = self.map_width
         for (r1, c1), (r2, c2) in rects:
-            start = r1 * bpr + c1
-            end = (r2 - 1) * bpr + c2
+            start = r1 * bytes_per_row + c1
+            end = (r2 - 1) * bytes_per_row + c2
             ranges.append((start, end))
         return ranges
 
