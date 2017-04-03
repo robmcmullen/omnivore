@@ -15,30 +15,12 @@ def fix_opcode_table(cpu, allow_undoc=False):
     4 values in the tuple.
     """
     table = cpu['opcodeTable']
-    try:
-        labels = cpu['labelTargets']
-    except KeyError:
-        labels = {}
-    try:
-        jump = cpu['jumpOpcodes']
-    except KeyError:
-        jump = set()
-    try:
-        branch = cpu['branchOpcodes']
-    except KeyError:
-        branch = set()
-    try:
-        branch_modes = cpu['branchModes']
-    except KeyError:
-        branch_modes = set()
-    try:
-        exclude_modes = cpu['modesExclude']
-    except KeyError:
-        exclude_modes = set()
-    try:
-        ret = cpu['returnOpcodes']
-    except KeyError:
-        ret = set()
+    labels = cpu.get('labelTargets', {})
+    jump = cpu.get('jumpOpcodes', set())
+    branch = cpu.get('branchOpcodes', set())
+    branch_modes = cpu.get('branchModes', set())
+    exclude_modes = cpu.get('modesExclude', set())
+    ret = cpu.get('returnOpcodes', set())
     possibilities = []
     nop = 0x00
     found_undoc = False
