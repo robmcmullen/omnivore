@@ -95,6 +95,10 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
     def __repr__(self):
         return "<%s at 0x%x>" % (self.__class__.__name__, id(self))
 
+    @property
+    def command_help(self):
+        return ""
+
     def get_view_params(self):
         s = self.GetViewStart()
         return [s[0], s[1]]  # might be a wx.Point, so ensure it's a list for json serialization
@@ -417,7 +421,8 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         if inside:
             label = self.get_label_at_index(byte)
             message = self.get_status_message_at_index(byte, bit)
-            self.editor.show_status_message("%s: %s %s" % (self.short_name, label, message))
+            self.task.status_bar.message = "%s: %s %s" % (self.short_name, label, message)
+            self.task.status_bar.command_help = self.command_help
 
     def get_label_at_index(self, index):
         try:
@@ -552,7 +557,8 @@ class BitmapScroller(BitviewScroller):
     def get_image(self, segment=None):
         if segment is None:
             segment = self.segment
-        log.debug("get_image: bit image: start=%d, num=%d" % (self.start_row, self.visible_rows))
+        viewport_byte_start, viewport_col_offset = divmod(self.start_col, self.pixels_per_byte)
+        log.debug("get_image: bit image: rows=%d:%d, cols=%d:%d, viewport_byte,col=%d,%d" % (self.start_row, self.start_row + self.visible_rows - 1, self.start_col, self.start_col + self.visible_cols - 1, viewport_byte_start, viewport_col_offset))
         sr = self.start_row
         nr = self.visible_rows
         self.start_byte = sr * self.bytes_per_row
@@ -596,6 +602,18 @@ class FontMapScroller(BitviewScroller):
         self.blink_index = 0
         self.blink_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.update, self.blink_timer)
+
+    @property
+    def command_help(self):
+        if not self.editing:
+            message = "Double click or press F2 to begin editing text"
+        else:
+            if self.inverse:
+                message = "Editing text (INVERSE MODE): Press F1 for normal characters"
+            else:
+                message = "Editing text: Press F1 for inverse"
+            message += " (press F2 to stop editing or click outside the character map window)"
+        return message
 
     def update(self, event):
         self.blink_index = (self.blink_index + 1) % 2
@@ -785,26 +803,14 @@ class FontMapScroller(BitviewScroller):
         actions.extend(self.task.get_font_mapping_actions(self.task))
         return actions
 
-    def get_status_message(self):
-        if not self.editing:
-            message = "Double click or press F2 to begin editing text"
-        else:
-            if self.inverse:
-                message = "Editing text (INVERSE MODE): Press F1 for normal characters"
-            else:
-                message = "Editing text: Press F1 for inverse"
-            message += " (press F2 to stop editing or click outside the character map window)"
-        return message
-
     def get_status_message_at_index(self, index, bit):
-        comments = self.segment.get_comment(index)
-        return "%s %s" % (comments, self.get_status_message())
+        return self.segment.get_comment(index)
 
     def set_status_message(self):
         e = self.editor
         if e is None:
             return
-        e.task.status_bar.message = self.get_status_message()
+        e.task.status_bar.command_help = self.command_help
 
     def on_focus(self, evt):
         log.debug("on_focus!")

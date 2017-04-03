@@ -78,6 +78,13 @@ class FrameworkStatusBarManager(StatusBarManager):
     # The message displayed in the first field of the status bar.
     message = Unicode
 
+    message_width = Int(400)
+
+    # The message to be displayed in debug field of the status bar
+    command_help = Unicode
+
+    command_help_width = Int(-1)
+
     # The message to be displayed in debug field of the status bar
     debug = Unicode
 
@@ -102,10 +109,11 @@ class FrameworkStatusBarManager(StatusBarManager):
         """ Creates a status bar. """
 
         if self.status_bar is None:
-            self.status_bar = FrameworkStatusBar(parent, [-1, self.debug_width], self.error_delay)
+            self.status_bar = FrameworkStatusBar(parent, [self.message_width, self.command_help_width, self.debug_width], self.error_delay)
             self.status_bar._pyface_control = self
             self.status_bar.SetStatusText(self.message, 0)
-            self.status_bar.SetStatusText(self.debug, 1)
+            self.status_bar.SetStatusText(self.command_help, 1)
+            self.status_bar.SetStatusText(self.debug, 2)
 
         return self.status_bar
 
@@ -129,11 +137,19 @@ class FrameworkStatusBarManager(StatusBarManager):
 
         return
 
+    def _command_help_changed(self):
+        """ Sets the text displayed on the status bar. """
+
+        if self.status_bar is not None:
+            self.status_bar.SetStatusText(self.command_help, 1)
+
+        return
+
     def _debug_changed(self):
         """ Sets the text displayed on the status bar. """
 
         if self.status_bar is not None:
-            self.status_bar.SetStatusText(self.debug, 1)
+            self.status_bar.SetStatusText(self.debug, 2)
 
         return
 
