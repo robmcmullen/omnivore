@@ -73,7 +73,7 @@ class InsertFileCommand(SetDataCommand):
             data = data[0:len(orig)]
         return data
 
-    def perform(self, editor):
+    def perform(self, editor, undo):
         i1 = self.start_index
         orig = self.segment.data[self.start_index:]
         data = self.get_data(orig)
@@ -82,14 +82,12 @@ class InsertFileCommand(SetDataCommand):
         else:
             i2 = i1 + len(data)
             self.end_index = i2
-            self.undo_info = undo = UndoInfo()
             undo.flags.byte_values_changed = True
             undo.flags.index_range = i1, i2
             undo.flags.select_range = True
             old_data = self.segment[i1:i2].copy()
             self.segment[i1:i2] = data
             undo.data = (old_data,)
-        return undo
 
 
 class MiniAssemblerCommand(ChangeByteCommand):
@@ -513,7 +511,6 @@ class FindAllCommand(Command):
             elif errors:
                 undo.flags.message = " ".join(errors)
             undo.flags.refresh_needed = True
-        self.undo_info = undo
 
 
 class FindNextCommand(Command):
@@ -535,8 +532,7 @@ class FindNextCommand(Command):
         cmd.current_match_index = match_index
         return match_index
 
-    def perform(self, editor):
-        self.undo_info = undo = UndoInfo()
+    def perform(self, editor, undo):
         undo.flags.changed_document = False
         index = self.get_index(editor)
         all_matches = self.search_command.all_matches
@@ -551,7 +547,6 @@ class FindNextCommand(Command):
         except IndexError:
             pass
         undo.flags.refresh_needed = True
-        return undo
 
 
 class FindPrevCommand(FindNextCommand):
