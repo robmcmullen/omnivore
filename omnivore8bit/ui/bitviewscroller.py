@@ -406,6 +406,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
 
     def on_left_down(self, evt):
         self.handle_select_start(self.editor, evt)
+        wx.CallAfter(self.SetFocus)
 
     def on_left_dclick(self, evt):
         self.on_left_down(evt)
@@ -823,7 +824,7 @@ class FontMapScroller(BitviewScroller):
         log.debug("on_focus_lost!")
         e = self.editor
         if e is not None:
-            e.task.status_bar.message = ""
+            e.task.status_bar.command_help = ""
         self.editing = False
 
     def on_left_dclick(self, evt):
@@ -832,6 +833,7 @@ class FontMapScroller(BitviewScroller):
         if inside:
             e.set_cursor(byte, False)
             wx.CallAfter(e.index_clicked, byte, bit, self, True)
+            wx.CallAfter(self.SetFocus)
             self.editing = True
             self.set_status_message()
         evt.Skip()
