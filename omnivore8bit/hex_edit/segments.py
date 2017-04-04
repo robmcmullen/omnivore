@@ -22,7 +22,11 @@ class SegmentList(wx.ListBox):
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.on_dclick)
         self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
         self.Bind(wx.EVT_MOTION, self.on_tooltip)
-        if sys.platform.startswith("linux"):
+        if sys.platform.startswith("linux") and not parent.IsTopLevel():
+            # hack needed to force the main window to get Ctrl-F keystrokes. If
+            # this ListBox is a direct child of a top-level frame, this is not
+            # needed as it won't be visible all the time and therefore won't
+            # interfere with the normal Ctrl-F find processing
             self.ui_action = wx.UIActionSimulator()
             self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook_find_hack)
         self.index_to_segment_number = []
