@@ -181,10 +181,18 @@ class SidebarPane(FrameworkPane):
     def comments_cb(self, parent, task, **kwargs):
         control = CommentsPanel(parent, task)
 
+    def segments_cb(self, parent, task, **kwargs):
+        control = SegmentList(parent, task)
+
+    def undo_cb(self, parent, task, **kwargs):
+        control = UndoHistoryPanel(parent, task)
+
     def create_contents(self, parent):
-        control = SpringTabs(parent, self.task, popup_direction="left")
-        control.addTab("Page Map", self.MemoryMapCB)
+        control = SpringTabs(parent, self.task, popup_direction="right")
+        control.addTab("Segments", self.segments_cb)
         control.addTab("Comments", self.comments_cb)
+        control.addTab("Page Map", self.MemoryMapCB)
+        control.addTab("Undo History", self.undo_cb)
         return control
 
     def refresh_active(self):

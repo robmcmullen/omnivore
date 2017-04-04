@@ -18,7 +18,7 @@ import panes
 # is only updated when quitting the application; if the application is killed
 # (or crashes!) the saved state is not updated.
 
-task_id_with_pane_layout = 'omnivore.hex_edit.v3'
+task_id_with_pane_layout = 'omnivore.hex_edit.v4'
 
 
 def pane_layout():
@@ -27,11 +27,9 @@ def pane_layout():
     """
     return TaskLayout(
         left=VSplitter(
-            PaneItem('hex_edit.segments'),
-            PaneItem('hex_edit.undo'),
+            PaneItem('hex_edit.sidebar'),
         ),
         right=HSplitter(
-            PaneItem('hex_edit.sidebar'),
             PaneItem('hex_edit.disassembly'),
             PaneItem('hex_edit.font_map'),
             PaneItem('hex_edit.bitmap'),
@@ -49,6 +47,4 @@ def pane_create():
         panes.DisassemblyPane(),
         panes.BitmapPane(),
         panes.FontMapPane(),
-        panes.SegmentsPane(),
-        panes.UndoPane(),
         ]

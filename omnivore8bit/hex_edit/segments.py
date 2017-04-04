@@ -26,8 +26,35 @@ class SegmentList(wx.ListBox):
             self.ui_action = wx.UIActionSimulator()
             self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook_find_hack)
 
+    def DoGetBestSize(self):
+        """ Base class virtual method for sizer use to get the best size
+        """
+        width = 300
+        height = -1
+        best = wx.Size(width, height)
+
+        # Cache the best size so it doesn't need to be calculated again,
+        # at least until some properties of the window change
+        self.CacheBestSize(best)
+
+        return best
+
     def set_task(self, task):
         self.task = task
+
+    def recalc_view(self):
+        e = self.task.active_editor
+        self.editor = e
+        if e is not None:
+            self.set_segments(e.document.segments, e.segment_number)
+
+    def refresh_view(self):
+        editor = self.task.active_editor
+        if editor is not None:
+            if self.editor != editor:
+                self.recalc_view()
+            else:
+                self.Refresh()
 
     def set_segments(self, segments, selected=0):
         items = [str(s) for s in segments]
@@ -126,3 +153,9 @@ class SegmentList(wx.ListBox):
         d = self.task.active_editor.document
         index = d.find_segment_index(segment)
         self.EnsureVisible(index)
+
+    def activateSpringTab(self):
+        self.recalc_view()
+
+    def get_notification_count(self):
+        return 0

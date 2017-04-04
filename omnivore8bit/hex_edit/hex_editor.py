@@ -339,7 +339,10 @@ class HexEditor(FrameworkEditor):
         # should only be called when the number of segments or document has
         # changed. If only the segment being viewed is changed, just set the
         # task.segment_selected trait
-        self.segment_list.set_segments(self.document.segments, self.segment_number)
+        if self.segment_list is not None:
+            self.segment_list.set_segments(self.document.segments, self.segment_number)
+        else:
+            self.sidebar.refresh_active()
         if self.segment_parser is not None:
             self.segment_parser_label = self.segment_parser.menu_name
         else:
@@ -531,7 +534,10 @@ class HexEditor(FrameworkEditor):
             self.view_segment_set_width(self.segment)
             self.reconfigure_panes()
             self.show_trace()
-            self.segment_list.SetSelection(self.segment_number)
+            if self.segment_list is not None:
+                self.segment_list.SetSelection(self.segment_number)
+            else:
+                self.sidebar.refresh_active()
             self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
         self.task.segment_selected = self.segment_number
 
@@ -667,7 +673,10 @@ class HexEditor(FrameworkEditor):
     def added_segment(self, segment, update=True):
         if update:
             self.update_segments_ui()
-            self.segment_list.ensure_visible(segment)
+            if self.segment_list is not None:
+                self.segment_list.ensure_visible(segment)
+            else:
+                self.sidebar.refresh_active()
         self.metadata_dirty = True
 
     def delete_user_segment(self, segment):
@@ -691,7 +700,10 @@ class HexEditor(FrameworkEditor):
     def update_history(self):
 #        history = document.undo_stack.serialize()
 #        self.window.application.save_log(str(history), "command_log", ".log")
-        self.undo_history.update_history()
+        if self.undo_history is not None:
+            self.undo_history.update_history()
+        else:
+            self.sidebar.refresh_active()
 
     def mark_index_range_changed(self, index_range):
         self.disassembly.restart_disassembly(index_range[0])
@@ -793,8 +805,14 @@ class HexEditor(FrameworkEditor):
         self.disassembly = self.window.get_dock_pane('hex_edit.disassembly').control
         self.bitmap = self.window.get_dock_pane('hex_edit.bitmap').control
         self.font_map = self.window.get_dock_pane('hex_edit.font_map').control
-        self.segment_list = self.window.get_dock_pane('hex_edit.segments').control
-        self.undo_history = self.window.get_dock_pane('hex_edit.undo').control
+        try:
+            self.segment_list = self.window.get_dock_pane('hex_edit.segments').control
+        except AttributeError:
+            self.segment_list = None
+        try:
+            self.undo_history = self.window.get_dock_pane('hex_edit.undo').control
+        except AttributeError:
+            self.undo_history = None
         self.sidebar = self.window.get_dock_pane('hex_edit.sidebar')
 
         # Load the editor's contents.
