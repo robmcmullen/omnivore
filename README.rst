@@ -238,7 +238,7 @@ Disclaimer
 ==========
 
 Omnivore, the Atari 8-bit binary editor sponsored by the Player/Missile Podcast
-Copyright (c) 2014-2016 Rob McMullen (feedback@playermissile.com)
+Copyright (c) 2014-2017 Rob McMullen (feedback@playermissile.com)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 from omnivore import __version__, __author__, __author_email__, __url__
 substitutes = {
     'prog': 'Omnivore XL',
-    'yearrange': '2014-2016',
+    'yearrange': '2014-2017',
     'version': __version__,
     'description': "The binary editor and disassembler for modern 8-bit hackers",
     'tagline': "Byte into the meat of 8-bit software!",
