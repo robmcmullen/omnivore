@@ -343,12 +343,22 @@ class SpringTabItem(GenToggleButton):
             child = windowlist[0]
 #            child.Bind(wx.EVT_SET_FOCUS, self.OnChildFocus)
             child.Bind(wx.EVT_KILL_FOCUS, self.OnLoseChildFocus)
+            child.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
             self.popup.fix_sizer(child)
         windowlist = self.popup.GetChildren()
         if len(windowlist) == 0:
             raise RuntimeError("Popup window creation failed!")
         child = windowlist[0]
         return self.popup, child
+
+    def on_char_hook(self, evt):
+        """ESC handler that closes the popup
+
+        """
+        if evt.GetKeyCode() == wx.WXK_ESCAPE:
+            wx.CallAfter(self.GetParent().cancel_popup)
+        else:
+            evt.Skip()
 
     def OnActivate(self, evt):
         #log.debug("Activating %s: %s, shown=%s" % (self.GetLabel(), evt.GetActive(), self.popup.IsShown()))
@@ -538,6 +548,9 @@ class SpringTabs(wx.Panel):
     def update_notifications(self):
         for tab in self._tabs:
             tab.recalc_notification()
+
+    def cancel_popup(self):
+        self.task.on_hide_minibuffer_or_cancel(None)
 
 
 if __name__ == "__main__":
