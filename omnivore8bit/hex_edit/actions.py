@@ -466,6 +466,10 @@ class SegmentParserAction(EditorAction):
             self.checked = new_state
 
 
+# Note: SegmentChoiceGroup isn't used with the addition of the segment list in
+# the sidebar, but I'm leaving this here for now to show the hacks needed on
+# MacOS since it doesn't handle radio buttons well.
+
 class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
     """Dynamic menu group to display the available fonts
     """
