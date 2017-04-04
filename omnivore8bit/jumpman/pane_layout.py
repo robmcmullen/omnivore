@@ -18,7 +18,7 @@ import panes
 # is only updated when quitting the application; if the application is killed
 # (or crashes!) the saved state is not updated.
 
-task_id_with_pane_layout = 'omnivore.jumpman.v3'
+task_id_with_pane_layout = 'omnivore.jumpman.v4'
 
 
 def pane_layout():
@@ -27,11 +27,9 @@ def pane_layout():
     """
     return TaskLayout(
         left=VSplitter(
-            PaneItem('jumpman.segments'),
-            PaneItem('jumpman.undo'),
+            PaneItem('jumpman.sidebar'),
         ),
         right=HSplitter(
-            PaneItem('jumpman.sidebar'),
             VSplitter(
                 PaneItem('jumpman.level_data'),
                 PaneItem('jumpman.hex'),
@@ -47,10 +45,8 @@ def pane_create():
     MaproomTask.activated)
     """
     return [
-        panes.SegmentsPane(),
-        panes.UndoPane(),
         panes.HexPane(),
-        panes.SidebarPane(),
+        panes.JumpmanSidebarPane(),
         panes.LevelDataPane(),
         panes.TriggerPane(),
         ]

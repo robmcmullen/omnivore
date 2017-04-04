@@ -1,10 +1,10 @@
 from omnivore.framework.panes import FrameworkPane
 
 # Local imports.
+from omnivore8bit.hex_edit.panes import SidebarPane
 from omnivore8bit.hex_edit.segments import SegmentList
 from omnivore8bit.hex_edit.grid_control import HexEditControl
 from omnivore8bit.hex_edit.panes import CommentsPanel
-from omnivore.framework.undo_panel import UndoHistoryPanel
 from omnivore.utils.wx.springtabs import SpringTabs
 from omnivore8bit.ui.info_panels import InfoPanel
 
@@ -12,28 +12,6 @@ from peanuts import TriggerList
 
 import logging
 log = logging.getLogger(__name__)
-
-
-class SegmentsPane(FrameworkPane):
-    #### TaskPane interface ###################################################
-
-    id = 'jumpman.segments'
-    name = 'Segments'
-
-    def create_contents(self, parent):
-        control = SegmentList(parent, self.task, size=(64,150))
-        return control
-
-
-class UndoPane(FrameworkPane):
-    #### TaskPane interface ###################################################
-
-    id = 'jumpman.undo'
-    name = 'Undo History'
-
-    def create_contents(self, parent):
-        control = UndoHistoryPanel(parent, self.task, size=(64,150))
-        return control
 
 
 class HexPane(FrameworkPane):
@@ -86,7 +64,13 @@ class LevelDataPane(FrameworkPane):
         return control
 
 
-class SidebarPane(FrameworkPane):
+class LevelList(SegmentList):
+    def show_segment_in_list(self, segment):
+        # simple level check; make sure it's 16 sectors long
+        return len(segment) == 0x800
+
+
+class JumpmanSidebarPane(SidebarPane):
     #### TaskPane interface ###################################################
 
     id = 'jumpman.sidebar'
@@ -96,15 +80,9 @@ class SidebarPane(FrameworkPane):
     caption_visible = False
     dock_layer = 9
 
-    def comments_cb(self, parent, task, **kwargs):
-        control = CommentsPanel(parent, task)
+    def levels_cb(self, parent, task, **kwargs):
+        control = LevelList(parent, task)
 
-    def create_contents(self, parent):
-        control = SpringTabs(parent, self.task, popup_direction="left")
-        control.addTab("Comments", self.comments_cb)
-        return control
-
-    def refresh_active(self):
-        active = self.control._radio
-        if active is not None and active.is_shown:
-            active.managed_window.refresh_view()
+    def add_tabs(self, control):
+        control.addTab("Levels", self.levels_cb)
+        control.addTab("Undo History", self.undo_cb)

@@ -719,11 +719,14 @@ class JumpmanEditor(BitmapEditor):
         ##########################################
 
         # Get related controls
-        self.segment_list = self.window.get_dock_pane('jumpman.segments').control
-        self.undo_history = self.window.get_dock_pane('jumpman.undo').control
         self.hex_edit = self.window.get_dock_pane('jumpman.hex').control
         self.level_data = self.window.get_dock_pane('jumpman.level_data').control
         self.trigger_list = self.window.get_dock_pane('jumpman.triggers').control
+
+        # segment list and undo history exclusively in sidebar
+        self.segment_list = None
+        self.undo_history = None
+        self.sidebar = self.window.get_dock_pane('jumpman.sidebar')
 
         # Load the editor's contents.
         self.load()
