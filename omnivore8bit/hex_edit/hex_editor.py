@@ -783,6 +783,14 @@ class HexEditor(FrameworkEditor):
             cmd.pretty_name = pretty
         self.process_command(cmd)
 
+    def popup_visible(self):
+        log.debug("checking sidebar: popup visible? %s" % self.sidebar.control.has_popup())
+        return self.sidebar.control.has_popup()
+
+    def clear_popup(self):
+        log.debug("clearing popup")
+        self.sidebar.control.clear_popup()
+
     ###########################################################################
     # Trait handlers.
     ###########################################################################

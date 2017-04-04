@@ -699,6 +699,16 @@ class FrameworkEditor(Editor):
         """
         pass
 
+    def popup_visible(self):
+        """Hook for subclass to state whether a popup is being shown
+        """
+        return False
+
+    def clear_popup(self):
+        """Hook for subclass to remove the topmost popup
+        """
+        pass
+
     # Command processor
 
     def update_undo_redo(self):

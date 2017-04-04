@@ -665,6 +665,13 @@ class FrameworkTask(Task):
                 control = control.GetParent()
 
     def on_hide_minibuffer_or_cancel(self, event):
+        """Hide any transient windows or cancel the current edit
+
+        Windows are closed in this order: sidebar windows, minibuffer
+        """
+        if self.active_editor is not None and self.active_editor.popup_visible():
+            self.active_editor.clear_popup()
+            return
         try:
             info = self.window.minibuffer_pane_info
         except AttributeError:

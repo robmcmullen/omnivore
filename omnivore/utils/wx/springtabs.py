@@ -494,6 +494,11 @@ class SpringTabs(wx.Panel):
             self._radio.SetToggle(False, check_popup=False)
         self._radio = None
 
+    def has_popup(self):
+        return self._radio is not None
+
+    clear_popup = clearRadio
+
     def OnPaint(self, evt):
         if self._debug_paint:
             dc = wx.PaintDC(self)
