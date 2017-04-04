@@ -281,7 +281,17 @@ class DisassemblyPanel(ByteGrid):
         return AssemblerEditor(self)
 
     def restart_disassembly(self, index):
-        self.table.disassemble_from(index, True)
+        first_row = self.get_first_visible_row()
+        current_row = self.GetGridCursorRow()
+        rows_from_top = current_row - first_row
+        want_address = self.table.get_pc(current_row)
+        self.table.disassemble_from(index, False)
+        r, _ = self.table.get_row_col(want_address - self.table.start_addr)
+        self.table.ResetView(self, None)
+        new_first = max(0, r - rows_from_top)
+        self.MakeCellVisible(new_first + self.get_num_visible_rows(), 0)
+        self.MakeCellVisible(new_first, 0)
+        self.SetGridCursor(r, 0)
 
     def get_disassembled_text(self, start=0, end=-1):
         return self.table.disassembler.get_disassembled_text(start, end)
