@@ -25,6 +25,7 @@ class SegmentList(wx.ListBox):
         if sys.platform.startswith("linux"):
             self.ui_action = wx.UIActionSimulator()
             self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook_find_hack)
+        self.index_to_segment_number = []
 
     def DoGetBestSize(self):
         """ Base class virtual method for sizer use to get the best size
@@ -56,8 +57,23 @@ class SegmentList(wx.ListBox):
             else:
                 self.Refresh()
 
+    def show_segment_in_list(self, segment):
+        return True
+
+    def filter_segments(self, segments, selected=0):
+        self.index_to_segment_number = []
+        names = []
+        found = 0
+        for segment_index, s in enumerate(segments):
+            if self.show_segment_in_list(s):
+                if selected == segment_index:
+                    found = len(self.index_to_segment_number)
+                self.index_to_segment_number.append(segment_index)
+                names.append(str(s))
+        return names, found
+
     def set_segments(self, segments, selected=0):
-        items = [str(s) for s in segments]
+        items, selected = self.filter_segments(segments, selected)
         if len(items) != self.GetCount():
             self.SetItems(items)
         else:
@@ -86,7 +102,8 @@ class SegmentList(wx.ListBox):
             selected = self.GetSelection()
             if selected != item:
                 editor = self.task.active_editor
-                wx.CallAfter(editor.view_segment_number, item)
+                segment_number = self.index_to_segment_number[item]
+                wx.CallAfter(editor.view_segment_number, segment_number)
         event.Skip()
 
     def on_click(self, event):
@@ -98,8 +115,9 @@ class SegmentList(wx.ListBox):
         if selected:
             item = event.GetSelection()
             editor = self.task.active_editor
-            if item != editor.segment_number:
-                wx.CallAfter(editor.view_segment_number, item)
+            segment_number = self.index_to_segment_number[item]
+            if segment_number != editor.segment_number:
+                wx.CallAfter(editor.view_segment_number, segment_number)
         event.Skip()
 
     def on_dclick(self, event):
