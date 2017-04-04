@@ -757,15 +757,12 @@ class FrameworkTask(Task):
     def _active_editor_tab_change(self, event):
         """ Prompt the user to save when exiting.
         """
-        active = self.active_editor
-        if active is not None:
-            self.window._title = "%s - %s %s" % (self.active_editor.name, self.about_title, self.about_version)
+        self.update_window_title()
+        if self.active_editor is not None:
             # Can't call the following during the trait handler because the
             # trait handlers for the toolbar actions won't be completed yet.
             # When delayed until afterwards, the toolbar update works properly.
-            wx.CallAfter(active.made_current_active_editor)
-        else:
-            self.window._title = "%s %s" % (self.about_title, self.about_version)
+            wx.CallAfter(self.active_editor.made_current_active_editor)
 
     #### Trait property getter/setters ########################################
 
@@ -819,6 +816,21 @@ class FrameworkTask(Task):
             notebook.Thaw()
 
     #### convenience functions
+
+    def update_window_title(self):
+        self.window._title = self.window_title
+
+    @property
+    def window_title(self):
+        e = self.active_editor
+        if e is not None:
+            sn = e.section_name
+            if sn:
+                name = "%s - %s" % (e.name, sn)
+            else:
+                name = e.name
+            return "%s - %s %s" % (name, self.about_title, self.about_version)
+        return "%s %s" % (self.about_title, self.about_version)
 
     def confirm(self, message, title=None, cancel=False, default=NO, no_label="", yes_label=""):
         """ Convenience method to show a confirmation dialog. """

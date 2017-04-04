@@ -113,6 +113,12 @@ class HexEditor(FrameworkEditor):
     def _bitmap_zoom_default(self):
         return 5
 
+    # Convenience functions
+
+    @property
+    def section_name(self):
+        return str(self.segment)
+
     ###########################################################################
     # 'FrameworkEditor' interface.
     ###########################################################################
@@ -539,6 +545,7 @@ class HexEditor(FrameworkEditor):
             else:
                 self.sidebar.refresh_active()
             self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
+            self.task.update_window_title()
         self.task.segment_selected = self.segment_number
 
     def get_extra_segment_savers(self, segment):

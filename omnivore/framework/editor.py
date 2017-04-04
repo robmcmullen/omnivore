@@ -940,6 +940,14 @@ class FrameworkEditor(Editor):
     #### convenience functions
 
     @property
+    def section_name(self):
+        """If the document can be broken up into sections, this should return
+        the title of the current section so it can be shown in the title bar of
+        the window.
+        """
+        return ""
+
+    @property
     def task(self):
         return self.editor_area.task
 
