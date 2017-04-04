@@ -18,7 +18,7 @@ import panes
 # is only updated when quitting the application; if the application is killed
 # (or crashes!) the saved state is not updated.
 
-task_id_with_pane_layout = 'omnivore.bitmap_edit.v1'
+task_id_with_pane_layout = 'omnivore.bitmap_edit.v2'
 
 
 def pane_layout():
@@ -27,8 +27,7 @@ def pane_layout():
     """
     return TaskLayout(
         left=VSplitter(
-            PaneItem('bitmap_edit.segments'),
-            PaneItem('bitmap_edit.undo'),
+            PaneItem('bitmap_edit.sidebar'),
         ),
         )
 
@@ -39,6 +38,5 @@ def pane_create():
     MaproomTask.activated)
     """
     return [
-        panes.SegmentsPane(),
-        panes.UndoPane(),
+        panes.BitmapSidebarPane(),
         ]

@@ -18,7 +18,7 @@ import panes
 # is only updated when quitting the application; if the application is killed
 # (or crashes!) the saved state is not updated.
 
-task_id_with_pane_layout = 'omnivore.map_edit.v3'
+task_id_with_pane_layout = 'omnivore.map_edit.v4'
 
 
 def pane_layout():
@@ -27,8 +27,7 @@ def pane_layout():
     """
     return TaskLayout(
         left=VSplitter(
-            PaneItem('map_edit.segments'),
-            PaneItem('map_edit.undo'),
+            PaneItem('map_edit.sidebar'),
         ),
         right=VSplitter(
             PaneItem('map_edit.tile_map'),
@@ -45,8 +44,7 @@ def pane_create():
     """
     return [
         panes.MemoryMapPane(),
-        panes.SegmentsPane(),
-        panes.UndoPane(),
+        panes.MapSidebarPane(),
         panes.TileMapPane(),
         panes.CharacterSetPane(),
         ]

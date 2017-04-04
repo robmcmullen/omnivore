@@ -486,9 +486,10 @@ class BitmapEditor(HexEditor):
         # Events.
         ##########################################
 
-        # Get related controls
-        self.segment_list = self.window.get_dock_pane('bitmap_edit.segments').control
-        self.undo_history = self.window.get_dock_pane('bitmap_edit.undo').control
+        # segment list and undo history exclusively in sidebar
+        self.segment_list = None
+        self.undo_history = None
+        self.sidebar = self.window.get_dock_pane('bitmap_edit.sidebar')
 
         # Load the editor's contents.
         self.load()

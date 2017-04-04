@@ -189,11 +189,14 @@ class SidebarPane(FrameworkPane):
 
     def create_contents(self, parent):
         control = SpringTabs(parent, self.task, popup_direction="right")
+        self.add_tabs(control)
+        return control
+
+    def add_tabs(self, control):
         control.addTab("Segments", self.segments_cb)
         control.addTab("Comments", self.comments_cb)
         control.addTab("Page Map", self.MemoryMapCB)
         control.addTab("Undo History", self.undo_cb)
-        return control
 
     def refresh_active(self):
         active = self.control._radio

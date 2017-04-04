@@ -1,30 +1,22 @@
 from omnivore.framework.panes import FrameworkPane
 
 # Local imports.
-from omnivore8bit.hex_edit.segments import SegmentList
-from omnivore.framework.undo_panel import UndoHistoryPanel
+from omnivore8bit.hex_edit.panes import SidebarPane
 
 import logging
 log = logging.getLogger(__name__)
 
 
-class SegmentsPane(FrameworkPane):
+class BitmapSidebarPane(SidebarPane):
     #### TaskPane interface ###################################################
 
-    id = 'bitmap_edit.segments'
-    name = 'Segments'
+    id = 'bitmap_edit.sidebar'
+    name = 'Sidebar'
 
-    def create_contents(self, parent):
-        control = SegmentList(parent, self.task, size=(64,150))
-        return control
+    movable = False
+    caption_visible = False
+    dock_layer = 9
 
-
-class UndoPane(FrameworkPane):
-    #### TaskPane interface ###################################################
-
-    id = 'bitmap_edit.undo'
-    name = 'Undo History'
-
-    def create_contents(self, parent):
-        control = UndoHistoryPanel(parent, self.task, size=(64,150))
-        return control
+    def add_tabs(self, control):
+        control.addTab("Segments", self.segments_cb)
+        control.addTab("Undo History", self.undo_cb)

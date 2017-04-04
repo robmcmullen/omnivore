@@ -47,7 +47,7 @@ class BitmapEditTask(HexEditTask):
         return pane_layout.pane_create()
 
     def _extra_actions_default(self):
-        segment_menu = self.create_menu("Menu", "Segments", "ListGroup", "ActionGroup")
+        segment_menu = self.create_menu("Menu", "Segment", "ActionGroup")
         actions = [
             # Menubar additions
             SchemaAddition(factory=lambda: segment_menu,

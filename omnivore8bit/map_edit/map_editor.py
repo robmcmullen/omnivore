@@ -500,8 +500,11 @@ class MapEditor(HexEditor):
         self.memory_map = self.window.get_dock_pane('map_edit.memory_map').control
         self.tile_map = self.window.get_dock_pane('map_edit.tile_map').control
         self.character_set = self.window.get_dock_pane('map_edit.character_set').control
-        self.segment_list = self.window.get_dock_pane('map_edit.segments').control
-        self.undo_history = self.window.get_dock_pane('map_edit.undo').control
+
+        # segment list and undo history exclusively in sidebar
+        self.segment_list = None
+        self.undo_history = None
+        self.sidebar = self.window.get_dock_pane('map_edit.sidebar')
 
         # Load the editor's contents.
         self.load()
