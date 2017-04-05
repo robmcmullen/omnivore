@@ -18,7 +18,7 @@ import panes
 # is only updated when quitting the application; if the application is killed
 # (or crashes!) the saved state is not updated.
 
-task_id_with_pane_layout = 'omnivore.htmlview.v1'
+pane_layout_version = 'v1'
 
 
 def pane_layout():

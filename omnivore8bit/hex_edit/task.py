@@ -28,13 +28,17 @@ class HexEditTask(FrameworkTask):
 
     new_file_text = ["Blank Atari DOS 2 SD (90K) Image", "Blank Atari DOS 2 DD (180K) Image", "Blank Atari DOS 3 (130K) Image", "Blank Apple DOS 3.3 Image"]
 
+    editor_id = "omnivore.hex_edit"
+
+    pane_layout_version = pane_layout.pane_layout_version
+
     hex_grid_lower_case = Bool(True)
 
     assembly_lower_case = Bool(False)
 
     #### Task interface #######################################################
 
-    id = pane_layout.task_id_with_pane_layout
+    id = editor_id + "." + pane_layout_version if pane_layout_version else editor_id
     name = 'Hex Editor'
 
     preferences_helper = HexEditPreferences

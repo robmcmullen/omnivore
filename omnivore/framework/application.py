@@ -319,6 +319,7 @@ class FrameworkApplication(TasksApplication):
 
         # Attempt to classify the guess using the file recognizer service
         document = self.guess_document(guess)
+        log.debug("using %s for %s" % (document.__class__.__name__, guess.metadata.uri))
 
         # Short circuit: if the file can be edited by the active task, use that!
         if active_task is not None and active_task.can_edit(document):
@@ -331,6 +332,7 @@ class FrameworkApplication(TasksApplication):
             log.debug("no editor for %s" % uri)
             return
         best = self.find_best_task_factory(document, possibilities)
+        log.debug("best task match: %s" % best.id)
 
         if active_task is not None:
             # Ask the active task if it's OK to load a different editor
@@ -359,9 +361,9 @@ class FrameworkApplication(TasksApplication):
     def get_possible_task_factories(self, document, task_id=""):
         possibilities = []
         for factory in self.task_factories:
-            log.debug("factory: %s=%s" % (factory.id, factory.name))
+            log.debug("checking factory: %s=%s for %s" % (factory.id, factory.name, task_id))
             if task_id:
-                if factory.id == task_id:
+                if factory.id == task_id or factory.factory.editor_id == task_id:
                     possibilities.append(factory)
             elif hasattr(factory.factory, "can_edit"):
                 if factory.factory.can_edit(document):
@@ -374,7 +376,7 @@ class FrameworkApplication(TasksApplication):
         scores = []
         for factory in factories:
             log.debug("factory: %s=%s" % (factory.id, factory.name))
-            if document.last_task_id == factory.id:
+            if document.last_task_id == factory.id or document.last_task_id == factory.factory.editor_id:
                 # short circuit if document is requesting a specific task
                 return factory
             score = factory.factory.get_match_score(document)
@@ -385,7 +387,7 @@ class FrameworkApplication(TasksApplication):
 
     def get_task_factory(self, task_id):
         for factory in self.task_factories:
-            if factory.id == task_id:
+            if factory.id == task_id or factory.factory.editor_id == task_id:
                 return factory
         return None
 

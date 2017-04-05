@@ -1,8 +1,11 @@
 from atrcopy import DefaultSegment
 
 from segmentutil import AnticFontSegment
-from omnivore8bit.map_edit.pane_layout import task_id_with_pane_layout as map_edit_task_id
-from omnivore8bit.jumpman.pane_layout import task_id_with_pane_layout as jumpman_task_id
+from omnivore8bit.map_edit.task import MapEditTask
+from omnivore8bit.jumpman.task import JumpmanEditTask
+
+map_edit_task_id = MapEditTask.editor_id
+jumpman_task_id = JumpmanEditTask.editor_id
 
 import logging
 log = logging.getLogger(__name__)

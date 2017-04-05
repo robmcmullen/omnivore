@@ -34,9 +34,13 @@ class FrameworkTask(Task):
 
     about_application = "about://omnivore"  # URL to load if no document specified on the command line
 
+    editor_id = 'omnivore.framework.framework_task'
+
+    pane_layout_version = ''
+
     #### Task interface #######################################################
 
-    id = 'omnivore.framework.framework_task'
+    id = editor_id + "." + pane_layout_version if pane_layout_version else editor_id
     name = 'Framework'
 
     icon = Instance(ImageResource)

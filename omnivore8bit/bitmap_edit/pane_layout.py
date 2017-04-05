@@ -18,7 +18,7 @@ import panes
 # is only updated when quitting the application; if the application is killed
 # (or crashes!) the saved state is not updated.
 
-task_id_with_pane_layout = 'omnivore.bitmap_edit.v2'
+pane_layout_version = 'v2'
 
 
 def pane_layout():

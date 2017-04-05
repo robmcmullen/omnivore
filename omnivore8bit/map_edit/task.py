@@ -27,9 +27,13 @@ class MapEditTask(HexEditTask):
 
     new_file_text = "Map File"
 
+    editor_id = "omnivore.map_edit"
+
+    pane_layout_version = pane_layout.pane_layout_version
+
     #### Task interface #######################################################
 
-    id = pane_layout.task_id_with_pane_layout
+    id = editor_id + "." + pane_layout_version if pane_layout_version else editor_id
     name = 'Map Editor'
 
     preferences_helper = MapEditPreferences
