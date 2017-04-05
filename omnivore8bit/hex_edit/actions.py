@@ -705,7 +705,7 @@ class ImportSegmentLabelsAction(EditorAction):
                     msg += "\n%d below $%04x\n" % (below, start)
                 if above > 0:
                     msg += "\n%d above $%04x\n" % (above, end)
-                if self.task.confirm("Some labels out of range.\n%s\nUse this set of labels anyway?" % msg, "Labels Out of Range") != YES:
+                if not self.task.confirm("Some labels out of range.\n%s\nUse this set of labels anyway?" % msg, "Labels Out of Range"):
                     return
             cmd = SegmentMemoryMapCommand(s, d)
             e.process_command(cmd)
@@ -927,7 +927,7 @@ class DeleteUserSegmentAction(EditorAction):
     def perform(self, event):
         e = self.task.active_editor
         segment = e.document.segments[self.segment_number]
-        if self.task.confirm("Delete user segment %s?" % segment.name, "Delete User Segment") == YES:
+        if self.task.confirm("Delete user segment %s?" % segment.name, "Delete User Segment"):
             e.delete_user_segment(segment)
 
 

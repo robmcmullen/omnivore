@@ -153,10 +153,8 @@ class RevertAction(EditorAction):
 
     def perform(self, event):
         message = "Revert file from\n\n%s?" % self.active_editor.document.metadata.uri
-        result = event.task.window.confirm(message=message, default=NO, title='Revert File?')
-        if result == CANCEL:
-            return
-        elif result == YES:
+        result = event.task.confirm(message=message, title='Revert File?')
+        if result:
             guess = FileGuess(self.active_editor.document.metadata.uri)
             document = event.task.window.application.guess_document(guess)
             self.active_editor.load(document)

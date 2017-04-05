@@ -336,7 +336,7 @@ class FrameworkTask(Task):
                 action.name = action.name + "!"
 
     def ask_attempt_loading_as_octet_stream(self, guess, other_task):
-        return self.window.confirm("%s\n\nwas identified with a MIME type of %s\nand can also be edited in a %s window.\n\nOpen here in the %s window instead?" % (guess.metadata.uri, guess.metadata.mime, other_task.new_file_text, self.name), "Edit in %s?" % self.name) == YES
+        return self.confirm("%s\n\nwas identified with a MIME type of %s\nand can also be edited in a %s window.\n\nOpen here in the %s window instead?" % (guess.metadata.uri, guess.metadata.mime, other_task.new_file_text, self.name), "Edit in %s?" % self.name)
 
     ###########################################################################
     # 'FrameworkTask' convenience functions.
@@ -739,11 +739,10 @@ class FrameworkTask(Task):
         if not dirty_editors.keys():
             return True
         message = 'You have unsaved files. Would you like to save them?'
-        result = self.window.confirm(message=message, cancel=True,
-                                    default=CANCEL, title='Save Changes?')
-        if result == CANCEL:
+        result = self.confirm_cancel(message=message, title='Save Changes?')
+        if result is None:
             return False
-        elif result == YES:
+        elif result:
             for name, editor in dirty_editors.items():
                 editor.save(editor.path)
         return True
@@ -809,10 +808,10 @@ class FrameworkTask(Task):
     def close_dirty_tab(self, notebook, replace=False):
         active = self.active_editor
         if active.dirty:
-            result = self.confirm('This file has unsaved changes. Close anyway?', default=NO, title='Save Changes?')
+            result = self.confirm('This file has unsaved changes. Close anyway?', title='Save Changes?')
         else:
-            result = YES
-        if result == YES:
+            result = True
+        if result:
             notebook.Freeze()
             if replace:
                 self.new()
@@ -846,7 +845,29 @@ class FrameworkTask(Task):
 
         dialog = ConfirmationDialog(parent=self.window.control, message=message, cancel=cancel, default=default, title=title, no_label=no_label, yes_label=yes_label)
 
-        return dialog.open()
+        return dialog.open() == YES
+
+    def confirm_cancel(self, message, title=None, cancel=True, default=CANCEL, no_label="", yes_label=""):
+        """ Convenience method to show a confirmation dialog.
+
+        Returns None if Cancel was chosen in addition to the usual True/False.
+        """
+
+        from pyface.confirmation_dialog import ConfirmationDialog
+
+        if title is None:
+            title = "Confirmation"
+
+        dialog = ConfirmationDialog(parent=self.window.control, message=message, cancel=cancel, default=default, title=title, no_label=no_label, yes_label=yes_label)
+
+        result = dialog.open()
+        if result == YES:
+            result = True
+        elif result == NO:
+            result = False
+        else:
+            result = None
+        return result
 
     def information(self, message, title='Information'):
         """ Convenience method to show an information message dialog. """

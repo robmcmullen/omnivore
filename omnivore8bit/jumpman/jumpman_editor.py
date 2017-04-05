@@ -10,7 +10,6 @@ from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_
 
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, File, Unicode, Property, provides
-from pyface.api import YES, NO
 
 # Local imports.
 from omnivore8bit.hex_edit.hex_editor import HexEditor
@@ -316,16 +315,14 @@ class JumpmanEditor(BitmapEditor):
     def is_valid_for_save(self):
         all_ok = True
         if self.manual_recompile_needed:
-            answer = self.task.confirm("Error in assembly code\n\nSave Anyway?" , "Bad Assembly Code")
-            all_ok = (answer == YES)
+            all_ok = self.task.confirm("Error in assembly code\n\nSave Anyway?" , "Bad Assembly Code")
         else:
             self.compile_assembly_source()
         if all_ok and self.custom_code and not self.manual_recompile_needed:
             self.save_assembly()
         if not self.bitmap.level_builder.harvest_ok:
             reason = self.bitmap.level_builder.harvest_reason()
-            answer = self.task.confirm("%s\n\nSave Anyway?" % reason, "Bad Peanut Grid")
-            all_ok = (answer == YES)
+            all_ok = self.task.confirm("%s\n\nSave Anyway?" % reason, "Bad Peanut Grid")
         return all_ok
 
     def made_current_active_editor(self):
