@@ -119,6 +119,7 @@ class SegmentedDocument(BaseDocument):
     def serialize_extra_to_dict(self, mdict):
         """Save extra metadata to a dict so that it can be serialized
         """
+        mdict["segment parser"] = self.segment_parser
         mdict["serialized user segments"] = list(self.user_segments)
         self.container_segment.serialize_extra_to_dict(mdict)
         emu = self.emulator
@@ -130,6 +131,12 @@ class SegmentedDocument(BaseDocument):
         mdict["document memory map"] = sorted([list(i) for i in self.document_memory_map.iteritems()])  # save as list of pairs because json doesn't allow int keys for dict
 
     def restore_extra_from_dict(self, e):
+        log.debug("restoring extra metadata: %s" % str(e))
+        if 'segment parser' in e:
+            parser = e['segment parser']
+            for s in parser.segments:
+                s.reconstruct_raw(self.container_segment.rawdata)
+            self.set_segments(parser)
         if 'user segments' in e:
             # Segment objects created by the utils.extra_metadata module
             for s in e['user segments']:
