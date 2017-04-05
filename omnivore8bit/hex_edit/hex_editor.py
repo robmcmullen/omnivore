@@ -128,23 +128,10 @@ class HexEditor(FrameworkEditor):
         self.machine.one_time_init(self)
         self.task.machine_menu_changed = self.machine
 
-    def load_builtin_extra_metadata(self, doc):
-        """ see if the document matches any hardcoded document information
-        """
-        from omnivore8bit.utils.extra_metadata import check_builtin
-        e = check_builtin(doc)
-        if 'machine mime' not in e:
-            e['machine mime'] = doc.metadata.mime
-        return e
-
-    def get_filesystem_extra_metadata_uri(self, doc):
-        return doc.metadata.uri + ".omnivore"
-
     def process_extra_metadata(self, doc, e):
         """ Set up any pre-calculated segments based on the type or content of
         the just-loaded document.
         """
-        doc.restore_extra_from_dict(e)
         if 'machine mime' in e:
             mime = e['machine mime']
             if not mime.startswith(self.machine.mime_prefix):

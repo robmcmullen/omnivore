@@ -24,7 +24,5 @@ class AtrcopyRecognizer(HasTraits):
 
     def load(self, guess):
         doc = SegmentedDocument(metadata=guess.metadata, bytes=guess.numpy)
-        doc.set_segments(guess.parser)
-        from omnivore8bit.utils.extra_metadata import check_builtin
-        check_builtin(doc)
+        doc.load_metadata(guess)
         return doc

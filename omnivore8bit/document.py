@@ -1,8 +1,11 @@
 from collections import namedtuple
 
 import numpy as np
+import jsonpickle
+import fs
 
 from omnivore.framework.document import BaseDocument, TraitNumpyConverter
+from omnivore.utils.file_guess import FileGuess
 
 # Enthought library imports.
 from traits.api import Trait, Any, List, Event, Dict, Property, Bool
@@ -30,6 +33,8 @@ class SegmentedDocument(BaseDocument):
 
     document_memory_map = Dict
 
+    extra_metadata = Dict
+
     #### trait default values
 
     def _style_default(self):
@@ -48,6 +53,68 @@ class SegmentedDocument(BaseDocument):
         return self.segments and self.container_segment.can_resize
 
     #### serialization methods
+
+    def load_metadata(self, guess):
+        # don't load check_builtin until now because it causes some circular
+        # imports
+        from omnivore8bit.utils.extra_metadata import check_builtin
+
+        self.set_segments(guess.parser)
+        extra = check_builtin(self)
+        if 'machine mime' not in extra:
+            extra['machine mime'] = self.metadata.mime
+        loaded_extra = self.load_filesystem_extra_metadata()
+        if 'serialized user segments' in loaded_extra and 'user_segments' in extra:
+            # Ignore the segments from the built-in data if serialized user
+            # segments exist in the .omnivore file. Any built-in segments will
+            # have already been saved in the .omnivore file, so this prevents
+            # duplication.
+            del extra['user segments']
+
+        # Overwrite any builtin stuff with saved data from the user
+        extra.update(loaded_extra)
+        self.restore_extra_from_dict(extra)
+        self.extra_metadata = extra
+
+    def load_filesystem_extra_metadata(self):
+        """ Find any extra metadata associated with the document, typically
+        used to load an extra file off the disk.
+        
+        If successful, return a dict to be processed by init_extra_metadata
+        """
+        uri = self.get_filesystem_extra_metadata_uri()
+        if uri is None:
+            return
+        try:
+            guess = FileGuess(uri)
+        except fs.errors.FSError, e:
+            log.error("File load error: %s" % str(e))
+            return {}
+        try:
+            b = guess.bytes
+            if b.startswith("#"):
+                header, b = b.split("\n", 1)
+            unserialized = jsonpickle.loads(b)
+        except ValueError, e:
+            log.error("JSON parsing error for extra metadata in %s: %s" % (uri, str(e)))
+            unserialized = {}
+        return unserialized
+
+    def get_filesystem_extra_metadata_uri(self):
+        """ Get filename of file used to store extra metadata
+        """
+        return self.metadata.uri + ".omnivore"
+
+    def get_metadata_for(self, task_id):
+        """Return extra metadata for the particular task
+
+        """
+        # FIXME: each task should have its own section in the metadata so they
+        # can save stuff without fear of stomping on another task's data. Also,
+        # when saving, they can overwrite their task stuff without changing an
+        # other task's info so that other task's stuff can be re-saved even if
+        # that task wasn't used in this editing session.
+        return self.extra_metadata
 
     def serialize_extra_to_dict(self, mdict):
         """Save extra metadata to a dict so that it can be serialized

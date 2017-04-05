@@ -145,50 +145,9 @@ class FrameworkEditor(Editor):
     def init_extra_metadata(self, doc):
         """ Hook to load any extra metadata for the given document
         """
-        e = self.load_builtin_extra_metadata(doc)
-        if e is None:
-            e = {}
-        self.process_extra_metadata(doc, e)
-        e = self.load_filesystem_extra_metadata(doc)
-        if e is None:
-            e = {}
+        e = doc.get_metadata_for(self.task.id)
         self.process_extra_metadata(doc, e)
         self.metadata_dirty = False
-
-    def load_builtin_extra_metadata(self, doc):
-        """ Find any extra metadata associated with the document that is built-
-        in to the application.
-        """
-        pass
-
-    def load_filesystem_extra_metadata(self, doc):
-        """ Find any extra metadata associated with the document, typically
-        used to load an extra file off the disk.
-        
-        If successful, return a dict to be processed by init_extra_metadata
-        """
-        uri = self.get_filesystem_extra_metadata_uri(doc)
-        if uri is None:
-            return
-        try:
-            guess = FileGuess(uri)
-        except fs.errors.FSError, e:
-            log.error("File load error: %s" % str(e))
-            return
-        try:
-            b = guess.bytes
-            if b.startswith("#"):
-                header, b = b.split("\n", 1)
-            unserialized = jsonpickle.loads(b)
-        except ValueError, e:
-            log.error("JSON parsing error for extra metadata in %s: %s" % (uri, str(e)))
-            unserialized = None
-        return unserialized
-
-    def get_filesystem_extra_metadata_uri(self, doc):
-        """ Get filename of file used to store extra metadata
-        """
-        pass
 
     def process_extra_metadata(self, doc, e):
         """ Set up any additional metadata from the dict argument
