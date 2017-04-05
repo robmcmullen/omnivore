@@ -5,15 +5,22 @@ import uuid
 
 import numpy as np
 import fs
+from fs.opener import opener
+import jsonpickle
 
 # Enthought library imports.
 from traits.api import HasTraits, Trait, TraitHandler, Int, Any, List, Set, Bool, Event, Dict, Set, Unicode, Property, Str
 
 from omnivore.utils.command import UndoStack
 from omnivore.utils.file_guess import FileGuess, FileMetadata
+import omnivore.utils.jsonutil as jsonutil
 
 import logging
 log = logging.getLogger(__name__)
+
+
+class DocumentError(RuntimeError):
+    pass
 
 
 class TraitNumpyConverter(TraitHandler):
@@ -47,9 +54,13 @@ class BaseDocument(HasTraits):
 
     last_task_id = Str
 
+    baseline_document = Any(transient=True)
+
     bytes = Trait("", TraitNumpyConverter())
 
     segments = List
+
+    extra_metadata = Dict
 
     # Trait events to provide view updating
 
@@ -141,3 +152,133 @@ class BaseDocument(HasTraits):
     @property
     def bytestream(self):
         return StringIO.StringIO(self.bytes)
+
+    # serialization
+
+    def load_metadata(self, guess):
+        extra = self.load_extra_metadata(guess)
+        self.restore_extra_from_dict(extra)
+        self.extra_metadata = extra
+
+    def load_extra_metadata(self, guess):
+        return self.load_filesystem_extra_metadata()
+
+    def load_filesystem_extra_metadata(self):
+        """ Find any extra metadata associated with the document, typically
+        used to load an extra file off the disk.
+        
+        If successful, return a dict to be processed by init_extra_metadata
+        """
+        uri = self.get_filesystem_extra_metadata_uri()
+        if uri is None:
+            return
+        try:
+            guess = FileGuess(uri)
+        except fs.errors.FSError, e:
+            log.error("File load error: %s" % str(e))
+            return {}
+        try:
+            b = guess.bytes
+            if b.startswith("#"):
+                header, b = b.split("\n", 1)
+            unserialized = jsonpickle.loads(b)
+        except ValueError, e:
+            log.error("JSON parsing error for extra metadata in %s: %s" % (uri, str(e)))
+            unserialized = {}
+        return unserialized
+
+    def get_filesystem_extra_metadata_uri(self):
+        """ Get filename of file used to store extra metadata
+        """
+        return None
+
+    def get_metadata_for(self, task):
+        """Return extra metadata for the particular task
+
+        """
+        # FIXME: each task should have its own section in the metadata so they
+        # can save stuff without fear of stomping on another task's data. Also,
+        # when saving, they can overwrite their task stuff without changing an
+        # other task's info so that other task's stuff can be re-saved even if
+        # that task wasn't used in this editing session.
+        return self.extra_metadata.get(task.editor_id, self.extra_metadata)
+
+    def serialize_extra_to_dict(self, mdict):
+        """Save extra metadata to a dict so that it can be serialized
+        """
+        mdict["document uuid"] = self.uuid
+        if self.baseline_document is not None:
+            mdict["baseline document"] = self.baseline_document.metadata.uri
+
+    def restore_extra_from_dict(self, e):
+        log.debug("restoring extra metadata: %s" % str(e))
+        if 'document uuid' in e:
+            self.uuid = e['document uuid']
+        if 'baseline document' in e:
+            try:
+                self.load_baseline(e['baseline document'])
+            except DocumentError:
+                pass
+
+    def load_baseline(self, uri, confirm_callback=None):
+        if confirm_callback is None:
+            confirm_callback = lambda a: True
+        try:
+            guess = FileGuess(uri)
+        except Exception, e:
+            log.error("Problem loading baseline file %s: %s" % (uri, str(e)))
+            raise DocumentError(str(e))
+        bytes = guess.numpy
+        difference = len(bytes) - len(self)
+        if difference > 0:
+            if confirm_callback("Truncate baseline data by %d bytes?" % difference, "Baseline Size Difference") == YES:
+                bytes = bytes[0:len(self)]
+            else:
+                bytes = []
+        elif difference < 0:
+            if confirm_callback("Pad baseline data with %d zeros?" % (-difference), "Baseline Size Difference") == YES:
+                bytes = np.pad(bytes, (0, -difference), "constant", constant_values=0)
+            else:
+                bytes = []
+        if len(bytes) > 0:
+            self.init_baseline(guess.metadata, bytes)
+        else:
+            self.del_baseline()
+
+    def save_to_uri(self, uri, editor, saver=None, save_metadata=True):
+        # Have to use a two-step process to write to the file: open the
+        # filesystem, then open the file.  Have to open the filesystem
+        # as writeable in case this is a virtual filesystem (like ZipFS),
+        # otherwise the write to the actual file will fail with a read-
+        # only filesystem error.
+        if saver is None:
+            bytes = self.bytes.tostring()
+        else:
+            bytes = saver(self, editor)
+
+        if uri.startswith("file://"):
+            # FIXME: workaround to allow opening of file:// URLs with the
+            # ! character
+            uri = uri.replace("file://", "")
+        fs, relpath = opener.parse(uri, writeable=True)
+        fh = fs.open(relpath, 'wb')
+        log.debug("saving to %s" % uri)
+        fh.write(bytes)
+        fh.close()
+
+        if save_metadata:
+            metadata_dict = dict()
+            editor.get_extra_metadata(metadata_dict, self)
+            if metadata_dict:
+                relpath += ".omnivore"
+                log.debug("saving extra metadata to %s" % relpath)
+                jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
+                bytes = jsonpickle.dumps(metadata_dict)
+                text = jsonutil.collapse_json(bytes)
+                header = editor.get_extra_metadata_header()
+                fh = fs.open(relpath, 'wb')
+                fh.write(header)
+                fh.write(text)
+                fh.close()
+
+        fs.close()

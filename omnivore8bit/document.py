@@ -17,8 +17,6 @@ log = logging.getLogger(__name__)
 
 
 class SegmentedDocument(BaseDocument):
-    baseline_document = Any(transient=True)
-
     style = Trait("", TraitNumpyConverter())
 
     segment_parser = Any
@@ -32,8 +30,6 @@ class SegmentedDocument(BaseDocument):
     can_resize = Property(Bool, depends_on='segments')
 
     document_memory_map = Dict
-
-    extra_metadata = Dict
 
     #### trait default values
 
@@ -54,7 +50,7 @@ class SegmentedDocument(BaseDocument):
 
     #### serialization methods
 
-    def load_metadata(self, guess):
+    def load_extra_metadata(self, guess):
         # don't load check_builtin until now because it causes some circular
         # imports
         from omnivore8bit.utils.extra_metadata import check_builtin
@@ -73,65 +69,27 @@ class SegmentedDocument(BaseDocument):
 
         # Overwrite any builtin stuff with saved data from the user
         extra.update(loaded_extra)
-        self.restore_extra_from_dict(extra)
-        self.extra_metadata = extra
-
-    def load_filesystem_extra_metadata(self):
-        """ Find any extra metadata associated with the document, typically
-        used to load an extra file off the disk.
-        
-        If successful, return a dict to be processed by init_extra_metadata
-        """
-        uri = self.get_filesystem_extra_metadata_uri()
-        if uri is None:
-            return
-        try:
-            guess = FileGuess(uri)
-        except fs.errors.FSError, e:
-            log.error("File load error: %s" % str(e))
-            return {}
-        try:
-            b = guess.bytes
-            if b.startswith("#"):
-                header, b = b.split("\n", 1)
-            unserialized = jsonpickle.loads(b)
-        except ValueError, e:
-            log.error("JSON parsing error for extra metadata in %s: %s" % (uri, str(e)))
-            unserialized = {}
-        return unserialized
+        return extra
 
     def get_filesystem_extra_metadata_uri(self):
         """ Get filename of file used to store extra metadata
         """
         return self.metadata.uri + ".omnivore"
 
-    def get_metadata_for(self, task_id):
-        """Return extra metadata for the particular task
-
-        """
-        # FIXME: each task should have its own section in the metadata so they
-        # can save stuff without fear of stomping on another task's data. Also,
-        # when saving, they can overwrite their task stuff without changing an
-        # other task's info so that other task's stuff can be re-saved even if
-        # that task wasn't used in this editing session.
-        return self.extra_metadata
-
     def serialize_extra_to_dict(self, mdict):
-        """Save extra metadata to a dict so that it can be serialized
-        """
+        BaseDocument.serialize_extra_to_dict(self, mdict)
+
         mdict["segment parser"] = self.segment_parser
         mdict["serialized user segments"] = list(self.user_segments)
         self.container_segment.serialize_extra_to_dict(mdict)
         emu = self.emulator
         if emu and not 'system default' in emu:
             mdict["emulator"] = self.emulator
-        if self.baseline_document is not None:
-            mdict["baseline document"] = self.baseline_document.metadata.uri
-        mdict["document uuid"] = self.uuid
         mdict["document memory map"] = sorted([list(i) for i in self.document_memory_map.iteritems()])  # save as list of pairs because json doesn't allow int keys for dict
 
     def restore_extra_from_dict(self, e):
-        log.debug("restoring extra metadata: %s" % str(e))
+        BaseDocument.restore_extra_from_dict(self, e)
+
         if 'segment parser' in e:
             parser = e['segment parser']
             for s in parser.segments:
@@ -149,8 +107,6 @@ class SegmentedDocument(BaseDocument):
         self.container_segment.restore_extra_from_dict(e)
         if 'emulator' in e:
             self.emulator = e['emulator']
-        if 'document uuid' in e:
-            self.uuid = e['document uuid']
         if 'document memory map' in e:
             self.document_memory_map = dict(e['document memory map'])
 

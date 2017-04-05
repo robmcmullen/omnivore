@@ -143,8 +143,6 @@ class HexEditor(FrameworkEditor):
             self.machine.set_font(e['font'][0], e['font'][1])
         if 'initial segment' in e:
             self.initial_segment = e['initial segment']
-        if 'baseline document' in e:
-            self.load_baseline(e['baseline document'], doc, ignore_error=True)
         if not doc.has_baseline:
             self.use_self_as_baseline(doc)
         if 'diff highlight' in e:
@@ -544,7 +542,8 @@ class HexEditor(FrameworkEditor):
     def save_segment(self, saver, uri):
         try:
             bytes = saver.encode_data(self.segment, self)
-            self.save_to_uri(bytes, uri, save_metadata=False)
+            saver = lambda a,b: bytes
+            self.document.save_to_uri(uri, self, saver, save_metadata=False)
         except Exception, e:
             log.error("%s: %s" % (uri, str(e)))
             #self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")

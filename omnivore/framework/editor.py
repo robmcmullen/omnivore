@@ -5,7 +5,6 @@ import numpy as np
 from fs.opener import opener
 import wx
 import fs
-import jsonpickle
 
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Bool, Int, Unicode, Property, Dict, List
@@ -17,7 +16,7 @@ from omnivore import __version__
 from omnivore.utils.command import HistoryList, StatusFlags
 from omnivore.utils.sortutil import collapse_overlapping_ranges, invert_ranges, ranges_to_indexes
 from omnivore.utils.file_guess import FileGuess
-import omnivore.utils.jsonutil as jsonutil
+from omnivore.framework.document import DocumentError
 
 import logging
 log = logging.getLogger(__name__)
@@ -145,7 +144,7 @@ class FrameworkEditor(Editor):
     def init_extra_metadata(self, doc):
         """ Hook to load any extra metadata for the given document
         """
-        e = doc.get_metadata_for(self.task.id)
+        e = doc.get_metadata_for(self.task)
         self.process_extra_metadata(doc, e)
         self.metadata_dirty = False
 
@@ -154,32 +153,14 @@ class FrameworkEditor(Editor):
         """
         pass
 
-    def load_baseline(self, uri, doc=None, ignore_error=False):
+    def load_baseline(self, uri, doc=None):
         if doc is None:
             doc = self.document
         try:
-            guess = FileGuess(uri)
-        except Exception, e:
-            if not ignore_error:
-                self.window.error("Failed opening baseline document file\n\n%s\n\nError: %s" % (uri, str(e)), "Baseline Document Loading Error")
-            log.error("Problem loading baseline file %s; using self as baseline" % uri)
+            doc.load_baseline(uri, confirm_callback=self.task.confirm)
+        except DocumentError, e:
+            self.window.error("Failed opening baseline document file\n\n%s\n\nError: %s" % (uri, str(e)), "Baseline Document Loading Error")
             return
-        bytes = guess.numpy
-        difference = len(bytes) - len(doc)
-        if difference > 0:
-            if self.task.confirm("Truncate baseline data by %d bytes?" % difference, "Baseline Size Difference") == YES:
-                bytes = bytes[0:len(doc)]
-            else:
-                bytes = []
-        elif difference < 0:
-            if self.task.confirm("Pad baseline data with %d zeros?" % (-difference), "Baseline Size Difference") == YES:
-                bytes = np.pad(bytes, (0, -difference), "constant", constant_values=0)
-            else:
-                bytes = []
-        if len(bytes) > 0:
-            doc.init_baseline(guess.metadata, bytes)
-        else:
-            doc.del_baseline()
         if doc == self.document:
             self.baseline_present = doc.has_baseline
             self.diff_highlight = self.baseline_present
@@ -249,11 +230,7 @@ class FrameworkEditor(Editor):
             uri = document.uri
 
         try:
-            if saver is None:
-                bytes = document.bytes.tostring()
-            else:
-                bytes = saver(document, self)
-            self.save_to_uri(bytes, uri, document=document)
+            document.save_to_uri(uri, self, saver)
             document.undo_stack.set_save_point()
 
             # force an update to the document name as the URI may have changed
@@ -267,8 +244,10 @@ class FrameworkEditor(Editor):
             # update the URI first because trait callbacks happen immediately
             # and because properties are used for the editor name, no trait
             # event gets called on updating the metadata URI.
-            if document == self.document and not self.dirty:
-                self.dirty = True
+            if document == self.document:
+                if not self.dirty:
+                    self.dirty = True
+                self.metadata_dirty = False
 
             document.undo_stack_changed = True
             saved = True
@@ -282,43 +261,6 @@ class FrameworkEditor(Editor):
             self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
             saved = False
         return saved
-
-    def save_to_uri(self, bytes, uri, save_metadata=True, document=None):
-        # Have to use a two-step process to write to the file: open the
-        # filesystem, then open the file.  Have to open the filesystem
-        # as writeable in case this is a virtual filesystem (like ZipFS),
-        # otherwise the write to the actual file will fail with a read-
-        # only filesystem error.
-        if document is None:
-            document = self.document
-        if uri.startswith("file://"):
-            # FIXME: workaround to allow opening of file:// URLs with the
-            # ! character
-            uri = uri.replace("file://", "")
-        fs, relpath = opener.parse(uri, writeable=True)
-        fh = fs.open(relpath, 'wb')
-        log.debug("saving to %s" % uri)
-        fh.write(bytes)
-        fh.close()
-
-        if save_metadata:
-            metadata_dict = dict()
-            self.get_extra_metadata(metadata_dict, document)
-            if metadata_dict:
-                relpath += ".omnivore"
-                log.debug("saving extra metadata to %s" % relpath)
-                jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
-                bytes = jsonpickle.dumps(metadata_dict)
-                text = jsonutil.collapse_json(bytes)
-                header = self.get_extra_metadata_header()
-                fh = fs.open(relpath, 'wb')
-                fh.write(header)
-                fh.write(text)
-                fh.close()
-                if document == self.document:
-                    self.metadata_dirty = False
-
-        fs.close()
 
     def is_valid_for_save(self):
         """Hook for subclasses to implement a validity check before saving
