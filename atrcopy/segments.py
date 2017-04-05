@@ -341,6 +341,9 @@ class DefaultSegment(object):
     savers = [SegmentSaver]
     can_resize_default = False
 
+    base_serializable_attributes = ['start_addr', 'error', 'name', 'verbose_name', 'page_size', 'map_width', 'uuid', 'can_resize']
+    extra_serializable_attributes = []
+
     def __init__(self, rawdata, start_addr=0, name="All", error=None, verbose_name=None, memory_map=None):
         self.start_addr = int(start_addr)  # force python int to decouple from possibly being a numpy datatype
         self.set_raw(rawdata)
@@ -412,7 +415,9 @@ class DefaultSegment(object):
         json.
         """
         state = dict()
-        for key in ['start_addr', 'error', 'name', 'verbose_name', 'page_size', 'map_width', 'uuid', 'can_resize']:
+        for key in self.base_serializable_attributes:
+            state[key] = getattr(self, key)
+        for key in self.extra_serializable_attributes:
             state[key] = getattr(self, key)
         r = self.rawdata
         state['_rawdata_bounds'] = list(r.byte_bounds_offset())
@@ -434,7 +439,15 @@ class DefaultSegment(object):
         self.memory_map = dict(state.pop('memory_map', []))
         self.uuid = state.pop('uuid', uuid.uuid4())
         self.can_resize = state.pop('can_resize', self.__class__.can_resize_default)
+        self.restore_missing_serializable_defaults()
         self.__dict__.update(state)
+
+    def restore_missing_serializable_defaults(self):
+        """Hook for the future when extra serializable attributes are added to
+        subclasses so new versions of the code can restore old saved files by
+        providing defaults to any missing attributes.
+        """
+        pass
 
     def reconstruct_raw(self, rawdata):
         """Reconstruct the pointers to the parent data arrays
@@ -998,10 +1011,12 @@ class EmptySegment(DefaultSegment):
 
 
 class ObjSegment(DefaultSegment):
+    extra_serializable_attributes = ['metadata_start', 'data_start']
+
     def __init__(self, rawdata, metadata_start, data_start, start_addr, end_addr=0,  name="", **kwargs):
         DefaultSegment.__init__(self, rawdata, start_addr, name, **kwargs)
-        self.metadata_start = metadata_start
-        self.data_start = data_start
+        self.metadata_start = int(metadata_start)
+        self.data_start = int(data_start)
 
     def __str__(self):
         count = len(self)
@@ -1025,13 +1040,15 @@ class SegmentedFileSegment(ObjSegment):
 
 
 class RawSectorsSegment(DefaultSegment):
+    extra_serializable_attributes = ['boot_sector_size', 'num_boot_sectors', 'page_size', 'first_sector', 'num_sectors']
+
     def __init__(self, rawdata, first_sector, num_sectors, count, boot_sector_size, num_boot_sectors, sector_size, **kwargs):
         DefaultSegment.__init__(self, rawdata, 0, **kwargs)
-        self.boot_sector_size = boot_sector_size
-        self.num_boot_sectors = num_boot_sectors
-        self.page_size = sector_size
-        self.first_sector = first_sector
-        self.num_sectors = num_sectors
+        self.boot_sector_size = int(boot_sector_size)
+        self.num_boot_sectors = int(num_boot_sectors)
+        self.page_size = int(sector_size)
+        self.first_sector = int(first_sector)
+        self.num_sectors = int(num_sectors)
 
     def __str__(self):
         if self.num_sectors > 1:

@@ -25,6 +25,34 @@ class SegmentParser(object):
         self.segment_data = segment_data
         self.parse()
 
+    def __getstate__(self):
+        """Custom jsonpickle state save routine
+
+        This routine culls down the list of attributes that should be
+        serialized, and in some cases changes their format slightly so they
+        have a better mapping to json objects. For instance, json can't handle
+        dicts with integer keys, so dicts are turned into lists of lists.
+        Tuples are also turned into lists because tuples don't have a direct
+        representation in json, while lists have a compact representation in
+        json.
+        """
+        state = dict()
+        for key in ['segments', 'strict']:
+            state[key] = getattr(self, key)
+        return state
+
+    def __setstate__(self, state):
+        """Custom jsonpickle state restore routine
+
+        The use of jsonpickle to recreate objects doesn't go through __init__,
+        so there will be missing attributes when restoring old versions of the
+        json. Once a version gets out in the wild and additional attributes are
+        added to a segment, a default value should be applied here.
+        """
+        print "UPDATING!!!!", state
+        self.__dict__.update(state)
+        print self.segments
+
     def parse(self):
         r = self.segment_data
         self.segments.append(self.container_segment(r, 0, name=self.menu_name))
