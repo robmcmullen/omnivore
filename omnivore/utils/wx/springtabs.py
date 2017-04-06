@@ -68,11 +68,16 @@ class FakePopupWindow(wx.MiniFrame):
         evt.Skip()
 
 
-class RealPopupWindow(wx.PopupWindow):
+#class RealPopupWindow(wx.PopupWindow):
+class RealPopupWindow(wx.PopupTransientWindow):
     def fix_sizer(self, child):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(child, 1, wx.EXPAND)
         self.SetSizer(sizer)
+
+    def OnDismiss(self):
+        print "DISMISSED!!!!!"
+        wx.CallAfter(self.GetParent().clear_popup)
 
 
 class SpringTabItemRenderer(object):
@@ -240,7 +245,9 @@ class SpringTabItemVerticalRenderer(SpringTabItemRenderer):
             child.SetPosition(wx.Point(0, 0))
             popup.SetPosition(wx.Point(x, y))
             wx.CallAfter(item.setPopupFocusCallback)
-        popup.Show(show)
+            popup.Popup()
+        else:
+            popup.Dismiss()
 
 
 class SpringTabItem(GenToggleButton):
@@ -307,6 +314,11 @@ class SpringTabItem(GenToggleButton):
 
     def SetToggle(self, flag, check_popup=True):
         self.up = not flag
+        print "SETTOGGLE! up=", self.up
+        if self.up:
+            # with PopupTransientWindow, need to force not hovering so it
+            # doesn't take a second click to process
+            self.hover = False
         if check_popup:
             self.GetParent().setRadio(self)
         self.Refresh()
@@ -344,6 +356,8 @@ class SpringTabItem(GenToggleButton):
 #            child.Bind(wx.EVT_SET_FOCUS, self.OnChildFocus)
             child.Bind(wx.EVT_KILL_FOCUS, self.OnLoseChildFocus)
             child.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
+            #child.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
+            #child.Bind(wx.EVT_CHAR, self.on_char)
             self.popup.fix_sizer(child)
         windowlist = self.popup.GetChildren()
         if len(windowlist) == 0:
@@ -351,10 +365,25 @@ class SpringTabItem(GenToggleButton):
         child = windowlist[0]
         return self.popup, child
 
+    def on_char(self, evt):
+        print("OnChar: keycode=%s, popup=%s" % (evt.GetKeyCode(), evt.GetEventObject()))
+        popup = evt.GetEventObject()
+        print popup.GetChildren()
+        #popup.GetParent().GetEventHandler().ProcessEvent(evt)
+        evt.Skip()
+
+    def on_key_down(self, evt):
+        print("on_key_down: keycode=%s, popup=%s" % (evt.GetKeyCode(), evt.GetEventObject()))
+        popup = evt.GetEventObject()
+        print popup.GetChildren()
+        popup.GetParent().GetEventHandler().ProcessEvent(evt)
+        evt.Skip()
+
     def on_char_hook(self, evt):
         """ESC handler that closes the popup
 
         """
+        print("on_char_hook: keycode=%s, popup=%s" % (evt.GetKeyCode(), evt.GetEventObject()))
         if evt.GetKeyCode() == wx.WXK_ESCAPE:
             wx.CallAfter(self.GetParent().cancel_popup)
         else:
@@ -461,6 +490,7 @@ class SpringTabs(wx.Panel):
             self._popup_cls = RealPopupWindow
         else:
             self._popup_cls = FakePopupWindow
+            self._popup_cls = RealPopupWindow
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_SIZE, self.OnSize)
@@ -498,11 +528,13 @@ class SpringTabs(wx.Panel):
         # uncomment this to show where the clearRadio is being called
         #import traceback
         #log.debug("".join(traceback.format_stack()))
+        print "CLEARRADIO", self._radio
         if self._radio is not None:
             #log.debug("Removing popup %s" % self._radio.GetLabel())
             self._tab_renderer.showPopup(self, self._radio, False)
             self._radio.SetToggle(False, check_popup=False)
         self._radio = None
+        self.Refresh()
 
     def has_popup(self):
         return self._radio is not None

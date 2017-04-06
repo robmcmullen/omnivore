@@ -22,6 +22,8 @@ class SegmentList(wx.ListBox):
         self.Bind(wx.EVT_LISTBOX_DCLICK, self.on_dclick)
         self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
         self.Bind(wx.EVT_MOTION, self.on_tooltip)
+        self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
+        self.Bind(wx.EVT_KEY_UP, self.on_key_up)
         if sys.platform.startswith("linux") and not parent.IsTopLevel():
             # hack needed to force the main window to get Ctrl-F keystrokes. If
             # this ListBox is a direct child of a top-level frame, this is not
@@ -117,12 +119,14 @@ class SegmentList(wx.ListBox):
         # that case, so I had to add the check on EVT_LEFT_DOWN
         selected = event.GetExtraLong()
         if selected:
-            item = event.GetSelection()
-            editor = self.task.active_editor
-            segment_number = self.index_to_segment_number[item]
-            if segment_number != editor.segment_number:
-                wx.CallAfter(editor.view_segment_number, segment_number)
+            self.view_index(event.GetSelection())
         event.Skip()
+
+    def view_index(self, index):
+        editor = self.task.active_editor
+        segment_number = self.index_to_segment_number[index]
+        if segment_number != editor.segment_number:
+            wx.CallAfter(editor.view_segment_number, segment_number)
 
     def on_dclick(self, event):
         event.Skip()
@@ -181,3 +185,42 @@ class SegmentList(wx.ListBox):
 
     def get_notification_count(self):
         return 0
+
+    def on_key_down(self, evt):
+        key = evt.GetKeyCode()
+        log.debug("evt=%s, key=%s" % (evt, key))
+        moved = False
+        index = self.GetSelection()
+        if key == wx.WXK_RETURN or key == wx.WXK_TAB:
+            self.view_index(index)
+        elif key == wx.WXK_UP:
+            index = max(index - 1, 0)
+            moved = True
+        elif key == wx.WXK_DOWN:
+            index = min(index + 1, len(self.index_to_segment_number) - 1)
+            moved = True
+        # elif key == wx.WXK_PAGEUP:
+        #     index = self.table.get_page_index(e.cursor_index, e.segment.page_size, -1, self)
+        #     moved = True
+        # elif key == wx.WXK_PAGEDOWN:
+        #     index = self.table.get_page_index(e.cursor_index, e.segment.page_size, 1, self)
+        #     moved = True
+        else:
+            evt.Skip()
+        # if True:
+        #     evt.Skip()
+        #     return
+        if moved:
+            self.SetSelection(index)
+            self.view_index(index)
+
+    def on_key_up(self, evt):
+        # Return key not sent through to EVT_CHAR, EVT_CHAR_HOOK or
+        # EVT_KEY_DOWN events in a ListBox. This is the only event handler
+        # that catches a Return.
+        key = evt.GetKeyCode()
+        log.debug("key down: %s" % key)
+        index = self.GetSelection()
+        if key == wx.WXK_RETURN:
+            self.view_index(index)
+        evt.Skip()
