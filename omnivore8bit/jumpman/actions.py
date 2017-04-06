@@ -12,7 +12,7 @@ from pyface.tasks.action.api import EditorAction
 
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, ChooseOnePlusCustomDialog
 from omnivore.utils.textutil import text_to_int
-from omnivore.framework.actions import SelectAllAction, SelectNoneAction, SelectInvertAction
+from omnivore.framework.actions import SelectAllAction, SelectNoneAction, SelectInvertAction, TaskDynamicSubmenuGroup
 from omnivore8bit.utils.jumpman import DrawObjectBounds
 from omnivore8bit.hex_edit.actions import UseSegmentAction, UseSegmentRadioAction
 
@@ -161,3 +161,29 @@ class RecompileAction(EditorAction):
     def perform(self, event):
         e = self.active_editor
         e.compile_assembly_source(True)
+
+
+class LevelListGroup(TaskDynamicSubmenuGroup):
+    """Dynamic menu group to display the available levels
+    """
+    #### 'DynamicSubmenuGroup' interface #####################################
+
+    event_name = 'segments_changed'
+
+    ##########################################################################
+    # Private interface.
+    ##########################################################################
+
+    def _get_items(self, event_data=None):
+        items = []
+        if event_data is not None:
+            for i, segment in enumerate(event_data):
+                if len(segment) == 0x800:
+                    if sys.platform == "darwin":
+                        action = UseSegmentAction(segment=segment, segment_number=i, task=self.task)
+                    else:
+                        action = UseSegmentRadioAction(segment=segment, segment_number=i, task=self.task, checked=False)
+                    log.debug("LevelListGroup: created %s for %s, num=%d" % (action, str(segment), i))
+                    items.append(ActionItem(action=action, parent=self))
+
+        return items

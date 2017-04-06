@@ -55,7 +55,7 @@ class JumpmanEditTask(HexEditTask):
 
     def _extra_actions_default(self):
         data_menu = self.create_menu("Menu", "Disk Image", "ParserGroup", "EmulatorGroup", "ActionGroup")
-        jumpman_menu = self.create_menu("Menu", "Jumpman", "SelectionGroup", "CustomCodeGroup")
+        jumpman_menu = self.create_menu("Menu", "Jumpman", "LevelGroup", "SelectionGroup", "CustomCodeGroup")
         actions = [
             # Menubar additions
             SchemaAddition(factory=lambda: jumpman_menu,
@@ -137,6 +137,13 @@ class JumpmanEditTask(HexEditTask):
                     AnticColorAction(),
                     id="a2", separator=True),
                 id='mm4', separator=False, name="Colors"),
+            ]
+
+    def get_actions_Menu_Jumpman_LevelGroup(self):
+        return [
+            SMenu(
+                LevelListGroup(id="a2", separator=True),
+                id='segmentlist1', separator=False, name="Edit Level"),
             ]
 
     def get_actions_Menu_Jumpman_SelectionGroup(self):
