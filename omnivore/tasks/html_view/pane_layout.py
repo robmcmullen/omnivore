@@ -18,7 +18,7 @@ import panes
 # is only updated when quitting the application; if the application is killed
 # (or crashes!) the saved state is not updated.
 
-pane_layout_version = 'v1'
+pane_layout_version = 'v2'
 
 
 def pane_layout():
@@ -26,9 +26,9 @@ def pane_layout():
     state if it exists.
     """
     return TaskLayout(
-        left=VSplitter(
-            PaneItem('omnivore.framework.file_browser_pane'),
-        ),
+#        left=VSplitter(
+#            PaneItem('omnivore.framework.file_browser_pane'),
+#        ),
         )
 
 
@@ -38,5 +38,5 @@ def pane_create():
     MaproomTask.activated)
     """
     return [
-        panes.FileBrowserPane(),
+#        panes.FileBrowserPane(),
         ]
