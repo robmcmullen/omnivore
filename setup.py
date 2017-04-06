@@ -15,7 +15,7 @@ import shutil
 import glob
 import subprocess
 from setuptools import find_packages
-from distutils.core import setup
+from setuptools import setup
 from distutils.extension import Extension
 
 ext_modules = [
@@ -323,6 +323,12 @@ if 'nsis' not in sys.argv:
         packages = packages,
         package_data = package_data,
         data_files=data_files,
+        entry_points = {
+              'pyface.toolkits': [
+                  'wx = pyface.ui.wx.init:toolkit_object',
+                  'null = pyface.ui.null.init:toolkit_object',
+              ],
+        },
         scripts = ['scripts/omnivore'],
         app=["run.py"],
         windows=[dict(

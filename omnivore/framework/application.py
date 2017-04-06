@@ -8,6 +8,21 @@ from datetime import datetime
 
 import fs
 
+try:
+    # Force wx toolkit because pyface 5 uses entry points to determine
+    # toolkits and I can't figure out how to get that to work in
+    # executable bundlers. It has to be included before any calls to
+    # any pyface modules so the monkey patch can intercept it before
+    # an import of pyface.toolkit.
+    from pyface.base_toolkit import Toolkit
+    class MonkeyPatchPyface(object):
+        toolkit_object = Toolkit('wx', 'pyface.ui.wx')
+    sys.modules["pyface.toolkit"] = MonkeyPatchPyface()
+except ImportError:
+    # An import error means this is an older version of pyface and
+    # does not need this hack.
+    pass
+
 from filesystem import init_filesystems
 from document import BaseDocument
 
