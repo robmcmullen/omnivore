@@ -314,28 +314,36 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
     def index_to_row_col(self, index):
         return divmod(index, self.bytes_per_row)
 
-    def select_index(self, from_control, rel_pos):
+    def select_index(self, from_control, rel_pos, first_row=None):
         r, c = self.index_to_row_col(rel_pos)
 #        print "r, c, start, vis", r, c, self.start_row, self.fully_visible_rows
+        last_scroll_row = self.total_rows - self.fully_visible_rows
+        if first_row is not None:
+            first_row = min(max(0, first_row), last_scroll_row)
         last_row = self.start_row + self.fully_visible_rows - 1
         last_col = self.start_col + self.fully_visible_cols - 1
 
         update = False
-        if r < self.start_row:
-            # above current view
-            update = True
-        elif r >= last_row:
-            # below last row
-            last_scroll_row = self.total_rows - self.fully_visible_rows
-            if r >= last_scroll_row:
-                r = last_scroll_row
+        if first_row:
+            print "First row:", first_row, "index %04x" % (rel_pos + self.start_addr)
+            if first_row != self.start_row:
                 update = True
-            elif r >= self.fully_visible_rows:
-                r = r - self.fully_visible_rows + 1
-                update = True
+                r = first_row
         else:
-            # row is already visible so don't change row position
-            r = self.start_row
+            if r < self.start_row:
+                # above current view
+                update = True
+            elif r >= last_row:
+                # below last row
+                if r >= last_scroll_row:
+                    r = last_scroll_row
+                    update = True
+                elif r >= self.fully_visible_rows:
+                    r = r - self.fully_visible_rows + 1
+                    update = True
+            else:
+                # row is already visible so don't change row position
+                r = self.start_row
 
         if c < self.start_col:
             # left of start column, so set start view to that column
@@ -477,6 +485,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
 
     def process_movement_keys(self, char):
         delta_index = None
+        first_row = None
         if char == wx.WXK_UP:
             delta_index = -self.bytes_per_row
         elif char == wx.WXK_DOWN:
@@ -486,24 +495,21 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         elif char == wx.WXK_RIGHT:
             delta_index = 1
         elif char == wx.WXK_PAGEUP:
-            page_size = self.editor.segment.page_size
-            if page_size < 0:
-                delta_index = -(self.fully_visible_rows * self.bytes_per_row)
-            else:
-                delta_index = -page_size
+            delta_index = -(self.fully_visible_rows * self.bytes_per_row)
+            first_row = self.start_row - self.fully_visible_rows
         elif char == wx.WXK_PAGEDOWN:
-            page_size = self.editor.segment.page_size
-            if page_size < 0:
-                delta_index = self.fully_visible_rows * self.bytes_per_row
-            else:
-                delta_index = page_size
-        return delta_index
+            delta_index = self.fully_visible_rows * self.bytes_per_row
+            first_row = self.start_row + self.fully_visible_rows
+        if delta_index is None:
+            return None
+        return (delta_index, first_row)
 
     def process_delta_index(self, delta_index):
         e = self.editor
+        delta_index, first_row = delta_index  # Now a tuple, was an int
         index = e.set_cursor(e.cursor_index + delta_index, False)
-        wx.CallAfter(self.select_index, self, index)
-        wx.CallAfter(e.index_clicked, index, 0, self, False)
+        self.select_index(self, index, first_row)
+        e.index_clicked(index, 0, self, False)
 
     def on_char_hook(self, evt):
         log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
@@ -513,7 +519,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
             char = evt.GetKeyCode()
         delta_index = self.process_movement_keys(char)
         if delta_index is not None:
-            self.process_delta_index(delta_index)
+            wx.CallAfter(self.process_delta_index, delta_index)
         else:
             evt.Skip()
 
@@ -747,6 +753,7 @@ class FontMapScroller(BitviewScroller):
         anchor_start, anchor_end, rc1, rc2 = self.get_highlight_indexes()
         self.show_highlight(array, rc1, rc2, zw, zh)
         r, c = self.index_to_row_col(self.editor.cursor_index)
+        print "Draw cursor: %04x" % (self.editor.cursor_index + self.start_addr), r, self.start_row, self.fully_visible_rows
         self.show_highlight(array, (r, c), (r + 1, c + 1), zw, zh)
 
     def show_highlight(self, array, rc1, rc2, zw, zh):
@@ -894,10 +901,7 @@ class FontMapScroller(BitviewScroller):
             self.change_byte(byte)
             self.pending_esc = False
         elif delta_index is not None:
-            e = self.editor
-            index = e.set_cursor(e.cursor_index + delta_index, False)
-            wx.CallAfter(self.select_index, self, index)
-            wx.CallAfter(e.index_clicked, index, 0, self, False)
+            wx.CallAfter(self.process_delta_index, delta_index)
         else:
             evt.Skip()
 
@@ -964,6 +968,7 @@ class CharacterSetViewer(FontMapScroller):
         return self.selected_char, self.selected_char + 1, None, None
 
     def process_delta_index(self, delta_index):
+        delta_index, first_row = delta_index
         _, byte = divmod(self.selected_char + delta_index, 256)
         self.set_selected_char(byte)
         self.Refresh()
@@ -976,7 +981,7 @@ class CharacterSetViewer(FontMapScroller):
             char = evt.GetKeyCode()
         delta_index = self.process_movement_keys(char)
         if delta_index is not None:
-            self.process_delta_index(delta_index)
+            wx.CallAfter(self.process_delta_index, delta_index)
         else:
             evt.Skip()
 
