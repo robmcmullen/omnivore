@@ -109,7 +109,11 @@ class DisassemblyTable(ByteGridTable):
             index = line.pc - self.start_addr
             return index, index + line.num_bytes
         except IndexError:
-            return 0, 0
+            if r >= self._rows:
+                index = len(self.segment) - 1
+            else:
+                index = 0
+            return index, index
 
     def is_index_valid(self, index):
         return self._rows > 0 and index >= 0 and index < len(self.segment)

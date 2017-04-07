@@ -806,6 +806,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         key = evt.GetKeyCode()
         log.debug("evt=%s, key=%s" % (evt, key))
         moved = False
+        paged = False
         index = None
         r, c = self.GetGridCursorRow(), self.GetGridCursorCol()
         if key == wx.WXK_RETURN or key == wx.WXK_TAB:
@@ -833,11 +834,15 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             r = n - 1 if r >= n - 1 else r + 1
             moved = True
         elif key == wx.WXK_PAGEUP:
-            index = self.table.get_page_index(e.cursor_index, e.segment.page_size, -1, self)
-            moved = True
+            cursor_row = max(0, r - self.get_num_visible_rows())
+            first_row = max(0, self.get_first_visible_row() - self.get_num_visible_rows())
+            paged = True
         elif key == wx.WXK_PAGEDOWN:
-            index = self.table.get_page_index(e.cursor_index, e.segment.page_size, 1, self)
-            moved = True
+            max_rows = self.table.GetNumberRows()
+            vis = self.get_num_visible_rows()
+            cursor_row = min(max_rows, r + vis)
+            first_row = min(max_rows - vis - 1, self.get_first_visible_row() + vis)
+            paged = True
         else:
             evt.Skip()
 
@@ -850,6 +855,35 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             self.SetGridCursor(r, c)
             self.MakeCellVisible(r, c)
             wx.CallAfter(e.index_clicked, e.cursor_index, c, self, refresh_self)
+        elif paged:
+            index, _ = self.table.get_index_range(cursor_row, c)
+            e.set_cursor(index, False)
+            wx.CallAfter(self.page_move, index, cursor_row, first_row)
+
+    def page_move(self, index, cursor_row, first_row):
+        """Move up or down a page, keeping the cursor in the same
+        relative position on screen (if possible)
+
+        The cursor move and cell positioning needs to happen at the same time.
+        Calling set_cursor in the event handler and index_clicked in a
+        CallAfter may result in the incorrect ordering of events; multiple
+        keypresses may be received before the first CallAfter is called.
+        Keeping them together guarantees that this move will happen
+        "atomically".
+        """
+        e = self.editor
+        r, c = self.GetGridCursorRow(), self.GetGridCursorCol()
+        max_rows = self.table.GetNumberRows()
+        vis = self.get_num_visible_rows()
+        e.set_cursor(index, False)
+        if cursor_row > r:
+            # page down needs to first set the last visible row, otherwise
+            # the cursor won't stay in the same relative position
+            print first_row, vis, first_row + vis, max_rows, cursor_row
+            self.MakeCellVisible(min(max_rows - 1, first_row + vis), c)
+        self.MakeCellVisible(first_row, c)
+        self.SetGridCursor(cursor_row, c)
+        e.index_clicked(e.cursor_index, c, self, True)
 
     def on_left_dclick(self, evt):
         self.EnableCellEditControl()
