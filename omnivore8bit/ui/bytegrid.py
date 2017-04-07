@@ -160,6 +160,9 @@ class ByteGridTable(Grid.PyGridTableBase):
     def get_row_col(self, index, col=0):
         return divmod(index, self.bytes_per_row)
 
+    def last_valid_index(self):
+        return self._rows * self._cols - 1
+
     def is_index_valid(self, index):
         return index < self._rows * self._cols
 
@@ -843,6 +846,12 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             cursor_row = min(max_rows, r + vis)
             first_row = min(max_rows - vis - 1, self.get_first_visible_row() + vis)
             paged = True
+        elif key == wx.WXK_HOME:
+            index = 0
+            moved = True
+        elif key == wx.WXK_END:
+            index = self.table.last_valid_index()
+            moved = True
         else:
             evt.Skip()
 

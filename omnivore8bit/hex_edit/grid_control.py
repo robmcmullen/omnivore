@@ -154,6 +154,9 @@ class ByteTable(ByteGridTable):
     def get_data_rows(self):
         return 0 if self.editor is None else ((self.start_offset + len(self.editor.segment) - 1) / self.bytes_per_row) + 1
 
+    def last_valid_index(self):
+        return len(self.segment)
+
     def get_index_range(self, row, col):
         """Get the byte offset from start of file given row, col
         position.

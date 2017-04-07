@@ -500,6 +500,10 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         elif char == wx.WXK_PAGEDOWN:
             delta_index = self.fully_visible_rows * self.bytes_per_row
             first_row = self.start_row + self.fully_visible_rows
+        elif char == wx.WXK_HOME:
+            delta_index = -len(self.segment)
+        elif char == wx.WXK_END:
+            delta_index = len(self.segment)
         if delta_index is None:
             return None
         return (delta_index, first_row)
