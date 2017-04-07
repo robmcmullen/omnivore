@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 import wx
 
 from omnivore.framework.panes import FrameworkPane
@@ -21,8 +23,12 @@ class MemoryMapSpringTab(MemoryMapScroller):
     def activateSpringTab(self):
         self.recalc_view()
 
+CommentItem = namedtuple('CommentItem', ('segment', 'index', 'label', 'font', 'type'))
 
 class CommentsPanel(wx.VListBox):
+    SEGMENT_TITLE = 0
+    COMMENT_ENTRY = 1
+
     def __init__(self, parent, task, **kwargs):
         self.task = task
         self.editor = None
@@ -45,6 +51,8 @@ class CommentsPanel(wx.VListBox):
         # that catches a Return.
         self.Bind(wx.EVT_KEY_UP, self.on_key_up)
 
+        self.last_segment = None
+
     # This method must be overridden.  When called it should draw the
     # n'th item on the dc within the rect.  How it is drawn, and what
     # is drawn is entirely up to you.
@@ -54,16 +62,16 @@ class CommentsPanel(wx.VListBox):
         else:
             c = self.GetForegroundColour()
         item = self.items[n]
-        dc.SetFont(item[3])
+        dc.SetFont(item.font)
         dc.SetTextForeground(c)
-        dc.DrawLabel(item[2], rect,
+        dc.DrawLabel(item.label, rect,
                      wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
     # This method must be overridden.  It should return the height
     # required to draw the n'th item.
     def OnMeasureItem(self, n):
         height = 0
-        text = self.items[n][2]
+        text = self.items[n].label
         for line in text.split('\n'):
             w, h = self.GetTextExtent(line)
             height += h
@@ -109,7 +117,6 @@ class CommentsPanel(wx.VListBox):
         if moved:
             self.SetSelection(index)
             self.process_index(index)
-            self.set_items()
             self.Refresh()
 
     def on_key_up(self, evt):
@@ -124,18 +131,19 @@ class CommentsPanel(wx.VListBox):
         if index >= 0:
             self.SetSelection(index)
             self.process_index(index)
-            self.set_items()
             self.Refresh()
 
     def process_index(self, index):
         e = self.editor
-        segment, index, text, font = self.items[index]
-        if segment == self.editor.segment:
-            e.index_clicked(index, 0, None)
+        item = self.items[index]
+        if item.segment == self.editor.segment:
+            e.index_clicked(item.index, 0, None)
         else:
-            n = e.document.find_segment_index(segment)
+            n = e.document.find_segment_index(item.segment)
             e.view_segment_number(n)
-            e.index_clicked(index, 0, None)
+            e.index_clicked(item.index, 0, None)
+        if item.segment != self.last_segment:
+            self.update_items(item.segment)
 
     def set_items(self, items=None):
         if items is None:
@@ -146,6 +154,22 @@ class CommentsPanel(wx.VListBox):
         for i in items:
             self.process_comment(i, seen)
         self.SetItemCount(len(self.items))
+
+    def update_items(self, segment):
+        self.last_segment = segment
+        new_items = []
+        font = self.GetFont()
+        for item in self.items:
+            new_item = item
+            if item.segment == segment:
+                if item.type == self.SEGMENT_TITLE:
+                    new_item = item._replace(font=self.bold_font)
+                else:
+                    new_item = item._replace(font=font)
+            else:
+                new_item = item._replace(font=self.italic_font)
+            new_items.append(new_item)
+        self.items = new_items
 
     def process_comment(self, item, segment_seen):
         e = self.editor
@@ -171,8 +195,8 @@ class CommentsPanel(wx.VListBox):
                 label = "%04x" % index
         if segment not in segment_seen:
             segment_seen.add(segment)
-            self.items.append((segment, 0, str(segment), segment_font))
-        self.items.append((segment, index, "  %s: %s" % (label, item[1]), font))
+            self.items.append(CommentItem._make((segment, 0, str(segment), segment_font, self.SEGMENT_TITLE)))
+        self.items.append(CommentItem._make((segment, index, "  %s: %s" % (label, item[1]), font, self.COMMENT_ENTRY)))
 
     def recalc_view(self):
         e = self.task.active_editor
