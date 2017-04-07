@@ -38,10 +38,12 @@ class CommentsPanel(wx.VListBox):
                                    wx.FONTSTYLE_ITALIC, wx.NORMAL, f.GetUnderlined(),
                                    f.GetFaceName(), f.GetEncoding())
 
+        self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
+
         # Return key not sent through to EVT_CHAR, EVT_CHAR_HOOK or
         # EVT_KEY_DOWN events in a ListBox. This is the only event handler
         # that catches a Return.
-        self.Bind(wx.EVT_KEY_UP, self.on_char)
+        self.Bind(wx.EVT_KEY_UP, self.on_key_up)
 
     # This method must be overridden.  When called it should draw the
     # n'th item on the dc within the rect.  How it is drawn, and what
@@ -80,12 +82,41 @@ class CommentsPanel(wx.VListBox):
 
         return best
 
-    def on_char(self, evt):
-        keycode = evt.GetKeyCode()
-        log.debug("key down: %s" % keycode)
-        if keycode == wx.WXK_RETURN:
-            index = self.GetSelection()
+    def on_key_down(self, evt):
+        key = evt.GetKeyCode()
+        log.debug("evt=%s, key=%s" % (evt, key))
+        moved = False
+        index = self.GetSelection()
+        if key == wx.WXK_TAB:
             self.process_index(index)
+        elif key == wx.WXK_UP:
+            index = max(index - 1, 0)
+            moved = True
+        elif key == wx.WXK_DOWN:
+            index = min(index + 1, len(self.items) - 1)
+            moved = True
+        # elif key == wx.WXK_PAGEUP:
+        #     index = self.table.get_page_index(e.cursor_index, e.segment.page_size, -1, self)
+        #     moved = True
+        # elif key == wx.WXK_PAGEDOWN:
+        #     index = self.table.get_page_index(e.cursor_index, e.segment.page_size, 1, self)
+        #     moved = True
+        else:
+            evt.Skip()
+        # if True:
+        #     evt.Skip()
+        #     return
+        if moved:
+            self.SetSelection(index)
+            self.process_index(index)
+            self.set_items()
+            self.Refresh()
+
+    def on_key_up(self, evt):
+        keycode = evt.GetKeyCode()
+        log.debug("key up: %s" % keycode)
+        if keycode == wx.WXK_RETURN:
+            self.task.on_hide_minibuffer_or_cancel(evt)
         evt.Skip()
 
     def on_click(self, evt):
