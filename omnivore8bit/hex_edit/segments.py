@@ -222,5 +222,5 @@ class SegmentList(wx.ListBox):
         log.debug("key down: %s" % key)
         index = self.GetSelection()
         if key == wx.WXK_RETURN:
-            self.view_index(index)
+            self.task.on_hide_minibuffer_or_cancel(evt)
         evt.Skip()
