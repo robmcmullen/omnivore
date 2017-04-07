@@ -823,7 +823,7 @@ class AddCommentPopupAction(EditorAction):
 
 class RemoveCommentAction(EditorAction):
     name = 'Remove Comment'
-    accelerator = 'Ctrl+Alt+C'
+    accelerator = 'Shift+Alt+C'
 
     def perform(self, event):
         e = self.active_editor
@@ -901,7 +901,7 @@ class AddLabelPopupAction(AddLabelAction):
 
 class RemoveLabelAction(AddLabelAction):
     name = 'Remove Label'
-    accelerator = 'Ctrl+Alt+L'
+    accelerator = 'Shift+Alt+L'
 
     def process(self, editor, segment, addr):
         existing = segment.memory_map.get(addr, "")
