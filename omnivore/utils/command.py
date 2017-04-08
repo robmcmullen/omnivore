@@ -107,7 +107,8 @@ class UndoStack(HistoryList):
         cmd = self.get_redo_command()
         if cmd is None:
             return UndoInfo()
-        undo_info = cmd.perform(editor)
+        undo_info = UndoInfo()
+        cmd.perform(editor, undo_info)
         if undo_info.flags.success:
             self.insert_index += 1
         cmd.last_flags = undo_info.flags
