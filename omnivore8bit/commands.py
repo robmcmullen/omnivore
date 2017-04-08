@@ -138,14 +138,13 @@ class SetValuesAtIndexesCommand(ChangeByteValuesCommand):
         self.segment.set_comments_at_indexes(comment_indexes, self.comments)
         return (old_data, indexes, old_style, old_comment_info)
 
-    def undo(self, editor):
-        old_data, old_indexes, old_style, old_comment_info = self.undo_info.data
+    def undo_change(self, editor, old_data):
+        old_data, old_indexes, old_style, old_comment_info = old_data
         self.segment[old_indexes] = old_data
         self.segment.style[old_indexes] = old_style
         old_comment_indexes, old_comments = old_comment_info
         self.segment.remove_comments_at_indexes(old_indexes)
         self.segment.set_comments_at_indexes(old_comment_indexes, old_comments)
-        return self.undo_info
 
 
 class SetRangeCommand(ChangeByteValuesCommand):
