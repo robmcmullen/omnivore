@@ -128,7 +128,7 @@ class SetValuesAtIndexesCommand(ChangeByteValuesCommand):
         indexes = indexes[0:np.alen(data)]
         if self.relative_comment_indexes is not None:
             comment_indexes = indexes[self.relative_comment_indexes[self.relative_comment_indexes < np.alen(indexes)]]
-            old_comment_info = self.segment.get_comments_at_indexes(indexes)
+            old_comment_info = self.segment.get_comment_restore_data(self.ranges)
         else:
             old_comment_info = None
         undo.flags.index_range = indexes[0], indexes[-1]
@@ -152,9 +152,7 @@ class SetValuesAtIndexesCommand(ChangeByteValuesCommand):
         if old_style is not None:
             self.segment.style[old_indexes] = old_style
         if old_comment_info is not None:
-            old_comment_indexes, old_comments = old_comment_info
-            self.segment.remove_comments_at_indexes(old_indexes)
-            self.segment.set_comments_at_indexes(old_comment_indexes, old_comments)
+            self.segment.restore_comments(old_comment_info)
 
 
 class SetRangeCommand(ChangeByteValuesCommand):
