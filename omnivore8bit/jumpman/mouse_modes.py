@@ -11,6 +11,7 @@ from omnivore8bit.bitmap_edit.bitmap_editor import SelectMode
 from omnivore.utils.command import Overlay
 from omnivore8bit.utils.jumpman import *
 from omnivore8bit.hex_edit.commands import ChangeByteCommand, SetValueCommand
+from omnivore.framework.actions import CutAction, CopyAction, PasteAction, SelectAllAction, SelectNoneAction, SelectInvertAction
 
 from actions import *
 
@@ -144,7 +145,7 @@ class JumpmanSelectMode(SelectMode):
             clearable = False
         clear_trigger = ClearTriggerAction(enabled=obj is not None and clearable, picked=obj, task=self.canvas.editor.task)
         trigger_action = SetTriggerAction(enabled=obj is not None, picked=obj, task=self.canvas.editor.task)
-        actions = [clear_trigger, trigger_action]
+        actions = [clear_trigger, trigger_action, None, CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction, SelectInvertAction]
         return actions
 
 
