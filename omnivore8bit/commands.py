@@ -125,26 +125,36 @@ class SetValuesAtIndexesCommand(ChangeByteValuesCommand):
         max_index = len(self.segment)
         indexes = indexes[indexes < max_index]
         data = self.get_data(self.segment.data[indexes])
-        style = self.style[0:np.alen(data)]
         indexes = indexes[0:np.alen(data)]
-        comment_indexes = indexes[self.relative_comment_indexes[self.relative_comment_indexes < np.alen(indexes)]]
+        if self.relative_comment_indexes is not None:
+            comment_indexes = indexes[self.relative_comment_indexes[self.relative_comment_indexes < np.alen(indexes)]]
+            old_comment_info = self.segment.get_comments_at_indexes(indexes)
+        else:
+            old_comment_info = None
         undo.flags.index_range = indexes[0], indexes[-1]
         undo.flags.select_range = True
         old_data = self.segment[indexes].copy()
-        old_style = self.segment.style[indexes].copy()
-        old_comment_info = self.segment.get_comments_at_indexes(indexes)
+        if self.style is not None:
+            style = self.style[0:np.alen(data)]
+            old_style = self.segment.style[indexes].copy()
+        else:
+            old_style = None
         self.segment[indexes] = data
-        self.segment.style[indexes] = style
-        self.segment.set_comments_at_indexes(comment_indexes, self.comments)
+        if old_style is not None:
+            self.segment.style[indexes] = style
+        if old_comment_info is not None:
+            self.segment.set_comments_at_indexes(comment_indexes, self.comments)
         return (old_data, indexes, old_style, old_comment_info)
 
     def undo_change(self, editor, old_data):
         old_data, old_indexes, old_style, old_comment_info = old_data
         self.segment[old_indexes] = old_data
-        self.segment.style[old_indexes] = old_style
-        old_comment_indexes, old_comments = old_comment_info
-        self.segment.remove_comments_at_indexes(old_indexes)
-        self.segment.set_comments_at_indexes(old_comment_indexes, old_comments)
+        if old_style is not None:
+            self.segment.style[old_indexes] = old_style
+        if old_comment_info is not None:
+            old_comment_indexes, old_comments = old_comment_info
+            self.segment.remove_comments_at_indexes(old_indexes)
+            self.segment.set_comments_at_indexes(old_comment_indexes, old_comments)
 
 
 class SetRangeCommand(ChangeByteValuesCommand):
