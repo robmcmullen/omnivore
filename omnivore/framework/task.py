@@ -14,7 +14,6 @@ from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
 from traits.api import provides, on_trait_change, Property, Instance, Bool, Str, Unicode, Int, Event
 from apptools.preferences.api import PreferencesHelper
 
-from omnivore.dock_panes import FileBrowserPane
 from omnivore.framework.i_about import IAbout
 from omnivore.framework.actions import *
 from omnivore.framework.status_bar_manager import FrameworkStatusBarManager
@@ -121,10 +120,7 @@ class FrameworkTask(Task):
         return FrameworkStatusBarManager(message="Hi!", debug_width=self.status_bar_debug_width)
 
     def _default_layout_default(self):
-        return TaskLayout(
-            left=VSplitter(
-                PaneItem('omnivore.framework.file_browser_pane'),
-                ))
+        return TaskLayout()
 
     def _keyboard_shortcuts_default(self):
         actions = []
@@ -184,12 +180,9 @@ class FrameworkTask(Task):
         return self.editor_area
 
     def create_dock_panes(self):
-        """ Create the file browser and connect to its double click event.
+        """ Create any dock panes and connect to its double click event.
         """
-        browser = FileBrowserPane()
-        handler = lambda: self.window.application.load_file(browser.selected_file, self)
-        browser.on_trait_change(handler, 'activated')
-        return [ browser ]
+        return []
 
     def iter_panes(self):
         for pane in self.window.dock_panes:

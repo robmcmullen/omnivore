@@ -25,11 +25,7 @@ def pane_layout():
     """ Create the default task layout, which is overridded by the user's save
     state if it exists.
     """
-    return TaskLayout(
-#        left=VSplitter(
-#            PaneItem('omnivore.framework.file_browser_pane'),
-#        ),
-        )
+    return TaskLayout()
 
 
 def pane_create():
@@ -37,6 +33,4 @@ def pane_create():
     of visibility -- visibility is handled in the task activation method
     MaproomTask.activated)
     """
-    return [
-#        panes.FileBrowserPane(),
-        ]
+    return []
