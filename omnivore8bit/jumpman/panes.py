@@ -7,6 +7,7 @@ from omnivore8bit.hex_edit.grid_control import HexEditControl
 from omnivore8bit.hex_edit.panes import CommentsPanel
 from omnivore.utils.wx.springtabs import SpringTabs
 from omnivore8bit.ui.info_panels import InfoPanel
+from omnivore8bit.utils.jumpman import is_valid_level_segment
 
 from peanuts import TriggerList
 
@@ -66,8 +67,8 @@ class LevelDataPane(FrameworkPane):
 
 class LevelList(SegmentList):
     def show_segment_in_list(self, segment):
-        # simple level check; make sure it's 16 sectors long
-        return len(segment) == 0x800
+        # Only show jumpman levels in the list
+        return is_valid_level_segment(segment)
 
 
 class JumpmanSidebarPane(SidebarPane):

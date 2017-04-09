@@ -9,6 +9,18 @@ log = logging.getLogger(__name__)
 #log.setLevel(logging.DEBUG)
 
 
+def is_valid_level_segment(segment):
+    # 283f is always 4c (JMP) because it and the next two bytes are a jump target from the game loop
+    # 2848: always 20 (i.e. JSR)
+    # 284b: always 60 (i.e. RTS)
+    # 284c: always FF (target for harvest table if no action to be taken)
+    if len(segment) >= 0x800 and segment[0x3f] == 0x4c and segment[0x48] == 0x20 and segment[0x4b] == 0x60 and segment[0x4c] == 0xff:
+        # check for sane level definition table
+        index = segment[0x38]*256 + segment[0x37] - segment.start_addr
+        return index >=0 and index < len(segment)
+    return False
+
+
 def is_bad_harvest_position(x, y, hx, hy):
     hx = hx & 0x1f
     hy = (hy & 0x1f) / 2

@@ -13,7 +13,7 @@ from pyface.tasks.action.api import EditorAction
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, ChooseOnePlusCustomDialog
 from omnivore.utils.textutil import text_to_int
 from omnivore.framework.actions import SelectAllAction, SelectNoneAction, SelectInvertAction, TaskDynamicSubmenuGroup
-from omnivore8bit.utils.jumpman import DrawObjectBounds
+from omnivore8bit.utils.jumpman import DrawObjectBounds, is_valid_level_segment
 from omnivore8bit.hex_edit.actions import UseSegmentAction, UseSegmentRadioAction
 
 from commands import *
@@ -178,7 +178,7 @@ class LevelListGroup(TaskDynamicSubmenuGroup):
         items = []
         if event_data is not None:
             for i, segment in enumerate(event_data):
-                if len(segment) == 0x800:
+                if is_valid_level_segment(segment):
                     if sys.platform == "darwin":
                         action = UseSegmentAction(segment=segment, segment_number=i, task=self.task)
                     else:
