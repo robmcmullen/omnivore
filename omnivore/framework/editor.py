@@ -135,9 +135,7 @@ class FrameworkEditor(Editor):
             self.init_extra_metadata(source)
             self.view_document(source)
         else:
-            metadata = source.get_metadata()
-            bytes = source.get_utf8()
-            doc = self.task.window.application.document_class(metadata=metadata, bytes=bytes)
+            doc = self.task.window.application.guess_document(source)
             self.init_extra_metadata(doc)
             self.view_document(doc)
 
