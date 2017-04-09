@@ -33,12 +33,7 @@ class FakePopupWindow(wx.MiniFrame):
         self.Bind(wx.EVT_CHAR, self.on_char)
         self.Bind(wx.EVT_SET_FOCUS, self.on_focus)
 
-    def fix_sizer(self, child):
-        pass
-
-    def on_char(self, evt):
-        #print("on_char: keycode=%s" % evt.GetKeyCode())
-        self.GetParent().GetEventHandler().ProcessEvent(evt)
+    # Superclass overrides
 
     def Position(self, position, size):
         #print("pos=%s size=%s" % (position, size))
@@ -47,6 +42,23 @@ class FakePopupWindow(wx.MiniFrame):
     def SetPosition(self, position):
         #print("pos=%s" % (position))
         self.Move((position[0], position[1]))
+
+    # Compatibility methods for wx.PopupTransientWindow
+
+    def Popup(self):
+        self.Show(True)
+
+    def Dismiss(self):
+        self.Show(False)
+
+    # local methods
+
+    def fix_sizer(self, child):
+        pass
+
+    def on_char(self, evt):
+        #print("on_char: keycode=%s" % evt.GetKeyCode())
+        self.GetParent().GetEventHandler().ProcessEvent(evt)
 
     def activate_parent(self):
         """Activate the parent window
@@ -67,35 +79,38 @@ class FakePopupWindow(wx.MiniFrame):
         self.activate_parent()
         evt.Skip()
 
-    def Popup(self):
-        self.Show(True)
-
-    def Dismiss(self):
-        self.Show(False)
-
 
 class RealPopupWindowMac(wx.PopupTransientWindow):
-    def fix_sizer(self, child):
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(child, 1, wx.EXPAND)
-        self.SetSizer(sizer)
+    # Superclass overrides
 
     def OnDismiss(self):
         print "DISMISSED!!!!!"
         wx.CallAfter(self.GetParent().clear_popup)
 
+    # local methods
 
-class RealPopupWindow(wx.PopupWindow):
     def fix_sizer(self, child):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(child, 1, wx.EXPAND)
         self.SetSizer(sizer)
+
+
+class RealPopupWindow(wx.PopupWindow):
+    # Compatibility methods for wx.PopupTransientWindow
 
     def Popup(self):
         self.Show(True)
 
     def Dismiss(self):
         self.Show(False)
+
+    # local methods
+
+    def fix_sizer(self, child):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(child, 1, wx.EXPAND)
+        self.SetSizer(sizer)
+
 
 if sys.platform == "darwin":
     RealPopupWindow = RealPopupWindowMac
@@ -104,6 +119,8 @@ else:
 
 
 class SpringTabItemRenderer(object):
+    # local methods
+
     def __init__(self):
         self.spacing_between_items = 8
 
@@ -153,22 +170,6 @@ class SpringTabItemRenderer(object):
         dc.DrawText(s, x + w/2 - tw/2, y + h/2 - th/2)
 
 
-class SpringTabItemHorizontalRenderer(SpringTabItemRenderer):
-    default_direction = "down"
-
-    def __init__(self, popup_direction="default"):
-        SpringTabItemRenderer.__init__(self)
-        if popup_direction == "default":
-            popup_direction = self.default_direction
-
-        if popup_direction == "down":
-            self.popdown = True
-        elif popup_direction == "up":
-            self.popdown = False
-        else:
-            raise TypeError("popup_direction %s not valid for horizontal renderer" % popup_direction)
-
-
 class SpringTabItemVerticalRenderer(SpringTabItemRenderer):
     default_direction = "right"
 
@@ -184,7 +185,9 @@ class SpringTabItemVerticalRenderer(SpringTabItemRenderer):
         else:
             raise TypeError("popup_direction %s not valid for vertical renderer" % popup_direction)
 
-    def DoGetBestSize(self, item):
+    # local methods
+
+    def get_best_size(self, item):
         """
         Overridden base class virtual.  Determines the best size of the
         button based on the label and bezel size.
@@ -315,6 +318,8 @@ class SpringTabItem(GenToggleButton):
         self.notification_count = 0
         self.skip_next_lose_focus = False
 
+    # Superclass overrides
+
     def InitColours(self):
         faceClr = self.GetBackgroundColour()
         r, g, b = faceClr.Get()
@@ -328,24 +333,10 @@ class SpringTabItem(GenToggleButton):
         self.focusClr = wx.Colour(hr, hg, hb)
 
     def DoGetBestSize(self):
-        return self.GetParent().get_renderer().DoGetBestSize(self)
-
-    def draw_label(self, dc, width, height, dx=0, dy=0):
-        self.GetParent().get_renderer().draw_label(self, dc, width, height, dx, dy)
+        return self.GetParent().get_renderer().get_best_size(self)
 
     def OnPaint(self, evt):
         self.GetParent().get_renderer().on_paint(self, evt)
-
-    def set_toggle(self, flag, check_popup=True):
-        self.up = not flag
-        print "set_toggle! %s up=%s" % (self.GetLabel(), self.up)
-        if self.up:
-            # with PopupTransientWindow, need to force not hovering so it
-            # doesn't take a second click to process
-            self.hover = False
-        if check_popup:
-            self.GetParent().set_radio(self)
-        self.Refresh()
 
     def OnLeftDown(self, event):
         log.debug("clicked on %s" % self.GetLabel())
@@ -355,6 +346,21 @@ class SpringTabItem(GenToggleButton):
         self.up = not self.up
         self.GetParent().set_radio(self)
         self.SetFocus()
+        self.Refresh()
+
+    # local methods
+
+    def draw_label(self, dc, width, height, dx=0, dy=0):
+        self.GetParent().get_renderer().draw_label(self, dc, width, height, dx, dy)
+
+    def set_toggle(self, flag, check_popup=True):
+        self.up = not flag
+        if self.up:
+            # with PopupTransientWindow, need to force not hovering so it
+            # doesn't take a second click to process
+            self.hover = False
+        if check_popup:
+            self.GetParent().set_radio(self)
         self.Refresh()
 
     def on_enter(self, evt):
@@ -369,7 +375,7 @@ class SpringTabItem(GenToggleButton):
         parent = self.GetParent()
         if self.popup is None:
             self.popup = parent.get_new_popup()
-            self.popup.Bind(wx.EVT_ACTIVATE, self.OnActivate)
+            self.popup.Bind(wx.EVT_ACTIVATE, self.on_activate)
 
             # Create the window using the popup as the parent
             self.window_cb(self.popup, parent.task, **self.kwargs)
@@ -378,15 +384,11 @@ class SpringTabItem(GenToggleButton):
             if len(windowlist) == 0:
                 raise RuntimeError("Popup window creation failed!")
             child = windowlist[0]
-#            child.Bind(wx.EVT_SET_FOCUS, self.OnChildFocus)
             child.Bind(wx.EVT_KILL_FOCUS, self.on_lose_child_focus)
             if sys.platform != "darwin":
                 child.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
             if sys.platform == "linux2":
                 child.Bind(wx.EVT_RIGHT_DOWN, self.on_right_down)
-                child.Bind(wx.EVT_RIGHT_UP, self.on_right_up)
-            #child.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
-            #child.Bind(wx.EVT_CHAR, self.on_char)
             self.popup.fix_sizer(child)
         windowlist = self.popup.GetChildren()
         if len(windowlist) == 0:
@@ -394,31 +396,17 @@ class SpringTabItem(GenToggleButton):
         child = windowlist[0]
         return self.popup, child
 
-    def on_char(self, evt):
-        print("on_char: keycode=%s, popup=%s" % (evt.GetKeyCode(), evt.GetEventObject()))
-        popup = evt.GetEventObject()
-        print popup.GetChildren()
-        #popup.GetParent().GetEventHandler().ProcessEvent(evt)
-        evt.Skip()
-
-    def on_key_down(self, evt):
-        print("on_key_down: keycode=%s, popup=%s" % (evt.GetKeyCode(), evt.GetEventObject()))
-        popup = evt.GetEventObject()
-        print popup.GetChildren()
-        popup.GetParent().GetEventHandler().ProcessEvent(evt)
-        evt.Skip()
-
     def on_char_hook(self, evt):
         """ESC handler that closes the popup
 
         """
-        print("on_char_hook: keycode=%s, popup=%s" % (evt.GetKeyCode(), evt.GetEventObject()))
+        log.debug("on_char_hook: keycode=%s, popup=%s" % (evt.GetKeyCode(), evt.GetEventObject()))
         if evt.GetKeyCode() == wx.WXK_ESCAPE:
             wx.CallAfter(self.GetParent().cancel_popup)
         else:
             evt.Skip()
 
-    def OnActivate(self, evt):
+    def on_activate(self, evt):
         #log.debug("Activating %s: %s, shown=%s" % (self.GetLabel(), evt.GetActive(), self.popup.IsShown()))
         if self.popup.IsShown():
             evt.Skip()
@@ -434,16 +422,6 @@ class SpringTabItem(GenToggleButton):
         if popup.IsShown():
             #log.debug("setting focus to %s" % self.GetLabel())
             child.SetFocus()
-
-    # FIXME: This attempt, using OnChildFocus, setPopupsLoseFocusCallback, and
-    # OnChildLoseFocus, was to see if I could find out when the focus was set
-    # to something other than one of the popup windows.  I can not make this
-    # work at the moment, so I'm relying on a call to pubsub to do the work.
-    def OnChildFocus(self, evt):
-        popup = evt.GetEventObject()
-        log.debug("OnChildFocus: tab: %s, win=%s new=%s, top=%s" % (self.GetLabel(), popup, evt.GetWindow(), wx.GetApp().GetTopWindow()))
-#        if evt.GetWindow() is not None:
-#            wx.CallAfter(self.set_popup_lose_focus_callback)
 
     @property
     def is_shown(self):
@@ -473,19 +451,14 @@ class SpringTabItem(GenToggleButton):
         focus = evt.GetWindow()
         log.debug("on_lose_child_focus: tab: %s, win=%s new=%s, top=%s" % (self.GetLabel(), popup, focus, wx.GetApp().GetTopWindow()))
         if self.skip_next_lose_focus:
-            print "Skipping!"
+            log.debug("Skipping next on_lose_child_focus; hack for popup menu!")
             self.skip_next_lose_focus = False
         elif popup is not None:
             if sys.platform == "linux2" or popup != focus:
                 wx.CallAfter(self.set_popup_lose_focus_callback)
 
     def on_right_down(self, evt):
-        print "Got down!"
         self.skip_next_lose_focus = True
-        evt.Skip()
-
-    def on_right_up(self, evt):
-        print "Got up!"
         evt.Skip()
 
     def recalc_notification(self):
@@ -523,24 +496,21 @@ class SpringTabs(wx.Panel):
         if vertical:
             self._tab_renderer = SpringTabItemVerticalRenderer(popup_direction)
         else:
-            self._tab_renderer = SpringTabItemHorizontalRenderer(popup_direction)
+            raise RuntimeError("horizontal tab rendering not supported yet.")
         self._radio = None
-
         self._debug_paint = False
-
-        # Using a real wx.PopupWindow seems prevent the focus from being set to
-        # the window in the popup.
-        # if sys.platform == "darwin":
-        #     self._popup_cls = RealPopupWindow
-        # else:
-        #     self._popup_cls = FakePopupWindow
-        #     self._popup_cls = RealPopupWindow
         self._popup_cls = RealPopupWindow
 
         self.Bind(wx.EVT_PAINT, self.on_paint)
-        self.Bind(wx.EVT_SIZE, self.OnSize)
+        self.Bind(wx.EVT_SIZE, self.on_size)
 
         self.init_colors()
+
+    # local methods
+
+    def on_size(self, evt):
+        self.Refresh()
+        evt.Skip()
 
     def init_colors(self):
         self.notification_background = wx.Colour(240, 120, 120)
@@ -556,7 +526,7 @@ class SpringTabs(wx.Panel):
         self._processing_radio = True
         if self._radio != item:
             self.clear_popup()
-            self.popupItem(item)
+            self.popup_item(item)
         elif not item.GetToggle():
             self.clear_popup()
 
@@ -564,7 +534,7 @@ class SpringTabs(wx.Panel):
         popup = self._popup_cls(self)
         return popup
 
-    def popupItem(self, item):
+    def popup_item(self, item):
         self._radio = item
         #log.debug("Popping up %s" % item.GetLabel())
         self._tab_renderer.show_popup(self, item)
@@ -573,7 +543,6 @@ class SpringTabs(wx.Panel):
         # uncomment this to show where the clear_popup is being called
         #import traceback
         #log.debug("".join(traceback.format_stack()))
-        print "clear_popup", self._radio.GetLabel() if self._radio is not None else "None"
         if self._radio is not None:
             #log.debug("Removing popup %s" % self._radio.GetLabel())
             self._tab_renderer.show_popup(self, self._radio, False)
@@ -597,11 +566,6 @@ class SpringTabs(wx.Panel):
             dc.DrawLine(0, 0, size.x, size.y)
             dc.DrawLine(0, size.y, size.x, 0)
 
-        #self._tab_renderer.drawTabs(dc, size.x, self._tabs)
-        evt.Skip()
-
-    def OnSize(self, evt):
-        self.Refresh()
         evt.Skip()
 
     def add_tab(self, title, window_create_callback, window_available_callback=None, **kwargs):
