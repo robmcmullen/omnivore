@@ -52,7 +52,7 @@ class EnthoughtWxApp(wx.App):
                 log.debug("MacOpenFile: loading %s" % filename)
                 self.tasks_application.load_file(filename, None)
         else:
-            log.debug("MacOpenFile: skipping %s because it's a command line argument" % filename)
+            log.debug("MacOpenFile: skipping %s because it's a command line argument" % str(filenames))
 
     throw_out_next_wheel_rotation = False
 
