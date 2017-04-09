@@ -60,7 +60,7 @@ class SegmentedDocument(BaseDocument):
         if 'machine mime' not in extra:
             extra['machine mime'] = self.metadata.mime
         loaded_extra = self.load_filesystem_extra_metadata()
-        if 'serialized user segments' in loaded_extra and 'user_segments' in extra:
+        if 'serialized user segments' in loaded_extra and 'user segments' in extra:
             # Ignore the segments from the built-in data if serialized user
             # segments exist in the .omnivore file. Any built-in segments will
             # have already been saved in the .omnivore file, so this prevents
