@@ -20,8 +20,10 @@ from omnivore8bit.utils.searchutil import HexSearcher, CharSearcher
 from omnivore8bit.utils.drawutil import get_bounds
 from omnivore.utils.sortutil import invert_rects
 from omnivore8bit.hex_edit.commands import ChangeByteCommand, PasteCommand
+from omnivore8bit.hex_edit.actions import *
 from omnivore.framework.mouse_handler import MouseHandler
 
+from omnivore.framework.actions import *
 from commands import *
 
 
@@ -467,6 +469,9 @@ class BitmapEditor(HexEditor):
 
     def get_extra_segment_savers(self, segment):
         return []
+
+    def common_popup_actions(self):
+        return [CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction, SelectInvertAction, GetSegmentFromSelectionAction, None, RevertToBaselineAction]
 
     ###########################################################################
     # Trait handlers.

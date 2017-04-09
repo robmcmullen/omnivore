@@ -19,6 +19,7 @@ from omnivore8bit.hex_edit.task import HexEditTask
 from omnivore8bit.hex_edit.actions import *
 import pane_layout
 from omnivore.framework.toolbar import get_toolbar_group
+import omnivore8bit.arch.colors as colors
 
 
 class BitmapEditTask(HexEditTask):
@@ -51,7 +52,7 @@ class BitmapEditTask(HexEditTask):
         return pane_layout.pane_create()
 
     def _extra_actions_default(self):
-        segment_menu = self.create_menu("Menu", "Segment", "ActionGroup")
+        segment_menu = self.create_menu("Menu", "Segment", "ListGroup", "ActionGroup")
         actions = [
             # Menubar additions
             SchemaAddition(factory=lambda: segment_menu,
@@ -88,6 +89,38 @@ class BitmapEditTask(HexEditTask):
 
     def get_actions_Menu_View_ViewConfigGroup(self):
         return self.get_common_ViewConfigGroup()
+
+    def get_actions_Menu_View_ViewChangeGroup(self):
+        bitmap_renderer_actions = self.get_bitmap_renderer_actions()
+        return [
+            SMenu(
+                Group(
+                    ColorStandardAction(name="NTSC", color_standard=0),
+                    ColorStandardAction(name="PAL", color_standard=1),
+                    id="a0", separator=True),
+                Group(
+                    UseColorsAction(name="Powerup Colors", colors=colors.powerup_colors()),
+                    id="a1", separator=True),
+                Group(
+                    AnticColorAction(),
+                    id="a2", separator=True),
+                id='mm4', separator=True, name="Colors"),
+            SMenu(
+                Group(
+                    *bitmap_renderer_actions,
+                    id="a1", separator=True),
+                Group(
+                    BitmapWidthAction(),
+                    BitmapZoomAction(),
+                    id="a1", separator=True),
+                id='mm7', separator=False, name="Bitmap Display"),
+            ]
+
+    def get_actions_Menu_Segment_ActionGroup(self):
+        return [
+            GetSegmentFromSelectionAction(),
+            MultipleSegmentsFromSelectionAction(),
+            ]
 
     ###
     @classmethod
