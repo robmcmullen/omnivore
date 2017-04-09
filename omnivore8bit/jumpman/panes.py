@@ -84,5 +84,5 @@ class JumpmanSidebarPane(SidebarPane):
         control = LevelList(parent, task)
 
     def add_tabs(self, control):
-        control.addTab("Levels", self.levels_cb)
-        control.addTab("Undo History", self.undo_cb)
+        control.add_tab("Levels", self.levels_cb)
+        control.add_tab("Undo History", self.undo_cb)

@@ -180,7 +180,7 @@ class SegmentList(wx.ListBox):
         index = d.find_segment_index(segment)
         self.EnsureVisible(index)
 
-    def activateSpringTab(self):
+    def activate_spring_tab(self):
         self.recalc_view()
 
     def get_notification_count(self):

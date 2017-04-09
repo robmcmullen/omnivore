@@ -32,8 +32,8 @@ class MapSidebarPane(SidebarPane):
     dock_layer = 9
 
     def add_tabs(self, control):
-        control.addTab("Segments", self.segments_cb)
-        control.addTab("Undo History", self.undo_cb)
+        control.add_tab("Segments", self.segments_cb)
+        control.add_tab("Undo History", self.undo_cb)
 
 
 class TileMapPane(FrameworkPane):

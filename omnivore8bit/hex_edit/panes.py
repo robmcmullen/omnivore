@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 
 class MemoryMapSpringTab(MemoryMapScroller):
-    def activateSpringTab(self):
+    def activate_spring_tab(self):
         self.recalc_view()
 
 CommentItem = namedtuple('CommentItem', ('segment', 'index', 'label', 'font', 'type'))
@@ -212,7 +212,7 @@ class CommentsPanel(wx.VListBox):
             else:
                 self.Refresh()
 
-    def activateSpringTab(self):
+    def activate_spring_tab(self):
         self.recalc_view()
 
     def get_notification_count(self):
@@ -248,10 +248,10 @@ class SidebarPane(FrameworkPane):
         return control
 
     def add_tabs(self, control):
-        control.addTab("Segments", self.segments_cb)
-        control.addTab("Comments", self.comments_cb)
-        control.addTab("Page Map", self.MemoryMapCB)
-        control.addTab("Undo History", self.undo_cb)
+        control.add_tab("Segments", self.segments_cb)
+        control.add_tab("Comments", self.comments_cb)
+        control.add_tab("Page Map", self.MemoryMapCB)
+        control.add_tab("Undo History", self.undo_cb)
 
     def refresh_active(self):
         active = self.control._radio
