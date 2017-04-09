@@ -143,11 +143,20 @@ class FrameworkEditor(Editor):
         """ Hook to load any extra metadata for the given document
         """
         e = doc.get_metadata_for(self.task)
-        self.process_extra_metadata(doc, e)
+        self.from_metadata_dict(e)
         self.metadata_dirty = False
 
-    def process_extra_metadata(self, doc, e):
-        """ Set up any additional metadata from the dict argument
+    def get_extra_metadata_header(self):
+        return "# omnivore %s extra_metadata=v1\n" % __version__
+
+    def from_metadata_dict(self, e):
+        """ Set up additional object attributes from the dict argument
+        """
+        pass
+
+    def to_metadata_dict(self, metadata_dict, document):
+        """ Store any persistent object attributes in a dictionary that
+        will be serialized and later loaded in from_metadata_dict
         """
         pass
 
@@ -191,7 +200,6 @@ class FrameworkEditor(Editor):
         """ Recreate any editor attributes for the new document
         """
         self.baseline_present = self.document.has_baseline
-        self.diff_highlight = self.diff_highlight and self.baseline_present
 
     def init_view_properties(self):
         """ Set up editor properties when loading a new file
@@ -276,12 +284,6 @@ class FrameworkEditor(Editor):
         """
         data = document.bytes.tostring()
         return data
-
-    def get_extra_metadata_header(self):
-        return "# omnivore %s extra_metadata=v1\n" % __version__
-
-    def get_extra_metadata(self, metadata_dict, document):
-        pass
 
     @property
     def metadata_dirty(self):

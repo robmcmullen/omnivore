@@ -128,10 +128,7 @@ class HexEditor(FrameworkEditor):
         self.machine.one_time_init(self)
         self.task.machine_menu_changed = self.machine
 
-    def process_extra_metadata(self, doc, e):
-        """ Set up any pre-calculated segments based on the type or content of
-        the just-loaded document.
-        """
+    def from_metadata_dict(self, e):
         if 'machine mime' in e:
             mime = e['machine mime']
             if not mime.startswith(self.machine.mime_prefix):
@@ -143,10 +140,8 @@ class HexEditor(FrameworkEditor):
             self.machine.set_font(e['font'][0], e['font'][1])
         if 'initial segment' in e:
             self.initial_segment = e['initial segment']
-        if not doc.has_baseline:
-            self.use_self_as_baseline(doc)
         if 'diff highlight' in e:
-            self.diff_highlight = doc.has_baseline and bool(e['diff highlight'])
+            self.diff_highlight = bool(e['diff highlight'])
         if 'map width' in e:
             self.map_width = e['map width']
         if 'map zoom' in e:
@@ -159,8 +154,7 @@ class HexEditor(FrameworkEditor):
             self.segment_view_params = e['segment view params']
         self.machine.restore_extra_from_dict(e)
 
-    def get_extra_metadata(self, mdict, document):
-        document.serialize_extra_to_dict(mdict)
+    def to_metadata_dict(self, mdict, document):
         mdict["diff highlight"] = self.diff_highlight
         mdict["map width"] = self.map_width
         mdict["map zoom"] = self.map_zoom
@@ -173,6 +167,8 @@ class HexEditor(FrameworkEditor):
         self.machine.serialize_extra_to_dict(mdict)
 
     def rebuild_document_properties(self):
+        if not self.document.has_baseline:
+            self.use_self_as_baseline(self.document)
         FrameworkEditor.rebuild_document_properties(self)
         self.find_segment()
         self.update_emulator()
@@ -561,7 +557,7 @@ class HexEditor(FrameworkEditor):
         self.task.change_minibuffer_editor(self)
 
     def compare_to_baseline(self):
-        if self.diff_highlight:
+        if self.diff_highlight and self.document.has_baseline:
             self.document.update_baseline()
 
     def adjust_selection(self, old_segment):

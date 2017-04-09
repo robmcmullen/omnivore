@@ -42,9 +42,9 @@ def Getaway(doc):
             'font': (font_segment.antic_font, "Antic 5"),
             'user segments': [font_segment, segment],
             'initial segment': segment,
+            'last_task_id': map_edit_task_id,
             }
         extra_metadata.update(getaway_defaults)
-        doc.last_task_id = map_edit_task_id
         return extra_metadata
 
     state = doc.bytes[0x10:0x19] == [0x00, 0xc1, 0x80, 0x0f, 0xcc, 0x22, 0x18, 0x60, 0x0e]
@@ -60,9 +60,9 @@ def Getaway(doc):
             'font': (font_segment.antic_font, "Antic 5"),
             'user segments': [font_segment, segment],
             'initial segment': segment,
+            'last_task_id': map_edit_task_id,
             }
         extra_metadata.update(getaway_defaults)
-        doc.last_task_id = map_edit_task_id
         return extra_metadata
 
 
@@ -88,8 +88,8 @@ def JumpmanLevelBuilder(doc):
         extra_metadata = {
             'user segments': user_segments,
             'initial segment': user_segments[0],
+            'last_task_id': jumpman_task_id,
             }
-        doc.last_task_id = jumpman_task_id
         return extra_metadata
 
 
@@ -155,14 +155,15 @@ def JumpmanFullAtr(doc):
         extra_metadata = {
             'user segments': user_segments,
             'initial segment': user_segments[0],
+            'last_task_id': jumpman_task_id,
             }
-        doc.last_task_id = jumpman_task_id
         return extra_metadata
 
 
 def check_builtin(doc):
     if len(doc.bytes) > 0:
         for match in [Getaway, JumpmanLevelBuilder, JumpmanFullAtr]:
+            log.debug("Checking for builtin metadata: %s" % (match.__name__))
             e = match(doc)
             if e is not None:
                 return e

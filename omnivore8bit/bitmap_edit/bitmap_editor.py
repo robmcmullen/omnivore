@@ -379,10 +379,6 @@ class BitmapEditor(HexEditor):
     # 'FrameworkEditor' interface.
     ###########################################################################
 
-    def process_extra_metadata(self, doc, e):
-        HexEditor.process_extra_metadata(self, doc, e)
-        pass
-
     @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self):
         self.bitmap.recalc_view()

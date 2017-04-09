@@ -186,6 +186,9 @@ class BaseDocument(HasTraits):
         except ValueError, e:
             log.error("JSON parsing error for extra metadata in %s: %s" % (uri, str(e)))
             unserialized = {}
+        except AttributeError, e:
+            log.error("JSON library error: %s: %s" % (uri, str(e)))
+            unserialized = {}
         return unserialized
 
     def get_filesystem_extra_metadata_uri(self):
@@ -197,12 +200,41 @@ class BaseDocument(HasTraits):
         """Return extra metadata for the particular task
 
         """
-        # FIXME: each task should have its own section in the metadata so they
-        # can save stuff without fear of stomping on another task's data. Also,
-        # when saving, they can overwrite their task stuff without changing an
-        # other task's info so that other task's stuff can be re-saved even if
-        # that task wasn't used in this editing session.
-        return self.extra_metadata.get(task.editor_id, self.extra_metadata)
+        # Each task has its own section in the metadata so they can save stuff
+        # without fear of stomping on another task's data. Also, when saving,
+        # they can overwrite their task stuff without changing an other task's
+        # info so that other task's stuff can be re-saved even if that task
+        # wasn't used in this editing session.
+        try:
+            return self.extra_metadata["task_specific"][task.editor_id]
+        except KeyError:
+            log.info("%s not in task specific metadata; falling back to old metadata storage" % task.editor_id)
+
+        # For compatibility with pre-1.0 versions of Omnivore which stored
+        # metadata for all tasks in the root directory
+        return self.extra_metadata
+
+    def init_extra_metadata_dict(self):
+        """ Creates new metadata dictionary for metadata to be serialized
+
+        The returned dict includes all the current document properties and all
+        the task specific metadata in the originally loaded document.
+
+        The task specific metadata will be replaced by values in the current
+        task.
+        """
+        mdict = {"task_specific": {}}
+        if "task_specific" in self.extra_metadata:
+            mdict["task_specific"].update(self.extra_metadata["task_specific"])
+        self.serialize_extra_to_dict(mdict)
+        return mdict
+
+    def store_task_specific_metadata(self, editor, mdict, task_dict):
+        # FIXME: should handle all tasks that have changed in this edit
+        # session, not just the one that is being saved.
+        task_name = editor.task.editor_id
+        mdict["task_specific"][task_name] = task_dict
+        mdict["last_task_id"] = task_name
 
     def serialize_extra_to_dict(self, mdict):
         """Save extra metadata to a dict so that it can be serialized
@@ -220,6 +252,8 @@ class BaseDocument(HasTraits):
                 self.load_baseline(e['baseline document'])
             except DocumentError:
                 pass
+        if 'last_task_id' in e:
+            self.last_task_id = e['last_task_id']
 
     def load_baseline(self, uri, confirm_callback=None):
         if confirm_callback is None:
@@ -268,13 +302,15 @@ class BaseDocument(HasTraits):
         fh.close()
 
         if save_metadata:
-            metadata_dict = dict()
-            editor.get_extra_metadata(metadata_dict, self)
-            if metadata_dict:
+            mdict = self.init_extra_metadata_dict()
+            task_metadata = dict()
+            editor.to_metadata_dict(task_metadata, self)
+            self.store_task_specific_metadata(editor, mdict, task_metadata)
+            if mdict:
                 relpath += ".omnivore"
                 log.debug("saving extra metadata to %s" % relpath)
                 jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
-                bytes = jsonpickle.dumps(metadata_dict)
+                bytes = jsonpickle.dumps(mdict)
                 text = jsonutil.collapse_json(bytes)
                 header = editor.get_extra_metadata_header()
                 fh = fs.open(relpath, 'wb')

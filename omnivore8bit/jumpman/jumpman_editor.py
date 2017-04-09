@@ -329,7 +329,7 @@ class JumpmanEditor(BitmapEditor):
         self.update_mouse_mode(AnticDSelectMode)
         self.refresh_toolbar_state()
 
-    def process_extra_metadata(self, doc, e):
+    def from_metadata_dict(self, e):
         # ignore bitmap renderer in restore because we always want to use the
         # JumpmanPlayfieldRenderer in Jumpman level edit mode
         if 'bitmap_renderer' in e:
@@ -338,12 +338,12 @@ class JumpmanEditor(BitmapEditor):
             self.assembly_source = e['assembly_source']
         if 'old_trigger_mapping' in e:
             self.old_trigger_mapping = e['old_trigger_mapping']
-        BitmapEditor.process_extra_metadata(self, doc, e)
+        BitmapEditor.from_metadata_dict(self, e)
 
-    def get_extra_metadata(self, mdict, document):
+    def to_metadata_dict(self, mdict, document):
         mdict["assembly_source"] = self.assembly_source
         mdict["old_trigger_mapping"] = dict(self.old_trigger_mapping)  # so we don't try to pickle a TraitDictObject
-        BitmapEditor.get_extra_metadata(self, mdict, document)
+        BitmapEditor.to_metadata_dict(self, mdict, document)
 
     @on_trait_change('machine.bitmap_shape_change_event')
     def update_bitmap_shape(self):

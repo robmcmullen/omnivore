@@ -364,14 +364,25 @@ class MapEditor(HexEditor):
     # 'FrameworkEditor' interface.
     ###########################################################################
 
-    def process_extra_metadata(self, doc, e):
+    def from_metadata_dict(self, e):
         """ Set up any pre-calculated segments based on the type or content of
         the just-loaded document.
         """
-        HexEditor.process_extra_metadata(self, doc, e)
+        HexEditor.from_metadata_dict(self, e)
         if 'tile map' in e:
             self.antic_tile_map = e['tile map']
-        self.machine.set_font_mapping(predefined['font_mapping'][1])
+        # Force ANTIC font mapping if not present
+        if 'font_mapping' not in e:
+            self.machine.set_font_mapping(predefined['font_mapping'][1])
+
+    def to_metadata_dict(self, mdict, document):
+        mdict["map width"] = self.map_width
+        mdict["map zoom"] = self.map_zoom
+        if document == self.document:
+            # If we're saving the document currently displayed, save the
+            # display parameters too.
+            mdict["segment view params"] = dict(self.segment_view_params)  # shallow copy, but only need to get rid of Traits dict wrapper
+        self.machine.serialize_extra_to_dict(mdict)
 
     @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self):
