@@ -74,6 +74,7 @@ class BaseDisassembler(object):
         }
 
     cached_miniassemblers = {}
+    label_format = "L%04X"  # Labels always upper case to match udis
 
     def __init__(self, asm_syntax=None, memory_map=None, hex_lower=True, mnemonic_lower=False):
         if asm_syntax is None:
@@ -120,7 +121,8 @@ class BaseDisassembler(object):
             all_pcs = np.where(self.info.labels > 0)[0]
             inside = np.where((self.start_addr <= all_pcs) & (all_pcs < self.end_addr))[0]
             pcs = all_pcs[inside]
-            d = {pc:"L%04x" % pc for pc in pcs}
+            fmt = self.label_format
+            d = {pc:fmt % pc for pc in pcs}
         return d
 
     def assemble_text(self, pc, cmd):
@@ -187,10 +189,10 @@ class BaseDisassembler(object):
                     # offset in bytes from the nearest previous label
                     nearest_label = self.memory_map.get_name(good_opcode_target_pc)
                     if not nearest_label:
-                        nearest_label = "L%04X" % good_opcode_target_pc
+                        nearest_label = self.label_format % good_opcode_target_pc
                     label = "%s+%d" % (nearest_label, diff)
                 else:
-                    label = "L%04X" % (target_pc)
+                    label = self.label_format % (target_pc)
             if label:
                 operand = operand[0:dollar] + label + operand[dollar+1+size:]
             return operand, target_pc, label
@@ -222,7 +224,7 @@ class BaseDisassembler(object):
         text = self.memory_map.get_name(pc)
         if not text:
             if self.info.labels[pc]:
-                text = "L" + (self.fmt_hex4 % pc)
+                text = self.label_format % pc
             else:
                 text = "     "
         return text

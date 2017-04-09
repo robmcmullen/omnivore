@@ -20,7 +20,6 @@ log = logging.getLogger(__name__)
 class DisassemblyTable(ByteGridTable):
     column_labels = ["Bytes", "Disassembly", "Comment"]
     column_sizes = [11, 18, 30]
-    label_format = "L%04x"
 
     @classmethod
     def update_preferences(cls, prefs):
@@ -29,10 +28,8 @@ class DisassemblyTable(ByteGridTable):
         # this DisassemblyTable
         if prefs.hex_grid_lower_case:
             cls.get_value_style = cls.get_value_style_lower
-            cls.label_format = "L%04x"
         else:
             cls.get_value_style = cls.get_value_style_upper
-            cls.label_format = "L%04X"
         for i, w in enumerate(prefs.disassembly_column_widths):
             if w > 0:
                 cls.column_pixel_sizes[i] = w
