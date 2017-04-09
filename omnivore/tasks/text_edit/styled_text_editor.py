@@ -21,7 +21,7 @@ import wx.stc
 
 # Enthought library imports.
 from traits.api import Bool, Event, Instance, File, Unicode, Property, provides
-from pyface.util.python_stc import PythonSTC, faces
+from pyface.wx.python_stc import PythonSTC, faces
 
 # Local imports.
 from omnivore.framework.editor import FrameworkEditor
