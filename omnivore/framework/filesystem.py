@@ -102,7 +102,7 @@ class WxAboutFileSystemHandler(wx.FileSystemHandler):
             try:
                 fh = opener.open(location, "rb")
             except FSError, e:
-                print str(e)
+                log.error(str(e))
                 return None
             log.debug("Created %s in wxMemoryFS" % path)
             wx.MemoryFSHandler.AddFile(path, fh.read())
