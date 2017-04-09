@@ -31,7 +31,7 @@ class FileRecognizerDriver(HasTraits):
             mime = recognizer.identify(guess)
             if mime is not None:
                 guess.metadata.mime = mime
-                log.info("found %s for %s" % (mime, guess.metadata.uri))
+                log.debug("found %s for %s" % (mime, guess.metadata.uri))
                 try:
                     document = recognizer.load(guess)
                 except AttributeError:
@@ -40,7 +40,7 @@ class FileRecognizerDriver(HasTraits):
 
         if mime is None:
             guess.metadata.mime = "application/octet-stream"
-            log.info("Not recognized; default is %s" % guess.metadata.mime)
+            log.debug("Not recognized; default is %s" % guess.metadata.mime)
         if document is None:
             document = self.application.document_class(metadata=guess.metadata, bytes=guess.numpy)
         return document

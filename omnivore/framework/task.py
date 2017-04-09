@@ -401,7 +401,7 @@ class FrameworkTask(Task):
             method = getattr(self, method_name)
             actions = method()
         except AttributeError:
-            log.info("%s actions not found for %s/%s in %s" % (location, menu_name, group_name, self.id))
+            log.debug("%s actions not found for %s/%s in %s" % (location, menu_name, group_name, self.id))
             actions = []
         return actions
 

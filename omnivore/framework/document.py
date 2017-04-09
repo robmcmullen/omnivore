@@ -177,6 +177,7 @@ class BaseDocument(HasTraits):
         except fs.errors.FSError, e:
             log.error("File load error: %s" % str(e))
             return {}
+        log.info("Loading metadata file: %s" % uri)
         try:
             b = guess.bytes
             if b.startswith("#"):
