@@ -321,8 +321,8 @@ class FrameworkEditor(Editor):
     def set_clipboard_object(self, data_obj):
         if wx.TheClipboard.Open():
             wx.TheClipboard.SetData(data_obj)
-            wx.TheClipboard.Close()
             self.show_data_object_stats(data_obj)
+            wx.TheClipboard.Close()
             return True
         else:
             self.window.error("Unable to open clipboard", "Clipboard Error")
