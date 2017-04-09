@@ -62,7 +62,7 @@ class UndoHistoryPanel(wx.Panel):
         if index > 0:
             self.history.SetSelection(index - 1)
 
-    def activateSpringTab(self):
+    def activate_spring_tab(self):
         self.recalc_view()
 
     def get_notification_count(self):
