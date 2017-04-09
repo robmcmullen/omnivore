@@ -335,6 +335,9 @@ class FrameworkApplication(TasksApplication):
         # Attempt to classify the guess using the file recognizer service
         document = self.guess_document(guess)
         log.debug("using %s for %s" % (document.__class__.__name__, guess.metadata.uri))
+        if document.load_error:
+            if self.active_window:
+                self.active_window.warning(document.load_error, "Document Load Error")
 
         # Short circuit: if the file can be edited by the active task, use that!
         if active_task is not None and active_task.can_edit(document):

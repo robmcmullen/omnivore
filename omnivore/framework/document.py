@@ -76,6 +76,8 @@ class BaseDocument(HasTraits):
 
     permute = Any
 
+    load_error = Str(transient=True)
+
     #### trait default values
 
     def _metadata_default(self):
@@ -189,6 +191,7 @@ class BaseDocument(HasTraits):
         except AttributeError, e:
             log.error("JSON library error: %s: %s" % (uri, str(e)))
             unserialized = {}
+            raise DocumentError("JSON library error: % s" % str(e))
         return unserialized
 
     def get_filesystem_extra_metadata_uri(self):
