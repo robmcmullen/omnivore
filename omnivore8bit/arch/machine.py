@@ -272,7 +272,16 @@ class Machine(HasTraits):
                 # keys into strings
                 value = getattr(self, name)
                 state[name] = value.items()
-
+            elif name == "antic_font_data":
+                # jsonpickle can't handle numpy, so if we have a numpy array
+                # convert it to the plain bytes type. Really, antic_font_data
+                # should do this itself
+                value = getattr(self, name)
+                if "np_data" in value:
+                    plain = value.copy()  # shallow copy is all we need
+                    plain["data"] = plain["np_data"].tostring()
+                    del plain["np_data"]
+                    state[name] = plain
         return state
 
     def state_to_traits(self, state):
