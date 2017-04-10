@@ -24,6 +24,8 @@ class UndoHistoryPanel(wx.Panel):
         self.sizer.Layout()
         self.Fit()
 
+        self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
+
     def DoGetBestSize(self):
         """ Base class virtual method for sizer use to get the best size
         """
@@ -67,3 +69,7 @@ class UndoHistoryPanel(wx.Panel):
 
     def get_notification_count(self):
         return 0
+
+    def on_key_down(self, evt):
+        key = evt.GetKeyCode()
+        log.debug("evt=%s, key=%s" % (evt, key))
