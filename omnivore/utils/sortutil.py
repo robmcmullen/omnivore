@@ -101,6 +101,15 @@ def ranges_to_indexes(ranges):
     return np.hstack((np.arange(r[0], r[1], dtype=np.uint32) for r in ranges))
 
 
+def indexes_to_ranges(indexes):
+    groups = np.split(indexes, np.where(np.diff(indexes) != 1)[0] + 1)
+    ranges = []
+    for group in groups:
+        if np.alen(group) > 0:
+            ranges.append((int(group[0]), int(group[-1]) + 1))
+    return ranges
+
+
 def invert_ranges(ranges, last):
     """ Invert the list of (possibly overlapping) selected ranges into a
     monotonically increasing set of non-overlapping ranges that represents the
