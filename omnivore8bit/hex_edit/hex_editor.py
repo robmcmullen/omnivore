@@ -652,7 +652,7 @@ class HexEditor(FrameworkEditor):
     def show_status_message(self, msg):
         s = self.get_selected_status_message()
         if s:
-            msg = "%s %s" % (s, msg)
+            msg = "%s %s" % (msg, s)
         self.task.status_bar.message = msg
 
     def add_user_segment(self, segment, update=True):

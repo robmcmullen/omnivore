@@ -8,7 +8,7 @@ from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
 from udis.udis_fast import TraceInfo, flag_origin
 
 from omnivore8bit.ui.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
-from omnivore8bit.arch.disasm import ANTIC_DISASM, JUMPMAN_LEVEL, JUMPMAN_HARVEST, UNINITIALIZED_DATA
+from omnivore8bit.arch.disasm import iter_disasm_styles
 
 from actions import GotoIndexAction
 from commands import MiniAssemblerCommand, SetCommentCommand
@@ -51,11 +51,8 @@ class DisassemblyTable(ByteGridTable):
         self.lines = None
         self.index_to_row = []
         self.disassembler = editor.machine.get_disassembler(editor.task.hex_grid_lower_case, editor.task.assembly_lower_case, self.editor.document.document_memory_map, self.segment.memory_map)
-        self.disassembler.add_chunk_processor("data", 1)
-        self.disassembler.add_chunk_processor("antic_dl", ANTIC_DISASM)
-        self.disassembler.add_chunk_processor("jumpman_level", JUMPMAN_LEVEL)
-        self.disassembler.add_chunk_processor("jumpman_harvest", JUMPMAN_HARVEST)
-        self.disassembler.add_chunk_processor("uninitialized data", UNINITIALIZED_DATA)
+        for i, name in iter_disasm_styles():
+            self.disassembler.add_chunk_processor(name, i)
         self.highlight_flags = self.disassembler.highlight_flags
         self.hex_lower = editor.task.hex_grid_lower_case
         if self.hex_lower:
@@ -340,11 +337,6 @@ class DisassemblyPanel(ByteGrid):
         text = os.linesep.join(lines) + os.linesep
         data = text.encode("utf-8")
         return data
-
-    def get_status_message_at_index(self, index, row, col):
-        msg = ByteGrid.get_status_message_at_index(self, index, row, col)
-        comments = self.table.disassembler.format_comment(index)
-        return "%s  %s" % (msg, comments)
 
     def clamp_column(self, col_from_index, col_from_user):
         if col_from_user <= 1:

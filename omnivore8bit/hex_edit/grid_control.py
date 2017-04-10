@@ -231,11 +231,6 @@ class HexEditControl(ByteGrid):
     def get_grid_cell_renderer(self, table, editor):
         return CachingHexRenderer(table, editor, self.image_cache)
 
-    def get_status_message_at_index(self, index, row, col):
-        msg = ByteGrid.get_status_message_at_index(self, index, row, col)
-        comments = self.table.segment.get_comment(index)
-        return "%s  %s" % (msg, comments)
-
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.
         

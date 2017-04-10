@@ -15,6 +15,28 @@ JUMPMAN_LEVEL = 3
 JUMPMAN_HARVEST = 4
 UNINITIALIZED_DATA = 5
 
+style_names = {
+    0: "code",
+    1: "data",
+    ANTIC_DISASM: "antic_dl",
+    JUMPMAN_LEVEL: "jumpman_level",
+    JUMPMAN_HARVEST: "jumpman_harvest",
+    UNINITIALIZED_DATA: "uninitialized data",
+}
+
+def get_style_name(segment, index):
+    if segment.is_valid_index(index):
+        s = segment.style[index] & user_bit_mask
+        msg = style_names.get(s, "")
+    else:
+        msg = ""
+    return msg
+
+def iter_disasm_styles():
+    for i, name in style_names.iteritems():
+        if i == 0:
+            continue
+        yield i, name
 
 def fast_get_entire_style_ranges(segment, split_comments=[data_style], **kwargs):
     style_copy = segment.get_comment_locations(**kwargs)

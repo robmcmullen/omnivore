@@ -26,6 +26,7 @@ from pyface.tasks.action.api import EditorAction
 from atrcopy import SegmentData, DefaultSegment, get_style_mask
 
 from omnivore8bit.hex_edit.actions import *
+from omnivore8bit.arch.disasm import get_style_name
 
 from selection_mixin import SelectionMixin
 
@@ -441,8 +442,9 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         return label
 
     def get_status_message_at_index(self, index, bit):
+        msg = get_style_name(self.segment, index)
         comments = self.segment.get_comment(index)
-        return "bit=%d  %s" % (bit, comments)
+        return "bit=%d %s  %s" % (bit, msg, comments)
 
     def on_paint(self, evt):
         self.dbg_call_seq += 1
@@ -816,7 +818,9 @@ class FontMapScroller(BitviewScroller):
         return actions
 
     def get_status_message_at_index(self, index, bit):
-        return self.segment.get_comment(index)
+        msg = get_style_name(self.segment, index)
+        comments = self.segment.get_comment(index)
+        return "%s  %s" % (msg, comments)
 
     def set_status_message(self):
         e = self.editor

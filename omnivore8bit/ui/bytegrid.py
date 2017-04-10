@@ -6,6 +6,7 @@ import wx.grid as Grid
 from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
 
 from selection_mixin import SelectionMixin
+from omnivore8bit.arch.disasm import get_style_name
 
 
 import logging
@@ -802,7 +803,9 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             self.editor.show_status_message("%s: %s %s" % (self.short_name, label, message))
 
     def get_status_message_at_index(self, index, row, col):
-        return "r=%d,c=%d" % (row, col)
+        msg = get_style_name(self.table.segment, index)
+        comments = self.table.segment.get_comment(index)
+        return "%s  %s" % (msg, comments)
 
     def on_key_down(self, evt):
         e = self.editor
