@@ -4,6 +4,12 @@
 import sys
 import logging
 
+# Monkey patch logging to support extra stuff. This has to be before any
+# getLogger calls that you want in the logging list.
+
+import omnivore.utils.wx.error_logger
+
+
 # A list of the directories that contain the application's eggs (any directory
 # not specified as an absolute path is treated as being relative to the current
 # working directory).

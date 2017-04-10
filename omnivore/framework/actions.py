@@ -13,9 +13,20 @@ from traits.api import on_trait_change, Property, Instance, Bool, Str, Unicode, 
 from omnivore.framework.about import AboutDialog
 from omnivore.utils.file_guess import FileGuess
 from omnivore.utils.wx.dialogs import get_file_dialog_wildcard
+from omnivore.utils.wx.error_logger import show_logging_frame
 
 import logging
 log = logging.getLogger(__name__)
+
+
+class ShowLoggerAction(Action):
+    """ An action for creating a new empty file that can be edited by a particular task
+    """
+    name = "Show Debug Log"
+    tooltip = "Open a window to view and manage debug logging"
+
+    def perform(self, event=None):
+        show_logging_frame()
 
 
 class NewFileAction(Action):

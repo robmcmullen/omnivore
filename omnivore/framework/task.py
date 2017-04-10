@@ -14,6 +14,7 @@ from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
 from traits.api import provides, on_trait_change, Property, Instance, Bool, Str, Unicode, Int, Event
 from apptools.preferences.api import PreferencesHelper
 
+from omnivore.utils.wx.error_logger import show_logging_frame
 from omnivore.framework.i_about import IAbout
 from omnivore.framework.actions import *
 from omnivore.framework.status_bar_manager import FrameworkStatusBarManager
@@ -505,11 +506,9 @@ class FrameworkTask(Task):
 
     def get_actions_Menu_Help_DebugGroup(self):
         return [
-            SMenu(TaskAction(name='Dynamic Menu Names', method='debug',
-                             tooltip='Do some debug stuff',
-                             image=ImageResource('debug')),
-                  WidgetInspectorAction(),
-                  id="Debug", name="Debug"),
+            ShowLoggerAction(),
+            SMenu(WidgetInspectorAction(),
+                  id="Debug", name="More Debugging"),
             ]
 
     def get_actions_Tool_File_NewGroup(self):
