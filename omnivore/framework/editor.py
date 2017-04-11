@@ -529,8 +529,7 @@ class FrameworkEditor(Editor):
         elif index > max_index:
             index = max_index
         self.cursor_index = index
-        self.anchor_start_index = self.anchor_initial_start_index = index
-        self.anchor_end_index = self.anchor_initial_end_index = index
+        self.select_none(False)
         if refresh:
             self.refresh_panes()
 
