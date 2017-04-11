@@ -1,12 +1,13 @@
 import numpy as np
 
 from omnivore.utils.command import Command, UndoInfo
-from omnivore.utils.sortutil import ranges_to_indexes
+from omnivore.utils.sortutil import ranges_to_indexes, indexes_to_ranges
 from omnivore8bit.utils.searchalgorithm import AlgorithmSearcher
 from omnivore.utils.file_guess import FileGuess
 from omnivore.utils.permute import bit_reverse_table
 
 import logging
+log = logging.getLogger(__name__)
 progress_log = logging.getLogger("progress")
 
 
@@ -105,6 +106,7 @@ class SetValuesAtIndexesCommand(ChangeByteValuesCommand):
         self.data = bytes
         self.indexes = indexes
         self.style = style
+        log.debug("cursor: %x, data=%s, style=%s" % (cursor, bytes, style))
         self.relative_comment_indexes = comment_indexes
         self.comments = comments
 
@@ -116,7 +118,9 @@ class SetValuesAtIndexesCommand(ChangeByteValuesCommand):
         return self.data[0:data_len]
 
     def do_change(self, editor, undo):
+        log.debug("ranges: %s" % str(self.ranges))
         indexes = ranges_to_indexes(self.ranges)
+        log.debug("indexes: %s" % str(indexes))
         if np.alen(indexes) == 0:
             if self.indexes is not None:
                 indexes = self.indexes.copy() - self.indexes[0] + self.cursor
@@ -124,11 +128,21 @@ class SetValuesAtIndexesCommand(ChangeByteValuesCommand):
                 indexes = np.arange(self.cursor, self.cursor + np.alen(self.data))
         max_index = len(self.segment)
         indexes = indexes[indexes < max_index]
+        log.debug("indexes after limits: %s" % str(indexes))
         data = self.get_data(self.segment.data[indexes])
+        log.debug("orig data: %s" % self.segment.data[indexes])
+        log.debug("new data: %s" % data)
         indexes = indexes[0:np.alen(data)]
+        log.debug("indexes truncated to data length: %s" % str(indexes))
         if self.relative_comment_indexes is not None:
-            comment_indexes = indexes[self.relative_comment_indexes[self.relative_comment_indexes < np.alen(indexes)]]
-            old_comment_info = self.segment.get_comment_restore_data(self.ranges)
+            log.debug("relative comment indexes: %s" % (str(self.relative_comment_indexes)))
+            subset = self.relative_comment_indexes[self.relative_comment_indexes < np.alen(indexes)]
+            log.debug("comment index subset: %s" % str(subset))
+            comment_indexes = indexes[subset]
+            log.debug("new comment indexes: %s" % str(comment_indexes))
+            clamped_ranges = indexes_to_ranges(indexes)
+            log.debug("clamped ranges: %s" % str(clamped_ranges))
+            old_comment_info = self.segment.get_comment_restore_data(clamped_ranges)
         else:
             old_comment_info = None
         undo.flags.index_range = indexes[0], indexes[-1]
@@ -143,7 +157,8 @@ class SetValuesAtIndexesCommand(ChangeByteValuesCommand):
         if old_style is not None:
             self.segment.style[indexes] = style
         if old_comment_info is not None:
-            self.segment.set_comments_at_indexes(comment_indexes, self.comments)
+            log.debug("setting comments: %s" % self.comments)
+            self.segment.set_comments_at_indexes(clamped_ranges, comment_indexes, self.comments)
         return (old_data, indexes, old_style, old_comment_info)
 
     def undo_change(self, editor, old_data):
