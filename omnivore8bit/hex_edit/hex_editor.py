@@ -304,7 +304,8 @@ class HexEditor(FrameworkEditor):
         """Return serializable string containing style information"""
         style = self.segment.get_style_at_indexes(indexes)
         r_orig = self.segment.get_style_ranges(comment=True)
-        comments = self.segment.get_nonblank_comments_at_indexes(indexes)
+        comments = self.segment.get_comments_at_indexes(indexes)
+        log.debug("after get_comments_at_indexes: %s" % str(comments))
         metadata = [style.tolist(), comments[0].tolist(), comments[1]]
         j = json.dumps(metadata)
         return j
