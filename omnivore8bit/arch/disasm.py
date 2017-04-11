@@ -186,44 +186,44 @@ class BaseDisassembler(object):
             return " ".join(comments)
         return ""
 
-    def get_operand_label(self, operand):
+    def get_label_at(self, target_pc):
+        label = self.memory_map.get_name(target_pc)
+        if not label and target_pc >= self.start_addr and target_pc <= self.end_addr:
+            #print operand, dollar, text_hex, target_pc, operand_labels_start_pc, operand_labels_end_pc
+            good_opcode_target_pc = self.info.get_instruction_start_pc(target_pc)
+            diff = target_pc - good_opcode_target_pc
+            if diff > 0:
+                # if no existing label at the target, reference it using
+                # offset in bytes from the nearest previous label
+                nearest_label = self.memory_map.get_name(good_opcode_target_pc)
+                if not nearest_label:
+                    nearest_label = self.label_format % good_opcode_target_pc
+                label = "%s+%d" % (nearest_label, diff)
+            else:
+                label = self.label_format % (target_pc)
+        return label
+
+    def get_operand_label(self, line, operand):
         """Find the label that the operand points to.
         """
-        if not self.use_labels:
-            return operand, -1, ""
-        dollar = operand.find("$")
-        if dollar >=0 and "#" not in operand:
-            text_hex = operand[dollar+1:dollar+1+4]
-            if len(text_hex) > 2 and text_hex[2] in "0123456789abcdefABCDEF":
-                size = 4
-            else:
-                size = 2
-            target_pc = int(text_hex[0:size], 16)
+        target_pc = line.dest_pc
 
-            # check for memory map label first, then branch label
-            label = self.memory_map.get_name(target_pc)
-            if not label and target_pc >= self.start_addr and target_pc <= self.end_addr:
-                #print operand, dollar, text_hex, target_pc, operand_labels_start_pc, operand_labels_end_pc
-                good_opcode_target_pc = self.info.get_instruction_start_pc(target_pc)
-                diff = target_pc - good_opcode_target_pc
-                if diff > 0:
-                    # if no existing label at the target, reference it using
-                    # offset in bytes from the nearest previous label
-                    nearest_label = self.memory_map.get_name(good_opcode_target_pc)
-                    if not nearest_label:
-                        nearest_label = self.label_format % good_opcode_target_pc
-                    label = "%s+%d" % (nearest_label, diff)
+        label = self.get_label_at(target_pc)
+        if label:
+            # find the place to replace hex digits with the text label
+            dollar = operand.find("$")
+            if dollar >=0 and "#" not in operand:
+                text_hex = operand[dollar+1:dollar+1+4]
+                if len(text_hex) > 2 and text_hex[2] in "0123456789abcdefABCDEF":
+                    size = 4
                 else:
-                    label = self.label_format % (target_pc)
-            if label:
+                    size = 2
                 operand = operand[0:dollar] + label + operand[dollar+1+size:]
-            return operand, target_pc, label
-        return operand, -1, ""
+        return operand
 
     def get_addr_dest(self, row):
-        operand = self.info[row].instruction
-        _, target_pc, _ = self.get_operand_label(operand)
-        return target_pc
+        line = self.info[row]
+        return line.dest_pc if line.flag & udis_fast.flag_label else -1
 
     def format_row_label(self, line):
         return self.fmt_hex4 % line.pc
@@ -263,8 +263,8 @@ class BaseDisassembler(object):
             operand = self.get_origin(line.dest_pc)
         elif line.flag & udis_fast.flag_data_bytes:
             operand = self.format_data_directive_bytes(operand)
-        elif line.num_bytes > 1:
-            operand, target_pc, label = self.get_operand_label(operand)
+        elif self.use_labels and line.flag & udis_fast.flag_label:
+            operand = self.get_operand_label(line, operand)
         return operand
 
     def format_instruction(self, index, line):
