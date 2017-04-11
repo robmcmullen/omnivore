@@ -76,6 +76,8 @@ class HexEditor(FrameworkEditor):
 
     can_resize_document = Bool(False)
 
+    has_origin = Bool(False)
+
     segment_view_params = Dict
 
     #### Events ####
@@ -320,6 +322,7 @@ class HexEditor(FrameworkEditor):
         self.segment = self.document.segments[self.segment_number]
         self.reconfigure_panes()
         self.update_segments_ui()
+        self.has_origin = self.segment.start_addr > 0
 
     def update_segments_ui(self):
         # Note: via profiling, it turns out that this is a very heavyweight

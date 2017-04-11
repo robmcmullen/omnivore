@@ -688,6 +688,7 @@ class MarkSelectionAsUninitializedDataAction(CustomDisassemblerAction):
 
 class ImportSegmentLabelsAction(EditorAction):
     name = 'Import Segment Labels'
+    enabled_name = 'has_origin'
 
     def perform(self, event):
         dialog = FileDialog(parent=event.task.window.control, title="Import Segment Labels")
@@ -713,6 +714,7 @@ class ImportSegmentLabelsAction(EditorAction):
 
 class ExportSegmentLabelsAction(EditorAction):
     name = 'Export Segment Labels'
+    enabled_name = 'has_origin'
 
     include_disassembly_labels = Bool(False)
 
@@ -867,9 +869,10 @@ def prompt_for_label(e, s, addr, desc):
 class AddLabelAction(EditorAction):
     name = 'Add Label'
     accelerator = 'Alt+L'
+    enabled_name = 'has_origin'
 
     def get_ranges(self, editor, segment, event):
-        if editor.can_copy:
+        if editor.can_copy:  # has selected ranges
             ranges = segment.get_style_ranges(selected=True)
         else:
             ranges = []
@@ -1410,6 +1413,7 @@ class RedoCursorPositionAction(EditorAction):
 class StartTraceAction(EditorAction):
     name = "Start New Disassembly Trace"
     accelerator = 'F12'
+    enabled_name = 'has_origin'
 
     def perform(self, event):
         e = self.active_editor
