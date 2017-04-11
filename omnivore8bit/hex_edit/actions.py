@@ -789,36 +789,38 @@ class AddCommentAction(EditorAction):
     name = 'Add Comment'
     accelerator = 'Alt+C'
 
+    def is_range(self, event):
+        return self.active_editor.can_copy
+
+    def get_index(self, event):
+        return self.active_editor.cursor_index
+
     def perform(self, event):
         e = self.active_editor
         s = e.segment
-        if e.can_copy:
+        if self.is_range(event):
             ranges = s.get_style_ranges(selected=True)
-            desc = "Enter comment for range %s" % str(ranges)
+            if len(ranges) == 1:
+                desc = "Enter comment for first byte of range:\n%s" % e.get_label_of_first_byte(ranges)
+            else:
+                desc = "Enter comment for first byte of each range:\n%s" % e.get_label_of_first_byte(ranges)
         else:
             ranges = []
         if not ranges:
-            index = e.cursor_index
+            index = self.get_index(event)
             ranges = [(index, index+1)]
             desc = "Enter comment for location %s" % index
         prompt_for_comment(e, s, ranges, desc)
 
 
-class AddCommentPopupAction(EditorAction):
+class AddCommentPopupAction(AddCommentAction):
     name = 'Add Comment'
 
-    def perform(self, event):
-        e = self.active_editor
-        s = e.segment
-        if event.popup_data["in_selection"]:
-            ranges = s.get_style_ranges(selected=True)
-            desc = "Enter comment for range %s" % e.get_label_of_ranges(ranges)
-        else:
-            index = event.popup_data["index"]
-            ranges = [(index, index+1)]
-            desc = "Enter comment for location %s" % e.get_label_at_index(index)
-        if ranges:
-            prompt_for_comment(e, s, ranges, desc)
+    def is_range(self, event):
+        return event.popup_data["in_selection"]
+
+    def get_index(self, event):
+        return event.popup_data["index"]
 
 
 class RemoveCommentAction(EditorAction):

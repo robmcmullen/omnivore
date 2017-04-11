@@ -120,7 +120,8 @@ class SetCommentCommand(ChangeMetadataCommand):
 
     def __init__(self, segment, ranges, comment):
         ChangeMetadataCommand.__init__(self, segment)
-        self.ranges = tuple(ranges)
+        # Only use the first byte of each range
+        self.ranges = tuple([(start, start + 1) for start, end in ranges])
         self.comment = comment
         indexes = ranges_to_indexes(self.ranges)
         self.index_range = indexes[0], indexes[-1]

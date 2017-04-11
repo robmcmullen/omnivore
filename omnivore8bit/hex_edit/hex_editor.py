@@ -613,6 +613,14 @@ class HexEditor(FrameworkEditor):
             labels.append("%s-%s" % (self.get_label_at_index(start), self.get_label_at_index(end - 1)))
         return ", ".join(labels)
 
+    def get_label_of_first_byte(self, ranges):
+        labels = []
+        for start, end in ranges:
+            if start > end:
+                start, end = end, start
+            labels.append(self.get_label_at_index(start))
+        return ", ".join(labels)
+
     def get_segments_from_selection(self, size=-1):
         s = self.segment
         segments = []
