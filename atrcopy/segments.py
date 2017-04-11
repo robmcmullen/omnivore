@@ -831,7 +831,16 @@ class DefaultSegment(object):
     def set_comments_at_indexes(self, ranges, indexes, comments):
         for where_index, comment in zip(indexes, comments):
             rawindex = self.get_raw_index(where_index)
-            self.rawdata.extra.comments[rawindex] = comment
+            if comment:
+                log.debug("  restoring comment: rawindex=%d, '%s'" % (rawindex, comment))
+                self.rawdata.extra.comments[rawindex] = comment
+            else:
+                try:
+                    del self.rawdata.extra.comments[rawindex]
+                    log.debug("  no comment in original data, removed comment in current data at rawindex=%d" % rawindex)
+                except KeyError:
+                    log.debug("  no comment in original data or current data at rawindex=%d" % rawindex)
+                    pass
 
     def get_comments_at_indexes(self, indexes):
         """Get a list of comments at specified indexes"""
@@ -840,7 +849,10 @@ class DefaultSegment(object):
         comments = []
         for where_index in has_comments:
             raw = self.get_raw_index(indexes[where_index])
-            comment = self.rawdata.extra.comments[raw]
+            try:
+                comment = self.rawdata.extra.comments[raw]
+            except KeyError:
+                comment = None
             comments.append(comment)
         return has_comments, comments
 
@@ -900,36 +912,6 @@ class DefaultSegment(object):
             if index >= start and index < end:
                 comments[index] = comment
         return comments
-
-    def get_nonblank_comments_at_indexes(self, indexes):
-        """Get a list of comments at specified indexes, but if blank, search
-        backward in that comment block to find the first index which should
-        have the comment.
-        """
-        s = self.style[indexes]
-        has_comments = np.where(s & comment_bit_mask > 0)[0]
-        comments = []
-        for where_index in has_comments:
-            raw = self.get_raw_index(indexes[where_index])
-            comment = self.get_comment(indexes[where_index])
-            if not comment:
-                # naive method: search backward until we find the comment at
-                # the start of the comment block and transfer that to the new
-                # block
-                start_index = indexes[where_index]
-                while start_index > 0:
-                    last = comment
-                    start_index -= 1
-                    comment = self.get_comment(start_index)
-                    if comment:
-                        break
-                    elif (self.style[start_index] & comment_bit_mask) == 0:
-                        comment = last
-                        break
-                if start_index == 0:
-                    comment = self.get_comment(0)
-            comments.append(comment)
-        return has_comments, comments
 
     def set_comment_at(self, index, text):
         rawindex = self.get_raw_index(index)
