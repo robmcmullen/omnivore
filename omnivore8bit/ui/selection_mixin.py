@@ -6,6 +6,7 @@ class SelectionMixin(object):
         self.multi_select_mode = False
         self.select_extend_mode = False
         self.mouse_drag_started = False
+        self.pending_select_awaiting_drag = None
 
     def handle_select_start(self, editor, evt, selecting_rows=False, col=0):
         self.mouse_drag_started = True
@@ -36,11 +37,17 @@ class SelectionMixin(object):
                 index1, index2 = self.get_start_end_index_of_row(r)
             editor.anchor_initial_start_index, editor.anchor_initial_end_index = index1, index2
             editor.cursor_index = index1
-            if not selecting_rows:
+            if selecting_rows:
+                editor.select_range(index1, index2, add=self.multi_select_mode)
+            else:
                 # initial click when not selecting rows should move the cursor,
                 # not select the grid square
-                index2 = index1
-            editor.select_range(index1, index2, add=self.multi_select_mode)
+                self.pending_select_awaiting_drag = (index1, index2)
+                if not self.multi_select_mode:
+                    editor.select_none()
+                    # status line doesn't get automatically updated to show
+                    # nothing is selected, so force the update
+                    wx.CallAfter(self.show_status_at_index, index1)
         wx.CallAfter(editor.index_clicked, editor.cursor_index, c, self, True)
 
     def handle_select_motion(self, editor, evt, selecting_rows=False):
@@ -48,13 +55,19 @@ class SelectionMixin(object):
             # On windows, it's possible to get a motion event before a mouse
             # down event, so need this flag to check
             return
+        update = False
         r, c, index1, index2, inside = self.get_location_from_event(evt)
         if c < 0 or selecting_rows or not inside:
             selecting_rows = True
             c = 0
         else:
             selecting_rows = False
-        update = False
+            if self.pending_select_awaiting_drag is not None:
+                # We have an actual drag so we can begin the selection
+                editor.anchor_initial_start_index, editor.anchor_initial_end_index = self.pending_select_awaiting_drag
+                self.pending_select_awaiting_drag = None
+                editor.select_range(editor.anchor_initial_start_index, editor.anchor_initial_end_index, add=self.multi_select_mode)
+                update = True
         if self.select_extend_mode:
             if index1 < editor.anchor_initial_start_index:
                 editor.select_range(index1, editor.anchor_initial_end_index, extend=True)

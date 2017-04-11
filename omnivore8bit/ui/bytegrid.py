@@ -797,12 +797,15 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         row = self.YToRow(y)
         col = self.XToCol(x)
         index, _ = self.table.get_index_range(row, col)
+        self.show_status_at_index(index)
+
+    def show_status_at_index(self, index):
         if self.table.is_index_valid(index):
             label = self.table.get_label_at_index(index)
-            message = self.get_status_message_at_index(index, row, col)
+            message = self.get_status_message_at_index(index)
             self.editor.show_status_message("%s: %s %s" % (self.short_name, label, message))
 
-    def get_status_message_at_index(self, index, row, col):
+    def get_status_message_at_index(self, index):
         msg = get_style_name(self.table.segment, index)
         comments = self.table.segment.get_comment(index)
         return "%s  %s" % (msg, comments)
