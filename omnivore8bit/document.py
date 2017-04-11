@@ -110,6 +110,10 @@ class SegmentedDocument(BaseDocument):
         if 'document memory map' in e:
             self.document_memory_map = dict(e['document memory map'])
 
+        # One-time call to enforce the new requirement that bytes marked with
+        # the comment style must have text associated with them.
+        self.container_segment.fixup_comments()
+
     #### convenience methods
 
     def parse_segments(self, parser_list):
