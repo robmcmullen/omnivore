@@ -16,6 +16,9 @@ match_bit_mask = 0x20
 comment_bit_mask = 0x40
 selected_bit_mask = 0x80
 
+import logging
+log = logging.getLogger(__name__)
+
 
 def get_style_bits(match=False, comment=False, selected=False, data=False, diff=False, user=0):
     """ Return an int value that contains the specified style bits set.
@@ -825,7 +828,7 @@ class DefaultSegment(object):
         for where_index in indexes:
             self.remove_comment(where_index)
 
-    def set_comments_at_indexes(self, indexes, comments):
+    def set_comments_at_indexes(self, ranges, indexes, comments):
         for where_index, comment in zip(indexes, comments):
             rawindex = self.get_raw_index(where_index)
             self.rawdata.extra.comments[rawindex] = comment
@@ -847,12 +850,19 @@ class DefaultSegment(object):
         """
         restore_data = []
         for start, end in ranges:
+            log.debug("range: %d-%d" % (start, end))
             styles = self.style[start:end].copy()
-            items = []
+            items = {}
             for i in range(start, end):
                 rawindex = self.get_raw_index(i)
-                comment = self.rawdata.extra.comments.get(rawindex, "")
-                items.append((rawindex, comment))
+                try:
+                    comment = self.rawdata.extra.comments[rawindex]
+                    log.debug("  index: %d rawindex=%d '%s'" % (i, rawindex, comment))
+                    items[i] = (rawindex, comment)
+                except KeyError:
+                    log.debug("  index: %d rawindex=%d NO COMMENT TO SAVE" % (i, rawindex))
+                    items[i] = (rawindex, None)
+
             restore_data.append((start, end, styles, items))
         return restore_data
 
@@ -860,14 +870,20 @@ class DefaultSegment(object):
         """Restore comment styles and data
         """
         for start, end, styles, items in restore_data:
+            log.debug("range: %d-%d" % (start, end))
             self.style[start:end] = styles
-            for rawindex, comment in items:
+            for i in range(start, end):
+                rawindex, comment = items[i]
                 if comment:
+                    log.debug("  restoring comment: rawindex=%d, '%s'" % (rawindex, comment))
                     self.rawdata.extra.comments[rawindex] = comment
                 else:
+                    # no comment in original data, remove any if exists
                     try:
                         del self.rawdata.extra.comments[rawindex]
+                        log.debug("  no comment in original data, removed comment in current data at rawindex=%d" % rawindex)
                     except KeyError:
+                        log.debug("  no comment in original data or current data at rawindex=%d" % rawindex)
                         pass
 
     def get_comments_in_range(self, start, end):
