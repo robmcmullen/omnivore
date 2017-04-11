@@ -613,6 +613,24 @@ class DefaultSegment(object):
         matches = (self.style & style_bits) == style_bits
         return self.bool_to_ranges(matches)
 
+    def fixup_comments(self):
+        """Remove any style bytes that are marked as commented but have no
+        comment, and add any style bytes where there's a comment but it isn't
+        marked in the style data.
+
+        This happens on the base data, so only need to do this on one segment
+        that uses this base data.
+        """
+        style_base = self.rawdata.style_base
+        comment_text_indexes = np.asarray(self.rawdata.extra.comments.keys(), dtype=np.uint32)
+        comment_mask = self.get_style_mask(comment=True)
+        has_comments = np.where(style_base & comment_bit_mask > 0)[0]
+        both = np.intersect1d(comment_text_indexes, has_comments)
+        log.info("fixup comments: %d correctly marked, %d without style, %d empty text" % (np.alen(both), np.alen(comment_text_indexes) - np.alen(both), np.alen(has_comments) - np.alen(both)))
+        style_base &= comment_mask
+        comment_style = self.get_style_bits(comment=True)
+        style_base[comment_text_indexes] |= comment_style
+
     def get_comment_locations(self, **kwargs):
         style_bits = self.get_style_bits(**kwargs)
         r = self.rawdata.copy()
