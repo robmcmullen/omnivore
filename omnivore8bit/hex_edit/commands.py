@@ -13,6 +13,7 @@ from omnivore.utils.file_guess import FileGuess
 from omnivore.utils.permute import bit_reverse_table
 
 import logging
+log = logging.getLogger(__name__)
 progress_log = logging.getLogger("progress")
 
 
@@ -459,38 +460,25 @@ class FindAllCommand(Command):
             undo.flags.message = self.error
         else:
             errors = []
-            found = []
+            match_dict = {}
             editor.segment.clear_style_bits(match=True)
             for searcher_cls in self.get_searchers(editor):
                 try:
                     searcher = searcher_cls(editor, self.search_text)
-                    found.append(searcher)
+                    for start, end in searcher.matches:
+                        if start in self.match_ids:
+                            if searcher.pretty_name not in self.match_ids[start]:
+                                self.match_ids[start] +=", %s" % searcher.pretty_name
+                            if end > match_dict[start]:
+                                match_dict[start] = end
+                        else:
+                            self.match_ids[start] = searcher.pretty_name
+                            match_dict[start] = end
                 except ValueError, e:
                     errors.append(str(e))
 
-            if found:
-                for searcher in found:
-                    self.all_matches.extend(searcher.matches)
-                    for match in searcher.matches:
-                        start = match[0]
-                        if start in self.match_ids:
-                            self.match_ids[start] +=", %s" % searcher.pretty_name
-                        else:
-                            self.match_ids[start] = searcher.pretty_name
-                self.all_matches.sort()
-
-                # remove entries that duplicate the start point, finding the
-                # match of largest size if two are coincident
-                dups = {}
-                dups_removed = []
-                for match in self.all_matches:
-                    start = match[0]
-                    if start not in dups:
-                        dups_removed.append(match)
-                        dups[start] = match[1]
-                    elif dups[start] < match[1]:
-                        dups[start] = match[1]
-                self.all_matches = [m if m[0] in dups and dups[m[0]] < m[1] else (m[0], dups[m[0]]) for m in dups_removed]
+            if match_dict:
+                self.all_matches = [(start, match_dict[start]) for start in sorted(match_dict.keys())]
 
                 #print "Find:", self.all_matches
                 if len(self.all_matches) == 0:
@@ -504,7 +492,7 @@ class FindAllCommand(Command):
                         self.current_match_index = 0
                     match = self.all_matches[self.current_match_index]
                     start = match[0]
-                    print self.current_match_index, match, cursor_tuple
+                    log.debug("Starting at match_index %d = %s" % (self.current_match_index, match))
                     undo.flags.index_range = match
                     undo.flags.cursor_index = start
                     undo.flags.select_range = True
