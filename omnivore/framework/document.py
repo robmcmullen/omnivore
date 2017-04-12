@@ -173,7 +173,7 @@ class BaseDocument(HasTraits):
         """
         uri = self.get_filesystem_extra_metadata_uri()
         if uri is None:
-            return
+            return {}
         try:
             guess = FileGuess(uri)
         except fs.errors.FSError, e:
