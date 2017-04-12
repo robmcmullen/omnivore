@@ -8,6 +8,9 @@ from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bi
 
 from memory_map import EmptyMemoryMap
 
+import logging
+log = logging.getLogger(__name__)
+
 
 # Style numbers for other disassemblers
 ANTIC_DISASM = 2
@@ -122,6 +125,8 @@ class BaseDisassembler(object):
         self.memory_map = memory_map if memory_map is not None else EmptyMemoryMap()
         self.segment = None
         self.info = None
+        self._pc_label_cache = None
+        self._dest_pc_label_cache = None
 
     @classmethod
     def get_nop(cls):
@@ -158,12 +163,45 @@ class BaseDisassembler(object):
         self.fast.add_chunk_processor(disassembler_name, style)
 
     def disassemble_segment(self, segment):
+        self.invalidate_label_caches()
         self.segment = segment
         self.start_addr = segment.start_addr
         self.end_addr = self.start_addr + len(segment)
         self.info = fast_disassemble_segment(self.fast, segment)
         self.use_labels = self.start_addr > 0
         return self.info
+
+    @property
+    def pc_label_cache(self):
+        if self._pc_label_cache is None:
+            self.create_label_caches()
+        return self._pc_label_cache
+
+    @property
+    def dest_pc_label_cache(self):
+        if self._dest_pc_label_cache is None:
+            self.create_label_caches()
+        return self._dest_pc_label_cache
+
+    def invalidate_label_caches(self):
+        log.debug("Invalidating label caches")
+        self._pc_label_cache = None
+        self._dest_pc_label_cache = None
+
+    def create_label_caches(self):
+        pc_labels = {}
+        dest_pc_labels = {}
+        for line in self.info:
+            text = self.get_pc_label(line.pc)
+            if text:
+                pc_labels[line.pc] = text
+            if line.flag & udis_fast.flag_label:
+                text = self.get_dest_pc_label(line.dest_pc)
+                if text:
+                    dest_pc_labels[line.pc] = text
+        self._pc_label_cache = pc_labels
+        self._dest_pc_label_cache = dest_pc_labels
+        log.debug("Created label caches: %d in pc, %d in dest_pc" % (len(pc_labels), len(dest_pc_labels)))
 
     def get_origin(self, pc):
         return "%s $%s" % (self.asm_origin, self.fmt_hex4 % pc)
@@ -186,7 +224,22 @@ class BaseDisassembler(object):
             return " ".join(comments)
         return ""
 
-    def get_label_at(self, target_pc):
+    def get_pc_label(self, pc):
+        """Get the label for a program counter address
+
+        """
+        text = self.memory_map.get_name(pc)
+        if not text and self.info.labels[pc]:
+            text = self.label_format % pc
+        return text
+
+    def get_dest_pc_label(self, target_pc):
+        """Get the label for a target address
+
+        This differs from get_pc_label in that if a label doesn't exist at the
+        target_pc but there is one at some small offset before, use that label
+        plus the offset difference.
+        """
         label = self.memory_map.get_name(target_pc)
         if not label and target_pc >= self.start_addr and target_pc <= self.end_addr:
             #print operand, dollar, text_hex, target_pc, operand_labels_start_pc, operand_labels_end_pc
@@ -200,7 +253,7 @@ class BaseDisassembler(object):
                     nearest_label = self.label_format % good_opcode_target_pc
                 label = "%s+%d" % (nearest_label, diff)
             else:
-                label = self.label_format % (target_pc)
+                label = self.label_format % target_pc
         return label
 
     def get_operand_label(self, line, operand):
@@ -208,7 +261,7 @@ class BaseDisassembler(object):
         """
         target_pc = line.dest_pc
 
-        label = self.get_label_at(target_pc)
+        label = self.get_dest_pc_label(target_pc)
         if label:
             # find the place to replace hex digits with the text label
             dollar = operand.find("$")
@@ -242,14 +295,8 @@ class BaseDisassembler(object):
     def format_label(self, line):
         if not self.use_labels:
             return "     "
-        pc = line.pc
-        text = self.memory_map.get_name(pc)
-        if not text:
-            if self.info.labels[pc]:
-                text = self.label_format % pc
-            else:
-                text = "     "
-        return text
+        text = self.get_pc_label(line.pc)
+        return "     " if not text else text
 
     def get_operand_from_instruction(self, text):
         if ";" in text:
@@ -380,6 +427,38 @@ class BaseDisassembler(object):
             lines.append(text)
             line_num += 1
         return lines
+
+    def search_labels(self, labels, search_text, match_case=False):
+        s = self.start_addr
+        matches = []
+        if not match_case:
+            for pc, label in labels.iteritems():
+                if search_text in label.lower():
+                    matches.append((pc - s, pc - s + 1))
+        else:
+            for pc, label in labels.iteritems():
+                if search_text in label:
+                    matches.append((pc - s, pc - s + 1))
+        return matches
+
+    def search(self, search_text, match_case=False):
+        s = self.start_addr
+        if not match_case:
+            search_text = search_text.lower()
+            matches = [(t.pc - s, t.pc - s + t.num_bytes) for t in self.info if search_text in t.instruction.lower()]
+        else:
+            matches = [(t.pc - s, t.pc - s + t.num_bytes) for t in self.info if search_text in t.instruction or t.pc in mmap]
+        log.debug("instruction matches: %s" % str(matches))
+
+        label_matches = self.search_labels(self.pc_label_cache, search_text, match_case)
+        matches.extend(label_matches)
+        log.debug("pc label matches: %s" % str(label_matches))
+
+        label_matches = self.search_labels(self.dest_pc_label_cache, search_text, match_case)
+        matches.extend(label_matches)
+        log.debug("dest pc label matches: %s" % str(label_matches))
+
+        return matches
 
 
 class Basic6502Disassembler(BaseDisassembler):

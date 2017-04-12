@@ -631,7 +631,7 @@ class Machine(HasTraits):
 
     def get_disassembler(self, hex_lower, mnemonic_lower, document_memory_map=None, segment_memory_map=None):
         if not document_memory_map and not segment_memory_map:  # either None or empty dict
-            mmap = self.memory_map
+            mmap = self.memory_map()
         else:
             # Create a merged memory map with first the segment map then the
             # document map taking precedence over the machine memory map when

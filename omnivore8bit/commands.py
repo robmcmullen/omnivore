@@ -2,7 +2,6 @@ import numpy as np
 
 from omnivore.utils.command import Command, UndoInfo
 from omnivore.utils.sortutil import ranges_to_indexes, indexes_to_ranges
-from omnivore8bit.utils.searchalgorithm import AlgorithmSearcher
 from omnivore.utils.file_guess import FileGuess
 from omnivore.utils.permute import bit_reverse_table
 

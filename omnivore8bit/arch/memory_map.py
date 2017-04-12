@@ -18,6 +18,9 @@ class EmptyMemoryMap(object):
             return cls.rmemmap[addr]
         return ""
 
+    def __contains__(self, addr):
+        return addr in self.rmemmap or addr in self.wmemmap
+
 
 class Atari800MemoryMap(EmptyMemoryMap):
     name = "Atari 400/800"

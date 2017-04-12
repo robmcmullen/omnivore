@@ -392,14 +392,7 @@ class DisassemblyPanel(ByteGrid):
         return False
 
     def search(self, search_text, match_case=False):
-        lines = self.table.lines
-        s = self.table.start_addr
-        if not match_case:
-            search_text = search_text.lower()
-            matches = [(t.pc - s, t.pc - s + t.num_bytes) for t in lines if search_text in t.instruction.lower()]
-        else:
-            matches = [(t.pc - s, t.pc - s + t.num_bytes) for t in lines if search_text in t.instruction]
-        return matches
+        return self.table.disassembler.search(search_text, match_case)
 
     def get_goto_caller_actions(self, addr_called):
         goto_actions = []
