@@ -206,6 +206,13 @@ class BaseDisassembler(object):
     def get_origin(self, pc):
         return "%s $%s" % (self.asm_origin, self.fmt_hex4 % pc)
 
+    def get_next_instruction_pc(self, pc):
+        info = self.info
+        index = pc - self.start_addr
+        row = info.index_to_row[index]
+        line = info[row + 1]  # next line!
+        return line.pc
+
     def get_comments(self, index, line=None):
         info = self.info
         if line is None:
