@@ -98,6 +98,8 @@ def collapse_overlapping_ranges(ranges):
 
 
 def ranges_to_indexes(ranges):
+    if len(ranges) == 0:
+        return np.zeros([0], dtype=np.uint32)
     return np.hstack((np.arange(r[0], r[1], dtype=np.uint32) for r in ranges))
 
 
