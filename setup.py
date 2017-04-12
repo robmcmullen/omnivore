@@ -154,6 +154,9 @@ package_data = {
                  'utils/*.png',
                  'templates/*',
                  ],
+    'omnivore8bit': ['icons/*.png',
+                 'templates/*',
+                 ],
     }
 
 packages = find_packages()
@@ -284,6 +287,9 @@ if 'nsis' not in sys.argv:
         # drwxr-xr-x 8 rob 160 Aug  5 11:37 yface/
         data_files.extend(omnivore.get_py2exe_data_files())
 
+        import omnivore8bit
+        data_files.extend(omnivore.get_py2exe_data_files(omnivore8bit))
+
         import traitsui
         data_files.extend(omnivore.get_py2exe_data_files(traitsui, excludes=["*/qt4/*"]))
 
@@ -292,6 +298,7 @@ if 'nsis' not in sys.argv:
 
         # Include template files in bundled app
         data_files.append(("omnivore/templates", glob.glob("omnivore/templates/*")))
+        data_files.append(("omnivore8bit/templates", glob.glob("omnivore8bit/templates/*")))
 
     setup(
         name = 'Omnivore',
