@@ -1,11 +1,11 @@
 from traits.api import HasTraits, provides
 
-from omnivore.file_type.i_file_recognizer import IFileRecognizer
+from omnivore.file_type.i_file_recognizer import IFileRecognizer, RecognizerBase
 import imghdr
 
 
 @provides(IFileRecognizer)
-class ImageRecognizer(HasTraits):
+class ImageRecognizer(RecognizerBase):
     """Recognizer for common image formats
     
     """

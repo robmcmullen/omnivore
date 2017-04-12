@@ -1,10 +1,10 @@
 from traits.api import HasTraits, provides
 
-from omnivore.file_type.i_file_recognizer import IFileRecognizer
+from omnivore.file_type.i_file_recognizer import IFileRecognizer, RecognizerBase
 
 
 @provides(IFileRecognizer)
-class OmnivoreRecognizer(HasTraits):
+class OmnivoreRecognizer(RecognizerBase):
     """Meta recognizer that forces the loading of a disk image when the
     .omnivore file is selected instead
     """

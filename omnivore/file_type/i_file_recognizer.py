@@ -1,5 +1,7 @@
 # Enthought library imports.
-from traits.api import Interface, Str, List, Instance
+from traits.api import Interface, Str, List, Instance, provides, HasTraits
+
+from omnivore.framework.document import BaseDocument
 
 
 class IFileRecognizer(Interface):
@@ -26,6 +28,13 @@ class IFileRecognizer(Interface):
         
         If the file type is not matched by this recognizer, returns None
         """
+
+
+class RecognizerBase(HasTraits):
+    def load(self, guess):
+        doc = BaseDocument(metadata=guess.metadata, bytes=guess.numpy)
+        doc.load_metadata(guess)
+        return doc
 
 
 class IFileRecognizerDriver(Interface):

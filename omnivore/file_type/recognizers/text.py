@@ -1,11 +1,11 @@
 from traits.api import HasTraits, provides
 
-from omnivore.file_type.i_file_recognizer import IFileRecognizer
+from omnivore.file_type.i_file_recognizer import IFileRecognizer, RecognizerBase
 from omnivore.utils.textutil import guessBinary
 
 
 @provides(IFileRecognizer)
-class PlainTextRecognizer(HasTraits):
+class PlainTextRecognizer(RecognizerBase):
     """Default plain text identifier based on percentage of non-ASCII bytes.
     
     """
@@ -17,7 +17,7 @@ class PlainTextRecognizer(HasTraits):
 
 
 @provides(IFileRecognizer)
-class XMLTextRecognizer(HasTraits):
+class XMLTextRecognizer(RecognizerBase):
     """Default plain text identifier based on percentage of non-ASCII bytes.
     
     """
@@ -44,7 +44,7 @@ class XMLTextRecognizer(HasTraits):
 
 
 @provides(IFileRecognizer)
-class PoundBangTextRecognizer(HasTraits):
+class PoundBangTextRecognizer(RecognizerBase):
     """Recognizer for pound bang style executable script files
     
     """
