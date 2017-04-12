@@ -174,8 +174,11 @@ class HexEditTask(FrameworkTask):
         return [
             CutAction(),
             CopyAction(),
-            CopyDisassemblyAction(),
-            CopyAsReprAction(),
+            SMenu(
+                CopyDisassemblyAction(),
+                CopyCommentsAction(),
+                CopyAsReprAction(),
+                id='copyspecial', name="Copy Special"),
             PasteAction(),
             PasteAndRepeatAction(),
             ]

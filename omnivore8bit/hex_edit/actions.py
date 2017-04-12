@@ -737,7 +737,7 @@ class ExportSegmentLabelsAction(EditorAction):
 
 
 class CopyDisassemblyAction(EditorAction):
-    name = 'Copy Disassembly'
+    name = 'Copy Disassembly Text'
     enabled_name = 'can_copy'
 
     def perform(self, event):
@@ -774,6 +774,24 @@ class CopyAsReprAction(EditorAction):
         else:
             # single quotes are literal, double are escaped
             text = text.replace("'", "\\x27").replace('\\"', "\\x22")
+        data_obj = wx.TextDataObject()
+        data_obj.SetText(text)
+        e.set_clipboard_object(data_obj)
+
+
+class CopyCommentsAction(EditorAction):
+    name = 'Copy Disassembly Comments'
+    enabled_name = 'can_copy'
+
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        ranges = s.get_style_ranges(selected=True)
+        lines = []
+        for start, end in ranges:
+            for _, _, _, comment, _ in e.disassembly.table.disassembler.iter_row_text(start, end):
+                lines.append(comment)
+        text = os.linesep.join(lines) + os.linesep
         data_obj = wx.TextDataObject()
         data_obj.SetText(text)
         e.set_clipboard_object(data_obj)
