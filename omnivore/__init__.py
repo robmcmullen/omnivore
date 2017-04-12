@@ -136,18 +136,18 @@ def get_image_path(rel_path, module=None, file=None, up_one_level=False, exclude
     if up_one_level:
         path = os.path.dirname(path)
     frozen = getattr(sys, 'frozen', False)
-    image_path = os.path.join(os.path.dirname(path), rel_path)
+    image_path = os.path.normpath(os.path.join(os.path.dirname(path), rel_path))
     if frozen:
         if frozen == True:
             # pyinstaller sets frozen=True and uses sys._MEIPASS
             root = sys._MEIPASS
-            image_path = os.path.join(root, image_path)
+            image_path = os.path.normpath(os.path.join(root, image_path))
         elif frozen in ('macosx_app'):
             #print "FROZEN!!! %s" % frozen
             root = os.environ['RESOURCEPATH']
             if ".zip/" in image_path:
                 zippath, image_path = image_path.split(".zip/")
-            image_path = os.path.join(root, image_path)
+            image_path = os.path.normpath(os.path.join(root, image_path))
         else:
             print "App packager %s not yet supported for image paths!!!"
     return image_path

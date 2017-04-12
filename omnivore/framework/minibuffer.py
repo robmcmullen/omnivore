@@ -3,6 +3,8 @@ import re
 
 import wx
 
+from pyface.api import ImageResource
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -84,19 +86,35 @@ class TextMinibuffer(Minibuffer):
         self.control = wx.Panel(parent, style=wx.NO_BORDER|wx.TAB_TRAVERSAL)
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        prompt = wx.StaticText(self.control, -1, _(self.label))
+
+        self.create_header_controls(self.control, sizer)
+        self.create_primary_control(self.control, sizer)
+        self.create_footer_controls(self.control, sizer)
+
+        self.control.SetSizer(sizer)
+
+        self.post_create()
+
+    def create_primary_control(self, parent ,sizer):
+        prompt = wx.StaticText(parent, -1, _(self.label))
         sizer.Add(prompt, 0, wx.CENTER)
-        self.text = wx.TextCtrl(self.control, -1, size=(-1,-1), style=wx.TE_PROCESS_ENTER)
-        sizer.Add(self.text, 1, wx.EXPAND)
+        self.text = wx.TextCtrl(parent, -1, size=(-1,-1), style=wx.TE_PROCESS_ENTER)
+        sizer.Add(self.text, 1, wx.EXPAND|wx.LEFT|wx.RIGHT, 2)
         if self.help_text:
-            c = wx.StaticText(self.control, -1, self.help_text)
+            c = wx.StaticText(parent, -1, self.help_text)
             c.SetToolTip(wx.ToolTip(self.help_tip))
             sizer.Add(c, 0, wx.ALIGN_CENTER_VERTICAL)
         self.text.Bind(wx.EVT_TEXT, self.on_text)
         self.text.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
-        self.control.SetSizer(sizer)
 
-        if self.initial:
+    def create_header_controls(self, parent, sizer):
+        pass
+
+    def create_footer_controls(self, parent, sizer):
+        pass
+
+    def post_create(self):
+         if self.initial:
             self.text.ChangeValue(self.initial)
             self.text.SetInsertionPointEnd()
             self.text.SetSelection(0, self.text.GetLastPosition())
@@ -185,9 +203,38 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         self.prev_match = prev_match
         self.segment = editor.segment
 
-    def create_control(self, parent, **kwargs):
-        TextMinibuffer.create_control(self, parent, **kwargs)
+    def create_header_controls(self, parent, sizer):
+        btn = wx.ToggleButton(parent, -1, "", style=wx.BU_EXACTFIT|wx.BORDER_NONE)
+        img = ImageResource('match_case')
+        bmp = img.create_bitmap()
+        btn.SetBitmap(bmp)
+        btn.SetToolTipString("Case sensitive match")
+        btn.SetInitialSize() # adjust default size for the bitmap
+        btn.Bind(wx.EVT_TOGGLEBUTTON, self.on_case_toggle)
+        sizer.Add(btn, 0, wx.LEFT|wx.RIGHT, 2)
 
+        if True:  # FIXME: regex not implemented yet
+            return
+
+        btn = wx.ToggleButton(parent, -1, "", style=wx.BU_EXACTFIT)
+        img = ImageResource('match_regex')
+        bmp = img.create_bitmap()
+        btn.SetBitmap(bmp)
+        btn.SetToolTipString("Regex match")
+        btn.SetInitialSize() # adjust default size for the bitmap
+        btn.Bind(wx.EVT_TOGGLEBUTTON, self.on_regex_toggle)
+        sizer.Add(btn, 0, wx.LEFT|wx.RIGHT, 2)
+
+    def create_footer_controls(self, parent, sizer):
+        btn = wx.Button(parent, -1, "Find Next")
+        btn.Bind(wx.EVT_BUTTON, self.on_find_next)
+        sizer.Add(btn, 0, wx.ALIGN_CENTER_VERTICAL)
+
+        btn = wx.Button(parent, -1, "Find Prev")
+        btn.Bind(wx.EVT_BUTTON, self.on_find_prev)
+        sizer.Add(btn, 0, wx.ALIGN_CENTER_VERTICAL)
+
+    def post_create(self):
         if self.initial:
             self.perform()
             # If using a previous search, select all text in case user wants to
@@ -221,11 +268,31 @@ class NextPrevTextMinibuffer(TextMinibuffer):
             self.editor.process_command(cmd)
             self.clear_selection()
 
+    def on_find_next(self, evt):
+        self.next()
+        evt.Skip()
+
     def prev(self):
         if self.search_command is not None:
             cmd = self.prev_cls(self.search_command)
             self.editor.process_command(cmd)
             self.clear_selection()
+
+    def on_find_prev(self, evt):
+        self.prev()
+        evt.Skip()
+
+    def on_case_toggle(self, evt):
+        log.debug("case: %s" % evt.IsChecked())
+        self.editor.last_search_settings['match_case'] = evt.IsChecked()
+        self.perform()
+        evt.Skip()
+
+    def on_regex_toggle(self, evt):
+        log.debug("regex: %s" % evt.IsChecked())
+        self.editor.last_search_settings['regex'] = evt.IsChecked()
+        self.perform()
+        evt.Skip()
 
     def perform(self):
         """Execute the command associatied with this minibuffer"""

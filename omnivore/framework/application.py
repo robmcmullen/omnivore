@@ -870,6 +870,7 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", 
     import os
     image_paths = image_path[:]
     image_paths.append(get_image_path("icons"))
+    image_paths.append(get_image_path("../omnivore8bit/icons"))
     resource_manager.extra_paths.extend(image_paths)
 
     kwargs = {}

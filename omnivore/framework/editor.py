@@ -100,7 +100,7 @@ class FrameworkEditor(Editor):
         return {
             "find": "",
             "replace": "",
-            "case_sensitive": False,
+            "match_case": False,
             "allow_inverse": False,
             "regex": False,
             "algorithm": "",

@@ -1,5 +1,8 @@
 import re
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class BaseSearcher(object):
     pretty_name = "<base class>"
@@ -32,16 +35,15 @@ class HexSearcher(BaseSearcher):
         return "hex matches: %s" % str(self.matches)
 
     def get_search_text(self, text):
-        return bytearray.fromhex(text)
+        try:
+            return bytearray.fromhex(text)
+        except ValueError:
+            log.debug("%s: fromhex failed on: %s")
+            return ""
 
 
 class CharSearcher(BaseSearcher):
     pretty_name = "text"
-
-    def __init__(self, editor, search_text, match_case=False, find_inverse=True, **kwargs):
-        self.match_case = match_case
-        self.find_inverse = find_inverse
-        BaseSearcher.__init__(self, editor, search_text)
 
     def __str__(self):
         return "char matches: %s" % str(self.matches)
@@ -50,11 +52,6 @@ class CharSearcher(BaseSearcher):
 class DisassemblySearcher(BaseSearcher):
     pretty_name = "disasm"
 
-    def __init__(self, editor, search_text, match_case=False, find_inverse=True, **kwargs):
-        self.match_case = match_case
-        self.find_inverse = find_inverse
-        BaseSearcher.__init__(self, editor, search_text)
-
     def __str__(self):
         return "disasm matches: %s" % str(self.matches)
 
@@ -62,17 +59,12 @@ class DisassemblySearcher(BaseSearcher):
         return text
 
     def get_matches(self, editor):
-        matches = editor.disassembly.search(self.search_text, self.match_case)
+        matches = editor.disassembly.search(self.search_text, editor.last_search_settings.get('match_case', False))
         return matches
 
 
 class CommentSearcher(BaseSearcher):
     pretty_name = "comments"
-
-    def __init__(self, editor, search_text, match_case=False, find_inverse=True, **kwargs):
-        self.match_case = match_case
-        self.find_inverse = find_inverse
-        BaseSearcher.__init__(self, editor, search_text)
 
     def __str__(self):
         return "comment matches: %s" % str(self.matches)
@@ -82,10 +74,9 @@ class CommentSearcher(BaseSearcher):
 
     def get_matches(self, editor):
         segment = editor.segment
-        match_case = self.match_case
         s = segment.start_addr
         matches = []
-        if match_case:
+        if editor.last_search_settings.get('match_case', False):
             search_text = self.search_text
             for index, comment in segment.iter_comments_in_segment():
                 if search_text in comment:
