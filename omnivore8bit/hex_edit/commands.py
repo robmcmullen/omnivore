@@ -442,6 +442,7 @@ class FindAllCommand(Command):
         self.repeat = repeat
         self.reverse = reverse
         self.current_match_index = -1
+        self.start_addr = -1
 
     def __str__(self):
         return "%s %s" % (self.pretty_name, repr(self.search_text))
@@ -453,6 +454,7 @@ class FindAllCommand(Command):
         return editor.searchers
 
     def perform(self, editor, undo):
+        self.start_addr = editor.segment.start_addr
         self.all_matches = []
         self.match_ids = {}
         undo.flags.changed_document = False
@@ -496,7 +498,7 @@ class FindAllCommand(Command):
                     undo.flags.index_range = match
                     undo.flags.cursor_index = start
                     undo.flags.select_range = True
-                    undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (self.current_match_index + 1, len(self.all_matches), start, self.match_ids[start]))
+                    undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (self.current_match_index + 1, len(self.all_matches), start + self.start_addr, self.match_ids[start]))
             elif errors:
                 undo.flags.message = " ".join(errors)
             undo.flags.refresh_needed = True
@@ -532,7 +534,8 @@ class FindNextCommand(Command):
             undo.flags.index_range = match
             undo.flags.cursor_index = start
             undo.flags.select_range = True
-            undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (index + 1, len(all_matches), start, self.search_command.match_ids[start]))
+            c = self.search_command
+            undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (index + 1, len(all_matches), start + c.start_addr, c.match_ids[start]))
         except IndexError:
             pass
         undo.flags.refresh_needed = True
