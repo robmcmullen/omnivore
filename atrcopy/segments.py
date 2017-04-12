@@ -842,6 +842,10 @@ class DefaultSegment(object):
     def get_style_at_indexes(self, indexes):
         return self.style[indexes]
 
+    def set_style_at_indexes(self, indexes, **kwargs):
+        style_bits = self.get_style_bits(**kwargs)
+        self.style[indexes] |= style_bits
+
     def remove_comments_at_indexes(self, indexes):
         for where_index in indexes:
             self.remove_comment(where_index)
