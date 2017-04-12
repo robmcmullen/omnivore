@@ -2,8 +2,9 @@ import os
 import re
 
 import wx
+import wx.lib.buttons as buttons
 
-from pyface.api import ImageResource
+from omnivore.utils.wx.buttons import FlatBitmapToggleButton
 
 import logging
 log = logging.getLogger(__name__)
@@ -39,16 +40,50 @@ class Minibuffer(object):
         self.editor = editor
 
     def create_control(self, parent, **kwargs):
+        """ Creates the minibuffer in a panel and returns the panel to be
+        managed by the minibuffer controller.
+
+        There are three methods that can be overridden in subclasses to provide
+        a bit of reusability: create_header_controls, create_primary_control,
+        create_footer_controls.
+
+        Or you can just override this method and do it all yourself.
         """
-        Create a window that represents the minibuffer, and set
-        self.control to that window.
-        
-        @param parent: parent window of minibuffer
+        self.control = wx.Panel(parent, style=wx.NO_BORDER|wx.TAB_TRAVERSAL)
+
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.create_header_controls(self.control, sizer)
+        self.create_primary_control(self.control, sizer)
+        self.create_footer_controls(self.control, sizer)
+
+        self.control.SetSizer(sizer)
+
+        self.post_create()
+
+    def create_primary_control(self, parent, sizer):
+        """ Creates the major editing component in the minibuffer
+
         """
-        panel = wx.Panel(parent, -1, name="Minibuffer")
-        panel.SetSize((500, 40))
-        panel.SetBackgroundColour('blue')
-        self.control = panel
+        self.control.SetBackgroundColour('blue')
+
+    def create_header_controls(self, parent, sizer):
+        """ Hook to creates auxiliary controls
+
+        """
+        pass
+
+    def create_footer_controls(self, parent, sizer):
+        """ Hook to creates auxiliary controls
+
+        """
+        pass
+
+    def post_create(self):
+        """ Hook to set up the controls after all of them have been created.
+
+        """
+        pass
 
     def destroy_control(self):
         if self.control is not None:
@@ -82,19 +117,6 @@ class TextMinibuffer(Minibuffer):
     label = "Text"
     error = "Bad input."
 
-    def create_control(self, parent, **kwargs):
-        self.control = wx.Panel(parent, style=wx.NO_BORDER|wx.TAB_TRAVERSAL)
-
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-
-        self.create_header_controls(self.control, sizer)
-        self.create_primary_control(self.control, sizer)
-        self.create_footer_controls(self.control, sizer)
-
-        self.control.SetSizer(sizer)
-
-        self.post_create()
-
     def create_primary_control(self, parent ,sizer):
         prompt = wx.StaticText(parent, -1, _(self.label))
         sizer.Add(prompt, 0, wx.CENTER)
@@ -106,12 +128,6 @@ class TextMinibuffer(Minibuffer):
             sizer.Add(c, 0, wx.ALIGN_CENTER_VERTICAL)
         self.text.Bind(wx.EVT_TEXT, self.on_text)
         self.text.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
-
-    def create_header_controls(self, parent, sizer):
-        pass
-
-    def create_footer_controls(self, parent, sizer):
-        pass
 
     def post_create(self):
          if self.initial:
@@ -204,25 +220,16 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         self.segment = editor.segment
 
     def create_header_controls(self, parent, sizer):
-        btn = wx.ToggleButton(parent, -1, "", style=wx.BU_EXACTFIT|wx.BORDER_NONE)
-        img = ImageResource('match_case')
-        bmp = img.create_bitmap()
-        btn.SetBitmap(bmp)
-        btn.SetToolTipString("Case sensitive match")
-        btn.SetInitialSize() # adjust default size for the bitmap
-        btn.Bind(wx.EVT_TOGGLEBUTTON, self.on_case_toggle)
+        print "BEFORE", self.editor.last_search_settings['match_case']
+        btn = FlatBitmapToggleButton(parent, -1, 'match_case', self.editor.last_search_settings['match_case'], "Case sensitive match")
+        btn.Bind(wx.EVT_BUTTON, self.on_case_toggle)
         sizer.Add(btn, 0, wx.LEFT|wx.RIGHT, 2)
 
         if True:  # FIXME: regex not implemented yet
             return
 
-        btn = wx.ToggleButton(parent, -1, "", style=wx.BU_EXACTFIT)
-        img = ImageResource('match_regex')
-        bmp = img.create_bitmap()
-        btn.SetBitmap(bmp)
-        btn.SetToolTipString("Regex match")
-        btn.SetInitialSize() # adjust default size for the bitmap
-        btn.Bind(wx.EVT_TOGGLEBUTTON, self.on_regex_toggle)
+        btn = FlatBitmapToggleButton(parent, -1, 'match_regex', False, "Regular expressions")
+        btn.Bind(wx.EVT_BUTTON, self.on_regex_toggle)
         sizer.Add(btn, 0, wx.LEFT|wx.RIGHT, 2)
 
     def create_footer_controls(self, parent, sizer):
@@ -283,14 +290,18 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         evt.Skip()
 
     def on_case_toggle(self, evt):
-        log.debug("case: %s" % evt.IsChecked())
-        self.editor.last_search_settings['match_case'] = evt.IsChecked()
+        state = evt.IsChecked()
+        log.debug("case: %s" % state)
+        self.editor.last_search_settings['match_case'] = state
+        log.debug("case toggle: current search settings: %s" % str(self.editor.last_search_settings))
         self.perform()
         evt.Skip()
 
     def on_regex_toggle(self, evt):
-        log.debug("regex: %s" % evt.IsChecked())
-        self.editor.last_search_settings['regex'] = evt.IsChecked()
+        state = evt.IsChecked()
+        log.debug("regex: %s" % state)
+        self.editor.last_search_settings['regex'] = state
+        log.debug("regex toggle: current search settings: %s" % str(self.editor.last_search_settings))
         self.perform()
         evt.Skip()
 
@@ -303,7 +314,7 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         self.editor.process_command(cmd)
         self.search_command = cmd
         self.editor.last_search_settings["find"] = value
-        print self.editor.last_search_settings
+        log.debug("current search settings: %s" % str(self.editor.last_search_settings))
         self.clear_selection()
 
     def repeat(self, minibuffer=None):
