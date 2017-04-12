@@ -454,7 +454,7 @@ class BaseDisassembler(object):
             search_text = search_text.lower()
             matches = [(t.pc - s, t.pc - s + t.num_bytes) for t in self.info if search_text in t.instruction.lower()]
         else:
-            matches = [(t.pc - s, t.pc - s + t.num_bytes) for t in self.info if search_text in t.instruction or t.pc in mmap]
+            matches = [(t.pc - s, t.pc - s + t.num_bytes) for t in self.info if search_text in t.instruction]
         log.debug("instruction matches: %s" % str(matches))
 
         label_matches = self.search_labels(self.pc_label_cache, search_text, match_case)
