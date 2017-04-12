@@ -180,7 +180,10 @@ class HexEditTask(FrameworkTask):
                 CopyAsReprAction(),
                 id='copyspecial', name="Copy Special"),
             PasteAction(),
-            PasteAndRepeatAction(),
+            SMenu(
+                PasteAndRepeatAction(),
+                PasteCommentsAction(),
+                id='pastespecial', name="Paste Special"),
             ]
 
     def get_actions_Menu_Edit_SelectGroup(self):

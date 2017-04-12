@@ -1246,10 +1246,20 @@ class PasteAndRepeatAction(EditorAction):
     name = 'Paste and Repeat'
     accelerator = 'Shift+Ctrl+V'
     tooltip = 'Paste and repeat clipboard data until current selection is filled'
-    enabled_name = 'can_copy'
+    enabled_name = 'can_paste'
 
     def perform(self, event):
         self.active_editor.paste(PasteAndRepeatCommand)
+
+
+class PasteCommentsAction(EditorAction):
+    name = 'Paste Comments'
+    tooltip = 'Paste text as comment lines'
+    enabled_name = 'can_paste'
+    accelerator = 'F6'
+
+    def perform(self, event):
+        self.active_editor.paste(PasteCommentsCommand)
 
 
 class FindAction(EditorAction):
