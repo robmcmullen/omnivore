@@ -28,6 +28,11 @@ from omnivore.utils.textutil import parse_int_label_dict
 from omnivore.utils.nputil import count_in_range
 from omnivore.utils.jsonutil import dict_to_list
 
+if sys.platform == "darwin":
+    RADIO_STYLE = "toggle"
+else:
+    RADIO_STYLE = "radio"
+
 
 class FontChoiceGroup(TaskDynamicSubmenuGroup):
     """Dynamic menu group to display the available fonts
@@ -99,7 +104,7 @@ class EmulatorChoiceGroup(TaskDynamicSubmenuGroup):
 
 
 class UseEmulatorAction(EditorAction):
-    style = 'radio'
+    style = RADIO_STYLE
     emulator = Any
 
     def _name_default(self):
@@ -175,7 +180,7 @@ class AssemblerChoiceGroup(TaskDynamicSubmenuGroup):
 
 
 class UseAssemblerAction(EditorAction):
-    style = 'radio'
+    style = RADIO_STYLE
     assembler = Any
 
     def _name_default(self):
@@ -223,7 +228,7 @@ class FontRendererAction(EditorAction):
     """Radio buttons for changing font style
     """
     # Traits
-    style = 'radio'
+    style = RADIO_STYLE
 
     font_renderer = Any
 
@@ -243,7 +248,7 @@ class FontMappingAction(EditorAction):
     """Radio buttons for changing font style
     """
     # Traits
-    style = 'radio'
+    style = RADIO_STYLE
 
     font_mapping = Any
 
@@ -263,7 +268,7 @@ class BitmapRendererAction(EditorAction):
     """Radio buttons for changing font style
     """
     # Traits
-    style = 'radio'
+    style = RADIO_STYLE
 
     bitmap_renderer = Any
 
@@ -338,7 +343,7 @@ class UseColorsAction(EditorAction):
 
 
 class ColorStandardAction(EditorAction):
-    style = 'radio'
+    style = RADIO_STYLE
 
     color_standard = Int
 
@@ -371,7 +376,7 @@ class PredefinedMachineAction(EditorAction):
     """Radio buttons for changing font style
     """
     # Traits
-    style = 'radio'
+    style = RADIO_STYLE
 
     machine = Any
 
@@ -391,7 +396,7 @@ class ProcessorTypeAction(EditorAction):
     """Radio buttons for changing the processor type and therefore disassembler
     """
     # Traits
-    style = 'radio'
+    style = RADIO_STYLE
 
     disassembler = Any
 
@@ -411,7 +416,7 @@ class MemoryMapAction(EditorAction):
     """Radio buttons for changing the memory map
     """
     # Traits
-    style = 'radio'
+    style = RADIO_STYLE
 
     memory_map = Any
 
@@ -466,10 +471,6 @@ class SegmentParserAction(EditorAction):
             self.checked = new_state
 
 
-# Note: SegmentChoiceGroup isn't used with the addition of the segment list in
-# the sidebar, but I'm leaving this here for now to show the hacks needed on
-# MacOS since it doesn't handle radio buttons well.
-
 class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
     """Dynamic menu group to display the available fonts
     """
@@ -485,10 +486,7 @@ class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
         items = []
         if event_data is not None:
             for i, segment in enumerate(event_data):
-                if sys.platform == "darwin":
-                    action = UseSegmentAction(segment=segment, segment_number=i, task=self.task)
-                else:
-                    action = UseSegmentRadioAction(segment=segment, segment_number=i, task=self.task, checked=False)
+                action = UseSegmentAction(segment=segment, segment_number=i, task=self.task, checked=False)
                 log.debug("SegmentChoiceGroup: created %s for %s, num=%d" % (action, str(segment), i))
                 items.append(ActionItem(action=action, parent=self))
 
@@ -496,6 +494,8 @@ class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
 
 
 class UseSegmentAction(EditorAction):
+    style = RADIO_STYLE
+
     segment = Any
 
     segment_number = Int
@@ -505,10 +505,6 @@ class UseSegmentAction(EditorAction):
 
     def perform(self, event):
         self.active_editor.view_segment_number(self.segment_number)
-
-
-class UseSegmentRadioAction(UseSegmentAction):
-    style = 'radio'
 
     @on_trait_change('task.segment_selected')
     def _update_checked(self):

@@ -287,24 +287,6 @@ class FrameworkApplication(TasksApplication):
             event.window._wx_on_mousewheel = types.MethodType(_task_window_wx_on_mousewheel, event.window)
             event.window.control.Bind(wx.EVT_MOUSEWHEEL, event.window._wx_on_mousewheel)
 
-    def _window_closing_fired(self, event):
-        """The toolkit window doesn't exist yet.
-        """
-        # Workaround on MacOS to prevent a segfault that occurs only on exit
-        # when deleting a menu that contains multiple radio button groups. This
-        # works fine
-        if sys.platform == "darwin":
-            import pyface.ui.wx.action.menu_manager as menu_manager
-            menu_manager.Mac_no_delete_radio_group_on_exit_hack = True
-
-    def _window_closed_fired(self, event):
-        """The toolkit window doesn't exist any more.
-        """
-        # Remove the MacOS workaround set above in _window_closing_fired
-        if sys.platform == "darwin":
-            import pyface.ui.wx.action.menu_manager as menu_manager
-            menu_manager.Mac_no_delete_radio_group_on_exit_hack = False
-
     #### API
 
     def guess_document(self, guess):

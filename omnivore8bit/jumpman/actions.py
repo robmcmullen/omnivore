@@ -14,7 +14,7 @@ from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, ChooseO
 from omnivore.utils.textutil import text_to_int
 from omnivore.framework.actions import SelectAllAction, SelectNoneAction, SelectInvertAction, TaskDynamicSubmenuGroup
 from omnivore8bit.utils.jumpman import DrawObjectBounds, is_valid_level_segment
-from omnivore8bit.hex_edit.actions import UseSegmentAction, UseSegmentRadioAction
+from omnivore8bit.hex_edit.actions import UseSegmentAction
 
 from commands import *
 
@@ -179,10 +179,7 @@ class LevelListGroup(TaskDynamicSubmenuGroup):
         if event_data is not None:
             for i, segment in enumerate(event_data):
                 if is_valid_level_segment(segment):
-                    if sys.platform == "darwin":
-                        action = UseSegmentAction(segment=segment, segment_number=i, task=self.task)
-                    else:
-                        action = UseSegmentRadioAction(segment=segment, segment_number=i, task=self.task, checked=False)
+                    action = UseSegmentAction(segment=segment, segment_number=i, task=self.task, checked=False)
                     log.debug("LevelListGroup: created %s for %s, num=%d" % (action, str(segment), i))
                     items.append(ActionItem(action=action, parent=self))
 
