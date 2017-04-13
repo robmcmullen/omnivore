@@ -127,6 +127,7 @@ class BaseDisassembler(object):
         self.info = None
         self._pc_label_cache = None
         self._dest_pc_label_cache = None
+        self._computed_directive_cache = None
 
     @classmethod
     def get_nop(cls):
@@ -163,7 +164,7 @@ class BaseDisassembler(object):
         self.fast.add_chunk_processor(disassembler_name, style)
 
     def disassemble_segment(self, segment):
-        self.invalidate_label_caches()
+        self.invalidate_caches()
         self.segment = segment
         self.start_addr = segment.start_addr
         self.end_addr = self.start_addr + len(segment)
@@ -183,10 +184,17 @@ class BaseDisassembler(object):
             self.create_label_caches()
         return self._dest_pc_label_cache
 
-    def invalidate_label_caches(self):
+    @property
+    def computed_directive_cache(self):
+        if self._computed_directive_cache is None:
+            self.create_computed_directive_cache()
+        return self._computed_directive_cache
+
+    def invalidate_caches(self):
         log.debug("Invalidating label caches")
         self._pc_label_cache = None
         self._dest_pc_label_cache = None
+        self._computed_directive_cache = None
 
     def create_label_caches(self):
         pc_labels = {}
@@ -202,6 +210,16 @@ class BaseDisassembler(object):
         self._pc_label_cache = pc_labels
         self._dest_pc_label_cache = dest_pc_labels
         log.debug("Created label caches: %d in pc, %d in dest_pc" % (len(pc_labels), len(dest_pc_labels)))
+
+    def create_computed_directive_cache(self):
+        pc_to_directive = {}
+        for line in self.info:
+            if line.flag & udis_fast.flag_data_bytes:
+                operand = self.get_operand_from_instruction(line.instruction)
+                text = self.format_data_directive_bytes(operand)
+                pc_to_directive[line.pc] = text
+        self._computed_directive_cache = pc_to_directive
+        log.debug("Created directive cache, %d lines" % (len(pc_to_directive)))
 
     def get_origin(self, pc):
         return "%s $%s" % (self.asm_origin, self.fmt_hex4 % pc)
@@ -464,6 +482,10 @@ class BaseDisassembler(object):
         label_matches = self.search_labels(self.dest_pc_label_cache, search_text, match_case)
         matches.extend(label_matches)
         log.debug("dest pc label matches: %s" % str(label_matches))
+
+        label_matches = self.search_labels(self.computed_directive_cache, search_text, match_case)
+        matches.extend(label_matches)
+        log.debug("computed directives match: %s" % str(label_matches))
 
         return matches
 
