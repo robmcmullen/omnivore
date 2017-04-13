@@ -61,11 +61,11 @@ class HexEditTask(FrameworkTask):
     ###########################################################################
 
     def _hex_grid_lower_case_default(self):
-        prefs = self.get_preferences()
+        prefs = self.preferences
         return prefs.hex_grid_lower_case
 
     def _assembly_lower_case_default(self):
-        prefs = self.get_preferences()
+        prefs = self.preferences
         return prefs.assembly_lower_case
 
     def _default_layout_default(self):
@@ -100,14 +100,15 @@ class HexEditTask(FrameworkTask):
         if editor is not None and editor.document.segments:
             editor.rebuild_ui()
 
+    # Properties
+
+    @property
+    def hex_format_character(self):
+        return "x" if self.hex_grid_lower_case else "X"
+
     ###########################################################################
     # 'FrameworkTask' interface.
     ###########################################################################
-
-    def initialize_class_preferences(self):
-        prefs = self.get_preferences()
-        ByteTable.update_preferences(prefs)
-        DisassemblyTable.update_preferences(prefs)
 
     def get_editor(self, guess=None):
         """ Opens a new empty window
@@ -117,16 +118,12 @@ class HexEditTask(FrameworkTask):
 
     @on_trait_change('window.application.preferences_changed_event')
     def refresh_from_new_preferences(self):
+        prefs = self.preferences
+        self.hex_grid_lower_case = prefs.hex_grid_lower_case
+        self.assembly_lower_case = prefs.assembly_lower_case
         e = self.active_editor
         if e is not None:
-            prefs = self.get_preferences()
-            e.machine.text_font = prefs.text_font
-            e.map_width = prefs.map_width
-            e.bitmap_width = prefs.bitmap_width
-            self.hex_grid_lower_case = prefs.hex_grid_lower_case
-            self.assembly_lower_case = prefs.assembly_lower_case
-            ByteTable.update_preferences(prefs)
-            DisassemblyTable.update_preferences(prefs)
+            e.process_preference_change(prefs)
             e.reconfigure_panes()
 
     def get_font_mapping_actions(self, task=None):

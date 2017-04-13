@@ -72,20 +72,11 @@ class BitmapEditTask(HexEditTask):
     # 'FrameworkTask' interface.
     ###########################################################################
 
-    def initialize_class_preferences(self):
-        prefs = self.get_preferences()
-
     def get_editor(self, guess=None):
         """ Opens a new empty window
         """
         editor = BitmapEditor()
         return editor
-
-    @on_trait_change('window.application.preferences_changed_event')
-    def refresh_from_new_preferences(self):
-        e = self.active_editor
-        if e is not None:
-            prefs = self.get_preferences()
 
     def get_actions_Menu_View_ViewConfigGroup(self):
         return self.get_common_ViewConfigGroup()

@@ -211,6 +211,11 @@ class FrameworkEditor(Editor):
         """
         pass
 
+    def process_preference_change(self, prefs):
+        """ Update any values dependent on application preferences
+        """
+        pass
+
     @property
     def document_length(self):
         return len(self.document)

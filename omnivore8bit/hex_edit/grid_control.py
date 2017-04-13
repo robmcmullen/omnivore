@@ -147,6 +147,7 @@ class ByteTable(ByteGridTable):
 
     def set_editor(self, editor):
         self.editor = editor
+        self.set_display_format(editor)
         self.segment = segment = self.editor.segment
         self.start_offset = segment.start_addr & 0x0f
         log.debug("segment %s: rows=%d cols=%d len=%d" % (segment, self._rows, self.bytes_per_row, len(segment)))
@@ -179,24 +180,20 @@ class ByteTable(ByteGridTable):
     def get_col_size(self, col, char_width=8):
         return 2 * char_width + self.extra_column_padding
 
-    def get_value_style_upper(self, row, col):
+    def get_value_style(self, row, col):
         i, _ = self.get_index_range(row, col)
-        return "%02X" % self.segment[i], self.segment.style[i]
-
-    def get_value_style_lower(self, row, col):
-        i, _ = self.get_index_range(row, col)
-        return "%02x" % self.segment[i], self.segment.style[i]
+        return self.fmt_hex2 % self.segment[i], self.segment.style[i]
 
     def get_label_at_index(self, index):
-        return self.segment.label(index, self.get_value_style == self.get_value_style_lower)
+        # Can't just return hex value of index because some segments (like the
+        # raw sector segment) use different labels
+        return self.segment.label(index, self.fmt_hex1 == "%x")
 
     def GetRowLabelValue(self, row):
         return self.get_label_at_index(row*self.bytes_per_row - self.start_offset)
 
     def GetColLabelValue(self, col):
-        if self.get_value_style == self.get_value_style_lower:
-            return "%x" % col
-        return "%X" % col
+        return self.fmt_hex1 % col
 
     def SetValue(self, row, col, value):
         val=int(value,16)

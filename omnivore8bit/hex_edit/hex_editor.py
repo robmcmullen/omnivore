@@ -102,14 +102,14 @@ class HexEditor(FrameworkEditor):
         return DefaultSegment(rawdata)
 
     def _map_width_default(self):
-        prefs = self.task.get_preferences()
+        prefs = self.task.preferences
         return prefs.map_width
 
     def _map_zoom_default(self):
         return 2
 
     def _bitmap_width_default(self):
-        prefs = self.task.get_preferences()
+        prefs = self.task.preferences
         return prefs.bitmap_width
 
     def _bitmap_zoom_default(self):
@@ -177,6 +177,12 @@ class HexEditor(FrameworkEditor):
         self.compare_to_baseline()
         self.can_resize_document = self.document.can_resize
         self.task.machine_menu_changed = self.machine
+
+    def process_preference_change(self, prefs):
+        log.debug("%s processing preferences change" % self.task.name)
+        self.machine.set_text_font(prefs.text_font)
+        self.map_width = prefs.map_width
+        self.bitmap_width = prefs.bitmap_width
 
     def copy_view_properties(self, old_editor):
         try:
@@ -342,6 +348,7 @@ class HexEditor(FrameworkEditor):
         self.task.segment_selected = self.segment_number
 
     def reconfigure_panes(self):
+        log.debug("%s: reconfigure_panes" % self.task.name)
         self.hex_edit.recalc_view()
         self.disassembly.recalc_view()
         self.bitmap.recalc_view()

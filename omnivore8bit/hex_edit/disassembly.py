@@ -21,18 +21,12 @@ class DisassemblyTable(ByteGridTable):
     column_labels = ["Bytes", "Disassembly", "Comment"]
     column_sizes = [11, 18, 30]
 
-    @classmethod
-    def update_preferences(cls, prefs):
-        # Can't call ByteGridTable.update_preferences(prefs) because the
-        # get_value_style method would be assigned from the base class and not
-        # this DisassemblyTable
-        if prefs.hex_grid_lower_case:
-            cls.get_value_style = cls.get_value_style_lower
-        else:
-            cls.get_value_style = cls.get_value_style_upper
+    def set_display_format(self, editor):
+        ByteGridTable.set_display_format(self, editor)
+        prefs = editor.task.preferences
         for i, w in enumerate(prefs.disassembly_column_widths):
             if w > 0:
-                cls.column_pixel_sizes[i] = w
+                self.__class__.column_pixel_sizes[i] = w
 
     def __init__(self):
         ByteGridTable.__init__(self)
@@ -47,6 +41,7 @@ class DisassemblyTable(ByteGridTable):
 
     def set_editor(self, editor):
         self.editor = editor
+        self.set_display_format(editor)
         self.segment = segment = self.editor.segment
         self.lines = None
         self.index_to_row = []
@@ -54,13 +49,6 @@ class DisassemblyTable(ByteGridTable):
         for i, name in iter_disasm_styles():
             self.disassembler.add_chunk_processor(name, i)
         self.highlight_flags = self.disassembler.highlight_flags
-        self.hex_lower = editor.task.hex_grid_lower_case
-        if self.hex_lower:
-            self.fmt_hex2 = "%02x"
-            self.fmt_hex4 = "%04x"
-        else:
-            self.fmt_hex2 = "%02X"
-            self.fmt_hex4 = "%04X"
         f = editor.machine.assembler
         self.fmt_hex_directive = f['data byte']
         self.fmt_hex_digits = f['data byte prefix'] + "%c%c"
@@ -173,7 +161,7 @@ class DisassemblyTable(ByteGridTable):
         except IndexError:
             return 0
 
-    def get_value_style_lower(self, row, col, operand_labels_start_pc=-1, operand_labels_end_pc=-1, extra_labels={}, offset_operand_labels={}, line=None):
+    def get_value_style(self, row, col, operand_labels_start_pc=-1, operand_labels_end_pc=-1, extra_labels={}, offset_operand_labels={}, line=None):
         if line is None:
             line = self.lines[row]
         pc = line.pc
@@ -193,8 +181,6 @@ class DisassemblyTable(ByteGridTable):
             text = self.disassembler.format_instruction(index, line)
         return text, style
 
-    get_value_style_upper = get_value_style_lower
-
     def get_style_override(self, row, col, style):
         if self.lines[row].flag & self.highlight_flags:
             return style|diff_bit_mask
@@ -206,9 +192,7 @@ class DisassemblyTable(ByteGridTable):
 
     def get_label_at_row(self, row):
         addr = self.get_pc(row)
-        if self.get_value_style == self.get_value_style_lower:
-            return "%04x" % addr
-        return "%04X" % addr
+        return self.fmt_hex4 % addr
 
     def GetRowLabelValue(self, row):
         if self.get_data_rows() > 0:
@@ -264,7 +248,7 @@ class DisassemblyPanel(ByteGrid):
         self.pending_index = -1
 
     def save_prefs(self):
-        prefs = self.task.get_preferences()
+        prefs = self.task.preferences
         widths = [0] * len(prefs.disassembly_column_widths)
         for i, w in self.table.column_pixel_sizes.iteritems():
             widths[i] = w

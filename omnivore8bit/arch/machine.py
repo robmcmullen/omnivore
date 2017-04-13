@@ -112,7 +112,7 @@ class Machine(HasTraits):
             except ValueError:
                 # bad JSON format
                 cls.font_list = []
-        prefs = editor.task.get_preferences()
+        prefs = editor.task.preferences
         try:
             cls.text_font = prefs.text_font
         except AttributeError:
@@ -184,11 +184,10 @@ class Machine(HasTraits):
         cls.init_assemblers(editor)
 
     @classmethod
-    def set_text_font(cls, editor, font, color):
-        cls.text_color = color
+    def set_text_font(cls, font, color=None):
+        if color is not None:
+            cls.text_color = color
         cls.text_font = font
-        prefs = editor.task.get_preferences()
-        prefs.text_font = font
 
     @classmethod
     def find_machine_by_mime(cls, mime):

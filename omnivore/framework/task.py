@@ -138,14 +138,10 @@ class FrameworkTask(Task):
 
     def initialized(self):
         self.window.application.remember_perspectives(self.window)
-        self.initialize_class_preferences()
         c = self.editor_area.control
         c.Bind(aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN, self.on_tab_context_menu)
         c.Bind(aui.EVT_AUINOTEBOOK_BG_RIGHT_DOWN, self.on_tab_background_context_menu)
         c.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.on_tab_pane_close)
-
-    def initialize_class_preferences(self):
-        pass
 
     def activated(self):
         log.debug("  status bar: %s" % self.status_bar)
@@ -336,7 +332,8 @@ class FrameworkTask(Task):
     # 'FrameworkTask' convenience functions.
     ###########################################################################
 
-    def get_preferences(self):
+    @property
+    def preferences(self):
         return self.window.application.get_preferences(self.preferences_helper)
 
     def create_menu(self, location, menu_name, *group_names):

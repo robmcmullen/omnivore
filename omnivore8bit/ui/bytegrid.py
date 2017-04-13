@@ -128,12 +128,11 @@ class ByteGridTable(Grid.PyGridTableBase):
     column_pixel_sizes = {}
     extra_column_padding = 4
 
-    @classmethod
-    def update_preferences(cls, prefs):
-        if prefs.hex_grid_lower_case:
-            cls.get_value_style = cls.get_value_style_lower
-        else:
-            cls.get_value_style = cls.get_value_style_upper
+    def set_display_format(self, editor):
+        fmt_char = editor.task.hex_format_character
+        self.fmt_hex1 = "%" + fmt_char
+        self.fmt_hex2 = "%02" + fmt_char
+        self.fmt_hex4 = "%04" + fmt_char
 
     def set_default_col_size(self, col, pixel_size):
         self.__class__.column_pixel_sizes[col] = pixel_size
@@ -228,13 +227,8 @@ class ByteGridTable(Grid.PyGridTableBase):
     def GetColLabelValue(self, col):
         return self.column_labels[col]
 
-    def get_value_style_upper(self, row, col):
+    def get_value_style(self, row, col):
         raise NotImplementedError
-
-    def get_value_style_lower(self, row, col):
-        raise NotImplementedError
-
-    get_value_style = get_value_style_lower
 
     def get_style_override(self, row, col, style):
         """Allow subclasses to change the style"""

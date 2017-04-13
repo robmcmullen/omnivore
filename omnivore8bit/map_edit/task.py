@@ -71,9 +71,6 @@ class MapEditTask(HexEditTask):
     # 'FrameworkTask' interface.
     ###########################################################################
 
-    def initialize_class_preferences(self):
-        prefs = self.get_preferences()
-
     def get_editor(self, guess=None):
         """ Opens a new empty window
         """
@@ -84,7 +81,7 @@ class MapEditTask(HexEditTask):
     def refresh_from_new_preferences(self):
         e = self.active_editor
         if e is not None:
-            prefs = self.get_preferences()
+            prefs = self.preferences
 
     def get_actions_Menu_View_ViewConfigGroup(self):
         return self.get_common_ViewConfigGroup()

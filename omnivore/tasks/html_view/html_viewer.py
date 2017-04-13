@@ -48,7 +48,7 @@ class HtmlViewer(FrameworkEditor):
         self.control.SetPage(text)
 
     def set_preferences(self):
-        prefs = self.task.get_preferences()
+        prefs = self.task.preferences
         self.control.SetStandardFonts(prefs.font_size, prefs.normal_face, prefs.fixed_face)
 
     ###########################################################################

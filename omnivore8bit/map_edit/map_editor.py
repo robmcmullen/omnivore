@@ -410,6 +410,10 @@ class MapEditor(HexEditor):
         self.find_segment("Playfield map")
         self.update_mouse_mode(SelectMode)
 
+    def process_preference_change(self, prefs):
+        # override HexEditor because those preferences don't apply here
+        pass
+
     def view_segment_set_width(self, segment):
         self.map_width = segment.map_width
 

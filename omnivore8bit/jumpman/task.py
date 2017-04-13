@@ -92,7 +92,7 @@ class JumpmanEditTask(HexEditTask):
     def refresh_from_new_preferences(self):
         e = self.active_editor
         if e is not None:
-            prefs = self.get_preferences()
+            prefs = self.preferences
 
     def get_actions_Menu_Edit_UndoGroup(self):
         return [
