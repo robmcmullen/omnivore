@@ -258,6 +258,11 @@ class SidebarPane(FrameworkPane):
         if active is not None and active.is_shown:
             active.managed_window.refresh_view()
 
+    def recalc_active(self):
+        active = self.control._radio
+        if active is not None and active.is_shown:
+            active.managed_window.recalc_view()
+
 
 class DisassemblyPane(FrameworkPane):
     #### TaskPane interface ###################################################

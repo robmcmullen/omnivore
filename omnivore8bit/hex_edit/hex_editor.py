@@ -338,8 +338,7 @@ class HexEditor(FrameworkEditor):
         # task.segment_selected trait
         if self.segment_list is not None:
             self.segment_list.set_segments(self.document.segments, self.segment_number)
-        else:
-            self.sidebar.refresh_active()
+        self.sidebar.recalc_active()
         if self.segment_parser is not None:
             self.segment_parser_label = self.segment_parser.menu_name
         else:
@@ -683,8 +682,6 @@ class HexEditor(FrameworkEditor):
             self.update_segments_ui()
             if self.segment_list is not None:
                 self.segment_list.ensure_visible(segment)
-            else:
-                self.sidebar.refresh_active()
         self.metadata_dirty = True
 
     def delete_user_segment(self, segment):
@@ -710,8 +707,7 @@ class HexEditor(FrameworkEditor):
 #        self.window.application.save_log(str(history), "command_log", ".log")
         if self.undo_history is not None:
             self.undo_history.update_history()
-        else:
-            self.sidebar.refresh_active()
+        self.sidebar.refresh_active()
 
     def mark_index_range_changed(self, index_range):
         self.disassembly.restart_disassembly(index_range[0])
