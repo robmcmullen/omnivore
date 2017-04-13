@@ -4,6 +4,9 @@ import sys
 import traceback
 import wx
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class UndoHistoryPanel(wx.ListBox):
     def __init__(self, parent, task, **kwargs):
