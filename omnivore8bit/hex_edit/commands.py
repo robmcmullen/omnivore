@@ -545,7 +545,9 @@ class FindAllCommand(Command):
                 except ValueError, e:
                     errors.append(str(e))
 
-            if match_dict:
+            if errors:
+                undo.flags.message = " ".join(errors)
+            else:
                 self.all_matches = [(start, match_dict[start]) for start in sorted(match_dict.keys())]
 
                 #print "Find:", self.all_matches
@@ -565,8 +567,6 @@ class FindAllCommand(Command):
                     undo.flags.cursor_index = start
                     undo.flags.select_range = True
                     undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (self.current_match_index + 1, len(self.all_matches), start + self.start_addr, self.match_ids[start]))
-            elif errors:
-                undo.flags.message = " ".join(errors)
             undo.flags.refresh_needed = True
 
 
