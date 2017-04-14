@@ -20,7 +20,16 @@ log = logging.getLogger(__name__)
 
 
 class ShowLoggerAction(Action):
-    """ An action for creating a new empty file that can be edited by a particular task
+    """ Displays a window that can be used to turn on debugging of particular
+    parts of the program.
+
+    The log levels shown initially are the default log levels for each logger.
+    Using the ``Filter`` text entry box, you can enter a string or a comma
+    separated list of strings that will be used to select which loggers get
+    switched to *DEBUG* mode. Everything else gets set to its default state,
+    usually either *INFO* or *WARNING*.
+
+    The string is not a regular expression, but will match partial strings.
     """
     name = "Show Debug Log"
     tooltip = "Open a window to view and manage debug logging"

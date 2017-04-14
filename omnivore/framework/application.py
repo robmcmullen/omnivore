@@ -25,6 +25,7 @@ except ImportError:
 
 from filesystem import init_filesystems
 from document import BaseDocument
+import documentation
 
 import logging
 log = logging.getLogger(__name__)
@@ -264,13 +265,16 @@ class FrameworkApplication(TasksApplication):
     def build_docs(self):
         for factory in self.task_factories:
             print("%s %s" % (factory.id, factory.name))
+            if "hex" not in factory.id:
+                continue
             task = self.create_task(factory.id)
             try:
                 self.add_task_to_window(self.active_window, task)
             except AttributeError, e:
                 print "Error creating task %s: %s" % (factory.id, e)
                 continue
-            task.get_menu_documentation()
+            hierarchy = task.get_menu_action_hierarchy()
+            idocs = documentation.parse_hierarchy(hierarchy)
 
     def check_clipboard_can_paste(self, editor):
         data_formats = [o.GetFormat() for o in editor.supported_clipboard_data_objects]
