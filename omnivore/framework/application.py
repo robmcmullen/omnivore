@@ -203,6 +203,7 @@ class FrameworkApplication(TasksApplication):
         parser = argparse.ArgumentParser(description="Application parser")
         parser.add_argument("-t", "--task_id", "--edit_with", action="store", default="", help="Use the editing mode specified by this task id for all files listed on the command line")
         parser.add_argument("--show_editors", action="store_true", default=False, help="List all task ids")
+        parser.add_argument("--build_docs", action="store_true", default=False, help="Build documentation from the menubar")
         options, extra_args = parser.parse_known_args(self.command_line_args)
         if options.show_editors:
             for factory in self.task_factories:
@@ -223,6 +224,8 @@ class FrameworkApplication(TasksApplication):
         app = wx.GetApp()
         app.tasks_application = self
 
+        if options.build_docs:
+            self.on_idle = self.on_idle_build_docs
         app.Bind(wx.EVT_IDLE, self.on_idle)
 
     def _application_exiting_fired(self):
@@ -230,7 +233,7 @@ class FrameworkApplication(TasksApplication):
         if self.downloader:
             self.downloader = None
 
-    def on_idle(self, evt):
+    def on_idle_clipboard_check(self, evt):
         evt.Skip()
         if not self.active_window:
             return
@@ -242,6 +245,32 @@ class FrameworkApplication(TasksApplication):
             wx.CallAfter(self.check_clipboard_can_paste, editor)
             self.last_clipboard_check_time = time.time()
         editor.perform_idle()
+
+    on_idle = on_idle_clipboard_check
+
+    def on_idle_build_docs(self, evt):
+        # Only call this once, so reset idle handler
+        self.on_idle = self.on_idle_clipboard_check
+
+        evt.Skip()
+        if not self.active_window:
+            return
+        editor = self.active_window.active_task.active_editor
+        if editor is None:
+            return
+        print "BUILDING DOCS!", editor
+        wx.CallAfter(self.build_docs)
+
+    def build_docs(self):
+        for factory in self.task_factories:
+            print("%s %s" % (factory.id, factory.name))
+            task = self.create_task(factory.id)
+            try:
+                self.add_task_to_window(self.active_window, task)
+            except AttributeError, e:
+                print "Error creating task %s: %s" % (factory.id, e)
+                continue
+            task.get_menu_documentation()
 
     def check_clipboard_can_paste(self, editor):
         data_formats = [o.GetFormat() for o in editor.supported_clipboard_data_objects]
