@@ -43,6 +43,14 @@ class JumpmanEditTask(HexEditTask):
 
     #### Menu events ##########################################################
 
+    ui_layout_overrides = {
+        "menu": {
+            "order": ["File", "Edit", "View", "Jumpman", "Disk Image", "Documents", "Window", "Help"],
+            "Disk Image": ["ParserGroup", "EmulatorGroup", "ActionGroup"],
+            "Jumpman":  ["LevelGroup", "SelectionGroup", "CustomCodeGroup"],
+        },
+    }
+
     ###########################################################################
     # 'Task' interface.
     ###########################################################################

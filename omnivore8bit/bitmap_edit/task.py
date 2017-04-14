@@ -41,6 +41,13 @@ class BitmapEditTask(HexEditTask):
 
     #### Menu events ##########################################################
 
+    ui_layout_overrides = {
+        "menu": {
+            "order": ["File", "Edit", "View", "Segment", "Documents", "Window", "Help"],
+            "Segment": ["ListGroup", "ActionGroup"],
+        },
+    }
+
     ###########################################################################
     # 'Task' interface.
     ###########################################################################
@@ -50,17 +57,6 @@ class BitmapEditTask(HexEditTask):
 
     def create_dock_panes(self):
         return pane_layout.pane_create()
-
-    def _extra_actions_default(self):
-        segment_menu = self.create_menu("Menu", "Segment", "ListGroup", "ActionGroup")
-        actions = [
-            # Menubar additions
-            SchemaAddition(factory=lambda: segment_menu,
-                           path='MenuBar',
-                           after="Edit",
-                           ),
-            ]
-        return actions
 
     def _tool_bars_default(self):
         toolbars = []
