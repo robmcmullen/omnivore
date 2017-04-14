@@ -282,13 +282,14 @@ class NameChangeAction(EditorAction):
                 self.name = str(self._get_attr(self.object,
                                                self.menu_item_name, 'Undo'))
             else:
-                self.name = 'Undo'
+                self.name = getattr(self, 'default_name', 'Undo')
         else:
-            self.name = 'Undo'
+            self.name = getattr(self, 'default_name', 'Undo')
 
 
 class UndoAction(NameChangeAction):
-    name = 'Undo'
+    default_name = 'Undo'
+    name = ''
     accelerator = 'Ctrl+Z'
     tooltip = 'Undo last action'
     image = ImageResource('undo')
@@ -300,7 +301,8 @@ class UndoAction(NameChangeAction):
 
 
 class RedoAction(NameChangeAction):
-    name = 'Redo'
+    default_name = 'Redo'
+    name = ''
     accelerator = 'Ctrl+Shift+Z'
     tooltip = 'Redo the last undone action'
     image = ImageResource('redo')
