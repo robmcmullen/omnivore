@@ -293,7 +293,6 @@ class SegmentData(object):
             d = self.data.base.copy()
             s = self.style.base.copy()
             start, end = self.byte_bounds_offset()
-            print "copy: start, end =", start, end
             copy = SegmentData(d[start:end], s[start:end])
         return copy
 

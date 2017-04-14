@@ -49,9 +49,7 @@ class SegmentParser(object):
         json. Once a version gets out in the wild and additional attributes are
         added to a segment, a default value should be applied here.
         """
-        print "UPDATING!!!!", state
         self.__dict__.update(state)
-        print self.segments
 
     def parse(self):
         r = self.segment_data
