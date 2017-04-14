@@ -129,7 +129,9 @@ class ByteGridTable(Grid.PyGridTableBase):
     extra_column_padding = 4
 
     def set_display_format(self, editor):
-        fmt_char = editor.task.hex_format_character
+        self.set_fmt_hex(editor.task.hex_format_character)
+
+    def set_fmt_hex(self, fmt_char):
         self.fmt_hex1 = "%" + fmt_char
         self.fmt_hex2 = "%02" + fmt_char
         self.fmt_hex4 = "%04" + fmt_char
@@ -142,6 +144,7 @@ class ByteGridTable(Grid.PyGridTableBase):
 
         self._rows = 1
         self._cols = len(self.column_labels)
+        self.set_fmt_hex("x")
 
     def get_data_rows(self):
         """Return current number of rows as calculated from the size of the
