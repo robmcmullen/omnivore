@@ -11,6 +11,7 @@ from pyface.tasks.api import Task, TaskWindow, TaskLayout, TaskWindowLayout, Pan
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
 from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
     SMenu, SToolBar, TaskAction, TaskToggleGroup
+from pyface.tasks.action.schema import Schema
 from traits.api import provides, on_trait_change, Property, Instance, Bool, Str, Unicode, Int, Event
 from apptools.preferences.api import PreferencesHelper
 
@@ -193,6 +194,9 @@ class FrameworkTask(Task):
         if self.id not in self.activated_task_ids:
             self.activated_task_ids.add(self.id)
             self.first_time_activated()
+
+        if "hex_edit" in self.id:
+            self.get_menu_documentation()
 
     def first_time_activated(self):
         """ Called the first time a task is activated in the application.
@@ -731,7 +735,16 @@ class FrameworkTask(Task):
     # Protected interface.
     ###########################################################################
 
-    def _iter_schema_items(self, items):
+    def get_menu_documentation(self):
+        for action, depth in self._iter_schema_items(self.menu_bar.items):
+            if hasattr(action, 'name'):
+                log.debug("menu: %s %s %s" % (depth, action.name, action))
+            elif hasattr(action, 'action'):
+                log.debug("action: %s %s %s" % (depth, action.action.name, action.action))
+
+        #sys.exit()
+
+    def _iter_schema_items(self, items, depth=0):
         """Generator to pull all Actions out of the list of Schemas
         
         Schemas may contain other schemas, which requires this recursive
@@ -743,12 +756,46 @@ class FrameworkTask(Task):
             for action in self._iter_schema_items(action_schemas):
                 # do something
         """
+        group_depth = 0
+        mgr_depth = 0
         for item in items:
-            if hasattr(item, 'items'):
-                for a in self._iter_schema_items(item.items):
-                    yield a
+            if hasattr(item, 'controller'):
+                log.debug("skipping MenuManager: %d %s" % (depth, str(item)))
+                mgr_depth = -1
             else:
-                yield item
+                log.debug("encountered item: %d %s" % (depth, str(item)))
+                yield item, depth
+                if item.__class__.__name__ == "Group":
+                    group_depth = -1
+                if hasattr(item, 'groups'):
+                    for a, subdepth in self._iter_schema_groups(item.groups, depth+1-group_depth-mgr_depth):
+                        yield a, subdepth
+                elif hasattr(item, 'items'):
+                    for a, subdepth in self._iter_schema_items(item.items, depth+1-group_depth-mgr_depth):
+                        yield a, subdepth
+
+    def _iter_schema_groups(self, groups, depth=0):
+        """Generator to pull all Actions out of the list of Schemas
+        
+        Schemas may contain other schemas, which requires this recursive
+        approach.
+        
+        Usage:
+            action_schemas = list(self.menu_bar.items)
+            action_schemas.extend(self.tool_bars)
+            for action in self._iter_schema_items(action_schemas):
+                # do something
+        """
+        for item in groups:
+            log.debug("encountered group: %d %s" % (depth, str(item)))
+            print "encountered group: " + str(depth) + " " + str(item)
+            yield item, depth
+            if hasattr(item, 'groups'):
+                for a, subdepth in self._iter_schema_groups(item.groups, depth+1):
+                    yield a, subdepth
+            elif hasattr(item, 'items'):
+                for a, subdepth in self._iter_schema_items(item.items, depth+1):
+                    yield a, subdepth
 
     def _prompt_for_save(self):
         """ Prompts the user to save if necessary. Returns whether the dialog
