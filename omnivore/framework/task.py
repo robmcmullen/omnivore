@@ -743,7 +743,7 @@ class FrameworkTask(Task):
 
     def get_menu_action_hierarchy(self):
         hierarchy = []
-        self.dump(self.window.menu_bar_manager, hierarchy=hierarchy)
+        self.pyface_dump_manager(self.window.menu_bar_manager, hierarchy=hierarchy)
         for mgr in self.window.tool_bar_managers:
             self.pyface_dump_manager(mgr, hierarchy=hierarchy)
         # for path, action in hierarchy:
