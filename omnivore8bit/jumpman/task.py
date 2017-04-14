@@ -61,22 +61,6 @@ class JumpmanEditTask(HexEditTask):
     def create_dock_panes(self):
         return pane_layout.pane_create()
 
-    def _extra_actions_default(self):
-        data_menu = self.create_menu("Menu", "Disk Image", "ParserGroup", "EmulatorGroup", "ActionGroup")
-        jumpman_menu = self.create_menu("Menu", "Jumpman", "LevelGroup", "SelectionGroup", "CustomCodeGroup")
-        actions = [
-            # Menubar additions
-            SchemaAddition(factory=lambda: jumpman_menu,
-                           path='MenuBar',
-                           after="Edit",
-                           ),
-            SchemaAddition(factory=lambda: data_menu,
-                           path='MenuBar',
-                           after="Edit",
-                           ),
-            ]
-        return actions
-
     def _tool_bars_default(self):
         toolbars = []
         toolbars.append(get_toolbar_group("%s:Modes" % self.id, JumpmanEditor.valid_mouse_modes))
