@@ -88,6 +88,33 @@ class FrameworkTask(Task):
 
     error_email_to = Str
 
+    # Regular ol' class attributes here
+
+    # description of menus
+    ui_layout_description = {
+        "menu": {
+            "order": ["File", "Edit", "View", "Documents", "Window", "Help"],
+            "File": ["NewGroup", "OpenGroup", "ImportGroup", "SaveGroup", "RevertGroup", "PrintGroup", "ExportGroup", "ExitGroup"],
+            "Edit": ["UndoGroup", "CopyPasteGroup", "SelectGroup", "FindGroup", "PrefGroup"],
+            "View": ["ViewPredefinedGroup", "ViewZoomGroup", "ViewChangeGroup", "ViewConfigGroup", "ViewToggleGroup", "TaskGroup", "ViewDebugGroup"],
+            "Documents": ["DocumentGroup"],
+            "Window": ["NewTaskGroup", "WindowGroup"],
+            "Help": ["AboutGroup", "DocGroup", "BugReportGroup", "DebugGroup"],
+        },
+        "toolbar": {
+            "order": ["File", "Edit", "View"],
+            "File": ["NewGroup", "OpenGroup", "SaveGroup"],
+            "Edit": ["UndoGroup", "CopyPasteGroup", "SelectGroup", "FindGroup"],
+            "View": ["ViewZoomGroup", "ViewChangeGroup", "ViewConfigGroup"],
+        },
+    }
+
+    # subclasses can make changes by putting entries into this structure.
+    # Entries here will replace items in the ui_layout_description dict
+    ui_layout_overrides = {}
+
+    # IAbout interface
+
     def _about_version_default(self):
         from omnivore import __version__
         return __version__
@@ -99,23 +126,28 @@ class FrameworkTask(Task):
     def _icon_default(self):
         return ImageResource('omnivore')
 
+    def get_layout_description(self, category, title):
+        try:
+            print self, self.__class__, self.name, self.ui_layout_overrides
+            return self.ui_layout_overrides[category][title]
+        except KeyError:
+            return self.ui_layout_description[category][title]
+        log.error("Ui for %s, %s not found s" % (category, title))
+
     def _menu_bar_default(self):
         menus = []
-        self.add_menu(menus, "Menu", "File", "NewGroup", "OpenGroup", "ImportGroup", "SaveGroup", "RevertGroup", "PrintGroup", "ExportGroup", "ExitGroup")
-        self.add_menu(menus, "Menu", "Edit", "UndoGroup", "CopyPasteGroup", "SelectGroup", "FindGroup", "PrefGroup")
-        self.add_menu(menus, "Menu", "View", "ViewPredefinedGroup", "ViewZoomGroup", "ViewChangeGroup", "ViewConfigGroup", "ViewToggleGroup", "TaskGroup", "ViewDebugGroup")
-        self.add_menu(menus, "Menu", "Documents", "DocumentGroup")
-        self.add_menu(menus, "Menu", "Window", "NewTaskGroup", "WindowGroup")
-        self.add_menu(menus, "Menu", "Help", "AboutGroup", "DocGroup", "BugReportGroup", "DebugGroup")
-
+        for menu_title in self.get_layout_description("menu", "order"):
+            menu_desc = self.get_layout_description("menu", menu_title)
+            self.add_menu(menus, "Menu", menu_title, *menu_desc)
         return SMenuBar(*menus)
 
     def _tool_bars_default(self):
-        return [ SToolBar(self.get_groups("Tool", "File", "NewGroup", "OpenGroup", "SaveGroup"),
-                          self.get_groups("Tool", "Edit", "UndoGroup", "CopyPasteGroup", "SelectGroup", "FindGroup"),
-                          self.get_groups("Tool", "View", "ViewZoomGroup", "ViewChangeGroup", "ViewConfigGroup"),
-                          show_tool_names=False, id="%s:ToolBar" % self.id),
-                 ]
+        bars = []
+        desc = self.ui_layout_description["toolbar"]
+        for menu_title in desc["order"]:
+            menu_desc = desc[menu_title]
+            bars.append(self.get_groups("Tool", menu_title, *menu_desc))
+        return [SToolBar(*bars, show_tool_names=False, id="%s:ToolBar" % self.id)]
 
     def _status_bar_default(self):
         return FrameworkStatusBarManager(message="Hi!", debug_width=self.status_bar_debug_width)

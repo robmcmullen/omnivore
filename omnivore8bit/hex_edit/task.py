@@ -56,6 +56,15 @@ class HexEditTask(FrameworkTask):
     # buttons updated properly
     segment_selected = Event
 
+    ui_layout_overrides = {
+        "menu": {
+            "order": ["File", "Edit", "View", "Bytes", "Segment", "Disk Image", "Documents", "Window", "Help"],
+            "Bytes": ["HexModifyGroup"],
+            "Segment": ["ListGroup", "ActionGroup"],
+            "Disk Image": ["ParserGroup", "EmulatorGroup", "ActionGroup"],
+        },
+    }
+
     ###########################################################################
     # 'Task' interface.
     ###########################################################################
@@ -73,27 +82,6 @@ class HexEditTask(FrameworkTask):
 
     def create_dock_panes(self):
         return pane_layout.pane_create()
-
-    def _extra_actions_default(self):
-        data_menu = self.create_menu("Menu", "Disk Image", "ParserGroup", "EmulatorGroup", "ActionGroup")
-        segment_menu = self.create_menu("Menu", "Segment", "ListGroup", "ActionGroup")
-        bytes_menu = self.create_menu("Menu", "Bytes", "HexModifyGroup")
-        actions = [
-            # Menubar additions
-            SchemaAddition(factory=lambda: bytes_menu,
-                           path='MenuBar',
-                           after="Edit",
-                           ),
-            SchemaAddition(factory=lambda: segment_menu,
-                           path='MenuBar',
-                           after="Edit",
-                           ),
-            SchemaAddition(factory=lambda: data_menu,
-                           path='MenuBar',
-                           after="Edit",
-                           ),
-            ]
-        return actions
 
     def _active_editor_changed(self, editor):
         # Make sure it's a valid document before refreshing
