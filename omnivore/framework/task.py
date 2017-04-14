@@ -129,7 +129,7 @@ class FrameworkTask(Task):
 
     def get_layout_description(self, category, title):
         try:
-            print self, self.__class__, self.name, self.ui_layout_overrides
+            log.debug("%s: %s/%s found in overrides" % (self.name, category, title))
             return self.ui_layout_overrides[category][title]
         except KeyError:
             return self.ui_layout_description[category][title]
@@ -194,9 +194,6 @@ class FrameworkTask(Task):
         if self.id not in self.activated_task_ids:
             self.activated_task_ids.add(self.id)
             self.first_time_activated()
-
-        if "hex_edit" in self.id:
-            self.get_menu_documentation()
 
     def first_time_activated(self):
         """ Called the first time a task is activated in the application.
