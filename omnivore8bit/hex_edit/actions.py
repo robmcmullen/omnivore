@@ -148,7 +148,7 @@ class SetSystemDefaultEmulatorAction(EditorAction):
 
 class RunEmulatorAction(NameChangeAction):
     default_name = 'Run Emulator'
-    name = ''
+    name = default_name
     accelerator = 'F5'
     menu_item_name = 'emulator_label'
 
@@ -438,7 +438,7 @@ class MemoryMapAction(EditorAction):
 
 class CurrentSegmentParserAction(NameChangeAction):
     default_name = 'Current Disk Image'
-    name = ''
+    name = default_name
     enabled = False
     enabled_name = None
     menu_item_name = 'segment_parser_label'

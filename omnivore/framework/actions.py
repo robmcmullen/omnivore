@@ -289,7 +289,7 @@ class NameChangeAction(EditorAction):
 
 class UndoAction(NameChangeAction):
     default_name = 'Undo'
-    name = ''
+    name = default_name
     accelerator = 'Ctrl+Z'
     tooltip = 'Undo last action'
     image = ImageResource('undo')
@@ -302,7 +302,7 @@ class UndoAction(NameChangeAction):
 
 class RedoAction(NameChangeAction):
     default_name = 'Redo'
-    name = ''
+    name = default_name
     accelerator = 'Ctrl+Shift+Z'
     tooltip = 'Redo the last undone action'
     image = ImageResource('redo')
