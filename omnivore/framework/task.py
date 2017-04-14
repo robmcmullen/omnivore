@@ -736,66 +736,57 @@ class FrameworkTask(Task):
     ###########################################################################
 
     def get_menu_documentation(self):
-        for action, depth in self._iter_schema_items(self.menu_bar.items):
-            if hasattr(action, 'name'):
-                log.debug("menu: %s %s %s" % (depth, action.name, action))
-            elif hasattr(action, 'action'):
-                log.debug("action: %s %s %s" % (depth, action.action.name, action.action))
+        hierarchy = self.get_menu_action_hierarchy()
+        for path, action in hierarchy:
+            if action is None:
+                print path
 
-        #sys.exit()
+    def get_menu_action_hierarchy(self):
+        hierarchy = []
+        self.dump(self.window.menu_bar_manager, hierarchy=hierarchy)
+        for mgr in self.window.tool_bar_managers:
+            self.pyface_dump_manager(mgr, hierarchy=hierarchy)
+        # for path, action in hierarchy:
+        #     print path, action
+        return hierarchy
 
-    def _iter_schema_items(self, items, depth=0):
-        """Generator to pull all Actions out of the list of Schemas
-        
-        Schemas may contain other schemas, which requires this recursive
-        approach.
-        
-        Usage:
-            action_schemas = list(self.menu_bar.items)
-            action_schemas.extend(self.tool_bars)
-            for action in self._iter_schema_items(action_schemas):
-                # do something
-        """
-        group_depth = 0
-        mgr_depth = 0
-        for item in items:
-            if hasattr(item, 'controller'):
-                log.debug("skipping MenuManager: %d %s" % (depth, str(item)))
-                mgr_depth = -1
+    def pyface_dump_manager(self, manager, indent='', path="", hierarchy=[]):
+        """ Render a manager! """
+        # print indent, 'Manager', manager.id, manager
+        indent += '  '
+
+        try:
+            path += manager.name + " -> "
+        except AttributeError:
+            path += manager.id + " -> "
+        # print path
+        hierarchy.append([path, None])
+        for group in manager._groups:
+            self.pyface_render_group(group, indent, path, hierarchy)
+
+    def pyface_render_group(self, group, indent, path, hierarchy):
+        """ Render a group! """
+        # print indent, 'Group', group.id
+        indent += '    '
+
+        for item in group.items:
+            if isinstance(item, Group):
+                print 'Surely, a group cannot contain another group!!!!'
+                self.pyface_render_group(item, indent, path, hierarchy)
+
             else:
-                log.debug("encountered item: %d %s" % (depth, str(item)))
-                yield item, depth
-                if item.__class__.__name__ == "Group":
-                    group_depth = -1
-                if hasattr(item, 'groups'):
-                    for a, subdepth in self._iter_schema_groups(item.groups, depth+1-group_depth-mgr_depth):
-                        yield a, subdepth
-                elif hasattr(item, 'items'):
-                    for a, subdepth in self._iter_schema_items(item.items, depth+1-group_depth-mgr_depth):
-                        yield a, subdepth
+                self.pyface_render_item(item, indent, path, hierarchy)
 
-    def _iter_schema_groups(self, groups, depth=0):
-        """Generator to pull all Actions out of the list of Schemas
-        
-        Schemas may contain other schemas, which requires this recursive
-        approach.
-        
-        Usage:
-            action_schemas = list(self.menu_bar.items)
-            action_schemas.extend(self.tool_bars)
-            for action in self._iter_schema_items(action_schemas):
-                # do something
-        """
-        for item in groups:
-            log.debug("encountered group: %d %s" % (depth, str(item)))
-            print "encountered group: " + str(depth) + " " + str(item)
-            yield item, depth
-            if hasattr(item, 'groups'):
-                for a, subdepth in self._iter_schema_groups(item.groups, depth+1):
-                    yield a, subdepth
-            elif hasattr(item, 'items'):
-                for a, subdepth in self._iter_schema_items(item.items, depth+1):
-                    yield a, subdepth
+    def pyface_render_item(self, item, indent, path, hierarchy):
+        """ Render an item! """
+
+        if hasattr(item, 'groups'):
+            self.pyface_dump_manager(item, indent, path, hierarchy)
+
+        else:
+            # print indent, 'Item', item.id, item.action
+            hierarchy.append((path + item.id, item.action))
+            # print path + item.id, item.action
 
     def _prompt_for_save(self):
         """ Prompts the user to save if necessary. Returns whether the dialog
