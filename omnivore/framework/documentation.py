@@ -268,7 +268,7 @@ Menus
             "slug": slug,
             "title": get_rst_section_title(2, task.name, True),
             "toc": "\n".join([rst_toc_entry_template.format(*t) for t in toc_entries]),
-            "overview": task.__doc__,
+            "overview": trim(task.__doc__),
         }
 
         text = template.format(**subs)

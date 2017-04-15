@@ -23,7 +23,33 @@ from disassembly import DisassemblyTable
 
 
 class HexEditTask(FrameworkTask):
-    """ Binary file editor
+    """The hex editor provides viewing, editing, and reverse engineering
+    support for binary files of 8-bit microcomputers. It started as an Atari
+    8-bit specific editor, but support has expanded to other 6502 machines
+    including the Apple ][, and has generic support for a host of 8-bit CPUs
+
+    Features include:
+
+    * Displays data in multiple forms: hex, binary, character graphics, disassembly
+    * Select regions and copy/paste
+    * Multiple selection: operate on multiple selected regions as if it were a contiguous block of data
+    * Smart search that matches in hex grid, character map, or disassembly comments
+    * Highlights all matches, move forward and backward among them
+    * Operate on hex data in selected regions (logical functions, shift/rotate, set/clear, arithmetic functions)
+    * Edit hex data right in the hex grid
+    * Character map supports all ANTIC text character modes (in either ATASCII or screen codes), Apple ][ normal (blinking!) text, Apple //e mouse text
+    * Edit character data right in the character map window
+    * Multiple CPU support for disassembler: 6502, 65c02, 65816, Z80, and many other 8-bit CPUs
+    * Data/code region support for disassembler to show byte data in known data regions
+    * Static tracing disassembler to help determine data and code sections
+    * Miniassembler for all supported CPUs allowing you to change the assembly code without needing a reference card
+    * Add labels to addresses
+    * Memory map support to replace hex addresses with their labels; currently provides Atari 8-bit, Atari 5200, Apple ][, KIM-1
+    * ANTIC display list disassembly
+    * Add comments to locations or regions for note-taking while reverse engineering
+    * Show differences to a baseline version
+    * ... and much more
+
     """
 
     new_file_text = ["Blank Atari DOS 2 SD (90K) Image", "Blank Atari DOS 2 DD (180K) Image", "Blank Atari DOS 3 (130K) Image", "Blank Apple DOS 3.3 Image"]
