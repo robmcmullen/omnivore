@@ -340,7 +340,7 @@ class HexEditTask(FrameworkTask):
 
     def get_actions_Menu_DiskImage_EmulatorGroup(self):
         return [
-            RunEmulatorAction(id="a3"),
+            RunEmulatorAction(),
             SMenu(
                 EmulatorChoiceGroup(id="a2"),
                 Group(
