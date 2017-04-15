@@ -74,6 +74,13 @@ class BitmapEditTask(HexEditTask):
         editor = BitmapEditor()
         return editor
 
+    @on_trait_change('window.application.preferences_changed_event')
+    def refresh_from_new_preferences(self):
+        # no prefs for bitmap editor yet, but hex edit has prefs that bitmap
+        # doesn't have so we override it here so the hex edit prefs don't get
+        # used.
+        pass
+
     def get_actions_Menu_View_ViewConfigGroup(self):
         return self.get_common_ViewConfigGroup()
 
