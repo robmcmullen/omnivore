@@ -274,7 +274,7 @@ class FrameworkApplication(TasksApplication):
                 print "Error creating task %s: %s" % (factory.id, e)
                 continue
             hierarchy = task.get_menu_action_hierarchy()
-            idocs = documentation.parse_hierarchy(hierarchy)
+            documentation.create_multi_rst("manual", hierarchy)
 
     def check_clipboard_can_paste(self, editor):
         data_formats = [o.GetFormat() for o in editor.supported_clipboard_data_objects]

@@ -743,8 +743,8 @@ class FrameworkTask(Task):
         self.pyface_dump_manager(self.window.menu_bar_manager, hierarchy=hierarchy)
         for mgr in self.window.tool_bar_managers:
             self.pyface_dump_manager(mgr, hierarchy=hierarchy)
-        # for path, action in hierarchy:
-        #     print path, action
+        for path, action in hierarchy:
+            print path, "|", action
         return hierarchy
 
     def pyface_dump_manager(self, manager, indent='', path="", hierarchy=[]):
