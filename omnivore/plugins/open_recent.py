@@ -164,6 +164,13 @@ class RecentFiles(object):
 
 
 class OpenRecentAction(Action):
+    """This submenu contain a list of the files most recently loaded or saved.
+
+    You can limit the number of items to remember in the General tab of the
+    Preferences dialog.
+    """
+    doc_hint = "summary"
+
     uri = Unicode
 
     def _name_default(self):

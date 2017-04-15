@@ -263,9 +263,10 @@ class FrameworkApplication(TasksApplication):
         wx.CallAfter(self.build_docs)
 
     def build_docs(self):
+        sections = []
         for factory in self.task_factories:
             print("%s %s" % (factory.id, factory.name))
-            if "hex" not in factory.id:
+            if "omnivore" not in factory.id or "framework" in factory.id:
                 continue
             task = self.create_task(factory.id)
             try:
@@ -273,8 +274,9 @@ class FrameworkApplication(TasksApplication):
             except AttributeError, e:
                 print "Error creating task %s: %s" % (factory.id, e)
                 continue
-            hierarchy = task.get_menu_action_hierarchy()
-            documentation.create_multi_rst("manual", hierarchy)
+            section = documentation.create_task_rst("manual", task)
+            sections.append(section)
+        documentation.create_manual_index_rst("manual", sections, "Omnivore User's Guide")
 
     def check_clipboard_can_paste(self, editor):
         data_formats = [o.GetFormat() for o in editor.supported_clipboard_data_objects]
