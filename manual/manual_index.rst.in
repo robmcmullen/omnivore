@@ -1,0 +1,36 @@
+.. _{slug}:
+
+.. include:: <isopub.txt>
+
+{title}
+
+
+.. centered:: **Hex Editor** |bull| **Bitmap Viewer** |bull| **Disassembler** |bull| **Mini-assembler** |bull| **Map Editor** |bull| **Jumpman Level Editor**
+
+.. figure:: main-hex.png
+   :align: center
+   :scale: 35%
+
+.. raw:: html
+   
+   <br clear="both">
+
+.. figure:: main-jumpman.png
+   :align: center
+   :scale: 35%
+
+Omnivore is a cross-platform app for modern hardware (running Linux, OS X and
+Windows) to work with executables or disk images of Atari 8-bit machines.
+
+Thanks to Kevin Savetz of the `ANTIC Podcast <http://ataripodcast.com>`_ and
+Wade of the `Inverse ATASCII Podcast <http://inverseatascii.info>`_
+for early testing and feedback.
+
+
+Editors
+=======
+
+.. toctree::
+   :maxdepth: 2
+
+{toc}

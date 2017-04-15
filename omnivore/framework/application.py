@@ -264,6 +264,7 @@ class FrameworkApplication(TasksApplication):
 
     def build_docs(self):
         sections = []
+        docs = documentation.RSTDocs("Omnivore User's Guide", "manual")
         for factory in self.task_factories:
             print("%s %s" % (factory.id, factory.name))
             if "omnivore" not in factory.id or "framework" in factory.id:
@@ -274,9 +275,8 @@ class FrameworkApplication(TasksApplication):
             except AttributeError, e:
                 print "Error creating task %s: %s" % (factory.id, e)
                 continue
-            section = documentation.create_task_rst("manual", task)
-            sections.append(section)
-        documentation.create_manual_index_rst("manual", sections, "Omnivore User's Guide")
+            docs.add_task(task)
+        docs.create_manual()
 
     def check_clipboard_can_paste(self, editor):
         data_formats = [o.GetFormat() for o in editor.supported_clipboard_data_objects]

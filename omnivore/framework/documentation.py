@@ -6,6 +6,12 @@ from omnivore.utils.textutil import slugify
 import logging
 log = logging.getLogger(__name__)
 
+class OmnivoreDocumentationError(RuntimeError):
+    pass
+
+class AlreadySeenError(OmnivoreDocumentationError):
+    pass
+
 # The hierarchy coming from task.get_menu_action_hierarchy() is a list of
 # tuples that look like this:
 #
@@ -80,28 +86,10 @@ def get_best_doc(action):
     else:
         return action.description or action.tooltip
 
-rst_task_index_template = """
-.. _{slug}
-
-{title}
-
-Menus
-=====
-
-.. toctree::
-   :maxdepth: 2
-"""
 
 rst_toc_entry_template = "   {0}"
 
 rst_toc_of_subdir_template = "   {0}/index"
-
-rst_page_template = """
-.. _{slug}
-
-{title}
-
-"""
 
 rst_section_chars = {
     2: "=",  # Menu items, first submenu
@@ -136,71 +124,174 @@ def get_rst_action_description(level, title, text, doc_hint):
     lines.append("")
     return lines
 
-def create_task_rst(directory, task):
-    hierarchy = task.get_menu_action_hierarchy()
-    subdir = os.path.join(directory, task.editor_id)
-    try:
-        os.mkdir(subdir)
-    except OSError, e:
-        # directory exists!
-        pass
-    toc_entries = create_multi_rst(subdir, hierarchy, lambda a: "%s.%s" % (task.editor_id, slugify(a)))
-    lines = [rst_task_index_template.format(slug=task.editor_id, title=get_rst_section_title(2, task.name, True))]
-    lines.extend([rst_toc_entry_template.format(*t) for t in toc_entries])
 
-    text = "\n".join(lines) + "\n"
-    filename = os.path.join(subdir, "index.rst")
-    log.debug("Writing %s" % filename)
-    with open(filename, "w") as fh:
-        fh.write(text)
+class RSTDocs(object):
+    default_templates = {
+        "manual_index": """
+.. _{slug}
 
-    return task.editor_id, task.name
+{title}
 
-def create_multi_rst(directory, hierarchy, _slugify=slugify):
-    toc_entries = []
-    pages = []
-    current_page = []
-    summaries_seen = set()
-    for path, action in hierarchy:
-        menu, title, level, is_action = split_path(path)
-        if level > 1:
-            if not is_action:  # explicit menu
-                if level == 2:  # toplevel menu item
-                    slug = _slugify(title)
-                    toc_entries.append((slug, title))
-                    current_page = [rst_page_template.format(slug=slug, title=get_rst_section_title(level, title, True))]
-                    print "New page for %s" % title, id(current_page)
-                    log.debug("New page for %s" % title)
-                    pages.append((slug, title, current_page))
-                else:
-                    log.debug("Submenu %s")
-                    current_page.append(get_rst_section_title(level - 1, title))
+Introduction
+============
 
-            else:  # menu item could be in a submenu or up a level
-                doc_hint = getattr(action, "doc_hint", "")
-                if doc_hint == "summary":
-                    summary_id = "/".join(menu) + "/" + action.__class__.__name__
-                    print "SUMMARY: ", level, summary_id, summary_id in summaries_seen
-                    if summary_id in summaries_seen:
+{intro}
+
+Editors
+=======
+
+.. toctree::
+   :maxdepth: 2
+
+{toc}
+""",
+
+        "task_index":"""
+.. _{slug}
+
+{title}
+
+Overview
+========
+
+{overview}
+
+Menus
+=====
+
+.. toctree::
+   :maxdepth: 2
+
+{toc}
+""",
+
+        "page": """
+.. _{slug}
+
+{title}
+
+""",
+    }
+
+
+    def __init__(self, title, directory):
+        self.title = title
+        self.title_slug = slugify(title)
+        self.directory = directory
+        self.template_dir = directory
+        self.template_suffix = ".rst.in"
+        self.sections = []
+
+    def get_subdir(self, name):
+        subdir = os.path.join(self.directory, name)
+        try:
+            os.mkdir(subdir)
+        except OSError, e:
+            # directory exists!
+            pass
+        return subdir
+
+    def get_template(self, kind):
+        filename = os.path.join(self.template_dir, kind + self.template_suffix)
+        try:
+            with open(filename, "r") as fh:
+                template = fh.read()
+        except IOError, e:
+            template = self.default_templates[kind]
+        return template
+
+    def get_action_text(self, action, menu, summaries_seen):
+        doc_hint = getattr(action, "doc_hint", "")
+        if doc_hint == "summary":
+            summary_id = "/".join(menu) + "/" + action.__class__.__name__
+            if summary_id in summaries_seen:
+                raise AlreadySeenError
+            summaries_seen.add(summary_id)
+        text = get_best_doc(action)
+        return text, doc_hint
+
+    def create_task_sections(self, directory, hierarchy, base_slug):
+        toc_entries = []
+        pages = []
+        current_page = []
+        summaries_seen = set()
+        template = self.get_template("page")
+        for path, action in hierarchy:
+            menu, title, level, is_action = split_path(path)
+            if level > 1:
+                if not is_action:  # explicit menu
+                    if level == 2:  # toplevel menu item
+                        slug = "%s.%s" % (base_slug, slugify(title))
+                        toc_entries.append((slug, title))
+                        subs = {
+                            "slug": slug,
+                            "title": get_rst_section_title(level, title, True),
+                        }
+                        current_page = [template.format(**subs)]
+                        print "New page for %s: %s" % (title, slug)
+                        log.debug("New page for %s: %s" % (title, slug))
+                        pages.append((slug, title, current_page))
+                    else:
+                        log.debug("Submenu %s")
+                        current_page.append(get_rst_section_title(level - 1, title))
+
+                else:  # menu item could be in a submenu or up a level
+                    try:
+                        text, doc_hint = self.get_action_text(action, menu, summaries_seen)
+                    except AlreadySeenError:
                         continue
-                    summaries_seen.add(summary_id)
-                text = get_best_doc(action)
-                current_page.extend(get_rst_action_description(level, title, text, doc_hint))
+                    current_page.extend(get_rst_action_description(level, title, text, doc_hint))
 
-    for slug, title, page in pages:
-        text = "\n".join(page) + "\n"
-        filename = os.path.join(directory, "%s.rst" % slug)
+        for slug, title, page in pages:
+            text = "\n".join(page) + "\n"
+            filename = os.path.join(directory, "%s.rst" % slug)
+            log.debug("Writing %s" % filename)
+            with open(filename, "w") as fh:
+                fh.write(text)
+
+        return toc_entries
+
+    def add_task(self, task):
+        doc_hint = getattr(task, "doc_hint", "")
+        if doc_hint == "skip":
+            log.debug("Skipping documentation for task %s" % task.editor_id)
+            return
+
+        hierarchy = task.get_menu_action_hierarchy()
+        slug = task.editor_id
+
+        subdir = self.get_subdir(slug)
+        toc_entries = self.create_task_sections(subdir, hierarchy, task.editor_id)
+        template = self.get_template("task_index")
+
+        subs = {
+            "slug": slug,
+            "title": get_rst_section_title(2, task.name, True),
+            "toc": "\n".join([rst_toc_entry_template.format(*t) for t in toc_entries]),
+            "overview": task.__doc__,
+        }
+
+        text = template.format(**subs)
+        filename = os.path.join(subdir, "index.rst")
         log.debug("Writing %s" % filename)
         with open(filename, "w") as fh:
             fh.write(text)
 
-    return toc_entries
+        self.sections.append((task.editor_id, task.name))
 
-def create_manual_index_rst(directory, sections, title):
-    lines = [rst_task_index_template.format(slug=slugify(title), title=get_rst_section_title(2, title, True))]
-    lines.extend([rst_toc_of_subdir_template.format(*t) for t in sections])
+    def create_manual(self, intro=""):
+        template = self.get_template("manual_index")
 
-    text = "\n".join(lines) + "\n"
-    log.debug("Writing index.rst")
-    with open(os.path.join(directory, "index.rst"), "w") as fh:
-        fh.write(text)
+        subs = {
+            "slug": self.title_slug,
+            "title": get_rst_section_title(2, self.title, True),
+            "toc": "\n".join([rst_toc_of_subdir_template.format(*t) for t in self.sections]),
+            "intro": intro,
+        }
+
+        text = template.format(**subs)
+
+        print "New manual index %s: %s" % (self.title, self.title_slug)
+        log.debug("Writing index.rst")
+        with open(os.path.join(self.directory, "index.rst"), "w") as fh:
+            fh.write(text)

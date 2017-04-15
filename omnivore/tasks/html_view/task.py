@@ -28,6 +28,8 @@ class HtmlViewTask(FrameworkTask):
 
     pane_layout_version = pane_layout.pane_layout_version
 
+    doc_hint = "skip"
+
     #### Task interface #######################################################
 
     id = editor_id
