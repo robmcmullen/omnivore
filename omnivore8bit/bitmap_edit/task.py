@@ -23,7 +23,12 @@ import omnivore8bit.arch.colors as colors
 
 
 class BitmapEditTask(HexEditTask):
-    """ Pixel-level graphic editor
+    """The Bitmap editor will be a pixel-level editor for any of the graphics
+    modes that Omnivore supports.
+
+    But currently it is little more than an image viewer and not terribly
+    interesting apart from that.  I will document this more when I add some
+    editing functions.
     """
 
     new_file_text = "Bitmap File"

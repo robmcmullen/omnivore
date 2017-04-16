@@ -161,6 +161,36 @@ class JumpmanEditTask(HexEditTask):
     level editor. To use the hex editor, you'll need to use the menu option
     ``Window -> New View of Jumpman -> In Hex Editor Window``
 
+    A Note on Terminology
+    ---------------------
+
+    In the documentation for the game, you are described as running around
+    defusing bombs by touching them. We started calling them peanuts in our
+    documentation because Kevin called them that in his youth, and so we
+    wouldn't get flagged and placed on NSA watchlists because our email traffic
+    contained hundreds of references to bombs. We hope the Planter's people are
+    less invasive.
+
+    peanut:
+
+        The bombs from the original manual; what you're collecting to
+        advance to the next level
+
+    harvest:
+
+        The act of colliding with a peanut and removing it from the level
+
+    trigger function:
+
+        A pointer to a routine that will run when that particular peanut is
+        harvested. This is not the same as trigger painting described below.
+
+    trigger painting:
+
+        A pointer to an entry in the trigger painting table that draws or
+        erases level elements when the peanut is harvested. Note that this is
+        entirely separate from the trigger function above. A peanut may have
+        one, both, or neither defined.
     """
 
     new_file_text = "Jumpman Level"

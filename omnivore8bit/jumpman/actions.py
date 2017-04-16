@@ -47,6 +47,9 @@ def trigger_dialog(event, e, obj):
 
 
 class ClearTriggerAction(EditorAction):
+    """Remove any trigger function from the selected peanut(s).
+    
+    """
     name = "Clear Trigger Function"
     enabled_name = 'can_copy'
     command = ClearTriggerCommand
@@ -78,6 +81,14 @@ class ClearTriggerAction(EditorAction):
 
 
 class SetTriggerAction(ClearTriggerAction):
+    """Set a trigger function for the selected peanut(s).
+
+    If you have used the custom code option, have compiled your code using the
+    built-in assembler, *and* your code has labels that start with ``trigger``,
+    these will show up in the list that appears when you invoke this action.
+
+    Otherwise, you can specify the hex address of a subroutine.
+    """
     name = "Set Trigger Function..."
     command = SetTriggerCommand
 
@@ -90,6 +101,9 @@ class SetTriggerAction(ClearTriggerAction):
 
 
 class SelectAllJumpmanAction(EditorAction):
+    """Select all drawing elements in the main level
+
+    """
     name = 'Select All'
     accelerator = 'Ctrl+A'
     tooltip = 'Select the entire document'
@@ -100,6 +114,9 @@ class SelectAllJumpmanAction(EditorAction):
 
 
 class SelectNoneJumpmanAction(EditorAction):
+    """Clear all selections
+
+    """
     name = 'Select None'
     accelerator = 'Shift+Ctrl+A'
     tooltip = 'Clear selection'
@@ -110,6 +127,10 @@ class SelectNoneJumpmanAction(EditorAction):
 
 
 class SelectInvertJumpmanAction(EditorAction):
+    """Invert the selection; that is: select everything that is currently
+    unselected and unselect those that were selected.
+
+    """
     name = 'Invert Selection'
     tooltip = 'Invert selection'
     enabled_name = 'can_select_objects'
@@ -119,6 +140,11 @@ class SelectInvertJumpmanAction(EditorAction):
 
 
 class FlipVerticalAction(EditorAction):
+    """Flips the selected items top to bottom.
+
+    This calculates the bounding box of just the selected items and uses that
+    to find the centerline about which to flip.
+    """
     name = "Flip Selection Vertically"
     enabled_name = 'can_copy'
     picked = None
@@ -138,6 +164,11 @@ class FlipVerticalAction(EditorAction):
 
 
 class FlipHorizontalAction(FlipVerticalAction):
+    """Flips the selected items left to right.
+
+    This calculates the bounding box of just the selected items and uses that
+    to find the centerline about which to flip.
+    """
     name = "Flip Selection Horizontally"
     command = FlipHorizontalCommand
 
@@ -146,6 +177,28 @@ class FlipHorizontalAction(FlipVerticalAction):
 
 
 class AssemblySourceAction(EditorAction):
+    """Add an assembly source file to this level (and compile it)
+
+    This is used to provide custom actions or even game loops, beyond what is
+    already built-in with trigger painting. There are special labels that are
+    recognized by the assembler and used in the appropriate places:
+
+        vbi1
+        vbi2
+        vbi3
+        vbi4
+        dead_begin
+        dead_at_bottom
+        dead_falling
+        gameloop
+        out_of_lives
+        level_complete
+        collect_callback
+
+    See our `reverse engineering notes
+    <http://playermissile.com/jumpman/notes.html#h.s0ullubzr0vv>`_ for more
+    details.
+    """
     name = 'Custom Code...'
 
     def perform(self, event):
@@ -156,6 +209,12 @@ class AssemblySourceAction(EditorAction):
 
 
 class RecompileAction(EditorAction):
+    """Recompile the assembly source code.
+
+    This is a manual action, currently the program doesn't know when the file
+    has changed. Making this process more automatic is a planned future
+    enhancement.
+    """
     name = 'Recompile Code'
 
     def perform(self, event):

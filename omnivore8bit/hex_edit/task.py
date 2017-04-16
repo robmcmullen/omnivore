@@ -53,19 +53,20 @@ class HexEditTask(FrameworkTask):
     the label will be reflected in the disassembly code. Also, memory mapping
     files can be supplied that automatically label operating system locations.
 
-    To support reverse engineering, bytes can be marked as various types like
-    data, code, ANTIC display list and more. This changes how the disassembly
-    is displayed.
+    To support reverse engineering, regions can be marked as data, code, ANTIC
+    display lists, and other types. Regions are highlighted in a different
+    style and changes how the disassembly is displayed.
 
-    To help identify regions, the static tracing can be useful. Starting the
-    static tracing assumes that every byte is data and shows temporary
-    highlights over the entire segment. Starting a trace at an address causes
-    Omnivore to follow the path of execution, including any branches, marking
-    every byte that it traverses as code until it hits a return, break or bad
-    instruction. This is not an emulator, however, so it is not able to tell if
-    there is any self-modifying code. Any blocks of code that aren't reached
-    will require additional traces. When tracing is finished, the results can
-    be applied to the data to mark as data or code.
+    To help identify regions, static tracing can be used. Turning on static
+    tracing assumes that every byte is data and shows temporary highlights over
+    the entire segment. Starting a trace at an address causes Omnivore to
+    follow the path of execution until it hits a return, break or bad
+    instruction, marking every byte that it traverses as code. It will also
+    follow both code paths at any branch. This is not an emulator, however, so
+    it is not able to tell if there is any self-modifying code. Any blocks of
+    code that aren't reached will require additional traces. When tracing is
+    finished, the results can be applied to the segment to mark as data or
+    code.
     """
 
     new_file_text = ["Blank Atari DOS 2 SD (90K) Image", "Blank Atari DOS 2 DD (180K) Image", "Blank Atari DOS 3 (130K) Image", "Blank Apple DOS 3.3 Image"]

@@ -24,7 +24,31 @@ from omnivore.framework.toolbar import get_toolbar_group
 
 
 class MapEditTask(HexEditTask):
-    """ Tile-based map editor
+    """Map edit mode provides a tile-based editor, capable of handling
+    scrolling playfields much wider than the screen.
+
+    Currently it has mostly been testing with Getaway! level editing, but it
+    can edit arbitrary maps. It needs a segment that exactly fits the
+    dimensions of the map, so some number of bytes wide times the number of
+    rows. If it does recognize the disk image as a Getaway! disk, it will set
+    up some extra features.
+
+    Selecting a segment will then show the map on a scrolling window. There are
+    tools available in the toolbar, such as line and rectangle drawing, that
+    can help speed up the process of creating areas. Cut and paste of
+    rectangular areas is supported. The basic usage of the draw tools is to
+    select a tile and use that as the drawing tile for whatever shape was
+    selected. Holding down the left mouse button while moving extends the shape
+    and releasing the mouse ends the shape. Full undo/redo support is
+    available.
+
+    In addition to the main map window, there are three supporting panes: a
+    tile map pane that shows characters broken down by groups, a character set
+    pane that shows the entire 256 byte character set (which for Atari includes
+    the inverse characters in the second 128 positions), and a page map pane
+    that shows an overview of the map at one pixel per character. Note that the
+    page map is just greyscale; it uses the value of the byte at a particular
+    location as the intensity.
     """
 
     new_file_text = "Map File"
