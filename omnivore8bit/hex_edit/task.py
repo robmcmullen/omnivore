@@ -23,33 +23,49 @@ from disassembly import DisassemblyTable
 
 
 class HexEditTask(FrameworkTask):
-    """The hex editor provides viewing, editing, and reverse engineering
-    support for binary files of 8-bit microcomputers. It started as an Atari
-    8-bit specific editor, but support has expanded to other 6502 machines
-    including the Apple ][, and has generic support for a host of 8-bit CPUs
+    """The hex editor was designed for reverse engineering 6502 machine code,
+    initially for the Atari 8-bit computer systems, but expanded to Apple ][
+    and other 6502-based processors. There is also support for most other 8-bit
+    processors, but as the author doesn't have experience with other 8-bit
+    processors they have not been extensively tested.
 
-    Features include:
+    Opening a file to edit will present the main hex edit user interface that
+    shows many different views of the data. There are regions to edit hex data,
+    character data, and the disassembly. There is also a bitmap view but is
+    presently only for viewing, not editing.
 
-    * Displays data in multiple forms: hex, binary, character graphics, disassembly
-    * Select regions and copy/paste
-    * Multiple selection: operate on multiple selected regions as if it were a contiguous block of data
-    * Smart search that matches in hex grid, character map, or disassembly comments
-    * Highlights all matches, move forward and backward among them
-    * Operate on hex data in selected regions (logical functions, shift/rotate, set/clear, arithmetic functions)
-    * Edit hex data right in the hex grid
-    * Character map supports all ANTIC text character modes (in either ATASCII or screen codes), Apple ][ normal (blinking!) text, Apple //e mouse text
-    * Edit character data right in the character map window
-    * Multiple CPU support for disassembler: 6502, 65c02, 65816, Z80, and many other 8-bit CPUs
-    * Data/code region support for disassembler to show byte data in known data regions
-    * Static tracing disassembler to help determine data and code sections
-    * Miniassembler for all supported CPUs allowing you to change the assembly code without needing a reference card
-    * Add labels to addresses
-    * Memory map support to replace hex addresses with their labels; currently provides Atari 8-bit, Atari 5200, Apple ][, KIM-1
-    * ANTIC display list disassembly
-    * Add comments to locations or regions for note-taking while reverse engineering
-    * Show differences to a baseline version
-    * ... and much more
+    Hex data can be edited by clicking on a cell and changing the hex data; by
+    selecting a region (or multiple regions) and using one of the operations in
+    the ``Bytes`` menu; by cutting and pasting hex data from elsewhere in the
+    file; by pasting in data from an external application.
 
+    Character data can be edited by clicking on a character in the character
+    map to set the cursor and then typing. Inverse text is supported for Atari
+    modes. Alo supported are all the selection and cut/paste methods as above.
+
+    As data is changed, the differences from the baseline version of the file
+    (either it's state immediately after loading or a separate file) will be
+    displayed in red.
+
+    The disassembly can be edited using a simple mini-assembler; clicking on an
+    opcode provides a text entry box to change the command. The mini-assembler
+    supports all CPU types, not just 6502. Labels can be set on an address, and
+    the label will be reflected in the disassembly code. Also, memory mapping
+    files can be supplied that automatically label operating system locations.
+
+    To support reverse engineering, bytes can be marked as various types like
+    data, code, ANTIC display list and more. This changes how the disassembly
+    is displayed.
+
+    To help identify regions, the static tracing can be useful. Starting the
+    static tracing assumes that every byte is data and shows temporary
+    highlights over the entire segment. Starting a trace at an address causes
+    Omnivore to follow the path of execution, including any branches, marking
+    every byte that it traverses as code until it hits a return, break or bad
+    instruction. This is not an emulator, however, so it is not able to tell if
+    there is any self-modifying code. Any blocks of code that aren't reached
+    will require additional traces. When tracing is finished, the results can
+    be applied to the data to mark as data or code.
     """
 
     new_file_text = ["Blank Atari DOS 2 SD (90K) Image", "Blank Atari DOS 2 DD (180K) Image", "Blank Atari DOS 3 (130K) Image", "Blank Apple DOS 3.3 Image"]
