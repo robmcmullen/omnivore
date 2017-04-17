@@ -167,7 +167,7 @@ class OpenRecentAction(Action):
     """This submenu contain a list of the files most recently loaded or saved.
 
     You can limit the number of items to remember in the General tab of the
-    `Preferences...`_ dialog.
+    `Preferences`_ dialog.
     """
     doc_hint = "summary"
 

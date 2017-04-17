@@ -104,6 +104,11 @@ class EmulatorChoiceGroup(TaskDynamicSubmenuGroup):
 
 
 class UseEmulatorAction(EditorAction):
+    """This submenu contains a list of the known emulators and a checkbox
+    to indicate the current emulator.
+
+    """
+    doc_hint = "parent"
     style = RADIO_STYLE
     emulator = Any
 
@@ -120,6 +125,14 @@ class UseEmulatorAction(EditorAction):
 
 
 class AddNewEmulatorAction(EditorAction):
+    """Open up a window to define a reference to an external emulator
+
+    Omnivore can run the disk image in any emulator that is capable of being
+    started from a command line. It spawns a separate process and feeds the
+    emulator a path to the disk image along with any necessary command line
+    arguments that you have to specify when setting up the emulator in this
+    window.
+    """
     name = 'Add New Emulator...'
 
     def perform(self, event):
@@ -129,6 +142,11 @@ class AddNewEmulatorAction(EditorAction):
 
 
 class EditEmulatorsAction(EditorAction):
+    """Make changes to the current list of emulators.
+
+    This opens a window with a list of the currently defined emulators
+    to make changes to existing emulators or add/delete any already defined.
+    """
     name = 'Edit Emulators...'
 
     def perform(self, event):
@@ -140,6 +158,9 @@ class EditEmulatorsAction(EditorAction):
 
 
 class SetSystemDefaultEmulatorAction(EditorAction):
+    """The currently specified emulator in the `Emulators`_ list will be set as
+    the system default and remembered for subsequent editing sessions.
+    """
     name = 'Set Current as System Default'
 
     def perform(self, event):
@@ -147,6 +168,10 @@ class SetSystemDefaultEmulatorAction(EditorAction):
 
 
 class RunEmulatorAction(NameChangeAction):
+    """Run the current emulator using the current emulator.
+
+    The current emulator is shown in the `Emulators`_ sub-menu.
+    """
     default_name = 'Run Emulator'
     name = default_name
     accelerator = 'F5'
@@ -499,6 +524,10 @@ class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
 
 
 class UseSegmentAction(EditorAction):
+    """This submenu contains a list of all segments in the disk image.
+    Selecting one of these items will change the view to the selected segment.
+    """
+    doc_hint = "parent"
     style = RADIO_STYLE
 
     segment = Any
@@ -1331,6 +1360,10 @@ class CancelMinibufferAction(EditorAction):
 
 
 class ViewDiffHighlightAction(EditorAction):
+    """Toggle whether differences to the `Baseline Data`_ are highlighted
+    or not.
+
+    """
     name = 'Show Baseline Differences'
     tooltip = 'Show bytes that are different than the baseline version'
     style = 'toggle'
@@ -1353,6 +1386,12 @@ class ViewDiffHighlightAction(EditorAction):
 
 
 class LoadBaselineVersionAction(EditorAction):
+    """Open a window to select a `Baseline Data`_ file.
+
+    The absolute path to the baseline file is stored, so if the baseline file
+    is moved to a new location you will have to use this command again to point
+    to the new location.
+    """
     name = 'Add Baseline Difference File...'
     tooltip = 'Add baseline file to be used to show differences in current version'
 
@@ -1366,11 +1405,20 @@ class LoadBaselineVersionAction(EditorAction):
 
 
 class RevertToBaselineAction(IndexRangeAction):
+    """Restore the selection to the data contained in the `Baseline
+    Data`_ file.
+    """
     cmd = RevertToBaselineCommand
     enabled_name = 'can_copy_baseline'
 
 
 class FindNextBaselineDiffAction(EditorAction):
+    """Move the cursor to the next block of data that is different than
+    the `Baseline Data`_ file.
+
+    This will wrap around to the beginning of the segment if it doesn't find a
+    difference before the end.
+    """
     name = 'Find Next Difference'
     accelerator = 'Ctrl+D'
     tooltip = 'Find next difference to the baseline'
@@ -1385,6 +1433,12 @@ class FindNextBaselineDiffAction(EditorAction):
 
 
 class FindPrevBaselineDiffAction(EditorAction):
+    """Move the cursor to the previous block of data that is different than
+    the `Baseline Data`_ file.Data
+
+    This will wrap around to the end of the segment if it doesn't find a
+    difference before the beginning.
+    """
     name = 'Find Previous Difference'
     accelerator = 'Ctrl+Shift+D'
     tooltip = 'Find previous difference to the baseline'

@@ -67,6 +67,27 @@ class HexEditTask(FrameworkTask):
     code that aren't reached will require additional traces. When tracing is
     finished, the results can be applied to the segment to mark as data or
     code.
+
+    Selections
+    ----------
+
+
+    Baseline Data
+    -------------
+
+    Omnivore automatically highlights changes to each segment as compared to
+    the state of the data when first loaded. Optionally, you can specify a
+    baseline difference file to compare to a different set of data.
+
+    A baseline difference file is a file used to compare the current state of
+    the disk image to some reference image. This is useful to compare changes
+    to some known state over several Omnivore editing sessions, as Omnivore
+    will remember the path to the reference image and will reload it when the
+    disk image is edited in the future.
+
+    By default, baseline data difference highlighting is turned on, you can
+    change this with the `Show Baseline Differences`_ menu item.
+
     """
 
     new_file_text = ["Blank Atari DOS 2 SD (90K) Image", "Blank Atari DOS 2 DD (180K) Image", "Blank Atari DOS 3 (130K) Image", "Blank Apple DOS 3.3 Image"]

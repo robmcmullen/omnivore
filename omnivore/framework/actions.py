@@ -46,7 +46,7 @@ class NewFileAction(Action):
 
     Available templates include:
     """
-    doc_hint = "parent list"
+    doc_hint = "parent,list"
     tooltip = Property(Unicode, depends_on='name')
 
     task_id = Any
@@ -450,7 +450,7 @@ class PreferencesAction(Action):
 
 class AboutAction(Action):
     name = 'About...'
-    tooltip = 'About this program'
+    tooltip = 'Display window with version number and author info'
     menu_role = "About"
 
     def perform(self, event):
