@@ -271,8 +271,11 @@ class FontRendererAction(EditorAction):
 
 
 class FontMappingAction(EditorAction):
-    """Radio buttons for changing font style
+    """This submenu contains a list of all available font renderers. Selecting
+    an item in this list will change how the text is displayed in the character
+    map window.
     """
+    doc_hint = "parent,list"
     # Traits
     style = RADIO_STYLE
 
@@ -291,8 +294,11 @@ class FontMappingAction(EditorAction):
 
 
 class BitmapRendererAction(EditorAction):
-    """Radio buttons for changing font style
+    """This submenu contains a list of all available bitmap renderers.
+    Selecting an item in this list will change the rendering of the graphics
+    display.
     """
+    doc_hint = "parent,list"
     # Traits
     style = RADIO_STYLE
 
@@ -311,6 +317,9 @@ class BitmapRendererAction(EditorAction):
 
 
 class BitmapWidthAction(EditorAction):
+    """Set the number of bytes per row of the bitmap display, which in turn
+    sets the width in pixels.
+    """
     name = "Bitmap Width"
 
     def perform(self, event):
@@ -321,6 +330,9 @@ class BitmapWidthAction(EditorAction):
 
 
 class BitmapZoomAction(EditorAction):
+    """Set the zoom factor of bitmap display. This is an integer value greater
+    than zero that scales the display size of each pixel in the bitmap.
+    """
     name = "Bitmap Zoom"
 
     def perform(self, event):
@@ -331,6 +343,8 @@ class BitmapZoomAction(EditorAction):
 
 
 class FontMappingWidthAction(EditorAction):
+    """Set the number of bytes per row of the character display.
+    """
     name = "Map Width"
 
     def perform(self, event):
@@ -341,6 +355,9 @@ class FontMappingWidthAction(EditorAction):
 
 
 class FontMappingZoomAction(EditorAction):
+    """Set the zoom factor of font display. This is an integer value greater
+    than zero that scales the display size of each character.
+    """
     name = "Map Zoom"
 
     def perform(self, event):
@@ -351,7 +368,10 @@ class FontMappingZoomAction(EditorAction):
 
 
 class AnticColorAction(EditorAction):
-    name = 'Choose Colors...'
+    """Open a window to choose the color palette from the available colors
+    of the ANTIC processor.
+    """
+    name = 'Use ANTIC Colors...'
 
     def perform(self, event):
         e = self.active_editor
@@ -361,6 +381,8 @@ class AnticColorAction(EditorAction):
 
 
 class UseColorsAction(EditorAction):
+    """Changes the color palette to {name}
+    """
     name = 'Use Colors'
     colors = Any
 
@@ -369,6 +391,10 @@ class UseColorsAction(EditorAction):
 
 
 class ColorStandardAction(EditorAction):
+    """This list sets the color encoding standard for all bitmapped graphics of
+    the disk image. Currently supported are:
+    """
+    doc_hint = "parent,list"
     style = RADIO_STYLE
 
     color_standard = Int
