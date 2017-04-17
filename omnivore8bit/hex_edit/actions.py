@@ -1091,6 +1091,12 @@ class SegmentGotoAction(EditorAction):
 
 
 class InsertFileAction(EditorAction):
+    """Insert binary data at the cursor
+
+    The data from the loaded file will overwrite data starting at the cursor,
+    so it's not inserted in the text editor sense where space is created in the
+    existing data.
+    """
     name = 'Insert File...'
 
     def perform(self, event):

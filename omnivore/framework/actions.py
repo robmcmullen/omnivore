@@ -39,8 +39,14 @@ class ShowLoggerAction(Action):
 
 
 class NewFileAction(Action):
-    """ An action for creating a new empty file that can be edited by a particular task
+    """A list of supported file types that can be created by Omnivore.
+
+    Choosing an item in this list will open up a new tab in the current window
+    showing a new blank template of the selected file format.
+
+    Available templates include:
     """
+    doc_hint = "parent list"
     tooltip = Property(Unicode, depends_on='name')
 
     task_id = Any
@@ -122,6 +128,9 @@ class NewFileGroup(Group):
 
 
 class OpenAction(Action):
+    """Open a file using a file select dialog box.
+
+    """
     name = 'Open...'
     accelerator = 'Ctrl+O'
     tooltip = 'Open a file'
@@ -145,6 +154,9 @@ class OpenAction(Action):
 
 
 class SaveAction(EditorAction):
+    """Save the file, overwriting the previously saved version
+
+    """
     name = 'Save'
     accelerator = 'Ctrl+S'
     tooltip = 'Save the current file'
@@ -156,6 +168,10 @@ class SaveAction(EditorAction):
 
 
 class SaveAsAction(EditorAction):
+    """Save the file to a new filename, leaving the originally loaded unchanged
+    on disk.
+
+    """
     name = 'Save As...'
     accelerator = 'Ctrl+Shift+S'
     tooltip = 'Save the current file with a new name'
@@ -169,6 +185,10 @@ class SaveAsAction(EditorAction):
 
 
 class RevertAction(EditorAction):
+    """Reverts the file to the last saved version on disk
+
+    This throws away any edits and is not undoable.
+    """
     name = 'Revert'
     tooltip = 'Revert to last saved version'
 
@@ -209,7 +229,7 @@ class PrintAction(EditorAction):
 
 class SaveAsPDFAction(EditorAction):
     name = 'Export As PDF...'
-    tooltip = 'Save the current view as a PDF'
+    tooltip = 'Save the current view as a PDF (if possible with this editor)'
     enabled_name = 'printable'
 
     def perform(self, event):
@@ -220,7 +240,7 @@ class SaveAsPDFAction(EditorAction):
 
 class SaveAsImageAction(EditorAction):
     name = 'Save As Image...'
-    tooltip = 'Save the current view as an image'
+    tooltip = 'Save the current view as an image (if possible with this editor)'
     enabled_name = 'imageable'
 
     def perform(self, event):
@@ -297,6 +317,12 @@ class NameChangeAction(EditorAction):
 
 
 class UndoAction(NameChangeAction):
+    """Undo the last action
+
+    Actions that modify data are undoable; some that modify the metadata are
+    but movement commands are not stored in the undo list, so for example
+    cursor moves or changes to selection regions are not undoable.
+    """
     default_name = 'Undo'
     name = default_name
     accelerator = 'Ctrl+Z'
@@ -310,6 +336,8 @@ class UndoAction(NameChangeAction):
 
 
 class RedoAction(NameChangeAction):
+    """Redo the last operation that was undone.  See `Undo`_.
+    """
     default_name = 'Redo'
     name = default_name
     accelerator = 'Ctrl+Shift+Z'
@@ -371,6 +399,9 @@ class SelectNoneAction(Action):
 
 
 class SelectInvertAction(Action):
+    """Inverts the selection; that is, select everything that is currently unselected and unselect those that were selected.
+
+    """
     name = 'Invert Selection'
     tooltip = 'Invert selection'
 
@@ -379,6 +410,9 @@ class SelectInvertAction(Action):
 
 
 class PreferencesAction(Action):
+    """Open a window to change program settings and defaults.
+
+    """
     name = 'Preferences...'
     accelerator = 'Ctrl+,'
     tooltip = 'Program settings and configuration options'
@@ -428,6 +462,12 @@ class AboutAction(Action):
 
 
 class OpenLogDirectoryAction(Action):
+    """Open the log directory in the desktop file manager program.
+
+    The log directory will contain debug logs (if enabled) and other files,
+    most of which are generally only useful for developers or to get more
+    information to send to the developers in the event of a problem.
+    """
     name = 'Open Log Directory in File Manager'
     tooltip = 'Open the log directory in the desktop file manager program'
 
@@ -446,6 +486,10 @@ class OpenLogDirectoryAction(Action):
 
 
 class NewWindowAction(Action):
+    """Open a new, blank Omnivore window that can be used to load new files
+    or to provide a second view on a currently loaded file.
+
+    """
     name = 'New Window'
     tooltip = 'Open a new window'
 
