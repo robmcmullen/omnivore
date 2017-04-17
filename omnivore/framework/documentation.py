@@ -46,12 +46,12 @@ class SkipDocumentationError(OmnivoreDocumentationError):
 
 def split_path(path):
     parts = path.split(" -> ")
-    title = parts[-1]
+    title = parts[-1].rstrip("...")
     if title:
         menu = parts[0:-1]
         is_action = True
     else:  # skip the last one, it's blank
-        title = parts[-2]
+        title = parts[-2].rstrip("...")
         menu = parts[0:-1]
         is_action = False
     # print "SPLIT", parts
