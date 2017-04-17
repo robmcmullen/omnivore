@@ -226,15 +226,17 @@ class FrameworkApplication(TasksApplication):
         app.tasks_application = self
 
         if options.build_docs:
-            self.on_idle = self.on_idle_build_docs
-        app.Bind(wx.EVT_IDLE, self.on_idle)
+            idle = self.on_idle_build_docs
+        else:
+            idle = self.on_idle
+        app.Bind(wx.EVT_IDLE, idle)
 
     def _application_exiting_fired(self):
         log.debug("CLEANING UP!!!")
         if self.downloader:
             self.downloader = None
 
-    def on_idle_clipboard_check(self, evt):
+    def on_idle(self, evt):
         evt.Skip()
         if not self.active_window:
             return
@@ -247,36 +249,35 @@ class FrameworkApplication(TasksApplication):
             self.last_clipboard_check_time = time.time()
         editor.perform_idle()
 
-    on_idle = on_idle_clipboard_check
-
     def on_idle_build_docs(self, evt):
-        # Only call this once, so reset idle handler
-        self.on_idle = self.on_idle_clipboard_check
-
         evt.Skip()
         if not self.active_window:
             return
         editor = self.active_window.active_task.active_editor
         if editor is None:
             return
-        print "BUILDING DOCS!", editor
+        print "Building documentation."
         wx.CallAfter(self.build_docs)
 
     def build_docs(self):
         sections = []
         docs = documentation.RSTOnePageDocs("Omnivore User's Guide", "manual")
         for factory in self.task_factories:
-            print("%s %s" % (factory.id, factory.name))
             if "omnivore" not in factory.id or "framework" in factory.id:
+                print "Skipping documentation for %s" % factory.id
                 continue
+            print "Building documentation for %s (%s)" % (factory.id, factory.name)
             task = self.create_task(factory.id)
             try:
                 self.add_task_to_window(self.active_window, task)
+                task.new()
             except AttributeError, e:
-                print "Error creating task %s: %s" % (factory.id, e)
+                print "Error creating documentation for %s: %s" % (factory.id, e)
                 continue
             docs.add_task(task)
         docs.create_manual()
+        print "Finished creating documentation! Exiting."
+        sys.exit()
 
     def check_clipboard_can_paste(self, editor):
         data_formats = [o.GetFormat() for o in editor.supported_clipboard_data_objects]
