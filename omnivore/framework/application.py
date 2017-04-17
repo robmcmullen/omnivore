@@ -264,7 +264,7 @@ class FrameworkApplication(TasksApplication):
 
     def build_docs(self):
         sections = []
-        docs = documentation.RSTDocs("Omnivore User's Guide", "manual")
+        docs = documentation.RSTOnePageDocs("Omnivore User's Guide", "manual")
         for factory in self.task_factories:
             print("%s %s" % (factory.id, factory.name))
             if "omnivore" not in factory.id or "framework" in factory.id:

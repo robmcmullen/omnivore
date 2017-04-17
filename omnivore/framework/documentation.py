@@ -12,6 +12,9 @@ class OmnivoreDocumentationError(RuntimeError):
 class AlreadySeenError(OmnivoreDocumentationError):
     pass
 
+class SkipDocumentationError(OmnivoreDocumentationError):
+    pass
+
 # The hierarchy coming from task.get_menu_action_hierarchy() is a list of
 # tuples that look like this:
 #
@@ -102,30 +105,46 @@ def get_rst_section_title(level, title, page=False):
     divider = rst_section_chars[level] * len(title)
     return "\n\n%s\n%s\n%s\n\n" % (divider if page else "", title, divider)
 
-def get_rst_action_description(level, title, text, doc_hint):
+def get_rst_action_description(level, title, text, doc_hint, in_submenu=True):
     lines = []
     indent = ""
     if doc_hint == "summary":
         # just use text as is because the menu title will have already been
         # printed
         level = -1
-    if level < 0:
-        # do nothing, format text as is
-        pass
-    elif level == 2:  # Actions in the main pulldown are subsections
-        lines.append(get_rst_section_title(level, title))
-    elif level == 3:  # Actions in the first submenu level
-        lines.append("%s:" % title)
-        indent = "    "
-    else:  # Actions in deeper submenus
-        lines.append("* %s:" % title)
-        text = ""  # force no description
+    if doc_hint == "parent list":
+        text += "\n\n* %s" % title  # list needs to start after first description
+    elif in_submenu:
+        if level < 0:
+            # do nothing, format text as is
+            pass
+        elif level == 2:  # Actions in the main pulldown are subsections
+            lines.append(get_rst_section_title(level, title))
+        elif level == 3:  # Actions in the first submenu level
+            lines.append("%s:" % title)
+            indent = "    "
+        else:  # Actions in deeper submenus
+            lines.append("* %s:" % title)
+            text = ""  # force no description
+    else:
+        if level < 0:
+            # do nothing, format text as is
+            pass
+        elif level == 2:  # Actions in the main pulldown are subsections
+            lines.append(get_rst_section_title(level + 1, title))
+        elif level == 3:  # Actions in the first submenu level
+            lines.append("%s:" % title)
+            indent = "    "
+        else:  # Actions in deeper submenus
+            lines.append("* %s:" % title)
+            text = ""  # force no description
+
     lines.extend([indent + t for t in text.splitlines()])
     lines.append("")
     return lines
 
 
-class RSTDocs(object):
+class RSTSeparateMenuDocs(object):
     default_templates = {
         "manual_index": """
 .. _{slug}
@@ -165,6 +184,24 @@ Menus
 {toc}
 """,
 
+        "task_index_one_page":"""
+.. _{slug}
+
+{title}
+
+.. toctree::
+   :maxdepth: 2
+
+{toc}
+
+Overview
+========
+
+{overview}
+
+{pages}
+""",
+
         "page": """
 .. _{slug}
 
@@ -175,6 +212,14 @@ Overview
 
 Menu Items
 **********
+""",
+
+        "page_one_page": """
+.. _{slug}
+
+{title}
+
+
 """,
     }
 
@@ -207,12 +252,22 @@ Menu Items
 
     def get_action_text(self, action, menu, summaries_seen):
         doc_hint = getattr(action, "doc_hint", "")
+        summary_id = "/".join(menu) + "/" + action.__class__.__name__
+        text = None
         if doc_hint == "summary":
-            summary_id = "/".join(menu) + "/" + action.__class__.__name__
             if summary_id in summaries_seen:
                 raise AlreadySeenError
             summaries_seen.add(summary_id)
-        text = get_best_doc(action)
+        elif doc_hint == "parent list":
+            # these submenu items should be put in a list under the parent menu
+            print "PAREN LIST", menu
+            if summary_id in summaries_seen:
+                text = ""
+            summaries_seen.add(summary_id)
+        if doc_hint == "skip":
+            raise SkipDocumentationError
+        if text is None:
+            text = get_best_doc(action)
         return text, doc_hint
 
     def create_task_sections(self, directory, hierarchy, base_slug):
@@ -244,6 +299,8 @@ Menu Items
                     try:
                         text, doc_hint = self.get_action_text(action, menu, summaries_seen)
                     except AlreadySeenError:
+                        continue
+                    except SkipDocumentationError:
                         continue
                     current_page.extend(get_rst_action_description(level, title, text, doc_hint))
 
@@ -291,6 +348,86 @@ Menu Items
             "slug": self.title_slug,
             "title": get_rst_section_title(2, self.title, True),
             "toc": "\n".join([rst_toc_of_subdir_template.format(*t) for t in self.sections]),
+            "intro": intro,
+        }
+
+        text = template.format(**subs)
+
+        print "New manual index %s: %s" % (self.title, self.title_slug)
+        log.debug("Writing index.rst")
+        with open(os.path.join(self.directory, "index.rst"), "w") as fh:
+            fh.write(text)
+
+class RSTOnePageDocs(RSTSeparateMenuDocs):
+    def create_task_pages(self, hierarchy, base_slug):
+        toc_entries = []
+        pages = []
+        current_page = []
+        summaries_seen = set()
+        template = self.get_template("page_one_page")
+        for path, action in hierarchy:
+            menu, title, level, is_action = split_path(path)
+            if level > 1:
+                if not is_action:  # explicit menu
+                    if level == 2:  # toplevel menu item
+                        slug = "%s.%s" % (base_slug, slugify(title))
+                        toc_entries.append((slug, title))
+                        subs = {
+                            "slug": slug,
+                            "title": get_rst_section_title(level, title + " Menu", False),
+                        }
+                        current_page = [template.format(**subs)]
+                        print "New page for %s: %s" % (title, slug)
+                        log.debug("New page for %s: %s" % (title, slug))
+                        pages.append((slug, title, current_page))
+                    else:
+                        log.debug("Submenu %s")
+                        current_page.append(get_rst_section_title(level, title))
+
+                else:  # menu item could be in a submenu or up a level
+                    try:
+                        text, doc_hint = self.get_action_text(action, menu, summaries_seen)
+                    except AlreadySeenError:
+                        continue
+                    current_page.extend(get_rst_action_description(level, title, text, doc_hint, False))
+
+        return toc_entries, pages
+
+    def add_task(self, task):
+        doc_hint = getattr(task, "doc_hint", "")
+        if doc_hint == "skip":
+            log.debug("Skipping documentation for task %s" % task.editor_id)
+            return
+
+        hierarchy = task.get_menu_action_hierarchy()
+        slug = task.editor_id
+
+        toc_entries, pages = self.create_task_pages(hierarchy, task.editor_id)
+        template = self.get_template("task_index_one_page")
+
+        subs = {
+            "slug": slug,
+            "title": get_rst_section_title(2, task.name, True),
+            "toc": "\n".join([rst_toc_entry_template.format(*t) for t in toc_entries]),
+            "overview": trim(task.__doc__),
+            "pages": "\n\n".join(["\n".join(p[2]) for p in pages]),
+        }
+
+        text = template.format(**subs)
+        filename = os.path.join(self.directory, "%s.rst" % slug)
+        log.debug("Writing %s" % filename)
+        with open(filename, "w") as fh:
+            fh.write(text)
+
+        self.sections.append((task.editor_id, task.name))
+
+    def create_manual(self, intro=""):
+        template = self.get_template("manual_index")
+
+        subs = {
+            "slug": self.title_slug,
+            "title": get_rst_section_title(2, self.title, True),
+            "toc": "\n".join([rst_toc_entry_template.format(*t) for t in self.sections]),
             "intro": intro,
         }
 
