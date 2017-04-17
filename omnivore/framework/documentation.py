@@ -101,6 +101,11 @@ rst_section_chars = {
     5: "^"
 }
 
+def get_doc_hint(item):
+    text = getattr(item, "doc_hint", "")
+    hints = [t.strip() for t in text.split(",")]
+    return hints
+
 def get_rst_section_title(level, title, page=False):
     divider = rst_section_chars[level] * len(title)
     return "\n\n%s\n%s\n%s\n\n" % (divider if page else "", title, divider)
@@ -108,12 +113,13 @@ def get_rst_section_title(level, title, page=False):
 def get_rst_action_description(level, title, text, doc_hint, in_submenu=True):
     lines = []
     indent = ""
-    if doc_hint == "summary":
+    if "summary" in doc_hint:
         # just use text as is because the menu title will have already been
         # printed
         level = -1
-    if doc_hint == "parent list":
-        text += "\n\n* %s" % title  # list needs to start after first description
+    if "parent" in doc_hint:
+        if "list" in doc_hint:
+            text += "\n\n* %s" % title  # list needs to start after first description
     elif in_submenu:
         if level < 0:
             # do nothing, format text as is
@@ -251,20 +257,23 @@ Menu Items
         return template
 
     def get_action_text(self, action, menu, summaries_seen):
-        doc_hint = getattr(action, "doc_hint", "")
+        doc_hint = get_doc_hint(action)
         summary_id = "/".join(menu) + "/" + action.__class__.__name__
         text = None
-        if doc_hint == "summary":
+        if "summary" in doc_hint:
             if summary_id in summaries_seen:
                 raise AlreadySeenError
             summaries_seen.add(summary_id)
-        elif doc_hint == "parent list":
-            # these submenu items should be put in a list under the parent menu
-            print "PAREN LIST", menu
+        elif "parent" in doc_hint:
+            # 'parent' keyword appears on actions where its parent menu is not
+            # an action. This occurs on dynamically generated menus and almost
+            # everything that is in a submenu. The first time, the description
+            # of this will show up under its parent title, but siblings should
+            # not duplicate this.
             if summary_id in summaries_seen:
                 text = ""
             summaries_seen.add(summary_id)
-        if doc_hint == "skip":
+        if "skip" in doc_hint:
             raise SkipDocumentationError
         if text is None:
             text = get_best_doc(action)
@@ -314,8 +323,8 @@ Menu Items
         return toc_entries
 
     def add_task(self, task):
-        doc_hint = getattr(task, "doc_hint", "")
-        if doc_hint == "skip":
+        doc_hint = get_doc_hint(task)
+        if "skip" in doc_hint:
             log.debug("Skipping documentation for task %s" % task.editor_id)
             return
 
@@ -377,7 +386,7 @@ class RSTOnePageDocs(RSTSeparateMenuDocs):
                             "title": get_rst_section_title(level, title + " Menu", False),
                         }
                         current_page = [template.format(**subs)]
-                        print "New page for %s: %s" % (title, slug)
+                        print "  New page for %s: %s" % (title, slug)
                         log.debug("New page for %s: %s" % (title, slug))
                         pages.append((slug, title, current_page))
                     else:
@@ -394,8 +403,8 @@ class RSTOnePageDocs(RSTSeparateMenuDocs):
         return toc_entries, pages
 
     def add_task(self, task):
-        doc_hint = getattr(task, "doc_hint", "")
-        if doc_hint == "skip":
+        doc_hint = get_doc_hint(task)
+        if "skip" in doc_hint:
             log.debug("Skipping documentation for task %s" % task.editor_id)
             return
 
