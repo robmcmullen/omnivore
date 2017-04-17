@@ -277,6 +277,7 @@ Menu Items
             raise SkipDocumentationError
         if text is None:
             text = get_best_doc(action)
+        text = text.format(name=action.name, tooltip=action.tooltip)
         return text, doc_hint
 
     def create_task_sections(self, directory, hierarchy, base_slug):
