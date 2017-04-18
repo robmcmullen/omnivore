@@ -150,7 +150,6 @@ package_data = {
                ],
     'omnivore': ['icons/*.png',
                  'icons/*.ico',
-                 'icons/*.icns',
                  'utils/*.png',
                  'templates/*',
                  ],
@@ -246,7 +245,7 @@ if 'nsis' not in sys.argv:
                 includes=common_includes + py2app_includes,
                 excludes=common_excludes,
                 frameworks=[],
-                iconfile="omnivore/icons/omnivore.icns",
+                iconfile="resources/omnivore.icns",
                 plist=dict(
                     CFBundleName="Omnivore",
                     CFBundleDocumentTypes=[dict(
