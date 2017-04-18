@@ -485,6 +485,17 @@ class OpenLogDirectoryAction(Action):
         subprocess.call([file_manager, dirname])
 
 
+class UserGuideAction(Action):
+    name = "User Guide"
+    tooltip = 'Display the user guide in a new window'
+
+    def perform(self, event):
+        # Don't rely on the event window as this might be called by the OSX
+        # minimal menu which, once installed by the OSX plugin, never changes
+        # with the task.
+        event.task.window.application.show_help()
+
+
 class NewWindowAction(Action):
     """Open a new, blank Omnivore window that can be used to load new files
     or to provide a second view on a currently loaded file.

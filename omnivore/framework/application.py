@@ -26,6 +26,7 @@ except ImportError:
 from filesystem import init_filesystems
 from document import BaseDocument
 import documentation
+from omnivore.help import get_htmlhelp, MissingDocumentationError
 
 import logging
 log = logging.getLogger(__name__)
@@ -795,8 +796,8 @@ class FrameworkApplication(TasksApplication):
 
     def show_help(self, section=None):
         from wx.html import HtmlHelpController
-        if help_frame is None:
-            filename = self.get_config_dir_filename("htmlhelp.cfg")
+        if self.help_frame is None:
+            filename = self.get_config_dir_filename(".", "htmlhelp.cfg")
             cfg = wx.FileConfig(localFilename=filename, style=wx.CONFIG_USE_LOCAL_FILE)
             # NOTE: using a FileConfig directly in the HtmlHelpController by
             # self.help_frame.UseConfig(cfg) crashes when closing the help
@@ -804,33 +805,29 @@ class FrameworkApplication(TasksApplication):
             wx.ConfigBase.Set(cfg)
             self.help_frame = HtmlHelpController()
 
-        # FIXME: get omnivore equivalent to this
-        filename = get_package_data_dir("peppy/help/peppydoc.hhp")
+        try:
+            filename = get_htmlhelp("userguide.hhp")
+        except MissingDocumentationError, e:
+            self.active_window.warning(str(e), "Help Files Not Found")
+            return
 
-        if os.path.exists(filename):
-            self.help_frame.AddBook(filename)
-            # plugins = wx.GetApp().plugin_manager.getActivePluginObjects()
-            # for plugin in plugins:
-            #     for book in plugin.getHelpBooks():
-            #         self.help_frame.AddBook(book)
-            if section:
-                self.help_frame.Display(section)
+        self.help_frame.AddBook(filename)
+        # plugins = wx.GetApp().plugin_manager.getActivePluginObjects()
+        # for plugin in plugins:
+        #     for book in plugin.getHelpBooks():
+        #         self.help_frame.AddBook(book)
+        if section:
+            self.help_frame.Display(section)
 
-                # Make sure it actually displayed something, otherwise show
-                # the work-in-progress page
-                data = self.help_frame.GetHelpWindow().GetData()
-                filename = data.FindPageByName(section)
-                if not filename:
-                    # FIXME: change this to something in omnivore
-                    self.help_frame.Display("work-in-progress.html")
-            else:
-                self.help_frame.DisplayContents()
+            # Make sure it actually displayed something, otherwise show
+            # the work-in-progress page
+            data = self.help_frame.GetHelpWindow().GetData()
+            filename = data.FindPageByName(section)
+            if not filename:
+                # FIXME: change this to something in omnivore
+                self.help_frame.Display("work-in-progress.html")
         else:
-            dlg = wx.MessageDialog(self.GetTopWindow(), "Unable to locate help files; installation error?\nThe files should be located here:\n\n%s\n\nbut were not found." % os.path.dirname(filename), "Help Files Not Found", wx.OK | wx.ICON_EXCLAMATION )
-            retval=dlg.ShowModal()
-            dlg.Destroy()
-
-
+            self.help_frame.DisplayContents()
 
 
 def setup_frozen_logging():

@@ -531,6 +531,11 @@ class FrameworkTask(Task):
             AboutAction()
             ]
 
+    def get_actions_Menu_Help_DocGroup(self):
+        return [
+            UserGuideAction()
+            ]
+
     def get_actions_Menu_Help_BugReportGroup(self):
         return [
             OpenLogDirectoryAction(),
