@@ -114,8 +114,17 @@ def get_rst_action_description(level, title, action_info, in_submenu=True):
     text = action_info[0]
     doc_hint = action_info[1]
     parent_doc = action_info[2]
+    submenu_of = action_info[3]
+    extra_indent = action_info[4]
     lines = []
     indent = ""
+
+    level += extra_indent
+    if submenu_of:
+        # The submenu label is on the children because the group of submenu
+        # items is dynamically generated or something.
+        lines.append(get_rst_section_title(level, submenu_of))
+
     if parent_doc:
         lines.append(parent_doc)
         lines.append("\n\n")
@@ -148,9 +157,9 @@ def get_rst_action_description(level, title, action_info, in_submenu=True):
         if level < 0:
             # do nothing, format text as is
             pass
-        elif level == 2:  # Actions in the main pulldown are subsections
+        elif level == 2 or level == 3:  # Actions in the main pulldown are subsections
             lines.append(get_rst_section_title(level, title))
-        elif level == 3:  # Actions in the first submenu level
+        elif level == 4:  # Actions in the first submenu level
             lines.append("%s:" % title)
             indent = "    "
         else:  # Actions in deeper submenus
@@ -160,11 +169,11 @@ def get_rst_action_description(level, title, action_info, in_submenu=True):
         if level < 0:
             # do nothing, format text as is
             pass
-        elif level == 2:  # Actions in the main pulldown are subsections
+        elif level == 2 or level == 3:  # Actions in the main pulldown are subsections
             lines.append(get_rst_section_title(level + 1, title))
-        elif level == 3:  # Actions in the first submenu level
-            lines.append("%s:" % title)
-            indent = "    "
+        # elif level == 4:  # Actions in the first submenu level
+        #     lines.append("%s:" % title)
+        #     indent = "    "
         else:  # Actions in deeper submenus
             lines.append("* %s:" % title)
             text = ""  # force no description
@@ -285,6 +294,8 @@ Menu Items
         summary_id = "/".join(menu) + "/" + action.__class__.__name__
         text = None
         parent_doc = ""
+        submenu_of = ""
+        extra_indent = 0
         if "summary" in doc_hint:
             if summary_id in summaries_seen:
                 raise AlreadySeenError
@@ -306,12 +317,23 @@ Menu Items
             if summary_id in summaries_seen:
                 parent_doc = ""
             summaries_seen.add(summary_id)
+        submenu_of = trim(getattr(action, "submenu_of", "")).format(name=action.name, tooltip=action.tooltip)
+        if submenu_of:
+            # Only on the first time the *parent* of this item is seen should
+            # the submenu label be displayed.
+            summary_id = "/".join(menu) + "/" + submenu_of
+            if summary_id in summaries_seen:
+                submenu_of = ""
+            summaries_seen.add(summary_id)
+
+            # But, all the entries should be indented
+            extra_indent = 1
         if "skip" in doc_hint:
             raise SkipDocumentationError
         if text is None:
             text = get_best_doc(action)
         text = text.format(name=action.name, tooltip=action.tooltip)
-        return (text, doc_hint, parent_doc)
+        return (text, doc_hint, parent_doc, submenu_of, extra_indent)
 
     def create_task_sections(self, directory, hierarchy, base_slug):
         toc_entries = []
