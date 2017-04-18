@@ -69,7 +69,7 @@ class MapEditTask(HexEditTask):
     ui_layout_overrides = {
         "menu": {
             "order": ["File", "Edit", "View", "Segment", "Documents", "Window", "Help"],
-            "View": ["ViewZoomGroup", "ViewChangeGroup", "ViewConfigGroup", "ViewToggleGroup", "TaskGroup", "ViewDebugGroup"],
+            "View": ["ColorGroup", "FontGroup", "ZoomGroup", "ChangeGroup", "ConfigGroup", "ToggleGroup", "TaskGroup", "DebugGroup"],
             "Segment": ["ListGroup"],
         },
     }
@@ -105,51 +105,6 @@ class MapEditTask(HexEditTask):
         e = self.active_editor
         if e is not None:
             prefs = self.preferences
-
-    def get_actions_Menu_View_ViewConfigGroup(self):
-        return self.get_common_ViewConfigGroup()
-
-    def get_actions_Menu_View_ViewChangeGroup(self):
-        font_mapping_actions = self.get_font_mapping_actions()
-        font_renderer_actions = self.get_font_renderer_actions()
-        return [
-            SMenu(
-                Group(
-                    ColorStandardAction(name="NTSC", color_standard=0),
-                    ColorStandardAction(name="PAL", color_standard=1),
-                    id="a0", separator=True),
-                Group(
-                    UseColorsAction(name="Powerup Colors", colors=colors.powerup_colors()),
-                    id="a1", separator=True),
-                Group(
-                    AnticColorAction(),
-                    id="a2", separator=True),
-                id='mm4', separator=False, name="Colors"),
-            SMenu(
-                Group(
-                    UseFontAction(font=fonts.A8DefaultFont),
-                    UseFontAction(font=fonts.A8ComputerFont),
-                    UseFontAction(font=fonts.A2DefaultFont),
-                    UseFontAction(font=fonts.A2MouseTextFont),
-                    id="a1", separator=True),
-                FontChoiceGroup(id="a2", separator=True),
-                Group(
-                    LoadFontAction(),
-                    GetFontFromSelectionAction(),
-                    id="a3", separator=True),
-                id='mm5', separator=False, name="Font"),
-            SMenu(
-                Group(
-                    *font_renderer_actions,
-                    id="a1", separator=True),
-                Group(
-                    *font_mapping_actions,
-                    id="a2", separator=True),
-                Group(
-                    FontMappingWidthAction(),
-                    id="a3", separator=True),
-                id='mm6', separator=False, name="Character Display"),
-            ]
 
     ###
     @classmethod

@@ -123,6 +123,7 @@ class HexEditTask(FrameworkTask):
     ui_layout_overrides = {
         "menu": {
             "order": ["File", "Edit", "View", "Bytes", "Segment", "Disk Image", "Documents", "Window", "Help"],
+            "View": ["PredefinedGroup", "ProcessorGroup", "AssemblerGroup", "MemoryMapGroup", "ColorGroup", "FontGroup", "BitmapGroup", "ZoomGroup", "ChangeGroup", "ConfigGroup", "ToggleGroup", "TaskGroup", "DebugGroup"],
             "Bytes": ["HexModifyGroup"],
             "Segment": ["ListGroup", "ActionGroup"],
             "Disk Image": ["ParserGroup", "EmulatorGroup", "ActionGroup"],
@@ -258,64 +259,38 @@ class HexEditTask(FrameworkTask):
             FindToSelectionAction(),
             ]
 
-    def get_actions_Menu_View_ViewConfigGroup(self):
+    def get_actions_Menu_View_ConfigGroup(self):
         return [
             ViewDiffHighlightAction(),
             TextFontAction(),
             ]
 
-    def get_predefined_machines_actions(self):
+    def get_actions_Menu_View_PredefinedGroup(self):
         actions = []
         for m in machine.predefined['machine']:
             actions.append(PredefinedMachineAction(machine=m))
-        return actions
-
-    def get_actions_Menu_View_ViewPredefinedGroup(self):
-        machines = self.get_predefined_machines_actions()
         return [
             SMenu(
                 Group(
-                    *machines,
+                    *actions,
                     id="a1", separator=True),
                 id='MachineChoiceSubmenu1', separator=False, name="Predefined Machines"),
             ]
 
-    def get_font_renderer_actions(self):
-        actions = []
-        for r in machine.predefined['font_renderer']:
-            actions.append(FontRendererAction(font_renderer=r))
-        return actions
-
-    def get_bitmap_renderer_actions(self):
-        actions = []
-        for r in machine.predefined['bitmap_renderer']:
-            actions.append(BitmapRendererAction(bitmap_renderer=r))
-        return actions
-
-    def get_processor_type_actions(self):
+    def get_actions_Menu_View_ProcessorGroup(self):
         actions = []
         for r in machine.predefined['disassembler']:
             actions.append(ProcessorTypeAction(disassembler=r))
-        return actions
-
-    def get_memory_map_actions(self):
-        actions = []
-        for r in machine.predefined['memory_map']:
-            actions.append(MemoryMapAction(memory_map=r))
-        return actions
-
-    def get_actions_Menu_View_ViewChangeGroup(self):
-        font_mapping_actions = self.get_font_mapping_actions()
-        font_renderer_actions = self.get_font_renderer_actions()
-        bitmap_renderer_actions = self.get_bitmap_renderer_actions()
-        processor_type_actions = self.get_processor_type_actions()
-        memory_map_actions = self.get_memory_map_actions()
         return [
             SMenu(
                 Group(
-                    *processor_type_actions,
+                    *actions,
                     id="a1", separator=True),
                 id='mm1', separator=True, name="Processor"),
+            ]
+
+    def get_actions_Menu_View_AssemblerGroup(self):
+        return [
             SMenu(
                 AssemblerChoiceGroup(id="a2", separator=True),
                 Group(
@@ -324,23 +299,42 @@ class HexEditTask(FrameworkTask):
                     SetSystemDefaultAssemblerAction(),
                     id="a3", separator=True),
                 id='mm2', separator=False, name="Assembler Syntax"),
+            ]
+
+    def get_actions_Menu_View_MemoryMapGroup(self):
+        actions = []
+        for r in machine.predefined['memory_map']:
+            actions.append(MemoryMapAction(memory_map=r))
+        return [
             SMenu(
                 Group(
-                    *memory_map_actions,
+                    *actions,
                     id="a1", separator=True),
                 id='mm3', separator=False, name="Memory Map"),
+            ]
+
+    def get_actions_Menu_View_ColorGroup(self):
+        return [
             SMenu(
                 Group(
                     ColorStandardAction(name="NTSC", color_standard=0),
                     ColorStandardAction(name="PAL", color_standard=1),
                     id="a0", separator=True),
                 Group(
-                    UseColorsAction(name="Powerup Colors", colors=colors.powerup_colors()),
+                    UseColorsAction(name="ANTIC Powerup Colors", colors=colors.powerup_colors()),
                     id="a1", separator=True),
                 Group(
                     AnticColorAction(),
                     id="a2", separator=True),
                 id='mm4', separator=False, name="Colors"),
+            ]
+
+    def get_actions_Menu_View_FontGroup(self):
+        font_mapping_actions = self.get_font_mapping_actions()
+        font_renderer_actions = []
+        for r in machine.predefined['font_renderer']:
+            font_renderer_actions.append(FontRendererAction(font_renderer=r))
+        return [
             SMenu(
                 Group(
                     UseFontAction(font=fonts.A8DefaultFont),
@@ -365,9 +359,16 @@ class HexEditTask(FrameworkTask):
                     FontMappingWidthAction(),
                     id="a3", separator=True),
                 id='mm6', separator=False, name="Character Display"),
+            ]
+
+    def get_actions_Menu_View_BitmapGroup(self):
+        actions = []
+        for r in machine.predefined['bitmap_renderer']:
+            actions.append(BitmapRendererAction(bitmap_renderer=r))
+        return [
             SMenu(
                 Group(
-                    *bitmap_renderer_actions,
+                    *actions,
                     id="a1", separator=True),
                 Group(
                     BitmapWidthAction(),

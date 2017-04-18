@@ -49,6 +49,7 @@ class BitmapEditTask(HexEditTask):
     ui_layout_overrides = {
         "menu": {
             "order": ["File", "Edit", "View", "Segment", "Documents", "Window", "Help"],
+            "View": ["ColorGroup", "BitmapGroup", "ZoomGroup", "ChangeGroup", "ConfigGroup", "ToggleGroup", "TaskGroup", "DebugGroup"],
             "Segment": ["ListGroup", "ActionGroup"],
         },
     }
@@ -85,35 +86,6 @@ class BitmapEditTask(HexEditTask):
         # doesn't have so we override it here so the hex edit prefs don't get
         # used.
         pass
-
-    def get_actions_Menu_View_ViewConfigGroup(self):
-        return self.get_common_ViewConfigGroup()
-
-    def get_actions_Menu_View_ViewChangeGroup(self):
-        bitmap_renderer_actions = self.get_bitmap_renderer_actions()
-        return [
-            SMenu(
-                Group(
-                    ColorStandardAction(name="NTSC", color_standard=0),
-                    ColorStandardAction(name="PAL", color_standard=1),
-                    id="a0", separator=True),
-                Group(
-                    UseColorsAction(name="Powerup Colors", colors=colors.powerup_colors()),
-                    id="a1", separator=True),
-                Group(
-                    AnticColorAction(),
-                    id="a2", separator=True),
-                id='mm4', separator=True, name="Colors"),
-            SMenu(
-                Group(
-                    *bitmap_renderer_actions,
-                    id="a1", separator=True),
-                Group(
-                    BitmapWidthAction(),
-                    BitmapZoomAction(),
-                    id="a1", separator=True),
-                id='mm7', separator=False, name="Bitmap Display"),
-            ]
 
     def get_actions_Menu_Segment_ActionGroup(self):
         return [

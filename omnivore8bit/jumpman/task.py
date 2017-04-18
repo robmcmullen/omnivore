@@ -211,6 +211,7 @@ class JumpmanEditTask(HexEditTask):
     ui_layout_overrides = {
         "menu": {
             "order": ["File", "Edit", "View", "Jumpman", "Disk Image", "Documents", "Window", "Help"],
+            "View": ["ColorGroup", "ConfigGroup", "ToggleGroup", "TaskGroup", "DebugGroup"],
             "Disk Image": ["ParserGroup", "EmulatorGroup", "ActionGroup"],
             "Jumpman":  ["LevelGroup", "SelectionGroup", "CustomCodeGroup"],
         },
@@ -275,25 +276,6 @@ class JumpmanEditTask(HexEditTask):
         return [
             FlipVerticalAction(),
             FlipHorizontalAction(),
-            ]
-
-    def get_actions_Menu_View_ViewPredefinedGroup(self):
-        return []
-
-    def get_actions_Menu_View_ViewChangeGroup(self):
-        return [
-            SMenu(
-                Group(
-                    ColorStandardAction(name="NTSC", color_standard=0),
-                    ColorStandardAction(name="PAL", color_standard=1),
-                    id="a0", separator=True),
-                Group(
-                    UseColorsAction(name="Powerup Colors", colors=colors.powerup_colors()),
-                    id="a1", separator=True),
-                Group(
-                    AnticColorAction(),
-                    id="a2", separator=True),
-                id='mm4', separator=False, name="Colors"),
             ]
 
     def get_actions_Menu_Jumpman_LevelGroup(self):

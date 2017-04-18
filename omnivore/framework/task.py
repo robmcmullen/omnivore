@@ -99,7 +99,7 @@ class FrameworkTask(Task):
             "order": ["File", "Edit", "View", "Documents", "Window", "Help"],
             "File": ["NewGroup", "OpenGroup", "ImportGroup", "SaveGroup", "RevertGroup", "PrintGroup", "ExportGroup", "ExitGroup"],
             "Edit": ["UndoGroup", "CopyPasteGroup", "SelectGroup", "FindGroup", "PrefGroup"],
-            "View": ["ViewPredefinedGroup", "ViewZoomGroup", "ViewChangeGroup", "ViewConfigGroup", "ViewToggleGroup", "TaskGroup", "ViewDebugGroup"],
+            "View": ["PredefinedGroup", "ZoomGroup", "ChangeGroup", "ConfigGroup", "ToggleGroup", "TaskGroup", "DebugGroup"],
             "Documents": ["DocumentGroup"],
             "Window": ["NewTaskGroup", "WindowGroup"],
             "Help": ["AboutGroup", "DocGroup", "BugReportGroup", "DebugGroup"],
@@ -108,7 +108,7 @@ class FrameworkTask(Task):
             "order": ["File", "Edit", "View"],
             "File": ["NewGroup", "OpenGroup", "SaveGroup"],
             "Edit": ["UndoGroup", "CopyPasteGroup", "SelectGroup", "FindGroup"],
-            "View": ["ViewZoomGroup", "ViewChangeGroup", "ViewConfigGroup"],
+            "View": ["ZoomGroup", "ChangeGroup", "ConfigGroup"],
         },
     }
 
