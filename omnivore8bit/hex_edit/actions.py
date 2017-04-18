@@ -256,6 +256,7 @@ class FontRendererAction(EditorAction):
     map window.
     """
     doc_hint = "parent,list"
+    submenu_of = "Character Display Modes"
     # Traits
     style = RADIO_STYLE
 
@@ -280,6 +281,7 @@ class FontMappingAction(EditorAction):
     looking at screen memory and the ATASCII mapping for normal usage.
     """
     doc_hint = "parent,list"
+    submenu_of = "Character Mappings"
     # Traits
     style = RADIO_STYLE
 

@@ -34,28 +34,71 @@ class HexEditTask(FrameworkTask):
     character data, and the disassembly. There is also a bitmap view but is
     presently only for viewing, not editing.
 
-    Hex data can be edited by clicking on a cell and changing the hex data; by
-    selecting a region (or multiple regions) and using one of the operations in
-    the ``Bytes`` menu; by cutting and pasting hex data from elsewhere in the
-    file; by pasting in data from an external application.
+    Editing Data
+    ------------
+
+    Hex data can be edited by:
+
+     * clicking on a cell and changing the hex data
+     * selecting a region (or multiple regions; see `Selections`_ below) and using one of the operations in the `Bytes`_ menu
+     * cutting and pasting hex data from elsewhere in the file
+     * cutting and pasting hex data from another file edited in a different tab or window
+     * pasting in data from an external application.
 
     Character data can be edited by clicking on a character in the character
     map to set the cursor and then typing. Inverse text is supported for Atari
-    modes. Alo supported are all the selection and cut/paste methods as above.
+    modes. Also supported are all the selection and cut/paste methods as above.
 
-    As data is changed, the differences from the baseline version of the file
-    (either it's state immediately after loading or a separate file) will be
+    Baseline Data
+    -------------
+
+    Omnivore automatically highlights changes to each segment as compared to
+    the state of the data when first loaded.
+
+    Optionally, you can specify a baseline difference file to compare to a
+    different set of data, like a canonical or reference image. This is useful
+    to compare changes to some known state over several Omnivore editing
+    sessions, as Omnivore will remember the path to the reference image and
+    will reload it when the disk image is edited in the future.
+
+    As data is changed, the changes as compared to the baseline will be
     displayed in red.
+
+    By default, baseline data difference highlighting is turned on, you can
+    change this with the `Show Baseline Differences`_ menu item.
+
+    Selections
+    ----------
+
+    Comments
+    --------
+
+    Disassembler
+    ------------
+
+    Labels
+    ~~~~~~
+
+    Labels can be set on an address, and the label will be reflected in the
+    disassembly code. Also, memory mapping files can be supplied that
+    automatically label operating system locations.
+
+    Mini-Assembler
+    ~~~~~~~~~~~~~~
 
     The disassembly can be edited using a simple mini-assembler; clicking on an
     opcode provides a text entry box to change the command. The mini-assembler
-    supports all CPU types, not just 6502. Labels can be set on an address, and
-    the label will be reflected in the disassembly code. Also, memory mapping
-    files can be supplied that automatically label operating system locations.
+    supports all CPU types, not just 6502.
+
+    Data Regions
+    ~~~~~~~~~~~~
 
     To support reverse engineering, regions can be marked as data, code, ANTIC
     display lists, and other types. Regions are highlighted in a different
     style and changes how the disassembly is displayed.
+
+    Static Tracing of Disassembly
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     To help identify regions, static tracing can be used. Turning on static
     tracing assumes that every byte is data and shows temporary highlights over
@@ -68,25 +111,9 @@ class HexEditTask(FrameworkTask):
     finished, the results can be applied to the segment to mark as data or
     code.
 
-    Selections
-    ----------
 
-
-    Baseline Data
-    -------------
-
-    Omnivore automatically highlights changes to each segment as compared to
-    the state of the data when first loaded. Optionally, you can specify a
-    baseline difference file to compare to a different set of data.
-
-    A baseline difference file is a file used to compare the current state of
-    the disk image to some reference image. This is useful to compare changes
-    to some known state over several Omnivore editing sessions, as Omnivore
-    will remember the path to the reference image and will reload it when the
-    disk image is edited in the future.
-
-    By default, baseline data difference highlighting is turned on, you can
-    change this with the `Show Baseline Differences`_ menu item.
+    Search
+    ------
 
     """
 
