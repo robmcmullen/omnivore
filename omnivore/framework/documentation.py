@@ -110,16 +110,40 @@ def get_rst_section_title(level, title, page=False):
     divider = rst_section_chars[level] * len(title)
     return "\n\n%s\n%s\n%s\n\n" % (divider if page else "", title, divider)
 
-def get_rst_action_description(level, title, text, doc_hint, in_submenu=True):
+def get_rst_action_description(level, title, action_info, in_submenu=True):
+    text = action_info[0]
+    doc_hint = action_info[1]
+    parent_doc = action_info[2]
     lines = []
     indent = ""
+    if parent_doc:
+        lines.append(parent_doc)
+        lines.append("\n\n")
     if "summary" in doc_hint:
         # just use text as is because the menu title will have already been
         # printed
         level = -1
     if "parent" in doc_hint:
         if "list" in doc_hint:
-            text += "\n\n* %s" % title  # list needs to start after first description
+            if "compact" in doc_hint:
+                # compact list puts the item description on the same line as
+                # the title
+                lines.append("%s:" % title)
+                indent = "    "
+            elif "level 3" in doc_hint:
+                # the submenu items in this list should be shown as RST
+                # sections at level 3, below the level 2 of the parent menu.
+                # This is used when the parent menu is dynamically generated
+                # and there's no good place to put a docstring on the parent
+                lines.append(get_rst_section_title(3, title))
+            else:
+                # normal list is for a menu that can't have a docstring on
+                # their own because they aren't an action. The documentation is
+                # on the submenu items and the docstring text of those items
+                # refers to the parent menu. So the description needs to come
+                # before the first item becasue it refers to the menu title,
+                # then the title of the submenu item.
+                text += "\n\n* %s" % title
     elif in_submenu:
         if level < 0:
             # do nothing, format text as is
@@ -256,10 +280,11 @@ Menu Items
             template = self.default_templates[kind]
         return template
 
-    def get_action_text(self, action, menu, summaries_seen):
+    def get_action_info(self, action, menu, summaries_seen):
         doc_hint = get_doc_hint(action)
         summary_id = "/".join(menu) + "/" + action.__class__.__name__
         text = None
+        parent_doc = ""
         if "summary" in doc_hint:
             if summary_id in summaries_seen:
                 raise AlreadySeenError
@@ -273,12 +298,20 @@ Menu Items
             if summary_id in summaries_seen:
                 text = ""
             summaries_seen.add(summary_id)
+        parent_doc = trim(getattr(action, "parent_doc", "")).format(name=action.name, tooltip=action.tooltip)
+        if parent_doc:
+            # Only on the first time the *parent* of this item is seen should
+            # the parent_doc be displayed.
+            summary_id = "/".join(menu)
+            if summary_id in summaries_seen:
+                parent_doc = ""
+            summaries_seen.add(summary_id)
         if "skip" in doc_hint:
             raise SkipDocumentationError
         if text is None:
             text = get_best_doc(action)
         text = text.format(name=action.name, tooltip=action.tooltip)
-        return text, doc_hint
+        return (text, doc_hint, parent_doc)
 
     def create_task_sections(self, directory, hierarchy, base_slug):
         toc_entries = []
@@ -307,12 +340,12 @@ Menu Items
 
                 else:  # menu item could be in a submenu or up a level
                     try:
-                        text, doc_hint = self.get_action_text(action, menu, summaries_seen)
+                        action_info = self.get_action_info(action, menu, summaries_seen)
                     except AlreadySeenError:
                         continue
                     except SkipDocumentationError:
                         continue
-                    current_page.extend(get_rst_action_description(level, title, text, doc_hint))
+                    current_page.extend(get_rst_action_description(level, title, action_info))
 
         for slug, title, page in pages:
             text = "\n".join(page) + "\n"
@@ -396,10 +429,10 @@ class RSTOnePageDocs(RSTSeparateMenuDocs):
 
                 else:  # menu item could be in a submenu or up a level
                     try:
-                        text, doc_hint = self.get_action_text(action, menu, summaries_seen)
+                        action_info = self.get_action_info(action, menu, summaries_seen)
                     except AlreadySeenError:
                         continue
-                    current_page.extend(get_rst_action_description(level, title, text, doc_hint, False))
+                    current_page.extend(get_rst_action_description(level, title, action_info, False))
 
         return toc_entries, pages
 
