@@ -203,9 +203,9 @@ class FrameworkApplication(TasksApplication):
         init_filesystems()
         loaded = False
         parser = argparse.ArgumentParser(description="Application parser")
-        parser.add_argument("-t", "--task_id", "--edit_with", action="store", default="", help="Use the editing mode specified by this task id for all files listed on the command line")
-        parser.add_argument("--show_editors", action="store_true", default=False, help="List all task ids")
-        parser.add_argument("--build_docs", action="store_true", default=False, help="Build documentation from the menubar")
+        parser.add_argument("-t", "--task_id", "--task-id", "--edit_with","--edit-with", action="store", default="", help="Use the editing mode specified by this task id for all files listed on the command line")
+        parser.add_argument("--show_editors", "--show-editors", action="store_true", default=False, help="List all task ids")
+        parser.add_argument("--build_docs", "--build-docs", action="store_true", default=False, help="Build documentation from the menubar")
         options, extra_args = parser.parse_known_args(self.command_line_args)
         if options.show_editors:
             for factory in self.task_factories:
