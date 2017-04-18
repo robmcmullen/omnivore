@@ -251,8 +251,11 @@ class SetSystemDefaultAssemblerAction(EditorAction):
 
 
 class FontRendererAction(EditorAction):
-    """Radio buttons for changing font style
+    """This submenu contains a list of all available font renderers. Selecting
+    an item in this list will change how the text is displayed in the character
+    map window.
     """
+    doc_hint = "parent,list"
     # Traits
     style = RADIO_STYLE
 
@@ -271,9 +274,10 @@ class FontRendererAction(EditorAction):
 
 
 class FontMappingAction(EditorAction):
-    """This submenu contains a list of all available font renderers. Selecting
-    an item in this list will change how the text is displayed in the character
-    map window.
+    """This submenu contains a list of all available character mappings. Most
+    platforms use a regular ASCII mapping, but some like the Atari 8-bits have
+    different character mappings depending on the usage: the ANTIC mapping if
+    looking at screen memory and the ATASCII mapping for normal usage.
     """
     doc_hint = "parent,list"
     # Traits
@@ -409,6 +413,9 @@ class ColorStandardAction(EditorAction):
 
 
 class TextFontAction(EditorAction):
+    """Open a font selection window to choose the font and size used to display
+    the values in the hex grid and the disassembly text.
+    """
     name = 'Text Font...'
 
     def perform(self, event):
@@ -428,8 +435,13 @@ class TextFontAction(EditorAction):
 
 
 class PredefinedMachineAction(EditorAction):
-    """Radio buttons for changing font style
+    """These are built-in machine definitions that store preset values for
+    `Processor`_, `Memory Map`_, `Colors`_, `Font`_, `Character Display`_ and
+    `Bitmap Display`_.
+
+    Currently defined machine types are:
     """
+    doc_hint = "parent,list"
     # Traits
     style = RADIO_STYLE
 
@@ -448,8 +460,12 @@ class PredefinedMachineAction(EditorAction):
 
 
 class ProcessorTypeAction(EditorAction):
-    """Radio buttons for changing the processor type and therefore disassembler
+    """The processor type defines the opcodes displayed in the disassembly
+    window and those understood by the mini-assembler.
+
+    Currently supported processors are:
     """
+    doc_hint = "parent,list"
     # Traits
     style = RADIO_STYLE
 
@@ -468,8 +484,20 @@ class ProcessorTypeAction(EditorAction):
 
 
 class MemoryMapAction(EditorAction):
-    """Radio buttons for changing the memory map
+    """In the disassembly window, target addresses for jumps, branches, loads,
+    stores, compares, etc. can be replaced by text labels that are defined for
+    the particular platform. For example, on the Atari 8-bit platform,
+    occurrences of ``$E459`` will be replaced by ``SIOV``.
+
+    Some platforms like the Atari 8-bits have hardware locations that perform
+    different functions depending on whether it is read from or written to. The
+    disassembler can handle this, so reading the location ``$D000`` will show
+    the label ``M0PF`` (missile 0 to playfield collisions) while writing will
+    show ``HPOSP0`` (set the horizontal position of player 0).
+
+    Currently supported platforms are:
     """
+    doc_hint = "parent,list"
     # Traits
     style = RADIO_STYLE
 
@@ -528,7 +556,7 @@ class SegmentParserAction(EditorAction):
 
 
 class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
-    """Dynamic menu group to display the available fonts
+    """Menu containing list of segments
     """
     #### 'DynamicSubmenuGroup' interface ######################################
 
@@ -1163,6 +1191,11 @@ class InsertFileAction(EditorAction):
 
 
 class IndexRangeAction(EditorAction):
+    """base class for byte modification operations
+    """
+    doc_hint = "parent,list,level 3"
+    parent_doc = """The commands in this menu operate on the current selection to change the byte values to:
+    """
     enabled_name = 'can_copy'
     cmd = None
 
@@ -1180,16 +1213,19 @@ class IndexRangeAction(EditorAction):
 
 
 class ZeroAction(IndexRangeAction):
+    """Set to zero"""
     cmd = ZeroCommand
     accelerator = 'Ctrl+0'
 
 
 class FFAction(IndexRangeAction):
+    """Set to $ff"""
     cmd = FFCommand
     accelerator = 'Ctrl+9'
 
 
 class NOPAction(IndexRangeAction):
+    """Set to the NOP command of the current processor"""
     cmd = NOPCommand
     accelerator = 'Ctrl+3'
 
@@ -1199,37 +1235,45 @@ class NOPAction(IndexRangeAction):
 
 
 class SetHighBitAction(IndexRangeAction):
+    """Or with $80"""
     cmd = SetHighBitCommand
 
 
 class ClearHighBitAction(IndexRangeAction):
+    """And with $7f"""
     cmd = ClearHighBitCommand
 
 
 class BitwiseNotAction(IndexRangeAction):
+    """Invert every bit in each byte"""
     cmd = BitwiseNotCommand
     accelerator = 'Ctrl+1'
 
 
 class LeftShiftAction(IndexRangeAction):
+    """Shift bits left (multiply by 2), inserting zeros in the low bit"""
     cmd = LeftShiftCommand
 
 
 class RightShiftAction(IndexRangeAction):
+    """Shift bits right (divide by 2), inserting zeros in the high bit"""
     cmd = RightShiftCommand
 
 
 class LeftRotateAction(IndexRangeAction):
+    """Shift bits left where the high bit wraps around to become the new low bit"""
     cmd = LeftRotateCommand
     accelerator = 'Ctrl+<'
 
 
 class RightRotateAction(IndexRangeAction):
+    """Shift bits right where the low bit wraps around to become the new high bit"""
     cmd = RightRotateCommand
     accelerator = 'Ctrl+>'
 
 
 class ReverseBitsAction(IndexRangeAction):
+    """Reverse the bit pattern of each byte; e.g. $c0 or 11000000 in binary becomes 00000011 in binary, $03 in hex"""
     cmd = ReverseBitsCommand
 
 
@@ -1248,58 +1292,83 @@ class IndexRangeValueAction(IndexRangeAction):
 
 
 class SetValueAction(IndexRangeValueAction):
+    """Prompts the user and sets the data to the specified value"""
     cmd = SetValueCommand
 
 
 class OrWithAction(IndexRangeValueAction):
+    """Logical OR the selected data with the user specified value"""
     cmd = OrWithCommand
     accelerator = 'Ctrl+\\'
 
 
 class AndWithAction(IndexRangeValueAction):
+    """Logical AND the selected data with the user specified value"""
     cmd = AndWithCommand
     accelerator = 'Ctrl+7'
 
 
 class XorWithAction(IndexRangeValueAction):
+    """Logical XOR the selected data with the user specified value"""
     cmd = XorWithCommand
     accelerator = 'Ctrl+6'
 
 
 class RampUpAction(IndexRangeValueAction):
+    """Starting with the user specified value at the first selected byte, loops
+    over each byte in the selection and adds one to the value of the previous
+    byte. At $ff, it wraps around to $00.
+    """
     cmd = RampUpCommand
 
 
 class RampDownAction(IndexRangeValueAction):
+    """Starting with the user specified value at the first selected byte, loops
+    over each byte in the selection and subtracts one from the value of the
+    previous byte. At $00, it wraps around to $ff.
+    """
     cmd = RampDownCommand
 
 
 class AddValueAction(IndexRangeValueAction):
+    """Adds the user specified value to the data, performing a logical AND with
+    $ff if necessary to keep all values in the 8-bit range."""
     cmd = AddValueCommand
     accelerator = 'Ctrl+='
 
 
 class SubtractValueAction(IndexRangeValueAction):
+    """Subtracts the user specified value from the data (AND with $ff if
+    necessary). Note the difference between this and `Subtract From`_"""
     cmd = SubtractValueCommand
     accelerator = 'Ctrl+-'
 
 
 class SubtractFromAction(IndexRangeValueAction):
+    """Subtracts the data from the user specified value (AND with $ff if
+    necessary). Note the difference between this and `Subtract`_"""
     cmd = SubtractFromCommand
     accelerator = 'Shift+Ctrl+-'
 
 
 class MultiplyAction(IndexRangeValueAction):
+    """Multiply the data from the user specified value (AND with $ff if
+    necessary)."""
     cmd = MultiplyCommand
     accelerator = 'Ctrl+8'
 
 
 class DivideByAction(IndexRangeValueAction):
+    """Divides the data by the user specified value by the data, ignoring the
+    remainder. Note the difference between this and `Divide From`_"""
     cmd = DivideByCommand
     accelerator = 'Ctrl+/'
 
 
 class DivideFromAction(IndexRangeValueAction):
+    """Divides the data from the user specified value (that is to say: dividing
+    the user specified value by the data), ignoring the remainder. Note the
+    difference between this and `Divide By`_"""
     cmd = DivideFromCommand
     accelerator = 'Shift+Ctrl+/'
 
