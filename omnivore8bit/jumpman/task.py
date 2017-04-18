@@ -212,7 +212,7 @@ class JumpmanEditTask(HexEditTask):
         "menu": {
             "order": ["File", "Edit", "View", "Jumpman", "Disk Image", "Documents", "Window", "Help"],
             "View": ["ColorGroup", "ConfigGroup", "ToggleGroup", "TaskGroup", "DebugGroup"],
-            "Disk Image": ["ParserGroup", "EmulatorGroup", "ActionGroup"],
+            "Disk Image": ["EmulatorGroup"],
             "Jumpman":  ["LevelGroup", "SelectionGroup", "CustomCodeGroup"],
         },
     }
