@@ -183,17 +183,17 @@ class AssemblySourceAction(EditorAction):
     already built-in with trigger painting. There are special labels that are
     recognized by the assembler and used in the appropriate places:
 
-        vbi1
-        vbi2
-        vbi3
-        vbi4
-        dead_begin
-        dead_at_bottom
-        dead_falling
-        gameloop
-        out_of_lives
-        level_complete
-        collect_callback
+        * vbi1
+        * vbi2
+        * vbi3
+        * vbi4
+        * dead_begin
+        * dead_at_bottom
+        * dead_falling
+        * gameloop
+        * out_of_lives
+        * level_complete
+        * collect_callback
 
     See our `reverse engineering notes
     <http://playermissile.com/jumpman/notes.html#h.s0ullubzr0vv>`_ for more
@@ -222,6 +222,18 @@ class RecompileAction(EditorAction):
         e.compile_assembly_source(True)
 
 
+class UseLevelAction(UseSegmentAction):
+    """This submenu contains a list of all Jumpman levels in the disk image.
+    Selecting one of these items will change the display to edit that level.
+
+    Note that no changes are lost when switching levels; they remain in memory
+    and your edits will be restored when switching back to a previously editing
+    level. However, no changes for any level are saved on disk until using the
+    `Save`_ or `Save As`_ commands.
+    """
+    doc_hint = "parent"
+
+
 class LevelListGroup(TaskDynamicSubmenuGroup):
     """Dynamic menu group to display the available levels
     """
@@ -238,8 +250,13 @@ class LevelListGroup(TaskDynamicSubmenuGroup):
         if event_data is not None:
             for i, segment in enumerate(event_data):
                 if is_valid_level_segment(segment):
-                    action = UseSegmentAction(segment=segment, segment_number=i, task=self.task, checked=False)
+                    action = UseLevelAction(segment=segment, segment_number=i, task=self.task, checked=False)
                     log.debug("LevelListGroup: created %s for %s, num=%d" % (action, str(segment), i))
                     items.append(ActionItem(action=action, parent=self))
+
+        if not items:
+            action = UseLevelAction(segment="<no valid levels>", segment_number=0, task=self.task, checked=False, enabled=False)
+            log.debug("LevelListGroup: created empty menu")
+            items.append(ActionItem(action=action, parent=self))
 
         return items
