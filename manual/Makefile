@@ -12,7 +12,7 @@ PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d _build/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
-HTMLHELPDIR = ../omnivore/help
+HTMLHELPDIR = ../omnivore8bit/help
 
 .PHONY: help clean html htmlhelp latex pdf rst
 
