@@ -126,6 +126,8 @@ common_excludes = [
 py2exe_excludes = [
     ]
 
+# package_data is for pip and python installs, not for app bundles. Need
+# to use data_files for that
 package_data = {
     '': ['images/*',
          '*.ini',
@@ -155,6 +157,11 @@ package_data = {
                  ],
     'omnivore8bit': ['icons/*.png',
                  'templates/*',
+                 'help/*.hh*',
+                 'help/*.stp',
+                 'help/*.html',
+                 'help/_static/*',
+                 'help/_images/*',
                  ],
     }
 
@@ -298,6 +305,10 @@ if 'nsis' not in sys.argv:
         # Include template files in bundled app
         data_files.append(("omnivore/templates", glob.glob("omnivore/templates/*")))
         data_files.append(("omnivore8bit/templates", glob.glob("omnivore8bit/templates/*")))
+
+        # Include help files
+        data_files.append(("omnivore8bit/help", glob.glob("omnivore8bit/help/*")))
+        data_files.append(("omnivore8bit/help/_static", glob.glob("omnivore8bit/help/_static/*")))
 
     setup(
         name = 'Omnivore',
