@@ -39,6 +39,11 @@ import wx
 
 
 class EnthoughtWxApp(wx.App):
+    def OnInit(self):
+        # Set application name before anything else
+        self.SetAppName("Omnivore")
+        return True
+
     def MacOpenFiles(self, filenames):
         """OSX specific routine to handle files that are dropped on the icon
         
