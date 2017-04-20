@@ -1,9 +1,18 @@
-#!/usr/bin/env shellpy
+#!/usr/bin/env python
 import os
-
 import shutil
+from subprocess import Popen, PIPE
 
 execfile("../omnivore/_omnivore_version.py")
+
+from subprocess import Popen, PIPE
+
+def run(args):
+    p = Popen(args, stdout=PIPE, bufsize=1)
+    with p.stdout:
+        for line in iter(p.stdout.readline, b''):
+            print line,
+    p.wait()
 
 # can't use Omnivore because omnivore is a directory name and the filesystem is
 # case-insensitive
@@ -19,7 +28,7 @@ final_zip = "%s-%s-darwin.tbz" % (final_target, version)
 dest_zip = "%s/%s" % (dest_dir, final_zip)
 
 print "Building %s" % build_app
-result = pe`pyinstaller -y --debug --windowed {build_target}.spec
+run(['pyinstaller', '-y', '--debug', '--windowed', '%s.spec' % build_target])
 
 try:
 	os.mkdir(dest_dir)
@@ -35,10 +44,10 @@ except OSError:
 
 print "Copying %s -> %s & removing architectures other than x86_64" % (build_app, dest_app)
 #shutil.copytree(build_app, dest_app, True)
-result = `/usr/bin/ditto -arch x86_64 {build_app} {dest_app}
+run(['/usr/bin/ditto', '-arch', 'x86_64', build_app, dest_app])
 
 print "Copying new Info.plist"
 shutil.copyfile("Info.plist", "%s/Contents/Info.plist" % dest_app)
 
 print "Zipping %s" % dest_zip
-result = `tar cfj {dest_zip} -C {dest_dir} {final_app}
+run(['tar', 'cfj', dest_zip, '-C', dest_dir, final_app])
