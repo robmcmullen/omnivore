@@ -29,25 +29,40 @@ for pymod, path, tag in sorted(a.pure):
 
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
-exe = EXE(pyz,
-          a.scripts,
-          exclude_binaries=True,
-          name='OmnivoreXL',
-          debug=False,
-          strip=True,
-          upx=True,
-          console=False,
-          icon='../resources/omnivore.icns')
-coll = COLLECT(exe,
-               a.binaries,
-               a.zipfiles,
-               a.datas,
-               strip=None,
-               upx=True,
-               name='OmnivoreXL')  # dir in dist: ..../dist/Omnivore
-app = BUNDLE(coll,
-             name='OmnivoreXL.app',
-             bundle_identifier="com.playermissile.omnivore",
-             icon='../resources/omnivore.icns')
+
+if sys.platform == "darwin":
+    exe = EXE(pyz,
+        a.scripts,
+        exclude_binaries=True,
+        name='OmnivoreXL',
+        debug=False,
+        strip=True,
+        upx=True,
+        console=False,
+        icon=icon)
+    coll = COLLECT(exe,
+        a.binaries,
+        a.zipfiles,
+        a.datas,
+        strip=None,
+        upx=True,
+        name='OmnivoreXL')  # dir in dist: ..../dist/Omnivore
+    app = BUNDLE(coll,
+       name='OmnivoreXL.app',
+       bundle_identifier="com.playermissile.omnivore",
+       icon='../resources/omnivore.icns')
+
+elif sys.platform == "win32":
+    exe = EXE(pyz,
+        a.scripts,
+        a.binaries,
+        a.zipfiles,
+        a.datas,
+        name='Omnivore',
+        debug=False,
+        strip=False,
+        upx=True,
+        console=False,
+        icon="../omnivore/icons/omnivore.ico")
 
 
