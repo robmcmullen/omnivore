@@ -58,7 +58,7 @@ elif sys.platform == "win32":
         a.binaries,
         a.zipfiles,
         a.datas,
-        name='Omnivore',
+        name='OmnivoreXL',
         debug=False,
         strip=False,
         upx=True,
