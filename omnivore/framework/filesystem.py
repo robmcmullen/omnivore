@@ -1,12 +1,17 @@
 import os
 import sys
+import datetime
 
 from pyface.api import ImageResource
 
 # Major package imports.
-from fs.errors import FSError
 from fs.opener import Opener, OpenerRegistry, _FSClosingFile, opener, fsopen
+from fs.base import FS
+from fs.path import normpath
+import fs
 import wx
+
+from omnivore.templates import get_template_fh, find_template_path
 
 import logging
 log = logging.getLogger(__name__)
@@ -101,7 +106,7 @@ class WxAboutFileSystemHandler(wx.FileSystemHandler):
         if fsfile is None:
             try:
                 fh = opener.open(location, "rb")
-            except FSError, e:
+            except errors.FSError, e:
                 log.error(str(e))
                 return None
             log.debug("Created %s in wxMemoryFS" % path)
@@ -168,6 +173,94 @@ examples:
         return memfs, None
 
 
+class TemplateFS(FS):
+    """Simple fs to read files from the template directories.
+
+    """
+
+    _meta = {'read_only': True,
+             'network': False}
+
+    def __init__(self, url):
+        self.root_url = url
+
+    def _make_url(self, path):
+        path = normpath(path)
+        url = '%s/%s' % (self.root_url.rstrip('/'), path.lstrip('/'))
+        return url
+
+    def open(self, path, mode='r', buffering=-1, encoding=None, errors=None, newline=None, line_buffering=False, **kwargs):
+
+        if '+' in mode or 'w' in mode or 'a' in mode:
+            raise UnsupportedError('write')
+
+        url = self._make_url(path)
+        log.debug("TemplateFS: loading %s" % url)
+        try:
+            fh = get_template_fh(url)
+        except OSError, e:
+            raise fs.errors.ResourceNotFoundError(path, details="No template found. %s" % e)
+
+        return fh
+
+    def exists(self, path):
+        url = self._make_url(path)
+        return get_template_fh(url) is not None
+
+    def isdir(self, path):
+        return False
+
+    def isfile(self, path):
+        return self.exists(path)
+
+    def listdir(self, path="./",
+                      wildcard=None,
+                      full=False,
+                      absolute=False,
+                      dirs_only=False,
+                      files_only=False):
+        return []
+
+    def getinfo(self, path):
+        url = self._make_url(path)
+        path = find_template_path(url)
+        stats = self._stat(path)
+        info = dict((k, getattr(stats, k)) for k in dir(stats) if k.startswith('st_'))
+        info['size'] = info['st_size']
+        #  TODO: this doesn't actually mean 'creation time' on unix
+        fromtimestamp = datetime.datetime.fromtimestamp
+        ct = info.get('st_ctime', None)
+        if ct is not None:
+            info['created_time'] = fromtimestamp(ct)
+        at = info.get('st_atime', None)
+        if at is not None:
+            info['accessed_time'] = fromtimestamp(at)
+        mt = info.get('st_mtime', None)
+        if mt is not None:
+            info['modified_time'] = fromtimestamp(mt)
+        return info
+
+
+class TemplateOpener(Opener):
+    names = ['template']
+    desc = """Simple filesystem that loads from the template directories
+
+examples:
+* about:// (opens a new memory filesystem)
+* about://foo/bar (opens a new memory filesystem with subdirectory /foo/bar)
+    """
+
+    @classmethod
+    def get_fs(cls, registry, fs_name, fs_name_params, fs_path,  writeable, create_dir):
+        if '/' in fs_path:
+            dirname, resourcename = fs_path.rsplit('/', 1)
+        else:
+            dirname = "/"
+            resourcename = fs_path
+        fs = TemplateFS(dirname)
+        return fs, resourcename
+
+
 def init_filesystems():
     wx.FileSystem.AddHandler(WxAboutFileSystemHandler())
     wx.FileSystem.AddHandler(wx.MemoryFSHandler())
@@ -188,6 +281,7 @@ def init_filesystems():
 
 def init_about_filesystem():
     opener.add(AboutOpener)
+    opener.add(TemplateOpener)
     for name, text in about.iteritems():
         url = "about://%s" % name
         fh = opener.open(url, "wb")

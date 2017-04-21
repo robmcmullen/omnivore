@@ -134,13 +134,3 @@ class FileGuess(object):
     def get_stream(self):
         fh, fs, relpath = self.get_fs()
         return fh
-
-    @classmethod
-    def get_packaged_file(cls, name):
-        source = get_template(name)
-        if source is not None:
-            uri = "about://%s" % os.path.basename(name)
-            fh = opener.open(uri, "wb")
-            fh.write(source)
-            fh.close()
-            return cls(uri)

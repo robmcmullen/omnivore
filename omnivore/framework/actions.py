@@ -54,7 +54,7 @@ class NewFileAction(Action):
     def perform(self, event=None):
         task = event.task.window.application.find_or_create_task_of_type(self.task_id)
         log.debug("Loading %s as %s" % (self.name, task))
-        guess = FileGuess.get_packaged_file(self.name)
+        guess = FileGuess("template://" + self.name)
         task.new(guess)
 
     def _get_tooltip(self):

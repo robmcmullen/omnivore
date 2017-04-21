@@ -105,7 +105,7 @@ class Minibuffer(object):
     def is_repeat(self, other):
         return self.__class__ == other.__class__ and self.command_cls == other.command_cls and self.editor == other.editor
 
-    def repeat(self):
+    def repeat(self, minibuffer=None):
         """Shortcut to perform the same action again."""
         pass
 
