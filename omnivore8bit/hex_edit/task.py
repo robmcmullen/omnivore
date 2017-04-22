@@ -269,12 +269,12 @@ class HexEditTask(FrameworkTask):
             SelectNoneAction(),
             SelectInvertAction(),
             SMenu(
-                MarkSelectionAsCodeAction(name="Code"),
-                MarkSelectionAsDataAction(name="Data"),
-                MarkSelectionAsUninitializedDataAction(name="Uninitialized Data"),
-                MarkSelectionAsDisplayListAction(name="ANTIC Display List"),
-                MarkSelectionAsJumpmanLevelAction(name="Jumpman Level Description"),
-                MarkSelectionAsJumpmanHarvestAction(name="Jumpman Harvest Table"),
+                MarkSelectionAsCodeAction(),
+                MarkSelectionAsDataAction(),
+                MarkSelectionAsUninitializedDataAction(),
+                MarkSelectionAsDisplayListAction(),
+                MarkSelectionAsJumpmanLevelAction(),
+                MarkSelectionAsJumpmanHarvestAction(),
                 id="mark1", name="Mark Selection As"),
             ]
 

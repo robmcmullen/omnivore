@@ -698,7 +698,7 @@ class ExpandDocumentAction(EditorAction):
 
 
 class MarkSelectionAsCodeAction(EditorAction):
-    name = 'Mark Selection As Code'
+    name = 'Code'
     enabled_name = 'can_copy'
 
     def perform(self, event):
@@ -713,7 +713,7 @@ class MarkSelectionAsCodeAction(EditorAction):
 
 
 class MarkSelectionAsDataAction(EditorAction):
-    name = 'Mark Selection As Data'
+    name = 'Data'
     enabled_name = 'can_copy'
 
     def perform(self, event):
@@ -733,7 +733,7 @@ class MarkSelectionAsDataAction(EditorAction):
 
 
 class CustomDisassemblerAction(EditorAction):
-    name = 'Mark Selection As <custom>'
+    name = '<custom>'
     enabled_name = 'can_copy'
     disassembly_type = 0
 
@@ -750,24 +750,24 @@ class CustomDisassemblerAction(EditorAction):
 
 
 class MarkSelectionAsDisplayListAction(CustomDisassemblerAction):
-    name = 'Mark Selection As Display List'
+    name = 'Display List'
     disassembly_type = ANTIC_DISASM
 
 
 class MarkSelectionAsJumpmanLevelAction(CustomDisassemblerAction):
-    name = 'Mark Selection As Jumpman Level Data'
+    name = 'Jumpman Level Data'
     enabled_name = 'can_copy'
     disassembly_type = JUMPMAN_LEVEL
 
 
 class MarkSelectionAsJumpmanHarvestAction(CustomDisassemblerAction):
-    name = 'Mark Selection As Jumpman Harvest Table'
+    name = 'Jumpman Harvest Table'
     enabled_name = 'can_copy'
     disassembly_type = JUMPMAN_HARVEST
 
 
 class MarkSelectionAsUninitializedDataAction(CustomDisassemblerAction):
-    name = 'Mark Selection As Uninitialized Data'
+    name = 'Uninitialized Data'
     enabled_name = 'can_copy'
     disassembly_type = UNINITIALIZED_DATA
 
