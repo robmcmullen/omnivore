@@ -73,7 +73,7 @@ def main(argv):
     import omnivore_extra.crypto.file_type
     plugins.extend(omnivore_extra.crypto.file_type.plugins)
 
-    from omnivore.framework.app_init import run
+    from omnivore.app_init import run
     from omnivore8bit.document import SegmentedDocument
     run(plugins=plugins, egg_path=EGG_PATH, document_class=SegmentedDocument)
 
@@ -82,7 +82,7 @@ def main(argv):
 
 if __name__ == '__main__':
     import sys
-    from omnivore.framework.app_init import setup_frozen_logging
+    from omnivore.app_init import setup_frozen_logging
     
     setup_frozen_logging()
     main(sys.argv)
