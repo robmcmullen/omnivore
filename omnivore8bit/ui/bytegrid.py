@@ -688,6 +688,8 @@ class ByteGrid(Grid.Grid, SelectionMixin):
                     log.debug("skipping refresh; document change count=%d" % self.last_change_count)
                 else:
                     log.debug("refreshing! document change count=%d" % self.last_change_count)
+                    if self.FindFocus() != self and editor.pending_focus != self:
+                        self.center_on_index()
                     self.Refresh()
                     self.last_change_count = editor.document.change_count
             else:
@@ -924,6 +926,16 @@ class ByteGrid(Grid.Grid, SelectionMixin):
 
     def clamp_column(self, col_from_index, col_from_user):
         return col_from_index
+
+    def center_on_index(self):
+        r, c = self.table.get_row_col(self.editor.cursor_index)
+        num = self.get_num_visible_rows()
+        last = self.table.GetNumberRows() - 1
+        ul = max(0, r - (num / 2))
+        if ul + num > last:
+            ul = max(0, last - num)
+        self.MakeCellVisible(ul + num, 0)
+        self.MakeCellVisible(ul, 0)
 
     def goto_index(self, from_control, index, col_from_user=None):
         row, c = self.table.get_row_col(index)

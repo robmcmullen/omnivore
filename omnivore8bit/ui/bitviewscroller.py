@@ -107,6 +107,20 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
     def restore_view_params(self, data):
         self.Scroll(*data)
 
+    def find_start_row_for_center_index(self, index):
+        r, c = self.index_to_row_col(index)
+        num = self.fully_visible_rows
+        last = self.total_rows - 1
+        ul = max(0, r - (num / 2))
+        if ul + num > last:
+            ul = max(0, last - num)
+        print "r, c, ul", r, c, ul
+        return ul
+
+    def center_on_index(self):
+        ul = self.find_start_row_for_center_index(self.editor.cursor_index)
+        self.start_row = ul
+
     def is_ready_to_render(self):
         return self.editor is not None
 
@@ -138,6 +152,8 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
             if self.editor != editor:
                 self.recalc_view()
             else:
+                if self.FindFocus() != self and editor.pending_focus != self:
+                    self.center_on_index()
                 self.Refresh()
 
     def sync_settings(self):
@@ -321,6 +337,8 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         last_scroll_row = self.total_rows - self.fully_visible_rows
         if first_row is not None:
             first_row = min(max(0, first_row), last_scroll_row)
+        if self.FindFocus() != self and self.editor.pending_focus != self:
+            first_row = self.find_start_row_for_center_index(self.editor.cursor_index)
         last_row = self.start_row + self.fully_visible_rows - 1
         last_col = self.start_col + self.fully_visible_cols - 1
 

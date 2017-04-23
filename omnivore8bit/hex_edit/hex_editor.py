@@ -80,6 +80,13 @@ class HexEditor(FrameworkEditor):
 
     segment_view_params = Dict
 
+    # This is a flag to help set the cursor to the center row when the cursor
+    # is moved in a different editor. Some editors can't use SetFocus inside an
+    # event handler, so the focus could still be set on one editor even though
+    # the user clicked on another. This results in the first editor not getting
+    # centered unless this flag is checked also.
+    pending_focus = Any(None)  # Flag to help
+
     #### Events ####
 
     changed = Event

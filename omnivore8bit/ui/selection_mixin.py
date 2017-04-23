@@ -9,6 +9,7 @@ class SelectionMixin(object):
         self.pending_select_awaiting_drag = None
 
     def handle_select_start(self, editor, evt, selecting_rows=False, col=0):
+        editor.pending_focus = self
         self.mouse_drag_started = True
         r, c, index1, index2, inside = self.get_location_from_event(evt)
         if c < 0 or selecting_rows or not inside:
@@ -96,6 +97,7 @@ class SelectionMixin(object):
         self.mouse_drag_started = False
         self.select_extend_mode = False
         self.multi_select_mode = False
+        editor.pending_focus = None
 
     def ClearSelection(self):
         # Stub function for those controls that don't have it. Tables use this
