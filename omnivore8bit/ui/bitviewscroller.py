@@ -780,13 +780,20 @@ class FontMapScroller(BitviewScroller):
         return array
 
     def draw_overlay(self, array, w, h, zw, zh):
+        # Draw highlight border around rectangular selection (if any)
         anchor_start, anchor_end, rc1, rc2 = self.get_highlight_indexes()
         self.show_highlight(array, rc1, rc2, zw, zh)
-        r, c = self.index_to_row_col(self.editor.cursor_index)
-        print "Draw cursor: %04x" % (self.editor.cursor_index + self.start_addr), r, self.start_row, self.fully_visible_rows
-        self.show_highlight(array, (r, c), (r + 1, c + 1), zw, zh)
 
-    def show_highlight(self, array, rc1, rc2, zw, zh):
+        # Draw cursor position
+        r, c = self.index_to_row_col(self.editor.cursor_index)
+        if self.FindFocus() == self:
+            color = (0, 0, 0)
+        else:
+            color = (128, 128, 128)
+        log.debug("Draw cursor: %04x (%d, %d) start_row=%d vis=%d color=%s" % (self.editor.cursor_index + self.start_addr, r, c, self.start_row, self.fully_visible_rows, color))
+        self.show_highlight(array, (r, c), (r + 1, c + 1), zw, zh, color)
+
+    def show_highlight(self, array, rc1, rc2, zw, zh, color=None):
         if rc1 is None:
             return
         r1, c1 = rc1
@@ -804,16 +811,27 @@ class FontMapScroller(BitviewScroller):
         c1 = max(x1, 0)
         c2 = min(x2, xmax)
         m = self.editor.machine
+        if color is None:
+            color = m.empty_color
+
+        # top
         if y1 >= 0 and y1 < ymax and c2 > c1:
-            array[y1, c1:c2 + 1] = m.empty_color
+            array[y1, c1:c2 + 1] = color
+
+        # bottom
         if y2 >= 0 and y2 < ymax and c2 > c1:
-            array[y2, c1:c2 + 1] = m.empty_color
+            array[y2, c1:c2 + 1] = color
+
         c1 = max(y1, 0)
         c2 = min(y2, ymax)
+
+        # left
         if x1 >= 0 and x1 < xmax and c2 > c1:
-            array[c1:c2 + 1, x1] = m.empty_color
+            array[c1:c2 + 1, x1] = color
+
+        # right
         if x2 >= 0 and x2 < xmax and c2 > c1:
-            array[c1:c2 + 1, x2] = m.empty_color
+            array[c1:c2 + 1, x2] = color
 
     def event_coords_to_byte(self, evt):
         """Convert event coordinates to world coordinates.
