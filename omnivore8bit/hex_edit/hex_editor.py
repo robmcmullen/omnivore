@@ -335,7 +335,6 @@ class HexEditor(FrameworkEditor):
         self.segment = self.document.segments[self.segment_number]
         self.reconfigure_panes()
         self.update_segments_ui()
-        self.has_origin = self.segment.start_addr > 0
 
     def update_segments_ui(self):
         # Note: via profiling, it turns out that this is a very heavyweight
@@ -359,6 +358,7 @@ class HexEditor(FrameworkEditor):
         self.disassembly.recalc_view()
         self.bitmap.recalc_view()
         self.font_map.recalc_view()
+        self.has_origin = self.segment.start_addr > 0
 
     def check_document_change(self):
         if self.last_cursor_index != self.cursor_index or self.last_anchor_start_index != self.anchor_start_index or self.last_anchor_end_index != self.anchor_end_index:
