@@ -21,8 +21,8 @@ a = Analysis(['OmnivoreXL.py'],
              cipher=block_cipher)
 
 for pymod, path, tag in sorted(a.pure):
-  if ".qt" in pymod or ".test" in pymod:
-    print "why is this still here?", pymod
+    if ".qt" in pymod or ".test" in pymod:
+        print "why is this still here?", pymod
 
 # pytz zip bundle from https://github.com/pyinstaller/pyinstaller/wiki/Recipe-pytz-zip-file
 # DOESN'T WORK ON MAC!
@@ -31,6 +31,7 @@ pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 
 if sys.platform == "darwin":
+    icon = '../resources/omnivore.icns'
     exe = EXE(pyz,
         a.scripts,
         exclude_binaries=True,
@@ -50,7 +51,7 @@ if sys.platform == "darwin":
     app = BUNDLE(coll,
        name='OmnivoreXL.app',
        bundle_identifier="com.playermissile.omnivore",
-       icon='../resources/omnivore.icns')
+       icon=icon)
 
 elif sys.platform == "win32":
     exe = EXE(pyz,

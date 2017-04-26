@@ -75,7 +75,14 @@ elif mac:
     run(['/usr/bin/ditto', '-arch', 'x86_64', build_app, dest_app])
 
     print "Copying new Info.plist"
-    shutil.copyfile("Info.plist", "%s/Contents/Info.plist" % dest_app)
+    with open("Info.plist", "r") as fh:
+        text = fh.read()
+    text = text.format(version=version)
+    with open("%s/Contents/Info.plist" % dest_app, "w") as fh:
+        fh.write(text)
+
+    print "Signing (with self-signed cert)"
+    run(["codesign", "-s", "Player/Missile Podcast", "--deep", dest_app])
 
     print "Zipping %s" % dest_zip
     run(['tar', 'cfj', dest_zip, '-C', dest_dir, final_app])
