@@ -295,7 +295,7 @@ def text_to_int(text, default_base="dec"):
     return value
 
 
-def parse_int_label_dict(text, base=10):
+def parse_int_label_dict(text, base=10, allow_equals=False):
     """Parse a multi-line text string into a dict keyed on integers with a
     keyword value
 
@@ -303,15 +303,30 @@ def parse_int_label_dict(text, base=10):
     that as the key, and the first label-looking thing (alphanumeric, starting
     with a letter or _, and stopping at the first non-alphanumeric or
     whitespace) and use that as the label.
+
+    If ``allow_equal`` is True, it will check for the presense of an ``=``
+    character and parse in the reverse order, where the label comes first and
+    the address follows after the equals character.
     """
-    regex = re.compile("^(0x|\$)?([0-9a-fA-F]+)[^a-zA-Z]+([a-z_]\w+)")
+    regex = re.compile("(0x|\$)?([0-9a-fA-F]+)[^a-zA-Z]+([a-zA-Z_]\w*)")
+    regex_eq = re.compile("([a-zA-Z_]\w*)[^a-zA-Z=]*=.*?(0x|\$)?([0-9a-fA-F]+)")
     d = {}
     for line in text.splitlines():
-        match = regex.search(line)
+        match = None
+        if allow_equals and "=" in line:
+            match = regex_eq.search(line)
+            key = match.group(3)
+            value = match.group(1)
+            b = match.group(2)
+
+        if not match:
+            match = regex.search(line)
+
+            if match:
+                key = match.group(2)
+                value = match.group(3)
+                b = match.group(1)
         if match:
-            key = match.group(2)
-            value = match.group(3)
-            b = match.group(1)
             line_base = 16 if b == "$" or b == "0x" else 10 if b == "#" else base
             key = int(key, line_base)
             d[key] = value
@@ -366,3 +381,6 @@ if __name__ == "__main__":
         fh = open(file)
         text = fh.read()
         log.debug("file=%s, tabsize=%d" % (file, guessSpacesPerIndent(text)))
+
+        print parse_int_label_dict(text)
+        print parse_int_label_dict(text, allow_equal=True)

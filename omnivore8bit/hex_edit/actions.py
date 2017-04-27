@@ -727,6 +727,10 @@ class ExpandDocumentAction(EditorAction):
 
 
 class MarkSelectionAsCodeAction(EditorAction):
+    """Marks the selected bytes as valid code to be disassembled using the
+    current processor definition.
+
+    """
     name = 'Code'
     enabled_name = 'can_copy'
 
@@ -742,6 +746,10 @@ class MarkSelectionAsCodeAction(EditorAction):
 
 
 class MarkSelectionAsDataAction(EditorAction):
+    """Marks the selected bytes as data, not to be disassembled but shown
+    as byte values in the disassembly listing.
+
+    """
     name = 'Data'
     enabled_name = 'can_copy'
 
@@ -779,29 +787,68 @@ class CustomDisassemblerAction(EditorAction):
 
 
 class MarkSelectionAsDisplayListAction(CustomDisassemblerAction):
+    """Marks the selected bytes as an ANTIC display list, which will be shown
+    as data in the disassembly listing. The data will be grouped by ANTIC
+    command, where all bytes that belong to a command will be on a single line.
+    This can result in a large number of data bytes appearing on one line when
+    displaying a graphics 8 display list, for example. Exporting the
+    disassembly will produce listings that break up these long lines into
+    normal amounts, defaulting to 4 bytes on a line.
+    """
     name = 'Display List'
     disassembly_type = ANTIC_DISASM
 
 
 class MarkSelectionAsJumpmanLevelAction(CustomDisassemblerAction):
+    """Marks the selected bytes as Jumpman drawing element descriptors. This is
+    not used much for editing now that the `Jumpman Level Editor
+    <omnivore.jumpman>`_ is available.
+    """
     name = 'Jumpman Level Data'
     enabled_name = 'can_copy'
     disassembly_type = JUMPMAN_LEVEL
 
 
 class MarkSelectionAsJumpmanHarvestAction(CustomDisassemblerAction):
+    """Marks the selected bytes as a Jumpman harvest table. This is
+    not used much for editing now that the `Jumpman Level Editor
+    <omnivore.jumpman>`_ is available.
+    """
     name = 'Jumpman Harvest Table'
     enabled_name = 'can_copy'
     disassembly_type = JUMPMAN_HARVEST
 
 
 class MarkSelectionAsUninitializedDataAction(CustomDisassemblerAction):
+    """Marks the selected bytes as unitialized data, skipping over those bytes
+    and placing an ``origin`` directive in the disassembly that points to the
+    next address that contains any other type of data.
+    """
     name = 'Uninitialized Data'
     enabled_name = 'can_copy'
     disassembly_type = UNINITIALIZED_DATA
 
 
 class ImportSegmentLabelsAction(EditorAction):
+    """Imports a text file that defines labels and addresses.
+
+    The text file should contain the address and the label on a single line.
+    It's pretty generous about parsing the input; there are two major types recognized.
+
+    The first is typical assembler format::
+
+        <label> = <address>
+
+    where the address can be in decimal without a prefix or in hex with the
+    ``$`` or ``0x`` prefix.
+
+    and the second is a line with a hex value first and the label following.
+    Any line without an ``=`` character is parsed this way, such that the first
+    thing that lookslike a hex or decimal number is used as the address, and
+    the first thing after that that looks like a valid text string is used as
+    the label. It can be comma separated, space separated, tab separated, etc;
+    anything but ``=``.
+    """
     name = 'Import Segment Labels'
     enabled_name = 'has_origin'
 
@@ -811,7 +858,7 @@ class ImportSegmentLabelsAction(EditorAction):
             e = self.active_editor
             with open(dialog.path, "r") as fh:
                 text = fh.read()
-            d = parse_int_label_dict(text)
+            d = parse_int_label_dict(text, allow_equals=True)
             s = e.segment
             start, end = s.start_addr, s.start_addr + len(s)
             below, above = count_in_range(d.keys(), start, end)
@@ -828,6 +875,17 @@ class ImportSegmentLabelsAction(EditorAction):
 
 
 class ExportSegmentLabelsAction(EditorAction):
+    """Exports a text file containing label/address pairs.
+
+    The text file will have a format that can be included in most assemblers::
+
+        <label> = $<hex address>
+
+    for example::
+
+        SIOV = $E459
+        SETVBV = $E45C
+    """
     name = 'Export Segment Labels'
     enabled_name = 'has_origin'
 
@@ -846,7 +904,7 @@ class ExportSegmentLabelsAction(EditorAction):
                 dialog = FileDialog(parent=event.task.window.control, action="save as", title="Export Segment Labels")
                 if dialog.open() == OK:
                     with open(dialog.path, "w") as fh:
-                        fh.write("\n".join(["0x%04x %s" % (k, v) for k, v in tmp]) + "\n")
+                        fh.write("\n".join(["%s = $%04x" % (v, k) for k, v in tmp]) + "\n")
                     return
         e.task.status_bar.error = "No labels in segment"
 
