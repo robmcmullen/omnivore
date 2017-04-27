@@ -962,9 +962,10 @@ class DefaultSegment(object):
     def clear_comment(self, ranges):
         self.clear_style_ranges(ranges, comment=True)
         for start, end in ranges:
-            rawindex = self.get_raw_index(start)
-            if rawindex in self.rawdata.extra.comments:
-                del self.rawdata.extra.comments[rawindex]
+            for i in range(start, end):
+                rawindex = self.get_raw_index(i)
+                if rawindex in self.rawdata.extra.comments:
+                    del self.rawdata.extra.comments[rawindex]
 
     def get_sorted_comments(self):
         return sorted([[k, v] for k, v in self.rawdata.extra.comments.iteritems()])
