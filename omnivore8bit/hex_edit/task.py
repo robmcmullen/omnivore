@@ -40,7 +40,7 @@ class HexEditTask(FrameworkTask):
     Hex data can be edited by:
 
      * clicking on a cell and changing the hex data
-     * selecting a region (or multiple regions; see `Selections`_ below) and using one of the operations in the `Bytes`_ menu
+     * selecting a region (or multiple regions; see `Selections`_ below) and using one of the operations in the `Bytes Menu`_
      * cutting and pasting hex data from elsewhere in the file
      * cutting and pasting hex data from another file edited in a different tab or window
      * pasting in data from an external application.

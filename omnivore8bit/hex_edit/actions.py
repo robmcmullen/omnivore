@@ -801,8 +801,8 @@ class MarkSelectionAsDisplayListAction(CustomDisassemblerAction):
 
 class MarkSelectionAsJumpmanLevelAction(CustomDisassemblerAction):
     """Marks the selected bytes as Jumpman drawing element descriptors. This is
-    not used much for editing now that the `Jumpman Level Editor
-    <omnivore.jumpman>`_ is available.
+    not used much for direct editing now that the `Jumpman Level Editor <omnivore.jumpman.html>`_ is
+    available.
     """
     name = 'Jumpman Level Data'
     enabled_name = 'can_copy'
@@ -810,9 +810,8 @@ class MarkSelectionAsJumpmanLevelAction(CustomDisassemblerAction):
 
 
 class MarkSelectionAsJumpmanHarvestAction(CustomDisassemblerAction):
-    """Marks the selected bytes as a Jumpman harvest table. This is
-    not used much for editing now that the `Jumpman Level Editor
-    <omnivore.jumpman>`_ is available.
+    """Marks the selected bytes as a Jumpman harvest table. This is not used
+    much for direct editing now that the `Jumpman Level Editor`_ is available.
     """
     name = 'Jumpman Harvest Table'
     enabled_name = 'can_copy'
