@@ -222,6 +222,9 @@ class UseAssemblerAction(EditorAction):
 
 
 class AddNewAssemblerAction(EditorAction):
+    """Add the syntax characteristics for a new assembler.
+
+    """
     name = 'Add New Assembler...'
 
     def perform(self, event):
@@ -231,6 +234,10 @@ class AddNewAssemblerAction(EditorAction):
 
 
 class EditAssemblersAction(EditorAction):
+    """Modify the list of assemblers, rearranging the order or editing
+    the characteristics of existing assemlers.
+
+    """
     name = 'Edit Assemblers...'
 
     def perform(self, event):
@@ -244,6 +251,10 @@ class EditAssemblersAction(EditorAction):
 
 
 class SetSystemDefaultAssemblerAction(EditorAction):
+    """Mark an assembler that will become the default for future
+    editing sessions.
+
+    """
     name = 'Set Current as System Default'
 
     def perform(self, event):
@@ -534,7 +545,7 @@ class CurrentSegmentParserAction(NameChangeAction):
 
 
 class SegmentParserAction(EditorAction):
-    """Radio buttons for changing font style
+    """Change the parser that generates segments from the disk image.
     """
     # Traits
     style = 'toggle'
@@ -605,6 +616,12 @@ class UseSegmentAction(EditorAction):
 
 
 class ParseSubSegmentsAction(EditorAction):
+    """Expand the segment into sub-segments using a parser.  The disk image
+    parser only parses the first level of segments automatically, so if there
+    are segments that can be further parsed, for instance an Atari DOS file
+    containing executable files, the executable files will only show the main
+    segment. To see the segments of the executable, you would use this command.
+    """
     name = 'Show Sub-Segments'
 
     segment_number = Int
@@ -633,6 +650,13 @@ class SelectSegmentInAllAction(EditorAction):
 
 
 class GetSegmentFromSelectionAction(EditorAction):
+    """Create a new segment in the segment list using the current selection.
+
+    All the bytes in the current selection will be shown in the new segment. If
+    there are multiple selections, the new segment will show the bytes as
+    contiguous but they will represent the original locations in the disk
+    image.
+    """
     name = 'New Segment From Selection'
     enabled_name = 'can_copy'
 
@@ -648,6 +672,11 @@ class GetSegmentFromSelectionAction(EditorAction):
 
 
 class MultipleSegmentsFromSelectionAction(EditorAction):
+    """Create a set of segments from the current selection, given the desired
+    length of the resulting segments. If the number of bytes in the selection
+    is not an exact multiple of the specified length, the last segment created
+    will contain the remaining bytes. It will not be padded with zeros.
+    """
     name = 'Multiple Segments From Selection'
     enabled_name = 'can_copy'
 
