@@ -910,6 +910,9 @@ class ExportSegmentLabelsAction(EditorAction):
 
 
 class CopyDisassemblyAction(EditorAction):
+    """Copy the disassembly text of the current selection to the clipboard.
+
+    """
     name = 'Copy Disassembly Text'
     enabled_name = 'can_copy'
 
@@ -931,6 +934,14 @@ class CopyDisassemblyAction(EditorAction):
 
 
 class CopyAsReprAction(EditorAction):
+    """Copy the current selection as a text string containing a string (with
+    escaped characters where necessary) that reproduces the bytes in the
+    selection.
+
+    Python note: both double quotes and single quotes are escaped as hex values
+    so the resulting string is safe to use inside either of those characters as
+    the string delimiter.
+    """
     name = 'Copy as Escaped String'
     enabled_name = 'can_copy'
 
@@ -953,6 +964,11 @@ class CopyAsReprAction(EditorAction):
 
 
 class CopyCommentsAction(EditorAction):
+    """Copy the text of the comments only, using the disassembly for line
+    breaks. Any blank lines that appear in the disassembly are included in the
+    copy.
+
+    """
     name = 'Copy Disassembly Comments'
     enabled_name = 'can_copy'
 
@@ -979,6 +995,13 @@ def prompt_for_comment(e, s, ranges, desc):
 
 
 class AddCommentAction(EditorAction):
+    """Add a text comment to a byte location.
+
+    A comment is associated with a single byte, so although a range can be
+    selected, the comment is applied to only the first byte in the range.
+
+    Bytes with comments will be highlighted in all displays.
+    """
     name = 'Add Comment'
     accelerator = 'Alt+C'
 
@@ -1017,6 +1040,10 @@ class AddCommentPopupAction(AddCommentAction):
 
 
 class RemoveCommentAction(EditorAction):
+    """Remove any comments that are in the selected range, or if no selection
+    from the current cursor position.
+
+    """
     name = 'Remove Comment'
     accelerator = 'Shift+Alt+C'
 
@@ -1058,6 +1085,15 @@ def prompt_for_label(e, s, addr, desc):
 
 
 class AddLabelAction(EditorAction):
+    """Add a label to a byte location.
+
+    Like `Add Comment`_, a label is associated with a single byte, so although
+    a range can be selected, the comment is applied to only the first byte in
+    the range.
+
+    Unlike comments, labels are *not* highlighted and are only shown in the
+    disassembly window.
+    """
     name = 'Add Label'
     accelerator = 'Alt+L'
     enabled_name = 'has_origin'
@@ -1096,6 +1132,10 @@ class AddLabelPopupAction(AddLabelAction):
 
 
 class RemoveLabelAction(AddLabelAction):
+    """Remove the label at the current cursor position, or if there is a
+    selection, all labels in the selected range.
+
+    """
     name = 'Remove Label'
     accelerator = 'Shift+Alt+L'
 
@@ -1117,6 +1157,11 @@ class RemoveLabelPopupAction(RemoveLabelAction):
 
 
 class DeleteUserSegmentAction(EditorAction):
+    """Remove a segment from the list of segments
+
+    Any segment except the root segment can be deleted. Recall that this
+    doesn't delete any data, just this view of the data.
+    """
     name = 'Delete User Segment'
     segment_number = Int
 
@@ -1128,6 +1173,10 @@ class DeleteUserSegmentAction(EditorAction):
 
 
 class SetSegmentOriginAction(EditorAction):
+    """Sets the origin of the current segment to an address, changing the
+    starting point for all windows displaying this segment's data.
+
+    """
     name = 'Set Segment Origin'
     segment_number = Int
 
@@ -1141,6 +1190,12 @@ class SetSegmentOriginAction(EditorAction):
 
 
 class SaveAsXEXAction(EditorAction):
+    """Create an Atari 8-bit executable from a set of segments.
+
+    Opens a dialog window providing a list of segments to be added to the new
+    executable and a starting address at which the Atari will begin executing
+    the program on completion of the load.
+    """
     name = 'Export as XEX...'
     tooltip = 'Create executable from segments'
     title = 'Create Executable'
@@ -1167,6 +1222,16 @@ class SaveAsXEXAction(EditorAction):
 
 
 class SaveAsXEXBootAction(SaveAsXEXAction):
+    """Create an Atari 8-bit boot disk from a set of segments.
+
+    Opens a dialog window providing a list of segments to be added to the boot
+    disk and a starting address at which the Atari will begin executing the
+    program after reading all the sectors written to disk.
+
+    This creates a smaller-than-normal ATR image with a custom bootloader. Any
+    sectors beyond the number fo sectors required to create the image are not
+    included in the image.
+    """
     name = 'Export as Boot Disk...'
     tooltip = 'Create a bootable disk from segments'
     title = 'Create Boot Disk'
@@ -1233,6 +1298,13 @@ class GotoIndexAction(Action):
 
 
 class SegmentGotoAction(EditorAction):
+    """Move the cursor to an address. If the address is in this segment, moves
+    there. If not, it searches through all the segments (in segment list order)
+    to find one that does contain that address.
+
+    If that address is not valid for any segment, it will return an error
+    message.
+    """
     name = "Goto Address..."
     accelerator = 'Alt+G'
 
