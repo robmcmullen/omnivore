@@ -269,21 +269,38 @@ class SetLabelCommand(ChangeMetadataCommand):
             self.segment.memory_map[self.addr] = old_data
 
 
-class ClearLabelCommand(SetLabelCommand):
+class ClearLabelCommand(ChangeMetadataCommand):
     short_name = "clear_comment"
     pretty_name = "Remove Label"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('ranges', 'int_list'),
+            ]
 
-    def __init__(self, segment, addr):
-        SetLabelCommand.__init__(self, segment, addr, "")
+    def __init__(self, segment, ranges):
+        ChangeMetadataCommand.__init__(self, segment)
+        print ranges
+        self.ranges = ranges
 
     def do_change(self, editor, undo):
-        old = self.segment.memory_map.get(self.addr, None)
-        self.segment.memory_map.pop(self.addr, "")
+        print self.ranges
+        indexes = ranges_to_indexes(self.ranges)
+        origin = self.segment.start_addr
+        old = {}
+        for i in indexes:
+            addr = i + origin
+            old[addr] = self.segment.memory_map.get(addr, None)
+            self.segment.memory_map.pop(addr, "")
         return old
 
     def undo_change(self, editor, old_data):
         if old_data is not None:
-            self.segment.memory_map[self.addr] = old_data
+            indexes = ranges_to_indexes(self.ranges)
+            for addr, label in old_data.iteritems():
+                if label is None:
+                    self.segment.memory_map.pop(addr, "")
+                else:
+                    self.segment.memory_map[addr] = label
 
 
 class PasteCommand(SetValuesAtIndexesCommand):

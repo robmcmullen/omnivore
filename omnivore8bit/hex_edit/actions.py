@@ -1101,8 +1101,13 @@ class AddLabelAction(EditorAction):
         if editor.can_copy:  # has selected ranges
             ranges = segment.get_style_ranges(selected=True)
         else:
-            ranges = []
+            ranges = [(editor.cursor_index, editor.cursor_index + 1)]
         return ranges
+
+    def process_ranges(self, editor, segment, ranges):
+        index = ranges[0][0]
+        addr = index + segment.start_addr
+        return addr
 
     def process(self, editor, segment, addr):
         desc = "Enter label for address $%04x" % addr
@@ -1112,11 +1117,7 @@ class AddLabelAction(EditorAction):
         e = self.active_editor
         s = e.segment
         ranges = self.get_ranges(e, s, event)
-        if ranges:
-            index = ranges[0][0]
-        else:
-            index = e.cursor_index
-        addr = index + s.start_addr
+        addr = self.process_ranges(e, s, ranges)
         self.process(e, s, addr)
 
 
@@ -1138,11 +1139,12 @@ class RemoveLabelAction(AddLabelAction):
     name = 'Remove Label'
     accelerator = 'Shift+Alt+L'
 
-    def process(self, editor, segment, addr):
-        existing = segment.memory_map.get(addr, "")
-        if existing:
-            cmd = ClearLabelCommand(segment, addr)
-            editor.process_command(cmd)
+    def process_ranges(self, editor, segment, ranges):
+        return ranges
+
+    def process(self, editor, segment, ranges):
+        cmd = ClearLabelCommand(segment, ranges)
+        editor.process_command(cmd)
 
 
 class RemoveLabelPopupAction(RemoveLabelAction):
