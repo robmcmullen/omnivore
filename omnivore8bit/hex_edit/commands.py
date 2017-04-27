@@ -122,7 +122,8 @@ class SetCommentCommand(ChangeMetadataCommand):
     def __init__(self, segment, ranges, text):
         ChangeMetadataCommand.__init__(self, segment)
         # Only use the first byte of each range
-        self.ranges = tuple([(start, start + 1) for start, end in ranges])
+        self.ranges = self.convert_ranges(ranges)
+        log.debug("%s operating on ranges: %s" % (self.pretty_name, str(ranges)))
         self.text = text
         indexes = ranges_to_indexes(self.ranges)
         self.index_range = indexes[0], indexes[-1]
@@ -135,6 +136,9 @@ class SetCommentCommand(ChangeMetadataCommand):
         else:
             text = self.text
         return "%s: %s" % (self.pretty_name, text)
+
+    def convert_ranges(self, ranges):
+        return tuple([(start, start + 1) for start, end in ranges])
 
     def set_undo_flags(self, flags):
         flags.byte_style_changed = True
@@ -160,14 +164,19 @@ class ClearCommentCommand(SetCommentCommand):
     short_name = "clear_comment"
     pretty_name = "Remove Comment"
 
-    def __init__(self, segment, ranges):
-        SetCommentCommand.__init__(self, segment, ranges, "")
+    def __init__(self, segment, ranges, bytes=""):
+        SetCommentCommand.__init__(self, segment, ranges, bytes)
 
-    def change_comments(self, editor):
-        self.segment.clear_comment(self.ranges)
+    def convert_ranges(self, ranges):
+        # When clearing comments, we want to look at every space, not just the
+        # first byte of each range like setting comments
+        return ranges
+
+    def change_comments(self, ranges, indexes):
+        self.segment.clear_comment(ranges)
 
 
-class PasteCommentsCommand(SetCommentCommand):
+class PasteCommentsCommand(ClearCommentCommand):
     short_name = "paste_comments"
     pretty_name = "Paste Comments"
     serialize_order =  [
@@ -184,8 +193,7 @@ class PasteCommentsCommand(SetCommentCommand):
         if not ranges:
             # use the range from cursor to end
             ranges = [(cursor, len(segment))]
-        SetCommentCommand.__init__(self, segment, [ranges[0]], bytes)  #dummy range here because SetCommentCommand converts to 1 byte long ranges
-        self.ranges = ranges  # real range here
+        ClearCommentCommand.__init__(self, segment, ranges, bytes)
         self.cursor = cursor
         self.comments = bytes.tostring().splitlines()
         self.num_lines = len(self.comments)
