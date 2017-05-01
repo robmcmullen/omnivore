@@ -164,8 +164,24 @@ def assemble(image, source_files, data_files):
             raise AtrError("Data files must include a load address specified with the @ char")
         name, addr = name.rsplit("@", 1)
         first = text_to_int(addr)
+        subset = slice(0, -1)
+        if "[" in name and "]" in name:
+            name, slicetext = name.rsplit("[", 1)
+            if ":" in slicetext:
+                start, end = slicetext.split(":", 1)
+                try:
+                    start = int(start)
+                except:
+                    start = 0
+                if end.endswith("]"):
+                    end = end[:-1]
+                try:
+                    end = int(end)
+                except:
+                    end = None
+                subset = slice(start, end)
         with open(name, 'rb') as fh:
-            data = fh.read()
+            data = fh.read()[subset]
             s = segments.add_segment(data, first)
             print s.name
     if options.verbose:
