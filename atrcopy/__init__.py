@@ -1,5 +1,6 @@
 __version__ = "4.0.0"
 
+import os
 import sys
 
 import logging
@@ -84,11 +85,19 @@ def extract_files(image, files):
         except FileNotFound:
             print "%s not in %s" % (name, image)
             continue
-        print "extracting %s" % name
+        output = dirent.filename
+        if options.lower:
+            output = output.lower()
         if not options.dry_run:
             data = image.get_file(dirent)
-            with open(dirent.filename, "wb") as fh:
+            if os.path.exists(output) and not options.force:
+                print "skipping %s, file exists. Use -f to overwrite" % output
+                continue
+            print "extracting %s -> %s" % (name, output)
+            with open(output, "wb") as fh:
                 fh.write(data)
+        else:
+            print "extracting %s -> %s" % (name, output)
 
 
 def save_file(image, name, filetype, data):
@@ -211,36 +220,159 @@ def shred_image(image, value=0):
         image.save()
 
 
+
 def run():
-    import sys
     import argparse
 
     global options
 
-    parser = argparse.ArgumentParser(description="Manipulate files on several types of 8-bit computer disk images")
+    # Subparser command aliasing from: https://gist.github.com/sampsyo/471779
+    # released into the public domain by its author
+    class AliasedSubParsersAction(argparse._SubParsersAction):
+        class _AliasedPseudoAction(argparse.Action):
+            def __init__(self, name, aliases, help):
+                dest = name
+                if aliases:
+                    dest += ' (%s)' % ','.join(aliases)
+                sup = super(AliasedSubParsersAction._AliasedPseudoAction, self)
+                sup.__init__(option_strings=[], dest=dest, help=help) 
+
+        def add_parser(self, name, **kwargs):
+            if 'aliases' in kwargs:
+                aliases = kwargs['aliases']
+                del kwargs['aliases']
+            else:
+                aliases = []
+
+            parser = super(AliasedSubParsersAction, self).add_parser(name, **kwargs)
+
+            # Make the aliases work.
+            for alias in aliases:
+                self._name_parser_map[alias] = parser
+            # Make the help text reflect them, first removing old help entry.
+            if 'help' in kwargs:
+                help = kwargs.pop('help')
+                self._choices_actions.pop()
+                pseudo_action = self._AliasedPseudoAction(name, aliases, help)
+                self._choices_actions.append(pseudo_action)
+
+            return parser
+
+    command_aliases = {
+        "list": ["t", "ls", "dir", "catalog"],
+        "extract": ["x"],
+        "add": ["a"],
+        "create": ["c"],
+        "assemble": ["s", "asm"],
+        "delete": ["rm", "del"],
+        "vtoc": ["v"],
+        "segments": [],
+    }
+    reverse_aliases = {z: k for k, v in command_aliases.iteritems() for z in v}
+    usage = "%(prog)s [-h] [-v] [--dry-run] DISK_IMAGE [...]"
+    subparser_usage = "%(prog)s [-h] [-v] [--dry-run] DISK_IMAGE"
+
+    parser = argparse.ArgumentParser(prog="atrcopy DISK_IMAGE", description="Manipulate files on several types of 8-bit computer disk images. Type '%(prog)s COMMAND --help' for list of options available for each command.")
+    parser.register('action', 'parsers', AliasedSubParsersAction)
     parser.add_argument("-v", "--verbose", default=0, action="count")
     parser.add_argument("--dry-run", action="store_true", default=False, help="don't perform operation, just show what would have happened")
 
-    parser.add_argument("-x", "-e", "--extract", action="store_true", default=False, help="extract named files")
-    parser.add_argument("-a", "--add", action="store_true", default=False, help="add files to image")
-    parser.add_argument("-d", "--delete", action="store_true", default=False, help="remove named files from image")
-    parser.add_argument("-t", "--filetype", action="store", default="", help="file type metadata for writing to disk images that require it")
-    parser.add_argument("-s", "--asm", nargs="+", action="append", help="source file(s) to assemble using pyatasm (requires -o to specify filename stored on disk image)")
-    parser.add_argument("-b", "--bytes", nargs="+", action="append", help="data file(s) to add to assembly, specify as file@addr (requires -o to specify filename stored on disk image)")
-    parser.add_argument("--run-addr", "--brun", action="store", default="", help="run address of binary file if not the first byte of the first segment")
-    parser.add_argument("-o", "--output", action="store", default="", help="output file name for those commands that need it")
-    parser.add_argument("-f", "--force", action="store_true", default=False, help="force operation, allowing file overwrites or attempt operation on non-standard disk images")
-    parser.add_argument("--all", action="store_true", default=False, help="operate on all files on disk image")
+    subparsers = parser.add_subparsers(dest='command', help='', metavar="COMMAND")
 
-    parser.add_argument("-l", "--lower", action="store_true", default=False, help="convert extracted filenames to lower case")
-    parser.add_argument("-n", "--no-sys", action="store_true", default=False, help="only extract things that look like games (no DOS or .SYS files)")
-    parser.add_argument("--xex", action="store_true", default=False, help="add .xex extension")
-    parser.add_argument("-g", "--segments", action="store_true", default=False, help="display segments")
-    parser.add_argument("--shred", action="store_true", default=False, help="fill empty sectors with 0")
-    parser.add_argument("--vtoc", action="store_true", default=False, help="show the VTOC")
-    parser.add_argument("-m", "--metadata", action="store_true", default=False, help="show extra metadata for named files")
-    parser.add_argument("files", metavar="IMAGE", nargs="+", help="a disk image file [or a list of them]")
-    options, extra_args = parser.parse_known_args()
+    command = "list"
+    list_parser = subparsers.add_parser(command, help="List files on the disk image. This is the default if no command is specified", aliases=command_aliases[command])
+    list_parser.add_argument("-g", "--segments", action="store_true", default=False, help="display segments")
+    list_parser.add_argument("-m", "--metadata", action="store_true", default=False, help="show extra metadata for named files")
+    list_parser.add_argument("files", metavar="FILENAME", nargs="*", help="an optional list of files to display")
+
+    command = "extract"
+    extract_parser = subparsers.add_parser(command, help="Copy files from the disk image to the local filesystem", aliases=command_aliases[command])
+    extract_parser.add_argument("-a", "--all", action="store_true", default=False, help="operate on all files on disk image")
+    extract_parser.add_argument("-l", "--lower", action="store_true", default=False, help="convert extracted filenames to lower case")
+    #extract_parser.add_argument("-n", "--no-sys", action="store_true", default=False, help="only extract things that look like games (no DOS or .SYS files)")
+    extract_parser.add_argument("-e", "--ext", action="store", nargs=1, default=False, help="add the specified extension")
+    extract_parser.add_argument("-f", "--force", action="store_true", default=False, help="allow file overwrites on local filesystem")
+    extract_parser.add_argument("files", metavar="FILENAME", nargs="*", help="if not using the -a/--all option, a file (or list of files) to extract from the disk image.")
+
+    command = "add"
+    add_parser = subparsers.add_parser(command, help="Add files to the disk image", aliases=command_aliases[command])
+    add_parser.add_argument("-f", "--force", action="store_true", default=False, help="allow file overwrites in the disk image")
+    add_parser.add_argument("-t", "--filetype", action="store", default="", help="file type metadata for writing to disk images that require it (e.g. DOS 3.3)")
+    add_parser.add_argument("files", metavar="FILENAME", nargs="+", help="a file (or list of files) to copy to the disk image")
+
+    # command = "create"
+    # create_parser = subparsers.add_parser(command, help="Create a new disk image", aliases=command_aliases[command])
+    # create_parser.add_argument("-f", "--force", action="store_true", default=False, help="replace disk image file if it exists")
+    # create_parser.add_argument("-s", "--sys", action="store_true", default=False, help="include system files (e.g. DOS.SYS and DUP.SYS for Atari DOS 2")
+    # create_parser.add_argument("-2", "--dos2", default="dos2", const="dos2", dest="image_type", action="store_const", help="blank Atari DOS 2")
+    # create_parser.add_argument("-33", "--dos33", default="dos2", const="dos33", dest="image_type", action="store_const", help="blank Apple DOS 3.3")
+
+    command = "assemble"
+    assembly_parser = subparsers.add_parser(command, help="Create a new binary file in the disk image", aliases=command_aliases[command])
+    assembly_parser.add_argument("-f", "--force", action="store_true", default=False, help="allow file overwrites in the disk image")
+    assembly_parser.add_argument("-s", "--asm", nargs="*", action="append", help="source file(s) to assemble using pyatasm")
+    assembly_parser.add_argument("-d","-b", "--data", nargs="*", action="append", help="binary data file(s) to add to assembly, specify as file@addr. Only a portion of the file may be included; specify the subset using standard python slice notation: file[subset]@addr")
+    assembly_parser.add_argument("-r", "--run-addr", "--brun", action="store", default="", help="run address of binary file if not the first byte of the first segment")
+    assembly_parser.add_argument("-o", "--output", action="store", default="", required=True, help="output file name in disk image")
+
+    command = "delete"
+    delete_parser = subparsers.add_parser(command, help="Delete files from the disk image", aliases=command_aliases[command])
+    delete_parser.add_argument("-f", "--force", action="store_true", default=False, help="remove the file even if it is write protected ('locked' in Atari DOS 2 terms), if write-protect is supported disk image")
+    delete_parser.add_argument("files", metavar="FILENAME", nargs="+", help="a file (or list of files) to remove from the disk image")
+
+    command = "vtoc"
+    vtoc_parser = subparsers.add_parser(command, help="Show a formatted display of sectors free in the disk image", aliases=command_aliases[command])
+    vtoc_parser.add_argument("-e", "--clear-empty", action="store_true", default=False, help="fill empty sectors with 0")
+
+    command = "segments"
+    vtoc_parser = subparsers.add_parser(command, help="Show the list of parsed segments in the disk image", aliases=command_aliases[command])
+
+
+    # argparse doesn't seem to allow an argument fixed to item 1, so have to
+    # hack with the arg list to get arg #1 to be the disk image. Because of
+    # this hack, we have to perform an additional hack to figure out what the
+    # --help option applies to if it's in the argument list.
+    args = list(sys.argv[1:])
+    if len(args) > 0:
+        found_help = -1
+        first_non_dash = 0
+        num_non_dash = 0
+        for i in range(len(args)):
+            if args[i].startswith("-"):
+                if i == 0:
+                    first_non_dash = -1
+                if args[i] =="-h" or args[i] == "--help":
+                    found_help = i
+            else:
+                num_non_dash += 1
+                if first_non_dash < 0:
+                    first_non_dash = i
+        if found_help >= 0 or first_non_dash < 0:
+            if found_help == 0 or first_non_dash < 0:
+                # put dummy argument so help for entire script will be shown
+                args = ["--help"]
+            elif args[first_non_dash] in command_aliases or args[first_non_dash] in reverse_aliases:
+                # if the first argument without a leading dash looks like a
+                # command instead of a disk image, show help for that command
+                args = [args[first_non_dash], "--help"]
+            else:
+                # show script help
+                args = ["--help"]
+        else:
+            # allow global options to come before or after disk image name
+            disk_image_name = args[first_non_dash]
+            args[first_non_dash:first_non_dash + 1] = []
+            if num_non_dash == 1:
+                # If there is only a disk image but no command specified, use
+                # the default
+                args.append('list')
+    else:
+        disk_image_name = None
+
+    # print "parsing: %s" % str(args)
+    options = parser.parse_args(args)
+    # print options
+    command = reverse_aliases.get(options.command, options.command)
 
     # Turn off debug messages by default
     logging.basicConfig(level=logging.WARNING)
@@ -250,51 +382,29 @@ def run():
     else:
         log.setLevel(logging.INFO)
 
-    file_list = []
-    if options.add or options.extract or options.delete:
-        image = options.files.pop()
-        file_list = options.files
-        options.files = [image]
-
-    if options.all and file_list:
-            raise AtrError("Specifying a list of files and --all doesn't make sense.")
-
-    image_files = []
-    for filename in options.files:
-        if filename == "-":
-            import fileinput
-
-            for line in fileinput.input(["-"]):
-                line = line.rstrip()
-                print "-->%s<--" % line
-                image_files.append(line)
-        else:
-            image_files.append(filename)
-
-    for filename in image_files:
-        parser = find_diskimage(filename)
+    if command == "create":
+        pass
+    else:
+        parser = find_diskimage(disk_image_name)
         if parser and parser.image:
-            if options.all:
-                file_list = list(parser.image.files)
-
-            if options.segments:
-                print "\n".join([str(a) for a in parser.segments])
-            elif options.add:
-                add_files(parser.image, file_list)
-            elif options.extract:
-                extract_files(parser.image, file_list)
-            elif options.delete:
-                remove_files(parser.image, file_list)
-            elif options.asm or options.bytes:
-                asm = options.asm[0] if options.asm else []
-                datafiles = options.bytes[0] if options.bytes else []
-                assemble(parser.image, asm, datafiles, options.run_addr)
-            else:
-                list_files(parser.image, file_list)
-
-            if options.shred:
-                shred_image(parser.image)
-
-            if options.vtoc:
+            if command == "vtoc":
                 vtoc = parser.image.get_vtoc_object()
                 print vtoc
+                if options.clear_empty:
+                    shred_image(parser.image)
+            elif command == "list":
+                list_files(parser.image, options.files)
+            elif command == "add":
+                add_files(parser.image, options.files)
+            elif command == "delete":
+                remove_files(parser.image, options.files)
+            elif command == "extract":
+                extract_files(parser.image, options.files)
+            elif command == "assemble":
+                asm = options.asm[0] if options.asm else []
+                data = options.data[0] if options.data else []
+                assemble(parser.image, asm, data, options.run_addr)
+            elif command == "segments":
+                print "\n".join([str(a) for a in parser.segments])
+        else:
+            log.error("Invalid disk image: %s" % disk_image_name)
