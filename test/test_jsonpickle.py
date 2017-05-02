@@ -1,6 +1,7 @@
 import os
 
-import jsonpickle
+import pytest
+jsonpickle = pytest.importorskip("jsonpickle")
 
 import numpy as np
 
