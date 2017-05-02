@@ -3,7 +3,6 @@ import cStringIO
 import uuid
 
 import numpy as np
-from profilehooks import coverage
 
 from errors import *
 from utils import to_numpy, to_numpy_list
@@ -170,6 +169,8 @@ class SegmentData(object):
             else:
                 self.data = newdata
                 self.style = newstyle
+        else:
+            raise ValueError("Can't resize a view of a segment")
 
     def replace_arrays(self, base_raw):
         newsize = len(base_raw)
@@ -365,12 +366,15 @@ class DefaultSegment(object):
 
     def set_raw(self, rawdata):
         self.rawdata = rawdata
-        self.data = rawdata.get_data()
-        self.style = rawdata.get_style()
-        self._search_copy = None
+        self.update_raw_pointers()
 
     def get_raw(self):
         return self.rawdata
+
+    def update_raw_pointers(self):
+        self.data = self.rawdata.get_data()
+        self.style = self.rawdata.get_style()
+        self._search_copy = None
 
     def resize(self, newsize, zeros=True):
         """ Resize the data arrays.
@@ -404,6 +408,7 @@ class DefaultSegment(object):
 
     def replace_data(self, container):
         self.rawdata.replace_arrays(container.rawdata)
+        self.update_raw_pointers()
 
     def __getstate__(self):
         """Custom jsonpickle state save routine

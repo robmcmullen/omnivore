@@ -349,29 +349,39 @@ class TestResize(object):
         self.container.can_resize = True
 
     def test_subset(self):
+        # check to see data a view of some rawdata will be the same when the
+        # rawdata is resized.
         c = self.container
         assert not c.rawdata.is_indexed
         offset = 1000
         s = DefaultSegment(c.rawdata[offset:offset + offset], 0)
         assert not s.rawdata.is_indexed
+
+        # Check that the small view has the same data as its parent
         for i in range(offset):
             assert s[i] == c[i + offset]
-        requested = 8192
+
+        # keep a copy of the old raw data of the subset
         oldraw = s.rawdata.copy()
         oldid = id(s.rawdata)
+
+        requested = 8192
         oldsize, newsize = c.resize(requested)
         assert newsize == requested
-        s.replace_data(c)
-        assert id(s.rawdata) == oldid
-        assert id(oldraw.order) == id(s.rawdata.order)
-        for i in range(offset):
+        s.replace_data(c)  # s should point to the same offset in the resized data
+        assert id(s.rawdata) == oldid  # segment rawdata object should be same
+        assert id(oldraw.order) == id(s.rawdata.order)  # order the same
+        for i in range(offset):  # check values compared to parent
             assert s[i] == c[i + offset]
+
+        # check for changes in parent/view reflected so we see that it's
+        # pointing to the same array in memory
         newbase = c.rawdata
         newsub = s.rawdata
-        print c.rawdata.data
+        print c.rawdata.data[offset:offset+offset]
         print s.rawdata.data[:]
         s.rawdata.data[:] = 111
-        print c.rawdata.data
+        print c.rawdata.data[offset:offset+offset]
         print s.rawdata.data[:]
         for i in range(offset):
             assert s[i] == c[i + offset]
@@ -411,11 +421,14 @@ if __name__ == "__main__":
     # t.test_indexed()
     # t.test_indexed_sub()
     # t.test_interleave()
-    t = TestSegment1()
-    t.setup()
-    t.test_xex()
+    # t = TestSegment1()
+    # t.setup()
+    # t.test_xex()
     # t.test_copy()
     # t = TestComments()
     # t.setup()
     # t.test_split_data_at_comment()
     # t.test_restore_comments()
+    t = TestResize()
+    t.setup()
+    t.test_subset()
