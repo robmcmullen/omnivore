@@ -649,7 +649,7 @@ class AtariDosDiskImage(DiskImageBase):
                 log.debug("%s not a binary file; skipping segment generation" % str(segment))
         return segments_out
 
-    def create_executable_file_image(self, segments,run_addr=None):
+    def create_executable_file_image(self, segments, run_addr=None):
         return get_xex(segments, run_addr), "XEX"
 
 

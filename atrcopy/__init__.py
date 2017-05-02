@@ -1,6 +1,9 @@
 __version__ = "4.0.0"
 
+import sys
+
 import logging
+log = logging.getLogger(__name__)
 
 try:
     import numpy as np
@@ -143,7 +146,7 @@ def list_files(image, files):
                 print dirent.extra_metadata(image)
 
 
-def assemble(image, source_files, data_files):
+def assemble(image, source_files, data_files, run_addr=""):
     if source_files:
         try:
             import pyatasm
@@ -156,15 +159,17 @@ def assemble(image, source_files, data_files):
             asm = pyatasm.Assemble(name)
         except SyntaxError, e:
             raise AtrError("Assembly error: %s" % e.msg)
+        log.debug("Assembled %s into:" % name)
         for first, last, object_code in asm.segments:
             s = segments.add_segment(object_code, first)
-            print s.name
+            log.debug("  %s" % s.name)
     for name in data_files:
         if "@" not in name:
             raise AtrError("Data files must include a load address specified with the @ char")
         name, addr = name.rsplit("@", 1)
         first = text_to_int(addr)
-        subset = slice(0, -1)
+        log.debug("Adding data file %s at $%04x" % (name, first))
+        subset = slice(0, sys.maxint)
         if "[" in name and "]" in name:
             name, slicetext = name.rsplit("[", 1)
             if ":" in slicetext:
@@ -183,11 +188,17 @@ def assemble(image, source_files, data_files):
         with open(name, 'rb') as fh:
             data = fh.read()[subset]
             s = segments.add_segment(data, first)
-            print s.name
+            log.debug("read data for %s" % s.name)
     if options.verbose:
         for s in segments:
             print "%s - %04x)" % (str(s)[:-1], s.start_addr + len(s))
-    file_data, filetype = image.create_executable_file_image(segments)
+    if run_addr:
+        try:
+            run_addr = text_to_int(run_addr)
+        except ValueError:
+            run_addr = None
+
+    file_data, filetype = image.create_executable_file_image(segments, run_addr)
     changed = save_file(image, options.output, filetype, file_data)
     if changed:
         image.save()
@@ -216,6 +227,7 @@ def run():
     parser.add_argument("-t", "--filetype", action="store", default="", help="file type metadata for writing to disk images that require it")
     parser.add_argument("-s", "--asm", nargs="+", action="append", help="source file(s) to assemble using pyatasm (requires -o to specify filename stored on disk image)")
     parser.add_argument("-b", "--bytes", nargs="+", action="append", help="data file(s) to add to assembly, specify as file@addr (requires -o to specify filename stored on disk image)")
+    parser.add_argument("--run-addr", "--brun", action="store", default="", help="run address of binary file if not the first byte of the first segment")
     parser.add_argument("-o", "--output", action="store", default="", help="output file name for those commands that need it")
     parser.add_argument("-f", "--force", action="store_true", default=False, help="force operation, allowing file overwrites or attempt operation on non-standard disk images")
     parser.add_argument("--all", action="store_true", default=False, help="operate on all files on disk image")
@@ -276,7 +288,7 @@ def run():
             elif options.asm or options.bytes:
                 asm = options.asm[0] if options.asm else []
                 datafiles = options.bytes[0] if options.bytes else []
-                assemble(parser.image, asm, datafiles)
+                assemble(parser.image, asm, datafiles, options.run_addr)
             else:
                 list_files(parser.image, file_list)
 

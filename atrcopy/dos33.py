@@ -3,7 +3,7 @@ import numpy as np
 from errors import *
 from diskimages import BaseHeader, DiskImageBase
 from utils import Directory, VTOC, WriteableSector, BaseSectorList, Dirent
-from segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver, get_style_bits
+from segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver, get_style_bits, SegmentData
 
 import logging
 log = logging.getLogger(__name__)
@@ -586,21 +586,33 @@ class Dos33DiskImage(DiskImageBase):
             segment = EmptySegment(self.rawdata, name=dirent.filename)
         return segment
 
-    def create_executable_file_image(self, segments):
+    def create_executable_file_image(self, segments, run_addr=None):
+        # Apple 2 executables get executed at the first address loaded. If the
+        # run_addr is not the first byte of the combined data, have to create a
+        # new 3-byte segment with a "JMP run_addr" to go at the beginning
         origin = 100000000
         last = -1
+
         for s in segments:
             origin = min(origin, s.start_addr)
             last = max(last, s.start_addr + len(s))
-            print "contiguous bytes needed: %04x - %04x" % (origin, last)
+            log.debug("contiguous bytes needed: %04x - %04x" % (origin, last))
+        if run_addr and run_addr != origin:
+            origin -= 3
+            hi, lo = divmod(run_addr, 256)
+            raw = SegmentData([0x4c, lo, hi])
+            all_segments = [DefaultSegment(raw, start_addr=origin)]
+            all_segments.extend(segments)
+        else:
+            all_segments = segments
         size = last - origin
         image = np.zeros([size + 4], dtype=np.uint8)
         words = image[0:4].view(dtype="<u2")  # always little endian
         words[0] = origin
         words[1] = size
-        for s in segments:
+        for s in all_segments:
             index = s.start_addr - origin + 4
-            print "setting data for %04x - %04x at %04x" % (s.start_addr, s.start_addr + len(s), index)
+            print "setting data for %04x - %04x at index %04x" % (s.start_addr, s.start_addr + len(s), index)
             image[index:index + len(s)] = s.data
         return image, 'B'
 
