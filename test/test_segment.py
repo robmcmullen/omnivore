@@ -289,7 +289,7 @@ class TestComments(object):
         for start, end, style, items in r0:
             print style
             assert np.all(style == 0)
-            for rawindex, comment in items:
+            for rawindex, comment in items.values():
                 assert not comment
         s1.restore_comments(r)
         r1 = s1.get_comment_restore_data([indexes])
@@ -317,7 +317,7 @@ class TestComments(object):
         for start, end, style, items in r0:
             print style
             assert np.all(style == 0)
-            for rawindex, comment in items:
+            for rawindex, comment in items.values():
                 assert not comment
         s2.restore_comments(r)
         r2 = s2.get_comment_restore_data([indexes])
@@ -337,7 +337,7 @@ class TestComments(object):
             print item2
             # indexes won't be the same, but rawindexes and comments will
             assert np.all(item1[2] - item2[2] == 0)
-            assert item1[3] == item2[3]
+            assert set(item1[3].values()) == set(item2[3].values())
 
 
 class TestResize(object):
