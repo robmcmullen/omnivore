@@ -182,6 +182,39 @@ Extract all, renaming to lower case on the host file system::
     extracting File #4  (.2.u.*) 162 COPY32  COM  056 -> copy32.com
     extracting File #5  (.2.u.*) 218 DISKFIX COM  057 -> diskfix.com
 
+Creating Binary Executables
+---------------------------
+
+The simple assembler included in ``atrcopy`` can create binary programs by
+connecting binary data together in a single file and specifying a start address
+so it can be executed by the system's binary run command.
+
+The following command links together a hires image loaded at 2000 hex (the
+first hires screen) and code at 6000 hex (that was assembled using an external
+program, in this case the assembler from the cc65 project) and sets a start
+address of 6000 hex. (Note that all the addresses are implicitly hex values.)
+Because the Apple ][ binary format is limited to a single contiguous block of
+data with a start address of the first byte of data loaded, atrcopy will fill
+the gaps between any segments that aren't contiguous with zeros. If the start
+address is not the first byte of the first specified segment, a mini-segment
+will be included at the beginning that jumps to the specified ``brun`` address
+(shown here as the segment from 1ffd - 2000). Note the gap between 4000 and
+6000 hex will be filled with zeros::
+
+    $ atrcopy game.dsk asm -b title.bin@2000 game[4:]@6000 --brun 6000 -f -o GAME
+    game.dsk: DOS 3.3 Disk Image (size=143360 (560x256b)
+    setting data for 1ffd - 2000 at index 0004
+    setting data for 2000 - 4000 at index 0007
+    setting data for 6000 - 6ef3 at index 4007
+    copying GAME to DOS 3.3 Disk Image (size=143360 (560x256b)
+
+It is also possible to assemble text files that use the MAC/65 syntax, because
+support for `pyatasm <https://pypi.python.org/pypi/pyatasm>`_ is built-in (but
+optional). MAC/65 is a macro assembler originally designed for the Atari 8-bit
+machines but since it produces 6502 code it can be used to compile for any
+machine that uses the 6502: Apple, Commodore, etc.
+
+
 Example on Mac OS X
 -------------------
 
