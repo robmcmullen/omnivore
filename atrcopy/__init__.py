@@ -79,6 +79,8 @@ def find_diskimage(filename):
 
 
 def extract_files(image, files):
+    if options.all:
+        files = image.files
     for name in files:
         try:
             dirent = image.find_dirent(name)
