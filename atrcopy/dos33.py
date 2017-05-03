@@ -598,6 +598,14 @@ class Dos33DiskImage(DiskImageBase):
             last = max(last, s.start_addr + len(s))
             log.debug("contiguous bytes needed: %04x - %04x" % (origin, last))
         if run_addr and run_addr != origin:
+            # check if run_addr points to some location that has data
+            found = False
+            for s in segments:
+                if run_addr >= s.start_addr and run_addr < s.start_addr + len(s):
+                    found = True
+                    break
+            if not found:
+                raise InvalidBinaryFile("Run address points outside data segments")
             origin -= 3
             hi, lo = divmod(run_addr, 256)
             raw = SegmentData([0x4c, lo, hi])
@@ -612,7 +620,7 @@ class Dos33DiskImage(DiskImageBase):
         words[1] = size
         for s in all_segments:
             index = s.start_addr - origin + 4
-            print "setting data for %04x - %04x at index %04x" % (s.start_addr, s.start_addr + len(s), index)
+            print "setting data for $%04x - $%04x at index $%04x" % (s.start_addr, s.start_addr + len(s), index)
             image[index:index + len(s)] = s.data
         return image, 'B'
 

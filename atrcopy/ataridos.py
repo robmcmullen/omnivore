@@ -650,7 +650,8 @@ class AtariDosDiskImage(DiskImageBase):
         return segments_out
 
     def create_executable_file_image(self, segments, run_addr=None):
-        return get_xex(segments, run_addr), "XEX"
+        base_segment, user_segments = get_xex(segments, run_addr)
+        return base_segment, "XEX"
 
 
 class BootDiskImage(AtariDosDiskImage):
@@ -719,7 +720,7 @@ class BootDiskImage(AtariDosDiskImage):
         return []
 
 
-def get_xex(segments, runaddr=None):
+def get_xex(segments, run_addr=None):
     segments_copy = [s for s in segments]  # don't affect the original list!
     main_segment = None
     sub_segments = []
@@ -732,9 +733,17 @@ def get_xex(segments, runaddr=None):
             runad = True
     if not runad:
         words = np.empty([1], dtype='<u2')
-        if not runaddr:
-            runaddr = segments[0].start_addr
-        words[0] = runaddr
+        if run_addr:
+            found = False
+            for s in segments:
+                if run_addr >= s.start_addr and run_addr < s.start_addr + len(s):
+                    found = True
+                    break
+            if not found:
+                raise InvalidBinaryFile("Run address points outside data segments")
+        else:
+            run_addr = segments[0].start_addr
+        words[0] = run_addr
         r = SegmentData(words.view(dtype=np.uint8))
         s = DefaultSegment(r, 0x2e0)
         segments_copy[0:0] = [s]
