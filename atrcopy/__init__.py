@@ -339,24 +339,30 @@ def run():
         found_help = -1
         first_non_dash = 0
         num_non_dash = 0
-        for i in range(len(args)):
-            if args[i].startswith("-"):
+        non_dash = []
+        for i, arg in enumerate(args):
+            if arg.startswith("-"):
                 if i == 0:
                     first_non_dash = -1
-                if args[i] =="-h" or args[i] == "--help":
+                if arg =="-h" or arg == "--help":
                     found_help = i
             else:
                 num_non_dash += 1
+                non_dash.append(arg)
                 if first_non_dash < 0:
                     first_non_dash = i
         if found_help >= 0 or first_non_dash < 0:
             if found_help == 0 or first_non_dash < 0:
                 # put dummy argument so help for entire script will be shown
                 args = ["--help"]
-            elif args[first_non_dash] in command_aliases or args[first_non_dash] in reverse_aliases:
+            elif non_dash[0] in command_aliases or non_dash[0] in reverse_aliases:
                 # if the first argument without a leading dash looks like a
                 # command instead of a disk image, show help for that command
-                args = [args[first_non_dash], "--help"]
+                args = [non_dash[0], "--help"]
+            elif len(non_dash) > 0 and (non_dash[1] in command_aliases or non_dash[1] in reverse_aliases):
+                # if the first argument without a leading dash looks like a
+                # command instead of a disk image, show help for that command
+                args = [non_dash[1], "--help"]
             else:
                 # show script help
                 args = ["--help"]
