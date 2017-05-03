@@ -1,10 +1,10 @@
-__version__ = "4.0.0"
-
 import os
 import sys
 
 import logging
 log = logging.getLogger(__name__)
+
+from _metadata import __version__
 
 try:
     import numpy as np
