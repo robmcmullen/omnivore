@@ -85,7 +85,8 @@ class BaseFilesystemModifyTest(object):
         self.image.write_file("RAMP50K.BIN", None, data)
         assert len(self.image.files) == self.num_files_in_sample + 1
         with pytest.raises(NotEnoughSpaceOnDisk):
-            self.image.write_file("RAMP50K2.BIN", None, data)
+            huge = np.arange(500*1024, dtype=np.uint8)
+            self.image.write_file("RAMP500K.BIN", None, huge)
         assert len(self.image.files) == self.num_files_in_sample + 1
 
     def test_delete(self):
@@ -140,6 +141,16 @@ class BaseFilesystemModifyTest(object):
 class TestAtariDosSDImage(BaseFilesystemModifyTest):
     diskimage_type = AtariDosDiskImage
     sample_file = "../test_data/dos_sd_test1.atr"
+    num_files_in_sample = 5
+
+class TestAtariDosEDImage(BaseFilesystemModifyTest):
+    diskimage_type = AtariDosDiskImage
+    sample_file = "../test_data/dos_ed_test1.atr"
+    num_files_in_sample = 5
+
+class TestAtariDosDDImage(BaseFilesystemModifyTest):
+    diskimage_type = AtariDosDiskImage
+    sample_file = "../test_data/dos_dd_test1.atr"
     num_files_in_sample = 5
 
 class TestDos33Image(BaseFilesystemModifyTest):
