@@ -223,6 +223,58 @@ def shred_image(image, value=0):
         image.save()
 
 
+def get_template_path(rel_path="templates"):
+    path = __file__
+
+    template_path = os.path.normpath(os.path.join(os.path.dirname(path), rel_path))
+    frozen = getattr(sys, 'frozen', False)
+    if frozen:
+        if frozen == True:
+            # pyinstaller sets frozen=True and uses sys._MEIPASS
+            root = sys._MEIPASS
+            template_path = os.path.normpath(os.path.join(root, template_path))
+        elif frozen  == 'macosx_app':
+            #print "FROZEN!!! %s" % frozen
+            root = os.environ['RESOURCEPATH']
+            if ".zip/" in template_path:
+                zippath, template_path = template_path.split(".zip/")
+            template_path = os.path.normpath(os.path.join(root, template_path))
+        else:
+            print "App packager %s not yet supported for image paths!!!"
+    return template_path
+
+
+def list_templates():
+    import glob
+
+    path = get_template_path()
+    files = glob.glob(os.path.join(path, "*"))
+    for name in files:
+        print os.path.basename(name)
+
+
+def get_template_data(template):
+    path = os.path.join(get_template_path(), template)
+    try:
+        with open(path, "rb") as fh:
+            data = fh.read()
+    except:
+        raise InvalidDiskImage("Template disk image %s not found" % template)
+    return data
+
+
+def create_image(template, name):
+    data = get_template_data(template)
+    print "using %s template to create %s" % (template, name)
+    if not options.dry_run:
+        if os.path.exists(name) and not options.force:
+            print "skipping %s, use -f to overwrite" % (name)
+        else:
+            with open(name, "wb") as fh:
+                fh.write(data)
+            parser = find_diskimage(name)
+            list_files(parser.image, [])
+
 
 def run():
     import argparse
@@ -303,12 +355,11 @@ def run():
     add_parser.add_argument("-t", "--filetype", action="store", default="", help="file type metadata for writing to disk images that require it (e.g. DOS 3.3)")
     add_parser.add_argument("files", metavar="FILENAME", nargs="+", help="a file (or list of files) to copy to the disk image")
 
-    # command = "create"
-    # create_parser = subparsers.add_parser(command, help="Create a new disk image", aliases=command_aliases[command])
-    # create_parser.add_argument("-f", "--force", action="store_true", default=False, help="replace disk image file if it exists")
-    # create_parser.add_argument("-s", "--sys", action="store_true", default=False, help="include system files (e.g. DOS.SYS and DUP.SYS for Atari DOS 2")
-    # create_parser.add_argument("-2", "--dos2", default="dos2", const="dos2", dest="image_type", action="store_const", help="blank Atari DOS 2")
-    # create_parser.add_argument("-33", "--dos33", default="dos2", const="dos33", dest="image_type", action="store_const", help="blank Apple DOS 3.3")
+    command = "create"
+    create_parser = subparsers.add_parser(command, help="Create a new disk image", aliases=command_aliases[command])
+    create_parser.add_argument("-f", "--force", action="store_true", default=False, help="replace disk image file if it exists")
+    create_parser.add_argument("-l", "--list", action="store_true", default=False, help="list available built-in templates")
+    create_parser.add_argument("template", metavar="TEMPLATE", nargs="?", help="template to use to create new disk image, or without this argument will list available built-in templates")
 
     command = "assemble"
     assembly_parser = subparsers.add_parser(command, help="Create a new binary file in the disk image", aliases=command_aliases[command])
@@ -392,7 +443,10 @@ def run():
         log.setLevel(logging.INFO)
 
     if command == "create":
-        pass
+        if options.list or options.template is None:
+            list_templates()
+        else:
+            create_image(options.template[0], disk_image_name)
     else:
         parser = find_diskimage(disk_image_name)
         if parser and parser.image:
