@@ -112,7 +112,7 @@ def save_file(image, name, filetype, data):
             return False
     except FileNotFound:
         pass
-    print "copying %s to %s" % (name, image)
+    print "copying %s to %s" % (name, image.filename)
     if not options.dry_run:
         image.write_file(name, filetype, data)
         return True
@@ -210,6 +210,7 @@ def assemble(image, source_files, data_files, run_addr=""):
             run_addr = None
 
     file_data, filetype = image.create_executable_file_image(segments, run_addr)
+    print "total file size: $%x (%d) bytes" % (len(file_data), len(file_data))
     changed = save_file(image, options.output, filetype, file_data)
     if changed:
         image.save()
