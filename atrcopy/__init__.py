@@ -268,7 +268,7 @@ def list_templates():
     path = get_template_path()
     files = glob.glob(os.path.join(path, "*"))
     print "Available templates:"
-    for name in files:
+    for name in sorted(files):
         if name.endswith(".inf"):
             continue
         try:
