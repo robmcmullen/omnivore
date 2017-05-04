@@ -72,6 +72,9 @@ def find_diskimage(filename):
     except UnsupportedDiskImage, e:
         print "%s: %s" % (filename, e)
         return None
+    except IOError, e:
+        print "%s: %s" % (filename, e)
+        return None
     else:
         parser.image.filename = filename
         parser.image.ext = ""
