@@ -151,18 +151,18 @@ def remove_files(image, files):
         image.save()
 
 
-def list_files(image, files):
+def list_files(image, files, show_crc=False, show_metadata=False):
     files = set(files)
     for dirent in image.files:
         if not files or dirent.filename in files:
-            if options.crc:
+            if show_crc:
                 data = image.get_file(dirent)
                 crc = zlib.crc32(data) & 0xffffffff  # correct for some platforms that return signed int
                 extra = "  %08x" % crc
             else:
                 extra = ""
             print("%s%s" % (dirent, extra))
-            if options.metadata:
+            if show_metadata:
                 print dirent.extra_metadata(image)
 
 
@@ -481,7 +481,7 @@ def run():
         if options.list or options.template is None:
             list_templates()
         else:
-            create_image(options.template[0], disk_image_name)
+            create_image(options.template, disk_image_name)
     else:
         parser = find_diskimage(disk_image_name)
         if parser and parser.image:
@@ -493,7 +493,7 @@ def run():
                 if options.clear_empty:
                     shred_image(parser.image)
             elif command == "list":
-                list_files(parser.image, options.files)
+                list_files(parser.image, options.files, options.crc, options.metadata)
             elif command == "crc":
                 crc_files(parser.image, options.files)
             elif command == "add":
