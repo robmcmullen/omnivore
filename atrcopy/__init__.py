@@ -276,7 +276,7 @@ def list_templates():
                 description = fh.read().strip()
         except IOError:
             description = ""
-        print "%-12s  %s" % (os.path.basename(name), description)
+        print "%-14s  %s" % (os.path.basename(name), description)
 
 
 def get_template_data(template):
@@ -286,12 +286,17 @@ def get_template_data(template):
             data = fh.read()
     except:
         raise InvalidDiskImage("Template disk image %s not found" % template)
-    return data
+    try:
+        with open(path + ".inf", "r") as fh:
+            inf = fh.read().strip()
+    except IOError:
+        inf = ""
+    return data, inf
 
 
 def create_image(template, name):
-    data = get_template_data(template)
-    print "using %s template to create %s" % (template, name)
+    data, inf = get_template_data(template)
+    print "using %s template: %s" % (template, inf)
     if not options.dry_run:
         if os.path.exists(name) and not options.force:
             print "skipping %s, use -f to overwrite" % (name)
@@ -299,7 +304,10 @@ def create_image(template, name):
             with open(name, "wb") as fh:
                 fh.write(data)
             parser = find_diskimage(name)
+            print "created %s: %s" % (name, str(parser.image))
             list_files(parser.image, [])
+    else:
+        print "creating %s" % name
 
 
 def run():
