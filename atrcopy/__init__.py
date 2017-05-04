@@ -359,6 +359,9 @@ def run():
         "segments": [],
     }
     reverse_aliases = {z: k for k, v in command_aliases.iteritems() for z in v}
+    possible_commands = set(command_aliases.keys()).union(reverse_aliases.keys())
+    allowed_without_diskimage = ["create"]
+    allowed_without_diskimage = set([c for c in possible_commands if c in allowed_without_diskimage or reverse_aliases.get(c, None) in allowed_without_diskimage])
 
     skip_diskimage_summary = set(["crc"])
 
@@ -450,11 +453,11 @@ def run():
             if found_help == 0 or first_non_dash < 0:
                 # put dummy argument so help for entire script will be shown
                 args = ["--help"]
-            elif non_dash[0] in command_aliases or non_dash[0] in reverse_aliases:
+            elif non_dash[0] in possible_commands:
                 # if the first argument without a leading dash looks like a
                 # command instead of a disk image, show help for that command
                 args = [non_dash[0], "--help"]
-            elif len(non_dash) > 0 and (non_dash[1] in command_aliases or non_dash[1] in reverse_aliases):
+            elif len(non_dash) > 0 and non_dash[1] in possible_commands:
                 # if the first argument without a leading dash looks like a
                 # command instead of a disk image, show help for that command
                 args = [non_dash[1], "--help"]
@@ -462,13 +465,25 @@ def run():
                 # show script help
                 args = ["--help"]
         else:
-            # allow global options to come before or after disk image name
-            disk_image_name = args[first_non_dash]
-            args[first_non_dash:first_non_dash + 1] = []
-            if num_non_dash == 1:
-                # If there is only a disk image but no command specified, use
-                # the default
-                args.append('list')
+            if first_non_dash == 0 and num_non_dash == 1:
+                # check a special case like "atrcopy COMMAND -l" to allow some
+                # help or limited functionality without a disk image. This is
+                # allowed only when there are no global options and no other
+                # non-dashed arguments, otherwise it will proceed as if a disk
+                # image has been specified.
+                cmd = args[0]
+                if cmd in allowed_without_diskimage:
+                    disk_image_name = None
+            else:
+                # not a special case, so process like no disk image is
+                # specified. Allow global options to come before or after disk
+                # image name
+                disk_image_name = args[first_non_dash]
+                args[first_non_dash:first_non_dash + 1] = []
+                if num_non_dash == 1:
+                    # If there is only a disk image but no command specified,
+                    # use the default
+                    args.append('list')
     else:
         disk_image_name = None
 
