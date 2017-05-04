@@ -249,8 +249,16 @@ def list_templates():
 
     path = get_template_path()
     files = glob.glob(os.path.join(path, "*"))
+    print "Available templates:"
     for name in files:
-        print os.path.basename(name)
+        if name.endswith(".inf"):
+            continue
+        try:
+            with open(name + ".inf", "r") as fh:
+                description = fh.read().strip()
+        except IOError:
+            description = ""
+        print "%-12s  %s" % (os.path.basename(name), description)
 
 
 def get_template_data(template):
