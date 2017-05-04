@@ -66,7 +66,6 @@ def find_diskimage(filename):
                     continue
                 if options.verbose:
                     print "Found parser %s" % parser.menu_name
-                print "%s: %s" % (filename, parser.image)
                 break
             if parser is None:
                 print "%s: Unknown disk image type" % filename
@@ -352,6 +351,9 @@ def run():
         "segments": [],
     }
     reverse_aliases = {z: k for k, v in command_aliases.iteritems() for z in v}
+
+    skip_diskimage_summary = set(["crc"])
+
     usage = "%(prog)s [-h] [-v] [--dry-run] DISK_IMAGE [...]"
     subparser_usage = "%(prog)s [-h] [-v] [--dry-run] DISK_IMAGE"
 
@@ -483,6 +485,8 @@ def run():
     else:
         parser = find_diskimage(disk_image_name)
         if parser and parser.image:
+            if command not in skip_diskimage_summary:
+                print "%s: %s" % (disk_image_name, parser.image)
             if command == "vtoc":
                 vtoc = parser.image.get_vtoc_object()
                 print vtoc
