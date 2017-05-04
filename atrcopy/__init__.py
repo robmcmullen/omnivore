@@ -1,5 +1,6 @@
 import os
 import sys
+import zlib
 
 import logging
 log = logging.getLogger(__name__)
@@ -155,9 +156,24 @@ def list_files(image, files):
     files = set(files)
     for dirent in image.files:
         if not files or dirent.filename in files:
-            print dirent
+            if options.crc:
+                data = image.get_file(dirent)
+                crc = zlib.crc32(data) & 0xffffffff  # correct for some platforms that return signed int
+                extra = "  %08x" % crc
+            else:
+                extra = ""
+            print("%s%s" % (dirent, extra))
             if options.metadata:
                 print dirent.extra_metadata(image)
+
+
+def crc_files(image, files):
+    files = set(files)
+    for dirent in image.files:
+        if not files or dirent.filename in files:
+            data = image.get_file(dirent)
+            crc = zlib.crc32(data) & 0xffffffff  # correct for some platforms that return signed int
+            print("%s: %08x" % (dirent.filename, crc))
 
 
 def assemble(image, source_files, data_files, run_addr=""):
@@ -326,6 +342,7 @@ def run():
 
     command_aliases = {
         "list": ["t", "ls", "dir", "catalog"],
+        "crc": [],
         "extract": ["x"],
         "add": ["a"],
         "create": ["c"],
@@ -349,7 +366,12 @@ def run():
     list_parser = subparsers.add_parser(command, help="List files on the disk image. This is the default if no command is specified", aliases=command_aliases[command])
     list_parser.add_argument("-g", "--segments", action="store_true", default=False, help="display segments")
     list_parser.add_argument("-m", "--metadata", action="store_true", default=False, help="show extra metadata for named files")
+    list_parser.add_argument("-c", "--crc", action="store_true", default=False, help="compute CRC32 for each file")
     list_parser.add_argument("files", metavar="FILENAME", nargs="*", help="an optional list of files to display")
+
+    command = "crc"
+    crc_parser = subparsers.add_parser(command, help="List files on the disk image and the CRC32 value in format suitable for parsing", aliases=command_aliases[command])
+    crc_parser.add_argument("files", metavar="FILENAME", nargs="*", help="an optional list of files to display")
 
     command = "extract"
     extract_parser = subparsers.add_parser(command, help="Copy files from the disk image to the local filesystem", aliases=command_aliases[command])
@@ -468,6 +490,8 @@ def run():
                     shred_image(parser.image)
             elif command == "list":
                 list_files(parser.image, options.files)
+            elif command == "crc":
+                crc_files(parser.image, options.files)
             elif command == "add":
                 add_files(parser.image, options.files)
             elif command == "delete":
