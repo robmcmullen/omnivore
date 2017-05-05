@@ -469,7 +469,7 @@ def run():
             else:
                 # show script help
                 args = ["--help"]
-            if reverse_aliases[args[0]] == "create":
+            if reverse_aliases.get(args[0], None) == "create":
                 create_parser.epilog = get_template_info()
         else:
             # Allow global options to come before or after disk image name
