@@ -282,10 +282,6 @@ def get_template_info():
     return os.linesep.join(lines) + os.linesep
 
 
-def list_templates():
-    print get_template_info()
-
-
 def get_template_data(template):
     path = os.path.join(get_template_path(), template)
     try:
@@ -496,10 +492,7 @@ def run():
         log.setLevel(logging.INFO)
 
     if command == "create":
-        if options.list or options.template is None:
-            list_templates()
-        else:
-            create_image(options.template, disk_image_name)
+        create_image(options.template[0], disk_image_name)
     else:
         parser = find_diskimage(disk_image_name)
         if parser and parser.image:
