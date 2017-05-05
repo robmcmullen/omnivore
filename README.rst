@@ -7,8 +7,8 @@ images.
 Prerequisites
 -------------
 
-Starting with atrcopy 2.0, numpy is required. It will be automatically
-installed when installing atrcopy with::
+Starting with ``atrcopy`` 2.0, `numpy <http://www.numpy.org/>`_ is required. It
+will be automatically installed when installing ``atrcopy`` with::
 
     pip install atrcopy
 
@@ -20,6 +20,7 @@ Features
 * copy files to and from disk images
 * delete files from disk images
 * create new disk images
+* concatenate binary data together into a file on the disk image
 * compile assembly source into binary files if `pyatasm <https://pypi.python.org/pypi/pyatasm>`_ is installed
 
 
@@ -36,23 +37,25 @@ Supported Disk Image Types
 Supported File System Formats
 ----------------------------
 
-+--------------+-------------+---------+-------+-------------------+
-| File System  | Platform    | Read    | Write | Status            |
-+==============+=============+=========+=======+===================+
-| DOS 2 (90K)  | Atari 8-bit | Yes     | Yes   | Fully supported   |
-+--------------+-------------+---------+-------+-------------------+
-| DOS 2 (180K) | Atari 8-bit | Yes     | Yes   | Fully supported   |
-+--------------+-------------+---------+-------+-------------------+
-| DOS 3 (130K) | Atari 8-bit | Yes     | Yes   | Fully supported   |
-+--------------+-------------+---------+-------+-------------------+
-| SpartaDOS    | Atari 8-bit | No      | No    | Under development |
-+--------------+-------------+---------+-------+-------------------+
-| MyDOS        | Atari 8-bit | Partial | No    | Under development |
-+--------------+-------------+---------+-------+-------------------+
-| DOS 3.3      | Apple ][    | Yes     | Yes   | Fully supported   |
-+--------------+-------------+---------+-------+-------------------+
-| ProDOS 8     | Apple ][    | No      | No    | Unimplemented     |
-+--------------+-------------+---------+-------+-------------------+
++----------------+-------------+---------+-------+-------------------+
+| File System    | Platform    | Read    | Write | Status            |
++================+=============+=========+=======+===================+
+| DOS 2 (90K)    | Atari 8-bit | Yes     | Yes   | Fully supported   |
++----------------+-------------+---------+-------+-------------------+
+| DOS 2 (180K)   | Atari 8-bit | Yes     | Yes   | Fully supported   |
++----------------+-------------+---------+-------+-------------------+
+| DOS 2.5 (130K) | Atari 8-bit | Yes     | Yes   | Fully supported   |
++----------------+-------------+---------+-------+-------------------+
+| DOS 3 (130K)   | Atari 8-bit | No      | No    | Unimplemented     |
++----------------+-------------+---------+-------+-------------------+
+| SpartaDOS      | Atari 8-bit | No      | No    | Under development |
++----------------+-------------+---------+-------+-------------------+
+| MyDOS          | Atari 8-bit | Partial | No    | Under development |
++----------------+-------------+---------+-------+-------------------+
+| DOS 3.3        | Apple ][    | Yes     | Yes   | Fully supported   |
++----------------+-------------+---------+-------+-------------------+
+| ProDOS 8       | Apple ][    | No      | No    | Unimplemented     |
++----------------+-------------+---------+-------+-------------------+
 
 
 Other Supported Formats
@@ -96,8 +99,11 @@ above, and the commands may be abbreviated as shown here::
         list (t,ls,dir,catalog)
                             List files on the disk image. This is the default if
                             no command is specified
+        crc                 List files on the disk image and the CRC32 value in
+                            format suitable for parsing
         extract (x)         Copy files from the disk image to the local filesystem
         add (a)             Add files to the disk image
+        create (c)          Create a new disk image
         assemble (s,asm)    Create a new binary file in the disk image
         delete (rm,del)     Delete files from the disk image
         vtoc (v)            Show a formatted display of sectors free in the disk
@@ -182,8 +188,41 @@ Extract all, renaming to lower case on the host file system::
     extracting File #4  (.2.u.*) 162 COPY32  COM  056 -> copy32.com
     extracting File #5  (.2.u.*) 218 DISKFIX COM  057 -> diskfix.com
 
-Creating Binary Executables
----------------------------
+Creating Disk Images
+--------------------
+
+Several template disk images are included in the distribution, and these can be
+used to create blank disk images that subsequent uses of ``atrcopy`` can
+reference.
+
+The available disk images can be viewed with::
+
+    $ atrcopy create -l
+    Available templates:
+    dos2dd          Atari 8-bit DOS 2 double density (180K), empty VTOC
+    dos2ed          Atari 8-bit DOS 2 enhanced density (130K), empty VTOC
+    dos2ed+2.5      Atari 8-bit DOS 2 enhanced density (130K) DOS 2.5 system disk
+    dos2sd          Atari 8-bit DOS 2 single density (90K), empty VTOC
+    dos2sd+2.0s     Atari 8-bit DOS 2 single density (90K) DOS 2.0S system disk
+    dos33           Apple ][ DOS 3.3 (140K) standard RWTS, empty VTOC
+    dos33autobrun   Apple ][ DOS 3.3 (140K) standard RWTS, boot to HGR & BRUN a file named AUTOBRUN
+
+To create a new image, use::
+
+    $ atrcopy game.dsk create dos33autobrun
+
+which will create a new file called ``game.dsk`` based on the ``dos33autobrun``
+image.
+
+``dos33autobrun`` is a special image that can be used to create autoloading
+binary programs. It contains an Applesoft Basic file called ``HELLO`` which
+will autoload on boot. It sets the graphics mode to ``HGR`` and executes a
+``BRUN`` command to start a binary file named ``AUTOBRUN``. ``AUTOBRUN``
+doesn't exist in the image, it's for you to supply.
+
+
+Creating Programs on the Disk Image
+-----------------------------------
 
 The simple assembler included in ``atrcopy`` can create binary programs by
 connecting binary data together in a single file and specifying a start address
@@ -194,19 +233,25 @@ first hires screen) and code at 6000 hex (that was assembled using an external
 program, in this case the assembler from the cc65 project) and sets a start
 address of 6000 hex. (Note that all the addresses are implicitly hex values.)
 Because the Apple ][ binary format is limited to a single contiguous block of
-data with a start address of the first byte of data loaded, atrcopy will fill
+data with a start address of the first byte of data loaded, ``atrcopy`` will fill
 the gaps between any segments that aren't contiguous with zeros. If the start
 address is not the first byte of the first specified segment, a mini-segment
 will be included at the beginning that jumps to the specified ``brun`` address
 (shown here as the segment from 1ffd - 2000). Note the gap between 4000 and
 6000 hex will be filled with zeros::
 
-    $ atrcopy game.dsk asm -b title.bin@2000 game[4:]@6000 --brun 6000 -f -o GAME
+    $ atrcopy game.dsk create dos33autobrun
+    using dos33autobrun template: Apple ][ DOS 3.3 (140K) standard RWTS, HGR, BRUN a file named AUTOBRUN
+    created game.dsk: DOS 3.3 Disk Image (size=143360 (560x256b)
+    File #0  ( A) 002 HELLO                          003 001
+
+    $ atrcopy game.dsk asm -b title.bin@2000 game[4:]@6000 --brun 6000 -f -o AUTOBRUN
     game.dsk: DOS 3.3 Disk Image (size=143360 (560x256b)
-    setting data for 1ffd - 2000 at index 0004
-    setting data for 2000 - 4000 at index 0007
-    setting data for 6000 - 6ef3 at index 4007
-    copying GAME to DOS 3.3 Disk Image (size=143360 (560x256b)
+    setting data for $1ffd - $2000 at index $0004
+    setting data for $2000 - $4000 at index $0007
+    setting data for $6000 - $6ef3 at index $4007
+    total file size: $4efa (20218) bytes
+    copying AUTOBRUN to game.dsk
 
 It is also possible to assemble text files that use the MAC/65 syntax, because
 support for `pyatasm <https://pypi.python.org/pypi/pyatasm>`_ is built-in (but
