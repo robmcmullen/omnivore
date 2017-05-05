@@ -262,12 +262,14 @@ def get_template_path(rel_path="templates"):
     return template_path
 
 
-def list_templates():
+def get_template_info():
     import glob
 
     path = get_template_path()
     files = glob.glob(os.path.join(path, "*"))
-    print "Available templates:"
+
+    lines = []
+    lines.append("available templates:")
     for name in sorted(files):
         if name.endswith(".inf"):
             continue
@@ -276,7 +278,12 @@ def list_templates():
                 description = fh.read().strip()
         except IOError:
             description = ""
-        print "%-14s  %s" % (os.path.basename(name), description)
+        lines.append("  %-14s  %s" % (os.path.basename(name), description))
+    return os.linesep.join(lines) + os.linesep
+
+
+def list_templates():
+    print get_template_info()
 
 
 def get_template_data(template):
@@ -358,10 +365,9 @@ def run():
         "vtoc": ["v"],
         "segments": [],
     }
-    reverse_aliases = {z: k for k, v in command_aliases.iteritems() for z in v}
-    possible_commands = set(command_aliases.keys()).union(reverse_aliases.keys())
-    allowed_without_diskimage = ["create"]
-    allowed_without_diskimage = set([c for c in possible_commands if c in allowed_without_diskimage or reverse_aliases.get(c, None) in allowed_without_diskimage])
+    # reverse aliases does the inverse mapping of command aliases, including
+    # the identity mapping of "command" to "command"
+    reverse_aliases = {z: k for k, v in command_aliases.iteritems() for z in (v + [k])}
 
     skip_diskimage_summary = set(["crc"])
 
@@ -402,10 +408,9 @@ def run():
     add_parser.add_argument("files", metavar="FILENAME", nargs="+", help="a file (or list of files) to copy to the disk image")
 
     command = "create"
-    create_parser = subparsers.add_parser(command, help="Create a new disk image", aliases=command_aliases[command])
+    create_parser = subparsers.add_parser(command, help="Create a new disk image", aliases=command_aliases[command], epilog="<generated on demand to list available templates>", formatter_class=argparse.RawDescriptionHelpFormatter)
     create_parser.add_argument("-f", "--force", action="store_true", default=False, help="replace disk image file if it exists")
-    create_parser.add_argument("-l", "--list", action="store_true", default=False, help="list available built-in templates")
-    create_parser.add_argument("template", metavar="TEMPLATE", nargs="?", help="template to use to create new disk image, or without this argument will list available built-in templates")
+    create_parser.add_argument("template", metavar="TEMPLATE", nargs=1, help="template to use to create new disk image; see below for list of available built-in templates")
 
     command = "assemble"
     assembly_parser = subparsers.add_parser(command, help="Create a new binary file in the disk image", aliases=command_aliases[command])
@@ -453,44 +458,34 @@ def run():
             if found_help == 0 or first_non_dash < 0:
                 # put dummy argument so help for entire script will be shown
                 args = ["--help"]
-            elif non_dash[0] in possible_commands:
+            elif non_dash[0] in reverse_aliases:
                 # if the first argument without a leading dash looks like a
                 # command instead of a disk image, show help for that command
                 args = [non_dash[0], "--help"]
-            elif len(non_dash) > 0 and non_dash[1] in possible_commands:
+            elif len(non_dash) > 0 and non_dash[1] in reverse_aliases:
                 # if the first argument without a leading dash looks like a
                 # command instead of a disk image, show help for that command
                 args = [non_dash[1], "--help"]
             else:
                 # show script help
                 args = ["--help"]
+            if reverse_aliases[args[0]] == "create":
+                create_parser.epilog = get_template_info()
         else:
-            if first_non_dash == 0 and num_non_dash == 1:
-                # check a special case like "atrcopy COMMAND -l" to allow some
-                # help or limited functionality without a disk image. This is
-                # allowed only when there are no global options and no other
-                # non-dashed arguments, otherwise it will proceed as if a disk
-                # image has been specified.
-                cmd = args[0]
-                if cmd in allowed_without_diskimage:
-                    disk_image_name = None
-            else:
-                # not a special case, so process like no disk image is
-                # specified. Allow global options to come before or after disk
-                # image name
-                disk_image_name = args[first_non_dash]
-                args[first_non_dash:first_non_dash + 1] = []
-                if num_non_dash == 1:
-                    # If there is only a disk image but no command specified,
-                    # use the default
-                    args.append('list')
+            # Allow global options to come before or after disk image name
+            disk_image_name = args[first_non_dash]
+            args[first_non_dash:first_non_dash + 1] = []
+            if num_non_dash == 1:
+                # If there is only a disk image but no command specified,
+                # use the default
+                args.append('list')
     else:
         disk_image_name = None
 
     # print "parsing: %s" % str(args)
     options = parser.parse_args(args)
     # print options
-    command = reverse_aliases.get(options.command, options.command)
+    command = reverse_aliases[options.command]
 
     # Turn off debug messages by default
     logging.basicConfig(level=logging.WARNING)

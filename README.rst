@@ -84,9 +84,10 @@ where the available commands include:
 * ``delete``: delete files from the disk image
 * ``vtoc``: show and manipulate the VTOC for images that support it
 
-The ``DISK_IMAGE`` is always required which points to the path on your local
-file system of the disk image.  ``COMMAND`` is one of the commands listed
-above, and the commands may be abbreviated as shown here::
+Except when using the ``--help`` option, the ``DISK_IMAGE`` is always required
+which points to the path on your local file system of the disk image.
+``COMMAND`` is one of the commands listed above, and the commands may be
+abbreviated as shown here::
 
     $ atrcopy --help
     usage: atrcopy DISK_IMAGE [-h] [-v] [--dry-run] COMMAND ...
@@ -195,17 +196,27 @@ Several template disk images are included in the distribution, and these can be
 used to create blank disk images that subsequent uses of ``atrcopy`` can
 reference.
 
-The available disk images can be viewed with::
+The available disk images can be viewed using the ``--help`` option::
 
-    $ atrcopy create -l
-    Available templates:
-    dos2dd          Atari 8-bit DOS 2 double density (180K), empty VTOC
-    dos2ed          Atari 8-bit DOS 2 enhanced density (130K), empty VTOC
-    dos2ed+2.5      Atari 8-bit DOS 2 enhanced density (130K) DOS 2.5 system disk
-    dos2sd          Atari 8-bit DOS 2 single density (90K), empty VTOC
-    dos2sd+2.0s     Atari 8-bit DOS 2 single density (90K) DOS 2.0S system disk
-    dos33           Apple ][ DOS 3.3 (140K) standard RWTS, empty VTOC
-    dos33autobrun   Apple ][ DOS 3.3 (140K) standard RWTS, boot to HGR & BRUN a file named AUTOBRUN
+    $ atrcopy create --help
+    usage: atrcopy DISK_IMAGE create [-h] [-f] TEMPLATE
+
+    positional arguments:
+      TEMPLATE     template to use to create new disk image; see below for list of
+                   available built-in templates
+
+    optional arguments:
+      -h, --help   show this help message and exit
+      -f, --force  replace disk image file if it exists
+
+    available templates:
+      dos2dd          Atari 8-bit DOS 2 double density (180K), empty VTOC
+      dos2ed          Atari 8-bit DOS 2 enhanced density (130K), empty VTOC
+      dos2ed+2.5      Atari 8-bit DOS 2 enhanced density (130K) DOS 2.5 system disk
+      dos2sd          Atari 8-bit DOS 2 single density (90K), empty VTOC
+      dos2sd+2.0s     Atari 8-bit DOS 2 single density (90K) DOS 2.0S system disk
+      dos33           Apple ][ DOS 3.3 (140K) standard RWTS, empty VTOC
+      dos33autobrun   Apple ][ DOS 3.3 (140K) standard RWTS, boot to HGR & BRUN a file named AUTOBRUN
 
 To create a new image, use::
 
