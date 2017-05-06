@@ -6,7 +6,7 @@ from ataridos import AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContaine
 from spartados import SpartaDosDiskImage
 from cartridge import AtariCartImage, get_known_carts
 from mame import MameZipImage
-from dos33 import Dos33DiskImage, ProdosDiskImage
+from dos33 import Dos33DiskImage, ProdosDiskImage, Dos33BinFile
 from errors import *
 
 import logging
@@ -130,6 +130,11 @@ class Dos33SegmentParser(SegmentParser):
     image_type = Dos33DiskImage
 
 
+class Dos33BinSegmentParser(SegmentParser):
+    menu_name = "BIN (Apple ][ executable)"
+    image_type = Dos33BinFile
+
+
 class ProdosSegmentParser(SegmentParser):
     menu_name = "ProDOS Disk Image"
     image_type = ProdosDiskImage
@@ -187,6 +192,9 @@ mime_parsers = {
         Dos33SegmentParser,
         ProdosSegmentParser,
         ],
+    "application/vnd.apple2.bin": [
+        Dos33BinSegmentParser,
+        ],
     }
 
 mime_parse_order = [
@@ -196,6 +204,7 @@ mime_parse_order = [
     "application/vnd.atari8bit.5200_cart",
     "application/vnd.mame_rom",
     "application/vnd.apple2.dsk",
+    "application/vnd.apple2.bin",
     ]
 
 pretty_mime = {
@@ -205,6 +214,7 @@ pretty_mime = {
     "application/vnd.atari8bit.5200_cart":"Atari 5200 Cartridge",
     "application/vnd.mame_rom": "MAME",
     "application/vnd.apple2.dsk": "Apple ][ Disk Image",
+    "application/vnd.apple2.bin": "Apple ][ Binary",
 }
 
 grouped_carts = get_known_carts()

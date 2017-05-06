@@ -175,7 +175,7 @@ def crc_files(image, files):
             print("%s: %08x" % (dirent.filename, crc))
 
 
-def assemble(image, source_files, data_files, run_addr=""):
+def assemble(image, source_files, data_files, obj_files, run_addr=""):
     if source_files:
         try:
             import pyatasm
@@ -218,6 +218,13 @@ def assemble(image, source_files, data_files, run_addr=""):
             data = fh.read()[subset]
             s = segments.add_segment(data, first)
             log.debug("read data for %s" % s.name)
+    for name in obj_files:
+        parser = find_diskimage(name)
+        if parser and parser.image:
+            for s in parser.segments:
+                if s.start_addr > 0:
+                    print "adding %s from %s" % (s, name)
+                    segments.add_segment(s.data, s.start_addr)
     if options.verbose:
         for s in segments:
             print "%s - %04x)" % (str(s)[:-1], s.start_addr + len(s))
@@ -418,7 +425,8 @@ def run():
     assembly_parser = subparsers.add_parser(command, help="Create a new binary file in the disk image", aliases=command_aliases[command])
     assembly_parser.add_argument("-f", "--force", action="store_true", default=False, help="allow file overwrites in the disk image")
     assembly_parser.add_argument("-s", "--asm", nargs="*", action="append", help="source file(s) to assemble using pyatasm")
-    assembly_parser.add_argument("-d","-b", "--data", nargs="*", action="append", help="binary data file(s) to add to assembly, specify as file@addr. Only a portion of the file may be included; specify the subset using standard python slice notation: file[subset]@addr")
+    assembly_parser.add_argument("-d","--data", nargs="*", action="append", help="binary data file(s) to add to assembly, specify as file@addr. Only a portion of the file may be included; specify the subset using standard python slice notation: file[subset]@addr")
+    assembly_parser.add_argument("-b", "--obj", "--bload", nargs="*", action="append", help="binary file(s) to add to assembly, either executables or labeled memory dumps (e.g. BSAVE on Apple ][), parsing each file's binary segments to add to the resulting disk image at the load address for each segment")
     assembly_parser.add_argument("-r", "--run-addr", "--brun", action="store", default="", help="run address of binary file if not the first byte of the first segment")
     assembly_parser.add_argument("-o", "--output", action="store", default="", required=True, help="output file name in disk image")
 
@@ -522,7 +530,8 @@ def run():
             elif command == "assemble":
                 asm = options.asm[0] if options.asm else []
                 data = options.data[0] if options.data else []
-                assemble(parser.image, asm, data, options.run_addr)
+                obj = options.obj[0] if options.obj else []
+                assemble(parser.image, asm, data, obj, options.run_addr)
             elif command == "segments":
                 print "\n".join([str(a) for a in parser.segments])
         else:
