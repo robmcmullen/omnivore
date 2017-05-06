@@ -264,6 +264,8 @@ def get_template_path(rel_path="templates"):
 
 def get_template_info():
     import glob
+    import textwrap
+    fmt = "  %-14s  %s"
 
     path = get_template_path()
     files = glob.glob(os.path.join(path, "*"))
@@ -278,7 +280,9 @@ def get_template_info():
                 description = fh.read().strip()
         except IOError:
             description = ""
-        lines.append("  %-14s  %s" % (os.path.basename(name), description))
+        d = textwrap.wrap(description, 80 - 1 - 14 - 2 - 2)
+        lines.append(fmt % (os.path.basename(name), d[0]))
+        lines.extend([fmt % ("", line) for line in d[1:]])
     return os.linesep.join(lines) + os.linesep
 
 
@@ -298,8 +302,10 @@ def get_template_data(template):
 
 
 def create_image(template, name):
+    import textwrap
+
     data, inf = get_template_data(template)
-    print "using %s template: %s" % (template, inf)
+    print "using %s template:\n  %s" % (template, "\n  ".join(textwrap.wrap(inf, 77)))
     if not options.dry_run:
         if os.path.exists(name) and not options.force:
             print "skipping %s, use -f to overwrite" % (name)
