@@ -216,7 +216,9 @@ The available disk images can be viewed using the ``--help`` option::
       dos2sd          Atari 8-bit DOS 2 single density (90K), empty VTOC
       dos2sd+2.0s     Atari 8-bit DOS 2 single density (90K) DOS 2.0S system disk
       dos33           Apple ][ DOS 3.3 (140K) standard RWTS, empty VTOC
-      dos33autobrun   Apple ][ DOS 3.3 (140K) standard RWTS, boot to HGR & BRUN a file named AUTOBRUN
+      dos33autobrun   Apple ][ DOS 3.3 (140K) disk image for binary program
+                      development: HELLO sets fullscreen HGR and calls BRUN on
+                      user-supplied AUTOBRUN binary file
 
 To create a new image, use::
 
@@ -227,9 +229,10 @@ image.
 
 ``dos33autobrun`` is a special image that can be used to create autoloading
 binary programs. It contains an Applesoft Basic file called ``HELLO`` which
-will autoload on boot. It sets the graphics mode to ``HGR`` and executes a
-``BRUN`` command to start a binary file named ``AUTOBRUN``. ``AUTOBRUN``
-doesn't exist in the image, it's for you to supply.
+will autoload on boot. It sets the graphics mode to fullscreen hi-res graphics
+(the first screen at $2000) and executes a ``BRUN`` command to start a binary
+file named ``AUTOBRUN``. ``AUTOBRUN`` doesn't exist in the image, it's for you
+to supply.
 
 
 Creating Programs on the Disk Image
