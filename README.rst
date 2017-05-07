@@ -40,7 +40,7 @@ Supported Disk Image Types
 * ``DSK``: Apple ][ DOS 3.3 disk image; raw sector dump
 
 Supported File System Formats
-----------------------------
+-----------------------------
 
 +----------------+-------------+---------+-------+-------------------+
 | File System    | Platform    | Read    | Write | Status            |
@@ -66,10 +66,22 @@ Supported File System Formats
 Other Supported Formats
 -----------------------
 
-* XEX format: Atari executable files
-* KBoot format: a single executable file packaged up into a bootable disk image
-* Atari ROM cartridges (both plain binary and Atari800 .CAR format)
-* MAME ROM zipfiles
++----------+----------------------------------+---------+-------+-----------------+
+| Format   | Platform/description             | Read    | Write | Status          |
++==========+==================================+=========+=======+=================+
+| ``.xex`` | Atari 8-bit executable files     | Yes     | Yes   | Fully supported |
++----------+----------------------------------+---------+-------+-----------------+
+| KBoot    | Atari 8-bit ``xex`` in boot disk | Yes     | Yes   | Fully supported |
++----------+----------------------------------+---------+-------+-----------------+
+| ``.car`` | Atari 8-bit cartridge images     | Yes     | No    | Read only       |
++----------+----------------------------------+---------+-------+-----------------+
+| BSAVE    | Apple ][ ``BSAVE`` data          | Yes     | Yes   | Fully supported |
++----------+----------------------------------+---------+-------+-----------------+
+| ``.zip`` | MAME ROM zipfiles                | Partial | No    | Experimental    |
++----------+----------------------------------+---------+-------+-----------------+
+
+**Note:** Atari ROM cartridges are supported in both both plain binary and
+atari800 ``.car`` format
 
 
 Example Usage
