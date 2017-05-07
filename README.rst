@@ -4,6 +4,8 @@ atrcopy
 Command line utility to manage file systems on Atari 8-bit and Apple ][ disk
 images.
 
+.. contents:: **Contents**
+
 Prerequisites
 -------------
 
