@@ -1,4 +1,7 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import object
+from past.utils import old_div
 from mock import *
 
 from atrcopy import AtariCartImage, SegmentData, InvalidDiskImage
@@ -10,7 +13,7 @@ class TestAtariCart(object):
 
     def get_cart(self, k_size, cart_type):
         data = np.zeros((k_size * 1024)+16, dtype=np.uint8)
-        data[0:4].view("|a4")[0] = 'CART'
+        data[0:4].view("|a4")[0] = b'CART'
         data[4:8].view(">u4")[0] = cart_type
         return data
 
@@ -47,7 +50,7 @@ class TestAtariCart(object):
             rawdata = SegmentData(data)
             image = AtariCartImage(rawdata, cart_type)
             image.parse_segments()
-            assert len(image.segments) == 1 + 1 + (k_size - main_size)/banked_size
+            assert len(image.segments) == 1 + 1 + old_div((k_size - main_size),banked_size)
             assert len(image.segments[0]) == 16
             assert len(image.segments[1]) == main_size * 1024
             assert len(image.segments[2]) == banked_size * 1024
