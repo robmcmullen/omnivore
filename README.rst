@@ -175,7 +175,7 @@ Examples
 List all files on a disk image::
 
     $ atrcopy DOS_25.ATR 
-    DOS_25.ATR: ATR Disk Image (size=133120 (1040x128b), crc=0 flags=0 unused=0) Atari DOS Format: 1010 usable sectors (739 free), 6 files
+    DOS_25.ATR: ATR Disk Image (size=133120 (1040x128B), crc=0 flags=0 unused=0) Atari DOS Format: 1010 usable sectors (739 free), 6 files
     File #0  (.2.u.*) 004 DOS     SYS  037
     File #1  (.2.u.*) 041 DUP     SYS  042
     File #2  (.2.u.*) 083 RAMDISK COM  009
@@ -186,13 +186,13 @@ List all files on a disk image::
 Extract a file::
 
     $ atrcopy DOS_25.ATR extract SETUP.COM
-    DOS_25.ATR: ATR Disk Image (size=133120 (1040x128b), crc=0 flags=0 unused=0) Atari DOS Format: 1010 usable sectors (739 free), 6 files
+    DOS_25.ATR: ATR Disk Image (size=133120 (1040x128B), crc=0 flags=0 unused=0) Atari DOS Format: 1010 usable sectors (739 free), 6 files
     extracting SETUP.COM -> SETUP.COM
 
 Extract all files::
 
     $ atrcopy DOS_25.ATR extract --all
-    DOS_25.ATR: ATR Disk Image (size=133120 (1040x128b), crc=0 flags=0 unused=0) Atari DOS Format: 1010 usable sectors (739 free), 6 files
+    DOS_25.ATR: ATR Disk Image (size=133120 (1040x128B), crc=0 flags=0 unused=0) Atari DOS Format: 1010 usable sectors (739 free), 6 files
     extracting File #0  (.2.u.*) 004 DOS     SYS  037 -> DOS.SYS
     extracting File #1  (.2.u.*) 041 DUP     SYS  042 -> DUP.SYS
     extracting File #2  (.2.u.*) 083 RAMDISK COM  009 -> RAMDISK.COM
@@ -204,7 +204,7 @@ Extract all, using the abbreviated command and converting to lower case on the
 host file system::
 
     $ atrcopy DOS_25.ATR x --all -l
-    DOS_25.ATR: ATR Disk Image (size=133120 (1040x128b), crc=0 flags=0 unused=0) Atari DOS Format: 1010 usable sectors (739 free), 6 files
+    DOS_25.ATR: ATR Disk Image (size=133120 (1040x128B), crc=0 flags=0 unused=0) Atari DOS Format: 1010 usable sectors (739 free), 6 files
     extracting File #0  (.2.u.*) 004 DOS     SYS  037 -> dos.sys
     extracting File #1  (.2.u.*) 041 DUP     SYS  042 -> dup.sys
     extracting File #2  (.2.u.*) 083 RAMDISK COM  009 -> ramdisk.com
@@ -287,13 +287,13 @@ After creating the test image with::
     $ atrcopy test.atr create dos2sd
     using dos2sd template:
       Atari 8-bit DOS 2 single density (90K), empty VTOC
-    created test.atr: ATR Disk Image (size=92160 (720x128b), crc=0 flags=0 unused=0) Atari DOS Format: 707 usable sectors (707 free), 0 files
+    created test.atr: ATR Disk Image (size=92160 (720x128B), crc=0 flags=0 unused=0) Atari DOS Format: 707 usable sectors (707 free), 0 files
 
 this command compiles the file ``test_header.s`` and prefixes it to the
 existing executable::
 
     $ atrcopy test.atr asm -s test_header.s -b air_defense_v18.xex -o test.xex -f
-    test.atr: ATR Disk Image (size=92160 (720x128b), crc=0 flags=0 unused=0) Atari DOS Format: 707 usable sectors (707 free), 0 files
+    test.atr: ATR Disk Image (size=92160 (720x128B), crc=0 flags=0 unused=0) Atari DOS Format: 707 usable sectors (707 free), 0 files
     fname: test_header.s
     Pass 1: Success. (0 warnings)
     Pass 2: 
@@ -343,11 +343,11 @@ and 6000 hex will be filled with zeros::
     copying AUTOBRUN to game.dsk
 
 
-Example on Mac OS X
--------------------
+Example on macOS
+----------------
 
-OS X supplies python with the operating system so you shouldn't need to install
-a framework version from python.org.
+macOS supplies python with the operating system so you shouldn't need to
+install a framework version from python.org.
 
 To prevent overwriting important system files, it's best to create a working
 folder: a new empty folder somewhere and do all your testing in that folder.
@@ -376,7 +376,7 @@ Now, run the program by typing ``atrcopy GAMES1.ATR`` and you should
 see the contents of the ``ATR`` image in the familiar Atari DOS format::
 
     mac:~/Documents/atrtest $ atrcopy GAMES1.ATR
-    GAMES1.ATR: ATR Disk Image (size=92160 (720x128b), crc=0 flags=0 unused=0) Atari DOS Format: 707 usable sectors (17 free), 9 files
+    GAMES1.ATR: ATR Disk Image (size=92160 (720x128B), crc=0 flags=0 unused=0) Atari DOS Format: 707 usable sectors (17 free), 9 files
     File #0  (.2.u.*) 004 DOS     SYS  039
     File #1  (.2.u.*) 043 MINER2       138
     File #2  (.2.u.*) 085 DEFENDER     132
