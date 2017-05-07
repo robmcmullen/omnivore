@@ -200,7 +200,7 @@ Extract all files::
     extracting File #4  (.2.u.*) 162 COPY32  COM  056 -> COPY32.COM
     extracting File #5  (.2.u.*) 218 DISKFIX COM  057 -> DISKFIX.COM
 
-Extract all, using the abbreviated commandn and renaming to lower case on the
+Extract all, using the abbreviated command and converting to lower case on the
 host file system::
 
     $ atrcopy DOS_25.ATR x --all -l
@@ -219,7 +219,7 @@ Several template disk images are included in the distribution, and these can be
 used to create blank disk images that subsequent uses of ``atrcopy`` can
 reference.
 
-The available disk images can be viewed using the ``--help`` option::
+The available disk images can be viewed using ``atrcopy create --help``::
 
     $ atrcopy create --help
     usage: atrcopy DISK_IMAGE create [-h] [-f] TEMPLATE
@@ -275,10 +275,9 @@ Creating Atari 8-bit Executables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Atari 8-bit object files include a small header and an arbitrary number of
-segments, each with a start and end address. As the file is read, segment data
-is placed in memory in the order they occur on disk, so there is no requirement
-that the segments be written to memory in any order and segments do not have to
-be contiguous.
+segments. Each segment defines a contiguous block of data with a start and end
+address. If the file has multiple segments, they will be processed in the order
+they appear in the file, not by segment start address.
 
 This example creates a new ``xex`` on a disk that combines the segments of an
 already existing executable with some new assembly code.
@@ -315,7 +314,7 @@ code at 6000 hex from the binary file ``game``, with a start address of 6000
 hex.
 
 The binary file ``game`` was assembled using the assembler from the 
-`cc65<https://github.com/cc65/cc65>`_ project, using the command::
+`cc65 <https://github.com/cc65/cc65>`_ project, using the command::
 
     cl65 -t apple2 --cpu 6502 --start-addr 0x6000 -o game game.s
 
