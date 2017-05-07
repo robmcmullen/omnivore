@@ -19,6 +19,8 @@ will be automatically installed when installing ``atrcopy`` with::
 
     pip install atrcopy
 
+Linux and macOS note: if numpy needs to be installed on your system, it may be
+compiled from source which can take several minutes.
 
 Features
 ========
