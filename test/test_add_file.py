@@ -8,12 +8,11 @@ from atrcopy.errors import *
 
 class BaseFilesystemModifyTest(object):
     diskimage_type = None
-    sample_file = None
+    sample_data = None
     num_files_in_sample = 0
 
     def setup(self):
-        data = np.fromfile(self.sample_file, dtype=np.uint8)
-        rawdata = SegmentData(data)
+        rawdata = SegmentData(self.sample_data.copy())
         self.image = self.diskimage_type(rawdata)
 
     def check_entries(self, entries, prefix="TEST", save=None):
@@ -140,26 +139,29 @@ class BaseFilesystemModifyTest(object):
 
 class TestAtariDosSDImage(BaseFilesystemModifyTest):
     diskimage_type = AtariDosDiskImage
-    sample_file = "../test_data/dos_sd_test1.atr"
+    sample_data = np.fromfile("../test_data/dos_sd_test1.atr", dtype=np.uint8)
     num_files_in_sample = 5
 
 class TestAtariDosEDImage(BaseFilesystemModifyTest):
     diskimage_type = AtariDosDiskImage
-    sample_file = "../test_data/dos_ed_test1.atr"
+    sample_data = np.fromfile("../test_data/dos_ed_test1.atr", dtype=np.uint8)
     num_files_in_sample = 5
 
 class TestAtariDosDDImage(BaseFilesystemModifyTest):
     diskimage_type = AtariDosDiskImage
-    sample_file = "../test_data/dos_dd_test1.atr"
+    sample_data = np.fromfile("../test_data/dos_dd_test1.atr", dtype=np.uint8)
     num_files_in_sample = 5
 
 class TestDos33Image(BaseFilesystemModifyTest):
     diskimage_type = Dos33DiskImage
-    sample_file = "../test_data/dos33_master.dsk"
+    sample_data = np.fromfile("../test_data/dos33_master.dsk", dtype=np.uint8)
     num_files_in_sample = 19
 
 
 if __name__ == "__main__":
-    t = TestAtariDosFile()
-    t.setup()
-    t.test_segment()
+    t = TestAtariDosSDImage()
+    for name in dir(t):
+        print name
+        if name.startswith("test_"):
+            t.setup()
+            getattr(t, name)()
