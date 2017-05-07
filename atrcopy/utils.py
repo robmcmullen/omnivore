@@ -6,6 +6,10 @@ from errors import *
 
 import logging
 log = logging.getLogger(__name__)
+try:  # Expensive debugging
+    _xd = _expensive_debugging
+except NameError:
+    _xd = False
 
 
 def to_numpy(value):
@@ -176,7 +180,7 @@ class Directory(BaseSectorList):
 
     def set(self, index, dirent):
         self.dirents[index] = dirent
-        log.debug("set dirent #%d: %s" % (index, dirent))
+        if _xd: log.debug("set dirent #%d: %s" % (index, dirent))
 
     def get_free_dirent(self):
         used = set()
@@ -240,10 +244,10 @@ class Directory(BaseSectorList):
         current = 0
         for index, dirent in d:
             for missing in range(current, index):
-                log.debug("Encoding empty dirent at %d" % missing)
+                if _xd: log.debug("Encoding empty dirent at %d" % missing)
                 data = self.encode_empty()
                 self.store_encoded(data)
-            log.debug("Encoding dirent: %s" % dirent)
+            if _xd: log.debug("Encoding dirent: %s" % dirent)
             data = self.encode_dirent(dirent)
             self.store_encoded(data)
             current = index + 1
@@ -260,7 +264,7 @@ class Directory(BaseSectorList):
 
     def store_encoded(self, data):
         while True:
-            log.debug("store_encoded: %d bytes in %s" % (len(data), self.current_sector))
+            if _xd: log.debug("store_encoded: %d bytes in %s" % (len(data), self.current_sector))
             data = self.current_sector.add_data(data)
             if len(data) > 0:
                 self.sectors.append(self.current_sector)
@@ -329,7 +333,7 @@ class VTOC(BaseSectorList):
         order = []
         for i in range(num):
             order.append(self.get_next_free_sector())
-        log.debug("Sectors reserved: %s" % order)
+        if _xd: log.debug("Sectors reserved: %s" % order)
         self.calc_bitmap()
         return order
 
@@ -337,7 +341,7 @@ class VTOC(BaseSectorList):
         free = np.nonzero(self.sector_map)[0]
         if len(free) > 0:
             num = free[0]
-            log.debug("Found sector %d free" % num)
+            if _xd: log.debug("Found sector %d free" % num)
             self.sector_map[num] = 0
             return num
         raise NotEnoughSpaceOnDisk("No space left in VTOC")

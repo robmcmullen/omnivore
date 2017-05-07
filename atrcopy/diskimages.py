@@ -6,6 +6,10 @@ from utils import *
 
 import logging
 log = logging.getLogger(__name__)
+try:  # Expensive debugging
+    _xd = _expensive_debugging
+except NameError:
+    _xd = False
 
 
 class BaseHeader(object):
@@ -348,7 +352,7 @@ class DiskImageBase(object):
     def write_sector_list(self, sector_list):
         for sector in sector_list:
             pos, size = self.header.get_pos(sector.sector_num)
-            log.debug("writing: %s at %d" % (sector, pos))
+            if _xd: log.debug("writing: %s at %d" % (sector, pos))
             self.bytes[pos:pos + size] = sector.data
 
     def delete_file(self, filename):
@@ -373,7 +377,7 @@ class DiskImageBase(object):
         try:
             vtoc = self.get_vtoc_object()
             for sector_num, pos, size in vtoc.iter_free_sectors():
-                log.debug("shredding: sector %s at %d, fill value=%d" % (sector_num, pos, fill_value))
+                if _xd: log.debug("shredding: sector %s at %d, fill value=%d" % (sector_num, pos, fill_value))
                 self.bytes[pos:pos + size] = fill_value
         except AtrError:
             self.rollback_transaction(state)
