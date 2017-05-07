@@ -361,7 +361,7 @@ class Dos33Header(BaseHeader):
         BaseHeader.__init__(self, 256)
 
     def __str__(self):
-        return "%s Disk Image (size=%d (%dx%db)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size)
+        return "%s Disk Image (size=%d (%dx%dB)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size)
 
     def check_size(self, size):
         if size != 143360:
