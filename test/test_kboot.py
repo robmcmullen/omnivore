@@ -1,8 +1,13 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import os
 
 import numpy as np
 
+from mock import *
 from atrcopy import SegmentData, KBootImage, add_xexboot_header, add_atr_header
 
 
@@ -23,7 +28,7 @@ class TestKbootHeader(object):
         newatr = KBootImage(rawdata)
         image = newatr.bytes
         print(image[0:16])
-        paragraphs = image_size / 16
+        paragraphs = old_div(image_size, 16)
         print(newatr.header, paragraphs)
         assert int(image[2:4].view(dtype='<u2')) == paragraphs
         assert int(image[16 + 9:16 + 9 + 2].view('<u2')) == xex_size
