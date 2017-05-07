@@ -86,10 +86,10 @@ Other Supported Formats
 atari800 ``.car`` format
 
 
-Example Usage
-=============
+Usage
+=====
 
-Basic usage is::
+::
 
     atrcopy DISK_IMAGE <global options> COMMAND <command options>
 
@@ -278,7 +278,7 @@ is placed in memory in the order they occur on disk, so there is no requirement
 that the segments be written to memory in any order and segments do not have to
 be contiguous.
 
-This example creates a new XEX on a disk that combines the segments of an
+This example creates a new ``xex`` on a disk that combines the segments of an
 already existing executable with some new assembly code.
 
 After creating the test image with::
