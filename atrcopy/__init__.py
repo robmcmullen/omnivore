@@ -192,6 +192,7 @@ def assemble(image, source_files, data_files, obj_files, run_addr=""):
         for first, last, object_code in asm.segments:
             s = segments.add_segment(object_code, first)
             log.debug("  %s" % s.name)
+            print "adding %s from %s assembly" % (s, name)
     for name in data_files:
         if "@" not in name:
             raise AtrError("Data files must include a load address specified with the @ char")

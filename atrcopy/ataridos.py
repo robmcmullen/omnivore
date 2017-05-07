@@ -651,7 +651,7 @@ class AtariDosDiskImage(DiskImageBase):
 
     def create_executable_file_image(self, segments, run_addr=None):
         base_segment, user_segments = get_xex(segments, run_addr)
-        return base_segment, "XEX"
+        return base_segment.data, "XEX"
 
 
 class BootDiskImage(AtariDosDiskImage):

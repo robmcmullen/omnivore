@@ -255,6 +255,40 @@ optional). MAC/65 is a macro assembler originally designed for the Atari 8-bit
 machines but since it produces 6502 code it can be used to compile for any
 machine that uses the 6502: Apple, Commodore, etc.
 
+Creating Atari 8-bit Executables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Atari 8-bit object files include a small header and an arbitrary number of
+segments, each with a start and end address. As the file is read, segment data
+is placed in memory in the order they occur on disk, so there is no requirement
+that the segments be written to memory in any order and segments do not have to
+be contiguous.
+
+This example creates a new XEX on a disk that combines the segments of an
+already existing executable with some new assembly code.
+
+After creating the test image with::
+
+    $ atrcopy test.atr create dos2sd
+    using dos2sd template:
+      Atari 8-bit DOS 2 single density (90K), empty VTOC
+    created test.atr: ATR Disk Image (size=92160 (720x128b), crc=0 flags=0 unused=0) Atari DOS Format: 707 usable sectors (707 free), 0 files
+
+this command compiles the file ``test_header.s`` and prefixes it to the
+existing executable::
+
+    $ atrcopy test.atr asm -s test_header.s -b air_defense_v18.xex -o test.xex -f
+    test.atr: ATR Disk Image (size=92160 (720x128b), crc=0 flags=0 unused=0) Atari DOS Format: 707 usable sectors (707 free), 0 files
+    fname: test_header.s
+    Pass 1: Success. (0 warnings)
+    Pass 2: 
+    adding 0600 - 0653, size=0053 ($53 bytes @ 0600) from test_header.s assembly
+    adding 02e2 - 02e4, size=0002 ($2 bytes @ 02e2) from test_header.s assembly
+    adding  $02e0-$02e2 ($0002 @ $0006) from air_defense_v18.xex
+    adding  $6000-$6bd4 ($0bd4 @ $000c) from air_defense_v18.xex
+    total file size: $c3d (3133) bytes
+    copying test.xex to test.atr
+
 
 Creating DOS 3.3 Binaries
 ~~~~~~~~~~~~~~~~~~~~~~~~~
