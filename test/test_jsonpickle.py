@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 
 import pytest
@@ -14,33 +15,33 @@ class TestJsonPickle(object):
         self.segment = DefaultSegment(SegmentData(data))
 
     def test_simple(self):
-        print self.segment.byte_bounds_offset(), len(self.segment)
+        print(self.segment.byte_bounds_offset(), len(self.segment))
         r2 = self.segment.rawdata[100:400]
         s2 = DefaultSegment(r2)
-        print s2.byte_bounds_offset(), len(s2), s2.__getstate__()
+        print(s2.byte_bounds_offset(), len(s2), s2.__getstate__())
         r3 = s2.rawdata[100:200]
         s3 = DefaultSegment(r3)
-        print s3.byte_bounds_offset(), len(s3), s3.__getstate__()
+        print(s3.byte_bounds_offset(), len(s3), s3.__getstate__())
         order = list(reversed(range(700, 800)))
         r4 = self.segment.rawdata.get_indexed(order)
         s4 = DefaultSegment(r4)
-        print s4.byte_bounds_offset(), len(s4), s4.__getstate__()
+        print(s4.byte_bounds_offset(), len(s4), s4.__getstate__())
         
         slist = [s2, s3, s4]
         for s in slist:
-            print s
+            print(s)
         j = jsonpickle.dumps(slist)
-        print j
+        print(j)
         
         slist2 = jsonpickle.loads(j)
-        print slist2
+        print(slist2)
         for s in slist2:
             s.reconstruct_raw(self.segment.rawdata)
-            print s
+            print(s)
         
         for orig, rebuilt in zip(slist, slist2):
-            print "orig", orig.data[:]
-            print "rebuilt", rebuilt.data[:]
+            print("orig", orig.data[:])
+            print("rebuilt", rebuilt.data[:])
             assert np.array_equal(orig[:], rebuilt[:])
 
 if __name__ == "__main__":

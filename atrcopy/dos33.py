@@ -1,9 +1,11 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import numpy as np
 
-from errors import *
-from diskimages import BaseHeader, DiskImageBase
-from utils import Directory, VTOC, WriteableSector, BaseSectorList, Dirent
-from segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver, get_style_bits, SegmentData
+from .errors import *
+from .diskimages import BaseHeader, DiskImageBase
+from .utils import Directory, VTOC, WriteableSector, BaseSectorList, Dirent
+from .segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver, get_style_bits, SegmentData
 
 import logging
 log = logging.getLogger(__name__)
@@ -624,7 +626,7 @@ class Dos33DiskImage(DiskImageBase):
         words[1] = size
         for s in all_segments:
             index = s.start_addr - origin + 4
-            print "setting data for $%04x - $%04x at index $%04x" % (s.start_addr, s.start_addr + len(s), index)
+            print("setting data for $%04x - $%04x at index $%04x" % (s.start_addr, s.start_addr + len(s), index))
             image[index:index + len(s)] = s.data
         return image, 'B'
 

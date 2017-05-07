@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 
 from mock import *
@@ -42,8 +43,8 @@ class BaseCreateTest(object):
                 file_data, filetype = image.create_executable_file_image(segments, run_addr)
         except TypeError:
             file_data, filetype = image.create_executable_file_image(segments, run_addr)
-            print image
-            print file_data, filetype
+            print(image)
+            print(file_data, filetype)
             assert len(file_data) == expected
 
 @pytest.mark.parametrize("sample_file", ["../test_data/dos_sd_test1.atr"])

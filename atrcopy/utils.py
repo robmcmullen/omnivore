@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 import types
 
 import numpy as np
 
-from errors import *
+from .errors import *
 
 import logging
 log = logging.getLogger(__name__)
@@ -15,9 +16,9 @@ except NameError:
 def to_numpy(value):
     if type(value) is np.ndarray:
         return value
-    elif type(value) is types.StringType:
+    elif type(value) is bytes:
         return np.fromstring(value, dtype=np.uint8)
-    elif type(value) is types.ListType:
+    elif type(value) is list:
     	return np.asarray(value, dtype=np.uint8)
     raise TypeError("Can't convert to numpy data")
 

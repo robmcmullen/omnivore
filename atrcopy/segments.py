@@ -1,11 +1,14 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import bisect
 import cStringIO
 import uuid
 
 import numpy as np
 
-from errors import *
-from utils import to_numpy, to_numpy_list
+from .errors import *
+from .utils import to_numpy, to_numpy_list
+from functools import reduce
 
 user_bit_mask = 0x07
 data_style = 0x1
@@ -1007,11 +1010,11 @@ class DefaultSegment(object):
     def compare_segment(self, other_segment):
         self.clear_style_bits(diff=True)
         diff = self.rawdata.data != other_segment.rawdata.data
-        print diff, diff.dtype
+        print(diff, diff.dtype)
         d = diff * np.uint8(diff_bit_mask)
-        print d
+        print(d)
         self.style |= (diff * np.uint8(diff_bit_mask))
-        print "# entries", len(diff), "# diffs:", len(np.where(diff == True)[0])
+        print("# entries", len(diff), "# diffs:", len(np.where(diff == True)[0]))
 
 
 class EmptySegment(DefaultSegment):

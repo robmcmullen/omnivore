@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 import numpy as np
 
-from errors import *
-from ataridos import AtariDosDirent, AtariDosDiskImage, XexSegment
-from segments import DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentSaver
+from .errors import *
+from .ataridos import AtariDosDirent, AtariDosDiskImage, XexSegment
+from .segments import DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentSaver
 
 import logging
 log = logging.getLogger(__name__)

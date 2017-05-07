@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 import numpy as np
 
-from errors import *
-from diskimages import DiskImageBase, BaseHeader
-from segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentedFileSegment, SegmentSaver, get_style_bits
-from utils import *
+from .errors import *
+from .diskimages import DiskImageBase, BaseHeader
+from .segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentedFileSegment, SegmentSaver, get_style_bits
+from .utils import *
 
 import logging
 log = logging.getLogger(__name__)

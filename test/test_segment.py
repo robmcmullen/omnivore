@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 
 import numpy as np
@@ -5,6 +6,7 @@ import pytest
 
 from atrcopy import DefaultSegment, SegmentData, get_xex, interleave_segments, user_bit_mask, diff_bit_mask
 from atrcopy.errors import *
+from functools import reduce
 
 
 def get_indexed(segment, num, scale):
@@ -32,7 +34,7 @@ class TestSegment1(object):
             s[1].set_comment_at(0, "comment 0")
             s[1].set_comment_at(10, "comment 10")
             s[1].set_comment_at(100, "comment 100")
-            print list(s[1].iter_comments_in_segment())
+            print(list(s[1].iter_comments_in_segment()))
             with pytest.raises(InvalidBinaryFile):
                 seg, subseg = get_xex(s, 0xbeef)
             seg, subseg = get_xex(s)
@@ -42,8 +44,8 @@ class TestSegment1(object):
             # An extra segment has been inserted for the run address!
             size = reduce(lambda a, b:a + len(b), subseg, 0)
             assert len(seg) == 2 + size
-            print id(s[1]), list(s[1].iter_comments_in_segment())
-            print id(subseg[2]), list(subseg[2].iter_comments_in_segment())
+            print(id(s[1]), list(s[1].iter_comments_in_segment()))
+            print(id(subseg[2]), list(subseg[2].iter_comments_in_segment()))
             for i, c in s[1].iter_comments_in_segment():
                 assert c == subseg[2].get_comment(i + 4)
             assert np.all(s[1].style[:] == subseg[2].style[4:])
@@ -51,15 +53,15 @@ class TestSegment1(object):
     def test_copy(self):
         for s in self.segments:
             d = s.rawdata
-            print "orig:", d.data.shape, d.is_indexed, d.data, id(d.data)
+            print("orig:", d.data.shape, d.is_indexed, d.data, id(d.data))
             c = d.copy()
-            print "copy", c.data.shape, c.is_indexed, c.data, id(c.data)
+            print("copy", c.data.shape, c.is_indexed, c.data, id(c.data))
             assert c.data.shape == s.data.shape
             assert id(c) != id(s)
             assert np.all((c.data[:] - s.data[:]) == 0)
             c.data[0:100] = 1
-            print d.data
-            print c.data
+            print(d.data)
+            print(c.data)
             assert not np.all((c.data[:] - s.data[:]) == 0)
 
 
@@ -104,13 +106,13 @@ class TestIndexed(object):
         
         # try with elements up to 256 * 3
         s, indexes = get_indexed(sub, 256, 3)
-        print sub.data
-        print indexes
-        print s.data[:]
+        print(sub.data)
+        print(indexes)
+        print(s.data[:])
         assert s.rawdata.is_indexed
         for i in range(len(indexes)):
             ri = s.get_raw_index(i)
-            print ri, "base[ri]=%d" % base[ri], i, indexes[i], "s[i]=%d" % s[i]
+            print(ri, "base[ri]=%d" % base[ri], i, indexes[i], "s[i]=%d" % s[i])
             assert ri == sub.start_addr + indexes[i]
             assert s[i] == base[ri]
         start, end = s.byte_bounds_offset()
@@ -147,9 +149,9 @@ class TestIndexed(object):
         a[1::4] = s1[1::2]
         a[2::4] = s2[0::2]
         a[3::4] = s2[1::2]
-        print list(s[:])
-        print list(a[:])
-        print s.rawdata.order
+        print(list(s[:]))
+        print(list(a[:]))
+        print(s.rawdata.order)
         assert np.array_equal(s[:], a)
         
         s = interleave_segments([s1, s2], 4)
@@ -184,8 +186,8 @@ class TestIndexed(object):
     def test_copy(self):
         s, indexes = get_indexed(self.segment, 1024, 3)
         c = s.rawdata.copy()
-        print c.data.shape, c.is_indexed
-        print id(c.data.np_data), id(s.data.np_data)
+        print(c.data.shape, c.is_indexed)
+        print(id(c.data.np_data), id(s.data.np_data))
         assert c.data.shape == s.data.shape
         assert id(c) != id(s)
         assert np.all((c.data[:] - s.data[:]) == 0)
@@ -220,9 +222,9 @@ class TestComments(object):
         s.set_user_data([r], 4, 99)
 
         s2 = self.sub_segment
-        print len(s2)
+        print(len(s2))
         copy = s2.get_comment_locations()
-        print copy
+        print(copy)
         # comments at 4 and 40 in the original means 2 and 38 in the copy
         orig = s.get_comment_locations()
         assert copy[2] == orig[4]
@@ -235,17 +237,17 @@ class TestComments(object):
             s.set_comment([[i,i+1]], "comment at %d" % i)
 
         s2 = self.sub_segment
-        print len(s2)
+        print(len(s2))
         copy = s2.get_comment_locations()
-        print copy
+        print(copy)
         # comments at 4 and 40 in the original means 2 and 38 in the copy
         orig = s.get_comment_locations()
-        print orig[0:200]
+        print(orig[0:200])
         assert copy[2] == orig[4]
         assert copy[28] == orig[38]
 
         r = s2.get_entire_style_ranges([1], user=True)
-        print r
+        print(r)
         assert r == [((0, 23), 1), ((23, 48), 1), ((48, 73), 1), ((73, 98), 1), ((98, 123), 1), ((123, 148), 1), ((148, 173), 1), ((173, 198), 1), ((198, 200), 1)]
 
     def test_split_data_at_comment2(self):
@@ -260,17 +262,17 @@ class TestComments(object):
             s.set_comment([[i,i+1]], "comment at %d" % i)
 
         s2 = self.sub_segment
-        print len(s2)
+        print(len(s2))
         copy = s2.get_comment_locations()
-        print copy
+        print(copy)
         # comments at 4 and 40 in the original means 2 and 38 in the copy
         orig = s.get_comment_locations()
-        print orig[0:200]
+        print(orig[0:200])
         assert copy[2] == orig[4]
         assert copy[28] == orig[38]
 
         r = s2.get_entire_style_ranges([1], user=user_bit_mask)
-        print r
+        print(r)
         assert r == [((0, 38), 0), ((38, 48), 1), ((48, 73), 1), ((73, 78), 1), ((78, 118), 2), ((118, 158), 3), ((158, 198), 4), ((198, 200), 5)]
 
     def test_restore_comments(self):
@@ -280,64 +282,64 @@ class TestComments(object):
             s.set_comment([[i,i+1]], "comment at %d" % i)
 
         s1 = self.segment
-        print len(s1)
+        print(len(s1))
         indexes = [7,12]
         r = s1.get_comment_restore_data([indexes])
-        print r
+        print(r)
         # force clear comments
         s1.rawdata.extra.comments = {}
         s1.style[indexes[0]:indexes[1]] = 0
         r0 = s1.get_comment_restore_data([indexes])
-        print r0
+        print(r0)
         for start, end, style, items in r0:
-            print style
+            print(style)
             assert np.all(style == 0)
             for rawindex, comment in items.values():
                 assert not comment
         s1.restore_comments(r)
         r1 = s1.get_comment_restore_data([indexes])
-        print r1
+        print(r1)
         for item1, item2 in zip(r, r1):
-            print item1
-            print item2
+            print(item1)
+            print(item2)
             for a1, a2 in zip(item1, item2):
-                print a1, a2
+                print(a1, a2)
                 if hasattr(a1, "shape"):
                     assert np.all(a1 - a2 == 0)
                 else:
                     assert a1 == a2
 
         s2 = self.sub_segment
-        print len(s2)
+        print(len(s2))
         indexes = [5,10]
         r = s2.get_comment_restore_data([indexes])
-        print r
+        print(r)
         # force clear comments
         s2.rawdata.extra.comments = {}
         s2.style[indexes[0]:indexes[1]] = 0
         r0 = s2.get_comment_restore_data([indexes])
-        print r0
+        print(r0)
         for start, end, style, items in r0:
-            print style
+            print(style)
             assert np.all(style == 0)
             for rawindex, comment in items.values():
                 assert not comment
         s2.restore_comments(r)
         r2 = s2.get_comment_restore_data([indexes])
-        print r2
+        print(r2)
         for item1, item2 in zip(r, r2):
-            print item1
-            print item2
+            print(item1)
+            print(item2)
             for a1, a2 in zip(item1, item2):
-                print a1, a2
+                print(a1, a2)
                 if hasattr(a1, "shape"):
                     assert np.all(a1 - a2 == 0)
                 else:
                     assert a1 == a2
 
         for item1, item2 in zip(r1, r2):
-            print item1
-            print item2
+            print(item1)
+            print(item2)
             # indexes won't be the same, but rawindexes and comments will
             assert np.all(item1[2] - item2[2] == 0)
             assert set(item1[3].values()) == set(item2[3].values())
@@ -381,11 +383,11 @@ class TestResize(object):
         # pointing to the same array in memory
         newbase = c.rawdata
         newsub = s.rawdata
-        print c.rawdata.data[offset:offset+offset]
-        print s.rawdata.data[:]
+        print(c.rawdata.data[offset:offset+offset])
+        print(s.rawdata.data[:])
         s.rawdata.data[:] = 111
-        print c.rawdata.data[offset:offset+offset]
-        print s.rawdata.data[:]
+        print(c.rawdata.data[offset:offset+offset])
+        print(s.rawdata.data[:])
         for i in range(offset):
             assert s[i] == c[i + offset]
 
@@ -408,11 +410,11 @@ class TestResize(object):
             assert s.get_raw_index(i) == indexes[i]
         newbase = c.rawdata
         newsub = s.rawdata
-        print c.rawdata.data
-        print s.rawdata.data[:]
+        print(c.rawdata.data)
+        print(s.rawdata.data[:])
         s.rawdata.data[:] = 111
-        print c.rawdata.data
-        print s.rawdata.data[:]
+        print(c.rawdata.data)
+        print(s.rawdata.data[:])
         for i in range(len(indexes)):
             assert c.rawdata.data[indexes[i]] == s.rawdata.data[i]
 

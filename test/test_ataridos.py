@@ -1,3 +1,4 @@
+from __future__ import print_function
 from mock import *
 
 from atrcopy import SegmentData, AtariDosFile, InvalidBinaryFile, DefaultSegment, XexContainerSegment
@@ -13,7 +14,7 @@ class TestAtariDosFile(object):
         container = XexContainerSegment(rawdata, 0)
         image = AtariDosFile(container.rawdata)
         image.parse_segments()
-        print image.segments
+        print(image.segments)
         assert len(image.segments) == 1
         assert len(image.segments[0]) == 2
         assert np.all(image.segments[0] == bytes[6:8])
@@ -23,7 +24,7 @@ class TestAtariDosFile(object):
         new_segment = DefaultSegment(rawdata[8:16])
         new_segment[:] = 99
         assert np.all(image.segments[0] == bytes[6:8])
-        print new_segment[:]
+        print(new_segment[:])
         assert np.all(new_segment[:] == 99)
 
 

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from mock import *
 
 from atrcopy import AtariCartImage, SegmentData, InvalidDiskImage
@@ -73,7 +74,7 @@ class TestAtariCart(object):
 
 
 if __name__ == "__main__":
-    print "\n".join(mime_parse_order)
+    print("\n".join(mime_parse_order))
 
     t = TestAtariCart()
     t.setup()

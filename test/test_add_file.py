@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 
 from mock import *
@@ -161,7 +162,7 @@ class TestDos33Image(BaseFilesystemModifyTest):
 if __name__ == "__main__":
     t = TestAtariDosSDImage()
     for name in dir(t):
-        print name
+        print(name)
         if name.startswith("test_"):
             t.setup()
             getattr(t, name)()

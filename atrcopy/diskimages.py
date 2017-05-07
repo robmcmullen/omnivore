@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 import numpy as np
 
-from errors import *
-from segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment
-from utils import *
+from .errors import *
+from .segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment
+from .utils import *
 
 import logging
 log = logging.getLogger(__name__)
@@ -290,7 +291,7 @@ class DiskImageBase(object):
         for dirent in self.files:
             try:
                 segment = self.get_file_segment(dirent)
-            except InvalidFile, e:
+            except InvalidFile as e:
                 segment = EmptySegment(self.rawdata, name=dirent.filename, error=str(e))
             segments.append(segment)
         return segments

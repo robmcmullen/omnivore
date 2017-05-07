@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 
 import numpy as np
@@ -21,9 +22,9 @@ class TestKbootHeader(object):
         rawdata = SegmentData(bytes)
         newatr = KBootImage(rawdata)
         image = newatr.bytes
-        print image[0:16]
+        print(image[0:16])
         paragraphs = image_size / 16
-        print newatr.header, paragraphs
+        print(newatr.header, paragraphs)
         assert int(image[2:4].view(dtype='<u2')) == paragraphs
         assert int(image[16 + 9:16 + 9 + 2].view('<u2')) == xex_size
         return image

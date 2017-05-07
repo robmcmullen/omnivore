@@ -1,11 +1,12 @@
+from __future__ import absolute_import
 from collections import defaultdict
 
 import numpy as np
 
-from errors import *
-from segments import SegmentData, EmptySegment, ObjSegment
-from diskimages import DiskImageBase
-from utils import to_numpy
+from .errors import *
+from .segments import SegmentData, EmptySegment, ObjSegment
+from .diskimages import DiskImageBase
+from .utils import to_numpy
 
 import logging
 log = logging.getLogger(__name__)

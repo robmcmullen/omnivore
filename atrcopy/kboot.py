@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 import numpy as np
 
-from errors import *
-from ataridos import AtariDosDirent, AtariDosDiskImage, XexSegment
+from .errors import *
+from .ataridos import AtariDosDirent, AtariDosDiskImage, XexSegment
 
 
 class KBootDirent(AtariDosDirent):
