@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 class MameZipImage(DiskImageBase):
     def __init__(self, rawdata, filename=""):
         self.zipdata = rawdata
-        fh = self.zipdata.stringio
+        fh = self.zipdata.bufferedio
         if zipfile.is_zipfile(fh):
             with zipfile.ZipFile(fh) as zf:
                 self.check_zip_size(zf)

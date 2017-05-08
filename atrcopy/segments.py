@@ -201,8 +201,8 @@ class SegmentData(object):
             raise ValueError("The base SegmentData object should use the resize method to replace arrays")
 
     @property
-    def stringio(self):
-        buf = io.StringIO(self.data[:])
+    def bufferedio(self):
+        buf = io.BytesIO(self.data[:])
         return buf
 
     @property
