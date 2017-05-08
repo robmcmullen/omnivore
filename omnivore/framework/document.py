@@ -269,12 +269,12 @@ class BaseDocument(HasTraits):
         bytes = guess.numpy
         difference = len(bytes) - len(self)
         if difference > 0:
-            if confirm_callback("Truncate baseline data by %d bytes?" % difference, "Baseline Size Difference") == YES:
+            if confirm_callback("Truncate baseline data by %d bytes?" % difference, "Baseline Size Difference"):
                 bytes = bytes[0:len(self)]
             else:
                 bytes = []
         elif difference < 0:
-            if confirm_callback("Pad baseline data with %d zeros?" % (-difference), "Baseline Size Difference") == YES:
+            if confirm_callback("Pad baseline data with %d zeros?" % (-difference), "Baseline Size Difference"):
                 bytes = np.pad(bytes, (0, -difference), "constant", constant_values=0)
             else:
                 bytes = []
