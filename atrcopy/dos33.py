@@ -171,7 +171,7 @@ class Dos33Dirent(Dirent):
         self.deleted = False
         self.track = 0
         self.sector = 0
-        self.filename = ""
+        self.filename = b''
         self.num_sectors = 0
         self.is_sane = True
         self.current_sector_index = 0
@@ -353,7 +353,8 @@ class Dos33Dirent(Dirent):
         return self.filename
 
     def set_values(self, filename, filetype, index):
-        self.filename = "%-30s" % filename[0:30]
+        if type(filename) is not bytes: filename = filename.encode("utf-8")
+        self.filename = b'%-30s' % filename[0:30]
         self._file_type = self.text_to_type.get(filetype, 0x04)
         self.locked = False
         self.deleted = False

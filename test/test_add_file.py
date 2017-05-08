@@ -18,6 +18,7 @@ class BaseFilesystemModifyTest(object):
         self.image = self.diskimage_type(rawdata)
 
     def check_entries(self, entries, prefix=b"TEST", save=None):
+        if type(prefix) is not bytes: prefix = prefix.encode("utf-8")
         orig_num_files = len(self.image.files)
         filenames = []
         count = 1

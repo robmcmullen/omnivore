@@ -94,8 +94,8 @@ class AtariDosDirent(Dirent):
         self.deleted = False
         self.num_sectors = 0
         self.starting_sector = 0
-        self.basename = ""
-        self.ext = ""
+        self.basename = b''
+        self.ext = b''
         self.is_sane = True
         self.current_sector = 0
         self.current_read = 0
@@ -103,14 +103,14 @@ class AtariDosDirent(Dirent):
         self.parse_raw_dirent(image, bytes)
 
     def __str__(self):
-        return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, self.summary, self.starting_sector, self.basename, self.ext, self.num_sectors)
+        return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, self.summary, self.starting_sector, str(self.basename), str(self.ext), self.num_sectors)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.filename == other.filename and self.starting_sector == other.starting_sector and self.num_sectors == other.num_sectors
 
     @property
     def filename(self):
-        ext = ("." + self.ext) if self.ext else ""
+        ext = (b'.' + self.ext) if self.ext else b''
         return self.basename + ext
 
     @property
@@ -138,10 +138,10 @@ class AtariDosDirent(Dirent):
     def extra_metadata(self, image):
         return self.verbose_info
 
-    def parse_raw_dirent(self, image, bytes):
-        if bytes is None:
+    def parse_raw_dirent(self, image, data):
+        if data is None:
             return
-        values = bytes.view(dtype=self.format)[0]
+        values = data.view(dtype=self.format)[0]
         flag = values[0]
         self.flag = flag
         self.opened_output = (flag&0x01) > 0
@@ -153,8 +153,8 @@ class AtariDosDirent(Dirent):
         self.deleted = (flag&0x80) > 0
         self.num_sectors = int(values[1])
         self.starting_sector = int(values[2])
-        self.basename = str(values[3]).rstrip()
-        self.ext = str(values[4]).rstrip()
+        self.basename = bytes(values[3]).rstrip()
+        self.ext = bytes(values[4]).rstrip()
         self.is_sane = self.sanity_check(image)
 
     def encode_dirent(self):

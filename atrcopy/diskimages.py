@@ -183,9 +183,9 @@ class DiskImageBase(object):
         if not filename:
             raise RuntimeError("No filename specified for save!")
         if type(filename) is not bytes: filename = filename.encode("utf-8")
-        bytes = self.bytes[:]
+        data = self.bytes[:]
         with open(filename, "wb") as fh:
-            bytes.tofile(fh)
+            data.tofile(fh)
 
     def assert_valid_sector(self, sector):
         if not self.header.sector_is_valid(sector):
@@ -279,7 +279,7 @@ class DiskImageBase(object):
         for dirent in self.files:
             if filename == dirent.filename:
                 return dirent
-        raise FileNotFound("%s not found on disk" % filename)
+        raise FileNotFound("%s not found on disk" % str(filename))
 
     def find_file(self, filename):
         dirent = self.find_dirent(filename)
