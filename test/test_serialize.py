@@ -1,3 +1,6 @@
+from __future__ import print_function
+from builtins import range
+from builtins import object
 import os
 
 import numpy as np
@@ -33,7 +36,7 @@ class TestSegment(object):
 
         out = dict()
         s.serialize_extra_to_dict(out)
-        print "saved", out
+        print("saved", out)
 
         data = np.ones([4000], dtype=np.uint8)
         r = SegmentData(data)
@@ -41,7 +44,7 @@ class TestSegment(object):
         s2.restore_extra_from_dict(out)
         out2 = dict()
         s2.serialize_extra_to_dict(out2)
-        print "loaded", out2
+        print("loaded", out2)
         assert out == out2
 
 

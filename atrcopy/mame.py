@@ -1,11 +1,12 @@
+from __future__ import absolute_import
 import zipfile
 
 import numpy as np
 
-from errors import *
-from segments import SegmentData, EmptySegment, ObjSegment
-from diskimages import DiskImageBase
-from utils import to_numpy
+from .errors import *
+from .segments import SegmentData, EmptySegment, ObjSegment
+from .diskimages import DiskImageBase
+from .utils import to_numpy
 
 import logging
 log = logging.getLogger(__name__)
@@ -14,7 +15,7 @@ log = logging.getLogger(__name__)
 class MameZipImage(DiskImageBase):
     def __init__(self, rawdata, filename=""):
         self.zipdata = rawdata
-        fh = self.zipdata.stringio
+        fh = self.zipdata.bufferedio
         if zipfile.is_zipfile(fh):
             with zipfile.ZipFile(fh) as zf:
                 self.check_zip_size(zf)

@@ -1,8 +1,12 @@
+from __future__ import absolute_import
+from builtins import str
+from builtins import range
+from builtins import object
 import numpy as np
 
-from errors import *
-from segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment
-from utils import *
+from .errors import *
+from .segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment
+from .utils import *
 
 import logging
 log = logging.getLogger(__name__)
@@ -125,10 +129,11 @@ class DiskImageBase(object):
         return Directory
 
     def set_filename(self, filename):
-        if "." in filename:
-            self.filename, self.ext = filename.rsplit(".", 1)
+        if type(filename) is not bytes: filename = filename.encode("utf-8")
+        if b'.' in filename:
+            self.filename, self.ext = filename.rsplit(b'.', 1)
         else:
-            self.filename, self.ext = filename, ""
+            self.filename, self.ext = filename, b''
 
     def dir(self):
         lines = []
@@ -174,12 +179,13 @@ class DiskImageBase(object):
         if not filename:
             filename = self.filename
             if self.ext:
-                filename += "." + self.ext
+                filename += b'.' + self.ext
         if not filename:
             raise RuntimeError("No filename specified for save!")
-        bytes = self.bytes[:]
+        if type(filename) is not bytes: filename = filename.encode("utf-8")
+        data = self.bytes[:]
         with open(filename, "wb") as fh:
-            bytes.tofile(fh)
+            data.tofile(fh)
 
     def assert_valid_sector(self, sector):
         if not self.header.sector_is_valid(sector):
@@ -269,10 +275,11 @@ class DiskImageBase(object):
         # check if we've been passed a dirent instead of a filename
         if hasattr(filename, "filename"):
             return filename
+        if type(filename) is not bytes: filename = filename.encode("utf-8")
         for dirent in self.files:
             if filename == dirent.filename:
                 return dirent
-        raise FileNotFound("%s not found on disk" % filename)
+        raise FileNotFound("%s not found on disk" % str(filename))
 
     def find_file(self, filename):
         dirent = self.find_dirent(filename)
@@ -290,7 +297,7 @@ class DiskImageBase(object):
         for dirent in self.files:
             try:
                 segment = self.get_file_segment(dirent)
-            except InvalidFile, e:
+            except InvalidFile as e:
                 segment = EmptySegment(self.rawdata, name=dirent.filename, error=str(e))
             segments.append(segment)
         return segments

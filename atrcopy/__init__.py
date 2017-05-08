@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from builtins import str
 import os
 import sys
 import zlib
@@ -5,22 +8,22 @@ import zlib
 import logging
 log = logging.getLogger(__name__)
 
-from _metadata import __version__
+from ._metadata import __version__
 
 try:
     import numpy as np
 except ImportError:
     raise RuntimeError("atrcopy %s requires numpy" % __version__)
 
-from errors import *
-from ataridos import AtrHeader, AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment, get_xex, add_atr_header
-from dos33 import Dos33DiskImage
-from kboot import KBootImage, add_xexboot_header
-from segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentedFileSegment, user_bit_mask, match_bit_mask, comment_bit_mask, data_style, selected_bit_mask, diff_bit_mask, not_user_bit_mask, interleave_segments, SegmentList, get_style_mask, get_style_bits
-from spartados import SpartaDosDiskImage
-from cartridge import A8CartHeader, AtariCartImage
-from parsers import SegmentParser, DefaultSegmentParser, guess_parser_for_mime, guess_parser_for_system, iter_parsers, iter_known_segment_parsers, mime_parse_order
-from utils import to_numpy, text_to_int
+from .errors import *
+from .ataridos import AtrHeader, AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment, get_xex, add_atr_header
+from .dos33 import Dos33DiskImage
+from .kboot import KBootImage, add_xexboot_header
+from .segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentedFileSegment, user_bit_mask, match_bit_mask, comment_bit_mask, data_style, selected_bit_mask, diff_bit_mask, not_user_bit_mask, interleave_segments, SegmentList, get_style_mask, get_style_bits
+from .spartados import SpartaDosDiskImage
+from .cartridge import A8CartHeader, AtariCartImage
+from .parsers import SegmentParser, DefaultSegmentParser, guess_parser_for_mime, guess_parser_for_system, iter_parsers, iter_known_segment_parsers, mime_parse_order
+from .utils import to_numpy, text_to_int
 
 
 def process(image, dirent, options):
@@ -42,38 +45,38 @@ def process(image, dirent, options):
         action = "DRY_RUN: %s" % action
         skip = True
     if options.extract:
-        print "%s: %s %s" % (dirent, action, outfilename)
+        print("%s: %s %s" % (dirent, action, outfilename))
         if not skip:
             bytes = image.get_file(dirent)
             with open(outfilename, "wb") as fh:
                 fh.write(bytes)
     else:
-        print dirent
+        print(dirent)
 
 
 def find_diskimage(filename):
     try:
         with open(filename, "rb") as fh:
             if options.verbose:
-                print "Loading file %s" % filename
+                print("Loading file %s" % filename)
             rawdata = SegmentData(fh.read())
             parser = None
             for mime in mime_parse_order:
                 if options.verbose:
-                    print "Trying MIME type %s" % mime
+                    print("Trying MIME type %s" % mime)
                 parser = guess_parser_for_mime(mime, rawdata, options.verbose)
                 if parser is None:
                     continue
                 if options.verbose:
-                    print "Found parser %s" % parser.menu_name
+                    print("Found parser %s" % parser.menu_name)
                 break
             if parser is None:
-                print "%s: Unknown disk image type" % filename
-    except UnsupportedDiskImage, e:
-        print "%s: %s" % (filename, e)
+                print("%s: Unknown disk image type" % filename)
+    except UnsupportedDiskImage as e:
+        print("%s: %s" % (filename, e))
         return None
-    except IOError, e:
-        print "%s: %s" % (filename, e)
+    except IOError as e:
+        print("%s: %s" % (filename, e))
         return None
     else:
         parser.image.filename = filename
@@ -88,7 +91,7 @@ def extract_files(image, files):
         try:
             dirent = image.find_dirent(name)
         except FileNotFound:
-            print "%s not in %s" % (name, image)
+            print("%s not in %s" % (name, image))
             continue
         output = dirent.filename
         if options.lower:
@@ -96,13 +99,13 @@ def extract_files(image, files):
         if not options.dry_run:
             data = image.get_file(dirent)
             if os.path.exists(output) and not options.force:
-                print "skipping %s, file exists. Use -f to overwrite" % output
+                print("skipping %s, file exists. Use -f to overwrite" % output)
                 continue
-            print "extracting %s -> %s" % (name, output)
+            print("extracting %s -> %s" % (name, output))
             with open(output, "wb") as fh:
                 fh.write(data)
         else:
-            print "extracting %s -> %s" % (name, output)
+            print("extracting %s -> %s" % (name, output))
 
 
 def save_file(image, name, filetype, data):
@@ -111,11 +114,11 @@ def save_file(image, name, filetype, data):
         if options.force:
             image.delete_file(name)
         else:
-            print "skipping %s, use -f to overwrite" % (name)
+            print("skipping %s, use -f to overwrite" % (name))
             return False
     except FileNotFound:
         pass
-    print "copying %s to %s" % (name, image.filename)
+    print("copying %s to %s" % (name, image.filename))
     if not options.dry_run:
         image.write_file(name, filetype, data)
         return True
@@ -141,9 +144,9 @@ def remove_files(image, files):
         try:
             dirent = image.find_dirent(name)
         except FileNotFound:
-            print "%s not in %s" % (name, image)
+            print("%s not in %s" % (name, image))
             continue
-        print "removing %s from %s" % (name, image)
+        print("removing %s from %s" % (name, image))
         if not options.dry_run:
             image.delete_file(name)
             changed = True
@@ -163,7 +166,7 @@ def list_files(image, files, show_crc=False, show_metadata=False):
                 extra = ""
             print("%s%s" % (dirent, extra))
             if show_metadata:
-                print dirent.extra_metadata(image)
+                print(dirent.extra_metadata(image))
 
 
 def crc_files(image, files):
@@ -186,20 +189,20 @@ def assemble(image, source_files, data_files, obj_files, run_addr=""):
     for name in source_files:
         try:
             asm = pyatasm.Assemble(name)
-        except SyntaxError, e:
+        except SyntaxError as e:
             raise AtrError("Assembly error: %s" % e.msg)
         log.debug("Assembled %s into:" % name)
         for first, last, object_code in asm.segments:
             s = segments.add_segment(object_code, first)
             log.debug("  %s" % s.name)
-            print "adding %s from %s assembly" % (s, name)
+            print("adding %s from %s assembly" % (s, name))
     for name in data_files:
         if "@" not in name:
             raise AtrError("Data files must include a load address specified with the @ char")
         name, addr = name.rsplit("@", 1)
         first = text_to_int(addr)
         log.debug("Adding data file %s at $%04x" % (name, first))
-        subset = slice(0, sys.maxint)
+        subset = slice(0, sys.maxsize)
         if "[" in name and "]" in name:
             name, slicetext = name.rsplit("[", 1)
             if ":" in slicetext:
@@ -224,11 +227,11 @@ def assemble(image, source_files, data_files, obj_files, run_addr=""):
         if parser and parser.image:
             for s in parser.segments:
                 if s.start_addr > 0:
-                    print "adding %s from %s" % (s, name)
+                    print("adding %s from %s" % (s, name))
                     segments.add_segment(s.data, s.start_addr)
     if options.verbose:
         for s in segments:
-            print "%s - %04x)" % (str(s)[:-1], s.start_addr + len(s))
+            print("%s - %04x)" % (str(s)[:-1], s.start_addr + len(s)))
     if run_addr:
         try:
             run_addr = text_to_int(run_addr)
@@ -236,14 +239,14 @@ def assemble(image, source_files, data_files, obj_files, run_addr=""):
             run_addr = None
 
     file_data, filetype = image.create_executable_file_image(segments, run_addr)
-    print "total file size: $%x (%d) bytes" % (len(file_data), len(file_data))
+    print("total file size: $%x (%d) bytes" % (len(file_data), len(file_data)))
     changed = save_file(image, options.output, filetype, file_data)
     if changed:
         image.save()
 
 
 def shred_image(image, value=0):
-    print "shredding: free sectors from %s filled with %d" % (image, value)
+    print("shredding: free sectors from %s filled with %d" % (image, value))
     if not options.dry_run:
         image.shred()
         image.save()
@@ -266,7 +269,7 @@ def get_template_path(rel_path="templates"):
                 zippath, template_path = template_path.split(".zip/")
             template_path = os.path.normpath(os.path.join(root, template_path))
         else:
-            print "App packager %s not yet supported for image paths!!!"
+            print("App packager %s not yet supported for image paths!!!")
     return template_path
 
 
@@ -313,18 +316,18 @@ def create_image(template, name):
     import textwrap
 
     data, inf = get_template_data(template)
-    print "using %s template:\n  %s" % (template, "\n  ".join(textwrap.wrap(inf, 77)))
+    print("using %s template:\n  %s" % (template, "\n  ".join(textwrap.wrap(inf, 77))))
     if not options.dry_run:
         if os.path.exists(name) and not options.force:
-            print "skipping %s, use -f to overwrite" % (name)
+            print("skipping %s, use -f to overwrite" % (name))
         else:
             with open(name, "wb") as fh:
                 fh.write(data)
             parser = find_diskimage(name)
-            print "created %s: %s" % (name, str(parser.image))
+            print("created %s: %s" % (name, str(parser.image)))
             list_files(parser.image, [])
     else:
-        print "creating %s" % name
+        print("creating %s" % name)
 
 
 def run():
@@ -377,7 +380,7 @@ def run():
     }
     # reverse aliases does the inverse mapping of command aliases, including
     # the identity mapping of "command" to "command"
-    reverse_aliases = {z: k for k, v in command_aliases.iteritems() for z in (v + [k])}
+    reverse_aliases = {z: k for k, v in command_aliases.items() for z in (v + [k])}
 
     skip_diskimage_summary = set(["crc"])
 
@@ -512,10 +515,10 @@ def run():
         parser = find_diskimage(disk_image_name)
         if parser and parser.image:
             if command not in skip_diskimage_summary:
-                print "%s: %s" % (disk_image_name, parser.image)
+                print("%s: %s" % (disk_image_name, parser.image))
             if command == "vtoc":
                 vtoc = parser.image.get_vtoc_object()
-                print vtoc
+                print(vtoc)
                 if options.clear_empty:
                     shred_image(parser.image)
             elif command == "list":
@@ -534,6 +537,6 @@ def run():
                 obj = options.obj[0] if options.obj else []
                 assemble(parser.image, asm, data, obj, options.run_addr)
             elif command == "segments":
-                print "\n".join([str(a) for a in parser.segments])
+                print("\n".join([str(a) for a in parser.segments]))
         else:
             log.error("Invalid disk image: %s" % disk_image_name)

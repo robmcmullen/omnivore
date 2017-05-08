@@ -1,11 +1,14 @@
+from __future__ import absolute_import
+from builtins import str
+from builtins import object
 from collections import defaultdict
 
 import numpy as np
 
-from errors import *
-from segments import SegmentData, EmptySegment, ObjSegment
-from diskimages import DiskImageBase
-from utils import to_numpy
+from .errors import *
+from .segments import SegmentData, EmptySegment, ObjSegment
+from .diskimages import DiskImageBase
+from .utils import to_numpy
 
 import logging
 log = logging.getLogger(__name__)
@@ -145,7 +148,7 @@ class A8CartHeader(object):
 
         if len(bytes) == 16:
             values = bytes.view(dtype=self.format)[0]
-            if values[0] != 'CART':
+            if values[0] != b'CART':
                 raise InvalidCartHeader
             self.cart_type = int(values[1])
             self.crc = int(values[2])
@@ -205,9 +208,9 @@ class AtariCartImage(DiskImageBase):
         return str(self.header)
 
     def read_header(self):
-        bytes = self.bytes[0:16]
+        data = self.bytes[0:16]
         try:
-            self.header = A8CartHeader(bytes)
+            self.header = A8CartHeader(data)
         except InvalidCartHeader:
             self.header = A8CartHeader()
             self.header.set_type(self.cart_type)

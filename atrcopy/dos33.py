@@ -1,9 +1,15 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+from builtins import str
+from builtins import range
+from builtins import object
 import numpy as np
 
-from errors import *
-from diskimages import BaseHeader, DiskImageBase
-from utils import Directory, VTOC, WriteableSector, BaseSectorList, Dirent
-from segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver, get_style_bits, SegmentData
+from .errors import *
+from .diskimages import BaseHeader, DiskImageBase
+from .utils import Directory, VTOC, WriteableSector, BaseSectorList, Dirent
+from .segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver, get_style_bits, SegmentData
 
 import logging
 log = logging.getLogger(__name__)
@@ -56,7 +62,7 @@ class Dos33TSSector(WriteableSector):
 
 
 class Dos33VTOC(VTOC):
-    max_tracks = (256 - 0x38) / 4  # 50, but kept here in case sector size changed
+    max_tracks = (256 - 0x38) // 4  # 50, but kept here in case sector size changed
     max_sectors = max_tracks * 16
     vtoc_bit_reorder_index = np.tile(np.arange(15, -1, -1), max_tracks) + (np.repeat(np.arange(max_tracks), 16) * 16)
 
@@ -164,7 +170,7 @@ class Dos33Dirent(Dirent):
         self.deleted = False
         self.track = 0
         self.sector = 0
-        self.filename = ""
+        self.filename = b''
         self.num_sectors = 0
         self.is_sane = True
         self.current_sector_index = 0
@@ -189,7 +195,7 @@ class Dos33Dirent(Dirent):
         0x20: "a",  # ?
         0x40: "b",  # ?
     }
-    text_to_type = {v: k for k, v in type_to_text.iteritems()}
+    text_to_type = {v: k for k, v in type_to_text.items()}
 
     @property
     def file_type(self):
@@ -346,7 +352,8 @@ class Dos33Dirent(Dirent):
         return self.filename
 
     def set_values(self, filename, filetype, index):
-        self.filename = "%-30s" % filename[0:30]
+        if type(filename) is not bytes: filename = filename.encode("utf-8")
+        self.filename = b'%-30s' % filename[0:30]
         self._file_type = self.text_to_type.get(filetype, 0x04)
         self.locked = False
         self.deleted = False
@@ -531,7 +538,7 @@ class Dos33DiskImage(DiskImageBase):
             self.assert_valid_sector(sector)
             if _xd: log.debug("loading directory segment from catalog sector %d" % sector)
             raw, pos, size = self.get_raw_bytes(sector)
-            byte_order.extend(range(pos, pos + size))
+            byte_order.extend(list(range(pos, pos + size)))
             sector = self.header.sector_from_track(raw[1], raw[2])
         raw = self.rawdata.get_indexed(byte_order)
         segment = DefaultSegment(raw, name="Catalog")
@@ -571,7 +578,7 @@ class Dos33DiskImage(DiskImageBase):
         dirent.start_read(self)
         while True:
             bytes, last, pos, size = dirent.read_sector(self)
-            byte_order.extend(range(pos, pos + size))
+            byte_order.extend(list(range(pos, pos + size)))
             if last:
                 break
         if len(byte_order) > 0:
@@ -624,7 +631,7 @@ class Dos33DiskImage(DiskImageBase):
         words[1] = size
         for s in all_segments:
             index = s.start_addr - origin + 4
-            print "setting data for $%04x - $%04x at index $%04x" % (s.start_addr, s.start_addr + len(s), index)
+            print("setting data for $%04x - $%04x at index $%04x" % (s.start_addr, s.start_addr + len(s), index))
             image[index:index + len(s)] = s.data
         return image, 'B'
 

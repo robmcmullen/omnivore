@@ -8,6 +8,8 @@ module_dir = os.path.realpath(os.path.abspath(".."))
 if module_dir not in sys.path:
     sys.path.insert(0, module_dir)
 
+print(sys.path)
+
 import pytest
 try:
     slow = pytest.mark.skipif(

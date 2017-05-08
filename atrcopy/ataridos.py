@@ -1,9 +1,14 @@
+from __future__ import absolute_import
+from __future__ import division
+from builtins import str
+from builtins import range
+from builtins import object
 import numpy as np
 
-from errors import *
-from diskimages import DiskImageBase, BaseHeader
-from segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentedFileSegment, SegmentSaver, get_style_bits
-from utils import *
+from .errors import *
+from .diskimages import DiskImageBase, BaseHeader
+from .segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentedFileSegment, SegmentSaver, get_style_bits
+from .utils import *
 
 import logging
 log = logging.getLogger(__name__)
@@ -88,8 +93,8 @@ class AtariDosDirent(Dirent):
         self.deleted = False
         self.num_sectors = 0
         self.starting_sector = 0
-        self.basename = ""
-        self.ext = ""
+        self.basename = b''
+        self.ext = b''
         self.is_sane = True
         self.current_sector = 0
         self.current_read = 0
@@ -97,14 +102,14 @@ class AtariDosDirent(Dirent):
         self.parse_raw_dirent(image, bytes)
 
     def __str__(self):
-        return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, self.summary, self.starting_sector, self.basename, self.ext, self.num_sectors)
+        return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, self.summary, self.starting_sector, str(self.basename), str(self.ext), self.num_sectors)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.filename == other.filename and self.starting_sector == other.starting_sector and self.num_sectors == other.num_sectors
 
     @property
     def filename(self):
-        ext = ("." + self.ext) if self.ext else ""
+        ext = (b'.' + self.ext) if self.ext else b''
         return self.basename + ext
 
     @property
@@ -132,10 +137,10 @@ class AtariDosDirent(Dirent):
     def extra_metadata(self, image):
         return self.verbose_info
 
-    def parse_raw_dirent(self, image, bytes):
-        if bytes is None:
+    def parse_raw_dirent(self, image, data):
+        if data is None:
             return
-        values = bytes.view(dtype=self.format)[0]
+        values = data.view(dtype=self.format)[0]
         flag = values[0]
         self.flag = flag
         self.opened_output = (flag&0x01) > 0
@@ -147,8 +152,8 @@ class AtariDosDirent(Dirent):
         self.deleted = (flag&0x80) > 0
         self.num_sectors = int(values[1])
         self.starting_sector = int(values[2])
-        self.basename = str(values[3]).rstrip()
-        self.ext = str(values[4]).rstrip()
+        self.basename = bytes(values[3]).rstrip()
+        self.ext = bytes(values[4]).rstrip()
         self.is_sane = self.sanity_check(image)
 
     def encode_dirent(self):
@@ -220,11 +225,13 @@ class AtariDosDirent(Dirent):
         return raw[0:num_bytes], num_bytes
 
     def set_values(self, filename, filetype, index):
-        if "." in filename:
-            filename, ext = filename.split(".", 1)
+        if type(filename) is not bytes:
+            filename = filename.encode("utf-8")
+        if b'.' in filename:
+            filename, ext = filename.split(b'.', 1)
         else:
-            ext = "   "
-        self.basename = "%-8s" % filename[0:8]
+            ext = b'   '
+        self.basename = b'%-8s' % filename[0:8]
         self.ext = ext
         self.file_num = index
         self.dos_2 = True
@@ -358,7 +365,7 @@ class AtrHeader(BaseHeader):
     def encode(self, raw):
         values = raw.view(dtype=self.format)[0]
         values[0] = 0x296
-        paragraphs = self.image_size / 16
+        paragraphs = self.image_size // 16
         parshigh, pars = divmod(paragraphs, 256*256)
         values[1] = pars
         values[2] = self.sector_size
@@ -394,7 +401,7 @@ class AtrHeader(BaseHeader):
         self.sectors_per_track = 18
         self.payload_bytes = self.sector_size - 3
         initial_bytes = self.initial_sector_size * self.num_initial_sectors
-        self.max_sectors = ((self.image_size - initial_bytes) / self.sector_size) + self.num_initial_sectors
+        self.max_sectors = ((self.image_size - initial_bytes) // self.sector_size) + self.num_initial_sectors
 
     def get_pos(self, sector):
         if not self.sector_is_valid(sector):
@@ -486,14 +493,14 @@ class AtariDosDiskImage(DiskImageBase):
 
     def calc_vtoc_code(self):
         # From AA post: http://atariage.com/forums/topic/179868-mydos-vtoc-size/
-        num = 1 + (self.total_sectors + 80) / (self.header.sector_size * 8)
+        num = 1 + (self.total_sectors + 80) // (self.header.sector_size * 8)
         if self.header.sector_size == 128:
             if num == 1:
                 code = 2
             else:
                 if num & 1:
                     num += 1
-                code = ((num + 1) / 2) + 2
+                code = ((num + 1) // 2) + 2
         else:
             if self.total_sectors < 1024:
                 code = 2
@@ -629,7 +636,7 @@ class AtariDosDiskImage(DiskImageBase):
         dirent.start_read(self)
         while True:
             bytes, last, pos, size = dirent.read_sector(self)
-            byte_order.extend(range(pos, pos + size))
+            byte_order.extend(list(range(pos, pos + size)))
             if last:
                 break
         if len(byte_order) > 0:
@@ -679,7 +686,7 @@ class BootDiskImage(AtariDosDiskImage):
         # before the boot sectors are finished loading
         max_ram = 0xc000
         max_size = max_ram - bload
-        max_sectors = max_size / self.header.sector_size
+        max_sectors = max_size // self.header.sector_size
         if nsec > max_sectors or nsec < 1:
             raise InvalidDiskImage("Number of boot sectors out of range")
         if bload < 0x200 or bload > (0xc000 - (nsec * self.header.sector_size)):

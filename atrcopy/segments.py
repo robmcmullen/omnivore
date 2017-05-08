@@ -1,11 +1,20 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
+from builtins import str
+from builtins import range
+from builtins import object
 import bisect
-import cStringIO
+import io
 import uuid
 
 import numpy as np
 
-from errors import *
-from utils import to_numpy, to_numpy_list
+from .errors import *
+from .utils import to_numpy, to_numpy_list
+from functools import reduce
 
 user_bit_mask = 0x07
 data_style = 0x1
@@ -192,8 +201,8 @@ class SegmentData(object):
             raise ValueError("The base SegmentData object should use the resize method to replace arrays")
 
     @property
-    def stringio(self):
-        buf = cStringIO.StringIO(self.data[:])
+    def bufferedio(self):
+        buf = io.BytesIO(self.data[:])
         return buf
 
     @property
@@ -432,7 +441,7 @@ class DefaultSegment(object):
             state['_order_list'] = r.order.tolist()  # more compact serialization in python list
         else:
             state['_order_list'] = None
-        state['memory_map'] = sorted([list(i) for i in self.memory_map.iteritems()])
+        state['memory_map'] = sorted([list(i) for i in self.memory_map.items()])
         return state
 
     def __setstate__(self, state):
@@ -626,7 +635,7 @@ class DefaultSegment(object):
         that uses this base data.
         """
         style_base = self.rawdata.style_base
-        comment_text_indexes = np.asarray(self.rawdata.extra.comments.keys(), dtype=np.uint32)
+        comment_text_indexes = np.asarray(list(self.rawdata.extra.comments.keys()), dtype=np.uint32)
         comment_mask = self.get_style_mask(comment=True)
         has_comments = np.where(style_base & comment_bit_mask > 0)[0]
         both = np.intersect1d(comment_text_indexes, has_comments)
@@ -641,7 +650,7 @@ class DefaultSegment(object):
         #print len(r.style)
         #print len(r.style_base)
         r.style_base[:] &= style_bits
-        comment_indexes = np.asarray(self.rawdata.extra.comments.keys(), dtype=np.uint32)
+        comment_indexes = np.asarray(list(self.rawdata.extra.comments.keys()), dtype=np.uint32)
         #print comment_indexes
         r.style_base[comment_indexes] |= comment_bit_mask
         return r.unindexed_style[:]
@@ -930,7 +939,7 @@ class DefaultSegment(object):
 
         # Naive way, but maybe it's fast enough: loop over all comments
         # gathering those within the bounds
-        for rawindex, comment in self.rawdata.extra.comments.iteritems():
+        for rawindex, comment in self.rawdata.extra.comments.items():
             try:
                 index = self.get_index_from_base_index(rawindex)
             except IndexError:
@@ -973,13 +982,13 @@ class DefaultSegment(object):
                     del self.rawdata.extra.comments[rawindex]
 
     def get_sorted_comments(self):
-        return sorted([[k, v] for k, v in self.rawdata.extra.comments.iteritems()])
+        return sorted([[k, v] for k, v in self.rawdata.extra.comments.items()])
 
     def iter_comments_in_segment(self):
         start = self.start_addr
         start_index = self.get_raw_index(0)
         end_index = self.get_raw_index(len(self.rawdata))
-        for k, v in self.rawdata.extra.comments.iteritems():
+        for k, v in self.rawdata.extra.comments.items():
             if k >= start_index and k < end_index:
                 yield self.rawdata.get_reverse_index(k), v
 
@@ -1007,11 +1016,11 @@ class DefaultSegment(object):
     def compare_segment(self, other_segment):
         self.clear_style_bits(diff=True)
         diff = self.rawdata.data != other_segment.rawdata.data
-        print diff, diff.dtype
+        print(diff, diff.dtype)
         d = diff * np.uint8(diff_bit_mask)
-        print d
+        print(d)
         self.style |= (diff * np.uint8(diff_bit_mask))
-        print "# entries", len(diff), "# diffs:", len(np.where(diff == True)[0])
+        print("# entries", len(diff), "# diffs:", len(np.where(diff == True)[0]))
 
 
 class EmptySegment(DefaultSegment):

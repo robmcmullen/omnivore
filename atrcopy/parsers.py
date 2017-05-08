@@ -1,13 +1,16 @@
+from __future__ import absolute_import
+from builtins import str
+from builtins import object
 import numpy as np
 
-from segments import SegmentData, DefaultSegment
-from kboot import KBootImage
-from ataridos import AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment
-from spartados import SpartaDosDiskImage
-from cartridge import AtariCartImage, get_known_carts
-from mame import MameZipImage
-from dos33 import Dos33DiskImage, ProdosDiskImage, Dos33BinFile
-from errors import *
+from .segments import SegmentData, DefaultSegment
+from .kboot import KBootImage
+from .ataridos import AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment
+from .spartados import SpartaDosDiskImage
+from .cartridge import AtariCartImage, get_known_carts
+from .mame import MameZipImage
+from .dos33 import Dos33DiskImage, ProdosDiskImage, Dos33BinFile
+from .errors import *
 
 import logging
 log = logging.getLogger(__name__)
@@ -60,7 +63,7 @@ class SegmentParser(object):
             self.image.parse_segments()
         except UnsupportedDiskImage:
             raise
-        except AtrError, e:
+        except AtrError as e:
             raise InvalidSegmentParser(e)
         self.segments.extend(self.image.segments)
 
@@ -71,7 +74,7 @@ class SegmentParser(object):
         if self.strict:
             try:
                 self.image.strict_check()
-            except AtrError, e:
+            except AtrError as e:
                 raise InvalidSegmentParser(e)
         else:
             self.image.relaxed_check()
@@ -147,7 +150,7 @@ def guess_parser_for_mime(mime, r, verbose=False):
         try:
             found = parser(r, True)
             break
-        except InvalidSegmentParser, e:
+        except InvalidSegmentParser as e:
             if verbose:
                 log.info("parser isn't %s: %s" % (parser.__name__, str(e)))
             pass
