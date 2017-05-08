@@ -398,3 +398,13 @@ References
 * http://www.crowcastle.net/preston/atari/
 * http://www.atarimax.com/jindroush.atari.org/afmtatr.html
 * https://archive.org/details/Beneath_Apple_DOS_OCR
+
+Related Projects
+----------------
+
+* `franny <http://atari8.sourceforge.net/franny.html>`_: (macOS/linux) Command line program to manage Atari DOS 2 and SpartaDOS II image and file systems
+* `dir2atr <http://www.horus.com/~hias/atari/>`_: (Win) Suite of command line programs to manage Atari disk images and DOS 2/MyDOS file systems
+* `atadim <http://raster.infos.cz/atari/forpc/atadim.htm>`_: (Win) Graphical program to manage Atari disk images and DOS 2/MyDOS file systems
+* `c2d <https://github.com/datajerk/c2d>`_: (Win/macOS/linux) Command line program to create bootable Apple disk images (no file system)
+* `Apple Commander <http://applecommander.sourceforge.net/>`_: (Java) Command line program to manage Apple disk images and file systems
+* `Cider Press <http://a2ciderpress.com/>`_: (Win) Graphical program to manage Apple disk images and file systems
