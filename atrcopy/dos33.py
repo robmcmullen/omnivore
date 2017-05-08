@@ -4,7 +4,6 @@ from __future__ import division
 from builtins import str
 from builtins import range
 from builtins import object
-from past.utils import old_div
 import numpy as np
 
 from .errors import *
@@ -63,7 +62,7 @@ class Dos33TSSector(WriteableSector):
 
 
 class Dos33VTOC(VTOC):
-    max_tracks = old_div((256 - 0x38), 4)  # 50, but kept here in case sector size changed
+    max_tracks = (256 - 0x38) // 4  # 50, but kept here in case sector size changed
     max_sectors = max_tracks * 16
     vtoc_bit_reorder_index = np.tile(np.arange(15, -1, -1), max_tracks) + (np.repeat(np.arange(max_tracks), 16) * 16)
 

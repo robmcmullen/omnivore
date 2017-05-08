@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import division
 from builtins import str
 from builtins import range
-from past.utils import old_div
 from builtins import object
 import numpy as np
 
@@ -366,7 +365,7 @@ class AtrHeader(BaseHeader):
     def encode(self, raw):
         values = raw.view(dtype=self.format)[0]
         values[0] = 0x296
-        paragraphs = old_div(self.image_size, 16)
+        paragraphs = self.image_size // 16
         parshigh, pars = divmod(paragraphs, 256*256)
         values[1] = pars
         values[2] = self.sector_size
@@ -402,7 +401,7 @@ class AtrHeader(BaseHeader):
         self.sectors_per_track = 18
         self.payload_bytes = self.sector_size - 3
         initial_bytes = self.initial_sector_size * self.num_initial_sectors
-        self.max_sectors = (old_div((self.image_size - initial_bytes), self.sector_size)) + self.num_initial_sectors
+        self.max_sectors = ((self.image_size - initial_bytes) // self.sector_size) + self.num_initial_sectors
 
     def get_pos(self, sector):
         if not self.sector_is_valid(sector):
@@ -494,14 +493,14 @@ class AtariDosDiskImage(DiskImageBase):
 
     def calc_vtoc_code(self):
         # From AA post: http://atariage.com/forums/topic/179868-mydos-vtoc-size/
-        num = 1 + old_div((self.total_sectors + 80), (self.header.sector_size * 8))
+        num = 1 + (self.total_sectors + 80) // (self.header.sector_size * 8)
         if self.header.sector_size == 128:
             if num == 1:
                 code = 2
             else:
                 if num & 1:
                     num += 1
-                code = (old_div((num + 1), 2)) + 2
+                code = ((num + 1) // 2) + 2
         else:
             if self.total_sectors < 1024:
                 code = 2
@@ -687,7 +686,7 @@ class BootDiskImage(AtariDosDiskImage):
         # before the boot sectors are finished loading
         max_ram = 0xc000
         max_size = max_ram - bload
-        max_sectors = old_div(max_size, self.header.sector_size)
+        max_sectors = max_size // self.header.sector_size
         if nsec > max_sectors or nsec < 1:
             raise InvalidDiskImage("Number of boot sectors out of range")
         if bload < 0x200 or bload > (0xc000 - (nsec * self.header.sector_size)):

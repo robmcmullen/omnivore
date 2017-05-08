@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import division
-from past.utils import old_div
 import numpy as np
 
 from .errors import *
@@ -27,7 +26,7 @@ class KBootDirent(AtariDosDirent):
         else:
             self.exe_size = count
             self.exe_start = start
-        self.num_sectors = old_div(count, 128) + 1
+        self.num_sectors = count // 128 + 1
 
     def parse_raw_dirent(self, image, bytes):
         pass
@@ -68,18 +67,18 @@ def insert_bytes(data, offset, string, color):
     s = np.fromstring(string.upper(), dtype=np.uint8) - 32  # convert to internal
     s = s | color
     count = len(s)
-    tx = offset + old_div((20 - count), 2)
+    tx = offset + (20 - count) // 2
     data[tx:tx+count] = s
 
 
 def add_xexboot_header(bytes, bootcode=None, title=b"DEMO", author=b"an atari user"):
     sec_size = 128
     xex_size = len(bytes)
-    num_sectors = old_div((xex_size + sec_size - 1), sec_size)
+    num_sectors = (xex_size + sec_size - 1) // sec_size
     padded_size = num_sectors * sec_size
     if xex_size < padded_size:
         bytes = np.append(bytes, np.zeros([padded_size - xex_size], dtype=np.uint8))
-    paragraphs = old_div(padded_size, 16)
+    paragraphs = padded_size // 16
 
     if bootcode is None:
         bootcode = np.fromstring(xexboot_header, dtype=np.uint8)
