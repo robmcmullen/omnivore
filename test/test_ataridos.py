@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import object
 from mock import *
 
 from atrcopy import SegmentData, AtariDosFile, InvalidBinaryFile, DefaultSegment, XexContainerSegment

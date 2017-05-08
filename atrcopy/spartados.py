@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from builtins import str
+from builtins import range
 import numpy as np
 
 from .errors import *
@@ -233,7 +235,7 @@ class SpartaDosDiskImage(AtariDosDiskImage):
         while True:
             bytes, last, pos, size = dirent.read_sector(self)
             if not last:
-                byte_order.extend(range(pos, pos + size))
+                byte_order.extend(list(range(pos, pos + size)))
             else:
                 break
         if len(byte_order) > 0:

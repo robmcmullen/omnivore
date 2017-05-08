@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from builtins import str
 import os
 import sys
 import zlib
@@ -379,7 +380,7 @@ def run():
     }
     # reverse aliases does the inverse mapping of command aliases, including
     # the identity mapping of "command" to "command"
-    reverse_aliases = {z: k for k, v in command_aliases.iteritems() for z in (v + [k])}
+    reverse_aliases = {z: k for k, v in command_aliases.items() for z in (v + [k])}
 
     skip_diskimage_summary = set(["crc"])
 

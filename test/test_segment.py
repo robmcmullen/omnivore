@@ -1,4 +1,7 @@
 from __future__ import print_function
+from builtins import zip
+from builtins import range
+from builtins import object
 import os
 
 import numpy as np
@@ -294,7 +297,7 @@ class TestComments(object):
         for start, end, style, items in r0:
             print(style)
             assert np.all(style == 0)
-            for rawindex, comment in items.values():
+            for rawindex, comment in list(items.values()):
                 assert not comment
         s1.restore_comments(r)
         r1 = s1.get_comment_restore_data([indexes])
@@ -322,7 +325,7 @@ class TestComments(object):
         for start, end, style, items in r0:
             print(style)
             assert np.all(style == 0)
-            for rawindex, comment in items.values():
+            for rawindex, comment in list(items.values()):
                 assert not comment
         s2.restore_comments(r)
         r2 = s2.get_comment_restore_data([indexes])

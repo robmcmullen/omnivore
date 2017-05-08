@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import object
 import numpy as np
 
 from mock import *
@@ -16,12 +17,12 @@ class BaseFilesystemModifyTest(object):
         rawdata = SegmentData(self.sample_data.copy())
         self.image = self.diskimage_type(rawdata)
 
-    def check_entries(self, entries, prefix="TEST", save=None):
+    def check_entries(self, entries, prefix=b"TEST", save=None):
         orig_num_files = len(self.image.files)
         filenames = []
         count = 1
         for data in entries:
-            filename = "%s%d.BIN" % (prefix, count)
+            filename = b"%s%d.BIN" % (prefix, count)
             self.image.write_file(filename, None, data)
             assert len(self.image.files) == orig_num_files + count
             data2 = np.fromstring(self.image.find_file(filename), dtype=np.uint8)
@@ -31,7 +32,7 @@ class BaseFilesystemModifyTest(object):
         # loop over them again to make sure data wasn't overwritten
         count = 1
         for data in entries:
-            filename = "%s%d.BIN" % (prefix, count)
+            filename = b"%s%d.BIN" % (prefix, count)
             data2 = np.fromstring(self.image.find_file(filename), dtype=np.uint8)
             assert np.array_equal(data, data2[0:len(data)])
             count += 1
@@ -46,20 +47,20 @@ class BaseFilesystemModifyTest(object):
         assert len(self.image.files) == self.num_files_in_sample
 
         data = np.asarray([0xff, 0xff, 0x00, 0x60, 0x01, 0x60, 1, 2], dtype=np.uint8)
-        self.image.write_file("TEST.XEX", None, data)
+        self.image.write_file(b"TEST.XEX", None, data)
         assert len(self.image.files) == self.num_files_in_sample + 1
 
-        data2 = np.fromstring(self.image.find_file("TEST.XEX"), dtype=np.uint8)
+        data2 = np.fromstring(self.image.find_file(b"TEST.XEX"), dtype=np.uint8)
         assert np.array_equal(data, data2[0:len(data)])
 
     def test_50k(self):
         assert len(self.image.files) == self.num_files_in_sample
 
         data = np.arange(50*1024, dtype=np.uint8)
-        self.image.write_file("RAMP50K.BIN", None, data)
+        self.image.write_file(b"RAMP50K.BIN", None, data)
         assert len(self.image.files) == self.num_files_in_sample + 1
 
-        data2 = self.image.find_file("RAMP50K.BIN")
+        data2 = self.image.find_file(b"RAMP50K.BIN")
         assert data.tostring() == data2
 
     def test_many_small(self):
@@ -76,17 +77,17 @@ class BaseFilesystemModifyTest(object):
             np.arange(9*1024, dtype=np.uint8),
             np.arange(10*1024, dtype=np.uint8),
             ]
-        self.check_entries(entries, save="many_small.atr")
+        self.check_entries(entries, save=b"many_small.atr")
 
     def test_big_failure(self):
         assert len(self.image.files) == self.num_files_in_sample
 
         data = np.arange(50*1024, dtype=np.uint8)
-        self.image.write_file("RAMP50K.BIN", None, data)
+        self.image.write_file(b"RAMP50K.BIN", None, data)
         assert len(self.image.files) == self.num_files_in_sample + 1
         with pytest.raises(NotEnoughSpaceOnDisk):
             huge = np.arange(500*1024, dtype=np.uint8)
-            self.image.write_file("RAMP500K.BIN", None, huge)
+            self.image.write_file(b"RAMP500K.BIN", None, huge)
         assert len(self.image.files) == self.num_files_in_sample + 1
 
     def test_delete(self):
@@ -116,7 +117,7 @@ class BaseFilesystemModifyTest(object):
         self.image.delete_file(filenames[8])
         assert len(self.image.files) == self.num_files_in_sample + 7
 
-        filename = self.check_entries(entries2, "SECOND", save="test_delete.atr")
+        filename = self.check_entries(entries2, b"SECOND", save="test_delete.atr")
         assert len(self.image.files) == self.num_files_in_sample + 9
 
     def test_delete_all(self):

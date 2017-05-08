@@ -1,4 +1,8 @@
 from __future__ import absolute_import
+from builtins import zip
+from builtins import str
+from builtins import range
+from builtins import object
 import types
 
 import numpy as np
@@ -185,7 +189,7 @@ class Directory(BaseSectorList):
 
     def get_free_dirent(self):
         used = set()
-        d = self.dirents.items()
+        d = list(self.dirents.items())
         if d:
             d.sort()
             for i, dirent in d:
@@ -210,11 +214,11 @@ class Directory(BaseSectorList):
     def find_dirent(self, filename):
         if hasattr(filename, "filename"):
             # we've been passed a dirent instead of a filename
-            for dirent in self.dirents.values():
+            for dirent in list(self.dirents.values()):
                 if dirent == filename:
                     return dirent
         else:
-            for dirent in self.dirents.values():
+            for dirent in list(self.dirents.values()):
                 if filename == dirent.filename:
                     return dirent
         raise FileNotFound("%s not found on disk" % filename)
@@ -239,7 +243,7 @@ class Directory(BaseSectorList):
         self.current_sector = self.get_dirent_sector()
         self.encode_index = 0
 
-        d = self.dirents.items()
+        d = list(self.dirents.items())
         d.sort()
         # there may be gaps, so fill in missing entries with blanks
         current = 0

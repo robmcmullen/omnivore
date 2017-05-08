@@ -1,4 +1,7 @@
 from __future__ import absolute_import
+from builtins import str
+from builtins import range
+from builtins import object
 import numpy as np
 
 from .errors import *
@@ -126,10 +129,11 @@ class DiskImageBase(object):
         return Directory
 
     def set_filename(self, filename):
-        if "." in filename:
-            self.filename, self.ext = filename.rsplit(".", 1)
+        if type(filename) is not bytes: filename = filename.encode("utf-8")
+        if b'.' in filename:
+            self.filename, self.ext = filename.rsplit(b'.', 1)
         else:
-            self.filename, self.ext = filename, ""
+            self.filename, self.ext = filename, b''
 
     def dir(self):
         lines = []
@@ -175,9 +179,10 @@ class DiskImageBase(object):
         if not filename:
             filename = self.filename
             if self.ext:
-                filename += "." + self.ext
+                filename += b'.' + self.ext
         if not filename:
             raise RuntimeError("No filename specified for save!")
+        if type(filename) is not bytes: filename = filename.encode("utf-8")
         bytes = self.bytes[:]
         with open(filename, "wb") as fh:
             bytes.tofile(fh)
@@ -270,6 +275,7 @@ class DiskImageBase(object):
         # check if we've been passed a dirent instead of a filename
         if hasattr(filename, "filename"):
             return filename
+        if type(filename) is not bytes: filename = filename.encode("utf-8")
         for dirent in self.files:
             if filename == dirent.filename:
                 return dirent

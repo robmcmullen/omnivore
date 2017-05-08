@@ -1,4 +1,7 @@
 from __future__ import print_function
+from builtins import zip
+from builtins import range
+from builtins import object
 import os
 
 import pytest
@@ -22,7 +25,7 @@ class TestJsonPickle(object):
         r3 = s2.rawdata[100:200]
         s3 = DefaultSegment(r3)
         print(s3.byte_bounds_offset(), len(s3), s3.__getstate__())
-        order = list(reversed(range(700, 800)))
+        order = list(reversed(list(range(700, 800))))
         r4 = self.segment.rawdata.get_indexed(order)
         s4 = DefaultSegment(r4)
         print(s4.byte_bounds_offset(), len(s4), s4.__getstate__())

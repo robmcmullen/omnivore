@@ -1,5 +1,10 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
+from builtins import str
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import numpy as np
 
 from .errors import *
@@ -58,7 +63,7 @@ class Dos33TSSector(WriteableSector):
 
 
 class Dos33VTOC(VTOC):
-    max_tracks = (256 - 0x38) / 4  # 50, but kept here in case sector size changed
+    max_tracks = old_div((256 - 0x38), 4)  # 50, but kept here in case sector size changed
     max_sectors = max_tracks * 16
     vtoc_bit_reorder_index = np.tile(np.arange(15, -1, -1), max_tracks) + (np.repeat(np.arange(max_tracks), 16) * 16)
 
@@ -191,7 +196,7 @@ class Dos33Dirent(Dirent):
         0x20: "a",  # ?
         0x40: "b",  # ?
     }
-    text_to_type = {v: k for k, v in type_to_text.iteritems()}
+    text_to_type = {v: k for k, v in type_to_text.items()}
 
     @property
     def file_type(self):
@@ -533,7 +538,7 @@ class Dos33DiskImage(DiskImageBase):
             self.assert_valid_sector(sector)
             if _xd: log.debug("loading directory segment from catalog sector %d" % sector)
             raw, pos, size = self.get_raw_bytes(sector)
-            byte_order.extend(range(pos, pos + size))
+            byte_order.extend(list(range(pos, pos + size)))
             sector = self.header.sector_from_track(raw[1], raw[2])
         raw = self.rawdata.get_indexed(byte_order)
         segment = DefaultSegment(raw, name="Catalog")
@@ -573,7 +578,7 @@ class Dos33DiskImage(DiskImageBase):
         dirent.start_read(self)
         while True:
             bytes, last, pos, size = dirent.read_sector(self)
-            byte_order.extend(range(pos, pos + size))
+            byte_order.extend(list(range(pos, pos + size)))
             if last:
                 break
         if len(byte_order) > 0:
