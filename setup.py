@@ -5,7 +5,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-execfile('atrcopy/_metadata.py')
+exec(open('atrcopy/_metadata.py').read())
 
 with open("README.rst", "r") as fp:
     long_description = fp.read()
@@ -27,16 +27,21 @@ setup(name="atrcopy",
         long_description=long_description,
         license="GPL",
         classifiers=[
-            "Programming Language :: Python :: 2",
+            "Programming Language :: Python :: 2.7",
+            "Programming Language :: Python :: 3.5",
+            "Programming Language :: Python :: 3.6",
             "Intended Audience :: Developers",
             "License :: OSI Approved :: GNU General Public License (GPL)",
             "Topic :: Software Development :: Libraries",
             "Topic :: Utilities",
         ],
         install_requires = [
+            "future",
             'numpy',
         ],
         tests_require = [
-            'pytest',
+            'pytest>3.0',
+            'coverage',
+            'pytest.cov',
         ],
     )
