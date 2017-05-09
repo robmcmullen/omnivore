@@ -180,7 +180,7 @@ class Dos33Dirent(Dirent):
         self.parse_raw_dirent(image, bytes)
 
     def __str__(self):
-        return "File #%-2d (%s) %03d %-30s %03d %03d" % (self.file_num, self.summary, self.num_sectors, self.filename, self.track, self.sector)
+        return "File #%-2d (%s) %03d %-30s %03d %03d" % (self.file_num, self.summary, self.num_sectors, self.filename.decode("utf-8"), self.track, self.sector)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.filename == other.filename and self.track == other.track and self.sector == other.sector and self.num_sectors == other.num_sectors

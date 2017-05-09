@@ -102,7 +102,8 @@ class AtariDosDirent(Dirent):
         self.parse_raw_dirent(image, bytes)
 
     def __str__(self):
-        return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, self.summary, self.starting_sector, str(self.basename), str(self.ext), self.num_sectors)
+        # return (b'File #%-2d (%s) %03d %-8s%-3s  %03d' % (self.file_num, self.summary.encode("utf-8"), self.starting_sector, self.basename, self.ext, self.num_sectors)).decode("utf-8")
+        return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, self.summary, self.starting_sector, self.basename.decode("utf-8"), self.ext.decode("utf-8"), self.num_sectors)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.filename == other.filename and self.starting_sector == other.starting_sector and self.num_sectors == other.num_sectors

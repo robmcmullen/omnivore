@@ -166,7 +166,7 @@ class A8CartHeader(object):
     def to_array(self):
         raw = np.zeros([16], dtype=np.uint8)
         values = raw.view(dtype=self.format)[0]
-        values[0] = 'CART'
+        values[0] = b'CART'
         values[1] = self.cart_type
         values[2] = self.crc
         values[3] = 0
