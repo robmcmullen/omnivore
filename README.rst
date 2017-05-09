@@ -425,12 +425,31 @@ References
 * http://www.atarimax.com/jindroush.atari.org/afmtatr.html
 * https://archive.org/details/Beneath_Apple_DOS_OCR
 
-Related Projects
-----------------
+Related Atari Projects
+----------------------
 
-* `franny <http://atari8.sourceforge.net/franny.html>`_: (macOS/linux) Command line program to manage Atari DOS 2 and SpartaDOS II image and file systems
+* `franny <http://atari8.sourceforge.net/franny.html>`_: (C, macOS/linux) Command line program to manage Atari DOS 2 and SpartaDOS II image and file systems
 * `dir2atr <http://www.horus.com/~hias/atari/>`_: (Win) Suite of command line programs to manage Atari disk images and DOS 2/MyDOS file systems
 * `atadim <http://raster.infos.cz/atari/forpc/atadim.htm>`_: (Win) Graphical program to manage Atari disk images and DOS 2/MyDOS file systems
-* `c2d <https://github.com/datajerk/c2d>`_: (Win/macOS/linux) Command line program to create bootable Apple disk images (no file system)
+
+Related Apple Projects
+----------------------
+
+Turns out there are a ton of Apple ][ disk imaging tools! I was pointed to the list from the `diskii project <https://github.com/zellyn/diskii>`_, so I've included most of that list here.
+
+* `a2disk <https://github.com/jtauber/a2disk>`_ (Python 3) DOS 3.3 reader and Applesoft BASIC detokenizer
+* `cppo <https://github.com/RasppleII/a2server/blob/master/scripts/tools/cppo>`_ (Python) a script from the `a2server <http://ivanx.com/a2server/>`_ project to read DOS 3.3 and ProDOS disk images
+* `Driv3rs <https://github.com/thecompu/Driv3rs>`_ (Python) Apple III SOS DSK image utility
+* `c2d <https://github.com/datajerk/c2d>`_: (C, Win/macOS/linux) Command line program to create bootable Apple disk images (no file system)
 * `Apple Commander <http://applecommander.sourceforge.net/>`_: (Java) Command line program to manage Apple disk images and file systems
 * `Cider Press <http://a2ciderpress.com/>`_: (Win) Graphical program to manage Apple disk images and file systems
+* `diskii <https://github.com/zellyn/diskii>`_: (Go) Command line tool, under development
+* `Cadius <http://brutaldeluxe.fr/products/crossdevtools/cadius/index.html>`_ (Win) Brutal Deluxe's commandline tools
+* `dsktool <https://github.com/cybernesto/dsktool.rb>`_ (Ruby)
+* `Apple II Disk Tools <https://github.com/cmosher01/Apple-II-Disk-Tools>`_ (C)
+* `libA2 <https://github.com/madsen/perl-libA2>`_ (Perl)
+* `AppleSAWS <https://github.com/markdavidlong/AppleSAWS>`_ (Qt, Win/macOS/linux) very cool looking GUI
+* `DiskBrowser <https://github.com/dmolony/DiskBrowser>`_ (Java) GUI tool that even displays Wizardry levels and VisiCalc files!
+* `dos33fsprogs <https://github.com/deater/dos33fsprogs>`_ (C)
+* `apple2-disk-util <https://github.com/slotek/apple2-disk-util>`_ (Ruby)
+* `dsk2nib <https://github.com/slotek/dsk2nib>`_ (C)
