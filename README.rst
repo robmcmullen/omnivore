@@ -1,21 +1,41 @@
 atrcopy
 =======
 
-Command line utility to manage file systems on Atari 8-bit and Apple ][ disk
-images.
+Python command line utility to manage file systems on Atari 8-bit and Apple ][
+disk images.
 
 .. contents:: **Contents**
 
 Prerequisites
--------------
+=============
 
-``atrcopy`` 4.0 introduces a new command line argument structure based on
-subcommands, much like ``git`` uses ``git pull``, ``git clone``, ``git
-branch``, etc. Upgrading to 4.0 will require modification of scripts that use
-``atrcopy`` 3.x-style command line arguments.
+Python
+------
+
+Supported Python versions:
+
+* Python 2.7
+* Python 3.5
+* Python 3.6
+
+Python 3 compatibility was added in ``atrcopy`` 5.0, but support for Python 3.4
+and older is not planned.
+
+Dependencies
+------------
 
 Starting with ``atrcopy`` 2.0, `numpy <http://www.numpy.org/>`_ is required. It
-will be automatically installed when installing ``atrcopy`` with::
+will be automatically installed when installing ``atrcopy`` with ``pip`` as
+described below.
+
+It also uses the pure-Python ``future`` compatibility library to help support
+both Python 2 and Python 3.
+
+Installation
+============
+
+``atrcopy`` is available in the `PyPI <https://pypi.python.org/pypi/atrcopy/>`_
+and installable using ``pip``::
 
     pip install atrcopy
 
@@ -31,6 +51,12 @@ Features
 * create new disk images
 * concatenate binary data together into a file on the disk image
 * compile assembly source into binary files if `pyatasm <https://pypi.python.org/pypi/pyatasm>`_ is installed
+
+**Note:** The command line argument structure was changed starting with
+``atrcopy`` 4.0 -- it is now based on subcommands, much like ``git`` uses ``git
+pull``, ``git clone``, ``git branch``, etc. Upgrading from a version prior to
+4.0 will require modification of scripts that use ``atrcopy`` 3.x-style command
+line arguments.
 
 
 Supported Formats
