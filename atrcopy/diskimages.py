@@ -89,7 +89,9 @@ class BaseHeader(object):
     def strict_check(self, image):
         pass
 
-    def create_sector(self, data):
+    def create_sector(self, data=None):
+        if data is None:
+            data = np.zeros([self.sector_size], dtype=np.uint8)
         return self.sector_class(self.sector_size, data)
 
 
