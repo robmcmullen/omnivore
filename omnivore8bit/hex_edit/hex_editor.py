@@ -647,16 +647,22 @@ class HexEditor(FrameworkEditor):
         ranges = s.get_style_ranges(selected=True)
         if len(ranges) == 1:
             seg_start, seg_end = ranges[0]
-            segment = DefaultSegment(s.rawdata[seg_start:seg_end], s.start_addr + seg_start)
-            segments.append(segment)
+            if size < 0:
+                size = seg_end - seg_start + 1
+            for start in range(seg_start, seg_end, size):
+                segment = DefaultSegment(s.rawdata[start:start + size], s.start_addr + start)
+                segments.append(segment)
         elif len(ranges) > 1:
             # If there are multiple selections, use an indexed segment
             indexes = []
             for start, end in ranges:
                 indexes.extend(range(start, end))
-            raw = s.rawdata.get_indexed(indexes)
-            segment = DefaultSegment(raw, s.start_addr + indexes[0])
-            segments.append(segment)
+            if size < 0:
+                size = len(indexes)
+            for i in range(0, len(indexes), size):
+                raw = s.rawdata.get_indexed(indexes[i:i + size])
+                segment = DefaultSegment(raw, s.start_addr + indexes[i])
+                segments.append(segment)
         return segments
 
     def get_selected_status_message(self):
