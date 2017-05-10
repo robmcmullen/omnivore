@@ -652,7 +652,7 @@ class HexEditor(FrameworkEditor):
         if len(ranges) == 1:
             seg_start, seg_end = ranges[0]
             if size < 0:
-                size = seg_end - seg_start + 1
+                size = seg_end - seg_start
             for start in range(seg_start, seg_end, size):
                 segment = DefaultSegment(s.rawdata[start:start + size], s.start_addr + start)
                 segments.append(segment)
