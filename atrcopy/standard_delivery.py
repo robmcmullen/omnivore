@@ -98,7 +98,7 @@ class StandardDeliveryImage(DiskImageBase):
         count = 0
 
         sector_list = []
-        address_list = []
+        address_list = [0xd0]
 
         boot_sector = dsk.header.create_sector()
         boot_sector.sector_num = 0
@@ -125,6 +125,7 @@ class StandardDeliveryImage(DiskImageBase):
                     track += 1
                 i += 256
                 hi += 1
+            address_list.append(0xd0)
 
         print("address list %s" % str(address_list))
         boot_code = get_fstbt_code(boot_sector.data, address_list, run_addr)
@@ -139,8 +140,10 @@ fstbt_64k = b'\x01\xa8\xee\x06\x08\xadM\x08\xc9\xc0\xf0?\x85\x27\xc8\xc0\x10\x90
 
 fstbt_64k_hgr = b'\x01\xa8,P\xc0,R\xc0,W\xc0\xee\x0f\x08\xadV\x08\xc9\xc0\xf0?\x85\x27\xc8\xc0\x10\x90\t\xf0\x05 7\x08\xa8,\xa0\x01\x84=\xc8\xa5\x27\xf0\xdf\x8a {\xf8\t\xc0H\xa9[H`\xe6A\x06@ ?\x08\x18 D\x08\xe6@\xa5@)\x03*\x05+\xa8\xb9\x80\xc0\xa90L\xa8\xfcL'
 
+fstbt_64k_trigger = b'\x01\xa8\x8dP\xc0\x8dR\xc0\x8dW\xc0\xee\x0f\x08\xadl\x08\xc9\xc0\xf0U\xc9\xd0\xf0\xf2\xc9\xd1\xd0\x05\x8dT\xc0\xf0\xe9\xc9\xd2\xd0\x05\x8dU\xc0\xf0\xe0\x85\x27\xc8\xc0\x10\x90\t\xf0\x05 M\x08\xa8,\xa0\x01\x84=\xc8\xa5\x27\xf0\xc9\x8a {\xf8\t\xc0H\xa9[H`\xe6A\x06@ U\x08\x18 Z\x08\xe6@\xa5@)\x03*\x05+\xa8\xb9\x80\xc0\xa90L\xa8\xfcL'
+
 def get_fstbt_code(data, address_list, run_addr):
-    code = fstbt_64k_hgr
+    code = fstbt_64k_trigger
     pointer = len(code)
     data[0:pointer] = np.fromstring(code, dtype=np.uint8)
     hi, lo = divmod(run_addr, 256)
