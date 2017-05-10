@@ -2,24 +2,8 @@
 import os
 import logging
 
-# Monkey patch logging to support extra stuff
-
-import __builtin__
-known_loggers = dict()
+# singleton; only one logging frame available at one time
 logging_frame = None
-
-orig_get_logger = logging.getLogger
-
-def monkey_patch_get_logger(name=""):
-    global known_loggers
-
-    if name is not None and name not in known_loggers:
-        known_loggers[name] = -1  # initially unknown logging level
-        #print "Adding logger", name
-
-    return orig_get_logger(name)
-
-logging.getLogger = monkey_patch_get_logger
 
 
 def show_logging_frame():
@@ -79,6 +63,7 @@ def show_logging_frame():
             logging.ERROR: "ERROR",
             logging.CRITICAL: "CRITICAL",
             }
+        known_loggers = {}
 
         def __init__(self, parent, *args, **kwargs):
             wx.Frame.__init__(self, parent, *args, title="Debug Log Viewer", size=(800,600), **kwargs)
@@ -134,12 +119,12 @@ def show_logging_frame():
             logger.removeHandler(self.handler)
 
         def get_default_levels(self):
-            loggers = known_loggers.copy()  # can't operate on dict when iterating
-            for logger_name, level in loggers.iteritems():
-                if level < 0:
+            current_loggers = logging.Logger.manager.loggerDict
+            for logger_name in current_loggers.keys():
+                if logger_name not in self.known_loggers:
                     known_log = logging.getLogger(logger_name)
                     level = known_log.getEffectiveLevel()
-                    known_loggers[logger_name] = level
+                    self.known_loggers[logger_name] = level
                     log.debug("default log level for %s: %s" % (logger_name, self.LEVEL_MAP.get(level, str(level))))
 
         def log(self, msg, override=False):
@@ -150,9 +135,11 @@ def show_logging_frame():
                 # self.text.SetInsertionPointEnd()
 
         def show_known(self):
+            self.get_default_levels()
+
             ruler = "----------------------------------------------------------"
             self.log("\n%s\nKNOWN LOGGER NAMES:\n" % ruler)
-            for logger_name in sorted(known_loggers):
+            for logger_name in sorted(self.known_loggers):
                 log = logging.getLogger(logger_name)
                 level = log.getEffectiveLevel()
                 self.log("%s %s\n" % (self.LEVEL_MAP.get(level, str(level)), logger_name), override=True)
@@ -183,7 +170,7 @@ def show_logging_frame():
                 return
             match_strings = [t.strip() for t in text.split(",") if t] if "," in text else [text.strip()] if text else []
             count = 0
-            for logger_name, level in known_loggers.iteritems():
+            for logger_name, level in self.known_loggers.iteritems():
                 if level < 0:
                     level = logging.INFO
                 for match in match_strings:
