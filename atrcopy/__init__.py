@@ -22,7 +22,7 @@ from .kboot import KBootImage, add_xexboot_header
 from .segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentedFileSegment, user_bit_mask, match_bit_mask, comment_bit_mask, data_style, selected_bit_mask, diff_bit_mask, not_user_bit_mask, interleave_segments, SegmentList, get_style_mask, get_style_bits
 from .spartados import SpartaDosDiskImage
 from .cartridge import A8CartHeader, AtariCartImage
-from .parsers import SegmentParser, DefaultSegmentParser, guess_parser_for_mime, guess_parser_for_system, iter_parsers, iter_known_segment_parsers, mime_parse_order
+from .parsers import SegmentParser, DefaultSegmentParser, guess_parser_for_mime, guess_parser_for_system, iter_parsers, iter_known_segment_parsers, mime_parse_order, parsers_for_filename
 from .utils import to_numpy, text_to_int
 
 
@@ -178,7 +178,7 @@ def crc_files(image, files):
             print("%s: %08x" % (dirent.filename, crc))
 
 
-def assemble(image, source_files, data_files, obj_files, run_addr=""):
+def assemble_segments(source_files, data_files, obj_files, run_addr=""):
     if source_files:
         try:
             import pyatasm
@@ -238,11 +238,23 @@ def assemble(image, source_files, data_files, obj_files, run_addr=""):
         except ValueError:
             run_addr = None
 
+    return segments, run_addr
+
+def assemble(image, source_files, data_files, obj_files, run_addr=""):
+    segments, run_addr = assemble_segments(source_files, data_files, obj_files, run_addr)
     file_data, filetype = image.create_executable_file_image(segments, run_addr)
     print("total file size: $%x (%d) bytes" % (len(file_data), len(file_data)))
     changed = save_file(image, options.output, filetype, file_data)
     if changed:
         image.save()
+
+
+def boot_image(image_name, source_files, data_files, obj_files, run_addr=""):
+    image_cls = parsers_for_filename(image_name)[0]
+    segments, run_addr = assemble_segments(source_files, data_files, obj_files, run_addr)
+    image = image_cls.create_boot_image(segments, run_addr)
+    print("saving boot disk %s" % (image_name))
+    image.save(image_name)
 
 
 def shred_image(image, value=0):
@@ -373,6 +385,7 @@ def run():
         "extract": ["x"],
         "add": ["a"],
         "create": ["c"],
+        "boot": ["b"],
         "assemble": ["s", "asm"],
         "delete": ["rm", "del"],
         "vtoc": ["v"],
@@ -433,6 +446,14 @@ def run():
     assembly_parser.add_argument("-b", "--obj", "--bload", nargs="*", action="append", help="binary file(s) to add to assembly, either executables or labeled memory dumps (e.g. BSAVE on Apple ][), parsing each file's binary segments to add to the resulting disk image at the load address for each segment")
     assembly_parser.add_argument("-r", "--run-addr", "--brun", action="store", default="", help="run address of binary file if not the first byte of the first segment")
     assembly_parser.add_argument("-o", "--output", action="store", default="", required=True, help="output file name in disk image")
+
+    command = "boot"
+    boot_parser = subparsers.add_parser(command, help="Create a bootable disk image", aliases=command_aliases[command])
+    boot_parser.add_argument("-f", "--force", action="store_true", default=False, help="allow file overwrites in the disk image")
+    boot_parser.add_argument("-s", "--asm", nargs="*", action="append", help="source file(s) to assemble using pyatasm")
+    boot_parser.add_argument("-d","--data", nargs="*", action="append", help="binary data file(s) to add to assembly, specify as file@addr. Only a portion of the file may be included; specify the subset using standard python slice notation: file[subset]@addr")
+    boot_parser.add_argument("-b", "--obj", "--bload", nargs="*", action="append", help="binary file(s) to add to assembly, either executables or labeled memory dumps (e.g. BSAVE on Apple ][), parsing each file's binary segments to add to the resulting disk image at the load address for each segment")
+    boot_parser.add_argument("-r", "--run-addr", "--brun", action="store", default="", help="run address of binary file if not the first byte of the first segment")
 
     command = "delete"
     delete_parser = subparsers.add_parser(command, help="Delete files from the disk image", aliases=command_aliases[command])
@@ -511,6 +532,11 @@ def run():
 
     if command == "create":
         create_image(options.template[0], disk_image_name)
+    elif command == "boot":
+        asm = options.asm[0] if options.asm else []
+        data = options.data[0] if options.data else []
+        obj = options.obj[0] if options.obj else []
+        boot_image(disk_image_name, asm, data, obj, options.run_addr)
     else:
         parser = find_diskimage(disk_image_name)
         if parser and parser.image:

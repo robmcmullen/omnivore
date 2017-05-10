@@ -10,6 +10,7 @@ from .spartados import SpartaDosDiskImage
 from .cartridge import AtariCartImage, get_known_carts
 from .mame import MameZipImage
 from .dos33 import Dos33DiskImage, ProdosDiskImage, Dos33BinFile
+from .standard_delivery import StandardDeliveryImage
 from .errors import *
 
 import logging
@@ -172,6 +173,17 @@ def iter_parsers(r):
         if p is not None:
             return mime, p
     return None, None
+
+
+def parsers_for_filename(name):
+    matches = []
+    for mime in mime_parse_order:
+        parsers = mime_parsers[mime]
+        found = None
+        for parser in parsers:
+            print("parser: %s = %s" % (mime, parser))
+    matches.append(StandardDeliveryImage)
+    return matches
 
 
 mime_parsers = {

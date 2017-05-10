@@ -453,3 +453,4 @@ Turns out there are a ton of Apple ][ disk imaging tools! I was pointed to the l
 * `dos33fsprogs <https://github.com/deater/dos33fsprogs>`_ (C)
 * `apple2-disk-util <https://github.com/slotek/apple2-disk-util>`_ (Ruby)
 * `dsk2nib <https://github.com/slotek/dsk2nib>`_ (C)
+* `standard-delivery <https://github.com/peterferrie/standard-delivery>`_ (6502 assembly) Apple II single-sector fast boot-loader
