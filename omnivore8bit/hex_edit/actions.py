@@ -669,6 +669,7 @@ class GetSegmentFromSelectionAction(EditorAction):
                 text = "%04x-%04x" % (segment.start_addr, segment.start_addr + len(segment) - 1)
             segment.name = text
             e.add_user_segment(segment)
+            e.find_segment(segment=segment, refresh=True)
 
 
 class MultipleSegmentsFromSelectionAction(EditorAction):
@@ -689,7 +690,7 @@ class MultipleSegmentsFromSelectionAction(EditorAction):
                 text = "%04x-%04x" % (segment.start_addr, segment.start_addr + len(segment) - 1)
                 segment.name = text
                 e.add_user_segment(segment, False)
-            e.update_segments_ui()
+            e.find_segment(segment=segments[0], refresh=True)
 
 
 class InterleaveSegmentsAction(EditorAction):
@@ -707,7 +708,7 @@ class InterleaveSegmentsAction(EditorAction):
             factor = dlg.get_interleave()
             segment = interleave_segments(s, factor)
             e.add_user_segment(segment, False)
-            e.update_segments_ui()
+            e.find_segment(segment=segment, refresh=True)
         dlg.Destroy()
 
 
@@ -722,8 +723,7 @@ class ExpandDocumentAction(EditorAction):
         s = d.expand_container(len(d) + 0x400)
         s.name = "Expanded %x bytes" % len(s)
         e.add_user_segment(s, False)
-        e.find_segment(segment=s)
-        e.update_segments_ui()
+        e.find_segment(segment=s, refresh=True)
 
 
 class MarkSelectionAsCodeAction(EditorAction):
