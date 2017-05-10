@@ -239,11 +239,12 @@ class SegmentInterleaveDialog(SegmentOrderDialog):
     instructions = "Drag segments to the right-hand list to determine interleave order. Then, choose interleave factor in bytes."
     dest_list_title = "Interleave Order"
 
-    def add_command_area(self, vbox):
-        t = wx.StaticText(self, -1, "Interleave Bytes")
+    def add_command_area(self, vbox, credits):
+        t = wx.StaticText(self, -1, "Interleave Factor (default hex)")
+        t.SetToolTip(wx.ToolTip("Number of bytes from each segment per interleave group"))
         vbox.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
-        self.intervleave = wx.TextCtrl(self, -1, size=(-1, -1))
-        vbox.Add(self.intervleave, 0, wx.ALL|wx.EXPAND, self.border)
+        self.interleave = wx.TextCtrl(self, -1, size=(-1, -1))
+        vbox.Add(self.interleave, 0, wx.ALL|wx.EXPAND, self.border)
 
         vbox.AddSpacer(50)
 
@@ -262,7 +263,7 @@ class SegmentInterleaveDialog(SegmentOrderDialog):
         return common
 
     def get_interleave(self):
-        text = self.intervleave.GetValue()
+        text = self.interleave.GetValue()
         length = self.get_length()
         try:
             num = text_to_int(text, "hex")
