@@ -1134,21 +1134,28 @@ class RawTrackSectorSegment(RawSectorsSegment):
 
 def interleave_indexes(segments, num_bytes):
     num_segments = len(segments)
+
+    # interleave size will be the smallest segment
     size = len(segments[0])
     for s in segments[1:]:
-        if size != len(s):
-            raise ValueError("All segments to interleave must be the same size")
+        if len(s) < size:
+            size = len(s)
+
+    # adjust if byte spacing is not an even divisor
     _, rem = divmod(size, num_bytes)
-    if rem != 0:
-        raise ValueError("Segment size must be a multiple of the byte interleave")
+    print("size: %d, rem=%d" % (size, rem))
+    size -= rem
+    print("size: %d, rem=%d" % (size, rem))
+
     interleave = np.empty(size * num_segments, dtype=np.uint32)
-    factor = num_bytes * num_segments
-    start = 0
-    for s in segments:
-        order = s.rawdata.get_indexes_from_base()
-        for i in range(num_bytes):
-            interleave[start::factor] = order[i::num_bytes]
-            start += 1
+    if size > 0:
+        factor = num_bytes * num_segments
+        start = 0
+        for s in segments:
+            order = s.rawdata.get_indexes_from_base()
+            for i in range(num_bytes):
+                interleave[start::factor] = order[i:size:num_bytes]
+                start += 1
     return interleave
 
 
