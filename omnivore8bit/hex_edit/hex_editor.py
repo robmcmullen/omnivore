@@ -654,7 +654,8 @@ class HexEditor(FrameworkEditor):
             if size < 0:
                 size = seg_end - seg_start
             for start in range(seg_start, seg_end, size):
-                segment = DefaultSegment(s.rawdata[start:start + size], s.start_addr + start)
+                end = min(seg_end, start + size)
+                segment = DefaultSegment(s.rawdata[start:end], s.start_addr + start)
                 segments.append(segment)
         elif len(ranges) > 1:
             # If there are multiple selections, use an indexed segment
