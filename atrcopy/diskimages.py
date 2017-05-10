@@ -20,7 +20,7 @@ class BaseHeader(object):
     file_format = "generic"  # text descriptor of file format
     sector_class = WriteableSector
 
-    def __init__(self, sector_size=256, initial_sectors=0, vtoc_sector=0, starting_sector_label=0):
+    def __init__(self, sector_size=256, initial_sectors=0, vtoc_sector=0, starting_sector_label=0, create=False):
         self.image_size = 0
         self.sector_size = sector_size
         self.payload_bytes = sector_size
@@ -96,7 +96,7 @@ class BaseHeader(object):
 
 
 class DiskImageBase(object):
-    def __init__(self, rawdata, filename=""):
+    def __init__(self, rawdata, filename="", create=False):
         self.rawdata = rawdata
         self.bytes = self.rawdata.get_data()
         self.style = self.rawdata.get_style()
@@ -109,7 +109,10 @@ class DiskImageBase(object):
         self.segments = []
         self.all_sane = True
         self.default_filetype = ""
-        self.setup()
+        if create:
+            self.header = self.new_header(self)
+        else:
+            self.setup()
 
     def __len__(self):
         return len(self.rawdata)
@@ -305,6 +308,10 @@ class DiskImageBase(object):
         return segments
 
     def create_executable_file_image(self, segments, run_addr=None):
+        raise NotImplementedError
+
+    @classmethod
+    def create_boot_image(self, segments, run_addr=None):
         raise NotImplementedError
 
     # file writing methods
