@@ -1016,11 +1016,9 @@ class DefaultSegment(object):
     def compare_segment(self, other_segment):
         self.clear_style_bits(diff=True)
         diff = self.rawdata.data != other_segment.rawdata.data
-        print(diff, diff.dtype)
         d = diff * np.uint8(diff_bit_mask)
-        print(d)
         self.style |= (diff * np.uint8(diff_bit_mask))
-        print("# entries", len(diff), "# diffs:", len(np.where(diff == True)[0]))
+        log.debug("compare_segment: # entries", len(diff), "# diffs:", len(np.where(diff == True)[0]))
 
 
 class EmptySegment(DefaultSegment):
@@ -1143,9 +1141,7 @@ def interleave_indexes(segments, num_bytes):
 
     # adjust if byte spacing is not an even divisor
     _, rem = divmod(size, num_bytes)
-    print("size: %d, rem=%d" % (size, rem))
     size -= rem
-    print("size: %d, rem=%d" % (size, rem))
 
     interleave = np.empty(size * num_segments, dtype=np.uint32)
     if size > 0:
