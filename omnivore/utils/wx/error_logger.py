@@ -1,9 +1,68 @@
 # Standard library imports.
 import os
 import logging
+log = logging.getLogger(__name__)
+
 
 # singleton; only one logging frame available at one time
 logging_frame = None
+
+LEVEL_MAP = {
+    logging.DEBUG: "DEBUG",
+    logging.INFO: "INFO",
+    logging.WARNING: "WARNING",
+    logging.ERROR: "ERROR",
+    logging.CRITICAL: "CRITICAL",
+    }
+
+known_loggers = {}
+
+def enable_loggers(text):
+    """Turn loggers on or off based on simple string matching
+    """
+    global known_loggers
+
+    if len(known_loggers) == 0:
+        # first time through, make sure there are default levels for everything
+        get_default_levels()
+
+    match_strings = [t.strip() for t in text.split(",") if t] if "," in text else [text.strip()] if text else []
+    count = 0
+    for logger_name, level in known_loggers.iteritems():
+        if level < 0:
+            level = logging.INFO
+        for match in match_strings:
+            if match in logger_name:
+                level = logging.DEBUG
+                count += 1
+                break
+        log = logging.getLogger(logger_name)
+        log.setLevel(level)
+    return count
+
+def get_default_levels():
+    global known_loggers
+
+    current_loggers = logging.Logger.manager.loggerDict
+    for logger_name in current_loggers.keys():
+        if logger_name not in known_loggers:
+            known_log = logging.getLogger(logger_name)
+            level = known_log.getEffectiveLevel()
+            known_loggers[logger_name] = level
+            log.debug("default log level for %s: %s" % (logger_name, LEVEL_MAP.get(level, str(level))))
+
+def count_active_loggers():
+    global known_loggers
+
+    current_loggers = logging.Logger.manager.loggerDict
+    count = 0
+    for logger_name in current_loggers.keys():
+        known_log = logging.getLogger(logger_name)
+        level = known_log.getEffectiveLevel()
+        if level <= logging.DEBUG:
+            count += 1
+    
+    return count
 
 
 def show_logging_frame():
@@ -13,8 +72,6 @@ def show_logging_frame():
     # cause any module-loading-order-dependent problems by importing these
     # before needed in the application
     import wx
-
-    log = logging.getLogger(__name__)
 
     # Logging handler & frame based on code from:
     # http://stackoverflow.com/questions/2819791/
@@ -56,14 +113,6 @@ def show_logging_frame():
             logging.ERROR,
             logging.CRITICAL
         ]
-        LEVEL_MAP = {
-            logging.DEBUG: "DEBUG",
-            logging.INFO: "INFO",
-            logging.WARNING: "WARNING",
-            logging.ERROR: "ERROR",
-            logging.CRITICAL: "CRITICAL",
-            }
-        known_loggers = {}
 
         def __init__(self, parent, *args, **kwargs):
             wx.Frame.__init__(self, parent, *args, title="Debug Log Viewer", size=(800,600), **kwargs)
@@ -91,7 +140,9 @@ def show_logging_frame():
             panel.SetSizer(sizer)
 
             self.add_handler()
-            self.get_default_levels()
+            get_default_levels()
+            count = count_active_loggers()
+            self.show_logger_stats(count)
             self.Bind(wx.EVT_CLOSE, self.on_close)
             self.is_frozen = False
 
@@ -118,15 +169,6 @@ def show_logging_frame():
             logger = logging.getLogger()
             logger.removeHandler(self.handler)
 
-        def get_default_levels(self):
-            current_loggers = logging.Logger.manager.loggerDict
-            for logger_name in current_loggers.keys():
-                if logger_name not in self.known_loggers:
-                    known_log = logging.getLogger(logger_name)
-                    level = known_log.getEffectiveLevel()
-                    self.known_loggers[logger_name] = level
-                    log.debug("default log level for %s: %s" % (logger_name, self.LEVEL_MAP.get(level, str(level))))
-
         def log(self, msg, override=False):
             if not self.is_frozen or override:
                 if not msg.endswith("\n"):
@@ -135,14 +177,14 @@ def show_logging_frame():
                 # self.text.SetInsertionPointEnd()
 
         def show_known(self):
-            self.get_default_levels()
+            get_default_levels()
 
             ruler = "----------------------------------------------------------"
             self.log("\n%s\nKNOWN LOGGER NAMES:\n" % ruler)
-            for logger_name in sorted(self.known_loggers):
+            for logger_name in sorted(known_loggers):
                 log = logging.getLogger(logger_name)
                 level = log.getEffectiveLevel()
-                self.log("%s %s\n" % (self.LEVEL_MAP.get(level, str(level)), logger_name), override=True)
+                self.log("%s %s\n" % (LEVEL_MAP.get(level, str(level)), logger_name), override=True)
             self.log("%s\n\n" % ruler)
 
         def on_test_button(self, evt):
@@ -168,20 +210,13 @@ def show_logging_frame():
             text = self.filter.GetValue()
             if not text:
                 return
-            match_strings = [t.strip() for t in text.split(",") if t] if "," in text else [text.strip()] if text else []
-            count = 0
-            for logger_name, level in self.known_loggers.iteritems():
-                if level < 0:
-                    level = logging.INFO
-                for match in match_strings:
-                    if match in logger_name:
-                        level = logging.DEBUG
-                        count += 1
-                        break
-                log = logging.getLogger(logger_name)
-                log.setLevel(level)
+            count = enable_loggers(text)
+            self.show_logger_stats(count)
+
+        def show_logger_stats(self, count):
             label = "1 debug logger enabled" if count == 1 else "%d debug loggers enabled" % count
             self.stats.SetLabel(label)
+
 
     if logging_frame is None:
         logging_frame = LoggingFrame(None)

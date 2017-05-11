@@ -35,22 +35,8 @@ def main(argv):
     for toolkit in ['pyface', 'envisage', 'traits', 'traitsui', 'apptools']:
         _ = logging.getLogger(toolkit)
         _.setLevel(logging.WARNING)
-    if "-d" in argv:
-        i = argv.index("-d")
-        argv.pop(i)  # discard -d
-        next = argv.pop(i)  # discard next
-        if next == "all":
-            logger = logging.getLogger()
-            logger.setLevel(logging.DEBUG)
-        else:
-            loggers = next.split(",")
-            for name in loggers:
-                log = logging.getLogger(name)
-                log.setLevel(logging.DEBUG)
-
-    else:
-        logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
 
     if "--trace" in argv:
         i = argv.index("--trace")

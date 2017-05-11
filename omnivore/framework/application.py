@@ -25,6 +25,7 @@ from omnivore.help import get_htmlhelp, MissingDocumentationError
 from omnivore.framework.preferences import FrameworkPreferences, \
     FrameworkPreferencesPane
 from omnivore.utils.background_http import BackgroundHttpDownloader
+import omnivore.utils.wx.error_logger as error_logger
 
 import logging
 log = logging.getLogger(__name__)
@@ -149,14 +150,21 @@ class FrameworkApplication(TasksApplication):
         if options.show_editors:
             for factory in self.task_factories:
                 print("%s %s" % (factory.id, factory.name))
-        for arg in extra_args:
+        i = 0
+        for i in range(len(extra_args)):
+            arg = extra_args[i]
             if arg.startswith("-"):
-                log.debug("skipping flag %s" % arg)
+                if arg == "-d":
+                    i += 1
+                    error_logger.enable_loggers(extra_args[i])
+                else:
+                    log.debug("skipping flag %s" % arg)
                 continue
             log.debug("processing %s" % arg)
             task_id = self.find_best_task_id(options.task_id)
             self.load_file(arg, None, task_id=task_id)
             loaded = True
+            i += 1
         if not loaded:
             factory = self.get_task_factory(self.startup_task)
             url = factory.factory.about_application
