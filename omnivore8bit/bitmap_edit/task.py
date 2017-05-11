@@ -31,7 +31,7 @@ class BitmapEditTask(HexEditTask):
     editing functions.
     """
 
-    new_file_text = "Bitmap File"
+    new_file_text = ""
 
     editor_id = "omnivore.bitmap_edit"
 

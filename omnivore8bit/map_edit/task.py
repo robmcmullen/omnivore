@@ -51,7 +51,7 @@ class MapEditTask(HexEditTask):
     location as the intensity.
     """
 
-    new_file_text = "Map File"
+    new_file_text = ""
 
     editor_id = "omnivore.map_edit"
 

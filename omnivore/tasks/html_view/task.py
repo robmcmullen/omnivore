@@ -22,7 +22,7 @@ class HtmlViewTask(FrameworkTask):
     """ Static HTML viewer
     """
 
-    new_file_text = "HTML View"
+    new_file_text = ""
 
     editor_id = "omnivore.htmlview"
 
