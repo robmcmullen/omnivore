@@ -176,7 +176,6 @@ class FrameworkEditor(Editor):
         if doc is None:
             doc = self.document
         bytes = np.copy(doc.bytes)
-        print "SELF AS BASELINE!!!!!", bytes
         doc.init_baseline(doc.metadata, bytes)
         if doc == self.document:
             self.baseline_present = doc.has_baseline
@@ -482,6 +481,10 @@ class FrameworkEditor(Editor):
         self.highlight_selected_ranges()
         if refresh:
             self.refresh_panes()
+
+    def select_none_if_selection(self):
+        if self.can_copy:
+            self.select_none()
 
     def select_invert(self, refresh=True):
         """ Selects the entire document

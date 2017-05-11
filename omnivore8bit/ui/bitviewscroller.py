@@ -114,7 +114,6 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         ul = max(0, r - (num / 2))
         if ul + num > last:
             ul = max(0, last - num)
-        print "r, c, ul", r, c, ul
         return ul
 
     def center_on_index(self):
@@ -344,7 +343,6 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
 
         update = False
         if first_row:
-            print "First row:", first_row, "index %04x" % (rel_pos + self.start_addr)
             if first_row != self.start_row:
                 update = True
                 r = first_row
@@ -902,6 +900,7 @@ class FontMapScroller(BitviewScroller):
             return
         char = evt.GetUniChar()
         if char > 0:
+            self.editor.select_none_if_selection()
             char = self.editor.machine.font_mapping.convert_byte_mapping(char)
             self.change_byte(char | self.inverse)
 
