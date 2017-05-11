@@ -193,12 +193,16 @@ class RevertAction(EditorAction):
     tooltip = 'Revert to last saved version'
 
     def perform(self, event):
-        message = "Revert file from\n\n%s?" % self.active_editor.document.metadata.uri
+        uri = self.active_editor.document.metadata.uri
+        message = "Revert file from\n\n%s?" % uri
         result = event.task.confirm(message=message, title='Revert File?')
         if result:
-            guess = FileGuess(self.active_editor.document.metadata.uri)
-            document = event.task.window.application.guess_document(guess)
-            self.active_editor.load(document)
+            try:
+                guess = FileGuess(uri)
+                document = event.task.window.application.guess_document(guess)
+                self.active_editor.load(document)
+            except fs.errors.FSError, e:
+                event.task.error("Can't revert from %s:\n\n%s" % (uri, str(e)), 'Revert Error')
 
 
 class PageSetupAction(Action):
