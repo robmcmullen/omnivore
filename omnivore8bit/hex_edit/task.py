@@ -117,7 +117,7 @@ class HexEditTask(FrameworkTask):
 
     """
 
-    new_file_text = ["Blank Atari DOS 2 SD (90K) Image", "Blank Atari DOS 2 DD (180K) Image", "Blank Atari DOS 3 (130K) Image", "Blank Apple DOS 3.3 Image"]
+    new_file_text = ["Blank Atari DOS 2 SD (90K) Image", "Blank Atari DOS 2 DD (180K) Image", "Blank Atari DOS 2 ED (130K) Image", "Blank Apple DOS 3.3 Image"]
 
     editor_id = "omnivore.hex_edit"
 
