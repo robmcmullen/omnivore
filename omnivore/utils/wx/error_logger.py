@@ -105,6 +105,20 @@ def show_logging_frame():
             wx.CallAfter(self.printer, msg + "\n")
 
 
+    class LoggerList(wx.CheckListBox):
+        def update(self):
+            items = []
+            checked = []
+            for i, logger_name in enumerate(sorted(known_loggers)):
+                items.append(logger_name)
+                log = logging.getLogger(logger_name)
+                level = log.getEffectiveLevel()
+                if level <= logging.DEBUG:
+                    checked.append(i)
+            self.Set(items)
+            self.SetChecked(checked)
+
+
     class LoggingFrame(wx.Frame):
         LEVELS = [
             logging.DEBUG,
@@ -117,13 +131,21 @@ def show_logging_frame():
         def __init__(self, parent, *args, **kwargs):
             wx.Frame.__init__(self, parent, *args, title="Debug Log Viewer", size=(800,600), **kwargs)
             panel = wx.Panel(self, wx.ID_ANY)
+
+            log_sizer = wx.BoxSizer(wx.HORIZONTAL)
+            self.loggers = LoggerList(panel, wx.ID_ANY, size=(200,600))
+            self.loggers.Bind(wx.EVT_CHECKLISTBOX, self.on_logger_checked)
             self.text = wx.TextCtrl(panel, wx.ID_ANY, size=(800,600),
                               style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
+            log_sizer.Add(self.loggers, 1, wx.RIGHT|wx.EXPAND, 5)
+            log_sizer.Add(self.text, 4, wx.ALL|wx.EXPAND, 0)
+
             top_hsizer = wx.BoxSizer(wx.HORIZONTAL)
             top_hsizer.Add(wx.StaticText(panel, -1, "Filter:"), 0, wx.ALL|wx.CENTER, 0)
             self.filter = wx.TextCtrl(panel, wx.ID_ANY)
             self.filter.Bind(wx.EVT_CHAR, self.on_char)
             top_hsizer.Add(self.filter, 1, wx.ALL|wx.CENTER, 0)
+
             bot_hsizer = wx.BoxSizer(wx.HORIZONTAL)
             self.stats = wx.StaticText(panel, -1, "")
             bot_hsizer.Add(self.stats, 1, wx.ALL|wx.CENTER, 0)
@@ -133,8 +155,9 @@ def show_logging_frame():
             btn = wx.Button(panel, wx.ID_ANY, 'Show Logger State')
             btn.Bind(wx.EVT_BUTTON, self.on_known_button)
             bot_hsizer.Add(btn, 0, wx.LEFT|wx.CENTER, 10)
+
             sizer = wx.BoxSizer(wx.VERTICAL)
-            sizer.Add(self.text, 1, wx.ALL|wx.EXPAND, 5)
+            sizer.Add(log_sizer, 1, wx.ALL|wx.EXPAND, 5)
             sizer.Add(top_hsizer, 0, wx.ALL|wx.EXPAND, 5)
             sizer.Add(bot_hsizer, 0, wx.ALL|wx.EXPAND, 5)
             panel.SetSizer(sizer)
@@ -143,6 +166,7 @@ def show_logging_frame():
             get_default_levels()
             count = count_active_loggers()
             self.show_logger_stats(count)
+            self.loggers.update()
             self.Bind(wx.EVT_CLOSE, self.on_close)
             self.is_frozen = False
 
@@ -206,12 +230,25 @@ def show_logging_frame():
             evt.Skip()
             wx.CallAfter(self.process_value)
 
+        def on_logger_checked(self, evt):
+            index = evt.GetSelection()
+            logger_name = self.loggers.GetString(index)
+            state = evt.IsChecked()
+            print("logger: %s; state=%s" % (logger_name, state))
+            if state:
+                level = logging.DEBUG
+            else:
+                level = known_loggers[logger_name]
+            log = logging.getLogger(logger_name)
+            log.setLevel(level)
+
         def process_value(self):
             text = self.filter.GetValue()
             if not text:
                 return
             count = enable_loggers(text)
             self.show_logger_stats(count)
+            self.loggers.update()
 
         def show_logger_stats(self, count):
             label = "1 debug logger enabled" if count == 1 else "%d debug loggers enabled" % count
