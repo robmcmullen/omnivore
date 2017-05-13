@@ -11,16 +11,14 @@
    :align: center
    :scale: 35%
 
-.. raw:: html
-   
-   <br clear="both">
+Omnivore is a cross-platform app for modern hardware (running Linux, OS X and
+Windows) to operate on executables or disk images of Atari 8-bit and Apple ][ machines.
+
+It is designed for reverse engineering, to understand code for which the source has been lost. It was the tool than Kevin Savetz and I used to reverse engineer the `Atari 8-bit version of Jumpman <https://playermissile.com/jumpman/>`_. We understand the source almost completely now, and through this I was able to add a `full graphical level editor <omnivore.jumpman.html>`_.
 
 .. figure:: main-jumpman.png
    :align: center
    :scale: 35%
-
-Omnivore is a cross-platform app for modern hardware (running Linux, OS X and
-Windows) to work with executables or disk images of Atari 8-bit machines.
 
 Thanks to Kevin Savetz of the `ANTIC Podcast <http://ataripodcast.com>`_ and
 Wade of the `Inverse ATASCII Podcast <http://inverseatascii.info>`_
