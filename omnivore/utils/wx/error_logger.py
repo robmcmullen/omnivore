@@ -1,5 +1,19 @@
-# Standard library imports.
+# Log level manager and log viewer for wxPython
+#
+# Provides capture window to show logging messages and list of all loggers
+# known to python logging module. Loggers may be turned on and off using simple
+# pattern matching or the graphical list of loggers.
+#
+# Remembers the initial log level of each logger and sets the log level to
+# DEBUG when turning on a logger, returning the log level to the initial log
+# level when turning off.
+#
+# author: Rob McMullen
+# license: LGPL-3.0
 import os
+
+import wx
+
 import logging
 debug_log = logging.getLogger(__name__)
 
@@ -55,38 +69,24 @@ def get_default_levels():
 def show_logging_frame():
     global logging_frame
 
-    # Wait until this function is called to import other packages so we don't
-    # cause any module-loading-order-dependent problems by importing these
-    # before needed in the application
-    import wx
-
     # Logging handler & frame based on code from:
     # http://stackoverflow.com/questions/2819791/
 
     class WindowLogHandler(logging.Handler):
-        """
-        A handler class which sends log strings to a wx object
+        """A handler class which sends log strings to a wx object
         """
 
         def __init__(self, printer):
-            """
-            Initialize the handler
-            @param wxDest: the destination object to post the event to 
-            @type wxDest: wx.Window
-            """
             logging.Handler.__init__(self)
             self.level = logging.DEBUG
             self.printer = printer
 
         def flush(self):
-            """
-            does nothing for this handler
+            """ (not needed)
             """
 
         def emit(self, record):
-            """
-            Emit a record.
-
+            """add record to text control
             """
             msg = self.format(record)
             wx.CallAfter(self.printer, msg + "\n")
@@ -165,7 +165,6 @@ def show_logging_frame():
             self.is_frozen = False
 
         def on_close(self, evt):
-            #self.remove_handler()
             self.Show(False)
 
         def Show(self, state=True):
@@ -183,16 +182,11 @@ def show_logging_frame():
             self.handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s:%(msg)s"))
             logger.setLevel(logging.INFO)
 
-        def remove_handler(self):
-            logger = logging.getLogger()
-            logger.removeHandler(self.handler)
-
         def log(self, msg, override=False):
             if not self.is_frozen or override:
                 if not msg.endswith("\n"):
                     msg += "\n"
                 self.text.AppendText(msg)
-                # self.text.SetInsertionPointEnd()
 
         def show_known(self):
             get_default_levels()
@@ -204,10 +198,6 @@ def show_logging_frame():
                 level = log.getEffectiveLevel()
                 self.log("%s %s\n" % (LEVEL_MAP.get(level, str(level)), logger_name), override=True)
             self.log("%s\n\n" % ruler)
-
-        def on_test_button(self, evt):
-            import random
-            debug_log.debug(random.choice(self.LEVELS), "More? click again!")
 
         def on_known_button(self, evt):
             self.show_known()
@@ -251,13 +241,10 @@ def show_logging_frame():
 
     if logging_frame is None:
         logging_frame = LoggingFrame(None)
-        # logging_frame.show_known()
     logging_frame.Show()
 
 
 if __name__ == '__main__':
-    import wx
-    
     logging.basicConfig(level=logging.INFO)
     log = logging.getLogger("omnivore")
     log = logging.getLogger("omnivore.framework")
