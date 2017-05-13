@@ -20,6 +20,7 @@ class TestIntLabelDict(object):
             ("$12 whatever and stuff", {0x12: "whatever"}),
             ("$cd !@#$ whatEver", {0xcd: "whatEver"}),
             (">]}**  $1F !@#$ what_ever", {0x1f: "what_ever"}),
+            ("No labels defined in here", {}),
         ]
 
         for search_text, expected in items:
@@ -38,6 +39,7 @@ class TestIntLabelDict(object):
             ("whatever and stuff = $12", {0x12: "stuff"}),
             ("u_ = 1234#address", {1234: "u_"}),
             ("_u = 1234    # address", {1234: "_u"}),
+            ("No = labels = defined = in here", {}),
         ]
 
         for search_text, expected in items:

@@ -328,8 +328,12 @@ def parse_int_label_dict(text, base=10, allow_equals=False):
                 b = match.group(1)
         if match:
             line_base = 16 if b == "$" or b == "0x" else 10 if b == "#" else base
-            key = int(key, line_base)
-            d[key] = value
+            try:
+                key = int(key, line_base)
+                d[key] = value
+            except ValueError:
+                # just ignore bad lines
+                pass
     return d
 
 
