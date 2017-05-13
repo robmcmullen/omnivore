@@ -137,20 +137,9 @@ class OpenAction(Action):
     image = ImageResource('file_open')
 
     def perform(self, event):
-        if event.task.active_editor:
-            uri = event.task.active_editor.most_recent_uri
-            most_recent = ""
-            try:
-                fs_, relpath = fs.opener.opener.parse(uri)
-                if fs_.hassyspath(relpath):
-                    most_recent = os.path.dirname(fs_.getsyspath(relpath))
-            except fs.errors.FSError:
-                pass
-            dialog = FileDialog(default_directory=most_recent, parent=event.task.window.control, title="Open File")
-        else:
-            dialog = FileDialog(parent=event.task.window.control, title="Open File")
-        if dialog.open() == OK:
-            event.task.window.application.load_file(dialog.path, event.task)
+        path = event.task.prompt_local_file_open()
+        if path is not None:
+            event.task.window.application.load_file(path, event.task)
 
 
 class SaveAction(EditorAction):

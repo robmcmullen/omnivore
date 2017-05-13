@@ -69,9 +69,9 @@ class LoadFontAction(EditorAction):
     name = 'Load Font...'
 
     def perform(self, event):
-        dialog = FileDialog(parent=event.task.window.control)
-        if dialog.open() == OK:
-            self.active_editor.machine.load_font(event.task, dialog.path)
+        path = event.task.prompt_local_file_open("Load Font")
+        if path is not None:
+            self.active_editor.machine.load_font(event.task, path)
 
 
 class GetFontFromSelectionAction(EditorAction):
@@ -852,10 +852,10 @@ class ImportSegmentLabelsAction(EditorAction):
     enabled_name = 'has_origin'
 
     def perform(self, event):
-        dialog = FileDialog(parent=event.task.window.control, title="Import Segment Labels")
-        if dialog.open() == OK:
+        path = event.task.prompt_local_file_open("Import Segment Labels")
+        if path is not None:
             e = self.active_editor
-            with open(dialog.path, "r") as fh:
+            with open(path, "r") as fh:
                 text = fh.read()
             d = parse_int_label_dict(text, allow_equals=True)
             s = e.segment
@@ -1345,10 +1345,10 @@ class InsertFileAction(EditorAction):
     name = 'Insert File...'
 
     def perform(self, event):
-        dialog = FileDialog(parent=event.task.window.control)
-        if dialog.open() == OK:
+        path = event.task.prompt_local_file_open("Insert File")
+        if path is not None:
             e = self.active_editor
-            cmd = InsertFileCommand(e.segment, e.cursor_index, dialog.path)
+            cmd = InsertFileCommand(e.segment, e.cursor_index, path)
             e.process_command(cmd)
 
 
@@ -1653,10 +1653,10 @@ class LoadBaselineVersionAction(EditorAction):
     tooltip = 'Add baseline file to be used to show differences in current version'
 
     def perform(self, event):
-        dialog = FileDialog(parent=event.task.window.control)
-        if dialog.open() == OK:
+        path = event.task.prompt_local_file_open()
+        if path:
             e = self.active_editor
-            e.load_baseline(dialog.path)
+            e.load_baseline(path)
             e.compare_to_baseline()
             e.refresh_panes()
 

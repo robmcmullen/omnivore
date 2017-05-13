@@ -303,6 +303,38 @@ class FrameworkTask(Task):
         window.open()
         log.debug("All windows: %s" % self.window.application.windows)
 
+    def prompt_local_file_open(self, title="Open File", most_recent=True):
+        """Display an "open file" dialog to load from the local filesystem,
+        defaulting to the most recently used directory.
+
+        If there is no previously used directory, default to the directory of
+        the current file.
+
+        Returns the directory path on the filesystem, or None if not found.
+        """
+        dirpath = ""
+        if self.active_editor:
+            # will try path of current file
+            attempts = [self.active_editor.document.metadata.uri]
+            if most_recent:
+                # try most recent first
+                attempts[0:0] = [self.active_editor.most_recent_uri]
+
+            for uri in attempts:
+                try:
+                    uri_dir = os.path.dirname(uri)
+                    fs_, relpath = fs.opener.opener.parse(uri_dir)
+                    if fs_.hassyspath(relpath):
+                        dirpath = fs_.getsyspath(relpath)
+                        break
+                except fs.errors.FSError:
+                    pass
+
+        dialog = FileDialog(parent=self.window.control, title=title, default_directory=dirpath)
+        if dialog.open() == OK:
+            return dialog.path
+        return None
+
     def save(self):
         """ Attempts to save the current file, prompting for a path if
             necessary. Returns whether the file was saved.
