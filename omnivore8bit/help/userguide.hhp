@@ -1,0 +1,39 @@
+[OPTIONS]
+Binary TOC=No
+Binary Index=No
+Compiled file=userguide.chm
+Contents file=userguide.hhc
+Default Window=userguide
+Default topic=index.html
+Display compile progress=No
+Full text search stop list file=userguide.stp
+Full-text search=Yes
+Index file=userguide.hhk
+Language=0x409
+Title=Omnivore XL 1.0 User Manual
+
+[WINDOWS]
+userguide="Omnivore XL 1.0 User Manual","userguide.hhc","userguide.hhk","index.html","index.html",,,,,0x63520,220,0x10384e,[0,0,1024,768],,,,,,,0
+
+[FILES]
+omnivore.bitmap_edit.html
+index.html
+omnivore.map_edit.html
+genindex.html
+omnivore.jumpman.html
+omnivore.hex_edit.html
+_static\basic.css
+_static\down.png
+_static\minus.png
+_static\comment-close.png
+_static\ajax-loader.gif
+_static\file.png
+_static\doc-logo.png
+_static\up-pressed.png
+_static\up.png
+_static\pygments.css
+_static\alabaster.css
+_static\comment.png
+_static\comment-bright.png
+_static\plus.png
+_static\down-pressed.png

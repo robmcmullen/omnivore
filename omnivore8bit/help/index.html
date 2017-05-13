@@ -1,0 +1,94 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Omnivore XL 1.0 User’s Guide</title>
+
+
+
+
+<meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+</head>
+<body role="document">
+<div id="titleLine">
+<center><a href="https://playermissile.com/omnivore/"><img src="_static/doc-logo.png" alt="Omnivore XL, the 8-bit Binary Editor" /></a></center>
+<hr />
+</div>
+<span class="target" id="omnivore-xl-1-0-users-guide"><a name="omnivore-xl-1-0-user-s-guide"></a>
+<h1>Omnivore XL 1.0 User&#8217;s Guide</h1>
+<p class="centered">
+<strong></strong><strong>Hex Editor</strong> • <strong>Bitmap Viewer</strong> • <strong>Disassembler</strong> • <strong>Mini-assembler</strong> • <strong>Map Editor</strong> • <strong>Jumpman Level Editor</strong></p><div class="figure align-center"><p></p>
+<img alt="_images/main-hex.png" src="_images/main-hex.png" />
+</div>
+<p>Omnivore is a cross-platform app for modern hardware (running Linux, OS X and
+Windows) to operate on executables or disk images of Atari 8-bit and Apple ][ machines.</p>
+<p>It is designed for reverse engineering, to understand code for which the source has been lost. It was the tool than Kevin Savetz and I used to reverse engineer the <a class="reference external" href="http://playermissile.com/jumpman/">Atari 8-bit version of Jumpman</a>. We understand the source <a class="reference external" href="http://playermissile.com/jumpman/notes.html">almost completely now</a>, and through this I was able to add a <a class="reference external" href="omnivore.jumpman.html">full graphical level editor</a>.</p>
+<div class="figure align-center"><p></p>
+<img alt="_images/main-jumpman.png" src="_images/main-jumpman.png" />
+</div>
+<p>Thanks to Kevin Savetz of the <a class="reference external" href="http://ataripodcast.com">ANTIC Podcast</a> and
+Wade of the <a class="reference external" href="http://inverseatascii.info">Inverse ATASCII Podcast</a>
+for early testing and feedback.</p>
+<a name="editors"></a>
+<h2>Editors</h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="omnivore.hex_edit.html">Hex Editor</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.hex_edit.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.hex_edit.html#file-menu">File Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.hex_edit.html#edit-menu">Edit Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.hex_edit.html#view-menu">View Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.hex_edit.html#bytes-menu">Bytes Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.hex_edit.html#segment-menu">Segment Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.hex_edit.html#disk-image-menu">Disk Image Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.hex_edit.html#documents-menu">Documents Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.hex_edit.html#window-menu">Window Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.hex_edit.html#help-menu">Help Menu</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="omnivore.map_edit.html">Map Editor</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.map_edit.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.map_edit.html#file-menu">File Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.map_edit.html#edit-menu">Edit Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.map_edit.html#view-menu">View Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.map_edit.html#segment-menu">Segment Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.map_edit.html#documents-menu">Documents Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.map_edit.html#window-menu">Window Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.map_edit.html#help-menu">Help Menu</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="omnivore.bitmap_edit.html">Bitmap Editor</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.bitmap_edit.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.bitmap_edit.html#file-menu">File Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.bitmap_edit.html#edit-menu">Edit Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.bitmap_edit.html#view-menu">View Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.bitmap_edit.html#segment-menu">Segment Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.bitmap_edit.html#documents-menu">Documents Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.bitmap_edit.html#window-menu">Window Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.bitmap_edit.html#help-menu">Help Menu</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="omnivore.jumpman.html">Jumpman Level Editor</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.jumpman.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.jumpman.html#file-menu">File Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.jumpman.html#edit-menu">Edit Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.jumpman.html#view-menu">View Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.jumpman.html#jumpman-menu">Jumpman Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.jumpman.html#disk-image-menu">Disk Image Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.jumpman.html#documents-menu">Documents Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.jumpman.html#window-menu">Window Menu</a></li>
+<li class="toctree-l2"><a class="reference internal" href="omnivore.jumpman.html#help-menu">Help Menu</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+
+</span>
+<div class="footer">
+<hr />
+Updated 13 May 2017 by Rob McMullen &lt;feedback@playermissile.com&gt;
+</div>
+</body>
+</html>

@@ -1,0 +1,1880 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<HEAD>
+<meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
+<!-- Sitemap 1.0 -->
+</HEAD><BODY>
+<OBJECT type="text/site properties">
+        <param name="Window Styles" value="0x801227">
+        <param name="ImageType" value="Folder">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Omnivore XL 1.0 User Manual">
+    <param name="Local" value="index.html">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Hex Editor">
+    <param name="Local" value="omnivore.hex_edit.html">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Overview">
+    <param name="Local" value="omnivore.hex_edit.html#overview">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Editing Data">
+    <param name="Local" value="omnivore.hex_edit.html#editing-data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Baseline Data">
+    <param name="Local" value="omnivore.hex_edit.html#baseline-data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Selections">
+    <param name="Local" value="omnivore.hex_edit.html#selections">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Comments">
+    <param name="Local" value="omnivore.hex_edit.html#comments">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Disassembler">
+    <param name="Local" value="omnivore.hex_edit.html#disassembler">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Labels">
+    <param name="Local" value="omnivore.hex_edit.html#labels">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Mini-Assembler">
+    <param name="Local" value="omnivore.hex_edit.html#mini-assembler">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Data Regions">
+    <param name="Local" value="omnivore.hex_edit.html#data-regions">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Static Tracing of Disassembly">
+    <param name="Local" value="omnivore.hex_edit.html#static-tracing-of-disassembly">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Search">
+    <param name="Local" value="omnivore.hex_edit.html#search">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="File Menu">
+    <param name="Local" value="omnivore.hex_edit.html#file-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="New">
+    <param name="Local" value="omnivore.hex_edit.html#new">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Open">
+    <param name="Local" value="omnivore.hex_edit.html#open">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Open Recent">
+    <param name="Local" value="omnivore.hex_edit.html#open-recent">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Insert File">
+    <param name="Local" value="omnivore.hex_edit.html#insert-file">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save">
+    <param name="Local" value="omnivore.hex_edit.html#save">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save As">
+    <param name="Local" value="omnivore.hex_edit.html#save-as">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save Segment As">
+    <param name="Local" value="omnivore.hex_edit.html#save-segment-as">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Disassembly (.s)">
+    <param name="Local" value="omnivore.hex_edit.html#disassembly-s">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="ATasm LST file (.lst)">
+    <param name="Local" value="omnivore.hex_edit.html#atasm-lst-file-lst">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Raw Data (.dat)">
+    <param name="Local" value="omnivore.hex_edit.html#raw-data-dat">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save As Image">
+    <param name="Local" value="omnivore.hex_edit.html#save-as-image">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Revert">
+    <param name="Local" value="omnivore.hex_edit.html#revert">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Page Setup">
+    <param name="Local" value="omnivore.hex_edit.html#page-setup">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Print Preview">
+    <param name="Local" value="omnivore.hex_edit.html#print-preview">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Print">
+    <param name="Local" value="omnivore.hex_edit.html#print">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Export as XEX">
+    <param name="Local" value="omnivore.hex_edit.html#export-as-xex">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Export as Boot Disk">
+    <param name="Local" value="omnivore.hex_edit.html#export-as-boot-disk">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Quit">
+    <param name="Local" value="omnivore.hex_edit.html#quit">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Edit Menu">
+    <param name="Local" value="omnivore.hex_edit.html#edit-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Undo">
+    <param name="Local" value="omnivore.hex_edit.html#undo">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Redo">
+    <param name="Local" value="omnivore.hex_edit.html#redo">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Revert to Baseline Data">
+    <param name="Local" value="omnivore.hex_edit.html#revert-to-baseline-data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Cut">
+    <param name="Local" value="omnivore.hex_edit.html#cut">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy">
+    <param name="Local" value="omnivore.hex_edit.html#copy">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy Special">
+    <param name="Local" value="omnivore.hex_edit.html#copy-special">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy Disassembly Text">
+    <param name="Local" value="omnivore.hex_edit.html#copy-disassembly-text">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy Disassembly Comments">
+    <param name="Local" value="omnivore.hex_edit.html#copy-disassembly-comments">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy as Escaped String">
+    <param name="Local" value="omnivore.hex_edit.html#copy-as-escaped-string">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Paste">
+    <param name="Local" value="omnivore.hex_edit.html#paste">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Paste Special">
+    <param name="Local" value="omnivore.hex_edit.html#paste-special">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Paste and Repeat">
+    <param name="Local" value="omnivore.hex_edit.html#paste-and-repeat">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Paste Comments">
+    <param name="Local" value="omnivore.hex_edit.html#paste-comments">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Select All">
+    <param name="Local" value="omnivore.hex_edit.html#select-all">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Select None">
+    <param name="Local" value="omnivore.hex_edit.html#select-none">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Invert Selection">
+    <param name="Local" value="omnivore.hex_edit.html#invert-selection">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Mark Selection As">
+    <param name="Local" value="omnivore.hex_edit.html#mark-selection-as">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Code">
+    <param name="Local" value="omnivore.hex_edit.html#code">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Data">
+    <param name="Local" value="omnivore.hex_edit.html#data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Uninitialized Data">
+    <param name="Local" value="omnivore.hex_edit.html#uninitialized-data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Display List">
+    <param name="Local" value="omnivore.hex_edit.html#display-list">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Jumpman Level Data">
+    <param name="Local" value="omnivore.hex_edit.html#jumpman-level-data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Jumpman Harvest Table">
+    <param name="Local" value="omnivore.hex_edit.html#jumpman-harvest-table">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Find">
+    <param name="Local" value="omnivore.hex_edit.html#find">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Find Using Expression">
+    <param name="Local" value="omnivore.hex_edit.html#find-using-expression">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Find Next">
+    <param name="Local" value="omnivore.hex_edit.html#find-next">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Find to Selection">
+    <param name="Local" value="omnivore.hex_edit.html#find-to-selection">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Preferences">
+    <param name="Local" value="omnivore.hex_edit.html#preferences">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="View Menu">
+    <param name="Local" value="omnivore.hex_edit.html#view-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Predefined Machines">
+    <param name="Local" value="omnivore.hex_edit.html#predefined-machines">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Processor">
+    <param name="Local" value="omnivore.hex_edit.html#processor">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Assembler Syntax">
+    <param name="Local" value="omnivore.hex_edit.html#assembler-syntax">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="MAC/65">
+    <param name="Local" value="omnivore.hex_edit.html#mac-65">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="cc65">
+    <param name="Local" value="omnivore.hex_edit.html#cc65">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="MADS">
+    <param name="Local" value="omnivore.hex_edit.html#mads">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Merlin">
+    <param name="Local" value="omnivore.hex_edit.html#merlin">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Add New Assembler">
+    <param name="Local" value="omnivore.hex_edit.html#add-new-assembler">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Edit Assemblers">
+    <param name="Local" value="omnivore.hex_edit.html#edit-assemblers">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Set Current as System Default">
+    <param name="Local" value="omnivore.hex_edit.html#set-current-as-system-default">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Memory Map">
+    <param name="Local" value="omnivore.hex_edit.html#memory-map">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Colors">
+    <param name="Local" value="omnivore.hex_edit.html#colors">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="ANTIC Powerup Colors">
+    <param name="Local" value="omnivore.hex_edit.html#antic-powerup-colors">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Use ANTIC Colors">
+    <param name="Local" value="omnivore.hex_edit.html#use-antic-colors">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Font">
+    <param name="Local" value="omnivore.hex_edit.html#font">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="8x8 Atari Default Font">
+    <param name="Local" value="omnivore.hex_edit.html#x8-atari-default-font">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="8x8 Atari Custom Computer Font">
+    <param name="Local" value="omnivore.hex_edit.html#x8-atari-custom-computer-font">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="7x8 Apple ][ Default Font">
+    <param name="Local" value="omnivore.hex_edit.html#x8-apple-default-font">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="7x8 Apple ][ Font w/Mouse Text">
+    <param name="Local" value="omnivore.hex_edit.html#x8-apple-font-w-mouse-text">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="mountainking.fnt">
+    <param name="Local" value="omnivore.hex_edit.html#mountainking-fnt">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="mountainking.fnt">
+    <param name="Local" value="omnivore.hex_edit.html#id1">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="mountainking.fnt">
+    <param name="Local" value="omnivore.hex_edit.html#id2">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="mountainking.fnt">
+    <param name="Local" value="omnivore.hex_edit.html#id3">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Load Font">
+    <param name="Local" value="omnivore.hex_edit.html#load-font">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Get Font From Selection">
+    <param name="Local" value="omnivore.hex_edit.html#get-font-from-selection">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Character Display">
+    <param name="Local" value="omnivore.hex_edit.html#character-display">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Character Display Modes">
+    <param name="Local" value="omnivore.hex_edit.html#character-display-modes">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Character Mappings">
+    <param name="Local" value="omnivore.hex_edit.html#character-mappings">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Map Width">
+    <param name="Local" value="omnivore.hex_edit.html#map-width">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Bitmap Display">
+    <param name="Local" value="omnivore.hex_edit.html#bitmap-display">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Bitmap Width">
+    <param name="Local" value="omnivore.hex_edit.html#bitmap-width">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Bitmap Zoom">
+    <param name="Local" value="omnivore.hex_edit.html#bitmap-zoom">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Show Baseline Differences">
+    <param name="Local" value="omnivore.hex_edit.html#show-baseline-differences">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Text Font">
+    <param name="Local" value="omnivore.hex_edit.html#text-font">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Bitmap">
+    <param name="Local" value="omnivore.hex_edit.html#bitmap">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Char Map">
+    <param name="Local" value="omnivore.hex_edit.html#char-map">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Disassembly">
+    <param name="Local" value="omnivore.hex_edit.html#disassembly">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Sidebar">
+    <param name="Local" value="omnivore.hex_edit.html#sidebar">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Text Editor">
+    <param name="Local" value="omnivore.hex_edit.html#text-editor">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="HTML Viewer">
+    <param name="Local" value="omnivore.hex_edit.html#html-viewer">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="HTML Viewer">
+    <param name="Local" value="omnivore.hex_edit.html#id4">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Hex Editor">
+    <param name="Local" value="omnivore.hex_edit.html#id5">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Bytes Menu">
+    <param name="Local" value="omnivore.hex_edit.html#bytes-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Zero Bytes">
+    <param name="Local" value="omnivore.hex_edit.html#zero-bytes">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="FF Bytes">
+    <param name="Local" value="omnivore.hex_edit.html#ff-bytes">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="NOP Bytes">
+    <param name="Local" value="omnivore.hex_edit.html#nop-bytes">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Set Value">
+    <param name="Local" value="omnivore.hex_edit.html#set-value">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Set High Bit">
+    <param name="Local" value="omnivore.hex_edit.html#set-high-bit">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Clear High Bit">
+    <param name="Local" value="omnivore.hex_edit.html#clear-high-bit">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Bitwise NOT">
+    <param name="Local" value="omnivore.hex_edit.html#bitwise-not">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="OR With">
+    <param name="Local" value="omnivore.hex_edit.html#or-with">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="AND With">
+    <param name="Local" value="omnivore.hex_edit.html#and-with">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="XOR With">
+    <param name="Local" value="omnivore.hex_edit.html#xor-with">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Left Shift">
+    <param name="Local" value="omnivore.hex_edit.html#left-shift">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Right Shift">
+    <param name="Local" value="omnivore.hex_edit.html#right-shift">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Left Rotate">
+    <param name="Local" value="omnivore.hex_edit.html#left-rotate">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Right Rotate">
+    <param name="Local" value="omnivore.hex_edit.html#right-rotate">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Reverse Bits">
+    <param name="Local" value="omnivore.hex_edit.html#reverse-bits">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Add">
+    <param name="Local" value="omnivore.hex_edit.html#add">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Subtract">
+    <param name="Local" value="omnivore.hex_edit.html#subtract">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Subtract From">
+    <param name="Local" value="omnivore.hex_edit.html#subtract-from">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Multiply">
+    <param name="Local" value="omnivore.hex_edit.html#multiply">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Divide By">
+    <param name="Local" value="omnivore.hex_edit.html#divide-by">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Divide From">
+    <param name="Local" value="omnivore.hex_edit.html#divide-from">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Ramp Up">
+    <param name="Local" value="omnivore.hex_edit.html#ramp-up">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Ramp Down">
+    <param name="Local" value="omnivore.hex_edit.html#ramp-down">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Segment Menu">
+    <param name="Local" value="omnivore.hex_edit.html#segment-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="View Segment">
+    <param name="Local" value="omnivore.hex_edit.html#view-segment">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="New Segment From Selection">
+    <param name="Local" value="omnivore.hex_edit.html#new-segment-from-selection">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Multiple Segments From Selection">
+    <param name="Local" value="omnivore.hex_edit.html#multiple-segments-from-selection">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Interleave Segments">
+    <param name="Local" value="omnivore.hex_edit.html#interleave-segments">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Set Segment Origin">
+    <param name="Local" value="omnivore.hex_edit.html#set-segment-origin">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Add Comment">
+    <param name="Local" value="omnivore.hex_edit.html#add-comment">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Remove Comment">
+    <param name="Local" value="omnivore.hex_edit.html#remove-comment">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Add Label">
+    <param name="Local" value="omnivore.hex_edit.html#add-label">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Remove Label">
+    <param name="Local" value="omnivore.hex_edit.html#remove-label">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Manage Segment Labels">
+    <param name="Local" value="omnivore.hex_edit.html#manage-segment-labels">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Import">
+    <param name="Local" value="omnivore.hex_edit.html#import">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Export User Defined Labels">
+    <param name="Local" value="omnivore.hex_edit.html#export-user-defined-labels">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Export All Labels">
+    <param name="Local" value="omnivore.hex_edit.html#export-all-labels">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Start New Disassembly Trace">
+    <param name="Local" value="omnivore.hex_edit.html#start-new-disassembly-trace">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Add Trace Start Point">
+    <param name="Local" value="omnivore.hex_edit.html#add-trace-start-point">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Apply Trace to Segment">
+    <param name="Local" value="omnivore.hex_edit.html#apply-trace-to-segment">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Clear Trace">
+    <param name="Local" value="omnivore.hex_edit.html#clear-trace">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Disk Image Menu">
+    <param name="Local" value="omnivore.hex_edit.html#disk-image-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="File Type">
+    <param name="Local" value="omnivore.hex_edit.html#file-type">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="No parser">
+    <param name="Local" value="omnivore.hex_edit.html#no-parser">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Raw Data">
+    <param name="Local" value="omnivore.hex_edit.html#raw-data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Atari 8-bit Disk Image">
+    <param name="Local" value="omnivore.hex_edit.html#atari-8-bit-disk-image">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Atari 8-bit Executable">
+    <param name="Local" value="omnivore.hex_edit.html#atari-8-bit-executable">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Atari 8-bit Cartridge">
+    <param name="Local" value="omnivore.hex_edit.html#atari-8-bit-cartridge">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Atari 5200 Cartridge">
+    <param name="Local" value="omnivore.hex_edit.html#atari-5200-cartridge">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="MAME">
+    <param name="Local" value="omnivore.hex_edit.html#mame">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Apple ][ Disk Image">
+    <param name="Local" value="omnivore.hex_edit.html#apple-disk-image">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Apple ][ Binary">
+    <param name="Local" value="omnivore.hex_edit.html#apple-binary">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Run Emulator">
+    <param name="Local" value="omnivore.hex_edit.html#run-emulator">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Emulators">
+    <param name="Local" value="omnivore.hex_edit.html#emulators">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Add New Emulator">
+    <param name="Local" value="omnivore.hex_edit.html#add-new-emulator">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Edit Emulators">
+    <param name="Local" value="omnivore.hex_edit.html#edit-emulators">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Set Current as System Default">
+    <param name="Local" value="omnivore.hex_edit.html#id6">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Expand Disk Image">
+    <param name="Local" value="omnivore.hex_edit.html#expand-disk-image">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Add Baseline Difference File">
+    <param name="Local" value="omnivore.hex_edit.html#add-baseline-difference-file">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Find Next Difference">
+    <param name="Local" value="omnivore.hex_edit.html#find-next-difference">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Find Previous Difference">
+    <param name="Local" value="omnivore.hex_edit.html#find-previous-difference">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="List Differences">
+    <param name="Local" value="omnivore.hex_edit.html#list-differences">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Goto Address">
+    <param name="Local" value="omnivore.hex_edit.html#goto-address">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Documents Menu">
+    <param name="Local" value="omnivore.hex_edit.html#documents-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="omnivore (about://omnivore)">
+    <param name="Local" value="omnivore.hex_edit.html#omnivore-about-omnivore">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Window Menu">
+    <param name="Local" value="omnivore.hex_edit.html#window-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="New View In">
+    <param name="Local" value="omnivore.hex_edit.html#new-view-in">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="New Window">
+    <param name="Local" value="omnivore.hex_edit.html#new-window">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Help Menu">
+    <param name="Local" value="omnivore.hex_edit.html#help-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="About">
+    <param name="Local" value="omnivore.hex_edit.html#about">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="User Guide">
+    <param name="Local" value="omnivore.hex_edit.html#user-guide">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Open Log Directory in File Manager">
+    <param name="Local" value="omnivore.hex_edit.html#open-log-directory-in-file-manager">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Show Debug Log">
+    <param name="Local" value="omnivore.hex_edit.html#show-debug-log">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="More Debugging">
+    <param name="Local" value="omnivore.hex_edit.html#more-debugging">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Widget Inspector">
+    <param name="Local" value="omnivore.hex_edit.html#widget-inspector">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Raise Exception">
+    <param name="Local" value="omnivore.hex_edit.html#raise-exception">
+</OBJECT>
+</UL>
+</UL>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Map Editor">
+    <param name="Local" value="omnivore.map_edit.html">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Overview">
+    <param name="Local" value="omnivore.map_edit.html#overview">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="File Menu">
+    <param name="Local" value="omnivore.map_edit.html#file-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="New">
+    <param name="Local" value="omnivore.map_edit.html#new">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Open">
+    <param name="Local" value="omnivore.map_edit.html#open">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Open Recent">
+    <param name="Local" value="omnivore.map_edit.html#open-recent">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Insert File">
+    <param name="Local" value="omnivore.map_edit.html#insert-file">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save">
+    <param name="Local" value="omnivore.map_edit.html#save">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save As">
+    <param name="Local" value="omnivore.map_edit.html#save-as">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save Segment As">
+    <param name="Local" value="omnivore.map_edit.html#save-segment-as">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Raw Data (.dat)">
+    <param name="Local" value="omnivore.map_edit.html#raw-data-dat">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save As Image">
+    <param name="Local" value="omnivore.map_edit.html#save-as-image">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Revert">
+    <param name="Local" value="omnivore.map_edit.html#revert">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Page Setup">
+    <param name="Local" value="omnivore.map_edit.html#page-setup">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Print Preview">
+    <param name="Local" value="omnivore.map_edit.html#print-preview">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Print">
+    <param name="Local" value="omnivore.map_edit.html#print">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Export as XEX">
+    <param name="Local" value="omnivore.map_edit.html#export-as-xex">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Export as Boot Disk">
+    <param name="Local" value="omnivore.map_edit.html#export-as-boot-disk">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Quit">
+    <param name="Local" value="omnivore.map_edit.html#quit">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Edit Menu">
+    <param name="Local" value="omnivore.map_edit.html#edit-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Undo">
+    <param name="Local" value="omnivore.map_edit.html#undo">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Redo">
+    <param name="Local" value="omnivore.map_edit.html#redo">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Revert to Baseline Data">
+    <param name="Local" value="omnivore.map_edit.html#revert-to-baseline-data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Cut">
+    <param name="Local" value="omnivore.map_edit.html#cut">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy">
+    <param name="Local" value="omnivore.map_edit.html#copy">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy Special">
+    <param name="Local" value="omnivore.map_edit.html#copy-special">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy Disassembly Text">
+    <param name="Local" value="omnivore.map_edit.html#copy-disassembly-text">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy Disassembly Comments">
+    <param name="Local" value="omnivore.map_edit.html#copy-disassembly-comments">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy as Escaped String">
+    <param name="Local" value="omnivore.map_edit.html#copy-as-escaped-string">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Paste">
+    <param name="Local" value="omnivore.map_edit.html#paste">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Paste Special">
+    <param name="Local" value="omnivore.map_edit.html#paste-special">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Paste and Repeat">
+    <param name="Local" value="omnivore.map_edit.html#paste-and-repeat">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Paste Comments">
+    <param name="Local" value="omnivore.map_edit.html#paste-comments">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Select All">
+    <param name="Local" value="omnivore.map_edit.html#select-all">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Select None">
+    <param name="Local" value="omnivore.map_edit.html#select-none">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Invert Selection">
+    <param name="Local" value="omnivore.map_edit.html#invert-selection">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Mark Selection As">
+    <param name="Local" value="omnivore.map_edit.html#mark-selection-as">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Code">
+    <param name="Local" value="omnivore.map_edit.html#code">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Data">
+    <param name="Local" value="omnivore.map_edit.html#data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Uninitialized Data">
+    <param name="Local" value="omnivore.map_edit.html#uninitialized-data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Display List">
+    <param name="Local" value="omnivore.map_edit.html#display-list">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Jumpman Level Data">
+    <param name="Local" value="omnivore.map_edit.html#jumpman-level-data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Jumpman Harvest Table">
+    <param name="Local" value="omnivore.map_edit.html#jumpman-harvest-table">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Find">
+    <param name="Local" value="omnivore.map_edit.html#find">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Find Using Expression">
+    <param name="Local" value="omnivore.map_edit.html#find-using-expression">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Find Next">
+    <param name="Local" value="omnivore.map_edit.html#find-next">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Find to Selection">
+    <param name="Local" value="omnivore.map_edit.html#find-to-selection">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Preferences">
+    <param name="Local" value="omnivore.map_edit.html#preferences">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="View Menu">
+    <param name="Local" value="omnivore.map_edit.html#view-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Colors">
+    <param name="Local" value="omnivore.map_edit.html#colors">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="ANTIC Powerup Colors">
+    <param name="Local" value="omnivore.map_edit.html#antic-powerup-colors">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Use ANTIC Colors">
+    <param name="Local" value="omnivore.map_edit.html#use-antic-colors">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Font">
+    <param name="Local" value="omnivore.map_edit.html#font">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="8x8 Atari Default Font">
+    <param name="Local" value="omnivore.map_edit.html#x8-atari-default-font">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="8x8 Atari Custom Computer Font">
+    <param name="Local" value="omnivore.map_edit.html#x8-atari-custom-computer-font">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="7x8 Apple ][ Default Font">
+    <param name="Local" value="omnivore.map_edit.html#x8-apple-default-font">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="7x8 Apple ][ Font w/Mouse Text">
+    <param name="Local" value="omnivore.map_edit.html#x8-apple-font-w-mouse-text">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="mountainking.fnt">
+    <param name="Local" value="omnivore.map_edit.html#mountainking-fnt">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="mountainking.fnt">
+    <param name="Local" value="omnivore.map_edit.html#id1">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="mountainking.fnt">
+    <param name="Local" value="omnivore.map_edit.html#id2">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="mountainking.fnt">
+    <param name="Local" value="omnivore.map_edit.html#id3">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Load Font">
+    <param name="Local" value="omnivore.map_edit.html#load-font">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Get Font From Selection">
+    <param name="Local" value="omnivore.map_edit.html#get-font-from-selection">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Character Display">
+    <param name="Local" value="omnivore.map_edit.html#character-display">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Character Display Modes">
+    <param name="Local" value="omnivore.map_edit.html#character-display-modes">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Character Mappings">
+    <param name="Local" value="omnivore.map_edit.html#character-mappings">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Map Width">
+    <param name="Local" value="omnivore.map_edit.html#map-width">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Show Baseline Differences">
+    <param name="Local" value="omnivore.map_edit.html#show-baseline-differences">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Text Font">
+    <param name="Local" value="omnivore.map_edit.html#text-font">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Character Set">
+    <param name="Local" value="omnivore.map_edit.html#character-set">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Page Map">
+    <param name="Local" value="omnivore.map_edit.html#page-map">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Sidebar">
+    <param name="Local" value="omnivore.map_edit.html#sidebar">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Tile Map">
+    <param name="Local" value="omnivore.map_edit.html#tile-map">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Text Editor">
+    <param name="Local" value="omnivore.map_edit.html#text-editor">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="HTML Viewer">
+    <param name="Local" value="omnivore.map_edit.html#html-viewer">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="HTML Viewer">
+    <param name="Local" value="omnivore.map_edit.html#id4">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Hex Editor">
+    <param name="Local" value="omnivore.map_edit.html#hex-editor">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Map Editor">
+    <param name="Local" value="omnivore.map_edit.html#id5">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Segment Menu">
+    <param name="Local" value="omnivore.map_edit.html#segment-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="View Segment">
+    <param name="Local" value="omnivore.map_edit.html#view-segment">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Documents Menu">
+    <param name="Local" value="omnivore.map_edit.html#documents-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="omnivore (about://omnivore)">
+    <param name="Local" value="omnivore.map_edit.html#omnivore-about-omnivore">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Window Menu">
+    <param name="Local" value="omnivore.map_edit.html#window-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="New View In">
+    <param name="Local" value="omnivore.map_edit.html#new-view-in">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="New Window">
+    <param name="Local" value="omnivore.map_edit.html#new-window">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Help Menu">
+    <param name="Local" value="omnivore.map_edit.html#help-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="About">
+    <param name="Local" value="omnivore.map_edit.html#about">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="User Guide">
+    <param name="Local" value="omnivore.map_edit.html#user-guide">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Open Log Directory in File Manager">
+    <param name="Local" value="omnivore.map_edit.html#open-log-directory-in-file-manager">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Show Debug Log">
+    <param name="Local" value="omnivore.map_edit.html#show-debug-log">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="More Debugging">
+    <param name="Local" value="omnivore.map_edit.html#more-debugging">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Widget Inspector">
+    <param name="Local" value="omnivore.map_edit.html#widget-inspector">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Raise Exception">
+    <param name="Local" value="omnivore.map_edit.html#raise-exception">
+</OBJECT>
+</UL>
+</UL>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Bitmap Editor">
+    <param name="Local" value="omnivore.bitmap_edit.html">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Overview">
+    <param name="Local" value="omnivore.bitmap_edit.html#overview">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="File Menu">
+    <param name="Local" value="omnivore.bitmap_edit.html#file-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="New">
+    <param name="Local" value="omnivore.bitmap_edit.html#new">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Open">
+    <param name="Local" value="omnivore.bitmap_edit.html#open">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Open Recent">
+    <param name="Local" value="omnivore.bitmap_edit.html#open-recent">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Insert File">
+    <param name="Local" value="omnivore.bitmap_edit.html#insert-file">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save">
+    <param name="Local" value="omnivore.bitmap_edit.html#save">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save As">
+    <param name="Local" value="omnivore.bitmap_edit.html#save-as">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save Segment As">
+    <param name="Local" value="omnivore.bitmap_edit.html#save-segment-as">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Raw Data (.dat)">
+    <param name="Local" value="omnivore.bitmap_edit.html#raw-data-dat">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save As Image">
+    <param name="Local" value="omnivore.bitmap_edit.html#save-as-image">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Revert">
+    <param name="Local" value="omnivore.bitmap_edit.html#revert">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Page Setup">
+    <param name="Local" value="omnivore.bitmap_edit.html#page-setup">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Print Preview">
+    <param name="Local" value="omnivore.bitmap_edit.html#print-preview">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Print">
+    <param name="Local" value="omnivore.bitmap_edit.html#print">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Export as XEX">
+    <param name="Local" value="omnivore.bitmap_edit.html#export-as-xex">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Export as Boot Disk">
+    <param name="Local" value="omnivore.bitmap_edit.html#export-as-boot-disk">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Quit">
+    <param name="Local" value="omnivore.bitmap_edit.html#quit">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Edit Menu">
+    <param name="Local" value="omnivore.bitmap_edit.html#edit-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Undo">
+    <param name="Local" value="omnivore.bitmap_edit.html#undo">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Redo">
+    <param name="Local" value="omnivore.bitmap_edit.html#redo">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Revert to Baseline Data">
+    <param name="Local" value="omnivore.bitmap_edit.html#revert-to-baseline-data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Cut">
+    <param name="Local" value="omnivore.bitmap_edit.html#cut">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy">
+    <param name="Local" value="omnivore.bitmap_edit.html#copy">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy Special">
+    <param name="Local" value="omnivore.bitmap_edit.html#copy-special">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy Disassembly Text">
+    <param name="Local" value="omnivore.bitmap_edit.html#copy-disassembly-text">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy Disassembly Comments">
+    <param name="Local" value="omnivore.bitmap_edit.html#copy-disassembly-comments">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy as Escaped String">
+    <param name="Local" value="omnivore.bitmap_edit.html#copy-as-escaped-string">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Paste">
+    <param name="Local" value="omnivore.bitmap_edit.html#paste">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Paste Special">
+    <param name="Local" value="omnivore.bitmap_edit.html#paste-special">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Paste and Repeat">
+    <param name="Local" value="omnivore.bitmap_edit.html#paste-and-repeat">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Paste Comments">
+    <param name="Local" value="omnivore.bitmap_edit.html#paste-comments">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Select All">
+    <param name="Local" value="omnivore.bitmap_edit.html#select-all">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Select None">
+    <param name="Local" value="omnivore.bitmap_edit.html#select-none">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Invert Selection">
+    <param name="Local" value="omnivore.bitmap_edit.html#invert-selection">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Mark Selection As">
+    <param name="Local" value="omnivore.bitmap_edit.html#mark-selection-as">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Code">
+    <param name="Local" value="omnivore.bitmap_edit.html#code">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Data">
+    <param name="Local" value="omnivore.bitmap_edit.html#data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Uninitialized Data">
+    <param name="Local" value="omnivore.bitmap_edit.html#uninitialized-data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Display List">
+    <param name="Local" value="omnivore.bitmap_edit.html#display-list">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Jumpman Level Data">
+    <param name="Local" value="omnivore.bitmap_edit.html#jumpman-level-data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Jumpman Harvest Table">
+    <param name="Local" value="omnivore.bitmap_edit.html#jumpman-harvest-table">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Find">
+    <param name="Local" value="omnivore.bitmap_edit.html#find">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Find Using Expression">
+    <param name="Local" value="omnivore.bitmap_edit.html#find-using-expression">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Find Next">
+    <param name="Local" value="omnivore.bitmap_edit.html#find-next">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Find to Selection">
+    <param name="Local" value="omnivore.bitmap_edit.html#find-to-selection">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Preferences">
+    <param name="Local" value="omnivore.bitmap_edit.html#preferences">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="View Menu">
+    <param name="Local" value="omnivore.bitmap_edit.html#view-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Colors">
+    <param name="Local" value="omnivore.bitmap_edit.html#colors">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="ANTIC Powerup Colors">
+    <param name="Local" value="omnivore.bitmap_edit.html#antic-powerup-colors">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Use ANTIC Colors">
+    <param name="Local" value="omnivore.bitmap_edit.html#use-antic-colors">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Bitmap Display">
+    <param name="Local" value="omnivore.bitmap_edit.html#bitmap-display">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Bitmap Width">
+    <param name="Local" value="omnivore.bitmap_edit.html#bitmap-width">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Bitmap Zoom">
+    <param name="Local" value="omnivore.bitmap_edit.html#bitmap-zoom">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Show Baseline Differences">
+    <param name="Local" value="omnivore.bitmap_edit.html#show-baseline-differences">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Text Font">
+    <param name="Local" value="omnivore.bitmap_edit.html#text-font">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Sidebar">
+    <param name="Local" value="omnivore.bitmap_edit.html#sidebar">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Text Editor">
+    <param name="Local" value="omnivore.bitmap_edit.html#text-editor">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="HTML Viewer">
+    <param name="Local" value="omnivore.bitmap_edit.html#html-viewer">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="HTML Viewer">
+    <param name="Local" value="omnivore.bitmap_edit.html#id1">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Hex Editor">
+    <param name="Local" value="omnivore.bitmap_edit.html#hex-editor">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Map Editor">
+    <param name="Local" value="omnivore.bitmap_edit.html#map-editor">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Bitmap Editor">
+    <param name="Local" value="omnivore.bitmap_edit.html#id2">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Segment Menu">
+    <param name="Local" value="omnivore.bitmap_edit.html#segment-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="View Segment">
+    <param name="Local" value="omnivore.bitmap_edit.html#view-segment">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="New Segment From Selection">
+    <param name="Local" value="omnivore.bitmap_edit.html#new-segment-from-selection">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Multiple Segments From Selection">
+    <param name="Local" value="omnivore.bitmap_edit.html#multiple-segments-from-selection">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Documents Menu">
+    <param name="Local" value="omnivore.bitmap_edit.html#documents-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="omnivore (about://omnivore)">
+    <param name="Local" value="omnivore.bitmap_edit.html#omnivore-about-omnivore">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Window Menu">
+    <param name="Local" value="omnivore.bitmap_edit.html#window-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="New View In">
+    <param name="Local" value="omnivore.bitmap_edit.html#new-view-in">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="New Window">
+    <param name="Local" value="omnivore.bitmap_edit.html#new-window">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Help Menu">
+    <param name="Local" value="omnivore.bitmap_edit.html#help-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="About">
+    <param name="Local" value="omnivore.bitmap_edit.html#about">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="User Guide">
+    <param name="Local" value="omnivore.bitmap_edit.html#user-guide">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Open Log Directory in File Manager">
+    <param name="Local" value="omnivore.bitmap_edit.html#open-log-directory-in-file-manager">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Show Debug Log">
+    <param name="Local" value="omnivore.bitmap_edit.html#show-debug-log">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="More Debugging">
+    <param name="Local" value="omnivore.bitmap_edit.html#more-debugging">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Widget Inspector">
+    <param name="Local" value="omnivore.bitmap_edit.html#widget-inspector">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Raise Exception">
+    <param name="Local" value="omnivore.bitmap_edit.html#raise-exception">
+</OBJECT>
+</UL>
+</UL>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Jumpman Level Editor">
+    <param name="Local" value="omnivore.jumpman.html">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Overview">
+    <param name="Local" value="omnivore.jumpman.html#overview">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Advanced Levels With Custom Code">
+    <param name="Local" value="omnivore.jumpman.html#advanced-levels-with-custom-code">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Disassembly">
+    <param name="Local" value="omnivore.jumpman.html#disassembly">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="A Note on Terminology">
+    <param name="Local" value="omnivore.jumpman.html#a-note-on-terminology">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="File Menu">
+    <param name="Local" value="omnivore.jumpman.html#file-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="New">
+    <param name="Local" value="omnivore.jumpman.html#new">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Open">
+    <param name="Local" value="omnivore.jumpman.html#open">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Open Recent">
+    <param name="Local" value="omnivore.jumpman.html#open-recent">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Insert File">
+    <param name="Local" value="omnivore.jumpman.html#insert-file">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save">
+    <param name="Local" value="omnivore.jumpman.html#save">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save As">
+    <param name="Local" value="omnivore.jumpman.html#save-as">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save Segment As">
+    <param name="Local" value="omnivore.jumpman.html#save-segment-as">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Jumpman Level Tester ATR (.atr)">
+    <param name="Local" value="omnivore.jumpman.html#jumpman-level-tester-atr-atr">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Raw Data (.dat)">
+    <param name="Local" value="omnivore.jumpman.html#raw-data-dat">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Save As Image">
+    <param name="Local" value="omnivore.jumpman.html#save-as-image">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Revert">
+    <param name="Local" value="omnivore.jumpman.html#revert">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Page Setup">
+    <param name="Local" value="omnivore.jumpman.html#page-setup">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Print Preview">
+    <param name="Local" value="omnivore.jumpman.html#print-preview">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Print">
+    <param name="Local" value="omnivore.jumpman.html#print">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Export as XEX">
+    <param name="Local" value="omnivore.jumpman.html#export-as-xex">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Export as Boot Disk">
+    <param name="Local" value="omnivore.jumpman.html#export-as-boot-disk">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Quit">
+    <param name="Local" value="omnivore.jumpman.html#quit">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Edit Menu">
+    <param name="Local" value="omnivore.jumpman.html#edit-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Undo">
+    <param name="Local" value="omnivore.jumpman.html#undo">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Redo">
+    <param name="Local" value="omnivore.jumpman.html#redo">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Cut">
+    <param name="Local" value="omnivore.jumpman.html#cut">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Copy">
+    <param name="Local" value="omnivore.jumpman.html#copy">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Paste">
+    <param name="Local" value="omnivore.jumpman.html#paste">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Select All">
+    <param name="Local" value="omnivore.jumpman.html#select-all">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Select None">
+    <param name="Local" value="omnivore.jumpman.html#select-none">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Invert Selection">
+    <param name="Local" value="omnivore.jumpman.html#invert-selection">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Flip Selection Vertically">
+    <param name="Local" value="omnivore.jumpman.html#flip-selection-vertically">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Flip Selection Horizontally">
+    <param name="Local" value="omnivore.jumpman.html#flip-selection-horizontally">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Preferences">
+    <param name="Local" value="omnivore.jumpman.html#preferences">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="View Menu">
+    <param name="Local" value="omnivore.jumpman.html#view-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Colors">
+    <param name="Local" value="omnivore.jumpman.html#colors">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="ANTIC Powerup Colors">
+    <param name="Local" value="omnivore.jumpman.html#antic-powerup-colors">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Use ANTIC Colors">
+    <param name="Local" value="omnivore.jumpman.html#use-antic-colors">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Show Baseline Differences">
+    <param name="Local" value="omnivore.jumpman.html#show-baseline-differences">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Text Font">
+    <param name="Local" value="omnivore.jumpman.html#text-font">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Level Data">
+    <param name="Local" value="omnivore.jumpman.html#level-data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Raw Level Data">
+    <param name="Local" value="omnivore.jumpman.html#raw-level-data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Sidebar">
+    <param name="Local" value="omnivore.jumpman.html#sidebar">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Trigger Painting">
+    <param name="Local" value="omnivore.jumpman.html#trigger-painting">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Text Editor">
+    <param name="Local" value="omnivore.jumpman.html#text-editor">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="HTML Viewer">
+    <param name="Local" value="omnivore.jumpman.html#html-viewer">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="HTML Viewer">
+    <param name="Local" value="omnivore.jumpman.html#id1">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Hex Editor">
+    <param name="Local" value="omnivore.jumpman.html#hex-editor">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Map Editor">
+    <param name="Local" value="omnivore.jumpman.html#map-editor">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Bitmap Editor">
+    <param name="Local" value="omnivore.jumpman.html#bitmap-editor">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Jumpman Level Editor">
+    <param name="Local" value="omnivore.jumpman.html#id2">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Jumpman Menu">
+    <param name="Local" value="omnivore.jumpman.html#jumpman-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Edit Level">
+    <param name="Local" value="omnivore.jumpman.html#edit-level">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Clear Trigger Function">
+    <param name="Local" value="omnivore.jumpman.html#clear-trigger-function">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Set Trigger Function">
+    <param name="Local" value="omnivore.jumpman.html#set-trigger-function">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Custom Code">
+    <param name="Local" value="omnivore.jumpman.html#custom-code">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Recompile Code">
+    <param name="Local" value="omnivore.jumpman.html#recompile-code">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Disk Image Menu">
+    <param name="Local" value="omnivore.jumpman.html#disk-image-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Run Emulator">
+    <param name="Local" value="omnivore.jumpman.html#run-emulator">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Emulators">
+    <param name="Local" value="omnivore.jumpman.html#emulators">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Add New Emulator">
+    <param name="Local" value="omnivore.jumpman.html#add-new-emulator">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Edit Emulators">
+    <param name="Local" value="omnivore.jumpman.html#edit-emulators">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Set Current as System Default">
+    <param name="Local" value="omnivore.jumpman.html#set-current-as-system-default">
+</OBJECT>
+</UL>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Documents Menu">
+    <param name="Local" value="omnivore.jumpman.html#documents-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="omnivore (about://omnivore)">
+    <param name="Local" value="omnivore.jumpman.html#omnivore-about-omnivore">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Window Menu">
+    <param name="Local" value="omnivore.jumpman.html#window-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="New View In">
+    <param name="Local" value="omnivore.jumpman.html#new-view-in">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="New Window">
+    <param name="Local" value="omnivore.jumpman.html#new-window">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Help Menu">
+    <param name="Local" value="omnivore.jumpman.html#help-menu">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="About">
+    <param name="Local" value="omnivore.jumpman.html#about">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="User Guide">
+    <param name="Local" value="omnivore.jumpman.html#user-guide">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Open Log Directory in File Manager">
+    <param name="Local" value="omnivore.jumpman.html#open-log-directory-in-file-manager">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Show Debug Log">
+    <param name="Local" value="omnivore.jumpman.html#show-debug-log">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="More Debugging">
+    <param name="Local" value="omnivore.jumpman.html#more-debugging">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Widget Inspector">
+    <param name="Local" value="omnivore.jumpman.html#widget-inspector">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Raise Exception">
+    <param name="Local" value="omnivore.jumpman.html#raise-exception">
+</OBJECT>
+</UL>
+</UL>
+</UL>
+</UL></BODY></HTML>

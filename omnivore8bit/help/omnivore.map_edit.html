@@ -1,0 +1,484 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Map Editor</title>
+
+
+
+
+
+<meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+</head>
+<body role="document">
+<div id="titleLine">
+<center><a href="https://playermissile.com/omnivore/"><img src="_static/doc-logo.png" alt="Omnivore XL, the 8-bit Binary Editor" /></a></center>
+<hr />
+</div>
+<a name="map-editor">
+<h1>Map Editor</h1>
+<div class="toctree-wrapper compound">
+<ul class="simple">
+</ul>
+</div>
+<a name="overview"></a>
+<h2>Overview</h2>
+<p>Map edit mode provides a tile-based editor, capable of handling
+scrolling playfields much wider than the screen.</p>
+<p>Currently it has mostly been testing with Getaway! level editing, but it
+can edit arbitrary maps. It needs a segment that exactly fits the
+dimensions of the map, so some number of bytes wide times the number of
+rows. If it does recognize the disk image as a Getaway! disk, it will set
+up some extra features.</p>
+<p>Selecting a segment will then show the map on a scrolling window. There are
+tools available in the toolbar, such as line and rectangle drawing, that
+can help speed up the process of creating areas. Cut and paste of
+rectangular areas is supported. The basic usage of the draw tools is to
+select a tile and use that as the drawing tile for whatever shape was
+selected. Holding down the left mouse button while moving extends the shape
+and releasing the mouse ends the shape. Full undo/redo support is
+available.</p>
+<p>In addition to the main map window, there are three supporting panes: a
+tile map pane that shows characters broken down by groups, a character set
+pane that shows the entire 256 byte character set (which for Atari includes
+the inverse characters in the second 128 positions), and a page map pane
+that shows an overview of the map at one pixel per character. Note that the
+page map is just greyscale; it uses the value of the byte at a particular
+location as the intensity.</p>
+
+<a name="file-menu"></a>
+<h2>File Menu</h2>
+<a name="new"></a>
+<h3>New</h3>
+<p>A list of supported file types that can be created by Omnivore.</p>
+<p>Choosing an item in this list will open up a new tab in the current window
+showing a new blank template of the selected file format.</p>
+<p>Available templates include:</p>
+<ul class="simple">
+<li>Blank Apple DOS 3.3 Image</li>
+<li>Blank Atari DOS 2 DD (180K) Image</li>
+<li>Blank Atari DOS 2 ED (130K) Image</li>
+<li>Blank Atari DOS 2 SD (90K) Image</li>
+<li>Jumpman Level</li>
+</ul>
+
+<a name="open"></a>
+<h3>Open</h3>
+<p>Open a file using a file select dialog box.</p>
+
+<a name="open-recent"></a>
+<h3>Open Recent</h3>
+<p>This submenu contain a list of the files most recently loaded or saved.</p>
+<p>You can limit the number of items to remember in the General tab of the
+<a class="reference internal" href="#preferences">Preferences</a> dialog.</p>
+
+<a name="insert-file"></a>
+<h3>Insert File</h3>
+<p>Insert binary data at the cursor</p>
+<p>The data from the loaded file will overwrite data starting at the cursor,
+so it&#8217;s not inserted in the text editor sense where space is created in the
+existing data.</p>
+
+<a name="save"></a>
+<h3>Save</h3>
+<p>Save the file, overwriting the previously saved version</p>
+
+<a name="save-as"></a>
+<h3>Save As</h3>
+<p>Save the file to a new filename, leaving the originally loaded unchanged
+on disk.</p>
+
+<a name="save-segment-as"></a>
+<h3>Save Segment As</h3>
+<a name="raw-data-dat"></a>
+<h4>Raw Data (.dat)</h4>
+
+
+<a name="save-as-image"></a>
+<h3>Save As Image</h3>
+<p>Save the current view as an image (if possible with this editor)</p>
+
+<a name="revert"></a>
+<h3>Revert</h3>
+<p>Reverts the file to the last saved version on disk</p>
+<p>This throws away any edits and is not undoable.</p>
+
+<a name="page-setup"></a>
+<h3>Page Setup</h3>
+<p>Choose options for printing</p>
+
+<a name="print-preview"></a>
+<h3>Print Preview</h3>
+<p>Preview the pages to be printed</p>
+
+<a name="print"></a>
+<h3>Print</h3>
+<p>Print the current view to a printer</p>
+
+<a name="export-as-xex"></a>
+<h3>Export as XEX</h3>
+<p>Create an Atari 8-bit executable from a set of segments.</p>
+<p>Opens a dialog window providing a list of segments to be added to the new
+executable and a starting address at which the Atari will begin executing
+the program on completion of the load.</p>
+
+<a name="export-as-boot-disk"></a>
+<h3>Export as Boot Disk</h3>
+<p>Create an Atari 8-bit boot disk from a set of segments.</p>
+<p>Opens a dialog window providing a list of segments to be added to the boot
+disk and a starting address at which the Atari will begin executing the
+program after reading all the sectors written to disk.</p>
+<p>This creates a smaller-than-normal ATR image with a custom bootloader. Any
+sectors beyond the number fo sectors required to create the image are not
+included in the image.</p>
+
+<a name="quit"></a>
+<h3>Quit</h3>
+<p>Quit the program</p>
+
+
+<a name="edit-menu"></a>
+<h2>Edit Menu</h2>
+<a name="undo"></a>
+<h3>Undo</h3>
+<p>Undo the last action</p>
+<p>Actions that modify data are undoable; some that modify the metadata are
+but movement commands are not stored in the undo list, so for example
+cursor moves or changes to selection regions are not undoable.</p>
+
+<a name="redo"></a>
+<h3>Redo</h3>
+<p>Redo the last operation that was undone.  See <a class="reference internal" href="#undo">Undo</a>.</p>
+<p>The commands in this menu operate on the current selection to change the byte values to:</p>
+
+<a name="revert-to-baseline-data"></a>
+<h3>Revert to Baseline Data</h3>
+<p>Restore the selection to the data contained in the <a href="#id6"><span class="problematic" id="id7">`Baseline
+Data`_</span></a> file.</p>
+
+<a name="cut"></a>
+<h3>Cut</h3>
+<p>Cut and remove the current selection</p>
+
+<a name="copy"></a>
+<h3>Copy</h3>
+<p>Copy the current selection</p>
+
+<a name="copy-special"></a>
+<h3>Copy Special</h3>
+<a name="copy-disassembly-text"></a>
+<h4>Copy Disassembly Text</h4>
+<p>Copy the disassembly text of the current selection to the clipboard.</p>
+
+<a name="copy-disassembly-comments"></a>
+<h4>Copy Disassembly Comments</h4>
+<p>Copy the text of the comments only, using the disassembly for line
+breaks. Any blank lines that appear in the disassembly are included in the
+copy.</p>
+
+<a name="copy-as-escaped-string"></a>
+<h4>Copy as Escaped String</h4>
+<p>Copy the current selection as a text string containing a string (with
+escaped characters where necessary) that reproduces the bytes in the
+selection.</p>
+<p>Python note: both double quotes and single quotes are escaped as hex values
+so the resulting string is safe to use inside either of those characters as
+the string delimiter.</p>
+
+
+<a name="paste"></a>
+<h3>Paste</h3>
+<p>Paste from the clipboard</p>
+
+<a name="paste-special"></a>
+<h3>Paste Special</h3>
+<a name="paste-and-repeat"></a>
+<h4>Paste and Repeat</h4>
+<p>Paste and repeat clipboard data until current selection is filled</p>
+
+<a name="paste-comments"></a>
+<h4>Paste Comments</h4>
+<p>Paste text as comment lines</p>
+
+
+<a name="select-all"></a>
+<h3>Select All</h3>
+<p>Select the entire document</p>
+
+<a name="select-none"></a>
+<h3>Select None</h3>
+<p>Clear selection</p>
+
+<a name="invert-selection"></a>
+<h3>Invert Selection</h3>
+<p>Inverts the selection; that is, select everything that is currently unselected and unselect those that were selected.</p>
+
+<a name="mark-selection-as"></a>
+<h3>Mark Selection As</h3>
+<a name="code"></a>
+<h4>Code</h4>
+<p>Marks the selected bytes as valid code to be disassembled using the
+current processor definition.</p>
+
+<a name="data"></a>
+<h4>Data</h4>
+<p>Marks the selected bytes as data, not to be disassembled but shown
+as byte values in the disassembly listing.</p>
+
+<a name="uninitialized-data"></a>
+<h4>Uninitialized Data</h4>
+<p>Marks the selected bytes as unitialized data, skipping over those bytes
+and placing an <code class="docutils literal"><span class="pre">origin</span></code> directive in the disassembly that points to the
+next address that contains any other type of data.</p>
+
+<a name="display-list"></a>
+<h4>Display List</h4>
+<p>Marks the selected bytes as an ANTIC display list, which will be shown
+as data in the disassembly listing. The data will be grouped by ANTIC
+command, where all bytes that belong to a command will be on a single line.
+This can result in a large number of data bytes appearing on one line when
+displaying a graphics 8 display list, for example. Exporting the
+disassembly will produce listings that break up these long lines into
+normal amounts, defaulting to 4 bytes on a line.</p>
+
+<a name="jumpman-level-data"></a>
+<h4>Jumpman Level Data</h4>
+<p>Marks the selected bytes as Jumpman drawing element descriptors. This is
+not used much for direct editing now that the <a class="reference external" href="omnivore.jumpman.html">Jumpman Level Editor</a> is
+available.</p>
+
+<a name="jumpman-harvest-table"></a>
+<h4>Jumpman Harvest Table</h4>
+<p>Marks the selected bytes as a Jumpman harvest table. This is not used
+much for direct editing now that the <a class="reference external" href="omnivore.jumpman.html">Jumpman Level Editor</a> is available.</p>
+
+
+<a name="find"></a>
+<h3>Find</h3>
+<p>Find bytes or characters in the raw data or in disassembly comments</p>
+
+<a name="find-using-expression"></a>
+<h3>Find Using Expression</h3>
+<p>Find bytes using logical and arithmetic comparisons</p>
+
+<a name="find-next"></a>
+<h3>Find Next</h3>
+<p>Find next match</p>
+
+<a name="find-to-selection"></a>
+<h3>Find to Selection</h3>
+<p>Convert all matched locations to multi-selection</p>
+
+<a name="preferences"></a>
+<h3>Preferences</h3>
+<p>Open a window to change program settings and defaults.</p>
+
+
+<a name="view-menu"></a>
+<h2>View Menu</h2>
+<a name="colors"></a>
+<h3>Colors</h3>
+<p>This list sets the color encoding standard for all bitmapped graphics of
+the disk image. Currently supported are:</p>
+<ul class="simple">
+<li>NTSC</li>
+<li>PAL</li>
+</ul>
+<a name="antic-powerup-colors"></a>
+<h4>ANTIC Powerup Colors</h4>
+<p>Changes the color palette to ANTIC Powerup Colors</p>
+
+<a name="use-antic-colors"></a>
+<h4>Use ANTIC Colors</h4>
+<p>Open a window to choose the color palette from the available colors
+of the ANTIC processor.</p>
+
+
+<a name="font"></a>
+<h3>Font</h3>
+<a name="x8-atari-default-font"></a>
+<h4>8x8 Atari Default Font</h4>
+
+<a name="x8-atari-custom-computer-font"></a>
+<h4>8x8 Atari Custom Computer Font</h4>
+
+<a name="x8-apple-default-font"></a>
+<h4>7x8 Apple ][ Default Font</h4>
+
+<a name="x8-apple-font-w-mouse-text"></a>
+<h4>7x8 Apple ][ Font w/Mouse Text</h4>
+
+<a name="mountainking-fnt"></a>
+<h4>mountainking.fnt</h4>
+
+<a name="id1"></a>
+<h4>mountainking.fnt</h4>
+
+<a name="id2"></a>
+<h4>mountainking.fnt</h4>
+
+<a name="id3"></a>
+<h4>mountainking.fnt</h4>
+
+<a name="load-font"></a>
+<h4>Load Font</h4>
+
+<a name="get-font-from-selection"></a>
+<h4>Get Font From Selection</h4>
+
+
+<a name="character-display"></a>
+<h3>Character Display</h3>
+<a name="character-display-modes"></a>
+<h4>Character Display Modes</h4>
+<p>This submenu contains a list of all available font renderers. Selecting
+an item in this list will change how the text is displayed in the character
+map window.</p>
+<ul class="simple">
+<li>Antic 2 (Gr 0)</li>
+<li>Antic 4 (40x24, 5 color)</li>
+<li>Antic 5 (40x12, 5 color)</li>
+<li>Antic 6 (Gr 1) Uppercase and Numbers</li>
+<li>Antic 6 (Gr 1) Lowercase and Symbols</li>
+<li>Antic 7 (Gr 2) Uppercase and Numbers</li>
+<li>Antic 7 (Gr 2) Lowercase and Symbols</li>
+<li>Apple ][</li>
+</ul>
+
+<a name="character-mappings"></a>
+<h4>Character Mappings</h4>
+<p>This submenu contains a list of all available character mappings. Most
+platforms use a regular ASCII mapping, but some like the Atari 8-bits have
+different character mappings depending on the usage: the ANTIC mapping if
+looking at screen memory and the ATASCII mapping for normal usage.</p>
+<ul class="simple">
+<li>ATASCII Characters</li>
+<li>Antic Map</li>
+</ul>
+
+<a name="map-width"></a>
+<h4>Map Width</h4>
+<p>Set the number of bytes per row of the character display.</p>
+
+
+<a name="show-baseline-differences"></a>
+<h3>Show Baseline Differences</h3>
+<p>Toggle whether differences to the <a href="#id8"><span class="problematic" id="id9">`Baseline Data`_</span></a> are highlighted
+or not.</p>
+
+<a name="text-font"></a>
+<h3>Text Font</h3>
+<p>Open a font selection window to choose the font and size used to display
+the values in the hex grid and the disassembly text.</p>
+
+<a name="character-set"></a>
+<h3>Character Set</h3>
+<p>An Action for toggling the visibility of a dock pane.</p>
+
+<a name="page-map"></a>
+<h3>Page Map</h3>
+<p>An Action for toggling the visibility of a dock pane.</p>
+
+<a name="sidebar"></a>
+<h3>Sidebar</h3>
+<p>An Action for toggling the visibility of a dock pane.</p>
+
+<a name="tile-map"></a>
+<h3>Tile Map</h3>
+<p>An Action for toggling the visibility of a dock pane.</p>
+
+<a name="text-editor"></a>
+<h3>Text Editor</h3>
+<p>An action for activating a task.</p>
+
+<a name="html-viewer"></a>
+<h3>HTML Viewer</h3>
+<p>An action for activating a task.</p>
+
+<a name="id4"></a>
+<h3>HTML Viewer</h3>
+<p>An action for activating a task.</p>
+
+<a name="hex-editor"></a>
+<h3>Hex Editor</h3>
+<p>An action for activating a task.</p>
+
+<a name="id5"></a>
+<h3>Map Editor</h3>
+<p>An action for activating a task.</p>
+
+
+<a name="segment-menu"></a>
+<h2>Segment Menu</h2>
+<a name="view-segment"></a>
+<h3>View Segment</h3>
+<p>This submenu contains a list of all segments in the disk image.
+Selecting one of these items will change the view to the selected segment.</p>
+
+
+<a name="documents-menu"></a>
+<h2>Documents Menu</h2>
+<a name="omnivore-about-omnivore"></a>
+<h3>omnivore (<a class="reference external" href="about://omnivore">about://omnivore</a>)</h3>
+
+
+<a name="window-menu"></a>
+<h2>Window Menu</h2>
+<a name="new-view-in"></a>
+<h3>New View In</h3>
+
+<a name="new-window"></a>
+<h3>New Window</h3>
+<p>Open a new, blank Omnivore window that can be used to load new files
+or to provide a second view on a currently loaded file.</p>
+
+
+<a name="help-menu"></a>
+<h2>Help Menu</h2>
+<a name="about"></a>
+<h3>About</h3>
+<p>Display window with version number and author info</p>
+
+<a name="user-guide"></a>
+<h3>User Guide</h3>
+<p>Display the user guide in a new window</p>
+
+<a name="open-log-directory-in-file-manager"></a>
+<h3>Open Log Directory in File Manager</h3>
+<p>Open the log directory in the desktop file manager program.</p>
+<p>The log directory will contain debug logs (if enabled) and other files,
+most of which are generally only useful for developers or to get more
+information to send to the developers in the event of a problem.</p>
+
+<a name="show-debug-log"></a>
+<h3>Show Debug Log</h3>
+<p>Displays a window that can be used to turn on debugging of particular
+parts of the program.</p>
+<p>The log levels shown initially are the default log levels for each logger.
+Using the <code class="docutils literal"><span class="pre">Filter</span></code> text entry box, you can enter a string or a comma
+separated list of strings that will be used to select which loggers get
+switched to <em>DEBUG</em> mode. Everything else gets set to its default state,
+usually either <em>INFO</em> or <em>WARNING</em>.</p>
+<p>The string is not a regular expression, but will match partial strings.</p>
+
+<a name="more-debugging"></a>
+<h3>More Debugging</h3>
+<a name="widget-inspector"></a>
+<h4>Widget Inspector</h4>
+<p>Open the wxPython Widget Inspector</p>
+
+<a name="raise-exception"></a>
+<h4>Raise Exception</h4>
+<p>Raise an exception to test the error reporter</p>
+
+
+
+
+</a>
+<div class="footer">
+<hr />
+Updated 13 May 2017 by Rob McMullen &lt;feedback@playermissile.com&gt;
+</div>
+</body>
+</html>
