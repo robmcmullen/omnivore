@@ -18,9 +18,10 @@ It is designed for reverse engineering, to understand code for which the source 
 .. figure:: main-jumpman.png
    :align: center
 
-Thanks to Kevin Savetz of the `ANTIC Podcast <http://ataripodcast.com>`_ and
-Wade of the `Inverse ATASCII Podcast <http://inverseatascii.info>`_
-for early testing and feedback.
+Thanks to Kevin Savetz of the `ANTIC <http://ataripodcast.com>`_ and `Eaten by
+a Grue <http://monsterfeet.com/grue/>`_ podcasts, and Wade of the `Inverse
+ATASCII <https://inverseatascii.info>`_ and `1632 Atari ST
+<https://1632podcast.info/>`_ podcasts for early testing and feedback.
 
 
 Editors
