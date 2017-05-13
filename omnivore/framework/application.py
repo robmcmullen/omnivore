@@ -104,13 +104,6 @@ class FrameworkApplication(TasksApplication):
 
     #### Trait initializers ###################################################
 
-    def _about_title_default(self):
-        return self.name
-
-    def _about_version_default(self):
-        from omnivore import __version__
-        return __version__
-
     def _default_layout_default(self):
         active_task = self.preferences_helper.default_task
         log.debug("active task: -->%s<--" % active_task)
@@ -208,8 +201,10 @@ class FrameworkApplication(TasksApplication):
         wx.CallAfter(self.build_docs)
 
     def build_docs(self):
+        import task as frameworktask
+        task = frameworktask.FrameworkTask()
         sections = []
-        docs = documentation.RSTOnePageDocs("Omnivore User's Guide", "manual")
+        docs = documentation.RSTOnePageDocs("%s %s User's Guide" % (task.about_title, task.about_version), "manual")
         for factory in self.task_factories:
             if "omnivore" not in factory.id or "framework" in factory.id:
                 print "Skipping documentation for %s" % factory.id
