@@ -1,7 +1,7 @@
 # Standard library imports.
 import os
 import logging
-log = logging.getLogger(__name__)
+debug_log = logging.getLogger(__name__)
 
 
 # singleton; only one logging frame available at one time
@@ -32,7 +32,7 @@ def enable_loggers(text):
         if level < 0:
             level = logging.INFO
         for match in match_strings:
-            if match in logger_name:
+            if match and match in logger_name:
                 level = logging.DEBUG
                 count += 1
                 break
@@ -49,20 +49,7 @@ def get_default_levels():
             known_log = logging.getLogger(logger_name)
             level = known_log.getEffectiveLevel()
             known_loggers[logger_name] = level
-            log.debug("default log level for %s: %s" % (logger_name, LEVEL_MAP.get(level, str(level))))
-
-def count_active_loggers():
-    global known_loggers
-
-    current_loggers = logging.Logger.manager.loggerDict
-    count = 0
-    for logger_name in current_loggers.keys():
-        known_log = logging.getLogger(logger_name)
-        level = known_log.getEffectiveLevel()
-        if level <= logging.DEBUG:
-            count += 1
-    
-    return count
+            debug_log.debug("default log level for %s: %s" % (logger_name, LEVEL_MAP.get(level, str(level))))
 
 
 def show_logging_frame():
@@ -106,17 +93,22 @@ def show_logging_frame():
 
 
     class LoggerList(wx.CheckListBox):
+        count = 0
+
         def update(self):
             items = []
             checked = []
+            count = 0
             for i, logger_name in enumerate(sorted(known_loggers)):
                 items.append(logger_name)
                 log = logging.getLogger(logger_name)
                 level = log.getEffectiveLevel()
                 if level <= logging.DEBUG:
                     checked.append(i)
+                    count += 1
             self.Set(items)
             self.SetChecked(checked)
+            self.count = count
 
 
     class LoggingFrame(wx.Frame):
@@ -127,6 +119,8 @@ def show_logging_frame():
             logging.ERROR,
             logging.CRITICAL
         ]
+
+        logger_state_button = False
 
         def __init__(self, parent, *args, **kwargs):
             wx.Frame.__init__(self, parent, *args, title="Debug Log Viewer", size=(800,600), **kwargs)
@@ -152,9 +146,10 @@ def show_logging_frame():
             self.freeze = wx.Button(panel, wx.ID_ANY, 'Freeze')
             self.freeze.Bind(wx.EVT_BUTTON, self.on_freeze)
             bot_hsizer.Add(self.freeze, 0, wx.LEFT|wx.CENTER, 10)
-            btn = wx.Button(panel, wx.ID_ANY, 'Show Logger State')
-            btn.Bind(wx.EVT_BUTTON, self.on_known_button)
-            bot_hsizer.Add(btn, 0, wx.LEFT|wx.CENTER, 10)
+            if self.logger_state_button:
+                btn = wx.Button(panel, wx.ID_ANY, 'Show Logger State')
+                btn.Bind(wx.EVT_BUTTON, self.on_known_button)
+                bot_hsizer.Add(btn, 0, wx.LEFT|wx.CENTER, 10)
 
             sizer = wx.BoxSizer(wx.VERTICAL)
             sizer.Add(log_sizer, 1, wx.ALL|wx.EXPAND, 5)
@@ -164,9 +159,8 @@ def show_logging_frame():
 
             self.add_handler()
             get_default_levels()
-            count = count_active_loggers()
-            self.show_logger_stats(count)
             self.loggers.update()
+            self.show_logger_stats()
             self.Bind(wx.EVT_CLOSE, self.on_close)
             self.is_frozen = False
 
@@ -213,7 +207,7 @@ def show_logging_frame():
 
         def on_test_button(self, evt):
             import random
-            log.log(random.choice(self.LEVELS), "More? click again!")
+            debug_log.debug(random.choice(self.LEVELS), "More? click again!")
 
         def on_known_button(self, evt):
             self.show_known()
@@ -233,31 +227,31 @@ def show_logging_frame():
         def on_logger_checked(self, evt):
             index = evt.GetSelection()
             logger_name = self.loggers.GetString(index)
-            state = evt.IsChecked()
-            print("logger: %s; state=%s" % (logger_name, state))
+            state = self.loggers.IsChecked(index)
+            debug_log.debug("logger: %s; state=%s" % (logger_name, state))
             if state:
                 level = logging.DEBUG
             else:
                 level = known_loggers[logger_name]
             log = logging.getLogger(logger_name)
             log.setLevel(level)
+            self.show_logger_stats()
+            self.filter.ChangeValue("")
 
         def process_value(self):
             text = self.filter.GetValue()
-            if not text:
-                return
             count = enable_loggers(text)
-            self.show_logger_stats(count)
-            self.loggers.update()
+            self.show_logger_stats()
 
-        def show_logger_stats(self, count):
-            label = "1 debug logger enabled" if count == 1 else "%d debug loggers enabled" % count
+        def show_logger_stats(self):
+            self.loggers.update()
+            label = "1 debug logger enabled" if self.loggers.count == 1 else "%d debug loggers enabled" % self.loggers.count
             self.stats.SetLabel(label)
 
 
     if logging_frame is None:
         logging_frame = LoggingFrame(None)
-        logging_frame.show_known()
+        # logging_frame.show_known()
     logging_frame.Show()
 
 
