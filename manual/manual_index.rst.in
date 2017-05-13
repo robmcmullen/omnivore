@@ -9,7 +9,6 @@
 
 .. figure:: main-hex.png
    :align: center
-   :scale: 35%
 
 Omnivore is a cross-platform app for modern hardware (running Linux, OS X and
 Windows) to operate on executables or disk images of Atari 8-bit and Apple ][ machines.
@@ -18,7 +17,6 @@ It is designed for reverse engineering, to understand code for which the source 
 
 .. figure:: main-jumpman.png
    :align: center
-   :scale: 35%
 
 Thanks to Kevin Savetz of the `ANTIC Podcast <http://ataripodcast.com>`_ and
 Wade of the `Inverse ATASCII Podcast <http://inverseatascii.info>`_
