@@ -1018,7 +1018,7 @@ class DefaultSegment(object):
         diff = self.rawdata.data != other_segment.rawdata.data
         d = diff * np.uint8(diff_bit_mask)
         self.style |= (diff * np.uint8(diff_bit_mask))
-        log.debug("compare_segment: # entries", len(diff), "# diffs:", len(np.where(diff == True)[0]))
+        log.debug("compare_segment: # entries %d, # diffs: %d" % (len(diff), len(np.where(diff == True)[0])))
 
 
 class EmptySegment(DefaultSegment):
