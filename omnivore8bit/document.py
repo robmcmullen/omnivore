@@ -222,7 +222,7 @@ class SegmentedDocument(BaseDocument):
         """
         found = []
         for i, s in enumerate(self.segments):
-            if addr >= s.start_addr and addr < (s.start_addr + len(s)):
+            if s.start_addr > 0 and addr >= s.start_addr and addr < (s.start_addr + len(s)):
                 found.append((i, s, addr - s.start_addr))
         return found
 
