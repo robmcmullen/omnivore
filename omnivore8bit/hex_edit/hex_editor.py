@@ -299,7 +299,7 @@ class HexEditor(FrameworkEditor):
             d = self.get_data_object_by_format(data_obj, fmt)
             value = d.GetDataHere()
             r, c, value = value.split(",", 2)
-            size = r * c
+            size = int(r) * int(c)
         elif fmt.GetId() == "numpy":
             d = self.get_data_object_by_format(data_obj, fmt)
             value = d.GetDataHere()
