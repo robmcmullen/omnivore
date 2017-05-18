@@ -27,8 +27,43 @@ getaway_defaults = {
         ]
     }
 
+supported_pd_getaway = [1]
 
 def Getaway(doc):
+    if doc.bytes[8] == 0x82 and doc.bytes[9] == 0x39:
+        state = doc.bytes[12:16] == [0x67, 0x21, 0x70, 0x64]
+        if state.all():
+            log.debug("Found Omnivore-enabled public domain getaway.xex!!!")
+            version = doc.bytes[16]
+            num_words = doc.bytes[17]
+            words = doc.bytes[18:18 + num_words * 2].copy().view(dtype='<u2')
+            r = doc.segments[0].rawdata
+            if version in supported_pd_getaway:
+                log.debug("Found supported version %d" % version)
+            else:
+                latest = reduce(max, supported_pd_getaway)
+                log.debug("Unsupported version %d; trying latest %d" % (version, latest))
+                version = latest
+            playfield = words[0]
+            playfield_font = words[1]
+            _, s, _ = doc.find_segments_in_range(playfield)[0]
+            i = s.get_raw_index_from_address(playfield)
+            segment = DefaultSegment(r[i:i + 0x4000], playfield, name="Playfield map")
+            segment.map_width = 256
+
+            _, s, _ = doc.find_segments_in_range(playfield_font)[0]
+            i = s.get_raw_index_from_address(playfield_font)
+            font_segment = AnticFontSegment(r[i:i + 0x400], playfield_font, name="Playfield font")
+
+            extra_metadata = {
+                'font': (font_segment.antic_font, "Antic 5"),
+                'user segments': [font_segment, segment],
+                'initial segment': segment,
+                'last_task_id': map_edit_task_id,
+                }
+            extra_metadata.update(getaway_defaults)
+            return extra_metadata
+
     state = doc.bytes[0:6] == [0xff, 0xff, 0x80, 0x2a, 0xff, 0x8a]
     if state.all():
         log.debug("Found getaway.xex!!!")
