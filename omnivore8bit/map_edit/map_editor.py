@@ -378,6 +378,7 @@ class MapEditor(HexEditor):
     def to_metadata_dict(self, mdict, document):
         mdict["map width"] = self.map_width
         mdict["map zoom"] = self.map_zoom
+        mdict["tile map"] = self.antic_tile_map
         if document == self.document:
             # If we're saving the document currently displayed, save the
             # display parameters too.
