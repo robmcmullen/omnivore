@@ -137,7 +137,7 @@ class OpenAction(Action):
     image = ImageResource('file_open')
 
     def perform(self, event):
-        path = event.task.prompt_local_file_open()
+        path = event.task.prompt_local_file_dialog()
         if path is not None:
             event.task.window.application.load_file(path, event.task)
 
@@ -167,10 +167,9 @@ class SaveAsAction(EditorAction):
     image = ImageResource('file_save_as')
 
     def perform(self, event):
-
-        dialog = FileDialog(default_filename=self.active_editor.document.name, parent=event.task.window.control, action='save as', title="Save File As", wildcard=get_file_dialog_wildcard(self.active_editor.export_data_name, self.active_editor.export_extensions))
-        if dialog.open() == OK:
-            self.active_editor.save(dialog.path, saver=self.active_editor.encode_data)
+        path = event.task.prompt_local_file_dialog(save=True, default_filename=self.active_editor.document.name)
+        if path:
+            self.active_editor.save(path, saver=self.active_editor.encode_data)
 
 
 class RevertAction(EditorAction):
@@ -226,9 +225,9 @@ class SaveAsPDFAction(EditorAction):
     enabled_name = 'printable'
 
     def perform(self, event):
-        dialog = FileDialog(parent=event.task.window.control, action='save as', title="Save PDF")
-        if dialog.open() == OK:
-            self.active_editor.save_as_pdf(dialog.path)
+        path = event.task.prompt_local_file_dialog(save=True, title="Save PDF")
+        if path:
+            self.active_editor.save_as_pdf(path)
 
 
 class SaveAsImageAction(EditorAction):
@@ -237,9 +236,9 @@ class SaveAsImageAction(EditorAction):
     enabled_name = 'imageable'
 
     def perform(self, event):
-        dialog = FileDialog(parent=event.task.window.control, action='save as', title="Save Image")
-        if dialog.open() == OK:
-            self.active_editor.save_as_image(dialog.path)
+        path = event.task.prompt_local_file_dialog(save=True, title="Save Image")
+        if path:
+            self.active_editor.save_as_image(path)
 
 
 class ExitAction(Action):

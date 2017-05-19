@@ -69,7 +69,7 @@ class LoadFontAction(EditorAction):
     name = 'Load Font...'
 
     def perform(self, event):
-        path = event.task.prompt_local_file_open("Load Font")
+        path = event.task.prompt_local_file_dialog("Load Font")
         if path is not None:
             self.active_editor.machine.load_font(event.task, path)
 
@@ -852,7 +852,7 @@ class ImportSegmentLabelsAction(EditorAction):
     enabled_name = 'has_origin'
 
     def perform(self, event):
-        path = event.task.prompt_local_file_open("Import Segment Labels")
+        path = event.task.prompt_local_file_dialog("Import Segment Labels")
         if path is not None:
             e = self.active_editor
             with open(path, "r") as fh:
@@ -900,9 +900,9 @@ class ExportSegmentLabelsAction(EditorAction):
             d.update(s.memory_map)
             tmp = dict_to_list(d)
             if tmp:
-                dialog = FileDialog(parent=event.task.window.control, action="save as", title="Export Segment Labels")
-                if dialog.open() == OK:
-                    with open(dialog.path, "w") as fh:
+                path = event.task.prompt_local_file_dialog(save=True, title="Export Segment Labels")
+                if path:
+                    with open(path, "w") as fh:
                         fh.write("\n".join(["%s = $%04x" % (v, k) for k, v in tmp]) + "\n")
                     return
         e.task.status_bar.error = "No labels in segment"
@@ -1216,9 +1216,9 @@ class SaveAsXEXAction(EditorAction):
         dlg = self.get_dialog(e)
         if dlg.ShowModal() == wx.ID_OK:
             doc = self.get_document(dlg)
-            dialog = FileDialog(default_filename="test.%s" % self.file_ext, parent=e.window.control, action='save as')
-            if dialog.open() == OK:
-                self.active_editor.save(dialog.path, document=doc)
+            path = event.task.prompt_local_file_dialog(default_filename="test.%s" % self.file_ext, save=True)
+            if path:
+                self.active_editor.save(path, document=doc)
         dlg.Destroy()
 
 
@@ -1261,9 +1261,9 @@ class SaveSegmentAsFormatAction(EditorAction):
 
     def perform(self, event):
         segment = self.task.active_editor.document.segments[self.segment_number]
-        dialog = FileDialog(default_filename=segment.name, parent=event.task.window.control, action='save as', wildcard=get_file_dialog_wildcard(self.saver.export_data_name, self.saver.export_extensions))
-        if dialog.open() == OK:
-            self.active_editor.save_segment(self.saver, dialog.path)
+        path = event.task.prompt_local_file_dialog(default_filename=segment.name, save=True, wildcard=get_file_dialog_wildcard(self.saver.export_data_name, self.saver.export_extensions))
+        if path:
+            self.active_editor.save_segment(self.saver, path)
 
 
 class SaveSegmentGroup(TaskDynamicSubmenuGroup):
@@ -1345,7 +1345,7 @@ class InsertFileAction(EditorAction):
     name = 'Insert File...'
 
     def perform(self, event):
-        path = event.task.prompt_local_file_open("Insert File")
+        path = event.task.prompt_local_file_dialog("Insert File")
         if path is not None:
             e = self.active_editor
             cmd = InsertFileCommand(e.segment, e.cursor_index, path)
@@ -1653,7 +1653,7 @@ class LoadBaselineVersionAction(EditorAction):
     tooltip = 'Add baseline file to be used to show differences in current version'
 
     def perform(self, event):
-        path = event.task.prompt_local_file_open()
+        path = event.task.prompt_local_file_dialog()
         if path:
             e = self.active_editor
             e.load_baseline(path)

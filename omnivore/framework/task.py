@@ -303,7 +303,7 @@ class FrameworkTask(Task):
         window.open()
         log.debug("All windows: %s" % self.window.application.windows)
 
-    def prompt_local_file_open(self, title="Open File", most_recent=True):
+    def prompt_local_file_dialog(self, title="", most_recent=True, save=False, default_filename="", wildcard="*"):
         """Display an "open file" dialog to load from the local filesystem,
         defaulting to the most recently used directory.
 
@@ -313,6 +313,9 @@ class FrameworkTask(Task):
         Returns the directory path on the filesystem, or None if not found.
         """
         dirpath = ""
+        action = "save as" if save else "open"
+        if not title:
+            title = "Save File" if save else "Open File"
         if self.active_editor:
             # will try path of current file
             attempts = [self.active_editor.document.metadata.uri]
@@ -330,7 +333,7 @@ class FrameworkTask(Task):
                 except fs.errors.FSError:
                     pass
 
-        dialog = FileDialog(parent=self.window.control, title=title, default_directory=dirpath)
+        dialog = FileDialog(parent=self.window.control, title=title, default_directory=dirpath, action=action, default_filename=default_filename, wildcard=wildcard)
         if dialog.open() == OK:
             return dialog.path
         return None
@@ -345,10 +348,9 @@ class FrameworkTask(Task):
         except IOError:
             # If you are trying to save to a file that doesn't exist, open up a
             # FileDialog with a 'save as' action.
-            dialog = FileDialog(parent=self.window.control,
-                                action='save as')
-            if dialog.open() == OK:
-                editor.save(dialog.path)
+            path = prompt_local_file_dialog(save=True)
+            if path:
+                editor.save(path)
             else:
                 return False
         return True
