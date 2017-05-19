@@ -21,6 +21,8 @@ from omnivore8bit.utils.drawutil import get_bounds
 from omnivore.utils.sortutil import invert_rects
 from omnivore8bit.hex_edit.commands import ChangeByteCommand, PasteCommand
 from omnivore.framework.mouse_handler import MouseHandler
+import omnivore.framework.actions as fa
+import omnivore8bit.hex_edit.actions as ha
 
 from commands import *
 
@@ -498,6 +500,9 @@ class MapEditor(HexEditor):
 
     def get_numpy_image(self):
         return self.font_map.get_full_image()
+
+    def common_popup_actions(self):
+        return [fa.CutAction, fa.CopyAction, fa.PasteAction, None, fa.SelectAllAction, fa.SelectNoneAction, None, ha.GetSegmentFromSelectionAction, ha.RevertToBaselineAction]
 
     ###########################################################################
     # Trait handlers.
