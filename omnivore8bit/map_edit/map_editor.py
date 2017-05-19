@@ -157,7 +157,7 @@ class SelectMode(MouseHandler):
         if e is not None:
             index, bit, inside = c.event_coords_to_byte(evt)
             r0, c0 = c.index_to_row_col(index)
-            msg = "row=%d (0x%x) col=%d (0x%x) index=%d (0x%x)" % (r0, r0, c0, c0, index, index)
+            msg = "x=$%x y=$%x index=$%x" % (c0, r0, index)
             if extra:
                 msg += " " + extra
             e.show_status_message(msg)
@@ -269,7 +269,7 @@ class OverlayMode(SelectMode):
         w = x2 - x1 + 1
         h = y2 - y1 + 1
         if w > 0 or h > 0:
-            extra = "rectangle: width=%d (0x%x), height=%d (0x%x)" % (w, w, h, h)
+            extra = "rectangle: $%x x $%x" % (w, h)
         return extra
 
     def draw(self, evt, start=False):
@@ -448,7 +448,7 @@ class MapEditor(HexEditor):
             w = c2 - c1
             h = r2 - r1
             if w > 0 or h > 0:
-                extra = "; current width=%d (0x%x), height=%d (0x%x)" % (w, w, h, h)
+                extra = "; current $%x x $%x" % (w, h)
         r = "rect" if len(self.selected_ranges) == 1 else "rects"
         return "[%d %s selected%s]" % (len(self.selected_ranges), r, extra)
 
