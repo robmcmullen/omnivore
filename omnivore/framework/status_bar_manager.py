@@ -78,7 +78,7 @@ class FrameworkStatusBarManager(StatusBarManager):
     # The message displayed in the first field of the status bar.
     message = Unicode
 
-    message_width = Int(400)
+    message_width = Int(600)
 
     # The message to be displayed in debug field of the status bar
     command_help = Unicode
