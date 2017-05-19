@@ -582,6 +582,12 @@ class DefaultSegment(object):
         """
         return self.rawdata.get_raw_index(i)
 
+    def get_raw_index_from_address(self, addr):
+        """Get index into base array's raw data, given the address of a byte
+        into this segment
+        """
+        return self.get_raw_index(addr - self.start_addr)
+
     def get_index_from_base_index(self, base_index):
         """Get index into this array's data given the index into the base array
         """
