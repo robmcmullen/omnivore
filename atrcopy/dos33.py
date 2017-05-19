@@ -718,3 +718,4 @@ class ProdosDiskImage(DiskImageBase):
                     #raise InvalidDiskImage("No ProDOS header info found")
                     pass
             raise UnsupportedDiskImage("ProDOS format found but not supported")
+        raise InvalidDiskImage("Not ProDOS format")
