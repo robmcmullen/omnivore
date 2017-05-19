@@ -55,6 +55,7 @@ class SegmentedDocument(BaseDocument):
         # imports
         from omnivore8bit.utils.extra_metadata import check_builtin
 
+        log.debug("extra metadata: parser=%s" % guess.parser)
         self.set_segments(guess.parser)
         extra = check_builtin(self)
         if 'machine mime' not in extra:
@@ -116,6 +117,19 @@ class SegmentedDocument(BaseDocument):
 
     #### convenience methods
 
+    def __str__(self):
+        lines = []
+        lines.append("Document(id=%s): %s" % (self.document_id, self.metadata.uri))
+        if log.isEnabledFor(logging.DEBUG):
+            lines.append("parser: %s" % self.segment_parser)
+            lines.append("segments:")
+            for s in self.segment_parser.segments:
+                lines.append("  %s" % s)
+            lines.append("user segments:")
+            for s in self.user_segments:
+                lines.append("  %s" % s)
+        return "\n".join(lines)
+
     def parse_segments(self, parser_list):
         parser_list.append(DefaultSegmentParser)
         r = SegmentData(self.bytes, self.style)
@@ -128,6 +142,7 @@ class SegmentedDocument(BaseDocument):
         self.set_segments(s)
 
     def set_segments(self, parser):
+        log.debug("setting parser: %s" % parser)
         self.segment_parser = parser
         self.segments = []
         self.segments.extend(parser.segments)

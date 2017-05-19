@@ -46,12 +46,22 @@ def Getaway(doc):
                 version = latest
             playfield = words[0]
             playfield_font = words[1]
-            _, s, _ = doc.find_segments_in_range(playfield)[0]
+            log.debug("playfield address: %04x, font address: %04x" % (playfield, playfield_font))
+            log.debug(doc)
+            segments = doc.find_segments_in_range(playfield)
+            if not segments:
+                log.error("playfield not found at %04x in any segment" % playfield)
+                return
+            _, s, _ = segments[0]
             i = s.get_raw_index_from_address(playfield)
             segment = DefaultSegment(r[i:i + 0x4000], playfield, name="Playfield map")
             segment.map_width = 256
 
-            _, s, _ = doc.find_segments_in_range(playfield_font)[0]
+            segments = doc.find_segments_in_range(playfield_font)
+            if not segments:
+                log.error("playfield font not found at %04x in any segment" % playfield_font)
+                return
+            _, s, _ = segments[0]
             i = s.get_raw_index_from_address(playfield_font)
             font_segment = AnticFontSegment(r[i:i + 0x400], playfield_font, name="Playfield font")
 
