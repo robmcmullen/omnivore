@@ -27,7 +27,7 @@ class Tile(object):
         self.keystroke = keystroke
 
     def get_bytes(self):
-        return [self.tile_num]
+        return (self.tile_num, )  # has to be tuple so it's hashable
 
     def get_height(self, parent):
         if parent.editor:  # Might get called before an editor is set
@@ -85,6 +85,7 @@ class TileListControl(wx.Panel):
         self.SetSizer(sizer)
         self.Fit()
 
+        self.pattern_to_index = {}
         self.parse_tile_map([("test", np.arange(0,10, dtype=np.uint8))])
         self.current_tile = -1
         self.setup_tiles()
@@ -108,6 +109,7 @@ class TileListControl(wx.Panel):
             for i in np.arange(np.alen(tiles)):
                 item = Tile(tiles[i:i+1], "")
                 self.items.append(item)
+                self.pattern_to_index[item.get_bytes] = i
 
     def setup_tiles(self):
         cats = [c[0].name for c in self.categories]
@@ -127,8 +129,13 @@ class TileListControl(wx.Panel):
         e = self.editor
         if e is not None:
             self.current_tile = index
-            e.set_current_draw_pattern(self.items[index].get_bytes(), self)
+            wx.CallAfter(e.set_current_draw_pattern, self.items[index].get_bytes(), self)
+
+    def show_pattern(self, pattern):
+        index = self.index_from_pattern.get(pattern, None)
+        if index is not None:
             self.tile_list.SetSelection(index)
+            self.tile_list.ScrollToRow(index)
 
     def clear_tile_selection(self):
         self.current_tile = -1
@@ -206,6 +213,7 @@ class TileWrapControl(wx.Panel):
         self.SetSizer(sizer)
         self.Fit()
 
+        self.pattern_to_item = {}
         self.parse_tile_map(self.panel, [("test", np.arange(0,10, dtype=np.uint8))])
         self.current_tile = None
         self.setup_tiles()
@@ -230,6 +238,7 @@ class TileWrapControl(wx.Panel):
         self.tile_map = tile_map
         self.categories = []
         self.items = []
+        self.pattern_to_item = {}
         for items in tile_map:
             label = items[0]
             t = wx.StaticText(panel, -1, label)
@@ -246,6 +255,7 @@ class TileWrapControl(wx.Panel):
                         btn.Bind(wx.EVT_BUTTON, self.on_tile_clicked)
                         w.Add(btn, 0, wx.ALL, 0)
                         self.items.append(btn)
+                        self.pattern_to_item[tuple(data)] = btn
             sizer.Add(w, 0, wx.EXPAND, 0)
         self.Layout()
 
@@ -254,14 +264,16 @@ class TileWrapControl(wx.Panel):
         self.cat.Set(cats)
         self.cat.SetSelection(0)
 
+    def scroll_to_control(self, ctrl):
+        sppu_x, sppu_y = self.panel.GetScrollPixelsPerUnit()
+        vs_x, vs_y = self.panel.GetViewStart()
+        cr = ctrl.GetRect()
+        self.panel.Scroll(0, vs_y + (cr.y / sppu_y))
+
     def on_category(self, event):
         cat = event.GetSelection()
         label = self.categories[cat]
-        #self.panel.ScrollChildIntoView(label)
-        sppu_x, sppu_y = self.panel.GetScrollPixelsPerUnit()
-        vs_x, vs_y = self.panel.GetViewStart()
-        cr = label.GetRect()
-        self.panel.Scroll(0, vs_y + (cr.y / sppu_y))
+        self.scroll_to_control(label)
 
     def on_tile_clicked(self, event):
         btn = event.GetEventObject()
@@ -271,6 +283,13 @@ class TileWrapControl(wx.Panel):
             e.set_current_draw_pattern(btn.tile_data, self)
             self.clear_toggle_except(btn)
 
+    def show_pattern(self, pattern):
+        log.debug("tilelist showing pattern %s" % str(pattern))
+        btn = self.pattern_to_item.get(pattern, None)
+        self.clear_toggle_except(btn)
+        if btn is not None:
+            self.scroll_to_control(btn)
+
     def clear_tile_selection(self):
         self.current_tile = None
         self.clear_toggle_except()
@@ -279,6 +298,8 @@ class TileWrapControl(wx.Panel):
         for b in self.items:
             if b != btn:
                 b.SetToggle(False)
+        if btn is not None:
+            btn.SetToggle(True)
 
     def on_tile(self, event):
         index = event.GetInt()

@@ -107,18 +107,29 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
     def restore_view_params(self, data):
         self.Scroll(*data)
 
-    def find_start_row_for_center_index(self, index):
+    def find_center(self, pos, visible, total):
+        last = total - 1
+        pos = max(0, pos - (visible / 2))
+        if pos + visible > last:
+            pos = max(0, last - visible + 1)
+        return pos
+
+    def find_upper_left_for_center_index(self, index):
         r, c = self.index_to_row_col(index)
-        num = self.fully_visible_rows
-        last = self.total_rows - 1
-        ul = max(0, r - (num / 2))
-        if ul + num > last:
-            ul = max(0, last - num)
-        return ul
+        log.debug("find_upper_left_for_center_index: r=%d c=%d, vis: r=%d c=%d" % (r, c, self.fully_visible_rows, self.fully_visible_cols))
+        r = self.find_center(r, self.fully_visible_rows, self.total_rows)
+        c = self.find_center(c, self.fully_visible_cols, self.bytes_per_row)
+        return r, c
 
     def center_on_index(self):
-        ul = self.find_start_row_for_center_index(self.editor.cursor_index)
-        self.start_row = ul
+        ul = self.find_upper_left_for_center_index(self.editor.cursor_index)
+        self.set_upper_left(ul)
+
+    def set_upper_left(self, ul):
+        log.debug("center_on_index: new upper left=%s" % str(ul))
+        self.start_row, self.start_col = ul
+        self.Scroll(ul[1], ul[0])
+        self.Refresh()
 
     def is_ready_to_render(self):
         return self.editor is not None
@@ -153,7 +164,8 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
             else:
                 if self.FindFocus() != self and editor.pending_focus != self:
                     self.center_on_index()
-                self.Refresh()
+                else:
+                    self.Refresh()
 
     def sync_settings(self):
         e = self.editor
@@ -273,7 +285,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         self.fully_visible_cols = w / self.zoom
         self.visible_rows = ((h + self.zoom - 1) / self.zoom)
         self.visible_cols = ((w + self.zoom - 1) / self.zoom)
-        log.debug("x, y, w, h, start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows]))
+        log.debug("x, y, w, h, rows start, num, cols start, num:%s" % str([x, y, w, h, self.start_row, self.visible_rows, self.fully_visible_rows, self.start_col, self.visible_cols, self.fully_visible_cols]))
 
     def update_bytes_per_row(self):
         self.pixels_per_byte = self.editor.machine.bitmap_renderer.pixels_per_byte
@@ -337,7 +349,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         if first_row is not None:
             first_row = min(max(0, first_row), last_scroll_row)
         if self.FindFocus() != self and self.editor.pending_focus != self:
-            first_row = self.find_start_row_for_center_index(self.editor.cursor_index)
+            first_row = self.find_upper_left_for_center_index(self.editor.cursor_index)[0]
         last_row = self.start_row + self.fully_visible_rows - 1
         last_col = self.start_col + self.fully_visible_cols - 1
 
@@ -700,7 +712,7 @@ class FontMapScroller(BitviewScroller):
         zoom_factor = self.pixels_per_byte * zw
         self.fully_visible_cols = w / zoom_factor
         self.start_col, self.visible_cols = x, (w + zoom_factor - 1) / zoom_factor
-        log.debug("fontmap: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.visible_cols]))
+        log.debug("fontmap: : x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, self.fully_visible_rows, "col start, num:", self.start_col, self.visible_cols, self.fully_visible_cols]))
 
     def set_font(self):
         self.font = self.editor.machine.antic_font
@@ -968,6 +980,16 @@ class CharacterSetViewer(FontMapScroller):
         if e is not None:
             e.set_current_draw_pattern(self.selected_char, self)
 
+    def center_on_index(self):
+        ul = self.find_upper_left_for_center_index(self.selected_char)
+        self.set_upper_left(ul)
+
+    def show_pattern(self, pattern):
+        log.debug("charset showing pattern: %s" % str(pattern))
+        index = pattern[0]
+        self.selected_char = index
+        self.refresh_view()
+
     def clear_tile_selection(self):
         self.selected_char = -1
         self.Refresh()
@@ -984,16 +1006,14 @@ class CharacterSetViewer(FontMapScroller):
         e = self.editor
         byte, bit, inside = self.event_coords_to_byte(evt)
         if inside:
-            self.set_selected_char(byte)
-            wx.CallAfter(self.Refresh)
+            wx.CallAfter(e.set_current_draw_pattern, byte)
         evt.Skip()
 
     def on_left_dclick(self, evt):
         e = self.editor
         byte, bit, inside = self.event_coords_to_byte(evt)
         if inside:
-            self.set_selected_char(byte)
-            wx.CallAfter(self.Refresh)
+            wx.CallAfter(e.set_current_draw_pattern, byte)
         evt.Skip()
 
     def on_motion(self, evt):
@@ -1016,11 +1036,20 @@ class CharacterSetViewer(FontMapScroller):
             return 0, 0, None, None
         return self.selected_char, self.selected_char + 1, None, None
 
+    def draw_overlay(self, array, w, h, zw, zh):
+        # Draw selected char position
+        r, c = self.index_to_row_col(self.selected_char)
+        if self.FindFocus() == self:
+            color = (0, 0, 0)
+        else:
+            color = (128, 128, 128)
+        log.debug("Draw index: %04x (%d, %d) start_row=%d vis=%d color=%s" % (self.selected_char, r, c, self.start_row, self.fully_visible_rows, color))
+        self.show_highlight(array, (r, c), (r + 1, c + 1), zw, zh, color)
+
     def process_delta_index(self, delta_index):
         delta_index, first_row = delta_index
         _, byte = divmod(self.selected_char + delta_index, 256)
-        self.set_selected_char(byte)
-        self.Refresh()
+        wx.CallAfter(self.editor.set_current_draw_pattern, byte)
 
     def on_char_hook(self, evt):
         log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
@@ -1085,7 +1114,7 @@ class MemoryMapScroller(BitviewScroller):
         self.fully_visible_cols = w / z
         self.visible_rows = (h + z - 1) / z
         self.start_col, self.visible_cols = x, (w + z - 1) / z
-        log.debug("memory map: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, "col start, num:", self.start_col, self.visible_cols]))
+        log.debug("memory map: x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, self.fully_visible_rows, "col start, num:", self.start_col, self.visible_cols, self.fully_visible_cols]))
 
     def get_image(self, segment=None):
         if segment is None:

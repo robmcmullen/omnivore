@@ -430,17 +430,15 @@ class MapEditor(HexEditor):
             self.mouse_mode_factory = mouse_handler
         self.control.set_mouse_mode(self.mouse_mode_factory)
 
-    def set_current_draw_pattern(self, pattern, control):
+    def set_current_draw_pattern(self, pattern, control=None):
         try:
             iter(pattern)
         except TypeError:
-            self.draw_pattern = [pattern]
+            self.draw_pattern = (pattern,)
         else:
-            self.draw_pattern = pattern
-        if control != self.tile_map:
-            self.tile_map.clear_tile_selection()
-        if control != self.character_set:
-            self.character_set.clear_tile_selection()
+            self.draw_pattern = tuple(pattern)
+        self.tile_map.show_pattern(self.draw_pattern)
+        self.character_set.show_pattern(self.draw_pattern)
 
     def mark_index_range_changed(self, index_range):
         pass
