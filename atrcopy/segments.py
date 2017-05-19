@@ -163,7 +163,7 @@ class SegmentData(object):
         self.reverse_index_mapping = None
 
     def __str__(self):
-        return "SegmentData id=%x indexed=%s data=%s" % (id(self), self.is_indexed, type(self.data))
+        return "SegmentData id=%x indexed=%s data=%s len=%s" % (id(self), self.is_indexed, type(self.data), len(self.data))
 
     def __len__(self):
         return len(self.data)

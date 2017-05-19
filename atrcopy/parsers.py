@@ -29,6 +29,15 @@ class SegmentParser(object):
         self.segment_data = segment_data
         self.parse()
 
+    def __str__(self):
+        lines = []
+        lines.append("%s (%s)" % (self.menu_name, self.__class__.__name__))
+        if log.isEnabledFor(logging.DEBUG):
+            lines.append("segments:")
+            for s in self.segments:
+                lines.append("  %s" % s)
+        return "\n".join(lines)
+
     def __getstate__(self):
         """Custom jsonpickle state save routine
 
@@ -59,6 +68,7 @@ class SegmentParser(object):
         r = self.segment_data
         self.segments.append(self.container_segment(r, 0, name=self.menu_name))
         try:
+            log.debug("Trying %s" % self.image_type)
             self.image = self.get_image(r)
             self.check_image()
             self.image.parse_segments()
