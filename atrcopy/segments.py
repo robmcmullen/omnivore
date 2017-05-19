@@ -8,12 +8,11 @@ from builtins import range
 from builtins import object
 import bisect
 import io
-import uuid
 
 import numpy as np
 
 from .errors import *
-from .utils import to_numpy, to_numpy_list
+from .utils import to_numpy, to_numpy_list, uuid
 from functools import reduce
 
 user_bit_mask = 0x07
@@ -364,7 +363,7 @@ class DefaultSegment(object):
         self.verbose_name = verbose_name
         self.page_size = -1
         self.map_width = 40
-        self.uuid = str(uuid.uuid4())
+        self.uuid = uuid()
         if memory_map is None:
             memory_map = {}
         self.memory_map = memory_map
@@ -453,7 +452,7 @@ class DefaultSegment(object):
         added to a segment, a default value should be applied here.
         """
         self.memory_map = dict(state.pop('memory_map', []))
-        self.uuid = state.pop('uuid', uuid.uuid4())
+        self.uuid = state.pop('uuid', uuid())
         self.can_resize = state.pop('can_resize', self.__class__.can_resize_default)
         self.restore_missing_serializable_defaults()
         self.__dict__.update(state)

@@ -4,6 +4,7 @@ from builtins import str
 from builtins import range
 from builtins import object
 import types
+import uuid as stdlib_uuid
 
 import numpy as np
 
@@ -15,6 +16,18 @@ try:  # Expensive debugging
     _xd = _expensive_debugging
 except NameError:
     _xd = False
+
+
+def uuid():
+    u = stdlib_uuid.uuid4()
+
+    # Force it to use unicode(py2) or str(py3) so it isn't serialized as
+    # future.types.newstr.newstr on py2
+    try:
+        u = unicode(u)
+    except:
+        u = str(u)
+    return u
 
 
 def to_numpy(value):

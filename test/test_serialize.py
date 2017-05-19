@@ -1,6 +1,7 @@
 from __future__ import print_function
 from builtins import range
 from builtins import object
+from builtins import str
 import os
 
 import numpy as np
@@ -15,7 +16,14 @@ class TestSegment(object):
         r = SegmentData(data)
         self.segment = DefaultSegment(r, 0)
 
-    def test_s1(self):
+    def test_getstate(self):
+        state = self.segment.__getstate__()
+        for k, v in state.items():
+            print("k=%s v=%s type=%s" % (k, v, type(v)))
+        byte_type = type(str(u'  ').encode('utf-8'))  # py2 and py3
+        assert type(state['uuid']) == byte_type
+
+    def test_extra(self):
         s = self.segment
         s.set_comment([[4,5]], "test1")
         s.set_comment([[40,50]], "test2")
@@ -51,4 +59,4 @@ class TestSegment(object):
 if __name__ == "__main__":
     t = TestSegment()
     t.setup()
-    t.test_s1()
+    t.test_getstate()
