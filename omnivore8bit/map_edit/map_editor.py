@@ -92,6 +92,7 @@ class MainFontMapScroller(FontMapScroller):
 
         mode.process_left_down(evt)
         self.set_cursor(mode)
+        evt.Skip()
 
     def on_motion(self, evt):
         mode = self.get_effective_tool_mode(evt)
@@ -100,18 +101,21 @@ class MainFontMapScroller(FontMapScroller):
         else:
             mode.process_mouse_motion_up(evt)
         self.set_cursor(mode)
+        evt.Skip()
 
     def on_left_up(self, evt):
         mode = self.get_effective_tool_mode(evt)
         self.forced_cursor = None
         mode.process_left_up(evt)
         self.set_cursor(mode)
+        evt.Skip()
 
     def on_left_dclick(self, evt):
         # self.SetFocus() # why would it not be focused?
         mode = self.get_effective_tool_mode(evt)
         mode.process_left_dclick(evt)
         self.set_cursor(mode)
+        evt.Skip()
 
     def on_popup(self, evt):
         mode = self.get_effective_tool_mode(evt)
@@ -126,16 +130,19 @@ class MainFontMapScroller(FontMapScroller):
 
     def on_mouse_enter(self, evt):
         self.set_cursor()
+        evt.Skip()
 
     def on_mouse_leave(self, evt):
         self.SetCursor(wx.StockCursor(wx.CURSOR_ARROW))
         self.mouse_mode.process_mouse_leave(evt)
+        evt.Skip()
 
     def on_key_char(self, evt):
         mode = self.get_effective_tool_mode(evt)
         self.set_cursor(mode)
 
         mode.process_key_char(evt)
+        evt.Skip()
 
     def on_focus(self, evt):
         mode = self.get_effective_tool_mode(evt)
