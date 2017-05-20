@@ -572,9 +572,13 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         ## We can ask the base class to do it
         #return self.base_IsAcceptedKey(evt)
 
-        self.parentgrid.editor.select_none_if_selection()
         # or do it ourselves
-        return (evt.GetKeyCode() < 256 and not (evt.ControlDown() or evt.AltDown()) and evt.GetKeyCode() != wx.WXK_SHIFT)
+        acceptable = (evt.GetKeyCode() < 256 and not (evt.ControlDown() or evt.AltDown()) and evt.GetKeyCode() != wx.WXK_SHIFT)
+        if acceptable:
+            # clear selection if an edit is about to start, otherwise the
+            # selection stays on screen during the text entry
+            self.parentgrid.editor.select_none_if_selection()
+        return acceptable
 
     def StartingKey(self, evt):
         """
