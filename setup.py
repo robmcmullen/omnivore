@@ -30,7 +30,7 @@ ext_modules = [
 
 install_requires = [
     'numpy',
-    'atrcopy>=5.0.0',
+    'atrcopy>=5.1.0',
     'pyatasm>=1.3',
     'jsonpickle>=0.9.4',
     'bson<1.0.0',
@@ -318,7 +318,7 @@ if 'nsis' not in sys.argv:
         url = omnivore.__url__,
         download_url = ('%s/%s.tar.gz' % (omnivore.__download_url__, full_version)),
         classifiers = [c.strip() for c in """\
-            Development Status :: 3 - Alpha
+            Development Status :: 5 - Production/Stable
             Intended Audience :: Developers
             License :: OSI Approved :: GNU General Public License (GPL)
             Operating System :: MacOS
@@ -328,6 +328,7 @@ if 'nsis' not in sys.argv:
             Operating System :: Unix
             Programming Language :: Python
             Topic :: Utilities
+            Topic :: Software Development :: Assemblers
             Topic :: Software Development :: Disassemblers
             """.splitlines() if len(c.strip()) > 0],
         description = "The Atari 8-bit binary editor sponsored by the Player/Missile Podcast.",
