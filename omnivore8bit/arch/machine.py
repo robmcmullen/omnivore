@@ -344,6 +344,7 @@ class Machine(HasTraits):
         self.color_registers_highlight = self.get_blended_color_registers(self.color_registers, self.highlight_color)
         self.color_registers_match = self.get_blended_color_registers(self.color_registers, self.match_background_color)
         self.color_registers_comment = self.get_blended_color_registers(self.color_registers, self.comment_background_color)
+        self.color_registers_data = self.get_dimmed_color_registers(self.color_registers, self.background_color, self.data_color)
         self.set_font()
         self.bitmap_color_change_event = True
 
