@@ -21,7 +21,11 @@ class TestSegment(object):
         for k, v in state.items():
             print("k=%s v=%s type=%s" % (k, v, type(v)))
         byte_type = type(str(u'  ').encode('utf-8'))  # py2 and py3
-        assert type(state['uuid']) == byte_type
+        try:
+            u = unicode(" ")
+        except:
+            u = str(" ")
+        assert type(state['uuid']) == type(u)
 
     def test_extra(self):
         s = self.segment
