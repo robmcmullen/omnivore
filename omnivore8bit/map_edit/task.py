@@ -94,6 +94,23 @@ class MapEditTask(HexEditTask):
     # 'FrameworkTask' interface.
     ###########################################################################
 
+    def get_actions_Menu_Edit_CopyPasteGroup(self):
+        return [
+            CutAction(),
+            CopyAction(),
+            PasteAction(),
+            ]
+
+    def get_actions_Menu_Edit_SelectGroup(self):
+        return [
+            SelectAllAction(),
+            SelectNoneAction(),
+            SelectInvertAction(),
+            ]
+
+    def get_actions_Menu_Edit_FindGroup(self):
+        return []
+
     def get_editor(self, guess=None):
         """ Opens a new empty window
         """
