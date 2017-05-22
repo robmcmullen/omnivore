@@ -2,7 +2,7 @@ from collections import namedtuple
 
 import wx
 
-from omnivore.framework.panes import FrameworkPane
+from omnivore.framework.panes import FrameworkPane, FrameworkFixedPane
 
 # Enthought library imports.
 from pyface.api import YES, NO
@@ -220,7 +220,7 @@ class CommentsPanel(wx.VListBox):
         return len(self.items)
 
 
-class SidebarPane(FrameworkPane):
+class SidebarPane(FrameworkFixedPane):
     #### TaskPane interface ###################################################
 
     id = 'hex_edit.sidebar'
