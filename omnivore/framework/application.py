@@ -144,7 +144,7 @@ class FrameworkApplication(TasksApplication):
             for factory in self.task_factories:
                 print("%s %s" % (factory.id, factory.name))
         i = 0
-        for i in range(len(extra_args)):
+        while i < len(extra_args):
             arg = extra_args[i]
             if arg.startswith("-"):
                 if arg == "-d":
@@ -152,6 +152,7 @@ class FrameworkApplication(TasksApplication):
                     error_logger.enable_loggers(extra_args[i])
                 else:
                     log.debug("skipping flag %s" % arg)
+                i += 1
                 continue
             log.debug("processing %s" % arg)
             task_id = self.find_best_task_id(options.task_id)

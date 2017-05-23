@@ -35,8 +35,15 @@ def main(argv):
     for toolkit in ['pyface', 'envisage', 'traits', 'traitsui', 'apptools']:
         _ = logging.getLogger(toolkit)
         _.setLevel(logging.WARNING)
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+
+    # check for logging early so we can get logging output during application init
+    import omnivore.utils.wx.error_logger as error_logger
+    if "-d" in argv:
+        i = argv.index("-d")
+        error_logger.enable_loggers(argv[i+1])
+    else:
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
 
     if "--trace" in argv:
         i = argv.index("--trace")

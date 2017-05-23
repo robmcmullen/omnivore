@@ -179,7 +179,6 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", 
         kwargs['name'] = application_name
     if document_class:
         kwargs['document_class'] = document_class
-    app = FrameworkApplication(plugin_manager=plugin_manager, command_line_args=extra_args, **kwargs)
 
     # Create a debugging log
     if debug_log:
@@ -192,6 +191,14 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", 
     # Turn off omnivore log debug messages by default
     log = logging.getLogger("omnivore")
     log.setLevel(logging.INFO)
+
+    # check for logging stuff again to pick up any new loggers loaded since
+    # startup
+    import omnivore.utils.wx.error_logger as error_logger
+    if "-d" in extra_args:
+        i = extra_args.index("-d")
+        error_logger.enable_loggers(extra_args[i+1])
+    app = FrameworkApplication(plugin_manager=plugin_manager, command_line_args=extra_args, **kwargs)
 
     app.run()
 
