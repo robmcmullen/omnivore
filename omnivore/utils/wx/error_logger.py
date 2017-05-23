@@ -17,7 +17,6 @@ import wx
 import logging
 debug_log = logging.getLogger(__name__)
 
-
 # singleton; only one logging frame available at one time
 logging_frame = None
 
@@ -36,9 +35,8 @@ def enable_loggers(text):
     """
     global known_loggers
 
-    if len(known_loggers) == 0:
-        # first time through, make sure there are default levels for everything
-        get_default_levels()
+    # make sure there are default levels for everything
+    get_default_levels()
 
     match_strings = [t.strip() for t in text.split(",") if t] if "," in text else [text.strip()] if text else []
     count = 0
@@ -46,6 +44,7 @@ def enable_loggers(text):
         if level < 0:
             level = logging.INFO
         for match in match_strings:
+            debug_log.debug("checking %s for %s, current level=%s" % (logger_name, match, level))
             if match and match in logger_name:
                 level = logging.DEBUG
                 count += 1
