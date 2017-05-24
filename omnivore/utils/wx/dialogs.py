@@ -350,7 +350,7 @@ class ListReorderDialog(wx.Dialog):
     """
     border = 5
 
-    def __init__(self, parent, items, get_item_text, dialog_helper=None, title="Reorder List", copy_helper=None):
+    def __init__(self, parent, items, get_item_text, dialog_helper=None, title="Reorder List", copy_helper=None, default_helper=None):
         wx.Dialog.__init__(self, parent, -1, title,
                            size=(700, 500), pos=wx.DefaultPosition,
                            style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
@@ -388,6 +388,14 @@ class ListReorderDialog(wx.Dialog):
             vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
         else:
             self.copy = None
+
+        if default_helper is not None:
+            self.default = b = wx.Button(self, wx.ID_COPY, 'Set as Default', size=(90, -1))
+            b.Bind(wx.EVT_BUTTON, self.on_set_default)
+            vbox.Add(b, 0, wx.ALL|wx.EXPAND, self.border)
+        else:
+            self.default = None
+        self.default_helper = default_helper
 
         vbox.AddSpacer(50)
 
@@ -429,6 +437,8 @@ class ListReorderDialog(wx.Dialog):
         self.edit.Enable(one_selected)
         if self.copy is not None:
             self.copy.Enable(one_selected)
+        if self.default is not None:
+            self.default.Enable(one_selected)
         self.delete.Enable(any_selected)
 
     def on_context_menu(self, evt):
@@ -504,6 +514,13 @@ class ListReorderDialog(wx.Dialog):
             new_item = self.copy_helper(item)
             if new_item is not None:
                 self.insert_new_item(new_item)
+
+    def on_set_default(self, evt):
+        index = self.list.GetFirstSelected()
+        if index >= 0:
+            for i, item in enumerate(self.list.items):
+                self.default_helper(item, i == index)
+            self.list.refresh()
 
     def on_delete(self, evt):
         self.list.delete_selected()
