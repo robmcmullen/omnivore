@@ -726,64 +726,52 @@ class ExpandDocumentAction(EditorAction):
         e.find_segment(segment=s, refresh=True)
 
 
-class MarkSelectionAsCodeAction(EditorAction):
-    """Marks the selected bytes as valid code to be disassembled using the
-    current processor definition.
-
-    """
-    name = 'Code'
-    enabled_name = 'can_copy'
-
-    def perform(self, event):
-        e = self.active_editor
-        s = e.segment
-        ranges = s.get_style_ranges(selected=True)
-        s.clear_style_ranges(ranges, data=True, user=1)
-        e.document.change_count += 1
-        e.metadata_dirty = True
-        e.mark_index_range_changed(ranges[0])
-        e.refresh_panes()
-
-
-class MarkSelectionAsDataAction(EditorAction):
-    """Marks the selected bytes as data, not to be disassembled but shown
-    as byte values in the disassembly listing.
-
-    """
-    name = 'Data'
-    enabled_name = 'can_copy'
-
-    def perform(self, event):
-        e = self.active_editor
-        s = e.segment
-        ranges = s.get_style_ranges(selected=True)
-        s.clear_style_ranges(ranges, user=user_bit_mask)
-        s.set_style_ranges(ranges, data=True)
-        e.document.change_count += 1
-        e.metadata_dirty = True
-        # check if the segment can be merged with a previous data segment
-        index = ranges[0][0]
-        while index > 0 and (s.style[index-1] & user_bit_mask) == data_style:
-            index -= 1
-        e.mark_index_range_changed((index, ranges[0][1]))
-        e.refresh_panes()
-
-
 class CustomDisassemblerAction(EditorAction):
     name = '<custom>'
     enabled_name = 'can_copy'
     disassembly_type = 0
 
+    def set_style(self, segment, ranges):
+        segment.clear_style_ranges(ranges, user=user_bit_mask)
+        segment.set_style_ranges(ranges, user=self.disassembly_type)
+
     def perform(self, event):
         e = self.active_editor
         s = e.segment
         ranges = s.get_style_ranges(selected=True)
-        s.clear_style_ranges(ranges, user=user_bit_mask)
-        s.set_style_ranges(ranges, user=self.disassembly_type)
+        self.set_style(s, ranges)
         e.document.change_count += 1
         e.metadata_dirty = True
         e.mark_index_range_changed(ranges[0])
         e.refresh_panes()
+
+
+class MarkSelectionAsCodeAction(CustomDisassemblerAction):
+    """Marks the selected bytes as valid code to be disassembled using the
+    current processor definition.
+
+    """
+    name = 'Code'
+
+    def set_style(self, segment, ranges):
+        segment.clear_style_ranges(ranges, data=True, user=1)
+
+
+class MarkSelectionAsDataAction(CustomDisassemblerAction):
+    """Marks the selected bytes as data, not to be disassembled but shown
+    as byte values in the disassembly listing.
+
+    """
+    name = 'Data'
+
+    def set_style(self, segment, ranges):
+        segment.clear_style_ranges(ranges, user=user_bit_mask)
+        segment.set_style_ranges(ranges, data=True)
+        # check if the segment can be merged with a previous data segment
+        index = ranges[0][0]
+        while index > 0 and (segment.style[index-1] & user_bit_mask) == data_style:
+            index -= 1
+        ranges[0] = (index, ranges[0][1])
 
 
 class MarkSelectionAsDisplayListAction(CustomDisassemblerAction):
@@ -805,7 +793,6 @@ class MarkSelectionAsJumpmanLevelAction(CustomDisassemblerAction):
     available.
     """
     name = 'Jumpman Level Data'
-    enabled_name = 'can_copy'
     disassembly_type = JUMPMAN_LEVEL
 
 
@@ -814,7 +801,6 @@ class MarkSelectionAsJumpmanHarvestAction(CustomDisassemblerAction):
     much for direct editing now that the `Jumpman Level Editor`_ is available.
     """
     name = 'Jumpman Harvest Table'
-    enabled_name = 'can_copy'
     disassembly_type = JUMPMAN_HARVEST
 
 
@@ -824,7 +810,6 @@ class MarkSelectionAsUninitializedDataAction(CustomDisassemblerAction):
     next address that contains any other type of data.
     """
     name = 'Uninitialized Data'
-    enabled_name = 'can_copy'
     disassembly_type = UNINITIALIZED_DATA
 
 
