@@ -7,22 +7,30 @@ from traits.trait_base import get_resource_path
 import logging
 log = logging.getLogger(__name__)
 
+template_subdirs = ["", "../../omnivore8bit/templates"]
+try:
+    import atrcopy
+    path = atrcopy.get_template_path()
+    template_subdirs.append(path)
+except ImportError:
+    pass
 
-relative_template_subdirs = ["", "../../omnivore8bit/templates"]
 
-
-def construct_path(subdir, name):
-    # resource path will point to the omnivore/templates directory
-    path = get_resource_path(1)
-    log.debug("resource path: %s" % path)
+def construct_path(template_dir, name):
     name = name.lstrip("/")
-    pathname = os.path.normpath(os.path.join(path, subdir, name))
+    if not os.path.isabs(template_dir):
+        # resource path will point to the omnivore/templates directory
+        path = get_resource_path(1)
+        log.debug("resource path: %s" % path)
+        pathname = os.path.normpath(os.path.join(path, template_dir, name))
+    else:
+        pathname = os.path.normpath(os.path.join(template_dir, name))
     return pathname
 
 
 def find_template_path(name):
     checked = []
-    for toplevel in relative_template_subdirs:
+    for toplevel in template_subdirs:
         pathname = construct_path(toplevel, name)
         log.debug("Checking for template at %s" % pathname)
         if os.path.exists(pathname):
@@ -49,7 +57,7 @@ def get_template(name):
 
 
 def iter_templates():
-    for toplevel in relative_template_subdirs:
+    for toplevel in template_subdirs:
         pathname = construct_path(toplevel, "*")
         for template in glob.glob(pathname):
             inf = template + ".inf"
@@ -57,7 +65,6 @@ def iter_templates():
                 try:
                     with open(inf, "r") as fh:
                         j = json.loads(fh.read())
-                        print "json:", j
                 except ValueError:
                     j = {}
                     raise
