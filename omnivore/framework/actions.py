@@ -14,6 +14,7 @@ from omnivore.framework.about import AboutDialog
 from omnivore.utils.file_guess import FileGuess
 from omnivore.utils.wx.dialogs import get_file_dialog_wildcard
 from omnivore.utils.wx.error_logger import show_logging_frame
+from omnivore.templates import iter_templates
 
 import logging
 log = logging.getLogger(__name__)
@@ -51,10 +52,12 @@ class NewFileAction(Action):
 
     task_id = Any
 
+    uri = Str
+
     def perform(self, event=None):
         task = event.task.window.application.find_or_create_task_of_type(self.task_id)
-        log.debug("Loading %s as %s" % (self.name, task))
-        guess = FileGuess("template://" + self.name)
+        log.debug("Loading %s as %s" % (self.uri, task))
+        guess = FileGuess(self.uri)
         task.new(guess)
 
     def _get_tooltip(self):
@@ -85,20 +88,13 @@ class NewFileGroup(Group):
 
     def _get_items(self):
         items = []
-        for factory in self.application.task_factories:
-            if hasattr(factory.factory, 'new_file_text'):
-                task_cls = factory.factory
-                template_names = task_cls.new_file_text
 
-                # accept either a text string or a list of text strings that
-                # refer to a filename in the templates directory
-                if template_names:
-                    if isinstance(template_names, basestring):
-                        template_names = [template_names]
-                    for name in template_names:
-                        log.debug("NewFileAction for %s as %s" % (name, factory.id))
-                        action = NewFileAction(name=name, task_id=factory.id)
-                        items.append((name, ActionItem(action=action)))
+        for template in iter_templates():
+            name = template["label"]
+            task_id = self.application.find_best_task_id(template["task"])
+            log.debug("NewFileAction for %s as %s" % (name, task_id))
+            action = NewFileAction(name=name, uri=template["uri"], task_id=task_id)
+            items.append((name, ActionItem(action=action)))
         items.sort()
         items = [i[1] for i in items]
         return items
