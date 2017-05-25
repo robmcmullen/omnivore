@@ -697,8 +697,9 @@ class FrameworkApplication(TasksApplication):
     def init_perspectives(self):
         if self.perspectives_loaded:
             return
-        self.perspectives = self.get_json_data("perspectives", default_on_error={})
-        self.last_window_size = tuple(self.perspectives.get("window_size", self.default_window_size))
+        data = self.get_json_data("perspectives", default_on_error={})
+        self.perspectives = data.get("perspectives", {})
+        self.last_window_size = tuple(data.get("window_size", self.default_window_size))
         log.debug("init_perspectives: size=%s" % str(self.last_window_size))
 
     def remember_perspectives(self, window):
