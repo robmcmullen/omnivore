@@ -4,6 +4,7 @@ from builtins import str
 import os
 import sys
 import zlib
+import json
 
 import logging
 log = logging.getLogger(__name__)
@@ -300,7 +301,9 @@ def get_template_info():
             continue
         try:
             with open(name + ".inf", "r") as fh:
-                description = fh.read().strip()
+                s = fh.read()
+                j = json.loads(s)
+                description = j["description"]
         except IOError:
             description = ""
         d = textwrap.wrap(description, 80 - 1 - 14 - 2 - 2)
@@ -318,9 +321,10 @@ def get_template_data(template):
         raise InvalidDiskImage("Template disk image %s not found" % template)
     try:
         with open(path + ".inf", "r") as fh:
-            inf = fh.read().strip()
+            s = fh.read()
+            inf = json.loads(s)
     except IOError:
-        inf = ""
+        inf = {"description": ""}
     return data, inf
 
 
@@ -328,7 +332,7 @@ def create_image(template, name):
     import textwrap
 
     data, inf = get_template_data(template)
-    print("using %s template:\n  %s" % (template, "\n  ".join(textwrap.wrap(inf, 77))))
+    print("using %s template:\n  %s" % (template, "\n  ".join(textwrap.wrap(inf["description"], 77))))
     if not options.dry_run:
         if os.path.exists(name) and not options.force:
             print("skipping %s, use -f to overwrite" % (name))
