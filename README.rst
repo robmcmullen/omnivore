@@ -435,7 +435,7 @@ Related Atari Projects
 Related Apple Projects
 ----------------------
 
-Turns out there are a ton of Apple ][ disk imaging tools! I was pointed to the list from the `diskii project <https://github.com/zellyn/diskii>`_, so I've included most of that list here.
+Turns out there are a ton of Apple ][ disk image viewers and editors! I was pointed to the list from the `diskii project <https://github.com/zellyn/diskii>`_, so I've included most of that list here.
 
 * `a2disk <https://github.com/jtauber/a2disk>`_ (Python 3) DOS 3.3 reader and Applesoft BASIC detokenizer
 * `cppo <https://github.com/RasppleII/a2server/blob/master/scripts/tools/cppo>`_ (Python) a script from the `a2server <http://ivanx.com/a2server/>`_ project to read DOS 3.3 and ProDOS disk images
