@@ -10,10 +10,15 @@ log = logging.getLogger(__name__)
 template_subdirs = ["", "../../omnivore8bit/templates"]
 try:
     import atrcopy
-    path = atrcopy.get_template_path()
-    template_subdirs.append(path)
 except ImportError:
     pass
+else:
+    try:
+        path = atrcopy.get_template_path()
+        template_subdirs.append(path)
+    except AttributeError:
+        # skip an old version of atrcopy that happens to be installed
+        pass
 
 
 def construct_path(template_dir, name):
