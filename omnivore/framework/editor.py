@@ -486,10 +486,10 @@ class FrameworkEditor(Editor):
         if self.can_copy:
             self.select_none()
 
-    def select_invert(self, refresh=True):
-        """ Selects the entire document
+    def select_ranges(self, ranges, refresh=True):
+        """ Selects the specified ranges
         """
-        self.selected_ranges = self.invert_selection_ranges(self.selected_ranges)
+        self.selected_ranges = ranges
         try:
             start, end = self.selected_ranges[-1]
         except IndexError:
@@ -500,6 +500,12 @@ class FrameworkEditor(Editor):
         self.highlight_selected_ranges()
         if refresh:
             self.refresh_panes()
+
+    def select_invert(self, refresh=True):
+        """ Selects the entire document
+        """
+        ranges = self.invert_selection_ranges(self.selected_ranges)
+        self.select_ranges(ranges, refresh)
 
     def select_range(self, start, end, add=False, extend=False):
         """ Adjust the current selection to the new start and end indexes
