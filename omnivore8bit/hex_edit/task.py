@@ -30,9 +30,46 @@ class HexEditTask(FrameworkTask):
     processors they have not been extensively tested.
 
     Opening a file to edit will present the main hex edit user interface that
-    shows many different views of the data. There are regions to edit hex data,
-    character data, and the disassembly. There is also a bitmap view but is
-    presently only for viewing, not editing.
+    shows many different views of the data. Editing is supported in the hex
+    view, character view, and the disassembly. There is also a bitmap view but
+    is presently only for viewing, not editing.
+
+    Viewing Data
+    ------------
+
+    The various views can be scrolled independently, but there is only one
+    cursor location. Clicking on a location in one view will move the other
+    views to show the same location. `Selections`_ are analogous; see below.
+
+    Segments
+    --------
+
+    Binary data is parsed using code that started life as part of Omnivore but
+    I spun it out because it's useful as a standalone library: `atrcopy
+    <https://pypi.python.org/pypi/atrcopy/>`_. It knows a lot about Atari 8-bit
+    files and disk images, knows some stuff about Apple ][ files and disk
+    images, and knows almost nothing about anything else (yet). Atrcopy thinks
+    of binary data in terms of *segments*, where a segment is simply a portion
+    of the disk image.
+
+    The interesting feature of atrcopy is due to the use of `numpy
+    <http://www.numpy.org/>`_, and it's this: segments can provide views of the
+    same data *in different orders*. And, changing a byte in one segment also
+    changes the value in other segments that contain that byte because there is
+    only one copy of the data.
+
+    This turns out to be super useful. For instance, the first segment that
+    appears in Omnivore's list of segments will contain all the data from the
+    disk image, in the order that the bytes appear in the file. This may or may
+    not mean much depending on the format of the image. As an example, the
+    catalog of an Apple DOS 3.3 disk is stored in sectors that increment
+    downwards, so the catalog appears backwards(-ish. It's complicated). So
+    atrcopy goes further and breaks this disk image segment into smaller
+    segments depending on the type of the file. In the catalog example above,
+    it creates another segment that displays the catalog in the correct order.
+    Changing a byte in either of those segments will change the value in the
+    other, because it's really the same value. It's just two different looks
+    into the same data.
 
     Editing Data
     ------------
@@ -70,8 +107,54 @@ class HexEditTask(FrameworkTask):
     Selections
     ----------
 
+    Left clicking on a byte in any of the data views (hex, char, disassembly,
+    bitmap, etc.) and dragging the mouse will start a new selection. The
+    selection will be shown in all views of the data, scrolling each view
+    independently if necessary.
+
+    The selection may be extended by shift-left-click, extending
+    from either the beginning or the end of the selection as appropriate.
+
+    Multiple selections are supported by holding the Control key (Command on
+    Mac) while clicking and dragging as above. Extending a selection when using
+    multiple selection is not currently supported.
+
+    Find
+    ----
+
+    The data is searchable in multiple ways. Starting any search will display a
+    search bar on the bottom of the main window. The basic search bar available
+    with the `Find`_ menu item tries to be flexible and will show matches in
+    any data view using an appropriate conversion for that view. For instance,
+    the text string "00" in the search bar will find values of 0 in the hex
+    view, strings of "00" in the character view, labels that have "00" anywhere
+    in their text, "00" as an operand in the disassembly, or anything that has
+    "00" in a comment.
+
+    The `Find Next`_ and `Find Prev`_ menu items (or keyboard shortcuts) will
+    traverse the list of matches.
+
+    A more complicated search can be performed using the `Find Using
+    Expression`_ menu item that support ranges of addresses or specific data
+    values as search parameters using arbitrary boolean expressions.
+
     Comments
     --------
+
+    Comments are a hugely important part of reverse engineering, because by
+    definition the original source has been lost (or was never available). As
+    you figure things out, it's important to write things down. Omnivore
+    supports adding a comment to any byte in the file, and it will appear in
+    any segment that views that byte.
+
+    In the sidebar is a big ol' list of comments, and selecting one of the
+    comments will move the data views to display the byte that is referenced by
+    that comment. Because there may be multiple views of the same byte, the
+    comment shown in the comments list is the *first* segment that contains
+    that comment.
+
+    Note that segments must have a defined origin for the segment to be
+    considered as the primary for that comment.
 
     Disassembler
     ------------
@@ -110,10 +193,6 @@ class HexEditTask(FrameworkTask):
     code that aren't reached will require additional traces. When tracing is
     finished, the results can be applied to the segment to mark as data or
     code.
-
-
-    Search
-    ------
 
     """
 

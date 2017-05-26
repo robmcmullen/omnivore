@@ -24,6 +24,14 @@
 </OBJECT>
 <UL>
 <LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Viewing Data">
+    <param name="Local" value="omnivore.hex_edit.html#viewing-data">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Segments">
+    <param name="Local" value="omnivore.hex_edit.html#segments">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Editing Data">
     <param name="Local" value="omnivore.hex_edit.html#editing-data">
 </OBJECT>
@@ -34,6 +42,10 @@
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Selections">
     <param name="Local" value="omnivore.hex_edit.html#selections">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Find">
+    <param name="Local" value="omnivore.hex_edit.html#find">
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Comments">
@@ -61,10 +73,6 @@
     <param name="Local" value="omnivore.hex_edit.html#static-tracing-of-disassembly">
 </OBJECT>
 </UL>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Search">
-    <param name="Local" value="omnivore.hex_edit.html#search">
-</OBJECT>
 </UL>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="File Menu">
@@ -251,7 +259,7 @@
 </UL>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Find">
-    <param name="Local" value="omnivore.hex_edit.html#find">
+    <param name="Local" value="omnivore.hex_edit.html#id1">
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Find Using Expression">
@@ -362,15 +370,19 @@
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="mountainking.fnt">
-    <param name="Local" value="omnivore.hex_edit.html#id1">
-</OBJECT>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="mountainking.fnt">
     <param name="Local" value="omnivore.hex_edit.html#id2">
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="mountainking.fnt">
     <param name="Local" value="omnivore.hex_edit.html#id3">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="mountainking.fnt">
+    <param name="Local" value="omnivore.hex_edit.html#id4">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="getaway.var">
+    <param name="Local" value="omnivore.hex_edit.html#getaway-var">
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Load Font">
@@ -447,11 +459,11 @@
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="HTML Viewer">
-    <param name="Local" value="omnivore.hex_edit.html#id4">
+    <param name="Local" value="omnivore.hex_edit.html#id5">
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Hex Editor">
-    <param name="Local" value="omnivore.hex_edit.html#id5">
+    <param name="Local" value="omnivore.hex_edit.html#id6">
 </OBJECT>
 </UL>
 <LI> <OBJECT type="text/sitemap">
@@ -694,7 +706,7 @@
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Set Current as System Default">
-    <param name="Local" value="omnivore.hex_edit.html#id6">
+    <param name="Local" value="omnivore.hex_edit.html#id7">
 </OBJECT>
 </UL>
 <LI> <OBJECT type="text/sitemap">
@@ -890,41 +902,9 @@
     <param name="Local" value="omnivore.map_edit.html#copy">
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Copy Special">
-    <param name="Local" value="omnivore.map_edit.html#copy-special">
-</OBJECT>
-<UL>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Copy Disassembly Text">
-    <param name="Local" value="omnivore.map_edit.html#copy-disassembly-text">
-</OBJECT>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Copy Disassembly Comments">
-    <param name="Local" value="omnivore.map_edit.html#copy-disassembly-comments">
-</OBJECT>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Copy as Escaped String">
-    <param name="Local" value="omnivore.map_edit.html#copy-as-escaped-string">
-</OBJECT>
-</UL>
-<LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Paste">
     <param name="Local" value="omnivore.map_edit.html#paste">
 </OBJECT>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Paste Special">
-    <param name="Local" value="omnivore.map_edit.html#paste-special">
-</OBJECT>
-<UL>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Paste and Repeat">
-    <param name="Local" value="omnivore.map_edit.html#paste-and-repeat">
-</OBJECT>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Paste Comments">
-    <param name="Local" value="omnivore.map_edit.html#paste-comments">
-</OBJECT>
-</UL>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Select All">
     <param name="Local" value="omnivore.map_edit.html#select-all">
@@ -936,52 +916,6 @@
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Invert Selection">
     <param name="Local" value="omnivore.map_edit.html#invert-selection">
-</OBJECT>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Mark Selection As">
-    <param name="Local" value="omnivore.map_edit.html#mark-selection-as">
-</OBJECT>
-<UL>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Code">
-    <param name="Local" value="omnivore.map_edit.html#code">
-</OBJECT>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Data">
-    <param name="Local" value="omnivore.map_edit.html#data">
-</OBJECT>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Uninitialized Data">
-    <param name="Local" value="omnivore.map_edit.html#uninitialized-data">
-</OBJECT>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Display List">
-    <param name="Local" value="omnivore.map_edit.html#display-list">
-</OBJECT>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Jumpman Level Data">
-    <param name="Local" value="omnivore.map_edit.html#jumpman-level-data">
-</OBJECT>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Jumpman Harvest Table">
-    <param name="Local" value="omnivore.map_edit.html#jumpman-harvest-table">
-</OBJECT>
-</UL>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Find">
-    <param name="Local" value="omnivore.map_edit.html#find">
-</OBJECT>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Find Using Expression">
-    <param name="Local" value="omnivore.map_edit.html#find-using-expression">
-</OBJECT>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Find Next">
-    <param name="Local" value="omnivore.map_edit.html#find-next">
-</OBJECT>
-<LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Find to Selection">
-    <param name="Local" value="omnivore.map_edit.html#find-to-selection">
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Preferences">
@@ -1043,6 +977,10 @@
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="mountainking.fnt">
     <param name="Local" value="omnivore.map_edit.html#id3">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="getaway.var">
+    <param name="Local" value="omnivore.map_edit.html#getaway-var">
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Load Font">

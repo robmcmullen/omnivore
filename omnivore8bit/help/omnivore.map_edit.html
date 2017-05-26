@@ -56,10 +56,14 @@ location as the intensity.</p>
 showing a new blank template of the selected file format.</p>
 <p>Available templates include:</p>
 <ul class="simple">
-<li>Blank Apple DOS 3.3 Image</li>
-<li>Blank Atari DOS 2 DD (180K) Image</li>
-<li>Blank Atari DOS 2 ED (130K) Image</li>
-<li>Blank Atari DOS 2 SD (90K) Image</li>
+<li>Apple DOS 3.3 (140K) AUTOBRUN image</li>
+<li>Apple DOS 3.3 (140K) blank image</li>
+<li>Atari DOS 2 DD (180K) blank image</li>
+<li>Atari DOS 2 ED (130K) blank image</li>
+<li>Atari DOS 2 SD (90K) blank image</li>
+<li>Atari DOS 2.0S SD (90K) system disk</li>
+<li>Atari DOS 2.5 ED (130K) system disk</li>
+<li>Getaway Map</li>
 <li>Jumpman Level</li>
 </ul>
 
@@ -165,42 +169,9 @@ Data`_</span></a> file.</p>
 <h3>Copy</h3>
 <p>Copy the current selection</p>
 
-<a name="copy-special"></a>
-<h3>Copy Special</h3>
-<a name="copy-disassembly-text"></a>
-<h4>Copy Disassembly Text</h4>
-<p>Copy the disassembly text of the current selection to the clipboard.</p>
-
-<a name="copy-disassembly-comments"></a>
-<h4>Copy Disassembly Comments</h4>
-<p>Copy the text of the comments only, using the disassembly for line
-breaks. Any blank lines that appear in the disassembly are included in the
-copy.</p>
-
-<a name="copy-as-escaped-string"></a>
-<h4>Copy as Escaped String</h4>
-<p>Copy the current selection as a text string containing a string (with
-escaped characters where necessary) that reproduces the bytes in the
-selection.</p>
-<p>Python note: both double quotes and single quotes are escaped as hex values
-so the resulting string is safe to use inside either of those characters as
-the string delimiter.</p>
-
-
 <a name="paste"></a>
 <h3>Paste</h3>
 <p>Paste from the clipboard</p>
-
-<a name="paste-special"></a>
-<h3>Paste Special</h3>
-<a name="paste-and-repeat"></a>
-<h4>Paste and Repeat</h4>
-<p>Paste and repeat clipboard data until current selection is filled</p>
-
-<a name="paste-comments"></a>
-<h4>Paste Comments</h4>
-<p>Paste text as comment lines</p>
-
 
 <a name="select-all"></a>
 <h3>Select All</h3>
@@ -213,62 +184,6 @@ the string delimiter.</p>
 <a name="invert-selection"></a>
 <h3>Invert Selection</h3>
 <p>Inverts the selection; that is, select everything that is currently unselected and unselect those that were selected.</p>
-
-<a name="mark-selection-as"></a>
-<h3>Mark Selection As</h3>
-<a name="code"></a>
-<h4>Code</h4>
-<p>Marks the selected bytes as valid code to be disassembled using the
-current processor definition.</p>
-
-<a name="data"></a>
-<h4>Data</h4>
-<p>Marks the selected bytes as data, not to be disassembled but shown
-as byte values in the disassembly listing.</p>
-
-<a name="uninitialized-data"></a>
-<h4>Uninitialized Data</h4>
-<p>Marks the selected bytes as unitialized data, skipping over those bytes
-and placing an <code class="docutils literal"><span class="pre">origin</span></code> directive in the disassembly that points to the
-next address that contains any other type of data.</p>
-
-<a name="display-list"></a>
-<h4>Display List</h4>
-<p>Marks the selected bytes as an ANTIC display list, which will be shown
-as data in the disassembly listing. The data will be grouped by ANTIC
-command, where all bytes that belong to a command will be on a single line.
-This can result in a large number of data bytes appearing on one line when
-displaying a graphics 8 display list, for example. Exporting the
-disassembly will produce listings that break up these long lines into
-normal amounts, defaulting to 4 bytes on a line.</p>
-
-<a name="jumpman-level-data"></a>
-<h4>Jumpman Level Data</h4>
-<p>Marks the selected bytes as Jumpman drawing element descriptors. This is
-not used much for direct editing now that the <a class="reference external" href="omnivore.jumpman.html">Jumpman Level Editor</a> is
-available.</p>
-
-<a name="jumpman-harvest-table"></a>
-<h4>Jumpman Harvest Table</h4>
-<p>Marks the selected bytes as a Jumpman harvest table. This is not used
-much for direct editing now that the <a class="reference external" href="omnivore.jumpman.html">Jumpman Level Editor</a> is available.</p>
-
-
-<a name="find"></a>
-<h3>Find</h3>
-<p>Find bytes or characters in the raw data or in disassembly comments</p>
-
-<a name="find-using-expression"></a>
-<h3>Find Using Expression</h3>
-<p>Find bytes using logical and arithmetic comparisons</p>
-
-<a name="find-next"></a>
-<h3>Find Next</h3>
-<p>Find next match</p>
-
-<a name="find-to-selection"></a>
-<h3>Find to Selection</h3>
-<p>Convert all matched locations to multi-selection</p>
 
 <a name="preferences"></a>
 <h3>Preferences</h3>
@@ -320,6 +235,9 @@ of the ANTIC processor.</p>
 
 <a name="id3"></a>
 <h4>mountainking.fnt</h4>
+
+<a name="getaway-var"></a>
+<h4>getaway.var</h4>
 
 <a name="load-font"></a>
 <h4>Load Font</h4>
@@ -478,7 +396,7 @@ usually either <em>INFO</em> or <em>WARNING</em>.</p>
 </a>
 <div class="footer">
 <hr />
-Updated 13 May 2017 by Rob McMullen &lt;feedback@playermissile.com&gt;
+Updated 26 May 2017 by Rob McMullen &lt;feedback@playermissile.com&gt;
 </div>
 </body>
 </html>

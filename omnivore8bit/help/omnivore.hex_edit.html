@@ -30,9 +30,40 @@ and other 6502-based processors. There is also support for most other 8-bit
 processors, but as the author doesn&#8217;t have experience with other 8-bit
 processors they have not been extensively tested.</p>
 <p>Opening a file to edit will present the main hex edit user interface that
-shows many different views of the data. There are regions to edit hex data,
-character data, and the disassembly. There is also a bitmap view but is
-presently only for viewing, not editing.</p>
+shows many different views of the data. Editing is supported in the hex
+view, character view, and the disassembly. There is also a bitmap view but
+is presently only for viewing, not editing.</p>
+<a name="viewing-data"></a>
+<h3>Viewing Data</h3>
+<p>The various views can be scrolled independently, but there is only one
+cursor location. Clicking on a location in one view will move the other
+views to show the same location. <a class="reference internal" href="#selections">Selections</a> are analogous; see below.</p>
+
+<a name="segments"></a>
+<h3>Segments</h3>
+<p>Binary data is parsed using code that started life as part of Omnivore but
+I spun it out because it&#8217;s useful as a standalone library: <a class="reference external" href="https://pypi.python.org/pypi/atrcopy/">atrcopy</a>. It knows a lot about Atari 8-bit
+files and disk images, knows some stuff about Apple ][ files and disk
+images, and knows almost nothing about anything else (yet). Atrcopy thinks
+of binary data in terms of <em>segments</em>, where a segment is simply a portion
+of the disk image.</p>
+<p>The interesting feature of atrcopy is due to the use of <a class="reference external" href="http://www.numpy.org/">numpy</a>, and it&#8217;s this: segments can provide views of the
+same data <em>in different orders</em>. And, changing a byte in one segment also
+changes the value in other segments that contain that byte because there is
+only one copy of the data.</p>
+<p>This turns out to be super useful. For instance, the first segment that
+appears in Omnivore&#8217;s list of segments will contain all the data from the
+disk image, in the order that the bytes appear in the file. This may or may
+not mean much depending on the format of the image. As an example, the
+catalog of an Apple DOS 3.3 disk is stored in sectors that increment
+downwards, so the catalog appears backwards(-ish. It&#8217;s complicated). So
+atrcopy goes further and breaks this disk image segment into smaller
+segments depending on the type of the file. In the catalog example above,
+it creates another segment that displays the catalog in the correct order.
+Changing a byte in either of those segments will change the value in the
+other, because it&#8217;s really the same value. It&#8217;s just two different looks
+into the same data.</p>
+
 <a name="editing-data"></a>
 <h3>Editing Data</h3>
 <p>Hex data can be edited by:</p>
@@ -65,9 +96,46 @@ change this with the <a class="reference internal" href="#show-baseline-differen
 
 <a name="selections"></a>
 <h3>Selections</h3>
+<p>Left clicking on a byte in any of the data views (hex, char, disassembly,
+bitmap, etc.) and dragging the mouse will start a new selection. The
+selection will be shown in all views of the data, scrolling each view
+independently if necessary.</p>
+<p>The selection may be extended by shift-left-click, extending
+from either the beginning or the end of the selection as appropriate.</p>
+<p>Multiple selections are supported by holding the Control key (Command on
+Mac) while clicking and dragging as above. Extending a selection when using
+multiple selection is not currently supported.</p>
+
+<a name="find"></a>
+<h3>Find</h3>
+<p>The data is searchable in multiple ways. Starting any search will display a
+search bar on the bottom of the main window. The basic search bar available
+with the <a href="#id8"><span class="problematic" id="id9">`Find`_</span></a> menu item tries to be flexible and will show matches in
+any data view using an appropriate conversion for that view. For instance,
+the text string &#8220;00&#8221; in the search bar will find values of 0 in the hex
+view, strings of &#8220;00&#8221; in the character view, labels that have &#8220;00&#8221; anywhere
+in their text, &#8220;00&#8221; as an operand in the disassembly, or anything that has
+&#8220;00&#8221; in a comment.</p>
+<p>The <a class="reference internal" href="#find-next">Find Next</a> and <a href="#id10"><span class="problematic" id="id11">`Find Prev`_</span></a> menu items (or keyboard shortcuts) will
+traverse the list of matches.</p>
+<p>A more complicated search can be performed using the <a class="reference internal" href="#find-using-expression">Find Using
+Expression</a> menu item that support ranges of addresses or specific data
+values as search parameters using arbitrary boolean expressions.</p>
 
 <a name="comments"></a>
 <h3>Comments</h3>
+<p>Comments are a hugely important part of reverse engineering, because by
+definition the original source has been lost (or was never available). As
+you figure things out, it&#8217;s important to write things down. Omnivore
+supports adding a comment to any byte in the file, and it will appear in
+any segment that views that byte.</p>
+<p>In the sidebar is a big ol&#8217; list of comments, and selecting one of the
+comments will move the data views to display the byte that is referenced by
+that comment. Because there may be multiple views of the same byte, the
+comment shown in the comments list is the <em>first</em> segment that contains
+that comment.</p>
+<p>Note that segments must have a defined origin for the segment to be
+considered as the primary for that comment.</p>
 
 <a name="disassembler"></a>
 <h3>Disassembler</h3>
@@ -103,9 +171,6 @@ finished, the results can be applied to the segment to mark as data or
 code.</p>
 
 
-<a name="search"></a>
-<h3>Search</h3>
-
 
 <a name="file-menu"></a>
 <h2>File Menu</h2>
@@ -116,10 +181,14 @@ code.</p>
 showing a new blank template of the selected file format.</p>
 <p>Available templates include:</p>
 <ul class="simple">
-<li>Blank Apple DOS 3.3 Image</li>
-<li>Blank Atari DOS 2 DD (180K) Image</li>
-<li>Blank Atari DOS 2 ED (130K) Image</li>
-<li>Blank Atari DOS 2 SD (90K) Image</li>
+<li>Apple DOS 3.3 (140K) AUTOBRUN image</li>
+<li>Apple DOS 3.3 (140K) blank image</li>
+<li>Atari DOS 2 DD (180K) blank image</li>
+<li>Atari DOS 2 ED (130K) blank image</li>
+<li>Atari DOS 2 SD (90K) blank image</li>
+<li>Atari DOS 2.0S SD (90K) system disk</li>
+<li>Atari DOS 2.5 ED (130K) system disk</li>
+<li>Getaway Map</li>
 <li>Jumpman Level</li>
 </ul>
 
@@ -320,7 +389,7 @@ available.</p>
 much for direct editing now that the <a class="reference external" href="omnivore.jumpman.html">Jumpman Level Editor</a> is available.</p>
 
 
-<a name="find"></a>
+<a name="id1"></a>
 <h3>Find</h3>
 <p>Find bytes or characters in the raw data or in disassembly comments</p>
 
@@ -461,14 +530,17 @@ of the ANTIC processor.</p>
 <a name="mountainking-fnt"></a>
 <h4>mountainking.fnt</h4>
 
-<a name="id1"></a>
-<h4>mountainking.fnt</h4>
-
 <a name="id2"></a>
 <h4>mountainking.fnt</h4>
 
 <a name="id3"></a>
 <h4>mountainking.fnt</h4>
+
+<a name="id4"></a>
+<h4>mountainking.fnt</h4>
+
+<a name="getaway-var"></a>
+<h4>getaway.var</h4>
 
 <a name="load-font"></a>
 <h4>Load Font</h4>
@@ -590,11 +662,11 @@ the values in the hex grid and the disassembly text.</p>
 <h3>HTML Viewer</h3>
 <p>An action for activating a task.</p>
 
-<a name="id4"></a>
+<a name="id5"></a>
 <h3>HTML Viewer</h3>
 <p>An action for activating a task.</p>
 
-<a name="id5"></a>
+<a name="id6"></a>
 <h3>Hex Editor</h3>
 <p>An action for activating a task.</p>
 
@@ -973,7 +1045,7 @@ window.</p>
 <p>This opens a window with a list of the currently defined emulators
 to make changes to existing emulators or add/delete any already defined.</p>
 
-<a name="id6"></a>
+<a name="id7"></a>
 <h4>Set Current as System Default</h4>
 <p>The currently specified emulator in the <a class="reference internal" href="#emulators">Emulators</a> list will be set as
 the system default and remembered for subsequent editing sessions.</p>
@@ -1078,7 +1150,7 @@ usually either <em>INFO</em> or <em>WARNING</em>.</p>
 </a>
 <div class="footer">
 <hr />
-Updated 13 May 2017 by Rob McMullen &lt;feedback@playermissile.com&gt;
+Updated 26 May 2017 by Rob McMullen &lt;feedback@playermissile.com&gt;
 </div>
 </body>
 </html>
