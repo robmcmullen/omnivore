@@ -283,6 +283,14 @@ class HexEditTask(FrameworkTask):
             FindAction(),
             FindAlgorithmAction(),
             FindNextAction(),
+            # SMenu(
+            #     FindCodeAction(),
+            #     FindDataAction(),
+            #     FindDisplayListAction(),
+            #     FindJumpmanLevelAction(),
+            #     FindJumpmanHarvestAction(),
+            #     FindUninitializedAction(),
+            #     id="sel1", name="Find Style", separator=False),
             FindToSelectionAction(),
             ]
 

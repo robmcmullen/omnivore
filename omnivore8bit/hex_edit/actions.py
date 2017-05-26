@@ -726,6 +726,61 @@ class ExpandDocumentAction(EditorAction):
         e.find_segment(segment=s, refresh=True)
 
 
+class FindStyleBaseAction(EditorAction):
+    name = 'Select Style'
+    tooltip = 'Select a particular style'
+
+    def get_ranges(self, segment):
+        return segment.get_style_ranges(selected=True)
+
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        ranges = self.get_ranges(s)
+        e.segment.clear_style_bits(match=True)
+        try:
+            start, end = ranges[0]
+            e.segment.set_style_ranges(ranges, match=True)
+            e.index_clicked(start, 0, None)
+        except IndexError:
+            pass
+
+
+class FindCodeAction(FindStyleBaseAction):
+    name = 'Code'
+
+    def get_ranges(self, segment):
+        return segment.get_style_ranges(selected=True)
+
+
+class FindDataAction(FindStyleBaseAction):
+    name = 'Data'
+    user_type = 0
+
+    def get_ranges(self, segment):
+        return segment.get_style_ranges(data=True, user=self.user_type)
+
+
+class FindDisplayListAction(FindDataAction):
+    name = 'Display List'
+    user_type = ANTIC_DISASM
+
+
+class FindJumpmanLevelAction(FindDataAction):
+    name = 'Jumpman Level Data'
+    user_type = JUMPMAN_LEVEL
+
+
+class FindJumpmanHarvestAction(FindDataAction):
+    name = 'Jumpman Harvest Table'
+    user_type = JUMPMAN_HARVEST
+
+
+class FindUninitializedAction(FindDataAction):
+    name = 'Uninitialized Data'
+    user_type = UNINITIALIZED_DATA
+
+
 class CustomDisassemblerAction(EditorAction):
     name = '<custom>'
     enabled_name = 'can_copy'
