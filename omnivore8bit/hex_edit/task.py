@@ -108,9 +108,10 @@ class HexEditTask(FrameworkTask):
     ----------
 
     Left clicking on a byte in any of the data views (hex, char, disassembly,
-    bitmap, etc.) and dragging the mouse will start a new selection. The
-    selection will be shown in all views of the data, scrolling each view
-    independently if necessary.
+    bitmap, etc.) and dragging the mouse with the button held down will start a
+    new selection, finished by releasing the mouse button. The selection will
+    be shown in all views of the data, scrolling each view independently if
+    necessary.
 
     The selection may be extended by shift-left-click, extending
     from either the beginning or the end of the selection as appropriate.
@@ -159,12 +160,27 @@ class HexEditTask(FrameworkTask):
     Disassembler
     ------------
 
-    Labels
-    ~~~~~~
+    Omnivore started out as a reverse engineering tool for Atari 8-bit
+    computers, which use the 6502 processor. After developing for a while, I
+    found a python disassembler called `udis
+    <https://github.com/jefftranter/udis>`_ that supports multiple processors.
+    Through its usage, Omnivore can disassemble (and assemble! See below) code
+    for:
 
-    Labels can be set on an address, and the label will be reflected in the
-    disassembly code. Also, memory mapping files can be supplied that
-    automatically label operating system locations.
+    * 6502
+    * 65816
+    * 65c02
+    * 6800
+    * 6809
+    * 6811
+    * 8051
+    * 8080
+    * z80
+
+    but the 6502 is the only processor have direct knowledge of and so the only
+    one I've tested thoroughly. `Bug reports
+    <https://github.com/robmcmullen/omnivore/issues>`_ (and patches!) for
+    the other processors are welcome.
 
     Mini-Assembler
     ~~~~~~~~~~~~~~
@@ -172,6 +188,13 @@ class HexEditTask(FrameworkTask):
     The disassembly can be edited using a simple mini-assembler; clicking on an
     opcode provides a text entry box to change the command. The mini-assembler
     supports all CPU types, not just 6502.
+
+    Labels
+    ~~~~~~
+
+    Labels can be set on an address, and the label will be reflected in the
+    disassembly code. Also, memory mapping files can be supplied that
+    automatically label operating system locations.
 
     Data Regions
     ~~~~~~~~~~~~

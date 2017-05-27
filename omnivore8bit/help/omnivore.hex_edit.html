@@ -97,9 +97,10 @@ change this with the <a class="reference internal" href="#show-baseline-differen
 <a name="selections"></a>
 <h3>Selections</h3>
 <p>Left clicking on a byte in any of the data views (hex, char, disassembly,
-bitmap, etc.) and dragging the mouse will start a new selection. The
-selection will be shown in all views of the data, scrolling each view
-independently if necessary.</p>
+bitmap, etc.) and dragging the mouse with the button held down will start a
+new selection, finished by releasing the mouse button. The selection will
+be shown in all views of the data, scrolling each view independently if
+necessary.</p>
 <p>The selection may be extended by shift-left-click, extending
 from either the beginning or the end of the selection as appropriate.</p>
 <p>Multiple selections are supported by holding the Control key (Command on
@@ -139,17 +140,36 @@ considered as the primary for that comment.</p>
 
 <a name="disassembler"></a>
 <h3>Disassembler</h3>
-<a name="labels"></a>
-<h4>Labels</h4>
-<p>Labels can be set on an address, and the label will be reflected in the
-disassembly code. Also, memory mapping files can be supplied that
-automatically label operating system locations.</p>
-
+<p>Omnivore started out as a reverse engineering tool for Atari 8-bit
+computers, which use the 6502 processor. After developing for a while, I
+found a python disassembler called <a class="reference external" href="https://github.com/jefftranter/udis">udis</a> that supports multiple processors.
+Through its usage, Omnivore can disassemble (and assemble! See below) code
+for:</p>
+<ul class="simple">
+<li>6502</li>
+<li>65816</li>
+<li>65c02</li>
+<li>6800</li>
+<li>6809</li>
+<li>6811</li>
+<li>8051</li>
+<li>8080</li>
+<li>z80</li>
+</ul>
+<p>but the 6502 is the only processor have direct knowledge of and so the only
+one I&#8217;ve tested thoroughly. <a class="reference external" href="https://github.com/robmcmullen/omnivore/issues">Bug reports</a> (and patches!) for
+the other processors are welcome.</p>
 <a name="mini-assembler"></a>
 <h4>Mini-Assembler</h4>
 <p>The disassembly can be edited using a simple mini-assembler; clicking on an
 opcode provides a text entry box to change the command. The mini-assembler
 supports all CPU types, not just 6502.</p>
+
+<a name="labels"></a>
+<h4>Labels</h4>
+<p>Labels can be set on an address, and the label will be reflected in the
+disassembly code. Also, memory mapping files can be supplied that
+automatically label operating system locations.</p>
 
 <a name="data-regions"></a>
 <h4>Data Regions</h4>

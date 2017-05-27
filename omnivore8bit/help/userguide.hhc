@@ -57,12 +57,12 @@
 </OBJECT>
 <UL>
 <LI> <OBJECT type="text/sitemap">
-    <param name="Name" value="Labels">
-    <param name="Local" value="omnivore.hex_edit.html#labels">
-</OBJECT>
-<LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Mini-Assembler">
     <param name="Local" value="omnivore.hex_edit.html#mini-assembler">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Labels">
+    <param name="Local" value="omnivore.hex_edit.html#labels">
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Data Regions">
@@ -804,6 +804,28 @@
     <param name="Name" value="Overview">
     <param name="Local" value="omnivore.map_edit.html#overview">
 </OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Getaway">
+    <param name="Local" value="omnivore.map_edit.html#getaway">
+</OBJECT>
+</UL>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Toolbar">
+    <param name="Local" value="omnivore.map_edit.html#toolbar">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Tile Map">
+    <param name="Local" value="omnivore.map_edit.html#tile-map">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Character Set">
+    <param name="Local" value="omnivore.map_edit.html#character-set">
+</OBJECT>
+<LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Page Map">
+    <param name="Local" value="omnivore.map_edit.html#page-map">
+</OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="File Menu">
     <param name="Local" value="omnivore.map_edit.html#file-menu">
@@ -1019,11 +1041,11 @@
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Character Set">
-    <param name="Local" value="omnivore.map_edit.html#character-set">
+    <param name="Local" value="omnivore.map_edit.html#id4">
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Page Map">
-    <param name="Local" value="omnivore.map_edit.html#page-map">
+    <param name="Local" value="omnivore.map_edit.html#id5">
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Sidebar">
@@ -1031,7 +1053,7 @@
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Tile Map">
-    <param name="Local" value="omnivore.map_edit.html#tile-map">
+    <param name="Local" value="omnivore.map_edit.html#id6">
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Text Editor">
@@ -1043,7 +1065,7 @@
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="HTML Viewer">
-    <param name="Local" value="omnivore.map_edit.html#id4">
+    <param name="Local" value="omnivore.map_edit.html#id7">
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Hex Editor">
@@ -1051,7 +1073,7 @@
 </OBJECT>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Map Editor">
-    <param name="Local" value="omnivore.map_edit.html#id5">
+    <param name="Local" value="omnivore.map_edit.html#id8">
 </OBJECT>
 </UL>
 <LI> <OBJECT type="text/sitemap">

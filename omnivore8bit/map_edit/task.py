@@ -49,6 +49,42 @@ class MapEditTask(HexEditTask):
     that shows an overview of the map at one pixel per character. Note that the
     page map is just greyscale; it uses the value of the byte at a particular
     location as the intensity.
+
+    Getaway
+    -------
+
+    I interviewed Mark Reid in `Player/Missile episode 19
+    <https://playermissile.com/podcast/ep019.html>`_ and he subsequently
+    located the original floppy disks containing his original source code. He
+    generously placed the code in the public domain, and I have set up a
+    `github repository <https://github.com/robmcmullen/getaway>`_ to further
+    development.
+
+    Wade of the `Inverse ATASCII <https://inverseatascii.info>`_ and `1632
+    Atari PodcaST <https://1632podcast.info>`_ created the first new map for
+    Getaway using the map editor in Omnivore. He discovered some limitations
+    with custom maps that the original game didn't handle because the original
+    game wasn't meant to have different maps. For instance, the hideout was
+    hardcoded in a certain position, and the game would freeze if a cop reached
+    a dead end because the original game didn't have any dead ends.
+
+    AtariAge user itaych fixed those bugs that caused custom maps to freeze the
+    game, and I extended it to allow more customization, like allowing the
+    hideout to be placed at any location on the map.
+
+    Toolbar
+    =======
+
+    Tile Map
+    ========
+
+    Character Set
+    =============
+
+    Page Map
+    ========
+
+
     """
 
     new_file_text = "Getaway Map"

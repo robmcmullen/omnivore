@@ -46,6 +46,36 @@ the inverse characters in the second 128 positions), and a page map pane
 that shows an overview of the map at one pixel per character. Note that the
 page map is just greyscale; it uses the value of the byte at a particular
 location as the intensity.</p>
+<a name="getaway"></a>
+<h3>Getaway</h3>
+<p>I interviewed Mark Reid in <a class="reference external" href="https://playermissile.com/podcast/ep019.html">Player/Missile episode 19</a> and he subsequently
+located the original floppy disks containing his original source code. He
+generously placed the code in the public domain, and I have set up a
+<a class="reference external" href="https://github.com/robmcmullen/getaway">github repository</a> to further
+development.</p>
+<p>Wade of the <a class="reference external" href="https://inverseatascii.info">Inverse ATASCII</a> and <a class="reference external" href="https://1632podcast.info">1632
+Atari PodcaST</a> created the first new map for
+Getaway using the map editor in Omnivore. He discovered some limitations
+with custom maps that the original game didn&#8217;t handle because the original
+game wasn&#8217;t meant to have different maps. For instance, the hideout was
+hardcoded in a certain position, and the game would freeze if a cop reached
+a dead end because the original game didn&#8217;t have any dead ends.</p>
+<p>AtariAge user itaych fixed those bugs that caused custom maps to freeze the
+game, and I extended it to allow more customization, like allowing the
+hideout to be placed at any location on the map.</p>
+
+
+<a name="toolbar"></a>
+<h2>Toolbar</h2>
+
+<a name="tile-map"></a>
+<h2>Tile Map</h2>
+
+<a name="character-set"></a>
+<h2>Character Set</h2>
+
+<a name="page-map"></a>
+<h2>Page Map</h2>
 
 <a name="file-menu"></a>
 <h2>File Menu</h2>
@@ -158,7 +188,7 @@ cursor moves or changes to selection regions are not undoable.</p>
 
 <a name="revert-to-baseline-data"></a>
 <h3>Revert to Baseline Data</h3>
-<p>Restore the selection to the data contained in the <a href="#id6"><span class="problematic" id="id7">`Baseline
+<p>Restore the selection to the data contained in the <a href="#id9"><span class="problematic" id="id10">`Baseline
 Data`_</span></a> file.</p>
 
 <a name="cut"></a>
@@ -282,7 +312,7 @@ looking at screen memory and the ATASCII mapping for normal usage.</p>
 
 <a name="show-baseline-differences"></a>
 <h3>Show Baseline Differences</h3>
-<p>Toggle whether differences to the <a href="#id8"><span class="problematic" id="id9">`Baseline Data`_</span></a> are highlighted
+<p>Toggle whether differences to the <a href="#id11"><span class="problematic" id="id12">`Baseline Data`_</span></a> are highlighted
 or not.</p>
 
 <a name="text-font"></a>
@@ -290,11 +320,11 @@ or not.</p>
 <p>Open a font selection window to choose the font and size used to display
 the values in the hex grid and the disassembly text.</p>
 
-<a name="character-set"></a>
+<a name="id4"></a>
 <h3>Character Set</h3>
 <p>An Action for toggling the visibility of a dock pane.</p>
 
-<a name="page-map"></a>
+<a name="id5"></a>
 <h3>Page Map</h3>
 <p>An Action for toggling the visibility of a dock pane.</p>
 
@@ -302,7 +332,7 @@ the values in the hex grid and the disassembly text.</p>
 <h3>Sidebar</h3>
 <p>An Action for toggling the visibility of a dock pane.</p>
 
-<a name="tile-map"></a>
+<a name="id6"></a>
 <h3>Tile Map</h3>
 <p>An Action for toggling the visibility of a dock pane.</p>
 
@@ -314,7 +344,7 @@ the values in the hex grid and the disassembly text.</p>
 <h3>HTML Viewer</h3>
 <p>An action for activating a task.</p>
 
-<a name="id4"></a>
+<a name="id7"></a>
 <h3>HTML Viewer</h3>
 <p>An action for activating a task.</p>
 
@@ -322,7 +352,7 @@ the values in the hex grid and the disassembly text.</p>
 <h3>Hex Editor</h3>
 <p>An action for activating a task.</p>
 
-<a name="id5"></a>
+<a name="id8"></a>
 <h3>Map Editor</h3>
 <p>An action for activating a task.</p>
 
