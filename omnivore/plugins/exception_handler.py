@@ -75,6 +75,9 @@ def ExceptionHook(exctype, value, trace):
     if ErrorDialog.ABORT:
         os._exit(1)
 
+    wx.CallAfter(ShowErrorDialog, ftrace)
+
+def ShowErrorDialog(ftrace):
     # Make sure the user gets control of the mouse if it has been captured
     capture = wx.Window.GetCapture()
     if capture:
