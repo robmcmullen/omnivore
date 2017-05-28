@@ -3,6 +3,7 @@
 import os
 import time
 import urllib2
+import tempfile
 
 import wx
 import wx.lib.scrolledpanel as scrolled
@@ -173,7 +174,7 @@ class DownloadControl(scrolled.ScrolledPanel):
     View of list of downloaded items
     """
 
-    def __init__(self, parent, downloader, path=None, **kwargs):
+    def __init__(self, parent, downloader, path=None, prefix="downloads_", **kwargs):
         scrolled.ScrolledPanel.__init__(self, parent, -1, **kwargs)
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_ALWAYS)
@@ -190,13 +191,22 @@ class DownloadControl(scrolled.ScrolledPanel):
         sizer.Layout()
         self.Fit()
 
-        if path:
-            self.path = path
-        else:
-            self.path = ""
+        self.default_path = path
+        self.dir_prefix = prefix
         self.downloader = downloader
         self.req_map = {}
         self.update_header()
+
+    @property
+    def path(self):
+        if self.default_path:
+            return default_path
+        return tempfile.mkdtemp(prefix=self.dir_prefix)
+
+    @path.setter
+    def path(self, value):
+        if value:
+            self.default_path = value
 
     @property
     def num_active(self):
@@ -219,7 +229,7 @@ class DownloadControl(scrolled.ScrolledPanel):
     def request_download(self, url, filename, callback):
         if not os.path.isabs(filename):
             filename = os.path.normpath(os.path.join(self.path, filename))
-        print "request_download", filename
+        log.debug("request_download: %s" % filename)
         req = DownloadURLRequest(url, filename, finished_callback=callback)
         self.add_request(req)
         return req
@@ -248,6 +258,10 @@ class DownloadControl(scrolled.ScrolledPanel):
 
 
 if __name__ == "__main__":
+    # Due to the package import in the parent directory, running from this
+    # directory won't work. Have to hack it:
+    #
+    # PYTHONPATH=../../.. python download_manager.py
     from omnivore.utils.background_http import BackgroundHttpDownloader
     import wx.lib.inspection
 
