@@ -15,7 +15,8 @@ from envisage.ui.tasks.api import TasksApplication
 from envisage.ui.tasks.task_window_event import TaskWindowEvent, VetoableTaskWindowEvent
 from pyface.api import ImageResource
 from pyface.tasks.api import Task, TaskWindowLayout
-from traits.api import provides, Bool, Instance, List, Property, Str, Unicode, Event, Dict, Int, Float, Tuple, Any
+from traits.api import provides, Bool, Instance, List, Property, Str, Unicode, Event, Dict, Int, Float, Tuple, Any, TraitError
+from apptools.preferences.api import Preferences
 
 # Local imports.
 from filesystem import init_filesystems
@@ -79,6 +80,8 @@ class FrameworkApplication(TasksApplication):
     log_file_ext = Str
 
     cache_dir = Str
+
+    user_data_dir = Str
 
     next_document_id = Int(0)
 
@@ -499,7 +502,7 @@ class FrameworkApplication(TasksApplication):
         config directory location instead of ~/.enthought 
         """
 
-        from omnivore.third_party.appdirs import user_config_dir, user_log_dir, user_cache_dir
+        from omnivore.third_party.appdirs import user_config_dir, user_log_dir, user_cache_dir, user_data_dir
         dirname = user_config_dir(self.name)
         ETSConfig.application_home = dirname
 
@@ -518,6 +521,11 @@ class FrameworkApplication(TasksApplication):
         if not os.path.exists(dirname):
             os.makedirs(dirname)
         self.cache_dir = dirname
+
+        dirname = user_data_dir(self.name)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        self.user_data_dir = dirname
 
         # Prevent py2exe from creating a dialog box on exit saying that there
         # are error messages.  It thinks that anything written to stderr is an
@@ -579,12 +587,12 @@ class FrameworkApplication(TasksApplication):
         bad preference values.
         """
         try:
-            helper = helper_object(preferences=self.preferences)
+            helper = helper_object(preferences=self.preferences, application=self)
         except TraitError:
             # Create an empty preference object and helper so we can try
             # preferences one-by-one to see which are bad
             empty = Preferences()
-            helper = helper_object(preferences=empty)
+            helper = helper_object(preferences=empty, application=self)
             if debug:
                 log.debug("Application preferences before determining error:")
                 self.preferences.dump()
@@ -606,7 +614,7 @@ class FrameworkApplication(TasksApplication):
             if debug:
                 log.debug("Application preferences after removing bad preferences:")
                 self.preferences.dump()
-            helper = helper_object(preferences=self.preferences)
+            helper = helper_object(preferences=self.preferences, application=self)
         return helper
 
     def get_log_file_name(self, log_file_name_base, ext=""):

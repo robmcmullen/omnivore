@@ -1,7 +1,7 @@
 # Enthought library imports.
-from envisage.ui.tasks.api import PreferencesPane, TaskFactory
+from envisage.ui.tasks.api import PreferencesPane, TaskFactory, TasksApplication
 from apptools.preferences.api import PreferencesHelper
-from traits.api import on_trait_change, Bool, Dict, Enum, List, Str, Unicode, Instance
+from traits.api import on_trait_change, Bool, Dict, Enum, List, Str, Unicode, Instance, Any
 from traitsui.api import EnumEditor, HGroup, VGroup, Item, Label, \
     View
 from envisage.api import IApplication
@@ -34,6 +34,14 @@ class FrameworkPreferences(PreferencesHelper):
     """
 
     #### 'PreferencesHelper' interface ########################################
+
+    # Enthought bug? The application trait is needed to provide subclasses a
+    # way to find application level defaults, like user config directories.
+    # But, if I declare this to be a trait, upon assignment in
+    # FrameworkApplication.get_preferences, the FrameworkApplication instance
+    # gets converted to unicode.
+    #
+    # application = Any
 
     # The path to the preference node that contains the preferences.
     preferences_path = 'omnivore.framework'
