@@ -11,7 +11,7 @@ from pyface.api import YES, NO
 from disassembly import DisassemblyPanel
 from segments import SegmentList
 from omnivore8bit.ui.bitviewscroller import BitmapScroller, FontMapScroller, MemoryMapScroller
-from omnivore.utils.wx.springtabs import SpringTabs
+from omnivore.utils.wx.popuputil import SpringTabs
 from omnivore.framework.undo_panel import UndoHistoryPanel
 from commands import ChangeByteCommand
 

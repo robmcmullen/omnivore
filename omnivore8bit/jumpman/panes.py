@@ -5,7 +5,6 @@ from omnivore8bit.hex_edit.panes import SidebarPane
 from omnivore8bit.hex_edit.segments import SegmentList
 from omnivore8bit.hex_edit.grid_control import HexEditControl
 from omnivore8bit.hex_edit.panes import CommentsPanel
-from omnivore.utils.wx.springtabs import SpringTabs
 from omnivore8bit.ui.info_panels import InfoPanel
 from omnivore8bit.utils.jumpman import is_valid_level_segment
 

@@ -95,7 +95,7 @@ class RealPopupWindowMac(wx.PopupTransientWindow):
         self.SetSizer(sizer)
 
 
-class RealPopupWindow(wx.PopupWindow):
+class RealPopupWindowWx(wx.PopupWindow):
     # Compatibility methods for wx.PopupTransientWindow
 
     def Popup(self):
@@ -592,6 +592,100 @@ class SpringTabs(wx.Panel):
         self.task.on_hide_minibuffer_or_cancel(None)
 
 
+
+if sys.platform == "darwin":
+    StatusPopupWindow = RealPopupWindowMac
+else:
+    StatusPopupWindow = RealPopupWindowWx
+
+class PopupStatusBar(StatusPopupWindow):
+    """Transient status bar that displays status text in a popup
+    
+    Unlike a wx.StatusBar window that uses a constant amount of screen real-
+    estate, the PopupStatusBar displays status info in a temporary popup
+    that is displayed on the bottom of the frame.
+    
+    Status text is always overwritten with updates to the status text.  Status
+    text is designed to be used for repetitive updates in response to an event;
+    for example, to update coordinates when the mouse is moved.
+    
+    To display menu help text like the wx.StatusBar does by default, capture
+    the wx.EVT_MENU_HIGHLIGHT event and send the help text to the status bar
+    using a method like:
+    
+    def OnMenuHighlight(self, evt):
+        menu_id = evt.GetMenuId()
+        if menu_id >= 0:
+            help_text = self.GetMenuBar().GetHelpString(menu_id)
+            if help_text:
+                self.popup_status.showStatusText(help_text)
+
+    """
+    def __init__(self, frame):
+        """Creates (but doesn't show) the PopupStatusBar
+        
+        @param frame: the parent frame
+        
+        @kwarg delay: (optional) delay in milliseconds before each message
+        decays
+        """
+        StatusPopupWindow.__init__(self, frame)
+        self.SetBackgroundColour("#B6C1FF")
+
+        self.stack = wx.BoxSizer(wx.VERTICAL)
+        self.status = wx.StaticText(self, -1, "", style = wx.BORDER_NONE)
+        self.stack.Add(self.status, 0, wx.ALL|wx.EXPAND, 0)
+        self.SetSizer(self.stack)
+        self.Hide()
+
+    def show_status_text(self, text):
+        """Display a status text string in the status popup.
+        
+        This method is intended to display text in response to a large number
+        of updates to a similar actions, for example: updating x,y coordinates
+        in response to mouse movement.  It is undesirable to keep these
+        messages in the list as the list would quickly grow to display many
+        lines.  Instead, status text updates replace any previous status
+        updates at the bottom of the popup.
+        
+        This forces the popup to be displayed if it isn't currently displayed.
+        If the popup is displayed and other messages are present, the existing
+        messages are moved up and this status text is inserted at the bottom.
+        
+        @param text: message to display
+        """
+        text = text.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+        self.status.SetLabelText(text)
+        if text:
+            self.position_and_show()
+        else:
+            self.Hide()
+
+    def position_and_show(self):
+        #self.Hide()
+        self.stack.Fit(self)
+        #self.stack.SetSizeHints(self)
+        self.Layout()
+        frame = self.GetParent()
+        frame_offset = frame.GetClientAreaOrigin()
+        frame_pos = frame.ClientToScreenXY(frame_offset[0], frame_offset[1])
+        frame_size = frame.GetClientSizeTuple()
+        win_size = self.GetSizeTuple()
+        #print("frame pos: %s, size=%s  popup size=%s" % (str(frame_pos), str(frame_size), str(win_size)))
+        x = frame_pos[0]
+        y = frame_pos[1] + frame_size[1] - win_size[1]
+        self.Position((x, y), (0,0))
+        if win_size[0] > frame_size[0]:
+            cropped_size = (frame_size[0], win_size[1])
+            #print("Cropped! %s" % str(cropped_size))
+            self.SetSize(cropped_size)
+        self.Show(True)
+
+    def clear(self):
+        """Remove all messages and hide the popup"""
+        self.show_status_text("")
+
+
 if __name__ == "__main__":
     import wx.calendar
     import wx.stc
@@ -642,6 +736,26 @@ if __name__ == "__main__":
     def CalendarCB(parent, task, **kwargs):
         wx.calendar.CalendarCtrl(parent, -1, wx.DateTime_Now())
 
+    class TestSTC(wx.stc.StyledTextCtrl):
+        def __init__(self, *args, **kwargs):
+            wx.stc.StyledTextCtrl.__init__(self, *args, **kwargs)
+            self.Bind(wx.stc.EVT_STC_UPDATEUI, self.OnUpdateUI)
+
+        def OnUpdateUI(self, evt):
+            """Specific OnUpdateUI callback for those modes that use an actual
+            STC for their edit window.
+            
+            Adds things like fold level and style display.
+            """
+            linenum = self.GetCurrentLine()
+            pos = self.GetCurrentPos()
+            col = self.GetColumn(pos)
+            status = "Line: %d Column: %d Position: %d" % (linenum, col, pos)
+            if col == 0:
+                status = ""
+            self.GetParent().status.show_status_text(status)
+            evt.Skip()
+
     app = wx.PySimpleApp()
     frm = wx.Frame(None,-1,"Test",style=wx.TAB_TRAVERSAL|wx.DEFAULT_FRAME_STYLE,
                    size=(600,400))
@@ -655,9 +769,11 @@ if __name__ == "__main__":
     tabs1.add_tab("Three", ButtonCB)
     sizer.Add(tabs1, 0, wx.EXPAND)
 
-    text = wx.stc.StyledTextCtrl(panel, -1)
-    text.SetText("Just a placeholder here.\nThe real action is on the borders.")
+    text = TestSTC(panel, -1)
+    text.SetText("Just a placeholder here.\nThe real action is on the borders\nand in the popup status bar.\n\nWhen the text cursor is in any column\nother than zero, the popup status\nbar will show the location.")
     sizer.Add(text, 1, wx.EXPAND)
+
+    panel.status = PopupStatusBar(text)
 
     # spring tabs for the rigth side
     tabs2 = SpringTabs(panel, None, popup_direction="left")
