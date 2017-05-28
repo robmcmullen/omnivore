@@ -42,13 +42,8 @@ class MapEditTask(HexEditTask):
     and releasing the mouse ends the shape. Full undo/redo support is
     available.
 
-    In addition to the main map window, there are three supporting panes: a
-    tile map pane that shows characters broken down by groups, a character set
-    pane that shows the entire 256 byte character set (which for Atari includes
-    the inverse characters in the second 128 positions), and a page map pane
-    that shows an overview of the map at one pixel per character. Note that the
-    page map is just greyscale; it uses the value of the byte at a particular
-    location as the intensity.
+    In addition to the main map window, there is a drawing toolbar and three
+    supporting panes, all of which are described below.
 
     Getaway
     -------
@@ -75,15 +70,32 @@ class MapEditTask(HexEditTask):
     Toolbar
     =======
 
-    Tile Map
-    ========
-
     Character Set
     =============
 
-    Page Map
+    From this grid of all 256 possible tiles, you can select a tile to use as
+    the drawing pattern. All of the drawing commands in the toolbar above will
+    use the selected tile.
+
+    For the Atari, it includes the inverse characters in the second 128
+    positions.
+
+    Tile Map
     ========
 
+    This pane also shows tiles, but in this case they are grouped together in
+    sections. Use the drop-down list at the top to choose a section, which will
+    scroll the tiles belonging to that section into view.
+
+    So far, this is only used for Getaway maps, and it is hardcoded. Eventually
+    there will be a way to define custom sections.
+
+    Overview Map
+    ============
+
+    This is a small version of the map, showing a view at one pixel per
+    character. Note that the page map is just greyscale; it uses the tile
+    number (i.e. the byte value) at a particular location as the intensity.
 
     """
 
