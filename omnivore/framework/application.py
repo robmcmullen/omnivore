@@ -586,13 +586,17 @@ class FrameworkApplication(TasksApplication):
         Handle mistakes in preference files by using the default value for any
         bad preference values.
         """
+
+        # Give the helper application a class attribute to the application
+        helper_object.application = self
+
         try:
-            helper = helper_object(preferences=self.preferences, application=self)
+            helper = helper_object(preferences=self.preferences)
         except TraitError:
             # Create an empty preference object and helper so we can try
             # preferences one-by-one to see which are bad
             empty = Preferences()
-            helper = helper_object(preferences=empty, application=self)
+            helper = helper_object(preferences=empty)
             if debug:
                 log.debug("Application preferences before determining error:")
                 self.preferences.dump()
@@ -614,7 +618,7 @@ class FrameworkApplication(TasksApplication):
             if debug:
                 log.debug("Application preferences after removing bad preferences:")
                 self.preferences.dump()
-            helper = helper_object(preferences=self.preferences, application=self)
+            helper = helper_object(preferences=self.preferences)
         return helper
 
     def get_log_file_name(self, log_file_name_base, ext=""):

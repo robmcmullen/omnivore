@@ -43,6 +43,10 @@ class FrameworkPreferences(PreferencesHelper):
     #
     # application = Any
 
+    # Instead, use a class attribute because the application object won't
+    # change so there's no need to make it an instance attribute.
+    application = None
+
     # The path to the preference node that contains the preferences.
     preferences_path = 'omnivore.framework'
 
