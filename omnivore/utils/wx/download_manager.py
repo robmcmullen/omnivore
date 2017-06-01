@@ -183,10 +183,17 @@ class DownloadControl(scrolled.ScrolledPanel):
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         self.header = wx.StaticText(self, -1, "")
         hbox.Add(self.header, 1, flag=wx.ALIGN_CENTER)
+
+        # Adding the button prevents the window from being dismissed when in a
+        # sidebar popup, so need to use the lose_focus_helper
+        self.lose_focus_helper_function = None
+
         self.setdir = wx.Button(self, -1, "Download Dir")
         self.setdir.Bind(wx.EVT_BUTTON, self.on_setdir)
+        self.setdir.Bind(wx.EVT_KILL_FOCUS, self.on_lose_child_focus)  # helper!
         hbox.Add(self.setdir, 0, flag=wx.EXPAND|wx.ALL)
         sizer.Add(hbox, 0, flag=wx.EXPAND)
+
         self.SetSizer(sizer)
         sizer.Layout()
         self.Fit()
@@ -243,6 +250,7 @@ class DownloadControl(scrolled.ScrolledPanel):
         self.Layout()
         self.SetupScrolling()
         self.downloader.send_request(req)
+        rc.cancel.Bind(wx.EVT_KILL_FOCUS, self.on_lose_child_focus)
 
     def threadsafe_progress_callback(self, req):
         rc = self.req_map[req]
@@ -255,6 +263,12 @@ class DownloadControl(scrolled.ScrolledPanel):
         if dlg.ShowModal() == wx.ID_OK:
             self.path = dlg.GetPath()
         dlg.Destroy()
+
+    def on_lose_child_focus(self, evt):
+        log.debug("on_lose_child_focus! currently focused: %s next focused: %s" % (self.FindFocus(), evt.GetWindow()))
+        evt.Skip()
+        if self.lose_focus_helper_function is not None:
+            self.lose_focus_helper_function(evt)
 
 
 if __name__ == "__main__":
@@ -293,6 +307,9 @@ if __name__ == "__main__":
     dlc = app.dlframe.dlcontrol
     DownloadURLRequest.blocksize = 1024
     wx.CallAfter(do_download, dlc)
+    inspect = wx.lib.inspection.InspectionTool()
+    wx.CallAfter(inspect.Show)
+
     app.MainLoop()
 
     downloader = None

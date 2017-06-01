@@ -11,7 +11,29 @@
 #-----------------------------------------------------------------------------
 """SpringTabs
 
-This module provides popup windows from a group of tabs
+This module provides popup windows from a group of tabs.
+
+Sometimes the popup won't properly close when clicking outside of the popup.
+Certain controls seem to swallow the EVT_KILL_FOCUS event and without that
+event propagating upwards, the sidebar handler never closes an open sidebar.
+This seems to happen when the popup includes buttons or controls that are a
+descendant of wx.PyControl.
+
+In these cases, if the popup class defines the instance attribute
+"lose_focus_helper_function" and binds all the offending controls to the
+wx.EVT_KILL_FOCUS event with a callback function that calls the helper
+function, the helper function will cause the popup to be dismissed.
+
+class MyCoolSidebar(wx.ScrolledWindow):
+    def __init__(...)
+        ...
+        btn = wx.Button(self, -i, "Button")
+        btn.Bind(wx.EVT_KILL_FOCUS, self.on_lose_child_focus)
+
+    def on_lose_child_focus(self, evt):
+        evt.Skip()
+        if self.lose_focus_helper_function is not None:
+            self.lose_focus_helper_function(evt)
 
 """
 
@@ -384,6 +406,8 @@ class SpringTabItem(GenToggleButton):
             if len(windowlist) == 0:
                 raise RuntimeError("Popup window creation failed!")
             child = windowlist[0]
+            if hasattr(child, 'lose_focus_helper_function'):
+                child.lose_focus_helper_function = self.on_lose_child_focus
             child.Bind(wx.EVT_KILL_FOCUS, self.on_lose_child_focus)
             if sys.platform != "darwin":
                 child.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
