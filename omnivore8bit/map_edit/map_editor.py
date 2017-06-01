@@ -424,6 +424,10 @@ class MapEditor(HexEditor):
         # override HexEditor because those preferences don't apply here
         pass
 
+    def set_map_width(self, width=None):
+        HexEditor.set_map_width(self, width)
+        self.memory_map.recalc_view()
+
     def view_segment_set_width(self, segment):
         self.map_width = segment.map_width
 
