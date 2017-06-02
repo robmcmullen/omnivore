@@ -121,9 +121,11 @@ class MapEditTask(HexEditTask):
     This is the same the square above, except the interior is filled with the
     tile.
 
+    Dockable Windows
+    ================
 
     Character Set
-    =============
+    -------------
 
     From this grid of all 256 possible tiles, you can select a tile to use as
     the drawing pattern. All of the drawing commands in the toolbar above will
@@ -133,7 +135,7 @@ class MapEditTask(HexEditTask):
     positions.
 
     Tile Map
-    ========
+    --------
 
     This pane also shows tiles, but in this case they are grouped together in
     sections. Use the drop-down list at the top to choose a section, which will
@@ -143,7 +145,7 @@ class MapEditTask(HexEditTask):
     there will be a way to define custom sections.
 
     Overview Map
-    ============
+    ------------
 
     This is a small version of the map, showing a view at one pixel per
     character. Note that the page map is just greyscale; it uses the tile

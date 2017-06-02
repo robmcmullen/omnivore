@@ -811,6 +811,11 @@
 </OBJECT>
 </UL>
 <LI> <OBJECT type="text/sitemap">
+    <param name="Name" value="Dockable Windows">
+    <param name="Local" value="omnivore.map_edit.html#dockable-windows">
+</OBJECT>
+<UL>
+<LI> <OBJECT type="text/sitemap">
     <param name="Name" value="Character Set">
     <param name="Local" value="omnivore.map_edit.html#character-set">
 </OBJECT>
@@ -822,6 +827,7 @@
     <param name="Name" value="Overview Map">
     <param name="Local" value="omnivore.map_edit.html#overview-map">
 </OBJECT>
+</UL>
 <LI> <OBJECT type="text/sitemap">
     <param name="Name" value="File Menu">
     <param name="Local" value="omnivore.map_edit.html#file-menu">
