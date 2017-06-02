@@ -6,7 +6,7 @@ import wx
 # Enthought library imports.
 from pyface.wx.aui import aui
 from pyface.api import ImageResource, FileDialog, YES, NO, OK, CANCEL
-from pyface.action.api import StatusBarManager, Group, Separator, ActionEvent
+from pyface.action.api import StatusBarManager, Group, Separator, ActionEvent, Action
 from pyface.tasks.api import Task, TaskWindow, TaskLayout, TaskWindowLayout, PaneItem, IEditor, \
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
 from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
@@ -539,8 +539,10 @@ class FrameworkTask(Task):
 
     def get_actions_Menu_View_TaskGroup(self):
         return [
-            DockPaneToggleGroup(),
-            TaskToggleGroup(),
+            DocumentationOnlyAction(name="Pane Visibility:", description="Toggles whether or not the named extra pane is shown or hidden in the current window."),
+            DockPaneToggleGroup(separator=False),
+            DocumentationOnlyAction(name="Current Task:", description="Changes the view in the entire window to a new editing task. The files in the current task are not lost, it's just a way to edit different types of files while using the same top level window on the desktop."),
+            TaskToggleGroup(separator=False),
             ]
 
     def get_actions_Menu_Documents_DocumentGroup(self):

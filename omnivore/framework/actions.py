@@ -20,6 +20,13 @@ import logging
 log = logging.getLogger(__name__)
 
 
+class DocumentationOnlyAction(Action):
+    ""
+    enabled = False
+    description = ""
+    tooltip = ""
+
+
 class ShowLoggerAction(Action):
     """ Displays a window that can be used to turn on debugging of particular
     parts of the program.

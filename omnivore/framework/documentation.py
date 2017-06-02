@@ -89,6 +89,10 @@ def get_best_doc(action):
     else:
         return action.description or action.tooltip
 
+def skip_action(action):
+    name = action.__class__.__name__
+    return name == "DockPaneToggleAction" or name == "TaskToggleAction"
+
 
 rst_toc_entry_template = "   {0}"
 
@@ -342,6 +346,8 @@ Menu Items
         summaries_seen = set()
         template = self.get_template("page")
         for path, action in hierarchy:
+            if skip_action(action):
+                continue
             menu, title, level, is_action = split_path(path)
             if level > 1:
                 if not is_action:  # explicit menu
@@ -431,6 +437,8 @@ class RSTOnePageDocs(RSTSeparateMenuDocs):
         summaries_seen = set()
         template = self.get_template("page_one_page")
         for path, action in hierarchy:
+            if skip_action(action):
+                continue
             menu, title, level, is_action = split_path(path)
             if level > 1:
                 if not is_action:  # explicit menu
