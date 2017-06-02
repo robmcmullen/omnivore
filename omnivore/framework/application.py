@@ -390,11 +390,14 @@ class FrameworkApplication(TasksApplication):
         return ""  # empty string will result in scanning the file for the best match
 
     def create_task_from_factory_id(self, guess, factory_id):
-        window = self.create_window()
+        window = self.active_window
         log.debug("  window=%s" % str(window))
-        task = self.create_task(factory_id)
+        for task in window.tasks:
+            if task.id == factory_id:
+                break
+        else:
+            task = self.create_task(factory_id)
         self.add_task_to_window(window, task)
-        window.open()
         task.new(guess)
         return task
 

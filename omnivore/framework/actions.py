@@ -693,6 +693,6 @@ class NewViewInGroup(TaskDynamicSubmenuGroup):
         if e:
             factories = self.task.window.application.get_possible_task_factories(e.document)
             for factory in factories:
-                action = NewViewInNewTaskAction(name="In a %s Window" % factory.name, factor_id=factory.id)
+                action = NewViewInNewTaskAction(name="In a %s Tab" % factory.name, factor_id=factory.id)
                 items.append(ActionItem(action=action))
         return items
