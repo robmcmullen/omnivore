@@ -22,6 +22,7 @@ from omnivore.framework.preferences import FrameworkPreferences
 
 import logging
 log = logging.getLogger(__name__)
+doclog = logging.getLogger("documentation")
 
 
 @provides(IAbout)
@@ -104,6 +105,13 @@ class FrameworkTask(Task):
             "Window": ["NewTaskGroup", "WindowGroup"],
             "Help": ["AboutGroup", "DocGroup", "BugReportGroup", "DebugGroup"],
         },
+        "MenuBar": {  # documentation for menus and submenus that don't have actions
+            "Documents": "This menu contains a list of all documents open in the current session, across all windows and tabs. Selecting an item in this list will switch the view to that document, using the editor that was being used the last time it was edited.",
+            "Window": {
+                "New View In...": "This menu will contain a list of all editors that can modify this file. Selecting an item in this list will add a new view into this file using the selected editor.  For instance, you can have a map editor and a hex editor on the same file; they point to the same data and modifying data in one window will show up in the other window.",
+            },
+        },
+
         "toolbar": {
             "order": ["File", "Edit", "View"],
             "File": ["NewGroup", "OpenGroup", "SaveGroup"],
@@ -136,6 +144,33 @@ class FrameworkTask(Task):
         except KeyError:
             return self.ui_layout_description[category][title]
         log.error("Ui for %s, %s not found s" % (category, title))
+
+    def get_submenu_docs(self, menu_list):
+        """Find any submenu docs from the MenuBar or Tool Bar keys in
+        the ui_layout_* dicts.
+
+        The hierarchy of pyface actions is very complicated and I can't figure
+        out how to attach documentation to a submenu. So we're left with this
+        mess. At least it's all in one spot.
+        """
+        category = menu_list.pop(0)
+        desc = ""
+        for ui in [self.ui_layout_overrides, self.ui_layout_description]:
+            try:
+                desc = ui[category]
+                print category, desc
+                for m in menu_list:
+                    desc = desc[m]
+                    print m, desc
+            except KeyError:
+                desc = ""
+                continue
+            else:
+                break
+        print "SUBMENU_DOCS", menu_list, desc
+        if not isinstance(desc, basestring):
+            desc = ""
+        return desc
 
     def _menu_bar_default(self):
         menus = []
@@ -786,27 +821,34 @@ class FrameworkTask(Task):
         self.pyface_dump_manager(self.window.menu_bar_manager, hierarchy=hierarchy)
         for mgr in self.window.tool_bar_managers:
             self.pyface_dump_manager(mgr, hierarchy=hierarchy)
-        # for path, action in hierarchy:
-        #     print path, "|", action
+        for path, action, extra_docs in hierarchy:
+            doclog.debug("get_menu_action_hierarchy: %s|%s|%s" % (path, action, extra_docs))
         return hierarchy
 
     def pyface_dump_manager(self, manager, indent='', path="", hierarchy=[]):
         """ Render a manager! """
-        # print indent, 'Manager', manager.id, manager
+        doclog.debug("pyface_dump_manager: %sManager: %s %s" % (indent, manager.id, manager))
         indent += '  '
 
         try:
             path += manager.name + " -> "
         except AttributeError:
             path += manager.id + " -> "
-        # print path
-        hierarchy.append([path, None])
+
+        # check for top level menu
+        submenu = path.split(" -> ")
+        submenu.pop()  # has an extra " -> " at the end
+        extra_docs = self.get_submenu_docs(submenu)
+        print "EXTRA", extra_docs
+
+        doclog.debug("pyface_dump_manager: %s" % (path))
+        hierarchy.append([path, None, extra_docs])
         for group in manager._groups:
             self.pyface_render_group(group, indent, path, hierarchy)
 
     def pyface_render_group(self, group, indent, path, hierarchy):
         """ Render a group! """
-        # print indent, 'Group', group.id
+        doclog.debug("pyface_render_group: %sGroup %s, %s" % (indent, group.id, group))
         indent += '    '
 
         for item in group.items:
@@ -824,9 +866,8 @@ class FrameworkTask(Task):
             self.pyface_dump_manager(item, indent, path, hierarchy)
 
         else:
-            # print indent, 'Item', item.id, item.action
-            hierarchy.append((path + item.id, item.action))
-            # print path + item.id, item.action
+            doclog.debug("pyface_render_item: %sItem %s %s path: %s" % (indent, item.id, item.action, path + item.id))
+            hierarchy.append((path + item.id, item.action, ""))
 
     def _prompt_for_save(self):
         """ Prompts the user to save if necessary. Returns whether the dialog

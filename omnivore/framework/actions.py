@@ -627,6 +627,8 @@ class ApplicationDynamicSubmenuGroup(BaseDynamicSubmenuGroup):
 
 
 class SwitchDocumentAction(Action):
+    doc_hint = "ignore"
+
     document_id = Int
 
     name = Str

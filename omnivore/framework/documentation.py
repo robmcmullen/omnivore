@@ -110,9 +110,9 @@ def get_doc_hint(item):
     hints = [t.strip() for t in text.split(",")]
     return hints
 
-def get_rst_section_title(level, title, page=False):
+def get_rst_section_title(level, title, page=False, extra_docs=""):
     divider = rst_section_chars[level] * len(title)
-    return "\n\n%s\n%s\n%s\n\n" % (divider if page else "", title, divider)
+    return "\n\n%s\n%s\n%s\n\n%s\n\n" % (divider if page else "", title, divider, extra_docs)
 
 def get_rst_action_description(level, title, action_info, in_submenu=True):
     text = action_info[0]
@@ -262,6 +262,8 @@ Menu Items
 
 {title}
 
+{description}
+
 
 """,
     }
@@ -304,6 +306,8 @@ Menu Items
             if summary_id in summaries_seen:
                 raise AlreadySeenError
             summaries_seen.add(summary_id)
+        if "ignore" in doc_hint:
+            raise AlreadySeenError
         elif "parent" in doc_hint:
             # 'parent' keyword appears on actions where its parent menu is not
             # an action. This occurs on dynamically generated menus and almost
@@ -436,18 +440,20 @@ class RSTOnePageDocs(RSTSeparateMenuDocs):
         current_page = []
         summaries_seen = set()
         template = self.get_template("page_one_page")
-        for path, action in hierarchy:
+        for path, action, menubar_docs in hierarchy:
             if skip_action(action):
                 continue
             menu, title, level, is_action = split_path(path)
             if level > 1:
                 if not is_action:  # explicit menu
+                    menubar_docs = "" if menubar_docs is None else menubar_docs
                     if level == 2:  # toplevel menu item
                         slug = "%s.%s" % (base_slug, slugify(title))
                         toc_entries.append((slug, title))
                         subs = {
                             "slug": slug,
                             "title": get_rst_section_title(level, title + " Menu", False),
+                            "description": menubar_docs,
                         }
                         current_page = [template.format(**subs)]
                         print "  New page for %s: %s" % (title, slug)
@@ -455,7 +461,7 @@ class RSTOnePageDocs(RSTSeparateMenuDocs):
                         pages.append((slug, title, current_page))
                     else:
                         log.debug("Submenu %s")
-                        current_page.append(get_rst_section_title(level, title))
+                        current_page.append(get_rst_section_title(level, title, extra_docs=menubar_docs))
 
                 else:  # menu item could be in a submenu or up a level
                     try:

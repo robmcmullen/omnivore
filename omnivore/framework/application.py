@@ -213,6 +213,14 @@ class FrameworkApplication(TasksApplication):
             if "omnivore" not in factory.id or "framework" in factory.id:
                 print "Skipping documentation for %s" % factory.id
                 continue
+
+            # For testing, uncomment the following block to only process
+            # a single task
+
+            # if not factory.id.startswith("omnivore.map_edit"):
+            #     print "Skipping documentation for %s" % factory.id
+            #     continue
+
             print "Building documentation for %s (%s)" % (factory.id, factory.name)
             task = self.create_task(factory.id)
             try:
