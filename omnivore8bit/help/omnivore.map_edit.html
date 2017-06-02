@@ -56,12 +56,54 @@ game wasn&#8217;t meant to have different maps. For instance, the hideout was
 hardcoded in a certain position, and the game would freeze if a cop reached
 a dead end because the original game didn&#8217;t have any dead ends.</p>
 <p>AtariAge user itaych fixed those bugs that caused custom maps to freeze the
-game, and I extended it to allow more customization, like allowing the
-hideout to be placed at any location on the map.</p>
+game, and I added the ability to place the hideout at any location.</p>
 
 
 <a name="toolbar"></a>
 <h2>Toolbar</h2>
+<p>Choosing any tool on the toolbar palette keeps that mode active until a new
+toolbar icon is selected.</p>
+<a name="selection"></a>
+<h3>Selection</h3>
+<p>The default mode is selection. Click the left button to place the cursor at
+a location, and drag while holding down the left button to select a
+rectangular region.</p>
+<p>Multiple selection is supported: hold down the Control key (Command on Mac)
+while clicking and dragging and new rectangular areas can be selected.</p>
+
+<a name="tile-picker"></a>
+<h3>Tile Picker</h3>
+<p>This mode will set the current drawing tile from a location on the screen.
+Click the left mouse button on a tile and that tile will be highlighted in
+the <a class="reference internal" href="#tile-map">Tile Map</a> and the <a class="reference internal" href="#character-set">Character Set</a>, and therefore will be used as the
+current drawing tile.</p>
+
+<a name="freehand-drawing"></a>
+<h3>Freehand Drawing</h3>
+<p>The current tile will be used to replace the tile at the mouse pointer
+location when the left button is held down.</p>
+
+<a name="line-drawing"></a>
+<h3>Line Drawing</h3>
+<p>To start drawing a line with the current tile, left click on the starting
+location and hold the mouse button. As you move the mouse, a preview of the
+line will be drawn between the starting location and the current mouse
+position. When you release the mouse button, the line will be copied to the
+map.</p>
+
+<a name="square"></a>
+<h3>Square</h3>
+<p>The process for drawing a square is much the line: left click on a point
+(this will become a corner) and hold the mouse button while you choose a
+point that will become the opposite corner. Like the line, it is a preview
+until you release the button, whereupon it will be copied to the map.</p>
+<p>The border is one tile wide, and the interior is not filled.</p>
+
+<a name="filled-square"></a>
+<h3>Filled Square</h3>
+<p>This is the same the square above, except the interior is filled with the
+tile.</p>
+
 
 <a name="character-set"></a>
 <h2>Character Set</h2>
@@ -196,7 +238,7 @@ cursor moves or changes to selection regions are not undoable.</p>
 
 <a name="revert-to-baseline-data"></a>
 <h3>Revert to Baseline Data</h3>
-<p>Restore the selection to the data contained in the <a href="#id8"><span class="problematic" id="id9">`Baseline
+<p>Restore the selection to the data contained in the <a href="#id4"><span class="problematic" id="id5">`Baseline
 Data`_</span></a> file.</p>
 
 <a name="cut"></a>
@@ -320,7 +362,7 @@ looking at screen memory and the ATASCII mapping for normal usage.</p>
 
 <a name="show-baseline-differences"></a>
 <h3>Show Baseline Differences</h3>
-<p>Toggle whether differences to the <a href="#id10"><span class="problematic" id="id11">`Baseline Data`_</span></a> are highlighted
+<p>Toggle whether differences to the <a href="#id6"><span class="problematic" id="id7">`Baseline Data`_</span></a> are highlighted
 or not.</p>
 
 <a name="text-font"></a>
@@ -328,41 +370,13 @@ or not.</p>
 <p>Open a font selection window to choose the font and size used to display
 the values in the hex grid and the disassembly text.</p>
 
-<a name="id4"></a>
-<h3>Character Set</h3>
-<p>An Action for toggling the visibility of a dock pane.</p>
+<a name="pane-visibility"></a>
+<h3>Pane Visibility:</h3>
+<p>Toggles whether or not the named extra pane is shown or hidden in the current window.</p>
 
-<a name="page-map"></a>
-<h3>Page Map</h3>
-<p>An Action for toggling the visibility of a dock pane.</p>
-
-<a name="sidebar"></a>
-<h3>Sidebar</h3>
-<p>An Action for toggling the visibility of a dock pane.</p>
-
-<a name="id5"></a>
-<h3>Tile Map</h3>
-<p>An Action for toggling the visibility of a dock pane.</p>
-
-<a name="text-editor"></a>
-<h3>Text Editor</h3>
-<p>An action for activating a task.</p>
-
-<a name="html-viewer"></a>
-<h3>HTML Viewer</h3>
-<p>An action for activating a task.</p>
-
-<a name="id6"></a>
-<h3>HTML Viewer</h3>
-<p>An action for activating a task.</p>
-
-<a name="hex-editor"></a>
-<h3>Hex Editor</h3>
-<p>An action for activating a task.</p>
-
-<a name="id7"></a>
-<h3>Map Editor</h3>
-<p>An action for activating a task.</p>
+<a name="current-task"></a>
+<h3>Current Task:</h3>
+<p>Changes the view in the entire window to a new editing task. The files in the current task are not lost, it&#8217;s just a way to edit different types of files while using the same top level window on the desktop.</p>
 
 
 <a name="segment-menu"></a>
@@ -375,14 +389,13 @@ Selecting one of these items will change the view to the selected segment.</p>
 
 <a name="documents-menu"></a>
 <h2>Documents Menu</h2>
-<a name="omnivore-about-omnivore"></a>
-<h3>omnivore (<a class="reference external" href="about://omnivore">about://omnivore</a>)</h3>
-
+<p>This menu contains a list of all documents open in the current session, across all windows and tabs. Selecting an item in this list will switch the view to that document, using the editor that was being used the last time it was edited.</p>
 
 <a name="window-menu"></a>
 <h2>Window Menu</h2>
 <a name="new-view-in"></a>
 <h3>New View In</h3>
+<p>This menu will contain a list of all editors that can modify this file. Selecting an item in this list will add a new view into this file using the selected editor.  For instance, you can have a map editor and a hex editor on the same file; they point to the same data and modifying data in one window will show up in the other window.</p>
 
 <a name="new-window"></a>
 <h3>New Window</h3>
@@ -434,7 +447,7 @@ usually either <em>INFO</em> or <em>WARNING</em>.</p>
 </a>
 <div class="footer">
 <hr />
-Updated 27 May 2017 by Rob McMullen &lt;feedback@playermissile.com&gt;
+Updated 01 Jun 2017 by Rob McMullen &lt;feedback@playermissile.com&gt;
 </div>
 </body>
 </html>

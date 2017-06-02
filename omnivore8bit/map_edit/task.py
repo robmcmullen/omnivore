@@ -64,11 +64,63 @@ class MapEditTask(HexEditTask):
     a dead end because the original game didn't have any dead ends.
 
     AtariAge user itaych fixed those bugs that caused custom maps to freeze the
-    game, and I extended it to allow more customization, like allowing the
-    hideout to be placed at any location on the map.
+    game, and I added the ability to place the hideout at any location.
 
     Toolbar
     =======
+
+    Choosing any tool on the toolbar palette keeps that mode active until a new
+    toolbar icon is selected.
+
+    Selection
+    ---------
+
+    The default mode is selection. Click the left button to place the cursor at
+    a location, and drag while holding down the left button to select a
+    rectangular region.
+
+    Multiple selection is supported: hold down the Control key (Command on Mac)
+    while clicking and dragging and new rectangular areas can be selected.
+
+    Tile Picker
+    -----------
+
+    This mode will set the current drawing tile from a location on the screen.
+    Click the left mouse button on a tile and that tile will be highlighted in
+    the `Tile Map`_ and the `Character Set`_, and therefore will be used as the
+    current drawing tile.
+
+    Freehand Drawing
+    ----------------
+
+    The current tile will be used to replace the tile at the mouse pointer
+    location when the left button is held down.
+
+    Line Drawing
+    ------------
+
+    To start drawing a line with the current tile, left click on the starting
+    location and hold the mouse button. As you move the mouse, a preview of the
+    line will be drawn between the starting location and the current mouse
+    position. When you release the mouse button, the line will be copied to the
+    map.
+
+    Square
+    ------
+
+    The process for drawing a square is much the line: left click on a point
+    (this will become a corner) and hold the mouse button while you choose a
+    point that will become the opposite corner. Like the line, it is a preview
+    until you release the button, whereupon it will be copied to the map.
+
+    The border is one tile wide, and the interior is not filled.
+
+    Filled Square
+    -------------
+
+    This is the same the square above, except the interior is filled with the
+    tile.
+
 
     Character Set
     =============

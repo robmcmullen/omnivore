@@ -141,7 +141,7 @@ cursor moves or changes to selection regions are not undoable.</p>
 
 <a name="revert-to-baseline-data"></a>
 <h3>Revert to Baseline Data</h3>
-<p>Restore the selection to the data contained in the <a href="#id3"><span class="problematic" id="id4">`Baseline
+<p>Restore the selection to the data contained in the <a href="#id1"><span class="problematic" id="id2">`Baseline
 Data`_</span></a> file.</p>
 
 <a name="cut"></a>
@@ -329,7 +329,7 @@ than zero that scales the display size of each pixel in the bitmap.</p>
 
 <a name="show-baseline-differences"></a>
 <h3>Show Baseline Differences</h3>
-<p>Toggle whether differences to the <a href="#id5"><span class="problematic" id="id6">`Baseline Data`_</span></a> are highlighted
+<p>Toggle whether differences to the <a href="#id3"><span class="problematic" id="id4">`Baseline Data`_</span></a> are highlighted
 or not.</p>
 
 <a name="text-font"></a>
@@ -337,33 +337,13 @@ or not.</p>
 <p>Open a font selection window to choose the font and size used to display
 the values in the hex grid and the disassembly text.</p>
 
-<a name="sidebar"></a>
-<h3>Sidebar</h3>
-<p>An Action for toggling the visibility of a dock pane.</p>
+<a name="pane-visibility"></a>
+<h3>Pane Visibility:</h3>
+<p>Toggles whether or not the named extra pane is shown or hidden in the current window.</p>
 
-<a name="text-editor"></a>
-<h3>Text Editor</h3>
-<p>An action for activating a task.</p>
-
-<a name="html-viewer"></a>
-<h3>HTML Viewer</h3>
-<p>An action for activating a task.</p>
-
-<a name="id1"></a>
-<h3>HTML Viewer</h3>
-<p>An action for activating a task.</p>
-
-<a name="hex-editor"></a>
-<h3>Hex Editor</h3>
-<p>An action for activating a task.</p>
-
-<a name="map-editor"></a>
-<h3>Map Editor</h3>
-<p>An action for activating a task.</p>
-
-<a name="id2"></a>
-<h3>Bitmap Editor</h3>
-<p>An action for activating a task.</p>
+<a name="current-task"></a>
+<h3>Current Task:</h3>
+<p>Changes the view in the entire window to a new editing task. The files in the current task are not lost, it&#8217;s just a way to edit different types of files while using the same top level window on the desktop.</p>
 
 
 <a name="segment-menu"></a>
@@ -391,14 +371,13 @@ will contain the remaining bytes. It will not be padded with zeros.</p>
 
 <a name="documents-menu"></a>
 <h2>Documents Menu</h2>
-<a name="omnivore-about-omnivore"></a>
-<h3>omnivore (<a class="reference external" href="about://omnivore">about://omnivore</a>)</h3>
-
+<p>This menu contains a list of all documents open in the current session, across all windows and tabs. Selecting an item in this list will switch the view to that document, using the editor that was being used the last time it was edited.</p>
 
 <a name="window-menu"></a>
 <h2>Window Menu</h2>
 <a name="new-view-in"></a>
 <h3>New View In</h3>
+<p>This menu will contain a list of all editors that can modify this file. Selecting an item in this list will add a new view into this file using the selected editor.  For instance, you can have a map editor and a hex editor on the same file; they point to the same data and modifying data in one window will show up in the other window.</p>
 
 <a name="new-window"></a>
 <h3>New Window</h3>
@@ -450,7 +429,7 @@ usually either <em>INFO</em> or <em>WARNING</em>.</p>
 </a>
 <div class="footer">
 <hr />
-Updated 27 May 2017 by Rob McMullen &lt;feedback@playermissile.com&gt;
+Updated 01 Jun 2017 by Rob McMullen &lt;feedback@playermissile.com&gt;
 </div>
 </body>
 </html>
