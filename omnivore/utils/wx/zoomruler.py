@@ -1,9 +1,12 @@
 import random
+import time
 
 import wx
-from wx.lib.agw.rulerctrl import RulerCtrl
+from wx.lib.agw.rulerctrl import RulerCtrl, TimeFormat
 import wx.lib.scrolledpanel as scrolled
 
+
+DateFormat = 6
 
 class LabeledRuler(RulerCtrl):
     def __init__(self, *args, **kwargs):
@@ -12,14 +15,19 @@ class LabeledRuler(RulerCtrl):
         self._mark_pen = wx.Pen(wx.RED)
 
     def position_to_value(self, pos):
-        pos = min(pos, self._right) * 1.0  # make it float
-        value = (self._max - self._min)*(pos/self._right)  # will be float
+        """Pixel position to data point value
+        """
+        perc = float(min(pos - self._left, self._length)) / self._length
+        value = ((self._max - self._min)*perc) + self._min
+        print "position_to_value", value, perc, pos
         return value
 
     def value_to_position(self, value):
+        """Data point value to pixel position
+        """
         perc = (value - self._min)/(self._max - self._min)
         if perc >= 0.0 and perc <= 1.0:
-            pos = perc * self._right
+            pos = perc * self._length
         else:
             pos = None
         print "value_to_position", value, perc, pos
@@ -59,7 +67,13 @@ class LabeledRuler(RulerCtrl):
                 continue
             self.draw_mark(dc, pos)
 
-
+    def LabelString(self, d, major=None):
+        if self._format == TimeFormat and self._timeformat == DateFormat:
+            t = time.gmtime(d)
+            s = time.strftime("%y%m%d %H%M%S", t)
+        else:
+            s = RulerCtrl.LabelString(self, d, major)
+        return s
 
 
 class ZoomRuler(wx.Panel):
@@ -69,6 +83,11 @@ class ZoomRuler(wx.Panel):
         wx.Panel.__init__(self, parent, -1, **kwargs)
         self.panel = scrolled.ScrolledPanel(self, -1, size=(-1, 50), style=wx.HSCROLL)
         self.ruler = LabeledRuler(self.panel, -1)
+        self.ruler.SetTimeFormat(DateFormat)
+        self.ruler.SetFormat(TimeFormat)
+        start = time.time()
+        end = start + 86400 * 10
+        self.ruler.SetRange(start, end)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.ruler, 1, wx.EXPAND, 0)
@@ -94,7 +113,7 @@ class ZoomRuler(wx.Panel):
         size = (1000,40)
         self.zoom_parent(size)
         for i in range(20):
-            self.ruler.set_mark(random.uniform(1.0, 10.0), "Whatever!")
+            self.ruler.set_mark(random.uniform(start, end), "Whatever!")
 
         self.panel.Bind(wx.EVT_SCROLLWIN, self.on_scroll)
         self.ruler.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse_events)
@@ -137,8 +156,8 @@ class ZoomRuler(wx.Panel):
         left = self.ruler.position_to_value(x1)
         right = self.ruler.position_to_value(x1 + self.GetSize()[0] - 1)
         print left, right
-        self.label_min.SetLabel("%.3f" % left)
-        self.label_max.SetLabel("%.3f" % right)
+        self.label_min.SetLabel(self.ruler.LabelString(left, True))
+        self.label_max.SetLabel(self.ruler.LabelString(right, True))
 
     def on_scroll(self, evt):
         self.update_limits()
