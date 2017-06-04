@@ -636,3 +636,7 @@ class TimelineMinibuffer(Minibuffer):
     def post_create(self):
          if self.initial:
             pass
+
+    def change_editor(self, editor):
+        self.editor = editor
+        self.timeline.rebuild(self.editor)

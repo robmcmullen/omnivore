@@ -20,7 +20,7 @@ class LabeledRuler(RulerCtrl):
         """
         perc = float(min(pos - self._left, self._length)) / self._length
         value = ((self._max - self._min)*perc) + self._min
-        print "position_to_value", value, perc, pos, self._length
+        #print "position_to_value", value, perc, pos, self._length
         return value
 
     def value_to_position(self, value):
@@ -31,8 +31,11 @@ class LabeledRuler(RulerCtrl):
             pos = perc * self._length
         else:
             pos = None
-        print "value_to_position", value, perc, pos, self._length
+        #print "value_to_position", value, perc, pos, self._length
         return pos
+
+    def clear_marks(self):
+        self._marks = {}
 
     def set_mark(self, value, data):
         self._marks[value] = data
@@ -78,7 +81,7 @@ class LabeledRuler(RulerCtrl):
                 # skip offscreen marks
                 continue
             if abs(mouse_pos - pos) < self._pixel_hit_distance:
-                return item
+                return data
         return None
 
     def LabelString(self, d, major=None):
@@ -164,6 +167,25 @@ class ZoomRulerBase(object):
     def add_mark(self, timestamp, item):
         self.ruler.set_mark(timestamp, item)
 
+    def rebuild(self, editor):
+        timeline_info = editor.get_timeline_info()
+        fmt = timeline_info.get("format", "date")
+        if fmt == "date":
+            self.ruler.SetTimeFormat(DateFormat)
+            self.ruler.SetFormat(TimeFormat)
+        else:
+            self.ruler.SetTimeFormat(DateFormat)
+            self.ruler.SetFormat(TimeFormat)
+
+        self.ruler.clear_marks()
+        for start, end, item in timeline_info["marks"]:
+            print("adding %s at %s" % (item, start))
+            self.add_mark(start, item)
+        start = timeline_info["earliest_time"]
+        end = timeline_info["latest_time"]
+        self.ruler.SetRange(start, end)
+        self.ruler.Invalidate()
+
 
 class ZoomRulerWithLimits(wx.Panel, ZoomRulerBase):
     """Zoomable ruler that uses a scrollbar and resize to implement the zoom.
@@ -172,16 +194,6 @@ class ZoomRulerWithLimits(wx.Panel, ZoomRulerBase):
         wx.Panel.__init__(self, parent, -1, **kwargs)
         self.panel = scrolled.ScrolledPanel(self, -1, size=(-1,50), style=wx.HSCROLL)
         self.ruler = LabeledRuler(self.panel, -1, style=wx.BORDER_NONE)
-
-        if True:
-            self.ruler.SetTimeFormat(DateFormat)
-            self.ruler.SetFormat(TimeFormat)
-            start = time.time()
-            end = start + 86400 * 10
-        else:
-            start = 0
-            end = 1000
-        self.ruler.SetRange(start, end)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.ruler, 1, wx.EXPAND, 0)
@@ -204,12 +216,6 @@ class ZoomRulerWithLimits(wx.Panel, ZoomRulerBase):
         sizer.Add(hbox, 0, wx.EXPAND, 0)
         self.SetSizerAndFit(sizer)
 
-        size = (1000,40)
-        self.zoom_parent(size, 0)
-        if True:
-            for i in range(20):
-                self.add_mark(random.uniform(start, end), "Whatever!")
-
         self.panel.Bind(wx.EVT_SCROLLWIN, self.on_scroll)
         self.ruler.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse_events)
 
@@ -221,16 +227,6 @@ class ZoomRuler(wx.ScrolledWindow, ZoomRulerBase):
         wx.ScrolledWindow.__init__(self, parent, -1, style=wx.HSCROLL, **kwargs)
         self.panel = self
         self.ruler = LabeledRuler(self.panel, -1, style=wx.BORDER_NONE)
-
-        if True:
-            self.ruler.SetTimeFormat(DateFormat)
-            self.ruler.SetFormat(TimeFormat)
-            start = time.time()
-            end = start + 86400 * 10
-        else:
-            start = 0
-            end = 1000
-        self.ruler.SetRange(start, end)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.ruler, 1, wx.EXPAND, 0)
@@ -244,9 +240,6 @@ class ZoomRuler(wx.ScrolledWindow, ZoomRulerBase):
 
         size = (1000,40)
         self.zoom_parent(size, 0)
-        if True:
-            for i in range(20):
-                self.add_mark(random.uniform(start, end), "Whatever!")
 
         self.panel.Bind(wx.EVT_SCROLLWIN, self.on_scroll)
         self.ruler.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse_events)
@@ -254,6 +247,27 @@ class ZoomRuler(wx.ScrolledWindow, ZoomRulerBase):
 
 if __name__ == "__main__":
     import wx.lib.scrolledpanel as scrolled
+
+    class SampleData(object):
+        @classmethod
+        def get_timeline_info(cls):
+            if True:
+                fmt = "date"
+                start = time.time()
+                end = start + 86400 * 10
+            else:
+                fmt = "int"
+                start = 0
+                end = 1000
+
+            info = {
+                "format": fmt,
+                "earliest_time": start,
+                "latest_time": end,
+                "marks": [(random.uniform(start, end), 0.0, "item % d" % i) for i in range(20)],
+            }
+            return info
+
 
     app = wx.PySimpleApp()
     frm = wx.Frame(None,-1,"Test",style=wx.TAB_TRAVERSAL|wx.DEFAULT_FRAME_STYLE,
@@ -266,6 +280,7 @@ if __name__ == "__main__":
 
     scroll = ZoomRuler(panel)
     sizer.Add(scroll, 0, wx.EXPAND)
+    scroll.rebuild(SampleData)
 
     panel.SetAutoLayout(True)
     panel.SetSizer(sizer)
