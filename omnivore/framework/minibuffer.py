@@ -5,6 +5,7 @@ import wx
 import wx.lib.buttons as buttons
 
 from omnivore.utils.wx.buttons import FlatBitmapToggleButton
+from omnivore.utils.wx.zoomruler import ZoomRuler
 
 import logging
 log = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ class Minibuffer(object):
         self.command_cls = command_cls
         if label is not None:
             self.label = label
-        else:
+        elif self.command_cls is not None:
             self.label = command_cls.pretty_name
         self.initial = initial
         self.help_text = help_text
@@ -58,6 +59,7 @@ class Minibuffer(object):
         self.create_footer_controls(self.control, sizer)
 
         self.control.SetSizer(sizer)
+        self.control.Fit()
 
         self.post_create()
 
@@ -618,3 +620,19 @@ class LocalFileMinibuffer(CompletionMinibuffer):
             text = os.path.join(wx.StandardPaths.Get().GetDocumentsDir(),
                                 text[2:])
         return text
+
+
+class TimelineMinibuffer(Minibuffer):
+    """
+    Dedicated subclass of Minibuffer that shows a timeline (ZoomRuler) control
+    """
+    label = "Timeline"
+    error = "Bad input."
+
+    def create_primary_control(self, parent ,sizer):
+        self.timeline = ZoomRuler(parent)
+        sizer.Add(self.timeline, 1, wx.EXPAND|wx.LEFT|wx.RIGHT, 2)
+
+    def post_create(self):
+         if self.initial:
+            pass
