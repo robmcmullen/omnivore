@@ -90,55 +90,11 @@ class LabeledRuler(RulerCtrl):
         return s
 
 
-class ZoomRuler(wx.Panel):
-    """Zoomable ruler that uses a scrollbar and resize to implement the zoom.
+class ZoomRulerBase(object):
+    """Base class for zoom ruler, regardless of container.
+
+    self.panel must point to the scrolling window.
     """
-    def __init__(self, parent, **kwargs):
-        wx.Panel.__init__(self, parent, -1, **kwargs)
-        self.panel = scrolled.ScrolledPanel(self, -1, size=(-1, 50), style=wx.HSCROLL)
-        self.ruler = LabeledRuler(self.panel, -1)
-
-        if True:
-            self.ruler.SetTimeFormat(DateFormat)
-            self.ruler.SetFormat(TimeFormat)
-            start = time.time()
-            end = start + 86400 * 10
-        else:
-            start = 0
-            end = 1000
-        self.ruler.SetRange(start, end)
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.ruler, 1, wx.EXPAND, 0)
-        self.panel.SetSizer(sizer)
-        self.panel.ShowScrollbars(wx.SHOW_SB_ALWAYS, wx.SHOW_SB_NEVER)
-        self.panel.SetupScrolling(scroll_y=False)
-        self.panel.SetScrollRate(1, 1)
-        sizer.Layout()
-        self.panel.Fit()
-
-        self.label_min = wx.StaticText(self, -1, "Min")
-        self.label_max = wx.StaticText(self, -1, "Max", style=wx.ALIGN_RIGHT)
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
-        hbox.Add(self.label_min, 0, wx.EXPAND, 0)
-        hbox.Add((0, 0), 1)
-        hbox.Add(self.label_max, 0, wx.EXPAND, 0)
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.panel, 1, wx.EXPAND, 0)
-        sizer.Add(hbox, 0, wx.EXPAND, 0)
-        self.SetSizer(sizer)
-        self.Fit()
-
-        size = (1000,40)
-        self.zoom_parent(size, 0)
-        if True:
-            for i in range(20):
-                self.add_mark(random.uniform(start, end), "Whatever!")
-
-        self.panel.Bind(wx.EVT_SCROLLWIN, self.on_scroll)
-        self.ruler.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse_events)
-
     def on_mouse_events(self, event):
         """Overriding the ruler to capture wheel events
         """
@@ -198,8 +154,9 @@ class ZoomRuler(wx.Panel):
         left = self.ruler.position_to_value(x1)
         right = self.ruler.position_to_value(x1 + self.GetSize()[0] - 1)
         print left, right
-        self.label_min.SetLabel(self.ruler.LabelString(left, True))
-        self.label_max.SetLabel(self.ruler.LabelString(right, True))
+        if self.label_min is not None:
+            self.label_min.SetLabel(self.ruler.LabelString(left, True))
+            self.label_max.SetLabel(self.ruler.LabelString(right, True))
 
     def on_scroll(self, evt):
         self.update_limits()
@@ -207,6 +164,92 @@ class ZoomRuler(wx.Panel):
     def add_mark(self, timestamp, item):
         self.ruler.set_mark(timestamp, item)
 
+
+class ZoomRulerWithLimits(wx.Panel, ZoomRulerBase):
+    """Zoomable ruler that uses a scrollbar and resize to implement the zoom.
+    """
+    def __init__(self, parent, **kwargs):
+        wx.Panel.__init__(self, parent, -1, **kwargs)
+        self.panel = scrolled.ScrolledPanel(self, -1, size=(-1,50), style=wx.HSCROLL)
+        self.ruler = LabeledRuler(self.panel, -1, style=wx.BORDER_NONE)
+
+        if True:
+            self.ruler.SetTimeFormat(DateFormat)
+            self.ruler.SetFormat(TimeFormat)
+            start = time.time()
+            end = start + 86400 * 10
+        else:
+            start = 0
+            end = 1000
+        self.ruler.SetRange(start, end)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.ruler, 1, wx.EXPAND, 0)
+        self.panel.SetSizer(sizer)
+        self.panel.ShowScrollbars(wx.SHOW_SB_ALWAYS, wx.SHOW_SB_NEVER)
+        self.panel.SetupScrolling(scroll_y=False)
+        self.panel.SetScrollRate(1, 1)
+        # sizer.Layout()
+        self.panel.Fit()
+
+        self.label_min = wx.StaticText(self, -1, "Min")
+        self.label_max = wx.StaticText(self, -1, "Max", style=wx.ALIGN_RIGHT)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(self.label_min, 0, wx.EXPAND, 0)
+        hbox.Add((0, 0), 1)
+        hbox.Add(self.label_max, 0, wx.EXPAND, 0)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.panel, 1, wx.EXPAND, 0)
+        sizer.Add(hbox, 0, wx.EXPAND, 0)
+        self.SetSizerAndFit(sizer)
+
+        size = (1000,40)
+        self.zoom_parent(size, 0)
+        if True:
+            for i in range(20):
+                self.add_mark(random.uniform(start, end), "Whatever!")
+
+        self.panel.Bind(wx.EVT_SCROLLWIN, self.on_scroll)
+        self.ruler.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse_events)
+
+
+class ZoomRuler(wx.ScrolledWindow, ZoomRulerBase):
+    """Zoomable ruler that uses a scrollbar and resize to implement the zoom.
+    """
+    def __init__(self, parent, **kwargs):
+        wx.ScrolledWindow.__init__(self, parent, -1, style=wx.HSCROLL, **kwargs)
+        self.panel = self
+        self.ruler = LabeledRuler(self.panel, -1, style=wx.BORDER_NONE)
+
+        if True:
+            self.ruler.SetTimeFormat(DateFormat)
+            self.ruler.SetFormat(TimeFormat)
+            start = time.time()
+            end = start + 86400 * 10
+        else:
+            start = 0
+            end = 1000
+        self.ruler.SetRange(start, end)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.ruler, 1, wx.EXPAND, 0)
+        self.panel.SetSizer(sizer)
+        self.panel.ShowScrollbars(wx.SHOW_SB_ALWAYS, wx.SHOW_SB_NEVER)
+        self.panel.SetScrollRate(1, 0)
+        # sizer.Layout()
+        self.panel.Fit()
+
+        self.label_max = self.label_min = None
+
+        size = (1000,40)
+        self.zoom_parent(size, 0)
+        if True:
+            for i in range(20):
+                self.add_mark(random.uniform(start, end), "Whatever!")
+
+        self.panel.Bind(wx.EVT_SCROLLWIN, self.on_scroll)
+        self.ruler.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse_events)
 
 
 if __name__ == "__main__":
