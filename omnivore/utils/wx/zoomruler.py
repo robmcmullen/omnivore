@@ -2,11 +2,12 @@ import random
 import time
 
 import wx
-from wx.lib.agw.rulerctrl import RulerCtrl, TimeFormat
+from wx.lib.agw.rulerctrl import RulerCtrl, TimeFormat, IntFormat
 import wx.lib.scrolledpanel as scrolled
 
 
 DateFormat = 6
+MonthFormat = 7
 
 class LabeledRuler(RulerCtrl):
     def __init__(self, *args, **kwargs):
@@ -85,9 +86,15 @@ class LabeledRuler(RulerCtrl):
         return None
 
     def LabelString(self, d, major=None):
-        if self._format == TimeFormat and self._timeformat == DateFormat:
+        if self._format == TimeFormat:
             t = time.gmtime(d)
-            s = time.strftime("%y%m%d %H%M%S", t)
+            if self._timeformat == DateFormat:
+                s = time.strftime("%y%m%d %H%M%S", t)
+            elif self._timeformat == MonthFormat:
+                if major:
+                    s = time.strftime("%b %d", t)
+                else:
+                    s = time.strftime("%H:%M:%S", t)
         else:
             s = RulerCtrl.LabelString(self, d, major)
         return s
@@ -173,9 +180,11 @@ class ZoomRulerBase(object):
         if fmt == "date":
             self.ruler.SetTimeFormat(DateFormat)
             self.ruler.SetFormat(TimeFormat)
-        else:
-            self.ruler.SetTimeFormat(DateFormat)
+        if fmt == "month":
+            self.ruler.SetTimeFormat(MonthFormat)
             self.ruler.SetFormat(TimeFormat)
+        else:
+            self.ruler.SetFormat(IntFormat)
 
         self.ruler.clear_marks()
         for start, end, item in timeline_info["marks"]:
@@ -252,7 +261,7 @@ if __name__ == "__main__":
         @classmethod
         def get_timeline_info(cls):
             if True:
-                fmt = "date"
+                fmt = "month"
                 start = time.time()
                 end = start + 86400 * 10
             else:
