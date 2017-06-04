@@ -723,7 +723,7 @@ class FrameworkTask(Task):
         try:
             info = self.window.minibuffer_pane_info
         except AttributeError:
-            panel = wx.Panel(self.window.control, style=wx.NO_BORDER)
+            panel = wx.Panel(self.window.control, name="minibuffer_parent", style=wx.NO_BORDER)
             sizer = wx.BoxSizer(wx.HORIZONTAL)
             close_image = ImageResource('cancel')
             bmp = close_image.create_bitmap()
@@ -746,18 +746,23 @@ class FrameworkTask(Task):
                 info.window.GetSizer().Remove(0)
                 info.minibuffer.destroy_control()
                 log.debug("Children: %s" % info.window.GetSizer().Children)
+        force_update = False
         if not repeat:
             minibuffer.create_control(info.window)
             info.window.GetSizer().Insert(0, minibuffer.control, 1, wx.EXPAND)
-            info.window.GetSizer().Layout()
+            info.window.Fit()  # Fit instead of Layout to prefer control size
+            info.BestSize(info.window.GetMinSize())  # Force minibuffer height, just in case
             minibuffer.focus()
             info.minibuffer = minibuffer
             log.debug("Window: %s, info: %s" % (self.window, info))
+            force_update = True
         else:
             info.minibuffer.focus()
             info.minibuffer.repeat(minibuffer)  # Include new minibuffer
         if not info.IsShown():
             info.Show()
+            force_update = True
+        if force_update:
             self.window._aui_manager.Update()
 
     def find_cancel_edit(self, control):
