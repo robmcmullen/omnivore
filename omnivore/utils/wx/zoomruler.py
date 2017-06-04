@@ -13,6 +13,7 @@ class LabeledRuler(RulerCtrl):
         RulerCtrl.__init__(self, *args, **kwargs)
         self._marks = {}
         self._mark_pen = wx.Pen(wx.RED)
+        self._pixel_hit_distance = 2
 
     def position_to_value(self, pos):
         """Pixel position to data point value
@@ -33,8 +34,8 @@ class LabeledRuler(RulerCtrl):
         print "value_to_position", value, perc, pos, self._length
         return pos
 
-    def set_mark(self, value, text):
-        self._marks[value] = text
+    def set_mark(self, value, data):
+        self._marks[value] = data
 
     def draw_mark(self, dc, pos):
         length = 10
@@ -60,12 +61,25 @@ class LabeledRuler(RulerCtrl):
         dc.SetBrush(wx.Brush(self._background))
         dc.SetPen(self._mark_pen)
 
-        for mark, label in self._marks.iteritems():
-            pos = self.value_to_position(mark)
+        for value, data in self._marks.iteritems():
+            pos = self.value_to_position(value)
             if pos is None:
                 # skip offscreen marks
                 continue
             self.draw_mark(dc, pos)
+
+    def hit_test(self, mouse_pos):
+        if mouse_pos < 0 or mouse_pos >= self._length:
+            return None
+
+        for value, data in self._marks.iteritems():
+            pos = self.value_to_position(value)
+            if pos is None:
+                # skip offscreen marks
+                continue
+            if abs(mouse_pos - pos) < self._pixel_hit_distance:
+                return item
+        return None
 
     def LabelString(self, d, major=None):
         if self._format == TimeFormat and self._timeformat == DateFormat:
@@ -120,7 +134,7 @@ class ZoomRuler(wx.Panel):
         self.zoom_parent(size, 0)
         if True:
             for i in range(20):
-                self.ruler.set_mark(random.uniform(start, end), "Whatever!")
+                self.add_mark(random.uniform(start, end), "Whatever!")
 
         self.panel.Bind(wx.EVT_SCROLLWIN, self.on_scroll)
         self.ruler.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse_events)
@@ -138,8 +152,17 @@ class ZoomRuler(wx.Panel):
                 elif wheel_dir > 0:
                     self.zoom_in(pos)
             event.Skip()
-        else:
-            self.ruler.OnMouseEvents(event)
+        elif event.LeftDown():
+            # start selection
+            pass
+        elif event.LeftUp():
+            # end selection
+            pass
+        elif event.Moving():
+            pos = event.GetPosition()[0]
+            label = self.ruler.hit_test(pos)
+            print pos, label
+        event.Skip()
 
     def zoom_out(self, pos):
         size = self.ruler.GetSize()
@@ -180,6 +203,10 @@ class ZoomRuler(wx.Panel):
 
     def on_scroll(self, evt):
         self.update_limits()
+
+    def add_mark(self, timestamp, item):
+        self.ruler.set_mark(timestamp, item)
+
 
 
 if __name__ == "__main__":
