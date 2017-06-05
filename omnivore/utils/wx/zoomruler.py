@@ -18,6 +18,12 @@ class LabeledRuler(RulerCtrl):
         self._marks = {}
         self._mark_pen = wx.Pen(wx.RED)
         self._pixel_hit_distance = 2
+        self._highlight = wx.Colour(100, 200, 230)
+        self.selected_ranges = []
+
+    @property
+    def has_selection(self):
+        return len(self.selected_ranges) > 0
 
     def position_to_value(self, pos):
         """Pixel position to data point value
@@ -62,8 +68,76 @@ class LabeledRuler(RulerCtrl):
                 dc.DrawLine(self._right - length, self._top + pos,
                             self._right, self._top + pos)
 
+    def marks_within_range(self, r):
+        inside = []
+        low = self.position_to_value(r[0])
+        hi = self.position_to_value(r[1])
+        if low > hi:
+            low, hi = hi, low
+        for value, data in self._marks.iteritems():
+            if value >= low and value <= hi:
+                inside.append(data)
+        return inside
+
+    def marks_in_selection(self):
+        total = set()
+        for r in self.selected_ranges:
+            inside = self.marks_within_range(r)
+            total.update(inside)
+        return total
+
+    def extend_selection(self, pos):
+        self.select_end = pos
+        self.ruler.selected_ranges[-1] = (start, end)
+
     def Draw(self, dc):
-        RulerCtrl.Draw(self, dc)
+        if not self._valid:
+            self.Update(dc)
+
+        dc.SetBrush(wx.Brush(self._background))
+        dc.SetPen(self._tickpen)
+        dc.SetTextForeground(self._textcolour)
+
+        r = self.GetClientRect()
+        dc.DrawRectangleRect(self.GetClientRect())
+
+        dc.SetBrush(wx.Brush(self._highlight))
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        for left, right in self.selected_ranges:
+            if right < left:
+                left, right = right, left
+            r.SetLeft(left)
+            r.SetRight(right)
+            dc.DrawRectangleRect(r)
+
+        dc.SetBrush(wx.Brush(self._background))
+        dc.SetPen(self._tickpen)
+        dc.DrawLine(self._left, self._bottom-1, self._right+1, self._bottom-1)
+
+        dc.SetFont(self._majorfont)
+
+        for label in self._majorlabels:
+            pos = label.pos
+            
+            dc.DrawLine(self._left + pos, self._bottom - 5,
+                self._left + pos, self._bottom)
+            
+            if label.text != "":
+                dc.DrawText(label.text, label.lx, label.ly)
+        
+        dc.SetFont(self._minorfont)
+
+        for label in self._minorlabels:
+            pos = label.pos
+
+            dc.DrawLine(self._left + pos, self._bottom - 3,
+                self._left + pos, self._bottom)
+            
+            if label.text != "":
+                dc.DrawText(label.text, label.lx, label.ly)
+
+        for indicator in self._indicators:
+            indicator.Draw(dc)
 
         dc.SetBrush(wx.Brush(self._background))
         dc.SetPen(self._mark_pen)
@@ -143,6 +217,9 @@ class ZoomRulerBase(object):
         self.ruler.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
         self.ruler.Bind(wx.EVT_KEY_UP, self.on_key_up)
         self.ruler.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse_events)
+        self.select_start = -1
+        self.select_end = -1
+        self.select_threshold = 2
         self.drag_start = -1
         self.view_at_drag_start = -1
         self.cursor_mode_image = {
@@ -159,6 +236,10 @@ class ZoomRulerBase(object):
     @property
     def is_dragging(self):
         return self.drag_start >= 0
+
+    @property
+    def is_selecting(self):
+        return self.select_end >= 0
 
     def set_mode(self, mode):
         if self.cursor_mode != mode:
@@ -198,18 +279,34 @@ class ZoomRulerBase(object):
             event.Skip()
         elif event.LeftDown():
             if event.AltDown():
-                self.drag_start = wx.GetMousePosition()[0]
+                self.drag_start = wx.GetMousePosition()[0]  # absolute mouse pos (see below)
                 self.view_at_drag_start, _ = self.panel.GetViewStart()
                 self.set_mode("dragging")
             else:
-                # start selection
-                pass
+                if event.ShiftDown() and self.ruler.has_selection:
+                    last_start, last_end = self.ruler.selected_ranges[-1]
+                    self.ruler.selected_ranges[-1] = (last_start, pos)
+                    self.Refresh()
+                else:
+                    # start selection
+                    self.selection_cleared_callback()
+                    self.select_start = pos
         elif event.LeftUp():
             self.drag_start = -1
             if event.AltDown():
                 mode = "drag_mode"
             else:
                 mode = "select"
+                if self.ruler.has_selection:
+                    self.selection_finished_callback()
+                elif self.select_start >= 0:
+                    if self.ruler.has_selection:
+                        self.ruler.selected_ranges = []
+                        self.Refresh()
+                    item = self.ruler.hit_test(self.select_start)
+                    if item is not None:
+                        self.selected_item_callback(item)
+                self.select_start = self.select_end = -1
             self.set_mode(mode)
             # end selection
             pass
@@ -227,8 +324,33 @@ class ZoomRulerBase(object):
                 delta = pos - self.drag_start
                 x = self.view_at_drag_start - delta
                 self.panel.Scroll(x, 0)
+            elif event.ShiftDown() and self.ruler.has_selection:
+                last_start, last_end = self.ruler.selected_ranges[-1]
+                self.ruler.selected_ranges[-1] = (last_start, pos)
+                self.Refresh()
+            elif self.is_selecting:
+                self.select_end = pos
+                self.ruler.selected_ranges[-1] = (self.select_start, self.select_end)
+                self.Refresh()
+            else:
+                # check if reached the threshold to start a drag
+                if abs(pos - self.select_start) > self.select_threshold:
+                    self.select_end = pos
+                    self.ruler.selected_ranges = [(self.select_start, self.select_end)]
+                    self.Refresh()
             
         event.Skip()
+
+    def selection_finished_callback(self):
+        print "DONE!"
+        items = self.ruler.marks_in_selection()
+        print items
+
+    def selected_item_callback(self, item):
+        print "CHOSEN!", item
+
+    def selection_cleared_callback(self):
+        print "CLEARED!"
 
     @property
     def zoom_rate(self):
