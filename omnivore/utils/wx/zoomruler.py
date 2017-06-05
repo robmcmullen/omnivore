@@ -114,6 +114,7 @@ class ZoomRulerBase(object):
     """
     open_hand_cursor_ = None
     closed_hand_cursor_ = None
+    zoom_percent = .1  # uses this percentage of control width (in pixels) as zoom distance at each mouse wheel click
 
     @property
     def can_drag_cursor(self):
@@ -229,14 +230,18 @@ class ZoomRulerBase(object):
             
         event.Skip()
 
+    @property
+    def zoom_rate(self):
+        return max(10, int(self.zoom_percent * self.ruler.GetSize()[0]))
+
     def zoom_out(self, pos):
         size = self.ruler.GetSize()
-        newsize = size - (50, 0)
+        newsize = size - (self.zoom_rate, 0)
         self.zoom_parent(newsize, pos)
 
     def zoom_in(self, pos):
         size = self.ruler.GetSize()
-        newsize = size + (50, 0)
+        newsize = size + (self.zoom_rate, 0)
         self.zoom_parent(newsize, pos)
 
     def zoom_parent(self, size, pos):
