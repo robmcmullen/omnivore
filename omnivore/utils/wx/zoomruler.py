@@ -1,5 +1,8 @@
 import random
 import time
+import zlib
+import base64
+import cStringIO
 
 import wx
 from wx.lib.agw.rulerctrl import RulerCtrl, TimeFormat, IntFormat
@@ -100,34 +103,130 @@ class LabeledRuler(RulerCtrl):
         return s
 
 
+open_hand_cursor_data = "eJzrDPBz5+WS4mJgYOD19HAJAtIKIMzBDCRdlnQdA1Is6Y6+jgwMG/u5/ySyMjAwMwT4hLgCxRkZGZmYmJiZmVlYWFhZWdnY2NjZ2Tk4OL58+fLt27fv37//+PHj58+fv379+v37958/f/7+/fvv37////8zjIJRMMSB0ddH84BZgKEkyC/4/8gGDMHf2VWBQSJZ4hpREpyfVlKeWJTKEJCYmVei5+caolBmrGeqZ2Fu3RALVLTV08UxxML/6eRsvmYDnuZYiQ3itUe+22t//uF4WOMW44qQlb72ln6Lkn5uLvBkaN8Uu+A407OX7SsZemyNHO/VftYyUGVUUVoaIlguE8/j80Cm7UWL7OmOnMPNwc9yufM1JjB5XnbL0mi4tjDlk6+YITvrTW0N13xDo+0+Sms/WU4sXikW49iYVtN1MW+a5bnVLSJ/fq9T9XL4fesD88fncZ6TVMqYb8dfM1qbfd4psHTXiRM7nV5zxzyJr2FQZg5cEB8aLgWKeU9XP5d1TglNAKfNkK0="
+
+closed_hand_cursor_data = "eJzrDPBz5+WS4mJgYOD19HAJAtIKIMzBDCRdlnQdA1Is6Y6+jgwMG/u5/ySyMjAwMwT4hLgCxRkZGZmYmJiZmVlYWFhZWdnY2P7//88wCkbBCADl+b/FgFmAoSTIL/j/yAYMwd/ZVYFBIlniGlESnJ9WUp5YlMoQkJiZV6Ln5xqiUGasZ6pnYW7dEAtUlO/p4hhi4f928lmuAwo8zY/Pn/ltv3Gyb2ZX39229q8KHfKZtxReeT9kX8f7Zlt7T1dMcsnHDs8JjTnpnE0cE25w+7i9mHFcYcZ0hlm/LkQwfvPp8s9WbPj2NfiMbIyY8+Gnj/WehlWw7WqJfppXqF//kF3N/9PCPq5ZP2bogeLM09XPZZ1TQhMAielZWg=="
+
 class ZoomRulerBase(object):
     """Base class for zoom ruler, regardless of container.
 
     self.panel must point to the scrolling window.
     """
+    open_hand_cursor_ = None
+    closed_hand_cursor_ = None
+
+    @property
+    def can_drag_cursor(self):
+        if self.__class__.open_hand_cursor_ is None:
+            raw = zlib.decompress(base64.b64decode(open_hand_cursor_data))
+            stream = cStringIO.StringIO(raw)
+            image = wx.ImageFromStream(stream)
+            image.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_X, 16)
+            image.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_Y, 16)
+            self.__class__.open_hand_cursor_ = wx.CursorFromImage(image)
+        return self.__class__.open_hand_cursor_
+
+    @property
+    def dragging_cursor(self):
+        if self.__class__.closed_hand_cursor_ is None:
+            raw = zlib.decompress(base64.b64decode(closed_hand_cursor_data))
+            stream = cStringIO.StringIO(raw)
+            image = wx.ImageFromStream(stream)
+            image.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_X, 16)
+            image.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_Y, 16)
+            self.__class__.closed_hand_cursor_ = wx.CursorFromImage(image)
+        return self.__class__.closed_hand_cursor_
+
+    def init_events(self):
+        self.panel.Bind(wx.EVT_SCROLLWIN, self.on_scroll)
+        self.ruler.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
+        self.ruler.Bind(wx.EVT_KEY_UP, self.on_key_up)
+        self.ruler.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse_events)
+        self.drag_start = -1
+        self.view_at_drag_start = -1
+        self.cursor_mode_image = {
+            "select": wx.StockCursor(wx.CURSOR_ARROW),
+            "drag_mode": self.can_drag_cursor,
+            "dragging": self.dragging_cursor,
+        }
+        self.cursor_mode = "select"
+
+    @property
+    def is_drag_mode(self):
+        return self.cursor_mode == "drag_mode"
+
+    @property
+    def is_dragging(self):
+        return self.drag_start >= 0
+
+    def set_mode(self, mode):
+        if self.cursor_mode != mode:
+            self.cursor_mode = mode
+            self.SetCursor(self.cursor_mode_image[mode])
+            print "mode:", mode
+
+    def on_key_down(self, event):
+        if self.is_dragging:
+            # mouse up will take care of cursor
+            return
+        mods = event.GetModifiers()
+        if mods == wx.MOD_ALT:
+            mode = "drag_mode"
+        else:
+            mode = "select"
+        self.set_mode(mode)
+
+    def on_key_up(self, event):
+        if self.is_dragging:
+            # mouse up will take care of cursor
+            return
+        self.set_mode("select")
+
     def on_mouse_events(self, event):
         """Overriding the ruler to capture wheel events
         """
         wheel_dir = event.GetWheelRotation()
+        pos = event.GetPosition()[0]
+        mods = event.GetModifiers()
         if wheel_dir:
-            pos = event.GetPosition()[0]
-            print "scrollbar:", pos
-            if event.ControlDown():
+            if mods == wx.MOD_NONE:
                 if wheel_dir < 0:
                     self.zoom_out(pos)
                 elif wheel_dir > 0:
                     self.zoom_in(pos)
             event.Skip()
         elif event.LeftDown():
-            # start selection
-            pass
+            if event.AltDown():
+                self.drag_start = wx.GetMousePosition()[0]
+                self.view_at_drag_start, _ = self.panel.GetViewStart()
+                self.set_mode("dragging")
+            else:
+                # start selection
+                pass
         elif event.LeftUp():
+            self.drag_start = -1
+            if event.AltDown():
+                mode = "drag_mode"
+            else:
+                mode = "select"
+            self.set_mode(mode)
             # end selection
             pass
         elif event.Moving():
-            pos = event.GetPosition()[0]
-            label = self.ruler.hit_test(pos)
-            print pos, label
+            if not self.is_drag_mode:
+                label = self.ruler.hit_test(pos)
+                if label is not None:
+                    print "hit at %d: %s" % (pos, label)
+        elif event.Dragging():
+            if self.is_dragging:
+                # Have to use absolute mouse position because the event was
+                # getting called a second time after the Scroll below, but with
+                # the new scrolled position.
+                pos =  wx.GetMousePosition()[0]
+                delta = pos - self.drag_start
+                x = self.view_at_drag_start - delta
+                self.panel.Scroll(x, 0)
+            
         event.Skip()
 
     def zoom_out(self, pos):
@@ -225,8 +324,7 @@ class ZoomRulerWithLimits(wx.Panel, ZoomRulerBase):
         sizer.Add(hbox, 0, wx.EXPAND, 0)
         self.SetSizerAndFit(sizer)
 
-        self.panel.Bind(wx.EVT_SCROLLWIN, self.on_scroll)
-        self.ruler.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse_events)
+        self.init_events()
 
 
 class ZoomRuler(wx.ScrolledWindow, ZoomRulerBase):
@@ -240,18 +338,14 @@ class ZoomRuler(wx.ScrolledWindow, ZoomRulerBase):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.ruler, 1, wx.EXPAND, 0)
         self.panel.SetSizer(sizer)
-        self.panel.ShowScrollbars(wx.SHOW_SB_ALWAYS, wx.SHOW_SB_NEVER)
+        self.panel.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
         self.panel.SetScrollRate(1, 0)
         # sizer.Layout()
         self.panel.Fit()
 
         self.label_max = self.label_min = None
 
-        size = (1000,40)
-        self.zoom_parent(size, 0)
-
-        self.panel.Bind(wx.EVT_SCROLLWIN, self.on_scroll)
-        self.ruler.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse_events)
+        self.init_events()
 
 
 if __name__ == "__main__":
