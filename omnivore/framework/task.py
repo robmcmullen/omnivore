@@ -735,6 +735,7 @@ class FrameworkTask(Task):
             self.window._aui_manager.AddPane(panel, info)
             # info.window is set to panel in the AUI code
             self.window.minibuffer_pane_info = info
+            info.close_button = close
         repeat = False
         if info.minibuffer is not None:
             if info.minibuffer.is_repeat(minibuffer):
@@ -749,6 +750,7 @@ class FrameworkTask(Task):
         force_update = False
         if not repeat:
             minibuffer.create_control(info.window)
+            info.close_button.Show(minibuffer.show_close_button)
             info.window.GetSizer().Insert(0, minibuffer.control, 1, wx.EXPAND)
             info.window.Fit()  # Fit instead of Layout to prefer control size
             info.BestSize(info.window.GetMinSize())  # Force minibuffer height, just in case

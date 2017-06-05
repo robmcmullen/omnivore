@@ -23,6 +23,7 @@ class Minibuffer(object):
     """
     label = "Input:"
     error = "Bad input."
+    show_close_button = True
 
     def __init__(self, editor, command_cls, label=None, initial=None, help_text=None, help_tip=None, **kwargs):
         self.control = None
@@ -628,6 +629,7 @@ class TimelineMinibuffer(Minibuffer):
     """
     label = "Timeline"
     error = "Bad input."
+    show_close_button = False
 
     def create_primary_control(self, parent ,sizer):
         self.timeline = ZoomRuler(parent)
