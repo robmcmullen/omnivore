@@ -3,23 +3,42 @@ import time
 import zlib
 import base64
 import cStringIO
+import math
+import bisect
 
 import wx
 from wx.lib.agw.rulerctrl import RulerCtrl, TimeFormat, IntFormat
 import wx.lib.scrolledpanel as scrolled
 
+import logging
+log = logging.getLogger(__name__)
+
 
 DateFormat = 6
 MonthFormat = 7
+
+time_steps = [minute * 60 for minute in [1, 2, 5, 10, 15, 20, 30]]
+time_steps.extend([hour * 3600 for hour in [1, 2, 4, 6, 12]])
+time_steps.extend([day * 86400 for day in [1, 2, 3, 7, 14, 28]])
+
+def time_step(self, visible_pixels, total_pixels, low_value, high_value):
+    time_range = high_value - low_value
+    seconds_per_pixel = time_range / visible_pixels
+    step = time_steps[min(bisect.bisect(time_steps, abs(seconds_per_pixel)), len(time_steps) - 1)]
+    print time_steps
+    print step
+    return step
+
 
 class LabeledRuler(RulerCtrl):
     def __init__(self, *args, **kwargs):
         RulerCtrl.__init__(self, *args, **kwargs)
         self._marks = {}
         self._mark_pen = wx.Pen(wx.RED)
-        self._pixel_hit_distance = 2
+        self._pixel_hit_distance = 3
         self._highlight = wx.Colour(100, 200, 230)
         self.selected_ranges = []
+        self.visible_range = (0,0)
 
     @property
     def has_selection(self):
@@ -33,15 +52,24 @@ class LabeledRuler(RulerCtrl):
         #print "position_to_value", value, perc, pos, self._length
         return value
 
-    def value_to_position(self, value):
+    def value_to_position(self, value, clamp=False):
         """Data point value to pixel position
         """
         perc = (value - self._min)/(self._max - self._min)
         if perc >= 0.0 and perc <= 1.0:
             pos = perc * self._length
+        elif clamp:
+            pos = 0 if perc < 0.0 else self._length
         else:
             pos = None
         #print "value_to_position", value, perc, pos, self._length
+        return pos
+
+    def value_to_visible_position(self, value):
+        pos = self.value_to_position(value)
+        if pos is not None:
+            if pos < self.visible_range[0] or pos > self.visible_range[1]:
+                pos = None
         return pos
 
     def clear_marks(self):
@@ -70,8 +98,7 @@ class LabeledRuler(RulerCtrl):
 
     def marks_within_range(self, r):
         inside = []
-        low = self.position_to_value(r[0])
-        hi = self.position_to_value(r[1])
+        low, hi = r
         if low > hi:
             low, hi = hi, low
         for value, data in self._marks.iteritems():
@@ -86,28 +113,29 @@ class LabeledRuler(RulerCtrl):
             total.update(inside)
         return total
 
-    def extend_selection(self, pos):
-        self.select_end = pos
-        self.ruler.selected_ranges[-1] = (start, end)
+    def get_visible_range(self):
+        panel = self.GetParent()
+        x, _ = panel.GetViewStart()
+        return x, x + panel.GetSize()[0] - 1
 
     def Draw(self, dc):
         if not self._valid:
-            self.Update(dc)
+            LabeledRuler.Update(self, dc)
 
         dc.SetBrush(wx.Brush(self._background))
         dc.SetPen(self._tickpen)
         dc.SetTextForeground(self._textcolour)
 
         r = self.GetClientRect()
-        dc.DrawRectangleRect(self.GetClientRect())
+        x, y = self.GetViewStart()
 
         dc.SetBrush(wx.Brush(self._highlight))
         dc.SetPen(wx.TRANSPARENT_PEN)
         for left, right in self.selected_ranges:
             if right < left:
                 left, right = right, left
-            r.SetLeft(left)
-            r.SetRight(right)
+            r.SetLeft(self.value_to_position(left, True) - x)
+            r.SetRight(self.value_to_position(right, True) - x)
             dc.DrawRectangleRect(r)
 
         dc.SetBrush(wx.Brush(self._background))
@@ -116,25 +144,48 @@ class LabeledRuler(RulerCtrl):
 
         dc.SetFont(self._majorfont)
 
+        left, right = self.get_visible_range()
+
+        leftmost_major_pos = right
+        leftmost_clear_zone = 0
+
         for label in self._majorlabels:
             pos = label.pos
+
+            if pos < left or pos > right:
+                print "skipping major: %s" % label.text, pos, left, right
+                continue
             
-            dc.DrawLine(self._left + pos, self._bottom - 5,
-                self._left + pos, self._bottom)
+            print "plotting major: %s" % label.text, pos, left, right
+
+            if pos < leftmost_major_pos:
+                leftmost_major_pos = pos
+                print "leftmost", pos, left, self._left
+
+            dc.DrawLine(self._left + pos - x, self._bottom - 5,
+                self._left + pos - x, self._bottom)
             
             if label.text != "":
-                dc.DrawText(label.text, label.lx, label.ly)
+                dc.DrawText(label.text, self._left + label.lx - x, label.ly)
+
+        text = "Major"
+        strw, strh = dc.GetTextExtent(text)
+
+        if leftmost_major_pos > left + strw + 4:
+            print text, left, self._left
+            dc.DrawText(text, self._left + left + 1 - x, self._bottom - strh - 10)
+            leftmost_clear_zone = int(left + (strw * 1.8))
         
         dc.SetFont(self._minorfont)
 
         for label in self._minorlabels:
             pos = label.pos
 
-            dc.DrawLine(self._left + pos, self._bottom - 3,
-                self._left + pos, self._bottom)
+            dc.DrawLine(self._left + pos - x, self._bottom - 3,
+                self._left + pos - x, self._bottom)
             
-            if label.text != "":
-                dc.DrawText(label.text, label.lx, label.ly)
+            if label.text != "" and label.lx > leftmost_clear_zone:
+                dc.DrawText(label.text, label.lx - x, label.ly)
 
         for indicator in self._indicators:
             indicator.Draw(dc)
@@ -147,12 +198,14 @@ class LabeledRuler(RulerCtrl):
             if pos is None:
                 # skip offscreen marks
                 continue
-            self.draw_mark(dc, pos)
+            self.draw_mark(dc, pos - x)
 
     def hit_test(self, mouse_pos):
         if mouse_pos < 0 or mouse_pos >= self._length:
             return None
 
+        x, y = self.GetViewStart()
+        mouse_pos += x
         for value, data in self._marks.iteritems():
             pos = self.value_to_position(value)
             if pos is None:
@@ -164,17 +217,88 @@ class LabeledRuler(RulerCtrl):
 
     def LabelString(self, d, major=None):
         if self._format == TimeFormat:
-            t = time.gmtime(d)
             if self._timeformat == DateFormat:
+                t = time.gmtime(d)
                 s = time.strftime("%y%m%d %H%M%S", t)
             elif self._timeformat == MonthFormat:
+                try:
+                    _ = d.tm_sec
+                    t = d  # already in timetuple format
+                except AttributeError:
+                    t = time.gmtime(d)
                 if major:
                     s = time.strftime("%b %d", t)
                 else:
-                    s = time.strftime("%H:%M:%S", t)
+                    s = time.strftime("%H%M", t)
         else:
             s = RulerCtrl.LabelString(self, d, major)
         return s
+
+    def step_size(self):
+        time_range = self._max - self._min
+        seconds_per_pixel = time_range / float(self._length)
+        min_pixels_between_ticks = 50
+        step = time_steps[min(bisect.bisect(time_steps, abs(seconds_per_pixel * min_pixels_between_ticks)), len(time_steps) - 1)]
+        self._minor = step
+        self._major = step * 4
+        return step, step * 4
+
+    def FindLinearTickSizes(self, UPP):
+        UPP = (self._max - self._min)/float(self._length)  # Units per pixel
+        print UPP, self._max, self._min, (self._max - self._min), float(self._length)
+        self.step_size()
+
+    def Update(self, dc):
+        """
+        Updates all the ticks calculations.
+
+        :param `dc`: an instance of :class:`DC`.
+        """
+
+        # This gets called when something has been changed
+        # (i.e. we've been invalidated).  Recompute all
+        # tick positions.
+
+        if self._orientation == wx.HORIZONTAL:
+            self._maxwidth = self._length
+            self._maxheight = 0
+        else:
+            self._maxwidth = 0
+            self._maxheight = self._length
+        
+        step, major_step = self.step_size()
+
+        self._bits = [0]*(self._length+1)
+        self._middlepos = []
+
+        if self._userbits:
+            for ii in xrange(self._length):
+                self._bits[ii] = self._userbits[ii]
+        else:
+            for ii in xrange(self._length):
+                self._bits[ii] = 0
+            
+        # Left and Right Edges
+        if self._labeledges:
+            self.Tick(dc, 0, self._min, True)
+            self.Tick(dc, self._length, self._max, True)
+        
+        # starting point
+        value, _ = divmod(self._min - step/2, step)
+        value = int(value * step)
+        while value < self._max:
+            pos = self.value_to_position(value)
+            if pos is not None:
+                pos = int(math.floor(pos))
+                t = time.gmtime(value)
+                major = (t.tm_hour == t.tm_min == t.tm_sec == 0)
+                print pos, value, t, major
+                self.Tick(dc, pos, t, major)
+            else:
+                print "offscreen", value
+            value += step
+            
+        self._valid = True
 
 
 open_hand_cursor_data = "eJzrDPBz5+WS4mJgYOD19HAJAtIKIMzBDCRdlnQdA1Is6Y6+jgwMG/u5/ySyMjAwMwT4hLgCxRkZGZmYmJiZmVlYWFhZWdnY2NjZ2Tk4OL58+fLt27fv37//+PHj58+fv379+v37958/f/7+/fvv37////8zjIJRMMSB0ddH84BZgKEkyC/4/8gGDMHf2VWBQSJZ4hpREpyfVlKeWJTKEJCYmVei5+caolBmrGeqZ2Fu3RALVLTV08UxxML/6eRsvmYDnuZYiQ3itUe+22t//uF4WOMW44qQlb72ln6Lkn5uLvBkaN8Uu+A407OX7SsZemyNHO/VftYyUGVUUVoaIlguE8/j80Cm7UWL7OmOnMPNwc9yufM1JjB5XnbL0mi4tjDlk6+YITvrTW0N13xDo+0+Sms/WU4sXikW49iYVtN1MW+a5bnVLSJ/fq9T9XL4fesD88fncZ6TVMqYb8dfM1qbfd4psHTXiRM7nV5zxzyJr2FQZg5cEB8aLgWKeU9XP5d1TglNAKfNkK0="
@@ -212,13 +336,29 @@ class ZoomRulerBase(object):
             self.__class__.closed_hand_cursor_ = wx.CursorFromImage(image)
         return self.__class__.closed_hand_cursor_
 
+    def populate(self, panel):
+        self.panel = panel
+        self.ruler = LabeledRuler(self.panel, -1, style=wx.BORDER_NONE)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.ruler, 1, wx.EXPAND, 0)
+        self.panel.SetSizer(sizer)
+        self.panel.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
+        self.panel.SetScrollRate(1, 0)
+        # sizer.Layout()
+        self.panel.Fit()
+
+        self.label_max = self.label_min = None
+
+        self.init_events()
+
     def init_events(self):
         self.panel.Bind(wx.EVT_SCROLLWIN, self.on_scroll)
         self.ruler.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
         self.ruler.Bind(wx.EVT_KEY_UP, self.on_key_up)
         self.ruler.Bind(wx.EVT_MOUSE_EVENTS, self.on_mouse_events)
-        self.select_start = -1
-        self.select_end = -1
+        self.select_start = None
+        self.select_end = None
         self.select_threshold = 2
         self.drag_start = -1
         self.view_at_drag_start = -1
@@ -239,7 +379,7 @@ class ZoomRulerBase(object):
 
     @property
     def is_selecting(self):
-        return self.select_end >= 0
+        return self.select_end is not None
 
     def set_mode(self, mode):
         if self.cursor_mode != mode:
@@ -268,7 +408,8 @@ class ZoomRulerBase(object):
         """Overriding the ruler to capture wheel events
         """
         wheel_dir = event.GetWheelRotation()
-        pos = event.GetPosition()[0]
+        x, _ = self.panel.GetViewStart()
+        pos = event.GetPosition()[0] + x
         mods = event.GetModifiers()
         if wheel_dir:
             if mods == wx.MOD_NONE:
@@ -285,12 +426,15 @@ class ZoomRulerBase(object):
             else:
                 if event.ShiftDown() and self.ruler.has_selection:
                     last_start, last_end = self.ruler.selected_ranges[-1]
-                    self.ruler.selected_ranges[-1] = (last_start, pos)
+                    value = self.position_to_value(pos)
+                    self.ruler.selected_ranges[-1] = (last_start, value)
                     self.Refresh()
                 else:
                     # start selection
                     self.selection_cleared_callback()
-                    self.select_start = pos
+                    self.ruler.selected_ranges = []
+                    self.select_start = self.position_to_value(pos)
+                    self.Refresh()
         elif event.LeftUp():
             self.drag_start = -1
             if event.AltDown():
@@ -306,7 +450,7 @@ class ZoomRulerBase(object):
                     item = self.ruler.hit_test(self.select_start)
                     if item is not None:
                         self.selected_item_callback(item)
-                self.select_start = self.select_end = -1
+                self.select_start = self.select_end = None
             self.set_mode(mode)
             # end selection
             pass
@@ -314,7 +458,9 @@ class ZoomRulerBase(object):
             if not self.is_drag_mode:
                 label = self.ruler.hit_test(pos)
                 if label is not None:
-                    print "hit at %d: %s" % (pos, label)
+                    self.over_item_callback(pos, label)
+                else:
+                    self.not_over_item_callback(pos)
         elif event.Dragging():
             if self.is_dragging:
                 # Have to use absolute mouse position because the event was
@@ -324,18 +470,21 @@ class ZoomRulerBase(object):
                 delta = pos - self.drag_start
                 x = self.view_at_drag_start - delta
                 self.panel.Scroll(x, 0)
+                #self.SetScrollbars(1, 0, self._right, 0, x, 0, True)
             elif event.ShiftDown() and self.ruler.has_selection:
                 last_start, last_end = self.ruler.selected_ranges[-1]
-                self.ruler.selected_ranges[-1] = (last_start, pos)
+                value = self.position_to_value(pos)
+                self.ruler.selected_ranges[-1] = (last_start, value)
                 self.Refresh()
             elif self.is_selecting:
-                self.select_end = pos
+                self.select_end = self.position_to_value(pos)
                 self.ruler.selected_ranges[-1] = (self.select_start, self.select_end)
                 self.Refresh()
             else:
                 # check if reached the threshold to start a drag
-                if abs(pos - self.select_start) > self.select_threshold:
-                    self.select_end = pos
+                start_pos = self.value_to_position(pos, True)
+                if abs(pos - start_pos) > self.select_threshold:
+                    self.select_end = self.position_to_value(pos)
                     self.ruler.selected_ranges = [(self.select_start, self.select_end)]
                     self.Refresh()
             
@@ -345,6 +494,12 @@ class ZoomRulerBase(object):
         print "DONE!"
         items = self.ruler.marks_in_selection()
         print items
+
+    def over_item_callback(self, pos, item):
+        print "hit at %d: %s" % (pos, item)
+
+    def not_over_item_callback(self, pos):
+        pass
 
     def selected_item_callback(self, item):
         print "CHOSEN!", item
@@ -373,6 +528,7 @@ class ZoomRulerBase(object):
         pixels_from_left = self.panel.CalcScrolledPosition(pos, 0)[0]
 
         self.ruler.SetSize(size)
+        print "SIZE", size, type(size)
         self.panel.SetVirtualSize(size)
 
         new_pos = self.ruler.value_to_position(value)
@@ -382,6 +538,7 @@ class ZoomRulerBase(object):
         self.update_limits()
 
     def update_limits(self):
+        log.debug("update_limits")
         x, y = self.panel.GetViewStart()
         x1, y1 = self.panel.CalcUnscrolledPosition(x, y)
         print "view", x, y, "unscrolled", x1, y1
@@ -395,12 +552,15 @@ class ZoomRulerBase(object):
             self.label_max.SetLabel(self.ruler.LabelString(right, True))
 
     def on_scroll(self, evt):
+        self.Refresh()
         self.update_limits()
+        evt.Skip()
 
     def add_mark(self, timestamp, item):
         self.ruler.set_mark(timestamp, item)
 
     def rebuild(self, editor):
+        log.debug("rebuild")
         timeline_info = editor.get_timeline_info()
         fmt = timeline_info.get("format", "date")
         if fmt == "date":
@@ -418,6 +578,7 @@ class ZoomRulerBase(object):
             self.add_mark(start, item)
         start = timeline_info["earliest_time"]
         end = timeline_info["latest_time"]
+        self.update_limits()
         self.ruler.SetRange(start, end)
         self.ruler.Invalidate()
 
@@ -459,24 +620,181 @@ class ZoomRuler(wx.ScrolledWindow, ZoomRulerBase):
     """
     def __init__(self, parent, **kwargs):
         wx.ScrolledWindow.__init__(self, parent, -1, style=wx.HSCROLL, **kwargs)
+        self.populate(self)
+
+
+class VirtualLabeledRuler(LabeledRuler):
+    def __init__(self, parent, id=-1, pos=wx.DefaultPosition, size=wx.DefaultSize,
+                 style=wx.STATIC_BORDER, orient=wx.HORIZONTAL):
+        self._marks = {}
+        self._mark_pen = wx.Pen(wx.RED)
+        self._pixel_hit_distance = 3
+        self._highlight = wx.Colour(100, 200, 230)
+        self.selected_ranges = []
+        self.visible_range = (0,0)
+
+        self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)        
+        width, height = size
+
+        self._min = 0.0
+        self._max = 10.0
+        self._orientation = orient
+        self._spacing = 5
+        self._hassetspacing = False
+        self._format = DateFormat
+        self._flip = False
+        self._log = False
+        self._labeledges = False
+        self._units = ""
+        
+        self._drawingparent = None
+        self._drawingpen = wx.Pen(wx.BLACK, 2)
+
+        self._left = -1
+        self._top = -1
+        self._right = -1
+        self._bottom = -1
+
+        self._major = 1
+        self._minor = 1
+
+        self._indicators = []
+        self._currentIndicator = None
+
+        fontsize = 10
+        if wx.Platform == "__WXMSW__":
+            fontsize = 8
+
+        self._minorfont = wx.Font(fontsize, wx.SWISS, wx.NORMAL, wx.NORMAL)
+        self._majorfont = wx.Font(fontsize, wx.SWISS, wx.NORMAL, wx.BOLD)
+
+        if wx.Platform == "__WXMAC__":
+            self._minorfont.SetNoAntiAliasing(True)
+            self._majorfont.SetNoAntiAliasing(True)
+
+        self._bits = []
+        self._userbits = []
+        self._userbitlen = 0
+        self._tickmajor = True
+        self._tickminor = True
+        self._timeformat = IntFormat
+        self._labelmajor = True
+        self._labelminor = True
+        self._tickpen = wx.Pen(wx.BLACK)
+        self._textcolour = wx.BLACK
+        self._background = wx.WHITE
+
+        self._valid = False
+        self._state = 0
+
+        self._style = style
+        self._orientation = orient
+        wbound, hbound = self.CheckStyle()
+
+        if orient & wx.VERTICAL:
+            self.SetBestSize((128, height))
+        else:
+            self.SetBestSize((width, 128))
+
+        self.SetBounds(0, 0, wbound, hbound)
+
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        #self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+        self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvents)
+        self.Bind(wx.EVT_MOUSE_CAPTURE_LOST, lambda evt: True)
+
+
+class VirtualZoomRuler(wx.ScrolledWindow, ZoomRulerBase, VirtualLabeledRuler):
+    """Zoomable ruler that uses a scrollbar and resize to implement the zoom.
+    """
+    def __init__(self, parent, **kwargs):
+        wx.ScrolledWindow.__init__(self, parent, -1, style=wx.HSCROLL, **kwargs)
+        VirtualLabeledRuler.__init__(self, parent)
         self.panel = self
-        self.ruler = LabeledRuler(self.panel, -1, style=wx.BORDER_NONE)
+        self.ruler = self
 
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.ruler, 1, wx.EXPAND, 0)
-        self.panel.SetSizer(sizer)
-        self.panel.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
-        self.panel.SetScrollRate(1, 0)
-        # sizer.Layout()
-        self.panel.Fit()
+        self.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
+        self.SetScrollbars(1, 0, self._right, 0, 0, 0)
+        self.SetScrollRate(1, 0)
+        self.SetDoubleBuffered(False)
 
+        print "SIZE:", self.GetSize()
         self.label_max = self.label_min = None
-
         self.init_events()
+
+    def get_visible_range(self):
+        x, _ = self.GetViewStart()
+        return x, x + self.GetSize()[0] - 1
+
+    def SetSize(self, size):
+        self.SetBounds(0, 0, size[0], size[1])
+        self.Invalidate()        
+
+    def GetSize(self):
+        if self._right == -1:
+            size = wx.ScrolledWindow.GetSize(self)
+            print "INITIAL SIZE", size
+            self._right = 500
+            self._bottom = size[1]
+        return wx.Size(self._right, self._bottom)
+
+    def OnSize(self, event):
+        # Need to handle the initial case to get the ruler size up to the
+        # window size
+        size = event.GetSize()
+        if self._right == -1 or self._right < size[0]:
+            self._right = size[0]
+            self._bottom = size[1]
+
+        width, height = self.CheckStyle()
+        print "new virtual size", width, height
+        self.SetBounds(0, 0, width, height)
+        print "as reported", self.GetSize()
+
+        self.Invalidate()
+        event.Skip()
+
+    def OnPaint(self, event):
+        """
+        Handles the ``wx.EVT_PAINT`` event for :class:`RulerCtrl`.
+
+        :param `event`: a :class:`PaintEvent` event to be processed.        
+        """
+
+        # dc = wx.PaintDC(self)
+        # print dc.GetClippingBox(), "BB", self.IsDoubleBuffered()
+        # dc.SetBackground(wx.Brush(self._background))
+        # dc.Clear()
+        # self.Draw(dc)
+
+        #wx.CallAfter(self.Refresh)
+        wx.CallAfter(self.clear_and_paint)
+
+    def clear_and_paint(self):
+        dc = wx.ClientDC(self)
+        dc.SetBackground(wx.Brush(self._background))
+        dc.Clear()
+        self.Draw(dc)
+
+    def Update(self):
+        wx.ScrolledWindow.Update(self)
+
+ZoomRuler = VirtualZoomRuler
 
 
 if __name__ == "__main__":
     import wx.lib.scrolledpanel as scrolled
+
+    time_steps = [minute * 60.0 for minute in [1, 2, 5, 10, 15, 20, 30]]
+    time_steps.extend([hour * 3600.0 for hour in [1, 2, 4, 6, 12]])
+    time_steps.extend([day * 86400.0 for day in [1, 2, 3, 7, 14, 28]])
+    visible_pixels = 800
+    time_range = 100000  # seconds
+    seconds_per_pixel = 100000 / 800
+    step = time_steps[min(bisect.bisect(time_steps, abs(seconds_per_pixel)), len(time_steps) - 1)]
+    print time_steps
+    print step
 
     class SampleData(object):
         @classmethod
@@ -508,7 +826,7 @@ if __name__ == "__main__":
     text = wx.StaticText(panel, -1, "Just a placeholder here.")
     sizer.Add(text, 1, wx.EXPAND)
 
-    scroll = ZoomRuler(panel)
+    scroll = VirtualZoomRuler(panel)
     sizer.Add(scroll, 0, wx.EXPAND)
     scroll.rebuild(SampleData)
 
@@ -519,4 +837,5 @@ if __name__ == "__main__":
     panel.Layout()
     app.SetTopWindow(frm)
     frm.Show()
+
     app.MainLoop()
