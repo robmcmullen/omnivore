@@ -113,6 +113,9 @@ class LabeledRuler(RulerCtrl):
         dc.DrawLine(self._left + pos, self._bottom - self.mark_length,
             self._left + pos, self._bottom)
 
+    def all_marks(self):
+        return set(self._marks.values())
+
     def marks_within_range(self, r):
         inside = []
         low, hi = r
