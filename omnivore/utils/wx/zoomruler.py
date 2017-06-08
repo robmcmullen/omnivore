@@ -386,9 +386,9 @@ class VirtualLabeledRuler(LabeledRuler):
         wbound, hbound = self.CheckStyle()
 
         if orient & wx.VERTICAL:
-            self.SetBestSize((128, height))
+            self.SetBestSize((28, height))
         else:
-            self.SetBestSize((width, 128))
+            self.SetBestSize((width, 28))
 
         self.SetBounds(0, 0, wbound, hbound)
 
