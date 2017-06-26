@@ -2286,11 +2286,11 @@ int find_extension(char *name) {
  *=========================================================================*/
 int main(int argc, char *argv[]) {
   char outfile[256],fname[256],snap[256],xname[256],labelfile[256],listfile[256];
-  int dsymbol,i,state,success;
+  int dsymbol,i,state,retval;
 
   fprintf(stderr,"ATasm %d.%.2d%s(A mostly Mac65 compatible 6502 cross-assembler)\n",MAJOR_VER,MINOR_VER,BETA_VER?" beta ":" ");
 
-  dsymbol=state=success=0;
+  dsymbol=state=retval=0;
   strcpy(snap,"atari800.a8s");
   fname[0]=outfile[0]=labelfile[0]=listfile[0]='\0';
   opt.savetp=opt.verbose=opt.MAElocals=0;
@@ -2409,11 +2409,10 @@ int main(int argc, char *argv[]) {
 
     fputs("\nAssembly successful\n",stderr);
     fprintf(stderr,"  Compiled %d bytes (~%dk)\n",bsize,bsize/1024);
-    success=1;
   }
   CATCH {
     /* don't produce any symbol or labels on error */
-    success=0;
+    retval=1;
   }
   END_TRY;
 
@@ -2430,7 +2429,7 @@ int main(int argc, char *argv[]) {
     strcat(fname,(opt.savetp)&2 ? ".bin" : ".65o");
     strcpy(outfile, fname);
   }
-  if (success) {
+  if (retval==0) {
   if (opt.savetp&2)
     save_raw(outfile,opt.fillByte);
   else
@@ -2458,6 +2457,6 @@ int main(int argc, char *argv[]) {
   }
 
   clean_up();
-  return 0;
+  return retval;
 }
 /*=========================================================================*/
