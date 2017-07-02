@@ -90,7 +90,7 @@ cdef class DisassemblyInfo:
         cdef int index = pc - self.first_pc
 
         if index < 0 or index >= self.num_bytes:
-            raise IndexError("PC %d out of range: %d - %d" % (pc, self.first_pc, self.first_pc + self.num_bytes))
+            raise IndexError("PC %d ($%x) out of range: %d - %d (%x - %x)" % (pc, pc, self.first_pc, self.first_pc + self.num_bytes, self.first_pc, self.first_pc + self.num_bytes))
 
         cdef int row = self.index_to_row[index]
         cdef unsigned char *m
