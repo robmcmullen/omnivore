@@ -62,6 +62,8 @@ class Minibuffer(object):
         self.control.SetSizer(sizer)
         self.control.Fit()
 
+        self.set_best_size()
+
         self.post_create()
 
     def create_primary_control(self, parent, sizer):
@@ -80,6 +82,9 @@ class Minibuffer(object):
         """ Hook to creates auxiliary controls
 
         """
+        pass
+
+    def set_best_size(self):
         pass
 
     def post_create(self):
@@ -131,6 +136,10 @@ class TextMinibuffer(Minibuffer):
             sizer.Add(c, 0, wx.ALIGN_CENTER_VERTICAL)
         self.text.Bind(wx.EVT_TEXT, self.on_text)
         self.text.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
+
+    # def set_best_size(self):
+    #     self.text.SetMinSize((-1, 28))
+    #     self.control.SetMinSize((-1, 28))
 
     def post_create(self):
          if self.initial:

@@ -722,6 +722,7 @@ class FrameworkTask(Task):
         # tasks use the same minibuffer pane in the AUI manager
         try:
             info = self.window.minibuffer_pane_info
+            log.debug("minibuffer pane exists: %s" % info)
         except AttributeError:
             panel = wx.Panel(self.window.control, name="minibuffer_parent", style=wx.NO_BORDER)
             sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -736,6 +737,7 @@ class FrameworkTask(Task):
             # info.window is set to panel in the AUI code
             self.window.minibuffer_pane_info = info
             info.close_button = close
+            log.debug("created minibuffer pane: %s" % info)
         repeat = False
         if info.minibuffer is not None:
             if info.minibuffer.is_repeat(minibuffer):
@@ -752,13 +754,24 @@ class FrameworkTask(Task):
             minibuffer.create_control(info.window)
             info.close_button.Show(minibuffer.show_close_button)
             info.window.GetSizer().Insert(0, minibuffer.control, 1, wx.EXPAND)
+
+            # force minibuffer parent panel to take min size of contents of
+            # minibuffer. Apparently this doesn't happen automatically.
+            #
+            # FIXME: or maybe it does. Removing all the min size stuff now
+            # seems to work. Maybe because prior I had been setting the min
+            # size after the Fit?
+            min_size = minibuffer.control.GetMinSize()
+#            info.window.SetMinSize(min_size)
+#            info.BestSize(min_size)  # Force minibuffer height, just in case
+
             info.window.Fit()  # Fit instead of Layout to prefer control size
-            info.BestSize(info.window.GetMinSize())  # Force minibuffer height, just in case
             minibuffer.focus()
             info.minibuffer = minibuffer
-            log.debug("Window: %s, info: %s" % (self.window, info))
+            log.debug("Window: %s, info: %s, size: %s" % (self.window, info, info.best_size))
             force_update = True
         else:
+            log.debug("Repeat: %s, info: %s" % (self.window, info))
             info.minibuffer.focus()
             info.minibuffer.repeat(minibuffer)  # Include new minibuffer
         if not info.IsShown():
@@ -766,6 +779,8 @@ class FrameworkTask(Task):
             force_update = True
         if force_update:
             self.window._aui_manager.Update()
+        log.debug("size after update: %s best=%s min=%s" % (info.window.GetSize(), info.best_size, info.min_size))
+        # info.window.SetMinSize(minibuffer.control.GetSize())
 
     def find_cancel_edit(self, control):
         while control is not None:
