@@ -266,7 +266,7 @@ class BaseDisassembler(object):
         plus the offset difference.
         """
         label = self.memory_map.get_name(target_pc)
-        if not label and target_pc >= self.start_addr and target_pc <= self.end_addr:
+        if not label and target_pc >= self.start_addr and target_pc < self.end_addr:
             #print operand, dollar, text_hex, target_pc, operand_labels_start_pc, operand_labels_end_pc
             good_opcode_target_pc = self.info.get_instruction_start_pc(target_pc)
             diff = target_pc - good_opcode_target_pc
