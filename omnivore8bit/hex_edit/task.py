@@ -617,6 +617,8 @@ class HexEditTask(FrameworkTask):
             Separator(),
             RampUpAction(),
             RampDownAction(),
+            Separator(),
+            ReverseSelectionAction(),
             ]
 
     def get_keyboard_actions(self):

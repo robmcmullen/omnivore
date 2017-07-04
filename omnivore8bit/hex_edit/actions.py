@@ -1575,6 +1575,11 @@ class DivideFromAction(IndexRangeValueAction):
     accelerator = 'Shift+Ctrl+/'
 
 
+class ReverseSelectionAction(IndexRangeAction):
+    """Reverses the order of bytes in the selection"""
+    cmd = ReverseSelectionCommand
+
+
 class PasteAndRepeatAction(EditorAction):
     name = 'Paste and Repeat'
     accelerator = 'Shift+Ctrl+V'

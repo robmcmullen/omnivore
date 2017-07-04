@@ -505,6 +505,14 @@ class DivideFromCommand(SetRangeValueCommand):
         return self.data / orig
 
 
+class ReverseSelectionCommand(SetRangeCommand):
+    short_name = "reverse_selection"
+    pretty_name = "Reverse Selection"
+
+    def get_data(self, orig):
+        return orig[::-1,...]
+
+
 class RevertToBaselineCommand(SetRangeCommand):
     short_name = "revert_baseline"
     pretty_name = "Revert to Baseline Data"
