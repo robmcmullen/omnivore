@@ -1480,11 +1480,13 @@ class ReverseBitsAction(IndexRangeAction):
 
 
 class IndexRangeValueAction(IndexRangeAction):
+    prompt = "Enter byte value: (default hex, prefix with # for decimal, %% for binary)"
+
     def _name_default(self):
         return self.cmd.pretty_name + "..."
 
     def show_dialog(self, e):
-        value = prompt_for_hex(e.window.control, "Enter byte value: (default hex, prefix with # for decimal, %% for binary)", self.cmd.pretty_name)
+        value = prompt_for_hex(e.window.control, self.prompt, self.cmd.pretty_name)
         if value is not None:
             cmd = self.cmd(e.segment, e.selected_ranges, value)
             self.active_editor.process_command(cmd)
@@ -1578,6 +1580,11 @@ class DivideFromAction(IndexRangeValueAction):
 class ReverseSelectionAction(IndexRangeAction):
     """Reverses the order of bytes in the selection"""
     cmd = ReverseSelectionCommand
+
+
+class ReverseGroupAction(IndexRangeValueAction):
+    prompt = "Enter number of bytes in each group: (default hex, prefix with # for decimal, %% for binary)"
+    cmd = ReverseGroupCommand
 
 
 class PasteAndRepeatAction(EditorAction):

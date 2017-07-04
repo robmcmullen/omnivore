@@ -513,6 +513,25 @@ class ReverseSelectionCommand(SetRangeCommand):
         return orig[::-1,...]
 
 
+class ReverseGroupCommand(SetRangeValueCommand):
+    short_name = "reverse_group"
+    pretty_name = "Reverse In Groups"
+
+    def get_data(self, orig):
+        num = len(orig)
+        chunk = self.data
+        num_groups = num // chunk
+        indexes = np.arange(num)
+        if num_groups > 0:
+            # have to handle special case: can't do indexes[9:-1:-1] !!!
+            indexes[0:chunk] = indexes[self.data-1::-1]
+            for i in range(1,num_groups):
+                start = i * chunk
+                indexes[start:start+chunk] = indexes[start+chunk-1:start-1:-1]
+        print num, chunk, num_groups, indexes
+        return orig[indexes]
+
+
 class RevertToBaselineCommand(SetRangeCommand):
     short_name = "revert_baseline"
     pretty_name = "Revert to Baseline Data"
