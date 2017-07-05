@@ -45,13 +45,18 @@ class BitSink(object):
 class LabeledRuler(RulerCtrl):
     def __init__(self, *args, **kwargs):
         RulerCtrl.__init__(self, *args, **kwargs)
+        self.common_init()
+
+    def common_init(self):
         self._marks = {}
         self._mark_pen = wx.Pen(wx.RED)
+        self._selected_mark_pen = wx.Pen(wx.RED, 2)
         self._pixel_hit_distance = 3
         self._highlight = wx.Colour(100, 200, 230)
         self.selected_ranges = []
         self.visible_range = (0,0)
         self.mark_length = 10  # pixels
+        self.selected_mark_length = 18  # pixels
         self.use_leftmost = False
 
     @property
@@ -109,8 +114,14 @@ class LabeledRuler(RulerCtrl):
     def set_mark(self, value, data):
         self._marks[float(value)] = data
 
-    def draw_mark(self, dc, pos):
-        dc.DrawLine(self._left + pos, self._bottom - self.mark_length,
+    def draw_mark(self, dc, pos, selected=False):
+        if selected:
+            length = self.selected_mark_length
+            dc.SetPen(self._selected_mark_pen)
+        else:
+            length = self.mark_length
+            dc.SetPen(self._mark_pen)
+        dc.DrawLine(self._left + pos, self._bottom - length,
             self._left + pos, self._bottom)
 
     def all_marks(self):
@@ -132,6 +143,10 @@ class LabeledRuler(RulerCtrl):
             inside = self.marks_within_range(r)
             total.update(inside)
         return total
+
+    def marks_to_display_as_selected(self):
+        # hook to override in subclass to add marks to the selection
+        return self.marks_in_selection()
 
     def get_visible_range(self):
         panel = self.GetParent()
@@ -223,12 +238,13 @@ class LabeledRuler(RulerCtrl):
         dc.SetBrush(wx.Brush(self._background))
         dc.SetPen(self._mark_pen)
 
+        selected = self.marks_to_display_as_selected()
         for value, data in self._marks.iteritems():
             pos = self.value_to_position(value)
             if pos is None:
                 # skip offscreen marks
                 continue
-            self.draw_mark(dc, pos - x)
+            self.draw_mark(dc, pos - x, data in selected)
 
     def hit_test(self, mouse_pos):
         if mouse_pos < 0 or mouse_pos >= self._length:
@@ -318,14 +334,7 @@ class LabeledRuler(RulerCtrl):
 class VirtualLabeledRuler(LabeledRuler):
     def __init__(self, parent, id=-1, pos=wx.DefaultPosition, size=wx.DefaultSize,
                  style=wx.STATIC_BORDER, orient=wx.HORIZONTAL):
-        self._marks = {}
-        self._mark_pen = wx.Pen(wx.RED)
-        self._pixel_hit_distance = 3
-        self._highlight = wx.Colour(100, 200, 230)
-        self.selected_ranges = []
-        self.visible_range = (0,0)
-        self.mark_length = 10  # pixels
-        self.use_leftmost = False
+        self.common_init()
 
         self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)        
         width, height = size
