@@ -191,7 +191,7 @@ def parsers_for_filename(name):
         parsers = mime_parsers[mime]
         found = None
         for parser in parsers:
-            print("parser: %s = %s" % (mime, parser))
+            log.debug("parser: %s = %s" % (mime, parser))
     matches.append(StandardDeliveryImage)
     return matches
 
