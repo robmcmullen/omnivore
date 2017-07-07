@@ -82,7 +82,8 @@ class StandardDeliveryImage(DiskImageBase):
             chunk = np.zeros([size], dtype=np.uint8)
             chunk[padding:padding + len(s)] = s[:]
             chunks.append((chunk_start, chunk))
-            print("segment: %s, chunk=%s" % (str(s), str(chunks[-1])))
+            print("segment: %s, pages=%d" % (str(s), len(chunk) // 256))
+            log.debug(" last chunk=%s" % str(chunks[-1]))
 
         # break up the chunks into sectors
 
@@ -111,8 +112,20 @@ class StandardDeliveryImage(DiskImageBase):
                 # Assume this is an HGR screen, use interesting load effect,
                 # not the usual venetian blind
                 chunk_hi = [0x20, 0x24, 0x28, 0x2c, 0x30, 0x34, 0x38, 0x3c, 0x21, 0x25, 0x29, 0x2d, 0x31, 0x35, 0x39, 0x3d, 0x22, 0x26, 0x2a, 0x2e, 0x32, 0x36, 0x3a, 0x3e, 0x23, 0x27, 0x2b, 0x2f, 0x33, 0x37, 0x3b, 0x3f]
+                address_order = chunk_hi
             else:
                 chunk_hi = range(chunk_start, chunk_start + count)
+                if len(chunk_hi) > 2:
+                    address_order = []
+                    for n in range(0, count, 32):
+                        subset = chunk_hi[n:n+32]
+                        if len(subset) > 2:
+                            address_order.extend([chunk_hi[n], 0xe0 + len(subset) - 1])
+                        else:
+                            address_order.extend(subset)
+                else:
+                    address_order = chunk_hi
+
             for n in range(count):
                 i = (chunk_hi[n] - chunk_start) * 256
                 sector = dsk.header.create_sector(chunk_data[i:i+256])
@@ -120,19 +133,19 @@ class StandardDeliveryImage(DiskImageBase):
                 count += 1
                 #sector.sector_num = count
                 sector_list.append(sector)
-                address_list.append(chunk_hi[n])
                 # sector.data[0] = sector.sector_num
                 # sector.data[1] = hi
                 # sector.data[2:16] = 0xff
-                print("%s at %02x00: %s ..." % (sector_list[-1], address_list[-1], " ".join(["%02x" % h for h in chunk_data[i:i + 16]])))
+                log.debug("%s at %02x00: %s ..." % (sector_list[-1], address_list[-1], " ".join(["%02x" % h for h in chunk_data[i:i + 16]])))
                 index += 1
                 if index >= len(sector_order):
                     index = 0
                     track += 1
+            address_list.extend(address_order)
             if chunk_start == 0x40:
                 address_list.append(0xd2)
 
-        print("address list %s" % str(address_list))
+        print("fstbt commands: %s" % ", ".join(["%02x" % i for i in address_list]))
         boot_code = get_fstbt_code(boot_sector.data, address_list, run_addr)
 
         dsk.write_sector_list(sector_list)
