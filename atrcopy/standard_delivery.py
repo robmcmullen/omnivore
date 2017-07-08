@@ -105,10 +105,11 @@ class StandardDeliveryImage(DiskImageBase):
         boot_sector.sector_num = 0
         boot_sector.track_num = 1
         sector_list.append(boot_sector)
+        first_page_1 = True
 
         for chunk_start, chunk_data in chunks:
             count = len(chunk_data) // 256
-            if chunk_start == 0x20 and count == 32:
+            if chunk_start == 0x20 and count == 32 and first_page_1:
                 # Assume this is an HGR screen, use interesting load effect,
                 # not the usual venetian blind
                 chunk_hi = [0x20, 0x24, 0x28, 0x2c, 0x30, 0x34, 0x38, 0x3c, 0x21, 0x25, 0x29, 0x2d, 0x31, 0x35, 0x39, 0x3d, 0x22, 0x26, 0x2a, 0x2e, 0x32, 0x36, 0x3a, 0x3e, 0x23, 0x27, 0x2b, 0x2f, 0x33, 0x37, 0x3b, 0x3f]
@@ -144,6 +145,10 @@ class StandardDeliveryImage(DiskImageBase):
             address_list.extend(address_order)
             if chunk_start == 0x40:
                 address_list.append(0xd2)
+            elif chunk_start == 0x20:
+                if not first_page_1:
+                    address_list.append(0xd1)
+                first_page_1 = False
 
         print("fstbt commands: %s" % ", ".join(["%02x" % i for i in address_list]))
         boot_code = get_fstbt_code(boot_sector.data, address_list, run_addr)
