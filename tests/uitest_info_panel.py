@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import mock
 
 import numpy as np
 
@@ -6,7 +7,7 @@ import wx
 
 import  wx.lib.buttons  as  buttons
 
-from omnivore.utils.wx.info_panels import InfoPanel
+from omnivore8bit.ui.info_panels import InfoPanel
 
 #----------------------------------------------------------------------
 

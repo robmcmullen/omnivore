@@ -558,6 +558,12 @@ class InfoPanel(PANELTYPE):
                 break
         return field
 
+    def is_valid_data(self):
+        """Override this in subclasses to disable entire panel if there is 
+        no valid data to show.
+        """
+        return True
+
     def set_fields(self):
         e = self.editor
         if e is None:
