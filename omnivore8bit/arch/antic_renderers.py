@@ -223,11 +223,11 @@ class ModeC(ModeB):
     pixels_per_byte = 16
 
 
-class OneBitPerPixelApple2(BaseRenderer):
-    name = "B/W, Apple 2"
+class OneBitPerPixelApple2Linear(BaseRenderer):
+    name = "B/W, Apple 2, Linear"
 
     def get_bw_colors(self, m):
-        return ((255, 255, 255), (0, 0, 0))
+        return ((0, 0, 0), (255, 255, 255))
 
     def get_image(self, m, bytes_per_row, nr, count, bytes, style):
         bits = np.unpackbits(bit_reverse_table[bytes])
@@ -250,6 +250,68 @@ class OneBitPerPixelApple2(BaseRenderer):
         match = (style_per_pixel & match_bit_mask) == match_bit_mask
 
         bitimage = np.empty((nr * bytes_per_row, 7, 3), dtype=np.uint8)
+        bitimage[background & normal] = bw_colors[0]
+        bitimage[background & data] = d_colors[0]
+        bitimage[background & comment] = c_colors[0]
+        bitimage[background & match] = m_colors[0]
+        bitimage[background & highlight] = h_colors[0]
+        bitimage[color1 & normal] = bw_colors[1]
+        bitimage[color1 & data] = d_colors[1]
+        bitimage[color1 & comment] = c_colors[1]
+        bitimage[color1 & match] = m_colors[1]
+        bitimage[color1 & highlight] = h_colors[1]
+        bitimage[count:,:,:] = m.empty_color
+
+        return bitimage.reshape((nr, bytes_per_row * 7, 3))
+
+
+def generate_apple2_row_offsets():
+    offsets = np.zeros(192, dtype=np.int32)
+    for y in range(192):
+        # From Apple Graphics and Arcade Game Design
+        a = y // 64
+        d = y - (64 * a)
+        b = d // 8
+        c = d - 8 * b
+        offsets[i] = (1024 * c) + (128 * b) + (40 * a)
+    return offsets
+
+def generate_apple2_index():
+    offsets = generate_apple2_row_offsets()
+    bytepos = np.empty((192, 280), dtype=np.int32)
+    bytepos[:,0] = offsets * 7
+
+class OneBitPerPixelApple2FullScreen(BaseRenderer):
+    name = "B/W, Apple 2, Screen Order"
+
+    def get_bw_colors(self, m):
+        return ((0, 0, 0), (255, 255, 255))
+
+    def get_image(self, m, bytes_per_row, nr, count, bytes, style):
+        screen = np.zeros((8192,), dtype=np.uint8)
+        bytes = bytes[0:8192]
+        num_valid = len(bytes)  # might be smaller than 8192
+        screen[:num_valid] = bytes
+        bits = np.unpackbits(bit_reverse_table[screen])
+        pixels = bits.reshape((-1, 8))
+
+        background = (pixels[:,0:7] == 0)
+        color1 = (pixels[:,0:7] == 1)
+
+        bw_colors = self.get_bw_colors(m)
+        h_colors = m.get_blended_color_registers(bw_colors, m.highlight_color)
+        m_colors = m.get_blended_color_registers(bw_colors, m.match_background_color)
+        c_colors = m.get_blended_color_registers(bw_colors, m.comment_background_color)
+        d_colors = m.get_dimmed_color_registers(bw_colors, m.background_color, m.data_color)
+
+        style_per_pixel = np.vstack((style, style, style, style, style, style, style)).T
+        normal = (style_per_pixel & self.ignore_mask) == 0
+        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
+        data = (style_per_pixel & user_bit_mask) > 0
+        comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
+        match = (style_per_pixel & match_bit_mask) == match_bit_mask
+
+        bitimage = np.empty((192 * 40, 7, 3), dtype=np.uint8)
         bitimage[background & normal] = bw_colors[0]
         bitimage[background & data] = d_colors[0]
         bitimage[background & comment] = c_colors[0]
@@ -564,6 +626,51 @@ class GTIA11(GTIA9):
     def get_antic_color_registers(self, m):
         first_color = m.antic_color_registers[8] & 0x0f
         return range(first_color, first_color + 256, 16)
+
+
+class BaseBytePerPixelRenderer(BaseRenderer):
+    """A generic renderer to display one pixel of the source using a byte
+    for the image. This provides highlighting on a per-pixel level which isn't possible with modes that have multiple pixels in a byte. This is used as an intermediate renderer, so the image format can convert to byte per pixel, and this renderer can display it.
+
+    Theoretically this will be able to display 256 colors, but at the
+    moment only uses the first 16 colors. It is mapped to the ANTIC color
+    register order, so the first 4 colors are player colors, then the 5
+    playfield colors. A blank screen corresponds to the index value of 8, so
+    the last playfield color.
+    """
+    name = "Intermediate Mode 1 Byte Per Pixel"
+    pixels_per_byte = 1
+    bitplanes = 1
+
+    def pixels_from_2bpp(self, m, bytes_per_row, nr, count, bytes, style, colors):
+        bits = np.unpackbits(bytes)
+        bits = bits.reshape((-1, 8))
+        pixels = np.empty((nr * bytes_per_row, 4), dtype=np.uint8)
+        pixels[:,0] = bits[:,0] * 2 + bits[:,1]
+        pixels[:,1] = bits[:,2] * 2 + bits[:,3]
+        pixels[:,2] = bits[:,4] * 2 + bits[:,5]
+        pixels[:,3] = bits[:,6] * 2 + bits[:,7]
+        style_per_pixel = np.vstack((style, style, style, style)).T
+        return pixels, style_per_pixel
+
+    def get_image(self, m, bytes_per_row, nr, count, bytes, style):
+        normal = style == 0
+        highlight = (style & selected_bit_mask) == selected_bit_mask
+        comment = (style & comment_bit_mask) == comment_bit_mask
+        data = (style & user_bit_mask) > 0
+        match = (style & match_bit_mask) == match_bit_mask
+
+        color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(m, range(16))
+        bitimage = np.empty((nr * bytes_per_row, 3), dtype=np.uint8)
+        for i in range(16):
+            color_is_set = (bytes == i)
+            bitimage[color_is_set & normal] = color_registers[i]
+            bitimage[color_is_set & comment] = c_colors[i]
+            bitimage[color_is_set & match] = m_colors[i]
+            bitimage[color_is_set & data] = d_colors[i]
+            bitimage[color_is_set & highlight] = h_colors[i]
+        bitimage[count:,:] = m.empty_color
+        return bitimage.reshape((nr, bytes_per_row, 3))
 
 
 def get_numpy_font_map_image(m, antic_font, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols):
