@@ -52,8 +52,18 @@ class MockTask(HasTraits):
     window = MockWindowSink
     _active_editor_tab_change = null
 
+    def __init__(self, editor):
+        self.active_editor = editor
+
 class MockEditorArea(HasTraits):
     task = MockTask()
+
+class MockEditor(object):
+    def __init__(self, segment):
+        self.segment = segment
+
+    def change_bytes(self, start, end, bytes):
+        print("changing bytes %d-%d to %s" % (start, end, repr(bytes)))
 
 class MockHexEditor(HexEditor):
     editor_area = MockEditorArea()
