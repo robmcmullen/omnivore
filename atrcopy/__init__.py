@@ -253,9 +253,12 @@ def assemble(image, source_files, data_files, obj_files, run_addr=""):
 def boot_image(image_name, source_files, data_files, obj_files, run_addr=""):
     image_cls = parsers_for_filename(image_name)[0]
     segments, run_addr = assemble_segments(source_files, data_files, obj_files, run_addr)
-    image = image_cls.create_boot_image(segments, run_addr)
-    print("saving boot disk %s" % (image_name))
-    image.save(image_name)
+    if segments:
+        image = image_cls.create_boot_image(segments, run_addr)
+        print("saving boot disk %s" % (image_name))
+        image.save(image_name)
+    else:
+        print("No segments to save to boot disk")
 
 
 def shred_image(image, value=0):
