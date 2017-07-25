@@ -78,10 +78,15 @@ class StandardDeliveryImage(DiskImageBase):
             # since the loader only deals with page boundaries
             origin = s.start_addr
             chunk_start, padding = divmod(origin, 256)
+            if (chunk_start == 0x20 or chunk_start == 0x40) and padding == 1:
+                show_hgr = False
+                padding = 0
+            else:
+                show_hgr = True
             size = ((len(s) + padding + 255) // 256) * 256
             chunk = np.zeros([size], dtype=np.uint8)
             chunk[padding:padding + len(s)] = s[:]
-            chunks.append((chunk_start, chunk))
+            chunks.append((chunk_start, chunk, show_hgr))
             print("segment: %s, pages=%d" % (str(s), len(chunk) // 256))
             log.debug(" last chunk=%s" % str(chunks[-1]))
 
@@ -107,7 +112,7 @@ class StandardDeliveryImage(DiskImageBase):
         sector_list.append(boot_sector)
         first_page_1 = True
 
-        for chunk_start, chunk_data in chunks:
+        for chunk_start, chunk_data, show_hgr in chunks:
             count = len(chunk_data) // 256
             if chunk_start == 0x20 and count == 32 and first_page_1:
                 # Assume this is an HGR screen, use interesting load effect,
@@ -143,12 +148,13 @@ class StandardDeliveryImage(DiskImageBase):
                     index = 0
                     track += 1
             address_list.extend(address_order)
-            if chunk_start == 0x40:
-                address_list.append(0xd2)
-            elif chunk_start == 0x20:
-                if not first_page_1:
-                    address_list.append(0xd1)
-                first_page_1 = False
+            if show_hgr:
+                if chunk_start == 0x40:
+                    address_list.append(0xd2)
+                elif chunk_start == 0x20:
+                    if not first_page_1:
+                        address_list.append(0xd1)
+                    first_page_1 = False
 
         print("fstbt commands: %s" % ", ".join(["%02x" % i for i in address_list]))
         boot_code = get_fstbt_code(boot_sector.data, address_list, run_addr)
