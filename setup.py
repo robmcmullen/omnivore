@@ -173,7 +173,7 @@ mac_dist_dir = os.path.join(base_dist_dir, "mac")
 
 is_64bit = sys.maxsize > 2**32
 
-if sys.platform.startswith("win"):
+if sys.platform.startswith("win") and 'py2exe' in sys.argv:
     import py2exe
     if is_64bit:
         # Help py2exe find MSVCP90.DLL from vcredist_x64
