@@ -5,6 +5,7 @@ import wx
 from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, diff_bit_mask, user_bit_mask, not_user_bit_mask
 
 from omnivore.utils.permute import bit_reverse_table
+from omnivore.utils.nputil import intwscale, intwscale_font
 
 from atascii import internal_to_atascii, atascii_to_internal
 try:
@@ -34,20 +35,12 @@ class BaseRenderer(object):
         return color_registers, h_colors, m_colors, c_colors, d_colors
 
     def reshape(self, bitimage, bytes_per_row, nr):
+        # source array 'bitimage' in the shape of (size, w, 3)
         h, w, colors = bitimage.shape
-        if w == self.pixels_per_byte:
-            return bitimage.reshape((nr, bytes_per_row * self.pixels_per_byte, 3))
-
-        # create a double-width image to expand the pixels to the correct
-        # aspect ratio
-        newdims = np.asarray((nr * bytes_per_row, self.pixels_per_byte))
-        base=np.indices(newdims)
-        d = []
-        d.append(base[0])
-        d.append(base[1]/(self.pixels_per_byte / w))
-        cd = np.array(d)
-        array = bitimage[list(cd)]
-        return array.reshape((nr, bytes_per_row * self.pixels_per_byte, 3))
+        print("bitimage: %d,%d,%d; ppb=%d bpr=%d" % (h, w, colors, self.pixels_per_byte, bytes_per_row))
+        # create a new image with pixels in the correct aspect ratio
+        output = intwscale(bitimage, self.pixels_per_byte / w)
+        return output.reshape((nr, bytes_per_row * self.pixels_per_byte, 3))
 
     def get_2bpp(self, m, bytes_per_row, nr, count, bytes, style, colors):
         bits = np.unpackbits(bytes)
@@ -802,15 +795,8 @@ class Mode4(Mode2):
 
         # create a double-width image to expand the pixels to the correct
         # aspect ratio
-        newdims = np.asarray((256, 8, 8))
-        base=np.indices(newdims)
-        d = []
-        d.append(base[0])
-        d.append(base[1])
-        d.append(base[2]/2)
-        cd = np.array(d)
-        array = font[list(cd)]
-        return array
+        output = intwscale_font(font, 2)
+        return output
 
 
 class Mode5(Mode4):
