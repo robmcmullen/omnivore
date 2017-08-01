@@ -16,6 +16,9 @@ try:
 except ImportError:
     __version__ = "dev"
 
+import logging
+log = logging.getLogger(__name__)
+
 
 # py2exe utilities
 def get_py2exe_toolkit_includes(module=None, toolkit="wx"):
@@ -135,6 +138,7 @@ def get_image_path(rel_path, module=None, file=None, up_one_level=False, exclude
     import sys
     if up_one_level:
         path = os.path.dirname(path)
+    log.debug("get_image_path: file=%s, path=%s, module=%s" % (file, path, module))
     frozen = getattr(sys, 'frozen', False)
     image_path = os.path.normpath(os.path.join(os.path.dirname(path), rel_path))
     if frozen:
@@ -149,5 +153,17 @@ def get_image_path(rel_path, module=None, file=None, up_one_level=False, exclude
                 zippath, image_path = image_path.split(".zip/")
             image_path = os.path.normpath(os.path.join(root, image_path))
         else:
-            print "App packager %s not yet supported for image paths!!!"
+            log.error("App packager %s not yet supported for image paths!!!")
+    elif not os.path.isabs(path):
+        if "/" in path:
+            toplevel, modulepath = path.split("/", 1)
+            modulepath = os.path.dirname(modulepath)
+        else:
+            toplevel = path
+            modulepath = ""
+        path = os.path.dirname(sys.modules[toplevel].__file__)
+        rel_path = os.path.join(modulepath, rel_path)
+        log.debug("get_image_path: relative! path=%s toplevel=%s modulepath=%s rel_path=%s" % (path, toplevel, modulepath, rel_path))
+        image_path = os.path.normpath(os.path.join(path, rel_path))
+    log.debug("get_image_path: image_path=%s" % image_path)
     return image_path

@@ -24,11 +24,11 @@ omnivore-framework/pyface:
 omnivore-framework/fs:
 	ln -s ../deps/pyfilesystem/fs omnivore-framework
 
-omnivore-framework/LICENSE:
-	ln -s ../deps/pyfilesystem/LICENSE omnivore-framework
+omnivore-framework/LICENSE: LICENSE
+	ln -s ../LICENSE omnivore-framework
 
-omnivore-framework/LICENSE.Enthought:
-	ln -s ../deps/pyfilesystem/LICENSE.Enthought omnivore-framework
+omnivore-framework/LICENSE.Enthought: LICENSE.Enthought
+	ln -s ../LICENSE.Enthought omnivore-framework
 
 ${SDIST}:
 	(cd omnivore-framework; python setup.py sdist)
