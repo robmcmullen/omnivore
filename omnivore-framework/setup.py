@@ -182,7 +182,7 @@ setup(
         Topic :: Software Development :: Assemblers
         Topic :: Software Development :: Disassemblers
         """.splitlines() if len(c.strip()) > 0],
-    description = "The Atari 8-bit binary editor sponsored by the Player/Missile Podcast.",
+    description = "Traits-based wxPython UI application framework",
     long_description = open('README.rst').read(),
     cmdclass = cmdclass,
     ext_modules = ext_modules,
