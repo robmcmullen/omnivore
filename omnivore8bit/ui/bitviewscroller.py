@@ -25,6 +25,7 @@ from pyface.tasks.action.api import EditorAction
 
 from atrcopy import SegmentData, DefaultSegment, get_style_mask
 
+from omnivore.utils.nputil import intscale
 from omnivore8bit.hex_edit.actions import *
 from omnivore8bit.arch.disasm import get_style_name
 
@@ -251,18 +252,10 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
             height = array.shape[0]
             if width > 0 and height > 0:
                 zw, zh = self.get_zoom_factors()
-                nw = width * zw
-                nh = height * zh
-                newdims = np.asarray((nh, nw))
-                base=np.indices(newdims)
-                d = []
-                d.append(base[0]/zh)
-                d.append(base[1]/zw)
-                cd = np.array(d)
-                newarray = array[list(cd)]
-                self.draw_overlay(newarray, width, height, zw, zh)
-                image = wx.EmptyImage(nw, nh)
-                image.SetData(newarray.tostring())
+                array = intscale(array, zh, zw)
+                self.draw_overlay(array, width, height, zw, zh)
+                image = wx.EmptyImage(array.shape[1], array.shape[0])
+                image.SetData(array.tostring())
                 bmp = wx.BitmapFromImage(image)
                 dc.DrawBitmap(bmp, 0, 0)
 
@@ -778,15 +771,7 @@ class FontMapScroller(BitviewScroller):
         font = m.get_blinking_font(0)
         array = m.font_renderer.get_image(m, font, bytes, style, start_byte, end_byte, self.bytes_per_row, nr, 0, self.bytes_per_row)
         if self.font.scale_h > 1 or self.font.scale_w > 1:
-            h, w, depth = array.shape
-            newdims = np.asarray((h * self.font.scale_h, w * self.font.scale_w))
-            base=np.indices(newdims)
-            d = []
-            d.append(base[0]/self.font.scale_h)
-            d.append(base[1]/self.font.scale_w)
-            cd = np.array(d)
-            resized = array[list(cd)]
-            array = resized
+            array = intscale(array, self.font_scale_h, self.font_scale_w)
         return array
 
     def draw_overlay(self, array, w, h, zw, zh):
