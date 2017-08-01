@@ -1,0 +1,7 @@
+include run.py
+include *.rst
+include LICENSE*
+recursive-include docs *.rst
+recursive-include omnivore/icons *.png *.ico *.icns
+recursive-include omnivore *.c
+include traits/*.h
