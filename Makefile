@@ -1,4 +1,5 @@
 VERSION := $(shell python -c "import omnivore; print(omnivore.__version__)")
+SOURCES := $(shell find omnivore -name "*.py" -print)
 SDIST := omnivore-framework/dist/omnivore-framework-${VERSION}.tar.gz
 
 all: framework
@@ -30,7 +31,8 @@ omnivore-framework/LICENSE: LICENSE
 omnivore-framework/LICENSE.Enthought: LICENSE.Enthought
 	ln -s ../LICENSE.Enthought omnivore-framework
 
-${SDIST}:
+# sdist will be updated any time it's older than any of the python source files
+${SDIST}: ${SOURCES}
 	(cd omnivore-framework; python setup.py sdist)
 
 framework: omnivore-framework/omnivore omnivore-framework/traits omnivore-framework/traitsui omnivore-framework/apptools omnivore-framework/envisage omnivore-framework/pyface omnivore-framework/fs omnivore-framework/LICENSE omnivore-framework/LICENSE.Enthought ${SDIST}
@@ -38,3 +40,7 @@ framework: omnivore-framework/omnivore omnivore-framework/traits omnivore-framew
 clean:
 	rm -rf omnivore-framework/dist
 	rm -f omnivore-framework/LICENSE*
+
+print-%: ; @ echo $* = $($*)
+
+.PHONY: print-% clean
