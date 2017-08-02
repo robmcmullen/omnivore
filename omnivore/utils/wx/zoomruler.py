@@ -555,6 +555,7 @@ class ZoomRulerBase(object):
                 op = "hit test"
             else:
                 op = "unknown"
+                next_mode = mode
 
         elif mode == "drag_mode":
             if event.ButtonDown():
@@ -569,6 +570,7 @@ class ZoomRulerBase(object):
                 next_mode = "drag_mode"
             else:
                 op = "unknown"
+                next_mode = mode
 
         elif mode == "dragging":
             if event.ButtonUp():
@@ -579,6 +581,7 @@ class ZoomRulerBase(object):
                 op = "dragging"
             else:
                 op = "unknown"
+                next_mode = mode
 
         # print "mouse: state=%s op=%s pos=%d btns=%s%s%s" % (mode, op, pos, "L" if event.LeftIsDown() else "l", "M" if event.MiddleIsDown() else "m", "R" if event.RightIsDown() else "r")
 
