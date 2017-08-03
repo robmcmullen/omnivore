@@ -51,6 +51,8 @@
 #           cog.outl("recognizers.append(%s())" % name)
 # ]]]*/
 recognizers = []
+from atari800_savestate import Atari800Recognizer
+recognizers.append(Atari800Recognizer())
 from atrcopy_parsers import AtrcopyRecognizer
 recognizers.append(AtrcopyRecognizer())
 # [[[end]]]
