@@ -63,7 +63,7 @@ def main(argv):
 
     from omnivore.app_init import run
     from omnivore8bit.document import SegmentedDocument
-    run(plugins=plugins, egg_path=EGG_PATH, document_class=SegmentedDocument)
+    run(plugins=plugins, use_eggs=False, document_class=SegmentedDocument)
 
     logging.shutdown()
 
