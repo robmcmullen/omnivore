@@ -7,6 +7,8 @@ from atrcopy import SegmentData, SegmentParser, InvalidSegmentParser, ObjSegment
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
 from omnivore8bit.document import SegmentedDocument
 
+from pyatari800 import parse_atari800
+
 
 @provides(IFileRecognizer)
 class Atari800Recognizer(HasTraits):
@@ -67,83 +69,11 @@ class Atari800Parser(SegmentParser):
         self.version = d[8]
         self.verbose = d[9]
         if self.version == 8:
-            self.parse_version_8(r, d, s)
+            comments = parse_atari800(d)
+            self.set_comments(comments)
         else:
             raise InvalidSegmentParser("Unsupported Atari800 save state file version: %d" % version)
 
-    def set_comments(self, segment, comments):
+    def set_comments(self, comments):
         for loc, text in comments.iteritems():
             self.container.set_comment_at(loc, text)
-
-    def parse_version_8(self, r, d, s):
-        end = 10
-        for parse_func in self.version_8_order:
-            name, start, end, comments = parse_func(self, end, d)
-            segment = ObjSegment(r[start:end], 0, 0, 0, name=name)
-            self.set_comments(segment, comments)
-
-    def parse_Atari800(self, pos, d):
-        comments = {}
-        start = pos
-        comments[pos] = "tv_mode"
-        pos += 1
-        machine = d[pos]
-        comments[pos] = "machine_type"
-        pos += 1
-        if machine == Atari800_MACHINE_XLXE:
-            comments[pos] = "builtin_basic"
-            pos += 1
-            comments[pos] = "keyboard_leds"
-            pos += 1
-            comments[pos] = "f_keys"
-            pos += 1
-            comments[pos] = "jumper"
-            pos += 1
-            comments[pos] = "builtin_game"
-            pos += 1
-            comments[pos] = "keyboard_detached"
-            pos += 1
-        return "Atari800", start, pos, comments
-
-#     def parse_CARTRIDGE(self, pos, d, s):
-#         ctype = d[pos:pos+2].view('i2') # signed, negative = second cart
-
-# {
-#     int cart_save = CARTRIDGE_main.type;
-    
-#     if (CARTRIDGE_piggyback.type != CARTRIDGE_NONE)
-#         /* Save the cart type as negative, to indicate to CARTStateRead that there is a 
-#            second cartridge */
-#         cart_save = -cart_save;
-    
-#     /* Save the cartridge type, or CARTRIDGE_NONE if there isn't one...*/
-#     StateSav_SaveINT(&cart_save, 1);
-#     if (CARTRIDGE_main.type != CARTRIDGE_NONE) {
-#         StateSav_SaveFNAME(CARTRIDGE_main.filename);
-#         StateSav_SaveINT(&CARTRIDGE_main.state, 1);
-#     }
-
-#     if (CARTRIDGE_piggyback.type != CARTRIDGE_NONE) {
-#         /* Save the second cartridge type and name*/
-#         StateSav_SaveINT(&CARTRIDGE_piggyback.type, 1);
-#         StateSav_SaveFNAME(CARTRIDGE_piggyback.filename);
-#         StateSav_SaveINT(&CARTRIDGE_piggyback.state, 1);
-#     }
-# }
-
-
-    version_8_order = [
-        parse_Atari800,
-        # parse_CARTRIDGE,
-        # parse_SIO,
-        # parse_ANTIC,
-        # parse_CPU,
-        # parse_GTIA,
-        # parse_PIA,
-        # parse_POKEY,
-        # parse_XEP80,
-        # parse_PBI,
-        # parse_PBI_MIO,
-        # parse_PBI_BB,
-        # parse_PBI_XLD,
-    ]
