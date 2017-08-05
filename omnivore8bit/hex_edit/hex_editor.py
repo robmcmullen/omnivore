@@ -715,6 +715,12 @@ class HexEditor(FrameworkEditor):
                 return s, index
             except IndexError:
                 continue
+        for s in self.document.segment_parser.segments[1:]:
+            try:
+                index = s.get_index_from_base_index(base_index)
+                return s, index
+            except IndexError:
+                continue
         return None, None
 
     def ensure_visible(self, start, end):
