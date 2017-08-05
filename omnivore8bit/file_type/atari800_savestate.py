@@ -69,8 +69,13 @@ class Atari800Parser(SegmentParser):
         self.version = d[8]
         self.verbose = d[9]
         if self.version == 8:
-            comments = parse_atari800(d)
+            comments, segments = parse_atari800(d)
             self.set_comments(comments)
+            for start, end, origin, name in segments:
+                print("Adding:", start, end, origin, name)
+                segment = ObjSegment(r[start:end], 0, 0, origin, name=name)
+                self.segments.append(segment)
+
         else:
             raise InvalidSegmentParser("Unsupported Atari800 save state file version: %d" % version)
 
