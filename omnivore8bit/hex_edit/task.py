@@ -357,6 +357,7 @@ class HexEditTask(FrameworkTask):
                 CopyDisassemblyAction(),
                 CopyCommentsAction(),
                 CopyAsReprAction(),
+                CopyAsCBytesAction(),
                 id='copyspecial', name="Copy Special"),
             PasteAction(),
             SMenu(

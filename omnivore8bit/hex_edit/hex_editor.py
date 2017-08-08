@@ -800,7 +800,7 @@ class HexEditor(FrameworkEditor):
         return goto_actions
 
     def common_popup_actions(self):
-        return [CutAction, CopyAction, ["Copy Special", CopyDisassemblyAction, CopyCommentsAction, CopyAsReprAction], PasteAction, ["Paste Special", PasteAndRepeatAction, PasteCommentsAction], None, SelectAllAction, SelectNoneAction, ["Mark Selection As", MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsUninitializedDataAction, MarkSelectionAsDisplayListAction, MarkSelectionAsJumpmanLevelAction, MarkSelectionAsJumpmanHarvestAction], None, GetSegmentFromSelectionAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction, AddLabelPopupAction, RemoveLabelPopupAction]
+        return [CutAction, CopyAction, ["Copy Special", CopyDisassemblyAction, CopyCommentsAction, CopyAsReprAction, CopyAsCBytesAction], PasteAction, ["Paste Special", PasteAndRepeatAction, PasteCommentsAction], None, SelectAllAction, SelectNoneAction, ["Mark Selection As", MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsUninitializedDataAction, MarkSelectionAsDisplayListAction, MarkSelectionAsJumpmanLevelAction, MarkSelectionAsJumpmanHarvestAction], None, GetSegmentFromSelectionAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction, AddLabelPopupAction, RemoveLabelPopupAction]
 
     def change_bytes(self, start, end, bytes, pretty=None):
         """Convenience function to perform a ChangeBytesCommand

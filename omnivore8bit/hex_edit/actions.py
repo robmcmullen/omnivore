@@ -972,6 +972,23 @@ class CopyDisassemblyAction(EditorAction):
         e.set_clipboard_object(data_obj)
 
 
+class CopyAsCBytesAction(EditorAction):
+    """Copy the current selection as text where each byte is converted to the
+    C source code representation.
+    """
+    name = 'Copy as C Data'
+    enabled_name = 'can_copy'
+
+    def perform(self, event):
+        e = self.active_editor
+        ranges, indexes = e.get_selected_ranges_and_indexes()
+        data = e.segment[indexes]
+        text = ",\n".join([",".join(["0x%02x" % d for d in list(c)]) for c in [data[i:i+8] for i in range(0, len(data), 8)]])
+        data_obj = wx.TextDataObject()
+        data_obj.SetText(text)
+        e.set_clipboard_object(data_obj)
+
+
 class CopyAsReprAction(EditorAction):
     """Copy the current selection as a text string containing a string (with
     escaped characters where necessary) that reproduces the bytes in the
