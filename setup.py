@@ -25,6 +25,7 @@ ext_modules = [
               ),
     Extension("omnivore8bit.arch.antic_speedups",
               sources=["omnivore8bit/arch/antic_speedups.c"],
+              extra_compile_args = ["-O3" ],
               )
     ]
 
@@ -61,7 +62,7 @@ if "sdist" in sys.argv:
         def run(self):
             # Make sure the compiled Cython files in the distribution are up-to-date
             from Cython.Build import cythonize
-            cythonize(["omnivore/arch/antic_speedups.pyx"])
+            cythonize(["omnivore8bit/arch/antic_speedups.pyx"])
             _sdist.run(self)
     cmdclass["sdist"] = sdist
 
