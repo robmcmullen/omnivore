@@ -68,11 +68,11 @@ def iter_templates():
             inf = template + ".inf"
             if os.path.exists(template) and os.path.isfile(template) and os.path.exists(inf):
                 try:
+                    log.debug("Loading json file %s" % inf)
                     with open(inf, "r") as fh:
                         j = json.loads(fh.read())
                 except ValueError:
                     j = {}
-                    raise
                 j["pathname"] = template
                 j["uri"] = "template://" + os.path.basename(template)
                 log.debug("template json: %s" % str(template))
