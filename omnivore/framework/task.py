@@ -651,7 +651,7 @@ class FrameworkTask(Task):
 
     def parse_accelerator(self, text, id):
         if text:
-            entry = wx.AcceleratorEntry(cmdID=id)
+            entry = wx.AcceleratorEntry(cmd=id)
             entry.FromString(text)
             return entry
         return None
