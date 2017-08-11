@@ -420,7 +420,7 @@ class FrameworkEditor(Editor):
         raw_data = self.get_numpy_image()
         h, w, depth = raw_data.shape
         bitmap = wx.BitmapFromBuffer(width=w, height=h, dataBuffer=raw_data)
-        image = wx.ImageFromBitmap(bitmap)
+        image = wx.ImageBitmap(bitmap)
         image.SaveFile(path, t)
 
     def get_numpy_image(self):
@@ -794,7 +794,7 @@ class FrameworkEditor(Editor):
                 elif hasattr(action, '__iter__'):
                     submenu = wx.Menu()
                     title = action[0]
-                    popup.AppendMenu(wx.NewId(), title, submenu)
+                    popup.Append(wx.NewId(), title, submenu)
                     loop_over_actions(submenu, action[1:])
                 else:
                     add_to_menu(popup, action, context_menu_data)

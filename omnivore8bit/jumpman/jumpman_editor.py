@@ -54,7 +54,7 @@ class JumpmanLevelView(MainBitmapScroller):
 
     def update_zoom(self):
         # force zoom so that entire screen fits in window
-        w, h = self.GetClientSizeTuple()
+        w, h = self.GetClientSize().Get()
         sw = w / 160
         sh = h / 88
         zoom = min(sh, sw)

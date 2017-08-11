@@ -781,7 +781,7 @@ class DragImage(wx.DragImage):
 
         memory = wx.MemoryDC()
 
-        bitmap = wx.EmptyBitmap(self._total_w, self._total_h)
+        bitmap = wx.Bitmap(self._total_w, self._total_h)
         memory.SelectObject(bitmap)
 
         if wx.Platform == '__WXMAC__':
@@ -2625,8 +2625,8 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._spacing = 18
 
         # Brushes for focused/unfocused items (also gradient type)
-        self._hilightBrush = wx.Brush(wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT))
-        btnshadow = wx.SystemSettings_GetColour(wx.SYS_COLOUR_BTNSHADOW)
+        self._hilightBrush = wx.Brush(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
+        btnshadow = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW)
         self._hilightUnfocusedBrush = wx.Brush(btnshadow)
         r, g, b = btnshadow.Red(), btnshadow.Green(), btnshadow.Blue()
         backcolour = (max((r >> 1) - 20, 0),
@@ -2662,7 +2662,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         # Default normal and bold fonts for an item
         self._hasFont = True
-        self._normalFont = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        self._normalFont = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
         family = self._normalFont.GetFamily()
         if family == wx.FONTFAMILY_UNKNOWN:
             family = wx.FONTFAMILY_SWISS
@@ -2692,7 +2692,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._disabledColour = wx.Colour(180, 180, 180)
 
         # Gradient selection colours
-        self._firstcolour = colour = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+        self._firstcolour = colour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
         self._secondcolour = wx.WHITE
         self._usegradients = False
         self._gradientstyle = 0   # Horizontal Gradient
@@ -2827,7 +2827,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :return: An instance of :class:`Bitmap`, representing a native looking checkbox or radiobutton.        
         """
 
-        bmp = wx.EmptyBitmap(x, y)
+        bmp = wx.Bitmap(x, y)
         mdc = wx.MemoryDC(bmp)
         mask = wx.Colour(0xfe, 0xfe, 0xfe)
         mdc.SetBackground(wx.Brush(mask))
@@ -3598,7 +3598,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self.CalculateSize(item, dc)
         self.RefreshLine(item)
 
-    def SetPyData(self, item, data):
+    def SetItemData(self, item, data):
         """
         Sets the data associated to an item.
 
@@ -3608,7 +3608,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         item.SetData(data)
 
-    SetItemPyData = SetPyData
+    SetItemPyData = SetItemData
 
     def SetItemHasChildren(self, item, has=True):
         """
@@ -3656,8 +3656,8 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         """
 
         if highlight:
-            bg = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT)
-            fg = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
+            bg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+            fg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
 
         item.Attr().SetTextColour(fg)
         item.Attr.SetBackgroundColour(bg)
@@ -3892,7 +3892,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         """
 
         if colour is None:
-            colour = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+            colour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
 
         self._firstcolour = colour
         if self._usegradients:
@@ -6294,7 +6294,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             if wx.Platform == "__WXMAC__":
                 if not self._hasFocus:
                     dc.SetBrush(wx.TRANSPARENT_BRUSH)
-                    dc.SetPen(wx.Pen(wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT), 1, wx.SOLID))
+                    dc.SetPen(wx.Pen(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT), 1, wx.SOLID))
                 else:
                     dc.SetBrush(self._hilightBrush)
             else:
@@ -6597,9 +6597,9 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
             if item.IsSelected():
                 if (wx.Platform == "__WXMAC__" and self._hasFocus):
-                    colText = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
+                    colText = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
                 else:
-                    colText = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
+                    colText = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
 
                 if self._vistaselection:
                     colText = wx.BLACK
@@ -7395,7 +7395,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
                     if hoverItem.IsSeparator():
                         if tip:
-                            self.SetToolTipString('')
+                            self.SetToolTip('')
                     else:
                         maxsize = self.GetItemSize(hoverItem)
                         itemText = hoverItem.GetText()
@@ -7404,10 +7404,10 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
                         if dc.GetMultiLineTextExtent(itemText)[0] > maxsize:
                             if tip != itemText:
-                                self.SetToolTipString(itemText)
+                                self.SetToolTip(itemText)
                         else:
                             if tip:
-                                self.SetToolTipString('')
+                                self.SetToolTip('')
 
                 if hoverItem.IsHyperText() and (flags & TREE_HITTEST_ONITEMLABEL) and hoverItem.IsEnabled():
                     self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
@@ -8241,9 +8241,9 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         """
 
         attr = wx.VisualAttributes()
-        attr.colFg = wx.SystemSettings_GetColour(wx.SYS_COLOUR_WINDOWTEXT)
-        attr.colBg = wx.SystemSettings_GetColour(wx.SYS_COLOUR_LISTBOX)
-        attr.font  = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        attr.colFg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
+        attr.colBg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_LISTBOX)
+        attr.font  = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
         return attr
 
     GetClassDefaultAttributes = classmethod(GetClassDefaultAttributes)

@@ -19,7 +19,7 @@ class GenToggleButtonEvent(wx.PyCommandEvent):
     def GetEventObject(self):
         return self.evt_obj
 
-        btn.SetToolTipString("Case sensitive match")
+        btn.SetToolTip("Case sensitive match")
 
 
 class FlatBitmapToggleButton(buttons.GenBitmapToggleButton):
@@ -49,4 +49,4 @@ class FlatBitmapToggleButton(buttons.GenBitmapToggleButton):
         state = "off" if self.up else "on"
         if self.tooltip_prefix:
             state = "%s: %s" % (self.tooltip_prefix, state)
-        self.SetToolTipString(state)
+        self.SetToolTip(state)

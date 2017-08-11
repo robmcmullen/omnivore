@@ -111,7 +111,7 @@ class AnticPalette(canvas.Canvas):
                 array[y:y+self.VERTICAL_STEP,x:x+self.HORIZONTAL_STEP,:] = c
         width = array.shape[1]
         height = array.shape[0]
-        image = wx.EmptyImage(width, height)
+        image = wx.Image(width, height)
         image.SetData(array.tostring())
         bmp = wx.BitmapFromImage(image)
         return bmp

@@ -765,10 +765,10 @@ class ImageScroller(wx.ScrolledWindow):
             self.set_data()
 
     def set_data(self):
-        img = wx.EmptyImage(1,1)
+        img = wx.Image(1,1)
         if not img.LoadMimeStream(self.document.bytestream, self.document.metadata.mime):
             #raise TypeError("Bad image -- either it really isn't an image, or wxPython doesn't support the image format.")
-            img = wx.EmptyImage(1,1)
+            img = wx.Image(1,1)
         self.setImage(img)
 
     def zoomIn(self, zoom=2):
@@ -839,7 +839,7 @@ class ImageScroller(wx.ScrolledWindow):
             w = int(self.img.GetWidth() * self.zoom)
             h = int(self.img.GetHeight() * self.zoom)
             dc = wx.MemoryDC()
-            self.scaled_bmp = wx.EmptyBitmap(w, h)
+            self.scaled_bmp = wx.Bitmap(w, h)
             dc.SelectObject(self.scaled_bmp)
             self._drawBackground(dc, w, h)
 
@@ -1019,7 +1019,7 @@ class ImageScroller(wx.ScrolledWindow):
         Return True if the event is within the visible viewport of the
         scrolled window.
         """
-        size = self.GetClientSizeTuple()
+        size = self.GetClientSize().Get()
         x = ev.GetX()
         y = ev.GetY()
         if x < 0 or x >= size[0] or y < 0 or y >= size[1]:
@@ -1070,7 +1070,7 @@ class ImageScroller(wx.ScrolledWindow):
     def autoScroll(self, ev):
         x = ev.GetX()
         y = ev.GetY()
-        size = self.GetClientSizeTuple()
+        size = self.GetClientSize().Get()
         if x < 0:
             dx = x
         elif x > size[0]:
@@ -1188,7 +1188,7 @@ if __name__ == '__main__':
 
     # Add a panel that the rubberband will work on.
     panel = ImageScroller(frame)
-    img = wx.ImageFromBitmap(wx.ArtProvider_GetBitmap(wx.ART_WARNING, wx.ART_OTHER, wx.Size(48, 48)))
+    img = wx.ImageBitmap(wx.ArtProvider_GetBitmap(wx.ART_WARNING, wx.ART_OTHER, wx.Size(48, 48)))
     panel.setImage(img)
 
     # Add the callbacks
@@ -1242,7 +1242,7 @@ if __name__ == '__main__':
             wildcard="*"
             dlg = wx.FileDialog(
                 frame, message="Open File",
-                defaultFile="", wildcard=wildcard, style=wx.OPEN)
+                defaultFile="", wildcard=wildcard, style=wx.FD_OPEN)
 
             # Show the dialog and retrieve the user response. If it is the
             # OK response, process the data.
@@ -1253,7 +1253,7 @@ if __name__ == '__main__':
                 for path in paths:
                     dprint("open file %s:" % path)
                     fh = open(path, 'rb')
-                    img = wx.EmptyImage()
+                    img = wx.Image()
                     if img.LoadStream(fh):
                         panel.setImage(img)
                     else:

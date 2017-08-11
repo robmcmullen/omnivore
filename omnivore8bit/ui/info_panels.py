@@ -3,7 +3,7 @@ import sys
 import numpy as np
 
 import wx
-import wx.combo
+import wx.adv
 import wx.lib.buttons as buttons
 import wx.lib.scrolledpanel
 from wx.lib.expando import ExpandoTextCtrl

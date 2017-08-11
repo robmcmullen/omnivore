@@ -64,7 +64,7 @@ class ImageCache(object):
         try:
             bmp = self.cache[k]
         except KeyError:
-            bmp = wx.EmptyBitmap(rect.width, rect.height)
+            bmp = wx.Bitmap(rect.width, rect.height)
             mdc = wx.MemoryDC()
             mdc.SelectObject(bmp)
             r = wx.Rect(0, 0, rect.width, rect.height)

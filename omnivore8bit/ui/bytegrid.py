@@ -500,7 +500,7 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         PaintBackground and do something meaningful there.
         """
         log.debug("rect=%s\n" % rect)
-        self._tc.SetDimensions(rect.x, rect.y, rect.width+2, rect.height+2,
+        self._tc.SetSize(rect.x, rect.y, rect.width+2, rect.height+2,
                                wx.SIZE_ALLOW_MINUS_ONE)
 
     def Show(self, show, attr):

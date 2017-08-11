@@ -239,9 +239,9 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         if self.is_ready_to_render():
             self.calc_image_size()
 
-            w, h = self.GetClientSizeTuple()
+            w, h = self.GetClientSize().Get()
             dc = wx.MemoryDC()
-            self.scaled_bmp = wx.EmptyBitmap(w, h)
+            self.scaled_bmp = wx.Bitmap(w, h)
 
             dc.SelectObject(self.scaled_bmp)
             dc.SetBackground(wx.Brush(self.editor.machine.empty_color))
@@ -254,7 +254,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
                 zw, zh = self.get_zoom_factors()
                 array = intscale(array, zh, zw)
                 self.draw_overlay(array, width, height, zw, zh)
-                image = wx.EmptyImage(array.shape[1], array.shape[0])
+                image = wx.Image(array.shape[1], array.shape[0])
                 image.SetData(array.tostring())
                 bmp = wx.BitmapFromImage(image)
                 dc.DrawBitmap(bmp, 0, 0)
@@ -266,7 +266,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
 
     def calc_image_size(self):
         x, y = self.GetViewStart()
-        w, h = self.GetClientSizeTuple()
+        w, h = self.GetClientSize().Get()
         self.start_row = y
         self.start_col = x
 
@@ -690,7 +690,7 @@ class FontMapScroller(BitviewScroller):
 
     def calc_image_size(self):
         x, y = self.GetViewStart()
-        w, h = self.GetClientSizeTuple()
+        w, h = self.GetClientSize().Get()
         self.start_row = y
         self.start_col = y
 
@@ -1065,8 +1065,8 @@ class MemoryMapScroller(BitviewScroller):
         width = self.bytes_per_row * self.zoom
         height = -1
 
-        vw, vh = self.GetVirtualSizeTuple()
-        ww, wh = self.GetClientSizeTuple()
+        vw, vh = self.GetVirtualSize().Get()
+        ww, wh = self.GetClientSize().Get()
         if wh < vh:
             # Scrollbar is present!
             width += wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X) + 1
@@ -1090,7 +1090,7 @@ class MemoryMapScroller(BitviewScroller):
 
     def calc_image_size(self):
         x, y = self.GetViewStart()
-        w, h = self.GetClientSizeTuple()
+        w, h = self.GetClientSize().Get()
         self.start_row = y
         self.start_col = x
 
@@ -1177,7 +1177,7 @@ if __name__ == '__main__':
             wildcard="*"
             dlg = wx.FileDialog(
                 frame, message="Open File",
-                defaultFile="", wildcard=wildcard, style=wx.OPEN)
+                defaultFile="", wildcard=wildcard, style=wx.FD_OPEN)
 
             # Show the dialog and retrieve the user response. If it is the
             # OK response, process the data.
@@ -1188,7 +1188,7 @@ if __name__ == '__main__':
                 for path in paths:
                     dprint("open file %s:" % path)
                     fh = open(path, 'rb')
-                    img = wx.EmptyImage()
+                    img = wx.Image()
                     if img.LoadStream(fh):
                         panel.setImage(img)
                     else:

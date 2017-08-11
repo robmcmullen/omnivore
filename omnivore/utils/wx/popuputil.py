@@ -147,7 +147,7 @@ class SpringTabItemRenderer(object):
         self.spacing_between_items = 8
 
     def on_paint(self, item, evt):
-        (width, height) = item.GetClientSizeTuple()
+        (width, height) = item.GetClientSize().Get()
         x1 = y1 = 0
         x2 = width-1
         y2 = height-1
@@ -252,12 +252,12 @@ class SpringTabItemVerticalRenderer(SpringTabItemRenderer):
             self.draw_notification(dc, x, y, w, h, num, parent)
 
     def set_popup_width(self, parent, popup, child):
-        pw, ph = popup.GetSizeTuple()
-        pcw, pch = popup.GetClientSizeTuple()
+        pw, ph = popup.GetSize().Get()
+        pcw, pch = popup.GetClientSize().Get()
         try:
             cw, ch = child.DoGetBestSize()
         except AttributeError:
-            cw, ch = child.GetSizeTuple()
+            cw, ch = child.GetSize().Get()
         log.debug("popup size=%s  popup client size=%s  child=%s" % (str((pw, ph)), str((pcw, pch)), str((cw, ch))))
 
         # The client size may be smaller than the popup window if the popup
@@ -266,7 +266,7 @@ class SpringTabItemVerticalRenderer(SpringTabItemRenderer):
         diffheight =  ph - pch
 
         # The popup will be at least as tall as the SpringTabs panel
-        width, height = parent.GetSizeTuple()
+        width, height = parent.GetSize().Get()
         if ph < height:
             ph = height
         pw = min(cw + diffwidth, parent.max_popup_width)
@@ -286,7 +286,7 @@ class SpringTabItemVerticalRenderer(SpringTabItemRenderer):
             self.set_popup_width(parent, popup, child)
             width, height, pw, ph = self.set_popup_width(parent, popup, child)
 
-            x, y = parent.ClientToScreenXY(width, 0)
+            x, y = parent.ClientToScreen(width, 0)
             if self.popleft:
                 x -= width + pw
             #log.debug("popping up at %s" % str((x,y)))
@@ -692,9 +692,9 @@ class PopupStatusBar(StatusPopupWindow):
         self.Layout()
         frame = self.GetParent()
         frame_offset = frame.GetClientAreaOrigin()
-        frame_pos = frame.ClientToScreenXY(frame_offset[0], frame_offset[1])
-        frame_size = frame.GetClientSizeTuple()
-        win_size = self.GetSizeTuple()
+        frame_pos = frame.ClientToScreen(frame_offset[0], frame_offset[1])
+        frame_size = frame.GetClientSize().Get()
+        win_size = self.GetSize().Get()
         #print("frame pos: %s, size=%s  popup size=%s" % (str(frame_pos), str(frame_size), str(win_size)))
         x = frame_pos[0]
         y = frame_pos[1] + frame_size[1] - win_size[1]

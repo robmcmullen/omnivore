@@ -426,7 +426,7 @@ class ZoomRulerBase(object):
         if self.__class__.open_hand_cursor_ is None:
             raw = zlib.decompress(base64.b64decode(open_hand_cursor_data))
             stream = cStringIO.StringIO(raw)
-            image = wx.ImageFromStream(stream)
+            image = wx.ImageStream(stream)
             image.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_X, 16)
             image.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_Y, 16)
             self.__class__.open_hand_cursor_ = wx.CursorFromImage(image)
@@ -437,7 +437,7 @@ class ZoomRulerBase(object):
         if self.__class__.closed_hand_cursor_ is None:
             raw = zlib.decompress(base64.b64decode(closed_hand_cursor_data))
             stream = cStringIO.StringIO(raw)
-            image = wx.ImageFromStream(stream)
+            image = wx.ImageStream(stream)
             image.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_X, 16)
             image.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_Y, 16)
             self.__class__.closed_hand_cursor_ = wx.CursorFromImage(image)
