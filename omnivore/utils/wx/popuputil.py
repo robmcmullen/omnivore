@@ -153,13 +153,13 @@ class SpringTabItemRenderer(object):
         y2 = height-1
 
         dc = wx.PaintDC(item)
+        log.debug("hover: %s %s" % (item.GetLabel(), item.hover))
         if item.hover:
             self.draw_hover_background(item, dc)
         else:
-            brush = item.GetBackgroundBrush(dc)
-            if brush is not None:
-                dc.SetBackground(brush)
-                dc.Clear()
+            brush = wx.Brush(item.face_background_color, wx.SOLID)
+            dc.SetBackground(brush)
+            dc.Clear()
 
         item.draw_label(dc, width, height)
         self.draw_hover_decorations(item, dc, width, height)
@@ -343,8 +343,9 @@ class SpringTabItem(GenToggleButton):
     # Superclass overrides
 
     def InitColours(self):
-        faceClr = self.GetBackgroundColour()
-        r, g, b = faceClr.Get()
+        self.face_background_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND)
+        r, g, b, a = self.face_background_color.Get()
+        log.debug("background: r,g,b,a: %s" % ((r,g,b,a),))
         fr, fg, fb = max(0,r-32), max(0,g-32), max(0,b-32)
         #log.debug(str((fr, fg, fb)))
         self.faceDnClr = wx.Colour(fr, fg, fb)
@@ -711,7 +712,7 @@ class PopupStatusBar(StatusPopupWindow):
 
 
 if __name__ == "__main__":
-    import wx.calendar
+    from wx.adv import CalendarCtrl
     import wx.stc
 
     class FontList(wx.Panel):
@@ -742,7 +743,7 @@ if __name__ == "__main__":
 
             self.lb1.SetSelection(0)
             self.OnSelect(None)
-            wx.FutureCall(300, self.SetTextSize)
+            wx.CallLater(300, self.SetTextSize)
 
         def SetTextSize(self):
             self.txt.SetSize(self.txt.GetBestSize())
@@ -758,7 +759,7 @@ if __name__ == "__main__":
         button = GenToggleButton(parent, -1, "Whatevar!!!")
 
     def CalendarCB(parent, task, **kwargs):
-        wx.calendar.CalendarCtrl(parent, -1, wx.DateTime_Now())
+        CalendarCtrl(parent, -1, wx.DateTime.Now())
 
     class TestSTC(wx.stc.StyledTextCtrl):
         def __init__(self, *args, **kwargs):
@@ -780,7 +781,7 @@ if __name__ == "__main__":
             self.GetParent().status.show_status_text(status)
             evt.Skip()
 
-    app = wx.PySimpleApp()
+    app = wx.App()
     frm = wx.Frame(None,-1,"Test",style=wx.TAB_TRAVERSAL|wx.DEFAULT_FRAME_STYLE,
                    size=(600,400))
     panel = wx.Panel(frm)
