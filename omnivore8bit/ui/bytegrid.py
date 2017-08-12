@@ -13,10 +13,10 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class ByteGridRenderer(Grid.PyGridCellRenderer):
+class ByteGridRenderer(Grid.GridCellRenderer):
     def __init__(self, table, editor):
         """Render data in the specified color and font and fontsize"""
-        Grid.PyGridCellRenderer.__init__(self)
+        Grid.GridCellRenderer.__init__(self)
         self.table = table
         m = editor.machine
         self.color = m.text_color
@@ -122,7 +122,7 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
         dc.DestroyClippingRegion()
 
 
-class ByteGridTable(Grid.PyGridTableBase):
+class ByteGridTable(Grid.GridTableBase):
     column_labels = [""]
     column_sizes = [4]
     column_pixel_sizes = {}
@@ -140,7 +140,7 @@ class ByteGridTable(Grid.PyGridTableBase):
         self.__class__.column_pixel_sizes[col] = pixel_size
 
     def __init__(self):
-        Grid.PyGridTableBase.__init__(self)
+        Grid.GridTableBase.__init__(self)
 
         self._rows = 1
         self._cols = len(self.column_labels)
@@ -471,14 +471,14 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
                 wx.CallAfter(self.parentgrid.advance_cursor)
 
 
-class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
+class HexCellEditor(Grid.GridCellEditor,HexDigitMixin):
     """
     Cell editor for the grid, based on GridCustEditor.py from the
     wxPython demo.
     """
 
     def __init__(self,grid):
-        Grid.PyGridCellEditor.__init__(self)
+        Grid.GridCellEditor.__init__(self)
         self.parentgrid=grid
 
     def Create(self, parent, id, evtHandler):
@@ -509,7 +509,7 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         to set colours or fonts for the control.
         """
         log.debug("show=%s, attr=%s" % (show, attr))
-        Grid.PyGridCellEditor.Show(self, show, attr)
+        Grid.GridCellEditor.Show(self, show, attr)
 
     def PaintBackground(self, dc, rect, attr):
         """
@@ -601,7 +601,7 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
     def Destroy(self):
         """final cleanup"""
         log.debug("")
-        Grid.PyGridCellEditor.Destroy(self)
+        Grid.GridCellEditor.Destroy(self)
 
     def Clone(self):
         """

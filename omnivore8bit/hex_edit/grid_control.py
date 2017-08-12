@@ -104,10 +104,10 @@ class ImageCache(object):
         dc.DrawText(text, rect.x+1, rect.y+1)
 
 
-class CachingHexRenderer(Grid.PyGridCellRenderer):
+class CachingHexRenderer(Grid.GridCellRenderer):
     def __init__(self, table, editor, cache):
         """Render data in the specified color and font and fontsize"""
-        Grid.PyGridCellRenderer.__init__(self)
+        Grid.GridCellRenderer.__init__(self)
         self.table = table
         self.cache = cache
         cache.set_colors(editor)
