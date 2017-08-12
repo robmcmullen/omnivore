@@ -573,7 +573,7 @@ def DrawTreeItemButton(win, dc, rect, flags):
     # white background
     dc.SetPen(wx.GREY_PEN)
     dc.SetBrush(wx.WHITE_BRUSH)
-    dc.DrawRectangleRect(rect)
+    dc.DrawRectangle(rect)
 
     # black lines
     xMiddle = rect.x + rect.width/2
@@ -6105,7 +6105,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         dc.SetPen(oldpen)
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        dc.DrawRectangleRect(rect)
+        dc.DrawRectangle(rect)
         dc.SetBrush(oldbrush)
 
     def DrawHorizontalGradient(self, dc, rect, hasfocus):
@@ -6152,7 +6152,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         dc.SetPen(oldpen)
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        dc.DrawRectangleRect(rect)
+        dc.DrawRectangle(rect)
         dc.SetBrush(oldbrush)
 
     def DrawVistaRectangle(self, dc, rect, hasfocus):
@@ -6335,7 +6335,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                         if self._hasFocus: flags = flags | wx.CONTROL_FOCUSED
                         wx.RendererNative.Get().DrawItemSelectionRect(self, dc, itemrect, flags)
                     else:
-                        dc.DrawRectangleRect(itemrect)
+                        dc.DrawRectangle(itemrect)
             else:
                if drawItemBackground:
                    minusicon = wcheck + image_w - 2
@@ -6343,7 +6343,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                                       item.GetY()+offset,
                                       item.GetWidth()-minusicon,
                                       total_h-offset)
-                   dc.DrawRectangleRect(itemrect)
+                   dc.DrawRectangle(itemrect)
 
         else:
 
@@ -6381,7 +6381,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                         if self._hasFocus: flags = flags | wx.CONTROL_FOCUSED
                         wx.RendererNative.Get().DrawItemSelectionRect(self, dc, itemrect, flags)
                     else:
-                        dc.DrawRectangleRect(itemrect)
+                        dc.DrawRectangle(itemrect)
 
             # On GTK+ 2, drawing a 'normal' background is wrong for themes that
             # don't allow backgrounds to be customized. Not drawing the background,
@@ -6406,7 +6406,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                     else:                          # Vertical
                         self.DrawVerticalGradient(dc, itemrect, self._hasFocus)
                 else:
-                    dc.DrawRectangleRect(itemrect)
+                    dc.DrawRectangle(itemrect)
 
         if image != _NO_IMAGE:
 
@@ -6822,7 +6822,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             if not dc:
                 dc = wx.ClientDC(self)
                 rect = self.GetUpdateRegion().GetBox()
-                dc.SetClippingRect(rect)
+                dc.SetClippingRegion(rect)
 
             self.TileBackground(dc)
 

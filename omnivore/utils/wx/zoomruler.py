@@ -171,7 +171,7 @@ class LabeledRuler(RulerCtrl):
                 left, right = right, left
             r.SetLeft(self.value_to_position(left, True) - x)
             r.SetRight(self.value_to_position(right, True) - x)
-            dc.DrawRectangleRect(r)
+            dc.DrawRectangle(r)
 
         dc.SetBrush(wx.Brush(self._background))
         dc.SetPen(self._tickpen)

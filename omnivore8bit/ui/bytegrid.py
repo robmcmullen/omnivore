@@ -45,7 +45,7 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
         # and colors.  We have to set the clipping region on
         # the grid's DC, otherwise the text will spill over
         # to the next cell
-        dc.SetClippingRect(rect)
+        dc.SetClippingRegion(rect)
 
         # clear the background
         dc.SetBackgroundMode(wx.SOLID)
@@ -54,7 +54,7 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
         if not self.table.is_index_valid(index):
             dc.SetBrush(wx.Brush(wx.WHITE, wx.SOLID))
             dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
-            dc.DrawRectangleRect(rect)
+            dc.DrawRectangle(rect)
         else:
             try:
                 text, style = self.table.get_value_style(row, col)
@@ -82,7 +82,7 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
                 dc.SetPen(self.normal_pen)
                 dc.SetBrush(self.normal_brush)
                 dc.SetTextBackground(self.normal_background)
-            dc.DrawRectangleRect(rect)
+            dc.DrawRectangle(rect)
 
             dc.SetBackgroundMode(wx.SOLID)
 

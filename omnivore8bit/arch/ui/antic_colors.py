@@ -67,7 +67,7 @@ class ColorListBox(wx.VListBox):
         dc.SetBrush(wx.Brush(color))
         rect.OffsetXY(self.max_w, 0)
         rect.Deflate(2, 2)
-        dc.DrawRectangleRect(rect)
+        dc.DrawRectangle(rect)
 
     # This method must be overridden.  It should return the height
     # required to draw the n'th item.

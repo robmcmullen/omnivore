@@ -57,7 +57,7 @@ class ImageCache(object):
     def draw_blank(self, dc, rect):
         dc.SetBrush(wx.Brush(wx.WHITE, wx.SOLID))
         dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
-        dc.DrawRectangleRect(rect)
+        dc.DrawRectangle(rect)
 
     def draw_text(self, dc, rect, text, style):
         k = (text, style, rect.width, rect.height)
@@ -95,7 +95,7 @@ class ImageCache(object):
             dc.SetBrush(self.normal_brush)
             dc.SetTextBackground(self.normal_background)
         dc.SetBackgroundMode(wx.SOLID)
-        dc.DrawRectangleRect(rect)
+        dc.DrawRectangle(rect)
         if style & diff_bit_mask:
             dc.SetTextForeground(self.diff_color)
         else:
