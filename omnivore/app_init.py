@@ -63,7 +63,7 @@ class EnthoughtWxApp(wx.App):
                     return 0
                 self.throw_out_next_wheel_rotation = True
         if hasattr(evt, "GetKeyCode"):
-            print "FILTEREVENT!!! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers()))
+            print "FILTEREVENT!!! char=%s, key=%s, modifiers=%s" % (evt.GetUnicodeKey(), evt.GetKeyCode(), bin(evt.GetModifiers()))
         return -1
 
 

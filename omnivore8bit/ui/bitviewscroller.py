@@ -545,9 +545,9 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         e.index_clicked(index, 0, self, False)
 
     def on_char_hook(self, evt):
-        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
+        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUnicodeKey(), evt.GetKeyCode(), bin(evt.GetModifiers())))
         mods = evt.GetModifiers()
-        char = evt.GetUniChar()
+        char = evt.GetUnicodeKey()
         if char == 0:
             char = evt.GetKeyCode()
         delta_index = self.process_movement_keys(char)
@@ -891,11 +891,11 @@ class FontMapScroller(BitviewScroller):
         evt.Skip()
 
     def on_char(self, evt):
-        log.debug("on_char! char=%s, key=%s, shift=%s, ctrl=%s, cmd=%s" % (evt.GetUniChar(), evt.GetRawKeyCode(), evt.ShiftDown(), evt.ControlDown(), evt.CmdDown()))
+        log.debug("on_char! char=%s, key=%s, shift=%s, ctrl=%s, cmd=%s" % (evt.GetUnicodeKey(), evt.GetRawKeyCode(), evt.ShiftDown(), evt.ControlDown(), evt.CmdDown()))
         if not self.editing:
             evt.Skip()
             return
-        char = evt.GetUniChar()
+        char = evt.GetUnicodeKey()
         if char > 0:
             self.editor.select_none_if_selection()
             char = self.editor.machine.font_mapping.convert_byte_mapping(char)
@@ -916,9 +916,9 @@ class FontMapScroller(BitviewScroller):
         e.process_command(cmd)
 
     def on_char_hook(self, evt):
-        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
+        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUnicodeKey(), evt.GetKeyCode(), bin(evt.GetModifiers())))
         mods = evt.GetModifiers()
-        char = evt.GetUniChar()
+        char = evt.GetUnicodeKey()
         if char == 0:
             char = evt.GetKeyCode()
         byte = None
@@ -1037,9 +1037,9 @@ class CharacterSetViewer(FontMapScroller):
         wx.CallAfter(self.editor.set_current_draw_pattern, byte)
 
     def on_char_hook(self, evt):
-        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
+        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUnicodeKey(), evt.GetKeyCode(), bin(evt.GetModifiers())))
         mods = evt.GetModifiers()
-        char = evt.GetUniChar()
+        char = evt.GetUnicodeKey()
         if char == 0:
             char = evt.GetKeyCode()
         delta_index = self.process_movement_keys(char)
