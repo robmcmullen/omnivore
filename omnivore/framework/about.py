@@ -1,5 +1,6 @@
 # Major package imports.
 import wx
+import wx.adv
 
 import logging
 log = logging.getLogger(__name__)
@@ -15,7 +16,7 @@ class AboutDialog(object):
     ###########################################################################
 
     def __init__(self, parent, about):
-        info = wx.AboutDialogInfo()
+        info = wx.adv.AboutDialogInfo()
 
         # Load the image to be displayed in the about box.
         #image = self.about_image.create_image()
@@ -31,4 +32,4 @@ class AboutDialog(object):
         info.SetDescription(about.about_description)
         info.SetWebSite(about.about_website)
 
-        dialog = wx.AboutBox(info)
+        dialog = wx.adv.AboutBox(info)
