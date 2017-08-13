@@ -37,7 +37,7 @@ class BaseRenderer(object):
     def reshape(self, bitimage, bytes_per_row, nr):
         # source array 'bitimage' in the shape of (size, w, 3)
         h, w, colors = bitimage.shape
-        print("bitimage: %d,%d,%d; ppb=%d bpr=%d" % (h, w, colors, self.pixels_per_byte, bytes_per_row))
+        log.debug("bitimage: %d,%d,%d; ppb=%d bpr=%d" % (h, w, colors, self.pixels_per_byte, bytes_per_row))
         # create a new image with pixels in the correct aspect ratio
         output = intwscale(bitimage, self.pixels_per_byte / w)
         return output.reshape((nr, bytes_per_row * self.pixels_per_byte, 3))
