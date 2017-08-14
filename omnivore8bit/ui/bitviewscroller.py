@@ -256,7 +256,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
                 self.draw_overlay(array, width, height, zw, zh)
                 image = wx.Image(array.shape[1], array.shape[0])
                 image.SetData(array.tostring())
-                bmp = wx.BitmapFromImage(image)
+                bmp = wx.Bitmap(image)
                 dc.DrawBitmap(bmp, 0, 0)
 
     def draw_overlay(self, array, w, h, zw, zh):
