@@ -325,8 +325,8 @@ if __name__ == '__main__':
     import sys
     sys.path[0:0] = [".."]
     print sys.path
-    import fonts
-    import colors
+    import omnivore8bit.arch.fonts as fonts
+    import omnivore8bit.arch.colors as colors
 
     class Wrapper(object):
         def __init__(self, **kwargs):
