@@ -544,6 +544,7 @@ class ZoomRulerBase(object):
                     op = "finish selection"
                 elif self.select_start >= 0:
                     op = "select item"
+                self.release_mouse()
             elif event.Dragging():
                 if event.ShiftDown() and self.ruler.has_selection:
                     op = "extend selection"
@@ -609,6 +610,8 @@ class ZoomRulerBase(object):
             self.drag_start = wx.GetMousePosition()[0]  # absolute mouse pos (see below)
             self.view_at_drag_start, _ = self.panel.GetViewStart()
             next_mode = "dragging"
+            if not self.HasCapture():
+                self.CaptureMouse()
         elif op == "dragging":
             pos =  wx.GetMousePosition()[0]  # absolute mouse pos
             delta = pos - self.drag_start
@@ -638,6 +641,9 @@ class ZoomRulerBase(object):
             next_mode = "select"
         self.set_mode(next_mode)
         event.Skip()
+
+    def release_mouse(self):
+        pass
 
     def selection_finished_callback(self):
         print "DONE!"
