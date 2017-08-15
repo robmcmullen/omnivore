@@ -135,7 +135,7 @@ class MainFontMapScroller(FontMapScroller):
         evt.Skip()
 
     def on_mouse_leave(self, evt):
-        self.SetCursor(wx.StockCursor(wx.CURSOR_ARROW))
+        self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
         self.mouse_mode.process_mouse_leave(evt)
         evt.Skip()
 

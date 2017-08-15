@@ -239,7 +239,7 @@ class wxLogHandler(logging.Handler):
         # OS X resets the busy cursor when the cursor moves out of the dialog,
         # so at every tick call this method to reset it to the wait cursor.
         # Other platforms don't have this problem.
-        wx.SetCursor(wx.StockCursor(wx.CURSOR_WAIT))
+        wx.SetCursor(wx.Cursor(wx.CURSOR_WAIT))
 
     def post(self, evt):
         if not self.use_gui:

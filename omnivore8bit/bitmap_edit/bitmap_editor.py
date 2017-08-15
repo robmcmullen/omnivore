@@ -134,7 +134,7 @@ class MainBitmapScroller(BitmapScroller):
         self.set_cursor()
 
     def on_mouse_leave(self, evt):
-        self.SetCursor(wx.StockCursor(wx.CURSOR_ARROW))
+        self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
         self.mouse_mode.process_mouse_leave(evt)
 
     def on_char(self, evt):

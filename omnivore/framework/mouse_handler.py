@@ -44,7 +44,7 @@ class MouseHandler(object):
         pass
 
     def get_cursor(self):
-        return wx.StockCursor(wx.CURSOR_ARROW)
+        return wx.Cursor(wx.CURSOR_ARROW)
 
     def process_left_down(self, evt):
         evt.Skip()

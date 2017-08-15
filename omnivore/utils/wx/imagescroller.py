@@ -1030,10 +1030,10 @@ class ImageScroller(wx.ScrolledWindow):
         """Set cursor for the window.
 
         A mild enhancement of the wx standard SetCursor that takes an
-        integer id as well as a wx.StockCursor instance.
+        integer id as well as a wx.Cursor instance.
         """
         if isinstance(cursor, int):
-            cursor = wx.StockCursor(cursor)
+            cursor = wx.Cursor(cursor)
         self.SetCursor(cursor)
 
     def blankCursor(self, ev, coords=None):
@@ -1050,7 +1050,7 @@ class ImageScroller(wx.ScrolledWindow):
         if self.isInBounds(*coords) and self.isEventInClientArea(ev):
             if not self.save_cursor:
                 self.save_cursor = True
-                self.setCursor(wx.StockCursor(wx.CURSOR_BLANK))
+                self.setCursor(wx.Cursor(wx.CURSOR_BLANK))
         else:
             if self.save_cursor:
                 self.setCursor(self.use_selector.cursor)
