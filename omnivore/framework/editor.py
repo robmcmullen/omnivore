@@ -351,7 +351,7 @@ class FrameworkEditor(Editor):
 
         if fmt is not None:
             d = self.get_data_object_by_format(data_obj, fmt)
-            size = d.GetDataSize()
+            size = d.GetTextLength()
             self.task.status_bar.message = "%s %d text characters" % ("Copied" if copy else "Pasted", size)
 
     def paste(self, cmd_cls=None):

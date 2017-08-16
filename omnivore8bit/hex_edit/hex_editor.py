@@ -228,7 +228,7 @@ class HexEditor(FrameworkEditor):
         elif wx.DF_UNICODETEXT in data_obj.GetAllFormats():  # for windows
             value = data_obj.GetText().encode('utf-8')
         else:
-            value = data_obj.GetData()
+            value = data_obj.GetData().tobytes()
             fmt = data_obj.GetPreferredFormat()
             if fmt.GetId() == "numpy,columns":
                 r, c, value = value.split(",", 2)
@@ -297,17 +297,17 @@ class HexEditor(FrameworkEditor):
             fmt = data_obj.GetPreferredFormat()
         if fmt.GetId() == "numpy,columns":
             d = self.get_data_object_by_format(data_obj, fmt)
-            value = d.GetDataHere()
+            value = d.GetData().tobytes()
             r, c, value = value.split(",", 2)
             size = int(r) * int(c)
         elif fmt.GetId() == "numpy":
             d = self.get_data_object_by_format(data_obj, fmt)
-            value = d.GetDataHere()
+            value = d.GetData().tobytes()
             size, _ = value.split(",", 1)
             size = int(size)
         elif fmt.GetId() == "numpy,multiple":
             d = self.get_data_object_by_format(data_obj, fmt)
-            value = d.GetDataHere()
+            value = d.GetData().tobytes()
             size, _, _ = value.split(",", 2)
             size = int(size)
         else:
