@@ -480,6 +480,7 @@ class HexCellEditor(Grid.GridCellEditor,HexDigitMixin):
     def __init__(self,grid):
         Grid.GridCellEditor.__init__(self)
         self.parentgrid=grid
+        self.accepted_change = None
 
     def Create(self, parent, id, evtHandler):
         """
@@ -542,15 +543,25 @@ class HexCellEditor(Grid.GridCellEditor,HexDigitMixin):
 
         val = self._tc.GetValue()
         if val != self.startValue:
-            changed = grid.change_value(row, col, val) # update the table
-            # On error, don't advance cursor
-            grid.change_is_valid = changed
+            self.accepted_change = val
+            changed = True
         else:
-            changed = False
+            changed = None
 
         self.startValue = ''
         self._tc.SetValue('')
         return changed
+
+    def ApplyEdit(self, row, col, grid):
+        """Actually apply the change to the grid from the saved value from
+        EndEdit.
+
+        """
+        if self.accepted_change is not None:
+            changed = grid.change_value(row, col, self.accepted_change)
+            # On error, don't advance cursor
+            grid.change_is_valid = changed
+            self.accepted_change = None
 
     def Reset(self):
         """
