@@ -36,9 +36,9 @@ class FlatBitmapToggleButton(buttons.GenBitmapToggleButton):
     def InitColours(self):
         buttons.GenBitmapToggleButton.InitColours(self)
         faceClr = self.GetBackgroundColour()
-        r, g, b = faceClr.Get()
+        r, g, b, a = faceClr.Get()
         fr, fg, fb = max(0,r-32), max(0,g-32), max(0,b-32)
-        self.faceDnClr = wx.Colour(fr, fg, fb)
+        self.faceDnClr = wx.Colour(fr, fg, fb, a)
 
     def Notify(self):
         evt = GenToggleButtonEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, self.GetId(), not self.up, self)
