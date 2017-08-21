@@ -65,7 +65,7 @@ class ColorListBox(wx.VListBox):
         dc.DrawLabel(label, rect, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
         color = self.GetParent().get_color(n)
         dc.SetBrush(wx.Brush(color))
-        rect.OffsetXY(self.max_w, 0)
+        rect.Offset(self.max_w, 0)
         rect.Deflate(2, 2)
         dc.DrawRectangle(rect)
 
@@ -96,7 +96,8 @@ class AnticPalette(canvas.Canvas):
         #wx.InitAllImageHandlers()
 
         self.palette = self.init_palette()
-        canvas.Canvas.__init__(self, parent, -1, size=self.palette.GetSize(), style=wx.SIMPLE_BORDER)
+        size = self.palette.GetSize()
+        canvas.Canvas.__init__(self, parent, -1, style=wx.SIMPLE_BORDER, forceClientSize=size)
 
     def init_palette(self):
         w = self.HORIZONTAL_STEP * 16 + 2 * self.BORDER
