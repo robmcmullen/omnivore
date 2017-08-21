@@ -164,6 +164,7 @@ class TileListControl(wx.Panel):
 class TileButton(buttons.GenBitmapToggleButton):
     labelDelta = 0
     label_border = 4
+    bgClr = wx.Colour(255, 255, 255)
     faceDnClr = wx.Colour(100, 200, 230)
 
     def DoGetBestSize(self):
@@ -182,8 +183,22 @@ class TileButton(buttons.GenBitmapToggleButton):
     def DrawBezel(self, dc, x1, y1, x2, y2):
         pass
 
+    def GetBackgroundBrush(self, dc):
+        """
+        Returns the current :class:`wx.Brush` to be used to draw the button background.
+
+        :param wx.DC `dc`: the device context used to draw the button background.
+        """
+        if self.up:
+            col = self.bgColor
+        else:
+            col = self.faceDnClr
+        brush = wx.Brush(col)
+        return brush
+
     @classmethod
     def set_colors(cls, editor):
+        cls.bgColor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND)
         cls.faceDnClr = wx.Colour(*editor.machine.highlight_color)
 
 
@@ -280,8 +295,8 @@ class TileWrapControl(wx.Panel):
         e = self.editor
         if e is not None:
             self.current_tile = btn
-            e.set_current_draw_pattern(btn.tile_data, self)
             self.clear_toggle_except(btn)
+            wx.CallAfter(e.set_current_draw_pattern, btn.tile_data, self)
 
     def show_pattern(self, pattern):
         log.debug("tilelist showing pattern %s" % str(pattern))
