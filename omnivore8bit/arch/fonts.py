@@ -96,5 +96,5 @@ class AnticFont(object):
         w *= self.scale_w * zoom
         h *= self.scale_h * zoom
         image.Rescale(w, h)
-        bmp = wx.BitmapFromImage(image)
+        bmp = wx.Bitmap(image)
         return bmp

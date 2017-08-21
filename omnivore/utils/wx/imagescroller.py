@@ -858,7 +858,7 @@ class ImageScroller(wx.ScrolledWindow):
                 crop = [0, ysource, self.img.GetWidth(), hsource]
                 #dprint(crop)
                 subimg = self.orig_img.GetSubImage(crop)
-                bmp = wx.BitmapFromImage(subimg.Scale(w, hdest))
+                bmp = wx.Bitmap(subimg.Scale(w, hdest))
                 dc.DrawBitmap(bmp, 0, ydest, True)
                 ydest += hdest
             self.width = self.scaled_bmp.GetWidth()
@@ -941,7 +941,7 @@ class ImageScroller(wx.ScrolledWindow):
         img = self._getCroppedImage()
         w = int(img.GetWidth() * self.zoom)
         h = int(img.GetHeight() * self.zoom)
-        clip = wx.BitmapFromImage(img.Scale(w, h))
+        clip = wx.Bitmap(img.Scale(w, h))
         bmpdo = wx.BitmapDataObject(clip)
         if wx.TheClipboard.Open():
             wx.TheClipboard.SetData(bmpdo)
