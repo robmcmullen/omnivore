@@ -234,7 +234,7 @@ class TileWrapControl(wx.Panel):
 
     def parse_tile_map(self, panel, tile_map):
         sizer = panel.GetSizer()
-        sizer.DeleteWindows()
+        sizer.Clear(True)
         self.tile_map = tile_map
         self.categories = []
         self.items = []
