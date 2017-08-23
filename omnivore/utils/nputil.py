@@ -49,7 +49,7 @@ def intscale(arr, hscale, wscale=None):
             # copy completed rows to the next three rows
             output[1::4,:,:] = output[::4,:,:]
             output[2::4,:,:] = output[::4,:,:]
-            output[2::4,:,:] = output[::4,:,:]
+            output[3::4,:,:] = output[::4,:,:]
             return output
     output = np.empty((h * hscale, w * wscale, depth), dtype=np.uint8)
     # duplicate source pixels horizontally first onto the first line
