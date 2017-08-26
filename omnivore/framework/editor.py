@@ -419,8 +419,7 @@ class FrameworkEditor(Editor):
 
         raw_data = self.get_numpy_image()
         h, w, depth = raw_data.shape
-        bitmap = wx.BitmapFromBuffer(width=w, height=h, dataBuffer=raw_data)
-        image = wx.ImageBitmap(bitmap)
+        image = wx.Image(w, h, raw_data)
         image.SaveFile(path, t)
 
     def get_numpy_image(self):
