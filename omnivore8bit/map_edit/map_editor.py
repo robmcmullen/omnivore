@@ -400,8 +400,7 @@ class MapEditor(HexEditor):
 
     @on_trait_change('machine.font_change_event')
     def update_fonts(self):
-        self.font_map.set_font()
-        self.font_map.Refresh()
+        self.font_map.recalc_view()
         self.tile_map.recalc_view()
         self.character_set.set_font()
         self.character_set.Refresh()
