@@ -887,16 +887,16 @@ class Apple2TextMode(Mode2):
         font = np.zeros((256, 8, 7, 3), dtype=np.uint8)
         if bits.shape[0] == 256:
             # all 256 chars are defined, so just store them
-            font[:,:,:,0] = r[:,:,0:7]
-            font[:,:,:,1] = g[:,:,0:7]
-            font[:,:,:,2] = b[:,:,0:7]
+            font[:,:,:,0] = r[:,:,8:0:-1]
+            font[:,:,:,1] = g[:,:,8:0:-1]
+            font[:,:,:,2] = b[:,:,8:0:-1]
         else:
             # only 128 chars are present, so create inversed/blink copies
 
             # Normal characters get stored in 2nd 128 char positions
-            font[128:256,:,:,0] = r[:,:,0:7]
-            font[128:256,:,:,1] = g[:,:,0:7]
-            font[128:256,:,:,2] = b[:,:,0:7]
+            font[128:256,:,:,0] = r[:,:,8:0:-1]
+            font[128:256,:,:,1] = g[:,:,8:0:-1]
+            font[128:256,:,:,2] = b[:,:,8:0:-1]
 
             # First 64 are inversed
             r[bits==0] = fg[0]
@@ -905,9 +905,9 @@ class Apple2TextMode(Mode2):
             g[bits==1] = bg[1]
             b[bits==0] = fg[2]
             b[bits==1] = bg[2]
-            font[0:64,:,:,0] = r[0:64,:,0:7]
-            font[0:64,:,:,1] = g[0:64,:,0:7]
-            font[0:64,:,:,2] = b[0:64,:,0:7]
+            font[0:64,:,:,0] = r[0:64,:,8:0:-1]
+            font[0:64,:,:,1] = g[0:64,:,8:0:-1]
+            font[0:64,:,:,2] = b[0:64,:,8:0:-1]
 
             # Next 64 are blinking!
             if reverse:
@@ -918,9 +918,9 @@ class Apple2TextMode(Mode2):
             g[bits==1] = bg[1]
             b[bits==0] = fg[2]
             b[bits==1] = bg[2]
-            font[64:128,:,:,0] = r[0:64,:,0:7]
-            font[64:128,:,:,1] = g[0:64,:,0:7]
-            font[64:128,:,:,2] = b[0:64,:,0:7]
+            font[64:128,:,:,0] = r[0:64,:,8:0:-1]
+            font[64:128,:,:,1] = g[0:64,:,8:0:-1]
+            font[64:128,:,:,2] = b[0:64,:,8:0:-1]
         return font
 
 
