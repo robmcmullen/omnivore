@@ -14,7 +14,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 from omnivore import get_image_path
 from omnivore8bit.hex_edit.hex_editor import HexEditor
 from omnivore8bit.arch.machine import predefined
-from omnivore8bit.ui.bitviewscroller import FontMapScroller
+from omnivore8bit.ui.bitviewscroller import CharacterSetViewer
 from omnivore.utils.command import Overlay
 from omnivore8bit.utils.searchutil import HexSearcher, CharSearcher
 from omnivore8bit.utils.drawutil import get_bounds
@@ -27,132 +27,6 @@ import omnivore8bit.hex_edit.actions as ha
 from commands import *
 
 
-class MainFontMapScroller(FontMapScroller):
-    """Subclass adapts the mouse interface to the MouseHandler class
-    
-    """
-
-    def __init__(self, *args, **kwargs):
-        FontMapScroller.__init__(self, *args, **kwargs)
-
-        p = get_image_path("icons/hand.ico")
-        self.hand_cursor = wx.Cursor(p, wx.BITMAP_TYPE_ICO, 16, 16)
-        p = get_image_path("icons/hand_closed.ico")
-        self.hand_closed_cursor = wx.Cursor(p, wx.BITMAP_TYPE_ICO, 16, 16)
-        self.forced_cursor = None
-        self.set_mouse_mode(MouseHandler)  # dummy initial mouse handler
-        self.default_pan_mode = SelectMode(self)
-        self.batch = None
-
-    def set_mouse_mode(self, handler):
-        self.release_mouse()
-        self.mouse_mode = handler(self)
-
-    def set_cursor(self, mode=None):
-        if (self.forced_cursor is not None):
-            self.SetCursor(self.forced_cursor)
-            #
-            return
-
-        if mode is None:
-            mode = self.mouse_mode
-        c = mode.get_cursor()
-        self.SetCursor(c)
-
-    def get_effective_tool_mode(self, event):
-        middle_down = False
-        alt_down = False
-        if (event is not None):
-            try:
-                alt_down = event.AltDown()
-                # print self.is_alt_key_down
-            except:
-                pass
-            try:
-                middle_down = event.MiddleIsDown()
-            except:
-                pass
-        if alt_down or middle_down:
-            mode = self.default_pan_mode
-        else:
-            mode = self.mouse_mode
-        return mode
-
-    def release_mouse(self):
-        self.mouse_is_down = False
-        self.selection_box_is_being_defined = False
-        while self.HasCapture():
-            self.ReleaseMouse()
-
-    def on_left_down(self, evt):
-        # self.SetFocus() # why would it not be focused?
-        mode = self.get_effective_tool_mode(evt)
-        self.forced_cursor = None
-        self.selection_box_is_being_defined = False
-        self.mouse_down_position = evt.GetPosition()
-        self.mouse_move_position = self.mouse_down_position
-
-        mode.process_left_down(evt)
-        self.set_cursor(mode)
-        evt.Skip()
-
-    def on_motion(self, evt):
-        mode = self.get_effective_tool_mode(evt)
-        if evt.LeftIsDown():
-            mode.process_mouse_motion_down(evt)
-        else:
-            mode.process_mouse_motion_up(evt)
-        self.set_cursor(mode)
-        evt.Skip()
-
-    def on_left_up(self, evt):
-        mode = self.get_effective_tool_mode(evt)
-        self.forced_cursor = None
-        mode.process_left_up(evt)
-        self.set_cursor(mode)
-        evt.Skip()
-
-    def on_left_dclick(self, evt):
-        # self.SetFocus() # why would it not be focused?
-        mode = self.get_effective_tool_mode(evt)
-        mode.process_left_dclick(evt)
-        self.set_cursor(mode)
-        evt.Skip()
-
-    def on_popup(self, evt):
-        mode = self.get_effective_tool_mode(evt)
-        self.forced_cursor = None
-        mode.process_popup(evt)
-        self.set_cursor(mode)
-
-    def on_mouse_wheel(self, evt):
-        mode = self.get_effective_tool_mode(evt)
-        mode.process_mouse_wheel(evt)
-        self.set_cursor(mode)
-
-    def on_mouse_enter(self, evt):
-        self.set_cursor()
-        evt.Skip()
-
-    def on_mouse_leave(self, evt):
-        self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
-        self.mouse_mode.process_mouse_leave(evt)
-        evt.Skip()
-
-    def on_key_char(self, evt):
-        mode = self.get_effective_tool_mode(evt)
-        self.set_cursor(mode)
-
-        mode.process_key_char(evt)
-        evt.Skip()
-
-    def on_focus(self, evt):
-        mode = self.get_effective_tool_mode(evt)
-        mode.process_focus(evt)
-
-    def on_focus_lost(self, evt):
-        mode = self.get_effective_tool_mode(evt)
-        mode.process_focus_lost(evt)
 
 
 class SelectMode(MouseHandler):
@@ -337,8 +211,8 @@ class FilledSquareMode(OverlayMode):
 
 
 class FontEditor(HexEditor):
-    """ The toolkit specific implementation of a HexEditor.  See the
-    IHexEditor interface for the API documentation.
+    """ The toolkit specific implementation of a MapEditor.  See the
+    IMapEditor interface for the API documentation.
     """
     ##### class attributes
 
@@ -377,7 +251,7 @@ class FontEditor(HexEditor):
         """ Set up any pre-calculated segments based on the type or content of
         the just-loaded document.
         """
-        HexEditor.from_metadata_dict(self, e)
+        MapEditor.from_metadata_dict(self, e)
         if 'tile map' in e:
             self.antic_tile_map = e['tile map']
         # Force ANTIC font mapping if not present
@@ -400,32 +274,29 @@ class FontEditor(HexEditor):
 
     @on_trait_change('machine.font_change_event')
     def update_fonts(self):
-        self.font_map.recalc_view()
-        self.tile_map.recalc_view()
-        self.character_set.set_font()
-        self.character_set.Refresh()
+        self.glyph_list.recalc_view()
+        self.pixel_editor.recalc_view()
 
     def reconfigure_panes(self):
         self.control.recalc_view()
-        self.memory_map.recalc_view()
-        self.tile_map.recalc_view()
-        self.character_set.recalc_view()
+        self.pixel_editor.recalc_view()
 
     def refresh_panes(self):
         self.control.refresh_view()
-        self.memory_map.refresh_view()
 
     def rebuild_document_properties(self):
         self.find_segment("Playfield map")
         self.update_mouse_mode(SelectMode)
 
     def process_preference_change(self, prefs):
-        # override HexEditor because those preferences don't apply here
+        # override MapEditor because those preferences don't apply here
         pass
 
     def set_map_width(self, width=None):
-        HexEditor.set_map_width(self, width)
-        self.memory_map.recalc_view()
+        if width is None:
+            width = self.map_width
+        self.map_width = width
+        self.control.recalc_view()
 
     def view_segment_set_width(self, segment):
         self.map_width = segment.map_width
@@ -442,7 +313,7 @@ class FontEditor(HexEditor):
             self.draw_pattern = (pattern,)
         else:
             self.draw_pattern = tuple(pattern)
-        self.tile_map.show_pattern(self.draw_pattern)
+        self.pixel_editor.show_pattern(self.draw_pattern)
         self.character_set.show_pattern(self.draw_pattern)
 
     def mark_index_range_changed(self, index_range):
@@ -452,15 +323,7 @@ class FontEditor(HexEditor):
         pass
 
     def get_selected_status_message(self):
-        anchor_start, anchor_end, (r1, c1), (r2, c2) = self.control.get_highlight_indexes()
-        extra = ""
-        if r1 >= 0:
-            w = c2 - c1
-            h = r2 - r1
-            if w > 0 or h > 0:
-                extra = "; current $%x x $%x" % (w, h)
-        r = "rect" if len(self.selected_ranges) == 1 else "rects"
-        return "[%d %s selected%s]" % (len(self.selected_ranges), r, extra)
+        return ""
 
     def process_paste_data_object(self, data_obj, cmd_cls=None):
         bytes, extra = self.get_numpy_from_data_object(data_obj)
@@ -502,7 +365,7 @@ class FontEditor(HexEditor):
         return []
 
     def get_numpy_image(self):
-        return self.font_map.get_full_image()
+        return self.glyph_list.get_full_image()
 
     def common_popup_actions(self):
         return [fa.CutAction, fa.CopyAction, fa.PasteAction, None, fa.SelectAllAction, fa.SelectNoneAction, None, ha.GetSegmentFromSelectionAction, ha.RevertToBaselineAction]
@@ -519,16 +382,15 @@ class FontEditor(HexEditor):
         """ Creates the toolkit-specific control for the widget. """
 
         # Base-class constructor.
-        self.control = self.font_map = MainFontMapScroller(parent, self.task, self.map_width, ChangeByteCommand)
+        self.control = self.glyph_list = CharacterSetViewer(parent, self.task)
 
         ##########################################
         # Events.
         ##########################################
 
         # Get related controls
-        self.memory_map = self.window.get_dock_pane('font_edit.memory_map').control
-        self.tile_map = self.window.get_dock_pane('font_edit.tile_map').control
-        self.character_set = self.window.get_dock_pane('font_edit.character_set').control
+        self.pixel_editor = self.window.get_dock_pane('font_edit.pixel_editor').control
+        self.color_chooser = self.window.get_dock_pane('font_edit.color_chooser').control
 
         # segment list and undo history exclusively in sidebar
         self.segment_list = None
@@ -547,6 +409,4 @@ class FontEditor(HexEditor):
         skip_control = None if refresh_from else from_control
         if skip_control != self.control:
             self.control.select_index(from_control, index)
-        if skip_control != self.memory_map:
-            self.memory_map.select_index(from_control, index)
         self.can_copy = (self.anchor_start_index != self.anchor_end_index)

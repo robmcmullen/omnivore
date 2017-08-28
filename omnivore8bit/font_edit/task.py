@@ -15,15 +15,14 @@ from omnivore.framework.actions import *
 from font_editor import FontEditor
 from preferences import FontEditPreferences
 from commands import *
-from omnivore8bit.map_edit.task import MapEditTask
-from omnivore8bit.map_edit.actions import *
+from omnivore8bit.hex_edit.task import HexEditTask
 import omnivore8bit.arch.fonts as fonts
 import omnivore8bit.arch.colors as colors
 import pane_layout
 from omnivore.framework.toolbar import get_toolbar_group
 
 
-class FontEditTask(MapEditTask):
+class FontEditTask(HexEditTask):
     """Font edit mode provides font (or tile) editor where the font bits
     are manipulated directly using the graphical interface, so no more
     converting to hex digits to change a font!
@@ -148,11 +147,17 @@ class FontEditTask(MapEditTask):
     ###########################################################################
     # 'Task' interface.
     ###########################################################################
+     
+    def _default_layout_default(self):
+        return pane_layout.pane_layout()
+
+    def create_dock_panes(self):
+        return pane_layout.pane_create()
 
     def _tool_bars_default(self):
         toolbars = []
         toolbars.append(get_toolbar_group("%s:Modes" % self.id, FontEditor.valid_mouse_modes))
-        toolbars.extend(MapEditTask._tool_bars_default(self))
+        toolbars.extend(HexEditTask._tool_bars_default(self))
         return toolbars
 
     ###########################################################################
@@ -164,3 +169,25 @@ class FontEditTask(MapEditTask):
         """
         editor = FontEditor()
         return editor
+
+    @on_trait_change('window.application.preferences_changed_event')
+    def refresh_from_new_preferences(self):
+        e = self.active_editor
+        if e is not None:
+            prefs = self.preferences
+
+    ###
+    @classmethod
+    def can_edit(cls, document):
+        return document.metadata.mime == "application/octet-stream" or document.segments
+
+    @classmethod
+    def get_match_score(cls, document):
+        """Return a number based on how good of a match this task is to the
+        incoming Document.
+        
+        0 = generic match
+        ...
+        10 = absolute match
+        """
+        return 0

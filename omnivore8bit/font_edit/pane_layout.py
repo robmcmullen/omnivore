@@ -18,7 +18,7 @@ import panes
 # is only updated when quitting the application; if the application is killed
 # (or crashes!) the saved state is not updated.
 
-pane_layout_version = 'v5'
+pane_layout_version = 'v1'
 
 
 def pane_layout():
@@ -30,9 +30,8 @@ def pane_layout():
             PaneItem('font_edit.sidebar'),
         ),
         right=VSplitter(
-            PaneItem('font_edit.tile_map'),
-            PaneItem('font_edit.character_set'),
-            PaneItem('font_edit.memory_map'),
+            PaneItem('font_edit.pixel_editor'),
+            PaneItem('font_edit.color_chooser'),
         ),
         )
 
@@ -43,8 +42,7 @@ def pane_create():
     MaproomTask.activated)
     """
     return [
-        panes.MemoryMapPane(),
-        panes.MapSidebarPane(),
-        panes.TileMapPane(),
-        panes.CharacterSetPane(),
+        panes.FontSidebarPane(),
+        panes.PixelEditorPane(),
+        panes.ColorChooserPane(),
         ]

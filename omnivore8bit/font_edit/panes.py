@@ -3,25 +3,14 @@ from omnivore.framework.panes import FrameworkPane
 # Local imports.
 from omnivore8bit.hex_edit.panes import SidebarPane
 from omnivore8bit.hex_edit.commands import ChangeByteCommand
-from omnivore8bit.ui.bitviewscroller import BitviewScroller, FontMapScroller, CharacterSetViewer, MemoryMapScroller
+from omnivore8bit.ui.bitviewscroller import BitviewScroller, FontMapScroller, CharacterSetViewer
 from omnivore.utils.wx.tilelist import TileWrapControl
 
 import logging
 log = logging.getLogger(__name__)
 
 
-class MemoryMapPane(FrameworkPane):
-    #### TaskPane interface ###################################################
-
-    id = 'font_edit.memory_map'
-    name = 'Page Map'
-
-    def create_contents(self, parent):
-        control = MemoryMapScroller(parent, self.task, size=(64,50))
-        return control
-
-
-class MapSidebarPane(SidebarPane):
+class FontSidebarPane(SidebarPane):
     #### TaskPane interface ###################################################
 
     id = 'font_edit.sidebar'
@@ -36,22 +25,22 @@ class MapSidebarPane(SidebarPane):
         control.add_tab("Undo History", self.undo_cb)
 
 
-class TileMapPane(FrameworkPane):
+class PixelEditorPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
-    id = 'font_edit.tile_map'
-    name = 'Tile Map'
+    id = 'font_edit.pixel_editor'
+    name = 'Pixel Editor'
 
     def create_contents(self, parent):
-        control = TileWrapControl(parent, self.task, size=(200,500), command=ChangeByteCommand)
+        control = CharacterSetViewer(parent, self.task, size=(200,500))
         return control
 
 
-class CharacterSetPane(FrameworkPane):
+class ColorChooserPane(FrameworkPane):
     #### TaskPane interface ###################################################
 
-    id = 'font_edit.character_set'
-    name = 'Character Set'
+    id = 'font_edit.color_chooser'
+    name = 'Colors'
 
     def create_contents(self, parent):
         control = CharacterSetViewer(parent, self.task, size=(256,500))

@@ -37,12 +37,14 @@ class OmnivoreEditorPlugin(FrameworkPlugin):
     def _tasks_default(self):
         from omnivore8bit.hex_edit import HexEditTask
         from omnivore8bit.map_edit import MapEditTask
+        from omnivore8bit.font_edit import FontEditTask
         from omnivore8bit.bitmap_edit import BitmapEditTask
         from omnivore8bit.jumpman import JumpmanEditTask
 
         return self.task_factories_from_tasks([
             HexEditTask,
             MapEditTask,
+            FontEditTask,
             BitmapEditTask,
             JumpmanEditTask,
             ])
