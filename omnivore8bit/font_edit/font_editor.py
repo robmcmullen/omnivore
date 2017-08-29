@@ -54,11 +54,11 @@ class SelectMode(MouseHandler):
             e.show_status_message(msg)
 
     def process_left_down(self, evt):
-        FontMapScroller.on_left_down(self.canvas, evt)  # can't use self.canvas directly because it has an overridded method on_left_down
+        CharacterSetViewer.on_left_down(self.canvas, evt)  # can't use self.canvas directly because it has an overridded method on_left_down
         self.display_coords(evt)
 
     def process_left_up(self, evt):
-        FontMapScroller.on_left_up(self.canvas, evt)  # can't use self.canvas directly because it has an overridded method on_left_down
+        CharacterSetViewer.on_left_up(self.canvas, evt)  # can't use self.canvas directly because it has an overridded method on_left_down
 
     def process_mouse_motion_down(self, evt):
         self.canvas.handle_select_motion(self.canvas.editor, evt)
@@ -259,9 +259,7 @@ class FontEditor(HexEditor):
         """ Set up any pre-calculated segments based on the type or content of
         the just-loaded document.
         """
-        MapEditor.from_metadata_dict(self, e)
-        if 'tile map' in e:
-            self.antic_tile_map = e['tile map']
+        HexEditor.from_metadata_dict(self, e)
         # Force ANTIC font mapping if not present
         if 'font_mapping' not in e:
             self.machine.set_font_mapping(predefined['font_mapping'][1])
@@ -269,7 +267,6 @@ class FontEditor(HexEditor):
     def to_metadata_dict(self, mdict, document):
         mdict["map width"] = self.map_width
         mdict["map zoom"] = self.map_zoom
-        mdict["tile map"] = self.antic_tile_map
         if document == self.document:
             # If we're saving the document currently displayed, save the
             # display parameters too.

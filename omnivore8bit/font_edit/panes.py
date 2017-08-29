@@ -4,7 +4,7 @@ from omnivore.framework.panes import FrameworkPane
 from omnivore8bit.hex_edit.panes import SidebarPane
 from omnivore8bit.hex_edit.commands import ChangeByteCommand
 from omnivore8bit.ui.bitviewscroller import BitviewScroller, FontMapScroller, CharacterSetViewer
-from omnivore.utils.wx.tilelist import TileWrapControl
+from omnivore.framework.undo_panel import UndoHistoryPanel
 
 import logging
 log = logging.getLogger(__name__)
@@ -43,5 +43,5 @@ class ColorChooserPane(FrameworkPane):
     name = 'Colors'
 
     def create_contents(self, parent):
-        control = CharacterSetViewer(parent, self.task, size=(256,500))
+        control = UndoHistoryPanel(parent, self.task, size=(256,500))
         return control
