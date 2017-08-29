@@ -20,13 +20,21 @@ from omnivore8bit.utils.searchutil import HexSearcher, CharSearcher
 from omnivore8bit.utils.drawutil import get_bounds
 from omnivore.utils.sortutil import invert_rects
 from omnivore8bit.hex_edit.commands import ChangeByteCommand, PasteCommand
-from omnivore.framework.mouse_handler import MouseHandler
+from omnivore.framework.mouse_handler import MouseHandler, MouseControllerMixin
 import omnivore.framework.actions as fa
 import omnivore8bit.hex_edit.actions as ha
 
 from commands import *
 
 
+class MainCharacterSetViewer(MouseControllerMixin, CharacterSetViewer):
+    """Subclass adapts the mouse interface to the MouseHandler class
+    
+    """
+
+    def __init__(self, *args, **kwargs):
+        CharacterSetViewer.__init__(self, *args, **kwargs)
+        MouseControllerMixin.__init__(self, SelectMode)
 
 
 class SelectMode(MouseHandler):
@@ -382,7 +390,7 @@ class FontEditor(HexEditor):
         """ Creates the toolkit-specific control for the widget. """
 
         # Base-class constructor.
-        self.control = self.glyph_list = CharacterSetViewer(parent, self.task)
+        self.control = self.glyph_list = MainCharacterSetViewer(parent, self.task)
 
         ##########################################
         # Events.
