@@ -285,6 +285,10 @@ class FontEditor(HexEditor):
         self.glyph_list.recalc_view()
         self.pixel_editor.recalc_view()
 
+    @on_trait_change('machine.disassembler_change_event')
+    def update_disassembler(self):
+        pass  # no disassembler!
+
     def reconfigure_panes(self):
         self.control.recalc_view()
         self.pixel_editor.recalc_view()

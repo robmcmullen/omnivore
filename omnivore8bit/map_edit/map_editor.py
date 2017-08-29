@@ -287,6 +287,10 @@ class MapEditor(HexEditor):
         self.character_set.set_font()
         self.character_set.Refresh()
 
+    @on_trait_change('machine.disassembler_change_event')
+    def update_disassembler(self):
+        pass  # no disassembler!
+
     def reconfigure_panes(self):
         self.control.recalc_view()
         self.memory_map.recalc_view()
