@@ -1,7 +1,11 @@
-import os
+# Standard library imports.
 import sys
 
+# Major package imports.
 import wx
+
+# Local imports.
+from omnivore import get_image_path
 
 import logging
 log = logging.getLogger(__name__)
@@ -161,3 +165,132 @@ class MouseHandler(object):
 
     def backspace_key_pressed(self):
         pass
+
+
+
+class MouseControllerMixin(object):
+    """Mixin for a control to adapt to the MouseHandler class
+    
+    Must specify the default pan mode
+    """
+
+    def __init__(self, pan_mode_class):
+        p = get_image_path("icons/hand.ico")
+        self.hand_cursor = wx.Cursor(p, wx.BITMAP_TYPE_ICO, 16, 16)
+        p = get_image_path("icons/hand_closed.ico")
+        self.hand_closed_cursor = wx.Cursor(p, wx.BITMAP_TYPE_ICO, 16, 16)
+        self.forced_cursor = None
+        self.set_mouse_mode(MouseHandler)  # dummy initial mouse handler
+        self.default_pan_mode = pan_mode_class(self)
+        self.batch = None
+
+    def set_mouse_mode(self, handler):
+        self.release_mouse()
+        self.mouse_mode = handler(self)
+
+    def set_cursor(self, mode=None):
+        if (self.forced_cursor is not None):
+            self.SetCursor(self.forced_cursor)
+            #
+            return
+
+        if mode is None:
+            mode = self.mouse_mode
+        c = mode.get_cursor()
+        self.SetCursor(c)
+
+    def get_effective_tool_mode(self, event):
+        middle_down = False
+        alt_down = False
+        if (event is not None):
+            try:
+                alt_down = event.AltDown()
+                # print self.is_alt_key_down
+            except:
+                pass
+            try:
+                middle_down = event.MiddleIsDown()
+            except:
+                pass
+        if alt_down or middle_down:
+            mode = self.default_pan_mode
+        else:
+            mode = self.mouse_mode
+        return mode
+
+    def release_mouse(self):
+        self.mouse_is_down = False
+        self.selection_box_is_being_defined = False
+        while self.HasCapture():
+            self.ReleaseMouse()
+
+    def on_left_down(self, evt):
+        # self.SetFocus() # why would it not be focused?
+        mode = self.get_effective_tool_mode(evt)
+        self.forced_cursor = None
+        self.selection_box_is_being_defined = False
+        self.mouse_down_position = evt.GetPosition()
+        self.mouse_move_position = self.mouse_down_position
+
+        mode.process_left_down(evt)
+        self.set_cursor(mode)
+        evt.Skip()
+
+    def on_motion(self, evt):
+        mode = self.get_effective_tool_mode(evt)
+        if evt.LeftIsDown():
+            mode.process_mouse_motion_down(evt)
+        else:
+            mode.process_mouse_motion_up(evt)
+        self.set_cursor(mode)
+        evt.Skip()
+
+    def on_left_up(self, evt):
+        mode = self.get_effective_tool_mode(evt)
+        self.forced_cursor = None
+        mode.process_left_up(evt)
+        self.set_cursor(mode)
+        evt.Skip()
+
+    def on_left_dclick(self, evt):
+        # self.SetFocus() # why would it not be focused?
+        mode = self.get_effective_tool_mode(evt)
+        mode.process_left_dclick(evt)
+        self.set_cursor(mode)
+        evt.Skip()
+
+    def on_popup(self, evt):
+        mode = self.get_effective_tool_mode(evt)
+        self.forced_cursor = None
+        mode.process_popup(evt)
+        self.set_cursor(mode)
+
+    def on_mouse_wheel(self, evt):
+        mode = self.get_effective_tool_mode(evt)
+        mode.process_mouse_wheel(evt)
+        self.set_cursor(mode)
+
+    def on_mouse_enter(self, evt):
+        self.set_cursor()
+        evt.Skip()
+
+    def on_mouse_leave(self, evt):
+        self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
+        self.mouse_mode.process_mouse_leave(evt)
+        evt.Skip()
+
+    def on_key_char(self, evt):
+        mode = self.get_effective_tool_mode(evt)
+        self.set_cursor(mode)
+
+        mode.process_key_char(evt)
+        evt.Skip()
+
+    def on_focus(self, evt):
+        mode = self.get_effective_tool_mode(evt)
+        mode.process_focus(evt)
+
+    def on_focus_lost(self, evt):
+        mode = self.get_effective_tool_mode(evt)
+        mode.process_focus_lost(evt)
+
