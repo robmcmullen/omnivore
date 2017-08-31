@@ -71,17 +71,15 @@ class AnticFont(object):
 
     def set_fonts(self, machine, font_data, font_renderer, reverse):
         if 'np_data' in font_data:
-            bytes = font_data['np_data']
+            data = font_data['np_data']
         else:
-            bytes = np.fromstring(font_data['data'], dtype=np.uint8)
-        bits = np.unpackbits(bytes)
-        bits = bits.reshape((-1, 8, 8))
+            data = np.fromstring(font_data['data'], dtype=np.uint8)
 
-        self.normal_font = font_renderer.bits_to_font(bits, machine.color_registers, self.normal_gr0_colors, reverse)
-        self.highlight_font = font_renderer.bits_to_font(bits, machine.color_registers_highlight, self.highlight_gr0_colors, reverse)
-        self.data_font = font_renderer.bits_to_font(bits, machine.color_registers_data, self.data_gr0_colors, reverse)
-        self.match_font = font_renderer.bits_to_font(bits, machine.color_registers_match, self.match_gr0_colors, reverse)
-        self.comment_font = font_renderer.bits_to_font(bits, machine.color_registers_comment, self.comment_gr0_colors, reverse)
+        self.normal_font = font_renderer.get_font(data, machine.color_registers, self.normal_gr0_colors, reverse)
+        self.highlight_font = font_renderer.get_font(data, machine.color_registers_highlight, self.highlight_gr0_colors, reverse)
+        self.data_font = font_renderer.get_font(data, machine.color_registers_data, self.data_gr0_colors, reverse)
+        self.match_font = font_renderer.get_font(data, machine.color_registers_match, self.match_gr0_colors, reverse)
+        self.comment_font = font_renderer.get_font(data, machine.color_registers_comment, self.comment_gr0_colors, reverse)
 
     def get_height(self, zoom):
         return self.char_h * self.scale_h * zoom

@@ -309,6 +309,7 @@ class FontEditor(HexEditor):
 
     def view_segment_set_width(self, segment):
         self.map_width = segment.map_width
+        self.machine.change_font_data(segment)
 
     def update_mouse_mode(self, mouse_handler=None):
         if mouse_handler is not None:
