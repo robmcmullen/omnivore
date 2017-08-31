@@ -902,9 +902,33 @@ class Apple2TextMode(Mode2):
     char_bit_width = 7
     expected_chars = 256
 
+    def pad_data(self, data):
+        """Expand (or shrink if necessary) to conform to the expected input
+        size of font data array
+        """
+        count = data.shape[0]
+
+        # if more than 128 characters, assume not blinking and pad/truncate to
+        # 256 chars
+        if count >= 2048:
+            return data[0:2048]
+        if count > 1024:
+            expanded = np.zeros(2048, dtype=np.uint8)
+            expanded[0:count] = data
+            expanded[count:] = 0
+            return expanded
+
+        # pad to 1024 if necessary; inverse/blinking will be applied later
+        if count < 1024:
+            expanded = np.zeros(1024, dtype=np.uint8)
+            expanded[0:count] = data
+            expanded[count:] = 0
+            data = expanded
+        return data
+
     def bits_to_font(self, bits, colors, gr0_colors, reverse=False):
-        bg = colors[8]
-        fg = colors[4]
+        bg = (0, 0, 0)
+        fg = (255, 255, 255)
         r = np.empty(bits.shape, dtype=np.uint8)
         r[bits==0] = bg[0]
         r[bits==1] = fg[0]
