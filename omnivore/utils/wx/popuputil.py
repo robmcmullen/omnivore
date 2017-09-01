@@ -343,7 +343,8 @@ class SpringTabItem(GenToggleButton):
     # Superclass overrides
 
     def InitColours(self):
-        self.face_background_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND)
+        self.face_background_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+        wx.Control.SetBackgroundColour(self, self.face_background_color)
         r, g, b, a = self.face_background_color.Get()
         log.debug("background: r,g,b,a: %s" % ((r,g,b,a),))
         fr, fg, fb = max(0,r-32), max(0,g-32), max(0,b-32)
@@ -543,6 +544,8 @@ class SpringTabs(wx.Panel):
         self.notification_pen = wx.Pen(self.notification_background, 1, wx.SOLID)
         self.notification_text = wx.Colour(255, 255, 255)
         self.notification_font = wx.Font(8, wx.FONTFAMILY_SWISS, wx.NORMAL, wx.NORMAL)
+        bg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+        self.SetBackgroundColour(bg)
 
     def get_renderer(self):
         return self._tab_renderer
@@ -714,6 +717,8 @@ class PopupStatusBar(StatusPopupWindow):
 if __name__ == "__main__":
     from wx.adv import CalendarCtrl
     import wx.stc
+
+    logging.basicConfig(level=logging.DEBUG)
 
     class FontList(wx.Panel):
         def __init__(self, parent, *args, **kwargs):
