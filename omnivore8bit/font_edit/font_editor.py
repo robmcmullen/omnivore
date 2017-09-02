@@ -324,7 +324,6 @@ class FontEditor(HexEditor):
         else:
             self.draw_pattern = tuple(pattern)
         self.pixel_editor.show_pattern(self.draw_pattern)
-        self.character_set.show_pattern(self.draw_pattern)
 
     def mark_index_range_changed(self, index_range):
         pass
