@@ -408,8 +408,10 @@ class HexEditor(FrameworkEditor):
         self.font_map.set_font()
         self.font_map.Refresh()
         pane = self.window.get_dock_pane('hex_edit.font_map')
-        pane.name = self.machine.font_mapping.name
-        self.window._aui_manager.Update()
+        if pane is not None:
+            # subclasses may not have font map pane
+            pane.name = self.machine.font_mapping.name
+            self.window._aui_manager.Update()
 
     @on_trait_change('machine.disassembler_change_event')
     def update_disassembler(self):
