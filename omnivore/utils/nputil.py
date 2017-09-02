@@ -12,9 +12,11 @@ def count_in_range(source_list, lowest_valid, highest_valid):
 
 # Fast integer-multiple scaling of bitmaps
 def intscale(arr, hscale, wscale=None):
+    if wscale is None:
+        wscale = hscale
     hscale, wscale = int(hscale), int(wscale)
     h, w, depth = arr.shape
-    if hscale == 1 and (wscale == 1 or wscale is None):
+    if hscale == 1 and wscale == 1:
         return arr
     elif hscale < 1 or wscale < 1:
         raise ValueError("Scale must be an integer greater than 1")
