@@ -772,6 +772,8 @@ class FontMapScroller(BitviewScroller):
         array = m.font_renderer.get_image(m, font, bytes, style, start_byte, end_byte, self.bytes_per_row, nr, 0, self.bytes_per_row)
         if self.font.scale_h > 1 or self.font.scale_w > 1:
             array = intscale(array, self.font.scale_h, self.font.scale_w)
+        if self.zoom > 1:
+            array = intscale(array, self.zoom)
         return array
 
     def draw_overlay(self, array, w, h, zw, zh):
