@@ -1067,7 +1067,7 @@ class MemoryMapScroller(BitviewScroller):
         width = self.bytes_per_row * self.zoom
         height = -1
 
-        vw, vh = self.GetVirtualSize()#.Get() Phoenix bug #474; should be wx.Size but returns tuple
+        vw, vh = self.GetVirtualSize().Get()
         ww, wh = self.GetClientSize().Get()
         if wh < vh:
             # Scrollbar is present!
