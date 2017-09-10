@@ -221,6 +221,9 @@ class TileWrapControl(wx.Panel):
         self.panel.SetSizer(psiz)
         self.panel.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_ALWAYS)
         self.panel.SetupScrolling(scroll_x=False)
+        self.bg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+        self.panel.SetBackgroundColour(self.bg)
+        self.SetBackgroundColour(self.bg)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.cat, 0, wx.EXPAND, 0)
@@ -266,6 +269,7 @@ class TileWrapControl(wx.Panel):
                         data = tiles[i:i+1]
                         bmp = self.editor.machine.antic_font.get_image(data[0], self.zoom)
                         btn = TileButton(panel, -1, bmp, style=wx.BORDER_NONE|wx.BU_EXACTFIT)
+                        btn.SetBackgroundColour(self.bg)
                         btn.tile_data = data
                         btn.Bind(wx.EVT_BUTTON, self.on_tile_clicked)
                         w.Add(btn, 0, wx.ALL, 0)
