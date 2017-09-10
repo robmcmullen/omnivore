@@ -53,7 +53,7 @@ class EnthoughtWxApp(wx.App):
 
     throw_out_next_wheel_rotation = False
 
-    def FilterEvent(self, evt):
+    def FilterEventMouseWheel(self, evt):
         if hasattr(evt, "GetWheelRotation"):
             print "FILTEREVENT!!!", evt.GetWheelRotation(), evt
             wheel = evt.GetWheelRotation()
@@ -63,7 +63,7 @@ class EnthoughtWxApp(wx.App):
                     return 0
                 self.throw_out_next_wheel_rotation = True
         if hasattr(evt, "GetKeyCode"):
-            print "FILTEREVENT!!! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers()))
+            print "FILTEREVENT!!! char=%s, key=%s, modifiers=%s" % (evt.GetUnicodeKey(), evt.GetKeyCode(), bin(evt.GetModifiers()))
         return -1
 
 
@@ -97,7 +97,7 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", 
     EnthoughtWxApp.mac_menubar_app_name = application_name
     _app = EnthoughtWxApp(redirect=False)
     if False:  # enable this to use FilterEvent
-        _app.SetCallFilterEvent(True)
+        _app.FilterEvent = _app.FilterEventMouseWheel
 
     # Enthought library imports.
     from envisage.api import PluginManager

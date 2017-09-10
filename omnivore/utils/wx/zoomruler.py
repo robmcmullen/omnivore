@@ -171,7 +171,7 @@ class LabeledRuler(RulerCtrl):
                 left, right = right, left
             r.SetLeft(self.value_to_position(left, True) - x)
             r.SetRight(self.value_to_position(right, True) - x)
-            dc.DrawRectangleRect(r)
+            dc.DrawRectangle(r)
 
         dc.SetBrush(wx.Brush(self._background))
         dc.SetPen(self._tickpen)
@@ -395,9 +395,9 @@ class VirtualLabeledRuler(LabeledRuler):
         wbound, hbound = self.CheckStyle()
 
         if orient & wx.VERTICAL:
-            self.SetBestSize((28, height))
+            self.SetInitialSize((28, height))
         else:
-            self.SetBestSize((width, 28))
+            self.SetInitialSize((width, 28))
 
         self.SetBounds(0, 0, wbound, hbound)
 
@@ -426,10 +426,10 @@ class ZoomRulerBase(object):
         if self.__class__.open_hand_cursor_ is None:
             raw = zlib.decompress(base64.b64decode(open_hand_cursor_data))
             stream = cStringIO.StringIO(raw)
-            image = wx.ImageFromStream(stream)
-            image.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_X, 16)
-            image.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_Y, 16)
-            self.__class__.open_hand_cursor_ = wx.CursorFromImage(image)
+            image = wx.Image(stream)
+            image.SetOption(wx.IMAGE_OPTION_CUR_HOTSPOT_X, 16)
+            image.SetOption(wx.IMAGE_OPTION_CUR_HOTSPOT_Y, 16)
+            self.__class__.open_hand_cursor_ = wx.Cursor(image)
         return self.__class__.open_hand_cursor_
 
     @property
@@ -437,10 +437,10 @@ class ZoomRulerBase(object):
         if self.__class__.closed_hand_cursor_ is None:
             raw = zlib.decompress(base64.b64decode(closed_hand_cursor_data))
             stream = cStringIO.StringIO(raw)
-            image = wx.ImageFromStream(stream)
-            image.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_X, 16)
-            image.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_Y, 16)
-            self.__class__.closed_hand_cursor_ = wx.CursorFromImage(image)
+            image = wx.Image(stream)
+            image.SetOption(wx.IMAGE_OPTION_CUR_HOTSPOT_X, 16)
+            image.SetOption(wx.IMAGE_OPTION_CUR_HOTSPOT_Y, 16)
+            self.__class__.closed_hand_cursor_ = wx.Cursor(image)
         return self.__class__.closed_hand_cursor_
 
     def populate(self, panel):
@@ -470,7 +470,7 @@ class ZoomRulerBase(object):
         self.drag_start = -1
         self.view_at_drag_start = -1
         self.cursor_mode_image = {
-            "select": wx.StockCursor(wx.CURSOR_ARROW),
+            "select": wx.Cursor(wx.CURSOR_ARROW),
             "drag_mode": self.can_drag_cursor,
             "dragging": self.dragging_cursor,
         }
@@ -908,7 +908,7 @@ if __name__ == "__main__":
             return info
 
 
-    app = wx.PySimpleApp()
+    app = wx.App()
     frm = wx.Frame(None,-1,"Test",style=wx.TAB_TRAVERSAL|wx.DEFAULT_FRAME_STYLE,
                    size=(800,400))
     panel = wx.Panel(frm)

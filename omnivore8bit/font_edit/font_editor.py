@@ -14,7 +14,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 from omnivore import get_image_path
 from omnivore8bit.hex_edit.hex_editor import HexEditor
 from omnivore8bit.arch.machine import predefined
-from omnivore8bit.ui.bitviewscroller import FontMapScroller
+from omnivore8bit.ui.bitviewscroller import CharacterSetViewer
 from omnivore.utils.command import Overlay
 from omnivore8bit.utils.searchutil import HexSearcher, CharSearcher
 from omnivore8bit.utils.drawutil import get_bounds
@@ -27,13 +27,13 @@ import omnivore8bit.hex_edit.actions as ha
 from commands import *
 
 
-class MainFontMapScroller(MouseControllerMixin, FontMapScroller):
+class MainCharacterSetViewer(MouseControllerMixin, CharacterSetViewer):
     """Subclass adapts the mouse interface to the MouseHandler class
     
     """
 
     def __init__(self, *args, **kwargs):
-        FontMapScroller.__init__(self, *args, **kwargs)
+        CharacterSetViewer.__init__(self, *args, **kwargs)
         MouseControllerMixin.__init__(self, SelectMode)
 
 
@@ -54,11 +54,11 @@ class SelectMode(MouseHandler):
             e.show_status_message(msg)
 
     def process_left_down(self, evt):
-        FontMapScroller.on_left_down(self.canvas, evt)  # can't use self.canvas directly because it has an overridded method on_left_down
+        CharacterSetViewer.on_left_down(self.canvas, evt)  # can't use self.canvas directly because it has an overridded method on_left_down
         self.display_coords(evt)
 
     def process_left_up(self, evt):
-        FontMapScroller.on_left_up(self.canvas, evt)  # can't use self.canvas directly because it has an overridded method on_left_down
+        CharacterSetViewer.on_left_up(self.canvas, evt)  # can't use self.canvas directly because it has an overridded method on_left_down
 
     def process_mouse_motion_down(self, evt):
         self.canvas.handle_select_motion(self.canvas.editor, evt)
@@ -218,9 +218,9 @@ class FilledSquareMode(OverlayMode):
     command = FilledSquareCommand
 
 
-class MapEditor(HexEditor):
-    """ The toolkit specific implementation of a HexEditor.  See the
-    IHexEditor interface for the API documentation.
+class FontEditor(HexEditor):
+    """ The toolkit specific implementation of a MapEditor.  See the
+    IMapEditor interface for the API documentation.
     """
     ##### class attributes
 
@@ -260,8 +260,6 @@ class MapEditor(HexEditor):
         the just-loaded document.
         """
         HexEditor.from_metadata_dict(self, e)
-        if 'tile map' in e:
-            self.antic_tile_map = e['tile map']
         # Force ANTIC font mapping if not present
         if 'font_mapping' not in e:
             self.machine.set_font_mapping(predefined['font_mapping'][1])
@@ -269,7 +267,6 @@ class MapEditor(HexEditor):
     def to_metadata_dict(self, mdict, document):
         mdict["map width"] = self.map_width
         mdict["map zoom"] = self.map_zoom
-        mdict["tile map"] = self.antic_tile_map
         if document == self.document:
             # If we're saving the document currently displayed, save the
             # display parameters too.
@@ -282,10 +279,8 @@ class MapEditor(HexEditor):
 
     @on_trait_change('machine.font_change_event')
     def update_fonts(self):
-        self.font_map.recalc_view()
-        self.tile_map.recalc_view()
-        self.character_set.set_font()
-        self.character_set.Refresh()
+        self.glyph_list.recalc_view()
+        self.pixel_editor.recalc_view()
 
     @on_trait_change('machine.disassembler_change_event')
     def update_disassembler(self):
@@ -293,28 +288,28 @@ class MapEditor(HexEditor):
 
     def reconfigure_panes(self):
         self.control.recalc_view()
-        self.memory_map.recalc_view()
-        self.tile_map.recalc_view()
-        self.character_set.recalc_view()
+        self.pixel_editor.recalc_view()
 
     def refresh_panes(self):
         self.control.refresh_view()
-        self.memory_map.refresh_view()
 
     def rebuild_document_properties(self):
         self.find_segment("Playfield map")
         self.update_mouse_mode(SelectMode)
 
     def process_preference_change(self, prefs):
-        # override HexEditor because those preferences don't apply here
+        # override MapEditor because those preferences don't apply here
         pass
 
     def set_map_width(self, width=None):
-        HexEditor.set_map_width(self, width)
-        self.memory_map.recalc_view()
+        if width is None:
+            width = self.map_width
+        self.map_width = width
+        self.control.recalc_view()
 
     def view_segment_set_width(self, segment):
         self.map_width = segment.map_width
+        self.machine.change_font_data(segment)
 
     def update_mouse_mode(self, mouse_handler=None):
         if mouse_handler is not None:
@@ -328,8 +323,7 @@ class MapEditor(HexEditor):
             self.draw_pattern = (pattern,)
         else:
             self.draw_pattern = tuple(pattern)
-        self.tile_map.show_pattern(self.draw_pattern)
-        self.character_set.show_pattern(self.draw_pattern)
+        self.pixel_editor.show_pattern(self.draw_pattern)
 
     def mark_index_range_changed(self, index_range):
         pass
@@ -338,15 +332,7 @@ class MapEditor(HexEditor):
         pass
 
     def get_selected_status_message(self):
-        anchor_start, anchor_end, (r1, c1), (r2, c2) = self.control.get_highlight_indexes()
-        extra = ""
-        if r1 >= 0:
-            w = c2 - c1
-            h = r2 - r1
-            if w > 0 or h > 0:
-                extra = "; current $%x x $%x" % (w, h)
-        r = "rect" if len(self.selected_ranges) == 1 else "rects"
-        return "[%d %s selected%s]" % (len(self.selected_ranges), r, extra)
+        return ""
 
     def process_paste_data_object(self, data_obj, cmd_cls=None):
         bytes, extra = self.get_numpy_from_data_object(data_obj)
@@ -388,7 +374,7 @@ class MapEditor(HexEditor):
         return []
 
     def get_numpy_image(self):
-        return self.font_map.get_full_image()
+        return self.glyph_list.get_full_image()
 
     def common_popup_actions(self):
         return [fa.CutAction, fa.CopyAction, fa.PasteAction, None, fa.SelectAllAction, fa.SelectNoneAction, None, ha.GetSegmentFromSelectionAction, ha.RevertToBaselineAction]
@@ -405,21 +391,20 @@ class MapEditor(HexEditor):
         """ Creates the toolkit-specific control for the widget. """
 
         # Base-class constructor.
-        self.control = self.font_map = MainFontMapScroller(parent, self.task, self.map_width, ChangeByteCommand)
+        self.control = self.glyph_list = MainCharacterSetViewer(parent, self.task)
 
         ##########################################
         # Events.
         ##########################################
 
         # Get related controls
-        self.memory_map = self.window.get_dock_pane('map_edit.memory_map').control
-        self.tile_map = self.window.get_dock_pane('map_edit.tile_map').control
-        self.character_set = self.window.get_dock_pane('map_edit.character_set').control
+        self.pixel_editor = self.window.get_dock_pane('font_edit.pixel_editor').control
+        self.color_chooser = self.window.get_dock_pane('font_edit.color_chooser').control
 
         # segment list and undo history exclusively in sidebar
         self.segment_list = None
         self.undo_history = None
-        self.sidebar = self.window.get_dock_pane('map_edit.sidebar')
+        self.sidebar = self.window.get_dock_pane('font_edit.sidebar')
 
         # Load the editor's contents.
         self.load()
@@ -433,6 +418,4 @@ class MapEditor(HexEditor):
         skip_control = None if refresh_from else from_control
         if skip_control != self.control:
             self.control.select_index(from_control, index)
-        if skip_control != self.memory_map:
-            self.memory_map.select_index(from_control, index)
         self.can_copy = (self.anchor_start_index != self.anchor_end_index)

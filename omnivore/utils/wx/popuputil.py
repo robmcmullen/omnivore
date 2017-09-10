@@ -147,19 +147,19 @@ class SpringTabItemRenderer(object):
         self.spacing_between_items = 8
 
     def on_paint(self, item, evt):
-        (width, height) = item.GetClientSizeTuple()
+        (width, height) = item.GetClientSize().Get()
         x1 = y1 = 0
         x2 = width-1
         y2 = height-1
 
         dc = wx.PaintDC(item)
+        log.debug("hover: %s %s" % (item.GetLabel(), item.hover))
         if item.hover:
             self.draw_hover_background(item, dc)
         else:
-            brush = item.GetBackgroundBrush(dc)
-            if brush is not None:
-                dc.SetBackground(brush)
-                dc.Clear()
+            brush = wx.Brush(item.face_background_color, wx.SOLID)
+            dc.SetBackground(brush)
+            dc.Clear()
 
         item.draw_label(dc, width, height)
         self.draw_hover_decorations(item, dc, width, height)
@@ -252,12 +252,12 @@ class SpringTabItemVerticalRenderer(SpringTabItemRenderer):
             self.draw_notification(dc, x, y, w, h, num, parent)
 
     def set_popup_width(self, parent, popup, child):
-        pw, ph = popup.GetSizeTuple()
-        pcw, pch = popup.GetClientSizeTuple()
+        pw, ph = popup.GetSize().Get()
+        pcw, pch = popup.GetClientSize().Get()
         try:
             cw, ch = child.DoGetBestSize()
         except AttributeError:
-            cw, ch = child.GetSizeTuple()
+            cw, ch = child.GetSize().Get()
         log.debug("popup size=%s  popup client size=%s  child=%s" % (str((pw, ph)), str((pcw, pch)), str((cw, ch))))
 
         # The client size may be smaller than the popup window if the popup
@@ -266,7 +266,7 @@ class SpringTabItemVerticalRenderer(SpringTabItemRenderer):
         diffheight =  ph - pch
 
         # The popup will be at least as tall as the SpringTabs panel
-        width, height = parent.GetSizeTuple()
+        width, height = parent.GetSize().Get()
         if ph < height:
             ph = height
         pw = min(cw + diffwidth, parent.max_popup_width)
@@ -286,7 +286,7 @@ class SpringTabItemVerticalRenderer(SpringTabItemRenderer):
             self.set_popup_width(parent, popup, child)
             width, height, pw, ph = self.set_popup_width(parent, popup, child)
 
-            x, y = parent.ClientToScreenXY(width, 0)
+            x, y = parent.ClientToScreen(width, 0)
             if self.popleft:
                 x -= width + pw
             #log.debug("popping up at %s" % str((x,y)))
@@ -343,8 +343,10 @@ class SpringTabItem(GenToggleButton):
     # Superclass overrides
 
     def InitColours(self):
-        faceClr = self.GetBackgroundColour()
-        r, g, b = faceClr.Get()
+        self.face_background_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+        wx.Control.SetBackgroundColour(self, self.face_background_color)
+        r, g, b, a = self.face_background_color.Get()
+        log.debug("background: r,g,b,a: %s" % ((r,g,b,a),))
         fr, fg, fb = max(0,r-32), max(0,g-32), max(0,b-32)
         #log.debug(str((fr, fg, fb)))
         self.faceDnClr = wx.Colour(fr, fg, fb)
@@ -542,6 +544,8 @@ class SpringTabs(wx.Panel):
         self.notification_pen = wx.Pen(self.notification_background, 1, wx.SOLID)
         self.notification_text = wx.Colour(255, 255, 255)
         self.notification_font = wx.Font(8, wx.FONTFAMILY_SWISS, wx.NORMAL, wx.NORMAL)
+        bg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+        self.SetBackgroundColour(bg)
 
     def get_renderer(self):
         return self._tab_renderer
@@ -692,9 +696,9 @@ class PopupStatusBar(StatusPopupWindow):
         self.Layout()
         frame = self.GetParent()
         frame_offset = frame.GetClientAreaOrigin()
-        frame_pos = frame.ClientToScreenXY(frame_offset[0], frame_offset[1])
-        frame_size = frame.GetClientSizeTuple()
-        win_size = self.GetSizeTuple()
+        frame_pos = frame.ClientToScreen(frame_offset[0], frame_offset[1])
+        frame_size = frame.GetClientSize().Get()
+        win_size = self.GetSize().Get()
         #print("frame pos: %s, size=%s  popup size=%s" % (str(frame_pos), str(frame_size), str(win_size)))
         x = frame_pos[0]
         y = frame_pos[1] + frame_size[1] - win_size[1]
@@ -711,8 +715,10 @@ class PopupStatusBar(StatusPopupWindow):
 
 
 if __name__ == "__main__":
-    import wx.calendar
+    from wx.adv import CalendarCtrl
     import wx.stc
+
+    logging.basicConfig(level=logging.DEBUG)
 
     class FontList(wx.Panel):
         def __init__(self, parent, *args, **kwargs):
@@ -742,7 +748,7 @@ if __name__ == "__main__":
 
             self.lb1.SetSelection(0)
             self.OnSelect(None)
-            wx.FutureCall(300, self.SetTextSize)
+            wx.CallLater(300, self.SetTextSize)
 
         def SetTextSize(self):
             self.txt.SetSize(self.txt.GetBestSize())
@@ -758,7 +764,7 @@ if __name__ == "__main__":
         button = GenToggleButton(parent, -1, "Whatevar!!!")
 
     def CalendarCB(parent, task, **kwargs):
-        wx.calendar.CalendarCtrl(parent, -1, wx.DateTime_Now())
+        CalendarCtrl(parent, -1, wx.DateTime.Now())
 
     class TestSTC(wx.stc.StyledTextCtrl):
         def __init__(self, *args, **kwargs):
@@ -780,7 +786,7 @@ if __name__ == "__main__":
             self.GetParent().status.show_status_text(status)
             evt.Skip()
 
-    app = wx.PySimpleApp()
+    app = wx.App()
     frm = wx.Frame(None,-1,"Test",style=wx.TAB_TRAVERSAL|wx.DEFAULT_FRAME_STYLE,
                    size=(600,400))
     panel = wx.Panel(frm)

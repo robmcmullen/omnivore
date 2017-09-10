@@ -1,3 +1,4 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -9,9 +10,10 @@
 
 
 
+
 <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 </head>
-<body role="document">
+<body>
 <div id="titleLine">
 <center><a href="https://playermissile.com/omnivore/"><img src="_static/doc-logo.png" alt="Omnivore XL, the 8-bit Binary Editor" /></a></center>
 <hr />
@@ -19,8 +21,6 @@
 <a name="bitmap-editor">
 <h1>Bitmap Editor</h1>
 <div class="toctree-wrapper compound">
-<ul class="simple">
-</ul>
 </div>
 <a name="overview"></a>
 <h2>Overview</h2>
@@ -49,6 +49,7 @@ showing a new blank template of the selected file format.</p>
 <li>Atari DOS 2.5 ED (130K) system disk</li>
 <li>Getaway Map</li>
 <li>Jumpman Level</li>
+<li>template://no-json.dsk</li>
 </ul>
 
 <a name="open"></a>
@@ -65,7 +66,7 @@ showing a new blank template of the selected file format.</p>
 <h3>Insert File</h3>
 <p>Insert binary data at the cursor</p>
 <p>The data from the loaded file will overwrite data starting at the cursor,
-so it&#8217;s not inserted in the text editor sense where space is created in the
+so it’s not inserted in the text editor sense where space is created in the
 existing data.</p>
 
 <a name="save"></a>
@@ -174,6 +175,11 @@ selection.</p>
 so the resulting string is safe to use inside either of those characters as
 the string delimiter.</p>
 
+<a name="copy-as-c-data"></a>
+<h4>Copy as C Data</h4>
+<p>Copy the current selection as text where each byte is converted to the
+C source code representation.</p>
+
 
 <a name="paste"></a>
 <h3>Paste</h3>
@@ -233,13 +239,13 @@ normal amounts, defaulting to 4 bytes on a line.</p>
 <a name="jumpman-level-data"></a>
 <h4>Jumpman Level Data</h4>
 <p>Marks the selected bytes as Jumpman drawing element descriptors. This is
-not used much for direct editing now that the <a class="reference external" href="omnivore.jumpman.html">Jumpman Level Editor</a> is
+not used much for direct editing now that the <a class="reference external" href="omnivore.jumpman.html" target="_blank">Jumpman Level Editor</a> is
 available.</p>
 
 <a name="jumpman-harvest-table"></a>
 <h4>Jumpman Harvest Table</h4>
 <p>Marks the selected bytes as a Jumpman harvest table. This is not used
-much for direct editing now that the <a class="reference external" href="omnivore.jumpman.html">Jumpman Level Editor</a> is available.</p>
+much for direct editing now that the <a class="reference external" href="omnivore.jumpman.html" target="_blank">Jumpman Level Editor</a> is available.</p>
 
 
 <a name="find"></a>
@@ -294,7 +300,7 @@ display.</p>
 <li>Player/Missile, normal width</li>
 <li>Player/Missile, double width</li>
 <li>Player/Missile, quad width</li>
-<li>B/W, Apple 2</li>
+<li>B/W, Apple 2, Linear</li>
 <li>Antic B (Gr 6, 1bpp)</li>
 <li>Antic C (Gr 6+, 1bpp)</li>
 <li>Antic D (Gr 7, 2bpp)</li>
@@ -344,7 +350,7 @@ the values in the hex grid and the disassembly text.</p>
 
 <a name="current-task"></a>
 <h3>Current Task:</h3>
-<p>Changes the view in the entire window to a new editing task. The files in the current task are not lost, it&#8217;s just a way to edit different types of files while using the same top level window on the desktop.</p>
+<p>Changes the view in the entire window to a new editing task. The files in the current task are not lost, it’s just a way to edit different types of files while using the same top level window on the desktop.</p>
 
 
 <a name="segment-menu"></a>
@@ -430,7 +436,7 @@ usually either <em>INFO</em> or <em>WARNING</em>.</p>
 </a>
 <div class="footer">
 <hr />
-Updated 02 Jun 2017 by Rob McMullen &lt;feedback@playermissile.com&gt;
+Updated 18 Aug 2017 by Rob McMullen &lt;feedback@playermissile.com&gt;
 </div>
 </body>
 </html>

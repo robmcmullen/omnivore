@@ -97,8 +97,8 @@ class NewFileGroup(Group):
         items = []
 
         for template in iter_templates():
-            name = template["label"]
-            task_id = self.application.find_best_task_id(template["task"])
+            name = template.get("label", template["uri"])
+            task_id = self.application.find_best_task_id(template.get("task", "hex_edit"))
             log.debug("NewFileAction for %s as %s" % (name, task_id))
             action = NewFileAction(name=name, uri=template["uri"], task_id=task_id)
             items.append((name, ActionItem(action=action)))

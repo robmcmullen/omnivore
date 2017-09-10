@@ -13,10 +13,10 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class ByteGridRenderer(Grid.PyGridCellRenderer):
+class ByteGridRenderer(Grid.GridCellRenderer):
     def __init__(self, table, editor):
         """Render data in the specified color and font and fontsize"""
-        Grid.PyGridCellRenderer.__init__(self)
+        Grid.GridCellRenderer.__init__(self)
         self.table = table
         m = editor.machine
         self.color = m.text_color
@@ -45,7 +45,7 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
         # and colors.  We have to set the clipping region on
         # the grid's DC, otherwise the text will spill over
         # to the next cell
-        dc.SetClippingRect(rect)
+        dc.SetClippingRegion(rect)
 
         # clear the background
         dc.SetBackgroundMode(wx.SOLID)
@@ -54,7 +54,7 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
         if not self.table.is_index_valid(index):
             dc.SetBrush(wx.Brush(wx.WHITE, wx.SOLID))
             dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
-            dc.DrawRectangleRect(rect)
+            dc.DrawRectangle(rect)
         else:
             try:
                 text, style = self.table.get_value_style(row, col)
@@ -82,7 +82,7 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
                 dc.SetPen(self.normal_pen)
                 dc.SetBrush(self.normal_brush)
                 dc.SetTextBackground(self.normal_background)
-            dc.DrawRectangleRect(rect)
+            dc.DrawRectangle(rect)
 
             dc.SetBackgroundMode(wx.SOLID)
 
@@ -122,7 +122,7 @@ class ByteGridRenderer(Grid.PyGridCellRenderer):
         dc.DestroyClippingRegion()
 
 
-class ByteGridTable(Grid.PyGridTableBase):
+class ByteGridTable(Grid.GridTableBase):
     column_labels = [""]
     column_sizes = [4]
     column_pixel_sizes = {}
@@ -140,7 +140,7 @@ class ByteGridTable(Grid.PyGridTableBase):
         self.__class__.column_pixel_sizes[col] = pixel_size
 
     def __init__(self):
-        Grid.PyGridTableBase.__init__(self)
+        Grid.GridTableBase.__init__(self)
 
         self._rows = 1
         self._cols = len(self.column_labels)
@@ -471,15 +471,16 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
                 wx.CallAfter(self.parentgrid.advance_cursor)
 
 
-class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
+class HexCellEditor(Grid.GridCellEditor,HexDigitMixin):
     """
     Cell editor for the grid, based on GridCustEditor.py from the
     wxPython demo.
     """
 
     def __init__(self,grid):
-        Grid.PyGridCellEditor.__init__(self)
+        Grid.GridCellEditor.__init__(self)
         self.parentgrid=grid
+        self.accepted_change = None
 
     def Create(self, parent, id, evtHandler):
         """
@@ -500,7 +501,7 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         PaintBackground and do something meaningful there.
         """
         log.debug("rect=%s\n" % rect)
-        self._tc.SetDimensions(rect.x, rect.y, rect.width+2, rect.height+2,
+        self._tc.SetSize(rect.x, rect.y, rect.width+2, rect.height+2,
                                wx.SIZE_ALLOW_MINUS_ONE)
 
     def Show(self, show, attr):
@@ -509,7 +510,7 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
         to set colours or fonts for the control.
         """
         log.debug("show=%s, attr=%s" % (show, attr))
-        Grid.PyGridCellEditor.Show(self, show, attr)
+        Grid.GridCellEditor.Show(self, show, attr)
 
     def PaintBackground(self, dc, rect, attr):
         """
@@ -542,15 +543,25 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
 
         val = self._tc.GetValue()
         if val != self.startValue:
-            changed = grid.change_value(row, col, val) # update the table
-            # On error, don't advance cursor
-            grid.change_is_valid = changed
+            self.accepted_change = val
+            changed = True
         else:
-            changed = False
+            changed = None
 
         self.startValue = ''
         self._tc.SetValue('')
         return changed
+
+    def ApplyEdit(self, row, col, grid):
+        """Actually apply the change to the grid from the saved value from
+        EndEdit.
+
+        """
+        if self.accepted_change is not None:
+            changed = grid.change_value(row, col, self.accepted_change)
+            # On error, don't advance cursor
+            grid.change_is_valid = changed
+            self.accepted_change = None
 
     def Reset(self):
         """
@@ -601,7 +612,7 @@ class HexCellEditor(Grid.PyGridCellEditor,HexDigitMixin):
     def Destroy(self):
         """final cleanup"""
         log.debug("")
-        Grid.PyGridCellEditor.Destroy(self)
+        Grid.GridCellEditor.Destroy(self)
 
     def Clone(self):
         """

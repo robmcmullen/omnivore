@@ -154,7 +154,7 @@ class ListDropScrollerMixin(object):
             # From Robin Dunn: use GetMainWindow on the list to find
             # the actual window on which to draw
             if self != self.GetMainWindow():
-                y += self.GetMainWindow().GetPositionTuple()[1]
+                y += self.GetMainWindow().GetPosition().Get()[1]
 
             # If the user is dropping into the lower half of the rect,
             # we want to insert _after_ this item.
@@ -203,10 +203,10 @@ class ListDropScrollerMixin(object):
         # a subwindow, so have to use GetMainWindow on the list to
         # find the actual window on which to draw
         if self != self.GetMainWindow():
-            y -= self.GetMainWindow().GetPositionTuple()[1]
+            y -= self.GetMainWindow().GetPosition().Get()[1]
 
         if self._auto_scroll_save_y == -1 or self._auto_scroll_save_y != y:
-            #print "main window=%s, self=%s, pos=%s" % (self, self.GetMainWindow(), self.GetMainWindow().GetPositionTuple())
+            #print "main window=%s, self=%s, pos=%s" % (self, self.GetMainWindow(), self.GetMainWindow().GetPosition().Get())
             if self._auto_scroll_save_width < 0:
                 self._auto_scroll_save_width = rect.width
             dc = self._getIndicatorDC()

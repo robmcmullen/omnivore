@@ -440,9 +440,9 @@ class DrawPeanutMode(DrawMode):
 
     def get_cursor(self):
         if self.is_bad_location:
-            return wx.StockCursor(wx.CURSOR_HAND)
+            return wx.Cursor(wx.CURSOR_HAND)
         else:
-            return wx.StockCursor(wx.CURSOR_ARROW)
+            return wx.Cursor(wx.CURSOR_ARROW)
 
     def check_objects(self, x, y):
         hx, hy = self.get_harvest_offset()

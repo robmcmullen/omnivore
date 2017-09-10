@@ -37,7 +37,7 @@ class BaseRenderer(object):
     def reshape(self, bitimage, bytes_per_row, nr):
         # source array 'bitimage' in the shape of (size, w, 3)
         h, w, colors = bitimage.shape
-        print("bitimage: %d,%d,%d; ppb=%d bpr=%d" % (h, w, colors, self.pixels_per_byte, bytes_per_row))
+        log.debug("bitimage: %d,%d,%d; ppb=%d bpr=%d" % (h, w, colors, self.pixels_per_byte, bytes_per_row))
         # create a new image with pixels in the correct aspect ratio
         output = intwscale(bitimage, self.pixels_per_byte / w)
         return output.reshape((nr, bytes_per_row * self.pixels_per_byte, 3))
@@ -714,6 +714,7 @@ class Mode2(BaseRenderer):
     char_bit_height = 8
     scale_width = 1
     scale_height = 1
+    expected_chars = 128
 
     @classmethod
     def get_image(cls, machine, antic_font, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols):
@@ -722,6 +723,46 @@ class Mode2(BaseRenderer):
         else:
             array = get_numpy_font_map_image(machine, antic_font, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols)
         return array
+
+    @property
+    def bytes_per_char(self):
+        return (self.char_bit_width + 7) // 8 * self.char_bit_height
+
+    def get_font(self, data, colors, gr0_colors, reverse=False):
+        bits = self.data_to_bits(data)
+        font = self.bits_to_font(bits, colors, gr0_colors, reverse)
+        return font
+
+    def data_to_bits(self, data):
+        """Convert byte data into bits, returning only a subset if
+        required
+        """
+        padded = self.pad_data(data)
+        bits = np.unpackbits(padded)
+        bits = bits.reshape((-1, 8, 8))
+        bits = self.select_subset(bits)
+        return bits
+
+    def pad_data(self, data):
+        """Expand (or shrink if necessary) to conform to the expected input
+        size of font data array
+        """
+        count = data.shape[0]
+        expected_bytes = self.bytes_per_char * self.expected_chars
+        if count > expected_bytes:
+            data = data[0:expected_bytes]
+        elif count < expected_bytes:
+            expanded = np.zeros((expected_bytes), dtype=np.uint8)
+            expanded[0:count] = data
+            expanded[count:] = 0
+            data = expanded
+        return data
+
+    def select_subset(self, bits):
+        """If the font is made up of only a portion of the data, return the
+        array that contains only the interesting bits.
+        """
+        return bits
 
     def bits_to_font(self, bits, colors, gr0_colors, reverse=False):
         fg, bg = gr0_colors
@@ -737,27 +778,21 @@ class Mode2(BaseRenderer):
         b[bits==0] = bg[2]
         b[bits==1] = fg[2]
         font = np.zeros((256, 8, 8, 3), dtype=np.uint8)
-        if bits.shape[0] == 256:
-            # all 256 chars are defined, so just store them
-            font[:,:,:,0] = r
-            font[:,:,:,1] = g
-            font[:,:,:,2] = b
-        else:
-            # store the 128 chars as the normal chars
-            font[0:128,:,:,0] = r
-            font[0:128,:,:,1] = g
-            font[0:128,:,:,2] = b
+        # store the first 128 chars as the normal chars
+        font[0:128,:,:,0] = r
+        font[0:128,:,:,1] = g
+        font[0:128,:,:,2] = b
 
-            # create inverse characters from first 128 chars
-            r[bits==0] = fg[0]
-            r[bits==1] = bg[0]
-            g[bits==0] = fg[1]
-            g[bits==1] = bg[1]
-            b[bits==0] = fg[2]
-            b[bits==1] = bg[2]
-            font[128:256,:,:,0] = r
-            font[128:256,:,:,1] = g
-            font[128:256,:,:,2] = b
+        # create inverse characters from first 128 chars
+        r[bits==0] = fg[0]
+        r[bits==1] = bg[0]
+        g[bits==0] = fg[1]
+        g[bits==1] = bg[1]
+        b[bits==0] = fg[2]
+        b[bits==1] = bg[2]
+        font[128:256,:,:,0] = r
+        font[128:256,:,:,1] = g
+        font[128:256,:,:,2] = b
         return font
 
 
@@ -808,14 +843,8 @@ class Mode6Base(Mode2):
     name = "Antic 6 (base class)"
     scale_width = 2
 
-    def get_half(self, bits):
-        """Return which half of the character set is used by this mode
-        """
-        raise NotImplementedError
-
     def bits_to_font(self, bits, colors, gr0_colors, reverse=False):
         bg = colors[8]
-        half = self.get_half(bits)
         r = np.empty(half.shape, dtype=np.uint8)
         g = np.empty(half.shape, dtype=np.uint8)
         b = np.empty(half.shape, dtype=np.uint8)
@@ -841,14 +870,14 @@ class Mode6Base(Mode2):
 class Mode6Upper(Mode6Base):
     name = "Antic 6 (Gr 1) Uppercase and Numbers"
 
-    def get_half(self, bits):
+    def select_subset(self, bits):
         return bits[0:64,:,:]
 
 
 class Mode6Lower(Mode6Base):
     name = "Antic 6 (Gr 1) Lowercase and Symbols"
 
-    def get_half(self, bits):
+    def select_subset(self, bits):
         return bits[64:128,:,:]
 
 
@@ -856,7 +885,7 @@ class Mode7Upper(Mode6Base):
     name = "Antic 7 (Gr 2) Uppercase and Numbers"
     scale_height = 2
 
-    def get_half(self, bits):
+    def select_subset(self, bits):
         return bits[0:64,:,:]
 
 
@@ -864,17 +893,42 @@ class Mode7Lower(Mode6Base):
     name = "Antic 7 (Gr 2) Lowercase and Symbols"
     scale_height = 2
 
-    def get_half(self, bits):
+    def select_subset(self, bits):
         return bits[64:128,:,:]
 
 
 class Apple2TextMode(Mode2):
     name = "Apple ]["
     char_bit_width = 7
+    expected_chars = 256
+
+    def pad_data(self, data):
+        """Expand (or shrink if necessary) to conform to the expected input
+        size of font data array
+        """
+        count = data.shape[0]
+
+        # if more than 128 characters, assume not blinking and pad/truncate to
+        # 256 chars
+        if count >= 2048:
+            return data[0:2048]
+        if count > 1024:
+            expanded = np.zeros(2048, dtype=np.uint8)
+            expanded[0:count] = data
+            expanded[count:] = 0
+            return expanded
+
+        # pad to 1024 if necessary; inverse/blinking will be applied later
+        if count < 1024:
+            expanded = np.zeros(1024, dtype=np.uint8)
+            expanded[0:count] = data
+            expanded[count:] = 0
+            data = expanded
+        return data
 
     def bits_to_font(self, bits, colors, gr0_colors, reverse=False):
-        bg = colors[8]
-        fg = colors[4]
+        bg = (0, 0, 0)
+        fg = (255, 255, 255)
         r = np.empty(bits.shape, dtype=np.uint8)
         r[bits==0] = bg[0]
         r[bits==1] = fg[0]
@@ -887,16 +941,16 @@ class Apple2TextMode(Mode2):
         font = np.zeros((256, 8, 7, 3), dtype=np.uint8)
         if bits.shape[0] == 256:
             # all 256 chars are defined, so just store them
-            font[:,:,:,0] = r[:,:,0:7]
-            font[:,:,:,1] = g[:,:,0:7]
-            font[:,:,:,2] = b[:,:,0:7]
+            font[:,:,:,0] = r[:,:,8:0:-1]
+            font[:,:,:,1] = g[:,:,8:0:-1]
+            font[:,:,:,2] = b[:,:,8:0:-1]
         else:
             # only 128 chars are present, so create inversed/blink copies
 
             # Normal characters get stored in 2nd 128 char positions
-            font[128:256,:,:,0] = r[:,:,0:7]
-            font[128:256,:,:,1] = g[:,:,0:7]
-            font[128:256,:,:,2] = b[:,:,0:7]
+            font[128:256,:,:,0] = r[:,:,8:0:-1]
+            font[128:256,:,:,1] = g[:,:,8:0:-1]
+            font[128:256,:,:,2] = b[:,:,8:0:-1]
 
             # First 64 are inversed
             r[bits==0] = fg[0]
@@ -905,9 +959,9 @@ class Apple2TextMode(Mode2):
             g[bits==1] = bg[1]
             b[bits==0] = fg[2]
             b[bits==1] = bg[2]
-            font[0:64,:,:,0] = r[0:64,:,0:7]
-            font[0:64,:,:,1] = g[0:64,:,0:7]
-            font[0:64,:,:,2] = b[0:64,:,0:7]
+            font[0:64,:,:,0] = r[0:64,:,8:0:-1]
+            font[0:64,:,:,1] = g[0:64,:,8:0:-1]
+            font[0:64,:,:,2] = b[0:64,:,8:0:-1]
 
             # Next 64 are blinking!
             if reverse:
@@ -918,9 +972,9 @@ class Apple2TextMode(Mode2):
             g[bits==1] = bg[1]
             b[bits==0] = fg[2]
             b[bits==1] = bg[2]
-            font[64:128,:,:,0] = r[0:64,:,0:7]
-            font[64:128,:,:,1] = g[0:64,:,0:7]
-            font[64:128,:,:,2] = b[0:64,:,0:7]
+            font[64:128,:,:,0] = r[0:64,:,8:0:-1]
+            font[64:128,:,:,1] = g[0:64,:,8:0:-1]
+            font[64:128,:,:,2] = b[0:64,:,8:0:-1]
         return font
 
 

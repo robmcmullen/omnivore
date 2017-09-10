@@ -12,9 +12,11 @@ def count_in_range(source_list, lowest_valid, highest_valid):
 
 # Fast integer-multiple scaling of bitmaps
 def intscale(arr, hscale, wscale=None):
+    if wscale is None:
+        wscale = hscale
     hscale, wscale = int(hscale), int(wscale)
     h, w, depth = arr.shape
-    if hscale == 1 and (wscale == 1 or wscale is None):
+    if hscale == 1 and wscale == 1:
         return arr
     elif hscale < 1 or wscale < 1:
         raise ValueError("Scale must be an integer greater than 1")
@@ -49,7 +51,7 @@ def intscale(arr, hscale, wscale=None):
             # copy completed rows to the next three rows
             output[1::4,:,:] = output[::4,:,:]
             output[2::4,:,:] = output[::4,:,:]
-            output[2::4,:,:] = output[::4,:,:]
+            output[3::4,:,:] = output[::4,:,:]
             return output
     output = np.empty((h * hscale, w * wscale, depth), dtype=np.uint8)
     # duplicate source pixels horizontally first onto the first line

@@ -351,7 +351,7 @@ class FrameworkEditor(Editor):
 
         if fmt is not None:
             d = self.get_data_object_by_format(data_obj, fmt)
-            size = d.GetDataSize()
+            size = d.GetTextLength()
             self.task.status_bar.message = "%s %d text characters" % ("Copied" if copy else "Pasted", size)
 
     def paste(self, cmd_cls=None):
@@ -419,8 +419,7 @@ class FrameworkEditor(Editor):
 
         raw_data = self.get_numpy_image()
         h, w, depth = raw_data.shape
-        bitmap = wx.BitmapFromBuffer(width=w, height=h, dataBuffer=raw_data)
-        image = wx.ImageFromBitmap(bitmap)
+        image = wx.Image(w, h, raw_data)
         image.SaveFile(path, t)
 
     def get_numpy_image(self):
@@ -794,7 +793,7 @@ class FrameworkEditor(Editor):
                 elif hasattr(action, '__iter__'):
                     submenu = wx.Menu()
                     title = action[0]
-                    popup.AppendMenu(wx.NewId(), title, submenu)
+                    popup.Append(wx.NewId(), title, submenu)
                     loop_over_actions(submenu, action[1:])
                 else:
                     add_to_menu(popup, action, context_menu_data)

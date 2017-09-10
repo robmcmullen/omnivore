@@ -1,3 +1,4 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -8,9 +9,10 @@
 
 
 
+
 <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 </head>
-<body role="document">
+<body>
 <div id="titleLine">
 <center><a href="https://playermissile.com/omnivore/"><img src="_static/doc-logo.png" alt="Omnivore XL, the 8-bit Binary Editor" /></a></center>
 <hr />
@@ -18,14 +20,12 @@
 <a name="jumpman-level-editor">
 <h1>Jumpman Level Editor</h1>
 <div class="toctree-wrapper compound">
-<ul class="simple">
-</ul>
 </div>
 <a name="overview"></a>
 <h2>Overview</h2>
 <p>This Jumpman level editor is a complete solution for creating new levels
 for this all-time-classic game.</p>
-<p>Open Omnivore and choose <code class="docutils literal"><span class="pre">File</span> <span class="pre">-&gt;</span> <span class="pre">New</span> <span class="pre">-&gt;</span> <span class="pre">Jumpman</span> <span class="pre">Level</span></code> and you&#8217;ll see a
+<p>Open Omnivore and choose <code class="docutils literal"><span class="pre">File</span> <span class="pre">-&gt;</span> <span class="pre">New</span> <span class="pre">-&gt;</span> <span class="pre">Jumpman</span> <span class="pre">Level</span></code> and you’ll see a
 very simple level definition. You can add to that by clicking one of the
 draw icons in the toolbar and drawing in the main window. By clicking on
 the arrow icon in the toolbar you can select existing items and drag them
@@ -41,7 +41,7 @@ hand panel.</p>
 fearlessly navigate the horizontal girders and ramps that are sloped up or
 down by one pixel per block. Ramps that slope up more than that can be
 (carefully) climbed, but down-slopes of more than one pixel will trip up
-and kill poor Jumpman. It&#8217;s not recommended to use more than one pixel
+and kill poor Jumpman. It’s not recommended to use more than one pixel
 slope up or down, but I have left the feature in the editor just in case
 someone comes up with a use for it.</p>
 <p>Ladders can only be placed at even pixel columns (as measured from the left
@@ -57,13 +57,13 @@ number of downropes is also shown in the <code class="docutils literal"><span cl
 positions, so knock yourself out.</p>
 <p>The object of the game is to collect bombs, so be sure to place at least
 one bomb or the level will end immediately when you try to play it. When
-you place bombs, you&#8217;ll notice a grid that appears in the main window.
+you place bombs, you’ll notice a grid that appears in the main window.
 Thick red borders between each grid cell denotes invalid bomb locations, so
-place bombs only where they don&#8217;t touch any of the red cell borders. (Due
+place bombs only where they don’t touch any of the red cell borders. (Due
 to a speed optimization in the code, the game can crash when Jumpman
 collects a bomb that is touching any part of the red shaded area.) Only one
 bomb may be placed per grid square.</p>
-<p>Finally, you must set Jumpman&#8217;s respawn position by selecting the the
+<p>Finally, you must set Jumpman’s respawn position by selecting the the
 Jumpman figure icon on the toolbar. Place the white square at the desired
 location. Typically, Jumpman will be placed on a girder, but other starting
 positions are possible. If the bottom of the square overlaps a girder,
@@ -87,7 +87,7 @@ levels of nesting. Select the <code class="docutils literal"><span class="pre">M
 level definition.</p>
 <a name="advanced-levels-with-custom-code"></a>
 <h3>Advanced Levels With Custom Code</h3>
-<p>Omnivore now has in integrated <a class="reference external" href="http://mixinc.net/atari/mac65.htm">MAC/65 compatible</a> assembler that recognizes specific
+<p>Omnivore now has in integrated <a class="reference external" href="http://mixinc.net/atari/mac65.htm" target="_blank">MAC/65 compatible</a> assembler that recognizes specific
 keywords in your assembly code and puts them in the correct spots in your
 Jumpman level definition.</p>
 <p>You will need to edit the assembly source with your favorite text editor
@@ -101,7 +101,7 @@ with <code class="docutils literal"><span class="pre">trigger</span></code>, tho
 collection. You can right click on peanuts and set their trigger function
 to any of those in the list.</p>
 <p>There are special vectors that Omnivore knows about; see the section in the
-<a class="reference external" href="http://playermissile.com/jumpman/notes.html#h.s0ullubzr0vv">Jumpman Reverse Engineering Notes</a>.</p>
+<a class="reference external" href="http://playermissile.com/jumpman/notes.html#h.s0ullubzr0vv" target="_blank">Jumpman Reverse Engineering Notes</a>.</p>
 <p>If you give your code any of those labels:</p>
 <ul class="simple">
 <li>vbi1</li>
@@ -119,25 +119,25 @@ to any of those in the list.</p>
 the level definition so that your routine gets automatically called. See
 the reverse engineering notes for more details on what each of the labels
 means.</p>
-<p>There&#8217;s also one last special label: <code class="docutils literal"><span class="pre">gameloop</span></code>. If you define this in
-your code, it will take over the non-VBI main game loop. If you don&#8217;t
+<p>There’s also one last special label: <code class="docutils literal"><span class="pre">gameloop</span></code>. If you define this in
+your code, it will take over the non-VBI main game loop. If you don’t
 define it, Omnivore will put the standard game loop at $2860. The game loop
 is responsible for fading in jumpman at the beginning of a level and
 monitoring end-of-game conditions. Only a few examples of a custom game
-loop exist Glover&#8217;s original levels, so this is not a commonly used feature
+loop exist Glover’s original levels, so this is not a commonly used feature
 at all.</p>
 
 <a name="disassembly"></a>
 <h3>Disassembly</h3>
-<p>If you&#8217;re interested in exploring the assembly code in Jumpman, you&#8217;ll want
+<p>If you’re interested in exploring the assembly code in Jumpman, you’ll want
 to use the standard Jumpman disk image and then get the Omnivore metadata
 file that provides the comments.</p>
 <ul class="simple">
-<li><a class="reference external" href="http://www.atarimania.com/game-atari-400-800-xl-xe-jumpman_2713.html">Jumpman disk image</a></li>
-<li><a class="reference external" href="http://playermissile.com/jumpman/Jumpman%20(1983)(Epyx)(US)[!].atr.omnivore">latest metadata</a></li>
+<li><a class="reference external" href="http://www.atarimania.com/game-atari-400-800-xl-xe-jumpman_2713.html" target="_blank">Jumpman disk image</a></li>
+<li><a class="reference external" href="http://playermissile.com/jumpman/Jumpman%20(1983)(Epyx)(US)[!].atr.omnivore" target="_blank">latest metadata</a></li>
 </ul>
 <p>Note that Omnivore recognizes a Jumpman disk image and loads right into the
-level editor. To use the hex editor, you&#8217;ll need to use the menu option
+level editor. To use the hex editor, you’ll need to use the menu option
 <code class="docutils literal"><span class="pre">Window</span> <span class="pre">-&gt;</span> <span class="pre">New</span> <span class="pre">View</span> <span class="pre">of</span> <span class="pre">Jumpman</span> <span class="pre">-&gt;</span> <span class="pre">In</span> <span class="pre">Hex</span> <span class="pre">Editor</span> <span class="pre">Window</span></code></p>
 
 <a name="a-note-on-terminology"></a>
@@ -145,12 +145,12 @@ level editor. To use the hex editor, you&#8217;ll need to use the menu option
 <p>In the documentation for the game, you are described as running around
 defusing bombs by touching them. We started calling them peanuts in our
 documentation because Kevin called them that in his youth, and so we
-wouldn&#8217;t get flagged and placed on NSA watchlists because our email traffic
-contained hundreds of references to bombs. We hope the Planter&#8217;s people are
+wouldn’t get flagged and placed on NSA watchlists because our email traffic
+contained hundreds of references to bombs. We hope the Planter’s people are
 less invasive.</p>
 <p>peanut:</p>
 <blockquote>
-<div>The bombs from the original manual; what you&#8217;re collecting to
+<div>The bombs from the original manual; what you’re collecting to
 advance to the next level</div></blockquote>
 <p>harvest:</p>
 <blockquote>
@@ -186,6 +186,7 @@ showing a new blank template of the selected file format.</p>
 <li>Atari DOS 2.5 ED (130K) system disk</li>
 <li>Getaway Map</li>
 <li>Jumpman Level</li>
+<li>template://no-json.dsk</li>
 </ul>
 
 <a name="open"></a>
@@ -202,7 +203,7 @@ showing a new blank template of the selected file format.</p>
 <h3>Insert File</h3>
 <p>Insert binary data at the cursor</p>
 <p>The data from the loaded file will overwrite data starting at the cursor,
-so it&#8217;s not inserted in the text editor sense where space is created in the
+so it’s not inserted in the text editor sense where space is created in the
 existing data.</p>
 
 <a name="save"></a>
@@ -357,7 +358,7 @@ the values in the hex grid and the disassembly text.</p>
 
 <a name="current-task"></a>
 <h3>Current Task:</h3>
-<p>Changes the view in the entire window to a new editing task. The files in the current task are not lost, it&#8217;s just a way to edit different types of files while using the same top level window on the desktop.</p>
+<p>Changes the view in the entire window to a new editing task. The files in the current task are not lost, it’s just a way to edit different types of files while using the same top level window on the desktop.</p>
 
 
 <a name="jumpman-menu"></a>
@@ -404,13 +405,13 @@ recognized by the assembler and used in the appropriate places:</p>
 <li>collect_callback</li>
 </ul>
 </div></blockquote>
-<p>See our <a class="reference external" href="http://playermissile.com/jumpman/notes.html#h.s0ullubzr0vv">reverse engineering notes</a> for more
+<p>See our <a class="reference external" href="http://playermissile.com/jumpman/notes.html#h.s0ullubzr0vv" target="_blank">reverse engineering notes</a> for more
 details.</p>
 
 <a name="recompile-code"></a>
 <h3>Recompile Code</h3>
 <p>Recompile the assembly source code.</p>
-<p>This is a manual action, currently the program doesn&#8217;t know when the file
+<p>This is a manual action, currently the program doesn’t know when the file
 has changed. Making this process more automatic is a planned future
 enhancement.</p>
 
@@ -508,7 +509,7 @@ usually either <em>INFO</em> or <em>WARNING</em>.</p>
 </a>
 <div class="footer">
 <hr />
-Updated 02 Jun 2017 by Rob McMullen &lt;feedback@playermissile.com&gt;
+Updated 18 Aug 2017 by Rob McMullen &lt;feedback@playermissile.com&gt;
 </div>
 </body>
 </html>

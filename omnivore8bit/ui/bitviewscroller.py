@@ -239,9 +239,9 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         if self.is_ready_to_render():
             self.calc_image_size()
 
-            w, h = self.GetClientSizeTuple()
+            w, h = self.GetClientSize().Get()
             dc = wx.MemoryDC()
-            self.scaled_bmp = wx.EmptyBitmap(w, h)
+            self.scaled_bmp = wx.Bitmap(w, h)
 
             dc.SelectObject(self.scaled_bmp)
             dc.SetBackground(wx.Brush(self.editor.machine.empty_color))
@@ -254,9 +254,9 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
                 zw, zh = self.get_zoom_factors()
                 array = intscale(array, zh, zw)
                 self.draw_overlay(array, width, height, zw, zh)
-                image = wx.EmptyImage(array.shape[1], array.shape[0])
+                image = wx.Image(array.shape[1], array.shape[0])
                 image.SetData(array.tostring())
-                bmp = wx.BitmapFromImage(image)
+                bmp = wx.Bitmap(image)
                 dc.DrawBitmap(bmp, 0, 0)
 
     def draw_overlay(self, array, w, h, zw, zh):
@@ -266,7 +266,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
 
     def calc_image_size(self):
         x, y = self.GetViewStart()
-        w, h = self.GetClientSizeTuple()
+        w, h = self.GetClientSize().Get()
         self.start_row = y
         self.start_col = x
 
@@ -545,9 +545,9 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         e.index_clicked(index, 0, self, False)
 
     def on_char_hook(self, evt):
-        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
+        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUnicodeKey(), evt.GetKeyCode(), bin(evt.GetModifiers())))
         mods = evt.GetModifiers()
-        char = evt.GetUniChar()
+        char = evt.GetUnicodeKey()
         if char == 0:
             char = evt.GetKeyCode()
         delta_index = self.process_movement_keys(char)
@@ -690,7 +690,7 @@ class FontMapScroller(BitviewScroller):
 
     def calc_image_size(self):
         x, y = self.GetViewStart()
-        w, h = self.GetClientSizeTuple()
+        w, h = self.GetClientSize().Get()
         self.start_row = y
         self.start_col = y
 
@@ -771,7 +771,9 @@ class FontMapScroller(BitviewScroller):
         font = m.get_blinking_font(0)
         array = m.font_renderer.get_image(m, font, bytes, style, start_byte, end_byte, self.bytes_per_row, nr, 0, self.bytes_per_row)
         if self.font.scale_h > 1 or self.font.scale_w > 1:
-            array = intscale(array, self.font_scale_h, self.font_scale_w)
+            array = intscale(array, self.font.scale_h, self.font.scale_w)
+        if self.zoom > 1:
+            array = intscale(array, self.zoom)
         return array
 
     def draw_overlay(self, array, w, h, zw, zh):
@@ -891,11 +893,11 @@ class FontMapScroller(BitviewScroller):
         evt.Skip()
 
     def on_char(self, evt):
-        log.debug("on_char! char=%s, key=%s, shift=%s, ctrl=%s, cmd=%s" % (evt.GetUniChar(), evt.GetRawKeyCode(), evt.ShiftDown(), evt.ControlDown(), evt.CmdDown()))
+        log.debug("on_char! char=%s, key=%s, shift=%s, ctrl=%s, cmd=%s" % (evt.GetUnicodeKey(), evt.GetRawKeyCode(), evt.ShiftDown(), evt.ControlDown(), evt.CmdDown()))
         if not self.editing:
             evt.Skip()
             return
-        char = evt.GetUniChar()
+        char = evt.GetUnicodeKey()
         if char > 0:
             self.editor.select_none_if_selection()
             char = self.editor.machine.font_mapping.convert_byte_mapping(char)
@@ -916,9 +918,9 @@ class FontMapScroller(BitviewScroller):
         e.process_command(cmd)
 
     def on_char_hook(self, evt):
-        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
+        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUnicodeKey(), evt.GetKeyCode(), bin(evt.GetModifiers())))
         mods = evt.GetModifiers()
-        char = evt.GetUniChar()
+        char = evt.GetUnicodeKey()
         if char == 0:
             char = evt.GetKeyCode()
         byte = None
@@ -1037,9 +1039,9 @@ class CharacterSetViewer(FontMapScroller):
         wx.CallAfter(self.editor.set_current_draw_pattern, byte)
 
     def on_char_hook(self, evt):
-        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
+        log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUnicodeKey(), evt.GetKeyCode(), bin(evt.GetModifiers())))
         mods = evt.GetModifiers()
-        char = evt.GetUniChar()
+        char = evt.GetUnicodeKey()
         if char == 0:
             char = evt.GetKeyCode()
         delta_index = self.process_movement_keys(char)
@@ -1065,8 +1067,8 @@ class MemoryMapScroller(BitviewScroller):
         width = self.bytes_per_row * self.zoom
         height = -1
 
-        vw, vh = self.GetVirtualSizeTuple()
-        ww, wh = self.GetClientSizeTuple()
+        vw, vh = self.GetVirtualSize().Get()
+        ww, wh = self.GetClientSize().Get()
         if wh < vh:
             # Scrollbar is present!
             width += wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X) + 1
@@ -1090,7 +1092,7 @@ class MemoryMapScroller(BitviewScroller):
 
     def calc_image_size(self):
         x, y = self.GetViewStart()
-        w, h = self.GetClientSizeTuple()
+        w, h = self.GetClientSize().Get()
         self.start_row = y
         self.start_col = x
 
@@ -1177,7 +1179,7 @@ if __name__ == '__main__':
             wildcard="*"
             dlg = wx.FileDialog(
                 frame, message="Open File",
-                defaultFile="", wildcard=wildcard, style=wx.OPEN)
+                defaultFile="", wildcard=wildcard, style=wx.FD_OPEN)
 
             # Show the dialog and retrieve the user response. If it is the
             # OK response, process the data.
@@ -1188,7 +1190,7 @@ if __name__ == '__main__':
                 for path in paths:
                     dprint("open file %s:" % path)
                     fh = open(path, 'rb')
-                    img = wx.EmptyImage()
+                    img = wx.Image()
                     if img.LoadStream(fh):
                         panel.setImage(img)
                     else:

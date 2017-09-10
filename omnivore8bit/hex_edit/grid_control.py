@@ -57,14 +57,14 @@ class ImageCache(object):
     def draw_blank(self, dc, rect):
         dc.SetBrush(wx.Brush(wx.WHITE, wx.SOLID))
         dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
-        dc.DrawRectangleRect(rect)
+        dc.DrawRectangle(rect)
 
     def draw_text(self, dc, rect, text, style):
         k = (text, style, rect.width, rect.height)
         try:
             bmp = self.cache[k]
         except KeyError:
-            bmp = wx.EmptyBitmap(rect.width, rect.height)
+            bmp = wx.Bitmap(rect.width, rect.height)
             mdc = wx.MemoryDC()
             mdc.SelectObject(bmp)
             r = wx.Rect(0, 0, rect.width, rect.height)
@@ -95,7 +95,7 @@ class ImageCache(object):
             dc.SetBrush(self.normal_brush)
             dc.SetTextBackground(self.normal_background)
         dc.SetBackgroundMode(wx.SOLID)
-        dc.DrawRectangleRect(rect)
+        dc.DrawRectangle(rect)
         if style & diff_bit_mask:
             dc.SetTextForeground(self.diff_color)
         else:
@@ -104,10 +104,10 @@ class ImageCache(object):
         dc.DrawText(text, rect.x+1, rect.y+1)
 
 
-class CachingHexRenderer(Grid.PyGridCellRenderer):
+class CachingHexRenderer(Grid.GridCellRenderer):
     def __init__(self, table, editor, cache):
         """Render data in the specified color and font and fontsize"""
-        Grid.PyGridCellRenderer.__init__(self)
+        Grid.GridCellRenderer.__init__(self)
         self.table = table
         self.cache = cache
         cache.set_colors(editor)

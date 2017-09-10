@@ -5,6 +5,14 @@ import shutil
 from subprocess import Popen, PIPE
 
 if sys.platform == 'win32':
+    # On windows, you can disable installation of egg files by creating the
+    # file %HOMEPATH%/pydistutils.cfg
+    #
+    # pyinstaller 3.2 doesn't work with the 'future' library. Development
+    # branch was suggested because of a fix for:
+    # https://github.com/pyinstaller/pyinstaller/issues/1935 but it still
+    # doesn't work. There are dynamic imports that aren't being included, so I
+    # had to create hook-future.py to include those.
     win = True
     mac = False
     exe = ".exe"
@@ -45,9 +53,7 @@ dest_exe = "%s/%s" % (dest_dir, final_exe)
 dest_zip = "%s/%s" % (dest_dir, final_zip)
 
 print "Building %s" % build_app
-args = ['pyinstaller', '-y', '--debug', '--windowed']
-if win:
-    args.append('--onefile')
+args = ['pyinstaller', '-y']
 args.append('%s.spec' % build_target)
 run(args)
 

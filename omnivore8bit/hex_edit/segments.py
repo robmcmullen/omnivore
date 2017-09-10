@@ -90,8 +90,8 @@ class SegmentList(wx.ListBox):
         self.SetSelection(selected)
 
     def on_char_hook_find_hack(self, evt):
-        log.debug("on_char_hook_find_hack! char=%s, key=%s, modifiers=%s" % (evt.GetUniChar(), evt.GetKeyCode(), bin(evt.GetModifiers())))
-        if evt.GetUniChar() == 70 and evt.ControlDown():
+        log.debug("on_char_hook_find_hack! char=%s, key=%s, modifiers=%s" % (evt.GetUnicodeKey(), evt.GetKeyCode(), bin(evt.GetModifiers())))
+        if evt.GetUnicodeKey() == 70 and evt.ControlDown():
             log.debug("on_char_hook_find_hack! redirecting to %s" % self.task.active_editor.control)
             # On linux/GTK, the ctrl-F is bound to the list's own find command,
             # which is useless for us. By redirecting it to the main window,

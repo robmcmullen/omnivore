@@ -367,10 +367,10 @@ class ErrorPanel(wx.Panel):
         wx.CallAfter(tctrl.ShowPosition, len(self.err_msg))
 
         abort_b = wx.Button(self, wx.ID_ABORT, _("Abort"))
-        abort_b.SetToolTipString(_("Exit the application"))
+        abort_b.SetToolTip(_("Exit the application"))
         close_b = wx.Button(self, wx.ID_CLOSE, ("Attempt to Continue"))
         send_b = wx.Button(self, ID_SEND, _("... and Send Error Report"))
-        send_b.SetToolTipString(_("Attempt to continue after sending error report"))
+        send_b.SetToolTip(_("Attempt to continue after sending error report"))
         send_b.SetDefault()
         ignore_b = wx.Button(self, wx.ID_IGNORE, ("Ignore Reoccurrences"))
 

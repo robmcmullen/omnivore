@@ -164,6 +164,7 @@ class TileListControl(wx.Panel):
 class TileButton(buttons.GenBitmapToggleButton):
     labelDelta = 0
     label_border = 4
+    bgClr = wx.Colour(255, 255, 255)
     faceDnClr = wx.Colour(100, 200, 230)
 
     def DoGetBestSize(self):
@@ -182,8 +183,22 @@ class TileButton(buttons.GenBitmapToggleButton):
     def DrawBezel(self, dc, x1, y1, x2, y2):
         pass
 
+    def GetBackgroundBrush(self, dc):
+        """
+        Returns the current :class:`wx.Brush` to be used to draw the button background.
+
+        :param wx.DC `dc`: the device context used to draw the button background.
+        """
+        if self.up:
+            col = self.bgColor
+        else:
+            col = self.faceDnClr
+        brush = wx.Brush(col)
+        return brush
+
     @classmethod
     def set_colors(cls, editor):
+        cls.bgColor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND)
         cls.faceDnClr = wx.Colour(*editor.machine.highlight_color)
 
 
@@ -206,6 +221,9 @@ class TileWrapControl(wx.Panel):
         self.panel.SetSizer(psiz)
         self.panel.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_ALWAYS)
         self.panel.SetupScrolling(scroll_x=False)
+        self.bg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+        self.panel.SetBackgroundColour(self.bg)
+        self.SetBackgroundColour(self.bg)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.cat, 0, wx.EXPAND, 0)
@@ -234,7 +252,7 @@ class TileWrapControl(wx.Panel):
 
     def parse_tile_map(self, panel, tile_map):
         sizer = panel.GetSizer()
-        sizer.DeleteWindows()
+        sizer.Clear(True)
         self.tile_map = tile_map
         self.categories = []
         self.items = []
@@ -251,6 +269,7 @@ class TileWrapControl(wx.Panel):
                         data = tiles[i:i+1]
                         bmp = self.editor.machine.antic_font.get_image(data[0], self.zoom)
                         btn = TileButton(panel, -1, bmp, style=wx.BORDER_NONE|wx.BU_EXACTFIT)
+                        btn.SetBackgroundColour(self.bg)
                         btn.tile_data = data
                         btn.Bind(wx.EVT_BUTTON, self.on_tile_clicked)
                         w.Add(btn, 0, wx.ALL, 0)
@@ -280,8 +299,8 @@ class TileWrapControl(wx.Panel):
         e = self.editor
         if e is not None:
             self.current_tile = btn
-            e.set_current_draw_pattern(btn.tile_data, self)
             self.clear_toggle_except(btn)
+            wx.CallAfter(e.set_current_draw_pattern, btn.tile_data, self)
 
     def show_pattern(self, pattern):
         log.debug("tilelist showing pattern %s" % str(pattern))
@@ -325,8 +344,8 @@ if __name__ == '__main__':
     import sys
     sys.path[0:0] = [".."]
     print sys.path
-    import fonts
-    import colors
+    import omnivore8bit.arch.fonts as fonts
+    import omnivore8bit.arch.colors as colors
 
     class Wrapper(object):
         def __init__(self, **kwargs):

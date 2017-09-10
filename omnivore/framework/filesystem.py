@@ -10,6 +10,7 @@ from fs.base import FS
 from fs.path import normpath
 import fs
 import wx
+import numpy as np
 
 from omnivore.templates import get_template_fh, find_template_path
 
@@ -109,8 +110,9 @@ class WxAboutFileSystemHandler(wx.FileSystemHandler):
             except errors.FSError, e:
                 log.error(str(e))
                 return None
+            data = np.fromstring(fh.read(), dtype=np.uint8)
             log.debug("Created %s in wxMemoryFS" % path)
-            wx.MemoryFSHandler.AddFile(path, fh.read())
+            wx.MemoryFSHandler.AddFileWithMimeType(path, data, "image/png")
 
             fsfile = wxfs.OpenFile("memory:%s" % path)
         else:

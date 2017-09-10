@@ -1,6 +1,7 @@
 # -*- mode: python -*-
 
 block_cipher = None
+DEBUG = False
 
 with open("../run.py", "r") as fh:
     script = fh.read()
@@ -54,16 +55,18 @@ if sys.platform == "darwin":
        icon=icon)
 
 elif sys.platform == "win32":
+    upx = not DEBUG
+    console = DEBUG
     exe = EXE(pyz,
         a.scripts,
         a.binaries,
         a.zipfiles,
         a.datas,
         name='OmnivoreXL',
-        debug=False,
+        debug=DEBUG,
         strip=False,
-        upx=True,
-        console=False,
+        upx=upx,
+        console=console,
         icon="../omnivore/icons/omnivore.ico")
 
 

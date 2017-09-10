@@ -3,7 +3,7 @@
 # Inspired By And Heavily Based On wxGenericTreeCtrl.
 #
 # Andrea Gavana, @ 17 May 2006
-# Latest Revision: 03 Jan 2014, 23.00 GMT
+# Latest Revision: 09 Jan 2014, 23.00 GMT
 #
 #
 # TODO List
@@ -33,13 +33,14 @@
 #
 # Or, Obviously, To The wxPython Mailing List!!!
 #
+# Tags:        phoenix-port, unittest, documented, py3-port
 #
 # End Of Comments
 # --------------------------------------------------------------------------------- #
 
 
 """
-:class:`CustomTreeCtrl` is a class that mimics the behaviour of :class:`TreeCtrl`, with some more
+:class:`~wx.lib.agw.customtreectrl.CustomTreeCtrl` is a class that mimics the behaviour of :class:`TreeCtrl`, with some more
 enhancements.
 
 
@@ -57,7 +58,7 @@ to the standard :class:`TreeCtrl` behaviour this class supports:
 * Added support for 3-state value checkbox items;
 * RadioButton-type items: since I elected to put radiobuttons in :class:`CustomTreeCtrl`, I
   needed some way to handle them, that made sense. So, I used the following approach:
-  
+
   - All peer-nodes that are radiobuttons will be mutually exclusive. In other words,
     only one of a set of radiobuttons that share a common parent can be checked at
     once. If a radiobutton node becomes checked, then all of its peer radiobuttons
@@ -80,15 +81,15 @@ to the standard :class:`TreeCtrl` behaviour this class supports:
 * Customized drag and drop images built on the fly;
 * Setting the :class:`CustomTreeCtrl` item buttons to a personalized imagelist;
 * Setting the :class:`CustomTreeCtrl` check/radio item icons to a personalized imagelist;
-* Changing the style of the lines that connect the items (in terms of :class:`Pen` styles);
+* Changing the style of the lines that connect the items (in terms of :class:`wx.Pen` styles);
 * Using an image as a :class:`CustomTreeCtrl` background (currently only in "tile" mode);
 * Adding images to any item in the leftmost area of the :class:`CustomTreeCtrl` client window.
 * Separator-type items which are simply visual indicators that are meant to set apart
   or divide tree items, with the following caveats:
 
   - Separator items should not have children, labels, data or an associated window;
-  - You can change the color of individual separators by using meth:~CustomTreeCtrl.SetItemTextColour`, or you can use
-    meth:~CustomTreeCtrl.SetSeparatorColour` to change the color of all separators. The default separator colour
+  - You can change the color of individual separators by using :meth:`~CustomTreeCtrl.SetItemTextColour`, or you can use
+    :meth:`~CustomTreeCtrl.SetSeparatorColour` to change the color of all separators. The default separator colour
     is that returned by `SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)`;
   - Separators can be selected just like any other tree item;
   - Separators cannot have text;
@@ -124,7 +125,7 @@ attached to the tree items:
 - ``TR_ALIGN_WINDOWS_RIGHT``: aligns to the rightmost position the windows belonging
   to the item on the same tree level.
 
-And two styles related to long items (with a lot of text in them), which can be 
+And two styles related to long items (with a lot of text in them), which can be
 ellipsized and/or highlighted with a tooltip:
 
 - ``TR_ELLIPSIZE_LONG_ITEMS``: ellipsizes long items when the horizontal space for
@@ -147,22 +148,22 @@ Usage example::
 
         def __init__(self, parent):
 
-            wx.Frame.__init(self, parent, -1, "CustomTreeCtrl Demo")        
+            wx.Frame.__init__(self, parent, -1, "CustomTreeCtrl Demo")
 
             # Create a CustomTreeCtrl instance
             custom_tree = CT.CustomTreeCtrl(self, agwStyle=wx.TR_DEFAULT_STYLE)
-            
+
             # Add a root node to it
-            root = custom_tree.AddRoot("The Root Item")            
+            root = custom_tree.AddRoot("The Root Item")
 
             # Create an image list to add icons next to an item
             il = wx.ImageList(16, 16)
-            fldridx     = il.Add(wx.ArtProvider_GetBitmap(wx.ART_FOLDER,      wx.ART_OTHER, 16))
-            fldropenidx = il.Add(wx.ArtProvider_GetBitmap(wx.ART_FILE_OPEN,   wx.ART_OTHER, 16))
-            fileidx     = il.Add(wx.ArtProvider_GetBitmap(wx.ART_NORMAL_FILE, wx.ART_OTHER, 16))
+            fldridx     = il.Add(wx.ArtProvider.GetBitmap(wx.ART_FOLDER,      wx.ART_OTHER, (16, 16)))
+            fldropenidx = il.Add(wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN,   wx.ART_OTHER, (16, 16)))
+            fileidx     = il.Add(wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_OTHER, (16, 16)))
 
             custom_tree.SetImageList(il)
-            
+
             custom_tree.SetItemImage(root, fldridx, wx.TreeItemIcon_Normal)
             custom_tree.SetItemImage(root, fldropenidx, wx.TreeItemIcon_Expanded)
 
@@ -179,9 +180,8 @@ Usage example::
                     for z in range(5):
                         item = custom_tree.AppendItem(last,  "item %d-%s-%d" % (x, chr(ord("a")+y), z))
                         custom_tree.SetItemImage(item, fileidx, wx.TreeItemIcon_Normal)
-                        custom_tree.SetItemImage(item, smileidx, wx.TreeItemIcon_Selected)
 
-            custom_tree.Expand(self.root)
+            custom_tree.Expand(root)
 
 
     # our normal wxApp-derived class, as usual
@@ -195,7 +195,7 @@ Usage example::
     app.MainLoop()
 
 
-        
+
 Events
 ======
 
@@ -249,9 +249,9 @@ Window Styles                  Hex Value   Description
 ``TR_ROW_LINES``                     0x400 Use this style to draw a contrasting border between displayed rows.
 ``TR_HIDE_ROOT``                     0x800 Use this style to suppress the display of the root node, effectively causing the first-level nodes to appear as a series of root nodes.
 ``TR_FULL_ROW_HIGHLIGHT``           0x2000 Use this style to have the background colour and the selection highlight extend  over the entire horizontal row of the tree control window.
-``TR_AUTO_CHECK_CHILD``             0x4000 Only meaningful foe checkbox-type items: when a parent item is checked/unchecked its children are checked/unchecked as well.
-``TR_AUTO_TOGGLE_CHILD``            0x8000 Only meaningful foe checkbox-type items: when a parent item is checked/unchecked its children are toggled accordingly.
-``TR_AUTO_CHECK_PARENT``           0x10000 Only meaningful foe checkbox-type items: when a child item is checked/unchecked its parent item is checked/unchecked as well.
+``TR_AUTO_CHECK_CHILD``             0x4000 Only meaningful for checkbox-type items: when a parent item is checked/unchecked its children are checked/unchecked as well.
+``TR_AUTO_TOGGLE_CHILD``            0x8000 Only meaningful for checkbox-type items: when a parent item is checked/unchecked its children are toggled accordingly.
+``TR_AUTO_CHECK_PARENT``           0x10000 Only meaningful for checkbox-type items: when a child item is checked/unchecked its parent item is checked/unchecked as well.
 ``TR_ALIGN_WINDOWS``               0x20000 Flag used to align windows (in items with windows) at the same horizontal position.
 ``TR_ALIGN_WINDOWS_RIGHT``         0x40000 Flag used to align windows (in items with windows) to the rightmost edge of :class:`CustomTreeCtrl`.
 ``TR_ELLIPSIZE_LONG_ITEMS``        0x80000 Flag used to ellipsize long items when the horizontal space for :class:`CustomTreeCtrl` is low.
@@ -268,19 +268,19 @@ This class processes the following events:
 Event Name                     Description
 ============================== ==================================================
 ``EVT_TREE_BEGIN_DRAG``        Begin dragging with the left mouse button.
-``EVT_TREE_BEGIN_LABEL_EDIT``  Begin editing a label. This can be prevented by calling meth:~TreeEvent.Veto`.
+``EVT_TREE_BEGIN_LABEL_EDIT``  Begin editing a label. This can be prevented by calling :meth:`~TreeEvent.Veto`.
 ``EVT_TREE_BEGIN_RDRAG``       Begin dragging with the right mouse button.
 ``EVT_TREE_DELETE_ITEM``       Delete an item.
 ``EVT_TREE_END_DRAG``          End dragging with the left or right mouse button.
-``EVT_TREE_END_LABEL_EDIT``    End editing a label. This can be prevented by calling meth:~TreeEvent.Veto`.
+``EVT_TREE_END_LABEL_EDIT``    End editing a label. This can be prevented by calling :meth:`~TreeEvent.Veto`.
 ``EVT_TREE_GET_INFO``          Request information from the application (not implemented in :class:`CustomTreeCtrl`).
 ``EVT_TREE_ITEM_ACTIVATED``    The item has been activated, i.e. chosen by double clicking it with mouse or from keyboard.
 ``EVT_TREE_ITEM_CHECKED``      A checkbox or radiobox type item has been checked.
 ``EVT_TREE_ITEM_CHECKING``     A checkbox or radiobox type item is being checked.
 ``EVT_TREE_ITEM_COLLAPSED``    The item has been collapsed.
-``EVT_TREE_ITEM_COLLAPSING``   The item is being collapsed. This can be prevented by calling meth:~TreeEvent.Veto`.
+``EVT_TREE_ITEM_COLLAPSING``   The item is being collapsed. This can be prevented by calling :meth:`~TreeEvent.Veto`.
 ``EVT_TREE_ITEM_EXPANDED``     The item has been expanded.
-``EVT_TREE_ITEM_EXPANDING``    The item is being expanded. This can be prevented by calling meth:~TreeEvent.Veto`.
+``EVT_TREE_ITEM_EXPANDING``    The item is being expanded. This can be prevented by calling :meth:`~TreeEvent.Veto`.
 ``EVT_TREE_ITEM_GETTOOLTIP``   The opportunity to set the item tooltip is being given to the application (call `TreeEvent.SetToolTip`).
 ``EVT_TREE_ITEM_HYPERLINK``    An hyperlink type item has been clicked.
 ``EVT_TREE_ITEM_MENU``         The context menu for the selected item has been requested, either by a right click or by using the menu key.
@@ -288,7 +288,7 @@ Event Name                     Description
 ``EVT_TREE_ITEM_RIGHT_CLICK``  The user has clicked the item with the right mouse button.
 ``EVT_TREE_KEY_DOWN``          A key has been pressed.
 ``EVT_TREE_SEL_CHANGED``       Selection has changed.
-``EVT_TREE_SEL_CHANGING``      Selection is changing. This can be prevented by calling meth:~TreeEvent.Veto`.
+``EVT_TREE_SEL_CHANGING``      Selection is changing. This can be prevented by calling :meth:`~TreeEvent.Veto`.
 ``EVT_TREE_SET_INFO``          Information is being supplied to the application (not implemented in :class:`CustomTreeCtrl`).
 ``EVT_TREE_STATE_IMAGE_CLICK`` The state image has been clicked (not implemented in :class:`CustomTreeCtrl`).
 ============================== ==================================================
@@ -297,9 +297,9 @@ Event Name                     Description
 License And Version
 ===================
 
-:class:`CustomTreeCtrl` is distributed under the wxPython license. 
+:class:`CustomTreeCtrl` is distributed under the wxPython license.
 
-Latest Revision: Andrea Gavana @ 03 Jan 2014, 23.00 GMT
+Latest Revision: Andrea Gavana @ 09 Jan 2014, 23.00 GMT
 
 Version 2.6
 
@@ -310,6 +310,9 @@ __version__ = "2.6"
 
 import wx
 from wx.lib.expando import ExpandoTextCtrl
+
+# Python 2/3 compatibility helper
+import six
 
 # ----------------------------------------------------------------------------
 # Constants
@@ -367,7 +370,7 @@ TR_SINGLE = wx.TR_SINGLE                                       # for convenience
 """ For convenience to document that only one item may be selected at a time. Selecting another item causes the current selection, if any, to be deselected. This is the default. """
 TR_MULTIPLE = wx.TR_MULTIPLE                                   # can select multiple items
 """ Use this style to allow a range of items to be selected. If a second range is selected, the current range, if any, is deselected. """
-TR_EXTENDED = wx.TR_EXTENDED                                   # TODO: allow extended selection
+TR_EXTENDED = 0x40                                             # TODO: allow extended selection
 """ Use this style to allow disjoint items to be selected. (Only partially implemented; may not work in all cases). """
 TR_HAS_VARIABLE_ROW_HEIGHT = wx.TR_HAS_VARIABLE_ROW_HEIGHT     # what it says
 """ Use this style to cause row heights to be just big enough to fit the content. If not set, all rows use the largest row height. The default is that this flag is unset. """
@@ -381,11 +384,11 @@ TR_FULL_ROW_HIGHLIGHT = wx.TR_FULL_ROW_HIGHLIGHT               # highlight full 
 """ Use this style to have the background colour and the selection highlight extend over the entire horizontal row of the tree control window. """
 
 TR_AUTO_CHECK_CHILD = 0x04000                                  # only meaningful for checkboxes
-""" Only meaningful foe checkbox-type items: when a parent item is checked/unchecked its children are checked/unchecked as well. """
+""" Only meaningful for checkbox-type items: when a parent item is checked/unchecked its children are checked/unchecked as well. """
 TR_AUTO_TOGGLE_CHILD = 0x08000                                 # only meaningful for checkboxes
-""" Only meaningful foe checkbox-type items: when a parent item is checked/unchecked its children are toggled accordingly. """
+""" Only meaningful for checkbox-type items: when a parent item is checked/unchecked its children are toggled accordingly. """
 TR_AUTO_CHECK_PARENT = 0x10000                                 # only meaningful for checkboxes
-""" Only meaningful foe checkbox-type items: when a child item is checked/unchecked its parent item is checked/unchecked as well. """
+""" Only meaningful for checkbox-type items: when a child item is checked/unchecked its parent item is checked/unchecked as well. """
 TR_ALIGN_WINDOWS = 0x20000                                     # to align windows horizontally for items at the same level
 """ Flag used to align windows (in items with windows) at the same horizontal position. """
 TR_ALIGN_WINDOWS_RIGHT = 0x40000                               # to align windows to the rightmost edge of CustomTreeCtrl
@@ -493,9 +496,9 @@ EVT_TREE_BEGIN_DRAG = wx.EVT_TREE_BEGIN_DRAG
 EVT_TREE_BEGIN_RDRAG = wx.EVT_TREE_BEGIN_RDRAG
 """ Begin dragging with the right mouse button. """
 EVT_TREE_BEGIN_LABEL_EDIT = wx.EVT_TREE_BEGIN_LABEL_EDIT
-""" Begin editing a label. This can be prevented by calling meth:~TreeEvent.Veto`. """
+""" Begin editing a label. This can be prevented by calling :meth:`~TreeEvent.Veto`. """
 EVT_TREE_END_LABEL_EDIT = wx.EVT_TREE_END_LABEL_EDIT
-""" End editing a label. This can be prevented by calling meth:~TreeEvent.Veto`. """
+""" End editing a label. This can be prevented by calling :meth:`~TreeEvent.Veto`. """
 EVT_TREE_DELETE_ITEM = wx.EVT_TREE_DELETE_ITEM
 """ Delete an item. """
 EVT_TREE_GET_INFO = wx.EVT_TREE_GET_INFO
@@ -505,15 +508,15 @@ EVT_TREE_SET_INFO = wx.EVT_TREE_SET_INFO
 EVT_TREE_ITEM_EXPANDED = wx.EVT_TREE_ITEM_EXPANDED
 """ The item has been expanded. """
 EVT_TREE_ITEM_EXPANDING = wx.EVT_TREE_ITEM_EXPANDING
-""" The item is being expanded. This can be prevented by calling meth:~TreeEvent.Veto`. """
+""" The item is being expanded. This can be prevented by calling :meth:`~TreeEvent.Veto`. """
 EVT_TREE_ITEM_COLLAPSED = wx.EVT_TREE_ITEM_COLLAPSED
 """ The item has been collapsed. """
 EVT_TREE_ITEM_COLLAPSING = wx.EVT_TREE_ITEM_COLLAPSING
-""" The item is being collapsed. This can be prevented by calling meth:~TreeEvent.Veto`. """
+""" The item is being collapsed. This can be prevented by calling :meth:`~TreeEvent.Veto`. """
 EVT_TREE_SEL_CHANGED = wx.EVT_TREE_SEL_CHANGED
 """ Selection has changed. """
 EVT_TREE_SEL_CHANGING = wx.EVT_TREE_SEL_CHANGING
-""" Selection is changing. This can be prevented by calling meth:~TreeEvent.Veto`. """
+""" Selection is changing. This can be prevented by calling :meth:`~TreeEvent.Veto`. """
 EVT_TREE_KEY_DOWN = wx.EVT_TREE_KEY_DOWN
 """ A key has been pressed. """
 EVT_TREE_ITEM_ACTIVATED = wx.EVT_TREE_ITEM_ACTIVATED
@@ -544,43 +547,42 @@ def MakeDisabledBitmap(original):
     """
     Creates a disabled-looking bitmap starting from the input one.
 
-    :param `original`: an instance of :class:`Bitmap` to be greyed-out.
+    :param `original`: an instance of :class:`wx.Bitmap` to be greyed-out.
 
-    :return: An instance of :class:`Bitmap`, containing a disabled-looking
+    :return: An instance of :class:`wx.Bitmap`, containing a disabled-looking
      representation of the original item image.
     """
 
     img = original.ConvertToImage()
-    return wx.BitmapFromImage(img.ConvertToGreyscale())
+    return wx.Bitmap(img.ConvertToGreyscale())
 
 # ----------------------------------------------------------------------------
-
 
 def DrawTreeItemButton(win, dc, rect, flags):
     """
     Draw the expanded/collapsed icon for a tree control item.
 
-    :param `win`: an instance of :class:`Window`;
-    :param `dc`: an instance of :class:`DC`;
-    :param Rect `rect`: the client rectangle where to draw the tree item button;
+    :param `win`: an instance of :class:`wx.Window`;
+    :param `dc`: an instance of :class:`wx.DC`;
+    :param wx.Rect `rect`: the client rectangle where to draw the tree item button;
     :param integer `flags`: contains ``wx.CONTROL_EXPANDED`` bit for expanded tree items.
 
     :note: This is a simple replacement of :meth:`RendererNative.DrawTreeItemButton`.
 
-    :note: This method is never used in wxPython versions newer than 2.6.2.1.    
+    :note: This method is never used in wxPython versions newer than 2.6.2.1.
     """
 
     # white background
     dc.SetPen(wx.GREY_PEN)
     dc.SetBrush(wx.WHITE_BRUSH)
-    dc.DrawRectangleRect(rect)
+    dc.DrawRectangle(rect)
 
     # black lines
-    xMiddle = rect.x + rect.width/2
-    yMiddle = rect.y + rect.height/2
+    xMiddle = rect.x + rect.width//2
+    yMiddle = rect.y + rect.height//2
 
     # half of the length of the horz lines in "-" and "+"
-    halfWidth = rect.width/2 - 2
+    halfWidth = rect.width//2 - 2
     dc.SetPen(wx.BLACK_PEN)
     dc.DrawLine(xMiddle - halfWidth, yMiddle,
                 xMiddle + halfWidth + 1, yMiddle)
@@ -588,12 +590,11 @@ def DrawTreeItemButton(win, dc, rect, flags):
     if not flags & _CONTROL_EXPANDED:
 
         # turn "-" into "+"
-        halfHeight = rect.height/2 - 2
+        halfHeight = rect.height//2 - 2
         dc.DrawLine(xMiddle, yMiddle - halfHeight,
                     xMiddle, yMiddle + halfHeight + 1)
 
 # ----------------------------------------------------------------------------
-
 
 def EventFlagsToSelType(style, shiftDown=False, ctrlDown=False):
     """
@@ -605,7 +606,7 @@ def EventFlagsToSelType(style, shiftDown=False, ctrlDown=False):
     :param bool `ctrlDown`: ``True`` if the ``Ctrl`` key is pressed, ``False`` otherwise;
 
     :return: A 3-elements tuple, with the following elements:
-    
+
      - `is_multiple`: ``True`` if :class:`CustomTreeCtrl` has the ``TR_MULTIPLE`` flag set, ``False`` otherwise;
      - `extended_select`: ``True`` if the ``Shift`` key is pressend and if :class:`CustomTreeCtrl` has the
        ``TR_MULTIPLE`` flag set, ``False`` otherwise;
@@ -621,13 +622,12 @@ def EventFlagsToSelType(style, shiftDown=False, ctrlDown=False):
 
 # ----------------------------------------------------------------------------
 
-
 def ChopText(dc, text, max_size):
     """
     Chops the input `text` if its size does not fit in `max_size`, by cutting the
     text and adding ellipsis at the end.
 
-    :param `dc`: a :class:`DC` device context;
+    :param `dc`: a :class:`wx.DC` device context;
     :param `text`: the text to chop;
     :param `max_size`: the maximum size in which the text should fit.
 
@@ -638,7 +638,7 @@ def ChopText(dc, text, max_size):
     """
 
     # first check if the text fits with no problems
-    x, y, dummy = dc.GetMultiLineTextExtent(text)
+    x, y, dummy = dc.GetFullMultiLineTextExtent(text)
 
     if x <= max_size:
         return text
@@ -646,7 +646,7 @@ def ChopText(dc, text, max_size):
     textLen = len(text)
     last_good_length = 0
 
-    for i in xrange(textLen, -1, -1):
+    for i in range(textLen, -1, -1):
         s = text[0:i]
         s += "..."
 
@@ -697,7 +697,7 @@ class DragImage(wx.DragImage):
 
         tempdc = wx.ClientDC(treeCtrl)
         tempdc.SetFont(font)
-        width, height, dummy = tempdc.GetMultiLineTextExtent(text + "M")
+        width, height, dummy = tempdc.GetFullMultiLineTextExtent(text + "M")
 
         image = item.GetCurrentImage()
 
@@ -729,13 +729,13 @@ class DragImage(wx.DragImage):
 
         if image_w:
             ximagepos = wcheck
-            yimagepos = ((total_h > image_h) and [(total_h-image_h)/2] or [0])[0]
+            yimagepos = ((total_h > image_h) and [(total_h-image_h)//2] or [0])[0]
 
         if checkimage is not None:
             xcheckpos = 2
-            ycheckpos = ((total_h > image_h) and [(total_h-image_h)/2] or [0])[0] + 2
+            ycheckpos = ((total_h > image_h) and [(total_h-image_h)//2] or [0])[0] + 2
 
-        extraH = ((total_h > height) and [(total_h - height)/2] or [0])[0]
+        extraH = ((total_h > height) and [(total_h - height)//2] or [0])[0]
 
         xtextpos = wcheck + image_w
         ytextpos = extraH
@@ -746,7 +746,7 @@ class DragImage(wx.DragImage):
         if total_h < 30:
             total_h += 2            # at least 2 pixels
         else:
-            total_h += total_h/10   # otherwise 10% extra spacing
+            total_h += total_h//10   # otherwise 10% extra spacing
 
         total_w = image_w + wcheck + width
 
@@ -771,6 +771,7 @@ class DragImage(wx.DragImage):
 
         wx.DragImage.__init__(self, self._bitmap)
 
+
     def CreateBitmap(self):
         """
         Actually creates the drag and drop bitmap for :class:`DragImage`.
@@ -781,7 +782,7 @@ class DragImage(wx.DragImage):
 
         memory = wx.MemoryDC()
 
-        bitmap = wx.EmptyBitmap(self._total_w, self._total_h)
+        bitmap = wx.Bitmap(self._total_w, self._total_h)
         memory.SelectObject(bitmap)
 
         if wx.Platform == '__WXMAC__':
@@ -811,8 +812,8 @@ class DragImage(wx.DragImage):
             timg = bitmap.ConvertToImage()
             if not timg.HasAlpha():
                 timg.InitAlpha()
-            for y in xrange(timg.GetHeight()):
-                for x in xrange(timg.GetWidth()):
+            for y in range(timg.GetHeight()):
+                for x in range(timg.GetWidth()):
                     pix = wx.Colour(timg.GetRed(x, y),
                                     timg.GetGreen(x, y),
                                     timg.GetBlue(x, y))
@@ -838,10 +839,10 @@ class TreeItemAttr(object):
         Default class constructor.
         For internal use: do not call it in your code!
 
-        :param `colText`: the text colour, an instance of :class:`Colour`;
-        :param `colBack`: the tree item background colour, an instance of :class:`Colour`;
-        :param `colBorder`: the tree item border colour, an instance of :class:`Colour`;
-        :param `font`: the tree item font, an instance of :class:`Font`.
+        :param `colText`: the text colour, an instance of :class:`wx.Colour`;
+        :param `colBack`: the tree item background colour, an instance of :class:`wx.Colour`;
+        :param `colBorder`: the tree item border colour, an instance of :class:`wx.Colour`;
+        :param `font`: the tree item font, an instance of :class:`wx.Font`.
         """
 
         self._colText = colText
@@ -854,39 +855,43 @@ class TreeItemAttr(object):
         """
         Sets the text colour attribute.
 
-        :param `colText`: an instance of :class:`Colour`.
+        :param `colText`: an instance of :class:`wx.Colour`.
         """
 
         self._colText = colText
+
 
     def SetBackgroundColour(self, colBack):
         """
         Sets the item background colour attribute.
 
-        :param `colBack`: an instance of :class:`Colour`.
+        :param `colBack`: an instance of :class:`wx.Colour`.
         """
 
         self._colBack = colBack
 
-    def SetBorderColour(self,colBorder):
+
+    def SetBorderColour(self, colBorder):
         """
         Sets the item border colour attribute.
 
-        :param `colBack`: an instance of :class:`Colour`.
+        :param `colBack`: an instance of :class:`wx.Colour`.
 
         .. versionadded:: 0.9.6
         """
 
         self._colBorder = colBorder
 
+
     def SetFont(self, font):
         """
         Sets the item font attribute.
 
-        :param `font`: an instance of :class:`Font`.
+        :param `font`: an instance of :class:`wx.Font`.
         """
 
         self._font = font
+
 
     # accessors
     def HasTextColour(self):
@@ -896,7 +901,8 @@ class TreeItemAttr(object):
         :return: ``True`` if the text colour attribute has been set, ``False`` otherwise.
         """
 
-        return self._colText != wx.NullColour
+        return self._colText != wx.NullColour and self._colText.IsOk()
+
 
     def HasBackgroundColour(self):
         """
@@ -905,7 +911,8 @@ class TreeItemAttr(object):
         :return: ``True`` if the background colour attribute has been set, ``False`` otherwise.
         """
 
-        return self._colBack != wx.NullColour
+        return self._colBack != wx.NullColour and self._colBack.IsOk()
+
 
     def HasBorderColour(self):
         """
@@ -916,7 +923,8 @@ class TreeItemAttr(object):
         .. versionadded:: 0.9.6
         """
 
-        return self._colBorder != wx.NullColour
+        return self._colBorder != wx.NullColour and self._colBorder.IsOk()
+
 
     def HasFont(self):
         """
@@ -925,60 +933,64 @@ class TreeItemAttr(object):
         :return: ``True`` if the font attribute has been set, ``False`` otherwise.
         """
 
-        return self._font != wx.NullFont
+        return self._font != wx.NullFont and self._font.IsOk()
+
 
     # getters
     def GetTextColour(self):
         """
         Returns the attribute text colour.
 
-        :return: An instance of :class:`Colour`.
+        :return: An instance of :class:`wx.Colour`.
         """
 
         return self._colText
+
 
     def GetBackgroundColour(self):
         """
         Returns the attribute background colour.
 
-        :return: An instance of :class:`Colour`.
+        :return: An instance of :class:`wx.Colour`.
         """
 
         return self._colBack
+
 
     def GetBorderColour(self):
         """
         Returns the attribute border colour.
 
-        :return: An instance of :class:`Colour`.
+        :return: An instance of :class:`wx.Colour`.
 
         .. versionadded:: 0.9.6
         """
 
         return self._colBorder
 
+
     def GetFont(self):
         """
         Returns the attribute font.
 
-        :return: An instance of :class:`Font`.
+        :return: An instance of :class:`wx.Font`.
         """
 
         return self._font
 
 
 # ----------------------------------------------------------------------------
-# CommandTreeEvent Is A Special Subclassing Of wx.PyCommandEvent
+# CommandTreeEvent Is A Special Subclassing Of wx.CommandEvent
 #
 # NB: Note That Not All The Accessors Make Sense For All The Events, See The
 # Event Description Below.
 # ----------------------------------------------------------------------------
 
-class CommandTreeEvent(wx.PyCommandEvent):
+class CommandTreeEvent(wx.CommandEvent):
     """
-    :class:`CommandTreeEvent` is a special subclassing of :class:`PyCommandEvent`.
+    :class:`CommandTreeEvent` is a special subclassing of :class:`CommandEvent`.
 
-    :note: Not all the accessors make sense for all the events, see the event description for every method in this class. 
+    :note: Not all the accessors make sense for all the events, see the event description for every method in this class.
     """
 
     def __init__(self, evtType, evtId, item=None, evtKey=None, point=None,
@@ -991,11 +1003,11 @@ class CommandTreeEvent(wx.PyCommandEvent):
         :param integer `evtId`: the event identifier;
         :param `item`: an instance of :class:`GenericTreeItem`;
         :param integer `evtKey`: a character ordinal;
-        :param `point`: an instance of :class:`Point`;
+        :param `point`: an instance of :class:`wx.Point`;
         :param string `label`: a :class:`GenericTreeItem` text label.
         """
 
-        wx.PyCommandEvent.__init__(self, evtType, evtId, **kwargs)
+        wx.CommandEvent.__init__(self, evtType, evtId, **kwargs)
         self._item = item
         self._evtKey = evtKey
         self._pointDrag = point
@@ -1013,15 +1025,17 @@ class CommandTreeEvent(wx.PyCommandEvent):
 
         return self._item
 
+
     def SetItem(self, item):
         """
         Sets the item on which the operation was performed or the newly selected
         item for ``EVT_TREE_SEL_CHANGED`` and ``EVT_TREE_SEL_CHANGING`` events.
 
-        :param `item`: an instance of :class:`GenericTreeItem`.        
+        :param `item`: an instance of :class:`GenericTreeItem`.
         """
 
         self._item = item
+
 
     def GetOldItem(self):
         """
@@ -1033,15 +1047,17 @@ class CommandTreeEvent(wx.PyCommandEvent):
 
         return self._itemOld
 
+
     def SetOldItem(self, item):
         """
         Returns the previously selected item for ``EVT_TREE_SEL_CHANGED`` and
         ``EVT_TREE_SEL_CHANGING`` events.
 
-        :param `item`: an instance of :class:`GenericTreeItem`.        
+        :param `item`: an instance of :class:`GenericTreeItem`.
         """
 
         self._itemOld = item
+
 
     def GetPoint(self):
         """
@@ -1049,10 +1065,11 @@ class CommandTreeEvent(wx.PyCommandEvent):
         (for ``EVT_TREE_BEGIN_DRAG`` and ``EVT_TREE_BEGIN_RDRAG`` events only)
         or the click position.
 
-        :return: An instance of :class:`Point`.
+        :return: An instance of :class:`wx.Point`.
         """
 
         return self._pointDrag
+
 
     def SetPoint(self, pt):
         """
@@ -1060,10 +1077,11 @@ class CommandTreeEvent(wx.PyCommandEvent):
         (for ``EVT_TREE_BEGIN_DRAG`` and ``EVT_TREE_BEGIN_RDRAG`` events only)
         or the click position.
 
-        :param `pt`: an instance of :class:`Point`.        
+        :param `pt`: an instance of :class:`wx.Point`.
         """
 
         self._pointDrag = pt
+
 
     def GetKeyEvent(self):
         """
@@ -1074,21 +1092,23 @@ class CommandTreeEvent(wx.PyCommandEvent):
 
         return self._evtKey
 
+
     def GetKeyCode(self):
         """
         Returns the virtual key code. ASCII events return normal ASCII values, while
         non-ASCII events return values such as ``wx.WXK_LEFT`` for the left cursor key.
 
         This method is for ``EVT_TREE_KEY_DOWN`` events only.
-        
+
         :return: An integer representing the virtual key code.
 
         :note: In Unicode build, the returned value is meaningful only if the user entered
          a character that can be represented in current locale's default charset. You can
-         obtain the corresponding Unicode character using `GetUnicodeKey`.        
+         obtain the corresponding Unicode character using `GetUnicodeKey`.
         """
 
         return self._evtKey.GetKeyCode()
+
 
     def SetKeyEvent(self, event):
         """
@@ -1098,6 +1118,7 @@ class CommandTreeEvent(wx.PyCommandEvent):
         """
 
         self._evtKey = event
+
 
     def GetLabel(self):
         """
@@ -1109,15 +1130,17 @@ class CommandTreeEvent(wx.PyCommandEvent):
 
         return self._label
 
+
     def SetLabel(self, label):
         """
         Sets the item text (for ``EVT_TREE_BEGIN_LABEL_EDIT`` and
         ``EVT_TREE_END_LABEL_EDIT`` events only).
 
-        :param string `label`: a string containing the new item text.        
+        :param string `label`: a string containing the new item text.
         """
 
         self._label = label
+
 
     def IsEditCancelled(self):
         """
@@ -1129,15 +1152,17 @@ class CommandTreeEvent(wx.PyCommandEvent):
 
         return self._editCancelled
 
+
     def SetEditCanceled(self, editCancelled):
         """
         Sets the edit cancel flag (for ``EVT_TREE_BEGIN_LABEL_EDIT`` and
         ``EVT_TREE_END_LABEL_EDIT`` events only).
 
-        :param bool `editCancelled`: ``True`` to cancel the editing, ``False`` otherwise.        
+        :param bool `editCancelled`: ``True`` to cancel the editing, ``False`` otherwise.
         """
 
         self._editCancelled = editCancelled
+
 
     def SetToolTip(self, toolTip):
         """
@@ -1147,6 +1172,7 @@ class CommandTreeEvent(wx.PyCommandEvent):
         """
 
         self._label = toolTip
+
 
     def GetToolTip(self):
         """
@@ -1174,10 +1200,9 @@ class CommandTreeEvent(wx.PyCommandEvent):
 class TreeEvent(CommandTreeEvent):
     """
     :class:`CommandTreeEvent` is a special class for all events associated with tree controls.
-    
+
     :note: Not all accessors make sense for all events, see the event descriptions below.
     """
-
     def __init__(self, evtType, evtId, item=None, evtKey=None, point=None,
                  label=None, **kwargs):
         """
@@ -1188,12 +1213,13 @@ class TreeEvent(CommandTreeEvent):
         :param integer `evtId`: the event identifier;
         :param `item`: an instance of :class:`GenericTreeItem`;
         :param integer `evtKey`: a character ordinal;
-        :param `point`: an instance of :class:`Point`;
+        :param `point`: an instance of :class:`wx.Point`;
         :param string `label`: a :class:`GenericTreeItem` text label.
         """
 
         CommandTreeEvent.__init__(self, evtType, evtId, item, evtKey, point, label, **kwargs)
         self.notify = wx.NotifyEvent(evtType, evtId)
+
 
     def GetNotifyEvent(self):
         """
@@ -1204,6 +1230,7 @@ class TreeEvent(CommandTreeEvent):
 
         return self.notify
 
+
     def IsAllowed(self):
         """
         Returns ``True`` if the change is allowed (:meth:`~TreeEvent.Veto` hasn't been called) or
@@ -1211,6 +1238,7 @@ class TreeEvent(CommandTreeEvent):
         """
 
         return self.notify.IsAllowed()
+
 
     def Veto(self):
         """
@@ -1222,6 +1250,7 @@ class TreeEvent(CommandTreeEvent):
         """
 
         self.notify.Veto()
+
 
     def Allow(self):
         """
@@ -1251,6 +1280,7 @@ class TreeEditTimer(wx.Timer):
 
         wx.Timer.__init__(self)
         self._owner = owner
+
 
     def Notify(self):
         """ The timer has expired, starts the item editing. """
@@ -1284,7 +1314,7 @@ class TreeTextCtrl(ExpandoTextCtrl):
         :param `item`: an instance of :class:`GenericTreeItem`.
 
         :raise: `Exception` when the item has an associated image but the parent
-         :class:`CustomTreeCtrl` does not have a :class:`ImageList` assigned.
+         :class:`CustomTreeCtrl` does not have a :class:`wx.ImageList` assigned.
         """
 
         self._owner = owner
@@ -1358,6 +1388,7 @@ class TreeTextCtrl(ExpandoTextCtrl):
         self.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
         self.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
 
+
     def AcceptChanges(self):
         """
         Accepts/rejects the changes made by the user.
@@ -1386,6 +1417,7 @@ class TreeTextCtrl(ExpandoTextCtrl):
 
         return True
 
+
     def Finish(self):
         """ Finish editing. """
 
@@ -1393,6 +1425,7 @@ class TreeTextCtrl(ExpandoTextCtrl):
             self._finished = True
             self._owner.SetFocusIgnoringChildren()
             self._owner.ResetEditControl()
+
 
     def OnChar(self, event):
         """
@@ -1421,6 +1454,7 @@ class TreeTextCtrl(ExpandoTextCtrl):
         else:
             event.Skip()
 
+
     def OnKeyUp(self, event):
         """
         Handles the ``wx.EVT_KEY_UP`` event for :class:`TreeTextCtrl`.
@@ -1436,7 +1470,7 @@ class TreeTextCtrl(ExpandoTextCtrl):
             mySize = self.GetSize()
 
             dc = wx.ClientDC(self)
-            sx, sy, dummy = dc.GetMultiLineTextExtent(self.GetValue() + "M")
+            sx, sy, dummy = dc.GetFullMultiLineTextExtent(self.GetValue() + "M")
 
             if myPos.x + sx > parentSize.x:
                 sx = parentSize.x - myPos.x
@@ -1447,6 +1481,7 @@ class TreeTextCtrl(ExpandoTextCtrl):
             self._currentValue = self.GetValue()
 
         event.Skip()
+
 
     def OnKillFocus(self, event):
         """
@@ -1467,11 +1502,13 @@ class TreeTextCtrl(ExpandoTextCtrl):
         # it could have problems with the cursor (e.g., in wxGTK).
         event.Skip()
 
+
     def StopEditing(self):
         """ Suddenly stops the editing. """
 
         self._owner.OnCancelEdit(self._itemEdited)
         self.Finish()
+
 
     def item(self):
         """
@@ -1500,11 +1537,12 @@ class TreeFindTimer(wx.Timer):
         Default class constructor.
         For internal use: do not call it in your code!
 
-        :param `owner`: the :class:`Timer` owner (an instance of :class:`CustomTreeCtrl`).        
+        :param `owner`: the :class:`Timer` owner (an instance of :class:`CustomTreeCtrl`).
         """
 
         wx.Timer.__init__(self)
         self._owner = owner
+
 
     def Notify(self):
         """ The timer has expired, clear the `_findPrefix` attribute in :class:`CustomTreeCtrl`. """
@@ -1543,18 +1581,18 @@ class GenericTreeItem(object):
          =============== =========================================
 
         :param `wnd`: if not ``None``, a non-toplevel window to be displayed next to
-         the item, an instance of :class:`Window`;
+         the item, an instance of :class:`wx.Window`;
         :param integer `image`: an index within the normal image list specifying the image to
          use for the item in unselected state;
         :param integer `selImage`: an index within the normal image list specifying the image to
          use for the item in selected state; if `image` > -1 and `selImage` is -1, the
          same image is used for both selected and unselected items;
         :param object `data`: associate the given Python object `data` with the item;
-        :param bool `separator`: ``True`` if the item is a separator, ``False`` otherwise. 
+        :param bool `separator`: ``True`` if the item is a separator, ``False`` otherwise.
 
         :note: Regarding radiobutton-type items (with `ct_type` = 2), the following
          approach is used:
-         
+
          - All peer-nodes that are radiobuttons will be mutually exclusive. In other words,
            only one of a set of radiobuttons that share a common parent can be checked at
            once. If a radiobutton node becomes checked, then all of its peer radiobuttons
@@ -1565,7 +1603,7 @@ class GenericTreeItem(object):
 
         :note: Separator items should not have children, labels, data or an associated window.
          Other issues/features associated to separator items:
-         
+
          - You can change the color of individual separators by using :meth:`CustomTreeCtrl.SetItemTextColour() <customtreectrl.CustomTreeCtrl.SetItemTextColour>`,
            or you can use :meth:`CustomTreeCtrl.SetSeparatorColour() <customtreectrl.CustomTreeCtrl.SetSeparatorColour>` to change the color of all
            separators. The default separator colour is that returned by `SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)`;
@@ -1666,6 +1704,7 @@ class GenericTreeItem(object):
 
         return True
 
+
     def IsSeparator(self):
         """
         Returns whether the item is meant to be an horizontal line separator or not.
@@ -1674,6 +1713,7 @@ class GenericTreeItem(object):
         """
 
         return self._separator
+
 
     def GetChildren(self):
         """
@@ -1685,6 +1725,7 @@ class GenericTreeItem(object):
 
         return self._children
 
+
     def GetText(self):
         """
         Returns the item text.
@@ -1693,6 +1734,7 @@ class GenericTreeItem(object):
         """
 
         return self._text
+
 
     def GetImage(self, which=TreeItemIcon_Normal):
         """
@@ -1706,14 +1748,15 @@ class GenericTreeItem(object):
          ``TreeItemIcon_Normal``           To get the normal item image
          ``TreeItemIcon_Selected``         To get the selected item image (i.e. the image which is shown when the item is currently selected)
          ``TreeItemIcon_Expanded``         To get the expanded image (this only makes sense for items which have children - then this image is shown when the item is expanded and the normal image is shown when it is collapsed)
-         ``TreeItemIcon_SelectedExpanded`` To get the selected expanded image (which is shown when an expanded item is currently selected) 
+         ``TreeItemIcon_SelectedExpanded`` To get the selected expanded image (which is shown when an expanded item is currently selected)
          ================================= ========================
 
         :return: An integer index that can be used to retrieve the item image inside
-         a :class:`ImageList`.
+         a :class:`wx.ImageList`.
         """
 
         return self._images[which]
+
 
     def GetCheckedImage(self, which=TreeItemIcon_Checked):
         """
@@ -1732,12 +1775,13 @@ class GenericTreeItem(object):
          ================================= ========================
 
         :return: An integer index that can be used to retrieve the item check image inside
-         a :class:`ImageList`.
+         a :class:`wx.ImageList`.
 
         :note: This method is meaningful only for radio & check items.
         """
 
         return self._checkedimages[which]
+
 
     def GetLeftImage(self):
         """
@@ -1745,10 +1789,11 @@ class GenericTreeItem(object):
         leftmost part of the client area of :class:`CustomTreeCtrl`.
 
         :return: An integer index that can be used to retrieve the item leftmost image inside
-         a :class:`ImageList`.
+         a :class:`wx.ImageList`.
         """
 
         return self._leftimage
+
 
     def GetData(self):
         """
@@ -1760,17 +1805,19 @@ class GenericTreeItem(object):
 
         return self._data
 
+
     def SetImage(self, image, which):
         """
         Sets the item image.
 
         :param integer `image`: an index within the normal image list specifying the image to use;
         :param integer `which`: the image kind.
-        
+
         :see: :meth:`~GenericTreeItem.GetImage` for a description of the `which` parameter.
         """
 
         self._images[which] = image
+
 
     def SetLeftImage(self, image):
         """
@@ -1783,6 +1830,7 @@ class GenericTreeItem(object):
 
         self._leftimage = image
 
+
     def SetData(self, data):
         """
         Sets the data associated to this item.
@@ -1791,6 +1839,7 @@ class GenericTreeItem(object):
         """
 
         self._data = data
+
 
     def SetHasPlus(self, has=True):
         """
@@ -1801,6 +1850,7 @@ class GenericTreeItem(object):
 
         self._hasPlus = has
 
+
     def SetBold(self, bold):
         """
         Sets the item font bold.
@@ -1809,6 +1859,7 @@ class GenericTreeItem(object):
         """
 
         self._isBold = bold
+
 
     def SetItalic(self, italic):
         """
@@ -1819,15 +1870,18 @@ class GenericTreeItem(object):
 
         self._isItalic = italic
 
+
     def GetX(self):
         """ Returns the `x` position on an item, in logical coordinates. """
 
         return self._x
 
+
     def GetY(self):
         """ Returns the `y` position on an item, in logical coordinates. """
 
         return self._y
+
 
     def SetX(self, x):
         """
@@ -1838,6 +1892,7 @@ class GenericTreeItem(object):
 
         self._x = x
 
+
     def SetY(self, y):
         """
         Sets the `y` position on an item, in logical coordinates.
@@ -1847,15 +1902,18 @@ class GenericTreeItem(object):
 
         self._y = y
 
+
     def GetHeight(self):
         """ Returns the height of the item, in pixels. """
 
         return self._height
 
+
     def GetWidth(self):
         """ Returns the width of the item, in pixels. """
 
         return self._width
+
 
     def SetHeight(self, h):
         """
@@ -1866,6 +1924,7 @@ class GenericTreeItem(object):
 
         self._height = h
 
+
     def SetWidth(self, w):
         """
         Sets the item's width.
@@ -1875,12 +1934,13 @@ class GenericTreeItem(object):
 
         self._width = w
 
+
     def SetWindow(self, wnd):
         """
         Sets the window associated to the item.
 
         :param `wnd`: a non-toplevel window to be displayed next to the item, any
-         subclass of :class:`Window`.
+         subclass of :class:`wx.Window`.
 
         :raise: `Exception` if the input `item` is a separator and `wnd` is not ``None``.
         """
@@ -1913,14 +1973,16 @@ class GenericTreeItem(object):
         self._wnd.Enable(self._enabled)
         self._windowenabled = self._enabled
 
+
     def GetWindow(self):
         """
         Returns the window associated to the item (if any).
 
-        :return: An instance of any :class:`Window` derived class, excluding top-level windows.
+        :return: An instance of any :class:`wx.Window` derived class, excluding top-level windows.
         """
 
         return self._wnd
+
 
     def DeleteWindow(self):
         """ Deletes the window associated to the item (if any). """
@@ -1928,6 +1990,7 @@ class GenericTreeItem(object):
         if self._wnd:
             self._wnd.Destroy()
             self._wnd = None
+
 
     def GetWindowEnabled(self):
         """
@@ -1942,6 +2005,7 @@ class GenericTreeItem(object):
             raise Exception("\nERROR: This Item Has No Window Associated")
 
         return self._windowenabled
+
 
     def SetWindowEnabled(self, enable=True):
         """
@@ -1958,16 +2022,18 @@ class GenericTreeItem(object):
         self._windowenabled = enable
         self._wnd.Enable(enable)
 
+
     def GetWindowSize(self):
         """ Returns the associated window size. """
 
         return self._windowsize
 
+
     def OnSetFocus(self, event):
         """
         Handles the ``wx.EVT_SET_FOCUS`` event for the window associated with the item.
 
-        :param `event`: a :class:`FocusEvent` event to be processed.        
+        :param `event`: a :class:`FocusEvent` event to be processed.
         """
 
         treectrl = self._wnd.GetParent()
@@ -1982,14 +2048,16 @@ class GenericTreeItem(object):
 
         event.Skip()
 
+
     def GetType(self):
         """
         Returns the item type.
 
-        :see: :meth:`~GenericTreeItem.SetType` and :meth:`~GenericTreeItem.__init__` for a description of valid item types.        
+        :see: :meth:`~GenericTreeItem.SetType` and :meth:`~GenericTreeItem.__init__` for a description of valid item types.
         """
 
         return self._type
+
 
     def SetType(self, ct_type):
         """
@@ -2007,7 +2075,7 @@ class GenericTreeItem(object):
 
         :note: Regarding radiobutton-type items (with `ct_type` = 2), the following
          approach is used:
-         
+
          - All peer-nodes that are radiobuttons will be mutually exclusive. In other words,
            only one of a set of radiobuttons that share a common parent can be checked at
            once. If a radiobutton node becomes checked, then all of its peer radiobuttons
@@ -2018,6 +2086,7 @@ class GenericTreeItem(object):
 
         self._type = ct_type
 
+
     def SetHyperText(self, hyper=True):
         """
         Sets whether the item is hypertext or not.
@@ -2026,6 +2095,7 @@ class GenericTreeItem(object):
         """
 
         self._hypertext = hyper
+
 
     def SetVisited(self, visited=True):
         """
@@ -2036,25 +2106,29 @@ class GenericTreeItem(object):
 
         self._visited = visited
 
+
     def GetVisited(self):
         """ Returns whether an hypertext item was visited or not. """
 
         return self._visited
+
 
     def IsHyperText(self):
         """ Returns whether the item is hypetext or not. """
 
         return self._hypertext
 
+
     def GetParent(self):
         """
         Gets the item parent (another instance of :class:`GenericTreeItem` or ``None`` for
         root items.
 
-        :return: An instance of :class:`GenericTreeItem` or ``None`` for root items.        
+        :return: An instance of :class:`GenericTreeItem` or ``None`` for root items.
         """
 
         return self._parent
+
 
     def Insert(self, child, index):
         """
@@ -2066,24 +2140,28 @@ class GenericTreeItem(object):
 
         self._children.insert(index, child)
 
+
     def Expand(self):
         """ Expands the item. """
 
         self._isCollapsed = False
+
 
     def Collapse(self):
         """ Collapses the item. """
 
         self._isCollapsed = True
 
+
     def SetHilight(self, set=True):
         """
         Sets the item focus/unfocus.
 
-        :param bool `set`: ``True`` to set the focus to the item, ``False`` otherwise.    
+        :param bool `set`: ``True`` to set the focus to the item, ``False`` otherwise.
         """
 
         self._hasHilight = set
+
 
     def HasChildren(self):
         """
@@ -2094,6 +2172,7 @@ class GenericTreeItem(object):
 
         return len(self._children) > 0
 
+
     def IsSelected(self):
         """
         Returns whether the item is selected or not.
@@ -2103,6 +2182,7 @@ class GenericTreeItem(object):
 
         return self._hasHilight != 0
 
+
     def IsExpanded(self):
         """
         Returns whether the item is expanded or not.
@@ -2111,6 +2191,7 @@ class GenericTreeItem(object):
         """
 
         return not self._isCollapsed
+
 
     def GetValue(self):
         """
@@ -2124,13 +2205,14 @@ class GenericTreeItem(object):
 
         return self._checked
 
+
     def Get3StateValue(self):
         """
         Gets the state of a 3-state checkbox item.
 
         :return: ``wx.CHK_UNCHECKED`` when the checkbox is unchecked, ``wx.CHK_CHECKED``
          when it is checked and ``wx.CHK_UNDETERMINED`` when it's in the undetermined
-         state. 
+         state.
 
         :raise: `Exception` when the item is not a 3-state checkbox item.
 
@@ -2145,6 +2227,7 @@ class GenericTreeItem(object):
 
         return self._checked
 
+
     def Is3State(self):
         """
         Returns whether or not the checkbox item is a 3-state checkbox.
@@ -2156,6 +2239,7 @@ class GenericTreeItem(object):
         """
 
         return self._is3State
+
 
     def Set3StateValue(self, state):
         """
@@ -2177,6 +2261,7 @@ class GenericTreeItem(object):
 
         self._checked = state
 
+
     def Set3State(self, allow):
         """
         Sets whether the item has a 3-state value checkbox assigned to it or not.
@@ -2195,6 +2280,7 @@ class GenericTreeItem(object):
         self._is3State = allow
         return True
 
+
     def IsChecked(self):
         """
         This is just a maybe more readable synonym for :meth:`~GenericTreeItem.GetValue`.
@@ -2205,16 +2291,18 @@ class GenericTreeItem(object):
 
         return self.GetValue()
 
+
     def Check(self, checked=True):
         """
         Checks/unchecks an item.
 
-        :param bool `checked`: ``True`` to check an item, ``False`` to uncheck it.        
+        :param bool `checked`: ``True`` to check an item, ``False`` to uncheck it.
 
         :note: This is meaningful only for checkbox-like and radiobutton-like items.
         """
 
         self._checked = checked
+
 
     def HasPlus(self):
         """
@@ -2225,6 +2313,7 @@ class GenericTreeItem(object):
 
         return self._hasPlus or self.HasChildren()
 
+
     def IsBold(self):
         """
         Returns whether the item font is bold or not.
@@ -2233,6 +2322,7 @@ class GenericTreeItem(object):
         """
 
         return self._isBold != 0
+
 
     def IsItalic(self):
         """
@@ -2243,6 +2333,7 @@ class GenericTreeItem(object):
 
         return self._isItalic != 0
 
+
     def Enable(self, enable=True):
         """
         Enables/disables the item.
@@ -2251,6 +2342,7 @@ class GenericTreeItem(object):
         """
 
         self._enabled = enable
+
 
     def IsEnabled(self):
         """
@@ -2261,6 +2353,7 @@ class GenericTreeItem(object):
 
         return self._enabled
 
+
     def GetAttributes(self):
         """
         Returns the item attributes (font, colours, etc...).
@@ -2269,6 +2362,7 @@ class GenericTreeItem(object):
         """
 
         return self._attr
+
 
     def Attr(self):
         """
@@ -2284,6 +2378,7 @@ class GenericTreeItem(object):
 
         return self._attr
 
+
     def SetAttributes(self, attr):
         """
         Sets the item attributes (font, colours, etc...).
@@ -2297,6 +2392,7 @@ class GenericTreeItem(object):
         self._attr = attr
         self._ownsAttr = False
 
+
     def AssignAttributes(self, attr):
         """
         Assigns the item attributes (font, colours, etc...) for this item.
@@ -2306,6 +2402,7 @@ class GenericTreeItem(object):
 
         self.SetAttributes(attr)
         self._ownsAttr = True
+
 
     def DeleteChildren(self, tree):
         """
@@ -2336,19 +2433,21 @@ class GenericTreeItem(object):
 
         self._children = []
 
+
     def SetText(self, text):
         """
         Sets the item text.
 
         :param string `text`: the new item label.
 
-        :raise: `Exception` if the item is a separator.        
+        :raise: `Exception` if the item is a separator.
         """
 
         if self.IsSeparator():
             raise Exception("Separator items can not have text")
 
         self._text = text
+
 
     def GetChildrenCount(self, recursively=True):
         """
@@ -2365,10 +2464,11 @@ class GenericTreeItem(object):
 
         total = count
 
-        for n in xrange(count):
+        for n in range(count):
             total += self._children[n].GetChildrenCount()
 
         return total
+
 
     def GetSize(self, x, y, theButton):
         """
@@ -2398,15 +2498,16 @@ class GenericTreeItem(object):
 
         return x, y
 
+
     def HitTest(self, point, theCtrl, flags=0, level=0):
         """
         :meth:`~GenericTreeItem.HitTest` method for an item. Called from the main window :meth:`CustomTreeCtrl.HitTest() <customtreectrl.CustomTreeCtrl.HitTest>`.
 
-        :param `point`: the point to test for the hit (an instance of :class:`Point`);
+        :param `point`: the point to test for the hit (an instance of :class:`wx.Point`);
         :param `theCtrl`: the main :class:`CustomTreeCtrl` tree;
         :param integer `flags`: a bitlist of hit locations;
         :param integer `level`: the item's level inside the tree hierarchy.
-        
+
         :see: :meth:`CustomTreeCtrl.HitTest() <customtreectrl.CustomTreeCtrl.HitTest>` method for the flags explanation.
         """
 
@@ -2416,11 +2517,12 @@ class GenericTreeItem(object):
             # evaluate the item
             h = theCtrl.GetLineHeight(self)
 
-            if point.y > self._y and point.y < self._y + h:
+            pointX, pointY = point[0], point[1]
+            if pointY > self._y and pointY < self._y + h:
 
-                y_mid = self._y + h/2
+                y_mid = self._y + h//2
 
-                if point.y < y_mid:
+                if pointY < y_mid:
                     flags |= TREE_HITTEST_ONITEMUPPERPART
                 else:
                     flags |= TREE_HITTEST_ONITEMLOWERPART
@@ -2430,20 +2532,20 @@ class GenericTreeItem(object):
                 if wx.Platform == "__WXMAC__":
                     # according to the drawing code the triangels are drawn
                     # at -4 , -4  from the position up to +10/+10 max
-                    if point.x > xCross-4 and point.x < xCross+10 and point.y > y_mid-4 and \
-                       point.y < y_mid+10 and self.HasPlus() and theCtrl.HasButtons():
+                    if pointX > xCross-4 and pointX < xCross+10 and pointY > y_mid-4 and \
+                       pointY < y_mid+10 and self.HasPlus() and theCtrl.HasButtons():
 
                         flags |= TREE_HITTEST_ONITEMBUTTON
                         return self, flags
                 else:
                     # 5 is the size of the plus sign
-                    if point.x > xCross-6 and point.x < xCross+6 and point.y > y_mid-6 and \
-                       point.y < y_mid+6 and self.HasPlus() and theCtrl.HasButtons():
+                    if pointX > xCross-6 and pointX < xCross+6 and pointY > y_mid-6 and \
+                       pointY < y_mid+6 and self.HasPlus() and theCtrl.HasButtons():
 
                         flags |= TREE_HITTEST_ONITEMBUTTON
                         return self, flags
 
-                if point.x >= self._x and point.x <= self._x + self._width:
+                if pointX >= self._x and pointX <= self._x + self._width:
 
                     image_w = -1
                     wcheck = 0
@@ -2455,23 +2557,23 @@ class GenericTreeItem(object):
                     if self.GetCheckedImage() is not None:
                         wcheck, hcheck = theCtrl._imageListCheck.GetSize(self.GetCheckedImage())
 
-                    if wcheck and point.x <= self._x + wcheck + 1:
+                    if wcheck and pointX <= self._x + wcheck + 1:
                         flags |= TREE_HITTEST_ONITEMCHECKICON
                         return self, flags
 
-                    if image_w != -1 and point.x <= self._x + wcheck + image_w + 1:
+                    if image_w != -1 and pointX <= self._x + wcheck + image_w + 1:
                         flags |= TREE_HITTEST_ONITEMICON
                     else:
                         flags |= TREE_HITTEST_ONITEMLABEL
 
                     return self, flags
 
-                if point.x < self._x:
+                if pointX < self._x:
                     if theCtrl.HasAGWFlag(TR_FULL_ROW_HIGHLIGHT):
                         flags |= TREE_HITTEST_ONITEM
                     else:
                         flags |= TREE_HITTEST_ONITEMINDENT
-                if point.x > self._x + self._width:
+                if pointX > self._x + self._width:
                     if theCtrl.HasAGWFlag(TR_FULL_ROW_HIGHLIGHT):
                         flags |= TREE_HITTEST_ONITEM
                     else:
@@ -2491,12 +2593,13 @@ class GenericTreeItem(object):
 
         return None, 0
 
+
     def GetCurrentImage(self):
         """
         Returns the current item image.
 
         :return: An integer index that can be used to retrieve the item image inside
-         a :class:`ImageList`.
+         a :class:`wx.ImageList`.
         """
 
         image = _NO_IMAGE
@@ -2525,12 +2628,13 @@ class GenericTreeItem(object):
 
         return image
 
+
     def GetCurrentCheckedImage(self):
         """
         Returns the current item check image.
 
         :return: An integer index that can be used to retrieve the item check image inside
-         a :class:`ImageList`.
+         a :class:`wx.ImageList`.
         """
 
         if self._type == 0:
@@ -2558,7 +2662,7 @@ class GenericTreeItem(object):
 # This Is The Main Class.
 # -----------------------------------------------------------------------------
 
-class CustomTreeCtrl(wx.PyScrolledWindow):
+class CustomTreeCtrl(wx.ScrolledWindow):
     """
     :class:`CustomTreeCtrl` is a class that mimics the behaviour of :class:`TreeCtrl`, with almost the
     same base functionalities plus some more enhancements. This class does not rely on
@@ -2570,19 +2674,19 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                  name="CustomTreeCtrl"):
         """
         Default class constructor.
-        
-        :param Window `parent`: parent window. Must not be ``None``;
+
+        :param wx.Window `parent`: parent window. Must not be ``None``;
         :param integer `id`: window identifier. A value of -1 indicates a default value;
         :param `pos`: the control position. A value of (-1, -1) indicates a default position,
          chosen by either the windowing system or wxPython, depending on platform;
-        :type `pos`: tuple or :class:`Point`
+        :type `pos`: tuple or :class:`wx.Point`
         :param `size`: the control size. A value of (-1, -1) indicates a default size,
          chosen by either the windowing system or wxPython, depending on platform;
-        :type `size`: tuple or :class:`Size`
-        :param integer `style`: the underlying :class:`PyScrolledWindow` style;
+        :type `size`: tuple or :class:`wx.Size`
+        :param integer `style`: the underlying :class:`ScrolledWindow` style;
         :param integer `agwStyle`: the AGW-specific window style for :class:`CustomTreeCtrl`. It can be a
          combination of the following bits:
-        
+
          ============================== =========== ==================================================
          Window Styles                  Hex Value   Description
          ============================== =========== ==================================================
@@ -2600,16 +2704,16 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
          ``TR_ROW_LINES``                     0x400 Use this style to draw a contrasting border between displayed rows.
          ``TR_HIDE_ROOT``                     0x800 Use this style to suppress the display of the root node, effectively causing the first-level nodes to appear as a series of root nodes.
          ``TR_FULL_ROW_HIGHLIGHT``           0x2000 Use this style to have the background colour and the selection highlight extend  over the entire horizontal row of the tree control window.
-         ``TR_AUTO_CHECK_CHILD``             0x4000 Only meaningful foe checkbox-type items: when a parent item is checked/unchecked its children are checked/unchecked as well.
-         ``TR_AUTO_TOGGLE_CHILD``            0x8000 Only meaningful foe checkbox-type items: when a parent item is checked/unchecked its children are toggled accordingly.
-         ``TR_AUTO_CHECK_PARENT``           0x10000 Only meaningful foe checkbox-type items: when a child item is checked/unchecked its parent item is checked/unchecked as well.
+         ``TR_AUTO_CHECK_CHILD``             0x4000 Only meaningful for checkbox-type items: when a parent item is checked/unchecked its children are checked/unchecked as well.
+         ``TR_AUTO_TOGGLE_CHILD``            0x8000 Only meaningful for checkbox-type items: when a parent item is checked/unchecked its children are toggled accordingly.
+         ``TR_AUTO_CHECK_PARENT``           0x10000 Only meaningful for checkbox-type items: when a child item is checked/unchecked its parent item is checked/unchecked as well.
          ``TR_ALIGN_WINDOWS``               0x20000 Flag used to align windows (in items with windows) at the same horizontal position.
          ``TR_ALIGN_WINDOWS_RIGHT``         0x40000 Flag used to align windows (in items with windows) to the rightmost edge of :class:`CustomTreeCtrl`.
          ``TR_ELLIPSIZE_LONG_ITEMS``        0x80000 Flag used to ellipsize long items when the horizontal space for :class:`CustomTreeCtrl` is low.
          ``TR_TOOLTIP_ON_LONG_ITEMS``      0x100000 Flag used to show tooltips on long items when the horizontal space for :class:`CustomTreeCtrl` is low.
          ============================== =========== ==================================================
 
-        :param Validator `validator`: window validator;
+        :param wx.Validator `validator`: window validator;
         :param string `name`: window name.
         """
 
@@ -2625,8 +2729,8 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._spacing = 18
 
         # Brushes for focused/unfocused items (also gradient type)
-        self._hilightBrush = wx.Brush(wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT))
-        btnshadow = wx.SystemSettings_GetColour(wx.SYS_COLOUR_BTNSHADOW)
+        self._hilightBrush = wx.Brush(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
+        btnshadow = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW)
         self._hilightUnfocusedBrush = wx.Brush(btnshadow)
         r, g, b = btnshadow.Red(), btnshadow.Green(), btnshadow.Blue()
         backcolour = (max((r >> 1) - 20, 0),
@@ -2662,20 +2766,20 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         # Default normal and bold fonts for an item
         self._hasFont = True
-        self._normalFont = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        self._normalFont = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
         family = self._normalFont.GetFamily()
         if family == wx.FONTFAMILY_UNKNOWN:
             family = wx.FONTFAMILY_SWISS
         self._boldFont = wx.Font(self._normalFont.GetPointSize(), family,
-                                 self._normalFont.GetStyle(), wx.BOLD, self._normalFont.GetUnderlined(),
+                                 self._normalFont.GetStyle(), wx.FONTWEIGHT_BOLD, self._normalFont.GetUnderlined(),
                                  self._normalFont.GetFaceName(), self._normalFont.GetEncoding())
         self._italicFont = wx.Font(self._normalFont.GetPointSize(), family,
-                                   wx.FONTSTYLE_ITALIC, wx.NORMAL, self._normalFont.GetUnderlined(),
+                                   wx.FONTSTYLE_ITALIC, wx.FONTWEIGHT_NORMAL, self._normalFont.GetUnderlined(),
                                    self._normalFont.GetFaceName(), self._normalFont.GetEncoding())
 
         # Hyperlinks things
         self._hypertextfont = wx.Font(self._normalFont.GetPointSize(), family,
-                                      self._normalFont.GetStyle(), wx.NORMAL, True,
+                                      self._normalFont.GetStyle(), wx.FONTWEIGHT_NORMAL, True,
                                       self._normalFont.GetFaceName(), self._normalFont.GetEncoding())
         self._hypertextnewcolour = wx.BLUE
         self._hypertextvisitedcolour = wx.Colour(200, 47, 200)
@@ -2692,7 +2796,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._disabledColour = wx.Colour(180, 180, 180)
 
         # Gradient selection colours
-        self._firstcolour = colour = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+        self._firstcolour = colour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
         self._secondcolour = wx.WHITE
         self._usegradients = False
         self._gradientstyle = 0   # Horizontal Gradient
@@ -2714,7 +2818,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         # Pen Used To Draw The Border Around Selected Items
         self._borderPen = wx.BLACK_PEN
-        self._cursor = wx.StockCursor(wx.CURSOR_ARROW)
+        self._cursor = wx.Cursor(wx.CURSOR_ARROW)
 
         # For Appended Windows
         self._hasWindows = False
@@ -2739,7 +2843,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._separatorPen = wx.Pen(wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT))
 
         # Create our container... at last!
-        wx.PyScrolledWindow.__init__(self, parent, id, pos, size, style|wx.HSCROLL|wx.VSCROLL, name)
+        wx.ScrolledWindow.__init__(self, parent, id, pos, size, style|wx.HSCROLL|wx.VSCROLL, name)
 
         self._agwStyle = agwStyle
 
@@ -2779,6 +2883,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         # with associated widgets.
         self.SetFocus()
 
+
     def AcceptsFocus(self):
         """
         Can this window be given focus by mouse click?
@@ -2786,19 +2891,20 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :note: This method always returns ``True`` as we always accept focus from
          mouse click.
 
-        :note: Overridden from :class:`PyScrolledWindow`.
+        :note: Overridden from :class:`ScrolledWindow`.
         """
 
         # overridden base class method, allows this ctrl to
         # participate in the tab-order, etc.  It's overridable because
-        # of deriving this class from wx.PyScrolledWindow...
+        # of deriving this class from wx.ScrolledWindow...
         return True
+
 
     def OnDestroy(self, event):
         """
         Handles the ``wx.EVT_WINDOW_DESTROY`` event for :class:`CustomTreeCtrl`.
 
-        :param `event`: a :class:`WindowDestroyEvent` event to be processed.        
+        :param `event`: a :class:`wx.WindowDestroyEvent` event to be processed.
         """
 
         # Here there may be something I miss... do I have to destroy
@@ -2814,20 +2920,21 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         event.Skip()
 
+
     def GetControlBmp(self, checkbox=True, checked=False, enabled=True, x=16, y=16):
         """
         Returns a native looking checkbox or radio button bitmap.
-        
+
         :param bool `checkbox`: ``True`` to get a checkbox image, ``False`` for a radiobutton one;
         :param bool `checked`: ``True`` if the control is marked, ``False`` if it is not;
         :param bool `enabled`: ``True`` if the control is enabled, ``False`` if it is not;
         :param integer `x`: the width of the bitmap;
         :param integer `y`: the height of the bitmap.
 
-        :return: An instance of :class:`Bitmap`, representing a native looking checkbox or radiobutton.        
+        :return: An instance of :class:`wx.Bitmap`, representing a native looking checkbox or radiobutton.
         """
 
-        bmp = wx.EmptyBitmap(x, y)
+        bmp = wx.Bitmap(x, y)
         mdc = wx.MemoryDC(bmp)
         mask = wx.Colour(0xfe, 0xfe, 0xfe)
         mdc.SetBackground(wx.Brush(mask))
@@ -2857,6 +2964,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         bmp.SetMaskColour(mask)
         return bmp
 
+
     def GetCount(self):
         """ Returns the global number of items in the tree. """
 
@@ -2872,27 +2980,31 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return count
 
+
     def GetIndent(self):
         """ Returns the item indentation, in pixels. """
 
         return self._indent
+
 
     def GetSpacing(self):
         """ Returns the spacing between the start and the text, in pixels. """
 
         return self._spacing
 
+
     def GetRootItem(self):
         """ Returns the root item, an instance of :class:`GenericTreeItem`. """
 
         return self._anchor
+
 
     def GetSelection(self):
         """
         Returns the current selection.
 
         :return: An instance of :class:`GenericTreeItem`.
-        
+
         :note:
 
          This method is valid only with the style ``TR_SINGLE`` set. Use
@@ -2900,6 +3012,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         """
 
         return self._current
+
 
     def ToggleItemSelection(self, item):
         """
@@ -2910,6 +3023,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         self.SelectItem(item, not self.IsSelected(item))
 
+
     def EnableChildren(self, item, enable=True):
         """
         Enables/disables the item children.
@@ -2917,7 +3031,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param `item`: an instance of :class:`GenericTreeItem`;
         :param bool `enable`: ``True`` to enable the children, ``False`` to disable them.
 
-        :note: This method is used internally.        
+        :note: This method is used internally.
         """
 
         torefresh = False
@@ -2936,6 +3050,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             if child.GetType != 2 or (child.GetType() == 2 and item.IsChecked()):
                 self.EnableChildren(child, enable)
             (child, cookie) = self.GetNextChild(item, cookie)
+
 
     def EnableItem(self, item, enable=True, torefresh=True):
         """
@@ -2966,6 +3081,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             self.CalculateSize(item, dc)
             self.RefreshLine(item)
 
+
     def IsItemEnabled(self, item):
         """
         Returns whether an item is enabled or disabled.
@@ -2975,24 +3091,27 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return item.IsEnabled()
 
+
     def SetDisabledColour(self, colour):
         """
         Sets the colour for items in a disabled state.
 
-        :param `colour`: a valid :class:`Colour` instance.
+        :param `colour`: a valid :class:`wx.Colour` instance.
         """
 
         self._disabledColour = colour
         self._dirty = True
 
+
     def GetDisabledColour(self):
         """
         Returns the colour for items in a disabled state.
 
-        :return: An instance of :class:`Colour`.
+        :return: An instance of :class:`wx.Colour`.
         """
 
         return self._disabledColour
+
 
     def IsItemChecked(self, item):
         """
@@ -3001,11 +3120,12 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param `item`: an instance of :class:`GenericTreeItem`.
 
         :return: ``True`` if the item is in a 'checked' state, ``False`` otherwise.
-        
+
         :note: This method is meaningful only for checkbox-like and radiobutton-like items.
         """
 
         return item.IsChecked()
+
 
     def GetItem3StateValue(self, item):
         """
@@ -3015,7 +3135,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         :return: ``wx.CHK_UNCHECKED`` when the checkbox is unchecked, ``wx.CHK_CHECKED``
          when it is checked and ``wx.CHK_UNDETERMINED`` when it's in the undetermined
-         state. 
+         state.
 
         :note: This method raises an exception when the function is used with a 2-state
          checkbox item.
@@ -3024,6 +3144,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         """
 
         return item.Get3StateValue()
+
 
     def IsItem3State(self, item):
         """
@@ -3038,6 +3159,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         """
 
         return item.Is3State()
+
 
     def SetItem3StateValue(self, item, state):
         """
@@ -3055,6 +3177,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         item.Set3StateValue(state)
 
+
     def SetItem3State(self, item, allow):
         """
         Sets whether the item has a 3-state value checkbox assigned to it or not.
@@ -3069,6 +3192,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         """
 
         return item.Set3State(allow)
+
 
     def CheckItem2(self, item, checked=True, torefresh=False):
         """
@@ -3088,6 +3212,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             dc = wx.ClientDC(self)
             self.CalculateSize(item, dc)
             self.RefreshLine(item)
+
 
     def UnCheckRadioParent(self, item, checked=False):
         """
@@ -3113,6 +3238,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self.GetEventHandler().ProcessEvent(e)
 
         return True
+
 
     def CheckItem(self, item, checked=True):
         """
@@ -3171,6 +3297,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         e.SetEventObject(self)
         self.GetEventHandler().ProcessEvent(e)
 
+
     def AutoToggleChild(self, item):
         """
         Transverses the tree and toggles the items.
@@ -3193,6 +3320,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             self.AutoToggleChild(child)
             (child, cookie) = self.GetNextChild(item, cookie)
 
+
     def AutoCheckChild(self, item, checked):
         """
         Transverses the tree and checks/unchecks the items.
@@ -3214,6 +3342,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                 self.CheckItem2(child, checked, torefresh=torefresh)
             self.AutoCheckChild(child, checked)
             (child, cookie) = self.GetNextChild(item, cookie)
+
 
     def AutoCheckParent(self, item, checked):
         """
@@ -3239,6 +3368,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self.CheckItem2(parent, checked, torefresh=True)
         self.AutoCheckParent(parent, checked)
 
+
     def CheckChilds(self, item, checked=True):
         """
         Programatically check/uncheck item children.
@@ -3256,6 +3386,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             self.AutoToggleChild(item)
         else:
             self.AutoCheckChild(item, checked)
+
 
     def CheckSameLevel(self, item, checked=False):
         """
@@ -3285,6 +3416,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                     self.EnableChildren(child, checked)
             (child, cookie) = self.GetNextChild(parent, cookie)
 
+
     def EditLabel(self, item):
         """
         Starts editing an item label.
@@ -3294,19 +3426,21 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         self.Edit(item)
 
+
     def ShouldInheritColours(self):
         """
         Return ``True`` from here to allow the colours of this window to be
         changed by `InheritAttributes`, returning ``False`` forbids inheriting them
         from the parent window.
-        
+
         The base class version returns ``False``, but this method is overridden in
-        :class:`Control` where it returns ``True``.
+        :class:`wx.Control` where it returns ``True``.
 
         :class:`CustomTreeCtrl` does not inherit colours from anyone.
         """
 
         return False
+
 
     def SetIndent(self, indent):
         """
@@ -3318,6 +3452,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._indent = indent
         self._dirty = True
 
+
     def SetSpacing(self, spacing):
         """
         Sets the spacing between items in :class:`CustomTreeCtrl`.
@@ -3328,6 +3463,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._spacing = spacing
         self._dirty = True
 
+
     def HasChildren(self, item):
         """
         Returns whether an item has children or not.
@@ -3336,6 +3472,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         """
 
         return len(item.GetChildren()) > 0
+
 
     def GetChildrenCount(self, item, recursively=True):
         """
@@ -3348,6 +3485,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return item.GetChildrenCount(recursively)
 
+
     def HasAGWFlag(self, flag):
         """
         Returns ``True`` if :class:`CustomTreeCtrl` has the `flag` bit set.
@@ -3359,12 +3497,13 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return self._agwStyle & flag
 
+
     def SetAGWWindowStyleFlag(self, agwStyle):
         """
         Sets the :class:`CustomTreeCtrl` window style.
 
         :param integer `agwStyle`: the new :class:`CustomTreeCtrl` window style.
-        
+
         :see: The :meth:`~CustomTreeCtrl.__init__` method for the `agwStyle` parameter description.
         """
 
@@ -3388,6 +3527,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._agwStyle = agwStyle
         self._dirty = True
 
+
     def GetAGWWindowStyleFlag(self):
         """
         Returns the :class:`CustomTreeCtrl` style.
@@ -3396,6 +3536,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         """
 
         return self._agwStyle
+
 
     def HasButtons(self):
         """
@@ -3420,6 +3561,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         """
 
         return item.GetText()
+
 
     def GetItemSize(self, item):
         """
@@ -3449,6 +3591,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         maxsize = w - (wcheck + image_w + item.GetX()) + xa
         return maxsize
 
+
     def GetItemImage(self, item, which=TreeItemIcon_Normal):
         """
         Returns the item image.
@@ -3462,14 +3605,15 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
          ``TreeItemIcon_Normal``           To get the normal item image
          ``TreeItemIcon_Selected``         To get the selected item image (i.e. the image which is shown when the item is currently selected)
          ``TreeItemIcon_Expanded``         To get the expanded image (this only makes sense for items which have children - then this image is shown when the item is expanded and the normal image is shown when it is collapsed)
-         ``TreeItemIcon_SelectedExpanded`` To get the selected expanded image (which is shown when an expanded item is currently selected) 
+         ``TreeItemIcon_SelectedExpanded`` To get the selected expanded image (which is shown when an expanded item is currently selected)
          ================================= ========================
 
         :return: An integer index that can be used to retrieve the item image inside
-         a :class:`ImageList`.         
+         a :class:`wx.ImageList`.
         """
 
         return item.GetImage(which)
+
 
     def GetItemLeftImage(self, item):
         """
@@ -3479,10 +3623,11 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param `item`: an instance of :class:`GenericTreeItem`.
 
         :return: An integer index that can be used to retrieve the item leftmost image inside
-         a :class:`ImageList`.
+         a :class:`wx.ImageList`.
         """
 
         return item.GetLeftImage()
+
 
     def GetPyData(self, item):
         """
@@ -3497,6 +3642,8 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         return item.GetData()
 
     GetItemPyData = GetPyData
+    GetItemData   = GetPyData
+
 
     def GetItemTextColour(self, item):
         """
@@ -3504,10 +3651,11 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         :param `item`: an instance of :class:`GenericTreeItem`.
 
-        :return: An instance of :class:`Colour`.
+        :return: An instance of :class:`wx.Colour`.
         """
 
         return item.Attr().GetTextColour()
+
 
     def GetItemBackgroundColour(self, item):
         """
@@ -3515,10 +3663,11 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         :param `item`: an instance of :class:`GenericTreeItem`.
 
-        :return: An instance of :class:`Colour`.
+        :return: An instance of :class:`wx.Colour`.
         """
 
         return item.Attr().GetBackgroundColour()
+
 
     def GetItemFont(self, item):
         """
@@ -3526,7 +3675,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         :param `item`: an instance of :class:`GenericTreeItem`.
 
-        :return: An instance of :class:`Font`.
+        :return: An instance of :class:`wx.Font`.
         """
 
         font = item.Attr().GetFont()
@@ -3534,6 +3683,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             return font
 
         return wx.NullFont
+
 
     def IsItemHyperText(self, item):
         """
@@ -3546,6 +3696,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return item.IsHyperText()
 
+
     def SetItemText(self, item, text):
         """
         Sets the item text.
@@ -3553,7 +3704,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param `item`: an instance of :class:`GenericTreeItem`;
         :param string `text`: the new item label.
 
-        :raise: `Exception` if the input `item` is a separator.        
+        :raise: `Exception` if the input `item` is a separator.
         """
 
         if item.IsSeparator():
@@ -3564,6 +3715,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self.CalculateSize(item, dc)
         self.RefreshLine(item)
 
+
     def SetItemImage(self, item, image, which=TreeItemIcon_Normal):
         """
         Sets the item image, depending on the item state.
@@ -3573,7 +3725,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
          use for the item in the state specified by the `which` parameter;
         :param integer `which`: the item state.
 
-        :see: :meth:`~CustomTreeCtrl.GetItemImage` for an explanation of the `which` parameter.        
+        :see: :meth:`~CustomTreeCtrl.GetItemImage` for an explanation of the `which` parameter.
         """
 
         item.SetImage(image, which)
@@ -3581,6 +3733,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         dc = wx.ClientDC(self)
         self.CalculateSize(item, dc)
         self.RefreshLine(item)
+
 
     def SetItemLeftImage(self, item, image):
         """
@@ -3598,6 +3751,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self.CalculateSize(item, dc)
         self.RefreshLine(item)
 
+
     def SetPyData(self, item, data):
         """
         Sets the data associated to an item.
@@ -3609,6 +3763,8 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         item.SetData(data)
 
     SetItemPyData = SetPyData
+    SetItemData = SetPyData
+
 
     def SetItemHasChildren(self, item, has=True):
         """
@@ -3620,6 +3776,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         item.SetHasPlus(has)
         self.RefreshLine(item)
+
 
     def SetItemBold(self, item, bold=True):
         """
@@ -3634,6 +3791,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             item.SetBold(bold)
             self._dirty = True
 
+
     def SetItemItalic(self, item, italic=True):
         """
         Sets the item font as italic/non-italic.
@@ -3646,6 +3804,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             item.SetItalic(italic)
             self._dirty = True
 
+
     def SetItemDropHighlight(self, item, highlight=True):
         """
         Gives the item the visual feedback for drag and drop operations.
@@ -3656,34 +3815,37 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         """
 
         if highlight:
-            bg = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT)
-            fg = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
+            bg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+            fg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
 
         item.Attr().SetTextColour(fg)
         item.Attr.SetBackgroundColour(bg)
         self.RefreshLine(item)
+
 
     def SetItemTextColour(self, item, colour):
         """
         Sets the item text colour or separator horizontal line colour.
 
         :param `item`: an instance of :class:`GenericTreeItem`;
-        :param `colour`: a valid :class:`Colour` instance.
+        :param `colour`: a valid :class:`wx.Colour` instance.
         """
 
         item.Attr().SetTextColour(colour)
         self.RefreshLine(item)
+
 
     def SetItemBackgroundColour(self, item, colour):
         """
         Sets the item background colour.
 
         :param `item`: an instance of :class:`GenericTreeItem`;
-        :param `colour`: a valid :class:`Colour` instance.
+        :param `colour`: a valid :class:`wx.Colour` instance.
         """
 
         item.Attr().SetBackgroundColour(colour)
         self.RefreshLine(item)
+
 
     def SetItemHyperText(self, item, hyper=True):
         """
@@ -3696,27 +3858,29 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         item.SetHyperText(hyper)
         self.RefreshLine(item)
 
+
     def SetItemFont(self, item, font):
         """
         Sets the item font.
 
         :param `item`: an instance of :class:`GenericTreeItem`;
-        :param `font`: a valid :class:`Font` instance.
+        :param `font`: a valid :class:`wx.Font` instance.
         """
 
         item.Attr().SetFont(font)
         self._dirty = True
 
+
     def SetFont(self, font):
         """
         Sets the :class:`CustomTreeCtrl` font.
 
-        :param `font`: a valid :class:`Font` instance.
+        :param `font`: a valid :class:`wx.Font` instance.
 
-        :note: Overridden from :class:`PyScrolledWindow`.        
+        :note: Overridden from :class:`ScrolledWindow`.
         """
 
-        wx.PyScrolledWindow.SetFont(self, font)
+        wx.ScrolledWindow.SetFont(self, font)
 
         self._normalFont = font
         family = self._normalFont.GetFamily()
@@ -3725,11 +3889,11 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             family = wx.FONTFAMILY_SWISS
 
         self._boldFont = wx.Font(self._normalFont.GetPointSize(), family,
-                                 self._normalFont.GetStyle(), wx.BOLD, self._normalFont.GetUnderlined(),
+                                 self._normalFont.GetStyle(), wx.FONTWEIGHT_BOLD, self._normalFont.GetUnderlined(),
                                  self._normalFont.GetFaceName(), self._normalFont.GetEncoding())
 
         self._italicFont = wx.Font(self._normalFont.GetPointSize(), family,
-                                   wx.FONTSTYLE_ITALIC, wx.NORMAL, self._normalFont.GetUnderlined(),
+                                   wx.FONTSTYLE_ITALIC, wx.FONTWEIGHT_NORMAL, self._normalFont.GetUnderlined(),
                                    self._normalFont.GetFaceName(), self._normalFont.GetEncoding())
 
         self.CalculatePositions()
@@ -3738,22 +3902,24 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return True
 
+
     def GetHyperTextFont(self):
         """
         Returns the font used to render hypertext items.
 
-        :return: An instance of :class:`Font`.
+        :return: An instance of :class:`wx.Font`.
 
         :note: This method is meaningful only for hypertext-like items.
         """
 
         return self._hypertextfont
 
+
     def SetHyperTextFont(self, font):
         """
         Sets the font used to render hypertext items.
 
-        :param `font`: a valid :class:`Font` instance.
+        :param `font`: a valid :class:`wx.Font` instance.
 
         :note: This method is meaningful only for hypertext-like items.
         """
@@ -3761,11 +3927,12 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._hypertextfont = font
         self._dirty = True
 
+
     def SetHyperTextNewColour(self, colour):
         """
         Sets the colour used to render a non-visited hypertext item.
 
-        :param `colour`: a valid :class:`Colour` instance.
+        :param `colour`: a valid :class:`wx.Colour` instance.
 
         :note: This method is meaningful only for hypertext-like items.
         """
@@ -3773,22 +3940,24 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._hypertextnewcolour = colour
         self._dirty = True
 
+
     def GetHyperTextNewColour(self):
         """
         Returns the colour used to render a non-visited hypertext item.
 
-        :return: An instance of :class:`Colour`.
+        :return: An instance of :class:`wx.Colour`.
 
         :note: This method is meaningful only for hypertext-like items.
         """
 
         return self._hypertextnewcolour
 
+
     def SetHyperTextVisitedColour(self, colour):
         """
         Sets the colour used to render a visited hypertext item.
 
-        :param `colour`: a valid :class:`Colour` instance.
+        :param `colour`: a valid :class:`wx.Colour` instance.
 
         :note: This method is meaningful only for hypertext-like items.
         """
@@ -3796,16 +3965,18 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._hypertextvisitedcolour = colour
         self._dirty = True
 
+
     def GetHyperTextVisitedColour(self):
         """
         Returns the colour used to render a visited hypertext item.
 
-        :return: An instance of :class:`Colour`.
+        :return: An instance of :class:`wx.Colour`.
 
         :note: This method is meaningful only for hypertext-like items.
         """
 
         return self._hypertextvisitedcolour
+
 
     def SetItemVisited(self, item, visited=True):
         """
@@ -3820,6 +3991,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         item.SetVisited(visited)
         self.RefreshLine(item)
 
+
     def GetItemVisited(self, item):
         """
         Returns whether an hypertext item was visited.
@@ -3833,12 +4005,13 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return item.GetVisited()
 
+
     def SetHilightFocusColour(self, colour):
         """
         Sets the colour used to highlight focused selected items.
 
-        :param `colour`: a valid :class:`Colour` instance.
-        
+        :param `colour`: a valid :class:`wx.Colour` instance.
+
         :note: This is applied only if gradient and Windows Vista selection
          styles are disabled.
         """
@@ -3846,12 +4019,13 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._hilightBrush = wx.Brush(colour)
         self.RefreshSelected()
 
+
     def SetHilightNonFocusColour(self, colour):
         """
         Sets the colour used to highlight unfocused selected items.
 
-        :param `colour`: a valid :class:`Colour` instance.
-        
+        :param `colour`: a valid :class:`wx.Colour` instance.
+
         :note: This is applied only if gradient and Windows Vista selection
          styles are disabled.
         """
@@ -3859,23 +4033,25 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._hilightUnfocusedBrush = wx.Brush(colour)
         self.RefreshSelected()
 
+
     def GetHilightFocusColour(self):
         """
         Returns the colour used to highlight focused selected items.
 
-        :return: An instance of :class:`Colour`.
-        
+        :return: An instance of :class:`wx.Colour`.
+
         :note: This is used only if gradient and Windows Vista selection
          styles are disabled.
         """
 
         return self._hilightBrush.GetColour()
 
+
     def GetHilightNonFocusColour(self):
         """
         Returns the colour used to highlight unfocused selected items.
 
-        :return: An instance of :class:`Colour`.
+        :return: An instance of :class:`wx.Colour`.
 
         :note: This is used only if gradient and Windows Vista selection
          styles are disabled.
@@ -3883,26 +4059,28 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return self._hilightUnfocusedBrush.GetColour()
 
+
     def SetFirstGradientColour(self, colour=None):
         """
         Sets the first gradient colour for gradient-style selections.
 
-        :param `colour`: if not ``None``, a valid :class:`Colour` instance. Otherwise,
+        :param `colour`: if not ``None``, a valid :class:`wx.Colour` instance. Otherwise,
          the colour is taken from the system value ``wx.SYS_COLOUR_HIGHLIGHT``.
         """
 
         if colour is None:
-            colour = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+            colour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
 
         self._firstcolour = colour
         if self._usegradients:
             self.RefreshSelected()
 
+
     def SetSecondGradientColour(self, colour=None):
         """
         Sets the second gradient colour for gradient-style selections.
 
-        :param `colour`: if not ``None``, a valid :class:`Colour` instance. Otherwise,
+        :param `colour`: if not ``None``, a valid :class:`wx.Colour` instance. Otherwise,
          the colour generated is a slightly darker version of the :class:`CustomTreeCtrl`
          background colour.
         """
@@ -3920,23 +4098,26 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         if self._usegradients:
             self.RefreshSelected()
 
+
     def GetFirstGradientColour(self):
         """
         Returns the first gradient colour for gradient-style selections.
 
-        :return: An instance of :class:`Colour`.
+        :return: An instance of :class:`wx.Colour`.
         """
 
         return self._firstcolour
+
 
     def GetSecondGradientColour(self):
         """
         Returns the second gradient colour for gradient-style selections.
 
-        :return: An instance of :class:`Colour`.
+        :return: An instance of :class:`wx.Colour`.
         """
 
         return self._secondcolour
+
 
     def EnableSelectionGradient(self, enable=True):
         """
@@ -3953,6 +4134,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._vistaselection = False
         self.RefreshSelected()
 
+
     def SetGradientStyle(self, vertical=0):
         """
         Sets the gradient style for gradient-style selections.
@@ -3967,6 +4149,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         if self._usegradients:
             self.RefreshSelected()
 
+
     def GetGradientStyle(self):
         """
         Returns the gradient style for gradient-style selections.
@@ -3976,6 +4159,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         """
 
         return self._gradientstyle
+
 
     def EnableSelectionVista(self, enable=True):
         """
@@ -3992,93 +4176,102 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._vistaselection = enable
         self.RefreshSelected()
 
+
     def SetBorderPen(self, pen):
         """
         Sets the pen used to draw the selected item border.
 
-        :param `pen`: an instance of :class:`Pen`.
-        
+        :param `pen`: an instance of :class:`wx.Pen`.
+
         :note: The border pen is not used if the Windows Vista selection style is applied.
         """
 
         self._borderPen = pen
         self.RefreshSelected()
 
+
     def GetBorderPen(self):
         """
         Returns the pen used to draw the selected item border.
 
-        :return: An instance of :class:`Pen`.
+        :return: An instance of :class:`wx.Pen`.
 
         :note: The border pen is not used if the Windows Vista selection style is applied.
         """
 
         return self._borderPen
 
+
     def SetConnectionPen(self, pen):
         """
         Sets the pen used to draw the connecting lines between items.
 
-        :param `pen`: an instance of :class:`Pen`.
+        :param `pen`: an instance of :class:`wx.Pen`.
         """
 
         self._dottedPen = pen
         self._dirty = True
 
+
     def GetConnectionPen(self):
         """
         Returns the pen used to draw the connecting lines between items.
 
-        :return: An instance of :class:`Pen`.
+        :return: An instance of :class:`wx.Pen`.
         """
 
         return self._dottedPen
+
 
     def SetBackgroundImage(self, image):
         """
         Sets the :class:`CustomTreeCtrl` background image.
 
-        :param `image`: if not ``None``, an instance of :class:`Bitmap`.
+        :param `image`: if not ``None``, an instance of :class:`wx.Bitmap`.
 
         :note: At present, the background image can only be used in "tile" mode.
 
-        .. todo:: Support background images also in stretch and centered modes.        
+        .. todo:: Support background images also in stretch and centered modes.
         """
 
         self._backgroundImage = image
         self.Refresh()
 
+
     def GetBackgroundImage(self):
         """
         Returns the :class:`CustomTreeCtrl` background image (if any).
 
-        :return: An instance of :class:`Bitmap` if a background image is present, ``None`` otherwise.
-        
+        :return: An instance of :class:`wx.Bitmap` if a background image is present, ``None`` otherwise.
+
         :note: At present, the background image can only be used in "tile" mode.
 
-        .. todo:: Support background images also in stretch and centered modes.        
+        .. todo:: Support background images also in stretch and centered modes.
         """
 
         return self._backgroundImage
+
 
     def SetSeparatorColour(self, colour):
         """
         Sets the pen colour for separator-type items.
 
-        :param `colour`: a valid instance of :class:`Colour`.
+        :param `colour`: a valid instance of :class:`wx.Colour`.
         """
 
         self._separatorPen = wx.Pen(colour, 1)
         self.Refresh()
 
+
     def GetSeparatorColour(self, colour):
         """
         Returns the pen colour for separator-type items.
 
-        :return: An instance of :class:`Colour` representing the separator pen colour.
+        :return: An instance of :class:`wx.Colour` representing the separator pen colour.
         """
 
         return self._separatorPen.GetColour()
+
 
     def IsItemSeparator(self, item):
         """
@@ -4089,16 +4282,18 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return item.IsSeparator()
 
+
     def GetItemWindow(self, item):
         """
         Returns the window associated to the item (if any).
 
         :param `item`: an instance of :class:`GenericTreeItem`.
 
-        :return: An instance of :class:`Window` if the item has an associated window, ``None`` otherwise.        
+        :return: An instance of :class:`wx.Window` if the item has an associated window, ``None`` otherwise.
         """
 
         return item.GetWindow()
+
 
     def SetItemWindow(self, item, wnd):
         """
@@ -4128,6 +4323,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self.Refresh()
         self.AdjustMyScrollbars()
 
+
     def DeleteItemWindow(self, item):
         """
         Deletes the window associated to an item (if any).
@@ -4142,6 +4338,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         if item in self._itemWithWindow:
             self._itemWithWindow.remove(item)
 
+
     def GetItemWindowEnabled(self, item):
         """
         Returns whether the window associated to the item is enabled.
@@ -4154,6 +4351,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return item.GetWindowEnabled()
 
+
     def SetItemWindowEnabled(self, item, enable=True):
         """
         Enables/disables the window associated to the item.
@@ -4165,6 +4363,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         item.SetWindowEnabled(enable)
 
+
     def GetItemType(self, item):
         """
         Returns the item type.
@@ -4172,11 +4371,12 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param `item`: an instance of :class:`GenericTreeItem`.
 
         :return: An integer representing the item type.
-        
-        :see: :meth:`~CustomTreeCtrl.SetItemType` for a description of valid item types.        
+
+        :see: :meth:`~CustomTreeCtrl.SetItemType` for a description of valid item types.
         """
 
         return item.GetType()
+
 
     def SetItemType(self, item, ct_type):
         """
@@ -4195,7 +4395,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         :note: Regarding radiobutton-type items (with `ct_type` = 2), the following
          approach is used:
-         
+
          - All peer-nodes that are radiobuttons will be mutually exclusive. In other words,
            only one of a set of radiobuttons that share a common parent can be checked at
            once. If a radiobutton node becomes checked, then all of its peer radiobuttons
@@ -4218,7 +4418,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         """
         Returns whether the item is visible or not (i.e., its hierarchy is expanded
         enough to show the item).
-        
+
         :param `item`: an instance of :class:`GenericTreeItem`.
 
         :return: ``True`` if the item is visible, ``False`` if it is hidden.
@@ -4250,6 +4450,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return True
 
+
     def ItemHasChildren(self, item):
         """
         Returns whether the item has children or not.
@@ -4266,6 +4467,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         # children for an item which does have them
         return item.HasPlus()
 
+
     def IsExpanded(self, item):
         """
         Returns whether the item is expanded or not.
@@ -4276,6 +4478,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         """
 
         return item.IsExpanded()
+
 
     def IsSelected(self, item):
         """
@@ -4288,6 +4491,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return item.IsSelected()
 
+
     def IsBold(self, item):
         """
         Returns whether the item font is bold or not.
@@ -4298,6 +4502,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         """
 
         return item.IsBold()
+
 
     def IsItalic(self, item):
         """
@@ -4321,10 +4526,11 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         :param `item`: an instance of :class:`GenericTreeItem`.
 
-        :return: An instance of :class:`GenericTreeItem` or ``None`` for root items.        
+        :return: An instance of :class:`GenericTreeItem` or ``None`` for root items.
         """
 
         return item.GetParent()
+
 
     def GetFirstChild(self, item):
         """
@@ -4342,6 +4548,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         cookie = 0
         return self.GetNextChild(item, cookie)
+
 
     def GetNextChild(self, item, cookie):
         """
@@ -4372,6 +4579,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             # there are no more of them
             return None, cookie
 
+
     def GetLastChild(self, item):
         """
         Returns the item last child.
@@ -4384,6 +4592,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         children = item.GetChildren()
         return (len(children) == 0 and [None] or [children[-1]])[0]
+
 
     def GetNextSibling(self, item):
         """
@@ -4411,6 +4620,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         n = index + 1
         return (n == len(siblings) and [None] or [siblings[n]])[0]
 
+
     def GetPrevSibling(self, item):
         """
         Returns the previous sibling of an item.
@@ -4435,6 +4645,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         index = siblings.index(i)
 
         return (index == 0 and [None] or [siblings[index-1]])[0]
+
 
     def GetNext(self, item):
         """
@@ -4462,13 +4673,14 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
              return toFind
 
+
     def GetPrev(self, item):
         """
         Returns the previous item. Only for internal use right now.
 
         :param `item`: an instance of :class:`GenericTreeItem`.
 
-        :return: An instance of :class:`GenericTreeItem`        
+        :return: An instance of :class:`GenericTreeItem`
         """
 
         # Look for a previous sibling of this item
@@ -4483,6 +4695,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         # item has not got a previous sibling, return it's parent
         return self.GetItemParent(item)
+
 
     def GetNextExpanded(self, item):
         """
@@ -4500,6 +4713,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return None
 
+
     def GetPrevExpanded(self, item):
         """
         Returns the previous expanded item before the input one.
@@ -4515,6 +4729,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             return self.GetPrevExpanded(prevSibling)
 
         return None
+
 
     def GetFirstVisibleItem(self):
         """
@@ -4535,6 +4750,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return None
 
+
     def GetNextVisible(self, item):
         """
         Returns the next visible item.
@@ -4553,6 +4769,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                 return id
 
         return None
+
 
     def GetPrevVisible(self, item):
         """
@@ -4593,6 +4810,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return lastGoodItem
 
+
     def ResetEditControl(self):
         """ Called by :class:`TreeTextCtrl` when it marks itself for deletion. """
 
@@ -4604,6 +4822,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self.Refresh()
         self.AdjustMyScrollbars()
 
+
     def FindItem(self, idParent, prefixOrig):
         """
         Finds the first item starting with the given prefix after the given parent.
@@ -4611,7 +4830,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param integer `idParent`: an instance of :class:`GenericTreeItem`;
         :param string `prefixOrig`: a string containing the item text prefix.
 
-        :return: An instance of :class:`GenericTreeItem` or ``None`` if no item has been found.        
+        :return: An instance of :class:`GenericTreeItem` or ``None`` if no item has been found.
         """
 
         # match is case insensitive as this is more convenient to the user: having
@@ -4667,14 +4886,14 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param integer `ct_type`: the item type (see :meth:`~CustomTreeCtrl.SetItemType` for a list of valid
          item types);
         :param `wnd`: if not ``None``, a non-toplevel window to show next to the item, any
-         subclass of :class:`Window` except top-level windows;
+         subclass of :class:`wx.Window` except top-level windows;
         :param integer `image`: an index within the normal image list specifying the image to
          use for the item in unselected state;
         :param integer `selImage`: an index within the normal image list specifying the image to
          use for the item in selected state; if `image` > -1 and `selImage` is -1, the
          same image is used for both selected and unselected items;
         :param object `data`: associate the given Python object `data` with the item;
-        :param bool `separator`: ``True`` if the item is a separator, ``False`` otherwise. 
+        :param bool `separator`: ``True`` if the item is a separator, ``False`` otherwise.
 
         :return: An instance of :class:`GenericTreeItem` upon successful insertion.
 
@@ -4689,7 +4908,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
          - The item is a separator but it has text or an associated window.
 
 
-        :note: Separator items should not have children, text labels or an associated window.        
+        :note: Separator items should not have children, text labels or an associated window.
         """
 
         if wnd is not None and not self.HasAGWFlag(TR_HAS_VARIABLE_ROW_HEIGHT):
@@ -4725,6 +4944,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return item
 
+
     def AddRoot(self, text, ct_type=0, wnd=None, image=-1, selImage=-1, data=None):
         """
         Adds a root item to the :class:`CustomTreeCtrl`.
@@ -4733,7 +4953,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param integer `ct_type`: the item type (see :meth:`~CustomTreeCtrl.SetItemType` for a list of valid
          item types);
         :param `wnd`: if not ``None``, a non-toplevel window to show next to the item,
-         any subclass of :class:`Window` except top-level windows;
+         any subclass of :class:`wx.Window` except top-level windows;
         :param integer `image`: an index within the normal image list specifying the image to
          use for the item in unselected state;
         :param  integer `selImage`: an index within the normal image list specifying the image to
@@ -4755,7 +4975,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         .. warning::
 
            Only one root is allowed to exist in any given instance of :class:`CustomTreeCtrl`.
-           
+
         """
 
         if self._anchor:
@@ -4793,6 +5013,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return self._anchor
 
+
     def PrependItem(self, parent, text, ct_type=0, wnd=None, image=-1, selImage=-1, data=None, separator=False):
         """
         Prepends an item as a first child of parent.
@@ -4803,7 +5024,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param integer `ct_type`: the item type (see :meth:`~CustomTreeCtrl.SetItemType` for a list of valid
          item types);
         :param `wnd`: if not ``None``, a non-toplevel window to show next to the item, any
-         subclass of :class:`Window` except top-level windows;
+         subclass of :class:`wx.Window` except top-level windows;
         :param integer `image`: an index within the normal image list specifying the image to
          use for the item in unselected state;
         :param integer `selImage`: an index within the normal image list specifying the image to
@@ -4814,10 +5035,11 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         :return: An instance of :class:`GenericTreeItem` upon successful insertion.
 
-        :see: :meth:`~CustomTreeCtrl.DoInsertItem` for possible exceptions generated by this method.        
+        :see: :meth:`~CustomTreeCtrl.DoInsertItem` for possible exceptions generated by this method.
         """
 
         return self.DoInsertItem(parent, 0, text, ct_type, wnd, image, selImage, data, separator)
+
 
     def InsertItemByItem(self, parentId, idPrevious, text, ct_type=0, wnd=None, image=-1, selImage=-1, data=None, separator=False):
         """
@@ -4831,7 +5053,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param integer `ct_type`: the item type (see :meth:`~CustomTreeCtrl.SetItemType` for a list of valid
          item types);
         :param `wnd`: if not ``None``, a non-toplevel window to show next to the item,
-         any subclass of :class:`Window`;
+         any subclass of :class:`wx.Window`;
         :param integer `image`: an index within the normal image list specifying the image to
          use for the item in unselected state;
         :param integer `selImage`: an index within the normal image list specifying the image to
@@ -4839,10 +5061,10 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
          same image is used for both selected and unselected items;
         :param object `data`: associate the given Python object `data` with the item;
         :param bool `separator`: ``True`` if the item is a separator, ``False`` otherwise.
-        
+
         :return: An instance of :class:`GenericTreeItem` upon successful insertion.
 
-        :raise: `Exception` if the previous item is not a sibling.        
+        :raise: `Exception` if the previous item is not a sibling.
 
         :see: :meth:`~CustomTreeCtrl.DoInsertItem` for other possible exceptions generated by this method.
         """
@@ -4863,6 +5085,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return self.DoInsertItem(parentId, index+1, text, ct_type, wnd, image, selImage, data, separator)
 
+
     def InsertItemByIndex(self, parentId, idPrevious, text, ct_type=0, wnd=None, image=-1, selImage=-1, data=None, separator=False):
         """
         Inserts an item after the given previous.
@@ -4874,7 +5097,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param integer `ct_type`: the item type (see :meth:`~CustomTreeCtrl.SetItemType` for a list of valid
          item types);
         :param `wnd`: if not ``None``, a non-toplevel window to show next to the item,
-         any subclass of :class:`Window`;
+         any subclass of :class:`wx.Window`;
         :param integer `image`: an index within the normal image list specifying the image to
          use for the item in unselected state;
         :param integer `selImage`: an index within the normal image list specifying the image to
@@ -4882,7 +5105,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
          same image is used for both selected and unselected items;
         :param object `data`: associate the given Python object `data` with the item;
         :param bool `separator`: ``True`` if the item is a separator, ``False`` otherwise.
-        
+
         :return: An instance of :class:`GenericTreeItem` upon successful insertion.
 
         :see: :meth:`~CustomTreeCtrl.DoInsertItem` for possible exceptions generated by this method.
@@ -4895,6 +5118,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             return self.AddRoot(text, ct_type, wnd, image, selImage, data)
 
         return self.DoInsertItem(parentId, idPrevious, text, ct_type, wnd, image, selImage, data, separator)
+
 
     def InsertItem(self, parentId, input, text, ct_type=0, wnd=None, image=-1, selImage=-1, data=None, separator=False):
         """
@@ -4913,6 +5137,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         else:
             return self.InsertItemByItem(parentId, input, text, ct_type, wnd, image, selImage, data, separator)
 
+
     def AppendItem(self, parentId, text, ct_type=0, wnd=None, image=-1, selImage=-1, data=None):
         """
         Appends an item as a last child of its parent.
@@ -4923,7 +5148,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param integer `ct_type`: the item type (see :meth:`~CustomTreeCtrl.SetItemType` for a list of valid
          item types);
         :param `wnd`: if not ``None``, a non-toplevel window to show next to the item,
-         any subclass of :class:`Window`;
+         any subclass of :class:`wx.Window`;
         :param integer `image`: an index within the normal image list specifying the image to
          use for the item in unselected state;
         :param integer `selImage`: an index within the normal image list specifying the image to
@@ -4944,6 +5169,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return self.DoInsertItem(parent, len(parent.GetChildren()), text, ct_type, wnd, image, selImage, data)
 
+
     def AppendSeparator(self, parentId):
         """
         Appends an horizontal line separator as a last child of its parent.
@@ -4959,6 +5185,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         parent = parentId
         return self.DoInsertItem(parent, len(parent.GetChildren()), "", separator=True)
 
+
     def InsertSeparator(self, parentId, input):
         """
         Inserts a separator item after the given previous.
@@ -4973,6 +5200,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return self.InsertItem(parentId, input, "", separator=True)
 
+
     def PrependSeparator(self, parent):
         """
         Prepends a separator item as a first child of parent.
@@ -4982,10 +5210,11 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         :return: An instance of :class:`GenericTreeItem` upon successful insertion.
 
-        :see: :meth:`~CustomTreeCtrl.DoInsertItem` for possible exceptions generated by this method.        
+        :see: :meth:`~CustomTreeCtrl.DoInsertItem` for possible exceptions generated by this method.
         """
 
         return self.PrependItem(parent, 0, separator=True)
+
 
     def SendDeleteEvent(self, item):
         """
@@ -4999,6 +5228,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         event.SetEventObject(self)
         self.GetEventHandler().ProcessEvent(event)
 
+
     def IsDescendantOf(self, parent, item):
         """
         Checks if the given item is under another one in the tree hierarchy.
@@ -5007,7 +5237,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
          parent of `item`;
         :param `item`: another instance of :class:`GenericTreeItem`.
 
-        :return: ``True`` if `item` is a descendant of `parent`, ``False`` otherwise.        
+        :return: ``True`` if `item` is a descendant of `parent`, ``False`` otherwise.
         """
 
         while item:
@@ -5020,6 +5250,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             item = item.GetParent()
 
         return False
+
 
     # Don't leave edit or selection on a child which is about to disappear
     def ChildrenClosing(self, item):
@@ -5043,6 +5274,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             self._current = None
             self._select_me = item
 
+
     def DeleteChildren(self, item):
         """
         Delete all the item's children.
@@ -5055,13 +5287,14 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self.ChildrenClosing(item)
         item.DeleteChildren(self)
 
+
     def Delete(self, item):
         """
         Deletes an item.
 
         :param `item`: an instance of :class:`GenericTreeItem`.
 
-        :note: This method sends the ``EVT_TREE_DELETE_ITEM`` event.        
+        :note: This method sends the ``EVT_TREE_DELETE_ITEM`` event.
         """
 
         self._dirty = True     # do this first so stuff below doesn't cause flicker
@@ -5124,18 +5357,20 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         del item
 
+
     def DeleteAllItems(self):
         """ Deletes all items in the :class:`CustomTreeCtrl`. """
 
         if self._anchor:
             self.Delete(self._anchor)
 
+
     def Expand(self, item):
         """
         Expands an item, sending a ``EVT_TREE_ITEM_EXPANDING`` and
         ``EVT_TREE_ITEM_EXPANDED`` events.
 
-        :param `item`: an instance of :class:`GenericTreeItem`.        
+        :param `item`: an instance of :class:`GenericTreeItem`.
 
         :raise: `Exception` if you try to expand a hidden root (i.e., when the ``TR_HIDE_ROOT``
          style is set for :class:`CustomTreeCtrl`).
@@ -5175,6 +5410,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         event.SetEventType(wxEVT_TREE_ITEM_EXPANDED)
         self.GetEventHandler().ProcessEvent(event)
 
+
     def ExpandAllChildren(self, item):
         """
         Expands all the items children of the input item.
@@ -5202,6 +5438,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._sendEvent = True
         self._dirty = True
 
+
     def ExpandAll(self):
         """
         Expands all :class:`CustomTreeCtrl` items.
@@ -5216,6 +5453,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         self._sendEvent = True
         self._dirty = True
+
 
     def Collapse(self, item):
         """
@@ -5255,6 +5493,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         event.SetEventType(wxEVT_TREE_ITEM_COLLAPSED)
         self.GetEventHandler().ProcessEvent(event)
 
+
     def CollapseAndReset(self, item):
         """
         Collapse the given item and deletes its children.
@@ -5264,6 +5503,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         self.Collapse(item)
         self.DeleteChildren(item)
+
 
     def Toggle(self, item):
         """
@@ -5277,6 +5517,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         else:
             self.Expand(item)
 
+
     def HideWindows(self):
         """ Hides the windows associated to the items. Used internally. """
 
@@ -5285,6 +5526,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                 wnd = child.GetWindow()
                 if wnd:
                     wnd.Hide()
+
 
     def Unselect(self):
         """ Unselects the current selection. """
@@ -5295,6 +5537,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         self._current = None
         self._select_me = None
+
 
     def UnselectAllChildren(self, item):
         """
@@ -5311,6 +5554,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             for child in item.GetChildren():
                 self.UnselectAllChildren(child)
 
+
     def SelectAllChildren(self, item):
         """
         Selects all the children of the given item.
@@ -5320,7 +5564,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :raise: `Exception` if used without the ``TR_EXTENDED`` or ``TR_MULTIPLE`` style set.
 
         :note: This method can be used only if :class:`CustomTreeCtrl` has the ``TR_MULTIPLE`` or ``TR_EXTENDED``
-         style set.        
+         style set.
         """
 
         if not self.HasAGWFlag(TR_MULTIPLE) and not self.HasAGWFlag(TR_EXTENDED):
@@ -5334,6 +5578,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             for child in item.GetChildren():
                 self.SelectAllChildren(child)
 
+
     def UnselectAll(self):
         """ Unselect all the items. """
 
@@ -5344,6 +5589,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             self.UnselectAllChildren(rootItem)
 
         self.Unselect()
+
 
     def SelectAll(self):
         """
@@ -5363,6 +5609,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         # the tree might not have the root item at all
         if rootItem:
             self.SelectAllChildren(rootItem)
+
 
     # Recursive function !
     # To stop we must have crt_item<last_item
@@ -5384,11 +5631,12 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         count = len(children)
 
-        for n in xrange(index+1, count):
+        for n in range(index+1, count):
             if self.TagAllChildrenUntilLast(children[n], last_item, select):
                 return True
 
         return self.TagNextChildren(parent, last_item, select)
+
 
     def TagAllChildrenUntilLast(self, crt_item, last_item, select):
         """ Used internally. """
@@ -5406,6 +5654,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return False
 
+
     def SelectItemRange(self, item1, item2):
         """
         Selects all the items between `item1` and `item2`.
@@ -5416,9 +5665,9 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
          item in the range to select.
 
         :raise: `Exception` if used without the ``TR_EXTENDED`` or ``TR_MULTIPLE`` style set.
-        
+
         :note: This method can be used only if :class:`CustomTreeCtrl` has the ``TR_MULTIPLE`` or ``TR_EXTENDED``
-         style set.         
+         style set.
         """
 
         if not self.HasAGWFlag(TR_MULTIPLE) and not self.HasAGWFlag(TR_EXTENDED):
@@ -5437,6 +5686,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             return
 
         self.TagNextChildren(first, last, select)
+
 
     def DoSelectItem(self, item, unselect_others=True, extended_select=False, from_key=False):
         """
@@ -5528,6 +5778,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             # Handles hypertext items
             self.HandleHyperLink(item)
 
+
     def SelectItem(self, item, select=True):
         """
         Selects/deselects an item.
@@ -5544,6 +5795,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
             item.SetHilight(False)
             self.RefreshLine(item)
+
 
     def FillArray(self, item, array=[]):
         """
@@ -5568,6 +5820,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return array
 
+
     def GetSelections(self):
         """
         Returns a list of selected items.
@@ -5587,17 +5840,19 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return array
 
+
     def HandleHyperLink(self, item):
         """
         Handles the hyperlink items, sending the ``EVT_TREE_ITEM_HYPERLINK`` event.
 
-        :param `item`: an instance of :class:`GenericTreeItem`.        
+        :param `item`: an instance of :class:`GenericTreeItem`.
         """
 
         if self.IsItemHyperText(item):
             event = TreeEvent(wxEVT_TREE_ITEM_HYPERLINK, self.GetId())
             event._item = item
             self.GetEventHandler().ProcessEvent(event)
+
 
     def EnsureVisible(self, item):
         """
@@ -5619,6 +5874,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                 parent = parent.GetParent()
 
         self.ScrollTo(item)
+
 
     def ScrollTo(self, item):
         """
@@ -5656,7 +5912,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             x += _PIXELS_PER_UNIT + 2 # one more scrollbar unit + 2 pixels
             x_pos = self.GetScrollPos(wx.HORIZONTAL)
             # Item should appear at top
-            self.SetScrollbars(_PIXELS_PER_UNIT, _PIXELS_PER_UNIT, x/_PIXELS_PER_UNIT, y/_PIXELS_PER_UNIT, x_pos, item_y/_PIXELS_PER_UNIT)
+            self.SetScrollbars(_PIXELS_PER_UNIT, _PIXELS_PER_UNIT, x//_PIXELS_PER_UNIT, y//_PIXELS_PER_UNIT, x_pos, item_y//_PIXELS_PER_UNIT)
 
         elif item_y+self.GetLineHeight(item) > start_y+client_h:
 
@@ -5667,12 +5923,13 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             item_y += _PIXELS_PER_UNIT+2
             x_pos = self.GetScrollPos(wx.HORIZONTAL)
             # Item should appear at bottom
-            self.SetScrollbars(_PIXELS_PER_UNIT, _PIXELS_PER_UNIT, x/_PIXELS_PER_UNIT, y/_PIXELS_PER_UNIT, x_pos, (item_y+self.GetLineHeight(item)-client_h)/_PIXELS_PER_UNIT )
+            self.SetScrollbars(_PIXELS_PER_UNIT, _PIXELS_PER_UNIT, x//_PIXELS_PER_UNIT, y//_PIXELS_PER_UNIT, x_pos, (item_y+self.GetLineHeight(item)-client_h)//_PIXELS_PER_UNIT )
+
 
     def OnCompareItems(self, item1, item2):
         """
         Returns whether 2 items have the same text.
-        
+
         Override this function in the derived class to change the sort order of the items
         in the :class:`CustomTreeCtrl`. The function should return a negative, zero or positive
         value if the first item is less than, equal to or greater than the second one.
@@ -5682,19 +5939,20 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         :return: The return value is negative if `item1` < `item2`, zero if `item1` == `item2`
          and strictly positive if `item1` < `item2`.
-        
+
         :note: The base class version compares items alphabetically.
         """
 
         return cmp(self.GetItemText(item1), self.GetItemText(item2))
 
+
     def SortChildren(self, item):
         """
         Sorts the children of the given item using the :meth:`~CustomTreeCtrl.OnCompareItems` method of
-        :class:`CustomTreeCtrl`. 
+        :class:`CustomTreeCtrl`.
 
         :param `item`: an instance of :class:`GenericTreeItem`.
-        
+
         :note: You should override the :meth:`~CustomTreeCtrl.OnCompareItems` method in your derived class to change
          the sort order (the default is ascending case-sensitive alphabetical order).
         """
@@ -5703,45 +5961,51 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         if len(children) > 1:
             self._dirty = True
-            children.sort(self.OnCompareItems)
+            children = six.sort(children, self.OnCompareItems)
+            item._children = children
+
 
     def GetImageList(self):
         """
         Returns the normal image list associated with :class:`CustomTreeCtrl`.
 
-        :return: An instance of :class:`ImageList`.
+        :return: An instance of :class:`wx.ImageList`.
         """
 
         return self._imageListNormal
+
 
     def GetButtonsImageList(self):
         """
         Returns the buttons image list associated with :class:`CustomTreeCtrl` (from
         which application-defined button images are taken).
 
-        :return: An instance of :class:`ImageList`.
+        :return: An instance of :class:`wx.ImageList`.
         """
 
         return self._imageListButtons
+
 
     def GetStateImageList(self):
         """
         Returns the state image list associated with :class:`CustomTreeCtrl` (from which
         application-defined state images are taken).
 
-        :return: An instance of :class:`ImageList`.
+        :return: An instance of :class:`wx.ImageList`.
         """
 
         return self._imageListState
+
 
     def GetImageListCheck(self):
         """
         Returns the image list used to build the check/radio buttons in :class:`CustomTreeCtrl`.
 
-        :return: An instance of :class:`ImageList`.
+        :return: An instance of :class:`wx.ImageList`.
         """
 
         return self._imageListCheck
+
 
     def GetLeftImageList(self):
         """
@@ -5749,10 +6013,11 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         the leftmost part of the client area. Any item can have a leftmost image associated
         with it.
 
-        :return: An instance of :class:`ImageList`.
+        :return: An instance of :class:`wx.ImageList`.
         """
 
         return self._imageListLeft
+
 
     def CalculateLineHeight(self):
         """ Calculates the height of a line. """
@@ -5767,7 +6032,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             # necessary (which might look ugly).
             n = self._imageListNormal.GetImageCount()
 
-            for i in xrange(n):
+            for i in range(n):
 
                 width, height = self._imageListNormal.GetSize(i)
 
@@ -5781,7 +6046,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             # necessary (which might look ugly).
             n = self._imageListButtons.GetImageCount()
 
-            for i in xrange(n):
+            for i in range(n):
 
                 width, height = self._imageListButtons.GetSize(i)
 
@@ -5795,7 +6060,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             # necessary (which might look ugly).
             n = self._imageListCheck.GetImageCount()
 
-            for i in xrange(n):
+            for i in range(n):
 
                 width, height = self._imageListCheck.GetSize(i)
 
@@ -5809,7 +6074,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             # necessary (which might look ugly).
             n = self._imageListLeft.GetImageCount()
 
-            for i in xrange(n):
+            for i in range(n):
 
                 width, height = self._imageListLeft.GetSize(i)
 
@@ -5819,13 +6084,14 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         if self._lineHeight < 30:
             self._lineHeight += 2                 # at least 2 pixels
         else:
-            self._lineHeight += self._lineHeight/10   # otherwise 10% extra spacing
+            self._lineHeight += self._lineHeight//10   # otherwise 10% extra spacing
+
 
     def SetImageList(self, imageList):
         """
         Sets the normal image list for :class:`CustomTreeCtrl`.
 
-        :param `imageList`: an instance of :class:`ImageList`.
+        :param `imageList`: an instance of :class:`wx.ImageList`.
         """
 
         if self._ownsImageListNormal:
@@ -5844,10 +6110,11 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             sz = imageList.GetSize(0)
             self._grayedImageList = wx.ImageList(sz[0], sz[1], True, 0)
 
-            for ii in xrange(imageList.GetImageCount()):
+            for ii in range(imageList.GetImageCount()):
                 bmp = imageList.GetBitmap(ii)
                 newbmp = MakeDisabledBitmap(bmp)
                 self._grayedImageList.Add(newbmp)
+
 
     def SetLeftImageList(self, imageList):
         """
@@ -5855,7 +6122,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         the leftmost part of the client area. Any item can have a leftmost image associated
         with it.
 
-        :param `imageList`: an instance of :class:`ImageList`.
+        :param `imageList`: an instance of :class:`wx.ImageList`.
         """
 
         self._imageListLeft = imageList
@@ -5871,17 +6138,18 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             sz = imageList.GetSize(0)
             self._grayedImageListLeft = wx.ImageList(sz[0], sz[1], True, 0)
 
-            for ii in xrange(imageList.GetImageCount()):
+            for ii in range(imageList.GetImageCount()):
                 bmp = imageList.GetBitmap(ii)
                 newbmp = MakeDisabledBitmap(bmp)
                 self._grayedImageListLeft.Add(newbmp)
+
 
     def SetStateImageList(self, imageList):
         """
         Sets the state image list for :class:`CustomTreeCtrl` (from which application-defined
         state images are taken).
 
-        :param `imageList`: an instance of :class:`ImageList`.
+        :param `imageList`: an instance of :class:`wx.ImageList`.
         """
 
         if self._ownsImageListState:
@@ -5890,12 +6158,13 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._imageListState = imageList
         self._ownsImageListState = False
 
+
     def SetButtonsImageList(self, imageList):
         """
         Sets the buttons image list for :class:`CustomTreeCtrl` (from which application-defined
         button images are taken).
 
-        :param `imageList`: an instance of :class:`ImageList`.
+        :param `imageList`: an instance of :class:`wx.ImageList`.
         """
 
         if self._ownsImageListButtons:
@@ -5906,13 +6175,14 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._dirty = True
         self.CalculateLineHeight()
 
+
     def SetImageListCheck(self, sizex, sizey, imglist=None):
         """
         Sets the checkbox/radiobutton image list.
 
         :param integer `sizex`: the width of the bitmaps in the `imglist`, in pixels;
         :param integer `sizey`: the height of the bitmaps in the `imglist`, in pixels;
-        :param `imglist`: an instance of :class:`ImageList`.
+        :param `imglist`: an instance of :class:`wx.ImageList`.
         """
 
         # Image list to hold disabled versions of each control
@@ -5974,7 +6244,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             sizex, sizey = imglist.GetSize(0)
             self._imageListCheck = imglist
 
-            for ii in xrange(self._imageListCheck.GetImageCount()):
+            for ii in range(self._imageListCheck.GetImageCount()):
 
                 bmp = self._imageListCheck.GetBitmap(ii)
                 newbmp = MakeDisabledBitmap(bmp)
@@ -5985,35 +6255,39 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         if imglist:
             self.CalculateLineHeight()
 
+
     def AssignImageList(self, imageList):
         """
         Assigns the normal image list.
 
-        :param `imageList`: an instance of :class:`ImageList`.
+        :param `imageList`: an instance of :class:`wx.ImageList`.
         """
 
         self.SetImageList(imageList)
         self._ownsImageListNormal = True
 
+
     def AssignStateImageList(self, imageList):
         """
         Assigns the state image list.
 
-        :param `imageList`: an instance of :class:`ImageList`.
+        :param `imageList`: an instance of :class:`wx.ImageList`.
         """
 
         self.SetStateImageList(imageList)
         self._ownsImageListState = True
 
+
     def AssignButtonsImageList(self, imageList):
         """
         Assigns the button image list.
 
-        :param `imageList`: an instance of :class:`ImageList`.
+        :param `imageList`: an instance of :class:`wx.ImageList`.
         """
 
         self.SetButtonsImageList(imageList)
         self._ownsImageListButtons = True
+
 
     def AssignLeftImageList(self, imageList):
         """
@@ -6021,7 +6295,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         the leftmost part of the client area. Any item can have a leftmost image associated
         with it.
 
-        :param `imageList`: an instance of :class:`ImageList`.
+        :param `imageList`: an instance of :class:`wx.ImageList`.
         """
 
         self.SetLeftImageList(imageList)
@@ -6033,7 +6307,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 # -----------------------------------------------------------------------------
 
     def AdjustMyScrollbars(self):
-        """ Internal method used to adjust the :class:`PyScrolledWindow` scrollbars. """
+        """ Internal method used to adjust the :class:`ScrolledWindow` scrollbars. """
 
         if self._anchor:
 
@@ -6042,11 +6316,12 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             x += _PIXELS_PER_UNIT + 2 # one more scrollbar unit + 2 pixels
             x_pos = self.GetScrollPos(wx.HORIZONTAL)
             y_pos = self.GetScrollPos(wx.VERTICAL)
-            self.SetScrollbars(_PIXELS_PER_UNIT, _PIXELS_PER_UNIT, x/_PIXELS_PER_UNIT, y/_PIXELS_PER_UNIT, x_pos, y_pos)
+            self.SetScrollbars(_PIXELS_PER_UNIT, _PIXELS_PER_UNIT, x//_PIXELS_PER_UNIT, y//_PIXELS_PER_UNIT, x_pos, y_pos)
 
         else:
 
             self.SetScrollbars(0, 0, 0, 0)
+
 
     def GetLineHeight(self, item):
         """
@@ -6054,7 +6329,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         :param `item`: an instance of :class:`GenericTreeItem`.
 
-        :return: the item height, in pixels.        
+        :return: the item height, in pixels.
         """
 
         if self.GetAGWWindowStyleFlag() & TR_HAS_VARIABLE_ROW_HEIGHT:
@@ -6062,12 +6337,13 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         else:
             return int(self._lineHeight)
 
+
     def DrawVerticalGradient(self, dc, rect, hasfocus):
         """
         Gradient fill from colour 1 to colour 2 from top to bottom.
 
-        :param `dc`: an instance of :class:`DC`;
-        :param Rect `rect`: the rectangle to be filled with the gradient shading;
+        :param `dc`: an instance of :class:`wx.DC`;
+        :param wx.Rect `rect`: the rectangle to be filled with the gradient shading;
         :param bool `hasfocus`: ``True`` if the main :class:`CustomTreeCtrl` has focus, ``False``
          otherwise.
         """
@@ -6095,9 +6371,9 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         rf, gf, bf = 0, 0, 0
 
-        for y in xrange(rect.y, rect.y + rect.height):
+        for y in range(rect.y, rect.y + rect.height):
             currCol = (r1 + rf, g1 + gf, b1 + bf)
-            dc.SetBrush(wx.Brush(currCol, wx.SOLID))
+            dc.SetBrush(wx.Brush(currCol, wx.BRUSHSTYLE_SOLID))
             dc.DrawRectangle(rect.x, y, rect.width, 1)
             rf = rf + rstep
             gf = gf + gstep
@@ -6105,15 +6381,16 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         dc.SetPen(oldpen)
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        dc.DrawRectangleRect(rect)
+        dc.DrawRectangle(rect)
         dc.SetBrush(oldbrush)
+
 
     def DrawHorizontalGradient(self, dc, rect, hasfocus):
         """
         Gradient fill from colour 1 to colour 2 from left to right.
 
-        :param `dc`: an instance of :class:`DC`;
-        :param Rect `rect`: the rectangle to be filled with the gradient shading;
+        :param `dc`: an instance of :class:`wx.DC`;
+        :param wx.Rect `rect`: the rectangle to be filled with the gradient shading;
         :param bool `hasfocus`: ``True`` if the main :class:`CustomTreeCtrl` has focus, ``False``
          otherwise.
         """
@@ -6142,9 +6419,9 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         rf, gf, bf = 0, 0, 0
 
-        for x in xrange(rect.x, rect.x + rect.width):
+        for x in range(rect.x, rect.x + rect.width):
             currCol = (int(r1 + rf), int(g1 + gf), int(b1 + bf))
-            dc.SetBrush(wx.Brush(currCol, wx.SOLID))
+            dc.SetBrush(wx.Brush(currCol, wx.BRUSHSTYLE_SOLID))
             dc.DrawRectangle(x, rect.y, 1, rect.height)
             rf = rf + rstep
             gf = gf + gstep
@@ -6152,15 +6429,16 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         dc.SetPen(oldpen)
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        dc.DrawRectangleRect(rect)
+        dc.DrawRectangle(rect)
         dc.SetBrush(oldbrush)
+
 
     def DrawVistaRectangle(self, dc, rect, hasfocus):
         """
         Draws the selected item(s) with the Windows Vista style.
 
-        :param `dc`: an instance of :class:`DC`;
-        :param Rect `rect`: the rectangle to be filled with the gradient shading;
+        :param `dc`: an instance of :class:`wx.DC`;
+        :param wx.Rect `rect`: the rectangle to be filled with the gradient shading;
         :param bool `hasfocus`: ``True`` if the main :class:`CustomTreeCtrl` has focus, ``False``
          otherwise.
         """
@@ -6200,9 +6478,9 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         rf, gf, bf = 0, 0, 0
         dc.SetPen(wx.TRANSPARENT_PEN)
 
-        for y in xrange(filRect.y, filRect.y + filRect.height):
+        for y in range(filRect.y, filRect.y + filRect.height):
             currCol = (r1 + rf, g1 + gf, b1 + bf)
-            dc.SetBrush(wx.Brush(currCol, wx.SOLID))
+            dc.SetBrush(wx.Brush(currCol, wx.BRUSHSTYLE_SOLID))
             dc.DrawRectangle(filRect.x, y, filRect.width, 1)
             rf = rf + rstep
             gf = gf + gstep
@@ -6210,20 +6488,21 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
         dc.SetPen(wx.Pen(outer))
-        dc.DrawRoundedRectangleRect(bdrRect, 3)
+        dc.DrawRoundedRectangle(bdrRect, 3)
         bdrRect.Deflate(1, 1)
         dc.SetPen(wx.Pen(inner))
-        dc.DrawRoundedRectangleRect(bdrRect, 2)
+        dc.DrawRoundedRectangle(bdrRect, 2)
 
         dc.SetPen(oldpen)
         dc.SetBrush(oldbrush)
+
 
     def PaintItem(self, item, dc, level, align):
         """
         Actually draws an item.
 
         :param `item`: an instance of :class:`GenericTreeItem`;
-        :param `dc`: an instance of :class:`DC`;
+        :param `dc`: an instance of :class:`wx.DC`;
         :param integer `level`: the item level in the tree hierarchy;
         :param integer `align`: an integer specifying the alignment type:
 
@@ -6252,7 +6531,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             else:
                 dc.SetTextForeground(self.GetHyperTextNewColour())
 
-        text_w, text_h, dummy = dc.GetMultiLineTextExtent(item.GetText())
+        text_w, text_h, dummy = dc.GetFullMultiLineTextExtent(item.GetText())
         w, h = self.GetClientSize()
 
         image = item.GetCurrentImage()
@@ -6294,7 +6573,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             if wx.Platform == "__WXMAC__":
                 if not self._hasFocus:
                     dc.SetBrush(wx.TRANSPARENT_BRUSH)
-                    dc.SetPen(wx.Pen(wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT), 1, wx.SOLID))
+                    dc.SetPen(wx.Pen(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT), 1, wx.PENSTYLE_SOLID))
                 else:
                     dc.SetBrush(self._hilightBrush)
             else:
@@ -6307,10 +6586,10 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             else:
                 colBg = self._backgroundColour
 
-            dc.SetBrush(wx.Brush(colBg, wx.SOLID))
+            dc.SetBrush(wx.Brush(colBg, wx.BRUSHSTYLE_SOLID))
             if attr and attr.HasBorderColour():
                 colBorder = attr.GetBorderColour()
-                dc.SetPen(wx.Pen(colBorder, 1, wx.SOLID))
+                dc.SetPen(wx.Pen(colBorder, 1))
             else:
                 dc.SetPen(wx.TRANSPARENT_PEN)
 
@@ -6335,7 +6614,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                         if self._hasFocus: flags = flags | wx.CONTROL_FOCUSED
                         wx.RendererNative.Get().DrawItemSelectionRect(self, dc, itemrect, flags)
                     else:
-                        dc.DrawRectangleRect(itemrect)
+                        dc.DrawRectangle(itemrect)
             else:
                if drawItemBackground:
                    minusicon = wcheck + image_w - 2
@@ -6343,7 +6622,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                                       item.GetY()+offset,
                                       item.GetWidth()-minusicon,
                                       total_h-offset)
-                   dc.DrawRectangleRect(itemrect)
+                   dc.DrawRectangle(itemrect)
 
         else:
 
@@ -6381,7 +6660,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                         if self._hasFocus: flags = flags | wx.CONTROL_FOCUSED
                         wx.RendererNative.Get().DrawItemSelectionRect(self, dc, itemrect, flags)
                     else:
-                        dc.DrawRectangleRect(itemrect)
+                        dc.DrawRectangle(itemrect)
 
             # On GTK+ 2, drawing a 'normal' background is wrong for themes that
             # don't allow backgrounds to be customized. Not drawing the background,
@@ -6406,7 +6685,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                     else:                          # Vertical
                         self.DrawVerticalGradient(dc, itemrect, self._hasFocus)
                 else:
-                    dc.DrawRectangleRect(itemrect)
+                    dc.DrawRectangle(itemrect)
 
         if image != _NO_IMAGE:
 
@@ -6418,7 +6697,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
             imglist.Draw(image, dc,
                          item.GetX() + wcheck,
-                         item.GetY() + ((total_h > image_h) and [(total_h-image_h)/2] or [0])[0],
+                         item.GetY() + ((total_h > image_h) and [(total_h-image_h)//2] or [0])[0],
                          wx.IMAGELIST_DRAW_TRANSPARENT)
 
             dc.DestroyClippingRegion()
@@ -6431,7 +6710,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
             imglist.Draw(checkimage, dc,
                          item.GetX(),
-                         item.GetY() + ((total_h > hcheck) and [(total_h-hcheck)/2] or [0])[0],
+                         item.GetY() + ((total_h > hcheck) and [(total_h-hcheck)//2] or [0])[0],
                          wx.IMAGELIST_DRAW_TRANSPARENT)
 
         if leftimage != _NO_IMAGE:
@@ -6442,11 +6721,11 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
             imglist.Draw(leftimage, dc,
                          4,
-                         item.GetY() + ((total_h > l_image_h) and [(total_h-l_image_h)/2] or [0])[0],
+                         item.GetY() + ((total_h > l_image_h) and [(total_h-l_image_h)//2] or [0])[0],
                          wx.IMAGELIST_DRAW_TRANSPARENT)
 
         dc.SetBackgroundMode(wx.TRANSPARENT)
-        extraH = ((total_h > text_h) and [(total_h - text_h)/2] or [0])[0]
+        extraH = ((total_h > text_h) and [(total_h - text_h)//2] or [0])[0]
 
         textrect = wx.Rect(wcheck + image_w + item.GetX(), item.GetY() + extraH, text_w, text_h)
 
@@ -6472,7 +6751,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             xa, ya = self.CalcScrolledPosition((0, item.GetY()))
             wndx += xa
             if item.GetHeight() > item.GetWindowSize()[1]:
-                ya += (item.GetHeight() - item.GetWindowSize()[1])/2
+                ya += (item.GetHeight() - item.GetWindowSize()[1])//2
 
             if align == 1:
                 # Horizontal alignment of windows
@@ -6500,7 +6779,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                 separatorPen = wx.GREY_PEN
 
             dc.SetPen(separatorPen)
-            dc.DrawLine(item.GetX()+2, item.GetY()+total_h/2, w, item.GetY()+total_h/2)
+            dc.DrawLine(item.GetX()+2, item.GetY()+total_h//2, w, item.GetY()+total_h//2)
             dc.SetPen(oldPen)
 
         if item.HasDropLine():
@@ -6517,15 +6796,16 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         # restore normal font
         dc.SetFont(self._normalFont)
 
+
     # Now y stands for the top of the item, whereas it used to stand for middle !
     def PaintLevel(self, item, dc, level, y, align):
         """
         Paint a level in the hierarchy of :class:`CustomTreeCtrl`.
 
         :param `item`: an instance of :class:`GenericTreeItem`;
-        :param `dc`: an instance of :class:`DC`;
+        :param `dc`: an instance of :class:`wx.DC`;
         :param integer `level`: the item level in the tree hierarchy;
-        :param integer `y`: the current vertical position in the :class:`PyScrolledWindow`;
+        :param integer `y`: the current vertical position in the :class:`ScrolledWindow`;
         :param integer `align`: an integer specifying the alignment type:
 
          =============== =========================================
@@ -6597,9 +6877,9 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
             if item.IsSelected():
                 if (wx.Platform == "__WXMAC__" and self._hasFocus):
-                    colText = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
+                    colText = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
                 else:
-                    colText = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
+                    colText = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
 
                 if self._vistaselection:
                     colText = wx.BLACK
@@ -6661,8 +6941,8 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                         image += TreeItemIcon_Selected - TreeItemIcon_Normal
 
                     image_w, image_h = self._imageListButtons.GetSize(image)
-                    xx = x - image_w/2
-                    yy = y_mid - image_h/2
+                    xx = x - image_w//2
+                    yy = y_mid - image_h//2
 
                     dc.SetClippingRegion(xx, yy, image_w, image_h)
                     self._imageListButtons.Draw(image, dc, xx, yy,
@@ -6708,7 +6988,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                         if item == self._underMouse:
                             flag |= _CONTROL_CURRENT
 
-                        self._drawingfunction(self, dc, wx.Rect(x - wImage/2, y_mid - hImage/2, wImage, hImage), flag)
+                        self._drawingfunction(self, dc, wx.Rect(x - wImage//2, y_mid - hImage//2, wImage, hImage), flag)
 
         if item.IsExpanded():
 
@@ -6782,11 +7062,12 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         y = 2
         self.PaintLevel(self._anchor, dc, 0, y, align)
 
+
     def OnSize(self, event):
         """
         Handles the ``wx.EVT_SIZE`` event for :class:`CustomTreeCtrl`.
 
-        :param `event`: a :class:`SizeEvent` event to be processed.
+        :param `event`: a :class:`wx.SizeEvent` event to be processed.
         """
 
         if self.HasAGWFlag(TR_ELLIPSIZE_LONG_ITEMS):
@@ -6800,6 +7081,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             self.RefreshSelected()
 
         event.Skip()
+
 
     def OnEraseBackground(self, event):
         """
@@ -6822,17 +7104,18 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             if not dc:
                 dc = wx.ClientDC(self)
                 rect = self.GetUpdateRegion().GetBox()
-                dc.SetClippingRect(rect)
+                dc.SetClippingRegion(rect)
 
             self.TileBackground(dc)
+
 
     def TileBackground(self, dc):
         """
         Tiles the background image to fill all the available area.
 
-        :param `dc`: an instance of :class:`DC`.
+        :param `dc`: an instance of :class:`wx.DC`.
 
-        .. todo:: Support background images also in stretch and centered modes.        
+        .. todo:: Support background images also in stretch and centered modes.
         """
 
         sz = self.GetClientSize()
@@ -6850,6 +7133,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
             x = x + w
 
+
     def OnSetFocus(self, event):
         """
         Handles the ``wx.EVT_SET_FOCUS`` event for :class:`CustomTreeCtrl`.
@@ -6861,6 +7145,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self.RefreshSelected()
         event.Skip()
 
+
     def OnKillFocus(self, event):
         """
         Handles the ``wx.EVT_KILL_FOCUS`` event for :class:`CustomTreeCtrl`.
@@ -6871,6 +7156,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._hasFocus = False
         self.RefreshSelected()
         event.Skip()
+
 
     def OnKeyDown(self, event):
         """
@@ -6929,7 +7215,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             event = TreeEvent(wxEVT_TREE_ITEM_MENU, self.GetId())
             event._item = self._current
             # Use the left edge, vertical middle
-            event._pointDrag = wx.Point(itemRect.GetX(), itemRect.GetY() + itemRect.GetHeight()/2)
+            event._pointDrag = wx.Point(itemRect.GetX(), itemRect.GetY() + itemRect.GetHeight()//2)
             event.SetEventObject(self)
             self.GetEventHandler().ProcessEvent(event)
 
@@ -7061,6 +7347,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                     self.DoSelectItem(next, unselect_others, extended_select, from_key=True)
                     self._key_current = next
 
+
         # <End> selects the last visible tree item
         elif keyCode == wx.WXK_END:
 
@@ -7128,6 +7415,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
                 event.Skip()
 
+
     def GetNextActiveItem(self, item, down=True):
         """
         Returns the next active item. Used Internally at present.
@@ -7168,12 +7456,13 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return None
 
+
     def HitTest(self, point, flags=0):
         """
         Calculates which (if any) item is under the given point, returning the tree item
         at this point plus extra information flags.
 
-        :param `point`: an instance of :class:`Point`, a point to test for hits;
+        :param `point`: an instance of :class:`wx.Point`, a point to test for hits;
         :param integer `flags`: a bitlist of the following values:
 
          ================================== =============== =================================
@@ -7204,13 +7493,14 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         w, h = self.GetSize()
         flags = 0
 
-        if point.x < 0:
+        pointX, pointY = point[0], point[1]
+        if pointX < 0:
             flags |= TREE_HITTEST_TOLEFT
-        if point.x > w:
+        if pointX > w:
             flags |= TREE_HITTEST_TORIGHT
-        if point.y < 0:
+        if pointY < 0:
             flags |= TREE_HITTEST_ABOVE
-        if point.y > h:
+        if pointY > h:
             flags |= TREE_HITTEST_BELOW
 
         if flags:
@@ -7220,7 +7510,8 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             flags = TREE_HITTEST_NOWHERE
             return None, flags
 
-        hit, flags = self._anchor.HitTest(self.CalcUnscrolledPosition(point), self, flags, 0)
+        point = self.CalcUnscrolledPosition(*point)
+        hit, flags = self._anchor.HitTest(point, self, flags, 0)
 
         if hit == None:
             flags = TREE_HITTEST_NOWHERE
@@ -7231,6 +7522,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return hit, flags
 
+
     def GetBoundingRect(self, item, textOnly=False):
         """
         Retrieves the rectangle bounding the item.
@@ -7239,8 +7531,8 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param bool `textOnly`: if ``True``, only the rectangle around the item's label will
          be returned, otherwise the item's image is also taken into account.
 
-        :return: An instance of :class:`Rect`.
-        
+        :return: An instance of :class:`wx.Rect`.
+
         :note: The rectangle coordinates are logical, not physical ones. So, for example,
          the `x` coordinate may be negative if the tree has a horizontal scrollbar and its
          position is not ``0``.
@@ -7258,6 +7550,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return rect
 
+
     def Edit(self, item):
         """
         Internal function. Starts the editing of an item label, sending a
@@ -7265,7 +7558,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         :param `item`: an instance of :class:`GenericTreeItem`.
 
-        .. warning:: Separator-type items can not be edited.        
+        .. warning:: Separator-type items can not be edited.
         """
 
         if item.IsSeparator():
@@ -7293,14 +7586,16 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self._editCtrl = TreeTextCtrl(self, item=item)
         self._editCtrl.SetFocus()
 
+
     def GetEditControl(self):
         """
         Returns a pointer to the edit :class:`TreeTextCtrl` if the item is being edited or
         ``None`` otherwise (it is assumed that no more than one item may be edited
-        simultaneously).        
+        simultaneously).
         """
 
         return self._editCtrl
+
 
     def OnAcceptEdit(self, item, value):
         """
@@ -7310,7 +7605,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param `item`: an instance of :class:`GenericTreeItem`;
         :param string `value`: the new value of the item label.
 
-        :return: ``True`` if the editing has not been vetoed, ``False`` otherwise.        
+        :return: ``True`` if the editing has not been vetoed, ``False`` otherwise.
         """
 
         le = TreeEvent(wxEVT_TREE_END_LABEL_EDIT, self.GetId())
@@ -7321,12 +7616,13 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return not self.GetEventHandler().ProcessEvent(le) or le.IsAllowed()
 
+
     def OnCancelEdit(self, item):
         """
         Called by :class:`TreeTextCtrl`, to cancel the changes and to send the
         ``EVT_TREE_END_LABEL_EDIT`` event.
 
-        :param `item`: an instance of :class:`GenericTreeItem`.        
+        :param `item`: an instance of :class:`GenericTreeItem`.
         """
 
         # let owner know that the edit was cancelled
@@ -7338,10 +7634,12 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         self.GetEventHandler().ProcessEvent(le)
 
+
     def OnEditTimer(self):
         """ The timer for editing has expired. Start editing. """
 
         self.Edit(self._current)
+
 
     def OnMouse(self, event):
         """
@@ -7353,7 +7651,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         if not self._anchor:
             return
 
-        pt = self.CalcUnscrolledPosition(event.GetPosition())
+        pt = wx.Point(self.CalcUnscrolledPosition(*event.GetPosition()))
 
         # Is the mouse over a tree item button?
         flags = 0
@@ -7391,30 +7689,30 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
                 elif self.HasAGWFlag(TR_TOOLTIP_ON_LONG_ITEMS):
 
-                    tip = self.GetToolTipString()
+                    tip = self.GetToolTipText()
 
                     if hoverItem.IsSeparator():
                         if tip:
-                            self.SetToolTipString('')
+                            self.SetToolTip('')
                     else:
                         maxsize = self.GetItemSize(hoverItem)
                         itemText = hoverItem.GetText()
 
                         dc = wx.ClientDC(self)
 
-                        if dc.GetMultiLineTextExtent(itemText)[0] > maxsize:
+                        if dc.GetFullMultiLineTextExtent(itemText)[0] > maxsize:
                             if tip != itemText:
-                                self.SetToolTipString(itemText)
+                                self.SetToolTip(itemText)
                         else:
                             if tip:
-                                self.SetToolTipString('')
+                                self.SetToolTip('')
 
                 if hoverItem.IsHyperText() and (flags & TREE_HITTEST_ONITEMLABEL) and hoverItem.IsEnabled():
-                    self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
+                    self.SetCursor(wx.Cursor(wx.CURSOR_HAND))
                     self._isonhyperlink = True
                 else:
                     if self._isonhyperlink:
-                        self.SetCursor(wx.StockCursor(wx.CURSOR_ARROW))
+                        self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
                         self._isonhyperlink = False
 
         # we process left mouse up event (enables in-place edit), right down
@@ -7447,7 +7745,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             nevent = TreeEvent(command, self.GetId())
             nevent._item = self._current
             nevent.SetEventObject(self)
-            newpt = self.CalcScrolledPosition(pt)
+            newpt = self.CalcScrolledPosition(*pt)
             nevent.SetPoint(newpt)
 
             # by default the dragging is not supported, the user code must
@@ -7485,7 +7783,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                 self._dragImage = DragImage(self, self._current)
                 self._dragImage.BeginDrag(wx.Point(0,0), self)
                 self._dragImage.Show()
-                self._dragImage.Move(self.CalcScrolledPosition(pt))
+                self._dragImage.Move(self.CalcScrolledPosition(*pt))
 
         elif event.Dragging() and self._isDragging:
 
@@ -7544,7 +7842,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             # generate the drag end event
             event = TreeEvent(wxEVT_TREE_END_DRAG, self.GetId())
             event._item = item
-            event._pointDrag = self.CalcScrolledPosition(pt)
+            event._pointDrag = self.CalcScrolledPosition(*pt)
             event._before = before
             event._in_folder = in_folder
             event.SetEventObject(self)
@@ -7599,7 +7897,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
                 nevent = TreeEvent(wxEVT_TREE_ITEM_RIGHT_CLICK, self.GetId())
                 nevent._item = item
-                nevent._pointDrag = self.CalcScrolledPosition(pt)
+                nevent._pointDrag = self.CalcScrolledPosition(*pt)
                 nevent.SetEventObject(self)
                 event.Skip(not self.GetEventHandler().ProcessEvent(nevent))
 
@@ -7607,7 +7905,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                 # the RIGHT_CLICK event. TODO: This behaviour may change.
                 nevent2 = TreeEvent(wxEVT_TREE_ITEM_MENU, self.GetId())
                 nevent2._item = item
-                nevent2._pointDrag = self.CalcScrolledPosition(pt)
+                nevent2._pointDrag = self.CalcScrolledPosition(*pt)
                 nevent2.SetEventObject(self)
                 self.GetEventHandler().ProcessEvent(nevent2)
 
@@ -7640,6 +7938,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                         self._editTimer.Start(_DELAY, True)
 
                     self._lastOnSame = False
+
 
             else: # !RightDown() && !LeftUp() ==> LeftDown() || LeftDClick()
 
@@ -7720,7 +8019,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                     # send activate event first
                     nevent = TreeEvent(wxEVT_TREE_ITEM_ACTIVATED, self.GetId())
                     nevent._item = item
-                    nevent._pointDrag = self.CalcScrolledPosition(pt)
+                    nevent._pointDrag = self.CalcScrolledPosition(*pt)
                     nevent.SetEventObject(self)
                     if not self.GetEventHandler().ProcessEvent(nevent):
 
@@ -7730,6 +8029,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 ##                        if item.HasPlus():
                         self.Toggle(item)
 
+
     def OnInternalIdle(self):
         """
         This method is normally only used internally, but sometimes an application
@@ -7737,7 +8037,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         application defining an `OnIdle` handler in a derived class.
 
         This method may be used to do delayed painting, for example, and most
-        implementations call :meth:`Window.UpdateWindowUI` in order to send update events
+        implementations call :meth:`wx.Window.UpdateWindowUI` in order to send update events
         to the window in idle time.
         """
 
@@ -7768,12 +8068,13 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
 #        event.Skip()
 
+
     def CalculateSize(self, item, dc, level=-1, align=0):
         """
         Calculates overall position and size of an item.
 
         :param `item`: an instance of :class:`GenericTreeItem`;
-        :param `dc`: an instance of :class:`DC`;
+        :param `dc`: an instance of :class:`wx.DC`;
         :param integer `level`: the item level in the tree hierarchy;
         :param integer `align`: an integer specifying the alignment type:
 
@@ -7799,7 +8100,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             else:
                 dc.SetFont(self._normalFont)
 
-        text_w, text_h, dummy = dc.GetMultiLineTextExtent(item.GetText())
+        text_w, text_h, dummy = dc.GetFullMultiLineTextExtent(item.GetText())
         text_h+=2
 
         # restore normal font
@@ -7827,7 +8128,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         if total_h < 30:
             total_h += 2            # at least 2 pixels
         else:
-            total_h += total_h/10   # otherwise 10% extra spacing
+            total_h += total_h//10   # otherwise 10% extra spacing
 
         if total_h > self._lineHeight:
             self._lineHeight = total_h
@@ -7856,14 +8157,15 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         item.SetWidth(totalWidth)
         item.SetHeight(totalHeight)
 
+
     def CalculateLevel(self, item, dc, level, y, align=0):
         """
         Calculates the level of an item inside the tree hierarchy.
 
         :param `item`: an instance of :class:`GenericTreeItem`;
-        :param `dc`: an instance of :class:`DC`;
+        :param `dc`: an instance of :class:`wx.DC`;
         :param integer `level`: the item level in the tree hierarchy;
-        :param integer `y`: the current vertical position inside the :class:`PyScrolledWindow`;
+        :param integer `y`: the current vertical position inside the :class:`ScrolledWindow`;
         :param integer `align`: an integer specifying the alignment type:
 
          =============== =========================================
@@ -7874,7 +8176,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
                 2        Windows (in items with windows) are aligned at the rightmost edge of :class:`CustomTreeCtrl`.
          =============== =========================================
 
-        :return: The new `y` vertical position inside the :class:`PyScrolledWindow`.
+        :return: The new `y` vertical position inside the :class:`ScrolledWindow`.
         """
 
         x = level*self._indent
@@ -7890,7 +8192,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             children = item.GetChildren()
             count = len(children)
             level = level + 1
-            for n in xrange(count):
+            for n in range(count):
                 y = self.CalculateLevel(children[n], dc, level, y, align)  # recurse
 
             return y
@@ -7909,10 +8211,11 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         children = item.GetChildren()
         count = len(children)
         level = level + 1
-        for n in xrange(count):
+        for n in range(count):
             y = self.CalculateLevel(children[n], dc, level, y, align)  # recurse
 
         return y
+
 
     def CalculatePositions(self):
         """ Calculates all the positions of the visible items. """
@@ -7935,10 +8238,11 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
             y = 2
             y = self.CalculateLevel(self._anchor, dc, 0, y, align) # start recursion
 
+
     def RefreshSubtree(self, item):
         """
         Refreshes a damaged subtree of an item.
-        
+
         :param `item`: an instance of :class:`GenericTreeItem`.
         """
 
@@ -7956,6 +8260,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         self.Refresh(True, rect)
         self.AdjustMyScrollbars()
+
 
     def RefreshLine(self, item):
         """
@@ -7976,6 +8281,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         self.Refresh(True, rect)
 
+
     def RefreshSelected(self):
         """ Refreshes a damaged selected item line. """
 
@@ -7986,6 +8292,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         #       selected items internally, should be much faster
         if self._anchor:
             self.RefreshSelectedUnder(self._anchor)
+
 
     def RefreshSelectedUnder(self, item):
         """
@@ -8004,13 +8311,14 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         for child in children:
             self.RefreshSelectedUnder(child)
 
+
     def RefreshItemWithWindows(self, item=None):
         """
         Refreshes the items with which a window is associated.
 
         :param `item`: an instance of :class:`GenericTreeItem`. If `item` is ``None``, then the
          recursive refresh starts from the root node.
-         
+
         :note: This method is called only if the style ``TR_ALIGN_WINDOWS_RIGHT`` is used.
         """
 
@@ -8030,6 +8338,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         for child in children:
             self.RefreshItemWithWindows(child)
 
+
     def Freeze(self):
         """
         Freeze :class:`CustomTreeCtrl`.
@@ -8047,6 +8356,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         self._freezeCount = self._freezeCount + 1
 
+
     def Thaw(self):
         """
         Thaw :class:`CustomTreeCtrl`.
@@ -8054,7 +8364,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         Reenables window updating after a previous call to :meth:`~Freeze`. To really thaw the
         control, it must be called exactly the same number of times as :meth:`~Freeze`.
 
-        :raise: `Exception` if :meth:`~Thaw` has been called without an un-matching :meth:`~Freeze`.        
+        :raise: `Exception` if :meth:`~Thaw` has been called without an un-matching :meth:`~Freeze`.
         """
 
         if self._freezeCount == 0:
@@ -8064,6 +8374,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         if not self._freezeCount:
             self.Refresh()
+
 
     # ----------------------------------------------------------------------------
     # changing colours: we need to refresh the tree control
@@ -8076,20 +8387,20 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param `colour`: the colour to be used as the background colour, pass
          :class:`NullColour` to reset to the default colour.
 
-        :return: ``False`` if the underlying :class:`PyScrolledWindow` does not accept
+        :return: ``False`` if the underlying :class:`ScrolledWindow` does not accept
          the new colour, ``True`` otherwise.
-         
+
         :note: The background colour is usually painted by the default :class:`EraseEvent`
          event handler function under Windows and automatically under GTK.
 
         :note: Setting the background colour does not cause an immediate refresh, so
-         you may wish to call :meth:`Window.ClearBackground` or :meth:`Window.Refresh` after
+         you may wish to call :meth:`wx.Window.ClearBackground` or :meth:`wx.Window.Refresh` after
          calling this function.
 
-        :note: Overridden from :class:`PyScrolledWindow`.         
+        :note: Overridden from :class:`ScrolledWindow`.
         """
 
-        if not wx.PyScrolledWindow.SetBackgroundColour(self, colour):
+        if not wx.ScrolledWindow.SetBackgroundColour(self, colour):
             return False
 
         if self._freezeCount:
@@ -8098,6 +8409,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         self.Refresh()
 
         return True
+
 
     def SetForegroundColour(self, colour):
         """
@@ -8106,13 +8418,13 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         :param `colour`: the colour to be used as the foreground colour, pass
          :class:`NullColour` to reset to the default colour.
 
-        :return: ``False`` if the underlying :class:`PyScrolledWindow` does not accept
+        :return: ``False`` if the underlying :class:`ScrolledWindow` does not accept
          the new colour, ``True`` otherwise.
 
-        :note: Overridden from :class:`PyScrolledWindow`.         
+        :note: Overridden from :class:`ScrolledWindow`.
         """
 
-        if not wx.PyScrolledWindow.SetForegroundColour(self, colour):
+        if not wx.ScrolledWindow.SetForegroundColour(self, colour):
             return False
 
         if self._freezeCount:
@@ -8122,15 +8434,17 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return True
 
+
     def OnGetToolTip(self, event):
         """
         Process the tooltip event, to speed up event processing. Does not actually
         get a tooltip.
 
-        :param `event`: a :class:`CommandTreeEvent` event to be processed.        
+        :param `event`: a :class:`CommandTreeEvent` event to be processed.
         """
 
         event.Veto()
+
 
     def DoGetBestSize(self):
         """
@@ -8138,9 +8452,9 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         minimal size which doesn't truncate the control, for a panel - the same size
         as it would have after a call to `Fit()`.
 
-        :return: An instance of :class:`Size`.
-        
-        :note: Overridden from :class:`PyScrolledWindow`.
+        :return: An instance of :class:`wx.Size`.
+
+        :note: Overridden from :class:`ScrolledWindow`.
         """
 
         # something is better than nothing...
@@ -8149,15 +8463,16 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return wx.Size(100, 80)
 
+
     def GetMaxWidth(self, respect_expansion_state=True):
         """
         Returns the maximum width of the :class:`CustomTreeCtrl`.
-        
+
         :param bool `respect_expansion_state`: if ``True``, only the expanded items (and their
          children) will be measured. Otherwise all the items are expanded and
          their width measured.
 
-        :return: the maximum width of :class:`CustomTreeCtrl`, in pixels.         
+        :return: the maximum width of :class:`CustomTreeCtrl`, in pixels.
         """
 
         self.Freeze()
@@ -8183,6 +8498,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return maxwidth
 
+
     def RecurseOnChildren(self, item, maxwidth, respect_expansion_state):
         """
         Recurses over all the children of the spcified items, calculating their
@@ -8194,7 +8510,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
          children) will be measured. Otherwise all the items are expanded and
          their width measured.
 
-        :return: A tuple containing the maximum width and item height, in pixels.         
+        :return: A tuple containing the maximum width and item height, in pixels.
         """
 
         child, cookie = self.GetFirstChild(item)
@@ -8216,6 +8532,7 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
 
         return maxwidth, lastheight
 
+
     def GetClassDefaultAttributes(self):
         """
         Returns the default font and colours which are used by the control. This is
@@ -8230,20 +8547,77 @@ class CustomTreeCtrl(wx.PyScrolledWindow):
         returned by, say, :meth:`ListCtrl.GetClassDefaultAttributes` ().
 
         :return: An instance of :class:`VisualAttributes`.
-        
+
         :note: The :class:`VisualAttributes` structure has at least the fields `font`,
          `colFg` and `colBg`. All of them may be invalid if it was not possible to
          determine the default control appearance or, especially for the background
          colour, if the field doesn't make sense as is the case for `colBg` for the
          controls with themed background.
 
-        :note: Overridden from :class:`PyControl`.         
+        :note: Overridden from :class:`wx.Control`.
         """
 
         attr = wx.VisualAttributes()
-        attr.colFg = wx.SystemSettings_GetColour(wx.SYS_COLOUR_WINDOWTEXT)
-        attr.colBg = wx.SystemSettings_GetColour(wx.SYS_COLOUR_LISTBOX)
-        attr.font  = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        attr.colFg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
+        attr.colBg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_LISTBOX)
+        attr.font  = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
         return attr
 
     GetClassDefaultAttributes = classmethod(GetClassDefaultAttributes)
+
+
+
+if __name__ == '__main__':
+
+    import wx
+
+    class MyFrame(wx.Frame):
+
+        def __init__(self, parent):
+
+            wx.Frame.__init__(self, parent, -1, "CustomTreeCtrl Demo")
+
+            # Create a CustomTreeCtrl instance
+            custom_tree = CustomTreeCtrl(self, agwStyle=wx.TR_DEFAULT_STYLE)
+            custom_tree.SetBackgroundColour(wx.WHITE)
+
+            # Add a root node to it
+            root = custom_tree.AddRoot("The Root Item")
+
+            # Create an image list to add icons next to an item
+            il = wx.ImageList(16, 16)
+            fldridx     = il.Add(wx.ArtProvider.GetBitmap(wx.ART_FOLDER,      wx.ART_OTHER, (16, 16)))
+            fldropenidx = il.Add(wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN,   wx.ART_OTHER, (16, 16)))
+            fileidx     = il.Add(wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_OTHER, (16, 16)))
+
+            custom_tree.SetImageList(il)
+
+            custom_tree.SetItemImage(root, fldridx, wx.TreeItemIcon_Normal)
+            custom_tree.SetItemImage(root, fldropenidx, wx.TreeItemIcon_Expanded)
+
+            for x in range(15):
+                child = custom_tree.AppendItem(root, "Item %d" % x)
+                custom_tree.SetItemImage(child, fldridx, wx.TreeItemIcon_Normal)
+                custom_tree.SetItemImage(child, fldropenidx, wx.TreeItemIcon_Expanded)
+
+                for y in range(5):
+                    last = custom_tree.AppendItem(child, "item %d-%s" % (x, chr(ord("a")+y)))
+                    custom_tree.SetItemImage(last, fldridx, wx.TreeItemIcon_Normal)
+                    custom_tree.SetItemImage(last, fldropenidx, wx.TreeItemIcon_Expanded)
+
+                    for z in range(5):
+                        item = custom_tree.AppendItem(last,  "item %d-%s-%d" % (x, chr(ord("a")+y), z))
+                        custom_tree.SetItemImage(item, fileidx, wx.TreeItemIcon_Normal)
+
+            custom_tree.Expand(root)
+
+
+    # our normal wxApp-derived class, as usual
+
+    app = wx.App(0)
+
+    frame = MyFrame(None)
+    app.SetTopWindow(frame)
+    frame.Show()
+
+    app.MainLoop()

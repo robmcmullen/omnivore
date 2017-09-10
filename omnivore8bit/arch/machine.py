@@ -420,6 +420,16 @@ class Machine(HasTraits):
             self.blinking_antic_font = None
         self.set_font_mapping()
 
+    def change_font_data(self, data):
+        font = dict(data=data[:], blink=self.antic_font.use_blinking)
+        self.antic_font_data = font
+        self.antic_font = self.get_antic_font()
+        if self.antic_font.use_blinking:
+            self.blinking_antic_font = self.get_antic_font(True)
+        else:
+            self.blinking_antic_font = None
+        self.set_font_mapping()
+
     def get_blinking_font(self, index):
         if self.antic_font.use_blinking and index == 1 and self.blinking_antic_font is not None:
             return self.blinking_antic_font
