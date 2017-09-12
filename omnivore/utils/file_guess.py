@@ -70,6 +70,12 @@ class FileMetadata(HasTraits):
     def _get_name(self):
         return os.path.basename(self.uri)
 
+    @property
+    def syspath(self):
+        fs, relpath = opener.parse(self.uri)
+        if fs.hassyspath(relpath):
+            return fs.getsyspath(relpath)
+        raise TypeError("No system path for %s" % self.uri)
 
 class FileGuess(object):
     """Loads the first part of a file and provides a container for metadata
