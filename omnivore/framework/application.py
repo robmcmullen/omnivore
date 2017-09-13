@@ -179,7 +179,11 @@ class FrameworkApplication(TasksApplication):
     def _application_exiting_fired(self):
         log.debug("CLEANING UP!!!")
         if self.downloader:
-            self.downloader = None
+            self.downloader.stop_threads()
+
+        import threading
+        for thread in threading.enumerate():
+            log.debug("thread running: %s" % thread.name)
 
     def on_idle(self, evt):
         evt.Skip()

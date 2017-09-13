@@ -70,8 +70,11 @@ class UnskippableURLRequest(URLRequest):
 
 
 class HttpThread(threading.Thread):
-    def __init__(self, in_q, out_q):
-        threading.Thread.__init__(self)
+    http_thread_count = 0
+
+    def __init__(self, in_q, out_q, name_prefix="HttpThread"):
+        self.__class__.http_thread_count += 1
+        threading.Thread.__init__(self, name="%s-%d" % (name_prefix, self.http_thread_count))
         self.in_q = in_q
         self.out_q = out_q
 
@@ -115,13 +118,18 @@ class BackgroundHttpDownloader(object):
     def __init__(self):
         self.requests = Queue.Queue()
         self.results = Queue.Queue()
-        self.thread = OnlyLatestHttpThread(self.requests, self.results)
+        self.thread = OnlyLatestHttpThread(self.requests, self.results, "BackgroundHttpDownloader")
         self.thread.start()
+        log.debug("Created thread %s" % self.thread.name)
         self.get_server_config()
 
     def __del__(self):
+        self.stop_threads()
+
+    def stop_threads(self):
         self.requests.put(None)
         self.thread.join()
+        log.debug("Stopped BackgroundHttpDownloader thread")
 
     def get_server_config(self):
         pass
@@ -146,12 +154,16 @@ class BackgroundHttpMultiDownloader(object):
         self.results = Queue.Queue()
         self.threads = []
         for i in range(num_workers):
-            thread = HttpThread(self.requests, self.results)
+            thread = HttpThread(self.requests, self.results, "BackgroundHttpMultiDownloader")
             thread.start()
+            log.debug("Created thread %s" % self.thread.name)
             self.threads.append(thread)
         self.get_server_config()
 
     def __del__(self):
+        self.stop_threads()
+
+    def stop_threads(self):
         for t in self.threads:
             self.requests.put(None)
         for t in self.threads:
