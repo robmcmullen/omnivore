@@ -185,6 +185,11 @@ class FrameworkApplication(TasksApplication):
         for thread in threading.enumerate():
             log.debug("thread running: %s" % thread.name)
 
+        log.debug("Cleaning up globally allocated resources in documents")
+        for doc in self.documents:
+            log.debug("Cleaning up resources from %s" % doc)
+            doc.global_resource_cleanup()
+
     def on_idle(self, evt):
         evt.Skip()
         if not self.active_window:

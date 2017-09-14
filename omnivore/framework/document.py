@@ -78,6 +78,8 @@ class BaseDocument(HasTraits):
 
     load_error = Str(transient=True)
 
+    global_resource_cleanup_functions = List([])
+
     #### trait default values
 
     def _metadata_default(self):
@@ -322,3 +324,15 @@ class BaseDocument(HasTraits):
                 fh.close()
 
         fs.close()
+
+    #### Cleanup functions
+
+    def add_cleanup_function(self, func):
+        # Prevent same function from being added multiple times
+        if func not in self.global_resource_cleanup_functions:
+            self.global_resource_cleanup_functions.append(func)
+
+    def global_resource_cleanup(self):
+        for f in self.global_resource_cleanup_functions:
+            log.debug("Calling cleanup function %s" % f)
+            f()
