@@ -455,8 +455,11 @@ class FrameworkEditor(Editor):
         """
         pass
 
-    def ensure_visible(self, start, end):
+    def ensure_visible(self, flags):
         """Make sure the current range of indexes is shown
+
+        flags: DisplayFlags instance containing index_range that should
+        be shown
         """
         pass
 
@@ -730,7 +733,9 @@ class FrameworkEditor(Editor):
         if visible_range:
             # Only update the range on the current editor, not other views
             # which are allowed to remain where they are
-            self.ensure_visible(self.anchor_start_index, self.anchor_end_index)
+            if flags.index_visible is None:
+                flags.index_visible = self.anchor_start_index
+            self.ensure_visible(flags)
 
             # Prevent a double refresh since ensure_visible does a refresh as a
             # side effect.

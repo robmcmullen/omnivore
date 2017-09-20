@@ -570,8 +570,9 @@ class ByteEditor(FrameworkEditor):
                 continue
         return None, None
 
-    def ensure_visible(self, start, end):
-        self.index_clicked(start, 0, None)
+    def ensure_visible(self, flags):
+        #self.index_clicked(start, 0, None)
+        self.focused_base.ensure_visible_event = flags
 
     def update_history(self):
 #        history = document.undo_stack.serialize()

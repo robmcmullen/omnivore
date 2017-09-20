@@ -455,10 +455,10 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         else:
             self.task.status_bar.command_help = ""
 
-    def show_status_at_index(self, index, bit=None):
+    def get_status_at_index(self, index, bit=None):
         label = self.get_label_at_index(index)
         message = self.get_status_message_at_index(index, bit)
-        self.editor.show_status_message("%s: %s %s" % (self.short_name, label, message))
+        return "%s: %s %s" % (self.short_name, label, message)
 
     def get_label_at_index(self, index):
         try:

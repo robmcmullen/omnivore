@@ -186,6 +186,9 @@ class StatusFlags(object):
         # set to True if the all views of the data need to be refreshed
         self.refresh_needed = False
 
+        # ensure the specified index is visible
+        self.index_visible = None
+
         # ensure the specified index range is visible
         self.index_range = None
 
@@ -195,11 +198,18 @@ class StatusFlags(object):
         # set cursor index to position
         self.cursor_index = None
 
+        # set cursor column to position, if supported
+        self.cursor_column = None
+
         # set if document properties have changed, but not the actual data
         self.metadata_dirty = None
 
         # set if user interface needs to be updated (very heavyweight call!)
         self.rebuild_ui = None
+
+        # the source control on which the event happened, if this is the
+        # result of a user interface change
+        self.source_control = None
 
         for flags in args:
             self.add_flags(flags)
@@ -252,6 +262,14 @@ class StatusFlags(object):
 
         if flags.cursor_index is not None:
             self.cursor_index = flags.cursor_index
+        if flags.cursor_column is not None:
+            self.cursor_column = flags.cursor_column
+
+
+class DisplayFlags(StatusFlags):
+    def __init__(self, source_control=None):
+        StatusFlags.__init__(self)
+        self.source_control = source_control
 
 
 class UndoInfo(object):

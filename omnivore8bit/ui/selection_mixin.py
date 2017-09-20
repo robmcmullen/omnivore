@@ -1,5 +1,6 @@
 import wx
 
+from omnivore.utils.command import DisplayFlags
 
 class SelectionMixin(object):
     def __init__(self):
@@ -9,6 +10,7 @@ class SelectionMixin(object):
         self.pending_select_awaiting_drag = None
 
     def handle_select_start(self, editor, evt, selecting_rows=False, col=0):
+        flags = DisplayFlags(self)
         editor.pending_focus = self
         self.mouse_drag_started = True
         r, c, index1, index2, inside = self.get_location_from_event(evt)
@@ -48,14 +50,17 @@ class SelectionMixin(object):
                     editor.select_none()
                     # status line doesn't get automatically updated to show
                     # nothing is selected, so force the update
-                    wx.CallAfter(self.show_status_at_index, index1)
-        wx.CallAfter(editor.index_clicked, editor.cursor_index, c, self, True)
+                    flags.message = self.get_status_at_index(index1)
+        flags.cursor_index = editor.cursor_index
+        flags.cursor_column = c
+        wx.CallAfter(editor.process_flags, flags)
 
     def handle_select_motion(self, editor, evt, selecting_rows=False):
         if not self.mouse_drag_started:
             # On windows, it's possible to get a motion event before a mouse
             # down event, so need this flag to check
             return
+        flags = DisplayFlags(self)
         update = False
         r, c, index1, index2, inside = self.get_location_from_event(evt)
         if c < 0 or selecting_rows or not inside:
@@ -90,8 +95,8 @@ class SelectionMixin(object):
                     editor.select_range(index1, editor.anchor_initial_end_index, extend=self.multi_select_mode)
                     update = True
         if update:
-            editor.cursor_index = index1
-            wx.CallAfter(editor.index_clicked, editor.cursor_index, c, self, True)
+            flags.cursor_index = index1
+            wx.CallAfter(editor.process_flags, flags)
 
     def handle_select_end(self, editor, evt):
         self.mouse_drag_started = False

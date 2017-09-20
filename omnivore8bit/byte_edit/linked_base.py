@@ -59,6 +59,8 @@ class LinkedBase(HasTraits):
 
     recalc_event = Event
 
+    ensure_visible_event = Event
+
     key_pressed = Event(KeyPressedEvent)
 
     # Class attributes (not traits)
@@ -283,9 +285,9 @@ class LinkedBase(HasTraits):
             last = r[0][1]
             num = abs(last - first)
             if num == 1: # python style, 4:5 indicates a single byte
-                return "[1 byte selected %s]" % self.get_label_of_ranges(r)
+                return "[1 byte selected %s]" % self.editor.get_label_of_ranges(r)
             elif num > 0:
-                return "[%d bytes selected %s]" % (num, self.get_label_of_ranges(r))
+                return "[%d bytes selected %s]" % (num, self.editor.get_label_of_ranges(r))
         else:
             return "[%d ranges selected]" % (len(self.editor.selected_ranges))
 
