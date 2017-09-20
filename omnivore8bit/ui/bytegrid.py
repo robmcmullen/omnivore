@@ -14,11 +14,11 @@ log = logging.getLogger(__name__)
 
 
 class ByteGridRenderer(Grid.GridCellRenderer):
-    def __init__(self, table, editor):
+    def __init__(self, table, linked_base):
         """Render data in the specified color and font and fontsize"""
         Grid.GridCellRenderer.__init__(self)
         self.table = table
-        m = editor.machine
+        m = linked_base.machine
         self.color = m.text_color
         self.diff_color = m.diff_text_color
         self.font = m.text_font
@@ -106,7 +106,7 @@ class ByteGridRenderer(Grid.GridCellRenderer):
                 dc.DrawRectangle(x, rect.y+1, width+1, height)
                 dc.DrawText("...", x, rect.y+1)
 
-            r, c = self.table.get_row_col(grid.editor.cursor_index)
+            r, c = self.table.get_row_col(grid.linked_base.cursor_index)
             if row == r and col == c:
                 dc.SetPen(self.cursor_pen)
                 dc.SetBrush(self.cursor_brush)
@@ -128,8 +128,8 @@ class ByteGridTable(Grid.GridTableBase):
     column_pixel_sizes = {}
     extra_column_padding = 4
 
-    def set_display_format(self, editor):
-        self.set_fmt_hex(editor.task.hex_format_character)
+    def set_display_format(self, linked_base):
+        self.set_fmt_hex(linked_base.hex_format_character)
 
     def set_fmt_hex(self, fmt_char):
         self.fmt_hex1 = "%" + fmt_char
@@ -139,9 +139,10 @@ class ByteGridTable(Grid.GridTableBase):
     def set_default_col_size(self, col, pixel_size):
         self.__class__.column_pixel_sizes[col] = pixel_size
 
-    def __init__(self):
+    def __init__(self, linked_base):
         Grid.GridTableBase.__init__(self)
 
+        self.linked_base = linked_base
         self._rows = 1
         self._cols = len(self.column_labels)
         self.set_fmt_hex("x")
@@ -250,9 +251,9 @@ class ByteGridTable(Grid.GridTableBase):
         pass
 
     def set_grid_cell_attr(self, grid, col, attr):
-        attr.SetFont(grid.editor.machine.text_font)
+        attr.SetFont(grid.linked_base.machine.text_font)
         attr.SetBackgroundColour("white")
-        renderer = grid.get_grid_cell_renderer(self, grid.editor)
+        renderer = grid.get_grid_cell_renderer(self, grid.linked_base)
         attr.SetRenderer(renderer)
 
     def set_col_attr(self, grid, col, char_width):
@@ -296,7 +297,7 @@ class ByteGridTable(Grid.GridTableBase):
 
         # update the scrollbars and the displayed part of the grid
         dc = wx.MemoryDC()
-        dc.SetFont(grid.editor.machine.text_font)
+        dc.SetFont(grid.linked_base.machine.text_font)
         (width, height) = dc.GetTextExtent("M")
         grid.SetDefaultRowSize(height)
         grid.SetColMinimalAcceptableWidth(width)
@@ -308,7 +309,7 @@ class ByteGridTable(Grid.GridTableBase):
             # each column
             self.set_col_attr(grid, col, width)
 
-        label_font = grid.editor.machine.text_font.Bold()
+        label_font = grid.linked_base.machine.text_font.Bold()
         grid.SetLabelFont(label_font)
         dc.SetFont(label_font)
         (width, height) = dc.GetTextExtent("M")
@@ -527,7 +528,7 @@ class HexCellEditor(Grid.GridCellEditor,HexDigitMixin):
         to begin editing.  Set the focus to the edit control.
         *Must Override*
         """
-        grid.editor.select_none(False)
+        grid.linked_base.editor.select_none(False)
         self.startValue = grid.GetTable().GetValue(row, col)
         mode = self.parentgrid.table.get_col_type(col)
         log.debug("begin edit: row,col=(%d,%d), mode=%s" % (row, col, mode))
@@ -588,7 +589,7 @@ class HexCellEditor(Grid.GridCellEditor,HexDigitMixin):
         if acceptable:
             # clear selection if an edit is about to start, otherwise the
             # selection stays on screen during the text entry
-            self.parentgrid.editor.select_none_if_selection()
+            self.parentgrid.linked_base.editor.select_none_if_selection()
         return acceptable
 
     def StartingKey(self, evt):
@@ -629,13 +630,12 @@ class ByteGrid(Grid.Grid, SelectionMixin):
     """
     short_name = "hex"
 
-    def __init__(self, parent, task, table, **kwargs):
+    def __init__(self, parent, linked_base, table, **kwargs):
         """Create the HexEdit viewer
         """
         Grid.Grid.__init__(self, parent, -1, **kwargs)
         SelectionMixin.__init__(self)
-        self.task = task
-        self.editor = None
+        self.linked_base = linked_base
         self.table = table
 
         # The second parameter means that the grid is to take
@@ -681,35 +681,28 @@ class ByteGrid(Grid.Grid, SelectionMixin):
     def restore_view_params(self, data):
         self.restore_upper_left = data
 
-    def get_grid_cell_renderer(self, table, editor):
-        return ByteGridRenderer(table, editor)
+    def get_grid_cell_renderer(self, table, linked_base):
+        return ByteGridRenderer(table, linked_base)
 
     def recalc_view(self):
-        editor = self.task.active_editor
-        if editor is not None:
-            self.editor = editor
-            self.table.ResetView(self, editor)
-            self.table.UpdateValues(self)
-            self.goto_index(self, editor.cursor_index)
-            self.last_change_count = editor.document.change_count
+        self.table.ResetView(self)
+        self.table.UpdateValues(self)
+        self.goto_index(self, self.linked_base.editor.cursor_index)
+        self.last_change_count = self.linked_base.editor.document.change_count
 
     def refresh_view(self):
-        editor = self.task.active_editor
-        if editor is not None:
-            if self.editor != editor:
-                self.recalc_view()
-            elif self.IsShown():
-                #self.ForceRefresh()
-                if self.last_change_count == editor.document.change_count:
-                    log.debug("skipping refresh; document change count=%d" % self.last_change_count)
-                else:
-                    log.debug("refreshing! document change count=%d" % self.last_change_count)
-                    if self.FindFocus() != self and editor.pending_focus != self:
-                        self.center_on_index()
-                    self.Refresh()
-                    self.last_change_count = editor.document.change_count
+        if self.IsShown():
+            #self.ForceRefresh()
+            if self.last_change_count == self.linked_base.editor.document.change_count:
+                log.debug("skipping refresh; document change count=%d" % self.last_change_count)
             else:
-                log.debug("skipping refresh of hidden %s" % self)
+                log.debug("refreshing! document change count=%d" % self.last_change_count)
+                if self.FindFocus() != self and self.linked_base.pending_focus != self:
+                    self.center_on_index()
+                self.Refresh()
+                self.last_change_count = self.linked_base.editor.document.change_count
+        else:
+            log.debug("skipping refresh of hidden %s" % self)
 
     def get_default_cell_editor(self):
         return HexCellEditor(self)
@@ -726,13 +719,13 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             index = -1
         popup_data = {'row':r, 'col':c, 'index': index, 'in_selection': style&0x80}
         if actions:
-            self.editor.popup_context_menu_from_actions(self, actions, popup_data)
+            self.linked_base.editor.popup_context_menu_from_actions(self, actions, popup_data)
 
     def get_popup_actions(self, r, c, inside):
         return []
 
     def on_left_up(self, evt):
-        self.handle_select_end(self.editor, evt)
+        self.handle_select_end(self.linked_base.editor, evt)
 
     def get_index_range_from_event(self, evt):
         c, r = (evt.GetCol(), evt.GetRow())
@@ -743,10 +736,10 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         # checking for event object window being the row labels in order to set
         # the 'selecting_rows' flag doesn't work here even though it works in
         # motion events.
-        self.handle_select_start(self.editor, evt)
+        self.handle_select_start(self.linked_base.editor, evt)
 
     def on_left_down_label(self, evt):
-        self.handle_select_start(self.editor, evt, selecting_rows=True)
+        self.handle_select_start(self.linked_base.editor, evt, selecting_rows=True)
 
     def get_location_from_event(self, evt):
         x, y = evt.GetPosition()
@@ -802,10 +795,10 @@ class ByteGrid(Grid.Grid, SelectionMixin):
 
     def on_motion(self, evt):
         self.on_motion_update_status(evt)
-        e = self.editor
+        e = self.linked_base
         if evt.LeftIsDown():
             selecting_rows = evt.GetEventObject() == self.GetGridRowLabelWindow()
-            self.handle_select_motion(self.editor, evt, selecting_rows)
+            self.handle_select_motion(self.linked_base.editor, evt, selecting_rows)
 
     def on_motion_update_status(self, evt):
         x, y = self.CalcUnscrolledPosition(evt.GetPosition())
@@ -818,7 +811,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         if self.table.is_index_valid(index):
             label = self.table.get_label_at_index(index)
             message = self.get_status_message_at_index(index)
-            self.editor.show_status_message("%s: %s %s" % (self.short_name, label, message))
+            self.linked_base.show_status_message("%s: %s %s" % (self.short_name, label, message))
 
     def get_status_message_at_index(self, index):
         msg = get_style_name(self.table.segment, index)
@@ -826,7 +819,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         return "%s  %s" % (msg, comments)
 
     def on_key_down(self, evt):
-        e = self.editor
+        e = self.linked_base.editor
         key = evt.GetKeyCode()
         log.debug("evt=%s, key=%s" % (evt, key))
         moved = False
@@ -901,7 +894,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         Keeping them together guarantees that this move will happen
         "atomically".
         """
-        e = self.editor
+        e = self.linked_base
         r, c = self.GetGridCursorRow(), self.GetGridCursorCol()
         max_rows = self.table.GetNumberRows()
         vis = self.get_num_visible_rows()
@@ -932,7 +925,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
 
     def advance_cursor(self):
         self.DisableCellEditControl()
-        e = self.editor
+        e = self.linked_base
         r, c = self.table.get_row_col(e.cursor_index)
         (r, c) = self.table.get_next_editable_pos(r, c)
         self.SetGridCursor(r, c)
@@ -944,7 +937,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         return col_from_index
 
     def center_on_index(self):
-        r, c = self.table.get_row_col(self.editor.cursor_index)
+        r, c = self.table.get_row_col(self.linked_base.editor.cursor_index)
         num = self.get_num_visible_rows()
         last = self.table.GetNumberRows() - 1
         ul = max(0, r - (num / 2))

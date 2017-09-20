@@ -40,6 +40,7 @@ class OmnivoreEditorPlugin(FrameworkPlugin):
         from omnivore8bit.font_edit import FontEditTask
         from omnivore8bit.bitmap_edit import BitmapEditTask
         from omnivore8bit.jumpman import JumpmanEditTask
+        from omnivore8bit.byte_edit import ByteEditTask
 
         return self.task_factories_from_tasks([
             HexEditTask,
@@ -47,4 +48,5 @@ class OmnivoreEditorPlugin(FrameworkPlugin):
             FontEditTask,
             BitmapEditTask,
             JumpmanEditTask,
+            ByteEditTask,
             ])
