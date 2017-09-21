@@ -48,13 +48,12 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
     dbg_call_seq = 0
     short_name = "_bitview base class"
 
-    def __init__(self, parent, task, **kwargs):
+    def __init__(self, parent, linked_base, **kwargs):
         wx.ScrolledWindow.__init__(self, parent, -1, **kwargs)
         SelectionMixin.__init__(self)
 
         # Settings
-        self.task = task
-        self.editor = None
+        self.linked_base = linked_base
         self.segment = None
         self.max_zoom = 16
         self.min_zoom = 1
@@ -101,6 +100,14 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
     def command_help(self):
         return ""
 
+    @property
+    def editor(self):
+        return self.linked_base.editor
+
+    @property
+    def task(self):
+        return self.linked_base.editor.task
+
     def get_view_params(self):
         s = self.GetViewStart()
         return [s[0], s[1]]  # might be a wx.Point, so ensure it's a list for json serialization
@@ -135,38 +142,26 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
     def is_ready_to_render(self):
         return self.editor is not None
 
-    def set_task(self, task):
-        self.task = task
-
     def recalc_view(self):
-        editor = self.task.active_editor
-        if editor is not None:
-            self.editor = editor
-            self.segment = self.get_segment(editor)
-            self.rect_select = editor.rect_select
-            self.start_addr = editor.segment.start_addr
-            self.update_bytes_per_row()
-            self.set_colors()
-            self.set_font()
-            self.update_zoom()
-            self.set_scale()
+        self.segment = self.get_segment()
+        self.rect_select = self.editor.rect_select
+        self.start_addr = self.segment.start_addr
+        self.update_bytes_per_row()
+        self.set_colors()
+        self.set_font()
+        self.set_scale()
 
-    def get_segment(self, editor):
+    def get_segment(self):
         """Get segment from editor; provided for subclasses that use
         a computed segment to represent the segment data (like Jumpman)
         """
-        return editor.segment
+        return self.linked_base.segment
 
     def refresh_view(self):
-        editor = self.task.active_editor
-        if editor is not None:
-            if self.editor != editor:
-                self.recalc_view()
-            else:
-                if self.FindFocus() != self and editor.pending_focus != self:
-                    self.center_on_index()
-                else:
-                    self.Refresh()
+        if self.FindFocus() != self and self.editor.pending_focus != self:
+            self.center_on_index()
+        else:
+            self.Refresh()
 
     def sync_settings(self):
         e = self.editor
@@ -244,7 +239,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
             self.scaled_bmp = wx.Bitmap(w, h)
 
             dc.SelectObject(self.scaled_bmp)
-            dc.SetBackground(wx.Brush(self.editor.machine.empty_color))
+            dc.SetBackground(wx.Brush(self.linked_base.machine.empty_color))
             dc.Clear()
 
             array = self.get_image()
@@ -281,11 +276,8 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         log.debug("x, y, w, h, rows start, num, cols start, num:%s" % str([x, y, w, h, self.start_row, self.visible_rows, self.fully_visible_rows, self.start_col, self.visible_cols, self.fully_visible_cols]))
 
     def update_bytes_per_row(self):
-        self.pixels_per_byte = self.editor.machine.bitmap_renderer.pixels_per_byte
-        self.bitplanes = self.editor.machine.bitmap_renderer.bitplanes
-
-    def update_zoom(self):
-        pass
+        self.pixels_per_byte = self.linked_base.machine.bitmap_renderer.pixels_per_byte
+        self.bitplanes = self.linked_base.machine.bitmap_renderer.bitplanes
 
     def set_scale(self):
         """Creates new image at specified zoom factor.
@@ -450,7 +442,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
     def on_motion_update_status(self, evt):
         byte, bit, inside = self.event_coords_to_byte(evt)
         if inside:
-            self.show_status_at_index(byte, bit)
+            self.task.status_bar.message = self.get_status_at_index(byte, bit)
             self.task.status_bar.command_help = self.command_help
         else:
             self.task.status_bar.command_help = ""
@@ -560,16 +552,14 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
 class BitmapScroller(BitviewScroller):
     short_name = "bitmap"
 
-    def update_bytes_per_row(self):
-        BitviewScroller.update_bytes_per_row(self)
-        self.bytes_per_row = self.editor.machine.bitmap_renderer.validate_bytes_per_row(self.editor.bitmap_width)
+    # FIXME: renderer becomes attribute of this class, not machine! There may be many different bitmap renderers
+    # def update_bytes_per_row(self):
+    #     BitviewScroller.update_bytes_per_row(self)
+    #     self.bytes_per_row = self.linked_base.machine.bitmap_renderer.validate_bytes_per_row(16) #self.editor.bitmap_width)
 
-    def update_zoom(self):
-        self.set_zoom(self.editor.bitmap_zoom)
-
-    def sync_to_editor(self, e):
-        e.bitmap_zoom = self.zoom
-        e.bitmap_width = self.bytes_per_row
+    # def sync_to_editor(self, e):
+    #     e.bitmap_zoom = self.zoom
+    #     e.bitmap_width = self.bytes_per_row
 
     def event_coords_to_byte(self, evt):
         if self.end_byte is None:  # end_byte is a proxy for the image being loaded
@@ -614,7 +604,7 @@ class BitmapScroller(BitviewScroller):
             count = self.end_byte - self.start_byte
             bytes = segment[self.start_byte:self.end_byte]
             style = segment.style[self.start_byte:self.end_byte]
-        m = self.editor.machine
+        m = self.linked_base.machine
         array = m.bitmap_renderer.get_image(m, self.bytes_per_row, nr, count, bytes, style)
         sc = self.start_col
         nc = self.visible_cols
@@ -662,12 +652,9 @@ class FontMapScroller(BitviewScroller):
     def is_ready_to_render(self):
         return self.font is not None
 
-    def update_bytes_per_row(self):
-        BitviewScroller.update_bytes_per_row(self)
-        self.bytes_per_row = self.editor.map_width
-
-    def update_zoom(self):
-        self.set_zoom(self.editor.map_zoom)
+    # def update_bytes_per_row(self):
+    #     BitviewScroller.update_bytes_per_row(self)
+    #     self.bytes_per_row = self.editor.map_width
 
     def sync_to_editor(self, e):
         e.map_zoom = self.zoom
@@ -708,9 +695,9 @@ class FontMapScroller(BitviewScroller):
         log.debug("fontmap: : x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, self.fully_visible_rows, "col start, num:", self.start_col, self.visible_cols, self.fully_visible_cols]))
 
     def set_font(self):
-        self.font = self.editor.machine.antic_font
-        self.pixels_per_byte = self.editor.machine.font_renderer.char_bit_width
-        self.pixels_per_row = self.editor.machine.font_renderer.char_bit_height
+        self.font = self.linked_base.machine.antic_font
+        self.pixels_per_byte = self.linked_base.machine.font_renderer.char_bit_width
+        self.pixels_per_row = self.linked_base.machine.font_renderer.char_bit_height
         self.calc_scroll_params()
         if self.font.use_blinking:
             self.blink_timer.Start(267)  # on/off cycle in 1.87 Hz
@@ -738,7 +725,7 @@ class FontMapScroller(BitviewScroller):
         style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
 
-        m = self.editor.machine
+        m = self.linked_base.machine
         font = m.get_blinking_font(self.blink_index)
         array = m.font_renderer.get_image(m, font, bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols)
         return array
@@ -767,7 +754,7 @@ class FontMapScroller(BitviewScroller):
         style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
 
-        m = self.editor.machine
+        m = self.linked_base.machine
         font = m.get_blinking_font(0)
         array = m.font_renderer.get_image(m, font, bytes, style, start_byte, end_byte, self.bytes_per_row, nr, 0, self.bytes_per_row)
         if self.font.scale_h > 1 or self.font.scale_w > 1:
@@ -807,7 +794,7 @@ class FontMapScroller(BitviewScroller):
         ymax = array.shape[0]
         c1 = max(x1, 0)
         c2 = min(x2, xmax)
-        m = self.editor.machine
+        m = self.linked_base.machine
         if color is None:
             color = m.empty_color
 
@@ -900,7 +887,7 @@ class FontMapScroller(BitviewScroller):
         char = evt.GetUnicodeKey()
         if char > 0:
             self.editor.select_none_if_selection()
-            char = self.editor.machine.font_mapping.convert_byte_mapping(char)
+            char = self.linked_base.machine.font_mapping.convert_byte_mapping(char)
             self.change_byte(char | self.inverse)
 
     def change_byte(self, value):
@@ -932,7 +919,7 @@ class FontMapScroller(BitviewScroller):
             else:
                 delta_index = self.process_movement_keys(char)
         else:
-            byte = self.editor.machine.font_mapping.wx_char_to_byte(char, mods, self)
+            byte = self.linked_base.machine.font_mapping.wx_char_to_byte(char, mods, self)
             if byte is None:
                 if char == wx.WXK_F1:
                     self.inverse = (self.inverse + 0x80) & 0x80
@@ -945,7 +932,7 @@ class FontMapScroller(BitviewScroller):
                     delta_index = self.process_movement_keys(char)
 
         if byte is not None:
-            byte = self.editor.machine.font_mapping.convert_byte_mapping(byte)
+            byte = self.linked_base.machine.font_mapping.convert_byte_mapping(byte)
             self.change_byte(byte)
             self.pending_esc = False
         elif delta_index is not None:
@@ -982,12 +969,9 @@ class CharacterSetViewer(FontMapScroller):
         self.Refresh()
 
     def recalc_view(self):
-        editor = self.task.active_editor
-        if editor is not None:
-            self.editor = editor
-            self.set_colors()
-            self.set_font()
-            self.set_scale()
+        self.set_colors()
+        self.set_font()
+        self.set_scale()
 
     def on_left_down(self, evt):
         e = self.editor
@@ -1057,9 +1041,9 @@ class MemoryMapScroller(BitviewScroller):
         self.bytes_per_row = 256
         self.zoom = 2
 
-    def update_bytes_per_row(self):
-        BitviewScroller.update_bytes_per_row(self)
-        self.bytes_per_row = self.editor.map_width
+    # def update_bytes_per_row(self):
+    #     BitviewScroller.update_bytes_per_row(self)
+    #     self.bytes_per_row = self.editor.map_width
 
     def DoGetBestSize(self):
         """ Base class virtual method for sizer use to get the best size
@@ -1129,7 +1113,7 @@ class MemoryMapScroller(BitviewScroller):
         style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
 
-        m = self.editor.machine
+        m = self.linked_base.machine
         array = m.page_renderer.get_image(m, bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols)
         log.debug(array.shape)
         t = time.clock()

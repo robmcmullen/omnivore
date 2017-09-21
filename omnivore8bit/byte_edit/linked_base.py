@@ -59,7 +59,7 @@ class LinkedBase(HasTraits):
 
     recalc_event = Event
 
-    ensure_visible_event = Event
+    ensure_visible_index = Event
 
     key_pressed = Event(KeyPressedEvent)
 
