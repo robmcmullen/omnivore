@@ -327,7 +327,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
     def index_to_row_col(self, index):
         return divmod(index, self.bytes_per_row)
 
-    def select_index(self, from_control, rel_pos, first_row=None):
+    def set_cursor_index(self, from_control, rel_pos, first_row=None):
         r, c = self.index_to_row_col(rel_pos)
 #        print "r, c, start, vis", r, c, self.start_row, self.fully_visible_rows
         last_scroll_row = self.total_rows - self.fully_visible_rows
@@ -374,7 +374,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
 
     def select_addr(self, addr):
         rel_pos = addr - self.start_addr
-        self.select_index(self, rel_pos)
+        self.set_cursor_index(self, rel_pos)
 
     def on_mouse_wheel(self, evt):
         """Driver to process mouse events.
@@ -533,7 +533,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         e = self.editor
         delta_index, first_row = delta_index  # Now a tuple, was an int
         index = e.set_cursor(e.cursor_index + delta_index, False)
-        self.select_index(self, index, first_row)
+        self.set_cursor_index(self, index, first_row)
         e.index_clicked(index, 0, self, False)
 
     def on_char_hook(self, evt):

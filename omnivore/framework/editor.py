@@ -520,6 +520,7 @@ class FrameworkEditor(Editor):
             self.selected_ranges = [(start, end)]
         self.anchor_start_index = start
         self.anchor_end_index = end
+        log.debug("selected ranges: %s" % str(self.selected_ranges))
         self.highlight_selected_ranges()
 
     def highlight_selected_ranges(self):
@@ -702,7 +703,11 @@ class FrameworkEditor(Editor):
         do_refresh = flags.refresh_needed
 
         if flags.cursor_index is not None:
-            self.cursor_index = self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = flags.cursor_index
+            if flags.keep_selection:
+                self.index_visible = flags.cursor_index
+                self.cursor_index = flags.cursor_index
+            else:
+                self.cursor_index = self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = flags.cursor_index
             visible_range = True
 
         if flags.index_range is not None:

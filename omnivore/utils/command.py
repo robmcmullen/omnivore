@@ -198,6 +198,9 @@ class StatusFlags(object):
         # set cursor index to position
         self.cursor_index = None
 
+        # keep any selection instead of erasing during a cursor move
+        self.keep_selection = None
+
         # set cursor column to position, if supported
         self.cursor_column = None
 

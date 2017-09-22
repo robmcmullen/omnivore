@@ -2,6 +2,10 @@ import wx
 
 from omnivore.utils.command import DisplayFlags
 
+import logging
+log = logging.getLogger(__name__)
+
+
 class SelectionMixin(object):
     def __init__(self):
         self.multi_select_mode = False
@@ -10,6 +14,7 @@ class SelectionMixin(object):
         self.pending_select_awaiting_drag = None
 
     def handle_select_start(self, editor, evt, selecting_rows=False, col=0):
+        log.debug("handle_select_start: selecting_rows: %s, col=%s" % (selecting_rows, col))
         flags = DisplayFlags(self)
         editor.pending_focus = self
         self.mouse_drag_started = True
@@ -53,9 +58,11 @@ class SelectionMixin(object):
                     flags.message = self.get_status_at_index(index1)
         flags.cursor_index = editor.cursor_index
         flags.cursor_column = c
+        log.debug("handle_select_start: flags: %s, anchors=%s" % (flags, str((editor.anchor_initial_start_index, editor.anchor_initial_end_index))))
         wx.CallAfter(editor.process_flags, flags)
 
     def handle_select_motion(self, editor, evt, selecting_rows=False):
+        log.debug("handle_select_motion: selecting_rows: %s" % (selecting_rows))
         if not self.mouse_drag_started:
             # On windows, it's possible to get a motion event before a mouse
             # down event, so need this flag to check
@@ -63,6 +70,7 @@ class SelectionMixin(object):
         flags = DisplayFlags(self)
         update = False
         r, c, index1, index2, inside = self.get_location_from_event(evt)
+        log.debug("handle_select_motion: index1: %s, index2: %s pending: %s" % (index1, index2, str(self.pending_select_awaiting_drag)))
         if c < 0 or selecting_rows or not inside:
             selecting_rows = True
             c = 0
@@ -83,6 +91,7 @@ class SelectionMixin(object):
                 update = True
         else:
             if index2 >= editor.anchor_initial_end_index:
+                flags.cursor_index = index1
                 if selecting_rows:
                     index1, index2 = self.get_start_end_index_of_row(r)
                 if index2 != editor.anchor_end_index:
@@ -96,7 +105,9 @@ class SelectionMixin(object):
                     update = True
         if update:
             flags.cursor_index = index1
+            flags.keep_selection = True
             wx.CallAfter(editor.process_flags, flags)
+        log.debug("handle_select_motion: update: %s, flags: %s, anchors=%s" % (update, flags, str((editor.anchor_initial_start_index, editor.anchor_initial_end_index))))
 
     def handle_select_end(self, editor, evt):
         self.mouse_drag_started = False

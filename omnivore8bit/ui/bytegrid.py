@@ -687,7 +687,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
     def recalc_view(self):
         self.table.ResetView(self)
         self.table.UpdateValues(self)
-        self.goto_index(self, self.linked_base.editor.cursor_index)
+        self.set_cursor_index(self, self.linked_base.editor.cursor_index)
         self.last_change_count = self.linked_base.editor.document.change_count
 
     def refresh_view(self):
@@ -946,7 +946,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         self.MakeCellVisible(ul + num, 0)
         self.MakeCellVisible(ul, 0)
 
-    def goto_index(self, from_control, index, col_from_user=None):
+    def set_cursor_index(self, from_control, index, col_from_user=None):
         row, c = self.table.get_row_col(index)
         if col_from_user is None:
             col = c
@@ -960,11 +960,11 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             self.MakeCellVisible(ul, 0)
             self.restore_upper_left = -1
         self.MakeCellVisible(row,col)
+        self.refresh_view()
 
     def select_index(self, from_control, cursor, col_from_user=None):
         self.ClearSelection()
-        self.goto_index(from_control, cursor, col_from_user)
-        self.refresh_view()
+        self.set_cursor_index(from_control, cursor, col_from_user)
 
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.
