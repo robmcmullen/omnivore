@@ -6,6 +6,7 @@ import os
 import wx
 import numpy as np
 import json
+from udis.udis_fast import TraceInfo, flag_origin
 
 # Enthought library imports.
 from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, File, Unicode, Property, provides, on_trait_change, HasTraits
@@ -22,21 +23,36 @@ log = logging.getLogger(__name__)
 
 
 class LinkedBase(HasTraits):
-    """ The toolkit specific implementation of a ByteEditor.  See the
-    IByteEditor interface for the API documentation.
+    """Model for the state of a set of viewers. A ByteEditor can have an
+    arbitrary number of LinkedBases, but all viewers that point to a common
+    LinkedBase will all show the same data.
+
+    A LinkedBase is tied to a Segment, and any data that can be applied
+    segment-wide should also live here, e.g. the disassembly trace.
+
+    Currently, a LinkedBase contains a single Machine, which specifies how to
+    look at the data, like: CPU used for disassembly/assembly, available
+    graphics and text modes, current colors and font. All views of the data
+    using this LinkedBase will show the same Machine.
+
+    In the future, each view will have its own Machine, because there's nothing
+    in the Machine that could affect other viewers, so it should really be part
+    of the view.
     """
 
-    #### 'IPythonEditor' interface ############################################
+    #### Traits
+
+    # 
 
     obj = Instance(File)
-
-    #### traits
 
     editor = Instance(FrameworkEditor)
 
     machine = Instance(Machine)
 
     segment = Instance(DefaultSegment)
+
+    trace = Instance(TraceInfo)
 
     last_cursor_index = Int(0)
 
@@ -55,19 +71,21 @@ class LinkedBase(HasTraits):
     # centered unless this flag is checked also.
     pending_focus = Any(None)  # Flag to help
 
-    #### Events ####
+    #### Events
 
     recalc_event = Event
 
     ensure_visible_index = Event
 
+    update_trace = Event
+
     key_pressed = Event(KeyPressedEvent)
 
-    # Class attributes (not traits)
+    #### Class attributes (not traits)
 
     rect_select = False
 
-    ##### Default traits
+    #### Default traits
 
     def _machine_default(self):
         return Atari800
@@ -76,7 +94,10 @@ class LinkedBase(HasTraits):
         rawdata = SegmentData([])
         return DefaultSegment(rawdata)
 
-    # Properties
+    def _trace_default(self):
+        return TraceInfo()
+
+    #### Properties
 
     @property
     def section_name(self):
@@ -86,7 +107,11 @@ class LinkedBase(HasTraits):
     def hex_format_character(self):
         return "x" if self.editor.task.hex_grid_lower_case else "X"
 
-    # Convenience functions
+    @property
+    def task(self):
+        return self.editor.task
+
+    #### Convenience functions
 
     def __str__(self):
         return "LinkedBase: seg=%s" % self.segment
@@ -424,3 +449,40 @@ class LinkedBase(HasTraits):
     def clear_popup(self):
         log.debug("clearing popup")
         self.sidebar.control.clear_popup()
+
+    #### Disassembly tracing
+
+    def start_trace(self):
+        self.trace_info = TraceInfo()
+        self.update_trace_in_segment()
+
+    def get_trace(self, save=False):
+        if save:
+            kwargs = {'user': True}
+        else:
+            kwargs = {'match': True}
+        s = self.segment
+        mask = s.get_style_mask(**kwargs)
+        style = s.get_style_bits(**kwargs)
+        is_data = self.trace_info.marked_as_data
+        size = min(len(is_data), len(s))
+        trace = is_data[s.start_addr:s.start_addr + size] * style
+        if save:
+            # don't change data flags for stuff that's already marked as data
+            s = self.segment
+            already_data = np.logical_and(s.style[0:size] & user_bit_mask > 0, trace > 0)
+            indexes = np.where(already_data)[0]
+            previous = s.style[indexes]
+            trace[indexes] = previous
+        return trace, mask
+
+    def update_trace_in_segment(self, save=False):
+        trace, mask = self.get_trace(save)
+        s = self.segment
+        size = len(trace)
+        s.style[0:size] &= mask
+        s.style[0:size] |= trace
+
+    def trace_disassembly(self, pc):
+        self.table.disassembler.fast.trace_disassembly(self.table.trace_info, [pc])
+        self.update_trace_in_segment()
