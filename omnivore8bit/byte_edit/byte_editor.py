@@ -24,6 +24,7 @@ from omnivore.utils.processutil import run_detach
 from omnivore8bit.viewers import SegmentViewer
 from omnivore8bit.viewers.hex import HexEditViewer
 from omnivore8bit.viewers.char import CharViewer
+from omnivore8bit.viewers.bitmap import BitmapViewer
 
 from actions import *
 from commands import PasteCommand
@@ -696,11 +697,15 @@ class ByteEditor(FrameworkEditor):
         default_viewer = HexEditViewer.create(panel, self.center_base)
         self.byte_edit = default_viewer.control
         self.viewers.append(default_viewer)
-        self.mgr.AddPane(self.byte_edit, aui.AuiPaneInfo().Name("center_pane").CenterPane().MinimizeButton(True))
+        self.mgr.AddPane(self.byte_edit, aui.AuiPaneInfo().Name("hex").CenterPane().MinimizeButton(True))
 
         viewer = CharViewer.create(panel, self.center_base)
         self.viewers.append(viewer)
         self.mgr.AddPane(viewer.control, aui.AuiPaneInfo().Name("char").Right().MinimizeButton(True))
+
+        viewer = BitmapViewer.create(panel, self.center_base)
+        self.viewers.append(viewer)
+        self.mgr.AddPane(viewer.control, aui.AuiPaneInfo().Name("bitmap").Right().MinimizeButton(True))
 
         try:
             self.segment_list = self.window.get_dock_pane('byte_edit.segments').control
