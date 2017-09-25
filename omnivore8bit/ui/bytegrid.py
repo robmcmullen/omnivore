@@ -106,7 +106,7 @@ class ByteGridRenderer(Grid.GridCellRenderer):
                 dc.DrawRectangle(x, rect.y+1, width+1, height)
                 dc.DrawText("...", x, rect.y+1)
 
-            r, c = self.table.get_row_col(grid.linked_base.cursor_index)
+            r, c = self.table.get_row_col(grid.linked_base.editor.cursor_index)
             if row == r and col == c:
                 dc.SetPen(self.cursor_pen)
                 dc.SetBrush(self.cursor_brush)
@@ -814,8 +814,8 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             return "%s: %s %s" % (self.short_name, label, message)
 
     def get_status_message_at_index(self, index):
-        msg = get_style_name(self.table.segment, index)
-        comments = self.table.segment.get_comment(index)
+        msg = get_style_name(self.linked_base.segment, index)
+        comments = self.linked_base.segment.get_comment(index)
         return "%s  %s" % (msg, comments)
 
     def on_key_down(self, evt):
@@ -894,7 +894,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         Keeping them together guarantees that this move will happen
         "atomically".
         """
-        e = self.linked_base
+        e = self.linked_base.editor
         r, c = self.GetGridCursorRow(), self.GetGridCursorCol()
         max_rows = self.table.GetNumberRows()
         vis = self.get_num_visible_rows()
@@ -925,7 +925,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
 
     def advance_cursor(self):
         self.DisableCellEditControl()
-        e = self.linked_base
+        e = self.linked_base.editor
         r, c = self.table.get_row_col(e.cursor_index)
         (r, c) = self.table.get_next_editable_pos(r, c)
         self.SetGridCursor(r, c)

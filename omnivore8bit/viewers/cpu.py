@@ -7,11 +7,12 @@ import wx
 from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
 from udis.udis_fast import TraceInfo, flag_origin
 
-from omnivore8bit.ui.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCelllinked_base
+from omnivore8bit.ui.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 from omnivore8bit.arch.disasm import iter_disasm_styles
 
 from actions import GotoIndexAction
 from commands import MiniAssemblerCommand, SetCommentCommand
+from . import SegmentViewer
 
 import logging
 log = logging.getLogger(__name__)
@@ -28,41 +29,26 @@ class DisassemblyTable(ByteGridTable):
             if w > 0:
                 self.__class__.column_pixel_sizes[i] = w
 
-    def __init__(self):
-        ByteGridTable.__init__(self)
+    def __init__(self, linked_base):
+        ByteGridTable.__init__(self, linked_base)
         self.lines = None
         self._rows = 0
         self.index_to_row = []
         self.start_addr = 0
         self.end_addr = 0
         self.chunk_size = 256
-        self.disassembler = None
-        self.trace_info = TraceInfo()
-
-    def set_linked_base(self, linked_base):
-        self.linked_base = linked_base
         self.set_display_format(linked_base)
-        self.segment = segment = self.linked_base.segment
-        self.lines = None
-        self.index_to_row = []
-        self.disassembler = linked_base.machine.get_disassembler(linked_base.task.hex_grid_lower_case, linked_base.task.assembly_lower_case, self.linked_base.document.document_memory_map, self.segment.memory_map)
-        for i, name in iter_disasm_styles():
-            self.disassembler.add_chunk_processor(name, i)
-        self.highlight_flags = self.disassembler.highlight_flags
-        f = linked_base.machine.assembler
-        self.fmt_hex_directive = f['data byte']
-        self.fmt_hex_digits = f['data byte prefix'] + "%c%c"
-        self.fmt_hex_digit_separator = f['data byte separator']
-        self.start_addr = segment.start_addr
-        self.end_addr = self.start_addr + len(segment)
-        self.disassemble_from(0)
+        self.disassembly = None
 
-    def disassemble_from(self, index, refresh=False):
-        self.lines = None
-        info = self.disassembler.disassemble_segment(self.segment)
-        self.index_to_row = info.index_to_row
-        self.lines = info
-        self.jump_targets = info.labels
+    def disassemble_from(self, index=0, refresh=False):
+        self.disassembly = self.linked_base.disassemble_segment()
+
+        # cache some values for fewer deep references
+        self.index_to_row = self.disassembly.info.index_to_row
+        self.lines = self.disassembly.info
+        self.jump_targets = self.disassembly.info.labels
+        self.start_addr = self.disassembly.start_addr
+        self.end_addr = self.disassembly.end_addr
         # grid = self.linked_base.disassembly
         # if refresh:
         #     # Fixed double resize bug if called from set_linked_base. Only if
@@ -92,13 +78,13 @@ class DisassemblyTable(ByteGridTable):
             return index, index + line.num_bytes
         except IndexError:
             if r >= self._rows:
-                index = len(self.segment) - 1
+                index = len(self.linked_base.segment) - 1
             else:
                 index = 0
             return index, index
 
     def is_index_valid(self, index):
-        return self._rows > 0 and index >= 0 and index < len(self.segment)
+        return self._rows > 0 and index >= 0 and index < len(self.linked_base.segment)
 
     def is_pc_valid(self, pc):
         index = pc - self.start_addr
@@ -169,20 +155,20 @@ class DisassemblyTable(ByteGridTable):
         style = 0
         count = line.num_bytes
         for i in range(count):
-            style |= self.segment.style[index + i]
+            style |= self.linked_base.segment.style[index + i]
         if col == 0:
             if self.lines[row].flag == flag_origin:
                 text = ""
             else:
-                text = self.disassembler.format_data_list_bytes(index, line.num_bytes)
+                text = self.disassembly.format_data_list_bytes(index, line.num_bytes)
         elif col == 2:
-            text = self.disassembler.format_comment(index, line)
+            text = self.disassembly.format_comment(index, line)
         else:
-            text = self.disassembler.format_instruction(index, line)
+            text = self.disassembly.format_instruction(index, line)
         return text, style
 
     def get_style_override(self, row, col, style):
-        if self.lines[row].flag & self.highlight_flags:
+        if self.lines[row].flag & self.disassembly.highlight_flags:
             return style|diff_bit_mask
         return style
 
@@ -197,8 +183,11 @@ class DisassemblyTable(ByteGridTable):
     def GetRowLabelValue(self, row):
         if self.get_data_rows() > 0:
             line = self.lines[row]
-            return self.disassembler.format_row_label(line)
+            return self.disassembly.format_row_label(line)
         return "0000"
+
+    def ResetViewProcessArgs(self, grid, *args, **kwargs):
+        self.disassemble_from()
 
 
 class AssemblerTextCtrl(HexTextCtrl):
@@ -232,11 +221,11 @@ class DisassemblyPanel(ByteGrid):
     export_data_name = "Disassembly"
     export_extensions = [".s"]
 
-    def __init__(self, parent, task, **kwargs):
+    def __init__(self, parent, linked_base, **kwargs):
         """Create the ByteEdit viewer
         """
-        table = DisassemblyTable()
-        ByteGrid.__init__(self, parent, task, table, **kwargs)
+        table = DisassemblyTable(linked_base)
+        ByteGrid.__init__(self, parent, linked_base, table, **kwargs)
 
         # During idle-time disassembly, an index may not yet be visible.  The
         # value is saved here so the view can be scrolled there once it does
@@ -244,7 +233,7 @@ class DisassemblyPanel(ByteGrid):
         self.pending_index = -1
 
     def save_prefs(self):
-        prefs = self.task.preferences
+        prefs = self.linked_base.preferences
         widths = [0] * len(prefs.disassembly_column_widths)
         for i, w in self.table.column_pixel_sizes.iteritems():
             widths[i] = w
@@ -252,7 +241,7 @@ class DisassemblyPanel(ByteGrid):
 
     def recalc_view(self):
         ByteGrid.recalc_view(self)
-        if self.table.linked_base.can_trace:
+        if self.table.linked_base.editor.can_trace:
             self.update_trace_in_segment()
 
     def get_default_cell_linked_base(self):
@@ -329,10 +318,10 @@ class DisassemblyPanel(ByteGrid):
             else:
                 start, _ = self.table.get_index_range(row, col)
                 cmd = SetCommentCommand(self.table.segment, [(start, start + 1)], text)
-            self.task.active_linked_base.process_command(cmd)
+            self.linked_base.active_linked_base.process_command(cmd)
             return True
         except RuntimeError, e:
-            self.task.window.error(unicode(e))
+            self.linked_base.window.error(unicode(e))
             self.SetFocus()  # OS X quirk: return focus to the grid so the user can keep typing
         return False
 
@@ -349,11 +338,11 @@ class DisassemblyPanel(ByteGrid):
                 if self.table.is_pc_valid(pc):
                     msg = "$%04x" % pc
                     addr_index = pc - s.start_addr
-                    action = GotoIndexAction(name=msg, enabled=True, segment_num=self.linked_base.segment_number, addr_index=addr_index, task=self.task, active_linked_base=self.linked_base)
+                    action = GotoIndexAction(name=msg, enabled=True, segment_num=self.linked_base.segment_number, addr_index=addr_index, task=self.linked_base.task, active_linked_base=self.linked_base)
                     caller_actions.append(action)
             goto_actions.append(caller_actions)
         else:
-            goto_actions.append(GotoIndexAction(name="No callers of $%04x" % addr_called, enabled=False, task=self.task))
+            goto_actions.append(GotoIndexAction(name="No callers of $%04x" % addr_called, enabled=False, task=self.linked_base.task))
         return goto_actions
 
     def get_goto_actions(self, r, c):
@@ -390,7 +379,7 @@ class DisassemblyListSaver(object):
         """Segment saver interface: take a segment and produce a byte
         representation to save to disk.
         """
-        lines = linked_base.disassembly.table.disassembler.get_atasm_lst_text()
+        lines = linked_base.disassemble_segment().get_atasm_lst_text()
         text = os.linesep.join(lines) + os.linesep
         data = text.encode("utf-8")
         return data

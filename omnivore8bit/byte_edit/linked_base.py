@@ -17,6 +17,7 @@ from omnivore.framework.editor import FrameworkEditor
 
 from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment
+from omnivore8bit.arch.disasm import iter_disasm_styles
 
 import logging
 log = logging.getLogger(__name__)
@@ -449,6 +450,21 @@ class LinkedBase(HasTraits):
     def clear_popup(self):
         log.debug("clearing popup")
         self.sidebar.control.clear_popup()
+
+    #### Disassembler
+
+    @property
+    def disassembler(self):
+        log.debug("creating disassembler for %s" % self.machine.name)
+        disassembler = self.machine.get_disassembler(self.task.hex_grid_lower_case, self.task.assembly_lower_case, self.editor.document.document_memory_map, self.segment.memory_map)
+        for i, name in iter_disasm_styles():
+            disassembler.add_chunk_processor(name, i)
+        return disassembler
+
+    def disassemble_segment(self):
+        d = self.disassembler
+        d.disassemble_segment(self.segment)
+        return d
 
     #### Disassembly tracing
 
