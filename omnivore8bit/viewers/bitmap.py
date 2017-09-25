@@ -19,3 +19,7 @@ class BitmapViewer(SegmentViewer):
 
         v = cls(linked_base=linked_base, control=control)
         return v
+
+    @property
+    def window_title(self):
+        return self.linked_base.machine.bitmap_renderer.name

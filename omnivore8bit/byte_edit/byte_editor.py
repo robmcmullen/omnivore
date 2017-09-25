@@ -76,7 +76,7 @@ class ByteEditor(FrameworkEditor):
 
     linked_bases = List(LinkedBase)
 
-    viewers = List(SegmentViewer)
+    viewers = List(Any)
 
     #### Events ####
 
@@ -318,6 +318,14 @@ class ByteEditor(FrameworkEditor):
     def refresh_panes(self):
         log.debug("refresh_panes called")
 
+    def reconfigure_panes(self):
+        self.update_pane_names()
+
+    def update_pane_names(self):
+        for viewer, pane_info in self.viewers:
+            pane_info.Caption(viewer.window_title)
+        self.mgr.Update()
+
     @on_trait_change('document.emulator_change_event')
     def update_emulator(self):
         emu = self.document.emulator
@@ -402,7 +410,7 @@ class ByteEditor(FrameworkEditor):
 
     def get_extra_segment_savers(self, segment):
         savers = []
-        for v in self.viewers:
+        for v, _ in self.viewers:
             savers.extend(v.get_extra_segment_savers(segment))
         return savers
 
@@ -696,21 +704,25 @@ class ByteEditor(FrameworkEditor):
         print("c=%s, f=%s" % (id(self.center_base), id(self.focused_base)))
 
         default_viewer = HexEditViewer.create(panel, self.center_base)
+        pane_info = aui.AuiPaneInfo().Name("hex").CenterPane().MinimizeButton(True)
         self.byte_edit = default_viewer.control
-        self.viewers.append(default_viewer)
-        self.mgr.AddPane(self.byte_edit, aui.AuiPaneInfo().Name("hex").CenterPane().MinimizeButton(True))
+        self.viewers.append((default_viewer, pane_info))
+        self.mgr.AddPane(self.byte_edit, pane_info)
 
         viewer = CharViewer.create(panel, self.center_base)
-        self.viewers.append(viewer)
-        self.mgr.AddPane(viewer.control, aui.AuiPaneInfo().Name("char").Right().MinimizeButton(True))
+        pane_info = aui.AuiPaneInfo().Name("char").Right().MinimizeButton(True)
+        self.viewers.append((viewer, pane_info))
+        self.mgr.AddPane(viewer.control, pane_info)
 
         viewer = BitmapViewer.create(panel, self.center_base)
-        self.viewers.append(viewer)
-        self.mgr.AddPane(viewer.control, aui.AuiPaneInfo().Name("bitmap").Right().MinimizeButton(True))
+        pane_info = aui.AuiPaneInfo().Name("bitmap").Right().MinimizeButton(True)
+        self.viewers.append((viewer, pane_info))
+        self.mgr.AddPane(viewer.control, pane_info)
 
         viewer = DisassemblyViewer.create(panel, self.center_base)
-        self.viewers.append(viewer)
-        self.mgr.AddPane(viewer.control, aui.AuiPaneInfo().Name("disassembly").Right().MinimizeButton(True))
+        pane_info = aui.AuiPaneInfo().Name("disassembly").Right().MinimizeButton(True)
+        self.viewers.append((viewer, pane_info))
+        self.mgr.AddPane(viewer.control, pane_info)
 
         try:
             self.segment_list = self.window.get_dock_pane('byte_edit.segments').control
@@ -729,6 +741,6 @@ class ByteEditor(FrameworkEditor):
         # Load the editor's contents.
         self.load()
 
-        self.mgr.Update()
+        self.update_pane_names()
 
         return panel

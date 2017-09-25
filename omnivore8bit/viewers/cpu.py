@@ -391,3 +391,7 @@ class DisassemblyViewer(SegmentViewer):
         control = DisassemblyPanel(parent, linked_base)
         v = cls(linked_base=linked_base, control=control)
         return v
+
+    @property
+    def window_title(self):
+        return self.linked_base.machine.disassembler.cpu

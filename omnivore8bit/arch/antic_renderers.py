@@ -979,7 +979,7 @@ class Apple2TextMode(Mode2):
 
 
 class ATASCIIFontMapping(object):
-    name = "ATASCII Characters"
+    name = "ASCII Order"
     font_mapping = atascii_to_internal
 
     def wx_char_to_byte(self, char, mods, control):
@@ -1042,7 +1042,7 @@ class ATASCIIFontMapping(object):
 
 
 class AnticFontMapping(ATASCIIFontMapping):
-    name = "Antic Map"
+    name = "Antic Order"
     font_mapping = np.arange(256, dtype=np.uint8)
 
     def convert_byte_mapping(self, char):
