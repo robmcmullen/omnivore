@@ -710,17 +710,17 @@ class ByteEditor(FrameworkEditor):
         self.mgr.AddPane(self.byte_edit, pane_info)
 
         viewer = CharViewer.create(panel, self.center_base)
-        pane_info = aui.AuiPaneInfo().Name("char").Right().MinimizeButton(True)
+        pane_info = aui.AuiPaneInfo().Name("char").Right().MinimizeButton(True).Layer(0)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
         viewer = BitmapViewer.create(panel, self.center_base)
-        pane_info = aui.AuiPaneInfo().Name("bitmap").Right().MinimizeButton(True)
+        pane_info = aui.AuiPaneInfo().Name("bitmap").Right().MinimizeButton(True).Layer(1)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
         viewer = DisassemblyViewer.create(panel, self.center_base)
-        pane_info = aui.AuiPaneInfo().Name("disassembly").Right().MinimizeButton(True)
+        pane_info = aui.AuiPaneInfo().Name("disassembly").Right().MinimizeButton(True).Layer(2)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
