@@ -16,6 +16,8 @@ from pyface.tasks.action.api import TaskAction, EditorAction
 from atrcopy import user_bit_mask, data_style, add_xexboot_header, add_atr_header, BootDiskImage, SegmentData, interleave_segments, get_xex
 
 from omnivore.framework.actions import *
+from omnivore.utils.command import StatusFlags
+
 from commands import *
 from omnivore8bit.arch.disasm import ANTIC_DISASM, JUMPMAN_LEVEL, JUMPMAN_HARVEST, UNINITIALIZED_DATA
 from omnivore8bit.arch.ui.antic_colors import AnticColorDialog
@@ -795,11 +797,9 @@ class CustomDisassemblerAction(EditorAction):
         s = e.segment
         ranges = s.get_style_ranges(selected=True)
         self.set_style(s, ranges)
-        e.document.change_count += 1
-        e.metadata_dirty = True
-        e.mark_index_range_changed(ranges[0])
-        e.refresh_panes()
-
+        f = StatusFlags()
+        f.byte_style_changed = True
+        e.process_flags(f)
 
 class MarkSelectionAsCodeAction(CustomDisassemblerAction):
     """Marks the selected bytes as valid code to be disassembled using the

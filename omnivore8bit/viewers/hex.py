@@ -258,7 +258,7 @@ class HexEditControl(ByteGrid):
             actions = self.get_goto_actions(r, c)
             if actions:
                 actions.append(None)
-        actions.extend(self.editor.common_popup_actions())
+        actions.extend(self.linked_base.editor.common_popup_actions())
         return actions
 
 

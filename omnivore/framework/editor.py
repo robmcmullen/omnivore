@@ -726,10 +726,13 @@ class FrameworkEditor(Editor):
 
         if flags.byte_values_changed:
             d.byte_values_changed = flags.index_range
+            d.change_count += 1
             do_refresh = True
         elif flags.byte_style_changed:
             d.byte_style_changed = flags.index_range
+            d.change_count += 1
             flags.rebuild_ui = True
+            do_refresh = True
 
         if visible_range:
             # Only update the range on the current editor, not other views
@@ -744,7 +747,7 @@ class FrameworkEditor(Editor):
 
         if flags.rebuild_ui:
             d.rebuild_event = True
-        elif do_refresh:
+        if do_refresh:
             d.refresh_event = True
 
     def popup_context_menu_from_commands(self, window, commands):

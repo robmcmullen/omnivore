@@ -84,6 +84,8 @@ class LinkedBase(HasTraits):
 
     update_cursor = Event
 
+    disassembly_changed_event = Event
+
     key_pressed = Event(KeyPressedEvent)
 
     #### Class attributes (not traits)
@@ -177,14 +179,14 @@ class LinkedBase(HasTraits):
 
     def save_segment_view_params(self, segment):
         d = {
-            'cursor_index': self.cursor_index,
-            'main_window': self.control.get_view_params(),
+            'cursor_index': self.editor.cursor_index,
         }
-        for pane in self.editor.task.iter_panes():
-            try:
-                d[pane.id] = pane.control.get_view_params()
-            except AttributeError:
-                pass
+        for viewer, pane_info in self.editor.viewers:
+            if viewer.linked_base == self:
+                try:
+                    d[pane_info.id] = viewer.control.get_view_params()
+                except AttributeError:
+                    pass
 
         self.segment_view_params[segment.uuid] = d
 
@@ -195,18 +197,17 @@ class LinkedBase(HasTraits):
             log.debug("no view params for %s" % segment.uuid)
             return
         log.debug("restoring view params for %s" % segment.uuid)
-        self.cursor_index = d['cursor_index']
-        if 'main_window' in d:
-            self.control.restore_view_params(d['main_window'])
-        for pane in self.editor.task.iter_panes():
-            try:
-                params = d[pane.id]
-            except KeyError:
-                continue
-            try:
-                pane.control.restore_view_params(params)
-            except AttributeError:
-                continue
+        self.editor.cursor_index = d['cursor_index']
+        for viewer, pane_info in self.editor.viewers:
+            if viewer.linked_base == self:
+                try:
+                    params = d[pane_info.id]
+                except KeyError:
+                    continue
+                try:
+                    viewer.control.restore_view_params(params)
+                except AttributeError:
+                    continue
 
     def view_segment_number(self, number):
         doc = self.editor.document
@@ -474,7 +475,9 @@ class LinkedBase(HasTraits):
 
     def restart_disassembly(self, index_range=None):
         #start = index_range[0] if index_range is not None else 0
-        self.disassemble_segment()
+        log.debug("restart_disassembly")
+        d = self.disassemble_segment()
+        self.disassembly_changed_event = True
 
     #### Disassembly tracing
 

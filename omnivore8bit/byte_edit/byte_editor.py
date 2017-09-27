@@ -381,27 +381,7 @@ class ByteEditor(FrameworkEditor):
         self.rebuild_ui()
 
     def view_segment_number(self, number):
-        doc = self.document
-        num = number if number < len(doc.segments) else len(doc.segments) - 1
-        if num != self.segment_number:
-            old_segment = self.segment
-            if old_segment is not None:
-                self.save_segment_view_params(old_segment)
-            self.segment = doc.segments[num]
-            self.focused_viewer.linked_base.segment = segment
-            self.adjust_selection(old_segment)
-            self.segment_number = num
-            self.invalidate_search()
-            self.view_segment_set_width(self.segment)
-            self.reconfigure_panes()
-            self.show_trace()
-            if self.segment_list is not None:
-                self.segment_list.SetSelection(self.segment_number)
-            else:
-                self.sidebar.refresh_active()
-            self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
-            self.task.update_window_title()
-        self.task.segment_selected = self.segment_number
+        self.focused_viewer.linked_base.view_segment_number(number)
 
     def get_extra_segment_savers(self, segment):
         savers = []
@@ -448,7 +428,7 @@ class ByteEditor(FrameworkEditor):
         new_offset = s.get_raw_index(0)
         old_offset = old_segment.get_raw_index(0)
 
-        self.restore_segment_view_params(s)
+        self.focused_viewer.linked_base.restore_segment_view_params(s)
         self.selected_ranges = s.get_style_ranges(selected=True)
         if self.selected_ranges:
             # Arbitrarily puth the anchor on the last selected range
@@ -587,9 +567,6 @@ class ByteEditor(FrameworkEditor):
         if self.undo_history is not None:
             self.undo_history.update_history()
         self.sidebar.refresh_active()
-
-    def mark_index_range_changed(self, index_range):
-        self.disassembly.restart_disassembly(index_range[0])
 
     def get_goto_action_in_segment(self, addr_dest):
         if addr_dest >= 0:

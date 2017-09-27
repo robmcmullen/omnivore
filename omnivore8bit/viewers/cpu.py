@@ -4,6 +4,8 @@ import sys
 import numpy as np
 import wx
 
+from traits.api import on_trait_change, Undefined
+
 from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
 from udis.udis_fast import TraceInfo, flag_origin
 
@@ -38,11 +40,10 @@ class DisassemblyTable(ByteGridTable):
         self.end_addr = 0
         self.chunk_size = 256
         self.set_display_format(linked_base)
-        self.disassembly = None
+        self.update_disassembly(linked_base.disassemble_segment())
 
-    def disassemble_from(self, index=0, refresh=False):
-        self.disassembly = self.linked_base.disassemble_segment()
-
+    def update_disassembly(self, disassembly, index=0, refresh=False):
+        self.disassembly = disassembly
         # cache some values for fewer deep references
         self.index_to_row = self.disassembly.info.index_to_row
         self.lines = self.disassembly.info
@@ -187,7 +188,8 @@ class DisassemblyTable(ByteGridTable):
         return "0000"
 
     def ResetViewProcessArgs(self, grid, *args, **kwargs):
-        self.disassemble_from()
+        #self.disassemble_from()
+        pass
 
 
 class AssemblerTextCtrl(HexTextCtrl):
@@ -240,6 +242,8 @@ class DisassemblyPanel(ByteGrid):
         prefs.disassembly_column_widths = tuple(widths)
 
     def recalc_view(self):
+        disassembly = self.linked_base.disassemble_segment()
+        self.table.update_disassembly(disassembly)
         ByteGrid.recalc_view(self)
         if self.table.linked_base.editor.can_trace:
             self.update_trace_in_segment()
@@ -247,12 +251,12 @@ class DisassemblyPanel(ByteGrid):
     def get_default_cell_linked_base(self):
         return Assemblerlinked_base(self)
 
-    def restart_disassembly(self, index):
+    def update_disassembly_from(self):
         first_row = self.get_first_visible_row()
         current_row = self.GetGridCursorRow()
         rows_from_top = current_row - first_row
         want_address = self.table.get_pc(current_row)
-        self.table.disassemble_from(index, False)
+        self.table.update_disassembly(self.linked_base.disassembler)
         r, _ = self.table.get_row_col(want_address - self.table.start_addr)
         self.table.ResetView(self, None)
         new_first = max(0, r - rows_from_top)
@@ -393,3 +397,15 @@ class DisassemblyViewer(SegmentViewer):
     @property
     def window_title(self):
         return self.linked_base.machine.disassembler.cpu
+
+    @on_trait_change('linked_base.editor.document.recalc_event')
+    def process_segment_change(self, evt):
+        log.debug("process_segment_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        if evt is not Undefined:
+            self.control.update_disassembly_from()
+            self.recalc_view()
+
+    @on_trait_change('linked_base.disassembly_changed_event')
+    def do_disassembly_change(self, evt):
+        if evt is not Undefined:
+            self.control.update_disassembly_from()
