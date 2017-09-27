@@ -261,13 +261,13 @@ class DisassemblyPanel(ByteGrid):
         self.SetGridCursor(r, 0)
 
     def get_disassembled_text(self, start=0, end=-1):
-        return self.table.disassembler.get_disassembled_text(start, end)
+        return self.table.disassembly.get_disassembled_text(start, end)
 
     def encode_data(self, segment, linked_base):
         """Segment saver interface: take a segment and produce a byte
         representation to save to disk.
         """
-        lines = self.table.disassembler.get_disassembled_text()
+        lines = self.table.disassembly.get_disassembled_text()
         text = os.linesep.join(lines) + os.linesep
         data = text.encode("utf-8")
         return data
@@ -311,7 +311,7 @@ class DisassemblyPanel(ByteGrid):
             pc = self.table.get_pc(row)
             if col == 1:
                 cmd = text.upper()
-                bytes = self.table.disassembler.assemble_text(pc, cmd)
+                bytes = self.table.disassembly.assemble_text(pc, cmd)
                 start, _ = self.table.get_index_range(row, col)
                 end = start + len(bytes)
                 cmd = MiniAssemblerCommand(self.table.segment, start, end, bytes, cmd)
@@ -326,11 +326,11 @@ class DisassemblyPanel(ByteGrid):
         return False
 
     def search(self, search_text, match_case=False):
-        return self.table.disassembler.search(search_text, match_case)
+        return self.table.disassembly.search(search_text, match_case)
 
     def get_goto_caller_actions(self, addr_called):
         goto_actions = []
-        callers = self.table.disassembler.fast.find_callers(addr_called)
+        callers = self.table.disassembly.fast.find_callers(addr_called)
         if len(callers) > 0:
             s = self.table.segment
             caller_actions = ["Go to Caller..."]
@@ -349,7 +349,7 @@ class DisassemblyPanel(ByteGrid):
         if self.table.get_data_rows() == 0:
             return []
         actions = []
-        addr_dest = self.table.disassembler.get_addr_dest(r)
+        addr_dest = self.table.disassembly.get_addr_dest(r)
         action = self.linked_base.editor.get_goto_action_in_segment(addr_dest)
         if action:
             actions.append(action)

@@ -112,6 +112,10 @@ class LinkedBase(HasTraits):
     def task(self):
         return self.editor.task
 
+    @property
+    def window(self):
+        return self.editor.window
+
     #### Convenience functions
 
     def __str__(self):
