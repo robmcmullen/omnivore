@@ -520,6 +520,7 @@ class FrameworkEditor(Editor):
             self.selected_ranges = [(start, end)]
         self.anchor_start_index = start
         self.anchor_end_index = end
+        self.can_copy = (self.anchor_start_index != self.anchor_end_index)
         log.debug("selected ranges: %s" % str(self.selected_ranges))
         self.highlight_selected_ranges()
 
