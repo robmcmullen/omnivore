@@ -72,7 +72,7 @@ class ByteEditor(FrameworkEditor):
 
     center_base = Instance(LinkedBase)
 
-    focused_base = Instance(LinkedBase)
+    focused_viewer = Instance(SegmentViewer)
 
     linked_bases = List(LinkedBase)
 
@@ -111,11 +111,7 @@ class ByteEditor(FrameworkEditor):
 
     @property
     def section_name(self):
-        if self.focused_base is not None:
-            return str(self.focused_base.segment)
-        if self.center_base is not None:
-            return str(self.center_base.segment)
-        return ""
+        return str(self.focused_viewer.linked_base.segment)
 
     ###########################################################################
     # 'FrameworkEditor' interface.
@@ -126,7 +122,7 @@ class ByteEditor(FrameworkEditor):
         Machine.one_time_init(self)
         self.control = self._create_control(parent)
         self.task.emulator_changed = self.document
-        self.task.machine_menu_changed = self.focused_base.machine
+        self.task.machine_menu_changed = self.focused_viewer.linked_base.machine
 
     def from_metadata_dict(self, e):
         if 'linked_bases' in e:
@@ -298,8 +294,8 @@ class ByteEditor(FrameworkEditor):
             self.update_cursor_history()
 
     def rebuild_ui(self):
-        log.debug("rebuilding focused_base: %s" % str(self.focused_base))
-        self.focused_base.recalc_event = True
+        log.debug("rebuilding focused_base: %s" % str(self.focused_viewer.linked_base))
+        self.focused_viewer.linked_base.recalc_event = True
 
     def get_cursor_state(self):
         return self.segment, self.cursor_index
@@ -324,7 +320,7 @@ class ByteEditor(FrameworkEditor):
     def update_pane_names(self):
         for viewer, pane_info in self.viewers:
             pane_info.Caption(viewer.window_title)
-        self.mgr.Update()
+        self.mgr.RefreshCaptions()
 
     @on_trait_change('document.emulator_change_event')
     def update_emulator(self):
@@ -377,7 +373,7 @@ class ByteEditor(FrameworkEditor):
             self.segment_parser = self.document.segment_parser
             self.segment = self.document.segments[index]
 
-            self.focused_base.segment = self.segment
+            self.focused_viewer.linked_base.segment = self.segment
             self.select_none(refresh=False)
             self.task.segment_selected = self.segment_number
 
@@ -393,7 +389,7 @@ class ByteEditor(FrameworkEditor):
             if old_segment is not None:
                 self.save_segment_view_params(old_segment)
             self.segment = doc.segments[num]
-            self.focused_base.segment = segment
+            self.focused_viewer.linked_base.segment = segment
             self.adjust_selection(old_segment)
             self.segment_number = num
             self.invalidate_search()
@@ -481,7 +477,7 @@ class ByteEditor(FrameworkEditor):
         self.document.change_count += 1
 
     def get_label_at_index(self, index):
-        return self.byte_edit.table.get_label_at_index(index)
+        return self.focused_viewer.linked_base.segment.label(index)
 
     def get_label_of_ranges(self, ranges):
         labels = []
@@ -584,7 +580,7 @@ class ByteEditor(FrameworkEditor):
     def ensure_visible(self, flags):
         #self.index_clicked(start, 0, None)
         log.debug("flags: %s" % str(flags))
-        self.focused_base.ensure_visible_index = flags
+        self.focused_viewer.linked_base.ensure_visible_index = flags
 
     def update_history(self):
 #        history = document.undo_stack.serialize()
@@ -693,33 +689,35 @@ class ByteEditor(FrameworkEditor):
         panel = wx.Panel(parent, style=wx.BORDER_NONE)
 
         # AUI Manager is the direct child of the task
-        self.mgr = aui.AuiManager()
+        self.mgr = aui.AuiManager(agwFlags=aui.AUI_MGR_ALLOW_ACTIVE_PANE)
+        self.mgr.GetArtProvider().SetMetric(aui.AUI_DOCKART_GRADIENT_TYPE, aui.AUI_GRADIENT_NONE)
+        panel.Bind(aui.framemanager.EVT_AUI_PANE_ACTIVATED, self.on_pane_active)
 
         # tell AuiManager to manage this frame
         self.mgr.SetManagedWindow(panel)
 
-        self.center_base = LinkedBase(editor=self)
-        self.linked_bases.append(self.center_base)
-        self.focused_base = self.center_base
-        print("c=%s, f=%s" % (id(self.center_base), id(self.focused_base)))
+        center_base = LinkedBase(editor=self)
+        self.linked_bases.append(center_base)
 
-        default_viewer = HexEditViewer.create(panel, self.center_base)
+        viewer = HexEditViewer.create(panel, center_base)
         pane_info = aui.AuiPaneInfo().Name("hex").CenterPane().MinimizeButton(True)
-        self.byte_edit = default_viewer.control
-        self.viewers.append((default_viewer, pane_info))
-        self.mgr.AddPane(self.byte_edit, pane_info)
+        self.viewers.append((viewer, pane_info))
+        self.mgr.AddPane(viewer.control, pane_info)
 
-        viewer = CharViewer.create(panel, self.center_base)
+        # Set initial default viewer as the center pane
+        self.focused_viewer = viewer
+
+        viewer = CharViewer.create(panel, center_base)
         pane_info = aui.AuiPaneInfo().Name("char").Right().MinimizeButton(True).Layer(0)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
-        viewer = BitmapViewer.create(panel, self.center_base)
+        viewer = BitmapViewer.create(panel, center_base)
         pane_info = aui.AuiPaneInfo().Name("bitmap").Right().MinimizeButton(True).Layer(1)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
-        viewer = DisassemblyViewer.create(panel, self.center_base)
+        viewer = DisassemblyViewer.create(panel, center_base)
         pane_info = aui.AuiPaneInfo().Name("disassembly").Right().MinimizeButton(True).Layer(2)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
@@ -742,5 +740,20 @@ class ByteEditor(FrameworkEditor):
         self.load()
 
         self.update_pane_names()
+        self.mgr.Update()
 
         return panel
+
+    #### wx event handlers
+
+    def on_pane_active(self, evt):
+        print("acvitated pane!", evt.pane)
+        found = None
+        for viewer, _ in self.viewers:
+            if evt.pane == viewer.control:
+                found = viewer
+                break
+        if found is None:
+            found = self.viewers[0][0]
+        self.focused_viewer = found
+
