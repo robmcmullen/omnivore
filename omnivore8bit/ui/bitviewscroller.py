@@ -76,6 +76,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         self.fully_visible_cols = 1
         self.visible_rows = 1
         self.visible_cols = 1
+        self.total_rows = 1
 
         self.rect_select = False
         self.Bind(wx.EVT_PAINT, self.on_paint)

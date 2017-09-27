@@ -9,7 +9,7 @@ import json
 from udis.udis_fast import TraceInfo, flag_origin
 
 # Enthought library imports.
-from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, File, Unicode, Property, provides, on_trait_change, HasTraits
+from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, File, Unicode, Property, provides, on_trait_change, HasTraits, Undefined
 from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
@@ -54,6 +54,8 @@ class LinkedBase(HasTraits):
     segment = Instance(DefaultSegment)
 
     trace = Instance(TraceInfo)
+
+    _disassembler = Any(None)
 
     last_cursor_index = Int(0)
 
@@ -325,7 +327,7 @@ class LinkedBase(HasTraits):
         s = self.get_selected_status_message()
         if s:
             msg = "%s %s" % (msg, s)
-        self.editor.task.status_bar.message = msg
+            self.editor.task.status_bar.message = msg
 
     def add_user_segment(self, segment, update=True):
         self.editor.document.add_user_segment(segment)
@@ -368,9 +370,6 @@ class LinkedBase(HasTraits):
         if self.undo_history is not None:
             self.undo_history.update_history()
         self.sidebar.refresh_active()
-
-    def mark_index_range_changed(self, index_range):
-        self.disassembly.restart_disassembly(index_range[0])
 
     def get_goto_action_in_segment(self, addr_dest):
         if addr_dest >= 0:
@@ -459,16 +458,21 @@ class LinkedBase(HasTraits):
 
     @property
     def disassembler(self):
-        log.debug("creating disassembler for %s" % self.machine.name)
-        disassembler = self.machine.get_disassembler(self.task.hex_grid_lower_case, self.task.assembly_lower_case, self.editor.document.document_memory_map, self.segment.memory_map)
-        for i, name in iter_disasm_styles():
-            disassembler.add_chunk_processor(name, i)
-        return disassembler
+        if self._disassembler is None:
+            log.debug("creating disassembler for %s" % self.machine.name)
+            d = self.machine.get_disassembler(self.task.hex_grid_lower_case, self.task.assembly_lower_case, self.editor.document.document_memory_map, self.segment.memory_map)
+            for i, name in iter_disasm_styles():
+                d.add_chunk_processor(name, i)
+            self._disassembler = d
+        return self._disassembler
 
     def disassemble_segment(self):
-        d = self.disassembler
-        d.disassemble_segment(self.segment)
-        return d
+        self.disassembler.disassemble_segment(self.segment)
+        return self.disassembler
+
+    def restart_disassembly(self, index_range=None):
+        #start = index_range[0] if index_range is not None else 0
+        self.disassemble_segment()
 
     #### Disassembly tracing
 
@@ -504,5 +508,19 @@ class LinkedBase(HasTraits):
         s.style[0:size] |= trace
 
     def trace_disassembly(self, pc):
-        self.table.disassembler.fast.trace_disassembly(self.table.trace_info, [pc])
+        self.disassembler.fast.trace_disassembly(self.table.trace_info, [pc])
         self.update_trace_in_segment()
+
+    #### Trait event handling
+
+    @on_trait_change('editor.document.byte_values_changed')
+    def byte_values_changed(self, index_range):
+        log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
+        if index_range is not Undefined:
+            self.restart_disassembly(index_range)
+
+    @on_trait_change('editor.document.byte_style_changed')
+    def byte_style_changed(self, index_range):
+        log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
+        if index_range is not Undefined:
+            self.restart_disassembly(index_range)

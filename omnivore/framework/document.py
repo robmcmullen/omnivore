@@ -70,6 +70,10 @@ class BaseDocument(HasTraits):
 
     byte_style_changed = Event  # only styling info may have changed, not any of the data byte values
 
+    recalc_event = Event  # recalculate view due to metadata change
+
+    refresh_event = Event  # update the view on screen
+
     change_count = Int()
 
     can_revert = Property(Bool, depends_on='metadata')

@@ -238,7 +238,7 @@ class HexEditControl(ByteGrid):
                 start, end = self.table.get_index_range(row, col)
                 if self.table.is_index_valid(start):
                     cmd = ChangeByteCommand(self.table.segment, start, end, val)
-                    self.linked_base.active_editor.process_command(cmd)
+                    self.linked_base.editor.process_command(cmd)
         except ValueError:
             pass
         return False

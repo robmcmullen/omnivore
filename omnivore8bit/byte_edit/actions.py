@@ -62,7 +62,7 @@ class UseFontAction(EditorAction):
         return "%s" % (self.font['name'])
 
     def perform(self, event):
-        self.active_editor.focused_base.machine.set_font(self.font)
+        self.active_editor.focused_viewer.linked_base.machine.set_font(self.font)
 
 
 class LoadFontAction(EditorAction):
@@ -71,7 +71,7 @@ class LoadFontAction(EditorAction):
     def perform(self, event):
         path = event.task.prompt_local_file_dialog("Load Font")
         if path is not None:
-            self.active_editor.focused_base.machine.load_font(event.task, path)
+            self.active_editor.focused_viewer.linked_base.machine.load_font(event.task, path)
 
 
 class GetFontFromSelectionAction(EditorAction):
@@ -138,7 +138,7 @@ class AddNewEmulatorAction(EditorAction):
     def perform(self, event):
         emu = prompt_for_emulator(event.task.window.control, "New Emulator")
         if emu:
-            self.active_editor.focused_base.machine.add_emulator(event.task, emu)
+            self.active_editor.focused_viewer.linked_base.machine.add_emulator(event.task, emu)
 
 
 class EditEmulatorsAction(EditorAction):
@@ -213,12 +213,12 @@ class UseAssemblerAction(EditorAction):
         return "%s" % (self.assembler['name'])
 
     def perform(self, event):
-        self.active_editor.focused_base.machine.set_assembler(self.assembler)
+        self.active_editor.focused_viewer.linked_base.machine.set_assembler(self.assembler)
 
-    @on_trait_change('active_editor.focused_base.machine.assembler')
+    @on_trait_change('active_editor.focused_viewer.linked_base.machine.assembler')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.focused_base.machine.assembler == self.assembler
+            self.checked = self.active_editor.focused_viewer.linked_base.machine.assembler == self.assembler
 
 
 class AddNewAssemblerAction(EditorAction):
@@ -230,7 +230,7 @@ class AddNewAssemblerAction(EditorAction):
     def perform(self, event):
         d = prompt_for_assembler(event.task.window.control, "New Assembler")
         if d:
-            self.active_editor.focused_base.machine.add_assembler(event.task, d)
+            self.active_editor.focused_viewer.linked_base.machine.add_assembler(event.task, d)
 
 
 class EditAssemblersAction(EditorAction):
@@ -246,7 +246,7 @@ class EditAssemblersAction(EditorAction):
         if dlg.ShowModal() == wx.ID_OK:
             asms = dlg.get_items()
             Machine.set_assembler_list(event.task, asms)
-            self.active_editor.focused_base.machine.verify_current_assembler()
+            self.active_editor.focused_viewer.linked_base.machine.verify_current_assembler()
         dlg.Destroy()
 
 
@@ -258,7 +258,7 @@ class SetSystemDefaultAssemblerAction(EditorAction):
     name = 'Set Current as System Default'
 
     def perform(self, event):
-        Machine.set_system_default_assembler(event.task, self.active_editor.focused_base.machine.assembler)
+        Machine.set_system_default_assembler(event.task, self.active_editor.focused_viewer.linked_base.machine.assembler)
 
 
 class FontRendererAction(EditorAction):
@@ -277,12 +277,12 @@ class FontRendererAction(EditorAction):
         return self.font_renderer.name
 
     def perform(self, event):
-        self.active_editor.focused_base.machine.set_font(font_renderer=self.font_renderer)
+        self.active_editor.focused_viewer.linked_base.machine.set_font(font_renderer=self.font_renderer)
 
-    @on_trait_change('active_editor.focused_base.machine.font_renderer')
+    @on_trait_change('active_editor.focused_viewer.linked_base.machine.font_renderer')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.focused_base.machine.font_renderer == self.font_renderer
+            self.checked = self.active_editor.focused_viewer.linked_base.machine.font_renderer == self.font_renderer
 
 
 class FontMappingAction(EditorAction):
@@ -302,12 +302,12 @@ class FontMappingAction(EditorAction):
         return self.font_mapping.name
 
     def perform(self, event):
-        self.active_editor.focused_base.machine.set_font_mapping(self.font_mapping)
+        self.active_editor.focused_viewer.linked_base.machine.set_font_mapping(self.font_mapping)
 
-    @on_trait_change('active_editor.focused_base.machine.font_mapping')
+    @on_trait_change('active_editor.focused_viewer.linked_base.machine.font_mapping')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.focused_base.machine.font_mapping == self.font_mapping
+            self.checked = self.active_editor.focused_viewer.linked_base.machine.font_mapping == self.font_mapping
 
 
 class BitmapRendererAction(EditorAction):
@@ -325,12 +325,12 @@ class BitmapRendererAction(EditorAction):
         return self.bitmap_renderer.name
 
     def perform(self, event):
-        self.active_editor.focused_base.machine.set_bitmap_renderer(self.bitmap_renderer)
+        self.active_editor.focused_viewer.linked_base.machine.set_bitmap_renderer(self.bitmap_renderer)
 
-    @on_trait_change('active_editor.focused_base.machine.bitmap_renderer')
+    @on_trait_change('active_editor.focused_viewer.linked_base.machine.bitmap_renderer')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.focused_base.machine.bitmap_renderer == self.bitmap_renderer
+            self.checked = self.active_editor.focused_viewer.linked_base.machine.bitmap_renderer == self.bitmap_renderer
 
 
 class BitmapWidthAction(EditorAction):
@@ -404,7 +404,7 @@ class UseColorsAction(EditorAction):
     colors = Any
 
     def perform(self, event):
-        self.active_editor.focused_base.machine.update_colors(self.colors)
+        self.active_editor.focused_viewer.linked_base.machine.update_colors(self.colors)
 
 
 class ColorStandardAction(EditorAction):
@@ -417,12 +417,12 @@ class ColorStandardAction(EditorAction):
     color_standard = Int
 
     def perform(self, event):
-        self.active_editor.focused_base.machine.set_color_standard(self.color_standard)
+        self.active_editor.focused_viewer.linked_base.machine.set_color_standard(self.color_standard)
 
-    @on_trait_change('active_editor.focused_base.machine.color_standard')
+    @on_trait_change('active_editor.focused_viewer.linked_base.machine.color_standard')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.focused_base.machine.color_standard == self.color_standard
+            self.checked = self.active_editor.focused_viewer.linked_base.machine.color_standard == self.color_standard
 
 
 class TextFontAction(EditorAction):
@@ -466,10 +466,10 @@ class PredefinedMachineAction(EditorAction):
     def perform(self, event):
         self.active_editor.set_machine(self.machine)
 
-    @on_trait_change('active_editor.focused_base.machine')
+    @on_trait_change('active_editor.focused_viewer.linked_base.machine')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.focused_base.machine == self.machine
+            self.checked = self.active_editor.focused_viewer.linked_base.machine == self.machine
 
 
 class ProcessorTypeAction(EditorAction):
@@ -488,12 +488,12 @@ class ProcessorTypeAction(EditorAction):
         return self.disassembler.name
 
     def perform(self, event):
-        self.active_editor.focused_base.machine.set_disassembler(self.disassembler)
+        self.active_editor.focused_viewer.linked_base.machine.set_disassembler(self.disassembler)
 
-    @on_trait_change('active_editor.focused_base.machine.disassembler')
+    @on_trait_change('active_editor.focused_viewer.linked_base.machine.disassembler')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.focused_base.machine.disassembler == self.disassembler
+            self.checked = self.active_editor.focused_viewer.linked_base.machine.disassembler == self.disassembler
 
 
 class MemoryMapAction(EditorAction):
@@ -520,12 +520,12 @@ class MemoryMapAction(EditorAction):
         return self.memory_map.name
 
     def perform(self, event):
-        self.active_editor.focused_base.machine.set_memory_map(self.memory_map)
+        self.active_editor.focused_viewer.linked_base.machine.set_memory_map(self.memory_map)
 
-    @on_trait_change('active_editor.focused_base.machine.memory_map')
+    @on_trait_change('active_editor.focused_viewer.linked_base.machine.memory_map')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.focused_base.machine.memory_map == self.memory_map
+            self.checked = self.active_editor.focused_viewer.linked_base.machine.memory_map == self.memory_map
 
 
 class CurrentSegmentParserAction(NameChangeAction):

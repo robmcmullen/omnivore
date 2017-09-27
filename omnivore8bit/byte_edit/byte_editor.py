@@ -295,7 +295,7 @@ class ByteEditor(FrameworkEditor):
 
     def rebuild_ui(self):
         log.debug("rebuilding focused_base: %s" % str(self.focused_viewer.linked_base))
-        self.focused_viewer.linked_base.recalc_event = True
+        self.document.recalc_event = True
 
     def get_cursor_state(self):
         return self.segment, self.cursor_index

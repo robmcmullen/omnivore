@@ -717,11 +717,6 @@ class FrameworkEditor(Editor):
                 d.change_count += 1
             visible_range = True
 
-            # mark_index_range_changed should be called only when a value/style
-            # changes, not if a range is simply selected.
-            if flags.byte_values_changed or flags.byte_style_changed:
-                self.mark_index_range_changed(flags.index_range)
-
         if flags.message:
             self.task.status_bar.message = flags.message
 
@@ -729,11 +724,11 @@ class FrameworkEditor(Editor):
             self.metadata_dirty = True
 
         if flags.byte_values_changed:
-            d.byte_values_changed = True  # also handles style changes and refresh
-            do_refresh = False
+            d.byte_values_changed = flags.index_range
+            do_refresh = True
         elif flags.byte_style_changed:
-            d.byte_style_changed = True  # also handles refresh
-            do_refresh = False
+            d.byte_style_changed = flags.index_range
+            flags.rebuild_ui = True
 
         if visible_range:
             # Only update the range on the current editor, not other views
@@ -747,9 +742,9 @@ class FrameworkEditor(Editor):
             do_refresh = False
 
         if flags.rebuild_ui:
-            self.rebuild_ui()
+            d.rebuild_event = True
         elif do_refresh:
-            self.refresh_panes()
+            d.refresh_event = True
 
     def popup_context_menu_from_commands(self, window, commands):
         """Popup a simple context menu with menu items defined by commands.
@@ -836,8 +831,6 @@ class FrameworkEditor(Editor):
         self.document.change_count += 1
         self.invalidate_search()
         self.compare_to_baseline()
-        self.rebuild_display_objects()
-        self.refresh_panes()
 
     @on_trait_change('document:byte_style_changed')
     def byte_style_changed(self):
