@@ -22,6 +22,17 @@ class SegmentViewer(HasTraits):
 
     control = Any(None)
 
+    @classmethod
+    def create_control(cls, parent, linked_base):
+        raise NotImplementedError("Implement in subclass!")
+
+    @classmethod
+    def create(cls, parent, linked_base):
+        control = cls.create_control(parent, linked_base)
+        v = cls(linked_base=linked_base, control=control)
+        control.segment_viewer = v
+        return v
+
     @on_trait_change('linked_base.editor.document.recalc_event')
     def process_segment_change(self, evt):
         log.debug("process_segment_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))

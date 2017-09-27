@@ -14,11 +14,8 @@ log = logging.getLogger(__name__)
 
 class CharViewer(SegmentViewer):
     @classmethod
-    def create(cls, parent, linked_base):
-        control = FontMapScroller(parent, linked_base, size=(160,500), command=ChangeByteCommand)
-
-        v = cls(linked_base=linked_base, control=control)
-        return v
+    def create_control(cls, parent, linked_base):
+        return FontMapScroller(parent, linked_base, size=(160,500), command=ChangeByteCommand)
 
     @property
     def window_title(self):

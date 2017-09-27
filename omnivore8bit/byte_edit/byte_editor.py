@@ -751,12 +751,5 @@ class ByteEditor(FrameworkEditor):
 
     def on_pane_active(self, evt):
         print("acvitated pane!", evt.pane)
-        found = None
-        for viewer, _ in self.viewers:
-            if evt.pane == viewer.control:
-                found = viewer
-                break
-        if found is None:
-            found = self.viewers[0][0]
-        self.focused_viewer = found
+        self.focused_viewer = evt.pane.segment_viewer
 

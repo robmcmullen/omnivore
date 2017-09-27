@@ -387,10 +387,8 @@ class DisassemblyListSaver(object):
 
 class DisassemblyViewer(SegmentViewer):
     @classmethod
-    def create(cls, parent, linked_base):
-        control = DisassemblyPanel(parent, linked_base)
-        v = cls(linked_base=linked_base, control=control)
-        return v
+    def create_control(cls, parent, linked_base):
+        return DisassemblyPanel(parent, linked_base)
 
     @property
     def window_title(self):
