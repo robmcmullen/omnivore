@@ -289,9 +289,8 @@ class ByteEditor(FrameworkEditor):
         return style, where_comments, metadata[2]
 
     def check_document_change(self):
-        if self.last_cursor_index != self.cursor_index or self.last_anchor_start_index != self.anchor_start_index or self.last_anchor_end_index != self.anchor_end_index:
-            self.document.change_count += 1
-            self.update_cursor_history()
+        self.document.change_count += 1
+        self.update_cursor_history()
 
     def rebuild_ui(self):
         log.debug("rebuilding focused_base: %s" % str(self.focused_viewer.linked_base))
@@ -753,3 +752,11 @@ class ByteEditor(FrameworkEditor):
         print("acvitated pane!", evt.pane)
         self.focused_viewer = evt.pane.segment_viewer
 
+    def index_clicked(self, index, bit, from_control, refresh_from=True):
+        self.cursor_index = index
+        self.check_document_change()
+        skip_control = None if refresh_from else from_control
+        self.focused_viewer.linked_base.update_cursor = (from_control, index, bit)
+        self.sidebar.refresh_active()
+        self.can_copy = len(self.selected_ranges) > 1 or (bool(self.selected_ranges) and (self.selected_ranges[0][0] != self.selected_ranges[0][1]))
+        self.can_copy_baseline = self.can_copy and self.baseline_present

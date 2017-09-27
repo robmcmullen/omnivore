@@ -36,13 +36,22 @@ class SegmentViewer(HasTraits):
     @on_trait_change('linked_base.editor.document.recalc_event')
     def process_segment_change(self, evt):
         log.debug("process_segment_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        self.recalc_view()
+        if evt is not Undefined:
+            self.recalc_view()
 
     @on_trait_change('linked_base.ensure_visible_index')
     def process_ensure_visible(self, evt):
         log.debug("process_ensure_visible for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
             self.control.set_cursor_index(evt.source_control, evt.index_visible, evt.cursor_column)
+
+    @on_trait_change('linked_base.update_cursor')
+    def process_update_cursor(self, evt):
+        log.debug("process_ensure_visible for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        if evt is not Undefined:
+            control, index, bit = evt
+            if control != self.control:
+                self.control.set_cursor_index(control, index, bit)
 
     @property
     def window_title(self):

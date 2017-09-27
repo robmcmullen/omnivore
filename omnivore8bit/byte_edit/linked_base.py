@@ -82,6 +82,8 @@ class LinkedBase(HasTraits):
 
     update_trace = Event
 
+    update_cursor = Event
+
     key_pressed = Event(KeyPressedEvent)
 
     #### Class attributes (not traits)
