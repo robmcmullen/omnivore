@@ -559,13 +559,13 @@ class LinkedBase(HasTraits):
 
     #### Trait event handling
 
-    @on_trait_change('document.byte_values_changed')
+    @on_trait_change('editor.document.byte_values_changed')
     def byte_values_changed(self, index_range):
         log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
         if index_range is not Undefined:
             self.restart_disassembly(index_range)
 
-    @on_trait_change('document.byte_style_changed')
+    @on_trait_change('editor.document.byte_style_changed')
     def byte_style_changed(self, index_range):
         log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
         if index_range is not Undefined:

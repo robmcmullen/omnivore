@@ -412,5 +412,6 @@ class DisassemblyViewer(SegmentViewer):
 
     @on_trait_change('linked_base.disassembly_changed_event')
     def do_disassembly_change(self, evt):
+        log.debug("do_disassembly_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
             self.control.update_disassembly_from()
