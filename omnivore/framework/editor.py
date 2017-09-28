@@ -742,7 +742,7 @@ class FrameworkEditor(Editor):
             # Only update the range on the current editor, not other views
             # which are allowed to remain where they are
             if flags.index_visible is None:
-                flags.index_visible = self.anchor_start_index
+                flags.index_visible = flags.cursor_index if flags.cursor_index is not None else self.anchor_start_index
             self.ensure_visible(flags)
 
             # Prevent a double refresh since ensure_visible does a refresh as a

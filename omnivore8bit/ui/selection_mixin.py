@@ -15,7 +15,7 @@ class SelectionMixin(object):
 
     def handle_select_start(self, editor, evt, selecting_rows=False, col=0):
         log.debug("handle_select_start: selecting_rows: %s, col=%s" % (selecting_rows, col))
-        flags = DisplayFlags(self)
+        flags = DisplayFlags(None)  # force redraw of current control
         editor.pending_focus = self
         self.mouse_drag_started = True
         r, c, index1, index2, inside = self.get_location_from_event(evt)
@@ -67,7 +67,7 @@ class SelectionMixin(object):
             # On windows, it's possible to get a motion event before a mouse
             # down event, so need this flag to check
             return
-        flags = DisplayFlags(self)
+        flags = DisplayFlags(None)
         update = False
         r, c, index1, index2, inside = self.get_location_from_event(evt)
         log.debug("handle_select_motion: index1: %s, index2: %s pending: %s" % (index1, index2, str(self.pending_select_awaiting_drag)))

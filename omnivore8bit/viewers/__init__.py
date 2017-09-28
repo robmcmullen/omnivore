@@ -49,7 +49,10 @@ class SegmentViewer(HasTraits):
     def process_ensure_visible(self, evt):
         log.debug("process_ensure_visible for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
-            self.control.set_cursor_index(evt.source_control, evt.index_visible, evt.cursor_column)
+            if evt.source_control != self.control:
+                self.control.set_cursor_index(evt.source_control, evt.index_visible, evt.cursor_column)
+            else:
+                log.debug("SKIPPED %s because it's the source control" % (self.control))
 
     @on_trait_change('linked_base.update_cursor')
     def process_update_cursor(self, evt):
@@ -58,6 +61,8 @@ class SegmentViewer(HasTraits):
             control, index, bit = evt
             if control != self.control:
                 self.control.set_cursor_index(control, index, bit)
+            else:
+                log.debug("SKIPPED %s because it's the source control" % (self.control))
 
     @property
     def window_title(self):

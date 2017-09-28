@@ -728,6 +728,7 @@ class ByteEditor(FrameworkEditor):
         self.focused_viewer = evt.pane.segment_viewer
 
     def index_clicked(self, index, bit, from_control, refresh_from=True):
+        log.debug("index_clicked: %s from %s at %d, %s" % (refresh_from, from_control, index, bit))
         self.cursor_index = index
         self.check_document_change()
         skip_control = None if refresh_from else from_control
