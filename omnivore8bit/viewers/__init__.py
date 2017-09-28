@@ -33,6 +33,12 @@ class SegmentViewer(HasTraits):
         control.segment_viewer = v
         return v
 
+    @on_trait_change('linked_base.editor.document.data_model_changed')
+    def process_data_model_change(self, evt):
+        log.debug("process_data_model_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        if evt is not Undefined:
+            self.recalc_data_model()
+
     @on_trait_change('linked_base.editor.document.recalc_event')
     def process_segment_change(self, evt):
         log.debug("process_segment_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
@@ -47,7 +53,7 @@ class SegmentViewer(HasTraits):
 
     @on_trait_change('linked_base.update_cursor')
     def process_update_cursor(self, evt):
-        log.debug("process_ensure_visible for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        log.debug("process_update_cursor for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
             control, index, bit = evt
             if control != self.control:
@@ -57,6 +63,12 @@ class SegmentViewer(HasTraits):
     def window_title(self):
         return "viewer"
 
+    def recalc_data_model(self):
+        """Rebuild the data model after a document formatting (or other
+        structural change) or loading a new document.
+        """
+        pass
+
     def recalc_view(self):
         """Rebuild the entire UI after a document formatting (or other
         structural change) or loading a new document.
@@ -64,9 +76,10 @@ class SegmentViewer(HasTraits):
         self.control.recalc_view()
 
     @on_trait_change('linked_base.editor.document.refresh_event')
-    def refresh_view(self):
+    def refresh_view(self, evt):
         """Redraw the UI
         """
+        log.debug("process_update_cursor for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         self.control.refresh_view()
 
     def get_extra_segment_savers(self, segment):

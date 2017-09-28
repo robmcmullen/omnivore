@@ -724,7 +724,11 @@ class FrameworkEditor(Editor):
         if flags.metadata_dirty:
             self.metadata_dirty = True
 
-        if flags.byte_values_changed:
+        if flags.data_model_changed:
+            d.data_model_changed = True
+            d.change_count += 1
+            flags.rebuild_ui = True
+        elif flags.byte_values_changed:
             d.byte_values_changed = flags.index_range
             d.change_count += 1
             do_refresh = True
@@ -746,7 +750,7 @@ class FrameworkEditor(Editor):
             do_refresh = False
 
         if flags.rebuild_ui:
-            d.rebuild_event = True
+            d.recalc_event = True
         if do_refresh:
             d.refresh_event = True
 

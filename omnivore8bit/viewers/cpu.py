@@ -188,7 +188,7 @@ class DisassemblyTable(ByteGridTable):
         return "0000"
 
     def ResetViewProcessArgs(self, grid, *args, **kwargs):
-        #self.disassemble_from()
+        #grid.update_disassembly_from()
         pass
 
 
@@ -249,14 +249,15 @@ class DisassemblyPanel(ByteGrid):
             self.update_trace_in_segment()
 
     def get_default_cell_linked_base(self):
-        return Assemblerlinked_base(self)
+        return AssemblerEditor(self)
 
     def update_disassembly_from(self):
         first_row = self.get_first_visible_row()
         current_row = self.GetGridCursorRow()
         rows_from_top = current_row - first_row
         want_address = self.table.get_pc(current_row)
-        self.table.update_disassembly(self.linked_base.disassembler)
+        d = self.linked_base.disassemble_segment()
+        self.table.update_disassembly(d)
         r, _ = self.table.get_row_col(want_address - self.table.start_addr)
         self.table.ResetView(self, None)
         new_first = max(0, r - rows_from_top)

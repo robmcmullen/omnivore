@@ -14,7 +14,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
 from omnivore.framework.editor import FrameworkEditor
-
+from omnivore.utils.command import DisplayFlags
 from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment
 from omnivore8bit.arch.disasm import iter_disasm_styles
@@ -52,6 +52,8 @@ class LinkedBase(HasTraits):
     machine = Instance(Machine)
 
     segment = Instance(DefaultSegment)
+
+    segment_number = Int(0)
 
     trace = Instance(TraceInfo)
 
@@ -122,6 +124,10 @@ class LinkedBase(HasTraits):
     def window(self):
         return self.editor.window
 
+    @property
+    def document(self):
+        return self.editor.document
+
     #### Convenience functions
 
     def __str__(self):
@@ -147,15 +153,14 @@ class LinkedBase(HasTraits):
 
     def to_metadata_dict(self, mdict, document):
         mdict["diff highlight"] = self.diff_highlight
-        if document == self.editor.document:
+        if document == self.document:
             # If we're saving the document currently displayed, save the
             # display parameters too.
             mdict["segment view params"] = dict(self.segment_view_params)  # shallow copy, but only need to get rid of Traits dict wrapper
         self.machine.serialize_extra_to_dict(mdict)
 
-
     def rebuild_ui(self):
-        self.segment = self.editor.document.segments[self.segment_number]
+        self.segment = self.document.segments[self.segment_number]
         self.reconfigure_panes()
         self.update_segments_ui()
 
@@ -164,7 +169,7 @@ class LinkedBase(HasTraits):
 
     def restore_cursor_state(self, state):
         segment, index = state
-        number = self.editor.document.find_segment_index(segment)
+        number = self.document.find_segment_index(segment)
         if number < 0:
             log.error("tried to restore cursor to a deleted segment? %s" % segment)
         else:
@@ -184,7 +189,7 @@ class LinkedBase(HasTraits):
         for viewer, pane_info in self.editor.viewers:
             if viewer.linked_base == self:
                 try:
-                    d[pane_info.id] = viewer.control.get_view_params()
+                    d[pane_info.name] = viewer.control.get_view_params()
                 except AttributeError:
                     pass
 
@@ -201,7 +206,7 @@ class LinkedBase(HasTraits):
         for viewer, pane_info in self.editor.viewers:
             if viewer.linked_base == self:
                 try:
-                    params = d[pane_info.id]
+                    params = d[pane_info.name]
                 except KeyError:
                     continue
                 try:
@@ -209,8 +214,41 @@ class LinkedBase(HasTraits):
                 except AttributeError:
                     continue
 
+    def find_segment_parser(self, parsers, segment_name=None):
+        self.document.parse_segments(parsers)
+        self.find_segment(segment_name)
+
+    def find_first_valid_segment_index(self):
+        return 0
+
+    def find_segment(self, segment_name=None, segment=None, refresh=False):
+        if segment_name is not None:
+            index = self.document.find_segment_index_by_name(segment_name)
+        elif segment is not None:
+            index = self.document.find_segment_index(segment)
+        else:
+            index = self.find_first_valid_segment_index()
+        if index < 0:
+            index = 0
+        self.segment_parser = self.document.segment_parser
+        if refresh:
+            self.view_segment_number(index)
+        else:
+            self._disassembler = None  # force disassembler to use new segment
+            self.segment_number = index
+            self.segment_parser = self.document.segment_parser
+            self.segment = self.document.segments[index]
+            self.editor.select_none(refresh=False)
+            self.task.segments_changed = self.document.segments
+            self.task.segment_selected = self.segment_number
+
+    def set_segment_parser(self, parser):
+        self.find_segment_parser([parser])
+        self.rebuild_ui()
+
     def view_segment_number(self, number):
-        doc = self.editor.document
+        log.debug("view_segment_number: changing to %d from %d" % (number, self.segment_number))
+        doc = self.document
         num = number if number < len(doc.segments) else len(doc.segments) - 1
         if num != self.segment_number:
             old_segment = self.segment
@@ -219,23 +257,26 @@ class LinkedBase(HasTraits):
             self.segment = doc.segments[num]
             self.adjust_selection(old_segment)
             self.segment_number = num
-            self.invalidate_search()
-            self.view_segment_set_width(self.segment)
-            self.reconfigure_panes()
-            self.show_trace()
-            if self.segment_list is not None:
-                self.segment_list.SetSelection(self.segment_number)
-            else:
-                self.sidebar.refresh_active()
-            self.editor.task.status_bar.message = "Switched to segment %s" % str(self.segment)
-            self.editor.task.update_window_title()
-        self.editor.task.segment_selected = self.segment_number
+            self._disassembler = None  # force disassembler to use new segment
+            flags = DisplayFlags()
+            flags.data_model_changed = True
+            self.editor.process_flags(flags)
+            #self.show_trace()
+            # if self.segment_list is not None:
+            #     self.segment_list.SetSelection(self.segment_number)
+            # else:
+            #     self.sidebar.refresh_active()
+            self.editor.sidebar.refresh_active()
+            self.task.segments_changed = self.document.segments
+            self.task.segment_selected = self.segment_number
+            #self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
+            self.task.update_window_title()
 
     def save_segment(self, saver, uri):
         try:
             bytes = saver.encode_data(self.segment, self)
             saver = lambda a,b: bytes
-            self.editor.document.save_to_uri(uri, self, saver, save_metadata=False)
+            self.document.save_to_uri(uri, self, saver, save_metadata=False)
         except Exception, e:
             log.error("%s: %s" % (uri, str(e)))
             #self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
@@ -249,7 +290,7 @@ class LinkedBase(HasTraits):
         all the selection indexes will be set to zero.
         """
         # find byte index of view into master array
-        g = self.editor.document.container_segment
+        g = self.document.container_segment
         s = self.segment
         global_offset = g.get_raw_index(0)
         new_offset = s.get_raw_index(0)
@@ -263,15 +304,15 @@ class LinkedBase(HasTraits):
             self.anchor_initial_start_index = self.anchor_start_index = last[0]
             self.anchor_initial_end_index = self.anchor_end_index = last[1]
         g.clear_style_bits(selected=True)
-        self.editor.document.change_count += 1
+        self.document.change_count += 1
         self.highlight_selected_ranges()
 
     def highlight_selected_ranges(self):
         s = self.segment
         s.clear_style_bits(selected=True)
         s.set_style_ranges(self.selected_ranges, selected=True)
-        self.editor.document.change_count += 1
-        self.can_copy_baseline = self.can_copy and self.baseline_present
+        self.document.change_count += 1
+        self.editor.can_copy_baseline = self.editor.can_copy and self.editor.baseline_present
 
     def convert_ranges(self, from_style, to_style):
         s = self.segment
@@ -280,7 +321,7 @@ class LinkedBase(HasTraits):
         s.clear_style_bits(**to_style)
         s.set_style_ranges(ranges, **to_style)
         self.selected_ranges = s.get_style_ranges(selected=True)
-        self.editor.document.change_count += 1
+        self.document.change_count += 1
 
     def get_segments_from_selection(self, size=-1):
         s = self.segment
@@ -333,7 +374,7 @@ class LinkedBase(HasTraits):
             self.editor.task.status_bar.message = msg
 
     def add_user_segment(self, segment, update=True):
-        self.editor.document.add_user_segment(segment)
+        self.document.add_user_segment(segment)
         self.added_segment(segment, update)
 
     def added_segment(self, segment, update=True):
@@ -344,19 +385,19 @@ class LinkedBase(HasTraits):
         self.metadata_dirty = True
 
     def delete_user_segment(self, segment):
-        self.editor.document.delete_user_segment(segment)
+        self.document.delete_user_segment(segment)
         self.view_segment_number(self.segment_number)
         self.update_segments_ui()
         self.metadata_dirty = True
 
     def find_in_user_segment(self, base_index):
-        for s in self.editor.document.user_segments:
+        for s in self.document.user_segments:
             try:
                 index = s.get_index_from_base_index(base_index)
                 return s, index
             except IndexError:
                 continue
-        for s in self.editor.document.segment_parser.segments[1:]:
+        for s in self.document.segment_parser.segments[1:]:
             try:
                 index = s.get_index_from_base_index(base_index)
                 return s, index
@@ -379,9 +420,9 @@ class LinkedBase(HasTraits):
             segment_start = self.segment.start_addr
             segment_num = -1
             addr_index = addr_dest - segment_start
-            segments = self.editor.document.find_segments_in_range(addr_dest)
+            segments = self.document.find_segments_in_range(addr_dest)
             if addr_dest < segment_start or addr_dest > segment_start + len(self.segment):
-                # segment_num, segment_dest, addr_index = self.editor.document.find_segment_in_range(addr_dest)
+                # segment_num, segment_dest, addr_index = self.document.find_segment_in_range(addr_dest)
                 if not segments:
                     msg = "Address $%04x not in any segment" % addr_dest
                     addr_dest = -1
@@ -403,7 +444,7 @@ class LinkedBase(HasTraits):
         """Add sub-menu to popup list for segments that have the same address
         """
         goto_actions = []
-        segments = self.editor.document.find_segments_in_range(addr_dest)
+        segments = self.document.find_segments_in_range(addr_dest)
         if len(segments) > 0:
             other_segment_actions = ["Go to $%04x in Other Segment..." % addr_dest]
             for segment_num, segment_dest, addr_index in segments:
@@ -423,7 +464,7 @@ class LinkedBase(HasTraits):
         """
         goto_actions = []
         raw_index = self.segment.get_raw_index(index)
-        segments = self.editor.document.find_segments_with_raw_index(raw_index)
+        segments = self.document.find_segments_with_raw_index(raw_index)
         if len(segments) > 0:
             other_segment_actions = ["Go to Same Byte in Other Segment..."]
             for segment_num, segment_dest, addr_index in segments:
@@ -443,7 +484,7 @@ class LinkedBase(HasTraits):
     def change_bytes(self, start, end, bytes, pretty=None):
         """Convenience function to perform a ChangeBytesCommand
         """
-        self.editor.document.change_count += 1
+        self.document.change_count += 1
         cmd = CoalescingChangeByteCommand(self.segment, start, end, bytes)
         if pretty:
             cmd.pretty_name = pretty
@@ -463,7 +504,7 @@ class LinkedBase(HasTraits):
     def disassembler(self):
         if self._disassembler is None:
             log.debug("creating disassembler for %s" % self.machine.name)
-            d = self.machine.get_disassembler(self.task.hex_grid_lower_case, self.task.assembly_lower_case, self.editor.document.document_memory_map, self.segment.memory_map)
+            d = self.machine.get_disassembler(self.task.hex_grid_lower_case, self.task.assembly_lower_case, self.document.document_memory_map, self.segment.memory_map)
             for i, name in iter_disasm_styles():
                 d.add_chunk_processor(name, i)
             self._disassembler = d
@@ -518,13 +559,13 @@ class LinkedBase(HasTraits):
 
     #### Trait event handling
 
-    @on_trait_change('editor.document.byte_values_changed')
+    @on_trait_change('document.byte_values_changed')
     def byte_values_changed(self, index_range):
         log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
         if index_range is not Undefined:
             self.restart_disassembly(index_range)
 
-    @on_trait_change('editor.document.byte_style_changed')
+    @on_trait_change('document.byte_style_changed')
     def byte_style_changed(self, index_range):
         log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
         if index_range is not Undefined:

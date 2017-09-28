@@ -270,3 +270,9 @@ class HexEditViewer(SegmentViewer):
     @property
     def window_title(self):
         return "Hex"
+
+    def recalc_data_model(self):
+        """Rebuild the data model after a document formatting (or other
+        structural change) or loading a new document.
+        """
+        self.control.table.recalc_segment_info()

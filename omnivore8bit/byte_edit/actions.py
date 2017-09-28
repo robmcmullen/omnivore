@@ -607,7 +607,7 @@ class UseSegmentAction(EditorAction):
         return str(self.segment)
 
     def perform(self, event):
-        self.active_editor.view_segment_number(self.segment_number)
+        wx.CallAfter(self.active_editor.view_segment_number, self.segment_number)
 
     @on_trait_change('task.segment_selected')
     def _update_checked(self):

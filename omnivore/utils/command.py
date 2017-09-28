@@ -183,6 +183,10 @@ class StatusFlags(object):
         # has any data style changed, forcing all views to be refreshed?
         self.byte_style_changed = False
 
+        # has anything in the data or metadata changed to require a rebuild
+        # of the data model?
+        self.data_model_changed = False
+
         # set to True if the all views of the data need to be refreshed
         self.refresh_needed = False
 

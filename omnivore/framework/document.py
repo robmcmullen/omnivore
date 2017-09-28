@@ -66,6 +66,8 @@ class BaseDocument(HasTraits):
 
     undo_stack_changed = Event
 
+    data_model_changed = Event  # update the data model because of a structural change to the data
+
     byte_values_changed = Event  # but not the size of the bytes array. That's not handled yet
 
     byte_style_changed = Event  # only styling info may have changed, not any of the data byte values

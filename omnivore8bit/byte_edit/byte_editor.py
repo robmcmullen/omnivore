@@ -110,8 +110,21 @@ class ByteEditor(FrameworkEditor):
     # Convenience functions
 
     @property
+    def segment(self):
+        return self.focused_viewer.linked_base.segment
+
+    @property
+    def segment_number(self):
+        return self.focused_viewer.linked_base.segment_number
+
+    @property
     def section_name(self):
-        return str(self.focused_viewer.linked_base.segment)
+        return str(self.segment)
+
+    @property
+    def document_length(self):
+        return len(self.segment)
+
 
     ###########################################################################
     # 'FrameworkEditor' interface.
@@ -145,7 +158,7 @@ class ByteEditor(FrameworkEditor):
         if not self.document.has_baseline:
             self.use_self_as_baseline(self.document)
         FrameworkEditor.rebuild_document_properties(self)
-        self.find_segment()
+        self.focused_viewer.linked_base.find_segment()
         self.update_emulator()
         self.compare_to_baseline()
         self.can_resize_document = self.document.can_resize
@@ -153,10 +166,6 @@ class ByteEditor(FrameworkEditor):
     def process_preference_change(self, prefs):
         log.debug("%s processing preferences change" % self.task.name)
         #self.machine.set_text_font(prefs.text_font)
-
-    @property
-    def document_length(self):
-        return len(self.segment)
 
     def process_paste_data_object(self, data_obj, cmd_cls=None):
         bytes, extra = self.get_numpy_from_data_object(data_obj)
@@ -348,38 +357,6 @@ class ByteEditor(FrameworkEditor):
         else:
             self.window.error("Can't run emulator on:\n\n%s\n\nDocument is not on local filesystem" % self.document.uri, "%s Emulator Error" % emu['name'])
 
-    def find_segment_parser(self, parsers, segment_name=None):
-        self.document.parse_segments(parsers)
-        self.find_segment(segment_name)
-
-    def find_first_valid_segment_index(self):
-        return 0
-
-    def find_segment(self, segment_name=None, segment=None, refresh=False):
-        if segment_name is not None:
-            index = self.document.find_segment_index_by_name(segment_name)
-        elif segment is not None:
-            index = self.document.find_segment_index(segment)
-        else:
-            index = self.find_first_valid_segment_index()
-        if index < 0:
-            index = 0
-        self.segment_parser = self.document.segment_parser
-        if refresh:
-            self.view_segment_number(index)
-        else:
-            self.segment_number = index
-            self.segment_parser = self.document.segment_parser
-            self.segment = self.document.segments[index]
-
-            self.focused_viewer.linked_base.segment = self.segment
-            self.select_none(refresh=False)
-            self.task.segment_selected = self.segment_number
-
-    def set_segment_parser(self, parser):
-        self.find_segment_parser([parser])
-        self.rebuild_ui()
-
     def view_segment_number(self, number):
         self.focused_viewer.linked_base.view_segment_number(number)
 
@@ -541,6 +518,22 @@ class ByteEditor(FrameworkEditor):
         self.update_segments_ui()
         self.metadata_dirty = True
 
+    def update_segments_ui(self):
+        # Note: via profiling, it turns out that this is a very heavyweight
+        # call, producing hundreds of thousands of trait notifier events. This
+        # should only be called when the number of segments or document has
+        # changed. If only the segment being viewed is changed, just set the
+        # task.segment_selected trait
+        if self.segment_list is not None:
+            self.segment_list.set_segments(self.document.segments, self.segment_number)
+        self.sidebar.recalc_active()
+        if self.linked_base.segment_parser is not None:
+            self.segment_parser_label = self.linked_base.segment_parser.menu_name
+        else:
+            self.segment_parser_label = "No parser"
+        self.task.segments_changed = self.document.segments
+        self.task.segment_selected = self.segment_number
+
     def find_in_user_segment(self, base_index):
         for s in self.document.user_segments:
             try:
@@ -698,6 +691,11 @@ class ByteEditor(FrameworkEditor):
 
         viewer = DisassemblyViewer.create(panel, center_base)
         pane_info = aui.AuiPaneInfo().Name("disassembly").Right().MinimizeButton(True).Layer(2)
+        self.viewers.append((viewer, pane_info))
+        self.mgr.AddPane(viewer.control, pane_info)
+
+        viewer = DisassemblyViewer.create(panel, center_base)
+        pane_info = aui.AuiPaneInfo().Name("disassembly").Right().MinimizeButton(True).Layer(0)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
