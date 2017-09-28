@@ -731,7 +731,8 @@ class ByteEditor(FrameworkEditor):
         log.debug("index_clicked: %s from %s at %d, %s" % (refresh_from, from_control, index, bit))
         self.cursor_index = index
         self.check_document_change()
-        skip_control = None if refresh_from else from_control
+        if refresh_from:
+            from_control = None
         self.focused_viewer.linked_base.update_cursor = (from_control, index, bit)
         self.sidebar.refresh_active()
         self.can_copy = len(self.selected_ranges) > 1 or (bool(self.selected_ranges) and (self.selected_ranges[0][0] != self.selected_ranges[0][1]))
