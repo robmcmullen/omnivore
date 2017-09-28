@@ -212,6 +212,10 @@ class AssemblerEditor(HexCellEditor):
         if evtHandler:
             self._tc.PushEventHandler(evtHandler)
 
+    def Clone(self):
+        log.debug("")
+        return AssemblerEditor(self.parentgrid)
+
 
 class DisassemblyPanel(ByteGrid):
     """
@@ -248,7 +252,7 @@ class DisassemblyPanel(ByteGrid):
         if self.table.linked_base.editor.can_trace:
             self.update_trace_in_segment()
 
-    def get_default_cell_linked_base(self):
+    def get_default_cell_editor(self):
         return AssemblerEditor(self)
 
     def update_disassembly_from(self):
@@ -319,11 +323,11 @@ class DisassemblyPanel(ByteGrid):
                 bytes = self.table.disassembly.assemble_text(pc, cmd)
                 start, _ = self.table.get_index_range(row, col)
                 end = start + len(bytes)
-                cmd = MiniAssemblerCommand(self.table.segment, start, end, bytes, cmd)
+                cmd = MiniAssemblerCommand(self.linked_base.segment, start, end, bytes, cmd)
             else:
                 start, _ = self.table.get_index_range(row, col)
-                cmd = SetCommentCommand(self.table.segment, [(start, start + 1)], text)
-            self.linked_base.active_linked_base.process_command(cmd)
+                cmd = SetCommentCommand(self.linked_base.segment, [(start, start + 1)], text)
+            self.linked_base.editor.process_command(cmd)
             return True
         except RuntimeError, e:
             self.linked_base.window.error(unicode(e))
