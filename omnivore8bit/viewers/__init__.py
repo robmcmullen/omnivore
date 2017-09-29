@@ -4,6 +4,7 @@ from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, F
 from omnivore.framework.editor import FrameworkEditor
 from ..byte_edit.linked_base import LinkedBase
 
+from omnivore8bit.arch.machine import Machine
 
 import logging
 log = logging.getLogger(__name__)
@@ -20,6 +21,8 @@ class SegmentViewer(HasTraits):
 
     linked_base = Instance(LinkedBase)
 
+    machine = Instance(Machine)
+
     control = Any(None)
 
     @classmethod
@@ -27,9 +30,11 @@ class SegmentViewer(HasTraits):
         raise NotImplementedError("Implement in subclass!")
 
     @classmethod
-    def create(cls, parent, linked_base):
+    def create(cls, parent, linked_base, machine=None):
         control = cls.create_control(parent, linked_base)
-        v = cls(linked_base=linked_base, control=control)
+        if machine is None:
+            machine = linked_base.machine.clone_machine()
+        v = cls(linked_base=linked_base, control=control, machine=machine)
         control.segment_viewer = v
         return v
 
@@ -40,8 +45,8 @@ class SegmentViewer(HasTraits):
             self.recalc_data_model()
 
     @on_trait_change('linked_base.editor.document.recalc_event')
-    def process_segment_change(self, evt):
-        log.debug("process_segment_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+    def process_recalc_view(self, evt):
+        log.debug("process_recalc_view for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
             self.recalc_view()
 

@@ -14,11 +14,10 @@ log = logging.getLogger(__name__)
 
 
 class ByteGridRenderer(Grid.GridCellRenderer):
-    def __init__(self, table, linked_base):
+    def __init__(self, grid):
         """Render data in the specified color and font and fontsize"""
         Grid.GridCellRenderer.__init__(self)
-        self.table = table
-        m = linked_base.machine
+        m = grid.segment_viewer.machine
         self.color = m.text_color
         self.diff_color = m.diff_text_color
         self.font = m.text_font
@@ -50,15 +49,16 @@ class ByteGridRenderer(Grid.GridCellRenderer):
         # clear the background
         dc.SetBackgroundMode(wx.SOLID)
 
-        index, _ = self.table.get_index_range(row, col)
-        if not self.table.is_index_valid(index):
+        table = grid.table
+        index, _ = table.get_index_range(row, col)
+        if not table.is_index_valid(index):
             dc.SetBrush(wx.Brush(wx.WHITE, wx.SOLID))
             dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
             dc.DrawRectangle(rect)
         else:
             try:
-                text, style = self.table.get_value_style(row, col)
-                style = self.table.get_style_override(row, col, style)
+                text, style = table.get_value_style(row, col)
+                style = table.get_style_override(row, col, style)
             except IndexError, e:
                 log.error("Scrolled to invalid row somehow! %s" % str(e))
                 text, style = "", 0
@@ -106,7 +106,7 @@ class ByteGridRenderer(Grid.GridCellRenderer):
                 dc.DrawRectangle(x, rect.y+1, width+1, height)
                 dc.DrawText("...", x, rect.y+1)
 
-            r, c = self.table.get_row_col(grid.linked_base.editor.cursor_index)
+            r, c = table.get_row_col(grid.linked_base.editor.cursor_index)
             if row == r and col == c:
                 dc.SetPen(self.cursor_pen)
                 dc.SetBrush(self.cursor_brush)
@@ -253,7 +253,7 @@ class ByteGridTable(Grid.GridTableBase):
     def set_grid_cell_attr(self, grid, col, attr):
         attr.SetFont(grid.linked_base.machine.text_font)
         attr.SetBackgroundColour("white")
-        renderer = grid.get_grid_cell_renderer(self, grid.linked_base)
+        renderer = grid.get_grid_cell_renderer(grid)
         attr.SetRenderer(renderer)
 
     def set_col_attr(self, grid, col, char_width):
@@ -681,8 +681,8 @@ class ByteGrid(Grid.Grid, SelectionMixin):
     def restore_view_params(self, data):
         self.restore_upper_left = data
 
-    def get_grid_cell_renderer(self, table, linked_base):
-        return ByteGridRenderer(table, linked_base)
+    def get_grid_cell_renderer(self, grid):
+        return ByteGridRenderer(grid)
 
     def recalc_view(self):
         self.table.ResetView(self)

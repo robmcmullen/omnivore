@@ -29,8 +29,7 @@ class ImageCache(object):
     def invalidate(self):
         self.cache = {}
 
-    def set_colors(self, linked_base):
-        m = linked_base.machine
+    def set_colors(self, m):
         self.color = m.text_color
         self.diff_color = m.diff_text_color
         self.font = m.text_font
@@ -103,22 +102,22 @@ class ImageCache(object):
 
 
 class CachingHexRenderer(Grid.GridCellRenderer):
-    def __init__(self, table, linked_base, cache):
+    def __init__(self, machine, cache):
         """Render data in the specified color and font and fontsize"""
         Grid.GridCellRenderer.__init__(self)
-        self.table = table
         self.cache = cache
-        cache.set_colors(linked_base)
+        cache.set_colors(machine)
 
     def Draw(self, grid, attr, dc, rect, row, col, isSelected):
-        index, _ = self.table.get_index_range(row, col)
-        if not self.table.is_index_valid(index):
+        table = grid.table
+        index, _ = table.get_index_range(row, col)
+        if not table.is_index_valid(index):
             self.cache.draw_blank(dc, rect)
         else:
-            text, style = self.table.get_value_style(row, col)
+            text, style = table.get_value_style(row, col)
             self.cache.draw_text(dc, rect, text, style)
 
-            r, c = self.table.get_row_col(grid.linked_base.editor.cursor_index)
+            r, c = table.get_row_col(grid.linked_base.editor.cursor_index)
             if row == r and col == c:
                 dc.SetPen(self.cache.cursor_pen)
                 dc.SetBrush(self.cache.cursor_brush)
@@ -222,8 +221,8 @@ class HexEditControl(ByteGrid):
         ByteGrid.__init__(self, parent, linked_base, table, **kwargs)
         self.image_cache = ImageCache()
 
-    def get_grid_cell_renderer(self, table, linked_base):
-        return CachingHexRenderer(table, linked_base, self.image_cache)
+    def get_grid_cell_renderer(self, grid):
+        return CachingHexRenderer(grid.segment_viewer.machine, self.image_cache)
 
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.

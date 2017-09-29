@@ -40,7 +40,7 @@ class DisassemblyTable(ByteGridTable):
         self.end_addr = 0
         self.chunk_size = 256
         self.set_display_format(linked_base)
-        self.update_disassembly(linked_base.disassemble_segment())
+        #self.update_disassembly(linked_base.disassemble_segment(self.segment_viewer.machine))
 
     def update_disassembly(self, disassembly, index=0, refresh=False):
         self.disassembly = disassembly
@@ -147,6 +147,8 @@ class DisassemblyTable(ByteGridTable):
             return row.pc
         except IndexError:
             return 0
+        except TypeError:
+            return 0
 
     def get_value_style(self, row, col, operand_labels_start_pc=-1, operand_labels_end_pc=-1, extra_labels={}, offset_operand_labels={}, line=None):
         if line is None:
@@ -246,7 +248,7 @@ class DisassemblyPanel(ByteGrid):
         prefs.disassembly_column_widths = tuple(widths)
 
     def recalc_view(self):
-        disassembly = self.linked_base.disassemble_segment()
+        disassembly = self.linked_base.get_current_disassembly(self.segment_viewer.machine)
         self.table.update_disassembly(disassembly)
         ByteGrid.recalc_view(self)
         if self.table.linked_base.editor.can_trace:
@@ -260,7 +262,7 @@ class DisassemblyPanel(ByteGrid):
         current_row = self.GetGridCursorRow()
         rows_from_top = current_row - first_row
         want_address = self.table.get_pc(current_row)
-        d = self.linked_base.disassemble_segment()
+        d = self.linked_base.get_current_disassembly(self.segment_viewer.machine)
         self.table.update_disassembly(d)
         r, _ = self.table.get_row_col(want_address - self.table.start_addr)
         self.table.ResetView(self, None)
@@ -388,7 +390,7 @@ class DisassemblyListSaver(object):
         """Segment saver interface: take a segment and produce a byte
         representation to save to disk.
         """
-        lines = linked_base.disassemble_segment().get_atasm_lst_text()
+        lines = linked_base.get_current_disassembly(self.segment_viewer.machine).get_atasm_lst_text()
         text = os.linesep.join(lines) + os.linesep
         data = text.encode("utf-8")
         return data
@@ -401,7 +403,7 @@ class DisassemblyViewer(SegmentViewer):
 
     @property
     def window_title(self):
-        return self.linked_base.machine.disassembler.cpu
+        return self.machine.disassembler.name
 
     @on_trait_change('linked_base.editor.document.recalc_event')
     def process_segment_change(self, evt):

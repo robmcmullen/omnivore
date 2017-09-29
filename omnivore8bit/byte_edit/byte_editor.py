@@ -694,8 +694,11 @@ class ByteEditor(FrameworkEditor):
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
-        viewer = DisassemblyViewer.create(panel, center_base)
-        pane_info = aui.AuiPaneInfo().Name("disassembly").Right().MinimizeButton(True).Layer(0)
+        machine2 = center_base.machine.clone_machine()
+        from ..arch.machine import disasm
+        machine2.set_disassembler(disasm.BasicZ80Disassembler)
+        viewer = DisassemblyViewer.create(panel, center_base, machine2)
+        pane_info = aui.AuiPaneInfo().Name("disassembly2").Right().MinimizeButton(True).Layer(0)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 

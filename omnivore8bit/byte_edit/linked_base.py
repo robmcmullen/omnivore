@@ -57,7 +57,7 @@ class LinkedBase(HasTraits):
 
     trace = Instance(TraceInfo)
 
-    _disassembler = Any(None)
+    disassembler_cache = Dict
 
     last_cursor_index = Int(0)
 
@@ -234,11 +234,11 @@ class LinkedBase(HasTraits):
         if refresh:
             self.view_segment_number(index)
         else:
-            self._disassembler = None  # force disassembler to use new segment
             self.segment_number = index
             self.segment_parser = self.document.segment_parser
             self.segment = self.document.segments[index]
             self.editor.select_none(refresh=False)
+            self.restart_disassembly()
             self.task.segments_changed = self.document.segments
             self.task.segment_selected = self.segment_number
 
@@ -500,23 +500,28 @@ class LinkedBase(HasTraits):
 
     #### Disassembler
 
-    @property
-    def disassembler(self):
-        if self._disassembler is None:
-            log.debug("creating disassembler for %s" % self.machine.name)
-            d = self.machine.get_disassembler(self.task.hex_grid_lower_case, self.task.assembly_lower_case, self.document.document_memory_map, self.segment.memory_map)
+    def get_current_disassembly(self, machine=None):
+        if machine is None:
+            machine = self.machine
+        d = self.disassembler_cache.get(machine.disassembler.name, None)
+        if d is None:
+            log.debug("creating disassembler for %s" % machine.disassembler.name)
+            d = machine.get_disassembler(self.task.hex_grid_lower_case, self.task.assembly_lower_case, self.document.document_memory_map, self.segment.memory_map)
             for i, name in iter_disasm_styles():
                 d.add_chunk_processor(name, i)
-            self._disassembler = d
-        return self._disassembler
+            d.disassemble_segment(self.segment)
+            self.disassembler_cache[machine.disassembler.name] = d
+        log.debug("get_current_disassembly: %s" % str(d.info))
+        return d
 
-    def disassemble_segment(self):
-        self.disassembler.disassemble_segment(self.segment)
-        return self.disassembler
+    def disassemble_segment(self, machine=None):
+        log.debug("disassemble_segment")
+        return self.get_current_disassembly(machine)
 
     def restart_disassembly(self, index_range=None):
         #start = index_range[0] if index_range is not None else 0
         log.debug("restart_disassembly")
+        self.disassembler_cache = {}
         d = self.disassemble_segment()
         self.disassembly_changed_event = True
 
