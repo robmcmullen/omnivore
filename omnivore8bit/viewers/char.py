@@ -19,4 +19,4 @@ class CharViewer(SegmentViewer):
 
     @property
     def window_title(self):
-        return self.linked_base.machine.font_renderer.name + ", " + self.linked_base.machine.font_mapping.name
+        return self.machine.font_renderer.name + ", " + self.machine.font_mapping.name

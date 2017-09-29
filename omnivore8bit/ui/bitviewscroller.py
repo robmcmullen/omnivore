@@ -240,7 +240,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
             self.scaled_bmp = wx.Bitmap(w, h)
 
             dc.SelectObject(self.scaled_bmp)
-            dc.SetBackground(wx.Brush(self.linked_base.machine.empty_color))
+            dc.SetBackground(wx.Brush(self.segment_viewer.machine.empty_color))
             dc.Clear()
 
             array = self.get_image()
@@ -277,8 +277,8 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         log.debug("x, y, w, h, rows start, num, cols start, num:%s" % str([x, y, w, h, self.start_row, self.visible_rows, self.fully_visible_rows, self.start_col, self.visible_cols, self.fully_visible_cols]))
 
     def update_bytes_per_row(self):
-        self.pixels_per_byte = self.linked_base.machine.bitmap_renderer.pixels_per_byte
-        self.bitplanes = self.linked_base.machine.bitmap_renderer.bitplanes
+        self.pixels_per_byte = self.segment_viewer.machine.bitmap_renderer.pixels_per_byte
+        self.bitplanes = self.segment_viewer.machine.bitmap_renderer.bitplanes
 
     def set_scale(self):
         """Creates new image at specified zoom factor.
@@ -556,7 +556,7 @@ class BitmapScroller(BitviewScroller):
     # FIXME: renderer becomes attribute of this class, not machine! There may be many different bitmap renderers
     # def update_bytes_per_row(self):
     #     BitviewScroller.update_bytes_per_row(self)
-    #     self.bytes_per_row = self.linked_base.machine.bitmap_renderer.validate_bytes_per_row(16) #self.editor.bitmap_width)
+    #     self.bytes_per_row = self.segment_viewer.machine.bitmap_renderer.validate_bytes_per_row(16) #self.editor.bitmap_width)
 
     # def sync_to_editor(self, e):
     #     e.bitmap_zoom = self.zoom
@@ -605,7 +605,7 @@ class BitmapScroller(BitviewScroller):
             count = self.end_byte - self.start_byte
             bytes = segment[self.start_byte:self.end_byte]
             style = segment.style[self.start_byte:self.end_byte]
-        m = self.linked_base.machine
+        m = self.segment_viewer.machine
         array = m.bitmap_renderer.get_image(m, self.bytes_per_row, nr, count, bytes, style)
         sc = self.start_col
         nc = self.visible_cols
@@ -696,9 +696,9 @@ class FontMapScroller(BitviewScroller):
         log.debug("fontmap: : x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, self.fully_visible_rows, "col start, num:", self.start_col, self.visible_cols, self.fully_visible_cols]))
 
     def set_font(self):
-        self.font = self.linked_base.machine.antic_font
-        self.pixels_per_byte = self.linked_base.machine.font_renderer.char_bit_width
-        self.pixels_per_row = self.linked_base.machine.font_renderer.char_bit_height
+        self.font = self.segment_viewer.machine.antic_font
+        self.pixels_per_byte = self.segment_viewer.machine.font_renderer.char_bit_width
+        self.pixels_per_row = self.segment_viewer.machine.font_renderer.char_bit_height
         self.calc_scroll_params()
         if self.font.use_blinking:
             self.blink_timer.Start(267)  # on/off cycle in 1.87 Hz
@@ -726,7 +726,7 @@ class FontMapScroller(BitviewScroller):
         style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
 
-        m = self.linked_base.machine
+        m = self.segment_viewer.machine
         font = m.get_blinking_font(self.blink_index)
         array = m.font_renderer.get_image(m, font, bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols)
         return array
@@ -755,7 +755,7 @@ class FontMapScroller(BitviewScroller):
         style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
 
-        m = self.linked_base.machine
+        m = self.segment_viewer.machine
         font = m.get_blinking_font(0)
         array = m.font_renderer.get_image(m, font, bytes, style, start_byte, end_byte, self.bytes_per_row, nr, 0, self.bytes_per_row)
         if self.font.scale_h > 1 or self.font.scale_w > 1:
@@ -795,7 +795,7 @@ class FontMapScroller(BitviewScroller):
         ymax = array.shape[0]
         c1 = max(x1, 0)
         c2 = min(x2, xmax)
-        m = self.linked_base.machine
+        m = self.segment_viewer.machine
         if color is None:
             color = m.empty_color
 
@@ -888,7 +888,7 @@ class FontMapScroller(BitviewScroller):
         char = evt.GetUnicodeKey()
         if char > 0:
             self.editor.select_none_if_selection()
-            char = self.linked_base.machine.font_mapping.convert_byte_mapping(char)
+            char = self.segment_viewer.machine.font_mapping.convert_byte_mapping(char)
             self.change_byte(char | self.inverse)
 
     def change_byte(self, value):
@@ -920,7 +920,7 @@ class FontMapScroller(BitviewScroller):
             else:
                 delta_index = self.process_movement_keys(char)
         else:
-            byte = self.linked_base.machine.font_mapping.wx_char_to_byte(char, mods, self)
+            byte = self.segment_viewer.machine.font_mapping.wx_char_to_byte(char, mods, self)
             if byte is None:
                 if char == wx.WXK_F1:
                     self.inverse = (self.inverse + 0x80) & 0x80
@@ -933,7 +933,7 @@ class FontMapScroller(BitviewScroller):
                     delta_index = self.process_movement_keys(char)
 
         if byte is not None:
-            byte = self.linked_base.machine.font_mapping.convert_byte_mapping(byte)
+            byte = self.segment_viewer.machine.font_mapping.convert_byte_mapping(byte)
             self.change_byte(byte)
             self.pending_esc = False
         elif delta_index is not None:
@@ -1114,7 +1114,7 @@ class MemoryMapScroller(BitviewScroller):
         style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
 
-        m = self.linked_base.machine
+        m = self.segment_viewer.machine
         array = m.page_renderer.get_image(m, bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols)
         log.debug(array.shape)
         t = time.clock()

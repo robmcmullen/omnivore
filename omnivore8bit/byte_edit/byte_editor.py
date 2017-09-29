@@ -679,26 +679,48 @@ class ByteEditor(FrameworkEditor):
         # Set initial default viewer as the center pane
         self.focused_viewer = viewer
 
+        # import stuff for extra renderers
+        from ..arch import antic_renderers as antic_renderers
+        from ..arch.machine import disasm
+
+        layer = 0
         viewer = CharViewer.create(panel, center_base)
-        pane_info = aui.AuiPaneInfo().Name("char").Right().MinimizeButton(True).Layer(0)
-        self.viewers.append((viewer, pane_info))
-        self.mgr.AddPane(viewer.control, pane_info)
-
-        viewer = BitmapViewer.create(panel, center_base)
-        pane_info = aui.AuiPaneInfo().Name("bitmap").Right().MinimizeButton(True).Layer(1)
-        self.viewers.append((viewer, pane_info))
-        self.mgr.AddPane(viewer.control, pane_info)
-
-        viewer = DisassemblyViewer.create(panel, center_base)
-        pane_info = aui.AuiPaneInfo().Name("disassembly").Right().MinimizeButton(True).Layer(2)
+        pane_info = aui.AuiPaneInfo().Name("char").Right().MinimizeButton(True).Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
         machine2 = center_base.machine.clone_machine()
-        from ..arch.machine import disasm
+        from ..arch import antic_renderers as antic_renderers
+        machine2.set_font(font_renderer=antic_renderers.Mode5())
+        viewer = CharViewer.create(panel, center_base, machine2)
+        pane_info = aui.AuiPaneInfo().Name("char2").Right().MinimizeButton(True).Layer(layer)
+        self.viewers.append((viewer, pane_info))
+        self.mgr.AddPane(viewer.control, pane_info)
+
+        layer += 1
+        viewer = BitmapViewer.create(panel, center_base)
+        pane_info = aui.AuiPaneInfo().Name("bitmap").Right().MinimizeButton(True).Layer(layer)
+        self.viewers.append((viewer, pane_info))
+        self.mgr.AddPane(viewer.control, pane_info)
+
+        machine2 = center_base.machine.clone_machine()
+        from ..arch import antic_renderers as antic_renderers
+        machine2.set_bitmap_renderer(antic_renderers.ModeE())
+        viewer = BitmapViewer.create(panel, center_base, machine2)
+        pane_info = aui.AuiPaneInfo().Name("bitmap2").Right().MinimizeButton(True).Layer(layer)
+        self.viewers.append((viewer, pane_info))
+        self.mgr.AddPane(viewer.control, pane_info)
+
+        layer += 1
+        viewer = DisassemblyViewer.create(panel, center_base)
+        pane_info = aui.AuiPaneInfo().Name("disassembly").Right().MinimizeButton(True).Layer(layer)
+        self.viewers.append((viewer, pane_info))
+        self.mgr.AddPane(viewer.control, pane_info)
+
+        machine2 = center_base.machine.clone_machine()
         machine2.set_disassembler(disasm.BasicZ80Disassembler)
         viewer = DisassemblyViewer.create(panel, center_base, machine2)
-        pane_info = aui.AuiPaneInfo().Name("disassembly2").Right().MinimizeButton(True).Layer(0)
+        pane_info = aui.AuiPaneInfo().Name("disassembly2").Right().MinimizeButton(True).Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
