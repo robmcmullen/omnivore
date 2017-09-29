@@ -672,7 +672,7 @@ class ByteEditor(FrameworkEditor):
         self.linked_bases.append(center_base)
 
         viewer = HexEditViewer.create(panel, center_base)
-        pane_info = aui.AuiPaneInfo().Name("hex").CenterPane().MinimizeButton(True)
+        pane_info = aui.AuiPaneInfo().Name("hex").CenterPane()
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
@@ -680,47 +680,53 @@ class ByteEditor(FrameworkEditor):
         self.focused_viewer = viewer
 
         # import stuff for extra renderers
-        from ..arch import antic_renderers as antic_renderers
+        from ..arch import antic_renderers
         from ..arch.machine import disasm
+        from ..arch import fonts
 
         layer = 0
         viewer = CharViewer.create(panel, center_base)
-        pane_info = aui.AuiPaneInfo().Name("char").Right().MinimizeButton(True).Layer(layer)
+        pane_info = aui.AuiPaneInfo().Name("char").Right().Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
         machine2 = center_base.machine.clone_machine()
-        from ..arch import antic_renderers as antic_renderers
         machine2.set_font(font_renderer=antic_renderers.Mode5())
         viewer = CharViewer.create(panel, center_base, machine2)
-        pane_info = aui.AuiPaneInfo().Name("char2").Right().MinimizeButton(True).Layer(layer)
+        pane_info = aui.AuiPaneInfo().Name("char2").Right().Layer(layer)
+        self.viewers.append((viewer, pane_info))
+        self.mgr.AddPane(viewer.control, pane_info)
+
+        machine2 = center_base.machine.clone_machine()
+        machine2.set_font(font=fonts.A2MouseTextFont, font_renderer=antic_renderers.Apple2TextMode())
+        viewer = CharViewer.create(panel, center_base, machine2)
+        pane_info = aui.AuiPaneInfo().Name("char3").Right().Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
         layer += 1
         viewer = BitmapViewer.create(panel, center_base)
-        pane_info = aui.AuiPaneInfo().Name("bitmap").Right().MinimizeButton(True).Layer(layer)
+        pane_info = aui.AuiPaneInfo().Name("bitmap").Right().Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
         machine2 = center_base.machine.clone_machine()
-        from ..arch import antic_renderers as antic_renderers
         machine2.set_bitmap_renderer(antic_renderers.ModeE())
         viewer = BitmapViewer.create(panel, center_base, machine2)
-        pane_info = aui.AuiPaneInfo().Name("bitmap2").Right().MinimizeButton(True).Layer(layer)
+        pane_info = aui.AuiPaneInfo().Name("bitmap2").Right().Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
         layer += 1
         viewer = DisassemblyViewer.create(panel, center_base)
-        pane_info = aui.AuiPaneInfo().Name("disassembly").Right().MinimizeButton(True).Layer(layer)
+        pane_info = aui.AuiPaneInfo().Name("disassembly").Right().Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
         machine2 = center_base.machine.clone_machine()
         machine2.set_disassembler(disasm.BasicZ80Disassembler)
         viewer = DisassemblyViewer.create(panel, center_base, machine2)
-        pane_info = aui.AuiPaneInfo().Name("disassembly2").Right().MinimizeButton(True).Layer(layer)
+        pane_info = aui.AuiPaneInfo().Name("disassembly2").Right().Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
