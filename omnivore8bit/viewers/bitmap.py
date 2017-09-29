@@ -3,6 +3,8 @@ import sys
 
 import wx
 
+from traits.api import on_trait_change
+
 from omnivore8bit.ui.bitviewscroller import BitmapScroller
 from commands import ChangeByteCommand
 
@@ -20,3 +22,8 @@ class BitmapViewer(SegmentViewer):
     @property
     def window_title(self):
         return self.machine.bitmap_renderer.name
+
+    @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
+    def update_bitmap(self):
+        log.debug("BitmapViewer: machine bitmap changed!")
+        self.control.recalc_view()

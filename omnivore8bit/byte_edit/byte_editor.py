@@ -756,7 +756,9 @@ class ByteEditor(FrameworkEditor):
 
     def on_pane_active(self, evt):
         print("acvitated pane!", evt.pane)
-        self.focused_viewer = evt.pane.segment_viewer
+        v = evt.pane.segment_viewer
+        if v != self.focused_viewer:
+            self.focused_viewer = evt.pane.segment_viewer
 
     def index_clicked(self, index, bit, from_control, refresh_from=True):
         log.debug("index_clicked: %s from %s at %d, %s" % (refresh_from, from_control, index, bit))
