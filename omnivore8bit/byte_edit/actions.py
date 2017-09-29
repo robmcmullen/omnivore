@@ -343,9 +343,10 @@ class BitmapWidthAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        width = prompt_for_dec(e.window.control, 'Enter new bitmap width in bytes', 'Set Bitmap Width', e.bitmap_width)
+        v = e.focused_viewer
+        width = prompt_for_dec(e.window.control, 'Enter new bitmap width in bytes', 'Set Bitmap Width', v.machine.bitmap_bytes_per_row)
         if width is not None and width > 0:
-            wx.CallAfter(e.set_bitmap_width, width)
+            wx.CallAfter(v.machine.set_bitmap_bytes_per_row, width)
 
 
 class BitmapZoomAction(EditorAction):
@@ -356,9 +357,10 @@ class BitmapZoomAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        width = prompt_for_dec(e.window.control, 'Enter new pixel zoom factor', 'Set Bitmap Zoom', e.bitmap_zoom)
+        v = e.focused_viewer
+        width = prompt_for_dec(e.window.control, 'Enter new pixel zoom factor', 'Set Bitmap Zoom', v.machine.bitmap_zoom)
         if width is not None and width > 0:
-            wx.CallAfter(e.set_bitmap_zoom, width)
+            wx.CallAfter(v.machine.set_bitmap_zoom, width)
 
 
 class FontMappingWidthAction(EditorAction):
@@ -368,9 +370,10 @@ class FontMappingWidthAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        width = prompt_for_dec(e.window.control, 'Enter new map width in bytes', 'Set Map Width', str(e.map_width))
+        v = e.focused_viewer
+        width = prompt_for_dec(e.window.control, 'Enter new map width in bytes', 'Set Map Width', str(v.machine.font_bytes_per_row))
         if width is not None and width > 0:
-            wx.CallAfter(e.set_map_width, width)
+            wx.CallAfter(v.machine.set_font_bytes_per_row, width)
 
 
 class FontMappingZoomAction(EditorAction):
@@ -381,9 +384,10 @@ class FontMappingZoomAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        width = prompt_for_dec(e.window.control, 'Enter new pixel zoom factor', 'Set Map Zoom', e.map_zoom)
+        v = e.focused_viewer
+        width = prompt_for_dec(e.window.control, 'Enter new pixel zoom factor', 'Set Map Zoom', v.machine.font_zoom)
         if width is not None and width > 0:
-            wx.CallAfter(e.set_map_zoom, width)
+            wx.CallAfter(v.machine.set_font_zoom, width)
 
 
 class AnticColorAction(EditorAction):

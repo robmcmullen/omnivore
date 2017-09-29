@@ -55,7 +55,15 @@ class Machine(HasTraits):
 
     bitmap_renderer = Any(transient=True)
 
+    bitmap_bytes_per_row = Int(1)
+
+    bitmap_zoom = Int(5)
+
     font_renderer = Any(transient=True)
+
+    font_bytes_per_row = Int(8)
+
+    font_zoom = Int(2)
 
     font_mapping = Any(transient=True)
 
@@ -366,6 +374,14 @@ class Machine(HasTraits):
         self.bitmap_renderer = renderer
         self.bitmap_shape_change_event = True
 
+    def set_bitmap_bytes_per_row(self, value):
+        self.bitmap_bytes_per_row = value
+        self.bitmap_shape_change_event = True
+
+    def set_bitmap_zoom(self, value):
+        self.bitmap_zoom = value
+        self.bitmap_shape_change_event = True
+
     def set_disassembler(self, disassembler):
         self.disassembler = disassembler
         self.disassembler_change_event = True
@@ -415,6 +431,14 @@ class Machine(HasTraits):
         if font_mapping is None:
             font_mapping = self.font_mapping
         self.font_mapping = font_mapping
+        self.font_change_event = True
+
+    def set_font_bytes_per_row(self, value):
+        self.font_bytes_per_row = value
+        self.font_change_event = True
+
+    def set_font_zoom(self, value):
+        self.font_zoom = value
         self.font_change_event = True
 
     def get_antic_font(self, reverse=False):

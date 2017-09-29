@@ -26,7 +26,7 @@ from pyface.tasks.action.api import EditorAction
 from atrcopy import SegmentData, DefaultSegment, get_style_mask
 
 from omnivore.utils.nputil import intscale
-from omnivore8bit.hex_edit.actions import *
+from omnivore8bit.byte_edit.actions import *
 from omnivore8bit.arch.disasm import get_style_name
 
 from selection_mixin import SelectionMixin
@@ -553,10 +553,10 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
 class BitmapScroller(BitviewScroller):
     short_name = "bitmap"
 
-    # FIXME: renderer becomes attribute of this class, not machine! There may be many different bitmap renderers
-    # def update_bytes_per_row(self):
-    #     BitviewScroller.update_bytes_per_row(self)
-    #     self.bytes_per_row = self.segment_viewer.machine.bitmap_renderer.validate_bytes_per_row(16) #self.editor.bitmap_width)
+    def update_bytes_per_row(self):
+        BitviewScroller.update_bytes_per_row(self)
+        m = self.segment_viewer.machine
+        self.bytes_per_row = m.bitmap_renderer.validate_bytes_per_row(m.bitmap_bytes_per_row)
 
     # def sync_to_editor(self, e):
     #     e.bitmap_zoom = self.zoom
@@ -653,9 +653,9 @@ class FontMapScroller(BitviewScroller):
     def is_ready_to_render(self):
         return self.font is not None
 
-    # def update_bytes_per_row(self):
-    #     BitviewScroller.update_bytes_per_row(self)
-    #     self.bytes_per_row = self.editor.map_width
+    def update_bytes_per_row(self):
+        BitviewScroller.update_bytes_per_row(self)
+        self.bytes_per_row = self.segment_viewer.machine.font_bytes_per_row
 
     def sync_to_editor(self, e):
         e.map_zoom = self.zoom
@@ -1042,9 +1042,9 @@ class MemoryMapScroller(BitviewScroller):
         self.bytes_per_row = 256
         self.zoom = 2
 
-    # def update_bytes_per_row(self):
-    #     BitviewScroller.update_bytes_per_row(self)
-    #     self.bytes_per_row = self.editor.map_width
+    def update_bytes_per_row(self):
+        BitviewScroller.update_bytes_per_row(self)
+        self.bytes_per_row = self.segment_viewer.machine.bitmap_bytes_per_row
 
     def DoGetBestSize(self):
         """ Base class virtual method for sizer use to get the best size
