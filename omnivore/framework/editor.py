@@ -754,7 +754,7 @@ class FrameworkEditor(Editor):
         if do_refresh:
             d.refresh_event = True
 
-    def popup_context_menu_from_commands(self, window, commands):
+    def popup_context_menu_from_commands(self, control, commands):
         """Popup a simple context menu with menu items defined by commands.
         
         Each entry is either None to indicate a separator, or a 2-tuple
@@ -771,13 +771,12 @@ class FrameworkEditor(Editor):
                 i = wx.NewId()
                 popup.Append(i, name)
                 context_menu_data[i] = cmd
-        ret = window.GetPopupMenuSelectionFromUser(popup)
-        if ret == wx.ID_NONE:
-            return
-        cmd = context_menu_data[ret]
-        self.process_command(cmd)
+        ret = self.do_popup(control, popup)
+        if ret is not None:
+            cmd = context_menu_data[ret]
+            self.process_command(cmd)
 
-    def popup_context_menu_from_actions(self, window, actions, popup_data=None):
+    def popup_context_menu_from_actions(self, control, actions, popup_data=None):
         """Popup a simple context menu with menu items defined by actions.
         
         Each entry is either None to indicate a separator, or an action to be
@@ -813,12 +812,18 @@ class FrameworkEditor(Editor):
 
         loop_over_actions(popup, actions)
 
-        ret = window.GetPopupMenuSelectionFromUser(popup)
+        ret = self.do_popup(control, popup)
+        if ret is not None:
+            action = context_menu_data[ret]
+            action_event = ActionEvent(task=self.task, popup_data=popup_data)
+            action.perform(action_event)
+
+    def do_popup(self, control, popup):
+        ret = control.GetPopupMenuSelectionFromUser(popup)
         if ret == wx.ID_NONE:
-            return
-        action = context_menu_data[ret]
-        action_event = ActionEvent(task=self.task, popup_data=popup_data)
-        action.perform(action_event)
+            ret = None
+        return ret
+
 
     #### Traits event handlers
 

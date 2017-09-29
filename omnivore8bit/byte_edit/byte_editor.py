@@ -627,6 +627,17 @@ class ByteEditor(FrameworkEditor):
     def common_popup_actions(self):
         return [CutAction, CopyAction, ["Copy Special", CopyDisassemblyAction, CopyCommentsAction, CopyAsReprAction, CopyAsCBytesAction], PasteAction, ["Paste Special", PasteAndRepeatAction, PasteCommentsAction], None, SelectAllAction, SelectNoneAction, ["Mark Selection As", MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsUninitializedDataAction, MarkSelectionAsDisplayListAction, MarkSelectionAsJumpmanLevelAction, MarkSelectionAsJumpmanHarvestAction], None, GetSegmentFromSelectionAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction, AddLabelPopupAction, RemoveLabelPopupAction]
 
+    def do_popup(self, control, popup):
+        # The popup event may happen on a control that isn't the focused
+        # viewer, and the focused_viewer needs to point to that control for
+        # actions to work in the correct viewer. The focus needs to be forced
+        # to that control, we can't necessarily count on the ActivatePane call
+        # to work before the popup.
+        self.focused_viewer = control.segment_viewer
+        ret = FrameworkEditor.do_popup(self, control, popup)
+        wx.CallAfter(self.force_focus, control.segment_viewer)
+        return ret
+
     def change_bytes(self, start, end, bytes, pretty=None):
         """Convenience function to perform a ChangeBytesCommand
         """
@@ -753,6 +764,10 @@ class ByteEditor(FrameworkEditor):
         return panel
 
     #### wx event handlers
+
+    def force_focus(self, viewer):
+        self.mgr.ActivatePane(viewer.control)
+        self.update_pane_names()
 
     def on_pane_active(self, evt):
         print("acvitated pane!", evt.pane)
