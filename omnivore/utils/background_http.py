@@ -156,7 +156,7 @@ class BackgroundHttpMultiDownloader(object):
         for i in range(num_workers):
             thread = HttpThread(self.requests, self.results, "BackgroundHttpMultiDownloader")
             thread.start()
-            log.debug("Created thread %s" % self.thread.name)
+            log.debug("Created thread %s" % thread.name)
             self.threads.append(thread)
         self.get_server_config()
 
