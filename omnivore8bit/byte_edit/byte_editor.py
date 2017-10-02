@@ -773,16 +773,14 @@ class ByteEditor(FrameworkEditor):
     def on_pane_active(self, evt):
         # NOTE: evt.pane in this case is not an AuiPaneInfo object, it's the
         # AuiPaneInfo.window object
-        print("activated window!", evt.pane)
         v = evt.pane.segment_viewer
+        log.debug("on_pane_active: activated viewer %s %s" % (v, v.window_title))
         if v != self.focused_viewer:
             self.focused_viewer = evt.pane.segment_viewer
 
     def on_pane_close(self, evt):
-        print("closed pane!", evt.pane)
         v = evt.pane.window.segment_viewer
-        print self.viewers
-        print v
+        log.debug("on_pane_close: closed viewer %s %s" % (v, v.window_title))
         self.viewers.remove((v, evt.pane))
 
     def index_clicked(self, index, bit, from_control, refresh_from=True):

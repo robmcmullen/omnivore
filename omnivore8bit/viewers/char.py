@@ -3,7 +3,7 @@ import sys
 
 import wx
 
-from traits.api import on_trait_change
+from traits.api import on_trait_change, Bool
 
 from omnivore8bit.ui.bitviewscroller import FontMapScroller
 from commands import ChangeByteCommand
@@ -15,6 +15,8 @@ log = logging.getLogger(__name__)
 
 
 class CharViewer(SegmentViewer):
+    has_font = Bool(True)
+
     @classmethod
     def create_control(cls, parent, linked_base):
         return FontMapScroller(parent, linked_base, size=(160,500), command=ChangeByteCommand)

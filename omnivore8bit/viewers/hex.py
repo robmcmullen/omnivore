@@ -4,6 +4,8 @@ import sys
 import wx
 import wx.grid as Grid
 
+from traits.api import on_trait_change, Bool
+
 from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
 
 from omnivore8bit.ui.bytegrid import ByteGridTable, ByteGrid
@@ -262,6 +264,8 @@ class HexEditControl(ByteGrid):
 
 
 class HexEditViewer(SegmentViewer):
+    has_hex = Bool(True)
+
     @classmethod
     def create_control(cls, parent, linked_base):
         return HexEditControl(parent, linked_base)

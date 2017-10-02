@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import wx
 
-from traits.api import on_trait_change, Undefined
+from traits.api import on_trait_change, Undefined, Bool
 
 from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
 from udis.udis_fast import TraceInfo, flag_origin
@@ -397,6 +397,10 @@ class DisassemblyListSaver(object):
 
 
 class DisassemblyViewer(SegmentViewer):
+    has_cpu = Bool(True)
+
+    has_hex = Bool(True)
+
     @classmethod
     def create_control(cls, parent, linked_base):
         return DisassemblyPanel(parent, linked_base)

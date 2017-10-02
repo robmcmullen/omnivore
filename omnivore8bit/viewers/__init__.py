@@ -25,6 +25,14 @@ class SegmentViewer(HasTraits):
 
     control = Any(None)
 
+    has_bitmap = Bool(False)
+
+    has_font = Bool(False)
+
+    has_cpu = Bool(False)
+
+    has_hex = Bool(False)
+
     @classmethod
     def create_control(cls, parent, linked_base):
         raise NotImplementedError("Implement in subclass!")

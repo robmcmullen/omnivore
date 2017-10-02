@@ -66,6 +66,11 @@ class UseFontAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.machine.set_font(self.font)
 
+    @on_trait_change('active_editor.focused_viewer')
+    def _update_enabled(self):
+        if self.active_editor:
+            self.enabled = self.active_editor.focused_viewer.has_font
+
 
 class LoadFontAction(EditorAction):
     name = 'Load Font...'
@@ -222,6 +227,11 @@ class UseAssemblerAction(EditorAction):
         if self.active_editor:
             self.checked = self.active_editor.focused_viewer.machine.assembler == self.assembler
 
+    @on_trait_change('active_editor.focused_viewer')
+    def _update_enabled(self):
+        if self.active_editor:
+            self.enabled = self.active_editor.focused_viewer.has_cpu
+
 
 class AddNewAssemblerAction(EditorAction):
     """Add the syntax characteristics for a new assembler.
@@ -286,6 +296,11 @@ class FontRendererAction(EditorAction):
         if self.active_editor:
             self.checked = self.active_editor.focused_viewer.machine.font_renderer == self.font_renderer
 
+    @on_trait_change('active_editor.focused_viewer')
+    def _update_enabled(self):
+        if self.active_editor:
+            self.enabled = self.active_editor.focused_viewer.has_font
+
 
 class FontMappingAction(EditorAction):
     """This submenu contains a list of all available character mappings. Most
@@ -311,6 +326,11 @@ class FontMappingAction(EditorAction):
         if self.active_editor:
             self.checked = self.active_editor.focused_viewer.machine.font_mapping == self.font_mapping
 
+    @on_trait_change('active_editor.focused_viewer')
+    def _update_enabled(self):
+        if self.active_editor:
+            self.enabled = self.active_editor.focused_viewer.has_font
+
 
 class BitmapRendererAction(EditorAction):
     """This submenu contains a list of all available bitmap renderers.
@@ -334,6 +354,11 @@ class BitmapRendererAction(EditorAction):
         if self.active_editor:
             self.checked = self.active_editor.focused_viewer.machine.bitmap_renderer == self.bitmap_renderer
 
+    @on_trait_change('active_editor.focused_viewer')
+    def _update_enabled(self):
+        if self.active_editor:
+            self.enabled = self.active_editor.focused_viewer.has_bitmap
+
 
 class BitmapWidthAction(EditorAction):
     """Set the number of bytes per row of the bitmap display, which in turn
@@ -347,6 +372,11 @@ class BitmapWidthAction(EditorAction):
         width = prompt_for_dec(e.window.control, 'Enter new bitmap width in bytes', 'Set Bitmap Width', v.machine.bitmap_bytes_per_row)
         if width is not None and width > 0:
             wx.CallAfter(v.machine.set_bitmap_bytes_per_row, width)
+
+    @on_trait_change('active_editor.focused_viewer')
+    def _update_enabled(self):
+        if self.active_editor:
+            self.enabled = self.active_editor.focused_viewer.has_bitmap
 
 
 class BitmapZoomAction(EditorAction):
@@ -362,6 +392,11 @@ class BitmapZoomAction(EditorAction):
         if width is not None and width > 0:
             wx.CallAfter(v.machine.set_bitmap_zoom, width)
 
+    @on_trait_change('active_editor.focused_viewer')
+    def _update_enabled(self):
+        if self.active_editor:
+            self.enabled = self.active_editor.focused_viewer.has_bitmap
+
 
 class FontMappingWidthAction(EditorAction):
     """Set the number of bytes per row of the character display.
@@ -374,6 +409,11 @@ class FontMappingWidthAction(EditorAction):
         width = prompt_for_dec(e.window.control, 'Enter new map width in bytes', 'Set Map Width', str(v.machine.font_bytes_per_row))
         if width is not None and width > 0:
             wx.CallAfter(v.machine.set_font_bytes_per_row, width)
+
+    @on_trait_change('active_editor.focused_viewer')
+    def _update_enabled(self):
+        if self.active_editor:
+            self.enabled = self.active_editor.focused_viewer.has_font
 
 
 class FontMappingZoomAction(EditorAction):
@@ -389,6 +429,11 @@ class FontMappingZoomAction(EditorAction):
         if width is not None and width > 0:
             wx.CallAfter(v.machine.set_font_zoom, width)
 
+    @on_trait_change('active_editor.focused_viewer')
+    def _update_enabled(self):
+        if self.active_editor:
+            self.enabled = self.active_editor.focused_viewer.has_font
+
 
 class AnticColorAction(EditorAction):
     """Open a window to choose the color palette from the available colors
@@ -402,6 +447,11 @@ class AnticColorAction(EditorAction):
         if dlg.ShowModal() == wx.ID_OK:
             e.machine.update_colors(dlg.colors)
 
+    @on_trait_change('active_editor.focused_viewer')
+    def _update_enabled(self):
+        if self.active_editor:
+            self.enabled = self.active_editor.focused_viewer.has_font or self.active_editor.focused_viewer.has_bitmap
+
 
 class UseColorsAction(EditorAction):
     """Changes the color palette to {name}
@@ -411,6 +461,11 @@ class UseColorsAction(EditorAction):
 
     def perform(self, event):
         self.active_editor.focused_viewer.machine.update_colors(self.colors)
+
+    @on_trait_change('active_editor.focused_viewer')
+    def _update_enabled(self):
+        if self.active_editor:
+            self.enabled = self.active_editor.focused_viewer.has_font or self.active_editor.focused_viewer.has_bitmap
 
 
 class ColorStandardAction(EditorAction):
@@ -429,6 +484,11 @@ class ColorStandardAction(EditorAction):
     def _update_checked(self):
         if self.active_editor:
             self.checked = self.active_editor.focused_viewer.machine.color_standard == self.color_standard
+
+    @on_trait_change('active_editor.focused_viewer')
+    def _update_enabled(self):
+        if self.active_editor:
+            self.enabled = self.active_editor.focused_viewer.has_font or self.active_editor.focused_viewer.has_bitmap
 
 
 class TextFontAction(EditorAction):
@@ -452,6 +512,11 @@ class TextFontAction(EditorAction):
             prefs.text_font = font
             e.reconfigure_panes()
 
+    @on_trait_change('active_editor.focused_viewer')
+    def _update_enabled(self):
+        if self.active_editor:
+            self.enabled = self.active_editor.focused_viewer.has_hex
+
 
 class PredefinedMachineAction(EditorAction):
     """These are built-in machine definitions that store preset values for
@@ -470,7 +535,7 @@ class PredefinedMachineAction(EditorAction):
         return self.machine.name
 
     def perform(self, event):
-        self.active_editor.set_machine(self.machine)
+        self.active_editor.focused_viewer.set_machine(self.machine)
 
     @on_trait_change('active_editor.focused_viewer.machine')
     def _update_checked(self):
@@ -500,6 +565,11 @@ class ProcessorTypeAction(EditorAction):
     def _update_checked(self):
         if self.active_editor:
             self.checked = self.active_editor.focused_viewer.machine.disassembler == self.disassembler
+
+    @on_trait_change('active_editor.focused_viewer')
+    def _update_enabled(self):
+        if self.active_editor:
+            self.enabled = self.active_editor.focused_viewer.has_cpu
 
 
 class MemoryMapAction(EditorAction):
@@ -532,6 +602,11 @@ class MemoryMapAction(EditorAction):
     def _update_checked(self):
         if self.active_editor:
             self.checked = self.active_editor.focused_viewer.machine.memory_map == self.memory_map
+
+    @on_trait_change('active_editor.focused_viewer')
+    def _update_enabled(self):
+        if self.active_editor:
+            self.enabled = self.active_editor.focused_viewer.has_cpu
 
 
 class CurrentSegmentParserAction(NameChangeAction):
