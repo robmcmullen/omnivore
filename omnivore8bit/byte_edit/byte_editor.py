@@ -674,6 +674,7 @@ class ByteEditor(FrameworkEditor):
         art.SetMetric(aui.AUI_DOCKART_GRADIENT_TYPE, aui.AUI_GRADIENT_NONE)
         art.SetColor(aui.AUI_DOCKART_ACTIVE_CAPTION_COLOUR, art.GetColor(aui.AUI_DOCKART_ACTIVE_CAPTION_GRADIENT_COLOUR))
         panel.Bind(aui.framemanager.EVT_AUI_PANE_ACTIVATED, self.on_pane_active)
+        panel.Bind(aui.framemanager.EVT_AUI_PANE_CLOSE, self.on_pane_close)
 
 
         # tell AuiManager to manage this frame
@@ -770,10 +771,19 @@ class ByteEditor(FrameworkEditor):
         self.update_pane_names()
 
     def on_pane_active(self, evt):
-        print("acvitated pane!", evt.pane)
+        # NOTE: evt.pane in this case is not an AuiPaneInfo object, it's the
+        # AuiPaneInfo.window object
+        print("activated window!", evt.pane)
         v = evt.pane.segment_viewer
         if v != self.focused_viewer:
             self.focused_viewer = evt.pane.segment_viewer
+
+    def on_pane_close(self, evt):
+        print("closed pane!", evt.pane)
+        v = evt.pane.window.segment_viewer
+        print self.viewers
+        print v
+        self.viewers.remove((v, evt.pane))
 
     def index_clicked(self, index, bit, from_control, refresh_from=True):
         log.debug("index_clicked: %s from %s at %d, %s" % (refresh_from, from_control, index, bit))
