@@ -616,6 +616,7 @@ class FrameworkTask(Task):
         return [
             ShowLoggerAction(),
             SMenu(WidgetInspectorAction(),
+                GarbageObjectsAction(),
                   id="Debug", name="More Debugging"),
             ]
 

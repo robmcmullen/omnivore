@@ -1,6 +1,7 @@
 import os
 import sys
 import wx.lib.inspection
+import wx.lib.dialogs
 
 import fs
 
@@ -510,6 +511,19 @@ class WidgetInspectorAction(Action):
     def perform(self, event):
         wx.lib.inspection.InspectionTool().Show()
 
+
+class GarbageObjectsAction(Action):
+    name = 'View Uncollectable GC Objects'
+    tooltip = "View list of objects that have no external references but the gc can't collect"
+
+    def perform(self, event):
+        import gc
+        obj_list = []
+        for obj in gc.garbage:
+            obj_list.append(str(obj))
+        text = "\n".join(obj_list)
+        dlg = wx.lib.dialogs.ScrolledMessageDialog(event.task.window.control, text, "Unreachable but Uncollectable Objects")
+        dlg.ShowModal()
 
 class BaseDynamicSubmenuGroup(Group):
     """ A group used for a dynamic menu.
