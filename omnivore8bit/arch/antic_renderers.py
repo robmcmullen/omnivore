@@ -23,6 +23,9 @@ class BaseRenderer(object):
     bitplanes = 1
     ignore_mask = not_user_bit_mask & (0xff ^ diff_bit_mask)
 
+    def __eq__(self, other):
+        return self.name == other.name and self.pixels_per_byte == other.pixels_per_byte and self.bitplanes == other.bitplanes
+
     def validate_bytes_per_row(self, bytes_per_row):
         return bytes_per_row
 
@@ -981,6 +984,9 @@ class Apple2TextMode(Mode2):
 class ATASCIIFontMapping(object):
     name = "ASCII Order"
     font_mapping = atascii_to_internal
+
+    def __eq__(self, other):
+        return self.name == other.name
 
     def wx_char_to_byte(self, char, mods, control):
         byte = None
