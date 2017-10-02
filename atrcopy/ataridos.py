@@ -416,6 +416,12 @@ class AtrHeader(BaseHeader):
         pos += self.header_offset
         return pos, size
 
+    def strict_check(self, image):
+        size = len(image)
+        if self.header_offset == 16 or size in [92176, 133136, 184336, 183952]:
+            return
+        raise InvalidDiskImage("Uncommon size of ATR file")
+
 
 class XfdHeader(AtrHeader):
     file_format = "XFD"
@@ -689,8 +695,8 @@ class BootDiskImage(AtariDosDiskImage):
         max_size = max_ram - bload
         max_sectors = max_size // self.header.sector_size
         if nsec > max_sectors or nsec < 1:
-            raise InvalidDiskImage("Number of boot sectors out of range")
-        if bload < 0x200 or bload > (0xc000 - (nsec * self.header.sector_size)):
+            raise InvalidDiskImage("Number of boot sectors out of range (tried %d, max=%d" % (nsec, max_sectors))
+        if bload > (0xc000 - (nsec * self.header.sector_size)):
             raise InvalidDiskImage("Bad boot load address")
 
     def get_boot_sector_info(self):
@@ -729,6 +735,19 @@ class BootDiskImage(AtariDosDiskImage):
         return []
 
     def get_directory_segments(self):
+        return []
+
+
+class AtariDiskImage(BootDiskImage):
+    def __str__(self):
+        return "%s Unidentified Contents" % (self.header)
+
+    def check_size(self):
+        print self.header
+        if self.header is None:
+            raise ("Not a known Atari disk image format")
+
+    def get_boot_segments(self):
         return []
 
 

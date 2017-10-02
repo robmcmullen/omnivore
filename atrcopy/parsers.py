@@ -5,7 +5,7 @@ import numpy as np
 
 from .segments import SegmentData, DefaultSegment
 from .kboot import KBootImage
-from .ataridos import AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment
+from .ataridos import AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment, AtariDiskImage
 from .spartados import SpartaDosDiskImage
 from .cartridge import AtariCartImage, get_known_carts
 from .mame import MameZipImage
@@ -118,6 +118,11 @@ class AtariBootDiskSegmentParser(SegmentParser):
     image_type = BootDiskImage
 
 
+class AtariUnidentifiedSegmentParser(SegmentParser):
+    menu_name = "Atari Disk Image"
+    image_type = AtariDiskImage
+
+
 class XexSegmentParser(SegmentParser):
     menu_name = "XEX (Atari 8-bit executable)"
     image_type = AtariDosFile
@@ -202,6 +207,7 @@ mime_parsers = {
         SpartaDosSegmentParser,
         AtariDosSegmentParser,
         AtariBootDiskSegmentParser,
+        AtariUnidentifiedSegmentParser,
         ],
     "application/vnd.atari8bit.xex": [
         XexSegmentParser,
