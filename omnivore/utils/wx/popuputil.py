@@ -492,7 +492,10 @@ class SpringTabItem(GenToggleButton):
     def recalc_notification(self):
         popup, child = self.get_popup()
         try:
-            count = child.get_notification_count()
+            try:
+                count = child.get_notification_count()
+            except AttributeError:
+                count = child.segment_viewer.get_notification_count()
             if count != self.notification_count:
                 self.notification_count = count
                 self.Refresh()
