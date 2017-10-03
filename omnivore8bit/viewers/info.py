@@ -7,6 +7,7 @@ import wx
 from traits.api import on_trait_change, Bool, Undefined
 
 from omnivore.framework.undo_panel import UndoHistoryPanel
+from omnivore8bit.byte_edit.segments import SegmentList
 from . import SegmentViewer
 
 import logging
@@ -246,6 +247,40 @@ class UndoViewer(SegmentViewer):
     def show_cursor(self, control, index, bit):
         self.control.recalc_view()
         self.control.refresh_view()
+
+    ##### Spring Tab interface
+
+    def get_notification_count(self):
+        return 0
+
+
+class SegmentListViewer(SegmentViewer):
+    name = "segments"
+
+    pretty_name = "Segments"
+
+    @classmethod
+    def create_control(cls, parent, linked_base):
+        return SegmentList(parent, linked_base.editor.task, size=(100,500))
+
+    def recalc_data_model(self):
+        pass
+
+    def show_cursor(self, control, index, bit):
+        pass
+
+    @on_trait_change('linked_base.editor.task.segments_changed')
+    def process_segments_changed(self, evt):
+        log.debug("process_segments_changed for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        if evt is not Undefined:
+            self.control.set_segments(self.linked_base.editor.document.segments, self.linked_base.segment_number)
+            self.recalc_view()
+
+    @on_trait_change('linked_base.editor.task.segment_selected')
+    def process_segment_selected(self, evt):
+        log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        if evt is not Undefined:
+            self.control.move_cursor(evt)  # evt is segment number
 
     ##### Spring Tab interface
 

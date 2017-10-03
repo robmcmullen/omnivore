@@ -427,11 +427,6 @@ class FrameworkEditor(Editor):
         """
         raise NotImplementedError
 
-    def update_history(self):
-        """Hook to update any undo history list and/or save history log to a file
-        """
-        pass
-
     def made_current_active_editor(self):
         pass
 
@@ -837,7 +832,6 @@ class FrameworkEditor(Editor):
     def undo_stack_changed(self):
         log.debug("undo_stack_changed called!!!")
         self.update_undo_redo()
-        self.update_history()
         wx.CallAfter(self.refresh_toolbar_state)
 
     @on_trait_change('document:byte_values_changed')

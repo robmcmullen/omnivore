@@ -3,7 +3,6 @@ from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, F
 from envisage.api import ExtensionPoint
 
 from omnivore.framework.plugin import FrameworkPlugin
-from omnivore.framework.editor import FrameworkEditor
 from ..byte_edit.linked_base import LinkedBase
 
 from omnivore8bit.arch.machine import Machine
@@ -26,8 +25,6 @@ class SegmentViewer(HasTraits):
     pretty_name = "_base_"
 
     ##### Traits
-
-    editor = Instance(FrameworkEditor)
 
     linked_base = Instance(LinkedBase)
 
@@ -158,8 +155,8 @@ class ByteViewersPlugin(FrameworkPlugin):
         from omnivore8bit.viewers.char import CharViewer
         from omnivore8bit.viewers.cpu import DisassemblyViewer
         from omnivore8bit.viewers.hex import HexEditViewer
-        from omnivore8bit.viewers.info import CommentsViewer, UndoViewer
+        from omnivore8bit.viewers.info import CommentsViewer, UndoViewer, SegmentListViewer
 
-        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, MemoryMapViewer, CommentsViewer, UndoViewer]
+        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, MemoryMapViewer, CommentsViewer, UndoViewer, SegmentListViewer]
 
 plugins = [ByteViewersPlugin()]

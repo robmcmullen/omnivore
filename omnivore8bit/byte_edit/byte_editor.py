@@ -550,13 +550,6 @@ class ByteEditor(FrameworkEditor):
         log.debug("flags: %s" % str(flags))
         self.focused_viewer.linked_base.ensure_visible_index = flags
 
-    def update_history(self):
-#        history = document.undo_stack.serialize()
-#        self.window.application.save_log(str(history), "command_log", ".log")
-        if self.undo_history is not None:
-            self.undo_history.update_history()
-        self.sidebar.refresh_active()
-
     def get_goto_action_in_segment(self, addr_dest):
         if addr_dest >= 0:
             segment_start = self.segment.start_addr
@@ -721,6 +714,7 @@ class ByteEditor(FrameworkEditor):
         disassembly_viewer = self.task.find_viewer_by_name("disassembly")
         comments_viewer = self.task.find_viewer_by_name("comments")
         undo_viewer = self.task.find_viewer_by_name("undo")
+        segment_viewer = self.task.find_viewer_by_name("segments")
 
         layer = 0
 
@@ -776,20 +770,12 @@ class ByteEditor(FrameworkEditor):
         # self.mgr.AddPane(viewer.control, pane_info)
 
         layer += 1
-        viewer = undo_viewer.create(panel, center_base)
+        viewer = segment_viewer.create(panel, center_base)
         pane_name = self.get_pane_name(viewer.name)
         pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
-        try:
-            self.segment_list = self.window.get_dock_pane('byte_edit.segments').control
-        except AttributeError:
-            self.segment_list = None
-        try:
-            self.undo_history = self.window.get_dock_pane('byte_edit.undo').control
-        except AttributeError:
-            self.undo_history = None
         self.sidebar = self.window.get_dock_pane('byte_edit.sidebar')
 
         ##########################################

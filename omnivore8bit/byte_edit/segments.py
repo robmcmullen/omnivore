@@ -32,6 +32,7 @@ class SegmentList(wx.ListBox):
             self.ui_action = wx.UIActionSimulator()
             self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook_find_hack)
         self.index_to_segment_number = []
+        self.segment_number_to_index = {}
 
     def DoGetBestSize(self):
         """ Base class virtual method for sizer use to get the best size
@@ -68,6 +69,7 @@ class SegmentList(wx.ListBox):
 
     def filter_segments(self, segments, selected=0):
         self.index_to_segment_number = []
+        self.segment_number_to_index = {}
         names = []
         found = 0
         for segment_index, s in enumerate(segments):
@@ -75,6 +77,7 @@ class SegmentList(wx.ListBox):
                 if selected == segment_index:
                     found = len(self.index_to_segment_number)
                 self.index_to_segment_number.append(segment_index)
+                self.segment_number_to_index[segment_index] = len(names)
                 names.append(str(s))
         return names, found
 
@@ -119,10 +122,10 @@ class SegmentList(wx.ListBox):
         # that case, so I had to add the check on EVT_LEFT_DOWN
         selected = event.GetExtraLong()
         if selected:
-            self.view_index(event.GetSelection())
+            self.process_segment_change(event.GetSelection())
         event.Skip()
 
-    def view_index(self, index):
+    def process_segment_change(self, index):
         editor = self.task.active_editor
         segment_number = self.index_to_segment_number[index]
         if segment_number != editor.segment_number:
@@ -180,19 +183,13 @@ class SegmentList(wx.ListBox):
         index = d.find_segment_index(segment)
         self.EnsureVisible(index)
 
-    def activate_spring_tab(self):
-        self.recalc_view()
-
-    def get_notification_count(self):
-        return 0
-
     def on_key_down(self, evt):
         key = evt.GetKeyCode()
         log.debug("evt=%s, key=%s" % (evt, key))
         moved = False
         index = self.GetSelection()
         if key == wx.WXK_RETURN or key == wx.WXK_TAB:
-            self.view_index(index)
+            self.process_segment_change(index)
         elif key == wx.WXK_UP:
             index = max(index - 1, 0)
             moved = True
@@ -212,7 +209,7 @@ class SegmentList(wx.ListBox):
         #     return
         if moved:
             self.SetSelection(index)
-            self.view_index(index)
+            self.process_segment_change(index)
 
     def on_key_up(self, evt):
         # Return key not sent through to EVT_CHAR, EVT_CHAR_HOOK or
@@ -224,3 +221,10 @@ class SegmentList(wx.ListBox):
         if key == wx.WXK_RETURN:
             self.task.on_hide_minibuffer_or_cancel(evt)
         evt.Skip()
+
+    def move_cursor(self, segment_number):
+        try:
+            index = self.segment_number_to_index[segment_number]
+        except KeyError:
+            return
+        self.SetSelection(index)

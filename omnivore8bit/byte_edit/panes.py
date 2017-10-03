@@ -8,7 +8,6 @@ from omnivore.framework.panes import FrameworkPane, FrameworkFixedPane
 from pyface.api import YES, NO
 
 # Local imports.
-from segments import SegmentList
 from omnivore.utils.wx.popuputil import SpringTabs
 
 import logging
@@ -34,9 +33,9 @@ class SidebarPane(FrameworkFixedPane):
         return control
 
     def add_tabs(self, control):
-        from omnivore8bit.viewers.info import CommentsViewer, UndoViewer
+        from omnivore8bit.viewers.info import CommentsViewer, UndoViewer, SegmentListViewer
         from omnivore8bit.viewers.bitmap import MemoryMapViewer
-        control.add_tab("Segments", self.segments_cb)
+        control.add_tab("Segments", SegmentListViewer())
         control.add_tab("Comments", CommentsViewer())
         control.add_tab("Page Map", MemoryMapViewer())
         control.add_tab("Undo History", UndoViewer())

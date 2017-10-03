@@ -413,13 +413,6 @@ class LinkedBase(HasTraits):
     def ensure_visible(self, start, end):
         self.index_clicked(start, 0, None)
 
-    def update_history(self):
-#        history = document.undo_stack.serialize()
-#        self.window.application.save_log(str(history), "command_log", ".log")
-        if self.undo_history is not None:
-            self.undo_history.update_history()
-        self.sidebar.refresh_active()
-
     def get_goto_action_in_segment(self, addr_dest):
         if addr_dest >= 0:
             segment_start = self.segment.start_addr
