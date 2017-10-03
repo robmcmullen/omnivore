@@ -278,6 +278,8 @@ class SpringTabItemVerticalRenderer(SpringTabItemRenderer):
         if show:
             if hasattr(child, 'activate_spring_tab'):
                 child.activate_spring_tab()
+            elif hasattr(child, 'segment_viewer'):
+                child.segment_viewer.activate_spring_tab()
 
             # Calculate the child's width twice because the popup itself may
             # not have a valid height the first time through if the popup has

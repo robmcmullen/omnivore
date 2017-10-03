@@ -18,10 +18,6 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class MemoryMapSpringTab(MemoryMapScroller):
-    def activate_spring_tab(self):
-        self.recalc_view()
-
 CommentItem = namedtuple('CommentItem', ('segment', 'index', 'label', 'font', 'type'))
 
 class CommentsPanel(wx.VListBox):
@@ -229,9 +225,6 @@ class SidebarPane(FrameworkFixedPane):
     caption_visible = False
     dock_layer = 9
 
-    def MemoryMapCB(self, parent, task, **kwargs):
-        control = MemoryMapSpringTab(parent, task)
-
     def comments_cb(self, parent, task, **kwargs):
         control = CommentsPanel(parent, task)
 
@@ -247,9 +240,10 @@ class SidebarPane(FrameworkFixedPane):
         return control
 
     def add_tabs(self, control):
+        from omnivore8bit.viewers.bitmap import MemoryMapViewer
         control.add_tab("Segments", self.segments_cb)
         control.add_tab("Comments", self.comments_cb)
-        control.add_tab("Page Map", self.MemoryMapCB)
+        control.add_tab("Page Map", MemoryMapViewer())
         control.add_tab("Undo History", self.undo_cb)
 
     def refresh_active(self):

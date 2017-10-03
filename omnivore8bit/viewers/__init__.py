@@ -117,6 +117,14 @@ class SegmentViewer(HasTraits):
         """
         return []
 
+    ##### Spring tab (pull out menu) interface
+
+    def __call__(self, parent, task, **kwargs):
+        control = self.create(parent, task.active_editor.focused_viewer.linked_base)
+        return control
+
+    def activate_spring_tab(self):
+        self.recalc_view()
 
 
 class ByteViewersPlugin(FrameworkPlugin):
