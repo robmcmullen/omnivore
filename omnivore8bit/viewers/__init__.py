@@ -98,7 +98,8 @@ class SegmentViewer(HasTraits):
         """Redraw the UI
         """
         log.debug("process_update_cursor for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        self.control.refresh_view()
+        if evt is not Undefined:
+            self.control.refresh_view()
 
     def get_extra_segment_savers(self, segment):
         """Hook to provide additional ways to save the data based on this view

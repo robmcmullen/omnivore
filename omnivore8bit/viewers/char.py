@@ -3,7 +3,7 @@ import sys
 
 import wx
 
-from traits.api import on_trait_change, Bool
+from traits.api import on_trait_change, Bool, Undefined
 
 from omnivore8bit.ui.bitviewscroller import FontMapScroller
 from commands import ChangeByteCommand
@@ -26,6 +26,7 @@ class CharViewer(SegmentViewer):
         return self.machine.font_renderer.name + ", " + self.machine.font_mapping.name
 
     @on_trait_change('machine.font_change_event')
-    def update_bitmap(self):
-        log.debug("BitmapViewer: machine font changed!")
-        self.control.recalc_view()
+    def update_bitmap(self, evt):
+        log.debug("CharViewer: machine font changed for %s" % self.control)
+        if evt is not Undefined:
+            self.control.recalc_view()
