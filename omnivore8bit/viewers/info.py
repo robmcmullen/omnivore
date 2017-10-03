@@ -55,7 +55,6 @@ class CommentsPanel(wx.VListBox):
         item = self.items[n]
         dc.SetFont(item.font)
         dc.SetTextForeground(c)
-        log.debug("drawing item[%d]=%s" % (n, item.label))
         dc.DrawLabel(item.label, rect,
                      wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
@@ -195,7 +194,6 @@ class CommentsPanel(wx.VListBox):
         self.editor = e
         if e is not None:
             self.set_items(e.document.segments[0].get_sorted_comments())
-            print self.items
 
     def refresh_view(self):
         editor = self.task.active_editor
@@ -219,6 +217,9 @@ class CommentsViewer(SegmentViewer):
     def recalc_view(self):
         self.control.recalc_view()
         self.control.refresh_view()
+
+    def show_cursor(self, control, index, bit):
+        pass
 
     ##### Spring Tab interface
 
