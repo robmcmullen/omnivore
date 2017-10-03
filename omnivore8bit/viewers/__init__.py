@@ -89,7 +89,7 @@ class SegmentViewer(HasTraits):
 
     @property
     def window_title(self):
-        return "viewer"
+        return self.pretty_name
 
     def recalc_data_model(self):
         """Rebuild the data model after a document formatting (or other
@@ -107,7 +107,7 @@ class SegmentViewer(HasTraits):
     def refresh_view(self, evt):
         """Redraw the UI
         """
-        log.debug("process_update_cursor for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        log.debug("process_refresh_view for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
             self.control.refresh_view()
 
@@ -155,7 +155,8 @@ class ByteViewersPlugin(FrameworkPlugin):
         from omnivore8bit.viewers.char import CharViewer
         from omnivore8bit.viewers.cpu import DisassemblyViewer
         from omnivore8bit.viewers.hex import HexEditViewer
+        from omnivore8bit.viewers.info import CommentsViewer
 
-        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, MemoryMapViewer]
+        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, MemoryMapViewer, CommentsViewer]
 
 plugins = [ByteViewersPlugin()]

@@ -43,7 +43,3 @@ class MemoryMapViewer(BitmapViewer):
     @classmethod
     def create_control(cls, parent, linked_base):
         return MemoryMapScroller(parent, linked_base, size=(500,500))
-
-    @property
-    def window_title(self):
-        return self.pretty_name

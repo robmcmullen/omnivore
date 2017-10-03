@@ -719,8 +719,10 @@ class ByteEditor(FrameworkEditor):
         char_viewer = self.task.find_viewer_by_name("char")
         bitmap_viewer = self.task.find_viewer_by_name("bitmap")
         disassembly_viewer = self.task.find_viewer_by_name("disassembly")
+        comments_viewer = self.task.find_viewer_by_name("comments")
 
         layer = 0
+
         viewer = char_viewer.create(panel, center_base)
         pane_name = self.get_pane_name(viewer.name)
         pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
@@ -765,9 +767,8 @@ class ByteEditor(FrameworkEditor):
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
-        machine2 = center_base.machine.clone_machine()
-        machine2.set_disassembler(disasm.BasicZ80Disassembler)
-        viewer = disassembly_viewer.create(panel, center_base, machine2)
+        layer += 1
+        viewer = comments_viewer.create(panel, center_base)
         pane_name = self.get_pane_name(viewer.name)
         pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
         self.viewers.append((viewer, pane_info))

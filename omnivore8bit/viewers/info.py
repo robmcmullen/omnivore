@@ -1,18 +1,12 @@
+import os
+import sys
 from collections import namedtuple
 
 import wx
 
-from omnivore.framework.panes import FrameworkPane, FrameworkFixedPane
+from traits.api import on_trait_change, Bool, Undefined
 
-# Enthought library imports.
-from pyface.api import YES, NO
-
-# Local imports.
-from segments import SegmentList
-from omnivore8bit.ui.bitviewscroller import BitmapScroller, FontMapScroller, MemoryMapScroller
-from omnivore.utils.wx.popuputil import SpringTabs
-from omnivore.framework.undo_panel import UndoHistoryPanel
-from commands import ChangeByteCommand
+from . import SegmentViewer
 
 import logging
 log = logging.getLogger(__name__)
@@ -59,6 +53,7 @@ class CommentsPanel(wx.VListBox):
         item = self.items[n]
         dc.SetFont(item.font)
         dc.SetTextForeground(c)
+        log.debug("drawing item[%d]=%s" % (n, item.label))
         dc.DrawLabel(item.label, rect,
                      wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
@@ -198,61 +193,36 @@ class CommentsPanel(wx.VListBox):
         self.editor = e
         if e is not None:
             self.set_items(e.document.segments[0].get_sorted_comments())
+            print self.items
 
     def refresh_view(self):
         editor = self.task.active_editor
         if editor is not None:
-            if self.editor != editor:
-                self.recalc_view()
-            else:
-                self.Refresh()
+            self.Refresh()
 
-    def activate_spring_tab(self):
-        self.recalc_view()
+    def set_cursor_index(self, from_control, index, col_from_user=None):
+        pass
+
+
+class CommentsViewer(SegmentViewer):
+    name = "comments"
+
+    pretty_name = "Comments"
+
+    @classmethod
+    def create_control(cls, parent, linked_base):
+        return CommentsPanel(parent, linked_base.editor.task, size=(100,500))
+
+    def recalc_data_model(self):
+        self.control.recalc_view()
+        self.control.refresh_view()
+
+    def recalc_view(self):
+        self.control.recalc_view()
+        self.control.refresh_view()
+
+    ##### Spring Tab interface
 
     def get_notification_count(self):
-        self.recalc_view()
-        return len(self.items)
-
-
-class SidebarPane(FrameworkFixedPane):
-    #### TaskPane interface ###################################################
-
-    id = 'byte_edit.sidebar'
-    name = 'Sidebar'
-
-    movable = False
-    caption_visible = False
-    dock_layer = 9
-
-    def comments_cb(self, parent, task, **kwargs):
-        control = CommentsPanel(parent, task)
-
-    def segments_cb(self, parent, task, **kwargs):
-        control = SegmentList(parent, task)
-
-    def undo_cb(self, parent, task, **kwargs):
-        control = UndoHistoryPanel(parent, task)
-
-    def create_contents(self, parent):
-        control = SpringTabs(parent, self.task, popup_direction="right")
-        self.add_tabs(control)
-        return control
-
-    def add_tabs(self, control):
-        from omnivore8bit.viewers.info import CommentsViewer
-        from omnivore8bit.viewers.bitmap import MemoryMapViewer
-        control.add_tab("Segments", self.segments_cb)
-        control.add_tab("Comments", CommentsViewer())
-        control.add_tab("Page Map", MemoryMapViewer())
-        control.add_tab("Undo History", self.undo_cb)
-
-    def refresh_active(self):
-        active = self.control._radio
-        if active is not None and active.is_shown:
-            active.managed_window.refresh_view()
-
-    def recalc_active(self):
-        active = self.control._radio
-        if active is not None and active.is_shown:
-            active.managed_window.recalc_view()
+        self.control.recalc_view()
+        return len(self.control.items)

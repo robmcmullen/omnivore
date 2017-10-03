@@ -274,10 +274,6 @@ class HexEditViewer(SegmentViewer):
     def create_control(cls, parent, linked_base):
         return HexEditControl(parent, linked_base)
 
-    @property
-    def window_title(self):
-        return "Hex"
-
     def recalc_data_model(self):
         """Rebuild the data model after a document formatting (or other
         structural change) or loading a new document.
