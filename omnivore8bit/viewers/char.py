@@ -19,7 +19,7 @@ class CharViewer(SegmentViewer):
 
     pretty_name = "Character"
 
-    has_font = Bool(True)
+    has_font = True
 
     @classmethod
     def create_control(cls, parent, linked_base):

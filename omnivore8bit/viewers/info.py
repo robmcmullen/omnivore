@@ -14,6 +14,11 @@ import logging
 log = logging.getLogger(__name__)
 
 
+
+class BaseInfoViewer(SegmentViewer):
+    has_metadata_only = True
+
+
 CommentItem = namedtuple('CommentItem', ('segment', 'index', 'label', 'font', 'type'))
 
 class CommentsPanel(wx.VListBox):
@@ -201,7 +206,7 @@ class CommentsPanel(wx.VListBox):
             self.Refresh()
 
 
-class CommentsViewer(SegmentViewer):
+class CommentsViewer(BaseInfoViewer):
     name = "comments"
 
     pretty_name = "Comments"
@@ -228,7 +233,7 @@ class CommentsViewer(SegmentViewer):
         return len(self.control.items)
 
 
-class UndoViewer(SegmentViewer):
+class UndoViewer(BaseInfoViewer):
     name = "undo"
 
     pretty_name = "Undo History"
@@ -255,7 +260,7 @@ class UndoViewer(SegmentViewer):
         return 0
 
 
-class SegmentListViewer(SegmentViewer):
+class SegmentListViewer(BaseInfoViewer):
     name = "segments"
 
     pretty_name = "Segments"

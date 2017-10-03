@@ -24,6 +24,16 @@ class SegmentViewer(HasTraits):
 
     pretty_name = "_base_"
 
+    has_bitmap = False
+
+    has_font = False
+
+    has_cpu = False
+
+    has_hex = False
+
+    has_metadata_only = False
+
     ##### Traits
 
     linked_base = Instance(LinkedBase)
@@ -31,14 +41,6 @@ class SegmentViewer(HasTraits):
     machine = Instance(Machine)
 
     control = Any(None)
-
-    has_bitmap = Bool(False)
-
-    has_font = Bool(False)
-
-    has_cpu = Bool(False)
-
-    has_hex = Bool(False)
 
     @classmethod
     def create_control(cls, parent, linked_base):

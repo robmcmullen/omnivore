@@ -401,9 +401,9 @@ class DisassemblyViewer(SegmentViewer):
 
     pretty_name = "Disassembly"
 
-    has_cpu = Bool(True)
+    has_cpu = True
 
-    has_hex = Bool(True)
+    has_hex = True
 
     @classmethod
     def create_control(cls, parent, linked_base):

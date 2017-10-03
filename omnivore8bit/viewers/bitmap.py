@@ -19,7 +19,7 @@ class BitmapViewer(SegmentViewer):
 
     pretty_name = "Bitmap"
 
-    has_bitmap = Bool(True)
+    has_bitmap = True
 
     @classmethod
     def create_control(cls, parent, linked_base):

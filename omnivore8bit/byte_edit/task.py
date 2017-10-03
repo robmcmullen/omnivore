@@ -390,15 +390,24 @@ class ByteEditTask(FrameworkTask):
             ]
 
     def get_actions_Menu_View_ConfigGroup(self):
-        actions = []
+        data_actions = []
+        info_actions = []
         for v in self.known_viewers:
-            actions.append(AddViewerAction(viewer=v))
+            if v.has_metadata_only:
+                info_actions.append(AddViewerAction(viewer=v))
+            else:
+                data_actions.append(AddViewerAction(viewer=v))
         return [
             SMenu(
                 Group(
-                    *actions,
+                    *data_actions,
                     id="a1", separator=True),
                 id='ViewerChoiceSubmenu1', separator=True, name="Add Byte Viewer"),
+            SMenu(
+                Group(
+                    *info_actions,
+                    id="a1", separator=True),
+                id='ViewerChoiceSubmenu2', separator=False, name="Add Info Pane"),
             Separator(),
             ViewDiffHighlightAction(),
             TextFontAction(),

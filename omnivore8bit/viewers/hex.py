@@ -268,7 +268,7 @@ class HexEditViewer(SegmentViewer):
 
     pretty_name = "Hex"
 
-    has_hex = Bool(True)
+    has_hex = True
 
     @classmethod
     def create_control(cls, parent, linked_base):
