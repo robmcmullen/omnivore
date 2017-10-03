@@ -257,7 +257,7 @@ class LinkedBase(HasTraits):
             self.segment = doc.segments[num]
             self.adjust_selection(old_segment)
             self.segment_number = num
-            self._disassembler = None  # force disassembler to use new segment
+            self.disassembler_cache = {}  # force disassembler to use new segment
             flags = DisplayFlags()
             flags.data_model_changed = True
             self.editor.process_flags(flags)
