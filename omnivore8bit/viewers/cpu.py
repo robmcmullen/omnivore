@@ -343,7 +343,7 @@ class DisassemblyPanel(ByteGrid):
         goto_actions = []
         callers = self.table.disassembly.fast.find_callers(addr_called)
         if len(callers) > 0:
-            s = self.table.segment
+            s = self.linked_base.segment
             caller_actions = ["Go to Caller..."]
             for pc in callers:
                 if self.table.is_pc_valid(pc):
