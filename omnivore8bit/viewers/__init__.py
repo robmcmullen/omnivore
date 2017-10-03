@@ -73,7 +73,7 @@ class SegmentViewer(HasTraits):
         log.debug("process_ensure_visible for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
             if evt.source_control != self.control:
-                self.control.set_cursor_index(evt.source_control, evt.index_visible, evt.cursor_column)
+                self.show_cursor(evt.source_control, evt.index_visible, evt.cursor_column)
             else:
                 log.debug("SKIPPED %s because it's the source control" % (self.control))
 
@@ -83,7 +83,7 @@ class SegmentViewer(HasTraits):
         if evt is not Undefined:
             control, index, bit = evt
             if control != self.control:
-                self.control.set_cursor_index(control, index, bit)
+                self.show_cursor(control, index, bit)
             else:
                 log.debug("SKIPPED %s because it's the source control" % (self.control))
 
@@ -102,6 +102,9 @@ class SegmentViewer(HasTraits):
         structural change) or loading a new document.
         """
         self.control.recalc_view()
+
+    def show_cursor(self, control, index, bit):
+        self.control.set_cursor_index(control, index, bit)
 
     @on_trait_change('linked_base.editor.document.refresh_event')
     def refresh_view(self, evt):
@@ -155,8 +158,8 @@ class ByteViewersPlugin(FrameworkPlugin):
         from omnivore8bit.viewers.char import CharViewer
         from omnivore8bit.viewers.cpu import DisassemblyViewer
         from omnivore8bit.viewers.hex import HexEditViewer
-        from omnivore8bit.viewers.info import CommentsViewer
+        from omnivore8bit.viewers.info import CommentsViewer, UndoViewer
 
-        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, MemoryMapViewer, CommentsViewer]
+        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, MemoryMapViewer, CommentsViewer, UndoViewer]
 
 plugins = [ByteViewersPlugin()]

@@ -747,7 +747,9 @@ class FrameworkEditor(Editor):
 
             # Prevent a double refresh since ensure_visible does a refresh as a
             # side effect.
-            do_refresh = False
+            if do_refresh:
+                log.debug("NOTE: turned off do_refresh to prevent double refresh")
+                do_refresh = False
 
         if flags.rebuild_ui:
             d.recalc_event = True

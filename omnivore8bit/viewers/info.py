@@ -6,6 +6,7 @@ import wx
 
 from traits.api import on_trait_change, Bool, Undefined
 
+from omnivore.framework.undo_panel import UndoHistoryPanel
 from . import SegmentViewer
 
 import logging
@@ -200,9 +201,6 @@ class CommentsPanel(wx.VListBox):
         if editor is not None:
             self.Refresh()
 
-    def set_cursor_index(self, from_control, index, col_from_user=None):
-        pass
-
 
 class CommentsViewer(SegmentViewer):
     name = "comments"
@@ -226,3 +224,30 @@ class CommentsViewer(SegmentViewer):
     def get_notification_count(self):
         self.control.recalc_view()
         return len(self.control.items)
+
+
+class UndoViewer(SegmentViewer):
+    name = "undo"
+
+    pretty_name = "Undo History"
+
+    @classmethod
+    def create_control(cls, parent, linked_base):
+        return UndoHistoryPanel(parent, linked_base.editor.task, size=(100,500))
+
+    def recalc_data_model(self):
+        self.control.recalc_view()
+        self.control.refresh_view()
+
+    def recalc_view(self):
+        self.control.recalc_view()
+        self.control.refresh_view()
+
+    def show_cursor(self, control, index, bit):
+        self.control.recalc_view()
+        self.control.refresh_view()
+
+    ##### Spring Tab interface
+
+    def get_notification_count(self):
+        return 0
