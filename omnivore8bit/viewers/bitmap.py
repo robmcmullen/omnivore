@@ -5,7 +5,7 @@ import wx
 
 from traits.api import on_trait_change, Bool, Undefined
 
-from omnivore8bit.ui.bitviewscroller import BitmapScroller
+from omnivore8bit.ui.bitviewscroller import BitmapScroller, MemoryMapScroller
 from commands import ChangeByteCommand
 
 from . import SegmentViewer
@@ -34,3 +34,16 @@ class BitmapViewer(SegmentViewer):
         log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)
         if evt is not Undefined:
             self.control.refresh_view()
+
+class MemoryMapViewer(BitmapViewer):
+    name = "memmap"
+
+    pretty_name = "Memory Page Map"
+
+    @classmethod
+    def create_control(cls, parent, linked_base):
+        return MemoryMapScroller(parent, linked_base, size=(500,500))
+
+    @property
+    def window_title(self):
+        return self.pretty_name

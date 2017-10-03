@@ -1042,10 +1042,6 @@ class MemoryMapScroller(BitviewScroller):
         self.bytes_per_row = 256
         self.zoom = 2
 
-    def update_bytes_per_row(self):
-        BitviewScroller.update_bytes_per_row(self)
-        self.bytes_per_row = self.segment_viewer.machine.bitmap_bytes_per_row
-
     def DoGetBestSize(self):
         """ Base class virtual method for sizer use to get the best size
         """

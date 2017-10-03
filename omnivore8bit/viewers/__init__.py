@@ -143,11 +143,11 @@ class ByteViewersPlugin(FrameworkPlugin):
     )
 
     def _viewers_default(self):
-        from omnivore8bit.viewers.bitmap import BitmapViewer
+        from omnivore8bit.viewers.bitmap import BitmapViewer, MemoryMapViewer
         from omnivore8bit.viewers.char import CharViewer
         from omnivore8bit.viewers.cpu import DisassemblyViewer
         from omnivore8bit.viewers.hex import HexEditViewer
 
-        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer]
+        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, MemoryMapViewer]
 
 plugins = [ByteViewersPlugin()]
