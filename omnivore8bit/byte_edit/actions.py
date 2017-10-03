@@ -35,6 +35,9 @@ if sys.platform == "darwin":
 else:
     RADIO_STYLE = "radio"
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class FontChoiceGroup(TaskDynamicSubmenuGroup):
     """Dynamic menu group to display the available fonts
@@ -572,6 +575,7 @@ class ProcessorTypeAction(EditorAction):
         return self.disassembler.name
 
     def perform(self, event):
+        log.debug("setting disassembler to: %s" % self.disassembler.name)
         self.active_editor.focused_viewer.machine.set_disassembler(self.disassembler)
 
     @on_trait_change('active_editor.focused_viewer.machine.disassembler')

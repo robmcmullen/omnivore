@@ -86,7 +86,7 @@ class LinkedBase(HasTraits):
 
     update_cursor = Event
 
-    disassembly_changed_event = Event
+    disassembly_refresh_event = Event
 
     key_pressed = Event(KeyPressedEvent)
 
@@ -528,7 +528,7 @@ class LinkedBase(HasTraits):
         log.debug("restart_disassembly")
         self.disassembler_cache = {}
         d = self.disassemble_segment()
-        self.disassembly_changed_event = True
+        self.disassembly_refresh_event = True
 
     #### Disassembly tracing
 

@@ -420,8 +420,15 @@ class DisassemblyViewer(SegmentViewer):
             self.control.update_disassembly_from()
             self.recalc_view()
 
-    @on_trait_change('linked_base.disassembly_changed_event')
-    def do_disassembly_change(self, evt):
+    @on_trait_change('linked_base.disassembly_refresh_event')
+    def do_byte_change(self, evt):
         log.debug("do_disassembly_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
             self.control.update_disassembly_from()
+
+    @on_trait_change('machine.disassembler_change_event')
+    def do_disassembler_change(self, evt):
+        log.debug("do_disassembler_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        if evt is not Undefined:
+            self.control.update_disassembly_from()
+            self.linked_base.editor.update_pane_names()
