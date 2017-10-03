@@ -223,7 +223,9 @@ class UseAssemblerAction(EditorAction):
         return "%s" % (self.assembler['name'])
 
     def perform(self, event):
-        self.active_editor.focused_viewer.machine.set_assembler(self.assembler)
+        v = self.active_editor.focused_viewer
+        v.linked_base.clear_disassembly(v.machine)
+        v.machine.set_assembler(self.assembler)
 
     @on_trait_change('active_editor.focused_viewer.machine.assembler')
     def _update_checked(self):

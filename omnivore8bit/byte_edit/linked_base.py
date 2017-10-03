@@ -519,6 +519,13 @@ class LinkedBase(HasTraits):
         log.debug("get_current_disassembly: %s" % str(d.info))
         return d
 
+    def clear_disassembly(self, machine):
+        log.debug("clear_disassembly")
+        try:
+            self.disassembler_cache.pop(machine.disassembler.name)
+        except KeyError:
+            pass
+
     def disassemble_segment(self, machine=None):
         log.debug("disassemble_segment")
         return self.get_current_disassembly(machine)
