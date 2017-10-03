@@ -390,7 +390,16 @@ class ByteEditTask(FrameworkTask):
             ]
 
     def get_actions_Menu_View_ConfigGroup(self):
+        actions = []
+        for v in self.known_viewers:
+            actions.append(AddViewerAction(viewer=v))
         return [
+            SMenu(
+                Group(
+                    *actions,
+                    id="a1", separator=True),
+                id='ViewerChoiceSubmenu1', separator=True, name="Add Byte Viewer"),
+            Separator(),
             ViewDiffHighlightAction(),
             TextFontAction(),
             ]
@@ -624,6 +633,20 @@ class ByteEditTask(FrameworkTask):
             ]
 
     ###
+
+    @property
+    def known_viewers(self):
+        viewers = self.window.application.get_extensions('omnivore8bit.viewers')
+        for v in viewers:
+            print "FOUND VIEWER", v
+        return viewers
+
+    def find_viewer_by_name(self, name):
+        for v in self.known_viewers:
+            if v.name == name:
+                return v
+        raise ValueError
+
     @classmethod
     def can_edit(cls, document):
         return document.metadata.mime == "application/octet-stream" or document.segments

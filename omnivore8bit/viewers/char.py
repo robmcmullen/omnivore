@@ -15,6 +15,10 @@ log = logging.getLogger(__name__)
 
 
 class CharViewer(SegmentViewer):
+    name = "char"
+
+    pretty_name = "Character"
+
     has_font = Bool(True)
 
     @classmethod

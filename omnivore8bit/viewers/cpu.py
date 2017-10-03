@@ -397,6 +397,10 @@ class DisassemblyListSaver(object):
 
 
 class DisassemblyViewer(SegmentViewer):
+    name = "disassembly"
+
+    pretty_name = "Disassembly"
+
     has_cpu = Bool(True)
 
     has_hex = Bool(True)

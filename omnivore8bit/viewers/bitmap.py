@@ -15,6 +15,10 @@ log = logging.getLogger(__name__)
 
 
 class BitmapViewer(SegmentViewer):
+    name = "bitmap"
+
+    pretty_name = "Bitmap"
+
     has_bitmap = Bool(True)
 
     @classmethod

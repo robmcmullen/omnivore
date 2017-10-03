@@ -518,6 +518,19 @@ class TextFontAction(EditorAction):
             self.enabled = self.active_editor.focused_viewer.has_hex
 
 
+class AddViewerAction(EditorAction):
+    """Add a new viewer to the user interface
+    """
+    # Traits
+    viewer = Any
+
+    def _name_default(self):
+        return self.viewer.pretty_name
+
+    def perform(self, event):
+        self.active_editor.add_viewer(self.viewer)
+
+
 class PredefinedMachineAction(EditorAction):
     """These are built-in machine definitions that store preset values for
     `Processor`_, `Memory Map`_, `Colors`_, `Font`_, `Character Display`_ and

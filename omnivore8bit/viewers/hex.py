@@ -264,6 +264,10 @@ class HexEditControl(ByteGrid):
 
 
 class HexEditViewer(SegmentViewer):
+    name = "hex"
+
+    pretty_name = "Hex"
+
     has_hex = Bool(True)
 
     @classmethod

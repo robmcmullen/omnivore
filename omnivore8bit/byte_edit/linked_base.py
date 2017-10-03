@@ -257,10 +257,9 @@ class LinkedBase(HasTraits):
             self.segment = doc.segments[num]
             self.adjust_selection(old_segment)
             self.segment_number = num
-            self.disassembler_cache = {}  # force disassembler to use new segment
-            flags = DisplayFlags()
-            flags.data_model_changed = True
-            self.editor.process_flags(flags)
+
+            self.force_data_model_update()
+
             #self.show_trace()
             # if self.segment_list is not None:
             #     self.segment_list.SetSelection(self.segment_number)
@@ -271,6 +270,12 @@ class LinkedBase(HasTraits):
             self.task.segment_selected = self.segment_number
             #self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
             self.task.update_window_title()
+
+    def force_data_model_update(self):
+            self.disassembler_cache = {}  # force disassembler to use new segment
+            flags = DisplayFlags()
+            flags.data_model_changed = True
+            self.editor.process_flags(flags)
 
     def save_segment(self, saver, uri):
         try:

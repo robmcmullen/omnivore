@@ -1,6 +1,8 @@
 
 from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, File, Unicode, Property, on_trait_change, HasTraits, Undefined
+from envisage.api import ExtensionPoint
 
+from omnivore.framework.plugin import FrameworkPlugin
 from omnivore.framework.editor import FrameworkEditor
 from ..byte_edit.linked_base import LinkedBase
 
@@ -17,6 +19,14 @@ class SegmentViewer(HasTraits):
     Linked base exists for the lifetime of the viewer. If the user wants to
     change the base, a new viewer is created and replaces this viewer.
     """
+    ##### class attributes
+
+    name = "_base_"
+
+    pretty_name = "_base_"
+
+    ##### Traits
+
     editor = Instance(FrameworkEditor)
 
     linked_base = Instance(LinkedBase)
@@ -107,3 +117,37 @@ class SegmentViewer(HasTraits):
         """
         return []
 
+
+
+class ByteViewersPlugin(FrameworkPlugin):
+    """ Plugin containing all the viewers for byte data
+    """
+
+    # Extension point IDs.
+    VIEWERS = 'omnivore8bit.viewers'
+
+    #### 'IPlugin' interface ##################################################
+
+    # The plugin's unique identifier.
+    id = 'omnivore8bit.viewer.plugin'
+
+    # The plugin's name (suitable for displaying to the user).
+    name = 'Omnivore Byte Viewers'
+
+    #### Contributions to extension points made by this plugin ################
+
+    viewers = List(contributes_to=VIEWERS)
+
+    segment_viewers = ExtensionPoint(
+        List(Instance(SegmentViewer)), id="omnivore8bit.viewers", desc="A list of SegmentViewers that can display the data in a segment"
+    )
+
+    def _viewers_default(self):
+        from omnivore8bit.viewers.bitmap import BitmapViewer
+        from omnivore8bit.viewers.char import CharViewer
+        from omnivore8bit.viewers.cpu import DisassemblyViewer
+        from omnivore8bit.viewers.hex import HexEditViewer
+
+        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer]
+
+plugins = [ByteViewersPlugin()]

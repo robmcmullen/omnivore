@@ -52,9 +52,12 @@ def main(argv):
 
     from omnivore8bit.plugin import OmnivoreEditorPlugin
     plugins = [OmnivoreEditorPlugin()]
-    
+
     import omnivore8bit.file_type
     plugins.extend(omnivore8bit.file_type.plugins)
+    
+    import omnivore8bit.viewers
+    plugins.extend(omnivore8bit.viewers.plugins)
 
     # Crypto is separated to make it easy to make it optional for those
     # framework users who don't want the extra dependencies

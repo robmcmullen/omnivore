@@ -21,12 +21,6 @@ from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment, AnticFon
 from omnivore8bit.utils.searchutil import known_searchers
 from omnivore.utils.processutil import run_detach
 
-from omnivore8bit.viewers import SegmentViewer
-from omnivore8bit.viewers.hex import HexEditViewer
-from omnivore8bit.viewers.char import CharViewer
-from omnivore8bit.viewers.bitmap import BitmapViewer
-from omnivore8bit.viewers.cpu import DisassemblyViewer
-
 from actions import *
 from commands import PasteCommand
 from linked_base import LinkedBase
@@ -72,7 +66,7 @@ class ByteEditor(FrameworkEditor):
 
     center_base = Instance(LinkedBase)
 
-    focused_viewer = Instance(SegmentViewer)
+    focused_viewer = Any(None)  # should be Instance(SegmentViewer), but creates circular imports
 
     linked_bases = List(LinkedBase)
 
@@ -89,6 +83,8 @@ class ByteEditor(FrameworkEditor):
     searchers = known_searchers
 
     rect_select = False
+
+    pane_creation_count = 0
 
     #### trait default values
 
@@ -655,6 +651,28 @@ class ByteEditor(FrameworkEditor):
         log.debug("clearing popup")
         self.sidebar.control.clear_popup()
 
+    def get_pane_name(self, name):
+        self.pane_creation_count += 1
+        pane_name = "%s%d" % (name, self.pane_creation_count)
+        log.debug("get_pane_name: created name %s" % pane_name)
+        return pane_name
+
+    def add_viewer(self, viewer_cls, linked=True):
+        if linked:
+            machine = None
+        else:
+            machine = center_base.machine.clone_machine()
+        center_viewer = self.viewers[0][0]
+        center_base = center_viewer.linked_base
+        viewer = viewer_cls.create(self.control, center_base, machine)
+        pane_name = self.get_pane_name(viewer.name)
+        pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(10)
+        self.viewers.append((viewer, pane_info))
+        self.mgr.AddPane(viewer.control, pane_info)
+        center_base.force_data_model_update()
+        self.update_pane_names()
+        self.mgr.Update()
+
     ###########################################################################
     # Trait handlers.
     ###########################################################################
@@ -683,7 +701,9 @@ class ByteEditor(FrameworkEditor):
         center_base = LinkedBase(editor=self)
         self.linked_bases.append(center_base)
 
-        viewer = HexEditViewer.create(panel, center_base)
+        hex_viewer = self.task.find_viewer_by_name("hex")
+
+        viewer = hex_viewer.create(panel, center_base)
         pane_info = aui.AuiPaneInfo().Name("hex").CenterPane()
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
@@ -695,50 +715,61 @@ class ByteEditor(FrameworkEditor):
         from ..arch import antic_renderers
         from ..arch.machine import disasm
         from ..arch import fonts
+        
+        char_viewer = self.task.find_viewer_by_name("char")
+        bitmap_viewer = self.task.find_viewer_by_name("bitmap")
+        disassembly_viewer = self.task.find_viewer_by_name("disassembly")
 
         layer = 0
-        viewer = CharViewer.create(panel, center_base)
-        pane_info = aui.AuiPaneInfo().Name("char").Right().Layer(layer)
+        viewer = char_viewer.create(panel, center_base)
+        pane_name = self.get_pane_name(viewer.name)
+        pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
         machine2 = center_base.machine.clone_machine()
         machine2.set_font(font_renderer=antic_renderers.Mode5())
-        viewer = CharViewer.create(panel, center_base, machine2)
-        pane_info = aui.AuiPaneInfo().Name("char2").Right().Layer(layer)
+        viewer = char_viewer.create(panel, center_base, machine2)
+        pane_name = self.get_pane_name(viewer.name)
+        pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
         machine2 = center_base.machine.clone_machine()
         machine2.set_font(font=fonts.A2MouseTextFont, font_renderer=antic_renderers.Apple2TextMode())
-        viewer = CharViewer.create(panel, center_base, machine2)
-        pane_info = aui.AuiPaneInfo().Name("char3").Right().Layer(layer)
+        viewer = char_viewer.create(panel, center_base, machine2)
+        pane_name = self.get_pane_name(viewer.name)
+        pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
         layer += 1
-        viewer = BitmapViewer.create(panel, center_base)
-        pane_info = aui.AuiPaneInfo().Name("bitmap").Right().Layer(layer)
+        viewer = bitmap_viewer.create(panel, center_base)
+        pane_name = self.get_pane_name(viewer.name)
+        pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
         machine2 = center_base.machine.clone_machine()
         machine2.set_bitmap_renderer(antic_renderers.ModeE())
-        viewer = BitmapViewer.create(panel, center_base, machine2)
-        pane_info = aui.AuiPaneInfo().Name("bitmap2").Right().Layer(layer)
+        viewer = bitmap_viewer.create(panel, center_base, machine2)
+        pane_name = self.get_pane_name(viewer.name)
+        pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
         layer += 1
-        viewer = DisassemblyViewer.create(panel, center_base)
-        pane_info = aui.AuiPaneInfo().Name("disassembly").Right().Layer(layer)
+        viewer = disassembly_viewer.create(panel, center_base)
+        pane_name = self.get_pane_name(viewer.name)
+        pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
         machine2 = center_base.machine.clone_machine()
         machine2.set_disassembler(disasm.BasicZ80Disassembler)
-        viewer = DisassemblyViewer.create(panel, center_base, machine2)
-        pane_info = aui.AuiPaneInfo().Name("disassembly2").Right().Layer(layer)
+        viewer = disassembly_viewer.create(panel, center_base, machine2)
+        pane_name = self.get_pane_name(viewer.name)
+        pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
 
