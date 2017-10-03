@@ -501,10 +501,12 @@ class FrameworkTask(Task):
         method_name = "get_actions_%s_%s_%s" % (location, menu_lookup, group_name)
         try:
             method = getattr(self, method_name)
-            actions = method()
-        except AttributeError:
+        except AttributeError, e:
             log.debug("%s actions not found for %s/%s in %s" % (location, menu_name, group_name, self.id))
             actions = []
+        else:
+            # let this exception be raised
+            actions = method()
         return actions
 
     def get_actions_Menu_File_NewGroup(self):
