@@ -39,6 +39,9 @@ class CommentsPanel(wx.VListBox):
         self.italic_font = wx.Font(f.GetPointSize(), f.GetFamily(),
                                    wx.FONTSTYLE_ITALIC, wx.NORMAL, f.GetUnderlined(),
                                    f.GetFaceName(), f.GetEncoding())
+        _, self.font_height = self.GetTextExtent("MWSqj")
+        self.select_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
+        self.normal_color = self.GetForegroundColour()
 
         #self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
 
@@ -54,9 +57,9 @@ class CommentsPanel(wx.VListBox):
     # is drawn is entirely up to you.
     def OnDrawItem(self, dc, rect, n):
         if self.GetSelection() == n:
-            c = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
+            c = self.select_color
         else:
-            c = self.GetForegroundColour()
+            c = self.normal_color
         item = self.items[n]
         dc.SetFont(item.font)
         dc.SetTextForeground(c)
@@ -69,8 +72,7 @@ class CommentsPanel(wx.VListBox):
         height = 0
         text = self.items[n].label
         for line in text.split('\n'):
-            w, h = self.GetTextExtent(line)
-            height += h
+            height += self.font_height
         return height + 2
 
     def DoGetBestSize(self):
