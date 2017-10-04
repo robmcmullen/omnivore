@@ -762,19 +762,19 @@ class ByteEditor(FrameworkEditor):
         # self.viewers.append((viewer, pane_info))
         # self.mgr.AddPane(viewer.control, pane_info)
 
-        # layer += 1
-        # viewer = comments_viewer.create(panel, center_base)
-        # pane_name = self.get_pane_name(viewer.name)
-        # pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
-        # self.viewers.append((viewer, pane_info))
-        # self.mgr.AddPane(viewer.control, pane_info)
-
         layer += 1
-        viewer = segment_viewer.create(panel, center_base)
+        viewer = comments_viewer.create(panel, center_base)
         pane_name = self.get_pane_name(viewer.name)
         pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
         self.viewers.append((viewer, pane_info))
         self.mgr.AddPane(viewer.control, pane_info)
+
+        # layer += 1
+        # viewer = segment_viewer.create(panel, center_base)
+        # pane_name = self.get_pane_name(viewer.name)
+        # pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
+        # self.viewers.append((viewer, pane_info))
+        # self.mgr.AddPane(viewer.control, pane_info)
 
         self.sidebar = self.window.get_dock_pane('byte_edit.sidebar')
 

@@ -40,7 +40,7 @@ class CommentsPanel(wx.VListBox):
                                    wx.FONTSTYLE_ITALIC, wx.NORMAL, f.GetUnderlined(),
                                    f.GetFaceName(), f.GetEncoding())
 
-        self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
+        #self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
 
         # Return key not sent through to EVT_CHAR, EVT_CHAR_HOOK or
         # EVT_KEY_DOWN events in a ListBox. This is the only event handler
@@ -128,6 +128,7 @@ class CommentsPanel(wx.VListBox):
             self.SetSelection(index)
             self.process_index(index)
             self.Refresh()
+        evt.Skip()
 
     def process_index(self, index):
         e = self.editor
