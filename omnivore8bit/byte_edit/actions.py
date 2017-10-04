@@ -536,6 +536,19 @@ class AddViewerAction(EditorAction):
         self.active_editor.add_viewer(self.viewer)
 
 
+class ReplaceCenterViewerAction(EditorAction):
+    """Replace the main viewer with a different type
+    """
+    # Traits
+    viewer = Any
+
+    def _name_default(self):
+        return self.viewer.pretty_name
+
+    def perform(self, event):
+        self.active_editor.replace_center_viewer(self.viewer)
+
+
 class PredefinedMachineAction(EditorAction):
     """These are built-in machine definitions that store preset values for
     `Processor`_, `Memory Map`_, `Colors`_, `Font`_, `Character Display`_ and

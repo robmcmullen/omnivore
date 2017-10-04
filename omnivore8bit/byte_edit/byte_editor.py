@@ -666,6 +666,24 @@ class ByteEditor(FrameworkEditor):
         self.update_pane_names()
         self.mgr.Update()
 
+    def replace_center_viewer(self, viewer_cls):
+        center_viewer, pane_info = self.viewers[0]
+        center_base = center_viewer.linked_base
+        viewer = viewer_cls.create(self.control, center_base, center_base.machine)
+
+        self.mgr.ClosePane(pane_info)
+
+        pane_name = self.get_pane_name(viewer.name)
+        pane_info = aui.AuiPaneInfo().Name(pane_name).CenterPane()
+
+        # Need to replace the first viewer here, because explicitly closing the
+        # pane above doesn't trigger an AUI_PANE_CLOSE event
+        self.viewers[0] = (viewer, pane_info)
+        log.debug("viewers after replacing center pane: %s" % str(self.viewers))
+        self.mgr.AddPane(viewer.control, pane_info)
+        center_base.force_data_model_update()
+        self.mgr.Update()
+
     ###########################################################################
     # Trait handlers.
     ###########################################################################
