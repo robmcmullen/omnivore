@@ -266,7 +266,6 @@ class LinkedBase(HasTraits):
             # else:
             #     self.sidebar.refresh_active()
             self.editor.sidebar.refresh_active()
-            self.task.segments_changed = self.document.segments
             self.task.segment_selected = self.segment_number
             #self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
             self.task.update_window_title()

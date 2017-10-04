@@ -520,6 +520,7 @@ class ByteEditor(FrameworkEditor):
         # should only be called when the number of segments or document has
         # changed. If only the segment being viewed is changed, just set the
         # task.segment_selected trait
+        log.debug("update_segments_ui costs a lot of time!!!!!!")
         if self.segment_list is not None:
             self.segment_list.set_segments(self.document.segments, self.segment_number)
         self.sidebar.recalc_active()
