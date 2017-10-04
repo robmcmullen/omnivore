@@ -322,8 +322,8 @@ class ByteEditor(FrameworkEditor):
         self.update_pane_names()
 
     def update_pane_names(self):
-        for viewer, pane_info in self.viewers:
-            pane_info.Caption(viewer.window_title)
+        for viewer in self.viewers:
+            viewer.update_caption()
         self.mgr.RefreshCaptions()
 
     @on_trait_change('document.emulator_change_event')
@@ -358,7 +358,7 @@ class ByteEditor(FrameworkEditor):
 
     def get_extra_segment_savers(self, segment):
         savers = []
-        for v, _ in self.viewers:
+        for v in self.viewers:
             savers.extend(v.get_extra_segment_savers(segment))
         return savers
 
@@ -644,43 +644,34 @@ class ByteEditor(FrameworkEditor):
         log.debug("clearing popup")
         self.sidebar.control.clear_popup()
 
-    def get_pane_name(self, name):
-        self.pane_creation_count += 1
-        pane_name = "%s%d" % (name, self.pane_creation_count)
-        log.debug("get_pane_name: created name %s" % pane_name)
-        return pane_name
-
     def add_viewer(self, viewer_cls, linked=True):
         if linked:
             machine = None
         else:
             machine = center_base.machine.clone_machine()
-        center_viewer = self.viewers[0][0]
+        center_viewer = self.viewers[0]
         center_base = center_viewer.linked_base
         viewer = viewer_cls.create(self.control, center_base, machine)
-        pane_name = self.get_pane_name(viewer.name)
-        pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(10)
-        self.viewers.append((viewer, pane_info))
-        self.mgr.AddPane(viewer.control, pane_info)
+        viewer.pane_info.Right().Layer(10)
+        self.viewers.append(viewer)
+        self.mgr.AddPane(viewer.control, viewer.pane_info)
         center_base.force_data_model_update()
         self.update_pane_names()
         self.mgr.Update()
 
     def replace_center_viewer(self, viewer_cls):
-        center_viewer, pane_info = self.viewers[0]
+        center_viewer = self.viewers[0]
         center_base = center_viewer.linked_base
         viewer = viewer_cls.create(self.control, center_base, center_base.machine)
+        viewer.pane_info.CenterPane()
 
-        self.mgr.ClosePane(pane_info)
-
-        pane_name = self.get_pane_name(viewer.name)
-        pane_info = aui.AuiPaneInfo().Name(pane_name).CenterPane()
+        self.mgr.ClosePane(center_viewer.pane_info)
 
         # Need to replace the first viewer here, because explicitly closing the
         # pane above doesn't trigger an AUI_PANE_CLOSE event
-        self.viewers[0] = (viewer, pane_info)
+        self.viewers[0] = viewer
         log.debug("viewers after replacing center pane: %s" % str(self.viewers))
-        self.mgr.AddPane(viewer.control, pane_info)
+        self.mgr.AddPane(viewer.control, viewer.pane_info)
         center_base.force_data_model_update()
         self.mgr.Update()
 
@@ -715,9 +706,9 @@ class ByteEditor(FrameworkEditor):
         hex_viewer = self.task.find_viewer_by_name("hex")
 
         viewer = hex_viewer.create(panel, center_base)
-        pane_info = aui.AuiPaneInfo().Name("hex").CenterPane()
-        self.viewers.append((viewer, pane_info))
-        self.mgr.AddPane(viewer.control, pane_info)
+        viewer.pane_info.CenterPane()
+        self.viewers.append(viewer)
+        self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         # Set initial default viewer as the center pane
         self.focused_viewer = viewer
@@ -737,62 +728,54 @@ class ByteEditor(FrameworkEditor):
         layer = 0
 
         # viewer = char_viewer.create(panel, center_base)
-        # pane_name = self.get_pane_name(viewer.name)
-        # pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
-        # self.viewers.append((viewer, pane_info))
-        # self.mgr.AddPane(viewer.control, pane_info)
+        # viewer.pane_info.Right().Layer(layer)
+        # self.viewers.append(viewer)
+        # self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         # machine2 = center_base.machine.clone_machine()
         # machine2.set_font(font_renderer=antic_renderers.Mode5())
         # viewer = char_viewer.create(panel, center_base, machine2)
-        # pane_name = self.get_pane_name(viewer.name)
-        # pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
-        # self.viewers.append((viewer, pane_info))
-        # self.mgr.AddPane(viewer.control, pane_info)
+        # viewer.pane_info.Right().Layer(layer)
+        # self.viewers.append(viewer)
+        # self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         # machine2 = center_base.machine.clone_machine()
         # machine2.set_font(font=fonts.A2MouseTextFont, font_renderer=antic_renderers.Apple2TextMode())
         # viewer = char_viewer.create(panel, center_base, machine2)
-        # pane_name = self.get_pane_name(viewer.name)
-        # pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
-        # self.viewers.append((viewer, pane_info))
-        # self.mgr.AddPane(viewer.control, pane_info)
+        # viewer.pane_info.Right().Layer(layer)
+        # self.viewers.append(viewer)
+        # self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         # layer += 1
         # viewer = bitmap_viewer.create(panel, center_base)
-        # pane_name = self.get_pane_name(viewer.name)
-        # pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
-        # self.viewers.append((viewer, pane_info))
-        # self.mgr.AddPane(viewer.control, pane_info)
+        # viewer.pane_info.Right().Layer(layer)
+        # self.viewers.append(viewer)
+        # self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         # machine2 = center_base.machine.clone_machine()
         # machine2.set_bitmap_renderer(antic_renderers.ModeE())
         # viewer = bitmap_viewer.create(panel, center_base, machine2)
-        # pane_name = self.get_pane_name(viewer.name)
-        # pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
-        # self.viewers.append((viewer, pane_info))
-        # self.mgr.AddPane(viewer.control, pane_info)
+        # viewer.pane_info.Right().Layer(layer)
+        # self.viewers.append(viewer)
+        # self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         # layer += 1
         # viewer = disassembly_viewer.create(panel, center_base)
-        # pane_name = self.get_pane_name(viewer.name)
-        # pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
-        # self.viewers.append((viewer, pane_info))
-        # self.mgr.AddPane(viewer.control, pane_info)
+        # viewer.pane_info.Right().Layer(layer)
+        # self.viewers.append(viewer)
+        # self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         layer += 1
         viewer = comments_viewer.create(panel, center_base)
-        pane_name = self.get_pane_name(viewer.name)
-        pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
-        self.viewers.append((viewer, pane_info))
-        self.mgr.AddPane(viewer.control, pane_info)
+        viewer.pane_info.Right().Layer(layer)
+        self.viewers.append(viewer)
+        self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         # layer += 1
         # viewer = segment_viewer.create(panel, center_base)
-        # pane_name = self.get_pane_name(viewer.name)
-        # pane_info = aui.AuiPaneInfo().Name(pane_name).Right().Layer(layer)
-        # self.viewers.append((viewer, pane_info))
-        # self.mgr.AddPane(viewer.control, pane_info)
+        # viewer.pane_info.Right().Layer(layer)
+        # self.viewers.append(viewer)
+        # self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         self.sidebar = self.window.get_dock_pane('byte_edit.sidebar')
 
@@ -825,7 +808,7 @@ class ByteEditor(FrameworkEditor):
     def on_pane_close(self, evt):
         v = evt.pane.window.segment_viewer
         log.debug("on_pane_close: closed viewer %s %s" % (v, v.window_title))
-        self.viewers.remove((v, evt.pane))
+        self.viewers.remove(v)
 
     def index_clicked(self, index, bit, from_control, refresh_from=True):
         log.debug("index_clicked: %s from %s at %d, %s" % (refresh_from, from_control, index, bit))

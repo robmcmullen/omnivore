@@ -1,3 +1,6 @@
+import uuid
+
+import wx.lib.agw.aui as aui
 
 from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, File, Unicode, Property, on_trait_change, HasTraits, Undefined
 from envisage.api import ExtensionPoint
@@ -42,9 +45,15 @@ class SegmentViewer(HasTraits):
 
     control = Any(None)
 
+    pane_info = Any(None)
+
     @classmethod
     def create_control(cls, parent, linked_base):
         raise NotImplementedError("Implement in subclass!")
+
+    @classmethod
+    def get_aui_pane_name(cls):
+        return "%s--%s" % (cls.name, str(uuid.uuid4()))
 
     @classmethod
     def create(cls, parent, linked_base, machine=None):
@@ -53,7 +62,11 @@ class SegmentViewer(HasTraits):
             machine = linked_base.machine.clone_machine()
         v = cls(linked_base=linked_base, control=control, machine=machine)
         control.segment_viewer = v
+        v.pane_info = aui.AuiPaneInfo().Name(cls.get_aui_pane_name())
         return v
+
+    def update_caption(self):
+        self.pane_info.Caption(self.window_title)
 
     @on_trait_change('linked_base.editor.document.data_model_changed')
     def process_data_model_change(self, evt):

@@ -186,10 +186,10 @@ class LinkedBase(HasTraits):
         d = {
             'cursor_index': self.editor.cursor_index,
         }
-        for viewer, pane_info in self.editor.viewers:
+        for viewer in self.editor.viewers:
             if viewer.linked_base == self:
                 try:
-                    d[pane_info.name] = viewer.control.get_view_params()
+                    d[viewer.pane_info.name] = viewer.control.get_view_params()
                 except AttributeError:
                     pass
 
@@ -203,10 +203,10 @@ class LinkedBase(HasTraits):
             return
         log.debug("restoring view params for %s" % segment.uuid)
         self.editor.cursor_index = d['cursor_index']
-        for viewer, pane_info in self.editor.viewers:
+        for viewer in self.editor.viewers:
             if viewer.linked_base == self:
                 try:
-                    params = d[pane_info.name]
+                    params = d[viewer.pane_info.name]
                 except KeyError:
                     continue
                 try:
