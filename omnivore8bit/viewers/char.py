@@ -6,7 +6,7 @@ import wx
 from traits.api import on_trait_change, Bool, Undefined
 
 from omnivore8bit.ui.bitviewscroller import FontMapScroller
-from commands import ChangeByteCommand
+from ..byte_edit.commands import ChangeByteCommand
 
 from . import SegmentViewer
 

@@ -10,8 +10,8 @@ from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bi
 
 from omnivore8bit.ui.bytegrid import ByteGridTable, ByteGrid
 
-from actions import GotoIndexAction
-from commands import ChangeByteCommand
+from ..byte_edit.actions import GotoIndexAction
+from ..byte_edit.commands import ChangeByteCommand
 
 from . import SegmentViewer
 

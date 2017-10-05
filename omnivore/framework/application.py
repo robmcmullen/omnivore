@@ -15,10 +15,11 @@ from envisage.ui.tasks.api import TasksApplication
 from envisage.ui.tasks.task_window_event import TaskWindowEvent, VetoableTaskWindowEvent
 from pyface.api import ImageResource
 from pyface.tasks.api import Task, TaskWindowLayout
-from traits.api import provides, Bool, Instance, List, Property, Str, Unicode, Event, Dict, Int, Float, Tuple, Any, TraitError
+from traits.api import provides, Bool, Instance, List, Property, Str, Unicode, Event, Dict, Int, Float, Tuple, Any, TraitError, Callable
 from apptools.preferences.api import Preferences
 
 # Local imports.
+from .enthought_api_replacements import FrameworkTaskWindow
 from filesystem import init_filesystems
 from document import BaseDocument
 import documentation
@@ -54,6 +55,10 @@ class FrameworkApplication(TasksApplication):
 
     # The default window-level layout for the application.
     default_layout = List(TaskWindowLayout)
+
+    # Substitute the framework's TaskWindow so it can use the FrameworkActions
+    # that don't use nearly as many traits as a pyface EditorAction
+    window_factory = Callable(FrameworkTaskWindow)
 
     # Whether to restore the previous application-level layout when the
     # applicaton is started.
@@ -199,7 +204,7 @@ class FrameworkApplication(TasksApplication):
             return
         t = time.time()
         if t > self.last_clipboard_check_time + self.clipboard_check_interval:
-            wx.CallAfter(self.check_clipboard_can_paste, editor)
+            wx.CallAfter(self.update_dynamic_menu_items, editor)
             self.last_clipboard_check_time = time.time()
         editor.perform_idle()
 
@@ -242,6 +247,10 @@ class FrameworkApplication(TasksApplication):
         docs.create_manual()
         print "Finished creating documentation! Exiting."
         sys.exit()
+
+    def update_dynamic_menu_items(self, editor):
+        editor.task.menu_update_event = editor
+        self.check_clipboard_can_paste(editor)
 
     def check_clipboard_can_paste(self, editor):
         data_formats = [o.GetFormat() for o in editor.supported_clipboard_data_objects]

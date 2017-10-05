@@ -521,17 +521,20 @@ class ByteEditor(FrameworkEditor):
         # changed. If only the segment being viewed is changed, just set the
         # task.segment_selected trait
         log.debug("update_segments_ui costs a lot of time!!!!!!")
-        if self.segment_list is not None:
-            self.segment_list.set_segments(self.document.segments, self.segment_number)
         self.sidebar.recalc_active()
-        if self.linked_base.segment_parser is not None:
-            self.segment_parser_label = self.linked_base.segment_parser.menu_name
+        if self.focused_viewer.linked_base.segment_parser is not None:
+            self.segment_parser_label = self.focused_viewer.linked_base.segment_parser.menu_name
         else:
             self.segment_parser_label = "No parser"
         self.task.segments_changed = self.document.segments
         self.task.segment_selected = self.segment_number
 
     def find_in_user_segment(self, base_index):
+        # FIXME: Profiling shows this as a big bottleneck when there are
+        # comments. It inefficiently loops over segments, then the call to
+        # get_index_from_base is super slow in atrcopy because of all the
+        # calculations and dereferences needed to compute the index. That
+        # probably needs to be cached.
         for s in self.document.user_segments:
             try:
                 index = s.get_index_from_base_index(base_index)

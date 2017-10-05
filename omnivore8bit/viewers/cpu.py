@@ -12,8 +12,8 @@ from udis.udis_fast import TraceInfo, flag_origin
 from omnivore8bit.ui.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 from omnivore8bit.arch.disasm import iter_disasm_styles
 
-from actions import GotoIndexAction
-from commands import MiniAssemblerCommand, SetCommentCommand
+from ..byte_edit.actions import GotoIndexAction
+from ..byte_edit.commands import MiniAssemblerCommand, SetCommentCommand
 from . import SegmentViewer
 
 import logging

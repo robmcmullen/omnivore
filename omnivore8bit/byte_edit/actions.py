@@ -11,11 +11,10 @@ import wx.lib.dialogs
 from traits.api import on_trait_change, Any, Int, Bool
 from pyface.api import YES, NO
 from pyface.action.api import Action, ActionItem
-from pyface.tasks.action.api import TaskAction, EditorAction
 
 from atrcopy import user_bit_mask, data_style, add_xexboot_header, add_atr_header, BootDiskImage, SegmentData, interleave_segments, get_xex
 
-from omnivore.framework.actions import *
+from omnivore.framework.enthought_api_replacements import EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
 from omnivore.utils.command import StatusFlags
 
 from commands import *

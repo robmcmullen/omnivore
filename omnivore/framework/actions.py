@@ -8,9 +8,9 @@ import fs
 # Enthought library imports.
 from pyface.api import ImageResource, FileDialog, YES, NO, OK, CANCEL
 from pyface.action.api import Action, ActionItem, Group
-from pyface.tasks.action.api import EditorAction
 from traits.api import on_trait_change, Property, Instance, Bool, Str, Unicode, Any, List, Int
 
+from .enthought_api_replacements import EditorAction, NameChangeAction, TaskDynamicSubmenuGroup, ApplicationDynamicSubmenuGroup
 from omnivore.framework.about import AboutDialog
 from omnivore.utils.file_guess import FileGuess
 from omnivore.utils.wx.dialogs import get_file_dialog_wildcard
@@ -255,63 +255,6 @@ class ExitAction(Action):
         event.task.window.application.exit()
 
 
-class NameChangeAction(EditorAction):
-    """Extension to the EditorAction that provides a user-updatable menu item
-    name based on a trait
-    
-    EditorAction is subclassed from ListeningAction, and the ListeningAction
-    methods destroy and _object_chaged must be called because the new
-    trait name 'menu_item_name' can't be added to list of traits managed by
-    ListeningAction and so must be taken care of here before the superclass
-    can do its work.
-    """
-    menu_item_name = Str
-
-    def destroy(self):
-        """ Called when the action is no longer required.
-
-        Remove all the task listeners.
-
-        """
-
-        if self.object:
-            self.object.on_trait_change(
-                self._menu_item_update, self.menu_item_name, remove=True
-            )
-        super(NameChangeAction, self).destroy()
-
-    def _menu_item_name_changed(self, old, new):
-        obj = self.object
-        if obj is not None:
-            if old:
-                obj.on_trait_change(self._menu_item_update, old, remove=True)
-            if new:
-                obj.on_trait_change(self._menu_item_update, new)
-        self._label_update()
-
-    def _object_changed(self, old, new):
-        kind = 'menu_item'
-        method = getattr(self, '_%s_update' % kind)
-        name = getattr(self, '%s_name' % kind)
-        if name:
-            if old:
-                old.on_trait_change(method, name, remove=True)
-            if new:
-                new.on_trait_change(method, name)
-        method()
-        super(NameChangeAction, self)._object_changed(old, new)
-
-    def _menu_item_update(self):
-        if self.menu_item_name:
-            if self.object:
-                self.name = str(self._get_attr(self.object,
-                                               self.menu_item_name, 'Undo'))
-            else:
-                self.name = getattr(self, 'default_name', 'Undo')
-        else:
-            self.name = getattr(self, 'default_name', 'Undo')
-
-
 class UndoAction(NameChangeAction):
     """Undo the last action
 
@@ -524,120 +467,6 @@ class GarbageObjectsAction(Action):
         text = "\n".join(obj_list)
         dlg = wx.lib.dialogs.ScrolledMessageDialog(event.task.window.control, text, "Unreachable but Uncollectable Objects")
         dlg.ShowModal()
-
-class BaseDynamicSubmenuGroup(Group):
-    """ A group used for a dynamic menu.
-    """
-
-    #### 'ActionManager' interface ############################################
-
-    id = 'DynamicMenuGroup'
-    items = List
-
-    #### 'TaskChangeMenuManager' interface ####################################
-
-    # The ActionManager to which the group belongs.
-    manager = Any
-
-    # ENTHOUGHT QUIRK: This doesn't work: can't have a property depending on
-    # a task because this forces task_default to be called very early in the
-    # initialization process, before the window hierarchy is defined.
-    #
-    # active_editor = Property(Instance(IEditor),
-    #                         depends_on='task.active_editor')
-
-    event_name = Str('change this to the Event trait')
-
-    ###########################################################################
-    # Private interface.
-    ###########################################################################
-
-    def _get_items(self, event_data=None):
-        # Override this in your subclass to return the list of actions
-        return []
-
-    def _rebuild(self, new_trait_val):
-        # Clear out the old group, then build the new one.
-        self.destroy()
-
-        # Get the new items, passing the event arguments to the method
-        self.items = self._get_items(new_trait_val)
-
-        # Set up parent so that radio items can determine their siblings to
-        # uncheck others when checked. (see the _checked_changed method in
-        # pyface/ui/wx/action/action_item.py)
-        for item in self.items:
-            item.parent = self
-
-        # Inform our manager that it needs to be rebuilt.
-        self.manager.changed = True
-
-    #### Trait initializers ###################################################
-
-    def _items_default(self):
-        log.debug("DYNAMICGROUP: _items_default!!!")
-        t = self._get_trait_for_event()
-        t.on_trait_change(self._rebuild, self.event_name)
-        return self._get_items()
-
-    def _get_trait_for_event(self):
-        raise NotImplementedError
-
-    def _manager_default(self):
-        manager = self
-        while isinstance(manager, Group):
-            manager = manager.parent
-        log.debug("DYNAMICGROUP: _manager_default=%s!!!" % manager)
-        return manager
-
-    # ENTHOUGHT QUIRK: This doesn't work: the trait change decorator never
-    # seems to get called, however specifying the on_trait_change in the
-    # _items_default method works.
-    #
-    #    @on_trait_change('task.layer_selection_changed')
-    #    def updated_fired(self, event):
-    #        log.debug("SAVELAYERGROUP: updated!!!")
-    #        self._rebuild(event)
-
-
-class TaskDynamicSubmenuGroup(BaseDynamicSubmenuGroup):
-    """ A group used for a dynamic menu.
-    """
-
-    # The task instance must be passed in as an attribute creation argument
-    # because we need to bind on a task trait change to update the menu
-    task = Instance('omnivore.framework.task.FrameworkTask')
-
-    ###########################################################################
-    # Private interface.
-    ###########################################################################
-
-    def _get_trait_for_event(self):
-        return self.task
-
-    #### Trait initializers ###################################################
-
-    def _task_default(self):
-        log.debug("DYNAMICGROUP: _task_default=%s!!!" % self.manager.controller.task)
-        return self.manager.controller.task
-
-
-class ApplicationDynamicSubmenuGroup(BaseDynamicSubmenuGroup):
-    """ A group used for a dynamic menu based on an application event.
-    """
-
-    # The application instance must be a trait so we can set an on_trait_change
-    # handler
-    application = Instance('envisage.ui.tasks.api.TasksApplication')
-
-    def _get_trait_for_event(self):
-        return self.application
-
-    #### Trait initializers ###################################################
-
-    def _application_default(self):
-        log.debug("DYNAMICGROUP: _application_default=%s!!!" % self.manager.controller.task.window.application)
-        return self.manager.controller.task.window.application
 
 
 class SwitchDocumentAction(Action):

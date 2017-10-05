@@ -66,6 +66,10 @@ class FrameworkTask(Task):
 
     document_changed = Event
 
+    # event that causes the menubar/toolbar to be updated according to
+    # the ui state variables
+    menu_update_event = Event
+
     keyboard_shortcuts = Any
 
     # class attribute
