@@ -146,6 +146,7 @@ class SegmentData(object):
             self.data = OrderWrapper(data, order)
         else:
             self.data = to_numpy(data)
+        self.calc_lookups()
         if style is None:
             if debug:
                 self.style = np.arange(len(self), dtype=np.uint8)
@@ -160,13 +161,12 @@ class SegmentData(object):
             extra = UserExtraData()
         self.extra = extra
         self.reverse_index_mapping = None
-        self.calc_lookups()
 
     def __str__(self):
         return "SegmentData id=%x indexed=%s data=%s len=%s" % (id(self), self.is_indexed, type(self.data), len(self.data))
 
     def __len__(self):
-        return len(self.data)
+        return self.data_length
 
     def resize(self, newsize):
         if self.data.base is None:
@@ -211,6 +211,7 @@ class SegmentData(object):
         else:
             self.data_start, self.data_end = np.byte_bounds(self.data)
             self.base_start, self.base_end = np.byte_bounds(self.data.base)
+        self.data_length = len(self.data)
 
     @property
     def bufferedio(self):
@@ -564,7 +565,7 @@ class DefaultSegment(object):
         return s
 
     def __len__(self):
-        return len(self.rawdata)
+        return self.rawdata.data_length
 
     def __getitem__(self, index):
         return self.data[index]
