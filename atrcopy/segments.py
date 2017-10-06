@@ -606,7 +606,7 @@ class DefaultSegment(object):
             index = r.get_reverse_index(base_index)
         else:
             index = base_index - r.get_raw_index(0)
-            if not self.is_valid_index(index):
+            if index < 0 or index >= self.rawdata.data_length:
                 raise IndexError("index %d not in this segment" % base_index)
         return index
 
