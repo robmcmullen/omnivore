@@ -160,6 +160,7 @@ class SegmentData(object):
             extra = UserExtraData()
         self.extra = extra
         self.reverse_index_mapping = None
+        self.calc_lookups()
 
     def __str__(self):
         return "SegmentData id=%x indexed=%s data=%s len=%s" % (id(self), self.is_indexed, type(self.data), len(self.data))
@@ -179,6 +180,7 @@ class SegmentData(object):
                 self.style = newstyle
         else:
             raise ValueError("Can't resize a view of a segment")
+        self.calc_lookups()
 
     def replace_arrays(self, base_raw):
         newsize = len(base_raw)
@@ -198,6 +200,17 @@ class SegmentData(object):
             self.style = base_raw.style[start:end]
         else:
             raise ValueError("The base SegmentData object should use the resize method to replace arrays")
+        self.calc_lookups()
+
+    def calc_lookups(self):
+        if self.is_base:
+            # these values not needed if indexed or is base array, so force bad
+            # values that will raise exception if they are used
+            self.data_start, self.data_end = None, None
+            self.base_start, self.base_end = None, None
+        else:
+            self.data_start, self.data_end = np.byte_bounds(self.data)
+            self.base_start, self.base_end = np.byte_bounds(self.data.base)
 
     @property
     def bufferedio(self):
@@ -247,9 +260,7 @@ class SegmentData(object):
             else:
                 basearray = self.data
             return 0, len(basearray)
-        data_start, data_end = np.byte_bounds(self.data)
-        base_start, base_end = np.byte_bounds(self.data.base)
-        return int(data_start - base_start), int(data_end - base_start)
+        return int(self.data_start - self.base_start), int(self.data_end - self.base_start)
 
     def get_raw_index(self, i):
         """Get index into base array's raw data, given the index into this
@@ -259,9 +270,7 @@ class SegmentData(object):
             return int(self.order[i])
         if self.data.base is None:
             return int(i)
-        data_start, data_end = np.byte_bounds(self.data)
-        base_start, base_end = np.byte_bounds(self.data.base)
-        return int(data_start - base_start + i)
+        return int(self.data_start - self.base_start + i)
 
     def get_indexes_from_base(self):
         """Get array of indexes from the base array, as if this raw data were
@@ -343,9 +352,7 @@ class SegmentData(object):
         else:
             if self.data.base is None:
                 return int(base_index)
-            data_start, data_end = np.byte_bounds(self.data)
-            base_start, base_end = np.byte_bounds(self.data.base)
-            return int(base_start + base_index - data_start)
+            return int(self.base_start + base_index - self.data_start)
 
 
 class DefaultSegment(object):
