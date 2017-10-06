@@ -33,6 +33,7 @@ class CommentsPanel(wx.VListBox):
         self.Bind(wx.EVT_LEFT_DOWN, self.on_click)
 
         f = self.GetFont()
+        self.normal_font = f
         self.bold_font = wx.Font(f.GetPointSize(), f.GetFamily(),
                                  f.GetStyle(), wx.BOLD, f.GetUnderlined(),
                                  f.GetFaceName(), f.GetEncoding())
@@ -157,7 +158,7 @@ class CommentsPanel(wx.VListBox):
     def update_items(self, segment):
         self.last_segment = segment
         new_items = []
-        font = self.GetFont()
+        font = self.normal_font
         for item in self.items:
             new_item = item
             if item.segment == segment:
@@ -181,7 +182,7 @@ class CommentsPanel(wx.VListBox):
                 raise IndexError
             index = segment.get_index_from_base_index(item[0])
             label = e.get_label_at_index(index)
-            font = self.GetFont()
+            font = self.normal_font
             segment_font = self.bold_font
         except IndexError:
             font = self.italic_font
