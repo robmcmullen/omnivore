@@ -160,7 +160,6 @@ class SegmentData(object):
         if extra is None:
             extra = UserExtraData()
         self.extra = extra
-        self.reverse_index_mapping = None
 
     def __str__(self):
         return "SegmentData id=%x indexed=%s data=%s len=%s" % (id(self), self.is_indexed, type(self.data), len(self.data))
@@ -207,14 +206,20 @@ class SegmentData(object):
             end = len(self.data.np_data)
             self.data_start, self.data_end = 0, end
             self.base_start, self.base_end = 0, end
+            base_size = end
         elif self.data.base is None:
             end = len(self.data)
             self.data_start, self.data_end = 0, end
             self.base_start, self.base_end = 0, end
+            base_size = end
         else:
             self.data_start, self.data_end = np.byte_bounds(self.data)
             self.base_start, self.base_end = np.byte_bounds(self.data.base)
+            base_size = len(self.data.base)
+        self.base_length = base_size
         self.data_length = len(self.data)
+        # Force regeneration of reverse index mapping the next time it's needed
+        self._reverse_index_mapping = None
 
     @property
     def bufferedio(self):
@@ -340,23 +345,38 @@ class SegmentData(object):
         data_base, style_base = self.get_bases()
         return SegmentData(data_base, style_base, self.extra, order=base_index)
 
+    @property
+    def reverse_index_mapping(self):
+        """Get mapping from this segment's indexes to the indexes of
+        the base array.
+
+        If the index is < 0, the index is out of range, meaning that it doesn't
+        exist in this segment and is not mapped to the base array
+        """
+        if self._reverse_index_mapping is None:
+            if self.is_indexed:
+                # Initialize array to out of range
+                r = np.zeros(self.base_length, dtype=np.int32) - 1
+                r[self.order] = np.arange(len(self.order), dtype=np.int32)
+            elif self.data.base is None:
+                # Starts at the beginning; produces the identity
+                r = np.arange(self.data_length, dtype=np.int32)
+            else:
+                r = np.zeros(self.base_length, dtype=np.int32) - 1
+                r[self.data_start - self.base_start:self.data_end - self.base_start] = np.arange(self.data_length, dtype=np.int32)
+            self._reverse_index_mapping = r
+        return self._reverse_index_mapping
+
     def get_reverse_index(self, base_index):
         """Get index into this segment's data given the index into the base data
 
         Raises IndexError if the base index doesn't map to anything in this
         segment's data
         """
-        if self.is_indexed:
-            if not self.reverse_index_mapping:
-                self.reverse_index_mapping = dict([(k,i) for i,k in enumerate(self.order)])
-            try:
-                return self.reverse_index_mapping[base_index]
-            except KeyError:
-                raise IndexError("index %d not mapped in this segment" % base_index)
-        else:
-            if self.data.base is None:
-                return int(base_index)
-            return int(self.base_start + base_index - self.data_start)
+        r = self.reverse_index_mapping[base_index]
+        if r < 0:
+            raise IndexError("index %d not mapped in this segment" % base_index)
+        return r
 
 
 class DefaultSegment(object):
@@ -602,13 +622,13 @@ class DefaultSegment(object):
         """Get index into this array's data given the index into the base array
         """
         r = self.rawdata
-        if r.is_indexed:
+        try:
             index = r.get_reverse_index(base_index)
-        else:
-            index = base_index - r.get_raw_index(0)
-            if index < 0 or index >= self.rawdata.data_length:
-                raise IndexError("index %d not in this segment" % base_index)
-        return index
+        except IndexError:
+            raise IndexError("index %d not in this segment" % base_index)
+        if index < 0:
+            raise IndexError("index %d not in this segment" % base_index)
+        return int(index)
 
     def tostring(self):
         return self.data.tostring()
