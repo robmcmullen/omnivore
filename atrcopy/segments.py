@@ -203,11 +203,14 @@ class SegmentData(object):
         self.calc_lookups()
 
     def calc_lookups(self):
-        if self.is_base:
-            # these values not needed if indexed or is base array, so force bad
-            # values that will raise exception if they are used
-            self.data_start, self.data_end = None, None
-            self.base_start, self.base_end = None, None
+        if self.is_indexed:
+            end = len(self.data.np_data)
+            self.data_start, self.data_end = 0, end
+            self.base_start, self.base_end = 0, end
+        elif self.data.base is None:
+            end = len(self.data)
+            self.data_start, self.data_end = 0, end
+            self.base_start, self.base_end = 0, end
         else:
             self.data_start, self.data_end = np.byte_bounds(self.data)
             self.base_start, self.base_end = np.byte_bounds(self.data.base)
