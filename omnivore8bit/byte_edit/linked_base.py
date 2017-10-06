@@ -375,7 +375,7 @@ class LinkedBase(HasTraits):
         s = self.get_selected_status_message()
         if s:
             msg = "%s %s" % (msg, s)
-            self.editor.task.status_bar.message = msg
+        self.editor.task.status_bar.message = msg
 
     def add_user_segment(self, segment, update=True):
         self.document.add_user_segment(segment)
