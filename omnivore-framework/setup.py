@@ -37,7 +37,7 @@ install_requires = [
 cmdclass = dict()
 
 import omnivore
-full_version = omnivore.__version__
+full_version = "1.0rc8"
 spaceless_version = full_version.replace(" ", "_")
 
 common_includes = [
