@@ -5,7 +5,7 @@ from envisage.ui.tasks.api import TaskWindow
 from pyface.action.api import Action, Group
 from pyface.tasks.api import Task
 from pyface.tasks.action.api import TaskActionManagerBuilder, TaskActionController
-from traits.api import Instance, Callable, Event, Str, List, Any, Property, cached_property, on_trait_change
+from traits.api import Instance, Callable, Event, Str, List, Any, Property, cached_property, on_trait_change, Undefined
 
 from .editor import FrameworkEditor
 
@@ -27,6 +27,7 @@ if not BENCHMARK_OLD:
 
         class DummyTask(Task):
             menu_update_event = Event
+            active_editor = None
 
         dummy_task = DummyTask()
 
@@ -58,7 +59,10 @@ if not BENCHMARK_OLD:
                     else:
                         obj = getattr(obj, attr)
             except AttributeError:
-                log.error("Did not find name %r on %r" % (attr, obj))
+                if obj is Undefined or obj is None:
+                    pass
+                else:
+                    log.error("Did not find name %r on %r" % (attr, obj))
                 return default
             return obj
 
@@ -82,7 +86,7 @@ if not BENCHMARK_OLD:
 
         @on_trait_change('task.menu_update_event')
         def on_dynamic_menu_update(self, ui_state):
-            if self.enabled_name:
+            if self.enabled_name and ui_state:
                 enabled = bool(self._get_attr(ui_state, self.enabled_name, None))
                 if enabled is None:
                     log.warning("%s flag does not exist in ui_state object %s" % (self.enabled_name, ui_state))
