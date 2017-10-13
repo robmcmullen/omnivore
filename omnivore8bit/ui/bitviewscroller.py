@@ -48,7 +48,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
     dbg_call_seq = 0
     short_name = "_bitview base class"
 
-    def __init__(self, parent, linked_base, **kwargs):
+    def __init__(self, parent, linked_base, rect_select=False, **kwargs):
         wx.ScrolledWindow.__init__(self, parent, -1, **kwargs)
         SelectionMixin.__init__(self)
 
@@ -78,7 +78,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         self.visible_cols = 1
         self.total_rows = 1
 
-        self.rect_select = False
+        self.rect_select = rect_select
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_resize)
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
@@ -145,7 +145,6 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
 
     def recalc_view(self):
         self.segment = self.get_segment()
-        self.rect_select = self.editor.rect_select
         self.start_addr = self.segment.start_addr
         self.update_bytes_per_row()
         self.set_colors()

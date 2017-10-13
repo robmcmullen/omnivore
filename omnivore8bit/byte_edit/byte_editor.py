@@ -708,8 +708,15 @@ class ByteEditor(FrameworkEditor):
         self.linked_bases.append(center_base)
 
         hex_viewer = self.task.find_viewer_by_name("hex")
+        char_viewer = self.task.find_viewer_by_name("char")
+        bitmap_viewer = self.task.find_viewer_by_name("bitmap")
+        disassembly_viewer = self.task.find_viewer_by_name("disassembly")
+        comments_viewer = self.task.find_viewer_by_name("comments")
+        undo_viewer = self.task.find_viewer_by_name("undo")
+        segment_viewer = self.task.find_viewer_by_name("segments")
+        map_viewer = self.task.find_viewer_by_name("map")
 
-        viewer = hex_viewer.create(panel, center_base)
+        viewer = map_viewer.create(panel, center_base)
         viewer.pane_info.CenterPane()
         self.viewers.append(viewer)
         self.mgr.AddPane(viewer.control, viewer.pane_info)
@@ -721,13 +728,6 @@ class ByteEditor(FrameworkEditor):
         from ..arch import antic_renderers
         from ..arch.machine import disasm
         from ..arch import fonts
-        
-        char_viewer = self.task.find_viewer_by_name("char")
-        bitmap_viewer = self.task.find_viewer_by_name("bitmap")
-        disassembly_viewer = self.task.find_viewer_by_name("disassembly")
-        comments_viewer = self.task.find_viewer_by_name("comments")
-        undo_viewer = self.task.find_viewer_by_name("undo")
-        segment_viewer = self.task.find_viewer_by_name("segments")
 
         layer = 0
 
@@ -770,7 +770,7 @@ class ByteEditor(FrameworkEditor):
         # self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         layer += 1
-        viewer = comments_viewer.create(panel, center_base)
+        viewer = map_viewer.create(panel, center_base)
         viewer.pane_info.Right().Layer(layer)
         self.viewers.append(viewer)
         self.mgr.AddPane(viewer.control, viewer.pane_info)

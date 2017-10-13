@@ -9,7 +9,6 @@ from omnivore import get_image_path
 
 import logging
 log = logging.getLogger(__name__)
-mouselog = logging.getLogger("mouse")
 
 
 class MouseHandler(object):
@@ -238,6 +237,7 @@ class MouseControllerMixin(object):
 
     def on_motion(self, evt):
         mode = self.get_effective_tool_mode(evt)
+        log.debug("on_motion: effective mode=%s" % mode)
         if evt.LeftIsDown():
             mode.process_mouse_motion_down(evt)
         else:

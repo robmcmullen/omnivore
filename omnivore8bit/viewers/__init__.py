@@ -37,6 +37,8 @@ class SegmentViewer(HasTraits):
 
     has_metadata_only = False
 
+    valid_mouse_modes = []  # toolbar description
+
     ##### Traits
 
     linked_base = Instance(LinkedBase)
@@ -132,6 +134,13 @@ class SegmentViewer(HasTraits):
         """
         return []
 
+    ##### Selections
+
+    def highlight_selected_ranges(self):
+        s = self.linked_base.segment
+        s.clear_style_bits(selected=True)
+        s.set_style_ranges(self.selected_ranges, selected=True)
+
     ##### Spring tab (pull out menu) interface
 
     def __call__(self, parent, task, **kwargs):
@@ -171,7 +180,8 @@ class ByteViewersPlugin(FrameworkPlugin):
         from omnivore8bit.viewers.cpu import DisassemblyViewer
         from omnivore8bit.viewers.hex import HexEditViewer
         from omnivore8bit.viewers.info import CommentsViewer, UndoViewer, SegmentListViewer
+        from omnivore8bit.viewers.map import MapViewer
 
-        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, MemoryMapViewer, CommentsViewer, UndoViewer, SegmentListViewer]
+        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, MemoryMapViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer]
 
 plugins = [ByteViewersPlugin()]

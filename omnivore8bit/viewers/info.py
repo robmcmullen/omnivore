@@ -286,11 +286,11 @@ class SegmentListViewer(BaseInfoViewer):
             self.control.set_segments(self.linked_base.editor.document.segments, self.linked_base.segment_number)
             self.recalc_view()
 
-    @on_trait_change('linked_base.editor.task.segment_selected')
-    def process_segment_selected(self, evt):
-        log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        if evt is not Undefined:
-            self.control.move_cursor(evt)  # evt is segment number
+    # @on_trait_change('linked_base.editor.task.segment_selected')
+    # def process_segment_selected(self, evt):
+    #     log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+    #     if evt is not Undefined:
+    #         self.control.move_cursor(evt)  # evt is segment number
 
     ##### Spring Tab interface
 
