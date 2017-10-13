@@ -309,8 +309,7 @@ class LinkedBase(HasTraits):
             self.anchor_initial_end_index = self.anchor_end_index = last[1]
         g.clear_style_bits(selected=True)
         self.document.change_count += 1
-        self.editor.focused_viewer.highlight_selected_ranges()
-        self.editor.can_copy_baseline = self.editor.can_copy and self.editor.baseline_present
+        self.editor.highlight_selected_ranges()
 
     def convert_ranges(self, from_style, to_style):
         s = self.segment

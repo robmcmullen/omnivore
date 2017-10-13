@@ -139,7 +139,7 @@ class SegmentViewer(HasTraits):
     def highlight_selected_ranges(self):
         s = self.linked_base.segment
         s.clear_style_bits(selected=True)
-        s.set_style_ranges(self.selected_ranges, selected=True)
+        s.set_style_ranges(self.linked_base.editor.selected_ranges, selected=True)
 
     ##### Spring tab (pull out menu) interface
 

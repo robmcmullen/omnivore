@@ -262,6 +262,6 @@ class MapViewer(SegmentViewer):
     ##### Selections
 
     def highlight_selected_ranges(self):
-        s = self.segment
+        s = self.linked_base.segment
         s.clear_style_bits(selected=True)
-        s.set_style_ranges_rect(self.selected_ranges, self.control.bytes_per_row, selected=True)
+        s.set_style_ranges_rect(self.linked_base.editor.selected_ranges, self.control.bytes_per_row, selected=True)

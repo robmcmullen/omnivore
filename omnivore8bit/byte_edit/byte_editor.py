@@ -409,14 +409,11 @@ class ByteEditor(FrameworkEditor):
             self.anchor_initial_start_index = self.anchor_start_index = last[0]
             self.anchor_initial_end_index = self.anchor_end_index = last[1]
         g.clear_style_bits(selected=True)
-        self.document.change_count += 1
         self.highlight_selected_ranges()
 
     def highlight_selected_ranges(self):
-        s = self.segment
-        s.clear_style_bits(selected=True)
-        s.set_style_ranges(self.selected_ranges, selected=True)
         self.document.change_count += 1
+        self.focused_viewer.highlight_selected_ranges()
         self.can_copy_baseline = self.can_copy and self.baseline_present
 
     def convert_ranges(self, from_style, to_style):
@@ -716,7 +713,7 @@ class ByteEditor(FrameworkEditor):
         segment_viewer = self.task.find_viewer_by_name("segments")
         map_viewer = self.task.find_viewer_by_name("map")
 
-        viewer = map_viewer.create(panel, center_base)
+        viewer = hex_viewer.create(panel, center_base)
         viewer.pane_info.CenterPane()
         self.viewers.append(viewer)
         self.mgr.AddPane(viewer.control, viewer.pane_info)
