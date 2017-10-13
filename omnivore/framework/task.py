@@ -107,7 +107,7 @@ class FrameworkTask(Task):
             "View": ["PredefinedGroup", "ZoomGroup", "ChangeGroup", "ConfigGroup", "ToggleGroup", "TaskGroup", "DebugGroup"],
             "Documents": ["DocumentGroup"],
             "Window": ["NewTaskGroup", "WindowGroup"],
-            "Help": ["AboutGroup", "DocGroup", "BugReportGroup", "DebugGroup"],
+            "Help": ["AboutGroup", "DocGroup", "BugReportGroup", "DebugTaskGroup", "DebugFrameworkGroup"],
         },
         "MenuBar": {  # documentation for menus and submenus that don't have actions
             "Documents": "This menu contains a list of all documents open in the current session, across all windows and tabs. Selecting an item in this list will switch the view to that document, using the editor that was being used the last time it was edited.",
@@ -618,7 +618,7 @@ class FrameworkTask(Task):
             OpenLogDirectoryAction(),
             ]
 
-    def get_actions_Menu_Help_DebugGroup(self):
+    def get_actions_Menu_Help_DebugFrameworkGroup(self):
         return [
             ShowLoggerAction(),
             SMenu(WidgetInspectorAction(),
