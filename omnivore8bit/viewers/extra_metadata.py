@@ -1,6 +1,6 @@
 from atrcopy import DefaultSegment
 
-from segmentutil import AnticFontSegment
+from ..utils.segmentutil import AnticFontSegment
 
 import logging
 log = logging.getLogger(__name__)

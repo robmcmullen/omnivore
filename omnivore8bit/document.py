@@ -56,7 +56,7 @@ class SegmentedDocument(BaseDocument):
     def load_extra_metadata(self, guess):
         # don't load check_builtin until now because it causes some circular
         # imports
-        from omnivore8bit.utils.extra_metadata import check_builtin
+        from omnivore8bit.viewers.extra_metadata import check_builtin
 
         log.debug("extra metadata: parser=%s" % guess.parser)
         self.set_segments(guess.parser)
