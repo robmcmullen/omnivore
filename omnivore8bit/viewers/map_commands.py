@@ -3,7 +3,7 @@ import numpy as np
 from omnivore.framework.errors import ProgressCancelError
 from omnivore.utils.command import Batch, Command, UndoInfo
 from omnivore8bit.commands import SegmentCommand
-from omnivore8bit.hex_edit.commands import ChangeByteCommand
+from ..byte_edit.commands import ChangeByteCommand
 from omnivore8bit.utils.drawutil import *
 
 import logging

@@ -14,7 +14,7 @@ from omnivore8bit.ui.bitviewscroller import BitviewScroller, FontMapScroller
 from omnivore.utils.command import Overlay
 from omnivore8bit.utils.drawutil import get_bounds
 from omnivore.utils.sortutil import invert_rects
-from omnivore8bit.hex_edit.commands import ChangeByteCommand, PasteCommand
+from ..byte_edit.commands import ChangeByteCommand, PasteCommand
 from omnivore.framework.mouse_handler import MouseHandler, MouseControllerMixin
 
 from . import SegmentViewer

@@ -29,25 +29,12 @@ class OmnivoreEditorPlugin(FrameworkPlugin):
     tasks = List(contributes_to=TASKS)
 
     def _preferences_panes_default(self):
-        # from omnivore8bit.hex_edit import HexEditPreferencesPane
-        # from omnivore8bit.bitmap_edit import BitmapEditPreferencesPane
-        # from omnivore8bit.jumpman import JumpmanPreferencesPane
         from omnivore8bit.byte_edit import ByteEditPreferencesPane
-        return [ ByteEditPreferencesPane]
+        return [ByteEditPreferencesPane]
 
     def _tasks_default(self):
-        # from omnivore8bit.hex_edit import HexEditTask
-        # from omnivore8bit.map_edit import MapEditTask
-        # from omnivore8bit.font_edit import FontEditTask
-        # from omnivore8bit.bitmap_edit import BitmapEditTask
-        # from omnivore8bit.jumpman import JumpmanEditTask
         from omnivore8bit.byte_edit import ByteEditTask
 
         return self.task_factories_from_tasks([
-            # HexEditTask,
-            # MapEditTask,
-            # FontEditTask,
-            # BitmapEditTask,
-            # JumpmanEditTask,
             ByteEditTask,
             ])
