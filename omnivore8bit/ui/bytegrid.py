@@ -812,6 +812,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             label = self.table.get_label_at_index(index)
             message = self.get_status_message_at_index(index)
             return "%s: %s %s" % (self.short_name, label, message)
+        return ""
 
     def get_status_message_at_index(self, index):
         msg = get_style_name(self.linked_base.segment, index)
