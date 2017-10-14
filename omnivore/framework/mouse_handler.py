@@ -98,7 +98,7 @@ class MouseHandler(object):
         rotation = evt.GetWheelRotation()
         delta = evt.GetWheelDelta()
         window = evt.GetEventObject()
-        mouselog.debug("on_mouse_wheel_scroll. rot=%s delta=%d win=%s" % (rotation, delta, window))
+        log.debug("on_mouse_wheel_scroll. rot=%s delta=%d win=%s" % (rotation, delta, window))
         if rotation == 0 or delta == 0:
             return
 
