@@ -133,6 +133,37 @@ def invert_ranges(ranges, last):
     return inverted
 
 
+def rect_ranges_to_indexes(row_width, start_offset, ranges):
+    # Loop over each range to determine the indexes of the selected bytes
+    # Returns a unique, monotonically increasing list of indexes to guarantee
+    # that each index appears in the list only once.
+    if len(ranges) == 0:
+        return np.zeros([0], dtype=np.uint32)
+    indexes = np.empty([0], dtype=np.uint32)
+    log.debug("starting rects: %s" % np.vectorize(hex)(ranges))
+    for start, end in ranges:
+        if start is None:
+            continue
+        if start > end:
+            start, end = end, start
+        r1, c1 = divmod(start, row_width)
+        r2, c2 = divmod(end, row_width)
+        if c2 < c1:
+            first_row_column_zero = start - c1
+            c1, c2 = c2 - 1, c1 + 1
+        else:
+            first_row_column_zero = start - c1
+        num_cols = c2 - c1  # cols is in slice format, so last col is + 1
+        num_rows = r2 - r1 + 1
+        log.debug("range: %x-%x, (%d,%d) -> (%d,%d), nr=%d nc=%d zeroc=%x" % (start, end, r1, c1, r2, c2, num_rows, num_cols, first_row_column_zero))
+        rect_indexes = np.hstack((np.arange(i + c1 + first_row_column_zero, i + c1 + first_row_column_zero + num_cols, dtype=np.uint32) for i in range(0, num_rows * row_width, row_width)))
+        indexes = np.hstack((indexes, rect_indexes))
+
+    unique_indexes = np.unique(indexes)
+    log.debug("rect indexes: %s" % np.vectorize(hex)(unique_indexes))
+    return unique_indexes
+
+
 def invert_rects(rects, numr, numc):
     # Purely heuristic approach.  An algorithmic approach might be based on:
     # http://stackoverflow.com/questions/30818645 but this one breaks up the

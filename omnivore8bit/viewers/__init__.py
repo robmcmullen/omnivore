@@ -7,6 +7,7 @@ from envisage.api import ExtensionPoint
 
 from omnivore.framework.plugin import FrameworkPlugin
 from ..byte_edit.linked_base import LinkedBase
+from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 
 from omnivore8bit.arch.machine import Machine
 
@@ -49,6 +50,10 @@ class SegmentViewer(HasTraits):
 
     pane_info = Any(None)
 
+    range_processor = Property(Any, depends_on='control')
+
+    ##### Class methods
+
     @classmethod
     def create_control(cls, parent, linked_base):
         raise NotImplementedError("Implement in subclass!")
@@ -66,6 +71,16 @@ class SegmentViewer(HasTraits):
         control.segment_viewer = v
         v.pane_info = aui.AuiPaneInfo().Name(cls.get_aui_pane_name())
         return v
+
+    ##### Range operations
+
+    def _get_range_processor(self):  # Trait property getter
+        return ranges_to_indexes
+
+    def get_optimized_selected_ranges(self, ranges):
+        return collapse_overlapping_ranges(ranges)
+
+    ##### SegmentViewer interface
 
     def update_caption(self):
         self.pane_info.Caption(self.window_title)

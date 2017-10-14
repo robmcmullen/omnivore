@@ -416,6 +416,12 @@ class ByteEditor(FrameworkEditor):
         self.focused_viewer.highlight_selected_ranges()
         self.can_copy_baseline = self.can_copy and self.baseline_present
 
+    def get_optimized_selected_ranges(self):
+        """ Get the list of monotonically increasing, non-overlapping selected
+        ranges
+        """
+        return self.focused_viewer.get_optimized_selected_ranges(self.selected_ranges)
+
     def convert_ranges(self, from_style, to_style):
         s = self.segment
         ranges = s.get_style_ranges(**from_style)

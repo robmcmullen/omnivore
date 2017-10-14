@@ -1,6 +1,7 @@
 # Standard library imports.
 import sys
 import os
+import functools
 
 # Major package imports.
 import wx
@@ -13,7 +14,7 @@ from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, 
 from omnivore8bit.ui.bitviewscroller import BitviewScroller, FontMapScroller
 from omnivore.utils.command import Overlay
 from omnivore8bit.utils.drawutil import get_bounds
-from omnivore.utils.sortutil import invert_rects
+from omnivore.utils.sortutil import invert_rects, rect_ranges_to_indexes
 from ..byte_edit.commands import ChangeByteCommand, PasteCommand
 from omnivore.framework.mouse_handler import MouseHandler, MouseControllerMixin
 
@@ -237,6 +238,16 @@ class MapViewer(SegmentViewer):
     @classmethod
     def create_control(cls, parent, linked_base):
         return MainFontMapScroller(parent, linked_base, cls.default_map_width, size=(500,500), command=ChangeByteCommand)
+
+    ##### Range operations
+
+    def _get_range_processor(self):  # Trait property getter
+        return functools.partial(rect_ranges_to_indexes, self.control.bytes_per_row, 0)
+
+    def get_optimized_selected_ranges(self, ranges):
+        return ranges
+
+    ##### SegmentViewer interface
 
     @property
     def window_title(self):

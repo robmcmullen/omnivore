@@ -6,7 +6,7 @@ import numpy as np
 
 from omnivore.framework.errors import ProgressCancelError
 from omnivore.utils.command import Command, UndoInfo
-from omnivore8bit.commands import SegmentCommand, ChangeMetadataCommand, SetDataCommand, SetValuesAtIndexesCommand, SetRangeCommand, SetRangeValueCommand, ChangeStyleCommand
+from omnivore8bit.commands import SegmentCommand, ChangeMetadataCommand, SetContiguousDataCommand, SetValuesAtIndexesCommand, SetRangeCommand, SetRangeValueCommand, ChangeStyleCommand
 from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 from omnivore8bit.utils.searchalgorithm import AlgorithmSearcher
 from omnivore.utils.file_guess import FileGuess
@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 progress_log = logging.getLogger("progress")
 
 
-class ChangeByteCommand(SetDataCommand):
+class ChangeByteCommand(SetContiguousDataCommand):
     short_name = "cb"
     pretty_name = "Change Bytes"
     serialize_order =  [
@@ -30,7 +30,7 @@ class ChangeByteCommand(SetDataCommand):
             ]
 
     def __init__(self, segment, start_index, end_index, bytes, cursor_at_end=False, ignore_if_same_bytes=False):
-        SetDataCommand.__init__(self, segment, start_index, end_index)
+        SetContiguousDataCommand.__init__(self, segment, start_index, end_index)
         self.data = bytes
         self.cursor_at_end = cursor_at_end
         self.ignore_if_same_bytes = ignore_if_same_bytes
@@ -49,7 +49,7 @@ class CoalescingChangeByteCommand(ChangeByteCommand):
         self.data = next_command.data
 
 
-class InsertFileCommand(SetDataCommand):
+class InsertFileCommand(SetContiguousDataCommand):
     short_name = "in"
     pretty_name = "Insert File"
     serialize_order =  [
@@ -59,7 +59,7 @@ class InsertFileCommand(SetDataCommand):
             ]
 
     def __init__(self, segment, start_index, uri):
-        SetDataCommand.__init__(self, segment, start_index, -1)
+        SetContiguousDataCommand.__init__(self, segment, start_index, -1)
         self.uri = uri
         self.error = None
 

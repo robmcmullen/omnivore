@@ -28,8 +28,8 @@ class SegmentCommand(Command):
 
 
 class ChangeByteValuesCommand(SegmentCommand):
-    short_name = "metadata_base"
-    pretty_name = "Change Metadata Abstract Command"
+    short_name = "change_values_base"
+    pretty_name = "Change Values Abstract Command"
 
     def set_undo_flags(self, flags):
         flags.byte_values_changed = True
@@ -43,8 +43,8 @@ class ChangeMetadataCommand(SegmentCommand):
         flags.byte_style_changed = True
 
 
-class SetDataCommand(ChangeByteValuesCommand):
-    short_name = "get_data_base"
+class SetContiguousDataCommand(ChangeByteValuesCommand):
+    short_name = "set_data_base"
     pretty_name = "Set Data Abstract Command"
     serialize_order =  [
             ('segment', 'int'),
@@ -175,24 +175,35 @@ class SetRangeCommand(ChangeByteValuesCommand):
     serialize_order =  [
             ('segment', 'int'),
             ('ranges', 'int_list'),
+            ('range_to_index_function', 'func_pointer'),
             ]
 
     def __init__(self, segment, ranges):
         SegmentCommand.__init__(self, segment)
         self.ranges = tuple(ranges)
 
+        # function to convert ranges to indexes will be set the first time this
+        # command is performed so it can use the function appropriate to the
+        # currently focused viewer.
+        self.range_to_index_function = None
+
     def get_data(self, orig):
         raise NotImplementedError
 
+    def perform(self, editor, undo_info):
+        if self.range_to_index_function is None:
+            self.range_to_index_function = editor.focused_viewer.range_processor
+        ChangeByteValuesCommand.perform(self, editor, undo_info)
+
     def do_change(self, editor, undo):
-        indexes = ranges_to_indexes(self.ranges)
+        indexes = self.range_to_index_function(self.ranges)
         undo.flags.index_range = indexes[0], indexes[-1]
         old_data = self.segment[indexes].copy()
         self.segment[indexes] = self.get_data(old_data)
         return old_data
 
     def undo_change(self, editor, old_data):
-        indexes = ranges_to_indexes(self.ranges)
+        indexes = self.range_to_index_function(self.ranges)
         self.segment[indexes] = old_data
 
 
@@ -213,14 +224,14 @@ class SetRangeValueCommand(SetRangeCommand):
         return self.data
 
 
-class ChangeStyleCommand(SetDataCommand):
+class ChangeStyleCommand(SetContiguousDataCommand):
     short_name = "cs"
     pretty_name = "Change Style"
 
     def __init__(self, segment):
         start_index = 0
         end_index = len(segment)
-        SetDataCommand.__init__(self, segment, start_index, end_index)
+        SetContiguousDataCommand.__init__(self, segment, start_index, end_index)
 
     def set_undo_flags(self, flags):
         flags.byte_style_changed = True
