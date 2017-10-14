@@ -146,14 +146,16 @@ def rect_ranges_to_indexes(row_width, start_offset, ranges):
             continue
         if start > end:
             start, end = end, start
+        end -= 1  # instead of slice format, last byte becomes inclusive
         r1, c1 = divmod(start, row_width)
         r2, c2 = divmod(end, row_width)
+        log.debug("before: %x-%x, (%d,%d) -> (%d,%d)" % (start, end, r1, c1, r2, c2))
         if c2 < c1:
             first_row_column_zero = start - c1
-            c1, c2 = c2 - 1, c1 + 1
+            c1, c2 = c2, c1
         else:
             first_row_column_zero = start - c1
-        num_cols = c2 - c1  # cols is in slice format, so last col is + 1
+        num_cols = c2 - c1 + 1
         num_rows = r2 - r1 + 1
         log.debug("range: %x-%x, (%d,%d) -> (%d,%d), nr=%d nc=%d zeroc=%x" % (start, end, r1, c1, r2, c2, num_rows, num_cols, first_row_column_zero))
         rect_indexes = np.hstack((np.arange(i + c1 + first_row_column_zero, i + c1 + first_row_column_zero + num_cols, dtype=np.uint32) for i in range(0, num_rows * row_width, row_width)))
