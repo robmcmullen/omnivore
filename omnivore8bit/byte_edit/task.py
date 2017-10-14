@@ -635,6 +635,7 @@ class ByteEditTask(FrameworkTask):
             Separator(),
             RampUpAction(),
             RampDownAction(),
+            RandomBytesAction(),
             Separator(),
             ReverseSelectionAction(),
             ReverseGroupAction(),

@@ -439,6 +439,14 @@ class ReverseBitsCommand(SetRangeCommand):
         return bit_reverse_table[orig]
 
 
+class RandomBytesCommand(SetRangeCommand):
+    short_name = "random_bytes"
+    pretty_name = "Random Bytes"
+
+    def get_data(self, orig):
+        return np.random.randint(0, 256, len(orig), dtype=np.uint8)
+
+
 class RampUpCommand(SetRangeValueCommand):
     short_name = "ramp_up"
     pretty_name = "Ramp Up"

@@ -1606,6 +1606,11 @@ class ReverseBitsAction(IndexRangeAction):
     cmd = ReverseBitsCommand
 
 
+class RandomBytesAction(IndexRangeAction):
+    """Generate random bytes to replace the selected data"""
+    cmd = RandomBytesCommand
+
+
 class IndexRangeValueAction(IndexRangeAction):
     prompt = "Enter byte value: (default hex, prefix with # for decimal, %% for binary)"
 
