@@ -10,6 +10,7 @@ from traits.api import on_trait_change, Property, Instance, Any, Event, Int
 
 from omnivore.framework.task import FrameworkTask
 from omnivore.framework.actions import *
+from omnivore.framework.toolbar import get_toolbar_group
 from byte_editor import ByteEditor
 from preferences import ByteEditPreferences
 import pane_layout
@@ -279,6 +280,15 @@ class ByteEditTask(FrameworkTask):
         # Make sure it's a valid document before refreshing
         if editor is not None and editor.document.segments:
             editor.rebuild_ui()
+
+    def _tool_bars_default(self):
+        toolbars = []
+        modes = []
+        for v in self.known_viewers:
+            modes.extend(v.valid_mouse_modes)
+        toolbars.append(get_toolbar_group("%s:Modes" % self.id, modes))
+        toolbars.extend(FrameworkTask._tool_bars_default(self))
+        return toolbars
 
     ###########################################################################
     # 'FrameworkTask' interface.
