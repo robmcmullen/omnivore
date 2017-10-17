@@ -64,7 +64,8 @@ def Getaway(doc):
                 'font': (font_segment.antic_font, "Antic 5"),
                 'user segments': [font_segment, segment],
                 'initial segment': segment,
-                'last_task_id': map_edit_task_id,
+                'last_task_id': 'byte_edit',
+                'layout': 'map',
                 }
             extra_metadata.update(getaway_defaults)
             return extra_metadata
@@ -100,7 +101,8 @@ def Getaway(doc):
             'font': (font_segment.antic_font, "Antic 5"),
             'user segments': [font_segment, segment],
             'initial segment': segment,
-            'last_task_id': map_edit_task_id,
+            'last_task_id': 'byte_edit',
+            'layout': 'map',
             }
         extra_metadata.update(getaway_defaults)
         return extra_metadata
@@ -128,7 +130,8 @@ def JumpmanLevelBuilder(doc):
         extra_metadata = {
             'user segments': user_segments,
             'initial segment': user_segments[0],
-            'last_task_id': jumpman_task_id,
+            'last_task_id': 'byte_edit',
+            'layout': 'jumpman',
             }
         return extra_metadata
 

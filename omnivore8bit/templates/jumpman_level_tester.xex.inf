@@ -1,4 +1,5 @@
 {
-  "task": "jumpman",
+  "task": "byte_edit",
+  "layout": "jumpman",
   "label": "Jumpman Level"
 }

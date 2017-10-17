@@ -1,4 +1,5 @@
 {
-  "task": "map_edit",
+  "task": "byte_edit",
+  "layout": "map",
   "label": "Getaway Map"
 }
