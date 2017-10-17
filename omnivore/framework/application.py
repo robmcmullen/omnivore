@@ -208,6 +208,15 @@ class FrameworkApplication(TasksApplication):
             self.last_clipboard_check_time = time.time()
         editor.perform_idle()
 
+        # Workaround: pyface doesn't seem to update the enabled status in any
+        # timely manner, so force an update here. Toolbars are instances of
+        # pyface.ui.wx.action.tool_bar_manager.ToolBarManager, and its window
+        # attribute is a pyface.ui.wx.action.tool_bar_manager._AuiToolBar which
+        # itself is a tiny subclass of wx.lib.agw.aui.AuiToolBar
+        toolbars = editor.window._window_backend.get_toolbars()
+        for t in [t.window for t in toolbars]:
+            t.Refresh(False)
+
     def on_idle_build_docs(self, evt):
         evt.Skip()
         if not self.active_window:
