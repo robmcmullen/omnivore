@@ -47,6 +47,8 @@ class ByteEditor(FrameworkEditor):
 #    segment_parser_label = Property(Unicode)
     segment_parser_label = Unicode("whatever")
 
+    initial_segment = Any(None)
+
     ### View traits
 
     can_copy_baseline = Bool
@@ -154,7 +156,7 @@ class ByteEditor(FrameworkEditor):
         if not self.document.has_baseline:
             self.use_self_as_baseline(self.document)
         FrameworkEditor.rebuild_document_properties(self)
-        self.focused_viewer.linked_base.find_segment()
+        self.focused_viewer.linked_base.find_segment(self.initial_segment)
         self.update_emulator()
         self.compare_to_baseline()
         self.can_resize_document = self.document.can_resize
