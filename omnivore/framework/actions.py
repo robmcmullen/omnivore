@@ -13,7 +13,7 @@ from traits.api import on_trait_change, Property, Instance, Bool, Str, Unicode, 
 from .enthought_api_replacements import EditorAction, NameChangeAction, TaskDynamicSubmenuGroup, ApplicationDynamicSubmenuGroup
 from omnivore.framework.about import AboutDialog
 from omnivore.utils.file_guess import FileGuess
-from omnivore.utils.wx.dialogs import get_file_dialog_wildcard
+from omnivore.utils.wx.dialogs import get_file_dialog_wildcard, prompt_for_dec
 from omnivore.utils.wx.error_logger import show_logging_frame
 from omnivore.templates import iter_templates
 
@@ -72,6 +72,22 @@ class NewFileAction(Action):
         return u'Open a new %s' % self.name
 
 
+class NewEmptyFileAction(EditorAction):
+    """Create a blank file by specifying the size in bytes
+    """
+    name = "Blank File"
+    tooltip = "Create a blank file"
+
+    def perform(self, event=None):
+        e = self.active_editor
+        val = prompt_for_dec(e.window.control, 'Enter file size in bytes', 'New Blank File', 256)
+        val = 256
+        if val is not None and val > 0:
+            uri = "blank://%d" % val
+            guess = FileGuess(uri)
+            self.task.new(guess)
+
+
 class NewFileGroup(Group):
     """ A menu for creating a new file for each type of task
     """
@@ -105,6 +121,8 @@ class NewFileGroup(Group):
             items.append((name, ActionItem(action=action)))
         items.sort()
         items = [i[1] for i in items]
+        blank = NewEmptyFileAction(task_id=task_id)
+        items[0:0] = [ActionItem(action=blank)]
         return items
 
     def _rebuild(self):

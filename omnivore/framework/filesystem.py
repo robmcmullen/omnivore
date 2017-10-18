@@ -1,6 +1,7 @@
 import os
 import sys
 import datetime
+from cStringIO import StringIO
 
 from pyface.api import ImageResource
 
@@ -263,6 +264,69 @@ examples:
         return fs, resourcename
 
 
+class BlankFS(FS):
+    """Simple fs to read files from the template directories.
+
+    """
+
+    _meta = {'read_only': True,
+             'network': False}
+
+    def __init__(self, url):
+        self.root_url = url
+
+    def open(self, path, mode='r', buffering=-1, encoding=None, errors=None, newline=None, line_buffering=False, **kwargs):
+
+        if '+' in mode or 'w' in mode or 'a' in mode:
+            raise UnsupportedError('write')
+
+        log.debug("BlankFS: loading %s" % path)
+        try:
+            size = int(path)
+        except ValueError, e:
+            raise fs.errors.ResourceNotFoundError(path, details="Invalid size. %s" % e)
+        fh = StringIO('\0' * size)
+        return fh
+
+    def exists(self, path):
+        return True
+
+    def isdir(self, path):
+        return False
+
+    def isfile(self, path):
+        return True
+
+    def listdir(self, path="./",
+                      wildcard=None,
+                      full=False,
+                      absolute=False,
+                      dirs_only=False,
+                      files_only=False):
+        return []
+
+    def getinfo(self, path):
+        info['size'] = int(path)
+        return info
+
+
+class BlankOpener(Opener):
+    names = ['blank']
+    desc = """Simple filesystem to return empty files of requested size
+
+examples:
+* blank:256 (opens a 256 file, filled with zeros)
+* blank:65536 (opens a 64K file, filled with zeros)
+    """
+
+    @classmethod
+    def get_fs(cls, registry, fs_name, fs_name_params, fs_path,  writeable, create_dir):
+        dirname = "/"
+        resourcename = fs_path
+        fs = BlankFS(dirname)
+        return fs, resourcename
+
+
 def init_filesystems():
     wx.FileSystem.AddHandler(WxAboutFileSystemHandler())
     wx.FileSystem.AddHandler(wx.MemoryFSHandler())
@@ -284,6 +348,7 @@ def init_filesystems():
 def init_about_filesystem():
     opener.add(AboutOpener)
     opener.add(TemplateOpener)
+    opener.add(BlankOpener)
     for name, text in about.iteritems():
         url = "about://%s" % name
         fh = opener.open(url, "wb")
