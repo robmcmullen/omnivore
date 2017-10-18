@@ -46,8 +46,7 @@ class MouseHandlerBaseAction(EditorAction):
     @on_trait_change('task.menu_update_event')
     def on_dynamic_menu_update(self, ui_state):
         self.enabled = self.handler in ui_state.focused_viewer.valid_mouse_modes
-        print("mode=%s, focused_viewer=%s enabled=%s" % (self.handler, ui_state.focused_viewer, self.enabled))
-        log.debug("on_dynamic_menu_update %s: %s" % (self.name, self.enabled))
+        log.debug("on_dynamic_menu_update %s: focused_viewer=%s enabled=%s" % (self.handler, ui_state.focused_viewer, self.enabled))
 
 
 def get_toolbar_group(toolbar_name, mouse_handlers):
