@@ -552,11 +552,6 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
 class BitmapScroller(BitviewScroller):
     short_name = "bitmap"
 
-    def update_bytes_per_row(self):
-        BitviewScroller.update_bytes_per_row(self)
-        m = self.segment_viewer.machine
-        self.bytes_per_row = m.bitmap_renderer.validate_bytes_per_row(m.bitmap_bytes_per_row)
-
     # def sync_to_editor(self, e):
     #     e.bitmap_zoom = self.zoom
     #     e.bitmap_width = self.bytes_per_row
@@ -651,10 +646,6 @@ class FontMapScroller(BitviewScroller):
 
     def is_ready_to_render(self):
         return self.font is not None
-
-    def update_bytes_per_row(self):
-        BitviewScroller.update_bytes_per_row(self)
-        self.bytes_per_row = self.segment_viewer.machine.font_bytes_per_row
 
     def sync_to_editor(self, e):
         e.map_zoom = self.zoom

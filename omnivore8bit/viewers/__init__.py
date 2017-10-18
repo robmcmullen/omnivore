@@ -1,5 +1,6 @@
 import uuid
 
+import wx
 import wx.lib.agw.aui as aui
 
 from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, File, Unicode, Property, on_trait_change, HasTraits, Undefined
@@ -148,6 +149,27 @@ class SegmentViewer(HasTraits):
         of the data
         """
         return []
+
+    ##### view settings
+
+    @property
+    def width(self):
+        return self.control.bytes_per_row
+
+    def set_width(self, width):
+        self.control.bytes_per_row = self.validate_width(width)
+        wx.CallAfter(self.control.recalc_view)
+
+    def validate_width(self, width):
+        return width
+
+    @property
+    def zoom(self):
+        return self.control.zoom
+
+    def set_zoom(self, zoom):
+        self.control.zoom = zoom
+        wx.CallAfter(self.control.recalc_view)
 
     ##### Selections
 

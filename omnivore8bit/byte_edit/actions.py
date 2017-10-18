@@ -373,9 +373,9 @@ class BitmapWidthAction(EditorAction):
     def perform(self, event):
         e = self.active_editor
         v = e.focused_viewer
-        width = prompt_for_dec(e.window.control, 'Enter new bitmap width in bytes', 'Set Bitmap Width', v.machine.bitmap_bytes_per_row)
-        if width is not None and width > 0:
-            wx.CallAfter(v.machine.set_bitmap_bytes_per_row, width)
+        val = prompt_for_dec(e.window.control, 'Enter new bitmap width in bytes', 'Set Bitmap Width', v.width)
+        if val is not None and val > 0:
+            v.set_width(val)
 
     @on_trait_change('active_editor.focused_viewer')
     def _update_enabled(self):
@@ -392,9 +392,9 @@ class BitmapZoomAction(EditorAction):
     def perform(self, event):
         e = self.active_editor
         v = e.focused_viewer
-        width = prompt_for_dec(e.window.control, 'Enter new pixel zoom factor', 'Set Bitmap Zoom', v.machine.bitmap_zoom)
-        if width is not None and width > 0:
-            wx.CallAfter(v.machine.set_bitmap_zoom, width)
+        val = prompt_for_dec(e.window.control, 'Enter new pixel zoom factor', 'Set Bitmap Zoom', v.zoom)
+        if val is not None and val > 0:
+            v.set_zoom(val)
 
     @on_trait_change('active_editor.focused_viewer')
     def _update_enabled(self):
@@ -410,9 +410,9 @@ class FontMappingWidthAction(EditorAction):
     def perform(self, event):
         e = self.active_editor
         v = e.focused_viewer
-        width = prompt_for_dec(e.window.control, 'Enter new map width in bytes', 'Set Map Width', str(v.machine.font_bytes_per_row))
-        if width is not None and width > 0:
-            wx.CallAfter(v.machine.set_font_bytes_per_row, width)
+        val = prompt_for_dec(e.window.control, 'Enter new map width in bytes', 'Set Map Width', v.width)
+        if val is not None and val > 0:
+            v.set_width(val)
 
     @on_trait_change('active_editor.focused_viewer')
     def _update_enabled(self):
@@ -429,9 +429,9 @@ class FontMappingZoomAction(EditorAction):
     def perform(self, event):
         e = self.active_editor
         v = e.focused_viewer
-        width = prompt_for_dec(e.window.control, 'Enter new pixel zoom factor', 'Set Map Zoom', v.machine.font_zoom)
-        if width is not None and width > 0:
-            wx.CallAfter(v.machine.set_font_zoom, width)
+        val = prompt_for_dec(e.window.control, 'Enter new pixel zoom factor', 'Set Map Zoom', v.zoom)
+        if val is not None and val > 0:
+            v.set_zoom(val)
 
     @on_trait_change('active_editor.focused_viewer')
     def _update_enabled(self):

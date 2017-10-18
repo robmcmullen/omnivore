@@ -35,6 +35,10 @@ class BitmapViewer(SegmentViewer):
         if evt is not Undefined:
             self.control.refresh_view()
 
+    def validate_width(self, width):
+        return self.machine.bitmap_renderer.validate_bytes_per_row(width)
+
+
 class MemoryMapViewer(BitmapViewer):
     name = "memmap"
 
