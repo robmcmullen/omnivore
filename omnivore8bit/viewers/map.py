@@ -268,7 +268,13 @@ class MapViewer(SegmentViewer):
     def process_segment_selected(self, evt):
         log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
+            self.control.bytes_per_row = self.linked_base.segment.map_width
             self.update_mouse_mode(SelectMode)
+
+    def set_width(self, width):
+        # also update the segment map width when changed
+        SegmentViewer.set_width(self, width)
+        self.linked_base.segment.map_width = self.width
 
     ##### Selections
 
