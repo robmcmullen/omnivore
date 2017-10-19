@@ -731,7 +731,7 @@ class ByteEditor(FrameworkEditor):
         segment_viewer = self.task.find_viewer_by_name("segments")
         map_viewer = self.task.find_viewer_by_name("map")
 
-        viewer = hex_viewer.create(panel, center_base, center_base.machine)
+        viewer = map_viewer.create(panel, center_base, center_base.machine)
         viewer.pane_info.CenterPane()
         self.viewers.append(viewer)
         self.mgr.AddPane(viewer.control, viewer.pane_info)
@@ -785,7 +785,7 @@ class ByteEditor(FrameworkEditor):
         # self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         layer += 1
-        viewer = map_viewer.create(panel, center_base, center_base.machine)
+        viewer = hex_viewer.create(panel, center_base, center_base.machine)
         viewer.pane_info.Right().Layer(layer)
         self.viewers.append(viewer)
         self.mgr.AddPane(viewer.control, viewer.pane_info)

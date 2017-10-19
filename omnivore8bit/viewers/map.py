@@ -8,7 +8,7 @@ import wx
 import numpy as np
 
 # Enthought library imports.
-from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides, Undefined
+from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides, Undefined, CArray
 
 # Local imports.
 from omnivore8bit.ui.bitviewscroller import BitviewScroller, FontMapScroller
@@ -47,7 +47,7 @@ class SelectMode(MouseHandler):
 
     def display_coords(self, evt, extra=None):
         log.debug("display_coords")
-        c = self.canvas
+        c = self.control
         e = c.editor
         if e is not None:
             index, bit, inside = c.event_coords_to_byte(evt)
@@ -58,14 +58,14 @@ class SelectMode(MouseHandler):
             e.show_status_message(msg)
 
     def process_left_down(self, evt):
-        FontMapScroller.on_left_down(self.canvas, evt)  # can't use self.canvas directly because it overrides on_left_down
+        FontMapScroller.on_left_down(self.control, evt)  # can't use self.control directly because it overrides on_left_down
         self.display_coords(evt)
 
     def process_left_up(self, evt):
-        FontMapScroller.on_left_up(self.canvas, evt)  # can't use self.canvas directly because it overrides on_left_down
+        FontMapScroller.on_left_up(self.control, evt)  # can't use self.control directly because it overrides on_left_down
 
     def process_mouse_motion_down(self, evt):
-        self.canvas.handle_select_motion(self.canvas.editor, evt)
+        self.control.handle_select_motion(self.control.editor, evt)
         self.display_coords(evt)
 
     def process_mouse_motion_up(self, evt):
@@ -73,12 +73,12 @@ class SelectMode(MouseHandler):
 
     def zoom_mouse_wheel(self, evt, amount):
         if amount < 0:
-            self.canvas.zoom_out()
+            self.control.zoom_out()
         elif amount > 0:
-            self.canvas.zoom_in()
+            self.control.zoom_in()
 
     def get_popup_actions(self, evt):
-        return self.canvas.get_popup_actions()
+        return self.control.get_popup_actions()
 
 
 class PickTileMode(SelectMode):
@@ -90,17 +90,17 @@ class PickTileMode(SelectMode):
         self.last_index = None
 
     def process_left_down(self, evt):
-        c = self.canvas
+        c = self.control
         index, bit, inside = c.event_coords_to_byte(evt)
         if not inside:
             return
         e = c.editor
+        v = c.segment_viewer
         value = e.segment[index]
         if self.last_index != index:
             e.set_cursor(index, False)
-            e.character_set.set_selected_char(value)
+            v.set_draw_pattern(value)
             e.index_clicked(index, bit, None)
-            e.character_set.Refresh()
         self.last_index = index
         self.display_coords(evt, "tile=%d" % value)
 
@@ -117,20 +117,18 @@ class DrawMode(SelectMode):
     menu_item_tooltip = "Draw with current tile"
 
     def draw(self, evt, start=False):
-        c = self.canvas
+        c = self.control
         e = c.editor
         if e is None:
             return
-        bytes = e.draw_pattern
-        if not bytes:
-            return
+        pattern = c.segment_viewer.draw_pattern
         if start:
             self.batch = DrawBatchCommand()
         byte, bit, inside = c.event_coords_to_byte(evt)
         if inside:
             e.set_cursor(byte, False)
             index = e.cursor_index
-            cmd = ChangeByteCommand(e.segment, index, index+len(bytes), bytes, False, True)
+            cmd = ChangeByteCommand(e.segment, index, index+len(pattern), pattern, False, True)
             e.process_command(cmd, self.batch)
 
     def process_left_down(self, evt):
@@ -142,7 +140,7 @@ class DrawMode(SelectMode):
         self.display_coords(evt)
 
     def process_left_up(self, evt):
-        c = self.canvas
+        c = self.control
         e = c.editor
         if e is None:
             return
@@ -154,7 +152,7 @@ class OverlayMode(SelectMode):
     command = None
 
     def get_display_rect(self, index):
-        c = self.canvas
+        c = self.control
         i1 = self.start_index
         i2 = index
         if i2 < i1:
@@ -168,13 +166,11 @@ class OverlayMode(SelectMode):
         return extra
 
     def draw(self, evt, start=False):
-        c = self.canvas
+        c = self.control
         e = c.editor
         if e is None:
             return
-        bytes = e.draw_pattern
-        if not bytes:
-            return
+        pattern = c.segment_viewer.draw_pattern
         byte, bit, inside = c.event_coords_to_byte(evt)
         if inside:
             if start:
@@ -182,7 +178,7 @@ class OverlayMode(SelectMode):
                 self.start_index = byte
             e.set_cursor(byte, False)
             index = byte
-            cmd = self.command(e.segment, self.start_index, index, bytes)
+            cmd = self.command(e.segment, self.start_index, index, pattern, c.bytes_per_row)
             e.process_command(cmd, self.batch)
             self.display_coords(evt, self.get_display_rect(index))
 
@@ -193,7 +189,7 @@ class OverlayMode(SelectMode):
         self.draw(evt)
 
     def process_left_up(self, evt):
-        c = self.canvas
+        c = self.control
         e = c.editor
         if e is None:
             return
@@ -235,6 +231,8 @@ class MapViewer(SegmentViewer):
 
     default_map_width = 16
 
+    draw_pattern = CArray(dtype=np.uint8, value=(0,))
+
     @classmethod
     def create_control(cls, parent, linked_base):
         return MainFontMapScroller(parent, linked_base, cls.default_map_width, size=(500,500), command=ChangeByteCommand)
@@ -262,6 +260,7 @@ class MapViewer(SegmentViewer):
     def update_mouse_mode(self, mouse_handler=None):
         if mouse_handler is not None:
             self.mouse_mode_factory = mouse_handler
+        log.debug("mouse mode: %s" % self.mouse_mode_factory)
         self.control.set_mouse_mode(self.mouse_mode_factory)
 
     @on_trait_change('linked_base.editor.task.segment_selected')
@@ -282,3 +281,8 @@ class MapViewer(SegmentViewer):
         s = self.linked_base.segment
         s.clear_style_bits(selected=True)
         s.set_style_ranges_rect(self.linked_base.editor.selected_ranges, self.control.bytes_per_row, selected=True)
+
+    ##### Drawing pattern
+
+    def set_draw_pattern(self, value):
+        self.draw_pattern = np.asarray(value, dtype=np.uint8)

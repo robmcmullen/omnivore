@@ -25,7 +25,7 @@ class MouseHandler(object):
     mouse_too_close_pixel_tolerance = 5
 
     def __init__(self, window):
-        self.canvas = window
+        self.control = window
         self.snapped_point = None, 0
         self.first_mouse_down_position = 0, 0
         self.after_first_mouse_up = False
@@ -56,7 +56,7 @@ class MouseHandler(object):
         return evt.GetPosition()
 
     def process_mouse_motion_up(self, evt):
-        self.canvas.release_mouse()
+        self.control.release_mouse()
         evt.Skip()
 
     def process_mouse_motion_down(self, evt):
@@ -67,7 +67,7 @@ class MouseHandler(object):
         self.after_first_mouse_up = False
 
     def check_early_mouse_release(self, evt):
-        c = self.canvas
+        c = self.control
         p = evt.GetPosition()
         dx = p[0] - self.first_mouse_down_position[0]
         dy = p[1] - self.first_mouse_down_position[1]
@@ -77,7 +77,7 @@ class MouseHandler(object):
         return False
 
     def process_left_up(self, evt):
-        c = self.canvas
+        c = self.control
         c.release_mouse()  # it's hard to know for sure when the mouse may be captured
         c.selection_box_is_being_defined = False
 
@@ -87,13 +87,13 @@ class MouseHandler(object):
     def process_popup(self, evt):
         actions = self.get_popup_actions(evt)
         if actions:
-            self.canvas.editor.popup_context_menu_from_actions(self.canvas, actions)
+            self.control.editor.popup_context_menu_from_actions(self.control, actions)
 
     def get_popup_actions(self, evt):
         return None
 
     def process_mouse_wheel(self, evt):
-        c = self.canvas
+        c = self.control
         e = c.editor
         rotation = evt.GetWheelRotation()
         delta = evt.GetWheelDelta()
@@ -146,7 +146,7 @@ class MouseHandler(object):
         pass
 
     def process_key_char(self, evt):
-        c = self.canvas
+        c = self.control
         if (evt.GetKeyCode() == wx.WXK_ESCAPE):
             self.esc_key_pressed()
         elif evt.GetKeyCode() == wx.WXK_DELETE:
@@ -157,7 +157,7 @@ class MouseHandler(object):
             evt.Skip()
 
     def esc_key_pressed(self):
-        self.canvas.project.clear_all_selections()
+        self.control.project.clear_all_selections()
 
     def delete_key_pressed(self):
         pass

@@ -35,13 +35,13 @@ class MouseHandlerBaseAction(EditorAction):
         return ImageResource(self.handler.icon)
 
     def perform(self, event):
-        self.active_editor.mouse_mode_factory = self.handler
-        self.active_editor.update_mouse_mode()
+        log.debug("performing %s" % self.handler)
+        self.active_editor.focused_viewer.update_mouse_mode(self.handler)
 
     @on_trait_change('active_editor.mouse_mode_factory')
     def _update_checked(self):
         if self.active_editor:
-            self.checked = self.active_editor.mouse_mode_factory == self.handler
+            self.checked = self.active_editor.focused_viewer.mouse_mode_factory == self.handler
 
     @on_trait_change('task.menu_update_event')
     def on_dynamic_menu_update(self, ui_state):

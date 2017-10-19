@@ -2,9 +2,9 @@ import numpy as np
 
 from omnivore.framework.errors import ProgressCancelError
 from omnivore.utils.command import Batch, Command, UndoInfo
-from omnivore8bit.commands import SegmentCommand
+from ..commands import SegmentCommand
 from ..byte_edit.commands import ChangeByteCommand
-from omnivore8bit.utils.drawutil import *
+from ..utils import drawutil
 
 import logging
 progress_log = logging.getLogger("progress")
@@ -33,11 +33,12 @@ class LineCommand(SegmentCommand):
             ('end_index', 'int'),
             ]
 
-    def __init__(self, segment, start_index, end_index, bytes):
+    def __init__(self, segment, start_index, end_index, bytes, bytes_per_row):
         SegmentCommand.__init__(self, segment)
         self.start_index = start_index
         self.end_index = end_index
         self.data = bytes
+        self.bytes_per_row = bytes_per_row
 
     def __str__(self):
         return "%s @ %04x-%04x" % (self.pretty_name, self.start_index + self.segment.start_addr, self.end_index + self.segment.start_addr)
@@ -45,8 +46,8 @@ class LineCommand(SegmentCommand):
     def get_data(self, orig):
         return self.data
 
-    def get_points(self, i1, i2, map_width):
-        return get_line(i1, i2, map_width)
+    def get_points(self, i1, i2):
+        return drawutil.get_line(i1, i2, self.bytes_per_row)
 
     def perform(self, editor, undo):
         i1 = self.start_index
@@ -56,7 +57,7 @@ class LineCommand(SegmentCommand):
         undo.flags.byte_values_changed = True
         undo.flags.index_range = i1, i2
         undo.flags.cursor_index = self.end_index
-        line = np.asarray(self.get_points(i1, i2, editor.map_width), dtype=np.uint32)
+        line = np.asarray(self.get_points(i1, i2), dtype=np.uint32)
         old_data = self.segment[line].copy()
         self.segment[line] = self.get_data(old_data)
         if (self.segment[line] == old_data).all():
@@ -74,16 +75,16 @@ class SquareCommand(LineCommand):
     short_name = "square"
     pretty_name = "Square"
 
-    def get_points(self, i1, i2, map_width):
-        return get_rectangle(i1, i2, map_width)
+    def get_points(self, i1, i2):
+        return drawutil.get_rectangle(i1, i2, self.bytes_per_row)
 
 
 class FilledSquareCommand(LineCommand):
     short_name = "filled_square"
     pretty_name = "Filled Square"
 
-    def get_points(self, i1, i2, map_width):
-        return get_filled_rectangle(i1, i2, map_width)
+    def get_points(self, i1, i2):
+        return drawutil.get_filled_rectangle(i1, i2, self.bytes_per_row)
 
 
 class PasteRectangularCommand(SegmentCommand):
