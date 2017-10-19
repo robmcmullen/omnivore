@@ -134,17 +134,18 @@ class LinkedBase(HasTraits):
         return "LinkedBase: seg=%s" % self.segment
 
     def from_metadata_dict(self, e):
+        log.debug("metadata: %s" % str(e))
         if 'machine mime' in e:
             mime = e['machine mime']
             if not mime.startswith(self.machine.mime_prefix):
                 m = self.machine.find_machine_by_mime(mime)
                 if m is not None:
                     self.machine = m
-        if 'font' in e:
-            # FIXME: I don't think 'font' is set anywhere, so this never gets called
-            self.machine.set_font(e['font'][0], e['font'][1])
-        if 'initial segment' in e:
-            self.initial_segment = e['initial segment']
+        if 'font' in e or 'font renderer' in e or 'font order' in e:
+            if 'font renderer' in e or 'font order' in e:
+                self.machine.set_font(e['font'], e.get('font renderer', None), e.get('font order', None))
+            else:
+                self.machine.set_font(e['font'][0], e['font'][1])
         if 'diff highlight' in e:
             self.diff_highlight = bool(e['diff highlight'])
         if 'segment view params' in e:

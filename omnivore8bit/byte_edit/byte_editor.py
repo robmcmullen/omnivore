@@ -49,6 +49,8 @@ class ByteEditor(FrameworkEditor):
 
     initial_segment = Any(None)
 
+    initial_font_segment = Any(None)
+
     ### View traits
 
     can_copy_baseline = Bool
@@ -136,13 +138,17 @@ class ByteEditor(FrameworkEditor):
         self.task.machine_menu_changed = self.focused_viewer.linked_base.machine
 
     def from_metadata_dict(self, e):
+        log.debug("metadata: %s" % str(e))
         if 'linked_bases' in e:
             # restore list of linked bases
             pass
         if 'initial segment' in e:
             self.initial_segment = e['initial segment']
+        if 'initial font segment' in e:
+            self.initial_font_segment = e['initial font segment']
         if 'diff highlight' in e:
             self.diff_highlight = bool(e['diff highlight'])
+        self.focused_viewer.linked_base.from_metadata_dict(e)
 
     def to_metadata_dict(self, mdict, document):
         mdict["diff highlight"] = self.diff_highlight
@@ -160,6 +166,10 @@ class ByteEditor(FrameworkEditor):
         self.update_emulator()
         self.compare_to_baseline()
         self.can_resize_document = self.document.can_resize
+
+    # def init_view_properties(self):
+    #     if self.initial_font_segment:
+    #         self.focused_viewer.linked_base.machine.change_font_data(self.initial_font_segment)
 
     def process_preference_change(self, prefs):
         log.debug("%s processing preferences change" % self.task.name)
@@ -721,7 +731,7 @@ class ByteEditor(FrameworkEditor):
         segment_viewer = self.task.find_viewer_by_name("segments")
         map_viewer = self.task.find_viewer_by_name("map")
 
-        viewer = hex_viewer.create(panel, center_base)
+        viewer = hex_viewer.create(panel, center_base, center_base.machine)
         viewer.pane_info.CenterPane()
         self.viewers.append(viewer)
         self.mgr.AddPane(viewer.control, viewer.pane_info)
@@ -775,7 +785,7 @@ class ByteEditor(FrameworkEditor):
         # self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         layer += 1
-        viewer = map_viewer.create(panel, center_base)
+        viewer = map_viewer.create(panel, center_base, center_base.machine)
         viewer.pane_info.Right().Layer(layer)
         self.viewers.append(viewer)
         self.mgr.AddPane(viewer.control, viewer.pane_info)

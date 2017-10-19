@@ -374,7 +374,7 @@ class Machine(HasTraits):
         self.memory_map = memory_map
         self.disassembler_change_event = True
 
-    def set_font(self, font=None, font_renderer=None):
+    def set_font(self, font=None, font_renderer=None, font_mapping=None):
         if font is None:
             font = self.antic_font_data
         if font_renderer is not None:
@@ -387,7 +387,7 @@ class Machine(HasTraits):
             self.blinking_antic_font = self.get_antic_font(True)
         else:
             self.blinking_antic_font = None
-        self.set_font_mapping()
+        self.set_font_mapping(font_mapping)
 
     def change_font_data(self, data):
         font = dict(data=data[:], blink=self.antic_font.use_blinking)
@@ -411,9 +411,17 @@ class Machine(HasTraits):
                 return r
         return predefined['font_renderer'][0]
 
+    def get_font_mapping_from_name(self, name):
+        for r in predefined['font_mapping']:
+            if r.name.startswith(name):
+                return r
+        return predefined['font_mapping'][0]
+
     def set_font_mapping(self, font_mapping=None):
         if font_mapping is None:
             font_mapping = self.font_mapping
+        elif isinstance(font_mapping, str):
+            font_mapping = self.get_font_mapping_from_name(font_mapping)
         self.font_mapping = font_mapping
         self.font_change_event = True
 

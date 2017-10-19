@@ -19,7 +19,11 @@ getaway_defaults = {
         ("golf", range(0xa9, 0xae),),
         ("other", [0x20, 0x25, 0x26, ]),
         ("special", range(0x21, 0x25), range(0x74, 0x76),),
-        ]
+        ],
+    'font renderer': "Antic 5",
+    'font order': "Antic Order",
+    'last_task_id': 'byte_edit',
+    'layout': 'map',
     }
 
 supported_pd_getaway = [1]
@@ -61,11 +65,9 @@ def Getaway(doc):
             font_segment = AnticFontSegment(r[i:i + 0x400], playfield_font, name="Playfield font")
 
             extra_metadata = {
-                'font': (font_segment.antic_font, "Antic 5"),
+                'font': font_segment.antic_font,
                 'user segments': [font_segment, segment],
                 'initial segment': segment,
-                'last_task_id': 'byte_edit',
-                'layout': 'map',
                 }
             extra_metadata.update(getaway_defaults)
             return extra_metadata
@@ -80,10 +82,9 @@ def Getaway(doc):
         segment.map_width = 256
         #doc.add_user_segment(segment)
         extra_metadata = {
-            'font': (font_segment.antic_font, "Antic 5"),
+            'font': font_segment.antic_font,
             'user segments': [font_segment, segment],
             'initial segment': segment,
-            'last_task_id': map_edit_task_id,
             }
         extra_metadata.update(getaway_defaults)
         return extra_metadata
@@ -98,11 +99,9 @@ def Getaway(doc):
         segment.map_width = 256
         #doc.add_user_segment(segment)
         extra_metadata = {
-            'font': (font_segment.antic_font, "Antic 5"),
+            'font': font_segment.antic_font,
             'user segments': [font_segment, segment],
             'initial segment': segment,
-            'last_task_id': 'byte_edit',
-            'layout': 'map',
             }
         extra_metadata.update(getaway_defaults)
         return extra_metadata
