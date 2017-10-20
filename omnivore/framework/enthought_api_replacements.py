@@ -95,7 +95,7 @@ if not BENCHMARK_OLD:
             else:
                 self.enabled = bool(self.task)
             self.on_dynamic_menu_update_hook(ui_state)
-            log.debug("on_dynamic_menu_update %s: %s" % (self.name, self.enabled))
+            log.debug("on_dynamic_menu_update %s: %s" % (self, self.enabled))
 
         def on_dynamic_menu_update_hook(self, evt):
             pass

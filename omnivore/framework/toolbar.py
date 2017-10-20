@@ -1,7 +1,7 @@
 from pyface.api import ImageResource
 from pyface.action.api import Group
 from pyface.tasks.action.api import SToolBar
-from traits.api import on_trait_change, Any
+from traits.api import on_trait_change, Any, Undefined
 
 from .enthought_api_replacements import EditorAction
 
@@ -45,8 +45,9 @@ class MouseHandlerBaseAction(EditorAction):
 
     @on_trait_change('task.menu_update_event')
     def on_dynamic_menu_update(self, ui_state):
-        self.enabled = self.handler in ui_state.focused_viewer.valid_mouse_modes
-        log.debug("on_dynamic_menu_update %s: focused_viewer=%s enabled=%s" % (self.handler, ui_state.focused_viewer, self.enabled))
+        if ui_state and ui_state is not Undefined:
+            self.enabled = self.handler in ui_state.focused_viewer.valid_mouse_modes
+            log.debug("on_dynamic_menu_update %s: focused_viewer=%s enabled=%s" % (self.handler, ui_state.focused_viewer, self.enabled))
 
 
 def get_toolbar_group(toolbar_name, mouse_handlers):
