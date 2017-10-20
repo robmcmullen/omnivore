@@ -788,6 +788,10 @@ class FrameworkEditor(Editor):
             i = wx.NewId()
             if not hasattr(action, 'task'):
                 action = action(task=self.task)
+                try:
+                    action.on_dynamic_menu_update(self)
+                except AttributeError:
+                    pass
 
             # wxpython popup entries can't have empty name
             name = action.name if action.name else " "
