@@ -73,6 +73,14 @@ class SegmentViewer(HasTraits):
         v.pane_info = aui.AuiPaneInfo().Name(cls.get_aui_pane_name())
         return v
 
+    ##### Initialization and serialization
+
+    def from_metadata_dict(self, e):
+        log.debug("metadata: %s" % str(e))
+
+    def to_metadata_dict(self, mdict, document):
+        pass
+
     ##### Range operations
 
     def _get_range_processor(self):  # Trait property getter
@@ -218,7 +226,8 @@ class ByteViewersPlugin(FrameworkPlugin):
         from omnivore8bit.viewers.hex import HexEditViewer
         from omnivore8bit.viewers.info import CommentsViewer, UndoViewer, SegmentListViewer
         from omnivore8bit.viewers.map import MapViewer
+        from omnivore8bit.viewers.tile import TileViewer
 
-        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, MemoryMapViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer]
+        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, MemoryMapViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, TileViewer]
 
 plugins = [ByteViewersPlugin()]

@@ -80,6 +80,8 @@ class ByteEditor(FrameworkEditor):
 
     changed = Event
 
+    focused_viewer_changed_event = Event
+
     key_pressed = Event(KeyPressedEvent)
 
     # Class attributes (not traits)
@@ -136,6 +138,7 @@ class ByteEditor(FrameworkEditor):
         self.control = self._create_control(parent)
         self.task.emulator_changed = self.document
         self.task.machine_menu_changed = self.focused_viewer.linked_base.machine
+        self.focused_viewer_changed_event = self.focused_viewer
 
     def from_metadata_dict(self, e):
         log.debug("metadata: %s" % str(e))
@@ -149,6 +152,8 @@ class ByteEditor(FrameworkEditor):
         if 'diff highlight' in e:
             self.diff_highlight = bool(e['diff highlight'])
         self.focused_viewer.linked_base.from_metadata_dict(e)
+        for v in self.viewers:
+            v.from_metadata_dict(e)
 
     def to_metadata_dict(self, mdict, document):
         mdict["diff highlight"] = self.diff_highlight
@@ -730,6 +735,7 @@ class ByteEditor(FrameworkEditor):
         undo_viewer = self.task.find_viewer_by_name("undo")
         segment_viewer = self.task.find_viewer_by_name("segments")
         map_viewer = self.task.find_viewer_by_name("map")
+        tile_viewer = self.task.find_viewer_by_name("tile")
 
         viewer = map_viewer.create(panel, center_base, center_base.machine)
         viewer.pane_info.CenterPane()
@@ -785,7 +791,7 @@ class ByteEditor(FrameworkEditor):
         # self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         layer += 1
-        viewer = hex_viewer.create(panel, center_base, center_base.machine)
+        viewer = tile_viewer.create(panel, center_base, center_base.machine)
         viewer.pane_info.Right().Layer(layer)
         self.viewers.append(viewer)
         self.mgr.AddPane(viewer.control, viewer.pane_info)
@@ -826,6 +832,7 @@ class ByteEditor(FrameworkEditor):
         log.debug("on_pane_active: activated viewer %s %s" % (v, v.window_title))
         if v != self.focused_viewer:
             self.focused_viewer = evt.pane.segment_viewer
+            self.focused_viewer_changed_event = self.focused_viewer
 
     def on_pane_close(self, evt):
         v = evt.pane.window.segment_viewer

@@ -941,9 +941,7 @@ class CharacterSetViewer(FontMapScroller):
 
     def set_selected_char(self, index):
         self.selected_char = index
-        e = self.editor
-        if e is not None:
-            e.set_current_draw_pattern(self.selected_char, self)
+        self.segment_viewer.set_draw_pattern(self.selected_char, self)
 
     def center_on_index(self):
         ul = self.find_upper_left_for_center_index(self.selected_char)
@@ -951,7 +949,7 @@ class CharacterSetViewer(FontMapScroller):
 
     def show_pattern(self, pattern):
         log.debug("charset showing pattern: %s" % str(pattern))
-        index = pattern[0]
+        index = int(pattern)
         self.selected_char = index
         self.refresh_view()
 
@@ -965,17 +963,17 @@ class CharacterSetViewer(FontMapScroller):
         self.set_scale()
 
     def on_left_down(self, evt):
-        e = self.editor
         byte, bit, inside = self.event_coords_to_byte(evt)
+        print("LEFT! %s,%s,%s,%s" % (byte, bit, inside, self.segment_viewer))
         if inside:
-            wx.CallAfter(e.set_current_draw_pattern, byte)
+            wx.CallAfter(self.segment_viewer.set_draw_pattern, byte)
         evt.Skip()
 
     def on_left_dclick(self, evt):
         e = self.editor
         byte, bit, inside = self.event_coords_to_byte(evt)
         if inside:
-            wx.CallAfter(e.set_current_draw_pattern, byte)
+            wx.CallAfter(self.segment_viewer.set_draw_pattern, byte)
         evt.Skip()
 
     def on_motion(self, evt):
@@ -1011,7 +1009,7 @@ class CharacterSetViewer(FontMapScroller):
     def process_delta_index(self, delta_index):
         delta_index, first_row = delta_index
         _, byte = divmod(self.selected_char + delta_index, 256)
-        wx.CallAfter(self.editor.set_current_draw_pattern, byte)
+        wx.CallAfter(self.segment_viewer.set_draw_pattern, byte)
 
     def on_char_hook(self, evt):
         log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUnicodeKey(), evt.GetKeyCode(), bin(evt.GetModifiers())))
