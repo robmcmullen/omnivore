@@ -40,6 +40,8 @@ class ByteEditor(FrameworkEditor):
 
     #### traits
 
+    task_arguments = Str("hex,bitmap,char,disassembly")
+
     grid_range_selected = Bool
 
     emulator_label = Unicode("Run Emulator")
@@ -737,13 +739,23 @@ class ByteEditor(FrameworkEditor):
         map_viewer = self.task.find_viewer_by_name("map")
         tile_viewer = self.task.find_viewer_by_name("tile")
 
-        viewer = map_viewer.create(panel, center_base, center_base.machine)
-        viewer.pane_info.CenterPane()
-        self.viewers.append(viewer)
-        self.mgr.AddPane(viewer.control, viewer.pane_info)
+        log.debug("task arguments: %s" % self.task_arguments)
+        viewer_names = [a.strip() for a in self.task_arguments.split(",")]
 
-        # Set initial default viewer as the center pane
-        self.focused_viewer = viewer
+        first = True
+        layer = 0
+        for name in viewer_names:
+            viewer_type = self.task.find_viewer_by_name(name)
+            viewer = viewer_type.create(panel, center_base, center_base.machine)
+            if first:
+                viewer.pane_info.CenterPane()
+                self.focused_viewer = viewer  # Initial focus is center pane
+                first = False
+            else:
+                layer += 1
+                viewer.pane_info.Right().Layer(layer)
+            self.viewers.append(viewer)
+            self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         # import stuff for extra renderers
         from ..arch import antic_renderers
@@ -790,11 +802,11 @@ class ByteEditor(FrameworkEditor):
         # self.viewers.append(viewer)
         # self.mgr.AddPane(viewer.control, viewer.pane_info)
 
-        layer += 1
-        viewer = tile_viewer.create(panel, center_base, center_base.machine)
-        viewer.pane_info.Right().Layer(layer)
-        self.viewers.append(viewer)
-        self.mgr.AddPane(viewer.control, viewer.pane_info)
+        # layer += 1
+        # viewer = tile_viewer.create(panel, center_base, center_base.machine)
+        # viewer.pane_info.Right().Layer(layer)
+        # self.viewers.append(viewer)
+        # self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         # layer += 1
         # viewer = segment_viewer.create(panel, center_base)

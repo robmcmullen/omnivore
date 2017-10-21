@@ -274,7 +274,7 @@ class FrameworkTask(Task):
         that will load a new file or create a new view of the existing editor,
         respectively.
         """
-        editor = self.get_editor()
+        editor = self.get_editor(**kwargs)
         self.editor_area.add_editor(editor)
         self.editor_area.activate_editor(editor)
         if hasattr(source, 'get_metadata') or source is None:
@@ -696,7 +696,7 @@ class FrameworkTask(Task):
         for id in shortcut_map.keys():
             self.window.control.Bind(wx.EVT_MENU, self.on_keyboard_shortcut, id=id)
 
-    def get_editor(self):
+    def get_editor(self, task_arguments="", **kwargs):
         raise NotImplementedError
 
     def restore_toolbars(self, window):

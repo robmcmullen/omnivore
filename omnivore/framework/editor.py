@@ -7,7 +7,7 @@ import wx
 import fs
 
 # Enthought library imports.
-from traits.api import on_trait_change, Any, Bool, Int, Unicode, Property, Dict, List
+from traits.api import on_trait_change, Any, Bool, Int, Unicode, Property, Dict, List, Str
 from pyface.api import YES, NO
 from pyface.tasks.api import Editor
 from pyface.action.api import ActionEvent
@@ -35,6 +35,8 @@ class FrameworkEditor(Editor):
     name = Property(Unicode, depends_on='document')
 
     tooltip = Property(Unicode, depends_on='document')
+
+    task_arguments = Str("")
 
     can_save = Bool(True)
 

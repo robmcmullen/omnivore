@@ -152,6 +152,11 @@ class FrameworkApplication(TasksApplication):
             for factory in self.task_factories:
                 print("%s %s" % (factory.id, factory.name))
         i = 0
+        if ":" in options.task_id:
+            options.task_id, task_arguments = options.task_id.split(":", 1)
+        else:
+            task_arguments = ""
+        log.debug("task arguments: %s" % task_arguments)
         while i < len(extra_args):
             arg = extra_args[i]
             if arg.startswith("-"):
@@ -164,7 +169,7 @@ class FrameworkApplication(TasksApplication):
                 continue
             log.debug("processing %s" % arg)
             task_id = self.find_best_task_id(options.task_id)
-            self.load_file(arg, None, task_id=task_id)
+            self.load_file(arg, None, task_id=task_id, task_arguments=task_arguments)
             loaded = True
             i += 1
         if not loaded:
@@ -374,7 +379,7 @@ class FrameworkApplication(TasksApplication):
             return
 
         log.debug("Creating task %s in current window" % best.id)
-        self.create_task_from_factory_id(document, best.id)
+        self.create_task_from_factory_id(document, best.id, **kwargs)
 
     def get_possible_task_factories(self, document, task_id=""):
         possibilities = []
@@ -416,7 +421,7 @@ class FrameworkApplication(TasksApplication):
                     return factory.id
         return ""  # empty string will result in scanning the file for the best match
 
-    def create_task_from_factory_id(self, guess, factory_id):
+    def create_task_from_factory_id(self, guess, factory_id, **kwargs):
         window = self.active_window
         log.debug("  window=%s" % str(window))
         for task in window.tasks:
@@ -425,7 +430,7 @@ class FrameworkApplication(TasksApplication):
         else:
             task = self.create_task(factory_id)
         self.add_task_to_window(window, task)
-        task.new(guess)
+        task.new(guess, **kwargs)
         return task
 
     def create_task_in_window(self, task_id, window):

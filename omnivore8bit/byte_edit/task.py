@@ -294,10 +294,13 @@ class ByteEditTask(FrameworkTask):
     # 'FrameworkTask' interface.
     ###########################################################################
 
-    def get_editor(self, guess=None):
+    def get_editor(self, task_arguments="", **kwargs):
         """ Opens a new empty window
         """
-        editor = ByteEditor()
+        if task_arguments:
+            editor = ByteEditor(task_arguments=task_arguments)
+        else:
+            editor = ByteEditor()
         return editor
 
     @on_trait_change('window.application.preferences_changed_event')

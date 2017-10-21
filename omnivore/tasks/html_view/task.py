@@ -51,7 +51,7 @@ class HtmlViewTask(FrameworkTask):
     # 'FrameworkTask' interface.
     ###########################################################################
 
-    def get_editor(self, guess=None):
+    def get_editor(self, **kwargs):
         """ Opens a new empty window
         """
         editor = HtmlViewer()
