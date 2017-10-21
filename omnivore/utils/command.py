@@ -190,6 +190,9 @@ class StatusFlags(object):
         # set to True if the all views of the data need to be refreshed
         self.refresh_needed = False
 
+        # keep the cursor in place in the currently focused window
+        self.dont_move_cursor = None
+
         # ensure the specified index is visible
         self.index_visible = None
 

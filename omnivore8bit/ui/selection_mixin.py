@@ -15,7 +15,8 @@ class SelectionMixin(object):
 
     def handle_select_start(self, editor, evt, selecting_rows=False, col=0):
         log.debug("handle_select_start: selecting_rows: %s, col=%s" % (selecting_rows, col))
-        flags = DisplayFlags(None)  # force redraw of current control
+        flags = DisplayFlags(self)
+        flags.dont_move_cursor = self
         editor.pending_focus = self
         self.mouse_drag_started = True
         r, c, index1, index2, inside = self.get_location_from_event(evt)
