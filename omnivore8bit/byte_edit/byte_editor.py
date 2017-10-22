@@ -617,7 +617,13 @@ class ByteEditor(FrameworkEditor):
         return goto_actions
 
     def common_popup_actions(self):
-        return [CutAction, CopyAction, ["Copy Special", CopyDisassemblyAction, CopyCommentsAction, CopyAsReprAction, CopyAsCBytesAction], PasteAction, ["Paste Special", PasteAndRepeatAction, PasteCommentsAction], None, SelectAllAction, SelectNoneAction, ["Mark Selection As", MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsUninitializedDataAction, MarkSelectionAsDisplayListAction, MarkSelectionAsJumpmanLevelAction, MarkSelectionAsJumpmanHarvestAction], None, GetSegmentFromSelectionAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction, AddLabelPopupAction, RemoveLabelPopupAction]
+        copy_special = [CopyAsReprAction, CopyAsCBytesAction]
+        for v in self.task.known_viewers:
+            copy_special.extend(v.copy_special)
+        copy_special.sort(key=lambda a:a().name)  # name is a trait, so only exists on an instance, not the class
+        copy_special[0:0] = ["Copy Special"]  # sub-menu title
+
+        return [CutAction, CopyAction, copy_special, PasteAction, ["Paste Special", PasteAndRepeatAction, PasteCommentsAction], None, SelectAllAction, SelectNoneAction, ["Mark Selection As", MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsUninitializedDataAction, MarkSelectionAsDisplayListAction, MarkSelectionAsJumpmanLevelAction, MarkSelectionAsJumpmanHarvestAction], None, GetSegmentFromSelectionAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction, AddLabelPopupAction, RemoveLabelPopupAction]
 
     def do_popup(self, control, popup):
         # The popup event may happen on a control that isn't the focused

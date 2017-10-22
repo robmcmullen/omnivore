@@ -9,6 +9,7 @@ from traits.api import on_trait_change, Undefined, Bool
 from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
 from udis.udis_fast import TraceInfo, flag_origin
 
+from omnivore.framework.enthought_api_replacements import EditorAction
 from omnivore8bit.ui.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 from omnivore8bit.arch.disasm import iter_disasm_styles
 
@@ -396,6 +397,59 @@ class DisassemblyListSaver(object):
         return data
 
 
+class CopyDisassemblyAction(EditorAction):
+    """Copy the disassembly text of the current selection to the clipboard.
+
+    """
+    name = 'Copy Disassembly Text'
+    enabled_name = 'can_copy'
+
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        ranges = s.get_style_ranges(selected=True)
+        lines = []
+        try:
+            for start, end in ranges:
+                lines.extend(e.disassembly.get_disassembled_text(start, end))
+        except IndexError:
+            e.window.error("Disassembly tried to jump to an address outside this segment.")
+            return
+        text = os.linesep.join(lines) + os.linesep
+        data_obj = wx.TextDataObject()
+        data_obj.SetText(text)
+        e.set_clipboard_object(data_obj)
+
+    def on_dynamic_menu_update_hook(self, evt):
+        self.enabled = self.active_editor.focused_viewer.has_cpu
+
+
+class CopyCommentsAction(EditorAction):
+    """Copy the text of the comments only, using the disassembly for line
+    breaks. Any blank lines that appear in the disassembly are included in the
+    copy.
+
+    """
+    name = 'Copy Disassembly Comments'
+    enabled_name = 'can_copy'
+
+    def perform(self, event):
+        e = self.active_editor
+        s = e.segment
+        ranges = s.get_style_ranges(selected=True)
+        lines = []
+        for start, end in ranges:
+            for _, _, _, comment, _ in e.disassembly.table.disassembler.iter_row_text(start, end):
+                lines.append(comment)
+        text = os.linesep.join(lines) + os.linesep
+        data_obj = wx.TextDataObject()
+        data_obj.SetText(text)
+        e.set_clipboard_object(data_obj)
+
+    def on_dynamic_menu_update_hook(self, evt):
+        self.enabled = self.active_editor.focused_viewer.has_cpu
+
+
 class DisassemblyViewer(SegmentViewer):
     name = "disassembly"
 
@@ -404,6 +458,8 @@ class DisassemblyViewer(SegmentViewer):
     has_cpu = True
 
     has_hex = True
+
+    copy_special = [CopyDisassemblyAction, CopyCommentsAction]
 
     @classmethod
     def create_control(cls, parent, linked_base):

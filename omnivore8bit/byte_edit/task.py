@@ -355,14 +355,18 @@ class ByteEditTask(FrameworkTask):
             ]
 
     def get_actions_Menu_Edit_CopyPasteGroup(self):
+        copy_special_actions = [
+            CopyAsReprAction(),
+            CopyAsCBytesAction()
+            ]
+        for v in self.known_viewers:
+            copy_special_actions.extend([action_cls() for action_cls in v.copy_special])
+        copy_special_actions.sort(key=lambda a:a.name)
         return [
             CutAction(),
             CopyAction(),
             SMenu(
-                CopyDisassemblyAction(),
-                CopyCommentsAction(),
-                CopyAsReprAction(),
-                CopyAsCBytesAction(),
+                *copy_special_actions,
                 id='copyspecial', name="Copy Special"),
             PasteAction(),
             SMenu(

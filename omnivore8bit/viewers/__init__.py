@@ -41,6 +41,8 @@ class SegmentViewer(HasTraits):
 
     valid_mouse_modes = []  # toolbar description
 
+    copy_special = []  # additional copy functions available when viewer is present
+
     ##### Traits
 
     linked_base = Instance(LinkedBase)
