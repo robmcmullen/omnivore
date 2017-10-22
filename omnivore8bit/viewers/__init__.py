@@ -189,6 +189,44 @@ class SegmentViewer(HasTraits):
         s.clear_style_bits(selected=True)
         s.set_style_ranges(self.linked_base.editor.selected_ranges, selected=True)
 
+    def create_clipboard_data_object(self):
+        e = self.linked_base.editor
+        ranges, indexes = e.get_selected_ranges_and_indexes()
+        metadata = e.get_selected_index_metadata(indexes)
+        if len(ranges) == 1:
+            r = ranges[0]
+            data = e.segment[r[0]:r[1]]
+            s1 = data.tostring()
+            metadata = e.get_selected_index_metadata(indexes)
+            data_obj = wx.CustomDataObject("numpy")
+            s = "%d,%s%s" % (len(s1), s1, metadata)
+            data_obj.SetData(s)
+        elif np.alen(indexes) > 0:
+            data = e.segment[indexes]
+            s1 = data.tostring()
+            s2 = indexes.tostring()
+            metadata = e.get_selected_index_metadata(indexes)
+            data_obj = wx.CustomDataObject("numpy,multiple")
+            s = "%d,%d,%s%s%s" % (len(s1), len(s2), s1, s2, metadata)
+            data_obj.SetData(s)
+        else:
+            data_obj = None
+        if data_obj is not None:
+            text = " ".join(["%02x" % i for i in data])
+            text_obj = wx.TextDataObject()
+            text_obj.SetText(text)
+            c = wx.DataObjectComposite()
+            c.Add(data_obj)
+            c.Add(text_obj)
+            return c
+        return None
+
+    def process_paste_data(self, extra, bytes, cmd_cls=None):
+        # Byte editor handles normal numpy and numpy,multiple data. If viewers
+        # can handle other types of paste data objects, handle it here. Return
+        # True if handled, False if the viewer can't handle it.
+        return False
+
     ##### Spring tab (pull out menu) interface
 
     def __call__(self, parent, task, **kwargs):

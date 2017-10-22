@@ -185,8 +185,13 @@ class ByteEditor(FrameworkEditor):
     def process_paste_data_object(self, data_obj, cmd_cls=None):
         bytes, extra = self.get_numpy_from_data_object(data_obj)
         ranges, indexes = self.get_selected_ranges_and_indexes()
-        if extra and (extra[0] == "numpy,multiple" or extra[0] == "numpy"):
-            source_indexes, style, where_comments, comments = extra[1:5]
+        if extra:
+            if extra[0] == "numpy,multiple" or extra[0] == "numpy":
+                source_indexes, style, where_comments, comments = extra[1:5]
+            else:
+                if not self.focused_viewer.process_paste_data(extra, bytes, cmd_cls):
+                    raise RuntimeError("Unsupported data object type %s" % extra[0])
+                return
         else:
             source_indexes = style = where_comments = comments = None
         if cmd_cls is None:
@@ -241,35 +246,7 @@ class ByteEditor(FrameworkEditor):
         ]
 
     def create_clipboard_data_object(self):
-        ranges, indexes = self.get_selected_ranges_and_indexes()
-        metadata = self.get_selected_index_metadata(indexes)
-        if len(ranges) == 1:
-            r = ranges[0]
-            data = self.segment[r[0]:r[1]]
-            s1 = data.tostring()
-            metadata = self.get_selected_index_metadata(indexes)
-            data_obj = wx.CustomDataObject("numpy")
-            s = "%d,%s%s" % (len(s1), s1, metadata)
-            data_obj.SetData(s)
-        elif np.alen(indexes) > 0:
-            data = self.segment[indexes]
-            s1 = data.tostring()
-            s2 = indexes.tostring()
-            metadata = self.get_selected_index_metadata(indexes)
-            data_obj = wx.CustomDataObject("numpy,multiple")
-            s = "%d,%d,%s%s%s" % (len(s1), len(s2), s1, s2, metadata)
-            data_obj.SetData(s)
-        else:
-            data_obj = None
-        if data_obj is not None:
-            text = " ".join(["%02x" % i for i in data])
-            text_obj = wx.TextDataObject()
-            text_obj.SetText(text)
-            c = wx.DataObjectComposite()
-            c.Add(data_obj)
-            c.Add(text_obj)
-            return c
-        return None
+        return self.focused_viewer.create_clipboard_data_object()
 
     def show_data_object_stats(self, data_obj, copy=True):
         try:

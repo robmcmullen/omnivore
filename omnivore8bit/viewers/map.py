@@ -282,6 +282,30 @@ class MapViewer(SegmentViewer):
         s.clear_style_bits(selected=True)
         s.set_style_ranges_rect(self.linked_base.editor.selected_ranges, self.control.bytes_per_row, selected=True)
 
+    def create_clipboard_data_object(self):
+        e = self.linked_base.editor
+        if e.anchor_start_index != e.anchor_end_index:
+            anchor_start, anchor_end, (r1, c1), (r2, c2) = self.control.get_highlight_indexes()
+            bpr = self.control.bytes_per_row
+            last = r2 * bpr
+            d = e.segment[:last].reshape(-1, bpr)
+            data = d[r1:r2, c1:c2]
+            data_obj = wx.CustomDataObject("numpy,columns")
+            data_obj.SetData("%d,%d,%s" % (r2 - r1, c2 - c1, data.tostring()))
+            return data_obj
+        return None
+
+    def process_paste_data(self, extra, bytes, cmd_cls=None):
+        e = self.linked_base.editor
+        if extra[0] == "numpy,columns":
+            if cmd_cls is None:
+                cmd_cls = PasteRectangularCommand
+            format_id, r, c = extra
+            cmd = cmd_cls(e.segment, e.anchor_start_index, r, c, self.control.bytes_per_row, bytes)
+            e.process_command(cmd)
+            return True
+        return False
+
     ##### Drawing pattern
 
     def set_draw_pattern(self, value):
