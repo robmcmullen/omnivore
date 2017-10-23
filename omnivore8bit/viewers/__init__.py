@@ -130,6 +130,12 @@ class SegmentViewer(HasTraits):
             else:
                 log.debug("SKIPPED %s because it's the source control" % (self.control))
 
+    @on_trait_change('machine.font_change_event,machine.bitmap_shape_change_event,machine.bitmap_color_change_event,machine.disassembler_change_event,')
+    def machine_metadata_changed(self, evt):
+        log.debug("machine_metadata_changed: %s evt=%s" % (self, str(evt)))
+        self.update_caption()
+        self.linked_base.editor.update_pane_names()
+
     @property
     def window_title(self):
         return self.pretty_name
