@@ -86,6 +86,12 @@ if not BENCHMARK_OLD:
 
         @on_trait_change('task.menu_update_event')
         def on_dynamic_menu_update(self, ui_state):
+            if self.active_editor:
+                self._update_enabled(ui_state)
+                self._update_checked(ui_state)
+            log.debug("on_dynamic_menu_update %s: %s" % (self, self.enabled))
+
+        def _update_enabled(self, ui_state):
             if self.enabled_name and ui_state:
                 enabled = bool(self._get_attr(ui_state, self.enabled_name, None))
                 if enabled is None:
@@ -94,10 +100,8 @@ if not BENCHMARK_OLD:
                 self.enabled = enabled
             else:
                 self.enabled = bool(self.task)
-            self.on_dynamic_menu_update_hook(ui_state)
-            log.debug("on_dynamic_menu_update %s: %s" % (self, self.enabled))
 
-        def on_dynamic_menu_update_hook(self, evt):
+        def _update_checked(self, ui_state):
             pass
 
 

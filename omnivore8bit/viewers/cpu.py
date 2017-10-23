@@ -420,7 +420,7 @@ class CopyDisassemblyAction(EditorAction):
         data_obj.SetText(text)
         e.set_clipboard_object(data_obj)
 
-    def on_dynamic_menu_update_hook(self, evt):
+    def _update_enabled(self, ui_state):
         self.enabled = self.active_editor.focused_viewer.has_cpu
 
 
@@ -446,7 +446,7 @@ class CopyCommentsAction(EditorAction):
         data_obj.SetText(text)
         e.set_clipboard_object(data_obj)
 
-    def on_dynamic_menu_update_hook(self, evt):
+    def _update_enabled(self, ui_state):
         self.enabled = self.active_editor.focused_viewer.has_cpu
 
 

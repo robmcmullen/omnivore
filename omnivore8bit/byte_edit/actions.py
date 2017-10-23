@@ -68,10 +68,8 @@ class UseFontAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.machine.set_font(self.font)
 
-    @on_trait_change('active_editor.focused_viewer')
-    def _update_enabled(self):
-        if self.active_editor:
-            self.enabled = self.active_editor.focused_viewer.has_font
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.focused_viewer.has_font
 
 
 class LoadFontAction(EditorAction):
@@ -127,10 +125,8 @@ class UseEmulatorAction(EditorAction):
     def perform(self, event):
         self.active_editor.document.set_emulator(self.emulator)
 
-    @on_trait_change('active_editor.document')
-    def _update_checked(self):
-        if self.active_editor:
-            self.checked = self.active_editor.document.emulator == self.emulator
+    def _update_checked(self, ui_state):
+        self.checked = self.active_editor.document.emulator == self.emulator
 
 
 class AddNewEmulatorAction(EditorAction):
@@ -226,15 +222,11 @@ class UseAssemblerAction(EditorAction):
         v.linked_base.clear_disassembly(v.machine)
         v.machine.set_assembler(self.assembler)
 
-    @on_trait_change('active_editor.focused_viewer.machine.assembler')
-    def _update_checked(self):
-        if self.active_editor:
-            self.checked = self.active_editor.focused_viewer.machine.assembler == self.assembler
+    def _update_checked(self, ui_state):
+        self.checked = self.active_editor.focused_viewer.machine.assembler == self.assembler
 
-    @on_trait_change('active_editor.focused_viewer')
-    def _update_enabled(self):
-        if self.active_editor:
-            self.enabled = self.active_editor.focused_viewer.has_cpu
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.focused_viewer.has_cpu
 
 
 class AddNewAssemblerAction(EditorAction):
@@ -295,15 +287,11 @@ class FontRendererAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.machine.set_font(font_renderer=self.font_renderer)
 
-    @on_trait_change('active_editor.focused_viewer.machine.font_renderer')
-    def _update_checked(self):
-        if self.active_editor:
-            self.checked = self.active_editor.focused_viewer.machine.font_renderer == self.font_renderer
+    def _update_checked(self, ui_state):
+        self.checked = self.active_editor.focused_viewer.machine.font_renderer == self.font_renderer
 
-    @on_trait_change('active_editor.focused_viewer')
-    def _update_enabled(self):
-        if self.active_editor:
-            self.enabled = self.active_editor.focused_viewer.has_font
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.focused_viewer.has_font
 
 
 class FontMappingAction(EditorAction):
@@ -325,15 +313,11 @@ class FontMappingAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.machine.set_font_mapping(self.font_mapping)
 
-    @on_trait_change('active_editor.focused_viewer.machine.font_mapping')
-    def _update_checked(self):
-        if self.active_editor:
-            self.checked = self.active_editor.focused_viewer.machine.font_mapping == self.font_mapping
+    def _update_checked(self, ui_state):
+        self.checked = self.active_editor.focused_viewer.machine.font_mapping == self.font_mapping
 
-    @on_trait_change('active_editor.focused_viewer')
-    def _update_enabled(self):
-        if self.active_editor:
-            self.enabled = self.active_editor.focused_viewer.has_font
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.focused_viewer.has_font
 
 
 class BitmapRendererAction(EditorAction):
@@ -353,15 +337,11 @@ class BitmapRendererAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.machine.set_bitmap_renderer(self.bitmap_renderer)
 
-    @on_trait_change('active_editor.focused_viewer.machine.bitmap_renderer')
-    def _update_checked(self):
-        if self.active_editor:
-            self.checked = self.active_editor.focused_viewer.machine.bitmap_renderer == self.bitmap_renderer
+    def _update_checked(self, ui_state):
+        self.checked = self.active_editor.focused_viewer.machine.bitmap_renderer == self.bitmap_renderer
 
-    @on_trait_change('active_editor.focused_viewer')
-    def _update_enabled(self):
-        if self.active_editor:
-            self.enabled = self.active_editor.focused_viewer.has_bitmap
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.focused_viewer.has_bitmap
 
 
 class BitmapWidthAction(EditorAction):
@@ -377,10 +357,8 @@ class BitmapWidthAction(EditorAction):
         if val is not None and val > 0:
             v.set_width(val)
 
-    @on_trait_change('active_editor.focused_viewer')
-    def _update_enabled(self):
-        if self.active_editor:
-            self.enabled = self.active_editor.focused_viewer.has_bitmap
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.focused_viewer.has_bitmap
 
 
 class BitmapZoomAction(EditorAction):
@@ -396,10 +374,8 @@ class BitmapZoomAction(EditorAction):
         if val is not None and val > 0:
             v.set_zoom(val)
 
-    @on_trait_change('active_editor.focused_viewer')
-    def _update_enabled(self):
-        if self.active_editor:
-            self.enabled = self.active_editor.focused_viewer.has_bitmap
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.focused_viewer.has_bitmap
 
 
 class FontMappingWidthAction(EditorAction):
@@ -414,10 +390,8 @@ class FontMappingWidthAction(EditorAction):
         if val is not None and val > 0:
             v.set_width(val)
 
-    @on_trait_change('active_editor.focused_viewer')
-    def _update_enabled(self):
-        if self.active_editor:
-            self.enabled = self.active_editor.focused_viewer.has_font
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.focused_viewer.has_font
 
 
 class FontMappingZoomAction(EditorAction):
@@ -433,10 +407,8 @@ class FontMappingZoomAction(EditorAction):
         if val is not None and val > 0:
             v.set_zoom(val)
 
-    @on_trait_change('active_editor.focused_viewer')
-    def _update_enabled(self):
-        if self.active_editor:
-            self.enabled = self.active_editor.focused_viewer.has_font
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.focused_viewer.has_font
 
 
 class AnticColorAction(EditorAction):
@@ -451,10 +423,8 @@ class AnticColorAction(EditorAction):
         if dlg.ShowModal() == wx.ID_OK:
             e.machine.update_colors(dlg.colors)
 
-    @on_trait_change('active_editor.focused_viewer')
-    def _update_enabled(self):
-        if self.active_editor:
-            self.enabled = self.active_editor.focused_viewer.has_font or self.active_editor.focused_viewer.has_bitmap
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.focused_viewer.has_font or self.active_editor.focused_viewer.has_bitmap
 
 
 class UseColorsAction(EditorAction):
@@ -466,10 +436,8 @@ class UseColorsAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.machine.update_colors(self.colors)
 
-    @on_trait_change('active_editor.focused_viewer')
-    def _update_enabled(self):
-        if self.active_editor:
-            self.enabled = self.active_editor.focused_viewer.has_font or self.active_editor.focused_viewer.has_bitmap
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.focused_viewer.has_font or self.active_editor.focused_viewer.has_bitmap
 
 
 class ColorStandardAction(EditorAction):
@@ -484,15 +452,11 @@ class ColorStandardAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.machine.set_color_standard(self.color_standard)
 
-    @on_trait_change('active_editor.focused_viewer.machine.color_standard')
-    def _update_checked(self):
-        if self.active_editor:
-            self.checked = self.active_editor.focused_viewer.machine.color_standard == self.color_standard
+    def _update_checked(self, ui_state):
+        self.checked = self.active_editor.focused_viewer.machine.color_standard == self.color_standard
 
-    @on_trait_change('active_editor.focused_viewer')
-    def _update_enabled(self):
-        if self.active_editor:
-            self.enabled = self.active_editor.focused_viewer.has_font or self.active_editor.focused_viewer.has_bitmap
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.focused_viewer.has_font or self.active_editor.focused_viewer.has_bitmap
 
 
 class TextFontAction(EditorAction):
@@ -516,10 +480,8 @@ class TextFontAction(EditorAction):
             prefs.text_font = font
             e.reconfigure_panes()
 
-    @on_trait_change('active_editor.focused_viewer')
-    def _update_enabled(self):
-        if self.active_editor:
-            self.enabled = self.active_editor.focused_viewer.has_hex
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.focused_viewer.has_hex
 
 
 class AddViewerAction(EditorAction):
@@ -567,10 +529,8 @@ class PredefinedMachineAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.set_machine(self.machine)
 
-    @on_trait_change('active_editor.focused_viewer.machine')
-    def _update_checked(self):
-        if self.active_editor:
-            self.checked = self.active_editor.focused_viewer.machine == self.machine
+    def _update_checked(self, ui_state):
+        self.checked = self.active_editor.focused_viewer.machine == self.machine
 
 
 class ProcessorTypeAction(EditorAction):
@@ -592,15 +552,11 @@ class ProcessorTypeAction(EditorAction):
         log.debug("setting disassembler to: %s" % self.disassembler.name)
         self.active_editor.focused_viewer.machine.set_disassembler(self.disassembler)
 
-    @on_trait_change('active_editor.focused_viewer.machine.disassembler')
-    def _update_checked(self):
-        if self.active_editor:
-            self.checked = self.active_editor.focused_viewer.machine.disassembler == self.disassembler
+    def _update_checked(self, ui_state):
+        self.checked = self.active_editor.focused_viewer.machine.disassembler == self.disassembler
 
-    @on_trait_change('active_editor.focused_viewer')
-    def _update_enabled(self):
-        if self.active_editor:
-            self.enabled = self.active_editor.focused_viewer.has_cpu
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.focused_viewer.has_cpu
 
 
 class MemoryMapAction(EditorAction):
@@ -629,15 +585,11 @@ class MemoryMapAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.machine.set_memory_map(self.memory_map)
 
-    @on_trait_change('active_editor.focused_viewer.machine.memory_map')
-    def _update_checked(self):
-        if self.active_editor:
-            self.checked = self.active_editor.focused_viewer.machine.memory_map == self.memory_map
+    def _update_checked(self, ui_state):
+        self.checked = self.active_editor.focused_viewer.machine.memory_map == self.memory_map
 
-    @on_trait_change('active_editor.focused_viewer')
-    def _update_enabled(self):
-        if self.active_editor:
-            self.enabled = self.active_editor.focused_viewer.has_cpu
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.focused_viewer.has_cpu
 
 
 class CurrentSegmentParserAction(NameChangeAction):
@@ -670,8 +622,7 @@ class SegmentParserAction(EditorAction):
     def perform(self, event):
         self.active_editor.set_segment_parser(self.segment_parser)
 
-    @on_trait_change('task.segments_changed')
-    def _update_checked(self):
+    def _update_checked(self, ui_state):
         if self.active_editor:
             new_state = self.active_editor.document.segment_parser.__class__ == self.segment_parser
             # workaround to force reset of state because sometimes the toggle
@@ -719,8 +670,7 @@ class UseSegmentAction(EditorAction):
     def perform(self, event):
         wx.CallAfter(self.active_editor.view_segment_number, self.segment_number)
 
-    @on_trait_change('task.segment_selected')
-    def _update_checked(self):
+    def _update_checked(self, ui_state):
         if self.active_editor:
             state = self.active_editor.segment_number == self.segment_number
             log.debug("UseSegmentAction: checked=%s %s %s %s" % (state, str(self.segment), self.active_editor.segment_number, self.segment_number))
@@ -1773,10 +1723,8 @@ class ViewDiffHighlightAction(EditorAction):
             e.document.clear_baseline()
         e.refresh_panes()
 
-    @on_trait_change('active_editor.diff_highlight')
-    def _update_checked(self):
-        if self.active_editor:
-            self.checked = self.active_editor.diff_highlight
+    def _update_checked(self, ui_state):
+        self.checked = self.active_editor.diff_highlight
 
 
 class LoadBaselineVersionAction(EditorAction):
