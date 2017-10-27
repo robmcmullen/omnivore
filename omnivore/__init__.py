@@ -158,6 +158,9 @@ def get_image_path(rel_path, module=None, file=None, up_one_level=False, exclude
         if "/" in path:
             toplevel, modulepath = path.split("/", 1)
             modulepath = os.path.dirname(modulepath)
+        elif "\\" in path:
+            toplevel, modulepath = path.split("\\", 1)
+            modulepath = os.path.dirname(modulepath)
         else:
             toplevel = path
             modulepath = ""
