@@ -13,7 +13,7 @@ import wx.lib.scrolledpanel as scrolled
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+#log.setLevel(logging.DEBUG)
 
 DateFormat = 6
 MonthFormat = 7
@@ -26,8 +26,6 @@ def time_step(self, visible_pixels, total_pixels, low_value, high_value):
     time_range = high_value - low_value
     seconds_per_pixel = time_range / visible_pixels
     step = time_steps[min(bisect.bisect(time_steps, abs(seconds_per_pixel)), len(time_steps) - 1)]
-    print time_steps
-    print step
     return step
 
 
@@ -210,7 +208,7 @@ class LabeledRuler(RulerCtrl):
             strw, strh = dc.GetTextExtent(text)
 
             if leftmost_major_pos > left + strw + 4:
-                print text, left, self._left
+                #print text, left, self._left
                 dc.DrawText(text, self._left + left + 1 - x, self._bottom - strh - 10)
                 leftmost_clear_zone = int(left + (strw * 1.8))
         
@@ -291,7 +289,7 @@ class LabeledRuler(RulerCtrl):
 
     def FindLinearTickSizes(self, UPP):
         UPP = (self._max - self._min)/float(self._length)  # Units per pixel
-        print UPP, self._max, self._min, (self._max - self._min), float(self._length)
+        # print UPP, self._max, self._min, (self._max - self._min), float(self._length)
         self.step_size()
 
     def Update(self, dc):
@@ -322,10 +320,11 @@ class LabeledRuler(RulerCtrl):
                 pos = int(math.floor(pos))
                 t = time.gmtime(value)
                 major = (t.tm_hour == t.tm_min == t.tm_sec == 0)
-                print pos, value, t, major
+                # print pos, value, t, major
                 self.Tick(dc, pos, t, major)
             else:
-                print "offscreen", value
+                # print "offscreen", value
+                pass
             value += step
             
         self._valid = True
@@ -492,7 +491,7 @@ class ZoomRulerBase(object):
         if self.cursor_mode != mode:
             self.cursor_mode = mode
             self.SetCursor(self.cursor_mode_image[mode])
-            print "mode:", mode
+            log.debug("mouse mode: %s" % mode)
 
     def on_key_down(self, event):
         if self.is_dragging:
@@ -635,7 +634,7 @@ class ZoomRulerBase(object):
             if item is not None:
                 self.selected_item_callback(item)
         else:
-            print("unknown state for mouse")
+            log.debug("unknown state for mouse")
 
         if next_mode is None:
             next_mode = "select"
@@ -646,21 +645,20 @@ class ZoomRulerBase(object):
         pass
 
     def selection_finished_callback(self):
-        print "DONE!"
         items = self.ruler.marks_in_selection()
-        print items
+        log.debug("selected_finished_callback: items=%s" % str(items))
 
     def over_item_callback(self, pos, item):
-        print "hit at %d: %s" % (pos, item)
+        log.debug("hit at %d: %s" % (pos, item))
 
     def not_over_item_callback(self, pos):
         pass
 
     def selected_item_callback(self, item):
-        print "CHOSEN!", item
+        log.debug("selected_item_callback: %s" % item)
 
     def selection_cleared_callback(self):
-        print "CLEARED!"
+        log.debug("selected_cleared_callback")
 
     @property
     def zoom_rate(self):
@@ -686,7 +684,7 @@ class ZoomRulerBase(object):
             size[0] = self.actual_screen_width
 
         self.ruler.SetSize(size)
-        print "SIZE", size, type(size)
+        # print "SIZE", size, type(size)
         self.panel.SetVirtualSize(size)
 
         new_pos = self.ruler.value_to_position(value)
