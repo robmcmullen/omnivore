@@ -618,7 +618,7 @@ class CheckItemDialog(wx.Dialog):
         return self.items
 
     def get_checked_items(self):
-        return [self.items[i] for i in self.list.GetChecked()]
+        return [self.items[i] for i in self.list.GetCheckedItems()]
 
     def clear(self, evt=None):
         self.list.Clear()
