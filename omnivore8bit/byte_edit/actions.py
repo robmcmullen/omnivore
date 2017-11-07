@@ -10,11 +10,10 @@ import wx.lib.dialogs
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Int, Bool
 from pyface.api import YES, NO
-from pyface.action.api import Action, ActionItem
 
 from atrcopy import user_bit_mask, data_style, add_xexboot_header, add_atr_header, BootDiskImage, SegmentData, interleave_segments, get_xex
 
-from omnivore.framework.enthought_api_replacements import EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
+from omnivore.framework.enthought_api import Action, ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
 from omnivore.utils.command import StatusFlags
 
 from commands import *
@@ -68,7 +67,7 @@ class UseFontAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.machine.set_font(self.font)
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_font
 
 
@@ -125,7 +124,7 @@ class UseEmulatorAction(EditorAction):
     def perform(self, event):
         self.active_editor.document.set_emulator(self.emulator)
 
-    def _update_checked(self, ui_state):
+    def _update_checked(self, ui_state, popup_data):
         self.checked = self.active_editor.document.emulator == self.emulator
 
 
@@ -222,10 +221,10 @@ class UseAssemblerAction(EditorAction):
         v.linked_base.clear_disassembly(v.machine)
         v.machine.set_assembler(self.assembler)
 
-    def _update_checked(self, ui_state):
+    def _update_checked(self, ui_state, popup_data):
         self.checked = self.active_editor.focused_viewer.machine.assembler == self.assembler
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_cpu
 
 
@@ -287,10 +286,10 @@ class FontRendererAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.machine.set_font(font_renderer=self.font_renderer)
 
-    def _update_checked(self, ui_state):
+    def _update_checked(self, ui_state, popup_data):
         self.checked = self.active_editor.focused_viewer.machine.font_renderer == self.font_renderer
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_font
 
 
@@ -313,10 +312,10 @@ class FontMappingAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.machine.set_font_mapping(self.font_mapping)
 
-    def _update_checked(self, ui_state):
+    def _update_checked(self, ui_state, popup_data):
         self.checked = self.active_editor.focused_viewer.machine.font_mapping == self.font_mapping
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_font
 
 
@@ -337,10 +336,10 @@ class BitmapRendererAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.machine.set_bitmap_renderer(self.bitmap_renderer)
 
-    def _update_checked(self, ui_state):
+    def _update_checked(self, ui_state, popup_data):
         self.checked = self.active_editor.focused_viewer.machine.bitmap_renderer == self.bitmap_renderer
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_bitmap
 
 
@@ -357,7 +356,7 @@ class BitmapWidthAction(EditorAction):
         if val is not None and val > 0:
             v.set_width(val)
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_bitmap
 
 
@@ -374,7 +373,7 @@ class BitmapZoomAction(EditorAction):
         if val is not None and val > 0:
             v.set_zoom(val)
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_bitmap
 
 
@@ -390,7 +389,7 @@ class FontMappingWidthAction(EditorAction):
         if val is not None and val > 0:
             v.set_width(val)
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_font
 
 
@@ -407,7 +406,7 @@ class FontMappingZoomAction(EditorAction):
         if val is not None and val > 0:
             v.set_zoom(val)
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_font
 
 
@@ -423,7 +422,7 @@ class AnticColorAction(EditorAction):
         if dlg.ShowModal() == wx.ID_OK:
             e.machine.update_colors(dlg.colors)
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_font or self.active_editor.focused_viewer.has_bitmap
 
 
@@ -436,7 +435,7 @@ class UseColorsAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.machine.update_colors(self.colors)
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_font or self.active_editor.focused_viewer.has_bitmap
 
 
@@ -452,10 +451,10 @@ class ColorStandardAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.machine.set_color_standard(self.color_standard)
 
-    def _update_checked(self, ui_state):
+    def _update_checked(self, ui_state, popup_data):
         self.checked = self.active_editor.focused_viewer.machine.color_standard == self.color_standard
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_font or self.active_editor.focused_viewer.has_bitmap
 
 
@@ -480,7 +479,7 @@ class TextFontAction(EditorAction):
             prefs.text_font = font
             e.reconfigure_panes()
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_hex
 
 
@@ -529,7 +528,7 @@ class PredefinedMachineAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.set_machine(self.machine)
 
-    def _update_checked(self, ui_state):
+    def _update_checked(self, ui_state, popup_data):
         self.checked = self.active_editor.focused_viewer.machine == self.machine
 
 
@@ -552,10 +551,10 @@ class ProcessorTypeAction(EditorAction):
         log.debug("setting disassembler to: %s" % self.disassembler.name)
         self.active_editor.focused_viewer.machine.set_disassembler(self.disassembler)
 
-    def _update_checked(self, ui_state):
+    def _update_checked(self, ui_state, popup_data):
         self.checked = self.active_editor.focused_viewer.machine.disassembler == self.disassembler
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_cpu
 
 
@@ -585,10 +584,10 @@ class MemoryMapAction(EditorAction):
     def perform(self, event):
         self.active_editor.focused_viewer.machine.set_memory_map(self.memory_map)
 
-    def _update_checked(self, ui_state):
+    def _update_checked(self, ui_state, popup_data):
         self.checked = self.active_editor.focused_viewer.machine.memory_map == self.memory_map
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_cpu
 
 
@@ -622,7 +621,7 @@ class SegmentParserAction(EditorAction):
     def perform(self, event):
         self.active_editor.set_segment_parser(self.segment_parser)
 
-    def _update_checked(self, ui_state):
+    def _update_checked(self, ui_state, popup_data):
         if self.active_editor:
             new_state = self.active_editor.document.segment_parser.__class__ == self.segment_parser
             # workaround to force reset of state because sometimes the toggle
@@ -670,7 +669,7 @@ class UseSegmentAction(EditorAction):
     def perform(self, event):
         wx.CallAfter(self.active_editor.view_segment_number, self.segment_number)
 
-    def _update_checked(self, ui_state):
+    def _update_checked(self, ui_state, popup_data):
         if self.active_editor:
             state = self.active_editor.segment_number == self.segment_number
             log.debug("UseSegmentAction: checked=%s %s %s %s" % (state, str(self.segment), self.active_editor.segment_number, self.segment_number))
@@ -1723,7 +1722,7 @@ class ViewDiffHighlightAction(EditorAction):
             e.document.clear_baseline()
         e.refresh_panes()
 
-    def _update_checked(self, ui_state):
+    def _update_checked(self, ui_state, popup_data):
         self.checked = self.active_editor.diff_highlight
 
 

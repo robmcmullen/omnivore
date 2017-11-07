@@ -7,10 +7,9 @@ import fs
 
 # Enthought library imports.
 from pyface.api import ImageResource, FileDialog, YES, NO, OK, CANCEL
-from pyface.action.api import Action, ActionItem, Group
 from traits.api import on_trait_change, Property, Instance, Bool, Str, Unicode, Any, List, Int
 
-from .enthought_api_replacements import EditorAction, NameChangeAction, TaskDynamicSubmenuGroup, ApplicationDynamicSubmenuGroup
+from .enthought_api import Action, ActionItem, Group, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup, ApplicationDynamicSubmenuGroup
 from omnivore.framework.about import AboutDialog
 from omnivore.utils.file_guess import FileGuess
 from omnivore.utils.wx.dialogs import get_file_dialog_wildcard, prompt_for_dec

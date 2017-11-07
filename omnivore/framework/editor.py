@@ -131,6 +131,7 @@ class FrameworkEditor(Editor):
     def load(self, source=None):
         """ Loads the contents of the editor.
         """
+        log.debug("loading: %s" % source)
         if source is None:
             doc = self.task.window.application.document_class()
         elif hasattr(source, 'document_id'):
@@ -791,7 +792,7 @@ class FrameworkEditor(Editor):
             if not hasattr(action, 'task'):
                 action = action(task=self.task)
                 try:
-                    action.on_dynamic_menu_update(self)
+                    action.on_dynamic_menu_update((self, popup_data))
                 except AttributeError:
                     pass
 

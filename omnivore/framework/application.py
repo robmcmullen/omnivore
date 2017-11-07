@@ -19,7 +19,7 @@ from traits.api import provides, Bool, Instance, List, Property, Str, Unicode, E
 from apptools.preferences.api import Preferences
 
 # Local imports.
-from .enthought_api_replacements import FrameworkTaskWindow
+from .enthought_api import FrameworkTaskWindow
 from filesystem import init_filesystems
 from document import BaseDocument
 import documentation
@@ -263,7 +263,7 @@ class FrameworkApplication(TasksApplication):
         sys.exit()
 
     def update_dynamic_menu_items(self, editor):
-        editor.task.menu_update_event = editor
+        editor.task.menu_update_event = (editor, None)  # tuple, 2nd item is popup data
         self.check_clipboard_can_paste(editor)
 
     def check_clipboard_can_paste(self, editor):

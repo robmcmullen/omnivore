@@ -277,6 +277,7 @@ class FrameworkTask(Task):
         editor = self.get_editor(**kwargs)
         self.editor_area.add_editor(editor)
         self.editor_area.activate_editor(editor)
+        log.debug("new: source=%s editor=%s" % (source, editor))
         if hasattr(source, 'get_metadata') or source is None:
             editor.load(source, **kwargs)
             if source is not None:

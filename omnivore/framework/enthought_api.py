@@ -2,7 +2,7 @@
 
 # Enthought library imports.
 from envisage.ui.tasks.api import TaskWindow
-from pyface.action.api import Action, Group
+from pyface.action.api import Action, ActionItem, Group
 from pyface.tasks.api import Task
 from pyface.tasks.action.api import TaskActionManagerBuilder, TaskActionController
 from traits.api import Instance, Callable, Event, Str, List, Any, Property, cached_property, on_trait_change, Undefined
@@ -85,13 +85,16 @@ if not BENCHMARK_OLD:
         enabled_name = Str("")
 
         @on_trait_change('task.menu_update_event')
-        def on_dynamic_menu_update(self, ui_state):
+        def on_dynamic_menu_update(self, ui_state_tuple):
+            if ui_state_tuple is Undefined:
+                return
+            ui_state, popup_data = ui_state_tuple
             if self.active_editor:
-                self._update_enabled(ui_state)
-                self._update_checked(ui_state)
+                self._update_enabled(ui_state, popup_data)
+                self._update_checked(ui_state, popup_data)
             log.debug("on_dynamic_menu_update %s: %s" % (self, self.enabled))
 
-        def _update_enabled(self, ui_state):
+        def _update_enabled(self, ui_state, popup_data):
             if self.enabled_name and ui_state:
                 enabled = bool(self._get_attr(ui_state, self.enabled_name, None))
                 if enabled is None:
@@ -101,7 +104,7 @@ if not BENCHMARK_OLD:
             else:
                 self.enabled = bool(self.task)
 
-        def _update_checked(self, ui_state):
+        def _update_checked(self, ui_state, popup_data):
             pass
 
 

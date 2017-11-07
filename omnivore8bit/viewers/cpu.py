@@ -9,7 +9,7 @@ from traits.api import on_trait_change, Undefined, Bool
 from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
 from udis.udis_fast import TraceInfo, flag_origin
 
-from omnivore.framework.enthought_api_replacements import EditorAction
+from omnivore.framework.enthought_api import EditorAction
 from omnivore8bit.ui.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 from omnivore8bit.arch.disasm import iter_disasm_styles
 
@@ -420,7 +420,7 @@ class CopyDisassemblyAction(EditorAction):
         data_obj.SetText(text)
         e.set_clipboard_object(data_obj)
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_cpu
 
 
@@ -446,7 +446,7 @@ class CopyCommentsAction(EditorAction):
         data_obj.SetText(text)
         e.set_clipboard_object(data_obj)
 
-    def _update_enabled(self, ui_state):
+    def _update_enabled(self, ui_state, popup_data):
         self.enabled = self.active_editor.focused_viewer.has_cpu
 
 
