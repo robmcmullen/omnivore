@@ -72,6 +72,8 @@ class FrameworkApplication(TasksApplication):
 
     successfully_loaded_event = Event
 
+    successfully_saved_event = Event
+
     plugin_event = Event
 
     preferences_changed_event = Event

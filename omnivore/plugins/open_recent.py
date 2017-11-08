@@ -261,9 +261,9 @@ class OpenRecentPlugin(FrameworkPlugin):
                                    serialize_uri=os.path.join(self.home, "files.dat"))
         self.set_plugin_data(recent_files)
 
-    @on_trait_change('application:successfully_loaded_event')
+    @on_trait_change('application:successfully_loaded_event,application:successfully_saved_event')
     def update_recent_file(self, uri):
-        log.debug("NEWLY LOADED FILE: %s" % uri)
+        log.debug("RECENT FILE: %s" % uri)
         recent_files = self.get_plugin_data()
         try:
             recent_files.append_uri(uri)

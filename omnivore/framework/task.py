@@ -358,20 +358,7 @@ class FrameworkTask(Task):
             title = "Save File" if save else "Open File"
         if self.active_editor:
             # will try path of current file
-            attempts = [self.active_editor.document.metadata.uri]
-            if most_recent:
-                # try most recent first
-                attempts[0:0] = [self.active_editor.most_recent_uri]
-
-            for uri in attempts:
-                try:
-                    uri_dir = os.path.dirname(uri)
-                    fs_, relpath = fs.opener.opener.parse(uri_dir)
-                    if fs_.hassyspath(relpath):
-                        dirpath = fs_.getsyspath(relpath)
-                        break
-                except fs.errors.FSError:
-                    pass
+            dirpath = self.active_editor.best_file_save_dir
 
         dialog = FileDialog(parent=self.window.control, title=title, default_directory=dirpath, action=action, default_filename=default_filename, wildcard=wildcard)
         if dialog.open() == OK:

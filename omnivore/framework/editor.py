@@ -7,7 +7,7 @@ import wx
 import fs
 
 # Enthought library imports.
-from traits.api import on_trait_change, Any, Bool, Int, Unicode, Property, Dict, List, Str
+from traits.api import on_trait_change, Any, Bool, Int, Unicode, Property, Dict, List, Str, Undefined
 from pyface.api import YES, NO
 from pyface.tasks.api import Editor
 from pyface.action.api import ActionEvent
@@ -89,6 +89,10 @@ class FrameworkEditor(Editor):
     diff_highlight = Bool
 
     _metadata_dirty = Bool(transient=True)
+
+    last_saved_uri = Str()
+
+    last_loaded_uri = Str()
 
     #### trait default values
 
@@ -264,6 +268,7 @@ class FrameworkEditor(Editor):
 
             document.undo_stack_changed = True
             saved = True
+            self.last_saved_uri = uri
 
             # refresh window name in case filename has changed
             self.task._active_editor_tab_change(None)
@@ -887,6 +892,47 @@ class FrameworkEditor(Editor):
     def window(self):
         return self.editor_area.task.window
 
+    @on_trait_change('editor_area.task.window.application.successfully_saved_event')
+    def update_last_saved_uri(self, uri):
+        if uri and uri is not Undefined:
+            log.debug("updating last saved uri: %s" % uri)
+            self.last_saved_uri = uri
+
     @property
     def most_recent_uri(self):
+        if self.last_saved_uri:
+            return self.last_saved_uri
         return self.document.uri
+
+    @on_trait_change('editor_area.task.window.application.successfully_loaded_event')
+    def update_last_loaded_uri(self, uri):
+        if uri and uri is not Undefined:
+            log.debug("updating last loaded uri: %s" % uri)
+            self.last_loaded_uri = uri
+
+    @property
+    def best_file_save_dir(self):
+        attempts = []
+        if self.last_saved_uri:
+            # try most recent first
+            attempts.append(self.last_saved_uri)
+        if self.last_loaded_uri:
+            # try directory of last loaded file next
+            attempts.append(self.last_loaded_uri)
+        if self.document.uri:
+            # path of current file is the final try
+            attempts.append(self.document.uri)
+
+        print("attempts for best_file_save_dir: %s" % str(attempts))
+        dirpath = ""
+        for uri in attempts:
+            try:
+                uri_dir = os.path.dirname(uri)
+                fs_, relpath = fs.opener.opener.parse(uri_dir)
+                if fs_.hassyspath(relpath):
+                    dirpath = fs_.getsyspath(relpath)
+                    break
+            except fs.errors.FSError:
+                pass
+
+        return dirpath
