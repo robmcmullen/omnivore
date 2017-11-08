@@ -39,15 +39,14 @@ class MouseHandlerBaseAction(EditorAction):
         self.active_editor.focused_viewer.update_mouse_mode(self.handler)
 
     @on_trait_change('active_editor.mouse_mode_factory')
-    def _update_checked(self, ui_state, popup_data):
+    def _update_checked(self, ui_state):
         if self.active_editor:
             self.checked = self.active_editor.focused_viewer.mouse_mode_factory == self.handler
 
     @on_trait_change('task.menu_update_event')
-    def on_dynamic_menu_update(self, ui_state_tuple):
-        if ui_state_tuple is Undefined:
+    def on_dynamic_menu_update(self, ui_state):
+        if ui_state is Undefined:
             return
-        ui_state, popup_data = ui_state_tuple
         self.enabled = self.handler in ui_state.focused_viewer.valid_mouse_modes
         log.debug("on_dynamic_menu_update %s: focused_viewer=%s enabled=%s" % (self.handler, ui_state.focused_viewer, self.enabled))
 

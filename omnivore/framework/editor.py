@@ -797,7 +797,7 @@ class FrameworkEditor(Editor):
             if not hasattr(action, 'task'):
                 action = action(task=self.task)
                 try:
-                    action.on_dynamic_menu_update((self, popup_data))
+                    action.on_popup_menu_update(self, popup_data)
                 except AttributeError:
                     pass
 

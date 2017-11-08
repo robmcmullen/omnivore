@@ -82,23 +82,40 @@ if not BENCHMARK_OLD:
         # trait on the task that is used to set the enabled/disabled state.
         # Can't change dynamically; for efficiency purposes, the enabled name
         # as set at creation time will be used for the life of the action.
+        #
+        # Popup enable/checked state can be handled differently by defining the
+        # methods _update_popup_enabled and _update_popup_checked. Those
+        # methods take a single argument containing the popup data (the same
+        # popup data as supplied to popup_context_menu_from_actions). The
+        # enabled and checked state falls back to the _update_enabled and
+        # _update_checked if the popup-specific methods are not supplied.
         enabled_name = Str("")
 
         @on_trait_change('task.menu_update_event')
-        def on_dynamic_menu_update(self, ui_state_tuple):
-            if ui_state_tuple is Undefined:
+        def on_dynamic_menu_update(self, ui_state):
+            if ui_state is Undefined:
                 return
-            ui_state, popup_data = ui_state_tuple
             if self.active_editor:
-                self._update_enabled(ui_state, popup_data)
-                self._update_checked(ui_state, popup_data)
+                self._update_enabled(ui_state)
+                self._update_checked(ui_state)
             self.on_dynamic_menu_update_hook(ui_state)
             log.debug("on_dynamic_menu_update %s: %s" % (self, self.enabled))
 
         def on_dynamic_menu_update_hook(self, evt):
             pass
 
-        def _update_enabled(self, ui_state, popup_data):
+        def on_popup_menu_update(self, ui_state, popup_data):
+            try:
+                self._update_popup_enabled(ui_state, popup_data)
+            except AttributeError:
+                self._update_enabled(ui_state)
+            try:
+                self._update_popup_checked(ui_state, popup_data)
+            except AttributeError:
+                self._update_checked(ui_state)
+            log.debug("on_popup_menu_update %s: %s" % (self, self.enabled))
+
+        def _update_enabled(self, ui_state):
             if self.enabled_name and ui_state:
                 enabled = bool(self._get_attr(ui_state, self.enabled_name, None))
                 if enabled is None:
@@ -108,7 +125,7 @@ if not BENCHMARK_OLD:
             else:
                 self.enabled = bool(self.task)
 
-        def _update_checked(self, ui_state, popup_data):
+        def _update_checked(self, ui_state):
             pass
 
 

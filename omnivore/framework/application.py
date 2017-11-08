@@ -265,7 +265,7 @@ class FrameworkApplication(TasksApplication):
         sys.exit()
 
     def update_dynamic_menu_items(self, editor):
-        editor.task.menu_update_event = (editor, None)  # tuple, 2nd item is popup data
+        editor.task.menu_update_event = editor
         self.check_clipboard_can_paste(editor)
 
     def check_clipboard_can_paste(self, editor):
