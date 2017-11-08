@@ -92,7 +92,11 @@ if not BENCHMARK_OLD:
             if self.active_editor:
                 self._update_enabled(ui_state, popup_data)
                 self._update_checked(ui_state, popup_data)
+            self.on_dynamic_menu_update_hook(ui_state)
             log.debug("on_dynamic_menu_update %s: %s" % (self, self.enabled))
+
+        def on_dynamic_menu_update_hook(self, evt):
+            pass
 
         def _update_enabled(self, ui_state, popup_data):
             if self.enabled_name and ui_state:
