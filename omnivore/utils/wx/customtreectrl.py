@@ -1385,8 +1385,10 @@ class TreeTextCtrl(ExpandoTextCtrl):
             self.SetSize((-1, bs.height))
 
         self.Bind(wx.EVT_CHAR, self.OnChar)
+        self.Bind(wx.EVT_KEY_DOWN, self.OnChar)  # Needed to catch ret, esc
         self.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
         self.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
+        self.SelectAll()  # begin with text selected
 
 
     def AcceptChanges(self):
@@ -7584,7 +7586,7 @@ class CustomTreeCtrl(wx.ScrolledWindow):
             self._editCtrl.StopEditing()
 
         self._editCtrl = TreeTextCtrl(self, item=item)
-        self._editCtrl.SetFocus()
+        wx.CallAfter(self._editCtrl.SetFocus)
 
 
     def GetEditControl(self):
