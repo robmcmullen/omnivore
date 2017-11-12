@@ -1305,7 +1305,7 @@ class TreeTextCtrl(ExpandoTextCtrl):
      consumed by the platform for tab navigation.
     """
 
-    def __init__(self, owner, item=None):
+    def __init__(self, owner, item=None, label=None):
         """
         Default class constructor.
         For internal use: do not call it in your code!
@@ -1319,7 +1319,10 @@ class TreeTextCtrl(ExpandoTextCtrl):
 
         self._owner = owner
         self._itemEdited = item
-        self._startValue = item.GetText()
+        if label is None:
+            self._startValue = item.GetText()
+        else:
+            self._startValue = label
         self._finished = False
         self._aboutToFinish = False
         self._currentValue = self._startValue
@@ -7566,7 +7569,7 @@ class CustomTreeCtrl(wx.ScrolledWindow):
         if item.IsSeparator():
             return
 
-        te = TreeEvent(wxEVT_TREE_BEGIN_LABEL_EDIT, self.GetId())
+        te = TreeEvent(wxEVT_TREE_BEGIN_LABEL_EDIT, self.GetId(), label=item.GetText())
         te._item = item
         te.SetEventObject(self)
         if self.GetEventHandler().ProcessEvent(te) and not te.IsAllowed():
@@ -7585,7 +7588,7 @@ class CustomTreeCtrl(wx.ScrolledWindow):
         if self._editCtrl != None and item != self._editCtrl.item():
             self._editCtrl.StopEditing()
 
-        self._editCtrl = TreeTextCtrl(self, item=item)
+        self._editCtrl = TreeTextCtrl(self, item=item, label=te.GetLabel())
         wx.CallAfter(self._editCtrl.SetFocus)
 
 
