@@ -178,6 +178,7 @@ class FrameworkApplication(TasksApplication):
             factory = self.get_task_factory(self.startup_task)
             url = factory.factory.about_application
             if url:
+                log.debug("No filename on command line, starting %s in %s" % (url, factory.factory.editor_id))
                 self.load_file(url)
         app = wx.GetApp()
         app.tasks_application = self
@@ -324,6 +325,7 @@ class FrameworkApplication(TasksApplication):
         return document
 
     def load_file(self, uri, active_task=None, task_id="", in_current_window=False, **kwargs):
+        log.debug("load_file: uri=%s task_id=%s" % (uri, task_id))
         from omnivore.utils.file_guess import FileGuess
         # The FileGuess loads the first part of the file and tries to identify it.
         try:

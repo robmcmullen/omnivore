@@ -137,8 +137,9 @@ class FrameworkEditor(Editor):
         """
         log.debug("loading: %s" % source)
         if source is None:
-            log.error("Hmmm, loading a blank document?")
+            log.debug("loading a blank document")
             doc = self.task.window.application.document_class()
+            self.init_blank_document(doc)
         elif hasattr(source, 'document_id'):
             log.debug("loading document: %s" % source)
             self.init_extra_metadata(source)
@@ -148,6 +149,9 @@ class FrameworkEditor(Editor):
             doc = self.task.window.application.guess_document(source)
             self.init_extra_metadata(doc)
             self.view_document(doc)
+
+    def init_blank_document(self, doc):
+        pass
 
     def init_extra_metadata(self, doc):
         """ Hook to load any extra metadata for the given document
