@@ -799,14 +799,6 @@ class ByteEditor(FrameworkEditor):
         # self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         self.sidebar = self.window.get_dock_pane('byte_edit.sidebar')
-
-        ##########################################
-        # Events.
-        ##########################################
-
-        # Load the editor's contents.
-        self.load()
-
         self.update_pane_names()
         self.mgr.Update()
 

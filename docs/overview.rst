@@ -184,6 +184,24 @@ default task, and an editor tab is opened in a window that is using that task's
 UI.  Omnivore currently enforces the limitation that a window will only show one
 task, so if no current windows are showing that task, a new window is opened.
 
+* :meth:`omnivore.framework.FrameworkApplication.load_file` is called with the path name (really URI), any keyword arguments sent to the function, and some optional stuff that isn't necessary to discuss here.
+* loads the first part of the file (currently the first 1MB) using the :class:`omnivore.utils.file_guess.FileGuess` class
+* try to actually match the data to a MIME type & document using :meth:`omnivore.file_type.driver.FileRecognizerDriver.recognize`, which loops through the recognizers using the :meth:`identify` method of each to see if it can match the MIME type supported by that recognizer. A MIME type is either found, or the "application/octet-stream" MIME is used.
+* still in :meth:`omnivore.file_type.driver.FileRecognizerDriver.recognize`, use the found recognizer's :meth:`load` method to create a document type that can handle this MIME type. (If the type is "application/octet-stream", the application's default document class is used). An error is indicated if a document of `None` is returned. If valid, any document metadata is also loaded and the document object returned.
+* find a task that can edit this document in one of two ways: see if the current window & task can edit it, or find a "best match" of document & file to task
+* calls Task.new on that document, passing through the keyword arguments from load_file
+* Task.new creates an instance of the FrameworkEditor that can edit that type of file with a call to Task.get_editor, passing through the keyword arguments
+
+Each task defines a get_editor method, and the creation of the specific editor can have some side effects. Typically not because it's a traits object and typically the constructor sets up any trait defaults and that's all.
+
+* Task.new then calls FrameworkEditor.activate_editor which is a call into the Pyface library.
+* In the call to activate_editor, pyface calls the FrameworkEditor.create method to set up the controls in the UI. This create method is a good place to put any initialization code that can happen before the document is loaded
+* Document.load_permute is called to perform any processing on the document before it is displayed to the user (e.g. uncompressing it)
+* Editor.init_extra_metadata is called with the document object
+* finally, Editor.view_document is called to populate the UI
+
+
+
 Recognizing MIME Types
 ----------------------
 

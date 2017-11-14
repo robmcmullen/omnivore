@@ -137,11 +137,14 @@ class FrameworkEditor(Editor):
         """
         log.debug("loading: %s" % source)
         if source is None:
+            log.error("Hmmm, loading a blank document?")
             doc = self.task.window.application.document_class()
         elif hasattr(source, 'document_id'):
+            log.debug("loading document: %s" % source)
             self.init_extra_metadata(source)
             self.view_document(source)
         else:
+            log.debug("loading FileGuess object: %s" % source)
             doc = self.task.window.application.guess_document(source)
             self.init_extra_metadata(doc)
             self.view_document(doc)
