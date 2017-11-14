@@ -153,7 +153,6 @@ class LinkedBase(HasTraits):
         self.machine.restore_extra_from_dict(e)
 
     def to_metadata_dict(self, mdict, document):
-        mdict["diff highlight"] = self.diff_highlight
         if document == self.document:
             # If we're saving the document currently displayed, save the
             # display parameters too.
