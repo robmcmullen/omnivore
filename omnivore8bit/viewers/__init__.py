@@ -94,7 +94,8 @@ class SegmentViewer(HasTraits):
     ##### SegmentViewer interface
 
     def update_caption(self):
-        self.pane_info.Caption(self.window_title)
+        if self.pane_info is not None:
+            self.pane_info.Caption(self.window_title)
 
     @on_trait_change('linked_base.editor.document.data_model_changed')
     def process_data_model_change(self, evt):
@@ -133,8 +134,9 @@ class SegmentViewer(HasTraits):
     @on_trait_change('machine.font_change_event,machine.bitmap_shape_change_event,machine.bitmap_color_change_event,machine.disassembler_change_event,')
     def machine_metadata_changed(self, evt):
         log.debug("machine_metadata_changed: %s evt=%s" % (self, str(evt)))
-        self.update_caption()
-        self.linked_base.editor.update_pane_names()
+        if self.linked_base is not None:
+            self.update_caption()
+            self.linked_base.editor.update_pane_names()
 
     @property
     def window_title(self):
