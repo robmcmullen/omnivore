@@ -847,15 +847,7 @@ class VirtualZoomRuler(wx.ScrolledWindow, ZoomRulerBase, VirtualLabeledRuler):
 
         :param `event`: a :class:`PaintEvent` event to be processed.        
         """
-
-        # dc = wx.PaintDC(self)
-        # print dc.GetClippingBox(), "BB", self.IsDoubleBuffered()
-        # dc.SetBackground(wx.Brush(self._background))
-        # dc.Clear()
-        # self.Draw(dc)
-
-        #wx.CallAfter(self.Refresh)
-        wx.CallAfter(self.clear_and_paint)
+        self.clear_and_paint()
 
     def clear_and_paint(self):
         dc = wx.ClientDC(self)
