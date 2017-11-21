@@ -404,8 +404,12 @@ class VirtualLabeledRuler(LabeledRuler):
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
         self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvents)
-        self.Bind(wx.EVT_MOUSE_CAPTURE_LOST, lambda evt: True)
+        self.Bind(wx.EVT_MOUSE_CAPTURE_LOST, self.on_capture_lost)
 
+    def on_capture_lost(self, evt):
+        print("LOST!")
+        #evt.Skip()
+        return True
 
 open_hand_cursor_data = "eJzrDPBz5+WS4mJgYOD19HAJAtIKIMzBDCRdlnQdA1Is6Y6+jgwMG/u5/ySyMjAwMwT4hLgCxRkZGZmYmJiZmVlYWFhZWdnY2NjZ2Tk4OL58+fLt27fv37//+PHj58+fv379+v37958/f/7+/fvv37////8zjIJRMMSB0ddH84BZgKEkyC/4/8gGDMHf2VWBQSJZ4hpREpyfVlKeWJTKEJCYmVei5+caolBmrGeqZ2Fu3RALVLTV08UxxML/6eRsvmYDnuZYiQ3itUe+22t//uF4WOMW44qQlb72ln6Lkn5uLvBkaN8Uu+A407OX7SsZemyNHO/VftYyUGVUUVoaIlguE8/j80Cm7UWL7OmOnMPNwc9yufM1JjB5XnbL0mi4tjDlk6+YITvrTW0N13xDo+0+Sms/WU4sXikW49iYVtN1MW+a5bnVLSJ/fq9T9XL4fesD88fncZ6TVMqYb8dfM1qbfd4psHTXiRM7nV5zxzyJr2FQZg5cEB8aLgWKeU9XP5d1TglNAKfNkK0="
 
@@ -605,6 +609,8 @@ class ZoomRulerBase(object):
             self.Refresh()
         elif op == "finish selection":
             self.selection_finished_callback()
+            if self.HasCapture():
+                self.ReleaseMouse()
         elif op == "start drag":
             self.drag_start = wx.GetMousePosition()[0]  # absolute mouse pos (see below)
             self.view_at_drag_start, _ = self.panel.GetViewStart()
@@ -619,6 +625,8 @@ class ZoomRulerBase(object):
             next_mode = "dragging"
         elif op == "end drag":
             self.drag_start = -1
+            if self.HasCapture():
+                self.ReleaseMouse()
         elif op == "hit test":
             label = self.ruler.hit_test(pos)
             if label is not None:
@@ -635,6 +643,8 @@ class ZoomRulerBase(object):
                 self.selected_item_callback(item)
         else:
             log.debug("unknown state for mouse")
+            if self.HasCapture():
+                self.ReleaseMouse()
 
         if next_mode is None:
             next_mode = "select"
