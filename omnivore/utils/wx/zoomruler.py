@@ -46,11 +46,12 @@ class LabeledRuler(RulerCtrl):
         self.common_init()
 
     def common_init(self):
-        self._marks = {}
+        self._marks = []
         self._mark_pen = wx.Pen(wx.RED)
         self._selected_mark_pen = wx.Pen(wx.RED, 2)
         self._pixel_hit_distance = 3
         self._highlight = wx.Colour(100, 200, 230)
+        self._range_color = wx.Colour(255, 100, 100)
         self.selected_ranges = []
         self.visible_range = (0,0)
         self.mark_length = 10  # pixels
@@ -107,10 +108,10 @@ class LabeledRuler(RulerCtrl):
         self.Refresh()
 
     def clear_marks(self):
-        self._marks = {}
+        self._marks = []
 
-    def set_mark(self, value, data):
-        self._marks[float(value)] = data
+    def set_mark(self, start_value, end_value, data):
+        self._marks.append([float(start_value), float(end_value), data])
 
     def draw_mark(self, dc, pos, selected=False):
         if selected:
@@ -123,15 +124,15 @@ class LabeledRuler(RulerCtrl):
             self._left + pos, self._bottom)
 
     def all_marks(self):
-        return set(self._marks.values())
+        return set([m[2] for m in self._marks])
 
     def marks_within_range(self, r):
         inside = []
         low, hi = r
         if low > hi:
             low, hi = hi, low
-        for value, data in self._marks.iteritems():
-            if value >= low and value <= hi:
+        for start, end, data in self._marks:
+            if start >= low and start <= hi:
                 inside.append(data)
         return inside
 
@@ -169,6 +170,25 @@ class LabeledRuler(RulerCtrl):
                 left, right = right, left
             r.SetLeft(self.value_to_position(left, True) - x)
             r.SetRight(self.value_to_position(right, True) - x)
+            dc.DrawRectangle(r)
+
+        selected = self.marks_to_display_as_selected()
+
+        # emphasize the range of time used by the selected marks
+        r = self.GetClientRect()
+        x, y = self.GetViewStart()
+        r.SetTop(r.Bottom - 4)
+        dc.SetBrush(wx.Brush(self._range_color))
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        for start, end, data in self._marks:
+            if data not in selected:
+                continue
+            r.SetLeft(self.value_to_position(start, True) - x)
+            if end > 0:
+                r.SetRight(self.value_to_position(end, True) - x)
+            else:
+                # don't display end time of infinity
+                continue
             dc.DrawRectangle(r)
 
         dc.SetBrush(wx.Brush(self._background))
@@ -233,12 +253,11 @@ class LabeledRuler(RulerCtrl):
         for indicator in self._indicators:
             indicator.Draw(dc)
 
+        # Draw marks over top of everything else
         dc.SetBrush(wx.Brush(self._background))
         dc.SetPen(self._mark_pen)
-
-        selected = self.marks_to_display_as_selected()
-        for value, data in self._marks.iteritems():
-            pos = self.value_to_position(value)
+        for start, end, data in self._marks:
+            pos = self.value_to_position(start)
             if pos is None:
                 # skip offscreen marks
                 continue
@@ -250,8 +269,8 @@ class LabeledRuler(RulerCtrl):
 
         x, y = self.GetViewStart()
         mouse_pos += x
-        for value, data in self._marks.iteritems():
-            pos = self.value_to_position(value)
+        for start, end, data in self._marks:
+            pos = self.value_to_position(start)
             if pos is None:
                 # skip offscreen marks
                 continue
@@ -718,8 +737,8 @@ class ZoomRulerBase(object):
         self.update_limits()
         evt.Skip()
 
-    def add_mark(self, timestamp, item):
-        self.ruler.set_mark(timestamp, item)
+    def add_mark(self, start_time, end_time, item):
+        self.ruler.set_mark(start_time, end_time, item)
 
     def rebuild(self, editor):
         log.debug("rebuild")
@@ -737,7 +756,7 @@ class ZoomRulerBase(object):
         self.ruler.clear_marks()
         for start, end, item in timeline_info["marks"]:
             log.debug("adding %s at %s" % (item, start))
-            self.add_mark(start, item)
+            self.add_mark(start, end, item)
         start = timeline_info["earliest_time"]
         end = timeline_info["latest_time"]
         self.ruler.SetRange(start, end)
