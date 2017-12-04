@@ -52,15 +52,23 @@ class LabeledRuler(RulerCtrl):
         self._pixel_hit_distance = 3
         self._highlight = wx.Colour(100, 200, 230)
         self._range_color = wx.Colour(255, 100, 100)
+        self._caret_color = wx.Colour(50, 100, 230)
+        self._caret_pen = wx.Pen(self._caret_color)
         self.selected_ranges = []
         self.visible_range = (0,0)
         self.mark_length = 10  # pixels
         self.selected_mark_length = 18  # pixels
         self.use_leftmost = False
+        self.lowest_marker_value = None
+        self.caret_value = None  # None means don't display caret
 
     @property
     def has_selection(self):
         return len(self.selected_ranges) > 0
+
+    #####
+    ##### Pixel position conversion routines
+    #####
 
     def position_to_value(self, pos):
         """Pixel position to data point value
@@ -74,7 +82,7 @@ class LabeledRuler(RulerCtrl):
         """Data point value to pixel position
         """
         perc = (value - self._min)/(self._max - self._min)
-        if perc >= 0.0 and perc <= 1.0:
+        if (perc >= 0.0 and perc <= 1.0) or clamp is None:
             pos = perc * self._length
         elif clamp:
             pos = 0 if perc < 0.0 else self._length
@@ -90,9 +98,13 @@ class LabeledRuler(RulerCtrl):
                 pos = None
         return pos
 
+    #####
+    ##### Range calculations
+    #####
+
     def SetRange(self, minVal, maxVal):
-        # make sure it's floating point! Otherwise you get lots of zeros
-        # calculating position_to_value & value_to_position.
+        # [Overloaded from parent] make sure it's floating point! Otherwise you
+        # get lots of zeros calculating position_to_value & value_to_position.
         minVal = float(minVal)
         maxVal = float(maxVal)
         if self._min != minVal or self._max != maxVal:
@@ -100,18 +112,31 @@ class LabeledRuler(RulerCtrl):
             self._max = maxVal
             self.Invalidate()
 
-    def Invalidate(self):
-        self._valid = False
-        self._length = self._right - self._left
-        self._majorlabels = []
-        self._minorlabels = []
-        self.Refresh()
+    def shift_range(self, delta):
+        # Shift both the minimum and maximum displayed values by the same
+        # amount, effectively panning the viewport
+        self._min += float(delta)
+        self._max += float(delta)
+        self.Invalidate()
+
+    def get_visible_range(self):
+        panel = self.GetParent()
+        x, _ = panel.GetViewStart()
+        return x, x + panel.GetSize()[0] - 1
+
+    #####
+    ##### Indicator marks
+    #####
 
     def clear_marks(self):
         self._marks = []
+        self.lowest_marker_value = None
 
     def set_mark(self, start_value, end_value, data):
-        self._marks.append([float(start_value), float(end_value), data])
+        s = float(start_value)
+        self._marks.append([s, float(end_value), data])
+        if self.lowest_marker_value is None or s < self.lowest_marker_value:
+            self.lowest_marker_value = s
 
     def draw_mark(self, dc, pos, selected=False):
         if selected:
@@ -136,6 +161,13 @@ class LabeledRuler(RulerCtrl):
                 inside.append(data)
         return inside
 
+    def marks_after(self, value):
+        valid = []
+        for start, end, data in self._marks:
+            if (start <= value and (end == 0 or end >= value)) or (start >= value):
+                valid.append(data)
+        return valid
+
     def marks_in_selection(self):
         total = set()
         for r in self.selected_ranges:
@@ -147,10 +179,33 @@ class LabeledRuler(RulerCtrl):
         # hook to override in subclass to add marks to the selection
         return self.marks_in_selection()
 
-    def get_visible_range(self):
-        panel = self.GetParent()
-        x, _ = panel.GetViewStart()
-        return x, x + panel.GetSize()[0] - 1
+    #####
+    ##### Caret (the cursor/insertion point indicator, not the mouse cursor)
+    #####
+
+    def set_caret_value(self, new_value=None):
+        if new_value is None:
+            new_value = self.lowest_marker_value
+        self.caret_value = new_value
+
+    def ensure_caret_visible(self):
+        x = self.value_to_position(self.caret_value, clamp=None)
+        left, right = self.get_visible_range()
+        if x < 0 or x > self._length:
+            width = right - left
+            delta = width / 4 * (-1 if x < left else 1)
+            self.shift_range(delta)
+
+    #####
+    ##### Graphics drawing routines
+    #####
+
+    def Invalidate(self):
+        self._valid = False
+        self._length = self._right - self._left
+        self._majorlabels = []
+        self._minorlabels = []
+        self.Refresh()
 
     def Draw(self, dc):
         if not self._valid:
@@ -253,7 +308,7 @@ class LabeledRuler(RulerCtrl):
         for indicator in self._indicators:
             indicator.Draw(dc)
 
-        # Draw marks over top of everything else
+        # Draw marks over top of everything except the caret
         dc.SetBrush(wx.Brush(self._background))
         dc.SetPen(self._mark_pen)
         for start, end, data in self._marks:
@@ -262,6 +317,14 @@ class LabeledRuler(RulerCtrl):
                 # skip offscreen marks
                 continue
             self.draw_mark(dc, pos - x, data in selected)
+
+        # Draw caret
+        if self.caret_value is not None:
+            pos = self.value_to_position(self.caret_value)
+            if pos is not None:
+                dc.SetPen(self._caret_pen)
+                dc.DrawLine(self._left + pos - x, self._bottom + 10,
+                    self._left + pos - x, self._top)
 
     def hit_test(self, mouse_pos):
         if mouse_pos < 0 or mouse_pos >= self._length:
@@ -480,6 +543,7 @@ class ZoomRulerBase(object):
         self.label_max = self.label_min = None
 
         self.init_events()
+        self.init_playback()
 
     def init_events(self):
         self.panel.Bind(wx.EVT_SCROLLWIN, self.on_scroll)
@@ -497,6 +561,48 @@ class ZoomRulerBase(object):
             "dragging": self.dragging_cursor,
         }
         self.cursor_mode = "select"
+
+    def init_playback(self):
+        self.playback_state = "stopped"
+        self.ruler.caret_value = None
+        self.step_rate = 1000  # milliseconds used for timer interval
+        self.step_value = 600  # number to add to caret_value per interval
+        self.panel.Bind(wx.EVT_TIMER, self.on_timer)
+        self.playback_timer = wx.Timer(self)
+
+    @property
+    def is_playing(self):
+        return self.playback_state == "playing"
+
+    def start_playback(self):
+        self.playback_timer.Stop()
+        if self.ruler.caret_value is None:
+            self.ruler.caret_value = self.ruler.lowest_marker_value
+        self.ruler.ensure_caret_visible()
+        self.playback_timer.Start(self.step_rate)
+        self.playback_state = "playing"
+        self.playback_start_callback()
+
+    def pause_playback(self):
+        self.playback_timer.Stop()
+        self.playback_state = "stopped"
+        self.playback_pause_callback()
+
+    def on_timer(self, evt):
+        log.debug("on_timer")
+        self.caret_value += self.step_value
+        self.ruler.ensure_caret_visible()
+        self.playback_callback(self.ruler.caret_value)
+        self.Refresh()
+
+    def playback_callback(self, current_value):
+        pass
+
+    def playback_start_callback(self):
+        pass
+
+    def playback_pause_callback(self):
+        pass
 
     @property
     def is_drag_mode(self):
@@ -614,6 +720,7 @@ class ZoomRulerBase(object):
             self.ruler.selected_ranges = []
             self.select_start = self.position_to_value(pos)
             self.select_end = None
+            self.caret_value = None
             self.Refresh()
         elif op == "select threshold":
             start_pos = self.value_to_position(self.select_start, True)
@@ -653,6 +760,7 @@ class ZoomRulerBase(object):
             else:
                 self.not_over_item_callback(pos)
         elif op == "select item":
+            self.caret_value = None
             if self.ruler.has_selection:
                 self.ruler.selected_ranges = []
                 self.Refresh()
@@ -835,6 +943,7 @@ class VirtualZoomRuler(wx.ScrolledWindow, ZoomRulerBase, VirtualLabeledRuler):
 
         self.label_max = self.label_min = None
         self.init_events()
+        self.init_playback()
 
     def get_visible_range(self):
         x, _ = self.GetViewStart()
