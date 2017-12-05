@@ -741,7 +741,7 @@ class ZoomRulerBase(object):
             self.ruler.selected_ranges[-1] = (last_start, value)
             self.Refresh()
         elif op == "finish selection":
-            self.selection_finished_callback()
+            self.selection_finished_callback(self.ruler.selected_ranges)
             if self.HasCapture():
                 self.ReleaseMouse()
         elif op == "start drag":
@@ -788,7 +788,7 @@ class ZoomRulerBase(object):
     def release_mouse(self):
         pass
 
-    def selection_finished_callback(self):
+    def selection_finished_callback(self, selected_ranges):
         items = self.ruler.marks_in_selection()
         log.debug("selected_finished_callback: items=%s" % str(items))
 
