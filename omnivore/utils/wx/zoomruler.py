@@ -168,6 +168,13 @@ class LabeledRuler(RulerCtrl):
                 valid.append(data)
         return valid
 
+    def marks_active(self, value):
+        valid = []
+        for start, end, data in self._marks:
+            if start == 0 or (start <= value < end):
+                valid.append(data)
+        return valid
+
     def marks_in_selection(self):
         total = set()
         for r in self.selected_ranges:
