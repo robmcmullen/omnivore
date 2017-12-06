@@ -42,6 +42,9 @@ class FrameworkTask(Task):
 
     doc_hint = ''  # directives for document formatter
 
+    about_filesystem = {  # extra documents to place in the about:// filesystem
+    }
+
     #### Task interface #######################################################
 
     id = editor_id + "." + pane_layout_version if pane_layout_version else editor_id

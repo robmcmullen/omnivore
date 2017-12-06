@@ -327,11 +327,11 @@ examples:
         return fs, resourcename
 
 
-def init_filesystems():
+def init_filesystems(task_factories):
     wx.FileSystem.AddHandler(WxAboutFileSystemHandler())
     wx.FileSystem.AddHandler(wx.MemoryFSHandler())
 
-    init_about_filesystem()
+    init_about_filesystem(task_factories)
 #
 #    for name in about.iterkeys():
 #        url = "about://%s" % name
@@ -345,17 +345,23 @@ def init_filesystems():
 #        print "fs=%s (%s), path=%s" % (fs, id(fs), path)
 
 
-def init_about_filesystem():
+def init_about_filesystem(task_factories):
     opener.add(AboutOpener)
     opener.add(TemplateOpener)
     opener.add(BlankOpener)
     for name, text in about.iteritems():
-        url = "about://%s" % name
-        fh = opener.open(url, "wb")
-        if hasattr(text, 'create_bitmap'):
-            fhb = opener.open(text.absolute_path, "rb")
-            text = fhb.read()
-            fhb.close()
-        fh.write(text)
-        fh.close()
-        log.debug("Created %s" % url)
+        save_to_about_filesystem(name, text)
+    for factory in task_factories:
+        for name, text in factory.factory.about_filesystem.iteritems():
+            save_to_about_filesystem(name, text)
+
+def save_to_about_filesystem(name, text):
+    url = "about://%s" % name
+    fh = opener.open(url, "wb")
+    if hasattr(text, 'create_bitmap'):
+        fhb = opener.open(text.absolute_path, "rb")
+        text = fhb.read()
+        fhb.close()
+    fh.write(text)
+    fh.close()
+    log.debug("Created %s" % url)

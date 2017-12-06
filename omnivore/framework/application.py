@@ -144,7 +144,7 @@ class FrameworkApplication(TasksApplication):
     def _application_initialized_fired(self):
         # Note: happens after _window_created_fired and _window_open_fired
         log.debug("STARTING!!!")
-        init_filesystems()
+        init_filesystems(self.task_factories)
         loaded = False
         parser = argparse.ArgumentParser(description="Application parser")
         parser.add_argument("-t", "--task_id", "--task-id", "--edit_with","--edit-with", action="store", default="", help="Use the editing mode specified by this task id for all files listed on the command line")
