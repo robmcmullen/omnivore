@@ -85,7 +85,7 @@ def setup_frozen_logging():
         sys.stderr = sys.stdout
 
 
-def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", application_name="Omnivore", debug_log=False, document_class=None):
+def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], template_path=[], startup_task="", application_name="Omnivore", debug_log=False, document_class=None):
     """Start the application
     
     :param plugins: list of user plugins
@@ -171,6 +171,9 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], startup_task="", 
     image_paths.append(get_image_path("icons"))
     image_paths.append(get_image_path("../omnivore8bit/icons"))
     resource_manager.extra_paths.extend(image_paths)
+
+    from omnivore.templates import template_subdirs
+    template_subdirs.extend(template_path)
 
     kwargs = {}
     if startup_task:
