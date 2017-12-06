@@ -132,28 +132,28 @@ class FrameworkEditor(Editor):
         """
         raise NotImplementedError
 
-    def load(self, source=None):
+    def load(self, source=None, **kwargs):
         """ Loads the contents of the editor.
         """
         log.debug("loading: %s" % source)
         if source is None:
             log.debug("loading a blank document")
             doc = self.task.window.application.document_class()
-            self.init_blank_document(doc)
+            self.init_blank_document(doc, **kwargs)
         elif hasattr(source, 'document_id'):
             log.debug("loading document: %s" % source)
-            self.init_extra_metadata(source)
-            self.view_document(source)
+            self.init_extra_metadata(source, **kwargs)
+            self.view_document(source, **kwargs)
         else:
             log.debug("loading FileGuess object: %s" % source)
             doc = self.task.window.application.guess_document(source)
-            self.init_extra_metadata(doc)
-            self.view_document(doc)
+            self.init_extra_metadata(doc, **kwargs)
+            self.view_document(doc, **kwargs)
 
-    def init_blank_document(self, doc):
+    def init_blank_document(self, doc, **kwargs):
         pass
 
-    def init_extra_metadata(self, doc):
+    def init_extra_metadata(self, doc, **kwargs):
         """ Hook to load any extra metadata for the given document
         """
         e = doc.get_metadata_for(self.task)
@@ -195,7 +195,7 @@ class FrameworkEditor(Editor):
             self.baseline_present = doc.has_baseline
             self.diff_highlight = self.baseline_present
 
-    def view_document(self, doc, old_editor=None):
+    def view_document(self, doc, old_editor=None, **kwargs):
         """ Change the view to the specified document
         """
         doc.last_task_id = self.task.id

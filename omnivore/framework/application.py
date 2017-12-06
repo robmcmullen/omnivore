@@ -142,6 +142,7 @@ class FrameworkApplication(TasksApplication):
     #### Trait event handlers
 
     def _application_initialized_fired(self):
+        # Note: happens after _window_created_fired and _window_open_fired
         log.debug("STARTING!!!")
         init_filesystems()
         loaded = False
@@ -305,7 +306,7 @@ class FrameworkApplication(TasksApplication):
 
         task = event.window.active_task
         if task.active_editor is None and task.start_new_editor_in_new_window:
-            task.new()
+            task.new(window_opening=True)
 
         if sys.platform.startswith("win"):
             # monkey patch to include mousewheel handler on the TaskWindow
