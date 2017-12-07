@@ -578,6 +578,10 @@ class ZoomRulerBase(object):
         self.playback_timer = wx.Timer(self)
 
     @property
+    def can_play(self):
+        return bool(self.ruler._marks)
+
+    @property
     def is_playing(self):
         return self.playback_state == "playing"
 
