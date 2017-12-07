@@ -190,6 +190,11 @@ class FrameworkApplication(TasksApplication):
             idle = self.on_idle
         app.Bind(wx.EVT_IDLE, idle)
 
+    @property
+    def application_initialization_finished(self):
+        app = wx.GetApp()
+        return hasattr(app, 'tasks_application')
+
     def _application_exiting_fired(self):
         log.debug("CLEANING UP!!!")
         if self.downloader:
