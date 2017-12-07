@@ -378,6 +378,29 @@ def slugify(s):
     return s
 
 
+def pretty_seconds(s, precision=1):
+    """Convert a number of seconds into a single text string with a decimal
+    number followed by the largest single unit of time that causes the result
+    to be greater than one.
+    """
+    fmt = "%%.%df" % precision
+    if s < 1:
+        result = (fmt % (s * 1000.0)) + "ms"
+    elif s < 60:
+        result = (fmt % s) + "s"
+    elif s < 3600:
+        result = (fmt % (s / 60.0)) + "m"
+    elif s < 86400:
+        result = (fmt % (s / 3660.0)) + "hr"
+    elif s < 604800:
+        result = (fmt % (s / 86400.0)) + "day"
+    elif s < 31449600:
+        result = (fmt % (s / 604800.0)) + "wk"
+    else:
+        result = (fmt % (s / 31449600.0)) + "yr"
+    return result
+
+
 if __name__ == "__main__":
     import sys
 
