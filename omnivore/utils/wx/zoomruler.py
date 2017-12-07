@@ -572,8 +572,8 @@ class ZoomRulerBase(object):
     def init_playback(self):
         self.playback_state = "stopped"
         self.ruler.caret_value = None
-        self.step_rate = 1000  # milliseconds used for timer interval
-        self.step_value = 600  # number to add to caret_value per interval
+        self.step_rate = 1  # seconds used for timer interval
+        self.step_value = 600  # number of seconds to add to caret_value per interval
         self.panel.Bind(wx.EVT_TIMER, self.on_timer)
         self.playback_timer = wx.Timer(self)
 
@@ -590,7 +590,7 @@ class ZoomRulerBase(object):
         if self.ruler.caret_value is None:
             self.ruler.caret_value = self.ruler.lowest_marker_value
         self.ruler.ensure_caret_visible()
-        self.playback_timer.Start(self.step_rate)
+        self.playback_timer.Start(self.step_rate * 1000)
         self.playback_state = "playing"
         self.playback_start_callback()
 
