@@ -7,6 +7,7 @@ These text utilities have no dependencies on any other part of peppy, and
 therefore may be used independently of peppy.
 """
 import re
+from collections import OrderedDict
 
 import logging
 log = logging.getLogger(__name__)
@@ -385,7 +386,7 @@ def pretty_seconds(s, precision=1):
     """
     fmt = "%%.%df" % precision
     if s < 1:
-        result = (fmt % (s * 1000.0)) + "ms"
+        result = ("%d" % (s * 1000.0)) + "ms"
     elif s < 60:
         result = (fmt % s) + "s"
     elif s < 3600:
@@ -401,6 +402,47 @@ def pretty_seconds(s, precision=1):
     return result
 
 
+interval_dict = OrderedDict([
+    ("year", 365*86400), ("yr", 365*86400), ("y", 365*86400),
+    ("week", 7*86400), ("wk", 7*86400),
+    ("day", 86400),    ("d", 86400),
+    ("hour", 3600), ("hr", 3600), ("h", 3600),
+    ("ms", .001),  # ms before m so m doesn't steal the first letter
+    ("min", 60), ("m", 60),
+    ("sec", 1), ("s", 1),
+    ])
+
+def parse_pretty_seconds(s):
+    """Convert internal string like 1M, 1Y3M, 3W to seconds.
+
+    :type string: str
+    :param string: Interval string like 1M, 1W, 1M3W4h2s...
+        (s => seconds, m => minutes, h => hours, D => days, W => weeks, M => months, Y => Years).
+
+    :rtype: int
+    :return: The conversion in seconds of string.
+
+    Based on: https://thomassileo.name/blog/2013/03/31/how-to-convert-seconds-to-human-readable-interval-back-and-forth-with-python/
+    """
+    interval_exc = "Bad interval format for {0}".format(s)
+
+    interval_regex = re.compile("^(?P<value>[0-9.]+)(?P<unit>({0}))".format("|".join(interval_dict.keys())))
+    seconds = 0
+
+    while s:
+        match = interval_regex.match(s)
+        if match:
+            value, unit = int(match.group("value")), match.group("unit")
+            if int(value) and unit in interval_dict:
+                seconds += value * interval_dict[unit]
+                s = s[match.end():]
+            else:
+                raise ValueError(interval_exc)
+        else:
+            raise ValueError(interval_exc)
+    return seconds
+
+
 if __name__ == "__main__":
     import sys
 
@@ -411,3 +453,7 @@ if __name__ == "__main__":
 
         print parse_int_label_dict(text)
         print parse_int_label_dict(text, allow_equal=True)
+
+    print parse_pretty_seconds("5m")
+    print parse_pretty_seconds("5wk")
+    print parse_pretty_seconds("5ms")
