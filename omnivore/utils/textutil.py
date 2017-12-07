@@ -386,19 +386,31 @@ def pretty_seconds(s, precision=1):
     """
     fmt = "%%.%df" % precision
     if s < 1:
-        result = ("%d" % (s * 1000.0)) + "ms"
+        fmt = "%d"
+        val = s * 1000.0
+        ext = "ms"
     elif s < 60:
-        result = (fmt % s) + "s"
+        val = s
+        ext = "s"
     elif s < 3600:
-        result = (fmt % (s / 60.0)) + "m"
+        val = (s / 60.0)
+        ext = "m"
     elif s < 86400:
-        result = (fmt % (s / 3660.0)) + "hr"
+        val = (s / 3600.0)
+        ext = "hr"
     elif s < 604800:
-        result = (fmt % (s / 86400.0)) + "day"
+        val = (s / 86400.0)
+        ext = "day"
     elif s < 31449600:
-        result = (fmt % (s / 604800.0)) + "wk"
+        val = (s / 604800.0)
+        ext = "wk"
     else:
-        result = (fmt % (s / 31449600.0)) + "yr"
+        val = (s / 31449600.0)
+        ext = "yr"
+    print val, val - int(val)
+    if abs(val - int(val)) < .000001:
+        fmt = "%d"
+    result = (fmt % val) + ext
     return result
 
 
@@ -457,3 +469,7 @@ if __name__ == "__main__":
     print parse_pretty_seconds("5m")
     print parse_pretty_seconds("5wk")
     print parse_pretty_seconds("5ms")
+    step_values = ['10m', '20m', '30m', '40m', '45m', '60m', '90m', '120m', '3hr', '4hr', '5hr', '6hr', '8hr', '10hr', '12hr', '16h', '24hr', '36hr', '48hr', '3d', '4d', '5d', '6d', '7d', '2wk', '3wk', '4wk']
+    step_values_as_seconds = [parse_pretty_seconds(a) for a in step_values]
+    print step_values_as_seconds
+    print([pretty_seconds(a) for a in step_values_as_seconds])
