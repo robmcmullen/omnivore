@@ -38,6 +38,17 @@ def normalize_uri(uri):
     return uri
 
 
+def get_fs(uri):
+    if uri.startswith("file://"):
+        # FIXME: workaround to allow opening of file:// URLs with the
+        # ! character
+        uri = uri.replace("file://", "")
+    fs, relpath = opener.parse(uri)
+    log.debug("Filesystem: %s" % fs)
+    fh = fs.open(relpath, "rb")
+    return fh, fs, relpath
+
+
 class TraitUriNormalizer(TraitHandler):
     """Trait validator to convert bytes to numpy array"""
 
@@ -77,6 +88,11 @@ class FileMetadata(HasTraits):
             return fs.getsyspath(relpath)
         raise TypeError("No system path for %s" % self.uri)
 
+    def get_stream(self):
+        fh, fs, relpath = get_fs(self.uri)
+        return fh
+
+
 class FileGuess(object):
     """Loads the first part of a file and provides a container for metadata
 
@@ -93,14 +109,7 @@ class FileGuess(object):
     def get_fs(self, uri=None):
         if uri is None:
             uri = self.metadata.uri
-        if uri.startswith("file://"):
-            # FIXME: workaround to allow opening of file:// URLs with the
-            # ! character
-            uri = uri.replace("file://", "")
-        fs, relpath = opener.parse(uri)
-        log.debug("Filesystem: %s" % fs)
-        fh = fs.open(relpath, "rb")
-        return fh, fs, relpath
+        return get_fs(uri)
 
     def reload(self, uri=None):
         fh, fs, relpath = self.get_fs(uri)
