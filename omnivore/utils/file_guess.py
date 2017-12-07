@@ -84,12 +84,19 @@ class FileMetadata(HasTraits):
     @property
     def syspath(self):
         fs, relpath = opener.parse(self.uri)
+        self.read_only = fs.getmeta('read_only')
         if fs.hassyspath(relpath):
             return fs.getsyspath(relpath)
         raise TypeError("No system path for %s" % self.uri)
 
+    def check_read_only(self):
+        fs, relpath = opener.parse(self.uri)
+        self.read_only = fs.getmeta('read_only')
+        return self.read_only
+
     def get_stream(self):
         fh, fs, relpath = get_fs(self.uri)
+        self.read_only = fs.getmeta('read_only')
         return fh
 
 
@@ -124,7 +131,7 @@ class FileGuess(object):
         # Use the default mime type until it is recognized
         self.metadata = FileMetadata(uri=uri)
         try:
-            self.metadata.read_only = fs.read_only_fs
+            self.metadata.read_only = fs.getmeta('read_only')
         except AttributeError:
             pass
 

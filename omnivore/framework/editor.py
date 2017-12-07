@@ -149,6 +149,7 @@ class FrameworkEditor(Editor):
             doc = self.task.window.application.guess_document(source)
             self.init_extra_metadata(doc, **kwargs)
             self.view_document(doc, **kwargs)
+        doc.read_only = doc.metadata.check_read_only()
 
     def init_blank_document(self, doc, **kwargs):
         pass
