@@ -126,6 +126,11 @@ class BaseDocument(HasTraits):
             return "%s (%s)" % (self.name, self.uri)
         return self.name
 
+    @property
+    def root_name(self):
+        name, _ = os.path.splitext(self.name)
+        return name
+
     @classmethod
     def get_blank(cls):
         return cls(bytes="")
