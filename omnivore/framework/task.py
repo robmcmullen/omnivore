@@ -19,6 +19,7 @@ from omnivore.framework.i_about import IAbout
 from omnivore.framework.actions import *
 from omnivore.framework.status_bar_manager import FrameworkStatusBarManager
 from omnivore.framework.preferences import FrameworkPreferences
+import omnivore.utils.wx.dialogs as dialogs
 
 import logging
 log = logging.getLogger(__name__)
@@ -1049,3 +1050,8 @@ class FrameworkTask(Task):
         from pyface.message_dialog import error
 
         return error(self.window.control, message, title)
+
+    def prompt(self, message, title='Prompt', default_value=""):
+        """ Convenience method to show a text entry dialog."""
+        d = dialogs.SimplePromptDialog(self.window.control, message, title, default_value)
+        return d.show_and_get_value()

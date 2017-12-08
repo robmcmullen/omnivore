@@ -1,5 +1,6 @@
 import os
 import sys
+import glob
 import json
 
 import jsonpickle
@@ -83,15 +84,33 @@ class FilePersistenceMixin(object):
         except IOError:
             log.error("Failed writing %s to %s" % (log_file_name_base, filename))
 
-    def get_config_dir_filename(self, subdir, json_name):
+    def get_config_dir(self, subdir):
         dirname = os.path.join(self.app_home_dir, subdir)
         if not os.path.exists(dirname):
             os.makedirs(dirname)
-        return os.path.join(dirname, json_name)
+        return dirname
+
+    def get_config_dir_filename(self, subdir, json_name):
+        return os.path.join(self.get_config_dir(subdir), json_name)
+
+    def get_file_config_data(self, subdir, filename, default_on_error=None, mode='r'):
+        try:
+            file_path = self.get_config_dir_filename(subdir, filename)
+            with open(file_path, mode) as fh:
+                data = fh.read()
+            return data
+        except IOError:
+            # file not found
+            return default_on_error
+
+    def save_file_config_data(self, subdir, filename, data, mode='w'):
+        file_path = self.get_config_dir_filename(subdir, filename)
+        with open(file_path, mode) as fh:
+            fh.write(data)
 
     def get_json_data(self, json_name, default_on_error=None):
         try:
-            file_path = self.get_config_dir_filename("json", json_name)
+            raw = self.get_file_config_data("json", json_name)
             with open(file_path, "r") as fh:
                 raw = fh.read()
             json_data = jsonpickle.decode(raw)
@@ -142,3 +161,45 @@ class FilePersistenceMixin(object):
         raw = bson.dumps(bson_data)
         with open(file_path, "w") as fh:
             fh.write(raw)
+
+    def get_user_dir(self, subdir):
+        dirname = os.path.join(self.user_data_dir, subdir)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        return dirname
+
+    def get_user_dir_filename(self, subdir, json_name):
+        return os.path.join(self.get_user_dir(subdir), json_name)
+
+    def get_user_data(self, subdir, filename, default_on_error=None, mode='r'):
+        try:
+            file_path = self.get_user_dir_filename(subdir, filename)
+            with open(file_path, mode) as fh:
+                data = fh.read()
+            return data
+        except IOError:
+            # file not found
+            return default_on_error
+
+    def save_user_data(self, subdir, filename, data, mode='w'):
+        file_path = self.get_user_dir_filename(subdir, filename)
+        with open(file_path, mode) as fh:
+            fh.write(data)
+
+    def get_available_user_data(self, subdir):
+        config_dir = self.get_user_dir(subdir)
+        globname = os.path.join(config_dir, "*")
+        available = [os.path.basename(a) for a in glob.glob(globname)]
+        return available
+
+    def get_text_user_data(self, subdir, filename, default_on_error=None):
+        return self.get_user_data(subdir, filename, default_on_error, 'r')
+
+    def save_text_user_data(self, subdir, filename, data):
+        return self.save_user_data(subdir, filename, data)
+
+    def get_binary_user_data(self, subdir, filename, default_on_error=None):
+        return self.get_user_data(subdir, filename, default_on_error, 'rb')
+
+    def save_binary_user_data(self, subdir, filename, data):
+        return self.save_user_data(subdir, filename, data, 'wb')

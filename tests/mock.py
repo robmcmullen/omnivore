@@ -31,20 +31,20 @@ from traits.api import HasTraits, Str, Event
 import numpy as np
 from numpy.testing import assert_almost_equal
 
+from omnivore.framework.persistence import FilePersistenceMixin
 from omnivore8bit.document import SegmentedDocument
-from omnivore8bit.hex_edit.hex_editor import HexEditor
 
 def null(self, *args, **kwargs):
     pass
 
-class MockApplicationSink(object):
+class MockApplication(FilePersistenceMixin):
     document_class = SegmentedDocument
 
 class MockWindowSink(object):
     recalc_view = null
     set_font = null
     Refresh = null
-    application = MockApplicationSink
+    application = MockApplication
 
 class MockTask(HasTraits):
     id = Str("mock")
@@ -56,7 +56,8 @@ class MockTask(HasTraits):
         self.active_editor = editor
 
 class MockEditorArea(HasTraits):
-    task = MockTask()
+    def __init__(self, editor):
+        task = MockTask(editor)
 
 class MockEditor(object):
     def __init__(self, segment):
@@ -65,15 +66,16 @@ class MockEditor(object):
     def change_bytes(self, start, end, bytes):
         print("changing bytes %d-%d to %s" % (start, end, repr(bytes)))
 
-class MockHexEditor(HexEditor):
-    editor_area = MockEditorArea()
-    font_map = MockWindowSink()
-    bitmap = MockWindowSink()
+class MockHexEditor(MockEditor):
+    def __init__(self, *args, **kwargs):
+        self.editor_area = MockEditorArea(self)
+        self.font_map = MockWindowSink()
+        self.bitmap = MockWindowSink()
 
     update_fonts = null
     update_segments_ui = null
     update_emulator = null
-    
+
     def view_document(self, doc):
         self.document = doc
         self.find_segment()
