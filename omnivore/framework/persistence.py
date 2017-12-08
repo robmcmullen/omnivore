@@ -109,10 +109,10 @@ class FilePersistenceMixin(object):
             fh.write(data)
 
     def get_json_data(self, json_name, default_on_error=None):
+        raw = self.get_file_config_data("json", json_name)
+        if raw is None:
+            return default_on_error
         try:
-            raw = self.get_file_config_data("json", json_name)
-            with open(file_path, "r") as fh:
-                raw = fh.read()
             json_data = jsonpickle.decode(raw)
             try:
                 # new format is a list with a format identifier as the first ntry
@@ -125,28 +125,21 @@ class FilePersistenceMixin(object):
                 encoded = json_data[json_name]
                 decoded = jsonpickle.decode(encoded)
             return decoded
-        except IOError:
-            # file not found
-            return default_on_error
         except ValueError:
             # bad JSON format
             log.error("Bad JSON format in preferences file: %s" % json_name)
             return default_on_error
 
     def save_json_data(self, json_name, data):
-        file_path = self.get_config_dir_filename("json", json_name)
         json_data = ["format=v2", data]
         encoded = jsonpickle.encode(json_data)
-        with open(file_path, "w") as fh:
-            fh.write(encoded)
+        self.save_file_config_data("json", json_name, encoded)
 
     def get_bson_data(self, bson_name):
         import bson
 
-        file_path = self.get_config_dir_filename("bson", bson_name)
-        with open(file_path, "r") as fh:
-            raw = fh.read()
-        if len(raw) > 0:
+        raw = self.get_file_config_data("bson", bson_name, mode='rb')
+        if raw is not None and len(raw) > 0:
             bson_data = bson.loads(raw)
             data = bson_data[bson_name]
         else:
@@ -156,11 +149,9 @@ class FilePersistenceMixin(object):
     def save_bson_data(self, bson_name, data):
         import bson
 
-        file_path = self.get_config_dir_filename("bson", bson_name)
         bson_data = {bson_name: data}
         raw = bson.dumps(bson_data)
-        with open(file_path, "w") as fh:
-            fh.write(raw)
+        self.save_file_config_data("bson", bson_name, raw, mode='wb')
 
     def get_user_dir(self, subdir):
         dirname = os.path.join(self.user_data_dir, subdir)
