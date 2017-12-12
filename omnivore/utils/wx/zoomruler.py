@@ -586,18 +586,20 @@ class ZoomRulerBase(object):
         return self.playback_state == "playing"
 
     def start_playback(self):
-        self.playback_timer.Stop()
-        if self.ruler.caret_value is None:
-            self.ruler.caret_value = self.ruler.lowest_marker_value
-        self.ruler.ensure_caret_visible()
-        self.playback_timer.Start(self.step_rate * 1000)
-        self.playback_state = "playing"
-        self.playback_start_callback()
+        if not self.is_playing:
+            self.playback_timer.Stop()
+            if self.ruler.caret_value is None:
+                self.ruler.caret_value = self.ruler.lowest_marker_value
+            self.ruler.ensure_caret_visible()
+            self.playback_timer.Start(self.step_rate * 1000)
+            self.playback_state = "playing"
+            self.playback_start_callback()
 
     def pause_playback(self):
-        self.playback_timer.Stop()
-        self.playback_state = "stopped"
-        self.playback_pause_callback()
+        if self.is_playing:
+            self.playback_timer.Stop()
+            self.playback_state = "stopped"
+            self.playback_pause_callback()
 
     def on_timer(self, evt):
         log.debug("on_timer")
@@ -727,6 +729,7 @@ class ZoomRulerBase(object):
 
         # process state machine commands
         if op == "start selection":
+            self.pause_playback()
             self.selection_cleared_callback()
             self.ruler.selected_ranges = []
             self.select_start = self.position_to_value(pos)
