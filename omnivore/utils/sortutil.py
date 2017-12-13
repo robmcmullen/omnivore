@@ -36,42 +36,132 @@ def before_after_wildcard_sort(items):
     # Build a set of pairs representing the graph.
     item_map = dict((item.id, item) for item in items if item.id)
     pairs = []
+    unconstrained_pairs = []
+    skip_before = set()
+    skip_after = set()
+    reverse_check = set()
     prev_item = None
+
+    # Move all doubly-constrained items to the end
+    items_front = []
+    items_back = []
+    for item in items:
+        wildcard_before = False
+        wildcard_after = False
+        if hasattr(item, 'before') and item.before and item.before.endswith("*"):
+            wildcard_before = True
+        if hasattr(item, 'after') and item.after and item.after.endswith("*"):
+            wildcard_after = True
+        if wildcard_before or wildcard_after:
+            items_back.append(item)
+        else:
+            items_front.append(item)
+    items = items_front
+    items.extend(items_back)
+    log.debug("item parse order: %s" % ", ".join([a.id for a in items]))
+
     for item in items:
         # Attempt to use 'before' and 'after' to make pairs.
-        new_pairs = []
+        before_pairs = []
+        after_pairs = []
+        wildcard_before = False
+        wildcard_after = False
         if hasattr(item, 'before') and item.before:
             if item.before.endswith("*"):
+                wildcard_before = True
                 for child in find_wildcard_matches(item_map, item.before):
 #                    print "%s should be before %s" % (item.id, child.id)
-                    new_pairs.append((item, child))
+                    before_pairs.append((item, child))
             else:
                 child = item_map.get(item.before)
                 if child:
-                    new_pairs.append((item, child))
+                    before_pairs.append((item, child))
         if hasattr(item, 'after') and item.after:
             if item.after.endswith("*"):
+                wildcard_after = True
                 for parent in find_wildcard_matches(item_map, item.after):
 #                    print "%s should be after %s" % (item.id, parent.id)
-                    new_pairs.append((parent, item))
+                    if item.id in skip_after:
+                        log.debug("Not including %s > %s because of earlier constraint" % (parent.id, item.id))
+                    elif parent.id != item.id:
+                        after_pairs.append((parent, item))
+                    else:
+                        log.debug("Can't be after itself! %s" % item.id)
+                skip_after.add(item.id)
             else:
                 parent = item_map.get(item.after)
                 if parent:
-                    new_pairs.append((parent, item))
+                    after_pairs.append((parent, item))
+
+        # simple cycle check: remove any single item named in the before/after
+        # list from the wildcard in the after/before
+        if wildcard_before and not wildcard_after and after_pairs:
+            # check for single 'after' item in the list of items in 'before'
+            dup_item = after_pairs[0][0]
+            for i, (list_item, child) in enumerate(before_pairs):
+                if dup_item.id == child.id and list_item.id == item.id:
+                    log.debug("%s > %s required; %s > %s generates %s > %s which must be removed from after" % (item.after, item.id, item.id, item.before, dup_item.id, list_item.id))
+                    log.debug("Removed %s from before list: (%s, %s)" % (dup_item.id, list_item.id, child.id))
+                    before_pairs[i:i+1] = []
+                    break
+        elif wildcard_after and not wildcard_before and before_pairs:
+            # check for 'before' item in the list of items in 'after'
+            dup_item = before_pairs[0][1]
+            for i, (parent, list_item) in enumerate(after_pairs):
+                if dup_item.id == parent.id and list_item.id == item.id:
+                    log.debug("%s > %s required; %s > %s generates %s > %s which must be removed from after" % (item.id, item.before, item.after, item.id, dup_item.id, list_item.id))
+                    after_pairs[i:i+1] = []
+                    break
 
         # If we have any pairs, use them. Otherwise, use the previous unmatched
         # item as a parent, if possible.
-        if new_pairs:
-            pairs.extend(new_pairs)
+        if before_pairs or after_pairs:
+            if before_pairs:
+                pairs.extend(before_pairs)
+            if after_pairs:
+                pairs.extend(after_pairs)
         else:
             if prev_item:
-                pairs.append((prev_item, item))
+                log.debug("Using prev_item: %s > %s" % (prev_item.id, item.id))
+                unconstrained_pairs.append((prev_item, item))
             prev_item = item
 
+    # check conditional pairs for those items without constraints. Remove any
+    # conditional constraint if there is already some constraint for one of the
+    # items referenced
+    referenced = set()
+    for item1, item2 in pairs:
+        referenced.add(item1.id)
+        referenced.add(item2.id)
+    log.debug("ids with constraints: %s" % sorted(referenced))
+    addl_pairs = []
+    for item1, item2 in unconstrained_pairs:
+        need_pair = False
+        if item1.id in referenced and item2.id in referenced:
+            for p1, p2 in pairs:
+                if (item1.id == p1.id or item1.id == p2.id or item2.id == p1.id or item2.id == p2.id) and (p1.id in referenced and p2.id in referenced):
+                        log.debug("skipping unconstrained (%s > %s) because a constraint already exists: (%s > %s)" % (item1.id, item2.id, p1.id, p2.id))
+                        break
+            else:
+                need_pair = True
+        else:
+            need_pair = True
+
+        if need_pair:
+            addl_pairs.append((item1, item2))
+            referenced.add(item1.id)
+            referenced.add(item2.id)
+    log.debug("adding addl pairs: %s" % ", ".join(["%s > %s" % (a.id, b.id) for a, b in addl_pairs]))
+    pairs.extend(addl_pairs)
+
+    # Check for reversed duplicates
+
+    log.debug("before sort:\n" + "\n".join(["%s > %s" % (a.id, b.id) for a, b in pairs]))
     # Now perform the actual sort.
     result, has_cycle = topological_sort(pairs)
     if has_cycle:
         log.error('Indeterminate result; cycle in before/after sort for items %r', items)
+    log.debug("after sort:\n" + "\n".join([a.id for a in result]))
     return result
 
 
