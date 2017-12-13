@@ -455,6 +455,49 @@ def parse_pretty_seconds(s):
     return seconds
 
 
+def check_for_matching_lines(text, sre):
+    """Return a list of lines that match the regular expression
+    """
+    cre = re.compile(sre)
+    num_matched = 0
+    num_unmatched = 0
+    for line in text.splitlines(False):
+        print("processing %s" % line)
+        match = cre.match(line)
+        if match is None:
+            if line.strip(): # ignore blank lines
+                print("unmatched: %s" % line)
+                num_unmatched += 1
+        else:
+            num_matched += 1
+    print("%d matched, %d unmatched" % (num_matched, num_unmatched))
+    return num_matched, num_unmatched
+
+
+def parse_for_matching_lines(text, sre, group_indexes):
+    """Return a list of values that match the regular expression. The groups
+    listed in group_indexes are pulled out of each line and used in the
+    returned array.
+    """
+    cre = re.compile(sre)
+    matches = []
+    num_unmatched = 0
+    for line in text.splitlines(False):
+        print("processing %s" % line)
+        match = cre.match(line)
+        if match is None:
+            if line.strip(): # ignore blank lines
+                print("unmatched: %s" % line)
+                num_unmatched += 1
+        else:
+            row = []
+            for i in group_indexes:
+                row.append(match.group(i))
+            matches.append(row)
+    print("%d matched, %d unmatched" % (len(matches), num_unmatched))
+    return matches, num_unmatched
+
+
 if __name__ == "__main__":
     import sys
 
@@ -466,10 +509,49 @@ if __name__ == "__main__":
         print parse_int_label_dict(text)
         print parse_int_label_dict(text, allow_equal=True)
 
-    print parse_pretty_seconds("5m")
-    print parse_pretty_seconds("5wk")
-    print parse_pretty_seconds("5ms")
-    step_values = ['10m', '20m', '30m', '40m', '45m', '60m', '90m', '120m', '3hr', '4hr', '5hr', '6hr', '8hr', '10hr', '12hr', '16h', '24hr', '36hr', '48hr', '3d', '4d', '5d', '6d', '7d', '2wk', '3wk', '4wk']
-    step_values_as_seconds = [parse_pretty_seconds(a) for a in step_values]
-    print step_values_as_seconds
-    print([pretty_seconds(a) for a in step_values_as_seconds])
+    if False:
+        print parse_pretty_seconds("5m")
+        print parse_pretty_seconds("5wk")
+        print parse_pretty_seconds("5ms")
+        step_values = ['10m', '20m', '30m', '40m', '45m', '60m', '90m', '120m', '3hr', '4hr', '5hr', '6hr', '8hr', '10hr', '12hr', '16h', '24hr', '36hr', '48hr', '3d', '4d', '5d', '6d', '7d', '2wk', '3wk', '4wk']
+        step_values_as_seconds = [parse_pretty_seconds(a) for a in step_values]
+        print step_values_as_seconds
+        print([pretty_seconds(a) for a in step_values_as_seconds])
+
+# ^\s*([-+]?([1-8]?\d(\.\d+)?|90(\.0+)?))\s*[,\s]?\s*([-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?))
+
+    re_latlon = r'^\s*(-(?:[1-8]?\d(?:\.\d+)?|90(?:\.0+)?))\s*[,\s]?\s*([-+]?(?:180(?:\.0+)?|(?:(?:1[0-7]\d)|(?:[1-9]?\d))(?:\.\d+)?))'
+    re_lonlat = r'^\s*([-+]?(?:180(?:\.0+)?|(?:(?:1[0-7]\d)|(?:[1-9]?\d))(?:\.\d+)?))\s*[,\s]?\s*(-(?:[1-8]?\d(?:\.\d+)?|90(?:\.0+)?))'
+
+    re_latlon = r'^\s*([-+]?(?:[1-8]?\d(?:\.\d+)?|90(?:\.0+)?))\s*[/,|\s]+\s*([-+]?(?:180(?:\.0+)?|(?:(?:1[0-7]\d)|(?:[1-9]?\d))(?:\.\d+)?))'
+    re_lonlat = r'^\s*([-+]?(?:180(?:\.0+)?|(?:(?:1[0-7]\d)|(?:[1-9]?\d))(?:\.\d+)?))\s*[/|,\s]+\s*([-+]?(?:[1-8]?\d(?:\.\d+)?|90(?:\.0+)?))'
+
+    text = """
+-62.242001\t, 12.775000, 1.000
+-28.990000  , 12.775000, 1.000
+8.990000, 30.645000, 1.000
+-4.669998, 31.774000, 102.000
+0.500999   36.661999, 1.000
+-43.978001\t28.400000, 1.000
+-137.164001 | 25.445999, 60.000
+33.2
+-139.804001, 17.983000, 1.000
+-144.109001, 22.204000, 1.000
+23.44903 -ZZZZ
+-50.821999, 20.202999, 97.000
+-34.911236, 29.293791, 1.000
+
+
+
+
+
+
+"""
+    if True:
+        matches, num_unmatched = parse_for_matching_lines(text, re_latlon)
+        print [(m.group(1), m.group(2)) for m in matches]
+        print num_unmatched
+
+        matches, num_unmatched = parse_for_matching_lines(text, re_lonlat)
+        print [(m.group(1), m.group(2)) for m in matches]
+        print num_unmatched
