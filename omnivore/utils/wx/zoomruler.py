@@ -978,6 +978,19 @@ class VirtualZoomRuler(wx.ScrolledWindow, ZoomRulerBase, VirtualLabeledRuler):
         size = wx.ScrolledWindow.GetSize(self)
         return size[0]
 
+    def get_viewport(self):
+        size = self.ruler.GetSize()
+        width = size[0]
+        left, _ = self.ruler.get_visible_range()
+        return width, left
+
+    def set_viewport(self, width, left):
+        size = self.ruler.GetSize()
+        size[0] = width
+        self.ruler.SetSize(size)
+        self.panel.SetVirtualSize(size)
+        self.panel.Scroll(left, 0)
+
     def OnSize(self, event):
         # Need to handle the initial case to get the ruler size up to the
         # window size
