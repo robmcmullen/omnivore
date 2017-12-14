@@ -7,6 +7,7 @@ from fs.errors import FSError
 
 from traits.api import HasTraits, Bool, Str, Unicode, Trait, TraitHandler, Property
 
+from .textutil import guessBinary
 from omnivore.templates import get_template
 
 import logging
@@ -110,8 +111,23 @@ class FileGuess(object):
     head_size = 1024*1024 - 1
 
     def __init__(self, uri):
+        self._likely_binary = None
         log.debug("Attempting to load %s" % uri)
         self.reload(uri)
+
+    @property
+    def likely_binary(self):
+        if self._likely_binary is None:
+            t = self.get_utf8()
+            self._likely_binary = guessBinary(t)
+        return self._likely_binary
+
+    @property
+    def likely_text(self):
+        if self._likely_binary is None:
+            t = self.get_utf8()
+            self._likely_binary = guessBinary(t)
+        return not self._likely_binary
 
     def get_fs(self, uri=None):
         if uri is None:
