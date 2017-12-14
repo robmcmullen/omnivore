@@ -20,7 +20,7 @@ MonthFormat = 7
 
 time_steps = [minute * 60 for minute in [1, 2, 5, 10, 15, 20, 30]]
 time_steps.extend([hour * 3600 for hour in [1, 2, 4, 6, 12]])
-time_steps.extend([day * 86400 for day in [1, 2, 3, 7, 14, 28]])
+time_steps.extend([day * 86400 for day in [1, 2, 3, 7, 14, 28, 182.62, 365.24]])
 
 def time_step(self, visible_pixels, total_pixels, low_value, high_value):
     time_range = high_value - low_value
