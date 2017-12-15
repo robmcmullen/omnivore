@@ -60,11 +60,16 @@ class LabeledRuler(RulerCtrl):
         self.selected_mark_length = 18  # pixels
         self.use_leftmost = False
         self.lowest_marker_value = None
+        self.highest_marker_value = None
         self.caret_value = None  # None means don't display caret
 
     @property
     def has_selection(self):
         return len(self.selected_ranges) > 0
+
+    @property
+    def num_marks(self):
+        return len(self._marks)
 
     #####
     ##### Pixel position conversion routines
@@ -111,6 +116,7 @@ class LabeledRuler(RulerCtrl):
             self._min = minVal
             self._max = maxVal
             self.Invalidate()
+        log.debug("SetRange: min=%f max=%f" % (self._min, self._max))
 
     def shift_range(self, delta):
         # Shift both the minimum and maximum displayed values by the same
@@ -131,12 +137,15 @@ class LabeledRuler(RulerCtrl):
     def clear_marks(self):
         self._marks = []
         self.lowest_marker_value = None
+        self.highest_marker_value = None
 
     def set_mark(self, start_value, end_value, data):
         s = float(start_value)
         self._marks.append([s, float(end_value), data])
         if self.lowest_marker_value is None or s < self.lowest_marker_value:
             self.lowest_marker_value = s
+        if self.highest_marker_value is None or s > self.highest_marker_value:
+            self.highest_marker_value = s
 
     def draw_mark(self, dc, pos, selected=False):
         if selected:
@@ -877,7 +886,7 @@ class ZoomRulerBase(object):
 
         self.ruler.clear_marks()
         for start, end, item in timeline_info["marks"]:
-            log.debug("adding %s at %s" % (item, start))
+            log.debug("adding %s at %s - %s" % (item, start, end))
             self.add_mark(start, end, item)
         start = timeline_info["earliest_time"]
         end = timeline_info["latest_time"]
