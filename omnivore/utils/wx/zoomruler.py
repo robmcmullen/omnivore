@@ -611,11 +611,14 @@ class ZoomRulerBase(object):
             self.playback_pause_callback()
 
     def on_timer(self, evt):
-        log.debug("on_timer")
+        log.debug("on_timer: caret=%s highest=%s" % (self.ruler.caret_value, self.ruler.highest_marker_value))
         self.caret_value += self.step_value
         self.ruler.ensure_caret_visible()
         self.playback_callback(self.ruler.caret_value)
         self.Refresh()
+        if self.ruler.caret_value >= self.ruler.highest_marker_value:
+            self.pause_playback()
+            self.ruler.caret_value = None
 
     def playback_callback(self, current_value):
         pass
