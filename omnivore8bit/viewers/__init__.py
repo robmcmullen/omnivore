@@ -11,6 +11,7 @@ from ..byte_edit.linked_base import LinkedBase
 from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 
 from omnivore8bit.arch.machine import Machine
+from omnivore8bit.utils import searchutil
 
 import logging
 log = logging.getLogger(__name__)
@@ -42,6 +43,11 @@ class SegmentViewer(HasTraits):
     valid_mouse_modes = []  # toolbar description
 
     copy_special = []  # additional copy functions available when viewer is present
+
+    searchers = [  # BaseSearcher classes that are applicable to this viewer
+        searchutil.HexSearcher,
+        searchutil.CommentSearcher,
+    ]
 
     ##### Traits
 

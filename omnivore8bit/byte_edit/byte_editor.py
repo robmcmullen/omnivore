@@ -18,7 +18,6 @@ from omnivore.framework.actions import *
 from omnivore.utils.file_guess import FileMetadata
 from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
-from omnivore8bit.utils.searchutil import known_searchers
 from omnivore.utils.processutil import run_detach
 
 from actions import *
@@ -87,8 +86,6 @@ class ByteEditor(FrameworkEditor):
     key_pressed = Event(KeyPressedEvent)
 
     # Class attributes (not traits)
-
-    searchers = known_searchers
 
     rect_select = False
 
@@ -377,8 +374,23 @@ class ByteEditor(FrameworkEditor):
             self.disassembly.update_trace_in_segment()
             self.document.change_count += 1
 
+    ##### Search
+
     def invalidate_search(self):
         self.task.change_minibuffer_editor(self)
+
+    @property
+    def searchers(self):
+        search_order = []
+        found = set()
+        for v in self.viewers:
+            for s in v.searchers:
+                # searchers may depend on the viewer (like the disassembly)
+                # or they may be generic to the segment
+                if s not in found:
+                    search_order.append(s)
+                    found.add(s)
+        return search_order
 
     def compare_to_baseline(self):
         if self.diff_highlight and self.document.has_baseline:

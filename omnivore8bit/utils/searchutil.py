@@ -91,7 +91,7 @@ class CommentSearcher(BaseSearcher):
 
 known_searchers = [
     HexSearcher,
-    CharSearcher,
-    DisassemblySearcher,
-    CommentSearcher,
+#    CharSearcher,
+#    DisassemblySearcher,
+#    CommentSearcher,
     ]
