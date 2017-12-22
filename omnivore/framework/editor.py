@@ -944,3 +944,11 @@ class FrameworkEditor(Editor):
                 pass
 
         return dirpath
+
+    @property
+    def status_message(self):
+        return ""
+
+    @status_message.setter
+    def status_message(self, msg):
+        self.task.status_bar.message = msg
