@@ -12,6 +12,7 @@ from udis.udis_fast import TraceInfo, flag_origin
 from omnivore.framework.enthought_api import EditorAction
 from omnivore8bit.ui.bytegrid import ByteGridTable, ByteGrid, HexTextCtrl, HexCellEditor
 from omnivore8bit.arch.disasm import iter_disasm_styles
+from omnivore8bit.utils import searchutil
 
 from ..byte_edit.actions import GotoIndexAction
 from ..byte_edit.commands import MiniAssemblerCommand, SetCommentCommand
@@ -450,6 +451,36 @@ class CopyCommentsAction(EditorAction):
         self.enabled = self.active_editor.focused_viewer.has_cpu
 
 
+# Disassembly searcher uses the __call__ method to return the object because it
+# needs extra info: the machine type & the disassembly list. Normal searchers
+# just use the segment's raw data and returns itself in the constructor.
+class DisassemblySearcher(searchutil.BaseSearcher):
+    def __init__(self, viewer, panel):
+        self.search_text = None
+        self.matches = []
+        self.panel = panel
+        self.pretty_name = viewer.machine.disassembler.name
+
+    def __call__(self, editor, search_text):
+        self.search_text = self.get_search_text(search_text)
+        if len(self.search_text) > 0:
+            self.matches = self.get_matches(editor)
+            self.set_style(editor)
+        else:
+            self.matches = []
+        return self
+
+    def __str__(self):
+        return "disasm matches: %s" % str(self.matches)
+
+    def get_search_text(self, text):
+        return text
+
+    def get_matches(self, editor):
+        matches = self.panel.search(self.search_text, editor.last_search_settings.get('match_case', False))
+        return matches
+
+
 class DisassemblyViewer(SegmentViewer):
     name = "disassembly"
 
@@ -468,6 +499,10 @@ class DisassemblyViewer(SegmentViewer):
     @property
     def window_title(self):
         return self.machine.disassembler.name
+
+    @property
+    def searchers(self):
+        return [DisassemblySearcher(self, self.control)]
 
     @on_trait_change('linked_base.editor.document.recalc_event')
     def process_segment_change(self, evt):

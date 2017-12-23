@@ -49,20 +49,6 @@ class CharSearcher(BaseSearcher):
         return "char matches: %s" % str(self.matches)
 
 
-class DisassemblySearcher(BaseSearcher):
-    pretty_name = "disasm"
-
-    def __str__(self):
-        return "disasm matches: %s" % str(self.matches)
-
-    def get_search_text(self, text):
-        return text
-
-    def get_matches(self, editor):
-        matches = editor.disassembly.search(self.search_text, editor.last_search_settings.get('match_case', False))
-        return matches
-
-
 class CommentSearcher(BaseSearcher):
     pretty_name = "comments"
 
