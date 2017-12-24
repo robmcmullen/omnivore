@@ -81,6 +81,12 @@ class SegmentViewer(HasTraits):
         v.pane_info = aui.AuiPaneInfo().Name(cls.get_aui_pane_name())
         return v
 
+    ##### Cleanup
+
+    def prepare_for_destroy(self):
+        self.control.segment_viewer = None
+        self.control = None
+
     ##### Initialization and serialization
 
     def from_metadata_dict(self, e):

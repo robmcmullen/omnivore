@@ -688,6 +688,7 @@ class ByteEditor(FrameworkEditor):
         viewer = viewer_cls.create(self.control, center_base, center_base.machine)
         viewer.pane_info.CenterPane()
 
+        center_viewer.prepare_for_destroy()
         self.mgr.ClosePane(center_viewer.pane_info)
 
         # Need to replace the first viewer here, because explicitly closing the
@@ -697,6 +698,7 @@ class ByteEditor(FrameworkEditor):
         self.mgr.AddPane(viewer.control, viewer.pane_info)
         center_base.force_data_model_update()
         self.mgr.Update()
+        self.force_focus(viewer)
 
     ###########################################################################
     # Trait handlers.
@@ -745,7 +747,7 @@ class ByteEditor(FrameworkEditor):
             viewer_type = self.task.find_viewer_by_name(name)
             viewer = viewer_type.create(panel, center_base, center_base.machine)
             if first:
-                viewer.pane_info.CenterPane()
+                viewer.pane_info.CenterPane().DestroyOnClose()
                 self.focused_viewer = viewer  # Initial focus is center pane
                 first = False
             else:
