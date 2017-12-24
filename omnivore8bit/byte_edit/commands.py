@@ -613,6 +613,7 @@ class FindAllCommand(Command):
                 #print "Find:", self.all_matches
                 if len(self.all_matches) == 0:
                     undo.flags.message = "Not found"
+                    editor.document.change_count += 1  # FIXME: find a better way to do this. This is needed to force grid controls to change in order to remove highlights
                 else:
                 # Need to use a tuple in order for bisect to search the list
                 # of tuples
