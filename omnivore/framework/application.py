@@ -172,8 +172,16 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
             log.debug("processing %s" % arg)
             task_id = self.find_best_task_id(options.task_id)
             self.load_file(arg, None, task_id=task_id, task_arguments=task_arguments)
-            loaded = True
             i += 1
+
+        # if any files were successfully loaded, some task will have an active
+        # editor
+        for w in self.windows:
+            for t in w.tasks:
+                if t.active_editor is not None:
+                    loaded = True
+                    break
+
         if not loaded:
             factory = self.get_task_factory(self.startup_task)
             url = factory.factory.about_application
