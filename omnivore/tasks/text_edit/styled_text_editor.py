@@ -56,7 +56,7 @@ class StyledTextEditor(FrameworkEditor):
 
     def rebuild_document_properties(self):
         text = self.document.to_bytes()
-        self.control.SetTextUTF8(text)
+        self.control.SetText(text)
         self.control.EmptyUndoBuffer()
 
     def undo(self):
