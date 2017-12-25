@@ -306,6 +306,11 @@ class MapViewer(SegmentViewer):
             return True
         return False
 
+    ##### toolbar
+
+    def update_toolbar(self):
+        self.update_mouse_mode()
+
     ##### Drawing pattern
 
     def set_draw_pattern(self, value):

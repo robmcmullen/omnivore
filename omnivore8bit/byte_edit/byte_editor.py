@@ -824,6 +824,7 @@ class ByteEditor(FrameworkEditor):
     def force_focus(self, viewer):
         self.mgr.ActivatePane(viewer.control)
         self.update_pane_names()
+        viewer.update_toolbar()
 
     def on_pane_active(self, evt):
         # NOTE: evt.pane in this case is not an AuiPaneInfo object, it's the

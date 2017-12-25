@@ -183,6 +183,11 @@ class SegmentViewer(HasTraits):
         """
         return []
 
+    ##### toolbar
+
+    def update_toolbar(self):
+        pass
+
     ##### view settings
 
     @property
