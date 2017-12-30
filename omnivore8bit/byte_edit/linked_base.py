@@ -16,7 +16,6 @@ from pyface.key_pressed_event import KeyPressedEvent
 # Local imports.
 from omnivore.framework.editor import FrameworkEditor
 from omnivore.utils.command import DisplayFlags
-from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment
 from omnivore8bit.arch.disasm import iter_disasm_styles
 
@@ -51,8 +50,6 @@ class LinkedBase(HasTraits):
     uuid = Str
 
     editor = Instance(FrameworkEditor)
-
-    machine = Instance(Machine)
 
     segment = Instance(DefaultSegment)
 
@@ -99,9 +96,6 @@ class LinkedBase(HasTraits):
 
     #### Default traits
 
-    def _machine_default(self):
-        return Atari800
-
     def _segment_default(self):
         rawdata = SegmentData([])
         return DefaultSegment(rawdata)
@@ -141,29 +135,16 @@ class LinkedBase(HasTraits):
 
     def from_metadata_dict(self, e):
         log.debug("metadata: %s" % str(e))
-        if 'machine mime' in e:
-            mime = e['machine mime']
-            if not mime.startswith(self.machine.mime_prefix):
-                m = self.machine.find_machine_by_mime(mime)
-                if m is not None:
-                    self.machine = m
-        if 'font' in e or 'font renderer' in e or 'font order' in e:
-            if 'font renderer' in e or 'font order' in e:
-                self.machine.set_font(e['font'], e.get('font renderer', None), e.get('font order', None))
-            else:
-                self.machine.set_font(e['font'][0], e['font'][1])
         if 'diff highlight' in e:
             self.diff_highlight = bool(e['diff highlight'])
         if 'segment view params' in e:
             self.segment_view_params = e['segment view params']
-        self.machine.restore_extra_from_dict(e)
 
     def to_metadata_dict(self, mdict, document):
         if document == self.document:
             # If we're saving the document currently displayed, save the
             # display parameters too.
             mdict["segment view params"] = dict(self.segment_view_params)  # shallow copy, but only need to get rid of Traits dict wrapper
-        self.machine.serialize_extra_to_dict(mdict)
 
     def rebuild_ui(self):
         self.segment = self.document.segments[self.segment_number]
@@ -183,10 +164,6 @@ class LinkedBase(HasTraits):
                 self.view_segment_number(number)
             self.index_clicked(index, 0, None)
         log.debug(self.cursor_history)
-
-    def set_machine(self, machine):
-        self.machine = machine
-        self.reconfigure_panes()
 
     def save_segment_view_params(self, segment):
         d = {
@@ -499,9 +476,7 @@ class LinkedBase(HasTraits):
 
     #### Disassembler
 
-    def get_current_disassembly(self, machine=None):
-        if machine is None:
-            machine = self.machine
+    def get_current_disassembly(self, machine):
         d = self.disassembler_cache.get(machine.disassembler.name, None)
         if d is None:
             log.debug("creating disassembler for %s" % machine.disassembler.name)
@@ -520,7 +495,7 @@ class LinkedBase(HasTraits):
         except KeyError:
             pass
 
-    def disassemble_segment(self, machine=None):
+    def disassemble_segment(self, machine):
         log.debug("disassemble_segment")
         return self.get_current_disassembly(machine)
 
@@ -528,7 +503,6 @@ class LinkedBase(HasTraits):
         #start = index_range[0] if index_range is not None else 0
         log.debug("restart_disassembly")
         self.disassembler_cache = {}
-        d = self.disassemble_segment()
         self.disassembly_refresh_event = True
 
     #### Disassembly tracing

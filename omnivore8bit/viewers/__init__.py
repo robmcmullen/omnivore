@@ -10,7 +10,7 @@ from omnivore.framework.plugin import FrameworkPlugin
 from ..byte_edit.linked_base import LinkedBase
 from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 
-from omnivore8bit.arch.machine import Machine
+from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.utils import searchutil
 
 import logging
@@ -68,6 +68,9 @@ class SegmentViewer(HasTraits):
     def _uuid_default(self):
         return str(uuid.uuid4())
 
+    def _machine_default(self):
+        return Atari800
+
     ##### Class methods
 
     @classmethod
@@ -81,9 +84,9 @@ class SegmentViewer(HasTraits):
     @classmethod
     def create(cls, parent, linked_base, machine=None, name=""):
         control = cls.create_control(parent, linked_base)
-        if machine is None:
-            machine = linked_base.machine.clone_machine()
-        v = cls(linked_base=linked_base, control=control, machine=machine)
+        v = cls(linked_base=linked_base, control=control)
+        if machine is not None:
+            v.machine = machine
         control.segment_viewer = v
         if "--" in name:
             _, u = name.split("--", 1)
@@ -108,9 +111,25 @@ class SegmentViewer(HasTraits):
 
     def from_metadata_dict(self, e):
         log.debug("metadata: %s" % str(e))
+        if 'machine mime' in e:
+            mime = e['machine mime']
+            if not mime.startswith(self.machine.mime_prefix):
+                m = self.machine.find_machine_by_mime(mime)
+                if m is not None:
+                    self.machine = m
+        if 'font' in e or 'font renderer' in e or 'font order' in e:
+            if 'font renderer' in e or 'font order' in e:
+                self.machine.set_font(e['font'], e.get('font renderer', None), e.get('font order', None))
+            else:
+                self.machine.set_font(e['font'][0], e['font'][1])
+        self.machine.restore_extra_from_dict(e)
 
     def to_metadata_dict(self, mdict, document):
-        pass
+        self.machine.serialize_extra_to_dict(mdict)
+
+    def set_machine(self, machine):
+        self.machine = machine
+        self.reconfigure_panes()
 
     ##### Range operations
 

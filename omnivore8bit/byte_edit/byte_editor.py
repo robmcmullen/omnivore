@@ -159,7 +159,7 @@ class ByteEditor(FrameworkEditor):
         else:
             layout = self.default_viewers
         self.create_viewers(layout)
-        self.task.machine_menu_changed = self.focused_viewer.linked_base.machine
+        self.task.machine_menu_changed = self.focused_viewer.machine
         self.focused_viewer_changed_event = self.focused_viewer
 
         self.focused_viewer.linked_base.from_metadata_dict(e)
@@ -766,7 +766,7 @@ class ByteEditor(FrameworkEditor):
 
         for name in viewers:
             viewer_type = self.task.find_viewer_by_name(name)
-            viewer = viewer_type.create(self.control, center_base, center_base.machine, name)
+            viewer = viewer_type.create(self.control, center_base, None, name)
             if first:
                 viewer.pane_info.CenterPane().DestroyOnClose()
                 self.focused_viewer = viewer  # Initial focus is center pane
