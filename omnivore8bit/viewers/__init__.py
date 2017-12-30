@@ -51,6 +51,8 @@ class SegmentViewer(HasTraits):
 
     ##### Traits
 
+    uuid = Str
+
     linked_base = Instance(LinkedBase)
 
     machine = Instance(Machine)
@@ -61,15 +63,16 @@ class SegmentViewer(HasTraits):
 
     range_processor = Property(Any, depends_on='control')
 
+    #### Default traits
+
+    def _uuid_default(self):
+        return str(uuid.uuid4())
+
     ##### Class methods
 
     @classmethod
     def create_control(cls, parent, linked_base):
         raise NotImplementedError("Implement in subclass!")
-
-    @classmethod
-    def get_aui_pane_name(cls):
-        return "%s--%s" % (cls.name, str(uuid.uuid4()))
 
     @classmethod
     def check_name(cls, name):
@@ -82,8 +85,11 @@ class SegmentViewer(HasTraits):
             machine = linked_base.machine.clone_machine()
         v = cls(linked_base=linked_base, control=control, machine=machine)
         control.segment_viewer = v
-        if not name or "--" not in name:
-            name = cls.get_aui_pane_name()
+        if "--" in name:
+            _, u = name.split("--", 1)
+            v.uuid = u
+        else:
+            name = v.get_aui_pane_name(name)
         v.pane_info = aui.AuiPaneInfo().Name(name)
         return v
 
@@ -94,6 +100,11 @@ class SegmentViewer(HasTraits):
         self.control = None
 
     ##### Initialization and serialization
+
+    def get_aui_pane_name(self, name=""):
+        if not name:
+            name = self.name
+        return "%s--%s" % (name, self.uuid)
 
     def from_metadata_dict(self, e):
         log.debug("metadata: %s" % str(e))

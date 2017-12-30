@@ -1,6 +1,7 @@
 # Standard library imports.
 import sys
 import os
+import uuid
 
 # Major package imports.
 import wx
@@ -46,6 +47,8 @@ class LinkedBase(HasTraits):
     # 
 
     obj = Instance(File)
+
+    uuid = Str
 
     editor = Instance(FrameworkEditor)
 
@@ -105,6 +108,9 @@ class LinkedBase(HasTraits):
 
     def _trace_default(self):
         return TraceInfo()
+
+    def _uuid_default(self):
+        return str(uuid.uuid4())
 
     #### Properties
 
