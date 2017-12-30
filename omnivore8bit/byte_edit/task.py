@@ -297,10 +297,7 @@ class ByteEditTask(FrameworkTask):
     def get_editor(self, task_arguments="", **kwargs):
         """ Opens a new empty window
         """
-        if task_arguments:
-            editor = ByteEditor(task_arguments=task_arguments)
-        else:
-            editor = ByteEditor()
+        editor = ByteEditor(task_arguments=task_arguments)
         return editor
 
     @on_trait_change('window.application.preferences_changed_event')
@@ -675,7 +672,7 @@ class ByteEditTask(FrameworkTask):
 
     def find_viewer_by_name(self, name):
         for v in self.known_viewers:
-            if v.name == name:
+            if v.check_name(name):
                 return v
         raise ValueError
 

@@ -72,13 +72,19 @@ class SegmentViewer(HasTraits):
         return "%s--%s" % (cls.name, str(uuid.uuid4()))
 
     @classmethod
-    def create(cls, parent, linked_base, machine=None):
+    def check_name(cls, name):
+        return name == cls.name or ("--" in name and name.split("--")[0] == cls.name)
+
+    @classmethod
+    def create(cls, parent, linked_base, machine=None, name=""):
         control = cls.create_control(parent, linked_base)
         if machine is None:
             machine = linked_base.machine.clone_machine()
         v = cls(linked_base=linked_base, control=control, machine=machine)
         control.segment_viewer = v
-        v.pane_info = aui.AuiPaneInfo().Name(cls.get_aui_pane_name())
+        if not name or "--" not in name:
+            name = cls.get_aui_pane_name()
+        v.pane_info = aui.AuiPaneInfo().Name(name)
         return v
 
     ##### Cleanup

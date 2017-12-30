@@ -39,7 +39,7 @@ class ByteEditor(FrameworkEditor):
 
     #### traits
 
-    task_arguments = Str("hex,bitmap,char,disassembly")
+    task_arguments = Str
 
     grid_range_selected = Bool
 
@@ -91,6 +91,8 @@ class ByteEditor(FrameworkEditor):
 
     pane_creation_count = 0
 
+    default_viewers = "hex,bitmap,char,disassembly"
+
     #### trait default values
 
     def _style_default(self):
@@ -136,8 +138,6 @@ class ByteEditor(FrameworkEditor):
         Machine.one_time_init(self)
         self.control = self._create_control(parent)
         self.task.emulator_changed = self.document
-        self.task.machine_menu_changed = self.focused_viewer.linked_base.machine
-        self.focused_viewer_changed_event = self.focused_viewer
 
     def from_metadata_dict(self, e):
         log.debug("metadata: %s" % str(e))
@@ -150,12 +150,25 @@ class ByteEditor(FrameworkEditor):
             self.initial_font_segment = e['initial font segment']
         if 'diff highlight' in e:
             self.diff_highlight = bool(e['diff highlight'])
+
+        log.debug("task arguments: '%s'" % self.task_arguments)
+        if self.task_arguments:
+            layout = self.task_arguments
+        elif 'viewers' in e:
+            layout = e['viewers']
+        else:
+            layout = self.default_viewers
+        self.create_viewers(layout)
+        self.task.machine_menu_changed = self.focused_viewer.linked_base.machine
+        self.focused_viewer_changed_event = self.focused_viewer
+
         self.focused_viewer.linked_base.from_metadata_dict(e)
         for v in self.viewers:
             v.from_metadata_dict(e)
 
     def to_metadata_dict(self, mdict, document):
         mdict["diff highlight"] = self.diff_highlight
+        mdict["viewers"] = self.mgr.SavePerspective()
         self.focused_viewer.linked_base.to_metadata_dict(mdict, document)
         # if document == self.document:
         #     # If we're saving the document currently displayed, save the
@@ -721,31 +734,39 @@ class ByteEditor(FrameworkEditor):
         panel.Bind(aui.framemanager.EVT_AUI_PANE_ACTIVATED, self.on_pane_active)
         panel.Bind(aui.framemanager.EVT_AUI_PANE_CLOSE, self.on_pane_close)
 
-
         # tell AuiManager to manage this frame
         self.mgr.SetManagedWindow(panel)
+
+        self.sidebar = self.window.get_dock_pane('byte_edit.sidebar')
+
+        return panel
+
+    def create_viewers(self, layout):
+        # Create a set of viewers from a list
+        log.debug("layout: %s" % layout)
 
         center_base = LinkedBase(editor=self)
         self.linked_bases.append(center_base)
 
-        hex_viewer = self.task.find_viewer_by_name("hex")
-        char_viewer = self.task.find_viewer_by_name("char")
-        bitmap_viewer = self.task.find_viewer_by_name("bitmap")
-        disassembly_viewer = self.task.find_viewer_by_name("disassembly")
-        comments_viewer = self.task.find_viewer_by_name("comments")
-        undo_viewer = self.task.find_viewer_by_name("undo")
-        segment_viewer = self.task.find_viewer_by_name("segments")
-        map_viewer = self.task.find_viewer_by_name("map")
-        tile_viewer = self.task.find_viewer_by_name("tile")
-
-        log.debug("task arguments: %s" % self.task_arguments)
-        viewer_names = [a.strip() for a in self.task_arguments.split(",")]
-
         first = True
         layer = 0
-        for name in viewer_names:
+        viewers = []
+        perspective = ""
+        if layout.startswith("layout2"):
+            # it's a perspective string, so parse names out of it
+            perspective = layout
+            sections = layout.split("|")
+            for section in sections[1:]:
+                parts = section.split(";")[0].split("=")
+                log.debug(str(parts))
+                if parts[0] == "name":
+                    viewers.append(parts[1])
+        if not viewers:
+            viewers = [a.strip() for a in self.default_viewers.split(",")]
+
+        for name in viewers:
             viewer_type = self.task.find_viewer_by_name(name)
-            viewer = viewer_type.create(panel, center_base, center_base.machine)
+            viewer = viewer_type.create(self.control, center_base, center_base.machine, name)
             if first:
                 viewer.pane_info.CenterPane().DestroyOnClose()
                 self.focused_viewer = viewer  # Initial focus is center pane
@@ -756,68 +777,10 @@ class ByteEditor(FrameworkEditor):
             self.viewers.append(viewer)
             self.mgr.AddPane(viewer.control, viewer.pane_info)
 
-        # import stuff for extra renderers
-        from ..arch import antic_renderers
-        from ..arch.machine import disasm
-        from ..arch import fonts
-
-        layer = 0
-
-        # viewer = char_viewer.create(panel, center_base)
-        # viewer.pane_info.Right().Layer(layer)
-        # self.viewers.append(viewer)
-        # self.mgr.AddPane(viewer.control, viewer.pane_info)
-
-        # machine2 = center_base.machine.clone_machine()
-        # machine2.set_font(font_renderer=antic_renderers.Mode5())
-        # viewer = char_viewer.create(panel, center_base, machine2)
-        # viewer.pane_info.Right().Layer(layer)
-        # self.viewers.append(viewer)
-        # self.mgr.AddPane(viewer.control, viewer.pane_info)
-
-        # machine2 = center_base.machine.clone_machine()
-        # machine2.set_font(font=fonts.A2MouseTextFont, font_renderer=antic_renderers.Apple2TextMode())
-        # viewer = char_viewer.create(panel, center_base, machine2)
-        # viewer.pane_info.Right().Layer(layer)
-        # self.viewers.append(viewer)
-        # self.mgr.AddPane(viewer.control, viewer.pane_info)
-
-        # layer += 1
-        # viewer = bitmap_viewer.create(panel, center_base)
-        # viewer.pane_info.Right().Layer(layer)
-        # self.viewers.append(viewer)
-        # self.mgr.AddPane(viewer.control, viewer.pane_info)
-
-        # machine2 = center_base.machine.clone_machine()
-        # machine2.set_bitmap_renderer(antic_renderers.ModeE())
-        # viewer = bitmap_viewer.create(panel, center_base, machine2)
-        # viewer.pane_info.Right().Layer(layer)
-        # self.viewers.append(viewer)
-        # self.mgr.AddPane(viewer.control, viewer.pane_info)
-
-        # layer += 1
-        # viewer = disassembly_viewer.create(panel, center_base)
-        # viewer.pane_info.Right().Layer(layer)
-        # self.viewers.append(viewer)
-        # self.mgr.AddPane(viewer.control, viewer.pane_info)
-
-        # layer += 1
-        # viewer = tile_viewer.create(panel, center_base, center_base.machine)
-        # viewer.pane_info.Right().Layer(layer)
-        # self.viewers.append(viewer)
-        # self.mgr.AddPane(viewer.control, viewer.pane_info)
-
-        # layer += 1
-        # viewer = segment_viewer.create(panel, center_base)
-        # viewer.pane_info.Right().Layer(layer)
-        # self.viewers.append(viewer)
-        # self.mgr.AddPane(viewer.control, viewer.pane_info)
-
-        self.sidebar = self.window.get_dock_pane('byte_edit.sidebar')
+        if perspective:
+            self.mgr.LoadPerspective(perspective)
         self.update_pane_names()
         self.mgr.Update()
-
-        return panel
 
     #### wx event handlers
 
