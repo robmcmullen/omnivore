@@ -774,7 +774,13 @@ class ByteEditor(FrameworkEditor):
             self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         if perspective:
+            # The following creates a new pane_info based on the layout...
             self.mgr.LoadPerspective(perspective)
+
+            # ...so we have to move this newly created pane_info back onto the
+            # viewer
+            for v in self.viewers:
+                v.pane_info = self.mgr.GetPane(v.ooid)
         self.update_pane_names()
         self.mgr.Update()
 
