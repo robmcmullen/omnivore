@@ -69,7 +69,7 @@ class SegmentViewer(HasTraits):
         return str(uuid.uuid4())
 
     def _machine_default(self):
-        return Atari800
+        return Atari800.clone_machine()
 
     ##### Class methods
 

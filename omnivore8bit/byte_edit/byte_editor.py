@@ -681,13 +681,9 @@ class ByteEditor(FrameworkEditor):
         self.sidebar.control.clear_popup()
 
     def add_viewer(self, viewer_cls, linked=True):
-        if linked:
-            machine = None
-        else:
-            machine = center_base.machine.clone_machine()
         center_viewer = self.viewers[0]
         center_base = center_viewer.linked_base
-        viewer = viewer_cls.create(self.control, center_base, machine)
+        viewer = viewer_cls.create(self.control, center_base)
         viewer.pane_info.Right().Layer(10)
         self.viewers.append(viewer)
         self.mgr.AddPane(viewer.control, viewer.pane_info)
