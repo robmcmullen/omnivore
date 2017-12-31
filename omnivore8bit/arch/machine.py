@@ -1,6 +1,5 @@
 import os
 import sys
-import uuid
 
 # Major package imports.
 import numpy as np
@@ -27,8 +26,6 @@ class Machine(HasTraits):
     # Traits
 
     name = Str
-
-    uuid = Str
 
     mime_prefix = Str("application/octet-stream")
 
@@ -168,9 +165,6 @@ class Machine(HasTraits):
                 return m
 
     # Trait initializers
-
-    def _uuid_default(self):
-        return str(uuid.uuid4())
 
     def _name_default(self):
         return "Generic 6502"

@@ -51,7 +51,7 @@ class SegmentViewer(HasTraits):
 
     ##### Traits
 
-    uuid = Str
+    ooid = Str
 
     linked_base = Instance(LinkedBase)
 
@@ -65,8 +65,8 @@ class SegmentViewer(HasTraits):
 
     #### Default traits
 
-    def _uuid_default(self):
-        return str(uuid.uuid4())
+    def _ooid_default(self):
+        return "%s--%s" % (self.name, str(uuid.uuid4()))
 
     def _machine_default(self):
         return Atari800.clone_machine()
@@ -89,11 +89,8 @@ class SegmentViewer(HasTraits):
             v.machine = machine
         control.segment_viewer = v
         if "--" in name:
-            _, u = name.split("--", 1)
-            v.uuid = u
-        else:
-            name = v.get_aui_pane_name(name)
-        v.pane_info = aui.AuiPaneInfo().Name(name)
+            v.ooid = name
+        v.pane_info = aui.AuiPaneInfo().Name(v.ooid)
         return v
 
     ##### Cleanup
@@ -104,28 +101,28 @@ class SegmentViewer(HasTraits):
 
     ##### Initialization and serialization
 
-    def get_aui_pane_name(self, name=""):
-        if not name:
-            name = self.name
-        return "%s--%s" % (name, self.uuid)
-
+    # Metadata is an additional dictionary keyed on the ooid
     def from_metadata_dict(self, e):
-        log.debug("metadata: %s" % str(e))
-        if 'machine mime' in e:
-            mime = e['machine mime']
-            if not mime.startswith(self.machine.mime_prefix):
-                m = self.machine.find_machine_by_mime(mime)
-                if m is not None:
-                    self.machine = m
-        if 'font' in e or 'font renderer' in e or 'font order' in e:
-            if 'font renderer' in e or 'font order' in e:
-                self.machine.set_font(e['font'], e.get('font renderer', None), e.get('font order', None))
-            else:
-                self.machine.set_font(e['font'][0], e['font'][1])
-        self.machine.restore_extra_from_dict(e)
+        if self.ooid in e:
+            e = e[self.ooid]
+            log.debug("metadata: %s" % str(e))
+            if 'machine mime' in e:
+                mime = e['machine mime']
+                if not mime.startswith(self.machine.mime_prefix):
+                    m = self.machine.find_machine_by_mime(mime)
+                    if m is not None:
+                        self.machine = m
+            if 'font' in e or 'font renderer' in e or 'font order' in e:
+                if 'font renderer' in e or 'font order' in e:
+                    self.machine.set_font(e['font'], e.get('font renderer', None), e.get('font order', None))
+                else:
+                    self.machine.set_font(e['font'][0], e['font'][1])
+            self.machine.restore_extra_from_dict(e)
 
     def to_metadata_dict(self, mdict, document):
-        self.machine.serialize_extra_to_dict(mdict)
+        e = {}
+        self.machine.serialize_extra_to_dict(e)
+        mdict[self.ooid] = e
 
     def set_machine(self, machine):
         self.machine = machine

@@ -158,17 +158,15 @@ class ByteEditor(FrameworkEditor):
             layout = e['viewers']
         else:
             layout = self.default_viewers
-        self.create_viewers(layout)
+        self.create_viewers(layout, e)
         self.task.machine_menu_changed = self.focused_viewer.machine
         self.focused_viewer_changed_event = self.focused_viewer
-
-        self.focused_viewer.linked_base.from_metadata_dict(e)
-        for v in self.viewers:
-            v.from_metadata_dict(e)
 
     def to_metadata_dict(self, mdict, document):
         mdict["diff highlight"] = self.diff_highlight
         mdict["viewers"] = self.mgr.SavePerspective()
+        for v in self.viewers:
+            v.to_metadata_dict(mdict, document)
         self.focused_viewer.linked_base.to_metadata_dict(mdict, document)
         # if document == self.document:
         #     # If we're saving the document currently displayed, save the
@@ -737,7 +735,7 @@ class ByteEditor(FrameworkEditor):
 
         return panel
 
-    def create_viewers(self, layout):
+    def create_viewers(self, layout, e):
         # Create a set of viewers from a list
         log.debug("layout: %s" % layout)
 
@@ -763,6 +761,8 @@ class ByteEditor(FrameworkEditor):
         for name in viewers:
             viewer_type = self.task.find_viewer_by_name(name)
             viewer = viewer_type.create(self.control, center_base, None, name)
+            log.debug("loading viewer metadata: %s\n%s" % (name, e.get(viewer.ooid, None)))
+            viewer.from_metadata_dict(e)
             if first:
                 viewer.pane_info.CenterPane().DestroyOnClose()
                 self.focused_viewer = viewer  # Initial focus is center pane
