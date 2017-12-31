@@ -852,21 +852,21 @@ class Mode6Base(Mode2):
 
     def bits_to_font(self, bits, colors, gr0_colors, reverse=False):
         bg = colors[8]
-        r = np.empty(half.shape, dtype=np.uint8)
-        g = np.empty(half.shape, dtype=np.uint8)
-        b = np.empty(half.shape, dtype=np.uint8)
+        r = np.empty(bits.shape, dtype=np.uint8)
+        g = np.empty(bits.shape, dtype=np.uint8)
+        b = np.empty(bits.shape, dtype=np.uint8)
         font = np.zeros((256, 8, 8, 3), dtype=np.uint8)
 
         start_char = 0
         for i in range(4, 8):
             end_char = start_char + 64
             fg = colors[i]
-            r[half==0] = bg[0]
-            r[half==1] = fg[0]
-            g[half==0] = bg[1]
-            g[half==1] = fg[1]
-            b[half==0] = bg[2]
-            b[half==1] = fg[2]
+            r[bits==0] = bg[0]
+            r[bits==1] = fg[0]
+            g[bits==0] = bg[1]
+            g[bits==1] = fg[1]
+            b[bits==0] = bg[2]
+            b[bits==1] = fg[2]
             font[start_char:end_char,:,:,0] = r
             font[start_char:end_char,:,:,1] = g
             font[start_char:end_char,:,:,2] = b
