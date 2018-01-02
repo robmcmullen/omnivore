@@ -572,7 +572,7 @@ class JumpmanViewer(SegmentViewer):
     ##### Display update utilities
 
     def update_mouse_mode(self, mouse_handler=None):
-        self.bitmap.update_mouse_mode(self, mouse_handler)
+        self.bitmap.set_mouse_mode(mouse_handler)
         self.can_select_objects = self.bitmap.mouse_mode.can_paste
         self.bitmap.refresh_view()
 

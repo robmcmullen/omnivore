@@ -46,6 +46,9 @@ class MouseHandler(object):
     def init_post_hook(self):
         pass
 
+    def cleanup(self):
+        pass
+
     def get_cursor(self):
         return wx.Cursor(wx.CURSOR_ARROW)
 

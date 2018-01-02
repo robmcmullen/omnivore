@@ -692,7 +692,7 @@ class ByteEditor(FrameworkEditor):
     def replace_center_viewer(self, viewer_cls):
         center_viewer = self.viewers[0]
         center_base = center_viewer.linked_base
-        viewer = viewer_cls.create(self.control, center_base, center_base.machine)
+        viewer = viewer_cls.create(self.control, center_base, center_viewer.machine)
         viewer.pane_info.CenterPane()
 
         center_viewer.prepare_for_destroy()

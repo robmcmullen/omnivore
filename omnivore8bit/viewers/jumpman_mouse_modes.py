@@ -44,7 +44,7 @@ class JumpmanSelectMode(SelectMode):
         return
 
     def get_harvest_offset(self):
-        source = self.canvas.editor.segment
+        source = self.control.segment_viewer.segment
         if len(source) < 0x47:
             hx = hy = 0, 0
         else:
@@ -86,8 +86,8 @@ class JumpmanSelectMode(SelectMode):
             s[y:h:16,:] |= comment_bit_mask
 
     def get_xy(self, evt):
-        c = self.canvas
-        e = c.editor
+        c = self.control
+        e = c.segment_viewer
         if e is not None:
             index, bit, inside = c.event_coords_to_byte(evt)
             y, x = c.index_to_row_col(index)
@@ -99,14 +99,14 @@ class JumpmanSelectMode(SelectMode):
         return None, None, None, None
 
     def display_coords(self, evt, extra=None):
-        c = self.canvas
-        e = c.editor
+        c = self.control
+        e = c.segment_viewer
         if e is not None:
             index, x, y, pick = self.get_xy(evt)
             msg = "x=%d (0x%x) y=%d (0x%x) index=%d (0x%x) pick=%d" % (x, x, y, y, index, index, pick)
             if extra:
                 msg += " " + extra
-            e.task.status_bar.message = msg
+            e.linked_base.editor.status_message = msg
 
     def process_left_down(self, evt):
         self.display_coords(evt)
@@ -124,10 +124,10 @@ class JumpmanSelectMode(SelectMode):
         self.display_coords(evt)
 
     def get_picked(self, pick):
-        return self.canvas.screen_state.get_picked(pick)
+        return self.control.screen_state.get_picked(pick)
 
     def get_trigger_popup_actions(self, evt):
-        e = self.canvas.editor
+        e = self.control.segment_viewer
         obj = e.bitmap.mouse_mode.objects
         if len(obj) == 0:
             index, x, y, pick = self.get_xy(evt)
@@ -143,8 +143,8 @@ class JumpmanSelectMode(SelectMode):
             clearable = any(o.trigger_function is not None for o in obj)
         else:
             clearable = False
-        clear_trigger = ClearTriggerAction(enabled=obj is not None and clearable, picked=obj, task=self.canvas.editor.task)
-        trigger_action = SetTriggerAction(enabled=obj is not None, picked=obj, task=self.canvas.editor.task)
+        clear_trigger = ClearTriggerAction(enabled=obj is not None and clearable, picked=obj, task=self.control.segment_viewer.linked_base.task)
+        trigger_action = SetTriggerAction(enabled=obj is not None, picked=obj, task=self.control.segment_viewer.linked_base.task)
         actions = [clear_trigger, trigger_action, None, CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction, SelectInvertAction]
         return actions
 
@@ -166,36 +166,36 @@ class AnticDSelectMode(JumpmanSelectMode):
         jumpman objects. We need to find the current objects that match up to
         the stored objects.
         """
-        self.objects = self.canvas.level_builder.find_equivalent(self.objects)
+        self.objects = self.control.level_builder.find_equivalent(self.objects)
 
     def delete_objects(self):
         if self.objects:
-            self.canvas.delete_objects(self.objects)
+            self.control.delete_objects(self.objects)
             self.objects = []
-        self.canvas.Refresh()
+        self.control.Refresh()
 
     def get_image_override(self):
         if not self.objects:
             self.override_state = None
             return
 
-        e = self.canvas.editor
+        e = self.control.segment_viewer
         playfield = e.get_playfield_segment()  # use new, temporary playfield
-        _, _, self.override_state = self.canvas.redraw_current(playfield, self.objects)
+        _, _, self.override_state = self.control.redraw_current(playfield, self.objects)
 
         # Draw the harvest grid if a peanut is selected
         for obj in self.objects:
             if obj.single:
                 self.draw_harvest_grid(playfield)
                 break
-        bitimage = self.canvas.get_rendered_image(playfield)
+        bitimage = self.control.get_rendered_image(playfield)
         return bitimage
 
     def get_picked(self, pick):
         if self.override_state:
             state = self.override_state
         else:
-            state = self.canvas.get_screen_state()
+            state = self.control.get_screen_state()
         return state.get_picked(pick)
 
     def highlight_pick(self, evt):
@@ -235,7 +235,7 @@ class AnticDSelectMode(JumpmanSelectMode):
             self.check_tolerance = False
             bad_move = False
             for obj in self.objects:
-                log.debug("moving %s, equiv %s" % (obj, self.canvas.level_builder.find_equivalent_object(obj)))
+                log.debug("moving %s, equiv %s" % (obj, self.control.level_builder.find_equivalent_object(obj)))
                 obj.last_x, obj.last_y = obj.x, obj.y
                 _, obj.x = divmod(obj.orig_x + dx, 160)
                 obj.x &= obj.valid_x_mask
@@ -249,12 +249,12 @@ class AnticDSelectMode(JumpmanSelectMode):
 
     def process_left_down(self, evt):
         self.highlight_pick(evt)
-        self.canvas.Refresh()
+        self.control.Refresh()
         self.display_coords(evt)
 
     def process_mouse_motion_down(self, evt):
         self.move_pick(evt)
-        self.canvas.Refresh()
+        self.control.Refresh()
         self.display_coords(evt)
 
     def process_left_up(self, evt):
@@ -266,9 +266,9 @@ class AnticDSelectMode(JumpmanSelectMode):
             self.objects.remove(self.pending_remove)
         self.pending_remove = None
         if self.objects and not self.check_tolerance:
-            self.canvas.save_changes()
+            self.control.save_changes()
         else:
-            self.canvas.Refresh()
+            self.control.Refresh()
         self.display_coords(evt)
 
     def process_mouse_motion_up(self, evt):
@@ -279,7 +279,7 @@ class AnticDSelectMode(JumpmanSelectMode):
         if pick >= 0:
             obj = self.get_picked(pick)
             if obj.single:
-                self.canvas.editor.set_trigger_view(obj)
+                self.control.segment_viewer.set_trigger_view(obj)
 
     def process_left_dclick(self, evt):
         self.check_trigger_pick(evt)
@@ -310,8 +310,8 @@ class DrawMode(JumpmanSelectMode):
         level_builder.draw_objects(screen, self.objects, current_segment)
 
     def create_objects(self, evt, start=False):
-        c = self.canvas
-        e = c.editor
+        c = self.control
+        e = c.segment_viewer
         if e is None:
             return
         index, x, y, pick = self.get_xy(evt)
@@ -351,24 +351,24 @@ class DrawMode(JumpmanSelectMode):
 
     def process_left_down(self, evt):
         self.create_objects(evt, True)
-        self.canvas.Refresh()
+        self.control.Refresh()
         self.display_coords(evt)
 
     def process_left_up(self, evt):
         if self.num_clicks == 2:
             return
-        self.canvas.save_objects(self.objects)
+        self.control.save_objects(self.objects)
         self.objects = []
         self.display_coords(evt)
 
     def process_mouse_motion_down(self, evt):
         self.create_objects(evt)
-        self.canvas.Refresh()
+        self.control.Refresh()
         self.display_coords(evt)
 
     def process_mouse_motion_up(self, evt):
         self.create_objects(evt, True)
-        self.canvas.Refresh()
+        self.control.Refresh()
         self.display_coords(evt)
 
 
@@ -436,7 +436,7 @@ class DrawPeanutMode(DrawMode):
         self.batch = None
 
     def cleanup(self):
-        self.canvas.editor.screen.style[:] = 0
+        self.control.segment_viewer.screen.style[:] = 0
 
     def get_cursor(self):
         if self.is_bad_location:
@@ -463,8 +463,8 @@ class DrawPeanutMode(DrawMode):
         self.draw_harvest_grid(screen)
 
     def change_harvest_offset(self, evt, start=False):
-        c = self.canvas
-        e = c.editor
+        c = self.control
+        e = c.segment_viewer
         if e is None:
             return
         index, x, y, pick = self.get_xy(evt)
@@ -477,7 +477,7 @@ class DrawPeanutMode(DrawMode):
             dy = ((self.mouse_down[1] - y) & 0xf) * 2
             self.display_coords(evt)
             values = [dx, dy]
-            source = self.canvas.editor.segment
+            source = self.control.segment_viewer.segment
             cmd = ChangeByteCommand(source, 0x46, 0x48, values)
             e.process_command(cmd, self.batch)
 
@@ -487,15 +487,15 @@ class DrawPeanutMode(DrawMode):
             self.change_harvest_offset(evt, True)
             self.objects = []
         else:
-            self.canvas.Refresh()
+            self.control.Refresh()
         self.display_coords(evt)
 
     def process_left_up(self, evt):
         if self.num_clicks == 2:
             return
         if self.batch is not None:
-            c = self.canvas
-            e = c.editor
+            c = self.control
+            e = c.segment_viewer
             if e is None:
                 return
             e.end_batch()
@@ -514,12 +514,12 @@ class DrawPeanutMode(DrawMode):
             self.change_harvest_offset(evt)
         else:
             self.create_objects(evt)
-            self.canvas.Refresh()
+            self.control.Refresh()
         self.display_coords(evt)
 
     def process_mouse_motion_up(self, evt):
         self.create_objects(evt, True)
-        self.canvas.Refresh()
+        self.control.Refresh()
         self.display_coords(evt)
 
     def get_popup_actions(self, evt):
@@ -538,7 +538,7 @@ class JumpmanRespawnMode(DrawMode):
         self.objects = []
 
     def get_respawn_point(self):
-        source = self.canvas.editor.segment
+        source = self.control.segment_viewer.segment
         x = source[0x39]
         y = source[0x3a]
         return x - 0x30, (y - 0x18) / 2
@@ -549,8 +549,8 @@ class JumpmanRespawnMode(DrawMode):
         level_builder.draw_objects(screen, objects, current_segment)
 
     def change_jumpman_respawn(self, evt):
-        c = self.canvas
-        e = c.editor
+        c = self.control
+        e = c.segment_viewer
         if e is None:
             return
         obj = self.objects[0]
@@ -563,7 +563,7 @@ class JumpmanRespawnMode(DrawMode):
         self.change_jumpman_respawn(evt)
         self.init_post_hook()
         self.display_coords(evt)
-        self.canvas.editor.refresh_panes()
+        self.control.segment_viewer.refresh_panes()
 
     def process_mouse_motion_down(self, evt):
         self.process_mouse_motion_up(evt)
