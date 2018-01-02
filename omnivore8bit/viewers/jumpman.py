@@ -206,7 +206,7 @@ class JumpmanLevelView(MouseControllerMixin, BitmapScroller):
         hdata.view(dtype="<u2")[0] = harvest_addr
         data = np.hstack([ropeladder_data, pdata, hdata, level_data])
         cmd = command_cls(source, ranges, data)
-        self.segment_viewer.process_command(cmd)
+        self.segment_viewer.editor.process_command(cmd)
 
     # Segment saver interface for menu item display
     export_data_name = "Jumpman Level Tester ATR"
@@ -567,7 +567,7 @@ class JumpmanViewer(SegmentViewer):
         source, level_addr, harvest_addr = self.get_level_addrs()
         ranges, data = code.get_ranges(source)
         cmd = MoveObjectCommand(source, ranges, data)
-        self.process_command(cmd)
+        self.editor.process_command(cmd)
 
     ##### Display update utilities
 
