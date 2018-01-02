@@ -91,6 +91,7 @@ class SegmentViewer(HasTraits):
         if "--" in name:
             v.ooid = name
         v.pane_info = aui.AuiPaneInfo().Name(v.ooid)
+        v.create_post()
         return v
 
     ##### Cleanup
@@ -100,6 +101,10 @@ class SegmentViewer(HasTraits):
         self.control = None
 
     ##### Initialization and serialization
+
+    def create_post(self):
+        # hook for subclasses to do some extra init
+        pass
 
     # Metadata is an additional dictionary keyed on the ooid
     def from_metadata_dict(self, e):
@@ -328,7 +333,8 @@ class ByteViewersPlugin(FrameworkPlugin):
         from omnivore8bit.viewers.info import CommentsViewer, UndoViewer, SegmentListViewer
         from omnivore8bit.viewers.map import MapViewer
         from omnivore8bit.viewers.tile import TileViewer
+        from omnivore8bit.viewers.jumpman import JumpmanViewer
 
-        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, MemoryMapViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, TileViewer]
+        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, MemoryMapViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, TileViewer, JumpmanViewer]
 
 plugins = [ByteViewersPlugin()]

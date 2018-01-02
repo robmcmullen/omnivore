@@ -197,7 +197,8 @@ def JumpmanFullAtr(doc):
         extra_metadata = {
             'user segments': user_segments,
             'initial segment': user_segments[0],
-            'last_task_id': jumpman_task_id,
+            'last_task_id': 'byte_edit',
+            'layout': 'jumpman',
             }
         return extra_metadata
 
