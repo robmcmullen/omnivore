@@ -756,7 +756,7 @@ class ByteEditor(FrameworkEditor):
                 if parts[0] == "name":
                     viewers.append(parts[1])
         if not viewers:
-            viewers = [a.strip() for a in self.default_viewers.split(",")]
+            viewers = [a.strip() for a in layout.split(",")]
 
         for name in viewers:
             viewer_type = self.task.find_viewer_by_name(name)
