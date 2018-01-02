@@ -374,7 +374,7 @@ class JumpmanViewer(SegmentViewer):
         log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)
         if evt is not Undefined:
             self.control.refresh_view()
-            self.linked_base.editor.update_pane_names()
+            self.editor.update_pane_names()
 
     # FIXME: need to be trait listeners so multiple viewers can be handled
     def undo_post_hook(self):
@@ -572,7 +572,9 @@ class JumpmanViewer(SegmentViewer):
     ##### Display update utilities
 
     def update_mouse_mode(self, mouse_handler=None):
-        self.bitmap.set_mouse_mode(mouse_handler)
+        if mouse_handler is not None:
+            self.editor.mouse_mode_factory = mouse_handler
+        self.bitmap.set_mouse_mode(self.editor.mouse_mode_factory)
         self.can_select_objects = self.bitmap.mouse_mode.can_paste
         self.bitmap.refresh_view()
 
@@ -580,12 +582,17 @@ class JumpmanViewer(SegmentViewer):
         self.bitmap.generate_display_objects(True)
 
     def recalc_data_model(self):
+        log.debug("rebuild jumpman level %s" % self.segment)
+        self.update_mouse_mode(AnticDSelectMode)
+        self.view_segment_set_width(self.segment)
         self.bitmap.recalc_view()
         #self.level_data.recalc_view()
         #self.trigger_list.recalc_view()
-        self.update_mouse_mode(AnticDSelectMode)
         self.manual_recompile_needed = False
         self.compile_assembly_source()
+
+    def recalc_view(self):
+        self.recalc_data_model()
 
     def refresh_panes(self):
         p = self.get_level_colors()

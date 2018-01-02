@@ -71,6 +71,16 @@ class SegmentViewer(HasTraits):
     def _machine_default(self):
         return Atari800.clone_machine()
 
+    ##### Properties
+
+    @property
+    def segment(self):
+        return self.linked_base.segment
+
+    @property
+    def editor(self):
+        return self.linked_base.editor
+
     ##### Class methods
 
     @classmethod
