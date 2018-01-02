@@ -28,6 +28,18 @@ def trace_calls(frame, event, arg):
          caller_line_no, caller_filename)
     return
 
+def create_global_functions():
+    def what_called_me():
+        import traceback
+        stack = traceback.extract_stack()
+        count = len(stack) - 2
+        for i, item in enumerate(stack[:-1]):
+            print("#%d %s in %s at %s:%d" % (count - i, item[3], item[2], item[0], item[1]))
+    import __builtin__
+    __builtin__.what_called_me = what_called_me
+
+create_global_functions()
+
 def main(argv):
     """ Run the application.
     """
