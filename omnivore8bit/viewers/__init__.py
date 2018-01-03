@@ -174,7 +174,6 @@ class SegmentViewer(HasTraits):
         log.debug("process_ensure_visible for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
             if evt.dont_move_cursor == self.control:
-                print("REOFUROESUHROEHUROH")
                 self.control.refresh_view()
             elif evt.source_control != self.control:
                 self.show_cursor(evt.source_control, evt.index_visible, evt.cursor_column)
@@ -191,7 +190,7 @@ class SegmentViewer(HasTraits):
             else:
                 log.debug("SKIPPED %s because it's the source control" % (self.control))
 
-    @on_trait_change('machine.font_change_event,machine.bitmap_shape_change_event,machine.bitmap_color_change_event,machine.disassembler_change_event,')
+    @on_trait_change('machine.font_change_event,machine.bitmap_shape_change_event,machine.bitmap_color_change_event,machine.disassembler_change_event')
     def machine_metadata_changed(self, evt):
         log.debug("machine_metadata_changed: %s evt=%s" % (self, str(evt)))
         if self.linked_base is not None:

@@ -41,6 +41,9 @@ class JumpmanLevelView(MouseControllerMixin, BitmapScroller):
         self.trigger_state = None
         self.bytes_per_row = 40 * 4
 
+    def set_cursor_index(self, *args, **kwargs):
+        pass
+
     def update_bytes_per_row(self):
         BitviewScroller.update_bytes_per_row(self)
         # remove FontMapScroller call to find font width from machine
@@ -358,23 +361,36 @@ class JumpmanViewer(SegmentViewer):
     ##### Trait listeners
 
     @on_trait_change('machine.bitmap_shape_change_event')
-    def update_bitmap_shape(self):
-        self.bitmap.recalc_view()
+    def update_bitmap_shape(self, evt):
+        log.debug("BitmapViewer: machine bitmap shape changed for %s" % self.control)
+        if evt is not Undefined:
+            self.bitmap.recalc_view()
 
     @on_trait_change('machine.bitmap_color_change_event')
-    def update_bitmap_colors(self):
-        try:
-            self.bitmap.compute_image(True)
-        except RuntimeError:
-            pass
-        self.bitmap.mouse_mode.resync_objects()
+    def update_bitmap_colors(self, evt):
+        log.debug("BitmapViewer: machine bitmap color changed for %s" % self.control)
+        if evt is not Undefined:
+            # FIXME: checking for pick buffer because this can get called
+            # before self.bitmap.set_segment is called
+            if not hasattr(self.bitmap, 'pick_buffer'):
+                return
+            try:
+                self.bitmap.compute_image(True)
+            except RuntimeError:
+                pass
+            self.bitmap.mouse_mode.resync_objects()
 
     @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self, evt):
         log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)
         if evt is not Undefined:
             self.control.refresh_view()
-            self.editor.update_pane_names()
+            #self.editor.update_pane_names()
+
+    def show_cursor(self, control, index, bit):
+        # FIXME! intercepts the linked_base.ensure_visible_index as the event
+        # that recreates the playfield after a change to the level data
+        self.control.recalc_view()
 
     # FIXME: need to be trait listeners so multiple viewers can be handled
     def undo_post_hook(self):

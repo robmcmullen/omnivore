@@ -798,8 +798,10 @@ class ByteEditor(FrameworkEditor):
             log.debug("skipping on_pane_active with no AuiPaneInfo object")
             return
         v = evt.pane.segment_viewer
-        log.debug("on_pane_active: activated viewer %s %s" % (v, v.window_title))
-        if v != self.focused_viewer:
+        if v == self.focused_viewer:
+            log.debug("on_pane_active: already current viewer %s" % v)
+        else:
+            log.debug("on_pane_active: activated viewer %s %s" % (v, v.window_title))
             self.focused_viewer = evt.pane.segment_viewer
             self.focused_viewer_changed_event = self.focused_viewer
 
