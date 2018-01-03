@@ -220,19 +220,10 @@ class SegmentedDocument(BaseDocument):
         try:
             return self.segments.index(segment)
         except ValueError:
-            return -1
-
-    def find_segment_index_by_name(self, name):
-        for i, s in enumerate(self.segments):
-            if s.name == name:
-                return i
+            for i, s in enumerate(self.segments):
+                if s.name == segment or s.uuid == segment:
+                    return i
         return -1
-
-    def find_segment_by_name(self, name):
-        for s in self.segments:
-            if s.name == name:
-                return s
-        raise ValueError("No segment with name %s" % name)
 
     def find_segments_in_range(self, addr):
         """Assuming segments had a start_addr param, find first segment that

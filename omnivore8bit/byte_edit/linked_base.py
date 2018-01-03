@@ -204,13 +204,8 @@ class LinkedBase(HasTraits):
     def find_first_valid_segment_index(self):
         return 0
 
-    def find_segment(self, segment_name=None, segment=None, refresh=False):
-        if segment_name is not None:
-            if hasattr(segment_name, "uuid"):  # passed segment in for segment name
-                index = self.document.find_segment_index(segment_name)
-            else:
-                index = self.document.find_segment_index_by_name(segment_name)
-        elif segment is not None:
+    def find_segment(self, segment, refresh=False):
+        if segment is not None:
             index = self.document.find_segment_index(segment)
         else:
             index = self.find_first_valid_segment_index()

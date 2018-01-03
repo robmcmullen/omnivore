@@ -67,7 +67,7 @@ def Getaway(doc):
             extra_metadata = {
                 'font': font_segment.antic_font,
                 'user segments': [font_segment, segment],
-                'initial segment': segment,
+                'initial segment': segment.name,
                 }
             extra_metadata.update(getaway_defaults)
             return extra_metadata
@@ -84,7 +84,7 @@ def Getaway(doc):
         extra_metadata = {
             'font': font_segment.antic_font,
             'user segments': [font_segment, segment],
-            'initial segment': segment,
+            'initial segment': segment.name,
             }
         extra_metadata.update(getaway_defaults)
         return extra_metadata
@@ -101,7 +101,7 @@ def Getaway(doc):
         extra_metadata = {
             'font': font_segment.antic_font,
             'user segments': [font_segment, segment],
-            'initial segment': segment,
+            'initial segment': segment.name,
             }
         extra_metadata.update(getaway_defaults)
         return extra_metadata
@@ -121,14 +121,17 @@ def JumpmanLevelBuilder(doc):
         for s in doc.segments:
             if s.start_addr == 0x2800 and len(s) == 0x800:
                 found_level = True
+                initial_segment = s
         if not found_level:
             user_segments.append(DefaultSegment(r[0x0196:0x0996], 0x2800, name="Jumpman Level Data"))
             user_segments.append(DefaultSegment(r[2458:3994], 0x0a00, name="Code at $0a00"))
             user_segments.append(DefaultSegment(r[3998:6046], 0x2000, name="Code at $2000"))
             user_segments.append(DefaultSegment(r[6050:22434], 0x3000, name="Code at $3000"))
+            initial_segment = user_segments[0]
+        log.debug("Found initial segment: %s, %s" % (initial_segment, initial_segment.uuid))
         extra_metadata = {
             'user segments': user_segments,
-            'initial segment': user_segments[0],
+            'initial segment': initial_segment.name,
             'last_task_id': 'byte_edit',
             'layout': 'jumpman',
             }
@@ -196,7 +199,7 @@ def JumpmanFullAtr(doc):
 
         extra_metadata = {
             'user segments': user_segments,
-            'initial segment': user_segments[0],
+            'initial segment': user_segments[0].name,
             'last_task_id': 'byte_edit',
             'layout': 'jumpman',
             }
