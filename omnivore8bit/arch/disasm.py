@@ -2,7 +2,6 @@ import numpy as np
 
 from udis import miniasm, cputables
 import udis.udis_fast as udis_fast
-from udis.udis_fast.disasm_info import DisassemblyInfo, fast_disassemble_segment
 
 from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bit_mask, data_style
 
@@ -168,7 +167,7 @@ class BaseDisassembler(object):
         self.segment = segment
         self.start_addr = segment.start_addr
         self.end_addr = self.start_addr + len(segment)
-        self.info = fast_disassemble_segment(self.fast, segment)
+        self.info = udis_fast.fast_disassemble_segment(self.fast, segment)
         self.use_labels = self.start_addr > 0
         return self.info
 

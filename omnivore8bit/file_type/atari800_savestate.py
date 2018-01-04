@@ -7,8 +7,10 @@ from atrcopy import SegmentData, SegmentParser, InvalidSegmentParser, ObjSegment
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
 from omnivore8bit.document import SegmentedDocument
 
-from pyatari800 import parse_atari800
-
+try:
+   from pyatari800 import parse_atari800
+except ImportError:
+   pass
 
 @provides(IFileRecognizer)
 class Atari800Recognizer(HasTraits):
