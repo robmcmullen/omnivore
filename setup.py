@@ -53,7 +53,7 @@ install_requires = [
     'bson<1.0.0',
     'configobj',
     'pyparsing',
-    'wxpython',
+    'wxpython>=4.0b2',
     ]
 
 
