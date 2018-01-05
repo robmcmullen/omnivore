@@ -18,6 +18,11 @@ log = logging.getLogger(__name__)
 
 
 class SegmentedDocument(BaseDocument):
+    json_expand_keywords = {
+        'linked bases': 2,
+        'viewers': 2,
+    }
+
     style = Trait("", TraitNumpyConverter())
 
     segment_parser = Any

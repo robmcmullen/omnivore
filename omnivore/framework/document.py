@@ -38,6 +38,13 @@ class TraitNumpyConverter(TraitHandler):
 
 
 class BaseDocument(HasTraits):
+
+    # Class properties
+
+    json_expand_keywords = {}
+
+    # Traits
+
     undo_stack = Any
 
     metadata = Any
@@ -329,7 +336,7 @@ class BaseDocument(HasTraits):
                 log.debug("saving extra metadata to %s" % relpath)
                 jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
                 bytes = jsonpickle.dumps(mdict)
-                text = jsonutil.collapse_json(bytes)
+                text = jsonutil.collapse_json(bytes, 8, self.json_expand_keywords)
                 header = editor.get_extra_metadata_header()
                 fh = fs.open(relpath, 'wb')
                 fh.write(header)
