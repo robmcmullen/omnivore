@@ -154,20 +154,38 @@ class ByteEditor(FrameworkEditor):
         log.debug("task arguments: '%s'" % self.task_arguments)
         if self.task_arguments:
             layout = self.task_arguments
-        elif 'viewers' in e:
-            layout = e['viewers']
+        elif 'layout' in e:
+            layout = e['layout']
         else:
             layout = self.default_viewers
-        self.create_viewers(layout, e)
+        viewer_metadata = {}
+        for v in e.get('viewers', []):
+            viewer_metadata[v['uuid']] = v
+        linked_bases = {}
+        for b in e.get('linked bases', []):
+            base = LinkedBase(editor=self)
+            base.from_metadata_dict(b)
+            linked_bases[base.uuid] = base
+        self.create_viewers(layout, viewer_metadata, linked_bases)
         self.task.machine_menu_changed = self.focused_viewer.machine
         self.focused_viewer_changed_event = self.focused_viewer
 
     def to_metadata_dict(self, mdict, document):
         mdict["diff highlight"] = self.diff_highlight
-        mdict["viewers"] = self.mgr.SavePerspective()
+        mdict["layout"] = self.mgr.SavePerspective()
+        mdict["viewers"] = []
+        bases = []
         for v in self.viewers:
-            v.to_metadata_dict(mdict, document)
-        self.focused_viewer.linked_base.to_metadata_dict(mdict, document)
+            bases.append(v.linked_base)
+            e = {"linked base": v.linked_base.uuid}
+            v.to_metadata_dict(e, document)
+            mdict["viewers"].append(e)
+        mdict["linked bases"] = []
+        for b in bases:
+            e = {}
+            b.to_metadata_dict(e, document)
+            mdict["linked bases"].append(e)
+        mdict["focused viewer"] = self.focused_viewer.uuid
         # if document == self.document:
         #     # If we're saving the document currently displayed, save the
         #     # display parameters too.
@@ -735,14 +753,15 @@ class ByteEditor(FrameworkEditor):
 
         return panel
 
-    def create_viewers(self, layout, e):
+    def create_viewers(self, layout, viewer_metadata, linked_bases):
         # Create a set of viewers from a list
         log.debug("layout: %s" % layout)
 
         center_base = LinkedBase(editor=self)
-        self.linked_bases.append(center_base)
+        # self.linked_bases.append(center_base)
 
         first = True
+        self.focused_viewer = None
         layer = 0
         viewers = []
         perspective = ""
@@ -753,25 +772,49 @@ class ByteEditor(FrameworkEditor):
             for section in sections[1:]:
                 parts = section.split(";")[0].split("=")
                 log.debug(str(parts))
-                if parts[0] == "name":
+                if parts[0] == "name":  # name is the uuid of the viewer
                     viewers.append(parts[1])
         if not viewers:
+            # use default list of viewer names, not uuids, if there is no saved
+            # layout.
             viewers = [a.strip() for a in layout.split(",")]
 
-        for name in viewers:
-            viewer_type = self.task.find_viewer_by_name(name)
-            viewer = viewer_type.create(self.control, center_base, None, name)
-            log.debug("loading viewer metadata: %s\n%s" % (name, e.get(viewer.ooid, None)))
-            viewer.from_metadata_dict(e)
+
+        while first:
+            for uuid in viewers:
+                if uuid in viewer_metadata:
+                    e = viewer_metadata[uuid]
+                    viewer_type = e['name']
+                    linked_base = linked_bases[e['linked base']]
+                else:  # either not a uuid or an unknown uuid
+                    e = {}
+                    viewer_type = uuid  # try the value of 'uuid' as a viewer name
+                    linked_base = center_base
+                    uuid = None
+
+                try:
+                    viewer_cls = self.task.find_viewer_by_name(viewer_type)
+                except ValueError:
+                    log.error("unknown viewer %s, uuid=%s" % (viewer_type, uuid))
+                    continue
+                log.debug("creating viewer %s with linked base %s" % (viewer_type, str(linked_base)))
+                viewer = viewer_cls.create(self.control, linked_base, None, uuid)
+                viewer.from_metadata_dict(e)
+
+                # if there is a perspective, this pane_info will get replaced
+                if first:
+                    viewer.pane_info.CenterPane().DestroyOnClose()
+                    self.focused_viewer = viewer  # Initial focus is center pane
+                    first = False
+                else:
+                    layer += 1
+                    viewer.pane_info.Right().Layer(layer)
+                self.viewers.append(viewer)
+                self.mgr.AddPane(viewer.control, viewer.pane_info)
             if first:
-                viewer.pane_info.CenterPane().DestroyOnClose()
-                self.focused_viewer = viewer  # Initial focus is center pane
+                # just load default hex editor if nothing has been created
+                viewers = ['hex']
                 first = False
-            else:
-                layer += 1
-                viewer.pane_info.Right().Layer(layer)
-            self.viewers.append(viewer)
-            self.mgr.AddPane(viewer.control, viewer.pane_info)
 
         if perspective:
             # The following creates a new pane_info based on the layout...
@@ -780,7 +823,7 @@ class ByteEditor(FrameworkEditor):
             # ...so we have to move this newly created pane_info back onto the
             # viewer
             for v in self.viewers:
-                v.pane_info = self.mgr.GetPane(v.ooid)
+                v.pane_info = self.mgr.GetPane(v.uuid)
         self.update_pane_names()
         self.mgr.Update()
 

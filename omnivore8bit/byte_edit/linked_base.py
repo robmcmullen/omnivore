@@ -135,16 +135,22 @@ class LinkedBase(HasTraits):
 
     def from_metadata_dict(self, e):
         log.debug("metadata: %s" % str(e))
+        if 'uuid' in e:
+            self.uuid = e['uuid']
         if 'diff highlight' in e:
             self.diff_highlight = bool(e['diff highlight'])
         if 'segment view params' in e:
             self.segment_view_params = e['segment view params']
+        if 'segment number' in e:
+            self.segment_number = e['segment number']
 
     def to_metadata_dict(self, mdict, document):
         if document == self.document:
+            mdict['uuid'] = self.uuid
             # If we're saving the document currently displayed, save the
             # display parameters too.
             mdict["segment view params"] = dict(self.segment_view_params)  # shallow copy, but only need to get rid of Traits dict wrapper
+            mdict['segment number'] = self.segment_number
 
     def rebuild_ui(self):
         self.segment = self.document.segments[self.segment_number]
@@ -164,6 +170,12 @@ class LinkedBase(HasTraits):
                 self.view_segment_number(number)
             self.index_clicked(index, 0, None)
         log.debug(self.cursor_history)
+
+    def get_segment_view_params(self):
+        return {
+            'cursor index': self.editor.cursor_index,
+            'segment number': self.segment_number,
+        }
 
     def save_segment_view_params(self, segment):
         d = {

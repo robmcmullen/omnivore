@@ -340,23 +340,17 @@ class JumpmanViewer(SegmentViewer):
         self.screen = self.get_playfield_segment()
         self.pick_buffer = np.zeros((160 * self.antic_lines), dtype=np.int32)
 
-    def from_metadata_dict(self, e):
+    def from_metadata_dict_post(self, e):
         # ignore bitmap renderer in restore because we always want to use the
         # JumpmanPlayfieldRenderer in Jumpman level edit mode
-        if self.ooid in e:
-            e = e[self.ooid]
-            if 'assembly_source' in e:
-                self.assembly_source = e['assembly_source']
-            if 'old_trigger_mapping' in e:
-                self.old_trigger_mapping = e['old_trigger_mapping']
-            self.control.from_metadata_dict(e)
+        if 'assembly_source' in e:
+            self.assembly_source = e['assembly_source']
+        if 'old_trigger_mapping' in e:
+            self.old_trigger_mapping = e['old_trigger_mapping']
 
-    def to_metadata_dict(self, mdict, document):
-        e = {}
-        e["assembly_source"] = self.assembly_source
-        e["old_trigger_mapping"] = dict(self.old_trigger_mapping)  # so we don't try to pickle a TraitDictObject
-        self.control.to_metadata_dict(mdict, document)
-        mdict[self.ooid] = e
+    def to_metadata_dict_post(self, mdict, document):
+        mdict["assembly_source"] = self.assembly_source
+        mdict["old_trigger_mapping"] = dict(self.old_trigger_mapping)  # so we don't try to pickle a TraitDictObject
 
     ##### Trait listeners
 
