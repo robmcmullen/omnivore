@@ -143,6 +143,8 @@ class LinkedBase(HasTraits):
             self.segment_view_params = e['segment view params']
         if 'segment number' in e:
             self.segment_number = e['segment number']
+        else:
+            self.segment_number = self.editor.initial_segment
 
     def to_metadata_dict(self, mdict, document):
         if document == self.document:
@@ -219,8 +221,11 @@ class LinkedBase(HasTraits):
     def find_segment(self, segment, refresh=False):
         if segment is not None:
             index = self.document.find_segment_index(segment)
-        else:
+        elif self.segment_number == 0:
             index = self.find_first_valid_segment_index()
+        else:
+            index = self.segment_number
+        log.debug("find_segment: changing from %d to %d, input=%s" % (self.segment_number, index, segment))
         if index < 0:
             index = 0
         self.segment_parser = self.document.segment_parser

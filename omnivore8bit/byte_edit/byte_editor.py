@@ -192,7 +192,7 @@ class ByteEditor(FrameworkEditor):
         #     mdict["segment view params"] = dict(self.segment_view_params)  # shallow copy, but only need to get rid of Traits dict wrapper
 
     def rebuild_document_properties(self):
-        log.debug("rebuilding document %s" % str(self.document))
+        log.debug("rebuilding document %s; intitial segment=%s" % (str(self.document), self.initial_segment))
         if not self.document.has_baseline:
             self.use_self_as_baseline(self.document)
         FrameworkEditor.rebuild_document_properties(self)
