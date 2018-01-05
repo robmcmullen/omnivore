@@ -996,6 +996,11 @@ class FrameworkTask(Task):
             return "%s - %s %s" % (name, self.about_title, self.about_version)
         return "%s %s" % (self.about_title, self.about_version)
 
+    @property
+    def known_editor_ids(self):
+        possibilities = [factory.id for factory in self.window.application.task_factories]
+        return possibilities
+
     def confirm(self, message, title=None, cancel=False, default=NO, no_label="", yes_label=""):
         """ Convenience method to show a confirmation dialog. """
 

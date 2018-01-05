@@ -222,7 +222,7 @@ class BaseDocument(HasTraits):
         # info so that other task's stuff can be re-saved even if that task
         # wasn't used in this editing session.
         try:
-            return self.extra_metadata["task_specific"][task.editor_id]
+            return self.extra_metadata[task.editor_id]
         except KeyError:
             log.info("%s not in task specific metadata; falling back to old metadata storage" % task.editor_id)
 
@@ -230,7 +230,7 @@ class BaseDocument(HasTraits):
         # metadata for all tasks in the root directory
         return self.extra_metadata
 
-    def init_extra_metadata_dict(self):
+    def init_extra_metadata_dict(self, editor):
         """ Creates new metadata dictionary for metadata to be serialized
 
         The returned dict includes all the current document properties and all
@@ -239,9 +239,11 @@ class BaseDocument(HasTraits):
         The task specific metadata will be replaced by values in the current
         task.
         """
-        mdict = {"task_specific": {}}
-        if "task_specific" in self.extra_metadata:
-            mdict["task_specific"].update(self.extra_metadata["task_specific"])
+        mdict = {}
+        known = set(editor.task.known_editor_ids)
+        for k, v in self.extra_metadata.iteritems():
+            if k in known:
+                mdict[k] = dict(v)
         self.serialize_extra_to_dict(mdict)
         return mdict
 
@@ -249,7 +251,7 @@ class BaseDocument(HasTraits):
         # FIXME: should handle all tasks that have changed in this edit
         # session, not just the one that is being saved.
         task_name = editor.task.editor_id
-        mdict["task_specific"][task_name] = task_dict
+        mdict[task_name] = task_dict
         mdict["last_task_id"] = task_name
 
     def serialize_extra_to_dict(self, mdict):
@@ -318,7 +320,7 @@ class BaseDocument(HasTraits):
         fh.close()
 
         if save_metadata:
-            mdict = self.init_extra_metadata_dict()
+            mdict = self.init_extra_metadata_dict(editor)
             task_metadata = dict()
             editor.to_metadata_dict(task_metadata, self)
             self.store_task_specific_metadata(editor, mdict, task_metadata)
