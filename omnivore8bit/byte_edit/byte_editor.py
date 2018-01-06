@@ -141,13 +141,8 @@ class ByteEditor(FrameworkEditor):
 
     def from_metadata_dict(self, e):
         log.debug("metadata: %s" % str(e))
-        if 'linked_bases' in e:
-            # restore list of linked bases
-            pass
         if 'initial segment' in e:
             self.initial_segment = e['initial segment']
-        if 'initial font segment' in e:
-            self.initial_font_segment = e['initial font segment']
         if 'diff highlight' in e:
             self.diff_highlight = bool(e['diff highlight'])
 
@@ -158,7 +153,7 @@ class ByteEditor(FrameworkEditor):
             layout = e['layout']
         else:
             layout = self.default_viewers
-        viewer_metadata = {}
+        viewer_metadata = {'default': e}
         for v in e.get('viewers', []):
             viewer_metadata[v['uuid']] = v
         linked_bases = {}
@@ -787,10 +782,11 @@ class ByteEditor(FrameworkEditor):
                     viewer_type = e['name']
                     linked_base = linked_bases[e['linked base']]
                 else:  # either not a uuid or an unknown uuid
-                    e = {}
+                    e = viewer_metadata.get('default', {})
                     viewer_type = uuid  # try the value of 'uuid' as a viewer name
                     linked_base = center_base
                     uuid = None
+                    log.debug("using default metadata for %s: %s" % (viewer_type, e))
 
                 try:
                     viewer_cls = self.task.find_viewer_by_name(viewer_type)

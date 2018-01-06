@@ -257,6 +257,7 @@ class Machine(HasTraits):
             if name not in state:
                 # skip missing trait definitions
                 continue
+            log.debug("state_to_traits: %s, restoring from %s" % (name, state.get(name, None)))
             t = self.trait(name)
             if t.transient:
                 if name in predefined:

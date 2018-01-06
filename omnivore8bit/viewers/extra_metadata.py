@@ -5,8 +5,13 @@ from ..utils.segmentutil import AnticFontSegment
 import logging
 log = logging.getLogger(__name__)
 
-getaway_defaults = {
+getaway_machine_defaults = {
     'antic_color_registers': [0x46, 0xD6, 0x74, 0x0C, 0x14, 0x86, 0x02, 0xB6, 0xBA],
+    'font_renderer': 2,  # "Antic 5",
+    'font_mapping': 1,  # "Antic Order",
+    }
+
+getaway_defaults = {
     'tile groups': [
         ("road", [0x70]),
         ("trees", range(0x80, 0x96), range(0x01, 0x16),),
@@ -20,13 +25,23 @@ getaway_defaults = {
         ("other", [0x20, 0x25, 0x26, ]),
         ("special", range(0x21, 0x25), range(0x74, 0x76),),
         ],
-    'font renderer': "Antic 5",
-    'font order': "Antic Order",
     'last_task_id': 'byte_edit',
     'layout': 'map',
+    'uuid': 'default',
     }
 
 supported_pd_getaway = [1]
+
+def getaway_metadata(font_segment, segment):
+    m = dict(getaway_machine_defaults)
+    m['antic_font_data'] = font_segment.antic_font
+    extra_metadata = {
+        'machine': m,
+        'user segments': [font_segment, segment],
+        'initial segment': segment.name,
+    }
+    extra_metadata.update(getaway_defaults)
+    return extra_metadata
 
 def Getaway(doc):
     if doc.bytes[8] == 0x82 and doc.bytes[9] == 0x39:
@@ -64,13 +79,7 @@ def Getaway(doc):
             i = s.get_raw_index_from_address(playfield_font)
             font_segment = AnticFontSegment(r[i:i + 0x400], playfield_font, name="Playfield font")
 
-            extra_metadata = {
-                'font': font_segment.antic_font,
-                'user segments': [font_segment, segment],
-                'initial segment': segment.name,
-                }
-            extra_metadata.update(getaway_defaults)
-            return extra_metadata
+            return getaway_metadata(font_segment, segment)
 
     state = doc.bytes[0:6] == [0xff, 0xff, 0x80, 0x2a, 0xff, 0x8a]
     if state.all():
@@ -81,13 +90,7 @@ def Getaway(doc):
         segment = DefaultSegment(r[0x2086:0x6086], 0x4b00, name="Playfield map")
         segment.map_width = 256
         #doc.add_user_segment(segment)
-        extra_metadata = {
-            'font': font_segment.antic_font,
-            'user segments': [font_segment, segment],
-            'initial segment': segment.name,
-            }
-        extra_metadata.update(getaway_defaults)
-        return extra_metadata
+        return getaway_metadata(font_segment, segment)
 
     state = doc.bytes[0x10:0x19] == [0x00, 0xc1, 0x80, 0x0f, 0xcc, 0x22, 0x18, 0x60, 0x0e]
     if state.all():
@@ -98,13 +101,7 @@ def Getaway(doc):
         segment = DefaultSegment(r[0x2090:0x6090], 0x4b00, name="Playfield map")
         segment.map_width = 256
         #doc.add_user_segment(segment)
-        extra_metadata = {
-            'font': font_segment.antic_font,
-            'user segments': [font_segment, segment],
-            'initial segment': segment.name,
-            }
-        extra_metadata.update(getaway_defaults)
-        return extra_metadata
+        return getaway_metadata(font_segment, segment)
 
 
 def JumpmanLevelBuilder(doc):
