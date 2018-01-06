@@ -28,6 +28,14 @@ import logging
 log = logging.getLogger(__name__)
 
 
+class DummyLinkedBase(object):
+    segment = None
+    segment_number = 0
+
+class DummyFocusedViewer(object):
+    linked_base = DummyLinkedBase
+
+
 class ByteEditor(FrameworkEditor):
     """ The toolkit specific implementation of a ByteEditor.  See the
     IByteEditor interface for the API documentation.
@@ -104,6 +112,9 @@ class ByteEditor(FrameworkEditor):
 
     def _program_memory_map_default(self):
         return dict()
+
+    def _focused_viewer_default(self):
+        return DummyFocusedViewer()
 
     #### trait property getters
 
