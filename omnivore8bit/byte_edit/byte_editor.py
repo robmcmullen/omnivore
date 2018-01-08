@@ -15,6 +15,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 # Local imports.
 from omnivore.framework.editor import FrameworkEditor
 from omnivore.framework.actions import *
+import omnivore.framework.clipboard as clipboard
 from omnivore.utils.file_guess import FileMetadata
 from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
@@ -215,22 +216,22 @@ class ByteEditor(FrameworkEditor):
         log.debug("%s processing preferences change" % self.task.name)
         #self.machine.set_text_font(prefs.text_font)
 
-    def process_paste_data_object(self, data_obj, cmd_cls=None):
-        bytes, extra = self.get_numpy_from_data_object(data_obj)
-        ranges, indexes = self.get_selected_ranges_and_indexes()
-        if extra:
-            if extra[0] == "numpy,multiple" or extra[0] == "numpy":
-                source_indexes, style, where_comments, comments = extra[1:5]
-            else:
-                if not self.focused_viewer.process_paste_data(extra, bytes, cmd_cls):
-                    raise RuntimeError("Unsupported data object type %s" % extra[0])
-                return
-        else:
-            source_indexes = style = where_comments = comments = None
+    ##### Copy/paste
+
+    @property
+    def clipboard_data_format(self):
+        return self.focused_viewer.clipboard_data_format
+
+    def copy_selection_to_clipboard(self, name):
+        return clipboard.set_from_selection(self.focused_viewer, name)
+
+    def process_paste_data(self, serialized_data, cmd_cls=None):
         if cmd_cls is None:
-            cmd_cls = PasteCommand
-        cmd = cmd_cls(self.segment, ranges, self.cursor_index, bytes, source_indexes, style, where_comments, comments)
+            cmd_cls = self.focused_viewer.get_paste_command(data_obj)
+        cmd = cmd_cls(self.segment, data_obj, self)
+        log.debug("processing paste object %s" % cmd)
         self.process_command(cmd)
+        return cmd
 
     def get_numpy_from_data_object(self, data_obj):
         # Full list of valid data formats:
@@ -271,40 +272,17 @@ class ByteEditor(FrameworkEditor):
         bytes = np.fromstring(value, dtype=np.uint8)
         return bytes, extra
 
-    supported_clipboard_data_objects = [
-        wx.CustomDataObject("numpy,multiple"),
-        wx.CustomDataObject("numpy"),
-        wx.CustomDataObject("numpy,columns"),
-        wx.TextDataObject(),
-        ]
+    @property
+    def supported_clipboard_data_objects(self):
+        return self.focused_viewer.supported_clipboard_data_objects
 
     def create_clipboard_data_object(self):
         return self.focused_viewer.create_clipboard_data_object()
 
-    def show_data_object_stats(self, data_obj, copy=True):
-        try:
-            fmt = data_obj.GetFormat()
-        except AttributeError:
-            fmt = data_obj.GetPreferredFormat()
-        if fmt.GetId() == "numpy,columns":
-            d = self.get_data_object_by_format(data_obj, fmt)
-            value = d.GetData().tobytes()
-            r, c, value = value.split(",", 2)
-            size = int(r) * int(c)
-        elif fmt.GetId() == "numpy":
-            d = self.get_data_object_by_format(data_obj, fmt)
-            value = d.GetData().tobytes()
-            size, _ = value.split(",", 1)
-            size = int(size)
-        elif fmt.GetId() == "numpy,multiple":
-            d = self.get_data_object_by_format(data_obj, fmt)
-            value = d.GetData().tobytes()
-            size, _, _ = value.split(",", 2)
-            size = int(size)
-        else:
-            FrameworkEditor.show_data_object_stats(self, data_obj)
-            return
-        self.task.status_bar.message = "%s $%x bytes (%d decimal)" % ("Copied" if copy else "Pasted", size, size)
+    def show_data_object_stats(self, data_obj, copy=True, cmd=None):
+        cmd_cls = self.focused_viewer.get_paste_command(data_obj)
+        cmd = cmd_cls(data_obj)
+        FrameworkEditor.show_data_object_stats(self, data_obj, copy, cmd)
 
     def get_selected_index_metadata(self, indexes):
         """Return serializable string containing style information"""

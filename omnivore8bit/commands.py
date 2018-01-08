@@ -109,14 +109,10 @@ class SetValuesAtIndexesCommand(ChangeByteValuesCommand):
         self.relative_comment_indexes = comment_indexes
         self.comments = comments
 
-    def get_data(self, orig):
-        data_len = np.alen(self.data)
-        orig_len = np.alen(orig)
-        if data_len > orig_len > 1:
-            data_len = orig_len
-        return self.data[0:data_len]
+    def prepare_data(self, editor):
+        pass
 
-    def do_change(self, editor, undo):
+    def get_clipped_indexes(self, editor):
         log.debug("ranges: %s" % str(self.ranges))
         indexes = ranges_to_indexes(self.ranges)
         log.debug("indexes: %s" % str(indexes))
@@ -128,6 +124,18 @@ class SetValuesAtIndexesCommand(ChangeByteValuesCommand):
         max_index = len(self.segment)
         indexes = indexes[indexes < max_index]
         log.debug("indexes after limits: %s" % str(indexes))
+        return indexes
+
+    def get_data(self, orig):
+        data_len = np.alen(self.data)
+        orig_len = np.alen(orig)
+        if data_len > orig_len > 1:
+            data_len = orig_len
+        return self.data[0:data_len]
+
+    def do_change(self, editor, undo):
+        self.prepare_data(editor)
+        indexes = self.get_clipped_indexes(editor)
         data = self.get_data(self.segment.data[indexes])
         log.debug("orig data: %s" % self.segment.data[indexes])
         log.debug("new data: %s" % data)

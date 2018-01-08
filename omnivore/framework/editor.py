@@ -17,6 +17,7 @@ from omnivore.utils.command import HistoryList, StatusFlags
 from omnivore.utils.sortutil import collapse_overlapping_ranges, invert_ranges, ranges_to_indexes
 from omnivore.utils.file_guess import FileGuess
 from omnivore.framework.document import DocumentError
+import omnivore.framework.clipboard as clipboard
 
 import logging
 log = logging.getLogger(__name__)
@@ -333,71 +334,32 @@ class FrameworkEditor(Editor):
     def copy(self):
         """ Copies the current selection to the clipboard
         """
-        data_obj = self.create_clipboard_data_object()
-        if data_obj is None:
-            return False
-        return self.set_clipboard_object(data_obj)
-
-    def set_clipboard_object(self, data_obj):
-        if wx.TheClipboard.Open():
-            wx.TheClipboard.SetData(data_obj)
-            self.show_data_object_stats(data_obj)
-            wx.TheClipboard.Close()
-            return True
-        else:
-            self.window.error("Unable to open clipboard", "Clipboard Error")
-            return False
-
-    def get_data_object_by_format(self, data_obj, fmt):
-        # First try a composite object, then simple: have to handle both
-        # cases
+        name = self.clipboard_data_format
         try:
-            d = data_obj.GetObject(fmt)
-        except AttributeError:
-            d = data_obj
-        return d
+            serialized_data = self.copy_selection_to_clipboard(name)
+            self.task.status_bar.message = "Copied %s" % serialized_data.summary
+        except clipboard.ClipboardError as e:
+            self.window.error(e.message, "Clipboard Error")
 
-    def show_data_object_stats(self, data_obj, copy=True):
-        if wx.DF_TEXT in data_obj.GetAllFormats():
-            fmt = wx.DataFormat(wx.DF_TEXT)
-        elif wx.DF_UNICODETEXT in data_obj.GetAllFormats():  # for windows
-            fmt = wx.DataFormat(wx.DF_UNICODETEXT)
-        else:
-            fmt = None
+    @property
+    def clipboard_data_format(self):
+        return "text"
 
-        if fmt is not None:
-            d = self.get_data_object_by_format(data_obj, fmt)
-            size = d.GetTextLength()
-            self.task.status_bar.message = "%s %d text characters" % ("Copied" if copy else "Pasted", size)
+    def copy_selection_to_clipboard(self, name):
+        return clipboard.set_from_selection(self, name)
 
     def paste(self, cmd_cls=None):
         """ Pastes the current clipboard at the current insertion point or over
         the current selection
         """
-        data_obj = self.get_paste_data_object()
-        if data_obj is not None:
-            self.process_paste_data_object(data_obj, cmd_cls)
-            self.show_data_object_stats(data_obj, False)
-        else:
-            self.window.error("Unsupported data format", "Paste Error")
+        try:
+            serialized_data = clipboard.get_paste_data()
+            self.process_paste_data(serialized_data, cmd_cls)
+            self.task.status_bar.message = "Pasted %s" % serialized_data.summary
+        except clipboard.ClipboardError as e:
+            self.window.error(e.message, "Paste Error")
 
-    def get_paste_data_object(self):
-        data_objs = self.supported_clipboard_data_objects
-
-        if wx.TheClipboard.Open():
-            for data_obj in data_objs:
-                success = wx.TheClipboard.GetData(data_obj)
-                if success:
-                    break
-            wx.TheClipboard.Close()
-        else:
-            self.window.error("Unable to open clipboard", "Clipboard Error")
-            success = False
-        if success:
-            return data_obj
-        return None
-
-    def process_paste_data_object(self, data_obj, cmd_cls=None):
+    def process_paste_data(self, serialized_data, cmd_cls=None):
         pass  # Override in subclass
 
     # must be a class attribute because for checking clipboard data formats of

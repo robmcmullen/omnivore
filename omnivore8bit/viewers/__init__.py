@@ -63,6 +63,8 @@ class SegmentViewer(HasTraits):
 
     range_processor = Property(Any, depends_on='control')
 
+    supported_clipboard_data_objects = List
+
     #### Default traits
 
     def _uuid_default(self):
@@ -70,6 +72,9 @@ class SegmentViewer(HasTraits):
 
     def _machine_default(self):
         return Atari800.clone_machine()
+
+    def _supported_clipboard_data_objects_default(self):
+        return [a[0] for a in self.supported_clipboard_data_object_map.values()]
 
     ##### Properties
 
@@ -278,37 +283,37 @@ class SegmentViewer(HasTraits):
         s.clear_style_bits(selected=True)
         s.set_style_ranges(self.linked_base.editor.selected_ranges, selected=True)
 
-    def create_clipboard_data_object(self):
-        e = self.linked_base.editor
-        ranges, indexes = e.get_selected_ranges_and_indexes()
-        metadata = e.get_selected_index_metadata(indexes)
-        if len(ranges) == 1:
-            r = ranges[0]
-            data = e.segment[r[0]:r[1]]
-            s1 = data.tostring()
-            metadata = e.get_selected_index_metadata(indexes)
-            data_obj = wx.CustomDataObject("numpy")
-            s = "%d,%s%s" % (len(s1), s1, metadata)
-            data_obj.SetData(s)
-        elif np.alen(indexes) > 0:
-            data = e.segment[indexes]
-            s1 = data.tostring()
-            s2 = indexes.tostring()
-            metadata = e.get_selected_index_metadata(indexes)
-            data_obj = wx.CustomDataObject("numpy,multiple")
-            s = "%d,%d,%s%s%s" % (len(s1), len(s2), s1, s2, metadata)
-            data_obj.SetData(s)
+    ##### Clipboard & Copy/Paste
+
+    supported_clipboard_data_objects = [
+        wx.CustomDataObject("numpy,multiple"),
+        wx.CustomDataObject("numpy"),
+        wx.CustomDataObject("numpy,columns"),
+        wx.TextDataObject(),
+        ]
+
+    @property
+    def clipboard_data_format(self):
+        return "numpy"
+
+    def get_paste_command(self, data_obj):
+        # Full list of valid data formats:
+        #
+        # >>> import wx
+        # >>> [x for x in dir(wx) if x.startswith("DF_")]
+        # ['DF_BITMAP', 'DF_DIB', 'DF_DIF', 'DF_ENHMETAFILE', 'DF_FILENAME',
+        # 'DF_HTML', 'DF_INVALID', 'DF_LOCALE', 'DF_MAX', 'DF_METAFILE',
+        # 'DF_OEMTEXT', 'DF_PALETTE', 'DF_PENDATA', 'DF_PRIVATE', 'DF_RIFF',
+        # 'DF_SYLK', 'DF_TEXT', 'DF_TIFF', 'DF_UNICODETEXT', 'DF_WAVE']
+        fmt = data_obj.GetPreferredFormat()
+        log.debug("pasting: %s" % fmt.GetId())
+        if wx.DF_TEXT in data_obj.GetAllFormats() or wx.DF_UNICODETEXT in data_obj.GetAllFormats():
+            fmt_id = 'text'
         else:
-            data_obj = None
-        if data_obj is not None:
-            text = " ".join(["%02x" % i for i in data])
-            text_obj = wx.TextDataObject()
-            text_obj.SetText(text)
-            c = wx.DataObjectComposite()
-            c.Add(data_obj)
-            c.Add(text_obj)
-            return c
-        return None
+            fmt = data_obj.GetPreferredFormat()
+            fmt_id = fmt.GetId()
+        _, cmd_cls = self.supported_clipboard_data_object_map[fmt_id]  # raises KeyError if not found
+        return cmd_cls
 
     def process_paste_data(self, extra, bytes, cmd_cls=None):
         # Byte editor handles normal numpy and numpy,multiple data. If viewers
