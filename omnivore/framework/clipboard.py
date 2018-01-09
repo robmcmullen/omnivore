@@ -28,13 +28,6 @@ def format_number(num):
     else:
         return "%d" % num
 
-        try:
-            fmt = data_obj.GetFormat()
-        except AttributeError:
-            fmt = data_obj.GetPreferredFormat()
-        if fmt.GetId() == "numpy,columns":
-            d = self.get_data_object_by_format(data_obj, fmt)
-
 
 def get_data_object_by_format(data_obj, fmt):
     # First try a composite object, then simple: have to handle both
@@ -44,6 +37,19 @@ def get_data_object_by_format(data_obj, fmt):
     except AttributeError:
         d = data_obj
     return d
+
+
+def get_data_object_value(data_obj, name):
+    # First try a composite object, then simple: have to handle both
+    # cases
+    try:
+        fmt = data_obj.GetFormat()
+    except AttributeError:
+        fmt = data_obj.GetPreferredFormat()
+    if fmt.GetId() == name:
+        d = get_data_object_by_format(data_obj, fmt)
+        return d.GetData().tobytes()
+    raise ClipboardError("Expecting %s data object, found %s" % (name, fmt.GetId()))
 
 
 class ClipboardSerializer(object):
@@ -83,7 +89,7 @@ class ClipboardSerializer(object):
         return d
 
 
-    def __init__(self, viewer, data_obj=None):
+    def __init__(self):
         self.data = None
         self.ranges = None
         self.cursor = None
@@ -93,8 +99,6 @@ class ClipboardSerializer(object):
         self.comments = None
         self.num_rows = None
         self.num_columns = None
-        self.unpack_data_object(data_obj)
-        self.unpack_metadata(viewer)
 
     @property
     def size_info(self):
@@ -107,7 +111,7 @@ class ClipboardSerializer(object):
         """
         return self.size_info
 
-    def unpack_data_object(self, data_obj):
+    def unpack_data_object(self, viewer, data_obj):
         """Parse the data object into the instance attributes
         """
         raise NotImplementedError("Unimplemented for data format %s" % cls.data_format_name)
@@ -128,7 +132,7 @@ class TextSelection(ClipboardSerializer):
         """
         return "%s text characters" % (format_number(np.alen(self.data)))
 
-    def unpack_data_object(self, data_obj):
+    def unpack_data_object(self, viewer, data_obj):
         fmts = data_obj.GetAllFormats()
         if wx.DF_TEXT in fmts:
             value = data_obj.GetText().encode('utf-8')
@@ -147,8 +151,10 @@ class BinarySelection(ClipboardSerializer):
     def selection_to_data_object(cls, viewer):
         # NOTE: also handles multiple selection
         ranges, indexes = viewer.get_selected_ranges_and_indexes()
+        log.debug("selection_to_data_object: viewer=%s ranges=%s indexes=%s" % (viewer, ranges, indexes))
         if len(ranges) > 0:
             metadata = viewer.get_selected_index_metadata(indexes)
+            log.debug("  metadata: %s" % str(metadata))
             if len(ranges) == 1:
                 r = ranges[0]
                 data = viewer.segment[r[0]:r[1]]
@@ -163,17 +169,17 @@ class BinarySelection(ClipboardSerializer):
                 name = "numpy,columns"
             else:
                 raise ClipboardError("No ranges or indexes selected")
-            return cls.get_composite_object(data, serialized, name), cls.size_info(np.alen(data))
+            return cls.get_composite_object(data, serialized, name)
         else:
-            return None, None
+            return None
 
-    def unpack_data_object(self, data_obj):
-        value = data_obj.GetData().tobytes()
+    def unpack_data_object(self, viewer, data_obj):
+        value = get_data_object_value(data_obj, self.data_format_name)
         len1, value = value.split(",", 1)
         len1 = int(len1)
         value, j = value[0:len1], value[len1:]
         self.data = np.fromstring(value, dtype=np.uint8)
-        self.style, self.where_comments, self.comments = self.restore_selected_index_metadata(j)
+        self.style, self.where_comments, self.comments = viewer.restore_selected_index_metadata(j)
 
 
 class MultipleBinarySelection(ClipboardSerializer):
@@ -186,7 +192,7 @@ class MultipleBinarySelection(ClipboardSerializer):
         """
         return "%s in multiple ranges" % (self.size_info)
 
-    def unpack_data_object(self, data_obj):
+    def unpack_data_object(self, viewer, data_obj):
         value = data_obj.GetData().tobytes()
         len1, len2, value = value.split(",", 2)
         len1 = int(len1)
@@ -196,7 +202,7 @@ class MultipleBinarySelection(ClipboardSerializer):
         value, index_string, j = value[0:split1], value[split1:split2], value[split2:]
         self.data = np.fromstring(value, dtype=np.uint8)
         self.indexes = np.fromstring(index_string, dtype=np.uint32)
-        self.style, self.where_comments, self.comments = self.restore_selected_index_metadata(j)
+        self.style, self.where_comments, self.comments = viewer.restore_selected_index_metadata(j)
 
 
 class RectangularSelection(ClipboardSerializer):
@@ -211,8 +217,8 @@ class RectangularSelection(ClipboardSerializer):
             last = r2 * bpr
             d = viewer.segment[:last].reshape(-1, bpr)
             data = d[r1:r2, c1:c2]
-            return cls.get_composite_object(data, "%d,%d,%s" % (r2 - r1, c2 - c1, data.tostring())), cls.size_info(np.alen(data))
-        return None, None
+            return cls.get_composite_object(data, "%d,%d,%s" % (r2 - r1, c2 - c1, data.tostring()))
+        return None
 
     @property
     def summary(self):
@@ -220,7 +226,7 @@ class RectangularSelection(ClipboardSerializer):
         """
         return "%s bytes in %sx%s rectangle" % (format_number(self.size_info), format_number(self.num_columns), format_number(self.num_rows))
 
-    def unpack_data_object(self, data_obj):
+    def unpack_data_object(self, viewer, data_obj):
         value = data_obj.GetData().tobytes()
         self.num_rows, self.num_columns, value = value.split(",", 2)
         self.data = np.fromstring(value, dtype=np.uint8)
@@ -231,11 +237,13 @@ def create_data_object(viewer, name):
         serializer_cls = known_clipboard_serializers[name]
     except IndexError:
         raise ClipboardError("Unknown format name %s" % name)
+    log.debug("create_data_object: viewer=%s name=%s" % (viewer, name))
     data_obj = serializer_cls.selection_to_data_object(viewer)
     if data_obj is None:
         raise ClipboardError("Viewer %s can't encode as a %s." % (viewer, serializer.pretty_name.lower()))
     serializer = serializer_cls()
-    serializer.unpack_data_object(data_obj)
+    serializer.unpack_data_object(viewer, data_obj)
+    log.debug("create_data_object: serialized: %s" % serializer)
     return data_obj, serializer
 
 
@@ -268,13 +276,14 @@ def get_paste_data(viewer):
     if wx.DF_TEXT in data_obj.GetAllFormats() or wx.DF_UNICODETEXT in data_obj.GetAllFormats():  # for windows
         serializer_cls = TextSelection
     else:
-        name = data_obj.GetPreferredFormat()
+        fmt = data_obj.GetPreferredFormat()
+        name = fmt.GetId()
         try:
             serializer_cls = known_clipboard_serializers[name]
         except IndexError:
             raise ClipboardError("Unknown format name %s" % name)
     serializer = serializer_cls()
-    serialized.unpack_data_object(data_obj)
+    serialized.unpack_data_object(viewer, data_obj)
     return serializer
 
 known_clipboard_serializers = {}
