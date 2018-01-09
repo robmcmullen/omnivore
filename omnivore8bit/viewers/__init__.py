@@ -8,6 +8,9 @@ from envisage.api import ExtensionPoint
 
 from omnivore.framework.plugin import FrameworkPlugin
 from ..byte_edit.linked_base import LinkedBase
+import omnivore.framework.actions as fa
+from ..byte_edit import actions as ba
+
 from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 
 from omnivore8bit.arch.machine import Machine, Atari800
@@ -335,6 +338,21 @@ class SegmentViewer(HasTraits):
 
     def activate_spring_tab(self):
         self.recalc_view()
+
+    #### popup menus
+
+    def popup_context_menu_from_actions(self, *args, **kwargs):
+        self.editor.popup_context_menu_from_actions(self.control, *args, **kwargs)
+
+    def common_popup_actions(self):
+        copy_special = [ba.CopyAsReprAction, ba.CopyAsCBytesAction]
+        for v in self.editor.task.known_viewers:
+            copy_special.extend(v.copy_special)
+        copy_special.sort(key=lambda a:a().name)  # name is a trait, so only exists on an instance, not the class
+        copy_special[0:0] = ["Copy Special"]  # sub-menu title
+
+        return [fa.CutAction, fa.CopyAction, copy_special, fa.PasteAction, ["Paste Special", ba.PasteAndRepeatAction, ba.PasteCommentsAction], None, fa.SelectAllAction, fa.SelectNoneAction, ["Mark Selection As", ba.MarkSelectionAsCodeAction, ba.MarkSelectionAsDataAction, ba.MarkSelectionAsUninitializedDataAction, ba.MarkSelectionAsDisplayListAction, ba.MarkSelectionAsJumpmanLevelAction, ba.MarkSelectionAsJumpmanHarvestAction], None, ba.GetSegmentFromSelectionAction, ba.RevertToBaselineAction, None, ba.AddCommentPopupAction, ba.RemoveCommentPopupAction, ba.AddLabelPopupAction, ba.RemoveLabelPopupAction]
+
 
 
 class ByteViewersPlugin(FrameworkPlugin):

@@ -363,20 +363,20 @@ class DisassemblyPanel(ByteGrid):
             return []
         actions = []
         addr_dest = self.table.disassembly.get_addr_dest(r)
-        action = self.linked_base.editor.get_goto_action_in_segment(addr_dest)
+        action = self.linked_base.get_goto_action_in_segment(addr_dest)
         if action:
             actions.append(action)
         index, _ = self.table.get_index_range(r, c)
         addr_called = index + self.table.start_addr
         actions.extend(self.get_goto_caller_actions(addr_called))
-        actions.extend(self.linked_base.editor.get_goto_actions_other_segments(addr_dest))
-        actions.extend(self.linked_base.editor.get_goto_actions_same_byte(index))
+        actions.extend(self.linked_base.get_goto_actions_other_segments(addr_dest))
+        actions.extend(self.linked_base.get_goto_actions_same_byte(index))
         return actions
 
     def get_popup_actions(self, r, c, inside):
         actions = self.get_goto_actions(r, c)
         actions.append(None)
-        actions.extend(self.linked_base.editor.common_popup_actions())
+        actions.extend(self.segment_viewer.common_popup_actions())
         return actions
 
 

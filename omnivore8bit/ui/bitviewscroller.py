@@ -486,7 +486,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
             self.editor.popup_context_menu_from_actions(self, actions, popup_data)
 
     def get_popup_actions(self):
-        return self.editor.common_popup_actions()
+        return self.segment_viewer.common_popup_actions()
 
     def on_focus(self, evt):
         log.debug("on_focus!")

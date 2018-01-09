@@ -19,6 +19,7 @@ from omnivore.framework.cursor import CursorHandler
 from omnivore.utils.command import DisplayFlags
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment
 from omnivore8bit.arch.disasm import iter_disasm_styles
+from . import actions as ba
 
 import logging
 log = logging.getLogger(__name__)
@@ -466,12 +467,12 @@ class LinkedBase(CursorHandler):
             else:
                 msg = "Go to $%04x" % addr_dest
             if msg:
-                action = GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.editor.task, active_editor=self)
+                action = ba.GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.editor.task, active_editor=self)
             else:
                 action = None
         else:
             msg = "No address to jump to"
-            action = GotoIndexAction(name=msg, enabled=False, task=self.editor.task)
+            action = ba.GotoIndexAction(name=msg, enabled=False, task=self.editor.task)
         return action
 
     def get_goto_actions_other_segments(self, addr_dest):
@@ -485,7 +486,7 @@ class LinkedBase(CursorHandler):
                 if segment_dest == self.segment:
                     continue
                 msg = str(segment_dest)
-                action = GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.editor.task, active_editor=self)
+                action = ba.GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.editor.task, active_editor=self)
                 other_segment_actions.append(action)
             if len(other_segment_actions) > 1:
                 # found another segment other than itself
@@ -505,32 +506,15 @@ class LinkedBase(CursorHandler):
                 if segment_dest == self.segment:
                     continue
                 msg = str(segment_dest)
-                action = GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.editor.task, active_editor=self)
+                action = ba.GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.editor.task, active_editor=self)
                 other_segment_actions.append(action)
             if len(other_segment_actions) > 1:
                 # found another segment other than itself
                 goto_actions.append(other_segment_actions)
         return goto_actions
 
-    def common_popup_actions(self):
-        return [CutAction, CopyAction, ["Copy Special", CopyDisassemblyAction, CopyCommentsAction, CopyAsReprAction, CopyAsCBytesAction], PasteAction, ["Paste Special", PasteAndRepeatAction, PasteCommentsAction], None, SelectAllAction, SelectNoneAction, ["Mark Selection As", MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsUninitializedDataAction, MarkSelectionAsDisplayListAction, MarkSelectionAsJumpmanLevelAction, MarkSelectionAsJumpmanHarvestAction], None, GetSegmentFromSelectionAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction, AddLabelPopupAction, RemoveLabelPopupAction]
-
-    def change_bytes(self, start, end, bytes, pretty=None):
-        """Convenience function to perform a ChangeBytesCommand
-        """
-        self.document.change_count += 1
-        cmd = CoalescingChangeByteCommand(self.segment, start, end, bytes)
-        if pretty:
-            cmd.pretty_name = pretty
-        self.process_command(cmd)
-
-    def popup_visible(self):
-        log.debug("checking sidebar: popup visible? %s" % self.sidebar.control.has_popup())
-        return self.sidebar.control.has_popup()
-
-    def clear_popup(self):
-        log.debug("clearing popup")
-        self.sidebar.control.clear_popup()
+    def popup_context_menu_from_actions(self, *args, **kwargs):
+        self.editor.popup_context_menu_from_actions(*args, **kwargs)
 
     #### Disassembler
 

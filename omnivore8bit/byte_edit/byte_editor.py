@@ -14,14 +14,13 @@ from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
 from omnivore.framework.editor import FrameworkEditor
-from omnivore.framework.actions import *
 import omnivore.framework.clipboard as clipboard
 from omnivore.utils.file_guess import FileMetadata
 from omnivore8bit.arch.machine import Machine, Atari800
+from omnivore8bit.document import SegmentedDocument
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
 from omnivore.utils.processutil import run_detach
 
-from actions import *
 from commands import PasteCommand
 from linked_base import LinkedBase
 
@@ -463,78 +462,6 @@ class ByteEditor(FrameworkEditor):
             except IndexError:
                 continue
         return None, None
-
-    def get_goto_action_in_segment(self, addr_dest):
-        if addr_dest >= 0:
-            segment_start = self.segment.start_addr
-            segment_num = -1
-            addr_index = addr_dest - segment_start
-            segments = self.document.find_segments_in_range(addr_dest)
-            if addr_dest < segment_start or addr_dest > segment_start + len(self.segment):
-                # segment_num, segment_dest, addr_index = self.editor.document.find_segment_in_range(addr_dest)
-                if not segments:
-                    msg = "Address $%04x not in any segment" % addr_dest
-                    addr_dest = -1
-                else:
-                    # Don't chose a default segment, just show the sub menu
-                    msg = None
-            else:
-                msg = "Go to $%04x" % addr_dest
-            if msg:
-                action = GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.task, active_editor=self)
-            else:
-                action = None
-        else:
-            msg = "No address to jump to"
-            action = GotoIndexAction(name=msg, enabled=False, task=self.task)
-        return action
-
-    def get_goto_actions_other_segments(self, addr_dest):
-        """Add sub-menu to popup list for segments that have the same address
-        """
-        goto_actions = []
-        segments = self.document.find_segments_in_range(addr_dest)
-        if len(segments) > 0:
-            other_segment_actions = ["Go to $%04x in Other Segment..." % addr_dest]
-            for segment_num, segment_dest, addr_index in segments:
-                if segment_dest == self.segment:
-                    continue
-                msg = str(segment_dest)
-                action = GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.task, active_editor=self)
-                other_segment_actions.append(action)
-            if len(other_segment_actions) > 1:
-                # found another segment other than itself
-                goto_actions.append(other_segment_actions)
-        return goto_actions
-
-    def get_goto_actions_same_byte(self, index):
-        """Add sub-menu to popup list for for segments that have the same raw
-        index (index into the base array) as the index into the current segment
-        """
-        goto_actions = []
-        raw_index = self.segment.get_raw_index(index)
-        segments = self.document.find_segments_with_raw_index(raw_index)
-        if len(segments) > 0:
-            other_segment_actions = ["Go to Same Byte in Other Segment..."]
-            for segment_num, segment_dest, addr_index in segments:
-                if segment_dest == self.segment:
-                    continue
-                msg = str(segment_dest)
-                action = GotoIndexAction(name=msg, enabled=True, segment_num=segment_num, addr_index=addr_index, task=self.task, active_editor=self)
-                other_segment_actions.append(action)
-            if len(other_segment_actions) > 1:
-                # found another segment other than itself
-                goto_actions.append(other_segment_actions)
-        return goto_actions
-
-    def common_popup_actions(self):
-        copy_special = [CopyAsReprAction, CopyAsCBytesAction]
-        for v in self.task.known_viewers:
-            copy_special.extend(v.copy_special)
-        copy_special.sort(key=lambda a:a().name)  # name is a trait, so only exists on an instance, not the class
-        copy_special[0:0] = ["Copy Special"]  # sub-menu title
-
-        return [CutAction, CopyAction, copy_special, PasteAction, ["Paste Special", PasteAndRepeatAction, PasteCommentsAction], None, SelectAllAction, SelectNoneAction, ["Mark Selection As", MarkSelectionAsCodeAction, MarkSelectionAsDataAction, MarkSelectionAsUninitializedDataAction, MarkSelectionAsDisplayListAction, MarkSelectionAsJumpmanLevelAction, MarkSelectionAsJumpmanHarvestAction], None, GetSegmentFromSelectionAction, RevertToBaselineAction, None, AddCommentPopupAction, RemoveCommentPopupAction, AddLabelPopupAction, RemoveLabelPopupAction]
 
     def do_popup(self, control, popup):
         # The popup event may happen on a control that isn't the focused

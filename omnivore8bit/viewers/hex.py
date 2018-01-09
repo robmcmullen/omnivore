@@ -247,9 +247,9 @@ class HexEditControl(ByteGrid):
     def get_goto_actions(self, r, c):
         actions = []
         addr_dest = self.table.get_addr_dest(r, c)
-        actions.extend(self.linked_base.editor.get_goto_actions_other_segments(addr_dest))
+        actions.extend(self.linked_base.get_goto_actions_other_segments(addr_dest))
         index, _ = self.table.get_index_range(r, c)
-        actions.extend(self.linked_base.editor.get_goto_actions_same_byte(index))
+        actions.extend(self.linked_base.get_goto_actions_same_byte(index))
         return actions
 
     def get_popup_actions(self, r, c, inside):
@@ -259,7 +259,7 @@ class HexEditControl(ByteGrid):
             actions = self.get_goto_actions(r, c)
             if actions:
                 actions.append(None)
-        actions.extend(self.linked_base.editor.common_popup_actions())
+        actions.extend(self.segment_viewer.common_popup_actions())
         return actions
 
 
