@@ -13,11 +13,11 @@ class SelectionMixin(object):
         self.mouse_drag_started = False
         self.pending_select_awaiting_drag = None
 
-    def handle_select_start(self, editor, evt, selecting_rows=False, col=0):
+    def handle_select_start(self, cursor_handler, evt, selecting_rows=False, col=0):
         log.debug("handle_select_start: selecting_rows: %s, col=%s" % (selecting_rows, col))
         flags = DisplayFlags(self)
         flags.dont_move_cursor = self
-        editor.pending_focus = self
+        cursor_handler.pending_focus = self
         self.mouse_drag_started = True
         r, c, index1, index2, inside = self.get_location_from_event(evt)
         if c < 0 or selecting_rows or not inside:
@@ -32,37 +32,37 @@ class SelectionMixin(object):
             self.multi_select_mode = False
             self.select_extend_mode = True
         if self.select_extend_mode:
-            if index1 < editor.anchor_start_index:
-                editor.anchor_start_index = index1
-                editor.cursor_index = index1
-            elif index2 > editor.anchor_start_index:
-                editor.anchor_end_index = index2
-                editor.cursor_index = index2 - 1
-            editor.anchor_initial_start_index, editor.anchor_initial_end_index = editor.anchor_start_index, editor.anchor_end_index
-            editor.select_range(editor.anchor_start_index, editor.anchor_end_index, add=self.multi_select_mode)
+            if index1 < cursor_handler.anchor_start_index:
+                cursor_handler.anchor_start_index = index1
+                cursor_handler.cursor_index = index1
+            elif index2 > cursor_handler.anchor_start_index:
+                cursor_handler.anchor_end_index = index2
+                cursor_handler.cursor_index = index2 - 1
+            cursor_handler.anchor_initial_start_index, cursor_handler.anchor_initial_end_index = cursor_handler.anchor_start_index, cursor_handler.anchor_end_index
+            cursor_handler.select_range(cursor_handler.anchor_start_index, cursor_handler.anchor_end_index, add=self.multi_select_mode)
         else:
             self.ClearSelection()
             if selecting_rows:
                 index1, index2 = self.get_start_end_index_of_row(r)
-            editor.anchor_initial_start_index, editor.anchor_initial_end_index = index1, index2
-            editor.cursor_index = index1
+            cursor_handler.anchor_initial_start_index, cursor_handler.anchor_initial_end_index = index1, index2
+            cursor_handler.cursor_index = index1
             if selecting_rows:
-                editor.select_range(index1, index2, add=self.multi_select_mode)
+                cursor_handler.select_range(index1, index2, add=self.multi_select_mode)
             else:
                 # initial click when not selecting rows should move the cursor,
                 # not select the grid square
                 self.pending_select_awaiting_drag = (index1, index2)
                 if not self.multi_select_mode:
-                    editor.select_none()
+                    cursor_handler.select_none()
                     # status line doesn't get automatically updated to show
                     # nothing is selected, so force the update
                     flags.message = self.get_status_at_index(index1)
-        flags.cursor_index = editor.cursor_index
+        flags.cursor_index = cursor_handler.cursor_index
         flags.cursor_column = c
-        log.debug("handle_select_start: flags: %s, anchors=%s" % (flags, str((editor.anchor_initial_start_index, editor.anchor_initial_end_index))))
-        wx.CallAfter(editor.process_flags, flags)
+        log.debug("handle_select_start: flags: %s, anchors=%s" % (flags, str((cursor_handler.anchor_initial_start_index, cursor_handler.anchor_initial_end_index))))
+        wx.CallAfter(cursor_handler.process_flags, flags)
 
-    def handle_select_motion(self, editor, evt, selecting_rows=False):
+    def handle_select_motion(self, cursor_handler, evt, selecting_rows=False):
         log.debug("handle_select_motion: selecting_rows: %s" % (selecting_rows))
         if not self.mouse_drag_started:
             # On windows, it's possible to get a motion event before a mouse
@@ -79,42 +79,42 @@ class SelectionMixin(object):
             selecting_rows = False
             if self.pending_select_awaiting_drag is not None:
                 # We have an actual drag so we can begin the selection
-                editor.anchor_initial_start_index, editor.anchor_initial_end_index = self.pending_select_awaiting_drag
+                cursor_handler.anchor_initial_start_index, cursor_handler.anchor_initial_end_index = self.pending_select_awaiting_drag
                 self.pending_select_awaiting_drag = None
-                editor.select_range(editor.anchor_initial_start_index, editor.anchor_initial_end_index, add=self.multi_select_mode)
+                cursor_handler.select_range(cursor_handler.anchor_initial_start_index, cursor_handler.anchor_initial_end_index, add=self.multi_select_mode)
                 update = True
         if self.select_extend_mode:
-            if index1 < editor.anchor_initial_start_index:
-                editor.select_range(index1, editor.anchor_initial_end_index, extend=True)
+            if index1 < cursor_handler.anchor_initial_start_index:
+                cursor_handler.select_range(index1, cursor_handler.anchor_initial_end_index, extend=True)
                 update = True
             else:
-                editor.select_range(editor.anchor_initial_start_index, index2, extend=True)
+                cursor_handler.select_range(cursor_handler.anchor_initial_start_index, index2, extend=True)
                 update = True
         else:
-            if index2 >= editor.anchor_initial_end_index:
+            if index2 >= cursor_handler.anchor_initial_end_index:
                 flags.cursor_index = index1
                 if selecting_rows:
                     index1, index2 = self.get_start_end_index_of_row(r)
-                if index2 != editor.anchor_end_index:
-                    editor.select_range(editor.anchor_initial_start_index, index2, extend=self.multi_select_mode)
+                if index2 != cursor_handler.anchor_end_index:
+                    cursor_handler.select_range(cursor_handler.anchor_initial_start_index, index2, extend=self.multi_select_mode)
                     update = True
-            elif index1 <= editor.anchor_initial_start_index:
+            elif index1 <= cursor_handler.anchor_initial_start_index:
                 if selecting_rows:
                     index1, index2 = self.get_start_end_index_of_row(r)
-                if index1 != editor.anchor_start_index:
-                    editor.select_range(index1, editor.anchor_initial_end_index, extend=self.multi_select_mode)
+                if index1 != cursor_handler.anchor_start_index:
+                    cursor_handler.select_range(index1, cursor_handler.anchor_initial_end_index, extend=self.multi_select_mode)
                     update = True
         if update:
             flags.cursor_index = index1
             flags.keep_selection = True
-            wx.CallAfter(editor.process_flags, flags)
-        log.debug("handle_select_motion: update: %s, flags: %s, anchors=%s" % (update, flags, str((editor.anchor_initial_start_index, editor.anchor_initial_end_index))))
+            wx.CallAfter(cursor_handler.process_flags, flags)
+        log.debug("handle_select_motion: update: %s, flags: %s, anchors=%s" % (update, flags, str((cursor_handler.anchor_initial_start_index, cursor_handler.anchor_initial_end_index))))
 
-    def handle_select_end(self, editor, evt):
+    def handle_select_end(self, cursor_handler, evt):
         self.mouse_drag_started = False
         self.select_extend_mode = False
         self.multi_select_mode = False
-        editor.pending_focus = None
+        cursor_handler.pending_focus = None
 
     def ClearSelection(self):
         # Stub function for those controls that don't have it. Tables use this

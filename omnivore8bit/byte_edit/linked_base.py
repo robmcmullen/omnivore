@@ -15,6 +15,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
 from omnivore.framework.editor import FrameworkEditor
+from omnivore.framework.cursor import CursorHandler
 from omnivore.utils.command import DisplayFlags
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment
 from omnivore8bit.arch.disasm import iter_disasm_styles
@@ -23,7 +24,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class LinkedBase(HasTraits):
+class LinkedBase(CursorHandler):
     """Model for the state of a set of viewers. A ByteEditor can have an
     arbitrary number of LinkedBases, but all viewers that point to a common
     LinkedBase will all show the same data.
@@ -154,34 +155,15 @@ class LinkedBase(HasTraits):
             mdict["segment view params"] = dict(self.segment_view_params)  # shallow copy, but only need to get rid of Traits dict wrapper
             mdict['segment number'] = self.segment_number
 
-    def rebuild_ui(self):
-        self.segment = self.document.segments[self.segment_number]
-        self.reconfigure_panes()
-        self.update_segments_ui()
-
-    def get_cursor_state(self):
-        return self.segment, self.cursor_index
-
-    def restore_cursor_state(self, state):
-        segment, index = state
-        number = self.document.find_segment_index(segment)
-        if number < 0:
-            log.error("tried to restore cursor to a deleted segment? %s" % segment)
-        else:
-            if number != self.segment_number:
-                self.view_segment_number(number)
-            self.index_clicked(index, 0, None)
-        log.debug(self.cursor_history)
-
     def get_segment_view_params(self):
         return {
-            'cursor index': self.editor.cursor_index,
+            'cursor index': self.cursor_index,
             'segment number': self.segment_number,
         }
 
     def save_segment_view_params(self, segment):
         d = {
-            'cursor_index': self.editor.cursor_index,
+            'cursor_index': self.cursor_index,
         }
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
@@ -199,7 +181,7 @@ class LinkedBase(HasTraits):
             log.debug("no view params for %s" % segment.uuid)
             return
         log.debug("restoring view params for %s" % segment.uuid)
-        self.editor.cursor_index = d['cursor_index']
+        self.cursor_index = d['cursor_index']
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
                 try:
@@ -235,7 +217,7 @@ class LinkedBase(HasTraits):
             self.segment_number = index
             self.segment_parser = self.document.segment_parser
             self.segment = self.document.segments[index]
-            self.editor.select_none(refresh=False)
+            self.select_none(refresh=False)
             self.restart_disassembly()
             self.task.segments_changed = self.document.segments
             self.task.segment_selected = self.segment_number
@@ -284,6 +266,55 @@ class LinkedBase(HasTraits):
             #self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
             raise
 
+    #### command flag processors
+
+    def process_flags(self, flags):
+        self.editor.process_flags(flags)
+
+    def ensure_visible(self, flags):
+        #self.index_clicked(start, 0, None)
+        log.debug("flags: %s" % str(flags))
+        self.ensure_visible_index = flags
+
+    def rebuild_ui(self):
+        self.segment = self.document.segments[self.segment_number]
+        self.reconfigure_panes()
+        self.update_segments_ui()
+
+    def calc_action_enabled_flags(self):
+        e = self.editor
+        e.can_copy = len(self.selected_ranges) > 1 or (bool(self.selected_ranges) and (self.selected_ranges[0][0] != self.selected_ranges[0][1]))
+        self.calc_dependent_action_enabled_flags()
+
+    def calc_dependent_action_enabled_flags(self):
+        e = self.editor
+        e.can_copy_baseline = e.can_copy and e.baseline_present
+
+    #### CursorHandler overrides
+
+    def highlight_selected_ranges(self):
+        self.document.change_count += 1
+        s = self.segment
+        s.clear_style_bits(selected=True)
+        s.set_style_ranges(self.selected_ranges, selected=True)
+        self.calc_dependent_action_enabled_flags()
+
+    def get_cursor_state(self):
+        return self.segment, self.cursor_index
+
+    def restore_cursor_state(self, state):
+        segment, index = state
+        number = self.document.find_segment_index(segment)
+        if number < 0:
+            log.error("tried to restore cursor to a deleted segment? %s" % segment)
+        else:
+            if number != self.segment_number:
+                self.view_segment_number(number)
+            self.index_clicked(index, 0, None)
+        log.debug(self.cursor_history)
+
+    #### selection utilities
+
     def adjust_selection(self, old_segment):
         """Adjust the selection of the current segment so that it is limited to the
         bounds of the new segment.
@@ -307,7 +338,7 @@ class LinkedBase(HasTraits):
             self.anchor_initial_end_index = self.anchor_end_index = last[1]
         g.clear_style_bits(selected=True)
         self.document.change_count += 1
-        self.editor.highlight_selected_ranges()
+        self.highlight_selected_ranges()
 
     def convert_ranges(self, from_style, to_style):
         s = self.segment
@@ -317,6 +348,22 @@ class LinkedBase(HasTraits):
         s.set_style_ranges(ranges, **to_style)
         self.selected_ranges = s.get_style_ranges(selected=True)
         self.document.change_count += 1
+
+    def get_selected_index_metadata(self, indexes):
+        """Return serializable string containing style information"""
+        style = self.segment.get_style_at_indexes(indexes)
+        r_orig = self.segment.get_style_ranges(comment=True)
+        comments = self.segment.get_comments_at_indexes(indexes)
+        log.debug("after get_comments_at_indexes: %s" % str(comments))
+        metadata = [style.tolist(), comments[0].tolist(), comments[1]]
+        j = json.dumps(metadata)
+        return j
+
+    def restore_selected_index_metadata(self, metastr):
+        metadata = json.loads(metastr)
+        style = np.asarray(metadata[0], dtype=np.uint8)
+        where_comments = np.asarray(metadata[1], dtype=np.int32)
+        return style, where_comments, metadata[2]
 
     def get_segments_from_selection(self, size=-1):
         s = self.segment
@@ -348,10 +395,10 @@ class LinkedBase(HasTraits):
         return segments
 
     def get_selected_status_message(self):
-        if not self.editor.selected_ranges:
+        if not self.selected_ranges:
             return ""
-        if len(self.editor.selected_ranges) == 1:
-            r = self.editor.selected_ranges
+        if len(self.selected_ranges) == 1:
+            r = self.selected_ranges
             first = r[0][0]
             last = r[0][1]
             num = abs(last - first)
@@ -360,13 +407,15 @@ class LinkedBase(HasTraits):
             elif num > 0:
                 return "[%d bytes selected %s]" % (num, self.editor.get_label_of_ranges(r))
         else:
-            return "[%d ranges selected]" % (len(self.editor.selected_ranges))
+            return "[%d ranges selected]" % (len(self.selected_ranges))
 
     def show_status_message(self, msg):
         s = self.get_selected_status_message()
         if s:
             msg = "%s %s" % (msg, s)
         self.editor.task.status_bar.message = msg
+
+    #### segment utilities
 
     def add_user_segment(self, segment, update=True):
         self.document.add_user_segment(segment)
@@ -399,9 +448,6 @@ class LinkedBase(HasTraits):
             except IndexError:
                 continue
         return None, None
-
-    def ensure_visible(self, start, end):
-        self.index_clicked(start, 0, None)
 
     def get_goto_action_in_segment(self, addr_dest):
         if addr_dest >= 0:
@@ -567,3 +613,15 @@ class LinkedBase(HasTraits):
         log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
         if index_range is not Undefined:
             self.restart_disassembly(index_range)
+
+    #### 
+
+    def index_clicked(self, index, bit, from_control, refresh_from=True):
+        log.debug("index_clicked: %s from %s at %d, %s" % (refresh_from, from_control, index, bit))
+        self.cursor_index = index
+        self.check_document_change()
+        if refresh_from:
+            from_control = None
+        self.update_cursor = (from_control, index, bit)
+        self.sidebar.refresh_active()
+        self.calc_action_enabled_flags()

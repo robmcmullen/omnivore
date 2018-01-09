@@ -106,7 +106,7 @@ class ByteGridRenderer(Grid.GridCellRenderer):
                 dc.DrawRectangle(x, rect.y+1, width+1, height)
                 dc.DrawText("...", x, rect.y+1)
 
-            r, c = table.get_row_col(grid.linked_base.editor.cursor_index)
+            r, c = table.get_row_col(grid.linked_base.cursor_index)
             if row == r and col == c:
                 dc.SetPen(self.cursor_pen)
                 dc.SetBrush(self.cursor_brush)
@@ -528,7 +528,7 @@ class HexCellEditor(Grid.GridCellEditor,HexDigitMixin):
         to begin editing.  Set the focus to the edit control.
         *Must Override*
         """
-        grid.linked_base.editor.select_none(False)
+        grid.linked_base.select_none(False)
         self.startValue = grid.GetTable().GetValue(row, col)
         mode = self.parentgrid.table.get_col_type(col)
         log.debug("begin edit: row,col=(%d,%d), mode=%s" % (row, col, mode))
@@ -589,7 +589,7 @@ class HexCellEditor(Grid.GridCellEditor,HexDigitMixin):
         if acceptable:
             # clear selection if an edit is about to start, otherwise the
             # selection stays on screen during the text entry
-            self.parentgrid.linked_base.editor.select_none_if_selection()
+            self.parentgrid.linked_base.select_none_if_selection()
         return acceptable
 
     def StartingKey(self, evt):
@@ -687,20 +687,20 @@ class ByteGrid(Grid.Grid, SelectionMixin):
     def recalc_view(self):
         self.table.ResetView(self)
         self.table.UpdateValues(self)
-        self.set_cursor_index(self, self.linked_base.editor.cursor_index)
-        self.last_change_count = self.linked_base.editor.document.change_count
+        self.set_cursor_index(self, self.linked_base.cursor_index)
+        self.last_change_count = self.linked_base.document.change_count
 
     def refresh_view(self):
         if self.IsShown():
             #self.ForceRefresh()
-            if self.last_change_count == self.linked_base.editor.document.change_count:
+            if self.last_change_count == self.linked_base.document.change_count:
                 log.debug("skipping refresh; document change count=%d" % self.last_change_count)
             else:
                 log.debug("refreshing! document change count=%d" % self.last_change_count)
                 if self.FindFocus() != self and self.linked_base.pending_focus != self:
                     self.center_on_index()
                 self.Refresh()
-                self.last_change_count = self.linked_base.editor.document.change_count
+                self.last_change_count = self.linked_base.document.change_count
         else:
             log.debug("skipping refresh of hidden %s" % self)
 
@@ -719,13 +719,13 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             index = -1
         popup_data = {'row':r, 'col':c, 'index': index, 'in_selection': style&0x80}
         if actions:
-            self.linked_base.editor.popup_context_menu_from_actions(self, actions, popup_data)
+            self.linked_base.popup_context_menu_from_actions(self, actions, popup_data)
 
     def get_popup_actions(self, r, c, inside):
         return []
 
     def on_left_up(self, evt):
-        self.handle_select_end(self.linked_base.editor, evt)
+        self.handle_select_end(self.linked_base, evt)
 
     def get_index_range_from_event(self, evt):
         c, r = (evt.GetCol(), evt.GetRow())
@@ -736,10 +736,10 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         # checking for event object window being the row labels in order to set
         # the 'selecting_rows' flag doesn't work here even though it works in
         # motion events.
-        self.handle_select_start(self.linked_base.editor, evt)
+        self.handle_select_start(self.linked_base, evt)
 
     def on_left_down_label(self, evt):
-        self.handle_select_start(self.linked_base.editor, evt, selecting_rows=True)
+        self.handle_select_start(self.linked_base, evt, selecting_rows=True)
 
     def get_location_from_event(self, evt):
         x, y = evt.GetPosition()
@@ -798,7 +798,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         e = self.linked_base
         if evt.LeftIsDown():
             selecting_rows = evt.GetEventObject() == self.GetGridRowLabelWindow()
-            self.handle_select_motion(self.linked_base.editor, evt, selecting_rows)
+            self.handle_select_motion(self.linked_base, evt, selecting_rows)
 
     def on_motion_update_status(self, evt):
         x, y = self.CalcUnscrolledPosition(evt.GetPosition())
@@ -820,7 +820,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         return "%s  %s" % (msg, comments)
 
     def on_key_down(self, evt):
-        e = self.linked_base.editor
+        e = self.linked_base
         key = evt.GetKeyCode()
         log.debug("evt=%s, key=%s" % (evt, key))
         moved = False
@@ -895,7 +895,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         Keeping them together guarantees that this move will happen
         "atomically".
         """
-        e = self.linked_base.editor
+        e = self.linked_base
         r, c = self.GetGridCursorRow(), self.GetGridCursorCol()
         max_rows = self.table.GetNumberRows()
         vis = self.get_num_visible_rows()
@@ -926,7 +926,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
 
     def advance_cursor(self):
         self.DisableCellEditControl()
-        e = self.linked_base.editor
+        e = self.linked_base
         r, c = self.table.get_row_col(e.cursor_index)
         (r, c) = self.table.get_next_editable_pos(r, c)
         self.SetGridCursor(r, c)
@@ -938,7 +938,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         return col_from_index
 
     def center_on_index(self):
-        r, c = self.table.get_row_col(self.linked_base.editor.cursor_index)
+        r, c = self.table.get_row_col(self.linked_base.cursor_index)
         num = self.get_num_visible_rows()
         last = self.table.GetNumberRows() - 1
         ul = max(0, r - (num / 2))

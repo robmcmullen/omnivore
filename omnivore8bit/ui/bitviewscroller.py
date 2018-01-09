@@ -131,7 +131,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         return r, c
 
     def center_on_index(self):
-        ul = self.find_upper_left_for_center_index(self.editor.cursor_index)
+        ul = self.find_upper_left_for_center_index(self.linked_base.cursor_index)
         self.set_upper_left(ul)
 
     def set_upper_left(self, ul):
@@ -164,7 +164,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
             self.Refresh()
 
     def sync_settings(self):
-        e = self.editor
+        e = self.linked_base
         if e is not None:
             self.sync_to_editor(e)
 
@@ -197,7 +197,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         return self.zoom, self.zoom
 
     def get_highlight_indexes(self):
-        e = self.editor
+        e = self.linked_base
         anchor_start, anchor_end = e.anchor_start_index, e.anchor_end_index
         r1 = c1 = r2 = c2 = -1
         if self.rect_select:
@@ -334,7 +334,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         if first_row is not None:
             first_row = min(max(0, first_row), last_scroll_row)
         if self.FindFocus() != self and self.editor.pending_focus != self:
-            first_row = self.find_upper_left_for_center_index(self.editor.cursor_index)[0]
+            first_row = self.find_upper_left_for_center_index(self.linked_base.cursor_index)[0]
         last_row = self.start_row + self.fully_visible_rows - 1
         last_col = self.start_col + self.fully_visible_cols - 1
 
@@ -397,10 +397,10 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         evt.Skip()
 
     def on_left_up(self, evt):
-        self.handle_select_end(self.editor, evt)
+        self.handle_select_end(self.linked_base, evt)
 
     def set_cursor_pos_from_event(self, evt):
-        e = self.editor
+        e = self.linked_base
         byte, bit, inside = self.event_coords_to_byte(evt)
         if inside:
             self.select_extend_mode = evt.ShiftDown()
@@ -427,7 +427,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         return index1, index2
 
     def on_left_down(self, evt):
-        self.handle_select_start(self.editor, evt)
+        self.handle_select_start(self.linked_base, evt)
         wx.CallAfter(self.SetFocus)
 
     def on_left_dclick(self, evt):
@@ -436,7 +436,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
     def on_motion(self, evt):
         self.on_motion_update_status(evt)
         if self.editor is not None and evt.LeftIsDown():
-            self.handle_select_motion(self.editor, evt)
+            self.handle_select_motion(self.linked_base, evt)
         evt.Skip()
 
     def on_motion_update_status(self, evt):
@@ -530,7 +530,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         return (delta_index, first_row)
 
     def process_delta_index(self, delta_index):
-        e = self.editor
+        e = self.linked_base
         delta_index, first_row = delta_index  # Now a tuple, was an int
         index = e.set_cursor(e.cursor_index + delta_index, False)
         self.set_cursor_index(self, index, first_row)
@@ -760,12 +760,12 @@ class FontMapScroller(BitviewScroller):
         self.show_highlight(array, rc1, rc2, zw, zh)
 
         # Draw cursor position
-        r, c = self.index_to_row_col(self.editor.cursor_index)
+        r, c = self.index_to_row_col(self.linked_base.cursor_index)
         if self.FindFocus() == self:
             color = (0, 0, 0)
         else:
             color = (128, 128, 128)
-        log.debug("Draw cursor: %04x (%d, %d) start_row=%d vis=%d color=%s" % (self.editor.cursor_index + self.start_addr, r, c, self.start_row, self.fully_visible_rows, color))
+        log.debug("Draw cursor: %04x (%d, %d) start_row=%d vis=%d color=%s" % (self.linked_base.cursor_index + self.start_addr, r, c, self.start_row, self.fully_visible_rows, color))
         self.show_highlight(array, (r, c), (r + 1, c + 1), zw, zh, color)
 
     def show_highlight(self, array, rc1, rc2, zw, zh, color=None):
@@ -860,7 +860,7 @@ class FontMapScroller(BitviewScroller):
         self.editing = False
 
     def on_left_dclick(self, evt):
-        e = self.editor
+        e = self.linked_base
         byte, bit, inside = self.event_coords_to_byte(evt)
         if inside:
             e.set_cursor(byte, False)
@@ -877,12 +877,12 @@ class FontMapScroller(BitviewScroller):
             return
         char = evt.GetUnicodeKey()
         if char > 0:
-            self.editor.select_none_if_selection()
+            self.linked_base.select_none_if_selection()
             char = self.segment_viewer.machine.font_mapping.convert_byte_mapping(char)
             self.change_byte(char | self.inverse)
 
     def change_byte(self, value):
-        e = self.editor
+        e = self.linked_base
         if e is None:
             return
         cmd_cls = self.command_cls
@@ -970,7 +970,7 @@ class CharacterSetViewer(FontMapScroller):
         evt.Skip()
 
     def on_left_dclick(self, evt):
-        e = self.editor
+        e = self.linked_base
         byte, bit, inside = self.event_coords_to_byte(evt)
         if inside:
             wx.CallAfter(self.segment_viewer.set_draw_pattern, byte)
@@ -978,7 +978,7 @@ class CharacterSetViewer(FontMapScroller):
 
     def on_motion(self, evt):
         self.on_motion_update_status(evt)
-        e = self.editor
+        e = self.linked_base
         if e is not None and evt.LeftIsDown():
             byte, bit, inside = self.event_coords_to_byte(evt)
             if inside:

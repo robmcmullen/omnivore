@@ -276,30 +276,6 @@ class ByteEditor(FrameworkEditor):
     def supported_clipboard_data_objects(self):
         return self.focused_viewer.supported_clipboard_data_objects
 
-    def create_clipboard_data_object(self):
-        return self.focused_viewer.create_clipboard_data_object()
-
-    def show_data_object_stats(self, data_obj, copy=True, cmd=None):
-        cmd_cls = self.focused_viewer.get_paste_command(data_obj)
-        cmd = cmd_cls(data_obj)
-        FrameworkEditor.show_data_object_stats(self, data_obj, copy, cmd)
-
-    def get_selected_index_metadata(self, indexes):
-        """Return serializable string containing style information"""
-        style = self.segment.get_style_at_indexes(indexes)
-        r_orig = self.segment.get_style_ranges(comment=True)
-        comments = self.segment.get_comments_at_indexes(indexes)
-        log.debug("after get_comments_at_indexes: %s" % str(comments))
-        metadata = [style.tolist(), comments[0].tolist(), comments[1]]
-        j = json.dumps(metadata)
-        return j
-
-    def restore_selected_index_metadata(self, metastr):
-        metadata = json.loads(metastr)
-        style = np.asarray(metadata[0], dtype=np.uint8)
-        where_comments = np.asarray(metadata[1], dtype=np.int32)
-        return style, where_comments, metadata[2]
-
     def check_document_change(self):
         self.document.change_count += 1
         self.update_cursor_history()
@@ -307,20 +283,6 @@ class ByteEditor(FrameworkEditor):
     def rebuild_ui(self):
         log.debug("rebuilding focused_base: %s" % str(self.focused_viewer.linked_base))
         self.document.recalc_event = True
-
-    def get_cursor_state(self):
-        return self.segment, self.cursor_index
-
-    def restore_cursor_state(self, state):
-        segment, index = state
-        number = self.document.find_segment_index(segment)
-        if number < 0:
-            log.error("tried to restore cursor to a deleted segment? %s" % segment)
-        else:
-            if number != self.segment_number:
-                self.view_segment_number(number)
-            self.index_clicked(index, 0, None)
-        log.debug(self.cursor_history)
 
     def refresh_panes(self):
         log.debug("refresh_panes called")
@@ -410,50 +372,6 @@ class ByteEditor(FrameworkEditor):
         if self.diff_highlight and self.document.has_baseline:
             self.document.update_baseline()
 
-    def adjust_selection(self, old_segment):
-        """Adjust the selection of the current segment so that it is limited to the
-        bounds of the new segment.
-        
-        If the current selection is entirely out of bounds of the new segment,
-        all the selection indexes will be set to zero.
-        """
-        # find byte index of view into master array
-        g = self.document.container_segment
-        s = self.segment
-        global_offset = g.get_raw_index(0)
-        new_offset = s.get_raw_index(0)
-        old_offset = old_segment.get_raw_index(0)
-
-        self.focused_viewer.linked_base.restore_segment_view_params(s)
-        self.selected_ranges = s.get_style_ranges(selected=True)
-        if self.selected_ranges:
-            # Arbitrarily puth the anchor on the last selected range
-            last = self.selected_ranges[-1]
-            self.anchor_initial_start_index = self.anchor_start_index = last[0]
-            self.anchor_initial_end_index = self.anchor_end_index = last[1]
-        g.clear_style_bits(selected=True)
-        self.highlight_selected_ranges()
-
-    def highlight_selected_ranges(self):
-        self.document.change_count += 1
-        self.focused_viewer.highlight_selected_ranges()
-        self.can_copy_baseline = self.can_copy and self.baseline_present
-
-    def get_optimized_selected_ranges(self):
-        """ Get the list of monotonically increasing, non-overlapping selected
-        ranges
-        """
-        return self.focused_viewer.get_optimized_selected_ranges(self.selected_ranges)
-
-    def convert_ranges(self, from_style, to_style):
-        s = self.segment
-        ranges = s.get_style_ranges(**from_style)
-        s.clear_style_bits(**from_style)
-        s.clear_style_bits(**to_style)
-        s.set_style_ranges(ranges, **to_style)
-        self.selected_ranges = s.get_style_ranges(selected=True)
-        self.document.change_count += 1
-
     def get_label_at_index(self, index):
         return self.focused_viewer.linked_base.segment.label(index)
 
@@ -472,35 +390,6 @@ class ByteEditor(FrameworkEditor):
                 start, end = end, start
             labels.append(self.get_label_at_index(start))
         return ", ".join(labels)
-
-    def get_segments_from_selection(self, size=-1):
-        s = self.segment
-        segments = []
-
-        # Get the selected ranges directly from the segment style data, because
-        # the individual range entries in self.selected_ranges can be out of
-        # order or overlapping
-        ranges = s.get_style_ranges(selected=True)
-        if len(ranges) == 1:
-            seg_start, seg_end = ranges[0]
-            if size < 0:
-                size = seg_end - seg_start
-            for start in range(seg_start, seg_end, size):
-                end = min(seg_end, start + size)
-                segment = DefaultSegment(s.rawdata[start:end], s.start_addr + start)
-                segments.append(segment)
-        elif len(ranges) > 1:
-            # If there are multiple selections, use an indexed segment
-            indexes = []
-            for start, end in ranges:
-                indexes.extend(range(start, end))
-            if size < 0:
-                size = len(indexes)
-            for i in range(0, len(indexes), size):
-                raw = s.rawdata.get_indexed(indexes[i:i + size])
-                segment = DefaultSegment(raw, s.start_addr + indexes[i])
-                segments.append(segment)
-        return segments
 
     def get_selected_status_message(self):
         if not self.selected_ranges:
@@ -574,11 +463,6 @@ class ByteEditor(FrameworkEditor):
             except IndexError:
                 continue
         return None, None
-
-    def ensure_visible(self, flags):
-        #self.index_clicked(start, 0, None)
-        log.debug("flags: %s" % str(flags))
-        self.focused_viewer.linked_base.ensure_visible_index = flags
 
     def get_goto_action_in_segment(self, addr_dest):
         if addr_dest >= 0:
@@ -789,7 +673,7 @@ class ByteEditor(FrameworkEditor):
                 # if there is a perspective, this pane_info will get replaced
                 if first:
                     viewer.pane_info.CenterPane().DestroyOnClose()
-                    self.focused_viewer = viewer  # Initial focus is center pane
+                    self.set_focused_viewer(viewer)  # Initial focus is center pane
                     first = False
                 else:
                     layer += 1
@@ -819,6 +703,12 @@ class ByteEditor(FrameworkEditor):
         self.update_pane_names()
         viewer.update_toolbar()
 
+    def set_focused_viewer(self, viewer):
+        self.focused_viewer = viewer
+        self.focused_viewer_changed_event = viewer
+        self.cursor_handler = viewer.linked_base
+        viewer.linked_base.calc_action_enabled_flags()
+
     def on_pane_active(self, evt):
         # NOTE: evt.pane in this case is not an AuiPaneInfo object, it's the
         # AuiPaneInfo.window object
@@ -830,21 +720,9 @@ class ByteEditor(FrameworkEditor):
             log.debug("on_pane_active: already current viewer %s" % v)
         else:
             log.debug("on_pane_active: activated viewer %s %s" % (v, v.window_title))
-            self.focused_viewer = evt.pane.segment_viewer
-            self.focused_viewer_changed_event = self.focused_viewer
+            self.set_focused_viewer(evt.pane.segment_viewer)
 
     def on_pane_close(self, evt):
         v = evt.pane.window.segment_viewer
         log.debug("on_pane_close: closed viewer %s %s" % (v, v.window_title))
         self.viewers.remove(v)
-
-    def index_clicked(self, index, bit, from_control, refresh_from=True):
-        log.debug("index_clicked: %s from %s at %d, %s" % (refresh_from, from_control, index, bit))
-        self.cursor_index = index
-        self.check_document_change()
-        if refresh_from:
-            from_control = None
-        self.focused_viewer.linked_base.update_cursor = (from_control, index, bit)
-        self.sidebar.refresh_active()
-        self.can_copy = len(self.selected_ranges) > 1 or (bool(self.selected_ranges) and (self.selected_ranges[0][0] != self.selected_ranges[0][1]))
-        self.can_copy_baseline = self.can_copy and self.baseline_present

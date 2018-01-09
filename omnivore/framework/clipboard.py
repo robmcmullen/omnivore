@@ -148,15 +148,15 @@ class BinarySelection(ClipboardSerializer):
         # NOTE: also handles multiple selection
         ranges, indexes = viewer.get_selected_ranges_and_indexes()
         if len(ranges) > 0:
-            metadata = e.get_selected_index_metadata(indexes)
+            metadata = viewer.get_selected_index_metadata(indexes)
             if len(ranges) == 1:
                 r = ranges[0]
-                data = e.segment[r[0]:r[1]]
+                data = viewer.segment[r[0]:r[1]]
                 s1 = data.tostring()
                 serialized = "%d,%s%s" % (len(s1), s1, metadata)
                 name = ""
             elif np.alen(indexes) > 0:
-                data = e.segment[indexes]
+                data = viewer.segment[indexes]
                 s1 = data.tostring()
                 s2 = indexes.tostring()
                 serialized = "%d,%d,%s%s%s" % (len(s1), len(s2), s1, s2, metadata)

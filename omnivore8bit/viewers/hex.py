@@ -119,7 +119,7 @@ class CachingHexRenderer(Grid.GridCellRenderer):
             text, style = table.get_value_style(row, col)
             self.cache.draw_text(dc, rect, text, style)
 
-            r, c = table.get_row_col(grid.linked_base.editor.cursor_index)
+            r, c = table.get_row_col(grid.linked_base.cursor_index)
             if row == r and col == c:
                 dc.SetPen(self.cache.cursor_pen)
                 dc.SetBrush(self.cache.cursor_brush)

@@ -94,8 +94,8 @@ class PickTileMode(SelectMode):
         index, bit, inside = c.event_coords_to_byte(evt)
         if not inside:
             return
-        e = c.editor
         v = c.segment_viewer
+        e = v.linked_base
         value = e.segment[index]
         if self.last_index != index:
             e.set_cursor(index, False)
@@ -118,18 +118,16 @@ class DrawMode(SelectMode):
 
     def draw(self, evt, start=False):
         c = self.control
-        e = c.editor
-        if e is None:
-            return
+        v = c.segment_viewer
         pattern = c.segment_viewer.draw_pattern
         if start:
             self.batch = DrawBatchCommand()
         byte, bit, inside = c.event_coords_to_byte(evt)
         if inside:
-            e.set_cursor(byte, False)
-            index = e.cursor_index
+            v.linked_base.set_cursor(byte, False)
+            index = v.linked_base.cursor_index
             cmd = ChangeByteCommand(e.segment, index, index+len(pattern), pattern, False, True)
-            e.process_command(cmd, self.batch)
+            v.editor.process_command(cmd, self.batch)
 
     def process_left_down(self, evt):
         self.draw(evt, True)
@@ -141,10 +139,8 @@ class DrawMode(SelectMode):
 
     def process_left_up(self, evt):
         c = self.control
-        e = c.editor
-        if e is None:
-            return
-        e.end_batch()
+        v = c.segment_viewer
+        v.editor.end_batch()
         self.batch = None
 
 
@@ -167,19 +163,17 @@ class OverlayMode(SelectMode):
 
     def draw(self, evt, start=False):
         c = self.control
-        e = c.editor
-        if e is None:
-            return
-        pattern = c.segment_viewer.draw_pattern
+        v = c.segment_viewer
+        pattern = v.draw_pattern
         byte, bit, inside = c.event_coords_to_byte(evt)
         if inside:
             if start:
                 self.batch = Overlay()
                 self.start_index = byte
-            e.set_cursor(byte, False)
+            v.linked_base.set_cursor(byte, False)
             index = byte
-            cmd = self.command(e.segment, self.start_index, index, pattern, c.bytes_per_row)
-            e.process_command(cmd, self.batch)
+            cmd = self.command(v.segment, self.start_index, index, pattern, c.bytes_per_row)
+            v.editor.process_command(cmd, self.batch)
             self.display_coords(evt, self.get_display_rect(index))
 
     def process_left_down(self, evt):
@@ -190,10 +184,8 @@ class OverlayMode(SelectMode):
 
     def process_left_up(self, evt):
         c = self.control
-        e = c.editor
-        if e is None:
-            return
-        e.end_batch()
+        v = c.segment_viewer
+        v.editor.end_batch()
         self.batch = None
 
 
@@ -280,10 +272,10 @@ class MapViewer(SegmentViewer):
     def highlight_selected_ranges(self):
         s = self.linked_base.segment
         s.clear_style_bits(selected=True)
-        s.set_style_ranges_rect(self.linked_base.editor.selected_ranges, self.control.bytes_per_row, selected=True)
+        s.set_style_ranges_rect(self.linked_base.selected_ranges, self.control.bytes_per_row, selected=True)
 
     def create_clipboard_data_object(self):
-        e = self.linked_base.editor
+        e = self.linked_base
         if e.anchor_start_index != e.anchor_end_index:
             anchor_start, anchor_end, (r1, c1), (r2, c2) = self.control.get_highlight_indexes()
             bpr = self.control.bytes_per_row
@@ -296,13 +288,13 @@ class MapViewer(SegmentViewer):
         return None
 
     def process_paste_data(self, extra, bytes, cmd_cls=None):
-        e = self.linked_base.editor
+        e = self.linked_base
         if extra[0] == "numpy,columns":
             if cmd_cls is None:
                 cmd_cls = PasteRectangularCommand
             format_id, r, c = extra
             cmd = cmd_cls(e.segment, e.anchor_start_index, r, c, self.control.bytes_per_row, bytes)
-            e.process_command(cmd)
+            self.editor.process_command(cmd)
             return True
         return False
 

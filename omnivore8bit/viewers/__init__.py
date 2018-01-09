@@ -168,8 +168,8 @@ class SegmentViewer(HasTraits):
     def _get_range_processor(self):  # Trait property getter
         return ranges_to_indexes
 
-    def get_optimized_selected_ranges(self, ranges):
-        return collapse_overlapping_ranges(ranges)
+    def get_selected_ranges_and_indexes(self):
+        return self.linked_base.get_selected_ranges_and_indexes()
 
     ##### SegmentViewer interface
 
