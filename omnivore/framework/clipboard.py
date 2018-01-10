@@ -167,7 +167,7 @@ class BinarySelection(ClipboardSerializer):
                 s1 = data.tostring()
                 s2 = indexes.tostring()
                 serialized = "%d,%d,%s%s%s" % (len(s1), len(s2), s1, s2, metadata)
-                name = "numpy,columns"
+                name = "numpy,multiple"
             else:
                 raise ClipboardError("No ranges or indexes selected")
             return cls.get_composite_object(data, serialized, name)
@@ -195,7 +195,7 @@ class MultipleBinarySelection(ClipboardSerializer):
         return "%s in multiple ranges" % (self.size_info)
 
     def unpack_data_object(self, viewer, data_obj):
-        value = data_obj.GetData().tobytes()
+        value = get_data_object_value(data_obj, self.data_format_name)
         len1, len2, value = value.split(",", 2)
         len1 = int(len1)
         len2 = int(len2)
@@ -245,6 +245,15 @@ def create_data_object(viewer, name):
     data_obj = serializer_cls.selection_to_data_object(viewer)
     if data_obj is None:
         raise ClipboardError("Viewer %s can't encode as a %s." % (viewer, serializer.pretty_name.lower()))
+
+    # format may not be the same as requested because the type of selection
+    # (single, multiple, etc.) may result in a different format.
+    fmt = data_obj.GetPreferredFormat()
+    name = fmt.GetId()
+    try:
+        serializer_cls = known_clipboard_serializers[name]
+    except IndexError:
+        raise ClipboardError("Unknown format name %s" % name)
     serializer = serializer_cls()
     serializer.unpack_data_object(viewer, data_obj)
     log.debug("create_data_object: serialized: %s" % serializer)
