@@ -91,11 +91,11 @@ class ClipboardSerializer(object):
 
     def __init__(self):
         self.data = None
-        self.ranges = None
-        self.cursor = None
+        self.ranges = []
+        self.cursor_index = 0
         self.indexes = None
         self.style = None
-        self.relative_comment_indexes = None
+        self.comment_indexes = None
         self.comments = None
         self.num_rows = None
         self.num_columns = None
@@ -141,6 +141,7 @@ class TextSelection(ClipboardSerializer):
         else:
             raise ClipboardError("Unsupported format type for %s: %s" % (self.data_format_name, ", ".join([str(f) in fmts])))
         self.data = np.fromstring(value, dtype=np.uint8)
+        self.cursor_index = viewer.linked_base.cursor_index
 
 
 class BinarySelection(ClipboardSerializer):
@@ -179,7 +180,8 @@ class BinarySelection(ClipboardSerializer):
         len1 = int(len1)
         value, j = value[0:len1], value[len1:]
         self.data = np.fromstring(value, dtype=np.uint8)
-        self.style, self.where_comments, self.comments = viewer.restore_selected_index_metadata(j)
+        self.style, self.comment_indexes, self.comments = viewer.restore_selected_index_metadata(j)
+        self.cursor_index = viewer.linked_base.cursor_index
 
 
 class MultipleBinarySelection(ClipboardSerializer):
@@ -202,7 +204,8 @@ class MultipleBinarySelection(ClipboardSerializer):
         value, index_string, j = value[0:split1], value[split1:split2], value[split2:]
         self.data = np.fromstring(value, dtype=np.uint8)
         self.indexes = np.fromstring(index_string, dtype=np.uint32)
-        self.style, self.where_comments, self.comments = viewer.restore_selected_index_metadata(j)
+        self.style, self.comment_indexes, self.comments = viewer.restore_selected_index_metadata(j)
+        self.cursor_index = viewer.linked_base.cursor_index
 
 
 class RectangularSelection(ClipboardSerializer):
@@ -230,6 +233,7 @@ class RectangularSelection(ClipboardSerializer):
         value = data_obj.GetData().tobytes()
         self.num_rows, self.num_columns, value = value.split(",", 2)
         self.data = np.fromstring(value, dtype=np.uint8)
+        self.cursor_index = viewer.linked_base.cursor_index
 
 
 def create_data_object(viewer, name):
@@ -283,7 +287,7 @@ def get_paste_data(viewer):
         except IndexError:
             raise ClipboardError("Unknown format name %s" % name)
     serializer = serializer_cls()
-    serialized.unpack_data_object(viewer, data_obj)
+    serializer.unpack_data_object(viewer, data_obj)
     return serializer
 
 known_clipboard_serializers = {}

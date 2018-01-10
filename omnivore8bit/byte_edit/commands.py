@@ -307,6 +307,10 @@ class PasteCommand(SetValuesAtIndexesCommand):
     short_name = "paste"
     pretty_name = "Paste"
 
+    def __init__(self, segment, serializer):
+        s = serializer
+        SetValuesAtIndexesCommand.__init__(self, segment, s.ranges, s.cursor_index, s.data, s.indexes, s.style, s.comment_indexes, s.comments)
+
 
 class PasteAndRepeatCommand(PasteCommand):
     short_name = "paste_rep"

@@ -10,6 +10,7 @@ from omnivore.framework.plugin import FrameworkPlugin
 from ..byte_edit.linked_base import LinkedBase
 import omnivore.framework.actions as fa
 from ..byte_edit import actions as ba
+from ..byte_edit.commands import PasteCommand
 
 from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 
@@ -305,30 +306,8 @@ class SegmentViewer(HasTraits):
     def clipboard_data_format(self):
         return "numpy"
 
-    def get_paste_command(self, data_obj):
-        # Full list of valid data formats:
-        #
-        # >>> import wx
-        # >>> [x for x in dir(wx) if x.startswith("DF_")]
-        # ['DF_BITMAP', 'DF_DIB', 'DF_DIF', 'DF_ENHMETAFILE', 'DF_FILENAME',
-        # 'DF_HTML', 'DF_INVALID', 'DF_LOCALE', 'DF_MAX', 'DF_METAFILE',
-        # 'DF_OEMTEXT', 'DF_PALETTE', 'DF_PENDATA', 'DF_PRIVATE', 'DF_RIFF',
-        # 'DF_SYLK', 'DF_TEXT', 'DF_TIFF', 'DF_UNICODETEXT', 'DF_WAVE']
-        fmt = data_obj.GetPreferredFormat()
-        log.debug("pasting: %s" % fmt.GetId())
-        if wx.DF_TEXT in data_obj.GetAllFormats() or wx.DF_UNICODETEXT in data_obj.GetAllFormats():
-            fmt_id = 'text'
-        else:
-            fmt = data_obj.GetPreferredFormat()
-            fmt_id = fmt.GetId()
-        _, cmd_cls = self.supported_clipboard_data_object_map[fmt_id]  # raises KeyError if not found
-        return cmd_cls
-
-    def process_paste_data(self, extra, bytes, cmd_cls=None):
-        # Byte editor handles normal numpy and numpy,multiple data. If viewers
-        # can handle other types of paste data objects, handle it here. Return
-        # True if handled, False if the viewer can't handle it.
-        return False
+    def get_paste_command(self, serialized_data):
+        return PasteCommand
 
     ##### Spring tab (pull out menu) interface
 

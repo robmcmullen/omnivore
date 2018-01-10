@@ -224,10 +224,13 @@ class ByteEditor(FrameworkEditor):
     def copy_selection_to_clipboard(self, name):
         return clipboard.set_from_selection(self.focused_viewer, name)
 
+    def get_paste_data_from_clipboard(self):
+        return clipboard.get_paste_data(self.focused_viewer)
+
     def process_paste_data(self, serialized_data, cmd_cls=None):
         if cmd_cls is None:
-            cmd_cls = self.focused_viewer.get_paste_command(data_obj)
-        cmd = cmd_cls(self.segment, data_obj, self)
+            cmd_cls = self.focused_viewer.get_paste_command(serialized_data)
+        cmd = cmd_cls(self.segment, serialized_data)
         log.debug("processing paste object %s" % cmd)
         self.process_command(cmd)
         return cmd

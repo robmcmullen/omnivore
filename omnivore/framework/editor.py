@@ -332,11 +332,14 @@ class FrameworkEditor(Editor):
         the current selection
         """
         try:
-            serialized_data = clipboard.get_paste_data()
+            serialized_data = self.get_paste_data_from_clipboard()
             self.process_paste_data(serialized_data, cmd_cls)
             self.task.status_bar.message = "Pasted %s" % serialized_data.summary
         except clipboard.ClipboardError as e:
             self.window.error(e.message, "Paste Error")
+
+    def get_paste_data_from_clipboard(self):
+        return clipboard.get_paste_data()
 
     def process_paste_data(self, serialized_data, cmd_cls=None):
         pass  # Override in subclass
