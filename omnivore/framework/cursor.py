@@ -198,7 +198,7 @@ class SelectionHandler(object):
     def select_invert(self, cursor_handler, refresh=True):
         """ Selects the entire document
         """
-        ranges = self.invert_selection_ranges(cursor_handler, self.selected_ranges)
+        ranges = self.invert_selection_ranges(cursor_handler, cursor_handler.selected_ranges)
         self.select_ranges(cursor_handler, ranges, refresh)
 
     def select_range(self, cursor_handler, start, end, add=False, extend=False):

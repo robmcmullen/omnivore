@@ -26,6 +26,7 @@ from pyface.tasks.action.api import EditorAction
 from atrcopy import SegmentData, DefaultSegment, get_style_mask
 
 from omnivore.utils.nputil import intscale
+from omnivore.utils.sortutil import invert_rects
 from omnivore8bit.byte_edit.actions import *
 from omnivore8bit.arch.disasm import get_style_name
 
@@ -810,6 +811,12 @@ class FontMapScroller(BitviewScroller):
 
     def highlight_selected_ranges_in_segment(self, selected_ranges, segment):
         segment.set_style_ranges_rect(selected_ranges, self.bytes_per_row, selected=True)
+
+    def invert_selection_ranges(self, cursor_handler, ranges):
+        rects = [(rect[2], rect[3]) for rect in [self.segment.get_rect_indexes(r[0], r[1], self.bytes_per_row) for r in ranges]]
+        inverted = invert_rects(rects, self.total_rows, self.bytes_per_row)
+        ranges = self.segment.rects_to_ranges(inverted, self.bytes_per_row)
+        return ranges
 
     def event_coords_to_byte(self, evt):
         """Convert event coordinates to world coordinates.

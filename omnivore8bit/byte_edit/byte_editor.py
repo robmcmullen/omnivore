@@ -135,10 +135,6 @@ class ByteEditor(FrameworkEditor):
     def section_name(self):
         return str(self.segment)
 
-    @property
-    def document_length(self):
-        return len(self.segment)
-
 
     ###########################################################################
     # 'FrameworkEditor' interface.
@@ -235,48 +231,21 @@ class ByteEditor(FrameworkEditor):
         self.process_command(cmd)
         return cmd
 
-    def get_numpy_from_data_object(self, data_obj):
-        # Full list of valid data formats:
-        #
-        # >>> import wx
-        # >>> [x for x in dir(wx) if x.startswith("DF_")]
-        # ['DF_BITMAP', 'DF_DIB', 'DF_DIF', 'DF_ENHMETAFILE', 'DF_FILENAME',
-        # 'DF_HTML', 'DF_INVALID', 'DF_LOCALE', 'DF_MAX', 'DF_METAFILE',
-        # 'DF_OEMTEXT', 'DF_PALETTE', 'DF_PENDATA', 'DF_PRIVATE', 'DF_RIFF',
-        # 'DF_SYLK', 'DF_TEXT', 'DF_TIFF', 'DF_UNICODETEXT', 'DF_WAVE']
-        extra = None
-        if wx.DF_TEXT in data_obj.GetAllFormats():
-            value = data_obj.GetText().encode('utf-8')
-        elif wx.DF_UNICODETEXT in data_obj.GetAllFormats():  # for windows
-            value = data_obj.GetText().encode('utf-8')
-        else:
-            value = data_obj.GetData().tobytes()
-            fmt = data_obj.GetPreferredFormat()
-            if fmt.GetId() == "numpy,columns":
-                r, c, value = value.split(",", 2)
-                extra = fmt.GetId(), int(r), int(c)
-            elif fmt.GetId() == "numpy":
-                len1, value = value.split(",", 1)
-                len1 = int(len1)
-                value, j = value[0:len1], value[len1:]
-                style, where_comments, comments = self.restore_selected_index_metadata(j)
-                extra = fmt.GetId(), None, style, where_comments, comments
-            elif fmt.GetId() == "numpy,multiple":
-                len1, len2, value = value.split(",", 2)
-                len1 = int(len1)
-                len2 = int(len2)
-                split1 = len1
-                split2 = len1 + len2
-                value, index_string, j = value[0:split1], value[split1:split2], value[split2:]
-                indexes = np.fromstring(index_string, dtype=np.uint32)
-                style, where_comments, comments = self.restore_selected_index_metadata(j)
-                extra = fmt.GetId(), indexes, style, where_comments, comments
-        bytes = np.fromstring(value, dtype=np.uint8)
-        return bytes, extra
-
     @property
     def supported_clipboard_data_objects(self):
         return self.focused_viewer.supported_clipboard_data_objects
+
+    def select_all(self):
+        self.focused_viewer.select_all()
+        self.document.refresh_event = True
+
+    def select_none(self):
+        self.focused_viewer.select_none()
+        self.document.refresh_event = True
+
+    def select_invert(self):
+        self.focused_viewer.select_invert()
+        self.document.refresh_event = True
 
     def check_document_change(self):
         self.document.change_count += 1

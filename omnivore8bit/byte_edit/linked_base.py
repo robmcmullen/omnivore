@@ -130,6 +130,10 @@ class LinkedBase(CursorHandler):
     def document(self):
         return self.editor.document
 
+    @property
+    def document_length(self):
+        return len(self.segment)
+
     #### Convenience functions
 
     def __str__(self):

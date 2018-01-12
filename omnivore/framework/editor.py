@@ -210,10 +210,6 @@ class FrameworkEditor(Editor):
         """
         pass
 
-    @property
-    def document_length(self):
-        return len(self.document)
-
     def save(self, uri=None, saver=None, document=None):
         """ Saves a document.
 
@@ -342,6 +338,15 @@ class FrameworkEditor(Editor):
         return clipboard.get_paste_data()
 
     def process_paste_data(self, serialized_data, cmd_cls=None):
+        pass  # Override in subclass
+
+    def select_all(self):
+        pass  # Override in subclass
+
+    def select_none(self):
+        pass  # Override in subclass
+
+    def select_invert(self):
         pass  # Override in subclass
 
     # must be a class attribute because for checking clipboard data formats of

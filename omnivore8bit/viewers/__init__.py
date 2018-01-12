@@ -288,6 +288,15 @@ class SegmentViewer(HasTraits):
 
     ##### Selections
 
+    def select_all(self):
+        self.control.select_all(self.linked_base)
+
+    def select_none(self):
+        self.control.select_none(self.linked_base)
+
+    def select_invert(self):
+        self.control.select_invert(self.linked_base)
+
     def highlight_selected_ranges(self):
         s = self.linked_base.segment
         s.clear_style_bits(selected=True)
