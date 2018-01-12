@@ -15,6 +15,7 @@ from omnivore8bit.ui.bitviewscroller import BitviewScroller, FontMapScroller
 from omnivore.utils.command import Overlay
 from omnivore8bit.utils.drawutil import get_bounds
 from omnivore.utils.sortutil import invert_rects, rect_ranges_to_indexes
+import omnivore.framework.actions as fa
 from ..byte_edit.commands import ChangeByteCommand, PasteCommand, PasteRectCommand
 from omnivore.framework.mouse_handler import MouseHandler, MouseControllerMixin
 
@@ -297,3 +298,8 @@ class MapViewer(SegmentViewer):
     def set_draw_pattern(self, value):
         log.debug("new draw pattern: %s" % str(value))
         self.draw_pattern = np.asarray(value, dtype=np.uint8)
+
+    #### popup menus
+
+    def common_popup_actions(self):
+        return [fa.CutAction, fa.CopyAction, fa.PasteAction, None, fa.SelectAllAction, fa.SelectNoneAction, fa.SelectInvertAction]
