@@ -6,15 +6,16 @@ from pyface.action.api import Separator, Group
 from pyface.tasks.api import Task, TaskWindow, TaskLayout, PaneItem, IEditor, \
     IEditorAreaPane, EditorAreaPane, Editor, DockPane, HSplitter, VSplitter
 from pyface.tasks.action.api import SMenuBar, SMenu, SToolBar, SchemaAddition
-from traits.api import on_trait_change, Property, Instance, Any, Event, Int
+from traits.api import on_trait_change, Property, Instance, Any, Event, Int, Bool
 
 from omnivore.framework.task import FrameworkTask
-from omnivore.framework.actions import *
+from omnivore.framework import actions as fa
 from omnivore.framework.toolbar import get_toolbar_group
 from byte_editor import ByteEditor
 from preferences import ByteEditPreferences
 import pane_layout
-from actions import *
+from . import actions as ba
+from ..viewers import actions as va
 import omnivore8bit.arch.fonts as fonts
 import omnivore8bit.arch.colors as colors
 import omnivore8bit.arch.machine as machine
@@ -321,77 +322,77 @@ class ByteEditTask(FrameworkTask):
             kwargs = {}
         actions = []
         for m in machine.predefined['font_mapping']:
-            actions.append(FontMappingAction(font_mapping=m, **kwargs))
+            actions.append(va.FontMappingAction(font_mapping=m, **kwargs))
         return actions
 
     def get_actions_Menu_File_ImportGroup(self):
         return [
-            InsertFileAction(),
+            ba.InsertFileAction(),
             ]
 
     def get_actions_Menu_File_ExportGroup(self):
         return [
-            SaveAsXEXAction(),
-            SaveAsXEXBootAction(),
+            ba.SaveAsXEXAction(),
+            ba.SaveAsXEXBootAction(),
             ]
 
     def get_actions_Menu_File_SaveGroup(self):
         return [
-            SaveAction(),
-            SaveAsAction(),
-            SMenu(SaveSegmentGroup(),
+            fa.SaveAction(),
+            fa.SaveAsAction(),
+            SMenu(ba.SaveSegmentGroup(),
                   id='SaveSegmentAsSubmenu', name="Save Segment As"),
-            SaveAsImageAction(),
+            fa.SaveAsImageAction(),
             ]
 
     def get_actions_Menu_Edit_UndoGroup(self):
         return [
-            UndoAction(),
-            RedoAction(),
-            RevertToBaselineAction(),
+            fa.UndoAction(),
+            fa.RedoAction(),
+            ba.RevertToBaselineAction(),
             ]
 
     def get_actions_Menu_Edit_CopyPasteGroup(self):
         copy_special_actions = [
-            CopyAsReprAction(),
-            CopyAsCBytesAction()
+            ba.CopyAsReprAction(),
+            ba.CopyAsCBytesAction()
             ]
         for v in self.known_viewers:
             copy_special_actions.extend([action_cls() for action_cls in v.copy_special])
         copy_special_actions.sort(key=lambda a:a.name)
         return [
-            CutAction(),
-            CopyAction(),
+            fa.CutAction(),
+            fa.CopyAction(),
             SMenu(
                 *copy_special_actions,
                 id='copyspecial', name="Copy Special"),
-            PasteAction(),
+            fa.PasteAction(),
             SMenu(
-                PasteAndRepeatAction(),
-                PasteCommentsAction(),
+                ba.PasteAndRepeatAction(),
+                ba.PasteCommentsAction(),
                 id='pastespecial', name="Paste Special"),
             ]
 
     def get_actions_Menu_Edit_SelectGroup(self):
         return [
-            SelectAllAction(),
-            SelectNoneAction(),
-            SelectInvertAction(),
+            fa.SelectAllAction(),
+            fa.SelectNoneAction(),
+            fa.SelectInvertAction(),
             SMenu(
-                MarkSelectionAsCodeAction(),
-                MarkSelectionAsDataAction(),
-                MarkSelectionAsUninitializedDataAction(),
-                MarkSelectionAsDisplayListAction(),
-                MarkSelectionAsJumpmanLevelAction(),
-                MarkSelectionAsJumpmanHarvestAction(),
+                ba.MarkSelectionAsCodeAction(),
+                ba.MarkSelectionAsDataAction(),
+                ba.MarkSelectionAsUninitializedDataAction(),
+                ba.MarkSelectionAsDisplayListAction(),
+                ba.MarkSelectionAsJumpmanLevelAction(),
+                ba.MarkSelectionAsJumpmanHarvestAction(),
                 id="mark1", name="Mark Selection As"),
             ]
 
     def get_actions_Menu_Edit_FindGroup(self):
         return [
-            FindAction(),
-            FindAlgorithmAction(),
-            FindNextAction(),
+            ba.FindAction(),
+            ba.FindAlgorithmAction(),
+            ba.FindNextAction(),
             # SMenu(
             #     FindCodeAction(),
             #     FindDataAction(),
@@ -400,7 +401,7 @@ class ByteEditTask(FrameworkTask):
             #     FindJumpmanHarvestAction(),
             #     FindUninitializedAction(),
             #     id="sel1", name="Find Style", separator=False),
-            FindToSelectionAction(),
+            ba.FindToSelectionAction(),
             ]
 
     def get_actions_Menu_View_ConfigGroup(self):
@@ -409,10 +410,10 @@ class ByteEditTask(FrameworkTask):
         center_actions = []
         for v in self.known_viewers:
             if v.has_metadata_only:
-                info_actions.append(AddViewerAction(viewer=v))
+                info_actions.append(ba.AddViewerAction(viewer=v))
             else:
-                data_actions.append(AddViewerAction(viewer=v))
-                center_actions.append(ReplaceCenterViewerAction(viewer=v))
+                data_actions.append(ba.AddViewerAction(viewer=v))
+                center_actions.append(ba.ReplaceCenterViewerAction(viewer=v))
         return [
             SMenu(
                 Group(
@@ -430,14 +431,14 @@ class ByteEditTask(FrameworkTask):
                     id="a1", separator=True),
                 id='ViewerChoiceSubmenu2', separator=False, name="Add Info Pane"),
             Separator(),
-            ViewDiffHighlightAction(),
-            TextFontAction(),
+            ba.ViewDiffHighlightAction(),
+            va.TextFontAction(),
             ]
 
     def get_actions_Menu_View_PredefinedGroup(self):
         actions = []
         for m in machine.predefined['machine']:
-            actions.append(PredefinedMachineAction(machine=m))
+            actions.append(va.PredefinedMachineAction(machine=m))
         return [
             SMenu(
                 Group(
@@ -449,7 +450,7 @@ class ByteEditTask(FrameworkTask):
     def get_actions_Menu_View_ProcessorGroup(self):
         actions = []
         for r in machine.predefined['disassembler']:
-            actions.append(ProcessorTypeAction(disassembler=r))
+            actions.append(va.ProcessorTypeAction(disassembler=r))
         return [
             SMenu(
                 Group(
@@ -461,11 +462,11 @@ class ByteEditTask(FrameworkTask):
     def get_actions_Menu_View_AssemblerGroup(self):
         return [
             SMenu(
-                AssemblerChoiceGroup(id="a2", separator=True),
+                va.AssemblerChoiceGroup(id="a2", separator=True),
                 Group(
-                    AddNewAssemblerAction(),
-                    EditAssemblersAction(),
-                    SetSystemDefaultAssemblerAction(),
+                    va.AddNewAssemblerAction(),
+                    va.EditAssemblersAction(),
+                    va.SetSystemDefaultAssemblerAction(),
                     id="a3", separator=True),
                 id='mm2', separator=False, name="Assembler Syntax"),
             ]
@@ -473,7 +474,7 @@ class ByteEditTask(FrameworkTask):
     def get_actions_Menu_View_MemoryMapGroup(self):
         actions = []
         for r in machine.predefined['memory_map']:
-            actions.append(MemoryMapAction(memory_map=r))
+            actions.append(va.MemoryMapAction(memory_map=r))
         return [
             SMenu(
                 Group(
@@ -486,14 +487,14 @@ class ByteEditTask(FrameworkTask):
         return [
             SMenu(
                 Group(
-                    ColorStandardAction(name="NTSC", color_standard=0),
-                    ColorStandardAction(name="PAL", color_standard=1),
+                    va.ColorStandardAction(name="NTSC", color_standard=0),
+                    va.ColorStandardAction(name="PAL", color_standard=1),
                     id="a0", separator=True),
                 Group(
-                    UseColorsAction(name="ANTIC Powerup Colors", colors=colors.powerup_colors()),
+                    va.UseColorsAction(name="ANTIC Powerup Colors", colors=colors.powerup_colors()),
                     id="a1", separator=True),
                 Group(
-                    AnticColorAction(),
+                    va.AnticColorAction(),
                     id="a2", separator=True),
                 id='mm4', separator=False, name="Colors"),
             ]
@@ -502,19 +503,19 @@ class ByteEditTask(FrameworkTask):
         font_mapping_actions = self.get_font_mapping_actions()
         font_renderer_actions = []
         for r in machine.predefined['font_renderer']:
-            font_renderer_actions.append(FontRendererAction(font_renderer=r))
+            font_renderer_actions.append(va.FontRendererAction(font_renderer=r))
         return [
             SMenu(
                 Group(
-                    UseFontAction(font=fonts.A8DefaultFont),
-                    UseFontAction(font=fonts.A8ComputerFont),
-                    UseFontAction(font=fonts.A2DefaultFont),
-                    UseFontAction(font=fonts.A2MouseTextFont),
+                    va.UseFontAction(font=fonts.A8DefaultFont),
+                    va.UseFontAction(font=fonts.A8ComputerFont),
+                    va.UseFontAction(font=fonts.A2DefaultFont),
+                    va.UseFontAction(font=fonts.A2MouseTextFont),
                     id="a1", separator=True),
-                FontChoiceGroup(id="a2", separator=True),
+                va.FontChoiceGroup(id="a2", separator=True),
                 Group(
-                    LoadFontAction(),
-                    GetFontFromSelectionAction(),
+                    va.LoadFontAction(),
+                    ba.GetFontFromSelectionAction(),
                     id="a3", separator=True),
                 id='mm5', separator=False, name="Font"),
             SMenu(
@@ -525,7 +526,7 @@ class ByteEditTask(FrameworkTask):
                     *font_mapping_actions,
                     id="a2", separator=True),
                 Group(
-                    FontMappingWidthAction(),
+                    va.FontMappingWidthAction(),
                     id="a3", separator=True),
                 id='mm6', separator=False, name="Character Display"),
             ]
@@ -533,28 +534,28 @@ class ByteEditTask(FrameworkTask):
     def get_actions_Menu_View_BitmapGroup(self):
         actions = []
         for r in machine.predefined['bitmap_renderer']:
-            actions.append(BitmapRendererAction(bitmap_renderer=r))
+            actions.append(va.BitmapRendererAction(bitmap_renderer=r))
         return [
             SMenu(
                 Group(
                     *actions,
                     id="a1", separator=True),
                 Group(
-                    BitmapWidthAction(),
-                    BitmapZoomAction(),
+                    va.BitmapWidthAction(),
+                    va.BitmapZoomAction(),
                     id="a1", separator=True),
                 id='mm7', separator=False, name="Bitmap Display"),
             ]
 
     def get_actions_Menu_DiskImage_EmulatorGroup(self):
         return [
-            RunEmulatorAction(),
+            ba.RunEmulatorAction(),
             SMenu(
-                EmulatorChoiceGroup(id="a2"),
+                ba.EmulatorChoiceGroup(id="a2"),
                 Group(
-                    AddNewEmulatorAction(),
-                    EditEmulatorsAction(),
-                    SetSystemDefaultEmulatorAction(),
+                    ba.AddNewEmulatorAction(),
+                    ba.EditEmulatorsAction(),
+                    ba.SetSystemDefaultEmulatorAction(),
                     id="a3", separator=True),
                 id='MachineEmulator1', name="Emulators"),
             ]
@@ -562,9 +563,9 @@ class ByteEditTask(FrameworkTask):
     def get_actions_Menu_DiskImage_ParserGroup(self):
         groups = []
         for mime, pretty, parsers in iter_known_segment_parsers():
-            actions = [SegmentParserAction(segment_parser=s) for s in parsers]
+            actions = [ba.SegmentParserAction(segment_parser=s) for s in parsers]
             if not pretty:
-                groups.append(Group(CurrentSegmentParserAction(), separator=True))
+                groups.append(Group(ba.CurrentSegmentParserAction(), separator=True))
                 groups.append(Group(*actions, separator=True))
             else:
                 groups.append(SMenu(Group(*actions, separator=True), name=pretty))
@@ -576,91 +577,91 @@ class ByteEditTask(FrameworkTask):
 
     def get_actions_Menu_DiskImage_ActionGroup(self):
         return [
-            ExpandDocumentAction(),
+            ba.ExpandDocumentAction(),
             Separator(),
-            LoadBaselineVersionAction(),
-            FindNextBaselineDiffAction(),
-            FindPrevBaselineDiffAction(),
-            ListDiffAction(),
+            ba.LoadBaselineVersionAction(),
+            ba.FindNextBaselineDiffAction(),
+            ba.FindPrevBaselineDiffAction(),
+            ba.ListDiffAction(),
             Separator(),
-            SegmentGotoAction(),
+            ba.SegmentGotoAction(),
             ]
 
     def get_actions_Menu_Segment_ListGroup(self):
         return [
             SMenu(
-                SegmentChoiceGroup(id="a2", separator=True),
+                ba.SegmentChoiceGroup(id="a2", separator=True),
                 id='segmentlist1', separator=False, name="View Segment"),
             ]
 
     def get_actions_Menu_Segment_ActionGroup(self):
         return [
-            GetSegmentFromSelectionAction(),
-            MultipleSegmentsFromSelectionAction(),
-            InterleaveSegmentsAction(),
-            SetSegmentOriginAction(),
+            ba.GetSegmentFromSelectionAction(),
+            ba.MultipleSegmentsFromSelectionAction(),
+            ba.InterleaveSegmentsAction(),
+            ba.SetSegmentOriginAction(),
             Separator(),
-            AddCommentAction(),
-            RemoveCommentAction(),
-            AddLabelAction(),
-            RemoveLabelAction(),
+            ba.AddCommentAction(),
+            ba.RemoveCommentAction(),
+            ba.AddLabelAction(),
+            ba.RemoveLabelAction(),
             SMenu(
                 Group(
-                    ImportSegmentLabelsAction(name="Import"),
+                    ba.ImportSegmentLabelsAction(name="Import"),
                     id="sl1", separator=True),
                 Group(
-                    ExportSegmentLabelsAction(name="Export User Defined Labels"),
-                    ExportSegmentLabelsAction(name="Export All Labels", include_disassembly_labels=True),
+                    ba.ExportSegmentLabelsAction(name="Export User Defined Labels"),
+                    ba.ExportSegmentLabelsAction(name="Export All Labels", include_disassembly_labels=True),
                     id="sl2", separator=True),
                 id='segmentlabels1', separator=False, name="Manage Segment Labels"),
             Separator(),
-            StartTraceAction(),
-            AddTraceStartPointAction(),
-            ApplyTraceSegmentAction(),
-            ClearTraceAction(),
+            ba.StartTraceAction(),
+            ba.AddTraceStartPointAction(),
+            ba.ApplyTraceSegmentAction(),
+            ba.ClearTraceAction(),
             ]
 
     def get_actions_Menu_Bytes_HexModifyGroup(self):
         return [
-            ZeroAction(),
-            FFAction(),
-            NOPAction(),
-            SetValueAction(),
+            va.ZeroAction(),
+            va.FFAction(),
+            va.NOPAction(),
+            va.SetValueAction(),
             Separator(),
-            SetHighBitAction(),
-            ClearHighBitAction(),
-            BitwiseNotAction(),
-            OrWithAction(),
-            AndWithAction(),
-            XorWithAction(),
+            va.SetHighBitAction(),
+            va.ClearHighBitAction(),
+            va.BitwiseNotAction(),
+            va.OrWithAction(),
+            va.AndWithAction(),
+            va.XorWithAction(),
             Separator(),
-            LeftShiftAction(),
-            RightShiftAction(),
-            LeftRotateAction(),
-            RightRotateAction(),
-            ReverseBitsAction(),
+            va.LeftShiftAction(),
+            va.RightShiftAction(),
+            va.LeftRotateAction(),
+            va.RightRotateAction(),
+            va.ReverseBitsAction(),
             Separator(),
-            AddValueAction(),
-            SubtractValueAction(),
-            SubtractFromAction(),
-            MultiplyAction(),
-            DivideByAction(),
-            DivideFromAction(),
+            va.AddValueAction(),
+            va.SubtractValueAction(),
+            va.SubtractFromAction(),
+            va.MultiplyAction(),
+            va.DivideByAction(),
+            va.DivideFromAction(),
             Separator(),
-            RampUpAction(),
-            RampDownAction(),
-            RandomBytesAction(),
+            va.RampUpAction(),
+            va.RampDownAction(),
+            va.RandomBytesAction(),
             Separator(),
-            ReverseSelectionAction(),
-            ReverseGroupAction(),
+            va.ReverseSelectionAction(),
+            va.ReverseGroupAction(),
             ]
 
     def get_keyboard_actions(self):
         return [
-            FindPrevAction(),
-            CancelMinibufferAction(),
-            UndoCursorPositionAction(),
-            RedoCursorPositionAction(),
+            ba.FindPrevAction(),
+            ba.CancelMinibufferAction(),
+            ba.UndoCursorPositionAction(),
+            ba.RedoCursorPositionAction(),
             ]
 
     ###

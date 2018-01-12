@@ -15,12 +15,11 @@ from omnivore.utils.textutil import text_to_int
 from omnivore.framework.actions import SelectAllAction, SelectNoneAction, SelectInvertAction, TaskDynamicSubmenuGroup
 from omnivore8bit.utils.jumpman import DrawObjectBounds, is_valid_level_segment
 from omnivore8bit.byte_edit.actions import UseSegmentAction
-from omnivore8bit.byte_edit.commands import SetValueCommand
 
 import logging
 progress_log = logging.getLogger("progress")
 
-from commands import *
+from .commands import SetValueCommand
 
 import logging
 log = logging.getLogger(__name__)

@@ -9,7 +9,7 @@ from atrcopy import SegmentData, DefaultSegment, comment_bit_mask
 # Local imports.
 from omnivore.utils.command import Overlay
 from omnivore8bit.utils.jumpman import *
-from omnivore8bit.byte_edit.commands import ChangeByteCommand, SetValueCommand
+from omnivore8bit.byte_edit.commands import ChangeByteCommand
 from omnivore.framework.actions import CutAction, CopyAction, PasteAction, SelectAllAction, SelectNoneAction, SelectInvertAction
 
 from .jumpman_commands import *

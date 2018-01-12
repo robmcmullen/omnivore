@@ -34,13 +34,19 @@ class SegmentViewer(HasTraits):
 
     pretty_name = "_base_"
 
+    has_editable_bytes = True  # directly user-editable bytes
+
     has_bitmap = False
 
-    has_font = False
+    has_font = False  # uses the bitmapped font to display characters
+
+    has_colors = False  # uses machine colors to display stuff
 
     has_cpu = False
 
     has_hex = False
+
+    has_text_font = False  # uses the app-wide text font
 
     has_metadata_only = False
 
@@ -300,7 +306,7 @@ class SegmentViewer(HasTraits):
     def highlight_selected_ranges(self):
         s = self.linked_base.segment
         s.clear_style_bits(selected=True)
-        s.set_style_ranges(self.linked_base.editor.selected_ranges, selected=True)
+        s.set_style_ranges(self.linked_base.selected_ranges, selected=True)
 
     ##### Clipboard & Copy/Paste
 

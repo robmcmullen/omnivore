@@ -50,6 +50,12 @@ class CursorHandler(HasTraits):
     def _selected_ranges_default(self):
         return [(0, 0)]
 
+    #### properties
+
+    @property
+    def has_selection(self):
+        return bool(self.selected_ranges)
+
     #### command flag processors
 
     def ensure_visible(self, flags):

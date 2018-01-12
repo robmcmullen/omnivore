@@ -281,6 +281,8 @@ class JumpmanViewer(SegmentViewer):
 
     pretty_name = "Jumpman Level Editor"
 
+    has_editable_bytes = False
+
     has_bitmap = True
 
     ##### Traits
