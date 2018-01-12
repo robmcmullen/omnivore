@@ -89,7 +89,8 @@ class ClipboardSerializer(object):
         return d
 
 
-    def __init__(self):
+    def __init__(self, source_data_format_name):
+        self.source_data_format_name = source_data_format_name
         self.data = None
         self.ranges = []
         self.cursor_index = 0
@@ -99,6 +100,7 @@ class ClipboardSerializer(object):
         self.comments = None
         self.num_rows = None
         self.num_columns = None
+        self.bytes_per_row = None
 
     @property
     def size_info(self):
@@ -220,20 +222,23 @@ class RectangularSelection(ClipboardSerializer):
             last = r2 * bpr
             d = viewer.segment[:last].reshape(-1, bpr)
             data = d[r1:r2, c1:c2]
-            return cls.get_composite_object(data, "%d,%d,%s" % (r2 - r1, c2 - c1, data.tostring()))
+            return cls.get_composite_object(data.flat, "%d,%d,%s" % (r2 - r1, c2 - c1, data.tostring()))
         return None
 
     @property
     def summary(self):
         """Return a string with a summary of the contents of the data object
         """
-        return "%s bytes in %sx%s rectangle" % (format_number(self.size_info), format_number(self.num_columns), format_number(self.num_rows))
+        return "%s bytes in %sx%s rectangle" % (self.size_info, format_number(self.num_columns), format_number(self.num_rows))
 
     def unpack_data_object(self, viewer, data_obj):
-        value = data_obj.GetData().tobytes()
-        self.num_rows, self.num_columns, value = value.split(",", 2)
+        value = get_data_object_value(data_obj, self.data_format_name)
+        r, c, value = value.split(",", 2)
+        self.num_rows = int(r)
+        self.num_columns = int(c)
         self.data = np.fromstring(value, dtype=np.uint8)
         self.cursor_index = viewer.linked_base.cursor_index
+        self.bytes_per_row = viewer.control.bytes_per_row
 
 
 def create_data_object(viewer, name):
@@ -254,7 +259,7 @@ def create_data_object(viewer, name):
         serializer_cls = known_clipboard_serializers[name]
     except IndexError:
         raise ClipboardError("Unknown format name %s" % name)
-    serializer = serializer_cls()
+    serializer = serializer_cls(name)
     serializer.unpack_data_object(viewer, data_obj)
     log.debug("create_data_object: serialized: %s" % serializer)
     return data_obj, serializer
@@ -295,7 +300,7 @@ def get_paste_data(viewer):
             serializer_cls = known_clipboard_serializers[name]
         except IndexError:
             raise ClipboardError("Unknown format name %s" % name)
-    serializer = serializer_cls()
+    serializer = serializer_cls(name)
     serializer.unpack_data_object(viewer, data_obj)
     return serializer
 

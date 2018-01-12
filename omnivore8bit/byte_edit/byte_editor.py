@@ -394,10 +394,10 @@ class ByteEditor(FrameworkEditor):
         return ", ".join(labels)
 
     def get_selected_status_message(self):
-        if not self.selected_ranges:
+        if not self.focused_viewer.linked_base.selected_ranges:
             return ""
-        if len(self.selected_ranges) == 1:
-            r = self.selected_ranges
+        if len(self.focused_viewer.linked_base.selected_ranges) == 1:
+            r = self.focused_viewer.linked_base.selected_ranges
             first = r[0][0]
             last = r[0][1]
             num = abs(last - first)
@@ -406,7 +406,7 @@ class ByteEditor(FrameworkEditor):
             elif num > 0:
                 return "[%d bytes selected %s]" % (num, self.get_label_of_ranges(r))
         else:
-            return "[%d ranges selected]" % (len(self.selected_ranges))
+            return "[%d ranges selected]" % (len(self.focused_viewer.linked_base.selected_ranges))
 
     def show_status_message(self, msg):
         s = self.get_selected_status_message()

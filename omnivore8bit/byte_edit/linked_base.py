@@ -218,7 +218,7 @@ class LinkedBase(CursorHandler):
             self.segment_number = index
             self.segment_parser = self.document.segment_parser
             self.segment = self.document.segments[index]
-            self.select_none(refresh=False)
+            self.clear_selection()
             self.restart_disassembly()
             self.task.segments_changed = self.document.segments
             self.task.segment_selected = self.segment_number
@@ -292,13 +292,6 @@ class LinkedBase(CursorHandler):
         e.can_copy_baseline = e.can_copy and e.baseline_present
 
     #### CursorHandler overrides
-
-    def highlight_selected_ranges(self):
-        self.document.change_count += 1
-        s = self.segment
-        s.clear_style_bits(selected=True)
-        s.set_style_ranges(self.selected_ranges, selected=True)
-        self.calc_dependent_action_enabled_flags()
 
     def get_cursor_state(self):
         return self.segment, self.cursor_index

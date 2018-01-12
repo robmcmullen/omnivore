@@ -60,79 +60,6 @@ class CursorHandler(HasTraits):
         """
         pass
 
-    #### range selection
-
-    def select_all(self, refresh=True):
-        """ Selects the entire document
-        """
-        self.anchor_start_index = self.anchor_initial_start_index = 0
-        self.anchor_end_index = self.anchor_initial_end_index = self.document_length
-        self.selected_ranges = [(self.anchor_start_index, self.anchor_end_index)]
-        self.highlight_selected_ranges()
-        self.calc_action_enabled_flags()
-
-    def select_none(self, refresh=True):
-        """ Clears any selection in the document
-        """
-        self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = self.cursor_index
-        self.selected_ranges = [(self.cursor_index, self.cursor_index)]
-        self.highlight_selected_ranges()
-        self.calc_action_enabled_flags()
-
-    def select_none_if_selection(self):
-        if self.can_copy:
-            self.select_none()
-
-    def select_ranges(self, ranges, refresh=True):
-        """ Selects the specified ranges
-        """
-        self.selected_ranges = ranges
-        try:
-            start, end = self.selected_ranges[-1]
-        except IndexError:
-            start, end = 0, 0
-        self.anchor_start_index = self.anchor_initial_start_index = start
-        self.anchor_end_index = self.anchor_initial_end_index = end
-        self.highlight_selected_ranges()
-        self.calc_action_enabled_flags()
-
-    def select_invert(self, refresh=True):
-        """ Selects the entire document
-        """
-        ranges = self.invert_selection_ranges(self.selected_ranges)
-        self.select_ranges(ranges, refresh)
-
-    def select_range(self, start, end, add=False, extend=False):
-        """ Adjust the current selection to the new start and end indexes
-        """
-        if extend:
-            self.selected_ranges[-1] = (start, end)
-        elif add:
-            self.selected_ranges.append((start, end))
-        else:
-            self.selected_ranges = [(start, end)]
-        self.anchor_start_index = start
-        self.anchor_end_index = end
-        log.debug("selected ranges: %s" % str(self.selected_ranges))
-        self.highlight_selected_ranges()
-        self.calc_action_enabled_flags()
-
-    def highlight_selected_ranges(self):
-        pass
-
-    def get_optimized_selected_ranges(self):
-        """ Get the list of monotonically increasing, non-overlapping selected
-        ranges
-        """
-        return collapse_overlapping_ranges(self.selected_ranges)
-
-    def get_selected_ranges_and_indexes(self):
-        opt = self.get_optimized_selected_ranges()
-        return opt, ranges_to_indexes(opt)
-
-    def invert_selection_ranges(self, ranges):
-        return invert_ranges(ranges, self.document_length)
-
     def set_cursor(self, index, refresh=True):
         max_index = self.document_length - 1
         if index < 0:
@@ -182,6 +109,12 @@ class CursorHandler(HasTraits):
         """
         pass
 
+    def clear_selection(self):
+        self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = self.cursor_index
+        self.selected_ranges = [(self.cursor_index, self.cursor_index)]
+        #self.highlight_selected_ranges(self)
+        self.calc_action_enabled_flags()
+
     def process_cursor_flags(self, flags, document):
         """Perform the UI updates given the StatusFlags or BatchFlags flags
         
@@ -219,3 +152,82 @@ class CursorHandler(HasTraits):
 
     def calc_action_enabled_flags(self):
         pass
+
+    @property
+    def selection_handler(self):
+        raise NotImplementedError("Subclass needs to define a SelectionHandler")
+
+
+class SelectionHandler(object):
+    """Range & selection routines that may be different depending on which
+    viewer is active.
+    """
+
+    def select_all(self, cursor_handler, refresh=True):
+        """ Selects the entire document
+        """
+        cursor_handler.anchor_start_index = cursor_handler.anchor_initial_start_index = 0
+        cursor_handler.anchor_end_index = cursor_handler.anchor_initial_end_index = cursor_handler.document_length
+        cursor_handler.selected_ranges = [(cursor_handler.anchor_start_index, cursor_handler.anchor_end_index)]
+        self.highlight_selected_ranges(cursor_handler)
+        cursor_handler.calc_action_enabled_flags()
+
+    def select_none(self, cursor_handler, refresh=True):
+        """ Clears any selection in the document
+        """
+        cursor_handler.clear_selection()
+        self.highlight_selected_ranges(cursor_handler)
+
+    def select_none_if_selection(self, cursor_handler):
+        if cursor_handler.can_copy:
+            self.select_none(cursor_handler)
+
+    def select_ranges(self, cursor_handler, ranges, refresh=True):
+        """ Selects the specified ranges
+        """
+        cursor_handler.selected_ranges = ranges
+        try:
+            start, end = cursor_handler.selected_ranges[-1]
+        except IndexError:
+            start, end = 0, 0
+        cursor_handler.anchor_start_index = cursor_handler.anchor_initial_start_index = start
+        cursor_handler.anchor_end_index = cursor_handler.anchor_initial_end_index = end
+        self.highlight_selected_ranges(cursor_handler)
+        cursor_handler.calc_action_enabled_flags()
+
+    def select_invert(self, cursor_handler, refresh=True):
+        """ Selects the entire document
+        """
+        ranges = self.invert_selection_ranges(cursor_handler, self.selected_ranges)
+        self.select_ranges(cursor_handler, ranges, refresh)
+
+    def select_range(self, cursor_handler, start, end, add=False, extend=False):
+        """ Adjust the current selection to the new start and end indexes
+        """
+        if extend:
+            cursor_handler.selected_ranges[-1] = (start, end)
+        elif add:
+            cursor_handler.selected_ranges.append((start, end))
+        else:
+            cursor_handler.selected_ranges = [(start, end)]
+        cursor_handler.anchor_start_index = start
+        cursor_handler.anchor_end_index = end
+        log.debug("selected ranges: %s" % str(cursor_handler.selected_ranges))
+        self.highlight_selected_ranges(cursor_handler)
+        cursor_handler.calc_action_enabled_flags()
+
+    def highlight_selected_ranges(self, cursor_handler):
+        raise NotImplementedError("highlight_selected_ranges must be implemented in subclass")
+
+    def get_optimized_selected_ranges(self, cursor_handler):
+        """ Get the list of monotonically increasing, non-overlapping selected
+        ranges
+        """
+        return collapse_overlapping_ranges(cursor_handler.selected_ranges)
+
+    def get_selected_ranges_and_indexes(self, cursor_handler):
+        opt = self.get_optimized_selected_ranges(cursor_handler)
+        return opt, ranges_to_indexes(opt)
+
+    def invert_selection_ranges(self, cursor_handler, ranges):
+        return invert_ranges(ranges, cursor_handler.document_length)

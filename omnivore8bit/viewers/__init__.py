@@ -173,7 +173,7 @@ class SegmentViewer(HasTraits):
         return ranges_to_indexes
 
     def get_selected_ranges_and_indexes(self):
-        return self.linked_base.get_selected_ranges_and_indexes()
+        return self.control.get_selected_ranges_and_indexes(self.linked_base)
 
     def get_selected_index_metadata(self, indexes):
         return self.linked_base.get_selected_index_metadata(indexes)

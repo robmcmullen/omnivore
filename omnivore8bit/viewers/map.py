@@ -15,7 +15,7 @@ from omnivore8bit.ui.bitviewscroller import BitviewScroller, FontMapScroller
 from omnivore.utils.command import Overlay
 from omnivore8bit.utils.drawutil import get_bounds
 from omnivore.utils.sortutil import invert_rects, rect_ranges_to_indexes
-from ..byte_edit.commands import ChangeByteCommand, PasteCommand
+from ..byte_edit.commands import ChangeByteCommand, PasteCommand, PasteRectCommand
 from omnivore.framework.mouse_handler import MouseHandler, MouseControllerMixin
 
 from . import SegmentViewer
@@ -65,7 +65,7 @@ class SelectMode(MouseHandler):
         FontMapScroller.on_left_up(self.control, evt)  # can't use self.control directly because it overrides on_left_down
 
     def process_mouse_motion_down(self, evt):
-        self.control.handle_select_motion(self.control.editor, evt)
+        self.control.handle_select_motion(self.control.linked_base, evt)
         self.display_coords(evt)
 
     def process_mouse_motion_up(self, evt):
@@ -274,29 +274,18 @@ class MapViewer(SegmentViewer):
         s.clear_style_bits(selected=True)
         s.set_style_ranges_rect(self.linked_base.selected_ranges, self.control.bytes_per_row, selected=True)
 
-    def create_clipboard_data_object(self):
-        e = self.linked_base
-        if e.anchor_start_index != e.anchor_end_index:
-            anchor_start, anchor_end, (r1, c1), (r2, c2) = self.control.get_highlight_indexes()
-            bpr = self.control.bytes_per_row
-            last = r2 * bpr
-            d = e.segment[:last].reshape(-1, bpr)
-            data = d[r1:r2, c1:c2]
-            data_obj = wx.CustomDataObject("numpy,columns")
-            data_obj.SetData("%d,%d,%s" % (r2 - r1, c2 - c1, data.tostring()))
-            return data_obj
-        return None
+    ##### Clipboard & Copy/Paste
 
-    def process_paste_data(self, extra, bytes, cmd_cls=None):
-        e = self.linked_base
-        if extra[0] == "numpy,columns":
-            if cmd_cls is None:
-                cmd_cls = PasteRectangularCommand
-            format_id, r, c = extra
-            cmd = cmd_cls(e.segment, e.anchor_start_index, r, c, self.control.bytes_per_row, bytes)
-            self.editor.process_command(cmd)
-            return True
-        return False
+    @property
+    def clipboard_data_format(self):
+        return "numpy,columns"
+
+    def get_paste_command(self, serialized_data):
+        print(serialized_data)
+        print(serialized_data.source_data_format_name)
+        if serialized_data.source_data_format_name == "numpy,columns":
+            return PasteRectCommand
+        return PasteCommand
 
     ##### toolbar
 

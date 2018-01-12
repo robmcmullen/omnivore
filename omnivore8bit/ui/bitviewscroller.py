@@ -808,6 +808,9 @@ class FontMapScroller(BitviewScroller):
         if x2 >= 0 and x2 < xmax and c2 > c1:
             array[c1:c2 + 1, x2] = color
 
+    def highlight_selected_ranges_in_segment(self, selected_ranges, segment):
+        segment.set_style_ranges_rect(selected_ranges, self.bytes_per_row, selected=True)
+
     def event_coords_to_byte(self, evt):
         """Convert event coordinates to world coordinates.
 
