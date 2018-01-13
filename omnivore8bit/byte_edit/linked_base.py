@@ -297,6 +297,11 @@ class LinkedBase(CursorHandler):
 
     #### CursorHandler overrides
 
+    def check_document_change(self):
+        if self.last_cursor_index != self.cursor_index or self.last_anchor_start_index != self.anchor_start_index or self.last_anchor_end_index != self.anchor_end_index:
+            self.document.change_count += 1
+            self.update_cursor_history()
+
     def get_cursor_state(self):
         return self.segment, self.cursor_index
 
@@ -336,7 +341,6 @@ class LinkedBase(CursorHandler):
             self.anchor_initial_end_index = self.anchor_end_index = last[1]
         g.clear_style_bits(selected=True)
         self.document.change_count += 1
-        self.highlight_selected_ranges()
 
     def convert_ranges(self, from_style, to_style):
         s = self.segment
@@ -604,5 +608,4 @@ class LinkedBase(CursorHandler):
         if refresh_from:
             from_control = None
         self.update_cursor = (from_control, index, bit)
-        self.sidebar.refresh_active()
         self.calc_action_enabled_flags()

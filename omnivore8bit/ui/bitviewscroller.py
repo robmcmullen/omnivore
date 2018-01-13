@@ -534,6 +534,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         e = self.linked_base
         delta_index, first_row = delta_index  # Now a tuple, was an int
         index = e.set_cursor(e.cursor_index + delta_index, False)
+        self.select_none_if_selection(e)
         self.set_cursor_index(self, index, first_row)
         e.index_clicked(index, 0, self, False)
 
@@ -887,7 +888,7 @@ class FontMapScroller(BitviewScroller):
             return
         char = evt.GetUnicodeKey()
         if char > 0:
-            self.linked_base.select_none_if_selection()
+            self.select_none_if_selection(self.linked_base)
             char = self.segment_viewer.machine.font_mapping.convert_byte_mapping(char)
             self.change_byte(char | self.inverse)
 
@@ -898,12 +899,12 @@ class FontMapScroller(BitviewScroller):
         cmd_cls = self.command_cls
         if cmd_cls is None:
             return
-        if e.can_copy:
+        if e.has_selection:
             index = e.anchor_start_index
         else:
             index = e.cursor_index
         cmd = cmd_cls(e.segment, index, index+1, value, True)
-        e.process_command(cmd)
+        e.editor.process_command(cmd)
 
     def on_char_hook(self, evt):
         log.debug("on_char_hook! char=%s, key=%s, modifiers=%s" % (evt.GetUnicodeKey(), evt.GetKeyCode(), bin(evt.GetModifiers())))

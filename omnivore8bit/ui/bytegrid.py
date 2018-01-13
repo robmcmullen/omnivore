@@ -528,7 +528,7 @@ class HexCellEditor(Grid.GridCellEditor,HexDigitMixin):
         to begin editing.  Set the focus to the edit control.
         *Must Override*
         """
-        grid.linked_base.select_none(False)
+        grid.select_none(grid.linked_base)
         self.startValue = grid.GetTable().GetValue(row, col)
         mode = self.parentgrid.table.get_col_type(col)
         log.debug("begin edit: row,col=(%d,%d), mode=%s" % (row, col, mode))
@@ -589,7 +589,7 @@ class HexCellEditor(Grid.GridCellEditor,HexDigitMixin):
         if acceptable:
             # clear selection if an edit is about to start, otherwise the
             # selection stays on screen during the text entry
-            self.parentgrid.linked_base.select_none_if_selection()
+            self.parentgrid.select_none_if_selection(self.parentgrid.linked_base)
         return acceptable
 
     def StartingKey(self, evt):
@@ -599,6 +599,7 @@ class HexCellEditor(Grid.GridCellEditor,HexDigitMixin):
         """
         log.debug("StartingKey: keycode=%d" % evt.GetKeyCode())
         key = evt.GetKeyCode()
+        self.parentgrid.select_none_if_selection(self.parentgrid.linked_base)
         if not self._tc.insertFirstKey(key):
             evt.Skip()
 
@@ -873,8 +874,9 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         if moved:
             if index is None:
                 index, _ = self.table.get_index_range(r, c)
-            refresh_self = e.can_copy
+            refresh_self = True  # e.can_copy
             e.set_cursor(index, False)
+            self.select_none(self.linked_base)
             r, c = self.table.get_row_col(e.cursor_index, c)
             self.SetGridCursor(r, c)
             self.MakeCellVisible(r, c)

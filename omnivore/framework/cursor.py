@@ -73,7 +73,7 @@ class CursorHandler(HasTraits):
         elif index > max_index:
             index = max_index
         self.cursor_index = index
-        self.select_none(False)
+        self.clear_selection()
 
         return index
 
@@ -185,7 +185,7 @@ class SelectionHandler(object):
         self.highlight_selected_ranges(cursor_handler)
 
     def select_none_if_selection(self, cursor_handler):
-        if cursor_handler.can_copy:
+        if cursor_handler.has_selection:
             self.select_none(cursor_handler)
 
     def select_ranges(self, cursor_handler, ranges, refresh=True):
