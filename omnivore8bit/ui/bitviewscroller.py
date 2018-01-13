@@ -810,9 +810,6 @@ class FontMapScroller(BitviewScroller):
         if x2 >= 0 and x2 < xmax and c2 > c1:
             array[c1:c2 + 1, x2] = color
 
-    def highlight_selected_ranges_in_segment(self, selected_ranges, segment):
-        segment.set_style_ranges_rect(selected_ranges, self.bytes_per_row, selected=True)
-
     def invert_selection_ranges(self, cursor_handler, ranges):
         rects = [(rect[2], rect[3]) for rect in [self.segment.get_rect_indexes(r[0], r[1], self.bytes_per_row) for r in ranges]]
         inverted = invert_rects(rects, self.total_rows, self.bytes_per_row)

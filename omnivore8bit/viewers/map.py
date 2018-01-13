@@ -40,6 +40,9 @@ class MainFontMapScroller(MouseControllerMixin, FontMapScroller):
         BitviewScroller.update_bytes_per_row(self)
         # remove FontMapScroller call to find font width from machine
 
+    def highlight_selected_ranges_in_segment(self, selected_ranges, segment):
+        segment.set_style_ranges_rect(selected_ranges, self.bytes_per_row, selected=True)
+
 
 class SelectMode(MouseHandler):
     icon = "select.png"
