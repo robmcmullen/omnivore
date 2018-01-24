@@ -34,9 +34,15 @@ class HexEditControl(cg.HexGridWindow):
     def __init__(self, parent, linked_base, **kwargs):
         """Create the HexEdit viewer
         """
+        self.linked_base = linked_base
         table = SegmentTable(linked_base)
         view_params = linked_base.task.preferences
         cg.HexGridWindow.__init__(self, table, view_params, parent)
+
+    def recalc_view(self):
+        table = SegmentTable(self.linked_base)
+        view_params = self.linked_base.task.preferences
+        self.main.recalc_view(view_params, table)
 
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.
