@@ -1,11 +1,13 @@
 import sys
 
+import wx
+
 # Enthought library imports.
 from envisage.ui.tasks.api import PreferencesPane, TaskFactory
 from apptools.preferences.api import PreferencesHelper
-from traits.api import Bool, Dict, Enum, List, Str, Unicode, Int, Font, Range, Tuple
+from traits.api import Bool, Dict, Enum, List, Str, Unicode, Int, Font, Range, Tuple, Color, Any
 from traitsui.api import FontEditor, HGroup, VGroup, Item, Label, \
-    View, RangeEditor
+    View, RangeEditor, ColorEditor
 
 if sys.platform == "darwin":
     def_font = "10 point Monaco"
@@ -37,11 +39,98 @@ class ByteEditPreferences(PreferencesHelper):
     # Font used for hex/disassembly
     text_font = Font(def_font)
 
+    header_font = Font(def_font + " bold")
+
     hex_grid_lower_case = Bool(True)
 
     assembly_lower_case = Bool(False)
 
     disassembly_column_widths = Tuple(0, 0, 0)
+
+    background_color = Color(wx.WHITE)
+
+    text_color = Color(wx.BLACK)
+
+    highlight_color = Color(wx.Colour(100, 200, 230))
+
+    data_color = Color(wx.Colour(224, 224, 224))
+
+    empty_color = Color(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE))
+
+    match_background_color = Color(wx.Colour(255, 255, 180))
+
+    comment_background_color = Color(wx.Colour(255, 180, 200))
+
+    diff_text_color = Color(wx.Colour(255, 0, 0))
+
+    unfocused_cursor_color = Color(wx.Colour(128, 128, 128))
+    
+    row_header_bg_color = Color(wx.Colour(224, 224, 224))
+    
+    col_header_bg_color = Color(wx.Colour(224, 224, 224))
+
+    col_label_border_width = Int(3)
+
+    row_label_border_width = Int(3)
+
+    row_height_extra_padding = Int(-3)
+
+    base_cell_width_in_chars = Int(2)
+
+    pixel_width_padding = Int(2)
+    
+    cursor_pen = Any
+
+    selected_brush = Any
+    
+    selected_pen = Any
+    
+    normal_brush = Any
+    
+    normal_pen = Any
+    
+    data_brush = Any
+    
+    match_brush = Any
+    
+    match_pen = Any
+    
+    comment_brush = Any
+    
+    comment_pen = Any
+
+    def _cursor_pen_default(self):
+        return wx.Pen(self.unfocused_cursor_color, 1, wx.SOLID)
+
+    def _selected_brush_default(self):
+        return wx.Brush(self.highlight_color, wx.SOLID)
+
+    def _selected_pen_default(self):
+        return wx.Pen(self.highlight_color, 1, wx.SOLID)
+
+    def _normal_brush_default(self):
+        return wx.Brush(self.background_color, wx.SOLID)
+
+    def _normal_pen_default(self):
+        return wx.Pen(self.background_color, 1, wx.SOLID)
+
+    def _data_brush_default(self):
+        return wx.Brush(self.data_color, wx.SOLID)
+
+    def _match_brush_default(self):
+        return wx.Brush(self.match_background_color, wx.SOLID)
+
+    def _match_pen_default(self):
+        return wx.Pen(self.match_background_color, 1, wx.SOLID)
+
+    def _comment_brush_default(self):
+        return wx.Brush(self.comment_background_color, wx.SOLID)
+
+    def _comment_pen_default(self):
+        return wx.Pen(self.comment_background_color, 1, wx.SOLID)
+
+
+
 
 
 class ByteEditPreferencesPane(PreferencesPane):
@@ -73,11 +162,17 @@ class ByteEditPreferencesPane(PreferencesPane):
                HGroup(Item('text_font'),
                       Label('Hex Display Font'),
                       show_labels = False),
+               HGroup(Item('header_font'),
+                      Label('Column Header Font'),
+                      show_labels = False),
                HGroup(Item('hex_grid_lower_case'),
                       Label('Use Lower Case for Hex Digits'),
                       show_labels = False),
                HGroup(Item('assembly_lower_case'),
                       Label('Use Lower Case for Assembler Mnemonics'),
+                      show_labels = False),
+               HGroup(Item('highlight_color', editor=ColorEditor(), style='custom'),
+                      Label('Highlight Color'),
                       show_labels = False),
                label='Hex Editor'),
         resizable=True)
