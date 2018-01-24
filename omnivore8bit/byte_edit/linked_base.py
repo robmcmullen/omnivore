@@ -71,6 +71,8 @@ class LinkedBase(CursorHandler):
 
     segment_view_params = Dict
 
+    cached_preferences = Any(transient=True)
+
     # This is a flag to help set the cursor to the center row when the cursor
     # is moved in a different editor. Some editors can't use SetFocus inside an
     # event handler, so the focus could still be set on one editor even though
@@ -107,6 +109,9 @@ class LinkedBase(CursorHandler):
 
     def _uuid_default(self):
         return str(uuid.uuid4())
+
+    def _cached_preferences_default(self):
+        return self.task.preferences
 
     #### Properties
 
