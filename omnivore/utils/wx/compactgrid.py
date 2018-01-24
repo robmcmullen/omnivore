@@ -10,7 +10,7 @@ logger = logging.getLogger()
 # logger.setLevel(logging.INFO)
 draw_log = logging.getLogger("draw")
 scroll_log = logging.getLogger("scroll")
-
+# draw_log.setLevel(logging.DEBUG)
 
 class AuxWindow(wx.ScrolledWindow):
     def __init__(self, parent, scroll_source, label_char_width=10):
@@ -174,6 +174,7 @@ class DrawTextImageCache(object):
 
     def draw_cached_text(self, dc, rect, text, style):
         k = (text, style, rect.width, rect.height)
+        draw_log.debug(str(k))
         try:
             bmp = self.cache[k]
         except KeyError:
@@ -757,9 +758,9 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         dc.SetPen(self.view_params.cursor_pen)
         dc.DrawRectangle(x, y, w, h)
 
-    def DrawEditText(self, t, style, x, y, dc):
+    def DrawEditText(self, t, style, x, y, dc, num_cells=1):
         #dc.DrawText(t, x * self.cell_width_in_pixels, y * self.cell_height_in_pixels)
-        rect = wx.Rect(x * self.cell_width_in_pixels, y * self.cell_height_in_pixels, len(t) * self.cell_width_in_pixels, self.cell_height_in_pixels)
+        rect = wx.Rect(x * self.cell_width_in_pixels, y * self.cell_height_in_pixels, num_cells * self.cell_width_in_pixels, self.cell_height_in_pixels)
         self.text_renderer.draw_text(dc, rect, t, style)
 
     def DrawLine(self, sy, line, dc):
@@ -833,7 +834,7 @@ class HexByteImageCache(DrawTextImageCache):
 
 class FixedFontNumpyWindow(FixedFontDataWindow):
     def init_renderers(self):
-        self.text_renderer = self.table.create_renderer(None, self.view_params, self)
+        self.text_renderer = self.table.create_renderer(0, self.view_params, self)
 
     @property
     def current_line_length(self):
@@ -883,8 +884,7 @@ class FixedFontNumpyWindow(FixedFontDataWindow):
 
             d = self.lines[index:last_index]
             style = self.style[index:last_index]
-            text = ["%02x" % x for x in d]
-            self.DrawEditText(text, style, cell_start - self.sx, sy - self.sy, dc)
+            self.DrawEditText(d, style, cell_start - self.sx, sy - self.sy, dc)
 
 
 class FixedFontMultiCellNumpyWindow(FixedFontNumpyWindow):
