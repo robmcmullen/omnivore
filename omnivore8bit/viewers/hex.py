@@ -263,10 +263,10 @@ class HexEditControl(ByteGrid):
         return actions
 
 
-class HexEditViewer(SegmentViewer):
-    name = "hex"
+class OldHexEditViewer(SegmentViewer):
+    name = "oldhex"
 
-    pretty_name = "Hex"
+    pretty_name = "OLd Hex"
 
     has_hex = True
 

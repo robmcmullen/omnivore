@@ -7,7 +7,7 @@ from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bi
 
 import logging
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.INFO)
 draw_log = logging.getLogger("draw")
 scroll_log = logging.getLogger("scroll")
 
@@ -138,11 +138,11 @@ class FakeList(object):
 
 
 class DrawTextImageCache(object):
-    def __init__(self, machine, viewer, font=None):
+    def __init__(self, view_params, window, font=None):
         self.font = font
-        self.viewer = viewer
+        self.window = window
         self.cache = {}
-        self.set_colors(machine)
+        self.set_colors(view_params)
 
     def invalidate(self):
         self.cache = {}
@@ -225,15 +225,15 @@ class DrawTextImageCache(object):
         for i, c in enumerate(text):
             s = style[i]
             self.draw_cached_text(dc, rect, c, s)
-            rect.x += self.viewer.cell_width_in_pixels
+            rect.x += self.window.cell_width_in_pixels
 
 
 class FakeStyle(object):
-    def __init__(self, viewer):
-        self.viewer = viewer
+    def __init__(self, window):
+        self.window = window
 
     def __len__(self):
-        return len(self.viewer.table.data)
+        return len(self.window.table.data)
 
     def __getitem__(self, item):
         index, last_index = item.start, item.stop
@@ -243,11 +243,13 @@ class FakeStyle(object):
             index, last_index = item, item + 1
         count = last_index - index
         style = np.zeros(count, dtype=np.uint8)
-        if last_index < self.viewer.SelectBegin or index >= self.viewer.SelectEnd:
+        if self.window is None:
+            return style
+        if last_index < self.window.SelectBegin or index >= self.window.SelectEnd:
             pass
         else:
             for i in range(index, last_index):
-                if i >= self.viewer.SelectBegin and i < self.viewer.SelectEnd:
+                if i >= self.window.SelectBegin and i < self.window.SelectEnd:
                     style[i - index] = selected_bit_mask
         return style
 
@@ -263,7 +265,6 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         self.InitDoubleBuffering()
         self.InitScrolling(parent)
         self.recalc_view(view_params, table)
-        self.style = FakeStyle(self)
 
     def recalc_view(self, view_params=None, table=None):
         if view_params is not None:
@@ -289,6 +290,10 @@ class FixedFontDataWindow(wx.ScrolledWindow):
     @property
     def lines(self):
         return self.table.data
+
+    @property
+    def style(self):
+        return self.table.style
 
 ##------------------ Init stuff
 
@@ -801,7 +806,7 @@ class HexByteImageCache(DrawTextImageCache):
             mdc = wx.MemoryDC()
             mdc.SelectObject(bmp)
             t = "%02x" % text
-            v = self.viewer
+            v = self.window
             r = wx.Rect(v.view_params.pixel_width_padding, 0, v.fw * 2, rect.height)
             bg_rect = wx.Rect(0, 0, rect.width, rect.height)
             self.draw_text_to_dc(mdc, bg_rect, r, t, style)
@@ -811,7 +816,7 @@ class HexByteImageCache(DrawTextImageCache):
 
     def draw_text(self, dc, rect, text, style, num_cells=1):
         draw_log.debug(str((rect, text)))
-        rect.width = num_cells * self.viewer.cell_width_in_pixels
+        rect.width = num_cells * self.window.cell_width_in_pixels
         for i, c in enumerate(text):
             draw_log.debug(str((i, c, rect)))
             self.draw_cached_text(dc, rect, c, style[i])
@@ -912,8 +917,9 @@ class FixedFontMultiCellNumpyWindow(FixedFontNumpyWindow):
 
 
 class HexTable(object):
-    def __init__(self, data, bytes_per_row, start_addr, col_widths=None, start_offset_mask=0):
+    def __init__(self, data, style, bytes_per_row, start_addr, col_widths=None, start_offset_mask=0):
         self.data = data
+        self.style = style
         self.start_addr = start_addr
         self.bytes_per_row = bytes_per_row
         if col_widths is None:
@@ -948,6 +954,7 @@ class HexTable(object):
     def calc_labels(self):
         self.label_start_addr = int(self.start_addr // self.bytes_per_row) * self.bytes_per_row
         self.col_label_text = ["%x" % x for x in range(self.items_per_row)]
+        self.label_char_width = 4
 
     def create_renderer(self, col, view_params, viewer):
         if not self.default_renderer:
@@ -1011,7 +1018,6 @@ class TableViewParams(object):
         self.row_height_extra_padding = -3
         self.base_cell_width_in_chars = 2
         self.pixel_width_padding = 2
-        self.label_char_width = 4
         self.background_color = wx.WHITE
         self.text_color = wx.BLACK
         self.row_header_bg_color = wx.Colour(224, 224, 224)
@@ -1080,6 +1086,12 @@ class HexGridWindow(wx.ScrolledWindow):
         self.left.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
         self.update_dependents = self.update_dependents_post_init
 
+    def recalc_view(self, *args, **kwargs):
+        self.main.recalc_view(*args, **kwargs)
+
+    def refresh_view(self, *args, **kwargs):
+        self.main.Refresh()
+
     def on_left_up(self, event):
         print
         print "Title " + str(self)
@@ -1096,7 +1108,7 @@ class HexGridWindow(wx.ScrolledWindow):
             - left = 80, height
         """
         top_height = self.main.cell_height_in_pixels + self.view_params.col_label_border_width
-        left_width = self.view_params.label_char_width * self.main.fw + self.view_params.row_label_border_width
+        left_width = self.main.table.label_char_width * self.main.fw + self.view_params.row_label_border_width
         self.main.SetVirtualSize(wx.Size(width,height))
         #(wt, ht) = self.top.GetSize()
         self.top.SetVirtualSize(wx.Size(width, top_height))
@@ -1199,10 +1211,14 @@ if __name__ == '__main__':
     splitter = wx.SplitterWindow(frame, -1, style = wx.SP_LIVE_UPDATE)
     splitter.SetMinimumPaneSize(20)
     view_params = TableViewParams()
-    table = VariableWidthHexTable(np.arange(1024, dtype=np.uint8), 4, 0x602, [1, 2, 3, 4])
+    style1 = FakeStyle(None)
+    table = VariableWidthHexTable(np.arange(1024, dtype=np.uint8), style1, 4, 0x602, [1, 2, 3, 4])
     scroll1 = NonUniformGridWindow(table, view_params, splitter)
-    table = HexTable(np.arange(1024, dtype=np.uint8), 16, 0x602)
+    style1.window = scroll1.main
+    style2 = FakeStyle(None)
+    table = HexTable(np.arange(1024, dtype=np.uint8), style2, 16, 0x602)
     scroll2 = HexGridWindow(table, view_params, splitter)
+    style2.window = scroll2.main
 
     splitter.SplitVertically(scroll1, scroll2)
     frame.Show(True)
