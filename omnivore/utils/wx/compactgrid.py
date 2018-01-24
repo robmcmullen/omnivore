@@ -265,9 +265,9 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         self.MapEvents()
         self.InitDoubleBuffering()
         self.InitScrolling(parent)
-        self.recalc_view(view_params, table)
+        self.recalc_view(table, view_params)
 
-    def recalc_view(self, view_params=None, table=None):
+    def recalc_view(self, table=None, view_params=None):
         if view_params is not None:
             self.view_params = view_params
         if table is None:
