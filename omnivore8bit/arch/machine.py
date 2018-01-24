@@ -35,23 +35,11 @@ class Machine(HasTraits):
 
     antic_font_data = Any
 
-    antic_font = Any(transient=True)
-
-    blinking_antic_font = Any(transient=True)
-
     antic_color_registers = Any
 
     color_standard = Enum(0, 1)
 
     color_registers = Any(transient=True)
-
-    color_registers_highlight = Any(transient=True)
-
-    color_registers_data = Any(transient=True)
-
-    color_registers_match = Any(transient=True)
-
-    color_registers_comment = Any(transient=True)
 
     bitmap_renderer = Any(transient=True)
 
@@ -79,24 +67,6 @@ class Machine(HasTraits):
 
     assembler_list = None
 
-    highlight_color = (100, 200, 230)
-
-    unfocused_cursor_color = (128, 128, 128)
-
-    background_color = (255, 255, 255)
-
-    data_color = (224, 224, 224)
-
-    match_background_color = (255, 255, 180)
-
-    comment_background_color = (255, 180, 200)
-
-    empty_color = None
-
-    text_color = (0, 0, 0)
-
-    diff_text_color = (255, 0, 0)
-
     text_font = None
 
     @classmethod
@@ -110,11 +80,6 @@ class Machine(HasTraits):
             except ValueError:
                 # bad JSON format
                 cls.font_list = []
-        prefs = editor.task.preferences
-        try:
-            cls.text_font = prefs.text_font
-        except AttributeError:
-            pass
 
     @classmethod
     def remember_fonts(cls, application):
@@ -141,22 +106,9 @@ class Machine(HasTraits):
             application.save_json_data("assembler_list", cls.assembler_list)
 
     @classmethod
-    def init_colors(cls, editor):
-        if cls.empty_color is None:
-            attr = editor.task.window.control.GetDefaultAttributes()
-            cls.empty_color = attr.colBg.Get(False)
-
-    @classmethod
     def one_time_init(cls, editor):
         cls.init_fonts(editor)
-        cls.init_colors(editor)
         cls.init_assemblers(editor)
-
-    @classmethod
-    def set_text_font(cls, font, color=None):
-        if color is not None:
-            cls.text_color = color
-        cls.text_font = font
 
     @classmethod
     def find_machine_by_mime(cls, mime):
@@ -181,12 +133,6 @@ class Machine(HasTraits):
     def _memory_map_default(self):
         return predefined['memory_map'][0]
 
-    def _antic_font_default(self):
-        return self.get_antic_font()
-
-    def _blinking_antic_font_default(self):
-        return self.get_antic_font(True)
-
     def _antic_font_data_default(self):
         return fonts.A8DefaultFont
 
@@ -198,18 +144,6 @@ class Machine(HasTraits):
 
     def _color_registers_default(self):
         return self.get_color_registers()
-
-    def _color_registers_highlight_default(self):
-        return self.get_blended_color_registers(self.color_registers, self.highlight_color)
-
-    def _color_registers_match_default(self):
-        return self.get_blended_color_registers(self.color_registers, self.match_background_color)
-
-    def _color_registers_comment_default(self):
-        return self.get_blended_color_registers(self.color_registers, self.comment_background_color)
-
-    def _color_registers_data_default(self):
-        return self.get_dimmed_color_registers(self.color_registers, self.background_color, self.data_color)
 
     def _bitmap_renderer_default(self):
         return predefined['bitmap_renderer'][0]
@@ -286,7 +220,6 @@ class Machine(HasTraits):
     def clone_machine(self):
         m = self.clone_traits()
         m.update_colors(m.antic_color_registers)
-        m.set_font()
         return m
 
     def serialize_extra_to_dict(self, mdict):
@@ -311,11 +244,6 @@ class Machine(HasTraits):
             baseline[0:len(c)] = [int(i) for i in c]
         self.antic_color_registers = baseline
         self.color_registers = self.get_color_registers()
-        self.color_registers_highlight = self.get_blended_color_registers(self.color_registers, self.highlight_color)
-        self.color_registers_match = self.get_blended_color_registers(self.color_registers, self.match_background_color)
-        self.color_registers_comment = self.get_blended_color_registers(self.color_registers, self.comment_background_color)
-        self.color_registers_data = self.get_dimmed_color_registers(self.color_registers, self.background_color, self.data_color)
-        self.set_font()
         self.bitmap_color_change_event = True
 
     def get_color_registers(self, antic_color_registers=None):
@@ -336,22 +264,6 @@ class Machine(HasTraits):
         for r in registers:
             dim.append((r[0]/4 + 64, r[1]/4 + 64, r[2]/4 + 64))
         registers.extend(dim)
-        return registers
-
-    def get_blended_color_registers(self, colors, blend_color):
-        registers = []
-        base_blend = [(r * 7)/8 for r in blend_color]
-        for c in colors:
-            r = [c[i]/8 + base_blend[i] for i in range(3)]
-            registers.append(r)
-        return registers
-
-    def get_dimmed_color_registers(self, colors, background_color, dimmed_color):
-        registers = []
-        dimmed_difference = [b - d for b, d in zip(background_color, dimmed_color)]
-        for c in colors:
-            r = [max(0, c[i]- dimmed_difference[i]) for i in range(3)]
-            registers.append(r)
         return registers
 
     def get_color_converter(self):
@@ -375,37 +287,6 @@ class Machine(HasTraits):
         self.memory_map = memory_map
         self.disassembler_change_event = True
 
-    def set_font(self, font=None, font_renderer=None, font_mapping=None):
-        if font is None:
-            font = self.antic_font_data
-        if font_renderer is not None:
-            if isinstance(font_renderer, str):
-                font_renderer = self.get_font_renderer_from_font_name(font_renderer)
-            self.font_renderer = font_renderer
-        self.antic_font_data = font
-        self.antic_font = self.get_antic_font()
-        if self.antic_font.use_blinking:
-            self.blinking_antic_font = self.get_antic_font(True)
-        else:
-            self.blinking_antic_font = None
-        self.set_font_mapping(font_mapping)
-
-    def change_font_data(self, data):
-        font = dict(data=data[:], blink=self.antic_font.use_blinking)
-        self.antic_font_data = font
-        self.antic_font = self.get_antic_font()
-        if self.antic_font.use_blinking:
-            self.blinking_antic_font = self.get_antic_font(True)
-        else:
-            self.blinking_antic_font = None
-        self.set_font_mapping()
-
-    def get_blinking_font(self, index):
-        if self.antic_font.use_blinking and index == 1 and self.blinking_antic_font is not None:
-            return self.blinking_antic_font
-        else:
-            return self.antic_font
-
     def get_font_renderer_from_font_name(self, font_name):
         for r in predefined['font_renderer']:
             if r.name.startswith(font_name):
@@ -425,9 +306,6 @@ class Machine(HasTraits):
             font_mapping = self.get_font_mapping_from_name(font_mapping)
         self.font_mapping = font_mapping
         self.font_change_event = True
-
-    def get_antic_font(self, reverse=False):
-        return fonts.AnticFont(self, self.antic_font_data, self.font_renderer, self.antic_color_registers[4:9], reverse)
 
     def load_font(self, task, filename):
         try:

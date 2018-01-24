@@ -240,7 +240,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
             self.scaled_bmp = wx.Bitmap(w, h)
 
             dc.SelectObject(self.scaled_bmp)
-            dc.SetBackground(wx.Brush(self.segment_viewer.machine.empty_color))
+            dc.SetBackground(wx.Brush(self.segment_viewer.preferences.empty_color))
             dc.Clear()
 
             array = self.get_image()
@@ -601,8 +601,8 @@ class BitmapScroller(BitviewScroller):
             count = self.end_byte - self.start_byte
             bytes = segment[self.start_byte:self.end_byte]
             style = segment.style[self.start_byte:self.end_byte]
-        m = self.segment_viewer.machine
-        array = m.bitmap_renderer.get_image(m, self.bytes_per_row, nr, count, bytes, style)
+        v = self.segment_viewer
+        array = v.machine.bitmap_renderer.get_image(v, self.bytes_per_row, nr, count, bytes, style)
         sc = self.start_col
         nc = self.visible_cols
         clipped = array[:,sc:sc + nc,:]
@@ -688,7 +688,7 @@ class FontMapScroller(BitviewScroller):
         log.debug("fontmap: : x, y, w, h, row start, num: %s" % str([x, y, w, h, self.start_row, self.visible_rows, self.fully_visible_rows, "col start, num:", self.start_col, self.visible_cols, self.fully_visible_cols]))
 
     def set_font(self):
-        self.font = self.segment_viewer.machine.antic_font
+        self.font = self.segment_viewer.current_antic_font
         self.pixels_per_byte = self.segment_viewer.machine.font_renderer.char_bit_width
         self.pixels_per_row = self.segment_viewer.machine.font_renderer.char_bit_height
         self.calc_scroll_params()
@@ -718,9 +718,9 @@ class FontMapScroller(BitviewScroller):
         style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
 
-        m = self.segment_viewer.machine
-        font = m.get_blinking_font(self.blink_index)
-        array = m.font_renderer.get_image(m, font, bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols)
+        v = self.segment_viewer
+        font = v.get_blinking_font(self.blink_index)
+        array = v.machine.font_renderer.get_image(v, font, bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols)
         return array
 
     def get_full_image(self, segment=None):
@@ -747,9 +747,9 @@ class FontMapScroller(BitviewScroller):
         style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
 
-        m = self.segment_viewer.machine
-        font = m.get_blinking_font(0)
-        array = m.font_renderer.get_image(m, font, bytes, style, start_byte, end_byte, self.bytes_per_row, nr, 0, self.bytes_per_row)
+        v = self.segment_viewer
+        font = v.get_blinking_font(0)
+        array = v.machine.font_renderer.get_image(v, font, bytes, style, start_byte, end_byte, self.bytes_per_row, nr, 0, self.bytes_per_row)
         if self.font.scale_h > 1 or self.font.scale_w > 1:
             array = intscale(array, self.font.scale_h, self.font.scale_w)
         if self.zoom > 1:
@@ -787,9 +787,8 @@ class FontMapScroller(BitviewScroller):
         ymax = array.shape[0]
         c1 = max(x1, 0)
         c2 = min(x2, xmax)
-        m = self.segment_viewer.machine
         if color is None:
-            color = m.empty_color
+            color = self.segment_viewer.preferences.empty_color.Get(False)
 
         # top
         if y1 >= 0 and y1 < ymax and c2 > c1:
@@ -1106,8 +1105,8 @@ class MemoryMapScroller(BitviewScroller):
         style = style.reshape((nr, -1))
         #log.debug("get_image: bytes", bytes)
 
-        m = self.segment_viewer.machine
-        array = m.page_renderer.get_image(m, bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols)
+        v = self.segment_viewer
+        array = v.machine.page_renderer.get_image(v, bytes, style, self.start_byte, self.end_byte, self.bytes_per_row, nr, self.start_col, self.visible_cols)
         log.debug(array.shape)
         t = time.clock()
         log.debug("get_image: time %f" % (t - t0))

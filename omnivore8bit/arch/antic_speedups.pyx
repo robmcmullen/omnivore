@@ -6,14 +6,14 @@ cimport numpy as np
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def get_numpy_memory_map_image(m, np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray[np.uint8_t, ndim=2] style, int start_byte, int end_byte, int bytes_per_row, int num_rows, int start_col, int num_cols):
+def get_numpy_memory_map_image(segment_viewer, np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray[np.uint8_t, ndim=2] style, int start_byte, int end_byte, int bytes_per_row, int num_rows, int start_col, int num_cols):
     cdef int num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) // bytes_per_row
-    cdef np.uint8_t bgr = m.background_color[0]
-    cdef np.uint8_t bgg = m.background_color[1]
-    cdef np.uint8_t bgb = m.background_color[2]
-    cdef np.uint8_t sr = m.highlight_color[0]
-    cdef np.uint8_t sg = m.highlight_color[1]
-    cdef np.uint8_t sb = m.highlight_color[2]
+    cdef np.uint8_t bgr = segment_viewer.preferences.background_color[0]
+    cdef np.uint8_t bgg = segment_viewer.preferences.background_color[1]
+    cdef np.uint8_t bgb = segment_viewer.preferences.background_color[2]
+    cdef np.uint8_t sr = segment_viewer.preferences.highlight_color[0]
+    cdef np.uint8_t sg = segment_viewer.preferences.highlight_color[1]
+    cdef np.uint8_t sb = segment_viewer.preferences.highlight_color[2]
     
     cdef int end_row = min(num_rows_with_data, num_rows)
     cdef int end_col = min(bytes_per_row, start_col + num_cols)
@@ -56,11 +56,11 @@ def get_numpy_memory_map_image(m, np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarr
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def get_numpy_font_map_image(m, antic_font, np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray[np.uint8_t, ndim=2] style, int start_byte, int end_byte, int bytes_per_row, int num_rows, int start_col, int num_cols):
+def get_numpy_font_map_image(segment_viewer, antic_font, np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray[np.uint8_t, ndim=2] style, int start_byte, int end_byte, int bytes_per_row, int num_rows, int start_col, int num_cols):
     cdef int num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) // bytes_per_row
-    cdef np.uint8_t bgr = m.background_color[0]
-    cdef np.uint8_t bgg = m.background_color[1]
-    cdef np.uint8_t bgb = m.background_color[2]
+    cdef np.uint8_t bgr = segment_viewer.preferences.background_color[0]
+    cdef np.uint8_t bgg = segment_viewer.preferences.background_color[1]
+    cdef np.uint8_t bgb = segment_viewer.preferences.background_color[2]
     
     cdef int char_w = antic_font.char_w
     cdef int char_h = antic_font.char_h
@@ -84,7 +84,7 @@ def get_numpy_font_map_image(m, antic_font, np.ndarray[np.uint8_t, ndim=2] bytes
     cdef np.ndarray[np.uint8_t, ndim=4] fc = antic_font.comment_font
     cdef np.uint8_t[:,:,:,:] fast_fc = fc
     cdef np.uint8_t s, c
-    cdef np.ndarray[np.uint8_t] mapping = m.font_mapping.font_mapping
+    cdef np.ndarray[np.uint8_t] mapping = segment_viewer.machine.font_mapping.font_mapping
     for j in range(num_rows):
         x = 0
         for i in range(start_col, start_col + num_cols):

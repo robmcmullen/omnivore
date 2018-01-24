@@ -48,38 +48,50 @@ A2MouseTextFont = {
 
 
 class AnticFont(object):
-    def __init__(self, machine, font_data, font_renderer, playfield_colors, reverse=False):
+    def __init__(self, segment_viewer, font_data, font_renderer, playfield_colors, reverse=False):
         self.use_blinking = font_data.get('blink', False)
         self.char_w = font_renderer.char_bit_width
         self.char_h = font_renderer.char_bit_height
         self.scale_w = font_renderer.scale_width
         self.scale_h = font_renderer.scale_height
 
-        self.set_colors(machine, playfield_colors)
-        self.set_fonts(machine, font_data, font_renderer, reverse)
+        self.set_colors(segment_viewer, playfield_colors)
+        self.set_fonts(segment_viewer, font_data, font_renderer, reverse)
 
-    def set_colors(self, machine, playfield_colors):
+    def set_colors(self, segment_viewer, playfield_colors):
         fg, bg = colors.gr0_colors(playfield_colors)
-        conv = machine.get_color_converter()
+        conv = segment_viewer.machine.get_color_converter()
         fg = conv(fg)
         bg = conv(bg)
         self.normal_gr0_colors = [fg, bg]
-        self.highlight_gr0_colors = machine.get_blended_color_registers(self.normal_gr0_colors, machine.highlight_color)
-        self.match_gr0_colors = machine.get_blended_color_registers(self.normal_gr0_colors, machine.match_background_color)
-        self.comment_gr0_colors = machine.get_blended_color_registers(self.normal_gr0_colors, machine.comment_background_color)
-        self.data_gr0_colors = machine.get_dimmed_color_registers(self.normal_gr0_colors, machine.background_color, machine.data_color)
+        prefs = segment_viewer.preferences
+        self.highlight_gr0_colors = colors.get_blended_color_registers(self.normal_gr0_colors, prefs.highlight_color)
+        self.match_gr0_colors = colors.get_blended_color_registers(self.normal_gr0_colors, prefs.match_background_color)
+        self.comment_gr0_colors = colors.get_blended_color_registers(self.normal_gr0_colors, prefs.comment_background_color)
+        self.data_gr0_colors = colors.get_dimmed_color_registers(self.normal_gr0_colors, prefs.background_color, prefs.data_color)
 
-    def set_fonts(self, machine, font_data, font_renderer, reverse):
+    def set_fonts(self, segment_viewer, font_data, font_renderer, reverse):
         if 'np_data' in font_data:
             data = font_data['np_data']
         else:
             data = np.fromstring(font_data['data'], dtype=np.uint8)
+        self.font_data = font_data
 
-        self.normal_font = font_renderer.get_font(data, machine.color_registers, self.normal_gr0_colors, reverse)
-        self.highlight_font = font_renderer.get_font(data, machine.color_registers_highlight, self.highlight_gr0_colors, reverse)
-        self.data_font = font_renderer.get_font(data, machine.color_registers_data, self.data_gr0_colors, reverse)
-        self.match_font = font_renderer.get_font(data, machine.color_registers_match, self.match_gr0_colors, reverse)
-        self.comment_font = font_renderer.get_font(data, machine.color_registers_comment, self.comment_gr0_colors, reverse)
+        m = segment_viewer.machine
+        self.normal_font = font_renderer.get_font(data, m.color_registers, self.normal_gr0_colors, reverse)
+
+        prefs = segment_viewer.preferences
+        h_colors = colors.get_blended_color_registers(m.color_registers, prefs.highlight_color)
+        self.highlight_font = font_renderer.get_font(data, h_colors, self.highlight_gr0_colors, reverse)
+
+        d_colors = colors.get_dimmed_color_registers(m.color_registers, prefs.background_color, prefs.data_color)
+        self.data_font = font_renderer.get_font(data, d_colors, self.data_gr0_colors, reverse)
+
+        m_colors = colors.get_blended_color_registers(m.color_registers, prefs.match_background_color)
+        self.match_font = font_renderer.get_font(data, m_colors, self.match_gr0_colors, reverse)
+
+        c_colors = colors.get_blended_color_registers(m.color_registers, prefs.comment_background_color)
+        self.comment_font = font_renderer.get_font(data, c_colors, self.comment_gr0_colors, reverse)
 
     def get_height(self, zoom):
         return self.char_h * self.scale_h * zoom

@@ -55,7 +55,7 @@ class ByteEditPreferences(PreferencesHelper):
 
     data_color = Color(wx.Colour(224, 224, 224))
 
-    empty_color = Color(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE))
+    empty_color = Color(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE).Get(False))
 
     match_background_color = Color(wx.Colour(255, 255, 180))
 

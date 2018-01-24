@@ -11,6 +11,7 @@ from ..byte_edit.linked_base import LinkedBase
 import omnivore.framework.actions as fa
 from ..byte_edit import actions as ba
 from ..byte_edit.commands import PasteCommand
+from ..arch import fonts
 
 from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 
@@ -75,6 +76,10 @@ class SegmentViewer(HasTraits):
 
     supported_clipboard_data_objects = List
 
+    antic_font = Any(transient=True)
+
+    blinking_antic_font = Any(transient=True)
+
     #### Default traits
 
     def _uuid_default(self):
@@ -95,6 +100,10 @@ class SegmentViewer(HasTraits):
     @property
     def editor(self):
         return self.linked_base.editor
+
+    @property
+    def preferences(self):
+        return self.linked_base.cached_preferences
 
     ##### Class methods
 
@@ -145,9 +154,9 @@ class SegmentViewer(HasTraits):
                     self.machine = m
         if 'font' in e or 'font renderer' in e or 'font order' in e:
             if 'font renderer' in e or 'font order' in e:
-                self.machine.set_font(e['font'], e.get('font renderer', None), e.get('font order', None))
+                self.set_font(e['font'], e.get('font renderer', None), e.get('font order', None))
             else:
-                self.machine.set_font(e['font'][0], e['font'][1])
+                self.set_font(e['font'][0], e['font'][1])
 
         if 'machine' in e:
             self.machine.restore_extra_from_dict(e['machine'])
@@ -323,6 +332,48 @@ class SegmentViewer(HasTraits):
 
     def get_paste_command(self, serialized_data):
         return PasteCommand
+
+    ##### Fonts
+
+    @property
+    def current_antic_font(self):
+        if self.antic_font is None:
+            self.set_font()
+        return self.antic_font
+
+    def get_antic_font(self, reverse=False):
+        return fonts.AnticFont(self, self.machine.antic_font_data, self.machine.font_renderer, self.machine.antic_color_registers[4:9], reverse)
+
+    def set_font(self, font=None, font_renderer=None, font_mapping=None):
+        if font is None:
+            font = self.machine.antic_font_data
+        if font_renderer is not None:
+            if isinstance(font_renderer, str):
+                font_renderer = self.machine.get_font_renderer_from_font_name(font_renderer)
+            self.machine.font_renderer = font_renderer
+        self.machine.antic_font_data = font
+        self.antic_font = self.get_antic_font()
+        if self.antic_font.use_blinking:
+            self.blinking_antic_font = self.get_antic_font(True)
+        else:
+            self.blinking_antic_font = None
+        self.machine.set_font_mapping(font_mapping)
+
+    def change_font_data(self, data):
+        font = dict(data=data[:], blink=self.antic_font.use_blinking)
+        self.machine.antic_font_data = font
+        self.antic_font = self.get_antic_font()
+        if self.antic_font.use_blinking:
+            self.blinking_antic_font = self.get_antic_font(True)
+        else:
+            self.blinking_antic_font = None
+        self.machine.set_font_mapping()
+
+    def get_blinking_font(self, index):
+        if self.antic_font.use_blinking and index == 1 and self.blinking_antic_font is not None:
+            return self.blinking_antic_font
+        else:
+            return self.antic_font
 
     ##### Spring tab (pull out menu) interface
 

@@ -114,6 +114,24 @@ def gr0_colors(colors):
     return fg, bg
 
 
+def get_blended_color_registers(colors, blend_color):
+    registers = []
+    base_blend = [(r * 7)/8 for r in blend_color]
+    for c in colors:
+        r = [c[i]/8 + base_blend[i] for i in range(3)]
+        registers.append(r)
+    return registers
+
+
+def get_dimmed_color_registers(colors, background_color, dimmed_color):
+    registers = []
+    dimmed_difference = [b - d for b, d in zip(background_color, dimmed_color)]
+    for c in colors:
+        r = [max(0, c[i]- dimmed_difference[i]) for i in range(3)]
+        registers.append(r)
+    return registers
+
+
 # Don't export the utility functions
 __all__ = ['atari_color_to_rgb', 'powerup_colors', 'gr0_colors']
 

@@ -17,7 +17,7 @@ class ByteGridRenderer(Grid.GridCellRenderer):
     def __init__(self, grid):
         """Render data in the specified color and font and fontsize"""
         Grid.GridCellRenderer.__init__(self)
-        m = grid.segment_viewer.machine
+        m = grid.segment_viewer.preferences
         self.color = m.text_color
         self.diff_color = m.diff_text_color
         self.font = m.text_font
@@ -251,7 +251,7 @@ class ByteGridTable(Grid.GridTableBase):
         pass
 
     def set_grid_cell_attr(self, grid, col, attr):
-        attr.SetFont(grid.segment_viewer.machine.text_font)
+        attr.SetFont(grid.segment_viewer.preferences.text_font)
         attr.SetBackgroundColour("white")
         renderer = grid.get_grid_cell_renderer(grid)
         attr.SetRenderer(renderer)
@@ -297,7 +297,7 @@ class ByteGridTable(Grid.GridTableBase):
 
         # update the scrollbars and the displayed part of the grid
         dc = wx.MemoryDC()
-        dc.SetFont(grid.segment_viewer.machine.text_font)
+        dc.SetFont(grid.segment_viewer.preferences.text_font)
         (width, height) = dc.GetTextExtent("M")
         grid.SetDefaultRowSize(height)
         grid.SetColMinimalAcceptableWidth(width)
@@ -309,7 +309,7 @@ class ByteGridTable(Grid.GridTableBase):
             # each column
             self.set_col_attr(grid, col, width)
 
-        label_font = grid.segment_viewer.machine.text_font.Bold()
+        label_font = grid.segment_viewer.preferences.text_font.Bold()
         grid.SetLabelFont(label_font)
         dc.SetFont(label_font)
         (width, height) = dc.GetTextExtent("M")
