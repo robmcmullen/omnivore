@@ -390,6 +390,14 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         self.cx = self.table.enforce_valid_cursor(self.cy, self.cx)
         self.AdjustScrollbars()
 
+    def show_cursor(self, col, row):
+        self.cy = ForceBetween(0, row, self.table.num_rows - 1)
+        self.sy = ForceBetween(self.cy - self.sh + 1, self.sy, self.cy)
+        self.cx = ForceBetween(0, col, self.current_line_length - 1)
+        self.sx = ForceBetween(self.cx - self.sw + 1, self.sx, self.cx)
+        self.cx = self.table.enforce_valid_cursor(self.cy, self.cx)
+        self.AdjustScrollbars()
+
     def HorizBoundaries(self):
         self.SetCharDimensions()
         self.sx = ForceBetween(0, self.sx, max(self.sw, self.table.num_cells - self.sw + 1))
@@ -988,11 +996,14 @@ class HexTable(object):
         """Get the byte offset from start of file given row, col
         position.
         """
-        index = row * self.bytes_per_row + col - self.start_offset
+        index = row * self.items_per_row + col - self.start_offset
         return index, index + 1
 
     def get_index_of_row(self, line):
         return (line * self.items_per_row) - self.start_offset
+
+    def index_to_row_col(self, index):
+        return divmod(index + self.start_offset, self.items_per_row)
 
 
 class VariableWidthHexTable(HexTable):
@@ -1197,6 +1208,11 @@ class HexGridWindow(wx.ScrolledWindow):
 
     def set_data(self, data, *args, **kwargs):
         self.main.set_data(data, *args, **kwargs)
+
+    def set_cursor_index(self, from_control, rel_pos, first_row=None):
+        r, c = self.main.table.index_to_row_col(rel_pos)
+        self.main.show_cursor(c, r)
+        self.refresh_view()
 
 
 class NonUniformGridWindow(HexGridWindow):
