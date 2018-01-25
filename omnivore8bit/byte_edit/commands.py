@@ -449,7 +449,7 @@ class FindAllCommand(Command):
                 else:
                 # Need to use a tuple in order for bisect to search the list
                 # of tuples
-                    cursor_tuple = (editor.cursor_index, 0)
+                    cursor_tuple = (editor.linked_base.cursor_index, 0)
                     self.current_match_index = bisect.bisect_left(self.all_matches, cursor_tuple)
                     if self.current_match_index >= len(self.all_matches):
                         self.current_match_index = 0
@@ -473,7 +473,7 @@ class FindNextCommand(Command):
 
     def get_index(self, editor):
         cmd = self.search_command
-        cursor_tuple = (editor.cursor_index, 0)
+        cursor_tuple = (editor.linked_base.cursor_index, 0)
         match_index = bisect.bisect_right(cmd.all_matches, cursor_tuple)
         if match_index == cmd.current_match_index:
             match_index += 1
@@ -506,7 +506,7 @@ class FindPrevCommand(FindNextCommand):
 
     def get_index(self, editor):
         cmd = self.search_command
-        cursor_tuple = (editor.cursor_index, 0)
+        cursor_tuple = (editor.linked_base.cursor_index, 0)
         match_index = bisect.bisect_left(cmd.all_matches, cursor_tuple)
         match_index -= 1
         if match_index < 0:

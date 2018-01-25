@@ -128,6 +128,10 @@ class ByteEditor(FrameworkEditor):
         return self.focused_viewer.linked_base.segment
 
     @property
+    def linked_base(self):
+        return self.focused_viewer.linked_base
+
+    @property
     def segment_number(self):
         return self.focused_viewer.linked_base.segment_number
 

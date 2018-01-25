@@ -321,7 +321,7 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         """Execute the command associatied with this minibuffer"""
         value, error = self.get_result()
         if self.start_cursor_index < 0:
-            self.start_cursor_index = self.editor.cursor_index
+            self.start_cursor_index = self.editor.linked_base.cursor_index
         cmd = self.command_cls(self.start_cursor_index, value, error, **self.kwargs)
         self.editor.process_command(cmd)
         self.search_command = cmd
