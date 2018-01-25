@@ -262,7 +262,6 @@ class FixedFontDataWindow(wx.ScrolledWindow):
 
         self.isDrawing = False
         self.settings_obj = settings_obj
-        self.MapEvents()
         self.InitDoubleBuffering()
         self.InitScrolling(parent)
         self.recalc_view(table, view_params)
@@ -305,18 +304,6 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         self.sy = 0
         self.sw = 0
         self.sh = 0
-
-    def MapEvents(self):
-        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
-        self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
-        self.Bind(wx.EVT_MOTION, self.OnMotion)
-        self.Bind(wx.EVT_MOUSEWHEEL, self.settings_obj.on_mouse_wheel)
-        self.Bind(wx.EVT_SCROLLWIN, self.settings_obj.on_scroll_window)
-        self.Bind(wx.EVT_CHAR, self.OnChar)
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
-        self.Bind(wx.EVT_SIZE, self.OnSize)
-        self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 
 ##-------------------- UpdateView/Caret code
 
@@ -502,6 +489,11 @@ class FixedFontDataWindow(wx.ScrolledWindow):
             self.cx = col
 
 ##------------------------ mousing functions
+
+    def pixel_pos_to_row_cell(self, x, y):
+        row  = self.sy + int(y / self.cell_height_in_pixels)
+        cell = self.sx + int(x / self.cell_width_in_pixels)
+        return row, cell
 
     def MouseToRow(self, mouseY):
         row  = self.sy + int(mouseY / self.cell_height_in_pixels)
@@ -992,6 +984,9 @@ class HexTable(object):
         for col in range(starting_col, self.items_per_row):
             yield self.col_to_cell[col], self.col_widths[col], self.col_label_text[col]
 
+    def is_index_valid(self, index):
+        return index > 0 and index <= self.last_valid_index
+
     def get_index_range(self, row, col):
         """Get the byte offset from start of file given row, col
         position.
@@ -1087,9 +1082,7 @@ class HexGridWindow(wx.ScrolledWindow):
         self.set_pane_sizes(3000, 1000)
         self.SetBackgroundColour(self.view_params.col_header_bg_color)
         #self.SetScrollRate(20,20)
-        self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
-        self.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
-        self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
+        self.map_events()
 
         self.ShowScrollbars(wx.SHOW_SB_ALWAYS, wx.SHOW_SB_ALWAYS)
         self.main.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
@@ -1097,11 +1090,33 @@ class HexGridWindow(wx.ScrolledWindow):
         self.left.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
         self.update_dependents = self.update_dependents_post_init
 
+    def map_events(self):
+        self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
+        self.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
+        self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
+
+        self.main.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
+        self.main.Bind(wx.EVT_LEFT_UP, self.on_left_up)
+        self.main.Bind(wx.EVT_MOTION, self.on_motion)
+        self.main.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
+        self.main.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
+        self.main.Bind(wx.EVT_CHAR, self.main.OnChar)
+        self.main.Bind(wx.EVT_PAINT, self.main.OnPaint)
+        self.main.Bind(wx.EVT_SIZE, self.main.OnSize)
+        self.main.Bind(wx.EVT_WINDOW_DESTROY, self.main.OnDestroy)
+        self.main.Bind(wx.EVT_ERASE_BACKGROUND, self.main.OnEraseBackground)
+
     def recalc_view(self, *args, **kwargs):
         self.main.recalc_view(*args, **kwargs)
 
     def refresh_view(self, *args, **kwargs):
         self.main.Refresh()
+
+    def on_left_down(self, evt):
+        evt.Skip()
+
+    def on_motion(self, evt):
+        evt.Skip()
 
     def on_left_up(self, event):
         print
