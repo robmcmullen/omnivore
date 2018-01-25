@@ -90,7 +90,7 @@ about = {
 #    def __init__(self, fh):
 #        wx.InputStream.__init__(self)
 #        self.fh = fh
-#        self.cursor = 0
+#        self.caret = 0
 #
 #    def OnSysRead(self, *args):
 #        log.error("OnSysRead!!!!!")

@@ -15,7 +15,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
 from omnivore.framework.editor import FrameworkEditor
-from omnivore.framework.cursor import CursorHandler
+from omnivore.framework.caret import CaretHandler
 from omnivore.utils.command import DisplayFlags
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment
 from omnivore8bit.arch.disasm import iter_disasm_styles
@@ -25,7 +25,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class LinkedBase(CursorHandler):
+class LinkedBase(CaretHandler):
     """Model for the state of a set of viewers. A ByteEditor can have an
     arbitrary number of LinkedBases, but all viewers that point to a common
     LinkedBase will all show the same data.
@@ -61,7 +61,7 @@ class LinkedBase(CursorHandler):
 
     disassembler_cache = Dict
 
-    last_cursor_index = Int(0)
+    last_caret_index = Int(0)
 
     last_anchor_start_index = Int(0)
 
@@ -73,7 +73,7 @@ class LinkedBase(CursorHandler):
 
     cached_preferences = Any(transient=True)
 
-    # This is a flag to help set the cursor to the center row when the cursor
+    # This is a flag to help set the caret to the center row when the caret
     # is moved in a different editor. Some editors can't use SetFocus inside an
     # event handler, so the focus could still be set on one editor even though
     # the user clicked on another. This results in the first editor not getting
@@ -88,7 +88,7 @@ class LinkedBase(CursorHandler):
 
     update_trace = Event
 
-    update_cursor = Event
+    update_caret = Event
 
     disassembly_refresh_event = Event
 
@@ -167,13 +167,13 @@ class LinkedBase(CursorHandler):
 
     def get_segment_view_params(self):
         return {
-            'cursor index': self.cursor_index,
+            'caret index': self.caret_index,
             'segment number': self.segment_number,
         }
 
     def save_segment_view_params(self, segment):
         d = {
-            'cursor_index': self.cursor_index,
+            'caret_index': self.caret_index,
         }
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
@@ -191,7 +191,7 @@ class LinkedBase(CursorHandler):
             log.debug("no view params for %s" % segment.uuid)
             return
         log.debug("restoring view params for %s" % segment.uuid)
-        self.cursor_index = d['cursor_index']
+        self.caret_index = d['caret_index']
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
                 try:
@@ -300,26 +300,26 @@ class LinkedBase(CursorHandler):
         e = self.editor
         e.can_copy_baseline = e.can_copy and e.baseline_present
 
-    #### CursorHandler overrides
+    #### CaretHandler overrides
 
     def check_document_change(self):
-        if self.last_cursor_index != self.cursor_index or self.last_anchor_start_index != self.anchor_start_index or self.last_anchor_end_index != self.anchor_end_index:
+        if self.last_caret_index != self.caret_index or self.last_anchor_start_index != self.anchor_start_index or self.last_anchor_end_index != self.anchor_end_index:
             self.document.change_count += 1
-            self.update_cursor_history()
+            self.update_caret_history()
 
-    def get_cursor_state(self):
-        return self.segment, self.cursor_index
+    def get_caret_state(self):
+        return self.segment, self.caret_index
 
-    def restore_cursor_state(self, state):
+    def restore_caret_state(self, state):
         segment, index = state
         number = self.document.find_segment_index(segment)
         if number < 0:
-            log.error("tried to restore cursor to a deleted segment? %s" % segment)
+            log.error("tried to restore caret to a deleted segment? %s" % segment)
         else:
             if number != self.segment_number:
                 self.view_segment_number(number)
             self.index_clicked(index, 0, None)
-        log.debug(self.cursor_history)
+        log.debug(self.caret_history)
 
     #### selection utilities
 
@@ -608,9 +608,9 @@ class LinkedBase(CursorHandler):
 
     def index_clicked(self, index, bit, from_control, refresh_from=True):
         log.debug("index_clicked: %s from %s at %d, %s" % (refresh_from, from_control, index, bit))
-        self.cursor_index = index
+        self.caret_index = index
         self.check_document_change()
         if refresh_from:
             from_control = None
-        self.update_cursor = (from_control, index, bit)
+        self.update_caret = (from_control, index, bit)
         self.calc_action_enabled_flags()

@@ -254,8 +254,8 @@ class TextEditField(InfoField):
     def get_focus_params(self):
         return self.ctrl.GetInsertionPoint()
 
-    def set_focus_params(self, cursor):
-        self.ctrl.SetInsertionPoint(cursor)
+    def set_focus_params(self, caret):
+        self.ctrl.SetInsertionPoint(caret)
 
     def is_valid(self):
         c = self.ctrl

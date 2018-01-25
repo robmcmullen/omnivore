@@ -656,7 +656,7 @@ class AddCommentAction(EditorAction):
         return self.active_editor.can_copy
 
     def get_index(self, event):
-        return self.active_editor.cursor_index
+        return self.active_editor.caret_index
 
     def perform(self, event):
         e = self.active_editor
@@ -688,7 +688,7 @@ class AddCommentPopupAction(AddCommentAction):
 
 class RemoveCommentAction(EditorAction):
     """Remove any comments that are in the selected range, or if no selection
-    from the current cursor position.
+    from the current caret position.
 
     """
     name = 'Remove Comment'
@@ -700,7 +700,7 @@ class RemoveCommentAction(EditorAction):
         if e.can_copy:
             ranges = s.get_style_ranges(selected=True)
         else:
-            index = e.cursor_index
+            index = e.caret_index
             ranges = [(index, index+1)]
         if ranges:
             cmd = ClearCommentCommand(s, ranges)
@@ -749,7 +749,7 @@ class AddLabelAction(EditorAction):
         if editor.can_copy:  # has selected ranges
             ranges = segment.get_style_ranges(selected=True)
         else:
-            ranges = [(editor.cursor_index, editor.cursor_index + 1)]
+            ranges = [(editor.caret_index, editor.caret_index + 1)]
         return ranges
 
     def process_ranges(self, editor, segment, ranges):
@@ -780,7 +780,7 @@ class AddLabelPopupAction(AddLabelAction):
 
 
 class RemoveLabelAction(AddLabelAction):
-    """Remove the label at the current cursor position, or if there is a
+    """Remove the label at the current caret position, or if there is a
     selection, all labels in the selected range.
 
     """
@@ -947,7 +947,7 @@ class GotoIndexAction(Action):
 
 
 class SegmentGotoAction(EditorAction):
-    """Move the cursor to an address. If the address is in this segment, moves
+    """Move the caret to an address. If the address is in this segment, moves
     there. If not, it searches through all the segments (in segment list order)
     to find one that does contain that address.
 
@@ -984,9 +984,9 @@ class SegmentGotoAction(EditorAction):
 
 
 class InsertFileAction(EditorAction):
-    """Insert binary data at the cursor
+    """Insert binary data at the caret
 
-    The data from the loaded file will overwrite data starting at the cursor,
+    The data from the loaded file will overwrite data starting at the caret,
     so it's not inserted in the text editor sense where space is created in the
     existing data.
     """
@@ -996,7 +996,7 @@ class InsertFileAction(EditorAction):
         path = event.task.prompt_local_file_dialog("Insert File")
         if path is not None:
             e = self.active_editor
-            cmd = InsertFileCommand(e.segment, e.cursor_index, path)
+            cmd = InsertFileCommand(e.segment, e.caret_index, path)
             e.process_command(cmd)
 
 
@@ -1138,7 +1138,7 @@ class RevertToBaselineAction(EditorAction):
 
 
 class FindNextBaselineDiffAction(EditorAction):
-    """Move the cursor to the next block of data that is different than
+    """Move the caret to the next block of data that is different than
     the `Baseline Data`_ file.
 
     This will wrap around to the beginning of the segment if it doesn't find a
@@ -1151,14 +1151,14 @@ class FindNextBaselineDiffAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        index = e.cursor_index
+        index = e.caret_index
         new_index = e.segment.find_next(index, diff=True)
         if new_index is not None:
             e.index_clicked(new_index, 0, None)
 
 
 class FindPrevBaselineDiffAction(EditorAction):
-    """Move the cursor to the previous block of data that is different than
+    """Move the caret to the previous block of data that is different than
     the `Baseline Data`_ file.Data
 
     This will wrap around to the end of the segment if it doesn't find a
@@ -1171,7 +1171,7 @@ class FindPrevBaselineDiffAction(EditorAction):
 
     def perform(self, event):
         e = self.active_editor
-        index = e.cursor_index
+        index = e.caret_index
         new_index = e.segment.find_previous(index, diff=True)
         if new_index is not None:
             e.index_clicked(new_index, 0, None)
@@ -1204,24 +1204,24 @@ class ListDiffAction(EditorAction):
         dlg.ShowModal()
 
 
-class UndoCursorPositionAction(EditorAction):
-    name = 'Previous Cursor Position'
+class UndoCaretPositionAction(EditorAction):
+    name = 'Previous Caret Position'
     accelerator = 'Ctrl+-'
-    tooltip = 'Go to previous cursor position in cursor history'
+    tooltip = 'Go to previous caret position in caret history'
 
     def perform(self, event):
         e = self.active_editor
-        e.undo_cursor_history()
+        e.undo_caret_history()
 
 
-class RedoCursorPositionAction(EditorAction):
-    name = 'Next Cursor Position'
+class RedoCaretPositionAction(EditorAction):
+    name = 'Next Caret Position'
     accelerator = 'Shift+Ctrl+-'
-    tooltip = 'Go to next cursor position in cursor history'
+    tooltip = 'Go to next caret position in caret history'
 
     def perform(self, event):
         e = self.active_editor
-        e.redo_cursor_history()
+        e.redo_caret_history()
 
 
 class StartTraceAction(EditorAction):
@@ -1242,14 +1242,14 @@ class AddTraceStartPointAction(EditorAction):
     name = "Add Trace Start Point"
     accelerator = 'F11'
     enabled_name = 'can_trace'
-    tooltip = 'Start a trace at the cursor or at all instructions in the selected ranges'
+    tooltip = 'Start a trace at the caret or at all instructions in the selected ranges'
 
     def perform(self, event):
         e = self.active_editor
         # check if selected a range:
         ranges, indexes = e.get_selected_ranges_and_indexes()
         if len(indexes) == 0:
-            indexes = [e.cursor_index]
+            indexes = [e.caret_index]
         s = e.segment
         checked = set()
         for i in indexes:

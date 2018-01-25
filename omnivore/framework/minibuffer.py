@@ -225,7 +225,7 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         TextMinibuffer.__init__(self, editor, command_cls, **kwargs)
         self.next_cls = next_cls
         self.prev_cls = prev_cls
-        self.start_cursor_index = -1
+        self.start_caret_index = -1
         self.search_command = None
         self.next_match = next_match
         self.prev_match = prev_match
@@ -320,9 +320,9 @@ class NextPrevTextMinibuffer(TextMinibuffer):
     def perform(self):
         """Execute the command associatied with this minibuffer"""
         value, error = self.get_result()
-        if self.start_cursor_index < 0:
-            self.start_cursor_index = self.editor.linked_base.cursor_index
-        cmd = self.command_cls(self.start_cursor_index, value, error, **self.kwargs)
+        if self.start_caret_index < 0:
+            self.start_caret_index = self.editor.linked_base.caret_index
+        cmd = self.command_cls(self.start_caret_index, value, error, **self.kwargs)
         self.editor.process_command(cmd)
         self.search_command = cmd
         self.editor.last_search_settings["find"] = value
@@ -402,7 +402,7 @@ class InPlaceCompletionMinibuffer(TextMinibuffer):
     """Base class for a simple autocompletion minibuffer.
 
     This completion style is like Outlook's email address completion
-    where it suggests the best completion ahead of the cursor,
+    where it suggests the best completion ahead of the caret,
     adjusting as you type.  There is no dropdown list; everything is
     handled in the text ctrl.
 
@@ -492,7 +492,7 @@ class CompletionMinibuffer(TextMinibuffer):
         self.text.SetEntryCallback(self.setDynamicChoices)
         #self.text.SetInsertionPointEnd()
 
-        # FIXME: Using the EVT_SET_FOCUS doesn't seem to work to set the cursor
+        # FIXME: Using the EVT_SET_FOCUS doesn't seem to work to set the caret
         # to the end of the text.  It doesn't seem to get called at all, so
         # the only way to do it appears to be to co-opt the Panel's SetFocus
         # method

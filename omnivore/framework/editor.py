@@ -16,7 +16,7 @@ from omnivore import __version__
 from omnivore.utils.command import HistoryList, StatusFlags
 from omnivore.utils.file_guess import FileGuess
 from omnivore.framework.document import DocumentError
-from omnivore.framework.cursor import CursorHandler
+from omnivore.framework.caret import CaretHandler
 import omnivore.framework.clipboard as clipboard
 
 import logging
@@ -61,7 +61,7 @@ class FrameworkEditor(Editor):
     # active window
     can_paste = Bool(False)
 
-    cursor_handler = Instance(CursorHandler)
+    caret_handler = Instance(CaretHandler)
 
     last_search_settings = Dict()
 
@@ -92,8 +92,8 @@ class FrameworkEditor(Editor):
             "algorithm": "",
             }
 
-    def _cursor_handler_default(self):
-        return CursorHandler()
+    def _caret_handler_default(self):
+        return CaretHandler()
 
     #### property getters
 
@@ -535,7 +535,7 @@ class FrameworkEditor(Editor):
         visible_range = False
         do_refresh = flags.refresh_needed
 
-        already_refreshed = self.cursor_handler.process_cursor_flags(flags, d)
+        already_refreshed = self.caret_handler.process_caret_flags(flags, d)
 
         if flags.message:
             self.task.status_bar.message = flags.message

@@ -93,7 +93,7 @@ class ClipboardSerializer(object):
         self.source_data_format_name = source_data_format_name
         self.data = None
         self.ranges = []
-        self.cursor_index = 0
+        self.caret_index = 0
         self.indexes = None
         self.style = None
         self.comment_indexes = None
@@ -143,7 +143,7 @@ class TextSelection(ClipboardSerializer):
         else:
             raise ClipboardError("Unsupported format type for %s: %s" % (self.data_format_name, ", ".join([str(f) in fmts])))
         self.data = np.fromstring(value, dtype=np.uint8)
-        self.cursor_index = viewer.linked_base.cursor_index
+        self.caret_index = viewer.linked_base.caret_index
 
 
 class BinarySelection(ClipboardSerializer):
@@ -183,7 +183,7 @@ class BinarySelection(ClipboardSerializer):
         value, j = value[0:len1], value[len1:]
         self.data = np.fromstring(value, dtype=np.uint8)
         self.style, self.comment_indexes, self.comments = viewer.restore_selected_index_metadata(j)
-        self.cursor_index = viewer.linked_base.cursor_index
+        self.caret_index = viewer.linked_base.caret_index
 
 
 class MultipleBinarySelection(ClipboardSerializer):
@@ -207,7 +207,7 @@ class MultipleBinarySelection(ClipboardSerializer):
         self.data = np.fromstring(value, dtype=np.uint8)
         self.indexes = np.fromstring(index_string, dtype=np.uint32)
         self.style, self.comment_indexes, self.comments = viewer.restore_selected_index_metadata(j)
-        self.cursor_index = viewer.linked_base.cursor_index
+        self.caret_index = viewer.linked_base.caret_index
 
 
 class RectangularSelection(ClipboardSerializer):
@@ -237,7 +237,7 @@ class RectangularSelection(ClipboardSerializer):
         self.num_rows = int(r)
         self.num_columns = int(c)
         self.data = np.fromstring(value, dtype=np.uint8)
-        self.cursor_index = viewer.linked_base.cursor_index
+        self.caret_index = viewer.linked_base.caret_index
         self.bytes_per_row = viewer.control.bytes_per_row
 
 

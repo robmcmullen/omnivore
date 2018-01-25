@@ -43,9 +43,9 @@ class ImageCache(object):
         self.normal_pen = wx.Pen(m.background_color, 1, wx.SOLID)
         self.data_background = m.data_color
         self.data_brush = wx.Brush(m.data_color, wx.SOLID)
-        self.cursor_background = m.background_color
-        self.cursor_brush = wx.Brush(m.background_color, wx.TRANSPARENT)
-        self.cursor_pen = wx.Pen(m.unfocused_cursor_color, 2, wx.SOLID)
+        self.caret_background = m.background_color
+        self.caret_brush = wx.Brush(m.background_color, wx.TRANSPARENT)
+        self.caret_pen = wx.Pen(m.unfocused_caret_color, 2, wx.SOLID)
         self.match_background = m.match_background_color
         self.match_brush = wx.Brush(m.match_background_color, wx.SOLID)
         self.match_pen = wx.Pen(m.match_background_color, 1, wx.SOLID)
@@ -119,10 +119,10 @@ class CachingHexRenderer(Grid.GridCellRenderer):
             text, style = table.get_value_style(row, col)
             self.cache.draw_text(dc, rect, text, style)
 
-            r, c = table.get_row_col(grid.linked_base.cursor_index)
+            r, c = table.get_row_col(grid.linked_base.caret_index)
             if row == r and col == c:
-                dc.SetPen(self.cache.cursor_pen)
-                dc.SetBrush(self.cache.cursor_brush)
+                dc.SetPen(self.cache.caret_pen)
+                dc.SetBrush(self.cache.caret_brush)
                 x = rect.x+1
                 if sys.platform == "darwin":
                     w = rect.width - 2

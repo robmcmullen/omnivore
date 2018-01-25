@@ -218,20 +218,20 @@ class SegmentViewer(HasTraits):
     def process_ensure_visible(self, evt):
         log.debug("process_ensure_visible for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
-            if evt.dont_move_cursor == self.control:
+            if evt.dont_move_caret == self.control:
                 self.control.refresh_view()
             elif evt.source_control != self.control:
-                self.show_cursor(evt.source_control, evt.index_visible, evt.cursor_column)
+                self.show_caret(evt.source_control, evt.index_visible, evt.caret_column)
             else:
                 log.debug("SKIPPED %s because it's the source control" % (self.control))
 
-    @on_trait_change('linked_base.update_cursor')
-    def process_update_cursor(self, evt):
-        log.debug("process_update_cursor for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+    @on_trait_change('linked_base.update_caret')
+    def process_update_caret(self, evt):
+        log.debug("process_update_caret for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
             control, index, bit = evt
             if control != self.control:
-                self.show_cursor(control, index, bit)
+                self.show_caret(control, index, bit)
             else:
                 log.debug("SKIPPED %s because it's the source control" % (self.control))
 
@@ -258,8 +258,8 @@ class SegmentViewer(HasTraits):
         """
         self.control.recalc_view()
 
-    def show_cursor(self, control, index, bit):
-        self.control.set_cursor_index(control, index, bit)
+    def show_caret(self, control, index, bit):
+        self.control.set_caret_index(control, index, bit)
 
     @on_trait_change('linked_base.editor.document.refresh_event')
     def refresh_view(self, evt):

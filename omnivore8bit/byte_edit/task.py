@@ -38,7 +38,7 @@ class ByteEditTask(FrameworkTask):
     ------------
 
     The various views can be scrolled independently, but there is only one
-    cursor location. Clicking on a location in one view will move the other
+    caret location. Clicking on a location in one view will move the other
     views to show the same location. `Selections`_ are analogous; see below.
 
     Segments
@@ -83,7 +83,7 @@ class ByteEditTask(FrameworkTask):
      * pasting in data from an external application.
 
     Character data can be edited by clicking on a character in the character
-    map to set the cursor and then typing. Inverse text is supported for Atari
+    map to set the caret and then typing. Inverse text is supported for Atari
     modes. Also supported are all the selection and cut/paste methods as above.
 
     Baseline Data
@@ -660,8 +660,8 @@ class ByteEditTask(FrameworkTask):
         return [
             ba.FindPrevAction(),
             ba.CancelMinibufferAction(),
-            ba.UndoCursorPositionAction(),
-            ba.RedoCursorPositionAction(),
+            ba.UndoCaretPositionAction(),
+            ba.RedoCaretPositionAction(),
             ]
 
     ###

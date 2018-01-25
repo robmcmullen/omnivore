@@ -70,7 +70,7 @@ class ByteEditor(FrameworkEditor):
 
     has_origin = Bool(False)
 
-    # This is a flag to help set the cursor to the center row when the cursor
+    # This is a flag to help set the caret to the center row when the caret
     # is moved in a different editor. Some editors can't use SetFocus inside an
     # event handler, so the focus could still be set on one editor even though
     # the user clicked on another. This results in the first editor not getting
@@ -253,7 +253,7 @@ class ByteEditor(FrameworkEditor):
 
     def check_document_change(self):
         self.document.change_count += 1
-        self.update_cursor_history()
+        self.update_caret_history()
 
     def rebuild_ui(self):
         log.debug("rebuilding focused_base: %s" % str(self.focused_viewer.linked_base))
@@ -609,7 +609,7 @@ class ByteEditor(FrameworkEditor):
     def set_focused_viewer(self, viewer):
         self.focused_viewer = viewer
         self.focused_viewer_changed_event = viewer
-        self.cursor_handler = viewer.linked_base
+        self.caret_handler = viewer.linked_base
         viewer.linked_base.calc_action_enabled_flags()
 
     def on_pane_active(self, evt):

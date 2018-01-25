@@ -63,7 +63,7 @@ class ByteEditPreferences(PreferencesHelper):
 
     diff_text_color = Color(wx.Colour(255, 0, 0))
 
-    unfocused_cursor_color = Color(wx.Colour(128, 128, 128))
+    unfocused_caret_color = Color(wx.Colour(128, 128, 128))
     
     row_header_bg_color = Color(wx.Colour(224, 224, 224))
     
@@ -79,7 +79,7 @@ class ByteEditPreferences(PreferencesHelper):
 
     pixel_width_padding = Int(2)
     
-    cursor_pen = Any
+    caret_pen = Any
 
     selected_brush = Any
     
@@ -99,8 +99,8 @@ class ByteEditPreferences(PreferencesHelper):
     
     comment_pen = Any
 
-    def _cursor_pen_default(self):
-        return wx.Pen(self.unfocused_cursor_color, 1, wx.SOLID)
+    def _caret_pen_default(self):
+        return wx.Pen(self.unfocused_caret_color, 1, wx.SOLID)
 
     def _selected_brush_default(self):
         return wx.Brush(self.highlight_color, wx.SOLID)

@@ -102,7 +102,7 @@ class PickTileMode(SelectMode):
         e = v.linked_base
         value = e.segment[index]
         if self.last_index != index:
-            e.set_cursor(index, False)
+            e.set_caret(index, False)
             v.set_draw_pattern(value)
             e.index_clicked(index, bit, None)
         self.last_index = index
@@ -128,8 +128,8 @@ class DrawMode(SelectMode):
             self.batch = DrawBatchCommand()
         byte, bit, inside = c.event_coords_to_byte(evt)
         if inside:
-            v.linked_base.set_cursor(byte, False)
-            index = v.linked_base.cursor_index
+            v.linked_base.set_caret(byte, False)
+            index = v.linked_base.caret_index
             cmd = ChangeByteCommand(e.segment, index, index+len(pattern), pattern, False, True)
             v.editor.process_command(cmd, self.batch)
 
@@ -174,7 +174,7 @@ class OverlayMode(SelectMode):
             if start:
                 self.batch = Overlay()
                 self.start_index = byte
-            v.linked_base.set_cursor(byte, False)
+            v.linked_base.set_caret(byte, False)
             index = byte
             cmd = self.command(v.segment, self.start_index, index, pattern, c.bytes_per_row)
             v.editor.process_command(cmd, self.batch)

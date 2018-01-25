@@ -25,14 +25,14 @@ class ChangeByteCommand(SetContiguousDataCommand):
             ('start_index', 'int'),
             ('end_index', 'int'),
             ('bytes', 'string'),
-            ('cursor_at_end', 'bool'),
+            ('caret_at_end', 'bool'),
             ('ignore_if_same_bytes', 'bool'),
             ]
 
-    def __init__(self, segment, start_index, end_index, bytes, cursor_at_end=False, ignore_if_same_bytes=False):
+    def __init__(self, segment, start_index, end_index, bytes, caret_at_end=False, ignore_if_same_bytes=False):
         SetContiguousDataCommand.__init__(self, segment, start_index, end_index)
         self.data = bytes
-        self.cursor_at_end = cursor_at_end
+        self.caret_at_end = caret_at_end
         self.ignore_if_same_bytes = ignore_if_same_bytes
 
     def get_data(self, orig):
@@ -182,19 +182,19 @@ class PasteCommentsCommand(ClearCommentCommand):
     serialize_order =  [
             ('segment', 'int'),
             ('ranges', 'int_list'),
-            ('cursor', 'int'),
+            ('caret', 'int'),
             ('bytes', 'string'),
             ]
 
-    def __init__(self, segment, ranges, cursor, bytes, *args, **kwargs):
+    def __init__(self, segment, ranges, caret, bytes, *args, **kwargs):
         # remove zero-length ranges
         r = [(start, end) for start, end in ranges if start != end]
         ranges = r
         if not ranges:
-            # use the range from cursor to end
-            ranges = [(cursor, len(segment))]
+            # use the range from caret to end
+            ranges = [(caret, len(segment))]
         ClearCommentCommand.__init__(self, segment, ranges, bytes)
-        self.cursor = cursor
+        self.caret = caret
         self.comments = bytes.tostring().splitlines()
         self.num_lines = len(self.comments)
 
@@ -309,7 +309,7 @@ class PasteCommand(SetValuesAtIndexesCommand):
 
     def __init__(self, segment, serializer):
         s = serializer
-        SetValuesAtIndexesCommand.__init__(self, segment, s.ranges, s.cursor_index, s.data, s.indexes, s.style, s.comment_indexes, s.comments)
+        SetValuesAtIndexesCommand.__init__(self, segment, s.ranges, s.caret_index, s.data, s.indexes, s.style, s.comment_indexes, s.comments)
 
 
 class PasteAndRepeatCommand(PasteCommand):
@@ -338,7 +338,7 @@ class PasteRectCommand(SegmentCommand):
         #start_index, rows, cols, bytes_per_row, bytes):
         SegmentCommand.__init__(self, segment)
         s = serializer
-        self.start_index = s.cursor_index
+        self.start_index = s.caret_index
         self.rows = s.num_rows
         self.cols = s.num_columns
         self.bytes_per_row = s.bytes_per_row
@@ -392,9 +392,9 @@ class FindAllCommand(Command):
     short_name = "find"
     pretty_name = "Find"
 
-    def __init__(self, start_cursor_index, search_text, error, repeat=False, reverse=False):
+    def __init__(self, start_caret_index, search_text, error, repeat=False, reverse=False):
         Command.__init__(self)
-        self.start_cursor_index = start_cursor_index
+        self.start_caret_index = start_caret_index
         self.search_text = search_text
         self.error = error
         self.repeat = repeat
@@ -449,15 +449,15 @@ class FindAllCommand(Command):
                 else:
                 # Need to use a tuple in order for bisect to search the list
                 # of tuples
-                    cursor_tuple = (editor.linked_base.cursor_index, 0)
-                    self.current_match_index = bisect.bisect_left(self.all_matches, cursor_tuple)
+                    caret_tuple = (editor.linked_base.caret_index, 0)
+                    self.current_match_index = bisect.bisect_left(self.all_matches, caret_tuple)
                     if self.current_match_index >= len(self.all_matches):
                         self.current_match_index = 0
                     match = self.all_matches[self.current_match_index]
                     start = match[0]
                     log.debug("Starting at match_index %d = %s" % (self.current_match_index, match))
                     undo.flags.index_range = match
-                    undo.flags.cursor_index = start
+                    undo.flags.caret_index = start
                     undo.flags.select_range = True
                     undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (self.current_match_index + 1, len(self.all_matches), start + self.start_addr, self.match_ids[start]))
             undo.flags.refresh_needed = True
@@ -473,8 +473,8 @@ class FindNextCommand(Command):
 
     def get_index(self, editor):
         cmd = self.search_command
-        cursor_tuple = (editor.linked_base.cursor_index, 0)
-        match_index = bisect.bisect_right(cmd.all_matches, cursor_tuple)
+        caret_tuple = (editor.linked_base.caret_index, 0)
+        match_index = bisect.bisect_right(cmd.all_matches, caret_tuple)
         if match_index == cmd.current_match_index:
             match_index += 1
         if match_index >= len(cmd.all_matches):
@@ -491,7 +491,7 @@ class FindNextCommand(Command):
             match = all_matches[index]
             start = match[0]
             undo.flags.index_range = match
-            undo.flags.cursor_index = start
+            undo.flags.caret_index = start
             undo.flags.select_range = True
             c = self.search_command
             undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (index + 1, len(all_matches), start + c.start_addr, c.match_ids[start]))
@@ -506,8 +506,8 @@ class FindPrevCommand(FindNextCommand):
 
     def get_index(self, editor):
         cmd = self.search_command
-        cursor_tuple = (editor.linked_base.cursor_index, 0)
-        match_index = bisect.bisect_left(cmd.all_matches, cursor_tuple)
+        caret_tuple = (editor.linked_base.caret_index, 0)
+        match_index = bisect.bisect_left(cmd.all_matches, caret_tuple)
         match_index -= 1
         if match_index < 0:
             match_index = len(cmd.all_matches) - 1

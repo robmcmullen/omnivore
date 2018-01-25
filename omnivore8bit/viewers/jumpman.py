@@ -41,7 +41,7 @@ class JumpmanLevelView(MouseControllerMixin, BitmapScroller):
         self.trigger_state = None
         self.bytes_per_row = 40 * 4
 
-    def set_cursor_index(self, *args, **kwargs):
+    def set_caret_index(self, *args, **kwargs):
         pass
 
     def update_bytes_per_row(self):
@@ -383,7 +383,7 @@ class JumpmanViewer(SegmentViewer):
             self.control.refresh_view()
             #self.editor.update_pane_names()
 
-    def show_cursor(self, control, index, bit):
+    def show_caret(self, control, index, bit):
         # FIXME! intercepts the linked_base.ensure_visible_index as the event
         # that recreates the playfield after a change to the level data
         self.control.recalc_view()
@@ -706,7 +706,7 @@ class JumpmanViewer(SegmentViewer):
     #### wx event handlers ####################################################
 
     def index_clicked(self, index, bit, from_control, refresh_from=True):
-        self.cursor_index = index
+        self.caret_index = index
         skip_control = None if refresh_from else from_control
         if skip_control != self.hex_edit:
             self.hex_edit.select_index(from_control, index)

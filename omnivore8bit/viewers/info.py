@@ -103,10 +103,10 @@ class CommentsPanel(wx.VListBox):
             index = min(index + 1, len(self.items) - 1)
             moved = True
         # elif key == wx.WXK_PAGEUP:
-        #     index = self.table.get_page_index(e.cursor_index, e.segment.page_size, -1, self)
+        #     index = self.table.get_page_index(e.caret_index, e.segment.page_size, -1, self)
         #     moved = True
         # elif key == wx.WXK_PAGEDOWN:
-        #     index = self.table.get_page_index(e.cursor_index, e.segment.page_size, 1, self)
+        #     index = self.table.get_page_index(e.caret_index, e.segment.page_size, 1, self)
         #     moved = True
         else:
             evt.Skip()
@@ -227,7 +227,7 @@ class CommentsViewer(BaseInfoViewer):
         self.control.recalc_view()
         self.control.refresh_view()
 
-    def show_cursor(self, control, index, bit):
+    def show_caret(self, control, index, bit):
         pass
 
     ##### Spring Tab interface
@@ -254,7 +254,7 @@ class UndoViewer(BaseInfoViewer):
         self.control.recalc_view()
         self.control.refresh_view()
 
-    def show_cursor(self, control, index, bit):
+    def show_caret(self, control, index, bit):
         self.control.recalc_view()
         self.control.refresh_view()
 
@@ -276,7 +276,7 @@ class SegmentListViewer(BaseInfoViewer):
     def recalc_data_model(self):
         pass
 
-    def show_cursor(self, control, index, bit):
+    def show_caret(self, control, index, bit):
         pass
 
     @on_trait_change('linked_base.editor.task.segments_changed')
@@ -290,7 +290,7 @@ class SegmentListViewer(BaseInfoViewer):
     # def process_segment_selected(self, evt):
     #     log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
     #     if evt is not Undefined:
-    #         self.control.move_cursor(evt)  # evt is segment number
+    #         self.control.move_caret(evt)  # evt is segment number
 
     ##### Spring Tab interface
 

@@ -56,7 +56,7 @@ class LineCommand(SegmentCommand):
             i1, i2 = i2, i1
         undo.flags.byte_values_changed = True
         undo.flags.index_range = i1, i2
-        undo.flags.cursor_index = self.end_index
+        undo.flags.caret_index = self.end_index
         line = np.asarray(self.get_points(i1, i2), dtype=np.uint32)
         old_data = self.segment[line].copy()
         self.segment[line] = self.get_data(old_data)

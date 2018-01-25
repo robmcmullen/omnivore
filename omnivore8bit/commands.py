@@ -58,7 +58,7 @@ class SetContiguousDataCommand(ChangeByteValuesCommand):
         if start_index == end_index:
             end_index += 1
         self.end_index = end_index
-        self.cursor_at_end = False
+        self.caret_at_end = False
         self.ignore_if_same_bytes = False
 
     def __str__(self):
@@ -74,8 +74,8 @@ class SetContiguousDataCommand(ChangeByteValuesCommand):
         i1 = self.start_index
         i2 = self.end_index
         undo.flags.index_range = i1, i2
-        if self.cursor_at_end:
-            undo.flags.cursor_index = i2
+        if self.caret_at_end:
+            undo.flags.caret_index = i2
         old_data = self.segment[i1:i2].copy()
         self.segment[i1:i2] = self.get_data(old_data)
         if self.ignore_if_same_bytes and self.segment[i1:i2] == old_data:
@@ -93,19 +93,19 @@ class SetValuesAtIndexesCommand(ChangeByteValuesCommand):
     serialize_order =  [
             ('segment', 'int'),
             ('ranges', 'int_list'),
-            ('cursor', 'int'),
+            ('caret', 'int'),
             ('bytes', 'string'),
             ('indexes', 'nparray'),
             ]
 
-    def __init__(self, segment, ranges, cursor, bytes, indexes, style=None, comment_indexes=None, comments=None):
+    def __init__(self, segment, ranges, caret, bytes, indexes, style=None, comment_indexes=None, comments=None):
         SegmentCommand.__init__(self, segment)
         self.ranges = tuple(ranges)
-        self.cursor = cursor
+        self.caret = caret
         self.data = bytes
         self.indexes = indexes
         self.style = style
-        log.debug("cursor: %x, data=%s, style=%s" % (cursor, bytes, style))
+        log.debug("caret: %x, data=%s, style=%s" % (caret, bytes, style))
         self.relative_comment_indexes = comment_indexes
         self.comments = comments
 
@@ -118,9 +118,9 @@ class SetValuesAtIndexesCommand(ChangeByteValuesCommand):
         log.debug("indexes: %s" % str(indexes))
         if np.alen(indexes) == 0:
             if self.indexes is not None:
-                indexes = self.indexes.copy() - self.indexes[0] + self.cursor
+                indexes = self.indexes.copy() - self.indexes[0] + self.caret
             else:
-                indexes = np.arange(self.cursor, self.cursor + np.alen(self.data))
+                indexes = np.arange(self.caret, self.caret + np.alen(self.data))
         max_index = len(self.segment)
         indexes = indexes[indexes < max_index]
         log.debug("indexes after limits: %s" % str(indexes))

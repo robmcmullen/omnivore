@@ -107,7 +107,7 @@ class TileViewer(SegmentViewer):
                 self.control.recalc_view()
                 log.debug("new linked_viewer=%s" % (self.linked_viewer))
 
-    def show_cursor(self, control, index, bit):
+    def show_caret(self, control, index, bit):
         # Cursor view is meaningless for this view
         pass
 

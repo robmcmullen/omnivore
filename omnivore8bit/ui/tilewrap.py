@@ -146,7 +146,7 @@ class TileWrapControl(wx.Panel):
         if e.can_copy:
             index = e.anchor_start_index
         else:
-            index = e.cursor_index
+            index = e.caret_index
         value = tile.get_bytes()
         cmd = cmd_cls(e.segment, index, index+len(value), value, True)
         e.process_command(cmd)
@@ -185,7 +185,7 @@ if __name__ == '__main__':
                 ]
             color_converter = colors.gtia_ntsc_to_rgb
             highlight_color = (100, 200, 230)
-            unfocused_cursor_color = (128, 128, 128)
+            unfocused_caret_color = (128, 128, 128)
             background_color = (255, 255, 255)
             match_background_color = (255, 255, 180)
             comment_background_color = (255, 180, 200)

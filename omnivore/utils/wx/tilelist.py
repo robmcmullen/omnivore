@@ -155,7 +155,7 @@ class TileListControl(wx.Panel):
         if e.can_copy:
             index = e.anchor_start_index
         else:
-            index = e.cursor_index
+            index = e.caret_index
         value = tile.get_bytes()
         cmd = cmd_cls(e.segment, index, index+len(value), value, True)
         e.process_command(cmd)

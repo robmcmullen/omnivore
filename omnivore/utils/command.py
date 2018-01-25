@@ -190,8 +190,8 @@ class StatusFlags(object):
         # set to True if the all views of the data need to be refreshed
         self.refresh_needed = False
 
-        # keep the cursor in place in the currently focused window
-        self.dont_move_cursor = None
+        # keep the caret in place in the currently focused window
+        self.dont_move_caret = None
 
         # ensure the specified index is visible
         self.index_visible = None
@@ -202,14 +202,14 @@ class StatusFlags(object):
         # set to True if the index_range should be selected
         self.select_range = False
 
-        # set cursor index to position
-        self.cursor_index = None
+        # set caret index to position
+        self.caret_index = None
 
-        # keep any selection instead of erasing during a cursor move
+        # keep any selection instead of erasing during a caret move
         self.keep_selection = None
 
-        # set cursor column to position, if supported
-        self.cursor_column = None
+        # set caret column to position, if supported
+        self.caret_column = None
 
         # set if document properties have changed, but not the actual data
         self.metadata_dirty = None
@@ -270,10 +270,10 @@ class StatusFlags(object):
                     s2 = f1
                 self.index_range = (s1, s2)
 
-        if flags.cursor_index is not None:
-            self.cursor_index = flags.cursor_index
-        if flags.cursor_column is not None:
-            self.cursor_column = flags.cursor_column
+        if flags.caret_index is not None:
+            self.caret_index = flags.caret_index
+        if flags.caret_column is not None:
+            self.caret_column = flags.caret_column
 
 
 class DisplayFlags(StatusFlags):

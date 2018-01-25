@@ -279,7 +279,7 @@ class FixedFontDataWindow(wx.ScrolledWindow):
     def set_table(self, table):
         self.InitCoords()
         self.table = table
-        self.cx = self.table.enforce_valid_cursor(self.cy, self.cx)
+        self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
         self.AdjustScrollbars()
         self.init_renderers()
         self.UpdateView(None)
@@ -336,7 +336,7 @@ class FixedFontDataWindow(wx.ScrolledWindow):
             dc = wx.ClientDC(self)
         if dc.IsOk():
             self.SetCharDimensions()
-            scroll_log.debug(str(("scroll:", self.sx, self.sy, "cursor", self.cx, self.cy)))
+            scroll_log.debug(str(("scroll:", self.sx, self.sy, "caret", self.cx, self.cy)))
             if self.Selecting:
                 self.KeepCaretOnScreen()
             else:
@@ -370,20 +370,20 @@ class FixedFontDataWindow(wx.ScrolledWindow):
     def InitDoubleBuffering(self):
         pass
 
-##-------- Enforcing screen boundaries, cursor movement
+##-------- Enforcing screen boundaries, caret movement
 
     def KeepCaretOnScreen(self):
         self.sy = ForceBetween(max(0, self.cy-self.sh), self.sy, self.cy)
         self.sx = ForceBetween(max(0, self.cx-self.sw), self.sx, self.cx)
-        self.cx = self.table.enforce_valid_cursor(self.cy, self.cx)
+        self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
         self.AdjustScrollbars()
 
-    def show_cursor(self, col, row):
+    def show_caret(self, col, row):
         self.cy = ForceBetween(0, row, self.table.num_rows - 1)
         self.sy = ForceBetween(self.cy - self.sh + 1, self.sy, self.cy)
         self.cx = ForceBetween(0, col, self.current_line_length - 1)
         self.sx = ForceBetween(self.cx - self.sw + 1, self.sx, self.cx)
-        self.cx = self.table.enforce_valid_cursor(self.cy, self.cx)
+        self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
         self.AdjustScrollbars()
 
     def HorizBoundaries(self):
@@ -399,13 +399,13 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         self.cy = ForceBetween(0, self.cy, self.table.num_rows - 1)
         self.sy = ForceBetween(self.cy - self.sh + 1, self.sy, self.cy)
         self.cx = min(self.cx, self.current_line_length - 1)
-        self.cx = self.table.enforce_valid_cursor(self.cy, self.cx)
+        self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
 
     def cHoriz(self, num):
         self.cx = self.cx + num
         self.cx = ForceBetween(0, self.cx, self.current_line_length - 1)
         self.sx = ForceBetween(self.cx - self.sw + 1, self.sx, self.cx)
-        self.cx = self.table.enforce_valid_cursor(self.cy, self.cx)
+        self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
 
     def AboveScreen(self, row):
         return row < self.sy
@@ -512,8 +512,8 @@ class FixedFontDataWindow(wx.ScrolledWindow):
             self.HandleRightOfScreen(cell)
         else:
             self.cx = min(cell, self.current_line_length)
-        # MouseToRow must be called first so the cursor is in the correct row
-        self.cx = self.table.enforce_valid_cursor(self.cy, self.cx)
+        # MouseToRow must be called first so the caret is in the correct row
+        self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
 
     def MouseToCaret(self, event):
         self.MouseToRow(event.GetY())
@@ -660,7 +660,7 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         print("OESUHCOEHUSRCOUHSRCOHEUCROEHUH")
         try:
             action[key](event)
-            self.cx = self.table.enforce_valid_cursor(self.cy, self.cx)
+            self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
             self.UpdateView()
             self.AdjustScrollbars()
         except KeyError:
@@ -735,7 +735,7 @@ class FixedFontDataWindow(wx.ScrolledWindow):
 
     def draw_caret(self, dc, x, y, w, h):
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        dc.SetPen(self.view_params.cursor_pen)
+        dc.SetPen(self.view_params.caret_pen)
         dc.DrawRectangle(x, y, w, h)
         x -= 1
         y -= 1
@@ -747,7 +747,7 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         y -= 1
         w += 2
         h += 2
-        dc.SetPen(self.view_params.cursor_pen)
+        dc.SetPen(self.view_params.caret_pen)
         dc.DrawRectangle(x, y, w, h)
 
     def DrawEditText(self, t, style, x, y, dc, num_cells=1):
@@ -965,7 +965,7 @@ class HexTable(object):
             return self.default_renderer
         return self.hex_renderer
 
-    def enforce_valid_cursor(self, row, cell):
+    def enforce_valid_caret(self, row, cell):
         if cell >= self.num_cells:
             cell = self.num_cells - 1
         index, _ = self.get_index_range(row, cell)
@@ -1029,13 +1029,13 @@ class TableViewParams(object):
         self.row_header_bg_color = wx.Colour(224, 224, 224)
         self.col_header_bg_color = wx.Colour(224, 224, 224)
         self.highlight_color = wx.Colour(100, 200, 230)
-        self.unfocused_cursor_color = (128, 128, 128)
+        self.unfocused_caret_color = (128, 128, 128)
         self.data_color = (224, 224, 224)
         self.empty_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
         self.match_background_color = (255, 255, 180)
         self.comment_background_color = (255, 180, 200)
         self.diff_text_color = (255, 0, 0)
-        self.cursor_pen = wx.Pen(self.unfocused_cursor_color, 1, wx.SOLID)
+        self.caret_pen = wx.Pen(self.unfocused_caret_color, 1, wx.SOLID)
 
         self.text_font = self.NiceFontForPlatform()
         self.header_font = wx.Font(self.text_font).MakeBold()
@@ -1224,9 +1224,9 @@ class HexGridWindow(wx.ScrolledWindow):
     def set_data(self, data, *args, **kwargs):
         self.main.set_data(data, *args, **kwargs)
 
-    def set_cursor_index(self, from_control, rel_pos, first_row=None):
+    def set_caret_index(self, from_control, rel_pos, first_row=None):
         r, c = self.main.table.index_to_row_col(rel_pos)
-        self.main.show_cursor(c, r)
+        self.main.show_caret(c, r)
         self.refresh_view()
 
 

@@ -68,7 +68,7 @@ class HexEditControl(cg.HexGridWindow, SelectionMixin):
 
     def on_motion_update_status(self, evt):
         row, cell = self.main.pixel_pos_to_row_cell(evt.GetX(), evt.GetY())
-        c2 = self.table.enforce_valid_cursor(row, cell)
+        c2 = self.table.enforce_valid_caret(row, cell)
         inside = cell == c2
         if inside:
             index, _ = self.table.get_index_range(row, cell)
@@ -76,7 +76,7 @@ class HexEditControl(cg.HexGridWindow, SelectionMixin):
 
     def get_location_from_event(self, evt):
         row, cell = self.main.pixel_pos_to_row_cell(evt.GetX(), evt.GetY())
-        c2 = self.table.enforce_valid_cursor(row, cell)
+        c2 = self.table.enforce_valid_caret(row, cell)
         inside = cell == c2
         index1, index2 = self.table.get_index_range(row, c2)
         return row, 0, index1, index2, inside

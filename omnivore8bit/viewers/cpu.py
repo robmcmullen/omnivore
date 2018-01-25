@@ -103,7 +103,7 @@ class DisassemblyTable(ByteGridTable):
                 return 0, 0
         return row, col
 
-    def get_next_cursor_pos(self, row, col):
+    def get_next_caret_pos(self, row, col):
         col += 1
         if col >= self._cols:
             if row < self._rows - 1:
@@ -124,7 +124,7 @@ class DisassemblyTable(ByteGridTable):
             row += 1
         return (row, col)
 
-    def get_prev_cursor_pos(self, row, col):
+    def get_prev_caret_pos(self, row, col):
         col -= 1
         if col < 1:
             if row > 0:

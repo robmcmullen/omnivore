@@ -277,7 +277,7 @@ class UndoAction(NameChangeAction):
 
     Actions that modify data are undoable; some that modify the metadata are
     but movement commands are not stored in the undo list, so for example
-    cursor moves or changes to selection regions are not undoable.
+    caret moves or changes to selection regions are not undoable.
     """
     default_name = 'Undo'
     name = default_name

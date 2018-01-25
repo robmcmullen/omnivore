@@ -197,10 +197,10 @@ class SegmentList(wx.ListBox):
             index = min(index + 1, len(self.index_to_segment_number) - 1)
             moved = True
         # elif key == wx.WXK_PAGEUP:
-        #     index = self.table.get_page_index(e.cursor_index, e.segment.page_size, -1, self)
+        #     index = self.table.get_page_index(e.caret_index, e.segment.page_size, -1, self)
         #     moved = True
         # elif key == wx.WXK_PAGEDOWN:
-        #     index = self.table.get_page_index(e.cursor_index, e.segment.page_size, 1, self)
+        #     index = self.table.get_page_index(e.caret_index, e.segment.page_size, 1, self)
         #     moved = True
         else:
             evt.Skip()
@@ -222,7 +222,7 @@ class SegmentList(wx.ListBox):
             self.task.on_hide_minibuffer_or_cancel(evt)
         evt.Skip()
 
-    def move_cursor(self, segment_number):
+    def move_caret(self, segment_number):
         try:
             index = self.segment_number_to_index[segment_number]
         except KeyError:

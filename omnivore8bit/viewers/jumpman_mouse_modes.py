@@ -438,7 +438,7 @@ class DrawPeanutMode(DrawMode):
     def cleanup(self):
         self.control.segment_viewer.screen.style[:] = 0
 
-    def get_cursor(self):
+    def get_caret(self):
         if self.is_bad_location:
             return wx.Cursor(wx.CURSOR_HAND)
         else:

@@ -29,9 +29,9 @@ class ByteGridRenderer(Grid.GridCellRenderer):
         self.normal_pen = wx.Pen(m.background_color, 1, wx.SOLID)
         self.data_background = m.data_color
         self.data_brush = wx.Brush(m.data_color, wx.SOLID)
-        self.cursor_background = m.background_color
-        self.cursor_brush = wx.Brush(m.background_color, wx.TRANSPARENT)
-        self.cursor_pen = wx.Pen(m.unfocused_cursor_color, 2, wx.SOLID)
+        self.caret_background = m.background_color
+        self.caret_brush = wx.Brush(m.background_color, wx.TRANSPARENT)
+        self.caret_pen = wx.Pen(m.unfocused_caret_color, 2, wx.SOLID)
         self.match_background = m.match_background_color
         self.match_brush = wx.Brush(m.match_background_color, wx.SOLID)
         self.match_pen = wx.Pen(m.match_background_color, 1, wx.SOLID)
@@ -106,10 +106,10 @@ class ByteGridRenderer(Grid.GridCellRenderer):
                 dc.DrawRectangle(x, rect.y+1, width+1, height)
                 dc.DrawText("...", x, rect.y+1)
 
-            r, c = table.get_row_col(grid.linked_base.cursor_index)
+            r, c = table.get_row_col(grid.linked_base.caret_index)
             if row == r and col == c:
-                dc.SetPen(self.cursor_pen)
-                dc.SetBrush(self.cursor_brush)
+                dc.SetPen(self.caret_pen)
+                dc.SetBrush(self.caret_brush)
                 x = rect.x+1
                 if sys.platform == "darwin":
                     w = rect.width - 2
@@ -185,7 +185,7 @@ class ByteGridTable(Grid.GridTableBase):
     def get_col_type(self, c):
         return "hex"
 
-    def get_next_cursor_pos(self, row, col):
+    def get_next_caret_pos(self, row, col):
         col += 1
         if col >= self._cols:
             if row < self._rows - 1:
@@ -196,9 +196,9 @@ class ByteGridTable(Grid.GridTableBase):
         return (row, col)
 
     def get_next_editable_pos(self, row, col):
-        return self.get_next_cursor_pos(row, col)
+        return self.get_next_caret_pos(row, col)
 
-    def get_prev_cursor_pos(self, row, col):
+    def get_prev_caret_pos(self, row, col):
         col -= 1
         if col < 0:
             if row > 0:
@@ -430,7 +430,7 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
         key=evt.GetKeyCode()
 
         if key==wx.WXK_TAB:
-            wx.CallAfter(self.parentgrid.advance_cursor)
+            wx.CallAfter(self.parentgrid.advance_caret)
             return
         elif self.mode=='hex':
             if self.isValidHexDigit(key):
@@ -454,7 +454,7 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
         
         @param evt: CommandEvent
         """
-        log.debug("evt=%s str=%s cursor=%d" % (evt,evt.GetString(),self.GetInsertionPoint()))
+        log.debug("evt=%s str=%s caret=%d" % (evt,evt.GetString(),self.GetInsertionPoint()))
 
         # NOTE: we check that GetInsertionPoint returns 1 less than
         # the desired number because the insertion point hasn't been
@@ -469,7 +469,7 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
                 # to see if we're editing, or to delay updates until a
                 # certain period of calmness, or something.
                 log.debug("advancing after edit")
-                wx.CallAfter(self.parentgrid.advance_cursor)
+                wx.CallAfter(self.parentgrid.advance_caret)
 
 
 class HexCellEditor(Grid.GridCellEditor,HexDigitMixin):
@@ -560,7 +560,7 @@ class HexCellEditor(Grid.GridCellEditor,HexDigitMixin):
         """
         if self.accepted_change is not None:
             changed = grid.change_value(row, col, self.accepted_change)
-            # On error, don't advance cursor
+            # On error, don't advance caret
             grid.change_is_valid = changed
             self.accepted_change = None
 
@@ -688,7 +688,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
     def recalc_view(self):
         self.table.ResetView(self)
         self.table.UpdateValues(self)
-        self.set_cursor_index(self, self.linked_base.cursor_index)
+        self.set_caret_index(self, self.linked_base.caret_index)
         self.last_change_count = self.linked_base.document.change_count
 
     def refresh_view(self):
@@ -834,16 +834,16 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             else:
                 self.DisableCellEditControl()
                 if evt.ShiftDown():
-                    (r, c) = self.table.get_prev_cursor_pos(r, c)
+                    (r, c) = self.table.get_prev_caret_pos(r, c)
                 elif self.change_is_valid:
                     (r, c) = self.table.get_next_editable_pos(r, c)
                 moved = True
                 self.change_is_valid = True
         elif key == wx.WXK_RIGHT:
-            r, c = self.table.get_next_cursor_pos(r, c)
+            r, c = self.table.get_next_caret_pos(r, c)
             moved = True
         elif key == wx.WXK_LEFT:
-            r, c = self.table.get_prev_cursor_pos(r, c)
+            r, c = self.table.get_prev_caret_pos(r, c)
             moved = True
         elif key == wx.WXK_UP:
             r = 0 if r <= 1 else r - 1
@@ -853,13 +853,13 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             r = n - 1 if r >= n - 1 else r + 1
             moved = True
         elif key == wx.WXK_PAGEUP:
-            cursor_row = max(0, r - self.get_num_visible_rows())
+            caret_row = max(0, r - self.get_num_visible_rows())
             first_row = max(0, self.get_first_visible_row() - self.get_num_visible_rows())
             paged = True
         elif key == wx.WXK_PAGEDOWN:
             max_rows = self.table.GetNumberRows()
             vis = self.get_num_visible_rows()
-            cursor_row = min(max_rows, r + vis)
+            caret_row = min(max_rows, r + vis)
             first_row = min(max_rows - vis - 1, self.get_first_visible_row() + vis)
             paged = True
         elif key == wx.WXK_HOME:
@@ -875,23 +875,23 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             if index is None:
                 index, _ = self.table.get_index_range(r, c)
             refresh_self = True  # e.can_copy
-            e.set_cursor(index, False)
+            e.set_caret(index, False)
             self.select_none(self.linked_base)
-            r, c = self.table.get_row_col(e.cursor_index, c)
+            r, c = self.table.get_row_col(e.caret_index, c)
             self.SetGridCursor(r, c)
             self.MakeCellVisible(r, c)
-            wx.CallAfter(e.index_clicked, e.cursor_index, c, self, refresh_self)
+            wx.CallAfter(e.index_clicked, e.caret_index, c, self, refresh_self)
         elif paged:
-            index, _ = self.table.get_index_range(cursor_row, c)
-            e.set_cursor(index, False)
-            wx.CallAfter(self.page_move, index, cursor_row, first_row)
+            index, _ = self.table.get_index_range(caret_row, c)
+            e.set_caret(index, False)
+            wx.CallAfter(self.page_move, index, caret_row, first_row)
 
-    def page_move(self, index, cursor_row, first_row):
-        """Move up or down a page, keeping the cursor in the same
+    def page_move(self, index, caret_row, first_row):
+        """Move up or down a page, keeping the caret in the same
         relative position on screen (if possible)
 
-        The cursor move and cell positioning needs to happen at the same time.
-        Calling set_cursor in the event handler and index_clicked in a
+        The caret move and cell positioning needs to happen at the same time.
+        Calling set_caret in the event handler and index_clicked in a
         CallAfter may result in the incorrect ordering of events; multiple
         keypresses may be received before the first CallAfter is called.
         Keeping them together guarantees that this move will happen
@@ -901,15 +901,15 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         r, c = self.GetGridCursorRow(), self.GetGridCursorCol()
         max_rows = self.table.GetNumberRows()
         vis = self.get_num_visible_rows()
-        e.set_cursor(index, False)
-        if cursor_row > r:
+        e.set_caret(index, False)
+        if caret_row > r:
             # page down needs to first set the last visible row, otherwise
-            # the cursor won't stay in the same relative position
-            print first_row, vis, first_row + vis, max_rows, cursor_row
+            # the caret won't stay in the same relative position
+            print first_row, vis, first_row + vis, max_rows, caret_row
             self.MakeCellVisible(min(max_rows - 1, first_row + vis), c)
         self.MakeCellVisible(first_row, c)
-        self.SetGridCursor(cursor_row, c)
-        e.index_clicked(e.cursor_index, c, self, True)
+        self.SetGridCursor(caret_row, c)
+        e.index_clicked(e.caret_index, c, self, True)
 
     def on_left_dclick(self, evt):
         self.EnableCellEditControl()
@@ -926,21 +926,21 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         log.debug("cancelling edit!")
         self.DisableCellEditControl()
 
-    def advance_cursor(self):
+    def advance_caret(self):
         self.DisableCellEditControl()
         e = self.linked_base
-        r, c = self.table.get_row_col(e.cursor_index)
+        r, c = self.table.get_row_col(e.caret_index)
         (r, c) = self.table.get_next_editable_pos(r, c)
         self.SetGridCursor(r, c)
         index1, index2 = self.table.get_index_range(r, c)
-        e.set_cursor(index1, False)
+        e.set_caret(index1, False)
         self.EnableCellEditControl()
 
     def clamp_column(self, col_from_index, col_from_user):
         return col_from_index
 
     def center_on_index(self):
-        r, c = self.table.get_row_col(self.linked_base.cursor_index)
+        r, c = self.table.get_row_col(self.linked_base.caret_index)
         num = self.get_num_visible_rows()
         last = self.table.GetNumberRows() - 1
         ul = max(0, r - (num / 2))
@@ -949,7 +949,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         self.MakeCellVisible(ul + num, 0)
         self.MakeCellVisible(ul, 0)
 
-    def set_cursor_index(self, from_control, index, col_from_user=None):
+    def set_caret_index(self, from_control, index, col_from_user=None):
         row, c = self.table.get_row_col(index)
         if col_from_user is None:
             col = c
@@ -965,9 +965,9 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         self.MakeCellVisible(row,col)
         self.refresh_view()
 
-    def select_index(self, from_control, cursor, col_from_user=None):
+    def select_index(self, from_control, caret, col_from_user=None):
         self.ClearSelection()
-        self.set_cursor_index(from_control, cursor, col_from_user)
+        self.set_caret_index(from_control, caret, col_from_user)
 
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.
