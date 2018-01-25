@@ -5,6 +5,9 @@ import numpy as np
 
 from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
 
+from .char_event_mixin import CharEventMixin
+
+
 import logging
 logger = logging.getLogger()
 # logger.setLevel(logging.INFO)
@@ -255,10 +258,11 @@ class FakeStyle(object):
         return style
 
 
-class FixedFontDataWindow(wx.ScrolledWindow):
+class FixedFontDataWindow(wx.ScrolledWindow, CharEventMixin):
     def __init__(self, parent, settings_obj, table, view_params):
 
         wx.ScrolledWindow.__init__(self, parent, -1, style=wx.WANTS_CHARS)
+        CharEventMixin.__init__(self)
 
         self.isDrawing = False
         self.settings_obj = settings_obj
@@ -599,13 +603,13 @@ class FixedFontDataWindow(wx.ScrolledWindow):
 
 #-------------- Keyboard movement implementations
 
-    def MoveDown(self, event):
+    def handle_char_move_down(self, event):
         self.cVert(+1)
 
-    def MoveUp(self, event):
+    def handle_char_move_up(self, event):
         self.cVert(-1)
 
-    def MoveLeft(self, event):
+    def handle_char_move_left(self, event):
         if self.cx == 0:
             if self.cy == 0:
                 wx.Bell()
@@ -615,7 +619,7 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         else:
             self.cx -= 1
 
-    def MoveRight(self, event):
+    def handle_char_move_right(self, event):
         linelen = self.current_line_length - 1
         if self.cx >= linelen:
             if self.cy == len(self.lines) - 1:
@@ -626,46 +630,36 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         else:
             self.cx += 1
 
-    def MovePageDown(self, event):
+    def handle_char_move_page_down(self, event):
         self.cVert(self.sh)
 
-    def MovePageUp(self, event):
+    def handle_char_move_page_up(self, event):
         self.cVert(-self.sh)
 
-    def MoveHome(self, event):
+    def handle_char_move_Home(self, event):
         self.cx = 0
 
-    def MoveEnd(self, event):
+    def handle_char_move_end(self, event):
         self.cx = self.current_line_length
 
-    def MoveStartOfFile(self, event):
+    def handle_char_move_start_of_file(self, event):
         self.cy = 0
         self.cx = 0
 
-    def MoveEndOfFile(self, event):
+    def handle_char_move_end_of_file(self, event):
         self.cy = len(self.lines) - 1
         self.cx = self.current_line_length
 
-    def OnChar(self, event):
-        action = {}
-        action[wx.WXK_DOWN]  = self.MoveDown
-        action[wx.WXK_UP]    = self.MoveUp
-        action[wx.WXK_LEFT]  = self.MoveLeft
-        action[wx.WXK_RIGHT] = self.MoveRight
-        action[wx.WXK_PAGEDOWN]  = self.MovePageDown
-        action[wx.WXK_PAGEUP] = self.MovePageUp
-        action[wx.WXK_HOME]  = self.MoveHome
-        action[wx.WXK_END]   = self.MoveEnd
-        key = event.GetKeyCode()
-        print("OESUHCOEHUSRCOUHSRCOHEUCROEHUH")
-        try:
-            action[key](event)
-            self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
-            self.UpdateView()
-            self.AdjustScrollbars()
-        except KeyError:
-            print(key)
-            event.Skip()
+    def handle_char_move_start_of_line(self, event):
+        self.cx = 0
+
+    def handle_char_move_end_of_line(self, event):
+        self.cx = self.current_line_length
+
+    def show_new_caret_position(self):
+        self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
+        self.UpdateView()
+        self.AdjustScrollbars()
 
 ##----------- selection routines
 
@@ -1100,7 +1094,7 @@ class HexGridWindow(wx.ScrolledWindow):
         self.main.Bind(wx.EVT_MOTION, self.on_motion)
         self.main.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
         self.main.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
-        self.main.Bind(wx.EVT_CHAR, self.main.OnChar)
+        self.main.Bind(wx.EVT_CHAR, self.main.on_char)
         self.main.Bind(wx.EVT_PAINT, self.main.OnPaint)
         self.main.Bind(wx.EVT_SIZE, self.main.OnSize)
         self.main.Bind(wx.EVT_WINDOW_DESTROY, self.main.OnDestroy)

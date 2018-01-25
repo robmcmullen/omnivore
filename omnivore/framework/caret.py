@@ -11,6 +11,7 @@ from traits.api import on_trait_change, HasTraits, Any, Bool, Int, Unicode, Prop
 
 from omnivore.utils.command import HistoryList, StatusFlags
 from omnivore.utils.sortutil import collapse_overlapping_ranges, invert_ranges, ranges_to_indexes
+from ..utils.wx.char_event_mixin import CharEventMixin
 
 import logging
 log = logging.getLogger(__name__)
@@ -162,6 +163,15 @@ class CaretHandler(HasTraits):
     @property
     def selection_handler(self):
         raise NotImplementedError("Subclass needs to define a SelectionHandler")
+
+
+class CaretEventMixin(CharEventMixin):
+    def __init__(self, caret_handler):
+        CharEventMixin.__init__(self)
+        self.caret_handler = caret_handler
+
+    def show_new_caret_position(self):
+        pass
 
 
 class SelectionHandler(object):
