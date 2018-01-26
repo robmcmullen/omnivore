@@ -5,8 +5,6 @@ import numpy as np
 
 from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
 
-from .char_event_mixin import CharEventMixin
-
 
 import logging
 logger = logging.getLogger()
@@ -258,11 +256,10 @@ class FakeStyle(object):
         return style
 
 
-class FixedFontDataWindow(wx.ScrolledWindow, CharEventMixin):
+class FixedFontDataWindow(wx.ScrolledWindow):
     def __init__(self, parent, settings_obj, table, view_params):
 
         wx.ScrolledWindow.__init__(self, parent, -1, style=wx.WANTS_CHARS)
-        CharEventMixin.__init__(self)
 
         self.isDrawing = False
         self.settings_obj = settings_obj
@@ -634,7 +631,7 @@ class FixedFontDataWindow(wx.ScrolledWindow, CharEventMixin):
     def handle_char_move_page_up(self, event):
         self.cVert(-self.sh)
 
-    def handle_char_move_Home(self, event):
+    def handle_char_move_home(self, event):
         self.cx = 0
 
     def handle_char_move_end(self, event):
@@ -654,10 +651,25 @@ class FixedFontDataWindow(wx.ScrolledWindow, CharEventMixin):
     def handle_char_move_end_of_line(self, event):
         self.cx = self.current_line_length
 
-    def show_new_caret_position(self):
-        self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
-        self.UpdateView()
-        self.AdjustScrollbars()
+    def on_char(self, event):
+        action = {}
+        action[wx.WXK_DOWN]  = self.handle_char_move_down
+        action[wx.WXK_UP]    = self.handle_char_move_up
+        action[wx.WXK_LEFT]  = self.handle_char_move_left
+        action[wx.WXK_RIGHT] = self.handle_char_move_right
+        action[wx.WXK_PAGEDOWN]  = self.handle_char_move_page_down
+        action[wx.WXK_PAGEUP] = self.handle_char_move_page_up
+        action[wx.WXK_HOME]  = self.handle_char_move_home
+        action[wx.WXK_END]   = self.handle_char_move_end
+        key = event.GetKeyCode()
+        try:
+            action[key](event)
+            self.cx = self.table.enforce_valid_cursor(self.cy, self.cx)
+            self.UpdateView()
+            self.AdjustScrollbars()
+        except KeyError:
+            print(key)
+            event.Skip()
 
 ##----------- selection routines
 
@@ -1085,11 +1097,10 @@ class HexGridWindow(wx.ScrolledWindow):
     def map_events(self):
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
         self.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
-        self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
 
-        self.main.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
-        self.main.Bind(wx.EVT_LEFT_UP, self.on_left_up)
-        self.main.Bind(wx.EVT_MOTION, self.on_motion)
+        self.main.Bind(wx.EVT_LEFT_DOWN, self.main.OnLeftDown)
+        self.main.Bind(wx.EVT_LEFT_UP, self.main.OnLeftUp)
+        self.main.Bind(wx.EVT_MOTION, self.main.OnMotion)
         self.main.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
         self.main.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
         self.main.Bind(wx.EVT_CHAR, self.main.on_char)
@@ -1103,20 +1114,6 @@ class HexGridWindow(wx.ScrolledWindow):
 
     def refresh_view(self, *args, **kwargs):
         self.main.Refresh()
-
-    def on_left_down(self, evt):
-        evt.Skip()
-
-    def on_motion(self, evt):
-        evt.Skip()
-
-    def on_left_up(self, event):
-        print
-        print "Title " + str(self)
-        print "Position " + str(self.GetPosition())
-        print "Size " + str(self.GetSize())
-        print "VirtualSize " + str(self.GetVirtualSize())
-        event.Skip()
        
     def set_pane_sizes(self, width, height):
         """
