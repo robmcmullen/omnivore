@@ -562,10 +562,9 @@ class FixedFontDataWindow(wx.ScrolledWindow, CharEventMixin):
         elif eventType == wx.wxEVT_SCROLLWIN_PAGEDOWN:
             self.sx += self.sw
         elif eventType == wx.wxEVT_SCROLLWIN_TOP:
-            self.sx = self.cx = 0
+            self.sx = 0
         elif eventType == wx.wxEVT_SCROLLWIN_BOTTOM:
             self.sx = self.table.num_cells - self.sw
-            self.cx = self.table.num_cells
         else:
             self.sx = event.GetPosition()
 
@@ -581,10 +580,9 @@ class FixedFontDataWindow(wx.ScrolledWindow, CharEventMixin):
         elif eventType == wx.wxEVT_SCROLLWIN_PAGEDOWN:
             self.sy += self.sh
         elif eventType == wx.wxEVT_SCROLLWIN_TOP:
-            self.sy = self.cy = 0
+            self.sy = 0
         elif eventType == wx.wxEVT_SCROLLWIN_BOTTOM:
             self.sy = self.table.num_rows - self.sh
-            self.cy = self.table.num_rows
         else:
             print("Position:", event.GetPosition(), "old:", self.sy, self.GetViewStart())
             self.sy = event.GetPosition()
@@ -1148,10 +1146,9 @@ class HexGridWindow(wx.ScrolledWindow):
         elif eventType == wx.wxEVT_SCROLLWIN_PAGEDOWN:
             self.main.sx += self.main.sw
         elif eventType == wx.wxEVT_SCROLLWIN_TOP:
-            self.main.sx = self.main.cx = 0
+            self.main.sx = 0
         elif eventType == wx.wxEVT_SCROLLWIN_BOTTOM:
             self.main.sx = self.main.max_line_len - self.main.sw
-            self.main.cx = self.main.max_line_len
         else:
             self.main.sx = event.GetPosition()
 
@@ -1167,10 +1164,9 @@ class HexGridWindow(wx.ScrolledWindow):
         elif eventType == wx.wxEVT_SCROLLWIN_PAGEDOWN:
             self.main.sy += self.main.sh
         elif eventType == wx.wxEVT_SCROLLWIN_TOP:
-            self.main.sy = self.main.cy = 0
+            self.main.sy = 0
         elif eventType == wx.wxEVT_SCROLLWIN_BOTTOM:
             self.main.sy = self.main.LinesInFile() - self.main.sh
-            self.main.cy = self.main.LinesInFile()
         elif eventType == wx.wxEVT_MOUSEWHEEL:
             # Not a normal scroll event. Wheel scrolling is handled by the
             # scrolled window by a wxEVT_SCROLLWIN_THUMBTRACK, but on GTK its
