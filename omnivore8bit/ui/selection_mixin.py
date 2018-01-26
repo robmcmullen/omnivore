@@ -23,7 +23,6 @@ class SelectionMixin(SelectionHandler):
         """
         log.debug("handle_select_start: selecting_rows: %s, col=%s" % (selecting_rows, col))
         flags = DisplayFlags(self)
-        flags.dont_move_caret = self
         caret_handler.pending_focus = self
         self.mouse_drag_started = True
         r, c, index1, index2, inside = self.get_location_from_event(evt)
