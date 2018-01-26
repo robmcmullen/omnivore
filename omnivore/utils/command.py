@@ -218,6 +218,13 @@ class StatusFlags(object):
         # result of a user interface change
         self.source_control = None
 
+        # set if the user is selecting by entire rows
+        self.selecting_rows = False
+
+        # if not None, will contain the set carets to determine if any have
+        # moved and need to be updated.
+        self.old_carets = None
+
         for flags in args:
             self.add_flags(flags)
 

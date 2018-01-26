@@ -7,11 +7,10 @@ import wx
 import fs
 
 # Enthought library imports.
-from traits.api import on_trait_change, HasTraits, Any, Bool, Int, Unicode, Property, Dict, List, Str, Undefined
+from traits.api import on_trait_change, HasTraits, Any, Bool, Int, Unicode, Property, Dict, List, Str, Undefined, Event
 
-from omnivore.utils.command import HistoryList, StatusFlags
+from omnivore.utils.command import HistoryList
 from omnivore.utils.sortutil import collapse_overlapping_ranges, invert_ranges, ranges_to_indexes
-from ..utils.wx.char_event_mixin import CharEventMixin
 
 import logging
 log = logging.getLogger(__name__)
@@ -43,6 +42,10 @@ class CaretHandler(HasTraits):
 
     selected_ranges = List([])
 
+    ensure_visible_event = Event
+
+    update_caret_event = Event
+
     #### trait default values
 
     def _caret_history_default(self):
@@ -57,6 +60,10 @@ class CaretHandler(HasTraits):
     def has_selection(self):
         return bool(self.selected_ranges)
 
+    @property
+    def caret_list(self):
+        return [self.caret_index]
+
     #### command flag processors
 
     def ensure_visible(self, flags):
@@ -68,14 +75,21 @@ class CaretHandler(HasTraits):
         pass
 
     def set_caret(self, index, refresh=True):
+        self.caret_index = index
+        self.validate_carets()
+        self.clear_selection()
+
+        return index
+
+    def validate_carets(self):
+        self.caret_index = self.validate_caret_position(self.caret_index)
+
+    def validate_caret_position(self, index):
         max_index = self.document_length - 1
         if index < 0:
             index = 0
         elif index > max_index:
             index = max_index
-        self.caret_index = index
-        self.clear_selection()
-
         return index
 
     def update_caret_history(self):
@@ -87,7 +101,10 @@ class CaretHandler(HasTraits):
                 self.caret_history.add_command(state)
 
     def get_caret_state(self):
-        return self.caret_index
+        """Return a copy of the caret state so that it can be restored
+        later
+        """
+        return [self.caret_index]
 
     def undo_caret_history(self):
         if not self.caret_history.can_redo():
@@ -127,14 +144,21 @@ class CaretHandler(HasTraits):
         
         """
         visible_range = False
-        refreshed = False
+        caret_moved = False
+        log.debug("processing caret flags: %s" % str(flags))
 
-        if flags.caret_index is not None:
-            if flags.keep_selection:
-                self.caret_index = flags.caret_index
-            else:
-                self.caret_index = self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = flags.caret_index
-            visible_range = True
+        if flags.old_carets is not None:
+            print("before:", str(self.caret_list))
+            self.validate_carets()
+            print("after:", str(self.caret_list))
+            caret_state = set(self.caret_list)
+            caret_moved = caret_state != flags.old_carets
+            if caret_moved:
+                print("MOVEDUOSECRDURCOEDUCROEDUCODEUCRDOE")
+                self.update_caret_event = flags
+                if not flags.keep_selection:
+                    self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = self.caret_index
+                visible_range = True
 
         if flags.index_range is not None:
             if flags.select_range:
@@ -147,15 +171,10 @@ class CaretHandler(HasTraits):
             # Only update the range on the current editor, not other views
             # which are allowed to remain where they are
             if flags.index_visible is None:
-                flags.index_visible = flags.caret_index if flags.caret_index is not None else self.anchor_start_index
-            self.ensure_visible(flags)
+                flags.index_visible = self.caret_index if caret_moved else self.anchor_start_index
+            self.ensure_visible_event = flags
 
-            # Prevent a double refresh since ensure_visible does a refresh as a
-            # side effect.
-            log.debug("NOTE: turned off do_refresh to prevent double refresh")
-            refreshed = True
-
-        return refreshed
+            flags.refresh_needed = True
 
     def calc_action_enabled_flags(self):
         pass

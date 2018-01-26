@@ -5,7 +5,7 @@ import wx.grid as Grid
 
 from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
 
-from selection_mixin import SelectionMixin
+from mouse_event_mixin import MouseEventMixin
 from omnivore8bit.arch.disasm import get_style_name
 
 
@@ -625,7 +625,7 @@ class HexCellEditor(Grid.GridCellEditor,HexDigitMixin):
         return HexCellEditor(self.parentgrid)
 
 
-class ByteGrid(Grid.Grid, SelectionMixin):
+class ByteGrid(Grid.Grid, MouseEventMixin):
     """
     View for editing in hexidecimal notation.
     """
@@ -635,7 +635,7 @@ class ByteGrid(Grid.Grid, SelectionMixin):
         """Create the HexEdit viewer
         """
         Grid.Grid.__init__(self, parent, -1, **kwargs)
-        SelectionMixin.__init__(self)
+        MouseEventMixin.__init__(self, linked_base)
         self.linked_base = linked_base
         self.table = table
 
@@ -698,8 +698,6 @@ class ByteGrid(Grid.Grid, SelectionMixin):
                 log.debug("skipping refresh; document change count=%d" % self.last_change_count)
             else:
                 log.debug("refreshing! document change count=%d" % self.last_change_count)
-                if self.FindFocus() != self and self.linked_base.pending_focus != self:
-                    self.center_on_index()
                 self.Refresh()
                 self.last_change_count = self.linked_base.document.change_count
         else:
@@ -964,6 +962,10 @@ class ByteGrid(Grid.Grid, SelectionMixin):
             self.restore_upper_left = -1
         self.MakeCellVisible(row,col)
         self.refresh_view()
+
+    def keep_index_on_screen(self, index):
+        r, c = self.table.get_row_col(self.linked_base.caret_index)
+        self.MakeCellVisible(r, c)
 
     def select_index(self, from_control, caret, col_from_user=None):
         self.ClearSelection()

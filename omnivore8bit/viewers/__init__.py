@@ -202,6 +202,17 @@ class SegmentViewer(HasTraits):
         if self.pane_info is not None:
             self.pane_info.Caption(self.window_title)
 
+    ##### Trait change handlers
+
+    # Only the refresh event should actually update the screen! All other trait
+    # handlers should just change the data model without any screen effects.
+
+    # Most trait change handlers are simply a trampoline to another method.
+    # Trait change events aren't easily overridden in subclasses, so this
+    # regular method is what subclasses should use for the desired changes. For
+    # example, process_ensure_visible is the trait change handler that calls
+    # ensure_visible to do the actual work of repositioning the viewer.
+
     @on_trait_change('linked_base.editor.document.data_model_changed')
     def process_data_model_change(self, evt):
         log.debug("process_data_model_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
@@ -215,17 +226,22 @@ class SegmentViewer(HasTraits):
             self.recalc_view()
 
     @on_trait_change('linked_base.ensure_visible_index')
-    def process_ensure_visible(self, evt):
-        log.debug("process_ensure_visible for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        if evt is not Undefined:
-            self.show_caret(evt.source_control, evt.index_visible, evt.caret_column)
+    def process_ensure_visible(self, flags):
+        log.debug("process_ensure_visible for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
+        if flags is not Undefined:
+            self.ensure_visible(flags)
 
-    @on_trait_change('linked_base.update_caret')
-    def process_update_caret(self, evt):
-        log.debug("process_update_caret for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        if evt is not Undefined:
-            control, index, bit = evt
-            self.show_caret(control, index, bit)
+    def ensure_visible(self, flags):
+        self.control.keep_index_on_screen(flags.index_visible)
+
+    @on_trait_change('linked_base.update_caret_event')
+    def process_update_carets(self, flags):
+        log.debug("process_update_caret for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
+        if flags is not Undefined:
+            self.update_carets(flags)
+
+    def update_carets(self, flags):
+        pass
 
     @on_trait_change('machine.font_change_event,machine.bitmap_shape_change_event,machine.bitmap_color_change_event,machine.disassembler_change_event')
     def machine_metadata_changed(self, evt):

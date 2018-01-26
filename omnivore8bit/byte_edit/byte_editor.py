@@ -70,13 +70,6 @@ class ByteEditor(FrameworkEditor):
 
     has_origin = Bool(False)
 
-    # This is a flag to help set the caret to the center row when the caret
-    # is moved in a different editor. Some editors can't use SetFocus inside an
-    # event handler, so the focus could still be set on one editor even though
-    # the user clicked on another. This results in the first editor not getting
-    # centered unless this flag is checked also.
-    pending_focus = Any(None)  # Flag to help
-
     center_base = Instance(LinkedBase)
 
     focused_viewer = Any(None)  # should be Instance(SegmentViewer), but creates circular imports

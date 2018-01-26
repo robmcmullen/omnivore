@@ -415,14 +415,6 @@ class FrameworkEditor(Editor):
         """
         pass
 
-    def ensure_visible(self, flags):
-        """Make sure the current range of indexes is shown
-
-        flags: DisplayFlags instance containing index_range that should
-        be shown
-        """
-        pass
-
     def rebuild_display_objects(self):
         """Hook for subclasses to get notified when the document is changed and
         to rebuild any objects necessary for display before the call to
@@ -533,9 +525,9 @@ class FrameworkEditor(Editor):
         log.debug("processing flags: %s" % str(flags))
         d = self.document
         visible_range = False
-        do_refresh = flags.refresh_needed
 
-        already_refreshed = self.caret_handler.process_caret_flags(flags, d)
+        self.caret_handler.process_caret_flags(flags, d)
+        do_refresh = flags.refresh_needed
 
         if flags.message:
             self.task.status_bar.message = flags.message
@@ -559,7 +551,7 @@ class FrameworkEditor(Editor):
 
         if flags.rebuild_ui:
             d.recalc_event = True
-        if do_refresh and not already_refreshed:
+        if do_refresh:
             d.refresh_event = True
 
     def popup_context_menu_from_commands(self, control, commands):

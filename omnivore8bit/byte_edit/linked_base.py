@@ -73,22 +73,11 @@ class LinkedBase(CaretHandler):
 
     cached_preferences = Any(transient=True)
 
-    # This is a flag to help set the caret to the center row when the caret
-    # is moved in a different editor. Some editors can't use SetFocus inside an
-    # event handler, so the focus could still be set on one editor even though
-    # the user clicked on another. This results in the first editor not getting
-    # centered unless this flag is checked also.
-    pending_focus = Any(None)  # Flag to help
-
     #### Events
 
     recalc_event = Event
 
-    ensure_visible_index = Event
-
     update_trace = Event
-
-    update_caret = Event
 
     disassembly_refresh_event = Event
 
@@ -280,11 +269,6 @@ class LinkedBase(CaretHandler):
 
     def process_flags(self, flags):
         self.editor.process_flags(flags)
-
-    def ensure_visible(self, flags):
-        #self.index_clicked(start, 0, None)
-        log.debug("flags: %s" % str(flags))
-        self.ensure_visible_index = flags
 
     def rebuild_ui(self):
         self.segment = self.document.segments[self.segment_number]

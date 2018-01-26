@@ -30,7 +30,7 @@ from omnivore.utils.sortutil import invert_rects
 from omnivore8bit.byte_edit.actions import *
 from omnivore8bit.arch.disasm import get_style_name
 
-from selection_mixin import SelectionMixin
+from mouse_event_mixin import MouseEventMixin
 
 import logging
 log = logging.getLogger(__name__)
@@ -45,13 +45,13 @@ class BitviewEvent(wx.PyCommandEvent):
         self.bit = bit
 
 
-class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
+class BitviewScroller(wx.ScrolledWindow, MouseEventMixin):
     dbg_call_seq = 0
     short_name = "_bitview base class"
 
     def __init__(self, parent, linked_base, rect_select=False, **kwargs):
         wx.ScrolledWindow.__init__(self, parent, -1, **kwargs)
-        SelectionMixin.__init__(self)
+        MouseEventMixin.__init__(self, linked_base)
 
         # Settings
         self.linked_base = linked_base
@@ -82,18 +82,14 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         self.rect_select = rect_select
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_resize)
-        self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
-        self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
-        self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
-        self.Bind(wx.EVT_LEFT_DCLICK, self.on_left_dclick)
-        self.Bind(wx.EVT_MOTION, self.on_motion)
-        self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
         self.Bind(wx.EVT_SET_FOCUS, self.on_focus)
         self.Bind(wx.EVT_KILL_FOCUS, self.on_focus_lost)
         self.Bind(wx.EVT_ENTER_WINDOW, self.on_mouse_enter)
         self.Bind(wx.EVT_LEAVE_WINDOW, self.on_mouse_leave)
         self.Bind(wx.EVT_CHAR, self.on_char)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
+        self.map_mouse_events(self)
+        self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
 
     def __repr__(self):
         return "<%s at 0x%x>" % (self.__class__.__name__, id(self))
@@ -141,6 +137,12 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         self.Scroll(ul[1], ul[0])
         self.Refresh()
 
+    def keep_index_on_screen(self, index):
+        ul = self.find_upper_left_for_center_index(self.linked_base.caret_index)
+        self.start_row, self.start_col = ul
+        self.Scroll(ul[1], ul[0])
+        # but don't refresh, that will be handled in another step
+
     def is_ready_to_render(self):
         return self.editor is not None
 
@@ -159,10 +161,7 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         return self.linked_base.segment
 
     def refresh_view(self):
-        if self.FindFocus() != self and self.editor.pending_focus != self:
-            self.center_on_index()
-        else:
-            self.Refresh()
+        self.Refresh()
 
     def sync_settings(self):
         e = self.linked_base
@@ -334,8 +333,6 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         last_scroll_row = self.total_rows - self.fully_visible_rows
         if first_row is not None:
             first_row = min(max(0, first_row), last_scroll_row)
-        if self.FindFocus() != self and self.editor.pending_focus != self:
-            first_row = self.find_upper_left_for_center_index(self.linked_base.caret_index)[0]
         last_row = self.start_row + self.fully_visible_rows - 1
         last_col = self.start_col + self.fully_visible_cols - 1
 
@@ -397,9 +394,6 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
 
         evt.Skip()
 
-    def on_left_up(self, evt):
-        self.handle_select_end(self.linked_base, evt)
-
     def set_caret_pos_from_event(self, evt):
         e = self.linked_base
         byte, bit, inside = self.event_coords_to_byte(evt)
@@ -426,19 +420,6 @@ class BitviewScroller(wx.ScrolledWindow, SelectionMixin):
         index1, _ = self.get_index_range(row, 0)
         _, index2 = self.get_index_range(row, self.bytes_per_row - 1)
         return index1, index2
-
-    def on_left_down(self, evt):
-        self.handle_select_start(self.linked_base, evt)
-        wx.CallAfter(self.SetFocus)
-
-    def on_left_dclick(self, evt):
-        self.on_left_down(evt)
-
-    def on_motion(self, evt):
-        self.on_motion_update_status(evt)
-        if self.editor is not None and evt.LeftIsDown():
-            self.handle_select_motion(self.linked_base, evt)
-        evt.Skip()
 
     def on_motion_update_status(self, evt):
         byte, bit, inside = self.event_coords_to_byte(evt)

@@ -1,6 +1,7 @@
 import wx
 
-from .selection_mixin import MouseEventMixin
+from .mouse_event_mixin import MouseEventMixin
+from omnivore.utils.command import DisplayFlags
 from omnivore.utils.wx import compactgrid as cg
 from omnivore.utils.wx.char_event_mixin import CharEventMixin
 from omnivore8bit.arch.disasm import get_style_name
@@ -43,65 +44,75 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
     def table(self):
         return self.main.table
 
+    @property
+    def page_size(self):
+        return self.main.sh * self.table.items_per_row
+
     ##### Caret handling
 
-    def handle_char_move_down(self, event):
-        self.main.cVert(+1)
+    def handle_char_move_down(self, evt, flags):
+        self.move_carets(self.table.items_per_row)
 
-    def handle_char_move_up(self, event):
-        self.main.cVert(-1)
+    def handle_char_move_up(self, evt, flags):
+        self.move_carets(-self.table.items_per_row)
 
-    def handle_char_move_left(self, event):
-        if self.main.cx == 0:
-            if self.main.cy == 0:
-                wx.Bell()
-            else:
-                self.main.cVert(-1)
-                self.main.cx = self.main.current_line_length
-        else:
-            self.main.cx -= 1
+    def handle_char_move_left(self, evt, flags):
+        self.move_carets(-1)
 
-    def handle_char_move_right(self, event):
-        linelen = self.main.current_line_length - 1
-        if self.main.cx >= linelen:
-            if self.main.cy == len(self.main.lines) - 1:
-                wx.Bell()
-            else:
-                self.main.cx = 0
-                self.main.cVert(1)
-        else:
-            self.main.cx += 1
+    def handle_char_move_right(self, evt, flags):
+        self.move_carets(1)
 
-    def handle_char_move_page_down(self, event):
-        self.main.cVert(self.main.sh)
+    def handle_char_move_page_down(self, evt, flags):
+        self.move_carets(self.page_size)
 
-    def handle_char_move_page_up(self, event):
-        self.main.cVert(-self.main.sh)
+    def handle_char_move_page_up(self, evt, flags):
+        self.move_carets(-self.page_size)
 
-    def handle_char_move_Home(self, event):
-        self.main.cx = 0
+    def handle_char_move_start_of_file(self, evt, flags):
+        self.move_carets_to(0)
 
-    def handle_char_move_end(self, event):
-        self.main.cx = self.main.current_line_length
+    def handle_char_move_end_of_file(self, evt, flags):
+        self.move_carets_to(self.table.last_valid_index)
 
-    def handle_char_move_start_of_file(self, event):
-        self.main.cy = 0
-        self.main.cx = 0
+    def handle_char_move_start_of_line(self, evt, flags):
+        self.move_carets_process_function(self.clamp_left_column)
 
-    def handle_char_move_end_of_file(self, event):
-        self.main.cy = len(self.main.lines) - 1
-        self.main.cx = self.main.current_line_length
+    def handle_char_move_end_of_line(self, evt, flags):
+        self.move_carets_process_function(self.clamp_right_column)
 
-    def handle_char_move_start_of_line(self, event):
-        self.main.cx = 0
+    def clamp_left_column(self, index):
+        r, c = self.table.index_to_row_col(index)
+        c = 0
+        index = max(0, self.table.get_index_range(r, c)[0])
+        return index
 
-    def handle_char_move_end_of_line(self, event):
-        self.main.cx = self.main.current_line_length
+    def clamp_right_column(self, index):
+        r, c = self.table.index_to_row_col(index)
+        c = self.table.items_per_row - 1
+        index = min(self.table.last_valid_index, self.table.get_index_range(r, c)[0])
+        return self.table.get_index_range(r, c)
 
-    def show_new_caret_position(self):
-        self.main.cx = self.table.enforce_valid_caret(self.main.cy, self.main.cx)
-        self.main.UpdateView()
-        self.main.AdjustScrollbars()
+    def move_carets(self, delta):
+        self.caret_handler.caret_index += delta
+
+    def move_carets_to(self, index):
+        self.caret_handler.caret_index = index
+
+    def move_carets_process_function(self, func):
+        self.caret_handler.caret_index = func(self.caret_handler.caret_index)
+
+    def validate_caret_position(self):
+        index = self.table.enforce_valid_index(self.caret_handler.caret_index)
+        self.caret_handler.caret_index = index
+        self.main.cy, self.main.cx = self.table.index_to_row_col(index)
+
+    def keep_index_on_screen(self, index):
+        row, col = self.table.index_to_row_col(index)
+        self.main.ensure_visible(row, col)
+
+    # FIXME: temporary hack until compactgrid uses indexes directly
+    def caret_indexes_to_display_coords(self):
+        self.main.cy, self.main.cx = self.table.index_to_row_col(self.caret_handler.caret_index)
 
     #####
 

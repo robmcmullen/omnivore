@@ -94,3 +94,6 @@ class HexEditViewer(SegmentViewer):
         structural change) or loading a new document.
         """
         self.control.recalc_view()
+
+    def update_carets(self, flags):
+        self.control.caret_indexes_to_display_coords()

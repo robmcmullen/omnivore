@@ -379,6 +379,11 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
         self.AdjustScrollbars()
 
+    def ensure_visible(self, row, col):
+        self.sy = ForceBetween(max(0, row-self.sh), self.sy, row)
+        self.sx = ForceBetween(max(0, col-self.sw), self.sx, col)
+        self.AdjustScrollbars()
+
     def show_caret(self, col, row):
         self.cy = ForceBetween(0, row, self.table.num_rows - 1)
         self.sy = ForceBetween(self.cy - self.sh + 1, self.sy, self.cy)
@@ -979,6 +984,9 @@ class HexTable(object):
             cell = self.num_cells - 1
         return cell
 
+    def enforce_valid_index(self, index):
+        return ForceBetween(0, index, self.last_valid_index)
+
     def get_row_label_text(self, start_line, num_lines):
         for line in range(start_line, start_line + num_lines + 1):
             yield line, "%04x" % (self.get_index_of_row(line) + self.start_addr)
@@ -1113,7 +1121,7 @@ class HexGridWindow(wx.ScrolledWindow):
         self.main.recalc_view(*args, **kwargs)
 
     def refresh_view(self, *args, **kwargs):
-        self.main.Refresh()
+        self.main.UpdateView()
        
     def set_pane_sizes(self, width, height):
         """

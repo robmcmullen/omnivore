@@ -1,5 +1,7 @@
 import wx
 
+from omnivore.utils.command import DisplayFlags
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -87,6 +89,11 @@ class CharEventMixin(object):
     def map_char_events(self, source):
         source.Bind(wx.EVT_CHAR, self.on_char)
 
+    def create_char_event_flags(self):
+        flags = DisplayFlags(self)
+        flags.old_carets = set(self.caret_handler.get_caret_state())
+        return flags
+
     def on_char(self, evt):
         key = evt.GetKeyCode()
         mods = evt.GetModifiers()
@@ -103,8 +110,6 @@ class CharEventMixin(object):
                 log.error("handler %s defined for key=%d mods=%d but missing!" % (handler, key, mods))
                 evt.Skip()
             else:
-                func(evt)
-                self.show_new_caret_position()
-
-    def show_new_caret_position(self):
-        pass
+                flags = self.create_char_event_flags()
+                func(evt, flags)
+                self.caret_handler.process_flags(flags)
