@@ -145,3 +145,59 @@ class SelectionMixin(SelectionHandler):
         # between the start/end values of each range. Other selection types
         # (rectangular selection) will need to be defined in the subclass
         segment.set_style_ranges(selected_ranges, selected=True)
+
+
+class MouseEventMixin(SelectionMixin):
+    def __init__(self, caret_handler):
+        SelectionMixin.__init__(self)
+        self.caret_handler = caret_handler
+
+    def map_mouse_events(self, source):
+        source.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
+        source.Bind(wx.EVT_LEFT_UP, self.on_left_up)
+        source.Bind(wx.EVT_MOTION, self.on_motion)
+        source.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
+
+    def on_left_up(self, evt):
+        self.handle_select_end(self.caret_handler, evt)
+
+    def on_left_down(self, evt):
+        self.handle_select_start(self.caret_handler, evt)
+        wx.CallAfter(self.SetFocus)
+
+    def on_left_dclick(self, evt):
+        self.on_left_down(evt)
+
+    def on_motion(self, evt):
+        self.on_motion_update_status(evt)
+        if evt.LeftIsDown():
+            self.handle_select_motion(self.caret_handler, evt)
+        evt.Skip()
+
+    def on_motion_update_status(self, evt):
+        row, cell = self.main.pixel_pos_to_row_cell(evt.GetX(), evt.GetY())
+        c2 = self.table.enforce_valid_caret(row, cell)
+        inside = cell == c2
+        if inside:
+            index, _ = self.table.get_index_range(row, cell)
+            self.caret_handler.show_status_message(self.get_status_at_index(index))
+
+    def on_mouse_wheel(self, evt):
+        """Driver to process mouse events.
+
+        This is the main driver to process all mouse events that
+        happen on the BitmapScroller.  Once a selector is triggered by
+        its event combination, it becomes the active selector and
+        further mouse events are directed to its handler.
+        """
+        if self.end_byte is None:  # end_byte is a proxy for the image being loaded
+            return
+
+        w = evt.GetWheelRotation()
+        if evt.ControlDown():
+            if w < 0:
+                self.zoom_out()
+            elif w > 0:
+                self.zoom_in()
+
+        evt.Skip()

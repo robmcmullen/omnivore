@@ -165,15 +165,6 @@ class CaretHandler(HasTraits):
         raise NotImplementedError("Subclass needs to define a SelectionHandler")
 
 
-class CaretEventMixin(CharEventMixin):
-    def __init__(self, caret_handler):
-        CharEventMixin.__init__(self)
-        self.caret_handler = caret_handler
-
-    def show_new_caret_position(self):
-        pass
-
-
 class SelectionHandler(object):
     """Range & selection routines that may be different depending on which
     viewer is active.

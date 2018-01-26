@@ -77,11 +77,15 @@ class CharEventMixin(object):
     }
 
 
-    def __init__(self):
+    def __init__(self, caret_handler):
+        self.caret_handler = caret_handler
         self.char_event_movement = self.char_event_movement_default.copy()
         self.char_event_line_edit = self.char_event_edit_line_default.copy()
 
         self.current_char_event_map = self.char_event_movement
+
+    def map_char_events(self, source):
+        source.Bind(wx.EVT_CHAR, self.on_char)
 
     def on_char(self, evt):
         key = evt.GetKeyCode()
@@ -89,15 +93,18 @@ class CharEventMixin(object):
         specifier = (key, mods)
         try:
             handler = self.current_char_event_map[specifier]
-            func = getattr(self, handler)
-            func(evt)
-            self.show_new_caret_position()
         except KeyError:
             log.debug("No handler for keyboard event: key=%d mods=%d" % (key, mods))
             evt.Skip()
-        except AttributeError:
-            log.error("handler %s defined for key=%d mods=%d but missing!" % (handler, key, mods))
-            evt.Skip()
+        else:
+            try:
+                func = getattr(self, handler)
+            except AttributeError:
+                log.error("handler %s defined for key=%d mods=%d but missing!" % (handler, key, mods))
+                evt.Skip()
+            else:
+                func(evt)
+                self.show_new_caret_position()
 
     def show_new_caret_position(self):
         pass
