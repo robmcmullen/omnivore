@@ -692,6 +692,7 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         self.SelectEnd = None
         self.Selecting = False
         self.SelectNotify(False,None,None)
+        self.anchor_start_index, self.anchor_end_index = 0, 0
 
 #----------------------- Eliminate memory leaks
 

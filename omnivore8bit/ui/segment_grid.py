@@ -124,8 +124,8 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
         return row, 0, index1, index2, inside
 
     def get_start_end_index_of_row(self, row):
-        index1, _ = self.get_index_range(row, 0)
-        _, index2 = self.get_index_range(row, self.bytes_per_row - 1)
+        index1, _ = self.table.get_index_range(row, 0)
+        _, index2 = self.table.get_index_range(row, self.table.items_per_row - 1)
         return index1, index2
 
     def get_status_at_index(self, index):
