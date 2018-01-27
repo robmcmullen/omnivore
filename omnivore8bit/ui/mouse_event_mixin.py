@@ -1,3 +1,5 @@
+import time
+
 import wx
 
 from omnivore.utils.command import DisplayFlags
@@ -14,12 +16,16 @@ class MouseEventMixin(SelectionHandler):
         self.select_extend_mode = False
         self.mouse_drag_started = False
         self.pending_select_awaiting_drag = None
+        self.next_scroll_time = 0
+        self.scroll_timer = None
+        self.scroll_delay = 1000  # milliseconds
 
     def map_mouse_events(self, source):
         source.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         source.Bind(wx.EVT_LEFT_UP, self.on_left_up)
         source.Bind(wx.EVT_MOTION, self.on_motion)
         source.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
+        self.Bind(wx.EVT_TIMER, self.on_timer)
 
     def create_mouse_event_flags(self):
         flags = DisplayFlags(self)
@@ -28,6 +34,7 @@ class MouseEventMixin(SelectionHandler):
         return flags
 
     def on_left_up(self, evt):
+        self.scroll_timer.Stop()
         flags = self.create_mouse_event_flags()
         self.handle_select_end(self.caret_handler, evt, flags)
 
@@ -39,21 +46,96 @@ class MouseEventMixin(SelectionHandler):
     def on_left_dclick(self, evt):
         self.on_left_down(evt)
 
-    def on_motion(self, evt):
-        self.on_motion_update_status(evt)
+    def can_scroll(self):
+        self.set_scroll_timer()
+        if time.time() >  self.next_scroll_time:
+            self.next_scroll_time = time.time() + (self.scroll_delay / 1000.0)
+            return True
+        else:
+            return False
+
+    def set_scroll_timer(self):
+        if self.scroll_timer is None:
+            self.scroll_timer = wx.Timer(self)
+        self.scroll_timer.Start(self.scroll_delay/2, True)
+
+    def on_timer(self, event):
+        screenX, screenY = wx.GetMousePosition()
+        x, y = self.main.ScreenToClient((screenX, screenY))
+        row, cell = self.main.pixel_pos_to_row_cell(x, y)
+        self.handle_on_motion(event, row, cell)
+
+    def is_left_of_screen(self, col):
+        return col < self.main.sx
+
+    def handle_left_of_screen(self, col):
+        scroll_col = -1
+        if col + scroll_col < 0:
+            scroll_col = 0
+        return scroll_col
+
+    def is_right_of_screen(self, col):
+        return col >= self.main.sx + self.main.sw
+
+    def handle_right_of_screen(self, col):
+        scroll_col = 1
+        if col + scroll_col >= self.main.table.num_cells:
+            scroll_col = 0
+        return scroll_col
+
+    def is_above_screen(self, row):
+        return row < self.main.sy
+
+    def handle_above_screen(self, row):
+        scroll_row = -1
+        if row + scroll_row < 0:
+            scroll_row = 0
+        return scroll_row
+
+    def is_below_screen(self, row):
+        return row >= self.main.sy + self.main.sh
+
+    def handle_below_screen(self, row):
+        scroll_row = 1
+        if row + scroll_row >= self.main.table.num_rows:
+            scroll_row = 0
+        return scroll_row
+
+    def on_motion(self, evt, x=None, y=None):
+        row, col = self.get_row_col_from_event(evt)
         if evt.LeftIsDown():
-            flags = self.create_mouse_event_flags()
-            self.handle_select_motion(self.caret_handler, evt, flags)
-            self.main.MouseToCaret(evt)
+            self.handle_on_motion(evt, row, col)
+        else:
+            self.handle_motion_update_status(row, col)
         evt.Skip()
 
-    def on_motion_update_status(self, evt):
-        row, cell = self.main.pixel_pos_to_row_cell(evt.GetX(), evt.GetY())
-        c2 = self.table.enforce_valid_caret(row, cell)
-        inside = cell == c2
-        if inside:
-            index, _ = self.table.get_index_range(row, cell)
-            self.caret_handler.show_status_message(self.get_status_at_index(index))
+    def handle_on_motion(self, evt, row, col):
+        scroll_row = 0
+        scroll_col = 0
+        if self.is_left_of_screen(col):
+            if self.can_scroll():
+                scroll_col = self.handle_left_of_screen(col)
+        elif self.is_right_of_screen(col):
+            if self.can_scroll():
+                scroll_col = self.handle_right_of_screen(col)
+        if self.is_above_screen(row):
+            if self.can_scroll():
+                scroll_row = self.handle_above_screen(row)
+        elif self.is_below_screen(row):
+            if self.can_scroll():
+                scroll_row = self.handle_below_screen(row)
+        print("scroll delta: %d, %d" % (scroll_row, scroll_col))
+        row += scroll_row
+        col += scroll_col
+        flags = self.create_mouse_event_flags()
+        self.handle_select_motion(self.caret_handler, row, col, flags)
+        self.handle_motion_update_status(row, col)
+        #self.main.MouseToCaret(evt)
+
+    def handle_motion_update_status(self, row, col):
+        msg = self.get_status_message_at_cell(row, col)
+        if msg:
+            self.caret_handler.show_status_message(msg)
 
     def on_mouse_wheel(self, evt):
         """Driver to process mouse events.
@@ -129,15 +211,14 @@ class MouseEventMixin(SelectionHandler):
         log.debug("handle_select_start: flags: %s, anchors=%s" % (flags, str((caret_handler.anchor_initial_start_index, caret_handler.anchor_initial_end_index))))
         self.commit_change(flags)
 
-    def handle_select_motion(self, caret_handler, evt, flags):
-        log.debug("handle_select_motion: selecting_rows: %s" % (flags.selecting_rows))
+    def handle_select_motion(self, caret_handler, row, col, flags):
         if not self.mouse_drag_started:
             # On windows, it's possible to get a motion event before a mouse
             # down event, so need this flag to check
             return
         update = False
-        r, c, index1, index2, inside = self.get_location_from_event(evt)
-        log.debug("handle_select_motion: index1: %s, index2: %s pending: %s" % (index1, index2, str(self.pending_select_awaiting_drag)))
+        r, c, index1, index2, inside = self.get_location_from_cell(row, col)
+        log.debug("handle_select_motion: r=%d c=%d index1: %s, index2: %s pending: %s, sel rows: %s" % (r, c, index1, index2, str(self.pending_select_awaiting_drag), flags.selecting_rows))
         if c < 0 or flags.selecting_rows or not inside:
             selecting_rows = True
             c = 0
