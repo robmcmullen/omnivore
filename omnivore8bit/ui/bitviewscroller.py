@@ -55,7 +55,6 @@ class BitviewScroller(wx.ScrolledWindow, MouseEventMixin):
 
         # Settings
         self.linked_base = linked_base
-        self.segment = None
         self.max_zoom = 16
         self.min_zoom = 1
         self.bytes_per_row = 1
@@ -106,6 +105,10 @@ class BitviewScroller(wx.ScrolledWindow, MouseEventMixin):
     def task(self):
         return self.linked_base.editor.task
 
+    @property
+    def segment(self):
+        return self.linked_base.segment
+
     def get_view_params(self):
         s = self.GetViewStart()
         return [s[0], s[1]]  # might be a wx.Point, so ensure it's a list for json serialization
@@ -147,7 +150,6 @@ class BitviewScroller(wx.ScrolledWindow, MouseEventMixin):
         return self.editor is not None
 
     def recalc_view(self):
-        self.segment = self.get_segment()
         self.start_addr = self.segment.start_addr
         self.update_bytes_per_row()
         self.set_colors()
@@ -923,9 +925,13 @@ class FontMapScroller(BitviewScroller):
 class CharacterSetViewer(FontMapScroller):
     def __init__(self, parent, task, bytes_per_row=16, command=None, **kwargs):
         FontMapScroller.__init__(self, parent, task, bytes_per_row, command, **kwargs)
-        self.segment = DefaultSegment(SegmentData(np.arange(256, dtype=np.uint8), np.zeros(256, dtype=np.uint8)), 0)
+        self.char_order = DefaultSegment(SegmentData(np.arange(256, dtype=np.uint8), np.zeros(256, dtype=np.uint8)), 0)
         self.start_addr = 0
         self.selected_char = -1
+
+    @property
+    def segment(self):
+        return self.char_order
 
     def set_selected_char(self, index):
         self.selected_char = index
