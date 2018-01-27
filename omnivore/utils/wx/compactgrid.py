@@ -280,7 +280,7 @@ class FixedFontDataWindow(wx.ScrolledWindow):
     def set_table(self, table):
         self.InitCoords()
         self.table = table
-        self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
+        self.cy, self.cx, _ = self.table.enforce_valid_caret(self.cy, self.cx)
         self.AdjustScrollbars()
         self.init_renderers()
         self.UpdateView(None)
@@ -376,7 +376,7 @@ class FixedFontDataWindow(wx.ScrolledWindow):
     def KeepCaretOnScreen(self):
         self.sy = ForceBetween(max(0, self.cy-self.sh), self.sy, self.cy)
         self.sx = ForceBetween(max(0, self.cx-self.sw), self.sx, self.cx)
-        self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
+        self.cy, self.cx, _ = self.table.enforce_valid_caret(self.cy, self.cx)
         self.AdjustScrollbars()
 
     def ensure_visible(self, row, col):
@@ -389,7 +389,7 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         self.sy = ForceBetween(self.cy - self.sh + 1, self.sy, self.cy)
         self.cx = ForceBetween(0, col, self.current_line_length - 1)
         self.sx = ForceBetween(self.cx - self.sw + 1, self.sx, self.cx)
-        self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
+        self.cy, self.cx, _ = self.table.enforce_valid_caret(self.cy, self.cx)
         self.AdjustScrollbars()
 
     def HorizBoundaries(self):
@@ -405,13 +405,13 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         self.cy = ForceBetween(0, self.cy, self.table.num_rows - 1)
         self.sy = ForceBetween(self.cy - self.sh + 1, self.sy, self.cy)
         self.cx = min(self.cx, self.current_line_length - 1)
-        self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
+        self.cy, self.cx, _ = self.table.enforce_valid_caret(self.cy, self.cx)
 
     def cHoriz(self, num):
         self.cx = self.cx + num
         self.cx = ForceBetween(0, self.cx, self.current_line_length - 1)
         self.sx = ForceBetween(self.cx - self.sw + 1, self.sx, self.cx)
-        self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
+        self.cy, self.cx, _ = self.table.enforce_valid_caret(self.cy, self.cx)
 
     def AboveScreen(self, row):
         return row < self.sy
@@ -438,8 +438,11 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         self.parent_scrolled_window = parent
         self.EnableScrolling(False, False)
         self.nextScrollTime = 0
-        self.scrollTimer = wx.Timer(self)
         self.scroller = Scroller(self)
+        self.init_timer()
+
+    def init_timer(self):
+        self.scrollTimer = wx.Timer(self)
 
     def SetScrollManager(self, parent):
         self.scroller = Scroller(parent)
@@ -519,7 +522,7 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         else:
             self.cx = min(cell, self.current_line_length)
         # MouseToRow must be called first so the caret is in the correct row
-        self.cx = self.table.enforce_valid_caret(self.cy, self.cx)
+        self.cy, self.cx, _ = self.table.enforce_valid_caret(self.cy, self.cx)
 
     def MouseToCaret(self, event):
         self.MouseToRow(event.GetY())
@@ -976,14 +979,30 @@ class HexTable(object):
         return self.hex_renderer
 
     def enforce_valid_caret(self, row, cell):
+        # restrict row, col to grid boundaries first so we don't get e.g. cells
+        # from previous line if cell number is negative
         if cell >= self.num_cells:
             cell = self.num_cells - 1
+        elif cell < 0:
+            cell = 0
+        if row >= self.num_rows:
+            row = self.num_rows - 1
+        elif row < 0:
+            row = 0
+
+        # now make sure we have a valid index to handle partial lines at the
+        # first or last row
         index, _ = self.get_index_range(row, cell)
         if index < 0:
-            cell = 0
+            row = 0
+            if cell < self.start_offset:
+                cell = self.start_offset
         elif index >= self.last_valid_index:
-            cell = self.num_cells - 1
-        return cell
+            row = self.num_rows - 1
+            _, c2 = self.index_to_row_col(self.last_valid_index)
+            if cell > c2:
+                cell = c2 - 1
+        return row, cell, index
 
     def enforce_valid_index(self, index):
         return ForceBetween(0, index, self.last_valid_index)
