@@ -313,24 +313,11 @@ class FixedFontDataWindow(wx.ScrolledWindow):
         self.SetFocus()
 
     def SetCharDimensions(self):
-        # TODO: We need a code review on this.  It appears that Linux
-        # improperly reports window dimensions when the scrollbar's there.
         self.bw, self.bh = self.GetClientSize()
         self.bh += self.view_params.row_height_extra_padding
 
-        if wx.Platform == "__WXMSW__":
-            self.sh = int(self.bh // self.cell_height_in_pixels) - 1
-            self.sw = int(self.bw // self.cell_width_in_pixels) - 1
-        else:
-            self.sh = int(self.bh // self.cell_height_in_pixels) - 1
-            if self.table.num_rows >= self.sh:
-                self.bw = self.bw - wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
-                self.sw = int(self.bw // self.cell_width_in_pixels) - 1
-
-            self.sw = int(self.bw // self.cell_width_in_pixels) - 1
-            if self.table.num_cells >= self.sw:
-                self.bh = self.bh - wx.SystemSettings.GetMetric(wx.SYS_HSCROLL_Y)
-                self.sh = int(self.bh // self.cell_height_in_pixels) - 1
+        self.sh = int(self.bh // self.cell_height_in_pixels)
+        self.sw = int(self.bw // self.cell_width_in_pixels)
 
     def UpdateView(self, dc = None):
         if dc is None:
