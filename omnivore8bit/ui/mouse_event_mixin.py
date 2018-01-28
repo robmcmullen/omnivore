@@ -145,9 +145,6 @@ class MouseEventMixin(SelectionHandler):
         its event combination, it becomes the active selector and
         further mouse events are directed to its handler.
         """
-        if self.end_byte is None:  # end_byte is a proxy for the image being loaded
-            return
-
         w = evt.GetWheelRotation()
         if evt.ControlDown():
             if w < 0:
