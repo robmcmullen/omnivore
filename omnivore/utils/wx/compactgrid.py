@@ -343,7 +343,6 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.next_scroll_time = 0
         self.scroll_timer = wx.Timer(self)
         self.scroll_delay = 100  # milliseconds
-        self.carets = []
         self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
@@ -465,9 +464,11 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         line_num = self.first_visible_row
         for line in range(line_num, min(line_num + self.visible_rows, self.table.num_rows)):
             self.line_renderer.draw(dc, line, self.first_visible_cell, self.visible_cells)
+        self.draw_carets(dc)
 
-        for caret in self.carets:
-            r, c = caret
+    def draw_carets(self, dc):
+        for index in self.parent.caret_handler.carets:
+            r, c = self.table.index_to_row_col(index)
             self.line_renderer.draw_caret(dc, r, c, 1)
      
     def can_scroll(self):
@@ -566,98 +567,20 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
             if self.can_scroll():
                 scroll_row = self.handle_below_screen(sy)
         print("on_motion: loc=%d,%d top=%d,%d size=%d,%d delta: %d, %d" % (row, col, sy, sx, self.visible_rows, self.visible_cells, scroll_row, scroll_col))
-        if scroll_row != 0 or scroll_col != 0 or True:
-            self.process_motion_scroll(row, col, scroll_row, scroll_col)
+        self.process_motion_scroll(row, col, scroll_row, scroll_col)
 
     def process_motion_scroll(self, row, col, scroll_row, scroll_col):
         row += scroll_row
         col += scroll_col
         self.ensure_visible(row, col)
-        self.carets = [self.clamp_row_col(row, col)]
+        r, c = self.clamp_row_col(row, col)
+        index, _ = self.table.get_index_range(r, c)
+        if index >= self.table.last_valid_index:
+            index = self.table.last_valid_index - 1
+        if index < 0:
+            index = 0
+        self.parent.caret_handler.move_carets_to(index)
         self.parent.Refresh()
-
-#-------------- Keyboard movement implementations
-
-    def handle_char_move_down(self, evt, flags):
-        self.move_carets(self.table.items_per_row)
-
-    def handle_char_move_up(self, evt, flags):
-        self.move_carets(-self.table.items_per_row)
-
-    def handle_char_move_left(self, evt, flags):
-        self.move_carets(-1)
-
-    def handle_char_move_right(self, evt, flags):
-        self.move_carets(1)
-
-    def handle_char_move_page_down(self, evt, flags):
-        self.move_carets(self.page_size)
-
-    def handle_char_move_page_up(self, evt, flags):
-        self.move_carets(-self.page_size)
-
-    def handle_char_move_start_of_file(self, evt, flags):
-        self.move_carets_to(0)
-
-    def handle_char_move_end_of_file(self, evt, flags):
-        self.move_carets_to(self.table.last_valid_index)
-
-    def handle_char_move_start_of_line(self, evt, flags):
-        self.move_carets_process_function(self.clamp_left_column)
-
-    def handle_char_move_end_of_line(self, evt, flags):
-        self.move_carets_process_function(self.clamp_right_column)
-
-    def clamp_left_column(self, index):
-        r, c = self.table.index_to_row_col(index)
-        c = 0
-        index = max(0, self.table.get_index_range(r, c)[0])
-        return index
-
-    def clamp_right_column(self, index):
-        r, c = self.table.index_to_row_col(index)
-        c = self.table.items_per_row - 1
-        index = min(self.table.last_valid_index, self.table.get_index_range(r, c)[0])
-        return self.table.get_index_range(r, c)
-
-    def move_carets(self, delta):
-        self.carets = [i + delta for i in self.carets]
-
-    def move_carets_to(self, index):
-        self.carets = [index]
-
-    def move_carets_process_function(self, func):
-        self.move_carets_to(func(self.caret_handler.caret_index))
-
-    def validate_caret_position(self):
-        index = self.table.enforce_valid_index(self.carets[0])
-        self.carets = [index]
-
-    def on_char(self, event):
-        action = {}
-        action[wx.WXK_DOWN]  = self.handle_char_move_down
-        action[wx.WXK_UP]    = self.handle_char_move_up
-        action[wx.WXK_LEFT]  = self.handle_char_move_left
-        action[wx.WXK_RIGHT] = self.handle_char_move_right
-        action[wx.WXK_PAGEDOWN]  = self.handle_char_move_page_down
-        action[wx.WXK_PAGEUP] = self.handle_char_move_page_up
-        action[wx.WXK_HOME]  = self.handle_char_move_home
-        action[wx.WXK_END]   = self.handle_char_move_end
-        key = event.GetKeyCode()
-        try:
-            action[key](event)
-            self.cx = self.table.enforce_valid_cursor(self.cy, self.cx)
-            self.UpdateView()
-            self.AdjustScrollbars()
-        except KeyError:
-            print(key)
-            event.Skip()
-
-    def zoom_in(self):
-        pass
-
-    def zoom_out(self):
-        pass
 
 
 class FixedFontNumpyWindow(FixedFontDataWindow):
@@ -792,11 +715,20 @@ class HexTable(object):
     def is_index_valid(self, index):
         return index > 0 and index <= self.last_valid_index
 
+    def clamp_index(self, index):
+        if index < 0:
+            index = 0
+        elif index > self.last_valid_index:
+            index = self.last_valid_index
+        return index
+
+    validate_caret_position = clamp_index
+
     def get_index_range(self, row, col):
         """Get the byte offset from start of file given row, col
         position.
         """
-        index = row * self.items_per_row + col - self.start_offset
+        index = self.clamp_index(row * self.items_per_row + col - self.start_offset)
         return index, index + 1
 
     def get_index_of_row(self, line):
@@ -804,6 +736,18 @@ class HexTable(object):
 
     def index_to_row_col(self, index):
         return divmod(index + self.start_offset, self.items_per_row)
+
+    def clamp_left_column(self, index):
+        r, c = self.index_to_row_col(index)
+        c = 0
+        index = max(0, self.get_index_range(r, c)[0])
+        return index
+
+    def clamp_right_column(self, index):
+        r, c = self.index_to_row_col(index)
+        c = self.items_per_row - 1
+        index = min(self.last_valid_index, self.get_index_range(r, c)[0])
+        return self.table.get_index_range(r, c)
 
 
 class VariableWidthHexTable(HexTable):
@@ -911,11 +855,32 @@ class ColLabelWindow(AuxWindow):
                 self.DrawHorzText(header, cell, num_cells, dc)
 
 
+class MultiCaretHandler(object):
+    def __init__(self, validator):
+        self.carets = []
+        self.validator = validator
+
+    def move_carets(self, delta):
+        self.carets = [i + delta for i in self.carets]
+
+    def move_carets_to(self, index):
+        self.carets = [index]
+
+    def move_carets_process_function(self, func):
+        self.move_carets_to(func(self.caret_handler.caret_index))
+
+    def validate_carets(self):
+        self.caret_index = self.validate_caret_position(self.caret_index)
+
+    def validate_caret_position(self, index):
+        return self.validator.validate_caret_position(index)
+
+
 class HexGridWindow(wx.ScrolledWindow):
     grid_cls = FixedFontNumpyWindow
     line_renderer_cls = HexLineRenderer
 
-    def __init__(self, table, view_params, chars_per_cell, *args, **kwargs):
+    def __init__(self, table, view_params, chars_per_cell, caret_handler, *args, **kwargs):
         wx.ScrolledWindow.__init__ (self, *args, **kwargs)
         self.SetAutoLayout(True)
 
@@ -926,6 +891,7 @@ class HexGridWindow(wx.ScrolledWindow):
         self.col_label_renderer = self.line_renderer
         self.row_label_renderer = self.line_renderer
         self.view_params = view_params
+        self.caret_handler = caret_handler
         self.main = self.grid_cls(self, self, table, self.view_params, self.line_renderer)
         self.top = ColLabelWindow(self, self.main)
         self.left = RowLabelWindow(self, self.main)
@@ -958,7 +924,7 @@ class HexGridWindow(wx.ScrolledWindow):
         self.main.Bind(wx.EVT_MOTION, self.main.on_motion)
         self.main.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
         self.main.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
-        self.main.Bind(wx.EVT_CHAR, self.main.on_char)
+        self.main.Bind(wx.EVT_CHAR, self.on_char)
         self.main.Bind(wx.EVT_PAINT, self.main.on_paint)
         self.main.Bind(wx.EVT_SIZE, self.main.on_size)
         self.main.Bind(wx.EVT_ERASE_BACKGROUND, lambda evt: False)
@@ -989,7 +955,6 @@ class HexGridWindow(wx.ScrolledWindow):
         self.left.SetVirtualSize(wx.Size(left_width, height))
         self.corner.SetMinSize(left_width, top_height)
         #self.Layout()
-
 
     def on_scroll_window(self, event):
         """
@@ -1028,14 +993,20 @@ class HexGridWindow(wx.ScrolledWindow):
         w = evt.GetWheelRotation()
         if evt.ControlDown():
             if w < 0:
-                self.main.zoom_out()
+                self.zoom_out()
             elif w > 0:
-                self.main.zoom_in()
+                self.zoom_in()
         # elif not evt.ShiftDown() and not evt.AltDown():
         #     self.VertScroll(w, wx.wxEVT_MOUSEWHEEL)
         #     self.main.UpdateView()
         else:
             evt.Skip()
+
+    def zoom_in(self):
+        pass
+
+    def zoom_out(self):
+        pass
 
     def update_dependents_null(self):
         pass
@@ -1051,6 +1022,58 @@ class HexGridWindow(wx.ScrolledWindow):
         r, c = self.main.table.index_to_row_col(rel_pos)
         self.main.show_caret(c, r)
         self.refresh_view()
+
+    ##### Keyboard movement implementations
+
+    def on_char(self, event):
+        action = {}
+        action[wx.WXK_DOWN]  = self.handle_char_move_down
+        action[wx.WXK_UP]    = self.handle_char_move_up
+        action[wx.WXK_LEFT]  = self.handle_char_move_left
+        action[wx.WXK_RIGHT] = self.handle_char_move_right
+        action[wx.WXK_PAGEDOWN]  = self.handle_char_move_page_down
+        action[wx.WXK_PAGEUP] = self.handle_char_move_page_up
+        action[wx.WXK_HOME]  = self.handle_char_move_home
+        action[wx.WXK_END]   = self.handle_char_move_end
+        key = event.GetKeyCode()
+        try:
+            action[key](event)
+            self.cx = self.table.enforce_valid_cursor(self.cy, self.cx)
+            self.UpdateView()
+            self.AdjustScrollbars()
+        except KeyError:
+            print(key)
+            event.Skip()
+
+    def handle_char_move_down(self, evt, flags):
+        self.caret_handler.move_carets(self.table.items_per_row)
+
+    def handle_char_move_up(self, evt, flags):
+        self.caret_handler.move_carets(-self.table.items_per_row)
+
+    def handle_char_move_left(self, evt, flags):
+        self.caret_handler.move_carets(-1)
+
+    def handle_char_move_right(self, evt, flags):
+        self.caret_handler.move_carets(1)
+
+    def handle_char_move_page_down(self, evt, flags):
+        self.caret_handler.move_carets(self.page_size)
+
+    def handle_char_move_page_up(self, evt, flags):
+        self.caret_handler.move_carets(-self.page_size)
+
+    def handle_char_move_start_of_file(self, evt, flags):
+        self.caret_handler.move_carets_to(0)
+
+    def handle_char_move_end_of_file(self, evt, flags):
+        self.caret_handler.move_carets_to(self.table.last_valid_index)
+
+    def handle_char_move_start_of_line(self, evt, flags):
+        self.caret_handler.move_carets_process_function(self.clamp_left_column)
+
+    def handle_char_move_end_of_line(self, evt, flags):
+        self.caret_handler.move_carets_process_function(self.clamp_right_column)
 
 
 class NonUniformGridWindow(HexGridWindow):
@@ -1117,11 +1140,13 @@ if __name__ == '__main__':
     # style1.set_window(scroll1.main)
     style1 = FakeStyle()
     table = HexTable(np.arange(1024, dtype=np.uint8), style1, 16, 0x600, 0xf)
-    scroll1 = HexGridWindow(table, view_params, 2, splitter)
+    carets = MultiCaretHandler(table)
+    scroll1 = HexGridWindow(table, view_params, 2, carets, splitter)
     style1.set_window(scroll1.main)
     style2 = FakeStyle()
     table = HexTable(np.arange(1024, dtype=np.uint8), style2, 16, 0x602, 0xf)
-    scroll2 = HexGridWindow(table, view_params, 2, splitter)
+    carets = MultiCaretHandler(table)
+    scroll2 = HexGridWindow(table, view_params, 2, carets, splitter)
     style2.set_window(scroll2.main)
 
     splitter.SplitVertically(scroll1, scroll2)
