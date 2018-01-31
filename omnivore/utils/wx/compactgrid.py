@@ -13,88 +13,6 @@ draw_log = logging.getLogger("draw")
 scroll_log = logging.getLogger("scroll")
 # draw_log.setLevel(logging.DEBUG)
 
-class AuxWindow(wx.ScrolledWindow):
-    def __init__(self, parent, scroll_source, label_char_width=10):
-        wx.ScrolledWindow.__init__(self, parent, -1)
-        self.scroll_source = scroll_source
-        self.label_char_width = label_char_width
-        self.isDrawing = False
-        self.EnableScrolling(False, False)
-        self.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
-
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
-        self.Bind(wx.EVT_SIZE, self.OnSize)
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
-        self.Bind(wx.EVT_MOUSEWHEEL, self.scroll_source.settings_obj.on_mouse_wheel)
-
-    def OnSize(self, event):
-        self.AdjustScrollbars()
-        self.SetFocus()
-
-    def UpdateView(self, dc = None):
-        if dc is None:
-            dc = wx.ClientDC(self)
-        if dc.IsOk():
-            self.Draw(dc)
-
-    def OnPaint(self, event):
-        dc = wx.PaintDC(self)
-        if self.isDrawing:
-            return
-        self.isDrawing = True
-        self.UpdateView(dc)
-        self.isDrawing = False
-
-    def OnEraseBackground(self, evt):
-        pass
-
-
-class LeftAuxWindow(AuxWindow):
-    def DrawVertText(self, t, line, dc):
-        s = self.scroll_source
-        y = (line - s.sy) * s.cell_height_in_pixels
-        dc.DrawText(t, 0, y)
-
-    def Draw(self, odc=None):
-        if not odc:
-            odc = wx.ClientDC(self)
-
-        dc = wx.BufferedDC(odc)
-        s = self.scroll_source
-        if dc.IsOk():
-            dc.SetFont(s.view_params.header_font)
-            dc.SetBackgroundMode(wx.SOLID)
-            dc.SetTextBackground(s.view_params.row_header_bg_color)
-            dc.SetTextForeground(s.view_params.text_color)
-            dc.SetBackground(wx.Brush(s.view_params.row_header_bg_color))
-            dc.Clear()
-            for line, header in self.scroll_source.table.get_row_label_text(s.sy, s.sh):
-                if s.IsLine(line):
-                    self.DrawVertText(header, line, dc)
-
-class TopAuxWindow(AuxWindow):
-    def DrawHorzText(self, t, sx, num_cells, dc):
-        s = self.scroll_source
-        x = (sx - s.sx) * s.cell_width_in_pixels
-        width = len(t) * s.fw
-        offset = ((s.cell_width_in_pixels * num_cells) - width)/2  # center text in cell
-        dc.DrawText(t, x + offset, 0)
-
-    def Draw(self, odc=None):
-        if not odc:
-            odc = wx.ClientDC(self)
-
-        dc = wx.BufferedDC(odc)
-        s = self.scroll_source
-        if dc.IsOk():
-            dc.SetFont(s.view_params.header_font)
-            dc.SetBackgroundMode(wx.SOLID)
-            dc.SetTextBackground(s.view_params.col_header_bg_color)
-            dc.SetTextForeground(s.view_params.text_color)
-            dc.SetBackground(wx.Brush(s.view_params.col_header_bg_color))
-            dc.Clear()
-            for cell, num_cells, header in self.scroll_source.table.get_col_labels(s.sx):
-                self.DrawHorzText(header, cell, num_cells, dc)
 
 
 def ForceBetween(min, val, max):
@@ -104,69 +22,14 @@ def ForceBetween(min, val, max):
         return min
     return val
 
-class Scroller:
-    def __init__(self, parent):
-        self.parent = parent
-        self.ow = None
-        self.oh = None
-        self.ox = None
-        self.oy = None
-
-    def SetScrollbars(self, fw, fh, w, h, x, y):
-        if (self.ow != w or self.oh != h or self.ox != x or self.oy != y):
-            scroll_log.debug("Setting scrollbar to: %s" % str([fw, fh, w, h, x, y]))
-            self.parent.SetScrollbars(fw, fh, w, h, x, y)
-            self.ow = w
-            self.oh = h
-            self.ox = x
-            self.oy = y
-
-class FakeList(object):
-    def __init__(self, count):
-        self.num_items = count
-
-    def __len__(self):
-        return self.num_items
-
-    def __getitem__(self, item):
-        #print(item, type(item))
-        try:
-            #return "0A 0X 0Y FF sv-bdizc  00 00 00 LDA $%04x" % ((item * 4) + 0x600)
-            #return "%04x c0f3 f4e1 f2f4 cdcd cdcd 48ad c602" % (item * 16 + 0x6000)
-            return "%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x" % tuple([a & 0xff for a in range(item & 0xff, (item & 0xff) + 16)])
-        except:
-            return "slice"
-
 
 class DrawTextImageCache(object):
-    def __init__(self, view_params, window, font=None):
-        self.font = font
-        self.window = window
+    def __init__(self, view_params):
         self.cache = {}
-        self.set_colors(view_params)
+        self.view_params = view_params
 
     def invalidate(self):
         self.cache = {}
-
-    def set_colors(self, m):
-        self.color = m.text_color
-        self.diff_color = m.diff_text_color
-        if self.font is None:
-            self.font = m.text_font
-        self.selected_background = m.highlight_color
-        self.selected_brush = wx.Brush(m.highlight_color, wx.SOLID)
-        self.selected_pen = wx.Pen(m.highlight_color, 1, wx.SOLID)
-        self.normal_background = m.background_color
-        self.normal_brush = wx.Brush(m.background_color, wx.SOLID)
-        self.normal_pen = wx.Pen(m.background_color, 1, wx.SOLID)
-        self.data_background = m.data_color
-        self.data_brush = wx.Brush(m.data_color, wx.SOLID)
-        self.match_background = m.match_background_color
-        self.match_brush = wx.Brush(m.match_background_color, wx.SOLID)
-        self.match_pen = wx.Pen(m.match_background_color, 1, wx.SOLID)
-        self.comment_background = m.comment_background_color
-        self.comment_brush = wx.Brush(m.comment_background_color, wx.SOLID)
-        self.comment_pen = wx.Pen(m.comment_background_color, 1, wx.SOLID)
 
     def draw_blank(self, dc, rect):
         dc.SetBrush(wx.Brush(wx.WHITE, wx.SOLID))
@@ -189,104 +52,331 @@ class DrawTextImageCache(object):
         dc.DrawBitmap(bmp, rect.x, rect.y)
 
     def draw_text_to_dc(self, dc, bg_rect, fg_rect, text, style):
+        v = self.view_params
         if style & selected_bit_mask:
-            dc.SetBrush(self.selected_brush)
-            dc.SetPen(self.selected_pen)
-            dc.SetBackground(self.selected_brush)
-            dc.SetTextBackground(self.selected_background)
+            dc.SetBrush(v.selected_brush)
+            dc.SetPen(v.selected_pen)
+            dc.SetBackground(v.selected_brush)
+            dc.SetTextBackground(v.selected_background)
         elif style & match_bit_mask:
-            dc.SetPen(self.match_pen)
-            dc.SetBrush(self.match_brush)
-            dc.SetBackground(self.match_brush)
-            dc.SetTextBackground(self.match_background)
+            dc.SetPen(v.match_pen)
+            dc.SetBrush(v.match_brush)
+            dc.SetBackground(v.match_brush)
+            dc.SetTextBackground(v.match_background)
         elif style & comment_bit_mask:
-            dc.SetPen(self.comment_pen)
-            dc.SetBrush(self.comment_brush)
-            dc.SetBackground(self.comment_brush)
-            dc.SetTextBackground(self.comment_background)
+            dc.SetPen(v.comment_pen)
+            dc.SetBrush(v.comment_brush)
+            dc.SetBackground(v.comment_brush)
+            dc.SetTextBackground(v.comment_background)
         elif style & user_bit_mask:
-            dc.SetPen(self.normal_pen)
-            dc.SetBrush(self.data_brush)
-            dc.SetBackground(self.normal_brush)
-            dc.SetTextBackground(self.data_background)
+            dc.SetPen(v.normal_pen)
+            dc.SetBrush(v.data_brush)
+            dc.SetBackground(v.normal_brush)
+            dc.SetTextBackground(v.data_background)
         else:
-            dc.SetPen(self.normal_pen)
-            dc.SetBrush(self.normal_brush)
-            dc.SetBackground(self.normal_brush)
-            dc.SetTextBackground(self.normal_background)
+            dc.SetPen(v.normal_pen)
+            dc.SetBrush(v.normal_brush)
+            dc.SetBackground(v.normal_brush)
+            dc.SetTextBackground(v.normal_background)
         dc.Clear()
         if style & diff_bit_mask:
-            dc.SetTextForeground(self.diff_color)
+            dc.SetTextForeground(v.diff_color)
         else:
-            dc.SetTextForeground(self.color)
-        dc.SetFont(self.font)
+            dc.SetTextForeground(v.text_color)
+        dc.SetFont(v.text_font)
         dc.DrawText(text, fg_rect.x, fg_rect.y)
 
-    def draw_text(self, dc, rect, text, style):
+    def draw_item(self, dc, rect, text, style, widths):
         draw_log.debug(str((text, rect)))
         for i, c in enumerate(text):
             s = style[i]
             self.draw_cached_text(dc, rect, c, s)
-            rect.x += self.window.cell_width_in_pixels
+            rect.x += widths[i]
 
 
-class FakeStyle(object):
-    def __init__(self, window):
-        self.window = window
-
-    def __len__(self):
-        return len(self.window.table.data)
-
-    def __getitem__(self, item):
-        index, last_index = item.start, item.stop
+class HexByteImageCache(DrawTextImageCache):
+    def draw_cached_text(self, dc, rect, text, style):
+        k = (text, style, rect.width, rect.height)
         try:
-            index, last_index = item.start, item.stop
-        except:
-            index, last_index = item, item + 1
-        count = last_index - index
-        style = np.zeros(count, dtype=np.uint8)
-        if self.window is None:
-            return style
-        if last_index < self.window.SelectBegin or index >= self.window.SelectEnd:
-            pass
+            bmp = self.cache[k]
+        except KeyError:
+            bmp = wx.Bitmap(rect.width, rect.height)
+            mdc = wx.MemoryDC()
+            mdc.SelectObject(bmp)
+            t = "%02x" % text
+            padding = self.view_params.pixel_width_padding
+            r = wx.Rect(padding, 0, rect.width - (padding * 2), rect.height)
+            bg_rect = wx.Rect(0, 0, rect.width, rect.height)
+            self.draw_text_to_dc(mdc, bg_rect, r, t, style)
+            del mdc  # force the bitmap painting by deleting the gc
+            self.cache[k] = bmp
+        dc.DrawBitmap(bmp, rect.x, rect.y)
+
+    def draw_item(self, dc, rect, data, style, widths):
+        draw_log.debug(str((rect, data)))
+        for i, c in enumerate(data):
+            draw_log.debug(str((i, c, rect)))
+            self.draw_cached_text(dc, rect, c, style[i])
+            rect.x += widths[i]
+
+
+class TableViewParams(object):
+    def __init__(self):
+        self.col_label_border_width = 3
+        self.row_label_border_width = 3
+        self.row_height_extra_padding = -3
+        self.base_cell_width_in_chars = 2
+        self.pixel_width_padding = 2
+        self.background_color = wx.WHITE
+        self.text_color = wx.BLACK
+        self.row_header_bg_color = wx.Colour(224, 224, 224)
+        self.col_header_bg_color = wx.Colour(224, 224, 224)
+        self.highlight_color = wx.Colour(100, 200, 230)
+        self.unfocused_caret_color = (128, 128, 128)
+        self.data_color = (224, 224, 224)
+        self.empty_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+        self.match_background_color = (255, 255, 180)
+        self.comment_background_color = (255, 180, 200)
+        self.diff_text_color = (255, 0, 0)
+        self.caret_pen = wx.Pen(self.unfocused_caret_color, 1, wx.SOLID)
+
+        self.text_font = self.NiceFontForPlatform()
+        self.header_font = wx.Font(self.text_font).MakeBold()
+
+        self.set_paint()
+        self.set_font_metadata()
+
+    def set_paint(self):
+        self.selected_background = self.highlight_color
+        self.selected_brush = wx.Brush(self.highlight_color, wx.SOLID)
+        self.selected_pen = wx.Pen(self.highlight_color, 1, wx.SOLID)
+        self.normal_background = self.background_color
+        self.normal_brush = wx.Brush(self.background_color, wx.SOLID)
+        self.normal_pen = wx.Pen(self.background_color, 1, wx.SOLID)
+        self.data_background = self.data_color
+        self.data_brush = wx.Brush(self.data_color, wx.SOLID)
+        self.match_background = self.match_background_color
+        self.match_brush = wx.Brush(self.match_background_color, wx.SOLID)
+        self.match_pen = wx.Pen(self.match_background_color, 1, wx.SOLID)
+        self.comment_background = self.comment_background_color
+        self.comment_brush = wx.Brush(self.comment_background_color, wx.SOLID)
+        self.comment_pen = wx.Pen(self.comment_background_color, 1, wx.SOLID)
+
+    def set_font_metadata(self):
+        dc = wx.MemoryDC()
+        dc.SetFont(self.text_font)
+        self.text_font_char_width = dc.GetCharWidth()
+        self.text_font_char_height = dc.GetCharHeight()
+        print(self.text_font_char_width, self.text_font_char_height)
+        self.image_caches = {}
+
+    def calc_cell_size_in_pixels(self, chars_per_cell):
+        width = self.pixel_width_padding * 2 + self.text_font_char_width * chars_per_cell
+        height = self.row_height_extra_padding + self.text_font_char_height
+        return width, height
+
+    def calc_text_width(self, text):
+        return self.text_font_char_width * len(text)
+
+    def NiceFontForPlatform(self):
+        point_size = 10
+        family = wx.DEFAULT
+        style = wx.NORMAL
+        weight = wx.NORMAL
+        underline = False
+        if wx.Platform == "__WXMAC__":
+            face_name = "Monaco"
+        elif wx.Platform == "__WXMSW__":
+            face_name = "Lucida Console"
         else:
-            for i in range(index, last_index):
-                if i >= self.window.SelectBegin and i < self.window.SelectEnd:
-                    style[i - index] = selected_bit_mask
-        return style
+            face_name = "monospace"
+        font = wx.Font(point_size, family, style, weight, underline, face_name)
+        return font
+
+    def calc_image_cache(self, cache_cls):
+        try:
+            c = self.image_caches[cache_cls]
+        except KeyError:
+            c = cache_cls(self)
+            self.image_caches[cache_cls] = c
+        return c
 
 
-class FixedFontDataWindow(wx.ScrolledWindow):
-    def __init__(self, parent, settings_obj, table, view_params):
+class LineRenderer(object):
+    default_image_cache = DrawTextImageCache
 
-        wx.ScrolledWindow.__init__(self, parent, -1, style=wx.WANTS_CHARS)
+    def __init__(self, w, h, num_cells, view_params, image_cache=None, widths=None, col_labels=None):
+        self.w = w
+        self.h = h
+        self.num_cells = num_cells
+        self.vw = self.w * self.num_cells
+        if image_cache is None:
+            image_cache = view_params.calc_image_cache(self.default_image_cache)
+        self.image_cache = image_cache
+        self.view_params = view_params
+        self.set_cell_metadata(widths)
+        self.col_label_text = self.calc_col_labels(col_labels)
 
-        self.isDrawing = False
-        self.settings_obj = settings_obj
-        self.InitDoubleBuffering()
-        self.InitScrolling(parent)
-        self.recalc_view(table, view_params)
+    def set_cell_metadata(self, widths):
+        """
+        :param items_per_row: number of entries in each line of the array
+        :param col_widths: array, entry containing the number of cells (width)
+            required to display that items in that column
+        """
+        if widths is None:
+            widths = [1] * self.num_cells
+        self.col_widths = tuple(widths)  # copy to prevent possible weird errors if parent modifies list!
+        self.pixel_widths = [self.w * i for i in self.col_widths]
+        self.cell_to_col = []
+        self.col_to_cell = []
+        pos = 0
+        for i, width in enumerate(widths):
+            self.col_to_cell.append(pos)
+            self.cell_to_col.extend([i] * width)
+            pos += width
+        self.num_cols = i
+        self.num_cells = pos
 
-    def recalc_view(self, table=None, view_params=None):
+    def calc_col_labels(self, labels):
+        if labels is None:
+            labels = ["%d" % x for x in range(len(self.col_widths))]
+        return labels
+
+    def get_col_labels(self, starting_cell, num_cells):
+        starting_col = self.cell_to_col[starting_cell]
+        last_cell = min(starting_cell + num_cells, self.num_cells) - 1
+        last_col = self.cell_to_col[last_cell]
+        for col in range(starting_col, last_col + 1):
+            yield self.col_to_cell[col], self.col_widths[col], self.col_label_text[col]
+
+    def calc_label_size(self):
+        t0 = self.col_label_text[0]
+        t1 = self.col_label_text[-1]
+        w = max(self.view_params.calc_text_width(t0), self.view_params.calc_text_width(t1))
+        return w, self.h
+
+    @property
+    def virtual_width(self):
+        return self.vw
+
+    def cell_to_pixel(self, line_num, cell_num):
+        x = cell_num * self.w
+        y = line_num * self.h
+        return x, y
+
+    def cell_to_rect(self, line_num, cell_num, num_cells=1):
+        x, y = self.cell_to_pixel(line_num, cell_num)
+        rect = wx.Rect(x, y, self.w * num_cells, self.h)
+        return rect
+
+    def col_to_rect(self, line_num, col):
+        cell = self.col_to_cell[col]
+        x, y = self.cell_to_pixel(line_num, cell)
+        w = self.pixel_widths[col]
+        rect = wx.Rect(x, y, w, self.h)
+        return rect
+
+    def set_scroll_rate(self, parent):
+        parent.SetScrollRate(self.w, self.h)
+
+    def draw(self, dc, line_num, start_item, num_items):
+        raise NotImplementedError("implement draw() in subclass!")
+
+    def draw_caret(self, dc, line_num, start_cell, num_cells):
+        dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        rect = self.cell_to_rect(line_num, start_cell, num_cells)
+        pen = self.view_params.caret_pen
+        dc.SetPen(pen)
+        dc.DrawRectangle(rect)
+        rect.Inflate(1, 1)
+        dc.SetPen(wx.Pen(wx.BLACK))
+        dc.DrawRectangle(rect)
+        rect.Inflate(1, 1)
+        dc.SetPen(pen)
+        dc.DrawRectangle(rect)
+
+
+class TextLineRenderer(LineRenderer):
+    def __init__(self, table, view_params, chars_per_cell, image_cache=None):
+        self.table = table
+        w, h = view_params.calc_cell_size_in_pixels(chars_per_cell)
+        LineRenderer.__init__(self, w, h, table.items_per_row, view_params, image_cache)
+
+
+class HexLineRenderer(TextLineRenderer):
+    default_image_cache = HexByteImageCache
+
+    def draw(self, dc, line_num, start_cell, num_cells):
+        """
+        """
+        col = self.cell_to_col[start_cell]
+        last_cell = min(start_cell + num_cells, self.num_cells)
+        last_col = self.cell_to_col[last_cell - 1] + 1
+        t = self.table
+        row_start = (line_num * t.items_per_row) - t.start_offset
+        index = row_start + col
+        if index < 0:
+            col -= index
+            index = 0
+        last_index = row_start + last_col
+        if last_index > t.last_valid_index:
+            last_index = t.last_valid_index
+        if index >= last_index:
+            # no items in this line are in the visible scrolled region
+            return
+
+        rect = self.col_to_rect(line_num, col)
+        data = t.data[index:last_index]
+        style = t.style[index:last_index]
+        self.image_cache.draw_item(dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)])
+
+
+class FixedFontDataWindow(wx.ScrolledCanvas):
+    def __init__(self, parent, settings_obj, table, view_params, line_renderer):
+
+        wx.ScrolledCanvas.__init__(self, parent, -1, style=wx.WANTS_CHARS)
+        self.parent = parent
+        self.zoom = 1
+        self.SetBackgroundColour(wx.RED)
+        self.calc_visible()
+        self.next_scroll_time = 0
+        self.scroll_timer = wx.Timer(self)
+        self.scroll_delay = 100  # milliseconds
+        self.carets = []
+        self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
+        self.Bind(wx.EVT_MOTION, self.on_motion)
+        self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
+        self.Bind(wx.EVT_PAINT, self.on_paint)
+        self.Bind(wx.EVT_SIZE, self.on_size)
+        self.Bind(wx.EVT_TIMER, self.on_timer)
+        self.Bind(wx.EVT_ERASE_BACKGROUND, lambda evt: False)
+        self.recalc_view(table, view_params, line_renderer)
+
+    def recalc_view(self, table=None, view_params=None, line_renderer=None):
         if view_params is not None:
             self.view_params = view_params
         if table is None:
             table = self.table
-        self.InitFonts()
-        self.SelectOff()
         self.SetFocus()
         self.set_table(table)
+        if line_renderer is None:
+            line_renderer = self.line_renderer
+        self.set_renderer(line_renderer)
 
     def set_table(self, table):
-        self.InitCoords()
         self.table = table
-        self.cy, self.cx, _ = self.table.enforce_valid_caret(self.cy, self.cx)
         self.AdjustScrollbars()
-        self.init_renderers()
-        self.UpdateView(None)
 
-    def init_renderers(self):
-        self.text_renderer = self.table.create_renderer(None, self.view_params, self)
+    def set_renderer(self, renderer):
+        self.line_renderer = renderer
+
+    @property
+    def cell_width_in_pixels(self):
+        return self.line_renderer.w
+
+    @property
+    def cell_height_in_pixels(self):
+        return self.line_renderer.h
 
     @property
     def lines(self):
@@ -296,300 +386,163 @@ class FixedFontDataWindow(wx.ScrolledWindow):
     def style(self):
         return self.table.style
 
-##------------------ Init stuff
-
-    def InitCoords(self):
-        self.cx = 0
-        self.cy = 0
-        self.sx = 0
-        self.sy = 0
-        self.sw = 0
-        self.sh = 0
-
-##-------------------- UpdateView/Caret code
-
-    def OnSize(self, event):
-        self.AdjustScrollbars()
-        self.SetFocus()
-
-    def SetCharDimensions(self):
-        self.bw, self.bh = self.GetClientSize()
-        self.bh += self.view_params.row_height_extra_padding
-
-        self.sh = int(self.bh // self.cell_height_in_pixels)
-        self.sw = int(self.bw // self.cell_width_in_pixels)
-
-    def UpdateView(self, dc = None):
-        if dc is None:
-            dc = wx.ClientDC(self)
-        if dc.IsOk():
-            self.SetCharDimensions()
-            scroll_log.debug(str(("scroll:", self.sx, self.sy, "caret", self.cx, self.cy)))
-            if self.Selecting:
-                self.KeepCaretOnScreen()
-            else:
-                self.AdjustScrollbars()
-            self.DrawSimpleCaret(0,0, dc, True)
-            self.Draw(dc)
-            self.parent_scrolled_window.update_dependents()
-
-    def OnPaint(self, event):
-        dc = wx.PaintDC(self)
-        if self.isDrawing:
-            return
-        self.isDrawing = True
-        self.UpdateView(dc)
-        wx.CallAfter(self.AdjustScrollbars)
-        self.isDrawing = False
-
-    def OnEraseBackground(self, evt):
-        pass
-
-##-------------------- Drawing code
-
-    def InitFonts(self):
-        dc = wx.ClientDC(self)
-        dc.SetFont(self.view_params.text_font)
-        self.fw = dc.GetCharWidth()
-        self.fh = dc.GetCharHeight()
-        self.cell_width_in_pixels = self.view_params.pixel_width_padding * 2 + self.view_params.base_cell_width_in_chars * self.fw
-        self.cell_height_in_pixels = self.fh + self.view_params.row_height_extra_padding
-
-    def InitDoubleBuffering(self):
-        pass
-
-##-------- Enforcing screen boundaries, caret movement
-
-    def KeepCaretOnScreen(self):
-        self.sy = ForceBetween(max(0, self.cy-self.sh), self.sy, self.cy)
-        self.sx = ForceBetween(max(0, self.cx-self.sw), self.sx, self.cx)
-        self.cy, self.cx, _ = self.table.enforce_valid_caret(self.cy, self.cx)
-        self.AdjustScrollbars()
-
-    def ensure_visible(self, row, col):
-        self.sy = ForceBetween(max(0, row-self.sh), self.sy, row)
-        self.sx = ForceBetween(max(0, col-self.sw), self.sx, col)
-        self.AdjustScrollbars()
-
-    def show_caret(self, col, row):
-        self.cy = ForceBetween(0, row, self.table.num_rows - 1)
-        self.sy = ForceBetween(self.cy - self.sh + 1, self.sy, self.cy)
-        self.cx = ForceBetween(0, col, self.current_line_length - 1)
-        self.sx = ForceBetween(self.cx - self.sw + 1, self.sx, self.cx)
-        self.cy, self.cx, _ = self.table.enforce_valid_caret(self.cy, self.cx)
-        self.AdjustScrollbars()
-
-    def HorizBoundaries(self):
-        self.SetCharDimensions()
-        self.sx = ForceBetween(0, self.sx, max(self.sw, self.table.num_cells - self.sw + 1))
-
-    def VertBoundaries(self):
-        self.SetCharDimensions()
-        self.sy = ForceBetween(0, self.sy, max(self.sh, self.table.num_rows - self.sh + 1))
-
-    def cVert(self, num):
-        self.cy = self.cy + num
-        self.cy = ForceBetween(0, self.cy, self.table.num_rows - 1)
-        self.sy = ForceBetween(self.cy - self.sh + 1, self.sy, self.cy)
-        self.cx = min(self.cx, self.current_line_length - 1)
-        self.cy, self.cx, _ = self.table.enforce_valid_caret(self.cy, self.cx)
-
-    def cHoriz(self, num):
-        self.cx = self.cx + num
-        self.cx = ForceBetween(0, self.cx, self.current_line_length - 1)
-        self.sx = ForceBetween(self.cx - self.sw + 1, self.sx, self.cx)
-        self.cy, self.cx, _ = self.table.enforce_valid_caret(self.cy, self.cx)
-
-    def AboveScreen(self, row):
-        return row < self.sy
-
-    def BelowScreen(self, row):
-        return row >= self.sy + self.sh
-
-    def LeftOfScreen(self, col):
-        return col < self.sx
-
-    def RightOfScreen(self, col):
-        return col >= self.sx + self.sw
-
-##----------------- data structure helper functions
-
-    def IsLine(self, lineNum):
-        return (0<=lineNum) and (lineNum<self.table.num_rows)
-
-##-------------------------- Mouse scroll timing functions
-
-    def InitScrolling(self, parent):
-        # we don't rely on the windows system to scroll for us; we just
-        # redraw the screen manually every time
-        self.parent_scrolled_window = parent
-        self.EnableScrolling(False, False)
-        self.nextScrollTime = 0
-        self.scroller = Scroller(self)
-        self.init_timer()
-
-    def init_timer(self):
-        self.scrollTimer = wx.Timer(self)
-
-    def SetScrollManager(self, parent):
-        self.scroller = Scroller(parent)
-        self.AdjustScrollbars()
-
-    def CanScroll(self):
-       if time.time() >  self.nextScrollTime:
-           self.nextScrollTime = time.time() + (self.settings_obj.scroll_delay / 1000.0)
-           return True
-       else:
-           return False
-
-    def SetScrollTimer(self):
-        oneShot = True
-        self.scrollTimer.Start(self.settings_obj.scroll_delay/2, oneShot)
-        self.Bind(wx.EVT_TIMER, self.OnTimer)
-
-    def OnTimer(self, event):
-        screenX, screenY = wx.GetMousePosition()
-        x, y = self.ScreenToClient((screenX, screenY))
-        self.MouseToRow(y)
-        self.MouseToCol(x)
-        self.update_selection()
-
-##-------------------------- Mouse off screen functions
-
-    def HandleAboveScreen(self, row):
-        self.SetScrollTimer()
-        if self.CanScroll():
-            row = self.sy - 1
-            row = max(0, row)
-            self.cy = row
-
-    def HandleBelowScreen(self, row):
-        self.SetScrollTimer()
-        if self.CanScroll():
-            row = self.sy + self.sh + 1
-            row  = min(row, self.table.num_rows - 1)
-            self.cy = row
-
-    def HandleLeftOfScreen(self, col):
-        self.SetScrollTimer()
-        if self.CanScroll():
-            col = self.sx - 1
-            col = max(0,col)
-            self.cx = col
-
-    def HandleRightOfScreen(self, col):
-        self.SetScrollTimer()
-        if self.CanScroll():
-            col = self.sx + self.sw + 1
-            col = min(col, self.current_line_length - 1)
-            self.cx = col
-
-##------------------------ mousing functions
-
     def pixel_pos_to_row_cell(self, x, y):
-        row  = self.sy + int(y / self.cell_height_in_pixels)
-        cell = self.sx + int(x / self.cell_width_in_pixels)
+        sx, sy = self.parent.GetViewStart()
+        row  = sy + int(y / self.cell_pixel_height)
+        cell = sx + int(x / self.cell_pixel_width)
         return row, cell
 
-    def MouseToRow(self, mouseY):
-        row  = self.sy + int(mouseY / self.cell_height_in_pixels)
-        if self.AboveScreen(row):
-            self.HandleAboveScreen(row)
-        elif self.BelowScreen(row):
-            self.HandleBelowScreen(row)
+    def clamp_row_col(self, row, col):
+        sx, sy = self.parent.GetViewStart()
+        row2 = ForceBetween(sy, row, sy + self.fully_visible_rows - 1)
+        col2 = ForceBetween(sx, col, sx + self.fully_visible_cells - 1)
+        print("clamp: before=%d,%d after=%d,%d" % (row, col, row2, col2))
+        return row2, col2
+
+    def ensure_visible(self, row, col):
+        sx, sy = self.parent.GetViewStart()
+        sy2 = ForceBetween(max(0, row - self.visible_rows), sy, row)
+        sx2 = ForceBetween(max(0, col - self.visible_cells), sx, col)
+        print("ensure_visible: before=%d,%d after=%d,%d" % (sy, sx, sy2, sx2))
+        self.parent.move_viewport(sy2, sx2)
+
+    def on_size(self, event ):
+        self.calc_visible()
+
+    def calc_visible(self):
+        # For proper buffered painting, the visible_rows must include the
+        # (possibly) partially obscured last row.  fully_visible_rows
+        # indicates the number of rows without that last partially obscured
+        # row (if it exists).
+        w, h = self.GetClientSize().Get()
+        self.cell_pixel_height = self.parent.line_renderer.h * self.zoom
+        self.cell_pixel_width = self.parent.line_renderer.w * self.zoom
+        self.fully_visible_rows = int(h / self.cell_pixel_height)
+        self.fully_visible_cells = int(w / self.cell_pixel_width)
+        self.visible_rows = ((h + self.cell_pixel_height - 1) / self.cell_pixel_height)
+        self.visible_cells = ((w + self.cell_pixel_width - 1) / self.cell_pixel_width)
+
+    def on_paint(self, event):
+        dc = wx.PaintDC(self)
+        self.first_visible_cell, self.first_visible_row = self.parent.GetViewStart()
+
+        px, py = self.parent.CalcUnscrolledPosition(0, 0)
+        dc.SetLogicalOrigin(px, py)
+
+        print("on_paint: %dx%d at %d,%d. origin=%d,%d" % (self.visible_cells, self.visible_rows, self.first_visible_cell, self.first_visible_row, px, py))
+
+        line_num = self.first_visible_row
+        for line in range(line_num, min(line_num + self.visible_rows, self.table.num_rows)):
+            self.line_renderer.draw(dc, line, self.first_visible_cell, self.visible_cells)
+
+        for caret in self.carets:
+            r, c = caret
+            self.line_renderer.draw_caret(dc, r, c, 1)
+     
+    def can_scroll(self):
+        self.set_scroll_timer()
+        if time.time() >  self.next_scroll_time:
+            self.next_scroll_time = time.time() + (self.scroll_delay / 1000.0)
+            return True
         else:
-            self.cy  = min(row, self.table.num_rows - 1)
+            return False
 
-    def MouseToCol(self, mouseX):
-        cell = self.sx + int(mouseX / self.cell_width_in_pixels)
-        if self.LeftOfScreen(cell):
-            self.HandleLeftOfScreen(cell)
-        elif self.RightOfScreen(cell):
-            self.HandleRightOfScreen(cell)
-        else:
-            self.cx = min(cell, self.current_line_length)
-        # MouseToRow must be called first so the caret is in the correct row
-        self.cy, self.cx, _ = self.table.enforce_valid_caret(self.cy, self.cx)
+    def set_scroll_timer(self):
+        if self.scroll_timer is None:
+            self.scroll_timer = wx.Timer(self)
+        print("starting timer")
+        self.scroll_timer.Start(self.scroll_delay, True)
 
-    def MouseToCaret(self, event):
-        self.MouseToRow(event.GetY())
-        self.MouseToCol(event.GetX())
+    def on_timer(self, event):
+        screenX, screenY = wx.GetMousePosition()
+        x, y = self.ScreenToClient((screenX, screenY))
+        row, cell = self.pixel_pos_to_row_cell(x, y)
+        print("on_timer: time=%f pos=%d,%d" % (time.time(), row, cell))
+        self.handle_on_motion(event, row, cell)
 
-    def OnMotion(self, event):
-        if event.LeftIsDown() and self.HasCapture():
-            self.Selecting = True
-            self.MouseToCaret(event)
-            self.update_selection()
+    def is_left_of_screen(self, sx, col):
+        return col < sx
 
-    def OnLeftDown(self, event):
-        self.MouseToCaret(event)
-        self.start_selection()
-        self.UpdateView()
+    def handle_left_of_screen(self, col):
+        scroll_col = -1
+        if col + scroll_col < 0:
+            scroll_col = 0
+        return scroll_col
+
+    def is_right_of_screen(self, sx, col):
+        return col >= sx + self.visible_cells
+
+    def handle_right_of_screen(self, col):
+        scroll_col = 1
+        if col + scroll_col >= self.visible_cells:
+            scroll_col = 0
+        return scroll_col
+
+    def is_above_screen(self, sy, row):
+        return row < sy
+
+    def handle_above_screen(self, row):
+        scroll_row = -1
+        if row + scroll_row < 0:
+            scroll_row = 0
+        return scroll_row
+
+    def is_below_screen(self, sy, row):
+        return row >= sy + self.visible_rows
+
+    def handle_below_screen(self, row):
+        scroll_row = 1
+        if row + scroll_row >= self.visible_rows:
+            scroll_row = 0
+        return scroll_row
+
+    def get_row_col_from_event(self, evt):
+        row, cell = self.pixel_pos_to_row_cell(evt.GetX(), evt.GetY())
+        return row, cell
+
+    def on_left_down(self, evt):
+        print("left down")
         self.CaptureMouse()
-        self.SetFocus()
 
-    def OnLeftUp(self, event):
+    def on_motion(self, evt, x=None, y=None):
+        row, col = self.get_row_col_from_event(evt)
+        if evt.LeftIsDown() and self.HasCapture() and not self.scroll_timer.IsRunning():
+            self.handle_on_motion(evt, row, col)
+
+    def on_left_up(self, event):
+        self.scroll_timer.Stop()
         if not self.HasCapture():
             return
-
-        if self.SelectEnd is None:
-            self.OnClick()
-        else:
-            self.Selecting = False
-            self.SelectNotify(False, self.SelectBegin, self.SelectEnd)
-
         self.ReleaseMouse()
-        self.scrollTimer.Stop()
+        print
+        print "Title " + str(self)
+        print "Position " + str(self.GetPosition())
+        print "Size " + str(self.GetSize())
+        print "VirtualSize " + str(self.GetVirtualSize())
 
-
-#------------------------- Scrolling
-
-    def HorizScroll(self, event, eventType):
-        if eventType == wx.wxEVT_SCROLLWIN_LINEUP:
-            self.sx -= 1
-        elif eventType == wx.wxEVT_SCROLLWIN_LINEDOWN:
-            self.sx += 1
-        elif eventType == wx.wxEVT_SCROLLWIN_PAGEUP:
-            self.sx -= self.sw
-        elif eventType == wx.wxEVT_SCROLLWIN_PAGEDOWN:
-            self.sx += self.sw
-        elif eventType == wx.wxEVT_SCROLLWIN_TOP:
-            self.sx = 0
-        elif eventType == wx.wxEVT_SCROLLWIN_BOTTOM:
-            self.sx = self.table.num_cells - self.sw
-        else:
-            self.sx = event.GetPosition()
-
-        self.HorizBoundaries()
-
-    def VertScroll(self, event, eventType):
-        if   eventType == wx.wxEVT_SCROLLWIN_LINEUP:
-            self.sy -= 1
-        elif eventType == wx.wxEVT_SCROLLWIN_LINEDOWN:
-            self.sy += 1
-        elif eventType == wx.wxEVT_SCROLLWIN_PAGEUP:
-            self.sy -= self.sh
-        elif eventType == wx.wxEVT_SCROLLWIN_PAGEDOWN:
-            self.sy += self.sh
-        elif eventType == wx.wxEVT_SCROLLWIN_TOP:
-            self.sy = 0
-        elif eventType == wx.wxEVT_SCROLLWIN_BOTTOM:
-            self.sy = self.table.num_rows - self.sh
-        else:
-            print("Position:", event.GetPosition(), "old:", self.sy, self.GetViewStart())
-            self.sy = event.GetPosition()
-
-        self.VertBoundaries()
-
-    def AdjustScrollbars(self):
-        if self:
-            self.SetCharDimensions()
-            self.scroller.SetScrollbars(
-                self.cell_width_in_pixels, self.cell_height_in_pixels,
-                self.table.num_cells+3, max(self.table.num_rows+1, self.sh),
-                self.sx, self.sy)
-        else:
-            print("NOT ADJUSTING SCROLLBARS!")
+    def handle_on_motion(self, evt, row, col):
+        scroll_row = 0
+        scroll_col = 0
+        sx, sy = self.GetViewStart()
+        if self.is_left_of_screen(sx, col):
+            if self.can_scroll():
+                scroll_col = self.handle_left_of_screen(col)
+        elif self.is_right_of_screen(sx, col):
+            if self.can_scroll():
+                scroll_col = self.handle_right_of_screen(col)
+        if self.is_above_screen(sy, row):
+            if self.can_scroll():
+                scroll_row = self.handle_above_screen(row)
+        elif self.is_below_screen(sy, row):
+            if self.can_scroll():
+                scroll_row = self.handle_below_screen(row)
+        print("scroll delta: %d, %d" % (scroll_row, scroll_col))
+        #row, col = self.main.clamp_row_col(row, col)
+        row += scroll_row
+        col += scroll_col
+        self.ensure_visible(row, col)
+        self.carets = [self.clamp_row_col(row, col)]
+        self.parent.Refresh()
 
 #-------------- Keyboard movement implementations
 
@@ -666,162 +619,11 @@ class FixedFontDataWindow(wx.ScrolledWindow):
             print(key)
             event.Skip()
 
-##----------- selection routines
-
-    def start_selection(self):
-        self.SelectBegin = (self.cy, self.cx)
-        self.SelectEnd = None
-
-    def update_selection(self):
-        self.SelectEnd = (self.cy, self.cx)
-        self.SelectNotify(self.Selecting, self.SelectBegin, self.SelectEnd)
-        self.UpdateView()
-
-    def SelectOff(self):
-        self.SelectBegin = None
-        self.SelectEnd = None
-        self.Selecting = False
-        self.SelectNotify(False,None,None)
-        self.anchor_start_index, self.anchor_end_index = 0, 0
-
-#----------------------- Eliminate memory leaks
-
-    def OnDestroy(self, event):
-        self.mdc = None
-        self.odc = None
-        self.scrollTimer = None
-        self.eofMarker = None
-
-#--------------------  Abstract methods for subclasses
-
-    def OnClick(self):
-        pass
-
-    def SelectNotify(self, Selecting, SelectionBegin, SelectionEnd):
-        pass
-
     def zoom_in(self):
         pass
 
     def zoom_out(self):
         pass
-
-    #### Overrides
-
-    def DrawCaret(self, dc = None):
-        if not dc:
-            dc = wx.ClientDC(self)
-
-        if (self.table.num_rows)<self.cy: #-1 ?
-            self.cy = self.table.num_rows-1
-        if self.cy >= 0:
-            x = self.cx - self.sx
-            y = self.cy - self.sy
-            self.DrawSimpleCaret(x, y, dc)
-
-    def DrawSimpleCaret(self, cell_x, cell_y, dc = None, old=False):
-        if not dc:
-            dc = wx.ClientDC(self)
-
-        t = self.table
-        col = t.cell_to_col[cell_x]
-        num_cells = t.col_widths[col]
-        w = (num_cells * self.cell_width_in_pixels) + 2
-        h = self.cell_height_in_pixels + 1
-        cell_x = t.col_to_cell[col]
-        x = (cell_x * self.cell_width_in_pixels) - 1
-        y = (cell_y * self.cell_height_in_pixels)
-        self.draw_caret(dc, x, y, w, h)
-
-    def draw_caret(self, dc, x, y, w, h):
-        dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        dc.SetPen(self.view_params.caret_pen)
-        dc.DrawRectangle(x, y, w, h)
-        x -= 1
-        y -= 1
-        w += 2
-        h += 2
-        dc.SetPen(wx.Pen(wx.BLACK))
-        dc.DrawRectangle(x, y, w, h)
-        x -= 1
-        y -= 1
-        w += 2
-        h += 2
-        dc.SetPen(self.view_params.caret_pen)
-        dc.DrawRectangle(x, y, w, h)
-
-    def DrawEditText(self, t, style, x, y, dc, num_cells=1):
-        #dc.DrawText(t, x * self.cell_width_in_pixels, y * self.cell_height_in_pixels)
-        rect = wx.Rect(x * self.cell_width_in_pixels, y * self.cell_height_in_pixels, num_cells * self.cell_width_in_pixels, self.cell_height_in_pixels)
-        self.text_renderer.draw_text(dc, rect, t, style)
-
-    def DrawLine(self, sy, line, dc):
-        if self.IsLine(line):
-            l   = line
-            t   = self.lines[l]
-            style = self.style[l]
-            t   = t[self.sx:]
-            style = style[self.sx:]
-            self.DrawEditText(t, style, 0, sy - self.sy, dc)
-
-    def Draw(self, odc=None):
-        if not odc:
-            odc = wx.ClientDC(self)
-
-        dc = wx.BufferedDC(odc)
-        if dc.IsOk():
-            dc.SetBackgroundMode(wx.SOLID)
-            dc.SetBackground(wx.Brush(self.view_params.empty_color))
-            dc.Clear()
-            for line in range(self.sy, self.sy + self.sh + 1):
-                self.DrawLine(line, line, dc)
-            self.DrawCaret(dc)
-
-
-class FixedFontTextWindow(FixedFontDataWindow):
-    @property
-    def current_line_length(self):
-        try:
-            return len(self.lines[self.cy])
-        except IndexError:
-            return 0
-
-    @property
-    def num_rows(self):
-        return len(self.lines)
-
-    @property
-    def num_cells(self):
-        return 64
-
-
-class HexByteImageCache(DrawTextImageCache):
-    num_chars = 2
-
-    def draw_cached_text(self, dc, rect, text, style):
-        k = (text, style, rect.width, rect.height)
-        try:
-            bmp = self.cache[k]
-        except KeyError:
-            bmp = wx.Bitmap(rect.width, rect.height)
-            mdc = wx.MemoryDC()
-            mdc.SelectObject(bmp)
-            t = "%02x" % text
-            v = self.window
-            r = wx.Rect(v.view_params.pixel_width_padding, 0, v.fw * 2, rect.height)
-            bg_rect = wx.Rect(0, 0, rect.width, rect.height)
-            self.draw_text_to_dc(mdc, bg_rect, r, t, style)
-            del mdc  # force the bitmap painting by deleting the gc
-            self.cache[k] = bmp
-        dc.DrawBitmap(bmp, rect.x, rect.y)
-
-    def draw_text(self, dc, rect, text, style, num_cells=1):
-        draw_log.debug(str((rect, text)))
-        rect.width = num_cells * self.window.cell_width_in_pixels
-        for i, c in enumerate(text):
-            draw_log.debug(str((i, c, rect)))
-            self.draw_cached_text(dc, rect, c, style[i])
-            rect.x += rect.width
 
 
 class FixedFontNumpyWindow(FixedFontDataWindow):
@@ -899,7 +701,7 @@ class FixedFontMultiCellNumpyWindow(FixedFontNumpyWindow):
         #dc.DrawText(t, x * self.cell_width_in_pixels, y * self.cell_height_in_pixels)
         draw_log.debug("DRAWEDIT: %d %d %d" % (start_x, show_at_x, x_width))
         rect = wx.Rect(show_at_x * self.cell_width_in_pixels, y * self.cell_height_in_pixels, x_width * self.cell_width_in_pixels, self.cell_height_in_pixels)
-        self.table.hex_renderer.draw_text(dc, rect, [t], [style], x_width)
+        self.table.hex_renderer.draw(dc, rect, [t], [style], x_width)
 
     def DrawLine(self, sy, line, dc):
         if self.IsLine(line):
@@ -917,55 +719,27 @@ class FixedFontMultiCellNumpyWindow(FixedFontNumpyWindow):
 
 
 class HexTable(object):
-    def __init__(self, data, style, bytes_per_row, start_addr, col_widths=None, start_offset_mask=0):
+    """Table works in rows and columns, knows nothing about display cells.
+
+    Each column may be displayed across an integer number of cells which is
+    controlled by the line renderer.
+    """
+    def __init__(self, data, style, items_per_row, start_addr, start_offset_mask=0):
         self.data = data
         self.style = style
         self.start_addr = start_addr
-        self.bytes_per_row = bytes_per_row
-        if col_widths is None:
-            col_widths = [1] * bytes_per_row
-        self.items_per_row = len(col_widths)
+        self.items_per_row = items_per_row
         self.start_offset = start_addr & start_offset_mask if start_offset_mask else 0
-        self.num_rows = ((self.start_offset + len(self.data) - 1) / bytes_per_row) + 1
+        self.num_rows = ((self.start_offset + len(self.data) - 1) / items_per_row) + 1
         self.last_valid_index = len(self.data)
         print(self.data, self.num_rows, self.start_offset, self.start_addr)
-        self.calc_cells(col_widths)
         self.calc_labels()
 
-        self.default_renderer = None
-        self.hex_renderer = None
-
-    def calc_cells(self, col_widths):
-        """
-        :param items_per_row: number of entries in each line of the array
-        :param col_widths: array, entry containing the number of cells (width)
-            required to display that items in that column
-        """
-        self.col_widths = tuple(col_widths)  # copy to prevent possible weird errors if parent modifies list!
-        self.cell_to_col = []
-        self.col_to_cell = []
-        pos = 0
-        for i, width in enumerate(col_widths):
-            self.col_to_cell.append(pos)
-            self.cell_to_col.extend([i] * width)
-            pos += width
-        self.num_cells = pos
-
     def calc_labels(self):
-        self.label_start_addr = int(self.start_addr // self.bytes_per_row) * self.bytes_per_row
-        self.col_label_text = ["%x" % x for x in range(self.items_per_row)]
+        self.label_start_addr = int(self.start_addr // self.items_per_row) * self.items_per_row
         self.label_char_width = 4
 
-    def create_renderer(self, col, view_params, viewer):
-        if not self.default_renderer:
-            self.default_renderer = DrawTextImageCache(view_params, viewer)
-        if not self.hex_renderer:
-            self.hex_renderer = HexByteImageCache(view_params, viewer)
-        if col is None:
-            return self.default_renderer
-        return self.hex_renderer
-
-    def enforce_valid_caret(self, row, cell):
+    def enforce_valid_caret(self, row, col):
         # restrict row, col to grid boundaries first so we don't get e.g. cells
         # from previous line if cell number is negative
         if cell >= self.num_cells:
@@ -995,13 +769,14 @@ class HexTable(object):
         return ForceBetween(0, index, self.last_valid_index)
 
     def get_row_label_text(self, start_line, num_lines):
-        for line in range(start_line, start_line + num_lines + 1):
-            yield line, "%04x" % (self.get_index_of_row(line) + self.start_addr)
+        last_line = min(start_line + num_lines, self.num_rows)
+        for line in range(start_line, last_line):
+            yield "%04x" % (self.get_index_of_row(line) + self.start_addr)
 
-    def get_col_labels(self, starting_cell):
-        starting_col = self.cell_to_col[starting_cell]
-        for col in range(starting_col, self.items_per_row):
-            yield self.col_to_cell[col], self.col_widths[col], self.col_label_text[col]
+    def calc_row_label_width(self, view_params):
+        r0 = list(self.get_row_label_text(0, 1))[0]
+        r1 = list(self.get_row_label_text(self.num_rows - 1, 1))[0]
+        return max(view_params.calc_text_width(r0), view_params.calc_text_width(r1))
 
     def is_index_valid(self, index):
         return index > 0 and index <= self.last_valid_index
@@ -1036,59 +811,113 @@ class FixedFontMixedMultiCellNumpyWindow(FixedFontMultiCellNumpyWindow):
     pass
 
 
-class TableViewParams(object):
-    def __init__(self):
-        self.col_label_border_width = 3
-        self.row_label_border_width = 3
-        self.row_height_extra_padding = -3
-        self.base_cell_width_in_chars = 2
-        self.pixel_width_padding = 2
-        self.background_color = wx.WHITE
-        self.text_color = wx.BLACK
-        self.row_header_bg_color = wx.Colour(224, 224, 224)
-        self.col_header_bg_color = wx.Colour(224, 224, 224)
-        self.highlight_color = wx.Colour(100, 200, 230)
-        self.unfocused_caret_color = (128, 128, 128)
-        self.data_color = (224, 224, 224)
-        self.empty_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
-        self.match_background_color = (255, 255, 180)
-        self.comment_background_color = (255, 180, 200)
-        self.diff_text_color = (255, 0, 0)
-        self.caret_pen = wx.Pen(self.unfocused_caret_color, 1, wx.SOLID)
+class AuxWindow(wx.ScrolledCanvas):
+    def __init__(self, parent, main, label_char_width=10):
+        wx.ScrolledCanvas.__init__(self, parent, -1)
+        self.main = main
+        self.label_char_width = label_char_width
+        self.isDrawing = False
+        self.EnableScrolling(False, False)
+        self.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
 
-        self.text_font = self.NiceFontForPlatform()
-        self.header_font = wx.Font(self.text_font).MakeBold()
+        self.Bind(wx.EVT_PAINT, self.on_paint)
+        self.Bind(wx.EVT_SIZE, self.on_size)
+        self.Bind(wx.EVT_ERASE_BACKGROUND, lambda evt: False)
 
-    def NiceFontForPlatform(self):
-        point_size = 10
-        family = wx.DEFAULT
-        style = wx.NORMAL
-        weight = wx.NORMAL
-        underline = False
-        if wx.Platform == "__WXMAC__":
-            face_name = "Monaco"
-        elif wx.Platform == "__WXMSW__":
-            face_name = "Lucida Console"
-        else:
-            face_name = "monospace"
-        font = wx.Font(point_size, family, style, weight, underline, face_name)
-        return font
+    def on_size(self, event):
+        self.AdjustScrollbars()
+        self.SetFocus()
+
+    def UpdateView(self, dc = None):
+        if dc is None:
+            dc = wx.ClientDC(self)
+        if dc.IsOk():
+            self.Draw(dc)
+
+    def on_paint(self, event):
+        dc = wx.PaintDC(self)
+        if self.isDrawing:
+            return
+        self.isDrawing = True
+        self.UpdateView(dc)
+        self.isDrawing = False
+
+
+class RowLabelWindow(AuxWindow):
+    def DrawVertText(self, t, line, dc):
+        y = line * self.main.line_renderer.h
+        #print("row: y=%d line=%d text=%s" % (y, line, t))
+        dc.DrawText(t, 0, y)
+
+    def Draw(self, odc=None):
+        if odc is None:
+            odc = wx.ClientDC(self)
+
+        s = self.main
+        #dc = wx.BufferedDC(odc)
+        dc = odc
+        _, row = s.parent.GetViewStart()
+        if dc.IsOk():
+            px, py = s.parent.CalcUnscrolledPosition(0, 0)
+            dc.SetLogicalOrigin(0, py)
+            dc.SetFont(s.view_params.header_font)
+            dc.SetBackgroundMode(wx.SOLID)
+            dc.SetTextBackground(s.view_params.row_header_bg_color)
+            dc.SetTextForeground(s.view_params.text_color)
+            dc.SetBackground(wx.Brush(s.view_params.row_header_bg_color))
+            dc.Clear()
+            for header in s.table.get_row_label_text(row, s.visible_rows):
+                self.DrawVertText(header, row, dc)
+                row += 1
+
+class ColLabelWindow(AuxWindow):
+    def DrawHorzText(self, t, cell, num_cells, dc):
+        lr = self.main.line_renderer
+        rect = lr.cell_to_rect(0, cell)
+        width = self.main.view_params.calc_text_width(t)
+        offset = (rect.width - width)/2  # center text in cell
+        dc.DrawText(t, rect.x + offset, 0)
+
+    def Draw(self, odc=None):
+        if odc is None:
+            odc = wx.ClientDC(self)
+
+        #dc = wx.BufferedDC(odc)
+        dc = odc
+        s = self.main
+        cell, _ = s.parent.GetViewStart()
+        if dc.IsOk():
+            px, py = s.parent.CalcUnscrolledPosition(0, 0)
+            dc.SetLogicalOrigin(px, 0)
+            dc.SetFont(s.view_params.header_font)
+            dc.SetBackgroundMode(wx.SOLID)
+            dc.SetTextBackground(s.view_params.col_header_bg_color)
+            dc.SetTextForeground(s.view_params.text_color)
+            dc.SetBackground(wx.Brush(s.view_params.col_header_bg_color))
+            dc.Clear()
+            print("col label starting cell: %d, visible: %d" % (cell, s.visible_cells))
+            for cell, num_cells, header in s.line_renderer.get_col_labels(cell, s.visible_cells):
+                self.DrawHorzText(header, cell, num_cells, dc)
 
 
 class HexGridWindow(wx.ScrolledWindow):
     grid_cls = FixedFontNumpyWindow
+    line_renderer_cls = HexLineRenderer
 
-    def __init__(self, table, view_params, *args, **kwargs):
+    def __init__(self, table, view_params, chars_per_cell, *args, **kwargs):
         wx.ScrolledWindow.__init__ (self, *args, **kwargs)
         self.SetAutoLayout(True)
 
         self.scroll_delay = 30  # milliseconds
 
         self.update_dependents = self.update_dependents_null
+        self.line_renderer = self.line_renderer_cls(table, view_params, chars_per_cell)
+        self.col_label_renderer = self.line_renderer
+        self.row_label_renderer = self.line_renderer
         self.view_params = view_params
-        self.main = self.grid_cls(self, self, table, self.view_params)
-        self.top = TopAuxWindow(self, self.main)
-        self.left = LeftAuxWindow(self, self.main)
+        self.main = self.grid_cls(self, self, table, self.view_params, self.line_renderer)
+        self.top = ColLabelWindow(self, self.main)
+        self.left = RowLabelWindow(self, self.main)
         sizer = wx.FlexGridSizer(2,2,0,0)
         self.corner = sizer.Add(5, 5, 0, wx.EXPAND)
         sizer.Add(self.top, 0, wx.EXPAND)
@@ -1098,9 +927,9 @@ class HexGridWindow(wx.ScrolledWindow):
         sizer.AddGrowableRow(1)
         self.SetSizer(sizer)
         self.SetTargetWindow(self.main)
-        self.set_pane_sizes(3000, 1000)
+        self.set_pane_sizes(self.line_renderer.virtual_width, table.num_rows * self.line_renderer.h)
+        self.line_renderer.set_scroll_rate(self)
         self.SetBackgroundColour(self.view_params.col_header_bg_color)
-        #self.SetScrollRate(20,20)
         self.map_events()
 
         self.ShowScrollbars(wx.SHOW_SB_ALWAYS, wx.SHOW_SB_ALWAYS)
@@ -1113,22 +942,23 @@ class HexGridWindow(wx.ScrolledWindow):
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
         self.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
 
-        self.main.Bind(wx.EVT_LEFT_DOWN, self.main.OnLeftDown)
-        self.main.Bind(wx.EVT_LEFT_UP, self.main.OnLeftUp)
-        self.main.Bind(wx.EVT_MOTION, self.main.OnMotion)
+        self.main.Bind(wx.EVT_LEFT_DOWN, self.main.on_left_down)
+        self.main.Bind(wx.EVT_LEFT_UP, self.main.on_left_up)
+        self.main.Bind(wx.EVT_MOTION, self.main.on_motion)
         self.main.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
         self.main.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
         self.main.Bind(wx.EVT_CHAR, self.main.on_char)
-        self.main.Bind(wx.EVT_PAINT, self.main.OnPaint)
-        self.main.Bind(wx.EVT_SIZE, self.main.OnSize)
-        self.main.Bind(wx.EVT_WINDOW_DESTROY, self.main.OnDestroy)
-        self.main.Bind(wx.EVT_ERASE_BACKGROUND, self.main.OnEraseBackground)
+        self.main.Bind(wx.EVT_PAINT, self.main.on_paint)
+        self.main.Bind(wx.EVT_SIZE, self.main.on_size)
+        self.main.Bind(wx.EVT_ERASE_BACKGROUND, lambda evt: False)
 
     def recalc_view(self, *args, **kwargs):
         self.main.recalc_view(*args, **kwargs)
 
     def refresh_view(self, *args, **kwargs):
-        self.main.UpdateView()
+        self.Refresh()
+        self.top.Refresh()
+        self.left.Refresh()
        
     def set_pane_sizes(self, width, height):
         """
@@ -1137,8 +967,10 @@ class HexGridWindow(wx.ScrolledWindow):
             - top = width, 40
             - left = 80, height
         """
-        top_height = self.main.cell_height_in_pixels + self.view_params.col_label_border_width
-        left_width = self.main.table.label_char_width * self.main.fw + self.view_params.row_label_border_width
+        w, h = self.col_label_renderer.calc_label_size()
+        top_height = h + self.view_params.col_label_border_width
+        w = self.main.table.calc_row_label_width(self.view_params)
+        left_width = w + self.view_params.row_label_border_width
         self.main.SetVirtualSize(wx.Size(width,height))
         #(wt, ht) = self.top.GetSize()
         self.top.SetVirtualSize(wx.Size(width, top_height))
@@ -1146,73 +978,51 @@ class HexGridWindow(wx.ScrolledWindow):
         self.left.SetVirtualSize(wx.Size(left_width, height))
         self.corner.SetMinSize(left_width, top_height)
         #self.Layout()
-        wx.CallAfter(self.main.SetScrollManager, self)
 
-    def HorizScroll(self, event, eventType):
-        if eventType == wx.wxEVT_SCROLLWIN_LINEUP:
-            self.main.sx -= 1
-        elif eventType == wx.wxEVT_SCROLLWIN_LINEDOWN:
-            self.main.sx += 1
-        elif eventType == wx.wxEVT_SCROLLWIN_PAGEUP:
-            self.main.sx -= self.main.sw
-        elif eventType == wx.wxEVT_SCROLLWIN_PAGEDOWN:
-            self.main.sx += self.main.sw
-        elif eventType == wx.wxEVT_SCROLLWIN_TOP:
-            self.main.sx = 0
-        elif eventType == wx.wxEVT_SCROLLWIN_BOTTOM:
-            self.main.sx = self.main.max_line_len - self.main.sw
-        else:
-            self.main.sx = event.GetPosition()
-
-        self.main.HorizBoundaries()
-
-    def VertScroll(self, event, eventType):
-        if   eventType == wx.wxEVT_SCROLLWIN_LINEUP:
-            self.main.sy -= 1
-        elif eventType == wx.wxEVT_SCROLLWIN_LINEDOWN:
-            self.main.sy += 1
-        elif eventType == wx.wxEVT_SCROLLWIN_PAGEUP:
-            self.main.sy -= self.main.sh
-        elif eventType == wx.wxEVT_SCROLLWIN_PAGEDOWN:
-            self.main.sy += self.main.sh
-        elif eventType == wx.wxEVT_SCROLLWIN_TOP:
-            self.main.sy = 0
-        elif eventType == wx.wxEVT_SCROLLWIN_BOTTOM:
-            self.main.sy = self.main.LinesInFile() - self.main.sh
-        elif eventType == wx.wxEVT_MOUSEWHEEL:
-            # Not a normal scroll event. Wheel scrolling is handled by the
-            # scrolled window by a wxEVT_SCROLLWIN_THUMBTRACK, but on GTK its
-            # internal value didn't match the scrollbar so it was getting
-            # repositioned. This value is only received through the call to
-            # on_mouse_wheel below.
-            if event < 0:
-                self.main.sy += 4
-            else:
-                self.main.sy -= 4
-        else:
-            self.main.sy = event.GetPosition()
-
-        self.main.VertBoundaries()
 
     def on_scroll_window(self, event):
-        dir = event.GetOrientation()
-        eventType = event.GetEventType()
-        if dir == wx.HORIZONTAL:
-            self.HorizScroll(event, eventType)
+        """
+        OnScrollWindow Event Callback. This should let the main panel scroll in
+        both direction but transmit the vertical scrolling to the left panel
+        and the horizontal scrolling to the top window
+        """
+        sx,sy = self.GetScrollPixelsPerUnit()
+        if event.GetOrientation() == wx.HORIZONTAL:
+            dx = event.GetPosition()
+            dy = self.GetScrollPos(wx.VERTICAL)
         else:
-            self.VertScroll(event, eventType)
-        self.main.UpdateView()
+            dx = self.GetScrollPos(wx.HORIZONTAL)
+            dy = event.GetPosition()
+       
+        pos = (dx ,dy)
+        print "scrolling..." + str(pos) + str(event.GetPosition())
+        self.Scroll(dx, dy)
+        # self.main.Scroll(dx, dy)
+        #self.top.Scroll(dx, 0)
+        #self.left.Scroll(0, dy)
+        self.Refresh()
+        event.Skip()
+
+    def move_viewport(self, row, col):
+        # self.main.SetScrollPos(wx.HORIZONTAL, col)
+        # self.main.SetScrollPos(wx.VERTICAL, row)
+        self.Scroll(col, row)
+        self.left.Scroll(0, row)
+        self.top.Scroll(col, 0)
+        print("viewport: %d,%d" % (row, col))
+        self.Refresh()
 
     def on_mouse_wheel(self, evt):
+        print("on_mouse_wheel")
         w = evt.GetWheelRotation()
         if evt.ControlDown():
             if w < 0:
                 self.main.zoom_out()
             elif w > 0:
                 self.main.zoom_in()
-        elif not evt.ShiftDown() and not evt.AltDown():
-            self.VertScroll(w, wx.wxEVT_MOUSEWHEEL)
-            self.main.UpdateView()
+        # elif not evt.ShiftDown() and not evt.AltDown():
+        #     self.VertScroll(w, wx.wxEVT_MOUSEWHEEL)
+        #     self.main.UpdateView()
         else:
             evt.Skip()
 
@@ -1239,19 +1049,69 @@ class NonUniformGridWindow(HexGridWindow):
        
 #For testing
 if __name__ == '__main__':
+    class FakeList(object):
+        def __init__(self, count):
+            self.num_items = count
+
+        def __len__(self):
+            return self.num_items
+
+        def __getitem__(self, item):
+            #print(item, type(item))
+            try:
+                #return "0A 0X 0Y FF sv-bdizc  00 00 00 LDA $%04x" % ((item * 4) + 0x600)
+                #return "%04x c0f3 f4e1 f2f4 cdcd cdcd 48ad c602" % (item * 16 + 0x6000)
+                return "%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x" % tuple([a & 0xff for a in range(item & 0xff, (item & 0xff) + 16)])
+            except:
+                return "slice"
+
+    class FakeStyle(object):
+        def __init__(self):
+            self.window = None
+
+        def set_window(self, window):
+            self.window = window
+            self.window.SelectBegin = 20
+            self.window.SelectEnd = 100
+
+        def __len__(self):
+            return len(self.window.table.data)
+
+        def __getitem__(self, item):
+            index, last_index = item.start, item.stop
+            try:
+                index, last_index = item.start, item.stop
+            except:
+                index, last_index = item, item + 1
+            count = last_index - index
+            style = np.zeros(count, dtype=np.uint8)
+            if self.window is None:
+                return style
+            if last_index < self.window.SelectBegin or index >= self.window.SelectEnd:
+                pass
+            else:
+                for i in range(index, last_index):
+                    if i >= self.window.SelectBegin and i < self.window.SelectEnd:
+                        style[i - index] = selected_bit_mask
+            return style
+
     app = wx.App()
     frame = wx.Frame(None, -1, "Test", size=(400,400))
     splitter = wx.SplitterWindow(frame, -1, style = wx.SP_LIVE_UPDATE)
     splitter.SetMinimumPaneSize(20)
     view_params = TableViewParams()
-    style1 = FakeStyle(None)
-    table = VariableWidthHexTable(np.arange(1024, dtype=np.uint8), style1, 4, 0x602, [1, 2, 3, 4])
-    scroll1 = NonUniformGridWindow(table, view_params, splitter)
-    style1.window = scroll1.main
-    style2 = FakeStyle(None)
-    table = HexTable(np.arange(1024, dtype=np.uint8), style2, 16, 0x602)
-    scroll2 = HexGridWindow(table, view_params, splitter)
-    style2.window = scroll2.main
+    # style1 = FakeStyle()
+    # table = VariableWidthHexTable(np.arange(1024, dtype=np.uint8), style1, 4, 0x602, [1, 2, 3, 4])
+    # scroll1 = NonUniformGridWindow(table, view_params, splitter)
+    # style1.set_window(scroll1.main)
+    style1 = FakeStyle()
+    table = HexTable(np.arange(1024, dtype=np.uint8), style1, 16, 0x600, 0xf)
+    scroll1 = HexGridWindow(table, view_params, 2, splitter)
+    style1.set_window(scroll1.main)
+    style2 = FakeStyle()
+    table = HexTable(np.arange(1024, dtype=np.uint8), style2, 16, 0x602, 0xf)
+    scroll2 = HexGridWindow(table, view_params, 2, splitter)
+    style2.set_window(scroll2.main)
 
     splitter.SplitVertically(scroll1, scroll2)
     frame.Show(True)
