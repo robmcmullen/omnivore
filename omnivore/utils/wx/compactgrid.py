@@ -209,7 +209,6 @@ class LineRenderer(object):
         self.w = w
         self.h = h
         self.num_cells = num_cells
-        self.vw = self.w * self.num_cells
         if image_cache is None:
             image_cache = view_params.calc_image_cache(self.default_image_cache)
         self.image_cache = image_cache
@@ -235,7 +234,9 @@ class LineRenderer(object):
             self.cell_to_col.extend([i] * width)
             pos += width
         self.num_cols = i
-        self.num_cells = pos
+        if pos != self.num_cells:
+            log.error("Line renderer cell count mismatch: %d cells requested, %d found by totaling widths" % (self.num_cells, pos))
+        self.vw = self.w * self.num_cells
 
     def calc_col_labels(self, labels):
         if labels is None:
@@ -386,6 +387,10 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
     def style(self):
         return self.table.style
 
+    @property
+    def page_size(self):
+        return self.visible_rows * self.table.items_per_row
+
     def pixel_pos_to_row_cell(self, x, y):
         sx, sy = self.parent.GetViewStart()
         row  = sy + int(y / self.cell_pixel_height)
@@ -405,6 +410,32 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         sx2 = ForceBetween(max(0, col - self.visible_cells), sx, col)
         print("ensure_visible: before=%d,%d after=%d,%d" % (sy, sx, sy2, sx2))
         self.parent.move_viewport(sy2, sx2)
+
+    def enforce_valid_caret(self, row, col):
+        # restrict row, col to grid boundaries first so we don't get e.g. cells
+        # from previous line if cell number is negative
+        if col >= self.line_renderer.num_cols:
+            col = self.line_renderer.num_cols - 1
+        elif col < 0:
+            col = 0
+        if row >= self.table.num_rows:
+            row = self.table.num_rows - 1
+        elif row < 0:
+            row = 0
+
+        # now make sure we have a valid index to handle partial lines at the
+        # first or last row
+        index, _ = self.table.get_index_range(row, col)
+        if index < 0:
+            row = 0
+            if col < self.table.start_offset:
+                col = self.table.start_offset
+        elif index >= self.table.last_valid_index:
+            row = self.table.num_rows - 1
+            _, c2 = self.table.index_to_row_col(self.last_valid_index)
+            if col > c2:
+                col = c2 - 1
+        return row, col, index
 
     def on_size(self, event ):
         self.calc_visible()
@@ -448,8 +479,6 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
             return False
 
     def set_scroll_timer(self):
-        if self.scroll_timer is None:
-            self.scroll_timer = wx.Timer(self)
         print("starting timer")
         self.scroll_timer.Start(self.scroll_delay, True)
 
@@ -526,18 +555,21 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         sx, sy = self.GetViewStart()
         if self.is_left_of_screen(sx, col):
             if self.can_scroll():
-                scroll_col = self.handle_left_of_screen(col)
+                scroll_col = self.handle_left_of_screen(sx)
         elif self.is_right_of_screen(sx, col):
             if self.can_scroll():
-                scroll_col = self.handle_right_of_screen(col)
+                scroll_col = self.handle_right_of_screen(sx)
         if self.is_above_screen(sy, row):
             if self.can_scroll():
-                scroll_row = self.handle_above_screen(row)
+                scroll_row = self.handle_above_screen(sy)
         elif self.is_below_screen(sy, row):
             if self.can_scroll():
-                scroll_row = self.handle_below_screen(row)
-        print("scroll delta: %d, %d" % (scroll_row, scroll_col))
-        #row, col = self.main.clamp_row_col(row, col)
+                scroll_row = self.handle_below_screen(sy)
+        print("on_motion: loc=%d,%d top=%d,%d size=%d,%d delta: %d, %d" % (row, col, sy, sx, self.visible_rows, self.visible_cells, scroll_row, scroll_col))
+        if scroll_row != 0 or scroll_col != 0 or True:
+            self.process_motion_scroll(row, col, scroll_row, scroll_col)
+
+    def process_motion_scroll(self, row, col, scroll_row, scroll_col):
         row += scroll_row
         col += scroll_col
         self.ensure_visible(row, col)
@@ -546,58 +578,60 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
 
 #-------------- Keyboard movement implementations
 
-    def handle_char_move_down(self, event):
-        self.cVert(+1)
+    def handle_char_move_down(self, evt, flags):
+        self.move_carets(self.table.items_per_row)
 
-    def handle_char_move_up(self, event):
-        self.cVert(-1)
+    def handle_char_move_up(self, evt, flags):
+        self.move_carets(-self.table.items_per_row)
 
-    def handle_char_move_left(self, event):
-        if self.cx == 0:
-            if self.cy == 0:
-                wx.Bell()
-            else:
-                self.cVert(-1)
-                self.cx = self.current_line_length
-        else:
-            self.cx -= 1
+    def handle_char_move_left(self, evt, flags):
+        self.move_carets(-1)
 
-    def handle_char_move_right(self, event):
-        linelen = self.current_line_length - 1
-        if self.cx >= linelen:
-            if self.cy == len(self.lines) - 1:
-                wx.Bell()
-            else:
-                self.cx = 0
-                self.cVert(1)
-        else:
-            self.cx += 1
+    def handle_char_move_right(self, evt, flags):
+        self.move_carets(1)
 
-    def handle_char_move_page_down(self, event):
-        self.cVert(self.sh)
+    def handle_char_move_page_down(self, evt, flags):
+        self.move_carets(self.page_size)
 
-    def handle_char_move_page_up(self, event):
-        self.cVert(-self.sh)
+    def handle_char_move_page_up(self, evt, flags):
+        self.move_carets(-self.page_size)
 
-    def handle_char_move_home(self, event):
-        self.cx = 0
+    def handle_char_move_start_of_file(self, evt, flags):
+        self.move_carets_to(0)
 
-    def handle_char_move_end(self, event):
-        self.cx = self.current_line_length
+    def handle_char_move_end_of_file(self, evt, flags):
+        self.move_carets_to(self.table.last_valid_index)
 
-    def handle_char_move_start_of_file(self, event):
-        self.cy = 0
-        self.cx = 0
+    def handle_char_move_start_of_line(self, evt, flags):
+        self.move_carets_process_function(self.clamp_left_column)
 
-    def handle_char_move_end_of_file(self, event):
-        self.cy = len(self.lines) - 1
-        self.cx = self.current_line_length
+    def handle_char_move_end_of_line(self, evt, flags):
+        self.move_carets_process_function(self.clamp_right_column)
 
-    def handle_char_move_start_of_line(self, event):
-        self.cx = 0
+    def clamp_left_column(self, index):
+        r, c = self.table.index_to_row_col(index)
+        c = 0
+        index = max(0, self.table.get_index_range(r, c)[0])
+        return index
 
-    def handle_char_move_end_of_line(self, event):
-        self.cx = self.current_line_length
+    def clamp_right_column(self, index):
+        r, c = self.table.index_to_row_col(index)
+        c = self.table.items_per_row - 1
+        index = min(self.table.last_valid_index, self.table.get_index_range(r, c)[0])
+        return self.table.get_index_range(r, c)
+
+    def move_carets(self, delta):
+        self.carets = [i + delta for i in self.carets]
+
+    def move_carets_to(self, index):
+        self.carets = [index]
+
+    def move_carets_process_function(self, func):
+        self.move_carets_to(func(self.caret_handler.caret_index))
+
+    def validate_caret_position(self):
+        index = self.table.enforce_valid_index(self.carets[0])
+        self.carets = [index]
 
     def on_char(self, event):
         action = {}
@@ -739,32 +773,6 @@ class HexTable(object):
         self.label_start_addr = int(self.start_addr // self.items_per_row) * self.items_per_row
         self.label_char_width = 4
 
-    def enforce_valid_caret(self, row, col):
-        # restrict row, col to grid boundaries first so we don't get e.g. cells
-        # from previous line if cell number is negative
-        if cell >= self.num_cells:
-            cell = self.num_cells - 1
-        elif cell < 0:
-            cell = 0
-        if row >= self.num_rows:
-            row = self.num_rows - 1
-        elif row < 0:
-            row = 0
-
-        # now make sure we have a valid index to handle partial lines at the
-        # first or last row
-        index, _ = self.get_index_range(row, cell)
-        if index < 0:
-            row = 0
-            if cell < self.start_offset:
-                cell = self.start_offset
-        elif index >= self.last_valid_index:
-            row = self.num_rows - 1
-            _, c2 = self.index_to_row_col(self.last_valid_index)
-            if cell > c2:
-                cell = c2 - 1
-        return row, cell, index
-
     def enforce_valid_index(self, index):
         return ForceBetween(0, index, self.last_valid_index)
 
@@ -774,9 +782,12 @@ class HexTable(object):
             yield "%04x" % (self.get_index_of_row(line) + self.start_addr)
 
     def calc_row_label_width(self, view_params):
-        r0 = list(self.get_row_label_text(0, 1))[0]
-        r1 = list(self.get_row_label_text(self.num_rows - 1, 1))[0]
-        return max(view_params.calc_text_width(r0), view_params.calc_text_width(r1))
+        r = list(self.get_row_label_text(0, 1))
+        if r:
+            r0 = r[0]
+            r1 = list(self.get_row_label_text(self.num_rows - 1, 1))[0]
+            return max(view_params.calc_text_width(r0), view_params.calc_text_width(r1))
+        return 20
 
     def is_index_valid(self, index):
         return index > 0 and index <= self.last_valid_index
