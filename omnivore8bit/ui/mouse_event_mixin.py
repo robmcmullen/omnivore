@@ -23,29 +23,6 @@ class MouseEventMixin(SelectionHandler):
         flags.old_carets = set(self.caret_handler.carets)
         return flags
 
-    def handle_on_motion(self, evt, row, col):
-        scroll_row = 0
-        scroll_col = 0
-        if self.is_left_of_screen(col):
-            if self.can_scroll():
-                scroll_col = self.handle_left_of_screen(col)
-        elif self.is_right_of_screen(col):
-            if self.can_scroll():
-                scroll_col = self.handle_right_of_screen(col)
-        if self.is_above_screen(row):
-            if self.can_scroll():
-                scroll_row = self.handle_above_screen(row)
-        elif self.is_below_screen(row):
-            if self.can_scroll():
-                scroll_row = self.handle_below_screen(row)
-        print("scroll delta: %d, %d" % (scroll_row, scroll_col))
-        row += scroll_row
-        col += scroll_col
-        flags = self.create_mouse_event_flags()
-        self.handle_select_motion(self.caret_handler, row, col, flags)
-        self.handle_motion_update_status(row, col)
-        #self.main.MouseToCaret(evt)
-
     def handle_motion_update_status(self, evt, row, col):
         msg = self.get_status_message_at_cell(row, col)
         if msg:
@@ -109,13 +86,13 @@ class MouseEventMixin(SelectionHandler):
         self.commit_change(flags)
 
     def handle_select_motion(self, evt, row, col, flags=None):
-        if flags is None:
-            flags = self.create_mouse_event_flags()
         if not self.mouse_drag_started:
             # On windows, it's possible to get a motion event before a mouse
             # down event, so need this flag to check
             return
-        flags = self.create_mouse_event_flags()
+        if flags is None:
+            flags = self.create_mouse_event_flags()
+        ch = self.caret_handler
         update = False
         r, c, index1, index2, inside = self.get_location_from_cell(row, col)
         log.debug("handle_select_motion: r=%d c=%d index1: %s, index2: %s pending: %s, sel rows: %s" % (r, c, index1, index2, str(self.pending_select_awaiting_drag), flags.selecting_rows))

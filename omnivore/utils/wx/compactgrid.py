@@ -522,7 +522,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         if evt.LeftIsDown() and self.HasCapture():
             user_input_r, user_input_c = self.get_row_col_from_event(evt)
             self.handle_user_caret(user_input_r, user_input_c)
-            self.parent.handle_select_start(evt, self.current_caret_row, self.current_caret_col)
+            self.parent.handle_select_motion(evt, self.current_caret_row, self.current_caret_col)
         else:
             r, c = self.get_row_col_from_event(evt)
             self.parent.handle_motion_update_status(evt, r, c)
