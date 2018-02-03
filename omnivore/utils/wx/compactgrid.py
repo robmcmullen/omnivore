@@ -986,6 +986,15 @@ class HexGridWindow(wx.ScrolledWindow):
         lr = self.main.line_renderer
         self.main.SetScrollbars(lr.w, lr.h, lr.num_cells, self.main.table.num_rows)
 
+        w, h = self.col_label_renderer.calc_label_size()
+        top_height = h + self.view_params.col_label_border_width
+        w = self.main.table.calc_row_label_width(self.view_params)
+        left_width = w + self.view_params.row_label_border_width
+        main_width, main_height = self.main.GetVirtualSize()
+        self.top.SetVirtualSize(wx.Size(main_width, top_height))
+        self.left.SetVirtualSize(wx.Size(left_width, main_height))
+        self.corner.SetMinSize(left_width, top_height)
+
     def on_scroll_window(self, evt):
         """
         OnScrollWindow Event Callback. This should let the main panel scroll in
