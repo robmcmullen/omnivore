@@ -81,14 +81,18 @@ class BitviewScroller(wx.ScrolledWindow, MouseEventMixin):
         self.rect_select = rect_select
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_resize)
+        self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
+        self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
+        self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
+        self.Bind(wx.EVT_LEFT_DCLICK, self.on_left_dclick)
+        self.Bind(wx.EVT_MOTION, self.on_motion)
+        self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
         self.Bind(wx.EVT_SET_FOCUS, self.on_focus)
         self.Bind(wx.EVT_KILL_FOCUS, self.on_focus_lost)
         self.Bind(wx.EVT_ENTER_WINDOW, self.on_mouse_enter)
         self.Bind(wx.EVT_LEAVE_WINDOW, self.on_mouse_leave)
         self.Bind(wx.EVT_CHAR, self.on_char)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
-        self.map_mouse_events(self)
-        self.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
 
     def __repr__(self):
         return "<%s at 0x%x>" % (self.__class__.__name__, id(self))
@@ -396,6 +400,9 @@ class BitviewScroller(wx.ScrolledWindow, MouseEventMixin):
 
         evt.Skip()
 
+    def on_left_up(self, evt):
+        self.handle_select_end(self.linked_base, evt)
+
     def set_caret_pos_from_event(self, evt):
         e = self.linked_base
         byte, bit, inside = self.event_coords_to_byte(evt)
@@ -412,6 +419,10 @@ class BitviewScroller(wx.ScrolledWindow, MouseEventMixin):
                 e.set_caret(byte, False)
             wx.CallAfter(e.index_clicked, byte, bit, self, True)
 
+    def get_row_col_from_event(self, evt):
+        byte, bit, inside = self.event_coords_to_byte(evt)
+        return byte, bit
+
     def get_location_from_event(self, evt):
         byte, bit, inside = self.event_coords_to_byte(evt)
         index1 = byte
@@ -422,6 +433,19 @@ class BitviewScroller(wx.ScrolledWindow, MouseEventMixin):
         index1, _ = self.get_index_range(row, 0)
         _, index2 = self.get_index_range(row, self.bytes_per_row - 1)
         return index1, index2
+
+    def on_left_down(self, evt):
+        self.handle_select_start(self.linked_base, evt)
+        wx.CallAfter(self.SetFocus)
+
+    def on_left_dclick(self, evt):
+        self.on_left_down(evt)
+
+    def on_motion(self, evt):
+        self.on_motion_update_status(evt)
+        if self.editor is not None and evt.LeftIsDown():
+            self.handle_select_motion(self.linked_base, evt)
+        evt.Skip()
 
     def on_motion_update_status(self, evt):
         byte, bit, inside = self.event_coords_to_byte(evt)
@@ -448,6 +472,10 @@ class BitviewScroller(wx.ScrolledWindow, MouseEventMixin):
         comments = self.segment.get_comment(index)
         bittext = "bit=%d " % bit if bit is not None else ""
         return "%s%s  %s" % (bittext, msg, comments)
+
+    def get_status_message_at_cell(self, row, col):
+        index, _ = self.get_index_range(row, col)
+        return self.get_status_at_index(index)
 
     def on_paint(self, evt):
         self.dbg_call_seq += 1
