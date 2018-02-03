@@ -345,6 +345,8 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.next_scroll_time = 0
         self.scroll_timer = wx.Timer(self)
         self.scroll_delay = 50  # milliseconds
+        self.recalc_view(table, view_params, line_renderer)
+
         self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
@@ -352,7 +354,6 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_TIMER, self.on_timer)
         self.Bind(wx.EVT_ERASE_BACKGROUND, lambda evt: False)
-        self.recalc_view(table, view_params, line_renderer)
 
     def recalc_view(self, table=None, view_params=None, line_renderer=None):
         if view_params is not None:
@@ -366,9 +367,12 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.set_renderer(line_renderer)
         self.line_renderer.table = table
 
+        # must make sure parent control has finished initialization, otherwise
+        # it won't know about its children yet.
+        wx.CallAfter(self.parent.calc_scrolling)
+
     def set_table(self, table):
         self.table = table
-        self.AdjustScrollbars()
 
     def set_renderer(self, renderer):
         self.line_renderer = renderer
@@ -807,7 +811,6 @@ class AuxWindow(wx.ScrolledCanvas):
         self.Bind(wx.EVT_ERASE_BACKGROUND, lambda evt: False)
 
     def on_size(self, evt):
-        self.AdjustScrollbars()
         self.SetFocus()
 
     def UpdateView(self, dc = None):
@@ -820,6 +823,17 @@ class AuxWindow(wx.ScrolledCanvas):
         dc = wx.PaintDC(self)
         if self.isDrawing:
             return
+        upd = wx.RegionIterator(self.GetUpdateRegion())  # get the update rect list
+        r = []
+        while upd.HaveRects():
+            rect = upd.GetRect()
+
+            # Repaint this rectangle
+            #PaintRectangle(rect, dc)
+            r.append("update: %s" % str(rect))
+            upd.Next()
+        size = self.GetClientSize()
+        print "Updating %s size=%dx%d" % (self.__class__.__name__, size.x, size.y), " ".join(r), "clip: %s" % str(dc.GetClippingRect())
         self.isDrawing = True
         self.UpdateView(dc)
         self.isDrawing = False
@@ -957,6 +971,8 @@ class HexGridWindow(wx.ScrolledWindow):
 
     def recalc_view(self, *args, **kwargs):
         self.main.recalc_view(*args, **kwargs)
+        self.left.UpdateView()
+        self.top.UpdateView()
 
     def refresh_view(self, *args, **kwargs):
         self.Refresh()
@@ -984,7 +1000,8 @@ class HexGridWindow(wx.ScrolledWindow):
 
     def calc_scrolling(self):
         lr = self.main.line_renderer
-        self.main.SetScrollbars(lr.w, lr.h, lr.num_cells, self.main.table.num_rows)
+        self.main.SetScrollbars(lr.w, lr.h, lr.num_cells, self.main.table.num_rows, 0, 0)
+        #self.main.SetVirtualSize(lr.num_cells * lr.w, self.main.table.num_rows * lr.h)
 
         w, h = self.col_label_renderer.calc_label_size()
         top_height = h + self.view_params.col_label_border_width
@@ -1102,7 +1119,6 @@ class HexGridWindow(wx.ScrolledWindow):
             action[key](event)
             self.cx = self.table.enforce_valid_cursor(self.cy, self.cx)
             self.UpdateView()
-            self.AdjustScrollbars()
         except KeyError:
             print(key)
             evt.Skip()
