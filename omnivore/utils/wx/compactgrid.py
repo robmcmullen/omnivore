@@ -240,7 +240,7 @@ class LineRenderer(object):
 
     def calc_col_labels(self, labels):
         if labels is None:
-            labels = ["%d" % x for x in range(len(self.col_widths))]
+            labels = ["%x" % x for x in range(len(self.col_widths))]
         return labels
 
     def get_col_labels(self, starting_cell, num_cells):
