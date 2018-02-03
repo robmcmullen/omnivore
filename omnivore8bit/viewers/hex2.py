@@ -7,7 +7,7 @@ from traits.api import on_trait_change, Bool
 
 from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
 
-from ..ui.segment_grid import SegmentGridControl
+from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from omnivore.utils.wx import compactgrid as cg
 from omnivore8bit.arch.disasm import get_style_name
 
@@ -20,17 +20,6 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class SegmentTable(cg.HexTable):
-    def __init__(self, linked_base):
-        self.segment = linked_base.segment
-        cg.HexTable.__init__(self, self.segment.data, self.segment.style, 16, self.segment.start_addr, col_widths=None, start_offset_mask=0x0f)
-
-    def get_label_at_index(self, index):
-        # Can't just return hex value of index because some segments (like the
-        # raw sector segment) use different labels
-        return self.segment.label(index, True)
-
-
 class HexEditControl(SegmentGridControl):
     """
     View for editing in hexidecimal notation.
@@ -38,7 +27,8 @@ class HexEditControl(SegmentGridControl):
     short_name = "hex"
 
     def recalc_view(self):
-        table = SegmentTable(self.segment_viewer.linked_base)
+        table = SegmentTable(self.segment_viewer.linked_base.segment)
+        print("RECALC", table)
         self.main.recalc_view(table, self.segment_viewer.linked_base.cached_preferences)
 
     def change_value(self, row, col, text):
@@ -96,4 +86,4 @@ class HexEditViewer(SegmentViewer):
         self.control.recalc_view()
 
     def update_carets(self, flags):
-        self.control.caret_indexes_to_display_coords()
+        pass

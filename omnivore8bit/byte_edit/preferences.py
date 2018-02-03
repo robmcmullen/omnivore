@@ -5,7 +5,7 @@ import wx
 # Enthought library imports.
 from envisage.ui.tasks.api import PreferencesPane, TaskFactory
 from apptools.preferences.api import PreferencesHelper
-from traits.api import Bool, Dict, Enum, List, Str, Unicode, Int, Font, Range, Tuple, Color, Any
+from traits.api import Bool, Dict, Enum, List, Str, Unicode, Int, Font, Range, Tuple, Color, Any, Property, cached_property
 from traitsui.api import FontEditor, HGroup, VGroup, Item, Label, \
     View, RangeEditor, ColorEditor
 
@@ -38,6 +38,12 @@ class ByteEditPreferences(PreferencesHelper):
 
     # Font used for hex/disassembly
     text_font = Font(def_font)
+
+    text_font_char_width = Property(Int, depends_on='text_font')
+  
+    text_font_char_height = Property(Int, depends_on='text_font')
+
+    image_caches = Property(Dict, depends_on='text_font')
 
     header_font = Font(def_font + " bold")
 
@@ -129,8 +135,37 @@ class ByteEditPreferences(PreferencesHelper):
     def _comment_pen_default(self):
         return wx.Pen(self.comment_background_color, 1, wx.SOLID)
 
+    @cached_property
+    def _get_text_font_char_width(self):
+        dc = wx.MemoryDC()
+        dc.SetFont(self.text_font)
+        return dc.GetCharWidth()
 
+    @cached_property
+    def _get_text_font_char_height(self):
+        dc = wx.MemoryDC()
+        dc.SetFont(self.text_font)
+        return dc.GetCharHeight()
 
+    @cached_property
+    def _get_image_caches(self):
+        return dict()
+
+    def calc_cell_size_in_pixels(self, chars_per_cell):
+        width = self.pixel_width_padding * 2 + self.text_font_char_width * chars_per_cell
+        height = self.row_height_extra_padding + self.text_font_char_height
+        return width, height
+
+    def calc_text_width(self, text):
+        return self.text_font_char_width * len(text)
+
+    def calc_image_cache(self, cache_cls):
+        try:
+            c = self.image_caches[cache_cls]
+        except KeyError:
+            c = cache_cls(self)
+            self.image_caches[cache_cls] = c
+        return c
 
 
 class ByteEditPreferencesPane(PreferencesPane):

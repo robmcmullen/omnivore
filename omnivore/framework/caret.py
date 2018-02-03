@@ -61,7 +61,7 @@ class CaretHandler(HasTraits):
         return bool(self.selected_ranges)
 
     @property
-    def caret_list(self):
+    def carets(self):
         return [self.caret_index]
 
     #### command flag processors
@@ -80,6 +80,15 @@ class CaretHandler(HasTraits):
         self.clear_selection()
 
         return index
+
+    def move_carets(self, delta):
+        self.caret_index += delta
+
+    def move_carets_to(self, index):
+        self.caret_index = index
+
+    def move_carets_process_function(self, func):
+        self.caret_index = func(self.caret_index)
 
     def validate_carets(self):
         self.caret_index = self.validate_caret_position(self.caret_index)
@@ -148,10 +157,10 @@ class CaretHandler(HasTraits):
         log.debug("processing caret flags: %s" % str(flags))
 
         if flags.old_carets is not None:
-            print("before:", str(self.caret_list))
+            print("before:", str(self.carets))
             self.validate_carets()
-            print("after:", str(self.caret_list))
-            caret_state = set(self.caret_list)
+            print("after:", str(self.carets))
+            caret_state = set(self.carets)
             caret_moved = caret_state != flags.old_carets
             if caret_moved:
                 print("old_carets: %s, new carets: %s" % (flags.old_carets, caret_state))

@@ -57,7 +57,7 @@ class DrawTextImageCache(object):
             dc.SetBrush(v.selected_brush)
             dc.SetPen(v.selected_pen)
             dc.SetBackground(v.selected_brush)
-            dc.SetTextBackground(v.selected_background)
+            dc.SetTextBackground(v.highlight_color)
         elif style & match_bit_mask:
             dc.SetPen(v.match_pen)
             dc.SetBrush(v.match_brush)
@@ -72,12 +72,12 @@ class DrawTextImageCache(object):
             dc.SetPen(v.normal_pen)
             dc.SetBrush(v.data_brush)
             dc.SetBackground(v.normal_brush)
-            dc.SetTextBackground(v.data_background)
+            dc.SetTextBackground(v.data_color)
         else:
             dc.SetPen(v.normal_pen)
             dc.SetBrush(v.normal_brush)
             dc.SetBackground(v.normal_brush)
-            dc.SetTextBackground(v.normal_background)
+            dc.SetTextBackground(v.background_color)
         dc.Clear()
         if style & diff_bit_mask:
             dc.SetTextForeground(v.diff_color)
@@ -364,6 +364,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         if line_renderer is None:
             line_renderer = self.line_renderer
         self.set_renderer(line_renderer)
+        self.line_renderer.table = table
 
     def set_table(self, table):
         self.table = table
@@ -446,13 +447,14 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
                 col = self.table.start_offset
         elif index >= self.table.last_valid_index:
             row = self.table.num_rows - 1
-            _, c2 = self.table.index_to_row_col(self.last_valid_index)
+            _, c2 = self.table.index_to_row_col(self.table.last_valid_index)
             if col > c2:
                 col = c2 - 1
         return row, col, index
 
-    def on_size(self, event ):
+    def on_size(self, evt):
         self.calc_visible()
+        self.parent.calc_scrolling()
 
     def calc_visible(self):
         # For proper buffered painting, the visible_rows must include the
@@ -468,7 +470,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.visible_cells = int((w + self.cell_pixel_width - 1) / self.cell_pixel_width)
         print("fully visible: %d,%d including partial: %d,%d" % (self.fully_visible_rows, self.fully_visible_cells, self.visible_rows, self.visible_cells))
 
-    def on_paint(self, event):
+    def on_paint(self, evt):
         dc = wx.PaintDC(self)
         self.first_visible_cell, self.first_visible_row = self.parent.GetViewStart()
 
@@ -480,12 +482,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         line_num = self.first_visible_row
         for line in range(line_num, min(line_num + self.visible_rows, self.table.num_rows)):
             self.line_renderer.draw(dc, line, self.first_visible_cell, self.visible_cells)
-        self.draw_carets(dc)
-
-    def draw_carets(self, dc):
-        for index in self.parent.caret_handler.carets:
-            r, c = self.table.index_to_row_col(index)
-            self.line_renderer.draw_caret(dc, r, c, 1)
+        self.parent.draw_carets(dc)
      
     def can_scroll(self):
         self.set_scroll_timer()
@@ -499,7 +496,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         print("starting timer")
         self.scroll_timer.Start(self.scroll_delay, True)
 
-    def on_timer(self, event):
+    def on_timer(self, evt):
         screenX, screenY = wx.GetMousePosition()
         x, y = self.ScreenToClient((screenX, screenY))
         row, cell = self.pixel_pos_to_row_cell(x, y)
@@ -519,18 +516,23 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.event_modifiers = evt.GetModifiers()
         self.current_caret_row, self.current_caret_col = self.process_motion_scroll(r, c)
         self.CaptureMouse()
+        self.parent.handle_select_start(evt, self.current_caret_row, self.current_caret_col)
 
     def on_motion(self, evt, x=None, y=None):
         if evt.LeftIsDown() and self.HasCapture():
             user_input_r, user_input_c = self.get_row_col_from_event(evt)
             self.handle_user_caret(user_input_r, user_input_c)
+            self.parent.handle_select_start(evt, self.current_caret_row, self.current_caret_col)
+        else:
+            r, c = self.get_row_col_from_event(evt)
+            self.parent.handle_motion_update_status(evt, r, c)
 
     def handle_user_caret(self, user_input_r, user_input_c):
             r, c, offscreen = self.calc_desired_caret(user_input_r, user_input_c)
             if not offscreen or self.can_scroll():
                 self.current_caret_row, self.current_caret_col = self.process_motion_scroll(r, c)
 
-    def on_left_up(self, event):
+    def on_left_up(self, evt):
         self.scroll_timer.Stop()
         if not self.HasCapture():
             return
@@ -541,6 +543,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         print "Position " + str(self.GetPosition())
         print "Size " + str(self.GetSize())
         print "VirtualSize " + str(self.GetVirtualSize())
+        self.parent.handle_select_end(evt, self.current_caret_row, self.current_caret_col)
 
     def calc_desired_caret(self, row, col):
         top_row, left_col, bot_row, right_col = self.fully_visible_area
@@ -803,7 +806,7 @@ class AuxWindow(wx.ScrolledCanvas):
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_ERASE_BACKGROUND, lambda evt: False)
 
-    def on_size(self, event):
+    def on_size(self, evt):
         self.AdjustScrollbars()
         self.SetFocus()
 
@@ -813,7 +816,7 @@ class AuxWindow(wx.ScrolledCanvas):
         if dc.IsOk():
             self.Draw(dc)
 
-    def on_paint(self, event):
+    def on_paint(self, evt):
         dc = wx.PaintDC(self)
         if self.isDrawing:
             return
@@ -979,28 +982,32 @@ class HexGridWindow(wx.ScrolledWindow):
         self.corner.SetMinSize(left_width, top_height)
         #self.Layout()
 
-    def on_scroll_window(self, event):
+    def calc_scrolling(self):
+        lr = self.main.line_renderer
+        self.main.SetScrollbars(lr.w, lr.h, lr.num_cells, self.main.table.num_rows)
+
+    def on_scroll_window(self, evt):
         """
         OnScrollWindow Event Callback. This should let the main panel scroll in
         both direction but transmit the vertical scrolling to the left panel
         and the horizontal scrolling to the top window
         """
         sx,sy = self.GetScrollPixelsPerUnit()
-        if event.GetOrientation() == wx.HORIZONTAL:
-            dx = event.GetPosition()
+        if evt.GetOrientation() == wx.HORIZONTAL:
+            dx = evt.GetPosition()
             dy = self.GetScrollPos(wx.VERTICAL)
         else:
             dx = self.GetScrollPos(wx.HORIZONTAL)
-            dy = event.GetPosition()
+            dy = evt.GetPosition()
        
         pos = (dx ,dy)
-        print "scrolling..." + str(pos) + str(event.GetPosition())
+        print "scrolling..." + str(pos) + str(evt.GetPosition())
         self.Scroll(dx, dy)
         # self.main.Scroll(dx, dy)
         #self.top.Scroll(dx, 0)
         #self.left.Scroll(0, dy)
         self.Refresh()
-        event.Skip()
+        evt.Skip()
 
     def move_viewport(self, row, col):
         # self.main.SetScrollPos(wx.HORIZONTAL, col)
@@ -1025,6 +1032,23 @@ class HexGridWindow(wx.ScrolledWindow):
         else:
             evt.Skip()
 
+    ##### places for subclasses to process stuff (should really use events)
+
+    def handle_on_motion(self, evt, row, col):
+        pass
+
+    def handle_motion_update_status(self, evt, row, col):
+        pass
+
+    def handle_select_start(self, evt, row, col):
+        pass
+
+    def handle_select_motion(self, evt, row, col):
+        pass
+
+    def handle_select_end(self, evt, row, col):
+        pass
+
     def zoom_in(self):
         pass
 
@@ -1046,9 +1070,15 @@ class HexGridWindow(wx.ScrolledWindow):
         self.main.show_caret(c, r)
         self.refresh_view()
 
+    def draw_carets(self, dc):
+        main = self.main
+        for index in self.caret_handler.carets:
+            r, c = main.table.index_to_row_col(index)
+            main.line_renderer.draw_caret(dc, r, c, 1)
+
     ##### Keyboard movement implementations
 
-    def on_char(self, event):
+    def on_char(self, evt):
         action = {}
         action[wx.WXK_DOWN]  = self.handle_char_move_down
         action[wx.WXK_UP]    = self.handle_char_move_up
@@ -1058,7 +1088,7 @@ class HexGridWindow(wx.ScrolledWindow):
         action[wx.WXK_PAGEUP] = self.handle_char_move_page_up
         action[wx.WXK_HOME]  = self.handle_char_move_home
         action[wx.WXK_END]   = self.handle_char_move_end
-        key = event.GetKeyCode()
+        key = evt.GetKeyCode()
         try:
             action[key](event)
             self.cx = self.table.enforce_valid_cursor(self.cy, self.cx)
@@ -1066,7 +1096,7 @@ class HexGridWindow(wx.ScrolledWindow):
             self.AdjustScrollbars()
         except KeyError:
             print(key)
-            event.Skip()
+            evt.Skip()
 
     def handle_char_move_down(self, evt, flags):
         self.caret_handler.move_carets(self.table.items_per_row)

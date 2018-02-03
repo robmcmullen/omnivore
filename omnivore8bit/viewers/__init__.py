@@ -321,7 +321,7 @@ class SegmentViewer(HasTraits):
     def select_invert(self):
         self.control.select_invert(self.linked_base)
 
-    def highlight_selected_ranges(self):
+    def highlight_selected_ranges(self, caret_handler):
         s = self.linked_base.segment
         s.clear_style_bits(selected=True)
         s.set_style_ranges(self.linked_base.selected_ranges, selected=True)
