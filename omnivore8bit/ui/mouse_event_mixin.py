@@ -102,6 +102,11 @@ class MouseEventMixin(SelectionHandler):
         else:
             selecting_rows = False
             if self.pending_select_awaiting_drag is not None:
+                # only start selection if the cursor is over a different cell
+                # than the mouse down event
+                if index1 == self.pending_select_awaiting_drag[0]:
+                    return
+
                 # We have an actual drag so we can begin the selection
                 ch.anchor_initial_start_index, ch.anchor_initial_end_index = self.pending_select_awaiting_drag
                 self.pending_select_awaiting_drag = None
