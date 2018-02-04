@@ -32,7 +32,7 @@ class BitmapImageCache(cg.DrawTextImageCache):
         start = 0
         end = len(data)
         nr = 1
-        array = self.bitmap_renderer.get_image(self.segment_viewer, self.bytes_per_row, nr, end, data, style)
+        array = self.bitmap_renderer.get_image(self.segment_viewer, end, nr, end, data, style)
         width = array.shape[1]
         height = array.shape[0]
         if width > 0 and height > 0:
