@@ -22,13 +22,17 @@ class SegmentTable(cg.HexTable):
 
 
 class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
-    def __init__(self, parent, segment, caret_handler, view_params, grid_cls=None):
+    def __init__(self, parent, segment, caret_handler, view_params, grid_cls=None, line_renderer_cls=None):
         MouseEventMixin.__init__(self, caret_handler)
         CharEventMixin.__init__(self, caret_handler)
         table = SegmentTable(segment)
+
+        # override class attributes in cg.HexGridWindow if present
         if grid_cls is not None:
-            # override class attribute in cg.HexGridWindow
             self.grid_cls = grid_cls
+        if line_renderer_cls is not None:
+            self.line_renderer_cls = line_renderer_cls
+
         cg.HexGridWindow.__init__(self, table, view_params, 2, caret_handler, parent)
 
     @property
@@ -74,7 +78,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
         if self.table.is_index_valid(index):
             label = self.table.get_label_at_index(index)
             message = self.get_status_message_at_index(index)
-            return "%s: %s %s" % (self.short_name, label, message)
+            return "%s: %s %s" % (self.segment_viewer.name, label, message)
         return ""
 
     def get_status_message_at_index(self, index):
@@ -87,4 +91,6 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
         return self.get_status_at_index(index)
 
     def recalc_view(self):
-        raise NotImplementedError("override this in subclass!")
+        table = SegmentTable(self.segment_viewer.linked_base.segment)
+        log.debug("recalculating %s" % self)
+        self.main.recalc_view(table, self.segment_viewer.linked_base.cached_preferences)

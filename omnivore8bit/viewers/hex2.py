@@ -26,11 +26,6 @@ class HexEditControl(SegmentGridControl):
     """
     short_name = "hex"
 
-    def recalc_view(self):
-        table = SegmentTable(self.segment_viewer.linked_base.segment)
-        print("RECALC", table)
-        self.main.recalc_view(table, self.segment_viewer.linked_base.cached_preferences)
-
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.
         
