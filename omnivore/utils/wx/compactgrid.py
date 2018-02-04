@@ -277,9 +277,6 @@ class LineRenderer(object):
         rect = wx.Rect(x, y, w, self.h)
         return rect
 
-    def set_scroll_rate(self, parent):
-        parent.SetScrollRate(self.w, self.h)
-
     def draw(self, dc, line_num, start_cell, num_cells):
         """
         """
@@ -342,10 +339,8 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
 
         wx.ScrolledCanvas.__init__(self, parent, -1, style=wx.WANTS_CHARS)
         self.parent = parent
-        self.zoom = 1
         self.offscreen_scroll_divisor = 3
         self.SetBackgroundColour(wx.RED)
-        self.calc_visible()
         self.event_row = self.event_col = self.event_modifiers = None
         self.next_scroll_time = 0
         self.scroll_timer = wx.Timer(self)
@@ -371,10 +366,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
             line_renderer = self.line_renderer
         self.set_renderer(line_renderer)
         self.line_renderer.table = table
-
-        # must make sure parent control has finished initialization, otherwise
-        # it won't know about its children yet.
-        wx.CallAfter(self.parent.calc_scrolling)
+        self.calc_visible()
 
     def set_table(self, table):
         self.table = table
@@ -471,8 +463,8 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         # indicates the number of rows without that last partially obscured
         # row (if it exists).
         w, h = self.GetClientSize().Get()
-        self.cell_pixel_height = self.parent.line_renderer.h * self.zoom
-        self.cell_pixel_width = self.parent.line_renderer.w * self.zoom
+        self.cell_pixel_height = self.line_renderer.h
+        self.cell_pixel_width = self.line_renderer.w
         self.fully_visible_rows = int(h / self.cell_pixel_height)
         self.fully_visible_cells = int(w / self.cell_pixel_width)
         self.visible_rows = int((h + self.cell_pixel_height - 1) / self.cell_pixel_height)
@@ -629,9 +621,6 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
 
 
 class FixedFontNumpyWindow(FixedFontDataWindow):
-    def init_renderers(self):
-        self.text_renderer = self.table.create_renderer(0, self.view_params, self)
-
     @property
     def current_line_length(self):
         return self.table.num_cells
@@ -661,26 +650,6 @@ class FixedFontNumpyWindow(FixedFontDataWindow):
                 if i >= self.SelectBegin and i < self.SelectEnd:
                     style[i - index] = selected_bit_mask
         return style
-
-    def DrawLine(self, sy, line, dc):
-        if self.IsLine(line):
-            t = self.table
-            if line == 0:
-                index = 0
-                cell_start = t.start_offset
-            else:
-                index = (line * t.bytes_per_row) - t.start_offset
-                cell_start = 0
-            if line == t.num_rows - 1:
-                last_index = t.last_valid_index
-                cell_end = last_index - index
-            else:
-                cell_end = t.bytes_per_row - cell_start
-                last_index = index + cell_end
-
-            d = self.lines[index:last_index]
-            style = self.style[index:last_index]
-            self.DrawEditText(d, style, cell_start - self.sx, sy - self.sy, dc)
 
 
 class FixedFontMultiCellNumpyWindow(FixedFontNumpyWindow):
@@ -943,22 +912,24 @@ class MultiCaretHandler(object):
 
 
 class HexGridWindow(wx.ScrolledWindow):
-    grid_cls = FixedFontNumpyWindow
-    line_renderer_cls = HexLineRenderer
+    initial_zoom = 1
 
-    def __init__(self, table, view_params, chars_per_cell, caret_handler, *args, **kwargs):
+    def __init__(self, table, view_params, caret_handler, *args, **kwargs):
         wx.ScrolledWindow.__init__ (self, *args, **kwargs)
         self.SetAutoLayout(True)
 
         self.scroll_delay = 30  # milliseconds
+        self.zoom = self.initial_zoom
+        self.min_zoom = 1  # arbitrary
+        self.max_zoom = 16  # arbitrary
 
         self.update_dependents = self.update_dependents_null
-        self.line_renderer = self.line_renderer_cls(table, view_params, chars_per_cell)
-        self.col_label_renderer = self.line_renderer
-        self.row_label_renderer = self.line_renderer
+        initial_line_renderer = self.calc_line_renderer(table, view_params)
+        self.col_label_renderer = initial_line_renderer
+        self.row_label_renderer = initial_line_renderer
         self.view_params = view_params
         self.caret_handler = caret_handler
-        self.main = self.grid_cls(self, self, table, self.view_params, self.line_renderer)
+        self.main = self.calc_main_grid(table, self.view_params, initial_line_renderer)
         self.top = ColLabelWindow(self, self.main)
         self.left = RowLabelWindow(self, self.main)
         sizer = wx.FlexGridSizer(2,2,0,0)
@@ -971,7 +942,6 @@ class HexGridWindow(wx.ScrolledWindow):
         self.SetSizer(sizer)
         self.SetTargetWindow(self.main)
         self.calc_scrolling()
-        self.line_renderer.set_scroll_rate(self)
         self.SetBackgroundColour(self.view_params.col_header_bg_color)
         self.map_events()
 
@@ -980,6 +950,12 @@ class HexGridWindow(wx.ScrolledWindow):
         self.top.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
         self.left.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
         self.update_dependents = self.update_dependents_post_init
+
+    def calc_line_renderer(self, table, view_params):
+        return HexLineRenderer(table, view_params, 2)
+
+    def calc_main_grid(self, table, view_params, line_renderer):
+        return FixedFontNumpyWindow(self, self, table, view_params, line_renderer)
 
     def map_events(self):
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
@@ -992,6 +968,7 @@ class HexGridWindow(wx.ScrolledWindow):
 
     def recalc_view(self, *args, **kwargs):
         self.main.recalc_view(*args, **kwargs)
+        self.calc_scrolling()
         self.left.UpdateView()
         self.top.UpdateView()
 
@@ -1027,14 +1004,13 @@ class HexGridWindow(wx.ScrolledWindow):
 
     def calc_scrolling(self):
         lr = self.main.line_renderer
-        self.main.SetScrollbars(lr.w, lr.h, lr.num_cells, self.main.table.num_rows, 0, 0)
-        #self.main.SetVirtualSize(lr.num_cells * lr.w, self.main.table.num_rows * lr.h)
-
         left_width, top_height = self.calc_header_sizes()
-        main_width, main_height = self.line_renderer.virtual_width, self.main.table.num_rows * self.line_renderer.h
+        main_width, main_height = lr.virtual_width, self.main.table.num_rows * lr.h
+        self.main.SetScrollbars(lr.w, lr.h, lr.num_cells, self.main.table.num_rows, 0, 0)
         self.top.SetVirtualSize(wx.Size(main_width, top_height))
         self.left.SetVirtualSize(wx.Size(left_width, main_height))
         self.corner.SetMinSize(left_width, top_height)
+        self.SetScrollRate(lr.w, lr.h)
 
     def on_scroll_window(self, evt):
         """
@@ -1103,11 +1079,20 @@ class HexGridWindow(wx.ScrolledWindow):
     def handle_select_end(self, evt, row, col):
         pass
 
-    def zoom_in(self):
-        pass
+    def zoom_in(self, zoom=1):
+        self.set_zoom(self.zoom + zoom)
+        self.recalc_view()
 
-    def zoom_out(self):
-        pass
+    def zoom_out(self, zoom=1):
+        self.set_zoom(self.zoom - zoom)
+        self.recalc_view()
+
+    def set_zoom(self, zoom):
+        if zoom > self.max_zoom:
+            zoom = self.max_zoom
+        elif zoom < self.min_zoom:
+            zoom = self.min_zoom
+        self.zoom = zoom
 
     def update_dependents_null(self):
         pass
@@ -1183,7 +1168,8 @@ class HexGridWindow(wx.ScrolledWindow):
 
 
 class NonUniformGridWindow(HexGridWindow):
-    grid_cls = FixedFontMultiCellNumpyWindow
+    def calc_main_grid(self, table, view_params, line_renderer):
+        return FixedFontMultiCellNumpyWindow(self, self, table, view_params, line_renderer)
 
 
        
@@ -1247,12 +1233,12 @@ if __name__ == '__main__':
     style1 = FakeStyle()
     table = HexTable(np.arange(1024, dtype=np.uint8), style1, 16, 0x600, 0xf)
     carets = MultiCaretHandler(table)
-    scroll1 = HexGridWindow(table, view_params, 2, carets, splitter)
+    scroll1 = HexGridWindow(table, view_params, carets, splitter)
     style1.set_window(scroll1.main)
     style2 = FakeStyle()
     table = HexTable(np.arange(1024, dtype=np.uint8), style2, 16, 0x602, 0xf)
     carets = MultiCaretHandler(table)
-    scroll2 = HexGridWindow(table, view_params, 2, carets, splitter)
+    scroll2 = HexGridWindow(table, view_params, carets, splitter)
     style2.set_window(scroll2.main)
 
     splitter.SplitVertically(scroll1, scroll2)

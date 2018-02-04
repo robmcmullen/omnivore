@@ -22,8 +22,10 @@ class AnticCharImageCache(cg.DrawTextImageCache):
         self.segment_viewer = segment_viewer
         self.font = segment_viewer.current_antic_font
         self.font_renderer = segment_viewer.machine.font_renderer
-        self.w = self.font_renderer.char_bit_width
-        self.h = self.font_renderer.char_bit_height
+        self.zoom_w = segment_viewer.control.zoom * self.font_renderer.scale_width
+        self.zoom_h = segment_viewer.control.zoom * self.font_renderer.scale_height
+        self.w = self.font_renderer.char_bit_width * self.zoom_w
+        self.h = self.font_renderer.char_bit_height * self.zoom_h
 
     def draw_item(self, dc, rect, data, style):
         start = 0
@@ -35,8 +37,7 @@ class AnticCharImageCache(cg.DrawTextImageCache):
         width = array.shape[1]
         height = array.shape[0]
         if width > 0 and height > 0:
-            zw, zh = 1, 1 # self.get_zoom_factors()
-            array = intscale(array, zh, zw)
+            array = intscale(array, self.zoom_h, self.zoom_w)
             image = wx.Image(array.shape[1], array.shape[0])
             image.SetData(array.tostring())
             bmp = wx.Bitmap(image)
@@ -62,6 +63,13 @@ class AnticCharRenderer(cg.LineRenderer):
 
 
 class CharGridControl(SegmentGridControl):
+    initial_zoom = 2
+
+    def calc_line_renderer(self, table, view_params):
+        if hasattr(self, 'segment_grid'):
+            return AnticCharRenderer(table, self.segment_viewer)
+        return SegmentGridControl.calc_line_renderer(self, table, view_params)
+
     def recalc_view(self):
         table = SegmentTable(self.segment_viewer.linked_base.segment)
         line_renderer = AnticCharRenderer(table, self.segment_viewer)

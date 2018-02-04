@@ -33,7 +33,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
         if line_renderer_cls is not None:
             self.line_renderer_cls = line_renderer_cls
 
-        cg.HexGridWindow.__init__(self, table, view_params, 2, caret_handler, parent)
+        cg.HexGridWindow.__init__(self, table, view_params, caret_handler, parent)
 
     @property
     def table(self):
