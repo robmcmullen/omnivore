@@ -970,7 +970,7 @@ class HexGridWindow(wx.ScrolledWindow):
         sizer.AddGrowableRow(1)
         self.SetSizer(sizer)
         self.SetTargetWindow(self.main)
-        self.set_pane_sizes(self.line_renderer.virtual_width, table.num_rows * self.line_renderer.h)
+        self.calc_scrolling()
         self.line_renderer.set_scroll_rate(self)
         self.SetBackgroundColour(self.view_params.col_header_bg_color)
         self.map_events()
@@ -1000,35 +1000,38 @@ class HexGridWindow(wx.ScrolledWindow):
         self.top.Refresh()
         self.left.Refresh()
 
-    def set_pane_sizes(self, width, height):
+    def DoGetBestSize(self):
+        """ Base class virtual method for sizer use to get the best size
         """
-        Set the size of the 3 panes as follow:
-            - main = width, height
-            - top = width, 40
-            - left = 80, height
-        """
+        left_width, _ = self.calc_header_sizes()
+        width = self.main.line_renderer.vw + left_width
+        height = -1
+
+        # add in scrollbar width to allow for it if the grid doesn't need it at
+        # the moment
+        width += wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X) + 1
+        best = wx.Size(width, height)
+
+        # Cache the best size so it doesn't need to be calculated again,
+        # at least until some properties of the window change
+        self.CacheBestSize(best)
+
+        return best
+
+    def calc_header_sizes(self):
         w, h = self.col_label_renderer.calc_label_size()
         top_height = h + self.view_params.col_label_border_width
         w = self.main.table.calc_row_label_width(self.view_params)
         left_width = w + self.view_params.row_label_border_width
-        self.main.SetVirtualSize(wx.Size(width,height))
-        #(wt, ht) = self.top.GetSize()
-        self.top.SetVirtualSize(wx.Size(width, top_height))
-        #(wl, hl) = self.left.GetSize()
-        self.left.SetVirtualSize(wx.Size(left_width, height))
-        self.corner.SetMinSize(left_width, top_height)
-        #self.Layout()
+        return left_width, top_height
 
     def calc_scrolling(self):
         lr = self.main.line_renderer
         self.main.SetScrollbars(lr.w, lr.h, lr.num_cells, self.main.table.num_rows, 0, 0)
         #self.main.SetVirtualSize(lr.num_cells * lr.w, self.main.table.num_rows * lr.h)
 
-        w, h = self.col_label_renderer.calc_label_size()
-        top_height = h + self.view_params.col_label_border_width
-        w = self.main.table.calc_row_label_width(self.view_params)
-        left_width = w + self.view_params.row_label_border_width
-        main_width, main_height = self.main.GetVirtualSize()
+        left_width, top_height = self.calc_header_sizes()
+        main_width, main_height = self.line_renderer.virtual_width, self.main.table.num_rows * self.line_renderer.h
         self.top.SetVirtualSize(wx.Size(main_width, top_height))
         self.left.SetVirtualSize(wx.Size(left_width, main_height))
         self.corner.SetMinSize(left_width, top_height)
