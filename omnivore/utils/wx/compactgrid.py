@@ -12,7 +12,7 @@ logger = logging.getLogger()
 draw_log = logging.getLogger("draw")
 scroll_log = logging.getLogger("scroll")
 # draw_log.setLevel(logging.DEBUG)
-
+debug_refresh = False
 
 
 def ForceBetween(min, val, max):
@@ -333,6 +333,8 @@ class HexLineRenderer(TextLineRenderer):
 
 
 class FixedFontDataWindow(wx.ScrolledCanvas):
+    refresh_count = 0
+
     def __init__(self, parent, settings_obj, table, view_params, line_renderer):
 
         wx.ScrolledCanvas.__init__(self, parent, -1, style=wx.WANTS_CHARS)
@@ -487,6 +489,9 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         for line in range(line_num, min(line_num + self.visible_rows, self.table.num_rows)):
             self.line_renderer.draw(dc, line, self.first_visible_cell, self.visible_cells)
         self.parent.draw_carets(dc)
+        if debug_refresh:
+            dc.DrawText("%d" % self.refresh_count, 0, 0)
+            self.refresh_count += 1
      
     def can_scroll(self):
         self.set_scroll_timer()
@@ -519,12 +524,18 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         r, c = self.get_row_col_from_event(evt)
         self.event_modifiers = evt.GetModifiers()
         self.current_caret_row, self.current_caret_col = self.process_motion_scroll(r, c)
+        self.last_mouse_event = (self.current_caret_row, self.current_caret_col)
         self.CaptureMouse()
         self.parent.handle_select_start(evt, self.current_caret_row, self.current_caret_col)
 
     def on_motion(self, evt, x=None, y=None):
         if evt.LeftIsDown() and self.HasCapture():
             user_input_r, user_input_c = self.get_row_col_from_event(evt)
+            if (user_input_r, user_input_c) == self.last_mouse_event:
+                # only process if mouse has moved to a new cell; no sub-cell
+                # events!
+                return
+            self.last_mouse_event = (user_input_r, user_input_c)
             self.handle_user_caret(user_input_r, user_input_c)
             self.parent.handle_select_motion(evt, self.current_caret_row, self.current_caret_col)
         else:
@@ -840,6 +851,8 @@ class AuxWindow(wx.ScrolledCanvas):
 
 
 class RowLabelWindow(AuxWindow):
+    refresh_count = 0
+
     def DrawVertText(self, t, line, dc):
         y = line * self.main.line_renderer.h
         #print("row: y=%d line=%d text=%s" % (y, line, t))
@@ -865,8 +878,14 @@ class RowLabelWindow(AuxWindow):
             for header in s.table.get_row_label_text(row, s.visible_rows):
                 self.DrawVertText(header, row, dc)
                 row += 1
+            if debug_refresh:
+                _, row = s.parent.GetViewStart()
+                self.DrawVertText("%d" % self.refresh_count, row, dc)
+                self.refresh_count += 1
 
 class ColLabelWindow(AuxWindow):
+    refresh_count = 0
+
     def DrawHorzText(self, t, cell, num_cells, dc):
         lr = self.main.line_renderer
         rect = lr.cell_to_rect(0, cell)
@@ -893,6 +912,10 @@ class ColLabelWindow(AuxWindow):
             dc.Clear()
             for cell, num_cells, header in s.line_renderer.get_col_labels(cell, s.visible_cells):
                 self.DrawHorzText(header, cell, num_cells, dc)
+            if debug_refresh:
+                cell, _ = s.parent.GetViewStart()
+                self.DrawHorzText("%d" % self.refresh_count, cell, 1, dc)
+                self.refresh_count += 1
 
 
 class MultiCaretHandler(object):
@@ -959,14 +982,9 @@ class HexGridWindow(wx.ScrolledWindow):
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
         self.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
 
-        self.main.Bind(wx.EVT_LEFT_DOWN, self.main.on_left_down)
-        self.main.Bind(wx.EVT_LEFT_UP, self.main.on_left_up)
-        self.main.Bind(wx.EVT_MOTION, self.main.on_motion)
         self.main.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
         self.main.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
         self.main.Bind(wx.EVT_CHAR, self.on_char)
-        self.main.Bind(wx.EVT_PAINT, self.main.on_paint)
-        self.main.Bind(wx.EVT_SIZE, self.main.on_size)
         self.main.Bind(wx.EVT_ERASE_BACKGROUND, lambda evt: False)
 
     def recalc_view(self, *args, **kwargs):
@@ -978,7 +996,7 @@ class HexGridWindow(wx.ScrolledWindow):
         self.Refresh()
         self.top.Refresh()
         self.left.Refresh()
-       
+
     def set_pane_sizes(self, width, height):
         """
         Set the size of the 3 panes as follow:
@@ -1038,6 +1056,10 @@ class HexGridWindow(wx.ScrolledWindow):
     def move_viewport(self, row, col):
         # self.main.SetScrollPos(wx.HORIZONTAL, col)
         # self.main.SetScrollPos(wx.VERTICAL, row)
+        sx, sy = self.GetViewStart()
+        if sx == col and sy == row:
+            # already there!
+            return
         self.Scroll(col, row)
         self.left.Scroll(0, row)
         self.top.Scroll(col, 0)
