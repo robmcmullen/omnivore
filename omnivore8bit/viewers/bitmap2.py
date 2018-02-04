@@ -25,8 +25,8 @@ class BitmapImageCache(cg.DrawTextImageCache):
         self.zoom_w = segment_viewer.control.zoom  # * self.bitmap_renderer.scale_width
         self.zoom_h = segment_viewer.control.zoom  # * self.bitmap_renderer.scale_height
         self.pixels_per_byte = self.bitmap_renderer.pixels_per_byte
-        self.w = self.zoom_w * self.pixels_per_byte
-        self.h = self.zoom_h
+        self.w = self.zoom_w * self.bitmap_renderer.scale_width * self.pixels_per_byte
+        self.h = self.zoom_h * self.bitmap_renderer.scale_height
 
     def draw_item(self, dc, rect, data, style):
         start = 0
@@ -37,6 +37,7 @@ class BitmapImageCache(cg.DrawTextImageCache):
         height = array.shape[0]
         if width > 0 and height > 0:
             array = intscale(array, self.zoom_h, self.zoom_w)
+            print("bitmap: %d,%d,3 after scaling: %s" % (height, width, str(array.shape)))
             image = wx.Image(array.shape[1], array.shape[0])
             image.SetData(array.tostring())
             bmp = wx.Bitmap(image)
@@ -70,7 +71,7 @@ class BitmapGridControl(SegmentGridControl):
         return SegmentGridControl.calc_line_renderer(self, table, view_params)
 
     def recalc_view(self):
-        table = SegmentTable(self.segment_viewer.linked_base.segment)
+        table = SegmentTable(self.segment_viewer.linked_base.segment, 1)
         line_renderer = BitmapRenderer(table, self.segment_viewer)
         log.debug("recalculating %s" % self)
         cg.HexGridWindow.recalc_view(self, table, self.segment_viewer.linked_base.cached_preferences, line_renderer)
@@ -95,7 +96,7 @@ class BitmapViewer(SegmentViewer):
     def update_bitmap(self, evt):
         log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)
         if evt is not Undefined:
-            self.control.refresh_view()
+            self.control.recalc_view()
             self.linked_base.editor.update_pane_names()
 
     def validate_width(self, width):

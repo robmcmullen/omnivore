@@ -5,7 +5,7 @@ import wx
 from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, diff_bit_mask, user_bit_mask, not_user_bit_mask
 
 from omnivore.utils.permute import bit_reverse_table
-from omnivore.utils.nputil import intwscale, intwscale_font
+from omnivore.utils.nputil import intscale, intwscale, intwscale_font
 
 import colors
 from atascii import internal_to_atascii, atascii_to_internal
@@ -47,10 +47,11 @@ class BaseRenderer(object):
     def reshape(self, bitimage, bytes_per_row, nr):
         # source array 'bitimage' in the shape of (size, w, 3)
         h, w, colors = bitimage.shape
-        log.debug("bitimage: %d,%d,%d; ppb=%d bpr=%d" % (h, w, colors, self.pixels_per_byte * self.scale_width, bytes_per_row))
         # create a new image with pixels in the correct aspect ratio
-        output = intwscale(bitimage, self.pixels_per_byte * self.scale_width / w)
-        return output.reshape((nr, bytes_per_row * self.pixels_per_byte * self.scale_width, 3))
+        output = bitimage.reshape((nr, self.pixels_per_byte * bytes_per_row, 3))
+        output = intscale(output, self.scale_height, self.scale_width)
+        log.debug("bitimage: %d,%d,%d; ppb=%d bpr=%d, output=%s" % (h, w, colors, self.pixels_per_byte * self.scale_width, bytes_per_row, str(output.shape)))
+        return output
 
     def get_2bpp(self, segment_viewer, bytes_per_row, nr, count, bytes, style, colors):
         bits = np.unpackbits(bytes)
@@ -77,7 +78,7 @@ class BaseRenderer(object):
             bitimage[color_is_set & comment] = c_colors[i]
             bitimage[color_is_set & match] = m_colors[i]
             bitimage[color_is_set & highlight] = h_colors[i]
-        bitimage[count:,:,:] = segment_viewer.preferences.empty_color
+        bitimage[count:,:,:] = segment_viewer.preferences.empty_color.Get(False)
         return bitimage
 
     def get_4bpp(self, segment_viewer, bytes_per_row, nr, count, bytes, style, colors):
@@ -103,7 +104,7 @@ class BaseRenderer(object):
             bitimage[color_is_set & comment] = c_colors[i]
             bitimage[color_is_set & match] = m_colors[i]
             bitimage[color_is_set & highlight] = h_colors[i]
-        bitimage[count:,:,:] = segment_viewer.preferences.empty_color
+        bitimage[count:,:,:] = segment_viewer.preferences.empty_color.Get(False)
         return bitimage
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
@@ -145,7 +146,7 @@ class BaseRenderer(object):
             bitimage[color_is_set & comment] = c_colors[i]
             bitimage[color_is_set & match] = m_colors[i]
             bitimage[color_is_set & highlight] = h_colors[i]
-        bitimage[count:,:,:] = segment_viewer.preferences.empty_color
+        bitimage[count:,:,:] = segment_viewer.preferences.empty_color.Get(False)
         return bitimage
 
 
@@ -219,7 +220,7 @@ class ModeB(OneBitPerPixelB):
     scale_height = 2
 
     def get_bw_colors(self, segment_viewer):
-        color_registers = [segment_viewer.preferences.color_registers[r] for r in [8, 4]]
+        color_registers = [segment_viewer.machine.color_registers[r] for r in [8, 4]]
         return color_registers
 
 
@@ -266,7 +267,7 @@ class OneBitPerPixelApple2Linear(BaseRenderer):
         bitimage[color1 & comment] = c_colors[1]
         bitimage[color1 & match] = m_colors[1]
         bitimage[color1 & highlight] = h_colors[1]
-        bitimage[count:,:,:] = segment_viewer.preferences.empty_color
+        bitimage[count:,:,:] = segment_viewer.preferences.empty_color.Get(False)
 
         return bitimage.reshape((nr, bytes_per_row * 7, 3))
 
@@ -328,7 +329,7 @@ class OneBitPerPixelApple2FullScreen(BaseRenderer):
         bitimage[color1 & comment] = c_colors[1]
         bitimage[color1 & match] = m_colors[1]
         bitimage[color1 & highlight] = h_colors[1]
-        bitimage[count:,:,:] = segment_viewer.preferences.empty_color
+        bitimage[count:,:,:] = segment_viewer.preferences.empty_color.Get(False)
 
         return bitimage.reshape((nr, bytes_per_row * 7, 3))
 
@@ -410,7 +411,7 @@ class OneBitPerPixelApple2Artifacting(BaseRenderer):
         bitimage[color1 & comment] = c_colors[1]
         bitimage[color1 & match] = m_colors[1]
         bitimage[color1 & highlight] = h_colors[1]
-        bitimage[count:,:,:] = segment_viewer.preferences.empty_color
+        bitimage[count:,:,:] = segment_viewer.preferences.empty_color.Get(False)
 
         return bitimage.reshape((nr, bytes_per_row * 7, 3))
 
@@ -420,8 +421,8 @@ class TwoBitsPerPixel(BaseRenderer):
     pixels_per_byte = 4
 
     def get_image(self, segment_viewer, bytes_per_row, nr, count, bytes, style):
-        colors = self.get_colors(m, [0, 1, 2, 3])
-        bitimage = self.get_2bpp(m, bytes_per_row, nr, count, bytes, style, colors)
+        colors = self.get_colors(segment_viewer, [0, 1, 2, 3])
+        bitimage = self.get_2bpp(segment_viewer, bytes_per_row, nr, count, bytes, style, colors)
         return self.reshape(bitimage, bytes_per_row, nr)
 
 
@@ -432,14 +433,15 @@ class ModeD(TwoBitsPerPixel):
     pixels_per_byte = 4
 
     def get_image(self, segment_viewer, bytes_per_row, nr, count, bytes, style):
-        colors = self.get_colors(m, [8, 4, 5, 6])
-        bitimage = self.get_2bpp(m, bytes_per_row, nr, count, bytes, style, colors)
+        colors = self.get_colors(segment_viewer, [8, 4, 5, 6])
+        bitimage = self.get_2bpp(segment_viewer, bytes_per_row, nr, count, bytes, style, colors)
         return self.reshape(bitimage, bytes_per_row, nr)
 
 
 class ModeE(ModeD):
     name = "Antic E (Gr 7+, 2bpp)"
     scale_width = 2
+    scale_height = 1
     pixels_per_byte = 4
 
 
@@ -448,8 +450,8 @@ class FourBitsPerPixel(BaseRenderer):
     pixels_per_byte = 2
 
     def get_image(self, segment_viewer, bytes_per_row, nr, count, bytes, style):
-        colors = self.get_colors(m, range(16))
-        bitimage = self.get_4bpp(m, bytes_per_row, nr, count, bytes, style, colors)
+        colors = self.get_colors(segment_viewer, range(16))
+        bitimage = self.get_4bpp(segment_viewer, bytes_per_row, nr, count, bytes, style, colors)
         return self.reshape(bitimage, bytes_per_row, nr)
 
 
@@ -472,8 +474,8 @@ class TwoBitPlanesLE(BaseRenderer):
         return bytes_per_row
 
     def get_image(self, segment_viewer, bytes_per_row, nr, count, bytes, style):
-        colors = self.get_colors(m, range(2**self.bitplanes))
-        bitimage = self.get_bitplanes(m, bytes_per_row, nr, count, bytes, style, colors)
+        colors = self.get_colors(segment_viewer, range(2**self.bitplanes))
+        bitimage = self.get_bitplanes(segment_viewer, bytes_per_row, nr, count, bytes, style, colors)
         return bitimage
 
 
@@ -615,7 +617,7 @@ class GTIA9(FourBitsPerPixel):
 
     def get_colors(self, segment_viewer, registers):
         antic_color_registers = self.get_antic_color_registers(segment_viewer)
-        color_registers = segment_viewer.preferences.get_color_registers(antic_color_registers)
+        color_registers = segment_viewer.machine.get_color_registers(antic_color_registers)
         h_colors = colors.get_blended_color_registers(color_registers, segment_viewer.preferences.highlight_color)
         m_colors = colors.get_blended_color_registers(color_registers, segment_viewer.preferences.match_background_color)
         c_colors = colors.get_blended_color_registers(color_registers, segment_viewer.preferences.comment_background_color)
@@ -670,7 +672,7 @@ class BaseBytePerPixelRenderer(BaseRenderer):
         data = (style & user_bit_mask) > 0
         match = (style & match_bit_mask) == match_bit_mask
 
-        color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(m, range(16))
+        color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(segment_viewer, range(16))
         bitimage = np.empty((nr * bytes_per_row, 3), dtype=np.uint8)
         for i in range(16):
             color_is_set = (bytes == i)
@@ -679,7 +681,7 @@ class BaseBytePerPixelRenderer(BaseRenderer):
             bitimage[color_is_set & match] = m_colors[i]
             bitimage[color_is_set & data] = d_colors[i]
             bitimage[color_is_set & highlight] = h_colors[i]
-        bitimage[count:,:] = segment_viewer.preferences.empty_color
+        bitimage[count:,:] = segment_viewer.preferences.empty_color.Get(False)
         return bitimage.reshape((nr, bytes_per_row, 3))
 
 
@@ -1100,7 +1102,7 @@ def get_numpy_memory_map_image(segment_viewer, bytes, style, start_byte, end_byt
     height = num_rows_with_data
     log.debug("memory map size: %dx%d, rows with data=%d, rows %d, cols %d-%d" % (width, height, num_rows_with_data, num_rows, start_col, start_col + width - 1))
     array = np.empty((height, width, 3), dtype=np.uint8)
-    array[:,:] = segment_viewer.preferences.empty_color
+    array[:,:] = segment_viewer.preferences.empty_color.Get(False)
     selected_color = segment_viewer.preferences.highlight_color
 
     y = 0
