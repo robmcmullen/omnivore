@@ -93,4 +93,4 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
     def recalc_view(self):
         table = SegmentTable(self.segment_viewer.linked_base.segment)
         log.debug("recalculating %s" % self)
-        self.main.recalc_view(table, self.segment_viewer.linked_base.cached_preferences)
+        cg.HexGridWindow.recalc_view(self, table, self.segment_viewer.linked_base.cached_preferences)
