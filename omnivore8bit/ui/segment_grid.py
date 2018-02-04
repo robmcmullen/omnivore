@@ -11,9 +11,9 @@ log = logging.getLogger(__name__)
 
 
 class SegmentTable(cg.HexTable):
-    def __init__(self, segment):
+    def __init__(self, segment, bytes_per_row=16):
         self.segment = segment
-        cg.HexTable.__init__(self, self.segment.data, self.segment.style, 16, self.segment.start_addr, start_offset_mask=0x0f)
+        cg.HexTable.__init__(self, self.segment.data, self.segment.style, bytes_per_row, self.segment.start_addr, start_offset_mask=0x0f)
 
     def get_label_at_index(self, index):
         # Can't just return hex value of index because some segments (like the
