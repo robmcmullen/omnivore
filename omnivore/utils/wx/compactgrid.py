@@ -280,33 +280,6 @@ class LineRenderer(object):
     def set_scroll_rate(self, parent):
         parent.SetScrollRate(self.w, self.h)
 
-    def draw(self, dc, line_num, start_item, num_items):
-        raise NotImplementedError("implement draw() in subclass!")
-
-    def draw_caret(self, dc, line_num, start_cell, num_cells):
-        dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        rect = self.cell_to_rect(line_num, start_cell, num_cells)
-        pen = self.view_params.caret_pen
-        dc.SetPen(pen)
-        dc.DrawRectangle(rect)
-        rect.Inflate(1, 1)
-        dc.SetPen(wx.Pen(wx.BLACK))
-        dc.DrawRectangle(rect)
-        rect.Inflate(1, 1)
-        dc.SetPen(pen)
-        dc.DrawRectangle(rect)
-
-
-class TextLineRenderer(LineRenderer):
-    def __init__(self, table, view_params, chars_per_cell, image_cache=None):
-        self.table = table
-        w, h = view_params.calc_cell_size_in_pixels(chars_per_cell)
-        LineRenderer.__init__(self, w, h, table.items_per_row, view_params, image_cache)
-
-
-class HexLineRenderer(TextLineRenderer):
-    default_image_cache = HexByteImageCache
-
     def draw(self, dc, line_num, start_cell, num_cells):
         """
         """
@@ -325,7 +298,37 @@ class HexLineRenderer(TextLineRenderer):
         if index >= last_index:
             # no items in this line are in the visible scrolled region
             return
+        self.draw_line(dc, line_num, col, index, last_index)
 
+    def draw_line(self, dc, line_num, col, index, last_index):
+        raise NotImplementedError("implement draw_line() in subclass!")
+
+    def draw_caret(self, dc, line_num, start_cell, num_cells):
+        dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        rect = self.cell_to_rect(line_num, start_cell, num_cells)
+        pen = self.view_params.caret_pen
+        dc.SetPen(pen)
+        dc.DrawRectangle(rect)
+        rect.Inflate(1, 1)
+        dc.SetPen(wx.Pen(wx.BLACK))
+        dc.DrawRectangle(rect)
+        rect.Inflate(1, 1)
+        dc.SetPen(pen)
+        dc.DrawRectangle(rect)
+
+
+class BaseLineRenderer(LineRenderer):
+    def __init__(self, table, view_params, chars_per_cell, image_cache=None):
+        self.table = table
+        w, h = view_params.calc_cell_size_in_pixels(chars_per_cell)
+        LineRenderer.__init__(self, w, h, table.items_per_row, view_params, image_cache)
+
+
+class HexLineRenderer(BaseLineRenderer):
+    default_image_cache = HexByteImageCache
+
+    def draw_line(self, dc, line_num, col, index, last_index):
+        t = self.table
         rect = self.col_to_rect(line_num, col)
         data = t.data[index:last_index]
         style = t.style[index:last_index]
