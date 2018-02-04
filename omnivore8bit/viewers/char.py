@@ -14,10 +14,10 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class CharViewer(SegmentViewer):
-    name = "char"
+class OldCharViewer(SegmentViewer):
+    name = "oldchar"
 
-    pretty_name = "Character"
+    pretty_name = "Old Character"
 
     has_font = True
 
