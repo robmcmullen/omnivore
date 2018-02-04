@@ -124,9 +124,9 @@ class BaseRenderer(object):
         if rem > 0:
             bytes = np.append(bytes, np.zeros(rem, dtype=np.uint8))
             style = np.append(style, np.zeros(rem, dtype=np.uint8))
-        bits = np.unpackbits(bytes).reshape((-1, 8))
         pixels_per_row = 8 * bytes_per_row / bitplanes
-        pixels = np.empty((nr * bytes_per_row / bitplanes, 8), dtype=np.uint8)
+        bits = np.unpackbits(bytes).reshape((-1, 8))
+        pixels = np.empty((nr * bytes_per_row / bitplanes, pixels_per_row), dtype=np.uint8)
         self.get_bitplane_pixels(bits, pixels, bytes_per_row, pixels_per_row)
         pixels = pixels.reshape((nr, pixels_per_row))
         s = self.get_bitplane_style(style)
@@ -461,7 +461,7 @@ class TwoBitPlanesLE(BaseRenderer):
     bitplanes = 2
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
-        for i in range(8):
+        for i in range(pixels_per_row):
             pixels[:,i] = bits[0::2,i] + bits[1::2,i] * 2
 
     def get_bitplane_style(self, style):
@@ -483,7 +483,7 @@ class TwoBitPlanesBE(TwoBitPlanesLE):
     name = "2 Bit Planes (big endian)"
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
-        for i in range(8):
+        for i in range(pixels_per_row):
             pixels[:,i] = bits[0::2,i] * 2 + bits[1::2,i]
 
 
@@ -492,7 +492,7 @@ class TwoBitPlanesLineLE(TwoBitPlanesLE):
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
         pixel_rows = bytes_per_row / 2
-        for i in range(8):
+        for i in range(pixels_per_row):
             for j in range(pixel_rows):
                 little = j
                 big = j + pixel_rows
@@ -504,7 +504,7 @@ class TwoBitPlanesLineBE(TwoBitPlanesLE):
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
         pixel_rows = bytes_per_row / 2
-        for i in range(8):
+        for i in range(pixels_per_row):
             for j in range(pixel_rows):
                 little = j + pixel_rows
                 big = j
@@ -516,7 +516,7 @@ class ThreeBitPlanesLE(TwoBitPlanesLE):
     bitplanes = 3
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
-        for i in range(8):
+        for i in range(pixels_per_row):
             pixels[:,i] = bits[0::3,i] * 4 + bits[1::3,i] * 2 + bits[2::3,i]
 
     def get_bitplane_style(self, style):
@@ -528,7 +528,7 @@ class ThreeBitPlanesBE(ThreeBitPlanesLE):
     bitplanes = 3
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
-        for i in range(8):
+        for i in range(pixels_per_row):
             pixels[:,i] = bits[0::3,i] + bits[1::3,i] * 2 + bits[2::3,i] * 4
 
 
@@ -537,7 +537,7 @@ class ThreeBitPlanesLineLE(ThreeBitPlanesLE):
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
         pixel_rows = bytes_per_row / 3
-        for i in range(8):
+        for i in range(pixels_per_row):
             for j in range(pixel_rows):
                 little = j
                 mid = j + pixel_rows
@@ -550,7 +550,7 @@ class ThreeBitPlanesLineBE(ThreeBitPlanesBE):
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
         pixel_rows = bytes_per_row / 3
-        for i in range(8):
+        for i in range(pixels_per_row):
             for j in range(pixel_rows):
                 little = j + (2 * pixel_rows)
                 mid = j + pixel_rows
@@ -563,7 +563,7 @@ class FourBitPlanesLE(TwoBitPlanesLE):
     bitplanes = 4
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
-        for i in range(8):
+        for i in range(pixels_per_row):
             pixels[:,i] = bits[0::4,i] * 8 + bits[1::4,i] * 4 + bits[2::4,i] * 2 + bits[3::4,i]
 
     def get_bitplane_style(self, style):
@@ -574,7 +574,7 @@ class FourBitPlanesBE(FourBitPlanesLE):
     name = "4 Bit Planes (big endian)"
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
-        for i in range(8):
+        for i in range(pixels_per_row):
             pixels[:,i] = bits[0::4,i] + bits[1::4,i] * 2 + bits[2::4,i] * 4 + bits[3::4,i] * 8
 
 
@@ -583,7 +583,7 @@ class FourBitPlanesLineLE(FourBitPlanesLE):
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
         pixel_rows = bytes_per_row / 4
-        for i in range(8):
+        for i in range(pixels_per_row):
             for j in range(pixel_rows):
                 little = j
                 little_mid = j + pixel_rows
@@ -597,7 +597,7 @@ class FourBitPlanesLineBE(FourBitPlanesLE):
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
         pixel_rows = bytes_per_row / 4
-        for i in range(8):
+        for i in range(pixels_per_row):
             for j in range(pixel_rows):
                 little = j + (3 * pixel_rows)
                 little_mid = j + (2 * pixel_rows)

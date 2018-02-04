@@ -20,8 +20,8 @@ class BitmapImageCache(cg.DrawTextImageCache):
     def __init__(self, segment_viewer, bytes_per_row):
         self.cache = {}
         self.segment_viewer = segment_viewer
-        self.bytes_per_row = bytes_per_row
         self.bitmap_renderer = segment_viewer.machine.bitmap_renderer
+        self.bytes_per_row = self.bitmap_renderer.validate_bytes_per_row(bytes_per_row)
         self.zoom_w = segment_viewer.control.zoom  # * self.bitmap_renderer.scale_width
         self.zoom_h = segment_viewer.control.zoom  # * self.bitmap_renderer.scale_height
         self.pixels_per_byte = self.bitmap_renderer.pixels_per_byte
@@ -71,7 +71,8 @@ class BitmapGridControl(SegmentGridControl):
         return SegmentGridControl.calc_line_renderer(self, table, view_params)
 
     def recalc_view(self):
-        table = SegmentTable(self.segment_viewer.linked_base.segment, 1)
+        bytes_per_row = self.segment_viewer.machine.bitmap_renderer.validate_bytes_per_row(1)
+        table = SegmentTable(self.segment_viewer.linked_base.segment, bytes_per_row)
         line_renderer = BitmapRenderer(table, self.segment_viewer)
         log.debug("recalculating %s" % self)
         cg.HexGridWindow.recalc_view(self, table, self.segment_viewer.linked_base.cached_preferences, line_renderer)
