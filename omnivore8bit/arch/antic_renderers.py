@@ -20,6 +20,8 @@ log = logging.getLogger(__name__)
 
 class BaseRenderer(object):
     name = "base"
+    scale_width = 1
+    scale_height = 1
     pixels_per_byte = 8
     bitplanes = 1
     ignore_mask = not_user_bit_mask & (0xff ^ diff_bit_mask)
@@ -45,10 +47,10 @@ class BaseRenderer(object):
     def reshape(self, bitimage, bytes_per_row, nr):
         # source array 'bitimage' in the shape of (size, w, 3)
         h, w, colors = bitimage.shape
-        log.debug("bitimage: %d,%d,%d; ppb=%d bpr=%d" % (h, w, colors, self.pixels_per_byte, bytes_per_row))
+        log.debug("bitimage: %d,%d,%d; ppb=%d bpr=%d" % (h, w, colors, self.pixels_per_byte * self.scale_width, bytes_per_row))
         # create a new image with pixels in the correct aspect ratio
-        output = intwscale(bitimage, self.pixels_per_byte / w)
-        return output.reshape((nr, bytes_per_row * self.pixels_per_byte, 3))
+        output = intwscale(bitimage, self.pixels_per_byte * self.scale_width / w)
+        return output.reshape((nr, bytes_per_row * self.pixels_per_byte * self.scale_width, 3))
 
     def get_2bpp(self, segment_viewer, bytes_per_row, nr, count, bytes, style, colors):
         bits = np.unpackbits(bytes)
@@ -198,21 +200,23 @@ class OneBitPerPixelW(OneBitPerPixelB):
 
 class OneBitPerPixelPM1(OneBitPerPixelB):
     name = "Player/Missile, normal width"
-    pixels_per_byte = 16
+    scale_width = 2
 
 
 class OneBitPerPixelPM2(OneBitPerPixelB):
     name = "Player/Missile, double width"
-    pixels_per_byte = 32
+    scale_width = 4
 
 
 class OneBitPerPixelPM4(OneBitPerPixelB):
     name = "Player/Missile, quad width"
-    pixels_per_byte = 64
+    scale_width = 8
 
 
 class ModeB(OneBitPerPixelB):
     name = "Antic B (Gr 6, 1bpp)"
+    scale_width = 2
+    scale_height = 2
 
     def get_bw_colors(self, segment_viewer):
         color_registers = [segment_viewer.preferences.color_registers[r] for r in [8, 4]]
@@ -221,7 +225,8 @@ class ModeB(OneBitPerPixelB):
 
 class ModeC(ModeB):
     name = "Antic C (Gr 6+, 1bpp)"
-    pixels_per_byte = 16
+    scale_width = 2
+    scale_height = 2
 
 
 class OneBitPerPixelApple2Linear(BaseRenderer):
@@ -422,6 +427,8 @@ class TwoBitsPerPixel(BaseRenderer):
 
 class ModeD(TwoBitsPerPixel):
     name = "Antic D (Gr 7, 2bpp)"
+    scale_width = 2
+    scale_height = 2
     pixels_per_byte = 4
 
     def get_image(self, segment_viewer, bytes_per_row, nr, count, bytes, style):
@@ -432,7 +439,8 @@ class ModeD(TwoBitsPerPixel):
 
 class ModeE(ModeD):
     name = "Antic E (Gr 7+, 2bpp)"
-    pixels_per_byte = 8
+    scale_width = 2
+    pixels_per_byte = 4
 
 
 class FourBitsPerPixel(BaseRenderer):
@@ -598,7 +606,8 @@ class FourBitPlanesLineBE(FourBitPlanesLE):
 
 class GTIA9(FourBitsPerPixel):
     name = "GTIA 9 (4bpp, 16 luminances, 1 color)"
-    pixels_per_byte = 8
+    scale_width = 4
+    pixels_per_byte = 2
 
     def get_antic_color_registers(self, segment_viewer):
         first_color = segment_viewer.machine.antic_color_registers[8] & 0xf0

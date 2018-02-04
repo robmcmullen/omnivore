@@ -14,10 +14,10 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class BitmapViewer(SegmentViewer):
-    name = "bitmap"
+class OldBitmapViewer(SegmentViewer):
+    name = "oldbitmap"
 
-    pretty_name = "Bitmap"
+    pretty_name = "Old Bitmap"
 
     has_bitmap = True
 
@@ -40,7 +40,7 @@ class BitmapViewer(SegmentViewer):
         return self.machine.bitmap_renderer.validate_bytes_per_row(width)
 
 
-class MemoryMapViewer(BitmapViewer):
+class MemoryMapViewer(OldBitmapViewer):
     name = "memmap"
 
     pretty_name = "Memory Page Map"
