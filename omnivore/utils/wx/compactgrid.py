@@ -7,8 +7,10 @@ from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bi
 
 
 import logging
+logging.basicConfig()
 logger = logging.getLogger()
 # logger.setLevel(logging.INFO)
+log = logging.getLogger(__name__)
 draw_log = logging.getLogger("draw")
 scroll_log = logging.getLogger("scroll")
 # draw_log.setLevel(logging.DEBUG)
@@ -24,9 +26,13 @@ def ForceBetween(min, val, max):
 
 
 class DrawTextImageCache(object):
-    def __init__(self, view_params):
+    def __init__(self, view_params, use_cache=True):
         self.cache = {}
         self.view_params = view_params
+        if use_cache:
+            self.draw_text = self.draw_cached_text
+        else:
+            self.draw_text = self.draw_uncached_text
 
     def invalidate(self):
         self.cache = {}
@@ -50,6 +56,9 @@ class DrawTextImageCache(object):
             del mdc  # force the bitmap painting by deleting the gc
             self.cache[k] = bmp
         dc.DrawBitmap(bmp, rect.x, rect.y)
+
+    def draw_uncached_text(self, dc, rect, text, style):
+        self.draw_text_to_dc(dc, rect, rect, text, style)
 
     def draw_text_to_dc(self, dc, bg_rect, fg_rect, text, style):
         v = self.view_params
@@ -78,6 +87,7 @@ class DrawTextImageCache(object):
             dc.SetBrush(v.normal_brush)
             dc.SetBackground(v.normal_brush)
             dc.SetTextBackground(v.background_color)
+        dc.SetClippingRegion(bg_rect)
         dc.Clear()
         if style & diff_bit_mask:
             dc.SetTextForeground(v.diff_color)
@@ -85,13 +95,30 @@ class DrawTextImageCache(object):
             dc.SetTextForeground(v.text_color)
         dc.SetFont(v.text_font)
         dc.DrawText(text, fg_rect.x, fg_rect.y)
+        dc.DestroyClippingRegion()
 
-    def draw_item(self, dc, rect, text, style, widths):
+    def draw_item(self, dc, rect, text, style, widths, col):
         draw_log.debug(str((text, rect)))
         for i, c in enumerate(text):
             s = style[i]
-            self.draw_cached_text(dc, rect, c, s)
+            self.draw_text(dc, rect, c, s)
             rect.x += widths[i]
+
+
+class DrawTableCellImageCache(DrawTextImageCache):
+    def __init__(self, table, view_params):
+        DrawTextImageCache.__init__(self, view_params, False)
+        self.table = table
+
+    def draw_item(self, dc, rect, items, style, widths, col):
+        for i, item in enumerate(items):
+            s = style[i]
+            text = self.table.calc_display_text(col, item)
+            w = widths[i]
+            rect.width = w
+            self.draw_text(dc, rect, text, s)
+            rect.x += w
+            col += 1
 
 
 class HexByteImageCache(DrawTextImageCache):
@@ -112,11 +139,11 @@ class HexByteImageCache(DrawTextImageCache):
             self.cache[k] = bmp
         dc.DrawBitmap(bmp, rect.x, rect.y)
 
-    def draw_item(self, dc, rect, data, style, widths):
+    def draw_item(self, dc, rect, data, style, widths, col):
         draw_log.debug(str((rect, data)))
         for i, c in enumerate(data):
             draw_log.debug(str((i, c, rect)))
-            self.draw_cached_text(dc, rect, c, style[i])
+            self.draw_text(dc, rect, c, style[i])
             rect.x += widths[i]
 
 
@@ -205,10 +232,10 @@ class TableViewParams(object):
 class LineRenderer(object):
     default_image_cache = DrawTextImageCache
 
-    def __init__(self, w, h, num_cells, view_params, image_cache=None, widths=None, col_labels=None):
+    def __init__(self, w, h, num_cols, view_params, image_cache=None, widths=None, col_labels=None):
         self.w = w
         self.h = h
-        self.num_cells = num_cells
+        self.num_cols = num_cols
         if image_cache is None:
             image_cache = view_params.calc_image_cache(self.default_image_cache)
         self.image_cache = image_cache
@@ -223,20 +250,20 @@ class LineRenderer(object):
             required to display that items in that column
         """
         if widths is None:
-            widths = [1] * self.num_cells
+            widths = [1] * self.num_cols
         self.col_widths = tuple(widths)  # copy to prevent possible weird errors if parent modifies list!
         self.pixel_widths = [self.w * i for i in self.col_widths]
+        print("pixel_widths", self.pixel_widths)
         self.cell_to_col = []
         self.col_to_cell = []
         pos = 0
+        self.vw = 0
         for i, width in enumerate(widths):
             self.col_to_cell.append(pos)
             self.cell_to_col.extend([i] * width)
             pos += width
-        self.num_cols = i
-        if pos != self.num_cells:
-            log.error("Line renderer cell count mismatch: %d cells requested, %d found by totaling widths" % (self.num_cells, pos))
-        self.vw = self.w * self.num_cells
+            self.vw += self.pixel_widths[i]
+        self.num_cells = pos
 
     def calc_col_labels(self, labels):
         if labels is None:
@@ -298,7 +325,11 @@ class LineRenderer(object):
         self.draw_line(dc, line_num, col, index, last_index)
 
     def draw_line(self, dc, line_num, col, index, last_index):
-        raise NotImplementedError("implement draw_line() in subclass!")
+        t = self.table
+        rect = self.col_to_rect(line_num, col)
+        data = t.data[index:last_index]
+        style = t.style[index:last_index]
+        self.image_cache.draw_item(dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)], col)
 
     def draw_caret(self, dc, line_num, start_cell, num_cells):
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
@@ -315,10 +346,10 @@ class LineRenderer(object):
 
 
 class BaseLineRenderer(LineRenderer):
-    def __init__(self, table, view_params, chars_per_cell, image_cache=None):
+    def __init__(self, table, view_params, chars_per_cell, image_cache=None, widths=None):
         self.table = table
         w, h = view_params.calc_cell_size_in_pixels(chars_per_cell)
-        LineRenderer.__init__(self, w, h, table.items_per_row, view_params, image_cache)
+        LineRenderer.__init__(self, w, h, table.items_per_row, view_params, image_cache, widths)
 
 
 class HexLineRenderer(BaseLineRenderer):
@@ -329,7 +360,7 @@ class HexLineRenderer(BaseLineRenderer):
         rect = self.col_to_rect(line_num, col)
         data = t.data[index:last_index]
         style = t.style[index:last_index]
-        self.image_cache.draw_item(dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)])
+        self.image_cache.draw_item(dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)], col)
 
 
 class FixedFontDataWindow(wx.ScrolledCanvas):
@@ -695,7 +726,7 @@ class HexTable(object):
     Each column may be displayed across an integer number of cells which is
     controlled by the line renderer.
     """
-    def __init__(self, data, style, items_per_row, start_addr, start_offset_mask=0):
+    def __init__(self, data, style, items_per_row, start_addr=0, start_offset_mask=0):
         self.data = data
         self.style = style
         self.start_addr = start_addr
@@ -1190,9 +1221,18 @@ class HexGridWindow(wx.ScrolledWindow):
         self.caret_handler.move_carets_process_function(self.clamp_right_column)
 
 
+class DisassemblyTable(HexTable):
+    def calc_display_text(self, col, item):
+        return "col %d: %s" % (col, str(item))
+
+
 class NonUniformGridWindow(HexGridWindow):
     def calc_main_grid(self, table, view_params, line_renderer):
         return FixedFontMultiCellNumpyWindow(self, self, table, view_params, line_renderer)
+
+    def calc_line_renderer(self, table, view_params):
+        image_cache = DrawTableCellImageCache(table, view_params)
+        return BaseLineRenderer(table, view_params, 2, image_cache=image_cache, widths=[1,2,4,8])
 
 
        
@@ -1254,10 +1294,15 @@ if __name__ == '__main__':
     # scroll1 = NonUniformGridWindow(table, view_params, splitter)
     # style1.set_window(scroll1.main)
     style1 = FakeStyle()
-    table = HexTable(np.arange(1024, dtype=np.uint8), style1, 16, 0x600, 0xf)
+    table = DisassemblyTable(np.arange(1024, dtype=np.uint8), style1, 4)
     carets = MultiCaretHandler(table)
-    scroll1 = HexGridWindow(table, view_params, carets, splitter)
+    scroll1 = NonUniformGridWindow(table, view_params, carets, splitter)
     style1.set_window(scroll1.main)
+    # style1 = FakeStyle()
+    # table = HexTable(np.arange(1024, dtype=np.uint8), style1, 16, 0x600, 0xf)
+    # carets = MultiCaretHandler(table)
+    # scroll1 = HexGridWindow(table, view_params, carets, splitter)
+    # style1.set_window(scroll1.main)
     style2 = FakeStyle()
     table = HexTable(np.arange(1024, dtype=np.uint8), style2, 16, 0x602, 0xf)
     carets = MultiCaretHandler(table)
