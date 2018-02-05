@@ -331,9 +331,9 @@ class LineRenderer(object):
         style = t.style[index:last_index]
         self.image_cache.draw_item(dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)], col)
 
-    def draw_caret(self, dc, line_num, start_cell, num_cells):
+    def draw_caret(self, dc, line_num, col):
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        rect = self.cell_to_rect(line_num, start_cell, num_cells)
+        rect = self.col_to_rect(line_num, col)
         pen = self.view_params.caret_pen
         dc.SetPen(pen)
         dc.DrawRectangle(rect)
@@ -374,6 +374,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.SetBackgroundColour(wx.RED)
         self.event_row = self.event_col = self.event_modifiers = None
         self.next_scroll_time = 0
+        self.last_mouse_event = None
         self.scroll_timer = wx.Timer(self)
         self.scroll_delay = 50  # milliseconds
         self.recalc_view(table, view_params, line_renderer)
@@ -438,23 +439,23 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         cell = sx + int(x / self.cell_pixel_width)
         return row, cell
 
-    def clamp_visible_row_col(self, row, col):
+    def clamp_visible_row_cell(self, row, cell):
         sx, sy = self.parent.GetViewStart()
         row2 = ForceBetween(sy, row, sy + self.fully_visible_rows - 1)
-        col2 = ForceBetween(sx, col, sx + self.fully_visible_cells - 1)
-        print("clamp visible: before=%d,%d after=%d,%d" % (row, col, row2, col2))
-        return row2, col2
+        cell2 = ForceBetween(sx, cell, sx + self.fully_visible_cells - 1)
+        print("clamp visible: before=%d,%d after=%d,%d" % (row, cell, row2, cell2))
+        return row2, cell2
 
-    def clamp_allowable_row_col(self, row, col):
+    def clamp_allowable_row_cell(self, row, cell):
         row2 = ForceBetween(0, row, self.table.num_rows - 1)
-        col2 = ForceBetween(0, col, self.line_renderer.num_cols)
-        print("clamp allowable: before=%d,%d after=%d,%d" % (row, col, row2, col2))
-        return row2, col2
+        cell2 = ForceBetween(0, cell, self.line_renderer.num_cells - 1)
+        print("clamp allowable: before=%d,%d after=%d,%d" % (row, cell, row2, cell2))
+        return row2, cell2
 
-    def ensure_visible(self, row, col):
+    def ensure_visible(self, row, cell):
         sx, sy = self.parent.GetViewStart()
         sy2 = ForceBetween(max(0, row - self.fully_visible_rows), sy, row)
-        sx2 = ForceBetween(max(0, col - self.fully_visible_cells), sx, col)
+        sx2 = ForceBetween(max(0, cell - self.fully_visible_cells), sx, cell)
         print("ensure_visible: before=%d,%d after=%d,%d" % (sy, sx, sy2, sx2))
         self.parent.move_viewport(sy2, sx2)
 
@@ -540,38 +541,39 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         # self.handle_on_motion(row, col, offscreen)
         self.handle_user_caret(row, cell)
 
-    def get_row_col_from_event(self, evt):
+    def get_row_cell_from_event(self, evt):
         row, cell = self.pixel_pos_to_row_cell(evt.GetX(), evt.GetY())
-        print("get_row_col:")
         return row, cell
 
     def on_left_down(self, evt):
         print("left down")
-        r, c = self.get_row_col_from_event(evt)
+        row, cell = self.get_row_cell_from_event(evt)
         self.event_modifiers = evt.GetModifiers()
-        self.current_caret_row, self.current_caret_col = self.process_motion_scroll(r, c)
-        self.last_mouse_event = (self.current_caret_row, self.current_caret_col)
+        self.current_caret_row, self.current_caret_col = self.process_motion_scroll(row, cell)
+        self.last_mouse_event = (row, cell)
         self.CaptureMouse()
         self.parent.handle_select_start(evt, self.current_caret_row, self.current_caret_col)
 
     def on_motion(self, evt, x=None, y=None):
+        input_row, input_cell = self.get_row_cell_from_event(evt)
+        if (input_row, input_cell) == self.last_mouse_event:
+            # only process if mouse has moved to a new cell; no sub-cell
+            # events!
+            return
         if evt.LeftIsDown() and self.HasCapture():
-            user_input_r, user_input_c = self.get_row_col_from_event(evt)
-            if (user_input_r, user_input_c) == self.last_mouse_event:
-                # only process if mouse has moved to a new cell; no sub-cell
-                # events!
-                return
-            self.last_mouse_event = (user_input_r, user_input_c)
-            self.handle_user_caret(user_input_r, user_input_c)
-            self.parent.handle_select_motion(evt, self.current_caret_row, self.current_caret_col)
+            self.handle_user_caret(input_row, input_cell)
+            last_row, last_col = self.current_caret_row, self.current_caret_col
+            if last_row != self.current_caret_row or last_col != self.current_caret_col:
+                self.parent.handle_select_motion(evt, self.current_caret_row, self.current_caret_col)
         else:
-            r, c = self.get_row_col_from_event(evt)
-            self.parent.handle_motion_update_status(evt, r, c)
+            col = self.line_renderer.cell_to_col[input_cell]
+            self.parent.handle_motion_update_status(evt, input_row, col)
+        self.last_mouse_event = (input_row, input_cell)
 
-    def handle_user_caret(self, user_input_r, user_input_c):
-            r, c, offscreen = self.calc_desired_caret(user_input_r, user_input_c)
-            if not offscreen or self.can_scroll():
-                self.current_caret_row, self.current_caret_col = self.process_motion_scroll(r, c)
+    def handle_user_caret(self, input_row, input_cell):
+        row, cell, offscreen = self.calc_desired_cell(input_row, input_cell)
+        if not offscreen or self.can_scroll():
+            self.current_caret_row, self.current_caret_col = self.process_motion_scroll(row, cell)
 
     def on_left_up(self, evt):
         self.scroll_timer.Stop()
@@ -586,39 +588,41 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         print "VirtualSize " + str(self.GetVirtualSize())
         self.parent.handle_select_end(evt, self.current_caret_row, self.current_caret_col)
 
-    def calc_desired_caret(self, row, col):
-        top_row, left_col, bot_row, right_col = self.fully_visible_area
+    def calc_desired_cell(self, row, cell):
+        top_row, left_cell, bot_row, right_cell = self.fully_visible_area
         offscreen = False
-        scroll_col = 0
+        scroll_cell = 0
         scroll_row = 0
-        if col < left_col:
-            if self.current_caret_col > left_col:
-                c = left_col
+        caret_cell = self.line_renderer.col_to_cell[self.current_caret_col]
+        if cell < left_cell:
+            if caret_cell > left_cell:
+                c = left_cell
             else:
-                delta = left_col - col
-                scroll_col = -1
-        elif col >= right_col:
-            if self.current_caret_col < right_col:
-                c = right_col
+                delta = left_cell - cell
+                scroll_cell = -1
+        elif cell >= right_cell:
+            if caret_cell < right_cell:
+                c = right_cell
             else:
-                delta = col - right_col
-                scroll_col = 1
+                delta = cell - right_cell
+                scroll_cell = 1
         else:
-            c = col
+            c = cell
 
-        if scroll_col != 0:
+        if scroll_cell != 0:
             delta = max(delta / self.offscreen_scroll_divisor, 1)
-            c = self.current_caret_col + (scroll_col * delta)
+            c = caret_cell + (scroll_cell * delta)
             offscreen = True
 
+        caret_row = self.current_caret_row
         if row < top_row:
-            if self.current_caret_row > top_row:
+            if caret_row > top_row:
                 r = top_row
             else:
                 delta = top_row - row
                 scroll_row = -1
         elif row >= bot_row:
-            if self.current_caret_row < bot_row:
+            if caret_row < bot_row:
                 r = bot_row
             else:
                 delta = row - bot_row
@@ -628,27 +632,28 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
 
         if scroll_row != 0:
             delta = max(delta / self.offscreen_scroll_divisor, 1)
-            r = self.current_caret_row + (scroll_row * delta)
+            r = caret_row + (scroll_row * delta)
             offscreen = True
 
-        print("desired caret: offscreen=%s user input=%d,%d current=%d,%d new=%d,%d visible=%d,%d -> %d,%d scroll=%d,%d" % (offscreen, row,col, self.current_caret_row, self.current_caret_col, r, c, top_row, left_col, bot_row, right_col, scroll_row, scroll_col))
+        print("desired caret: offscreen=%s user input=%d,%d current=%d,%d new=%d,%d visible=%d,%d -> %d,%d scroll=%d,%d" % (offscreen, row,cell, self.current_caret_row, caret_cell, r, c, top_row, left_cell, bot_row, right_cell, scroll_row, scroll_cell))
         return r, c, offscreen
 
-    def calc_desired_caret_from_event(self, evt):
-        row, col = self.get_row_col_from_event(evt)
-        return self.calc_desired_caret(row, col)
+    def calc_desired_cell_from_event(self, evt):
+        row, cell = self.get_row_cell_from_event(evt)
+        return self.calc_desired_cell(row, cell)
 
-    def process_motion_scroll(self, row, col):
-        self.ensure_visible(row, col)
-        r, c = self.clamp_allowable_row_col(row, col)
-        index, _ = self.table.get_index_range(r, c)
+    def process_motion_scroll(self, row, cell):
+        self.ensure_visible(row, cell)
+        _, cell = self.clamp_allowable_row_cell(row, cell)
+        col = self.line_renderer.cell_to_col[cell]
+        index, _ = self.table.get_index_range(row, col)
         if index >= self.table.last_valid_index:
             index = self.table.last_valid_index - 1
         if index < 0:
             index = 0
         self.parent.caret_handler.move_carets_to(index)
         self.parent.Refresh()
-        return r, c
+        return row, col
 
 
 class FixedFontNumpyWindow(FixedFontDataWindow):
@@ -1167,7 +1172,7 @@ class HexGridWindow(wx.ScrolledWindow):
         main = self.main
         for index in self.caret_handler.carets:
             r, c = main.table.index_to_row_col(index)
-            main.line_renderer.draw_caret(dc, r, c, 1)
+            main.line_renderer.draw_caret(dc, r, c)
 
     ##### Keyboard movement implementations
 
