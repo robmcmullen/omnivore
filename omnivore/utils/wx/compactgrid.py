@@ -713,9 +713,9 @@ class HexTable(object):
     def enforce_valid_index(self, index):
         return ForceBetween(0, index, self.last_valid_index)
 
-    def get_row_label_text(self, start_line, num_lines):
+    def get_row_label_text(self, start_line, num_lines, step=1):
         last_line = min(start_line + num_lines, self.num_rows)
-        for line in range(start_line, last_line):
+        for line in range(start_line, last_line, step):
             yield "%04x" % (self.get_index_of_row(line) + self.start_addr)
 
     def calc_row_label_width(self, view_params):
@@ -781,10 +781,10 @@ class FixedFontMixedMultiCellNumpyWindow(FixedFontMultiCellNumpyWindow):
 
 
 class AuxWindow(wx.ScrolledCanvas):
-    def __init__(self, parent, main, label_char_width=10):
+    def __init__(self, parent, main):
         wx.ScrolledCanvas.__init__(self, parent, -1)
         self.main = main
-        self.label_char_width = label_char_width
+        self.set_font_metadata()
         self.isDrawing = False
         self.EnableScrolling(False, False)
         self.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
@@ -795,6 +795,25 @@ class AuxWindow(wx.ScrolledCanvas):
 
     def on_size(self, evt):
         self.SetFocus()
+
+    def set_font_metadata(self):
+        dc = wx.MemoryDC()
+        dc.SetFont(self.main.view_params.header_font)
+        self.char_width = dc.GetCharWidth()
+        self.char_height = max(dc.GetCharHeight(), 2)
+        self.row_skip = self.calc_row_skip()
+
+    def calc_row_skip(self):
+        row_height = self.main.line_renderer.h
+        if row_height < self.char_height:
+            skip = (self.char_height + row_height - 1) // row_height
+        else:
+            skip = 1
+        return skip
+
+    def recalc_view(self, *args, **kwargs):
+        self.set_font_metadata()
+        self.UpdateView()
 
     def UpdateView(self, dc = None):
         if dc is None:
@@ -825,9 +844,12 @@ class AuxWindow(wx.ScrolledCanvas):
 class RowLabelWindow(AuxWindow):
     refresh_count = 0
 
-    def DrawVertText(self, t, line, dc):
+    def DrawVertText(self, t, line, dc, skip=1):
         y = line * self.main.line_renderer.h
         #print("row: y=%d line=%d text=%s" % (y, line, t))
+        if skip > 1:
+            w, _ = self.GetClientSize()
+            dc.DrawLine(0, y, w, y)
         dc.DrawText(t, 0, y)
 
     def Draw(self, odc=None):
@@ -846,10 +868,11 @@ class RowLabelWindow(AuxWindow):
             dc.SetTextBackground(s.view_params.row_header_bg_color)
             dc.SetTextForeground(s.view_params.text_color)
             dc.SetBackground(wx.Brush(s.view_params.row_header_bg_color))
+            dc.SetPen(wx.Pen(s.view_params.text_color))
             dc.Clear()
-            for header in s.table.get_row_label_text(row, s.visible_rows):
-                self.DrawVertText(header, row, dc)
-                row += 1
+            for header in s.table.get_row_label_text(row, s.visible_rows, self.row_skip):
+                self.DrawVertText(header, row, dc, self.row_skip)
+                row += self.row_skip
             if debug_refresh:
                 _, row = s.parent.GetViewStart()
                 self.DrawVertText("%d" % self.refresh_count, row, dc)
@@ -969,8 +992,8 @@ class HexGridWindow(wx.ScrolledWindow):
     def recalc_view(self, *args, **kwargs):
         self.main.recalc_view(*args, **kwargs)
         self.calc_scrolling()
-        self.left.UpdateView()
-        self.top.UpdateView()
+        self.left.recalc_view()
+        self.top.recalc_view()
 
     def refresh_view(self, *args, **kwargs):
         self.Refresh()
