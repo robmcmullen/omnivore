@@ -13,6 +13,7 @@ from omnivore.utils.nputil import intscale
 from omnivore.utils.wx import compactgrid as cg
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
+from .hex2 import HexEditControl
 from ..arch.disasm import iter_disasm_styles
 from ..utils import searchutil
 
@@ -29,7 +30,7 @@ class UdisFastTable(cg.HexTable):
 
     def __init__(self, linked_base):
         s = linked_base.segment
-        cg.HexTable.__init__(self, s.data, s.style, 3, s.start_addr)
+        cg.HexTable.__init__(self, s.data, s.style, 2, s.start_addr)
         self.lines = None
         self.num_rows = 0
         self.index_to_row = []
@@ -158,12 +159,17 @@ class UdisFastTable(cg.HexTable):
     def get_value_style(self, row, col, operand_labels_start_pc=-1, operand_labels_end_pc=-1, extra_labels={}, offset_operand_labels={}, line=None):
         if line is None:
             line = self.lines[row]
-        pc = line.pc
-        index = pc - self.start_addr
+        index = line.pc - self.start_addr
         style = 0
-        count = line.num_bytes
-        for i in range(count):
+        for i in range(line.num_bytes):
             style |= self.style[index + i]
+        text = self.calc_display_text(row, col, line, index)
+        return text, style
+
+    def calc_display_text(self, row, col, line=None, index=None):
+        if line is None:
+            line = self.lines[row]
+            index = line.pc - self.start_addr
         if col == 0:
             if self.lines[row].flag == flag_origin:
                 text = ""
@@ -173,7 +179,7 @@ class UdisFastTable(cg.HexTable):
             text = self.disassembly.format_comment(index, line)
         else:
             text = self.disassembly.format_instruction(index, line)
-        return text, style
+        return text
 
     def get_style_override(self, row, col, style):
         if self.lines[row].flag & self.disassembly.highlight_flags:
@@ -188,23 +194,21 @@ class UdisFastTable(cg.HexTable):
         addr = self.get_pc(row)
         return self.fmt_hex4 % addr
 
-    def calc_column_range(self, line_num, col, last_col):
-        index, last_index = self.get_index_range(line_num, col)
-        return col, index, last_index
-
 
 class DisassemblyImageCache(cg.DrawTableCellImageCache):
     def draw_item_at(self, dc, rect, row, col, last_col, widths):
         for c in range(col, last_col):
             text, style = self.table.get_value_style(row, col)
+            #text = "blah"
+            #style = 0
             w = widths[c]
             rect.width = w
-            self.draw_text(dc, rect, text, style)
+            self.draw_text_to_dc(dc, rect, rect, text, style)
             rect.x += w
             col += 1
 
 
-class DisassemblyLineRenderer(cg.BaseLineRenderer):
+class DisassemblyLineRenderer(cg.TableLineRenderer):
     def draw(self, dc, line_num, start_cell, num_cells):
         col = self.cell_to_col[start_cell]
         last_cell = min(start_cell + num_cells, self.num_cells)
@@ -212,11 +216,15 @@ class DisassemblyLineRenderer(cg.BaseLineRenderer):
         rect = self.col_to_rect(line_num, col)
         self.image_cache.draw_item_at(dc, rect, line_num, col, last_col, self.pixel_widths)
 
+    def calc_column_range(self, line_num, col, last_col):
+        index, last_index = self.table.get_index_range(line_num, col)
+        return col, index, last_index
+
 
 class DisassemblyGridControl(SegmentGridControl):
     def calc_line_renderer(self, table, view_params):
         image_cache = DisassemblyImageCache(table, view_params)
-        return DisassemblyLineRenderer(table, view_params, 2, image_cache=image_cache, widths=[4,6,10])
+        return DisassemblyLineRenderer(table, view_params, 2, image_cache=image_cache, widths=[5,25])
 
     def recalc_view(self):
         e = self.segment_viewer.linked_base

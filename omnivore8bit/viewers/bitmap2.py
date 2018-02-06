@@ -44,7 +44,7 @@ class BitmapImageCache(cg.DrawTextImageCache):
             dc.DrawBitmap(bmp, rect.x, rect.y)
 
 
-class BitmapRenderer(cg.LineRenderer):
+class BitmapRenderer(cg.TableLineRenderer):
     default_image_cache = BitmapImageCache
 
     def __init__(self, table, segment_viewer, image_cache=None):

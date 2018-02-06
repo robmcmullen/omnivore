@@ -39,7 +39,7 @@ class DrawTextImageCache(object):
 
     def draw_blank(self, dc, rect):
         dc.SetBrush(wx.Brush(wx.WHITE, wx.SOLID))
-        dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
+        dc.SetPen(wx.TRANSPARENT_PEN)
         dc.DrawRectangle(rect)
 
     def draw_cached_text(self, dc, rect, text, style):
@@ -62,28 +62,24 @@ class DrawTextImageCache(object):
 
     def draw_text_to_dc(self, dc, bg_rect, fg_rect, text, style):
         v = self.view_params
+        dc.SetPen(wx.TRANSPARENT_PEN)
         if style & selected_bit_mask:
             dc.SetBrush(v.selected_brush)
-            dc.SetPen(v.selected_pen)
             dc.SetBackground(v.selected_brush)
             dc.SetTextBackground(v.highlight_color)
         elif style & match_bit_mask:
-            dc.SetPen(v.match_pen)
             dc.SetBrush(v.match_brush)
             dc.SetBackground(v.match_brush)
             dc.SetTextBackground(v.match_background)
         elif style & comment_bit_mask:
-            dc.SetPen(v.comment_pen)
             dc.SetBrush(v.comment_brush)
             dc.SetBackground(v.comment_brush)
             dc.SetTextBackground(v.comment_background)
         elif style & user_bit_mask:
-            dc.SetPen(v.normal_pen)
             dc.SetBrush(v.data_brush)
             dc.SetBackground(v.normal_brush)
             dc.SetTextBackground(v.data_color)
         else:
-            dc.SetPen(v.normal_pen)
             dc.SetBrush(v.normal_brush)
             dc.SetBackground(v.normal_brush)
             dc.SetTextBackground(v.background_color)
@@ -176,18 +172,14 @@ class TableViewParams(object):
     def set_paint(self):
         self.selected_background = self.highlight_color
         self.selected_brush = wx.Brush(self.highlight_color, wx.SOLID)
-        self.selected_pen = wx.Pen(self.highlight_color, 1, wx.SOLID)
         self.normal_background = self.background_color
         self.normal_brush = wx.Brush(self.background_color, wx.SOLID)
-        self.normal_pen = wx.Pen(self.background_color, 1, wx.SOLID)
         self.data_background = self.data_color
         self.data_brush = wx.Brush(self.data_color, wx.SOLID)
         self.match_background = self.match_background_color
         self.match_brush = wx.Brush(self.match_background_color, wx.SOLID)
-        self.match_pen = wx.Pen(self.match_background_color, 1, wx.SOLID)
         self.comment_background = self.comment_background_color
         self.comment_brush = wx.Brush(self.comment_background_color, wx.SOLID)
-        self.comment_pen = wx.Pen(self.comment_background_color, 1, wx.SOLID)
 
     def set_font_metadata(self):
         dc = wx.MemoryDC()
@@ -312,10 +304,13 @@ class LineRenderer(object):
         last_col = self.cell_to_col[last_cell - 1] + 1
 
         try:
-            col, index, last_index = self.table.calc_column_range(line_num, col, last_col)
+            col, index, last_index = self.calc_column_range(line_num, col, last_col)
         except IndexError:
             return
         self.draw_line(dc, line_num, col, index, last_index)
+
+    def calc_column_range(self, line_num, col, last_col):
+        raise NotImplementedError("override to produce column number and start and end indexes")
 
     def draw_line(self, dc, line_num, col, index, last_index):
         t = self.table
@@ -338,14 +333,45 @@ class LineRenderer(object):
         dc.DrawRectangle(rect)
 
 
-class BaseLineRenderer(LineRenderer):
+class DebugLineRenderer(LineRenderer):
+    def __init__(self, view_params, chars_per_cell=4, image_cache=None, widths=None):
+        w, h = view_params.calc_cell_size_in_pixels(chars_per_cell)
+        LineRenderer.__init__(self, w, h, len(widths), view_params, image_cache, widths)
+
+    def calc_column_range(self, line_num, col, last_col):
+        return col, 0, last_col - col
+
+    def draw_line(self, dc, line_num, col, index, last_index):
+        t = self.table
+        rect = self.col_to_rect(line_num, col)
+        num = last_index - index
+        data = ["r%dc%d" % (line_num, c + col) for c in range(num)]
+        style = [0] * num
+        self.image_cache.draw_item(dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)], col)
+
+
+class TableLineRenderer(LineRenderer):
     def __init__(self, table, view_params, chars_per_cell, image_cache=None, widths=None):
         self.table = table
         w, h = view_params.calc_cell_size_in_pixels(chars_per_cell)
         LineRenderer.__init__(self, w, h, table.items_per_row, view_params, image_cache, widths)
 
+    def calc_column_range(self, line_num, col, last_col):
+        t = self.table
+        row_start = (line_num * t.items_per_row) - t.start_offset
+        index = row_start + col
+        if index < 0:
+            col -= index
+            index = 0
+        last_index = row_start + last_col
+        if last_index > t.last_valid_index:
+            last_index = t.last_valid_index
+        if index >= last_index:
+            raise IndexError("No items in this line are in the visible scrolled region")
+        return col, index, last_index
 
-class HexLineRenderer(BaseLineRenderer):
+
+class HexLineRenderer(TableLineRenderer):
     default_image_cache = HexByteImageCache
 
     def draw_line(self, dc, line_num, col, index, last_index):
@@ -798,24 +824,11 @@ class HexTable(object):
 
     def get_start_end_index_of_row(self, row):
         index1, _ = self.get_index_range(row, 0)
-        _, index2 = self.get_index_range(row, self.table.items_per_row - 1)
+        _, index2 = self.get_index_range(row, self.items_per_row - 1)
         return index1, index2
 
     def index_to_row_col(self, index):
         return divmod(index + self.start_offset, self.items_per_row)
-
-    def calc_column_range(self, line_num, col, last_col):
-        row_start = (line_num * self.items_per_row) - self.start_offset
-        index = row_start + col
-        if index < 0:
-            col -= index
-            index = 0
-        last_index = row_start + last_col
-        if last_index > self.last_valid_index:
-            last_index = self.last_valid_index
-        if index >= last_index:
-            raise IndexError("No items in this line are in the visible scrolled region")
-        return col, index, last_index
 
     def clamp_left_column(self, index):
         r, c = self.index_to_row_col(index)
@@ -827,7 +840,7 @@ class HexTable(object):
         r, c = self.index_to_row_col(index)
         c = self.items_per_row - 1
         index = min(self.last_valid_index, self.get_index_range(r, c)[0])
-        return self.table.get_index_range(r, c)
+        return self.get_index_range(r, c)
 
 
 class VariableWidthHexTable(HexTable):
@@ -1267,7 +1280,7 @@ class NonUniformGridWindow(HexGridWindow):
 
     def calc_line_renderer(self, table, view_params):
         image_cache = DrawTableCellImageCache(table, view_params)
-        return BaseLineRenderer(table, view_params, 2, image_cache=image_cache, widths=[5,1,2,4,8])
+        return TableLineRenderer(table, view_params, 2, image_cache=image_cache, widths=[5,1,2,4,8])
 
 
        

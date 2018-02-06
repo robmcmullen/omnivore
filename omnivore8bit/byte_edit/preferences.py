@@ -89,21 +89,13 @@ class ByteEditPreferences(PreferencesHelper):
 
     selected_brush = Any
     
-    selected_pen = Any
-    
     normal_brush = Any
-    
-    normal_pen = Any
     
     data_brush = Any
     
     match_brush = Any
     
-    match_pen = Any
-    
     comment_brush = Any
-    
-    comment_pen = Any
 
     def _caret_pen_default(self):
         return wx.Pen(self.unfocused_caret_color, 1, wx.SOLID)
@@ -111,14 +103,8 @@ class ByteEditPreferences(PreferencesHelper):
     def _selected_brush_default(self):
         return wx.Brush(self.highlight_color, wx.SOLID)
 
-    def _selected_pen_default(self):
-        return wx.Pen(self.highlight_color, 1, wx.SOLID)
-
     def _normal_brush_default(self):
         return wx.Brush(self.background_color, wx.SOLID)
-
-    def _normal_pen_default(self):
-        return wx.Pen(self.background_color, 1, wx.SOLID)
 
     def _data_brush_default(self):
         return wx.Brush(self.data_color, wx.SOLID)
@@ -126,14 +112,8 @@ class ByteEditPreferences(PreferencesHelper):
     def _match_brush_default(self):
         return wx.Brush(self.match_background_color, wx.SOLID)
 
-    def _match_pen_default(self):
-        return wx.Pen(self.match_background_color, 1, wx.SOLID)
-
     def _comment_brush_default(self):
         return wx.Brush(self.comment_background_color, wx.SOLID)
-
-    def _comment_pen_default(self):
-        return wx.Pen(self.comment_background_color, 1, wx.SOLID)
 
     @cached_property
     def _get_text_font_char_width(self):
