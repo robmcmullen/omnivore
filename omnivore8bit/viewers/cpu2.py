@@ -29,7 +29,7 @@ class UdisFastTable(cg.HexTable):
 
     def __init__(self, linked_base):
         s = linked_base.segment
-        cg.HexTable.__init__(self, s.data, s.style, 1, s.start_addr)
+        cg.HexTable.__init__(self, s.data, s.style, 3, s.start_addr)
         self.lines = None
         self.num_rows = 0
         self.index_to_row = []
@@ -51,6 +51,7 @@ class UdisFastTable(cg.HexTable):
     def update_disassembly(self, segment, disassembly, index=0, refresh=False):
         self.data = segment.data
         self.style = segment.style
+        self.last_valid_index = len(self.data)
         self.disassembly = disassembly
         # cache some values for fewer deep references
         self.index_to_row = self.disassembly.info.index_to_row
@@ -82,8 +83,14 @@ class UdisFastTable(cg.HexTable):
         return self.num_rows > 0 and index >= 0 and index <= self.last_valid_index
 
     def get_index_of_row(self, row):
-        row = self.lines[row]
-        return row.pc - self.start_addr
+        line = self.lines[row]
+        index = line.pc - self.start_addr
+        return index
+
+    def get_start_end_index_of_row(self, row):
+        line = self.lines[row]
+        index = line.pc - self.start_addr
+        return index, index + line.num_bytes
 
     def is_pc_valid(self, pc):
         index = pc - self.start_addr
@@ -226,7 +233,7 @@ class DisassemblyGridControl(SegmentGridControl):
         # rows_from_top = current_row - first_row
         # want_address = self.table.get_pc(current_row)
         d = e.get_current_disassembly(self.segment_viewer.machine)
-        self.table.update_disassembly(d)
+        self.table.update_disassembly(self.segment_viewer.linked_base.segment, d)
         # r, _ = self.table.get_row_col(want_address - self.table.start_addr)
         # self.table.ResetView(self, None)
         # new_first = max(0, r - rows_from_top)

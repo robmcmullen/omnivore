@@ -39,7 +39,6 @@ class MouseEventMixin(SelectionHandler):
         """
         if flags is None:
             flags = self.create_mouse_event_flags()
-        log.debug("handle_select_start: selecting_rows: %s" % (flags.selecting_rows))
         ch = self.caret_handler
         self.mouse_drag_started = True
         r, c, index1, index2, inside = self.get_location_from_event(evt)
@@ -48,6 +47,7 @@ class MouseEventMixin(SelectionHandler):
             selecting_rows = True
         else:
             selecting_rows = False
+        log.debug("handle_select_start: rows=%s, input=%d,%d r,c=%d,%d index1,2=%d,%d inside=%s" % (selecting_rows, row, col, r, c, index1, index2, inside))
         if evt.ControlDown():
             self.multi_select_mode = True
             self.select_extend_mode = False
@@ -94,7 +94,7 @@ class MouseEventMixin(SelectionHandler):
             flags = self.create_mouse_event_flags()
         ch = self.caret_handler
         update = False
-        r, c, index1, index2, inside = self.get_location_from_cell(row, col)
+        r, c, index1, index2, inside = self.get_location_from_col(row, col)
         log.debug("handle_select_motion: r=%d c=%d index1: %s, index2: %s pending: %s, sel rows: %s" % (r, c, index1, index2, str(self.pending_select_awaiting_drag), flags.selecting_rows))
         if c < 0 or flags.selecting_rows or not inside:
             selecting_rows = True

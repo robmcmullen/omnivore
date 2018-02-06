@@ -436,6 +436,11 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         cell = ForceBetween(0, cell, self.line_renderer.num_cells - 1)
         return self.line_renderer.cell_to_col[cell]
 
+    def pixel_pos_to_row_col(self, x, y):
+        row, cell = self.pixel_pos_to_row_cell(x, y)
+        col = self.cell_to_col(cell)
+        return row, col
+
     def clamp_visible_row_cell(self, row, cell):
         sx, sy = self.parent.GetViewStart()
         row2 = ForceBetween(sy, row, sy + self.fully_visible_rows - 1)
@@ -790,6 +795,11 @@ class HexTable(object):
 
     def get_index_of_row(self, line):
         return (line * self.items_per_row) - self.start_offset
+
+    def get_start_end_index_of_row(self, row):
+        index1, _ = self.get_index_range(row, 0)
+        _, index2 = self.get_index_range(row, self.table.items_per_row - 1)
+        return index1, index2
 
     def index_to_row_col(self, index):
         return divmod(index + self.start_offset, self.items_per_row)

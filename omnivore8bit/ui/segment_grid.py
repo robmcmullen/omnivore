@@ -58,22 +58,20 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
     #####
 
     def get_row_col_from_event(self, evt):
-        row, cell = self.main.pixel_pos_to_row_cell(evt.GetX(), evt.GetY())
-        return row, cell
+        row, col = self.main.pixel_pos_to_row_col(evt.GetX(), evt.GetY())
+        return row, col
 
     def get_location_from_event(self, evt):
-        row, col = self.main.pixel_pos_to_row_cell(evt.GetX(), evt.GetY())
-        return self.get_location_from_cell(row, col)
+        row, col = self.main.pixel_pos_to_row_col(evt.GetX(), evt.GetY())
+        return self.get_location_from_col(row, col)
 
-    def get_location_from_cell(self, row, col):
+    def get_location_from_col(self, row, col):
         r2, c2, index = self.main.enforce_valid_caret(row, col)
         inside = col == c2 and row == r2
         return r2, c2, index, index + 1, inside
 
     def get_start_end_index_of_row(self, row):
-        index1, _ = self.table.get_index_range(row, 0)
-        _, index2 = self.table.get_index_range(row, self.table.items_per_row - 1)
-        return index1, index2
+        return self.table.get_start_end_index_of_row(row)
 
     def get_status_at_index(self, index):
         if self.table.is_index_valid(index):
@@ -83,8 +81,9 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
         return ""
 
     def get_status_message_at_index(self, index):
-        msg = get_style_name(self.table.segment, index)
-        comments = self.table.segment.get_comment(index)
+        s = self.segment_viewer.linked_base.segment
+        msg = get_style_name(s, index)
+        comments = s.get_comment(index)
         return "%s  %s" % (msg, comments)
 
     def get_status_message_at_cell(self, row, col):
