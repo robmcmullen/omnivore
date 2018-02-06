@@ -654,10 +654,6 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.ensure_visible(row, cell)
         col = self.cell_to_col(cell)
         index, _ = self.table.get_index_range(row, col)
-        if index >= self.table.last_valid_index:
-            index = self.table.last_valid_index - 1
-        if index < 0:
-            index = 0
         self.parent.caret_handler.move_carets_to(index)
         self.parent.Refresh()
         return row, col
@@ -786,6 +782,10 @@ class HexTable(object):
         position.
         """
         index = self.clamp_index(row * self.items_per_row + col - self.start_offset)
+        if index >= self.last_valid_index:
+            index = self.last_valid_index - 1
+        if index < 0:
+            index = 0
         return index, index + 1
 
     def get_index_of_row(self, line):
@@ -801,8 +801,8 @@ class HexTable(object):
             col -= index
             index = 0
         last_index = row_start + last_col
-        if last_index > t.last_valid_index:
-            last_index = t.last_valid_index
+        if last_index > self.last_valid_index:
+            last_index = self.last_valid_index
         if index >= last_index:
             raise IndexError("No items in this line are in the visible scrolled region")
         return col, index, last_index
