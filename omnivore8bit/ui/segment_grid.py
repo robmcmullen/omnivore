@@ -22,10 +22,11 @@ class SegmentTable(cg.HexTable):
 
 
 class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
-    def __init__(self, parent, segment, caret_handler, view_params, grid_cls=None, line_renderer_cls=None):
+    def __init__(self, parent, segment, caret_handler, view_params, grid_cls=None, line_renderer_cls=None, table=None):
         MouseEventMixin.__init__(self, caret_handler)
         CharEventMixin.__init__(self, caret_handler)
-        table = SegmentTable(segment)
+        if table is None:
+            table = SegmentTable(segment)
 
         # override class attributes in cg.HexGridWindow if present
         if grid_cls is not None:

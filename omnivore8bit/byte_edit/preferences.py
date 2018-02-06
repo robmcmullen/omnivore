@@ -167,6 +167,10 @@ class ByteEditPreferences(PreferencesHelper):
             self.image_caches[cache_cls] = c
         return c
 
+    @property
+    def hex_format_character(self):
+        return "x" if self.hex_grid_lower_case else "X"
+
 
 class ByteEditPreferencesPane(PreferencesPane):
     """ The preferences pane for the Framework application.

@@ -437,7 +437,8 @@ class ByteViewersPlugin(FrameworkPlugin):
         from omnivore8bit.viewers.bitmap2 import BitmapViewer
         from omnivore8bit.viewers.char import OldCharViewer
         from omnivore8bit.viewers.char2 import CharViewer
-        from omnivore8bit.viewers.cpu import DisassemblyViewer
+        from omnivore8bit.viewers.cpu import OldDisassemblyViewer
+        from omnivore8bit.viewers.cpu2 import DisassemblyViewer
         from omnivore8bit.viewers.hex import OldHexEditViewer
         from omnivore8bit.viewers.hex2 import HexEditViewer
         from omnivore8bit.viewers.info import CommentsViewer, UndoViewer, SegmentListViewer

@@ -109,10 +109,6 @@ class LinkedBase(CaretHandler):
         return str(self.segment)
 
     @property
-    def hex_format_character(self):
-        return "x" if self.editor.task.hex_grid_lower_case else "X"
-
-    @property
     def task(self):
         return self.editor.task
 

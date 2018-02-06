@@ -481,10 +481,10 @@ class DisassemblySearcher(searchutil.BaseSearcher):
         return matches
 
 
-class DisassemblyViewer(SegmentViewer):
-    name = "disassembly"
+class OldDisassemblyViewer(SegmentViewer):
+    name = "olddisassembly"
 
-    pretty_name = "Disassembly"
+    pretty_name = "Old Disassembly"
 
     has_cpu = True
 
