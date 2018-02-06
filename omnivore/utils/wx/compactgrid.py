@@ -429,8 +429,8 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
     @property
     def fully_visible_area(self):  # r,c -> r,c
         left_col, top_row = self.parent.GetViewStart()
-        right_col = left_col + self.fully_visible_cells
-        bot_row = top_row + self.fully_visible_rows
+        right_col = left_col + self.fully_visible_cells - 1
+        bot_row = top_row + self.fully_visible_rows - 1
         return top_row, left_col, bot_row, right_col
 
     def pixel_pos_to_row_cell(self, x, y):
@@ -458,8 +458,8 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
 
     def ensure_visible(self, row, cell):
         sx, sy = self.parent.GetViewStart()
-        sy2 = ForceBetween(max(0, row - self.fully_visible_rows), sy, row)
-        sx2 = ForceBetween(max(0, cell - self.fully_visible_cells), sx, cell)
+        sy2 = ForceBetween(max(0, row - self.fully_visible_rows + 1), sy, row)
+        sx2 = ForceBetween(max(0, cell - self.fully_visible_cells + 1), sx, cell)
         print("ensure_visible: before=%d,%d after=%d,%d" % (sy, sx, sy2, sx2))
         self.parent.move_viewport(sy2, sx2)
 
@@ -597,50 +597,61 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         offscreen = False
         scroll_cell = 0
         scroll_row = 0
-        caret_cell = self.line_renderer.col_to_cell[self.current_caret_col]
-        if cell < left_cell:
-            if caret_cell > left_cell:
-                c = left_cell
+        caret_start_cell = self.line_renderer.col_to_cell[self.current_caret_col]
+        caret_width = self.line_renderer.col_widths[self.current_caret_col]
+
+        if cell < left_cell:  # off left side
+            if caret_start_cell > left_cell:
+                print("LEFT: caret_start_cell=%d caret_width=%d cell=%d left_cell=%d" % (caret_start_cell, caret_width, cell, left_cell))
+                new_cell = left_cell
             else:
                 delta = left_cell - cell
+                print("LEFT: caret_start_cell=%d caret_width=%d cell=%d left_cell=%d delta=%d" % (caret_start_cell, caret_width, cell, left_cell, delta))
                 scroll_cell = -1
-        elif cell >= right_cell:
-            if caret_cell < right_cell:
-                c = right_cell
+                delta = max(delta / self.offscreen_scroll_divisor, 1)
+                new_cell = left_cell - delta
+                offscreen = True
+        elif cell >= right_cell:  # off right side
+            if caret_start_cell + caret_width - 1 < right_cell:  # caret was on screen so force to edge
+                new_cell = right_cell
             else:
                 delta = cell - right_cell
                 scroll_cell = 1
+                delta = max(delta / self.offscreen_scroll_divisor, 1)
+                new_cell = right_cell + delta
+                offscreen = True
         else:
-            c = cell
+            new_cell = cell
 
-        if scroll_cell != 0:
-            delta = max(delta / self.offscreen_scroll_divisor, 1)
-            c = caret_cell + (scroll_cell * delta)
-            offscreen = True
+        # if scroll_cell != 0:
+        #     delta = max(delta / self.offscreen_scroll_divisor, 1)
+        #     new_cell = caret_start_cell + (scroll_cell * delta)
+        #     offscreen = True
 
         caret_row = self.current_caret_row
         if row < top_row:
             if caret_row > top_row:
-                r = top_row
+                new_row = top_row
             else:
                 delta = top_row - row
                 scroll_row = -1
         elif row >= bot_row:
             if caret_row < bot_row:
-                r = bot_row
+                new_row = bot_row
             else:
+                caret_row = bot_row
                 delta = row - bot_row
                 scroll_row = 1
         else:
-            r = row
+            new_row = row
 
         if scroll_row != 0:
             delta = max(delta / self.offscreen_scroll_divisor, 1)
-            r = caret_row + (scroll_row * delta)
+            new_row = caret_row + (scroll_row * delta)
             offscreen = True
 
-        print("desired caret: offscreen=%s user input=%d,%d current=%d,%d new=%d,%d visible=%d,%d -> %d,%d scroll=%d,%d" % (offscreen, row,cell, self.current_caret_row, caret_cell, r, c, top_row, left_cell, bot_row, right_cell, scroll_row, scroll_cell))
-        return r, c, offscreen
+        print("desired caret: offscreen=%s user input=%d,%d current=%d,%d new=%d,%d visible=%d,%d -> %d,%d scroll=%d,%d" % (offscreen, row,cell, self.current_caret_row, caret_start_cell, new_row, new_cell, top_row, left_cell, bot_row, right_cell, scroll_row, scroll_cell))
+        return new_row, new_cell, offscreen
 
     def calc_desired_cell_from_event(self, evt):
         row, cell = self.get_row_cell_from_event(evt)
@@ -1240,7 +1251,7 @@ class NonUniformGridWindow(HexGridWindow):
 
     def calc_line_renderer(self, table, view_params):
         image_cache = DrawTableCellImageCache(table, view_params)
-        return BaseLineRenderer(table, view_params, 2, image_cache=image_cache, widths=[1,2,4,8])
+        return BaseLineRenderer(table, view_params, 2, image_cache=image_cache, widths=[5,1,2,4,8])
 
 
        
@@ -1302,7 +1313,7 @@ if __name__ == '__main__':
     # scroll1 = NonUniformGridWindow(table, view_params, splitter)
     # style1.set_window(scroll1.main)
     style1 = FakeStyle()
-    table = DisassemblyTable(np.arange(1024, dtype=np.uint8), style1, 4)
+    table = DisassemblyTable(np.arange(1024, dtype=np.uint8), style1, 5)
     carets = MultiCaretHandler(table)
     scroll1 = NonUniformGridWindow(table, view_params, carets, splitter)
     style1.set_window(scroll1.main)
