@@ -439,6 +439,10 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         cell = sx + int(x / self.cell_pixel_width)
         return row, cell
 
+    def cell_to_col(self, cell):
+        cell = ForceBetween(0, cell, self.line_renderer.num_cells - 1)
+        return self.line_renderer.cell_to_col[cell]
+
     def clamp_visible_row_cell(self, row, cell):
         sx, sy = self.parent.GetViewStart()
         row2 = ForceBetween(sy, row, sy + self.fully_visible_rows - 1)
@@ -561,12 +565,12 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
             # events!
             return
         if evt.LeftIsDown() and self.HasCapture():
-            self.handle_user_caret(input_row, input_cell)
             last_row, last_col = self.current_caret_row, self.current_caret_col
+            self.handle_user_caret(input_row, input_cell)
             if last_row != self.current_caret_row or last_col != self.current_caret_col:
                 self.parent.handle_select_motion(evt, self.current_caret_row, self.current_caret_col)
         else:
-            col = self.line_renderer.cell_to_col[input_cell]
+            col = self.cell_to_col(input_cell)
             self.parent.handle_motion_update_status(evt, input_row, col)
         self.last_mouse_event = (input_row, input_cell)
 
@@ -644,8 +648,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
 
     def process_motion_scroll(self, row, cell):
         self.ensure_visible(row, cell)
-        _, cell = self.clamp_allowable_row_cell(row, cell)
-        col = self.line_renderer.cell_to_col[cell]
+        col = self.cell_to_col(cell)
         index, _ = self.table.get_index_range(row, col)
         if index >= self.table.last_valid_index:
             index = self.table.last_valid_index - 1
