@@ -310,17 +310,10 @@ class LineRenderer(object):
         col = self.cell_to_col[start_cell]
         last_cell = min(start_cell + num_cells, self.num_cells)
         last_col = self.cell_to_col[last_cell - 1] + 1
-        t = self.table
-        row_start = (line_num * t.items_per_row) - t.start_offset
-        index = row_start + col
-        if index < 0:
-            col -= index
-            index = 0
-        last_index = row_start + last_col
-        if last_index > t.last_valid_index:
-            last_index = t.last_valid_index
-        if index >= last_index:
-            # no items in this line are in the visible scrolled region
+
+        try:
+            col, index, last_index = self.table.calc_column_range(line_num, col, last_col)
+        except IndexError:
             return
         self.draw_line(dc, line_num, col, index, last_index)
 
@@ -800,6 +793,19 @@ class HexTable(object):
 
     def index_to_row_col(self, index):
         return divmod(index + self.start_offset, self.items_per_row)
+
+    def calc_column_range(self, line_num, col, last_col):
+        row_start = (line_num * self.items_per_row) - self.start_offset
+        index = row_start + col
+        if index < 0:
+            col -= index
+            index = 0
+        last_index = row_start + last_col
+        if last_index > t.last_valid_index:
+            last_index = t.last_valid_index
+        if index >= last_index:
+            raise IndexError("No items in this line are in the visible scrolled region")
+        return col, index, last_index
 
     def clamp_left_column(self, index):
         r, c = self.index_to_row_col(index)
