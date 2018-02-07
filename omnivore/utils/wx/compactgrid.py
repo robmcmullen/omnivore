@@ -575,6 +575,8 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
 
     def on_left_down(self, evt):
         print("left down")
+        if not self.HasFocus():
+            self.SetFocus()
         row, cell = self.get_row_cell_from_event(evt)
         self.event_modifiers = evt.GetModifiers()
         self.current_caret_row, self.current_caret_col = self.process_motion_scroll(row, cell)
@@ -914,7 +916,8 @@ class AuxWindow(wx.ScrolledCanvas):
             r.append("update: %s" % str(rect))
             upd.Next()
         size = self.GetClientSize()
-        print "Updating %s size=%dx%d" % (self.__class__.__name__, size.x, size.y), " ".join(r), "clip: %s" % str(dc.GetClippingRect())
+        focused = "(Focused)" if self.HasFocus() else "(Unfocused)"
+        print "Updating %s %s size=%dx%d" % (self.__class__.__name__, focused, size.x, size.y), " ".join(r), "clip: %s" % str(dc.GetClippingRect())
         self.isDrawing = True
         self.UpdateView(dc)
         self.isDrawing = False
@@ -993,9 +996,9 @@ class ColLabelWindow(AuxWindow):
 
 
 class MultiCaretHandler(object):
-    def __init__(self, validator):
+    def __init__(self, table):
         self.carets = []
-        self.validator = validator
+        self.table = table
 
     def move_carets(self, delta):
         self.carets = [i + delta for i in self.carets]
@@ -1007,17 +1010,21 @@ class MultiCaretHandler(object):
         self.move_carets_to(func(self.caret_handler.caret_index))
 
     def validate_carets(self):
-        self.caret_index = self.validate_caret_position(self.caret_index)
+        new_carets = []
+        for index in self.carets:
+            index = self.validate_caret_position(index)
+            new_carets.append(index)
+        self.carets = new_carets
 
     def validate_caret_position(self, index):
-        return self.validator.validate_caret_position(index)
+        return self.table.enforce_valid_index(index)
 
 
 class HexGridWindow(wx.ScrolledWindow):
     initial_zoom = 1
 
     def __init__(self, table, view_params, caret_handler, *args, **kwargs):
-        wx.ScrolledWindow.__init__ (self, *args, **kwargs)
+        wx.ScrolledWindow.__init__ (self, *args, style=wx.WANTS_CHARS, **kwargs)
         self.SetAutoLayout(True)
 
         self.scroll_delay = 30  # milliseconds
@@ -1034,19 +1041,15 @@ class HexGridWindow(wx.ScrolledWindow):
         self.main = self.calc_main_grid(table, self.view_params, initial_line_renderer)
         self.top = ColLabelWindow(self, self.main)
         self.left = RowLabelWindow(self, self.main)
-        sizer = wx.FlexGridSizer(2,2,0,0)
-        self.corner = sizer.Add(5, 5, 0, wx.EXPAND)
-        sizer.Add(self.top, 0, wx.EXPAND)
-        sizer.Add(self.left, 0, wx.EXPAND)
-        sizer.Add(self.main, 0, wx.EXPAND)
-        sizer.AddGrowableCol(1)
-        sizer.AddGrowableRow(1)
-        self.SetSizer(sizer)
         self.SetTargetWindow(self.main)
+        self.want_col_header = True
+        self.want_row_header = True
+        self.calc_header_sizes()
         self.calc_scrolling()
         self.SetBackgroundColour(self.view_params.col_header_bg_color)
         self.map_events()
 
+        self.Bind(wx.EVT_SIZE, self.on_size)
         self.ShowScrollbars(wx.SHOW_SB_ALWAYS, wx.SHOW_SB_ALWAYS)
         self.main.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
         self.top.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
@@ -1070,7 +1073,9 @@ class HexGridWindow(wx.ScrolledWindow):
 
     def recalc_view(self, *args, **kwargs):
         self.main.recalc_view(*args, **kwargs)
+        self.calc_header_sizes()
         self.calc_scrolling()
+        self.on_size(None)
         self.left.recalc_view()
         self.top.recalc_view()
 
@@ -1078,6 +1083,22 @@ class HexGridWindow(wx.ScrolledWindow):
         self.Refresh()
         self.top.Refresh()
         self.left.Refresh()
+
+    def on_size(self, evt):
+        w, h = self.GetClientSize()
+        if self.want_row_header:
+            x = self.left.pixel_width
+        else:
+            x = 0
+        if self.want_col_header:
+            y = self.top.pixel_height
+        else:
+            y = 0
+        self.main.SetSize(x, y, w - x, h - y)
+        self.left.Show(x > 0)
+        self.left.SetSize(0, y, x, h - y)
+        self.top.Show(y > 0)
+        self.top.SetSize(x, 0, w - x, y)
 
     def DoGetBestSize(self):
         """ Base class virtual method for sizer use to get the best size
@@ -1097,21 +1118,34 @@ class HexGridWindow(wx.ScrolledWindow):
 
         return best
 
+    def process_visibility_change(self):
+        focused_before = self.FindFocus()
+        self.on_size(None)
+        focused_after = self.FindFocus()
+        print("Focused: before=%s after=%s" % (focused_before, focused_after))
+        if focused_before != focused_after:
+            wx.CallAfter(focused_before.SetFocus)
+
     def calc_header_sizes(self):
         w, h = self.col_label_renderer.calc_label_size()
         top_height = h + self.view_params.col_label_border_width
         w = self.main.table.calc_row_label_width(self.view_params)
         left_width = w + self.view_params.row_label_border_width
+        self.top.pixel_height = top_height
+        self.left.pixel_width = left_width
         return left_width, top_height
 
     def calc_scrolling(self):
         lr = self.main.line_renderer
-        left_width, top_height = self.calc_header_sizes()
+        # left_width = self.left.pixel_width if self.want_row_header else 0
+        # top_height = self.top.pixel_height if self.want_col_header else 0
+        left_width = self.left.pixel_width
+        top_height = self.top.pixel_height
         main_width, main_height = lr.virtual_width, self.main.table.num_rows * lr.h
         self.main.SetScrollbars(lr.w, lr.h, lr.num_cells, self.main.table.num_rows, 0, 0)
         self.top.SetVirtualSize(wx.Size(main_width, top_height))
         self.left.SetVirtualSize(wx.Size(left_width, main_height))
-        self.corner.SetMinSize(left_width, top_height)
+        #self.corner.SetMinSize(left_width, top_height)
         self.SetScrollRate(lr.w, lr.h)
 
     def on_scroll_window(self, evt):
@@ -1220,22 +1254,33 @@ class HexGridWindow(wx.ScrolledWindow):
 
     def on_char(self, evt):
         action = {}
+        action[ord('c')] = self.handle_toggle_col_header
+        action[ord('r')] = self.handle_toggle_row_header
         action[wx.WXK_DOWN]  = self.handle_char_move_down
         action[wx.WXK_UP]    = self.handle_char_move_up
         action[wx.WXK_LEFT]  = self.handle_char_move_left
         action[wx.WXK_RIGHT] = self.handle_char_move_right
         action[wx.WXK_PAGEDOWN]  = self.handle_char_move_page_down
         action[wx.WXK_PAGEUP] = self.handle_char_move_page_up
-        action[wx.WXK_HOME]  = self.handle_char_move_home
-        action[wx.WXK_END]   = self.handle_char_move_end
+        action[wx.WXK_HOME]  = self.handle_char_move_start_of_line
+        action[wx.WXK_END]   = self.handle_char_move_end_of_line
         key = evt.GetKeyCode()
+        print("Trying %d" % key)
         try:
-            action[key](event)
-            self.cx = self.table.enforce_valid_cursor(self.cy, self.cx)
-            self.UpdateView()
+            action[key](evt, None)
+            self.caret_handler.validate_carets()
+            #self.UpdateView()
         except KeyError:
-            print(key)
+            print("Error! %d not recognized" % key)
             evt.Skip()
+
+    def handle_toggle_col_header(self, evt, flags):
+        self.want_col_header = not self.want_col_header
+        self.process_visibility_change()
+
+    def handle_toggle_row_header(self, evt, flags):
+        self.want_row_header = not self.want_row_header
+        self.process_visibility_change()
 
     def handle_char_move_down(self, evt, flags):
         self.caret_handler.move_carets(self.table.items_per_row)
