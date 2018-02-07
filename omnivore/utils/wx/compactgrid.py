@@ -180,6 +180,7 @@ class TableViewParams(object):
         self.match_brush = wx.Brush(self.match_background_color, wx.SOLID)
         self.comment_background = self.comment_background_color
         self.comment_brush = wx.Brush(self.comment_background_color, wx.SOLID)
+        self.empty_brush = wx.Brush(self.empty_color, wx.SOLID)
 
     def set_font_metadata(self):
         dc = wx.MemoryDC()
@@ -404,7 +405,10 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_TIMER, self.on_timer)
-        self.Bind(wx.EVT_ERASE_BACKGROUND, lambda evt: False)
+        if wx.Platform == "__WXMSW__":
+            self.Bind(wx.EVT_ERASE_BACKGROUND, self.on_windows_erase_background)
+        else:
+            self.Bind(wx.EVT_ERASE_BACKGROUND, lambda evt: False)
 
     def recalc_view(self, table=None, view_params=None, line_renderer=None):
         if view_params is not None:
@@ -547,7 +551,37 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         if debug_refresh:
             dc.DrawText("%d" % self.refresh_count, 0, 0)
             self.refresh_count += 1
-     
+
+    def on_windows_erase_background(self, evt):
+        """Windows flickers like crazy when erasing the whole screen, so just
+        erase the parts that won't be filled in later.
+        """
+        dc = evt.GetDC()
+
+        px, py = self.parent.CalcUnscrolledPosition(0, 0)
+        dc.SetLogicalOrigin(px, py)
+
+        ch = self.cell_pixel_height
+        empty_x = self.line_renderer.vw
+        empty_y = self.table.num_rows * ch
+
+        w, h = self.GetClientSize()
+        last_x, last_y = self.parent.CalcUnscrolledPosition(w, h)
+        #print("size: w,h=%d,%d empty: x,y=%d,%d last: x,y=%d,%d origin=%d,%d" % (w, h, empty_x, empty_y, last_x, last_y, px, py))
+ 
+        dc.SetBrush(self.view_params.empty_brush)
+        dc.SetPen(wx.TRANSPARENT_PEN)
+
+        dc.DrawRectangle(empty_x, py, last_x, last_y)  # right side
+
+        # Need to handle special cases: both the first row and last row may be
+        # partial, so fill in an extra row. Some of that will get drawn over,
+        # but it's not worth actually calculating those parts.
+
+        dc.DrawRectangle(px, py, last_x, ch)  # top
+        dc.DrawRectangle(px, empty_y - ch, last_x, last_y)  # bottom
+
+
     def can_scroll(self):
         self.set_scroll_timer()
         if time.time() >  self.next_scroll_time:
@@ -1069,7 +1103,6 @@ class HexGridWindow(wx.ScrolledWindow):
         self.main.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
         self.main.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
         self.main.Bind(wx.EVT_CHAR, self.on_char)
-        self.main.Bind(wx.EVT_ERASE_BACKGROUND, lambda evt: False)
 
     def recalc_view(self, *args, **kwargs):
         self.main.recalc_view(*args, **kwargs)
