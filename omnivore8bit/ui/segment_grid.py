@@ -35,6 +35,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
             self.line_renderer_cls = line_renderer_cls
 
         cg.HexGridWindow.__init__(self, table, view_params, caret_handler, parent)
+        self.automatic_refresh = False
 
     @property
     def table(self):

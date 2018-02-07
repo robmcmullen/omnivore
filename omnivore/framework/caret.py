@@ -185,6 +185,12 @@ class CaretHandler(HasTraits):
 
             flags.refresh_needed = True
 
+        if flags.viewport_origin is not None:
+            flags.source_control.move_viewport_origin(flags.viewport_origin)
+            flags.skip_source_control_refresh = True
+            flags.refresh_needed = True
+
+
     def calc_action_enabled_flags(self):
         pass
 

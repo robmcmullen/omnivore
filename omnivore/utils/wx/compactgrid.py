@@ -482,12 +482,20 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         # print("clamp allowable: before=%d,%d after=%d,%d" % (row, cell, row2, cell2))
         return row2, cell2
 
-    def ensure_visible(self, row, cell):
+    def ensure_visible(self, row, cell, flags):
         sx, sy = self.parent.GetViewStart()
         sy2 = ForceBetween(max(0, row - self.fully_visible_rows + 1), sy, row)
         sx2 = ForceBetween(max(0, cell - self.fully_visible_cells + 1), sx, cell)
+        if sx == sx2 and sy == sy2:
+            print("Already visible! Not moving")
+            return
         # print("ensure_visible: before=%d,%d after=%d,%d" % (sy, sx, sy2, sx2))
-        self.parent.move_viewport(sy2, sx2)
+        if self.parent.automatic_refresh:
+            self.parent.move_viewport_origin((sy2, sx2))
+        else:
+            flags.source_control = self.parent
+            flags.viewport_origin = (sy2, sx2)
+            print("Moving viewport origin to %d,%d from %s" % (sy2, sx2, flags.source_control))
 
     def enforce_valid_caret(self, row, col):
         # restrict row, col to grid boundaries first so we don't get e.g. cells
@@ -599,7 +607,12 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         # row, col, offscreen = self.calc_desired_caret(row, cell)
         scroll_log.debug("on_timer: time=%f pos=%d,%d" % (time.time(), row, cell))
         # self.handle_on_motion(row, col, offscreen)
-        self.handle_user_caret(row, cell)
+        flags = self.parent.create_mouse_event_flags()
+        last_row, last_col = self.current_caret_row, self.current_caret_col
+        self.handle_user_caret(row, cell, flags)
+        if not self.parent.automatic_refresh:
+            if last_row != self.current_caret_row or last_col != self.current_caret_col:
+                self.parent.handle_select_motion(evt, self.current_caret_row, self.current_caret_col, flags)
 
     def get_row_cell_from_event(self, evt):
         row, cell = self.pixel_pos_to_row_cell(evt.GetX(), evt.GetY())
@@ -611,7 +624,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         flags = self.parent.create_mouse_event_flags()
         row, cell = self.get_row_cell_from_event(evt)
         self.event_modifiers = evt.GetModifiers()
-        self.current_caret_row, self.current_caret_col = self.process_motion_scroll(row, cell)
+        self.current_caret_row, self.current_caret_col = self.process_motion_scroll(row, cell, flags)
         self.last_mouse_event = (row, cell)
         self.CaptureMouse()
         self.parent.handle_select_start(evt, self.current_caret_row, self.current_caret_col, flags)
@@ -625,7 +638,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         flags = self.parent.create_mouse_event_flags()
         if evt.LeftIsDown() and self.HasCapture():
             last_row, last_col = self.current_caret_row, self.current_caret_col
-            self.handle_user_caret(input_row, input_cell)
+            self.handle_user_caret(input_row, input_cell, flags)
             if last_row != self.current_caret_row or last_col != self.current_caret_col:
                 self.parent.handle_select_motion(evt, self.current_caret_row, self.current_caret_col, flags)
         else:
@@ -633,10 +646,10 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
             self.parent.handle_motion_update_status(evt, input_row, col)
         self.last_mouse_event = (input_row, input_cell)
 
-    def handle_user_caret(self, input_row, input_cell):
+    def handle_user_caret(self, input_row, input_cell, flags):
         row, cell, offscreen = self.calc_desired_cell(input_row, input_cell)
         if not offscreen or self.can_scroll():
-            self.current_caret_row, self.current_caret_col = self.process_motion_scroll(row, cell)
+            self.current_caret_row, self.current_caret_col = self.process_motion_scroll(row, cell, flags)
 
     def on_left_up(self, evt):
         self.scroll_timer.Stop()
@@ -711,8 +724,8 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         row, cell = self.get_row_cell_from_event(evt)
         return self.calc_desired_cell(row, cell)
 
-    def process_motion_scroll(self, row, cell):
-        self.ensure_visible(row, cell)
+    def process_motion_scroll(self, row, cell, flags):
+        self.ensure_visible(row, cell, flags)
         col = self.cell_to_col(cell)
         index, _ = self.table.get_index_range(row, col)
         self.parent.caret_handler.move_carets_to(index)
@@ -1206,7 +1219,8 @@ class HexGridWindow(wx.ScrolledWindow):
         self.Refresh()
         evt.Skip()
 
-    def move_viewport(self, row, col):
+    def move_viewport_origin(self, row_col_tuple):
+        row, col = row_col_tuple
         sx, sy = self.GetViewStart()
         if sx == col and sy == row:
             # already there!
@@ -1215,8 +1229,9 @@ class HexGridWindow(wx.ScrolledWindow):
         self.main.Scroll(col, row)
         self.left.Scroll(0, row)
         self.top.Scroll(col, 0)
-        #print("viewport: %d,%d" % (row, col))
-        #self.Refresh()
+        print("viewport: %d,%d" % (row, col))
+        # if self.automatic_refresh:
+        #     self.Refresh()
 
     def on_mouse_wheel(self, evt):
         print("on_mouse_wheel")
@@ -1240,10 +1255,10 @@ class HexGridWindow(wx.ScrolledWindow):
     def handle_motion_update_status(self, evt, row, col):
         pass
 
-    def handle_select_start(self, evt, row, col):
+    def handle_select_start(self, evt, row, col, flags):
         pass
 
-    def handle_select_motion(self, evt, row, col):
+    def handle_select_motion(self, evt, row, col, flags):
         pass
 
     def handle_select_end(self, evt, row, col):

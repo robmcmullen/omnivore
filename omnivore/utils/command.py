@@ -218,6 +218,15 @@ class StatusFlags(object):
         # result of a user interface change
         self.source_control = None
 
+        # if the source control is refreshed as a side-effect of some action,
+        # set this flag so that the event manager can skip that control when
+        # it refreshes the others
+        self.skip_source_control_refresh = False
+
+        # if the portion of the window looking at the data needs to be changed,
+        # these will be the new upper left coordinates
+        self.viewport_origin = None
+
         # set if the user is selecting by entire rows
         self.selecting_rows = False
 

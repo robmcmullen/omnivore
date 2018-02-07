@@ -271,12 +271,16 @@ class SegmentViewer(HasTraits):
         self.control.set_caret_index(control, index, bit)
 
     @on_trait_change('linked_base.refresh_event')
-    def refresh_view(self, evt):
+    def refresh_view(self, flags):
         """Redraw the UI
         """
-        log.debug("process_refresh_view for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        if evt is not Undefined:
-            self.control.refresh_view()
+        log.debug("process_refresh_view for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
+        if flags is not Undefined:
+            if flags.skip_source_control_refresh and self.control == flags.source_control:
+                log.debug("refresh_event: skipping refresh of %s" % self.control)
+            else:
+                log.debug("refresh_event: refreshing %s" % self.control)
+                self.control.refresh_view()
 
     def get_extra_segment_savers(self, segment):
         """Hook to provide additional ways to save the data based on this view
