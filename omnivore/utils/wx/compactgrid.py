@@ -1129,26 +1129,25 @@ class HexGridWindow(wx.ScrolledWindow):
             dy = evt.GetPosition()
        
         pos = (dx ,dy)
-        print "scrolling..." + str(pos) + str(evt.GetPosition())
+        #print "scrolling..." + str(pos) + str(evt.GetPosition())
         self.Scroll(dx, dy)
-        # self.main.Scroll(dx, dy)
-        #self.top.Scroll(dx, 0)
-        #self.left.Scroll(0, dy)
+        self.main.Scroll(dx, dy)
+        self.top.Scroll(dx, 0)
+        self.left.Scroll(0, dy)
         self.Refresh()
         evt.Skip()
 
     def move_viewport(self, row, col):
-        # self.main.SetScrollPos(wx.HORIZONTAL, col)
-        # self.main.SetScrollPos(wx.VERTICAL, row)
         sx, sy = self.GetViewStart()
         if sx == col and sy == row:
             # already there!
             return
         self.Scroll(col, row)
+        self.main.Scroll(col, row)
         self.left.Scroll(0, row)
         self.top.Scroll(col, 0)
-        print("viewport: %d,%d" % (row, col))
-        self.Refresh()
+        #print("viewport: %d,%d" % (row, col))
+        #self.Refresh()
 
     def on_mouse_wheel(self, evt):
         print("on_mouse_wheel")
