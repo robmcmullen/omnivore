@@ -1061,6 +1061,10 @@ class MultiCaretHandler(object):
     def validate_caret_position(self, index):
         return self.table.enforce_valid_index(index)
 
+    def iter_caret_indexes(self):
+        for index in self.carets:
+            yield index
+
 
 class HexGridWindow(wx.ScrolledWindow):
     initial_zoom = 1
@@ -1301,7 +1305,7 @@ class HexGridWindow(wx.ScrolledWindow):
 
     def draw_carets(self, dc):
         main = self.main
-        for index in self.caret_handler.carets:
+        for index in self.caret_handler.iter_caret_indexes():
             r, c = main.table.index_to_row_col(index)
             main.line_renderer.draw_caret(dc, r, c)
 
