@@ -270,7 +270,7 @@ class SegmentViewer(HasTraits):
         log.debug("show_caret: %s, index=%d" % (self.pretty_name, index))
         self.control.set_caret_index(control, index, bit)
 
-    @on_trait_change('linked_base.editor.document.refresh_event')
+    @on_trait_change('linked_base.refresh_event')
     def refresh_view(self, evt):
         """Redraw the UI
         """

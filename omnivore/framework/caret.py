@@ -46,6 +46,8 @@ class CaretHandler(HasTraits):
 
     update_caret_event = Event
 
+    refresh_event = Event
+
     #### trait default values
 
     def _caret_history_default(self):

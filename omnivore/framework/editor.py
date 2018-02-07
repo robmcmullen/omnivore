@@ -552,7 +552,7 @@ class FrameworkEditor(Editor):
         if flags.rebuild_ui:
             d.recalc_event = True
         if do_refresh:
-            d.refresh_event = True
+            self.caret_handler.refresh_event = flags
 
     def popup_context_menu_from_commands(self, control, commands):
         """Popup a simple context menu with menu items defined by commands.
