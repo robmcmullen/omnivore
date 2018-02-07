@@ -487,7 +487,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         sy2 = ForceBetween(max(0, row - self.fully_visible_rows + 1), sy, row)
         sx2 = ForceBetween(max(0, cell - self.fully_visible_cells + 1), sx, cell)
         if sx == sx2 and sy == sy2:
-            print("Already visible! Not moving")
+            # print("Already visible! Not moving")
             return
         # print("ensure_visible: before=%d,%d after=%d,%d" % (sy, sx, sy2, sx2))
         if self.parent.automatic_refresh:
@@ -495,7 +495,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         else:
             flags.source_control = self.parent
             flags.viewport_origin = (sy2, sx2)
-            print("Moving viewport origin to %d,%d from %s" % (sy2, sx2, flags.source_control))
+            # print("Moving viewport origin to %d,%d from %s" % (sy2, sx2, flags.source_control))
 
     def enforce_valid_caret(self, row, col):
         # restrict row, col to grid boundaries first so we don't get e.g. cells
@@ -728,7 +728,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.ensure_visible(row, cell, flags)
         col = self.cell_to_col(cell)
         index, _ = self.table.get_index_range(row, col)
-        self.parent.caret_handler.move_carets_to(index)
+        self.parent.caret_handler.move_current_caret_to(index)
         if self.parent.automatic_refresh:
             self.parent.Refresh()
         return row, col
@@ -948,18 +948,18 @@ class AuxWindow(wx.ScrolledCanvas):
         dc = wx.PaintDC(self)
         if self.isDrawing:
             return
-        upd = wx.RegionIterator(self.GetUpdateRegion())  # get the update rect list
-        r = []
-        while upd.HaveRects():
-            rect = upd.GetRect()
+        # upd = wx.RegionIterator(self.GetUpdateRegion())  # get the update rect list
+        # r = []
+        # while upd.HaveRects():
+        #     rect = upd.GetRect()
 
-            # Repaint this rectangle
-            #PaintRectangle(rect, dc)
-            r.append("update: %s" % str(rect))
-            upd.Next()
-        size = self.GetClientSize()
-        focused = "(Focused)" if self.HasFocus() else "(Unfocused)"
-        print "Updating %s %s size=%dx%d" % (self.__class__.__name__, focused, size.x, size.y), " ".join(r), "clip: %s" % str(dc.GetClippingRect())
+        #     # Repaint this rectangle
+        #     #PaintRectangle(rect, dc)
+        #     r.append("update: %s" % str(rect))
+        #     upd.Next()
+        # size = self.GetClientSize()
+        # focused = "(Focused)" if self.HasFocus() else "(Unfocused)"
+        # print "Updating %s %s size=%dx%d" % (self.__class__.__name__, focused, size.x, size.y), " ".join(r), "clip: %s" % str(dc.GetClippingRect())
         self.isDrawing = True
         self.UpdateView(dc)
         self.isDrawing = False
@@ -1046,6 +1046,9 @@ class MultiCaretHandler(object):
         self.carets = [i + delta for i in self.carets]
 
     def move_carets_to(self, index):
+        self.carets = [index]
+
+    def move_current_caret_to(self, index):
         self.carets = [index]
 
     def move_carets_process_function(self, func):
@@ -1171,7 +1174,7 @@ class HexGridWindow(wx.ScrolledWindow):
         focused_before = self.FindFocus()
         self.on_size(None)
         focused_after = self.FindFocus()
-        print("Focused: before=%s after=%s" % (focused_before, focused_after))
+        # print("Focused: before=%s after=%s" % (focused_before, focused_after))
         if focused_before != focused_after:
             wx.CallAfter(focused_before.SetFocus)
 

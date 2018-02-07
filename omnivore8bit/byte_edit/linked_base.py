@@ -152,13 +152,13 @@ class LinkedBase(CaretHandler):
 
     def get_segment_view_params(self):
         return {
-            'caret index': self.caret_index,
+            'caret index': self.carets.current.index,
             'segment number': self.segment_number,
         }
 
     def save_segment_view_params(self, segment):
         d = {
-            'caret_index': self.caret_index,
+            'caret_index': self.carets.current.index,
         }
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
@@ -176,7 +176,7 @@ class LinkedBase(CaretHandler):
             log.debug("no view params for %s" % segment.uuid)
             return
         log.debug("restoring view params for %s" % segment.uuid)
-        self.caret_index = d['caret_index']
+        self.carets.current.index = d['caret_index']
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
                 try:
@@ -283,12 +283,12 @@ class LinkedBase(CaretHandler):
     #### CaretHandler overrides
 
     def check_document_change(self):
-        if self.last_caret_index != self.caret_index or self.last_anchor_start_index != self.anchor_start_index or self.last_anchor_end_index != self.anchor_end_index:
+        if self.last_caret_index != self.carets.current.index or self.last_anchor_start_index != self.anchor_start_index or self.last_anchor_end_index != self.anchor_end_index:
             self.document.change_count += 1
             self.update_caret_history()
 
     def get_caret_state(self):
-        return self.segment, self.caret_index
+        return self.segment, self.carets.current.index
 
     def restore_caret_state(self, state):
         segment, index = state
@@ -588,7 +588,7 @@ class LinkedBase(CaretHandler):
 
     def index_clicked(self, index, bit, from_control, refresh_from=True):
         log.debug("index_clicked: %s from %s at %d, %s" % (refresh_from, from_control, index, bit))
-        self.caret_index = index
+        self.carets.current.index = index
         self.check_document_change()
         if refresh_from:
             from_control = None

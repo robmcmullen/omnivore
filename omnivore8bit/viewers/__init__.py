@@ -124,7 +124,7 @@ class SegmentViewer(HasTraits):
         control.segment_viewer = v
         if uuid:
             v.uuid = uuid
-        v.pane_info = aui.AuiPaneInfo().Name(v.uuid)
+        v.pane_info = aui.AuiPaneInfo().Name(v.uuid).PinButton()
         v.create_post()
         return v
 
@@ -245,7 +245,7 @@ class SegmentViewer(HasTraits):
                 self.sync_caret(flags)
 
     def sync_caret(self, flags):
-        self.control.set_caret_index(self.linked_base.caret_index, flags)
+        self.control.set_caret_index(self.linked_base.carets.current.index, flags)
 
     @on_trait_change('machine.font_change_event,machine.bitmap_shape_change_event,machine.bitmap_color_change_event,machine.disassembler_change_event')
     def machine_metadata_changed(self, evt):

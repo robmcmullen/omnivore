@@ -20,7 +20,7 @@ class MouseEventMixin(SelectionHandler):
     def create_mouse_event_flags(self):
         flags = DisplayFlags(self)
         flags.selecting_rows = False
-        flags.old_carets = set(self.caret_handler.carets)
+        flags.old_carets = self.caret_handler.carets.get_state()
         return flags
 
     def handle_motion_update_status(self, evt, row, col):
@@ -57,10 +57,10 @@ class MouseEventMixin(SelectionHandler):
         if self.select_extend_mode:
             if index1 < ch.anchor_start_index:
                 ch.anchor_start_index = index1
-                ch.caret_index = index1
+                ch.carets.current.index = index1
             elif index2 > ch.anchor_start_index:
                 ch.anchor_end_index = index2
-                ch.caret_index = index2 - 1
+                ch.carets.current.index = index2 - 1
             ch.anchor_initial_start_index, ch.anchor_initial_end_index = ch.anchor_start_index, ch.anchor_end_index
             self.select_range(ch, ch.anchor_start_index, ch.anchor_end_index, add=self.multi_select_mode)
         else:
@@ -68,7 +68,7 @@ class MouseEventMixin(SelectionHandler):
             if selecting_rows:
                 index1, index2 = self.get_start_end_index_of_row(r)
             ch.anchor_initial_start_index, ch.anchor_initial_end_index = index1, index2
-            ch.caret_index = index1
+            ch.carets.current.index = index1
             if selecting_rows:
                 self.select_range(ch, index1, index2, add=self.multi_select_mode)
             else:
@@ -80,7 +80,7 @@ class MouseEventMixin(SelectionHandler):
                     # status line doesn't get automatically updated to show
                     # nothing is selected, so force the update
                     flags.message = self.get_status_at_index(index1)
-        flags.caret_index = ch.caret_index
+        flags.caret_index = ch.carets.current.index
         flags.caret_column = c
         log.debug("handle_select_start: flags: %s, anchors=%s" % (flags, str((ch.anchor_initial_start_index, ch.anchor_initial_end_index))))
         self.commit_change(flags)
@@ -95,7 +95,7 @@ class MouseEventMixin(SelectionHandler):
         ch = self.caret_handler
         update = False
         r, c, index1, index2, inside = self.get_location_from_col(row, col)
-        log.debug("handle_select_motion: r=%d c=%d index1: %s, index2: %s pending: %s, sel rows: %s" % (r, c, index1, index2, str(self.pending_select_awaiting_drag), flags.selecting_rows))
+        log.debug("handle_select_motion: r=%d c=%d index1: %s, index2: %s pending: %s, sel rows: %s anchors: initial=%s current=%s" % (r, c, index1, index2, str(self.pending_select_awaiting_drag), flags.selecting_rows, str((ch.anchor_initial_start_index, ch.anchor_initial_end_index)), str((ch.anchor_start_index, ch.anchor_end_index))))
         if c < 0 or flags.selecting_rows or not inside:
             selecting_rows = True
             c = 0
@@ -121,7 +121,7 @@ class MouseEventMixin(SelectionHandler):
                 update = True
         else:
             if index2 >= ch.anchor_initial_end_index:
-                ch.caret_index = index1
+                ch.carets.current.index = index1
                 if selecting_rows:
                     index1, index2 = self.get_start_end_index_of_row(r)
                 if index2 != ch.anchor_end_index:
@@ -134,10 +134,10 @@ class MouseEventMixin(SelectionHandler):
                     self.select_range(ch, index1, ch.anchor_initial_end_index, extend=self.multi_select_mode)
                     update = True
         if update:
-            ch.caret_index = index1
+            ch.carets.current.index = index1
             flags.keep_selection = True
             self.commit_change(flags)
-        log.debug("handle_select_motion: update: %s, flags: %s, anchors=%s" % (update, flags, str((ch.anchor_initial_start_index, ch.anchor_initial_end_index))))
+        log.debug("handle_select_motion: update: %s, flags: %s, anchors: initial=%s current=%s" % (update, flags, str((ch.anchor_initial_start_index, ch.anchor_initial_end_index)), str((ch.anchor_start_index, ch.anchor_end_index))))
 
     def handle_select_end(self, evt, row, col, flags=None):
         self.mouse_drag_started = False

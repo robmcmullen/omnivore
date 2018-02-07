@@ -16,6 +16,97 @@ import logging
 log = logging.getLogger(__name__)
 
 
+class Caret(object):
+    """Opaque class representing a caret's index and additional metadata
+    """
+    def __init__(self, index=0):
+        self.index = index
+
+    def __bool__(self):
+        return self.index is not None
+
+    __nonzero__=__bool__
+
+    def __eq__(self, other):
+        if not hasattr(self, 'index'):
+            print("not a Caret object")
+            return False
+        print("comparing caret indexes:", self.index, other.index)
+        return self.index == other.index
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def set(self, index):
+        self.index = index
+
+    def add_delta(self, delta):
+        self.index += delta
+
+    def apply_function(self, func):
+        self.index = func(self.index)
+
+    def copy(self):
+        return Caret(self.index)
+
+
+class CaretList(list):
+    def __init__(self, index, *args, **kwargs):
+        list(self, *args, **kwargs)
+        if index is not None:
+            self.new_caret(index)
+
+    def __bool__(self):
+        return len(self) >= 1
+
+    __nonzero__=__bool__
+
+    def __eq__(self, other):
+        if len(self) != len(other):
+            print("list size different! ", len(self), len(other))
+            return False
+        for c1, c2 in zip(self, other):
+            print("comparing ", c1, c2)
+            if c1 != c2:
+                return False
+        return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    @property
+    def current(self):
+        return self[-1]  # The last one added is the most recent
+
+    def new_caret(self, index):
+        caret = Caret(index)
+        self.append(caret)
+        return caret
+
+    def get_state(self):
+        return self.copy()
+
+    def copy(self):
+        c = CaretList(None)
+        for caret in self:
+            c.append(caret.copy())
+        return c
+
+    def validate(self, caret_handler):
+        found = set()
+        validated = CaretList(None)
+        for caret in self:
+            index = caret_handler.validate_caret_position(caret.index)
+            if index in found:
+                continue
+            found.add(index)
+            caret.set(index)
+            validated.append(caret)
+        if found:
+            validated
+        return validated
+
+
 class CaretHandler(HasTraits):
     """The pyface editor template for the omnivore framework
     
@@ -26,7 +117,7 @@ class CaretHandler(HasTraits):
     # first byte and the max index is the number of bytes, which points to
     # after the last byte
 
-    caret_index = Int(0)
+    carets = Any
 
     caret_history = Any
 
@@ -50,6 +141,9 @@ class CaretHandler(HasTraits):
 
     #### trait default values
 
+    def _carets_default(self):
+        return CaretList(0)
+
     def _caret_history_default(self):
         return HistoryList()
 
@@ -62,10 +156,6 @@ class CaretHandler(HasTraits):
     def has_selection(self):
         return bool(self.selected_ranges)
 
-    @property
-    def carets(self):
-        return [self.caret_index]
-
     #### command flag processors
 
     def ensure_visible(self, flags):
@@ -77,23 +167,37 @@ class CaretHandler(HasTraits):
         pass
 
     def set_caret(self, index, refresh=True):
-        self.caret_index = index
+        self.clear_carets(index)
+        self.validate_carets()
+        return self.carets.current
+
+    def clear_carets(self, index):
+        self.carets = CaretList(index)
         self.validate_carets()
         self.clear_selection()
 
-        return index
-
     def move_carets(self, delta):
-        self.caret_index += delta
+        for caret in self.carets:
+            caret.add_delta(delta)
+        self.validate_carets()
 
     def move_carets_to(self, index):
-        self.caret_index = index
+        self.set_caret(index)
+
+    def move_current_caret_to(self, index):
+        index = self.validate_caret_position(index)
+        self.carets.current.set(index)
 
     def move_carets_process_function(self, func):
-        self.caret_index = func(self.caret_index)
+        for caret in self.carets:
+            caret.apply_function(func)
+        self.validate_carets()
 
     def validate_carets(self):
-        self.caret_index = self.validate_caret_position(self.caret_index)
+        """Confirms the index position of all carets and collapses multiple
+        carets that have the same index into a single caret
+        """
+        self.carets = self.carets.validate(self)
 
     def validate_caret_position(self, index):
         max_index = self.document_length - 1
@@ -103,19 +207,17 @@ class CaretHandler(HasTraits):
             index = max_index
         return index
 
+    def iter_caret_indexes(self):
+        for caret in self.carets:
+            yield caret.index
+
     def update_caret_history(self):
-        state = self.get_caret_state()
+        state = self.carets.get_state()
         last = self.caret_history.get_undo_command()
         if last is None or last != state:
             cmd = self.caret_history.get_redo_command()
             if cmd is None or cmd != state:
                 self.caret_history.add_command(state)
-
-    def get_caret_state(self):
-        """Return a copy of the caret state so that it can be restored
-        later
-        """
-        return [self.caret_index]
 
     def undo_caret_history(self):
         if not self.caret_history.can_redo():
@@ -136,7 +238,7 @@ class CaretHandler(HasTraits):
         self.restore_caret_state(cmd)
 
     def restore_caret_state(self, state):
-        self.set_caret(state)
+        self.carets.set_state(state)
 
     def mark_index_range_changed(self, index_range):
         """Hook for subclasses to be informed when bytes within the specified
@@ -144,9 +246,18 @@ class CaretHandler(HasTraits):
         """
         pass
 
+    def set_anchors(self, start, end):
+        self.anchor_start_index = self.anchor_initial_start_index = start
+        self.anchor_end_index = self.anchor_initial_end_index = end
+        print("set anchors: initial to: %d,%d" % (start, end))
+
     def clear_selection(self):
-        self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = self.caret_index
-        self.selected_ranges = [(self.caret_index, self.caret_index)]
+        index = self.carets.current.index
+        self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = index
+        print("clear_selection: initial to: %d,%d" % (index, index))
+        # if index > 0:
+        #     import pdb; pdb.set_trace()
+        self.selected_ranges = []
         #self.highlight_selected_ranges(self)
         self.calc_action_enabled_flags()
 
@@ -160,19 +271,19 @@ class CaretHandler(HasTraits):
 
         if flags.old_carets is not None:
             self.validate_carets()
-            caret_state = set(self.carets)
+            caret_state = self.carets.get_state()
             caret_moved = caret_state != flags.old_carets
             if caret_moved:
                 log.debug("caret moved! old_carets: %s, new carets: %s" % (flags.old_carets, caret_state))
                 if not flags.keep_selection:
-                    self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = self.caret_index
+                    index = self.carets.current.index
+                    self.set_anchors(index, index)
                 visible_range = True
                 self.sync_caret_event = flags
 
         if flags.index_range is not None:
             if flags.select_range:
-                self.anchor_start_index = self.anchor_initial_start_index = flags.index_range[0]
-                self.anchor_end_index = self.anchor_initial_end_index = flags.index_range[1]
+                self.set_anchors(flags.index_range[0], flags.index_range[1])
                 document.change_count += 1
             visible_range = True
 
@@ -180,7 +291,7 @@ class CaretHandler(HasTraits):
             # Only update the range on the current editor, not other views
             # which are allowed to remain where they are
             if flags.index_visible is None:
-                flags.index_visible = self.caret_index if caret_moved else self.anchor_start_index
+                flags.index_visible = self.carets.current.index if caret_moved else self.anchor_start_index
             self.ensure_visible_event = flags
 
             flags.refresh_needed = True
@@ -207,9 +318,7 @@ class SelectionHandler(object):
     def select_all(self, caret_handler, refresh=True):
         """ Selects the entire document
         """
-        caret_handler.anchor_start_index = caret_handler.anchor_initial_start_index = 0
-        caret_handler.anchor_end_index = caret_handler.anchor_initial_end_index = caret_handler.document_length
-        caret_handler.selected_ranges = [(caret_handler.anchor_start_index, caret_handler.anchor_end_index)]
+        caret_handler.set_anchors(0, caret_handler.document_length)
         self.highlight_selected_ranges(caret_handler)
         caret_handler.calc_action_enabled_flags()
 
