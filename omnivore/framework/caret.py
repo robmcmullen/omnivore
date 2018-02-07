@@ -44,7 +44,7 @@ class CaretHandler(HasTraits):
 
     ensure_visible_event = Event
 
-    update_caret_event = Event
+    sync_caret_event = Event
 
     refresh_event = Event
 
@@ -164,10 +164,10 @@ class CaretHandler(HasTraits):
             caret_moved = caret_state != flags.old_carets
             if caret_moved:
                 log.debug("caret moved! old_carets: %s, new carets: %s" % (flags.old_carets, caret_state))
-                self.update_caret_event = flags
                 if not flags.keep_selection:
                     self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = self.caret_index
                 visible_range = True
+                self.sync_caret_event = flags
 
         if flags.index_range is not None:
             if flags.select_range:

@@ -1289,11 +1289,15 @@ class HexGridWindow(wx.ScrolledWindow):
     def set_data(self, data, *args, **kwargs):
         self.main.set_data(data, *args, **kwargs)
 
-    def set_caret_index(self, from_control, rel_pos, first_row=None):
+    def set_caret_index(self, rel_pos, flags, refresh=True):
         r, c = self.main.table.index_to_row_col(rel_pos)
-        self.main.show_caret(c, r)
-        if self.automatic_refresh:
-            self.refresh_view()
+        dummy_flags = self.create_mouse_event_flags()
+        self.main.ensure_visible(r, c, dummy_flags)
+        if self.automatic_refresh or refresh:
+            if dummy_flags.viewport_origin is not None:
+                self.move_viewport_origin(dummy_flags.viewport_origin)
+                flags.refreshed_as_side_effect.add(self)
+                self.refresh_view()
 
     def draw_carets(self, dc):
         main = self.main

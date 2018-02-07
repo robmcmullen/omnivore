@@ -234,14 +234,18 @@ class SegmentViewer(HasTraits):
     def ensure_visible(self, flags):
         self.control.keep_index_on_screen(flags.index_visible)
 
-    @on_trait_change('linked_base.update_caret_event')
-    def process_update_carets(self, flags):
+    @on_trait_change('linked_base.sync_caret_event')
+    def sync_caret_event_handler(self, flags):
         log.debug("process_update_caret for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
         if flags is not Undefined:
-            self.update_carets(flags)
+            if self.control == flags.source_control:
+                log.debug("sync_caret_event: skipping %s" % self.control)
+            else:
+                log.debug("sync_caret_event: syncing %s" % self.control)
+                self.sync_caret(flags)
 
-    def update_carets(self, flags):
-        pass
+    def sync_caret(self, flags):
+        self.control.set_caret_index(self.linked_base.caret_index, flags)
 
     @on_trait_change('machine.font_change_event,machine.bitmap_shape_change_event,machine.bitmap_color_change_event,machine.disassembler_change_event')
     def machine_metadata_changed(self, evt):
@@ -278,6 +282,8 @@ class SegmentViewer(HasTraits):
         if flags is not Undefined:
             if flags.skip_source_control_refresh and self.control == flags.source_control:
                 log.debug("refresh_event: skipping refresh of %s" % self.control)
+            elif self.control in flags.refreshed_as_side_effect:
+                log.debug("refresh_event: skipping already refreshed %s" % self.control)
             else:
                 log.debug("refresh_event: refreshing %s" % self.control)
                 self.control.refresh_view()

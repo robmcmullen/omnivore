@@ -227,6 +227,10 @@ class StatusFlags(object):
         # these will be the new upper left coordinates
         self.viewport_origin = None
 
+        # list of viewers that have been refreshed during the caret_flags
+        # processing so it won't be updated again
+        self.refreshed_as_side_effect = set()
+
         # set if the user is selecting by entire rows
         self.selecting_rows = False
 
