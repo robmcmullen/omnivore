@@ -608,12 +608,13 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
     def on_left_down(self, evt):
         if not self.HasFocus():
             self.SetFocus()
+        flags = self.parent.create_mouse_event_flags()
         row, cell = self.get_row_cell_from_event(evt)
         self.event_modifiers = evt.GetModifiers()
         self.current_caret_row, self.current_caret_col = self.process_motion_scroll(row, cell)
         self.last_mouse_event = (row, cell)
         self.CaptureMouse()
-        self.parent.handle_select_start(evt, self.current_caret_row, self.current_caret_col)
+        self.parent.handle_select_start(evt, self.current_caret_row, self.current_caret_col, flags)
 
     def on_motion(self, evt, x=None, y=None):
         input_row, input_cell = self.get_row_cell_from_event(evt)
@@ -621,11 +622,12 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
             # only process if mouse has moved to a new cell; no sub-cell
             # events!
             return
+        flags = self.parent.create_mouse_event_flags()
         if evt.LeftIsDown() and self.HasCapture():
             last_row, last_col = self.current_caret_row, self.current_caret_col
             self.handle_user_caret(input_row, input_cell)
             if last_row != self.current_caret_row or last_col != self.current_caret_col:
-                self.parent.handle_select_motion(evt, self.current_caret_row, self.current_caret_col)
+                self.parent.handle_select_motion(evt, self.current_caret_row, self.current_caret_col, flags)
         else:
             col = self.cell_to_col(input_cell)
             self.parent.handle_motion_update_status(evt, input_row, col)
@@ -714,7 +716,8 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         col = self.cell_to_col(cell)
         index, _ = self.table.get_index_range(row, col)
         self.parent.caret_handler.move_carets_to(index)
-        self.parent.Refresh()
+        if self.parent.automatic_refresh:
+            self.parent.Refresh()
         return row, col
 
 
@@ -1058,6 +1061,10 @@ class HexGridWindow(wx.ScrolledWindow):
         self.min_zoom = 1  # arbitrary
         self.max_zoom = 16  # arbitrary
 
+        # omnivore sets this to false so it can update multiple views at the
+        # same time without any double refreshes
+        self.automatic_refresh = True
+
         self.update_dependents = self.update_dependents_null
         initial_line_renderer = self.calc_line_renderer(table, view_params)
         self.col_label_renderer = initial_line_renderer
@@ -1173,6 +1180,9 @@ class HexGridWindow(wx.ScrolledWindow):
         #self.corner.SetMinSize(left_width, top_height)
         self.SetScrollRate(lr.w, lr.h)
 
+    def create_mouse_event_flags(self):
+        return None
+
     def on_scroll_window(self, evt):
         """
         OnScrollWindow Event Callback. This should let the main panel scroll in
@@ -1267,7 +1277,8 @@ class HexGridWindow(wx.ScrolledWindow):
     def set_caret_index(self, from_control, rel_pos, first_row=None):
         r, c = self.main.table.index_to_row_col(rel_pos)
         self.main.show_caret(c, r)
-        self.refresh_view()
+        if self.automatic_refresh:
+            self.refresh_view()
 
     def draw_carets(self, dc):
         main = self.main
