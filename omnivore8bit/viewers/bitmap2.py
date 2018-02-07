@@ -37,7 +37,7 @@ class BitmapImageCache(cg.DrawTextImageCache):
         height = array.shape[0]
         if width > 0 and height > 0:
             array = intscale(array, self.zoom_h, self.zoom_w)
-            print("bitmap: %d,%d,3 after scaling: %s" % (height, width, str(array.shape)))
+            #print("bitmap: %d,%d,3 after scaling: %s" % (height, width, str(array.shape)))
             image = wx.Image(array.shape[1], array.shape[0])
             image.SetData(array.tostring())
             bmp = wx.Bitmap(image)

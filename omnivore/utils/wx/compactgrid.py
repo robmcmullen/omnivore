@@ -187,7 +187,6 @@ class TableViewParams(object):
         dc.SetFont(self.text_font)
         self.text_font_char_width = dc.GetCharWidth()
         self.text_font_char_height = dc.GetCharHeight()
-        print(self.text_font_char_width, self.text_font_char_height)
         self.image_caches = {}
 
     def calc_cell_size_in_pixels(self, chars_per_cell):
@@ -246,7 +245,6 @@ class LineRenderer(object):
             widths = [1] * self.num_cols
         self.col_widths = tuple(widths)  # copy to prevent possible weird errors if parent modifies list!
         self.pixel_widths = [self.w * i for i in self.col_widths]
-        print("pixel_widths", self.pixel_widths)
         self.cell_to_col = []
         self.col_to_cell = []
         pos = 0
@@ -475,20 +473,20 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         sx, sy = self.parent.GetViewStart()
         row2 = ForceBetween(sy, row, sy + self.fully_visible_rows - 1)
         cell2 = ForceBetween(sx, cell, sx + self.fully_visible_cells - 1)
-        print("clamp visible: before=%d,%d after=%d,%d" % (row, cell, row2, cell2))
+        # print("clamp visible: before=%d,%d after=%d,%d" % (row, cell, row2, cell2))
         return row2, cell2
 
     def clamp_allowable_row_cell(self, row, cell):
         row2 = ForceBetween(0, row, self.table.num_rows - 1)
         cell2 = ForceBetween(0, cell, self.line_renderer.num_cells - 1)
-        print("clamp allowable: before=%d,%d after=%d,%d" % (row, cell, row2, cell2))
+        # print("clamp allowable: before=%d,%d after=%d,%d" % (row, cell, row2, cell2))
         return row2, cell2
 
     def ensure_visible(self, row, cell):
         sx, sy = self.parent.GetViewStart()
         sy2 = ForceBetween(max(0, row - self.fully_visible_rows + 1), sy, row)
         sx2 = ForceBetween(max(0, cell - self.fully_visible_cells + 1), sx, cell)
-        print("ensure_visible: before=%d,%d after=%d,%d" % (sy, sx, sy2, sx2))
+        # print("ensure_visible: before=%d,%d after=%d,%d" % (sy, sx, sy2, sx2))
         self.parent.move_viewport(sy2, sx2)
 
     def enforce_valid_caret(self, row, col):
@@ -533,7 +531,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.fully_visible_cells = int(w / self.cell_pixel_width)
         self.visible_rows = int((h + self.cell_pixel_height - 1) / self.cell_pixel_height)
         self.visible_cells = int((w + self.cell_pixel_width - 1) / self.cell_pixel_width)
-        print("fully visible: %d,%d including partial: %d,%d" % (self.fully_visible_rows, self.fully_visible_cells, self.visible_rows, self.visible_cells))
+        # print("fully visible: %d,%d including partial: %d,%d" % (self.fully_visible_rows, self.fully_visible_cells, self.visible_rows, self.visible_cells))
 
     def on_paint(self, evt):
         dc = wx.PaintDC(self)
@@ -591,7 +589,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
             return False
 
     def set_scroll_timer(self):
-        print("starting timer")
+        scroll_log.debug("starting timer")
         self.scroll_timer.Start(self.scroll_delay, True)
 
     def on_timer(self, evt):
@@ -599,7 +597,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         x, y = self.ScreenToClient((screenX, screenY))
         row, cell = self.pixel_pos_to_row_cell(x, y)
         # row, col, offscreen = self.calc_desired_caret(row, cell)
-        print("on_timer: time=%f pos=%d,%d" % (time.time(), row, cell))
+        scroll_log.debug("on_timer: time=%f pos=%d,%d" % (time.time(), row, cell))
         # self.handle_on_motion(row, col, offscreen)
         self.handle_user_caret(row, cell)
 
@@ -608,7 +606,6 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         return row, cell
 
     def on_left_down(self, evt):
-        print("left down")
         if not self.HasFocus():
             self.SetFocus()
         row, cell = self.get_row_cell_from_event(evt)
@@ -645,11 +642,6 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
             return
         self.ReleaseMouse()
         self.event_row = self.event_col = self.event_modifiers = None
-        print
-        print "Title " + str(self)
-        print "Position " + str(self.GetPosition())
-        print "Size " + str(self.GetSize())
-        print "VirtualSize " + str(self.GetVirtualSize())
         self.parent.handle_select_end(evt, self.current_caret_row, self.current_caret_col)
 
     def calc_desired_cell(self, row, cell):
@@ -662,11 +654,11 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
 
         if cell < left_cell:  # off left side
             if caret_start_cell > left_cell:
-                print("LEFT: caret_start_cell=%d caret_width=%d cell=%d left_cell=%d" % (caret_start_cell, caret_width, cell, left_cell))
+                # print("LEFT: caret_start_cell=%d caret_width=%d cell=%d left_cell=%d" % (caret_start_cell, caret_width, cell, left_cell))
                 new_cell = left_cell
             else:
                 delta = left_cell - cell
-                print("LEFT: caret_start_cell=%d caret_width=%d cell=%d left_cell=%d delta=%d" % (caret_start_cell, caret_width, cell, left_cell, delta))
+                # print("LEFT: caret_start_cell=%d caret_width=%d cell=%d left_cell=%d delta=%d" % (caret_start_cell, caret_width, cell, left_cell, delta))
                 scroll_cell = -1
                 delta = max(delta / self.offscreen_scroll_divisor, 1)
                 new_cell = left_cell - delta
@@ -710,7 +702,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
             new_row = caret_row + (scroll_row * delta)
             offscreen = True
 
-        print("desired caret: offscreen=%s user input=%d,%d current=%d,%d new=%d,%d visible=%d,%d -> %d,%d scroll=%d,%d" % (offscreen, row,cell, self.current_caret_row, caret_start_cell, new_row, new_cell, top_row, left_cell, bot_row, right_cell, scroll_row, scroll_cell))
+        # print("desired caret: offscreen=%s user input=%d,%d current=%d,%d new=%d,%d visible=%d,%d -> %d,%d scroll=%d,%d" % (offscreen, row,cell, self.current_caret_row, caret_start_cell, new_row, new_cell, top_row, left_cell, bot_row, right_cell, scroll_row, scroll_cell))
         return new_row, new_cell, offscreen
 
     def calc_desired_cell_from_event(self, evt):
@@ -809,7 +801,7 @@ class HexTable(object):
         self.start_offset = start_addr & start_offset_mask if start_offset_mask else 0
         self.num_rows = ((self.start_offset + len(self.data) - 1) / items_per_row) + 1
         self.last_valid_index = len(self.data)
-        print(self.data, self.num_rows, self.start_offset, self.start_addr)
+        # print(self.data, self.num_rows, self.start_offset, self.start_addr)
         self.calc_labels()
 
     def calc_labels(self):

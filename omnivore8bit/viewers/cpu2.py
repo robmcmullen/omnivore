@@ -61,7 +61,7 @@ class UdisFastTable(cg.HexTable):
         self.start_addr = self.disassembly.start_addr
         self.end_addr = self.disassembly.end_addr
         self.num_rows = self.lines.num_instructions
-        print(self.disassembly, self.num_rows)
+        # print(self.disassembly, self.num_rows)
 
     def get_index_range(self, r, c):
         try:

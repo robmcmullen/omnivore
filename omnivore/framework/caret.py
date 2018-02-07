@@ -157,13 +157,11 @@ class CaretHandler(HasTraits):
         log.debug("processing caret flags: %s" % str(flags))
 
         if flags.old_carets is not None:
-            print("before:", str(self.carets))
             self.validate_carets()
-            print("after:", str(self.carets))
             caret_state = set(self.carets)
             caret_moved = caret_state != flags.old_carets
             if caret_moved:
-                print("old_carets: %s, new carets: %s" % (flags.old_carets, caret_state))
+                log.debug("caret moved! old_carets: %s, new carets: %s" % (flags.old_carets, caret_state))
                 self.update_caret_event = flags
                 if not flags.keep_selection:
                     self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = self.caret_index
