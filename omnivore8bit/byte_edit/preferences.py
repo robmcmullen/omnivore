@@ -96,6 +96,8 @@ class ByteEditPreferences(PreferencesHelper):
     match_brush = Any
     
     comment_brush = Any
+    
+    empty_brush = Any
 
     def _caret_pen_default(self):
         return wx.Pen(self.unfocused_caret_color, 1, wx.SOLID)
@@ -114,6 +116,9 @@ class ByteEditPreferences(PreferencesHelper):
 
     def _comment_brush_default(self):
         return wx.Brush(self.comment_background_color, wx.SOLID)
+
+    def _empty_brush_default(self):
+        return wx.Brush(self.empty_color, wx.SOLID)
 
     @cached_property
     def _get_text_font_char_width(self):
