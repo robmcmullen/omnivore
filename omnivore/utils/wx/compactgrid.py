@@ -266,7 +266,15 @@ class LineRenderer(object):
         last_cell = min(starting_cell + num_cells, self.num_cells) - 1
         last_col = self.cell_to_col[last_cell]
         for col in range(starting_col, last_col + 1):
-            yield self.col_to_cell[col], self.col_widths[col], self.col_label_text[col]
+            rect = self.col_to_rect(0, col)
+            text = self.col_label_text[col]
+            if text.startswith('^'):
+                text = text[1:]
+                offset = 0
+            else:
+                width = self.view_params.calc_text_width(text)
+                offset = (rect.width - width)/2  # center text in cell
+            yield rect, offset, text
 
     def calc_label_size(self):
         t0 = self.col_label_text[0]
@@ -333,9 +341,9 @@ class LineRenderer(object):
 
 
 class DebugLineRenderer(LineRenderer):
-    def __init__(self, view_params, chars_per_cell=4, image_cache=None, widths=None):
+    def __init__(self, view_params, chars_per_cell=4, image_cache=None, widths=None, col_labels=None):
         w, h = view_params.calc_cell_size_in_pixels(chars_per_cell)
-        LineRenderer.__init__(self, w, h, len(widths), view_params, image_cache, widths)
+        LineRenderer.__init__(self, w, h, len(widths), view_params, image_cache, widths, col_labels)
 
     def calc_column_range(self, line_num, col, last_col):
         return col, 0, last_col - col
@@ -350,10 +358,10 @@ class DebugLineRenderer(LineRenderer):
 
 
 class TableLineRenderer(LineRenderer):
-    def __init__(self, table, view_params, chars_per_cell, image_cache=None, widths=None):
+    def __init__(self, table, view_params, chars_per_cell, image_cache=None, widths=None, col_labels=None):
         self.table = table
         w, h = view_params.calc_cell_size_in_pixels(chars_per_cell)
-        LineRenderer.__init__(self, w, h, table.items_per_row, view_params, image_cache, widths)
+        LineRenderer.__init__(self, w, h, table.items_per_row, view_params, image_cache, widths, col_labels)
 
     def calc_column_range(self, line_num, col, last_col):
         t = self.table
@@ -1007,7 +1015,7 @@ class ColLabelWindow(AuxWindow):
 
     def DrawHorzText(self, t, cell, num_cells, dc):
         lr = self.main.line_renderer
-        rect = lr.cell_to_rect(0, cell)
+        rect = lr.cell_to_rect(0, cell, num_cells)
         width = self.main.view_params.calc_text_width(t)
         offset = (rect.width - width)/2  # center text in cell
         dc.DrawText(t, rect.x + offset, 0)
@@ -1029,8 +1037,8 @@ class ColLabelWindow(AuxWindow):
             dc.SetTextForeground(s.view_params.text_color)
             dc.SetBackground(wx.Brush(s.view_params.col_header_bg_color))
             dc.Clear()
-            for cell, num_cells, header in s.line_renderer.get_col_labels(cell, s.visible_cells):
-                self.DrawHorzText(header, cell, num_cells, dc)
+            for rect, offset, header in s.line_renderer.get_col_labels(cell, s.visible_cells):
+                dc.DrawText(header, rect.x + offset, 0)
             if debug_refresh:
                 cell, _ = s.parent.GetViewStart()
                 self.DrawHorzText("%d" % self.refresh_count, cell, 1, dc)
