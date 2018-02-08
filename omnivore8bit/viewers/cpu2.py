@@ -224,7 +224,7 @@ class DisassemblyLineRenderer(cg.TableLineRenderer):
 class DisassemblyGridControl(SegmentGridControl):
     def calc_line_renderer(self, table, view_params):
         image_cache = DisassemblyImageCache(table, view_params)
-        return DisassemblyLineRenderer(table, view_params, 2, image_cache=image_cache, widths=[5,25])
+        return DisassemblyLineRenderer(table, view_params, 2, image_cache=image_cache, widths=[5,25], col_labels=['^Opcodes','^      Operand'])
 
     def recalc_view(self):
         e = self.segment_viewer.linked_base
