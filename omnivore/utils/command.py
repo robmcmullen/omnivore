@@ -238,6 +238,13 @@ class StatusFlags(object):
         # moved and need to be updated.
         self.old_carets = None
 
+        # if True will add the old carets to the current caret to increase the
+        # number of carets by one
+        self.add_caret = False
+
+        # if True will remove all carets except the current caret
+        self.force_single_caret = False
+
         for flags in args:
             self.add_flags(flags)
 

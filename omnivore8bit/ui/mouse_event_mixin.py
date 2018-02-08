@@ -64,11 +64,16 @@ class MouseEventMixin(SelectionHandler):
             ch.anchor_initial_start_index, ch.anchor_initial_end_index = ch.anchor_start_index, ch.anchor_end_index
             self.select_range(ch, ch.anchor_start_index, ch.anchor_end_index, add=self.multi_select_mode)
         else:
-            self.ClearSelection()
             if selecting_rows:
                 index1, index2 = self.get_start_end_index_of_row(r)
-            ch.anchor_initial_start_index, ch.anchor_initial_end_index = index1, index2
+            elif self.multi_select_mode:
+                flags.add_caret = True
+                print("NEW CARET!", str(ch.carets))
+            else:
+                flags.force_single_caret = True
             ch.carets.current.index = index1
+            ch.anchor_initial_start_index, ch.anchor_initial_end_index = index1, index2
+
             if selecting_rows:
                 self.select_range(ch, index1, index2, add=self.multi_select_mode)
             else:
@@ -146,11 +151,6 @@ class MouseEventMixin(SelectionHandler):
 
     def commit_change(self, flags):
         self.caret_handler.process_flags(flags)
-
-    def ClearSelection(self):
-        # Stub function for those controls that don't have it. Tables use this
-        # but nothing else so far.
-        pass
 
     def get_location_from_event(self, evt):
         raise NotImplementedError

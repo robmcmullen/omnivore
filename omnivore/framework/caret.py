@@ -37,6 +37,9 @@ class Caret(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __repr__(self):
+        return "Caret(%d)" % self.index
+
     def set(self, index):
         self.index = index
 
@@ -91,6 +94,21 @@ class CaretList(list):
         for caret in self:
             c.append(caret.copy())
         return c
+
+    def add_old_carets(self, old_list):
+        """Prefix the existing current caret with the list of old carets.
+
+        This throws away all but the current caret in the self object, but
+        hopefully this is what's intended as the current caret will have been
+        moved by the compactgrid before hitting the process_caret_flags.
+        """
+        self[0:-1] = old_list[:]
+        print("old_carets: %s added: %s" % (str(old_list), str(self)))
+
+    def remove_old_carets(self):
+        """Remove everything but the current caret"""
+        self[0:-1] = []
+        print("removed all but %s" % (str(self)))
 
     def validate(self, caret_handler):
         found = set()
@@ -167,14 +185,9 @@ class CaretHandler(HasTraits):
         pass
 
     def set_caret(self, index, refresh=True):
-        self.clear_carets(index)
-        self.validate_carets()
-        return self.carets.current
-
-    def clear_carets(self, index):
         self.carets = CaretList(index)
         self.validate_carets()
-        self.clear_selection()
+        return self.carets.current
 
     def move_carets(self, delta):
         for caret in self.carets:
@@ -270,11 +283,19 @@ class CaretHandler(HasTraits):
         log.debug("processing caret flags: %s" % str(flags))
 
         if flags.old_carets is not None:
-            self.validate_carets()
-            caret_state = self.carets.get_state()
-            caret_moved = caret_state != flags.old_carets
-            if caret_moved:
+            if flags.add_caret:
+                self.carets.add_old_carets(flags.old_carets)
+                caret_moved = True
+                log.debug("caret added! before: %s, after: %s" % (flags.old_carets, self.carets))
+            elif flags.force_single_caret:
+                self.carets.remove_old_carets()
+                caret_moved = True
+            else:
+                self.validate_carets()
+                caret_state = self.carets.get_state()
+                caret_moved = caret_state != flags.old_carets
                 log.debug("caret moved! old_carets: %s, new carets: %s" % (flags.old_carets, caret_state))
+            if caret_moved:
                 if not flags.keep_selection:
                     index = self.carets.current.index
                     self.set_anchors(index, index)
