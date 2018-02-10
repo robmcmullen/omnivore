@@ -159,10 +159,10 @@ class ByteEditor(FrameworkEditor):
         log.debug("task arguments: '%s'" % self.task_arguments)
         if self.task_arguments or not viewer_metadata:
             names = self.task_arguments if self.task_arguments else self.default_viewers
+            log.debug("overriding viewers: %s" % str(names))
             viewer_metadata = {}  # reset to start from empty if task args are specified
             for viewer_name in names.split(","):
                 viewer_metadata[viewer_name.strip()] = {}
-            viewer_metadata = {name:{} for name in self.task_arguments.split(",")}
 
             layout = {}  # empty layout so it isn't cluttered with unused windows
 
@@ -498,7 +498,7 @@ class ByteEditor(FrameworkEditor):
         # Create a set of viewers from a list
         log.debug("layout: %s" % layout)
         import pprint
-        log.debug("viewer_metadata: %s" % pprint.pformat(viewer_metadata))
+        log.debug("viewer_metadata: %s" % str(viewer_metadata.keys()))
 
         center_base = LinkedBase(editor=self)
         # self.linked_bases.append(center_base)
@@ -526,7 +526,7 @@ class ByteEditor(FrameworkEditor):
                     viewer_type = uuid  # try the value of 'uuid' as a viewer name
                     linked_base = center_base
                     uuid = None
-                    log.debug("using default metadata for %s: %s" % (viewer_type, e))
+                    log.debug("using default metadata for %s" % (viewer_type))
 
                 try:
                     viewer_cls = self.task.find_viewer_by_name(viewer_type)
