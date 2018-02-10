@@ -188,7 +188,10 @@ class SaveAsAction(EditorAction):
     image = ImageResource('file_save_as')
 
     def perform(self, event):
-        path = event.task.prompt_local_file_dialog(save=True, default_filename=self.active_editor.document.name)
+        wx.CallAfter(self.prompt)
+
+    def prompt(self):
+        path = self.active_editor.task.prompt_local_file_dialog(save=True, default_filename=self.active_editor.document.name)
         if path:
             self.active_editor.save(path, saver=self.active_editor.encode_data)
 
