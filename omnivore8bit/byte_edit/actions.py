@@ -157,19 +157,6 @@ class AddViewerAction(EditorAction):
         self.active_editor.add_viewer(self.viewer)
 
 
-class ReplaceCenterViewerAction(EditorAction):
-    """Replace the main viewer with a different type
-    """
-    # Traits
-    viewer = Any
-
-    def _name_default(self):
-        return self.viewer.pretty_name
-
-    def perform(self, event):
-        self.active_editor.replace_center_viewer(self.viewer)
-
-
 class CurrentSegmentParserAction(NameChangeAction):
     default_name = 'Current Disk Image'
     name = default_name

@@ -407,24 +407,17 @@ class ByteEditTask(FrameworkTask):
     def get_actions_Menu_View_ConfigGroup(self):
         data_actions = []
         info_actions = []
-        center_actions = []
         for v in self.known_viewers:
             if v.has_metadata_only:
                 info_actions.append(ba.AddViewerAction(viewer=v))
             else:
                 data_actions.append(ba.AddViewerAction(viewer=v))
-                center_actions.append(ba.ReplaceCenterViewerAction(viewer=v))
         return [
-            SMenu(
-                Group(
-                    *center_actions,
-                    id="a1", separator=True),
-                id='ViewerChoiceSubmenu0', separator=True, name="Change Main Viewer"),
             SMenu(
                 Group(
                     *data_actions,
                     id="a1", separator=True),
-                id='ViewerChoiceSubmenu1', separator=False, name="Add Auxiliary Viewer"),
+                id='ViewerChoiceSubmenu1', separator=False, name="Add Data Viewer"),
             SMenu(
                 Group(
                     *info_actions,

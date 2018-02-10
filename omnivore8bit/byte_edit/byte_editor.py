@@ -471,7 +471,7 @@ class ByteEditor(FrameworkEditor):
         center_base = center_viewer.linked_base
         viewer = viewer_cls.create(self.control, center_base)
         self.viewers.append(viewer)
-        self.control.add(viewer.control)
+        self.control.add(viewer.control, viewer.uuid)
         center_base.force_data_model_update()
         self.update_pane_names()
 

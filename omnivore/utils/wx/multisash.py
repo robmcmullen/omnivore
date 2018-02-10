@@ -105,6 +105,9 @@ class MultiSash(wx.Window):
     def find_uuid(self, uuid):
         return self.child.find_uuid(uuid)
 
+    def find_empty(self):
+        return self.child.find_empty()
+
     def focus_uuid(self, uuid):
         found = self.find_uuid(uuid)
         if found:
@@ -113,11 +116,16 @@ class MultiSash(wx.Window):
     def replace_by_uuid(self, control, u):
         found = self.find_uuid(u)
         if found is not None:
-            found.replace(control)
+            found.replace(control, u)
             return True
         return False
 
-    def add(self, control, u=None, direction=None):
+    def add(self, control, u=None, direction=None, use_empty=True):
+        if use_empty:
+            found = self.find_empty()
+            if found:
+                found.replace(control, u)
+                return
         if direction is None:
             self.last_direction = not self.last_direction
             direction = self.last_direction
@@ -189,6 +197,17 @@ class MultiSplit(wx.Window):
                 return found
         if self.view2:
             found = self.view2.find_uuid(uuid)
+            if found is not None:
+                return found
+        return None
+
+    def find_empty(self):
+        if self.view1:
+            found = self.view1.find_empty()
+            if found is not None:
+                return found
+        if self.view2:
+            found = self.view2.find_empty()
             if found is not None:
                 return found
         return None
@@ -436,6 +455,13 @@ class MultiViewLeaf(wx.Window):
         log.debug("find_uuid: skipping %s in %s" % (self.detail.child_uuid, self.detail.child.GetName()))
         return None
 
+    def find_empty(self):
+        if isinstance(self.detail.child, self.multiView._defChild):
+            log.debug("find_empty: found %s" % (self.detail.child.GetName()))
+            return self.detail
+        log.debug("find_empty: skipping %s in %s" % (self.detail.child_uuid, self.detail.child.GetName()))
+        return None
+
     def get_layout(self):
         d = {}
         if hasattr(self.detail.child,'get_layout'):
@@ -649,12 +675,15 @@ class MultiClient(wx.Window):
             x, y, w, h = button.CalcSizePos(self)
             button.SetSize(x, y, w, h)
 
-    def replace(self, child):
+    def replace(self, child, u=None):
         if self.child:
             self.child.Destroy()
             self.child = None
         self.child = child
         self.child.Reparent(self)
+        if u is None:
+            u = str(uuid4())
+        self.child_uuid = u
         self.move_child()
 
     def move_child(self):
