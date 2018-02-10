@@ -57,11 +57,11 @@ class ByteEditPreferences(PreferencesHelper):
 
     text_color = Color(wx.BLACK)
 
-    highlight_color = Color(wx.Colour(100, 200, 230))
+    highlight_background_color = Color(wx.Colour(100, 200, 230))
 
-    data_color = Color(wx.Colour(224, 224, 224))
+    data_background_color = Color(wx.Colour(224, 224, 224))
 
-    empty_color = Color(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE).Get(False))
+    empty_background_color = Color(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE).Get(False))
 
     match_background_color = Color(wx.Colour(255, 255, 180))
 
@@ -103,13 +103,13 @@ class ByteEditPreferences(PreferencesHelper):
         return wx.Pen(self.unfocused_caret_color, 1, wx.SOLID)
 
     def _selected_brush_default(self):
-        return wx.Brush(self.highlight_color, wx.SOLID)
+        return wx.Brush(self.highlight_background_color, wx.SOLID)
 
     def _normal_brush_default(self):
         return wx.Brush(self.background_color, wx.SOLID)
 
     def _data_brush_default(self):
-        return wx.Brush(self.data_color, wx.SOLID)
+        return wx.Brush(self.data_background_color, wx.SOLID)
 
     def _match_brush_default(self):
         return wx.Brush(self.match_background_color, wx.SOLID)
@@ -118,7 +118,7 @@ class ByteEditPreferences(PreferencesHelper):
         return wx.Brush(self.comment_background_color, wx.SOLID)
 
     def _empty_brush_default(self):
-        return wx.Brush(self.empty_color, wx.SOLID)
+        return wx.Brush(self.empty_background_color, wx.SOLID)
 
     @cached_property
     def _get_text_font_char_width(self):
@@ -195,7 +195,7 @@ class ByteEditPreferencesPane(PreferencesPane):
                HGroup(Item('assembly_lower_case'),
                       Label('Use Lower Case for Assembler Mnemonics'),
                       show_labels = False),
-               HGroup(Item('highlight_color', editor=ColorEditor(), style='custom'),
+               HGroup(Item('highlight_background_color', editor=ColorEditor(), style='custom'),
                       Label('Highlight Color'),
                       show_labels = False),
                label='Hex Editor'),

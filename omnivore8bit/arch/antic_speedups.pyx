@@ -11,9 +11,9 @@ def get_numpy_memory_map_image(segment_viewer, np.ndarray[np.uint8_t, ndim=2] by
     cdef np.uint8_t bgr = segment_viewer.preferences.background_color[0]
     cdef np.uint8_t bgg = segment_viewer.preferences.background_color[1]
     cdef np.uint8_t bgb = segment_viewer.preferences.background_color[2]
-    cdef np.uint8_t sr = segment_viewer.preferences.highlight_color[0]
-    cdef np.uint8_t sg = segment_viewer.preferences.highlight_color[1]
-    cdef np.uint8_t sb = segment_viewer.preferences.highlight_color[2]
+    cdef np.uint8_t sr = segment_viewer.preferences.highlight_background_color[0]
+    cdef np.uint8_t sg = segment_viewer.preferences.highlight_background_color[1]
+    cdef np.uint8_t sb = segment_viewer.preferences.highlight_background_color[2]
     
     cdef int end_row = min(num_rows_with_data, num_rows)
     cdef int end_col = min(bytes_per_row, start_col + num_cols)

@@ -66,19 +66,19 @@ class DrawTextImageCache(object):
         if style & selected_bit_mask:
             dc.SetBrush(v.selected_brush)
             dc.SetBackground(v.selected_brush)
-            dc.SetTextBackground(v.highlight_color)
+            dc.SetTextBackground(v.highlight_background_color)
         elif style & match_bit_mask:
             dc.SetBrush(v.match_brush)
             dc.SetBackground(v.match_brush)
-            dc.SetTextBackground(v.match_background)
+            dc.SetTextBackground(v.match_background_color)
         elif style & comment_bit_mask:
             dc.SetBrush(v.comment_brush)
             dc.SetBackground(v.comment_brush)
-            dc.SetTextBackground(v.comment_background)
+            dc.SetTextBackground(v.comment_background_color)
         elif style & user_bit_mask:
             dc.SetBrush(v.data_brush)
             dc.SetBackground(v.normal_brush)
-            dc.SetTextBackground(v.data_color)
+            dc.SetTextBackground(v.data_background_color)
         else:
             dc.SetBrush(v.normal_brush)
             dc.SetBackground(v.normal_brush)
@@ -154,10 +154,10 @@ class TableViewParams(object):
         self.text_color = wx.BLACK
         self.row_header_bg_color = wx.Colour(224, 224, 224)
         self.col_header_bg_color = wx.Colour(224, 224, 224)
-        self.highlight_color = wx.Colour(100, 200, 230)
+        self.highlight_background_color = wx.Colour(100, 200, 230)
         self.unfocused_caret_color = (128, 128, 128)
-        self.data_color = (224, 224, 224)
-        self.empty_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+        self.data_background_color = (224, 224, 224)
+        self.empty_background_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
         self.match_background_color = (255, 255, 180)
         self.comment_background_color = (255, 180, 200)
         self.diff_text_color = (255, 0, 0)
@@ -170,17 +170,12 @@ class TableViewParams(object):
         self.set_font_metadata()
 
     def set_paint(self):
-        self.selected_background = self.highlight_color
-        self.selected_brush = wx.Brush(self.highlight_color, wx.SOLID)
-        self.normal_background = self.background_color
+        self.selected_brush = wx.Brush(self.highlight_background_color, wx.SOLID)
         self.normal_brush = wx.Brush(self.background_color, wx.SOLID)
-        self.data_background = self.data_color
-        self.data_brush = wx.Brush(self.data_color, wx.SOLID)
-        self.match_background = self.match_background_color
+        self.data_brush = wx.Brush(self.data_background_color, wx.SOLID)
         self.match_brush = wx.Brush(self.match_background_color, wx.SOLID)
-        self.comment_background = self.comment_background_color
         self.comment_brush = wx.Brush(self.comment_background_color, wx.SOLID)
-        self.empty_brush = wx.Brush(self.empty_color, wx.SOLID)
+        self.empty_brush = wx.Brush(self.empty_background_color, wx.SOLID)
 
     def set_font_metadata(self):
         dc = wx.MemoryDC()

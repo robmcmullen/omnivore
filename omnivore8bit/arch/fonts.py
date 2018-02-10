@@ -65,10 +65,10 @@ class AnticFont(object):
         bg = conv(bg)
         self.normal_gr0_colors = [fg, bg]
         prefs = segment_viewer.preferences
-        self.highlight_gr0_colors = colors.get_blended_color_registers(self.normal_gr0_colors, prefs.highlight_color)
+        self.highlight_gr0_colors = colors.get_blended_color_registers(self.normal_gr0_colors, prefs.highlight_background_color)
         self.match_gr0_colors = colors.get_blended_color_registers(self.normal_gr0_colors, prefs.match_background_color)
         self.comment_gr0_colors = colors.get_blended_color_registers(self.normal_gr0_colors, prefs.comment_background_color)
-        self.data_gr0_colors = colors.get_dimmed_color_registers(self.normal_gr0_colors, prefs.background_color, prefs.data_color)
+        self.data_gr0_colors = colors.get_dimmed_color_registers(self.normal_gr0_colors, prefs.background_color, prefs.data_background_color)
 
     def set_fonts(self, segment_viewer, font_data, font_renderer, reverse):
         if 'np_data' in font_data:
@@ -81,10 +81,10 @@ class AnticFont(object):
         self.normal_font = font_renderer.get_font(data, m.color_registers, self.normal_gr0_colors, reverse)
 
         prefs = segment_viewer.preferences
-        h_colors = colors.get_blended_color_registers(m.color_registers, prefs.highlight_color)
+        h_colors = colors.get_blended_color_registers(m.color_registers, prefs.highlight_background_color)
         self.highlight_font = font_renderer.get_font(data, h_colors, self.highlight_gr0_colors, reverse)
 
-        d_colors = colors.get_dimmed_color_registers(m.color_registers, prefs.background_color, prefs.data_color)
+        d_colors = colors.get_dimmed_color_registers(m.color_registers, prefs.background_color, prefs.data_background_color)
         self.data_font = font_renderer.get_font(data, d_colors, self.data_gr0_colors, reverse)
 
         m_colors = colors.get_blended_color_registers(m.color_registers, prefs.match_background_color)
