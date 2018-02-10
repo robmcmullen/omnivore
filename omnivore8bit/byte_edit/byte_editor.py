@@ -4,7 +4,6 @@ import os
 
 # Major package imports.
 import wx
-import wx.lib.agw.aui as aui
 import numpy as np
 import json
 
@@ -16,6 +15,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 from omnivore.framework.editor import FrameworkEditor
 import omnivore.framework.clipboard as clipboard
 from omnivore.utils.file_guess import FileMetadata
+from omnivore.utils.wx.multisash import MultiSash
 from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.document import SegmentedDocument
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
@@ -150,28 +150,34 @@ class ByteEditor(FrameworkEditor):
         if 'diff highlight' in e:
             self.diff_highlight = bool(e['diff highlight'])
 
-        log.debug("task arguments: '%s'" % self.task_arguments)
-        if self.task_arguments:
-            layout = self.task_arguments
-        elif 'layout' in e:
-            layout = e['layout']
-        else:
-            layout = self.default_viewers
-        viewer_metadata = {'default': e}
+        layout = e.get('layout', {})
+
+        viewer_metadata = {}
         for v in e.get('viewers', []):
             viewer_metadata[v['uuid']] = v
+
+        log.debug("task arguments: '%s'" % self.task_arguments)
+        if self.task_arguments or not viewer_metadata:
+            names = self.task_arguments if self.task_arguments else self.default_viewers
+            viewer_metadata = {}  # reset to start from empty if task args are specified
+            for viewer_name in names.split(","):
+                viewer_metadata[viewer_name.strip()] = {}
+            viewer_metadata = {name:{} for name in self.task_arguments.split(",")}
+
+            layout = {}  # empty layout so it isn't cluttered with unused windows
+
         linked_bases = {}
         for b in e.get('linked bases', []):
             base = LinkedBase(editor=self)
             base.from_metadata_dict(b)
             linked_bases[base.uuid] = base
-        self.create_viewers(layout, viewer_metadata, linked_bases)
+        self.create_viewers(layout, viewer_metadata, e, linked_bases)
         self.task.machine_menu_changed = self.focused_viewer.machine
         self.focused_viewer_changed_event = self.focused_viewer
 
     def to_metadata_dict(self, mdict, document):
         mdict["diff highlight"] = self.diff_highlight
-        mdict["layout"] = self.mgr.SavePerspective()
+        mdict["layout"] = self.control.get_layout()
         mdict["viewers"] = []
         bases = []
         for v in self.viewers:
@@ -261,7 +267,7 @@ class ByteEditor(FrameworkEditor):
     def update_pane_names(self):
         for viewer in self.viewers:
             viewer.update_caption()
-        self.mgr.RefreshCaptions()
+        self.control.update_captions()
 
     @on_trait_change('document.emulator_change_event')
     def update_emulator(self):
@@ -464,30 +470,10 @@ class ByteEditor(FrameworkEditor):
         center_viewer = self.viewers[0]
         center_base = center_viewer.linked_base
         viewer = viewer_cls.create(self.control, center_base)
-        viewer.pane_info.Right().Layer(10)
         self.viewers.append(viewer)
-        self.mgr.AddPane(viewer.control, viewer.pane_info)
+        self.control.add(viewer.control)
         center_base.force_data_model_update()
         self.update_pane_names()
-        self.mgr.Update()
-
-    def replace_center_viewer(self, viewer_cls):
-        center_viewer = self.viewers[0]
-        center_base = center_viewer.linked_base
-        viewer = viewer_cls.create(self.control, center_base, center_viewer.machine)
-        viewer.pane_info.CenterPane()
-
-        center_viewer.prepare_for_destroy()
-        self.mgr.ClosePane(center_viewer.pane_info)
-
-        # Need to replace the first viewer here, because explicitly closing the
-        # pane above doesn't trigger an AUI_PANE_CLOSE event
-        self.viewers[0] = viewer
-        log.debug("viewers after replacing center pane: %s" % str(self.viewers))
-        self.mgr.AddPane(viewer.control, viewer.pane_info)
-        center_base.force_data_model_update()
-        self.mgr.Update()
-        self.force_focus(viewer)
 
     ###########################################################################
     # Trait handlers.
@@ -500,58 +486,43 @@ class ByteEditor(FrameworkEditor):
     def _create_control(self, parent):
         """ Creates the toolkit-specific control for the widget. """
 
-        panel = wx.Panel(parent, style=wx.BORDER_NONE)
-
-        # AUI Manager is the direct child of the task
-        self.mgr = aui.AuiManager(agwFlags=aui.AUI_MGR_ALLOW_ACTIVE_PANE)
-        art = self.mgr.GetArtProvider()
-        art.SetMetric(aui.AUI_DOCKART_GRADIENT_TYPE, aui.AUI_GRADIENT_NONE)
-        art.SetColor(aui.AUI_DOCKART_ACTIVE_CAPTION_COLOUR, art.GetColor(aui.AUI_DOCKART_ACTIVE_CAPTION_GRADIENT_COLOUR))
-        panel.Bind(aui.framemanager.EVT_AUI_PANE_ACTIVATED, self.on_pane_active)
-        panel.Bind(aui.framemanager.EVT_AUI_PANE_CLOSE, self.on_pane_close)
-
-        # tell AuiManager to manage this frame
-        self.mgr.SetManagedWindow(panel)
+        panel = MultiSash(parent)
+        panel.Bind(MultiSash.EVT_CLIENT_ACTIVATED, self.on_viewer_active)
+        panel.Bind(MultiSash.EVT_CLIENT_CLOSE, self.on_viewer_close)
 
         self.sidebar = self.window.get_dock_pane('byte_edit.sidebar')
 
         return panel
 
-    def create_viewers(self, layout, viewer_metadata, linked_bases):
+    def create_viewers(self, layout, viewer_metadata, default_viewer_metadata, linked_bases):
         # Create a set of viewers from a list
         log.debug("layout: %s" % layout)
+        import pprint
+        log.debug("viewer_metadata: %s" % pprint.pformat(viewer_metadata))
 
         center_base = LinkedBase(editor=self)
         # self.linked_bases.append(center_base)
 
-        first = True
         self.focused_viewer = None
         layer = 0
-        viewers = []
-        perspective = ""
-        if layout.startswith("layout2"):
-            # it's a perspective string, so parse names out of it
-            perspective = layout
-            sections = layout.split("|")
-            for section in sections[1:]:
-                parts = section.split(";")[0].split("=")
-                log.debug(str(parts))
-                if parts[0] == "name":  # name is the uuid of the viewer
-                    viewers.append(parts[1])
-        if not viewers:
-            # use default list of viewer names, not uuids, if there is no saved
-            # layout.
-            viewers = [a.strip() for a in layout.split(",")]
+        viewers = viewer_metadata.keys()
+        if layout:
+            # try:
+                print(layout)
+                self.control.restore_layout(layout)
+            # except ValueError:
+            #     log.warning("Unable to decode layout")
 
-
-        while first:
+        while self.focused_viewer is None:
             for uuid in viewers:
-                if uuid in viewer_metadata:
-                    e = viewer_metadata[uuid]
+                log.debug("loading viewer: %s" % uuid)
+                e = viewer_metadata[uuid]
+                if e:
                     viewer_type = e['name']
                     linked_base = linked_bases[e['linked base']]
+                    log.debug("recreating viewer %s: %s" % (viewer_type, uuid))
                 else:  # either not a uuid or an unknown uuid
-                    e = viewer_metadata.get('default', {})
+                    e = default_viewer_metadata
                     viewer_type = uuid  # try the value of 'uuid' as a viewer name
                     linked_base = center_base
                     uuid = None
@@ -562,40 +533,38 @@ class ByteEditor(FrameworkEditor):
                 except ValueError:
                     log.error("unknown viewer %s, uuid=%s" % (viewer_type, uuid))
                     continue
-                log.debug("creating viewer %s with linked base %s" % (viewer_type, str(linked_base)))
+                log.debug("creating viewer %s (%s) with linked base %s" % (uuid, viewer_type, str(linked_base)))
                 viewer = viewer_cls.create(self.control, linked_base, None, uuid)
                 viewer.from_metadata_dict(e)
+                log.debug("created viewer %s (%s)" % (viewer.uuid, viewer.name))
 
-                # if there is a perspective, this pane_info will get replaced
-                if first:
-                    viewer.pane_info.CenterPane().DestroyOnClose()
-                    self.set_focused_viewer(viewer)  # Initial focus is center pane
-                    first = False
-                else:
-                    layer += 1
-                    viewer.pane_info.Right().Layer(layer)
                 self.viewers.append(viewer)
-                self.mgr.AddPane(viewer.control, viewer.pane_info)
-            if first:
+                if self.focused_viewer is None:
+                    self.set_focused_viewer(viewer)
+                if not self.control.replace_by_uuid(viewer.control, viewer.uuid):
+                    log.debug("viewer %s not found, adding in new pane" % viewer.uuid)
+                    self.control.add(viewer.control, viewer.uuid)
+
+            if self.focused_viewer is None:
                 # just load default hex editor if nothing has been created
                 viewers = ['hex']
                 first = False
 
-        if perspective:
-            # The following creates a new pane_info based on the layout...
-            self.mgr.LoadPerspective(perspective)
+        print str(self.control.get_layout())
+        # if perspective:
+        #     # The following creates a new pane_info based on the layout...
+        #     self.mgr.LoadPerspective(perspective)
 
-            # ...so we have to move this newly created pane_info back onto the
-            # viewer
-            for v in self.viewers:
-                v.pane_info = self.mgr.GetPane(v.uuid)
+        #     # ...so we have to move this newly created pane_info back onto the
+        #     # viewer
+        #     for v in self.viewers:
+        #         v.pane_info = self.mgr.GetPane(v.uuid)
         self.update_pane_names()
-        self.mgr.Update()
 
     #### wx event handlers
 
     def force_focus(self, viewer):
-        self.mgr.ActivatePane(viewer.control)
+        self.focus_uuid(viewer.uuid)
         self.update_pane_names()
         viewer.update_toolbar()
 
@@ -605,20 +574,28 @@ class ByteEditor(FrameworkEditor):
         self.caret_handler = viewer.linked_base
         viewer.linked_base.calc_action_enabled_flags()
 
-    def on_pane_active(self, evt):
-        # NOTE: evt.pane in this case is not an AuiPaneInfo object, it's the
-        # AuiPaneInfo.window object
-        if evt.pane is None:
-            log.debug("skipping on_pane_active with no AuiPaneInfo object")
-            return
-        v = evt.pane.segment_viewer
-        if v == self.focused_viewer:
-            log.debug("on_pane_active: already current viewer %s" % v)
+    def on_viewer_active(self, evt):
+        try:
+            v = evt.child.segment_viewer
+        except AttributeError:
+            # must be an empty window (a multisash window that has no segment
+            # viewer). It can be closed without any further action.
+            pass
         else:
-            log.debug("on_pane_active: activated viewer %s %s" % (v, v.window_title))
-            self.set_focused_viewer(evt.pane.segment_viewer)
+            v = evt.child.segment_viewer
+            if v == self.focused_viewer:
+                log.debug("on_pane_active: already current viewer %s" % v)
+            else:
+                log.debug("on_pane_active: activated viewer %s %s" % (v, v.window_title))
+                self.set_focused_viewer(v)
 
-    def on_pane_close(self, evt):
-        v = evt.pane.window.segment_viewer
-        log.debug("on_pane_close: closed viewer %s %s" % (v, v.window_title))
-        self.viewers.remove(v)
+    def on_viewer_close(self, evt):
+        try:
+            v = evt.child.segment_viewer
+        except AttributeError:
+            # must be an empty window (a multisash window that has no segment
+            # viewer). It can be closed without any further action.
+            pass
+        else:
+            log.debug("on_pane_close: closed viewer %s %s" % (v, v.window_title))
+            self.viewers.remove(v)

@@ -1,7 +1,6 @@
 import uuid
 
 import wx
-import wx.lib.agw.aui as aui
 
 from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, File, Unicode, Property, on_trait_change, HasTraits, Undefined
 from envisage.api import ExtensionPoint
@@ -124,8 +123,9 @@ class SegmentViewer(HasTraits):
         control.segment_viewer = v
         if uuid:
             v.uuid = uuid
-        v.pane_info = aui.AuiPaneInfo().Name(v.uuid).PinButton()
+        control.uuid = v.uuid
         v.create_post()
+        print("control: %s, parent: %s uuid:%s" % (control.__class__.__name__, parent.__class__.__name__, v.uuid))
         return v
 
     ##### Cleanup
@@ -199,8 +199,7 @@ class SegmentViewer(HasTraits):
     ##### SegmentViewer interface
 
     def update_caption(self):
-        if self.pane_info is not None:
-            self.pane_info.Caption(self.window_title)
+        self.control.SetName(self.window_title)
 
     ##### Trait change handlers
 
