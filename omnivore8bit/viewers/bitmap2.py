@@ -11,6 +11,7 @@ from omnivore.utils.wx import compactgrid as cg
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
 
 from . import SegmentViewer
+from . import actions as va
 
 import logging
 log = logging.getLogger(__name__)
@@ -76,6 +77,10 @@ class BitmapGridControl(SegmentGridControl):
         line_renderer = BitmapRenderer(table, self.segment_viewer)
         log.debug("recalculating %s" % self)
         cg.HexGridWindow.recalc_view(self, table, self.segment_viewer.linked_base.cached_preferences, line_renderer)
+
+    def get_extra_actions(self):
+        actions = [None, va.BitmapWidthAction, va.BitmapZoomAction]
+        return actions
 
 
 class BitmapViewer(SegmentViewer):

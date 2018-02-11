@@ -50,6 +50,7 @@ class UdisFastTable(cg.HexTable):
         self.fmt_hex4 = "%04" + fmt_char
 
     def update_disassembly(self, segment, disassembly, index=0, refresh=False):
+        self.segment = segment
         self.data = segment.data
         self.style = segment.style
         self.last_valid_index = len(self.data)
@@ -261,6 +262,13 @@ class DisassemblyGridControl(SegmentGridControl):
         text = os.linesep.join(lines) + os.linesep
         data = text.encode("utf-8")
         return data
+
+    def extra_popup_actions(self, popup_data):
+        actions = []
+        addr_dest = self.table.disassembly.get_addr_dest(popup_data['row'], popup_data['col'])
+        actions.extend(self.segment_viewer.linked_base.get_goto_actions_other_segments(addr_dest))
+        actions.extend(self.segment_viewer.linked_base.get_goto_actions_same_byte(popup_data['index']))
+        return actions
 
 
 class CopyDisassemblyAction(EditorAction):

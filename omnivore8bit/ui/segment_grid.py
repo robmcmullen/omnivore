@@ -5,6 +5,8 @@ from omnivore.utils.command import DisplayFlags
 from omnivore.utils.wx import compactgrid as cg
 from omnivore.utils.wx.char_event_mixin import CharEventMixin
 from omnivore8bit.arch.disasm import get_style_name
+from omnivore.framework import actions as fa
+from ..byte_edit import actions as ba
 
 import logging
 log = logging.getLogger(__name__)
@@ -95,3 +97,37 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
         table = SegmentTable(self.segment_viewer.linked_base.segment)
         log.debug("recalculating %s" % self)
         cg.HexGridWindow.recalc_view(self, table, self.segment_viewer.linked_base.cached_preferences)
+
+    def on_popup(self, evt):
+        row, col = self.get_row_col_from_event(evt)
+        index, _ = self.table.get_index_range(row, col)
+        inside = True  # fixme
+        style = self.table.segment.style[index] if inside else 0
+        popup_data = {
+            'index': index,
+            'in_selection': style&0x80,
+            'row': row,
+            'col': col,
+            'inside': inside,
+            }
+        actions = self.get_popup_actions(popup_data)
+        if actions:
+            self.segment_viewer.popup_context_menu_from_actions(actions, popup_data)
+
+    def get_popup_actions(self, popup_data):
+        actions = self.common_popup_actions(popup_data)
+        actions.extend(self.extra_popup_actions(popup_data))
+        return actions
+
+    def common_popup_actions(self, popup_data):
+        copy_special = [ba.CopyAsReprAction, ba.CopyAsCBytesAction]
+        for v in self.segment_viewer.editor.task.known_viewers:
+            copy_special.extend(v.copy_special)
+        copy_special.sort(key=lambda a:a().name)  # name is a trait, so only exists on an instance, not the class
+        copy_special[0:0] = ["Copy Special"]  # sub-menu title
+
+        return [fa.CutAction, fa.CopyAction, copy_special, fa.PasteAction, ["Paste Special", ba.PasteAndRepeatAction, ba.PasteCommentsAction], None, fa.SelectAllAction, fa.SelectNoneAction, ["Mark Selection As", ba.MarkSelectionAsCodeAction, ba.MarkSelectionAsDataAction, ba.MarkSelectionAsUninitializedDataAction, ba.MarkSelectionAsDisplayListAction, ba.MarkSelectionAsJumpmanLevelAction, ba.MarkSelectionAsJumpmanHarvestAction], None, ba.GetSegmentFromSelectionAction, ba.RevertToBaselineAction, None, ba.AddCommentPopupAction, ba.RemoveCommentPopupAction, ba.AddLabelPopupAction, ba.RemoveLabelPopupAction]
+
+    def extra_popup_actions(self, popup_data):
+        # for subclasses!
+        return []

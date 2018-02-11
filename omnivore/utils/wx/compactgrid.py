@@ -403,6 +403,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
+        self.Bind(wx.EVT_RIGHT_DOWN, self.parent.on_popup)
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_TIMER, self.on_timer)
@@ -1257,6 +1258,10 @@ class HexGridWindow(wx.ScrolledWindow):
         #     self.main.UpdateView()
         else:
             evt.Skip()
+
+    def on_popup(self, evt):
+        # for subclasses
+        evt.Skip()
 
     ##### places for subclasses to process stuff (should really use events)
 
