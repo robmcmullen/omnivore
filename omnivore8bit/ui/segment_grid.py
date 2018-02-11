@@ -28,7 +28,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
         MouseEventMixin.__init__(self, caret_handler)
         CharEventMixin.__init__(self, caret_handler)
         if table is None:
-            table = SegmentTable(segment)
+            table = self.calc_default_table(segment, view_params)
 
         # override class attributes in cg.HexGridWindow if present
         if grid_cls is not None:
@@ -39,6 +39,12 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
         cg.HexGridWindow.__init__(self, table, view_params, caret_handler, parent)
         self.automatic_refresh = False
 
+    def set_viewer_defaults(self):
+        pass
+
+    def calc_default_table(self, segment, view_params):
+        return SegmentTable(segment, view_params.hex_grid_width)
+
     @property
     def table(self):
         return self.main.table
@@ -46,6 +52,14 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
     @property
     def page_size(self):
         return self.main.sh * self.table.items_per_row
+
+    @property
+    def items_per_row(self):
+        return self.table.items_per_row
+
+    @items_per_row.setter
+    def items_per_row(self, val):
+        self.table.items_per_row = val
 
     ##### Caret handling
 

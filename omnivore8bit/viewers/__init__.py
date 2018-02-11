@@ -124,6 +124,7 @@ class SegmentViewer(HasTraits):
         if uuid:
             v.uuid = uuid
         control.uuid = v.uuid
+        control.set_viewer_defaults()
         v.create_post()
         print("control: %s, parent: %s uuid:%s" % (control.__class__.__name__, parent.__class__.__name__, v.uuid))
         return v
@@ -302,10 +303,10 @@ class SegmentViewer(HasTraits):
 
     @property
     def width(self):
-        return self.control.bytes_per_row
+        return self.control.items_per_row
 
     def set_width(self, width):
-        self.control.bytes_per_row = self.validate_width(width)
+        self.control.items_per_row = self.validate_width(width)
         wx.CallAfter(self.control.recalc_view)
 
     def validate_width(self, width):

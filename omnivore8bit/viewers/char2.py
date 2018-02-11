@@ -65,16 +65,25 @@ class AnticCharRenderer(cg.TableLineRenderer):
 class CharGridControl(SegmentGridControl):
     initial_zoom = 2
 
+    def calc_default_table(self, segment, view_params):
+        return SegmentTable(segment, view_params.map_width)
+
     def calc_line_renderer(self, table, view_params):
         if hasattr(self, 'segment_grid'):
             return AnticCharRenderer(table, self.segment_viewer)
         return SegmentGridControl.calc_line_renderer(self, table, view_params)
 
     def recalc_view(self):
-        table = SegmentTable(self.segment_viewer.linked_base.segment)
+        table = SegmentTable(self.segment_viewer.linked_base.segment, self.items_per_row)
         line_renderer = AnticCharRenderer(table, self.segment_viewer)
-        log.debug("recalculating %s" % self)
+        log.debug("recalculating %s; items_per_row=%d" % (self, self.items_per_row))
+        print("before table:", table)
+        print("before main:", self.main.table)
+        print("before line_renderer:", self.main.line_renderer.table)
         cg.HexGridWindow.recalc_view(self, table, self.segment_viewer.linked_base.cached_preferences, line_renderer)
+        print("after table:", table)
+        print("after main:", self.main.table)
+        print("after line_renderer:", self.main.line_renderer.table)
 
 
 class CharViewer(SegmentViewer):

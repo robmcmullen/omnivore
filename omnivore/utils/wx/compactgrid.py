@@ -323,7 +323,11 @@ class LineRenderer(object):
 
     def draw_caret(self, dc, line_num, col):
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        rect = self.col_to_rect(line_num, col)
+        try:
+            rect = self.col_to_rect(line_num, col)
+        except IndexError:
+            print(line_num, col)
+            import pdb; pdb.set_trace()
         pen = self.view_params.caret_pen
         dc.SetPen(pen)
         dc.DrawRectangle(rect)

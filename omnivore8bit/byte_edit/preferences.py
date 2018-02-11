@@ -30,11 +30,15 @@ class ByteEditPreferences(PreferencesHelper):
 
     map_width_low = 1
     map_width_high = 256
-    map_width = Range(low=map_width_low, high=map_width_high, value=16)
+    map_width = Range(low=map_width_low, high=map_width_high, value=17)
 
     bitmap_width_low = 1
     bitmap_width_high = 16
-    bitmap_width = Range(low=bitmap_width_low, high=bitmap_width_high, value=1)
+    bitmap_width = Range(low=bitmap_width_low, high=bitmap_width_high, value=3)
+
+    hex_grid_width_low = 1
+    hex_grid_width_high = 256
+    hex_grid_width = Range(low=hex_grid_width_low, high=hex_grid_width_high, value=14)
 
     # Font used for hex/disassembly
     text_font = Font(def_font)
@@ -182,6 +186,9 @@ class ByteEditPreferencesPane(PreferencesPane):
                       show_labels = False),
                HGroup(Item('bitmap_width', editor=RangeEditor(mode="spinner", is_float=False, low_name='bitmap_width_low', high_name='bitmap_width_high')),
                       Label('Default Bitmap Width (in bytes)'),
+                      show_labels = False),
+               HGroup(Item('hex_grid_width', editor=RangeEditor(mode="spinner", is_float=False, low_name='hex_grid_width_low', high_name='hex_grid_width_high')),
+                      Label('Default Hex Grid Width (in bytes)'),
                       show_labels = False),
                HGroup(Item('text_font'),
                       Label('Hex Display Font'),
