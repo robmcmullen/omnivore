@@ -920,7 +920,8 @@ class AuxWindow(wx.ScrolledCanvas):
         self.Bind(wx.EVT_ERASE_BACKGROUND, lambda evt: False)
 
     def on_size(self, evt):
-        self.SetFocus()
+        #self.SetFocus()  # why?
+        pass
 
     def set_font_metadata(self):
         dc = wx.MemoryDC()
