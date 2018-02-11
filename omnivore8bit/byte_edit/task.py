@@ -417,7 +417,7 @@ class ByteEditTask(FrameworkTask):
                 Group(
                     *data_actions,
                     id="a1", separator=True),
-                id='ViewerChoiceSubmenu1', separator=False, name="Add Data Viewer"),
+                id='ViewerChoiceSubmenu1', separator=True, name="Add Data Viewer"),
             SMenu(
                 Group(
                     *info_actions,
