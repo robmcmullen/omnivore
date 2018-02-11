@@ -175,10 +175,11 @@ class UdisFastTable(cg.HexTable):
                 text = ""
             else:
                 text = self.disassembly.format_data_list_bytes(index, line.num_bytes)
-        elif col == 2:
-            text = self.disassembly.format_comment(index, line)
         else:
             text = self.disassembly.format_instruction(index, line)
+            comment = self.disassembly.format_comment(index, line)
+            if comment:
+                text += " ; " + comment
         return text
 
     def get_style_override(self, row, col, style):
