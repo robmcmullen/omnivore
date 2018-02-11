@@ -654,6 +654,7 @@ class MultiClient(wx.Window):
         evt = MultiSashEvent(MultiSash.wxEVT_CLIENT_ACTIVATED, self)
         evt.SetChild(self.child)
         self.do_send_event(evt)
+        self.child.SetFocus()
         self.Refresh()
 
     def CalcSize(self,parent):

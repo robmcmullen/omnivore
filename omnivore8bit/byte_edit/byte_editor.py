@@ -172,8 +172,14 @@ class ByteEditor(FrameworkEditor):
             base.from_metadata_dict(b)
             linked_bases[base.uuid] = base
         self.create_viewers(layout, viewer_metadata, e, linked_bases)
-        self.task.machine_menu_changed = self.focused_viewer.machine
-        self.focused_viewer_changed_event = self.focused_viewer
+        viewer = None
+        if 'focused viewer' in e:
+            u = e['focused viewer']
+            viewer = self.find_viewer_by_uuid(u)
+        if viewer is None:
+            viewer = self.viewers[0]
+        print("setting focus to %s" % viewer)
+        self.set_focused_viewer(viewer)
 
     def to_metadata_dict(self, mdict, document):
         mdict["diff highlight"] = self.diff_highlight
@@ -206,9 +212,11 @@ class ByteEditor(FrameworkEditor):
         self.compare_to_baseline()
         self.can_resize_document = self.document.can_resize
 
-    # def init_view_properties(self):
-    #     if self.initial_font_segment:
-    #         self.focused_viewer.linked_base.machine.change_font_data(self.initial_font_segment)
+    def init_view_properties(self):
+        wx.CallAfter(self.force_focus, self.focused_viewer)
+        self.task.machine_menu_changed = self.focused_viewer.machine
+        # if self.initial_font_segment:
+        #     self.focused_viewer.linked_base.machine.change_font_data(self.initial_font_segment)
 
     def process_preference_change(self, prefs):
         log.debug("%s processing preferences change" % self.task.name)
@@ -503,7 +511,6 @@ class ByteEditor(FrameworkEditor):
         center_base = LinkedBase(editor=self)
         # self.linked_bases.append(center_base)
 
-        self.focused_viewer = None
         layer = 0
         viewers = viewer_metadata.keys()
         if layout:
@@ -513,7 +520,7 @@ class ByteEditor(FrameworkEditor):
             # except ValueError:
             #     log.warning("Unable to decode layout")
 
-        while self.focused_viewer is None:
+        while not self.viewers:
             for uuid in viewers:
                 log.debug("loading viewer: %s" % uuid)
                 e = viewer_metadata[uuid]
@@ -539,32 +546,27 @@ class ByteEditor(FrameworkEditor):
                 log.debug("created viewer %s (%s)" % (viewer.uuid, viewer.name))
 
                 self.viewers.append(viewer)
-                if self.focused_viewer is None:
-                    self.set_focused_viewer(viewer)
                 if not self.control.replace_by_uuid(viewer.control, viewer.uuid):
                     log.debug("viewer %s not found, adding in new pane" % viewer.uuid)
                     self.control.add(viewer.control, viewer.uuid)
 
-            if self.focused_viewer is None:
+            if not self.viewers:
                 # just load default hex editor if nothing has been created
                 viewers = ['hex']
                 first = False
 
-        print str(self.control.get_layout())
-        # if perspective:
-        #     # The following creates a new pane_info based on the layout...
-        #     self.mgr.LoadPerspective(perspective)
-
-        #     # ...so we have to move this newly created pane_info back onto the
-        #     # viewer
-        #     for v in self.viewers:
-        #         v.pane_info = self.mgr.GetPane(v.uuid)
         self.update_pane_names()
+
+    def find_viewer_by_uuid(self, u):
+        for v in self.viewers:
+            if u == v.uuid:
+                return v
+        return None
 
     #### wx event handlers
 
     def force_focus(self, viewer):
-        self.focus_uuid(viewer.uuid)
+        self.control.focus_uuid(viewer.uuid)
         self.update_pane_names()
         viewer.update_toolbar()
 
