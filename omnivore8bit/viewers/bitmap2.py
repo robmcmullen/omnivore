@@ -18,26 +18,15 @@ log = logging.getLogger(__name__)
 
 
 class BitmapImageCache(cg.DrawTextImageCache):
-    def __init__(self, segment_viewer, bytes_per_row):
-        self.cache = {}
-        self.segment_viewer = segment_viewer
-        self.bitmap_renderer = segment_viewer.machine.bitmap_renderer
-        self.bytes_per_row = self.bitmap_renderer.validate_bytes_per_row(bytes_per_row)
-        self.zoom_w = segment_viewer.control.zoom  # * self.bitmap_renderer.scale_width
-        self.zoom_h = segment_viewer.control.zoom  # * self.bitmap_renderer.scale_height
-        self.pixels_per_byte = self.bitmap_renderer.pixels_per_byte
-        self.w = self.zoom_w * self.bitmap_renderer.scale_width * self.pixels_per_byte
-        self.h = self.zoom_h * self.bitmap_renderer.scale_height
-
     def draw_item(self, parent, dc, rect, data, style):
         start = 0
         end = len(data)
         nr = 1
-        array = self.bitmap_renderer.get_image(parent.segment_viewer, end, nr, end, data, style)
+        array = parent.bitmap_renderer.get_image(parent.segment_viewer, end, nr, end, data, style)
         width = array.shape[1]
         height = array.shape[0]
         if width > 0 and height > 0:
-            array = intscale(array, self.zoom_h, self.zoom_w)
+            array = intscale(array, parent.zoom_h, parent.zoom_w)
             #print("bitmap: %d,%d,3 after scaling: %s" % (height, width, str(array.shape)))
             image = wx.Image(array.shape[1], array.shape[0])
             image.SetData(array.tostring())
@@ -49,8 +38,10 @@ class BitmapRenderer(cg.TableLineRenderer):
     default_image_cache = BitmapImageCache
 
     def __init__(self, parent, segment_viewer, image_cache=None):
-        image_cache = BitmapImageCache(segment_viewer, parent.table.items_per_row)
-        cg.LineRenderer.__init__(self, parent, image_cache.w, image_cache.h, parent.table.items_per_row, image_cache)
+        image_cache = BitmapImageCache()
+        w = parent.zoom_w * parent.scale_width * parent.pixels_per_byte
+        h = parent.zoom_h * parent.scale_height
+        cg.LineRenderer.__init__(self, parent, w, h, parent.items_per_row, image_cache)
 
     # BaseLineRenderer interface
 
@@ -74,13 +65,37 @@ class BitmapGridControl(SegmentGridControl):
     def calc_default_table(self, segment, view_params):
         return SegmentTable(segment, view_params.bitmap_width)
 
+    @property
+    def bitmap_renderer(self):
+        return self.segment_viewer.machine.bitmap_renderer
+
+    @property
+    def zoom_w(self):
+        return self.zoom  # * self.bitmap_renderer.scale_width
+
+    @property
+    def zoom_h(self):
+        return self.zoom  # * self.bitmap_renderer.scale_height
+
+    @property
+    def pixels_per_byte(self):
+        return self.bitmap_renderer.pixels_per_byte
+
+    @property
+    def scale_width(self):
+        return self.bitmap_renderer.scale_width
+
+    @property
+    def scale_height(self):
+        return self.bitmap_renderer.scale_height
+
     def calc_line_renderer(self):
         if hasattr(self, 'segment_viewer'):
             return BitmapRenderer(self, self.segment_viewer)
         return SegmentGridControl.calc_line_renderer(self)
 
     def recalc_view(self):
-        bytes_per_row = self.segment_viewer.machine.bitmap_renderer.validate_bytes_per_row(self.items_per_row)
+        bytes_per_row = self.segment_viewer.validate_width(self.items_per_row)
         table = SegmentTable(self.segment_viewer.linked_base.segment, bytes_per_row)
         line_renderer = self.calc_line_renderer()
         log.debug("recalculating %s" % self)

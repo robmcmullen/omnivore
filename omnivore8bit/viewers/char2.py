@@ -42,7 +42,7 @@ class AnticCharRenderer(cg.TableLineRenderer):
         image_cache = AnticCharImageCache()
         w = parent.font_renderer.char_bit_width * parent.zoom_w
         h = parent.font_renderer.char_bit_height * parent.zoom_h
-        cg.LineRenderer.__init__(self, parent, w, h, parent.table.items_per_row, image_cache)
+        cg.LineRenderer.__init__(self, parent, w, h, parent.items_per_row, image_cache)
 
     # BaseLineRenderer interface
 
