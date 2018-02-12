@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 
 class SegmentTable(cg.HexTable):
-    def __init__(self, segment, bytes_per_row=16):
+    def __init__(self, segment, bytes_per_row):
         self.segment = segment
         cg.HexTable.__init__(self, self.segment.data, self.segment.style, bytes_per_row, self.segment.start_addr, start_offset_mask=0x0f)
 
@@ -27,6 +27,11 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
     def __init__(self, parent, segment, caret_handler, view_params, grid_cls=None, line_renderer_cls=None, table=None):
         MouseEventMixin.__init__(self, caret_handler)
         CharEventMixin.__init__(self, caret_handler)
+
+        self.view_params = view_params
+        self.items_per_row = None
+        self.set_viewer_defaults()
+
         if table is None:
             table = self.calc_default_table(segment, view_params)
 
@@ -46,20 +51,8 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
         return SegmentTable(segment, view_params.hex_grid_width)
 
     @property
-    def table(self):
-        return self.main.table
-
-    @property
     def page_size(self):
         return self.main.sh * self.table.items_per_row
-
-    @property
-    def items_per_row(self):
-        return self.table.items_per_row
-
-    @items_per_row.setter
-    def items_per_row(self, val):
-        self.table.items_per_row = val
 
     ##### Caret handling
 
@@ -108,7 +101,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
         return self.get_status_at_index(index)
 
     def recalc_view(self):
-        table = SegmentTable(self.segment_viewer.linked_base.segment)
+        table = SegmentTable(self.segment_viewer.linked_base.segment, self.items_per_row)
         log.debug("recalculating %s" % self)
         cg.HexGridWindow.recalc_view(self, table, self.segment_viewer.linked_base.cached_preferences)
 

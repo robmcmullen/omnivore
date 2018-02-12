@@ -29,11 +29,11 @@ class BitmapImageCache(cg.DrawTextImageCache):
         self.w = self.zoom_w * self.bitmap_renderer.scale_width * self.pixels_per_byte
         self.h = self.zoom_h * self.bitmap_renderer.scale_height
 
-    def draw_item(self, dc, rect, data, style):
+    def draw_item(self, parent, dc, rect, data, style):
         start = 0
         end = len(data)
         nr = 1
-        array = self.bitmap_renderer.get_image(self.segment_viewer, end, nr, end, data, style)
+        array = self.bitmap_renderer.get_image(parent.segment_viewer, end, nr, end, data, style)
         width = array.shape[1]
         height = array.shape[0]
         if width > 0 and height > 0:
@@ -48,19 +48,18 @@ class BitmapImageCache(cg.DrawTextImageCache):
 class BitmapRenderer(cg.TableLineRenderer):
     default_image_cache = BitmapImageCache
 
-    def __init__(self, table, segment_viewer, image_cache=None):
-        self.table = table
-        image_cache = BitmapImageCache(segment_viewer, table.items_per_row)
-        cg.LineRenderer.__init__(self, image_cache.w, image_cache.h, table.items_per_row, segment_viewer.linked_base.cached_preferences, image_cache)
+    def __init__(self, parent, segment_viewer, image_cache=None):
+        image_cache = BitmapImageCache(segment_viewer, parent.table.items_per_row)
+        cg.LineRenderer.__init__(self, parent, image_cache.w, image_cache.h, parent.table.items_per_row, image_cache)
 
     # BaseLineRenderer interface
 
-    def draw_line(self, dc, line_num, col, index, last_index):
-        t = self.table
+    def draw_line(self, parent, dc, line_num, col, index, last_index):
+        t = parent.table
         rect = self.col_to_rect(line_num, col)
         data = t.data[index:last_index]
         style = t.style[index:last_index]
-        self.image_cache.draw_item(dc, rect, data, style)
+        self.image_cache.draw_item(parent, dc, rect, data, style)
 
 
 class BitmapGridControl(SegmentGridControl):
@@ -69,21 +68,21 @@ class BitmapGridControl(SegmentGridControl):
     def set_viewer_defaults(self):
         old = self.items_per_row
         self.items_per_row = self.view_params.bitmap_width
-        if self.items_per_row != old:
+        if old is not None and self.items_per_row != old:
             self.recalc_view()
 
     def calc_default_table(self, segment, view_params):
         return SegmentTable(segment, view_params.bitmap_width)
 
-    def calc_line_renderer(self, table, view_params):
-        if hasattr(self, 'segment_grid'):
-            return BitmapRenderer(table, self.segment_viewer)
-        return SegmentGridControl.calc_line_renderer(self, table, view_params)
+    def calc_line_renderer(self):
+        if hasattr(self, 'segment_viewer'):
+            return BitmapRenderer(self, self.segment_viewer)
+        return SegmentGridControl.calc_line_renderer(self)
 
     def recalc_view(self):
         bytes_per_row = self.segment_viewer.machine.bitmap_renderer.validate_bytes_per_row(self.items_per_row)
         table = SegmentTable(self.segment_viewer.linked_base.segment, bytes_per_row)
-        line_renderer = BitmapRenderer(table, self.segment_viewer)
+        line_renderer = self.calc_line_renderer()
         log.debug("recalculating %s" % self)
         cg.HexGridWindow.recalc_view(self, table, self.segment_viewer.linked_base.cached_preferences, line_renderer)
 

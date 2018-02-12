@@ -353,7 +353,7 @@ class DebugLineRenderer(LineRenderer):
 class TableLineRenderer(LineRenderer):
     def __init__(self, parent, chars_per_cell, image_cache=None, widths=None, col_labels=None):
         w, h = parent.view_params.calc_cell_size_in_pixels(chars_per_cell)
-        LineRenderer.__init__(self, parent, w, h, table.items_per_row, image_cache, widths, col_labels)
+        LineRenderer.__init__(self, parent, w, h, parent.table.items_per_row, image_cache, widths, col_labels)
 
     def calc_column_range(self, parent, line_num, col, last_col):
         t = parent.table
@@ -531,7 +531,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.fully_visible_cells = int(w / self.cell_pixel_width)
         self.visible_rows = int((h + self.cell_pixel_height - 1) / self.cell_pixel_height)
         self.visible_cells = int((w + self.cell_pixel_width - 1) / self.cell_pixel_width)
-        # print("fully visible: %d,%d including partial: %d,%d" % (self.fully_visible_rows, self.fully_visible_cells, self.visible_rows, self.visible_cells))
+        print("fully visible: %d,%d including partial: %d,%d" % (self.fully_visible_rows, self.fully_visible_cells, self.visible_rows, self.visible_cells))
 
     def on_paint(self, evt):
         dc = wx.PaintDC(self)
@@ -1301,7 +1301,7 @@ class HexGridWindow(wx.ScrolledWindow):
         self.main.set_data(data, *args, **kwargs)
 
     def set_caret_index(self, rel_pos, flags, refresh=True):
-        r, c = self.main.table.index_to_row_col(rel_pos)
+        r, c = self.table.index_to_row_col(rel_pos)
         dummy_flags = self.create_mouse_event_flags()
         self.main.ensure_visible(r, c, dummy_flags)
         if self.automatic_refresh or refresh:
@@ -1311,10 +1311,10 @@ class HexGridWindow(wx.ScrolledWindow):
                 self.refresh_view()
 
     def draw_carets(self, dc):
-        main = self.main
         for index in self.caret_handler.iter_caret_indexes():
-            r, c = main.table.index_to_row_col(index)
-            main.line_renderer.draw_caret(self, dc, r, c)
+            r, c = self.table.index_to_row_col(index)
+            print(self, self.table, index, r, c)
+            self.line_renderer.draw_caret(self, dc, r, c)
 
     ##### Keyboard movement implementations
 
