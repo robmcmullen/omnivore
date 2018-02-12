@@ -29,9 +29,9 @@ class Caret(object):
 
     def __eq__(self, other):
         if not hasattr(self, 'index'):
-            print("not a Caret object")
+            log.error("not a Caret object")
             return False
-        print("comparing caret indexes:", self.index, other.index)
+        log.debug("comparing caret indexes:", self.index, other.index)
         return self.index == other.index
 
     def __ne__(self, other):
@@ -66,10 +66,10 @@ class CaretList(list):
 
     def __eq__(self, other):
         if len(self) != len(other):
-            print("list size different! ", len(self), len(other))
+            #print("list size different! ", len(self), len(other))
             return False
         for c1, c2 in zip(self, other):
-            print("comparing ", c1, c2)
+            #print("comparing ", c1, c2)
             if c1 != c2:
                 return False
         return True
@@ -103,12 +103,12 @@ class CaretList(list):
         moved by the compactgrid before hitting the process_caret_flags.
         """
         self[0:-1] = old_list[:]
-        print("old_carets: %s added: %s" % (str(old_list), str(self)))
+        log.debug("old_carets: %s added: %s" % (str(old_list), str(self)))
 
     def remove_old_carets(self):
         """Remove everything but the current caret"""
         self[0:-1] = []
-        print("removed all but %s" % (str(self)))
+        log.debug("removed all but %s" % (str(self)))
 
     def validate(self, caret_handler):
         found = set()
@@ -262,12 +262,12 @@ class CaretHandler(HasTraits):
     def set_anchors(self, start, end):
         self.anchor_start_index = self.anchor_initial_start_index = start
         self.anchor_end_index = self.anchor_initial_end_index = end
-        print("set anchors: initial to: %d,%d" % (start, end))
+        log.debug("set anchors: initial to: %d,%d" % (start, end))
 
     def clear_selection(self):
         index = self.carets.current.index
         self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = index
-        print("clear_selection: initial to: %d,%d" % (index, index))
+        log.debug("clear_selection: initial to: %d,%d" % (index, index))
         # if index > 0:
         #     import pdb; pdb.set_trace()
         self.selected_ranges = []

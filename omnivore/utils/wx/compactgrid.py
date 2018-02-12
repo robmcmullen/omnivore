@@ -388,7 +388,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         wx.ScrolledCanvas.__init__(self, parent, -1, style=wx.WANTS_CHARS)
         self.parent = parent
         self.offscreen_scroll_divisor = 3
-        self.SetBackgroundColour(wx.RED)
+        #self.SetBackgroundColour(wx.RED)
         self.event_row = self.event_col = self.event_modifiers = None
         self.next_scroll_time = 0
         self.last_mouse_event = None
@@ -1236,7 +1236,7 @@ class HexGridWindow(wx.ScrolledWindow):
         self.main.Scroll(col, row)
         self.left.Scroll(0, row)
         self.top.Scroll(col, 0)
-        print("viewport: %d,%d" % (row, col))
+        scroll_log.debug("viewport: %d,%d" % (row, col))
         # if self.automatic_refresh:
         #     self.Refresh()
 
@@ -1313,7 +1313,6 @@ class HexGridWindow(wx.ScrolledWindow):
     def draw_carets(self, dc):
         for index in self.caret_handler.iter_caret_indexes():
             r, c = self.table.index_to_row_col(index)
-            print(self, self.table, index, r, c)
             self.line_renderer.draw_caret(self, dc, r, c)
 
     ##### Keyboard movement implementations
