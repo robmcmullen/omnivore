@@ -26,9 +26,8 @@ def ForceBetween(min, val, max):
 
 
 class DrawTextImageCache(object):
-    def __init__(self, view_params, use_cache=True):
+    def __init__(self, use_cache=True):
         self.cache = {}
-        self.view_params = view_params
         if use_cache:
             self.draw_text = self.draw_cached_text
         else:
@@ -42,7 +41,7 @@ class DrawTextImageCache(object):
         dc.SetPen(wx.TRANSPARENT_PEN)
         dc.DrawRectangle(rect)
 
-    def draw_cached_text(self, dc, rect, text, style):
+    def draw_cached_text(self, parent, dc, rect, text, style):
         k = (text, style, rect.width, rect.height)
         draw_log.debug(str(k))
         try:
@@ -52,16 +51,16 @@ class DrawTextImageCache(object):
             mdc = wx.MemoryDC()
             mdc.SelectObject(bmp)
             r = wx.Rect(0, 0, rect.width, rect.height)
-            self.draw_text_to_dc(mdc, r, r, text, style)
+            self.draw_text_to_dc(parent, mdc, r, r, text, style)
             del mdc  # force the bitmap painting by deleting the gc
             self.cache[k] = bmp
         dc.DrawBitmap(bmp, rect.x, rect.y)
 
-    def draw_uncached_text(self, dc, rect, text, style):
+    def draw_uncached_text(self, parent, dc, rect, text, style):
         self.draw_text_to_dc(dc, rect, rect, text, style)
 
-    def draw_text_to_dc(self, dc, bg_rect, fg_rect, text, style):
-        v = self.view_params
+    def draw_text_to_dc(self, parent, dc, bg_rect, fg_rect, text, style):
+        v = parent.view_params
         dc.SetPen(wx.TRANSPARENT_PEN)
         if style & selected_bit_mask:
             dc.SetBrush(v.selected_brush)
@@ -93,32 +92,28 @@ class DrawTextImageCache(object):
         dc.DrawText(text, fg_rect.x, fg_rect.y)
         dc.DestroyClippingRegion()
 
-    def draw_item(self, dc, rect, text, style, widths, col):
+    def draw_item(self, parent, dc, rect, text, style, widths, col):
         draw_log.debug(str((text, rect)))
         for i, c in enumerate(text):
             s = style[i]
-            self.draw_text(dc, rect, c, s)
+            self.draw_text(parent, dc, rect, c, s)
             rect.x += widths[i]
 
 
 class DrawTableCellImageCache(DrawTextImageCache):
-    def __init__(self, table, view_params):
-        DrawTextImageCache.__init__(self, view_params, False)
-        self.table = table
-
-    def draw_item(self, dc, rect, items, style, widths, col):
+    def draw_item(self, parent, dc, rect, items, style, widths, col):
         for i, item in enumerate(items):
             s = style[i]
-            text = self.table.calc_display_text(col, item)
+            text = parent.table.calc_display_text(col, item)
             w = widths[i]
             rect.width = w
-            self.draw_text(dc, rect, text, s)
+            self.draw_text(parent, dc, rect, text, s)
             rect.x += w
             col += 1
 
 
 class HexByteImageCache(DrawTextImageCache):
-    def draw_cached_text(self, dc, rect, text, style):
+    def draw_cached_text(self, parent, dc, rect, text, style):
         k = (text, style, rect.width, rect.height)
         try:
             bmp = self.cache[k]
@@ -127,19 +122,19 @@ class HexByteImageCache(DrawTextImageCache):
             mdc = wx.MemoryDC()
             mdc.SelectObject(bmp)
             t = "%02x" % text
-            padding = self.view_params.pixel_width_padding
+            padding = parent.view_params.pixel_width_padding
             r = wx.Rect(padding, 0, rect.width - (padding * 2), rect.height)
             bg_rect = wx.Rect(0, 0, rect.width, rect.height)
-            self.draw_text_to_dc(mdc, bg_rect, r, t, style)
+            self.draw_text_to_dc(parent, mdc, bg_rect, r, t, style)
             del mdc  # force the bitmap painting by deleting the gc
             self.cache[k] = bmp
         dc.DrawBitmap(bmp, rect.x, rect.y)
 
-    def draw_item(self, dc, rect, data, style, widths, col):
+    def draw_item(self, parent, dc, rect, data, style, widths, col):
         draw_log.debug(str((rect, data)))
         for i, c in enumerate(data):
             draw_log.debug(str((i, c, rect)))
-            self.draw_text(dc, rect, c, style[i])
+            self.draw_text(parent, dc, rect, c, style[i])
             rect.x += widths[i]
 
 
@@ -219,14 +214,13 @@ class TableViewParams(object):
 class LineRenderer(object):
     default_image_cache = DrawTextImageCache
 
-    def __init__(self, w, h, num_cols, view_params, image_cache=None, widths=None, col_labels=None):
+    def __init__(self, parent, w, h, num_cols, image_cache=None, widths=None, col_labels=None):
         self.w = w
         self.h = h
         self.num_cols = num_cols
         if image_cache is None:
-            image_cache = view_params.calc_image_cache(self.default_image_cache)
+            image_cache = parent.view_params.calc_image_cache(self.default_image_cache)
         self.image_cache = image_cache
-        self.view_params = view_params
         self.set_cell_metadata(widths)
         self.col_label_text = self.calc_col_labels(col_labels)
 
@@ -256,7 +250,7 @@ class LineRenderer(object):
             labels = ["%x" % x for x in range(len(self.col_widths))]
         return labels
 
-    def get_col_labels(self, starting_cell, num_cells):
+    def get_col_labels(self, parent, starting_cell, num_cells):
         starting_col = self.cell_to_col[starting_cell]
         last_cell = min(starting_cell + num_cells, self.num_cells) - 1
         last_col = self.cell_to_col[last_cell]
@@ -267,14 +261,14 @@ class LineRenderer(object):
                 text = text[1:]
                 offset = 0
             else:
-                width = self.view_params.calc_text_width(text)
+                width = parent.view_params.calc_text_width(text)
                 offset = (rect.width - width)/2  # center text in cell
             yield rect, offset, text
 
-    def calc_label_size(self):
+    def calc_label_size(self, parent):
         t0 = self.col_label_text[0]
         t1 = self.col_label_text[-1]
-        w = max(self.view_params.calc_text_width(t0), self.view_params.calc_text_width(t1))
+        w = max(parent.view_params.calc_text_width(t0), parent.view_params.calc_text_width(t1))
         return w, self.h
 
     @property
@@ -298,7 +292,7 @@ class LineRenderer(object):
         rect = wx.Rect(x, y, w, self.h)
         return rect
 
-    def draw(self, dc, line_num, start_cell, num_cells):
+    def draw(self, parent, dc, line_num, start_cell, num_cells):
         """
         """
         col = self.cell_to_col[start_cell]
@@ -306,29 +300,29 @@ class LineRenderer(object):
         last_col = self.cell_to_col[last_cell - 1] + 1
 
         try:
-            col, index, last_index = self.calc_column_range(line_num, col, last_col)
+            col, index, last_index = self.calc_column_range(parent, line_num, col, last_col)
         except IndexError:
             return
-        self.draw_line(dc, line_num, col, index, last_index)
+        self.draw_line(parent, dc, line_num, col, index, last_index)
 
-    def calc_column_range(self, line_num, col, last_col):
+    def calc_column_range(self, parent, line_num, col, last_col):
         raise NotImplementedError("override to produce column number and start and end indexes")
 
-    def draw_line(self, dc, line_num, col, index, last_index):
-        t = self.table
+    def draw_line(self, parent, dc, line_num, col, index, last_index):
+        t = parent.table
         rect = self.col_to_rect(line_num, col)
         data = t.data[index:last_index]
         style = t.style[index:last_index]
-        self.image_cache.draw_item(dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)], col)
+        self.image_cache.draw_item(parent, dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)], col)
 
-    def draw_caret(self, dc, line_num, col):
+    def draw_caret(self, parent, dc, line_num, col):
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
         try:
             rect = self.col_to_rect(line_num, col)
         except IndexError:
             print(line_num, col)
             import pdb; pdb.set_trace()
-        pen = self.view_params.caret_pen
+        pen = parent.view_params.caret_pen
         dc.SetPen(pen)
         dc.DrawRectangle(rect)
         rect.Inflate(1, 1)
@@ -344,26 +338,25 @@ class DebugLineRenderer(LineRenderer):
         w, h = view_params.calc_cell_size_in_pixels(chars_per_cell)
         LineRenderer.__init__(self, w, h, len(widths), view_params, image_cache, widths, col_labels)
 
-    def calc_column_range(self, line_num, col, last_col):
+    def calc_column_range(self, parent, line_num, col, last_col):
         return col, 0, last_col - col
 
-    def draw_line(self, dc, line_num, col, index, last_index):
+    def draw_line(self, parent, dc, line_num, col, index, last_index):
         t = self.table
         rect = self.col_to_rect(line_num, col)
         num = last_index - index
         data = ["r%dc%d" % (line_num, c + col) for c in range(num)]
         style = [0] * num
-        self.image_cache.draw_item(dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)], col)
+        self.image_cache.draw_item(parent, dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)], col)
 
 
 class TableLineRenderer(LineRenderer):
-    def __init__(self, table, view_params, chars_per_cell, image_cache=None, widths=None, col_labels=None):
-        self.table = table
-        w, h = view_params.calc_cell_size_in_pixels(chars_per_cell)
-        LineRenderer.__init__(self, w, h, table.items_per_row, view_params, image_cache, widths, col_labels)
+    def __init__(self, parent, chars_per_cell, image_cache=None, widths=None, col_labels=None):
+        w, h = parent.view_params.calc_cell_size_in_pixels(chars_per_cell)
+        LineRenderer.__init__(self, parent, w, h, table.items_per_row, image_cache, widths, col_labels)
 
-    def calc_column_range(self, line_num, col, last_col):
-        t = self.table
+    def calc_column_range(self, parent, line_num, col, last_col):
+        t = parent.table
         row_start = (line_num * t.items_per_row) - t.start_offset
         index = row_start + col
         if index < 0:
@@ -380,19 +373,18 @@ class TableLineRenderer(LineRenderer):
 class HexLineRenderer(TableLineRenderer):
     default_image_cache = HexByteImageCache
 
-    def draw_line(self, dc, line_num, col, index, last_index):
-        t = self.table
+    def draw_line(self, parent, dc, line_num, col, index, last_index):
+        t = parent.table
         rect = self.col_to_rect(line_num, col)
         data = t.data[index:last_index]
         style = t.style[index:last_index]
-        self.image_cache.draw_item(dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)], col)
+        self.image_cache.draw_item(parent, dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)], col)
 
 
 class FixedFontDataWindow(wx.ScrolledCanvas):
     refresh_count = 0
 
-    def __init__(self, parent, settings_obj, table, view_params, line_renderer):
-
+    def __init__(self, parent):
         wx.ScrolledCanvas.__init__(self, parent, -1, style=wx.WANTS_CHARS)
         self.parent = parent
         self.offscreen_scroll_divisor = 3
@@ -402,7 +394,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.last_mouse_event = None
         self.scroll_timer = wx.Timer(self)
         self.scroll_delay = 50  # milliseconds
-        self.recalc_view(table, view_params, line_renderer)
+        self.recalc_view()
 
         self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.Bind(wx.EVT_MOTION, self.on_motion)
@@ -416,44 +408,36 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         else:
             self.Bind(wx.EVT_ERASE_BACKGROUND, lambda evt: False)
 
-    def recalc_view(self, table=None, view_params=None, line_renderer=None):
-        if view_params is not None:
-            self.view_params = view_params
-        if table is None:
-            table = self.table
-        self.SetFocus()
-        self.set_table(table)
-        if line_renderer is None:
-            line_renderer = self.line_renderer
-        self.set_renderer(line_renderer)
-        self.line_renderer.table = table
+    def recalc_view(self):
         self.calc_visible()
 
-    def set_table(self, table):
-        self.table = table
+    @property
+    def table(self):
+        return self.parent.table
 
-    def set_renderer(self, renderer):
-        self.line_renderer = renderer
+    @property
+    def line_renderer(self):
+        return self.parent.line_renderer
 
     @property
     def cell_width_in_pixels(self):
-        return self.line_renderer.w
+        return self.parent.line_renderer.w
 
     @property
     def cell_height_in_pixels(self):
-        return self.line_renderer.h
+        return self.parent.line_renderer.h
 
     @property
     def lines(self):
-        return self.table.data
+        return self.parent.table.data
 
     @property
     def style(self):
-        return self.table.style
+        return self.parent.table.style
 
     @property
     def page_size(self):
-        return self.visible_rows * self.table.items_per_row
+        return self.visible_rows * self.parent.table.items_per_row
 
     @property
     def fully_visible_area(self):  # r,c -> r,c
@@ -560,7 +544,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
 
         line_num = self.first_visible_row
         for line in range(line_num, min(line_num + self.visible_rows, self.table.num_rows)):
-            self.line_renderer.draw(dc, line, self.first_visible_cell, self.visible_cells)
+            self.line_renderer.draw(self.parent, dc, line, self.first_visible_cell, self.visible_cells)
         self.parent.draw_carets(dc)
         if debug_refresh:
             dc.DrawText("%d" % self.refresh_count, 0, 0)
@@ -794,7 +778,7 @@ class FixedFontMultiCellNumpyWindow(FixedFontNumpyWindow):
         #dc.DrawText(t, x * self.cell_width_in_pixels, y * self.cell_height_in_pixels)
         draw_log.debug("DRAWEDIT: %d %d %d" % (start_x, show_at_x, x_width))
         rect = wx.Rect(show_at_x * self.cell_width_in_pixels, y * self.cell_height_in_pixels, x_width * self.cell_width_in_pixels, self.cell_height_in_pixels)
-        self.table.hex_renderer.draw(dc, rect, [t], [style], x_width)
+        self.table.hex_renderer.draw(self.parent, dc, rect, [t], [style], x_width)
 
     def DrawLine(self, sy, line, dc):
         if self.IsLine(line):
@@ -912,9 +896,9 @@ class FixedFontMixedMultiCellNumpyWindow(FixedFontMultiCellNumpyWindow):
 
 
 class AuxWindow(wx.ScrolledCanvas):
-    def __init__(self, parent, main):
+    def __init__(self, parent):
         wx.ScrolledCanvas.__init__(self, parent, -1)
-        self.main = main
+        self.parent = parent
         self.set_font_metadata()
         self.isDrawing = False
         self.EnableScrolling(False, False)
@@ -930,13 +914,13 @@ class AuxWindow(wx.ScrolledCanvas):
 
     def set_font_metadata(self):
         dc = wx.MemoryDC()
-        dc.SetFont(self.main.view_params.header_font)
+        dc.SetFont(self.parent.view_params.header_font)
         self.char_width = dc.GetCharWidth()
         self.char_height = max(dc.GetCharHeight(), 2)
         self.row_skip = self.calc_row_skip()
 
     def calc_row_skip(self):
-        row_height = self.main.line_renderer.h
+        row_height = self.parent.line_renderer.h
         if row_height < self.char_height:
             skip = (self.char_height + row_height - 1) // row_height
         else:
@@ -978,7 +962,7 @@ class RowLabelWindow(AuxWindow):
     refresh_count = 0
 
     def DrawVertText(self, t, line, dc, skip=1):
-        y = line * self.main.line_renderer.h
+        y = line * self.parent.line_renderer.h
         #print("row: y=%d line=%d text=%s" % (y, line, t))
         if skip > 1:
             w, _ = self.GetClientSize()
@@ -989,12 +973,12 @@ class RowLabelWindow(AuxWindow):
         if odc is None:
             odc = wx.ClientDC(self)
 
-        s = self.main
+        s = self.parent
         #dc = wx.BufferedDC(odc)
         dc = odc
-        _, row = s.parent.GetViewStart()
+        _, row = s.GetViewStart()
         if dc.IsOk():
-            px, py = s.parent.CalcUnscrolledPosition(0, 0)
+            px, py = s.CalcUnscrolledPosition(0, 0)
             dc.SetLogicalOrigin(0, py)
             dc.SetFont(s.view_params.header_font)
             dc.SetBackgroundMode(wx.SOLID)
@@ -1003,11 +987,11 @@ class RowLabelWindow(AuxWindow):
             dc.SetBackground(wx.Brush(s.view_params.row_header_bg_color))
             dc.SetPen(wx.Pen(s.view_params.text_color))
             dc.Clear()
-            for header in s.table.get_row_label_text(row, s.visible_rows, self.row_skip):
+            for header in s.table.get_row_label_text(row, s.main.visible_rows, self.row_skip):
                 self.DrawVertText(header, row, dc, self.row_skip)
                 row += self.row_skip
             if debug_refresh:
-                _, row = s.parent.GetViewStart()
+                _, row = s.GetViewStart()
                 self.DrawVertText("%d" % self.refresh_count, row, dc)
                 self.refresh_count += 1
 
@@ -1015,9 +999,9 @@ class ColLabelWindow(AuxWindow):
     refresh_count = 0
 
     def DrawHorzText(self, t, cell, num_cells, dc):
-        lr = self.main.line_renderer
+        lr = self.parent.line_renderer
         rect = lr.cell_to_rect(0, cell, num_cells)
-        width = self.main.view_params.calc_text_width(t)
+        width = self.parent.view_params.calc_text_width(t)
         offset = (rect.width - width)/2  # center text in cell
         dc.DrawText(t, rect.x + offset, 0)
 
@@ -1027,10 +1011,10 @@ class ColLabelWindow(AuxWindow):
 
         #dc = wx.BufferedDC(odc)
         dc = odc
-        s = self.main
-        cell, _ = s.parent.GetViewStart()
+        s = self.parent
+        cell, _ = s.GetViewStart()
         if dc.IsOk():
-            px, py = s.parent.CalcUnscrolledPosition(0, 0)
+            px, py = s.CalcUnscrolledPosition(0, 0)
             dc.SetLogicalOrigin(px, 0)
             dc.SetFont(s.view_params.header_font)
             dc.SetBackgroundMode(wx.SOLID)
@@ -1038,10 +1022,10 @@ class ColLabelWindow(AuxWindow):
             dc.SetTextForeground(s.view_params.text_color)
             dc.SetBackground(wx.Brush(s.view_params.col_header_bg_color))
             dc.Clear()
-            for rect, offset, header in s.line_renderer.get_col_labels(cell, s.visible_cells):
+            for rect, offset, header in s.line_renderer.get_col_labels(s, cell, s.main.visible_cells):
                 dc.DrawText(header, rect.x + offset, 0)
             if debug_refresh:
-                cell, _ = s.parent.GetViewStart()
+                cell, _ = s.GetViewStart()
                 self.DrawHorzText("%d" % self.refresh_count, cell, 1, dc)
                 self.refresh_count += 1
 
@@ -1095,14 +1079,15 @@ class HexGridWindow(wx.ScrolledWindow):
         self.automatic_refresh = True
 
         self.update_dependents = self.update_dependents_null
-        initial_line_renderer = self.calc_line_renderer(table, view_params)
-        self.col_label_renderer = initial_line_renderer
-        self.row_label_renderer = initial_line_renderer
+        self.table = table
         self.view_params = view_params
+        self.line_renderer = self.calc_line_renderer()
+        self.col_label_renderer = self.line_renderer
+        self.row_label_renderer = self.line_renderer
         self.caret_handler = caret_handler
-        self.main = self.calc_main_grid(table, self.view_params, initial_line_renderer)
-        self.top = ColLabelWindow(self, self.main)
-        self.left = RowLabelWindow(self, self.main)
+        self.main = self.calc_main_grid()
+        self.top = ColLabelWindow(self)
+        self.left = RowLabelWindow(self)
         self.SetTargetWindow(self.main)
         self.want_col_header = True
         self.want_row_header = True
@@ -1118,11 +1103,11 @@ class HexGridWindow(wx.ScrolledWindow):
         self.left.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
         self.update_dependents = self.update_dependents_post_init
 
-    def calc_line_renderer(self, table, view_params):
-        return HexLineRenderer(table, view_params, 2)
+    def calc_line_renderer(self):
+        return HexLineRenderer(self, 2)
 
-    def calc_main_grid(self, table, view_params, line_renderer):
-        return FixedFontNumpyWindow(self, self, table, view_params, line_renderer)
+    def calc_main_grid(self):
+        return FixedFontNumpyWindow(self)
 
     def map_events(self):
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
@@ -1132,7 +1117,13 @@ class HexGridWindow(wx.ScrolledWindow):
         self.main.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
         self.main.Bind(wx.EVT_CHAR, self.on_char)
 
-    def recalc_view(self, *args, **kwargs):
+    def recalc_view(self, table=None, view_params=None, line_renderer=None, *args, **kwargs):
+        if view_params is not None:
+            self.view_params = view_params
+        if table is not None:
+            self.table = table
+        if line_renderer is not None:
+            self.line_renderer = line_renderer
         self.main.recalc_view(*args, **kwargs)
         self.calc_header_sizes()
         self.calc_scrolling()
@@ -1188,7 +1179,7 @@ class HexGridWindow(wx.ScrolledWindow):
             wx.CallAfter(focused_before.SetFocus)
 
     def calc_header_sizes(self):
-        w, h = self.col_label_renderer.calc_label_size()
+        w, h = self.col_label_renderer.calc_label_size(self)
         top_height = h + self.view_params.col_label_border_width
         w = self.main.table.calc_row_label_width(self.view_params)
         left_width = w + self.view_params.row_label_border_width
@@ -1323,7 +1314,7 @@ class HexGridWindow(wx.ScrolledWindow):
         main = self.main
         for index in self.caret_handler.iter_caret_indexes():
             r, c = main.table.index_to_row_col(index)
-            main.line_renderer.draw_caret(dc, r, c)
+            main.line_renderer.draw_caret(self, dc, r, c)
 
     ##### Keyboard movement implementations
 
@@ -1394,12 +1385,12 @@ class DisassemblyTable(HexTable):
 
 
 class NonUniformGridWindow(HexGridWindow):
-    def calc_main_grid(self, table, view_params, line_renderer):
-        return FixedFontMultiCellNumpyWindow(self, self, table, view_params, line_renderer)
+    def calc_main_grid(self):
+        return FixedFontMultiCellNumpyWindow(self)
 
-    def calc_line_renderer(self, table, view_params):
-        image_cache = DrawTableCellImageCache(table, view_params)
-        return TableLineRenderer(table, view_params, 2, image_cache=image_cache, widths=[5,1,2,4,8])
+    def calc_line_renderer(self):
+        image_cache = DrawTableCellImageCache(self)
+        return TableLineRenderer(self, 2, image_cache=image_cache, widths=[5,1,2,4,8])
 
 
        
