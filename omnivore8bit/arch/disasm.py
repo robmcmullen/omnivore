@@ -172,6 +172,9 @@ class BaseDisassembler(object):
         self.use_labels = self.start_addr > 0
         return self.info
 
+    def is_current(self, segment):
+        return self.segment == segment and self.start_addr == segment.start_addr
+
     @property
     def pc_label_cache(self):
         if self._pc_label_cache is None:

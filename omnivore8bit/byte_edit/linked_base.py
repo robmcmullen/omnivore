@@ -506,7 +506,7 @@ class LinkedBase(CaretHandler):
 
     def get_current_disassembly(self, machine):
         d = self.disassembler_cache.get(machine.disassembler.name, None)
-        if d is None:
+        if d is None or not d.is_current(self.segment):
             log.debug("creating disassembler for %s" % machine.disassembler.name)
             d = machine.get_disassembler(self.task.hex_grid_lower_case, self.task.assembly_lower_case, self.document.document_memory_map, self.segment.memory_map)
             for i, name in iter_disasm_styles():

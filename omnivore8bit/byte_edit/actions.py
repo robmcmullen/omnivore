@@ -814,11 +814,10 @@ class SetSegmentOriginAction(EditorAction):
 
     """
     name = 'Set Segment Origin'
-    segment_number = Int
 
     def perform(self, event):
         e = self.active_editor
-        segment = e.document.segments[self.segment_number]
+        segment = e.segment
         org = prompt_for_hex(e.window.control, "Enter origin address for %s\n(default hex, prefix with # for decimal, %% for binary)" % segment.name, "Set Segment Origin")
         if org is not None:
             cmd = SetSegmentOriginCommand(segment, org)
