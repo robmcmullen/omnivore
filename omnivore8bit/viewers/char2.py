@@ -93,6 +93,14 @@ class CharViewer(SegmentViewer):
 
     has_font = True
 
+    has_width = True
+
+    width_text = "width in characters"
+
+    has_zoom = True
+
+    zoom_text = "character zoom factor"
+
     @property
     def window_title(self):
         return self.machine.font_renderer.name + ", " + self.machine.font_mapping.name

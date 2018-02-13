@@ -238,61 +238,33 @@ class BitmapRendererAction(ViewerAction):
         self.checked = self.viewer.machine.bitmap_renderer == self.bitmap_renderer
 
 
-class BitmapWidthAction(ViewerAction):
-    """Set the number of bytes per row of the bitmap display, which in turn
-    sets the width in pixels.
+class ViewerWidthAction(ViewerAction):
+    """Set the number of items per row of the bitmap display. The width can
+    mean different things for different viewers (i.e. bitmap widths are in
+    bytes, not pixels), so prompt is based on the viewer.
     """
-    name = "Bitmap Width"
-    enabled_name = 'has_bitmap'
+    name = "Width"
+    enabled_name = 'has_width'
 
     def perform(self, event):
         e = self.active_editor
         v = e.focused_viewer
-        val = prompt_for_dec(e.window.control, 'Enter new bitmap width in bytes', 'Set Bitmap Width', v.width)
+        val = prompt_for_dec(e.window.control, 'Enter new %s' % v.width_text, 'Set Width', v.width)
         if val is not None and val > 0:
             v.set_width(val)
 
 
-class BitmapZoomAction(ViewerAction):
-    """Set the zoom factor of bitmap display. This is an integer value greater
-    than zero that scales the display size of each pixel in the bitmap.
+class ViewerZoomAction(ViewerAction):
+    """Set the zoom factor of the viewer, if applicable. This is an integer
+    value greater than zero that scales the display size of each item.
     """
-    name = "Bitmap Zoom"
-    enabled_name = 'has_bitmap'
+    name = "Zoom"
+    enabled_name = 'has_zoom'
 
     def perform(self, event):
         e = self.active_editor
         v = e.focused_viewer
-        val = prompt_for_dec(e.window.control, 'Enter new pixel zoom factor', 'Set Bitmap Zoom', v.zoom)
-        if val is not None and val > 0:
-            v.set_zoom(val)
-
-
-class FontMappingWidthAction(ViewerAction):
-    """Set the number of bytes per row of the character display.
-    """
-    name = "Map Width"
-    enabled_name = 'has_font'
-
-    def perform(self, event):
-        e = self.active_editor
-        v = e.focused_viewer
-        val = prompt_for_dec(e.window.control, 'Enter new map width in bytes', 'Set Map Width', v.width)
-        if val is not None and val > 0:
-            v.set_width(val)
-
-
-class FontMappingZoomAction(ViewerAction):
-    """Set the zoom factor of font display. This is an integer value greater
-    than zero that scales the display size of each character.
-    """
-    name = "Map Zoom"
-    enabled_name = 'has_font'
-
-    def perform(self, event):
-        e = self.active_editor
-        v = e.focused_viewer
-        val = prompt_for_dec(e.window.control, 'Enter new pixel zoom factor', 'Set Map Zoom', v.zoom)
+        val = prompt_for_dec(e.window.control, 'Enter new %s' % v.zoom_text, 'Set Zoom', v.zoom)
         if val is not None and val > 0:
             v.set_zoom(val)
 

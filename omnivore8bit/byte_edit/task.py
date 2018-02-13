@@ -252,7 +252,7 @@ class ByteEditTask(FrameworkTask):
     ui_layout_overrides = {
         "menu": {
             "order": ["File", "Edit", "View", "Bytes", "Segment", "Disk Image", "Documents", "Window", "Help"],
-            "View": ["PredefinedGroup", "ProcessorGroup", "AssemblerGroup", "MemoryMapGroup", "ColorGroup", "FontGroup", "BitmapGroup", "ZoomGroup", "ChangeGroup", "ConfigGroup", "ToggleGroup", "TaskGroup", "DebugGroup"],
+            "View": ["PredefinedGroup", "ProcessorGroup", "AssemblerGroup", "MemoryMapGroup", "ColorGroup", "FontGroup", "BitmapGroup", "SizeGroup", "ChangeGroup", "ConfigGroup", "ToggleGroup", "TaskGroup", "DebugGroup"],
             "Bytes": ["HexModifyGroup"],
             "Segment": ["ListGroup", "ActionGroup"],
             "Disk Image": ["ParserGroup", "EmulatorGroup", "ActionGroup"],
@@ -518,9 +518,6 @@ class ByteEditTask(FrameworkTask):
                 Group(
                     *font_mapping_actions,
                     id="a2", separator=True),
-                Group(
-                    va.FontMappingWidthAction(),
-                    id="a3", separator=True),
                 id='mm6', separator=False, name="Character Display"),
             ]
 
@@ -533,11 +530,17 @@ class ByteEditTask(FrameworkTask):
                 Group(
                     *actions,
                     id="a1", separator=True),
-                Group(
-                    va.BitmapWidthAction(),
-                    va.BitmapZoomAction(),
-                    id="a1", separator=True),
                 id='mm7', separator=False, name="Bitmap Display"),
+            ]
+
+    def get_actions_Menu_View_SizeGroup(self):
+        return [
+            SMenu(
+                Group(
+                    va.ViewerWidthAction(),
+                    va.ViewerZoomAction(),
+                    id="a1", separator=True),
+                id='mm8', separator=False, name="Viewer Size"),
             ]
 
     def get_actions_Menu_DiskImage_EmulatorGroup(self):

@@ -57,6 +57,8 @@ class HexEditViewer(SegmentViewer):
 
     has_hex = True
 
+    has_width = True
+
     def recalc_data_model(self):
         """Rebuild the data model after a document formatting (or other
         structural change) or loading a new document.

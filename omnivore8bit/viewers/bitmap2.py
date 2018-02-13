@@ -101,6 +101,14 @@ class BitmapViewer(SegmentViewer):
 
     has_bitmap = True
 
+    has_width = True
+
+    width_text = "bitmap width in bytes"
+
+    has_zoom = True
+
+    zoom_text = "bitmap zoom factor"
+
     @property
     def window_title(self):
         return self.machine.bitmap_renderer.name

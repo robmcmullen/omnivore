@@ -51,6 +51,14 @@ class SegmentViewer(HasTraits):
 
     has_text_font = False  # uses the app-wide text font
 
+    has_width = False  # has a user-specifiable items_per_row
+
+    width_text = "viewer width in bytes"
+
+    has_zoom = False  # has user-specifiable zoom value
+
+    zoom_text = "viewer zoom factor"
+
     has_metadata_only = False
 
     valid_mouse_modes = []  # toolbar description
