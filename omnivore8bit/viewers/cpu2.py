@@ -3,7 +3,7 @@ import sys
 
 import wx
 
-from traits.api import on_trait_change, Bool, Undefined
+from traits.api import on_trait_change, Bool, Undefined, Any
 
 from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
 from udis.udis_fast import TraceInfo, flag_origin
@@ -233,27 +233,10 @@ class DisassemblyGridControl(SegmentGridControl):
         return DisassemblyLineRenderer(self, 2, image_cache=image_cache, widths=[5,25], col_labels=['^Opcodes','^      Operand'])
 
     def recalc_view(self):
-        e = self.segment_viewer.linked_base
-        disassembly = e.get_current_disassembly(self.segment_viewer.machine)
-        self.table.update_disassembly(e.segment, disassembly)
+        self.segment_viewer.restart_disassembly()
         cg.HexGridWindow.recalc_view(self)
         if e.editor.can_trace:
             e.update_trace_in_segment()
-
-    def update_disassembly_from(self):
-        e = self.segment_viewer.linked_base
-        # first_row = self.get_first_visible_row()
-        # current_row = self.GetGridCursorRow()
-        # rows_from_top = current_row - first_row
-        # want_address = self.table.get_pc(current_row)
-        d = e.get_current_disassembly(self.segment_viewer.machine)
-        self.table.update_disassembly(self.segment_viewer.linked_base.segment, d)
-        # r, _ = self.table.get_row_col(want_address - self.table.start_addr)
-        # self.table.ResetView(self, None)
-        # new_first = max(0, r - rows_from_top)
-        # self.MakeCellVisible(new_first + self.get_num_visible_rows(), 0)
-        # self.MakeCellVisible(new_first, 0)
-        # self.SetGridCursor(r, 0)
 
     def get_disassembled_text(self, start=0, end=-1):
         return self.table.disassembly.get_disassembled_text(start, end)
@@ -371,6 +354,8 @@ class DisassemblyViewer(SegmentViewer):
 
     copy_special = [CopyDisassemblyAction, CopyCommentsAction]
 
+    current_disassembly_ = Any(None)
+
     @property
     def window_title(self):
         return self.machine.disassembler.name + " (" + self.machine.memory_map.name + ")"
@@ -379,20 +364,85 @@ class DisassemblyViewer(SegmentViewer):
     def searchers(self):
         return [DisassemblySearcher(self, self.control)]
 
-    @on_trait_change('linked_base.disassembly_refresh_event')
-    def do_byte_change(self, evt):
-        log.debug("do_disassembly_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        if evt is not Undefined:
-            self.control.update_disassembly_from()
-            self.linked_base.editor.update_pane_names()
-
     @on_trait_change('machine.disassembler_change_event')
     def do_disassembler_change(self, evt):
         log.debug("do_disassembler_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
-            self.control.update_disassembly_from()
+            self.clear_disassembly()
+            self.restart_disassembly()
             self.linked_base.editor.update_pane_names()
 
-    def set_memory_map(self, memory_map):
-        self.linked_base.clear_disassembly(self.machine)
-        self.machine.set_memory_map(memory_map)
+    @on_trait_change('linked_base.editor.document.byte_values_changed')
+    def byte_values_changed(self, index_range):
+        log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
+        if index_range is not Undefined:
+            self.restart_disassembly(index_range)
+
+    @on_trait_change('linked_base.editor.document.byte_style_changed')
+    def byte_style_changed(self, index_range):
+        log.debug("byte_style_changed: %s index_range=%s" % (self, str(index_range)))
+        if index_range is not Undefined:
+            self.restart_disassembly(index_range)
+
+    def recalc_data_model(self):
+        self.clear_disassembly()
+
+    ##### UdisFast interface
+
+    def create_disassembler(self):
+        prefs = self.linked_base.cached_preferences
+        d = self.machine.get_disassembler(prefs.hex_grid_lower_case, prefs.assembly_lower_case, self.document.document_memory_map, self.segment.memory_map)
+        for i, name in iter_disasm_styles():
+            d.add_chunk_processor(name, i)
+        return d
+
+    @property
+    def current_disassembly(self):
+        if self.current_disassembly_ is None:
+            d = self.create_disassembler()
+            self.current_disassembly_ = d
+        return self.current_disassembly_
+
+    def clear_disassembly(self):
+        self.current_disassembly_ = None
+
+    def restart_disassembly(self, index=None):
+        self.current_disassembly.disassemble_segment(self.segment)
+        self.control.table.update_disassembly(self.segment, self.current_disassembly)
+
+    ##### disassembly tracing
+
+    def start_trace(self):
+        self.trace_info = TraceInfo()
+        self.update_trace_in_segment()
+
+    def get_trace(self, save=False):
+        if save:
+            kwargs = {'user': True}
+        else:
+            kwargs = {'match': True}
+        s = self.segment
+        mask = s.get_style_mask(**kwargs)
+        style = s.get_style_bits(**kwargs)
+        is_data = self.trace_info.marked_as_data
+        size = min(len(is_data), len(s))
+        trace = is_data[s.start_addr:s.start_addr + size] * style
+        if save:
+            # don't change data flags for stuff that's already marked as data
+            s = self.segment
+            already_data = np.logical_and(s.style[0:size] & user_bit_mask > 0, trace > 0)
+            indexes = np.where(already_data)[0]
+            previous = s.style[indexes]
+            trace[indexes] = previous
+        return trace, mask
+
+    def update_trace_in_segment(self, save=False):
+        trace, mask = self.get_trace(save)
+        s = self.segment
+        size = len(trace)
+        s.style[0:size] &= mask
+        s.style[0:size] |= trace
+
+    def trace_disassembly(self, pc):
+        self.disassembler.fast.trace_disassembly(self.table.trace_info, [pc])
+        self.update_trace_in_segment()

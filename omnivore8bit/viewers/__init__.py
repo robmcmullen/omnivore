@@ -112,6 +112,10 @@ class SegmentViewer(HasTraits):
         return self.linked_base.editor
 
     @property
+    def document(self):
+        return self.linked_base.editor.document
+
+    @property
     def preferences(self):
         return self.linked_base.cached_preferences
 

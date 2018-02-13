@@ -18,7 +18,6 @@ from omnivore.framework.editor import FrameworkEditor
 from omnivore.framework.caret import CaretHandler
 from omnivore.utils.command import DisplayFlags
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment
-from omnivore8bit.arch.disasm import iter_disasm_styles
 from . import actions as ba
 
 import logging
@@ -59,8 +58,6 @@ class LinkedBase(CaretHandler):
 
     trace = Instance(TraceInfo)
 
-    disassembler_cache = Dict
-
     last_caret_index = Int(0)
 
     last_anchor_start_index = Int(0)
@@ -78,8 +75,6 @@ class LinkedBase(CaretHandler):
     recalc_event = Event
 
     update_trace = Event
-
-    disassembly_refresh_event = Event
 
     key_pressed = Event(KeyPressedEvent)
 
@@ -213,7 +208,7 @@ class LinkedBase(CaretHandler):
             self.segment_parser = self.document.segment_parser
             self.segment = self.document.segments[index]
             self.clear_selection()
-            self.restart_disassembly()
+            self.force_data_model_update()
             self.task.segments_changed = self.document.segments
             self.task.segment_selected = self.segment_number
 
@@ -246,7 +241,6 @@ class LinkedBase(CaretHandler):
             self.task.update_window_title()
 
     def force_data_model_update(self):
-            self.disassembler_cache = {}  # force disassembler to use new segment
             flags = DisplayFlags()
             flags.data_model_changed = True
             self.editor.process_flags(flags)
@@ -501,90 +495,6 @@ class LinkedBase(CaretHandler):
 
     def popup_context_menu_from_actions(self, *args, **kwargs):
         self.editor.popup_context_menu_from_actions(*args, **kwargs)
-
-    #### Disassembler
-
-    def get_current_disassembly(self, machine):
-        d = self.disassembler_cache.get(machine.disassembler.name, None)
-        if d is None or not d.is_current(self.segment):
-            log.debug("creating disassembler for %s" % machine.disassembler.name)
-            d = machine.get_disassembler(self.task.hex_grid_lower_case, self.task.assembly_lower_case, self.document.document_memory_map, self.segment.memory_map)
-            for i, name in iter_disasm_styles():
-                d.add_chunk_processor(name, i)
-            d.disassemble_segment(self.segment)
-            self.disassembler_cache[machine.disassembler.name] = d
-        log.debug("get_current_disassembly: %s" % str(d.info))
-        return d
-
-    def clear_disassembly(self, machine):
-        log.debug("clear_disassembly")
-        try:
-            self.disassembler_cache.pop(machine.disassembler.name)
-        except KeyError:
-            pass
-
-    def disassemble_segment(self, machine):
-        log.debug("disassemble_segment")
-        return self.get_current_disassembly(machine)
-
-    def restart_disassembly(self, index_range=None):
-        #start = index_range[0] if index_range is not None else 0
-        log.debug("restart_disassembly")
-        self.disassembler_cache = {}
-        self.disassembly_refresh_event = True
-
-    #### Disassembly tracing
-
-    def start_trace(self):
-        self.trace_info = TraceInfo()
-        self.update_trace_in_segment()
-
-    def get_trace(self, save=False):
-        if save:
-            kwargs = {'user': True}
-        else:
-            kwargs = {'match': True}
-        s = self.segment
-        mask = s.get_style_mask(**kwargs)
-        style = s.get_style_bits(**kwargs)
-        is_data = self.trace_info.marked_as_data
-        size = min(len(is_data), len(s))
-        trace = is_data[s.start_addr:s.start_addr + size] * style
-        if save:
-            # don't change data flags for stuff that's already marked as data
-            s = self.segment
-            already_data = np.logical_and(s.style[0:size] & user_bit_mask > 0, trace > 0)
-            indexes = np.where(already_data)[0]
-            previous = s.style[indexes]
-            trace[indexes] = previous
-        return trace, mask
-
-    def update_trace_in_segment(self, save=False):
-        trace, mask = self.get_trace(save)
-        s = self.segment
-        size = len(trace)
-        s.style[0:size] &= mask
-        s.style[0:size] |= trace
-
-    def trace_disassembly(self, pc):
-        self.disassembler.fast.trace_disassembly(self.table.trace_info, [pc])
-        self.update_trace_in_segment()
-
-    #### Trait event handling
-
-    @on_trait_change('editor.document.byte_values_changed')
-    def byte_values_changed(self, index_range):
-        log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
-        if index_range is not Undefined:
-            self.restart_disassembly(index_range)
-
-    @on_trait_change('editor.document.byte_style_changed')
-    def byte_style_changed(self, index_range):
-        log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
-        if index_range is not Undefined:
-            self.restart_disassembly(index_range)
-
-    #### 
 
     def index_clicked(self, index, bit, from_control, refresh_from=True):
         log.debug("index_clicked: %s from %s at %d, %s" % (refresh_from, from_control, index, bit))
