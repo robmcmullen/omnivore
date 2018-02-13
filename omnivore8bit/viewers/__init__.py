@@ -110,18 +110,18 @@ class SegmentViewer(HasTraits):
     ##### Class methods
 
     @classmethod
-    def create_control(cls, parent, linked_base):
+    def create_control(cls, parent, linked_base, mdict):
         # if a control isn't based on SegmentGridControl, this is the place for
         # the subclass to return the custom control
-        return cls.control_cls(parent, linked_base)
+        return cls.control_cls(parent, linked_base, mdict)
 
     @classmethod
     def check_name(cls, name):
         return name == cls.name
 
     @classmethod
-    def create(cls, parent, linked_base, machine=None, uuid=None):
-        control = cls.create_control(parent, linked_base)
+    def create(cls, parent, linked_base, machine=None, uuid=None, mdict={}):
+        control = cls.create_control(parent, linked_base, mdict)
         v = cls(linked_base=linked_base, control=control)
         if machine is not None:
             v.machine = machine
@@ -129,7 +129,6 @@ class SegmentViewer(HasTraits):
         if uuid:
             v.uuid = uuid
         control.uuid = v.uuid
-        control.set_viewer_defaults()
         v.create_post()
         print("control: %s, parent: %s uuid:%s" % (control.__class__.__name__, parent.__class__.__name__, v.uuid))
         return v
@@ -166,6 +165,8 @@ class SegmentViewer(HasTraits):
 
         if 'machine' in e:
             self.machine.restore_extra_from_dict(e['machine'])
+        if 'control' in e:
+            self.control.restore_extra_from_dict(e['control'])
         self.from_metadata_dict_post(e)
 
     def from_metadata_dict_post(self, e):
@@ -178,6 +179,8 @@ class SegmentViewer(HasTraits):
         mdict['linked base'] = self.linked_base.uuid
         mdict['machine'] = {}
         self.machine.serialize_extra_to_dict(mdict['machine'])
+        mdict['control'] = {}
+        self.control.serialize_extra_to_dict(mdict['control'])
         self.to_metadata_dict_post(mdict, document)
 
     def to_metadata_dict_post(self, mdict, document):

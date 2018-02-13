@@ -54,16 +54,9 @@ class BitmapRenderer(cg.TableLineRenderer):
 
 
 class BitmapGridControl(SegmentGridControl):
-    initial_zoom = 2
-
     def set_viewer_defaults(self):
-        old = self.items_per_row
         self.items_per_row = self.view_params.bitmap_width
-        if old is not None and self.items_per_row != old:
-            self.recalc_view()
-
-    def calc_default_table(self, segment, view_params):
-        return SegmentTable(segment, view_params.bitmap_width)
+        self.zoom = 2
 
     @property
     def bitmap_renderer(self):
@@ -93,13 +86,6 @@ class BitmapGridControl(SegmentGridControl):
         if hasattr(self, 'segment_viewer'):
             return BitmapRenderer(self, self.segment_viewer)
         return SegmentGridControl.calc_line_renderer(self)
-
-    def recalc_view(self):
-        bytes_per_row = self.segment_viewer.validate_width(self.items_per_row)
-        self.table = SegmentTable(self.segment_viewer.linked_base.segment, bytes_per_row)
-        self.line_renderer = self.calc_line_renderer()
-        log.debug("recalculating %s" % self)
-        SegmentGridControl.recalc_view(self)
 
     def get_extra_actions(self):
         actions = [None, va.BitmapWidthAction, va.BitmapZoomAction]

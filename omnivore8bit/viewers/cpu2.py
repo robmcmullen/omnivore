@@ -224,6 +224,10 @@ class DisassemblyLineRenderer(cg.TableLineRenderer):
 
 
 class DisassemblyGridControl(SegmentGridControl):
+    def calc_default_table(self):
+        linked_base = self.caret_handler
+        return UdisFastTable(linked_base)
+
     def calc_line_renderer(self):
         image_cache = DisassemblyImageCache(False)
         return DisassemblyLineRenderer(self, 2, image_cache=image_cache, widths=[5,25], col_labels=['^Opcodes','^      Operand'])
@@ -232,7 +236,7 @@ class DisassemblyGridControl(SegmentGridControl):
         e = self.segment_viewer.linked_base
         disassembly = e.get_current_disassembly(self.segment_viewer.machine)
         self.table.update_disassembly(e.segment, disassembly)
-        SegmentGridControl.recalc_view(self)
+        cg.HexGridWindow.recalc_view(self)
         if e.editor.can_trace:
             e.update_trace_in_segment()
 
@@ -366,11 +370,6 @@ class DisassemblyViewer(SegmentViewer):
     has_hex = True
 
     copy_special = [CopyDisassemblyAction, CopyCommentsAction]
-
-    @classmethod
-    def create_control(cls, parent, linked_base):
-        table = UdisFastTable(linked_base)
-        return DisassemblyGridControl(parent, linked_base, table)
 
     @property
     def window_title(self):

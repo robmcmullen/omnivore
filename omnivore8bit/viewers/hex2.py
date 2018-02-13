@@ -27,10 +27,7 @@ class HexEditControl(SegmentGridControl):
     short_name = "hex"
 
     def set_viewer_defaults(self):
-        old = self.items_per_row
         self.items_per_row = self.view_params.hex_grid_width
-        if old is not None and self.items_per_row != old:
-            self.recalc_view()
 
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.

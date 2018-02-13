@@ -1068,23 +1068,22 @@ class HexGridWindow(wx.ScrolledWindow):
     def __init__(self, table, view_params, caret_handler, *args, **kwargs):
         wx.ScrolledWindow.__init__ (self, *args, style=wx.WANTS_CHARS, **kwargs)
         self.SetAutoLayout(True)
+        self.view_params = view_params
+        self.caret_handler = caret_handler
 
-        self.scroll_delay = 30  # milliseconds
-        self.zoom = self.initial_zoom
-        self.min_zoom = 1  # arbitrary
-        self.max_zoom = 16  # arbitrary
+        self.set_view_param_defaults()
 
         # omnivore sets this to false so it can update multiple views at the
         # same time without any double refreshes
         self.automatic_refresh = True
 
         self.update_dependents = self.update_dependents_null
+        if table is None:
+            table = self.calc_default_table()
         self.table = table
-        self.view_params = view_params
         self.line_renderer = self.calc_line_renderer()
         self.col_label_renderer = self.line_renderer
         self.row_label_renderer = self.line_renderer
-        self.caret_handler = caret_handler
         self.main = self.calc_main_grid()
         self.top = ColLabelWindow(self)
         self.left = RowLabelWindow(self)
@@ -1102,6 +1101,18 @@ class HexGridWindow(wx.ScrolledWindow):
         self.top.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
         self.left.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
         self.update_dependents = self.update_dependents_post_init
+
+    def set_view_param_defaults(self):
+        self.scroll_delay = 30  # milliseconds
+        self.zoom = 1
+        self.min_zoom = 1  # arbitrary
+        self.max_zoom = 16  # arbitrary
+
+    def calc_default_table(self):
+        # In this generic base class, we don't know enough about the data to
+        # generate a table! Subclasses might, though, so allow them the
+        # opportunity.
+        raise NotImplementedError("no default table implementation defined")
 
     def calc_line_renderer(self):
         return HexLineRenderer(self, 2)

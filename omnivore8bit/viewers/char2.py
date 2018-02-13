@@ -58,13 +58,8 @@ class CharGridControl(SegmentGridControl):
     initial_zoom = 2
 
     def set_viewer_defaults(self):
-        old = self.items_per_row
         self.items_per_row = self.view_params.map_width
-        if old is not None and self.items_per_row != old:
-            self.recalc_view()
-
-    def calc_default_table(self, segment, view_params):
-        return SegmentTable(segment, view_params.map_width)
+        self.zoom = 2
 
     def calc_line_renderer(self):
         if hasattr(self, 'segment_viewer'):

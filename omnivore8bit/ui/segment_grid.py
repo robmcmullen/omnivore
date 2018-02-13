@@ -24,28 +24,48 @@ class SegmentTable(cg.HexTable):
 
 
 class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
-    def __init__(self, parent, linked_base, table=None):
+    def __init__(self, parent, linked_base, mdict={}, table=None):
         MouseEventMixin.__init__(self, linked_base)
         CharEventMixin.__init__(self, linked_base)
 
-        self.view_params = linked_base.cached_preferences
-        self.items_per_row = None
-        self.set_viewer_defaults()
-
-        if table is None:
-            table = self.calc_default_table(linked_base.segment, linked_base.cached_preferences)
+        self.original_metadata = mdict.copy()
 
         cg.HexGridWindow.__init__(self, table, linked_base.cached_preferences, linked_base, parent)
         self.automatic_refresh = False
 
-    def set_viewer_defaults(self):
-        pass
+    def set_view_param_defaults(self):
+        # called from base class to set up initial viewer
+        cg.HexGridWindow.set_view_param_defaults(self)
+        self.set_viewer_defaults()
+        self.restore_extra_from_dict(self.original_metadata)
 
-    def calc_default_table(self, segment, view_params):
-        return SegmentTable(segment, view_params.hex_grid_width)
+    def set_viewer_defaults(self):
+        self.items_per_row = 99  # unlikely to be used normally, so something is likely wrong if a viewer ever appears with 99 colums
+        self.zoom = 1
+
+    def serialize_extra_to_dict(self, mdict):
+        """Save extra metadata to a dict so that it can be serialized
+        """
+        mdict['items_per_row'] = self.items_per_row
+        mdict['zoom'] = self.zoom
+
+    def restore_extra_from_dict(self, e):
+        log.debug("metadata: %s" % str(e))
+        if 'items_per_row' in e:
+            self.items_per_row = e['items_per_row']
+        if 'zoom' in e:
+            self.zoom = e['zoom']
+
+    def calc_default_table(self):
+        linked_base = self.caret_handler
+        return SegmentTable(linked_base.segment, self.items_per_row)
 
     def recalc_view(self):
+        # just recreate everything. If a subclass wants something different,
+        # let it do it itself.
         self.view_params = self.segment_viewer.linked_base.cached_preferences
+        self.table = SegmentTable(self.segment_viewer.linked_base.segment, self.items_per_row)
+        self.line_renderer = self.calc_line_renderer()
         log.debug("recalculating %s; items_per_row=%d" % (self, self.items_per_row))
         cg.HexGridWindow.recalc_view(self)
 
@@ -98,11 +118,6 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
     def get_status_message_at_cell(self, row, col):
         r, c, index = self.main.enforce_valid_caret(row, col)
         return self.get_status_at_index(index)
-
-    def recalc_view(self):
-        self.table = SegmentTable(self.segment_viewer.linked_base.segment, self.items_per_row)
-        log.debug("recalculating %s" % self)
-        cg.HexGridWindow.recalc_view(self)
 
     def on_popup(self, evt):
         row, col = self.get_row_col_from_event(evt)
