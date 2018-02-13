@@ -34,10 +34,10 @@ class SidebarPane(FrameworkFixedPane):
 
     def add_tabs(self, control):
         from omnivore8bit.viewers.info import CommentsViewer, UndoViewer, SegmentListViewer
-        from omnivore8bit.viewers.bitmap import MemoryMapViewer
+        # from omnivore8bit.viewers.bitmap import MemoryMapViewer
         control.add_tab("Segments", SegmentListViewer())
         control.add_tab("Comments", CommentsViewer())
-        control.add_tab("Page Map", MemoryMapViewer())
+        # control.add_tab("Page Map", MemoryMapViewer())
         control.add_tab("Undo History", UndoViewer())
 
     def refresh_active(self):

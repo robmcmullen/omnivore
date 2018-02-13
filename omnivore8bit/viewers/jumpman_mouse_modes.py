@@ -13,7 +13,7 @@ from omnivore8bit.byte_edit.commands import ChangeByteCommand
 from omnivore.framework.actions import CutAction, CopyAction, PasteAction, SelectAllAction, SelectNoneAction, SelectInvertAction
 
 from .jumpman_commands import *
-from .map import SelectMode
+from .map2 import SelectMode
 
 import logging
 log = logging.getLogger(__name__)
