@@ -224,6 +224,9 @@ class CaretHandler(HasTraits):
         for caret in self.carets:
             yield caret.index
 
+    def carets_as_ranges(self):
+        return [(c.index, c.index + 1) for c in self.carets]
+
     def update_caret_history(self):
         state = self.carets.get_state()
         last = self.caret_history.get_undo_command()
@@ -396,8 +399,13 @@ class SelectionHandler(object):
         """
         return collapse_overlapping_ranges(caret_handler.selected_ranges)
 
+    def get_selected_ranges(self, caret_handler):
+        ranges = caret_handler.carets_as_ranges()
+        ranges.extend(caret_handler.selected_ranges)
+        return collapse_overlapping_ranges(ranges)
+
     def get_selected_ranges_and_indexes(self, caret_handler):
-        opt = self.get_optimized_selected_ranges(caret_handler)
+        opt = self.get_selected_ranges(caret_handler)
         return opt, ranges_to_indexes(opt)
 
     def invert_selection_ranges(self, caret_handler, ranges):

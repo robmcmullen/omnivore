@@ -429,7 +429,7 @@ class IndexRangeAction(ViewerAction):
 
     def perform(self, event):
         e = self.active_editor
-        ranges = self.viewer.control.get_optimized_selected_ranges(self.linked_base)
+        ranges = self.viewer.control.get_selected_ranges(self.linked_base)
         cmd = self.get_cmd(e, e.segment, ranges)
         e.process_command(cmd)
 
