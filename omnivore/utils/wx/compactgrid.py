@@ -85,7 +85,7 @@ class DrawTextImageCache(object):
         dc.SetClippingRegion(bg_rect)
         dc.DrawRectangle(bg_rect)
         if style & diff_bit_mask:
-            dc.SetTextForeground(v.diff_color)
+            dc.SetTextForeground(v.diff_text_color)
         else:
             dc.SetTextForeground(v.text_color)
         dc.SetFont(v.text_font)
