@@ -90,6 +90,8 @@ class SegmentViewer(HasTraits):
 
     blinking_antic_font = Any(transient=True)
 
+    is_tracing = Bool(False)
+
     #### Default traits
 
     def _uuid_default(self):

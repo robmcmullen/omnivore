@@ -1,6 +1,6 @@
 import numpy as np
 
-from omnivore8bit.commands import SetRangeCommand, SetRangeValueCommand
+from omnivore8bit.commands import SetRangeCommand, SetRangeValueCommand, ChangeStyleCommand
 from omnivore.utils.permute import bit_reverse_table
 
 import logging
@@ -222,3 +222,32 @@ class ReverseGroupCommand(SetRangeValueCommand):
                 indexes[start:start+chunk] = indexes[start+chunk-1:start-1:-1]
         print num, chunk, num_groups, indexes
         return orig[indexes]
+
+
+class ApplyTraceSegmentCommand(ChangeStyleCommand):
+    short_name = "applytrace"
+    pretty_name = "Apply Trace to Segment"
+
+    def get_style(self, editor):
+        v = editor.focused_viewer
+        trace, mask = v.get_trace(save=True)
+        self.clip(trace)
+        style_data = (self.segment.style[self.start_index:self.end_index].copy() & mask) | trace
+        return style_data
+
+    def set_undo_flags(self, flags):
+        flags.byte_values_changed = True
+        flags.index_range = self.start_index, self.end_index
+
+
+class ClearTraceCommand(ChangeStyleCommand):
+    short_name = "cleartrace"
+    pretty_name = "Clear Current Trace Results"
+
+    def get_style(self, editor):
+        mask = self.segment.get_style_mask(match=True)
+        style_data = (self.segment.style[:].copy() & mask)
+        return style_data
+
+    def update_can_trace(self, editor):
+        editor.can_trace = False

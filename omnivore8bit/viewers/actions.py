@@ -616,3 +616,54 @@ class ReverseSelectionAction(IndexRangeAction):
 class ReverseGroupAction(IndexRangeValueAction):
     prompt = "Enter number of bytes in each group: (default hex, prefix with # for decimal, %% for binary)"
     cmd = commands.ReverseGroupCommand
+
+
+class StartTraceAction(ViewerAction):
+    name = "Start New Disassembly Trace"
+    accelerator = 'F12'
+    enabled_name = 'has_cpu'
+
+    def perform(self, event):
+        self.viewer.start_trace()
+
+
+class AddTraceStartPointAction(ViewerAction):
+    name = "Add Trace Start Point"
+    accelerator = 'F11'
+    enabled_name = 'has_cpu'
+    tooltip = 'Start a trace at the caret or at all instructions in the selected ranges'
+
+    def perform(self, event):
+        v = self.viewer
+        # check if selected a range:
+        ranges, indexes = v.get_selected_ranges_and_indexes()
+        s = v.segment
+        checked = set()
+        for i in indexes:
+            pc = v.control.table.lines.get_instruction_start_pc(i + s.start_addr)
+            if pc not in checked:
+                v.trace_disassembly(pc)
+                checked.add(pc)
+        v.linked_base.force_refresh()
+
+
+class ApplyTraceSegmentAction(ViewerAction):
+    name = "Apply Trace to Segment"
+    accelerator = 'F10'
+    tooltip = 'Copy the results of the trace to the current segment'
+    enabled_name = 'has_cpu'
+
+    def perform(self, event):
+        cmd = commands.ApplyTraceSegmentCommand(self.viewer.segment)
+        self.active_editor.process_command(cmd)
+
+
+class ClearTraceAction(ViewerAction):
+    name = "Clear Trace"
+    accelerator = 'F9'
+    tooltip = 'Clear the current trace'
+    enabled_name = 'has_cpu'
+
+    def perform(self, event):
+        cmd = commands.ClearTraceCommand(self.active_editor.document.container_segment)
+        self.active_editor.process_command(cmd)

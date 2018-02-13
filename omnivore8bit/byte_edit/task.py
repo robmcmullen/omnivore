@@ -611,10 +611,10 @@ class ByteEditTask(FrameworkTask):
                     id="sl2", separator=True),
                 id='segmentlabels1', separator=False, name="Manage Segment Labels"),
             Separator(),
-            ba.StartTraceAction(),
-            ba.AddTraceStartPointAction(),
-            ba.ApplyTraceSegmentAction(),
-            ba.ClearTraceAction(),
+            va.StartTraceAction(),
+            va.AddTraceStartPointAction(),
+            va.ApplyTraceSegmentAction(),
+            va.ClearTraceAction(),
             ]
 
     def get_actions_Menu_Bytes_HexModifyGroup(self):

@@ -6,7 +6,7 @@ import numpy as np
 
 from omnivore.framework.errors import ProgressCancelError
 from omnivore.utils.command import Command, UndoInfo
-from omnivore8bit.commands import SegmentCommand, ChangeMetadataCommand, SetContiguousDataCommand, SetValuesAtIndexesCommand, SetRangeCommand, SetRangeValueCommand, ChangeStyleCommand
+from omnivore8bit.commands import SegmentCommand, ChangeMetadataCommand, SetContiguousDataCommand, SetValuesAtIndexesCommand, SetRangeCommand, SetRangeValueCommand
 from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 from omnivore8bit.utils.searchalgorithm import AlgorithmSearcher
 from omnivore.utils.file_guess import FileGuess
@@ -452,34 +452,6 @@ class FindAlgorithmCommand(FindAllCommand):
 
     def get_searchers(self, editor):
         return [AlgorithmSearcher]
-
-
-class ApplyTraceSegmentCommand(ChangeStyleCommand):
-    short_name = "applytrace"
-    pretty_name = "Apply Trace to Segment"
-
-    def get_style(self, editor):
-        trace, mask = editor.disassembly.get_trace(save=True)
-        self.clip(trace)
-        style_data = (self.segment.style[self.start_index:self.end_index].copy() & mask) | trace
-        return style_data
-
-    def set_undo_flags(self, flags):
-        flags.byte_values_changed = True
-        flags.index_range = self.start_index, self.end_index
-
-
-class ClearTraceCommand(ChangeStyleCommand):
-    short_name = "cleartrace"
-    pretty_name = "Clear Current Trace Results"
-
-    def get_style(self, editor):
-        mask = self.segment.get_style_mask(match=True)
-        style_data = (self.segment.style[:].copy() & mask)
-        return style_data
-
-    def update_can_trace(self, editor):
-        editor.can_trace = False
 
 
 class SetSegmentOriginCommand(SegmentCommand):

@@ -1,9 +1,11 @@
 import os
 import sys
 
+import numpy as np
+
 import wx
 
-from traits.api import on_trait_change, Bool, Undefined, Any
+from traits.api import on_trait_change, Bool, Undefined, Any, Instance
 
 from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
 from udis.udis_fast import TraceInfo, flag_origin
@@ -356,6 +358,15 @@ class DisassemblyViewer(SegmentViewer):
 
     current_disassembly_ = Any(None)
 
+    trace = Instance(TraceInfo)
+
+    # trait defaults
+
+    def _trace_default(self):
+        return TraceInfo()
+
+    # properties
+
     @property
     def window_title(self):
         return self.machine.disassembler.name + " (" + self.machine.memory_map.name + ")"
@@ -414,7 +425,9 @@ class DisassemblyViewer(SegmentViewer):
 
     def start_trace(self):
         self.trace_info = TraceInfo()
+        self.is_tracing = True
         self.update_trace_in_segment()
+        self.linked_base.force_refresh()
 
     def get_trace(self, save=False):
         if save:
@@ -444,5 +457,5 @@ class DisassemblyViewer(SegmentViewer):
         s.style[0:size] |= trace
 
     def trace_disassembly(self, pc):
-        self.disassembler.fast.trace_disassembly(self.table.trace_info, [pc])
+        self.current_disassembly.fast.trace_disassembly(self.trace_info, [pc])
         self.update_trace_in_segment()

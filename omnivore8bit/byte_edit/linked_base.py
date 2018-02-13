@@ -7,7 +7,6 @@ import uuid
 import wx
 import numpy as np
 import json
-from udis.udis_fast import TraceInfo, flag_origin
 
 # Enthought library imports.
 from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, File, Unicode, Property, provides, on_trait_change, HasTraits, Undefined
@@ -56,8 +55,6 @@ class LinkedBase(CaretHandler):
 
     segment_number = Int(0)
 
-    trace = Instance(TraceInfo)
-
     last_caret_index = Int(0)
 
     last_anchor_start_index = Int(0)
@@ -87,9 +84,6 @@ class LinkedBase(CaretHandler):
     def _segment_default(self):
         rawdata = SegmentData([])
         return DefaultSegment(rawdata)
-
-    def _trace_default(self):
-        return TraceInfo()
 
     def _uuid_default(self):
         return str(uuid.uuid4())
@@ -241,9 +235,14 @@ class LinkedBase(CaretHandler):
             self.task.update_window_title()
 
     def force_data_model_update(self):
-            flags = DisplayFlags()
-            flags.data_model_changed = True
-            self.editor.process_flags(flags)
+        flags = DisplayFlags()
+        flags.data_model_changed = True
+        self.process_flags(flags)
+
+    def force_refresh(self):
+        flags = DisplayFlags()
+        flags.byte_values_changed = True
+        self.process_flags(flags)
 
     def save_segment(self, saver, uri):
         try:

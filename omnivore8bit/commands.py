@@ -252,20 +252,21 @@ class ChangeStyleCommand(SetContiguousDataCommand):
         if len(style) < self.end_index - self.start_index:
             self.end_index = self.start_index + len(style)
 
-    def update_can_trace(self, editor):
+    def update_is_tracing(self, viewer):
         pass
 
     def do_change(self, editor, undo):
-        old_can_trace = editor.can_trace
+        viewer = editor.focused_viewer
+        old_is_tracing = viewer.is_tracing
         new_style = self.get_style(editor)
         self.clip(new_style)
         old_style = self.segment.style[self.start_index:self.end_index].copy()
         self.segment.style[self.start_index:self.end_index] = new_style
-        self.update_can_trace(editor)
+        self.update_is_tracing(viewer)
         editor.document.change_count += 1
-        return (old_style, old_can_trace)
+        return (old_style, old_is_tracing)
 
     def undo_change(self, editor, old_data):
-        old_style, old_can_trace = old_data
+        old_style, old_is_tracing = old_data
         self.segment.style[self.start_index:self.end_index] = old_style
-        editor.can_trace = old_can_trace
+        viewer.is_tracing = old_is_tracing
