@@ -93,14 +93,14 @@ class ClipboardSerializer(object):
         self.source_data_format_name = source_data_format_name
         self.data = None
         self.ranges = []
-        self.caret_index = 0
+        self.carets = None
         self.indexes = None
         self.style = None
         self.comment_indexes = None
         self.comments = None
         self.num_rows = None
         self.num_columns = None
-        self.bytes_per_row = None
+        self.items_per_row = None
 
     @property
     def size_info(self):
@@ -143,7 +143,7 @@ class TextSelection(ClipboardSerializer):
         else:
             raise ClipboardError("Unsupported format type for %s: %s" % (self.data_format_name, ", ".join([str(f) in fmts])))
         self.data = np.fromstring(value, dtype=np.uint8)
-        self.caret_index = viewer.linked_base.caret_index
+        self.carets = viewer.linked_base.carets.copy()
 
 
 class BinarySelection(ClipboardSerializer):
@@ -183,7 +183,7 @@ class BinarySelection(ClipboardSerializer):
         value, j = value[0:len1], value[len1:]
         self.data = np.fromstring(value, dtype=np.uint8)
         self.style, self.comment_indexes, self.comments = viewer.restore_selected_index_metadata(j)
-        self.caret_index = viewer.linked_base.caret_index
+        self.carets = viewer.linked_base.carets.copy()
 
 
 class MultipleBinarySelection(ClipboardSerializer):
@@ -207,7 +207,7 @@ class MultipleBinarySelection(ClipboardSerializer):
         self.data = np.fromstring(value, dtype=np.uint8)
         self.indexes = np.fromstring(index_string, dtype=np.uint32)
         self.style, self.comment_indexes, self.comments = viewer.restore_selected_index_metadata(j)
-        self.caret_index = viewer.linked_base.caret_index
+        self.carets = viewer.linked_base.carets.copy()
 
 
 class RectangularSelection(ClipboardSerializer):
@@ -218,7 +218,7 @@ class RectangularSelection(ClipboardSerializer):
     def selection_to_data_object(cls, viewer):
         if viewer.linked_base.anchor_start_index != viewer.linked_base.anchor_end_index:
             anchor_start, anchor_end, (r1, c1), (r2, c2) = viewer.control.get_highlight_indexes()
-            bpr = viewer.control.bytes_per_row
+            bpr = viewer.control.items_per_row
             last = r2 * bpr
             d = viewer.segment[:last].reshape(-1, bpr)
             data = d[r1:r2, c1:c2]
@@ -237,8 +237,8 @@ class RectangularSelection(ClipboardSerializer):
         self.num_rows = int(r)
         self.num_columns = int(c)
         self.data = np.fromstring(value, dtype=np.uint8)
-        self.caret_index = viewer.linked_base.caret_index
-        self.bytes_per_row = viewer.control.bytes_per_row
+        self.carets = viewer.linked_base.carets.copy()
+        self.items_per_row = viewer.control.items_per_row
 
 
 def create_data_object(viewer, name):
