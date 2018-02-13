@@ -9,7 +9,7 @@ from omnivore.framework.plugin import FrameworkPlugin
 from ..byte_edit.linked_base import LinkedBase
 import omnivore.framework.actions as fa
 from ..byte_edit import actions as ba
-from ..byte_edit.commands import PasteCommand
+from ..clipboard_commands import PasteCommand
 from ..arch import fonts
 
 from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges

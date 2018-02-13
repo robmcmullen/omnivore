@@ -16,7 +16,8 @@ from omnivore.utils.command import Overlay
 from omnivore8bit.utils.drawutil import get_bounds
 from omnivore.utils.sortutil import invert_rects, rect_ranges_to_indexes
 import omnivore.framework.actions as fa
-from ..byte_edit.commands import ChangeByteCommand, PasteCommand, PasteRectCommand
+from ..byte_edit.commands import ChangeByteCommand
+from ..clipboard_commands import PasteCommand, PasteRectCommand
 from omnivore.framework.mouse_handler import MouseHandler, MouseControllerMixin
 
 from . import SegmentViewer

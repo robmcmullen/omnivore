@@ -21,7 +21,6 @@ from omnivore8bit.document import SegmentedDocument
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
 from omnivore.utils.processutil import run_detach
 
-from commands import PasteCommand
 from linked_base import LinkedBase
 
 import logging
