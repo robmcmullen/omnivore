@@ -406,7 +406,7 @@ class MemoryMapAction(ViewerAction):
         return self.memory_map.name
 
     def perform(self, event):
-        self.viewer.machine.set_memory_map(self.memory_map)
+        self.viewer.set_memory_map(self.memory_map)
 
     def _update_checked(self, ui_state):
         self.checked = self.viewer.machine.memory_map == self.memory_map

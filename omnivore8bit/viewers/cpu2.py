@@ -373,7 +373,7 @@ class DisassemblyViewer(SegmentViewer):
 
     @property
     def window_title(self):
-        return self.machine.disassembler.name
+        return self.machine.disassembler.name + " (" + self.machine.memory_map.name + ")"
 
     @property
     def searchers(self):
@@ -384,6 +384,7 @@ class DisassemblyViewer(SegmentViewer):
         log.debug("do_disassembly_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
             self.control.update_disassembly_from()
+            self.linked_base.editor.update_pane_names()
 
     @on_trait_change('machine.disassembler_change_event')
     def do_disassembler_change(self, evt):
@@ -391,3 +392,7 @@ class DisassemblyViewer(SegmentViewer):
         if evt is not Undefined:
             self.control.update_disassembly_from()
             self.linked_base.editor.update_pane_names()
+
+    def set_memory_map(self, memory_map):
+        self.linked_base.clear_disassembly(self.machine)
+        self.machine.set_memory_map(memory_map)
