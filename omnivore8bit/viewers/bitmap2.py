@@ -96,10 +96,10 @@ class BitmapGridControl(SegmentGridControl):
 
     def recalc_view(self):
         bytes_per_row = self.segment_viewer.validate_width(self.items_per_row)
-        table = SegmentTable(self.segment_viewer.linked_base.segment, bytes_per_row)
-        line_renderer = self.calc_line_renderer()
+        self.table = SegmentTable(self.segment_viewer.linked_base.segment, bytes_per_row)
+        self.line_renderer = self.calc_line_renderer()
         log.debug("recalculating %s" % self)
-        cg.HexGridWindow.recalc_view(self, table, self.segment_viewer.linked_base.cached_preferences, line_renderer)
+        SegmentGridControl.recalc_view(self)
 
     def get_extra_actions(self):
         actions = [None, va.BitmapWidthAction, va.BitmapZoomAction]
@@ -111,11 +111,9 @@ class BitmapViewer(SegmentViewer):
 
     pretty_name = "Bitmap"
 
-    has_bitmap = True
+    control_cls = BitmapGridControl
 
-    @classmethod
-    def create_control(cls, parent, linked_base):
-        return BitmapGridControl(parent, linked_base.segment, linked_base, linked_base.cached_preferences)
+    has_bitmap = True
 
     @property
     def window_title(self):

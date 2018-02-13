@@ -16,6 +16,7 @@ from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_rang
 
 from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.utils import searchutil
+from omnivore8bit.ui.segment_grid import SegmentGridControl
 
 import logging
 log = logging.getLogger(__name__)
@@ -33,6 +34,8 @@ class SegmentViewer(HasTraits):
     name = "_base_"
 
     pretty_name = "_base_"
+
+    control_cls = SegmentGridControl  # override in subclass
 
     has_editable_bytes = True  # directly user-editable bytes
 
@@ -108,7 +111,9 @@ class SegmentViewer(HasTraits):
 
     @classmethod
     def create_control(cls, parent, linked_base):
-        raise NotImplementedError("Implement in subclass!")
+        # if a control isn't based on SegmentGridControl, this is the place for
+        # the subclass to return the custom control
+        return cls.control_cls(parent, linked_base)
 
     @classmethod
     def check_name(cls, name):

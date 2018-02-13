@@ -84,14 +84,9 @@ class CharGridControl(SegmentGridControl):
         return self.zoom * self.font_renderer.scale_height
 
     def recalc_view(self):
-        table = SegmentTable(self.segment_viewer.linked_base.segment, self.items_per_row)
-        line_renderer = self.calc_line_renderer()
-        log.debug("recalculating %s; items_per_row=%d" % (self, self.items_per_row))
-        print("before table:", table)
-        print("before main:", self.table)
-        cg.HexGridWindow.recalc_view(self, table, self.segment_viewer.linked_base.cached_preferences, line_renderer)
-        print("after table:", table)
-        print("after main:", self.table)
+        self.table = SegmentTable(self.segment_viewer.linked_base.segment, self.items_per_row)
+        self.line_renderer = self.calc_line_renderer()
+        SegmentGridControl.recalc_view(self)
 
 
 class CharViewer(SegmentViewer):
@@ -99,11 +94,9 @@ class CharViewer(SegmentViewer):
 
     pretty_name = "Character"
 
-    has_font = True
+    control_cls = CharGridControl
 
-    @classmethod
-    def create_control(cls, parent, linked_base):
-        return CharGridControl(parent, linked_base.segment, linked_base, linked_base.cached_preferences)
+    has_font = True
 
     @property
     def window_title(self):

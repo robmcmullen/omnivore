@@ -24,24 +24,18 @@ class SegmentTable(cg.HexTable):
 
 
 class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
-    def __init__(self, parent, segment, caret_handler, view_params, grid_cls=None, line_renderer_cls=None, table=None):
-        MouseEventMixin.__init__(self, caret_handler)
-        CharEventMixin.__init__(self, caret_handler)
+    def __init__(self, parent, linked_base, table=None):
+        MouseEventMixin.__init__(self, linked_base)
+        CharEventMixin.__init__(self, linked_base)
 
-        self.view_params = view_params
+        self.view_params = linked_base.cached_preferences
         self.items_per_row = None
         self.set_viewer_defaults()
 
         if table is None:
-            table = self.calc_default_table(segment, view_params)
+            table = self.calc_default_table(linked_base.segment, linked_base.cached_preferences)
 
-        # override class attributes in cg.HexGridWindow if present
-        if grid_cls is not None:
-            self.grid_cls = grid_cls
-        if line_renderer_cls is not None:
-            self.line_renderer_cls = line_renderer_cls
-
-        cg.HexGridWindow.__init__(self, table, view_params, caret_handler, parent)
+        cg.HexGridWindow.__init__(self, table, linked_base.cached_preferences, linked_base, parent)
         self.automatic_refresh = False
 
     def set_viewer_defaults(self):
@@ -49,6 +43,11 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
 
     def calc_default_table(self, segment, view_params):
         return SegmentTable(segment, view_params.hex_grid_width)
+
+    def recalc_view(self):
+        self.view_params = self.segment_viewer.linked_base.cached_preferences
+        log.debug("recalculating %s; items_per_row=%d" % (self, self.items_per_row))
+        cg.HexGridWindow.recalc_view(self)
 
     @property
     def page_size(self):
@@ -101,9 +100,9 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
         return self.get_status_at_index(index)
 
     def recalc_view(self):
-        table = SegmentTable(self.segment_viewer.linked_base.segment, self.items_per_row)
+        self.table = SegmentTable(self.segment_viewer.linked_base.segment, self.items_per_row)
         log.debug("recalculating %s" % self)
-        cg.HexGridWindow.recalc_view(self, table, self.segment_viewer.linked_base.cached_preferences)
+        cg.HexGridWindow.recalc_view(self)
 
     def on_popup(self, evt):
         row, col = self.get_row_col_from_event(evt)

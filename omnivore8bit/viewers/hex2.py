@@ -56,11 +56,9 @@ class HexEditViewer(SegmentViewer):
 
     pretty_name = "Hex"
 
-    has_hex = True
+    control_cls = HexEditControl
 
-    @classmethod
-    def create_control(cls, parent, linked_base):
-        return HexEditControl(parent, linked_base.segment, linked_base, linked_base.cached_preferences)
+    has_hex = True
 
     def recalc_data_model(self):
         """Rebuild the data model after a document formatting (or other

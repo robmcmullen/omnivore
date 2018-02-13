@@ -232,7 +232,7 @@ class DisassemblyGridControl(SegmentGridControl):
         e = self.segment_viewer.linked_base
         disassembly = e.get_current_disassembly(self.segment_viewer.machine)
         self.table.update_disassembly(e.segment, disassembly)
-        cg.HexGridWindow.recalc_view(self, None, e.cached_preferences)
+        SegmentGridControl.recalc_view(self)
         if e.editor.can_trace:
             e.update_trace_in_segment()
 
@@ -359,6 +359,8 @@ class DisassemblyViewer(SegmentViewer):
 
     pretty_name = "Disassembly"
 
+    control_cls = DisassemblyGridControl
+
     has_cpu = True
 
     has_hex = True
@@ -368,7 +370,7 @@ class DisassemblyViewer(SegmentViewer):
     @classmethod
     def create_control(cls, parent, linked_base):
         table = UdisFastTable(linked_base)
-        return DisassemblyGridControl(parent, linked_base.segment, linked_base, linked_base.cached_preferences, table=table)
+        return DisassemblyGridControl(parent, linked_base, table)
 
     @property
     def window_title(self):

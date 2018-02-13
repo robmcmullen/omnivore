@@ -1117,13 +1117,13 @@ class HexGridWindow(wx.ScrolledWindow):
         self.main.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
         self.main.Bind(wx.EVT_CHAR, self.on_char)
 
-    def recalc_view(self, table=None, view_params=None, line_renderer=None, *args, **kwargs):
-        if view_params is not None:
-            self.view_params = view_params
-        if table is not None:
-            self.table = table
-        if line_renderer is not None:
-            self.line_renderer = line_renderer
+    def recalc_view(self, *args, **kwargs):
+        # if view_params is not None:
+        #     self.view_params = view_params
+        # if table is not None:
+        #     self.table = table
+        # if line_renderer is not None:
+        #     self.line_renderer = line_renderer
         self.main.recalc_view(*args, **kwargs)
         self.calc_header_sizes()
         self.calc_scrolling()
