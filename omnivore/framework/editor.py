@@ -739,3 +739,13 @@ class FrameworkEditor(Editor):
     @status_message.setter
     def status_message(self, msg):
         self.task.status_bar.message = msg
+
+    def editor_summary(self):
+        lines = []
+        lines.append("name: %s" % self.name)
+        lines.append("document: %s" % self.document)
+        lines.append("task_arguments: %s" % self.task_arguments)
+        lines.append("flags: can_save: %s\n  can_undo: %s\n  can_redo: %s\n  can_cut: %s\n  can_copy: %s\n  can_paste: %s" % (self.can_save, self.can_undo, self.can_redo, self.can_cut, self.can_copy, self.can_paste))
+        lines.append("last saved: %s" % self.last_saved_uri)
+        lines.append("last loaded: %s" % self.last_loaded_uri)
+        return "\n".join(lines)

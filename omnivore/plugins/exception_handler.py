@@ -259,7 +259,7 @@ class ErrorDialog(wx.Dialog):
         self._message = message
 
         # Add timestamp and give message to ErrorReporter
-        message = u"*** %s ***%s" % (TimeStamp(), os.linesep) + message
+        message = u"********** %s **********\nEditor summary:\n%s\n\n%s" % (TimeStamp(), self.task.active_editor.editor_summary(), message)
         ErrorReporter().AddMessage(message)
 
         # Attributes
