@@ -181,6 +181,7 @@ class ByteEditor(FrameworkEditor):
         self.set_focused_viewer(viewer)
 
     def to_metadata_dict(self, mdict, document):
+        self.prepare_metadata_for_save()
         mdict["diff highlight"] = self.diff_highlight
         mdict["layout"] = self.control.get_layout()
         mdict["viewers"] = []
@@ -201,6 +202,9 @@ class ByteEditor(FrameworkEditor):
         #     # If we're saving the document currently displayed, save the
         #     # display parameters too.
         #     mdict["segment view params"] = dict(self.segment_view_params)  # shallow copy, but only need to get rid of Traits dict wrapper
+
+    def prepare_metadata_for_save(self):
+        pass
 
     def rebuild_document_properties(self):
         log.debug("rebuilding document %s; intitial segment=%s" % (str(self.document), self.initial_segment))

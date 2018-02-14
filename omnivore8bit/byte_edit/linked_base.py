@@ -135,12 +135,17 @@ class LinkedBase(CaretHandler):
             self.segment_number = self.editor.initial_segment
 
     def to_metadata_dict(self, mdict, document):
+        self.prepare_metadata_for_save()
         if document == self.document:
             mdict['uuid'] = self.uuid
             # If we're saving the document currently displayed, save the
             # display parameters too.
             mdict["segment view params"] = dict(self.segment_view_params)  # shallow copy, but only need to get rid of Traits dict wrapper
             mdict['segment number'] = self.segment_number
+
+    def prepare_metadata_for_save(self):
+        # make sure to save latest values of currently viewed segment
+        self.save_segment_view_params(self.segment)
 
     def save_segment_view_params(self, segment):
         d = {
@@ -165,7 +170,7 @@ class LinkedBase(CaretHandler):
             self.clear_selection()
             d = {}
         else:
-            log.debug("restoring view params for %s: %s" % (segment.uuid, str(d)))
+            log.debug("restoring view params for segment %s (%s): %s" % (segment.name, segment.uuid, str(d)))
             self.restore_caret_state(d['carets'])
             self.selected_ranges = d['selected_ranges']
         for viewer in self.editor.viewers:
