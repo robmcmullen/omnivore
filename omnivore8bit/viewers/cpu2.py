@@ -235,10 +235,11 @@ class DisassemblyGridControl(SegmentGridControl):
         return DisassemblyLineRenderer(self, 2, image_cache=image_cache, widths=[5,25], col_labels=['^Opcodes','^      Operand'])
 
     def recalc_view(self):
-        self.segment_viewer.restart_disassembly()
+        v = self.segment_viewer
+        v.restart_disassembly()
         cg.HexGridWindow.recalc_view(self)
-        if e.editor.can_trace:
-            e.update_trace_in_segment()
+        if v.is_tracing:
+            v.update_trace_in_segment()
 
     def get_disassembled_text(self, start=0, end=-1):
         return self.table.disassembly.get_disassembled_text(start, end)
