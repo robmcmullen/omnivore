@@ -147,12 +147,12 @@ class LinkedBase(CaretHandler):
 
     def save_segment_view_params(self, segment):
         d = {
-            'caret_index': self.carets.current.index,
+            'carets': self.calc_caret_state(),
         }
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
                 try:
-                    d[viewer.pane_info.name] = viewer.control.get_view_params()
+                    d[viewer.uuid] = viewer.control.calc_view_params()
                 except AttributeError:
                     pass
 
@@ -165,11 +165,11 @@ class LinkedBase(CaretHandler):
             log.debug("no view params for %s" % segment.uuid)
             return
         log.debug("restoring view params for %s" % segment.uuid)
-        self.carets.current.index = d['caret_index']
+        self.restore_caret_state(d['carets'])
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
                 try:
-                    params = d[viewer.pane_info.name]
+                    params = d[viewer.uuid]
                 except KeyError:
                     continue
                 try:
@@ -280,18 +280,18 @@ class LinkedBase(CaretHandler):
             self.document.change_count += 1
             self.update_caret_history()
 
-    def get_caret_state(self):
-        return self.segment, self.carets.current.index
+    def calc_caret_history(self):
+        return self.segment, CaretHandler.calc_caret_state(self)
 
-    def restore_caret_state(self, state):
-        segment, index = state
+    def restore_caret_history(self, state):
+        segment, carets = state
         number = self.document.find_segment_index(segment)
         if number < 0:
             log.error("tried to restore caret to a deleted segment? %s" % segment)
         else:
             if number != self.segment_number:
                 self.view_segment_number(number)
-            self.index_clicked(index, 0, None)
+            CaretHandler.restore_caret_state(self, carets)
         log.debug(self.caret_history)
 
     #### selection utilities

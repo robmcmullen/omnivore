@@ -216,7 +216,7 @@ class CommentsViewer(BaseInfoViewer):
     pretty_name = "Comments"
 
     @classmethod
-    def create_control(cls, parent, linked_base):
+    def create_control(cls, parent, linked_base, mdict):
         return CommentsPanel(parent, linked_base.editor.task, size=(100,500))
 
     def recalc_data_model(self):
@@ -243,7 +243,7 @@ class UndoViewer(BaseInfoViewer):
     pretty_name = "Undo History"
 
     @classmethod
-    def create_control(cls, parent, linked_base):
+    def create_control(cls, parent, linked_base, mdict):
         return UndoHistoryPanel(parent, linked_base.editor.task, size=(100,500))
 
     def recalc_data_model(self):
@@ -269,9 +269,7 @@ class SegmentListViewer(BaseInfoViewer):
 
     pretty_name = "Segments"
 
-    @classmethod
-    def create_control(cls, parent, linked_base):
-        return SegmentList(parent, linked_base.editor.task, size=(100,500))
+    control_cls = SegmentList
 
     def recalc_data_model(self):
         pass

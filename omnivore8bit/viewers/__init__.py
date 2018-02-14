@@ -80,8 +80,6 @@ class SegmentViewer(HasTraits):
 
     control = Any(None)
 
-    pane_info = Any(None)
-
     range_processor = Property(Any, depends_on='control')
 
     supported_clipboard_data_objects = List

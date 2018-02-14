@@ -253,8 +253,11 @@ class CaretHandler(HasTraits):
             return
         self.restore_caret_state(cmd)
 
+    def calc_caret_state(self):
+        return self.carets.copy()
+
     def restore_caret_state(self, state):
-        self.carets.set_state(state)
+        self.carets = state
 
     def mark_index_range_changed(self, index_range):
         """Hook for subclasses to be informed when bytes within the specified
