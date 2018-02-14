@@ -567,7 +567,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         last_x, last_y = self.parent.CalcUnscrolledPosition(w, h)
         #print("size: w,h=%d,%d empty: x,y=%d,%d last: x,y=%d,%d origin=%d,%d" % (w, h, empty_x, empty_y, last_x, last_y, px, py))
  
-        dc.SetBrush(self.view_params.empty_brush)
+        dc.SetBrush(self.parent.view_params.empty_brush)
         dc.SetPen(wx.TRANSPARENT_PEN)
 
         dc.DrawRectangle(empty_x, py, last_x, last_y)  # right side
