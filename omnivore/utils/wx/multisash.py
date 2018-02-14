@@ -686,6 +686,7 @@ class MultiClient(wx.Window):
             u = str(uuid4())
         self.child_uuid = u
         self.move_child()
+        self.OnSize(None)
 
     def move_child(self):
         if self.use_title_bar:
