@@ -153,7 +153,7 @@ class LinkedBase(CaretHandler):
                     d[viewer.uuid] = viewer.control.calc_view_params()
                 except AttributeError:
                     pass
-        print("segment view params: %s: %s" % (segment.name, str(d)))
+        log.debug("segment view params: %s: %s" % (segment.name, str(d)))
         self.segment_view_params[segment.uuid] = d
 
     def restore_segment_view_params(self, segment):
@@ -162,17 +162,20 @@ class LinkedBase(CaretHandler):
         except KeyError:
             log.debug("no view params for %s" % segment.uuid)
             self.clear_carets()
-            return
-        log.debug("restoring view params for %s" % segment.uuid)
-        self.restore_caret_state(d['carets'])
-        self.selected_ranges = d['selected_ranges']
+            d = {}
+        else:
+            log.debug("restoring view params for %s: %s" % (segment.uuid, str(d)))
+            self.restore_caret_state(d['carets'])
+            self.selected_ranges = d['selected_ranges']
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
                 try:
                     params = d[viewer.uuid]
                 except KeyError:
+                    viewer.control.use_default_view_params()
                     continue
                 try:
+                    log.debug(" restoring view of %s (%s): %s" % (viewer.window_title, viewer.uuid, str(params)))
                     viewer.control.restore_view_params(params)
                 except AttributeError:
                     continue
