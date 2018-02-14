@@ -1102,6 +1102,11 @@ class HexGridWindow(wx.ScrolledWindow):
         self.left.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
         self.update_dependents = self.update_dependents_post_init
 
+    def __repr__(self):
+        c, r = self.GetViewStart()
+        vx, vy = self.main.GetVirtualSize()
+        return "%s view_start=%d,%d size=%d,%d vsize=%d,%d" % (self.__class__.__name__, r, c, self.table.num_rows, self.line_renderer.num_cells, vy, vx)
+
     def set_view_param_defaults(self):
         self.scroll_delay = 30  # milliseconds
         self.zoom = 1
@@ -1246,24 +1251,26 @@ class HexGridWindow(wx.ScrolledWindow):
         return [row, col]  # viewport origin takes row, col!
 
     def restore_view_params(self, data):
+        log.debug("restoring viewport of %s to: %s" % (self, str(data)))
         self.move_viewport_origin(data)
-        log.debug("restored viewport to: %s" % str(self.GetViewStart()))
+        log.debug("restored viewport of %s to: %s (size: %s)" % (self, str(self.GetViewStart()), str(self.main.GetVirtualSize())))
 
     def use_default_view_params(self):
         self.move_viewport_origin((0, 0))
-        log.debug("restored viewport to: %s" % str(self.GetViewStart()))
+        log.debug("restored viewport to default: %s" % str(self.GetViewStart()))
 
     def move_viewport_origin(self, row_col_tuple):
         row, col = row_col_tuple
         sx, sy = self.GetViewStart()
         if sx == col and sy == row:
+            log.debug("viewport: already at %d,%d" % (row, col))
             # already there!
             return
-        self.Scroll(col, row)
         self.main.Scroll(col, row)
         self.left.Scroll(0, row)
         self.top.Scroll(col, 0)
-        scroll_log.debug("viewport: %d,%d" % (row, col))
+        self.Scroll(col, row)
+        log.debug("viewport: %d,%d" % (row, col))
         # if self.automatic_refresh:
         #     self.Refresh()
 

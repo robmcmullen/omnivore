@@ -210,8 +210,8 @@ class LinkedBase(CaretHandler):
             self.segment_number = index
             self.segment_parser = self.document.segment_parser
             self.segment = self.document.segments[index]
-            self.restore_segment_view_params(self.segment)
             self.force_data_model_update()
+            self.restore_segment_view_params(self.segment)
             self.task.segments_changed = self.document.segments
             self.task.segment_selected = self.segment_number
 
@@ -228,10 +228,9 @@ class LinkedBase(CaretHandler):
             if old_segment is not None:
                 self.save_segment_view_params(old_segment)
             self.segment = doc.segments[num]
-            self.adjust_selection(old_segment)
             self.segment_number = num
-
             self.force_data_model_update()
+            self.adjust_selection(old_segment)
 
             #self.show_trace()
             # if self.segment_list is not None:

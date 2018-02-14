@@ -398,6 +398,7 @@ class DisassemblyViewer(SegmentViewer):
 
     def recalc_data_model(self):
         self.clear_disassembly()
+        self.restart_disassembly()
 
     ##### UdisFast interface
 
