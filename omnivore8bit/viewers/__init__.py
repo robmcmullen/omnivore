@@ -265,7 +265,8 @@ class SegmentViewer(HasTraits):
                 self.sync_caret(flags)
 
     def sync_caret(self, flags):
-        self.control.set_caret_index(self.linked_base.carets.current.index, flags)
+        if not self.has_metadata_only:
+            self.control.set_caret_index(self.linked_base.carets.current.index, flags)
 
     @on_trait_change('machine.font_change_event,machine.bitmap_shape_change_event,machine.bitmap_color_change_event,machine.disassembler_change_event')
     def machine_metadata_changed(self, evt):

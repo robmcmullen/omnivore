@@ -189,6 +189,9 @@ class CaretHandler(HasTraits):
         self.validate_carets()
         return self.carets.current
 
+    def clear_carets(self):
+        self.set_caret(0)
+
     def move_carets(self, delta):
         for caret in self.carets:
             caret.add_delta(delta)

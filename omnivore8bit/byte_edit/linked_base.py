@@ -91,6 +91,9 @@ class LinkedBase(CaretHandler):
     def _cached_preferences_default(self):
         return self.task.preferences
 
+    def _segment_view_params_default(self):
+        return {}
+
     #### Properties
 
     @property
@@ -139,15 +142,10 @@ class LinkedBase(CaretHandler):
             mdict["segment view params"] = dict(self.segment_view_params)  # shallow copy, but only need to get rid of Traits dict wrapper
             mdict['segment number'] = self.segment_number
 
-    def get_segment_view_params(self):
-        return {
-            'caret index': self.carets.current.index,
-            'segment number': self.segment_number,
-        }
-
     def save_segment_view_params(self, segment):
         d = {
             'carets': self.calc_caret_state(),
+            'selected_ranges': list(self.selected_ranges),
         }
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
@@ -155,7 +153,7 @@ class LinkedBase(CaretHandler):
                     d[viewer.uuid] = viewer.control.calc_view_params()
                 except AttributeError:
                     pass
-
+        print("segment view params: %s: %s" % (segment.name, str(d)))
         self.segment_view_params[segment.uuid] = d
 
     def restore_segment_view_params(self, segment):
@@ -163,9 +161,11 @@ class LinkedBase(CaretHandler):
             d = self.segment_view_params[segment.uuid]
         except KeyError:
             log.debug("no view params for %s" % segment.uuid)
+            self.clear_carets()
             return
         log.debug("restoring view params for %s" % segment.uuid)
         self.restore_caret_state(d['carets'])
+        self.selected_ranges = d['selected_ranges']
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
                 try:
@@ -311,13 +311,14 @@ class LinkedBase(CaretHandler):
         old_offset = old_segment.get_raw_index(0)
 
         self.restore_segment_view_params(s)
-        self.selected_ranges = s.get_style_ranges(selected=True)
-        if self.selected_ranges:
-            # Arbitrarily puth the anchor on the last selected range
-            last = self.selected_ranges[-1]
-            self.anchor_initial_start_index = self.anchor_start_index = last[0]
-            self.anchor_initial_end_index = self.anchor_end_index = last[1]
-        g.clear_style_bits(selected=True)
+        if False:  # select same bytes in new segment, if possible
+            self.selected_ranges = s.get_style_ranges(selected=True)
+            if self.selected_ranges:
+                # Arbitrarily puth the anchor on the last selected range
+                last = self.selected_ranges[-1]
+                self.anchor_initial_start_index = self.anchor_start_index = last[0]
+                self.anchor_initial_end_index = self.anchor_end_index = last[1]
+            g.clear_style_bits(selected=True)
         self.document.change_count += 1
 
     def convert_ranges(self, from_style, to_style):

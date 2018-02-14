@@ -1237,6 +1237,13 @@ class HexGridWindow(wx.ScrolledWindow):
         self.Refresh()
         evt.Skip()
 
+    def calc_view_params(self):
+        sx, sy = self.GetViewStart()
+        return [sx, sy]  # might be a wx.Point, so ensure it's a list for json serialization
+
+    def restore_view_params(self, data):
+        self.move_viewport_origin(data)
+
     def move_viewport_origin(self, row_col_tuple):
         row, col = row_col_tuple
         sx, sy = self.GetViewStart()
