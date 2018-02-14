@@ -148,6 +148,12 @@ class MouseEventMixin(SelectionHandler):
         self.mouse_drag_started = False
         self.select_extend_mode = False
         self.multi_select_mode = False
+        if wx.Platform == "__WXMSW__":
+            # FIXME: MSW doesn't seem to refresh after a mouse release
+            # outside of the window, so force it here to fill in the remaining
+            # bits of the selection
+            log.debug("Extra refresh on handle_select_end for windows")
+            self.refresh_view()
 
     def commit_change(self, flags):
         self.caret_handler.process_flags(flags)
