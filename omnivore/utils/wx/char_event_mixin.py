@@ -91,7 +91,7 @@ class CharEventMixin(object):
 
     def create_char_event_flags(self):
         flags = DisplayFlags(self)
-        flags.old_carets = set(self.caret_handler.get_caret_state())
+        flags.old_carets = set(self.caret_handler.calc_caret_state())
         return flags
 
     def on_char(self, evt):
