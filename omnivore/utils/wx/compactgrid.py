@@ -921,7 +921,7 @@ class AuxWindow(wx.ScrolledCanvas):
 
     def calc_row_skip(self):
         row_height = self.parent.line_renderer.h
-        if row_height < self.char_height:
+        if row_height < self.char_height + self.parent.view_params.row_height_extra_padding:
             skip = (self.char_height + row_height - 1) // row_height
         else:
             skip = 1
