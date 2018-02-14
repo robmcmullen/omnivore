@@ -19,8 +19,10 @@ log = logging.getLogger(__name__)
 class Caret(object):
     """Opaque class representing a caret's index and additional metadata
     """
-    def __init__(self, index=0):
+    def __init__(self, index=0, state=None):
         self.index = index
+        if state is not None:
+            self.restore(state)
 
     def __bool__(self):
         return self.index is not None
@@ -31,7 +33,7 @@ class Caret(object):
         if not hasattr(self, 'index'):
             log.error("not a Caret object")
             return False
-        log.debug("comparing caret indexes:", self.index, other.index)
+        log.debug("comparing caret indexes: %d %d" % (self.index, other.index))
         return self.index == other.index
 
     def __ne__(self, other):
@@ -39,6 +41,12 @@ class Caret(object):
 
     def __repr__(self):
         return "Caret(%d)" % self.index
+
+    def serialize(self):
+        return self.index
+
+    def restore(self, state):
+        self.index = state
 
     def set(self, index):
         self.index = index
@@ -56,7 +64,9 @@ class Caret(object):
 class CaretList(list):
     def __init__(self, index, *args, **kwargs):
         list(self, *args, **kwargs)
-        if index is not None:
+        if isinstance(index, list):
+            self.new_carets(index)
+        elif index is not None:
             self.new_caret(index)
 
     def __bool__(self):
@@ -86,8 +96,13 @@ class CaretList(list):
         self.append(caret)
         return caret
 
+    def new_carets(self, caret_state):
+        for s in caret_state:
+            caret = Caret(state=s)
+            self.append(caret)
+
     def get_state(self):
-        return self.copy()
+        return [caret.serialize() for caret in self]
 
     def copy(self):
         c = CaretList(None)
@@ -95,15 +110,16 @@ class CaretList(list):
             c.append(caret.copy())
         return c
 
-    def add_old_carets(self, old_list):
+    def add_old_carets(self, old_state):
         """Prefix the existing current caret with the list of old carets.
 
         This throws away all but the current caret in the self object, but
         hopefully this is what's intended as the current caret will have been
         moved by the compactgrid before hitting the process_caret_flags.
         """
-        self[0:-1] = old_list[:]
-        log.debug("old_carets: %s added: %s" % (str(old_list), str(self)))
+        old_carets = CaretList(old_state)
+        self[0:-1] = old_carets[:]
+        log.debug("old_carets: %s added: %s" % (str(old_carets), str(self)))
 
     def remove_old_carets(self):
         """Remove everything but the current caret"""
@@ -257,10 +273,11 @@ class CaretHandler(HasTraits):
         self.restore_caret_state(cmd)
 
     def calc_caret_state(self):
-        return self.carets.copy()
+        return self.carets.get_state()
 
     def restore_caret_state(self, state):
-        self.carets = state
+        carets = CaretList(state)
+        self.carets = carets
 
     def mark_index_range_changed(self, index_range):
         """Hook for subclasses to be informed when bytes within the specified

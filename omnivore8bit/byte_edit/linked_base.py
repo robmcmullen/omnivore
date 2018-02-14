@@ -145,7 +145,7 @@ class LinkedBase(CaretHandler):
     def save_segment_view_params(self, segment):
         d = {
             'carets': self.calc_caret_state(),
-            'selected_ranges': list(self.selected_ranges),
+            'selected_ranges': [list(a) for a in self.selected_ranges],
         }
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
