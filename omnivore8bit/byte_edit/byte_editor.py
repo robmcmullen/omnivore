@@ -184,14 +184,15 @@ class ByteEditor(FrameworkEditor):
         mdict["diff highlight"] = self.diff_highlight
         mdict["layout"] = self.control.get_layout()
         mdict["viewers"] = []
-        bases = []
+        bases = {}
         for v in self.viewers:
-            bases.append(v.linked_base)
+            b = v.linked_base
+            bases[b.uuid] = b
             e = {"linked base": v.linked_base.uuid}
             v.to_metadata_dict(e, document)
             mdict["viewers"].append(e)
         mdict["linked bases"] = []
-        for b in bases:
+        for u, b in bases.iteritems():
             e = {}
             b.to_metadata_dict(e, document)
             mdict["linked bases"].append(e)

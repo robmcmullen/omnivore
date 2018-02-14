@@ -162,6 +162,7 @@ class LinkedBase(CaretHandler):
         except KeyError:
             log.debug("no view params for %s" % segment.uuid)
             self.clear_carets()
+            self.clear_selection()
             d = {}
         else:
             log.debug("restoring view params for %s: %s" % (segment.uuid, str(d)))
@@ -204,7 +205,7 @@ class LinkedBase(CaretHandler):
             self.segment_number = index
             self.segment_parser = self.document.segment_parser
             self.segment = self.document.segments[index]
-            self.clear_selection()
+            self.restore_segment_view_params(self.segment)
             self.force_data_model_update()
             self.task.segments_changed = self.document.segments
             self.task.segment_selected = self.segment_number
