@@ -303,6 +303,12 @@ class SegmentViewer(HasTraits):
         if flags is not Undefined:
             if flags.skip_source_control_refresh and self.control == flags.source_control:
                 log.debug("refresh_event: skipping refresh of %s" % self.control)
+                # FIXME: the row/col headers aren't refreshed with the call to
+                # move_viewport_origin, so force them to be refreshed here. I
+                # could just take out the optimization and not skip the source
+                # control refresh, but this is not that unpleasant of a hack to
+                # save a full refresh of the main grid.
+                self.control.refresh_headers()
             elif self.control in flags.refreshed_as_side_effect:
                 log.debug("refresh_event: skipping already refreshed %s" % self.control)
             else:

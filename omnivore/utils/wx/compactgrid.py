@@ -1147,6 +1147,10 @@ class HexGridWindow(wx.ScrolledWindow):
         self.top.Refresh()
         self.left.Refresh()
 
+    def refresh_headers(self):
+        self.top.Refresh()
+        self.left.Refresh()
+
     def on_size(self, evt):
         w, h = self.GetClientSize()
         if self.want_row_header:
