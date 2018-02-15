@@ -531,7 +531,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.fully_visible_cells = int(w / self.cell_pixel_width)
         self.visible_rows = int((h + self.cell_pixel_height - 1) / self.cell_pixel_height)
         self.visible_cells = int((w + self.cell_pixel_width - 1) / self.cell_pixel_width)
-        print("fully visible: %d,%d including partial: %d,%d" % (self.fully_visible_rows, self.fully_visible_cells, self.visible_rows, self.visible_cells))
+        log.debug("fully visible: %d,%d including partial: %d,%d" % (self.fully_visible_rows, self.fully_visible_cells, self.visible_rows, self.visible_cells))
 
     def on_paint(self, evt):
         dc = wx.PaintDC(self)

@@ -25,11 +25,11 @@ import wx
 
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+#log.setLevel(logging.DEBUG)
 resize_log = logging.getLogger("resize")
-resize_log.setLevel(logging.DEBUG)
+#resize_log.setLevel(logging.DEBUG)
 
 
 MV_HOR = 0
@@ -152,7 +152,7 @@ class MultiSash(wx.Window):
             creator = self.live_update_control
             px, py = creator.ClientToScreen((evt.x, evt.y))
             px, py = creator.GetParent().ScreenToClient((px, py))
-            print("motion", px, py, self.HasCapture(), self.GetCapture(), self.GetCapture() == self)
+            log.debug("motion: %s" % str((px, py, self.HasCapture(), self.GetCapture(), self.GetCapture() == self)))
             if creator.side == MV_HOR:
                 creator.drag_parent.SizeLeaf(creator.drag_leaf, py,not creator.side)
             else:
