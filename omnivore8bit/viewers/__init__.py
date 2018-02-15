@@ -133,8 +133,9 @@ class SegmentViewer(HasTraits):
 
     @classmethod
     def create(cls, parent, linked_base, machine=None, uuid=None, mdict={}):
-        control = cls.create_control(parent, linked_base, mdict)
+        control = cls.create_control(parent, linked_base, mdict.get('control',{}))
         v = cls(linked_base=linked_base, control=control)
+        v.from_metadata_dict(mdict)
         if machine is not None:
             v.machine = machine
         control.segment_viewer = v
@@ -142,7 +143,7 @@ class SegmentViewer(HasTraits):
             v.uuid = uuid
         control.uuid = v.uuid
         v.create_post()
-        print("control: %s, parent: %s uuid:%s" % (control.__class__.__name__, parent.__class__.__name__, v.uuid))
+        log.debug("create: control=%s, parent=%s uuid=%s" % (control.__class__.__name__, parent.__class__.__name__, v.uuid))
         return v
 
     ##### Cleanup
@@ -177,8 +178,7 @@ class SegmentViewer(HasTraits):
 
         if 'machine' in e:
             self.machine.restore_extra_from_dict(e['machine'])
-        if 'control' in e:
-            self.control.restore_extra_from_dict(e['control'])
+        # 'control' is handled during viewer creation process
         self.from_metadata_dict_post(e)
 
     def from_metadata_dict_post(self, e):

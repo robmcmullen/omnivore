@@ -1,3 +1,5 @@
+import hashlib, uuid
+
 import numpy as np
 import wx
 
@@ -11,10 +13,11 @@ import colors
 #
 # template:
 # Font = {
-#    'data': ,
+#    'data': data_bytes,
 #    'name':"Default Atari Font",
 #    'char_w': 8,
 #    'char_h': 8,
+#    'uuid': uuid.UUID(bytes=hashlib.md5(data_bytes).digest()),
 #    }
 
 A8DefaultFont = {
@@ -22,6 +25,7 @@ A8DefaultFont = {
     'name': "8x8 Atari Default Font",
     'char_w': 8,
     'char_h': 8,
+    'uuid': 'e46c1a08-b718-de27-3303-6e2701f0b0b3',
     }
 
 A8ComputerFont = {
@@ -29,6 +33,7 @@ A8ComputerFont = {
     'name': "8x8 Atari Custom Computer Font",
     'char_w': 8,
     'char_h': 8,
+    'uuid': '5e605b00-56cd-1e63-92ac-7dcee6c2418e',
     }
 
 A2DefaultFont = {
@@ -37,6 +42,7 @@ A2DefaultFont = {
     'char_w': 7,
     'char_h': 8,
     'blink': True,
+    'uuid': 'bfee0385-a80f-072d-ee1c-ac3fc034ba22',
     }
 
 A2MouseTextFont = {
@@ -44,7 +50,11 @@ A2MouseTextFont = {
     'name': "7x8 Apple ][ Font w/Mouse Text",
     'char_w': 7,
     'char_h': 8,
+    'uuid': '921db38b-f80a-c055-d1e5-bcff2477aa14',
     }
+
+
+builtin_font_data = {f['uuid']:f for f in [A8DefaultFont, A8ComputerFont, A2DefaultFont, A2MouseTextFont]}
 
 
 class AnticFont(object):
@@ -54,6 +64,7 @@ class AnticFont(object):
         self.char_h = font_renderer.char_bit_height
         self.scale_w = font_renderer.scale_width
         self.scale_h = font_renderer.scale_height
+        self.uuid = font_data['uuid']
 
         self.set_colors(segment_viewer, playfield_colors)
         self.set_fonts(segment_viewer, font_data, font_renderer, reverse)

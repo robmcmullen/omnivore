@@ -545,7 +545,7 @@ class ByteEditor(FrameworkEditor):
                     log.error("unknown viewer %s, uuid=%s" % (viewer_type, uuid))
                     continue
                 log.debug("creating viewer %s (%s) with linked base %s" % (uuid, viewer_type, str(linked_base)))
-                viewer = viewer_cls.create(self.control, linked_base, None, uuid, e.get('control',{}))
+                viewer = viewer_cls.create(self.control, linked_base, None, uuid, e)
                 log.debug("created viewer %s (%s)" % (viewer.uuid, viewer.name))
 
                 self.viewers.append(viewer)
