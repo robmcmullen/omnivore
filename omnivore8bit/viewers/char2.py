@@ -93,6 +93,8 @@ class CharViewer(SegmentViewer):
 
     has_font = True
 
+    has_colors = True
+
     has_width = True
 
     width_text = "width in characters"
@@ -103,10 +105,16 @@ class CharViewer(SegmentViewer):
 
     @property
     def window_title(self):
-        return self.machine.font_renderer.name + ", " + self.machine.font_mapping.name
+        return self.machine.font_renderer.name + ", " + self.machine.font_mapping.name + ", " + self.machine.color_standard_name
+
+    @on_trait_change('machine.bitmap_color_change_event')
+    def update_font_colors(self, evt):
+        log.debug("CharViewer: machine font colors changed for %s" % self.control)
+        if evt is not Undefined:
+            self.set_font()
 
     @on_trait_change('machine.font_change_event')
-    def update_bitmap(self, evt):
+    def update_font(self, evt):
         log.debug("CharViewer: machine font changed for %s" % self.control)
         if evt is not Undefined:
             self.control.recalc_view()

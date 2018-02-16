@@ -275,6 +275,10 @@ class Machine(HasTraits):
         self.color_standard = std
         self.update_colors(self.antic_color_registers)
 
+    @property
+    def color_standard_name(self):
+        return "NTSC" if self.color_standard == 0 else "PAL"
+
     def set_bitmap_renderer(self, renderer):
         self.bitmap_renderer = renderer
         self.bitmap_shape_change_event = True

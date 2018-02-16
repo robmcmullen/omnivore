@@ -101,6 +101,8 @@ class BitmapViewer(SegmentViewer):
 
     has_bitmap = True
 
+    has_colors = True
+
     has_width = True
 
     width_text = "bitmap width in bytes"

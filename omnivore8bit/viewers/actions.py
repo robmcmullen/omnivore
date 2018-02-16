@@ -247,9 +247,8 @@ class ViewerWidthAction(ViewerAction):
     enabled_name = 'has_width'
 
     def perform(self, event):
-        e = self.active_editor
-        v = e.focused_viewer
-        val = prompt_for_dec(e.window.control, 'Enter new %s' % v.width_text, 'Set Width', v.width)
+        v = self.viewer
+        val = prompt_for_dec(v.control, 'Enter new %s' % v.width_text, 'Set Width', v.width)
         if val is not None and val > 0:
             v.set_width(val)
 
@@ -262,9 +261,8 @@ class ViewerZoomAction(ViewerAction):
     enabled_name = 'has_zoom'
 
     def perform(self, event):
-        e = self.active_editor
-        v = e.focused_viewer
-        val = prompt_for_dec(e.window.control, 'Enter new %s' % v.zoom_text, 'Set Zoom', v.zoom)
+        v = self.viewer
+        val = prompt_for_dec(v.control, 'Enter new %s' % v.zoom_text, 'Set Zoom', v.zoom)
         if val is not None and val > 0:
             v.set_zoom(val)
 
@@ -277,10 +275,10 @@ class AnticColorAction(ViewerAction):
     enabled_name = 'has_colors'
 
     def perform(self, event):
-        e = self.active_editor
-        dlg = AnticColorDialog(event.task.window.control, e.machine.antic_color_registers)
+        v = self.viewer
+        dlg = AnticColorDialog(v.control, v.machine.antic_color_registers)
         if dlg.ShowModal() == wx.ID_OK:
-            e.machine.update_colors(dlg.colors)
+            v.machine.update_colors(dlg.colors)
 
 
 class UseColorsAction(ViewerAction):
