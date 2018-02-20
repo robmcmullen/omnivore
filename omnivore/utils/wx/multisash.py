@@ -569,17 +569,10 @@ class MultiClient(wx.Window):
         self.selected = False
         self.setup_paint()
 
-        button_index = 0
-        self.buttons = []
-        if self.use_close_button:
-            button_index += 1
-            self.buttons.append(TitleBarCloser(self, button_index))
+        if self.use_title_bar:
+            self.title_bar = TitleBar(self)
+
         top = self.GetParent().multiView
-        if top.live_update:
-            button_index += 1
-            self.buttons.append(TitleBarSplitHor(self, button_index))
-            button_index += 1
-            self.buttons.append(TitleBarSplitVer(self, button_index))
 
         if child is None:
             child = top._defChild(self)
@@ -591,6 +584,7 @@ class MultiClient(wx.Window):
         self.Bind(wx.EVT_SET_FOCUS,self.OnSetFocus)
         self.Bind(wx.EVT_CHILD_FOCUS,self.OnChildFocus)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_SIZE, self.OnSize)
 
     def do_send_event(self, evt):
         return not self.GetEventHandler().ProcessEvent(evt) or evt.IsAllowed()
@@ -668,13 +662,10 @@ class MultiClient(wx.Window):
         self.SetSize(0,0,w,h)
         w,h = self.GetClientSize()
         if self.use_title_bar:
+            self.title_bar.SetSize((w, self.title_bar_height))
             self.child.SetSize((w, h - self.title_bar_height))
         else:
             self.child.SetSize((w - 2 * self.child_window_x, h - 2 * self.child_window_y))
-
-        for button in self.buttons:
-            x, y, w, h = button.CalcSizePos(self)
-            button.SetSize(x, y, w, h)
 
     def replace(self, child, u=None):
         if self.child:
@@ -690,12 +681,10 @@ class MultiClient(wx.Window):
 
     def move_child(self):
         if self.use_title_bar:
+            self.title_bar.Move(0, 0)
             self.child.Move(0, self.title_bar_height)
         else:
             self.child.Move(self.child_window_x, self.child_window_y)
-        for button in self.buttons:
-            x, y, w, h = button.CalcSizePos(self)
-            button.SetSize(x, y, w, h)
 
     def OnSetFocus(self,evt):
         self.Select()
@@ -705,6 +694,73 @@ class MultiClient(wx.Window):
 ##        from Funcs import FindFocusedChild
 ##        child = FindFocusedChild(self)
 ##        child.Bind(wx.EVT_KILL_FOCUS,self.OnChildKillFocus)
+
+
+class TitleBar(wx.Window):
+    def __init__(self, parent):
+        wx.Window.__init__(self, parent, -1)
+        self.client = parent
+
+        button_index = 0
+        self.buttons = []
+        button_index += 1
+        self.buttons.append(TitleBarCloser(self, button_index))
+        top = self.client.GetParent().multiView
+        button_index += 1
+        self.buttons.append(TitleBarSplitHor(self, button_index))
+        button_index += 1
+        self.buttons.append(TitleBarSplitVer(self, button_index))
+
+        self.SetBackgroundColour(wx.RED)
+        self.hide_buttons()
+
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+        self.Bind(wx.EVT_LEAVE_WINDOW,self.OnLeave)
+        self.Bind(wx.EVT_ENTER_WINDOW,self.OnEnter)
+
+    def draw_title_bar(self, dc):
+        dc.SetBackgroundMode(wx.SOLID)
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        brush, _, text, textbg = self.client.get_paint_tools()
+        dc.SetBrush(brush)
+
+        w, h = self.GetSize()
+        dc.SetFont(wx.NORMAL_FONT)
+        dc.SetTextBackground(textbg)
+        dc.SetTextForeground(text)
+        dc.DrawRectangle(0, 0, w, h)
+        dc.DrawText(self.client.child.GetName(), self.client.title_bar_x, self.client.title_bar_y)
+
+    def OnPaint(self, event):
+        dc = wx.PaintDC(self)
+        self.draw_title_bar(dc)
+
+    def OnSize(self, evt):
+        for button in self.buttons:
+            x, y, w, h = button.CalcSizePos(self)
+            button.SetSize(x, y, w, h)
+
+    def hide_buttons(self):
+        for b in self.buttons[1:]:
+            if b: b.Hide()
+
+    def show_buttons(self):
+        for b in self.buttons[1:]:
+            if b: b.Show()
+
+    def OnEnter(self, evt):
+        self.show_buttons()
+
+    def OnLeave(self, evt):
+        # check if left the window but still in the title bar, otherwise will
+        # enter an endless cycle of leave/enter events as the buttons due to
+        # the show/hide of the buttons being right under the cursor
+        x, y = evt.GetPosition()
+        w, h = self.GetSize()
+        if x < 0 or x >= w or y < 0 or y >= h:
+            self.hide_buttons()
+
 
 #----------------------------------------------------------------------
 
@@ -936,6 +992,9 @@ class MultiCreator(wx.Window):
 
 class MultiCloser(wx.Window):
     def __init__(self,parent):
+        self.title_bar = parent
+        self.client = parent.GetParent()
+        self.splitter = self.client.GetParent()
         x,y,w,h = self.CalcSizePos(parent)
         wx.Window.__init__(self,id = -1,parent = parent,
                           pos = (x,y),
@@ -965,10 +1024,14 @@ class MultiCloser(wx.Window):
 
     def OnRelease(self,evt):
         if self.down and self.entered:
-            self.GetParent().DestroyLeaf()
+            wx.CallAfter(self.title_bar.hide_buttons)
+            self.do_action(evt)
         else:
             evt.Skip()
         self.down = False
+
+    def do_action(self, evt):
+        self.GetParent().DestroyLeaf()
 
     def OnPaint(self,evt):
         dc = wx.PaintDC(self)
@@ -984,7 +1047,7 @@ class MultiCloser(wx.Window):
         return (x,y,w,h)
 
     def OnSize(self,evt):
-        x,y,w,h = self.CalcSizePos(self.GetParent())
+        x,y,w,h = self.CalcSizePos(self.title_bar)
         self.SetSize(x,y,w,h)
 
 
@@ -997,7 +1060,7 @@ class TitleBarButton(MultiCloser):
         dc = wx.PaintDC(self)
         size = self.GetClientSize()
 
-        brush, pen, _, _ = self.GetParent().get_paint_tools()
+        brush, pen, _, _ = self.client.get_paint_tools()
         self.draw_button(dc, size, brush, pen)
 
     def draw_button(self, dc, size, brush, pen):
@@ -1009,18 +1072,14 @@ class TitleBarButton(MultiCloser):
     def OnEnter(self,evt):
         self.entered = True
 
-    def OnRelease(self, evt):
-        if self.down and self.entered:
-            self.do_action(evt)
-
     def do_action(self, evt):
-        print("action")
+        pass
 
     def CalcSizePos(self, parent):
         pw, ph = parent.GetClientSize()
-        w, h = parent.close_button_size
-        x = pw - (w - parent.title_bar_margin) * self.order * 2
-        y = (parent.title_bar_height - h) // 2
+        w, h = self.client.close_button_size
+        x = pw - (w - self.client.title_bar_margin) * self.order * 2
+        y = (self.client.title_bar_height - h) // 2
         return (x, y, w, h)
 
 
@@ -1042,10 +1101,6 @@ class TitleBarCloser(TitleBarButton):
 
     def ask_close(self):
         return True
-
-    @property
-    def splitter(self):
-        return self.GetGrandParent()
 
     def close(self):
         self.splitter.DestroyLeaf()
