@@ -599,6 +599,8 @@ class MultiClient(wx.Window):
         cls.unfocused_brush = wx.Brush(cls.unfocused_color, wx.SOLID)
         cls.focused_pen = wx.Pen(cls.focused_text_color)
         cls.unfocused_pen = wx.Pen(cls.unfocused_text_color)
+        cls.focused_fill = wx.Brush(cls.focused_text_color, wx.SOLID)
+        cls.unfocused_fill = wx.Brush(cls.unfocused_text_color, wx.SOLID)
 
         dc = wx.MemoryDC()
         dc.SetFont(cls.title_bar_font)
@@ -610,19 +612,21 @@ class MultiClient(wx.Window):
         if self.selected:
             brush = self.focused_brush
             pen = self.focused_pen
+            fill = self.focused_fill
             text = self.focused_text_color
             textbg = self.focused_color
         else:
             brush = self.unfocused_brush
             pen = self.unfocused_pen
+            fill = self.unfocused_fill
             text = self.unfocused_text_color
             textbg = self.unfocused_color
-        return brush, pen, text, textbg
+        return brush, pen, fill, text, textbg
 
     def draw_title_bar(self, dc):
         dc.SetBackgroundMode(wx.SOLID)
         dc.SetPen(wx.TRANSPARENT_PEN)
-        brush, _, text, textbg = self.get_paint_tools()
+        brush, _, _, text, textbg = self.get_paint_tools()
         dc.SetBrush(brush)
 
         w, h = self.GetSize()
@@ -707,9 +711,9 @@ class TitleBar(wx.Window):
         self.buttons.append(TitleBarCloser(self, button_index))
         top = self.client.GetParent().multiView
         button_index += 1
-        self.buttons.append(TitleBarSplitHor(self, button_index))
+        self.buttons.append(TitleBarHSplitNewBot(self, button_index))
         button_index += 1
-        self.buttons.append(TitleBarSplitVer(self, button_index))
+        self.buttons.append(TitleBarVSplitNewRight(self, button_index))
 
         self.SetBackgroundColour(wx.RED)
         self.hide_buttons()
@@ -722,7 +726,7 @@ class TitleBar(wx.Window):
     def draw_title_bar(self, dc):
         dc.SetBackgroundMode(wx.SOLID)
         dc.SetPen(wx.TRANSPARENT_PEN)
-        brush, _, text, textbg = self.client.get_paint_tools()
+        brush, _, _, text, textbg = self.client.get_paint_tools()
         dc.SetBrush(brush)
 
         w, h = self.GetSize()
@@ -1060,10 +1064,10 @@ class TitleBarButton(MultiCloser):
         dc = wx.PaintDC(self)
         size = self.GetClientSize()
 
-        brush, pen, _, _ = self.client.get_paint_tools()
-        self.draw_button(dc, size, brush, pen)
+        bg_brush, pen, fg_brush, _, _ = self.client.get_paint_tools()
+        self.draw_button(dc, size, bg_brush, pen, fg_brush)
 
-    def draw_button(self, dc, size, brush, pen):
+    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
         print("draw")
 
     def OnLeave(self,evt):
@@ -1084,8 +1088,8 @@ class TitleBarButton(MultiCloser):
 
 
 class TitleBarCloser(TitleBarButton):
-    def draw_button(self, dc, size, brush, pen):
-        dc.SetBrush(brush)
+    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+        dc.SetBrush(bg_brush)
         dc.SetPen(wx.TRANSPARENT_PEN)
         dc.DrawRectangle(0, 0, size.x, size.y)
         dc.SetPen(pen)
@@ -1106,29 +1110,27 @@ class TitleBarCloser(TitleBarButton):
         self.splitter.DestroyLeaf()
 
 
-class TitleBarSplitHor(TitleBarCloser):
-    def draw_button(self, dc, size, brush, pen):
-        dc.SetBrush(brush)
-        dc.SetPen(wx.TRANSPARENT_PEN)
-        dc.DrawRectangle(0, 0, size.x, size.y)
+class TitleBarVSplitNewRight(TitleBarCloser):
+    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+        split = size.x // 2
+        dc.SetBrush(bg_brush)
         dc.SetPen(pen)
-        dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        dc.DrawRectangle(0, 0, size.x, size.y)
-        dc.DrawLine(size.x//2, 0, size.x//2, size.y)
+        dc.DrawRectangle(0, 0, split + 1, size.y)
+        dc.SetBrush(fg_brush)
+        dc.DrawRectangle(split, 0, size.x - split, size.y)
 
     def do_action(self, evt):
         self.splitter.AddLeaf(None, None, MV_HOR)
 
 
-class TitleBarSplitVer(TitleBarCloser):
-    def draw_button(self, dc, size, brush, pen):
-        dc.SetBrush(brush)
-        dc.SetPen(wx.TRANSPARENT_PEN)
-        dc.DrawRectangle(0, 0, size.x, size.y)
+class TitleBarHSplitNewBot(TitleBarCloser):
+    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+        split = size.y // 2
+        dc.SetBrush(bg_brush)
         dc.SetPen(pen)
-        dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        dc.DrawRectangle(0, 0, size.x, size.y)
-        dc.DrawLine(0, size.y//2, size.x, size.y//2)
+        dc.DrawRectangle(0, 0, size.x, split + 1)
+        dc.SetBrush(fg_brush)
+        dc.DrawRectangle(0, split, size.x, size.y - split)
 
     def do_action(self, evt):
         self.splitter.AddLeaf(None, None, MV_VER)
