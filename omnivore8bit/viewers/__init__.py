@@ -258,11 +258,8 @@ class SegmentViewer(HasTraits):
     def sync_caret_event_handler(self, flags):
         log.debug("process_update_caret for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
         if flags is not Undefined:
-            if self.control == flags.source_control:
-                log.debug("sync_caret_event: skipping %s" % self.control)
-            else:
-                log.debug("sync_caret_event: syncing %s" % self.control)
-                self.sync_caret(flags)
+            log.debug("sync_caret_event: syncing %s" % self.control)
+            self.sync_caret(flags)
 
     def sync_caret(self, flags):
         if not self.has_metadata_only:
