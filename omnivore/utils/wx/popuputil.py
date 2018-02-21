@@ -671,7 +671,7 @@ class PopupStatusBar(StatusPopupWindow):
         self.SetSizer(self.stack)
         self.Hide()
 
-    def show_status_text(self, text):
+    def show_status_text(self, text, multiline=False):
         """Display a status text string in the status popup.
         
         This method is intended to display text in response to a large number
@@ -687,7 +687,10 @@ class PopupStatusBar(StatusPopupWindow):
         
         @param text: message to display
         """
-        text = text.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+        if multiline:
+            text = text.replace("\r\n", "\n").replace("\n", "\n").replace("\r", "\n")
+        else:
+            text = text.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
         self.status.SetLabelText(text)
         if text:
             self.position_and_show()
