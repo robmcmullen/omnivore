@@ -71,7 +71,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
 
     @property
     def page_size(self):
-        return self.main.sh * self.table.items_per_row
+        return (self.main.fully_visible_rows - 1) * self.table.items_per_row
 
     ##### Caret handling
 

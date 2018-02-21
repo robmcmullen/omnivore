@@ -876,7 +876,7 @@ class HexTable(object):
         r, c = self.index_to_row_col(index)
         c = self.items_per_row - 1
         index = min(self.last_valid_index, self.get_index_range(r, c)[0])
-        return self.get_index_range(r, c)
+        return index
 
 
 class VariableWidthHexTable(HexTable):
@@ -1406,10 +1406,10 @@ class HexGridWindow(wx.ScrolledWindow):
         self.caret_handler.move_carets_to(self.table.last_valid_index)
 
     def handle_char_move_start_of_line(self, evt, flags):
-        self.caret_handler.move_carets_process_function(self.clamp_left_column)
+        self.caret_handler.move_carets_process_function(self.table.clamp_left_column)
 
     def handle_char_move_end_of_line(self, evt, flags):
-        self.caret_handler.move_carets_process_function(self.clamp_right_column)
+        self.caret_handler.move_carets_process_function(self.table.clamp_right_column)
 
 
 class DisassemblyTable(HexTable):

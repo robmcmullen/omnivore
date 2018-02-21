@@ -110,6 +110,7 @@ class CharEventMixin(object):
                 log.error("handler %s defined for key=%d mods=%d but missing!" % (handler, key, mods))
                 evt.Skip()
             else:
+                log.debug("using handler %s" % handler)
                 flags = self.create_char_event_flags()
                 func(evt, flags)
                 self.caret_handler.process_flags(flags)
