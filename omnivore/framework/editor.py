@@ -740,6 +740,14 @@ class FrameworkEditor(Editor):
     def status_message(self, msg):
         self.task.status_bar.message = msg
 
+    @property
+    def debug_message(self):
+        return ""
+
+    @debug_message.setter
+    def debug_message(self, msg):
+        self.task.status_bar.debug = msg
+
     def editor_summary(self):
         lines = []
         lines.append("name: %s" % self.name)
