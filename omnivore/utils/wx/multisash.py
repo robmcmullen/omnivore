@@ -50,7 +50,6 @@ class MultiSash(wx.Window):
 
     def __init__(self, *_args,**_kwargs):
         wx.Window.__init__(self, *_args, **_kwargs)
-        self.live_update = True
         self.live_update_control = None
         self._defChild = EmptyChild
         self.child = MultiSplit(self,self,(0,0),self.GetSize())
@@ -435,14 +434,7 @@ class MultiViewLeaf(wx.Window):
 
         self.sizerHor = MultiSizer(self,MV_HOR)
         self.sizerVer = MultiSizer(self,MV_VER)
-        if not self.multiView.live_update:
-            self.creatorHor = MultiCreator(self,MV_HOR)
-            self.creatorVer = MultiCreator(self,MV_VER)
         self.detail = MultiClient(self, child, u)
-        if self.detail.use_close_button:
-            self.closer = None
-        else:
-            self.closer = MultiCloser(self)
 
         self.Bind(wx.EVT_SIZE,self.OnSize)
 
@@ -516,12 +508,7 @@ class MultiViewLeaf(wx.Window):
             try:
                 self.sizerHor.OnSize(evt)
                 self.sizerVer.OnSize(evt)
-                if not self.multiView.live_update:
-                    self.creatorHor.OnSize(evt)
-                    self.creatorVer.OnSize(evt)
                 self.detail.OnSize(evt)
-                if self.closer is not None:
-                    self.closer.OnSize(evt)
             except:
                 pass
         wx.CallAfter(doresize)
@@ -824,19 +811,14 @@ class MultiSizer(wx.Window):
     def OnMouseMove(self,evt):
         if self.isDrag:
             top = self.GetParent().multiView
-            if not top.live_update:
-                DrawSash(self.dragTarget,self.px,self.py,self.side)
             self.px,self.py = self.ClientToScreen((evt.x, evt.y))
             self.px,self.py = self.dragTarget.ScreenToClient((self.px,self.py))
-            if top.live_update:
-                if self.side == MV_HOR:
-                    self.dragTarget.SizeLeaf(self.GetParent(),
-                                             self.py,not self.side)
-                else:
-                    self.dragTarget.SizeLeaf(self.GetParent(),
-                                             self.px,not self.side)
+            if self.side == MV_HOR:
+                self.dragTarget.SizeLeaf(self.GetParent(),
+                                         self.py,not self.side)
             else:
-                DrawSash(self.dragTarget,self.px,self.py,self.side)
+                self.dragTarget.SizeLeaf(self.GetParent(),
+                                         self.px,not self.side)
         else:
             evt.Skip()
 
@@ -855,14 +837,6 @@ class MultiSizer(wx.Window):
         if self.isDrag:
             self.ReleaseMouse()
             top = self.GetParent().multiView
-            if not top.live_update:
-                DrawSash(self.dragTarget,self.px,self.py,self.side)
-                if self.side == MV_HOR:
-                    self.dragTarget.SizeLeaf(self.GetParent(),
-                                             self.py,not self.side)
-                else:
-                    self.dragTarget.SizeLeaf(self.GetParent(),
-                                             self.px,not self.side)
             self.isDrag = False
             self.dragTarget = None
         else:
@@ -871,131 +845,9 @@ class MultiSizer(wx.Window):
 #----------------------------------------------------------------------
 
 
-class MultiCreator(wx.Window):
-    def __init__(self,parent,side):
-        self.side = side
-        x,y,w,h = self.CalcSizePos(parent)
-        wx.Window.__init__(self,id = -1,parent = parent,
-                          pos = (x,y),
-                          size = (w,h),
-                          style = wx.CLIP_CHILDREN)
-
-        self.px = None                  # Previous X
-        self.py = None                  # Previous Y
-        self.isDrag = False           # In Dragging
-
-        self.Bind(wx.EVT_LEAVE_WINDOW,self.OnLeave)
-        self.Bind(wx.EVT_ENTER_WINDOW,self.OnEnter)
-        self.Bind(wx.EVT_MOTION,self.OnMouseMove)
-        self.Bind(wx.EVT_LEFT_DOWN,self.OnPress)
-        self.Bind(wx.EVT_LEFT_UP,self.OnRelease)
-        self.Bind(wx.EVT_PAINT,self.OnPaint)
-
-    def CalcSizePos(self,parent):
-        pw,ph = parent.GetSize()
-        if self.side == MV_HOR:
-            x = 2
-            y = ph - SH_SIZE
-            w = CR_SIZE
-            h = SH_SIZE
-        else:
-            x = pw - SH_SIZE
-            y = 4
-            if not MultiClient.use_close_button:
-                y += SH_SIZE             # Make provision for closer
-            w = SH_SIZE
-            h = CR_SIZE
-        return (x,y,w,h)
-
-    def OnSize(self,evt):
-        x,y,w,h = self.CalcSizePos(self.GetParent())
-        self.SetSize(x,y,w,h)
-
-    def OnLeave(self,evt):
-        self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
-
-    def OnEnter(self,evt):
-        if self.side == MV_HOR:
-            self.SetCursor(wx.Cursor(wx.CURSOR_HAND))
-        else:
-            self.SetCursor(wx.Cursor(wx.CURSOR_POINT_LEFT))
-
-    def OnMouseMove(self,evt):
-        if self.isDrag:
-            parent = self.GetParent()
-            top = parent.multiView
-            if not top.live_update:
-                DrawSash(parent,self.px,self.py,self.side)
-            self.px,self.py = self.ClientToScreen((evt.x, evt.y))
-            self.px,self.py = parent.ScreenToClient((self.px,self.py))
-            if top.live_update:
-                if self.side == MV_HOR:
-                    self.drag_parent.SizeLeaf(self.drag_leaf, self.py,not self.side)
-                else:
-                    self.drag_parent.SizeLeaf(self.drag_leaf, self.px,not self.side)
-            else:
-                DrawSash(parent,self.px,self.py,self.side)
-        else:
-            evt.Skip()
-
-    def OnPress(self,evt):
-        parent = self.GetParent()
-        top = parent.multiView
-        self.px,self.py = self.ClientToScreen((evt.x, evt.y))
-        self.px,self.py = parent.ScreenToClient((self.px,self.py))
-        if top.live_update:
-            wx.CallAfter(top.live_split, self, parent, self.px, self.py, self.side)
-        else:
-            DrawSash(parent,self.px,self.py,self.side)
-            self.isDrag = True
-            self.CaptureMouse()
-
-    def OnRelease(self,evt):
-        if self.isDrag:
-            self.isDrag = False
-            self.ReleaseMouse()
-            # print("left up", self.px, self.py, self.HasCapture(), self.GetCapture())
-            parent = self.GetParent()
-            top = parent.multiView
-            if not top.live_update:
-                DrawSash(parent,self.px,self.py,self.side)
-
-                if self.side == MV_HOR:
-                    parent.AddLeaf(None, None, MV_VER, self.py)
-                else:
-                    parent.AddLeaf(None, None, MV_HOR, self.px)
-            self.drag_target = None
-            self.drag_leaf = None
-        else:
-            evt.Skip()
-
-    def OnPaint(self,evt):
-        dc = wx.PaintDC(self)
-        dc.SetBackground(wx.Brush(self.GetBackgroundColour(),wx.BRUSHSTYLE_SOLID))
-        dc.Clear()
-
-        highlight = wx.Pen(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNHIGHLIGHT), 1, wx.PENSTYLE_SOLID)
-        shadow = wx.Pen(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW), 1, wx.PENSTYLE_SOLID)
-        black = wx.Pen(wx.BLACK,1,wx.PENSTYLE_SOLID)
-        w,h = self.GetSize()
-        w -= 1
-        h -= 1
-
-        # Draw outline
-        dc.SetPen(highlight)
-        dc.DrawLine(0,0, 0,h)
-        dc.DrawLine(0,0, w,0)
-        dc.SetPen(black)
-        dc.DrawLine(0,h, w+1,h)
-        dc.DrawLine(w,0, w,h)
-        dc.SetPen(shadow)
-        dc.DrawLine(w-1,2, w-1,h)
-
-#----------------------------------------------------------------------
-
-
-class MultiCloser(wx.Window):
-    def __init__(self,parent):
+class TitleBarButton(wx.Window):
+    def __init__(self, parent, order):
+        self.order = order
         self.title_bar = parent
         self.client = parent.GetParent()
         self.splitter = self.client.GetParent()
@@ -1014,14 +866,6 @@ class MultiCloser(wx.Window):
         self.Bind(wx.EVT_LEAVE_WINDOW,self.OnLeave)
         self.Bind(wx.EVT_ENTER_WINDOW,self.OnEnter)
 
-    def OnLeave(self,evt):
-        self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
-        self.entered = False
-
-    def OnEnter(self,evt):
-        self.SetCursor(wx.Cursor(wx.CURSOR_BULLSEYE))
-        self.entered = True
-
     def OnPress(self,evt):
         self.down = True
         evt.Skip()
@@ -1033,32 +877,6 @@ class MultiCloser(wx.Window):
         else:
             evt.Skip()
         self.down = False
-
-    def do_action(self, evt):
-        self.GetParent().DestroyLeaf()
-
-    def OnPaint(self,evt):
-        dc = wx.PaintDC(self)
-        dc.SetBackground(wx.Brush(wx.RED,wx.BRUSHSTYLE_SOLID))
-        dc.Clear()
-
-    def CalcSizePos(self,parent):
-        pw,ph = parent.GetSize()
-        x = pw - SH_SIZE
-        w = SH_SIZE
-        h = SH_SIZE + 2
-        y = 1
-        return (x,y,w,h)
-
-    def OnSize(self,evt):
-        x,y,w,h = self.CalcSizePos(self.title_bar)
-        self.SetSize(x,y,w,h)
-
-
-class TitleBarButton(MultiCloser):
-    def __init__(self, parent, order):
-        self.order = order
-        MultiCloser.__init__(self, parent)
 
     def OnPaint(self, event):
         dc = wx.PaintDC(self)
@@ -1085,6 +903,10 @@ class TitleBarButton(MultiCloser):
         x = pw - (w - self.client.title_bar_margin) * self.order * 2
         y = (self.client.title_bar_height - h) // 2
         return (x, y, w, h)
+
+    def OnSize(self,evt):
+        x,y,w,h = self.CalcSizePos(self.title_bar)
+        self.SetSize(x,y,w,h)
 
 
 class TitleBarCloser(TitleBarButton):
