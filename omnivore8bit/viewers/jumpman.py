@@ -8,7 +8,7 @@ from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_
 
 from traits.api import on_trait_change, Any, Bool, Undefined, Int, Str, List, Dict, Event, Enum, Instance, File, Unicode, Property, provides
 
-from omnivore.framework.mouse_handler import MouseHandler, MouseControllerMixin
+from omnivore.framework.mouse_mode import MouseMode
 from omnivore8bit.ui.bitviewscroller import BitviewScroller, BitmapScroller
 from omnivore8bit.utils.jumpman import *
 from omnivore8bit.arch.antic_renderers import BaseRenderer
@@ -23,9 +23,10 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class JumpmanLevelView(MouseControllerMixin, BitmapScroller):
+#class JumpmanLevelView(MouseControllerMixin, BitmapScroller):
+class JumpmanLevelView(BitmapScroller):
 #class MainFontMapScroller(FontMapScroller):
-    """Subclass adapts the mouse interface to the MouseHandler class
+    """Subclass adapts the mouse interface to the MouseMode class
     
     """
 
@@ -583,9 +584,9 @@ class JumpmanViewer(SegmentViewer):
 
     ##### Display update utilities
 
-    def update_mouse_mode(self, mouse_handler=None):
-        if mouse_handler is not None:
-            self.editor.mouse_mode_factory = mouse_handler
+    def update_mouse_mode(self, mouse_mode=None):
+        if mouse_mode is not None:
+            self.editor.mouse_mode_factory = mouse_mode
         self.bitmap.set_mouse_mode(self.editor.mouse_mode_factory)
         self.can_select_objects = self.bitmap.mouse_mode.can_paste
         self.bitmap.refresh_view()

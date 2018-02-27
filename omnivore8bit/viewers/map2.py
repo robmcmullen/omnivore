@@ -18,7 +18,7 @@ from omnivore.utils.sortutil import invert_rects, rect_ranges_to_indexes
 import omnivore.framework.actions as fa
 from ..byte_edit.commands import ChangeByteCommand
 from ..clipboard_commands import PasteCommand, PasteRectCommand
-from omnivore.framework.mouse_handler import MouseHandler, MouseControllerMixin
+from omnivore.framework.mouse_mode import MouseMode
 
 from .char2 import CharViewer
 from .map_commands import *
@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 
 # class MainFontMapScroller(MouseControllerMixin, FontMapScroller):
 # #class MainFontMapScroller(FontMapScroller):
-#     """Subclass adapts the mouse interface to the MouseHandler class
+#     """Subclass adapts the mouse interface to the MouseMode class
     
 #     """
 
@@ -45,7 +45,7 @@ log = logging.getLogger(__name__)
 #         segment.set_style_ranges_rect(selected_ranges, self.bytes_per_row, selected=True)
 
 
-class SelectMode(MouseHandler):
+class SelectMode(MouseMode):
     icon = "select.png"
     menu_item_name = "Select"
     menu_item_tooltip = "Select regions"
@@ -254,9 +254,9 @@ class MapViewer(CharViewer):
     #     if evt is not Undefined:
     #         self.control.recalc_view()
 
-    # def update_mouse_mode(self, mouse_handler=None):
-    #     if mouse_handler is not None:
-    #         self.mouse_mode_factory = mouse_handler
+    # def update_mouse_mode(self, mouse_mode=None):
+    #     if mouse_mode is not None:
+    #         self.mouse_mode_factory = mouse_mode
     #     log.debug("mouse mode: %s" % self.mouse_mode_factory)
     #     self.control.set_mouse_mode(self.mouse_mode_factory)
 
@@ -297,9 +297,9 @@ class MapViewer(CharViewer):
     def update_toolbar(self):
         self.update_mouse_mode()
 
-    def update_mouse_mode(self, mouse_handler=None):
-        if mouse_handler is not None:
-            self.editor.mouse_mode_factory = mouse_handler
+    def update_mouse_mode(self, mouse_mode=None):
+        if mouse_mode is not None:
+            self.editor.mouse_mode_factory = mouse_mode
         self.control.set_mouse_mode(self.editor.mouse_mode_factory)
         self.can_select_objects = self.control.mouse_mode.can_paste
         self.control.refresh_view()

@@ -396,13 +396,6 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.scroll_delay = 50  # milliseconds
         self.recalc_view()
 
-        self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
-        self.Bind(wx.EVT_MOTION, self.on_motion)
-        self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
-        self.Bind(wx.EVT_RIGHT_DOWN, self.parent.on_popup)
-        self.Bind(wx.EVT_PAINT, self.on_paint)
-        self.Bind(wx.EVT_SIZE, self.on_size)
-        self.Bind(wx.EVT_TIMER, self.on_timer)
         if wx.Platform == "__WXMSW__":
             self.Bind(wx.EVT_ERASE_BACKGROUND, self.on_windows_erase_background)
         else:
@@ -616,7 +609,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         flags = self.parent.create_mouse_event_flags()
         row, cell = self.get_row_cell_from_event(evt)
         self.event_modifiers = evt.GetModifiers()
-        self.current_caret_row, self.current_caret_col = self.process_motion_scroll(row, cell, flags)
+        self.process_motion_scroll(row, cell, flags)
         self.last_mouse_event = (row, cell)
         self.CaptureMouse()
         self.parent.handle_select_start(evt, self.current_caret_row, self.current_caret_col, flags)
@@ -641,7 +634,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
     def handle_user_caret(self, input_row, input_cell, flags):
         row, cell, offscreen = self.calc_desired_cell(input_row, input_cell)
         if not offscreen or self.can_scroll():
-            self.current_caret_row, self.current_caret_col = self.process_motion_scroll(row, cell, flags)
+            self.process_motion_scroll(row, cell, flags)
 
     def on_left_up(self, evt):
         self.scroll_timer.Stop()
@@ -723,7 +716,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.parent.caret_handler.move_current_caret_to(index)
         if self.parent.automatic_refresh:
             self.parent.Refresh()
-        return row, col
+        self.current_caret_row, self.current_caret_col = row, col
 
 
 class FixedFontNumpyWindow(FixedFontDataWindow):
@@ -1126,12 +1119,29 @@ class HexGridWindow(wx.ScrolledWindow):
         return FixedFontNumpyWindow(self)
 
     def map_events(self):
-        self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
         self.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
-
-        self.main.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
         self.main.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
+
+        self.map_char_events()
+        self.map_mouse_events()
+
+        # These events aren't part of the mouse movement so are kept separate.
+        self.main.Bind(wx.EVT_PAINT, self.main.on_paint)
+        self.main.Bind(wx.EVT_SIZE, self.main.on_size)
+        self.main.Bind(wx.EVT_TIMER, self.main.on_timer)
+
+    def map_char_events(self):
         self.main.Bind(wx.EVT_CHAR, self.on_char)
+
+    def map_mouse_events(self):
+        # mouse movement event bindings are here so subclasses don't also have
+        # to subclass the FixedFontNumpyWindow
+        self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
+        self.main.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
+        self.main.Bind(wx.EVT_LEFT_DOWN, self.main.on_left_down)
+        self.main.Bind(wx.EVT_MOTION, self.main.on_motion)
+        self.main.Bind(wx.EVT_LEFT_UP, self.main.on_left_up)
+        self.main.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
 
     def recalc_view(self, *args, **kwargs):
         # if view_params is not None:

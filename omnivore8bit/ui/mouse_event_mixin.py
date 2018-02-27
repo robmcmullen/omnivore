@@ -2,6 +2,7 @@ import time
 
 import wx
 
+from omnivore import get_image_path
 from omnivore.utils.command import DisplayFlags
 from omnivore.framework.caret import SelectionHandler
 
@@ -10,12 +11,165 @@ log = logging.getLogger(__name__)
 
 
 class MouseEventMixin(SelectionHandler):
-    def __init__(self, caret_handler):
+    hand_cursor = None
+    hand_closed_cursor = None
+
+    def __init__(self, caret_handler, default_mouse_mode_cls):
         self.caret_handler = caret_handler
         self.multi_select_mode = False
         self.select_extend_mode = False
         self.mouse_drag_started = False
         self.pending_select_awaiting_drag = None
+        self.source = None
+        if self.__class__.hand_cursor is None:
+            p = get_image_path("icons/hand.ico")
+            self.hand_cursor = wx.Cursor(p, wx.BITMAP_TYPE_ICO, 16, 16)
+            p = get_image_path("icons/hand_closed.ico")
+            self.hand_closed_cursor = wx.Cursor(p, wx.BITMAP_TYPE_ICO, 16, 16)
+        self.forced_cursor = None
+        self.batch = None
+
+        self.default_mouse_mode_cls = default_mouse_mode_cls
+        self.default_mouse_mode = self.default_mouse_mode_cls(self)
+        self.mouse_mode = self.default_mouse_mode  # can't call set_mouse_mode yet because control hasn't been initialized
+
+    def map_mouse_events(self, source):
+        self.source = source
+        source.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
+        source.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
+        source.Bind(wx.EVT_MOTION, self.on_motion)
+        source.Bind(wx.EVT_LEFT_UP, self.on_left_up)
+        source.Bind(wx.EVT_LEFT_DCLICK, self.on_left_dclick)
+        source.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
+        source.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
+        source.Bind(wx.EVT_SET_FOCUS, self.on_focus)
+        source.Bind(wx.EVT_KILL_FOCUS, self.on_focus_lost)
+        source.Bind(wx.EVT_ENTER_WINDOW, self.on_mouse_enter)
+        source.Bind(wx.EVT_LEAVE_WINDOW, self.on_mouse_leave)
+
+    def set_mouse_mode(self, mode=None):
+        self.release_mouse()
+        if mode is None:
+            mode = self.default_mouse_mode_cls
+        self.mouse_mode = mode(self)
+
+    def capture_mouse(self):
+        if not self.source.HasFocus():
+            self.source.SetFocus()
+        self.source.CaptureMouse()
+
+    def has_capture(self):
+        return self.source.HasCapture()
+
+    def release_mouse(self):
+        self.mouse_is_down = False
+        self.selection_box_is_being_defined = False
+        while self.source.HasCapture():
+            self.source.ReleaseMouse()
+
+    def set_cursor(self, mode=None):
+        if (self.forced_cursor is not None):
+            self.SetCursor(self.forced_cursor)
+            #
+            return
+
+        if mode is None:
+            mode = self.mouse_mode
+        c = mode.get_cursor()
+        self.SetCursor(c)
+
+    def get_effective_tool_mode(self, event):
+        middle_down = False
+        alt_down = False
+        if (event is not None):
+            try:
+                alt_down = event.AltDown()
+                # print self.is_alt_key_down
+            except:
+                pass
+            try:
+                middle_down = event.MiddleIsDown()
+            except:
+                pass
+        if alt_down or middle_down:
+            mode = self.default_mouse_mode
+        else:
+            mode = self.mouse_mode
+        return mode
+
+    def on_left_down(self, evt):
+        self.capture_mouse()
+        mode = self.get_effective_tool_mode(evt)
+        log.debug("on_left_down: effective mode=%s" % mode)
+        self.forced_cursor = None
+        self.selection_box_is_being_defined = False
+        self.mouse_down_position = evt.GetPosition()
+        self.mouse_move_position = self.mouse_down_position
+
+        mode.process_left_down(evt)
+        self.set_cursor(mode)
+        evt.Skip()
+
+    def on_motion(self, evt):
+        mode = self.get_effective_tool_mode(evt)
+        log.debug("on_motion: effective mode=%s" % mode)
+        if evt.LeftIsDown() and self.has_capture():
+            mode.process_mouse_motion_down(evt)
+        else:
+            mode.process_mouse_motion_up(evt)
+        self.set_cursor(mode)
+        evt.Skip()
+
+    def on_left_up(self, evt):
+        if not self.has_capture():
+            return
+        self.release_mouse()
+        mode = self.get_effective_tool_mode(evt)
+        log.debug("on_left_up: effective mode=%s" % mode)
+        self.forced_cursor = None
+        mode.process_left_up(evt)
+        self.set_cursor(mode)
+        evt.Skip()
+
+    def on_left_dclick(self, evt):
+        # self.SetFocus() # why would it not be focused?
+        mode = self.get_effective_tool_mode(evt)
+        log.debug("on_left_dclick: effective mode=%s" % mode)
+        mode.process_left_dclick(evt)
+        self.set_cursor(mode)
+        evt.Skip()
+
+    def on_popup(self, evt):
+        mode = self.get_effective_tool_mode(evt)
+        log.debug("on_popup: effective mode=%s" % mode)
+        self.forced_cursor = None
+        mode.process_popup(evt)
+        self.set_cursor(mode)
+
+    def on_mouse_wheel(self, evt):
+        mode = self.get_effective_tool_mode(evt)
+        log.debug("on_mouse_wheel: effective mode=%s" % mode)
+        mode.process_mouse_wheel(evt)
+        self.set_cursor(mode)
+
+    def on_mouse_enter(self, evt):
+        self.set_cursor()
+        evt.Skip()
+
+    def on_mouse_leave(self, evt):
+        self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
+        self.mouse_mode.process_mouse_leave(evt)
+        evt.Skip()
+
+    def on_focus(self, evt):
+        mode = self.get_effective_tool_mode(evt)
+        mode.process_focus(evt)
+
+    def on_focus_lost(self, evt):
+        mode = self.get_effective_tool_mode(evt)
+        mode.process_focus_lost(evt)
+
+    ##### 
 
     def create_mouse_event_flags(self):
         flags = DisplayFlags(self)
