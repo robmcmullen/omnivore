@@ -464,10 +464,10 @@ class ByteViewersPlugin(FrameworkPlugin):
         from omnivore8bit.viewers.cpu2 import DisassemblyViewer
         from omnivore8bit.viewers.hex2 import HexEditViewer
         from omnivore8bit.viewers.info import CommentsViewer, UndoViewer, SegmentListViewer
-        # from omnivore8bit.viewers.map import MapViewer
+        from omnivore8bit.viewers.map2 import MapViewer
         from omnivore8bit.viewers.tile import TileViewer
         from omnivore8bit.viewers.jumpman import JumpmanViewer
 
-        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, CommentsViewer, UndoViewer, SegmentListViewer, TileViewer, JumpmanViewer]
+        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, TileViewer, JumpmanViewer]
 
 plugins = [ByteViewersPlugin()]

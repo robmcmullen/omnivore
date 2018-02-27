@@ -20,29 +20,29 @@ from ..byte_edit.commands import ChangeByteCommand
 from ..clipboard_commands import PasteCommand, PasteRectCommand
 from omnivore.framework.mouse_handler import MouseHandler, MouseControllerMixin
 
-from . import SegmentViewer
+from .char2 import CharViewer
 from .map_commands import *
 
 import logging
 log = logging.getLogger(__name__)
 
 
-class MainFontMapScroller(MouseControllerMixin, FontMapScroller):
-#class MainFontMapScroller(FontMapScroller):
-    """Subclass adapts the mouse interface to the MouseHandler class
+# class MainFontMapScroller(MouseControllerMixin, FontMapScroller):
+# #class MainFontMapScroller(FontMapScroller):
+#     """Subclass adapts the mouse interface to the MouseHandler class
     
-    """
+#     """
 
-    def __init__(self, parent, linked_base, width, *args, **kwargs):
-        FontMapScroller.__init__(self, parent, linked_base, width, rect_select=True, *args, **kwargs)
-        MouseControllerMixin.__init__(self, SelectMode)
+#     def __init__(self, parent, linked_base, width, *args, **kwargs):
+#         FontMapScroller.__init__(self, parent, linked_base, width, rect_select=True, *args, **kwargs)
+#         MouseControllerMixin.__init__(self, SelectMode)
 
-    def update_bytes_per_row(self):
-        BitviewScroller.update_bytes_per_row(self)
-        # remove FontMapScroller call to find font width from machine
+#     def update_bytes_per_row(self):
+#         BitviewScroller.update_bytes_per_row(self)
+#         # remove FontMapScroller call to find font width from machine
 
-    def highlight_selected_ranges_in_segment(self, selected_ranges, segment):
-        segment.set_style_ranges_rect(selected_ranges, self.bytes_per_row, selected=True)
+#     def highlight_selected_ranges_in_segment(self, selected_ranges, segment):
+#         segment.set_style_ranges_rect(selected_ranges, self.bytes_per_row, selected=True)
 
 
 class SelectMode(MouseHandler):
@@ -215,62 +215,62 @@ class FilledSquareMode(OverlayMode):
     command = FilledSquareCommand
 
 
-class MapViewer(SegmentViewer):
+class MapViewer(CharViewer):
     name = "map"
 
     pretty_name = "Map"
-
-    has_font = True
 
     valid_mouse_modes = [SelectMode, PickTileMode, DrawMode, LineMode, SquareMode, FilledSquareMode]
 
     mouse_mode_factory = SelectMode
 
-    default_map_width = 16
-
     draw_pattern = CArray(dtype=np.uint8, value=(0,))
-
-    @classmethod
-    def create_control(cls, parent, linked_base):
-        return MainFontMapScroller(parent, linked_base, cls.default_map_width, size=(500,500), command=ChangeByteCommand)
-
-    ##### Range operations
-
-    def _get_range_processor(self):  # Trait property getter
-        return functools.partial(rect_ranges_to_indexes, self.control.bytes_per_row, 0)
-
-    def get_optimized_selected_ranges(self, ranges):
-        return ranges
-
-    ##### SegmentViewer interface
 
     @property
     def window_title(self):
-        return self.pretty_name + " " + self.machine.font_renderer.name + ", " + self.machine.font_mapping.name
+        return "Map: " + self.machine.font_renderer.name + ", " + self.machine.font_mapping.name + ", " + self.machine.color_standard_name
 
-    @on_trait_change('machine.font_change_event')
-    def update_bitmap(self, evt):
-        log.debug("MapViewer: machine font changed for %s" % self.control)
-        if evt is not Undefined:
-            self.control.recalc_view()
+    # @classmethod
+    # def create_control(cls, parent, linked_base, mdict):
+    #     return MainFontMapScroller(parent, linked_base, cls.default_map_width, size=(500,500), command=ChangeByteCommand)
 
-    def update_mouse_mode(self, mouse_handler=None):
-        if mouse_handler is not None:
-            self.mouse_mode_factory = mouse_handler
-        log.debug("mouse mode: %s" % self.mouse_mode_factory)
-        self.control.set_mouse_mode(self.mouse_mode_factory)
+    # ##### Range operations
 
-    @on_trait_change('linked_base.editor.task.segment_selected')
-    def process_segment_selected(self, evt):
-        log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        if evt is not Undefined:
-            self.control.bytes_per_row = self.linked_base.segment.map_width
-            self.update_mouse_mode(SelectMode)
+    # def _get_range_processor(self):  # Trait property getter
+    #     return functools.partial(rect_ranges_to_indexes, self.control.bytes_per_row, 0)
 
-    def set_width(self, width):
-        # also update the segment map width when changed
-        SegmentViewer.set_width(self, width)
-        self.linked_base.segment.map_width = self.width
+    # def get_optimized_selected_ranges(self, ranges):
+    #     return ranges
+
+    # ##### SegmentViewer interface
+
+    # @property
+    # def window_title(self):
+    #     return self.pretty_name + " " + self.machine.font_renderer.name + ", " + self.machine.font_mapping.name
+
+    # @on_trait_change('machine.font_change_event')
+    # def update_bitmap(self, evt):
+    #     log.debug("MapViewer: machine font changed for %s" % self.control)
+    #     if evt is not Undefined:
+    #         self.control.recalc_view()
+
+    # def update_mouse_mode(self, mouse_handler=None):
+    #     if mouse_handler is not None:
+    #         self.mouse_mode_factory = mouse_handler
+    #     log.debug("mouse mode: %s" % self.mouse_mode_factory)
+    #     self.control.set_mouse_mode(self.mouse_mode_factory)
+
+    # @on_trait_change('linked_base.editor.task.segment_selected')
+    # def process_segment_selected(self, evt):
+    #     log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+    #     if evt is not Undefined:
+    #         self.control.bytes_per_row = self.linked_base.segment.map_width
+    #         self.update_mouse_mode(SelectMode)
+
+    # def set_width(self, width):
+    #     # also update the segment map width when changed
+    #     SegmentViewer.set_width(self, width)
+    #     self.linked_base.segment.map_width = self.width
 
     ##### Selections
 
@@ -296,6 +296,13 @@ class MapViewer(SegmentViewer):
 
     def update_toolbar(self):
         self.update_mouse_mode()
+
+    def update_mouse_mode(self, mouse_handler=None):
+        if mouse_handler is not None:
+            self.editor.mouse_mode_factory = mouse_handler
+        self.control.set_mouse_mode(self.editor.mouse_mode_factory)
+        self.can_select_objects = self.control.mouse_mode.can_paste
+        self.control.refresh_view()
 
     ##### Drawing pattern
 

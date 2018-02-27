@@ -330,7 +330,7 @@ class JumpmanViewer(SegmentViewer):
     ##### Class methods
 
     @classmethod
-    def create_control(cls, parent, linked_base):
+    def create_control(cls, parent, linked_base, mdict):
         bitmap = JumpmanLevelView(parent, linked_base, size=(640,500))
         return bitmap
 

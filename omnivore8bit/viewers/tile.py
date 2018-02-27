@@ -74,7 +74,7 @@ class TileViewer(SegmentViewer):
     tile_groups = Any([])
 
     @classmethod
-    def create_control(cls, parent, linked_base):
+    def create_control(cls, parent, linked_base, mdict):
         return TileWindow(parent, linked_base, size=(160,500))
 
     ##### Initialization and serialization

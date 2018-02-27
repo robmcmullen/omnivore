@@ -286,8 +286,8 @@ class ByteEditTask(FrameworkTask):
         toolbars = []
         modes = []
         for v in self.known_viewers:
-            modes.extend(v.valid_mouse_modes)
-        toolbars.append(get_toolbar_group("%s:Modes" % self.id, modes))
+            if v.valid_mouse_modes:
+                toolbars.append(get_toolbar_group(v.name, v.valid_mouse_modes))
         toolbars.extend(FrameworkTask._tool_bars_default(self))
         return toolbars
 
