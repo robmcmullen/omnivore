@@ -112,14 +112,14 @@ class NormalSelectMode(MouseMode):
         self.control.zoom_out()
 
 
-class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
+class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
     def __init__(self, parent, linked_base, mdict={}, table=None):
         MouseEventMixin.__init__(self, linked_base, NormalSelectMode)
         CharEventMixin.__init__(self, linked_base)
 
         self.original_metadata = mdict.copy()
 
-        cg.HexGridWindow.__init__(self, table, linked_base.cached_preferences, linked_base, parent)
+        cg.CompactGrid.__init__(self, table, linked_base.cached_preferences, linked_base, parent)
         self.automatic_refresh = False
 
     def map_char_events(self):
@@ -131,7 +131,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
 
     def set_view_param_defaults(self):
         # called from base class to set up initial viewer
-        cg.HexGridWindow.set_view_param_defaults(self)
+        cg.CompactGrid.set_view_param_defaults(self)
         self.set_viewer_defaults()
         self.restore_extra_from_dict(self.original_metadata)
 
@@ -163,7 +163,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.HexGridWindow):
         self.table = SegmentTable(self.segment_viewer.linked_base.segment, self.items_per_row)
         self.line_renderer = self.calc_line_renderer()
         log.debug("recalculating %s; items_per_row=%d" % (self, self.items_per_row))
-        cg.HexGridWindow.recalc_view(self)
+        cg.CompactGrid.recalc_view(self)
 
     @property
     def page_size(self):

@@ -237,7 +237,7 @@ class DisassemblyGridControl(SegmentGridControl):
     def recalc_view(self):
         v = self.segment_viewer
         v.restart_disassembly()
-        cg.HexGridWindow.recalc_view(self)
+        cg.CompactGrid.recalc_view(self)
         if v.is_tracing:
             v.update_trace_in_segment()
 

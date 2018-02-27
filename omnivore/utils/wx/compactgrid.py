@@ -381,7 +381,7 @@ class HexLineRenderer(TableLineRenderer):
         self.image_cache.draw_item(parent, dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)], col)
 
 
-class FixedFontDataWindow(wx.ScrolledCanvas):
+class BaseGridDrawControl(wx.ScrolledCanvas):
     refresh_count = 0
 
     def __init__(self, parent):
@@ -719,7 +719,7 @@ class FixedFontDataWindow(wx.ScrolledCanvas):
         self.current_caret_row, self.current_caret_col = row, col
 
 
-class FixedFontNumpyWindow(FixedFontDataWindow):
+class NumpyGridDrawControl(BaseGridDrawControl):
     @property
     def current_line_length(self):
         return self.table.num_cells
@@ -751,7 +751,7 @@ class FixedFontNumpyWindow(FixedFontDataWindow):
         return style
 
 
-class FixedFontMultiCellNumpyWindow(FixedFontNumpyWindow):
+class MultiCellNumpyGridDrawControl(NumpyGridDrawControl):
     def start_selection(self):
         self.SelectBegin, self.SelectEnd = self.table.get_index_range(self.cy, self.cx)
         self.anchor_start_index, self.anchor_end_index = self.SelectBegin, self.SelectEnd
@@ -882,7 +882,7 @@ class VariableWidthHexTable(HexTable):
         return index, index + 1
 
 
-class FixedFontMixedMultiCellNumpyWindow(FixedFontMultiCellNumpyWindow):
+class MixedMultiCellNumpyGridDrawControl(MultiCellNumpyGridDrawControl):
         #             "0A 0X 0Y FF sv-bdizc  00 00 00 LDA $%04x"
         #self.header = " A  X  Y SP sv-bdizc  Opcodes  Assembly"
     pass
@@ -1055,7 +1055,7 @@ class MultiCaretHandler(object):
             yield index
 
 
-class HexGridWindow(wx.ScrolledWindow):
+class CompactGrid(wx.ScrolledWindow):
     initial_zoom = 1
 
     def __init__(self, table, view_params, caret_handler, *args, **kwargs):
@@ -1116,7 +1116,7 @@ class HexGridWindow(wx.ScrolledWindow):
         return HexLineRenderer(self, 2)
 
     def calc_main_grid(self):
-        return FixedFontNumpyWindow(self)
+        return NumpyGridDrawControl(self)
 
     def map_events(self):
         self.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
@@ -1135,7 +1135,7 @@ class HexGridWindow(wx.ScrolledWindow):
 
     def map_mouse_events(self):
         # mouse movement event bindings are here so subclasses don't also have
-        # to subclass the FixedFontNumpyWindow
+        # to subclass the NumpyGridDrawControl
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
         self.main.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
         self.main.Bind(wx.EVT_LEFT_DOWN, self.main.on_left_down)
@@ -1427,9 +1427,9 @@ class DisassemblyTable(HexTable):
         return "col %d: %s" % (col, str(item))
 
 
-class NonUniformGridWindow(HexGridWindow):
+class NonUniformGridWindow(CompactGrid):
     def calc_main_grid(self):
-        return FixedFontMultiCellNumpyWindow(self)
+        return MultiCellNumpyGridDrawControl(self)
 
     def calc_line_renderer(self):
         image_cache = DrawTableCellImageCache(self)
@@ -1502,12 +1502,12 @@ if __name__ == '__main__':
     # style1 = FakeStyle()
     # table = HexTable(np.arange(1024, dtype=np.uint8), style1, 16, 0x600, 0xf)
     # carets = MultiCaretHandler(table)
-    # scroll1 = HexGridWindow(table, view_params, carets, splitter)
+    # scroll1 = CompactGrid(table, view_params, carets, splitter)
     # style1.set_window(scroll1.main)
     style2 = FakeStyle()
     table = HexTable(np.arange(1024, dtype=np.uint8), style2, 16, 0x602, 0xf)
     carets = MultiCaretHandler(table)
-    scroll2 = HexGridWindow(table, view_params, carets, splitter)
+    scroll2 = CompactGrid(table, view_params, carets, splitter)
     style2.set_window(scroll2.main)
 
     splitter.SplitVertically(scroll1, scroll2)
