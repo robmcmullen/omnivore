@@ -923,6 +923,10 @@ class TitleBarCloser(TitleBarButton):
     def do_action(self, evt):
         requested_close = self.ask_close()
         if requested_close:
+            log.debug("sending close event for %s" % self.client)
+            evt = MultiSashEvent(MultiSash.wxEVT_CLIENT_CLOSE, self.client)
+            evt.SetChild(self.client.child)
+            self.client.do_send_event(evt)
             self.close()
 
     def ask_close(self):

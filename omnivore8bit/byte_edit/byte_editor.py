@@ -604,3 +604,4 @@ class ByteEditor(FrameworkEditor):
         else:
             log.debug("on_pane_close: closed viewer %s %s" % (v, v.window_title))
             self.viewers.remove(v)
+            v.prepare_for_destroy()
