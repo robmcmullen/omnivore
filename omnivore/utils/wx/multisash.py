@@ -36,7 +36,6 @@ MV_HOR = 0
 MV_VER = 1
 
 SH_SIZE = 5
-CR_SIZE = SH_SIZE * 3
 
 #----------------------------------------------------------------------
 
@@ -782,15 +781,15 @@ class MultiSizer(wx.Window):
     def CalcSizePos(self,parent):
         pw,ph = parent.GetSize()
         if self.side == MV_HOR:
-            x = CR_SIZE + 2
+            x = 0
             y = ph - SH_SIZE
-            w = pw - CR_SIZE - SH_SIZE - 2
+            w = pw - SH_SIZE
             h = SH_SIZE
         else:
             x = pw - SH_SIZE
-            y = CR_SIZE + 2 + SH_SIZE
+            y = 0
             w = SH_SIZE
-            h = ph - CR_SIZE - SH_SIZE - 4 - SH_SIZE # For Closer
+            h = ph
         return (x,y,w,h)
 
     def OnSize(self,evt):
