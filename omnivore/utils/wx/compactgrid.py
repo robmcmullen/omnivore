@@ -980,6 +980,11 @@ class RowLabelWindow(AuxWindow):
             dc.SetBackground(wx.Brush(s.view_params.row_header_bg_color))
             dc.SetPen(wx.Pen(s.view_params.text_color))
             dc.Clear()
+            if self.row_skip > 1:
+                # when vertically scrolling, want the tick marks and labels to
+                # remain fixed to their respective rows, not always starting
+                # from the first visible row and skipping rows from there.
+                row = (row // self.row_skip) * self.row_skip
             for header in s.table.get_row_label_text(row, s.main.visible_rows, self.row_skip):
                 self.DrawVertText(header, row, dc, self.row_skip)
                 row += self.row_skip
