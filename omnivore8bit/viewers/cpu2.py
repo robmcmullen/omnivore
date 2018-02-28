@@ -461,3 +461,8 @@ class DisassemblyViewer(SegmentViewer):
     def trace_disassembly(self, pc):
         self.current_disassembly.fast.trace_disassembly(self.trace_info, [pc])
         self.update_trace_in_segment()
+
+    ##### popup commands
+
+    def calc_viewer_popup_actions(self, popup_data):
+        return []

@@ -94,15 +94,14 @@ class NormalSelectMode(MouseMode):
     def calc_popup_actions(self, evt, popup_data):
         actions = self.calc_mode_popup_actions(popup_data)
         if not actions:
-            actions = self.control.calc_popup_actions(popup_data)
-        if actions:
-            self.segment_viewer.popup_context_menu_from_actions(actions, popup_data)
+            actions = self.control.calc_control_popup_actions(popup_data)
+        return actions
 
     def calc_mode_popup_actions(self, popup_data):
         return []
 
     def show_popup(self, actions):
-        self.control.viewer.popup_context_menu_from_actions(actions)
+        self.control.segment_viewer.popup_context_menu_from_actions(actions)
 
     def zoom_in(self, evt, amount):
         self.control.zoom_in()

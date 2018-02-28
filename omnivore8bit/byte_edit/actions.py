@@ -1114,6 +1114,7 @@ class RevertToBaselineAction(EditorAction):
     """Restore the selection to the data contained in the `Baseline
     Data`_ file.
     """
+    name = 'Revert to Baseline Data'
     enabled_name = 'can_copy_baseline'
 
     def perform(self, event):

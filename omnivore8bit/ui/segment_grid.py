@@ -129,7 +129,10 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
 
     def calc_control_popup_actions(self, popup_data):
         actions = self.calc_common_popup_actions(popup_data)
-        actions.extend(self.calc_extra_popup_actions(popup_data))
+        last = self.segment_viewer.calc_viewer_popup_actions(popup_data)
+        if last:
+            actions.append(None)
+            actions.extend(last)
         return actions
 
     def calc_common_popup_actions(self, popup_data):
@@ -140,7 +143,3 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
         copy_special[0:0] = ["Copy Special"]  # sub-menu title
 
         return [fa.CutAction, fa.CopyAction, copy_special, fa.PasteAction, ["Paste Special", ba.PasteAndRepeatAction, ba.PasteCommentsAction], None, fa.SelectAllAction, fa.SelectNoneAction, ["Mark Selection As", ba.MarkSelectionAsCodeAction, ba.MarkSelectionAsDataAction, ba.MarkSelectionAsUninitializedDataAction, ba.MarkSelectionAsDisplayListAction, ba.MarkSelectionAsJumpmanLevelAction, ba.MarkSelectionAsJumpmanHarvestAction], None, ba.GetSegmentFromSelectionAction, ba.RevertToBaselineAction, None, ba.AddCommentPopupAction, ba.RemoveCommentPopupAction, ba.AddLabelPopupAction, ba.RemoveLabelPopupAction]
-
-    def calc_extra_popup_actions(self, popup_data):
-        # for subclasses!
-        return []

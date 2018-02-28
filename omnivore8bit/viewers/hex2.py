@@ -15,6 +15,7 @@ from ..byte_edit.actions import GotoIndexAction
 from ..byte_edit.commands import ChangeByteCommand
 
 from . import SegmentViewer
+from .actions import ViewerWidthAction
 
 import logging
 log = logging.getLogger(__name__)
@@ -67,3 +68,6 @@ class HexEditViewer(SegmentViewer):
 
     def update_carets(self, flags):
         pass
+
+    def calc_viewer_popup_actions(self, popup_data):
+        return [ViewerWidthAction]

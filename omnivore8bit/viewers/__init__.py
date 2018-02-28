@@ -18,6 +18,7 @@ from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.utils import searchutil
 from omnivore8bit.ui.segment_grid import SegmentGridControl
 from .mouse_modes import NormalSelectMode
+from . import actions as va
 
 import logging
 log = logging.getLogger(__name__)
@@ -436,6 +437,10 @@ class SegmentViewer(HasTraits):
         self.recalc_view()
 
     #### popup menus
+
+    def calc_viewer_popup_actions(self, popup_data):
+        # for subclasses!
+        return [va.ViewerWidthAction, va.ViewerZoomAction]
 
     def popup_context_menu_from_actions(self, *args, **kwargs):
         self.editor.popup_context_menu_from_actions(self.control, *args, **kwargs)
