@@ -17,6 +17,7 @@ from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_rang
 from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.utils import searchutil
 from omnivore8bit.ui.segment_grid import SegmentGridControl
+from .mouse_modes import NormalSelectMode
 
 import logging
 log = logging.getLogger(__name__)
@@ -62,6 +63,8 @@ class SegmentViewer(HasTraits):
     has_metadata_only = False
 
     valid_mouse_modes = []  # toolbar description
+
+    default_mouse_mode_cls = NormalSelectMode
 
     copy_special = []  # additional copy functions available when viewer is present
 
@@ -125,7 +128,7 @@ class SegmentViewer(HasTraits):
     def create_control(cls, parent, linked_base, mdict):
         # if a control isn't based on SegmentGridControl, this is the place for
         # the subclass to return the custom control
-        return cls.control_cls(parent, linked_base, mdict)
+        return cls.control_cls(parent, linked_base, mdict, cls)
 
     @classmethod
     def check_name(cls, name):
@@ -321,7 +324,11 @@ class SegmentViewer(HasTraits):
     ##### toolbar
 
     def update_toolbar(self):
-        pass
+        self.update_mouse_mode()
+
+    def update_mouse_mode(self, mouse_mode=None):
+        self.control.set_mouse_mode(mouse_mode)
+        self.control.refresh_view()
 
     ##### view settings
 
@@ -355,10 +362,11 @@ class SegmentViewer(HasTraits):
     def select_invert(self):
         self.control.select_invert(self.linked_base)
 
-    def highlight_selected_ranges(self, caret_handler):
-        s = self.linked_base.segment
-        s.clear_style_bits(selected=True)
-        s.set_style_ranges(self.linked_base.selected_ranges, selected=True)
+    def highlight_selected_ranges_in_segment(self, selected_ranges, segment):
+        # This is default implementation which simply highlights everything
+        # between the start/end values of each range. Other selection types
+        # (rectangular selection) will need to be defined in the subclass
+        segment.set_style_ranges(selected_ranges, selected=True)
 
     ##### Clipboard & Copy/Paste
 

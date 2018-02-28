@@ -13,13 +13,13 @@ from omnivore8bit.byte_edit.commands import ChangeByteCommand
 from omnivore.framework.actions import CutAction, CopyAction, PasteAction, SelectAllAction, SelectNoneAction, SelectInvertAction
 
 from .jumpman_commands import *
-from .map2 import SelectMode
+from .mouse_modes import NormalSelectMode
 
 import logging
 log = logging.getLogger(__name__)
 
 
-class JumpmanSelectMode(SelectMode):
+class JumpmanSelectMode(NormalSelectMode):
     can_paste = False
 
     def __init__(self, *args, **kwargs):

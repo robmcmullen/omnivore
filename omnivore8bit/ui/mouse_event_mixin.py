@@ -326,13 +326,5 @@ class MouseEventMixin(SelectionHandler):
         ch.document.change_count += 1
         s = ch.segment
         s.clear_style_bits(selected=True)
-        self.highlight_selected_ranges_in_segment(ch.selected_ranges, s)
+        self.segment_viewer.highlight_selected_ranges_in_segment(ch.selected_ranges, s)
         ch.calc_dependent_action_enabled_flags()
-
-    def highlight_selected_ranges_in_segment(self, selected_ranges, segment):
-        # This is default implementation which simply highlights everything
-        # between the start/end values of each range. Other selection types
-        # (rectangular selection) will need to be defined in the subclass
-        segment.set_style_ranges(selected_ranges, selected=True)
-
-

@@ -430,11 +430,6 @@ class FrameworkEditor(Editor):
         """Hook for subclasses to update any comparisons to the baseline data."""
         pass
 
-    def update_mouse_mode(self, mouse_handler=None):
-        """Hook for subclasses to process the change to a new mouse mode 
-        """
-        pass
-
     def perform_idle(self):
         """Hook for subclasses to do some (small!) processing during UI idle
         time.

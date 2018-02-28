@@ -24,102 +24,14 @@ class SegmentTable(cg.HexTable):
         return self.segment.label(index, True)
 
 
-class NormalSelectMode(MouseMode):
-    def init_post_hook(self):
-        self.last_mouse_event = -1, -1
-        self.event_modifiers = None
-
-    def process_mouse_motion_up(self, evt):
-        log.debug("NormalSelectMode: process_mouse_motion_up")
-        cg = self.control
-        input_row, input_cell = cg.main.get_row_cell_from_event(evt)
-        if (input_row, input_cell) == self.last_mouse_event:
-            # only process if mouse has moved to a new cell; no sub-cell
-            # events!
-            return
-        col = cg.main.cell_to_col(input_cell)
-        cg.handle_motion_update_status(evt, input_row, col)
-        self.last_mouse_event = (input_row, input_cell)
-
-    def process_left_down(self, evt):
-        log.debug("NormalSelectMode: process_left_down")
-        cg = self.control
-        flags = cg.create_mouse_event_flags()
-        row, cell = cg.main.get_row_cell_from_event(evt)
-        self.event_modifiers = evt.GetModifiers()
-        cg.main.process_motion_scroll(row, cell, flags)
-        self.last_mouse_event = (row, cell)
-        cg.handle_select_start(evt, cg.main.current_caret_row, cg.main.current_caret_col, flags)
-
-    def process_mouse_motion_down(self, evt):
-        log.debug("NormalSelectMode: process_mouse_motion_down")
-        cg = self.control
-        input_row, input_cell = cg.main.get_row_cell_from_event(evt)
-        if (input_row, input_cell) == self.last_mouse_event:
-            # only process if mouse has moved to a new cell; no sub-cell
-            # events!
-            return
-        flags = cg.create_mouse_event_flags()
-        last_row, last_col = cg.main.current_caret_row, cg.main.current_caret_col
-        cg.main.handle_user_caret(input_row, input_cell, flags)
-        if last_row != cg.main.current_caret_row or last_col != cg.main.current_caret_col:
-            cg.handle_select_motion(evt, cg.main.current_caret_row, cg.main.current_caret_col, flags)
-        self.last_mouse_event = (input_row, input_cell)
-
-    def process_left_up(self, evt):
-        log.debug("NormalSelectMode: process_left_up")
-        cg = self.control
-        cg.main.scroll_timer.Stop()
-        self.event_modifiers = None
-        cg.handle_select_end(evt, cg.main.current_caret_row, cg.main.current_caret_col)
-
-    def process_left_dclick(self, evt):
-        log.debug("NormalSelectMode: process_left_dclick")
-        evt.Skip()
-
-    def calc_popup_data(self, evt):
-        c = self.control
-        row, col = c.get_row_col_from_event(evt)
-        index, _ = c.table.get_index_range(row, col)
-        inside = True  # fixme
-        style = c.table.segment.style[index] if inside else 0
-        popup_data = {
-            'index': index,
-            'in_selection': style&0x80,
-            'row': row,
-            'col': col,
-            'inside': inside,
-            }
-        return popup_data
-
-    def calc_popup_actions(self, evt, popup_data):
-        actions = self.calc_mode_popup_actions(popup_data)
-        if not actions:
-            actions = self.control.calc_popup_actions(popup_data)
-        if actions:
-            self.segment_viewer.popup_context_menu_from_actions(actions, popup_data)
-
-    def calc_mode_popup_actions(self, popup_data):
-        return []
-
-    def show_popup(self, actions):
-        self.control.viewer.popup_context_menu_from_actions(actions)
-
-    def zoom_in(self, evt, amount):
-        self.control.zoom_in()
-
-    def zoom_out(self, evt, amount):
-        self.control.zoom_out()
-
-
 class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
-    def __init__(self, parent, linked_base, mdict={}, table=None):
-        MouseEventMixin.__init__(self, linked_base, NormalSelectMode)
+    def __init__(self, parent, linked_base, mdict, viewer_cls):
+        MouseEventMixin.__init__(self, linked_base, viewer_cls.default_mouse_mode_cls)
         CharEventMixin.__init__(self, linked_base)
 
         self.original_metadata = mdict.copy()
 
-        cg.CompactGrid.__init__(self, table, linked_base.cached_preferences, linked_base, parent)
+        cg.CompactGrid.__init__(self, None, linked_base.cached_preferences, linked_base, parent)
         self.automatic_refresh = False
 
     def map_char_events(self):
