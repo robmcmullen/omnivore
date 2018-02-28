@@ -70,7 +70,7 @@ class MultiSash(wx.Window):
         self.child.OnSize(None)
 
     def get_layout(self, to_json=False, pretty=False):
-        d = {'child': self.child.get_layout()}
+        d = {'multisash': self.child.get_layout()}
         if to_json:
             if pretty:
                 d = json.dumps(d, sort_keys=True, indent=4)
@@ -78,12 +78,54 @@ class MultiSash(wx.Window):
                 d = json.dumps(d)
         return d
 
+    def calc_graphviz(self):
+        from graphviz import Digraph
+        top = {'multisash': self.child.get_layout()}
+        g = Digraph('multisash', filename='multisash.dot')
+        self.add_edges(g, top, 'multisash', 'root', 'root')
+        return g
+
+    # def add_edges(self, g, top, k, parent, prefix):
+    #     contents = top[k]
+    #     if 'view1' in contents:
+    #         title = "%s-1" % (prefix)
+    #         g.edge(prefix, title)
+    #         self.add_edges(g, contents, 'view1', title)
+    #     if 'view2' in contents:
+    #         title = "%s-2" % (prefix)
+    #         g.edge(prefix, title)
+    #         self.add_edges(g, contents, 'view2', title)
+
+    # def add_edges(self, g, top, k, parent, prefix):
+    #     contents = top[k]
+    #     next_prefix = chr(ord(prefix) + 1)
+    #     if 'view1' in contents:
+    #         title = "%s-1" % (prefix)
+    #         g.edge(parent, title)
+    #         next_prefix = self.add_edges(g, contents, 'view1', title, next_prefix)
+    #     if 'view2' in contents:
+    #         title = "%s-2" % (prefix)
+    #         g.edge(parent, title)
+    #         next_prefix = self.add_edges(g, contents, 'view2', title, next_prefix)
+    #     return next_prefix
+
+    def add_edges(self, g, top, k, parent, prefix):
+        contents = top[k]
+        if 'view1' in contents:
+            title = "%s-1" % (contents['view1']['debug_id'])
+            g.edge(parent, title)
+            self.add_edges(g, contents, 'view1', title, prefix)
+        if 'view2' in contents:
+            title = "%s-2" % (contents['view2']['debug_id'])
+            g.edge(parent, title)
+            self.add_edges(g, contents, 'view2', title, prefix)
+
     def restore_layout(self, d):
         try:
-            layout = d['child']
+            layout = d['multisash']
         except TypeError:
             d = json.loads(d)
-            layout = d['child']
+            layout = d['multisash']
         old = self.child
         self.child = MultiSplit(self,self,wx.Point(0,0),self.GetSize())
         try:
@@ -171,6 +213,8 @@ class MultiSash(wx.Window):
 
 
 class MultiSplit(wx.Window):
+    debug_count = 1
+
     def __init__(self,multiView,parent,pos,size,view1 = None):
         wx.Window.__init__(self,id = -1,parent = parent,pos = pos,size = size,
                           style = wx.CLIP_CHILDREN)
@@ -187,6 +231,9 @@ class MultiSplit(wx.Window):
         self.ratio = 0.5
 
         self.Bind(wx.EVT_SIZE,self.OnSize)
+
+        self.debug_id = "S_%d" % self.__class__.debug_count
+        self.__class__.debug_count += 1
 
     def find_uuid(self, uuid):
         if self.view1:
@@ -234,6 +281,7 @@ class MultiSplit(wx.Window):
             if isinstance(self.view2,MultiSplit):
                 d['split2'] = True
         d['ratio'] = self.calc_ratio()
+        d['debug_id'] = self.debug_id
         return d
 
     def restore_layout(self,d):
@@ -386,6 +434,9 @@ class MultiSplit(wx.Window):
             return True
         return False
 
+    def is_internal_resize(self, side, view):
+        return self.direction == side and self.view2 and view == self.view1
+
     def SizeTarget(self,side,view):
         if self.direction == side and self.view2 and view == self.view1:
             return self
@@ -426,6 +477,13 @@ class MultiSplit(wx.Window):
 
 
 class MultiViewLeaf(wx.Window):
+    debug_letter = "A"
+
+    @classmethod
+    def next_debug_letter(cls):
+        cls.debug_letter = chr(ord(cls.debug_letter) + 1)
+        return cls.debug_letter
+
     def __init__(self,multiView,parent,pos,size, child=None, u=None):
         wx.Window.__init__(self,id = -1,parent = parent,pos = pos,size = size,
                           style = wx.CLIP_CHILDREN)
@@ -438,6 +496,19 @@ class MultiViewLeaf(wx.Window):
         self.Bind(wx.EVT_SIZE,self.OnSize)
 
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
+
+        self.debug_id = self.next_debug_letter()
+        if self.debug_id == "S":
+            # Skip S; used for hidden panes
+            self.debug_id = self.next_debug_letter()
+
+    @property
+    def is_view1(self):
+        return self.GetParent().view1 == self
+
+    @property
+    def is_view2(self):
+        return self.GetParent().view2 == self
 
     def find_uuid(self, uuid):
         if uuid == self.detail.child_uuid:
@@ -462,6 +533,7 @@ class MultiViewLeaf(wx.Window):
                 if dData:
                     h['detail'] = dData
         d['child_uuid'] = self.detail.child_uuid
+        d['debug_id'] = self.debug_id
         return d
 
     def restore_layout(self, d):
@@ -498,6 +570,9 @@ class MultiViewLeaf(wx.Window):
 
     def SizeTarget(self,side):
         return self.GetParent().SizeTarget(side,self)
+
+    def is_internal_resize(self, side):
+        return self.GetParent().is_internal_resize(side, self)
 
     def CanSize(self,side):
         return self.GetParent().CanSize(side,self)
@@ -569,7 +644,6 @@ class MultiClient(wx.Window):
 
         self.Bind(wx.EVT_SET_FOCUS,self.OnSetFocus)
         self.Bind(wx.EVT_CHILD_FOCUS,self.OnChildFocus)
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_SIZE, self.OnSize)
 
     def do_send_event(self, evt):
@@ -609,23 +683,17 @@ class MultiClient(wx.Window):
             textbg = self.unfocused_color
         return brush, pen, fill, text, textbg
 
-    def draw_title_bar(self, dc):
-        dc.SetBackgroundMode(wx.SOLID)
-        dc.SetPen(wx.TRANSPARENT_PEN)
-        brush, _, _, text, textbg = self.get_paint_tools()
-        dc.SetBrush(brush)
-
-        w, h = self.GetSize()
-        dc.SetFont(wx.NORMAL_FONT)
-        dc.SetTextBackground(textbg)
-        dc.SetTextForeground(text)
-        dc.DrawRectangle(0, 0, w, self.title_bar_height)
-        dc.DrawText(self.child.GetName(), self.title_bar_x, self.title_bar_y)
-
-    def OnPaint(self, event):
-        if self.use_title_bar:
-            dc = wx.PaintDC(self)
-            self.draw_title_bar(dc)
+    @property
+    def title(self):
+        leaf = self.GetParent()  # parent is always Leaf
+        v = "v1" if leaf.is_view1 else "v2"
+        v = ("%s " % leaf.debug_id) + v
+        depth = 0
+        top = leaf.multiView
+        while leaf != top:
+            depth += 1
+            leaf = leaf.GetParent()
+        return "%s-%d: %s" % (v, depth, self.child.GetName())
 
     def UnSelect(self):
         if self.selected:
@@ -720,7 +788,7 @@ class TitleBar(wx.Window):
         dc.SetTextBackground(textbg)
         dc.SetTextForeground(text)
         dc.DrawRectangle(0, 0, w, h)
-        dc.DrawText(self.client.child.GetName(), self.client.title_bar_x, self.client.title_bar_y)
+        dc.DrawText(self.client.title, self.client.title_bar_x, self.client.title_bar_y)
 
     def OnPaint(self, event):
         dc = wx.PaintDC(self)
@@ -768,6 +836,7 @@ class MultiSizer(wx.Window):
         self.py = None                  # Previous Y
         self.isDrag = False             # In Dragging
         self.dragTarget = None          # View being sized
+        self.is_internal = None
 
         self.Bind(wx.EVT_LEAVE_WINDOW,self.OnLeave)
         self.Bind(wx.EVT_ENTER_WINDOW,self.OnEnter)
@@ -776,6 +845,7 @@ class MultiSizer(wx.Window):
         self.Bind(wx.EVT_LEFT_UP,self.OnRelease)
 
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
+        self.SetBackgroundColour(wx.WHITE)
 
 
     def CalcSizePos(self,parent):
@@ -800,6 +870,7 @@ class MultiSizer(wx.Window):
         self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
 
     def OnEnter(self,evt):
+
         if not self.GetParent().CanSize(not self.side):
             return
         if self.side == MV_HOR:
@@ -812,6 +883,7 @@ class MultiSizer(wx.Window):
             top = self.GetParent().multiView
             self.px,self.py = self.ClientToScreen((evt.x, evt.y))
             self.px,self.py = self.dragTarget.ScreenToClient((self.px,self.py))
+            print("moving sash: internal=%s x=%d y=%d" % (self.is_internal, self.px, self.py))
             if self.side == MV_HOR:
                 self.dragTarget.SizeLeaf(self.GetParent(),
                                          self.py,not self.side)
@@ -821,10 +893,18 @@ class MultiSizer(wx.Window):
         else:
             evt.Skip()
 
+    def is_simple_resize(self):
+        leaf = self.GetParent()
+        self.first = leaf
+
     def OnPress(self,evt):
-        self.dragTarget = self.GetParent().SizeTarget(not self.side)
+        leaf = self.GetParent()
+        self.dragTarget = leaf.SizeTarget(not self.side)
+        self.first = leaf
+        self.second = leaf
         if self.dragTarget:
             self.isDrag = True
+            self.is_internal = leaf.is_internal_resize(not self.side)
             self.px,self.py = self.ClientToScreen((evt.x, evt.y))
             self.px,self.py = self.dragTarget.ScreenToClient((self.px,self.py))
             DrawSash(self.dragTarget,self.px,self.py,self.side)
@@ -1212,6 +1292,13 @@ if __name__ == '__main__':
         test = EmptyChild(multi)
         multi.add(test)
 
+    def show_tree(evt):
+        global multi
+
+        g = multi.calc_graphviz()
+        print(g)
+        g.view()
+
     app = wx.App()
     frame = wx.Frame(None, -1, "Test", size=(800,400))
     multi = MultiSash(frame, -1, pos = (0,0), size = (640,480))
@@ -1235,6 +1322,9 @@ if __name__ == '__main__':
     btn = wx.Button(frame, -1, "Add Control")
     bsizer.Add(btn, 0, wx.EXPAND)
     btn.Bind(wx.EVT_BUTTON, add_control)
+    btn = wx.Button(frame, -1, "Show Tree")
+    bsizer.Add(btn, 0, wx.EXPAND)
+    btn.Bind(wx.EVT_BUTTON, show_tree)
 
     sizer.Add(horz, 1, wx.EXPAND)
     sizer.Add(bsizer, 0, wx.EXPAND)
