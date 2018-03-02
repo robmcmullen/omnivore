@@ -603,6 +603,9 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         row, cell = self.pixel_pos_to_row_cell(evt.GetX(), evt.GetY())
         return row, cell
 
+    def is_inside(self, row, col):
+        return row >= 0 and row < self.table.num_rows and col >= 0 and col < self.line_renderer.num_cols
+
     def on_left_down(self, evt):
         if not self.HasFocus():
             self.SetFocus()

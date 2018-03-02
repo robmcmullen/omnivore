@@ -298,6 +298,8 @@ class StatusFlags(object):
             self.caret_index = flags.caret_index
         if flags.caret_column is not None:
             self.caret_column = flags.caret_column
+        if flags.force_single_caret:
+            self.force_single_caret = flags.force_single_caret
 
 
 class DisplayFlags(StatusFlags):

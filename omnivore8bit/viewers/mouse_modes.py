@@ -36,9 +36,15 @@ class NormalSelectMode(MouseMode):
             # only process if mouse has moved to a new cell; no sub-cell
             # events!
             return
-        col = cg.main.cell_to_col(input_cell)
-        cg.handle_motion_update_status(evt, input_row, col)
         self.last_mouse_event = (input_row, input_cell)
+        cmd = self.calc_mouse_motion_up_command(evt, input_row, input_cell)
+        if cmd:
+            cg.segment_viewer.editor.process_command(cmd)
+
+    def calc_mouse_motion_up_command(self, evt, row, cell):
+        cg = self.control
+        col = cg.main.cell_to_col(cell)
+        cg.handle_motion_update_status(evt, row, col)
 
     def process_left_down(self, evt):
         log.debug("NormalSelectMode: process_left_down")
@@ -46,8 +52,14 @@ class NormalSelectMode(MouseMode):
         flags = cg.create_mouse_event_flags()
         input_row, input_cell = cg.main.get_row_cell_from_event(evt)
         self.event_modifiers = evt.GetModifiers()
-        cg.main.process_motion_scroll(input_row, input_cell, flags)
         self.last_mouse_event = (input_row, input_cell)
+        cmd = self.calc_left_down_command(evt, input_row, input_cell, flags)
+        if cmd:
+            cg.segment_viewer.editor.process_command(cmd)
+
+    def calc_left_down_command(self, evt, row, cell, flags):
+        cg = self.control
+        cg.main.process_motion_scroll(row, cell, flags)
         cg.handle_select_start(evt, cg.main.current_caret_row, cg.main.current_caret_col, flags)
 
     def process_mouse_motion_down(self, evt):
@@ -58,12 +70,18 @@ class NormalSelectMode(MouseMode):
             # only process if mouse has moved to a new cell; no sub-cell
             # events!
             return
+        self.last_mouse_event = (input_row, input_cell)
         flags = cg.create_mouse_event_flags()
+        cmd = self.calc_mouse_motion_down_command(evt, input_row, input_cell, flags)
+        if cmd:
+            cg.segment_viewer.editor.process_command(cmd)
+
+    def calc_mouse_motion_down_command(self, evt, row, cell, flags):
+        cg = self.control
         last_row, last_col = cg.main.current_caret_row, cg.main.current_caret_col
-        cg.main.handle_user_caret(input_row, input_cell, flags)
+        cg.main.handle_user_caret(row, cell, flags)
         if last_row != cg.main.current_caret_row or last_col != cg.main.current_caret_col:
             cg.handle_select_motion(evt, cg.main.current_caret_row, cg.main.current_caret_col, flags)
-        self.last_mouse_event = (input_row, input_cell)
 
     def process_left_up(self, evt):
         log.debug("NormalSelectMode: process_left_up")
@@ -77,11 +95,11 @@ class NormalSelectMode(MouseMode):
         evt.Skip()
 
     def calc_popup_data(self, evt):
-        c = self.control
-        row, col = c.get_row_col_from_event(evt)
-        index, _ = c.table.get_index_range(row, col)
+        cg = self.control
+        row, col = cg.get_row_col_from_event(evt)
+        index, _ = cg.table.get_index_range(row, col)
         inside = True  # fixme
-        style = c.table.segment.style[index] if inside else 0
+        style = cg.table.segment.style[index] if inside else 0
         popup_data = {
             'index': index,
             'in_selection': style&0x80,
@@ -117,15 +135,14 @@ class RectangularSelectMode(NormalSelectMode):
 
     def display_coords(self, evt, extra=None):
         log.debug("display_coords")
-        c = self.control
-        e = c.editor
-        if e is not None:
-            index, bit, inside = c.event_coords_to_byte(evt)
-            r0, c0 = c.index_to_row_col(index)
-            msg = "x=$%x y=$%x index=$%x" % (c0, r0, index)
-            if extra:
-                msg += " " + extra
-            e.show_status_message(msg)
+        cg = self.control
+        v = cg.segment_viewer
+        row, col = cg.get_row_col_from_event(evt)
+        index, _ = cg.table.get_index_range(row, col)
+        msg = "x=$%x y=$%x index=$%x" % (col, row, index)
+        if extra:
+            msg += " " + extra
+        v.editor.show_status_message(msg)
 
 
 class EyedropperMode(RectangularSelectMode):
@@ -162,16 +179,16 @@ class DrawMode(RectangularSelectMode):
     menu_item_tooltip = "Draw with current tile"
 
     def draw(self, evt, start=False):
-        c = self.control
-        v = c.segment_viewer
-        pattern = c.segment_viewer.draw_pattern
+        cg = self.control
+        v = cg.segment_viewer
+        pattern = cg.segment_viewer.draw_pattern
+        print("drawing with!", pattern, type(pattern))
         if start:
             self.batch = DrawBatchCommand()
-        byte, bit, inside = c.event_coords_to_byte(evt)
-        if inside:
-            v.linked_base.set_caret(byte, False)
-            index = v.linked_base.caret_index
-            cmd = ChangeByteCommand(e.segment, index, index+len(pattern), pattern, False, True)
+        row, col = cg.get_row_col_from_event(evt)
+        if cg.main.is_inside(row, col):
+            index, _ = cg.table.get_index_range(row, col)
+            cmd = ChangeByteCommand(v.segment, index, index+len(pattern), pattern, False, True)
             v.editor.process_command(cmd, self.batch)
 
     def process_left_down(self, evt):
@@ -183,8 +200,8 @@ class DrawMode(RectangularSelectMode):
         self.display_coords(evt)
 
     def process_left_up(self, evt):
-        c = self.control
-        v = c.segment_viewer
+        cg = self.control
+        v = cg.segment_viewer
         v.editor.end_batch()
         self.batch = None
 
@@ -193,12 +210,12 @@ class OverlayMode(RectangularSelectMode):
     command = None
 
     def get_display_rect(self, index):
-        c = self.control
+        cg = self.control
         i1 = self.start_index
         i2 = index
         if i2 < i1:
             i1, i2 = i2, i1
-        (x1, y1), (x2, y2) = get_bounds(i1, i2, c.bytes_per_row)
+        (x1, y1), (x2, y2) = get_bounds(i1, i2, cg.table.items_per_row)
         extra = None
         w = x2 - x1 + 1
         h = y2 - y1 + 1
@@ -207,17 +224,18 @@ class OverlayMode(RectangularSelectMode):
         return extra
 
     def draw(self, evt, start=False):
-        c = self.control
-        v = c.segment_viewer
+        cg = self.control
+        v = cg.segment_viewer
         pattern = v.draw_pattern
-        byte, bit, inside = c.event_coords_to_byte(evt)
-        if inside:
+        row, col = cg.get_row_col_from_event(evt)
+        if cg.main.is_inside(row, col):
+            index, _ = cg.table.get_index_range(row, col)
             if start:
                 self.batch = Overlay()
-                self.start_index = byte
-            v.linked_base.set_caret(byte, False)
-            index = byte
-            cmd = self.command(v.segment, self.start_index, index, pattern, c.bytes_per_row)
+                self.start_index = index
+            #v.linked_base.set_caret(byte, False)
+            #index = byte
+            cmd = self.command(v.segment, self.start_index, index, pattern, cg.table.items_per_row)
             v.editor.process_command(cmd, self.batch)
             self.display_coords(evt, self.get_display_rect(index))
 
@@ -228,8 +246,8 @@ class OverlayMode(RectangularSelectMode):
         self.draw(evt)
 
     def process_left_up(self, evt):
-        c = self.control
-        v = c.segment_viewer
+        cg = self.control
+        v = cg.segment_viewer
         v.editor.end_batch()
         self.batch = None
 

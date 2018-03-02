@@ -314,19 +314,28 @@ class CaretHandler(HasTraits):
                 caret_moved = True
                 log.debug("caret added! before: %s, after: %s" % (flags.old_carets, self.carets))
             elif flags.force_single_caret:
+                if flags.caret_index is not None:
+                    self.carets.new_caret(flags.caret_index)
                 self.carets.remove_old_carets()
                 caret_moved = True
             else:
                 self.validate_carets()
                 caret_state = self.carets.get_state()
                 caret_moved = caret_state != flags.old_carets
-                log.debug("caret moved! old_carets: %s, new carets: %s" % (flags.old_carets, caret_state))
             if caret_moved:
+                log.debug("caret moved! old_carets: %s, new carets: %s" % (flags.old_carets, caret_state))
                 if not flags.keep_selection:
                     index = self.carets.current.index
                     self.set_anchors(index, index)
                 visible_range = True
                 self.sync_caret_event = flags
+        elif flags.force_single_caret:
+            if flags.caret_index is not None:
+                self.carets.new_caret(flags.caret_index)
+                self.carets.remove_old_carets()
+                caret_moved = True
+                self.sync_caret_event = flags
+
 
         if flags.index_range is not None:
             if flags.select_range:
