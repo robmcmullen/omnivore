@@ -90,7 +90,7 @@ class MouseMode(object):
         data = self.calc_popup_data(evt)
         actions = self.calc_popup_actions(evt, data)
         if actions:
-            self.show_popup(actions)
+            self.show_popup(actions, data)
 
     def calc_popup_data(self, evt):
         return None

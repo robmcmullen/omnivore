@@ -118,8 +118,8 @@ class NormalSelectMode(MouseMode):
     def calc_mode_popup_actions(self, popup_data):
         return []
 
-    def show_popup(self, actions):
-        self.control.segment_viewer.popup_context_menu_from_actions(actions)
+    def show_popup(self, actions, popup_data):
+        self.control.segment_viewer.popup_context_menu_from_actions(actions, popup_data)
 
     def zoom_in(self, evt, amount):
         self.control.zoom_in()
