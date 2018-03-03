@@ -77,7 +77,7 @@ class UseFontAction(ViewerAction):
         return "%s" % (self.font['name'])
 
     def perform(self, event):
-        self.viewer.machine.set_font(self.font)
+        self.viewer.set_font(self.font)
 
 
 class LoadFontAction(ViewerAction):
@@ -186,7 +186,7 @@ class FontRendererAction(ViewerAction):
         return self.font_renderer.name
 
     def perform(self, event):
-        self.viewer.machine.set_font(font_renderer=self.font_renderer)
+        self.viewer.set_font(font_renderer=self.font_renderer)
 
     def _update_checked(self, ui_state):
         self.checked = self.viewer.machine.font_renderer == self.font_renderer
