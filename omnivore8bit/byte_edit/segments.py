@@ -13,7 +13,7 @@ class SegmentList(wx.ListBox):
     """Segment selector for choosing which portion of the binary data to view
     """
 
-    def __init__(self, parent, linked_base, mdict={}, **kwargs):
+    def __init__(self, parent, linked_base, mdict, viewer_cls, **kwargs):
         self.task = linked_base.task
 
         wx.ListBox.__init__(self, parent, style=wx.LB_SINGLE, **kwargs)
