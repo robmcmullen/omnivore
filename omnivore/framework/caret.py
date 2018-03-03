@@ -96,6 +96,9 @@ class CaretList(list):
         self.append(caret)
         return caret
 
+    def force_single_caret(self, index):
+        self[:] = [Caret(index)]
+
     def new_carets(self, caret_state):
         for s in caret_state:
             caret = Caret(state=s)
@@ -331,8 +334,7 @@ class CaretHandler(HasTraits):
                 self.sync_caret_event = flags
         elif flags.force_single_caret:
             if flags.caret_index is not None:
-                self.carets.new_caret(flags.caret_index)
-                self.carets.remove_old_carets()
+                self.carets.force_single_caret(flags.caret_index)
                 caret_moved = True
                 self.sync_caret_event = flags
 

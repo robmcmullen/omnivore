@@ -269,6 +269,13 @@ class SegmentViewer(HasTraits):
         if not self.has_metadata_only:
             self.control.set_caret_index(self.linked_base.carets.current.index, flags)
 
+    def sync_caret_to_index(self, index, refresh=True):
+        self.linked_base.carets.force_single_caret(index)
+        flags = self.control.create_mouse_event_flags()
+        self.linked_base.sync_caret_event = flags
+        if refresh:
+            self.linked_base.refresh_event = flags
+
     @on_trait_change('machine.font_change_event,machine.bitmap_shape_change_event,machine.bitmap_color_change_event,machine.disassembler_change_event')
     def machine_metadata_changed(self, evt):
         log.debug("machine_metadata_changed: %s evt=%s" % (self, str(evt)))

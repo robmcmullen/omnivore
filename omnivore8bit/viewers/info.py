@@ -134,14 +134,13 @@ class CommentsPanel(wx.VListBox):
         evt.Skip()
 
     def process_index(self, index):
-        e = self.editor
+        v = self.editor.focused_viewer
         item = self.items[index]
         if item.segment == self.editor.segment:
-            e.index_clicked(item.index, 0, None)
+            v.sync_caret_to_index(item.index)
         else:
-            n = e.document.find_segment_index(item.segment)
-            e.view_segment_number(n)
-            e.index_clicked(item.index, 0, None)
+            v.linked_base.find_segment(item.segment)
+            v.sync_caret_to_index(item.index)
         if item.segment != self.last_segment:
             self.update_items(item.segment)
 
