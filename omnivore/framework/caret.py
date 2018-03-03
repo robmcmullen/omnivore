@@ -322,8 +322,8 @@ class CaretHandler(HasTraits):
                 self.validate_carets()
                 caret_state = self.carets.get_state()
                 caret_moved = caret_state != flags.old_carets
-            if caret_moved:
                 log.debug("caret moved! old_carets: %s, new carets: %s" % (flags.old_carets, caret_state))
+            if caret_moved:
                 if not flags.keep_selection:
                     index = self.carets.current.index
                     self.set_anchors(index, index)
