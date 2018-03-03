@@ -86,7 +86,7 @@ class AnticPalette(canvas.Canvas):
     BORDER = 4
     HIGHLIGHT_WIDTH = 5
 
-    def __init__(self, parent):
+    def __init__(self, parent, color_prefs):
         """Creates a palette object."""
         # Load the pre-generated palette XPM
 
@@ -94,7 +94,7 @@ class AnticPalette(canvas.Canvas):
         # It is the responsibility of the app to init the image
         # handlers, IAW RD
         #wx.InitAllImageHandlers()
-
+        self.color_prefs = color_prefs
         self.palette = self.init_palette()
         size = self.palette.GetSize()
         canvas.Canvas.__init__(self, parent, -1, style=wx.SIMPLE_BORDER, forceClientSize=size)
@@ -103,7 +103,7 @@ class AnticPalette(canvas.Canvas):
         w = self.HORIZONTAL_STEP * 16 + 2 * self.BORDER
         h = self.VERTICAL_STEP * 16 + 2 * self.BORDER
         array = np.empty((h, w, 3), dtype=np.uint8)
-        array[:,:] = Machine.empty_color
+        array[:,:] = self.color_prefs.empty_background_color[:3]
         for high in range(0, 256, 16):
             y = self.BORDER + (high / 16) * self.VERTICAL_STEP
             for low in range(16):
@@ -149,7 +149,7 @@ class AnticPalette(canvas.Canvas):
 
 
 class AnticColorDialog(wx.Dialog):
-    def __init__(self, parent, antic_color_registers, color_register_names=None):
+    def __init__(self, parent, antic_color_registers, color_prefs, color_register_names=None):
         wx.Dialog.__init__(self, parent, -1, "Choose ANTIC Colors")
         self.num_cols = 17
         if color_register_names is None:
@@ -165,7 +165,7 @@ class AnticColorDialog(wx.Dialog):
         box = wx.BoxSizer(wx.HORIZONTAL)
         self.color_registers = ColorListBox(self, -1, style=wx.VSCROLL, size=(200, -1))
         box.Add(self.color_registers, 0, wx.EXPAND|wx.ALL, 4)
-        self.palette = AnticPalette(self)
+        self.palette = AnticPalette(self, color_prefs)
         box.Add(self.palette, 1, wx.ALL, 4)
         sizer.Add(box, 1, wx.GROW|wx.ALL, 5)
 

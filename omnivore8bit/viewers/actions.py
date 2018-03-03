@@ -276,7 +276,7 @@ class AnticColorAction(ViewerAction):
 
     def perform(self, event):
         v = self.viewer
-        dlg = AnticColorDialog(v.control, v.machine.antic_color_registers)
+        dlg = AnticColorDialog(v.control, v.machine.antic_color_registers, v.linked_base.cached_preferences)
         if dlg.ShowModal() == wx.ID_OK:
             v.machine.update_colors(dlg.colors)
 
@@ -327,7 +327,7 @@ class TextFontAction(ViewerAction):
             data = dlg.GetFontData()
             font = data.GetChosenFont()
             v.machine.set_text_font(font, data.GetColour())
-            prefs = self.active_editor.task.preferences
+            prefs = self.viewer.linked_base.cached_preferences
             prefs.text_font = font
             self.editor.rebuild_ui()
 
