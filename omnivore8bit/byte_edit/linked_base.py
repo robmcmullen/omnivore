@@ -348,6 +348,7 @@ class LinkedBase(CaretHandler):
         j = json.dumps(metadata)
         return j
 
+    @classmethod
     def restore_selected_index_metadata(self, metastr):
         metadata = json.loads(metastr)
         style = np.asarray(metadata[0], dtype=np.uint8)

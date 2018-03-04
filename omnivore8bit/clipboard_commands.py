@@ -1,12 +1,92 @@
 import numpy as np
 
 from omnivore.utils.command import Command, UndoInfo
-from omnivore8bit.commands import SetValuesAtIndexesCommand, SegmentCommand
-from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
+from omnivore8bit.commands import SegmentCommand
+from omnivore.utils.sortutil import ranges_to_indexes, indexes_to_ranges, collapse_overlapping_ranges
+
+import logging
+log = logging.getLogger(__name__)
 
 
 class ClipboardCommand(SegmentCommand):
-    pass
+    short_name = "clipboard_command"
+    pretty_name = "Clipboard Abstract Command"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('serializer', 'clipboard_serializer')
+            ]
+
+    def __init__(self, segment, serializer):
+        SegmentCommand.__init__(self, segment)
+        self.serializer = serializer
+        s = serializer
+
+    def prepare_data(self, editor):
+        pass
+
+    def get_clipped_indexes(self, editor):
+        s = self.serializer
+        caret = s.dest_carets.current.index
+        if s.clipboard_indexes is not None:
+            indexes = s.clipboard_indexes.copy() - s.clipboard_indexes[0] + caret
+        else:
+            indexes = np.arange(caret, caret + np.alen(s.clipboard_data))
+        max_index = len(self.segment)
+        indexes = indexes[indexes < max_index]
+        log.debug("indexes after limits: %s" % str(indexes))
+        return indexes
+
+    def get_data(self, orig):
+        data = self.serializer.clipboard_data
+        data_len = np.alen(data)
+        orig_len = np.alen(orig)
+        if data_len > orig_len > 1:
+            data_len = orig_len
+        return data[0:data_len]
+
+    def do_change(self, editor, undo):
+        self.prepare_data(editor)
+        indexes = self.get_clipped_indexes(editor)
+        data = self.get_data(self.segment.data[indexes])
+        log.debug("orig data: %s" % self.segment.data[indexes])
+        log.debug("new data: %s" % data)
+        indexes = indexes[0:np.alen(data)]
+        log.debug("indexes truncated to data length: %s" % str(indexes))
+        s = self.serializer
+        if s.clipboard_relative_comment_indexes is not None:
+            log.debug("relative comment indexes: %s" % (str(s.clipboard_relative_comment_indexes)))
+            subset = s.clipboard_relative_comment_indexes[s.clipboard_relative_comment_indexes < np.alen(indexes)]
+            log.debug("comment index subset: %s" % str(subset))
+            comment_indexes = indexes[subset]
+            log.debug("new comment indexes: %s" % str(comment_indexes))
+            clamped_ranges = indexes_to_ranges(indexes)
+            log.debug("clamped ranges: %s" % str(clamped_ranges))
+            old_comment_info = self.segment.get_comment_restore_data(clamped_ranges)
+        else:
+            old_comment_info = None
+        undo.flags.index_range = indexes[0], indexes[-1]
+        undo.flags.select_range = True
+        old_data = self.segment[indexes].copy()
+        if s.clipboard_style is not None:
+            style = s.clipboard_style[0:np.alen(data)]
+            old_style = self.segment.style[indexes].copy()
+        else:
+            old_style = None
+        self.segment[indexes] = data
+        if old_style is not None:
+            self.segment.style[indexes] = style
+        if old_comment_info is not None:
+            log.debug("setting comments: %s" % s.clipboard_comments)
+            self.segment.set_comments_at_indexes(clamped_ranges, comment_indexes, s.clipboard_comments)
+        return (old_data, indexes, old_style, old_comment_info)
+
+    def undo_change(self, editor, old_data):
+        old_data, old_indexes, old_style, old_comment_info = old_data
+        self.segment[old_indexes] = old_data
+        if old_style is not None:
+            self.segment.style[old_indexes] = old_style
+        if old_comment_info is not None:
+            self.segment.restore_comments(old_comment_info)
 
 
 class PasteCommand(ClipboardCommand):
@@ -17,10 +97,6 @@ class PasteCommand(ClipboardCommand):
     """
     short_name = "paste"
     pretty_name = "Paste"
-
-    def __init__(self, segment, serializer):
-        self.serializer = serializer
-        SegmentCommand.__init__(self, segment)
 
 
 class PasteAndRepeatCommand(PasteCommand):

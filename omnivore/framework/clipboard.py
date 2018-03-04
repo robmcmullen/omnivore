@@ -91,20 +91,19 @@ class ClipboardSerializer(object):
 
     def __init__(self, source_data_format_name):
         self.source_data_format_name = source_data_format_name
-        self.data = None
-        self.ranges = []
-        self.carets = None
-        self.indexes = None
-        self.style = None
-        self.comment_indexes = None
-        self.comments = None
-        self.num_rows = None
-        self.num_columns = None
-        self.items_per_row = None
+        self.clipboard_data = None
+        self.clipboard_indexes = None
+        self.clipboard_style = None
+        self.clipboard_relative_comment_indexes = None
+        self.clipboard_comments = None
+        self.clipboard_num_rows = None
+        self.clipboard_num_columns = None
+        self.dest_items_per_row = None
+        self.dest_carets = None
 
     @property
     def size_info(self):
-        size = np.alen(self.data)
+        size = np.alen(self.clipboard_data)
         return "%s bytes" % (format_number(size))
 
     @property
@@ -142,8 +141,8 @@ class TextSelection(ClipboardSerializer):
             value = data_obj.GetText().encode('utf-8')
         else:
             raise ClipboardError("Unsupported format type for %s: %s" % (self.data_format_name, ", ".join([str(f) in fmts])))
-        self.data = np.fromstring(value, dtype=np.uint8)
-        self.carets = viewer.linked_base.carets.copy()
+        self.clipboard_data = np.fromstring(value, dtype=np.uint8)
+        self.dest_carets = viewer.linked_base.carets.copy()
 
 
 class BinarySelection(ClipboardSerializer):
@@ -181,9 +180,9 @@ class BinarySelection(ClipboardSerializer):
         len1, value = value.split(",", 1)
         len1 = int(len1)
         value, j = value[0:len1], value[len1:]
-        self.data = np.fromstring(value, dtype=np.uint8)
-        self.style, self.comment_indexes, self.comments = viewer.restore_selected_index_metadata(j)
-        self.carets = viewer.linked_base.carets.copy()
+        self.clipboard_data = np.fromstring(value, dtype=np.uint8)
+        self.clipboard_style, self.clipboard_relative_comment_indexes, self.clipboard_comments = viewer.linked_base.restore_selected_index_metadata(j)
+        self.dest_carets = viewer.linked_base.carets.copy()
 
 
 class MultipleBinarySelection(ClipboardSerializer):
@@ -204,10 +203,10 @@ class MultipleBinarySelection(ClipboardSerializer):
         split1 = len1
         split2 = len1 + len2
         value, index_string, j = value[0:split1], value[split1:split2], value[split2:]
-        self.data = np.fromstring(value, dtype=np.uint8)
-        self.indexes = np.fromstring(index_string, dtype=np.uint32)
-        self.style, self.comment_indexes, self.comments = viewer.restore_selected_index_metadata(j)
-        self.carets = viewer.linked_base.carets.copy()
+        self.clipboard_data = np.fromstring(value, dtype=np.uint8)
+        self.clipboard_indexes = np.fromstring(index_string, dtype=np.uint32)
+        self.clipboard_style, self.clipboard_relative_comment_indexes, self.clipboard_comments = viewer.linked_base.restore_selected_index_metadata(j)
+        self.dest_carets = viewer.linked_base.carets.copy()
 
 
 class RectangularSelection(ClipboardSerializer):
@@ -234,11 +233,11 @@ class RectangularSelection(ClipboardSerializer):
     def unpack_data_object(self, viewer, data_obj):
         value = get_data_object_value(data_obj, self.data_format_name)
         r, c, value = value.split(",", 2)
-        self.num_rows = int(r)
-        self.num_columns = int(c)
-        self.data = np.fromstring(value, dtype=np.uint8)
-        self.carets = viewer.linked_base.carets.copy()
-        self.items_per_row = viewer.control.items_per_row
+        self.clipboard_num_rows = int(r)
+        self.clipboard_num_columns = int(c)
+        self.clipboard_data = np.fromstring(value, dtype=np.uint8)
+        self.dest_carets = viewer.linked_base.carets.copy()
+        self.dest_items_per_row = viewer.control.items_per_row
 
 
 def create_data_object(viewer, name):
