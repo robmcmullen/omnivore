@@ -468,7 +468,7 @@ class SelectionHandler(object):
         """ Adjust the current selection to the new start and end indexes
         """
         if extend:
-            caret = caret_handler.current
+            caret = caret_handler.carets.current
             caret.set_selection(start, end)
         elif add:
             caret = Caret(end)
