@@ -142,7 +142,7 @@ class RectangularSelectMode(NormalSelectMode):
         msg = "x=$%x y=$%x index=$%x" % (col, row, index)
         if extra:
             msg += " " + extra
-        v.editor.show_status_message(msg)
+        v.linked_base.show_status_message(msg)
 
 
 class EyedropperMode(RectangularSelectMode):

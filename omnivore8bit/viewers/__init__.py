@@ -120,6 +120,10 @@ class SegmentViewer(HasTraits):
         return self.linked_base.editor.document
 
     @property
+    def task(self):
+        return self.linked_base.task
+
+    @property
     def preferences(self):
         return self.linked_base.cached_preferences
 
@@ -391,6 +395,43 @@ class SegmentViewer(HasTraits):
 
     def get_paste_command(self, serialized_data):
         return PasteCommand
+
+    ##### Status info and text utilities
+
+    def get_selected_status_message(self):
+        carets = self.linked_base.carets_with_selection
+        if len(carets) == 0:
+            return ""
+        if len(carets) == 1:
+            c = carets[0]
+            num = c.num_selected
+            if num == 1: # python style, 4:5 indicates a single byte
+                return "[1 byte selected %s]" % self.get_label_of_selections(carets)
+            elif num > 0:
+                return "[%d bytes selected %s]" % (num, self.get_label_of_selections(carets))
+        else:
+            return "[%d ranges selected]" % (len(carets))
+
+    def show_status_message(self, msg):
+        s = self.get_selected_status_message()
+        if s:
+            msg = "%s %s" % (msg, s)
+        self.task.status_bar.message = msg
+
+    def get_label_at_index(self, index):
+        return self.segment.label(index)
+
+    def get_label_of_selections(self, carets):
+        labels = []
+        for start, end in [c.range for c in carets]:
+            labels.append("%s-%s" % (self.get_label_at_index(start), self.get_label_at_index(end - 1)))
+        return ", ".join(labels)
+
+    def get_label_of_first_byte(self, carets):
+        labels = []
+        for start, end in [c.range for c in carets]:
+            labels.append(self.get_label_at_index(start))
+        return ", ".join(labels)
 
     ##### Fonts
 

@@ -358,46 +358,6 @@ class ByteEditor(FrameworkEditor):
         if self.diff_highlight and self.document.has_baseline:
             self.document.update_baseline()
 
-    def get_label_at_index(self, index):
-        return self.focused_viewer.linked_base.segment.label(index)
-
-    def get_label_of_ranges(self, ranges):
-        labels = []
-        for start, end in ranges:
-            if start > end:
-                start, end = end, start
-            labels.append("%s-%s" % (self.get_label_at_index(start), self.get_label_at_index(end - 1)))
-        return ", ".join(labels)
-
-    def get_label_of_first_byte(self, ranges):
-        labels = []
-        for start, end in ranges:
-            if start > end:
-                start, end = end, start
-            labels.append(self.get_label_at_index(start))
-        return ", ".join(labels)
-
-    def get_selected_status_message(self):
-        if not self.focused_viewer.linked_base.selected_ranges:
-            return ""
-        if len(self.focused_viewer.linked_base.selected_ranges) == 1:
-            r = self.focused_viewer.linked_base.selected_ranges
-            first = r[0][0]
-            last = r[0][1]
-            num = abs(last - first)
-            if num == 1: # python style, 4:5 indicates a single byte
-                return "[1 byte selected %s]" % self.get_label_of_ranges(r)
-            elif num > 0:
-                return "[%d bytes selected %s]" % (num, self.get_label_of_ranges(r))
-        else:
-            return "[%d ranges selected]" % (len(self.focused_viewer.linked_base.selected_ranges))
-
-    def show_status_message(self, msg):
-        s = self.get_selected_status_message()
-        if s:
-            msg = "%s %s" % (msg, s)
-        self.task.status_bar.message = msg
-
     def add_user_segment(self, segment, update=True):
         self.document.add_user_segment(segment)
         self.added_segment(segment, update)

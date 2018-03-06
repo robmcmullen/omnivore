@@ -55,12 +55,6 @@ class LinkedBase(CaretHandler):
 
     segment_number = Int(0)
 
-    last_caret_index = Int(0)
-
-    last_anchor_start_index = Int(0)
-
-    last_anchor_end_index = Int(0)
-
     has_origin = Bool(False)
 
     segment_view_params = Dict
@@ -150,7 +144,6 @@ class LinkedBase(CaretHandler):
     def save_segment_view_params(self, segment):
         d = {
             'carets': self.calc_caret_state(),
-            'selected_ranges': [list(a) for a in self.selected_ranges],
         }
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
@@ -167,12 +160,10 @@ class LinkedBase(CaretHandler):
         except KeyError:
             log.debug("no view params for %s" % segment.uuid)
             self.clear_carets()
-            self.clear_selection()
             d = {}
         else:
             log.debug("restoring view params for segment %s (%s): %s" % (segment.name, segment.uuid, str(d)))
             self.restore_caret_state(d['carets'])
-            self.selected_ranges = d['selected_ranges']
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
                 try:
@@ -274,7 +265,7 @@ class LinkedBase(CaretHandler):
 
     def calc_action_enabled_flags(self):
         e = self.editor
-        e.can_copy = len(self.selected_ranges) > 1 or (bool(self.selected_ranges) and (self.selected_ranges[0][0] != self.selected_ranges[0][1]))
+        e.can_copy = self.has_selection
         self.calc_dependent_action_enabled_flags()
 
     def calc_dependent_action_enabled_flags(self):
@@ -282,11 +273,6 @@ class LinkedBase(CaretHandler):
         e.can_copy_baseline = e.can_copy and e.baseline_present
 
     #### CaretHandler overrides
-
-    def check_document_change(self):
-        if self.last_caret_index != self.carets.current.index or self.last_anchor_start_index != self.anchor_start_index or self.last_anchor_end_index != self.anchor_end_index:
-            self.document.change_count += 1
-            self.update_caret_history()
 
     def calc_caret_history(self):
         return self.segment, CaretHandler.calc_caret_state(self)
@@ -360,8 +346,8 @@ class LinkedBase(CaretHandler):
         segments = []
 
         # Get the selected ranges directly from the segment style data, because
-        # the individual range entries in self.selected_ranges can be out of
-        # order or overlapping
+        # the selected ranges in the caret list can be out of order or
+        # overlapping
         ranges = s.get_style_ranges(selected=True)
         if len(ranges) == 1:
             seg_start, seg_end = ranges[0]
@@ -383,27 +369,6 @@ class LinkedBase(CaretHandler):
                 segment = DefaultSegment(raw, s.start_addr + indexes[i])
                 segments.append(segment)
         return segments
-
-    def get_selected_status_message(self):
-        if not self.selected_ranges:
-            return ""
-        if len(self.selected_ranges) == 1:
-            r = self.selected_ranges
-            first = r[0][0]
-            last = r[0][1]
-            num = abs(last - first)
-            if num == 1: # python style, 4:5 indicates a single byte
-                return "[1 byte selected %s]" % self.editor.get_label_of_ranges(r)
-            elif num > 0:
-                return "[%d bytes selected %s]" % (num, self.editor.get_label_of_ranges(r))
-        else:
-            return "[%d ranges selected]" % (len(self.selected_ranges))
-
-    def show_status_message(self, msg):
-        s = self.get_selected_status_message()
-        if s:
-            msg = "%s %s" % (msg, s)
-        self.editor.task.status_bar.message = msg
 
     #### segment utilities
 
@@ -508,7 +473,6 @@ class LinkedBase(CaretHandler):
     def index_clicked(self, index, bit, from_control, refresh_from=True):
         log.debug("index_clicked: %s from %s at %d, %s" % (refresh_from, from_control, index, bit))
         self.carets.current.index = index
-        self.check_document_change()
         if refresh_from:
             from_control = None
         self.update_caret = (from_control, index, bit)

@@ -17,12 +17,19 @@ log = logging.getLogger(__name__)
 
 
 class Caret(object):
-    """Opaque class representing a caret's index and additional metadata
+    """Class representing both a caret's index and optionally a single selected
+    range
+
+    Anchor indexes behave like caret positions: they indicate positions
+    between bytes.
     """
     def __init__(self, index=0, state=None):
-        self.index = index
         if state is not None:
             self.restore(state)
+        else:
+            self.index = index
+            self.anchor_start_index = self.anchor_initial_start_index = 0
+            self.anchor_end_index = self.anchor_initial_end_index = 0
 
     def __bool__(self):
         return self.index is not None
@@ -42,11 +49,40 @@ class Caret(object):
     def __repr__(self):
         return "Caret(%d)" % self.index
 
+    @property
+    def has_selection(self):
+        return self.anchor_start_index != self.anchor_end_index
+
+    @property
+    def num_selected(self):
+        return self.anchor_end_index - self.anchor_start_index
+
+    @property
+    def range(self):
+        s = self.anchor_start_index
+        e = self.anchor_end_index
+        return (s, e) if e > s else (e, s)
+
+    def clear_selection(self):
+        self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = 0
+
+    def set_initial_selection(self, start, end):
+        self.anchor_start_index = self.anchor_initial_start_index = start
+        self.anchor_end_index = self.anchor_initial_end_index = end
+
+    def set_selection(self, start, end):
+        self.anchor_start_index = start
+        self.anchor_end_index = end
+
     def serialize(self):
-        return self.index
+        return (self.index, self.anchor_start_index, self.anchor_initial_start_index, self.anchor_end_index, self.anchor_initial_end_index)
 
     def restore(self, state):
-        self.index = state
+        try:
+            self.index, self.anchor_start_index, self.anchor_initial_start_index, self.anchor_end_index, self.anchor_initial_end_index = state
+        except TypeError:
+            self.index = state
+            self.clear_selection()
 
     def set(self, index):
         self.index = index
@@ -58,7 +94,8 @@ class Caret(object):
         self.index = func(self.index)
 
     def copy(self):
-        return Caret(self.index)
+        state = self.serialize()
+        return Caret(state=state)
 
 
 class CaretList(list):
@@ -96,8 +133,8 @@ class CaretList(list):
         self.append(caret)
         return caret
 
-    def force_single_caret(self, index):
-        self[:] = [Caret(index)]
+    def force_single_caret(self, caret):
+        self[:] = [caret]
 
     def new_carets(self, caret_state):
         for s in caret_state:
@@ -143,6 +180,10 @@ class CaretList(list):
             validated
         return validated
 
+    def clear_selection(self):
+        self.remove_old_carets()
+        self.current.clear_selection()
+
 
 class CaretHandler(HasTraits):
     """The pyface editor template for the omnivore framework
@@ -158,18 +199,6 @@ class CaretHandler(HasTraits):
 
     caret_history = Any
 
-    # Anchor indexes behave like caret positions: they indicate positions
-    # between bytes
-    anchor_start_index = Int(0)
-
-    anchor_initial_start_index = Int(0)
-
-    anchor_initial_end_index = Int(0)
-
-    anchor_end_index = Int(0)
-
-    selected_ranges = List([])
-
     ensure_visible_event = Event
 
     sync_caret_event = Event
@@ -184,14 +213,23 @@ class CaretHandler(HasTraits):
     def _caret_history_default(self):
         return HistoryList()
 
-    def _selected_ranges_default(self):
-        return [(0, 0)]
-
     #### properties
 
     @property
     def has_selection(self):
-        return bool(self.selected_ranges)
+        """True if any caret has a selection"""
+        for caret in self.carets:
+            if caret.has_selection:
+                return True
+        return False
+
+    @property
+    def carets_with_selection(self):
+        c = []
+        for caret in self.carets:
+            if caret.has_selection:
+                c.append(caret)
+        return c
 
     #### command flag processors
 
@@ -210,6 +248,9 @@ class CaretHandler(HasTraits):
 
     def clear_carets(self):
         self.set_caret(0)
+
+    def add_caret(self, caret):
+        self.carets.append(caret)
 
     def move_carets(self, delta):
         for caret in self.carets:
@@ -246,8 +287,9 @@ class CaretHandler(HasTraits):
         for caret in self.carets:
             yield caret.index
 
-    def carets_as_ranges(self):
-        return [(c.index, c.index + 1) for c in self.carets]
+    @property
+    def selected_ranges(self):
+        return [c.range for c in self.carets if c.has_selection]
 
     def update_caret_history(self):
         state = self.carets.get_state()
@@ -294,14 +336,24 @@ class CaretHandler(HasTraits):
         log.debug("set anchors: initial to: %d,%d" % (start, end))
 
     def clear_selection(self):
-        index = self.carets.current.index
-        self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = index
-        log.debug("clear_selection: initial to: %d,%d" % (index, index))
-        # if index > 0:
-        #     import pdb; pdb.set_trace()
-        self.selected_ranges = []
+        self.carets.clear_selection()
         #self.highlight_selected_ranges(self)
         self.calc_action_enabled_flags()
+
+    def select_all(self):
+        caret_handler.set_anchors(0, caret_handler.document_length)
+        self.highlight_selected_ranges(caret_handler)
+        caret_handler.calc_action_enabled_flags()
+
+    def select_none(self, caret_handler, refresh=True):
+        """ Clears any selection in the document
+        """
+        caret_handler.clear_selection()
+        self.highlight_selected_ranges(caret_handler)
+
+    def select_none_if_selection(self, caret_handler):
+        if caret_handler.has_selection:
+            self.select_none(caret_handler)
 
     def process_caret_flags(self, flags, document):
         """Perform the UI updates given the StatusFlags or BatchFlags flags
@@ -334,7 +386,8 @@ class CaretHandler(HasTraits):
                 self.sync_caret_event = flags
         elif flags.force_single_caret:
             if flags.caret_index is not None:
-                self.carets.force_single_caret(flags.caret_index)
+                c = Caret(flags.caret_index)
+                self.carets.force_single_caret(c)
                 caret_moved = True
                 self.sync_caret_event = flags
 
@@ -376,7 +429,8 @@ class SelectionHandler(object):
     def select_all(self, caret_handler, refresh=True):
         """ Selects the entire document
         """
-        caret_handler.set_anchors(0, caret_handler.document_length)
+        caret_handler.clear_selection()
+        caret_handler.current.set_initial_selection(0, caret_handler.document_length)
         self.highlight_selected_ranges(caret_handler)
         caret_handler.calc_action_enabled_flags()
 
@@ -385,6 +439,7 @@ class SelectionHandler(object):
         """
         caret_handler.clear_selection()
         self.highlight_selected_ranges(caret_handler)
+        caret_handler.calc_action_enabled_flags()
 
     def select_none_if_selection(self, caret_handler):
         if caret_handler.has_selection:
@@ -413,14 +468,17 @@ class SelectionHandler(object):
         """ Adjust the current selection to the new start and end indexes
         """
         if extend:
-            caret_handler.selected_ranges[-1] = (start, end)
+            caret = caret_handler.current
+            caret.set_selection(start, end)
         elif add:
-            caret_handler.selected_ranges.append((start, end))
+            caret = Caret(end)
+            caret.set_initial_selection(start, end)
+            caret_handler.add_caret(caret)
         else:
-            caret_handler.selected_ranges = [(start, end)]
-        caret_handler.anchor_start_index = start
-        caret_handler.anchor_end_index = end
-        log.debug("selected ranges: %s" % str(caret_handler.selected_ranges))
+            caret = Caret(end)
+            caret.set_initial_selection(start, end)
+            caret_handler.carets.force_single_caret(caret)
+        log.debug("selected ranges: %s" % str(caret_handler.carets))
         self.highlight_selected_ranges(caret_handler)
         caret_handler.calc_action_enabled_flags()
 
@@ -434,9 +492,7 @@ class SelectionHandler(object):
         return collapse_overlapping_ranges(caret_handler.selected_ranges)
 
     def get_selected_ranges(self, caret_handler):
-        ranges = caret_handler.carets_as_ranges()
-        ranges.extend(caret_handler.selected_ranges)
-        return collapse_overlapping_ranges(ranges)
+        return collapse_overlapping_ranges(caret_handler.selected_ranges)
 
     def get_selected_ranges_and_indexes(self, caret_handler):
         opt = self.get_selected_ranges(caret_handler)

@@ -180,7 +180,7 @@ class MouseEventMixin(SelectionHandler):
     def handle_motion_update_status(self, evt, row, col):
         msg = self.get_status_message_at_cell(row, col)
         if msg:
-            self.caret_handler.show_status_message(msg)
+            self.segment_viewer.show_status_message(msg)
 
     ##### Default selection handlers
 
