@@ -66,6 +66,7 @@ class ClipboardCommand(SegmentCommand):
             old_comment_info = None
         undo.flags.index_range = indexes[0], indexes[-1]
         undo.flags.select_range = True
+        undo.flags.byte_values_changed = True
         old_data = self.segment[indexes].copy()
         if s.clipboard_style is not None:
             style = s.clipboard_style[0:np.alen(data)]
