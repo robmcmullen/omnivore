@@ -448,9 +448,9 @@ class SelectionHandler(object):
     def select_ranges(self, caret_handler, ranges, refresh=True):
         """ Selects the specified ranges
         """
-        caret_handler.selected_ranges = ranges
+        caret_handler.carets.selected_ranges = ranges
         try:
-            start, end = caret_handler.selected_ranges[-1]
+            start, end = caret_handler.carets.selected_ranges[-1]
         except IndexError:
             start, end = 0, 0
         caret_handler.anchor_start_index = caret_handler.anchor_initial_start_index = start
@@ -461,7 +461,7 @@ class SelectionHandler(object):
     def select_invert(self, caret_handler, refresh=True):
         """ Selects the entire document
         """
-        ranges = self.invert_selection_ranges(caret_handler, caret_handler.selected_ranges)
+        ranges = self.invert_selection_ranges(caret_handler, caret_handler.carets.selected_ranges)
         self.select_ranges(caret_handler, ranges, refresh)
 
     def select_range(self, caret_handler, start, end, add=False, extend=False):
@@ -489,10 +489,10 @@ class SelectionHandler(object):
         """ Get the list of monotonically increasing, non-overlapping selected
         ranges
         """
-        return collapse_overlapping_ranges(caret_handler.selected_ranges)
+        return collapse_overlapping_ranges(caret_handler.carets.selected_ranges)
 
     def get_selected_ranges(self, caret_handler):
-        return collapse_overlapping_ranges(caret_handler.selected_ranges)
+        return collapse_overlapping_ranges(caret_handler.carets.selected_ranges)
 
     def get_selected_ranges_and_indexes(self, caret_handler):
         opt = self.get_selected_ranges(caret_handler)

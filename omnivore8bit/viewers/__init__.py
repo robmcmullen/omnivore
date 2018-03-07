@@ -67,7 +67,7 @@ class SegmentViewer(HasTraits):
 
     default_mouse_mode_cls = NormalSelectMode
 
-    copy_special = [ba.CopyAsReprAction, ba.CopyAsCBytesAction]  # additional copy functions available when viewer is present
+    copy_special = [va.CopyAsReprAction, va.CopyAsCBytesAction]  # additional copy functions available when viewer is present
 
     paste_special = [ba.PasteCommentsAction]  # additional paste functions available when viewer is present
 

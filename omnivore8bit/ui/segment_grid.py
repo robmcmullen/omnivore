@@ -8,6 +8,7 @@ from omnivore.framework.mouse_mode import MouseMode
 from omnivore8bit.arch.disasm import get_style_name
 from omnivore.framework import actions as fa
 from ..byte_edit import actions as ba
+from ..viewers import actions as va
 
 import logging
 log = logging.getLogger(__name__)
@@ -141,4 +142,4 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
         paste_special = self.segment_viewer.all_known_paste_special_actions(self.segment_viewer.task)
         paste_special[0:0] = ["Paste Special"]  # sub-menu title
 
-        return [fa.CutAction, fa.CopyAction, copy_special, fa.PasteAction, paste_special, None, fa.SelectAllAction, fa.SelectNoneAction, ["Mark Selection As", ba.MarkSelectionAsCodeAction, ba.MarkSelectionAsDataAction, ba.MarkSelectionAsUninitializedDataAction, ba.MarkSelectionAsDisplayListAction, ba.MarkSelectionAsJumpmanLevelAction, ba.MarkSelectionAsJumpmanHarvestAction], None, ba.GetSegmentFromSelectionAction, ba.RevertToBaselineAction, None, ba.AddCommentPopupAction, ba.RemoveCommentPopupAction, ba.AddLabelPopupAction, ba.RemoveLabelPopupAction]
+        return [fa.CutAction, fa.CopyAction, copy_special, fa.PasteAction, paste_special, None, fa.SelectAllAction, fa.SelectNoneAction, ["Mark Selection As", ba.MarkSelectionAsCodeAction, ba.MarkSelectionAsDataAction, ba.MarkSelectionAsUninitializedDataAction, ba.MarkSelectionAsDisplayListAction, ba.MarkSelectionAsJumpmanLevelAction, ba.MarkSelectionAsJumpmanHarvestAction], None, ba.GetSegmentFromSelectionAction, ba.RevertToBaselineAction, None, va.AddCommentPopupAction, va.RemoveCommentPopupAction, va.AddLabelPopupAction,va.RemoveLabelPopupAction]

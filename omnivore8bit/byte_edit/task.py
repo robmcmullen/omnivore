@@ -592,10 +592,10 @@ class ByteEditTask(FrameworkTask):
             ba.InterleaveSegmentsAction(),
             ba.SetSegmentOriginAction(),
             Separator(),
-            ba.AddCommentAction(),
-            ba.RemoveCommentAction(),
-            ba.AddLabelAction(),
-            ba.RemoveLabelAction(),
+            va.AddCommentAction(),
+            va.RemoveCommentAction(),
+            va.AddLabelAction(),
+            va.RemoveLabelAction(),
             SMenu(
                 Group(
                     ba.ImportSegmentLabelsAction(name="Import"),
