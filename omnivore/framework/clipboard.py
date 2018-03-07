@@ -266,10 +266,13 @@ def create_data_object(viewer, name):
 
 def set_from_selection(viewer, name):
     data_obj, serializer = create_data_object(viewer, name)
+    set_clipboard_object(data_obj)
+    return serializer
+
+def set_clipboard_object(data_obj):
     if wx.TheClipboard.Open():
         wx.TheClipboard.SetData(data_obj)
         wx.TheClipboard.Close()
-        return serializer
     else:
         raise ClipboardError("System error: unable to open clipboard")
 
