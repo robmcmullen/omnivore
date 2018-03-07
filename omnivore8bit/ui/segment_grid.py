@@ -93,6 +93,22 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
         row, col = self.table.index_to_row_col(self.caret_handler.caret_index)
         self.main.show_caret(col, row)
 
+    ##### Rectangular regions
+
+    def get_rects_from_selections(self):
+        rects = []
+        for caret in self.caret_handler.carets_with_selection:
+            _, _, ul, lr = self.segment_viewer.segment.get_rect_indexes(caret.anchor_start_index, caret.anchor_end_index, self.table.items_per_row)
+            rects.append((ul, lr))
+        return rects
+
+    def get_data_from_rect(self, r):
+        (r1, c1), (r2, c2) = r
+        last = r2 * self.table.items_per_row
+        d = self.segment_viewer.segment[:last].reshape(-1, self.table.items_per_row)
+        data = d[r1:r2, c1:c2]
+        return r2 - r1, c2 - c1, data
+
     #####
 
     def get_row_col_from_event(self, evt):

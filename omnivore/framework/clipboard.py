@@ -215,20 +215,18 @@ class RectangularSelection(ClipboardSerializer):
 
     @classmethod
     def selection_to_data_object(cls, viewer):
-        if viewer.linked_base.anchor_start_index != viewer.linked_base.anchor_end_index:
-            anchor_start, anchor_end, (r1, c1), (r2, c2) = viewer.control.get_highlight_indexes()
-            bpr = viewer.control.items_per_row
-            last = r2 * bpr
-            d = viewer.segment[:last].reshape(-1, bpr)
-            data = d[r1:r2, c1:c2]
-            return cls.get_composite_object(data.flat, "%d,%d,%s" % (r2 - r1, c2 - c1, data.tostring()))
+        rects = viewer.control.get_rects_from_selections()
+        if rects:
+            r = rects[0]  # FIXME: handle multiple rects
+            num_rows, num_cols, data = viewer.control.get_data_from_rect(r)
+            return cls.get_composite_object(data.flat, "%d,%d,%s" % (num_rows, num_cols, data.tostring()))
         return None
 
     @property
     def summary(self):
         """Return a string with a summary of the contents of the data object
         """
-        return "%s bytes in %sx%s rectangle" % (self.size_info, format_number(self.num_columns), format_number(self.num_rows))
+        return "%s bytes in %sx%s rectangle" % (self.size_info, format_number(self.clipboard_num_columns), format_number(self.clipboard_num_rows))
 
     def unpack_data_object(self, viewer, data_obj):
         value = get_data_object_value(data_obj, self.data_format_name)
@@ -248,7 +246,7 @@ def create_data_object(viewer, name):
     log.debug("create_data_object: viewer=%s name=%s" % (viewer, name))
     data_obj = serializer_cls.selection_to_data_object(viewer)
     if data_obj is None:
-        raise ClipboardError("Viewer %s can't encode as a %s." % (viewer, serializer.pretty_name.lower()))
+        raise ClipboardError("Viewer %s can't encode as a %s." % (viewer, serializer_cls.pretty_name.lower()))
 
     # format may not be the same as requested because the type of selection
     # (single, multiple, etc.) may result in a different format.
