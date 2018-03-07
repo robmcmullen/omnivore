@@ -128,6 +128,10 @@ class CaretList(list):
     def current(self):
         return self[-1]  # The last one added is the most recent
 
+    @property
+    def selected_ranges(self):
+        return [c.range for c in self if c.has_selection]
+
     def new_caret(self, index):
         caret = Caret(index)
         self.append(caret)
@@ -286,10 +290,6 @@ class CaretHandler(HasTraits):
     def iter_caret_indexes(self):
         for caret in self.carets:
             yield caret.index
-
-    @property
-    def selected_ranges(self):
-        return [c.range for c in self.carets if c.has_selection]
 
     def update_caret_history(self):
         state = self.carets.get_state()

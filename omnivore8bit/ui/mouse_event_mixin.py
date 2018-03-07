@@ -326,5 +326,5 @@ class MouseEventMixin(SelectionHandler):
         ch.document.change_count += 1
         s = ch.segment
         s.clear_style_bits(selected=True)
-        self.segment_viewer.highlight_selected_ranges_in_segment(ch.selected_ranges, s)
+        self.segment_viewer.highlight_selected_ranges_in_segment(ch.carets.selected_ranges, s)
         ch.calc_dependent_action_enabled_flags()

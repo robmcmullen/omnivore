@@ -67,7 +67,9 @@ class SegmentViewer(HasTraits):
 
     default_mouse_mode_cls = NormalSelectMode
 
-    copy_special = []  # additional copy functions available when viewer is present
+    copy_special = [ba.CopyAsReprAction, ba.CopyAsCBytesAction]  # additional copy functions available when viewer is present
+
+    paste_special = [ba.PasteCommentsAction]  # additional paste functions available when viewer is present
 
     searchers = [  # BaseSearcher classes that are applicable to this viewer
         searchutil.HexSearcher,
@@ -395,6 +397,22 @@ class SegmentViewer(HasTraits):
 
     def get_paste_command(self, serialized_data):
         return PasteCommand
+
+    @classmethod
+    def all_known_copy_special_actions(cls, task):
+        actions = set()
+        for v in task.known_viewers:
+            actions.update(v.copy_special)
+        actions = sorted(actions, key=lambda a:a().name)  # name is a trait, so only exists on an instance, not the class
+        return actions
+
+    @classmethod
+    def all_known_paste_special_actions(cls, task):
+        actions = set()
+        for v in task.known_viewers:
+            actions.update(v.paste_special)
+        actions = sorted(actions, key=lambda a:a().name)  # name is a trait, so only exists on an instance, not the class
+        return actions
 
     ##### Status info and text utilities
 

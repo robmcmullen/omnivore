@@ -136,10 +136,9 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
         return actions
 
     def calc_common_popup_actions(self, popup_data):
-        copy_special = [ba.CopyAsReprAction, ba.CopyAsCBytesAction]
-        for v in self.segment_viewer.editor.task.known_viewers:
-            copy_special.extend(v.copy_special)
-        copy_special.sort(key=lambda a:a().name)  # name is a trait, so only exists on an instance, not the class
+        copy_special = self.segment_viewer.all_known_copy_special_actions(self.segment_viewer.task)
         copy_special[0:0] = ["Copy Special"]  # sub-menu title
+        paste_special = self.segment_viewer.all_known_paste_special_actions(self.segment_viewer.task)
+        paste_special[0:0] = ["Paste Special"]  # sub-menu title
 
-        return [fa.CutAction, fa.CopyAction, copy_special, fa.PasteAction, ["Paste Special", ba.PasteAndRepeatAction, ba.PasteCommentsAction], None, fa.SelectAllAction, fa.SelectNoneAction, ["Mark Selection As", ba.MarkSelectionAsCodeAction, ba.MarkSelectionAsDataAction, ba.MarkSelectionAsUninitializedDataAction, ba.MarkSelectionAsDisplayListAction, ba.MarkSelectionAsJumpmanLevelAction, ba.MarkSelectionAsJumpmanHarvestAction], None, ba.GetSegmentFromSelectionAction, ba.RevertToBaselineAction, None, ba.AddCommentPopupAction, ba.RemoveCommentPopupAction, ba.AddLabelPopupAction, ba.RemoveLabelPopupAction]
+        return [fa.CutAction, fa.CopyAction, copy_special, fa.PasteAction, paste_special, None, fa.SelectAllAction, fa.SelectNoneAction, ["Mark Selection As", ba.MarkSelectionAsCodeAction, ba.MarkSelectionAsDataAction, ba.MarkSelectionAsUninitializedDataAction, ba.MarkSelectionAsDisplayListAction, ba.MarkSelectionAsJumpmanLevelAction, ba.MarkSelectionAsJumpmanHarvestAction], None, ba.GetSegmentFromSelectionAction, ba.RevertToBaselineAction, None, ba.AddCommentPopupAction, ba.RemoveCommentPopupAction, ba.AddLabelPopupAction, ba.RemoveLabelPopupAction]

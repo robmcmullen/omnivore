@@ -176,66 +176,6 @@ class ClearCommentCommand(SetCommentCommand):
         self.segment.clear_comment(ranges)
 
 
-class PasteCommentsCommand(ClearCommentCommand):
-    short_name = "paste_comments"
-    pretty_name = "Paste Comments"
-    serialize_order =  [
-            ('segment', 'int'),
-            ('ranges', 'int_list'),
-            ('caret', 'int'),
-            ('bytes', 'string'),
-            ]
-
-    def __init__(self, segment, ranges, caret, bytes, *args, **kwargs):
-        # remove zero-length ranges
-        r = [(start, end) for start, end in ranges if start != end]
-        ranges = r
-        if not ranges:
-            # use the range from caret to end
-            ranges = [(caret, len(segment))]
-        ClearCommentCommand.__init__(self, segment, ranges, bytes)
-        self.caret = caret
-        self.comments = bytes.tostring().splitlines()
-        self.num_lines = len(self.comments)
-
-    def __str__(self):
-        return "%s: %d line%s" % (self.pretty_name, self.num_lines, "" if self.num_lines == 1 else "s")
-
-    def clamp_ranges_and_indexes(self, editor):
-        disasm = editor.disassembly.table.disassembler
-        count = self.num_lines
-        comment_indexes = []
-        clamped = []
-        for start, end in self.ranges:
-            index = start
-            log.debug("starting range %d:%d" % (start, end))
-            while index < end and count > 0:
-                comment_indexes.append(index)
-                pc = index + self.segment.start_addr
-                log.debug("comment at %d, %04x" % (index, pc))
-                try:
-                    index = disasm.get_next_instruction_pc(pc)
-                    count -= 1
-                except IndexError:
-                    count = 0
-            clamped.append((start, index))
-            if count <= 0:
-                break
-        return clamped, comment_indexes
-
-    def change_comments(self, ranges, indexes):
-        """Add comment lines as long as we don't go out of range (if specified)
-        or until the end of the segment or the comment list is exhausted.
-
-        Depends on a valid disassembly to find the lines; we are adding a
-        comment for the first byte in each statement.
-        """
-        log.debug("ranges: %s" % str(ranges))
-        log.debug("indexes: %s" % str(indexes))
-        self.segment.set_comments_at_indexes(ranges, indexes, self.comments)
-        self.segment.set_style_at_indexes(indexes, comment=True)
-
-
 class SetLabelCommand(ChangeMetadataCommand):
     short_name = "set_comment"
     pretty_name = "Label"

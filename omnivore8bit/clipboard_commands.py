@@ -44,6 +44,13 @@ class ClipboardCommand(SegmentCommand):
             data_len = orig_len
         return data[0:data_len]
 
+    def get_style(self, data):
+        style_data = self.serializer.clipboard_style
+        if style_data is not None:
+            style = s.clipboard_style[0:np.alen(data)]
+        else:
+            old_style = None
+
     def do_change(self, editor, undo):
         self.prepare_data(editor)
         indexes = self.get_clipped_indexes(editor)
@@ -68,14 +75,13 @@ class ClipboardCommand(SegmentCommand):
         undo.flags.select_range = True
         undo.flags.byte_values_changed = True
         old_data = self.segment[indexes].copy()
-        if s.clipboard_style is not None:
-            style = s.clipboard_style[0:np.alen(data)]
+        self.segment[indexes] = data
+        style = self.get_style(data)
+        if style is not None:
             old_style = self.segment.style[indexes].copy()
+            self.segment.style[indexes] = style
         else:
             old_style = None
-        self.segment[indexes] = data
-        if old_style is not None:
-            self.segment.style[indexes] = style
         if old_comment_info is not None:
             log.debug("setting comments: %s" % s.clipboard_comments)
             self.segment.set_comments_at_indexes(clamped_ranges, comment_indexes, s.clipboard_comments)
@@ -98,6 +104,23 @@ class PasteCommand(ClipboardCommand):
     """
     short_name = "paste"
     pretty_name = "Paste"
+
+
+class PasteCommentsCommand(PasteCommand):
+    """Paste comments only
+
+    This paste command places the comments at the byte offsets of the originial
+    selection. For a command that will paste comments to match the lines of a
+    disassembly, see :meth:`PasteDisassemblyComments`.
+    """
+    short_name = "paste_comments"
+    pretty_name = "Paste Comments"
+
+    def get_data(self, orig):
+        return orig
+
+    def get_style(self, data):
+        None
 
 
 class PasteAndRepeatCommand(PasteCommand):

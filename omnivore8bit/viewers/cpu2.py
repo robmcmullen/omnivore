@@ -18,6 +18,7 @@ from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from .hex2 import HexEditControl
 from ..arch.disasm import iter_disasm_styles
 from ..utils import searchutil
+from ..byte_edit.commands import SetCommentCommand
 
 from . import SegmentViewer
 
@@ -288,7 +289,7 @@ class CopyDisassemblyAction(EditorAction):
         self.enabled = self.active_editor.focused_viewer.has_cpu
 
 
-class CopyCommentsAction(EditorAction):
+class CopyDisassemblyCommentsAction(EditorAction):
     """Copy the text of the comments only, using the disassembly for line
     breaks. Any blank lines that appear in the disassembly are included in the
     copy.
@@ -312,6 +313,72 @@ class CopyCommentsAction(EditorAction):
 
     def _update_enabled(self, ui_state):
         self.enabled = self.active_editor.focused_viewer.has_cpu
+
+
+class PasteDisassemblyCommentsAction(EditorAction):
+    name = 'Paste Disassembly Comments'
+    tooltip = 'Paste text as comment lines'
+    enabled_name = 'can_paste'
+    accelerator = 'Shift-F6'
+
+    def perform(self, event):
+        self.active_editor.paste(PasteDisassemblyCommentsCommand)
+
+
+class PasteDisassemblyCommentsCommand(SetCommentCommand):
+    """Copy the text of the comments only, using the disassembly for line
+    breaks. Any blank lines that appear in the disassembly are included in the
+    copy.
+
+    """
+    name = 'Paste Disassembly Comments'
+
+    def __init__(self, segment, serializer):
+        ranges = serializer.dest_carets.selected_ranges
+        if not ranges:
+            # use the range from caret to end
+            ranges = [(serializer.dest_carets.current.index, len(segment))]
+        SetCommentCommand.__init__(self, segment, ranges, serializer.data)
+        self.comments = self.text.tostring().splitlines()
+        self.num_lines = len(self.comments)
+
+    def __str__(self):
+        return "%s: %d line%s" % (self.pretty_name, self.num_lines, "" if self.num_lines == 1 else "s")
+
+    def clamp_ranges_and_indexes(self, editor):
+        disasm = editor.disassembly.table.disassembler
+        count = self.num_lines
+        comment_indexes = []
+        clamped = []
+        for start, end in self.ranges:
+            index = start
+            log.debug("starting range %d:%d" % (start, end))
+            while index < end and count > 0:
+                comment_indexes.append(index)
+                pc = index + self.segment.start_addr
+                log.debug("comment at %d, %04x" % (index, pc))
+                try:
+                    index = disasm.get_next_instruction_pc(pc)
+                    count -= 1
+                except IndexError:
+                    count = 0
+            clamped.append((start, index))
+            if count <= 0:
+                break
+        return clamped, comment_indexes
+
+    def change_comments(self, ranges, indexes):
+        """Add comment lines as long as we don't go out of range (if specified)
+        or until the end of the segment or the comment list is exhausted.
+
+        Depends on a valid disassembly to find the lines; we are adding a
+        comment for the first byte in each statement.
+        """
+        log.debug("ranges: %s" % str(ranges))
+        log.debug("indexes: %s" % str(indexes))
+        self.segment.set_comments_at_indexes(ranges, indexes, self.comments)
+        self.segment.set_style_at_indexes(indexes, comment=True)
+
 
 
 # Disassembly searcher uses the __call__ method to return the object because it
@@ -355,7 +422,9 @@ class DisassemblyViewer(SegmentViewer):
 
     has_hex = True
 
-    copy_special = [CopyDisassemblyAction, CopyCommentsAction]
+    copy_special = [CopyDisassemblyAction, CopyDisassemblyCommentsAction]
+
+    paste_special = [PasteDisassemblyCommentsAction]
 
     current_disassembly_ = Any(None)
 
