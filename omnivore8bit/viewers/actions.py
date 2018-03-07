@@ -38,11 +38,12 @@ class ViewerAction(EditorAction):
 
     def _update_enabled(self, ui_state):
         if self.enabled_name and ui_state:
-            enabled = bool(self._get_attr(self.viewer, self.enabled_name, None))
+            enabled = self._get_attr(self.viewer, self.enabled_name, None)
             if enabled is None:
-                log.warning("%s flag does not exist in ui_state object %s" % (self.enabled_name, ui_state))
-                enabled = False
-            self.enabled = enabled
+                enabled = bool(self._get_attr(self.task.active_editor, self.enabled_name, None))
+                if enabled is None:
+                    log.warning("%s flag does not exist in viewer %s or active editor %s" % (self.enabled_name, self.viewer, self.task_active_editor))
+            self.enabled = bool(enabled)
         else:
             self.enabled = True
 
