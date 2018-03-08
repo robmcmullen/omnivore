@@ -361,8 +361,14 @@ class MultiSplit(wx.Window):
         return self.view2
 
     def DestroyLeaf(self,caller):
-        if not self.view2:              # We will only have 2 windows if
-            return                      # we need to destroy any
+        if not self.view2:
+            # deleting final control here; need to replace it with a dummy
+            # control otherwise we won't actually be able to delete that last
+            # one
+            old = self.view1
+            self.view1 = MultiViewLeaf(self.multiView,self, (0,0),self.GetSize())
+            old.Destroy()
+            return
         parent = self.GetParent()       # Another splitview
         if parent == self.multiView:    # We'r at the root
             if caller == self.view1:
