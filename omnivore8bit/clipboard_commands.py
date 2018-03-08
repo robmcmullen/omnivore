@@ -148,22 +148,20 @@ class PasteRectCommand(SegmentCommand):
     def __init__(self, segment, serializer):
         #start_index, rows, cols, bytes_per_row, bytes):
         SegmentCommand.__init__(self, segment)
-        s = serializer
-        self.start_index = s.caret_index
-        self.rows = s.num_rows
-        self.cols = s.num_columns
-        self.bytes_per_row = s.bytes_per_row
-        self.bytes = s.data
+        self.serializer = serializer
 
     def __str__(self):
-        return "%s @ %04x (%dx%d)" % (self.pretty_name, self.start_index + self.segment.start_addr, self.cols, self.rows)
+        s = self.serializer
+        return "%s @ %04x (%dx%d)" % (self.pretty_name, s.dest_carets.current.index + self.segment.start_addr, s.clipboard_num_cols, s.clipboard_num_rows)
 
-    def perform(self, editor, undo):
-        i1 = self.start_index
-        bpr = self.bytes_per_row
+    def single_source_single_dest(self, editor, undo):
+        s = self.serializer
+        caret = s.dest_carets.current
+        i1 = caret.index
+        bpr = s.dest_items_per_row
         r1, c1 = divmod(i1, bpr)
-        r2 = r1 + self.rows
-        c2 = c1 + self.cols
+        r2 = r1 + s.clipboard_num_rows
+        c2 = c1 + s.clipboard_num_cols
         last = r2 * bpr
         d = self.segment[:last].reshape(-1, bpr)
         r2 = min(r2, d.shape[0])
@@ -171,13 +169,17 @@ class PasteRectCommand(SegmentCommand):
         undo.flags.byte_values_changed = True
         #undo.flags.index_range = i1, i2
         old_data = d[r1:r2,c1:c2].copy()
-        new_data = np.fromstring(self.bytes, dtype=np.uint8).reshape(self.rows, self.cols)
+        new_data = np.fromstring(s.clipboard_data, dtype=np.uint8).reshape(s.clipboard_num_rows, s.clipboard_num_cols)
         d[r1:r2, c1:c2] = new_data[0:r2 - r1, 0:c2 - c1]
         undo.data = (r1, c1, r2, c2, last, old_data, )
         self.undo_info = undo
 
+    def perform(self, editor, undo):
+        self.single_source_single_dest(editor, undo)
+
     def undo(self, editor):
+        s = self.serializer
         r1, c1, r2, c2, last, old_data, = self.undo_info.data
-        d = self.segment[:last].reshape(-1, self.bytes_per_row)
+        d = self.segment[:last].reshape(-1, s.dest_items_per_row)
         d[r1:r2, c1:c2] = old_data
         return self.undo_info

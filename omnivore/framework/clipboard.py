@@ -97,7 +97,7 @@ class ClipboardSerializer(object):
         self.clipboard_relative_comment_indexes = None
         self.clipboard_comments = None
         self.clipboard_num_rows = None
-        self.clipboard_num_columns = None
+        self.clipboard_num_cols = None
         self.dest_items_per_row = None
         self.dest_carets = None
 
@@ -226,13 +226,13 @@ class RectangularSelection(ClipboardSerializer):
     def summary(self):
         """Return a string with a summary of the contents of the data object
         """
-        return "%s bytes in %sx%s rectangle" % (self.size_info, format_number(self.clipboard_num_columns), format_number(self.clipboard_num_rows))
+        return "%s bytes in %sx%s rectangle" % (self.size_info, format_number(self.clipboard_num_cols), format_number(self.clipboard_num_rows))
 
     def unpack_data_object(self, viewer, data_obj):
         value = get_data_object_value(data_obj, self.data_format_name)
         r, c, value = value.split(",", 2)
         self.clipboard_num_rows = int(r)
-        self.clipboard_num_columns = int(c)
+        self.clipboard_num_cols = int(c)
         self.clipboard_data = np.fromstring(value, dtype=np.uint8)
         self.dest_carets = viewer.linked_base.carets.copy()
         self.dest_items_per_row = viewer.control.items_per_row
