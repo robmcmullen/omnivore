@@ -512,6 +512,64 @@ class SegmentViewer(HasTraits):
         self.editor.popup_context_menu_from_actions(self.control, *args, **kwargs)
 
 
+class PlaceholderControl(wx.Window):
+    def __init__(self, parent, linked_base, mdict, viewer_cls):
+        wx.Window.__init__(self, parent)
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+
+    def OnPaint(self, event):
+        dc = wx.PaintDC(self)
+        self.draw(dc)
+
+    def draw(self, dc):
+        size = self.GetClientSize()
+        s = "Size: %d x %d"%(size.x, size.y)
+        dc.SetFont(wx.NORMAL_FONT)
+        w, height = dc.GetTextExtent(s)
+        height += 3
+        dc.SetBrush(wx.WHITE_BRUSH)
+        dc.SetPen(wx.WHITE_PEN)
+        dc.DrawRectangle(0, 0, size.x, size.y)
+        dc.SetPen(wx.LIGHT_GREY_PEN)
+        dc.DrawLine(0, 0, size.x, size.y)
+        dc.DrawLine(0, size.y, size.x, 0)
+        dc.DrawText(s, (size.x-w)/2, (size.y-height*5)/2)
+        pos = self.GetPosition()
+        s = "Position: %d, %d" % (pos.x, pos.y)
+        w, h = dc.GetTextExtent(s)
+        dc.DrawText(s, (size.x-w)/2, ((size.y-(height*5))/2)+(height*3))
+
+    def OnEraseBackground(self, event):
+        pass
+
+    def OnSize(self, event):
+        size = self.GetClientSize()
+        s = "Size: %d x %d"%(size.x, size.y)
+        self.SetName(s)
+        self.Refresh()
+
+    def recalc_view(self):
+        self.refresh_view()
+
+    def refresh_view(self):
+        dc = wx.ClientDC(self)
+        self.draw(dc)
+
+    def refresh_headers(self):
+        pass
+
+
+class PlaceholderViewer(SegmentViewer):
+    name = "placeholder"
+
+    pretty_name = "Placeholder"
+
+    control_cls = PlaceholderControl
+
+    has_editable_bytes = False
+
 
 class ByteViewersPlugin(FrameworkPlugin):
     """ Plugin containing all the viewers for byte data

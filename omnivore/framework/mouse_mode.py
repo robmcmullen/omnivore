@@ -1,5 +1,6 @@
 # Standard library imports.
 import sys
+import weakref
 
 # Major package imports.
 import wx
@@ -25,7 +26,7 @@ class MouseMode(object):
     mouse_too_close_pixel_tolerance = 5
 
     def __init__(self, window):
-        self.control = window
+        self.control = weakref.proxy(window)
         self.snapped_point = None, 0
         self.first_mouse_down_position = 0, 0
         self.after_first_mouse_up = False

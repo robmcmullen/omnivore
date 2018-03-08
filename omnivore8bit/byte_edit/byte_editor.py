@@ -19,6 +19,7 @@ from omnivore.utils.wx.multisash import MultiSash
 from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.document import SegmentedDocument
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
+
 from omnivore.utils.processutil import run_detach
 
 from linked_base import LinkedBase
@@ -438,14 +439,18 @@ class ByteEditor(FrameworkEditor):
         log.debug("clearing popup")
         self.sidebar.control.clear_popup()
 
-    def add_viewer(self, viewer_cls, linked=True):
-        center_viewer = self.viewers[0]
-        center_base = center_viewer.linked_base
-        viewer = viewer_cls.create(self.control, center_base)
+    def add_viewer(self, viewer_cls, linked_base=None):
+        if linked_base is None:
+            if self.focused_viewer is not None:
+                linked_base = self.focused_viewer.linked_base
+            else:
+                raise RuntimeError("Creating a viewer with no linked base and no focused viewer")
+        viewer = viewer_cls.create(self.control, linked_base)
         self.viewers.append(viewer)
         self.control.add(viewer.control, viewer.uuid)
-        center_base.force_data_model_update()
+        linked_base.force_data_model_update()
         self.update_pane_names()
+        return viewer
 
     ###########################################################################
     # Trait handlers.
@@ -472,8 +477,7 @@ class ByteEditor(FrameworkEditor):
         import pprint
         log.debug("viewer_metadata: %s" % str(viewer_metadata.keys()))
 
-        center_base = LinkedBase(editor=self)
-        # self.linked_bases.append(center_base)
+        center_base = center_base = LinkedBase(editor=self)
 
         layer = 0
         viewers = viewer_metadata.keys()
@@ -563,5 +567,13 @@ class ByteEditor(FrameworkEditor):
             pass
         else:
             log.debug("on_pane_close: closed viewer %s %s" % (v, v.window_title))
+
+            # Keep a reference to the linked base
+            linked_base_save = v.linked_base
+
             self.viewers.remove(v)
             v.prepare_for_destroy()
+
+            import omnivore8bit.viewers
+            v = self.add_viewer(omnivore8bit.viewers.PlaceholderViewer, linked_base_save)
+            self.set_focused_viewer(v)
