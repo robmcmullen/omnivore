@@ -23,7 +23,7 @@ class JumpmanSelectMode(NormalSelectMode):
     can_paste = False
 
     def __init__(self, *args, **kwargs):
-        SelectMode.__init__(self, *args, **kwargs)
+        NormalSelectMode.__init__(self, *args, **kwargs)
         self.mouse_down = (0, 0)
         self.objects = []
 
@@ -33,7 +33,7 @@ class JumpmanSelectMode(NormalSelectMode):
     def resync_objects(self):
         pass
 
-    def get_image_override(self):
+    def calc_playfield_override(self):
         """ Replace the entire bit image generation in JumpmanLevelView """
         return None
 
@@ -174,13 +174,13 @@ class AnticDSelectMode(JumpmanSelectMode):
             self.objects = []
         self.control.Refresh()
 
-    def get_image_override(self):
+    def calc_playfield_override(self):
         if not self.objects:
             self.override_state = None
             return
 
-        e = self.control.segment_viewer
-        playfield = e.get_playfield_segment()  # use new, temporary playfield
+        table = self.control.table
+        playfield = table.get_playfield_segment()  # use new, temporary playfield
         _, _, self.override_state = self.control.redraw_current(playfield, self.objects)
 
         # Draw the harvest grid if a peanut is selected
@@ -188,8 +188,7 @@ class AnticDSelectMode(JumpmanSelectMode):
             if obj.single:
                 self.draw_harvest_grid(playfield)
                 break
-        bitimage = self.control.get_rendered_image(playfield)
-        return bitimage
+        return playfield
 
     def get_picked(self, pick):
         if self.override_state:

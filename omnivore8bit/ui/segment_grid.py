@@ -26,6 +26,8 @@ class SegmentTable(cg.HexTable):
 
 
 class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
+    default_table_cls = SegmentTable
+
     def __init__(self, parent, linked_base, mdict, viewer_cls):
         MouseEventMixin.__init__(self, linked_base, viewer_cls.default_mouse_mode_cls)
         CharEventMixin.__init__(self, linked_base)
@@ -66,17 +68,23 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
             self.zoom = e['zoom']
 
     def calc_default_table(self):
-        linked_base = self.caret_handler
-        return SegmentTable(linked_base.segment, self.items_per_row)
+        return self.default_table_cls(self.caret_handler.segment, self.items_per_row)
 
     def recalc_view(self):
         # just recreate everything. If a subclass wants something different,
         # let it do it itself.
         self.view_params = self.segment_viewer.linked_base.cached_preferences
-        self.table = SegmentTable(self.segment_viewer.linked_base.segment, self.items_per_row)
+        self.table = self.calc_default_table()
         self.line_renderer = self.calc_line_renderer()
         log.debug("recalculating %s; items_per_row=%d" % (self, self.items_per_row))
+        self.recalc_view_extra_setup()
         cg.CompactGrid.recalc_view(self)
+
+    def recalc_view_extra_setup(self):
+        """Hook for subclasses to set up any data needed before actually
+        displaying the screen
+        """
+        pass
 
     @property
     def page_size(self):

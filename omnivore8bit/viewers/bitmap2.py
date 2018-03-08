@@ -18,15 +18,15 @@ log = logging.getLogger(__name__)
 
 
 class BitmapImageCache(cg.DrawTextImageCache):
-    def draw_item(self, parent, dc, rect, data, style):
+    def draw_item(self, grid_control, dc, rect, data, style):
         start = 0
         end = len(data)
         nr = 1
-        array = parent.bitmap_renderer.get_image(parent.segment_viewer, end, nr, end, data, style)
+        array = grid_control.bitmap_renderer.get_image(grid_control.segment_viewer, end, nr, end, data, style)
         width = array.shape[1]
         height = array.shape[0]
         if width > 0 and height > 0:
-            array = intscale(array, parent.zoom_h, parent.zoom_w)
+            array = intscale(array, grid_control.zoom_h, grid_control.zoom_w)
             #print("bitmap: %d,%d,3 after scaling: %s" % (height, width, str(array.shape)))
             image = wx.Image(array.shape[1], array.shape[0])
             image.SetData(array.tostring())
@@ -34,23 +34,23 @@ class BitmapImageCache(cg.DrawTextImageCache):
             dc.DrawBitmap(bmp, rect.x, rect.y)
 
 
-class BitmapRenderer(cg.TableLineRenderer):
+class BitmapLineRenderer(cg.TableLineRenderer):
     default_image_cache = BitmapImageCache
 
-    def __init__(self, parent, segment_viewer, image_cache=None):
+    def __init__(self, grid_control, segment_viewer, image_cache=None):
         image_cache = BitmapImageCache()
-        w = parent.zoom_w * parent.scale_width * parent.pixels_per_byte
-        h = parent.zoom_h * parent.scale_height
-        cg.LineRenderer.__init__(self, parent, w, h, parent.items_per_row, image_cache)
+        w = grid_control.zoom_w * grid_control.scale_width * grid_control.pixels_per_byte
+        h = grid_control.zoom_h * grid_control.scale_height
+        cg.LineRenderer.__init__(self, grid_control, w, h, grid_control.items_per_row, image_cache)
 
     # BaseLineRenderer interface
 
-    def draw_line(self, parent, dc, line_num, col, index, last_index):
-        t = parent.table
+    def draw_line(self, grid_control, dc, line_num, col, index, last_index):
+        t = grid_control.table
         rect = self.col_to_rect(line_num, col)
         data = t.data[index:last_index]
         style = t.style[index:last_index]
-        self.image_cache.draw_item(parent, dc, rect, data, style)
+        self.image_cache.draw_item(grid_control, dc, rect, data, style)
 
 
 class BitmapGridControl(SegmentGridControl):
@@ -84,7 +84,7 @@ class BitmapGridControl(SegmentGridControl):
 
     def calc_line_renderer(self):
         if hasattr(self, 'segment_viewer'):
-            return BitmapRenderer(self, self.segment_viewer)
+            return BitmapLineRenderer(self, self.segment_viewer)
         return SegmentGridControl.calc_line_renderer(self)
 
     def get_extra_actions(self):
