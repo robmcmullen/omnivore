@@ -62,7 +62,7 @@ if not BENCHMARK_OLD:
                 if obj is Undefined or obj is None:
                     pass
                 else:
-                    log.error("Did not find name %r on %r" % (attr, obj))
+                    log.debug("Did not find name %r on %r" % (attr, obj))
                 return default
             return obj
 
