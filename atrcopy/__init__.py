@@ -305,10 +305,15 @@ def get_template_info():
         try:
             with open(name + ".inf", "r") as fh:
                 s = fh.read()
-                j = json.loads(s)
+                try:
+                    j = json.loads(s)
+                except ValueError:
+                    continue
                 description = j["description"]
         except IOError:
             description = ""
+        if not description:
+            continue
         d = textwrap.wrap(description, 80 - 1 - 14 - 2 - 2)
         lines.append(fmt % (os.path.basename(name), d[0]))
         lines.extend([fmt % ("", line) for line in d[1:]])
