@@ -326,7 +326,7 @@ def get_template_data(template):
         with open(path, "rb") as fh:
             data = fh.read()
     except:
-        raise InvalidDiskImage("Template disk image %s not found" % template)
+        raise InvalidDiskImage("Unknown template disk image %s" % template)
     try:
         with open(path + ".inf", "r") as fh:
             s = fh.read()
@@ -339,7 +339,12 @@ def get_template_data(template):
 def create_image(template, name):
     import textwrap
 
-    data, inf = get_template_data(template)
+    try:
+        data, inf = get_template_data(template)
+    except InvalidDiskImage, e:
+        info = get_template_info()
+        print("Error: %s\n\n%s" % (e, info))
+        return
     print("using %s template:\n  %s" % (template, "\n  ".join(textwrap.wrap(inf["description"], 77))))
     if not options.dry_run:
         if os.path.exists(name) and not options.force:
