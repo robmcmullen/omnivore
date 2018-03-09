@@ -289,50 +289,61 @@ def get_template_path(rel_path="templates"):
     return template_path
 
 
-def get_template_info():
+def get_template_images(partial=""):
     import glob
-    import textwrap
-    fmt = "  %-14s  %s"
 
     path = get_template_path()
     files = glob.glob(os.path.join(path, "*"))
-
-    lines = []
-    lines.append("available templates:")
-    for name in sorted(files):
+    templates = {}
+    for path in files:
+        name = os.path.basename(path)
         if name.endswith(".inf"):
             continue
+        if partial not in name:
+            continue
         try:
-            with open(name + ".inf", "r") as fh:
+            with open(path + ".inf", "r") as fh:
                 s = fh.read()
                 try:
                     j = json.loads(s)
                 except ValueError:
                     continue
-                description = j["description"]
+                j['name'] = name
+                j['path'] = path
+                templates[name] = j
         except IOError:
-            description = ""
-        if not description:
             continue
-        d = textwrap.wrap(description, 80 - 1 - 14 - 2 - 2)
+    return templates
+
+
+def get_template_info():
+    import textwrap
+    fmt = "  %-14s  %s"
+
+    templates = get_template_images()
+
+    lines = []
+    lines.append("available templates:")
+    for name in sorted(templates.keys()):
+        d = textwrap.wrap(templates[name]["description"], 80 - 1 - 14 - 2 - 2)
         lines.append(fmt % (os.path.basename(name), d[0]))
         lines.extend([fmt % ("", line) for line in d[1:]])
     return os.linesep.join(lines) + os.linesep
 
 
 def get_template_data(template):
-    path = os.path.join(get_template_path(), template)
+    possibilities = get_template_images(template)
+    if not possibilities:
+        raise InvalidDiskImage("Unknown template disk image %s" % template)
+    if len(possibilities) > 1:
+        raise InvalidDiskImage("Name %s is ambiguous (%d matches: %s)" % (template, len(possibilities), ", ".join(sorted(possibilities.keys()))))
+    name, inf = possibilities.popitem()
+    path = inf['path']
     try:
         with open(path, "rb") as fh:
             data = fh.read()
-    except:
-        raise InvalidDiskImage("Unknown template disk image %s" % template)
-    try:
-        with open(path + ".inf", "r") as fh:
-            s = fh.read()
-            inf = json.loads(s)
     except IOError:
-        inf = {"description": ""}
+        raise InvalidDiskImage("Failed reading template file %s" % path)
     return data, inf
 
 
@@ -345,7 +356,7 @@ def create_image(template, name):
         info = get_template_info()
         print("Error: %s\n\n%s" % (e, info))
         return
-    print("using %s template:\n  %s" % (template, "\n  ".join(textwrap.wrap(inf["description"], 77))))
+    print("Using template %s:\n  %s" % (inf['name'], "\n  ".join(textwrap.wrap(inf["description"], 77))))
     if not options.dry_run:
         if os.path.exists(name) and not options.force:
             print("skipping %s, use -f to overwrite" % (name))
