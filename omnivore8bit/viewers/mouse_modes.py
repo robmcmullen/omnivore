@@ -59,7 +59,7 @@ class NormalSelectMode(MouseMode):
 
     def calc_left_down_command(self, evt, row, cell, flags):
         cg = self.control
-        cg.main.process_motion_scroll(row, cell, flags)
+        cg.main.update_caret_from_mouse(row, cell, flags)
         cg.handle_select_start(evt, cg.main.current_caret_row, cg.main.current_caret_col, flags)
 
     def process_mouse_motion_down(self, evt):
@@ -79,7 +79,7 @@ class NormalSelectMode(MouseMode):
     def calc_mouse_motion_down_command(self, evt, row, cell, flags):
         cg = self.control
         last_row, last_col = cg.main.current_caret_row, cg.main.current_caret_col
-        cg.main.handle_user_caret(row, cell, flags)
+        cg.main.update_caret_from_mouse(row, cell, flags)
         if last_row != cg.main.current_caret_row or last_col != cg.main.current_caret_col:
             cg.handle_select_motion(evt, cg.main.current_caret_row, cg.main.current_caret_col, flags)
 

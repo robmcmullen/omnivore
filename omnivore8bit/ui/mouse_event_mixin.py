@@ -4,7 +4,7 @@ import wx
 
 from omnivore import get_image_path
 from omnivore.utils.command import DisplayFlags
-from omnivore.framework.caret import SelectionHandler
+from omnivore.framework.caret import Caret, SelectionHandler
 
 import logging
 log = logging.getLogger(__name__)
@@ -20,6 +20,7 @@ class MouseEventMixin(SelectionHandler):
         self.select_extend_mode = False
         self.mouse_drag_started = False
         self.pending_select_awaiting_drag = None
+        self.caret_with_selection = None
         self.source = None
         if self.__class__.hand_cursor is None:
             p = get_image_path("icons/hand.ico")
@@ -208,41 +209,47 @@ class MouseEventMixin(SelectionHandler):
         elif evt.ShiftDown():
             self.multi_select_mode = False
             self.select_extend_mode = True
+        log.debug(("start before:", ch.carets, "multi", self.multi_select_mode, "extend", self.select_extend_mode))
         if self.select_extend_mode:
-            if index1 < ch.anchor_start_index:
-                ch.anchor_start_index = index1
-                ch.carets.current.index = index1
-            elif index2 > ch.anchor_start_index:
-                ch.anchor_end_index = index2
-                ch.carets.current.index = index2 - 1
-            ch.anchor_initial_start_index, ch.anchor_initial_end_index = ch.anchor_start_index, ch.anchor_end_index
-            self.select_range(ch, ch.anchor_start_index, ch.anchor_end_index, add=self.multi_select_mode)
+            caret = self.caret_with_selection = ch.carets.current
+            if index1 < caret.anchor_start_index:
+                self.select_extend_mode = "bottom anchor"
+                if not caret.has_selection:
+                    caret.anchor_end_index += 1
+                caret.anchor_start_index = index1
+                caret.index = index1
+            else:
+                self.select_extend_mode = "top anchor"
+                caret.anchor_end_index = index2
+                caret.index = index2 - 1
+            caret.anchor_initial_start_index, caret.anchor_initial_end_index = caret.anchor_start_index, caret.anchor_end_index
         else:
             if selecting_rows:
                 index1, index2 = self.get_start_end_index_of_row(r)
-            elif self.multi_select_mode:
-                flags.add_caret = True
-                print("NEW CARET!", str(ch.carets))
+                caret = Caret(index2)
+                ch.carets.force_single_caret(caret)
+                self.caret_with_selection = caret
+                caret.anchor_initial_start_index, caret.anchor_initial_end_index = index1, index2
+                caret.anchor_start_index, caret.anchor_end_index = index1, index2
+                flags.keep_selection = True
+                log.debug("handle_select_start selecting rows: flags: %s, anchors=%s" % (flags, str((caret.anchor_initial_start_index, caret.anchor_initial_end_index))))
             else:
-                flags.force_single_caret = True
-            ch.carets.current.index = index1
-            ch.anchor_initial_start_index, ch.anchor_initial_end_index = index1, index2
-
-            if selecting_rows:
-                self.select_range(ch, index1, index2, add=self.multi_select_mode)
-            else:
+                flags.keep_selection = True
                 # initial click when not selecting rows should move the caret,
                 # not select the grid square
+                caret = Caret(index1)
+                if self.multi_select_mode:
+                    ch.add_caret(caret)
+                    log.debug(("adding caret", caret))
+                else:
+                    ch.force_single_caret(caret)
+                    log.debug(("forced single caret", caret))
+                self.caret_with_selection = caret
                 self.pending_select_awaiting_drag = (index1, index2)
-                if not self.multi_select_mode:
-                    self.select_none(ch)
-                    # status line doesn't get automatically updated to show
-                    # nothing is selected, so force the update
-                    flags.message = self.get_status_at_index(index1)
-        flags.caret_index = ch.carets.current.index
+                log.debug("handle_select_start placing cursor: flags: %s, index=%s" % (flags, index1))
         flags.caret_column = c
-        log.debug("handle_select_start: flags: %s, anchors=%s" % (flags, str((ch.anchor_initial_start_index, ch.anchor_initial_end_index))))
         self.commit_change(flags)
+        log.debug(("start after:", ch.carets))
 
     def handle_select_motion(self, evt, row, col, flags=None):
         if not self.mouse_drag_started:
@@ -254,9 +261,13 @@ class MouseEventMixin(SelectionHandler):
         ch = self.caret_handler
         update = False
         r, c, index1, index2, inside = self.get_location_from_col(row, col)
-        log.debug("handle_select_motion: r=%d c=%d index1: %s, index2: %s pending: %s, sel rows: %s anchors: initial=%s current=%s" % (r, c, index1, index2, str(self.pending_select_awaiting_drag), flags.selecting_rows, str((ch.anchor_initial_start_index, ch.anchor_initial_end_index)), str((ch.anchor_start_index, ch.anchor_end_index))))
+        log.debug("handle_select_motion: r=%d c=%d index1: %s, index2: %s pending: %s, sel rows: %s" % (r, c, index1, index2, str(self.pending_select_awaiting_drag), flags.selecting_rows))
+        # log.debug("handle_select_motion: r=%d c=%d index1: %s, index2: %s pending: %s, sel rows: %s anchors: initial=%s current=%s" % (r, c, index1, index2, str(self.pending_select_awaiting_drag), flags.selecting_rows, str((caret.anchor_initial_start_index, caret.anchor_initial_end_index)), str((caret.anchor_start_index, caret.anchor_end_index))))
+        log.debug(("motion before:", ch.carets))
+        caret = self.caret_with_selection
         if c < 0 or flags.selecting_rows or not inside:
             selecting_rows = True
+            index1, index2 = self.get_start_end_index_of_row(r)
             c = 0
         else:
             selecting_rows = False
@@ -267,50 +278,72 @@ class MouseEventMixin(SelectionHandler):
                     return
 
                 # We have an actual drag so we can begin the selection
-                ch.anchor_initial_start_index, ch.anchor_initial_end_index = self.pending_select_awaiting_drag
+                caret.anchor_initial_start_index, caret.anchor_initial_end_index = self.pending_select_awaiting_drag
+                caret.anchor_start_index, caret.anchor_end_index = self.pending_select_awaiting_drag
                 self.pending_select_awaiting_drag = None
-                self.select_range(ch, ch.anchor_initial_start_index, ch.anchor_initial_end_index, add=self.multi_select_mode)
                 update = True
-        if self.select_extend_mode:
-            if index1 < ch.anchor_initial_start_index:
-                self.select_range(ch, index1, ch.anchor_initial_end_index, extend=True)
+
+        if self.select_extend_mode == "top anchor":
+            if index1 < caret.anchor_initial_start_index:
+                caret.index = index1
+                caret.anchor_start_index = index1
+                caret.anchor_end_index = caret.anchor_initial_start_index + 1
                 update = True
             else:
-                self.select_range(ch, ch.anchor_initial_start_index, index2, extend=True)
+                caret.index = index2 - 1
+                caret.anchor_start_index = caret.anchor_initial_start_index
+                caret.anchor_end_index = index2
+                update = True
+        elif self.select_extend_mode == "bottom anchor":
+            if index1 < caret.anchor_initial_end_index:
+                caret.index = index1
+                caret.anchor_start_index = index1
+                caret.anchor_end_index = caret.anchor_initial_end_index
+                update = True
+            else:
+                caret.index = index2 - 1
+                caret.anchor_start_index = caret.anchor_initial_end_index
+                caret.anchor_end_index = index2
                 update = True
         else:
-            if index2 >= ch.anchor_initial_end_index:
-                ch.carets.current.index = index1
-                if selecting_rows:
-                    index1, index2 = self.get_start_end_index_of_row(r)
-                if index2 != ch.anchor_end_index:
-                    self.select_range(ch, ch.anchor_initial_start_index, index2, extend=self.multi_select_mode)
+            if index2 >= caret.anchor_initial_end_index:
+                caret.index = index2 - 1
+                if index2 != caret.anchor_end_index:
+                    caret.anchor_start_index = caret.anchor_initial_start_index
+                    caret.anchor_end_index = index2
                     update = True
-            elif index1 <= ch.anchor_initial_start_index:
-                if selecting_rows:
-                    index1, index2 = self.get_start_end_index_of_row(r)
-                if index1 != ch.anchor_start_index:
-                    self.select_range(ch, index1, ch.anchor_initial_end_index, extend=self.multi_select_mode)
+            elif index1 <= caret.anchor_initial_start_index:
+                caret.index = index1
+                if index1 != caret.anchor_start_index:
+                    caret.anchor_start_index = index1
+                    caret.anchor_end_index = caret.anchor_initial_end_index
                     update = True
+
         if update:
-            ch.carets.current.index = index1
-            flags.keep_selection = True
             self.commit_change(flags)
-        log.debug("handle_select_motion: update: %s, flags: %s, anchors: initial=%s current=%s" % (update, flags, str((ch.anchor_initial_start_index, ch.anchor_initial_end_index)), str((ch.anchor_start_index, ch.anchor_end_index))))
+        log.debug("handle_select_motion: update: %s, flags: %s, anchors: initial=%s current=%s" % (update, flags, str((caret.anchor_initial_start_index, caret.anchor_initial_end_index)), str((caret.anchor_start_index, caret.anchor_end_index))))
+        log.debug(("motion after:", ch.carets))
 
     def handle_select_end(self, evt, row, col, flags=None):
         self.mouse_drag_started = False
         self.select_extend_mode = False
         self.multi_select_mode = False
+        self.caret_with_selection = None
         if wx.Platform == "__WXMSW__":
             # FIXME: MSW doesn't seem to refresh after a mouse release
             # outside of the window, so force it here to fill in the remaining
             # bits of the selection
             log.debug("Extra refresh on handle_select_end for windows")
             self.refresh_view()
+        log.debug(("end after:", self.caret_handler.carets))
 
     def commit_change(self, flags):
-        self.caret_handler.process_flags(flags)
+        log.debug(("commit before:", self.caret_handler.carets))
+        self.refresh_ranges(self.caret_handler)
+        self.caret_handler.sync_caret_event = flags
+        self.caret_handler.ensure_visible_event = flags
+        self.caret_handler.refresh_event = flags
+        log.debug(("commit after:", self.caret_handler.carets))
 
     def get_location_from_event(self, evt):
         raise NotImplementedError

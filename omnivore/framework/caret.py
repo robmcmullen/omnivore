@@ -27,9 +27,7 @@ class Caret(object):
         if state is not None:
             self.restore(state)
         else:
-            self.index = index
-            self.anchor_start_index = self.anchor_initial_start_index = 0
-            self.anchor_end_index = self.anchor_initial_end_index = 0
+            self.index = self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = index
 
     def __bool__(self):
         return self.index is not None
@@ -47,7 +45,7 @@ class Caret(object):
         return not self.__eq__(other)
 
     def __repr__(self):
-        return "Caret(%d)" % self.index
+        return "Caret%s" % str(self.serialize())
 
     @property
     def has_selection(self):
@@ -134,6 +132,10 @@ class CaretList(list):
 
     def new_caret(self, index):
         caret = Caret(index)
+        self.append(caret)
+        return caret
+
+    def add_caret(self, caret):
         self.append(caret)
         return caret
 
@@ -256,6 +258,9 @@ class CaretHandler(HasTraits):
     def add_caret(self, caret):
         self.carets.append(caret)
 
+    def force_single_caret(self, caret):
+        self.carets.force_single_caret(caret)
+
     def move_carets(self, delta):
         for caret in self.carets:
             caret.add_delta(delta)
@@ -377,7 +382,7 @@ class CaretHandler(HasTraits):
                 self.validate_carets()
                 caret_state = self.carets.get_state()
                 caret_moved = caret_state != flags.old_carets
-                log.debug("caret moved! old_carets: %s, new carets: %s" % (flags.old_carets, caret_state))
+                log.debug("caret moved: %s old_carets: %s, new carets: %s" % (caret_moved, flags.old_carets, caret_state))
             if caret_moved:
                 if not flags.keep_selection:
                     index = self.carets.current.index
@@ -402,7 +407,7 @@ class CaretHandler(HasTraits):
             # Only update the range on the current editor, not other views
             # which are allowed to remain where they are
             if flags.index_visible is None:
-                flags.index_visible = self.carets.current.index if caret_moved else self.anchor_start_index
+                flags.index_visible = self.carets.current.index
             self.ensure_visible_event = flags
 
             flags.refresh_needed = True
@@ -478,7 +483,10 @@ class SelectionHandler(object):
             caret = Caret(end)
             caret.set_initial_selection(start, end)
             caret_handler.carets.force_single_caret(caret)
-        log.debug("selected ranges: %s" % str(caret_handler.carets))
+        self.refresh_ranges(caret_handler)
+
+    def refresh_ranges(self, caret_handler):
+        log.debug("refreshing ranges: %s" % str(caret_handler.carets))
         self.highlight_selected_ranges(caret_handler)
         caret_handler.calc_action_enabled_flags()
 

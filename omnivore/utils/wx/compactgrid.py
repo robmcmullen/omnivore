@@ -721,6 +721,11 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
             self.parent.Refresh()
         self.current_caret_row, self.current_caret_col = row, col
 
+    def update_caret_from_mouse(self, row, cell, flags):
+        self.ensure_visible(row, cell, flags)
+        col = self.cell_to_col(cell)
+        self.current_caret_row, self.current_caret_col = row, col
+
 
 class NumpyGridDrawControl(BaseGridDrawControl):
     @property
