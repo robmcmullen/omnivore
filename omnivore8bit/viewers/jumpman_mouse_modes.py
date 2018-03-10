@@ -121,10 +121,10 @@ class JumpmanSelectMode(NormalSelectMode):
         self.display_coords(evt)
 
     def get_picked(self, pick):
-        return self.control.screen_state.get_picked(pick)
+        return self.control.table.screen_state.get_picked(pick)
 
     def get_trigger_popup_actions(self, evt):
-        e = self.control.segment_viewer
+        e = self.control.table.segment_viewer
         obj = e.bitmap.mouse_mode.objects
         if len(obj) == 0:
             x, y, pick = self.get_xy(evt)
@@ -163,11 +163,11 @@ class AnticDSelectMode(JumpmanSelectMode):
         jumpman objects. We need to find the current objects that match up to
         the stored objects.
         """
-        self.objects = self.control.level_builder.find_equivalent(self.objects)
+        self.objects = self.control.table.level_builder.find_equivalent(self.objects)
 
     def delete_objects(self):
         if self.objects:
-            self.control.delete_objects(self.objects)
+            self.control.table.delete_objects(self.objects)
             self.objects = []
         self.control.Refresh()
 
@@ -178,7 +178,8 @@ class AnticDSelectMode(JumpmanSelectMode):
 
         table = self.control.table
         playfield = table.get_playfield_segment()  # use new, temporary playfield
-        _, _, self.override_state = self.control.redraw_current(playfield, self.objects)
+        _, _, self.override_state = table.redraw_current(playfield, self.objects)
+        log.debug("override_state: %s" % self.override_state)
 
         # Draw the harvest grid if a peanut is selected
         for obj in self.objects:
@@ -191,7 +192,7 @@ class AnticDSelectMode(JumpmanSelectMode):
         if self.override_state:
             state = self.override_state
         else:
-            state = self.control.get_screen_state()
+            state = self.control.table.get_screen_state()
         return state.get_picked(pick)
 
     def highlight_pick(self, evt):
@@ -199,6 +200,7 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.mouse_down = x, y
         if pick >= 0:
             obj = self.get_picked(pick)
+            log.debug("picked object: %s" % obj)
             if obj in self.objects:
                 if evt.ControlDown():
                     self.pending_remove = obj
@@ -231,7 +233,7 @@ class AnticDSelectMode(JumpmanSelectMode):
             self.check_tolerance = False
             bad_move = False
             for obj in self.objects:
-                log.debug("moving %s, equiv %s" % (obj, self.control.level_builder.find_equivalent_object(obj)))
+                log.debug("moving %s, equiv %s" % (obj, self.control.table.level_builder.find_equivalent_object(obj)))
                 obj.last_x, obj.last_y = obj.x, obj.y
                 _, obj.x = divmod(obj.orig_x + dx, 160)
                 obj.x &= obj.valid_x_mask
@@ -244,13 +246,14 @@ class AnticDSelectMode(JumpmanSelectMode):
             self.pending_remove = None
 
     def process_left_down(self, evt):
+        log.debug("left down: %s" % evt)
         self.highlight_pick(evt)
-        self.control.Refresh()
+        self.control.refresh_view()
         self.display_coords(evt)
 
     def process_mouse_motion_down(self, evt):
         self.move_pick(evt)
-        self.control.Refresh()
+        self.control.refresh_view()
         self.display_coords(evt)
 
     def process_left_up(self, evt):
@@ -262,7 +265,7 @@ class AnticDSelectMode(JumpmanSelectMode):
             self.objects.remove(self.pending_remove)
         self.pending_remove = None
         if self.objects and not self.check_tolerance:
-            self.control.save_changes()
+            self.control.table.save_changes()
         else:
             self.control.Refresh()
         self.display_coords(evt)
@@ -353,7 +356,7 @@ class DrawMode(JumpmanSelectMode):
     def process_left_up(self, evt):
         if self.num_clicks == 2:
             return
-        self.control.save_objects(self.objects)
+        self.control.table.save_objects(self.objects)
         self.objects = []
         self.display_coords(evt)
 

@@ -19,6 +19,7 @@ from ..utils import jumpman as ju
 from . import SegmentViewer
 from . import actions as va
 from . import jumpman_mouse_modes as jm
+from . import jumpman_commands as jc
 from .bitmap2 import BitmapGridControl, BitmapViewer
 
 import logging
@@ -172,8 +173,13 @@ class JumpmanSegmentTable(cg.HexTable):
             return self.trigger_state
         return self.screen_state
 
-    def redraw_current(self, overlay_objects=[]):
-        screen = self.playfield
+    def set_current_screen(self, screen=None):
+        if screen is None:
+            screen = self.playfield
+        self.data = screen
+        self.style = screen.style
+
+    def redraw_current(self, screen, overlay_objects=[]):
         self.clear_playfield(screen)
         self.pick_buffer[:] = -1
         self.level_builder.set_harvest_offset(self.mouse_mode.get_harvest_offset())
@@ -205,12 +211,14 @@ class JumpmanSegmentTable(cg.HexTable):
         if force:
             self.force_refresh = True
         if self.force_refresh:
-            self.screen_state, self.trigger_state, _ = self.redraw_current()
+            self.screen_state, self.trigger_state, _ = self.redraw_current(self.playfield)
             self.cached_screen = self.playfield[:].copy()
             self.force_refresh = False
             self.segment_viewer.update_harvest_state()
         else:
             self.playfield[:] = self.cached_screen
+        self.set_current_screen()
+        return
 
     def bad_image(self):
         self.playfield[:] = 0
@@ -219,17 +227,71 @@ class JumpmanSegmentTable(cg.HexTable):
         s = self.playfield.style.reshape((self.antic_lines, -1))
         s[::2,::2] = comment_bit_mask
         s[1::2,1::2] = comment_bit_mask
+        self.set_current_screen()
+        return
 
     def draw_playfield(self, force=False):
         if self.valid_level:
             override = self.mouse_mode.calc_playfield_override()
             if override is not None:
-                return override
+                self.set_current_screen(override)
+                return
             self.compute_image()
         else:
             self.bad_image()
         self.mouse_mode.draw_extra_objects(self.level_builder, self.playfield, self.segment_viewer.segment)
         # self.mouse_mode.draw_overlay(bitimage)  # FIXME!
+
+    ##### Object edit
+
+    def get_save_location(self):
+        if self.trigger_root is not None:
+            equiv = self.level_builder.find_equivalent_peanut(self.trigger_root)
+            parent = equiv.trigger_painting
+        else:
+            parent = None
+        return parent
+
+    def delete_objects(self, objects):
+        save_location = self.get_save_location()
+        self.level_builder.delete_objects(objects, save_location)
+        self.save_changes()
+
+    def save_objects(self, objects, command_cls=jc.CreateObjectCommand):
+        save_location = self.get_save_location()
+        self.level_builder.add_objects(objects, save_location)
+        self.save_changes(command_cls)
+
+    def save_changes(self, command_cls=jc.MoveObjectCommand):
+        source, level_addr, old_harvest_addr = self.get_level_addrs()
+        level_data, harvest_addr, ropeladder_data, num_peanuts = self.level_builder.create_level_definition(level_addr, source[0x46], source[0x47])
+        index = level_addr - source.start_addr
+        ranges = [(0x18,0x2a), (0x3e,0x3f), (0x4e,0x50), (index,index + len(level_data))]
+        pdata = np.empty([1], dtype=np.uint8)
+        if self.segment_viewer.peanut_harvest_diff < 0:
+            pdata[0] = num_peanuts
+        else:
+            pdata[0] = max(0, num_peanuts - self.segment_viewer.peanut_harvest_diff)
+        hdata = np.empty([2], dtype=np.uint8)
+        hdata.view(dtype="<u2")[0] = harvest_addr
+        data = np.hstack([ropeladder_data, pdata, hdata, level_data])
+        cmd = command_cls(source, ranges, data)
+        self.segment_viewer.editor.process_command(cmd)
+
+    # Segment saver interface for menu item display
+    export_data_name = "Jumpman Level Tester ATR"
+    export_extensions = [".atr"]
+
+    def encode_data(self, segment, editor):
+        """Segment saver interface: take a segment and produce a byte
+        representation to save to disk.
+        """
+        image = get_template("Jumpman Level")
+        if image is None:
+            raise RuntimeError("Can't find Jumpman Level template file")
+        raw = np.fromstring(image, dtype=np.uint8)
+        raw[0x0196:0x0996] = segment[:]
+        return raw.tostring()
 
 
 class JumpmanGridControl(BitmapGridControl):
@@ -243,6 +305,10 @@ class JumpmanGridControl(BitmapGridControl):
 
     def recalc_view_extra_setup(self):
         self.table.init_level_builder(self.segment_viewer)
+
+    def refresh_view(self, *args, **kwargs):
+        self.table.draw_playfield(True)
+        BitmapGridControl.refresh_view(self, *args, **kwargs)
 
     def draw_carets(self, dc):
         pass
