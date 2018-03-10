@@ -110,6 +110,22 @@ class Caret(object):
     def contains(self, other):
         return other.anchor_start_index >= self.anchor_start_index and other.anchor_end_index <= self.anchor_end_index
 
+    def intersects(self, other):
+        return not (other.anchor_start_index > self.anchor_end_index or other.anchor_end_index < self.anchor_start_index)
+
+    def merge(self, other):
+        """Merge boundaries of other into this caret"""
+        if other.anchor_start_index < self.anchor_start_index:
+            self.anchor_start_index = other.anchor_start_index
+            self.anchor_initial_start_index = other.anchor_initial_start_index
+            if other.index < self.index:
+                self.index = other.index
+        if other.anchor_end_index > self.anchor_end_index:
+            self.anchor_end_index = other.anchor_end_index
+            self.anchor_initial_end_index = other.anchor_initial_end_index
+            if other.index > self.index:
+                self.index = other.index
+
 
 class CaretList(list):
     def __init__(self, index, *args, **kwargs):
@@ -206,61 +222,44 @@ class CaretList(list):
         self.current.clear_selection()
 
     def collapse_overlapping(self):
-        """ Collapse the list of (possibly overlapping) selected ranges into a
-        monotonically increasing set of non-overlapping ranges, except for the
-        current caret which will always stay in the last position.
+        """Check if the current caret selection overlaps any existing caret and
+        merge any overlaps into the current caret.
         """
-        old_current = self.current.copy()
-        new_current = None
-
-        # eliminate duplicates first
-        selections = sorted(set([c for c in self if c.has_selection]))
-        print("with selection: %s" % str(selections))
-        carets_only = sorted(set([c for c in self if not c.has_selection]))
-        print("carets only: %s" % str(carets_only))
-
-        collapsed_selections = []
-        if selections:
-            first = selections.pop(0)
-            collapsed_selections.append(first)
-            while selections:
-                other = selections.pop(0)
-                if other.anchor_start_index > first.anchor_end_index:
-                    # not touching at all
-                    collapsed_selections.append(other)
-                    first = other
-                elif other.anchor_end_index > first.anchor_end_index:
-                    first.anchor_end_index = other.anchor_end_index
-                    # caret index remains at the index of the first selection
-
-        collapsed_carets = []
-        while carets_only:
-            first = carets_only.pop(0)
-            for other in collapsed_selections:
-                print("first: %s, other=%s" % (first, other))
-                if first.index >= other.anchor_start_index and first.index <= other.anchor_end_index:
-                    first = None
-                    break
-            if first is not None:
-                print("%s not in any selection" % first)
-                collapsed_carets.append(first)
-
-        if old_current.has_selection:
-            for c in list(collapsed_selections):
-                if c.contains(old_current):
-                    collapsed_selections.remove(c)
-                    new_current = c
-                    break
-        else:
-            for c in list(collapsed_carets):
-                if c.index == old_current.index:
-                    collapsed_carets.remove(c)
-                    new_current = c
-                    break
-
-        self[:] = collapsed_selections
-        self.extend(collapsed_carets)
-        self.append(new_current)
+        current = self.pop()
+        if self:
+            if current.has_selection:
+                collapsed = []
+                for c in self:
+                    if current.contains(c):
+                        # gets rid of any selections wholly contained within
+                        # the current selection, or any standalone carets
+                        # inside the selection
+                        continue
+                    elif current.intersects(c):
+                        current.merge(c)
+                    else:
+                        collapsed.append(c)
+                self[:] = collapsed
+            else:
+                # Merge caret into selection
+                collapsed = []
+                for c in self:
+                    if current.has_selection:
+                        # if caret has been merged into a selection, don't do
+                        # any further checking.
+                        collapsed.append(c)
+                    else:
+                        if not c.has_selection and c.index == current.index:
+                            # gets rid of any duplicate carets
+                            continue
+                        elif c.contains(current):
+                            # if caret inside a selection, make the that the
+                            # current caret
+                            current = c
+                        else:
+                            collapsed.append(c)
+                self[:] = collapsed
+        self.append(current)
         print("collapsed carets: %s" % str(self))
 
 class CaretHandler(HasTraits):
@@ -586,11 +585,8 @@ if __name__ == "__main__":
     carets = CaretList(None)
     for c in range(1,100,15):
         carets.append(Caret(c))
-    for c in range(1,100,15):
-        carets.append(Caret(c))
     carets.append(Caret(state=(25,10,10,25,25)))
-    carets.append(Caret(state=(90,50,50,90,90)))
     carets.append(Caret(state=(45,45,45,80,80)))
-    carets.append(Caret(state=(14,14,14,20,20)))
+    carets.append(Caret(state=(90,50,50,90,90)))
     carets.collapse_overlapping()
     print carets
