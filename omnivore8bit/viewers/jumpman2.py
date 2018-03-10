@@ -238,6 +238,8 @@ class JumpmanGridControl(BitmapGridControl):
     def set_viewer_defaults(self):
         self.items_per_row = 160
         self.zoom = 4
+        self.want_col_header = False
+        self.want_row_header = False
 
     def recalc_view_extra_setup(self):
         self.table.init_level_builder(self.segment_viewer)

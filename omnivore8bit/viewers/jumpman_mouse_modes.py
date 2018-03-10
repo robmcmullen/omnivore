@@ -87,23 +87,20 @@ class JumpmanSelectMode(NormalSelectMode):
 
     def get_xy(self, evt):
         c = self.control
-        e = c.segment_viewer
-        if e is not None:
-            index, bit, inside = c.event_coords_to_byte(evt)
-            y, x = c.index_to_row_col(index)
-            if y < e.antic_lines:
-                pick = e.pick_buffer[index]
-            else:
-                pick = -1
-            return index, x, y, pick
-        return None, None, None, None
+        y, x = c.get_row_col_from_event(evt)
+        if y < c.table.antic_lines:
+            index, _ = c.table.get_index_range(y, x)
+            pick = c.table.pick_buffer[index]
+        else:
+            pick = -1
+        return x, y, pick
 
     def display_coords(self, evt, extra=None):
         c = self.control
         e = c.segment_viewer
         if e is not None:
-            index, x, y, pick = self.get_xy(evt)
-            msg = "x=%d (0x%x) y=%d (0x%x) index=%d (0x%x) pick=%d" % (x, x, y, y, index, index, pick)
+            x, y, pick = self.get_xy(evt)
+            msg = "x=%d (0x%x) y=%d (0x%x) pick=%d" % (x, x, y, y, pick)
             if extra:
                 msg += " " + extra
             e.linked_base.editor.status_message = msg
@@ -130,7 +127,7 @@ class JumpmanSelectMode(NormalSelectMode):
         e = self.control.segment_viewer
         obj = e.bitmap.mouse_mode.objects
         if len(obj) == 0:
-            index, x, y, pick = self.get_xy(evt)
+            x, y, pick = self.get_xy(evt)
             if pick >= 0:
                 p = self.get_picked(pick)
                 if p.single:
@@ -198,7 +195,7 @@ class AnticDSelectMode(JumpmanSelectMode):
         return state.get_picked(pick)
 
     def highlight_pick(self, evt):
-        index, x, y, pick = self.get_xy(evt)
+        x, y, pick = self.get_xy(evt)
         self.mouse_down = x, y
         if pick >= 0:
             obj = self.get_picked(pick)
@@ -226,7 +223,7 @@ class AnticDSelectMode(JumpmanSelectMode):
 
     def move_pick(self, evt):
         if self.objects:
-            index, x, y, pick = self.get_xy(evt)
+            x, y, pick = self.get_xy(evt)
             dx = x - self.mouse_down[0]
             dy = y - self.mouse_down[1]
             if self.check_tolerance and abs(dx) + abs(dy) <  self.min_mouse_distance:
@@ -274,7 +271,7 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.display_coords(evt)
 
     def check_trigger_pick(self, evt):
-        index, x, y, pick = self.get_xy(evt)
+        x, y, pick = self.get_xy(evt)
         if pick >= 0:
             obj = self.get_picked(pick)
             if obj.single:
@@ -313,7 +310,7 @@ class DrawMode(JumpmanSelectMode):
         e = c.segment_viewer
         if e is None:
             return
-        index, x, y, pick = self.get_xy(evt)
+        x, y, pick = self.get_xy(evt)
         if start:
             self.mouse_down = x, y
         dx = x - self.mouse_down[0]
@@ -466,7 +463,7 @@ class DrawPeanutMode(DrawMode):
         e = c.segment_viewer
         if e is None:
             return
-        index, x, y, pick = self.get_xy(evt)
+        x, y, pick = self.get_xy(evt)
         if start:
             self.batch = Overlay()
             hx, hy = self.get_harvest_offset()
