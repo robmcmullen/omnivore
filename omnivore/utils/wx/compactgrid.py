@@ -1076,6 +1076,8 @@ class CompactGrid(wx.ScrolledWindow):
         self.SetAutoLayout(True)
         self.view_params = view_params
         self.caret_handler = caret_handler
+        self.want_col_header = True
+        self.want_row_header = True
 
         self.set_view_param_defaults()
 
@@ -1094,8 +1096,6 @@ class CompactGrid(wx.ScrolledWindow):
         self.top = ColLabelWindow(self)
         self.left = RowLabelWindow(self)
         self.SetTargetWindow(self.main)
-        self.want_col_header = True
-        self.want_row_header = True
         self.calc_header_sizes()
         self.calc_scrolling()
         self.SetBackgroundColour(self.view_params.col_header_bg_color)
