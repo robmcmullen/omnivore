@@ -399,6 +399,12 @@ class JumpmanViewer(BitmapViewer):
             self.control.recalc_view()
             self.linked_base.editor.update_pane_names()
 
+    @on_trait_change('linked_base.editor.document.byte_values_changed')
+    def byte_values_changed(self, index_range):
+        log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
+        if index_range is not Undefined:
+            self.control.refresh_view()
+
     ##### Jumpman level construction
 
     def update_harvest_state(self):
