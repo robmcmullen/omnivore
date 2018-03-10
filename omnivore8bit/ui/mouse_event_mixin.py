@@ -325,16 +325,20 @@ class MouseEventMixin(SelectionHandler):
         log.debug(("motion after:", ch.carets))
 
     def handle_select_end(self, evt, row, col, flags=None):
+        if flags is None:
+            flags = self.create_mouse_event_flags()
         self.mouse_drag_started = False
         self.select_extend_mode = False
         self.multi_select_mode = False
         self.caret_with_selection = None
+        self.caret_handler.carets.collapse_overlapping()
         if wx.Platform == "__WXMSW__":
             # FIXME: MSW doesn't seem to refresh after a mouse release
             # outside of the window, so force it here to fill in the remaining
             # bits of the selection
             log.debug("Extra refresh on handle_select_end for windows")
             self.refresh_view()
+        self.commit_change(flags)
         log.debug(("end after:", self.caret_handler.carets))
 
     def commit_change(self, flags):

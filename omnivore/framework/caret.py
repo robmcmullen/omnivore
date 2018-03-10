@@ -1,4 +1,5 @@
 import os
+import functools
 
 # Major package imports.
 import numpy as np
@@ -16,6 +17,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
+@functools.total_ordering
 class Caret(object):
     """Class representing both a caret's index and optionally a single selected
     range
@@ -44,8 +46,18 @@ class Caret(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __lt__(self, other):
+        if self.has_selection:
+            if other.has_selection:
+                return self.anchor_start_index < other.anchor_start_index
+            return self.anchor_start_index < other.index
+        return self.index < other.index
+
     def __repr__(self):
         return "Caret%s" % str(self.serialize())
+
+    def __hash__(self):
+        return hash(self.serialize())
 
     @property
     def has_selection(self):
@@ -94,6 +106,9 @@ class Caret(object):
     def copy(self):
         state = self.serialize()
         return Caret(state=state)
+
+    def contains(self, other):
+        return other.anchor_start_index >= self.anchor_start_index and other.anchor_end_index <= self.anchor_end_index
 
 
 class CaretList(list):
@@ -190,6 +205,63 @@ class CaretList(list):
         self.remove_old_carets()
         self.current.clear_selection()
 
+    def collapse_overlapping(self):
+        """ Collapse the list of (possibly overlapping) selected ranges into a
+        monotonically increasing set of non-overlapping ranges, except for the
+        current caret which will always stay in the last position.
+        """
+        old_current = self.current.copy()
+        new_current = None
+
+        # eliminate duplicates first
+        selections = sorted(set([c for c in self if c.has_selection]))
+        print("with selection: %s" % str(selections))
+        carets_only = sorted(set([c for c in self if not c.has_selection]))
+        print("carets only: %s" % str(carets_only))
+
+        collapsed_selections = []
+        if selections:
+            first = selections.pop(0)
+            collapsed_selections.append(first)
+            while selections:
+                other = selections.pop(0)
+                if other.anchor_start_index > first.anchor_end_index:
+                    # not touching at all
+                    collapsed_selections.append(other)
+                    first = other
+                elif other.anchor_end_index > first.anchor_end_index:
+                    first.anchor_end_index = other.anchor_end_index
+                    # caret index remains at the index of the first selection
+
+        collapsed_carets = []
+        while carets_only:
+            first = carets_only.pop(0)
+            for other in collapsed_selections:
+                print("first: %s, other=%s" % (first, other))
+                if first.index >= other.anchor_start_index and first.index <= other.anchor_end_index:
+                    first = None
+                    break
+            if first is not None:
+                print("%s not in any selection" % first)
+                collapsed_carets.append(first)
+
+        if old_current.has_selection:
+            for c in list(collapsed_selections):
+                if c.contains(old_current):
+                    collapsed_selections.remove(c)
+                    new_current = c
+                    break
+        else:
+            for c in list(collapsed_carets):
+                if c.index == old_current.index:
+                    collapsed_carets.remove(c)
+                    new_current = c
+                    break
+
+        self[:] = collapsed_selections
+        self.extend(collapsed_carets)
+        self.append(new_current)
+        print("collapsed carets: %s" % str(self))
 
 class CaretHandler(HasTraits):
     """The pyface editor template for the omnivore framework
@@ -508,3 +580,17 @@ class SelectionHandler(object):
 
     def invert_selection_ranges(self, caret_handler, ranges):
         return invert_ranges(ranges, caret_handler.document_length)
+
+
+if __name__ == "__main__":
+    carets = CaretList(None)
+    for c in range(1,100,15):
+        carets.append(Caret(c))
+    for c in range(1,100,15):
+        carets.append(Caret(c))
+    carets.append(Caret(state=(25,10,10,25,25)))
+    carets.append(Caret(state=(90,50,50,90,90)))
+    carets.append(Caret(state=(45,45,45,80,80)))
+    carets.append(Caret(state=(14,14,14,20,20)))
+    carets.collapse_overlapping()
+    print carets
