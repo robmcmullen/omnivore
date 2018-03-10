@@ -56,7 +56,7 @@ class JumpmanPlayfieldRenderer(BaseRenderer):
             bitimage[color_is_set & match] = m_colors[i]
             bitimage[color_is_set & data] = d_colors[i]
             bitimage[color_is_set & highlight] = h_colors[i]
-        bitimage[count:,:] = segment_viewer.preferences.empty_background_color
+        bitimage[count:,:] = segment_viewer.preferences.empty_background_color[0:3]
         return bitimage.reshape((nr, bytes_per_row, 3))
 
 
@@ -89,7 +89,7 @@ class JumpmanSegmentTable(cg.HexTable):
 
     def init_level_builder(self, segment_viewer):
         self.segment_viewer = segment_viewer
-        self.level_builder = JumpmanLevelBuilder(self.segment_viewer.document.user_segments)
+        self.level_builder = ju.JumpmanLevelBuilder(self.segment_viewer.document.user_segments)
         self.trigger_root = None
         self.cached_screen = None
         self.valid_level = False
@@ -106,7 +106,7 @@ class JumpmanSegmentTable(cg.HexTable):
 
     def generate_display_objects(self, resync=False):
         try:
-            source, level_addr, harvest_addr = self.table.get_level_addrs()
+            source, level_addr, harvest_addr = self.get_level_addrs()
             index = level_addr - source.start_addr
             self.level_builder.parse_level_data(source, level_addr, harvest_addr)
             self.force_refresh = True
@@ -235,6 +235,10 @@ class JumpmanSegmentTable(cg.HexTable):
 class JumpmanGridControl(BitmapGridControl):
     default_table_cls = JumpmanSegmentTable
 
+    def set_viewer_defaults(self):
+        self.items_per_row = 160
+        self.zoom = 4
+
     def recalc_view_extra_setup(self):
         self.table.init_level_builder(self.segment_viewer)
 
@@ -327,9 +331,9 @@ class JumpmanViewer(BitmapViewer):
     ##### Jumpman level construction
 
     def update_harvest_state(self):
-        if not self.table.valid_level:
+        if not self.control.table.valid_level:
             return
-        harvest_state = self.table.level_builder.get_harvest_state()
+        harvest_state = self.control.table.level_builder.get_harvest_state()
         self.num_ladders = len(harvest_state.ladder_positions)
         self.num_downropes = len(harvest_state.downrope_positions)
         self.num_peanuts = len(harvest_state.peanuts)

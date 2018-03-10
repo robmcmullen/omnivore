@@ -320,8 +320,8 @@ class LineRenderer(object):
         try:
             rect = self.col_to_rect(line_num, col)
         except IndexError:
-            print(line_num, col)
-            import pdb; pdb.set_trace()
+            log.error("draw_caret: unknown rect for %s" % str((line_num, col)))
+            return
         pen = parent.view_params.caret_pen
         dc.SetPen(pen)
         dc.DrawRectangle(rect)
