@@ -244,6 +244,9 @@ class JumpmanGridControl(BitmapGridControl):
     def recalc_view_extra_setup(self):
         self.table.init_level_builder(self.segment_viewer)
 
+    def draw_carets(self, dc):
+        pass
+
     ##### popup stuff
 
     def get_extra_actions(self):
