@@ -548,13 +548,9 @@ class JumpmanRespawnMode(DrawMode):
         level_builder.draw_objects(screen, objects, current_segment)
 
     def change_jumpman_respawn(self, evt):
-        c = self.control
-        e = c.segment_viewer
-        if e is None:
-            return
         obj = self.objects[0]
         values = [obj.x + 0x30, (obj.y * 2) + 0x18]
-        e.change_bytes(0x39, 0x3b, values, "Change Respawn Point")
+        self.control.segment_viewer.linked_base.change_bytes(0x39, 0x3b, values, "Change Respawn Point")
 
     def process_left_up(self, evt):
         if self.num_clicks == 2:
@@ -562,7 +558,6 @@ class JumpmanRespawnMode(DrawMode):
         self.change_jumpman_respawn(evt)
         self.init_post_hook()
         self.display_coords(evt)
-        self.control.segment_viewer.refresh_panes()
 
     def process_mouse_motion_down(self, evt):
         self.process_mouse_motion_up(evt)

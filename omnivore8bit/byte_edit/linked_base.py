@@ -18,6 +18,7 @@ from omnivore.framework.caret import CaretHandler
 from omnivore.utils.command import DisplayFlags
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment
 from . import actions as ba
+from . import commands as bc
 
 import logging
 log = logging.getLogger(__name__)
@@ -252,6 +253,15 @@ class LinkedBase(CaretHandler):
             log.error("%s: %s" % (uri, str(e)))
             #self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
             raise
+
+    def change_bytes(self, start, end, data, pretty=None):
+        """Convenience function to perform a ChangeBytesCommand
+        """
+        self.document.change_count += 1
+        cmd = bc.CoalescingChangeByteCommand(self.segment, start, end, data)
+        if pretty:
+            cmd.pretty_name = pretty
+        self.editor.process_command(cmd)
 
     #### command flag processors
 
