@@ -234,6 +234,7 @@ class JumpmanSegmentTable(cg.HexTable):
         if self.valid_level:
             override = self.mouse_mode.calc_playfield_override()
             if override is not None:
+                log.debug("draw_playfield: using override screen")
                 self.set_current_screen(override)
                 return
             self.compute_image()
@@ -403,7 +404,7 @@ class JumpmanViewer(BitmapViewer):
     def byte_values_changed(self, index_range):
         log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
         if index_range is not Undefined:
-            self.control.refresh_view()
+            self.control.recalc_view()
 
     ##### Jumpman level construction
 
