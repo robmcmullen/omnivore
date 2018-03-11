@@ -350,7 +350,7 @@ class DrawMode(JumpmanSelectMode):
 
     def process_left_down(self, evt):
         self.create_objects(evt, True)
-        self.control.Refresh()
+        self.control.refresh_view()
         self.display_coords(evt)
 
     def process_left_up(self, evt):
@@ -362,12 +362,12 @@ class DrawMode(JumpmanSelectMode):
 
     def process_mouse_motion_down(self, evt):
         self.create_objects(evt)
-        self.control.Refresh()
+        self.control.refresh_view()
         self.display_coords(evt)
 
     def process_mouse_motion_up(self, evt):
         self.create_objects(evt, True)
-        self.control.Refresh()
+        self.control.refresh_view()
         self.display_coords(evt)
 
 
