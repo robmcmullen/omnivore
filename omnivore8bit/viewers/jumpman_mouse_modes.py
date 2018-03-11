@@ -12,7 +12,7 @@ from omnivore8bit.utils.jumpman import *
 from omnivore8bit.byte_edit.commands import ChangeByteCommand
 from omnivore.framework.actions import CutAction, CopyAction, PasteAction, SelectAllAction, SelectNoneAction, SelectInvertAction
 
-from .jumpman_commands import *
+from . import jumpman_commands as jc
 from .mouse_modes import NormalSelectMode
 
 import logging
@@ -123,9 +123,12 @@ class JumpmanSelectMode(NormalSelectMode):
     def get_picked(self, pick):
         return self.control.table.screen_state.get_picked(pick)
 
-    def get_trigger_popup_actions(self, evt):
-        e = self.control.table.segment_viewer
-        obj = e.bitmap.mouse_mode.objects
+    def calc_popup_data(self, evt):
+        cg = self.control
+        row, col = cg.get_row_col_from_event(evt)
+        inside = True  # fixme
+        style = 0
+        obj = self.objects
         if len(obj) == 0:
             x, y, pick = self.get_xy(evt)
             if pick >= 0:
@@ -136,12 +139,24 @@ class JumpmanSelectMode(NormalSelectMode):
                     obj = None
             else:
                 obj = None
+        popup_data = {
+            'index': None,
+            'in_selection': style&0x80,
+            'row': row,
+            'col': col,
+            'inside': inside,
+            'jumpman_obj': obj,
+            }
+        return popup_data
+
+    def calc_popup_actions(self, evt, data):
+        obj = data['jumpman_obj']
         if obj is not None:
             clearable = any(o.trigger_function is not None for o in obj)
         else:
             clearable = False
-        clear_trigger = ClearTriggerAction(enabled=obj is not None and clearable, picked=obj, task=self.control.segment_viewer.linked_base.task)
-        trigger_action = SetTriggerAction(enabled=obj is not None, picked=obj, task=self.control.segment_viewer.linked_base.task)
+        clear_trigger = jc.ClearTriggerAction(enabled=obj is not None and clearable, picked=obj, task=self.control.segment_viewer.linked_base.task)
+        trigger_action = jc.SetTriggerAction(enabled=obj is not None, picked=obj, task=self.control.segment_viewer.linked_base.task)
         actions = [clear_trigger, trigger_action, None, CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction, SelectInvertAction]
         return actions
 

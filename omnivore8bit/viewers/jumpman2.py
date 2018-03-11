@@ -319,6 +319,42 @@ class JumpmanGridControl(BitmapGridControl):
     def get_extra_actions(self):
         return []
 
+    ##### selections
+
+    def select_all(self, caret_handler):
+        """ Selects the entire document
+        """
+        mouse_mode = self.mouse_mode
+        if mouse_mode.can_paste:
+            first = True
+            for obj in self.table.level_builder.objects:
+                mouse_mode.add_to_selection(obj, not first)
+                first = False
+            if not first:
+                self.recalc_view()
+
+    def select_none(self, caret_handler):
+        """ Clears any selection in the document
+        """
+        mouse_mode = self.mouse_mode
+        if mouse_mode.can_paste:
+            mouse_mode.objects = []
+            self.recalc_view()
+
+    def select_invert(self, caret_handler):
+        """ Selects the entire document
+        """
+        mouse_mode = self.mouse_mode
+        if mouse_mode.can_paste:
+            first = True
+            current = set(mouse_mode.objects)
+            for obj in self.table.level_builder.objects:
+                if obj not in current:
+                    mouse_mode.add_to_selection(obj, not first)
+                    first = False
+            if not first:
+                self.recalc_view()
+
 
 class JumpmanViewer(BitmapViewer):
     name = "jumpman"

@@ -8,7 +8,7 @@ import wx
 import numpy as np
 
 # Enthought library imports.
-from omnivore.framework.enthought_api import Action, ActionItem, EditorAction
+from omnivore.framework.enthought_api import Action, ActionItem
 
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, ChooseOnePlusCustomDialog
 from omnivore.utils.textutil import text_to_int
@@ -16,10 +16,11 @@ from omnivore.framework.actions import SelectAllAction, SelectNoneAction, Select
 from omnivore8bit.utils.jumpman import DrawObjectBounds, is_valid_level_segment
 from omnivore8bit.byte_edit.actions import UseSegmentAction
 
+from .commands import SetValueCommand
+from .actions import ViewerAction
+
 import logging
 progress_log = logging.getLogger("progress")
-
-from .commands import SetValueCommand
 
 import logging
 log = logging.getLogger(__name__)
@@ -84,7 +85,7 @@ class AssemblyChangedCommand(SetValueCommand):
     pretty_name = "Reassemble Custom Code"
 
 
-class ClearTriggerAction(EditorAction):
+class ClearTriggerAction(ViewerAction):
     """Remove any trigger function from the selected peanut(s).
     
     """
@@ -97,7 +98,7 @@ class ClearTriggerAction(EditorAction):
     def get_objects(self):
         if self.picked is not None:
             return self.picked
-        return self.active_editor.bitmap.mouse_mode.objects
+        return self.viewer.control.mouse_mode.objects
 
     def get_addr(self, event, objects):
         return None
@@ -106,14 +107,13 @@ class ClearTriggerAction(EditorAction):
         obj.trigger_function = addr
 
     def perform(self, event):
-        e = self.active_editor
         objects = self.get_objects()
         try:
             addr = self.get_addr(event, objects)
             for o in objects:
                 self.permute_object(o, addr)
-            e.bitmap.save_changes(self.command)
-            e.bitmap.mouse_mode.resync_objects()
+            self.viewer.control.table.save_changes(self.command)
+            self.viewer.control.mouse_mode.resync_objects()
         except ValueError:
             pass
 
@@ -138,7 +138,7 @@ class SetTriggerAction(ClearTriggerAction):
         raise ValueError("Cancelled!")
 
 
-class SelectAllJumpmanAction(EditorAction):
+class SelectAllJumpmanAction(ViewerAction):
     """Select all drawing elements in the main level
 
     """
@@ -148,10 +148,10 @@ class SelectAllJumpmanAction(EditorAction):
     enabled_name = 'can_select_objects'
 
     def perform(self, event):
-        event.task.active_editor.select_all()
+        self.viewer.select_all()
 
 
-class SelectNoneJumpmanAction(EditorAction):
+class SelectNoneJumpmanAction(ViewerAction):
     """Clear all selections
 
     """
@@ -161,10 +161,10 @@ class SelectNoneJumpmanAction(EditorAction):
     enabled_name = 'can_select_objects'
 
     def perform(self, event):
-        event.task.active_editor.select_none()
+        self.viewer.select_none()
 
 
-class SelectInvertJumpmanAction(EditorAction):
+class SelectInvertJumpmanAction(ViewerAction):
     """Invert the selection; that is: select everything that is currently
     unselected and unselect those that were selected.
 
@@ -174,10 +174,10 @@ class SelectInvertJumpmanAction(EditorAction):
     enabled_name = 'can_select_objects'
 
     def perform(self, event):
-        event.task.active_editor.select_invert()
+        self.viewer.select_invert()
 
 
-class FlipVerticalAction(EditorAction):
+class FlipVerticalAction(ViewerAction):
     """Flips the selected items top to bottom.
 
     This calculates the bounding box of just the selected items and uses that
@@ -214,7 +214,7 @@ class FlipHorizontalAction(FlipVerticalAction):
         obj.flip_horizontal(bounds)
 
 
-class AssemblySourceAction(EditorAction):
+class AssemblySourceAction(ViewerAction):
     """Add an assembly source file to this level (and compile it)
 
     This is used to provide custom actions or even game loops, beyond what is
@@ -246,7 +246,7 @@ class AssemblySourceAction(EditorAction):
             e.set_assembly_source(filename)
 
 
-class RecompileAction(EditorAction):
+class RecompileAction(ViewerAction):
     """Recompile the assembly source code.
 
     This is a manual action, currently the program doesn't know when the file
