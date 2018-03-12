@@ -89,6 +89,7 @@ class JumpmanSegmentTable(cg.HexTable):
         return (index // 40)
 
     def init_level_builder(self, segment_viewer):
+        log.debug("init_level_builder")
         self.segment_viewer = segment_viewer
         self.level_builder = ju.JumpmanLevelBuilder(self.segment_viewer.document.user_segments)
         self.trigger_root = None
@@ -185,6 +186,7 @@ class JumpmanSegmentTable(cg.HexTable):
         self.level_builder.set_harvest_offset(self.mouse_mode.get_harvest_offset())
         main_state = self.level_builder.draw_objects(screen, None, self.segment, highlight=overlay_objects, pick_buffer=self.pick_buffer)
         log.debug("draw objects: %s" % self.level_builder.objects)
+        log.debug("highlight objects: %s" % overlay_objects)
         if main_state.missing_object_codes:
             log.error("missing draw codes: %s" % (sorted(main_state.missing_object_codes)))
         if self.trigger_root is not None:
@@ -231,12 +233,14 @@ class JumpmanSegmentTable(cg.HexTable):
         return
 
     def draw_playfield(self, force=False):
+        self.set_current_screen()
         if self.valid_level:
             override = self.mouse_mode.calc_playfield_override()
             if override is not None:
                 log.debug("draw_playfield: using override screen")
                 self.set_current_screen(override)
                 return
+            log.debug("draw_playfield: computing image")
             self.compute_image()
         else:
             self.bad_image()
@@ -309,6 +313,7 @@ class JumpmanGridControl(BitmapGridControl):
         self.table.init_level_builder(self.segment_viewer)
 
     def refresh_view(self, *args, **kwargs):
+        log.debug("refresh_view")
         self.table.draw_playfield(True)
         BitmapGridControl.refresh_view(self, *args, **kwargs)
 
@@ -329,10 +334,11 @@ class JumpmanGridControl(BitmapGridControl):
         if mouse_mode.can_paste:
             first = True
             for obj in self.table.level_builder.objects:
+                print("select_all: adding %s" % str(obj))
                 mouse_mode.add_to_selection(obj, not first)
                 first = False
             if not first:
-                self.recalc_view()
+                self.refresh_view()
 
     def select_none(self, caret_handler):
         """ Clears any selection in the document
@@ -340,7 +346,7 @@ class JumpmanGridControl(BitmapGridControl):
         mouse_mode = self.mouse_mode
         if mouse_mode.can_paste:
             mouse_mode.objects = []
-            self.recalc_view()
+            self.refresh_view()
 
     def select_invert(self, caret_handler):
         """ Selects the entire document
@@ -354,7 +360,7 @@ class JumpmanGridControl(BitmapGridControl):
                     mouse_mode.add_to_selection(obj, not first)
                     first = False
             if not first:
-                self.recalc_view()
+                self.refresh_view()
 
 
 class JumpmanViewer(BitmapViewer):
