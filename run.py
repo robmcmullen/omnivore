@@ -11,9 +11,10 @@ import logging
 EGG_PATH = ['eggs']
 
 last_trace_was_system_call = False
+trace_after_funcname = None
 
 def trace_calls(frame, event, arg):
-    global last_trace_was_system_call
+    global last_trace_was_system_call, trace_after_funcname
 
     if event != 'call':
         return
@@ -22,6 +23,12 @@ def trace_calls(frame, event, arg):
     if func_name == 'write':
         # Ignore write() calls from print statements
         return
+    if trace_after_funcname is not None:
+        if func_name == trace_after_funcname:
+            trace_after_funcname = None
+        else:
+            # skip anything until it hits the trace_after function
+            return
     func_line_no = frame.f_lineno
     func_filename = co.co_filename
     caller = frame.f_back
@@ -68,6 +75,14 @@ def main(argv):
     if "--trace" in argv:
         i = argv.index("--trace")
         argv.pop(i)
+        sys.settrace(trace_calls)
+
+    if "--trace-after" in argv:
+        global trace_after_funcname
+        i = argv.index("--trace-after")
+        argv.pop(i)
+        funcname = argv.pop(i)
+        trace_after_funcname = funcname
         sys.settrace(trace_calls)
 
     from omnivore8bit.plugin import OmnivoreEditorPlugin
