@@ -108,6 +108,71 @@ class DrawObjectBounds(object):
         return self.xmin >= other.xmin and self.xmax <= other.xmax and self.ymin >= other.ymin and self.ymax <= other.ymax
 
 
+class PixelList(object):
+    # map color numbers in drawing codes to ANTIC register order
+    # jumpman color numbers are 0 - 3
+    # color number 4 is used to draw Jumpman
+    # ANTIC player color registers are 0 - 3
+    # ANTIC playfield color registers are 4 - 7
+    # ANTIC background color is 8
+    color_map = {0:8, 1:4, 2:5, 3:6, 4:0}
+
+    def __init__(self, codes):
+        self.pixel_list = self.calc_pixel_list(codes)
+
+    def calc_pixel_list(self, codes):
+        log.debug("generating pixel list from codes: %s" % str(codes))
+        index = 0
+        last = len(codes)
+        lines = []
+        while index < last:
+            prefix = codes[index:index + 3]
+            if len(prefix) < 3:
+                if len(prefix) == 0 or prefix[0] != 0xff:
+                    log.warning("  short prefix: %s" % str(prefix))
+                break
+            n , xoffset, yoffset = prefix.view(dtype=np.int8)
+            index += 3
+            pixels = list(codes[index:index + n])
+            if len(pixels) < n:
+                log.debug("  %d pixels expected, %d found" % (n, len(pixels)))
+                return
+            log.debug("pixels: n=%d x=%d y=%d pixels=%s" % (n, xoffset, yoffset, pixels))
+            lines.append((n, xoffset, yoffset, pixels))
+            index += n
+        return lines
+
+    def draw_object(self, obj, screen, pick_buffer, highlight):
+        x = obj.x
+        y = obj.y
+        has_trigger_function = bool(obj.trigger_function)
+        for i in range(obj.count):
+            for n, xoffset, yoffset, pixels in self.pixel_list:
+                self.draw_line(screen, pixels, x + xoffset, y + yoffset, pick_buffer, obj.pick_index, highlight, has_trigger_function)
+            x += obj.dx
+            y += obj.dy
+
+    def draw_line(self, screen, pixels, x, y, pick_buffer, pick_index, highlight, has_trigger_function):
+        for i, c in enumerate(pixels):
+            px = x + i
+            index = self.draw_pixel(screen, px, y, c, highlight, has_trigger_function)
+            if index is not None and pick_buffer is not None:
+                pick_buffer[index] = pick_index
+
+    def draw_pixel(self, screen, x, y, color, highlight, trigger):
+        index = y * 160 + x
+        if index < 0 or index >= len(screen):
+            return None
+        screen[index] = self.color_map[color]
+        s = 0
+        if highlight:
+            s = selected_bit_mask
+        if trigger:
+            s |= match_bit_mask
+        screen.style[index] |= s
+        return index
+
+
 class JumpmanDrawObject(object):
     name = "object"
     default_addr = None
@@ -196,13 +261,13 @@ class JumpmanDrawObject(object):
     @property
     def pixel_list(self):
         if self.__class__._pixel_list is None:
-            self.__class__._pixel_list = self.generate_pixel_list(self.drawing_codes)
+            self.__class__._pixel_list = PixelList(self.drawing_codes)
         return self.__class__._pixel_list
 
     @property
     def error_pixel_list(self):
         if self.__class__._error_pixel_list is None:
-            self.__class__._error_pixel_list = self.generate_pixel_list(self.error_drawing_codes)
+            self.__class__._error_pixel_list = PixelList(self.error_drawing_codes)
         return self.__class__._error_pixel_list
 
     def __str__(self):
@@ -230,28 +295,6 @@ class JumpmanDrawObject(object):
         except AttributeError:
             pass
         return False
-
-    def generate_pixel_list(self, codes):
-        log.debug("generating pixel list from codes: %s" % str(codes))
-        index = 0
-        last = len(codes)
-        lines = []
-        while index < last:
-            prefix = codes[index:index + 3]
-            if len(prefix) < 3:
-                if len(prefix) == 0 or prefix[0] != 0xff:
-                    log.warning("  short prefix: %s" % str(prefix))
-                break
-            n , xoffset, yoffset = prefix.view(dtype=np.int8)
-            index += 3
-            pixels = list(codes[index:index + n])
-            if len(pixels) < n:
-                log.debug("  %d pixels expected, %d found" % (n, len(pixels)))
-                return
-            log.debug("pixels: n=%d x=%d y=%d pixels=%s" % (n, xoffset, yoffset, pixels))
-            lines.append((n, xoffset, yoffset, pixels))
-            index += n
-        return lines
 
     def equal_except_painting(self, other):
         try:
@@ -592,79 +635,35 @@ class ScreenState(LevelDef):
             if codes is None:
                 log.warning("  no drawing codes found for %s" % str(obj.addr))
                 return
-            pixel_list = obj.generate_pixel_list(codes)
+            pixel_list = PixelList(codes)
         else:
             log.debug("addr=BUILTIN x=%d y=%d dx=%d dy=%d, num=%d" % (obj.x, obj.y, obj.dx, obj.dy, obj.count))
             pixel_list = obj.pixel_list
 
-        x = obj.x
-        y = obj.y
         self.add_pick(obj)
         if obj.error:
             pixel_list = obj.error_pixel_list
-            for i in range(obj.count):
-                for n, xoffset, yoffset, pixels in pixel_list:
-                    for i, c in enumerate(pixels):
-                        px = x + xoffset + i
-                        py = y + yoffset
-                        index = self.draw_pixel(px, py, c, highlight, False)
-                        if index is not None and self.pick_buffer is not None:
-                            self.pick_buffer[index] = obj.pick_index
-                x += obj.dx
-                y += obj.dy
-        else:
-            has_trigger_function = bool(obj.trigger_function)
-            for i in range(obj.count):
-                for n, xoffset, yoffset, pixels in pixel_list:
-                    for i, c in enumerate(pixels):
-                        px = x + xoffset + i
-                        py = y + yoffset
-                        index = self.draw_pixel(px, py, c, highlight, has_trigger_function)
-                        if index is not None and self.pick_buffer is not None:
-                            self.pick_buffer[index] = obj.pick_index
-                x += obj.dx
-                y += obj.dy
+        pixel_list.draw_object(obj, self.screen, self.pick_buffer, highlight)
 
-            # Draw extra highlight around peanut if has trigger painting functions
-            if obj.trigger_painting:
-                index = (obj.y - 2) * 160 + obj.x - 2
-                if index > len(self.screen):
-                    return
-                if index < 0:
-                    cindex = -index
-                    index = 0
-                else:
-                    cindex = 0
-                cend = len(self.trigger_circle)
-                if index + cend > len(self.screen):
-                    iend = len(self.screen)
-                    cend = cindex + iend - index
-                else:
-                    iend = index + cend - cindex
-                self.screen.style[index:iend] |= self.trigger_circle[cindex:cend]
+        # Draw extra highlight around peanut if has trigger painting functions
+        if obj.trigger_painting:
+            index = (obj.y - 2) * 160 + obj.x - 2
+            if index > len(self.screen):
+                return
+            if index < 0:
+                cindex = -index
+                index = 0
+            else:
+                cindex = 0
+            cend = len(self.trigger_circle)
+            if index + cend > len(self.screen):
+                iend = len(self.screen)
+                cend = cindex + iend - index
+            else:
+                iend = index + cend - cindex
+            self.screen.style[index:iend] |= self.trigger_circle[cindex:cend]
 
         self.check_object(obj)
-
-    # map color numbers in drawing codes to ANTIC register order
-    # jumpman color numbers are 0 - 3
-    # color number 4 is used to draw Jumpman
-    # ANTIC player color registers are 0 - 3
-    # ANTIC playfield color registers are 4 - 7
-    # ANTIC background color is 8
-    color_map = {0:8, 1:4, 2:5, 3:6, 4:0}
-
-    def draw_pixel(self, x, y, color, highlight, trigger):
-        index = y * 160 + x
-        if index < 0 or index >= len(self.screen):
-            return None
-        self.screen[index] = self.color_map[color]
-        s = 0
-        if highlight:
-            s = selected_bit_mask
-        if trigger:
-            s |= match_bit_mask
-        self.screen.style[index] |= s
-        return index
 
     def get_object_code(self, addr):
         if addr in self.object_code_cache:
