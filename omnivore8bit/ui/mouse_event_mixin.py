@@ -52,7 +52,11 @@ class MouseEventMixin(SelectionHandler):
         self.release_mouse()
         if mode is None:
             mode = self.default_mouse_mode_cls
-        self.mouse_mode = mode(self)
+        if self.mouse_mode.__class__ != mode:
+            log.debug("set_mouse_mode: %s" % mode)
+            self.mouse_mode = mode(self)
+        else:
+            log.debug("mouse mode already %s" % mode)
 
     def capture_mouse(self):
         if not self.source.HasFocus():
