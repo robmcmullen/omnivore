@@ -49,38 +49,43 @@ def trigger_dialog(event, segment_viewer, obj):
     dlg.Destroy()
     return addr
 
+class JumpmanBaseCommand(SetValueCommand):
+    def set_undo_flags(self, flags):
+        # FIXME: need to add new flags to control rebuilding of objects, etc?
+        flags.byte_values_changed = True
 
-class CreateObjectCommand(SetValueCommand):
+
+class CreateObjectCommand(JumpmanBaseCommand):
     short_name = "create_jumpman_obj"
     pretty_name = "Create Object"
 
 
-class MoveObjectCommand(SetValueCommand):
+class MoveObjectCommand(JumpmanBaseCommand):
     short_name = "move_jumpman_obj"
     pretty_name = "Move Object"
 
 
-class FlipVerticalCommand(SetValueCommand):
+class FlipVerticalCommand(JumpmanBaseCommand):
     short_name = "vflip_jumpman_obj"
     pretty_name = "Flip Vertically"
 
 
-class FlipHorizontalCommand(SetValueCommand):
+class FlipHorizontalCommand(JumpmanBaseCommand):
     short_name = "hflip_jumpman_obj"
     pretty_name = "Flip Horizontally"
 
 
-class ClearTriggerCommand(SetValueCommand):
+class ClearTriggerCommand(JumpmanBaseCommand):
     short_name = "cleartrigger_jumpman_obj"
     pretty_name = "Clear Trigger Function"
 
 
-class SetTriggerCommand(SetValueCommand):
+class SetTriggerCommand(JumpmanBaseCommand):
     short_name = "settrigger_jumpman_obj"
     pretty_name = "Set Trigger Function"
 
 
-class AssemblyChangedCommand(SetValueCommand):
+class AssemblyChangedCommand(JumpmanBaseCommand):
     short_name = "jumpman_custom_code"
     pretty_name = "Reassemble Custom Code"
 

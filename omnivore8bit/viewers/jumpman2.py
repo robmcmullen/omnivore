@@ -177,6 +177,8 @@ class JumpmanSegmentTable(cg.HexTable):
     def set_current_screen(self, screen=None):
         if screen is None:
             screen = self.playfield
+        else:
+            self.cached_screen = None
         self.data = screen
         self.style = screen.style
 
@@ -210,9 +212,10 @@ class JumpmanSegmentTable(cg.HexTable):
         return main_state, trigger_state, active_state
 
     def compute_image(self, force=False):
+        self.set_current_screen()
         if force:
             self.force_refresh = True
-        if self.force_refresh:
+        if self.force_refresh or self.cached_screen is None:
             self.screen_state, self.trigger_state, _ = self.redraw_current(self.playfield)
             self.cached_screen = self.playfield[:].copy()
             self.force_refresh = False
@@ -223,6 +226,7 @@ class JumpmanSegmentTable(cg.HexTable):
         return
 
     def bad_image(self):
+        self.set_current_screen()
         self.playfield[:] = 0
         self.playfield.style[:] = 0
         self.force_refresh = True
@@ -233,7 +237,6 @@ class JumpmanSegmentTable(cg.HexTable):
         return
 
     def draw_playfield(self, force=False):
-        self.set_current_screen()
         if self.valid_level:
             override = self.mouse_mode.calc_playfield_override()
             if override is not None:
@@ -282,6 +285,8 @@ class JumpmanSegmentTable(cg.HexTable):
         data = np.hstack([ropeladder_data, pdata, hdata, level_data])
         cmd = command_cls(source, ranges, data)
         self.segment_viewer.editor.process_command(cmd)
+        self.cached_screen = None
+        log.debug("saved changes, new objects=%s" % self.level_builder.objects)
 
     ##### Segment saver interface for menu item display
 

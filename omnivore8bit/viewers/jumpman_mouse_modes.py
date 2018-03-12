@@ -178,7 +178,9 @@ class AnticDSelectMode(JumpmanSelectMode):
         jumpman objects. We need to find the current objects that match up to
         the stored objects.
         """
+        log.debug("before resyncing: %s" % self.objects)
         self.objects = self.control.table.level_builder.find_equivalent(self.objects)
+        log.debug("after resyncing: %s" % self.objects)
 
     def delete_objects(self):
         if self.objects:
@@ -274,6 +276,7 @@ class AnticDSelectMode(JumpmanSelectMode):
     def process_left_up(self, evt):
         if self.num_clicks == 2:
             return
+        print("pending_remove: %s" % self.pending_remove)
         if self.pending_remove is True:
             self.objects = []
         elif self.pending_remove is not None:
@@ -281,8 +284,10 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.pending_remove = None
         if self.objects and not self.check_tolerance:
             self.control.table.save_changes()
+            self.resync_objects()
+            self.control.refresh_view()
         else:
-            self.control.Refresh()
+            self.control.refresh_view()
         self.display_coords(evt)
 
     def process_mouse_motion_up(self, evt):
@@ -371,8 +376,10 @@ class DrawMode(JumpmanSelectMode):
     def process_left_up(self, evt):
         if self.num_clicks == 2:
             return
+        log.debug("saving objects: %s" % self.objects)
         self.control.table.save_objects(self.objects)
         self.objects = []
+        self.control.refresh_view()
         self.display_coords(evt)
 
     def process_mouse_motion_down(self, evt):
@@ -528,12 +535,12 @@ class DrawPeanutMode(DrawMode):
             self.change_harvest_offset(evt)
         else:
             self.create_objects(evt)
-            self.control.Refresh()
+            self.control.refresh_view()
         self.display_coords(evt)
 
     def process_mouse_motion_up(self, evt):
         self.create_objects(evt, True)
-        self.control.Refresh()
+        self.control.refresh_view()
         self.display_coords(evt)
 
     def get_popup_actions(self, evt):
