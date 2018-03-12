@@ -279,7 +279,8 @@ class JumpmanSegmentTable(cg.HexTable):
         cmd = command_cls(source, ranges, data)
         self.segment_viewer.editor.process_command(cmd)
 
-    # Segment saver interface for menu item display
+    ##### Segment saver interface for menu item display
+
     export_data_name = "Jumpman Level Tester ATR"
     export_extensions = [".atr"]
 
@@ -464,6 +465,89 @@ class JumpmanViewer(BitmapViewer):
             self.draw_pattern = [pattern]
         else:
             self.draw_pattern = pattern
+
+    ##### Custom code handling
+
+    def set_assembly_source(self, src):
+        """Assembly source file is required to be in the same directory as the
+        jumpman disk image. It's also assumed to be on the local filesystem
+        since pyatasm can't handle the virtual filesystem.
+        """
+        self.assembly_source = src
+        self.manual_recompile_needed = False
+        self.compile_assembly_source()
+
+    def compile_assembly_source(self, show_info=False):
+        self.custom_code = None
+        if not self.assembly_source:
+            return
+        self.editor.metadata_dirty = True
+        path = self.document.filesystem_path()
+        if not path:
+            if show_info:
+                # only display error message on user-initiated compilation
+                self.editor.window.error("Please save the level before\ncompiling the assembly source", "Assembly Error")
+            return
+        dirname = os.path.dirname(self.document.filesystem_path())
+        if dirname:
+            filename = os.path.join(dirname, self.assembly_source)
+            try:
+                self.custom_code = ju.JumpmanCustomCode(filename)
+                self.manual_recompile_needed = False
+            except SyntaxError, e:
+                log.error("Assembly error: %s" % e.msg)
+                self.editor.window.error(e.msg, "Assembly Error")
+                self.manual_recompile_needed = True
+            except ImportError:
+                log.error("Please install pyatasm to compile custom code.")
+                self.assembly_source = ""
+                self.old_trigger_mapping = dict()
+            if self.custom_code:
+                self.update_trigger_mapping()
+                if show_info:
+                    dlg = wx.lib.dialogs.ScrolledMessageDialog(self.control, self.custom_code.info, "Assembly Results")
+                    dlg.ShowModal()
+
+    def save_assembly(self):
+        code = self.custom_code
+        if not code:
+            return
+        source, level_addr, harvest_addr = self.control.table.get_level_addrs()
+        ranges, data = code.get_ranges(source)
+        cmd = jc.MoveObjectCommand(source, ranges, data)
+        self.editor.process_command(cmd)
+
+    ##### Trigger handling
+
+    def update_trigger_mapping(self):
+        # only create old trigger mapping if one doesn't exist
+        if not self.old_trigger_mapping:
+            self.old_trigger_mapping = dict(self.get_triggers())
+        else:
+            old_map = self.old_trigger_mapping
+            new_map = self.get_triggers()
+            if old_map != new_map:
+                log.debug("UPDATING trigger map!")
+                log.debug("old map %s" % old_map)
+                log.debug("new_map %s" % new_map)
+                self.bitmap.level_builder.update_triggers(old_map, new_map)
+                # FIXME: what about undo and the trigger mapping?
+                self.bitmap.save_changes(AssemblyChangedCommand)
+                self.old_trigger_mapping = new_map
+
+    def get_triggers(self):
+        if self.custom_code is None and self.manual_recompile_needed == False:
+            self.compile_assembly_source()
+        code = self.custom_code
+        if code is None:
+            return {}
+        return code.triggers
+
+    def get_trigger_label(self, addr):
+        rev_old_map = {v: k for k, v in self.old_trigger_mapping.iteritems()}
+        if addr in rev_old_map:
+            return rev_old_map[addr]
+        return None
 
 ##### Class level utilities
 

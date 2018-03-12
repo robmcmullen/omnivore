@@ -26,9 +26,9 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def trigger_dialog(event, e, obj):
-    possible_labels = e.get_triggers()
-    label = e.get_trigger_label(obj.trigger_function)
+def trigger_dialog(event, segment_viewer, obj):
+    possible_labels = segment_viewer.get_triggers()
+    label = segment_viewer.get_trigger_label(obj.trigger_function)
     if label is None and obj.trigger_function:
         custom_value = "%04x" % obj.trigger_function
     else:
@@ -131,8 +131,7 @@ class SetTriggerAction(ClearTriggerAction):
     command = SetTriggerCommand
 
     def get_addr(self, event, objects):
-        e = self.active_editor
-        addr = trigger_dialog(event, e, objects[0])
+        addr = trigger_dialog(event, self.viewer, objects[0])
         if addr is not None:
             return addr
         raise ValueError("Cancelled!")
