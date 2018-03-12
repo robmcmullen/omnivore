@@ -147,8 +147,11 @@ class PixelList(object):
         y = obj.y
         has_trigger_function = bool(obj.trigger_function)
         for i in range(obj.count):
-            for n, xoffset, yoffset, pixels in self.pixel_list:
-                self.draw_line(screen, pixels, x + xoffset, y + yoffset, pick_buffer, obj.pick_index, highlight, has_trigger_function)
+            if x < obj.screen_bounds.xmin or x + obj.dx - 1> obj.screen_bounds.xmax or y < obj.screen_bounds.ymin or y + obj.dy - 1 > obj.screen_bounds.ymax:
+                log.debug("unit %d of %s off screen at %d,%d" % (i, obj, x, y))
+            else:
+                for n, xoffset, yoffset, pixels in self.pixel_list:
+                    self.draw_line(screen, pixels, x + xoffset, y + yoffset, pick_buffer, obj.pick_index, highlight, has_trigger_function)
             x += obj.dx
             y += obj.dy
 
@@ -647,6 +650,8 @@ class ScreenState(LevelDef):
 
         # Draw extra highlight around peanut if has trigger painting functions
         if obj.trigger_painting:
+            if obj.x < 0 or (obj.x + obj.default_dx - 1) > 159 or obj.y < 0 or (obj.y + obj.default_dy - 1) > 87:
+                return  # offscreen
             index = (obj.y - 2) * 160 + obj.x - 2
             if index > len(self.screen):
                 return
@@ -659,8 +664,12 @@ class ScreenState(LevelDef):
             if index + cend > len(self.screen):
                 iend = len(self.screen)
                 cend = cindex + iend - index
+                if cend > len(self.screen):
+                    return  # entirely off bottom of screen
             else:
                 iend = index + cend - cindex
+                if iend < 0:
+                    return  # entirely off top of screen
             self.screen.style[index:iend] |= self.trigger_circle[cindex:cend]
 
         self.check_object(obj)
