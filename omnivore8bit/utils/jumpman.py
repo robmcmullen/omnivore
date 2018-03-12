@@ -616,6 +616,9 @@ class ScreenState(LevelDef):
             self.search_order.append(current_segment)
         self.search_order.extend(segments)
         self.screen = screen
+        if screen is not None:
+            self.screen_2d = screen.data.reshape((88, 160))
+            self.screen_style_2d = screen.style.reshape((88, 160))
         self.pick_buffer = pick_buffer
 
     def __str__(self):
@@ -624,10 +627,7 @@ class ScreenState(LevelDef):
     # The following commented out code generates the text string
     #circle = np.zeros((7, 8), dtype=np.uint8)
     #circle[0,2:6] = circle[6,2:6] = circle[2:5,0] = circle[2:5,7] = circle[1,1] = circle[1,6] = circle[5,6] = circle[5,1] = match_bit_mask
-    circle = np.fromstring('\x00\x00    \x00\x00\x00 \x00\x00\x00\x00 \x00 \x00\x00\x00\x00\x00\x00  \x00\x00\x00\x00\x00\x00  \x00\x00\x00\x00\x00\x00 \x00 \x00\x00\x00\x00 \x00\x00\x00    \x00\x00', dtype=np.uint8).reshape((7,8))
-    trigger_circle = np.zeros((7,160), dtype=np.uint8)
-    trigger_circle[0:7,0:8] = circle
-    trigger_circle = trigger_circle.flatten()
+    trigger_circle = np.fromstring('\x00\x00    \x00\x00\x00 \x00\x00\x00\x00 \x00 \x00\x00\x00\x00\x00\x00  \x00\x00\x00\x00\x00\x00  \x00\x00\x00\x00\x00\x00 \x00 \x00\x00\x00\x00 \x00\x00\x00    \x00\x00', dtype=np.uint8).reshape((7,8))
 
     def draw_object(self, obj, highlight=False):
         if obj.drawing_codes is None:
@@ -650,27 +650,36 @@ class ScreenState(LevelDef):
 
         # Draw extra highlight around peanut if has trigger painting functions
         if obj.trigger_painting:
-            if obj.x < 0 or (obj.x + obj.default_dx - 1) > 159 or obj.y < 0 or (obj.y + obj.default_dy - 1) > 87:
+            ox = obj.x + obj.default_dx
+            oy = obj.y + obj.default_dy
+            if obj.x < 0 or ox > 160 or obj.y < 0 or oy > 88:
                 return  # offscreen
-            index = (obj.y - 2) * 160 + obj.x - 2
-            if index > len(self.screen):
-                return
-            if index < 0:
-                cindex = -index
-                index = 0
-            else:
-                cindex = 0
-            cend = len(self.trigger_circle)
-            if index + cend > len(self.screen):
-                iend = len(self.screen)
-                cend = cindex + iend - index
-                if cend > len(self.screen):
-                    return  # entirely off bottom of screen
-            else:
-                iend = index + cend - cindex
-                if iend < 0:
-                    return  # entirely off top of screen
-            self.screen.style[index:iend] |= self.trigger_circle[cindex:cend]
+
+            cx = 0
+            cy = 0
+            cx2 = self.trigger_circle.shape[1]
+            cy2 = self.trigger_circle.shape[0]
+
+            x = obj.x - 2
+            y = obj.y - 2
+            x2 = x + cx2
+            y2 = y + cy2
+
+            if x < 0:
+                cx = -x
+                x = 0
+            if y < 0:
+                cy = -y
+                y = 0
+
+            if x2 > 160:
+                cx2 = 160 - x2
+                x2 = 160
+            if y2 > 88:
+                cy2 = 88 - y2
+                y2 = 88
+
+            self.screen_style_2d[y:y2,x:x2] |= self.trigger_circle[cy:cy2,cx:cx2]
 
         self.check_object(obj)
 
