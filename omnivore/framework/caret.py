@@ -506,7 +506,7 @@ class SelectionHandler(object):
         """ Selects the entire document
         """
         caret_handler.clear_selection()
-        caret_handler.current.set_initial_selection(0, caret_handler.document_length)
+        caret_handler.carets.current.set_initial_selection(0, caret_handler.document_length)
         self.highlight_selected_ranges(caret_handler)
         caret_handler.calc_action_enabled_flags()
 
