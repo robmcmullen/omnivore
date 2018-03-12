@@ -253,15 +253,15 @@ class ByteEditor(FrameworkEditor):
 
     def select_all(self):
         self.focused_viewer.select_all()
-        self.document.refresh_event = True
+        self.linked_base.refresh_event = True
 
     def select_none(self):
         self.focused_viewer.select_none()
-        self.document.refresh_event = True
+        self.linked_base.refresh_event = True
 
     def select_invert(self):
         self.focused_viewer.select_invert()
-        self.document.refresh_event = True
+        self.linked_base.refresh_event = True
 
     def check_document_change(self):
         self.document.change_count += 1

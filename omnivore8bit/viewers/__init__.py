@@ -311,11 +311,17 @@ class SegmentViewer(HasTraits):
 
     @on_trait_change('linked_base.refresh_event')
     def refresh_view(self, flags):
-        """Redraw the UI
+        """Redraw the UI.
+
+        flags is either True for an unconditional refresh, or a DisplayFlags
+        instance that contains more info about what or how to refresh
         """
         log.debug("process_refresh_view for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
         if flags is not Undefined:
-            if flags.skip_source_control_refresh and self.control == flags.source_control:
+            if flags == True:
+                log.debug("refresh_event: forcing refresh of %s because no display flags" % self.control)
+                self.control.refresh_view()
+            elif flags.skip_source_control_refresh and self.control == flags.source_control:
                 log.debug("refresh_event: skipping refresh of %s" % self.control)
                 # FIXME: the row/col headers aren't refreshed with the call to
                 # move_viewport_origin, so force them to be refreshed here. I
