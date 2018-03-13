@@ -221,6 +221,15 @@ class DisassemblyLineRenderer(cg.TableLineRenderer):
         rect = self.col_to_rect(line_num, col)
         self.image_cache.draw_item_at(parent, dc, rect, line_num, col, last_col, self.pixel_widths)
 
+    def draw_grid(self, parent, dc, start_row, visible_rows, start_cell, visible_cells):
+        first_col = self.cell_to_col[start_cell]
+        last_cell = min(start_cell + visible_cells, self.num_cells)
+        last_col = self.cell_to_col[last_cell - 1] + 1
+
+        for row in range(start_row, min(start_row + visible_rows, parent.table.num_rows)):
+            rect = self.col_to_rect(row, first_col)
+            self.image_cache.draw_item_at(parent, dc, rect, row, first_col, last_col, self.pixel_widths)
+
     def calc_column_range(self, parent,line_num, col, last_col):
         index, last_index = parent.table.get_index_range(line_num, col)
         return col, index, last_index

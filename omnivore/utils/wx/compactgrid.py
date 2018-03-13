@@ -73,7 +73,7 @@ class DrawTextImageCache(object):
         dc.DrawBitmap(bmp, rect.x, rect.y)
 
     def draw_uncached_text(self, parent, dc, rect, text, style):
-        self.draw_text_to_dc(dc, rect, rect, text, style)
+        self.draw_text_to_dc(parent, dc, rect, rect, text, style)
 
     def draw_text_to_dc(self, parent, dc, bg_rect, fg_rect, text, style):
         v = parent.view_params
@@ -108,24 +108,23 @@ class DrawTextImageCache(object):
         dc.DrawText(text, fg_rect.x, fg_rect.y)
         dc.DestroyClippingRegion()
 
-    def draw_item(self, parent, dc, rect, text, style, widths, col):
+    def draw_item(self, parent, dc, rect, text, style, col_widths, col):
         draw_log.debug(str((text, rect)))
         for i, c in enumerate(text):
             s = style[i]
             self.draw_text(parent, dc, rect, c, s)
-            rect.x += widths[i]
+            rect.x += col_widths[col + i]
 
 
 class DrawTableCellImageCache(DrawTextImageCache):
-    def draw_item(self, parent, dc, rect, items, style, widths, col):
+    def draw_item(self, parent, dc, rect, items, style, col_widths, col):
         for i, item in enumerate(items):
             s = style[i]
-            text = parent.table.calc_display_text(col, item)
-            w = widths[i]
+            text = parent.table.calc_display_text(col + i, item)
+            w = col_widths[col + i]
             rect.width = w
             self.draw_text(parent, dc, rect, text, s)
             rect.x += w
-            col += 1
 
 
 class HexByteImageCache(DrawTextImageCache):
@@ -146,12 +145,12 @@ class HexByteImageCache(DrawTextImageCache):
             self.cache[k] = bmp
         dc.DrawBitmap(bmp, rect.x, rect.y)
 
-    def draw_item(self, parent, dc, rect, data, style, widths, col):
+    def draw_item(self, parent, dc, rect, data, style, col_widths, col):
         draw_log.debug(str((rect, data)))
         for i, c in enumerate(data):
             draw_log.debug(str((i, c, rect)))
             self.draw_text(parent, dc, rect, c, style[i])
-            rect.x += widths[i]
+            rect.x += col_widths[col + i]
 
 
 class TableViewParams(object):
@@ -301,7 +300,7 @@ class LineRenderer(object):
         rect = self.col_to_rect(line_num, col)
         data = t.data[index:last_index]
         style = t.style[index:last_index]
-        self.image_cache.draw_item(parent, dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)], col)
+        self.image_cache.draw_item(parent, dc, rect, data, style, self.pixel_widths, col)
 
     def draw_grid(self, parent, dc, start_row, visible_rows, start_cell, visible_cells):
         first_col = self.cell_to_col[start_cell]
@@ -347,7 +346,7 @@ class DebugLineRenderer(LineRenderer):
         num = last_index - index
         data = ["r%dc%d" % (line_num, c + col) for c in range(num)]
         style = [0] * num
-        self.image_cache.draw_item(parent, dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)], col)
+        self.image_cache.draw_item(parent, dc, rect, data, style, self.pixel_widths, col)
 
 
 class TableLineRenderer(LineRenderer):
@@ -378,7 +377,7 @@ class HexLineRenderer(TableLineRenderer):
         rect = self.col_to_rect(line_num, col)
         data = t.data[index:last_index]
         style = t.style[index:last_index]
-        self.image_cache.draw_item(parent, dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)], col)
+        self.image_cache.draw_item(parent, dc, rect, data, style, self.pixel_widths, col)
 
 
 class BaseGridDrawControl(wx.ScrolledCanvas):
