@@ -6,7 +6,7 @@ from omnivore.utils.runtime import get_all_subclasses
 
 import logging
 log = logging.getLogger(__name__)
-#log.setLevel(logging.DEBUG)
+log.setLevel(logging.DEBUG)
 
 
 def is_valid_level_segment(segment):
@@ -174,12 +174,15 @@ class PixelList(object):
         self.mask = mask
 
     def draw_array(self, obj, screen2d, style2d, pick2d, highlight):
-        x = obj.x
-        y = obj.y
+        # FIXME: the x value is getting constrainted to a uint8 somewhere, so
+        # signed values are positive. Force it to be a negative number by
+        # checking for outside the width of the screen
+        x = int(obj.x) if obj.x < 160 else int(obj.x - 256)
+        y = int(obj.y)
         has_trigger_function = bool(obj.trigger_function)
         for i in range(obj.count):
             if x < obj.screen_bounds.xmin or x + obj.dx - 1> obj.screen_bounds.xmax or y < obj.screen_bounds.ymin or y + obj.dy - 1 > obj.screen_bounds.ymax:
-                log.debug("unit %d of %s off screen at %d,%d" % (i, obj, x, y))
+                log.debug("unit %d of %s off screen at %s(%d),%s(%d)" % (i, obj, type(x), x, type(y), y))
             else:
                 screen2d[y:y+self.h,x:x+self.w] &= self.mask
                 screen2d[y:y+self.h,x:x+self.w] |= self.pixels
@@ -191,39 +194,6 @@ class PixelList(object):
                     pick2d[y:y+self.h,x:x+self.w] = obj.pick_index
             x += obj.dx
             y += obj.dy
-
-    def draw_object(self, obj, screen, pick_buffer, highlight):
-        x = obj.x
-        y = obj.y
-        has_trigger_function = bool(obj.trigger_function)
-        for i in range(obj.count):
-            if x < obj.screen_bounds.xmin or x + obj.dx - 1> obj.screen_bounds.xmax or y < obj.screen_bounds.ymin or y + obj.dy - 1 > obj.screen_bounds.ymax:
-                log.debug("unit %d of %s off screen at %d,%d" % (i, obj, x, y))
-            else:
-                for n, xoffset, yoffset, pixels in self.pixel_list:
-                    self.draw_line(screen, pixels, x + xoffset, y + yoffset, pick_buffer, obj.pick_index, highlight, has_trigger_function)
-            x += obj.dx
-            y += obj.dy
-
-    def draw_line(self, screen, pixels, x, y, pick_buffer, pick_index, highlight, has_trigger_function):
-        for i, c in enumerate(pixels):
-            px = x + i
-            index = self.draw_pixel(screen, px, y, c, highlight, has_trigger_function)
-            if index is not None and pick_buffer is not None:
-                pick_buffer[index] = pick_index
-
-    def draw_pixel(self, screen, x, y, color, highlight, trigger):
-        index = y * 160 + x
-        if index < 0 or index >= len(screen):
-            return None
-        screen[index] = self.color_map[color]
-        s = 0
-        if highlight:
-            s = selected_bit_mask
-        if trigger:
-            s |= match_bit_mask
-        screen.style[index] |= s
-        return index
 
 
 class JumpmanDrawObject(object):
@@ -249,8 +219,8 @@ class JumpmanDrawObject(object):
     screen_bounds = DrawObjectBounds(((0, 0), (159, 87)))
 
     def __init__(self, pick_index, x, y, count, dx=None, dy=None, addr=None):
-        self.x = x
-        self.y = y
+        self.x = int(x)
+        self.y = int(y)
         self.count = count
         self.addr = self.default_addr if addr is None else addr
         self.pick_index = pick_index
@@ -700,7 +670,6 @@ class ScreenState(LevelDef):
         self.add_pick(obj)
         if obj.error:
             pixel_list = obj.error_pixel_list
-        # pixel_list.draw_object(obj, self.screen, self.pick_buffer, highlight)
         pixel_list.draw_array(obj, self.screen_2d, self.screen_style_2d, self.pick_buffer_2d, highlight)
 
         # Draw extra highlight around peanut if has trigger painting functions
@@ -844,8 +813,8 @@ class JumpmanLevelBuilder(object):
                 if c == 0xfc:
                     addr = arg2 * 256 + arg1
                 elif c == 0xfd:
-                    x = arg1
-                    y = arg2
+                    x = int(arg1)
+                    y = int(arg2)
                 else:
                     dx = int(np.int8(arg1))  # signed!
                     dy = int(np.int8(arg2))

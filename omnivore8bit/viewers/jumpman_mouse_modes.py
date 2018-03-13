@@ -233,8 +233,8 @@ class AnticDSelectMode(JumpmanSelectMode):
                 self.objects = []
 
     def add_to_selection(self, obj, append=False):
-        obj.orig_x = obj.x
-        obj.orig_y = obj.y
+        obj.orig_x = int(obj.x)
+        obj.orig_y = int(obj.y)
         if append:
             self.objects.append(obj)
         else:
@@ -248,18 +248,11 @@ class AnticDSelectMode(JumpmanSelectMode):
             if self.check_tolerance and abs(dx) + abs(dy) <  self.min_mouse_distance:
                 return
             self.check_tolerance = False
-            bad_move = False
             for obj in self.objects:
                 log.debug("moving %s, equiv %s" % (obj, self.control.table.level_builder.find_equivalent_object(obj)))
-                obj.last_x, obj.last_y = obj.x, obj.y
-                _, obj.x = divmod(obj.orig_x + dx, 160)
+                obj.x = obj.orig_x + dx
                 obj.x &= obj.valid_x_mask
                 obj.y = obj.orig_y + dy
-                if obj.is_offscreen():
-                    bad_move = True
-            if bad_move:
-                for obj in self.objects:
-                    obj.x, obj.y = obj.last_x, obj.last_y
             self.pending_remove = None
 
     def process_left_down(self, evt):
