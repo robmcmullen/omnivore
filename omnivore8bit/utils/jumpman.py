@@ -181,7 +181,7 @@ class PixelList(object):
         y = int(obj.y)
         has_trigger_function = bool(obj.trigger_function)
         for i in range(obj.count):
-            if x < obj.screen_bounds.xmin or x + obj.dx - 1> obj.screen_bounds.xmax or y < obj.screen_bounds.ymin or y + obj.dy - 1 > obj.screen_bounds.ymax:
+            if x < obj.screen_bounds.xmin or x + self.w - 1 > obj.screen_bounds.xmax or y < obj.screen_bounds.ymin or y + self.h - 1 > obj.screen_bounds.ymax:
                 log.debug("unit %d of %s off screen at %s(%d),%s(%d)" % (i, obj, type(x), x, type(y), y))
             else:
                 screen2d[y:y+self.h,x:x+self.w] &= self.mask
