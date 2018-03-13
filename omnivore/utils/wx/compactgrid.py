@@ -293,19 +293,6 @@ class LineRenderer(object):
         rect = wx.Rect(x, y, w, self.h)
         return rect
 
-    def draw(self, parent, dc, line_num, start_cell, num_cells):
-        """
-        """
-        col = self.cell_to_col[start_cell]
-        last_cell = min(start_cell + num_cells, self.num_cells)
-        last_col = self.cell_to_col[last_cell - 1] + 1
-
-        try:
-            col, index, last_index = self.calc_column_range(parent, line_num, col, last_col)
-        except IndexError:
-            return
-        self.draw_line(parent, dc, line_num, col, index, last_index)
-
     def calc_column_range(self, parent, line_num, col, last_col):
         raise NotImplementedError("override to produce column number and start and end indexes")
 
@@ -315,6 +302,18 @@ class LineRenderer(object):
         data = t.data[index:last_index]
         style = t.style[index:last_index]
         self.image_cache.draw_item(parent, dc, rect, data, style, self.pixel_widths[col:col + (last_index - index)], col)
+
+    def draw_grid(self, parent, dc, start_row, visible_rows, start_cell, visible_cells):
+        first_col = self.cell_to_col[start_cell]
+        last_cell = min(start_cell + visible_cells, self.num_cells)
+        last_col = self.cell_to_col[last_cell - 1] + 1
+
+        for row in range(start_row, min(start_row + visible_rows, parent.table.num_rows)):
+            try:
+                col, index, last_index = self.calc_column_range(parent, row, first_col, last_col)
+            except IndexError:
+                continue  # skip lines with no visible cells
+            self.draw_line(parent, dc, row, col, index, last_index)
 
     def draw_caret(self, parent, dc, line_num, col):
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
@@ -467,8 +466,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         # print("on_paint: %dx%d at %d,%d. origin=%d,%d" % (self.visible_cells, self.visible_rows, self.first_visible_cell, self.first_visible_row, px, py))
 
         line_num = self.first_visible_row
-        for line in range(line_num, min(line_num + self.visible_rows, self.table.num_rows)):
-            self.line_renderer.draw(self.parent, dc, line, self.first_visible_cell, self.visible_cells)
+        self.line_renderer.draw_grid(self.parent, dc, self.first_visible_row, self.visible_rows, self.first_visible_cell, self.visible_cells)
         self.parent.draw_carets(dc)
         if debug_refresh:
             dc.DrawText("%d" % self.refresh_count, 0, 0)
