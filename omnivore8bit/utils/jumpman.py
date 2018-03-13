@@ -125,9 +125,11 @@ class PixelList(object):
     # ANTIC background color is 8
     color_map = {0:8, 1:4, 2:5, 3:6, 4:0}
 
-    def __init__(self, codes):
+    def __init__(self, codes, x_shift=0, y_shift=0):
         self.pixel_list = self.calc_pixel_list(codes)
         self.generate_pixel_array(self.pixel_list)
+        self.x_shift = x_shift
+        self.y_shift = y_shift
 
     def calc_pixel_list(self, codes):
         log.debug("generating pixel list from codes: %s" % str(codes))
@@ -180,6 +182,8 @@ class PixelList(object):
         x = int(obj.x) if obj.x < 160 else int(obj.x - 256)
         y = int(obj.y)
         has_trigger_function = bool(obj.trigger_function)
+        x += self.x_shift
+        y += self.y_shift
         for i in range(obj.count):
             if x < obj.screen_bounds.xmin or x + self.w - 1 > obj.screen_bounds.xmax or y < obj.screen_bounds.ymin or y + self.h - 1 > obj.screen_bounds.ymax:
                 log.debug("unit %d of %s off screen at %s(%d),%s(%d)" % (i, obj, type(x), x, type(y), y))
@@ -208,11 +212,11 @@ class JumpmanDrawObject(object):
     drawing_codes = None
     _pixel_list = None
     error_drawing_codes = np.asarray([
-        6, 0, -1,  3, 0, 0, 0, 0, 3,
-        6, 0,  0,  0, 3, 0, 0, 3, 0,
-        6, 0,  1,  0, 0, 3, 3, 0, 0,
-        6, 0,  2,  0, 3, 0, 0, 3, 0,
-        6, 0,  3,  3, 0, 0, 0, 0, 3,
+        6, 0,  0,  3, 0, 0, 0, 0, 3,
+        6, 0,  1,  0, 3, 0, 0, 3, 0,
+        6, 0,  2,  0, 0, 3, 3, 0, 0,
+        6, 0,  3,  0, 3, 0, 0, 3, 0,
+        6, 0,  4,  3, 0, 0, 0, 0, 3,
         0xff
     ], dtype=np.uint8)
     _error_pixel_list = None
@@ -290,7 +294,7 @@ class JumpmanDrawObject(object):
     @property
     def error_pixel_list(self):
         if self.__class__._error_pixel_list is None:
-            self.__class__._error_pixel_list = PixelList(self.error_drawing_codes)
+            self.__class__._error_pixel_list = PixelList(self.error_drawing_codes, -1, -1)
         return self.__class__._error_pixel_list
 
     def __str__(self):
