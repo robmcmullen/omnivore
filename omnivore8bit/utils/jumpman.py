@@ -76,6 +76,14 @@ class DrawObjectBounds(object):
             pass
         return False
 
+    @property
+    def w(self):
+        return self.xmax - self.xmin + 1
+
+    @property
+    def h(self):
+        return self.ymax - self.ymin + 1
+
     def get_offset(self, x, y):
         if self.xmin is None:
             return DrawObjectBounds()
@@ -119,6 +127,7 @@ class PixelList(object):
 
     def __init__(self, codes):
         self.pixel_list = self.calc_pixel_list(codes)
+        self.generate_pixel_array(self.pixel_list)
 
     def calc_pixel_list(self, codes):
         log.debug("generating pixel list from codes: %s" % str(codes))
@@ -141,6 +150,47 @@ class PixelList(object):
             lines.append((n, xoffset, yoffset, pixels))
             index += n
         return lines
+
+    def generate_pixel_array(self, pixel_list):
+        bounds = DrawObjectBounds(((0,0), (0,0)))
+
+        # pass 1: compute boundary
+        for n, xoffset, yoffset, pixels in self.pixel_list:
+            bounds.add_point(xoffset, yoffset)
+            bounds.add_point(xoffset + n - 1, yoffset)
+        self.h, self.w = bounds.h, bounds.w
+
+        # pass 2: create mask & image
+        pixels = np.zeros((self.h, self.w), dtype=np.uint8)
+        mask = np.full((self.h, self.w), 0xff, dtype=np.uint8) 
+        for n, xoffset, yoffset, colors in self.pixel_list:
+            x = bounds.xmin + xoffset
+            y = bounds.ymin + yoffset
+            for c in colors:
+                pixels[y, x] = self.color_map[c]
+                mask[y, x] = 0
+                x += 1
+        self.pixels = pixels
+        self.mask = mask
+
+    def draw_array(self, obj, screen2d, style2d, pick2d, highlight):
+        x = obj.x
+        y = obj.y
+        has_trigger_function = bool(obj.trigger_function)
+        for i in range(obj.count):
+            if x < obj.screen_bounds.xmin or x + obj.dx - 1> obj.screen_bounds.xmax or y < obj.screen_bounds.ymin or y + obj.dy - 1 > obj.screen_bounds.ymax:
+                log.debug("unit %d of %s off screen at %d,%d" % (i, obj, x, y))
+            else:
+                screen2d[y:y+self.h,x:x+self.w] &= self.mask
+                screen2d[y:y+self.h,x:x+self.w] |= self.pixels
+                if highlight:
+                    style2d[y:y+self.h,x:x+self.w] = selected_bit_mask
+                if has_trigger_function:
+                    style2d[y:y+self.h,x:x+self.w] |= match_bit_mask
+                if pick2d is not None:
+                    pick2d[y:y+self.h,x:x+self.w] = obj.pick_index
+            x += obj.dx
+            y += obj.dy
 
     def draw_object(self, obj, screen, pick_buffer, highlight):
         x = obj.x
@@ -620,6 +670,10 @@ class ScreenState(LevelDef):
             self.screen_2d = screen.data.reshape((88, 160))
             self.screen_style_2d = screen.style.reshape((88, 160))
         self.pick_buffer = pick_buffer
+        if pick_buffer is not None:
+            self.pick_buffer_2d = pick_buffer.reshape((88, 160))
+        else:
+            self.pick_buffer_2d = None
 
     def __str__(self):
         return "current segment: %s\nsearch order: %s\nladders: %s\ndownropes: %s" % (self.current_segment, self.search_order, self.ladder_positions, self.downrope_positions)
@@ -646,7 +700,8 @@ class ScreenState(LevelDef):
         self.add_pick(obj)
         if obj.error:
             pixel_list = obj.error_pixel_list
-        pixel_list.draw_object(obj, self.screen, self.pick_buffer, highlight)
+        # pixel_list.draw_object(obj, self.screen, self.pick_buffer, highlight)
+        pixel_list.draw_array(obj, self.screen_2d, self.screen_style_2d, self.pick_buffer_2d, highlight)
 
         # Draw extra highlight around peanut if has trigger painting functions
         if obj.trigger_painting:
