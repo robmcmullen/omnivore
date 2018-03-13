@@ -732,69 +732,6 @@ class NumpyGridDrawControl(BaseGridDrawControl):
     def current_line_length(self):
         return self.table.num_cells
 
-    def start_selection(self):
-        self.SelectBegin, self.SelectEnd = self.table.get_index_range(self.cy, self.cx)
-        self.anchor_start_index, self.anchor_end_index = self.SelectBegin, self.SelectEnd
-
-    def update_selection(self):
-        index1, index2 = self.table.get_index_range(self.cy, self.cx)
-        if index1 < self.anchor_start_index:
-            self.SelectBegin = index1
-            self.SelectEnd = self.anchor_end_index
-        elif index2 > self.anchor_end_index:
-            self.SelectBegin = self.anchor_start_index
-            self.SelectEnd = index2
-        self.SelectNotify(self.Selecting, self.SelectBegin, self.SelectEnd)
-        self.UpdateView()
-
-    def get_style_array(self, index, last_index):
-        count = last_index - index
-        style = np.zeros(count, dtype=np.uint8)
-        if last_index < self.SelectBegin or index >= self.SelectEnd:
-            pass
-        else:
-            for i in range(index, last_index):
-                if i >= self.SelectBegin and i < self.SelectEnd:
-                    style[i - index] = selected_bit_mask
-        return style
-
-
-class MultiCellNumpyGridDrawControl(NumpyGridDrawControl):
-    def start_selection(self):
-        self.SelectBegin, self.SelectEnd = self.table.get_index_range(self.cy, self.cx)
-        self.anchor_start_index, self.anchor_end_index = self.SelectBegin, self.SelectEnd
-
-    def update_selection(self):
-        index1, index2 = self.table.get_index_range(self.cy, self.cx)
-        if index1 < self.anchor_start_index:
-            self.SelectBegin = index1
-            self.SelectEnd = self.anchor_end_index
-        elif index2 > self.anchor_end_index:
-            self.SelectBegin = self.anchor_start_index
-            self.SelectEnd = index2
-        self.SelectNotify(self.Selecting, self.SelectBegin, self.SelectEnd)
-        self.UpdateView()
-
-    def DrawEditText(self, t, style, start_x, show_at_x, x_width, y, dc):
-        #dc.DrawText(t, x * self.cell_width_in_pixels, y * self.cell_height_in_pixels)
-        draw_log.debug("DRAWEDIT: %d %d %d" % (start_x, show_at_x, x_width))
-        rect = wx.Rect(show_at_x * self.cell_width_in_pixels, y * self.cell_height_in_pixels, x_width * self.cell_width_in_pixels, self.cell_height_in_pixels)
-        self.table.hex_renderer.draw(self.parent, dc, rect, [t], [style], x_width)
-
-    def DrawLine(self, sy, line, dc):
-        if self.IsLine(line):
-            # import pdb; pdb.set_trace()
-            t = self.table
-            start_col = t.cell_to_col[self.sx]
-            index = line * t.items_per_row
-            last_index = (line + 1) * t.items_per_row
-            data = self.lines[index:last_index]
-            style = self.style[index:last_index]
-            for col in range(start_col, t.items_per_row):
-                cell_start = t.col_to_cell[col]
-                cell_width = t.col_widths[col]
-                self.DrawEditText(data[col], style[col], cell_start, cell_start - self.sx, cell_width, sy - self.sy, dc)
-
 
 class HexTable(object):
     """Table works in rows and columns, knows nothing about display cells.
@@ -890,12 +827,6 @@ class VariableWidthHexTable(HexTable):
         return index, index + 1
 
 
-class MixedMultiCellNumpyGridDrawControl(MultiCellNumpyGridDrawControl):
-        #             "0A 0X 0Y FF sv-bdizc  00 00 00 LDA $%04x"
-        #self.header = " A  X  Y SP sv-bdizc  Opcodes  Assembly"
-    pass
-
-
 class AuxWindow(wx.ScrolledCanvas):
     def __init__(self, parent):
         wx.ScrolledCanvas.__init__(self, parent, -1)
@@ -936,7 +867,7 @@ class AuxWindow(wx.ScrolledCanvas):
         if dc is None:
             dc = wx.ClientDC(self)
         if dc.IsOk():
-            self.Draw(dc)
+            self.draw_header(dc)
 
     def on_paint(self, evt):
         dc = wx.PaintDC(self)
@@ -962,7 +893,7 @@ class AuxWindow(wx.ScrolledCanvas):
 class RowLabelWindow(AuxWindow):
     refresh_count = 0
 
-    def DrawVertText(self, t, line, dc, skip=1):
+    def draw_row_label_text(self, t, line, dc, skip=1):
         y = line * self.parent.line_renderer.h
         #print("row: y=%d line=%d text=%s" % (y, line, t))
         if skip > 1:
@@ -970,7 +901,7 @@ class RowLabelWindow(AuxWindow):
             dc.DrawLine(0, y, w, y)
         dc.DrawText(t, 0, y)
 
-    def Draw(self, odc=None):
+    def draw_header(self, odc=None):
         if odc is None:
             odc = wx.ClientDC(self)
 
@@ -994,24 +925,24 @@ class RowLabelWindow(AuxWindow):
                 # from the first visible row and skipping rows from there.
                 row = (row // self.row_skip) * self.row_skip
             for header in s.table.get_row_label_text(row, s.main.visible_rows, self.row_skip):
-                self.DrawVertText(header, row, dc, self.row_skip)
+                self.draw_row_label_text(header, row, dc, self.row_skip)
                 row += self.row_skip
             if debug_refresh:
                 _, row = s.GetViewStart()
-                self.DrawVertText("%d" % self.refresh_count, row, dc)
+                self.draw_row_label_text("%d" % self.refresh_count, row, dc)
                 self.refresh_count += 1
 
 class ColLabelWindow(AuxWindow):
     refresh_count = 0
 
-    def DrawHorzText(self, t, cell, num_cells, dc):
+    def draw_col_label_text(self, t, cell, num_cells, dc):
         lr = self.parent.line_renderer
         rect = lr.cell_to_rect(0, cell, num_cells)
         width = self.parent.view_params.calc_text_width(t)
         offset = (rect.width - width)/2  # center text in cell
         dc.DrawText(t, rect.x + offset, 0)
 
-    def Draw(self, odc=None):
+    def draw_header(self, odc=None):
         if odc is None:
             odc = wx.ClientDC(self)
 
@@ -1032,7 +963,7 @@ class ColLabelWindow(AuxWindow):
                 dc.DrawText(header, rect.x + offset, 0)
             if debug_refresh:
                 cell, _ = s.GetViewStart()
-                self.DrawHorzText("%d" % self.refresh_count, cell, 1, dc)
+                self.draw_col_label_text("%d" % self.refresh_count, cell, 1, dc)
                 self.refresh_count += 1
 
 
@@ -1441,9 +1372,6 @@ class DisassemblyTable(HexTable):
 
 
 class NonUniformGridWindow(CompactGrid):
-    def calc_main_grid(self):
-        return MultiCellNumpyGridDrawControl(self)
-
     def calc_line_renderer(self):
         image_cache = DrawTableCellImageCache(self)
         return TableLineRenderer(self, 2, image_cache=image_cache, widths=[5,1,2,4,8])
