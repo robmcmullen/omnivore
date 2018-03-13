@@ -25,6 +25,22 @@ def ForceBetween(min, val, max):
     return val
 
 
+def NiceFontForPlatform():
+    point_size = 10
+    family = wx.DEFAULT
+    style = wx.NORMAL
+    weight = wx.NORMAL
+    underline = False
+    if wx.Platform == "__WXMAC__":
+        face_name = "Monaco"
+    elif wx.Platform == "__WXMSW__":
+        face_name = "Lucida Console"
+    else:
+        face_name = "monospace"
+    font = wx.Font(point_size, family, style, weight, underline, face_name)
+    return font
+
+
 class DrawTextImageCache(object):
     def __init__(self, use_cache=True):
         self.cache = {}
@@ -158,7 +174,7 @@ class TableViewParams(object):
         self.diff_text_color = (255, 0, 0)
         self.caret_pen = wx.Pen(self.unfocused_caret_color, 1, wx.SOLID)
 
-        self.text_font = self.NiceFontForPlatform()
+        self.text_font = NiceFontForPlatform()
         self.header_font = wx.Font(self.text_font).MakeBold()
 
         self.set_paint()
@@ -186,21 +202,6 @@ class TableViewParams(object):
 
     def calc_text_width(self, text):
         return self.text_font_char_width * len(text)
-
-    def NiceFontForPlatform(self):
-        point_size = 10
-        family = wx.DEFAULT
-        style = wx.NORMAL
-        weight = wx.NORMAL
-        underline = False
-        if wx.Platform == "__WXMAC__":
-            face_name = "Monaco"
-        elif wx.Platform == "__WXMSW__":
-            face_name = "Lucida Console"
-        else:
-            face_name = "monospace"
-        font = wx.Font(point_size, family, style, weight, underline, face_name)
-        return font
 
     def calc_image_cache(self, cache_cls):
         try:
@@ -401,8 +402,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         else:
             self.Bind(wx.EVT_ERASE_BACKGROUND, lambda evt: False)
 
-    def recalc_view(self):
-        self.calc_visible()
+    ##### properties
 
     @property
     def table(self):
@@ -439,92 +439,23 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         bot_row = top_row + self.fully_visible_rows - 1
         return top_row, left_col, bot_row, right_col
 
-    def pixel_pos_to_row_cell(self, x, y):
-        sx, sy = self.parent.GetViewStart()
-        row  = sy + int(y / self.cell_pixel_height)
-        cell = sx + int(x / self.cell_pixel_width)
-        return row, cell
+    ##### wxPython method overrides
 
-    def cell_to_col(self, cell):
-        cell = ForceBetween(0, cell, self.line_renderer.num_cells - 1)
-        return self.line_renderer.cell_to_col[cell]
 
-    def pixel_pos_to_row_col(self, x, y):
-        row, cell = self.pixel_pos_to_row_cell(x, y)
-        col = self.cell_to_col(cell)
-        return row, col
+    ##### object method overrides
 
-    def clamp_visible_row_cell(self, row, cell):
-        sx, sy = self.parent.GetViewStart()
-        row2 = ForceBetween(sy, row, sy + self.fully_visible_rows - 1)
-        cell2 = ForceBetween(sx, cell, sx + self.fully_visible_cells - 1)
-        # print("clamp visible: before=%d,%d after=%d,%d" % (row, cell, row2, cell2))
-        return row2, cell2
 
-    def clamp_allowable_row_cell(self, row, cell):
-        row2 = ForceBetween(0, row, self.table.num_rows - 1)
-        cell2 = ForceBetween(0, cell, self.line_renderer.num_cells - 1)
-        # print("clamp allowable: before=%d,%d after=%d,%d" % (row, cell, row2, cell2))
-        return row2, cell2
+    ##### initialization helpers
 
-    def ensure_visible(self, row, cell, flags):
-        sx, sy = self.parent.GetViewStart()
-        sy2 = ForceBetween(max(0, row - self.fully_visible_rows + 1), sy, row)
-        sx2 = ForceBetween(max(0, cell - self.fully_visible_cells + 1), sx, cell)
-        if sx == sx2 and sy == sy2:
-            # print("Already visible! Not moving")
-            return
-        # print("ensure_visible: before=%d,%d after=%d,%d" % (sy, sx, sy2, sx2))
-        if self.parent.automatic_refresh:
-            self.parent.move_viewport_origin((sy2, sx2))
-        else:
-            flags.source_control = self.parent
-            flags.viewport_origin = (sy2, sx2)
-            # print("Moving viewport origin to %d,%d from %s" % (sy2, sx2, flags.source_control))
 
-    def enforce_valid_caret(self, row, col):
-        # restrict row, col to grid boundaries first so we don't get e.g. cells
-        # from previous line if cell number is negative
-        if col >= self.line_renderer.num_cols:
-            col = self.line_renderer.num_cols - 1
-        elif col < 0:
-            col = 0
-        if row >= self.table.num_rows:
-            row = self.table.num_rows - 1
-        elif row < 0:
-            row = 0
+    ##### serialization
 
-        # now make sure we have a valid index to handle partial lines at the
-        # first or last row
-        index, _ = self.table.get_index_range(row, col)
-        if index < 0:
-            row = 0
-            if col < self.table.start_offset:
-                col = self.table.start_offset
-        elif index >= self.table.last_valid_index:
-            row = self.table.num_rows - 1
-            _, c2 = self.table.index_to_row_col(self.table.last_valid_index)
-            if col > c2:
-                col = c2 - 1
-        return row, col, index
+
+    ##### event handlers
 
     def on_size(self, evt):
         self.calc_visible()
         self.parent.calc_scrolling()
-
-    def calc_visible(self):
-        # For proper buffered painting, the visible_rows must include the
-        # (possibly) partially obscured last row.  fully_visible_rows
-        # indicates the number of rows without that last partially obscured
-        # row (if it exists).
-        w, h = self.GetClientSize().Get()
-        self.cell_pixel_height = self.line_renderer.h
-        self.cell_pixel_width = self.line_renderer.w
-        self.fully_visible_rows = int(h / self.cell_pixel_height)
-        self.fully_visible_cells = int(w / self.cell_pixel_width)
-        self.visible_rows = int((h + self.cell_pixel_height - 1) / self.cell_pixel_height)
-        self.visible_cells = int((w + self.cell_pixel_width - 1) / self.cell_pixel_width)
-        log.debug("fully visible: %d,%d including partial: %d,%d" % (self.fully_visible_rows, self.fully_visible_cells, self.visible_rows, self.visible_cells))
 
     def on_paint(self, evt):
         dc = wx.PaintDC(self)
@@ -572,19 +503,6 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         dc.DrawRectangle(px, py, last_x, ch)  # top
         dc.DrawRectangle(px, empty_y - ch, last_x, last_y)  # bottom
 
-
-    def can_scroll(self):
-        self.set_scroll_timer()
-        if time.time() >  self.next_scroll_time:
-            self.next_scroll_time = time.time() + (self.scroll_delay / 1000.0)
-            return True
-        else:
-            return False
-
-    def set_scroll_timer(self):
-        scroll_log.debug("starting timer")
-        self.scroll_timer.Start(self.scroll_delay, True)
-
     def on_timer(self, evt):
         screenX, screenY = wx.GetMousePosition()
         x, y = self.ScreenToClient((screenX, screenY))
@@ -598,13 +516,6 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         if not self.parent.automatic_refresh:
             if last_row != self.current_caret_row or last_col != self.current_caret_col:
                 self.parent.handle_select_motion(evt, self.current_caret_row, self.current_caret_col, flags)
-
-    def get_row_cell_from_event(self, evt):
-        row, cell = self.pixel_pos_to_row_cell(evt.GetX(), evt.GetY())
-        return row, cell
-
-    def is_inside(self, row, col):
-        return row >= 0 and row < self.table.num_rows and col >= 0 and col < self.line_renderer.num_cols
 
     def on_left_down(self, evt):
         if not self.HasFocus():
@@ -634,11 +545,6 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
             self.parent.handle_motion_update_status(evt, input_row, col)
         self.last_mouse_event = (input_row, input_cell)
 
-    def handle_user_caret(self, input_row, input_cell, flags):
-        row, cell, offscreen = self.calc_desired_cell(input_row, input_cell)
-        if not offscreen or self.can_scroll():
-            self.process_motion_scroll(row, cell, flags)
-
     def on_left_up(self, evt):
         self.scroll_timer.Stop()
         if not self.HasCapture():
@@ -646,6 +552,30 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         self.ReleaseMouse()
         self.event_row = self.event_col = self.event_modifiers = None
         self.parent.handle_select_end(evt, self.current_caret_row, self.current_caret_col)
+
+    ##### row/cell/col info
+
+    def pixel_pos_to_row_cell(self, x, y):
+        sx, sy = self.parent.GetViewStart()
+        row  = sy + int(y / self.cell_pixel_height)
+        cell = sx + int(x / self.cell_pixel_width)
+        return row, cell
+
+    def cell_to_col(self, cell):
+        cell = ForceBetween(0, cell, self.line_renderer.num_cells - 1)
+        return self.line_renderer.cell_to_col[cell]
+
+    def pixel_pos_to_row_col(self, x, y):
+        row, cell = self.pixel_pos_to_row_cell(x, y)
+        col = self.cell_to_col(cell)
+        return row, col
+
+    def get_row_cell_from_event(self, evt):
+        row, cell = self.pixel_pos_to_row_cell(evt.GetX(), evt.GetY())
+        return row, cell
+
+    def is_inside(self, row, col):
+        return row >= 0 and row < self.table.num_rows and col >= 0 and col < self.line_renderer.num_cols
 
     def calc_desired_cell(self, row, cell):
         top_row, left_cell, bot_row, right_cell = self.fully_visible_area
@@ -712,6 +642,107 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         row, cell = self.get_row_cell_from_event(evt)
         return self.calc_desired_cell(row, cell)
 
+    ##### row/cell/col utilities
+
+    def clamp_visible_row_cell(self, row, cell):
+        sx, sy = self.parent.GetViewStart()
+        row2 = ForceBetween(sy, row, sy + self.fully_visible_rows - 1)
+        cell2 = ForceBetween(sx, cell, sx + self.fully_visible_cells - 1)
+        # print("clamp visible: before=%d,%d after=%d,%d" % (row, cell, row2, cell2))
+        return row2, cell2
+
+    def clamp_allowable_row_cell(self, row, cell):
+        row2 = ForceBetween(0, row, self.table.num_rows - 1)
+        cell2 = ForceBetween(0, cell, self.line_renderer.num_cells - 1)
+        # print("clamp allowable: before=%d,%d after=%d,%d" % (row, cell, row2, cell2))
+        return row2, cell2
+
+    ##### redrawing
+
+    def recalc_view(self):
+        self.calc_visible()
+
+    def calc_visible(self):
+        # For proper buffered painting, the visible_rows must include the
+        # (possibly) partially obscured last row.  fully_visible_rows
+        # indicates the number of rows without that last partially obscured
+        # row (if it exists).
+        w, h = self.GetClientSize().Get()
+        self.cell_pixel_height = self.line_renderer.h
+        self.cell_pixel_width = self.line_renderer.w
+        self.fully_visible_rows = int(h / self.cell_pixel_height)
+        self.fully_visible_cells = int(w / self.cell_pixel_width)
+        self.visible_rows = int((h + self.cell_pixel_height - 1) / self.cell_pixel_height)
+        self.visible_cells = int((w + self.cell_pixel_width - 1) / self.cell_pixel_width)
+        log.debug("fully visible: %d,%d including partial: %d,%d" % (self.fully_visible_rows, self.fully_visible_cells, self.visible_rows, self.visible_cells))
+
+    ##### caret
+
+    def handle_user_caret(self, input_row, input_cell, flags):
+        row, cell, offscreen = self.calc_desired_cell(input_row, input_cell)
+        if not offscreen or self.can_scroll():
+            self.process_motion_scroll(row, cell, flags)
+
+    def update_caret_from_mouse(self, row, cell, flags):
+        self.ensure_visible(row, cell, flags)
+        col = self.cell_to_col(cell)
+        self.current_caret_row, self.current_caret_col = row, col
+
+    def enforce_valid_caret(self, row, col):
+        # restrict row, col to grid boundaries first so we don't get e.g. cells
+        # from previous line if cell number is negative
+        if col >= self.line_renderer.num_cols:
+            col = self.line_renderer.num_cols - 1
+        elif col < 0:
+            col = 0
+        if row >= self.table.num_rows:
+            row = self.table.num_rows - 1
+        elif row < 0:
+            row = 0
+
+        # now make sure we have a valid index to handle partial lines at the
+        # first or last row
+        index, _ = self.table.get_index_range(row, col)
+        if index < 0:
+            row = 0
+            if col < self.table.start_offset:
+                col = self.table.start_offset
+        elif index >= self.table.last_valid_index:
+            row = self.table.num_rows - 1
+            _, c2 = self.table.index_to_row_col(self.table.last_valid_index)
+            if col > c2:
+                col = c2 - 1
+        return row, col, index
+
+    ##### scrolling
+
+    def can_scroll(self):
+        self.set_scroll_timer()
+        if time.time() >  self.next_scroll_time:
+            self.next_scroll_time = time.time() + (self.scroll_delay / 1000.0)
+            return True
+        else:
+            return False
+
+    def set_scroll_timer(self):
+        scroll_log.debug("starting timer")
+        self.scroll_timer.Start(self.scroll_delay, True)
+
+    def ensure_visible(self, row, cell, flags):
+        sx, sy = self.parent.GetViewStart()
+        sy2 = ForceBetween(max(0, row - self.fully_visible_rows + 1), sy, row)
+        sx2 = ForceBetween(max(0, cell - self.fully_visible_cells + 1), sx, cell)
+        if sx == sx2 and sy == sy2:
+            # print("Already visible! Not moving")
+            return
+        # print("ensure_visible: before=%d,%d after=%d,%d" % (sy, sx, sy2, sx2))
+        if self.parent.automatic_refresh:
+            self.parent.move_viewport_origin((sy2, sx2))
+        else:
+            flags.source_control = self.parent
+            flags.viewport_origin = (sy2, sx2)
+            # print("Moving viewport origin to %d,%d from %s" % (sy2, sx2, flags.source_control))
+
     def process_motion_scroll(self, row, cell, flags):
         self.ensure_visible(row, cell, flags)
         col = self.cell_to_col(cell)
@@ -719,11 +750,6 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         self.parent.caret_handler.move_current_caret_to(index)
         if self.parent.automatic_refresh:
             self.parent.Refresh()
-        self.current_caret_row, self.current_caret_col = row, col
-
-    def update_caret_from_mouse(self, row, cell, flags):
-        self.ensure_visible(row, cell, flags)
-        col = self.cell_to_col(cell)
         self.current_caret_row, self.current_caret_col = row, col
 
 
@@ -1016,7 +1042,6 @@ class CompactGrid(wx.ScrolledWindow):
         # same time without any double refreshes
         self.automatic_refresh = True
 
-        self.update_dependents = self.update_dependents_null
         if table is None:
             table = self.calc_default_table()
         self.table = table
@@ -1037,12 +1062,35 @@ class CompactGrid(wx.ScrolledWindow):
         self.main.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
         self.top.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
         self.left.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
-        self.update_dependents = self.update_dependents_post_init
+
+    ##### wxPython method overrides
+
+    def DoGetBestSize(self):
+        """ Base class virtual method for sizer use to get the best size
+        """
+        left_width, _ = self.calc_header_sizes()
+        width = self.main.line_renderer.vw + left_width
+        height = -1
+
+        # add in scrollbar width to allow for it if the grid doesn't need it at
+        # the moment
+        width += wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X) + 1
+        best = wx.Size(width, height)
+
+        # Cache the best size so it doesn't need to be calculated again,
+        # at least until some properties of the window change
+        self.CacheBestSize(best)
+
+        return best
+
+    ##### object method overrides
 
     def __repr__(self):
         c, r = self.GetViewStart()
         vx, vy = self.main.GetVirtualSize()
         return "%s view_start=%d,%d size=%d,%d vsize=%d,%d" % (self.__class__.__name__, r, c, self.table.num_rows, self.line_renderer.num_cells, vy, vx)
+
+    ##### initialization helpers
 
     def set_view_param_defaults(self):
         self.scroll_delay = 30  # milliseconds
@@ -1061,6 +1109,28 @@ class CompactGrid(wx.ScrolledWindow):
 
     def calc_main_grid(self):
         return NumpyGridDrawControl(self)
+
+    def calc_header_sizes(self):
+        w, h = self.col_label_renderer.calc_label_size(self)
+        top_height = h + self.view_params.col_label_border_width
+        w = self.main.table.calc_row_label_width(self.view_params)
+        left_width = w + self.view_params.row_label_border_width
+        self.top.pixel_height = top_height
+        self.left.pixel_width = left_width
+        return left_width, top_height
+
+    def calc_scrolling(self):
+        lr = self.main.line_renderer
+        # left_width = self.left.pixel_width if self.want_row_header else 0
+        # top_height = self.top.pixel_height if self.want_col_header else 0
+        left_width = self.left.pixel_width
+        top_height = self.top.pixel_height
+        main_width, main_height = lr.virtual_width, self.main.table.num_rows * lr.h
+        self.main.SetScrollbars(lr.w, lr.h, lr.num_cells, self.main.table.num_rows, 0, 0)
+        self.top.SetVirtualSize(wx.Size(main_width, top_height))
+        self.left.SetVirtualSize(wx.Size(left_width, main_height))
+        #self.corner.SetMinSize(left_width, top_height)
+        self.SetScrollRate(lr.w, lr.h)
 
     def map_events(self):
         self.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
@@ -1087,28 +1157,22 @@ class CompactGrid(wx.ScrolledWindow):
         self.main.Bind(wx.EVT_LEFT_UP, self.main.on_left_up)
         self.main.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
 
-    def recalc_view(self, *args, **kwargs):
-        # if view_params is not None:
-        #     self.view_params = view_params
-        # if table is not None:
-        #     self.table = table
-        # if line_renderer is not None:
-        #     self.line_renderer = line_renderer
-        self.main.recalc_view(*args, **kwargs)
-        self.calc_header_sizes()
-        self.calc_scrolling()
-        self.on_size(None)
-        self.left.recalc_view()
-        self.top.recalc_view()
+    ##### serialization
 
-    def refresh_view(self, *args, **kwargs):
-        self.Refresh()
-        self.top.Refresh()
-        self.left.Refresh()
+    def calc_view_params(self):
+        col, row = self.GetViewStart()
+        return [row, col]  # viewport origin takes row, col!
 
-    def refresh_headers(self):
-        self.top.Refresh()
-        self.left.Refresh()
+    def restore_view_params(self, data):
+        log.debug("restoring viewport of %s to: %s" % (self, str(data)))
+        self.move_viewport_origin(data)
+        log.debug("restored viewport of %s to: %s (size: %s)" % (self, str(self.GetViewStart()), str(self.main.GetVirtualSize())))
+
+    def use_default_view_params(self):
+        self.move_viewport_origin((0, 0))
+        log.debug("restored viewport to default: %s" % str(self.GetViewStart()))
+
+    ##### event handlers
 
     def on_size(self, evt):
         w, h = self.GetClientSize()
@@ -1125,57 +1189,6 @@ class CompactGrid(wx.ScrolledWindow):
         self.left.SetSize(0, y, x, h - y)
         self.top.Show(y > 0)
         self.top.SetSize(x, 0, w - x, y)
-
-    def DoGetBestSize(self):
-        """ Base class virtual method for sizer use to get the best size
-        """
-        left_width, _ = self.calc_header_sizes()
-        width = self.main.line_renderer.vw + left_width
-        height = -1
-
-        # add in scrollbar width to allow for it if the grid doesn't need it at
-        # the moment
-        width += wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X) + 1
-        best = wx.Size(width, height)
-
-        # Cache the best size so it doesn't need to be calculated again,
-        # at least until some properties of the window change
-        self.CacheBestSize(best)
-
-        return best
-
-    def process_visibility_change(self):
-        focused_before = self.FindFocus()
-        self.on_size(None)
-        focused_after = self.FindFocus()
-        # print("Focused: before=%s after=%s" % (focused_before, focused_after))
-        if focused_before != focused_after:
-            wx.CallAfter(focused_before.SetFocus)
-
-    def calc_header_sizes(self):
-        w, h = self.col_label_renderer.calc_label_size(self)
-        top_height = h + self.view_params.col_label_border_width
-        w = self.main.table.calc_row_label_width(self.view_params)
-        left_width = w + self.view_params.row_label_border_width
-        self.top.pixel_height = top_height
-        self.left.pixel_width = left_width
-        return left_width, top_height
-
-    def calc_scrolling(self):
-        lr = self.main.line_renderer
-        # left_width = self.left.pixel_width if self.want_row_header else 0
-        # top_height = self.top.pixel_height if self.want_col_header else 0
-        left_width = self.left.pixel_width
-        top_height = self.top.pixel_height
-        main_width, main_height = lr.virtual_width, self.main.table.num_rows * lr.h
-        self.main.SetScrollbars(lr.w, lr.h, lr.num_cells, self.main.table.num_rows, 0, 0)
-        self.top.SetVirtualSize(wx.Size(main_width, top_height))
-        self.left.SetVirtualSize(wx.Size(left_width, main_height))
-        #self.corner.SetMinSize(left_width, top_height)
-        self.SetScrollRate(lr.w, lr.h)
-
-    def create_mouse_event_flags(self):
-        return None
 
     def on_scroll_window(self, evt):
         """
@@ -1200,34 +1213,6 @@ class CompactGrid(wx.ScrolledWindow):
         self.Refresh()
         evt.Skip()
 
-    def calc_view_params(self):
-        col, row = self.GetViewStart()
-        return [row, col]  # viewport origin takes row, col!
-
-    def restore_view_params(self, data):
-        log.debug("restoring viewport of %s to: %s" % (self, str(data)))
-        self.move_viewport_origin(data)
-        log.debug("restored viewport of %s to: %s (size: %s)" % (self, str(self.GetViewStart()), str(self.main.GetVirtualSize())))
-
-    def use_default_view_params(self):
-        self.move_viewport_origin((0, 0))
-        log.debug("restored viewport to default: %s" % str(self.GetViewStart()))
-
-    def move_viewport_origin(self, row_col_tuple):
-        row, col = row_col_tuple
-        sx, sy = self.GetViewStart()
-        if sx == col and sy == row:
-            log.debug("viewport: already at %d,%d" % (row, col))
-            # already there!
-            return
-        self.main.Scroll(col, row)
-        self.left.Scroll(0, row)
-        self.top.Scroll(col, 0)
-        self.Scroll(col, row)
-        log.debug("viewport: %d,%d" % (row, col))
-        # if self.automatic_refresh:
-        #     self.Refresh()
-
     def on_mouse_wheel(self, evt):
         print("on_mouse_wheel")
         w = evt.GetWheelRotation()
@@ -1246,7 +1231,80 @@ class CompactGrid(wx.ScrolledWindow):
         # for subclasses
         evt.Skip()
 
+    def on_char(self, evt):
+        action = {}
+        action[ord('c')] = self.handle_toggle_col_header
+        action[ord('r')] = self.handle_toggle_row_header
+        action[wx.WXK_DOWN]  = self.handle_char_move_down
+        action[wx.WXK_UP]    = self.handle_char_move_up
+        action[wx.WXK_LEFT]  = self.handle_char_move_left
+        action[wx.WXK_RIGHT] = self.handle_char_move_right
+        action[wx.WXK_PAGEDOWN]  = self.handle_char_move_page_down
+        action[wx.WXK_PAGEUP] = self.handle_char_move_page_up
+        action[wx.WXK_HOME]  = self.handle_char_move_start_of_line
+        action[wx.WXK_END]   = self.handle_char_move_end_of_line
+        key = evt.GetKeyCode()
+        print("Trying %d" % key)
+        try:
+            action[key](evt, None)
+            self.caret_handler.validate_carets()
+            #self.UpdateView()
+        except KeyError:
+            print("Error! %d not recognized" % key)
+            evt.Skip()
+
+    ##### redrawing
+
+    def recalc_view(self, *args, **kwargs):
+        # if view_params is not None:
+        #     self.view_params = view_params
+        # if table is not None:
+        #     self.table = table
+        # if line_renderer is not None:
+        #     self.line_renderer = line_renderer
+        self.main.recalc_view(*args, **kwargs)
+        self.calc_header_sizes()
+        self.calc_scrolling()
+        self.on_size(None)
+        self.left.recalc_view()
+        self.top.recalc_view()
+
+    def refresh_view(self, *args, **kwargs):
+        self.Refresh()
+        self.top.Refresh()
+        self.left.Refresh()
+
+    def refresh_headers(self):
+        self.top.Refresh()
+        self.left.Refresh()
+
+    def process_visibility_change(self):
+        focused_before = self.FindFocus()
+        self.on_size(None)
+        focused_after = self.FindFocus()
+        # print("Focused: before=%s after=%s" % (focused_before, focused_after))
+        if focused_before != focused_after:
+            wx.CallAfter(focused_before.SetFocus)
+
+    def move_viewport_origin(self, row_col_tuple):
+        row, col = row_col_tuple
+        sx, sy = self.GetViewStart()
+        if sx == col and sy == row:
+            log.debug("viewport: already at %d,%d" % (row, col))
+            # already there!
+            return
+        self.main.Scroll(col, row)
+        self.left.Scroll(0, row)
+        self.top.Scroll(col, 0)
+        self.Scroll(col, row)
+        log.debug("viewport: %d,%d" % (row, col))
+        # if self.automatic_refresh:
+        #     self.Refresh()
+
     ##### places for subclasses to process stuff (should really use events)
+
+    def create_mouse_event_flags(self):
+        return None
 
     def handle_on_motion(self, evt, row, col):
         pass
@@ -1278,16 +1336,6 @@ class CompactGrid(wx.ScrolledWindow):
             zoom = self.min_zoom
         self.zoom = zoom
 
-    def update_dependents_null(self):
-        pass
-
-    def update_dependents_post_init(self):
-        self.top.UpdateView()
-        self.left.UpdateView()
-
-    def set_data(self, data, *args, **kwargs):
-        self.main.set_data(data, *args, **kwargs)
-
     def set_caret_index(self, rel_pos, flags, refresh=True):
         r, c = self.table.index_to_row_col(rel_pos)
         dummy_flags = self.create_mouse_event_flags()
@@ -1304,28 +1352,6 @@ class CompactGrid(wx.ScrolledWindow):
             self.line_renderer.draw_caret(self, dc, r, c)
 
     ##### Keyboard movement implementations
-
-    def on_char(self, evt):
-        action = {}
-        action[ord('c')] = self.handle_toggle_col_header
-        action[ord('r')] = self.handle_toggle_row_header
-        action[wx.WXK_DOWN]  = self.handle_char_move_down
-        action[wx.WXK_UP]    = self.handle_char_move_up
-        action[wx.WXK_LEFT]  = self.handle_char_move_left
-        action[wx.WXK_RIGHT] = self.handle_char_move_right
-        action[wx.WXK_PAGEDOWN]  = self.handle_char_move_page_down
-        action[wx.WXK_PAGEUP] = self.handle_char_move_page_up
-        action[wx.WXK_HOME]  = self.handle_char_move_start_of_line
-        action[wx.WXK_END]   = self.handle_char_move_end_of_line
-        key = evt.GetKeyCode()
-        print("Trying %d" % key)
-        try:
-            action[key](evt, None)
-            self.caret_handler.validate_carets()
-            #self.UpdateView()
-        except KeyError:
-            print("Error! %d not recognized" % key)
-            evt.Skip()
 
     def handle_toggle_col_header(self, evt, flags):
         self.want_col_header = not self.want_col_header
