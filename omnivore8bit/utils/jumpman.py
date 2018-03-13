@@ -358,6 +358,24 @@ class JumpmanDrawObject(object):
     def is_offscreen(self):
         return not self.bounds.is_inside(self.screen_bounds)
 
+    def clip(self):
+        x = int(self.x) if self.x < 160 else int(self.x - 256)
+        y = int(self.y)
+        visible_count = 0
+        for i in range(self.count):
+            if x < self.screen_bounds.xmin or y < self.screen_bounds.ymin:
+                # from the left, find the first unit that's fully on screen
+                self.x += self.dx
+                self.y += self.dy
+            elif x + self.default_dx - 1 > self.screen_bounds.xmax or y + self.default_dy - 1 > self.screen_bounds.ymax:
+                # at the right, if we go offscreen, we're done.
+                break
+            else:
+                visible_count += 1
+            x += self.dx
+            y += self.dy
+        self.count = visible_count
+
     def flip_vertical(self, bounds):
         """Reflect the object vertically (i.e. top to bottom). The X
         coordinates stay the same; the Y coordinates are flipped within the
@@ -570,7 +588,23 @@ class LevelDef(object):
         ropeladder_data[12:12 + len(d)] = d
         return ropeladder_data
 
+    def clip_objects(self, objects):
+        visible = []
+        for obj in objects:
+            orig_count = obj.count
+            obj.clip()
+            if obj.count > 0:
+                if orig_count > obj.count:
+                    log.debug("clip_objects: partially visible: %s" % obj)
+                else:
+                    log.debug("clip_objects: fully visible: %s" % obj)
+                visible.append(obj)
+            else:
+                log.debug("clip_objects: fully clipped")
+        return visible
+
     def process_objects(self, objects, hx, hy):
+        objects = self.clip_objects(objects)
         main_level_data = self.get_painting_table(objects)
 
         # process any object characteristics
