@@ -20,7 +20,7 @@ from . import SegmentViewer
 from . import actions as va
 from . import jumpman_mouse_modes as jm
 from . import jumpman_commands as jc
-from .bitmap2 import BitmapGridControl, BitmapViewer
+from .bitmap2 import BitmapGridControl, BitmapViewer, BitmapLineRenderer
 
 import logging
 log = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ class JumpmanPlayfieldRenderer(BaseRenderer):
     pixels_per_byte = 1
     bitplanes = 1
 
-    def get_image(self, segment_viewer, bytes_per_row, nr, count, bytes, style):
+    def get_image(self, segment_viewer, bytes_per_row, nr, count, pixels, style):
         normal = style == 0
         highlight = (style & selected_bit_mask) == selected_bit_mask
         comment = (style & comment_bit_mask) == comment_bit_mask
@@ -51,7 +51,7 @@ class JumpmanPlayfieldRenderer(BaseRenderer):
         color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(segment_viewer, range(32))
         bitimage = np.empty((nr * bytes_per_row, 3), dtype=np.uint8)
         for i in range(32):
-            color_is_set = (bytes == i)
+            color_is_set = (pixels == i)
             bitimage[color_is_set & normal] = color_registers[i]
             bitimage[color_is_set & comment] = c_colors[i]
             bitimage[color_is_set & match] = m_colors[i]
@@ -59,6 +59,43 @@ class JumpmanPlayfieldRenderer(BaseRenderer):
             bitimage[color_is_set & highlight] = h_colors[i]
         bitimage[count:,:] = segment_viewer.preferences.empty_background_color[0:3]
         return bitimage.reshape((nr, bytes_per_row, 3))
+
+
+class JumpmanFrameRenderer(BitmapLineRenderer):
+    def draw_grid(self, grid_control, dc, first_row, visible_rows, first_cell, visible_cells):
+        first_col = self.cell_to_col[first_cell]
+        last_cell = min(first_cell + visible_cells, self.num_cells)
+        last_col = self.cell_to_col[last_cell - 1] + 1
+        last_row = min(first_row + visible_rows, grid_control.table.antic_lines)
+        log.debug("draw_grid: rows:%d,%d, cols:%d,%d" % (first_row, last_row, first_col, last_col))
+
+        ul_rect = self.col_to_rect(first_row, first_col)
+        lr_rect = self.col_to_rect(last_row - 1, last_col - 1)
+        frame_rect = wx.Rect(ul_rect.x, ul_rect.y, lr_rect.x - ul_rect.x + lr_rect.width, lr_rect.y - ul_rect.y + lr_rect.height)
+
+        bytes_per_row = grid_control.table.items_per_row
+        first_index = first_row * bytes_per_row
+        last_index = last_row * bytes_per_row
+        t = grid_control.table
+        data = t.data[first_index:last_index]
+        style = t.style[first_index:last_index]
+        log.debug("draw_grid: first_index:%d last_index:%d" % (first_index, last_index))
+
+        array = grid_control.bitmap_renderer.get_image(grid_control.segment_viewer, bytes_per_row, last_row - first_row, last_index - first_index, data, style)
+        width = array.shape[1]
+        height = array.shape[0]
+        log.debug("Calculated image: %dx%d" % (width, height))
+        if width > 0 and height > 0:
+            # image returned will have the correct number of rows but will be
+            # 160 pixels wide; need to crop to visible columns
+            cropped = array[:,first_col:last_col,:]
+            array = intscale(cropped, grid_control.zoom_h, grid_control.zoom_w)
+            #print("bitmap: %d,%d,3 after scaling: %s" % (height, width, str(array.shape)))
+            image = wx.Image(array.shape[1], array.shape[0])
+            image.SetData(array.tostring())
+            bmp = wx.Bitmap(image)
+            dc.SetClippingRegion(frame_rect)
+            dc.DrawBitmap(bmp, frame_rect.x, frame_rect.y)
 
 
 class JumpmanMachine(Machine):
@@ -313,6 +350,11 @@ class JumpmanGridControl(BitmapGridControl):
         self.zoom = 4
         self.want_col_header = False
         self.want_row_header = False
+
+    def calc_line_renderer(self):
+        if hasattr(self, 'segment_viewer'):
+            return JumpmanFrameRenderer(self, self.segment_viewer)
+        return SegmentGridControl.calc_line_renderer(self)
 
     def recalc_view_extra_setup(self):
         self.table.init_level_builder(self.segment_viewer)
