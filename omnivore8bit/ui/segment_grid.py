@@ -92,6 +92,9 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
 
     ##### Caret handling
 
+    def stop_scroll_timer(self):
+        self.main.scroll_timer.Stop()
+
     def keep_index_on_screen(self, index):
         row, col = self.table.index_to_row_col(index)
         self.main.ensure_visible(row, col)

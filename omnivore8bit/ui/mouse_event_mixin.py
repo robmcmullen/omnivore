@@ -126,6 +126,7 @@ class MouseEventMixin(SelectionHandler):
         evt.Skip()
 
     def on_left_up(self, evt):
+        self.stop_scroll_timer()
         if not self.has_capture():
             return
         self.release_mouse()
@@ -174,7 +175,12 @@ class MouseEventMixin(SelectionHandler):
         mode = self.get_effective_tool_mode(evt)
         mode.process_focus_lost(evt)
 
-    ##### 
+    ##### autoscrolling
+
+    def stop_scroll_timer(self):
+        pass
+
+    ##### command processor
 
     def create_mouse_event_flags(self):
         flags = DisplayFlags(self)
