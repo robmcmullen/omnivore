@@ -425,6 +425,8 @@ class JumpmanViewer(BitmapViewer):
 
     zoom_text = "bitmap zoom factor"
 
+    has_metadata_only = True
+
     ##### Traits
 
     peanut_harvest_diff = Int(-1)
