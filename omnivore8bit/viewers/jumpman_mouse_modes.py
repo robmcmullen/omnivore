@@ -262,8 +262,9 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.display_coords(evt)
 
     def process_mouse_motion_down(self, evt):
-        self.move_pick(evt)
-        self.control.refresh_view()
+        if self.objects:
+            self.move_pick(evt)
+            self.control.refresh_view()
         self.display_coords(evt)
 
     def process_left_up(self, evt):
