@@ -124,7 +124,11 @@ class MultiSash(wx.Window):
         try:
             layout = d['multisash']
         except TypeError:
-            d = json.loads(d)
+            try:
+                d = json.loads(d)
+            except ValueError, e:
+                log.error("Error loading layout: %s" % e.message)
+                return
             layout = d['multisash']
         old = self.child
         self.child = MultiSplit(self,self,wx.Point(0,0),self.GetSize())
