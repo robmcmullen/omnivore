@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 
 class BaseInfoViewer(SegmentViewer):
-    has_metadata_only = True
+    has_caret = False
 
 
 CommentItem = namedtuple('CommentItem', ('segment', 'index', 'label', 'font', 'type'))

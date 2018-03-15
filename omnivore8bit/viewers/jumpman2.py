@@ -425,7 +425,7 @@ class JumpmanViewer(BitmapViewer):
 
     zoom_text = "bitmap zoom factor"
 
-    has_metadata_only = True
+    has_caret = False
 
     ##### Traits
 

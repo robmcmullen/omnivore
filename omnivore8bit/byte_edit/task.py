@@ -403,10 +403,10 @@ class ByteEditTask(FrameworkTask):
         data_actions = []
         info_actions = []
         for v in self.known_viewers:
-            if v.has_metadata_only:
-                info_actions.append(ba.AddViewerAction(viewer=v))
-            else:
+            if v.has_caret:
                 data_actions.append(ba.AddViewerAction(viewer=v))
+            else:
+                info_actions.append(ba.AddViewerAction(viewer=v))
         return [
             SMenu(
                 Group(

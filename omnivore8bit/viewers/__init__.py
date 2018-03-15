@@ -61,7 +61,7 @@ class SegmentViewer(HasTraits):
 
     zoom_text = "viewer zoom factor"
 
-    has_metadata_only = False
+    has_caret = True
 
     valid_mouse_modes = []  # toolbar description
 
@@ -273,14 +273,14 @@ class SegmentViewer(HasTraits):
 
     def sync_caret(self, flags):
         log.debug("sync_caret: syncing %s" % self.pretty_name)
-        if self.has_metadata_only:
-            flags.refreshed_as_side_effect.add(self.control)
-        else:
+        if self.has_caret:
             self.control.set_caret_index(self.linked_base.carets.current.index, flags)
+        else:
+            flags.refreshed_as_side_effect.add(self.control)
 
     def sync_caret_to_index(self, index, refresh=True):
         log.debug("sync_caret_to_index: syncing %s" % self.pretty_name)
-        if not self.has_metadata_only:
+        if self.has_caret:
             self.linked_base.carets.force_single_caret(index)
             flags = self.control.create_mouse_event_flags()
             self.linked_base.sync_caret_event = flags
