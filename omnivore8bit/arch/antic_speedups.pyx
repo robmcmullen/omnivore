@@ -54,14 +54,14 @@ def get_numpy_memory_map_image(segment_viewer, np.ndarray[np.uint8_t, ndim=2] by
 
     return array
 
+
+# Fast font rendering. As an optimization, only renders complete rectangles.
+# The first and last row may be partial depending on the start offset of the
+# segment, but these now have to be rendered separately in their own (single
+# row) rectangle
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def get_numpy_font_map_image(segment_viewer, antic_font, np.ndarray[np.uint8_t, ndim=2] bytes, np.ndarray[np.uint8_t, ndim=2] style, int start_byte, int end_byte, int bytes_per_row, int num_rows, int start_col, int num_cols):
-    cdef int num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) // bytes_per_row
-    cdef np.uint8_t bgr = segment_viewer.preferences.background_color[0]
-    cdef np.uint8_t bgg = segment_viewer.preferences.background_color[1]
-    cdef np.uint8_t bgb = segment_viewer.preferences.background_color[2]
-    
     cdef int char_w = antic_font.char_w
     cdef int char_h = antic_font.char_h
     cdef int end_col = min(bytes_per_row, start_col + num_cols)
@@ -71,7 +71,6 @@ def get_numpy_font_map_image(segment_viewer, antic_font, np.ndarray[np.uint8_t, 
     cdef np.uint8_t[:,:,:] fast_array = array
 
     cdef int y = 0
-    cdef int e = start_byte
     cdef int x, i, j
     cdef np.ndarray[np.uint8_t, ndim=4] f = antic_font.normal_font
     cdef np.uint8_t[:,:,:,:] fast_f = f
@@ -88,25 +87,19 @@ def get_numpy_font_map_image(segment_viewer, antic_font, np.ndarray[np.uint8_t, 
     for j in range(num_rows):
         x = 0
         for i in range(start_col, start_col + num_cols):
-            if e + i >= end_byte or i >= end_col:
-                fast_array[y:y+char_h,x:x+char_w,0] = bgr
-                fast_array[y:y+char_h,x:x+char_w,1] = bgg
-                fast_array[y:y+char_h,x:x+char_w,2] = bgb
+            c = mapping[bytes[j, i]]
+            s = style[j, i]
+            if s & 0x80:
+                fast_array[y:y+char_h,x:x+char_w,:] = fast_fh[c]
+            elif s & 0x20:
+                fast_array[y:y+char_h,x:x+char_w,:] = fast_fm[c]
+            elif s & 0x40:
+                fast_array[y:y+char_h,x:x+char_w,:] = fast_fc[c]
+            elif s & 0x07:
+                fast_array[y:y+char_h,x:x+char_w,:] = fast_fd[c]
             else:
-                c = mapping[bytes[j, i]]
-                s = style[j, i]
-                if s & 0x80:
-                    fast_array[y:y+char_h,x:x+char_w,:] = fast_fh[c]
-                elif s & 0x20:
-                    fast_array[y:y+char_h,x:x+char_w,:] = fast_fm[c]
-                elif s & 0x40:
-                    fast_array[y:y+char_h,x:x+char_w,:] = fast_fc[c]
-                elif s & 0x07:
-                    fast_array[y:y+char_h,x:x+char_w,:] = fast_fd[c]
-                else:
-                    fast_array[y:y+char_h,x:x+char_w,:] = fast_f[c]
+                fast_array[y:y+char_h,x:x+char_w,:] = fast_f[c]
             x += char_w
         y += char_h
-        e += bytes_per_row
 
     return array
