@@ -400,28 +400,31 @@ class ByteEditTask(FrameworkTask):
             ]
 
     def get_actions_Menu_View_ConfigGroup(self):
-        data_actions = []
-        info_actions = []
+        category_actions = {}
         for v in self.known_viewers:
-            if v.has_caret:
-                data_actions.append(ba.AddViewerAction(viewer=v))
-            else:
-                info_actions.append(ba.AddViewerAction(viewer=v))
-        return [
-            SMenu(
-                Group(
-                    *data_actions,
-                    id="a1", separator=True),
-                id='ViewerChoiceSubmenu1', separator=True, name="Add Data Viewer"),
-            SMenu(
-                Group(
-                    *info_actions,
-                    id="a1", separator=True),
-                id='ViewerChoiceSubmenu2', separator=False, name="Add Info Pane"),
+            cat = v.viewer_category
+            if cat not in category_actions:
+                category_actions[cat] = []
+            category_actions[cat].append(ba.AddViewerAction(viewer=v))
+        submenus = []
+        sid = 1
+        first = True
+        for cat in sorted(category_actions.keys()):
+            submenus.append(
+                SMenu(
+                    Group(
+                        *category_actions[cat],
+                        id="a%d" % sid, separator=True),
+                    id='ViewerChoiceSubmenu%d' % sid, separator=first, name="Add %s Viewer" % cat)
+                )
+            sid += 1
+            first = False
+        submenus.extend([
             Separator(),
             ba.ViewDiffHighlightAction(),
             va.TextFontAction(),
-            ]
+            ])
+        return submenus
 
     def get_actions_Menu_View_PredefinedGroup(self):
         actions = []

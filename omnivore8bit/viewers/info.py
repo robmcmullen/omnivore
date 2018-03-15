@@ -16,6 +16,8 @@ log = logging.getLogger(__name__)
 
 
 class BaseInfoViewer(SegmentViewer):
+    viewer_category = "Info"
+
     has_caret = False
 
 

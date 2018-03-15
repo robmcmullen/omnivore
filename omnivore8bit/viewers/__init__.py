@@ -37,6 +37,8 @@ class SegmentViewer(HasTraits):
 
     pretty_name = "_base_"
 
+    viewer_category = "Data"
+
     control_cls = SegmentGridControl  # override in subclass
 
     has_editable_bytes = True  # directly user-editable bytes
