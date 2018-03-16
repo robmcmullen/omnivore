@@ -125,11 +125,10 @@ class PixelList(object):
     # ANTIC background color is 8
     color_map = {0:8, 1:4, 2:5, 3:6, 4:0}
 
-    def __init__(self, codes, x_shift=0, y_shift=0):
+    def __init__(self, codes, relative_origin):
         self.pixel_list = self.calc_pixel_list(codes)
         self.generate_pixel_array(self.pixel_list)
-        self.x_shift = x_shift
-        self.y_shift = y_shift
+        self.x_shift, self.y_shift = relative_origin
 
     def calc_pixel_list(self, codes):
         log.debug("generating pixel list from codes: %s" % str(codes))
@@ -210,6 +209,7 @@ class JumpmanDrawObject(object):
     sort_order = 0
     valid_x_mask = 0xff
     drawing_codes = None
+    drawing_codes_relative_origin = (0, 0)
     _pixel_list = None
     error_drawing_codes = np.asarray([
         6, 0,  0,  3, 0, 0, 0, 0, 3,
@@ -219,6 +219,7 @@ class JumpmanDrawObject(object):
         6, 0,  4,  3, 0, 0, 0, 0, 3,
         0xff
     ], dtype=np.uint8)
+    error_drawing_codes_relative_origin = (-1, -1)
     _error_pixel_list = None
     screen_bounds = DrawObjectBounds(((0, 0), (159, 87)))
 
@@ -288,13 +289,13 @@ class JumpmanDrawObject(object):
     @property
     def pixel_list(self):
         if self.__class__._pixel_list is None:
-            self.__class__._pixel_list = PixelList(self.drawing_codes)
+            self.__class__._pixel_list = PixelList(self.drawing_codes, self.drawing_codes_relative_origin)
         return self.__class__._pixel_list
 
     @property
     def error_pixel_list(self):
         if self.__class__._error_pixel_list is None:
-            self.__class__._error_pixel_list = PixelList(self.error_drawing_codes, -1, -1)
+            self.__class__._error_pixel_list = PixelList(self.error_drawing_codes, self.error_drawing_codes_relative_origin)
         return self.__class__._error_pixel_list
 
     def __str__(self):
@@ -404,14 +405,15 @@ class JumpmanDrawObject(object):
 class JumpmanRespawn(JumpmanDrawObject):
     name = "jumpman"
     drawing_codes = np.asarray([
-        6, 0, -5,  4, 4, 4, 4, 4, 4,
-        6, 0, -4,  4, 0, 0, 0, 0, 4,
-        6, 0, -3,  4, 0, 0, 0, 0, 4,
-        6, 0, -2,  4, 0, 0, 0, 0, 4,
-        6, 0, -1,  4, 0, 0, 0, 0, 4,
-        6, 0,  0,  4, 4, 4, 4, 4, 4,
+        6, 0, 0,  4, 4, 4, 4, 4, 4,
+        6, 0, 1,  4, 0, 0, 0, 0, 4,
+        6, 0, 2,  4, 0, 0, 0, 0, 4,
+        6, 0, 3,  4, 0, 0, 0, 0, 4,
+        6, 0, 4,  4, 0, 0, 0, 0, 4,
+        6, 0, 5,  4, 4, 4, 4, 4, 4,
         0xff
     ], dtype=np.uint8)
+    drawing_codes_relative_origin = (0, -5)
     default_dx = 6
     default_dy = 0
     valid_x_mask = 0xfe  # Even pixels only
