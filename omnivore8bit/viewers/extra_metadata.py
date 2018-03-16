@@ -5,11 +5,6 @@ from ..utils.segmentutil import AnticFontSegment
 import logging
 log = logging.getLogger(__name__)
 
-getaway_machine_defaults = {
-    'antic_color_registers': [0x46, 0xD6, 0x74, 0x0C, 0x14, 0x86, 0x02, 0xB6, 0xBA],
-    'font_renderer': 2,  # "Antic 5",
-    'font_mapping': 1,  # "Antic Order",
-    }
 
 getaway_defaults = {
     'tile groups': [
@@ -25,22 +20,33 @@ getaway_defaults = {
         ("other", [0x20, 0x25, 0x26, ]),
         ("special", range(0x21, 0x25), range(0x74, 0x76),),
         ],
-    'last_task_id': 'byte_edit',
-    'layout': 'map',
     'uuid': 'default',
     }
 
 supported_pd_getaway = [1]
 
 def getaway_metadata(font_segment, segment):
-    m = dict(getaway_machine_defaults)
-    m['antic_font_data'] = font_segment.antic_font
     extra_metadata = {
-        'machine': m,
+        'last_task_id': 'omnivore.byte_edit',
+        'omnivore.byte_edit': {
+            'viewers' : [
+                {
+                    'name': 'map',
+                    'uuid': 'uuid-getaway',
+                    'linked base': 'default',
+                    'control': {'items_per_row': 256, 'zoom': 2},
+                    'machine': {
+                        'antic_color_registers': [0x46, 0xD6, 0x74, 0x0C, 0x14, 0x86, 0x02, 0xB6, 0xBA],
+                        'antic_font_data': font_segment.antic_font,
+                        'font_renderer': 2,  # "Antic 5",
+                        'font_mapping': 1,  # "Antic Order",
+                        },
+                },
+            ],
+            'initial segment': segment.name,
+        },
         'user segments': [font_segment, segment],
-        'initial segment': segment.name,
     }
-    extra_metadata.update(getaway_defaults)
     return extra_metadata
 
 def Getaway(doc):
@@ -127,11 +133,20 @@ def JumpmanLevelBuilder(doc):
             initial_segment = user_segments[0]
         log.debug("Found initial segment: %s, %s" % (initial_segment, initial_segment.uuid))
         extra_metadata = {
+            'last_task_id': 'omnivore.byte_edit',
+            'omnivore.byte_edit': {
+                'viewers' : [
+                    {
+                        'name': 'jumpman',
+                        'uuid': 'uuid-jumpman',
+                        'linked base': 'default',
+                        'control': {'zoom': 4},
+                    },
+                ],
+                'initial segment': initial_segment.name,
+            },
             'user segments': user_segments,
-            'initial segment': initial_segment.name,
-            'last_task_id': 'byte_edit',
-            'layout': 'jumpman',
-            }
+        }
         return extra_metadata
 
 
@@ -195,11 +210,20 @@ def JumpmanFullAtr(doc):
                 user_segments.append(s)
 
         extra_metadata = {
+            'last_task_id': 'omnivore.byte_edit',
+            'omnivore.byte_edit': {
+                'viewers' : [
+                    {
+                        'name': 'jumpman',
+                        'uuid': 'uuid-jumpman',
+                        'linked base': 'default',
+                        'control': {'zoom': 4},
+                    },
+                ],
+                'initial segment': user_segments[0].name,
+            },
             'user segments': user_segments,
-            'initial segment': user_segments[0].name,
-            'last_task_id': 'byte_edit',
-            'layout': 'jumpman',
-            }
+        }
         return extra_metadata
 
 

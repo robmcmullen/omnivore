@@ -159,6 +159,10 @@ class Machine(HasTraits):
 
     def __getstate__(self):
         state = super(Machine, self).__getstate__()
+        try:
+            del state["__traits_version__"]
+        except KeyError:
+            pass
 
         for name in self.all_trait_names():
             t = self.trait(name)
@@ -200,6 +204,10 @@ class Machine(HasTraits):
                 try:
                     font_data = fonts.builtin_font_data[uuid]
                 except KeyError:
+                    font_data = fonts.A8DefaultFont
+                except TypeError:
+                    # loading omnivore 1.0 format
+                    log.error("found Omnivore 1.0 font segment")
                     font_data = fonts.A8DefaultFont
                 setattr(self, name, font_data)
             else:

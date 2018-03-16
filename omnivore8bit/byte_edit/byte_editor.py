@@ -151,10 +151,12 @@ class ByteEditor(FrameworkEditor):
             self.diff_highlight = bool(e['diff highlight'])
 
         layout = e.get('layout', {})
+        log.debug("metadata: layout=%s" % str(layout))
 
         viewer_metadata = {}
         for v in e.get('viewers', []):
             viewer_metadata[v['uuid']] = v
+            log.debug("metadata: viewer[%s]=%s" % (v['uuid'], str(v)))
 
         log.debug("task arguments: '%s'" % self.task_arguments)
         if self.task_arguments or not viewer_metadata:
@@ -163,6 +165,7 @@ class ByteEditor(FrameworkEditor):
             viewer_metadata = {}  # reset to start from empty if task args are specified
             for viewer_name in names.split(","):
                 viewer_metadata[viewer_name.strip()] = {}
+                log.debug("metadata: clearing viewer[%s] because specified in task args" % (viewer_name.strip()))
 
             layout = {}  # empty layout so it isn't cluttered with unused windows
 
@@ -171,6 +174,7 @@ class ByteEditor(FrameworkEditor):
             base = LinkedBase(editor=self)
             base.from_metadata_dict(b)
             linked_bases[base.uuid] = base
+            log.debug("metadata: linked_base[%s]=%s" % (base.uuid, base))
         self.create_viewers(layout, viewer_metadata, e, linked_bases)
         viewer = None
         if 'focused viewer' in e:
@@ -478,6 +482,7 @@ class ByteEditor(FrameworkEditor):
         log.debug("viewer_metadata: %s" % str(viewer_metadata.keys()))
 
         center_base = center_base = LinkedBase(editor=self)
+        linked_bases['default'] = center_base
 
         layer = 0
         viewers = viewer_metadata.keys()
