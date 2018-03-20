@@ -38,6 +38,11 @@ resize_log = logging.getLogger("resize")
 
 SH_SIZE = 5
 
+def opposite(dir):
+    if dir == wx.HORIZONTAL:
+        return wx.VERTICAL
+    return wx.HORIZONTAL
+
 #----------------------------------------------------------------------
 
 class MultiSash(wx.Window):
@@ -48,7 +53,7 @@ class MultiSash(wx.Window):
     wxEVT_CLIENT_ACTIVATED = wx.NewEventType()
     EVT_CLIENT_ACTIVATED = wx.PyEventBinder(wxEVT_CLIENT_ACTIVATED, 1)
 
-    def __init__(self, parent, direction=wx.HORIZONTAL, *_args,**_kwargs):
+    def __init__(self, parent, direction=wx.VERTICAL, *_args,**_kwargs):
         wx.Window.__init__(self, parent, *_args, **_kwargs)
         self.live_update_control = None
         self._defChild = EmptyChild
@@ -228,6 +233,7 @@ class MultiSplit(wx.Window):
         if leaf:
             leaf.Reparent(self)
             leaf.Move(0,0)
+            leaf.ratio_in_parent = 1.0
         else:
             leaf = MultiViewLeaf(self.multiView, self, 1.0)
         self.views.append(leaf)
@@ -237,6 +243,7 @@ class MultiSplit(wx.Window):
 
         self.debug_id = "S_%d" % self.__class__.debug_count
         self.__class__.debug_count += 1
+        self.on_size(None)
 
     def find_uuid(self, uuid):
         for view in self.views:
@@ -252,25 +259,37 @@ class MultiSplit(wx.Window):
                 return found
         return None
 
-    def add(self, view_index_to_split, control=None, uuid=None, direction=None, start=wx.LEFT|wx.TOP):
-        if control is None:
-            control = self.multiView._defChild(self)
+    def find_leaf_index(self, leaf):
+        return self.views.index(leaf)  # raises IndexError on failure
+
+    def split(self, leaf, control=None, uuid=None, direction=None, start=wx.LEFT|wx.TOP):
+        if direction is not None and direction != self.direction:
+            self.split_opposite(leaf, control, uuid, start)
+        else:
+            self.split_same(leaf, control, uuid, start)
+
+    def split_same(self, leaf, control=None, uuid=None, start=wx.LEFT|wx.TOP):
+        view_index_to_split = self.find_leaf_index(leaf)
         if start & (wx.LEFT|wx.TOP):
             # insert at beginning of list
             insert_pos = view_index_to_split
         else:
             insert_pos = view_index_to_split + 1
-        splitting = self.views[view_index_to_split]
-        ratio = splitting.ratio_in_parent / 2.0
-        splitting.ratio_in_parent = ratio
+        ratio = leaf.ratio_in_parent / 2.0
+        leaf.ratio_in_parent = ratio
 
-        view = MultiViewLeaf(self.multiView, self, ratio, control, u)
-        if direction is not None and direction != self.direction:
-            # opposite direction, start new MultiSplit
-            view.ratio = 1.0  # leaf occupies entire space of container
-            view = MultiSplit(self.multiView, self, direction, ratio, view)
+        if control is None:
+            control = self.multiView._defChild(self)
+        view = MultiViewLeaf(self.multiView, self, ratio, control, uuid)
         self.views[insert_pos:insert_pos] = [view]
-        self.compute_layout()
+        self.on_size(None)
+
+    def split_opposite(self, leaf, control=None, uuid=None, start=wx.LEFT|wx.TOP):
+        view_index_to_split = self.find_leaf_index(leaf)
+        subsplit = MultiSplit(self.multiView, self, opposite(self.direction), leaf.ratio_in_parent, leaf)
+        self.views[view_index_to_split] = subsplit
+        self.on_size(None)
+        subsplit.split_same(leaf, control, uuid, start)
 
     def on_size(self, evt):
         w, h = self.GetSize()
@@ -335,10 +354,8 @@ class MultiSplit(wx.Window):
         self.set_sizes_from_ratio(w, h)
 
     def UnSelect(self):
-        if self.view1:
-            self.view1.UnSelect()
-        if self.view2:
-            self.view2.UnSelect()
+        for view in self.views:
+            view.UnSelect()
 
     def AddLeaf(self, control, u, direction, caller, pos=None):
         if self.view2:
@@ -528,16 +545,8 @@ class MultiViewLeaf(wx.Window):
     def get_multi_split(self):
         return self.GetParent()
 
-    def AddLeaf(self, control, u, direction, pos=None):
-        w,h = self.GetSize()
-        if pos is None:
-            pos = h // 2 if direction == wx.VERTICAL else w // 2
-        if pos < 10: return
-        if direction == wx.VERTICAL:
-            if pos > h - 10: return
-        else:
-            if pos > w - 10: return
-        return self.GetParent().AddLeaf(control, u, direction, self, pos)
+    def split(self, *args, **kwargs):
+        self.GetParent().split(self, *args, **kwargs)
 
     def DestroyLeaf(self):
         self.GetParent().DestroyLeaf(self)
@@ -998,7 +1007,10 @@ class TitleBarVSplitNewRight(TitleBarCloser):
         dc.DrawRectangle(split, 0, size.x - split, size.y)
 
     def do_action(self, evt):
-        self.splitter.AddLeaf(None, None, wx.HORIZONTAL)
+        print(self.client)
+        print(self.splitter)
+        print("HORZ")
+        self.splitter.split(direction=wx.HORIZONTAL)
 
 
 class TitleBarHSplitNewBot(TitleBarCloser):
@@ -1011,7 +1023,10 @@ class TitleBarHSplitNewBot(TitleBarCloser):
         dc.DrawRectangle(0, split, size.x, size.y - split)
 
     def do_action(self, evt):
-        self.splitter.AddLeaf(None, None, wx.VERTICAL)
+        print(self.client)
+        print(self.splitter)
+        print("VERT")
+        self.splitter.split(direction=wx.VERTICAL)
 
 #----------------------------------------------------------------------
 
