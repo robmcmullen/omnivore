@@ -311,18 +311,12 @@ class MultiSplit(wx.Window):
             pos += size
 
     def get_layout(self):
-        d = {}
-        d['direction'] = self.direction
-        if self.view1:
-            d['view1'] = self.view1.get_layout()
-            if isinstance(self.view1,MultiSplit):
-                d['split1'] = True
-        if self.view2:
-            d['view2'] = self.view2.get_layout()
-            if isinstance(self.view2,MultiSplit):
-                d['split2'] = True
-        d['ratio'] = self.calc_ratio()
-        d['debug_id'] = self.debug_id
+        d = {
+            'direction': self.direction,
+            'ratio_in_parent': self.ratio_in_parent,
+            'views': [v.get_layout() for v in self.views],
+            'debug_id': self.debug_id,
+            }
         return d
 
     def restore_layout(self,d):
@@ -516,15 +510,17 @@ class MultiViewLeaf(wx.Window):
         return None
 
     def get_layout(self):
-        d = {}
+        d = {
+            'ratio_in_parent': self.ratio_in_parent,
+            'debug_id': self.debug_id,
+            'child_uuid': self.detail.child_uuid,
+            }
         if hasattr(self.detail.child,'get_layout'):
-            attr = getattr(self.detail.child,'get_layout')
+            attr = getattr(self.detail.child, 'get_layout')
             if callable(attr):
-                dData = attr()
-                if dData:
-                    h['detail'] = dData
-        d['child_uuid'] = self.detail.child_uuid
-        d['debug_id'] = self.debug_id
+                layout = attr()
+                if layout:
+                    d['detail'] = layout
         return d
 
     def restore_layout(self, d):
