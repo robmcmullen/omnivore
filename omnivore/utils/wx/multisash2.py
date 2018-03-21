@@ -227,6 +227,10 @@ class MultiSplit(wx.Window):
     def __init__(self, multiView, parent, direction=wx.HORIZONTAL, ratio=1.0, leaf=None, layout=None):
         wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN)
         self.multiView = multiView
+        self.needs_sizers = {
+            wx.HORIZONTAL: True,
+            wx.VERTICAL: True,
+            }
         self.views = []
         if layout is not None:
             self.restore_layout(layout)
@@ -311,6 +315,9 @@ class MultiSplit(wx.Window):
             view.on_size(evt)
             total -= size
             pos += size
+            view.needs_sizers[opposite(self.direction)] = True
+            view.needs_sizers[self.direction] = True
+        view.needs_sizers[self.direction] = False
 
     def get_layout(self):
         d = {
@@ -440,6 +447,10 @@ class MultiViewLeaf(wx.Window):
     def __init__(self, multiView, parent, ratio=1.0, child=None, u=None, layout=None):
         wx.Window.__init__(self, id = -1, parent = parent, style = wx.CLIP_CHILDREN)
         self.multiView = multiView
+        self.needs_sizers = {
+            wx.HORIZONTAL: True,
+            wx.VERTICAL: True,
+            }
         if layout is not None:
             self.detail = None
             self.restore_layout(layout)
@@ -525,8 +536,16 @@ class MultiViewLeaf(wx.Window):
     def on_size(self,evt):
         def doresize():
             try:
-                self.sizerHor.OnSize(evt)
-                self.sizerVer.OnSize(evt)
+                if self.needs_sizers[wx.HORIZONTAL]:
+                    self.sizerVer.Show()
+                    self.sizerVer.OnSize(evt)
+                else:
+                    self.sizerVer.Hide()
+                if self.needs_sizers[wx.VERTICAL]:
+                    self.sizerHor.Show()
+                    self.sizerHor.OnSize(evt)
+                else:
+                    self.sizerHor.Hide()
                 self.detail.OnSize(evt)
             except:
                 pass
@@ -655,8 +674,10 @@ class MultiClient(wx.Window):
 
     def CalcSize(self,parent):
         w,h = parent.GetSize()
-        w -= SH_SIZE
-        h -= SH_SIZE
+        if parent.needs_sizers[wx.HORIZONTAL]:
+            w -= SH_SIZE
+        if parent.needs_sizers[wx.VERTICAL]:
+            h -= SH_SIZE
         return (w,h)
 
     def OnSize(self,evt):
