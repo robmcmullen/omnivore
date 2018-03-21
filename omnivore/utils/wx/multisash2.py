@@ -137,9 +137,8 @@ class MultiSash(wx.Window):
                 return
             layout = d['multisash']
         old = self.child
-        self.child = MultiSplit(self,self,wx.Point(0,0),self.GetSize())
         try:
-            self.child.restore_layout(layout)
+            self.child = MultiSplit(self, self, layout=layout)
         except KeyError, e:
             log.error("Error loading layout: missing key %s. Restoring previous layout." % e.message)
             self.child.Destroy()
@@ -147,7 +146,7 @@ class MultiSash(wx.Window):
         else:
             old.Destroy()
         self.OnMultiSize(None)
-        self.child.OnSize(None)
+        self.child.on_size(None)
 
     def update_captions(self):
         self.Refresh()
@@ -225,24 +224,27 @@ class MultiSash(wx.Window):
 class MultiSplit(wx.Window):
     debug_count = 1
 
-    def __init__(self, multiView, parent, direction, ratio=1.0, leaf=None):
+    def __init__(self, multiView, parent, direction=wx.HORIZONTAL, ratio=1.0, leaf=None, layout=None):
         wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN)
         self.multiView = multiView
-        self.ratio_in_parent = ratio
         self.views = []
-        if leaf:
-            leaf.Reparent(self)
-            leaf.Move(0,0)
-            leaf.ratio_in_parent = 1.0
+        if layout is not None:
+            self.restore_layout(layout)
         else:
-            leaf = MultiViewLeaf(self.multiView, self, 1.0)
-        self.views.append(leaf)
-        self.direction = direction
+            self.ratio_in_parent = ratio
+            self.direction = direction
+            if leaf:
+                leaf.Reparent(self)
+                leaf.Move(0,0)
+                leaf.ratio_in_parent = 1.0
+            else:
+                leaf = MultiViewLeaf(self.multiView, self, 1.0)
+            self.views.append(leaf)
 
-        self.Bind(wx.EVT_SIZE, self.on_size)
+            self.Bind(wx.EVT_SIZE, self.on_size)
 
-        self.debug_id = "S_%d" % self.__class__.debug_count
-        self.__class__.debug_count += 1
+            self.debug_id = "S_%d" % self.__class__.debug_count
+            self.__class__.debug_count += 1
         self.on_size(None)
 
     def find_uuid(self, uuid):
@@ -319,62 +321,20 @@ class MultiSplit(wx.Window):
             }
         return d
 
-    def restore_layout(self,d):
+    def restore_layout(self, d):
         self.direction = d['direction']
-        self.ratio = d['ratio']
-        w, h = self.GetSize()
-        v1Data = d.get('view1',None)
-        if v1Data:
-            isSplit = d.get('split1',None)
-            old = self.view1
-            if isSplit:
-                self.view1 = MultiSplit(self.multiView,self, (0,0),self.GetSize())
+        self.ratio_in_parent = d['ratio_in_parent']
+        self.debug_id = d['debug_id']
+        for layout in d['views']:
+            if 'direction' in layout:
+                view = MultiSplit(self.multiView, self, layout=layout)
             else:
-                self.view1 = MultiViewLeaf(self.multiView,self, (0,0),self.GetSize())
-            self.view1.restore_layout(v1Data)
-            if old:
-                old.Destroy()
-        v2Data = d.get('view2',None)
-        if v2Data:
-            isSplit = d.get('split2',None)
-            old = self.view2
-            if isSplit:
-                self.view2 = MultiSplit(self.multiView,self, (0,0),self.GetSize())
-            else:
-                self.view2 = MultiViewLeaf(self.multiView,self, (0,0),self.GetSize())
-            self.view2.restore_layout(v2Data)
-            if old:
-                old.Destroy()
-        self.set_sizes_from_ratio(w, h)
+                view = MultiViewLeaf(self.multiView, self, layout=layout)
+            self.views.append(view)
 
     def UnSelect(self):
         for view in self.views:
             view.UnSelect()
-
-    def AddLeaf(self, control, u, direction, caller, pos=None):
-        if self.view2:
-            if caller == self.view1:
-                self.view1 = MultiSplit(self.multiView,self,
-                                          caller.GetPosition(),
-                                          caller.GetSize(),
-                                          caller)
-                self.view1.AddLeaf(control, u, direction, caller, pos)
-                split = self.view1
-                view = split.view1
-            else:
-                self.view2 = MultiSplit(self.multiView,self,
-                                          caller.GetPosition(),
-                                          caller.GetSize(),
-                                          caller)
-                self.view2.AddLeaf(control, u, direction, caller, pos)
-                split = self.view2
-                view = split.view1
-        else:
-            view = self.add_view2(control, u, direction, pos)
-            split = self
-        self.multiView.update_captions()
-        return split, view
-        return self.view2
 
     def DestroyLeaf(self,caller):
         if not self.view2:
@@ -477,23 +437,26 @@ class MultiViewLeaf(wx.Window):
         cls.debug_letter = chr(ord(cls.debug_letter) + 1)
         return cls.debug_letter
 
-    def __init__(self, multiView, parent, ratio, child=None, u=None):
+    def __init__(self, multiView, parent, ratio=1.0, child=None, u=None, layout=None):
         wx.Window.__init__(self, id = -1, parent = parent, style = wx.CLIP_CHILDREN)
         self.multiView = multiView
-        self.ratio_in_parent = ratio
+        if layout is not None:
+            self.detail = None
+            self.restore_layout(layout)
+        else:
+            self.detail = MultiClient(self, child, u)
+            self.ratio_in_parent = ratio
+            self.debug_id = self.next_debug_letter()
+            if self.debug_id == "S":
+                # Skip S; used for hidden panes
+                self.debug_id = self.next_debug_letter()
 
         self.sizerHor = MultiSizer(self, wx.HORIZONTAL)
         self.sizerVer = MultiSizer(self, wx.VERTICAL)
-        self.detail = MultiClient(self, child, u)
 
         self.Bind(wx.EVT_SIZE, self.on_size)
 
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
-
-        self.debug_id = self.next_debug_letter()
-        if self.debug_id == "S":
-            # Skip S; used for hidden panes
-            self.debug_id = self.next_debug_letter()
 
     def find_uuid(self, uuid):
         if uuid == self.detail.child_uuid:
@@ -524,6 +487,8 @@ class MultiViewLeaf(wx.Window):
         return d
 
     def restore_layout(self, d):
+        self.debug_id = d['debug_id']
+        self.ratio_in_parent = d['ratio_in_parent']
         old = self.detail
         self.detail = MultiClient(self, None, d['child_uuid'])
         dData = d.get('detail',None)
@@ -532,7 +497,8 @@ class MultiViewLeaf(wx.Window):
                 attr = getattr(self.detail.child,'restore_layout')
                 if callable(attr):
                     attr(dData)
-        old.Destroy()
+        if old is not None:
+            old.Destroy()
         self.detail.OnSize(None)
 
     def UnSelect(self):
