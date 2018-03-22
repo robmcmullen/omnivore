@@ -197,7 +197,17 @@ def parsers_for_filename(name):
         found = None
         for parser in parsers:
             log.debug("parser: %s = %s" % (mime, parser))
-    matches.append(StandardDeliveryImage)
+    n = name.lower()
+    if n.endswith(".atr"):
+        matches.append(KBootImage)
+    elif n.endswith(".dsk"):
+        matches.append(StandardDeliveryImage)
+    else:
+        try:
+            _, name = name.rsplit(".", 1)
+        except ValueError:
+            pass
+        raise InvalidDiskImage("no disk image formats that match '%s'" % name)
     return matches
 
 

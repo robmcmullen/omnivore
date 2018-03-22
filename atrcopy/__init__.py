@@ -251,7 +251,11 @@ def assemble(image, source_files, data_files, obj_files, run_addr=""):
 
 
 def boot_image(image_name, source_files, data_files, obj_files, run_addr=""):
-    image_cls = parsers_for_filename(image_name)[0]
+    try:
+        image_cls = parsers_for_filename(image_name)[0]
+    except InvalidDiskImage, e:
+        print("%s: %s" % (image_name, e))
+        return None
     segments, run_addr = assemble_segments(source_files, data_files, obj_files, run_addr)
     if segments:
         image = image_cls.create_boot_image(segments, run_addr)
