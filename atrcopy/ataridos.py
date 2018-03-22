@@ -350,7 +350,7 @@ class AtrHeader(BaseHeader):
         if len(bytes) == 16:
             values = bytes.view(dtype=self.format)[0]
             if values[0] != 0x296:
-                raise InvalidAtrHeader
+                raise InvalidAtrHeader("no ATR header magic value")
             self.image_size = (int(values[3]) * 256 * 256 + int(values[1])) * 16
             self.sector_size = int(values[2])
             self.crc = int(values[4])
@@ -358,7 +358,7 @@ class AtrHeader(BaseHeader):
             self.flags = int(values[6])
             self.header_offset = 16
         else:
-            raise InvalidAtrHeader
+            raise InvalidAtrHeader("incorrect AHC header size of %d" % len(bytes))
 
     def __str__(self):
         return "%s Disk Image (size=%d (%dx%dB), crc=%d flags=%d unused=%d)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size, self.crc, self.flags, self.unused)
@@ -743,7 +743,6 @@ class AtariDiskImage(BootDiskImage):
         return "%s Unidentified Contents" % (self.header)
 
     def check_size(self):
-        print self.header
         if self.header is None:
             raise ("Not a known Atari disk image format")
 

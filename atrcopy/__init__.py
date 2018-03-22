@@ -253,7 +253,7 @@ def assemble(image, source_files, data_files, obj_files, run_addr=""):
 def boot_image(image_name, source_files, data_files, obj_files, run_addr=""):
     try:
         image_cls = parsers_for_filename(image_name)[0]
-    except InvalidDiskImage, e:
+    except InvalidDiskImage as e:
         print("%s: %s" % (image_name, e))
         return None
     segments, run_addr = assemble_segments(source_files, data_files, obj_files, run_addr)
@@ -356,7 +356,7 @@ def create_image(template, name):
 
     try:
         data, inf = get_template_data(template)
-    except InvalidDiskImage, e:
+    except InvalidDiskImage as e:
         info = get_template_info()
         print("Error: %s\n\n%s" % (e, info))
         return
@@ -548,6 +548,8 @@ def run():
                 args.append('list')
     else:
         disk_image_name = None
+        parser.print_help()
+        sys.exit(1)
 
     # print "parsing: %s" % str(args)
     options = parser.parse_args(args)
