@@ -128,6 +128,7 @@ where the available commands include:
 * ``add``: add files to a disk image
 * ``extract``: copy files from the disk image to the local file system
 * ``assemble``: create a binary file from ATasm source, optionally including segments containing raw binary data
+* ``boot``: create a boot disk using various binary data as input
 * ``delete``: delete files from the disk image
 * ``vtoc``: show and manipulate the VTOC for images that support it
 
@@ -153,6 +154,7 @@ abbreviated as shown here::
         add (a)             Add files to the disk image
         create (c)          Create a new disk image
         assemble (s,asm)    Create a new binary file in the disk image
+        boot (b)            Create a bootable disk image
         delete (rm,del)     Delete files from the disk image
         vtoc (v)            Show a formatted display of sectors free in the disk
                             image
@@ -282,6 +284,45 @@ will autoload on boot. It sets the graphics mode to fullscreen hi-res graphics
 (the first screen at $2000) and executes a ``BRUN`` command to start a binary
 file named ``AUTOBRUN``. ``AUTOBRUN`` doesn't exist in the image, it's for you
 to supply.
+
+
+Creating a Custom Boot Disk
+---------------------------
+
+Blocks of binary data can be combined into a boot disk in either ATR format for
+Atari or DSK format for Apple::
+
+    $ atrcopy boot --help
+    usage: atrcopy DISK_IMAGE boot [-h] [-f] [-s [ASM [ASM ...]]]
+                                   [-d [DATA [DATA ...]]] [-b [OBJ [OBJ ...]]]
+                                   [-r RUN_ADDR]
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -f, --force           allow file overwrites in the disk image
+      -s [ASM [ASM ...]], --asm [ASM [ASM ...]]
+                            source file(s) to assemble using pyatasm
+      -d [DATA [DATA ...]], --data [DATA [DATA ...]]
+                            binary data file(s) to add to assembly, specify as
+                            file@addr. Only a portion of the file may be included;
+                            specify the subset using standard python slice
+                            notation: file[subset]@addr
+      -b [OBJ [OBJ ...]], --obj [OBJ [OBJ ...]], --bload [OBJ [OBJ ...]]
+                            binary file(s) to add to assembly, either executables
+                            or labeled memory dumps (e.g. BSAVE on Apple ][),
+                            parsing each file's binary segments to add to the
+                            resulting disk image at the load address for each
+                            segment
+      -r RUN_ADDR, --run-addr RUN_ADDR, --brun RUN_ADDR
+                            run address of binary file if not the first byte of
+                            the first segment
+
+One of ``-s``, ``-d``, or ``-b`` must be speficied to provide the source for
+the boot disk. The ``-b`` argument can take an Atari binary in XEX format, and
+will properly handle multiple segments within that file. If no starting address
+is supplied (or, if using an XEX, to override the start address normally
+contained within the XEX), use the ``-r`` option. Otherwise, the run address
+will point to the first byte of the first binary segment.
 
 
 Creating Programs on the Disk Image
