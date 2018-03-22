@@ -75,5 +75,7 @@ def iter_templates():
                     j = {}
                 j["pathname"] = template
                 j["uri"] = "template://" + os.path.basename(template)
+                if "task" in j and j["task"] == "hex_edit":
+                    j["task"] = "byte_edit"
                 log.debug("template json: %s" % str(template))
                 yield j

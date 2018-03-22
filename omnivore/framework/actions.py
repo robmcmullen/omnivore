@@ -115,6 +115,9 @@ class NewFileGroup(Group):
         for template in iter_templates():
             name = template.get("label", template["uri"])
             task_id = self.application.find_best_task_id(template.get("task", "byte_edit"))
+            if not task_id:
+                task_id = self.application.find_best_task_id("byte_edit")
+                log.error("No task for %s, defaulting to %s" % (name, task_id))
             log.debug("NewFileAction for %s as %s" % (name, task_id))
             action = NewFileAction(name=name, uri=template["uri"], task_id=task_id)
             items.append((name, ActionItem(action=action)))
