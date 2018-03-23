@@ -59,8 +59,6 @@ class MultiSash(wx.Window):
         self._defChild = EmptyChild
         self.child = MultiSplit(self, self, layout_direction)
         self.Bind(wx.EVT_SIZE,self.OnMultiSize)
-        self.Bind(wx.EVT_MOTION,self.OnMouseMove)
-        self.Bind(wx.EVT_LEFT_UP,self.OnRelease)
         self.last_direction = wx.VERTICAL
 
     def OnMultiSize(self,evt):
@@ -86,48 +84,6 @@ class MultiSash(wx.Window):
             else:
                 d = json.dumps(d)
         return d
-
-    def calc_graphviz(self):
-        from graphviz import Digraph
-        top = {'multisash': self.child.get_layout()}
-        g = Digraph('multisash', filename='multisash.dot')
-        self.add_edges(g, top, 'multisash', 'root', 'root')
-        return g
-
-    # def add_edges(self, g, top, k, parent, prefix):
-    #     contents = top[k]
-    #     if 'view1' in contents:
-    #         title = "%s-1" % (prefix)
-    #         g.edge(prefix, title)
-    #         self.add_edges(g, contents, 'view1', title)
-    #     if 'view2' in contents:
-    #         title = "%s-2" % (prefix)
-    #         g.edge(prefix, title)
-    #         self.add_edges(g, contents, 'view2', title)
-
-    # def add_edges(self, g, top, k, parent, prefix):
-    #     contents = top[k]
-    #     next_prefix = chr(ord(prefix) + 1)
-    #     if 'view1' in contents:
-    #         title = "%s-1" % (prefix)
-    #         g.edge(parent, title)
-    #         next_prefix = self.add_edges(g, contents, 'view1', title, next_prefix)
-    #     if 'view2' in contents:
-    #         title = "%s-2" % (prefix)
-    #         g.edge(parent, title)
-    #         next_prefix = self.add_edges(g, contents, 'view2', title, next_prefix)
-    #     return next_prefix
-
-    def add_edges(self, g, top, k, parent, prefix):
-        contents = top[k]
-        if 'view1' in contents:
-            title = "%s-1" % (contents['view1']['debug_id'])
-            g.edge(parent, title)
-            self.add_edges(g, contents, 'view1', title, prefix)
-        if 'view2' in contents:
-            title = "%s-2" % (contents['view2']['debug_id'])
-            g.edge(parent, title)
-            self.add_edges(g, contents, 'view2', title, prefix)
 
     def restore_layout(self, d):
         try:
@@ -173,58 +129,123 @@ class MultiSash(wx.Window):
         return False
 
     def add(self, control, u=None, layout_direction=None, use_empty=True):
-        print("BOERUCHOESUHOEH", self.child)
         if use_empty:
             found = self.find_empty()
-            print("TOHEUSRCOHEUCR", found)
             if found:
                 found.replace(control, u)
                 return
         if layout_direction is None:
             self.last_direction = opposite(self.last_direction)
             direction = self.last_direction
-        print("OHSEUOCEUHOCREUH")
         self.child.add(control, u, layout_direction)
-
-    def live_split(self, source, splitter, px, py, side):
-        if side == wx.HORIZONTAL:
-            drag_parent, drag_leaf = splitter.AddLeaf(None, None, wx.VERTICAL, py)
-        else:
-            drag_parent, drag_leaf = splitter.AddLeaf(None, None, wx.HORIZONTAL, px)
-        print(splitter, drag_parent, drag_leaf)
-        if side == wx.HORIZONTAL:
-            creator = drag_leaf.creatorHor
-        else:
-            creator = drag_leaf.creatorVer
-        creator.drag_parent, creator.drag_leaf = drag_parent, drag_leaf 
-        print("start_live_update", source, creator, creator.drag_parent, creator.drag_leaf)
-        creator.isDrag = True
-        self.live_update_control = creator
-        self.CaptureMouse()
-
-    def OnMouseMove(self,evt):
-        if self.live_update_control:
-            creator = self.live_update_control
-            px, py = creator.ClientToScreen((evt.x, evt.y))
-            px, py = creator.GetParent().ScreenToClient((px, py))
-            log.debug("motion: %s" % str((px, py, self.HasCapture(), self.GetCapture(), self.GetCapture() == self)))
-            if creator.side == wx.HORIZONTAL:
-                creator.drag_parent.SizeLeaf(creator.drag_leaf, py,not creator.side)
-            else:
-                creator.drag_parent.SizeLeaf(creator.drag_leaf, px,not creator.side)
-        else:
-            evt.Skip()
-
-    def OnRelease(self,evt):
-        if self.live_update_control:
-            creator = self.live_update_control
-            creator.isDrag = False
-            self.ReleaseMouse()
-        else:
-            evt.Skip()
 
 
 #----------------------------------------------------------------------
+
+
+class HorizontalLayout(object):
+    @classmethod
+    def calc_size(cls, multi_split):
+        w, h = multi_split.GetClientSize()
+
+        # size used for ratio includes all the sizer widths (including the
+        # extra sizer at the end that won't be displayed)
+        full_size = w + SIZER_THICKNESS
+
+        return w, h, full_size
+
+    @classmethod
+    def do_view_size(cls, view, pos, size, w, h):
+        view_width = size - SIZER_THICKNESS
+        view.SetSize(pos, 0, view_width, h)
+        view.sizer.SetSize(pos + view_width, 0, SIZER_THICKNESS, h)
+
+    @classmethod
+    def calc_resizer(cls, splitter, left, sizer, right, x, y):
+        return HorizontalResizer(splitter, left, sizer, right, x, y)
+
+
+class HorizontalResizer(object):
+    def __init__(self, splitter, first, sizer, second, sizer_evt_x, sizer_evt_y):
+        self.splitter = splitter
+        self.first = first
+        self.sizer = sizer
+        self.second = second
+        self.total_ratio = first.ratio_in_parent + second.ratio_in_parent
+        self.total_width, self.total_height = self.calc_pixel_size()
+        self.mouse_offset = sizer_evt_x, sizer_evt_y
+        self.x_sash, self.y_sash = self.calc_sash_pos(sizer_evt_x, sizer_evt_y)
+        self.calc_extrema()
+
+    def __repr__(self):
+        return "%s: %s %s, ratio=%f, width=%d" % (self.__class__.__name__, self.first.debug_id, self.second.debug_id, self.total_ratio, self.total_width)
+
+    def calc_pixel_size(self):
+        w1, h1 = self.first.GetSize()
+        w2, h2 = self.second.GetSize()
+        w = w1 + w2 + 2 * (SIZER_THICKNESS)
+        h = h1 + h2 + 2 * (SIZER_THICKNESS)
+        return w, h
+
+    def calc_sash_pos(self, sizer_evt_x, sizer_evt_y):
+        # Calculate the right/bottom location of the moving sash (for either
+        # horz or vert; they don't use the other value so both can be
+        # calculated in a single method). This location is used because it's
+        # the point at which the ratio is calculated in the layout_calculator's
+        # do_view_size method
+        x, y = self.sizer.ClientToScreen((sizer_evt_x, sizer_evt_y))
+        x, y = self.first.ScreenToClient((x, y))
+        x, y = x - self.mouse_offset[0] + SIZER_THICKNESS, y - self.mouse_offset[0] + SIZER_THICKNESS
+        return x, y
+
+    def calc_extrema(self):
+        self.x_min, _ = self.first.GetPosition()
+        self.x_min += 2 * SIZER_THICKNESS
+        x, _ = self.second.GetPosition()
+        w, _ = self.second.GetSize()
+        self.x_max = x + w
+        self.x_min -= SIZER_THICKNESS
+
+    def set_ratios(self, x, y):
+        r = float(x) / float(self.total_width)
+        if x > self.x_min and x < self.x_max:
+            self.first.ratio_in_parent = r
+            self.second.ratio_in_parent = 1.0 - r
+            return True
+
+    def do_mouse_move(self, sizer_evt_x, sizer_evt_y):
+        x, y = self.calc_sash_pos(sizer_evt_x, sizer_evt_y)
+        print(self, x, y)
+        if self.set_ratios(x, y):
+            self.splitter.do_layout()
+        else:
+            print("out of range")
+
+class VerticalLayout(object):
+    @classmethod
+    def calc_size(cls, multi_split):
+        w, h = multi_split.GetClientSize()
+
+        # size used for ratio includes all the sizer widths (including the
+        # extra sizer at the end that won't be displayed)
+        full_size = h + SIZER_THICKNESS
+
+        return w, h, full_size
+
+    @classmethod
+    def do_view_size(cls, view, pos, size, w, h):
+        view_height = size - SIZER_THICKNESS
+        view.SetSize(0, pos, w, view_height)
+        view.sizer.SetSize(0, pos + view_height, w, SIZER_THICKNESS)
+
+    @classmethod
+    def calc_resizer(cls, splitter, top, sizer, bot, x, y):
+        return VerticalResizer(splitter, top, sizer, bot, x, y)
+
+
+class VerticalResizer(object):
+    def __init__(self, splitter, top, bot, x, y):
+        pass
 
 
 class MultiWindowBase(wx.Window):
@@ -238,8 +259,14 @@ class MultiWindowBase(wx.Window):
     def __init__(self, multiView, parent, ratio=1.0):
         wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN)
         self.multiView = multiView
+
+        self.resizer = None
         self.sizer_after = True
         self.sizer = MultiSizer(parent)
+        self.sizer.Bind(wx.EVT_MOTION, self.on_motion)
+        self.sizer.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
+        self.sizer.Bind(wx.EVT_LEFT_UP, self.on_left_up)
+
         self.ratio_in_parent = ratio
         self.debug_id = self.next_debug_letter()
         if self.debug_id == "S":
@@ -249,6 +276,33 @@ class MultiWindowBase(wx.Window):
 
     def do_layout(self):
         raise NotImplementedError
+
+    def on_motion(self,evt):
+        print("motion %d,%d" % (evt.x, evt.y))
+        if self.resizer is not None:
+            self.resizer.do_mouse_move(evt.x, evt.y)
+        else:
+            evt.Skip()
+
+    def on_left_down(self, evt):
+        splitter = self.GetParent()
+        print("left down %d,%d, self=%s parent=%s" % (evt.x, evt.y, self.debug_id, splitter))
+        try:
+            resize_partner = splitter.find_resize_partner(self)
+        except IndexError:
+            evt.Skip()
+            resize_partner = None
+        print(resize_partner)
+        if resize_partner:
+            self.resizer = splitter.layout_calculator.calc_resizer(splitter, self, self.sizer, resize_partner, evt.x, evt.y)
+            self.sizer.CaptureMouse()
+
+    def on_left_up(self,evt):
+        if self.resizer is not None:
+            self.sizer.ReleaseMouse()
+            self.resizer = None
+        else:
+            evt.Skip()
 
 
 class MultiSplit(MultiWindowBase):
@@ -269,6 +323,10 @@ class MultiSplit(MultiWindowBase):
             else:
                 leaf = MultiViewLeaf(self.multiView, self, 1.0)
             self.views.append(leaf)
+        if self.layout_direction == wx.HORIZONTAL:
+            self.layout_calculator = HorizontalLayout
+        else:
+            self.layout_calculator = VerticalLayout
         self.do_layout()
 
     def find_uuid(self, uuid):
@@ -288,8 +346,15 @@ class MultiSplit(MultiWindowBase):
     def find_leaf_index(self, leaf):
         return self.views.index(leaf)  # raises IndexError on failure
 
+    def find_resize_partner(self, leaf):
+        print(leaf)
+        print(self.views)
+        current = self.find_leaf_index(leaf)
+        print(current)
+        return self.views[current + 1]
+
     def split(self, leaf, control=None, uuid=None, layout_direction=None, start=wx.LEFT|wx.TOP):
-        if direction is not None and direction != self.layout_direction:
+        if layout_direction is not None and layout_direction != self.layout_direction:
             self.split_opposite(leaf, control, uuid, start)
         else:
             self.split_same(leaf, control, uuid, start)
@@ -318,14 +383,7 @@ class MultiSplit(MultiWindowBase):
         subsplit.split_same(leaf, control, uuid, start)
 
     def do_layout(self):
-        w, h = self.GetClientSize()
-
-        # size used for ratio includes all the sizer widths (including the
-        # extra sizer at the end that won't be displayed)
-        if self.layout_direction == wx.HORIZONTAL:
-            full_size = w + SIZER_THICKNESS
-        else:
-            full_size = h + SIZER_THICKNESS
+        w, h, full_size = self.layout_calculator.calc_size(self)
 
         for view in self.views:
             view.sizer_after = True
@@ -338,16 +396,7 @@ class MultiSplit(MultiWindowBase):
                 size = int(view.ratio_in_parent * full_size)
             else:
                 size = remaining_size
-            if self.layout_direction == wx.HORIZONTAL:
-                view_width = size - SIZER_THICKNESS
-                print("hsizing %s %s in %s" % (str((pos, 0, view_width, h)), view, self))
-                view.SetSize(pos, 0, view_width, h)
-                view.sizer.SetSize(pos + view_width, 0, SIZER_THICKNESS, h)
-            else:
-                view_height = size - SIZER_THICKNESS
-                print("vsizing %s %s in %s" % (str((0, pos, 0, w, view_height)), view, self))
-                view.SetSize(0, pos, w, view_height)
-                view.sizer.SetSize(0, pos + view_height, w, SIZER_THICKNESS)
+            self.layout_calculator.do_view_size(view, pos, size, w, h)
             view.sizer.Show(view.sizer_after)
             print("sizing: %s for %s" % (view.GetSize(), self))
             view.do_layout()
@@ -419,14 +468,6 @@ class MultiSplit(MultiWindowBase):
             self.view1 = None
             self.view2 = None
             self.Destroy()
-
-    def CanSize(self,side,view):
-        if self.SizeTarget(side,view):
-            return True
-        return False
-
-    def is_internal_resize(self, side, view):
-        return self.layout_direction == side and self.view2 and view == self.view1
 
     def SizeTarget(self,side,view):
         if self.layout_direction == side and self.view2 and view == self.view1:
