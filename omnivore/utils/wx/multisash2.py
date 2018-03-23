@@ -53,11 +53,11 @@ class MultiSash(wx.Window):
     wxEVT_CLIENT_ACTIVATED = wx.NewEventType()
     EVT_CLIENT_ACTIVATED = wx.PyEventBinder(wxEVT_CLIENT_ACTIVATED, 1)
 
-    def __init__(self, parent, direction=wx.VERTICAL, *_args,**_kwargs):
+    def __init__(self, parent, layout_direction=wx.VERTICAL, *_args,**_kwargs):
         wx.Window.__init__(self, parent, *_args, **_kwargs)
         self.live_update_control = None
         self._defChild = EmptyChild
-        self.child = MultiSplit(self, self, direction)
+        self.child = MultiSplit(self, self, layout_direction)
         self.Bind(wx.EVT_SIZE,self.OnMultiSize)
         self.Bind(wx.EVT_MOTION,self.OnMouseMove)
         self.Bind(wx.EVT_LEFT_UP,self.OnRelease)
@@ -74,7 +74,7 @@ class MultiSash(wx.Window):
 
     def Clear(self):
         old = self.child
-        self.child = MultiSplit(self, self, old.direction, old.start)
+        self.child = MultiSplit(self, self, old.layout_direction, old.start)
         old.Destroy()
         self.child.OnSize(None)
 
@@ -172,7 +172,7 @@ class MultiSash(wx.Window):
             return True
         return False
 
-    def add(self, control, u=None, direction=None, use_empty=True):
+    def add(self, control, u=None, layout_direction=None, use_empty=True):
         print("BOERUCHOESUHOEH", self.child)
         if use_empty:
             found = self.find_empty()
@@ -180,11 +180,11 @@ class MultiSash(wx.Window):
             if found:
                 found.replace(control, u)
                 return
-        if direction is None:
+        if layout_direction is None:
             self.last_direction = opposite(self.last_direction)
             direction = self.last_direction
         print("OHSEUOCEUHOCREUH")
-        self.child.add(control, u, direction)
+        self.child.add(control, u, layout_direction)
 
     def live_split(self, source, splitter, px, py, side):
         if side == wx.HORIZONTAL:
@@ -254,13 +254,13 @@ class MultiWindowBase(wx.Window):
 class MultiSplit(MultiWindowBase):
     debug_count = 1
 
-    def __init__(self, multiView, parent, direction=wx.HORIZONTAL, ratio=1.0, leaf=None, layout=None):
+    def __init__(self, multiView, parent, layout_direction=wx.HORIZONTAL, ratio=1.0, leaf=None, layout=None):
         MultiWindowBase.__init__(self, multiView, parent, ratio)
         self.views = []
         if layout is not None:
             self.restore_layout(layout)
         else:
-            self.direction = direction
+            self.layout_direction = layout_direction
             if leaf:
                 leaf.Reparent(self)
                 leaf.sizer.Reparent(self)
@@ -288,8 +288,8 @@ class MultiSplit(MultiWindowBase):
     def find_leaf_index(self, leaf):
         return self.views.index(leaf)  # raises IndexError on failure
 
-    def split(self, leaf, control=None, uuid=None, direction=None, start=wx.LEFT|wx.TOP):
-        if direction is not None and direction != self.direction:
+    def split(self, leaf, control=None, uuid=None, layout_direction=None, start=wx.LEFT|wx.TOP):
+        if direction is not None and direction != self.layout_direction:
             self.split_opposite(leaf, control, uuid, start)
         else:
             self.split_same(leaf, control, uuid, start)
@@ -312,7 +312,7 @@ class MultiSplit(MultiWindowBase):
 
     def split_opposite(self, leaf, control=None, uuid=None, start=wx.LEFT|wx.TOP):
         view_index_to_split = self.find_leaf_index(leaf)
-        subsplit = MultiSplit(self.multiView, self, opposite(self.direction), leaf.ratio_in_parent, leaf)
+        subsplit = MultiSplit(self.multiView, self, opposite(self.layout_direction), leaf.ratio_in_parent, leaf)
         self.views[view_index_to_split] = subsplit
         self.do_layout()
         subsplit.split_same(leaf, control, uuid, start)
@@ -322,7 +322,7 @@ class MultiSplit(MultiWindowBase):
 
         # size used for ratio includes all the sizer widths (including the
         # extra sizer at the end that won't be displayed)
-        if self.direction == wx.HORIZONTAL:
+        if self.layout_direction == wx.HORIZONTAL:
             full_size = w + SIZER_THICKNESS
         else:
             full_size = h + SIZER_THICKNESS
@@ -331,7 +331,6 @@ class MultiSplit(MultiWindowBase):
             view.sizer_after = True
         view.sizer_after = False
 
-        full_size -= SIZER_THICKNESS
         remaining_size = full_size
         pos = 0
         for view in self.views:
@@ -339,7 +338,7 @@ class MultiSplit(MultiWindowBase):
                 size = int(view.ratio_in_parent * full_size)
             else:
                 size = remaining_size
-            if self.direction == wx.HORIZONTAL:
+            if self.layout_direction == wx.HORIZONTAL:
                 view_width = size - SIZER_THICKNESS
                 print("hsizing %s %s in %s" % (str((pos, 0, view_width, h)), view, self))
                 view.SetSize(pos, 0, view_width, h)
@@ -357,7 +356,7 @@ class MultiSplit(MultiWindowBase):
 
     def get_layout(self):
         d = {
-            'direction': self.direction,
+            'direction': self.layout_direction,
             'ratio_in_parent': self.ratio_in_parent,
             'views': [v.get_layout() for v in self.views],
             'debug_id': self.debug_id,
@@ -365,7 +364,7 @@ class MultiSplit(MultiWindowBase):
         return d
 
     def restore_layout(self, d):
-        self.direction = d['direction']
+        self.layout_direction = d['direction']
         self.ratio_in_parent = d['ratio_in_parent']
         self.debug_id = d['debug_id']
         for layout in d['views']:
@@ -427,10 +426,10 @@ class MultiSplit(MultiWindowBase):
         return False
 
     def is_internal_resize(self, side, view):
-        return self.direction == side and self.view2 and view == self.view1
+        return self.layout_direction == side and self.view2 and view == self.view1
 
     def SizeTarget(self,side,view):
-        if self.direction == side and self.view2 and view == self.view1:
+        if self.layout_direction == side and self.view2 and view == self.view1:
             return self
         parent = self.GetParent()
         if parent != self.multiView:
@@ -438,7 +437,7 @@ class MultiSplit(MultiWindowBase):
         return None
 
     def SizeLeaf(self,leaf,pos,side):
-        if self.direction != side:
+        if self.layout_direction != side:
             return
         if not (self.view1 and self.view2):
             return
@@ -763,8 +762,8 @@ class TitleBar(wx.Window):
 
 
 class MultiSizer(wx.Window):
-    def __init__(self, parent, direction=wx.HORIZONTAL):
-        self.direction = direction
+    def __init__(self, parent, layout_direction=wx.HORIZONTAL):
+        self.layout_direction = layout_direction
         wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN)
 
         self.px = None                  # Previous X
@@ -786,7 +785,7 @@ class MultiSizer(wx.Window):
         self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
 
     def OnEnter(self,evt):
-        if self.direction == wx.HORIZONTAL:
+        if self.layout_direction == wx.HORIZONTAL:
             self.SetCursor(wx.Cursor(wx.CURSOR_SIZEWE))
         else:
             self.SetCursor(wx.Cursor(wx.CURSOR_SIZENS))
@@ -797,12 +796,12 @@ class MultiSizer(wx.Window):
             self.px,self.py = self.ClientToScreen((evt.x, evt.y))
             self.px,self.py = self.dragTarget.ScreenToClient((self.px,self.py))
             print("moving sash: internal=%s x=%d y=%d" % (self.is_internal, self.px, self.py))
-            if self.direction == wx.HORIZONTAL:
+            if self.layout_direction == wx.HORIZONTAL:
                 self.dragTarget.SizeLeaf(self.GetParent(),
-                                         self.py,not self.direction)
+                                         self.py,not self.layout_direction)
             else:
                 self.dragTarget.SizeLeaf(self.GetParent(),
-                                         self.px,not self.direction)
+                                         self.px,not self.layout_direction)
         else:
             evt.Skip()
 
@@ -937,7 +936,7 @@ class TitleBarVSplitNewRight(TitleBarCloser):
         print(self.client)
         print(self.splitter)
         print("HORZ")
-        self.splitter.split(direction=wx.HORIZONTAL)
+        self.splitter.split(layout_direction=wx.HORIZONTAL)
 
 
 class TitleBarHSplitNewBot(TitleBarCloser):
@@ -953,7 +952,7 @@ class TitleBarHSplitNewBot(TitleBarCloser):
         print(self.client)
         print(self.splitter)
         print("VERT")
-        self.splitter.split(direction=wx.VERTICAL)
+        self.splitter.split(layout_direction=wx.VERTICAL)
 
 #----------------------------------------------------------------------
 
@@ -1216,7 +1215,7 @@ if __name__ == '__main__':
 
     app = wx.App()
     frame = wx.Frame(None, -1, "Test", size=(800,400))
-    multi = MultiSash(frame, pos = (0,0), size = (640,480), direction=wx.HORIZONTAL)
+    multi = MultiSash(frame, pos = (0,0), size = (640,480), layout_direction=wx.HORIZONTAL)
     sizer = wx.BoxSizer(wx.VERTICAL)
     horz = wx.BoxSizer(wx.HORIZONTAL)
     horz.Add(multi, 1, wx.EXPAND)
