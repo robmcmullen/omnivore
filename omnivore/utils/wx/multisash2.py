@@ -36,12 +36,12 @@ resize_log = logging.getLogger("resize")
 # either wx.HORIZONTAL or wx.VERTICAL. Split direction (left-to-
 # right, bottom- to-top) specified with wx.LEFT, wx.RIGHT, wx.TOP, wx.BOTTOM
 
-SH_SIZE = 5
-
 def opposite(dir):
     if dir == wx.HORIZONTAL:
         return wx.VERTICAL
     return wx.HORIZONTAL
+
+SIZER_THICKNESS = 5
 
 #----------------------------------------------------------------------
 
@@ -64,7 +64,10 @@ class MultiSash(wx.Window):
         self.last_direction = wx.VERTICAL
 
     def OnMultiSize(self,evt):
+        self.child.sizer_after = False
+        self.child.sizer.Hide()
         self.child.SetSize(self.GetSize())
+        self.child.do_layout()
 
     def UnSelect(self):
         self.child.UnSelect()
@@ -146,7 +149,7 @@ class MultiSash(wx.Window):
         else:
             old.Destroy()
         self.OnMultiSize(None)
-        self.child.on_size(None)
+        self.child.do_layout()
 
     def update_captions(self):
         self.Refresh()
@@ -170,14 +173,17 @@ class MultiSash(wx.Window):
         return False
 
     def add(self, control, u=None, direction=None, use_empty=True):
+        print("BOERUCHOESUHOEH", self.child)
         if use_empty:
             found = self.find_empty()
+            print("TOHEUSRCOHEUCR", found)
             if found:
                 found.replace(control, u)
                 return
         if direction is None:
-            self.last_direction = not self.last_direction
+            self.last_direction = opposite(self.last_direction)
             direction = self.last_direction
+        print("OHSEUOCEUHOCREUH")
         self.child.add(control, u, direction)
 
     def live_split(self, source, splitter, px, py, side):
@@ -221,31 +227,52 @@ class MultiSash(wx.Window):
 #----------------------------------------------------------------------
 
 
-class MultiSplit(wx.Window):
+class MultiWindowBase(wx.Window):
+    debug_letter = "A"
+
+    @classmethod
+    def next_debug_letter(cls):
+        cls.debug_letter = chr(ord(cls.debug_letter) + 1)
+        return cls.debug_letter
+
+    def __init__(self, multiView, parent, ratio=1.0):
+        wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN)
+        self.multiView = multiView
+        self.sizer_after = True
+        self.sizer = MultiSizer(parent)
+        self.ratio_in_parent = ratio
+        self.debug_id = self.next_debug_letter()
+        if self.debug_id == "S":
+            # Skip S; used for hidden panes
+            self.debug_id = self.next_debug_letter()
+        self.SetBackgroundColour(wx.RED)
+
+    def compute_sizer_size(self, direction):
+        return self.sizer.compute_size(self, direction, self.sizer_after)
+
+    def do_layout(self):
+        raise NotImplementedError
+
+
+class MultiSplit(MultiWindowBase):
     debug_count = 1
 
     def __init__(self, multiView, parent, direction=wx.HORIZONTAL, ratio=1.0, leaf=None, layout=None):
-        wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN)
-        self.multiView = multiView
+        MultiWindowBase.__init__(self, multiView, parent, ratio)
         self.views = []
         if layout is not None:
             self.restore_layout(layout)
         else:
-            self.ratio_in_parent = ratio
             self.direction = direction
             if leaf:
                 leaf.Reparent(self)
+                leaf.sizer.Reparent(self)
                 leaf.Move(0,0)
                 leaf.ratio_in_parent = 1.0
             else:
                 leaf = MultiViewLeaf(self.multiView, self, 1.0)
             self.views.append(leaf)
-
-            self.Bind(wx.EVT_SIZE, self.on_size)
-
-            self.debug_id = "S_%d" % self.__class__.debug_count
-            self.__class__.debug_count += 1
-        self.on_size(None)
+        self.do_layout()
 
     def find_uuid(self, uuid):
         for view in self.views:
@@ -284,35 +311,43 @@ class MultiSplit(wx.Window):
             control = self.multiView._defChild(self)
         view = MultiViewLeaf(self.multiView, self, ratio, control, uuid)
         self.views[insert_pos:insert_pos] = [view]
-        self.on_size(None)
+        self.do_layout()
 
     def split_opposite(self, leaf, control=None, uuid=None, start=wx.LEFT|wx.TOP):
         view_index_to_split = self.find_leaf_index(leaf)
         subsplit = MultiSplit(self.multiView, self, opposite(self.direction), leaf.ratio_in_parent, leaf)
         self.views[view_index_to_split] = subsplit
-        self.on_size(None)
+        self.do_layout()
         subsplit.split_same(leaf, control, uuid, start)
 
-    def on_size(self, evt):
-        w, h = self.GetSize()
+    def do_layout(self):
+        w, h = self.GetClientSize()
         if self.direction == wx.HORIZONTAL:
             full_size = w
         else:
             full_size = h
 
+        for view in self.views:
+            view.sizer_after = True
+        view.sizer_after = False
+
+        total_sizers = (len(self.views) - 1) * SIZER_THICKNESS
+        total_views = full_size - total_sizers
+        full_size -= total_sizers
         pos = 0
-        total = full_size
         for view in self.views:
             size = int(view.ratio_in_parent * full_size)
             if self.direction == wx.HORIZONTAL:
+                print("hsizing %s %s in %s" % (str((pos, 0, size ,h)), view, self))
                 view.SetSize(pos, 0, size, h)
             else:
+                print("vsizing %s %s in %s" % (str((0, pos, 0, w, size)), view, self))
                 view.SetSize(0, pos, w, size)
-            view.on_size(evt)
-            total -= size
-            pos += size
-            view.needs_sizer = True
-        view.needs_sizer = False
+            print("sizing: %s for %s" % (view.GetSize(), self))
+            sizer_thickness = view.compute_sizer_size(self.direction)
+            view.do_layout()
+            total_views -= size
+            pos += size + sizer_thickness
 
     def get_layout(self):
         d = {
@@ -380,18 +415,6 @@ class MultiSplit(wx.Window):
             self.view2 = None
             self.Destroy()
 
-    def calc_ratio(self):
-        if self.view1 and self.view2:
-            w1, h1 = self.view1.GetSize()
-            w2, h2 = self.view2.GetSize()
-            if self.direction == wx.HORIZONTAL:
-                ratio = 1.0 * w1 / (w1 + w2)
-            else:
-                ratio = 1.0 * h1 / (h1 + h2)
-        else:
-            ratio = 0.5
-        return ratio
-
     def CanSize(self,side,view):
         if self.SizeTarget(side,view):
             return True
@@ -431,33 +454,14 @@ class MultiSplit(wx.Window):
 #----------------------------------------------------------------------
 
 
-class MultiViewLeaf(wx.Window):
-    debug_letter = "A"
-
-    @classmethod
-    def next_debug_letter(cls):
-        cls.debug_letter = chr(ord(cls.debug_letter) + 1)
-        return cls.debug_letter
-
+class MultiViewLeaf(MultiWindowBase):
     def __init__(self, multiView, parent, ratio=1.0, child=None, u=None, layout=None):
-        wx.Window.__init__(self, id = -1, parent = parent, style = wx.CLIP_CHILDREN)
-        self.multiView = multiView
-        self.needs_sizer = True
-        self.sizer = MultiSizer(self, opposite(parent.direction))
+        MultiWindowBase.__init__(self, multiView, parent, ratio)
         if layout is not None:
             self.detail = None
             self.restore_layout(layout)
         else:
             self.detail = MultiClient(self, child, u)
-            self.ratio_in_parent = ratio
-            self.debug_id = self.next_debug_letter()
-            if self.debug_id == "S":
-                # Skip S; used for hidden panes
-                self.debug_id = self.next_debug_letter()
-
-
-        self.Bind(wx.EVT_SIZE, self.on_size)
-
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
 
     def find_uuid(self, uuid):
@@ -501,7 +505,7 @@ class MultiViewLeaf(wx.Window):
                     attr(dData)
         if old is not None:
             old.Destroy()
-        self.detail.OnSize(None)
+        self.detail.do_size_from_parent()
 
     def UnSelect(self):
         self.detail.UnSelect()
@@ -524,18 +528,10 @@ class MultiViewLeaf(wx.Window):
     def CanSize(self,side):
         return self.GetParent().CanSize(side,self)
 
-    def on_size(self,evt):
-        def doresize():
-            try:
-                if self.needs_sizer:
-                    self.sizer.Show()
-                    self.sizer.OnSize(evt)
-                else:
-                    self.sizer.Hide()
-                self.detail.OnSize(evt)
-            except:
-                pass
-        wx.CallAfter(doresize)
+    def do_layout(self):
+        print("DETAIL SIZE", self.GetSize())
+        self.detail.do_size_from_parent()
+
 
 #----------------------------------------------------------------------
 
@@ -569,11 +565,8 @@ class MultiClient(wx.Window):
     close_button_size = (11, 11)
 
     def __init__(self, parent, child=None, uuid=None):
-        w,h = self.CalcSize(parent)
-        wx.Window.__init__(self,id = -1,parent = parent,
-                          pos = (0,0),
-                          size = (w,h),
-                          style = wx.CLIP_CHILDREN | wx.SUNKEN_BORDER)
+        w,h = parent.GetSize()
+        wx.Window.__init__(self, parent, -1, pos=(0,0), size=(w,h), style = wx.CLIP_CHILDREN | wx.SUNKEN_BORDER)
         if uuid is None:
             uuid = str(uuid4())
         self.child_uuid = uuid
@@ -583,10 +576,8 @@ class MultiClient(wx.Window):
         if self.use_title_bar:
             self.title_bar = TitleBar(self)
 
-        top = self.GetParent().multiView
-
         if child is None:
-            child = top._defChild(self)
+            child = parent.multiView._defChild(self)
         self.child = child
         self.child.Reparent(self)
         self.move_child()
@@ -594,7 +585,6 @@ class MultiClient(wx.Window):
 
         self.Bind(wx.EVT_SET_FOCUS,self.OnSetFocus)
         self.Bind(wx.EVT_CHILD_FOCUS,self.OnChildFocus)
-        self.Bind(wx.EVT_SIZE, self.OnSize)
 
     def do_send_event(self, evt):
         return not self.GetEventHandler().ProcessEvent(evt) or evt.IsAllowed()
@@ -658,16 +648,10 @@ class MultiClient(wx.Window):
         self.child.SetFocus()
         self.Refresh()
 
-    def CalcSize(self,parent):
-        w,h = parent.GetSize()
-        w -= SH_SIZE
-        h -= SH_SIZE
-        return (w,h)
-
-    def OnSize(self,evt):
-        w,h = self.CalcSize(self.GetParent())
-        self.SetSize(0,0,w,h)
-        w,h = self.GetClientSize()
+    def do_size_from_parent(self):
+        w,h = self.GetParent().GetClientSize()
+        self.SetSize((w, h))
+        print("in client %s:" % self.GetParent().debug_id, w, h)
         if self.use_title_bar:
             self.title_bar.SetSize((w, self.title_bar_height))
             self.child.SetSize((w, h - self.title_bar_height))
@@ -773,13 +757,9 @@ class TitleBar(wx.Window):
 
 
 class MultiSizer(wx.Window):
-    def __init__(self,parent,side):
-        self.side = side
-        x,y,w,h = self.CalcSizePos(parent)
-        wx.Window.__init__(self,id = -1,parent = parent,
-                          pos = (x,y),
-                          size = (w,h),
-                          style = wx.CLIP_CHILDREN)
+    def __init__(self, parent, direction=wx.HORIZONTAL):
+        self.direction = direction
+        wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN)
 
         self.px = None                  # Previous X
         self.py = None                  # Previous Y
@@ -796,36 +776,34 @@ class MultiSizer(wx.Window):
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
         self.SetBackgroundColour(wx.WHITE)
 
-
-    def CalcSizePos(self,parent):
-        pw,ph = parent.GetSize()
-        if self.side == wx.HORIZONTAL:
-            x = 0
-            y = ph - SH_SIZE
-            w = pw - SH_SIZE
-            h = SH_SIZE
+    def compute_size(self, parent, direction, show_sizer):
+        self.direction = direction
+        if not show_sizer:
+            print("Hiding sizer after %s" % parent)
+            self.Hide()
+            return 0
+        x, y = parent.GetPosition()
+        w, h = parent.GetSize()
+        if direction == wx.HORIZONTAL:
+            # horizontal layout needs vertical dividers
+            x += w
+            w = SIZER_THICKNESS
         else:
-            x = pw - SH_SIZE
-            y = 0
-            w = SH_SIZE
-            h = ph
-        return (x,y,w,h)
-
-    def OnSize(self,evt):
-        x,y,w,h = self.CalcSizePos(self.GetParent())
-        self.SetSize(x,y,w,h)
+            # so, obvs, vertical layout needs horizontal dividers
+            y += h
+            h = SIZER_THICKNESS
+        self.SetSize(x, y, w, h)
+        self.Show()
+        return SIZER_THICKNESS
 
     def OnLeave(self,evt):
         self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
 
     def OnEnter(self,evt):
-
-        if not self.GetParent().CanSize(not self.side):
-            return
-        if self.side == wx.HORIZONTAL:
-            self.SetCursor(wx.Cursor(wx.CURSOR_SIZENS))
-        else:
+        if self.direction == wx.HORIZONTAL:
             self.SetCursor(wx.Cursor(wx.CURSOR_SIZEWE))
+        else:
+            self.SetCursor(wx.Cursor(wx.CURSOR_SIZENS))
 
     def OnMouseMove(self,evt):
         if self.isDrag:
@@ -833,18 +811,14 @@ class MultiSizer(wx.Window):
             self.px,self.py = self.ClientToScreen((evt.x, evt.y))
             self.px,self.py = self.dragTarget.ScreenToClient((self.px,self.py))
             print("moving sash: internal=%s x=%d y=%d" % (self.is_internal, self.px, self.py))
-            if self.side == wx.HORIZONTAL:
+            if self.direction == wx.HORIZONTAL:
                 self.dragTarget.SizeLeaf(self.GetParent(),
-                                         self.py,not self.side)
+                                         self.py,not self.direction)
             else:
                 self.dragTarget.SizeLeaf(self.GetParent(),
-                                         self.px,not self.side)
+                                         self.px,not self.direction)
         else:
             evt.Skip()
-
-    def is_simple_resize(self):
-        leaf = self.GetParent()
-        self.first = leaf
 
     def OnPress(self,evt):
         leaf = self.GetParent()
@@ -1303,5 +1277,9 @@ if __name__ == '__main__':
         else:
             print("searching for %s" % u)
             wx.CallAfter(replace_uuid, u)
+
+    # import wx.lib.inspection
+    # inspect = wx.lib.inspection.InspectionTool()
+    # wx.CallAfter(inspect.Show)
 
     app.MainLoop()
