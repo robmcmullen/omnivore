@@ -247,9 +247,6 @@ class MultiWindowBase(wx.Window):
             self.debug_id = self.next_debug_letter()
         self.SetBackgroundColour(wx.RED)
 
-    def compute_sizer_size(self, direction):
-        return self.sizer.compute_size(self, direction, self.sizer_after)
-
     def do_layout(self):
         raise NotImplementedError
 
@@ -322,32 +319,41 @@ class MultiSplit(MultiWindowBase):
 
     def do_layout(self):
         w, h = self.GetClientSize()
+
+        # size used for ratio includes all the sizer widths (including the
+        # extra sizer at the end that won't be displayed)
         if self.direction == wx.HORIZONTAL:
-            full_size = w
+            full_size = w + SIZER_THICKNESS
         else:
-            full_size = h
+            full_size = h + SIZER_THICKNESS
 
         for view in self.views:
             view.sizer_after = True
         view.sizer_after = False
 
-        total_sizers = (len(self.views) - 1) * SIZER_THICKNESS
-        total_views = full_size - total_sizers
-        full_size -= total_sizers
+        full_size -= SIZER_THICKNESS
+        remaining_size = full_size
         pos = 0
         for view in self.views:
-            size = int(view.ratio_in_parent * full_size)
-            if self.direction == wx.HORIZONTAL:
-                print("hsizing %s %s in %s" % (str((pos, 0, size ,h)), view, self))
-                view.SetSize(pos, 0, size, h)
+            if view.sizer_after:
+                size = int(view.ratio_in_parent * full_size)
             else:
-                print("vsizing %s %s in %s" % (str((0, pos, 0, w, size)), view, self))
-                view.SetSize(0, pos, w, size)
+                size = remaining_size
+            if self.direction == wx.HORIZONTAL:
+                view_width = size - SIZER_THICKNESS
+                print("hsizing %s %s in %s" % (str((pos, 0, view_width, h)), view, self))
+                view.SetSize(pos, 0, view_width, h)
+                view.sizer.SetSize(pos + view_width, 0, SIZER_THICKNESS, h)
+            else:
+                view_height = size - SIZER_THICKNESS
+                print("vsizing %s %s in %s" % (str((0, pos, 0, w, view_height)), view, self))
+                view.SetSize(0, pos, w, view_height)
+                view.sizer.SetSize(0, pos + view_height, w, SIZER_THICKNESS)
+            view.sizer.Show(view.sizer_after)
             print("sizing: %s for %s" % (view.GetSize(), self))
-            sizer_thickness = view.compute_sizer_size(self.direction)
             view.do_layout()
-            total_views -= size
-            pos += size + sizer_thickness
+            remaining_size -= size
+            pos += size
 
     def get_layout(self):
         d = {
@@ -775,26 +781,6 @@ class MultiSizer(wx.Window):
 
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
         self.SetBackgroundColour(wx.WHITE)
-
-    def compute_size(self, parent, direction, show_sizer):
-        self.direction = direction
-        if not show_sizer:
-            print("Hiding sizer after %s" % parent)
-            self.Hide()
-            return 0
-        x, y = parent.GetPosition()
-        w, h = parent.GetSize()
-        if direction == wx.HORIZONTAL:
-            # horizontal layout needs vertical dividers
-            x += w
-            w = SIZER_THICKNESS
-        else:
-            # so, obvs, vertical layout needs horizontal dividers
-            y += h
-            h = SIZER_THICKNESS
-        self.SetSize(x, y, w, h)
-        self.Show()
-        return SIZER_THICKNESS
 
     def OnLeave(self,evt):
         self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
