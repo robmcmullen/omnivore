@@ -446,8 +446,10 @@ class MultiSplit(MultiWindowBase):
             view.UnSelect()
 
     def destroy_leaf(self, view):
+        print("destroy_leaf: view=%s views=%s self=%s" % (view, self.views, self))
         index = self.find_leaf_index(view)  # raise IndexError
         if len(self.views) > 2:
+            print("deleting > 2: %d %s" %(index, self.views))
             del self.views[index]
             r = view.ratio_in_parent / len(self.views)
             for v in self.views:
@@ -456,26 +458,27 @@ class MultiSplit(MultiWindowBase):
             view.sizer.Destroy()
             self.do_layout()
         elif len(self.views) == 2:
+            print("deleting == 2: %d %s, parent=%s self=%s" % (index, self.views, self.GetParent(), self))
             # remove leaf, resulting in a single leaf inside a multisplit.
             # Instead of leaving it like this, move it up into the parent
             # multisplit
             del self.views[index]
             view.Destroy()
             view.sizer.Destroy()
-            self.GetParent().destroy_leaf(self)
+            print("  deleting %s from parent %s parent views=%s" % (self, self.GetParent(), self.GetParent().views))
+            self.GetParent().reparent_from_splitter(self)
         else:
-            # single leaf, means must mean we've been called to destroy a
-            # splitter and reparent its view into itself.
-            splitter = view
-            if hasattr(splitter, "views"):
-                view = splitter.views[0]
-                view.ratio_in_parent = splitter.ratio_in_parent
-                view.Reparent(self)
-                view.sizer.Reparent(self)
-                splitter.Destroy()
-                self.do_layout()
-            else:
-                log.error("Attempting to remove the last item?", view)
+            log.error("Attempting to remove the last item?", view)
+
+    def reparent_from_splitter(self, splitter):
+        index = self.find_leaf_index(splitter)  # raise IndexError
+        view = splitter.views[0]
+        view.ratio_in_parent = splitter.ratio_in_parent
+        view.Reparent(self)
+        view.sizer.Reparent(self)
+        self.views[index] = view
+        splitter.Destroy()
+        self.do_layout()
 
 
 #----------------------------------------------------------------------
