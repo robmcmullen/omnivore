@@ -300,7 +300,6 @@ class MultiWindowBase(wx.Window):
         raise NotImplementedError
 
     def on_motion(self,evt):
-        # print("motion %d,%d" % (evt.x, evt.y))
         if self.resizer is not None:
             self.resizer.do_mouse_move(evt.x, evt.y)
         else:
@@ -308,13 +307,11 @@ class MultiWindowBase(wx.Window):
 
     def on_left_down(self, evt):
         splitter = self.GetParent()
-        # print("left down %d,%d, self=%s parent=%s" % (evt.x, evt.y, self.debug_id, splitter))
         try:
             resize_partner = splitter.find_resize_partner(self)
         except IndexError:
             evt.Skip()
             resize_partner = None
-        print(resize_partner)
         if resize_partner:
             self.resizer = splitter.layout_calculator.calc_resizer(splitter, self, self.sizer, resize_partner, evt.x, evt.y)
             self.sizer.CaptureMouse()
@@ -373,7 +370,6 @@ class MultiSplit(MultiWindowBase):
 
     def find_resize_partner(self, leaf):
         current = self.find_leaf_index(leaf)
-        print("find_resize_partner: leaf,current,views", leaf, current, self.views)
         return self.views[current + 1]
 
     def split(self, leaf, control=None, uuid=None, layout_direction=None, start=wx.LEFT|wx.TOP):
@@ -421,7 +417,6 @@ class MultiSplit(MultiWindowBase):
                 size = remaining_size
             self.layout_calculator.do_view_size(view, pos, size, w, h)
             view.sizer.Show(view.sizer_after)
-            print("sizing: %s for %s" % (view.GetSize(), self))
             view.do_layout()
             remaining_size -= size
             pos += size
@@ -450,47 +445,37 @@ class MultiSplit(MultiWindowBase):
         for view in self.views:
             view.UnSelect()
 
-    def DestroyLeaf(self,caller):
-        if not self.view2:
-            # deleting final control here; need to replace it with a dummy
-            # control otherwise we won't actually be able to delete that last
-            # one
-            old = self.view1
-            self.view1 = MultiViewLeaf(self.multiView,self, (0,0),self.GetSize())
-            old.Destroy()
-            return
-        parent = self.GetParent()       # Another splitview
-        if parent == self.multiView:    # We'r at the root
-            if caller == self.view1:
-                old = self.view1
-                self.view1 = self.view2
-                self.view2 = None
-                old.Destroy()
-            else:
-                self.view2.Destroy()
-                self.view2 = None
-            self.view1.SetSize(self.GetSize())
-            self.view1.Move(self.GetPosition())
+    def destroy_leaf(self, view):
+        index = self.find_leaf_index(view)  # raise IndexError
+        if len(self.views) > 2:
+            del self.views[index]
+            r = view.ratio_in_parent / len(self.views)
+            for v in self.views:
+                v.ratio_in_parent += r
+            view.Destroy()
+            view.sizer.Destroy()
+            self.do_layout()
+        elif len(self.views) == 2:
+            # remove leaf, resulting in a single leaf inside a multisplit.
+            # Instead of leaving it like this, move it up into the parent
+            # multisplit
+            del self.views[index]
+            view.Destroy()
+            view.sizer.Destroy()
+            self.GetParent().destroy_leaf(self)
         else:
-            w,h = self.GetSize()
-            x,y = self.GetPosition()
-            if caller == self.view1:
-                if self == parent.view1:
-                    parent.view1 = self.view2
-                else:
-                    parent.view2 = self.view2
-                self.view2.Reparent(parent)
-                self.view2.SetSize(x,y,w,h)
+            # single leaf, means must mean we've been called to destroy a
+            # splitter and reparent its view into itself.
+            splitter = view
+            if hasattr(splitter, "views"):
+                view = splitter.views[0]
+                view.ratio_in_parent = splitter.ratio_in_parent
+                view.Reparent(self)
+                view.sizer.Reparent(self)
+                splitter.Destroy()
+                self.do_layout()
             else:
-                if self == parent.view1:
-                    parent.view1 = self.view1
-                else:
-                    parent.view2 = self.view1
-                self.view1.Reparent(parent)
-                self.view1.SetSize(x,y,w,h)
-            self.view1 = None
-            self.view2 = None
-            self.Destroy()
+                log.error("Attempting to remove the last item?", view)
 
 
 #----------------------------------------------------------------------
@@ -561,8 +546,8 @@ class MultiViewLeaf(MultiWindowBase):
     def split(self, *args, **kwargs):
         self.GetParent().split(self, *args, **kwargs)
 
-    def DestroyLeaf(self):
-        self.GetParent().DestroyLeaf(self)
+    def destroy_leaf(self):
+        self.GetParent().destroy_leaf(self)
 
     def do_layout(self):
         self.detail.do_size_from_parent()
@@ -902,7 +887,7 @@ class TitleBarCloser(TitleBarButton):
         return True
 
     def close(self):
-        self.splitter.DestroyLeaf()
+        self.splitter.destroy_leaf()
 
 
 class TitleBarVSplitNewRight(TitleBarCloser):
@@ -944,55 +929,6 @@ class EmptyChild(wx.Window):
         wx.Window.__init__(self,parent,-1, style = wx.CLIP_CHILDREN)
 
 
-#----------------------------------------------------------------------
-
-# TODO: Switch to wx.Overlay instead of screen DC
-
-def DrawSash(win,x,y,direction):
-    dc = wx.ScreenDC()
-    dc.StartDrawingOnTop(win)
-    bmp = wx.Bitmap(8,8)
-    bdc = wx.MemoryDC()
-    bdc.SelectObject(bmp)
-    bdc.DrawRectangle(-1,-1, 10,10)
-    for i in range(8):
-        for j in range(8):
-            if ((i + j) & 1):
-                bdc.DrawPoint(i,j)
-
-    brush = wx.Brush(wx.Colour(0,0,0))
-    brush.SetStipple(bmp)
-
-    dc.SetBrush(brush)
-    dc.SetLogicalFunction(wx.XOR)
-
-    body_w,body_h = win.GetClientSize()
-
-    if y < 0:
-        y = 0
-    if y > body_h:
-        y = body_h
-    if x < 0:
-        x = 0
-    if x > body_w:
-        x = body_w
-
-    if direction == wx.HORIZONTAL:
-        x = 0
-    else:
-        y = 0
-
-    x,y = win.ClientToScreen((x,y))
-
-    w = body_w
-    h = body_h
-
-    if direction == wx.HORIZONTAL:
-        dc.DrawRectangle(x,y-2, w,4)
-    else:
-        dc.DrawRectangle(x-2,y, 4,h)
-
-    dc.EndDrawingOnTop()
 
 
 class MultiSashEvent(wx.PyCommandEvent):
