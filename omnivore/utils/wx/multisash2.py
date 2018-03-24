@@ -171,10 +171,11 @@ class HorizontalResizer(object):
         self.first = first
         self.sizer = sizer
         self.second = second
+        self.zero_pos = first.GetPosition()
         self.total_ratio = first.ratio_in_parent + second.ratio_in_parent
         self.total_width, self.total_height = self.calc_pixel_size()
         self.mouse_offset = sizer_evt_x, sizer_evt_y
-        self.x_sash, self.y_sash = self.calc_sash_pos(sizer_evt_x, sizer_evt_y)
+        self.x_sash, self.y_sash = self.calc_splitter_pos(sizer_evt_x, sizer_evt_y)
         self.calc_extrema()
 
     def __repr__(self):
@@ -187,15 +188,16 @@ class HorizontalResizer(object):
         h = h1 + h2 + 2 * (SIZER_THICKNESS)
         return w, h
 
-    def calc_sash_pos(self, sizer_evt_x, sizer_evt_y):
+    def calc_splitter_pos(self, sizer_evt_x, sizer_evt_y):
         # Calculate the right/bottom location of the moving sash (for either
         # horz or vert; they don't use the other value so both can be
         # calculated in a single method). This location is used because it's
         # the point at which the ratio is calculated in the layout_calculator's
         # do_view_size method
-        x, y = self.sizer.ClientToScreen((sizer_evt_x, sizer_evt_y))
-        x, y = self.first.ScreenToClient((x, y))
-        x, y = x - self.mouse_offset[0] + SIZER_THICKNESS, y - self.mouse_offset[0] + SIZER_THICKNESS
+        xs, ys = self.sizer.ClientToScreen((sizer_evt_x, sizer_evt_y))
+        x, y = self.splitter.ScreenToClient((xs, ys))
+        print("calc_splitter_pos: evt: %d,%d screen: %d,%d first: %d,%d" % (sizer_evt_x, sizer_evt_y, xs, ys, x, y))
+        x, y = x - self.mouse_offset[0] + SIZER_THICKNESS, y - self.mouse_offset[1] + SIZER_THICKNESS
         return x, y
 
     def calc_extrema(self):
@@ -204,18 +206,20 @@ class HorizontalResizer(object):
         x, _ = self.second.GetPosition()
         w, _ = self.second.GetSize()
         self.x_max = x + w
-        self.x_min -= SIZER_THICKNESS
+        self.x_max -= SIZER_THICKNESS
+        print("calc_extrema: min %d, x %d, w %d, max %d" % (self.x_min, x, w, self.x_max))
 
     def set_ratios(self, x, y):
-        r = float(x) / float(self.total_width)
+        r = float(x - self.zero_pos[0]) / float(self.total_width) * self.total_ratio
         print("x,r,x_min,xmax", x, r, self.x_min, self.x_max)
         if x > self.x_min and x < self.x_max:
             self.first.ratio_in_parent = r
-            self.second.ratio_in_parent = 1.0 - r
+            self.second.ratio_in_parent = self.total_ratio - r
             return True
 
     def do_mouse_move(self, sizer_evt_x, sizer_evt_y):
-        x, y = self.calc_sash_pos(sizer_evt_x, sizer_evt_y)
+        x, y = self.calc_splitter_pos(sizer_evt_x, sizer_evt_y)
+        print("do_mouse_move: sizer: %d,%d first: %d,%d" % (sizer_evt_x, sizer_evt_y, x, y))
         print(self, x, y)
         if self.set_ratios(x, y):
             self.splitter.do_layout()
@@ -245,19 +249,24 @@ class VerticalLayout(object):
 
 
 class VerticalResizer(HorizontalResizer):
+    def __repr__(self):
+        return "%s: %s %s, ratio=%f, height=%d" % (self.__class__.__name__, self.first.debug_id, self.second.debug_id, self.total_ratio, self.total_height)
+
     def calc_extrema(self):
         _, self.y_min = self.first.GetPosition()
         self.y_min += 2 * SIZER_THICKNESS
         _, y = self.second.GetPosition()
         _, h = self.second.GetSize()
         self.y_max = y + h
-        self.y_min -= SIZER_THICKNESS
+        self.y_max -= SIZER_THICKNESS
+        print("calc_extrema: min %d, y %d, h %d, max %d" % (self.y_min, y, h, self.y_max))
 
     def set_ratios(self, x, y):
-        r = float(y) / float(self.total_height)
+        r = float(y - self.zero_pos[1]) / float(self.total_height) * self.total_ratio
+        print("y,r,y_min,xmax", y, r, self.y_min, self.y_max)
         if y > self.y_min and y < self.y_max:
             self.first.ratio_in_parent = r
-            self.second.ratio_in_parent = 1.0 - r
+            self.second.ratio_in_parent = self.total_ratio - r
             return True
 
 
@@ -291,7 +300,7 @@ class MultiWindowBase(wx.Window):
         raise NotImplementedError
 
     def on_motion(self,evt):
-        print("motion %d,%d" % (evt.x, evt.y))
+        # print("motion %d,%d" % (evt.x, evt.y))
         if self.resizer is not None:
             self.resizer.do_mouse_move(evt.x, evt.y)
         else:
@@ -299,7 +308,7 @@ class MultiWindowBase(wx.Window):
 
     def on_left_down(self, evt):
         splitter = self.GetParent()
-        print("left down %d,%d, self=%s parent=%s" % (evt.x, evt.y, self.debug_id, splitter))
+        # print("left down %d,%d, self=%s parent=%s" % (evt.x, evt.y, self.debug_id, splitter))
         try:
             resize_partner = splitter.find_resize_partner(self)
         except IndexError:
