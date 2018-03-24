@@ -784,7 +784,7 @@ class TitleBar(wx.Window):
         # the show/hide of the buttons being right under the cursor
         x, y = evt.GetPosition()
         w, h = self.GetSize()
-        if x < 0 or x >= w or y < 0 or y >= h:
+        if x <= 0 or x >= w or y <= 0 or y >= h:
             self.hide_buttons()
 
 
