@@ -50,6 +50,9 @@ class MultiSash(wx.Window):
     wxEVT_CLIENT_CLOSE = wx.NewEventType()
     EVT_CLIENT_CLOSE = wx.PyEventBinder(wxEVT_CLIENT_CLOSE, 1)
 
+    wxEVT_CLIENT_REPLACE = wx.NewEventType()
+    EVT_CLIENT_REPLACE = wx.PyEventBinder(wxEVT_CLIENT_REPLACE, 1)
+
     wxEVT_CLIENT_ACTIVATED = wx.NewEventType()
     EVT_CLIENT_ACTIVATED = wx.PyEventBinder(wxEVT_CLIENT_ACTIVATED, 1)
 
@@ -521,10 +524,7 @@ class MultiViewLeaf(MultiWindowBase):
         return "<MultiLeaf %s %f>" % (self.debug_id, self.ratio_in_parent)
 
     def remove(self):
-        log.debug("sending close event for %s" % self.client)
-        evt = MultiSashEvent(MultiSash.wxEVT_CLIENT_CLOSE, self.client)
-        evt.SetChild(self.client.child)
-        self.client.do_send_event(evt)
+        self.client.do_send_close_event()
         self.sizer.Destroy()
         self.Destroy()
 
@@ -646,6 +646,19 @@ class MultiClient(wx.Window):
     def do_send_event(self, evt):
         return not self.GetEventHandler().ProcessEvent(evt) or evt.IsAllowed()
 
+    def do_send_close_event(self):
+        log.debug("sending close event for %s" % self)
+        evt = MultiSashEvent(MultiSash.wxEVT_CLIENT_CLOSE, self)
+        evt.SetChild(self.child)
+        self.do_send_event(evt)
+
+    def do_send_replace_event(self, new_child):
+        log.debug("sending replace event for %s" % self)
+        evt = MultiSashEvent(MultiSash.wxEVT_CLIENT_REPLACE, self)
+        evt.SetChild(self.child)
+        evt.SetReplacementChild(new_child)
+        self.do_send_event(evt)
+
     @classmethod
     def setup_paint(cls):
         if cls.title_bar_font_height is not None:
@@ -717,6 +730,7 @@ class MultiClient(wx.Window):
 
     def replace(self, child, u=None):
         if self.child:
+            self.do_send_replace_event(child)
             self.child.Destroy()
             self.child = None
         self.child = child
@@ -987,11 +1001,12 @@ class MultiSashEvent(wx.PyCommandEvent):
             self.SetEventObject(splitter)
             self.SetId(splitter.GetId())
         self.child = None
+        self.replacement_child = None
         self.isAllowed = True
 
     def SetChild(self, child):
         """
-        The MultiClient that is reporting the event
+        The MultiClient child window that is reporting the event
 
         :param `client`: MultiClient instance
 
@@ -1000,12 +1015,30 @@ class MultiSashEvent(wx.PyCommandEvent):
 
     def GetChild(self):
         """
-        The MultiClient that is reporting the event
+        The MultiClient child window that is reporting the event
 
         :param `client`: MultiClient instance
 
         """
         return self.child
+
+    def SetReplacementChild(self, child):
+        """
+        The child window that will become the new child of the MultiClient
+
+        :param `client`: MultiClient instance
+
+        """
+        self.replacement_child = child
+
+    def GetReplacementChild(self):
+        """
+        The child window that will become the new child of the MultiClient
+
+        :param `client`: MultiClient instance
+
+        """
+        return self.replacement_child
 
     def SetSashPosition(self, pos):
         """
