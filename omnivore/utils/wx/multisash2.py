@@ -478,6 +478,7 @@ class MultiSplit(MultiWindowBase):
         view.sizer.Reparent(self)
         self.views[index] = view
         splitter.Destroy()
+        splitter.sizer.Destroy()
         self.do_layout()
 
 
