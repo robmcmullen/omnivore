@@ -72,9 +72,9 @@ class MultiSash(wx.Window):
 
     def Clear(self):
         old = self.child
-        self.child = MultiSplit(self, self, old.layout_direction, old.start)
-        old.Destroy()
-        self.child.OnSize(None)
+        self.child = MultiSplit(self, self, old.layout_direction)
+        old.remove_all()
+        self.OnMultiSize(None)
 
     def get_layout(self, to_json=False, pretty=False):
         d = {'multisash': self.child.get_layout()}
@@ -137,7 +137,8 @@ class MultiSash(wx.Window):
         if layout_direction is None:
             self.last_direction = opposite(self.last_direction)
             direction = self.last_direction
-        self.child.add(control, u, layout_direction)
+        leaf = self.child.views[-1]
+        self.child.split(leaf, control, u, layout_direction)
 
 
 #----------------------------------------------------------------------
@@ -299,6 +300,13 @@ class MultiWindowBase(wx.Window):
     def do_layout(self):
         raise NotImplementedError
 
+    def remove(self):
+        self.sizer.Destroy()
+        self.Destroy()
+
+    def remove_all(self):
+        self.remove()
+
     def on_motion(self,evt):
         if self.resizer is not None:
             self.resizer.do_mouse_move(evt.x, evt.y)
@@ -350,6 +358,15 @@ class MultiSplit(MultiWindowBase):
 
     def __repr__(self):
         return "<MultiSplit %s %f>" % (self.debug_id, self.ratio_in_parent)
+
+    def remove(self):
+        self.sizer.Destroy()
+        self.Destroy()
+
+    def remove_all(self):
+        for view in self.views:
+            view.remove_all()
+        self.remove()
 
     def find_uuid(self, uuid):
         for view in self.views:
@@ -446,7 +463,7 @@ class MultiSplit(MultiWindowBase):
             view.UnSelect()
 
     def destroy_leaf(self, view):
-        print("destroy_leaf: view=%s views=%s self=%s" % (view, self.views, self))
+        print("destroy_leaf: view=%s views=%s self=%s parent=%s" % (view, self.views, self, self.GetParent()))
         index = self.find_leaf_index(view)  # raise IndexError
         if len(self.views) > 2:
             print("deleting > 2: %d %s" %(index, self.views))
@@ -454,8 +471,7 @@ class MultiSplit(MultiWindowBase):
             r = view.ratio_in_parent / len(self.views)
             for v in self.views:
                 v.ratio_in_parent += r
-            view.Destroy()
-            view.sizer.Destroy()
+            view.remove()
             self.do_layout()
         elif len(self.views) == 2:
             print("deleting == 2: %d %s, parent=%s self=%s" % (index, self.views, self.GetParent(), self))
@@ -463,12 +479,19 @@ class MultiSplit(MultiWindowBase):
             # Instead of leaving it like this, move it up into the parent
             # multisplit
             del self.views[index]
-            view.Destroy()
-            view.sizer.Destroy()
-            print("  deleting %s from parent %s parent views=%s" % (self, self.GetParent(), self.GetParent().views))
-            self.GetParent().reparent_from_splitter(self)
+            view.remove()
+            if self.GetParent() == self.multiView:
+                # Only one item left.
+                print("  last item in %s!" % (self))
+                self.views[0].ratio_in_parent = 1.0
+                self.do_layout()
+            else:
+                print("  deleting %s from parent %s parent views=%s" % (self, self.GetParent(), self.GetParent().views))
+                self.GetParent().reparent_from_splitter(self)
         else:
-            log.error("Attempting to remove the last item?", view)
+            # must be at the top; the final splitter.
+            print("Removing the last item!", view)
+            self.GetParent().Clear()
 
     def reparent_from_splitter(self, splitter):
         index = self.find_leaf_index(splitter)  # raise IndexError
@@ -477,8 +500,7 @@ class MultiSplit(MultiWindowBase):
         view.Reparent(self)
         view.sizer.Reparent(self)
         self.views[index] = view
-        splitter.Destroy()
-        splitter.sizer.Destroy()
+        splitter.remove()
         self.do_layout()
 
 
@@ -489,37 +511,48 @@ class MultiViewLeaf(MultiWindowBase):
     def __init__(self, multiView, parent, ratio=1.0, child=None, u=None, layout=None):
         MultiWindowBase.__init__(self, multiView, parent, ratio)
         if layout is not None:
-            self.detail = None
+            self.client = None
             self.restore_layout(layout)
         else:
-            self.detail = MultiClient(self, child, u)
+            self.client = MultiClient(self, child, u)
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
 
     def __repr__(self):
         return "<MultiLeaf %s %f>" % (self.debug_id, self.ratio_in_parent)
 
+    def remove(self):
+        log.debug("sending close event for %s" % self.client)
+        evt = MultiSashEvent(MultiSash.wxEVT_CLIENT_CLOSE, self.client)
+        evt.SetChild(self.client.child)
+        self.client.do_send_event(evt)
+        self.sizer.Destroy()
+        self.Destroy()
+
+    def remove_all(self):
+        self.remove()
+
     def find_uuid(self, uuid):
-        if uuid == self.detail.child_uuid:
-            log.debug("find_uuid: found %s in %s" % (uuid, self.detail.child.GetName()))
-            return self.detail
-        log.debug("find_uuid: skipping %s in %s" % (self.detail.child_uuid, self.detail.child.GetName()))
+        if uuid == self.client.child_uuid:
+            log.debug("find_uuid: found %s in %s" % (uuid, self.client.child.GetName()))
+            return self.client
+        log.debug("find_uuid: skipping %s in %s" % (self.client.child_uuid, self.client.child.GetName()))
         return None
 
     def find_empty(self):
-        if isinstance(self.detail.child, self.multiView._defChild):
-            log.debug("find_empty: found %s" % (self.detail.child.GetName()))
-            return self.detail
-        log.debug("find_empty: skipping %s in %s" % (self.detail.child_uuid, self.detail.child.GetName()))
+        if hasattr(self.client.child, "multisash2_empty_control") and self.client.child.multisash2_empty_control:
+            log.debug("find_empty: found %s" % (self.client.child.GetName()))
+            return self.client
+        log.debug("find_empty: skipping %s in %s" % (self.client.child_uuid, self.client.child.GetName()))
         return None
 
     def get_layout(self):
         d = {
             'ratio_in_parent': self.ratio_in_parent,
             'debug_id': self.debug_id,
-            'child_uuid': self.detail.child_uuid,
+            'child_uuid': self.client.child_uuid,
             }
-        if hasattr(self.detail.child,'get_layout'):
-            attr = getattr(self.detail.child, 'get_layout')
+        if hasattr(self.client.child,'get_layout'):
+            attr = getattr(self.client.child, 'get_layout')
             if callable(attr):
                 layout = attr()
                 if layout:
@@ -529,20 +562,20 @@ class MultiViewLeaf(MultiWindowBase):
     def restore_layout(self, d):
         self.debug_id = d['debug_id']
         self.ratio_in_parent = d['ratio_in_parent']
-        old = self.detail
-        self.detail = MultiClient(self, None, d['child_uuid'])
+        old = self.client
+        self.client = MultiClient(self, None, d['child_uuid'])
         dData = d.get('detail',None)
         if dData:
-            if hasattr(self.detail.child,'restore_layout'):
-                attr = getattr(self.detail.child,'restore_layout')
+            if hasattr(self.client.child,'restore_layout'):
+                attr = getattr(self.client.child,'restore_layout')
                 if callable(attr):
                     attr(dData)
         if old is not None:
             old.Destroy()
-        self.detail.do_size_from_parent()
+        self.client.do_size_from_parent()
 
     def UnSelect(self):
-        self.detail.UnSelect()
+        self.client.UnSelect()
 
     def get_multi_split(self):
         return self.GetParent()
@@ -554,7 +587,7 @@ class MultiViewLeaf(MultiWindowBase):
         self.GetParent().destroy_leaf(self)
 
     def do_layout(self):
-        self.detail.do_size_from_parent()
+        self.client.do_size_from_parent()
 
 
 #----------------------------------------------------------------------
@@ -692,7 +725,7 @@ class MultiClient(wx.Window):
             u = str(uuid4())
         self.child_uuid = u
         self.move_child()
-        self.OnSize(None)
+        self.do_size_from_parent()
 
     def move_child(self):
         if self.use_title_bar:
@@ -808,7 +841,7 @@ class TitleBarButton(wx.Window):
         self.order = order
         self.title_bar = parent
         self.client = parent.GetParent()
-        self.splitter = self.client.GetParent()
+        self.leaf = self.client.GetParent()
         x,y,w,h = self.CalcSizePos(parent)
         wx.Window.__init__(self,id = -1,parent = parent,
                           pos = (x,y),
@@ -881,17 +914,10 @@ class TitleBarCloser(TitleBarButton):
     def do_action(self, evt):
         requested_close = self.ask_close()
         if requested_close:
-            log.debug("sending close event for %s" % self.client)
-            evt = MultiSashEvent(MultiSash.wxEVT_CLIENT_CLOSE, self.client)
-            evt.SetChild(self.client.child)
-            self.client.do_send_event(evt)
-            self.close()
+            self.leaf.destroy_leaf()
 
     def ask_close(self):
         return True
-
-    def close(self):
-        self.splitter.destroy_leaf()
 
 
 class TitleBarVSplitNewRight(TitleBarCloser):
@@ -905,9 +931,9 @@ class TitleBarVSplitNewRight(TitleBarCloser):
 
     def do_action(self, evt):
         print(self.client)
-        print(self.splitter)
+        print(self.leaf)
         print("HORZ")
-        self.splitter.split(layout_direction=wx.HORIZONTAL)
+        self.leaf.split(layout_direction=wx.HORIZONTAL)
 
 
 class TitleBarHSplitNewBot(TitleBarCloser):
@@ -921,14 +947,16 @@ class TitleBarHSplitNewBot(TitleBarCloser):
 
     def do_action(self, evt):
         print(self.client)
-        print(self.splitter)
+        print(self.leaf)
         print("VERT")
-        self.splitter.split(layout_direction=wx.VERTICAL)
+        self.leaf.split(layout_direction=wx.VERTICAL)
 
 #----------------------------------------------------------------------
 
 
 class EmptyChild(wx.Window):
+    multisash2_empty_control = True
+
     def __init__(self,parent):
         wx.Window.__init__(self,parent,-1, style = wx.CLIP_CHILDREN)
 
@@ -1135,6 +1163,11 @@ if __name__ == '__main__':
         print(g)
         g.view()
 
+    def clear_all(evt):
+        global multi
+
+        multi.Clear()
+
     app = wx.App()
     frame = wx.Frame(None, -1, "Test", size=(800,400))
     multi = MultiSash(frame, pos = (0,0), size = (640,480), layout_direction=wx.HORIZONTAL)
@@ -1161,6 +1194,9 @@ if __name__ == '__main__':
     btn = wx.Button(frame, -1, "Show Tree")
     bsizer.Add(btn, 0, wx.EXPAND)
     btn.Bind(wx.EVT_BUTTON, show_tree)
+    btn = wx.Button(frame, -1, "Clear")
+    bsizer.Add(btn, 0, wx.EXPAND)
+    btn.Bind(wx.EVT_BUTTON, clear_all)
 
     sizer.Add(horz, 1, wx.EXPAND)
     sizer.Add(bsizer, 0, wx.EXPAND)
