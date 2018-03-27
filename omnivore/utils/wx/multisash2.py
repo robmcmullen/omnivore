@@ -59,10 +59,41 @@ class MultiSash(wx.Window):
     def __init__(self, parent, layout_direction=wx.VERTICAL, *_args,**_kwargs):
         wx.Window.__init__(self, parent, *_args, **_kwargs)
         self.live_update_control = None
+        self.set_defaults()
         self._defChild = EmptyChild
         self.child = MultiSplit(self, self, layout_direction)
         self.Bind(wx.EVT_SIZE,self.OnMultiSize)
         self.last_direction = wx.VERTICAL
+
+    def set_defaults(self):
+        self.use_title_bar = True
+        self.use_close_button = True
+
+        self.child_window_x = 2
+        self.child_window_y = 2
+
+        self.title_bar_height = 20
+        self.title_bar_margin = 3
+        self.title_bar_font = wx.NORMAL_FONT
+        dc = wx.MemoryDC()
+        dc.SetFont(self.title_bar_font)
+        self.title_bar_font_height = max(dc.GetCharHeight(), 2)
+        self.title_bar_x = self.title_bar_margin
+        self.title_bar_y = (self.title_bar_height - self.title_bar_font_height) // 2
+
+        self.focused_color = wx.Colour(0x2e, 0xb5, 0xf4) # Blue
+        self.focused_brush = wx.Brush(self.focused_color, wx.SOLID)
+        self.focused_text_color = wx.WHITE
+        self.focused_pen = wx.Pen(self.focused_text_color)
+        self.focused_fill = wx.Brush(self.focused_text_color, wx.SOLID)
+
+        self.unfocused_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+        self.unfocused_brush = wx.Brush(self.unfocused_color, wx.SOLID)
+        self.unfocused_text_color = wx.BLACK
+        self.unfocused_pen = wx.Pen(self.unfocused_text_color)
+        self.unfocused_fill = wx.Brush(self.unfocused_text_color, wx.SOLID)
+
+        self.close_button_size = (11, 11)
 
     def OnMultiSize(self,evt):
         self.child.sizer_after = False
@@ -594,47 +625,20 @@ class MultiViewLeaf(MultiWindowBase):
 
 
 class MultiClient(wx.Window):
-    use_title_bar = True
-    use_close_button = True
-
-    child_window_x = 2
-    child_window_y = 2
-
-    title_bar_height = 20
-    title_bar_margin = 3
-    title_bar_font = wx.NORMAL_FONT
-    title_bar_font_height = None
-    title_bar_x = None
-    title_bar_y = None
-
-    focused_color = wx.Colour(0x2e, 0xb5, 0xf4) # Blue
-    focused_brush = None
-    focused_text_color = wx.WHITE
-    focused_pen = None
-
-    unfocused_color = None
-    unfocused_brush = None
-    unfocused_text_color = wx.BLACK
-    unfocused_pen = None
-
-    title_font = wx.NORMAL_FONT
-
-    close_button_size = (11, 11)
-
     def __init__(self, parent, child=None, uuid=None):
         w,h = parent.GetSize()
         wx.Window.__init__(self, parent, -1, pos=(0,0), size=(w,h), style = wx.CLIP_CHILDREN | wx.SUNKEN_BORDER)
+        self.multiView = parent.multiView
         if uuid is None:
             uuid = str(uuid4())
         self.child_uuid = uuid
         self.selected = False
-        self.setup_paint()
 
-        if self.use_title_bar:
+        if self.multiView.use_title_bar:
             self.title_bar = TitleBar(self)
 
         if child is None:
-            child = parent.multiView._defChild(self)
+            child = self.multiView._defChild(self)
         self.child = child
         self.child.Reparent(self)
         self.move_child()
@@ -659,38 +663,20 @@ class MultiClient(wx.Window):
         evt.SetReplacementChild(new_child)
         self.do_send_event(evt)
 
-    @classmethod
-    def setup_paint(cls):
-        if cls.title_bar_font_height is not None:
-            return
-
-        cls.unfocused_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
-        cls.focused_brush = wx.Brush(cls.focused_color, wx.SOLID)
-        cls.unfocused_brush = wx.Brush(cls.unfocused_color, wx.SOLID)
-        cls.focused_pen = wx.Pen(cls.focused_text_color)
-        cls.unfocused_pen = wx.Pen(cls.unfocused_text_color)
-        cls.focused_fill = wx.Brush(cls.focused_text_color, wx.SOLID)
-        cls.unfocused_fill = wx.Brush(cls.unfocused_text_color, wx.SOLID)
-
-        dc = wx.MemoryDC()
-        dc.SetFont(cls.title_bar_font)
-        cls.title_bar_font_height = max(dc.GetCharHeight(), 2)
-        cls.title_bar_x = cls.title_bar_margin
-        cls.title_bar_y = (cls.title_bar_height - cls.title_bar_font_height) // 2
-
     def get_paint_tools(self):
+        m = self.multiView
         if self.selected:
-            brush = self.focused_brush
-            pen = self.focused_pen
-            fill = self.focused_fill
-            text = self.focused_text_color
-            textbg = self.focused_color
+            brush = m.focused_brush
+            pen = m.focused_pen
+            fill = m.focused_fill
+            text = m.focused_text_color
+            textbg = m.focused_color
         else:
-            brush = self.unfocused_brush
-            pen = self.unfocused_pen
-            fill = self.unfocused_fill
-            text = self.unfocused_text_color
-            textbg = self.unfocused_color
+            brush = m.unfocused_brush
+            pen = m.unfocused_pen
+            fill = m.unfocused_fill
+            text = m.unfocused_text_color
+            textbg = m.unfocused_color
         return brush, pen, fill, text, textbg
 
     @property
@@ -722,11 +708,11 @@ class MultiClient(wx.Window):
         w,h = self.GetParent().GetClientSize()
         self.SetSize((w, h))
         # print("in client %s:" % self.GetParent().debug_id, w, h)
-        if self.use_title_bar:
-            self.title_bar.SetSize((w, self.title_bar_height))
-            self.child.SetSize((w, h - self.title_bar_height))
+        if self.multiView.use_title_bar:
+            self.title_bar.SetSize((w, self.multiView.title_bar_height))
+            self.child.SetSize((w, h - self.multiView.title_bar_height))
         else:
-            self.child.SetSize((w - 2 * self.child_window_x, h - 2 * self.child_window_y))
+            self.child.SetSize((w - 2 * self.multiView.child_window_x, h - 2 * self.multiView.child_window_y))
 
     def replace(self, child, u=None):
         if self.child:
@@ -742,11 +728,11 @@ class MultiClient(wx.Window):
         self.do_size_from_parent()
 
     def move_child(self):
-        if self.use_title_bar:
+        if self.multiView.use_title_bar:
             self.title_bar.Move(0, 0)
-            self.child.Move(0, self.title_bar_height)
+            self.child.Move(0, self.multiView.title_bar_height)
         else:
-            self.child.Move(self.child_window_x, self.child_window_y)
+            self.child.Move(self.multiView.child_window_x, self.multiView.child_window_y)
 
     def OnSetFocus(self,evt):
         self.Select()
@@ -767,7 +753,7 @@ class TitleBar(wx.Window):
         self.buttons = []
         button_index += 1
         self.buttons.append(TitleBarCloser(self, button_index))
-        top = self.client.GetParent().multiView
+        top = self.client.multiView
         button_index += 1
         self.buttons.append(TitleBarHSplitNewBot(self, button_index))
         button_index += 1
@@ -782,17 +768,18 @@ class TitleBar(wx.Window):
         self.Bind(wx.EVT_ENTER_WINDOW,self.OnEnter)
 
     def draw_title_bar(self, dc):
+        m = self.client.multiView
         dc.SetBackgroundMode(wx.SOLID)
         dc.SetPen(wx.TRANSPARENT_PEN)
         brush, _, _, text, textbg = self.client.get_paint_tools()
         dc.SetBrush(brush)
 
         w, h = self.GetSize()
-        dc.SetFont(wx.NORMAL_FONT)
+        dc.SetFont(m.title_bar_font)
         dc.SetTextBackground(textbg)
         dc.SetTextForeground(text)
         dc.DrawRectangle(0, 0, w, h)
-        dc.DrawText(self.client.title, self.client.title_bar_x, self.client.title_bar_y)
+        dc.DrawText(self.client.title, m.title_bar_x, m.title_bar_y)
 
     def OnPaint(self, event):
         dc = wx.PaintDC(self)
@@ -903,10 +890,11 @@ class TitleBarButton(wx.Window):
         pass
 
     def CalcSizePos(self, parent):
+        m = self.client.multiView
         pw, ph = parent.GetClientSize()
-        w, h = self.client.close_button_size
-        x = pw - (w - self.client.title_bar_margin) * self.order * 2
-        y = (self.client.title_bar_height - h) // 2
+        w, h = m.close_button_size
+        x = pw - (w - m.title_bar_margin) * self.order * 2
+        y = (m.title_bar_height - h) // 2
         return (x, y, w, h)
 
     def OnSize(self,evt):
