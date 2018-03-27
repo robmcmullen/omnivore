@@ -15,7 +15,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 from omnivore.framework.editor import FrameworkEditor
 import omnivore.framework.clipboard as clipboard
 from omnivore.utils.file_guess import FileMetadata
-from omnivore.utils.wx.multisash import MultiSash
+from omnivore.utils.wx.multisash2 import MultiSash
 from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.document import SegmentedDocument
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
@@ -470,6 +470,7 @@ class ByteEditor(FrameworkEditor):
         panel = MultiSash(parent)
         panel.Bind(MultiSash.EVT_CLIENT_ACTIVATED, self.on_viewer_active)
         panel.Bind(MultiSash.EVT_CLIENT_CLOSE, self.on_viewer_close)
+        panel.Bind(MultiSash.EVT_CLIENT_REPLACE, self.on_viewer_replace)
 
         self.sidebar = self.window.get_dock_pane('byte_edit.sidebar')
 
@@ -580,5 +581,25 @@ class ByteEditor(FrameworkEditor):
             v.prepare_for_destroy()
 
             import omnivore8bit.viewers
-            v = self.add_viewer(omnivore8bit.viewers.PlaceholderViewer, linked_base_save)
-            self.set_focused_viewer(v)
+            if not self.viewers:
+                v = self.add_viewer(omnivore8bit.viewers.PlaceholderViewer, linked_base_save)
+            self.set_focused_viewer(self.viewers[0])
+            del v
+
+    def on_viewer_replace(self, evt):
+        try:
+            v = evt.child.segment_viewer
+        except AttributeError:
+            # must be an empty window (a multisash window that has no segment
+            # viewer). It can be closed without any further action.
+            pass
+        else:
+            log.debug("on_viewer_replace: closing viewer %s %s for replacement" % (v, v.window_title))
+
+            # Keep a reference to the linked base
+            linked_base_save = v.linked_base
+
+            self.viewers.remove(v)
+            v.prepare_for_destroy()
+            self.set_focused_viewer(evt.replacement_child.segment_viewer)
+            del v

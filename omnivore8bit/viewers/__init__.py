@@ -526,6 +526,8 @@ class SegmentViewer(HasTraits):
 
 
 class PlaceholderControl(wx.Window):
+    multisash2_empty_control = True
+
     def __init__(self, parent, linked_base, mdict, viewer_cls):
         wx.Window.__init__(self, parent)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
