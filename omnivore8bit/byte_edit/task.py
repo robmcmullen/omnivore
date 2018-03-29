@@ -16,6 +16,7 @@ from preferences import ByteEditPreferences
 import pane_layout
 from . import actions as ba
 from ..viewers import actions as va
+from ..viewers import jumpman_commands as ja
 import omnivore8bit.arch.fonts as fonts
 import omnivore8bit.arch.colors as colors
 import omnivore8bit.arch.machine as machine
@@ -251,11 +252,12 @@ class ByteEditTask(FrameworkTask):
 
     ui_layout_overrides = {
         "menu": {
-            "order": ["File", "Edit", "View", "Bytes", "Segment", "Disk Image", "Documents", "Window", "Help"],
+            "order": ["File", "Edit", "View", "Bytes", "Jumpman", "Segment", "Disk Image", "Documents", "Window", "Help"],
             "View": ["PredefinedGroup", "ProcessorGroup", "AssemblerGroup", "MemoryMapGroup", "ColorGroup", "FontGroup", "BitmapGroup", "SizeGroup", "ChangeGroup", "ConfigGroup", "ToggleGroup", "TaskGroup", "DebugGroup"],
             "Bytes": ["HexModifyGroup"],
             "Segment": ["ListGroup", "ActionGroup"],
             "Disk Image": ["ParserGroup", "EmulatorGroup", "ActionGroup"],
+            "Jumpman":  ["LevelGroup", "SelectionGroup", "CustomCodeGroup"],
         },
     }
 
@@ -648,6 +650,25 @@ class ByteEditTask(FrameworkTask):
             Separator(),
             va.ReverseSelectionAction(),
             va.ReverseGroupAction(),
+            ]
+
+    def get_actions_Menu_Jumpman_LevelGroup(self):
+        return [
+            SMenu(
+                ja.LevelListGroup(id="a2", separator=True),
+                id='segmentlist1', separator=False, name="Edit Level"),
+            ]
+
+    def get_actions_Menu_Jumpman_SelectionGroup(self):
+        return [
+            ja.ClearTriggerAction(),
+            ja.SetTriggerAction(),
+            ]
+
+    def get_actions_Menu_Jumpman_CustomCodeGroup(self):
+        return [
+            ja.AssemblySourceAction(),
+            ja.RecompileAction(),
             ]
 
     def get_keyboard_actions(self):

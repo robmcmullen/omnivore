@@ -547,6 +547,7 @@ class JumpmanViewer(BitmapViewer):
         if dirname:
             filename = os.path.join(dirname, self.assembly_source)
             try:
+                log.debug("compiling jumpman level code in %s" % filename)
                 self.custom_code = ju.JumpmanCustomCode(filename)
                 self.manual_recompile_needed = False
             except SyntaxError, e:
@@ -562,8 +563,10 @@ class JumpmanViewer(BitmapViewer):
                 if show_info:
                     dlg = wx.lib.dialogs.ScrolledMessageDialog(self.control, self.custom_code.info, "Assembly Results")
                     dlg.ShowModal()
+                self.save_assembly()
 
     def save_assembly(self):
+        log.debug("save_assembly: code=%s" % self.custom_code)
         code = self.custom_code
         if not code:
             return
