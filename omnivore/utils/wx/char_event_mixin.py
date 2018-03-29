@@ -85,6 +85,7 @@ class CharEventMixin(object):
         self.char_event_line_edit = self.char_event_edit_line_default.copy()
 
         self.current_char_event_map = self.char_event_movement
+        self.is_editing = False
 
     def map_char_events(self, source):
         source.Bind(wx.EVT_CHAR, self.on_char)
@@ -98,19 +99,30 @@ class CharEventMixin(object):
         key = evt.GetKeyCode()
         mods = evt.GetModifiers()
         specifier = (key, mods)
-        try:
-            handler = self.current_char_event_map[specifier]
-        except KeyError:
-            log.debug("No handler for keyboard event: key=%d mods=%d" % (key, mods))
-            evt.Skip()
+        if self.is_editing:
+            # when editing in another control, let that control handle control
+            # chars except for ESC
+            if key == wx.WXK_ESCAPE:
+                self.end_editing()
+            else:
+                self.handle_char_ordinary(evt)
         else:
             try:
-                func = getattr(self, handler)
-            except AttributeError:
-                log.error("handler %s defined for key=%d mods=%d but missing!" % (handler, key, mods))
-                evt.Skip()
+                handler = self.current_char_event_map[specifier]
+            except KeyError:
+                self.handle_char_ordinary(evt)
             else:
-                log.debug("using handler %s" % handler)
-                flags = self.create_char_event_flags()
-                func(evt, flags)
-                self.caret_handler.process_flags(flags)
+                try:
+                    func = getattr(self, handler)
+                except AttributeError:
+                    log.error("handler %s defined for key=%d mods=%d but missing!" % (handler, key, mods))
+                    evt.Skip()
+                else:
+                    log.debug("using handler %s" % handler)
+                    flags = self.create_char_event_flags()
+                    func(evt, flags)
+                    self.caret_handler.process_flags(flags)
+
+    def handle_char_ordinary(self, evt):
+            log.debug("No handler for keyboard event: key=%d mods=%d" % (key, mods))
+            evt.Skip()

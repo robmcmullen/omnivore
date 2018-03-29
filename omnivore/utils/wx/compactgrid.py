@@ -331,6 +331,10 @@ class LineRenderer(object):
         dc.SetPen(pen)
         dc.DrawRectangle(rect)
 
+    def draw_edit_cell(self, parent, dc, line_num, col, edit_source):
+        # default implementation is to just draw a caret
+        self.draw_caret(parent, dc, line_num, col)
+
 
 class DebugLineRenderer(LineRenderer):
     def __init__(self, view_params, chars_per_cell=4, image_cache=None, widths=None, col_labels=None):
@@ -466,7 +470,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
 
         line_num = self.first_visible_row
         self.line_renderer.draw_grid(self.parent, dc, self.first_visible_row, self.visible_rows, self.first_visible_cell, self.visible_cells)
-        self.parent.draw_carets(dc)
+        self.parent.draw_carets(dc, self.first_visible_row, self.visible_rows)
         if debug_refresh:
             dc.DrawText("%d" % self.refresh_count, 0, 0)
             self.refresh_count += 1
@@ -1035,6 +1039,8 @@ class CompactGrid(wx.ScrolledWindow):
 
         self.set_view_param_defaults()
 
+        self.is_editing = False  # if the user is editing at carets
+
         # omnivore sets this to false so it can update multiple views at the
         # same time without any double refreshes
         self.automatic_refresh = True
@@ -1343,10 +1349,18 @@ class CompactGrid(wx.ScrolledWindow):
                 flags.refreshed_as_side_effect.add(self)
                 self.refresh_view()
 
-    def draw_carets(self, dc):
+    def draw_carets(self, dc, start_row, visible_rows):
         for index in self.caret_handler.iter_caret_indexes():
             r, c = self.table.index_to_row_col(index)
-            self.line_renderer.draw_caret(self, dc, r, c)
+            if r >= start_row and r < start_row + visible_rows:
+                if self.is_editing:
+                    print("drawing edit cell at r,c=%d,%d" % (r, c))
+                    self.line_renderer.draw_edit_cell(self, dc, r, c, self.edit_source)
+                else:
+                    print("drawing caret at r,c=%d,%d" % (r, c))
+                    self.line_renderer.draw_caret(self, dc, r, c)
+            else:
+                print("skipping offscreen caret at r,c=%d,%d" % (r, c))
 
     ##### Keyboard movement implementations
 

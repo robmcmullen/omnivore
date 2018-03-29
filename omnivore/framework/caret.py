@@ -161,6 +161,16 @@ class CaretList(list):
     def selected_ranges(self):
         return [c.range for c in self if c.has_selection]
 
+    @property
+    def selected_ranges_including_carets(self):
+        ranges = []
+        for c in self:
+            if c.has_selection:
+                ranges.append(c.range)
+            else:
+                ranges.append((c.index, c.index + 1))
+        return ranges
+
     def new_caret(self, index):
         caret = Caret(index)
         self.append(caret)
@@ -572,6 +582,9 @@ class SelectionHandler(object):
 
     def get_selected_ranges(self, caret_handler):
         return collapse_overlapping_ranges(caret_handler.carets.selected_ranges)
+
+    def get_selected_ranges_including_carets(self, caret_handler):
+        return collapse_overlapping_ranges(caret_handler.carets.selected_ranges_including_carets)
 
     def get_selected_ranges_and_indexes(self, caret_handler):
         opt = self.get_selected_ranges(caret_handler)

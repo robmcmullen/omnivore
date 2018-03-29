@@ -9,6 +9,7 @@ from omnivore8bit.arch.disasm import get_style_name
 from omnivore.framework import actions as fa
 from ..byte_edit import actions as ba
 from ..viewers import actions as va
+from ..commands import SetRangeValueCommand
 
 import logging
 log = logging.getLogger(__name__)
@@ -170,3 +171,34 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
         paste_special[0:0] = ["Paste Special"]  # sub-menu title
 
         return [fa.CutAction, fa.CopyAction, copy_special, fa.PasteAction, paste_special, None, fa.SelectAllAction, fa.SelectNoneAction, ["Mark Selection As", ba.MarkSelectionAsCodeAction, ba.MarkSelectionAsDataAction, ba.MarkSelectionAsUninitializedDataAction, ba.MarkSelectionAsDisplayListAction, ba.MarkSelectionAsJumpmanLevelAction, ba.MarkSelectionAsJumpmanHarvestAction], None, ba.GetSegmentFromSelectionAction, ba.RevertToBaselineAction, None, va.AddCommentPopupAction, va.RemoveCommentPopupAction, va.AddLabelPopupAction,va.RemoveLabelPopupAction]
+
+    ##### editing
+
+    def start_editing(self):
+        self.is_editing = True
+        self.edit_source = self.create_hidden_text_ctrl()
+        self.edit_source.SetFocus()
+
+    def accept_edit(self, autoadvance=False):
+        val = self.edit_source.get_processed_value()
+        self.end_editing()
+        print("changing to %d" % val)
+        self.process_edit(val)
+
+    def process_edit(self, val):
+        ranges = []
+        # for c in self.caret_handler.carets:
+        #     ranges.append((c.index, c.index + 1))
+        ranges = self.get_selected_ranges_including_carets(self.caret_handler)
+        cmd = SetRangeValueCommand(self.segment_viewer.segment, ranges, val)
+        self.segment_viewer.editor.process_command(cmd)
+
+    def end_editing(self):
+        self.edit_source.Destroy()
+        self.edit_source = None
+        self.is_editing = False
+        self.SetFocus()
+
+    def create_hidden_text_ctrl(self):
+        c = wx.TextCtrl(self, -1, pos=(100,100), size=(400,24))
+        return c

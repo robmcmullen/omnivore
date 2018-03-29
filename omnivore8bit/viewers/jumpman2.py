@@ -364,7 +364,7 @@ class JumpmanGridControl(BitmapGridControl):
         self.table.draw_playfield(True)
         BitmapGridControl.refresh_view(self, *args, **kwargs)
 
-    def draw_carets(self, dc):
+    def draw_carets(self, *args, **kwargs):
         pass
 
     ##### popup stuff
