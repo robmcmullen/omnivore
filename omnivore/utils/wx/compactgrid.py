@@ -1271,16 +1271,20 @@ class CompactGrid(wx.ScrolledWindow):
             elif w > 0:
                 self.zoom_in()
         elif not evt.ShiftDown() and not evt.AltDown():
-            dx = self.GetScrollPos(wx.HORIZONTAL)
-            dy = self.GetScrollPos(wx.VERTICAL)
-            dy -= w / self.view_params.text_font_char_height
-            self.Scroll(dx, dy)
-            self.main.Scroll(dx, dy)
-            self.top.Scroll(dx, 0)
-            self.left.Scroll(0, dy)
-            self.Refresh()
+            self.pan_mouse_wheel(evt)
         else:
             evt.Skip()
+
+    def pan_mouse_wheel(self, evt):
+        w = evt.GetWheelRotation()
+        dx = self.GetScrollPos(wx.HORIZONTAL)
+        dy = self.GetScrollPos(wx.VERTICAL)
+        dy -= w / self.view_params.text_font_char_height
+        self.Scroll(dx, dy)
+        self.main.Scroll(dx, dy)
+        self.top.Scroll(dx, 0)
+        self.left.Scroll(0, dy)
+        self.Refresh()
 
     def on_popup(self, evt):
         # for subclasses
