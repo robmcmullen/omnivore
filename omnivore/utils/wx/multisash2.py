@@ -916,7 +916,7 @@ class TitleBarCloser(TitleBarButton):
     def do_action(self, evt):
         requested_close = self.ask_close()
         if requested_close:
-            self.leaf.destroy_leaf()
+            wx.CallAfter(self.leaf.destroy_leaf)
 
     def ask_close(self):
         return True
