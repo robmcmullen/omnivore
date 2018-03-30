@@ -146,7 +146,7 @@ class MouseMode(object):
         evt.Skip()
 
     def pan_mouse_wheel(self, evt, amount):
-        evt.Skip()
+        self.control.pan_mouse_wheel(evt)
 
     def process_mouse_enter(self, evt):
         evt.Skip()
