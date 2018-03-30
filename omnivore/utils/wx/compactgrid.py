@@ -3,8 +3,14 @@ import time
 import wx
 import numpy as np
 
-from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
-
+try:
+    from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
+except ImportError:
+    user_bit_mask = 0x07
+    diff_bit_mask = 0x10
+    match_bit_mask = 0x20
+    comment_bit_mask = 0x40
+    selected_bit_mask = 0x80
 
 import logging
 logging.basicConfig()
@@ -1257,16 +1263,22 @@ class CompactGrid(wx.ScrolledWindow):
         evt.Skip()
 
     def on_mouse_wheel(self, evt):
-        print("on_mouse_wheel")
         w = evt.GetWheelRotation()
+        print("on_mouse_wheel rotation=%d, lines_per_action %s" % (w, evt.GetLinesPerAction()))
         if evt.ControlDown():
             if w < 0:
                 self.zoom_out()
             elif w > 0:
                 self.zoom_in()
-        # elif not evt.ShiftDown() and not evt.AltDown():
-        #     self.VertScroll(w, wx.wxEVT_MOUSEWHEEL)
-        #     self.main.UpdateView()
+        elif not evt.ShiftDown() and not evt.AltDown():
+            dx = self.GetScrollPos(wx.HORIZONTAL)
+            dy = self.GetScrollPos(wx.VERTICAL)
+            dy -= w / self.view_params.text_font_char_height
+            self.Scroll(dx, dy)
+            self.main.Scroll(dx, dy)
+            self.top.Scroll(dx, 0)
+            self.left.Scroll(0, dy)
+            self.Refresh()
         else:
             evt.Skip()
 
