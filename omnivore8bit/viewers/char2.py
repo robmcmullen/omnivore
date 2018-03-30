@@ -134,6 +134,7 @@ class CharGridControl(SegmentGridControl):
     def set_viewer_defaults(self):
         self.items_per_row = self.view_params.map_width
         self.zoom = 2
+        self.inverse = 0
 
     def calc_line_renderer(self):
         if hasattr(self, 'segment_viewer'):
@@ -156,6 +157,13 @@ class CharGridControl(SegmentGridControl):
         self.table = SegmentTable(self.segment_viewer.linked_base.segment, self.items_per_row)
         self.line_renderer = self.calc_line_renderer()
         SegmentGridControl.recalc_view(self)
+
+    def handle_char_ordinary(self, evt):
+        c = evt.GetKeyCode()
+        print("ordinary char: %s", c)
+        if c != wx.WXK_NONE:
+            c = self.segment_viewer.machine.font_mapping.convert_byte_mapping(c)
+            self.process_edit(c| self.inverse)
 
 
 class CharViewer(SegmentViewer):
