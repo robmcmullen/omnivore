@@ -89,16 +89,25 @@ class CharEventMixin(object):
 
     def map_char_events(self, source):
         source.Bind(wx.EVT_CHAR, self.on_char)
+        source.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
 
     def create_char_event_flags(self):
         flags = DisplayFlags(self)
         flags.old_carets = set(self.caret_handler.calc_caret_state())
         return flags
 
+    def on_key_down(self, evt):
+        key = evt.GetKeyCode()
+        mods = evt.GetModifiers()
+        specifier = (key, mods)
+        log.debug("char_event_mixin: on_key_down speficier=%s" % str(specifier))
+        evt.Skip()
+
     def on_char(self, evt):
         key = evt.GetKeyCode()
         mods = evt.GetModifiers()
         specifier = (key, mods)
+        log.debug("char_event_mixin: on_char speficier=%s" % str(specifier))
         if self.is_editing:
             # when editing in another control, let that control handle control
             # chars except for ESC
@@ -107,6 +116,7 @@ class CharEventMixin(object):
             else:
                 self.handle_char_ordinary(evt)
         else:
+            self.end_editing()
             try:
                 handler = self.current_char_event_map[specifier]
             except KeyError:
@@ -124,5 +134,7 @@ class CharEventMixin(object):
                     self.caret_handler.process_flags(flags)
 
     def handle_char_ordinary(self, evt):
-            log.debug("No handler for keyboard event: key=%d mods=%d" % (key, mods))
-            evt.Skip()
+        key = evt.GetKeyCode()
+        mods = evt.GetModifiers()
+        log.debug("No handler for keyboard event: key=%d mods=%d" % (key, mods))
+        evt.Skip()

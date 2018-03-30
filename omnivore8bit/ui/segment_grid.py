@@ -26,6 +26,79 @@ class SegmentTable(cg.HexTable):
         return self.segment.label(index, True)
 
 
+class SegmentGridTextCtrl(wx.TextCtrl):
+    def __init__(self, parent, id, num_chars_autoadvance, *args, **kwargs):
+        # Don't use the validator here, because apparently we can't
+        # reset the validator based on the columns.  We have to do the
+        # validation ourselves using EVT_KEY_DOWN.
+        wx.TextCtrl.__init__(self, parent, id, *args, style=wx.TE_PROCESS_TAB|wx.TE_PROCESS_ENTER, **kwargs)
+        log.debug("parent=%s" % parent)
+        self.SetInsertionPoint(0)
+        self.Bind(wx.EVT_TEXT, self.on_text)
+        self.Bind(wx.EVT_CHAR, self.on_char)
+        self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
+        self.SetMaxLength(num_chars_autoadvance)
+        self.num_chars_autoadvance = num_chars_autoadvance
+
+    def is_valid_keycode(self, keycode):
+        return True
+
+    def on_key_down(self, evt):
+        """
+        Keyboard handler to process command keys before they are
+        inserted.  Tabs, arrows, ESC, return, etc. should be handled
+        here.  If the key is to be processed normally, evt.Skip must
+        be called.  Otherwise, the event is eaten here.
+
+        @param evt: key event to process
+        """
+        log.debug("key down before evt=%s" % evt.GetKeyCode())
+        key = evt.GetKeyCode()
+
+        if key == wx.WXK_TAB:
+            wx.CallAfter(self.GetParent().advance_caret)
+        elif key == wx.WXK_ESCAPE:
+            wx.CallAfter(self.GetParent().end_editing)
+            print("OSEUCHORECUHCROEUHSCOEHUESCAPE")
+        else:
+            evt.Skip()
+
+    def on_char(self, evt):
+        code = evt.GetKeyCode()
+        char = evt.GetUnicodeKey()
+        log.debug("char keycode=%s unicode=%s" % (code, char))
+        if char == wx.WXK_NONE or code == wx.WXK_BACK or self.is_valid_keycode(code):
+            evt.Skip()
+            wx.CallAfter(self.GetParent().Refresh)
+
+    def get_processed_value(self):
+        return self.GetValue()
+
+    def on_text(self, evt):
+        """
+        Callback used to automatically advance to the next edit field. If
+        self.num_chars_autoadvance > 0, this number is used as the max number
+        of characters in the field.  Once the text string hits this number, the
+        field is processed and advanced to the next position.
+        """
+        log.debug("evt=%s str=%s cursor=%d" % (evt, evt.GetString(), self.GetInsertionPoint()))
+
+        # NOTE: we check that GetInsertionPoint returns 1 less than
+        # the desired number because the insertion point hasn't been
+        # updated yet and won't be until after this event handler
+        # returns.
+        n = self.num_chars_autoadvance
+        if n and len(evt.GetString()) >= n and self.GetInsertionPoint() >= n - 1:
+            # FIXME: problem here with a bunch of really quick
+            # keystrokes -- the interaction with the
+            # underlyingSTCChanged callback causes a cell's
+            # changes to be skipped over.  Need some flag in grid
+            # to see if we're editing, or to delay updates until a
+            # certain period of calmness, or something.
+            log.debug("advancing after edit")
+            wx.CallAfter(self.GetParent().accept_edit, n)
+
+
 class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
     default_table_cls = SegmentTable
 
@@ -174,6 +247,14 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
 
     ##### editing
 
+    def handle_char_ordinary(self, evt):
+        c = evt.GetKeyCode()
+        print("ordinary char: %s", c)
+        if not self.is_editing:
+            self.start_editing()
+        print("EmulateKeyPress: %s" % evt.GetKeyCode())
+        self.edit_source.EmulateKeyPress(evt)
+
     def mouse_event_in_edit_cell(self, evt):
         r, c = self.get_row_col_from_event(evt)
         index, _ = self.table.get_index_range(r, c)
@@ -216,5 +297,5 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
             self.SetFocus()
 
     def create_hidden_text_ctrl(self):
-        c = wx.TextCtrl(self, -1, pos=(100,100), size=(400,24))
+        c = SegmentGridTextCtrl(self, -1, 0, pos=(600,100), size=(400,24))
         return c
