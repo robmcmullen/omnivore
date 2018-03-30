@@ -75,7 +75,7 @@ class DrawTextImageCache(object):
     def draw_uncached_text(self, parent, dc, rect, text, style):
         self.draw_text_to_dc(parent, dc, rect, rect, text, style)
 
-    def draw_text_to_dc(self, parent, dc, bg_rect, fg_rect, text, style):
+    def prepare_dc_style(self, parent, dc, style):
         v = parent.view_params
         dc.SetPen(wx.TRANSPARENT_PEN)
         if style & selected_bit_mask:
@@ -98,14 +98,40 @@ class DrawTextImageCache(object):
             dc.SetBrush(v.normal_brush)
             dc.SetBackground(v.normal_brush)
             dc.SetTextBackground(v.background_color)
-        dc.SetClippingRegion(bg_rect)
-        dc.DrawRectangle(bg_rect)
         if style & diff_bit_mask:
             dc.SetTextForeground(v.diff_text_color)
         else:
             dc.SetTextForeground(v.text_color)
         dc.SetFont(v.text_font)
+
+    def draw_text_to_dc(self, parent, dc, bg_rect, fg_rect, text, style):
+        self.prepare_dc_style(parent, dc, style)
+        dc.SetClippingRegion(bg_rect)
+        dc.DrawRectangle(bg_rect)
         dc.DrawText(text, fg_rect.x, fg_rect.y)
+        dc.DestroyClippingRegion()
+
+    def draw_selected_string_to_dc(self, parent, dc, rect, before, selected, after, insertion_point_index):
+        v = parent.view_params
+        self.prepare_dc_style(parent, dc, 0)
+        dc.SetClippingRegion(rect)
+        dc.DrawRectangle(rect)
+        rect.x += v.pixel_width_padding
+        caret_x = rect.x + (insertion_point_index * v.text_font_char_width)
+        if before:
+            dc.DrawText(before, rect.x, rect.y)
+            rect.x += v.text_font_char_width * len(before)
+        if selected:
+            self.prepare_dc_style(parent, dc, selected_bit_mask)
+            dc.DrawText(selected, rect.x, rect.y)
+            rect.x += v.text_font_char_width * len(selected)
+        if after:
+            self.prepare_dc_style(parent, dc, 0)
+            dc.DrawText(after, rect.x, rect.y)
+
+        dc.SetPen(wx.BLACK_PEN)
+        dc.DrawLine(caret_x, rect.y, caret_x, rect.y + rect.height)
+
         dc.DestroyClippingRegion()
 
     def draw_item(self, parent, dc, rect, text, style, col_widths, col):

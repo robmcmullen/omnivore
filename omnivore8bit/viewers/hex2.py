@@ -23,7 +23,18 @@ log = logging.getLogger(__name__)
 
 class HexEditRenderer(cg.HexLineRenderer):
     def draw_edit_cell(self, parent, dc, line_num, col, edit_source):
-        # default implementation is to just draw a caret
+        insertion_point_index = edit_source.GetInsertionPoint()
+        highlight_start, highlight_end = edit_source.GetSelection()
+        value = edit_source.GetValue()
+        print("draw_edit_cell: caret=%d sel=%d-%d value=%s" % (insertion_point_index, highlight_start, highlight_end, value))
+
+        before = value[0:highlight_start]
+        selected = value[highlight_start:highlight_end]
+        after = value[highlight_end:]
+
+        rect = self.col_to_rect(line_num, col)
+        self.image_cache.draw_selected_string_to_dc(parent, dc, rect, before, selected, after, insertion_point_index)
+        
         self.draw_caret(parent, dc, line_num, col)
 
 
@@ -265,9 +276,7 @@ class HexEditControl(SegmentGridControl):
         self.items_per_row = self.view_params.hex_grid_width
 
     def calc_line_renderer(self):
-        if hasattr(self, 'segment_viewer'):
-            return HexEditRenderer(self)
-        return SegmentGridControl.calc_line_renderer(self)
+        return HexEditRenderer(self, 2)
 
     def change_value(self, row, col, text):
         """Called after editor has provided a new value for a cell.
