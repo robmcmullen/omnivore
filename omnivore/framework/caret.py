@@ -359,6 +359,12 @@ class CaretHandler(HasTraits):
             caret.apply_function(func)
         self.validate_carets()
 
+    def is_index_of_caret(self, index):
+        for caret in self.carets:
+            if index == caret.index:
+                return True
+        return False
+
     def validate_carets(self):
         """Confirms the index position of all carets and collapses multiple
         carets that have the same index into a single caret

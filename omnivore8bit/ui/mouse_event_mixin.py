@@ -19,6 +19,8 @@ class MouseEventMixin(SelectionHandler):
         self.multi_select_mode = False
         self.select_extend_mode = False
         self.mouse_drag_started = False
+        self.is_editing_in_cell = False
+        self.is_mousing_while_editing = False
         self.pending_select_awaiting_drag = None
         self.caret_with_selection = None
         self.source = None
@@ -104,25 +106,33 @@ class MouseEventMixin(SelectionHandler):
 
     def on_left_down(self, evt):
         self.capture_mouse()
-        mode = self.get_effective_tool_mode(evt)
-        log.debug("on_left_down: effective mode=%s" % mode)
-        self.forced_cursor = None
-        self.selection_box_is_being_defined = False
-        self.mouse_down_position = evt.GetPosition()
-        self.mouse_move_position = self.mouse_down_position
+        if self.is_editing_in_cell and self.mouse_event_in_edit_cell(evt):
+            self.is_mousing_while_editing = True
+            self.on_left_down_in_edit_cell(evt)
+        else:
+            self.end_editing()
+            mode = self.get_effective_tool_mode(evt)
+            log.debug("on_left_down: effective mode=%s" % mode)
+            self.forced_cursor = None
+            self.selection_box_is_being_defined = False
+            self.mouse_down_position = evt.GetPosition()
+            self.mouse_move_position = self.mouse_down_position
 
-        mode.process_left_down(evt)
-        self.set_cursor(mode)
+            mode.process_left_down(evt)
+            self.set_cursor(mode)
         evt.Skip()
 
     def on_motion(self, evt):
-        mode = self.get_effective_tool_mode(evt)
-        log.debug("on_motion: effective mode=%s" % mode)
-        if evt.LeftIsDown() and self.has_capture():
-            mode.process_mouse_motion_down(evt)
+        if self.is_mousing_while_editing:
+            self.on_motion_in_edit_cell(evt)
         else:
-            mode.process_mouse_motion_up(evt)
-        self.set_cursor(mode)
+            mode = self.get_effective_tool_mode(evt)
+            log.debug("on_motion: effective mode=%s" % mode)
+            if evt.LeftIsDown() and self.has_capture():
+                mode.process_mouse_motion_down(evt)
+            else:
+                mode.process_mouse_motion_up(evt)
+            self.set_cursor(mode)
         evt.Skip()
 
     def on_left_up(self, evt):
@@ -130,15 +140,20 @@ class MouseEventMixin(SelectionHandler):
         if not self.has_capture():
             return
         self.release_mouse()
-        mode = self.get_effective_tool_mode(evt)
-        log.debug("on_left_up: effective mode=%s" % mode)
-        self.forced_cursor = None
-        mode.process_left_up(evt)
-        self.set_cursor(mode)
+        if self.is_mousing_while_editing:
+            self.is_mousing_while_editing = False
+            self.on_left_up_in_edit_cell(evt)
+        else:
+            mode = self.get_effective_tool_mode(evt)
+            log.debug("on_left_up: effective mode=%s" % mode)
+            self.forced_cursor = None
+            mode.process_left_up(evt)
+            self.set_cursor(mode)
         evt.Skip()
 
     def on_left_dclick(self, evt):
         # self.SetFocus() # why would it not be focused?
+        self.end_editing()
         mode = self.get_effective_tool_mode(evt)
         log.debug("on_left_dclick: effective mode=%s" % mode)
         mode.process_left_dclick(evt)
@@ -146,6 +161,7 @@ class MouseEventMixin(SelectionHandler):
         evt.Skip()
 
     def on_popup(self, evt):
+        self.end_editing()
         mode = self.get_effective_tool_mode(evt)
         log.debug("on_popup: effective mode=%s" % mode)
         self.forced_cursor = None
@@ -174,6 +190,20 @@ class MouseEventMixin(SelectionHandler):
     def on_focus_lost(self, evt):
         mode = self.get_effective_tool_mode(evt)
         mode.process_focus_lost(evt)
+
+    ##### mouse processing while in cell edit mode
+
+    def mouse_event_in_edit_cell(self, evt):
+        return False
+
+    def on_left_down_in_edit_cell(self, evt):
+        pass
+
+    def on_motion_in_edit_cell(self, evt):
+        pass
+
+    def on_left_up_in_edit_cell(self, evt):
+        pass
 
     ##### autoscrolling
 

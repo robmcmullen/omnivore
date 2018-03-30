@@ -174,8 +174,23 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
 
     ##### editing
 
+    def mouse_event_in_edit_cell(self, evt):
+        r, c = self.get_row_col_from_event(evt)
+        index, _ = self.table.get_index_range(r, c)
+        print("mouse edit cell check: r,c=%d,%d, index=%d" % (r, c, index))
+        return self.caret_handler.is_index_of_caret(index)
+
+    def on_left_down_in_edit_cell(self, evt):
+        pass
+
+    def on_motion_in_edit_cell(self, evt):
+        pass
+
+    def on_left_up_in_edit_cell(self, evt):
+        pass
+
     def start_editing(self):
-        self.is_editing = True
+        self.is_editing_in_cell = True
         self.edit_source = self.create_hidden_text_ctrl()
         self.edit_source.SetFocus()
 
@@ -194,10 +209,11 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
         self.segment_viewer.editor.process_command(cmd)
 
     def end_editing(self):
-        self.edit_source.Destroy()
-        self.edit_source = None
-        self.is_editing = False
-        self.SetFocus()
+        if self.is_editing_in_cell:
+            self.edit_source.Destroy()
+            self.edit_source = None
+            self.is_editing_in_cell = False
+            self.SetFocus()
 
     def create_hidden_text_ctrl(self):
         c = wx.TextCtrl(self, -1, pos=(100,100), size=(400,24))

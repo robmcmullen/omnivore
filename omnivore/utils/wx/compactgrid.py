@@ -123,8 +123,10 @@ class DrawTextImageCache(object):
             rect.x += v.text_font_char_width * len(before)
         if selected:
             self.prepare_dc_style(parent, dc, selected_bit_mask)
+            selected_width = v.text_font_char_width * len(selected)
+            dc.DrawRectangle(rect.x, rect.y, selected_width, rect.height)
             dc.DrawText(selected, rect.x, rect.y)
-            rect.x += v.text_font_char_width * len(selected)
+            rect.x += selected_width
         if after:
             self.prepare_dc_style(parent, dc, 0)
             dc.DrawText(after, rect.x, rect.y)
@@ -1065,7 +1067,7 @@ class CompactGrid(wx.ScrolledWindow):
 
         self.set_view_param_defaults()
 
-        self.is_editing = False  # if the user is editing at carets
+        self.edit_source = None  # if the user is typing in a cell
 
         # omnivore sets this to false so it can update multiple views at the
         # same time without any double refreshes
@@ -1379,7 +1381,7 @@ class CompactGrid(wx.ScrolledWindow):
         for index in self.caret_handler.iter_caret_indexes():
             r, c = self.table.index_to_row_col(index)
             if r >= start_row and r < start_row + visible_rows:
-                if self.is_editing:
+                if self.edit_source is not None:
                     print("drawing edit cell at r,c=%d,%d" % (r, c))
                     self.line_renderer.draw_edit_cell(self, dc, r, c, self.edit_source)
                 else:

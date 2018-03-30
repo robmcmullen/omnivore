@@ -57,87 +57,6 @@ class HexDigitMixin(object):
 
 
 class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
-    def __init__(self,parent,id,parentgrid):
-        # Don't use the validator here, because apparently we can't
-        # reset the validator based on the columns.  We have to do the
-        # validation ourselves using EVT_KEY_DOWN.
-        wx.TextCtrl.__init__(self,parent, id,
-                             style=wx.TE_PROCESS_TAB|wx.TE_PROCESS_ENTER|wx.NO_BORDER)
-        log.debug("parent=%s" % parent)
-        self.SetInsertionPoint(0)
-        self.Bind(wx.EVT_TEXT, self.on_text)
-        self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
-        self.parentgrid=parentgrid
-        self.setMode('hex')
-        self.startValue=None
-
-    def setMode(self, mode):
-        self.mode=mode
-        if mode=='hex':
-            self.SetMaxLength(2)
-            self.autoadvance=2
-        elif mode=='char':
-            self.SetMaxLength(1)
-            self.autoadvance=1
-        else:
-            self.SetMaxLength(0)
-            self.autoadvance=0
-        self.userpressed=False
-
-    def editingNewCell(self, value, mode='hex'):
-        """
-        Begin editing a new cell by determining the edit mode and
-        setting the initial value.
-        """
-        # Set the mode before setting the value, otherwise OnText gets
-        # triggered before self.userpressed is set to false.  When
-        # operating in char mode (i.e. autoadvance=1), this causes the
-        # editor to skip every other cell.
-        self.setMode(mode)
-        self.startValue=value
-        self.SetValue(value)
-        self.SetFocus()
-        self.SetInsertionPoint(0)
-        self.SetSelection(-1, -1) # select the text
-
-    def insertFirstKey(self, key):
-        """
-        Check for a valid initial keystroke, and insert it into the
-        text ctrl if it is one.
-
-        @param key: keystroke
-        @type key: int
-
-        @returns: True if keystroke was valid, False if not.
-        """
-        ch=None
-        if self.mode=='hex':
-            ch=self.getValidHexDigit(key)
-        elif key>=wx.WXK_SPACE and key<=255:
-            ch=chr(key)
-
-        if ch is not None:
-            # set self.userpressed before SetValue, because it appears
-            # that the OnText callback happens immediately and the
-            # keystroke won't be flagged as one that the user caused.
-            log.debug("insert_first_key: found valid key: '%s'" % ch)
-            self.userpressed=True
-            self.SetValue(ch)
-            self.SetInsertionPointEnd()
-            return True
-
-        return False
-
-    def getValidHexDigit(self,key):
-        if key in HexDigitMixin.keypad:
-            return chr(ord('0') + key - wx.WXK_NUMPAD0)
-        elif (key>=ord('0') and key<=ord('9')) or (key>=ord('A') and key<=ord('F')) or (key>=ord('a') and key<=ord('f')):
-            return chr(key)
-        else:
-            return None
-
-
-class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
     def __init__(self, parent, id, *args, **kwargs):
         # Don't use the validator here, because apparently we can't
         # reset the validator based on the columns.  We have to do the
@@ -227,6 +146,11 @@ class HexTextCtrl(wx.TextCtrl,HexDigitMixin):
                 self.userpressed=True
         elif self.mode!='hex':
             self.userpressed=True
+
+        # Need to refresh the grid for every keypress in case the cursor has
+        # been moved or the selection has changed. May result in duplicate
+        # refreshes, but we're not concerned about that much speed here.
+        wx.CallAfter(self.GetParent().Refresh)
         evt.Skip()
 
     def cancel_edit(self):
