@@ -142,6 +142,39 @@ class SetRangeValueCommand(SetRangeCommand):
         return self.data
 
 
+class SetIndexedDataCommand(ChangeByteValuesCommand):
+    short_name = "set_indexes_value"
+    pretty_name = "Set Values at Indexes"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('indexes', 'int_list'),
+            ('data', 'string'),
+            ]
+
+    def __init__(self, segment, indexes, data):
+        ChangeByteValuesCommand.__init__(self, segment)
+        self.indexes = indexes
+        self.data = data
+
+    def __str__(self):
+        return "%s (%04x indexes)" % (self.pretty_name, len(self.indexes))
+
+    def get_data(self, orig):
+        return self.data
+
+    def do_change(self, editor, undo):
+        i1 = min(self.indexes)
+        i2 = max(self.indexes)
+        undo.flags.index_range = i1, i2
+        old_data = self.segment[self.indexes].copy()
+        self.segment[self.indexes] = self.get_data(old_data)
+        return (old_data, )
+
+    def undo_change(self, editor, old_data):
+        old_data, = old_data
+        self.segment[self.indexes] = old_data
+
+
 class ChangeStyleCommand(SetContiguousDataCommand):
     short_name = "cs"
     pretty_name = "Change Style"

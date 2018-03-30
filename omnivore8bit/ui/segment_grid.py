@@ -60,6 +60,8 @@ class SegmentGridTextCtrl(wx.TextCtrl):
         elif key == wx.WXK_ESCAPE:
             wx.CallAfter(self.GetParent().end_editing)
             print("OSEUCHORECUHCROEUHSCOEHUESCAPE")
+        elif key == wx.WXK_RETURN:
+            wx.CallAfter(self.GetParent().accept_edit, self.num_chars_autoadvance)
         else:
             evt.Skip()
 
@@ -278,7 +280,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
     def accept_edit(self, autoadvance=False):
         val = self.edit_source.get_processed_value()
         self.end_editing()
-        print("changing to %d" % val)
+        print("changing to %s" % val)
         self.process_edit(val)
 
     def process_edit(self, val):

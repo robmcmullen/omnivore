@@ -14,11 +14,12 @@ from omnivore.framework.enthought_api import EditorAction
 from omnivore.utils.nputil import intscale
 from omnivore.utils.wx import compactgrid as cg
 
-from ..ui.segment_grid import SegmentGridControl, SegmentTable
+from ..ui.segment_grid import SegmentGridControl, SegmentTable, SegmentGridTextCtrl
 from .hex2 import HexEditControl
 from ..arch.disasm import iter_disasm_styles
 from ..utils import searchutil
 from ..byte_edit.commands import SetCommentCommand
+from ..commands import SetIndexedDataCommand
 
 from . import SegmentViewer
 
@@ -269,6 +270,40 @@ class DisassemblyGridControl(SegmentGridControl):
         actions.extend(self.segment_viewer.linked_base.get_goto_actions_other_segments(addr_dest))
         actions.extend(self.segment_viewer.linked_base.get_goto_actions_same_byte(popup_data['index']))
         return actions
+
+    ##### editing
+
+    def process_edit(self, val):
+        t = self.table
+        d = t.disassembly
+        op = val.upper()
+        ranges = self.get_selected_ranges_including_carets(self.caret_handler)
+        max_possible = ranges[-1][1] + 16  # assuming max opcode length < 16 bytes
+        data = np.zeros([max_possible], dtype=np.int16) - 1  # negative == unused
+
+        # Have to calculate each line individually because PC relative
+        # operations will have different opcode bytes depending on what the PC
+        # is at the current location.
+        for r in ranges:
+            print("processing range %s" % str(r))
+            data_index = r[0]
+            subset = None
+            while data_index <= r[1]:
+                row = t.index_to_row[data_index]
+                pc = t.get_pc(row)
+                opcodes = d.assemble_text(pc, op)
+                next_data_index = data_index + len(opcodes)
+                print("pc=%x op=%s data[%d:%d]=%s" % (pc, op, data_index, next_data_index, opcodes))
+                data[data_index:next_data_index] = opcodes
+                data_index = next_data_index
+
+        indexes = np.where(data >= 0)[0]
+        byte_data = np.empty([len(indexes)], dtype=np.uint8)
+        byte_data[:] = data[indexes]
+        print(indexes)
+        print(byte_data)
+        cmd = SetIndexedDataCommand(self.segment_viewer.segment, indexes, byte_data)
+        self.segment_viewer.editor.process_command(cmd)
 
 
 class CopyDisassemblyAction(EditorAction):
