@@ -360,7 +360,19 @@ class LineRenderer(object):
         dc.DrawRectangle(rect)
 
     def draw_edit_cell(self, parent, dc, line_num, col, edit_source):
-        # default implementation is to just draw a caret
+        # Mimic the display of a TextCtrl in the cell being drawn
+        insertion_point_index = edit_source.GetInsertionPoint()
+        highlight_start, highlight_end = edit_source.GetSelection()
+        value = edit_source.GetValue()
+        print("draw_edit_cell: caret=%d sel=%d-%d value=%s" % (insertion_point_index, highlight_start, highlight_end, value))
+
+        before = value[0:highlight_start]
+        selected = value[highlight_start:highlight_end]
+        after = value[highlight_end:]
+
+        rect = self.col_to_rect(line_num, col)
+        self.image_cache.draw_selected_string_to_dc(parent, dc, rect, before, selected, after, insertion_point_index)
+
         self.draw_caret(parent, dc, line_num, col)
 
 
