@@ -504,6 +504,19 @@ class CaretHandler(HasTraits):
             flags.skip_source_control_refresh = True
             flags.refresh_needed = True
 
+    def post_process_caret_flags(self, flags, document):
+        """Perform any caret updates after the data model has been regenerated
+        (e.g. the disassembler where the number of bytes per row can change
+        after an edit)
+
+        """
+        log.debug("post processing caret flags: %s" % str(flags))
+
+        if flags.advance_caret_position_in_control:
+            log.debug("advancing each caret to next position")
+            flags.advance_caret_position_in_control.advance_caret_position()
+            self.validate_carets()
+            self.sync_caret_event = flags
 
     def calc_action_enabled_flags(self):
         pass

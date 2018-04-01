@@ -544,6 +544,8 @@ class FrameworkEditor(Editor):
             flags.rebuild_ui = True
             do_refresh = True
 
+        self.caret_handler.post_process_caret_flags(flags, d)
+
         if flags.rebuild_ui:
             d.recalc_event = True
         if do_refresh:

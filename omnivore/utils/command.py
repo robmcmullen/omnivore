@@ -245,6 +245,11 @@ class StatusFlags(object):
         # if True will remove all carets except the current caret
         self.force_single_caret = False
 
+        # move the caret(s) to the next edit position (usually column) using
+        # the control as the basis for how much the index needs to be adjusted
+        # to get to the next column.
+        self.advance_caret_position_in_control = None
+
         for flags in args:
             self.add_flags(flags)
 
@@ -300,6 +305,10 @@ class StatusFlags(object):
             self.caret_column = flags.caret_column
         if flags.force_single_caret:
             self.force_single_caret = flags.force_single_caret
+        if flags.source_control:
+            self.source_control = flags.source_control
+        if flags.advance_caret_position_in_control:
+            self.advance_caret_position_in_control = flags.advance_caret_position_in_control
 
 
 class DisplayFlags(StatusFlags):

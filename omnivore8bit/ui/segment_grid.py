@@ -252,7 +252,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
     def handle_char_ordinary(self, evt):
         c = evt.GetKeyCode()
         print("ordinary char: %s", c)
-        if not self.is_editing:
+        if not self.is_editing_in_cell:
             self.start_editing()
         print("EmulateKeyPress: %s" % evt.GetKeyCode())
         self.edit_source.EmulateKeyPress(evt)
@@ -288,7 +288,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
         # for c in self.caret_handler.carets:
         #     ranges.append((c.index, c.index + 1))
         ranges = self.get_selected_ranges_including_carets(self.caret_handler)
-        cmd = SetRangeValueCommand(self.segment_viewer.segment, ranges, val)
+        cmd = SetRangeValueCommand(self.segment_viewer.segment, ranges, val, advance=True)
         self.segment_viewer.editor.process_command(cmd)
 
     def end_editing(self):

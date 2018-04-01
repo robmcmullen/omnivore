@@ -64,24 +64,6 @@ class HexEditControl(SegmentGridControl):
     def set_viewer_defaults(self):
         self.items_per_row = self.view_params.hex_grid_width
 
-    def change_value(self, row, col, text):
-        """Called after editor has provided a new value for a cell.
-        
-        Can use this to override the default handler.  Return True if the grid
-        should be updated, or False if the value is invalid or the grid will
-        be updated some other way.
-        """
-        try:
-            val = int(text,16)
-            if val >= 0 and val < 256:
-                start, end = self.table.get_index_range(row, col)
-                if self.table.is_index_valid(start):
-                    cmd = ChangeByteCommand(self.table.segment, start, end, val)
-                    self.linked_base.editor.process_command(cmd)
-        except ValueError:
-            pass
-        return False
-
     def handle_char_ordinary(self, evt):
         c = evt.GetKeyCode()
         print("ordinary char: %s", c)
@@ -91,7 +73,7 @@ class HexEditControl(SegmentGridControl):
             evt.Skip()
 
     def process_hex_digit(self, evt, keycode):
-        if not self.is_editing:
+        if not self.is_editing_in_cell:
             self.start_editing()
         print("EmulateKeyPress: %s" % evt.GetKeyCode())
         self.edit_source.EmulateKeyPress(evt)

@@ -273,6 +273,9 @@ class DisassemblyGridControl(SegmentGridControl):
 
     ##### editing
 
+    def advance_caret_position(self):
+        self.handle_char_move_down(None, None)
+
     def process_edit(self, val):
         t = self.table
         d = t.disassembly
@@ -303,7 +306,7 @@ class DisassemblyGridControl(SegmentGridControl):
         byte_data[:] = data[indexes]
         print(indexes)
         print(byte_data)
-        cmd = SetIndexedDataCommand(self.segment_viewer.segment, indexes, byte_data)
+        cmd = SetIndexedDataCommand(self.segment_viewer.segment, indexes, byte_data, advance=True)
         self.segment_viewer.editor.process_command(cmd)
 
 

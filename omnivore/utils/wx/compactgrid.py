@@ -1420,6 +1420,9 @@ class CompactGrid(wx.ScrolledWindow):
 
     ##### Keyboard movement implementations
 
+    def advance_caret_position(self):
+        self.handle_char_move_right(None, None)
+
     def handle_toggle_col_header(self, evt, flags):
         self.want_col_header = not self.want_col_header
         self.process_visibility_change()

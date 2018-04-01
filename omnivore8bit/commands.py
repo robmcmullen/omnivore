@@ -31,6 +31,10 @@ class ChangeByteValuesCommand(SegmentCommand):
     short_name = "change_values_base"
     pretty_name = "Change Values Abstract Command"
 
+    def __init__(self, segment, advance=False):
+        SegmentCommand.__init__(self, segment)
+        self.advance = advance
+
     def set_undo_flags(self, flags):
         flags.byte_values_changed = True
 
@@ -52,8 +56,8 @@ class SetContiguousDataCommand(ChangeByteValuesCommand):
             ('end_index', 'int'),
             ]
 
-    def __init__(self, segment, start_index, end_index):
-        SegmentCommand.__init__(self, segment)
+    def __init__(self, segment, start_index, end_index, advance=False):
+        ChangeByteValuesCommand.__init__(self, segment, advance)
         self.start_index = start_index
         if start_index == end_index:
             end_index += 1
@@ -76,6 +80,8 @@ class SetContiguousDataCommand(ChangeByteValuesCommand):
         undo.flags.index_range = i1, i2
         if self.caret_at_end:
             undo.flags.caret_index = i2
+        if self.advance:
+            undo.flags.advance_caret_position_in_control = editor.focused_viewer.control
         old_data = self.segment[i1:i2].copy()
         self.segment[i1:i2] = self.get_data(old_data)
         if self.ignore_if_same_bytes and self.segment[i1:i2] == old_data:
@@ -96,8 +102,8 @@ class SetRangeCommand(ChangeByteValuesCommand):
             ('range_to_index_function', 'func_pointer'),
             ]
 
-    def __init__(self, segment, ranges):
-        SegmentCommand.__init__(self, segment)
+    def __init__(self, segment, ranges, advance=False):
+        ChangeByteValuesCommand.__init__(self, segment, advance)
         self.ranges = tuple(ranges)
 
         # function to convert ranges to indexes will be set the first time this
@@ -118,6 +124,8 @@ class SetRangeCommand(ChangeByteValuesCommand):
         undo.flags.index_range = indexes[0], indexes[-1]
         old_data = self.segment[indexes].copy()
         self.segment[indexes] = self.get_data(old_data)
+        if self.advance:
+            undo.flags.advance_caret_position_in_control = editor.focused_viewer.control
         return old_data
 
     def undo_change(self, editor, old_data):
@@ -134,8 +142,8 @@ class SetRangeValueCommand(SetRangeCommand):
             ('bytes', 'string'),
             ]
 
-    def __init__(self, segment, ranges, bytes):
-        SetRangeCommand.__init__(self, segment, ranges)
+    def __init__(self, segment, ranges, bytes, advance=False):
+        SetRangeCommand.__init__(self, segment, ranges, advance)
         self.data = bytes
 
     def get_data(self, orig):
@@ -151,8 +159,8 @@ class SetIndexedDataCommand(ChangeByteValuesCommand):
             ('data', 'string'),
             ]
 
-    def __init__(self, segment, indexes, data):
-        ChangeByteValuesCommand.__init__(self, segment)
+    def __init__(self, segment, indexes, data, advance=False):
+        ChangeByteValuesCommand.__init__(self, segment, advance)
         self.indexes = indexes
         self.data = data
 
@@ -166,6 +174,8 @@ class SetIndexedDataCommand(ChangeByteValuesCommand):
         i1 = min(self.indexes)
         i2 = max(self.indexes)
         undo.flags.index_range = i1, i2
+        if self.advance:
+            undo.flags.advance_caret_position_in_control = editor.focused_viewer.control
         old_data = self.segment[self.indexes].copy()
         self.segment[self.indexes] = self.get_data(old_data)
         return (old_data, )
