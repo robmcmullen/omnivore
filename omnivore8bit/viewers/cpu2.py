@@ -289,11 +289,11 @@ class DisassemblyGridControl(SegmentGridControl):
         # is at the current location.
         for r in ranges:
             print("processing range %s" % str(r))
-            data_index = r[0]
-            row = t.index_to_row[data_index]
+            row = t.index_to_row[r[0]]
+            data_index = t.get_index_of_row(row)
             pc = t.get_pc(row)
             subset = None
-            while data_index <= r[1]:
+            while data_index < r[1]:
                 opcodes = d.assemble_text(pc, op)
                 next_data_index = data_index + len(opcodes)
                 print("pc=%x op=%s data[%d:%d]=%s" % (pc, op, data_index, next_data_index, opcodes))
