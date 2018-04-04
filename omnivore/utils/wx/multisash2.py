@@ -62,7 +62,7 @@ class MultiSash(wx.Window):
         self.set_defaults()
         self._defChild = EmptyChild
         self.child = MultiSplit(self, self, layout_direction)
-        self.Bind(wx.EVT_SIZE,self.OnMultiSize)
+        self.Bind(wx.EVT_SIZE, self.on_size)
         self.last_direction = wx.VERTICAL
 
     def set_defaults(self):
@@ -95,20 +95,38 @@ class MultiSash(wx.Window):
 
         self.close_button_size = (11, 11)
 
-    def OnMultiSize(self,evt):
+    def get_paint_tools(self, selected=False):
+        if selected:
+            brush = self.focused_brush
+            pen = self.focused_pen
+            fill = self.focused_fill
+            text = self.focused_text_color
+            textbg = self.focused_color
+        else:
+            brush = self.unfocused_brush
+            pen = self.unfocused_pen
+            fill = self.unfocused_fill
+            text = self.unfocused_text_color
+            textbg = self.unfocused_color
+        return brush, pen, fill, text, textbg
+
+    def on_size(self, evt):
+        self.do_layout()
+
+    def do_layout(self):
         self.child.sizer_after = False
         self.child.sizer.Hide()
         self.child.SetSize(self.GetSize())
         self.child.do_layout()
 
-    def UnSelect(self):
-        self.child.UnSelect()
+    def clear_tile_focus(self):
+        self.child.clear_tile_focus()
 
-    def Clear(self):
+    def remove_all(self):
         old = self.child
         self.child = MultiSplit(self, self, old.layout_direction)
         old.remove_all()
-        self.OnMultiSize(None)
+        self.do_layout()
 
     def get_layout(self, to_json=False, pretty=False):
         d = {'multisash': self.child.get_layout()}
@@ -138,8 +156,7 @@ class MultiSash(wx.Window):
             self.child = old
         else:
             old.Destroy()
-        self.OnMultiSize(None)
-        self.child.do_layout()
+        self.do_layout()
 
     def update_captions(self):
         self.Refresh()
@@ -153,7 +170,7 @@ class MultiSash(wx.Window):
     def focus_uuid(self, uuid):
         found = self.find_uuid(uuid)
         if found:
-            found.Select()
+            found.set_tile_focus()
 
     def replace_by_uuid(self, control, u):
         found = self.find_uuid(u)
@@ -231,7 +248,7 @@ class HorizontalResizer(object):
         # do_view_size method
         xs, ys = self.sizer.ClientToScreen((sizer_evt_x, sizer_evt_y))
         x, y = self.splitter.ScreenToClient((xs, ys))
-        print("calc_splitter_pos: evt: %d,%d screen: %d,%d first: %d,%d" % (sizer_evt_x, sizer_evt_y, xs, ys, x, y))
+        log.debug("calc_splitter_pos: evt: %d,%d screen: %d,%d first: %d,%d" % (sizer_evt_x, sizer_evt_y, xs, ys, x, y))
         x, y = x - self.mouse_offset[0] + SIZER_THICKNESS, y - self.mouse_offset[1] + SIZER_THICKNESS
         return x, y
 
@@ -242,11 +259,11 @@ class HorizontalResizer(object):
         w, _ = self.second.GetSize()
         self.x_max = x + w
         self.x_max -= SIZER_THICKNESS
-        print("calc_extrema: min %d, x %d, w %d, max %d" % (self.x_min, x, w, self.x_max))
+        log.debug("calc_extrema: min %d, x %d, w %d, max %d" % (self.x_min, x, w, self.x_max))
 
     def set_ratios(self, x, y):
         r = float(x - self.zero_pos[0]) / float(self.total_width) * self.total_ratio
-        print("x,r,x_min,xmax", x, r, self.x_min, self.x_max)
+        log.debug("x,r,x_min,xmax", x, r, self.x_min, self.x_max)
         if x > self.x_min and x < self.x_max:
             self.first.ratio_in_parent = r
             self.second.ratio_in_parent = self.total_ratio - r
@@ -254,12 +271,11 @@ class HorizontalResizer(object):
 
     def do_mouse_move(self, sizer_evt_x, sizer_evt_y):
         x, y = self.calc_splitter_pos(sizer_evt_x, sizer_evt_y)
-        print("do_mouse_move: sizer: %d,%d first: %d,%d" % (sizer_evt_x, sizer_evt_y, x, y))
-        print(self, x, y)
+        log.debug("do_mouse_move: sizer: %d,%d first: %d,%d" % (sizer_evt_x, sizer_evt_y, x, y))
         if self.set_ratios(x, y):
             self.splitter.do_layout()
         else:
-            print("out of range")
+            log.debug("do_mouse_move: out of range")
 
 class VerticalLayout(object):
     @classmethod
@@ -294,11 +310,11 @@ class VerticalResizer(HorizontalResizer):
         _, h = self.second.GetSize()
         self.y_max = y + h
         self.y_max -= SIZER_THICKNESS
-        print("calc_extrema: min %d, y %d, h %d, max %d" % (self.y_min, y, h, self.y_max))
+        log.debug("calc_extrema: min %d, y %d, h %d, max %d" % (self.y_min, y, h, self.y_max))
 
     def set_ratios(self, x, y):
         r = float(y - self.zero_pos[1]) / float(self.total_height) * self.total_ratio
-        print("y,r,y_min,xmax", y, r, self.y_min, self.y_max)
+        log.debug("y,r,y_min,xmax", y, r, self.y_min, self.y_max)
         if y > self.y_min and y < self.y_max:
             self.first.ratio_in_parent = r
             self.second.ratio_in_parent = self.total_ratio - r
@@ -492,15 +508,15 @@ class MultiSplit(MultiWindowBase):
                 view = MultiViewLeaf(self.multiView, self, layout=layout)
             self.views.append(view)
 
-    def UnSelect(self):
+    def clear_tile_focus(self):
         for view in self.views:
-            view.UnSelect()
+            view.clear_tile_focus()
 
     def destroy_leaf(self, view):
-        print("destroy_leaf: view=%s views=%s self=%s parent=%s" % (view, self.views, self, self.GetParent()))
+        log.debug("destroy_leaf: view=%s views=%s self=%s parent=%s" % (view, self.views, self, self.GetParent()))
         index = self.find_leaf_index(view)  # raise IndexError
         if len(self.views) > 2:
-            print("deleting > 2: %d %s" %(index, self.views))
+            log.debug("deleting > 2: %d %s" %(index, self.views))
             del self.views[index]
             r = view.ratio_in_parent / len(self.views)
             for v in self.views:
@@ -508,7 +524,7 @@ class MultiSplit(MultiWindowBase):
             view.remove()
             self.do_layout()
         elif len(self.views) == 2:
-            print("deleting == 2: %d %s, parent=%s self=%s" % (index, self.views, self.GetParent(), self))
+            log.debug("deleting == 2: %d %s, parent=%s self=%s" % (index, self.views, self.GetParent(), self))
             # remove leaf, resulting in a single leaf inside a multisplit.
             # Instead of leaving it like this, move it up into the parent
             # multisplit
@@ -516,16 +532,16 @@ class MultiSplit(MultiWindowBase):
             view.remove()
             if self.GetParent() == self.multiView:
                 # Only one item left.
-                print("  last item in %s!" % (self))
+                log.debug("  last item in %s!" % (self))
                 self.views[0].ratio_in_parent = 1.0
                 self.do_layout()
             else:
-                print("  deleting %s from parent %s parent views=%s" % (self, self.GetParent(), self.GetParent().views))
+                log.debug("  deleting %s from parent %s parent views=%s" % (self, self.GetParent(), self.GetParent().views))
                 self.GetParent().reparent_from_splitter(self)
         else:
             # must be at the top; the final splitter.
-            print("Removing the last item!", view)
-            self.GetParent().Clear()
+            log.debug("Removing the last item!", view)
+            self.GetParent().remove_all()
 
     def reparent_from_splitter(self, splitter):
         index = self.find_leaf_index(splitter)  # raise IndexError
@@ -605,8 +621,8 @@ class MultiViewLeaf(MultiWindowBase):
             old.Destroy()
         self.client.do_size_from_parent()
 
-    def UnSelect(self):
-        self.client.UnSelect()
+    def clear_tile_focus(self):
+        self.client.clear_tile_focus()
 
     def get_multi_split(self):
         return self.GetParent()
@@ -644,8 +660,8 @@ class MultiClient(wx.Window):
         self.move_child()
         log.debug("Created client for %s" % self.child_uuid)
 
-        self.Bind(wx.EVT_SET_FOCUS,self.OnSetFocus)
-        self.Bind(wx.EVT_CHILD_FOCUS,self.OnChildFocus)
+        self.Bind(wx.EVT_SET_FOCUS, self.on_set_focus)
+        self.Bind(wx.EVT_CHILD_FOCUS, self.on_child_focus)
 
     def do_send_event(self, evt):
         return not self.GetEventHandler().ProcessEvent(evt) or evt.IsAllowed()
@@ -663,22 +679,6 @@ class MultiClient(wx.Window):
         evt.SetReplacementChild(new_child)
         self.do_send_event(evt)
 
-    def get_paint_tools(self):
-        m = self.multiView
-        if self.selected:
-            brush = m.focused_brush
-            pen = m.focused_pen
-            fill = m.focused_fill
-            text = m.focused_text_color
-            textbg = m.focused_color
-        else:
-            brush = m.unfocused_brush
-            pen = m.unfocused_pen
-            fill = m.unfocused_fill
-            text = m.unfocused_text_color
-            textbg = m.unfocused_color
-        return brush, pen, fill, text, textbg
-
     @property
     def title(self):
         leaf = self.GetParent()  # parent is always Leaf
@@ -690,13 +690,13 @@ class MultiClient(wx.Window):
             leaf = leaf.GetParent()
         return "%s-%d: %s" % (v, depth, self.child.GetName())
 
-    def UnSelect(self):
+    def clear_tile_focus(self):
         if self.selected:
             self.selected = False
             self.Refresh()
 
-    def Select(self):
-        self.GetParent().multiView.UnSelect()
+    def set_tile_focus(self):
+        self.GetParent().multiView.clear_tile_focus()
         self.selected = True
         evt = MultiSashEvent(MultiSash.wxEVT_CLIENT_ACTIVATED, self)
         evt.SetChild(self.child)
@@ -734,14 +734,11 @@ class MultiClient(wx.Window):
         else:
             self.child.Move(self.multiView.child_window_x, self.multiView.child_window_y)
 
-    def OnSetFocus(self,evt):
-        self.Select()
+    def on_set_focus(self,evt):
+        self.set_tile_focus()
 
-    def OnChildFocus(self,evt):
-        self.OnSetFocus(evt)
-##        from Funcs import FindFocusedChild
-##        child = FindFocusedChild(self)
-##        child.Bind(wx.EVT_KILL_FOCUS,self.OnChildKillFocus)
+    def on_child_focus(self,evt):
+        self.on_set_focus(evt)
 
 
 class TitleBar(wx.Window):
@@ -762,16 +759,16 @@ class TitleBar(wx.Window):
         self.SetBackgroundColour(wx.RED)
         self.hide_buttons()
 
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
-        self.Bind(wx.EVT_SIZE, self.OnSize)
-        self.Bind(wx.EVT_LEAVE_WINDOW,self.OnLeave)
-        self.Bind(wx.EVT_ENTER_WINDOW,self.OnEnter)
+        self.Bind(wx.EVT_PAINT, self.on_paint)
+        self.Bind(wx.EVT_SIZE, self.on_size)
+        self.Bind(wx.EVT_LEAVE_WINDOW,self.on_leave)
+        self.Bind(wx.EVT_ENTER_WINDOW,self.on_enter)
 
     def draw_title_bar(self, dc):
         m = self.client.multiView
         dc.SetBackgroundMode(wx.SOLID)
         dc.SetPen(wx.TRANSPARENT_PEN)
-        brush, _, _, text, textbg = self.client.get_paint_tools()
+        brush, _, _, text, textbg = m.get_paint_tools(self.client.selected)
         dc.SetBrush(brush)
 
         w, h = self.GetSize()
@@ -781,13 +778,13 @@ class TitleBar(wx.Window):
         dc.DrawRectangle(0, 0, w, h)
         dc.DrawText(self.client.title, m.title_bar_x, m.title_bar_y)
 
-    def OnPaint(self, event):
+    def on_paint(self, event):
         dc = wx.PaintDC(self)
         self.draw_title_bar(dc)
 
-    def OnSize(self, evt):
+    def on_size(self, evt):
         for button in self.buttons:
-            x, y, w, h = button.CalcSizePos(self)
+            x, y, w, h = button.calc_size_pos(self)
             button.SetSize(x, y, w, h)
 
     def hide_buttons(self):
@@ -798,10 +795,10 @@ class TitleBar(wx.Window):
         for b in self.buttons[1:]:
             if b: b.Show()
 
-    def OnEnter(self, evt):
+    def on_enter(self, evt):
         self.show_buttons()
 
-    def OnLeave(self, evt):
+    def on_leave(self, evt):
         # check if left the window but still in the title bar, otherwise will
         # enter an endless cycle of leave/enter events as the buttons due to
         # the show/hide of the buttons being right under the cursor
@@ -818,16 +815,16 @@ class MultiSizer(wx.Window):
     def __init__(self, parent, layout_direction=wx.HORIZONTAL):
         wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN)
 
-        self.Bind(wx.EVT_LEAVE_WINDOW,self.OnLeave)
-        self.Bind(wx.EVT_ENTER_WINDOW,self.OnEnter)
+        self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
+        self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
 
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
         self.SetBackgroundColour(wx.WHITE)
 
-    def OnLeave(self,evt):
+    def on_leave(self,evt):
         self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
 
-    def OnEnter(self,evt):
+    def on_enter(self,evt):
         if self.GetParent().layout_direction == wx.HORIZONTAL:
             self.SetCursor(wx.Cursor(wx.CURSOR_SIZEWE))
         else:
@@ -843,26 +840,23 @@ class TitleBarButton(wx.Window):
         self.title_bar = parent
         self.client = parent.GetParent()
         self.leaf = self.client.GetParent()
-        x,y,w,h = self.CalcSizePos(parent)
-        wx.Window.__init__(self,id = -1,parent = parent,
-                          pos = (x,y),
-                          size = (w,h),
-                          style = wx.CLIP_CHILDREN)
+        x,y,w,h = self.calc_size_pos(parent)
+        wx.Window.__init__(self,id = -1,parent = parent, pos = (x,y), size = (w,h), style = wx.CLIP_CHILDREN)
 
         self.down = False
         self.entered = False
 
-        self.Bind(wx.EVT_LEFT_DOWN,self.OnPress)
-        self.Bind(wx.EVT_LEFT_UP,self.OnRelease)
-        self.Bind(wx.EVT_PAINT,self.OnPaint)
-        self.Bind(wx.EVT_LEAVE_WINDOW,self.OnLeave)
-        self.Bind(wx.EVT_ENTER_WINDOW,self.OnEnter)
+        self.Bind(wx.EVT_LEFT_DOWN, self.on_press)
+        self.Bind(wx.EVT_LEFT_UP, self.on_release)
+        self.Bind(wx.EVT_PAINT, self.on_paint)
+        self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
+        self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
 
-    def OnPress(self,evt):
+    def on_press(self,evt):
         self.down = True
         evt.Skip()
 
-    def OnRelease(self,evt):
+    def on_release(self,evt):
         if self.down and self.entered:
             wx.CallAfter(self.title_bar.hide_buttons)
             self.do_action(evt)
@@ -870,36 +864,33 @@ class TitleBarButton(wx.Window):
             evt.Skip()
         self.down = False
 
-    def OnPaint(self, event):
+    def on_paint(self, event):
+        m = self.client.multiView
         dc = wx.PaintDC(self)
         size = self.GetClientSize()
 
-        bg_brush, pen, fg_brush, _, _ = self.client.get_paint_tools()
+        bg_brush, pen, fg_brush, _, _ = m.get_paint_tools(self.client.selected)
         self.draw_button(dc, size, bg_brush, pen, fg_brush)
 
     def draw_button(self, dc, size, bg_brush, pen, fg_brush):
-        print("draw")
+        pass
 
-    def OnLeave(self,evt):
+    def on_leave(self,evt):
         self.entered = False
 
-    def OnEnter(self,evt):
+    def on_enter(self,evt):
         self.entered = True
 
     def do_action(self, evt):
         pass
 
-    def CalcSizePos(self, parent):
+    def calc_size_pos(self, parent):
         m = self.client.multiView
         pw, ph = parent.GetClientSize()
         w, h = m.close_button_size
         x = pw - (w - m.title_bar_margin) * self.order * 2
         y = (m.title_bar_height - h) // 2
         return (x, y, w, h)
-
-    def OnSize(self,evt):
-        x,y,w,h = self.CalcSizePos(self.title_bar)
-        self.SetSize(x,y,w,h)
 
 
 class TitleBarCloser(TitleBarButton):
@@ -932,9 +923,6 @@ class TitleBarVSplitNewRight(TitleBarCloser):
         dc.DrawRectangle(split, 0, size.x - split, size.y)
 
     def do_action(self, evt):
-        print(self.client)
-        print(self.leaf)
-        print("HORZ")
         self.leaf.split(layout_direction=wx.HORIZONTAL)
 
 
@@ -948,9 +936,6 @@ class TitleBarHSplitNewBot(TitleBarCloser):
         dc.DrawRectangle(0, split, size.x, size.y - split)
 
     def do_action(self, evt):
-        print(self.client)
-        print(self.leaf)
-        print("VERT")
         self.leaf.split(layout_direction=wx.VERTICAL)
 
 #----------------------------------------------------------------------
@@ -1116,11 +1101,11 @@ if __name__ == '__main__':
                     size=wx.DefaultSize):
 
             wx.Control.__init__(self, parent, id, pos, size, style=wx.NO_BORDER)
-            self.Bind(wx.EVT_PAINT, self.OnPaint)
+            self.Bind(wx.EVT_PAINT, self.on_paint)
             self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
-            self.Bind(wx.EVT_SIZE, self.OnSize)
+            self.Bind(wx.EVT_SIZE, self.on_size)
 
-        def OnPaint(self, event):
+        def on_paint(self, event):
             dc = wx.PaintDC(self)
             size = self.GetClientSize()
 
@@ -1144,7 +1129,7 @@ if __name__ == '__main__':
         def OnEraseBackground(self, event):
             pass
 
-        def OnSize(self, event):
+        def on_size(self, event):
             size = self.GetClientSize()
             s = "Size: %d x %d"%(size.x, size.y)
             self.SetName(s)
@@ -1187,7 +1172,7 @@ if __name__ == '__main__':
     def clear_all(evt):
         global multi
 
-        multi.Clear()
+        multi.remove_all()
 
     app = wx.App()
     frame = wx.Frame(None, -1, "Test", size=(800,400))
