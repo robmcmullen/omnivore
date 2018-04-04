@@ -699,13 +699,18 @@ class MultiViewLeaf(MultiWindowBase):
 
 
 class MultiClient(wx.Window):
-    def __init__(self, parent, child=None, uuid=None, pos=None, size=None, multiView=None):
+    def __init__(self, parent, child=None, uuid=None, pos=None, size=None, multiView=None, extra_border=0):
         if pos is None:
             pos = (0, 0)
         if size is None:
             size = parent.GetSize()
 
-        wx.Window.__init__(self, parent, -1, pos=pos, size=size, style = wx.CLIP_CHILDREN | wx.SUNKEN_BORDER)
+        style = wx.CLIP_CHILDREN
+        if extra_border == 0:
+            style |= wx.SUNKEN_BORDER
+        else:
+            style |= wx.NO_BORDER
+        wx.Window.__init__(self, parent, -1, pos=pos, size=size, style=style)
         if multiView is None:
             multiView = parent.multiView
         self.multiView = multiView
@@ -714,6 +719,7 @@ class MultiClient(wx.Window):
         self.child_uuid = uuid
         self.selected = False
 
+        self.extra_border = extra_border
         self.title_bar = TitleBar(self)
 
         if child is None:
@@ -723,6 +729,7 @@ class MultiClient(wx.Window):
         self.move_child()
         log.debug("Created client for %s" % self.child_uuid)
 
+        self.SetBackgroundColour(self.multiView.focused_color)
         self.Bind(wx.EVT_SET_FOCUS, self.on_set_focus)
         self.Bind(wx.EVT_CHILD_FOCUS, self.on_child_focus)
 
@@ -768,18 +775,19 @@ class MultiClient(wx.Window):
         self.Refresh()
 
     def do_size_from_parent(self):
-        w,h = self.GetParent().GetClientSize()
+        w, h = self.GetParent().GetClientSize()
         self.SetSize((w, h))
         # print("in client %s:" % self.GetParent().debug_id, w, h)
         self.title_bar.SetSize((w, self.multiView.title_bar_height))
         self.child.SetSize((w, h - self.multiView.title_bar_height))
 
-    def do_size_from_sidebar(self, sidebar):
-        w,h = self.GetParent().GetClientSize()
-        self.SetSize((w, h))
-        # print("in client %s:" % self.GetParent().debug_id, w, h)
-        self.title_bar.SetSize((w, self.multiView.title_bar_height))
-        self.child.SetSize((w, h - self.multiView.title_bar_height))
+    def do_size_from_child(self):
+        b = self.extra_border + 2
+        m = self.multiView
+        w, h = self.child.GetBestSize()
+        self.SetSize((w + b * 2, h + b * 2 + m.title_bar_height))
+        self.title_bar.SetSize(b, b, w, m.title_bar_height)
+        self.child.SetSize(b, b + m.title_bar_height, w, h)
 
     def replace(self, child, u=None):
         if self.child:
@@ -1010,6 +1018,10 @@ class EmptyChild(wx.Window):
 
     def __init__(self,parent):
         wx.Window.__init__(self,parent,-1, style = wx.CLIP_CHILDREN)
+        self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
+
+    def DoGetBestClientSize(self):
+        return wx.Size(250, 150)
 
 
 ########## Sidebar ##########
@@ -1057,14 +1069,14 @@ class SidebarLeftRenderer(SidebarVerticalRenderer):
     def show_client(cls, sidebar, view):
         # sidebar position within multiView, so these are global values
         x_min, y_min = sidebar.GetPosition()
-        w, _ = sidebar.GetSize()
-        x = x_min + w
+        w, h = sidebar.GetSize()
+        x_min += w
 
         # view position is position within sidebar
-        _, y = view.GetPosition()
-        _, h = view.GetSize()
+        x, y = view.GetPosition()
+        w, h = view.GetSize()
         y += y_min  # global y for top of window
-        view.client.SetPosition((x, y))
+        view.client.SetPosition((x_min, y))
         view.client.Show()
 
 
@@ -1102,6 +1114,20 @@ class SidebarTopRenderer(SidebarHorizontalRenderer):
         sidebar.SetSize(x, y, w, thickness)
         return x, y + thickness, w, h - thickness
 
+    @classmethod
+    def show_client(cls, sidebar, view):
+        # sidebar position within multiView, so these are global values
+        x_min, y_min = sidebar.GetPosition()
+        w, h = sidebar.GetSize()
+        y_min += h
+
+        # view position is position within sidebar
+        x, y = view.GetPosition()
+        w, h = view.GetSize()
+        x += x_min  # global y for top of window
+        view.client.SetPosition((x, y_min))
+        view.client.Show()
+
 
 class SidebarBottomRenderer(SidebarHorizontalRenderer):
     @classmethod
@@ -1120,7 +1146,7 @@ class SidebarLeaf(wx.Window):
         # Client windows are children of the main window so they can be
         # positioned over (and therefore obscure) any window within the
         # MultiSash
-        self.client = MultiClient(self.multiView, child, uuid, size=(200,200), multiView=self.multiView)
+        self.client = MultiClient(self.multiView, child, uuid, size=(200,200), multiView=self.multiView, extra_border=2)
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
 
         # the label drawing offsets will be calculated during sizing
@@ -1146,6 +1172,7 @@ class SidebarLeaf(wx.Window):
 
     def on_enter(self,evt):
         self.entered = True
+        self.client.do_size_from_child()
         self.sidebar.title_renderer.show_client(self.sidebar, self)
         self.Refresh()
 
