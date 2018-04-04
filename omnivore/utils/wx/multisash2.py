@@ -36,10 +36,16 @@ resize_log = logging.getLogger("resize")
 # either wx.HORIZONTAL or wx.VERTICAL. Split direction (left-to-
 # right, bottom- to-top) specified with wx.LEFT, wx.RIGHT, wx.TOP, wx.BOTTOM
 
-def opposite(dir):
-    if dir == wx.HORIZONTAL:
-        return wx.VERTICAL
-    return wx.HORIZONTAL
+opposite = {
+    wx.HORIZONTAL: wx.VERTICAL,
+    wx.VERTICAL: wx.HORIZONTAL,
+    wx.LEFT: wx.RIGHT,
+    wx.RIGHT: wx.LEFT,
+    wx.TOP: wx.BOTTOM,
+    wx.BOTTOM: wx.TOP,
+}
+
+
 
 SIZER_THICKNESS = 5
 
@@ -59,14 +65,15 @@ class MultiSash(wx.Window):
     def __init__(self, parent, layout_direction=wx.VERTICAL, *_args,**_kwargs):
         wx.Window.__init__(self, parent, *_args, **_kwargs)
         self.live_update_control = None
+        self.debug_id = "root"
         self.set_defaults()
         self._defChild = EmptyChild
         self.child = MultiSplit(self, self, layout_direction)
+        self.sidebars = []
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.last_direction = wx.VERTICAL
 
     def set_defaults(self):
-        self.use_title_bar = True
         self.use_close_button = True
 
         self.child_window_x = 2
@@ -75,11 +82,16 @@ class MultiSash(wx.Window):
         self.title_bar_height = 20
         self.title_bar_margin = 3
         self.title_bar_font = wx.NORMAL_FONT
+
         dc = wx.MemoryDC()
         dc.SetFont(self.title_bar_font)
+        self.memory_dc = dc
+
         self.title_bar_font_height = max(dc.GetCharHeight(), 2)
         self.title_bar_x = self.title_bar_margin
         self.title_bar_y = (self.title_bar_height - self.title_bar_font_height) // 2
+
+        self.sidebar_margin = 4
 
         self.focused_color = wx.Colour(0x2e, 0xb5, 0xf4) # Blue
         self.focused_brush = wx.Brush(self.focused_color, wx.SOLID)
@@ -94,6 +106,9 @@ class MultiSash(wx.Window):
         self.unfocused_fill = wx.Brush(self.unfocused_text_color, wx.SOLID)
 
         self.close_button_size = (11, 11)
+
+    def get_text_size(self, text):
+        return self.memory_dc.GetTextExtent(text)
 
     def get_paint_tools(self, selected=False):
         if selected:
@@ -110,13 +125,27 @@ class MultiSash(wx.Window):
             textbg = self.unfocused_color
         return brush, pen, fill, text, textbg
 
+    def configure_dc(self, dc, selected):
+        brush, pen, fill, text, textbg = self.get_paint_tools(selected)
+        dc.SetBackgroundMode(wx.SOLID)
+        dc.SetPen(pen)
+        dc.SetBrush(brush)
+        dc.SetTextForeground(text)
+        dc.SetTextBackground(textbg)
+        dc.SetFont(self.title_bar_font)
+        return brush, pen, fill, text, textbg
+
     def on_size(self, evt):
         self.do_layout()
 
     def do_layout(self):
         self.child.sizer_after = False
         self.child.sizer.Hide()
-        self.child.SetSize(self.GetSize())
+        x, y = 0, 0
+        w, h = self.GetSize()
+        for sidebar in self.sidebars:
+            x, y, w, h = sidebar.set_size_inside(x, y, w, h)
+        self.child.SetSize(x, y, w, h)
         self.child.do_layout()
 
     def clear_tile_focus(self):
@@ -179,17 +208,42 @@ class MultiSash(wx.Window):
             return True
         return False
 
-    def add(self, control, u=None, layout_direction=None, use_empty=True):
+    def add(self, control, u=None, layout_direction=None, use_empty=True, side=None):
+        if side is not None:
+            self.add_sidebar(control, u, side)
+        else:
+            self.add_split(control, u, layout_direction, use_empty)
+
+    def add_split(self, control, u=None, layout_direction=None, use_empty=True):
         if use_empty:
             found = self.find_empty()
             if found:
                 found.replace(control, u)
                 return
         if layout_direction is None:
-            self.last_direction = opposite(self.last_direction)
+            self.last_direction = opposite[self.last_direction]
             direction = self.last_direction
         leaf = self.child.views[-1]
         self.child.split(leaf, control, u, layout_direction)
+
+    def use_sidebar(self, side=wx.LEFT):
+        try:
+            sidebar = self.find_sidebar(side)
+        except ValueError:
+            sidebar = Sidebar(self, side)
+            self.sidebars.append(sidebar)
+            self.do_layout()
+        return sidebar
+
+    def find_sidebar(self, side=wx.LEFT):
+        for sidebar in self.sidebars:
+            if side == sidebar.side:
+                return sidebar
+        raise ValueError("No sidebar on side")
+
+    def add_sidebar(self, control, u=None, side=wx.LEFT):
+        sidebar = self.use_sidebar(side)
+        sidebar.add_client(control, u)
 
 
 #----------------------------------------------------------------------
@@ -382,35 +436,11 @@ class MultiWindowBase(wx.Window):
             evt.Skip()
 
 
-class MultiSplit(MultiWindowBase):
-    debug_count = 1
-
-    def __init__(self, multiView, parent, layout_direction=wx.HORIZONTAL, ratio=1.0, leaf=None, layout=None):
-        MultiWindowBase.__init__(self, multiView, parent, ratio)
+class ViewContainer(object):
+    def __init__(self):
         self.views = []
-        if layout is not None:
-            self.restore_layout(layout)
-        else:
-            self.layout_direction = layout_direction
-            if leaf:
-                leaf.Reparent(self)
-                leaf.sizer.Reparent(self)
-                leaf.Move(0,0)
-                leaf.ratio_in_parent = 1.0
-            else:
-                leaf = MultiViewLeaf(self.multiView, self, 1.0)
-            self.views.append(leaf)
-        if self.layout_direction == wx.HORIZONTAL:
-            self.layout_calculator = HorizontalLayout
-        else:
-            self.layout_calculator = VerticalLayout
-        self.do_layout()
-
-    def __repr__(self):
-        return "<MultiSplit %s %f>" % (self.debug_id, self.ratio_in_parent)
 
     def remove(self):
-        self.sizer.Destroy()
         self.Destroy()
 
     def remove_all(self):
@@ -431,6 +461,38 @@ class MultiSplit(MultiWindowBase):
             if found is not None:
                 return found
         return None
+
+    def clear_tile_focus(self):
+        for view in self.views:
+            view.clear_tile_focus()
+
+
+class MultiSplit(MultiWindowBase, ViewContainer):
+    debug_count = 1
+
+    def __init__(self, multiView, parent, layout_direction=wx.HORIZONTAL, ratio=1.0, leaf=None, layout=None):
+        MultiWindowBase.__init__(self, multiView, parent, ratio)
+        ViewContainer.__init__(self)
+        if layout is not None:
+            self.restore_layout(layout)
+        else:
+            self.layout_direction = layout_direction
+            if leaf:
+                leaf.Reparent(self)
+                leaf.sizer.Reparent(self)
+                leaf.Move(0,0)
+                leaf.ratio_in_parent = 1.0
+            else:
+                leaf = MultiViewLeaf(self.multiView, self, 1.0)
+            self.views.append(leaf)
+        if self.layout_direction == wx.HORIZONTAL:
+            self.layout_calculator = HorizontalLayout
+        else:
+            self.layout_calculator = VerticalLayout
+        self.do_layout()
+
+    def __repr__(self):
+        return "<MultiSplit %s %f>" % (self.debug_id, self.ratio_in_parent)
 
     def find_leaf_index(self, leaf):
         return self.views.index(leaf)  # raises IndexError on failure
@@ -463,7 +525,7 @@ class MultiSplit(MultiWindowBase):
 
     def split_opposite(self, leaf, control=None, uuid=None, start=wx.LEFT|wx.TOP):
         view_index_to_split = self.find_leaf_index(leaf)
-        subsplit = MultiSplit(self.multiView, self, opposite(self.layout_direction), leaf.ratio_in_parent, leaf)
+        subsplit = MultiSplit(self.multiView, self, opposite[self.layout_direction], leaf.ratio_in_parent, leaf)
         self.views[view_index_to_split] = subsplit
         self.do_layout()
         subsplit.split_same(leaf, control, uuid, start)
@@ -507,10 +569,6 @@ class MultiSplit(MultiWindowBase):
             else:
                 view = MultiViewLeaf(self.multiView, self, layout=layout)
             self.views.append(view)
-
-    def clear_tile_focus(self):
-        for view in self.views:
-            view.clear_tile_focus()
 
     def destroy_leaf(self, view):
         log.debug("destroy_leaf: view=%s views=%s self=%s parent=%s" % (view, self.views, self, self.GetParent()))
@@ -641,17 +699,22 @@ class MultiViewLeaf(MultiWindowBase):
 
 
 class MultiClient(wx.Window):
-    def __init__(self, parent, child=None, uuid=None):
-        w,h = parent.GetSize()
-        wx.Window.__init__(self, parent, -1, pos=(0,0), size=(w,h), style = wx.CLIP_CHILDREN | wx.SUNKEN_BORDER)
-        self.multiView = parent.multiView
+    def __init__(self, parent, child=None, uuid=None, pos=None, size=None, multiView=None):
+        if pos is None:
+            pos = (0, 0)
+        if size is None:
+            size = parent.GetSize()
+
+        wx.Window.__init__(self, parent, -1, pos=pos, size=size, style = wx.CLIP_CHILDREN | wx.SUNKEN_BORDER)
+        if multiView is None:
+            multiView = parent.multiView
+        self.multiView = multiView
         if uuid is None:
             uuid = str(uuid4())
         self.child_uuid = uuid
         self.selected = False
 
-        if self.multiView.use_title_bar:
-            self.title_bar = TitleBar(self)
+        self.title_bar = TitleBar(self)
 
         if child is None:
             child = self.multiView._defChild(self)
@@ -684,7 +747,7 @@ class MultiClient(wx.Window):
         leaf = self.GetParent()  # parent is always Leaf
         v = "%s " % leaf.debug_id
         depth = 0
-        top = leaf.multiView
+        top = self.multiView
         while leaf != top:
             depth += 1
             leaf = leaf.GetParent()
@@ -696,7 +759,7 @@ class MultiClient(wx.Window):
             self.Refresh()
 
     def set_tile_focus(self):
-        self.GetParent().multiView.clear_tile_focus()
+        self.multiView.clear_tile_focus()
         self.selected = True
         evt = MultiSashEvent(MultiSash.wxEVT_CLIENT_ACTIVATED, self)
         evt.SetChild(self.child)
@@ -708,11 +771,15 @@ class MultiClient(wx.Window):
         w,h = self.GetParent().GetClientSize()
         self.SetSize((w, h))
         # print("in client %s:" % self.GetParent().debug_id, w, h)
-        if self.multiView.use_title_bar:
-            self.title_bar.SetSize((w, self.multiView.title_bar_height))
-            self.child.SetSize((w, h - self.multiView.title_bar_height))
-        else:
-            self.child.SetSize((w - 2 * self.multiView.child_window_x, h - 2 * self.multiView.child_window_y))
+        self.title_bar.SetSize((w, self.multiView.title_bar_height))
+        self.child.SetSize((w, h - self.multiView.title_bar_height))
+
+    def do_size_from_sidebar(self, sidebar):
+        w,h = self.GetParent().GetClientSize()
+        self.SetSize((w, h))
+        # print("in client %s:" % self.GetParent().debug_id, w, h)
+        self.title_bar.SetSize((w, self.multiView.title_bar_height))
+        self.child.SetSize((w, h - self.multiView.title_bar_height))
 
     def replace(self, child, u=None):
         if self.child:
@@ -728,11 +795,8 @@ class MultiClient(wx.Window):
         self.do_size_from_parent()
 
     def move_child(self):
-        if self.multiView.use_title_bar:
-            self.title_bar.Move(0, 0)
-            self.child.Move(0, self.multiView.title_bar_height)
-        else:
-            self.child.Move(self.multiView.child_window_x, self.multiView.child_window_y)
+        self.title_bar.Move(0, 0)
+        self.child.Move(0, self.multiView.title_bar_height)
 
     def on_set_focus(self,evt):
         self.set_tile_focus()
@@ -948,7 +1012,201 @@ class EmptyChild(wx.Window):
         wx.Window.__init__(self,parent,-1, style = wx.CLIP_CHILDREN)
 
 
+########## Sidebar ##########
 
+
+class SidebarBaseRenderer(object):
+    @classmethod
+    def calc_view_start(self, w, h):
+        return 0
+
+    @classmethod
+    def calc_thickness(cls, sidebar):
+        m = sidebar.multiView
+        pixels = m.sidebar_margin * 2 + m.title_bar_font_height
+        return pixels
+
+
+class SidebarVerticalRenderer(SidebarBaseRenderer):
+    @classmethod
+    def do_view_size(self, view, pos, w, h):
+        m = view.multiView
+        text_width, text_height = m.get_text_size(view.client.title)
+        size = text_width + 2 * m.sidebar_margin
+        view.SetSize(0, pos, w, size)
+        view.label_x = m.sidebar_margin
+        view.label_y = m.sidebar_margin + text_width
+        return pos + size
+
+    @classmethod
+    def draw_label(self, dc, view):
+        w, h = view.GetSize()
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.DrawRectangle(0, 0, w, h)
+        dc.DrawRotatedText(view.client.title, view.label_x, view.label_y, 90.0)
+
+
+class SidebarLeftRenderer(SidebarVerticalRenderer):
+    @classmethod
+    def set_size_inside(cls, sidebar, x, y, w, h):
+        thickness = cls.calc_thickness(sidebar)
+        sidebar.SetSize(x, y, thickness, h)
+        return x + thickness, y, w - thickness, h
+
+    @classmethod
+    def show_client(cls, sidebar, view):
+        # sidebar position within multiView, so these are global values
+        x_min, y_min = sidebar.GetPosition()
+        w, _ = sidebar.GetSize()
+        x = x_min + w
+
+        # view position is position within sidebar
+        _, y = view.GetPosition()
+        _, h = view.GetSize()
+        y += y_min  # global y for top of window
+        view.client.SetPosition((x, y))
+        view.client.Show()
+
+
+class SidebarRightRenderer(SidebarVerticalRenderer):
+    @classmethod
+    def set_size_inside(cls, sidebar, x, y, w, h):
+        thickness = cls.calc_thickness(sidebar)
+        sidebar.SetSize(x + w - thickness, y, thickness, h)
+        return x, y, w - thickness, h
+
+
+class SidebarHorizontalRenderer(SidebarBaseRenderer):
+    @classmethod
+    def do_view_size(self, view, pos, w, h):
+        m = view.multiView
+        text_width, text_height = m.get_text_size(view.client.title)
+        size = text_width + 2 * m.sidebar_margin
+        view.SetSize(pos, 0, size, h)
+        view.label_x = m.sidebar_margin
+        view.label_y = m.sidebar_margin
+        return pos + size
+
+    @classmethod
+    def draw_label(self, dc, view):
+        w, h = view.GetSize()
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.DrawRectangle(0, 0, w, h)
+        dc.DrawText(view.client.title, view.label_x, view.label_y)
+
+
+class SidebarTopRenderer(SidebarHorizontalRenderer):
+    @classmethod
+    def set_size_inside(cls, sidebar, x, y, w, h):
+        thickness = cls.calc_thickness(sidebar)
+        sidebar.SetSize(x, y, w, thickness)
+        return x, y + thickness, w, h - thickness
+
+
+class SidebarBottomRenderer(SidebarHorizontalRenderer):
+    @classmethod
+    def set_size_inside(cls, sidebar, x, y, w, h):
+        thickness = cls.calc_thickness(sidebar)
+        sidebar.SetSize(x, y + h - thickness, w, thickness)
+        return x, y, w, h - thickness
+
+
+class SidebarLeaf(wx.Window):
+    def __init__(self, sidebar, child, uuid=None):
+        wx.Window.__init__(self, sidebar, -1, name="sidebarleaf")
+        self.sidebar = sidebar
+        self.multiView = sidebar.multiView
+
+        # Client windows are children of the main window so they can be
+        # positioned over (and therefore obscure) any window within the
+        # MultiSash
+        self.client = MultiClient(self.multiView, child, uuid, size=(200,200), multiView=self.multiView)
+        self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
+
+        # the label drawing offsets will be calculated during sizing
+        self.label_x = 0
+        self.label_y = 0
+        self.entered = False
+        self.client.Hide()
+
+        self.Bind(wx.EVT_PAINT, self.on_paint)
+        self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
+        self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
+
+    def on_paint(self, event):
+        dc = wx.PaintDC(self)
+        s = self.sidebar
+        s.multiView.configure_dc(dc, self.entered)
+        s.title_renderer.draw_label(dc, self)
+
+    def on_leave(self,evt):
+        self.entered = False
+        self.client.Hide()
+        self.Refresh()
+
+    def on_enter(self,evt):
+        self.entered = True
+        self.sidebar.title_renderer.show_client(self.sidebar, self)
+        self.Refresh()
+
+    def remove(self):
+        self.client.do_send_close_event()
+        self.Destroy()
+
+    def remove_all(self):
+        self.remove()
+
+    def find_uuid(self, uuid):
+        if uuid == self.client.child_uuid:
+            log.debug("find_uuid: found %s in %s" % (uuid, self.client.child.GetName()))
+            return self.client
+        log.debug("find_uuid: skipping %s in %s" % (self.client.child_uuid, self.client.child.GetName()))
+        return None
+
+
+class Sidebar(wx.Window, ViewContainer):
+    def __init__(self, multiView, side=wx.LEFT, layout=None):
+        wx.Window.__init__(self, multiView, -1, name="sidebar")
+        ViewContainer.__init__(self)
+        self.multiView = multiView
+
+        self.SetBackgroundColour(wx.RED)
+        if layout is not None:
+            self.restore_layout(layout)
+        else:
+            if side == wx.RIGHT:
+                self.title_renderer = SidebarRightRenderer
+            elif side == wx.TOP:
+                self.title_renderer = SidebarTopRenderer
+            elif side == wx.BOTTOM:
+                self.title_renderer = SidebarBottomRenderer
+            else:
+                side = wx.LEFT
+                self.title_renderer = SidebarLeftRenderer
+            self.side = side
+
+    def set_size_inside(self, x, y, w, h):
+        return self.title_renderer.set_size_inside(self, x, y, w, h)
+
+    def add_client(self, control, u=None):
+        if control is None:
+            control = self.multiView._defChild(self)
+        view = SidebarLeaf(self, control, u)
+        self.views.append(view)
+        self.do_layout()
+
+    def do_layout(self):
+        w, h = self.GetSize()
+
+        pos = self.title_renderer.calc_view_start(w, h)
+        for view in self.views:
+            pos = self.title_renderer.do_view_size(view, pos, w, h)
+
+
+
+
+
+########## Events ##########
 
 class MultiSashEvent(wx.PyCommandEvent):
     """
@@ -1203,6 +1461,13 @@ if __name__ == '__main__':
     btn = wx.Button(frame, -1, "Clear")
     bsizer.Add(btn, 0, wx.EXPAND)
     btn.Bind(wx.EVT_BUTTON, clear_all)
+
+    multi.use_sidebar(wx.LEFT)
+    multi.use_sidebar(wx.TOP)
+    multi.add_sidebar(None)
+    multi.add_sidebar(None)
+    multi.add_sidebar(None, side=wx.TOP)
+    multi.add_sidebar(None, side=wx.TOP)
 
     sizer.Add(horz, 1, wx.EXPAND)
     sizer.Add(bsizer, 0, wx.EXPAND)
