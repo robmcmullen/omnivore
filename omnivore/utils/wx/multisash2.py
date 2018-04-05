@@ -867,16 +867,12 @@ class TitleBar(wx.Window):
     def __init__(self, parent):
         wx.Window.__init__(self, parent, -1)
         self.client = parent
+        m = self.client.multiView
 
-        button_index = 0
         self.buttons = []
-        button_index += 1
-        self.buttons.append(TitleBarCloser(self, button_index))
-        top = self.client.multiView
-        button_index += 1
-        self.buttons.append(TitleBarHSplitNewBot(self, button_index))
-        button_index += 1
-        self.buttons.append(TitleBarVSplitNewRight(self, button_index))
+        self.buttons.append(TitleBarCloser(self, m.close_button_size))
+        self.buttons.append(TitleBarHSplitNewBot(self, m.close_button_size))
+        self.buttons.append(TitleBarVSplitNewRight(self, m.close_button_size))
 
         self.SetBackgroundColour(wx.RED)
         self.hide_buttons()
@@ -905,9 +901,12 @@ class TitleBar(wx.Window):
         self.draw_title_bar(dc)
 
     def on_size(self, evt):
+        m = self.client.multiView
+        w, h = self.GetClientSize()
+        x = w - m.title_bar_margin
         for button in self.buttons:
-            x, y, w, h = button.calc_size_pos(self)
-            button.SetSize(x, y, w, h)
+            x = button.do_button_pos(x, h)
+            x -= m.title_bar_margin
 
     def hide_buttons(self):
         for b in self.buttons[1:]:
@@ -931,13 +930,11 @@ class TitleBar(wx.Window):
 
 
 class TitleBarButton(wx.Window):
-    def __init__(self, parent, order):
-        self.order = order
+    def __init__(self, parent, size):
         self.title_bar = parent
         self.client = parent.GetParent()
         self.leaf = self.client.GetParent()
-        x,y,w,h = self.calc_size_pos(parent)
-        wx.Window.__init__(self,id = -1,parent = parent, pos = (x,y), size = (w,h), style = wx.CLIP_CHILDREN)
+        wx.Window.__init__(self, parent, -1, pos=(0, 0), size=size, style=wx.BORDER_NONE)
 
         self.down = False
         self.entered = False
@@ -980,13 +977,12 @@ class TitleBarButton(wx.Window):
     def do_action(self, evt):
         pass
 
-    def calc_size_pos(self, parent):
-        m = self.client.multiView
-        pw, ph = parent.GetClientSize()
-        w, h = m.close_button_size
-        x = pw - (w - m.title_bar_margin) * self.order * 2
-        y = (m.title_bar_height - h) // 2
-        return (x, y, w, h)
+    def do_button_pos(self, x, h):
+        bw, bh = self.GetSize()
+        x -= bw
+        y = (h - bh) // 2
+        self.SetPosition((x, y))
+        return x
 
 
 class TitleBarCloser(TitleBarButton):
