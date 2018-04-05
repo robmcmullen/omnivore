@@ -18,6 +18,7 @@
 # o wxMultiSplit -> MultiSplit
 # o wxMultiViewLeaf -> MultiViewLeaf
 #
+import weakref
 import json
 from uuid import uuid4
 
@@ -68,6 +69,10 @@ class MultiSash(wx.Window):
         self.sidebars = []
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.last_direction = wx.VERTICAL
+        self.pending_sidebar_focus = None
+        self.current_sidebar_focus = None
+        self.current_leaf_focus = None
+        self.previous_leaf_focus_list = []
 
     def set_defaults(self):
         self.use_close_button = True
@@ -166,8 +171,62 @@ class MultiSash(wx.Window):
         self.child.SetSize(x, y, w, h)
         self.child.do_layout()
 
-    def clear_tile_focus(self):
-        self.child.clear_tile_focus()
+    def set_leaf_focus(self, leaf):
+        self.clear_leaf_focus()
+        self.current_leaf_focus = weakref.proxy(leaf)
+        print("current_leaf_focus", leaf, "current_sidebar_focus", self.current_sidebar_focus)
+        if self.current_sidebar_focus is not None:
+            self.current_sidebar_focus.popdown()
+            self.current_sidebar_focus = None
+        self.current_leaf_focus.client.set_focus()
+
+    def clear_leaf_focus(self):
+        current = self.current_leaf_focus
+        print("clear_leaf_focus", current)
+        if current:  # fails if None or non-existent proxy
+            current.client.clear_focus()
+            if current.main_window_leaf:
+                self.previous_leaf_focus_list.append(current)
+        print("previous_leaf_focus_list", str(self.previous_leaf_focus_list))
+        self.current_leaf_focus = None
+        if self.pending_sidebar_focus is not None:
+            if self.current_sidebar_focus != self.pending_sidebar_focus:
+                self.pending_sidebar_focus.popdown()
+            self.pending_sidebar_focus = None
+
+    def force_clear_sidebar(self):
+        if self.pending_sidebar_focus is not None:
+            self.pending_sidebar_focus.popdown()
+            self.pending_sidebar_focus = None
+        if self.current_sidebar_focus is not None:
+            self.current_sidebar_focus.popdown()
+            self.current_sidebar_focus = None
+            self.current_leaf_focus = None
+
+    def set_sidebar_focus(self):
+        self.current_sidebar_focus = self.pending_sidebar_focus
+        #self.pending_sidebar_focus = None
+        self.clear_leaf_focus()
+        #self.set_leaf_focus(self.current_sidebar_focus)
+        self.current_leaf_focus = self.current_sidebar_focus
+        self.current_leaf_focus.client.set_focus()
+
+    def restore_last_main_window_focus(self):
+        try:
+            print("restoring from", str(self.previous_leaf_focus_list))
+            while True:
+                prev = self.previous_leaf_focus_list.pop()
+                if prev:
+                    self.current_leaf_focus = prev
+                    prev.client.set_focus()
+                    return
+        except IndexError:
+            # nothing in list that still exists
+            self.current_leaf_focus = None
+
+    def is_leaf_focused(self, window):
+        c = self.current_leaf_focus
+        return c is not None and (c == window or c.client == window)
 
     def remove_all(self):
         old = self.child
@@ -217,7 +276,8 @@ class MultiSash(wx.Window):
     def focus_uuid(self, uuid):
         found = self.find_uuid(uuid)
         if found:
-            found.set_tile_focus()
+            print("FOCUS UUID:", found)
+            self.set_leaf_focus(found.leaf)
 
     def replace_by_uuid(self, control, u):
         found = self.find_uuid(u)
@@ -511,10 +571,6 @@ class ViewContainer(object):
                 return found
         return None
 
-    def clear_tile_focus(self):
-        for view in self.views:
-            view.clear_tile_focus()
-
 
 class MultiSplit(MultiWindowBase, ViewContainer):
     debug_count = 1
@@ -665,6 +721,8 @@ class MultiSplit(MultiWindowBase, ViewContainer):
 
 
 class MultiViewLeaf(MultiWindowBase):
+    main_window_leaf = True
+
     def __init__(self, multiView, parent, ratio=1.0, child=None, u=None, layout=None):
         MultiWindowBase.__init__(self, multiView, parent, ratio)
         if layout is not None:
@@ -728,9 +786,6 @@ class MultiViewLeaf(MultiWindowBase):
             old.Destroy()
         self.client.do_size_from_parent()
 
-    def clear_tile_focus(self):
-        self.client.clear_tile_focus()
-
     def get_multi_split(self):
         return self.GetParent()
 
@@ -745,7 +800,7 @@ class MultiViewLeaf(MultiWindowBase):
 
 
 class MultiClient(wx.Window):
-    def __init__(self, parent, child=None, uuid=None, pos=None, size=None, multiView=None, extra_border=1, in_sidebar=False):
+    def __init__(self, parent, child=None, uuid=None, pos=None, size=None, multiView=None, extra_border=1, in_sidebar=False, leaf=None):
         if pos is None:
             pos = (0, 0)
         if size is None:
@@ -754,15 +809,21 @@ class MultiClient(wx.Window):
         wx.Window.__init__(self, parent, -1, pos=pos, size=size, style=wx.CLIP_CHILDREN | wx.BORDER_NONE)
         if multiView is None:
             multiView = parent.multiView
+        self.multiView = multiView
+
+        if leaf is None:
+            leaf = parent
+        self.leaf = leaf
+
         if in_sidebar:
             self.SetBackgroundColour(multiView.focused_color)
         else:
             self.SetBackgroundColour(multiView.border_color)
-        self.multiView = multiView
+        self.in_sidebar = in_sidebar
+
         if uuid is None:
             uuid = str(uuid4())
         self.child_uuid = uuid
-        self.selected = False
 
         self.extra_border = extra_border
         self.title_bar = TitleBar(self, close=not in_sidebar, split=not in_sidebar)
@@ -804,14 +865,10 @@ class MultiClient(wx.Window):
             leaf = leaf.GetParent()
         return "%s-%d: %s" % (v, depth, self.child.GetName())
 
-    def clear_tile_focus(self):
-        if self.selected:
-            self.selected = False
-            self.Refresh()
+    def clear_focus(self):
+        self.Refresh()
 
-    def set_tile_focus(self):
-        self.multiView.clear_tile_focus()
-        self.selected = True
+    def set_focus(self):
         evt = MultiSashEvent(MultiSash.wxEVT_CLIENT_ACTIVATED, self)
         evt.SetChild(self.child)
         self.do_send_event(evt)
@@ -855,7 +912,12 @@ class MultiClient(wx.Window):
         self.child.Move(0, self.multiView.title_bar_height)
 
     def on_set_focus(self,evt):
-        self.set_tile_focus()
+        m = self.multiView
+        if self.leaf == m.current_leaf_focus:
+            print("already focused", self.leaf)
+        else:
+            print("on_set_focus", self.leaf, "current_leaf_focus", m.current_leaf_focus, "current_sidebar_focus", m.current_sidebar_focus)
+            m.set_leaf_focus(self.leaf)
 
     def on_child_focus(self,evt):
         self.on_set_focus(evt)
@@ -886,7 +948,7 @@ class TitleBar(wx.Window):
         m = self.client.multiView
         dc.SetBackgroundMode(wx.SOLID)
         dc.SetPen(wx.TRANSPARENT_PEN)
-        brush, _, _, text, textbg = m.get_paint_tools(self.client.selected)
+        brush, _, _, text, textbg = m.get_paint_tools(m.is_leaf_focused(self.client))
         dc.SetBrush(brush)
 
         w, h = self.GetSize()
@@ -967,7 +1029,7 @@ class TitleBarButton(wx.Window):
         dc = wx.PaintDC(self)
         size = self.GetClientSize()
 
-        bg_brush, pen, fg_brush, _, _ = m.get_paint_tools(self.client.selected)
+        bg_brush, pen, fg_brush, _, _ = m.get_paint_tools(m.is_leaf_focused(self.client))
         self.draw_button(dc, size, bg_brush, pen, fg_brush)
 
     def draw_button(self, dc, size, bg_brush, pen, fg_brush):
@@ -1147,6 +1209,8 @@ class SidebarBottomRenderer(SidebarHorizontalRenderer):
 
 
 class SidebarLeaf(wx.Window):
+    main_window_leaf = False
+
     def __init__(self, sidebar, child, uuid=None):
         wx.Window.__init__(self, sidebar, -1, name="sidebarleaf")
         self.sidebar = sidebar
@@ -1155,7 +1219,7 @@ class SidebarLeaf(wx.Window):
         # Client windows are children of the main window so they can be
         # positioned over (and therefore obscure) any window within the
         # MultiSash
-        self.client = MultiClient(self.multiView, child, uuid, size=(200,200), multiView=self.multiView, extra_border=4, in_sidebar=True)
+        self.client = MultiClient(self.multiView, child, uuid, size=(200,200), multiView=self.multiView, extra_border=4, in_sidebar=True, leaf=self)
         self.SetBackgroundColour(self.multiView.empty_color)
 
         # the label drawing offsets will be calculated during sizing
@@ -1167,6 +1231,9 @@ class SidebarLeaf(wx.Window):
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
         self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
+        self.Bind(wx.EVT_MOTION, self.on_motion)
+        self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
+        self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
 
     def on_paint(self, event):
         dc = wx.PaintDC(self)
@@ -1175,14 +1242,52 @@ class SidebarLeaf(wx.Window):
         s.title_renderer.draw_label(dc, self)
 
     def on_leave(self,evt):
-        self.entered = False
-        self.client.Hide()
-        self.Refresh()
+        m = self.multiView
+        if m.current_sidebar_focus == self:
+            pass
+        elif m.pending_sidebar_focus != self:
+            self.popdown()
 
     def on_enter(self,evt):
+        m = self.multiView
+        print("on_enter: current sidebar focus", m.current_sidebar_focus, "current_leaf_focus", m.current_leaf_focus)
+        if not m.current_sidebar_focus:
+            if m.pending_sidebar_focus:
+                m.pending_sidebar_focus.popdown()
+            self.popup()
+
+    def on_motion(self,evt):
+        print("pending sidebar focus=%s" % self.multiView.pending_sidebar_focus)
+        evt.Skip()
+
+    def on_left_down(self, evt):
+        m = self.multiView
+        if m.current_sidebar_focus == self:
+            m.restore_last_main_window_focus()
+        else:
+            if m.current_sidebar_focus:
+                print("clicked on another sidebar label %s" % self)
+                m.force_clear_sidebar()
+                self.popup()
+            else:
+                m.pending_sidebar_focus = self
+                print("setting pending focus to sidebar %s" % self)
+
+    def on_left_up(self,evt):
+        m = self.multiView
+        if m.pending_sidebar_focus == self:
+            print("Setting focus to sidebar!")
+            m.set_sidebar_focus()
+
+    def popup(self):
         self.entered = True
         self.client.do_size_from_child()
         self.sidebar.title_renderer.show_client(self.sidebar, self)
+        self.Refresh()
+
+    def popdown(self):
+        self.entered = False
+        self.client.Hide()
         self.Refresh()
 
     def remove(self):
