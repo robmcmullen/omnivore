@@ -93,13 +93,17 @@ class MultiSash(wx.Window):
 
         self.sidebar_margin = 4
 
+        self.border_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW)
+        self.empty_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+        self.empty_brush = wx.Brush(self.empty_color, wx.SOLID)
+
         self.focused_color = wx.Colour(0x2e, 0xb5, 0xf4) # Blue
         self.focused_brush = wx.Brush(self.focused_color, wx.SOLID)
         self.focused_text_color = wx.WHITE
         self.focused_pen = wx.Pen(self.focused_text_color)
         self.focused_fill = wx.Brush(self.focused_text_color, wx.SOLID)
 
-        self.unfocused_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+        self.unfocused_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNHILIGHT)
         self.unfocused_brush = wx.Brush(self.unfocused_color, wx.SOLID)
         self.unfocused_text_color = wx.BLACK
         self.unfocused_pen = wx.Pen(self.unfocused_text_color)
@@ -134,6 +138,18 @@ class MultiSash(wx.Window):
         dc.SetTextBackground(textbg)
         dc.SetFont(self.title_bar_font)
         return brush, pen, fill, text, textbg
+
+    def configure_sidebar_dc(self, dc, selected):
+        brush, _, fill, text, textbg = self.get_paint_tools(selected)
+        if not selected:
+            brush = self.empty_brush
+            textbg = self.empty_color
+        dc.SetBackgroundMode(wx.SOLID)
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.SetBrush(brush)
+        dc.SetTextForeground(text)
+        dc.SetTextBackground(textbg)
+        dc.SetFont(self.title_bar_font)
 
     def on_size(self, evt):
         self.do_layout()
@@ -389,7 +405,7 @@ class MultiWindowBase(wx.Window):
 
         self.resizer = None
         self.sizer_after = True
-        self.sizer = MultiSizer(parent)
+        self.sizer = MultiSizer(parent, multiView.empty_color)
         self.sizer.Bind(wx.EVT_MOTION, self.on_motion)
         self.sizer.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.sizer.Bind(wx.EVT_LEFT_UP, self.on_left_up)
@@ -623,7 +639,7 @@ class MultiViewLeaf(MultiWindowBase):
             self.restore_layout(layout)
         else:
             self.client = MultiClient(self, child, u)
-        self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
+        self.SetBackgroundColour(multiView.unfocused_color)
 
     def __repr__(self):
         return "<MultiLeaf %s %f>" % (self.debug_id, self.ratio_in_parent)
@@ -699,20 +715,19 @@ class MultiViewLeaf(MultiWindowBase):
 
 
 class MultiClient(wx.Window):
-    def __init__(self, parent, child=None, uuid=None, pos=None, size=None, multiView=None, extra_border=0):
+    def __init__(self, parent, child=None, uuid=None, pos=None, size=None, multiView=None, extra_border=1):
         if pos is None:
             pos = (0, 0)
         if size is None:
             size = parent.GetSize()
 
-        style = wx.CLIP_CHILDREN
-        if extra_border == 0:
-            style |= wx.SUNKEN_BORDER
-        else:
-            style |= wx.NO_BORDER
-        wx.Window.__init__(self, parent, -1, pos=pos, size=size, style=style)
+        wx.Window.__init__(self, parent, -1, pos=pos, size=size, style=wx.CLIP_CHILDREN | wx.BORDER_NONE)
         if multiView is None:
             multiView = parent.multiView
+            self.SetBackgroundColour(multiView.border_color)
+        else:
+            # multiView is specified means that it's a sidebar client
+            self.SetBackgroundColour(multiView.focused_color)
         self.multiView = multiView
         if uuid is None:
             uuid = str(uuid4())
@@ -729,7 +744,6 @@ class MultiClient(wx.Window):
         self.move_child()
         log.debug("Created client for %s" % self.child_uuid)
 
-        self.SetBackgroundColour(self.multiView.focused_color)
         self.Bind(wx.EVT_SET_FOCUS, self.on_set_focus)
         self.Bind(wx.EVT_CHILD_FOCUS, self.on_child_focus)
 
@@ -777,12 +791,16 @@ class MultiClient(wx.Window):
     def do_size_from_parent(self):
         w, h = self.GetParent().GetClientSize()
         self.SetSize((w, h))
+        b = self.extra_border
+        m = self.multiView
+        w -= b * 2
+        h -= b * 2
         # print("in client %s:" % self.GetParent().debug_id, w, h)
-        self.title_bar.SetSize((w, self.multiView.title_bar_height))
-        self.child.SetSize((w, h - self.multiView.title_bar_height))
+        self.title_bar.SetSize(b, b, w, m.title_bar_height)
+        self.child.SetSize(b, b + m.title_bar_height, w, h - m.title_bar_height)
 
     def do_size_from_child(self):
-        b = self.extra_border + 2
+        b = self.extra_border
         m = self.multiView
         w, h = self.child.GetBestSize()
         self.SetSize((w + b * 2, h + b * 2 + m.title_bar_height))
@@ -884,14 +902,13 @@ class TitleBar(wx.Window):
 
 
 class MultiSizer(wx.Window):
-    def __init__(self, parent, layout_direction=wx.HORIZONTAL):
+    def __init__(self, parent, color):
         wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN)
 
         self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
         self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
 
-        self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
-        self.SetBackgroundColour(wx.WHITE)
+        self.SetBackgroundColour(color)
 
     def on_leave(self,evt):
         self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
@@ -1018,7 +1035,7 @@ class EmptyChild(wx.Window):
 
     def __init__(self,parent):
         wx.Window.__init__(self,parent,-1, style = wx.CLIP_CHILDREN)
-        self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
+        self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE))
 
     def DoGetBestClientSize(self):
         return wx.Size(250, 150)
@@ -1053,7 +1070,6 @@ class SidebarVerticalRenderer(SidebarBaseRenderer):
     @classmethod
     def draw_label(self, dc, view):
         w, h = view.GetSize()
-        dc.SetPen(wx.TRANSPARENT_PEN)
         dc.DrawRectangle(0, 0, w, h)
         dc.DrawRotatedText(view.client.title, view.label_x, view.label_y, 90.0)
 
@@ -1102,7 +1118,6 @@ class SidebarHorizontalRenderer(SidebarBaseRenderer):
     @classmethod
     def draw_label(self, dc, view):
         w, h = view.GetSize()
-        dc.SetPen(wx.TRANSPARENT_PEN)
         dc.DrawRectangle(0, 0, w, h)
         dc.DrawText(view.client.title, view.label_x, view.label_y)
 
@@ -1146,8 +1161,8 @@ class SidebarLeaf(wx.Window):
         # Client windows are children of the main window so they can be
         # positioned over (and therefore obscure) any window within the
         # MultiSash
-        self.client = MultiClient(self.multiView, child, uuid, size=(200,200), multiView=self.multiView, extra_border=2)
-        self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
+        self.client = MultiClient(self.multiView, child, uuid, size=(200,200), multiView=self.multiView, extra_border=4)
+        self.SetBackgroundColour(self.multiView.empty_color)
 
         # the label drawing offsets will be calculated during sizing
         self.label_x = 0
@@ -1162,7 +1177,7 @@ class SidebarLeaf(wx.Window):
     def on_paint(self, event):
         dc = wx.PaintDC(self)
         s = self.sidebar
-        s.multiView.configure_dc(dc, self.entered)
+        s.multiView.configure_sidebar_dc(dc, self.entered)
         s.title_renderer.draw_label(dc, self)
 
     def on_leave(self,evt):
@@ -1197,7 +1212,7 @@ class Sidebar(wx.Window, ViewContainer):
         ViewContainer.__init__(self)
         self.multiView = multiView
 
-        self.SetBackgroundColour(wx.RED)
+        self.SetBackgroundColour(multiView.empty_color)
         if layout is not None:
             self.restore_layout(layout)
         else:
