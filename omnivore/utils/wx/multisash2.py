@@ -46,12 +46,8 @@ opposite = {
 }
 
 
-
-SIZER_THICKNESS = 5
-
-#----------------------------------------------------------------------
-
 class MultiSash(wx.Window):
+    sizer_thickness = 5
 
     wxEVT_CLIENT_CLOSE = wx.NewEventType()
     EVT_CLIENT_CLOSE = wx.PyEventBinder(wxEVT_CLIENT_CLOSE, 1)
@@ -268,8 +264,18 @@ class MultiSash(wx.Window):
         sidebar.add_client(control, u)
 
 
-#----------------------------------------------------------------------
+class EmptyChild(wx.Window):
+    multisash2_empty_control = True
 
+    def __init__(self,parent):
+        wx.Window.__init__(self,parent,-1, style = wx.CLIP_CHILDREN)
+        self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INACTIVECAPTION))
+
+    def DoGetBestClientSize(self):
+        return wx.Size(250, 150)
+
+
+########## Splitter Layout ##########
 
 class HorizontalLayout(object):
     @classmethod
@@ -278,15 +284,15 @@ class HorizontalLayout(object):
 
         # size used for ratio includes all the sizer widths (including the
         # extra sizer at the end that won't be displayed)
-        full_size = w + SIZER_THICKNESS
+        full_size = w + MultiSash.sizer_thickness
 
         return w, h, full_size
 
     @classmethod
     def do_view_size(cls, view, pos, size, w, h):
-        view_width = size - SIZER_THICKNESS
+        view_width = size - MultiSash.sizer_thickness
         view.SetSize(pos, 0, view_width, h)
-        view.sizer.SetSize(pos + view_width, 0, SIZER_THICKNESS, h)
+        view.sizer.SetSize(pos + view_width, 0, MultiSash.sizer_thickness, h)
 
     @classmethod
     def calc_resizer(cls, splitter, left, sizer, right, x, y):
@@ -312,8 +318,8 @@ class HorizontalResizer(object):
     def calc_pixel_size(self):
         w1, h1 = self.first.GetSize()
         w2, h2 = self.second.GetSize()
-        w = w1 + w2 + 2 * (SIZER_THICKNESS)
-        h = h1 + h2 + 2 * (SIZER_THICKNESS)
+        w = w1 + w2 + 2 * (MultiSash.sizer_thickness)
+        h = h1 + h2 + 2 * (MultiSash.sizer_thickness)
         return w, h
 
     def calc_splitter_pos(self, sizer_evt_x, sizer_evt_y):
@@ -325,16 +331,16 @@ class HorizontalResizer(object):
         xs, ys = self.sizer.ClientToScreen((sizer_evt_x, sizer_evt_y))
         x, y = self.splitter.ScreenToClient((xs, ys))
         log.debug("calc_splitter_pos: evt: %d,%d screen: %d,%d first: %d,%d" % (sizer_evt_x, sizer_evt_y, xs, ys, x, y))
-        x, y = x - self.mouse_offset[0] + SIZER_THICKNESS, y - self.mouse_offset[1] + SIZER_THICKNESS
+        x, y = x - self.mouse_offset[0] + MultiSash.sizer_thickness, y - self.mouse_offset[1] + MultiSash.sizer_thickness
         return x, y
 
     def calc_extrema(self):
         self.x_min, _ = self.first.GetPosition()
-        self.x_min += 2 * SIZER_THICKNESS
+        self.x_min += 2 * MultiSash.sizer_thickness
         x, _ = self.second.GetPosition()
         w, _ = self.second.GetSize()
         self.x_max = x + w
-        self.x_max -= SIZER_THICKNESS
+        self.x_max -= MultiSash.sizer_thickness
         log.debug("calc_extrema: min %d, x %d, w %d, max %d" % (self.x_min, x, w, self.x_max))
 
     def set_ratios(self, x, y):
@@ -360,15 +366,15 @@ class VerticalLayout(object):
 
         # size used for ratio includes all the sizer widths (including the
         # extra sizer at the end that won't be displayed)
-        full_size = h + SIZER_THICKNESS
+        full_size = h + MultiSash.sizer_thickness
 
         return w, h, full_size
 
     @classmethod
     def do_view_size(cls, view, pos, size, w, h):
-        view_height = size - SIZER_THICKNESS
+        view_height = size - MultiSash.sizer_thickness
         view.SetSize(0, pos, w, view_height)
-        view.sizer.SetSize(0, pos + view_height, w, SIZER_THICKNESS)
+        view.sizer.SetSize(0, pos + view_height, w, MultiSash.sizer_thickness)
 
     @classmethod
     def calc_resizer(cls, splitter, top, sizer, bot, x, y):
@@ -381,11 +387,11 @@ class VerticalResizer(HorizontalResizer):
 
     def calc_extrema(self):
         _, self.y_min = self.first.GetPosition()
-        self.y_min += 2 * SIZER_THICKNESS
+        self.y_min += 2 * MultiSash.sizer_thickness
         _, y = self.second.GetPosition()
         _, h = self.second.GetSize()
         self.y_max = y + h
-        self.y_max -= SIZER_THICKNESS
+        self.y_max -= MultiSash.sizer_thickness
         log.debug("calc_extrema: min %d, y %d, h %d, max %d" % (self.y_min, y, h, self.y_max))
 
     def set_ratios(self, x, y):
@@ -396,6 +402,27 @@ class VerticalResizer(HorizontalResizer):
             self.second.ratio_in_parent = self.total_ratio - r
             return True
 
+
+class MultiSizer(wx.Window):
+    def __init__(self, parent, color):
+        wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN)
+
+        self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
+        self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
+
+        self.SetBackgroundColour(color)
+
+    def on_leave(self,evt):
+        self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
+
+    def on_enter(self,evt):
+        if self.GetParent().layout_direction == wx.HORIZONTAL:
+            self.SetCursor(wx.Cursor(wx.CURSOR_SIZEWE))
+        else:
+            self.SetCursor(wx.Cursor(wx.CURSOR_SIZENS))
+
+
+########## Splitter ##########
 
 class MultiWindowBase(wx.Window):
     debug_letter = "A"
@@ -634,7 +661,7 @@ class MultiSplit(MultiWindowBase, ViewContainer):
         self.do_layout()
 
 
-#----------------------------------------------------------------------
+########## Leaf (Client Container) ##########
 
 
 class MultiViewLeaf(MultiWindowBase):
@@ -715,9 +742,6 @@ class MultiViewLeaf(MultiWindowBase):
 
     def do_layout(self):
         self.client.do_size_from_parent()
-
-
-#----------------------------------------------------------------------
 
 
 class MultiClient(wx.Window):
@@ -837,6 +861,8 @@ class MultiClient(wx.Window):
         self.on_set_focus(evt)
 
 
+########## Title Bar ##########
+
 class TitleBar(wx.Window):
     def __init__(self, parent):
         wx.Window.__init__(self, parent, -1)
@@ -902,31 +928,6 @@ class TitleBar(wx.Window):
         w, h = self.GetSize()
         if x <= 0 or x >= w or y <= 0 or y >= h:
             self.hide_buttons()
-
-
-#----------------------------------------------------------------------
-
-
-class MultiSizer(wx.Window):
-    def __init__(self, parent, color):
-        wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN)
-
-        self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
-        self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
-
-        self.SetBackgroundColour(color)
-
-    def on_leave(self,evt):
-        self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
-
-    def on_enter(self,evt):
-        if self.GetParent().layout_direction == wx.HORIZONTAL:
-            self.SetCursor(wx.Cursor(wx.CURSOR_SIZEWE))
-        else:
-            self.SetCursor(wx.Cursor(wx.CURSOR_SIZENS))
-
-
-#----------------------------------------------------------------------
 
 
 class TitleBarButton(wx.Window):
@@ -1033,22 +1034,8 @@ class TitleBarHSplitNewBot(TitleBarCloser):
     def do_action(self, evt):
         self.leaf.split(layout_direction=wx.VERTICAL)
 
-#----------------------------------------------------------------------
-
-
-class EmptyChild(wx.Window):
-    multisash2_empty_control = True
-
-    def __init__(self,parent):
-        wx.Window.__init__(self,parent,-1, style = wx.CLIP_CHILDREN)
-        self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INACTIVECAPTION))
-
-    def DoGetBestClientSize(self):
-        return wx.Size(250, 150)
-
 
 ########## Sidebar ##########
-
 
 class SidebarBaseRenderer(object):
     @classmethod
@@ -1249,9 +1236,6 @@ class Sidebar(wx.Window, ViewContainer):
         pos = self.title_renderer.calc_view_start(w, h)
         for view in self.views:
             pos = self.title_renderer.do_view_size(view, pos, w, h)
-
-
-
 
 
 ########## Events ##########
