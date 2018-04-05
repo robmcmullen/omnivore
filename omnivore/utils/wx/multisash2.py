@@ -93,17 +93,23 @@ class MultiSash(wx.Window):
 
         self.sidebar_margin = 4
 
-        self.border_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW)
-        self.empty_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+        self.focused_color = wx.Colour(0x2e, 0xb5, 0xf4) # Blue
+        if wx.Platform == "__WXMAC__":
+            self.border_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW)
+            self.empty_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+            self.unfocused_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNHILIGHT)
+        else:
+            self.border_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW)
+            self.empty_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_INACTIVECAPTION)
+            self.unfocused_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+
         self.empty_brush = wx.Brush(self.empty_color, wx.SOLID)
 
-        self.focused_color = wx.Colour(0x2e, 0xb5, 0xf4) # Blue
         self.focused_brush = wx.Brush(self.focused_color, wx.SOLID)
         self.focused_text_color = wx.WHITE
         self.focused_pen = wx.Pen(self.focused_text_color)
         self.focused_fill = wx.Brush(self.focused_text_color, wx.SOLID)
 
-        self.unfocused_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNHILIGHT)
         self.unfocused_brush = wx.Brush(self.unfocused_color, wx.SOLID)
         self.unfocused_text_color = wx.BLACK
         self.unfocused_pen = wx.Pen(self.unfocused_text_color)
@@ -1035,7 +1041,7 @@ class EmptyChild(wx.Window):
 
     def __init__(self,parent):
         wx.Window.__init__(self,parent,-1, style = wx.CLIP_CHILDREN)
-        self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE))
+        self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INACTIVECAPTION))
 
     def DoGetBestClientSize(self):
         return wx.Size(250, 150)
