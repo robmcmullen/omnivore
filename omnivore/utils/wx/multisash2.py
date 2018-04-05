@@ -745,7 +745,7 @@ class MultiViewLeaf(MultiWindowBase):
 
 
 class MultiClient(wx.Window):
-    def __init__(self, parent, child=None, uuid=None, pos=None, size=None, multiView=None, extra_border=1):
+    def __init__(self, parent, child=None, uuid=None, pos=None, size=None, multiView=None, extra_border=1, in_sidebar=False):
         if pos is None:
             pos = (0, 0)
         if size is None:
@@ -754,10 +754,10 @@ class MultiClient(wx.Window):
         wx.Window.__init__(self, parent, -1, pos=pos, size=size, style=wx.CLIP_CHILDREN | wx.BORDER_NONE)
         if multiView is None:
             multiView = parent.multiView
-            self.SetBackgroundColour(multiView.border_color)
-        else:
-            # multiView is specified means that it's a sidebar client
+        if in_sidebar:
             self.SetBackgroundColour(multiView.focused_color)
+        else:
+            self.SetBackgroundColour(multiView.border_color)
         self.multiView = multiView
         if uuid is None:
             uuid = str(uuid4())
@@ -765,7 +765,7 @@ class MultiClient(wx.Window):
         self.selected = False
 
         self.extra_border = extra_border
-        self.title_bar = TitleBar(self)
+        self.title_bar = TitleBar(self, close=not in_sidebar, split=not in_sidebar)
 
         if child is None:
             child = self.multiView._defChild(self)
@@ -864,15 +864,15 @@ class MultiClient(wx.Window):
 ########## Title Bar ##########
 
 class TitleBar(wx.Window):
-    def __init__(self, parent):
+    def __init__(self, parent, close=True, split=True):
         wx.Window.__init__(self, parent, -1)
         self.client = parent
         m = self.client.multiView
 
         self.buttons = []
-        self.buttons.append(TitleBarCloser(self, m.close_button_size))
-        self.buttons.append(TitleBarHSplitNewBot(self, m.close_button_size))
-        self.buttons.append(TitleBarVSplitNewRight(self, m.close_button_size))
+        self.buttons.append(TitleBarCloser(self, m.close_button_size, enabled=close))
+        self.buttons.append(TitleBarHSplitNewBot(self, m.close_button_size, enabled=split))
+        self.buttons.append(TitleBarVSplitNewRight(self, m.close_button_size, enabled=split))
 
         self.SetBackgroundColour(wx.RED)
         self.hide_buttons()
@@ -905,8 +905,12 @@ class TitleBar(wx.Window):
         w, h = self.GetClientSize()
         x = w - m.title_bar_margin
         for button in self.buttons:
-            x = button.do_button_pos(x, h)
-            x -= m.title_bar_margin
+            if button.is_enabled:
+                x = button.do_button_pos(x, h)
+                x -= m.title_bar_margin
+                button.Show()
+            else:
+                button.Hide()
 
     def hide_buttons(self):
         for b in self.buttons[1:]:
@@ -930,7 +934,7 @@ class TitleBar(wx.Window):
 
 
 class TitleBarButton(wx.Window):
-    def __init__(self, parent, size):
+    def __init__(self, parent, size, enabled=True):
         self.title_bar = parent
         self.client = parent.GetParent()
         self.leaf = self.client.GetParent()
@@ -938,6 +942,7 @@ class TitleBarButton(wx.Window):
 
         self.down = False
         self.entered = False
+        self.is_enabled = enabled
 
         self.Bind(wx.EVT_LEFT_DOWN, self.on_press)
         self.Bind(wx.EVT_LEFT_UP, self.on_release)
@@ -1150,7 +1155,7 @@ class SidebarLeaf(wx.Window):
         # Client windows are children of the main window so they can be
         # positioned over (and therefore obscure) any window within the
         # MultiSash
-        self.client = MultiClient(self.multiView, child, uuid, size=(200,200), multiView=self.multiView, extra_border=4)
+        self.client = MultiClient(self.multiView, child, uuid, size=(200,200), multiView=self.multiView, extra_border=4, in_sidebar=True)
         self.SetBackgroundColour(self.multiView.empty_color)
 
         # the label drawing offsets will be calculated during sizing
