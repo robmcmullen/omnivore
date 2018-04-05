@@ -332,7 +332,7 @@ class EmptyChild(wx.Window):
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INACTIVECAPTION))
 
     def DoGetBestClientSize(self):
-        return wx.Size(250, 150)
+        return wx.Size(250, 300)
 
 
 ########## Splitter Layout ##########
@@ -877,6 +877,9 @@ class MultiClient(wx.Window):
 
     def do_size_from_parent(self):
         w, h = self.GetParent().GetClientSize()
+        self.do_size_from_bounds(w, h)
+
+    def do_size_from_bounds(self, w, h):
         self.SetSize((w, h))
         b = self.extra_border
         m = self.multiView
@@ -885,6 +888,12 @@ class MultiClient(wx.Window):
         # print("in client %s:" % self.GetParent().debug_id, w, h)
         self.title_bar.SetSize(b, b, w, m.title_bar_height)
         self.child.SetSize(b, b + m.title_bar_height, w, h - m.title_bar_height)
+
+    def DoGetBestClientSize(self):
+        b = self.extra_border
+        m = self.multiView
+        w, h = self.child.GetBestSize()
+        return wx.Size(w + b * 2, h + b * 2 + m.title_bar_height)
 
     def do_size_from_child(self):
         b = self.extra_border
@@ -1129,6 +1138,19 @@ class SidebarVerticalRenderer(SidebarBaseRenderer):
         dc.DrawRectangle(0, 0, w, h)
         dc.DrawRotatedText(view.client.title, view.label_x, view.label_y, 90.0)
 
+    @classmethod
+    def show_client_prevent_clipping(self, sidebar, view, x, y):
+        sw, sh = sidebar.GetSize()
+        cw, ch = view.client.GetBestSize()
+        if y + ch > sh:
+            y -= (y + ch - sh)
+        if y < 0:
+            y = 0
+            ch = sh
+        view.client.SetPosition((x, y))
+        view.client.do_size_from_bounds(cw, ch)
+        view.client.Show()
+
 
 class SidebarLeftRenderer(SidebarVerticalRenderer):
     @classmethod
@@ -1148,8 +1170,7 @@ class SidebarLeftRenderer(SidebarVerticalRenderer):
         x, y = view.GetPosition()
         w, h = view.GetSize()
         y += y_min  # global y for top of window
-        view.client.SetPosition((x_min, y))
-        view.client.Show()
+        cls.show_client_prevent_clipping(sidebar, view, x_min, y)
 
 
 class SidebarRightRenderer(SidebarVerticalRenderer):
@@ -1177,6 +1198,19 @@ class SidebarHorizontalRenderer(SidebarBaseRenderer):
         dc.DrawRectangle(0, 0, w, h)
         dc.DrawText(view.client.title, view.label_x, view.label_y)
 
+    @classmethod
+    def show_client_prevent_clipping(self, sidebar, view, x, y):
+        sw, sh = sidebar.GetSize()
+        cw, ch = view.client.GetBestSize()
+        if x + cw > sw:
+            x -= (x + cw - sw)
+        if x < sw:
+            x = 0
+            ch = sw
+        view.client.SetPosition((x, y))
+        view.client.do_size_from_bounds(cw, ch)
+        view.client.Show()
+
 
 class SidebarTopRenderer(SidebarHorizontalRenderer):
     @classmethod
@@ -1196,8 +1230,7 @@ class SidebarTopRenderer(SidebarHorizontalRenderer):
         x, y = view.GetPosition()
         w, h = view.GetSize()
         x += x_min  # global y for top of window
-        view.client.SetPosition((x, y_min))
-        view.client.Show()
+        cls.show_client_prevent_clipping(sidebar, view, x, y_min)
 
 
 class SidebarBottomRenderer(SidebarHorizontalRenderer):
@@ -1281,7 +1314,6 @@ class SidebarLeaf(wx.Window):
 
     def popup(self):
         self.entered = True
-        self.client.do_size_from_child()
         self.sidebar.title_renderer.show_client(self.sidebar, self)
         self.Refresh()
 
