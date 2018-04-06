@@ -472,8 +472,6 @@ class ByteEditor(FrameworkEditor):
         panel.Bind(MultiSash.EVT_CLIENT_CLOSE, self.on_viewer_close)
         panel.Bind(MultiSash.EVT_CLIENT_REPLACE, self.on_viewer_replace)
 
-        self.sidebar = self.window.get_dock_pane('byte_edit.sidebar')
-
         return panel
 
     def create_viewers(self, layout, viewer_metadata, default_viewer_metadata, linked_bases):
@@ -527,6 +525,12 @@ class ByteEditor(FrameworkEditor):
                 # just load default hex editor if nothing has been created
                 viewers = ['hex']
                 first = False
+
+        for viewer_type in ['segments', 'comments', 'undo', 'hex', 'char']:
+            viewer_cls = self.task.find_viewer_by_name(viewer_type)
+            viewer = viewer_cls.create(self.control, linked_base)
+            self.viewers.append(viewer)
+            self.control.add_sidebar(viewer.control, viewer.uuid)
 
         self.update_pane_names()
 

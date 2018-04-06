@@ -233,6 +233,7 @@ class SegmentViewer(HasTraits):
 
     def update_caption(self):
         self.control.SetName(self.window_title)
+        self.control.SetLabel(self.pretty_name)
 
     ##### Trait change handlers
 

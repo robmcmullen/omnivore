@@ -13,7 +13,6 @@ from omnivore.framework import actions as fa
 from omnivore.framework.toolbar import get_toolbar_group
 from byte_editor import ByteEditor
 from preferences import ByteEditPreferences
-import pane_layout
 from . import actions as ba
 from ..viewers import actions as va
 from ..viewers import jumpman_commands as ja
@@ -224,7 +223,7 @@ class ByteEditTask(FrameworkTask):
 
     editor_id = "omnivore.byte_edit"
 
-    pane_layout_version = pane_layout.pane_layout_version
+    pane_layout_version = ""
 
     hex_grid_lower_case = Bool(True)
 
@@ -232,7 +231,8 @@ class ByteEditTask(FrameworkTask):
 
     #### Task interface #######################################################
 
-    id = editor_id + "." + pane_layout_version if pane_layout_version else editor_id
+    id = editor_id
+
     name = 'Byte Editor'
 
     preferences_helper = ByteEditPreferences
@@ -272,12 +272,6 @@ class ByteEditTask(FrameworkTask):
     def _assembly_lower_case_default(self):
         prefs = self.preferences
         return prefs.assembly_lower_case
-
-    def _default_layout_default(self):
-        return pane_layout.pane_layout()
-
-    def create_dock_panes(self):
-        return pane_layout.pane_create()
 
     def _active_editor_changed(self, editor):
         # Make sure it's a valid document before refreshing
