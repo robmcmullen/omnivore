@@ -232,6 +232,8 @@ class MultiSash(wx.Window):
         old = self.child
         self.child = MultiSplit(self, self, old.layout_direction)
         old.remove_all()
+        for sidebar in self.sidebars:
+            sidebar.force_popup_to_top_of_stacking_order()
         self.do_layout()
 
     def get_layout(self, to_json=False, pretty=False):
@@ -931,6 +933,11 @@ class MultiClient(wx.Window):
     def on_child_focus(self,evt):
         self.on_set_focus(evt)
 
+    def show_as_popup(self, x, y, w, h):
+        self.SetPosition((x, y))
+        self.do_size_from_bounds(w, h)
+        self.Show()
+
 
 ########## Title Bar ##########
 
@@ -1147,9 +1154,7 @@ class SidebarVerticalRenderer(SidebarBaseRenderer):
         if y < 0:
             y = 0
             ch = sh
-        view.client.SetPosition((x, y))
-        view.client.do_size_from_bounds(cw, ch)
-        view.client.Show()
+        view.client.show_as_popup(x, y, cw, ch)
 
 
 class SidebarLeftRenderer(SidebarVerticalRenderer):
@@ -1207,9 +1212,7 @@ class SidebarHorizontalRenderer(SidebarBaseRenderer):
         if x < sw:
             x = 0
             ch = sw
-        view.client.SetPosition((x, y))
-        view.client.do_size_from_bounds(cw, ch)
-        view.client.Show()
+        view.client.show_as_popup(x, y, cw, ch)
 
 
 class SidebarTopRenderer(SidebarHorizontalRenderer):
@@ -1367,6 +1370,18 @@ class Sidebar(wx.Window, ViewContainer):
         view = SidebarLeaf(self, control, u)
         self.views.append(view)
         self.do_layout()
+
+    def force_popup_to_top_of_stacking_order(self):
+        # Unless popup is at the top of the stacking order, it will be obscured
+        # by the main MultiSplit window (and all of its children, of course).
+        # This method is needed only when the main MultiSplit window is changed
+        # with a call to MultiSash.remove_all
+        for view in self.views:
+            # There doesn't appear to be an explicit way to force a particular
+            # child window to the top of the stacking order, but this is a
+            # workaround.
+            view.client.Reparent(self)
+            view.client.Reparent(self.multiView)
 
     def do_layout(self):
         w, h = self.GetSize()
