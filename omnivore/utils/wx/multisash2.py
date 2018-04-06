@@ -265,6 +265,8 @@ class MultiSash(wx.Window):
         self.do_layout()
 
     def update_captions(self):
+        for sidebar in self.sidebars:
+            sidebar.do_layout()
         self.Refresh()
 
     def find_uuid(self, uuid):
@@ -328,8 +330,9 @@ class EmptyChild(wx.Window):
     multisash2_empty_control = True
 
     def __init__(self,parent):
-        wx.Window.__init__(self,parent,-1, style = wx.CLIP_CHILDREN)
+        wx.Window.__init__(self,parent,-1, name="blank", style=wx.CLIP_CHILDREN)
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INACTIVECAPTION))
+        self.SetLabel("Popup blank")
 
     def DoGetBestClientSize(self):
         return wx.Size(250, 300)
@@ -856,14 +859,11 @@ class MultiClient(wx.Window):
 
     @property
     def title(self):
-        leaf = self.GetParent()  # parent is always Leaf
-        v = "%s " % leaf.debug_id
-        depth = 0
-        top = self.multiView
-        while leaf != top:
-            depth += 1
-            leaf = leaf.GetParent()
-        return "%s-%d: %s" % (v, depth, self.child.GetName())
+        return self.child.GetName()
+
+    @property
+    def popup_name(self):
+        return self.child.GetLabel()
 
     def clear_focus(self):
         self.Refresh()
@@ -1125,7 +1125,7 @@ class SidebarVerticalRenderer(SidebarBaseRenderer):
     @classmethod
     def do_view_size(self, view, pos, w, h):
         m = view.multiView
-        text_width, text_height = m.get_text_size(view.client.title)
+        text_width, text_height = m.get_text_size(view.client.popup_name)
         size = text_width + 2 * m.sidebar_margin
         view.SetSize(0, pos, w, size)
         view.label_x = m.sidebar_margin
@@ -1136,7 +1136,7 @@ class SidebarVerticalRenderer(SidebarBaseRenderer):
     def draw_label(self, dc, view):
         w, h = view.GetSize()
         dc.DrawRectangle(0, 0, w, h)
-        dc.DrawRotatedText(view.client.title, view.label_x, view.label_y, 90.0)
+        dc.DrawRotatedText(view.client.popup_name, view.label_x, view.label_y, 90.0)
 
     @classmethod
     def show_client_prevent_clipping(self, sidebar, view, x, y):
@@ -1185,7 +1185,7 @@ class SidebarHorizontalRenderer(SidebarBaseRenderer):
     @classmethod
     def do_view_size(self, view, pos, w, h):
         m = view.multiView
-        text_width, text_height = m.get_text_size(view.client.title)
+        text_width, text_height = m.get_text_size(view.client.popup_name)
         size = text_width + 2 * m.sidebar_margin
         view.SetSize(pos, 0, size, h)
         view.label_x = m.sidebar_margin
@@ -1196,7 +1196,7 @@ class SidebarHorizontalRenderer(SidebarBaseRenderer):
     def draw_label(self, dc, view):
         w, h = view.GetSize()
         dc.DrawRectangle(0, 0, w, h)
-        dc.DrawText(view.client.title, view.label_x, view.label_y)
+        dc.DrawText(view.client.popup_name, view.label_x, view.label_y)
 
     @classmethod
     def show_client_prevent_clipping(self, sidebar, view, x, y):
