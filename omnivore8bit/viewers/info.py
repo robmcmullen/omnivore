@@ -20,6 +20,20 @@ class BaseInfoViewer(SegmentViewer):
 
     has_caret = False
 
+    def use_default_view_params(self):
+        pass
+
+    def restore_view_params(self, params):
+        pass
+
+    def recalc_data_model(self):
+        self.control.recalc_view()
+        self.control.refresh_view()
+
+    def recalc_view(self):
+        self.control.recalc_view()
+        self.control.refresh_view()
+
 
 CommentItem = namedtuple('CommentItem', ('segment', 'index', 'label', 'font', 'type'))
 
@@ -27,9 +41,7 @@ class CommentsPanel(wx.VListBox):
     SEGMENT_TITLE = 0
     COMMENT_ENTRY = 1
 
-    def __init__(self, parent, task, **kwargs):
-        self.task = task
-        self.editor = None
+    def __init__(self, parent, **kwargs):
         self.items = []
         wx.VListBox.__init__(self, parent, wx.ID_ANY, **kwargs)
         self.Bind(wx.EVT_LEFT_DOWN, self.on_click)
@@ -44,6 +56,8 @@ class CommentsPanel(wx.VListBox):
                                    f.GetFaceName(), f.GetEncoding())
         _, self.font_height = self.GetTextExtent("MWSqj")
         self.select_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
+        self.select_bg_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+        self.select_brush = wx.Brush(self.select_bg_color, wx.SOLID)
         self.normal_color = self.GetForegroundColour()
 
         #self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
@@ -60,14 +74,21 @@ class CommentsPanel(wx.VListBox):
     # is drawn is entirely up to you.
     def OnDrawItem(self, dc, rect, n):
         if self.GetSelection() == n:
-            c = self.select_color
+            dc.SetTextForeground(self.select_color)
         else:
-            c = self.normal_color
+            dc.SetTextForeground(self.normal_color)
         item = self.items[n]
         dc.SetFont(item.font)
-        dc.SetTextForeground(c)
         dc.DrawLabel(item.label, rect,
                      wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+
+    def OnDrawBackground(self, dc, rect, n):
+        if self.GetSelection() == n:
+            dc.SetBrush(self.select_brush)
+        else:
+            dc.SetBrush(wx.WHITE_BRUSH)
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.DrawRectangle(rect)
 
     # This method must be overridden.  It should return the height
     # required to draw the n'th item.
@@ -136,9 +157,9 @@ class CommentsPanel(wx.VListBox):
         evt.Skip()
 
     def process_index(self, index):
-        v = self.editor.focused_viewer
+        v = self.segment_viewer
         item = self.items[index]
-        if item.segment == self.editor.segment:
+        if item.segment == v.segment:
             v.sync_caret_to_index(item.index)
         else:
             v.linked_base.find_segment(item.segment)
@@ -173,22 +194,22 @@ class CommentsPanel(wx.VListBox):
         self.items = new_items
 
     def process_comment(self, item, segment_seen):
-        e = self.editor
+        v = self.segment_viewer
+        segment = v.segment
         try:
-            segment = e.segment
-            if segment == e.document.segments[0]:
+            if segment == v.document.segments[0]:
                 # if we're currently in the main segment, check for the index
                 # in user segments first, rather than listing everything in
                 # the main segment.
                 raise IndexError
             index = segment.get_index_from_base_index(item[0])
-            label = e.get_label_at_index(index)
+            label = v.get_label_at_index(index)
             font = self.normal_font
             segment_font = self.bold_font
         except IndexError:
             font = self.italic_font
             segment_font = self.italic_font
-            segment, index = e.find_in_user_segment(item[0])
+            segment, index = v.linked_base.find_in_user_segment(item[0])
             if segment is not None:
                 label = segment.label(index)
             else:
@@ -200,15 +221,12 @@ class CommentsPanel(wx.VListBox):
         self.items.append(CommentItem._make((segment, index, "  %s: %s" % (label, item[1]), font, self.COMMENT_ENTRY)))
 
     def recalc_view(self):
-        e = self.task.active_editor
-        self.editor = e
-        if e is not None:
-            self.set_items(e.document.segments[0].get_sorted_comments())
+        comments = self.segment_viewer.document.segments[0].get_sorted_comments()
+        print("COMMENTS!", str(comments))
+        self.set_items(comments)
 
     def refresh_view(self):
-        editor = self.task.active_editor
-        if editor is not None:
-            self.Refresh()
+        self.Refresh()
 
 
 class CommentsViewer(BaseInfoViewer):
@@ -218,15 +236,7 @@ class CommentsViewer(BaseInfoViewer):
 
     @classmethod
     def create_control(cls, parent, linked_base, mdict):
-        return CommentsPanel(parent, linked_base.editor.task, size=(100,500))
-
-    def recalc_data_model(self):
-        self.control.recalc_view()
-        self.control.refresh_view()
-
-    def recalc_view(self):
-        self.control.recalc_view()
-        self.control.refresh_view()
+        return CommentsPanel(parent, size=(100,500))
 
     def show_caret(self, control, index, bit):
         pass
@@ -247,17 +257,12 @@ class UndoViewer(BaseInfoViewer):
     def create_control(cls, parent, linked_base, mdict):
         return UndoHistoryPanel(parent, linked_base.editor.task, size=(100,500))
 
-    def recalc_data_model(self):
-        self.control.recalc_view()
-        self.control.refresh_view()
-
-    def recalc_view(self):
-        self.control.recalc_view()
-        self.control.refresh_view()
-
     def show_caret(self, control, index, bit):
         self.control.recalc_view()
         self.control.refresh_view()
+
+    def refresh_view(self, flags):
+        self.recalc_view()
 
     ##### Spring Tab interface
 

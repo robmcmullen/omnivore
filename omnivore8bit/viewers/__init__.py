@@ -318,7 +318,7 @@ class SegmentViewer(HasTraits):
         self.control.set_caret_index(control, index, bit)
 
     @on_trait_change('linked_base.refresh_event')
-    def refresh_view(self, flags):
+    def process_refresh_view(self, flags):
         """Redraw the UI.
 
         flags is either True for an unconditional refresh, or a DisplayFlags
@@ -326,22 +326,25 @@ class SegmentViewer(HasTraits):
         """
         log.debug("process_refresh_view for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
         if flags is not Undefined:
-            if flags == True:
-                log.debug("refresh_event: forcing refresh of %s because no display flags" % self.control)
-                self.control.refresh_view()
-            elif flags.skip_source_control_refresh and self.control == flags.source_control:
-                log.debug("refresh_event: skipping refresh of %s" % self.control)
-                # FIXME: the row/col headers aren't refreshed with the call to
-                # move_viewport_origin, so force them to be refreshed here. I
-                # could just take out the optimization and not skip the source
-                # control refresh, but this is not that unpleasant of a hack to
-                # save a full refresh of the main grid.
-                self.control.refresh_headers()
-            elif self.control in flags.refreshed_as_side_effect:
-                log.debug("refresh_event: skipping already refreshed %s" % self.control)
-            else:
-                log.debug("refresh_event: refreshing %s" % self.control)
-                self.control.refresh_view()
+            self.refresh_view(flags)
+
+    def refresh_view(self, flags):
+        if flags == True:
+            log.debug("refresh_event: forcing refresh of %s because no display flags" % self.control)
+            self.control.refresh_view()
+        elif flags.skip_source_control_refresh and self.control == flags.source_control:
+            log.debug("refresh_event: skipping refresh of %s" % self.control)
+            # FIXME: the row/col headers aren't refreshed with the call to
+            # move_viewport_origin, so force them to be refreshed here. I
+            # could just take out the optimization and not skip the source
+            # control refresh, but this is not that unpleasant of a hack to
+            # save a full refresh of the main grid.
+            self.control.refresh_headers()
+        elif self.control in flags.refreshed_as_side_effect:
+            log.debug("refresh_event: skipping already refreshed %s" % self.control)
+        else:
+            log.debug("refresh_event: refreshing %s" % self.control)
+            self.control.refresh_view()
 
     def get_extra_segment_savers(self, segment):
         """Hook to provide additional ways to save the data based on this view
@@ -359,6 +362,12 @@ class SegmentViewer(HasTraits):
         self.control.refresh_view()
 
     ##### view settings
+
+    def use_default_view_params(self):
+        self.control.use_default_view_params()
+
+    def restore_view_params(self, params):
+        self.control.restore_view_params(params)
 
     @property
     def width(self):

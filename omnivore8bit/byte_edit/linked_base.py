@@ -170,11 +170,11 @@ class LinkedBase(CaretHandler):
                 try:
                     params = d[viewer.uuid]
                 except KeyError:
-                    viewer.control.use_default_view_params()
+                    viewer.use_default_view_params()
                     continue
                 try:
                     log.debug(" restoring view of %s (%s): %s" % (viewer.window_title, viewer.uuid, str(params)))
-                    viewer.control.restore_view_params(params)
+                    viewer.restore_view_params(params)
                 except AttributeError:
                     continue
 
@@ -225,11 +225,6 @@ class LinkedBase(CaretHandler):
             self.adjust_selection(old_segment)
 
             #self.show_trace()
-            # if self.segment_list is not None:
-            #     self.segment_list.SetSelection(self.segment_number)
-            # else:
-            #     self.sidebar.refresh_active()
-            self.editor.sidebar.refresh_active()
             self.task.segment_selected = self.segment_number
             #self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
             self.task.update_window_title()
