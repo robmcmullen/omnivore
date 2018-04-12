@@ -48,6 +48,8 @@ opposite = {
 
 
 class MultiSash(wx.Window):
+    _debug_count = 1
+
     sizer_thickness = 5
 
     wxEVT_CLIENT_CLOSE = wx.NewEventType()
@@ -59,13 +61,15 @@ class MultiSash(wx.Window):
     wxEVT_CLIENT_ACTIVATED = wx.NewEventType()
     EVT_CLIENT_ACTIVATED = wx.PyEventBinder(wxEVT_CLIENT_ACTIVATED, 1)
 
-    def __init__(self, parent, layout_direction=wx.VERTICAL, *_args,**_kwargs):
-        wx.Window.__init__(self, parent, *_args, **_kwargs)
+    def __init__(self, parent, layout_direction=wx.VERTICAL, name="top", *_args, **_kwargs):
+        wx.Window.__init__(self, parent, name=name, *_args, **_kwargs)
         self.live_update_control = None
         self.debug_id = "root"
         self.set_defaults()
         self._defChild = EmptyChild
         self.child = MultiSplit(self, self, layout_direction)
+        self.hiding_space = wx.Window(self, -1, name="reparenting hiding space")
+        self.hiding_space.Hide()
         self.sidebars = []
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.last_direction = wx.VERTICAL
@@ -327,12 +331,30 @@ class MultiSash(wx.Window):
         sidebar = self.use_sidebar(side)
         sidebar.add_client(control, u)
 
+    def calc_graphviz(self):
+        from graphviz import Digraph
+        g = Digraph('multisash2', filename='multisash2.dot')
+        self.calc_graphviz_children(self, g)
+        return g
+
+    def calc_graphviz_children(self, window, g):
+        parent = window.GetName()
+        for child in window.GetChildren():
+            g.edge(parent, child.GetName())
+            self.calc_graphviz_children(child, g)
+
+    @classmethod
+    def debug_window_name(cls, name):
+        cls._debug_count += 1
+        return "%s-%d" % (name, cls._debug_count)
+
+
 
 class EmptyChild(wx.Window):
     multisash2_empty_control = True
 
     def __init__(self,parent):
-        wx.Window.__init__(self,parent,-1, name="blank", style=wx.CLIP_CHILDREN)
+        wx.Window.__init__(self,parent,-1, name=MultiSash.debug_window_name("blank"), style=wx.CLIP_CHILDREN)
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INACTIVECAPTION))
         self.SetLabel("Popup blank")
 
@@ -470,7 +492,7 @@ class VerticalResizer(HorizontalResizer):
 
 class MultiSizer(wx.Window):
     def __init__(self, parent, color):
-        wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN)
+        wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN, name=MultiSash.debug_window_name("MultiSizer"))
 
         self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
         self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
@@ -497,8 +519,8 @@ class MultiWindowBase(wx.Window):
         cls.debug_letter = chr(ord(cls.debug_letter) + 1)
         return cls.debug_letter
 
-    def __init__(self, multiView, parent, ratio=1.0):
-        wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN)
+    def __init__(self, multiView, parent, ratio=1.0, name="MultiWindowBase"):
+        wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN, name=MultiSash.debug_window_name(name))
         self.multiView = multiView
 
         self.resizer = None
@@ -578,10 +600,8 @@ class ViewContainer(object):
 
 
 class MultiSplit(MultiWindowBase, ViewContainer):
-    debug_count = 1
-
     def __init__(self, multiView, parent, layout_direction=wx.HORIZONTAL, ratio=1.0, leaf=None, layout=None):
-        MultiWindowBase.__init__(self, multiView, parent, ratio)
+        MultiWindowBase.__init__(self, multiView, parent, ratio, name="MultiSplit")
         ViewContainer.__init__(self)
         if layout is not None:
             self.restore_layout(layout)
@@ -729,7 +749,7 @@ class MultiViewLeaf(MultiWindowBase):
     main_window_leaf = True
 
     def __init__(self, multiView, parent, ratio=1.0, child=None, u=None, layout=None):
-        MultiWindowBase.__init__(self, multiView, parent, ratio)
+        MultiWindowBase.__init__(self, multiView, parent, ratio, name="MultiViewLeaf")
         if layout is not None:
             self.client = None
             self.restore_layout(layout)
@@ -811,7 +831,7 @@ class MultiClient(wx.Window):
         if size is None:
             size = parent.GetSize()
 
-        wx.Window.__init__(self, parent, -1, pos=pos, size=size, style=wx.CLIP_CHILDREN | wx.BORDER_NONE)
+        wx.Window.__init__(self, parent, -1, pos=pos, size=size, style=wx.CLIP_CHILDREN | wx.BORDER_NONE, name=MultiSash.debug_window_name("MultiClient"))
         if multiView is None:
             multiView = parent.multiView
         self.multiView = multiView
@@ -824,6 +844,7 @@ class MultiClient(wx.Window):
             self.SetBackgroundColour(multiView.focused_color)
         else:
             self.SetBackgroundColour(multiView.border_color)
+        self.SetBackgroundColour(wx.RED)
         self.in_sidebar = in_sidebar
 
         if uuid is None:
@@ -882,7 +903,7 @@ class MultiClient(wx.Window):
         self.do_size_from_bounds(w, h)
 
     def do_size_from_bounds(self, w, h):
-        self.SetSize((w, h))
+        self.SetSize(w, h)
         b = self.extra_border
         m = self.multiView
         w -= b * 2
@@ -943,7 +964,7 @@ class MultiClient(wx.Window):
 
 class TitleBar(wx.Window):
     def __init__(self, parent, close=True, split=True):
-        wx.Window.__init__(self, parent, -1)
+        wx.Window.__init__(self, parent, -1, name=MultiSash.debug_window_name("TitleBar"))
         self.client = parent
         m = self.client.multiView
 
@@ -1016,7 +1037,7 @@ class TitleBarButton(wx.Window):
         self.title_bar = parent
         self.client = parent.GetParent()
         self.leaf = self.client.GetParent()
-        wx.Window.__init__(self, parent, -1, pos=(0, 0), size=size, style=wx.BORDER_NONE)
+        wx.Window.__init__(self, parent, -1, pos=(0, 0), size=size, style=wx.BORDER_NONE, name=MultiSash.debug_window_name("TitleBarButton"))
 
         self.down = False
         self.entered = False
@@ -1154,7 +1175,7 @@ class SidebarVerticalRenderer(SidebarBaseRenderer):
         if y < 0:
             y = 0
             ch = sh
-        view.client.show_as_popup(x, y, cw, ch)
+        sidebar.do_popup_view(view, x, y, cw, ch)
 
 
 class SidebarLeftRenderer(SidebarVerticalRenderer):
@@ -1212,7 +1233,7 @@ class SidebarHorizontalRenderer(SidebarBaseRenderer):
         if x < sw:
             x = 0
             ch = sw
-        view.client.show_as_popup(x, y, cw, ch)
+        sidebar.do_popup_view(view, x, y, cw, ch)
 
 
 class SidebarTopRenderer(SidebarHorizontalRenderer):
@@ -1244,11 +1265,11 @@ class SidebarBottomRenderer(SidebarHorizontalRenderer):
         return x, y, w, h - thickness
 
 
-class SidebarLeaf(wx.Window):
+class SidebarMenuItem(wx.Window):
     main_window_leaf = False
 
     def __init__(self, sidebar, child, uuid=None):
-        wx.Window.__init__(self, sidebar, -1, name="sidebarleaf")
+        wx.Window.__init__(self, sidebar, -1, name=MultiSash.debug_window_name("SidebarMenuItem"))
         self.sidebar = sidebar
         self.multiView = sidebar.multiView
 
@@ -1342,7 +1363,7 @@ class SidebarLeaf(wx.Window):
 
 class Sidebar(wx.Window, ViewContainer):
     def __init__(self, multiView, side=wx.LEFT, layout=None):
-        wx.Window.__init__(self, multiView, -1, name="sidebar")
+        wx.Window.__init__(self, multiView, -1, name=MultiSash.debug_window_name("Sidebar"))
         ViewContainer.__init__(self)
         self.multiView = multiView
 
@@ -1367,7 +1388,7 @@ class Sidebar(wx.Window, ViewContainer):
     def add_client(self, control, u=None):
         if control is None:
             control = self.multiView._defChild(self)
-        view = SidebarLeaf(self, control, u)
+        view = SidebarMenuItem(self, control, u)
         self.views.append(view)
         self.do_layout()
 
@@ -1380,8 +1401,9 @@ class Sidebar(wx.Window, ViewContainer):
             # There doesn't appear to be an explicit way to force a particular
             # child window to the top of the stacking order, but this is a
             # workaround.
-            view.client.Reparent(self)
+            view.client.Reparent(self.multiView.hiding_space)
             view.client.Reparent(self.multiView)
+            pass
 
     def do_layout(self):
         w, h = self.GetSize()
@@ -1389,6 +1411,37 @@ class Sidebar(wx.Window, ViewContainer):
         pos = self.title_renderer.calc_view_start(w, h)
         for view in self.views:
             pos = self.title_renderer.do_view_size(view, pos, w, h)
+
+    def do_popup_view(self, view, x, y, w, h):
+        print("operating on view", view)
+        print("children before:", str(self.multiView.GetChildren()))
+        print("client parent before:", view.client.GetParent())
+        view.client.Reparent(self.multiView.hiding_space)
+        print("client parent mid:", view.client.GetParent())
+        view.client.Reparent(self.multiView)
+        print("client parent after:", view.client.GetParent())
+        print("children after:", str(self.multiView.GetChildren()))
+        view.client.show_as_popup(x, y, w, h)
+
+    def do_popup_view_msw(self, view, x, y, w, h):
+        top = self.multiView
+        client = view.client
+        print("reparenting %s" % self.GetName())
+        #top.Freeze()
+        client.Reparent(top.hiding_space)
+        order = [c for c in top.GetChildren() if c != client and c != top.hiding_space]
+        for c in order:
+            c.Reparent(top.hiding_space)
+        client.Reparent(top)
+        for c in order:
+            c.Reparent(top)
+        #top.Thaw()
+        client.show_as_popup(x, y, w, h)
+
+    if wx.Platform == "__WXMSW__":
+        do_popup_view = do_popup_view_msw
+
+
 
 
 ########## Events ##########
