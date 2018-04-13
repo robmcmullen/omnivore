@@ -175,6 +175,11 @@ class MultiSash(wx.Window):
         self.child.SetSize(x, y, w, h)
         self.child.do_layout()
 
+    def calc_usable_rect(self):
+        x, y = self.child.GetPosition()
+        w, h = self.child.GetSize()
+        return x, y, w, h
+
     def set_leaf_focus(self, leaf):
         self.clear_leaf_focus()
         self.current_leaf_focus = weakref.proxy(leaf)
@@ -1168,13 +1173,15 @@ class SidebarVerticalRenderer(SidebarBaseRenderer):
 
     @classmethod
     def show_client_prevent_clipping(self, sidebar, view, x, y):
-        sw, sh = sidebar.GetSize()
         cw, ch = view.client.GetBestSize()
-        if y + ch > sh:
+        x_min, y_min, sw, sh = sidebar.multiView.calc_usable_rect()
+        if y + ch > y_min + sh:
             y -= (y + ch - sh)
-        if y < 0:
-            y = 0
+        if y < y_min:
+            y = y_min
             ch = sh
+        if cw > sw:
+            cw = sw
         sidebar.do_popup_view(view, x, y, cw, ch)
 
 
@@ -1226,13 +1233,18 @@ class SidebarHorizontalRenderer(SidebarBaseRenderer):
 
     @classmethod
     def show_client_prevent_clipping(self, sidebar, view, x, y):
-        sw, sh = sidebar.GetSize()
         cw, ch = view.client.GetBestSize()
-        if x + cw > sw:
+        x_min, y_min, sw, sh = sidebar.multiView.calc_usable_rect()
+        x = max(x, x_min)
+        if x + cw > x_min + sw:
+            # first try to shift left to attempt to contain larger popup
             x -= (x + cw - sw)
-        if x < sw:
-            x = 0
-            ch = sw
+        if x < x_min:
+            # if popup is too wide, force it to be exact size of usable area
+            x = x_min
+            cw = sw
+        if ch > sh:
+            ch = sh
         sidebar.do_popup_view(view, x, y, cw, ch)
 
 
