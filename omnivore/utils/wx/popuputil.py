@@ -664,11 +664,7 @@ class PopupStatusBar(StatusPopupWindow):
         """
         StatusPopupWindow.__init__(self, frame)
         self.SetBackgroundColour("#B6C1FF")
-
-        self.stack = wx.BoxSizer(wx.VERTICAL)
         self.status = wx.StaticText(self, -1, "", style = wx.BORDER_NONE)
-        self.stack.Add(self.status, 0, wx.ALL|wx.EXPAND, 0)
-        self.SetSizer(self.stack)
         self.Hide()
 
     def show_status_text(self, text, multiline=False):
@@ -698,23 +694,17 @@ class PopupStatusBar(StatusPopupWindow):
             self.Hide()
 
     def position_and_show(self):
-        #self.Hide()
-        self.stack.Fit(self)
-        #self.stack.SetSizeHints(self)
-        self.Layout()
         frame = self.GetParent()
         frame_offset = frame.GetClientAreaOrigin()
         frame_pos = frame.ClientToScreen(frame_offset[0], frame_offset[1])
         frame_size = frame.GetClientSize().Get()
-        win_size = self.GetSize().Get()
-        #print("frame pos: %s, size=%s  popup size=%s" % (str(frame_pos), str(frame_size), str(win_size)))
+        w, h = self.status.GetSize()
+        print("frame pos: %s, size=%s  popup size=%s" % (str(frame_pos), str(frame_size), str((w, h))))
         x = frame_pos[0]
-        y = frame_pos[1] + frame_size[1] - win_size[1]
-        self.Position((x, y), (0,0))
-        if win_size[0] > frame_size[0]:
-            cropped_size = (frame_size[0], win_size[1])
-            #print("Cropped! %s" % str(cropped_size))
-            self.SetSize(cropped_size)
+        y = frame_pos[1] + frame_size[1] - h
+        if w > frame_size[0]:
+            w = frame_size[0]
+        self.SetSize(x, y, w, h)
         self.Show(True)
 
     def clear(self):
