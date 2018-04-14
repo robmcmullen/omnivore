@@ -61,7 +61,7 @@ class MultiSash(wx.Window):
     wxEVT_CLIENT_ACTIVATED = wx.NewEventType()
     EVT_CLIENT_ACTIVATED = wx.PyEventBinder(wxEVT_CLIENT_ACTIVATED, 1)
 
-    def __init__(self, parent, layout_direction=wx.VERTICAL, name="top", *_args, **_kwargs):
+    def __init__(self, parent, layout_direction=wx.HORIZONTAL, name="top", *_args, **_kwargs):
         wx.Window.__init__(self, parent, name=name, *_args, **_kwargs)
         self.live_update_control = None
         self.debug_id = "root"
