@@ -342,6 +342,26 @@ class CaretHandler(HasTraits):
     def force_single_caret(self, caret):
         self.carets.force_single_caret(caret)
 
+    def move_current_caret_to(self, index):
+        index = self.validate_caret_position(index)
+        self.carets.current.set(index)
+
+    def is_index_of_caret(self, index):
+        for caret in self.carets:
+            if index == caret.index:
+                return True
+        return False
+
+    def validate_caret_position(self, index):
+        max_index = self.document_length - 1
+        if index < 0:
+            index = 0
+        elif index > max_index:
+            index = max_index
+        return index
+
+    ##### caret movement commands for keystroke moves
+
     def move_carets(self, delta):
         for caret in self.carets:
             caret.add_delta(delta)
@@ -352,39 +372,23 @@ class CaretHandler(HasTraits):
         self.set_caret(index)
         self.collapse_selections_to_carets()
 
-    def move_current_caret_to(self, index):
-        index = self.validate_caret_position(index)
-        self.carets.current.set(index)
-
     def move_carets_process_function(self, func):
         for caret in self.carets:
             caret.apply_function(func)
         self.validate_carets()
         self.collapse_selections_to_carets()
 
-    def is_index_of_caret(self, index):
-        for caret in self.carets:
-            if index == caret.index:
-                return True
-        return False
-
-    def validate_carets(self):
-        """Confirms the index position of all carets and collapses multiple
-        carets that have the same index into a single caret
-        """
-        self.carets = self.carets.validate(self)
-
-    def validate_caret_position(self, index):
-        max_index = self.document_length - 1
-        if index < 0:
-            index = 0
-        elif index > max_index:
-            index = max_index
-        return index
+    ##### Multi-caret utilities
 
     def iter_caret_indexes(self):
         for caret in self.carets:
             yield caret.index
+
+    def collapse_selections_to_carets(self):
+        for caret in self.carets:
+            caret.clear_selection()
+
+    ##### Caret history
 
     def update_caret_history(self):
         state = self.carets.get_state()
@@ -419,6 +423,8 @@ class CaretHandler(HasTraits):
         carets = CaretList(state)
         self.carets = carets
 
+    ##### Ranges
+
     def mark_index_range_changed(self, index_range):
         """Hook for subclasses to be informed when bytes within the specified
         index range have changed.
@@ -450,9 +456,7 @@ class CaretHandler(HasTraits):
         if caret_handler.has_selection:
             self.select_none(caret_handler)
 
-    def collapse_selections_to_carets(self):
-        for caret in self.carets:
-            caret.clear_selection()
+    ##### processing
 
     def process_caret_flags(self, flags, document):
         """Perform the UI updates given the StatusFlags or BatchFlags flags
