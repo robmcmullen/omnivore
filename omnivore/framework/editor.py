@@ -522,7 +522,6 @@ class FrameworkEditor(Editor):
         visible_range = False
 
         self.caret_handler.process_caret_flags(flags, d)
-        do_refresh = flags.refresh_needed
 
         if flags.message:
             self.task.status_bar.message = flags.message
@@ -537,18 +536,18 @@ class FrameworkEditor(Editor):
         elif flags.byte_values_changed:
             d.byte_values_changed = flags.index_range
             d.change_count += 1
-            do_refresh = True
+            flags.refresh_needed = True
         elif flags.byte_style_changed:
             d.byte_style_changed = flags.index_range
             d.change_count += 1
             flags.rebuild_ui = True
-            do_refresh = True
+            flags.refresh_needed = True
 
         self.caret_handler.post_process_caret_flags(flags, d)
 
         if flags.rebuild_ui:
             d.recalc_event = True
-        if do_refresh:
+        if flags.refresh_needed:
             self.caret_handler.refresh_event = flags
 
     def popup_context_menu_from_commands(self, control, commands):

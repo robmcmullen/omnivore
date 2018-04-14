@@ -447,6 +447,10 @@ class CaretHandler(HasTraits):
         if caret_handler.has_selection:
             self.select_none(caret_handler)
 
+    def collapse_selections_to_carets(self):
+        for caret in self.carets:
+            caret.clear_selection()
+
     def process_caret_flags(self, flags, document):
         """Perform the UI updates given the StatusFlags or BatchFlags flags
         
@@ -514,8 +518,12 @@ class CaretHandler(HasTraits):
 
         if flags.advance_caret_position_in_control:
             log.debug("advancing each caret to next position")
+            selection_before = self.has_selection
             flags.advance_caret_position_in_control.advance_caret_position()
             self.validate_carets()
+            if selection_before:
+                self.collapse_selections_to_carets()
+                flags.refresh_needed = True
             self.sync_caret_event = flags
 
     def calc_action_enabled_flags(self):

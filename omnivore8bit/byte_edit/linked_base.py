@@ -293,6 +293,11 @@ class LinkedBase(CaretHandler):
             CaretHandler.restore_caret_state(self, carets)
         log.debug(self.caret_history)
 
+    def collapse_selections_to_carets(self):
+        CaretHandler.collapse_selections_to_carets(self)
+        self.document.change_count += 1
+        self.segment.clear_style_bits(selected=True)
+
     #### selection utilities
 
     def adjust_selection(self, old_segment):
