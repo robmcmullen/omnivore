@@ -346,9 +346,11 @@ class CaretHandler(HasTraits):
         for caret in self.carets:
             caret.add_delta(delta)
         self.validate_carets()
+        self.collapse_selections_to_carets()
 
     def move_carets_to(self, index):
         self.set_caret(index)
+        self.collapse_selections_to_carets()
 
     def move_current_caret_to(self, index):
         index = self.validate_caret_position(index)
@@ -358,6 +360,7 @@ class CaretHandler(HasTraits):
         for caret in self.carets:
             caret.apply_function(func)
         self.validate_carets()
+        self.collapse_selections_to_carets()
 
     def is_index_of_caret(self, index):
         for caret in self.carets:
