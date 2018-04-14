@@ -665,7 +665,7 @@ class PopupStatusBar(StatusPopupWindow):
         StatusPopupWindow.__init__(self, frame)
         self.SetBackgroundColour("#B6C1FF")
         self.status = wx.StaticText(self, -1, "", style = wx.BORDER_NONE)
-        self.Hide()
+        self.do_hide()
 
     def show_status_text(self, text, multiline=False):
         """Display a status text string in the status popup.
@@ -691,7 +691,7 @@ class PopupStatusBar(StatusPopupWindow):
         if text:
             self.position_and_show()
         else:
-            self.Hide()
+            self.do_hide()
 
     def position_and_show(self):
         frame = self.GetParent()
@@ -705,11 +705,18 @@ class PopupStatusBar(StatusPopupWindow):
         if w > frame_size[0]:
             w = frame_size[0]
         self.SetSize(x, y, w, h)
-        self.Show(True)
+        self.do_show()
 
     def clear(self):
         """Remove all messages and hide the popup"""
         self.show_status_text("")
+
+    def do_hide(self):
+        self.SetSize(-10000,-10000,10,10)
+        self.Show()
+
+    def do_show(self):
+        pass
 
 
 if __name__ == "__main__":
