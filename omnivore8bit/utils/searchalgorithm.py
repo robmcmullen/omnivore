@@ -102,6 +102,20 @@ class EvalAndOp():
         return val1
 
 
+class EvalOrOp():
+    "Class to evaluate addition and subtraction expressions"
+
+    def __init__(self, tokens):
+        self.value = tokens[0]
+
+    def eval(self, vars_ ):
+        val1 = self.value[0].eval(vars_)
+        for op,val in operatorOperands(self.value[1:]):
+            val2 = val.eval(vars_)
+            val1 = val1 | val2
+        return val1
+
+
 class EvalComparisonOp():
     "Class to evaluate comparison expressions"
     opMap = {
@@ -147,6 +161,7 @@ class NumpyExpression():
     multop = oneOf('* / // %')
     plusop = oneOf('+ -')
     andop = oneOf('and &')
+    orop = oneOf('or |')
     comparisonop = oneOf("< <= > >= == != <>")
 
     # use parse actions to attach EvalXXX constructors to sub-expressions
@@ -157,6 +172,7 @@ class NumpyExpression():
          (plusop, 2, opAssoc.LEFT, EvalAddOp),
          (comparisonop, 2, opAssoc.LEFT, EvalComparisonOp),
          (andop, 2, opAssoc.LEFT, EvalAndOp),
+         (orop, 2, opAssoc.LEFT, EvalOrOp),
          ])
 
     def __init__(self, vars_={}):
@@ -214,6 +230,9 @@ if __name__=='__main__':
         ("(a & 7)", a & 7),
         ("((a & 7) > 3)", (a & 7) > 3),
         ("((a & 7) > 3) & (a > 5)", ((a & 7) > 3) & (a > 5)),
+        ("((a & 7) > 3) | (a > 25)", ((a & 7) > 3) | (a > 25)),
+        ("(a > 1000) | (a < 20)", (a > 1000) | (a < 20)),
+        ("a > 1000 | a < 20", (a > 1000) | (a < 20)),
         ]
     for test, expected in tests:
         result = arith.eval(test)
