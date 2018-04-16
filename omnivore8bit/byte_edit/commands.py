@@ -8,7 +8,7 @@ from omnivore.framework.errors import ProgressCancelError
 from omnivore.utils.command import Command, UndoInfo
 from omnivore8bit.commands import SegmentCommand, ChangeMetadataCommand, SetContiguousDataCommand, SetRangeCommand, SetRangeValueCommand
 from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
-from omnivore8bit.utils.searchalgorithm import AlgorithmSearcher
+from omnivore8bit.utils.searchutil import AlgorithmSearcher
 from omnivore.utils.file_guess import FileGuess
 from omnivore.utils.permute import bit_reverse_table
 

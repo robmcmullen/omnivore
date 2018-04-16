@@ -1,5 +1,9 @@
 import re
 
+import numpy as np
+
+from omnivore.utils.parseutil import NumpyExpression, ParseException
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -73,6 +77,30 @@ class CommentSearcher(BaseSearcher):
                 if search_text in comment.lower():
                     matches.append((index, index + 1))
         return matches
+
+
+class AlgorithmSearcher(BaseSearcher):
+    def __str__(self):
+        return "pyparsing matches: %s" % str(self.matches)
+
+    def get_search_text(self, text):
+        return text
+
+    def get_matches(self, editor):
+        s = editor.segment
+        a = np.arange(s.start_addr, s.start_addr + len(s))
+        b = np.copy(s.data)
+        v = {
+            'a': np.arange(s.start_addr, s.start_addr + len(s)),
+            'b': np.copy(s.data),
+            }
+        expression = NumpyExpression(v)
+        try:
+            result = expression.eval(self.search_text)
+            matches = s.bool_to_ranges(result)
+            return matches
+        except ParseException, e:
+            raise ValueError(e)
 
 
 known_searchers = [

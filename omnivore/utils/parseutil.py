@@ -7,8 +7,6 @@ import numpy as np
 from pyparsing import Word, nums, hexnums, alphas, Combine, oneOf, Optional, \
     opAssoc, operatorPrecedence, ParseException
 
-from searchutil import BaseSearcher
-
 
 class EvalConstant():
     "Class to evaluate a parsed constant or variable"
@@ -188,30 +186,6 @@ class NumpyExpression():
         ret = self.arith_expr.parseString( strExpr, parseAll=True)[0]
         result = ret.eval( self.vars_ )
         return result
-
-
-class AlgorithmSearcher(BaseSearcher):
-    def __str__(self):
-        return "pyparsing matches: %s" % str(self.matches)
-
-    def get_search_text(self, text):
-        return text
-
-    def get_matches(self, editor):
-        s = editor.segment
-        a = np.arange(s.start_addr, s.start_addr + len(s))
-        b = np.copy(s.data)
-        v = {
-            'a': np.arange(s.start_addr, s.start_addr + len(s)),
-            'b': np.copy(s.data),
-            }
-        expression = NumpyExpression(v)
-        try:
-            result = expression.eval(self.search_text)
-            matches = s.bool_to_ranges(result)
-            return matches
-        except ParseException, e:
-            raise ValueError(e)
 
 
 if __name__=='__main__':
