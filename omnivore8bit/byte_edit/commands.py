@@ -320,7 +320,7 @@ class FindAllCommand(Command):
                 else:
                 # Need to use a tuple in order for bisect to search the list
                 # of tuples
-                    caret_tuple = (editor.linked_base.caret_index, 0)
+                    caret_tuple = (editor.linked_base.carets.current.index, 0)
                     self.current_match_index = bisect.bisect_left(self.all_matches, caret_tuple)
                     if self.current_match_index >= len(self.all_matches):
                         self.current_match_index = 0
@@ -328,6 +328,7 @@ class FindAllCommand(Command):
                     start = match[0]
                     log.debug("Starting at match_index %d = %s" % (self.current_match_index, match))
                     undo.flags.index_range = match
+                    undo.flags.force_single_caret = True
                     undo.flags.caret_index = start
                     undo.flags.select_range = True
                     undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (self.current_match_index + 1, len(self.all_matches), start + self.start_addr, self.match_ids[start]))
@@ -344,7 +345,7 @@ class FindNextCommand(Command):
 
     def get_index(self, editor):
         cmd = self.search_command
-        caret_tuple = (editor.linked_base.caret_index, 0)
+        caret_tuple = (editor.linked_base.carets.current.index, 0)
         match_index = bisect.bisect_right(cmd.all_matches, caret_tuple)
         if match_index == cmd.current_match_index:
             match_index += 1
@@ -362,6 +363,7 @@ class FindNextCommand(Command):
             match = all_matches[index]
             start = match[0]
             undo.flags.index_range = match
+            undo.flags.force_single_caret = True
             undo.flags.caret_index = start
             undo.flags.select_range = True
             c = self.search_command
@@ -377,7 +379,7 @@ class FindPrevCommand(FindNextCommand):
 
     def get_index(self, editor):
         cmd = self.search_command
-        caret_tuple = (editor.linked_base.caret_index, 0)
+        caret_tuple = (editor.linked_base.carets.current.index, 0)
         match_index = bisect.bisect_left(cmd.all_matches, caret_tuple)
         match_index -= 1
         if match_index < 0:

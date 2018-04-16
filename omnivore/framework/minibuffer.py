@@ -321,7 +321,7 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         """Execute the command associatied with this minibuffer"""
         value, error = self.get_result()
         if self.start_caret_index < 0:
-            self.start_caret_index = self.editor.linked_base.caret_index
+            self.start_caret_index = self.editor.linked_base.carets.current.index
         cmd = self.command_cls(self.start_caret_index, value, error, **self.kwargs)
         self.editor.process_command(cmd)
         self.search_command = cmd
