@@ -5,7 +5,8 @@
 import numpy as np
 
 from pyparsing import Word, nums, hexnums, alphas, Combine, oneOf, Optional, \
-    opAssoc, operatorPrecedence, ParseException
+    opAssoc, operatorPrecedence, ParseException, ParserElement
+ParserElement.enablePackrat()
 
 
 class EvalConstant():
