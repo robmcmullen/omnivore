@@ -407,7 +407,6 @@ def pretty_seconds(s, precision=1):
     else:
         val = (s / 31449600.0)
         ext = "yr"
-    print val, val - int(val)
     if abs(val - int(val)) < .000001:
         fmt = "%d"
     result = (fmt % val) + ext
@@ -462,15 +461,15 @@ def check_for_matching_lines(text, sre):
     num_matched = 0
     num_unmatched = 0
     for line in text.splitlines(False):
-        print("processing %s" % line)
+        log.debug("processing %s" % line)
         match = cre.match(line)
         if match is None:
             if line.strip(): # ignore blank lines
-                print("unmatched: %s" % line)
+                log.debug("unmatched: %s" % line)
                 num_unmatched += 1
         else:
             num_matched += 1
-    print("%d matched, %d unmatched" % (num_matched, num_unmatched))
+    log.debug("%d matched, %d unmatched" % (num_matched, num_unmatched))
     return num_matched, num_unmatched
 
 
@@ -483,18 +482,18 @@ def parse_for_matching_lines(text, sre, group_indexes):
     matches = []
     num_unmatched = 0
     for line in text.splitlines(False):
-        print("processing %s" % line)
+        log.debug("processing %s" % line)
         match = cre.match(line)
         if match is None:
             if line.strip(): # ignore blank lines
-                print("unmatched: %s" % line)
+                log.debug("unmatched: %s" % line)
                 num_unmatched += 1
         else:
             row = []
             for i in group_indexes:
                 row.append(match.group(i))
             matches.append(row)
-    print("%d matched, %d unmatched" % (len(matches), num_unmatched))
+    log.debug("%d matched, %d unmatched" % (len(matches), num_unmatched))
     return matches, num_unmatched
 
 
