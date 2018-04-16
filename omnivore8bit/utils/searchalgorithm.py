@@ -155,8 +155,8 @@ class NumpyExpression():
         [(signop, 1, opAssoc.RIGHT, EvalSignOp),
          (multop, 2, opAssoc.LEFT, EvalMultOp),
          (plusop, 2, opAssoc.LEFT, EvalAddOp),
-         (andop, 2, opAssoc.LEFT, EvalAndOp),
          (comparisonop, 2, opAssoc.LEFT, EvalComparisonOp),
+         (andop, 2, opAssoc.LEFT, EvalAndOp),
          ])
 
     def __init__(self, vars_={}):
@@ -208,6 +208,9 @@ if __name__=='__main__':
         ("a > 3", a > 3),
         ("b > 8", b > 8),
         ("(a > 3) & (a > 5)", a > 5),
+        ("a > 3 & a > 5", a > 5),
+        ("(a > 3) & (a < 100)", (a > 3) & (a < 100)),
+        ("a > 3 & a < 100", (a > 3) & (a < 100)),
         ("(a & 7)", a & 7),
         ("((a & 7) > 3)", (a & 7) > 3),
         ("((a & 7) > 3) & (a > 5)", ((a & 7) > 3) & (a > 5)),
