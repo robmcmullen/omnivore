@@ -975,6 +975,8 @@ class TitleBar(wx.Window):
 
         self.buttons = []
         self.buttons.append(TitleBarCloser(self, m.close_button_size))
+        self.buttons.append(TitleBarMinimize(self, m.close_button_size))
+        self.buttons.append(TitleBarMaximize(self, m.close_button_size))
         self.buttons.append(TitleBarHSplitNewBot(self, m.close_button_size))
         self.buttons.append(TitleBarVSplitNewRight(self, m.close_button_size))
 
@@ -1115,7 +1117,6 @@ class TitleBarButton(wx.Window):
 
 class TitleBarCloser(TitleBarButton):
     def set_sidebar_state(self, in_sidebar):
-        self.is_enabled = not in_sidebar
         self.is_always_shown = True
 
     def draw_button(self, dc, size, bg_brush, pen, fg_brush):
@@ -1135,6 +1136,38 @@ class TitleBarCloser(TitleBarButton):
 
     def ask_close(self):
         return True
+
+
+class TitleBarMinimize(TitleBarButton):
+    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+        cx = size.x // 2
+        cy = size.y // 2
+        dc.SetBrush(bg_brush)
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.DrawRectangle(cx - 2, cy - 2, cx + 1, cy + 1)
+        dc.SetPen(pen)
+        dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        dc.DrawRectangle(cx - 2, cy - 2, cx + 1, cy + 1)
+
+    def do_action(self, evt):
+        self.leaf.split(layout_direction=wx.HORIZONTAL)
+
+
+class TitleBarMaximize(TitleBarButton):
+    def set_sidebar_state(self, in_sidebar):
+        self.is_enabled = in_sidebar
+        # self.is_always_shown = True
+
+    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+        dc.SetBrush(bg_brush)
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.DrawRectangle(0, 0, size.x, size.y)
+        dc.SetPen(pen)
+        dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        dc.DrawRectangle(0, 0, size.x, size.y)
+
+    def do_action(self, evt):
+        self.leaf.split(layout_direction=wx.HORIZONTAL)
 
 
 class TitleBarVSplitNewRight(TitleBarButton):
