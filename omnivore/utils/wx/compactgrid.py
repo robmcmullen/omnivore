@@ -370,7 +370,7 @@ class LineRenderer(object):
         insertion_point_index = edit_source.GetInsertionPoint()
         highlight_start, highlight_end = edit_source.GetSelection()
         value = edit_source.GetValue()
-        print("draw_edit_cell: caret=%d sel=%d-%d value=%s" % (insertion_point_index, highlight_start, highlight_end, value))
+        log.debug("draw_edit_cell: caret=%d sel=%d-%d value=%s" % (insertion_point_index, highlight_start, highlight_end, value))
 
         before = value[0:highlight_start]
         selected = value[highlight_start:highlight_end]
@@ -1410,13 +1410,13 @@ class CompactGrid(wx.ScrolledWindow):
             r, c = self.table.index_to_row_col(index)
             if r >= start_row and r < start_row + visible_rows:
                 if self.edit_source is not None:
-                    print("drawing edit cell at r,c=%d,%d" % (r, c))
+                    log.debug("drawing edit cell at r,c=%d,%d" % (r, c))
                     self.line_renderer.draw_edit_cell(self, dc, r, c, self.edit_source)
                 else:
-                    print("drawing caret at r,c=%d,%d" % (r, c))
+                    log.debug("drawing caret at r,c=%d,%d" % (r, c))
                     self.line_renderer.draw_caret(self, dc, r, c)
             else:
-                print("skipping offscreen caret at r,c=%d,%d" % (r, c))
+                log.debug("skipping offscreen caret at r,c=%d,%d" % (r, c))
 
     ##### Keyboard movement implementations
 
