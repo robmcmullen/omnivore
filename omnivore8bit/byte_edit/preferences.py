@@ -17,6 +17,19 @@ else:
     def_font = "10 point monospace"
 
 
+def byte2hex(val):
+    return "$02x" % val
+
+def word2hex(val):
+    return "$04x" % val
+
+def int2hex(val):
+    return "%x" % val
+
+byte2str = byte2hex
+word2str = word2hex
+int2str = int2hex
+
 class ByteEditPreferences(PreferencesHelper):
     """ The preferences helper for the Framework application.
     """
