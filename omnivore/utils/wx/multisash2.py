@@ -857,7 +857,7 @@ class MultiClient(wx.Window):
         self.child_uuid = uuid
 
         self.extra_border = extra_border
-        self.title_bar = TitleBar(self, close=not in_sidebar, split=not in_sidebar)
+        self.title_bar = TitleBar(self, in_sidebar)
 
         if child is None:
             child = self.multiView._defChild(self)
@@ -968,23 +968,29 @@ class MultiClient(wx.Window):
 ########## Title Bar ##########
 
 class TitleBar(wx.Window):
-    def __init__(self, parent, close=True, split=True):
+    def __init__(self, parent, in_sidebar=False):
         wx.Window.__init__(self, parent, -1, name=MultiSash.debug_window_name("TitleBar"))
         self.client = parent
         m = self.client.multiView
 
         self.buttons = []
-        self.buttons.append(TitleBarCloser(self, m.close_button_size, enabled=close))
-        self.buttons.append(TitleBarHSplitNewBot(self, m.close_button_size, enabled=split))
-        self.buttons.append(TitleBarVSplitNewRight(self, m.close_button_size, enabled=split))
+        self.buttons.append(TitleBarCloser(self, m.close_button_size))
+        self.buttons.append(TitleBarHSplitNewBot(self, m.close_button_size))
+        self.buttons.append(TitleBarVSplitNewRight(self, m.close_button_size))
 
         self.SetBackgroundColour(wx.RED)
+        self.set_buttons_for_sidebar_state(in_sidebar)
         self.hide_buttons()
 
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEAVE_WINDOW,self.on_leave)
         self.Bind(wx.EVT_ENTER_WINDOW,self.on_enter)
+
+    def set_buttons_for_sidebar_state(self, in_sidebar):
+        for button in self.buttons:
+            button.set_sidebar_state(in_sidebar)
+        self.position_buttons()
 
     def draw_title_bar(self, dc):
         m = self.client.multiView
@@ -1004,7 +1010,7 @@ class TitleBar(wx.Window):
         dc = wx.PaintDC(self)
         self.draw_title_bar(dc)
 
-    def on_size(self, evt):
+    def position_buttons(self):
         m = self.client.multiView
         w, h = self.GetClientSize()
         x = w - m.title_bar_margin
@@ -1012,18 +1018,19 @@ class TitleBar(wx.Window):
             if button.is_enabled:
                 x = button.do_button_pos(x, h)
                 x -= m.title_bar_margin
-                button.Show()
             else:
                 button.SetPosition((-100, -100))
-                button.Hide()
+
+    def on_size(self, evt):
+        self.position_buttons()
 
     def hide_buttons(self):
-        for b in self.buttons[1:]:
-            if b: b.Hide()
+        for button in self.buttons:
+            button.do_hide()
 
     def show_buttons(self):
-        for b in self.buttons[1:]:
-            if b: b.Show()
+        for button in self.buttons:
+            button.do_show()
 
     def on_enter(self, evt):
         self.show_buttons()
@@ -1039,7 +1046,7 @@ class TitleBar(wx.Window):
 
 
 class TitleBarButton(wx.Window):
-    def __init__(self, parent, size, enabled=True):
+    def __init__(self, parent, size):
         self.title_bar = parent
         self.client = parent.GetParent()
         self.leaf = self.client.GetParent()
@@ -1047,13 +1054,17 @@ class TitleBarButton(wx.Window):
 
         self.down = False
         self.entered = False
-        self.is_enabled = enabled
+        self.is_enabled = True
+        self.is_always_shown = False
 
         self.Bind(wx.EVT_LEFT_DOWN, self.on_press)
         self.Bind(wx.EVT_LEFT_UP, self.on_release)
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
         self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
+
+    def set_sidebar_state(self, in_sidebar):
+        self.is_enabled = not in_sidebar
 
     def on_press(self,evt):
         self.down = True
@@ -1087,6 +1098,13 @@ class TitleBarButton(wx.Window):
     def do_action(self, evt):
         pass
 
+    def do_hide(self):
+        if not self.is_always_shown:
+            self.Hide()
+
+    def do_show(self):
+        self.Show()
+
     def do_button_pos(self, x, h):
         bw, bh = self.GetSize()
         x -= bw
@@ -1096,6 +1114,10 @@ class TitleBarButton(wx.Window):
 
 
 class TitleBarCloser(TitleBarButton):
+    def set_sidebar_state(self, in_sidebar):
+        self.is_enabled = not in_sidebar
+        self.is_always_shown = True
+
     def draw_button(self, dc, size, bg_brush, pen, fg_brush):
         dc.SetBrush(bg_brush)
         dc.SetPen(wx.TRANSPARENT_PEN)
@@ -1115,7 +1137,7 @@ class TitleBarCloser(TitleBarButton):
         return True
 
 
-class TitleBarVSplitNewRight(TitleBarCloser):
+class TitleBarVSplitNewRight(TitleBarButton):
     def draw_button(self, dc, size, bg_brush, pen, fg_brush):
         split = size.x // 2
         dc.SetBrush(bg_brush)
@@ -1128,7 +1150,7 @@ class TitleBarVSplitNewRight(TitleBarCloser):
         self.leaf.split(layout_direction=wx.HORIZONTAL)
 
 
-class TitleBarHSplitNewBot(TitleBarCloser):
+class TitleBarHSplitNewBot(TitleBarButton):
     def draw_button(self, dc, size, bg_brush, pen, fg_brush):
         split = size.y // 2
         dc.SetBrush(bg_brush)
