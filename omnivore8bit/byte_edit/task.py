@@ -225,10 +225,6 @@ class ByteEditTask(FrameworkTask):
 
     pane_layout_version = ""
 
-    hex_grid_lower_case = Bool(True)
-
-    assembly_lower_case = Bool(False)
-
     #### Task interface #######################################################
 
     id = editor_id
@@ -265,14 +261,6 @@ class ByteEditTask(FrameworkTask):
     # 'Task' interface.
     ###########################################################################
 
-    def _hex_grid_lower_case_default(self):
-        prefs = self.preferences
-        return prefs.hex_grid_lower_case
-
-    def _assembly_lower_case_default(self):
-        prefs = self.preferences
-        return prefs.assembly_lower_case
-
     def _active_editor_changed(self, editor):
         # Make sure it's a valid document before refreshing
         if editor is not None and editor.document.segments:
@@ -300,8 +288,6 @@ class ByteEditTask(FrameworkTask):
     @on_trait_change('window.application.preferences_changed_event')
     def refresh_from_new_preferences(self):
         prefs = self.preferences
-        self.hex_grid_lower_case = prefs.hex_grid_lower_case
-        self.assembly_lower_case = prefs.assembly_lower_case
         e = self.active_editor
         if e is not None:
             e.process_preference_change(prefs)

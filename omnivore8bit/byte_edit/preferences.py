@@ -55,6 +55,18 @@ class ByteEditPreferences(PreferencesHelper):
 
     assembly_lower_case = Bool(False)
 
+    int_display_format = Enum(
+        "Hexadecimal",
+        "Decimal",
+        "Both",
+    )
+
+    hex_display_format = Enum(
+        "$XX",
+        "0xXX",
+        "XXh",
+    )
+
     disassembly_column_widths = Tuple(0, 0, 0)
 
     background_color = Color(wx.WHITE)
@@ -196,6 +208,12 @@ class ByteEditPreferencesPane(PreferencesPane):
                HGroup(Item('header_font'),
                       Label('Column Header Font'),
                       show_labels = False),
+               HGroup(Item('int_display_format'),
+                      Label('Number Display Format'),
+                      show_labels=False),
+               HGroup(Item('hex_display_format'),
+                      Label('Hex Display Format'),
+                      show_labels=False),
                HGroup(Item('hex_grid_lower_case'),
                       Label('Use Lower Case for Hex Digits'),
                       show_labels = False),
