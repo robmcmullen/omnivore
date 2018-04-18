@@ -5,7 +5,8 @@
 import numpy as np
 
 from pyparsing import Word, nums, hexnums, alphas, Combine, oneOf, Optional, \
-    opAssoc, operatorPrecedence, ParseException, ParserElement
+    opAssoc, operatorPrecedence, ParseException, ParserElement, Literal, Regex, pyparsing_common
+
 ParserElement.enablePackrat()
 
 
@@ -149,7 +150,7 @@ class EvalComparisonOp():
             return False
 
 
-class NumpyExpression():
+class NumpyIntExpression():
     integer = Word(nums)
     hexint = Combine(oneOf('0x $') + Word(hexnums))
 
@@ -189,12 +190,64 @@ class NumpyExpression():
         return result
 
 
+class EvalFloatConstant():
+    "Class to evaluate a parsed constant or variable"
+
+    def __init__(self, tokens):
+        self.value = tokens[0]
+
+    def eval(self, vars_):
+        v = self.value
+        if v in vars_:
+            return vars_[v]
+        else:
+            return float(v)
+
+
+class NumpyFloatExpression():
+    variable = Word(alphas)
+    leading_dot_float = Regex(r'\.\d+')
+    operand = leading_dot_float | pyparsing_common.number | variable
+
+    signop = oneOf('+ -')
+    multop = oneOf('* / // %')
+    plusop = oneOf('+ -')
+    andop = oneOf('and &')
+    orop = oneOf('or |')
+    comparisonop = oneOf("< <= > >= == != <>")
+
+    # use parse actions to attach EvalXXX constructors to sub-expressions
+    operand.setParseAction(EvalFloatConstant)
+    arith_expr = operatorPrecedence(operand,
+        [(signop, 1, opAssoc.RIGHT, EvalSignOp),
+         (multop, 2, opAssoc.LEFT, EvalMultOp),
+         (plusop, 2, opAssoc.LEFT, EvalAddOp),
+         (comparisonop, 2, opAssoc.LEFT, EvalComparisonOp),
+         (andop, 2, opAssoc.LEFT, EvalAndOp),
+         (orop, 2, opAssoc.LEFT, EvalOrOp),
+         ])
+
+    def __init__(self, vars_={}):
+        self.vars_ = vars_
+
+    def setvars(self, vars_):
+        self.vars_ = vars_
+
+    def setvar( var, val ):
+        self.vars_[ var ] = val
+
+    def eval( self, strExpr ):
+        ret = self.arith_expr.parseString( strExpr, parseAll=True)[0]
+        result = ret.eval( self.vars_ )
+        return result
+
+
 if __name__=='__main__':
     a = np.arange(256*256)
     b = np.arange(256*256)
-    #v = {"a": 5, "b": 10}
-    v = {"a": a, "b": b}
-    arith = NumpyExpression(v)
+    f = np.linspace(0, 1, 101, dtype=np.float32)
+    v = {"a": a, "b": b, "f": f}
+    arith = NumpyIntExpression(v)
     tests = [
         ("a > 3", a > 3),
         ("b > 8", b > 8),
@@ -208,6 +261,20 @@ if __name__=='__main__':
         ("((a & 7) > 3) | (a > 25)", ((a & 7) > 3) | (a > 25)),
         ("(a > 1000) | (a < 20)", (a > 1000) | (a < 20)),
         ("a > 1000 | a < 20", (a > 1000) | (a < 20)),
+        ]
+    for test, expected in tests:
+        result = arith.eval(test)
+        correct = (expected == result).all()
+        if correct:
+            print test, "correct!"
+        else:
+            print test, "FAILED", expected, result
+
+    arith = NumpyFloatExpression(v)
+    tests = [
+        ("f > 3", f > 3),
+        ("f > 0.3", f > .3),
+        ("f > .3", f > .3),
         ]
     for test, expected in tests:
         result = arith.eval(test)

@@ -2,7 +2,7 @@ import re
 
 import numpy as np
 
-from omnivore.utils.parseutil import NumpyExpression, ParseException
+from omnivore.utils.parseutil import NumpyIntExpression, ParseException
 
 import logging
 log = logging.getLogger(__name__)
@@ -94,7 +94,7 @@ class AlgorithmSearcher(BaseSearcher):
             'a': np.arange(s.start_addr, s.start_addr + len(s)),
             'b': np.copy(s.data),
             }
-        expression = NumpyExpression(v)
+        expression = NumpyIntExpression(v)
         try:
             result = expression.eval(self.search_text)
             matches = s.bool_to_ranges(result)
