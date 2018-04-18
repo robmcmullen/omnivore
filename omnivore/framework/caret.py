@@ -352,6 +352,12 @@ class CaretHandler(HasTraits):
                 return True
         return False
 
+    def validate_carets(self):
+        """Confirms the index position of all carets and collapses multiple
+        carets that have the same index into a single caret
+        """
+        self.carets = self.carets.validate(self)
+
     def validate_caret_position(self, index):
         max_index = self.document_length - 1
         if index < 0:
