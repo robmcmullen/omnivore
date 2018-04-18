@@ -1014,6 +1014,7 @@ class TitleBar(wx.Window):
                 x -= m.title_bar_margin
                 button.Show()
             else:
+                button.SetPosition((-100, -100))
                 button.Hide()
 
     def hide_buttons(self):
