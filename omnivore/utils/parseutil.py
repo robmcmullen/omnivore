@@ -88,7 +88,7 @@ class EvalAddOp():
         return sum
 
 
-class EvalAndOp():
+class EvalBitwiseAndOp():
     "Class to evaluate addition and subtraction expressions"
 
     def __init__(self, tokens):
@@ -102,7 +102,7 @@ class EvalAndOp():
         return val1
 
 
-class EvalOrOp():
+class EvalBitwiseOrOp():
     "Class to evaluate addition and subtraction expressions"
 
     def __init__(self, tokens):
@@ -113,6 +113,34 @@ class EvalOrOp():
         for op,val in operatorOperands(self.value[1:]):
             val2 = val.eval(vars_)
             val1 = val1 | val2
+        return val1
+
+
+class EvalLogicalAndOp():
+    "Class to evaluate addition and subtraction expressions"
+
+    def __init__(self, tokens):
+        self.value = tokens[0]
+
+    def eval(self, vars_ ):
+        val1 = self.value[0].eval(vars_)
+        for op,val in operatorOperands(self.value[1:]):
+            val2 = val.eval(vars_)
+            val1 = np.logical_and(val1, val2)
+        return val1
+
+
+class EvalLogicalOrOp():
+    "Class to evaluate addition and subtraction expressions"
+
+    def __init__(self, tokens):
+        self.value = tokens[0]
+
+    def eval(self, vars_ ):
+        val1 = self.value[0].eval(vars_)
+        for op,val in operatorOperands(self.value[1:]):
+            val2 = val.eval(vars_)
+            val1 = np.logical_or(val1, val2)
         return val1
 
 
@@ -160,8 +188,10 @@ class NumpyIntExpression():
     signop = oneOf('+ -')
     multop = oneOf('* / // %')
     plusop = oneOf('+ -')
-    andop = oneOf('and &')
-    orop = oneOf('or |')
+    bitwiseandop = Literal('&')
+    bitwiseorop = Literal('|')
+    logicalandop = oneOf('and &&')
+    logicalorop = oneOf('or ||')
     comparisonop = oneOf("< <= > >= == != <>")
 
     # use parse actions to attach EvalXXX constructors to sub-expressions
@@ -170,9 +200,11 @@ class NumpyIntExpression():
         [(signop, 1, opAssoc.RIGHT, EvalSignOp),
          (multop, 2, opAssoc.LEFT, EvalMultOp),
          (plusop, 2, opAssoc.LEFT, EvalAddOp),
+         (bitwiseandop, 2, opAssoc.LEFT, EvalBitwiseAndOp),
+         (bitwiseorop, 2, opAssoc.LEFT, EvalBitwiseOrOp),
          (comparisonop, 2, opAssoc.LEFT, EvalComparisonOp),
-         (andop, 2, opAssoc.LEFT, EvalAndOp),
-         (orop, 2, opAssoc.LEFT, EvalOrOp),
+         (logicalandop, 2, opAssoc.LEFT, EvalLogicalAndOp),
+         (logicalorop, 2, opAssoc.LEFT, EvalLogicalOrOp),
          ])
 
     def __init__(self, vars_={}):
@@ -223,8 +255,8 @@ class NumpyFloatExpression():
          (multop, 2, opAssoc.LEFT, EvalMultOp),
          (plusop, 2, opAssoc.LEFT, EvalAddOp),
          (comparisonop, 2, opAssoc.LEFT, EvalComparisonOp),
-         (andop, 2, opAssoc.LEFT, EvalAndOp),
-         (orop, 2, opAssoc.LEFT, EvalOrOp),
+         (andop, 2, opAssoc.LEFT, EvalLogicalAndOp),
+         (orop, 2, opAssoc.LEFT, EvalLogicalOrOp),
          ])
 
     def __init__(self, vars_={}):
@@ -251,16 +283,16 @@ if __name__=='__main__':
     tests = [
         ("a > 3", a > 3),
         ("b > 8", b > 8),
-        ("(a > 3) & (a > 5)", a > 5),
-        ("a > 3 & a > 5", a > 5),
-        ("(a > 3) & (a < 100)", (a > 3) & (a < 100)),
-        ("a > 3 & a < 100", (a > 3) & (a < 100)),
+        ("(a > 3) && (a > 5)", a > 5),
+        ("a > 3 && a > 5", a > 5),
+        ("(a > 3) && (a < 100)", np.logical_and((a > 3), (a < 100))),
+        ("a > 3 && a < 100", np.logical_and((a > 3), (a < 100))),
         ("(a & 7)", a & 7),
         ("((a & 7) > 3)", (a & 7) > 3),
-        ("((a & 7) > 3) & (a > 5)", ((a & 7) > 3) & (a > 5)),
-        ("((a & 7) > 3) | (a > 25)", ((a & 7) > 3) | (a > 25)),
-        ("(a > 1000) | (a < 20)", (a > 1000) | (a < 20)),
-        ("a > 1000 | a < 20", (a > 1000) | (a < 20)),
+        ("((a & 7) > 3) && (a > 5)", np.logical_and(((a & 7) > 3), (a > 5))),
+        ("((a & 7) > 3) || (a > 25)", np.logical_or(((a & 7) > 3), (a > 25))),
+        ("(a > 1000) || (a < 20)", np.logical_or((a > 1000), (a < 20))),
+        ("a > 1000 || a < 20", np.logical_or((a > 1000), (a < 20))),
         ]
     for test, expected in tests:
         result = arith.eval(test)
