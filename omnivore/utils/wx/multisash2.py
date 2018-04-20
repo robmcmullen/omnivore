@@ -46,6 +46,13 @@ opposite = {
     wx.BOTTOM: wx.TOP,
 }
 
+side_to_direction = {
+    wx.LEFT: wx.HORIZONTAL,
+    wx.RIGHT: wx.HORIZONTAL,
+    wx.TOP: wx.VERTICAL,
+    wx.BOTTOM: wx.VERTICAL,
+    }
+
 
 def calc_bitmap_of_window(win):
     # modified from a snipped that creates a screenshot of the entire desktop
@@ -100,6 +107,7 @@ class DockingRectangleHandler(object):
         self.event_window = None
         self.drag_window = None
         self.background_bitmap = None
+        self.current_rect = None
         self.pen = wx.Pen(wx.BLUE)
         brush_color = wx.Colour(0xb0, 0xb0, 0xff, 0x80)
         self.brush = wx.Brush(brush_color)
@@ -112,6 +120,7 @@ class DockingRectangleHandler(object):
         # Capture the mouse and save the starting posiiton for the rubber-band
         event_window.CaptureMouse()
         event_window.SetFocus()
+        self.current_rect = None
         self.event_window = event_window
         self.drag_window = BitmapPopup(drag_window, evt.GetPosition())
         _, self.background_bitmap = calc_bitmap_of_window(event_window)
@@ -140,9 +149,7 @@ class DockingRectangleHandler(object):
         rects.append(wx.Rect(px, ty, r.width, h))  # top
         return rects
 
-    def process_dragging(self, evt):
-        pos = evt.GetPosition()
-
+    def in_rect(self, pos):
         for rect in self.docking_rectangles:
             print("checking %s in rect %s" % (pos, rect))
             if rect.Contains(pos):
@@ -150,6 +157,12 @@ class DockingRectangleHandler(object):
         else:
             print("NOT IN RECT")
             rect = None
+        return rect
+
+    def process_dragging(self, evt):
+        pos = evt.GetPosition()
+
+        self.current_rect = self.in_rect(pos)
 
         dc = wx.ClientDC(self.event_window)
         odc = wx.DCOverlay(self.overlay, dc)
@@ -164,10 +177,10 @@ class DockingRectangleHandler(object):
             # platform difference
             dc.DrawBitmap(self.background_bitmap, 0, 0)
 
-        if rect is not None:
+        if self.current_rect is not None:
             dc.SetPen(self.pen)
             dc.SetBrush(self.brush)
-            dc.DrawRectangle(rect)
+            dc.DrawRectangle(self.current_rect)
 
         pos = self.event_window.ClientToScreen(pos)
         self.drag_window.SetPosition(pos)
@@ -194,7 +207,9 @@ class DockingRectangleHandler(object):
         self.event_window.Refresh()  # Force redraw
         self.event_window = None
 
-        return pos
+        rect = self.current_rect
+        self.docking_rectangles = None
+        return rect
 
 
 class MultiSash(wx.Window):
@@ -224,7 +239,6 @@ class MultiSash(wx.Window):
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
-        self.last_direction = wx.VERTICAL
         self.pending_sidebar_focus = None
         self.current_sidebar_focus = None
         self.current_leaf_focus = None
@@ -454,23 +468,20 @@ class MultiSash(wx.Window):
             return True
         return False
 
-    def add(self, control, u=None, layout_direction=None, use_empty=True, side=None):
-        if side is not None:
-            self.add_sidebar(control, u, side)
+    def add(self, control, u=None, new_side=wx.LEFT, use_empty=True, sidebar=False):
+        if sidebar:
+            self.add_sidebar(control, u, new_side)
         else:
-            self.add_split(control, u, layout_direction, use_empty)
+            self.add_split(control, u, new_side, use_empty)
 
-    def add_split(self, control, u=None, layout_direction=None, use_empty=True):
+    def add_split(self, control, u=None, new_side=wx.LEFT, use_empty=True):
         if use_empty:
             found = self.find_empty()
             if found:
                 found.replace(control, u)
                 return
-        if layout_direction is None:
-            self.last_direction = opposite[self.last_direction]
-            direction = self.last_direction
         leaf = self.child.views[-1]
-        self.child.split(leaf, control, u, layout_direction)
+        self.child.split(leaf, control, u, new_side)
 
     def use_sidebar(self, side=wx.LEFT):
         try:
@@ -518,8 +529,8 @@ class MultiSash(wx.Window):
 
     def on_left_up(self, evt):
         if self.dock_handler.is_active:
-            print("Back to normal")
-            self.dock_handler.cleanup_docking(evt)
+            rect = self.dock_handler.cleanup_docking(evt)
+            print("chose rect: %s" % rect)
 
     def start_child_window_move(self, client, evt):
         self.dock_handler.start_docking(self, client, evt)
@@ -823,15 +834,16 @@ class MultiSplit(MultiWindowBase, ViewContainer):
         current = self.find_leaf_index(leaf)
         return self.views[current + 1]
 
-    def split(self, leaf, control=None, uuid=None, layout_direction=None, start=wx.LEFT|wx.TOP):
-        if layout_direction is not None and layout_direction != self.layout_direction:
-            self.split_opposite(leaf, control, uuid, start)
+    def split(self, leaf, control=None, uuid=None, new_side=wx.RIGHT):
+        layout_direction = side_to_direction[new_side]
+        if layout_direction != self.layout_direction:
+            self.split_opposite(leaf, control, uuid, new_side)
         else:
-            self.split_same(leaf, control, uuid, start)
+            self.split_same(leaf, control, uuid, new_side)
 
-    def split_same(self, leaf, control=None, uuid=None, start=wx.LEFT|wx.TOP):
+    def split_same(self, leaf, control=None, uuid=None, new_side=wx.LEFT):
         view_index_to_split = self.find_leaf_index(leaf)
-        if start & (wx.LEFT|wx.TOP):
+        if new_side & (wx.LEFT|wx.TOP):
             # insert at beginning of list
             insert_pos = view_index_to_split
         else:
@@ -845,12 +857,12 @@ class MultiSplit(MultiWindowBase, ViewContainer):
         self.views[insert_pos:insert_pos] = [view]
         self.do_layout()
 
-    def split_opposite(self, leaf, control=None, uuid=None, start=wx.LEFT|wx.TOP):
+    def split_opposite(self, leaf, control=None, uuid=None, new_side=wx.LEFT):
         view_index_to_split = self.find_leaf_index(leaf)
         subsplit = MultiSplit(self.multiView, self, opposite[self.layout_direction], leaf.ratio_in_parent, leaf)
         self.views[view_index_to_split] = subsplit
         self.do_layout()
-        subsplit.split_same(leaf, control, uuid, start)
+        subsplit.split_same(leaf, control, uuid, new_side)
 
     def do_layout(self):
         w, h, full_size = self.layout_calculator.calc_size(self)
@@ -1151,6 +1163,12 @@ class MultiClient(wx.Window):
         self.do_size_from_bounds(w, h)
         self.Show()
 
+    def destroy_thyself(self):
+        wx.CallAfter(self.leaf.destroy_leaf)
+
+    def split_side(self, new_side=wx.LEFT):
+        self.leaf.split(new_side=new_side)
+
 
 ########## Title Bar ##########
 
@@ -1165,7 +1183,9 @@ class TitleBar(wx.Window):
         self.buttons.append(TitleBarMinimize(self, m.close_button_size))
         self.buttons.append(TitleBarMaximize(self, m.close_button_size))
         self.buttons.append(TitleBarHSplitNewBot(self, m.close_button_size))
+        self.buttons.append(TitleBarHSplitNewTop(self, m.close_button_size))
         self.buttons.append(TitleBarVSplitNewRight(self, m.close_button_size))
+        self.buttons.append(TitleBarVSplitNewLeft(self, m.close_button_size))
 
         self.SetBackgroundColour(wx.RED)
         self.set_buttons_for_sidebar_state(in_sidebar)
@@ -1256,7 +1276,6 @@ class TitleBarButton(wx.Window):
     def __init__(self, parent, size):
         self.title_bar = parent
         self.client = parent.GetParent()
-        self.leaf = self.client.GetParent()
         wx.Window.__init__(self, parent, -1, pos=(0, 0), size=size, style=wx.BORDER_NONE, name=MultiSash.debug_window_name("TitleBarButton"))
 
         self.down = False
@@ -1337,7 +1356,7 @@ class TitleBarCloser(TitleBarButton):
     def do_action(self, evt):
         requested_close = self.ask_close()
         if requested_close:
-            wx.CallAfter(self.leaf.destroy_leaf)
+            self.client.destroy_thyself()
 
     def ask_close(self):
         return True
@@ -1355,7 +1374,7 @@ class TitleBarMinimize(TitleBarButton):
         dc.DrawRectangle(cx - 2, cy - 2, cx + 1, cy + 1)
 
     def do_action(self, evt):
-        self.leaf.split(layout_direction=wx.HORIZONTAL)
+        self.client.minimize()
 
 
 class TitleBarMaximize(TitleBarButton):
@@ -1372,7 +1391,20 @@ class TitleBarMaximize(TitleBarButton):
         dc.DrawRectangle(0, 0, size.x, size.y)
 
     def do_action(self, evt):
-        self.leaf.split(layout_direction=wx.HORIZONTAL)
+        self.client.minimize()
+
+
+class TitleBarVSplitNewLeft(TitleBarButton):
+    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+        split = size.x // 2
+        dc.SetBrush(bg_brush)
+        dc.SetPen(pen)
+        dc.DrawRectangle(0, 0, split + 1, size.y)
+        dc.SetBrush(fg_brush)
+        dc.DrawRectangle(split, 0, size.x - split, size.y)
+
+    def do_action(self, evt):
+        self.client.split_side(wx.LEFT)
 
 
 class TitleBarVSplitNewRight(TitleBarButton):
@@ -1385,7 +1417,7 @@ class TitleBarVSplitNewRight(TitleBarButton):
         dc.DrawRectangle(split, 0, size.x - split, size.y)
 
     def do_action(self, evt):
-        self.leaf.split(layout_direction=wx.HORIZONTAL)
+        self.client.split_side(wx.RIGHT)
 
 
 class TitleBarHSplitNewBot(TitleBarButton):
@@ -1398,7 +1430,20 @@ class TitleBarHSplitNewBot(TitleBarButton):
         dc.DrawRectangle(0, split, size.x, size.y - split)
 
     def do_action(self, evt):
-        self.leaf.split(layout_direction=wx.VERTICAL)
+        self.client.split_side(wx.BOTTOM)
+
+
+class TitleBarHSplitNewTop(TitleBarButton):
+    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+        split = size.y // 2
+        dc.SetBrush(bg_brush)
+        dc.SetPen(pen)
+        dc.DrawRectangle(0, 0, size.x, split + 1)
+        dc.SetBrush(fg_brush)
+        dc.DrawRectangle(0, split, size.x, size.y - split)
+
+    def do_action(self, evt):
+        self.client.split_side(wx.TOP)
 
 
 ########## Sidebar ##########
