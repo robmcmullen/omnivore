@@ -47,6 +47,155 @@ opposite = {
 }
 
 
+def calc_bitmap_of_window(win):
+    # modified from a snipped that creates a screenshot of the entire desktop
+    # see http://aspn.activestate.com/ASPN/Mail/Message/wxpython-users/3575899
+    # created by Andrea Gavana
+    rect = win.GetRect()
+
+    sx, sy = win.ClientToScreen((0, 0))
+    rect.x = sx
+    rect.y = sy
+
+    dcScreen = wx.ScreenDC()
+
+    try:
+        # print("trying screenDC subbitmap: %s" % str(rect))
+        drag_bitmap = dcScreen.GetAsBitmap().GetSubBitmap(rect)
+    except wx.wxAssertionError:
+        # print("creating bitmap manually")
+        drag_bitmap = wx.Bitmap(rect.width, rect.height)
+        memDC = wx.MemoryDC()
+        memDC.SelectObject(drag_bitmap)
+        memDC.Blit(0, 0, rect.width, rect.height, dcScreen, sx, sy)
+        memDC.SelectObject(wx.NullBitmap)  # sync data to bitmap
+    return rect, drag_bitmap
+
+
+class BitmapPopup(wx.PopupWindow):
+    """Adds a bit of text and mouse movement to the wx.PopupWindow"""
+    def __init__(self, parent, pos, style=wx.SIMPLE_BORDER):
+        wx.PopupWindow.__init__(self, parent, style)
+        self.SetBackgroundColour("CADET BLUE")
+        
+        rect, self.bitmap = calc_bitmap_of_window(parent)
+        x, y = parent.ClientToScreen(pos)
+        rect.x = x
+        rect.y = y
+        self.SetSize(rect)
+        self.Show()
+
+        self.Bind(wx.EVT_PAINT, self.on_paint)
+
+    def on_paint(self, evt):
+        dc = wx.PaintDC(self)
+        dc.DrawBitmap(self.bitmap, 0, 0)
+
+
+class DockingRectangleHandler(object):
+    def __init__(self):
+        self.use_transparency = True
+        self.overlay = None
+        self.docking_rectangles = []
+        self.event_window = None
+        self.drag_window = None
+        self.background_bitmap = None
+        self.pen = wx.Pen(wx.BLUE)
+        brush_color = wx.Colour(0xb0, 0xb0, 0xff, 0x80)
+        self.brush = wx.Brush(brush_color)
+
+    @property
+    def is_active(self):
+        return self.drag_window is not None
+
+    def start_docking(self, event_window, drag_window, evt):
+        # Capture the mouse and save the starting posiiton for the rubber-band
+        event_window.CaptureMouse()
+        event_window.SetFocus()
+        self.event_window = event_window
+        self.drag_window = BitmapPopup(drag_window, evt.GetPosition())
+        _, self.background_bitmap = calc_bitmap_of_window(event_window)
+        self.overlay = wx.Overlay()
+        self.overlay.Reset()
+        self.create_docking_rectangles()
+
+    def create_docking_rectangles(self):
+        rects = []
+        for win in self.event_window.calc_dock_windows():
+            rects.extend(self.create_docking_rectangle_for_window(win))
+        self.docking_rectangles = rects
+
+    def create_docking_rectangle_for_window(self, win):
+        rects = []
+        r = win.GetClientRect()
+        sx, sy = win.ClientToScreen((r.x, r.y))
+        px, py = self.event_window.ScreenToClient((sx, sy))
+        w = r.width // 4
+        h = r.height // 4
+        ty = py + r.height - h
+        rx = px + r.width - w
+        rects.append(wx.Rect(px, py, w, r.height))  # bottom
+        rects.append(wx.Rect(px, py, r.width, h))  # left
+        rects.append(wx.Rect(rx, py, w, r.height))  # right
+        rects.append(wx.Rect(px, ty, r.width, h))  # top
+        return rects
+
+    def process_dragging(self, evt):
+        pos = evt.GetPosition()
+
+        for rect in self.docking_rectangles:
+            print("checking %s in rect %s" % (pos, rect))
+            if rect.Contains(pos):
+                break
+        else:
+            print("NOT IN RECT")
+            rect = None
+
+        dc = wx.ClientDC(self.event_window)
+        odc = wx.DCOverlay(self.overlay, dc)
+        odc.Clear()
+
+        # Copy background to overlay; otherwise the overlay seems to be black?
+        # I don't know what I'm doing wrong to need this hack.
+        dc.DrawBitmap(self.background_bitmap, 0, 0)
+
+        # Mac already using GCDC
+        if 'wxMac' not in wx.PlatformInfo and self.use_transparency:
+            dc = wx.GCDC(dc)
+
+        if rect is not None:
+            dc.SetPen(self.pen)
+            dc.SetBrush(self.brush)
+            dc.DrawRectangle(rect)
+
+        pos = self.event_window.ClientToScreen(pos)
+        self.drag_window.SetPosition(pos)
+
+        del odc  # Make sure the odc is destroyed before the dc is.
+
+
+    def cleanup_docking(self, evt):
+        if self.event_window.HasCapture():
+            self.event_window.ReleaseMouse()
+        pos = evt.GetPosition()
+
+        # When the mouse is released we reset the overlay and it
+        # restores the former content to the window.
+        dc = wx.ClientDC(self.event_window)
+        odc = wx.DCOverlay(self.overlay, dc)
+        odc.Clear()
+        del odc
+        self.overlay.Reset()
+        self.overlay = None
+
+        self.drag_window.Destroy()
+        self.drag_window = None
+        self.event_window.Refresh()  # Force redraw
+        self.event_window = None
+
+        return pos
+
+
 class MultiSash(wx.Window):
     _debug_count = 1
 
@@ -72,11 +221,14 @@ class MultiSash(wx.Window):
         self.hiding_space.Hide()
         self.sidebars = []
         self.Bind(wx.EVT_SIZE, self.on_size)
+        self.Bind(wx.EVT_MOTION, self.on_motion)
+        self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
         self.last_direction = wx.VERTICAL
         self.pending_sidebar_focus = None
         self.current_sidebar_focus = None
         self.current_leaf_focus = None
         self.previous_leaf_focus_list = []
+        self.dock_handler = DockingRectangleHandler()
 
     def set_defaults(self):
         self.use_close_button = True
@@ -121,6 +273,8 @@ class MultiSash(wx.Window):
         self.unfocused_fill = wx.Brush(self.unfocused_text_color, wx.SOLID)
 
         self.close_button_size = (11, 11)
+
+        self.mouse_delta_for_window_move = 4
 
     def get_text_size(self, text):
         return self.memory_dc.GetTextExtent(text)
@@ -353,6 +507,31 @@ class MultiSash(wx.Window):
         cls._debug_count += 1
         return "%s-%d" % (name, cls._debug_count)
 
+    #### Dynamic positioning of child windows
+
+    def on_motion(self, evt):
+        if self.dock_handler.is_active:
+            pos = evt.GetPosition()
+            print("In main window!", pos)
+            self.dock_handler.process_dragging(evt)
+
+    def on_left_up(self, evt):
+        if self.dock_handler.is_active:
+            print("Back to normal")
+            self.dock_handler.cleanup_docking(evt)
+
+    def start_child_window_move(self, client, evt):
+        self.dock_handler.start_docking(self, client, evt)
+
+    def calc_clients(self):
+        clients = []
+        self.child.calc_clients(clients)
+        return clients
+
+    def calc_dock_windows(self):
+        clients = self.calc_clients()
+        print("CLIENST!", clients)
+        return clients
 
 
 class EmptyChild(wx.Window):
@@ -518,6 +697,7 @@ class MultiSizer(wx.Window):
 
 class MultiWindowBase(wx.Window):
     debug_letter = "A"
+    main_window_leaf = False
 
     @classmethod
     def next_debug_letter(cls):
@@ -603,6 +783,12 @@ class ViewContainer(object):
                 return found
         return None
 
+    def calc_clients(self, clients):
+        for view in self.views:
+            if view.main_window_leaf:
+                clients.append(view.client)
+            else:
+                view.calc_clients(clients)
 
 class MultiSplit(MultiWindowBase, ViewContainer):
     def __init__(self, multiView, parent, layout_direction=wx.HORIZONTAL, ratio=1.0, leaf=None, layout=None):
@@ -984,10 +1170,28 @@ class TitleBar(wx.Window):
         self.set_buttons_for_sidebar_state(in_sidebar)
         self.hide_buttons()
 
+        self.mouse_down_pos = None
+
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEAVE_WINDOW,self.on_leave)
         self.Bind(wx.EVT_ENTER_WINDOW,self.on_enter)
+        self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
+        self.Bind(wx.EVT_MOTION, self.on_motion)
+
+    def on_left_down(self, evt):
+        self.mouse_down_pos = evt.GetPosition()
+        evt.Skip()
+
+    def on_motion(self, evt):
+        old = self.mouse_down_pos
+        if evt.LeftIsDown() and old is not None:
+            pos = evt.GetPosition()
+            d = self.client.multiView.mouse_delta_for_window_move
+            if abs(old.x - pos.x) > d or abs(old.y - pos.y) > d:
+                self.hide_buttons()
+                self.mouse_down_pos = None
+                self.client.multiView.start_child_window_move(self.client, evt)
 
     def set_buttons_for_sidebar_state(self, in_sidebar):
         for button in self.buttons:
