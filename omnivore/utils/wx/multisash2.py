@@ -133,23 +133,8 @@ class DockingRectangleHandler(object):
     def create_docking_rectangles(self):
         rects = []
         for leaf in self.event_window.calc_dock_targets():
-            rects.extend(self.create_docking_rectangle_for_target(leaf))
+            rects.extend(leaf.calc_docking_rectangles(self.event_window, self.source_leaf))
         self.docking_rectangles = rects
-
-    def create_docking_rectangle_for_target(self, leaf):
-        rects = []
-        r = leaf.GetClientRect()
-        sx, sy = leaf.ClientToScreen((r.x, r.y))
-        px, py = self.event_window.ScreenToClient((sx, sy))
-        w = r.width // 4
-        h = r.height // 4
-        ty = py + r.height - h
-        rx = px + r.width - w
-        rects.append((leaf, wx.LEFT, wx.Rect(px, py, w, r.height)))  # left
-        rects.append((leaf, wx.BOTTOM, wx.Rect(px, py, r.width, h)))  # bottom
-        rects.append((leaf, wx.RIGHT, wx.Rect(rx, py, w, r.height)))  # right
-        rects.append((leaf, wx.TOP, wx.Rect(px, ty, r.width, h)))  # top
-        return rects
 
     def in_rect(self, pos):
         for dock_info in self.docking_rectangles:
@@ -220,6 +205,37 @@ class DockingRectangleHandler(object):
         self.current_dock = None
         self.docking_rectangles = None
         return leaf, leaf_to_split, side
+
+
+class DockTarget(object):
+    def get_rectangle_relative_to(self, event_window):
+        r = self.GetClientRect()
+        sx, sy = self.ClientToScreen((r.x, r.y))
+        px, py = event_window.ScreenToClient((sx, sy))
+        return wx.Rect(px, py, r.width, r.height)
+
+    def calc_docking_rectangles(self, event_window, source_leaf):
+        rects = []
+        r = self.get_rectangle_relative_to(event_window)
+        if source_leaf == self:
+            # dummy rectangle for feedback, but can't drop on itself
+            rects.append((None, None, r))
+        else:
+            w = r.width // 4
+            h = r.height // 4
+            ty = r.y + r.height - h
+            rx = r.x + r.width - w
+            rects.append((self, wx.LEFT, wx.Rect(r.x, r.y, w, r.height)))  # left
+            rects.append((self, wx.BOTTOM, wx.Rect(r.x, r.y, r.width, h)))  # bottom
+            rects.append((self, wx.RIGHT, wx.Rect(rx, r.y, w, r.height)))  # right
+            rects.append((self, wx.TOP, wx.Rect(r.x, ty, r.width, h)))  # top
+        return rects
+
+    def process_dock_target(self, leaf, side):
+        print("inserting leaf=%s, splitting leaf=%s on side=%s" % (leaf, self, side))
+        leaf.detach()
+        self.multiView.do_layout()
+        self.split_side(new_side=side, view=leaf)
 
 
 class MultiSash(wx.Window):
@@ -551,10 +567,7 @@ class MultiSash(wx.Window):
                 if leaf == leaf_to_split:
                     print("nop: splitting and inserting same leaf")
                 else:
-                    print("inserting leaf=%s, splitting leaf=%s on side=%s" % (leaf, leaf_to_split, side))
-                    leaf.detach()
-                    self.do_layout()
-                    leaf_to_split.split_side(new_side=side, view=leaf)
+                    leaf_to_split.process_dock_target(leaf, side)
 
     def start_child_window_move(self, source_leaf, evt):
         self.dock_handler.start_docking(self, source_leaf, evt)
@@ -979,7 +992,7 @@ class MultiSplit(MultiWindowBase, ViewContainer):
 ########## Leaf (Client Container) ##########
 
 
-class MultiViewLeaf(MultiWindowBase):
+class MultiViewLeaf(MultiWindowBase, DockTarget):
     main_window_leaf = True
 
     def __init__(self, multiView, parent, ratio=1.0, child=None, u=None, layout=None):
