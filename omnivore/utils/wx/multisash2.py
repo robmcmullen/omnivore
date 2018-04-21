@@ -107,7 +107,7 @@ class DockingRectangleHandler(object):
         self.event_window = None
         self.drag_window = None
         self.background_bitmap = None
-        self.current_rect = None
+        self.current_dock = None
         self.pen = wx.Pen(wx.BLUE)
         brush_color = wx.Colour(0xb0, 0xb0, 0xff, 0x80)
         self.brush = wx.Brush(brush_color)
@@ -120,7 +120,7 @@ class DockingRectangleHandler(object):
         # Capture the mouse and save the starting posiiton for the rubber-band
         event_window.CaptureMouse()
         event_window.SetFocus()
-        self.current_rect = None
+        self.current_dock = None
         self.event_window = event_window
         self.drag_window = BitmapPopup(drag_window, evt.GetPosition())
         _, self.background_bitmap = calc_bitmap_of_window(event_window)
@@ -130,39 +130,40 @@ class DockingRectangleHandler(object):
 
     def create_docking_rectangles(self):
         rects = []
-        for win in self.event_window.calc_dock_windows():
-            rects.extend(self.create_docking_rectangle_for_window(win))
+        for client in self.event_window.calc_client_dock_windows():
+            rects.extend(self.create_docking_rectangle_for_window(client))
         self.docking_rectangles = rects
 
-    def create_docking_rectangle_for_window(self, win):
+    def create_docking_rectangle_for_window(self, client):
         rects = []
-        r = win.GetClientRect()
-        sx, sy = win.ClientToScreen((r.x, r.y))
+        r = client.GetClientRect()
+        sx, sy = client.ClientToScreen((r.x, r.y))
         px, py = self.event_window.ScreenToClient((sx, sy))
         w = r.width // 4
         h = r.height // 4
         ty = py + r.height - h
         rx = px + r.width - w
-        rects.append(wx.Rect(px, py, w, r.height))  # bottom
-        rects.append(wx.Rect(px, py, r.width, h))  # left
-        rects.append(wx.Rect(rx, py, w, r.height))  # right
-        rects.append(wx.Rect(px, ty, r.width, h))  # top
+        rects.append((client, wx.LEFT, wx.Rect(px, py, w, r.height)))  # left
+        rects.append((client, wx.BOTTOM, wx.Rect(px, py, r.width, h)))  # bottom
+        rects.append((client, wx.RIGHT, wx.Rect(rx, py, w, r.height)))  # right
+        rects.append((client, wx.TOP, wx.Rect(px, ty, r.width, h)))  # top
         return rects
 
     def in_rect(self, pos):
-        for rect in self.docking_rectangles:
+        for dock_info in self.docking_rectangles:
+            _, _, rect = dock_info
             print("checking %s in rect %s" % (pos, rect))
             if rect.Contains(pos):
                 break
         else:
             print("NOT IN RECT")
-            rect = None
-        return rect
+            dock_info = None
+        return dock_info
 
     def process_dragging(self, evt):
         pos = evt.GetPosition()
 
-        self.current_rect = self.in_rect(pos)
+        self.current_dock = self.in_rect(pos)
 
         dc = wx.ClientDC(self.event_window)
         odc = wx.DCOverlay(self.overlay, dc)
@@ -177,10 +178,10 @@ class DockingRectangleHandler(object):
             # platform difference
             dc.DrawBitmap(self.background_bitmap, 0, 0)
 
-        if self.current_rect is not None:
+        if self.current_dock is not None:
             dc.SetPen(self.pen)
             dc.SetBrush(self.brush)
-            dc.DrawRectangle(self.current_rect)
+            dc.DrawRectangle(self.current_dock[2])
 
         pos = self.event_window.ClientToScreen(pos)
         self.drag_window.SetPosition(pos)
@@ -207,9 +208,9 @@ class DockingRectangleHandler(object):
         self.event_window.Refresh()  # Force redraw
         self.event_window = None
 
-        rect = self.current_rect
+        dock = self.current_dock
         self.docking_rectangles = None
-        return rect
+        return dock
 
 
 class MultiSash(wx.Window):
@@ -530,7 +531,10 @@ class MultiSash(wx.Window):
     def on_left_up(self, evt):
         if self.dock_handler.is_active:
             rect = self.dock_handler.cleanup_docking(evt)
-            print("chose rect: %s" % rect)
+            print("chose rect: %s" % str(rect))
+            if rect is not None:
+                client, side, _ = rect
+                client.split_side(side)
 
     def start_child_window_move(self, client, evt):
         self.dock_handler.start_docking(self, client, evt)
@@ -540,7 +544,7 @@ class MultiSash(wx.Window):
         self.child.calc_clients(clients)
         return clients
 
-    def calc_dock_windows(self):
+    def calc_client_dock_windows(self):
         clients = self.calc_clients()
         print("CLIENST!", clients)
         return clients
