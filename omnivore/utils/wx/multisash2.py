@@ -105,7 +105,8 @@ class DockingRectangleHandler(object):
         self.overlay = None
         self.docking_rectangles = []
         self.event_window = None
-        self.drag_window = None
+        self.source_leaf = None
+        self.popup_window = None
         self.background_bitmap = None
         self.current_dock = None
         self.pen = wx.Pen(wx.BLUE)
@@ -114,15 +115,16 @@ class DockingRectangleHandler(object):
 
     @property
     def is_active(self):
-        return self.drag_window is not None
+        return self.popup_window is not None
 
-    def start_docking(self, event_window, drag_window, evt):
+    def start_docking(self, event_window, source_leaf, evt):
         # Capture the mouse and save the starting posiiton for the rubber-band
         event_window.CaptureMouse()
         event_window.SetFocus()
         self.current_dock = None
         self.event_window = event_window
-        self.drag_window = BitmapPopup(drag_window, evt.GetPosition())
+        self.source_leaf = source_leaf
+        self.popup_window = BitmapPopup(source_leaf, evt.GetPosition())
         _, self.background_bitmap = calc_bitmap_of_window(event_window)
         self.overlay = wx.Overlay()
         self.overlay.Reset()
@@ -130,23 +132,23 @@ class DockingRectangleHandler(object):
 
     def create_docking_rectangles(self):
         rects = []
-        for client in self.event_window.calc_client_dock_windows():
-            rects.extend(self.create_docking_rectangle_for_window(client))
+        for leaf in self.event_window.calc_dock_targets():
+            rects.extend(self.create_docking_rectangle_for_target(leaf))
         self.docking_rectangles = rects
 
-    def create_docking_rectangle_for_window(self, client):
+    def create_docking_rectangle_for_target(self, leaf):
         rects = []
-        r = client.GetClientRect()
-        sx, sy = client.ClientToScreen((r.x, r.y))
+        r = leaf.GetClientRect()
+        sx, sy = leaf.ClientToScreen((r.x, r.y))
         px, py = self.event_window.ScreenToClient((sx, sy))
         w = r.width // 4
         h = r.height // 4
         ty = py + r.height - h
         rx = px + r.width - w
-        rects.append((client, wx.LEFT, wx.Rect(px, py, w, r.height)))  # left
-        rects.append((client, wx.BOTTOM, wx.Rect(px, py, r.width, h)))  # bottom
-        rects.append((client, wx.RIGHT, wx.Rect(rx, py, w, r.height)))  # right
-        rects.append((client, wx.TOP, wx.Rect(px, ty, r.width, h)))  # top
+        rects.append((leaf, wx.LEFT, wx.Rect(px, py, w, r.height)))  # left
+        rects.append((leaf, wx.BOTTOM, wx.Rect(px, py, r.width, h)))  # bottom
+        rects.append((leaf, wx.RIGHT, wx.Rect(rx, py, w, r.height)))  # right
+        rects.append((leaf, wx.TOP, wx.Rect(px, ty, r.width, h)))  # top
         return rects
 
     def in_rect(self, pos):
@@ -184,7 +186,7 @@ class DockingRectangleHandler(object):
             dc.DrawRectangle(self.current_dock[2])
 
         pos = self.event_window.ClientToScreen(pos)
-        self.drag_window.SetPosition(pos)
+        self.popup_window.SetPosition(pos)
 
         del odc  # Make sure the odc is destroyed before the dc is.
 
@@ -203,14 +205,21 @@ class DockingRectangleHandler(object):
         self.overlay.Reset()
         self.overlay = None
 
-        self.drag_window.Destroy()
-        self.drag_window = None
+        self.popup_window.Destroy()
+        self.popup_window = None
         self.event_window.Refresh()  # Force redraw
         self.event_window = None
+        leaf = self.source_leaf
+        self.source_leaf = None
 
-        dock = self.current_dock
+        if self.current_dock is not None:
+            leaf_to_split, side, _ = self.current_dock
+        else:
+            leaf_to_split = None
+            side = None
+        self.current_dock = None
         self.docking_rectangles = None
-        return dock
+        return leaf, leaf_to_split, side
 
 
 class MultiSash(wx.Window):
@@ -362,8 +371,15 @@ class MultiSash(wx.Window):
     def clear_leaf_focus(self):
         current = self.current_leaf_focus
         print("clear_leaf_focus", current)
-        if current:  # fails if None or non-existent proxy
+        try:
             current.client.clear_focus()
+        except ReferenceError:
+            # weakref referrant has been deleted!
+            pass
+        except AttributeError:
+            # weakref referrant has been deleted!
+            pass
+        else:
             if current.main_window_leaf:
                 self.previous_leaf_focus_list.append(current)
         print("previous_leaf_focus_list", str(self.previous_leaf_focus_list))
@@ -530,24 +546,24 @@ class MultiSash(wx.Window):
 
     def on_left_up(self, evt):
         if self.dock_handler.is_active:
-            rect = self.dock_handler.cleanup_docking(evt)
-            print("chose rect: %s" % str(rect))
-            if rect is not None:
-                client, side, _ = rect
-                client.split_side(side)
+            leaf, leaf_to_split, side = self.dock_handler.cleanup_docking(evt)
+            if leaf_to_split is not None:
+                if leaf == leaf_to_split:
+                    print("nop: splitting and inserting same leaf")
+                else:
+                    print("inserting leaf=%s, splitting leaf=%s on side=%s" % (leaf, leaf_to_split, side))
+                    leaf.detach()
+                    self.do_layout()
+                    leaf_to_split.split_side(new_side=side, view=leaf)
 
-    def start_child_window_move(self, client, evt):
-        self.dock_handler.start_docking(self, client, evt)
+    def start_child_window_move(self, source_leaf, evt):
+        self.dock_handler.start_docking(self, source_leaf, evt)
 
-    def calc_clients(self):
-        clients = []
-        self.child.calc_clients(clients)
-        return clients
-
-    def calc_client_dock_windows(self):
-        clients = self.calc_clients()
-        print("CLIENST!", clients)
-        return clients
+    def calc_dock_targets(self):
+        targets = []
+        self.child.calc_dock_targets(targets)
+        print("dock targets: %s", str(targets))
+        return targets
 
 
 class EmptyChild(wx.Window):
@@ -738,6 +754,11 @@ class MultiWindowBase(wx.Window):
             self.debug_id = self.next_debug_letter()
         self.SetBackgroundColour(wx.RED)
 
+    def reparent_to(self, viewer, ratio):
+        self.Reparent(viewer)
+        self.sizer.Reparent(viewer)
+        self.ratio_in_parent = ratio
+
     def do_layout(self):
         raise NotImplementedError
 
@@ -799,12 +820,12 @@ class ViewContainer(object):
                 return found
         return None
 
-    def calc_clients(self, clients):
+    def calc_dock_targets(self, targets):
         for view in self.views:
             if view.main_window_leaf:
-                clients.append(view.client)
+                targets.append(view)
             else:
-                view.calc_clients(clients)
+                view.calc_dock_targets(targets)
 
 class MultiSplit(MultiWindowBase, ViewContainer):
     def __init__(self, multiView, parent, layout_direction=wx.HORIZONTAL, ratio=1.0, leaf=None, layout=None):
@@ -815,10 +836,8 @@ class MultiSplit(MultiWindowBase, ViewContainer):
         else:
             self.layout_direction = layout_direction
             if leaf:
-                leaf.Reparent(self)
-                leaf.sizer.Reparent(self)
+                leaf.reparent_to(self, 1.0)
                 leaf.Move(0,0)
-                leaf.ratio_in_parent = 1.0
             else:
                 leaf = MultiViewLeaf(self.multiView, self, 1.0)
             self.views.append(leaf)
@@ -838,14 +857,16 @@ class MultiSplit(MultiWindowBase, ViewContainer):
         current = self.find_leaf_index(leaf)
         return self.views[current + 1]
 
-    def split(self, leaf, control=None, uuid=None, new_side=wx.RIGHT):
+    def split(self, leaf, control=None, uuid=None, new_side=wx.RIGHT, view=None):
+        log.debug("split: using view %s" % view)
         layout_direction = side_to_direction[new_side]
         if layout_direction != self.layout_direction:
-            self.split_opposite(leaf, control, uuid, new_side)
+            new_view = self.split_opposite(leaf, control, uuid, new_side, view)
         else:
-            self.split_same(leaf, control, uuid, new_side)
+            new_view = self.split_same(leaf, control, uuid, new_side, view)
+        return new_view
 
-    def split_same(self, leaf, control=None, uuid=None, new_side=wx.LEFT):
+    def split_same(self, leaf, control=None, uuid=None, new_side=wx.LEFT, view=None):
         view_index_to_split = self.find_leaf_index(leaf)
         if new_side & (wx.LEFT|wx.TOP):
             # insert at beginning of list
@@ -855,18 +876,22 @@ class MultiSplit(MultiWindowBase, ViewContainer):
         ratio = leaf.ratio_in_parent / 2.0
         leaf.ratio_in_parent = ratio
 
-        if control is None:
-            control = self.multiView._defChild(self)
-        view = MultiViewLeaf(self.multiView, self, ratio, control, uuid)
+        if view is None:
+            if control is None:
+                control = self.multiView._defChild(self)
+            view = MultiViewLeaf(self.multiView, self, ratio, control, uuid)
+        else:
+            view.reparent_to(self, ratio)
         self.views[insert_pos:insert_pos] = [view]
         self.do_layout()
+        return view
 
-    def split_opposite(self, leaf, control=None, uuid=None, new_side=wx.LEFT):
+    def split_opposite(self, leaf, control=None, uuid=None, new_side=wx.LEFT, view=None):
         view_index_to_split = self.find_leaf_index(leaf)
         subsplit = MultiSplit(self.multiView, self, opposite[self.layout_direction], leaf.ratio_in_parent, leaf)
         self.views[view_index_to_split] = subsplit
         self.do_layout()
-        subsplit.split_same(leaf, control, uuid, new_side)
+        return subsplit.split_same(leaf, control, uuid, new_side, view)
 
     def do_layout(self):
         w, h, full_size = self.layout_calculator.calc_size(self)
@@ -908,16 +933,16 @@ class MultiSplit(MultiWindowBase, ViewContainer):
                 view = MultiViewLeaf(self.multiView, self, layout=layout)
             self.views.append(view)
 
-    def destroy_leaf(self, view):
-        log.debug("destroy_leaf: view=%s views=%s self=%s parent=%s" % (view, self.views, self, self.GetParent()))
+    def detach_leaf(self, view):
+        log.debug("detach_leaf: view=%s views=%s self=%s parent=%s" % (view, self.views, self, self.GetParent()))
         index = self.find_leaf_index(view)  # raise IndexError
+        view.reparent_to(self.multiView.hiding_space, 0.1)
         if len(self.views) > 2:
             log.debug("deleting > 2: %d %s" %(index, self.views))
             del self.views[index]
             r = view.ratio_in_parent / len(self.views)
             for v in self.views:
                 v.ratio_in_parent += r
-            view.remove()
             self.do_layout()
         elif len(self.views) == 2:
             log.debug("deleting == 2: %d %s, parent=%s self=%s" % (index, self.views, self.GetParent(), self))
@@ -925,7 +950,6 @@ class MultiSplit(MultiWindowBase, ViewContainer):
             # Instead of leaving it like this, move it up into the parent
             # multisplit
             del self.views[index]
-            view.remove()
             if self.GetParent() == self.multiView:
                 # Only one item left.
                 log.debug("  last item in %s!" % (self))
@@ -939,12 +963,14 @@ class MultiSplit(MultiWindowBase, ViewContainer):
             log.debug("Removing the last item!", view)
             self.GetParent().remove_all()
 
+    def destroy_leaf(self, view):
+        self.detach_leaf(view)
+        view.remove()
+
     def reparent_from_splitter(self, splitter):
         index = self.find_leaf_index(splitter)  # raise IndexError
         view = splitter.views[0]
-        view.ratio_in_parent = splitter.ratio_in_parent
-        view.Reparent(self)
-        view.sizer.Reparent(self)
+        view.reparent_to(self, splitter.ratio_in_parent)
         self.views[index] = view
         splitter.remove()
         self.do_layout()
@@ -966,15 +992,22 @@ class MultiViewLeaf(MultiWindowBase):
         self.SetBackgroundColour(multiView.unfocused_color)
 
     def __repr__(self):
-        return "<MultiLeaf %s %f>" % (self.debug_id, self.ratio_in_parent)
+        return "<MultiLeaf %s %s %f>" % (self.client.child.GetName(), self.debug_id, self.ratio_in_parent)
 
     def remove(self):
-        self.client.do_send_close_event()
+        self.remove_client()
         self.sizer.Destroy()
         self.Destroy()
 
     def remove_all(self):
         self.remove()
+
+    def remove_client(self):
+        self.client.remove()
+        self.client = None
+
+    def detach(self):
+        self.GetParent().detach_leaf(self)
 
     def find_uuid(self, uuid):
         if uuid == self.client.child_uuid:
@@ -1022,11 +1055,11 @@ class MultiViewLeaf(MultiWindowBase):
     def get_multi_split(self):
         return self.GetParent()
 
-    def split(self, *args, **kwargs):
-        self.GetParent().split(self, *args, **kwargs)
+    def split_side(self, new_side, view=None):
+        return self.GetParent().split(self, new_side=new_side, view=view)
 
     def destroy_leaf(self):
-        self.GetParent().destroy_leaf(self)
+        return self.GetParent().destroy_leaf(self)
 
     def do_layout(self):
         self.client.do_size_from_parent()
@@ -1071,6 +1104,10 @@ class MultiClient(wx.Window):
 
         self.Bind(wx.EVT_SET_FOCUS, self.on_set_focus)
         self.Bind(wx.EVT_CHILD_FOCUS, self.on_child_focus)
+
+    def remove(self):
+        self.do_send_close_event()
+        self.Destroy()
 
     def do_send_event(self, evt):
         return not self.GetEventHandler().ProcessEvent(evt) or evt.IsAllowed()
@@ -1147,6 +1184,11 @@ class MultiClient(wx.Window):
         self.move_child()
         self.do_size_from_parent()
 
+    def reparent_to_new_leaf(self, leaf):
+        self.Reparent(leaf)
+        self.leaf = leaf
+        self.leaf.client = self
+
     def move_child(self):
         self.title_bar.Move(0, 0)
         self.child.Move(0, self.multiView.title_bar_height)
@@ -1170,8 +1212,8 @@ class MultiClient(wx.Window):
     def destroy_thyself(self):
         wx.CallAfter(self.leaf.destroy_leaf)
 
-    def split_side(self, new_side=wx.LEFT):
-        self.leaf.split(new_side=new_side)
+    def split_side(self, new_side, view=None):
+        return self.leaf.split_side(new_side, view)
 
 
 ########## Title Bar ##########
@@ -1216,7 +1258,7 @@ class TitleBar(wx.Window):
             if abs(old.x - pos.x) > d or abs(old.y - pos.y) > d:
                 self.hide_buttons()
                 self.mouse_down_pos = None
-                self.client.multiView.start_child_window_move(self.client, evt)
+                self.client.multiView.start_child_window_move(self.client.leaf, evt)
 
     def set_buttons_for_sidebar_state(self, in_sidebar):
         for button in self.buttons:
