@@ -396,7 +396,7 @@ class MultiSash(wx.Window):
             # weakref referrant has been deleted!
             pass
         else:
-            if current.main_window_leaf:
+            if current.can_take_leaf_focus:
                 self.previous_leaf_focus_list.append(current)
         print("previous_leaf_focus_list", str(self.previous_leaf_focus_list))
         self.current_leaf_focus = None
@@ -746,7 +746,7 @@ class MultiSizer(wx.Window):
 
 class MultiWindowBase(wx.Window):
     debug_letter = "A"
-    main_window_leaf = False
+    can_take_leaf_focus = False
 
     @classmethod
     def next_debug_letter(cls):
@@ -839,10 +839,11 @@ class ViewContainer(object):
 
     def calc_dock_targets(self, targets):
         for view in self.views:
-            if view.main_window_leaf:
-                targets.append(view)
-            else:
+            try:
                 view.calc_dock_targets(targets)
+            except AttributeError:
+                if hasattr(view, 'calc_docking_rectangles'):
+                    targets.append(view)
 
 class MultiSplit(MultiWindowBase, ViewContainer):
     def __init__(self, multiView, parent, layout_direction=wx.HORIZONTAL, ratio=1.0, leaf=None, layout=None):
@@ -997,7 +998,7 @@ class MultiSplit(MultiWindowBase, ViewContainer):
 
 
 class MultiViewLeaf(MultiWindowBase, DockTarget):
-    main_window_leaf = True
+    can_take_leaf_focus = True
 
     def __init__(self, multiView, parent, ratio=1.0, child=None, u=None, layout=None):
         MultiWindowBase.__init__(self, multiView, parent, ratio, name="MultiViewLeaf")
@@ -1513,7 +1514,7 @@ class TitleBarHSplitNewTop(TitleBarButton):
 
 class SidebarBaseRenderer(object):
     @classmethod
-    def calc_view_start(self, w, h):
+    def calc_view_start(cls, w, h):
         return 0
 
     @classmethod
@@ -1525,7 +1526,7 @@ class SidebarBaseRenderer(object):
 
 class SidebarVerticalRenderer(SidebarBaseRenderer):
     @classmethod
-    def do_view_size(self, view, pos, w, h):
+    def do_view_size(cls, view, pos, w, h):
         m = view.multiView
         text_width, text_height = m.get_text_size(view.client.popup_name)
         size = text_width + 2 * m.sidebar_margin
@@ -1535,13 +1536,13 @@ class SidebarVerticalRenderer(SidebarBaseRenderer):
         return pos + size
 
     @classmethod
-    def draw_label(self, dc, view):
+    def draw_label(cls, dc, view):
         w, h = view.GetSize()
         dc.DrawRectangle(0, 0, w, h)
         dc.DrawRotatedText(view.client.popup_name, view.label_x, view.label_y, 90.0)
 
     @classmethod
-    def show_client_prevent_clipping(self, sidebar, view, x, y):
+    def show_client_prevent_clipping(cls, sidebar, view, x, y):
         cw, ch = view.client.GetBestSize()
         x_min, y_min, sw, sh = sidebar.multiView.calc_usable_rect()
         if y + ch > y_min + sh:
@@ -1554,11 +1555,13 @@ class SidebarVerticalRenderer(SidebarBaseRenderer):
         sidebar.do_popup_view(view, x, y, cw, ch)
 
     @classmethod
-    def calc_docking_rectangles_relative_to(self, r):
+    def calc_docking_rectangles_relative_to(cls, target_to_split, r):
+        rects = []
         h = r.height // 3
         ty = r.y + r.height - h
-        rects.append((self, wx.BOTTOM, wx.Rect(r.x, r.y, r.width, h)))  # bottom
-        rects.append((self, wx.TOP, wx.Rect(r.x, ty, r.width, h)))  # top
+        rects.append((target_to_split, wx.BOTTOM, wx.Rect(r.x, r.y, r.width, h)))  # bottom
+        rects.append((target_to_split, wx.TOP, wx.Rect(r.x, ty, r.width, h)))  # top
+        return rects
 
 
 class SidebarLeftRenderer(SidebarVerticalRenderer):
@@ -1592,7 +1595,7 @@ class SidebarRightRenderer(SidebarVerticalRenderer):
 
 class SidebarHorizontalRenderer(SidebarBaseRenderer):
     @classmethod
-    def do_view_size(self, view, pos, w, h):
+    def do_view_size(cls, view, pos, w, h):
         m = view.multiView
         text_width, text_height = m.get_text_size(view.client.popup_name)
         size = text_width + 2 * m.sidebar_margin
@@ -1602,13 +1605,13 @@ class SidebarHorizontalRenderer(SidebarBaseRenderer):
         return pos + size
 
     @classmethod
-    def draw_label(self, dc, view):
+    def draw_label(cls, dc, view):
         w, h = view.GetSize()
         dc.DrawRectangle(0, 0, w, h)
         dc.DrawText(view.client.popup_name, view.label_x, view.label_y)
 
     @classmethod
-    def show_client_prevent_clipping(self, sidebar, view, x, y):
+    def show_client_prevent_clipping(cls, sidebar, view, x, y):
         cw, ch = view.client.GetBestSize()
         x_min, y_min, sw, sh = sidebar.multiView.calc_usable_rect()
         x = max(x, x_min)
@@ -1624,11 +1627,13 @@ class SidebarHorizontalRenderer(SidebarBaseRenderer):
         sidebar.do_popup_view(view, x, y, cw, ch)
 
     @classmethod
-    def calc_docking_rectangles_relative_to(self, r):
+    def calc_docking_rectangles_relative_to(cls, target_to_split, r):
+        rects = []
         w = r.width // 3
         rx = r.x + r.width - w
-        rects.append((self, wx.LEFT, wx.Rect(r.x, r.y, w, r.height)))  # left
-        rects.append((self, wx.RIGHT, wx.Rect(rx, r.y, w, r.height)))  # right
+        rects.append((target_to_split, wx.LEFT, wx.Rect(r.x, r.y, w, r.height)))  # left
+        rects.append((target_to_split, wx.RIGHT, wx.Rect(rx, r.y, w, r.height)))  # right
+        return rects
 
 
 class SidebarTopRenderer(SidebarHorizontalRenderer):
@@ -1661,7 +1666,7 @@ class SidebarBottomRenderer(SidebarHorizontalRenderer):
 
 
 class SidebarMenuItem(wx.Window, DockTarget):
-    main_window_leaf = False
+    can_take_leaf_focus = False
 
     def __init__(self, sidebar, child, uuid=None):
         wx.Window.__init__(self, sidebar, -1, name=MultiSash.debug_window_name("SidebarMenuItem"))
@@ -1693,7 +1698,7 @@ class SidebarMenuItem(wx.Window, DockTarget):
             # dummy rectangle for feedback, but can't drop on itself
             rects = [(None, None, r)]
         else:
-            rects = self.sidebar.title_renderer.calc_docking_rectangles_relative_to(r)
+            rects = self.sidebar.title_renderer.calc_docking_rectangles_relative_to(self, r)
         return rects
 
     def process_dock_target(self, leaf, side):
