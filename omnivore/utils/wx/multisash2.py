@@ -1549,6 +1549,13 @@ class SidebarVerticalRenderer(SidebarBaseRenderer):
             cw = sw
         sidebar.do_popup_view(view, x, y, cw, ch)
 
+    @classmethod
+    def calc_docking_rectangles_relative_to(self, r):
+        h = r.height // 3
+        ty = r.y + r.height - h
+        rects.append((self, wx.BOTTOM, wx.Rect(r.x, r.y, r.width, h)))  # bottom
+        rects.append((self, wx.TOP, wx.Rect(r.x, ty, r.width, h)))  # top
+
 
 class SidebarLeftRenderer(SidebarVerticalRenderer):
     @classmethod
@@ -1612,6 +1619,13 @@ class SidebarHorizontalRenderer(SidebarBaseRenderer):
             ch = sh
         sidebar.do_popup_view(view, x, y, cw, ch)
 
+    @classmethod
+    def calc_docking_rectangles_relative_to(self, r):
+        w = r.width // 3
+        rx = r.x + r.width - w
+        rects.append((self, wx.LEFT, wx.Rect(r.x, r.y, w, r.height)))  # left
+        rects.append((self, wx.RIGHT, wx.Rect(rx, r.y, w, r.height)))  # right
+
 
 class SidebarTopRenderer(SidebarHorizontalRenderer):
     @classmethod
@@ -1642,7 +1656,7 @@ class SidebarBottomRenderer(SidebarHorizontalRenderer):
         return x, y, w, h - thickness
 
 
-class SidebarMenuItem(wx.Window):
+class SidebarMenuItem(wx.Window, DockTarget):
     main_window_leaf = False
 
     def __init__(self, sidebar, child, uuid=None):
@@ -1668,6 +1682,15 @@ class SidebarMenuItem(wx.Window):
         self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
+
+    def calc_docking_rectangles(self, event_window, source_leaf):
+        r = self.get_rectangle_relative_to(event_window)
+        if source_leaf == self:
+            # dummy rectangle for feedback, but can't drop on itself
+            rects = [(None, None, r)]
+        else:
+            rects = self.sidebar.title_renderer.calc_docking_rectangles_relative_to(r)
+        return rects
 
     def on_paint(self, event):
         dc = wx.PaintDC(self)
