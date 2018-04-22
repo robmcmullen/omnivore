@@ -574,8 +574,12 @@ class MultiSash(wx.Window):
 
     def calc_dock_targets(self):
         targets = []
+        for sidebar in self.sidebars:
+            print("checking sidebar %s" % sidebar)
+            sidebar.calc_dock_targets(targets)
+        print("dock targets from sidebars: %s" % str(targets))
         self.child.calc_dock_targets(targets)
-        print("dock targets: %s", str(targets))
+        print("dock targets: %s" % str(targets))
         return targets
 
 
@@ -1691,6 +1695,9 @@ class SidebarMenuItem(wx.Window, DockTarget):
         else:
             rects = self.sidebar.title_renderer.calc_docking_rectangles_relative_to(r)
         return rects
+
+    def process_dock_target(self, leaf, side):
+        print("ADDING %s TO SIDEBAR %s" % (leaf, self.sidebar.side))
 
     def on_paint(self, event):
         dc = wx.PaintDC(self)
