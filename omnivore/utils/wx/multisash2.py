@@ -53,6 +53,13 @@ side_to_direction = {
     wx.BOTTOM: wx.VERTICAL,
     }
 
+pretty_direction = {
+    wx.LEFT: "left",
+    wx.RIGHT: "right",
+    wx.TOP: "top",
+    wx.BOTTOM: "bottom",
+    }
+
 
 def calc_bitmap_of_window(win):
     # modified from a snipped that creates a screenshot of the entire desktop
@@ -208,6 +215,16 @@ class DockingRectangleHandler(object):
 
 
 class DockTarget(object):
+    def detach_client(self):
+        if self.client is not None:
+            client = self.client
+            client.Reparent(self.multiView.hiding_space)
+            self.client = None
+
+    def attach_client(self, client):
+        self.client = client
+        self.client.set_leaf(self)
+
     def get_rectangle_relative_to(self, event_window):
         r = self.GetClientRect()
         sx, sy = self.ClientToScreen((r.x, r.y))
@@ -259,7 +276,7 @@ class MultiSash(wx.Window):
         self.set_defaults()
         self._defChild = EmptyChild
         self.child = MultiSplit(self, self, layout_direction)
-        self.hiding_space = wx.Window(self, -1, name="reparenting hiding space")
+        self.hiding_space = HidingSpace(self, -1, name="reparenting hiding space")
         self.hiding_space.Hide()
         self.sidebars = []
         self.Bind(wx.EVT_SIZE, self.on_size)
@@ -895,9 +912,8 @@ class MultiSplit(MultiWindowBase, ViewContainer):
         leaf.ratio_in_parent = ratio
 
         if view is None:
-            if control is None:
-                control = self.multiView._defChild(self)
-            view = MultiViewLeaf(self.multiView, self, ratio, control, uuid)
+            client = MultiClient(None, control, uuid, self.multiView)
+            view = MultiViewLeaf(self.multiView, self, ratio, client)
         else:
             view.reparent_to(self, ratio)
         self.views[insert_pos:insert_pos] = [view]
@@ -997,16 +1013,24 @@ class MultiSplit(MultiWindowBase, ViewContainer):
 ########## Leaf (Client Container) ##########
 
 
+class HidingSpace(wx.Window):
+    can_take_leaf_focus = False
+    is_sidebar = False
+
+
 class MultiViewLeaf(MultiWindowBase, DockTarget):
     can_take_leaf_focus = True
+    is_sidebar = False
 
-    def __init__(self, multiView, parent, ratio=1.0, child=None, u=None, layout=None):
+    def __init__(self, multiView, parent, ratio=1.0, client=None, layout=None):
         MultiWindowBase.__init__(self, multiView, parent, ratio, name="MultiViewLeaf")
         if layout is not None:
             self.client = None
             self.restore_layout(layout)
         else:
-            self.client = MultiClient(self, child, u)
+            if client is None:
+                client = MultiClient(self)
+            self.attach_client(client)
         self.SetBackgroundColour(multiView.unfocused_color)
 
     def __repr__(self):
@@ -1021,8 +1045,9 @@ class MultiViewLeaf(MultiWindowBase, DockTarget):
         self.remove()
 
     def remove_client(self):
-        self.client.remove()
-        self.client = None
+        if self.client is not None:
+            self.client.remove()
+            self.client = None
 
     def detach(self):
         self.GetParent().detach_leaf(self)
@@ -1084,34 +1109,20 @@ class MultiViewLeaf(MultiWindowBase, DockTarget):
 
 
 class MultiClient(wx.Window):
-    def __init__(self, parent, child=None, uuid=None, pos=None, size=None, multiView=None, extra_border=1, in_sidebar=False, leaf=None):
-        if pos is None:
-            pos = (0, 0)
-        if size is None:
-            size = parent.GetSize()
-
-        wx.Window.__init__(self, parent, -1, pos=pos, size=size, style=wx.CLIP_CHILDREN | wx.BORDER_NONE, name=MultiSash.debug_window_name("MultiClient"))
+    def __init__(self, parent, child=None, uuid=None, multiView=None, extra_border=1, leaf=None):
+        if parent is None:
+            parent = multiView.hiding_space
+        wx.Window.__init__(self, parent, -1, style=wx.CLIP_CHILDREN | wx.BORDER_NONE, size=(200, 200), name=MultiSash.debug_window_name("MultiClient"))
         if multiView is None:
             multiView = parent.multiView
         self.multiView = multiView
-
-        if leaf is None:
-            leaf = parent
-        self.leaf = leaf
-
-        if in_sidebar:
-            self.SetBackgroundColour(multiView.focused_color)
-        else:
-            self.SetBackgroundColour(multiView.border_color)
-        self.SetBackgroundColour(wx.RED)
-        self.in_sidebar = in_sidebar
 
         if uuid is None:
             uuid = str(uuid4())
         self.child_uuid = uuid
 
         self.extra_border = extra_border
-        self.title_bar = TitleBar(self, in_sidebar)
+        self.title_bar = TitleBar(self)
 
         if child is None:
             child = self.multiView._defChild(self)
@@ -1119,9 +1130,23 @@ class MultiClient(wx.Window):
         self.child.Reparent(self)
         self.move_child()
         log.debug("Created client for %s" % self.child_uuid)
+        if leaf is None:
+            leaf = parent
+        self.set_leaf(leaf)
 
         self.Bind(wx.EVT_SET_FOCUS, self.on_set_focus)
         self.Bind(wx.EVT_CHILD_FOCUS, self.on_child_focus)
+
+    def set_leaf(self, leaf):
+        self.leaf = leaf
+        self.title_bar.set_buttons_for_sidebar_state(leaf.is_sidebar)
+        self.Reparent(leaf)
+        self.do_size_from_child()
+        if leaf.is_sidebar:
+            self.SetBackgroundColour(self.multiView.focused_color)
+        else:
+            self.SetBackgroundColour(self.multiView.border_color)
+        self.SetBackgroundColour(wx.RED)
 
     def remove(self):
         self.do_send_close_event()
@@ -1202,10 +1227,10 @@ class MultiClient(wx.Window):
         self.move_child()
         self.do_size_from_parent()
 
-    def reparent_to_new_leaf(self, leaf):
-        self.Reparent(leaf)
-        self.leaf = leaf
-        self.leaf.client = self
+    def reparent_to_new_leaf(self, new_leaf):
+        self.leaf.detach_client()
+        new_leaf.attach_client(self)
+        self.leaf = new_leaf
 
     def move_child(self):
         self.title_bar.Move(0, 0)
@@ -1667,8 +1692,9 @@ class SidebarBottomRenderer(SidebarHorizontalRenderer):
 
 class SidebarMenuItem(wx.Window, DockTarget):
     can_take_leaf_focus = False
+    is_sidebar = True
 
-    def __init__(self, sidebar, child, uuid=None):
+    def __init__(self, sidebar, client):
         wx.Window.__init__(self, sidebar, -1, name=MultiSash.debug_window_name("SidebarMenuItem"))
         self.sidebar = sidebar
         self.multiView = sidebar.multiView
@@ -1676,7 +1702,7 @@ class SidebarMenuItem(wx.Window, DockTarget):
         # Client windows are children of the main window so they can be
         # positioned over (and therefore obscure) any window within the
         # MultiSash
-        self.client = MultiClient(self.multiView, child, uuid, size=(200,200), multiView=self.multiView, extra_border=4, in_sidebar=True, leaf=self)
+        self.attach_client(client)
         self.SetBackgroundColour(self.multiView.empty_color)
 
         # the label drawing offsets will be calculated during sizing
@@ -1701,8 +1727,8 @@ class SidebarMenuItem(wx.Window, DockTarget):
             rects = self.sidebar.title_renderer.calc_docking_rectangles_relative_to(self, r)
         return rects
 
-    def process_dock_target(self, leaf, side):
-        print("ADDING %s TO SIDEBAR %s" % (leaf, self.sidebar.side))
+    def split_side(self, new_side, view=None):
+        return self.GetParent().split_menu_item(self, new_side, view)
 
     def on_paint(self, event):
         dc = wx.PaintDC(self)
@@ -1794,13 +1820,31 @@ class Sidebar(wx.Window, ViewContainer):
                 self.title_renderer = SidebarLeftRenderer
             self.side = side
 
+    def __repr__(self):
+        return "Sidebar %s" % pretty_direction[self.side]
+
     def set_size_inside(self, x, y, w, h):
         return self.title_renderer.set_size_inside(self, x, y, w, h)
+
+    def split_menu_item(self, menu_item_to_split, side, new_leaf):
+        menu_index_to_split = self.find_leaf_index(menu_item_to_split)
+        if new_side & (wx.LEFT|wx.TOP):
+            # insert at beginning of list
+            insert_pos = menu_index_to_split
+        else:
+            insert_pos = menu_index_to_split + 1
+
+        client = new_leaf.detach_client()
+        view = SidebarMenuItem(self, client=client)
+        self.views[insert_pos:insert_pos] = [view]
+        self.do_layout()
+        return view
 
     def add_client(self, control, u=None):
         if control is None:
             control = self.multiView._defChild(self)
-        view = SidebarMenuItem(self, control, u)
+        client = MultiClient(None, control, u, multiView=self.multiView, extra_border=4)
+        view = SidebarMenuItem(self, client)
         self.views.append(view)
         self.do_layout()
 
