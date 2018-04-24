@@ -216,10 +216,11 @@ class DockingRectangleHandler(object):
 
 class DockTarget(object):
     def detach_client(self):
-        if self.client is not None:
-            client = self.client
+        client = self.client
+        if client is not None:
             client.Reparent(self.multiView.hiding_space)
-            self.client = None
+        self.client = None
+        return client
 
     def attach_client(self, client):
         self.client = client
@@ -606,7 +607,7 @@ class EmptyChild(wx.Window):
     def __init__(self,parent):
         wx.Window.__init__(self,parent,-1, name=MultiSash.debug_window_name("blank"), style=wx.CLIP_CHILDREN)
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INACTIVECAPTION))
-        self.SetLabel("Popup blank")
+        self.SetLabel("")
 
     def DoGetBestClientSize(self):
         return wx.Size(250, 300)
@@ -854,6 +855,13 @@ class ViewContainer(object):
                 return found
         return None
 
+    def find_leaf_index(self, leaf):
+        return self.views.index(leaf)  # raises IndexError on failure
+
+    def find_resize_partner(self, leaf):
+        current = self.find_leaf_index(leaf)
+        return self.views[current + 1]
+
     def calc_dock_targets(self, targets):
         for view in self.views:
             try:
@@ -884,13 +892,6 @@ class MultiSplit(MultiWindowBase, ViewContainer):
 
     def __repr__(self):
         return "<MultiSplit %s %f>" % (self.debug_id, self.ratio_in_parent)
-
-    def find_leaf_index(self, leaf):
-        return self.views.index(leaf)  # raises IndexError on failure
-
-    def find_resize_partner(self, leaf):
-        current = self.find_leaf_index(leaf)
-        return self.views[current + 1]
 
     def split(self, leaf, control=None, uuid=None, new_side=wx.RIGHT, view=None):
         log.debug("split: using view %s" % view)
@@ -1017,6 +1018,9 @@ class HidingSpace(wx.Window):
     can_take_leaf_focus = False
     is_sidebar = False
 
+    def set_chrome(self, client):
+        pass
+
 
 class MultiViewLeaf(MultiWindowBase, DockTarget):
     can_take_leaf_focus = True
@@ -1051,6 +1055,9 @@ class MultiViewLeaf(MultiWindowBase, DockTarget):
 
     def detach(self):
         self.GetParent().detach_leaf(self)
+
+    def set_chrome(self, client):
+        client.extra_border = 1
 
     def find_uuid(self, uuid):
         if uuid == self.client.child_uuid:
@@ -1109,7 +1116,7 @@ class MultiViewLeaf(MultiWindowBase, DockTarget):
 
 
 class MultiClient(wx.Window):
-    def __init__(self, parent, child=None, uuid=None, multiView=None, extra_border=1, leaf=None):
+    def __init__(self, parent, child=None, uuid=None, multiView=None, leaf=None):
         if parent is None:
             parent = multiView.hiding_space
         wx.Window.__init__(self, parent, -1, style=wx.CLIP_CHILDREN | wx.BORDER_NONE, size=(200, 200), name=MultiSash.debug_window_name("MultiClient"))
@@ -1121,7 +1128,7 @@ class MultiClient(wx.Window):
             uuid = str(uuid4())
         self.child_uuid = uuid
 
-        self.extra_border = extra_border
+        self.extra_border = 0
         self.title_bar = TitleBar(self)
 
         if child is None:
@@ -1140,6 +1147,7 @@ class MultiClient(wx.Window):
     def set_leaf(self, leaf):
         self.leaf = leaf
         self.title_bar.set_buttons_for_sidebar_state(leaf.is_sidebar)
+        self.leaf.set_chrome(self)
         self.Reparent(leaf)
         self.do_size_from_child()
         if leaf.is_sidebar:
@@ -1174,7 +1182,10 @@ class MultiClient(wx.Window):
 
     @property
     def popup_name(self):
-        return self.child.GetLabel()
+        menu_label = self.child.GetLabel()
+        if not menu_label:
+            menu_label = self.child.GetName()
+        return menu_label
 
     def clear_focus(self):
         self.Refresh()
@@ -1718,6 +1729,12 @@ class SidebarMenuItem(wx.Window, DockTarget):
         self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
 
+    def __repr__(self):
+        return "<SidebarMenuItem %s>" % (self.client.child.GetName())
+
+    def set_chrome(self, client):
+        client.extra_border = 4
+
     def calc_docking_rectangles(self, event_window, source_leaf):
         r = self.get_rectangle_relative_to(event_window)
         if source_leaf == self:
@@ -1828,14 +1845,14 @@ class Sidebar(wx.Window, ViewContainer):
 
     def split_menu_item(self, menu_item_to_split, side, new_leaf):
         menu_index_to_split = self.find_leaf_index(menu_item_to_split)
-        if new_side & (wx.LEFT|wx.TOP):
+        if side & (wx.LEFT|wx.TOP):
             # insert at beginning of list
             insert_pos = menu_index_to_split
         else:
             insert_pos = menu_index_to_split + 1
 
         client = new_leaf.detach_client()
-        view = SidebarMenuItem(self, client=client)
+        view = SidebarMenuItem(self, client)
         self.views[insert_pos:insert_pos] = [view]
         self.do_layout()
         return view
@@ -1843,7 +1860,7 @@ class Sidebar(wx.Window, ViewContainer):
     def add_client(self, control, u=None):
         if control is None:
             control = self.multiView._defChild(self)
-        client = MultiClient(None, control, u, multiView=self.multiView, extra_border=4)
+        client = MultiClient(None, control, u, multiView=self.multiView)
         view = SidebarMenuItem(self, client)
         self.views.append(view)
         self.do_layout()
