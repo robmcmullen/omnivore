@@ -244,9 +244,9 @@ class DockTarget(object):
             ty = r.y + r.height - h
             rx = r.x + r.width - w
             rects.append((self, wx.LEFT, wx.Rect(r.x, r.y, w, r.height)))  # left
-            rects.append((self, wx.BOTTOM, wx.Rect(r.x, r.y, r.width, h)))  # bottom
+            rects.append((self, wx.TOP, wx.Rect(r.x, r.y, r.width, h)))  # bottom
             rects.append((self, wx.RIGHT, wx.Rect(rx, r.y, w, r.height)))  # right
-            rects.append((self, wx.TOP, wx.Rect(r.x, ty, r.width, h)))  # top
+            rects.append((self, wx.BOTTOM, wx.Rect(r.x, ty, r.width, h)))  # top
         return rects
 
     def process_dock_target(self, leaf, side):
@@ -1595,8 +1595,8 @@ class SidebarVerticalRenderer(SidebarBaseRenderer):
         rects = []
         h = r.height // 3
         ty = r.y + r.height - h
-        rects.append((target_to_split, wx.BOTTOM, wx.Rect(r.x, r.y, r.width, h)))  # bottom
-        rects.append((target_to_split, wx.TOP, wx.Rect(r.x, ty, r.width, h)))  # top
+        rects.append((target_to_split, wx.TOP, wx.Rect(r.x, r.y, r.width, h)))  # bottom
+        rects.append((target_to_split, wx.BOTTOM, wx.Rect(r.x, ty, r.width, h)))  # top
         return rects
 
 
