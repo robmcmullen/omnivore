@@ -609,10 +609,15 @@ class MultiSash(wx.Window):
 
     def calc_dock_targets(self):
         targets = []
+        missing_sidebars = set([wx.LEFT, wx.RIGHT, wx.TOP, wx.BOTTOM])
         for sidebar in self.sidebars:
             print("checking sidebar %s" % sidebar)
             sidebar.calc_dock_targets(targets)
+            missing_sidebars.remove(sidebar.side)
         print("dock targets from sidebars: %s" % str(targets))
+        for side in missing_sidebars:
+            targets.append(MissingSidebarDock(self, side))
+            print("dock targets for missing sidebar: %s" % str(MissingSidebarDock))
         self.child.calc_dock_targets(targets)
         print("dock targets: %s" % str(targets))
         return targets
@@ -1663,6 +1668,11 @@ class SidebarLeftRenderer(SidebarVerticalRenderer):
         y += y_min  # global y for top of window
         cls.show_client_prevent_clipping(sidebar, view, x_min, y)
 
+    @classmethod
+    def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
+        ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
+        return wx.Rect(0, uy, cls.calc_thickness(missing_sidebar) // 2, uh)
+
 
 class SidebarRightRenderer(SidebarVerticalRenderer):
     @classmethod
@@ -1670,6 +1680,13 @@ class SidebarRightRenderer(SidebarVerticalRenderer):
         thickness = cls.calc_thickness(sidebar)
         sidebar.SetSize(x + w - thickness, y, thickness, h)
         return x, y, w - thickness, h
+
+    @classmethod
+    def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
+        mw, mh = missing_sidebar.multiView.GetClientSize()
+        ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
+        t = cls.calc_thickness(missing_sidebar) // 2
+        return wx.Rect(mw - t, uy, t, uh)
 
 
 class SidebarHorizontalRenderer(SidebarBaseRenderer):
@@ -1735,6 +1752,11 @@ class SidebarTopRenderer(SidebarHorizontalRenderer):
         x += x_min  # global y for top of window
         cls.show_client_prevent_clipping(sidebar, view, x, y_min)
 
+    @classmethod
+    def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
+        ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
+        return wx.Rect(ux, 0, uw, cls.calc_thickness(missing_sidebar) // 2)
+
 
 class SidebarBottomRenderer(SidebarHorizontalRenderer):
     @classmethod
@@ -1742,6 +1764,13 @@ class SidebarBottomRenderer(SidebarHorizontalRenderer):
         thickness = cls.calc_thickness(sidebar)
         sidebar.SetSize(x, y + h - thickness, w, thickness)
         return x, y, w, h - thickness
+
+    @classmethod
+    def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
+        mw, mh = missing_sidebar.multiView.GetClientSize()
+        ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
+        t = cls.calc_thickness(missing_sidebar) // 2
+        return wx.Rect(ux, mh - t, uw, t)
 
 
 class SidebarMenuItem(wx.Window, DockTarget):
@@ -1868,7 +1897,32 @@ class SidebarMenuItem(wx.Window, DockTarget):
         return self.GetParent().maximize_leaf(self)
 
 
+class MissingSidebarDock(DockTarget):
+    def __init__(self, multiView, side):
+        self.side = side
+        self.multiView = multiView
+        self.title_renderer = Sidebar.renderers[side]
+
+    def calc_docking_rectangles(self, event_window, source_leaf):
+        mw, mh = self.multiView.GetClientSize()
+        ux, uy, uw, uh = self.multiView.calc_usable_rect()
+        rect = self.title_renderer.calc_missing_sidebar_docking_rectangle(self)
+        return [(self, None, rect)]
+
+    def split_side(self, new_side, view=None):
+        sidebar = self.multiView.use_sidebar(self.side)
+        client = view.detach_client()
+        sidebar.add_client(client)
+
+
 class Sidebar(wx.Window, ViewContainer):
+    renderers = {
+        wx.LEFT: SidebarLeftRenderer,
+        wx.RIGHT: SidebarRightRenderer,
+        wx.TOP: SidebarTopRenderer,
+        wx.BOTTOM: SidebarBottomRenderer,
+    }
+
     def __init__(self, multiView, side=wx.LEFT, layout=None):
         wx.Window.__init__(self, multiView, -1, name=MultiSash.debug_window_name("Sidebar"))
         ViewContainer.__init__(self)
@@ -1878,15 +1932,7 @@ class Sidebar(wx.Window, ViewContainer):
         if layout is not None:
             self.restore_layout(layout)
         else:
-            if side == wx.RIGHT:
-                self.title_renderer = SidebarRightRenderer
-            elif side == wx.TOP:
-                self.title_renderer = SidebarTopRenderer
-            elif side == wx.BOTTOM:
-                self.title_renderer = SidebarBottomRenderer
-            else:
-                side = wx.LEFT
-                self.title_renderer = SidebarLeftRenderer
+            self.title_renderer = self.renderers[side]
             self.side = side
 
     def __repr__(self):
