@@ -1607,6 +1607,28 @@ class SidebarBaseRenderer(object):
         pixels = m.sidebar_margin * 2 + m.title_bar_font_height
         return pixels
 
+    @classmethod
+    def show_client_prevent_clipping(cls, sidebar, view, x, y):
+        cw, ch = view.client.GetBestSize()
+        x_min, y_min, sw, sh = sidebar.multiView.calc_usable_rect()
+        if y + ch > y_min + sh:
+            # some amount is offscreen on the bottom
+            y -= (y + ch - sh - y_min)
+        if y < y_min:
+            # too tall, force popup height to max height of usable space
+            y = y_min
+            ch = sh
+        if cw > sw:
+            cw = sw
+        if x + cw > x_min + sw:
+            # some amount is offscreen to the right
+            x -= (x + cw - sw - x_min)
+        if x < x_min:
+            # too wide; force popup to max width of usable space
+            x = x_min
+            cw = sw
+        sidebar.do_popup_view(view, x, y, cw, ch)
+
 
 class SidebarVerticalRenderer(SidebarBaseRenderer):
     @classmethod
@@ -1624,19 +1646,6 @@ class SidebarVerticalRenderer(SidebarBaseRenderer):
         w, h = view.GetSize()
         dc.DrawRectangle(0, 0, w, h)
         dc.DrawRotatedText(view.client.popup_name, view.label_x, view.label_y, 90.0)
-
-    @classmethod
-    def show_client_prevent_clipping(cls, sidebar, view, x, y):
-        cw, ch = view.client.GetBestSize()
-        x_min, y_min, sw, sh = sidebar.multiView.calc_usable_rect()
-        if y + ch > y_min + sh:
-            y -= (y + ch - sh)
-        if y < y_min:
-            y = y_min
-            ch = sh
-        if cw > sw:
-            cw = sw
-        sidebar.do_popup_view(view, x, y, cw, ch)
 
     @classmethod
     def calc_docking_rectangles_relative_to(cls, target_to_split, r):
@@ -1682,6 +1691,17 @@ class SidebarRightRenderer(SidebarVerticalRenderer):
         return x, y, w - thickness, h
 
     @classmethod
+    def show_client(cls, sidebar, view):
+        # sidebar position within multiView, so these are global values
+        x_min, y_min = sidebar.GetPosition()
+
+        # view position is position within sidebar
+        x, y = view.GetPosition()
+        w, h = view.GetSize()
+        y += y_min  # global y for top of window
+        cls.show_client_prevent_clipping(sidebar, view, x_min, y)
+
+    @classmethod
     def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
         mw, mh = missing_sidebar.multiView.GetClientSize()
         ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
@@ -1707,22 +1727,6 @@ class SidebarHorizontalRenderer(SidebarBaseRenderer):
         dc.DrawText(view.client.popup_name, view.label_x, view.label_y)
 
     @classmethod
-    def show_client_prevent_clipping(cls, sidebar, view, x, y):
-        cw, ch = view.client.GetBestSize()
-        x_min, y_min, sw, sh = sidebar.multiView.calc_usable_rect()
-        x = max(x, x_min)
-        if x + cw > x_min + sw:
-            # first try to shift left to attempt to contain larger popup
-            x -= (x + cw - sw)
-        if x < x_min:
-            # if popup is too wide, force it to be exact size of usable area
-            x = x_min
-            cw = sw
-        if ch > sh:
-            ch = sh
-        sidebar.do_popup_view(view, x, y, cw, ch)
-
-    @classmethod
     def calc_docking_rectangles_relative_to(cls, target_to_split, r):
         rects = []
         w = r.width // 3
@@ -1746,10 +1750,10 @@ class SidebarTopRenderer(SidebarHorizontalRenderer):
         w, h = sidebar.GetSize()
         y_min += h
 
-        # view position is position within sidebar
+        # view is menu item position within sidebar
         x, y = view.GetPosition()
         w, h = view.GetSize()
-        x += x_min  # global y for top of window
+        x += x_min
         cls.show_client_prevent_clipping(sidebar, view, x, y_min)
 
     @classmethod
@@ -1764,6 +1768,17 @@ class SidebarBottomRenderer(SidebarHorizontalRenderer):
         thickness = cls.calc_thickness(sidebar)
         sidebar.SetSize(x, y + h - thickness, w, thickness)
         return x, y, w, h - thickness
+
+    @classmethod
+    def show_client(cls, sidebar, view):
+        # sidebar position within multiView, so these are global values
+        x_min, y_max = sidebar.GetPosition()
+
+        # view is menu item position within sidebar
+        x, y = view.GetPosition()
+        w, h = view.GetSize()
+        x += x_min
+        cls.show_client_prevent_clipping(sidebar, view, x, y_max)
 
     @classmethod
     def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
