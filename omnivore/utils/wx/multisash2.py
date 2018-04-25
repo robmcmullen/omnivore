@@ -792,10 +792,11 @@ class MultiWindowBase(wx.Window):
             self.debug_id = self.next_debug_letter()
         self.SetBackgroundColour(wx.RED)
 
-    def reparent_to(self, viewer, ratio):
+    def reparent_to(self, viewer, ratio=None):
         self.Reparent(viewer)
         self.sizer.Reparent(viewer)
-        self.ratio_in_parent = ratio
+        if ratio is not None:
+            self.ratio_in_parent = ratio
 
     def do_layout(self):
         raise NotImplementedError
@@ -974,7 +975,7 @@ class MultiSplit(MultiWindowBase, ViewContainer):
     def detach_leaf(self, view):
         log.debug("detach_leaf: view=%s views=%s self=%s parent=%s" % (view, self.views, self, self.GetParent()))
         index = self.find_leaf_index(view)  # raise IndexError
-        view.reparent_to(self.multiView.hiding_space, 0.1)
+        view.reparent_to(self.multiView.hiding_space)
         if len(self.views) > 2:
             log.debug("deleting > 2: %d %s" %(index, self.views))
             del self.views[index]
