@@ -544,6 +544,8 @@ class MultiSash(wx.Window):
         return sidebar
 
     def find_sidebar(self, side=wx.LEFT):
+        if side == wx.DEFAULT and len(self.sidebars) > 0:
+            return self.sidebars[0]
         for sidebar in self.sidebars:
             if side == sidebar.side:
                 return sidebar
@@ -551,7 +553,8 @@ class MultiSash(wx.Window):
 
     def add_sidebar(self, control, u=None, side=wx.LEFT):
         sidebar = self.use_sidebar(side)
-        sidebar.add_client(control, u)
+        client = MultiClient(None, control, u, multiView=self)
+        sidebar.add_client(client)
 
     def calc_graphviz(self):
         from graphviz import Digraph
@@ -1002,6 +1005,12 @@ class MultiSplit(MultiWindowBase, ViewContainer):
         self.detach_leaf(view)
         view.remove()
 
+    def minimize_leaf(self, view):
+        self.detach_leaf(view)
+        sidebar = self.multiView.use_sidebar(wx.DEFAULT)
+        client = view.detach_client()
+        sidebar.add_client(client)
+
     def reparent_from_splitter(self, splitter):
         index = self.find_leaf_index(splitter)  # raise IndexError
         view = splitter.views[0]
@@ -1110,6 +1119,9 @@ class MultiViewLeaf(MultiWindowBase, DockTarget):
 
     def destroy_leaf(self):
         return self.GetParent().destroy_leaf(self)
+
+    def minimize_leaf(self):
+        return self.GetParent().minimize_leaf(self)
 
     def do_layout(self):
         self.client.do_size_from_parent()
@@ -1265,6 +1277,9 @@ class MultiClient(wx.Window):
 
     def destroy_thyself(self):
         wx.CallAfter(self.leaf.destroy_leaf)
+
+    def minimize(self):
+        wx.CallAfter(self.leaf.minimize_leaf)
 
     def split_side(self, new_side, view=None):
         return self.leaf.split_side(new_side, view)
@@ -1857,10 +1872,7 @@ class Sidebar(wx.Window, ViewContainer):
         self.do_layout()
         return view
 
-    def add_client(self, control, u=None):
-        if control is None:
-            control = self.multiView._defChild(self)
-        client = MultiClient(None, control, u, multiView=self.multiView)
+    def add_client(self, client):
         view = SidebarMenuItem(self, client)
         self.views.append(view)
         self.do_layout()
