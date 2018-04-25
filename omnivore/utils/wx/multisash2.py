@@ -874,6 +874,29 @@ class ViewContainer(object):
                 if hasattr(view, 'calc_docking_rectangles'):
                     targets.append(view)
 
+    def delete_leaf_from_list(self, view, index):
+        raise NotImplementedError("implement in subclass!")
+
+    def detach_leaf(self, view):
+        log.debug("detach_leaf: view=%s views=%s self=%s parent=%s" % (view, self.views, self, self.GetParent()))
+        index = self.find_leaf_index(view)  # raise IndexError
+        view.reparent_to(self.multiView.hiding_space)
+        self.delete_leaf_from_list(view, index)
+
+    def destroy_leaf(self, view):
+        self.detach_leaf(view)
+        view.remove()
+
+    def minimize_leaf(self, view):
+        self.detach_leaf(view)
+        sidebar = self.multiView.use_sidebar(wx.DEFAULT)
+        client = view.detach_client()
+        sidebar.add_client(client)
+
+    def maximize_leaf(self, view):
+        log.warning("maximize not implemented yet")
+
+
 class MultiSplit(MultiWindowBase, ViewContainer):
     def __init__(self, multiView, parent, layout_direction=wx.HORIZONTAL, ratio=1.0, leaf=None, layout=None):
         MultiWindowBase.__init__(self, multiView, parent, ratio, name="MultiSplit")
@@ -972,10 +995,7 @@ class MultiSplit(MultiWindowBase, ViewContainer):
                 view = MultiViewLeaf(self.multiView, self, layout=layout)
             self.views.append(view)
 
-    def detach_leaf(self, view):
-        log.debug("detach_leaf: view=%s views=%s self=%s parent=%s" % (view, self.views, self, self.GetParent()))
-        index = self.find_leaf_index(view)  # raise IndexError
-        view.reparent_to(self.multiView.hiding_space)
+    def delete_leaf_from_list(self, view, index):
         if len(self.views) > 2:
             log.debug("deleting > 2: %d %s" %(index, self.views))
             del self.views[index]
@@ -1001,16 +1021,6 @@ class MultiSplit(MultiWindowBase, ViewContainer):
             # must be at the top; the final splitter.
             log.debug("Removing the last item!", view)
             self.GetParent().remove_all()
-
-    def destroy_leaf(self, view):
-        self.detach_leaf(view)
-        view.remove()
-
-    def minimize_leaf(self, view):
-        self.detach_leaf(view)
-        sidebar = self.multiView.use_sidebar(wx.DEFAULT)
-        client = view.detach_client()
-        sidebar.add_client(client)
 
     def reparent_from_splitter(self, splitter):
         index = self.find_leaf_index(splitter)  # raise IndexError
@@ -1282,6 +1292,9 @@ class MultiClient(wx.Window):
     def minimize(self):
         wx.CallAfter(self.leaf.minimize_leaf)
 
+    def maximize(self):
+        wx.CallAfter(self.leaf.maximize_leaf)
+
     def split_side(self, new_side, view=None):
         return self.leaf.split_side(new_side, view)
 
@@ -1507,7 +1520,7 @@ class TitleBarMaximize(TitleBarButton):
         dc.DrawRectangle(0, 0, size.x, size.y)
 
     def do_action(self, evt):
-        self.client.minimize()
+        self.client.maximize()
 
 
 class TitleBarVSplitNewLeft(TitleBarButton):
@@ -1748,6 +1761,9 @@ class SidebarMenuItem(wx.Window, DockTarget):
     def __repr__(self):
         return "<SidebarMenuItem %s>" % (self.client.child.GetName())
 
+    def reparent_to(self, viewer, ratio=None):
+        self.Reparent(viewer)
+
     def set_chrome(self, client):
         client.extra_border = 4
 
@@ -1830,6 +1846,12 @@ class SidebarMenuItem(wx.Window, DockTarget):
             return self.client
         log.debug("find_uuid: skipping %s in %s" % (self.client.child_uuid, self.client.child.GetName()))
         return None
+
+    def destroy_leaf(self):
+        return self.GetParent().destroy_leaf(self)
+
+    def maximize_leaf(self):
+        return self.GetParent().maximize_leaf(self)
 
 
 class Sidebar(wx.Window, ViewContainer):
@@ -1927,7 +1949,12 @@ class Sidebar(wx.Window, ViewContainer):
     if wx.Platform == "__WXMSW__":
         do_popup_view = do_popup_view_msw
 
-
+    def delete_leaf_from_list(self, view, index):
+        self.multiView.force_clear_sidebar()
+        del self.views[index]
+        self.do_layout()
+        if len(self.views) == 0:
+            log.debug("Nothing left in sidebar!", self)
 
 
 ########## Events ##########
