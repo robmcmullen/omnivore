@@ -551,6 +551,20 @@ class MultiSash(wx.Window):
                 return sidebar
         raise ValueError("No sidebar on side")
 
+    def remove_sidebar(self, side_or_sidebar):
+        try:
+            sidebar = self.find_sidebar(side_or_sidebar)
+        except ValueError:
+            pass
+        try:
+            sidebar = side_or_sidebar
+            sidebar.remove_all()
+        except AttributeError:
+            log.error("No sidebar on %s so can't remove it!" % pretty_direction(side_or_sidebar))
+        else:
+            self.sidebars.remove(sidebar)
+            self.do_layout()
+
     def add_sidebar(self, control, u=None, side=wx.LEFT):
         sidebar = self.use_sidebar(side)
         client = MultiClient(None, control, u, multiView=self)
@@ -1955,6 +1969,7 @@ class Sidebar(wx.Window, ViewContainer):
         self.do_layout()
         if len(self.views) == 0:
             log.debug("Nothing left in sidebar!", self)
+            self.multiView.remove_sidebar(self)
 
 
 ########## Events ##########
