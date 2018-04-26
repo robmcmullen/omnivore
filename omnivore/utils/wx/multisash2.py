@@ -385,6 +385,7 @@ class MultiSash(wx.Window):
         w, h = self.GetSize()
         for sidebar in self.sidebars:
             x, y, w, h = sidebar.set_size_inside(x, y, w, h)
+            sidebar.do_layout()
         self.child.SetSize(x, y, w, h)
         self.child.do_layout()
 
@@ -457,7 +458,7 @@ class MultiSash(wx.Window):
         c = self.current_leaf_focus
         return c is not None and (c == window or c.client == window)
 
-    def remove_all(self):
+    def clear_main_splitter(self):
         old = self.child
         self.child = MultiSplit(self, self, old.layout_direction)
         old.remove_all()
@@ -465,8 +466,26 @@ class MultiSash(wx.Window):
             sidebar.force_popup_to_top_of_stacking_order()
         self.do_layout()
 
+    def remove_all(self):
+        self.replace_all()
+
+    def replace_all(self, layout=None, sidebar_layout=[]):
+        old = self.child
+        self.child = MultiSplit(self, self, old.layout_direction, layout=layout)
+        old.remove_all()
+        for sidebar in self.sidebars:
+            sidebar.remove_all()
+        self.sidebars = []
+        for d in sidebar_layout:
+            self.use_sidebar(layout=d)
+        self.do_layout()
+
     def get_layout(self, to_json=False, pretty=False):
         d = {'multisash': self.child.get_layout()}
+        s = []
+        for sidebar in self.sidebars:
+            s.append(sidebar.get_layout())
+        d['sidebars'] = s
         if to_json:
             if pretty:
                 d = json.dumps(d, sort_keys=True, indent=4)
@@ -484,16 +503,11 @@ class MultiSash(wx.Window):
                 log.error("Error loading layout: %s" % e.message)
                 return
             layout = d['multisash']
-        old = self.child
         try:
-            self.child = MultiSplit(self, self, layout=layout)
+            self.replace_all(layout, d.get('sidebars', []))
         except KeyError, e:
             log.error("Error loading layout: missing key %s. Restoring previous layout." % e.message)
-            self.child.Destroy()
-            self.child = old
-        else:
-            old.Destroy()
-        self.do_layout()
+        print("SIDEBARS!", self.sidebars)
 
     def update_captions(self):
         for sidebar in self.sidebars:
@@ -534,13 +548,18 @@ class MultiSash(wx.Window):
         leaf = self.child.views[-1]
         self.child.split(leaf, control, u, new_side)
 
-    def use_sidebar(self, side=wx.LEFT):
-        try:
-            sidebar = self.find_sidebar(side)
-        except ValueError:
-            sidebar = Sidebar(self, side)
+    def use_sidebar(self, side=wx.LEFT, layout=None):
+        if layout is not None:
+            sidebar = Sidebar(self, None, layout=layout)
             self.sidebars.append(sidebar)
-            self.do_layout()
+            # do_layout will be called after all sidebars loaded
+        else:
+            try:
+                sidebar = self.find_sidebar(side)
+            except ValueError:
+                sidebar = Sidebar(self, side)
+                self.sidebars.append(sidebar)
+                self.do_layout()
         return sidebar
 
     def find_sidebar(self, side=wx.LEFT):
@@ -1039,7 +1058,7 @@ class MultiSplit(MultiWindowBase, ViewContainer):
         else:
             # must be at the top; the final splitter.
             log.debug("Removing the last item!", view)
-            self.GetParent().remove_all()
+            self.GetParent().clear_main_splitter()
 
     def reparent_from_splitter(self, splitter):
         index = self.find_leaf_index(splitter)  # raise IndexError
@@ -1113,30 +1132,16 @@ class MultiViewLeaf(MultiWindowBase, DockTarget):
         return None
 
     def get_layout(self):
-        d = {
-            'ratio_in_parent': self.ratio_in_parent,
-            'debug_id': self.debug_id,
-            'child_uuid': self.client.child_uuid,
-            }
-        if hasattr(self.client.child,'get_layout'):
-            attr = getattr(self.client.child, 'get_layout')
-            if callable(attr):
-                layout = attr()
-                if layout:
-                    d['detail'] = layout
+        d = self.client.get_layout()
+        d['ratio_in_parent'] = self.ratio_in_parent
+        d['debug_id'] = self.debug_id
         return d
 
     def restore_layout(self, d):
         self.debug_id = d['debug_id']
         self.ratio_in_parent = d['ratio_in_parent']
         old = self.client
-        self.client = MultiClient(self, None, d['child_uuid'])
-        dData = d.get('detail',None)
-        if dData:
-            if hasattr(self.client.child,'restore_layout'):
-                attr = getattr(self.client.child,'restore_layout')
-                if callable(attr):
-                    attr(dData)
+        self.client = MultiClient(self, layout=d)
         if old is not None:
             old.Destroy()
         self.client.do_size_from_parent()
@@ -1158,17 +1163,13 @@ class MultiViewLeaf(MultiWindowBase, DockTarget):
 
 
 class MultiClient(wx.Window):
-    def __init__(self, parent, child=None, uuid=None, multiView=None, leaf=None):
+    def __init__(self, parent, child=None, uuid=None, multiView=None, leaf=None, layout=None):
         if parent is None:
             parent = multiView.hiding_space
         wx.Window.__init__(self, parent, -1, style=wx.CLIP_CHILDREN | wx.BORDER_NONE, size=(200, 200), name=MultiSash.debug_window_name("MultiClient"))
         if multiView is None:
             multiView = parent.multiView
         self.multiView = multiView
-
-        if uuid is None:
-            uuid = str(uuid4())
-        self.child_uuid = uuid
 
         self.extra_border = 0
         self.title_bar = TitleBar(self)
@@ -1178,6 +1179,14 @@ class MultiClient(wx.Window):
         self.child = child
         self.child.Reparent(self)
         self.move_child()
+
+        if layout is not None:
+            self.restore_layout(layout)
+        else:
+            if uuid is None:
+                uuid = str(uuid4())
+            self.child_uuid = uuid
+
         log.debug("Created client for %s" % self.child_uuid)
         if leaf is None:
             leaf = parent
@@ -1185,6 +1194,15 @@ class MultiClient(wx.Window):
 
         self.Bind(wx.EVT_SET_FOCUS, self.on_set_focus)
         self.Bind(wx.EVT_CHILD_FOCUS, self.on_child_focus)
+
+    def get_layout(self):
+        d = {
+            'child_uuid': self.child_uuid,
+        }
+        return d
+
+    def restore_layout(self, d):
+        self.child_uuid = d['child_uuid']
 
     def set_leaf(self, leaf):
         self.leaf = leaf
@@ -1792,7 +1810,7 @@ class SidebarMenuItem(wx.Window, DockTarget):
     can_take_leaf_focus = False
     is_sidebar = True
 
-    def __init__(self, sidebar, client):
+    def __init__(self, sidebar, client=None, layout=None):
         wx.Window.__init__(self, sidebar, -1, name=MultiSash.debug_window_name("SidebarMenuItem"))
         self.sidebar = sidebar
         self.multiView = sidebar.multiView
@@ -1800,7 +1818,11 @@ class SidebarMenuItem(wx.Window, DockTarget):
         # Client windows are children of the main window so they can be
         # positioned over (and therefore obscure) any window within the
         # MultiSash
-        self.attach_client(client)
+        self.client = None
+        if layout is not None:
+            self.restore_layout(layout)
+        else:
+            self.attach_client(client)
         self.SetBackgroundColour(self.multiView.empty_color)
 
         # the label drawing offsets will be calculated during sizing
@@ -1818,6 +1840,15 @@ class SidebarMenuItem(wx.Window, DockTarget):
 
     def __repr__(self):
         return "<SidebarMenuItem %s>" % (self.client.child.GetName())
+
+    def get_layout(self):
+        return self.client.get_layout()
+
+    def restore_layout(self, d):
+        old = self.client
+        self.client = MultiClient(self, layout=d)
+        if old is not None:
+            old.Destroy()
 
     def reparent_to(self, viewer, ratio=None):
         self.Reparent(viewer)
@@ -1947,11 +1978,27 @@ class Sidebar(wx.Window, ViewContainer):
         if layout is not None:
             self.restore_layout(layout)
         else:
-            self.title_renderer = self.renderers[side]
-            self.side = side
+            self.set_renderer(side)
 
     def __repr__(self):
         return "Sidebar %s" % pretty_direction[self.side]
+
+    def get_layout(self):
+        d = {
+            'side': self.side,
+            'views': [v.get_layout() for v in self.views],
+            }
+        return d
+
+    def restore_layout(self, d):
+        self.set_renderer(d['side'])
+        for layout in d['views']:
+            view = SidebarMenuItem(self, layout=layout)
+            self.views.append(view)
+
+    def set_renderer(self, side):
+        self.title_renderer = self.renderers[side]
+        self.side = side
 
     def set_size_inside(self, x, y, w, h):
         return self.title_renderer.set_size_inside(self, x, y, w, h)
