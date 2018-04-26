@@ -226,6 +226,9 @@ class DockTarget(object):
         self.client = client
         self.client.set_leaf(self)
 
+    def detach(self):
+        self.GetParent().detach_leaf(self)
+
     def get_rectangle_relative_to(self, event_window):
         r = self.GetClientRect()
         sx, sy = self.ClientToScreen((r.x, r.y))
@@ -980,6 +983,9 @@ class MultiSplit(MultiWindowBase, ViewContainer):
         if view is None:
             client = MultiClient(None, control, uuid, self.multiView)
             view = MultiViewLeaf(self.multiView, self, ratio, client)
+        elif view.is_sidebar:
+            client = view.detach_client()
+            view = MultiViewLeaf(self.multiView, self, ratio, client, from_sidebar=True)
         else:
             view.reparent_to(self, ratio)
         self.views[insert_pos:insert_pos] = [view]
@@ -1084,7 +1090,7 @@ class MultiViewLeaf(MultiWindowBase, DockTarget):
     can_take_leaf_focus = True
     is_sidebar = False
 
-    def __init__(self, multiView, parent, ratio=1.0, client=None, layout=None):
+    def __init__(self, multiView, parent, ratio=1.0, client=None, layout=None, from_sidebar=False):
         MultiWindowBase.__init__(self, multiView, parent, ratio, name="MultiViewLeaf")
         if layout is not None:
             self.client = None
@@ -1092,6 +1098,9 @@ class MultiViewLeaf(MultiWindowBase, DockTarget):
         else:
             if client is None:
                 client = MultiClient(self)
+            if from_sidebar:
+                client.SetPosition((0, 0))
+                client.Show()
             self.attach_client(client)
         self.SetBackgroundColour(multiView.unfocused_color)
 
@@ -1110,9 +1119,6 @@ class MultiViewLeaf(MultiWindowBase, DockTarget):
         if self.client is not None:
             self.client.remove()
             self.client = None
-
-    def detach(self):
-        self.GetParent().detach_leaf(self)
 
     def set_chrome(self, client):
         client.extra_border = 1
