@@ -1,23 +1,35 @@
-#----------------------------------------------------------------------
-# Name:         multisash
-# Purpose:      Multi Sash control
+# TileManager
+# 
+# MDI manager using tile layout for the main area and sidebars for pop-out
+# windows. The user can split tiles either horizontally or vertically, and drag
+# tiles to and from sidebars. Up to 4 sidebars are supported, at most one at
+# each of the 4 cardinal directions.
 #
-# Author:       Gerrit van Dyk
+# This is a very very large modification of the MultiSash control included in
+# the wxPython distribution. It was written by Gerrit van Dyk and Jeff
+# Grimmett. It has almost entirely diverged from the original, but the code
+# structure remains largely the same.
 #
-# Created:      2002/11/20
-# Version:      0.1
+# My coding conventions:
+#
+# constants:                  ALL_UPPERCASE
+# classes:                    CamelCase
+# normal methods:             underscore_separated
+# wxPython override methods:  CamelCase
+#
+# method names:
+#    get_*:       fast access to internal state that may include some minimal
+#                   computation, but no side effects
+#    set_*:       updates state of object (i.e.: side effects), no return value
+#    do_*:        updates UI or state of other objects, no return value
+#    calc_*:      returns a value, possibly heavyweight calculations involved,
+#                   no side effects
+#    on_*:        wxPython event handlers
+#
 # License:      wxWindows license
-#----------------------------------------------------------------------
-# 12/09/2003 - Jeff Grimmett (grimmtooth@softhome.net)
-#
-# o 2.5 compatibility update.
-#
-# 12/20/2003 - Jeff Grimmett (grimmtooth@softhome.net)
-#
-# o wxMultiSash -> MultiSash
-# o wxMultiSplit -> MultiSplit
-# o wxMultiViewLeaf -> MultiViewLeaf
-#
+# Author:       Rob McMullen <feedback@playermissile.com>
+# Copyright:    2018
+
 import weakref
 import json
 from uuid import uuid4
@@ -219,7 +231,7 @@ class DockTarget(object):
     def detach_client(self):
         client = self.client
         if client is not None:
-            client.Reparent(self.multiView.hiding_space)
+            client.Reparent(self.tile_mgr.hiding_space)
         self.client = None
         return client
 
@@ -256,11 +268,11 @@ class DockTarget(object):
     def process_dock_target(self, leaf, side):
         print("inserting leaf=%s, splitting leaf=%s on side=%s" % (leaf, self, side))
         leaf.detach()
-        self.multiView.do_layout()
+        self.tile_mgr.do_layout()
         self.split_side(new_side=side, view=leaf)
 
 
-class MultiSash(wx.Window):
+class TileManager(wx.Window):
     _debug_count = 1
 
     sizer_thickness = 5
@@ -274,14 +286,21 @@ class MultiSash(wx.Window):
     wxEVT_CLIENT_ACTIVATED = wx.NewEventType()
     EVT_CLIENT_ACTIVATED = wx.PyEventBinder(wxEVT_CLIENT_ACTIVATED, 1)
 
+    class HidingSpace(wx.Window):
+        can_take_leaf_focus = False
+        is_sidebar = False
+
+        def set_chrome(self, client):
+            pass
+
     def __init__(self, parent, layout_direction=wx.HORIZONTAL, name="top", *_args, **_kwargs):
         wx.Window.__init__(self, parent, name=name, *_args, **_kwargs)
         self.live_update_control = None
         self.debug_id = "root"
         self.set_defaults()
         self._defChild = EmptyChild
-        self.child = MultiSplit(self, self, layout_direction)
-        self.hiding_space = HidingSpace(self, -1, name="reparenting hiding space")
+        self.child = TileSplit(self, self, layout_direction)
+        self.hiding_space = TileManager.HidingSpace(self, -1, name="reparenting hiding space")
         self.hiding_space.Hide()
         self.sidebars = []
         self.Bind(wx.EVT_SIZE, self.on_size)
@@ -464,7 +483,7 @@ class MultiSash(wx.Window):
 
     def clear_main_splitter(self):
         old = self.child
-        self.child = MultiSplit(self, self, old.layout_direction)
+        self.child = TileSplit(self, self, old.layout_direction)
         old.remove_all()
         for sidebar in self.sidebars:
             sidebar.force_popup_to_top_of_stacking_order()
@@ -475,7 +494,7 @@ class MultiSash(wx.Window):
 
     def replace_all(self, layout=None, sidebar_layout=[]):
         old = self.child
-        self.child = MultiSplit(self, self, old.layout_direction, layout=layout)
+        self.child = TileSplit(self, self, old.layout_direction, layout=layout)
         old.remove_all()
         for sidebar in self.sidebars:
             sidebar.remove_all()
@@ -485,7 +504,7 @@ class MultiSash(wx.Window):
         self.do_layout()
 
     def get_layout(self, to_json=False, pretty=False):
-        d = {'multisash': self.child.get_layout()}
+        d = {'tile_manager': self.child.get_layout()}
         s = []
         for sidebar in self.sidebars:
             s.append(sidebar.get_layout())
@@ -499,14 +518,14 @@ class MultiSash(wx.Window):
 
     def restore_layout(self, d):
         try:
-            layout = d['multisash']
+            layout = d['tile_manager']
         except TypeError:
             try:
                 d = json.loads(d)
             except ValueError, e:
                 log.error("Error loading layout: %s" % e.message)
                 return
-            layout = d['multisash']
+            layout = d['tile_manager']
         try:
             self.replace_all(layout, d.get('sidebars', []))
         except KeyError, e:
@@ -590,12 +609,12 @@ class MultiSash(wx.Window):
 
     def add_sidebar(self, control, u=None, side=wx.LEFT):
         sidebar = self.use_sidebar(side)
-        client = MultiClient(None, control, u, multiView=self)
+        client = TileClient(None, control, u, tile_mgr=self)
         sidebar.add_client(client)
 
     def calc_graphviz(self):
         from graphviz import Digraph
-        g = Digraph('multisash2', filename='multisash2.dot')
+        g = Digraph('tile_manager', filename='tile_manager.dot')
         self.calc_graphviz_children(self, g)
         return g
 
@@ -647,10 +666,10 @@ class MultiSash(wx.Window):
 
 
 class EmptyChild(wx.Window):
-    multisash2_empty_control = True
+    tile_manager_empty_control = True
 
     def __init__(self,parent):
-        wx.Window.__init__(self,parent,-1, name=MultiSash.debug_window_name("blank"), style=wx.CLIP_CHILDREN)
+        wx.Window.__init__(self,parent,-1, name=TileManager.debug_window_name("blank"), style=wx.CLIP_CHILDREN)
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INACTIVECAPTION))
         self.SetLabel("")
 
@@ -660,12 +679,12 @@ class EmptyChild(wx.Window):
 
 ########## Splitter ##########
 
-class MultiWindowBase(wx.Window):
+class TileWindowBase(wx.Window):
     can_take_leaf_focus = False
 
-    class MultiSizer(wx.Window):
+    class TileSizer(wx.Window):
         def __init__(self, parent, color):
-            wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN, name=MultiSash.debug_window_name("MultiSizer"))
+            wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN, name=TileManager.debug_window_name("TileSizer"))
 
             self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
             self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
@@ -686,13 +705,13 @@ class MultiWindowBase(wx.Window):
         cls.debug_letter = chr(ord(cls.debug_letter) + 1)
         return cls.debug_letter
 
-    def __init__(self, multiView, parent, ratio=1.0, name="MultiWindowBase"):
-        wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN, name=MultiSash.debug_window_name(name))
-        self.multiView = multiView
+    def __init__(self, tile_mgr, parent, ratio=1.0, name="TileWindowBase"):
+        wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN, name=TileManager.debug_window_name(name))
+        self.tile_mgr = tile_mgr
 
         self.resizer = None
         self.sizer_after = True
-        self.sizer = MultiWindowBase.MultiSizer(parent, multiView.empty_color)
+        self.sizer = TileWindowBase.TileSizer(parent, tile_mgr.empty_color)
         self.sizer.Bind(wx.EVT_MOTION, self.on_motion)
         self.sizer.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.sizer.Bind(wx.EVT_LEFT_UP, self.on_left_up)
@@ -792,7 +811,7 @@ class ViewContainer(object):
     def detach_leaf(self, view):
         log.debug("detach_leaf: view=%s views=%s self=%s parent=%s" % (view, self.views, self, self.GetParent()))
         index = self.find_leaf_index(view)  # raise IndexError
-        view.reparent_to(self.multiView.hiding_space)
+        view.reparent_to(self.tile_mgr.hiding_space)
         self.delete_leaf_from_list(view, index)
 
     def destroy_leaf(self, view):
@@ -801,7 +820,7 @@ class ViewContainer(object):
 
     def minimize_leaf(self, view):
         self.detach_leaf(view)
-        sidebar = self.multiView.use_sidebar(wx.DEFAULT)
+        sidebar = self.tile_mgr.use_sidebar(wx.DEFAULT)
         client = view.detach_client()
         sidebar.add_client(client)
 
@@ -809,23 +828,23 @@ class ViewContainer(object):
         log.warning("maximize not implemented yet")
 
 
-class MultiSplit(MultiWindowBase, ViewContainer):
+class TileSplit(TileWindowBase, ViewContainer):
     class HorizontalLayout(object):
         @classmethod
-        def calc_size(cls, multi_split):
-            w, h = multi_split.GetClientSize()
+        def calc_size(cls, tile_split):
+            w, h = tile_split.GetClientSize()
 
             # size used for ratio includes all the sizer widths (including the
             # extra sizer at the end that won't be displayed)
-            full_size = w + MultiSash.sizer_thickness
+            full_size = w + TileManager.sizer_thickness
 
             return w, h, full_size
 
         @classmethod
         def do_view_size(cls, view, pos, size, w, h):
-            view_width = size - MultiSash.sizer_thickness
+            view_width = size - TileManager.sizer_thickness
             view.SetSize(pos, 0, view_width, h)
-            view.sizer.SetSize(pos + view_width, 0, MultiSash.sizer_thickness, h)
+            view.sizer.SetSize(pos + view_width, 0, TileManager.sizer_thickness, h)
 
         @classmethod
         def calc_resizer(cls, splitter, left, sizer, right, x, y):
@@ -849,8 +868,8 @@ class MultiSplit(MultiWindowBase, ViewContainer):
         def calc_pixel_size(self):
             w1, h1 = self.first.GetSize()
             w2, h2 = self.second.GetSize()
-            w = w1 + w2 + 2 * (MultiSash.sizer_thickness)
-            h = h1 + h2 + 2 * (MultiSash.sizer_thickness)
+            w = w1 + w2 + 2 * (TileManager.sizer_thickness)
+            h = h1 + h2 + 2 * (TileManager.sizer_thickness)
             return w, h
 
         def calc_splitter_pos(self, sizer_evt_x, sizer_evt_y):
@@ -862,16 +881,16 @@ class MultiSplit(MultiWindowBase, ViewContainer):
             xs, ys = self.sizer.ClientToScreen((sizer_evt_x, sizer_evt_y))
             x, y = self.splitter.ScreenToClient((xs, ys))
             log.debug("calc_splitter_pos: evt: %d,%d screen: %d,%d first: %d,%d" % (sizer_evt_x, sizer_evt_y, xs, ys, x, y))
-            x, y = x - self.mouse_offset[0] + MultiSash.sizer_thickness, y - self.mouse_offset[1] + MultiSash.sizer_thickness
+            x, y = x - self.mouse_offset[0] + TileManager.sizer_thickness, y - self.mouse_offset[1] + TileManager.sizer_thickness
             return x, y
 
         def calc_extrema(self):
             self.x_min, _ = self.first.GetPosition()
-            self.x_min += 2 * MultiSash.sizer_thickness
+            self.x_min += 2 * TileManager.sizer_thickness
             x, _ = self.second.GetPosition()
             w, _ = self.second.GetSize()
             self.x_max = x + w
-            self.x_max -= MultiSash.sizer_thickness
+            self.x_max -= TileManager.sizer_thickness
             log.debug("calc_extrema: min %d, x %d, w %d, max %d" % (self.x_min, x, w, self.x_max))
 
         def set_ratios(self, x, y):
@@ -892,20 +911,20 @@ class MultiSplit(MultiWindowBase, ViewContainer):
 
     class VerticalLayout(HorizontalLayout):
         @classmethod
-        def calc_size(cls, multi_split):
-            w, h = multi_split.GetClientSize()
+        def calc_size(cls, tile_split):
+            w, h = tile_split.GetClientSize()
 
             # size used for ratio includes all the sizer widths (including the
             # extra sizer at the end that won't be displayed)
-            full_size = h + MultiSash.sizer_thickness
+            full_size = h + TileManager.sizer_thickness
 
             return w, h, full_size
 
         @classmethod
         def do_view_size(cls, view, pos, size, w, h):
-            view_height = size - MultiSash.sizer_thickness
+            view_height = size - TileManager.sizer_thickness
             view.SetSize(0, pos, w, view_height)
-            view.sizer.SetSize(0, pos + view_height, w, MultiSash.sizer_thickness)
+            view.sizer.SetSize(0, pos + view_height, w, TileManager.sizer_thickness)
 
         @classmethod
         def calc_resizer(cls, splitter, top, sizer, bot, x, y):
@@ -916,11 +935,11 @@ class MultiSplit(MultiWindowBase, ViewContainer):
 
         def calc_extrema(self):
             _, self.y_min = self.first.GetPosition()
-            self.y_min += 2 * MultiSash.sizer_thickness
+            self.y_min += 2 * TileManager.sizer_thickness
             _, y = self.second.GetPosition()
             _, h = self.second.GetSize()
             self.y_max = y + h
-            self.y_max -= MultiSash.sizer_thickness
+            self.y_max -= TileManager.sizer_thickness
             log.debug("calc_extrema: min %d, y %d, h %d, max %d" % (self.y_min, y, h, self.y_max))
 
         def set_ratios(self, x, y):
@@ -931,8 +950,8 @@ class MultiSplit(MultiWindowBase, ViewContainer):
                 self.second.ratio_in_parent = self.total_ratio - r
                 return True
 
-    def __init__(self, multiView, parent, layout_direction=wx.HORIZONTAL, ratio=1.0, leaf=None, layout=None):
-        MultiWindowBase.__init__(self, multiView, parent, ratio, name="MultiSplit")
+    def __init__(self, tile_mgr, parent, layout_direction=wx.HORIZONTAL, ratio=1.0, leaf=None, layout=None):
+        TileWindowBase.__init__(self, tile_mgr, parent, ratio, name="TileSplit")
         ViewContainer.__init__(self)
         if layout is not None:
             self.restore_layout(layout)
@@ -942,16 +961,16 @@ class MultiSplit(MultiWindowBase, ViewContainer):
                 leaf.reparent_to(self, 1.0)
                 leaf.Move(0,0)
             else:
-                leaf = MultiViewLeaf(self.multiView, self, 1.0)
+                leaf = TileViewLeaf(self.tile_mgr, self, 1.0)
             self.views.append(leaf)
         if self.layout_direction == wx.HORIZONTAL:
-            self.layout_calculator = MultiSplit.HorizontalLayout
+            self.layout_calculator = TileSplit.HorizontalLayout
         else:
-            self.layout_calculator = MultiSplit.VerticalLayout
+            self.layout_calculator = TileSplit.VerticalLayout
         self.do_layout()
 
     def __repr__(self):
-        return "<MultiSplit %s %f>" % (self.debug_id, self.ratio_in_parent)
+        return "<TileSplit %s %f>" % (self.debug_id, self.ratio_in_parent)
 
     def split(self, leaf, control=None, uuid=None, new_side=wx.RIGHT, view=None):
         log.debug("split: using view %s" % view)
@@ -973,11 +992,11 @@ class MultiSplit(MultiWindowBase, ViewContainer):
         leaf.ratio_in_parent = ratio
 
         if view is None:
-            client = MultiClient(None, control, uuid, self.multiView)
-            view = MultiViewLeaf(self.multiView, self, ratio, client)
+            client = TileClient(None, control, uuid, self.tile_mgr)
+            view = TileViewLeaf(self.tile_mgr, self, ratio, client)
         elif view.is_sidebar:
             client = view.detach_client()
-            view = MultiViewLeaf(self.multiView, self, ratio, client, from_sidebar=True)
+            view = TileViewLeaf(self.tile_mgr, self, ratio, client, from_sidebar=True)
         else:
             view.reparent_to(self, ratio)
         self.views[insert_pos:insert_pos] = [view]
@@ -986,7 +1005,7 @@ class MultiSplit(MultiWindowBase, ViewContainer):
 
     def split_opposite(self, leaf, control=None, uuid=None, new_side=wx.LEFT, view=None):
         view_index_to_split = self.find_leaf_index(leaf)
-        subsplit = MultiSplit(self.multiView, self, opposite[self.layout_direction], leaf.ratio_in_parent, leaf)
+        subsplit = TileSplit(self.tile_mgr, self, opposite[self.layout_direction], leaf.ratio_in_parent, leaf)
         self.views[view_index_to_split] = subsplit
         self.do_layout()
         return subsplit.split_same(leaf, control, uuid, new_side, view)
@@ -1025,9 +1044,9 @@ class MultiSplit(MultiWindowBase, ViewContainer):
         self.ratio_in_parent = d['ratio_in_parent']
         for layout in d['views']:
             if 'direction' in layout:
-                view = MultiSplit(self.multiView, self, layout=layout)
+                view = TileSplit(self.tile_mgr, self, layout=layout)
             else:
-                view = MultiViewLeaf(self.multiView, self, layout=layout)
+                view = TileViewLeaf(self.tile_mgr, self, layout=layout)
             self.views.append(view)
 
     def delete_leaf_from_list(self, view, index):
@@ -1044,7 +1063,7 @@ class MultiSplit(MultiWindowBase, ViewContainer):
             # Instead of leaving it like this, move it up into the parent
             # multisplit
             del self.views[index]
-            if self.GetParent() == self.multiView:
+            if self.GetParent() == self.tile_mgr:
                 # Only one item left.
                 log.debug("  last item in %s!" % (self))
                 self.views[0].ratio_in_parent = 1.0
@@ -1068,39 +1087,30 @@ class MultiSplit(MultiWindowBase, ViewContainer):
 
 ########## Leaf (Client Container) ##########
 
-
-class HidingSpace(wx.Window):
-    can_take_leaf_focus = False
-    is_sidebar = False
-
-    def set_chrome(self, client):
-        pass
-
-
-class MultiViewLeaf(MultiWindowBase, DockTarget):
+class TileViewLeaf(TileWindowBase, DockTarget):
     can_take_leaf_focus = True
     is_sidebar = False
 
-    def __init__(self, multiView, parent, ratio=1.0, client=None, layout=None, from_sidebar=False):
-        MultiWindowBase.__init__(self, multiView, parent, ratio, name="MultiViewLeaf")
+    def __init__(self, tile_mgr, parent, ratio=1.0, client=None, layout=None, from_sidebar=False):
+        TileWindowBase.__init__(self, tile_mgr, parent, ratio, name="TileViewLeaf")
         if layout is not None:
             self.client = None
             self.restore_layout(layout)
         else:
             if client is None:
-                client = MultiClient(self)
+                client = TileClient(self)
             if from_sidebar:
                 client.SetPosition((0, 0))
                 client.Show()
             self.attach_client(client)
-        self.SetBackgroundColour(multiView.unfocused_color)
+        self.SetBackgroundColour(tile_mgr.unfocused_color)
 
     @property
     def debug_id(self):
         return self.client.child.GetName()
 
     def __repr__(self):
-        return "<MultiLeaf %s %s %f>" % (self.client.child.GetName(), self.debug_id, self.ratio_in_parent)
+        return "<TileLeaf %s %s %f>" % (self.client.child.GetName(), self.debug_id, self.ratio_in_parent)
 
     def remove(self):
         self.remove_client()
@@ -1126,7 +1136,7 @@ class MultiViewLeaf(MultiWindowBase, DockTarget):
         return None
 
     def find_empty(self):
-        if hasattr(self.client.child, "multisash2_empty_control") and self.client.child.multisash2_empty_control:
+        if hasattr(self.client.child, "tile_manager_empty_control") and self.client.child.tile_manager_empty_control:
             log.debug("find_empty: found %s" % (self.client.child.GetName()))
             return self.client
         log.debug("find_empty: skipping %s in %s" % (self.client.child_uuid, self.client.child.GetName()))
@@ -1141,12 +1151,12 @@ class MultiViewLeaf(MultiWindowBase, DockTarget):
     def restore_layout(self, d):
         self.ratio_in_parent = d['ratio_in_parent']
         old = self.client
-        self.client = MultiClient(self, layout=d)
+        self.client = TileClient(self, layout=d)
         if old is not None:
             old.Destroy()
         self.client.do_size_from_parent()
 
-    def get_multi_split(self):
+    def get_tile_split(self):
         return self.GetParent()
 
     def split_side(self, new_side, view=None):
@@ -1162,20 +1172,20 @@ class MultiViewLeaf(MultiWindowBase, DockTarget):
         self.client.do_size_from_parent()
 
 
-class MultiClient(wx.Window):
-    def __init__(self, parent, child=None, uuid=None, multiView=None, leaf=None, layout=None):
+class TileClient(wx.Window):
+    def __init__(self, parent, child=None, uuid=None, tile_mgr=None, leaf=None, layout=None):
         if parent is None:
-            parent = multiView.hiding_space
-        wx.Window.__init__(self, parent, -1, style=wx.CLIP_CHILDREN | wx.BORDER_NONE, size=(200, 200), name=MultiSash.debug_window_name("MultiClient"))
-        if multiView is None:
-            multiView = parent.multiView
-        self.multiView = multiView
+            parent = tile_mgr.hiding_space
+        wx.Window.__init__(self, parent, -1, style=wx.CLIP_CHILDREN | wx.BORDER_NONE, size=(200, 200), name=TileManager.debug_window_name("TileClient"))
+        if tile_mgr is None:
+            tile_mgr = parent.tile_mgr
+        self.tile_mgr = tile_mgr
 
         self.extra_border = 0
         self.title_bar = TitleBar(self)
 
         if child is None:
-            child = self.multiView._defChild(self)
+            child = self.tile_mgr._defChild(self)
         self.child = child
         self.child.Reparent(self)
         self.move_child()
@@ -1211,9 +1221,9 @@ class MultiClient(wx.Window):
         self.Reparent(leaf)
         self.do_size_from_child()
         if leaf.is_sidebar:
-            self.SetBackgroundColour(self.multiView.focused_color)
+            self.SetBackgroundColour(self.tile_mgr.focused_color)
         else:
-            self.SetBackgroundColour(self.multiView.border_color)
+            self.SetBackgroundColour(self.tile_mgr.border_color)
         self.SetBackgroundColour(wx.RED)
 
     def remove(self):
@@ -1225,13 +1235,13 @@ class MultiClient(wx.Window):
 
     def do_send_close_event(self):
         log.debug("sending close event for %s" % self)
-        evt = MultiSashEvent(MultiSash.wxEVT_CLIENT_CLOSE, self)
+        evt = TileManagerEvent(TileManager.wxEVT_CLIENT_CLOSE, self)
         evt.SetChild(self.child)
         self.do_send_event(evt)
 
     def do_send_replace_event(self, new_child):
         log.debug("sending replace event for %s" % self)
-        evt = MultiSashEvent(MultiSash.wxEVT_CLIENT_REPLACE, self)
+        evt = TileManagerEvent(TileManager.wxEVT_CLIENT_REPLACE, self)
         evt.SetChild(self.child)
         evt.SetReplacementChild(new_child)
         self.do_send_event(evt)
@@ -1251,7 +1261,7 @@ class MultiClient(wx.Window):
         self.Refresh()
 
     def set_focus(self):
-        evt = MultiSashEvent(MultiSash.wxEVT_CLIENT_ACTIVATED, self)
+        evt = TileManagerEvent(TileManager.wxEVT_CLIENT_ACTIVATED, self)
         evt.SetChild(self.child)
         self.do_send_event(evt)
         self.child.SetFocus()
@@ -1264,7 +1274,7 @@ class MultiClient(wx.Window):
     def do_size_from_bounds(self, w, h):
         self.SetSize(w, h)
         b = self.extra_border
-        m = self.multiView
+        m = self.tile_mgr
         w -= b * 2
         h -= b * 2
         # print("in client %s:" % self.GetParent().debug_id, w, h)
@@ -1273,13 +1283,13 @@ class MultiClient(wx.Window):
 
     def DoGetBestClientSize(self):
         b = self.extra_border
-        m = self.multiView
+        m = self.tile_mgr
         w, h = self.child.GetBestSize()
         return wx.Size(w + b * 2, h + b * 2 + m.title_bar_height)
 
     def do_size_from_child(self):
         b = self.extra_border
-        m = self.multiView
+        m = self.tile_mgr
         w, h = self.child.GetBestSize()
         self.SetSize((w + b * 2, h + b * 2 + m.title_bar_height))
         self.title_bar.SetSize(b, b, w, m.title_bar_height)
@@ -1305,10 +1315,10 @@ class MultiClient(wx.Window):
 
     def move_child(self):
         self.title_bar.Move(0, 0)
-        self.child.Move(0, self.multiView.title_bar_height)
+        self.child.Move(0, self.tile_mgr.title_bar_height)
 
     def on_set_focus(self,evt):
-        m = self.multiView
+        m = self.tile_mgr
         if self.leaf == m.current_leaf_focus:
             print("already focused", self.leaf)
         else:
@@ -1343,7 +1353,7 @@ class TitleBar(wx.Window):
         def __init__(self, parent, size):
             self.title_bar = parent
             self.client = parent.GetParent()
-            wx.Window.__init__(self, parent, -1, pos=(0, 0), size=size, style=wx.BORDER_NONE, name=MultiSash.debug_window_name("TitleBarButton"))
+            wx.Window.__init__(self, parent, -1, pos=(0, 0), size=size, style=wx.BORDER_NONE, name=TileManager.debug_window_name("TitleBarButton"))
 
             self.down = False
             self.entered = False
@@ -1372,7 +1382,7 @@ class TitleBar(wx.Window):
             self.down = False
 
         def on_paint(self, event):
-            m = self.client.multiView
+            m = self.client.tile_mgr
             dc = wx.PaintDC(self)
             size = self.GetClientSize()
 
@@ -1513,9 +1523,9 @@ class TitleBar(wx.Window):
             self.client.split_side(wx.TOP)
 
     def __init__(self, parent, in_sidebar=False):
-        wx.Window.__init__(self, parent, -1, name=MultiSash.debug_window_name("TitleBar"))
+        wx.Window.__init__(self, parent, -1, name=TileManager.debug_window_name("TitleBar"))
         self.client = parent
-        m = self.client.multiView
+        m = self.client.tile_mgr
 
         self.buttons = []
         self.buttons.append(TitleBar.Closer(self, m.close_button_size))
@@ -1547,11 +1557,11 @@ class TitleBar(wx.Window):
         old = self.mouse_down_pos
         if evt.LeftIsDown() and old is not None:
             pos = evt.GetPosition()
-            d = self.client.multiView.mouse_delta_for_window_move
+            d = self.client.tile_mgr.mouse_delta_for_window_move
             if abs(old.x - pos.x) > d or abs(old.y - pos.y) > d:
                 self.hide_buttons()
                 self.mouse_down_pos = None
-                self.client.multiView.start_child_window_move(self.client.leaf, evt)
+                self.client.tile_mgr.start_child_window_move(self.client.leaf, evt)
 
     def set_buttons_for_sidebar_state(self, in_sidebar):
         for button in self.buttons:
@@ -1559,7 +1569,7 @@ class TitleBar(wx.Window):
         self.position_buttons()
 
     def draw_title_bar(self, dc):
-        m = self.client.multiView
+        m = self.client.tile_mgr
         dc.SetBackgroundMode(wx.SOLID)
         dc.SetPen(wx.TRANSPARENT_PEN)
         brush, _, _, text, textbg = m.get_paint_tools(m.is_leaf_focused(self.client))
@@ -1577,7 +1587,7 @@ class TitleBar(wx.Window):
         self.draw_title_bar(dc)
 
     def position_buttons(self):
-        m = self.client.multiView
+        m = self.client.tile_mgr
         w, h = self.GetClientSize()
         x = w - m.title_bar_margin
         for button in self.buttons:
@@ -1618,19 +1628,19 @@ class SidebarMenuItem(wx.Window, DockTarget):
     is_sidebar = True
 
     def __init__(self, sidebar, client=None, layout=None):
-        wx.Window.__init__(self, sidebar, -1, name=MultiSash.debug_window_name("SidebarMenuItem"))
+        wx.Window.__init__(self, sidebar, -1, name=TileManager.debug_window_name("SidebarMenuItem"))
         self.sidebar = sidebar
-        self.multiView = sidebar.multiView
+        self.tile_mgr = sidebar.tile_mgr
 
         # Client windows are children of the main window so they can be
         # positioned over (and therefore obscure) any window within the
-        # MultiSash
+        # TileManager
         self.client = None
         if layout is not None:
             self.restore_layout(layout)
         else:
             self.attach_client(client)
-        self.SetBackgroundColour(self.multiView.empty_color)
+        self.SetBackgroundColour(self.tile_mgr.empty_color)
 
         # the label drawing offsets will be calculated during sizing
         self.label_x = 0
@@ -1653,7 +1663,7 @@ class SidebarMenuItem(wx.Window, DockTarget):
 
     def restore_layout(self, d):
         old = self.client
-        self.client = MultiClient(self, layout=d)
+        self.client = TileClient(self, layout=d)
         if old is not None:
             old.Destroy()
 
@@ -1678,18 +1688,18 @@ class SidebarMenuItem(wx.Window, DockTarget):
     def on_paint(self, event):
         dc = wx.PaintDC(self)
         s = self.sidebar
-        s.multiView.configure_sidebar_dc(dc, self.entered)
+        s.tile_mgr.configure_sidebar_dc(dc, self.entered)
         s.title_renderer.draw_label(dc, self)
 
     def on_leave(self,evt):
-        m = self.multiView
+        m = self.tile_mgr
         if m.current_sidebar_focus == self:
             pass
         elif m.pending_sidebar_focus != self:
             self.popdown()
 
     def on_enter(self,evt):
-        m = self.multiView
+        m = self.tile_mgr
         print("on_enter: current sidebar focus", m.current_sidebar_focus, "current_leaf_focus", m.current_leaf_focus)
         if not m.current_sidebar_focus:
             if m.pending_sidebar_focus:
@@ -1697,11 +1707,11 @@ class SidebarMenuItem(wx.Window, DockTarget):
             self.popup()
 
     def on_motion(self,evt):
-        print("pending sidebar focus=%s" % self.multiView.pending_sidebar_focus)
+        print("pending sidebar focus=%s" % self.tile_mgr.pending_sidebar_focus)
         evt.Skip()
 
     def on_left_down(self, evt):
-        m = self.multiView
+        m = self.tile_mgr
         if m.current_sidebar_focus == self:
             m.restore_last_main_window_focus()
         else:
@@ -1714,7 +1724,7 @@ class SidebarMenuItem(wx.Window, DockTarget):
                 print("setting pending focus to sidebar %s" % self)
 
     def on_left_up(self,evt):
-        m = self.multiView
+        m = self.tile_mgr
         if m.pending_sidebar_focus == self:
             print("Setting focus to sidebar!")
             m.set_sidebar_focus()
@@ -1751,19 +1761,19 @@ class SidebarMenuItem(wx.Window, DockTarget):
 
 
 class MissingSidebarDock(DockTarget):
-    def __init__(self, multiView, side):
+    def __init__(self, tile_mgr, side):
         self.side = side
-        self.multiView = multiView
+        self.tile_mgr = tile_mgr
         self.title_renderer = Sidebar.renderers[side]
 
     def calc_docking_rectangles(self, event_window, source_leaf):
-        mw, mh = self.multiView.GetClientSize()
-        ux, uy, uw, uh = self.multiView.calc_usable_rect()
+        mw, mh = self.tile_mgr.GetClientSize()
+        ux, uy, uw, uh = self.tile_mgr.calc_usable_rect()
         rect = self.title_renderer.calc_missing_sidebar_docking_rectangle(self)
         return [(self, None, rect)]
 
     def split_side(self, new_side, view=None):
-        sidebar = self.multiView.use_sidebar(self.side)
+        sidebar = self.tile_mgr.use_sidebar(self.side)
         client = view.detach_client()
         sidebar.add_client(client)
 
@@ -1776,14 +1786,14 @@ class Sidebar(wx.Window, ViewContainer):
 
         @classmethod
         def calc_thickness(cls, sidebar):
-            m = sidebar.multiView
+            m = sidebar.tile_mgr
             pixels = m.sidebar_margin * 2 + m.title_bar_font_height
             return pixels
 
         @classmethod
         def show_client_prevent_clipping(cls, sidebar, view, x, y):
             cw, ch = view.client.GetBestSize()
-            x_min, y_min, sw, sh = sidebar.multiView.calc_usable_rect()
+            x_min, y_min, sw, sh = sidebar.tile_mgr.calc_usable_rect()
             if y + ch > y_min + sh:
                 # some amount is offscreen on the bottom
                 y -= (y + ch - sh - y_min)
@@ -1806,7 +1816,7 @@ class Sidebar(wx.Window, ViewContainer):
     class VerticalRenderer(BaseRenderer):
         @classmethod
         def do_view_size(cls, view, pos, w, h):
-            m = view.multiView
+            m = view.tile_mgr
             text_width, text_height = m.get_text_size(view.client.popup_name)
             size = text_width + 2 * m.sidebar_margin
             view.SetSize(0, pos, w, size)
@@ -1839,7 +1849,7 @@ class Sidebar(wx.Window, ViewContainer):
 
         @classmethod
         def show_client(cls, sidebar, view):
-            # sidebar position within multiView, so these are global values
+            # sidebar position within tile_mgr, so these are global values
             x_min, y_min = sidebar.GetPosition()
             w, h = sidebar.GetSize()
             x_min += w
@@ -1852,7 +1862,7 @@ class Sidebar(wx.Window, ViewContainer):
 
         @classmethod
         def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
-            ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
+            ux, uy, uw, uh = missing_sidebar.tile_mgr.calc_usable_rect()
             return wx.Rect(0, uy, cls.calc_thickness(missing_sidebar) // 2, uh)
 
 
@@ -1865,7 +1875,7 @@ class Sidebar(wx.Window, ViewContainer):
 
         @classmethod
         def show_client(cls, sidebar, view):
-            # sidebar position within multiView, so these are global values
+            # sidebar position within tile_mgr, so these are global values
             x_min, y_min = sidebar.GetPosition()
 
             # view position is position within sidebar
@@ -1876,8 +1886,8 @@ class Sidebar(wx.Window, ViewContainer):
 
         @classmethod
         def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
-            mw, mh = missing_sidebar.multiView.GetClientSize()
-            ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
+            mw, mh = missing_sidebar.tile_mgr.GetClientSize()
+            ux, uy, uw, uh = missing_sidebar.tile_mgr.calc_usable_rect()
             t = cls.calc_thickness(missing_sidebar) // 2
             return wx.Rect(mw - t, uy, t, uh)
 
@@ -1885,7 +1895,7 @@ class Sidebar(wx.Window, ViewContainer):
     class HorizontalRenderer(BaseRenderer):
         @classmethod
         def do_view_size(cls, view, pos, w, h):
-            m = view.multiView
+            m = view.tile_mgr
             text_width, text_height = m.get_text_size(view.client.popup_name)
             size = text_width + 2 * m.sidebar_margin
             view.SetSize(pos, 0, size, h)
@@ -1918,7 +1928,7 @@ class Sidebar(wx.Window, ViewContainer):
 
         @classmethod
         def show_client(cls, sidebar, view):
-            # sidebar position within multiView, so these are global values
+            # sidebar position within tile_mgr, so these are global values
             x_min, y_min = sidebar.GetPosition()
             w, h = sidebar.GetSize()
             y_min += h
@@ -1931,7 +1941,7 @@ class Sidebar(wx.Window, ViewContainer):
 
         @classmethod
         def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
-            ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
+            ux, uy, uw, uh = missing_sidebar.tile_mgr.calc_usable_rect()
             return wx.Rect(ux, 0, uw, cls.calc_thickness(missing_sidebar) // 2)
 
 
@@ -1944,7 +1954,7 @@ class Sidebar(wx.Window, ViewContainer):
 
         @classmethod
         def show_client(cls, sidebar, view):
-            # sidebar position within multiView, so these are global values
+            # sidebar position within tile_mgr, so these are global values
             x_min, y_max = sidebar.GetPosition()
 
             # view is menu item position within sidebar
@@ -1955,8 +1965,8 @@ class Sidebar(wx.Window, ViewContainer):
 
         @classmethod
         def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
-            mw, mh = missing_sidebar.multiView.GetClientSize()
-            ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
+            mw, mh = missing_sidebar.tile_mgr.GetClientSize()
+            ux, uy, uw, uh = missing_sidebar.tile_mgr.calc_usable_rect()
             t = cls.calc_thickness(missing_sidebar) // 2
             return wx.Rect(ux, mh - t, uw, t)
 
@@ -1967,12 +1977,12 @@ class Sidebar(wx.Window, ViewContainer):
         wx.BOTTOM: BottomRenderer,
     }
 
-    def __init__(self, multiView, side=wx.LEFT, layout=None):
-        wx.Window.__init__(self, multiView, -1, name=MultiSash.debug_window_name("Sidebar"))
+    def __init__(self, tile_mgr, side=wx.LEFT, layout=None):
+        wx.Window.__init__(self, tile_mgr, -1, name=TileManager.debug_window_name("Sidebar"))
         ViewContainer.__init__(self)
-        self.multiView = multiView
+        self.tile_mgr = tile_mgr
 
-        self.SetBackgroundColour(multiView.empty_color)
+        self.SetBackgroundColour(tile_mgr.empty_color)
         if layout is not None:
             self.restore_layout(layout)
         else:
@@ -2022,15 +2032,15 @@ class Sidebar(wx.Window, ViewContainer):
 
     def force_popup_to_top_of_stacking_order(self):
         # Unless popup is at the top of the stacking order, it will be obscured
-        # by the main MultiSplit window (and all of its children, of course).
-        # This method is needed only when the main MultiSplit window is changed
-        # with a call to MultiSash.remove_all
+        # by the main TileSplit window (and all of its children, of course).
+        # This method is needed only when the main TileSplit window is changed
+        # with a call to TileManager.remove_all
         for view in self.views:
             # There doesn't appear to be an explicit way to force a particular
             # child window to the top of the stacking order, but this is a
             # workaround.
-            view.client.Reparent(self.multiView.hiding_space)
-            view.client.Reparent(self.multiView)
+            view.client.Reparent(self.tile_mgr.hiding_space)
+            view.client.Reparent(self.tile_mgr)
             pass
 
     def do_layout(self):
@@ -2042,17 +2052,17 @@ class Sidebar(wx.Window, ViewContainer):
 
     def do_popup_view(self, view, x, y, w, h):
         print("operating on view", view)
-        print("children before:", str(self.multiView.GetChildren()))
+        print("children before:", str(self.tile_mgr.GetChildren()))
         print("client parent before:", view.client.GetParent())
-        view.client.Reparent(self.multiView.hiding_space)
+        view.client.Reparent(self.tile_mgr.hiding_space)
         print("client parent mid:", view.client.GetParent())
-        view.client.Reparent(self.multiView)
+        view.client.Reparent(self.tile_mgr)
         print("client parent after:", view.client.GetParent())
-        print("children after:", str(self.multiView.GetChildren()))
+        print("children after:", str(self.tile_mgr.GetChildren()))
         view.client.show_as_popup(x, y, w, h)
 
     def do_popup_view_msw(self, view, x, y, w, h):
-        top = self.multiView
+        top = self.tile_mgr
         client = view.client
         print("reparenting %s" % self.GetName())
         #top.Freeze()
@@ -2070,17 +2080,17 @@ class Sidebar(wx.Window, ViewContainer):
         do_popup_view = do_popup_view_msw
 
     def delete_leaf_from_list(self, view, index):
-        self.multiView.force_clear_sidebar()
+        self.tile_mgr.force_clear_sidebar()
         del self.views[index]
         self.do_layout()
         if len(self.views) == 0:
             log.debug("Nothing left in sidebar!", self)
-            self.multiView.remove_sidebar(self)
+            self.tile_mgr.remove_sidebar(self)
 
 
 ########## Events ##########
 
-class MultiSashEvent(wx.PyCommandEvent):
+class TileManagerEvent(wx.PyCommandEvent):
     """
     This event class is almost the same as `wx.SplitterEvent` except
     it adds an accessor for the sash index that is being changed.  The
@@ -2109,36 +2119,36 @@ class MultiSashEvent(wx.PyCommandEvent):
 
     def SetChild(self, child):
         """
-        The MultiClient child window that is reporting the event
+        The TileClient child window that is reporting the event
 
-        :param `client`: MultiClient instance
+        :param `client`: TileClient instance
 
         """
         self.child = child
 
     def GetChild(self):
         """
-        The MultiClient child window that is reporting the event
+        The TileClient child window that is reporting the event
 
-        :param `client`: MultiClient instance
+        :param `client`: TileClient instance
 
         """
         return self.child
 
     def SetReplacementChild(self, child):
         """
-        The child window that will become the new child of the MultiClient
+        The child window that will become the new child of the TileClient
 
-        :param `client`: MultiClient instance
+        :param `client`: TileClient instance
 
         """
         self.replacement_child = child
 
     def GetReplacementChild(self):
         """
-        The child window that will become the new child of the MultiClient
+        The child window that will become the new child of the TileClient
 
-        :param `client`: MultiClient instance
+        :param `client`: TileClient instance
 
         """
         return self.replacement_child
@@ -2306,7 +2316,7 @@ if __name__ == '__main__':
 
     app = wx.App()
     frame = wx.Frame(None, -1, "Test", size=(800,400))
-    multi = MultiSash(frame, pos = (0,0), size = (640,480), layout_direction=wx.HORIZONTAL)
+    multi = TileManager(frame, pos = (0,0), size = (640,480), layout_direction=wx.HORIZONTAL)
     sizer = wx.BoxSizer(wx.VERTICAL)
     horz = wx.BoxSizer(wx.HORIZONTAL)
     horz.Add(multi, 1, wx.EXPAND)
