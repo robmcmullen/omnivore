@@ -188,7 +188,7 @@ class ByteEditor(FrameworkEditor):
     def to_metadata_dict(self, mdict, document):
         self.prepare_metadata_for_save()
         mdict["diff highlight"] = self.diff_highlight
-        mdict["layout"] = self.control.get_layout()
+        mdict["layout"] = self.control.calc_layout()
         mdict["viewers"] = []
         bases = {}
         for v in self.viewers:

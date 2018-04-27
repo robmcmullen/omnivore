@@ -204,7 +204,10 @@ class SegmentViewer(HasTraits):
         mdict['machine'] = {}
         self.machine.serialize_extra_to_dict(mdict['machine'])
         mdict['control'] = {}
-        self.control.serialize_extra_to_dict(mdict['control'])
+        try:
+            self.control.serialize_extra_to_dict(mdict['control'])
+        except AttributeError:
+            pass
         self.to_metadata_dict_post(mdict, document)
 
     def to_metadata_dict_post(self, mdict, document):
