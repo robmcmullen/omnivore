@@ -61,160 +61,161 @@ pretty_direction = {
     }
 
 
-def calc_bitmap_of_window(win):
-    # modified from a snipped that creates a screenshot of the entire desktop
-    # see http://aspn.activestate.com/ASPN/Mail/Message/wxpython-users/3575899
-    # created by Andrea Gavana
-    rect = win.GetRect()
-
-    sx, sy = win.ClientToScreen((0, 0))
-    rect.x = sx
-    rect.y = sy
-
-    dcScreen = wx.ScreenDC()
-
-    try:
-        # print("trying screenDC subbitmap: %s" % str(rect))
-        drag_bitmap = dcScreen.GetAsBitmap().GetSubBitmap(rect)
-    except wx.wxAssertionError:
-        # print("creating bitmap manually")
-        drag_bitmap = wx.Bitmap(rect.width, rect.height)
-        memDC = wx.MemoryDC()
-        memDC.SelectObject(drag_bitmap)
-        memDC.Blit(0, 0, rect.width, rect.height, dcScreen, sx, sy)
-        memDC.SelectObject(wx.NullBitmap)  # sync data to bitmap
-    return rect, drag_bitmap
-
-
-class BitmapPopup(wx.PopupWindow):
-    """Adds a bit of text and mouse movement to the wx.PopupWindow"""
-    def __init__(self, parent, pos, style=wx.SIMPLE_BORDER):
-        wx.PopupWindow.__init__(self, parent, style)
-        self.SetBackgroundColour("CADET BLUE")
-        
-        rect, self.bitmap = calc_bitmap_of_window(parent)
-        x, y = parent.ClientToScreen(pos)
-        rect.x = x
-        rect.y = y
-        self.SetSize(rect)
-        self.Show()
-
-        self.Bind(wx.EVT_PAINT, self.on_paint)
-
-    def on_paint(self, evt):
-        dc = wx.PaintDC(self)
-        dc.DrawBitmap(self.bitmap, 0, 0)
-
-
-class DockingRectangleHandler(object):
-    def __init__(self):
-        self.use_transparency = True
-        self.overlay = None
-        self.docking_rectangles = []
-        self.event_window = None
-        self.source_leaf = None
-        self.popup_window = None
-        self.background_bitmap = None
-        self.current_dock = None
-        self.pen = wx.Pen(wx.BLUE)
-        brush_color = wx.Colour(0xb0, 0xb0, 0xff, 0x80)
-        self.brush = wx.Brush(brush_color)
-
-    @property
-    def is_active(self):
-        return self.popup_window is not None
-
-    def start_docking(self, event_window, source_leaf, evt):
-        # Capture the mouse and save the starting posiiton for the rubber-band
-        event_window.CaptureMouse()
-        event_window.SetFocus()
-        self.current_dock = None
-        self.event_window = event_window
-        self.source_leaf = source_leaf
-        self.popup_window = BitmapPopup(source_leaf, evt.GetPosition())
-        _, self.background_bitmap = calc_bitmap_of_window(event_window)
-        self.overlay = wx.Overlay()
-        self.overlay.Reset()
-        self.create_docking_rectangles()
-
-    def create_docking_rectangles(self):
-        rects = []
-        for leaf in self.event_window.calc_dock_targets():
-            rects.extend(leaf.calc_docking_rectangles(self.event_window, self.source_leaf))
-        self.docking_rectangles = rects
-
-    def in_rect(self, pos):
-        for dock_info in self.docking_rectangles:
-            _, _, rect = dock_info
-            print("checking %s in rect %s" % (pos, rect))
-            if rect.Contains(pos):
-                break
-        else:
-            print("NOT IN RECT")
-            dock_info = None
-        return dock_info
-
-    def process_dragging(self, evt):
-        pos = evt.GetPosition()
-
-        self.current_dock = self.in_rect(pos)
-
-        dc = wx.ClientDC(self.event_window)
-        odc = wx.DCOverlay(self.overlay, dc)
-        odc.Clear()
-
-        if wx.Platform != "__WXMAC__":
-            if self.use_transparency:
-                dc = wx.GCDC(dc)        # Mac already using GCDC
-
-            # Win & linux need this hack: copy background to overlay; otherwise
-            # the overlay seems to be black? I don't know what's up with this
-            # platform difference
-            dc.DrawBitmap(self.background_bitmap, 0, 0)
-
-        if self.current_dock is not None:
-            dc.SetPen(self.pen)
-            dc.SetBrush(self.brush)
-            dc.DrawRectangle(self.current_dock[2])
-
-        pos = self.event_window.ClientToScreen(pos)
-        self.popup_window.SetPosition(pos)
-
-        del odc  # Make sure the odc is destroyed before the dc is.
-
-
-    def cleanup_docking(self, evt):
-        if self.event_window.HasCapture():
-            self.event_window.ReleaseMouse()
-        pos = evt.GetPosition()
-
-        # When the mouse is released we reset the overlay and it
-        # restores the former content to the window.
-        dc = wx.ClientDC(self.event_window)
-        odc = wx.DCOverlay(self.overlay, dc)
-        odc.Clear()
-        del odc
-        self.overlay.Reset()
-        self.overlay = None
-
-        self.popup_window.Destroy()
-        self.popup_window = None
-        self.event_window.Refresh()  # Force redraw
-        self.event_window = None
-        leaf = self.source_leaf
-        self.source_leaf = None
-
-        if self.current_dock is not None:
-            leaf_to_split, side, _ = self.current_dock
-        else:
-            leaf_to_split = None
-            side = None
-        self.current_dock = None
-        self.docking_rectangles = None
-        return leaf, leaf_to_split, side
-
-
 class DockTarget(object):
+    @classmethod
+    def calc_bitmap_of_window(cls, win):
+        # modified from a snipped that creates a screenshot of the entire desktop
+        # see http://aspn.activestate.com/ASPN/Mail/Message/wxpython-users/3575899
+        # created by Andrea Gavana
+        rect = win.GetRect()
+
+        sx, sy = win.ClientToScreen((0, 0))
+        rect.x = sx
+        rect.y = sy
+
+        dcScreen = wx.ScreenDC()
+
+        try:
+            # print("trying screenDC subbitmap: %s" % str(rect))
+            drag_bitmap = dcScreen.GetAsBitmap().GetSubBitmap(rect)
+        except wx.wxAssertionError:
+            # print("creating bitmap manually")
+            drag_bitmap = wx.Bitmap(rect.width, rect.height)
+            memDC = wx.MemoryDC()
+            memDC.SelectObject(drag_bitmap)
+            memDC.Blit(0, 0, rect.width, rect.height, dcScreen, sx, sy)
+            memDC.SelectObject(wx.NullBitmap)  # sync data to bitmap
+        return rect, drag_bitmap
+
+
+    class BitmapPopup(wx.PopupWindow):
+        """Adds a bit of text and mouse movement to the wx.PopupWindow"""
+        def __init__(self, parent, pos, style=wx.SIMPLE_BORDER):
+            wx.PopupWindow.__init__(self, parent, style)
+            self.SetBackgroundColour("CADET BLUE")
+            
+            rect, self.bitmap = DockTarget.calc_bitmap_of_window(parent)
+            x, y = parent.ClientToScreen(pos)
+            rect.x = x
+            rect.y = y
+            self.SetSize(rect)
+            self.Show()
+
+            self.Bind(wx.EVT_PAINT, self.on_paint)
+
+        def on_paint(self, evt):
+            dc = wx.PaintDC(self)
+            dc.DrawBitmap(self.bitmap, 0, 0)
+
+
+    class DockingRectangleHandler(object):
+        def __init__(self):
+            self.use_transparency = True
+            self.overlay = None
+            self.docking_rectangles = []
+            self.event_window = None
+            self.source_leaf = None
+            self.popup_window = None
+            self.background_bitmap = None
+            self.current_dock = None
+            self.pen = wx.Pen(wx.BLUE)
+            brush_color = wx.Colour(0xb0, 0xb0, 0xff, 0x80)
+            self.brush = wx.Brush(brush_color)
+
+        @property
+        def is_active(self):
+            return self.popup_window is not None
+
+        def start_docking(self, event_window, source_leaf, evt):
+            # Capture the mouse and save the starting posiiton for the rubber-band
+            event_window.CaptureMouse()
+            event_window.SetFocus()
+            self.current_dock = None
+            self.event_window = event_window
+            self.source_leaf = source_leaf
+            self.popup_window = DockTarget.BitmapPopup(source_leaf, evt.GetPosition())
+            _, self.background_bitmap = DockTarget.calc_bitmap_of_window(event_window)
+            self.overlay = wx.Overlay()
+            self.overlay.Reset()
+            self.create_docking_rectangles()
+
+        def create_docking_rectangles(self):
+            rects = []
+            for leaf in self.event_window.calc_dock_targets():
+                rects.extend(leaf.calc_docking_rectangles(self.event_window, self.source_leaf))
+            self.docking_rectangles = rects
+
+        def in_rect(self, pos):
+            for dock_info in self.docking_rectangles:
+                _, _, rect = dock_info
+                print("checking %s in rect %s" % (pos, rect))
+                if rect.Contains(pos):
+                    break
+            else:
+                print("NOT IN RECT")
+                dock_info = None
+            return dock_info
+
+        def process_dragging(self, evt):
+            pos = evt.GetPosition()
+
+            self.current_dock = self.in_rect(pos)
+
+            dc = wx.ClientDC(self.event_window)
+            odc = wx.DCOverlay(self.overlay, dc)
+            odc.Clear()
+
+            if wx.Platform != "__WXMAC__":
+                if self.use_transparency:
+                    dc = wx.GCDC(dc)        # Mac already using GCDC
+
+                # Win & linux need this hack: copy background to overlay; otherwise
+                # the overlay seems to be black? I don't know what's up with this
+                # platform difference
+                dc.DrawBitmap(self.background_bitmap, 0, 0)
+
+            if self.current_dock is not None:
+                dc.SetPen(self.pen)
+                dc.SetBrush(self.brush)
+                dc.DrawRectangle(self.current_dock[2])
+
+            pos = self.event_window.ClientToScreen(pos)
+            self.popup_window.SetPosition(pos)
+
+            del odc  # Make sure the odc is destroyed before the dc is.
+
+
+        def cleanup_docking(self, evt):
+            if self.event_window.HasCapture():
+                self.event_window.ReleaseMouse()
+            pos = evt.GetPosition()
+
+            # When the mouse is released we reset the overlay and it
+            # restores the former content to the window.
+            dc = wx.ClientDC(self.event_window)
+            odc = wx.DCOverlay(self.overlay, dc)
+            odc.Clear()
+            del odc
+            self.overlay.Reset()
+            self.overlay = None
+
+            self.popup_window.Destroy()
+            self.popup_window = None
+            self.event_window.Refresh()  # Force redraw
+            self.event_window = None
+            leaf = self.source_leaf
+            self.source_leaf = None
+
+            if self.current_dock is not None:
+                leaf_to_split, side, _ = self.current_dock
+            else:
+                leaf_to_split = None
+                side = None
+            self.current_dock = None
+            self.docking_rectangles = None
+            return leaf, leaf_to_split, side
+
+
     def detach_client(self):
         client = self.client
         if client is not None:
@@ -246,10 +247,10 @@ class DockTarget(object):
             h = r.height // 4
             ty = r.y + r.height - h
             rx = r.x + r.width - w
-            rects.append((self, wx.LEFT, wx.Rect(r.x, r.y, w, r.height)))  # left
-            rects.append((self, wx.TOP, wx.Rect(r.x, r.y, r.width, h)))  # bottom
-            rects.append((self, wx.RIGHT, wx.Rect(rx, r.y, w, r.height)))  # right
-            rects.append((self, wx.BOTTOM, wx.Rect(r.x, ty, r.width, h)))  # top
+            rects.append((self, wx.LEFT, wx.Rect(r.x, r.y, w, r.height)))
+            rects.append((self, wx.TOP, wx.Rect(r.x, r.y, r.width, h)))
+            rects.append((self, wx.RIGHT, wx.Rect(rx, r.y, w, r.height)))
+            rects.append((self, wx.BOTTOM, wx.Rect(r.x, ty, r.width, h)))
         return rects
 
     def process_dock_target(self, leaf, side):
@@ -290,7 +291,7 @@ class MultiSash(wx.Window):
         self.current_sidebar_focus = None
         self.current_leaf_focus = None
         self.previous_leaf_focus_list = []
-        self.dock_handler = DockingRectangleHandler()
+        self.dock_handler = DockTarget.DockingRectangleHandler()
 
     def set_defaults(self):
         self.use_close_button = True
@@ -657,158 +658,28 @@ class EmptyChild(wx.Window):
         return wx.Size(250, 300)
 
 
-########## Splitter Layout ##########
-
-class HorizontalLayout(object):
-    @classmethod
-    def calc_size(cls, multi_split):
-        w, h = multi_split.GetClientSize()
-
-        # size used for ratio includes all the sizer widths (including the
-        # extra sizer at the end that won't be displayed)
-        full_size = w + MultiSash.sizer_thickness
-
-        return w, h, full_size
-
-    @classmethod
-    def do_view_size(cls, view, pos, size, w, h):
-        view_width = size - MultiSash.sizer_thickness
-        view.SetSize(pos, 0, view_width, h)
-        view.sizer.SetSize(pos + view_width, 0, MultiSash.sizer_thickness, h)
-
-    @classmethod
-    def calc_resizer(cls, splitter, left, sizer, right, x, y):
-        return HorizontalResizer(splitter, left, sizer, right, x, y)
-
-
-class HorizontalResizer(object):
-    def __init__(self, splitter, first, sizer, second, sizer_evt_x, sizer_evt_y):
-        self.splitter = splitter
-        self.first = first
-        self.sizer = sizer
-        self.second = second
-        self.zero_pos = first.GetPosition()
-        self.total_ratio = first.ratio_in_parent + second.ratio_in_parent
-        self.total_width, self.total_height = self.calc_pixel_size()
-        self.mouse_offset = sizer_evt_x, sizer_evt_y
-        self.x_sash, self.y_sash = self.calc_splitter_pos(sizer_evt_x, sizer_evt_y)
-        self.calc_extrema()
-
-    def __repr__(self):
-        return "%s: %s %s, ratio=%f, width=%d" % (self.__class__.__name__, self.first.debug_id, self.second.debug_id, self.total_ratio, self.total_width)
-
-    def calc_pixel_size(self):
-        w1, h1 = self.first.GetSize()
-        w2, h2 = self.second.GetSize()
-        w = w1 + w2 + 2 * (MultiSash.sizer_thickness)
-        h = h1 + h2 + 2 * (MultiSash.sizer_thickness)
-        return w, h
-
-    def calc_splitter_pos(self, sizer_evt_x, sizer_evt_y):
-        # Calculate the right/bottom location of the moving sash (for either
-        # horz or vert; they don't use the other value so both can be
-        # calculated in a single method). This location is used because it's
-        # the point at which the ratio is calculated in the layout_calculator's
-        # do_view_size method
-        xs, ys = self.sizer.ClientToScreen((sizer_evt_x, sizer_evt_y))
-        x, y = self.splitter.ScreenToClient((xs, ys))
-        log.debug("calc_splitter_pos: evt: %d,%d screen: %d,%d first: %d,%d" % (sizer_evt_x, sizer_evt_y, xs, ys, x, y))
-        x, y = x - self.mouse_offset[0] + MultiSash.sizer_thickness, y - self.mouse_offset[1] + MultiSash.sizer_thickness
-        return x, y
-
-    def calc_extrema(self):
-        self.x_min, _ = self.first.GetPosition()
-        self.x_min += 2 * MultiSash.sizer_thickness
-        x, _ = self.second.GetPosition()
-        w, _ = self.second.GetSize()
-        self.x_max = x + w
-        self.x_max -= MultiSash.sizer_thickness
-        log.debug("calc_extrema: min %d, x %d, w %d, max %d" % (self.x_min, x, w, self.x_max))
-
-    def set_ratios(self, x, y):
-        r = float(x - self.zero_pos[0]) / float(self.total_width) * self.total_ratio
-        log.debug("x,r,x_min,xmax", x, r, self.x_min, self.x_max)
-        if x > self.x_min and x < self.x_max:
-            self.first.ratio_in_parent = r
-            self.second.ratio_in_parent = self.total_ratio - r
-            return True
-
-    def do_mouse_move(self, sizer_evt_x, sizer_evt_y):
-        x, y = self.calc_splitter_pos(sizer_evt_x, sizer_evt_y)
-        log.debug("do_mouse_move: sizer: %d,%d first: %d,%d" % (sizer_evt_x, sizer_evt_y, x, y))
-        if self.set_ratios(x, y):
-            self.splitter.do_layout()
-        else:
-            log.debug("do_mouse_move: out of range")
-
-class VerticalLayout(object):
-    @classmethod
-    def calc_size(cls, multi_split):
-        w, h = multi_split.GetClientSize()
-
-        # size used for ratio includes all the sizer widths (including the
-        # extra sizer at the end that won't be displayed)
-        full_size = h + MultiSash.sizer_thickness
-
-        return w, h, full_size
-
-    @classmethod
-    def do_view_size(cls, view, pos, size, w, h):
-        view_height = size - MultiSash.sizer_thickness
-        view.SetSize(0, pos, w, view_height)
-        view.sizer.SetSize(0, pos + view_height, w, MultiSash.sizer_thickness)
-
-    @classmethod
-    def calc_resizer(cls, splitter, top, sizer, bot, x, y):
-        return VerticalResizer(splitter, top, sizer, bot, x, y)
-
-
-class VerticalResizer(HorizontalResizer):
-    def __repr__(self):
-        return "%s: %s %s, ratio=%f, height=%d" % (self.__class__.__name__, self.first.debug_id, self.second.debug_id, self.total_ratio, self.total_height)
-
-    def calc_extrema(self):
-        _, self.y_min = self.first.GetPosition()
-        self.y_min += 2 * MultiSash.sizer_thickness
-        _, y = self.second.GetPosition()
-        _, h = self.second.GetSize()
-        self.y_max = y + h
-        self.y_max -= MultiSash.sizer_thickness
-        log.debug("calc_extrema: min %d, y %d, h %d, max %d" % (self.y_min, y, h, self.y_max))
-
-    def set_ratios(self, x, y):
-        r = float(y - self.zero_pos[1]) / float(self.total_height) * self.total_ratio
-        log.debug("y,r,y_min,xmax", y, r, self.y_min, self.y_max)
-        if y > self.y_min and y < self.y_max:
-            self.first.ratio_in_parent = r
-            self.second.ratio_in_parent = self.total_ratio - r
-            return True
-
-
-class MultiSizer(wx.Window):
-    def __init__(self, parent, color):
-        wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN, name=MultiSash.debug_window_name("MultiSizer"))
-
-        self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
-        self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
-
-        self.SetBackgroundColour(color)
-
-    def on_leave(self,evt):
-        self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
-
-    def on_enter(self,evt):
-        if self.GetParent().layout_direction == wx.HORIZONTAL:
-            self.SetCursor(wx.Cursor(wx.CURSOR_SIZEWE))
-        else:
-            self.SetCursor(wx.Cursor(wx.CURSOR_SIZENS))
-
-
 ########## Splitter ##########
 
 class MultiWindowBase(wx.Window):
-    debug_letter = "A"
     can_take_leaf_focus = False
+
+    class MultiSizer(wx.Window):
+        def __init__(self, parent, color):
+            wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN, name=MultiSash.debug_window_name("MultiSizer"))
+
+            self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
+            self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
+
+            self.SetBackgroundColour(color)
+
+        def on_leave(self,evt):
+            self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
+
+        def on_enter(self,evt):
+            if self.GetParent().layout_direction == wx.HORIZONTAL:
+                self.SetCursor(wx.Cursor(wx.CURSOR_SIZEWE))
+            else:
+                self.SetCursor(wx.Cursor(wx.CURSOR_SIZENS))
 
     @classmethod
     def next_debug_letter(cls):
@@ -821,17 +692,17 @@ class MultiWindowBase(wx.Window):
 
         self.resizer = None
         self.sizer_after = True
-        self.sizer = MultiSizer(parent, multiView.empty_color)
+        self.sizer = MultiWindowBase.MultiSizer(parent, multiView.empty_color)
         self.sizer.Bind(wx.EVT_MOTION, self.on_motion)
         self.sizer.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.sizer.Bind(wx.EVT_LEFT_UP, self.on_left_up)
 
         self.ratio_in_parent = ratio
-        self.debug_id = self.next_debug_letter()
-        if self.debug_id == "S":
-            # Skip S; used for hidden panes
-            self.debug_id = self.next_debug_letter()
         self.SetBackgroundColour(wx.RED)
+
+    @property
+    def debug_id(self):
+        return self.GetName()
 
     def reparent_to(self, viewer, ratio=None):
         self.Reparent(viewer)
@@ -939,6 +810,127 @@ class ViewContainer(object):
 
 
 class MultiSplit(MultiWindowBase, ViewContainer):
+    class HorizontalLayout(object):
+        @classmethod
+        def calc_size(cls, multi_split):
+            w, h = multi_split.GetClientSize()
+
+            # size used for ratio includes all the sizer widths (including the
+            # extra sizer at the end that won't be displayed)
+            full_size = w + MultiSash.sizer_thickness
+
+            return w, h, full_size
+
+        @classmethod
+        def do_view_size(cls, view, pos, size, w, h):
+            view_width = size - MultiSash.sizer_thickness
+            view.SetSize(pos, 0, view_width, h)
+            view.sizer.SetSize(pos + view_width, 0, MultiSash.sizer_thickness, h)
+
+        @classmethod
+        def calc_resizer(cls, splitter, left, sizer, right, x, y):
+            return cls(splitter, left, sizer, right, x, y)
+
+        def __init__(self, splitter, first, sizer, second, sizer_evt_x, sizer_evt_y):
+            self.splitter = splitter
+            self.first = first
+            self.sizer = sizer
+            self.second = second
+            self.zero_pos = first.GetPosition()
+            self.total_ratio = first.ratio_in_parent + second.ratio_in_parent
+            self.total_width, self.total_height = self.calc_pixel_size()
+            self.mouse_offset = sizer_evt_x, sizer_evt_y
+            self.x_sash, self.y_sash = self.calc_splitter_pos(sizer_evt_x, sizer_evt_y)
+            self.calc_extrema()
+
+        def __repr__(self):
+            return "%s: %s %s, ratio=%f, width=%d" % (self.__class__.__name__, self.first.debug_id, self.second.debug_id, self.total_ratio, self.total_width)
+
+        def calc_pixel_size(self):
+            w1, h1 = self.first.GetSize()
+            w2, h2 = self.second.GetSize()
+            w = w1 + w2 + 2 * (MultiSash.sizer_thickness)
+            h = h1 + h2 + 2 * (MultiSash.sizer_thickness)
+            return w, h
+
+        def calc_splitter_pos(self, sizer_evt_x, sizer_evt_y):
+            # Calculate the right/bottom location of the moving sash (for either
+            # horz or vert; they don't use the other value so both can be
+            # calculated in a single method). This location is used because it's
+            # the point at which the ratio is calculated in the layout_calculator's
+            # do_view_size method
+            xs, ys = self.sizer.ClientToScreen((sizer_evt_x, sizer_evt_y))
+            x, y = self.splitter.ScreenToClient((xs, ys))
+            log.debug("calc_splitter_pos: evt: %d,%d screen: %d,%d first: %d,%d" % (sizer_evt_x, sizer_evt_y, xs, ys, x, y))
+            x, y = x - self.mouse_offset[0] + MultiSash.sizer_thickness, y - self.mouse_offset[1] + MultiSash.sizer_thickness
+            return x, y
+
+        def calc_extrema(self):
+            self.x_min, _ = self.first.GetPosition()
+            self.x_min += 2 * MultiSash.sizer_thickness
+            x, _ = self.second.GetPosition()
+            w, _ = self.second.GetSize()
+            self.x_max = x + w
+            self.x_max -= MultiSash.sizer_thickness
+            log.debug("calc_extrema: min %d, x %d, w %d, max %d" % (self.x_min, x, w, self.x_max))
+
+        def set_ratios(self, x, y):
+            r = float(x - self.zero_pos[0]) / float(self.total_width) * self.total_ratio
+            log.debug("x,r,x_min,xmax", x, r, self.x_min, self.x_max)
+            if x > self.x_min and x < self.x_max:
+                self.first.ratio_in_parent = r
+                self.second.ratio_in_parent = self.total_ratio - r
+                return True
+
+        def do_mouse_move(self, sizer_evt_x, sizer_evt_y):
+            x, y = self.calc_splitter_pos(sizer_evt_x, sizer_evt_y)
+            log.debug("do_mouse_move: sizer: %d,%d first: %d,%d" % (sizer_evt_x, sizer_evt_y, x, y))
+            if self.set_ratios(x, y):
+                self.splitter.do_layout()
+            else:
+                log.debug("do_mouse_move: out of range")
+
+    class VerticalLayout(HorizontalLayout):
+        @classmethod
+        def calc_size(cls, multi_split):
+            w, h = multi_split.GetClientSize()
+
+            # size used for ratio includes all the sizer widths (including the
+            # extra sizer at the end that won't be displayed)
+            full_size = h + MultiSash.sizer_thickness
+
+            return w, h, full_size
+
+        @classmethod
+        def do_view_size(cls, view, pos, size, w, h):
+            view_height = size - MultiSash.sizer_thickness
+            view.SetSize(0, pos, w, view_height)
+            view.sizer.SetSize(0, pos + view_height, w, MultiSash.sizer_thickness)
+
+        @classmethod
+        def calc_resizer(cls, splitter, top, sizer, bot, x, y):
+            return cls(splitter, top, sizer, bot, x, y)
+
+        def __repr__(self):
+            return "%s: %s %s, ratio=%f, height=%d" % (self.__class__.__name__, self.first.debug_id, self.second.debug_id, self.total_ratio, self.total_height)
+
+        def calc_extrema(self):
+            _, self.y_min = self.first.GetPosition()
+            self.y_min += 2 * MultiSash.sizer_thickness
+            _, y = self.second.GetPosition()
+            _, h = self.second.GetSize()
+            self.y_max = y + h
+            self.y_max -= MultiSash.sizer_thickness
+            log.debug("calc_extrema: min %d, y %d, h %d, max %d" % (self.y_min, y, h, self.y_max))
+
+        def set_ratios(self, x, y):
+            r = float(y - self.zero_pos[1]) / float(self.total_height) * self.total_ratio
+            log.debug("y,r,y_min,xmax", y, r, self.y_min, self.y_max)
+            if y > self.y_min and y < self.y_max:
+                self.first.ratio_in_parent = r
+                self.second.ratio_in_parent = self.total_ratio - r
+                return True
+
     def __init__(self, multiView, parent, layout_direction=wx.HORIZONTAL, ratio=1.0, leaf=None, layout=None):
         MultiWindowBase.__init__(self, multiView, parent, ratio, name="MultiSplit")
         ViewContainer.__init__(self)
@@ -953,9 +945,9 @@ class MultiSplit(MultiWindowBase, ViewContainer):
                 leaf = MultiViewLeaf(self.multiView, self, 1.0)
             self.views.append(leaf)
         if self.layout_direction == wx.HORIZONTAL:
-            self.layout_calculator = HorizontalLayout
+            self.layout_calculator = MultiSplit.HorizontalLayout
         else:
-            self.layout_calculator = VerticalLayout
+            self.layout_calculator = MultiSplit.VerticalLayout
         self.do_layout()
 
     def __repr__(self):
@@ -1031,7 +1023,6 @@ class MultiSplit(MultiWindowBase, ViewContainer):
     def restore_layout(self, d):
         self.layout_direction = d['direction']
         self.ratio_in_parent = d['ratio_in_parent']
-        self.debug_id = d['debug_id']
         for layout in d['views']:
             if 'direction' in layout:
                 view = MultiSplit(self.multiView, self, layout=layout)
@@ -1104,6 +1095,10 @@ class MultiViewLeaf(MultiWindowBase, DockTarget):
             self.attach_client(client)
         self.SetBackgroundColour(multiView.unfocused_color)
 
+    @property
+    def debug_id(self):
+        return self.client.child.GetName()
+
     def __repr__(self):
         return "<MultiLeaf %s %s %f>" % (self.client.child.GetName(), self.debug_id, self.ratio_in_parent)
 
@@ -1144,7 +1139,6 @@ class MultiViewLeaf(MultiWindowBase, DockTarget):
         return d
 
     def restore_layout(self, d):
-        self.debug_id = d['debug_id']
         self.ratio_in_parent = d['ratio_in_parent']
         old = self.client
         self.client = MultiClient(self, layout=d)
@@ -1345,19 +1339,192 @@ class MultiClient(wx.Window):
 ########## Title Bar ##########
 
 class TitleBar(wx.Window):
+    class Button(wx.Window):
+        def __init__(self, parent, size):
+            self.title_bar = parent
+            self.client = parent.GetParent()
+            wx.Window.__init__(self, parent, -1, pos=(0, 0), size=size, style=wx.BORDER_NONE, name=MultiSash.debug_window_name("TitleBarButton"))
+
+            self.down = False
+            self.entered = False
+            self.is_enabled = True
+            self.is_always_shown = False
+
+            self.Bind(wx.EVT_LEFT_DOWN, self.on_press)
+            self.Bind(wx.EVT_LEFT_UP, self.on_release)
+            self.Bind(wx.EVT_PAINT, self.on_paint)
+            self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
+            self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
+
+        def set_sidebar_state(self, in_sidebar):
+            self.is_enabled = not in_sidebar
+
+        def on_press(self,evt):
+            self.down = True
+            evt.Skip()
+
+        def on_release(self,evt):
+            if self.down and self.entered:
+                wx.CallAfter(self.title_bar.hide_buttons)
+                self.do_action(evt)
+            else:
+                evt.Skip()
+            self.down = False
+
+        def on_paint(self, event):
+            m = self.client.multiView
+            dc = wx.PaintDC(self)
+            size = self.GetClientSize()
+
+            bg_brush, pen, fg_brush, _, _ = m.get_paint_tools(m.is_leaf_focused(self.client))
+            self.draw_button(dc, size, bg_brush, pen, fg_brush)
+
+        def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+            pass
+
+        def on_leave(self,evt):
+            self.entered = False
+
+        def on_enter(self,evt):
+            self.entered = True
+
+        def do_action(self, evt):
+            pass
+
+        def do_hide(self):
+            if not self.is_always_shown:
+                self.Hide()
+
+        def do_show(self):
+            self.Show()
+
+        def do_button_pos(self, x, h):
+            bw, bh = self.GetSize()
+            x -= bw
+            y = (h - bh) // 2
+            self.SetPosition((x, y))
+            return x
+
+
+    class Closer(Button):
+        def set_sidebar_state(self, in_sidebar):
+            self.is_always_shown = True
+
+        def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+            dc.SetBrush(bg_brush)
+            dc.SetPen(wx.TRANSPARENT_PEN)
+            dc.DrawRectangle(0, 0, size.x, size.y)
+            dc.SetPen(pen)
+            dc.SetBrush(wx.TRANSPARENT_BRUSH)
+            dc.DrawRectangle(0, 0, size.x, size.y)
+            dc.DrawLine(0, 0, size.x, size.y)
+            dc.DrawLine(0, size.y, size.x, 0)
+
+        def do_action(self, evt):
+            requested_close = self.ask_close()
+            if requested_close:
+                self.client.destroy_thyself()
+
+        def ask_close(self):
+            return True
+
+
+    class Minimize(Button):
+        def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+            cx = size.x // 2
+            cy = size.y // 2
+            dc.SetBrush(bg_brush)
+            dc.SetPen(wx.TRANSPARENT_PEN)
+            dc.DrawRectangle(cx - 2, cy - 2, cx + 1, cy + 1)
+            dc.SetPen(pen)
+            dc.SetBrush(wx.TRANSPARENT_BRUSH)
+            dc.DrawRectangle(cx - 2, cy - 2, cx + 1, cy + 1)
+
+        def do_action(self, evt):
+            self.client.minimize()
+
+
+    class Maximize(Button):
+        def set_sidebar_state(self, in_sidebar):
+            self.is_enabled = in_sidebar
+            # self.is_always_shown = True
+
+        def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+            dc.SetBrush(bg_brush)
+            dc.SetPen(wx.TRANSPARENT_PEN)
+            dc.DrawRectangle(0, 0, size.x, size.y)
+            dc.SetPen(pen)
+            dc.SetBrush(wx.TRANSPARENT_BRUSH)
+            dc.DrawRectangle(0, 0, size.x, size.y)
+
+        def do_action(self, evt):
+            self.client.maximize()
+
+
+    class VSplitNewLeft(Button):
+        def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+            split = size.x // 2
+            dc.SetBrush(bg_brush)
+            dc.SetPen(pen)
+            dc.DrawRectangle(0, 0, split + 1, size.y)
+            dc.SetBrush(fg_brush)
+            dc.DrawRectangle(split, 0, size.x - split, size.y)
+
+        def do_action(self, evt):
+            self.client.split_side(wx.LEFT)
+
+
+    class VSplitNewRight(Button):
+        def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+            split = size.x // 2
+            dc.SetBrush(bg_brush)
+            dc.SetPen(pen)
+            dc.DrawRectangle(0, 0, split + 1, size.y)
+            dc.SetBrush(fg_brush)
+            dc.DrawRectangle(split, 0, size.x - split, size.y)
+
+        def do_action(self, evt):
+            self.client.split_side(wx.RIGHT)
+
+
+    class HSplitNewBot(Button):
+        def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+            split = size.y // 2
+            dc.SetBrush(bg_brush)
+            dc.SetPen(pen)
+            dc.DrawRectangle(0, 0, size.x, split + 1)
+            dc.SetBrush(fg_brush)
+            dc.DrawRectangle(0, split, size.x, size.y - split)
+
+        def do_action(self, evt):
+            self.client.split_side(wx.BOTTOM)
+
+
+    class HSplitNewTop(Button):
+        def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+            split = size.y // 2
+            dc.SetBrush(bg_brush)
+            dc.SetPen(pen)
+            dc.DrawRectangle(0, 0, size.x, split + 1)
+            dc.SetBrush(fg_brush)
+            dc.DrawRectangle(0, split, size.x, size.y - split)
+
+        def do_action(self, evt):
+            self.client.split_side(wx.TOP)
+
     def __init__(self, parent, in_sidebar=False):
         wx.Window.__init__(self, parent, -1, name=MultiSash.debug_window_name("TitleBar"))
         self.client = parent
         m = self.client.multiView
 
         self.buttons = []
-        self.buttons.append(TitleBarCloser(self, m.close_button_size))
-        self.buttons.append(TitleBarMinimize(self, m.close_button_size))
-        self.buttons.append(TitleBarMaximize(self, m.close_button_size))
-        self.buttons.append(TitleBarHSplitNewBot(self, m.close_button_size))
-        self.buttons.append(TitleBarHSplitNewTop(self, m.close_button_size))
-        self.buttons.append(TitleBarVSplitNewRight(self, m.close_button_size))
-        self.buttons.append(TitleBarVSplitNewLeft(self, m.close_button_size))
+        self.buttons.append(TitleBar.Closer(self, m.close_button_size))
+        self.buttons.append(TitleBar.Minimize(self, m.close_button_size))
+        self.buttons.append(TitleBar.Maximize(self, m.close_button_size))
+        self.buttons.append(TitleBar.HSplitNewBot(self, m.close_button_size))
+        self.buttons.append(TitleBar.HSplitNewTop(self, m.close_button_size))
+        self.buttons.append(TitleBar.VSplitNewRight(self, m.close_button_size))
+        self.buttons.append(TitleBar.VSplitNewLeft(self, m.close_button_size))
 
         self.SetBackgroundColour(wx.RED)
         self.set_buttons_for_sidebar_state(in_sidebar)
@@ -1444,373 +1611,7 @@ class TitleBar(wx.Window):
             self.hide_buttons()
 
 
-class TitleBarButton(wx.Window):
-    def __init__(self, parent, size):
-        self.title_bar = parent
-        self.client = parent.GetParent()
-        wx.Window.__init__(self, parent, -1, pos=(0, 0), size=size, style=wx.BORDER_NONE, name=MultiSash.debug_window_name("TitleBarButton"))
-
-        self.down = False
-        self.entered = False
-        self.is_enabled = True
-        self.is_always_shown = False
-
-        self.Bind(wx.EVT_LEFT_DOWN, self.on_press)
-        self.Bind(wx.EVT_LEFT_UP, self.on_release)
-        self.Bind(wx.EVT_PAINT, self.on_paint)
-        self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
-        self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
-
-    def set_sidebar_state(self, in_sidebar):
-        self.is_enabled = not in_sidebar
-
-    def on_press(self,evt):
-        self.down = True
-        evt.Skip()
-
-    def on_release(self,evt):
-        if self.down and self.entered:
-            wx.CallAfter(self.title_bar.hide_buttons)
-            self.do_action(evt)
-        else:
-            evt.Skip()
-        self.down = False
-
-    def on_paint(self, event):
-        m = self.client.multiView
-        dc = wx.PaintDC(self)
-        size = self.GetClientSize()
-
-        bg_brush, pen, fg_brush, _, _ = m.get_paint_tools(m.is_leaf_focused(self.client))
-        self.draw_button(dc, size, bg_brush, pen, fg_brush)
-
-    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
-        pass
-
-    def on_leave(self,evt):
-        self.entered = False
-
-    def on_enter(self,evt):
-        self.entered = True
-
-    def do_action(self, evt):
-        pass
-
-    def do_hide(self):
-        if not self.is_always_shown:
-            self.Hide()
-
-    def do_show(self):
-        self.Show()
-
-    def do_button_pos(self, x, h):
-        bw, bh = self.GetSize()
-        x -= bw
-        y = (h - bh) // 2
-        self.SetPosition((x, y))
-        return x
-
-
-class TitleBarCloser(TitleBarButton):
-    def set_sidebar_state(self, in_sidebar):
-        self.is_always_shown = True
-
-    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
-        dc.SetBrush(bg_brush)
-        dc.SetPen(wx.TRANSPARENT_PEN)
-        dc.DrawRectangle(0, 0, size.x, size.y)
-        dc.SetPen(pen)
-        dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        dc.DrawRectangle(0, 0, size.x, size.y)
-        dc.DrawLine(0, 0, size.x, size.y)
-        dc.DrawLine(0, size.y, size.x, 0)
-
-    def do_action(self, evt):
-        requested_close = self.ask_close()
-        if requested_close:
-            self.client.destroy_thyself()
-
-    def ask_close(self):
-        return True
-
-
-class TitleBarMinimize(TitleBarButton):
-    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
-        cx = size.x // 2
-        cy = size.y // 2
-        dc.SetBrush(bg_brush)
-        dc.SetPen(wx.TRANSPARENT_PEN)
-        dc.DrawRectangle(cx - 2, cy - 2, cx + 1, cy + 1)
-        dc.SetPen(pen)
-        dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        dc.DrawRectangle(cx - 2, cy - 2, cx + 1, cy + 1)
-
-    def do_action(self, evt):
-        self.client.minimize()
-
-
-class TitleBarMaximize(TitleBarButton):
-    def set_sidebar_state(self, in_sidebar):
-        self.is_enabled = in_sidebar
-        # self.is_always_shown = True
-
-    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
-        dc.SetBrush(bg_brush)
-        dc.SetPen(wx.TRANSPARENT_PEN)
-        dc.DrawRectangle(0, 0, size.x, size.y)
-        dc.SetPen(pen)
-        dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        dc.DrawRectangle(0, 0, size.x, size.y)
-
-    def do_action(self, evt):
-        self.client.maximize()
-
-
-class TitleBarVSplitNewLeft(TitleBarButton):
-    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
-        split = size.x // 2
-        dc.SetBrush(bg_brush)
-        dc.SetPen(pen)
-        dc.DrawRectangle(0, 0, split + 1, size.y)
-        dc.SetBrush(fg_brush)
-        dc.DrawRectangle(split, 0, size.x - split, size.y)
-
-    def do_action(self, evt):
-        self.client.split_side(wx.LEFT)
-
-
-class TitleBarVSplitNewRight(TitleBarButton):
-    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
-        split = size.x // 2
-        dc.SetBrush(bg_brush)
-        dc.SetPen(pen)
-        dc.DrawRectangle(0, 0, split + 1, size.y)
-        dc.SetBrush(fg_brush)
-        dc.DrawRectangle(split, 0, size.x - split, size.y)
-
-    def do_action(self, evt):
-        self.client.split_side(wx.RIGHT)
-
-
-class TitleBarHSplitNewBot(TitleBarButton):
-    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
-        split = size.y // 2
-        dc.SetBrush(bg_brush)
-        dc.SetPen(pen)
-        dc.DrawRectangle(0, 0, size.x, split + 1)
-        dc.SetBrush(fg_brush)
-        dc.DrawRectangle(0, split, size.x, size.y - split)
-
-    def do_action(self, evt):
-        self.client.split_side(wx.BOTTOM)
-
-
-class TitleBarHSplitNewTop(TitleBarButton):
-    def draw_button(self, dc, size, bg_brush, pen, fg_brush):
-        split = size.y // 2
-        dc.SetBrush(bg_brush)
-        dc.SetPen(pen)
-        dc.DrawRectangle(0, 0, size.x, split + 1)
-        dc.SetBrush(fg_brush)
-        dc.DrawRectangle(0, split, size.x, size.y - split)
-
-    def do_action(self, evt):
-        self.client.split_side(wx.TOP)
-
-
 ########## Sidebar ##########
-
-class SidebarBaseRenderer(object):
-    @classmethod
-    def calc_view_start(cls, w, h):
-        return 0
-
-    @classmethod
-    def calc_thickness(cls, sidebar):
-        m = sidebar.multiView
-        pixels = m.sidebar_margin * 2 + m.title_bar_font_height
-        return pixels
-
-    @classmethod
-    def show_client_prevent_clipping(cls, sidebar, view, x, y):
-        cw, ch = view.client.GetBestSize()
-        x_min, y_min, sw, sh = sidebar.multiView.calc_usable_rect()
-        if y + ch > y_min + sh:
-            # some amount is offscreen on the bottom
-            y -= (y + ch - sh - y_min)
-        if y < y_min:
-            # too tall, force popup height to max height of usable space
-            y = y_min
-            ch = sh
-        if cw > sw:
-            cw = sw
-        if x + cw > x_min + sw:
-            # some amount is offscreen to the right
-            x -= (x + cw - sw - x_min)
-        if x < x_min:
-            # too wide; force popup to max width of usable space
-            x = x_min
-            cw = sw
-        sidebar.do_popup_view(view, x, y, cw, ch)
-
-
-class SidebarVerticalRenderer(SidebarBaseRenderer):
-    @classmethod
-    def do_view_size(cls, view, pos, w, h):
-        m = view.multiView
-        text_width, text_height = m.get_text_size(view.client.popup_name)
-        size = text_width + 2 * m.sidebar_margin
-        view.SetSize(0, pos, w, size)
-        view.label_x = m.sidebar_margin
-        view.label_y = m.sidebar_margin + text_width
-        return pos + size
-
-    @classmethod
-    def draw_label(cls, dc, view):
-        w, h = view.GetSize()
-        dc.DrawRectangle(0, 0, w, h)
-        dc.DrawRotatedText(view.client.popup_name, view.label_x, view.label_y, 90.0)
-
-    @classmethod
-    def calc_docking_rectangles_relative_to(cls, target_to_split, r):
-        rects = []
-        h = r.height // 3
-        ty = r.y + r.height - h
-        rects.append((target_to_split, wx.TOP, wx.Rect(r.x, r.y, r.width, h)))  # bottom
-        rects.append((target_to_split, wx.BOTTOM, wx.Rect(r.x, ty, r.width, h)))  # top
-        return rects
-
-
-class SidebarLeftRenderer(SidebarVerticalRenderer):
-    @classmethod
-    def set_size_inside(cls, sidebar, x, y, w, h):
-        thickness = cls.calc_thickness(sidebar)
-        sidebar.SetSize(x, y, thickness, h)
-        return x + thickness, y, w - thickness, h
-
-    @classmethod
-    def show_client(cls, sidebar, view):
-        # sidebar position within multiView, so these are global values
-        x_min, y_min = sidebar.GetPosition()
-        w, h = sidebar.GetSize()
-        x_min += w
-
-        # view position is position within sidebar
-        x, y = view.GetPosition()
-        w, h = view.GetSize()
-        y += y_min  # global y for top of window
-        cls.show_client_prevent_clipping(sidebar, view, x_min, y)
-
-    @classmethod
-    def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
-        ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
-        return wx.Rect(0, uy, cls.calc_thickness(missing_sidebar) // 2, uh)
-
-
-class SidebarRightRenderer(SidebarVerticalRenderer):
-    @classmethod
-    def set_size_inside(cls, sidebar, x, y, w, h):
-        thickness = cls.calc_thickness(sidebar)
-        sidebar.SetSize(x + w - thickness, y, thickness, h)
-        return x, y, w - thickness, h
-
-    @classmethod
-    def show_client(cls, sidebar, view):
-        # sidebar position within multiView, so these are global values
-        x_min, y_min = sidebar.GetPosition()
-
-        # view position is position within sidebar
-        x, y = view.GetPosition()
-        w, h = view.GetSize()
-        y += y_min  # global y for top of window
-        cls.show_client_prevent_clipping(sidebar, view, x_min, y)
-
-    @classmethod
-    def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
-        mw, mh = missing_sidebar.multiView.GetClientSize()
-        ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
-        t = cls.calc_thickness(missing_sidebar) // 2
-        return wx.Rect(mw - t, uy, t, uh)
-
-
-class SidebarHorizontalRenderer(SidebarBaseRenderer):
-    @classmethod
-    def do_view_size(cls, view, pos, w, h):
-        m = view.multiView
-        text_width, text_height = m.get_text_size(view.client.popup_name)
-        size = text_width + 2 * m.sidebar_margin
-        view.SetSize(pos, 0, size, h)
-        view.label_x = m.sidebar_margin
-        view.label_y = m.sidebar_margin
-        return pos + size
-
-    @classmethod
-    def draw_label(cls, dc, view):
-        w, h = view.GetSize()
-        dc.DrawRectangle(0, 0, w, h)
-        dc.DrawText(view.client.popup_name, view.label_x, view.label_y)
-
-    @classmethod
-    def calc_docking_rectangles_relative_to(cls, target_to_split, r):
-        rects = []
-        w = r.width // 3
-        rx = r.x + r.width - w
-        rects.append((target_to_split, wx.LEFT, wx.Rect(r.x, r.y, w, r.height)))  # left
-        rects.append((target_to_split, wx.RIGHT, wx.Rect(rx, r.y, w, r.height)))  # right
-        return rects
-
-
-class SidebarTopRenderer(SidebarHorizontalRenderer):
-    @classmethod
-    def set_size_inside(cls, sidebar, x, y, w, h):
-        thickness = cls.calc_thickness(sidebar)
-        sidebar.SetSize(x, y, w, thickness)
-        return x, y + thickness, w, h - thickness
-
-    @classmethod
-    def show_client(cls, sidebar, view):
-        # sidebar position within multiView, so these are global values
-        x_min, y_min = sidebar.GetPosition()
-        w, h = sidebar.GetSize()
-        y_min += h
-
-        # view is menu item position within sidebar
-        x, y = view.GetPosition()
-        w, h = view.GetSize()
-        x += x_min
-        cls.show_client_prevent_clipping(sidebar, view, x, y_min)
-
-    @classmethod
-    def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
-        ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
-        return wx.Rect(ux, 0, uw, cls.calc_thickness(missing_sidebar) // 2)
-
-
-class SidebarBottomRenderer(SidebarHorizontalRenderer):
-    @classmethod
-    def set_size_inside(cls, sidebar, x, y, w, h):
-        thickness = cls.calc_thickness(sidebar)
-        sidebar.SetSize(x, y + h - thickness, w, thickness)
-        return x, y, w, h - thickness
-
-    @classmethod
-    def show_client(cls, sidebar, view):
-        # sidebar position within multiView, so these are global values
-        x_min, y_max = sidebar.GetPosition()
-
-        # view is menu item position within sidebar
-        x, y = view.GetPosition()
-        w, h = view.GetSize()
-        x += x_min
-        cls.show_client_prevent_clipping(sidebar, view, x, y_max)
-
-    @classmethod
-    def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
-        mw, mh = missing_sidebar.multiView.GetClientSize()
-        ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
-        t = cls.calc_thickness(missing_sidebar) // 2
-        return wx.Rect(ux, mh - t, uw, t)
-
 
 class SidebarMenuItem(wx.Window, DockTarget):
     can_take_leaf_focus = False
@@ -1968,11 +1769,202 @@ class MissingSidebarDock(DockTarget):
 
 
 class Sidebar(wx.Window, ViewContainer):
+    class BaseRenderer(object):
+        @classmethod
+        def calc_view_start(cls, w, h):
+            return 0
+
+        @classmethod
+        def calc_thickness(cls, sidebar):
+            m = sidebar.multiView
+            pixels = m.sidebar_margin * 2 + m.title_bar_font_height
+            return pixels
+
+        @classmethod
+        def show_client_prevent_clipping(cls, sidebar, view, x, y):
+            cw, ch = view.client.GetBestSize()
+            x_min, y_min, sw, sh = sidebar.multiView.calc_usable_rect()
+            if y + ch > y_min + sh:
+                # some amount is offscreen on the bottom
+                y -= (y + ch - sh - y_min)
+            if y < y_min:
+                # too tall, force popup height to max height of usable space
+                y = y_min
+                ch = sh
+            if cw > sw:
+                cw = sw
+            if x + cw > x_min + sw:
+                # some amount is offscreen to the right
+                x -= (x + cw - sw - x_min)
+            if x < x_min:
+                # too wide; force popup to max width of usable space
+                x = x_min
+                cw = sw
+            sidebar.do_popup_view(view, x, y, cw, ch)
+
+
+    class VerticalRenderer(BaseRenderer):
+        @classmethod
+        def do_view_size(cls, view, pos, w, h):
+            m = view.multiView
+            text_width, text_height = m.get_text_size(view.client.popup_name)
+            size = text_width + 2 * m.sidebar_margin
+            view.SetSize(0, pos, w, size)
+            view.label_x = m.sidebar_margin
+            view.label_y = m.sidebar_margin + text_width
+            return pos + size
+
+        @classmethod
+        def draw_label(cls, dc, view):
+            w, h = view.GetSize()
+            dc.DrawRectangle(0, 0, w, h)
+            dc.DrawRotatedText(view.client.popup_name, view.label_x, view.label_y, 90.0)
+
+        @classmethod
+        def calc_docking_rectangles_relative_to(cls, target_to_split, r):
+            rects = []
+            h = r.height // 3
+            ty = r.y + r.height - h
+            rects.append((target_to_split, wx.TOP, wx.Rect(r.x, r.y, r.width, h)))  # bottom
+            rects.append((target_to_split, wx.BOTTOM, wx.Rect(r.x, ty, r.width, h)))  # top
+            return rects
+
+
+    class LeftRenderer(VerticalRenderer):
+        @classmethod
+        def set_size_inside(cls, sidebar, x, y, w, h):
+            thickness = cls.calc_thickness(sidebar)
+            sidebar.SetSize(x, y, thickness, h)
+            return x + thickness, y, w - thickness, h
+
+        @classmethod
+        def show_client(cls, sidebar, view):
+            # sidebar position within multiView, so these are global values
+            x_min, y_min = sidebar.GetPosition()
+            w, h = sidebar.GetSize()
+            x_min += w
+
+            # view position is position within sidebar
+            x, y = view.GetPosition()
+            w, h = view.GetSize()
+            y += y_min  # global y for top of window
+            cls.show_client_prevent_clipping(sidebar, view, x_min, y)
+
+        @classmethod
+        def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
+            ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
+            return wx.Rect(0, uy, cls.calc_thickness(missing_sidebar) // 2, uh)
+
+
+    class RightRenderer(VerticalRenderer):
+        @classmethod
+        def set_size_inside(cls, sidebar, x, y, w, h):
+            thickness = cls.calc_thickness(sidebar)
+            sidebar.SetSize(x + w - thickness, y, thickness, h)
+            return x, y, w - thickness, h
+
+        @classmethod
+        def show_client(cls, sidebar, view):
+            # sidebar position within multiView, so these are global values
+            x_min, y_min = sidebar.GetPosition()
+
+            # view position is position within sidebar
+            x, y = view.GetPosition()
+            w, h = view.GetSize()
+            y += y_min  # global y for top of window
+            cls.show_client_prevent_clipping(sidebar, view, x_min, y)
+
+        @classmethod
+        def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
+            mw, mh = missing_sidebar.multiView.GetClientSize()
+            ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
+            t = cls.calc_thickness(missing_sidebar) // 2
+            return wx.Rect(mw - t, uy, t, uh)
+
+
+    class HorizontalRenderer(BaseRenderer):
+        @classmethod
+        def do_view_size(cls, view, pos, w, h):
+            m = view.multiView
+            text_width, text_height = m.get_text_size(view.client.popup_name)
+            size = text_width + 2 * m.sidebar_margin
+            view.SetSize(pos, 0, size, h)
+            view.label_x = m.sidebar_margin
+            view.label_y = m.sidebar_margin
+            return pos + size
+
+        @classmethod
+        def draw_label(cls, dc, view):
+            w, h = view.GetSize()
+            dc.DrawRectangle(0, 0, w, h)
+            dc.DrawText(view.client.popup_name, view.label_x, view.label_y)
+
+        @classmethod
+        def calc_docking_rectangles_relative_to(cls, target_to_split, r):
+            rects = []
+            w = r.width // 3
+            rx = r.x + r.width - w
+            rects.append((target_to_split, wx.LEFT, wx.Rect(r.x, r.y, w, r.height)))  # left
+            rects.append((target_to_split, wx.RIGHT, wx.Rect(rx, r.y, w, r.height)))  # right
+            return rects
+
+
+    class TopRenderer(HorizontalRenderer):
+        @classmethod
+        def set_size_inside(cls, sidebar, x, y, w, h):
+            thickness = cls.calc_thickness(sidebar)
+            sidebar.SetSize(x, y, w, thickness)
+            return x, y + thickness, w, h - thickness
+
+        @classmethod
+        def show_client(cls, sidebar, view):
+            # sidebar position within multiView, so these are global values
+            x_min, y_min = sidebar.GetPosition()
+            w, h = sidebar.GetSize()
+            y_min += h
+
+            # view is menu item position within sidebar
+            x, y = view.GetPosition()
+            w, h = view.GetSize()
+            x += x_min
+            cls.show_client_prevent_clipping(sidebar, view, x, y_min)
+
+        @classmethod
+        def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
+            ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
+            return wx.Rect(ux, 0, uw, cls.calc_thickness(missing_sidebar) // 2)
+
+
+    class BottomRenderer(HorizontalRenderer):
+        @classmethod
+        def set_size_inside(cls, sidebar, x, y, w, h):
+            thickness = cls.calc_thickness(sidebar)
+            sidebar.SetSize(x, y + h - thickness, w, thickness)
+            return x, y, w, h - thickness
+
+        @classmethod
+        def show_client(cls, sidebar, view):
+            # sidebar position within multiView, so these are global values
+            x_min, y_max = sidebar.GetPosition()
+
+            # view is menu item position within sidebar
+            x, y = view.GetPosition()
+            w, h = view.GetSize()
+            x += x_min
+            cls.show_client_prevent_clipping(sidebar, view, x, y_max)
+
+        @classmethod
+        def calc_missing_sidebar_docking_rectangle(cls, missing_sidebar):
+            mw, mh = missing_sidebar.multiView.GetClientSize()
+            ux, uy, uw, uh = missing_sidebar.multiView.calc_usable_rect()
+            t = cls.calc_thickness(missing_sidebar) // 2
+            return wx.Rect(ux, mh - t, uw, t)
+
     renderers = {
-        wx.LEFT: SidebarLeftRenderer,
-        wx.RIGHT: SidebarRightRenderer,
-        wx.TOP: SidebarTopRenderer,
-        wx.BOTTOM: SidebarBottomRenderer,
+        wx.LEFT: LeftRenderer,
+        wx.RIGHT: RightRenderer,
+        wx.TOP: TopRenderer,
+        wx.BOTTOM: BottomRenderer,
     }
 
     def __init__(self, multiView, side=wx.LEFT, layout=None):
