@@ -242,7 +242,7 @@ class DockTarget(object):
     def detach(self):
         self.GetParent().detach_leaf(self)
 
-    def get_rectangle_relative_to(self, event_window):
+    def calc_rectangle_relative_to(self, event_window):
         r = self.GetClientRect()
         sx, sy = self.ClientToScreen((r.x, r.y))
         px, py = event_window.ScreenToClient((sx, sy))
@@ -250,7 +250,7 @@ class DockTarget(object):
 
     def calc_docking_rectangles(self, event_window, source_leaf):
         rects = []
-        r = self.get_rectangle_relative_to(event_window)
+        r = self.calc_rectangle_relative_to(event_window)
         if source_leaf == self:
             # dummy rectangle for feedback, but can't drop on itself
             rects.append((None, None, r))
@@ -503,11 +503,11 @@ class TileManager(wx.Window):
             self.use_sidebar(layout=d)
         self.do_layout()
 
-    def get_layout(self, to_json=False, pretty=False):
-        d = {'tile_manager': self.child.get_layout()}
+    def calc_layout(self, to_json=False, pretty=False):
+        d = {'tile_manager': self.child.calc_layout()}
         s = []
         for sidebar in self.sidebars:
-            s.append(sidebar.get_layout())
+            s.append(sidebar.calc_layout())
         d['sidebars'] = s
         if to_json:
             if pretty:
@@ -1030,11 +1030,11 @@ class TileSplit(TileWindowBase, ViewContainer):
             remaining_size -= size
             pos += size
 
-    def get_layout(self):
+    def calc_layout(self):
         d = {
             'direction': self.layout_direction,
             'ratio_in_parent': self.ratio_in_parent,
-            'views': [v.get_layout() for v in self.views],
+            'views': [v.calc_layout() for v in self.views],
             'debug_id': self.debug_id,
             }
         return d
@@ -1142,8 +1142,8 @@ class TileViewLeaf(TileWindowBase, DockTarget):
         log.debug("find_empty: skipping %s in %s" % (self.client.child_uuid, self.client.child.GetName()))
         return None
 
-    def get_layout(self):
-        d = self.client.get_layout()
+    def calc_layout(self):
+        d = self.client.calc_layout()
         d['ratio_in_parent'] = self.ratio_in_parent
         d['debug_id'] = self.debug_id
         return d
@@ -1205,7 +1205,7 @@ class TileClient(wx.Window):
         self.Bind(wx.EVT_SET_FOCUS, self.on_set_focus)
         self.Bind(wx.EVT_CHILD_FOCUS, self.on_child_focus)
 
-    def get_layout(self):
+    def calc_layout(self):
         d = {
             'child_uuid': self.child_uuid,
         }
@@ -1658,8 +1658,8 @@ class SidebarMenuItem(wx.Window, DockTarget):
     def __repr__(self):
         return "<SidebarMenuItem %s>" % (self.client.child.GetName())
 
-    def get_layout(self):
-        return self.client.get_layout()
+    def calc_layout(self):
+        return self.client.calc_layout()
 
     def restore_layout(self, d):
         old = self.client
@@ -1674,7 +1674,7 @@ class SidebarMenuItem(wx.Window, DockTarget):
         client.extra_border = 4
 
     def calc_docking_rectangles(self, event_window, source_leaf):
-        r = self.get_rectangle_relative_to(event_window)
+        r = self.calc_rectangle_relative_to(event_window)
         if source_leaf == self:
             # dummy rectangle for feedback, but can't drop on itself
             rects = [(None, None, r)]
@@ -1991,10 +1991,10 @@ class Sidebar(wx.Window, ViewContainer):
     def __repr__(self):
         return "Sidebar %s" % pretty_direction[self.side]
 
-    def get_layout(self):
+    def calc_layout(self):
         d = {
             'side': self.side,
-            'views': [v.get_layout() for v in self.views],
+            'views': [v.calc_layout() for v in self.views],
             }
         return d
 
@@ -2278,7 +2278,7 @@ if __name__ == '__main__':
     def save_state(evt):
         global multi, json_text
 
-        json_text.SetValue(multi.get_layout(True, True))
+        json_text.SetValue(multi.calc_layout(True, True))
 
     def load_state(evt):
         global multi, json_text
