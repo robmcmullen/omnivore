@@ -536,7 +536,7 @@ class SegmentViewer(HasTraits):
 
 
 class PlaceholderControl(wx.Window):
-    multisash2_empty_control = True
+    tile_manager_empty_control = True
 
     def __init__(self, parent, linked_base, mdict, viewer_cls):
         wx.Window.__init__(self, parent)

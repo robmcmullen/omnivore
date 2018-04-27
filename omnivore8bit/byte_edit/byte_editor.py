@@ -15,7 +15,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 from omnivore.framework.editor import FrameworkEditor
 import omnivore.framework.clipboard as clipboard
 from omnivore.utils.file_guess import FileMetadata
-from omnivore.utils.wx.multisash2 import MultiSash
+from omnivore.utils.wx.tilemanager import TileManager
 from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.document import SegmentedDocument
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
@@ -467,10 +467,10 @@ class ByteEditor(FrameworkEditor):
     def _create_control(self, parent):
         """ Creates the toolkit-specific control for the widget. """
 
-        panel = MultiSash(parent)
-        panel.Bind(MultiSash.EVT_CLIENT_ACTIVATED, self.on_viewer_active)
-        panel.Bind(MultiSash.EVT_CLIENT_CLOSE, self.on_viewer_close)
-        panel.Bind(MultiSash.EVT_CLIENT_REPLACE, self.on_viewer_replace)
+        panel = TileManager(parent)
+        panel.Bind(TileManager.EVT_CLIENT_ACTIVATED, self.on_viewer_active)
+        panel.Bind(TileManager.EVT_CLIENT_CLOSE, self.on_viewer_close)
+        panel.Bind(TileManager.EVT_CLIENT_REPLACE, self.on_viewer_replace)
 
         return panel
 
