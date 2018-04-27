@@ -26,6 +26,9 @@ class BaseInfoViewer(SegmentViewer):
     def restore_view_params(self, params):
         pass
 
+    def update_toolbar(self):
+        pass
+
     def recalc_data_model(self):
         self.control.recalc_view()
         self.control.refresh_view()

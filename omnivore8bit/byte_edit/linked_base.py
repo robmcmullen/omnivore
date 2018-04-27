@@ -70,6 +70,10 @@ class LinkedBase(CaretHandler):
 
     key_pressed = Event(KeyPressedEvent)
 
+    segment_selected_event = Event
+
+    jumpman_trigger_selected_event = Event
+
     #### Class attributes (not traits)
 
     rect_select = False
@@ -205,7 +209,7 @@ class LinkedBase(CaretHandler):
             self.force_data_model_update()
             self.restore_segment_view_params(self.segment)
             self.task.segments_changed = self.document.segments
-            self.task.segment_selected = self.segment_number
+            self.segment_selected_event = self.segment_number
 
     def set_segment_parser(self, parser):
         self.find_segment_parser([parser])
@@ -225,7 +229,7 @@ class LinkedBase(CaretHandler):
             self.adjust_selection(old_segment)
 
             #self.show_trace()
-            self.task.segment_selected = self.segment_number
+            self.segment_selected_event = self.segment_number
             #self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
             self.task.update_window_title()
 
@@ -487,3 +491,11 @@ class LinkedBase(CaretHandler):
             from_control = None
         self.update_caret = (from_control, index, bit)
         self.calc_action_enabled_flags()
+
+    ##### viewer-specific helpers
+
+    def find_viewer(self, name):
+        for viewer in self.editor.viewers:
+            if viewer.linked_base == self and viewer.name == name:
+                return viewer
+        raise ValueError("No jumpman viewer present!")

@@ -6,7 +6,7 @@ from omnivore.utils.runtime import get_all_subclasses
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+#log.setLevel(logging.DEBUG)
 
 
 def is_valid_level_segment(segment):

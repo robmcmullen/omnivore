@@ -241,11 +241,6 @@ class ByteEditTask(FrameworkTask):
 
     segments_changed = Event
 
-    # Must use different trait event in order for actions populated in the
-    # dynamic menu (set by segments_changed event above) to have their radio
-    # buttons updated properly
-    segment_selected = Event
-
     ui_layout_overrides = {
         "menu": {
             "order": ["File", "Edit", "View", "Bytes", "Jumpman", "Segment", "Disk Image", "Documents", "Window", "Help"],

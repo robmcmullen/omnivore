@@ -387,13 +387,12 @@ class ByteEditor(FrameworkEditor):
         # changed. If only the segment being viewed is changed, just set the
         # task.segment_selected trait
         log.debug("update_segments_ui costs a lot of time!!!!!!")
-        self.sidebar.recalc_active()
         if self.focused_viewer.linked_base.segment_parser is not None:
             self.segment_parser_label = self.focused_viewer.linked_base.segment_parser.menu_name
         else:
             self.segment_parser_label = "No parser"
         self.task.segments_changed = self.document.segments
-        self.task.segment_selected = self.segment_number
+        self.focused_viewer.linked_base.segment_selected = self.segment_number
 
     def find_in_user_segment(self, base_index):
         # FIXME: Profiling shows this as a big bottleneck when there are
@@ -434,14 +433,6 @@ class ByteEditor(FrameworkEditor):
         if pretty:
             cmd.pretty_name = pretty
         self.process_command(cmd)
-
-    def popup_visible(self):
-        log.debug("checking sidebar: popup visible? %s" % self.sidebar.control.has_popup())
-        return self.sidebar.control.has_popup()
-
-    def clear_popup(self):
-        log.debug("clearing popup")
-        self.sidebar.control.clear_popup()
 
     def add_viewer(self, viewer_cls, linked_base=None):
         if linked_base is None:

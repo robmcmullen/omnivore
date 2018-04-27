@@ -11,6 +11,7 @@ from omnivore.utils.nputil import intscale
 from omnivore.utils.wx import compactgrid as cg
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
+from ..ui.info_panels import InfoPanel
 from ..arch.machine import Machine
 from ..arch.antic_renderers import BaseRenderer
 from ..arch.colors import powerup_colors
@@ -21,9 +22,11 @@ from . import actions as va
 from . import jumpman_mouse_modes as jm
 from . import jumpman_commands as jc
 from .bitmap2 import BitmapGridControl, BitmapViewer, BitmapLineRenderer
+from .info import BaseInfoViewer
 
 import logging
 log = logging.getLogger(__name__)
+drawlog = logging.getLogger("refresh")
 
 
 class JumpmanPlayfieldRenderer(BaseRenderer):
@@ -67,7 +70,7 @@ class JumpmanFrameRenderer(BitmapLineRenderer):
         last_cell = min(first_cell + visible_cells, self.num_cells)
         last_col = self.cell_to_col[last_cell - 1] + 1
         last_row = min(first_row + visible_rows, grid_control.table.antic_lines)
-        log.debug("draw_grid: rows:%d,%d, cols:%d,%d" % (first_row, last_row, first_col, last_col))
+        drawlog.debug("draw_grid: rows:%d,%d, cols:%d,%d" % (first_row, last_row, first_col, last_col))
 
         ul_rect = self.col_to_rect(first_row, first_col)
         lr_rect = self.col_to_rect(last_row - 1, last_col - 1)
@@ -79,12 +82,12 @@ class JumpmanFrameRenderer(BitmapLineRenderer):
         t = grid_control.table
         data = t.data[first_index:last_index]
         style = t.style[first_index:last_index]
-        log.debug("draw_grid: first_index:%d last_index:%d" % (first_index, last_index))
+        drawlog.debug("draw_grid: first_index:%d last_index:%d" % (first_index, last_index))
 
         array = grid_control.bitmap_renderer.get_image(grid_control.segment_viewer, bytes_per_row, last_row - first_row, last_index - first_index, data, style)
         width = array.shape[1]
         height = array.shape[0]
-        log.debug("Calculated image: %dx%d" % (width, height))
+        drawlog.debug("Calculated image: %dx%d" % (width, height))
         if width > 0 and height > 0:
             # image returned will have the correct number of rows but will be
             # 160 pixels wide; need to crop to visible columns
@@ -122,6 +125,20 @@ class JumpmanSegmentTable(cg.HexTable):
         self.pick_buffer = np.zeros((self.items_per_row * self.antic_lines), dtype=np.int32)
         cg.HexTable.__init__(self, self.playfield, self.playfield.style, self.items_per_row, 0x7000)
 
+    @property
+    def trigger_root(self):
+        try:
+            return self.segment_viewer.trigger_root
+        except AttributeError:
+            return None
+
+    @trigger_root.setter
+    def trigger_root(self, value):
+        try:
+            self.segment_viewer.trigger_root = value
+        except AttributeError:
+            pass
+
     def get_label_at_index(self, index):
         return (index // 40)
 
@@ -129,7 +146,6 @@ class JumpmanSegmentTable(cg.HexTable):
         log.debug("init_level_builder")
         self.segment_viewer = segment_viewer
         self.level_builder = ju.JumpmanLevelBuilder(self.segment_viewer.document.user_segments)
-        self.trigger_root = None
         self.cached_screen = None
         self.valid_level = False
         self.force_refresh = True
@@ -150,9 +166,9 @@ class JumpmanSegmentTable(cg.HexTable):
             self.level_builder.parse_level_data(source, level_addr, harvest_addr)
             self.force_refresh = True
             self.valid_level = True
+            print("generate_display_objects: TRIGGER ROOT", self.trigger_root)
             if self.trigger_root is not None:
                 self.trigger_root = self.level_builder.find_equivalent_peanut(self.trigger_root)
-                self.trigger_list.recalc_view()
             if resync:
                 self.mouse_mode.resync_objects()
         except RuntimeError:
@@ -203,6 +219,7 @@ class JumpmanSegmentTable(cg.HexTable):
         if root is not None:
             root = self.level_builder.find_equivalent_peanut(root)
         self.trigger_root = root
+        print("set_trigger_root: %s" % self.trigger_root)
         self.force_refresh = True
         self.trigger_state = None
 
@@ -224,8 +241,8 @@ class JumpmanSegmentTable(cg.HexTable):
         self.pick_buffer[:] = -1
         self.level_builder.set_harvest_offset(self.mouse_mode.get_harvest_offset())
         main_state = self.level_builder.draw_objects(screen, None, self.segment, highlight=overlay_objects, pick_buffer=self.pick_buffer)
-        log.debug("draw objects: %s" % self.level_builder.objects)
-        log.debug("highlight objects: %s" % overlay_objects)
+        drawlog.debug("draw objects: %s" % self.level_builder.objects)
+        drawlog.debug("highlight objects: %s" % overlay_objects)
         if main_state.missing_object_codes:
             log.error("missing draw codes: %s" % (sorted(main_state.missing_object_codes)))
         if self.trigger_root is not None:
@@ -277,10 +294,10 @@ class JumpmanSegmentTable(cg.HexTable):
         if self.valid_level:
             override = self.mouse_mode.calc_playfield_override()
             if override is not None:
-                log.debug("draw_playfield: using override screen")
+                drawlog.debug("draw_playfield: using override screen")
                 self.set_current_screen(override)
                 return
-            log.debug("draw_playfield: computing image")
+            drawlog.debug("draw_playfield: computing image")
             self.compute_image()
         else:
             self.bad_image()
@@ -360,7 +377,7 @@ class JumpmanGridControl(BitmapGridControl):
         self.table.init_level_builder(self.segment_viewer)
 
     def refresh_view(self, *args, **kwargs):
-        log.debug("refresh_view")
+        drawlog.debug("refresh_view")
         self.table.draw_playfield(True)
         BitmapGridControl.refresh_view(self, *args, **kwargs)
 
@@ -449,6 +466,8 @@ class JumpmanViewer(BitmapViewer):
 
     old_trigger_mapping = Dict
 
+    trigger_root = Any
+
     ##### class attributes
 
     valid_mouse_modes = [jm.AnticDSelectMode, jm.DrawGirderMode, jm.DrawLadderMode, jm.DrawUpRopeMode, jm.DrawDownRopeMode, jm.DrawPeanutMode, jm.EraseGirderMode, jm.EraseLadderMode, jm.EraseRopeMode, jm.JumpmanRespawnMode]
@@ -468,6 +487,10 @@ class JumpmanViewer(BitmapViewer):
     @property
     def window_title(self):
         return "Jumpman Level Editor"
+
+    @property
+    def current_level(self):
+        return self.control.table
 
     ##### Initialization and serialization
 
@@ -498,12 +521,18 @@ class JumpmanViewer(BitmapViewer):
         if index_range is not Undefined:
             self.control.recalc_view()
 
+    @on_trait_change('linked_base.jumpman_trigger_selected_event')
+    def do_jumpman_trigger_selected_event(self, new_trigger_root):
+        log.debug("jumpman_trigger_selected_changed: %s selected=%s" % (self, str(new_trigger_root)))
+        if new_trigger_root is not Undefined:
+            self.set_trigger_view(new_trigger_root)
+
     ##### Jumpman level construction
 
     def update_harvest_state(self):
-        if not self.control.table.valid_level:
+        if not self.current_level.valid_level:
             return
-        harvest_state = self.control.table.level_builder.get_harvest_state()
+        harvest_state = self.current_level.level_builder.get_harvest_state()
         self.num_ladders = len(harvest_state.ladder_positions)
         self.num_downropes = len(harvest_state.downrope_positions)
         self.num_peanuts = len(harvest_state.peanuts)
@@ -570,7 +599,7 @@ class JumpmanViewer(BitmapViewer):
         code = self.custom_code
         if not code:
             return
-        source, level_addr, harvest_addr = self.control.table.get_level_addrs()
+        source, level_addr, harvest_addr = self.current_level.get_level_addrs()
         ranges, data = code.get_ranges(source)
         cmd = jc.MoveObjectCommand(source, ranges, data)
         self.editor.process_command(cmd)
@@ -588,9 +617,9 @@ class JumpmanViewer(BitmapViewer):
                 log.debug("UPDATING trigger map!")
                 log.debug("old map %s" % old_map)
                 log.debug("new_map %s" % new_map)
-                self.bitmap.level_builder.update_triggers(old_map, new_map)
+                self.current_level.update_triggers(old_map, new_map)
                 # FIXME: what about undo and the trigger mapping?
-                self.bitmap.save_changes(AssemblyChangedCommand)
+                self.current_level.save_changes(AssemblyChangedCommand)
                 self.old_trigger_mapping = new_map
 
     def get_triggers(self):
@@ -606,6 +635,168 @@ class JumpmanViewer(BitmapViewer):
         if addr in rev_old_map:
             return rev_old_map[addr]
         return None
+
+    def set_trigger_view(self, trigger_root):
+        level = self.current_level
+        mouse_mode = level.mouse_mode
+        if mouse_mode.can_paste:
+            mouse_mode.objects = []
+        level.set_trigger_root(trigger_root)
+        self.can_erase_objects = trigger_root is not None
+        self.control.refresh_view()
+
+
+##### Trigger painting viewer
+
+class TriggerList(wx.ListBox):
+    """Trigger selector for choosing which trigger actions to edit
+    """
+
+    def __init__(self, parent, linked_base, mdict, viewer_cls, **kwargs):
+        self.triggers = None
+
+        wx.ListBox.__init__(self, parent, style=wx.LB_SINGLE, **kwargs)
+        self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
+        self.Bind(wx.EVT_LISTBOX, self.on_click)
+        self.Bind(wx.EVT_LISTBOX_DCLICK, self.on_dclick)
+        self.Bind(wx.EVT_MOTION, self.on_tooltip)
+
+    def DoGetBestSize(self):
+        """ Base class virtual method for sizer use to get the best size
+        """
+        width = 300
+        height = -1
+        best = wx.Size(width, height)
+
+        # Cache the best size so it doesn't need to be calculated again,
+        # at least until some properties of the window change
+        self.CacheBestSize(best)
+
+        return best
+
+    @property
+    def current_jumpman_level(self):
+        # Raises ValueError if no main jumpman viewer found
+        source = self.segment_viewer.linked_base.find_viewer("jumpman")
+        return source.current_level
+
+    def recalc_view(self):
+        try:
+            level = self.current_jumpman_level
+        except ValueError:
+            self.SetItems([])
+            self.triggers = [None]
+        else:
+            self.set_peanuts(level)
+
+    def refresh_view(self):
+        if self.IsShown():
+            drawlog.debug("refreshing %s" % self)
+            self.recalc_view()
+        else:
+            drawlog.debug("skipping refresh of hidden %s" % self)
+
+    def parse_peanuts(self, peanuts, items, triggers, indent=""):
+        for peanut in peanuts:
+            items.append(indent + peanut.trigger_str)
+            triggers.append(peanut)
+            children = []
+            for p in peanut.trigger_painting:
+                if p.single:
+                    children.append(p)
+            if children:
+                self.parse_peanuts(children, items, triggers, indent + "    ")
+
+    def set_peanuts(self, level):
+        items = ["Main Level"]
+        triggers = [None]
+        index = 1
+        selected_index = 0
+        state = level.screen_state
+        if state is not None:
+            self.parse_peanuts(state.sorted_peanuts, items, triggers)
+            for index, trigger in enumerate(triggers):
+                if trigger == level.trigger_root:
+                    selected_index = index
+        if len(items) != self.GetCount():
+            self.SetItems(items)
+        else:
+            for i, item in enumerate(items):
+                old = self.GetString(i)
+                if old != item:
+                    self.SetString(i, item)
+        if selected_index < self.GetCount():
+            self.SetSelection(selected_index)
+        self.triggers = triggers
+
+    def on_left_down(self, event):
+        item = self.HitTest(event.GetPosition())
+        if item >= 0:
+            selected = self.GetSelection()
+            if selected != item:
+                wx.CallAfter(self.update_triggers_in_main_viewer, self.triggers[item])
+        event.Skip()
+
+    def on_click(self, event):
+        # BUG: doesn't seem to get called when selecting a segment, using the
+        # comments sidebar to jump to another segment, then attempting to
+        # select that previous segment. This function never gets called in
+        # that case, so I had to add the check on EVT_LEFT_DOWN
+        is_selected = event.GetExtraLong()
+        if is_selected:
+            selected = event.GetSelection()
+            wx.CallAfter(self.update_triggers_in_main_viewer, self.triggers[selected])
+        event.Skip()
+
+    def update_triggers_in_main_viewer(self, new_trigger_root):
+        print("new trigger root:", new_trigger_root)
+        self.segment_viewer.linked_base.jumpman_trigger_selected_event = new_trigger_root
+
+    def on_dclick(self, event):
+        event.Skip()
+
+    def on_tooltip(self, evt):
+        pos = evt.GetPosition()
+        selected = self.HitTest(pos)
+        if selected >= 0:
+            message = "peanut #%d" % selected
+        else:
+            message = ""
+        # FIXME: set message, maybe in title bar?
+        evt.Skip()
+
+
+class TriggerPaintingViewer(BaseInfoViewer):
+    name = "trigger_painting"
+
+    pretty_name = "Jumpman Trigger Painting"
+
+    control_cls = TriggerList
+
+    def recalc_data_model(self):
+        pass
+
+    def show_caret(self, control, index, bit):
+        pass
+
+    @on_trait_change('linked_base.segment_selected_event')
+    def process_segment_selected(self, evt):
+        log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        if evt is not Undefined:
+            self.recalc_view()
+
+    ##### Spring Tab interface
+
+    def get_notification_count(self):
+        return 0
+
+
+class JumpmanInfoPanel(InfoPanel):
+    def is_valid_data(self):
+        return self.editor.valid_jumpman_segment and bool(self.editor.bitmap.level_builder.objects)
+
+
+
 
 ##### Class level utilities
 
