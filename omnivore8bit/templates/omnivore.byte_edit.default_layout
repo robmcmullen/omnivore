@@ -1,0 +1,29 @@
+{
+    "layout": {"sidebars": [], "tile_manager": {"debug_id": "TileSplit-2", "direction": 4, "ratio_in_parent": 1.0, "views": [{"child_uuid": "64ed8426-00f3-43b3-8614-09d9490bd0f0", "debug_id": "Hex", "ratio_in_parent": 0.27846449187865957}, {"child_uuid": "2d624f5c-b826-41d3-9a69-eb90a18e98e9", "debug_id": "B/W, 1bpp, on=black", "ratio_in_parent": 0.09286361978769354}, {"child_uuid": "ee6a177f-7fbd-44da-b164-2799ed947bc6", "debug_id": "Antic 2 (Gr 0), ASCII Order, NTSC", "ratio_in_parent": 0.26954406309387124}, {"child_uuid": "07a96e5a-b8bc-4104-a45d-0c92c6d20673", "debug_id": "6502 (No Memory Map)", "ratio_in_parent": 0.3591278252397755}]}},
+    "viewers": [
+        {
+            "control": {"items_per_row": 16, "zoom": 2},
+            "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
+            "name": "char",
+            "uuid": "ee6a177f-7fbd-44da-b164-2799ed947bc6"
+        }, 
+        {
+            "control": {"items_per_row": 99, "zoom": 1},
+            "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
+            "name": "disassembly",
+            "uuid": "07a96e5a-b8bc-4104-a45d-0c92c6d20673"
+        }, 
+        {
+            "control": {"items_per_row": 16, "zoom": 1},
+            "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
+            "name": "hex",
+            "uuid": "64ed8426-00f3-43b3-8614-09d9490bd0f0"
+        }, 
+        {
+            "control": {"items_per_row": 1, "zoom": 2},
+            "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
+            "name": "bitmap",
+            "uuid": "2d624f5c-b826-41d3-9a69-eb90a18e98e9"
+        }
+    ]
+}

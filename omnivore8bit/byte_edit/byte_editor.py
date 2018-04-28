@@ -16,6 +16,7 @@ from omnivore.framework.editor import FrameworkEditor
 import omnivore.framework.clipboard as clipboard
 from omnivore.utils.file_guess import FileMetadata
 from omnivore.utils.wx.tilemanager import TileManager
+from omnivore.templates import get_template
 from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.document import SegmentedDocument
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
@@ -143,6 +144,16 @@ class ByteEditor(FrameworkEditor):
         self.control = self._create_control(parent)
         self.task.emulator_changed = self.document
 
+    def get_default_layout(self):
+        data = get_template("%s.default_layout" % self.task.id)
+        print(data)
+        try:
+            e = json.loads(data)
+        except ValueError:
+            log.error("invalid data in default layout")
+            e = {}
+        return e
+
     def from_metadata_dict(self, e):
         log.debug("metadata: %s" % str(e))
         if 'initial segment' in e:
@@ -150,11 +161,24 @@ class ByteEditor(FrameworkEditor):
         if 'diff highlight' in e:
             self.diff_highlight = bool(e['diff highlight'])
 
+        viewers = e.get('viewers', [])
+        log.debug("metadata: viewers=%s" % str(viewers))
+        
+        if not viewers:
+            try:
+                e_default = self.get_default_layout()
+                print("using defaults from template: template=%s" % str(e_default))
+            except OSError:
+                log.error("No template for default layout; falling back to minimal setup.")
+            else:
+                e.update(e_default)
+                viewers = e.get('viewers', [])
+
         layout = e.get('layout', {})
         log.debug("metadata: layout=%s" % str(layout))
 
         viewer_metadata = {}
-        for v in e.get('viewers', []):
+        for v in viewers:
             viewer_metadata[v['uuid']] = v
             log.debug("metadata: viewer[%s]=%s" % (v['uuid'], str(v)))
 
@@ -477,11 +501,7 @@ class ByteEditor(FrameworkEditor):
         layer = 0
         viewers = viewer_metadata.keys()
         if layout:
-            # try:
-                print(layout)
-                self.control.restore_layout(layout)
-            # except ValueError:
-            #     log.warning("Unable to decode layout")
+            self.control.restore_layout(layout)
 
         while not self.viewers:
             for uuid in viewers:
@@ -489,7 +509,10 @@ class ByteEditor(FrameworkEditor):
                 e = viewer_metadata[uuid]
                 if e:
                     viewer_type = e['name']
-                    linked_base = linked_bases[e['linked base']]
+                    try:
+                        linked_base = linked_bases[e['linked base']]
+                    except KeyError:
+                        linked_base = center_base
                     log.debug("recreating viewer %s: %s" % (viewer_type, uuid))
                 else:  # either not a uuid or an unknown uuid
                     e = default_viewer_metadata
@@ -516,12 +539,6 @@ class ByteEditor(FrameworkEditor):
                 # just load default hex editor if nothing has been created
                 viewers = ['hex']
                 first = False
-
-        for viewer_type in ['segments', 'comments', 'undo', 'hex', 'char']:
-            viewer_cls = self.task.find_viewer_by_name(viewer_type)
-            viewer = viewer_cls.create(self.control, linked_base)
-            self.viewers.append(viewer)
-            self.control.add_sidebar(viewer.control, viewer.uuid)
 
         self.update_pane_names()
 

@@ -9,6 +9,7 @@ from traits.api import on_trait_change, Bool, Undefined, Int, Str, Dict, Any
 
 from omnivore.utils.nputil import intscale
 from omnivore.utils.wx import compactgrid as cg
+from omnivore.templates import get_template
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from ..ui.info_panels import InfoPanel
