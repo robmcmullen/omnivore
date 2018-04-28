@@ -228,6 +228,11 @@ class DockTarget(object):
             return leaf, leaf_to_split, side
 
 
+    def remove_client(self):
+        if self.client is not None:
+            self.client.remove()
+            self.client = None
+
     def detach_client(self):
         client = self.client
         if client is not None:
@@ -241,6 +246,20 @@ class DockTarget(object):
 
     def detach(self):
         self.GetParent().detach_leaf(self)
+
+    def find_uuid(self, uuid):
+        if uuid == self.client.child_uuid:
+            log.debug("find_uuid: found %s in %s" % (uuid, self.client.child.GetName()))
+            return self.client
+        log.debug("find_uuid: skipping %s in %s" % (self.client.child_uuid, self.client.child.GetName()))
+        return None
+
+    def find_empty(self):
+        if hasattr(self.client.child, "tile_manager_empty_control") and self.client.child.tile_manager_empty_control:
+            log.debug("find_empty: found %s" % (self.client.child.GetName()))
+            return self.client
+        log.debug("find_empty: skipping %s in %s" % (self.client.child_uuid, self.client.child.GetName()))
+        return None
 
     def calc_rectangle_relative_to(self, event_window):
         r = self.GetClientRect()
@@ -1132,27 +1151,8 @@ class TileViewLeaf(TileWindowBase, DockTarget):
     def remove_all(self):
         self.remove()
 
-    def remove_client(self):
-        if self.client is not None:
-            self.client.remove()
-            self.client = None
-
     def set_chrome(self, client):
         client.extra_border = 1
-
-    def find_uuid(self, uuid):
-        if uuid == self.client.child_uuid:
-            log.debug("find_uuid: found %s in %s" % (uuid, self.client.child.GetName()))
-            return self.client
-        log.debug("find_uuid: skipping %s in %s" % (self.client.child_uuid, self.client.child.GetName()))
-        return None
-
-    def find_empty(self):
-        if hasattr(self.client.child, "tile_manager_empty_control") and self.client.child.tile_manager_empty_control:
-            log.debug("find_empty: found %s" % (self.client.child.GetName()))
-            return self.client
-        log.debug("find_empty: skipping %s in %s" % (self.client.child_uuid, self.client.child.GetName()))
-        return None
 
     def calc_layout(self):
         d = self.client.calc_layout()
