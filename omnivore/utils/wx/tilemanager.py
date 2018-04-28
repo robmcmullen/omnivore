@@ -538,10 +538,22 @@ class TileManager(wx.Window):
         self.Refresh()
 
     def find_uuid(self, uuid):
-        return self.child.find_uuid(uuid)
+        found = self.child.find_uuid(uuid)
+        if not found:
+            for sidebar in self.sidebars:
+                found = sidebar.find_uuid(uuid)
+                if found:
+                    break
+        return found
 
     def find_empty(self):
-        return self.child.find_empty()
+        found = self.child.find_empty()
+        if not found:
+            for sidebar in self.sidebars:
+                found = sidebar.find_empty()
+                if found:
+                    break
+        return found
 
     def focus_uuid(self, uuid):
         found = self.find_uuid(uuid)
