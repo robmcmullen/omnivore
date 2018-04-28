@@ -1691,7 +1691,8 @@ class SidebarMenuItem(wx.Window, DockTarget):
             # dummy rectangle for feedback, but can't drop on itself
             rects = [(None, None, r)]
         else:
-            rects = self.sidebar.title_renderer.calc_docking_rectangles_relative_to(self, r)
+            first = self.sidebar.find_leaf_index(self) == 0
+            rects = self.sidebar.title_renderer.calc_docking_rectangles_relative_to(self, r, first)
         return rects
 
     def split_side(self, new_side, view=None):
@@ -1843,11 +1844,12 @@ class Sidebar(wx.Window, ViewContainer):
             dc.DrawRotatedText(view.client.popup_name, view.label_x, view.label_y, 90.0)
 
         @classmethod
-        def calc_docking_rectangles_relative_to(cls, target_to_split, r):
+        def calc_docking_rectangles_relative_to(cls, target_to_split, r, first):
             rects = []
             h = r.height // 3
-            ty = r.y + r.height - h
-            rects.append((target_to_split, wx.TOP, wx.Rect(r.x, r.y, r.width, h)))  # bottom
+            ty = r.y + r.height - (h // 2)  # offset to between items
+            if first:
+                rects.append((target_to_split, wx.TOP, wx.Rect(r.x, r.y, r.width, h)))  # bottom
             rects.append((target_to_split, wx.BOTTOM, wx.Rect(r.x, ty, r.width, h)))  # top
             return rects
 
@@ -1922,11 +1924,12 @@ class Sidebar(wx.Window, ViewContainer):
             dc.DrawText(view.client.popup_name, view.label_x, view.label_y)
 
         @classmethod
-        def calc_docking_rectangles_relative_to(cls, target_to_split, r):
+        def calc_docking_rectangles_relative_to(cls, target_to_split, r, first):
             rects = []
             w = r.width // 3
-            rx = r.x + r.width - w
-            rects.append((target_to_split, wx.LEFT, wx.Rect(r.x, r.y, w, r.height)))  # left
+            rx = r.x + r.width - (w // 2)
+            if first:
+                rects.append((target_to_split, wx.LEFT, wx.Rect(r.x, r.y, w, r.height)))  # left
             rects.append((target_to_split, wx.RIGHT, wx.Rect(rx, r.y, w, r.height)))  # right
             return rects
 
