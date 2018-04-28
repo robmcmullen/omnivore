@@ -1044,7 +1044,7 @@ class TileSplit(TileWindowBase, ViewContainer):
 
     def calc_layout(self):
         d = {
-            'direction': self.layout_direction,
+            'direction': int(self.layout_direction),
             'ratio_in_parent': self.ratio_in_parent,
             'views': [v.calc_layout() for v in self.views],
             'debug_id': self.debug_id,
@@ -2005,7 +2005,7 @@ class Sidebar(wx.Window, ViewContainer):
 
     def calc_layout(self):
         d = {
-            'side': self.side,
+            'side': int(self.side),
             'views': [v.calc_layout() for v in self.views],
             }
         return d
