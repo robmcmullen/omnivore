@@ -29,7 +29,8 @@ def construct_path(template_dir, name):
         log.debug("resource path: %s" % path)
         pathname = os.path.normpath(os.path.join(path, template_dir, name))
     else:
-        pathname = os.path.normpath(os.path.join(template_dir, name))
+        path = os.path.dirname(__file__)
+        pathname = os.path.normpath(os.path.join(path, template_dir, name))
     return pathname
 
 
