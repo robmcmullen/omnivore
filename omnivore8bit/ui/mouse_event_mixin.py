@@ -213,10 +213,7 @@ class MouseEventMixin(SelectionHandler):
     ##### command processor
 
     def create_mouse_event_flags(self):
-        flags = DisplayFlags(self)
-        flags.selecting_rows = False
-        flags.old_carets = self.caret_handler.carets.get_state()
-        return flags
+        return self.segment_viewer.create_mouse_event_flags()
 
     def handle_motion_update_status(self, evt, row, col):
         msg = self.get_status_message_at_cell(row, col)

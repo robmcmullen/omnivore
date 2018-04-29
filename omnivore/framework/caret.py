@@ -29,7 +29,11 @@ class Caret(object):
         if state is not None:
             self.restore(state)
         else:
-            self.index = self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = index
+            try:
+                index.anchor_start_index
+                self.restore(index.serialize())
+            except AttributeError:
+                self.index = self.anchor_start_index = self.anchor_initial_start_index = self.anchor_end_index = self.anchor_initial_end_index = index
 
     def __bool__(self):
         return self.index is not None
@@ -181,7 +185,7 @@ class CaretList(list):
         return caret
 
     def force_single_caret(self, caret):
-        self[:] = [caret]
+        self[:] = [Caret(caret)]
 
     def new_carets(self, caret_state):
         for s in caret_state:

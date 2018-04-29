@@ -13,6 +13,7 @@ from ..clipboard_commands import PasteCommand
 from ..arch import fonts
 
 from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
+from omnivore.utils.command import DisplayFlags
 
 from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.utils import searchutil
@@ -286,12 +287,11 @@ class SegmentViewer(HasTraits):
 
     def sync_caret_to_index(self, index, refresh=True):
         log.debug("sync_caret_to_index: syncing %s" % self.pretty_name)
-        if self.has_caret:
-            self.linked_base.carets.force_single_caret(index)
-            flags = self.control.create_mouse_event_flags()
-            self.linked_base.sync_caret_event = flags
-            if refresh:
-                self.linked_base.refresh_event = flags
+        self.linked_base.carets.force_single_caret(index)
+        flags = self.create_mouse_event_flags()
+        self.linked_base.sync_caret_event = flags
+        if refresh:
+            self.linked_base.refresh_event = flags
 
     @on_trait_change('machine.font_change_event,machine.bitmap_shape_change_event,machine.bitmap_color_change_event,machine.disassembler_change_event')
     def machine_metadata_changed(self, evt):
@@ -390,6 +390,14 @@ class SegmentViewer(HasTraits):
     def set_zoom(self, zoom):
         self.control.zoom = zoom
         wx.CallAfter(self.control.recalc_view)
+
+    ##### Caret
+
+    def create_mouse_event_flags(self):
+        flags = DisplayFlags(self.control)
+        flags.selecting_rows = False
+        flags.old_carets = self.linked_base.carets.get_state()
+        return flags
 
     ##### Selections
 
