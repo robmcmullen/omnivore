@@ -14,7 +14,7 @@ class SegmentList(wx.ListBox):
     """
 
     def __init__(self, parent, linked_base, mdict, viewer_cls, **kwargs):
-        self.task = linked_base.task
+        self.linked_base = linked_base
 
         wx.ListBox.__init__(self, parent, style=wx.LB_SINGLE, **kwargs)
         self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
@@ -47,22 +47,12 @@ class SegmentList(wx.ListBox):
 
         return best
 
-    def set_task(self, task):
-        self.task = task
-
     def recalc_view(self):
-        e = self.task.active_editor
-        self.editor = e
-        if e is not None:
-            self.set_segments(e.document.segments, e.segment_number)
+        d = self.linked_base.document
+        self.set_segments(d.segments, self.linked_base.segment_number)
 
     def refresh_view(self):
-        editor = self.task.active_editor
-        if editor is not None:
-            if self.editor != editor:
-                self.recalc_view()
-            else:
-                self.Refresh()
+        self.Refresh()
 
     def show_segment_in_list(self, segment):
         return True
@@ -95,11 +85,11 @@ class SegmentList(wx.ListBox):
     def on_char_hook_find_hack(self, evt):
         log.debug("on_char_hook_find_hack! char=%s, key=%s, modifiers=%s" % (evt.GetUnicodeKey(), evt.GetKeyCode(), bin(evt.GetModifiers())))
         if evt.GetUnicodeKey() == 70 and evt.ControlDown():
-            log.debug("on_char_hook_find_hack! redirecting to %s" % self.task.active_editor.control)
+            log.debug("on_char_hook_find_hack! redirecting to %s" % self.linked_base.editor.control)
             # On linux/GTK, the ctrl-F is bound to the list's own find command,
             # which is useless for us. By redirecting it to the main window,
             # omnivore's find command can be called.
-            wx.CallAfter(self.task.active_editor.control.SetFocus)
+            wx.CallAfter(self.linked_base.editor.control.SetFocus)
             wx.CallAfter(self.ui_action.KeyDown, evt.GetKeyCode(),evt.GetModifiers())
             wx.CallAfter(self.ui_action.KeyUp, evt.GetKeyCode(),evt.GetModifiers())
         else:
@@ -110,9 +100,7 @@ class SegmentList(wx.ListBox):
         if item >= 0:
             selected = self.GetSelection()
             if selected != item:
-                editor = self.task.active_editor
-                segment_number = self.index_to_segment_number[item]
-                wx.CallAfter(editor.view_segment_number, segment_number)
+                self.process_segment_change(item)
         event.Skip()
 
     def on_click(self, event):
@@ -126,10 +114,9 @@ class SegmentList(wx.ListBox):
         event.Skip()
 
     def process_segment_change(self, index):
-        editor = self.task.active_editor
         segment_number = self.index_to_segment_number[index]
-        if segment_number != editor.segment_number:
-            wx.CallAfter(editor.view_segment_number, segment_number)
+        if segment_number != self.linked_base.segment_number:
+            wx.CallAfter(self.linked_base.view_segment_number, segment_number)
 
     def on_dclick(self, event):
         event.Skip()
@@ -140,8 +127,9 @@ class SegmentList(wx.ListBox):
         if selected == -1:
             event.Skip()
             return
-        e = self.task.active_editor
+        e = self.linked_base.editor
         d = e.document
+        t = e.task
         segment = d.segments[selected]
 
         # include disabled action showing the name of the segment clicked upon
@@ -150,20 +138,20 @@ class SegmentList(wx.ListBox):
         if not name:
             name = str(segment)
         actions = [
-            Action(name=name, task=self.task, enabled=False),
+            Action(name=name, task=t, enabled=False),
             None,
             ]
         if selected > 0:
-            actions.append(SelectSegmentInAllAction(segment_number=selected, task=self.task))
-            actions.append(ParseSubSegmentsAction(segment_number=selected, task=self.task))
+            actions.append(SelectSegmentInAllAction(segment_number=selected, task=t))
+            actions.append(ParseSubSegmentsAction(segment_number=selected, task=t))
             if segment != d.container_segment:
-                actions.append(SetSegmentOriginAction(segment_number=selected, task=self.task))
-                actions.append(DeleteUserSegmentAction(segment_number=selected, task=self.task))
+                actions.append(SetSegmentOriginAction(segment_number=selected, task=t))
+                actions.append(DeleteUserSegmentAction(segment_number=selected, task=t))
             actions.append(None)
         savers = e.get_extra_segment_savers(segment)
         savers.extend(segment.savers)
         for saver in savers:
-            action = SaveSegmentAsFormatAction(saver=saver, segment_number=selected, task=self.task, name="Save as %s" % saver.export_data_name)
+            action = SaveSegmentAsFormatAction(saver=saver, segment_number=selected, task=t, name="Save as %s" % saver.export_data_name)
             actions.append(action)
         if actions:
             e.popup_context_menu_from_actions(self, actions)
@@ -172,10 +160,10 @@ class SegmentList(wx.ListBox):
         pos = evt.GetPosition()
         selected = self.HitTest(pos)
         if selected >= 0:
-            segment = self.task.active_editor.document.segments[selected]
-            self.task.status_bar.message = segment.verbose_info
+            segment = self.linked_base.document.segments[selected]
+            self.linked_base.task.status_bar.message = segment.verbose_info
         else:
-            self.task.status_bar.message = ""
+            self.linked_base.task.status_bar.message = ""
         evt.Skip()
 
     def ensure_visible(self, segment):
