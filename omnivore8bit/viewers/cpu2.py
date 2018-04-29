@@ -276,7 +276,28 @@ class DisassemblyGridControl(SegmentGridControl):
     def advance_caret_position(self):
         self.handle_char_move_down(None, None)
 
+    def verify_keycode_can_start_edit(self, c):
+        if c == ord(";"):
+            self.editing_type = "comment"
+        else:
+            self.editing_type = "code"
+        return True
+
+    def use_first_char_when_starting_edit(self):
+        return self.editing_type != "comment"
+
     def process_edit(self, val):
+        if self.editing_type == "comment":
+            self.process_comment(val)
+        else:
+            self.process_mnemonic(val)
+
+    def process_comment(self, val):
+        ranges = self.get_selected_ranges_including_carets(self.caret_handler)
+        cmd = SetCommentCommand(self.segment_viewer.segment, ranges, val)
+        self.segment_viewer.editor.process_command(cmd)
+
+    def process_mnemonic(self, val):
         t = self.table
         d = t.disassembly
         op = val.upper()
