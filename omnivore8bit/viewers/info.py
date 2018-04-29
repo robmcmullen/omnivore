@@ -47,6 +47,7 @@ class CommentsPanel(wx.VListBox):
     def __init__(self, parent, **kwargs):
         self.items = []
         wx.VListBox.__init__(self, parent, wx.ID_ANY, **kwargs)
+        self.SetBackgroundStyle(wx.BG_STYLE_PAINT)
         self.Bind(wx.EVT_LEFT_DOWN, self.on_click)
 
         f = self.GetFont()
@@ -62,6 +63,11 @@ class CommentsPanel(wx.VListBox):
         self.select_bg_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
         self.select_brush = wx.Brush(self.select_bg_color, wx.SOLID)
         self.normal_color = self.GetForegroundColour()
+        self.SetBackgroundColour(wx.GREEN)
+
+        self.select_color = wx.RED
+        self.select_bg_color = wx.YELLOW
+        self.normal_color = wx.BLUE
 
         #self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
 
@@ -69,13 +75,26 @@ class CommentsPanel(wx.VListBox):
         # EVT_KEY_DOWN events in a ListBox. This is the only event handler
         # that catches a Return.
         self.Bind(wx.EVT_KEY_UP, self.on_key_up)
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self.on_erase_background)
 
         self.last_segment = None
+
+    def on_erase_background(self, evt):
+        """Windows flickers like crazy when erasing the whole screen, so just
+        erase the parts that won't be filled in later.
+        """
+        dc = evt.GetDC()
+        w, h = self.GetClientSize()
+        print("erasing background", w, h)
+        dc.SetBrush(self.select_brush)
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.DrawRectangle(0, 0, w, h)
 
     # This method must be overridden.  When called it should draw the
     # n'th item on the dc within the rect.  How it is drawn, and what
     # is drawn is entirely up to you.
     def OnDrawItem(self, dc, rect, n):
+        print("draw item %d" % n)
         if self.GetSelection() == n:
             dc.SetTextForeground(self.select_color)
         else:
@@ -86,6 +105,7 @@ class CommentsPanel(wx.VListBox):
                      wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
     def OnDrawBackground(self, dc, rect, n):
+        print("draw item background %d" % n)
         if self.GetSelection() == n:
             dc.SetBrush(self.select_brush)
         else:
