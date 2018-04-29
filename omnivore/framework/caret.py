@@ -185,7 +185,11 @@ class CaretList(list):
         return caret
 
     def force_single_caret(self, caret):
-        self[:] = [Caret(caret)]
+        try:
+            caret.anchor_start_index
+        except:
+            caret = Caret(caret)
+        self[:] = [caret]
 
     def new_carets(self, caret_state):
         for s in caret_state:
