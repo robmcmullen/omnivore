@@ -64,19 +64,8 @@ class HexEditControl(SegmentGridControl):
     def set_viewer_defaults(self):
         self.items_per_row = self.view_params.hex_grid_width
 
-    def handle_char_ordinary(self, evt):
-        c = evt.GetKeyCode()
-        print("ordinary char: %s", c)
-        if get_valid_hex_digit(c) is not None:
-            self.process_hex_digit(evt, c)
-        else:
-            evt.Skip()
-
-    def process_hex_digit(self, evt, keycode):
-        if not self.is_editing_in_cell:
-            self.start_editing()
-        print("EmulateKeyPress: %s" % evt.GetKeyCode())
-        self.edit_source.EmulateKeyPress(evt)
+    def verify_keycode_can_start_edit(self, c):
+        return get_valid_hex_digit(c)
 
     def create_hidden_text_ctrl(self):
         c = HexTextCtrl(self, -1, pos=(600,100), size=(400,24))
