@@ -65,11 +65,7 @@ class CommentsPanel(wx.VListBox):
         self.normal_color = self.GetForegroundColour()
         self.SetBackgroundColour(wx.GREEN)
 
-        self.select_color = wx.RED
-        self.select_bg_color = wx.YELLOW
-        self.normal_color = wx.BLUE
-
-        #self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
+        self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
 
         # Return key not sent through to EVT_CHAR, EVT_CHAR_HOOK or
         # EVT_KEY_DOWN events in a ListBox. This is the only event handler
@@ -94,7 +90,6 @@ class CommentsPanel(wx.VListBox):
     # n'th item on the dc within the rect.  How it is drawn, and what
     # is drawn is entirely up to you.
     def OnDrawItem(self, dc, rect, n):
-        print("draw item %d" % n)
         if self.GetSelection() == n:
             dc.SetTextForeground(self.select_color)
         else:
@@ -105,7 +100,6 @@ class CommentsPanel(wx.VListBox):
                      wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
     def OnDrawBackground(self, dc, rect, n):
-        print("draw item background %d" % n)
         if self.GetSelection() == n:
             dc.SetBrush(self.select_brush)
         else:
@@ -168,7 +162,7 @@ class CommentsPanel(wx.VListBox):
         keycode = evt.GetKeyCode()
         log.debug("key up: %s" % keycode)
         if keycode == wx.WXK_RETURN:
-            self.task.on_hide_minibuffer_or_cancel(evt)
+            pass
         evt.Skip()
 
     def on_click(self, evt):
