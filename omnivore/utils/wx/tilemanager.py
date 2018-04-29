@@ -325,6 +325,7 @@ class TileManager(wx.Window):
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
+        self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
         self.pending_sidebar_focus = None
         self.current_sidebar_focus = None
         self.current_leaf_focus = None
@@ -694,6 +695,24 @@ class TileManager(wx.Window):
         self.child.calc_dock_targets(targets)
         print("dock targets: %s" % str(targets))
         return targets
+
+    def on_char_hook(self, evt):
+        """
+        Keyboard handler to process global keys before they are handled by any
+        children. Unless evt.Skip is called, the character event propagation
+        stops here.
+        """
+        key = evt.GetKeyCode()
+        log.debug("on_char_hook evt=%s" % key)
+
+        skip = True
+        if key == wx.WXK_ESCAPE:
+            if self.current_sidebar_focus is not None:
+                log.debug("on_char_hook: popping down active sidebar %s" % self.current_sidebar_focus)
+                self.force_clear_sidebar()
+                skip = False
+        if skip:
+            evt.Skip()
 
 
 class EmptyChild(wx.Window):
