@@ -200,14 +200,13 @@ class LabelField(InfoField):
     def fill_data(self, linked_base):
         value = getattr(self.panel.linked_base.jumpman_playfield_model, self.attr_name)
         self.ctrl.SetLabel(str(value))
-        self.set_background(value <= self.max_val)
+        self.set_background(linked_base, value <= self.max_val)
 
-    def set_background(self, valid):
+    def set_background(self, linked_base, valid):
         if valid:
-            attr = self.ctrl.GetDefaultAttributes()
-            color = attr.colBg.Get(False)
+            color = linked_base.cached_preferences.empty_background_color
         else:
-            color = "#FF8080"
+            color = linked_base.cached_preferences.error_background_color
         self.ctrl.SetBackgroundColour(color)
 
     def clear_data(self):
@@ -500,8 +499,7 @@ class InfoPanel(PANELTYPE):
         PANELTYPE.__init__(self, parent)
 
         # Mac/Win needs this, otherwise background color is black
-        attr = self.GetDefaultAttributes()
-        self.SetBackgroundColour(attr.colBg)
+        self.SetBackgroundColour(linked_base.cached_preferences.empty_background_color)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)

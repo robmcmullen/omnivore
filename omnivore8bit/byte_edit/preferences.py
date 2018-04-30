@@ -96,6 +96,8 @@ class ByteEditPreferences(PreferencesHelper):
 
     comment_background_color = Color(wx.Colour(255, 180, 200))
 
+    error_background_color = Color(wx.Colour(255, 128, 128))
+
     diff_text_color = Color(wx.Colour(255, 0, 0))
 
     unfocused_caret_color = Color(wx.Colour(128, 128, 128))
