@@ -265,6 +265,10 @@ class JumpmanViewer(BitmapViewer):
 
     ##### Trait change handlers
 
+    def recalc_data_model(self):
+        self.current_level.init_level_builder(self)
+        self.machine.update_colors(self.current_level.level_colors)
+
     @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self, evt):
         log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)
