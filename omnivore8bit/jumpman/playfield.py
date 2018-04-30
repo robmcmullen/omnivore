@@ -1,6 +1,8 @@
 import numpy as np
 from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_mask, user_bit_mask, match_bit_mask
 
+from omnivore.templates import get_template
+
 from . import parser as ju
 from . import commands as jc
 from ..arch.colors import powerup_colors
@@ -248,7 +250,7 @@ class JumpmanPlayfieldModel(object):
         """Segment saver interface: take a segment and produce a byte
         representation to save to disk.
         """
-        image = get_template("Jumpman Level")
+        image = get_template("jumpman_level_tester.atr")
         if image is None:
             raise RuntimeError("Can't find Jumpman Level template file")
         raw = np.fromstring(image, dtype=np.uint8)

@@ -263,6 +263,12 @@ class JumpmanViewer(BitmapViewer):
         mdict["assembly_source"] = self.linked_base.assembly_source
         mdict["old_trigger_mapping"] = dict(self.linked_base.old_trigger_mapping)  # so we don't try to pickle a TraitDictObject
 
+    def get_extra_segment_savers(self, segment):
+        """Hook to provide additional ways to save the data based on this view
+        of the data
+        """
+        return [self.current_level]
+
     ##### Trait change handlers
 
     def recalc_data_model(self):

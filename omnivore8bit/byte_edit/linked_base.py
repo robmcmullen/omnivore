@@ -251,16 +251,6 @@ class LinkedBase(CaretHandler):
         flags.byte_values_changed = True
         self.process_flags(flags)
 
-    def save_segment(self, saver, uri):
-        try:
-            bytes = saver.encode_data(self.segment, self)
-            saver = lambda a,b: bytes
-            self.document.save_to_uri(uri, self, saver, save_metadata=False)
-        except Exception, e:
-            log.error("%s: %s" % (uri, str(e)))
-            #self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
-            raise
-
     def change_bytes(self, start, end, data, pretty=None):
         """Convenience function to perform a ChangeBytesCommand
         """

@@ -416,7 +416,7 @@ class ByteEditor(FrameworkEditor):
         else:
             self.segment_parser_label = "No parser"
         self.task.segments_changed = self.document.segments
-        self.focused_viewer.linked_base.segment_selected = self.segment_number
+        self.focused_viewer.linked_base.segment_selected_event = self.segment_number
 
     def find_in_user_segment(self, base_index):
         # FIXME: Profiling shows this as a big bottleneck when there are

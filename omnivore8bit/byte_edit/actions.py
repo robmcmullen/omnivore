@@ -687,14 +687,18 @@ class SaveSegmentGroup(TaskDynamicSubmenuGroup):
     """
     id = 'SaveSegmentGroup'
 
-    event_name = 'segment_selected'
+    event_name = 'segments_changed'
 
     def _get_items(self, event_data=None):
         items = []
         if event_data is not None:
-            segment_number = event_data
+            print("event_data", event_data)
+            #segment_number = event_data
+            segment_number = self.task.active_editor.segment_number
             segment = self.task.active_editor.document.segments[segment_number]
+            print("segment", segment)
             savers = self.task.active_editor.get_extra_segment_savers(segment)
+            print("extra savers", savers)
             savers.extend(segment.savers)
             for saver in savers:
                 action = SaveSegmentAsFormatAction(saver=saver, segment_number=segment_number)
