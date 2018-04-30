@@ -82,8 +82,8 @@ class JumpmanFrameRenderer(BitmapLineRenderer):
         bytes_per_row = model.items_per_row
         first_index = first_row * bytes_per_row
         last_index = last_row * bytes_per_row
-        data = model.playfield.data[first_index:last_index]
-        style = model.playfield.style[first_index:last_index]
+        data = model.data[first_index:last_index]
+        style = model.style[first_index:last_index]
         drawlog.debug("draw_grid: first_index:%d last_index:%d" % (first_index, last_index))
 
         array = grid_control.bitmap_renderer.get_image(grid_control.segment_viewer, bytes_per_row, last_row - first_row, last_index - first_index, data, style)

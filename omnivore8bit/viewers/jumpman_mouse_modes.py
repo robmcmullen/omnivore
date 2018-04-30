@@ -17,7 +17,7 @@ from .mouse_modes import NormalSelectMode
 
 import logging
 log = logging.getLogger(__name__)
-
+selectlog = logging.getLogger("select")
 
 class JumpmanSelectMode(NormalSelectMode):
     can_paste = False
@@ -178,9 +178,9 @@ class AnticDSelectMode(JumpmanSelectMode):
         jumpman objects. We need to find the current objects that match up to
         the stored objects.
         """
-        log.debug("before resyncing: %s" % self.objects)
+        selectlog.debug("before resyncing: %s" % self.objects)
         self.objects = self.control.model.level_builder.find_equivalent(self.objects)
-        log.debug("after resyncing: %s" % self.objects)
+        selectlog.debug("after resyncing: %s" % self.objects)
 
     def delete_objects(self):
         if self.objects:
@@ -217,7 +217,7 @@ class AnticDSelectMode(JumpmanSelectMode):
         self.mouse_down = x, y
         if pick >= 0:
             obj = self.get_picked(pick)
-            log.debug("picked object: %s" % obj)
+            selectlog.debug("picked object: %s" % obj)
             if obj in self.objects:
                 if evt.ControlDown():
                     self.pending_remove = obj
@@ -249,14 +249,14 @@ class AnticDSelectMode(JumpmanSelectMode):
                 return
             self.check_tolerance = False
             for obj in self.objects:
-                log.debug("moving %s, equiv %s" % (obj, self.control.model.level_builder.find_equivalent_object(obj)))
+                selectlog.debug("moving %s, equiv %s" % (obj, self.control.model.level_builder.find_equivalent_object(obj)))
                 obj.x = obj.orig_x + dx
                 obj.x &= obj.valid_x_mask
                 obj.y = obj.orig_y + dy
             self.pending_remove = None
 
     def process_left_down(self, evt):
-        log.debug("left down: %s" % evt)
+        selectlog.debug("left down: %s" % evt)
         self.highlight_pick(evt)
         self.control.refresh_view()
         self.display_coords(evt)
@@ -270,7 +270,7 @@ class AnticDSelectMode(JumpmanSelectMode):
     def process_left_up(self, evt):
         if self.num_clicks == 2:
             return
-        print("pending_remove: %s" % self.pending_remove)
+        selectlog.debug("pending_remove: %s" % self.pending_remove)
         if self.pending_remove is True:
             self.objects = []
         elif self.pending_remove is not None:
