@@ -8,12 +8,12 @@ from atrcopy import SegmentData, DefaultSegment, comment_bit_mask
 
 # Local imports.
 from omnivore.utils.command import Overlay
-from omnivore8bit.utils.jumpman import *
 from omnivore8bit.byte_edit.commands import ChangeByteCommand
 from omnivore.framework.actions import CutAction, CopyAction, PasteAction, SelectAllAction, SelectNoneAction, SelectInvertAction
 
-from . import jumpman_commands as jc
-from .mouse_modes import NormalSelectMode
+from . import parser as jp
+from . import commands as jc
+from ..viewers.mouse_modes import NormalSelectMode
 
 import logging
 log = logging.getLogger(__name__)
@@ -312,7 +312,7 @@ class DrawMode(JumpmanSelectMode):
     icon = "select.png"
     menu_item_name = "Draw"
     menu_item_tooltip = "Draw stuff"
-    drawing_object = Girder
+    drawing_object = jp.Girder
     can_paste = False
 
     def resync_objects(self):
@@ -391,35 +391,35 @@ class DrawGirderMode(DrawMode):
     icon = "jumpman_girder.png"
     menu_item_name = "Draw Girder"
     menu_item_tooltip = "Draw girders"
-    drawing_object = Girder
+    drawing_object = jp.Girder
 
 
 class DrawLadderMode(DrawMode):
     icon = "jumpman_ladder.png"
     menu_item_name = "Draw Ladder"
     menu_item_tooltip = "Draw ladders (vertical only)"
-    drawing_object = Ladder
+    drawing_object = jp.Ladder
 
 
 class DrawUpRopeMode(DrawMode):
     icon = "jumpman_uprope.png"
     menu_item_name = "Draw Up Rope"
     menu_item_tooltip = "Draw up ropes (vertical only)"
-    drawing_object = UpRope
+    drawing_object = jp.UpRope
 
 
 class DrawDownRopeMode(DrawMode):
     icon = "jumpman_downrope.png"
     menu_item_name = "Draw Down Rope"
     menu_item_tooltip = "Draw down ropes (vertical only)"
-    drawing_object = DownRope
+    drawing_object = jp.DownRope
 
 
 class EraseGirderMode(DrawMode):
     icon = "jumpman_erase_girder.png"
     menu_item_name = "Erase Girder"
     menu_item_tooltip = "Erase girders"
-    drawing_object = EraseGirder
+    drawing_object = jp.EraseGirder
     editor_trait_for_enabled = 'can_erase_objects'
 
 
@@ -427,7 +427,7 @@ class EraseLadderMode(DrawMode):
     icon = "jumpman_erase_ladder.png"
     menu_item_name = "Erase Ladder"
     menu_item_tooltip = "Erase ladders (vertical only)"
-    drawing_object = EraseLadder
+    drawing_object = jp.EraseLadder
     editor_trait_for_enabled = 'can_erase_objects'
 
 
@@ -435,7 +435,7 @@ class EraseRopeMode(DrawMode):
     icon = "jumpman_erase_rope.png"
     menu_item_name = "Erase Rope"
     menu_item_tooltip = "Erase ropes (vertical only)"
-    drawing_object = EraseRope
+    drawing_object = jp.EraseRope
     editor_trait_for_enabled = 'can_erase_objects'
 
 
@@ -443,7 +443,7 @@ class DrawPeanutMode(DrawMode):
     icon = "jumpman_peanut.png"
     menu_item_name = "Draw Peanuts"
     menu_item_tooltip = "Draw peanuts (single only)"
-    drawing_object = Peanut
+    drawing_object = jp.Peanut
 
     def __init__(self, *args, **kwargs):
         DrawMode.__init__(self, *args, **kwargs)
@@ -545,7 +545,7 @@ class JumpmanRespawnMode(DrawMode):
     icon = "jumpman_respawn.png"
     menu_item_name = "Set Jumpman Start"
     menu_item_tooltip = "Set jumpman respawn position"
-    drawing_object = JumpmanRespawn
+    drawing_object = jp.JumpmanRespawn
 
     def init_post_hook(self):
         x, y = self.get_respawn_point()

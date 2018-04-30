@@ -1,8 +1,8 @@
 import numpy as np
 from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_mask, user_bit_mask, match_bit_mask
 
-from . import jumpman as ju
-from ..viewers import jumpman_commands as jc
+from . import parser as ju
+from . import commands as jc
 from ..arch.colors import powerup_colors
 
 import logging
@@ -65,14 +65,12 @@ class JumpmanPlayfieldModel(object):
             self.level_builder.parse_level_data(source, level_addr, harvest_addr)
             self.force_refresh = True
             self.valid_level = True
-            print("generate_display_objects: TRIGGER ROOT", self.trigger_root)
             if self.trigger_root is not None:
                 self.trigger_root = self.level_builder.find_equivalent_peanut(self.trigger_root)
             if resync:
                 self.mouse_mode.resync_objects()
         except RuntimeError:
             self.valid_level = False
-            raise
 
     def get_playfield(self):
         data = np.empty(self.items_per_row * self.antic_lines, dtype=np.uint8)
@@ -119,7 +117,6 @@ class JumpmanPlayfieldModel(object):
         if root is not None:
             root = self.level_builder.find_equivalent_peanut(root)
         self.trigger_root = root
-        print("set_trigger_root: %s" % self.trigger_root)
         self.force_refresh = True
         self.trigger_state = None
 

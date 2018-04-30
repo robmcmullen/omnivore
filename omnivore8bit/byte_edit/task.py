@@ -15,7 +15,7 @@ from byte_editor import ByteEditor
 from preferences import ByteEditPreferences
 from . import actions as ba
 from ..viewers import actions as va
-from ..viewers import jumpman_commands as ja
+from ..jumpman import commands as ja
 import omnivore8bit.arch.fonts as fonts
 import omnivore8bit.arch.colors as colors
 import omnivore8bit.arch.machine as machine

@@ -16,13 +16,13 @@ from ..ui.info_panels import InfoPanel
 from ..arch.machine import Machine
 from ..arch.antic_renderers import BaseRenderer
 from ..arch.colors import powerup_colors
-from ..utils import jumpman as ju
-from ..utils import jumpman_playfield as jp
+from ..jumpman import parser as ju
+from ..jumpman import playfield as jp
 
 from . import SegmentViewer
 from . import actions as va
-from . import jumpman_mouse_modes as jm
-from . import jumpman_commands as jc
+from ..jumpman import mouse_modes as jm
+from ..jumpman import commands as jc
 from .bitmap2 import BitmapGridControl, BitmapViewer, BitmapLineRenderer
 from .info import BaseInfoViewer
 

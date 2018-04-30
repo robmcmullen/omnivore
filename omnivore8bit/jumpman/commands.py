@@ -13,11 +13,12 @@ from omnivore.framework.enthought_api import Action, ActionItem
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, ChooseOnePlusCustomDialog
 from omnivore.utils.textutil import text_to_int
 from omnivore.framework.actions import SelectAllAction, SelectNoneAction, SelectInvertAction, TaskDynamicSubmenuGroup
-from omnivore8bit.utils.jumpman import DrawObjectBounds, is_valid_level_segment
 from omnivore8bit.byte_edit.actions import UseSegmentAction
 
-from .commands import SetValueCommand
-from .actions import ViewerAction
+from ..viewers.commands import SetValueCommand
+from ..viewers.actions import ViewerAction
+
+from .parser import DrawObjectBounds, is_valid_level_segment
 
 import logging
 progress_log = logging.getLogger("progress")

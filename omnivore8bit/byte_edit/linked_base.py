@@ -19,7 +19,7 @@ from omnivore.utils.command import DisplayFlags
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment
 from . import actions as ba
 from . import commands as bc
-from ..utils import jumpman_playfield as jp
+from ..jumpman import playfield as jp
 
 import logging
 log = logging.getLogger(__name__)
