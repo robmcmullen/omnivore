@@ -16,6 +16,14 @@ from omnivore.utils.runtime import get_all_subclasses
 import logging
 log = logging.getLogger(__name__)
 
+def reduce_from_little_endian(raw):
+    try:
+        value = reduce(lambda x, y: x + (y << 8), raw)  #  convert to little endian
+    except TypeError:
+        # no array values, probably an attempt to display before the
+        # segment is loaded.
+        value = 0
+    return value
 
 class InfoField(object):
     keyword = ""
@@ -190,7 +198,7 @@ class LabelField(InfoField):
         return c
 
     def fill_data(self, linked_base):
-        value = getattr(self.panel.linked_base, self.attr_name)
+        value = getattr(self.panel.linked_base.jumpman_playfield_model, self.attr_name)
         self.ctrl.SetLabel(str(value))
         self.set_background(value <= self.max_val)
 
@@ -341,14 +349,14 @@ class UIntEditField(TextEditField):
         pass
 
     def bytes_to_control_data(self, raw):
-        value = reduce(lambda x, y: x + (y << 8), raw)  #  convert to little endian
+        value = reduce_from_little_endian(raw)
         text = str(value)
         return text
 
     def parse_from_control(self):
         value = int(self.ctrl.GetValue())
         if hasattr(self, "attr_name_max_val") and hasattr(self.panel.linked_base, self.attr_name_max_val):
-            maxval = getattr(self.panel.linked_base, self.attr_name_max_val)
+            maxval = getattr(self.panel.linked_base.jumpman_playfield_model, self.attr_name_max_val)
             if value > maxval:
                 raise ValueError("%d out of range for attribute %s max of %d" % (value, self.attr_name_max_val, maxval))
         if hasattr(self, "max_val"):
@@ -399,7 +407,7 @@ class AnticColorsField(InfoField):
     def on_colors(self, evt):
         linked_base = self.panel.linked_base
         raw = self.get_source_bytes(linked_base)
-        dlg = AnticColorDialog(self.ctrl, raw, self.register_names)
+        dlg = AnticColorDialog(self.ctrl, raw, linked_base.cached_preferences, self.register_names)
         if dlg.ShowModal() == wx.ID_OK:
             linked_base.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, dlg.colors, self.undo_label)
 
@@ -418,7 +426,7 @@ class DropDownField(InfoField):
         return self.choices
 
     def bytes_to_control_data(self, raw):
-        value = reduce(lambda x, y: x + (y << 8), raw)  #  convert to little endian
+        value = reduce_from_little_endian(raw)
         value = min(value, len(self.choices) - 1)
         return value
 
@@ -448,10 +456,10 @@ class PeanutsNeededField(DropDownField):
     same_line = True
 
     def bytes_to_control_data(self, raw):
-        e = self.panel.linked_base
+        e = self.panel.linked_base.jumpman_playfield_model
         if not hasattr(e, 'num_peanuts'):
             return 0
-        value = reduce(lambda x, y: x + (y << 8), raw)  #  convert to little endian
+        value = reduce_from_little_endian(raw)
         diff = e.num_peanuts - value
         if diff < 0:
             diff = 0
@@ -463,11 +471,11 @@ class PeanutsNeededField(DropDownField):
         return diff
 
     def drop_down_changed(self, event):
-        e = self.panel.linked_base
+        e = self.panel.linked_base.jumpman_playfield_model
         e.peanut_harvest_diff = self.ctrl.GetSelection()
         raw = np.zeros([self.byte_count],dtype=np.uint8)
         raw[0] = max(0, e.num_peanuts - e.peanut_harvest_diff)
-        e.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw, self.undo_label)
+        self.panel.linked_base.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw, self.undo_label)
 
 
 PANELTYPE = wx.lib.scrolledpanel.ScrolledPanel

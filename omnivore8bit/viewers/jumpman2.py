@@ -463,7 +463,8 @@ class JumpmanInfoPanel(InfoPanel):
     ]
 
     def is_valid_data(self):
-        return self.editor.valid_jumpman_segment and bool(self.editor.bitmap.level_builder.objects)
+        jm = self.linked_base.jumpman_playfield_model
+        return jm.possible_jumpman_segment and bool(jm.level_builder.objects)
 
 
 class LevelSummaryViewer(BaseInfoViewer):
