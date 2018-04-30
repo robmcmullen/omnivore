@@ -17,6 +17,7 @@ from ..arch.machine import Machine
 from ..arch.antic_renderers import BaseRenderer
 from ..arch.colors import powerup_colors
 from ..utils import jumpman as ju
+from ..utils import jumpman_playfield as jp
 
 from . import SegmentViewer
 from . import actions as va
@@ -67,22 +68,22 @@ class JumpmanPlayfieldRenderer(BaseRenderer):
 
 class JumpmanFrameRenderer(BitmapLineRenderer):
     def draw_grid(self, grid_control, dc, first_row, visible_rows, first_cell, visible_cells):
+        model = grid_control.model
         first_col = self.cell_to_col[first_cell]
         last_cell = min(first_cell + visible_cells, self.num_cells)
         last_col = self.cell_to_col[last_cell - 1] + 1
-        last_row = min(first_row + visible_rows, grid_control.table.antic_lines)
+        last_row = min(first_row + visible_rows, model.antic_lines)
         drawlog.debug("draw_grid: rows:%d,%d, cols:%d,%d" % (first_row, last_row, first_col, last_col))
 
         ul_rect = self.col_to_rect(first_row, first_col)
         lr_rect = self.col_to_rect(last_row - 1, last_col - 1)
         frame_rect = wx.Rect(ul_rect.x, ul_rect.y, lr_rect.x - ul_rect.x + lr_rect.width, lr_rect.y - ul_rect.y + lr_rect.height)
 
-        bytes_per_row = grid_control.table.items_per_row
+        bytes_per_row = model.items_per_row
         first_index = first_row * bytes_per_row
         last_index = last_row * bytes_per_row
-        t = grid_control.table
-        data = t.data[first_index:last_index]
-        style = t.style[first_index:last_index]
+        data = model.playfield.data[first_index:last_index]
+        style = model.playfield.style[first_index:last_index]
         drawlog.debug("draw_grid: first_index:%d last_index:%d" % (first_index, last_index))
 
         array = grid_control.bitmap_renderer.get_image(grid_control.segment_viewer, bytes_per_row, last_row - first_row, last_index - first_index, data, style)
@@ -117,251 +118,24 @@ class JumpmanMachine(Machine):
 
 
 class JumpmanSegmentTable(cg.HexTable):
-    def __init__(self, segment, bytes_per_row):
-        self.segment = segment
-        self.possible_jumpman_segment = ju.is_valid_level_segment(segment)
-        self.items_per_row = 160
-        self.antic_lines = 88
-        self.playfield = self.get_playfield_segment()
-        self.pick_buffer = np.zeros((self.items_per_row * self.antic_lines), dtype=np.int32)
-        cg.HexTable.__init__(self, self.playfield, self.playfield.style, self.items_per_row, 0x7000)
+    def __init__(self, linked_base, bytes_per_row):
+        self.model = linked_base.jumpman_playfield_model
+        cg.HexTable.__init__(self, self.model.playfield, self.model.playfield.style, self.model.items_per_row, 0x7000)
 
     @property
-    def trigger_root(self):
-        try:
-            return self.segment_viewer.trigger_root
-        except AttributeError:
-            return None
-
-    @trigger_root.setter
-    def trigger_root(self, value):
-        try:
-            self.segment_viewer.trigger_root = value
-        except AttributeError:
-            pass
+    def segment(self):
+        return self.linked_base.segment
 
     def get_label_at_index(self, index):
         return (index // 40)
 
-    def init_level_builder(self, segment_viewer):
-        log.debug("init_level_builder")
-        self.segment_viewer = segment_viewer
-        self.level_builder = ju.JumpmanLevelBuilder(self.segment_viewer.document.user_segments)
-        self.cached_screen = None
-        self.valid_level = False
-        self.force_refresh = True
-        self.screen_state = None
-        self.trigger_state = None
-        self.generate_display_objects()
-        self.level_colors = self.calc_level_colors()
-        self.draw_playfield(True)
-
-    @property
-    def mouse_mode(self):
-        return self.segment_viewer.control.mouse_mode
-
-    def generate_display_objects(self, resync=False):
-        try:
-            source, level_addr, harvest_addr = self.get_level_addrs()
-            index = level_addr - source.start_addr
-            self.level_builder.parse_level_data(source, level_addr, harvest_addr)
-            self.force_refresh = True
-            self.valid_level = True
-            print("generate_display_objects: TRIGGER ROOT", self.trigger_root)
-            if self.trigger_root is not None:
-                self.trigger_root = self.level_builder.find_equivalent_peanut(self.trigger_root)
-            if resync:
-                self.mouse_mode.resync_objects()
-        except RuntimeError:
-            self.valid_level = False
-
-    def get_playfield(self):
-        data = np.empty(self.items_per_row * self.antic_lines, dtype=np.uint8)
-        return data
-
-    def get_playfield_segment(self, playfield=None):
-        if playfield is None:
-            playfield = self.get_playfield()
-        r = SegmentData(playfield)
-        return DefaultSegment(r, 0x7000)
-
-    def clear_playfield(self, playfield=None):
-        if playfield is None:
-            playfield = self.playfield
-        playfield[:] = 8  # background is the 9th ANTIC color register (counting from zero)
-        playfield.style[:] = 0
-
-    def calc_level_colors(self):
-        if self.valid_level:
-            colors = self.segment[0x2a:0x33].copy()
-            # on some levels, the bombs are set to color 0 because they are
-            # cycled to produce a glowing effect, but that's not visible here
-            # so we force it to be bright white
-            fg = colors[4:8]
-            fg[fg == 0] = 15
-        else:
-            colors = powerup_colors()
-        return list(colors)
-
-    def get_level_addrs(self):
-        if not self.possible_jumpman_segment:
-            raise RuntimeError
-        source = self.segment
-        start = source.start_addr
-        level_addr = source[0x37] + source[0x38]*256
-        harvest_addr = source[0x4e] + source[0x4f]*256
-        log.debug("level def table: %x, harvest table: %x" % (level_addr, harvest_addr))
-        last = source.start_addr + len(source)
-        if level_addr > start and harvest_addr > start and level_addr < last and harvest_addr < last:
-            return source, level_addr, harvest_addr
-        raise RuntimeError
-
-    def set_trigger_root(self, root):
-        if root is not None:
-            root = self.level_builder.find_equivalent_peanut(root)
-        self.trigger_root = root
-        print("set_trigger_root: %s" % self.trigger_root)
-        self.force_refresh = True
-        self.trigger_state = None
-
-    def get_screen_state(self):
-        if self.trigger_state is not None:
-            return self.trigger_state
-        return self.screen_state
-
-    def set_current_screen(self, screen=None):
-        if screen is None:
-            screen = self.playfield
-        else:
-            self.cached_screen = None
-        self.data = screen
-        self.style = screen.style
-
-    def redraw_current(self, screen, overlay_objects=[]):
-        self.clear_playfield(screen)
-        self.pick_buffer[:] = -1
-        self.level_builder.set_harvest_offset(self.mouse_mode.get_harvest_offset())
-        main_state = self.level_builder.draw_objects(screen, None, self.segment, highlight=overlay_objects, pick_buffer=self.pick_buffer)
-        drawlog.debug("draw objects: %s" % self.level_builder.objects)
-        drawlog.debug("highlight objects: %s" % overlay_objects)
-        if main_state.missing_object_codes:
-            log.error("missing draw codes: %s" % (sorted(main_state.missing_object_codes)))
-        if self.trigger_root is not None:
-            self.level_builder.fade_screen(screen)
-            root = [self.trigger_root]
-            self.level_builder.draw_objects(screen, root, self.segment, highlight=root, pick_buffer=self.pick_buffer)
-            # change highlight to comment color for selected trigger peanut so
-            # you don't get confused with any objects actually selected
-            old_highlight = np.where(screen.style == selected_bit_mask)
-            screen.style[old_highlight] |= comment_bit_mask
-            screen.style[:] &= (0xff ^ (match_bit_mask|selected_bit_mask))
-
-            # replace screen state so that the only pickable objects are
-            # those in the triggered layer
-            self.pick_buffer[:] = -1
-            trigger_state = self.level_builder.draw_objects(screen, self.trigger_root.trigger_painting, self.segment, highlight=overlay_objects, pick_buffer=self.pick_buffer)
-            active_state = trigger_state
-        else:
-            active_state = main_state
-            trigger_state = None
-        return main_state, trigger_state, active_state
-
-    def compute_image(self, force=False):
-        self.set_current_screen()
-        if force:
-            self.force_refresh = True
-        if self.force_refresh or self.cached_screen is None:
-            self.screen_state, self.trigger_state, _ = self.redraw_current(self.playfield)
-            self.cached_screen = self.playfield[:].copy()
-            self.force_refresh = False
-            self.segment_viewer.update_harvest_state()
-        else:
-            self.playfield[:] = self.cached_screen
-        self.set_current_screen()
-        return
-
-    def bad_image(self):
-        self.set_current_screen()
-        self.playfield[:] = 0
-        self.playfield.style[:] = 0
-        self.force_refresh = True
-        s = self.playfield.style.reshape((self.antic_lines, -1))
-        s[::2,::2] = comment_bit_mask
-        s[1::2,1::2] = comment_bit_mask
-        self.set_current_screen()
-        return
-
-    def draw_playfield(self, force=False):
-        if self.valid_level:
-            override = self.mouse_mode.calc_playfield_override()
-            if override is not None:
-                drawlog.debug("draw_playfield: using override screen")
-                self.set_current_screen(override)
-                return
-            drawlog.debug("draw_playfield: computing image")
-            self.compute_image()
-        else:
-            self.bad_image()
-        self.mouse_mode.draw_extra_objects(self.level_builder, self.playfield, self.segment_viewer.segment)
-        # self.mouse_mode.draw_overlay(bitimage)  # FIXME!
-
-    ##### Object edit
-
-    def get_save_location(self):
-        if self.trigger_root is not None:
-            equiv = self.level_builder.find_equivalent_peanut(self.trigger_root)
-            parent = equiv.trigger_painting
-        else:
-            parent = None
-        return parent
-
-    def delete_objects(self, objects):
-        save_location = self.get_save_location()
-        self.level_builder.delete_objects(objects, save_location)
-        self.save_changes()
-
-    def save_objects(self, objects, command_cls=jc.CreateObjectCommand):
-        save_location = self.get_save_location()
-        self.level_builder.add_objects(objects, save_location)
-        self.save_changes(command_cls)
-
-    def save_changes(self, command_cls=jc.MoveObjectCommand):
-        source, level_addr, old_harvest_addr = self.get_level_addrs()
-        level_data, harvest_addr, ropeladder_data, num_peanuts = self.level_builder.create_level_definition(level_addr, source[0x46], source[0x47])
-        index = level_addr - source.start_addr
-        ranges = [(0x18,0x2a), (0x3e,0x3f), (0x4e,0x50), (index,index + len(level_data))]
-        pdata = np.empty([1], dtype=np.uint8)
-        if self.segment_viewer.peanut_harvest_diff < 0:
-            pdata[0] = num_peanuts
-        else:
-            pdata[0] = max(0, num_peanuts - self.segment_viewer.peanut_harvest_diff)
-        hdata = np.empty([2], dtype=np.uint8)
-        hdata.view(dtype="<u2")[0] = harvest_addr
-        data = np.hstack([ropeladder_data, pdata, hdata, level_data])
-        cmd = command_cls(source, ranges, data)
-        self.segment_viewer.editor.process_command(cmd)
-        self.cached_screen = None
-        log.debug("saved changes, new objects=%s" % self.level_builder.objects)
-
-    ##### Segment saver interface for menu item display
-
-    export_data_name = "Jumpman Level Tester ATR"
-    export_extensions = [".atr"]
-
-    def encode_data(self, segment, editor):
-        """Segment saver interface: take a segment and produce a byte
-        representation to save to disk.
-        """
-        image = get_template("Jumpman Level")
-        if image is None:
-            raise RuntimeError("Can't find Jumpman Level template file")
-        raw = np.fromstring(image, dtype=np.uint8)
-        raw[0x0196:0x0996] = segment[:]
-        return raw.tostring()
-
 
 class JumpmanGridControl(BitmapGridControl):
     default_table_cls = JumpmanSegmentTable
+
+    @property
+    def model(self):
+        return self.table.model
 
     def set_viewer_defaults(self):
         self.items_per_row = 160
@@ -375,11 +149,11 @@ class JumpmanGridControl(BitmapGridControl):
         return SegmentGridControl.calc_line_renderer(self)
 
     def recalc_view_extra_setup(self):
-        self.table.init_level_builder(self.segment_viewer)
+        self.model.init_level_builder(self.segment_viewer)
 
     def refresh_view(self, *args, **kwargs):
         drawlog.debug("refresh_view")
-        self.table.draw_playfield(True)
+        self.model.draw_playfield(True)
         BitmapGridControl.refresh_view(self, *args, **kwargs)
 
     def draw_carets(self, *args, **kwargs):
@@ -398,7 +172,7 @@ class JumpmanGridControl(BitmapGridControl):
         mouse_mode = self.mouse_mode
         if mouse_mode.can_paste:
             first = True
-            for obj in self.table.level_builder.objects:
+            for obj in self.model.level_builder.objects:
                 print("select_all: adding %s" % str(obj))
                 mouse_mode.add_to_selection(obj, not first)
                 first = False
@@ -420,7 +194,7 @@ class JumpmanGridControl(BitmapGridControl):
         if mouse_mode.can_paste:
             first = True
             current = set(mouse_mode.objects)
-            for obj in self.table.level_builder.objects:
+            for obj in self.model.level_builder.objects:
                 if obj not in current:
                     mouse_mode.add_to_selection(obj, not first)
                     first = False
@@ -447,27 +221,9 @@ class JumpmanViewer(BitmapViewer):
 
     ##### Traits
 
-    peanut_harvest_diff = Int(-1)
-
-    num_ladders = Int(-1)
-
-    num_downropes = Int(-1)
-
-    num_peanuts = Int(-1)
-
     can_select_objects = Bool(False)
 
     can_erase_objects = Bool(False)
-
-    assembly_source = Str
-
-    custom_code = Any(None)
-
-    manual_recompile_needed = Bool(False)
-
-    old_trigger_mapping = Dict
-
-    trigger_root = Any
 
     ##### class attributes
 
@@ -491,7 +247,7 @@ class JumpmanViewer(BitmapViewer):
 
     @property
     def current_level(self):
-        return self.control.table
+        return self.linked_base.jumpman_playfield_model
 
     ##### Initialization and serialization
 
@@ -499,13 +255,13 @@ class JumpmanViewer(BitmapViewer):
         # ignore bitmap renderer in restore because we always want to use the
         # JumpmanPlayfieldRenderer in Jumpman level edit mode
         if 'assembly_source' in e:
-            self.assembly_source = e['assembly_source']
+            self.linked_base.assembly_source = e['assembly_source']
         if 'old_trigger_mapping' in e:
-            self.old_trigger_mapping = e['old_trigger_mapping']
+            self.linked_base.old_trigger_mapping = e['old_trigger_mapping']
 
     def to_metadata_dict_post(self, mdict, document):
-        mdict["assembly_source"] = self.assembly_source
-        mdict["old_trigger_mapping"] = dict(self.old_trigger_mapping)  # so we don't try to pickle a TraitDictObject
+        mdict["assembly_source"] = self.linked_base.assembly_source
+        mdict["old_trigger_mapping"] = dict(self.linked_base.old_trigger_mapping)  # so we don't try to pickle a TraitDictObject
 
     ##### Trait change handlers
 
@@ -542,100 +298,6 @@ class JumpmanViewer(BitmapViewer):
         # level builder objects so it can count the number of items
         #self.level_data.refresh_view()
         #self.trigger_list.refresh_view()
-
-    def set_current_draw_pattern(self, pattern, control):
-        try:
-            iter(pattern)
-        except TypeError:
-            self.draw_pattern = [pattern]
-        else:
-            self.draw_pattern = pattern
-
-    ##### Custom code handling
-
-    def set_assembly_source(self, src):
-        """Assembly source file is required to be in the same directory as the
-        jumpman disk image. It's also assumed to be on the local filesystem
-        since pyatasm can't handle the virtual filesystem.
-        """
-        self.assembly_source = src
-        self.manual_recompile_needed = False
-        self.compile_assembly_source()
-
-    def compile_assembly_source(self, show_info=False):
-        self.custom_code = None
-        if not self.assembly_source:
-            return
-        self.editor.metadata_dirty = True
-        path = self.document.filesystem_path()
-        if not path:
-            if show_info:
-                # only display error message on user-initiated compilation
-                self.editor.window.error("Please save the level before\ncompiling the assembly source", "Assembly Error")
-            return
-        dirname = os.path.dirname(self.document.filesystem_path())
-        if dirname:
-            filename = os.path.join(dirname, self.assembly_source)
-            try:
-                log.debug("compiling jumpman level code in %s" % filename)
-                self.custom_code = ju.JumpmanCustomCode(filename)
-                self.manual_recompile_needed = False
-            except SyntaxError, e:
-                log.error("Assembly error: %s" % e.msg)
-                self.editor.window.error(e.msg, "Assembly Error")
-                self.manual_recompile_needed = True
-            except ImportError:
-                log.error("Please install pyatasm to compile custom code.")
-                self.assembly_source = ""
-                self.old_trigger_mapping = dict()
-            if self.custom_code:
-                self.update_trigger_mapping()
-                if show_info:
-                    dlg = wx.lib.dialogs.ScrolledMessageDialog(self.control, self.custom_code.info, "Assembly Results")
-                    dlg.ShowModal()
-                self.save_assembly()
-
-    def save_assembly(self):
-        log.debug("save_assembly: code=%s" % self.custom_code)
-        code = self.custom_code
-        if not code:
-            return
-        source, level_addr, harvest_addr = self.current_level.get_level_addrs()
-        ranges, data = code.get_ranges(source)
-        cmd = jc.MoveObjectCommand(source, ranges, data)
-        self.editor.process_command(cmd)
-
-    ##### Trigger handling
-
-    def update_trigger_mapping(self):
-        # only create old trigger mapping if one doesn't exist
-        if not self.old_trigger_mapping:
-            self.old_trigger_mapping = dict(self.get_triggers())
-        else:
-            old_map = self.old_trigger_mapping
-            new_map = self.get_triggers()
-            if old_map != new_map:
-                log.debug("UPDATING trigger map!")
-                log.debug("old map %s" % old_map)
-                log.debug("new_map %s" % new_map)
-                self.current_level.update_triggers(old_map, new_map)
-                # FIXME: what about undo and the trigger mapping?
-                self.current_level.save_changes(AssemblyChangedCommand)
-                self.old_trigger_mapping = new_map
-
-    def get_triggers(self):
-        if self.custom_code is None and self.manual_recompile_needed == False:
-            self.compile_assembly_source()
-        code = self.custom_code
-        if code is None:
-            return {}
-        return code.triggers
-
-    def get_trigger_label(self, addr):
-        rev_old_map = {v: k for k, v in self.old_trigger_mapping.iteritems()}
-        if addr in rev_old_map:
-            return rev_old_map[addr]
-        return None
 
     def set_trigger_view(self, trigger_root):
         level = self.current_level
@@ -675,15 +337,9 @@ class TriggerList(wx.ListBox):
 
         return best
 
-    @property
-    def current_jumpman_level(self):
-        # Raises ValueError if no main jumpman viewer found
-        source = self.segment_viewer.linked_base.find_viewer("jumpman")
-        return source.current_level
-
     def recalc_view(self):
         try:
-            level = self.current_jumpman_level
+            level = self.segment_viewer.linked_base.jumpman_playfield_model
         except ValueError:
             self.SetItems([])
             self.triggers = [None]
@@ -793,9 +449,61 @@ class TriggerPaintingViewer(BaseInfoViewer):
 
 
 class JumpmanInfoPanel(InfoPanel):
+    fields = [
+        ("text", "Level Number", 0x00, 2),
+        ("atascii_gr2_0xc0", "Level Name", 0x3ec, 20),
+        ("uint", "Points per Peanut", 0x33, 2, 250),
+        ("label", "# Peanuts", "num_peanuts", 42),
+        ("peanuts_needed", "Peanuts Needed", 0x3e, 1, ["All", "All except 1", "All except 2", "All except 3", "All except 4"]),
+        ("uint", "Bonus Value", 0x35, 2, 2500),
+        ("dropdown", "Number of Bullets", 0x3d, 1, ["None", "1", "2", "3", "4"]),
+        ("antic_colors", "Game Colors", 0x2a, 9),
+        ("label", "# Columns with Ladders", "num_ladders", 12),
+        ("label", "# Columns with Downropes", "num_downropes", 6),
+    ]
+
     def is_valid_data(self):
         return self.editor.valid_jumpman_segment and bool(self.editor.bitmap.level_builder.objects)
 
+
+class LevelSummaryViewer(BaseInfoViewer):
+    name = "level_summary"
+
+    pretty_name = "Jumpman Level Summary"
+
+    @classmethod
+    def create_control(cls, parent, linked_base, mdict):
+        fields = [
+            ("text", "Level Number", 0x00, 2),
+            ("atascii_gr2_0xc0", "Level Name", 0x3ec, 20),
+            ("uint", "Points per Peanut", 0x33, 2, 250),
+            ("label", "# Peanuts", "num_peanuts", 42),
+            ("peanuts_needed", "Peanuts Needed", 0x3e, 1, ["All", "All except 1", "All except 2", "All except 3", "All except 4"]),
+            ("uint", "Bonus Value", 0x35, 2, 2500),
+            ("dropdown", "Number of Bullets", 0x3d, 1, ["None", "1", "2", "3", "4"]),
+            ("antic_colors", "Game Colors", 0x2a, 9),
+            ("label", "# Columns with Ladders", "num_ladders", 12),
+            ("label", "# Columns with Downropes", "num_downropes", 6),
+        ]
+        control = JumpmanInfoPanel(parent, linked_base, fields, size=(350, 150))
+        return control
+
+    def recalc_data_model(self):
+        pass
+
+    def show_caret(self, control, index, bit):
+        pass
+
+    @on_trait_change('linked_base.segment_selected_event')
+    def process_segment_selected(self, evt):
+        log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        if evt is not Undefined:
+            self.recalc_view()
+
+    ##### Spring Tab interface
+
+    def get_notification_count(self):
+        return 0
 
 
 

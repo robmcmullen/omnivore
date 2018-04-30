@@ -88,9 +88,9 @@ class JumpmanSelectMode(NormalSelectMode):
     def get_xy(self, evt):
         c = self.control
         y, x = c.get_row_col_from_event(evt)
-        if y < c.table.antic_lines:
+        if y < c.model.antic_lines:
             index, _ = c.table.get_index_range(y, x)
-            pick = c.table.pick_buffer[index]
+            pick = c.model.pick_buffer[index]
         else:
             pick = -1
         return x, y, pick
@@ -121,7 +121,7 @@ class JumpmanSelectMode(NormalSelectMode):
         self.display_coords(evt)
 
     def get_picked(self, pick):
-        return self.control.table.screen_state.get_picked(pick)
+        return self.control.model.screen_state.get_picked(pick)
 
     def calc_popup_data(self, evt):
         cg = self.control
@@ -179,12 +179,12 @@ class AnticDSelectMode(JumpmanSelectMode):
         the stored objects.
         """
         log.debug("before resyncing: %s" % self.objects)
-        self.objects = self.control.table.level_builder.find_equivalent(self.objects)
+        self.objects = self.control.model.level_builder.find_equivalent(self.objects)
         log.debug("after resyncing: %s" % self.objects)
 
     def delete_objects(self):
         if self.objects:
-            self.control.table.delete_objects(self.objects)
+            self.control.model.delete_objects(self.objects)
             self.objects = []
         self.control.Refresh()
 
@@ -193,9 +193,9 @@ class AnticDSelectMode(JumpmanSelectMode):
             self.override_state = None
             return
 
-        table = self.control.table
-        playfield = table.get_playfield_segment()  # use new, temporary playfield
-        _, _, self.override_state = table.redraw_current(playfield, self.objects)
+        model = self.control.model
+        playfield = model.get_playfield_segment()  # use new, temporary playfield
+        _, _, self.override_state = model.redraw_current(playfield, self.objects)
         log.debug("override_state: %s" % self.override_state)
 
         # Draw the harvest grid if a peanut is selected
@@ -209,7 +209,7 @@ class AnticDSelectMode(JumpmanSelectMode):
         if self.override_state:
             state = self.override_state
         else:
-            state = self.control.table.get_screen_state()
+            state = self.control.model.get_screen_state()
         return state.get_picked(pick)
 
     def highlight_pick(self, evt):
@@ -249,7 +249,7 @@ class AnticDSelectMode(JumpmanSelectMode):
                 return
             self.check_tolerance = False
             for obj in self.objects:
-                log.debug("moving %s, equiv %s" % (obj, self.control.table.level_builder.find_equivalent_object(obj)))
+                log.debug("moving %s, equiv %s" % (obj, self.control.model.level_builder.find_equivalent_object(obj)))
                 obj.x = obj.orig_x + dx
                 obj.x &= obj.valid_x_mask
                 obj.y = obj.orig_y + dy
@@ -277,7 +277,7 @@ class AnticDSelectMode(JumpmanSelectMode):
             self.objects.remove(self.pending_remove)
         self.pending_remove = None
         if self.objects and not self.check_tolerance:
-            self.control.table.save_changes()
+            self.control.model.save_changes()
             self.resync_objects()
             self.control.refresh_view()
         else:
@@ -371,7 +371,7 @@ class DrawMode(JumpmanSelectMode):
         if self.num_clicks == 2:
             return
         log.debug("saving objects: %s" % self.objects)
-        self.control.table.save_objects(self.objects)
+        self.control.model.save_objects(self.objects)
         self.objects = []
         self.control.refresh_view()
         self.display_coords(evt)

@@ -19,6 +19,7 @@ from omnivore.utils.command import DisplayFlags
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment
 from . import actions as ba
 from . import commands as bc
+from ..utils import jumpman_playfield as jp
 
 import logging
 log = logging.getLogger(__name__)
@@ -72,7 +73,11 @@ class LinkedBase(CaretHandler):
 
     segment_selected_event = Event
 
+    ##### Jumpman-specific traits
+
     jumpman_trigger_selected_event = Event
+
+    jumpman_playfield_model = Any
 
     #### Class attributes (not traits)
 
@@ -92,6 +97,9 @@ class LinkedBase(CaretHandler):
 
     def _segment_view_params_default(self):
         return {}
+
+    def _jumpman_playfield_model_default(self):
+        return jp.JumpmanPlayfieldModel(self)
 
     #### Properties
 
@@ -491,11 +499,3 @@ class LinkedBase(CaretHandler):
             from_control = None
         self.update_caret = (from_control, index, bit)
         self.calc_action_enabled_flags()
-
-    ##### viewer-specific helpers
-
-    def find_viewer(self, name):
-        for viewer in self.editor.viewers:
-            if viewer.linked_base == self and viewer.name == name:
-                return viewer
-        raise ValueError("No jumpman viewer present!")

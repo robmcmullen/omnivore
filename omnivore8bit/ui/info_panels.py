@@ -56,7 +56,7 @@ class InfoField(object):
             except ValueError:
                 self.attr_name_max_val = val
 
-    def is_displayed(self, editor):
+    def is_displayed(self, linked_base):
         return True
 
     def show(self, state=True):
@@ -136,7 +136,7 @@ class InfoField(object):
         self.panel.sizer.Add(self.parent, self.vertical_proportion, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.ALIGN_TOP, 0)
         self.show(True)
 
-    def fill_data(self, editor):
+    def fill_data(self, linked_base):
         raise NotImplementedError
 
     def clear_data(self):
@@ -151,11 +151,8 @@ class InfoField(object):
     def set_focus_params(self, params):
         pass
 
-    def get_source_bytes(self, editor):
-        if (editor is None):
-            raw = np.zeros([], dtype=np.uint8)
-        else:
-            raw = editor.segment[self.byte_offset:self.byte_offset+self.byte_count].copy()
+    def get_source_bytes(self, linked_base):
+        raw = linked_base.segment[self.byte_offset:self.byte_offset+self.byte_count].copy()
         return raw
 
     def is_valid(self):
@@ -172,7 +169,7 @@ class InfoField(object):
         size = self.ctrl.GetSize()
         if screen_point.x < 0 or screen_point.y < 0 or screen_point.x > size.x or screen_point.y > size.y:
 #            print "Mouse not over info panel %s: trying map!" % self
-            self.panel.editor.control.on_mouse_wheel_scroll(event)
+            self.panel.linked_base.control.on_mouse_wheel_scroll(event)
             return
 
         event.Skip()
@@ -192,8 +189,8 @@ class LabelField(InfoField):
         c = GenStaticText(self.parent, style=wx.ALIGN_RIGHT)
         return c
 
-    def fill_data(self, editor):
-        value = getattr(self.panel.editor, self.attr_name)
+    def fill_data(self, linked_base):
+        value = getattr(self.panel.linked_base, self.attr_name)
         self.ctrl.SetLabel(str(value))
         self.set_background(value <= self.max_val)
 
@@ -227,16 +224,16 @@ class TextEditField(InfoField):
         return c
 
     def edit_timer_callback(self):
-        editor = self.panel.editor
-        self.process_text_change(editor)
+        linked_base = self.panel.linked_base
+        self.process_text_change(linked_base)
 
     def set_control_limits(self):
         if self.byte_count > 0:
             self.ctrl.SetMaxLength(self.byte_count)
 
-    def fill_data(self, editor):
+    def fill_data(self, linked_base):
         try:
-            raw = self.get_source_bytes(editor)
+            raw = self.get_source_bytes(linked_base)
             text = self.bytes_to_control_data(raw)
             self.ctrl.Enable(True)
         except IndexError:
@@ -305,11 +302,11 @@ class TextEditField(InfoField):
     def map_parsed_to_bytes(self, text):
         return text
 
-    def process_text_change(self, editor):
+    def process_text_change(self, linked_base):
         if self.is_valid():
             data = self.parse_from_control()
             raw = self.parsed_to_bytes(data)
-            editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw, self.undo_label)
+            linked_base.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw, self.undo_label)
 
 
 class AtasciiC0(TextEditField):
@@ -350,8 +347,8 @@ class UIntEditField(TextEditField):
 
     def parse_from_control(self):
         value = int(self.ctrl.GetValue())
-        if hasattr(self, "attr_name_max_val") and hasattr(self.panel.editor, self.attr_name_max_val):
-            maxval = getattr(self.panel.editor, self.attr_name_max_val)
+        if hasattr(self, "attr_name_max_val") and hasattr(self.panel.linked_base, self.attr_name_max_val):
+            maxval = getattr(self.panel.linked_base, self.attr_name_max_val)
             if value > maxval:
                 raise ValueError("%d out of range for attribute %s max of %d" % (value, self.attr_name_max_val, maxval))
         if hasattr(self, "max_val"):
@@ -393,18 +390,18 @@ class AnticColorsField(InfoField):
         c.Bind(wx.EVT_BUTTON, self.on_colors)
         return c
 
-    def fill_data(self, editor):
+    def fill_data(self, linked_base):
         pass
 
     def clear_data(self):
         pass
 
     def on_colors(self, evt):
-        editor = self.panel.editor
-        raw = self.get_source_bytes(editor)
+        linked_base = self.panel.linked_base
+        raw = self.get_source_bytes(linked_base)
         dlg = AnticColorDialog(self.ctrl, raw, self.register_names)
         if dlg.ShowModal() == wx.ID_OK:
-            editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, dlg.colors, self.undo_label)
+            linked_base.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, dlg.colors, self.undo_label)
 
 
 class DropDownField(InfoField):
@@ -417,7 +414,7 @@ class DropDownField(InfoField):
         self.byte_count = args[2]
         self.choices = args[3]
 
-    def get_choices(self, editor):
+    def get_choices(self, linked_base):
         return self.choices
 
     def bytes_to_control_data(self, raw):
@@ -425,10 +422,10 @@ class DropDownField(InfoField):
         value = min(value, len(self.choices) - 1)
         return value
 
-    def fill_data(self, editor):
-        choices = self.get_choices(editor)
+    def fill_data(self, linked_base):
+        choices = self.get_choices(linked_base)
         self.ctrl.SetItems(choices)
-        raw = self.get_source_bytes(editor)
+        raw = self.get_source_bytes(linked_base)
         default_choice = self.bytes_to_control_data(raw)
         self.ctrl.SetSelection(default_choice)
 
@@ -443,7 +440,7 @@ class DropDownField(InfoField):
     def drop_down_changed(self, event):
         raw = np.zeros([self.byte_count],dtype=np.uint8)
         raw[0] = self.ctrl.GetSelection()
-        self.panel.editor.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw, self.undo_label)
+        self.panel.linked_base.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw, self.undo_label)
 
 
 class PeanutsNeededField(DropDownField):
@@ -451,7 +448,7 @@ class PeanutsNeededField(DropDownField):
     same_line = True
 
     def bytes_to_control_data(self, raw):
-        e = self.panel.editor
+        e = self.panel.linked_base
         if not hasattr(e, 'num_peanuts'):
             return 0
         value = reduce(lambda x, y: x + (y << 8), raw)  #  convert to little endian
@@ -466,7 +463,7 @@ class PeanutsNeededField(DropDownField):
         return diff
 
     def drop_down_changed(self, event):
-        e = self.panel.editor
+        e = self.panel.linked_base
         e.peanut_harvest_diff = self.ctrl.GetSelection()
         raw = np.zeros([self.byte_count],dtype=np.uint8)
         raw[0] = max(0, e.num_peanuts - e.peanut_harvest_diff)
@@ -479,15 +476,14 @@ PANELTYPE = wx.lib.scrolledpanel.ScrolledPanel
 class InfoPanel(PANELTYPE):
 
     """
-    A panel for displaying and manipulating the properties of a editor.
+    A panel for displaying and manipulating the properties of a linked_base.
     """
     LABEL_SPACING = 0
     VALUE_SPACING = 3
     SIDE_SPACING = 5
 
-    def __init__(self, parent, task, fields, **kwargs):
-        self.task = task
-        self.editor = None
+    def __init__(self, parent, linked_base, fields, **kwargs):
+        self.linked_base = linked_base
 
         self.fields = fields
         self.focus_on_input = None
@@ -504,23 +500,15 @@ class InfoPanel(PANELTYPE):
 
         self.init_fields(fields)
 
-    def set_task(self, task):
-        self.task = task
-
     def recalc_view(self):
-        e = self.task.active_editor
-        self.editor = e
-        if e is not None:
-            self.set_fields()
+        self.set_fields()
 
     def refresh_view(self):
-        editor = self.task.active_editor
-        if editor is not None:
-            if self.IsShown():
-                log.debug("refreshing %s" % self)
-                self.recalc_view()
-            else:
-                log.debug("skipping refresh of hidden %s" % self)
+        if self.IsShown():
+            log.debug("refreshing %s" % self)
+            self.recalc_view()
+        else:
+            log.debug("skipping refresh of hidden %s" % self)
 
     def init_fields(self, fields):
         self.sizer.AddSpacer(self.LABEL_SPACING)
@@ -529,15 +517,13 @@ class InfoPanel(PANELTYPE):
 
         focus = None
         self.current_fields = []
-        e = self.editor
         for info in fields:
             field = self.create_field(info)
             if field is None:
                 log.debug("init_fields: Skipping %s" % str(info))
                 continue
             field.add_to_parent()
-            if e is not None:
-                field.fill_data(e)
+            field.fill_data(self.linked_base)
             if field.wants_focus():
                 focus = field
             self.current_fields.append(field)
@@ -565,9 +551,6 @@ class InfoPanel(PANELTYPE):
         return True
 
     def set_fields(self):
-        e = self.editor
-        if e is None:
-            return
         enabled = self.is_valid_data()
         focus = None
         for field in self.current_fields:
@@ -576,7 +559,7 @@ class InfoPanel(PANELTYPE):
             else:
                 params = None
             if enabled:
-                field.fill_data(e)
+                field.fill_data(self.linked_base)
                 if params is not None:
                     field.set_focus_params(params)
                     focus = field

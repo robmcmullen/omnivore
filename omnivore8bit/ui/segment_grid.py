@@ -16,9 +16,13 @@ log = logging.getLogger(__name__)
 
 
 class SegmentTable(cg.HexTable):
-    def __init__(self, segment, bytes_per_row):
-        self.segment = segment
+    def __init__(self, linked_base, bytes_per_row):
+        self.linked_base = linked_base
         cg.HexTable.__init__(self, self.segment.data, self.segment.style, bytes_per_row, self.segment.start_addr, start_offset_mask=0x0f)
+
+    @property
+    def segment(self):
+        return self.linked_base.segment
 
     def get_label_at_index(self, index):
         # Can't just return hex value of index because some segments (like the
@@ -144,7 +148,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
             self.zoom = e['zoom']
 
     def calc_default_table(self):
-        return self.default_table_cls(self.caret_handler.segment, self.items_per_row)
+        return self.default_table_cls(self.caret_handler, self.items_per_row)
 
     def recalc_view(self):
         # just recreate everything. If a subclass wants something different,
