@@ -18,6 +18,7 @@ from ..arch.antic_renderers import BaseRenderer
 from ..arch.colors import powerup_colors
 from ..jumpman import parser as ju
 from ..jumpman import playfield as jp
+from ..jumpman import savers as js
 
 from . import SegmentViewer
 from . import actions as va
@@ -267,7 +268,7 @@ class JumpmanViewer(BitmapViewer):
         """Hook to provide additional ways to save the data based on this view
         of the data
         """
-        return [self.current_level]
+        return [js.JumpmanSaveAsATR, js.JumpmanSaveAsXEX]
 
     ##### Trait change handlers
 
