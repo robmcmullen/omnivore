@@ -568,6 +568,9 @@ class TileManager(wx.Window):
     def restore_layout(self, d):
         try:
             layout = d['tile_manager']
+        except KeyError:
+            log.error("No tile manager layout found")
+            return
         except TypeError:
             try:
                 d = json.loads(d)
