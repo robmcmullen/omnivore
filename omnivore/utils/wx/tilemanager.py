@@ -322,6 +322,8 @@ class TileManager(wx.Window):
         self.hiding_space = TileManager.HidingSpace(self, -1, name="reparenting hiding space")
         self.hiding_space.Hide()
         self.sidebars = []
+        self.header = None
+        self.footer = None
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
@@ -426,11 +428,28 @@ class TileManager(wx.Window):
         self.child.sizer.Hide()
         x, y = 0, 0
         w, h = self.GetSize()
+        x, y, w, h = self.set_header_size_inside(x, y, w, h)
+        x, y, w, h = self.set_footer_size_inside(x, y, w, h)
         for sidebar in self.sidebars:
             x, y, w, h = sidebar.set_size_inside(x, y, w, h)
             sidebar.do_layout()
         self.child.SetSize(x, y, w, h)
         self.child.do_layout()
+
+    def set_header_size_inside(self, x, y, w, h):
+        if self.header is not None and self.header.IsShown():
+            _, hh = self.header.GetBestSize()
+            self.header.SetSize(x, y, w, hh)
+            y += hh
+            h -= hh
+        return x, y, w, h
+
+    def set_footer_size_inside(self, x, y, w, h):
+        if self.footer is not None and self.footer.IsShown():
+            _, hh = self.footer.GetBestSize()
+            self.footer.SetSize(x, y + h - hh, w, hh)
+            h -= hh
+        return x, y, w, h
 
     def calc_usable_rect(self):
         x, y = self.child.GetPosition()
@@ -643,6 +662,26 @@ class TileManager(wx.Window):
         sidebar = self.use_sidebar(side)
         client = TileClient(None, control, u, tile_mgr=self)
         sidebar.add_client(client)
+
+    def add_header(self, control):
+        if self.header is not None:
+            self.header.Destroy()
+        self.header = control
+        self.do_layout()
+
+    def add_footer(self, control):
+        if self.footer is not None:
+            self.footer.Destroy()
+        self.footer = control
+        self.do_layout()
+
+    def show_footer(self, state=True):
+        self.footer.Show(state)
+        self.do_layout()
+
+    def show_header(self, state=True):
+        self.header.Show(state)
+        self.do_layout()
 
     def calc_graphviz(self):
         from graphviz import Digraph
@@ -2380,6 +2419,12 @@ if __name__ == '__main__':
 
         multi.remove_all()
 
+    def toggle_footer(evt):
+        multi.show_footer(not multi.footer.IsShown())
+
+    def toggle_header(evt):
+        multi.show_header(not multi.header.IsShown())
+
     app = wx.App()
     frame = wx.Frame(None, -1, "Test", size=(800,400))
     multi = TileManager(frame, pos = (0,0), size = (640,480), layout_direction=wx.HORIZONTAL)
@@ -2409,6 +2454,12 @@ if __name__ == '__main__':
     btn = wx.Button(frame, -1, "Clear")
     bsizer.Add(btn, 0, wx.EXPAND)
     btn.Bind(wx.EVT_BUTTON, clear_all)
+    btn = wx.Button(frame, -1, "Footer")
+    bsizer.Add(btn, 0, wx.EXPAND)
+    btn.Bind(wx.EVT_BUTTON, toggle_footer)
+    btn = wx.Button(frame, -1, "Header")
+    bsizer.Add(btn, 0, wx.EXPAND)
+    btn.Bind(wx.EVT_BUTTON, toggle_header)
 
     multi.use_sidebar(wx.LEFT)
     multi.use_sidebar(wx.TOP)
@@ -2416,6 +2467,12 @@ if __name__ == '__main__':
     multi.add_sidebar(None)
     multi.add_sidebar(None, side=wx.TOP)
     multi.add_sidebar(None, side=wx.TOP)
+
+    minibuffer = wx.TextCtrl(multi, -1, size=(400,20))
+    multi.add_footer(minibuffer)
+    title = wx.StaticText(multi, -1, "Tile Manager test")
+    title.SetBackgroundColour("darkseagreen4")
+    multi.add_header(title)
 
     sizer.Add(horz, 1, wx.EXPAND)
     sizer.Add(bsizer, 0, wx.EXPAND)
