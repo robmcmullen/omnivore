@@ -59,13 +59,11 @@ class SegmentedDocument(BaseDocument):
     #### serialization methods
 
     def load_extra_metadata(self, guess):
-        # don't load check_builtin until now because it causes some circular
-        # imports
-        from omnivore8bit.viewers.extra_metadata import check_builtin
-
-        log.debug("extra metadata: parser=%s" % guess.parser)
+        log.debug("extra metadata: parser=%s, mime=%s" % (guess.parser, guess.metadata.mime))
         self.set_segments(guess.parser)
-        extra = check_builtin(self)
+        extra = self.calc_unserialized_template(guess.metadata.mime)
+        if extra:
+            log.debug("extra metadata: loaded template for %s" % guess.metadata.mime)
         if 'machine mime' not in extra:
             extra['machine mime'] = self.metadata.mime
         loaded_extra = self.load_filesystem_extra_metadata()

@@ -218,8 +218,14 @@ class BaseDocument(HasTraits):
         return unserialized
 
     def calc_unserialized_template(self, template):
-        text = get_template(template)
-        return self.calc_unserialized_extra_metadata(template, text)
+        try:
+            text = get_template(template)
+        except OSError:
+            log.debug("no template for %s" % template)
+            e = {}
+        else:
+            e = self.calc_unserialized_extra_metadata(template, text)
+        return e
 
     def get_filesystem_extra_metadata_uri(self):
         """ Get filename of file used to store extra metadata
