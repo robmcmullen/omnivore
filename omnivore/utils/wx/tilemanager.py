@@ -312,9 +312,9 @@ class TileManager(wx.Window):
         def set_chrome(self, client):
             pass
 
-    def __init__(self, parent, layout_direction=wx.HORIZONTAL, name="top", *_args, **_kwargs):
+    def __init__(self, parent, layout_direction=wx.HORIZONTAL, name="top", show_close=True, *_args, **_kwargs):
         wx.Window.__init__(self, parent, name=name, *_args, **_kwargs)
-        self.live_update_control = None
+        self.use_close_button = show_close
         self.debug_id = "root"
         self.set_defaults()
         self._defChild = EmptyChild
@@ -335,8 +335,6 @@ class TileManager(wx.Window):
         self.dock_handler = DockTarget.DockingRectangleHandler()
 
     def set_defaults(self):
-        self.use_close_button = True
-
         self.child_window_x = 2
         self.child_window_y = 2
 
@@ -1521,6 +1519,7 @@ class TitleBar(wx.Window):
     class Closer(Button):
         def set_sidebar_state(self, in_sidebar):
             self.is_always_shown = True
+            self.is_enabled = self.client.tile_mgr.use_close_button
 
         def draw_button(self, dc, size, bg_brush, pen, fg_brush):
             dc.SetBrush(bg_brush)
@@ -2427,7 +2426,7 @@ if __name__ == '__main__':
 
     app = wx.App()
     frame = wx.Frame(None, -1, "Test", size=(800,400))
-    multi = TileManager(frame, pos = (0,0), size = (640,480), layout_direction=wx.HORIZONTAL)
+    multi = TileManager(frame, pos = (0,0), size = (640,480), layout_direction=wx.HORIZONTAL, show_close=True)
     sizer = wx.BoxSizer(wx.VERTICAL)
     horz = wx.BoxSizer(wx.HORIZONTAL)
     horz.Add(multi, 1, wx.EXPAND)
