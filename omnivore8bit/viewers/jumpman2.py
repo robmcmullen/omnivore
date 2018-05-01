@@ -256,13 +256,13 @@ class JumpmanViewer(BitmapViewer):
         # ignore bitmap renderer in restore because we always want to use the
         # JumpmanPlayfieldRenderer in Jumpman level edit mode
         if 'assembly_source' in e:
-            self.linked_base.assembly_source = e['assembly_source']
+            self.current_level.assembly_source = e['assembly_source']
         if 'old_trigger_mapping' in e:
-            self.linked_base.old_trigger_mapping = e['old_trigger_mapping']
+            self.current_level.old_trigger_mapping = e['old_trigger_mapping']
 
     def to_metadata_dict_post(self, mdict, document):
-        mdict["assembly_source"] = self.linked_base.assembly_source
-        mdict["old_trigger_mapping"] = dict(self.linked_base.old_trigger_mapping)  # so we don't try to pickle a TraitDictObject
+        mdict["assembly_source"] = self.current_level.assembly_source
+        mdict["old_trigger_mapping"] = dict(self.current_level.old_trigger_mapping)  # so we don't try to pickle a TraitDictObject
 
     def get_extra_segment_savers(self, segment):
         """Hook to provide additional ways to save the data based on this view
