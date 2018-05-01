@@ -1,0 +1,62 @@
+# omnivore 2.0a1 extra_metadata=v1
+{
+    "comment ranges": [], 
+    "comments": [], 
+    "data ranges": [], 
+    "document memory map": [], 
+    "last_task_id": "omnivore.byte_edit", 
+    "omnivore.byte_edit": {
+        "diff highlight": true,
+        "focused viewer": "uuid-jumpman",
+        "layout": {"sidebars": [{"side": 16, "views": [{"child_uuid": "db75e1bb-39fe-4f1b-9740-8fd82eed8ee4"}]}], "tile_manager": {"debug_id": "TileSplit-2", "direction": 4, "ratio_in_parent": 1.0, "views": [{"child_uuid": "uuid-jumpman", "debug_id": "Jumpman Level Editor", "ratio_in_parent": 0.5902353966870096}, {"debug_id": "TileSplit-28", "direction": 8, "ratio_in_parent": 0.40976460331299036, "views": [{"child_uuid": "0c735051-5a02-44a8-9426-54694386d500", "debug_id": "Jumpman Level Summary", "ratio_in_parent": 0.5}, {"child_uuid": "0745c563-b010-4405-8748-096d65aaf866", "debug_id": "Jumpman Trigger Painting", "ratio_in_parent": 0.5}]}]}},
+        "linked bases": [
+            {
+                "segment number": 6,
+                "segment view params": {"d8b20c09-ec3e-4e10-b83b-234a8719cce7": {"carets": [{"py/tuple": [0, 0, 0, 0, 0]}], "uuid-jumpman": [0, 0]}},
+                "uuid": "1209b625-fdf1-46ce-8a66-38c6e2064b2d"
+            }
+        ], 
+        "viewers": [
+            {
+                "assembly_source": "",
+                "control": {"items_per_row": 160, "zoom": 4},
+                "linked base": "1209b625-fdf1-46ce-8a66-38c6e2064b2d",
+                "machine": {"antic_color_registers": [15, 0, 15, 84, 150, 24, 90, 202, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Jumpman", "page_renderer": 0},
+                "name": "jumpman",
+                "old_trigger_mapping": {},
+                "uuid": "uuid-jumpman"
+            }, 
+            {
+                "control": {},
+                "linked base": "1209b625-fdf1-46ce-8a66-38c6e2064b2d",
+                "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
+                "name": "level_summary",
+                "uuid": "0c735051-5a02-44a8-9426-54694386d500"
+            }, 
+            {
+                "control": {},
+                "linked base": "1209b625-fdf1-46ce-8a66-38c6e2064b2d",
+                "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
+                "name": "trigger_painting",
+                "uuid": "0745c563-b010-4405-8748-096d65aaf866"
+            }, 
+            {
+                "control": {},
+                "linked base": "1209b625-fdf1-46ce-8a66-38c6e2064b2d",
+                "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
+                "name": "segments",
+                "uuid": "db75e1bb-39fe-4f1b-9740-8fd82eed8ee4"
+            }
+        ]
+    }, 
+    "segment parser": {
+        "py/object": "atrcopy.parsers.AtariBootDiskSegmentParser",
+        "py/state": {"segments": [{"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [0, 23824], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "Atari Boot Disk Image", "page_size": -1, "start_addr": 0, "uuid": "541c401d-7607-4548-8be8-1437f0e329d4", "verbose_name": null}}, {"py/object": "atrcopy.segments.ObjSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [0, 16], "can_resize": false, "data_start": 0, "error": null, "map_width": 40, "memory_map": [], "metadata_start": 0, "name": "ATR Header", "page_size": -1, "start_addr": 0, "uuid": "5ebf4735-f06e-451e-9ec6-77bd6f4fa64d", "verbose_name": null}}, {"py/object": "atrcopy.segments.RawSectorsSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [16, 23824], "boot_sector_size": 0, "can_resize": false, "error": null, "first_sector": 1, "map_width": 40, "memory_map": [], "name": "Raw disk sectors", "num_boot_sectors": 0, "num_sectors": 186, "page_size": 128, "start_addr": 0, "uuid": "6034f92f-2d2f-46b7-9ae5-58d3c0d1df2c", "verbose_name": null}}, {"py/object": "atrcopy.segments.ObjSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [16, 400], "can_resize": false, "data_start": 0, "error": null, "map_width": 40, "memory_map": [], "metadata_start": 0, "name": "Boot Sectors", "page_size": -1, "start_addr": 1792, "uuid": "4d5e1273-5879-498c-a172-1f82ce5892cc", "verbose_name": null}}, {"py/object": "atrcopy.segments.ObjSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [16, 22], "can_resize": false, "data_start": 0, "error": null, "map_width": 40, "memory_map": [], "metadata_start": 0, "name": "Boot Header", "page_size": -1, "start_addr": 1792, "uuid": "9f5e8178-ef7f-431d-8bf4-df6560dc3efa", "verbose_name": null}}, {"py/object": "atrcopy.segments.ObjSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [22, 400], "can_resize": false, "data_start": 0, "error": null, "map_width": 40, "memory_map": [], "metadata_start": 0, "name": "Boot Code", "page_size": -1, "start_addr": 1798, "uuid": "de34bfdb-316b-4866-8786-44441de87e72", "verbose_name": null}}], "strict": true}
+    }, 
+    "serialized user segments": [
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [406, 2454], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "Jumpman Level Data", "page_size": -1, "start_addr": 10240, "uuid": "aa44ff88-1f57-4487-b493-3c31fba3d079", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [2458, 3994], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "Code at $0a00", "page_size": -1, "start_addr": 2560, "uuid": "e493a11a-6a90-4680-9989-646691933c72", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [3998, 6046], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "Code at $2000", "page_size": -1, "start_addr": 8192, "uuid": "c0e9f2dd-e8bd-44b4-8011-b95250477028", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [6050, 22434], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "Code at $3000", "page_size": -1, "start_addr": 12288, "uuid": "a38b5a7f-ea8d-4353-b277-48263a6ff87e", "verbose_name": null}}
+    ]
+}

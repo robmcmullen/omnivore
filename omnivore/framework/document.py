@@ -14,6 +14,7 @@ from traits.api import HasTraits, Trait, TraitHandler, Int, Any, List, Set, Bool
 from omnivore.utils.command import UndoStack
 from omnivore.utils.file_guess import FileGuess, FileMetadata
 import omnivore.utils.jsonutil as jsonutil
+from omnivore.templates import get_template
 
 import logging
 log = logging.getLogger(__name__)
@@ -200,11 +201,13 @@ class BaseDocument(HasTraits):
             log.error("File load error: %s" % str(e))
             return {}
         log.info("Loading metadata file: %s" % uri)
+        return self.calc_unserialized_extra_metadata(uri, guess.bytes)
+
+    def calc_unserialized_extra_metadata(self, uri, text):
         try:
-            b = guess.bytes
-            if b.startswith("#"):
-                header, b = b.split("\n", 1)
-            unserialized = jsonpickle.loads(b)
+            if text.startswith("#"):
+                header, text = text.split("\n", 1)
+            unserialized = jsonpickle.loads(text)
         except ValueError, e:
             log.error("JSON parsing error for extra metadata in %s: %s" % (uri, str(e)))
             unserialized = {}
@@ -213,6 +216,10 @@ class BaseDocument(HasTraits):
             unserialized = {}
             raise DocumentError("JSON library error: % s" % str(e))
         return unserialized
+
+    def calc_unserialized_template(self, template):
+        text = get_template(template)
+        return self.calc_unserialized_extra_metadata(template, text)
 
     def get_filesystem_extra_metadata_uri(self):
         """ Get filename of file used to store extra metadata

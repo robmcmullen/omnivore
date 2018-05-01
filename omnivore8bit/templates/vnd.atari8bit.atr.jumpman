@@ -1,0 +1,92 @@
+# omnivore 2.0a1 extra_metadata=v1
+{
+    "comment ranges": [], 
+    "comments": [], 
+    "data ranges": [], 
+    "document memory map": [], 
+    "last_task_id": "omnivore.byte_edit", 
+    "omnivore.byte_edit": {
+        "diff highlight": true,
+        "focused viewer": "uuid-jumpman",
+        "layout": {"sidebars": [{"side": 16, "views": [{"child_uuid": "db75e1bb-39fe-4f1b-9740-8fd82eed8ee4"}]}], "tile_manager": {"debug_id": "TileSplit-2", "direction": 4, "ratio_in_parent": 1.0, "views": [{"child_uuid": "uuid-jumpman", "debug_id": "Jumpman Level Editor", "ratio_in_parent": 0.5902353966870096}, {"debug_id": "TileSplit-28", "direction": 8, "ratio_in_parent": 0.40976460331299036, "views": [{"child_uuid": "0c735051-5a02-44a8-9426-54694386d500", "debug_id": "Jumpman Level Summary", "ratio_in_parent": 0.5}, {"child_uuid": "0745c563-b010-4405-8748-096d65aaf866", "debug_id": "Jumpman Trigger Painting", "ratio_in_parent": 0.5}]}]}},
+        "linked bases": [
+            {
+                "segment number": 6,
+                "segment view params": {"d8b20c09-ec3e-4e10-b83b-234a8719cce7": {"carets": [{"py/tuple": [0, 0, 0, 0, 0]}], "uuid-jumpman": [0, 0]}},
+                "uuid": "1209b625-fdf1-46ce-8a66-38c6e2064b2d"
+            }
+        ], 
+        "viewers": [
+            {
+                "assembly_source": "",
+                "control": {"items_per_row": 160, "zoom": 4},
+                "linked base": "1209b625-fdf1-46ce-8a66-38c6e2064b2d",
+                "machine": {"antic_color_registers": [15, 0, 15, 84, 150, 24, 90, 202, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Jumpman", "page_renderer": 0},
+                "name": "jumpman",
+                "old_trigger_mapping": {},
+                "uuid": "uuid-jumpman"
+            }, 
+            {
+                "control": {},
+                "linked base": "1209b625-fdf1-46ce-8a66-38c6e2064b2d",
+                "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
+                "name": "level_summary",
+                "uuid": "0c735051-5a02-44a8-9426-54694386d500"
+            }, 
+            {
+                "control": {},
+                "linked base": "1209b625-fdf1-46ce-8a66-38c6e2064b2d",
+                "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
+                "name": "trigger_painting",
+                "uuid": "0745c563-b010-4405-8748-096d65aaf866"
+            }, 
+            {
+                "control": {},
+                "linked base": "1209b625-fdf1-46ce-8a66-38c6e2064b2d",
+                "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
+                "name": "segments",
+                "uuid": "db75e1bb-39fe-4f1b-9740-8fd82eed8ee4"
+            }
+        ]
+    }, 
+    "segment parser": {
+        "py/object": "atrcopy.parsers.AtariBootDiskSegmentParser",
+        "py/state": {"segments": [{"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [0, 92176], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "Atari Boot Disk Image", "page_size": -1, "start_addr": 0, "uuid": "65007352-5d5b-4625-a9bf-8af3a9bf4efe", "verbose_name": null}}, {"py/object": "atrcopy.segments.ObjSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [0, 16], "can_resize": false, "data_start": 0, "error": null, "map_width": 40, "memory_map": [], "metadata_start": 0, "name": "ATR Header", "page_size": -1, "start_addr": 0, "uuid": "36267319-c0d1-4241-9994-f3e827bca771", "verbose_name": null}}, {"py/object": "atrcopy.segments.RawSectorsSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [16, 92176], "boot_sector_size": 0, "can_resize": false, "error": null, "first_sector": 1, "map_width": 40, "memory_map": [], "name": "Raw disk sectors", "num_boot_sectors": 0, "num_sectors": 720, "page_size": 128, "start_addr": 0, "uuid": "3c0d1064-7573-4584-9b95-34a8f4063292", "verbose_name": null}}, {"py/object": "atrcopy.segments.ObjSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [16, 400], "can_resize": false, "data_start": 0, "error": null, "map_width": 40, "memory_map": [], "metadata_start": 0, "name": "Boot Sectors", "page_size": -1, "start_addr": 1792, "uuid": "ce5331d9-dc17-49af-be74-0a09c798c954", "verbose_name": null}}, {"py/object": "atrcopy.segments.ObjSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [16, 22], "can_resize": false, "data_start": 0, "error": null, "map_width": 40, "memory_map": [], "metadata_start": 0, "name": "Boot Header", "page_size": -1, "start_addr": 1792, "uuid": "2ececfbd-74c0-4c56-98fe-ea8e23987184", "verbose_name": null}}, {"py/object": "atrcopy.segments.ObjSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [22, 400], "can_resize": false, "data_start": 0, "error": null, "map_width": 40, "memory_map": [], "metadata_start": 0, "name": "Boot Code", "page_size": -1, "start_addr": 1798, "uuid": "5f0b4998-4d31-4ec1-8927-65aec42fc13d", "verbose_name": null}}], "strict": true}
+    }, 
+    "serialized user segments": [
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [2064, 4112], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "01: easy does it", "page_size": -1, "start_addr": 10240, "uuid": "d8b20c09-ec3e-4e10-b83b-234a8719cce7", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [4112, 6160], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "02: robots I", "page_size": -1, "start_addr": 10240, "uuid": "9a1852f2-a3e5-4eb8-b2fd-eb93ec7a9101", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [6160, 8208], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "03: bombs away", "page_size": -1, "start_addr": 10240, "uuid": "75e17075-5b15-4fbb-8b0d-570b28c2542b", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [8208, 10256], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "04: jumping blocks", "page_size": -1, "start_addr": 10240, "uuid": "8100a6f7-80c5-4bc6-9e05-e7237a39b63d", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [10256, 12304], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "05: vampire", "page_size": -1, "start_addr": 10240, "uuid": "ce864822-007c-4f32-92b3-d0b6902b9f99", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [12304, 14352], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "06: invasion", "page_size": -1, "start_addr": 10240, "uuid": "58b85b9b-2ca0-46f9-8807-cb6a9d6239b2", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [14352, 16400], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "07: GP I", "page_size": -1, "start_addr": 10240, "uuid": "375c8a96-b8ed-4d10-9508-713956be7177", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [16400, 18448], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "08: builder", "page_size": -1, "start_addr": 10240, "uuid": "ad7e2c85-9a13-4c8b-a43f-ebb05a19bd09", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [18448, 20496], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "09: look out below", "page_size": -1, "start_addr": 10240, "uuid": "88ca29e9-0ee7-4738-9e39-26836a577aa2", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [20496, 22544], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "10: hotfoot", "page_size": -1, "start_addr": 10240, "uuid": "1095a1d6-6ed3-499b-b998-d9bc3c698802", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [22544, 24592], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "11: runaway", "page_size": -1, "start_addr": 10240, "uuid": "641d0540-fee7-4a69-816c-5d881cece28d", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [24592, 26640], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "12: robots II", "page_size": -1, "start_addr": 10240, "uuid": "0ffc30c7-d8f7-4287-9897-d54739f9e57d", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [26640, 28688], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "13: hailstones", "page_size": -1, "start_addr": 10240, "uuid": "d971d36e-1136-483b-b6fc-fcea07ca560b", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [28688, 30736], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "14: dragonslayer", "page_size": -1, "start_addr": 10240, "uuid": "080d9801-b89d-4fa5-a7d3-250db5198dc9", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [30736, 32784], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "15: GP II", "page_size": -1, "start_addr": 10240, "uuid": "93ab8a64-68a5-4b9d-be78-72b38b67d683", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [32784, 34832], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "16: ride around", "page_size": -1, "start_addr": 10240, "uuid": "8fc9a38a-fe4c-4a65-a2b5-d10dcdcc3fec", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [34832, 36880], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "17: roost", "page_size": -1, "start_addr": 10240, "uuid": "ef867e41-8cf7-49a0-99b7-01baa1762dc6", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [36880, 38928], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "18: roll me over", "page_size": -1, "start_addr": 10240, "uuid": "99072870-4b20-48fd-8a30-36e3fe10245c", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [38928, 40976], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "19: ladder challenge", "page_size": -1, "start_addr": 10240, "uuid": "006bf654-5563-4f3b-86e9-c7d315ca1572", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [40976, 43024], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "20: figureit", "page_size": -1, "start_addr": 10240, "uuid": "9ae6cbc3-7dd0-45d3-9b92-e34220b6a035", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [43024, 45072], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "21: jump n run", "page_size": -1, "start_addr": 10240, "uuid": "5568010a-c500-4e5c-8769-0a0b1c2e4205", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [45072, 47120], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "22: freeze", "page_size": -1, "start_addr": 10240, "uuid": "3ecb267b-4c78-4a3e-a105-70dc5b0fcf1d", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [47120, 49168], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "23: follow the leader", "page_size": -1, "start_addr": 10240, "uuid": "c2f11a59-9c3f-4215-80f1-3d292ee960fa", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [49168, 51216], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "24: the jungle", "page_size": -1, "start_addr": 10240, "uuid": "33b5555a-442a-466c-a7dc-6acb992bd513", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [51216, 53264], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "25a: mystery maze #1", "page_size": -1, "start_addr": 10240, "uuid": "45647c7d-c8af-4369-b47e-ae81842f3802", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [53264, 55312], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "25b: mystery maze #2", "page_size": -1, "start_addr": 10240, "uuid": "7c9b4c6a-f2a6-4653-bbe6-5e2906490431", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [55312, 57360], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "25c: mystery maze #3", "page_size": -1, "start_addr": 10240, "uuid": "0fb2d990-5eca-4a54-be1c-5ebe1a8a5fd2", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [57360, 59408], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "26: gunfighter", "page_size": -1, "start_addr": 10240, "uuid": "52c59c36-eb45-4faf-ac4e-893503f291fc", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [59408, 61456], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "27: robots III", "page_size": -1, "start_addr": 10240, "uuid": "d669759c-f3ae-4700-8ca9-cd5ae2760cda", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [61456, 63504], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "28: now you see it", "page_size": -1, "start_addr": 10240, "uuid": "bdffb7f1-de84-41eb-892b-66900a8f6cc9", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [63504, 65552], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "29: going down", "page_size": -1, "start_addr": 10240, "uuid": "c830cb35-9485-44be-a9dc-7ff4b68fab67", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [65552, 67600], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "30: GP III", "page_size": -1, "start_addr": 10240, "uuid": "ef489764-14a1-4162-9481-a2c2246b797f", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [70032, 71568], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "Code", "page_size": -1, "start_addr": 2560, "uuid": "65f6f60d-32d1-46cd-ba9c-608adc11e575", "verbose_name": null}},
+        {"py/object": "atrcopy.segments.DefaultSegment", "py/state": {"_order_list": null, "_rawdata_bounds": [71568, 92048], "can_resize": false, "error": null, "map_width": 40, "memory_map": [], "name": "Code", "page_size": -1, "start_addr": 8192, "uuid": "9a077114-a4ba-4d5a-ac4d-8de84e7d305e", "verbose_name": null}}
+    ]
+}

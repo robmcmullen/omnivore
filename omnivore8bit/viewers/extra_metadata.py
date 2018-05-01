@@ -118,72 +118,9 @@ def JumpmanLevelBuilder(doc):
     s = doc.bytes[0x0196:0x0296]
     if s[0x3f] == 0x4c and s[0x48] == 0x20 and s[0x4b] == 0x60 and s[0x4c] == 0xff:
         log.debug("Found jumpman level builder!!!")
-        r = doc.segments[0].rawdata
-        found_level = False
-        user_segments = []
-        for s in doc.segments:
-            if s.start_addr == 0x2800 and len(s) == 0x800:
-                found_level = True
-                initial_segment = s
-        if not found_level:
-            user_segments.append(DefaultSegment(r[0x0196:0x0996], 0x2800, name="Jumpman Level Data"))
-            user_segments.append(DefaultSegment(r[2458:3994], 0x0a00, name="Code at $0a00"))
-            user_segments.append(DefaultSegment(r[3998:6046], 0x2000, name="Code at $2000"))
-            user_segments.append(DefaultSegment(r[6050:22434], 0x3000, name="Code at $3000"))
-            initial_segment = user_segments[0]
-        log.debug("Found initial segment: %s, %s" % (initial_segment, initial_segment.uuid))
-        extra_metadata = {
-            'last_task_id': 'omnivore.byte_edit',
-            'omnivore.byte_edit': {
-                'viewers' : [
-                    {
-                        'name': 'jumpman',
-                        'uuid': 'uuid-jumpman',
-                        'linked base': 'default',
-                        'control': {'zoom': 4},
-                    },
-                ],
-                'initial segment': initial_segment.name,
-            },
-            'user segments': user_segments,
-        }
+        extra_metadata = doc.calc_unserialized_template('vnd.atari8bit.atr.jumpman_level_tester')
+        extra_metadata['omnivore.byte_edit']['initial segment'] = extra_metadata['serialized user segments'][0].name
         return extra_metadata
-
-
-level_names = [
-    "01: easy does it",
-    "02: robots I",
-    "03: bombs away",
-    "04: jumping blocks",
-    "05: vampire",
-    "06: invasion",
-    "07: GP I",
-    "08: builder",
-    "09: look out below",
-    "10: hotfoot",
-    "11: runaway",
-    "12: robots II",
-    "13: hailstones",
-    "14: dragonslayer",
-    "15: GP II",
-    "16: ride around",
-    "17: roost",
-    "18: roll me over",
-    "19: ladder challenge",
-    "20: figureit",
-    "21: jump n run",
-    "22: freeze",
-    "23: follow the leader",
-    "24: the jungle",
-    "25a: mystery maze #1",
-    "25b: mystery maze #2",
-    "25c: mystery maze #3",
-    "26: gunfighter",
-    "27: robots III",
-    "28: now you see it",
-    "29: going down",
-    "30: GP III",
-]
 
 
 def JumpmanFullAtr(doc):
@@ -194,36 +131,8 @@ def JumpmanFullAtr(doc):
     s = doc.bytes[0x0810:0x0910]
     if s[0x3f] == 0x4c and s[0x48] == 0x20 and s[0x4b] == 0x60 and s[0x4c] == 0xff:
         log.debug("Found jumpman ATR!!!")
-        r = doc.segments[0].rawdata
-        found_level = False
-        user_segments = []
-        start = 0x0810
-        for i in range(32):
-            s = DefaultSegment(r[start:start+0x800], 0x2800, name=level_names[i])
-            if not doc.find_matching_segment(s):
-                log.debug("adding %s" % s)
-                user_segments.append(s)
-            start += 0x800
-        for s in [DefaultSegment(r[70032:71568], 0x0a00, name="Code"), DefaultSegment(r[71568:92048], 0x2000, name="Code")]:
-            if not doc.find_matching_segment(s):
-                log.debug("adding %s" % s)
-                user_segments.append(s)
-
-        extra_metadata = {
-            'last_task_id': 'omnivore.byte_edit',
-            'omnivore.byte_edit': {
-                'viewers' : [
-                    {
-                        'name': 'jumpman',
-                        'uuid': 'uuid-jumpman',
-                        'linked base': 'default',
-                        'control': {'zoom': 4},
-                    },
-                ],
-                'initial segment': user_segments[0].name,
-            },
-            'user segments': user_segments,
-        }
+        extra_metadata = doc.calc_unserialized_template('vnd.atari8bit.atr.jumpman')
+        extra_metadata['omnivore.byte_edit']['initial segment'] = extra_metadata['serialized user segments'][0].name
         return extra_metadata
 
 
