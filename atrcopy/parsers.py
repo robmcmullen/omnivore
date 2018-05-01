@@ -12,6 +12,7 @@ from .mame import MameZipImage
 from .dos33 import Dos33DiskImage, ProdosDiskImage, Dos33BinFile
 from .standard_delivery import StandardDeliveryImage
 from .errors import *
+from .magic import guess_detail_for_mime
 
 import logging
 log = logging.getLogger(__name__)
@@ -178,6 +179,7 @@ def guess_parser_for_system(mime_base, r):
         if mime.startswith(mime_base):
             p = guess_parser_for_mime(mime, r)
             if p is not None:
+                mime = guess_detail_for_mime(mime, r, p)
                 return mime, p
     return None, None
 
@@ -186,6 +188,7 @@ def iter_parsers(r):
     for mime in mime_parse_order:
         p = guess_parser_for_mime(mime, r)
         if p is not None:
+            mime = guess_detail_for_mime(mime, r, p)
             return mime, p
     return None, None
 

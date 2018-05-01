@@ -24,6 +24,7 @@ from .segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, O
 from .spartados import SpartaDosDiskImage
 from .cartridge import A8CartHeader, AtariCartImage
 from .parsers import SegmentParser, DefaultSegmentParser, guess_parser_for_mime, guess_parser_for_system, iter_parsers, iter_known_segment_parsers, mime_parse_order, parsers_for_filename
+from .magic import guess_detail_for_mime
 from .utils import to_numpy, text_to_int
 
 
@@ -70,6 +71,9 @@ def find_diskimage(filename):
                     continue
                 if options.verbose:
                     print("Found parser %s" % parser.menu_name)
+                mime2 = guess_detail_for_mime(mime, rawdata, parser)
+                if mime != mime2 and options.verbose:
+                    print("Signature match: %s" % mime2)
                 break
             if parser is None:
                 print("%s: Unknown disk image type" % filename)
