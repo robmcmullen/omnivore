@@ -733,12 +733,17 @@ class TileWindowBase(wx.Window):
     can_take_leaf_focus = False
 
     class TileSizer(wx.Window):
-        def __init__(self, parent, color):
+        def __init__(self, parent, tile_mgr):
             wx.Window.__init__(self, parent, -1, style = wx.CLIP_CHILDREN, name=TileManager.debug_window_name("TileSizer"))
+            self.tile_mgr = tile_mgr
+            self.num_grips = 5
+            self.grip_delta_pixels = 4
 
             self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
             self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
+            self.Bind(wx.EVT_PAINT, self.on_paint)
 
+            color = self.tile_mgr.empty_color
             self.SetBackgroundColour(color)
 
         def on_leave(self,evt):
@@ -749,6 +754,33 @@ class TileWindowBase(wx.Window):
                 self.SetCursor(wx.Cursor(wx.CURSOR_SIZEWE))
             else:
                 self.SetCursor(wx.Cursor(wx.CURSOR_SIZENS))
+
+        def on_paint(self, evt):
+            m = self.tile_mgr
+            dc = wx.PaintDC(self)
+            size = self.GetClientSize()
+            p = wx.Pen(m.border_color)
+            dc.SetPen(p)
+            if self.GetParent().layout_direction == wx.HORIZONTAL:
+                x = 0
+                y = size.y // 2
+                w = size.x
+                dy = self.grip_delta_pixels
+                dc.DrawLine(x, y, x + w, y)
+                dc.DrawLine(x, y + dy, x + w, y + dy)
+                dc.DrawLine(x, y - dy, x + w, y - dy)
+                dc.DrawLine(x, y + dy + dy, x + w, y + dy + dy)
+                dc.DrawLine(x, y - dy - dy, x + w, y - dy - dy)
+            else:
+                x = size.x // 2
+                y = 0
+                h = size.y
+                dx = self.grip_delta_pixels
+                dc.DrawLine(x, y, x, y + h)
+                dc.DrawLine(x + dx, y, x + dx, y + h)
+                dc.DrawLine(x - dx, y, x - dx, y + h)
+                dc.DrawLine(x + dx + dx, y, x + dx + dx, y + h)
+                dc.DrawLine(x - dx - dx, y, x - dx - dx, y + h)
 
     @classmethod
     def next_debug_letter(cls):
@@ -761,7 +793,7 @@ class TileWindowBase(wx.Window):
 
         self.resizer = None
         self.sizer_after = True
-        self.sizer = TileWindowBase.TileSizer(parent, tile_mgr.empty_color)
+        self.sizer = TileWindowBase.TileSizer(parent, tile_mgr)
         self.sizer.Bind(wx.EVT_MOTION, self.on_motion)
         self.sizer.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.sizer.Bind(wx.EVT_LEFT_UP, self.on_left_up)
