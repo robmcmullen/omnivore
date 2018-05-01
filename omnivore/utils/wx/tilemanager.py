@@ -254,6 +254,13 @@ class DockTarget(object):
         log.debug("find_uuid: skipping %s in %s" % (self.client.child_uuid, self.client.child.GetName()))
         return None
 
+    def find_control(self, control):
+        if control == self.client.child:
+            log.debug("find_control: found %s in %s" % (control, self.client.child.GetName()))
+            return self.client
+        log.debug("find_control: skipping %s in %s" % (self.client.child, self.client.child.GetName()))
+        return None
+
     def find_empty(self):
         if hasattr(self.client.child, "tile_manager_empty_control") and self.client.child.tile_manager_empty_control:
             log.debug("find_empty: found %s" % (self.client.child.GetName()))
@@ -461,7 +468,12 @@ class TileManager(wx.Window):
         if self.current_sidebar_focus is not None:
             self.current_sidebar_focus.popdown()
             self.current_sidebar_focus = None
-        self.current_leaf_focus.client.set_focus()
+        if self.current_leaf_focus.is_sidebar:
+            self.current_leaf_focus.popup()
+            self.current_sidebar_focus = self.current_leaf_focus
+            self.pending_sidebar_focus = None
+        else:
+            self.current_leaf_focus.client.set_focus()
 
     def clear_leaf_focus(self):
         current = self.current_leaf_focus
@@ -592,10 +604,22 @@ class TileManager(wx.Window):
                     break
         return found
 
-    def focus_uuid(self, uuid):
-        found = self.find_uuid(uuid)
+    def find_control(self, control):
+        found = self.child.find_control(control)
+        if not found:
+            for sidebar in self.sidebars:
+                found = sidebar.find_control(control)
+                if found:
+                    break
+        return found
+
+    def force_focus(self, item):
+        if hasattr(item, 'SetPosition'):
+            found = self.find_control(item)
+        else:
+            found = self.find_uuid(item)
         if found:
-            print("FOCUS UUID:", found)
+            print("FOCUS TO:", found)
             self.set_leaf_focus(found.leaf)
 
     def replace_by_uuid(self, control, u):
@@ -898,6 +922,13 @@ class ViewContainer(object):
     def find_uuid(self, uuid):
         for view in self.views:
             found = view.find_uuid(uuid)
+            if found is not None:
+                return found
+        return None
+
+    def find_control(self, control):
+        for view in self.views:
+            found = view.find_control(control)
             if found is not None:
                 return found
         return None
@@ -2394,7 +2425,7 @@ if __name__ == '__main__':
         global multi, uuid_text
 
         u = uuid_text.GetValue()
-        multi.focus_uuid(u)
+        multi.force_focus(u)
 
     def replace_uuid(u):
         found = multi.find_uuid(u)

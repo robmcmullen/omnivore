@@ -551,7 +551,7 @@ class ByteEditor(FrameworkEditor):
     #### wx event handlers
 
     def force_focus(self, viewer):
-        self.control.focus_uuid(viewer.uuid)
+        self.control.force_focus(viewer.uuid)
         self.update_pane_names()
         viewer.update_toolbar()
 
