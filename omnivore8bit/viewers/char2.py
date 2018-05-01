@@ -154,7 +154,7 @@ class CharGridControl(SegmentGridControl):
         return self.zoom * self.font_renderer.scale_height
 
     def recalc_view(self):
-        self.table = SegmentTable(self.segment_viewer.linked_base.segment, self.items_per_row)
+        self.table = SegmentTable(self.segment_viewer.linked_base, self.items_per_row)
         self.line_renderer = self.calc_line_renderer()
         SegmentGridControl.recalc_view(self)
 
