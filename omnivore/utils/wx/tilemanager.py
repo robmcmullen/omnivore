@@ -1867,21 +1867,22 @@ class SidebarMenuItem(wx.Window, DockTarget):
 
     def on_leave(self,evt):
         m = self.tile_mgr
+        print("on_leave %s: focus: current" % self.client.child.GetName(), m.current_sidebar_focus, "pending", m.pending_sidebar_focus, "leaf", m.current_leaf_focus)
         if m.current_sidebar_focus == self:
             pass
         elif m.pending_sidebar_focus != self:
-            self.popdown()
+            self.popdown(self.client)
 
     def on_enter(self,evt):
         m = self.tile_mgr
-        print("on_enter: current sidebar focus", m.current_sidebar_focus, "current_leaf_focus", m.current_leaf_focus)
+        print("on_enter %s: focus: current" % self.client.child.GetName(), m.current_sidebar_focus, "pending", m.pending_sidebar_focus, "leaf", m.current_leaf_focus)
         if not m.current_sidebar_focus:
             if m.pending_sidebar_focus:
                 m.pending_sidebar_focus.popdown()
             self.popup()
 
     def on_motion(self,evt):
-        print("pending sidebar focus=%s" % self.tile_mgr.pending_sidebar_focus)
+        # print("pending sidebar focus=%s" % self.tile_mgr.pending_sidebar_focus)
         evt.Skip()
 
     def on_left_down(self, evt):
@@ -1908,10 +1909,17 @@ class SidebarMenuItem(wx.Window, DockTarget):
         self.sidebar.title_renderer.show_client(self.sidebar, self)
         self.Refresh()
 
-    def popdown(self):
-        self.entered = False
-        self.client.Hide()
-        self.Refresh()
+    if wx.Platform == "__WXMSW__":
+        def popdown(self, expected_client=None):
+            self.entered = False
+            popup = self.tile_mgr.actual_popup
+            popup.Dismiss(expected_client)
+            self.Refresh()
+    else:
+        def popdown(self, expected_client=None):
+            self.entered = False
+            self.client.Hide()
+            self.Refresh()
 
     def remove(self):
         self.client.do_send_close_event()
@@ -2228,34 +2236,85 @@ class Sidebar(wx.Window, ViewContainer):
         for view in self.views:
             pos = self.title_renderer.do_view_size(view, pos, w, h)
 
-    def do_popup_view(self, view, x, y, w, h):
-        print("operating on view", view)
-        print("children before:", str(self.tile_mgr.GetChildren()))
-        print("client parent before:", view.client.GetParent())
-        view.client.Reparent(self.tile_mgr.hiding_space)
-        print("client parent mid:", view.client.GetParent())
-        view.client.Reparent(self.tile_mgr)
-        print("client parent after:", view.client.GetParent())
-        print("children after:", str(self.tile_mgr.GetChildren()))
-        view.client.show_as_popup(x, y, w, h)
-
-    def do_popup_view_msw(self, view, x, y, w, h):
-        top = self.tile_mgr
-        client = view.client
-        print("reparenting %s" % self.GetName())
-        #top.Freeze()
-        client.Reparent(top.hiding_space)
-        order = [c for c in top.GetChildren() if c != client and c != top.hiding_space]
-        for c in order:
-            c.Reparent(top.hiding_space)
-        client.Reparent(top)
-        for c in order:
-            c.Reparent(top)
-        #top.Thaw()
-        client.show_as_popup(x, y, w, h)
-
     if wx.Platform == "__WXMSW__":
-        do_popup_view = do_popup_view_msw
+        def do_popup_view(self, view, x, y, w, h):
+            top = self.tile_mgr
+            if not hasattr(top, 'actual_popup'):
+                top.actual_popup = self.FakePopupWindow(top)
+                top.actual_popup.tile_mgr = top
+            print("operating on view", view)
+            print("client parent before:", view.client.GetParent())
+            view.client.Reparent(top.actual_popup)
+            print("client parent after:", view.client.GetParent())
+            view.client.show_as_popup(0, 0, w, h)
+            xs, ys = top.ClientToScreen(x, y)
+            top.actual_popup.SetSize(xs, ys, w, h)
+            top.actual_popup.client = view.client
+            top.actual_popup.Popup()
+
+        class FakePopupWindow(wx.MiniFrame):
+            def __init__(self, parent, style=None):
+                wx.MiniFrame.__init__(self, parent, style = wx.NO_BORDER |wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_NO_TASKBAR)
+                #self.Bind(wx.EVT_KEY_DOWN , self.OnKeyDown)
+                self.Bind(wx.EVT_CHAR, self.on_char)
+                self.Bind(wx.EVT_SET_FOCUS, self.on_focus)
+
+            def on_char(self, evt):
+                #print("on_char: keycode=%s" % evt.GetKeyCode())
+                self.GetParent().GetEventHandler().ProcessEvent(evt)
+
+            def activate_parent(self):
+                """Activate the parent window
+                @postcondition: parent window is raised
+
+                """
+                parent = self.GetParent()
+                parent.Raise()
+                parent.SetFocus()
+
+            def on_focus(self, evt):
+                """Raise and reset the focus to the parent window whenever
+                we get focus.
+                @param evt: event that called this handler
+
+                """
+                #log.debug("on_focus: set focus to %s" % str(self.GetParent()))
+                self.activate_parent()
+                evt.Skip()
+
+            # Compatibility methods for wx.PopupTransientWindow
+
+            def Popup(self):
+                print("showing popup")
+                self.Show(True)
+
+            def Dismiss(self, expected_client=None):
+                if self.client is None:
+                    print("Dismissing popup with no client!")
+                else:
+                    if expected_client is not None and expected_client != self.client:
+                        # MSW can get a leave event for the old window after an
+                        # enter event for the new window
+                        print("enter before leave: reparenting expected client")
+                        expected_client.Reparent(self.tile_mgr.hiding_space)
+                    else:
+                        print("hiding popup")
+                        self.client.Reparent(self.tile_mgr.hiding_space)
+                        self.client.Hide()
+                        self.client = None
+                        self.Show(False)
+
+    else:
+        def do_popup_view(self, view, x, y, w, h):
+            print("operating on view", view)
+            print("children before:", str(self.tile_mgr.GetChildren()))
+            print("client parent before:", view.client.GetParent())
+            view.client.Reparent(self.tile_mgr.hiding_space)
+            print("client parent mid:", view.client.GetParent())
+            view.client.Reparent(self.tile_mgr)
+            print("client parent after:", view.client.GetParent())
+            print("children after:", str(self.tile_mgr.GetChildren()))
+            view.client.show_as_popup(x, y, w, h)
 
     def delete_leaf_from_list(self, view, index):
         self.tile_mgr.force_clear_sidebar()
