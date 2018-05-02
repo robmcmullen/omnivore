@@ -1224,9 +1224,13 @@ class TileSplit(TileWindowBase, ViewContainer):
         if len(self.views) > 2:
             log.debug("deleting > 2: %d %s" %(index, self.views))
             del self.views[index]
-            r = view.ratio_in_parent / len(self.views)
-            for v in self.views:
-                v.ratio_in_parent += r
+            # add ratio to whichever leaf is bigger
+            possible_views = self.views[index - 1: index + 1]
+            if len(possible_views) == 2 and possible_views[0].ratio_in_parent > possible_views[1].ratio_in_parent:
+                i = index - 1
+            else:
+                i = min(index, len(self.views) - 1)  # handle last view
+            self.views[i].ratio_in_parent += view.ratio_in_parent
             self.do_layout()
             self.tile_mgr.send_layout_changed_event()
         elif len(self.views) == 2:
