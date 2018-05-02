@@ -312,6 +312,9 @@ class TileManager(wx.Window):
     wxEVT_CLIENT_ACTIVATED = wx.NewEventType()
     EVT_CLIENT_ACTIVATED = wx.PyEventBinder(wxEVT_CLIENT_ACTIVATED, 1)
 
+    wxEVT_LAYOUT_CHANGED = wx.NewEventType()
+    EVT_LAYOUT_CHANGED = wx.PyEventBinder(wxEVT_LAYOUT_CHANGED, 1)
+
     class HidingSpace(wx.Window):
         can_take_leaf_focus = False
         is_sidebar = False
@@ -428,7 +431,11 @@ class TileManager(wx.Window):
     def on_size(self, evt):
         self.do_layout()
 
-    def do_layout(self):
+    def send_layout_changed_event(self):
+        evt = TileManagerEvent(TileManager.wxEVT_LAYOUT_CHANGED, self)
+        self.GetEventHandler().ProcessEvent(evt)
+
+    def do_layout(self, layout_changed=False):
         self.child.sizer_after = False
         self.child.sizer.Hide()
         x, y = 0, 0
@@ -440,6 +447,8 @@ class TileManager(wx.Window):
             sidebar.do_layout()
         self.child.SetSize(x, y, w, h)
         self.child.do_layout()
+        if layout_changed:
+            self.send_layout_changed_event()
 
     def set_header_size_inside(self, x, y, w, h):
         if self.header is not None and self.header.IsShown():
@@ -536,7 +545,7 @@ class TileManager(wx.Window):
         old.remove_all()
         for sidebar in self.sidebars:
             sidebar.force_popup_to_top_of_stacking_order()
-        self.do_layout()
+        self.do_layout(layout_changed=True)
 
     def remove_all(self):
         self.replace_all()
@@ -550,7 +559,7 @@ class TileManager(wx.Window):
         self.sidebars = []
         for d in sidebar_layout:
             self.use_sidebar(layout=d)
-        self.do_layout()
+        self.do_layout(layout_changed=True)
 
     def calc_layout(self, to_json=False, pretty=False):
         d = {'tile_manager': self.child.calc_layout()}
@@ -658,7 +667,7 @@ class TileManager(wx.Window):
             except ValueError:
                 sidebar = Sidebar(self, side)
                 self.sidebars.append(sidebar)
-                self.do_layout()
+                self.do_layout(layout_changed=True)
         return sidebar
 
     def find_sidebar(self, side=wx.LEFT):
@@ -681,7 +690,7 @@ class TileManager(wx.Window):
             log.error("No sidebar on %s so can't remove it!" % pretty_direction(side_or_sidebar))
         else:
             self.sidebars.remove(sidebar)
-            self.do_layout()
+            self.do_layout(layout_changed=True)
 
     def add_sidebar(self, control, u=None, side=wx.LEFT):
         sidebar = self.use_sidebar(side)
@@ -692,13 +701,13 @@ class TileManager(wx.Window):
         if self.header is not None:
             self.header.Destroy()
         self.header = control
-        self.do_layout()
+        self.do_layout(layout_changed=True)
 
     def add_footer(self, control):
         if self.footer is not None:
             self.footer.Destroy()
         self.footer = control
-        self.do_layout()
+        self.do_layout(layout_changed=True)
 
     def show_footer(self, state=True):
         self.footer.Show(state)
@@ -906,6 +915,7 @@ class TileWindowBase(wx.Window):
         if self.resizer is not None:
             self.sizer.ReleaseMouse()
             self.resizer = None
+            self.tile_mgr.send_layout_changed_event()
         else:
             evt.Skip()
 
@@ -1154,6 +1164,7 @@ class TileSplit(TileWindowBase, ViewContainer):
             view.reparent_to(self, ratio)
         self.views[insert_pos:insert_pos] = [view]
         self.do_layout()
+        self.tile_mgr.send_layout_changed_event()
         return view
 
     def split_opposite(self, leaf, control=None, uuid=None, new_side=wx.LEFT, view=None):
@@ -1188,7 +1199,6 @@ class TileSplit(TileWindowBase, ViewContainer):
             'direction': int(self.layout_direction),
             'ratio_in_parent': self.ratio_in_parent,
             'views': [v.calc_layout() for v in self.views],
-            'debug_id': self.debug_id,
             }
         return d
 
@@ -1210,6 +1220,7 @@ class TileSplit(TileWindowBase, ViewContainer):
             for v in self.views:
                 v.ratio_in_parent += r
             self.do_layout()
+            self.tile_mgr.send_layout_changed_event()
         elif len(self.views) == 2:
             log.debug("deleting == 2: %d %s, parent=%s self=%s" % (index, self.views, self.GetParent(), self))
             # remove leaf, resulting in a single leaf inside a multisplit.
@@ -1224,6 +1235,7 @@ class TileSplit(TileWindowBase, ViewContainer):
             else:
                 log.debug("  deleting %s from parent %s parent views=%s" % (self, self.GetParent(), self.GetParent().views))
                 self.GetParent().reparent_from_splitter(self)
+                self.tile_mgr.send_layout_changed_event()
         else:
             # must be at the top; the final splitter.
             log.debug("Removing the last item!", view)
@@ -1279,7 +1291,6 @@ class TileViewLeaf(TileWindowBase, DockTarget):
     def calc_layout(self):
         d = self.client.calc_layout()
         d['ratio_in_parent'] = self.ratio_in_parent
-        d['debug_id'] = self.debug_id
         return d
 
     def restore_layout(self, d):
@@ -2161,12 +2172,14 @@ class Sidebar(wx.Window, ViewContainer):
         view = SidebarMenuItem(self, client)
         self.views[insert_pos:insert_pos] = [view]
         self.do_layout()
+        self.tile_mgr.send_layout_changed_event()
         return view
 
     def add_client(self, client):
         view = SidebarMenuItem(self, client)
         self.views.append(view)
         self.do_layout()
+        self.tile_mgr.send_layout_changed_event()
 
     def force_popup_to_top_of_stacking_order(self):
         # Unless popup is at the top of the stacking order, it will be obscured
@@ -2224,6 +2237,8 @@ class Sidebar(wx.Window, ViewContainer):
         if len(self.views) == 0:
             log.debug("Nothing left in sidebar!", self)
             self.tile_mgr.remove_sidebar(self)
+        else:
+            self.tile_mgr.send_layout_changed_event()
 
 
 ########## Events ##########
