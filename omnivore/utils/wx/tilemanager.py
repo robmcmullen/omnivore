@@ -322,9 +322,8 @@ class TileManager(wx.Window):
         def set_chrome(self, client):
             pass
 
-    def __init__(self, parent, layout_direction=wx.HORIZONTAL, name="top", show_close=True, *_args, **_kwargs):
+    def __init__(self, parent, layout_direction=wx.HORIZONTAL, name="top", *_args, **_kwargs):
         wx.Window.__init__(self, parent, name=name, *_args, **_kwargs)
-        self.use_close_button = show_close
         self.debug_id = "root"
         self.set_defaults()
         self._defChild = EmptyChild
@@ -642,28 +641,28 @@ class TileManager(wx.Window):
             print("FOCUS TO:", found)
             self.set_leaf_focus(found.leaf)
 
-    def replace_by_uuid(self, control, u):
+    def replace_by_uuid(self, control, u, **kwargs):
         found = self.find_uuid(u)
         if found is not None:
-            found.replace(control, u)
+            found.replace(control, u, **kwargs)
             return True
         return False
 
-    def add(self, control, u=None, new_side=wx.LEFT, use_empty=True, sidebar=False):
-        if not self.replace_by_uuid(control, u):
+    def add(self, control, u=None, new_side=wx.LEFT, use_empty=True, sidebar=False, **kwargs):
+        if not self.replace_by_uuid(control, u, **kwargs):
             if use_empty:
                 found = self.find_empty()
                 if found:
-                    found.replace(control, u)
+                    found.replace(control, u, **kwargs)
                     return
             if sidebar:
-                self.add_sidebar(control, u, new_side)
+                self.add_sidebar(control, u, new_side, **kwargs)
             else:
-                self.add_split(control, u, new_side, use_empty)
+                self.add_split(control, u, new_side, use_empty, **kwargs)
 
-    def add_split(self, control, u=None, new_side=wx.LEFT, use_empty=True):
+    def add_split(self, control, u=None, new_side=wx.LEFT, use_empty=True, **kwargs):
         leaf = self.child.views[-1]
-        self.child.split(leaf, control, u, new_side)
+        self.child.split(leaf, control, u, new_side, **kwargs)
 
     def use_sidebar(self, side=wx.LEFT, layout=None):
         if layout is not None:
@@ -701,9 +700,9 @@ class TileManager(wx.Window):
             self.sidebars.remove(sidebar)
             self.do_layout(layout_changed=True)
 
-    def add_sidebar(self, control, u=None, side=wx.LEFT):
+    def add_sidebar(self, control, u=None, side=wx.LEFT, **kwargs):
         sidebar = self.use_sidebar(side)
-        client = TileClient(None, control, u, tile_mgr=self)
+        client = TileClient(None, control, u, tile_mgr=self, **kwargs)
         sidebar.add_client(client)
 
     def add_header(self, control):
@@ -1144,16 +1143,16 @@ class TileSplit(TileWindowBase, ViewContainer):
     def __repr__(self):
         return "<TileSplit %s %f>" % (self.debug_id, self.ratio_in_parent)
 
-    def split(self, leaf, control=None, uuid=None, new_side=wx.RIGHT, view=None):
+    def split(self, leaf, control=None, uuid=None, new_side=wx.RIGHT, view=None, **kwargs):
         log.debug("split: using view %s" % view)
         layout_direction = side_to_direction[new_side]
         if layout_direction != self.layout_direction:
-            new_view = self.split_opposite(leaf, control, uuid, new_side, view)
+            new_view = self.split_opposite(leaf, control, uuid, new_side, view, **kwargs)
         else:
-            new_view = self.split_same(leaf, control, uuid, new_side, view)
+            new_view = self.split_same(leaf, control, uuid, new_side, view, **kwargs)
         return new_view
 
-    def split_same(self, leaf, control=None, uuid=None, new_side=wx.LEFT, view=None):
+    def split_same(self, leaf, control=None, uuid=None, new_side=wx.LEFT, view=None, **kwargs):
         view_index_to_split = self.find_leaf_index(leaf)
         if new_side & (wx.LEFT|wx.TOP):
             # insert at beginning of list
@@ -1164,7 +1163,7 @@ class TileSplit(TileWindowBase, ViewContainer):
         leaf.ratio_in_parent = ratio
 
         if view is None:
-            client = TileClient(None, control, uuid, self.tile_mgr)
+            client = TileClient(None, control, uuid, self.tile_mgr, **kwargs)
             view = TileViewLeaf(self.tile_mgr, self, ratio, client)
         elif view.is_sidebar:
             client = view.detach_client()
@@ -1176,12 +1175,12 @@ class TileSplit(TileWindowBase, ViewContainer):
         self.tile_mgr.send_layout_changed_event()
         return view
 
-    def split_opposite(self, leaf, control=None, uuid=None, new_side=wx.LEFT, view=None):
+    def split_opposite(self, leaf, control=None, uuid=None, new_side=wx.LEFT, view=None, **kwargs):
         view_index_to_split = self.find_leaf_index(leaf)
         subsplit = TileSplit(self.tile_mgr, self, opposite[self.layout_direction], leaf.ratio_in_parent, leaf)
         self.views[view_index_to_split] = subsplit
         self.do_layout()
-        return subsplit.split_same(leaf, control, uuid, new_side, view)
+        return subsplit.split_same(leaf, control, uuid, new_side, view, **kwargs)
 
     def do_layout(self):
         w, h, full_size = self.layout_calculator.calc_size(self)
@@ -1327,13 +1326,14 @@ class TileViewLeaf(TileWindowBase, DockTarget):
 
 
 class TileClient(wx.Window):
-    def __init__(self, parent, child=None, uuid=None, tile_mgr=None, leaf=None, layout=None):
+    def __init__(self, parent, child=None, uuid=None, tile_mgr=None, leaf=None, layout=None, **kwargs):
         if parent is None:
             parent = tile_mgr.hiding_space
         wx.Window.__init__(self, parent, -1, style=wx.CLIP_CHILDREN | wx.BORDER_NONE, size=(200, 200), name=TileManager.debug_window_name("TileClient"))
         if tile_mgr is None:
             tile_mgr = parent.tile_mgr
         self.tile_mgr = tile_mgr
+        self.init_kwargs(**kwargs)
 
         self.extra_border = 0
         self.title_bar = TitleBar(self)
@@ -1359,14 +1359,22 @@ class TileClient(wx.Window):
         self.Bind(wx.EVT_SET_FOCUS, self.on_set_focus)
         self.Bind(wx.EVT_CHILD_FOCUS, self.on_child_focus)
 
+    def init_kwargs(self, **kwargs):
+        self.show_title = kwargs.get('show_title', True)
+        self.use_close_button = kwargs.get('use_close_button', True)
+
     def calc_layout(self):
         d = {
             'child_uuid': self.child_uuid,
+            'show_title': self.show_title,
+            'use_close_button': self.use_close_button,
         }
         return d
 
     def restore_layout(self, d):
         self.child_uuid = d['child_uuid']
+        self.show_title = d.get('show_title', True)
+        self.use_close_button = d.get('use_close_button', True)
 
     def set_leaf(self, leaf):
         self.leaf = leaf
@@ -1431,9 +1439,13 @@ class TileClient(wx.Window):
         m = self.tile_mgr
         w -= b * 2
         h -= b * 2
-        # print("in client %s:" % self.GetParent().debug_id, w, h)
         self.title_bar.SetSize(b, b, w, m.title_bar_height)
-        self.child.SetSize(b, b + m.title_bar_height, w, h - m.title_bar_height)
+        if self.show_title:
+            title_offset = m.title_bar_height
+        else:
+            title_offset = 0
+        self.title_bar.Show(self.show_title)
+        self.child.SetSize(b, b + title_offset, w, h - title_offset)
 
     def DoGetBestClientSize(self):
         b = self.extra_border
@@ -1449,7 +1461,7 @@ class TileClient(wx.Window):
         self.title_bar.SetSize(b, b, w, m.title_bar_height)
         self.child.SetSize(b, b + m.title_bar_height, w, h)
 
-    def replace(self, child, u=None):
+    def replace(self, child, u=None, **kwargs):
         if self.child:
             self.do_send_replace_event(child)
             self.child.Destroy()
@@ -1459,6 +1471,8 @@ class TileClient(wx.Window):
         if u is None:
             u = str(uuid4())
         self.child_uuid = u
+        self.init_kwargs(**kwargs)
+        self.title_bar.set_buttons_for_sidebar_state(self.leaf.is_sidebar)
         self.move_child()
         self.do_size_from_parent()
 
@@ -1573,7 +1587,7 @@ class TitleBar(wx.Window):
     class Closer(Button):
         def set_sidebar_state(self, in_sidebar):
             self.is_always_shown = True
-            self.is_enabled = self.client.tile_mgr.use_close_button
+            self.is_enabled = self.client.use_close_button
 
         def draw_button(self, dc, size, bg_brush, pen, fg_brush):
             dc.SetBrush(bg_brush)
@@ -2484,7 +2498,7 @@ if __name__ == '__main__':
 
     app = wx.App()
     frame = wx.Frame(None, -1, "Test", size=(800,400))
-    multi = TileManager(frame, pos = (0,0), size = (640,480), layout_direction=wx.HORIZONTAL, show_close=True)
+    multi = TileManager(frame, pos = (0,0), size = (640,480), layout_direction=wx.HORIZONTAL)
     sizer = wx.BoxSizer(wx.VERTICAL)
     horz = wx.BoxSizer(wx.HORIZONTAL)
     horz.Add(multi, 1, wx.EXPAND)
