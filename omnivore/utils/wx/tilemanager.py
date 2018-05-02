@@ -40,7 +40,7 @@ import wx
 import logging
 #logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
-#log.setLevel(logging.DEBUG)
+log.setLevel(logging.DEBUG)
 resize_log = logging.getLogger("resize")
 #resize_log.setLevel(logging.DEBUG)
 
@@ -118,6 +118,39 @@ class DockTarget(object):
         def on_paint(self, evt):
             dc = wx.PaintDC(self)
             dc.DrawBitmap(self.bitmap, 0, 0)
+
+
+    class HitTestManager(object):
+        def __init__(self, event_window, leafs):
+            self.start_hit_test(event_window, leafs)
+
+        def start_hit_test(self, event_window, leafs):
+            self.create_rectangles(event_window, leafs)
+
+        def create_rectangles(self, event_window, leafs):
+            rects = []
+            for leaf in leafs:
+                rects.append((leaf, leaf.calc_rectangle_relative_to(event_window)))
+            self.rectangles = rects
+
+        def in_rect(self, pos):
+            for dock_info in self.rectangles:
+                leaf, rect = dock_info
+                # print("checking %s in rect %s" % (pos, rect))
+                if rect.Contains(pos):
+                    break
+            else:
+                # print("NOT IN RECT")
+                leaf = None
+            return leaf
+
+
+    class MenuHitTestManager(HitTestManager):
+        def __init__(self, tile_mgr):
+            leafs = []
+            for s in tile_mgr.sidebars:
+                leafs.extend(s.views)
+            DockTarget.HitTestManager.__init__(self, tile_mgr, leafs)
 
 
     class DockingRectangleHandler(object):
@@ -244,6 +277,9 @@ class DockTarget(object):
         self.client = client
         self.client.set_leaf(self)
 
+    def reparent_client(self, client):
+        client.Reparent(self)
+
     def detach(self):
         self.GetParent().detach_leaf(self)
 
@@ -322,6 +358,9 @@ class TileManager(wx.Window):
         def set_chrome(self, client):
             pass
 
+        def reparent_client(self, client):
+            client.Reparent(self)
+
     def __init__(self, parent, layout_direction=wx.HORIZONTAL, name="top", *_args, **_kwargs):
         wx.Window.__init__(self, parent, name=name, *_args, **_kwargs)
         self.debug_id = "root"
@@ -337,11 +376,12 @@ class TileManager(wx.Window):
         self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
-        self.pending_sidebar_focus = None
-        self.current_sidebar_focus = None
         self.current_leaf_focus = None
         self.previous_leaf_focus_list = []
         self.dock_handler = DockTarget.DockingRectangleHandler()
+        self.menu_popdown_mode = False
+        self.menu_hit_test = None
+        self.menu_currently_displayed = None
 
     def set_defaults(self):
         self.child_window_x = 2
@@ -471,55 +511,46 @@ class TileManager(wx.Window):
 
     def set_leaf_focus(self, leaf):
         self.clear_leaf_focus()
-        self.current_leaf_focus = weakref.proxy(leaf)
-        print("current_leaf_focus", leaf, "current_sidebar_focus", self.current_sidebar_focus)
-        if self.current_sidebar_focus is not None:
-            self.current_sidebar_focus.popdown()
-            self.current_sidebar_focus = None
-        if self.current_leaf_focus.is_sidebar:
-            self.current_leaf_focus.popup()
-            self.current_sidebar_focus = self.current_leaf_focus
-            self.pending_sidebar_focus = None
+        self.current_leaf_focus = leaf
+        print("current_leaf_focus", repr(leaf), "menu", repr(self.menu_currently_displayed))
+        print("current_leaf_focus = menu", self.current_leaf_focus == self.menu_currently_displayed)
+        if self.current_leaf_focus == self.menu_currently_displayed:
+            self.current_leaf_focus.client.set_focus()
+        elif self.menu_currently_displayed is not None:
+            self.menu_currently_displayed.close_menu()
+            self.menu_currently_displayed = None
+        # if self.current_leaf_focus.is_sidebar:
+        #     self.menu_currently_displayed = self.current_leaf_focus
+        #     self.menu_currently_displayed.open_menu()
         else:
             self.current_leaf_focus.client.set_focus()
 
     def clear_leaf_focus(self):
         current = self.current_leaf_focus
         print("clear_leaf_focus", current)
-        try:
-            current.client.clear_focus()
-        except ReferenceError:
-            # weakref referrant has been deleted!
-            pass
-        except AttributeError:
-            # weakref referrant has been deleted!
-            pass
-        else:
+        if current:
             if current.can_take_leaf_focus:
                 self.previous_leaf_focus_list.append(current)
-        print("previous_leaf_focus_list", str(self.previous_leaf_focus_list))
+            print("previous_leaf_focus_list", str(self.previous_leaf_focus_list))
         self.current_leaf_focus = None
-        if self.pending_sidebar_focus is not None:
-            if self.current_sidebar_focus != self.pending_sidebar_focus:
-                self.pending_sidebar_focus.popdown()
-            self.pending_sidebar_focus = None
+        # try:
+        #     current.client.clear_focus()
+        # except ReferenceError:
+        #     # weakref referrant has been deleted!
+        #     pass
+        # except AttributeError:
+        #     # weakref referrant has been deleted!
+        #     pass
+        # else:
+        #     if current.can_take_leaf_focus:
+        #         self.previous_leaf_focus_list.append(current)
+        # print("previous_leaf_focus_list", str(self.previous_leaf_focus_list))
+        # self.current_leaf_focus = None
 
     def force_clear_sidebar(self):
-        if self.pending_sidebar_focus is not None:
-            self.pending_sidebar_focus.popdown()
-            self.pending_sidebar_focus = None
-        if self.current_sidebar_focus is not None:
-            self.current_sidebar_focus.popdown()
-            self.current_sidebar_focus = None
-            self.current_leaf_focus = None
-
-    def set_sidebar_focus(self):
-        self.current_sidebar_focus = self.pending_sidebar_focus
-        #self.pending_sidebar_focus = None
-        self.clear_leaf_focus()
-        #self.set_leaf_focus(self.current_sidebar_focus)
-        self.current_leaf_focus = self.current_sidebar_focus
-        self.current_leaf_focus.client.set_focus()
+        if self.menu_currently_displayed is not None:
+            self.menu_currently_displayed.close_menu()
+            self.menu_currently_displayed = None
 
     def restore_last_main_window_focus(self):
         try:
@@ -632,7 +663,7 @@ class TileManager(wx.Window):
         return found
 
     def in_sidebar(self, control):
-        found = self.find(control).GetParent()
+        found = self.find(control).leaf
         return found.is_sidebar if found is not None else False
 
     def force_focus(self, item):
@@ -744,11 +775,41 @@ class TileManager(wx.Window):
 
     #### Dynamic positioning of child windows
 
+    def on_start_menu(self, menu_item, evt):
+        self.menu_popdown_mode = True
+        self.menu_hit_test = DockTarget.MenuHitTestManager(self)
+        if self.menu_currently_displayed == menu_item:
+            print("START! already showing menu %s" % menu_item)
+        else:
+            if self.menu_currently_displayed is not None:
+                print("START! closing currently shown menu %s" % self.menu_currently_displayed)
+                self.menu_currently_displayed.close_menu()
+            else:
+                print("START! showing menu %s" % menu_item)
+            self.menu_currently_displayed = menu_item
+            menu_item.open_menu()
+        self.CaptureMouse()
+
     def on_motion(self, evt):
         if self.dock_handler.is_active:
             pos = evt.GetPosition()
-            print("In main window!", pos)
+            print("docking in main window!", pos)
             self.dock_handler.process_dragging(evt)
+        elif self.menu_popdown_mode:
+            pos = evt.GetPosition()
+            menu_item = self.menu_hit_test.in_rect(pos)
+            print("menu down main window: pos=%s in %s" % (pos,menu_item))
+            if menu_item is None:
+                print("not over any menu; leaving menu displayed %s" % self.menu_currently_displayed)
+            elif self.menu_currently_displayed != menu_item:
+                if self.menu_currently_displayed is not None:
+                    print("closing menu %s" % self.menu_currently_displayed)
+                    self.menu_currently_displayed.close_menu()
+                print("showing menu %s" % menu_item)
+                self.menu_currently_displayed = menu_item
+                menu_item.open_menu()
+            else:
+                print("still displaying same menu %s" % menu_item)
 
     def on_left_up(self, evt):
         if self.dock_handler.is_active:
@@ -758,6 +819,30 @@ class TileManager(wx.Window):
                     print("nop: splitting and inserting same leaf")
                 else:
                     leaf_to_split.process_dock_target(leaf, side)
+        elif self.menu_popdown_mode:
+            leave_open = False
+            menu_item = self.menu_currently_displayed
+            if menu_item is not None:
+                pos = evt.GetPosition()
+                if self.menu_hit_test.in_rect(pos) is not None:
+                    print("FINISH IN MENU ITEM! change to popdown mode that doesn't need the mouse button down!")
+                    return
+                elif menu_item.actual_popup.GetScreenRect().Contains(self.ClientToScreen(pos)):
+                    print("FINISH IN MENU! leave open!")
+                    leave_open = True
+
+            if self.HasCapture():
+                self.ReleaseMouse()
+            self.menu_popdown_mode = False
+            self.menu_hit_test = None
+            if leave_open:
+                print("FINISH! setting focus to menu %s" % menu_item)
+                #menu_item.client.on_set_focus(None)
+                self.set_leaf_focus(menu_item)
+            else:
+                print("FINISH! menu closed")
+                self.menu_currently_displayed = None
+                menu_item.close_menu()
 
     def start_child_window_move(self, source_leaf, evt):
         self.dock_handler.start_docking(self, source_leaf, evt)
@@ -788,8 +873,8 @@ class TileManager(wx.Window):
 
         skip = True
         if key == wx.WXK_ESCAPE:
-            if self.current_sidebar_focus is not None:
-                log.debug("on_char_hook: popping down active sidebar %s" % self.current_sidebar_focus)
+            if self.menu_currently_displayed is not None:
+                log.debug("on_char_hook: popping down active sidebar %s" % self.menu_currently_displayed)
                 self.force_clear_sidebar()
                 skip = False
         if skip:
@@ -1355,7 +1440,7 @@ class TileClient(wx.Window):
                 uuid = str(uuid4())
             self.child_uuid = uuid
 
-        log.debug("Created client for %s" % self.child_uuid)
+        log.debug("Created client for %s" % self.child.GetName())
         if leaf is None:
             leaf = parent
         self.set_leaf(leaf)
@@ -1384,7 +1469,7 @@ class TileClient(wx.Window):
         self.leaf = leaf
         self.title_bar.set_buttons_for_sidebar_state(leaf.is_sidebar)
         self.leaf.set_chrome(self)
-        self.Reparent(leaf)
+        self.leaf.reparent_client(self)
         self.do_size_from_child()
         if leaf.is_sidebar:
             self.SetBackgroundColour(self.tile_mgr.focused_color)
@@ -1430,6 +1515,7 @@ class TileClient(wx.Window):
         evt = TileManagerEvent(TileManager.wxEVT_CLIENT_ACTIVATED, self)
         evt.SetChild(self.child)
         self.do_send_event(evt)
+        print("setting focus to %s" % self.child.GetName())
         self.child.SetFocus()
         self.Refresh()
 
@@ -1494,13 +1580,13 @@ class TileClient(wx.Window):
         if self.leaf == m.current_leaf_focus:
             print("already focused", self.leaf)
         else:
-            print("on_set_focus", self.leaf, "current_leaf_focus", m.current_leaf_focus, "current_sidebar_focus", m.current_sidebar_focus)
+            print("on_set_focus", self.leaf, "current_leaf_focus", m.current_leaf_focus, "current menu", m.menu_currently_displayed)
             m.set_leaf_focus(self.leaf)
 
     def on_child_focus(self,evt):
         self.on_set_focus(evt)
 
-    def show_as_popup(self, x, y, w, h):
+    def fit_in_popup(self, x, y, w, h):
         self.SetPosition((x, y))
         self.do_size_from_bounds(w, h)
         self.Show()
@@ -1800,10 +1886,27 @@ class SidebarMenuItem(wx.Window, DockTarget):
     can_take_leaf_focus = False
     is_sidebar = True
 
+    if True:
+        class SidebarPopupWindow(wx.PopupTransientWindow):
+            def ProcessLeftDown(self, evt):
+                print("LEFT EVENT!")
+                return wx.PopupTransientWindow.ProcessLeftDown(self, evt)
+        class SidebarPopupWindow(wx.PopupWindow):
+            def ProcessLeftDown(self, evt):
+                print("LEFT EVENT!")
+                return wx.PopupTransientWindow.ProcessLeftDown(self, evt)
+
+            def Popup(self, client_focus=None):
+                self.Show(True)
+
+            def Dismiss(self):
+                self.Show(False)
+
     def __init__(self, sidebar, client=None, layout=None):
         wx.Window.__init__(self, sidebar, -1, name=TileManager.debug_window_name("SidebarMenuItem"))
         self.sidebar = sidebar
         self.tile_mgr = sidebar.tile_mgr
+        self.actual_popup = self.SidebarPopupWindow(self.tile_mgr)
 
         # Client windows are children of the main window so they can be
         # positioned over (and therefore obscure) any window within the
@@ -1822,11 +1925,7 @@ class SidebarMenuItem(wx.Window, DockTarget):
         self.client.Hide()
 
         self.Bind(wx.EVT_PAINT, self.on_paint)
-        self.Bind(wx.EVT_LEAVE_WINDOW, self.on_leave)
-        self.Bind(wx.EVT_ENTER_WINDOW, self.on_enter)
-        self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
-        self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
 
     def __repr__(self):
         return "<SidebarMenuItem %s>" % (self.client.child.GetName())
@@ -1845,6 +1944,9 @@ class SidebarMenuItem(wx.Window, DockTarget):
 
     def set_chrome(self, client):
         client.extra_border = 4
+
+    def reparent_client(self, client):
+        client.Reparent(self.actual_popup)
 
     def calc_docking_rectangles(self, event_window, source_leaf):
         r = self.calc_rectangle_relative_to(event_window)
@@ -1865,64 +1967,31 @@ class SidebarMenuItem(wx.Window, DockTarget):
         s.tile_mgr.configure_sidebar_dc(dc, self.entered)
         s.title_renderer.draw_label(dc, self)
 
-    def on_leave(self,evt):
-        m = self.tile_mgr
-        print("on_leave %s: focus: current" % self.client.child.GetName(), m.current_sidebar_focus, "pending", m.pending_sidebar_focus, "leaf", m.current_leaf_focus)
-        if m.current_sidebar_focus == self:
-            pass
-        elif m.pending_sidebar_focus != self:
-            self.popdown(self.client)
-
-    def on_enter(self,evt):
-        m = self.tile_mgr
-        print("on_enter %s: focus: current" % self.client.child.GetName(), m.current_sidebar_focus, "pending", m.pending_sidebar_focus, "leaf", m.current_leaf_focus)
-        if not m.current_sidebar_focus:
-            if m.pending_sidebar_focus:
-                m.pending_sidebar_focus.popdown()
-            self.popup()
-
-    def on_motion(self,evt):
-        # print("pending sidebar focus=%s" % self.tile_mgr.pending_sidebar_focus)
-        evt.Skip()
-
     def on_left_down(self, evt):
-        m = self.tile_mgr
-        if m.current_sidebar_focus == self:
-            m.restore_last_main_window_focus()
-        else:
-            if m.current_sidebar_focus:
-                print("clicked on another sidebar label %s" % self)
-                m.force_clear_sidebar()
-                self.popup()
-            else:
-                m.pending_sidebar_focus = self
-                print("setting pending focus to sidebar %s" % self)
+        self.tile_mgr.on_start_menu(self, evt)
 
-    def on_left_up(self,evt):
-        m = self.tile_mgr
-        if m.pending_sidebar_focus == self:
-            print("Setting focus to sidebar!")
-            m.set_sidebar_focus()
+    def position_popup(self, x, y, w, h):
+        top = self.tile_mgr
+        xs, ys = top.ClientToScreen(x, y)
+        self.client.SetSize(0, 0, w, h)
+        self.client.fit_in_popup(0, 0, w, h)
+        self.actual_popup.SetSize(xs, ys, w, h)
+        self.actual_popup.Popup(self.client)
+        print("positioned popup %s to %s" % (self.client.child.GetName(), (xs, ys, w, h)))
 
-    def popup(self):
+    def open_menu(self):
         self.entered = True
         self.sidebar.title_renderer.show_client(self.sidebar, self)
         self.Refresh()
 
-    if wx.Platform == "__WXMSW__":
-        def popdown(self, expected_client=None):
-            self.entered = False
-            popup = self.tile_mgr.actual_popup
-            popup.Dismiss(expected_client)
-            self.Refresh()
-    else:
-        def popdown(self, expected_client=None):
-            self.entered = False
-            self.client.Hide()
-            self.Refresh()
+    def close_menu(self):
+        self.entered = False
+        self.actual_popup.Dismiss()
+        self.Refresh()
 
     def remove(self):
         self.client.do_send_close_event()
+        self.actual_popup.Destroy()
         self.Destroy()
 
     def remove_all(self):
@@ -1992,7 +2061,7 @@ class Sidebar(wx.Window, ViewContainer):
                 # too wide; force popup to max width of usable space
                 x = x_min
                 cw = sw
-            sidebar.do_popup_view(view, x, y, cw, ch)
+            view.position_popup(x, y, cw, ch)
 
 
     class VerticalRenderer(BaseRenderer):
@@ -2235,86 +2304,6 @@ class Sidebar(wx.Window, ViewContainer):
         pos = self.title_renderer.calc_view_start(w, h)
         for view in self.views:
             pos = self.title_renderer.do_view_size(view, pos, w, h)
-
-    if wx.Platform == "__WXMSW__":
-        def do_popup_view(self, view, x, y, w, h):
-            top = self.tile_mgr
-            if not hasattr(top, 'actual_popup'):
-                top.actual_popup = self.FakePopupWindow(top)
-                top.actual_popup.tile_mgr = top
-            print("operating on view", view)
-            print("client parent before:", view.client.GetParent())
-            view.client.Reparent(top.actual_popup)
-            print("client parent after:", view.client.GetParent())
-            view.client.show_as_popup(0, 0, w, h)
-            xs, ys = top.ClientToScreen(x, y)
-            top.actual_popup.SetSize(xs, ys, w, h)
-            top.actual_popup.client = view.client
-            top.actual_popup.Popup()
-
-        class FakePopupWindow(wx.MiniFrame):
-            def __init__(self, parent, style=None):
-                wx.MiniFrame.__init__(self, parent, style = wx.NO_BORDER |wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_NO_TASKBAR)
-                #self.Bind(wx.EVT_KEY_DOWN , self.OnKeyDown)
-                self.Bind(wx.EVT_CHAR, self.on_char)
-                self.Bind(wx.EVT_SET_FOCUS, self.on_focus)
-
-            def on_char(self, evt):
-                #print("on_char: keycode=%s" % evt.GetKeyCode())
-                self.GetParent().GetEventHandler().ProcessEvent(evt)
-
-            def activate_parent(self):
-                """Activate the parent window
-                @postcondition: parent window is raised
-
-                """
-                parent = self.GetParent()
-                parent.Raise()
-                parent.SetFocus()
-
-            def on_focus(self, evt):
-                """Raise and reset the focus to the parent window whenever
-                we get focus.
-                @param evt: event that called this handler
-
-                """
-                #log.debug("on_focus: set focus to %s" % str(self.GetParent()))
-                self.activate_parent()
-                evt.Skip()
-
-            # Compatibility methods for wx.PopupTransientWindow
-
-            def Popup(self):
-                print("showing popup")
-                self.Show(True)
-
-            def Dismiss(self, expected_client=None):
-                if self.client is None:
-                    print("Dismissing popup with no client!")
-                else:
-                    if expected_client is not None and expected_client != self.client:
-                        # MSW can get a leave event for the old window after an
-                        # enter event for the new window
-                        print("enter before leave: reparenting expected client")
-                        expected_client.Reparent(self.tile_mgr.hiding_space)
-                    else:
-                        print("hiding popup")
-                        self.client.Reparent(self.tile_mgr.hiding_space)
-                        self.client.Hide()
-                        self.client = None
-                        self.Show(False)
-
-    else:
-        def do_popup_view(self, view, x, y, w, h):
-            print("operating on view", view)
-            print("children before:", str(self.tile_mgr.GetChildren()))
-            print("client parent before:", view.client.GetParent())
-            view.client.Reparent(self.tile_mgr.hiding_space)
-            print("client parent mid:", view.client.GetParent())
-            view.client.Reparent(self.tile_mgr)
-            print("client parent after:", view.client.GetParent())
-            print("children after:", str(self.tile_mgr.GetChildren()))
-            view.client.show_as_popup(x, y, w, h)
 
     def delete_leaf_from_list(self, view, index):
         self.tile_mgr.force_clear_sidebar()
