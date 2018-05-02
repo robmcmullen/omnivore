@@ -625,11 +625,19 @@ class TileManager(wx.Window):
                     break
         return found
 
-    def force_focus(self, item):
+    def find(self, item):
         if hasattr(item, 'SetPosition'):
             found = self.find_control(item)
         else:
             found = self.find_uuid(item)
+        return found
+
+    def in_sidebar(self, control):
+        found = self.find(control).GetParent()
+        return found.is_sidebar if found is not None else False
+
+    def force_focus(self, item):
+        found = self.find(item)
         if found:
             print("FOCUS TO:", found)
             self.set_leaf_focus(found.leaf)

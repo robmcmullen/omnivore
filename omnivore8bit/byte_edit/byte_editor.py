@@ -205,7 +205,9 @@ class ByteEditor(FrameworkEditor):
             u = e['focused viewer']
             viewer = self.find_viewer_by_uuid(u)
         if viewer is None:
-            viewer = self.viewers[0]
+            for viewer in self.viewers:
+                if not self.control.in_sidebar(viewer.control):
+                    break
         print("setting focus to %s" % viewer)
         self.set_focused_viewer(viewer)
 
