@@ -642,17 +642,18 @@ class TileManager(wx.Window):
         return False
 
     def add(self, control, u=None, new_side=wx.LEFT, use_empty=True, sidebar=False):
-        if sidebar:
-            self.add_sidebar(control, u, new_side)
-        else:
-            self.add_split(control, u, new_side, use_empty)
+        if not self.replace_by_uuid(control, u):
+            if use_empty:
+                found = self.find_empty()
+                if found:
+                    found.replace(control, u)
+                    return
+            if sidebar:
+                self.add_sidebar(control, u, new_side)
+            else:
+                self.add_split(control, u, new_side, use_empty)
 
     def add_split(self, control, u=None, new_side=wx.LEFT, use_empty=True):
-        if use_empty:
-            found = self.find_empty()
-            if found:
-                found.replace(control, u)
-                return
         leaf = self.child.views[-1]
         self.child.split(leaf, control, u, new_side)
 
