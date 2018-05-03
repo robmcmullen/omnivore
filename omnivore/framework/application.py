@@ -107,6 +107,8 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
 
     downloader = Any
 
+    debug_show_focused = False
+
     ###########################################################################
     # Private interface.
     ###########################################################################
@@ -148,6 +150,7 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
         parser = argparse.ArgumentParser(description="Application parser")
         parser.add_argument("-t", "--task_id", "--task-id", "--edit_with","--edit-with", action="store", default="", help="Use the editing mode specified by this task id for all files listed on the command line")
         parser.add_argument("--show_editors", "--show-editors", action="store_true", default=False, help="List all task ids")
+        parser.add_argument("--show_focused", "--show-focused", action="store_true", default=False, help="Show the focused window at every idle processing ")
         parser.add_argument("--build_docs", "--build-docs", action="store_true", default=False, help="Build documentation from the menubar")
         options, extra_args = parser.parse_known_args(self.command_line_args)
         if options.show_editors:
@@ -191,6 +194,8 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
         app = wx.GetApp()
         app.tasks_application = self
 
+        self.debug_show_focused = options.show_focused
+
         if options.build_docs:
             idle = self.on_idle_build_docs
         else:
@@ -227,6 +232,8 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
         if t > self.last_clipboard_check_time + self.clipboard_check_interval:
             wx.CallAfter(self.update_dynamic_menu_items, editor)
             self.last_clipboard_check_time = time.time()
+            if self.debug_show_focused:
+                self.show_focused()
         editor.perform_idle()
 
         # Workaround: pyface doesn't seem to update the enabled status in any
@@ -237,6 +244,10 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
         toolbars = editor.window._window_backend.get_toolbars()
         for t in [t.window for t in toolbars]:
             t.Refresh(False)
+
+    def show_focused(self):
+        focused = self.active_window.active_task.active_editor.control.FindFocus()
+        print("Focus at: %s (%s)" % (focused, focused.GetName() if focused is not None else ""))
 
     def on_idle_build_docs(self, evt):
         evt.Skip()

@@ -1132,6 +1132,11 @@ class CompactGrid(wx.ScrolledWindow):
 
         return best
 
+    def SetFocus(self):
+        # Windows needs the focus to be explicitly set to the main window to
+        # get text events. No harm on Linux/MacOS.
+        self.main.SetFocus()
+
     ##### object method overrides
 
     def __repr__(self):
