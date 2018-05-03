@@ -1377,10 +1377,10 @@ class TileViewLeaf(TileWindowBase, DockTarget):
 
     @property
     def debug_id(self):
-        return self.client.child.GetName()
+        return self.client.child.GetName() if self.client is not None else None
 
     def __repr__(self):
-        return "<TileLeaf %s %s %f>" % (self.client.child.GetName(), self.debug_id, self.ratio_in_parent)
+        return "<TileLeaf %s %f>" % (self.debug_id, self.ratio_in_parent)
 
     def remove(self):
         self.remove_client()
