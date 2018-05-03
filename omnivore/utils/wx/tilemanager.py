@@ -514,43 +514,36 @@ class TileManager(wx.Window):
         return x, y, w, h
 
     def set_leaf_focus(self, leaf):
-        self.clear_leaf_focus()
+        last_focus = self.current_leaf_focus
+        if not leaf:
+            # no previous leaf or the leaf has been deleted; need to find a new
+            # one
+            print("can't focus on leaf %s; finding first suitable leaf" % leaf)
+            for leaf in self.iter_leafs():
+                if leaf.can_take_leaf_focus:
+                    break
+            else:
+                leaf = None
         self.current_leaf_focus = leaf
-        print("current_leaf_focus", repr(leaf), "menu", repr(self.menu_currently_displayed))
-        print("current_leaf_focus = menu", self.current_leaf_focus == self.menu_currently_displayed)
-        if self.menu_currently_displayed is not None and self.menu_currently_displayed != self.current_leaf_focus:
+        print("set_leaf_focus: current=%s last=%s menu=%s is_menu=%s" % (repr(leaf), repr(last_focus), repr(self.menu_currently_displayed), self.current_leaf_focus == self.menu_currently_displayed))
+        if self.menu_currently_displayed is not None and self.menu_currently_displayed != leaf:
             self.menu_currently_displayed.close_menu()
             self.menu_currently_displayed = None
-        self.current_leaf_focus.client.set_focus()
-
-    def clear_leaf_focus(self):
-        current = self.current_leaf_focus
-        print("clear_leaf_focus", current)
-        if current:
-            if current.can_take_leaf_focus:
-                # only update previous focus if it can take focus
-                self.previous_leaf_focus = current
-                current.Refresh()
-            print("previous_leaf_focus", str(self.previous_leaf_focus))
-        self.current_leaf_focus = None
-        # try:
-        #     current.client.clear_focus()
-        # except ReferenceError:
-        #     # weakref referrant has been deleted!
-        #     pass
-        # except AttributeError:
-        #     # weakref referrant has been deleted!
-        #     pass
-        # else:
-        #     if current.can_take_leaf_focus:
-        #         self.previous_leaf_focus.append(current)
-        # print("previous_leaf_focus", str(self.previous_leaf_focus))
-        # self.current_leaf_focus = None
+        if last_focus:
+            print("CLEARING LAST LEAF", last_focus)
+            last_focus.Refresh()
+        if leaf:
+            leaf.client.set_focus()
+            print("REFRESHING CURRENT LEAF", leaf)
+            leaf.Refresh()
+            if leaf.can_take_leaf_focus:
+                self.previous_leaf_focus = leaf
 
     def force_clear_sidebar(self):
         if self.menu_currently_displayed is not None:
             self.menu_currently_displayed.close_menu()
             self.menu_currently_displayed = None
+            self.set_leaf_focus(self.previous_leaf_focus)
 
     def restore_last_main_window_focus(self):
         print("restoring from", str(self.previous_leaf_focus))
@@ -845,9 +838,7 @@ class TileManager(wx.Window):
                 self.set_leaf_focus(menu_item)
             else:
                 print("FINISH! menu closed")
-                self.menu_currently_displayed = None
-                menu_item.close_menu()
-                self.restore_last_main_window_focus()
+                self.force_clear_sidebar()
 
     def start_child_window_move(self, source_leaf, evt):
         self.dock_handler.start_docking(self, source_leaf, evt)
