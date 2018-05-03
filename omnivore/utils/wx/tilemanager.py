@@ -927,6 +927,9 @@ class TileWindowBase(wx.Window):
 
         def on_paint(self, evt):
             m = self.tile_mgr
+            if m == self.GetParent():
+                # top level can't be resized! It fills the space
+                return
             dc = wx.PaintDC(self)
             size = self.GetClientSize()
             p = wx.Pen(m.border_color)
