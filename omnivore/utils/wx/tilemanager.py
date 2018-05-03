@@ -1894,17 +1894,25 @@ class SidebarMenuItem(wx.Window, DockTarget):
     can_take_leaf_focus = False
     is_sidebar = True
 
-    if True:
-        class SidebarPopupWindow(wx.PopupTransientWindow):
-            def ProcessLeftDown(self, evt):
-                print("LEFT EVENT!")
-                return wx.PopupTransientWindow.ProcessLeftDown(self, evt)
-        class SidebarPopupWindow(wx.PopupWindow):
-            def ProcessLeftDown(self, evt):
-                print("LEFT EVENT!")
-                return wx.PopupTransientWindow.ProcessLeftDown(self, evt)
+    if wx.Platform == "__WXGTK__":
+        class SidebarPopupWindow(wx.MiniFrame):
+            def __init__(self, parent, style=None):
+                wx.MiniFrame.__init__(self, parent, style = wx.NO_BORDER |wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_NO_TASKBAR)
+                #self.Bind(wx.EVT_KEY_DOWN , self.OnKeyDown)
+                self.Bind(wx.EVT_CHAR, self.on_char)
 
-            def Popup(self, client_focus=None):
+            def Popup(self):
+                self.Show(True)
+
+            def Dismiss(self):
+                self.Show(False)
+
+            def on_char(self, evt):
+                print("on_char: keycode=%s" % evt.GetKeyCode())
+                self.GetParent().GetEventHandler().ProcessEvent(evt)
+    else:
+        class SidebarPopupWindow(wx.PopupWindow):
+            def Popup(self):
                 self.Show(True)
 
             def Dismiss(self):
@@ -1984,7 +1992,7 @@ class SidebarMenuItem(wx.Window, DockTarget):
         self.client.SetSize(0, 0, w, h)
         self.client.fit_in_popup(0, 0, w, h)
         self.actual_popup.SetSize(xs, ys, w, h)
-        self.actual_popup.Popup(self.client)
+        self.actual_popup.Popup()
         print("positioned popup %s to %s" % (self.client.child.GetName(), (xs, ys, w, h)))
 
     def open_menu(self):
