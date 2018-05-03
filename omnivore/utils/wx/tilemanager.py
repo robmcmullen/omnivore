@@ -380,6 +380,7 @@ class TileManager(wx.Window):
         self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
+        self.Bind(wx.EVT_KILL_FOCUS, self.on_kill_focus)
         self.current_leaf_focus = None
         self.previous_leaf_focus = None
         self.dock_handler = DockTarget.DockingRectangleHandler()
@@ -776,6 +777,11 @@ class TileManager(wx.Window):
         return "%s-%d" % (name, cls._debug_count)
 
     #### Dynamic positioning of child windows
+
+    def on_kill_focus(self, evt):
+        # FIXME: MacOS doesn't get this event
+        self.force_clear_sidebar()
+        evt.Skip()
 
     def on_start_menu(self, menu_item, evt):
         self.menu_popdown_mode = True
