@@ -304,6 +304,10 @@ class DockTarget(object):
         log.debug("find_empty: skipping %s in %s" % (self.client.child_uuid, self.client.child.GetName()))
         return None
 
+    def iter_leafs(self):
+        log.debug("iter_leafs: found %s" % (self.client.child.GetName()))
+        yield self
+
     def calc_rectangle_relative_to(self, event_window):
         r = self.GetClientRect()
         sx, sy = self.ClientToScreen((r.x, r.y))
@@ -377,7 +381,7 @@ class TileManager(wx.Window):
         self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
         self.current_leaf_focus = None
-        self.previous_leaf_focus_list = []
+        self.previous_leaf_focus = None
         self.dock_handler = DockTarget.DockingRectangleHandler()
         self.menu_popdown_mode = False
         self.menu_hit_test = None
@@ -514,24 +518,20 @@ class TileManager(wx.Window):
         self.current_leaf_focus = leaf
         print("current_leaf_focus", repr(leaf), "menu", repr(self.menu_currently_displayed))
         print("current_leaf_focus = menu", self.current_leaf_focus == self.menu_currently_displayed)
-        if self.current_leaf_focus == self.menu_currently_displayed:
-            self.current_leaf_focus.client.set_focus()
-        elif self.menu_currently_displayed is not None:
+        if self.menu_currently_displayed is not None and self.menu_currently_displayed != self.current_leaf_focus:
             self.menu_currently_displayed.close_menu()
             self.menu_currently_displayed = None
-        # if self.current_leaf_focus.is_sidebar:
-        #     self.menu_currently_displayed = self.current_leaf_focus
-        #     self.menu_currently_displayed.open_menu()
-        else:
-            self.current_leaf_focus.client.set_focus()
+        self.current_leaf_focus.client.set_focus()
 
     def clear_leaf_focus(self):
         current = self.current_leaf_focus
         print("clear_leaf_focus", current)
         if current:
             if current.can_take_leaf_focus:
-                self.previous_leaf_focus_list.append(current)
-            print("previous_leaf_focus_list", str(self.previous_leaf_focus_list))
+                # only update previous focus if it can take focus
+                self.previous_leaf_focus = current
+                current.Refresh()
+            print("previous_leaf_focus", str(self.previous_leaf_focus))
         self.current_leaf_focus = None
         # try:
         #     current.client.clear_focus()
@@ -543,8 +543,8 @@ class TileManager(wx.Window):
         #     pass
         # else:
         #     if current.can_take_leaf_focus:
-        #         self.previous_leaf_focus_list.append(current)
-        # print("previous_leaf_focus_list", str(self.previous_leaf_focus_list))
+        #         self.previous_leaf_focus.append(current)
+        # print("previous_leaf_focus", str(self.previous_leaf_focus))
         # self.current_leaf_focus = None
 
     def force_clear_sidebar(self):
@@ -553,17 +553,17 @@ class TileManager(wx.Window):
             self.menu_currently_displayed = None
 
     def restore_last_main_window_focus(self):
-        try:
-            print("restoring from", str(self.previous_leaf_focus_list))
-            while True:
-                prev = self.previous_leaf_focus_list.pop()
-                if prev:
-                    self.current_leaf_focus = prev
-                    prev.client.set_focus()
+        print("restoring from", str(self.previous_leaf_focus))
+        if self.previous_leaf_focus:
+            self.previous_leaf_focus.client.set_focus()
+            return
+        else:
+            for leaf in self.iter_leafs():
+                if not leaf.is_sidebar:
+                    leaf.client.set_focus()
                     return
-        except IndexError:
-            # nothing in list that still exists
-            self.current_leaf_focus = None
+        # nothing left?
+        self.current_leaf_focus = None
 
     def is_leaf_focused(self, window):
         c = self.current_leaf_focus
@@ -654,6 +654,10 @@ class TileManager(wx.Window):
                 if found:
                     break
         return found
+
+    def iter_leafs(self):
+        for leaf in self.child.iter_leafs():
+            yield leaf
 
     def find(self, item):
         if hasattr(item, 'SetPosition'):
@@ -843,6 +847,7 @@ class TileManager(wx.Window):
                 print("FINISH! menu closed")
                 self.menu_currently_displayed = None
                 menu_item.close_menu()
+                self.restore_last_main_window_focus()
 
     def start_child_window_move(self, source_leaf, evt):
         self.dock_handler.start_docking(self, source_leaf, evt)
@@ -1045,6 +1050,10 @@ class ViewContainer(object):
             if found is not None:
                 return found
         return None
+
+    def iter_leafs(self):
+        for view in self.views:
+            yield view
 
     def find_leaf_index(self, leaf):
         return self.views.index(leaf)  # raises IndexError on failure
