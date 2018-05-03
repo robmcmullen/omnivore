@@ -40,7 +40,7 @@ import wx
 import logging
 #logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+#log.setLevel(logging.DEBUG)
 resize_log = logging.getLogger("resize")
 #resize_log.setLevel(logging.DEBUG)
 
@@ -514,6 +514,11 @@ class TileManager(wx.Window):
         return x, y, w, h
 
     def set_leaf_focus(self, leaf):
+        if self.menu_popdown_mode:
+            # MacOS sends a focus event when the menu is visible, before the
+            # user explicitly focuses it. So, just ignore when the menu is
+            # active.
+            return
         last_focus = self.current_leaf_focus
         if not leaf:
             # no previous leaf or the leaf has been deleted; need to find a new
@@ -795,18 +800,15 @@ class TileManager(wx.Window):
         elif self.menu_popdown_mode:
             pos = evt.GetPosition()
             menu_item = self.menu_hit_test.in_rect(pos)
-            print("menu down main window: pos=%s in %s" % (pos,menu_item))
             if menu_item is None:
-                print("not over any menu; leaving menu displayed %s" % self.menu_currently_displayed)
+                log.debug("not over any menu; leaving menu displayed %s" % self.menu_currently_displayed)
             elif self.menu_currently_displayed != menu_item:
                 if self.menu_currently_displayed is not None:
-                    print("closing menu %s" % self.menu_currently_displayed)
                     self.menu_currently_displayed.close_menu()
-                print("showing menu %s" % menu_item)
                 self.menu_currently_displayed = menu_item
                 menu_item.open_menu()
             else:
-                print("still displaying same menu %s" % menu_item)
+                log.debug("still displaying same menu %s" % menu_item)
 
     def on_left_up(self, evt):
         if self.dock_handler.is_active:
