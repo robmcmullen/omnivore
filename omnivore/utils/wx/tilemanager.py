@@ -1898,9 +1898,9 @@ class SidebarMenuItem(wx.Window, DockTarget):
     is_sidebar = True
 
     if wx.Platform == "__WXGTK__":
-        class SidebarPopupWindow(wx.MiniFrame):
+        class SidebarPopupWindow(wx.Frame):
             def __init__(self, parent, style=None):
-                wx.MiniFrame.__init__(self, parent, style = wx.NO_BORDER |wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_NO_TASKBAR)
+                wx.Frame.__init__(self, parent, style = wx.NO_BORDER|wx.FRAME_FLOAT_ON_PARENT|wx.FRAME_NO_TASKBAR|wx.FRAME_SHAPED)
                 #self.Bind(wx.EVT_KEY_DOWN , self.OnKeyDown)
                 self.Bind(wx.EVT_CHAR, self.on_char)
 
