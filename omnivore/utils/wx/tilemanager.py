@@ -539,9 +539,12 @@ class TileManager(wx.Window):
             print("CLEARING LAST LEAF", last_focus)
             last_focus.Refresh()
         if leaf:
-            leaf.client.set_focus()
-            print("REFRESHING CURRENT LEAF", leaf)
-            leaf.Refresh()
+            if leaf == last_focus:
+                print("SAME FOCUS!!!!!!")
+            else:
+                leaf.client.set_focus()
+                print("REFRESHING CURRENT LEAF", leaf)
+                leaf.Refresh()
             if leaf.can_take_leaf_focus:
                 self.previous_leaf_focus = leaf
 
@@ -780,7 +783,11 @@ class TileManager(wx.Window):
 
     def on_kill_focus(self, evt):
         # FIXME: MacOS doesn't get this event
-        self.force_clear_sidebar()
+        if not self.menu_popdown_mode:
+            log.debug("kill focus")
+            self.force_clear_sidebar()
+        else:
+            log.debug("Skipping kill focus because we're in a menu event")
         evt.Skip()
 
     def on_start_menu(self, menu_item, evt):
@@ -813,6 +820,7 @@ class TileManager(wx.Window):
                     self.menu_currently_displayed.close_menu()
                 self.menu_currently_displayed = menu_item
                 menu_item.open_menu()
+                log.debug("changing menu to %s" % menu_item)
             else:
                 log.debug("still displaying same menu %s" % menu_item)
 
