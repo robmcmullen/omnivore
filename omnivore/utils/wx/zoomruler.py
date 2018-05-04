@@ -767,11 +767,13 @@ class ZoomRulerBase(object):
             if abs(pos - start_pos) > self.select_threshold:
                 self.select_end = self.position_to_value(pos)
                 self.ruler.selected_ranges = [(self.select_start, self.select_end)]
+                self.selection_started_callback(self.ruler.selected_ranges)
                 self.Refresh()
         elif op == "extend selection":
             last_start, last_end = self.ruler.selected_ranges[-1]
             value = self.position_to_value(pos)
             self.ruler.selected_ranges[-1] = (last_start, value)
+            self.selection_extended_callback(self.ruler.selected_ranges, self.ruler.marks_in_selection())
             self.Refresh()
         elif op == "finish selection":
             self.selection_finished_callback(self.ruler.selected_ranges)
@@ -820,6 +822,12 @@ class ZoomRulerBase(object):
 
     def release_mouse(self):
         pass
+
+    def selection_started_callback(self, selected_ranges):
+        log.debug("selected_started_callback")
+
+    def selection_extended_callback(self, selected_ranges, marks_in_selection):
+        log.debug("selected_extended_callback")
 
     def selection_finished_callback(self, selected_ranges):
         items = self.ruler.marks_in_selection()
