@@ -980,7 +980,7 @@ class TileWindowBase(wx.Window):
         self.sizer.Bind(wx.EVT_LEFT_UP, self.on_left_up)
 
         self.ratio_in_parent = ratio
-        self.SetBackgroundColour(wx.RED)
+        # self.SetBackgroundColour(wx.RED)
 
     @property
     def debug_id(self):
@@ -1494,7 +1494,7 @@ class TileClient(wx.Window):
             self.SetBackgroundColour(self.tile_mgr.focused_color)
         else:
             self.SetBackgroundColour(self.tile_mgr.border_color)
-        self.SetBackgroundColour(wx.RED)
+        # self.SetBackgroundColour(wx.RED)
 
     def remove(self):
         self.do_send_close_event()
@@ -1814,7 +1814,7 @@ class TitleBar(wx.Window):
         self.buttons.append(TitleBar.VSplitNewRight(self, m.close_button_size))
         self.buttons.append(TitleBar.VSplitNewLeft(self, m.close_button_size))
 
-        self.SetBackgroundColour(wx.RED)
+        # self.SetBackgroundColour(wx.RED)
         self.set_buttons_for_sidebar_state(in_sidebar)
         self.hide_buttons()
 
