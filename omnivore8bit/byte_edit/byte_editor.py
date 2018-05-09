@@ -469,7 +469,7 @@ class ByteEditor(FrameworkEditor):
         viewer = viewer_cls.create(self.control, linked_base)
         self.viewers.append(viewer)
         self.control.add(viewer.control, viewer.uuid)
-        linked_base.force_data_model_update()
+        viewer.recalc_data_model()
         self.update_pane_names()
         return viewer
 
