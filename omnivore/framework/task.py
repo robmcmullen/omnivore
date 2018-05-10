@@ -278,7 +278,11 @@ class FrameworkTask(Task):
         that will load a new file or create a new view of the existing editor,
         respectively.
         """
-        editor = self.get_editor(**kwargs)
+        try:
+            editor = self.get_editor(**kwargs)
+        except e:
+            self.error("Failed creating editor: %s" % str(e))
+            return
         self.editor_area.add_editor(editor)
         self.editor_area.activate_editor(editor)
         log.debug("new: source=%s editor=%s" % (source, editor))

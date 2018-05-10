@@ -16,6 +16,8 @@ from preferences import ByteEditPreferences
 from . import actions as ba
 from ..viewers import actions as va
 from ..jumpman import commands as ja
+from .. import emulators as emu
+from ..emulators import actions as ea
 import omnivore8bit.arch.fonts as fonts
 import omnivore8bit.arch.colors as colors
 import omnivore8bit.arch.machine as machine
@@ -237,18 +239,17 @@ class ByteEditTask(FrameworkTask):
 
     machine_menu_changed = Event
 
-    emulator_changed = Event
-
     segments_changed = Event
 
     ui_layout_overrides = {
         "menu": {
-            "order": ["File", "Edit", "View", "Bytes", "Jumpman", "Segment", "Disk Image", "Documents", "Window", "Help"],
+            "order": ["File", "Edit", "View", "Bytes", "Jumpman", "Segment", "Disk Image", "Emulation", "Documents", "Window", "Help"],
             "View": ["PredefinedGroup", "ProcessorGroup", "AssemblerGroup", "MemoryMapGroup", "ColorGroup", "FontGroup", "BitmapGroup", "SizeGroup", "ChangeGroup", "ConfigGroup", "ToggleGroup", "TaskGroup", "DebugGroup"],
             "Bytes": ["HexModifyGroup"],
             "Segment": ["ListGroup", "ActionGroup"],
-            "Disk Image": ["ParserGroup", "EmulatorGroup", "ActionGroup"],
+            "Disk Image": ["ParserGroup", "ActionGroup"],
             "Jumpman":  ["LevelGroup", "SelectionGroup", "CustomCodeGroup"],
+            "Emulation":  ["BootGroup", "ConfigGroup", "CommandGroup"],
         },
     }
 
@@ -274,10 +275,10 @@ class ByteEditTask(FrameworkTask):
     # 'FrameworkTask' interface.
     ###########################################################################
 
-    def get_editor(self, task_arguments="", **kwargs):
+    def get_editor(self, task_arguments="", emulator=None, **kwargs):
         """ Opens a new empty window
         """
-        editor = ByteEditor(task_arguments=task_arguments)
+        editor = ByteEditor(task_arguments=task_arguments, emulator=emulator)
         return editor
 
     @on_trait_change('window.application.preferences_changed_event')
@@ -518,19 +519,6 @@ class ByteEditTask(FrameworkTask):
                 id='mm8', separator=False, name="Viewer Size"),
             ]
 
-    def get_actions_Menu_DiskImage_EmulatorGroup(self):
-        return [
-            ba.RunEmulatorAction(),
-            SMenu(
-                ba.EmulatorChoiceGroup(id="a2"),
-                Group(
-                    ba.AddNewEmulatorAction(),
-                    ba.EditEmulatorsAction(),
-                    ba.SetSystemDefaultEmulatorAction(),
-                    id="a3", separator=True),
-                id='MachineEmulator1', name="Emulators"),
-            ]
-
     def get_actions_Menu_DiskImage_ParserGroup(self):
         groups = []
         for mime, pretty, parsers in iter_known_segment_parsers():
@@ -644,6 +632,25 @@ class ByteEditTask(FrameworkTask):
         return [
             ja.AssemblySourceAction(),
             ja.RecompileAction(),
+            ]
+
+    def get_actions_Menu_Emulation_BootGroup(self):
+        actions = []
+        for e in emu.known_emulators:
+            actions.append(ea.UseEmulatorAction(name=e.pretty_name, emulator=e))
+        return [
+            ea.BootDiskImageAction(),
+            ea.BootSegmentsAction(),
+            SMenu(
+                Group(
+                    *actions,
+                    id="emug1", separator=True),
+                id='emu1', separator=False, name="Available Emulators"),
+            ea.ResumeAction(),
+            ea.PauseAction(),
+            ea.StepAction(),
+            ea.StepIntoAction(),
+            ea.StepOverAction(),
             ]
 
     def get_keyboard_actions(self):

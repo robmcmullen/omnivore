@@ -17,47 +17,6 @@ from omnivore.utils.wx.dialogs import DictEditDialog
 from omnivore8bit.document import SegmentedDocument
 
 
-class EmulatorDialog(DictEditDialog):
-    border = 5
-
-    def __init__(self, parent, title, default=None):
-        fields = [
-            ('file', 'exe', 'Executable: '),
-            ('text', 'args', 'Args: '),
-            ('static spacer below', None, "(use %s as placeholder for the data file or it will be added at the end)"),
-            ('text', 'name', 'Display Name: '),
-            ]
-        self.user_changed = False
-        DictEditDialog.__init__(self, parent, title, "Enter emulator information:", fields, default)
-
-    def on_text_changed(self, evt):
-        if evt.GetEventObject() == self.controls['name']:
-            self.user_changed = True
-        elif not self.user_changed:
-            self.set_automatic_name()
-
-    def set_automatic_name(self):
-        name = os.path.basename(self.controls['exe'].GetValue())
-        args = self.controls['args'].GetValue()
-        if args:
-            name += " " + args
-        self.controls['name'].ChangeValue(name)
-
-    def on_path_changed(self, evt):
-        if not self.user_changed:
-            self.set_automatic_name()
-        self.ok_btn.Enable(self.can_submit())
-
-    def can_submit(self):
-        path = self.controls['exe'].GetValue()
-        return bool(which(path))
-
-
-def prompt_for_emulator(parent, title, default_emu=None):
-    d = EmulatorDialog(parent, title, default_emu)
-    return d.show_and_get_value()
-
-
 class AssemblerDialog(DictEditDialog):
     border = 5
 

@@ -20,6 +20,7 @@ from omnivore.templates import get_template
 from omnivore8bit.arch.machine import Machine, Atari800
 from omnivore8bit.document import SegmentedDocument
 from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
+from .. import emulators as emu
 
 from omnivore.utils.processutil import run_detach
 
@@ -74,6 +75,12 @@ class ByteEditor(FrameworkEditor):
     center_base = Instance(LinkedBase)
 
     focused_viewer = Any(None)  # should be Instance(SegmentViewer), but creates circular imports
+
+    # Emulators must be set at editor creation time and there's no way to
+    # change the emulator. All you can do is create a new editor.
+    emulator = Any(None)
+
+    emulator_running = Bool(False)
 
     linked_bases = List(LinkedBase)
 
@@ -133,16 +140,13 @@ class ByteEditor(FrameworkEditor):
     def section_name(self):
         return str(self.segment)
 
-
     ###########################################################################
     # 'FrameworkEditor' interface.
     ###########################################################################
 
     def create(self, parent):
-        SegmentedDocument.init_emulators(self)
         Machine.one_time_init(self)
         self.control = self._create_control(parent)
-        self.task.emulator_changed = self.document
 
     def get_default_layout(self):
         data = get_template("%s.default_layout" % self.task.id)
@@ -160,6 +164,8 @@ class ByteEditor(FrameworkEditor):
             self.initial_segment = e['initial segment']
         if 'diff highlight' in e:
             self.diff_highlight = bool(e['diff highlight'])
+        if 'emulator' in e:
+            self.emulator = emu.restore_emulator(e['emulator'])
 
         viewers = e.get('viewers', [])
         log.debug("metadata: viewers=%s" % str(viewers))
@@ -229,6 +235,8 @@ class ByteEditor(FrameworkEditor):
             b.to_metadata_dict(e, document)
             mdict["linked bases"].append(e)
         mdict["focused viewer"] = self.focused_viewer.uuid
+        if self.emulator is not None:
+            mdict["emulator"] = self.emulator.serialize_state(mdict)
         # if document == self.document:
         #     # If we're saving the document currently displayed, save the
         #     # display parameters too.
@@ -243,7 +251,6 @@ class ByteEditor(FrameworkEditor):
             self.use_self_as_baseline(self.document)
         FrameworkEditor.rebuild_document_properties(self)
         self.focused_viewer.linked_base.find_segment(self.initial_segment)
-        self.update_emulator()
         self.compare_to_baseline()
         self.can_resize_document = self.document.can_resize
 
@@ -311,33 +318,6 @@ class ByteEditor(FrameworkEditor):
         for viewer in self.viewers:
             viewer.update_caption()
         self.control.update_captions()
-
-    @on_trait_change('document.emulator_change_event')
-    def update_emulator(self):
-        emu = self.document.emulator
-        if emu is None:
-            emu = self.document.get_system_default_emulator(self.task)
-        if not self.document.is_known_emulator(emu):
-            self.document.add_emulator(self.task, emu)
-        self.emulator_label = "Run using '%s'" % emu['name']
-
-    def run_emulator(self):
-        emu = self.document.emulator
-        if not emu:
-            emu = self.document.get_system_default_emulator(self.task)
-        if self.dirty:
-            if not self.save():
-                return
-        exe = emu['exe']
-        args = emu['args']
-        fspath = self.document.filesystem_path()
-        if fspath is not None:
-            try:
-                run_detach(exe, args, fspath, "%s")
-            except RuntimeError, e:
-                self.window.error("Failed launching %s %s\n\nError: %s" % (exe, args, str(e)), "%s Emulator Error" % emu['name'])
-        else:
-            self.window.error("Can't run emulator on:\n\n%s\n\nDocument is not on local filesystem" % self.document.uri, "%s Emulator Error" % emu['name'])
 
     def view_segment_number(self, number):
         self.focused_viewer.linked_base.view_segment_number(number)

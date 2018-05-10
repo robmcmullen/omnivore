@@ -123,6 +123,10 @@ class LinkedBase(CaretHandler):
     def document_length(self):
         return len(self.segment)
 
+    @property
+    def emulator(self):
+        return self.editor.emulator
+
     #### Convenience functions
 
     def __str__(self):

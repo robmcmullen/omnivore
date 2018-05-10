@@ -20,7 +20,7 @@ from commands import *
 from omnivore8bit.arch.disasm import ANTIC_DISASM, JUMPMAN_LEVEL, JUMPMAN_HARVEST, UNINITIALIZED_DATA
 from omnivore8bit.arch.ui.antic_colors import AnticColorDialog
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
-from omnivore8bit.ui.dialogs import prompt_for_emulator, prompt_for_assembler, SegmentOrderDialog, SegmentInterleaveDialog
+from omnivore8bit.ui.dialogs import SegmentOrderDialog, SegmentInterleaveDialog
 from omnivore8bit.arch.machine import Machine
 from omnivore8bit.document import SegmentedDocument
 from omnivore.framework.minibuffer import *
@@ -28,6 +28,7 @@ from omnivore.utils.textutil import parse_int_label_dict
 from omnivore.utils.nputil import count_in_range
 from omnivore.utils.jsonutil import dict_to_list
 from .. import clipboard_commands as cc
+from .. import emulators as emu
 
 if sys.platform == "darwin":
     RADIO_STYLE = "toggle"
@@ -46,103 +47,28 @@ class GetFontFromSelectionAction(EditorAction):
         self.active_editor.get_font_from_selection()
 
 
-class EmulatorChoiceGroup(TaskDynamicSubmenuGroup):
-    """Dynamic menu group to display the available fonts
-    """
-    #### 'DynamicSubmenuGroup' interface ######################################
-
-    event_name = 'emulator_changed'
-
-    ###########################################################################
-    # Private interface.
-    ###########################################################################
-
-    def _get_items(self, event_data=None):
-        items = []
-        if event_data is not None:
-            for emu in event_data.emulator_list:
-                action = UseEmulatorAction(emulator=emu)
-                items.append(ActionItem(action=action))
-
-        return items
-
-
-class UseEmulatorAction(EditorAction):
-    """This submenu contains a list of the known emulators and a checkbox
-    to indicate the current emulator.
-
+class UseSegmentAction(EditorAction):
+    """This submenu contains a list of all segments in the disk image.
+    Selecting one of these items will change the view to the selected segment.
     """
     doc_hint = "parent"
     style = RADIO_STYLE
-    emulator = Any
+
+    segment = Any
+
+    segment_number = Int
 
     def _name_default(self):
-        return "%s" % (self.emulator['name'])
+        return str(self.segment)
 
     def perform(self, event):
-        self.active_editor.document.set_emulator(self.emulator)
+        wx.CallAfter(self.active_editor.view_segment_number, self.segment_number)
 
     def _update_checked(self, ui_state):
-        self.checked = self.active_editor.document.emulator == self.emulator
-
-
-class AddNewEmulatorAction(EditorAction):
-    """Open up a window to define a reference to an external emulator
-
-    Omnivore can run the disk image in any emulator that is capable of being
-    started from a command line. It spawns a separate process and feeds the
-    emulator a path to the disk image along with any necessary command line
-    arguments that you have to specify when setting up the emulator in this
-    window.
-    """
-    name = 'Add New Emulator...'
-
-    def perform(self, event):
-        emu = prompt_for_emulator(event.task.window.control, "New Emulator")
-        if emu:
-            self.active_editor.focused_viewer.machine.add_emulator(event.task, emu)
-
-
-class EditEmulatorsAction(EditorAction):
-    """Make changes to the current list of emulators.
-
-    This opens a window with a list of the currently defined emulators
-    to make changes to existing emulators or add/delete any already defined.
-    """
-    name = 'Edit Emulators...'
-
-    def perform(self, event):
-        dlg = ListReorderDialog(event.task.window.control, Machine.get_user_defined_emulator_list(), lambda a:a['name'], prompt_for_emulator, "Manage Emulators")
-        if dlg.ShowModal() == wx.ID_OK:
-            emus = dlg.get_items()
-            Machine.set_user_defined_emulator_list(event.task, emus)
-        dlg.Destroy()
-
-
-class SetSystemDefaultEmulatorAction(EditorAction):
-    """The currently specified emulator in the `Emulators`_ list will be set as
-    the system default and remembered for subsequent editing sessions.
-    """
-    name = 'Set Current as System Default'
-
-    def perform(self, event):
-        Machine.set_system_default_emulator(event.task, self.active_editor.document.emulator)
-
-
-class RunEmulatorAction(NameChangeAction):
-    """Run the current emulator using the current emulator.
-
-    The current emulator is shown in the `Emulators`_ sub-menu.
-    """
-    default_name = 'Run Emulator'
-    name = default_name
-    accelerator = 'F5'
-    menu_item_name = 'emulator_label'
-
-    def perform(self, event):
-        self.active_editor.run_emulator()
-
-
+        if self.active_editor:
+            state = self.active_editor.segment_number == self.segment_number
+            log.debug("UseSegmentAction: checked=%s %s %s %s" % (state, str(self.segment), self.active_editor.segment_number, self.segment_number))
+            self.checked = state
 
 
 class AddViewerAction(EditorAction):

@@ -29,12 +29,6 @@ class SegmentedDocument(BaseDocument):
 
     user_segments = List
 
-    emulator = Any
-
-    emulator_list = None
-
-    emulator_change_event = Event
-
     can_resize = Property(Bool, depends_on='segments')
 
     document_memory_map = Dict
@@ -89,9 +83,6 @@ class SegmentedDocument(BaseDocument):
         mdict["segment parser"] = self.segment_parser
         mdict["serialized user segments"] = list(self.user_segments)
         self.container_segment.serialize_extra_to_dict(mdict)
-        emu = self.emulator
-        if emu and not 'system default' in emu:
-            mdict["emulator"] = self.emulator
         mdict["document memory map"] = sorted([list(i) for i in self.document_memory_map.iteritems()])  # save as list of pairs because json doesn't allow int keys for dict
 
     def restore_extra_from_dict(self, e):
@@ -112,8 +103,6 @@ class SegmentedDocument(BaseDocument):
                 s.reconstruct_raw(self.container_segment.rawdata)
                 self.add_user_segment(s, replace=True)
         self.container_segment.restore_extra_from_dict(e)
-        if 'emulator' in e:
-            self.emulator = e['emulator']
         if 'document memory map' in e:
             self.document_memory_map = dict(e['document memory map'])
 
@@ -255,113 +244,6 @@ class SegmentedDocument(BaseDocument):
             except IndexError:
                 pass
         return found
-
-    #### Emulator
-
-    def set_emulator(self, emu):
-        self.emulator = emu
-        self.emulator_change_event = True
-
-    def add_emulator(self, task, emu):
-        self.emulator_list.append(emu)
-        self.remember_emulators(task.window.application)
-        task.machine_menu_changed = self
-
-    @classmethod
-    def init_emulators(cls, editor):
-        if cls.emulator_list is None:
-            cls.emulator_list = editor.window.application.get_json_data("emulator_list", [])
-            default = editor.window.application.get_json_data("system_default_emulator", None)
-
-            if default is None:
-                default = cls.guess_system_default_emulator()
-            if not cls.is_known_emulator(default):
-                cls.emulator_list[0:0] = [default]
-
-    @classmethod
-    def remember_emulators(cls, application):
-        e_list = []
-        default = None
-        for emu in cls.emulator_list:
-            if 'system default' in emu:
-                default = emu
-            else:
-                if 'system default' in emu:
-                    # remove system default tags on any other emulator
-                    del emu['system default']
-                e_list.append(emu)
-        if e_list:
-            application.save_json_data("emulator_list", e_list)
-        if default:
-            application.save_json_data("system_default_emulator", default)
-
-    @classmethod
-    def is_known_emulator(cls, emu):
-        for e in cls.emulator_list:
-            if e == emu:
-                return True
-        return False
-
-    @classmethod
-    def guess_system_default_emulator(cls):
-        if sys.platform == "win32":
-            exe = "Altirra.exe"
-        elif sys.platform == "darwin":
-            exe = "Atari800MacX"
-        else:
-            exe = "atari800"
-        emu = {'exe': exe,
-               'args': "",
-               'name': "system default: %s" % exe,
-               'system default': True,
-               }
-        return emu
-
-    @classmethod
-    def get_system_default_emulator(cls, task):
-        try:
-            default = cls.emulator_list[0]
-        except IndexError:
-            # somehow, all the elements have been removed!
-            default = cls.guess_system_default_emulator()
-            cls.remember_emulators(task.window.application)
-            task.machine_menu_changed = cls
-        return default
-
-    @classmethod
-    def set_system_default_emulator(cls, task, emu):
-        emu = dict(emu)  # copy to make sure we're not referencing an item in the existing emulator_list
-        emu['system default'] = True
-        emu['name'] = "system default: %s" % emu['name']
-        default = cls.emulator_list[0]
-        if 'system default' not in default:
-            cls.emulator_list[0:0] = [emu]
-        else:
-            cls.emulator_list[0] = emu
-        cls.remember_emulators(task.window.application)
-        task.machine_menu_changed = cls
-
-    @classmethod
-    def get_user_defined_emulator_list(cls):
-        """Return list of user defined emulators (i.e. not including the system
-        default emulator
-        """
-        emus = []
-        for e in cls.emulator_list:
-            if 'system default' not in e:
-                emus.append(e)
-        return emus
-
-    @classmethod
-    def set_user_defined_emulator_list(cls, task, emus):
-        default = None
-        for e in cls.emulator_list:
-            if 'system default' in e:
-                default = e
-        emus[0:0] = [default]
-        cls.emulator_list = emus
-        cls.remember_emulators(task.window.application)
-        task.machine_menu_changed = cls
 
     #### Baseline document for comparisons
 
