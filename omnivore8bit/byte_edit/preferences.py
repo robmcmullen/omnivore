@@ -43,15 +43,15 @@ class ByteEditPreferences(PreferencesHelper):
 
     map_width_low = 1
     map_width_high = 256
-    map_width = Range(low=map_width_low, high=map_width_high, value=17)
+    map_width = Range(low=map_width_low, high=map_width_high, value=40)
 
     bitmap_width_low = 1
     bitmap_width_high = 16
-    bitmap_width = Range(low=bitmap_width_low, high=bitmap_width_high, value=3)
+    bitmap_width = Range(low=bitmap_width_low, high=bitmap_width_high, value=1)
 
     hex_grid_width_low = 1
     hex_grid_width_high = 256
-    hex_grid_width = Range(low=hex_grid_width_low, high=hex_grid_width_high, value=14)
+    hex_grid_width = Range(low=hex_grid_width_low, high=hex_grid_width_high, value=16)
 
     # Font used for hex/disassembly
     text_font = Font(def_font)
