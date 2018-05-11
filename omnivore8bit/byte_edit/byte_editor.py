@@ -194,6 +194,10 @@ class ByteEditor(FrameworkEditor):
             log.debug("overriding viewers: %s" % str(names))
             viewer_metadata = {}  # reset to start from empty if task args are specified
             for viewer_name in names.split(","):
+                if viewer_name == "emulator":
+                    import pyatari800
+                    self.emulator = pyatari800.Atari800()
+                    continue
                 viewer_metadata[viewer_name.strip()] = {}
                 log.debug("metadata: clearing viewer[%s] because specified in task args" % (viewer_name.strip()))
 

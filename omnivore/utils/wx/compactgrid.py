@@ -400,6 +400,8 @@ class DebugLineRenderer(LineRenderer):
 
 
 class TableLineRenderer(LineRenderer):
+    default_image_cache = DrawTableCellImageCache
+
     def __init__(self, parent, chars_per_cell, image_cache=None, widths=None, col_labels=None):
         w, h = parent.view_params.calc_cell_size_in_pixels(chars_per_cell)
         LineRenderer.__init__(self, parent, w, h, parent.table.items_per_row, image_cache, widths, col_labels)

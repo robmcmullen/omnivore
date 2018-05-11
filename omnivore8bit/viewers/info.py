@@ -37,6 +37,9 @@ class BaseInfoViewer(SegmentViewer):
         self.control.recalc_view()
         self.control.refresh_view()
 
+    def get_notification_count(self):
+        return 0
+
 
 CommentItem = namedtuple('CommentItem', ('segment', 'index', 'label', 'font', 'type'))
 

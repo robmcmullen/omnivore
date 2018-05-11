@@ -7,8 +7,12 @@ import wx
 from traits.api import on_trait_change, Bool, Undefined
 
 import pyatari800 as a8
-from omnivore8bit.byte_edit.segments import SegmentList
+
+from omnivore.utils.wx import compactgrid as cg
+from ..byte_edit.segments import SegmentList
+from ..ui.segment_grid import SegmentGridControl, SegmentTable, SegmentGridTextCtrl
 from . import SegmentViewer
+from .info import BaseInfoViewer
 
 import logging
 log = logging.getLogger(__name__)
@@ -53,3 +57,56 @@ class Atari800Viewer(EmulatorViewer):
 
     def get_notification_count(self):
         return 0
+
+
+class CPU6502Table(cg.HexTable):
+    column_labels = ["A", "X", "Y", "SP", "N", "V", "-", "B", "D", "I", "Z", "C", "PC"]
+    column_sizes = [2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 4]
+
+    def __init__(self, linked_base):
+        dummy_data = [0] * 13
+        self.emulator = linked_base.emulator
+        cg.HexTable.__init__(self, dummy_data, dummy_data, 13)
+
+    def calc_display_text(self, col, dummy):
+        emu = self.emulator
+        if col < 4:
+            text = "%02x" % col
+        elif col < 12:
+            text = "X" if col != 6 else "-"
+        else:
+            text = "%04x" % col
+        return text
+
+    def get_label_at_index(self, index):
+        return "cpu"
+
+
+class CPU6502GridControl(SegmentGridControl):
+    col_labels = ["^A", "^X", "^Y", "^SP", "^N", "^V", "^-", "^B", "^D", "^I", "^Z", "^C", "^PC"]
+    col_widths = [2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 4]
+
+    def calc_default_table(self):
+        linked_base = self.caret_handler
+        return CPU6502Table(linked_base)
+
+    def calc_line_renderer(self):
+        return cg.TableLineRenderer(self, 1, None, widths=self.col_widths, col_labels=self.col_labels)
+
+    ##### editing
+
+    def set_viewer_defaults(self):
+        self.items_per_row = 13
+        self.want_row_header = False
+
+    def verify_keycode_can_start_edit(self, c):
+        return get_valid_hex_digit(c)
+
+
+class CPU6502Viewer(BaseInfoViewer):
+    name = "cpu6502"
+    viewer_category = "Emulator"
+
+    pretty_name = "6502 CPU Registers"
+
+    control_cls = CPU6502GridControl
