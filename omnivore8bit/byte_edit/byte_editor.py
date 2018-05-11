@@ -164,12 +164,21 @@ class ByteEditor(FrameworkEditor):
 
     def preprocess_document(self, doc):
         if self.task_arguments:
+            args = {}
             for arg in self.task_arguments.split(","):
-                if arg == "emulator":
-                    import pyatari800
-                    doc = emu.EmulationDocument(source_document=doc, emulator_type=pyatari800.Atari800)
-                    self.has_emulator = True
-                    continue
+                if "=" in arg:
+                    arg, v = arg.split("=", 1)
+                else:
+                    v = None
+                args[arg] = v
+            if "emulator" in args:
+                if "skip_frames" in args:
+                    skip = int(args["skip_frames"])
+                else:
+                    skip = 0
+                import pyatari800
+                doc = emu.EmulationDocument(source_document=doc, emulator_type=pyatari800.Atari800, skip_frames_on_boot=skip)
+                self.has_emulator = True
         return doc
 
     def from_metadata_dict(self, e):

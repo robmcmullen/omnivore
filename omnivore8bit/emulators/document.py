@@ -1,7 +1,7 @@
 import numpy as np
 
 # Enthought library imports.
-from traits.api import Trait, Any, List, Event, Dict, Property, Bool
+from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int
 
 from omnivore8bit.document import SegmentedDocument
 
@@ -32,12 +32,16 @@ class EmulationDocument(SegmentedDocument):
 
     emulator = Any(None)
 
+    skip_frames_on_boot = Int(0)
+
     ##### trait default values
 
     def _emulator_type_changed(self, value):
         print("VALUE", value)
         emu = self.emulator_type()
-        emu.begin_emulation()
+        emu.begin_emulation(["/nas/share/dreamhost/playermissile.com/jumpman/tutorial/clockwise.atr"])
+        for i in range(self.skip_frames_on_boot):
+            emu.next_frame()
         self.emulator = emu
         print("EMULATOR SEGMENST", emu.segments)
         self.bytes = emu.raw_array
