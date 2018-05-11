@@ -1,5 +1,7 @@
 import pyatari800 as a8
 
+from .document import EmulationDocument
+
 known_emulators = [a8.Atari800]
 
 default_emulator = a8.Atari800

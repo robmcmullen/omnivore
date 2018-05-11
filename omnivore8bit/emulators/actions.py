@@ -20,6 +20,7 @@ from commands import *
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
 from omnivore8bit.ui.dialogs import SegmentOrderDialog
 from .. import emulators as emu
+from .document import EmulationDocument
 
 if sys.platform == "darwin":
     RADIO_STYLE = "toggle"
@@ -49,10 +50,11 @@ class BootDiskImageAction(EditorAction):
     tooltip = "Start emulator using the current file as the boot disk"
 
     def perform(self, event=None):
-        self.task.new(self.active_editor.document, emulator=emu.default_emulator())
+        doc = EmulationDocument(source=self.active_editor.document, emulator_type=emu.default_emulator)
+        self.task.new(doc)
 
     def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.emulator is None
+        self.enabled = not self.active_editor.has_emulator
 
 
 class BootSegmentsAction(EditorAction):
@@ -67,7 +69,7 @@ class BootSegmentsAction(EditorAction):
         self.task.error("Not implemented yet!")
 
     def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.emulator is None
+        self.enabled = not self.active_editor.has_emulator
 
 
 class EmulatorAction(EditorAction):
@@ -80,7 +82,7 @@ class EmulatorAction(EditorAction):
         print("emulate!")
 
     def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.emulator is not None
+        self.enabled = self.active_editor.has_emulator
 
 
 class ResumeAction(EmulatorAction):
@@ -93,7 +95,7 @@ class ResumeAction(EmulatorAction):
         print("resume!")
 
     def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.emulator is not None and self.active_editor.emulator_running
+        self.enabled = self.active_editor.has_emulator and self.active_editor.emulator_running
 
 
 class PauseAction(EmulatorAction):
@@ -106,7 +108,7 @@ class PauseAction(EmulatorAction):
         print("resume!")
 
     def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.emulator is not None and not self.active_editor.emulator_running
+        self.enabled = self.active_editor.has_emulator and not self.active_editor.emulator_running
 
 
 class StepAction(PauseAction):
@@ -119,7 +121,7 @@ class StepAction(PauseAction):
         print("resume!")
 
     def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.emulator is not None and self.active_editor.emulator_running
+        self.enabled = self.active_editor.has_emulator and self.active_editor.emulator_running
 
 
 class StepIntoAction(PauseAction):
@@ -132,7 +134,7 @@ class StepIntoAction(PauseAction):
         print("resume!")
 
     def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.emulator is not None and not self.active_editor.emulator_running
+        self.enabled = self.active_editor.has_emulator and not self.active_editor.emulator_running
 
 
 class StepOverAction(PauseAction):
@@ -145,4 +147,4 @@ class StepOverAction(PauseAction):
         print("resume!")
 
     def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.emulator is not None and not self.active_editor.emulator_running
+        self.enabled = self.active_editor.has_emulator and not self.active_editor.emulator_running

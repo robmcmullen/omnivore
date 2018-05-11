@@ -132,7 +132,7 @@ class LinkedBase(CaretHandler):
     def __str__(self):
         return "LinkedBase: seg=%s" % self.segment
 
-    def from_metadata_dict(self, e):
+    def from_metadata_dict(self, e, document):
         log.debug("metadata: %s" % str(e))
         if 'uuid' in e:
             self.uuid = e['uuid']

@@ -292,8 +292,7 @@ class FrameworkTask(Task):
                 self.window.application.successfully_loaded_event = source.metadata.uri
         elif hasattr(source, 'document_id'):
             source.load_permute(editor)
-            editor.init_extra_metadata(source)
-            editor.view_document(source)
+            editor.load_document(source)
             self.window.application.successfully_loaded_event = source.metadata.uri
         else:
             editor.view_document(source.document, source)

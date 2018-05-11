@@ -121,18 +121,27 @@ class FrameworkEditor(Editor):
             doc = self.task.window.application.document_class()
             self.init_blank_document(doc, **kwargs)
         elif hasattr(source, 'document_id'):
-            log.debug("loading document: %s" % source)
-            self.init_extra_metadata(source, **kwargs)
-            self.view_document(source, **kwargs)
+            self.load_document(source, **kwargs)
         else:
             log.debug("loading FileGuess object: %s" % source)
             doc = self.task.window.application.guess_document(source)
-            self.init_extra_metadata(doc, **kwargs)
-            self.view_document(doc, **kwargs)
+            self.load_document(doc, **kwargs)
         doc.read_only = doc.metadata.check_read_only()
 
     def init_blank_document(self, doc, **kwargs):
         pass
+
+    def load_document(self, doc, **kwargs):
+        log.debug("loading document: %s" % doc)
+        self.document = self.preprocess_document(doc)
+        self.init_extra_metadata(self.document, **kwargs)
+        self.view_document(self.document, **kwargs)
+
+    def preprocess_document(self, doc):
+        """ Hook for subclasses to modify document based on arguments to the
+        application.
+        """
+        return doc
 
     def init_extra_metadata(self, doc, **kwargs):
         """ Hook to load any extra metadata for the given document

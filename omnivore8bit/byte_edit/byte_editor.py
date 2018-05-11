@@ -78,7 +78,7 @@ class ByteEditor(FrameworkEditor):
 
     # Emulators must be set at editor creation time and there's no way to
     # change the emulator. All you can do is create a new editor.
-    emulator = Any(None)
+    has_emulator = Bool(False)
 
     emulator_running = Bool(False)
 
@@ -140,6 +140,10 @@ class ByteEditor(FrameworkEditor):
     def section_name(self):
         return str(self.segment)
 
+    @property
+    def emulator(self):
+        return self.document.emulator
+
     ###########################################################################
     # 'FrameworkEditor' interface.
     ###########################################################################
@@ -157,6 +161,16 @@ class ByteEditor(FrameworkEditor):
             log.error("invalid data in default layout")
             e = {}
         return e
+
+    def preprocess_document(self, doc):
+        if self.task_arguments:
+            for arg in self.task_arguments.split(","):
+                if arg == "emulator":
+                    import pyatari800
+                    doc = emu.EmulationDocument(source_document=doc, emulator_type=pyatari800.Atari800)
+                    self.has_emulator = True
+                    continue
+        return doc
 
     def from_metadata_dict(self, e):
         log.debug("metadata: %s" % str(e))
@@ -195,8 +209,6 @@ class ByteEditor(FrameworkEditor):
             viewer_metadata = {}  # reset to start from empty if task args are specified
             for viewer_name in names.split(","):
                 if viewer_name == "emulator":
-                    import pyatari800
-                    self.emulator = pyatari800.Atari800()
                     continue
                 viewer_metadata[viewer_name.strip()] = {}
                 log.debug("metadata: clearing viewer[%s] because specified in task args" % (viewer_name.strip()))
