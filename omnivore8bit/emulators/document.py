@@ -1,7 +1,10 @@
+import os
+import tempfile
+
 import numpy as np
 
 # Enthought library imports.
-from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int
+from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int, String
 
 from omnivore8bit.document import SegmentedDocument
 
@@ -37,14 +40,27 @@ class EmulationDocument(SegmentedDocument):
     ##### trait default values
 
     def _emulator_type_changed(self, value):
-        print("VALUE", value)
         emu = self.emulator_type()
-        emu.begin_emulation(["/nas/share/dreamhost/playermissile.com/jumpman/tutorial/clockwise.atr"])
+        self.emulator = emu
+
+    #####
+
+    def boot(self, boot_file_type=None):
+        if boot_file_type is None:
+            boot_file_type = self.source_document.extension
+        fd, bootfile = tempfile.mkstemp(boot_file_type)
+        fh = os.fdopen(fd, "wb")
+        fh.write(self.source_document.container_segment.data.tostring())
+        fh.close()
+        emu = self.emulator
+        emu.begin_emulation([bootfile])
         for i in range(self.skip_frames_on_boot):
             emu.next_frame()
-        self.emulator = emu
-        print("EMULATOR SEGMENST", emu.segments)
         self.bytes = emu.raw_array
         self.style = np.zeros([len(self.bytes)], dtype=np.uint8)
         self.parse_segments([segment_parser_factory(emu.segments)])
-        print("CERATED SEGMENST:", self.segments)
+        log.debug("Segments after boot: %s" % str(self.segments))
+        try:
+            os.remove(bootfile)
+        except IOError:
+            log.warning("Unable to remove temporary file %s." % bootfile)

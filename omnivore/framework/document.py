@@ -139,6 +139,11 @@ class BaseDocument(HasTraits):
         name, _ = os.path.splitext(self.name)
         return name
 
+    @property
+    def extension(self):
+        _, ext = os.path.splitext(self.name)
+        return ext
+
     @classmethod
     def get_blank(cls):
         return cls(bytes="")
