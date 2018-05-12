@@ -43,7 +43,25 @@ class EmulationDocument(SegmentedDocument):
         emu = self.emulator_type()
         self.emulator = emu
 
+    #### serialization methods
+
+    def restore_extra_from_dict(self, e):
+        SegmentedDocument.restore_extra_from_dict(self, e)
+
+        if 'emulator_type' in e:
+            self.emulator_type = emu.factory[e['emulator_type']]
+        self.skip_frames_on_boot = e.get('skip_frames_on_boot', 0)
+
+    def serialize_extra_to_dict(self, mdict):
+        SegmentedDocument.serialize_extra_to_dict(self, mdict)
+
+        mdict["emulator_type"] = self.emulator_type.name
+        mdict["skip_frames_on_boot"] = self.skip_frames_on_boot
+
     #####
+
+    def calc_layout_template_name(self, task_id):
+        return "%s.emulator_layout" % task_id
 
     def boot(self, boot_file_type=None):
         if boot_file_type is None:

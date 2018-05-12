@@ -125,6 +125,9 @@ class SegmentedDocument(BaseDocument):
                 lines.append("  %s" % s)
         return "\n".join(lines)
 
+    def calc_layout_template_name(self, task_id):
+        return "%s.default_layout" % task_id
+
     def parse_segments(self, parser_list):
         parser_list.append(DefaultSegmentParser)
         r = SegmentData(self.bytes, self.style)

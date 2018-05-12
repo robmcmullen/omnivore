@@ -22,7 +22,7 @@ class EmulatorInUseError(EmulatorError):
 def factory(emulator_name):
     for e in known_emulators:
         if e.name == emulator_name:
-            return e()
+            return e
     raise UnknownEmulatorError("Unknown emulator '%s'" % emulator_name)
 
 
@@ -37,7 +37,7 @@ class EmulatorBase(object):
     pretty_name = "<pretty name>"
 
     def serialize_state(self, mdict):
-        pass
+        return {"name": self.name}
 
     def begin_emulation(self, args=None):
         pass

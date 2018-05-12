@@ -50,7 +50,7 @@ class BootDiskImageAction(EditorAction):
     tooltip = "Start emulator using the current file as the boot disk"
 
     def perform(self, event=None):
-        doc = EmulationDocument(source=self.active_editor.document, emulator_type=emu.default_emulator)
+        doc = EmulationDocument(source_document=self.active_editor.document, emulator_type=emu.default_emulator)
         doc.boot(".atr")
         self.task.new(doc)
 

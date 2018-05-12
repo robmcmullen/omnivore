@@ -153,7 +153,8 @@ class ByteEditor(FrameworkEditor):
         self.control = self._create_control(parent)
 
     def get_default_layout(self):
-        data = get_template("%s.default_layout" % self.task.id)
+        template_name = self.document.calc_layout_template_name(self.task.id)
+        data = get_template(template_name)
         print(data)
         try:
             e = json.loads(data)
@@ -179,7 +180,11 @@ class ByteEditor(FrameworkEditor):
                 import pyatari800
                 doc = emu.EmulationDocument(source_document=doc, emulator_type=pyatari800.Atari800, skip_frames_on_boot=skip)
                 doc.boot()
-                self.has_emulator = True
+        try:
+            doc.emulator_type
+            self.has_emulator = True
+        except:
+            pass
         return doc
 
     def from_metadata_dict(self, e):
@@ -188,8 +193,6 @@ class ByteEditor(FrameworkEditor):
             self.initial_segment = e['initial segment']
         if 'diff highlight' in e:
             self.diff_highlight = bool(e['diff highlight'])
-        if 'emulator' in e:
-            self.emulator = emu.restore_emulator(e['emulator'])
 
         viewers = e.get('viewers', [])
         log.debug("metadata: viewers=%s" % str(viewers))
@@ -261,8 +264,6 @@ class ByteEditor(FrameworkEditor):
             b.to_metadata_dict(e, document)
             mdict["linked bases"].append(e)
         mdict["focused viewer"] = self.focused_viewer.uuid
-        if self.emulator is not None:
-            mdict["emulator"] = self.emulator.serialize_state(mdict)
         # if document == self.document:
         #     # If we're saving the document currently displayed, save the
         #     # display parameters too.
