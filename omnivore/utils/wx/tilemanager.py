@@ -1606,7 +1606,7 @@ class TileClient(wx.Window):
         self.on_set_focus(evt)
 
     def fit_in_popup(self, x, y, w, h):
-        self.SetPosition((x, y))
+        self.SetSize(x, y, w, h)
         self.do_size_from_bounds(w, h)
         self.Show()
 
@@ -1911,9 +1911,18 @@ class SidebarMenuItem(wx.Window, DockTarget):
                 wx.Frame.__init__(self, parent, style = wx.NO_BORDER|wx.FRAME_FLOAT_ON_PARENT|wx.FRAME_NO_TASKBAR|wx.FRAME_SHAPED)
                 #self.Bind(wx.EVT_KEY_DOWN , self.OnKeyDown)
                 self.Bind(wx.EVT_CHAR, self.on_char)
+                self.first_time_shown = True
 
             def Popup(self):
+                print("popup size: %s" % str(self.GetSize()))
                 self.Show(True)
+
+                # Workaround for GTK bug(?) window isn't correct size until 2nd
+                # time it's shown.
+                if self.first_time_shown:
+                    self.first_time_shown = False
+                    self.Show(False)
+                    self.Show(True)
 
             def Dismiss(self):
                 self.Show(False)
@@ -2000,11 +2009,11 @@ class SidebarMenuItem(wx.Window, DockTarget):
     def position_popup(self, x, y, w, h):
         top = self.tile_mgr
         xs, ys = top.ClientToScreen(x, y)
-        self.client.SetSize(0, 0, w, h)
-        self.client.fit_in_popup(0, 0, w, h)
         self.actual_popup.SetSize(xs, ys, w, h)
+        pw, ph = self.actual_popup.GetClientSize()
+        self.client.fit_in_popup(0, 0, pw, ph)
         self.actual_popup.Popup()
-        print("positioned popup %s to %s" % (self.client.child.GetName(), (xs, ys, w, h)))
+        print("positioned popup %s to %s" % (self.client.child.GetName(), (xs, ys, w, h, pw, ph)))
 
     def open_menu(self):
         self.entered = True
