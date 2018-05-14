@@ -154,8 +154,8 @@ class ByteEditor(FrameworkEditor):
 
     def get_default_layout(self):
         template_name = self.document.calc_layout_template_name(self.task.id)
+        log.debug("template from: %s" % template_name)
         data = get_template(template_name)
-        print(data)
         try:
             e = json.loads(data)
         except ValueError:
@@ -206,6 +206,7 @@ class ByteEditor(FrameworkEditor):
             else:
                 e.update(e_default)
                 viewers = e.get('viewers', [])
+            log.debug("from layout: viewers=%s" % str(viewers))
 
         layout = e.get('layout', {})
         log.debug("metadata: layout=%s" % str(layout))
@@ -219,14 +220,16 @@ class ByteEditor(FrameworkEditor):
         if self.task_arguments or not viewer_metadata:
             names = self.task_arguments if self.task_arguments else self.default_viewers
             log.debug("overriding viewers: %s" % str(names))
-            viewer_metadata = {}  # reset to start from empty if task args are specified
+            override_viewer_metadata = {}
             for viewer_name in names.split(","):
                 if viewer_name == "emulator":
                     continue
-                viewer_metadata[viewer_name.strip()] = {}
+                override_viewer_metadata[viewer_name.strip()] = {}
                 log.debug("metadata: clearing viewer[%s] because specified in task args" % (viewer_name.strip()))
-
-            layout = {}  # empty layout so it isn't cluttered with unused windows
+            if override_viewer_metadata:
+                # found some specified viewers, so override the default layout
+                viewer_metadata = override_viewer_metadata
+                layout = {}  # empty layout so it isn't cluttered with unused windows
 
         linked_bases = {}
         for b in e.get('linked bases', []):
