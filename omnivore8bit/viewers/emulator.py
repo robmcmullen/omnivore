@@ -61,22 +61,23 @@ class Atari800Viewer(EmulatorViewer):
 
 class CPU6502Table(cg.HexTable):
     column_labels = ["A", "X", "Y", "SP", "N", "V", "-", "B", "D", "I", "Z", "C", "PC"]
+    column_from_cpu_state = [0, 3, 4, 2, 1, 1, 1, 1, 1, 1, 1, 1, 6]  # a, p, sp, x, y, _, pc
     column_sizes = [2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 4]
     p_bit = [0, 0, 0, 0, 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01]
 
     def __init__(self, linked_base):
         self.linked_base = linked_base
-        data = linked_base.emulator.cpu_info
+        data = linked_base.emulator.cpu_state
         cg.HexTable.__init__(self, data, data, 13)
 
     def calc_display_text(self, row, col):
-        vals = self.data
+        val = self.data[self.column_from_cpu_state[col]]
         if col < 4:
-            text = "%02x" % vals[col]
+            text = "%02x" % val
         elif col < 12:
-            text = self.column_labels[col] if vals[4] & self.p_bit[col] else "-"
+            text = self.column_labels[col] if val & self.p_bit[col] else "-"
         else:
-            text = "%04x" % vals[5]
+            text = "%04x" % val
         return text
 
     def get_value_style(self, row, col):
