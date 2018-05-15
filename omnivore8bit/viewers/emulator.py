@@ -2,6 +2,7 @@ import os
 import sys
 from collections import namedtuple
 
+import numpy as np
 import wx
 
 from traits.api import on_trait_change, Bool, Undefined
@@ -64,6 +65,8 @@ class CPU6502Table(SegmentVirtualTable):
     col_from_cpu_state = [0, 3, 4, 2, 1, 1, 1, 1, 1, 1, 1, 1, 6]  # a, p, sp, x, y, _, pc
     col_sizes = [2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 4]
     p_bit = [0, 0, 0, 0, 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01]
+    want_col_header = True
+    want_row_header = False
 
     def get_data_style_view(self, linked_base):
         data = linked_base.emulator.cpu_state
@@ -108,3 +111,43 @@ class CPU6502Viewer(CPUParamTableViewer):
     pretty_name = "6502 CPU Registers"
 
     override_table_cls = CPU6502Table
+
+
+class ANTICTable(SegmentVirtualTable):
+    col_labels = ["value"]
+    col_sizes = [4]
+    row_labels = ["DMACTL", "CHACTL", "HSCROL", "VSCROL", "PMBASE", "CHBASE", "NMIEN", "NMIST", "IR", "anticmode", "dctr", "lastline", "need_dl", "vscrol_off", "dlist", "screenaddr", "xpos", "xpos_limit", "ypos"]
+    want_col_header = False
+    want_row_header = True
+
+    def get_data_style_view(self, linked_base):
+        data = np.arange(len(self.row_labels), dtype=np.uint8)
+        return data, data
+
+    def calc_labels(self):
+        self.label_char_width = max([len(r) for r in self.row_labels])
+        self.num_rows = len(self.row_labels)
+
+    def get_row_label_text(self, start_line, num_lines, step=1):
+        last_line = min(start_line + num_lines, self.num_rows)
+        for line in range(start_line, last_line, step):
+            yield self.row_labels[line]
+
+    def calc_row_label_width(self, view_params):
+        return max([view_params.calc_text_width(r) for r in self.row_labels])
+
+    def get_value_style(self, row, col):
+        val = self.data[row]
+        text = "%02x" % val
+        return text, 0
+
+    def get_label_at_index(self, index):
+        return "antic"
+
+
+class ANTICViewer(CPUParamTableViewer):
+    name = "antic"
+
+    pretty_name = "ANTIC Registers"
+
+    override_table_cls = ANTICTable

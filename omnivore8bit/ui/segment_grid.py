@@ -346,6 +346,8 @@ class SegmentVirtualGridControl(SegmentGridControl):
         linked_base = self.caret_handler
         table = self.default_table_cls(linked_base)
         self.items_per_row = table.items_per_row
+        self.want_row_header = table.want_row_header
+        self.want_col_header = table.want_col_header
         return table
 
     def calc_line_renderer(self):
@@ -355,4 +357,3 @@ class SegmentVirtualGridControl(SegmentGridControl):
 
     def set_viewer_defaults(self):
         self.items_per_row = -1
-        self.want_row_header = False
