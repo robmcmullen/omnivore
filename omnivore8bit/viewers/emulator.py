@@ -10,7 +10,7 @@ import pyatari800 as a8
 
 from omnivore.utils.wx import compactgrid as cg
 from ..byte_edit.segments import SegmentList
-from ..ui.segment_grid import SegmentGridControl, SegmentTable, SegmentGridTextCtrl
+from ..ui.segment_grid import SegmentVirtualGridControl, SegmentVirtualTable, SegmentGridTextCtrl
 from . import SegmentViewer
 from .info import BaseInfoViewer
 
@@ -59,64 +59,38 @@ class Atari800Viewer(EmulatorViewer):
         return 0
 
 
-class CPU6502Table(cg.HexTable):
-    column_labels = ["A", "X", "Y", "SP", "N", "V", "-", "B", "D", "I", "Z", "C", "PC"]
-    column_from_cpu_state = [0, 3, 4, 2, 1, 1, 1, 1, 1, 1, 1, 1, 6]  # a, p, sp, x, y, _, pc
-    column_sizes = [2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 4]
+class CPU6502Table(SegmentVirtualTable):
+    col_labels = ["A", "X", "Y", "SP", "N", "V", "-", "B", "D", "I", "Z", "C", "PC"]
+    col_from_cpu_state = [0, 3, 4, 2, 1, 1, 1, 1, 1, 1, 1, 1, 6]  # a, p, sp, x, y, _, pc
+    col_sizes = [2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 4]
     p_bit = [0, 0, 0, 0, 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01]
 
-    def __init__(self, linked_base):
-        self.linked_base = linked_base
+    def get_data_style_view(self, linked_base):
         data = linked_base.emulator.cpu_state
-        cg.HexTable.__init__(self, data, data, 13)
+        return data, data
 
-    def calc_display_text(self, row, col):
-        val = self.data[self.column_from_cpu_state[col]]
+    def get_value_style(self, row, col):
+        val = self.data[self.col_from_cpu_state[col]]
         if col < 4:
             text = "%02x" % val
         elif col < 12:
-            text = self.column_labels[col] if val & self.p_bit[col] else "-"
+            text = self.col_labels[col] if val & self.p_bit[col] else "-"
         else:
             text = "%04x" % val
-        return text
-
-    def get_value_style(self, row, col):
-        style = 0
-        text = self.calc_display_text(row, col)
-        return text, style
+        return text, 0
 
     def get_label_at_index(self, index):
         return "cpu"
 
 
-class CPU6502GridControl(SegmentGridControl):
-    col_labels = ["^A", "^X", "^Y", "^SP", "^N", "^V", "^-", "^B", "^D", "^I", "^Z", "^C", "^PC"]
-    col_widths = [2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 4]
+class CPUParamTableViewer(BaseInfoViewer):
+    name = "<base class>"
 
-    def calc_default_table(self):
-        linked_base = self.caret_handler
-        return CPU6502Table(linked_base)
-
-    def calc_line_renderer(self):
-        return cg.VirtualTableLineRenderer(self, 1, widths=self.col_widths, col_labels=self.col_labels)
-
-    ##### editing
-
-    def set_viewer_defaults(self):
-        self.items_per_row = 13
-        self.want_row_header = False
-
-    def verify_keycode_can_start_edit(self, c):
-        return get_valid_hex_digit(c)
-
-
-class CPU6502Viewer(BaseInfoViewer):
-    name = "cpu6502"
     viewer_category = "Emulator"
 
-    pretty_name = "6502 CPU Registers"
+    pretty_name = "<pretty name>"
 
-    control_cls = CPU6502GridControl
+    control_cls = SegmentVirtualGridControl
 
     @on_trait_change('linked_base.editor.document.emulator_update_event')
     def process_emulator_update(self, evt):
@@ -126,3 +100,11 @@ class CPU6502Viewer(BaseInfoViewer):
 
     def show_caret(self, control, index, bit):
         pass
+
+
+class CPU6502Viewer(CPUParamTableViewer):
+    name = "cpu6502"
+
+    pretty_name = "6502 CPU Registers"
+
+    override_table_cls = CPU6502Table

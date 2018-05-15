@@ -30,6 +30,25 @@ class SegmentTable(cg.HexTable):
         return self.segment.label(index, True)
 
 
+class SegmentVirtualTable(cg.HexTable):
+    col_labels = []
+    col_sizes = []
+
+    def __init__(self, linked_base):
+        self.linked_base = linked_base
+        data, style = self.get_data_style_view(linked_base)
+        cg.HexTable.__init__(self, data, style, len(self.col_sizes))
+
+    def get_data_style_view(self, linked_base):
+        raise NotImplementedError
+
+    def get_value_style(self, row, col):
+        raise NotImplementedError
+
+    def get_label_at_index(self, index):
+        raise NotImplementedError
+
+
 class SegmentGridTextCtrl(wx.TextCtrl):
     def __init__(self, parent, id, num_chars_autoadvance, *args, **kwargs):
         # Don't use the validator here, because apparently we can't
@@ -114,6 +133,9 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
 
         self.original_metadata = mdict.copy()
 
+        if viewer_cls.override_table_cls is not None:
+            # instance attribute will override class attribute
+            self.default_table_cls = viewer_cls.override_table_cls
         cg.CompactGrid.__init__(self, None, linked_base.cached_preferences, linked_base, parent)
         self.automatic_refresh = False
 
@@ -315,3 +337,22 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
     def create_hidden_text_ctrl(self):
         c = SegmentGridTextCtrl(self, -1, 0, pos=(600,100), size=(400,24))
         return c
+
+
+class SegmentVirtualGridControl(SegmentGridControl):
+    default_table_cls = SegmentVirtualTable
+
+    def calc_default_table(self):
+        linked_base = self.caret_handler
+        table = self.default_table_cls(linked_base)
+        self.items_per_row = table.items_per_row
+        return table
+
+    def calc_line_renderer(self):
+        return cg.VirtualTableLineRenderer(self, 1, widths=self.table.col_sizes, col_labels=self.table.col_labels)
+
+    ##### editing
+
+    def set_viewer_defaults(self):
+        self.items_per_row = -1
+        self.want_row_header = False

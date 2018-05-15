@@ -42,6 +42,8 @@ class SegmentViewer(HasTraits):
 
     control_cls = SegmentGridControl  # override in subclass
 
+    override_table_cls = None  # override grid table
+
     has_editable_bytes = True  # directly user-editable bytes
 
     has_bitmap = False
