@@ -1,3 +1,5 @@
+import wx
+
 import pyatari800 as a8
 
 from .document import EmulationDocument

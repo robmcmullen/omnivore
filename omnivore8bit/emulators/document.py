@@ -2,13 +2,14 @@ import os
 import tempfile
 
 import numpy as np
+from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, InvalidSegmentParser, SegmentParser
 
 # Enthought library imports.
 from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int, String
 
 from omnivore8bit.document import SegmentedDocument
 
-from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, InvalidSegmentParser, SegmentParser
+from . import event_loop as el
 
 import logging
 log = logging.getLogger(__name__)
@@ -36,6 +37,10 @@ class EmulationDocument(SegmentedDocument):
     emulator = Any(None)
 
     skip_frames_on_boot = Int(0)
+
+    pause_emulator_event = Event
+
+    emulator_update_event = Event
 
     ##### trait default values
 
@@ -71,7 +76,7 @@ class EmulationDocument(SegmentedDocument):
         fh.write(self.source_document.container_segment.data.tostring())
         fh.close()
         emu = self.emulator
-        emu.begin_emulation([bootfile])
+        emu.begin_emulation([bootfile], el.start_monitor, self)
         for i in range(self.skip_frames_on_boot):
             emu.next_frame()
         self.bytes = emu.raw_array
@@ -82,3 +87,13 @@ class EmulationDocument(SegmentedDocument):
             os.remove(bootfile)
         except IOError:
             log.warning("Unable to remove temporary file %s." % bootfile)
+
+    ##### Emulator commands
+
+    def pause_emulator(self):
+        emu = self.emulator
+        emu.get_current_state()  # force output array update which normally happens only at the end of a frame
+        frame.update_ui()
+        a, x, y, s, sp, pc = emu.get_cpu()
+        print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, s, sp, pc))
+

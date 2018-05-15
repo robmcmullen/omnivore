@@ -86,33 +86,24 @@ class EmulatorAction(EditorAction):
         self.enabled = self.active_editor.has_emulator
 
 
-class ResumeAction(EmulatorAction):
-    """Restart the emulation
+class PauseResumeAction(EmulatorAction):
+    """Stop/Restart the emulation
     """
     name = "Resume"
-    tooltip = "Restart the emulation"
+    tooltip = "Pause or restart the emulation"
 
     def perform(self, event=None):
         print("resume!")
 
     def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.has_emulator and self.active_editor.emulator_running
+        self.enabled = self.active_editor.has_emulator
+        if self.active_editor.emulator_running:
+            self.name = "Pause"
+        else:
+            self.name = "Resume"
 
 
-class PauseAction(EmulatorAction):
-    """Restart the emulation
-    """
-    name = "Pause"
-    tooltip = "Restart the emulation"
-
-    def perform(self, event=None):
-        print("resume!")
-
-    def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.has_emulator and not self.active_editor.emulator_running
-
-
-class StepAction(PauseAction):
+class StepAction(EmulatorAction):
     """Restart the emulation
     """
     name = "Step"
@@ -125,7 +116,7 @@ class StepAction(PauseAction):
         self.enabled = self.active_editor.has_emulator and self.active_editor.emulator_running
 
 
-class StepIntoAction(PauseAction):
+class StepIntoAction(StepAction):
     """Restart the emulation
     """
     name = "Step Into"
@@ -135,10 +126,10 @@ class StepIntoAction(PauseAction):
         print("resume!")
 
     def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.has_emulator and not self.active_editor.emulator_running
+        self.enabled = self.active_editor.has_emulator and self.active_editor.emulator_running
 
 
-class StepOverAction(PauseAction):
+class StepOverAction(StepAction):
     """Restart the emulation
     """
     name = "Step Over"
@@ -148,4 +139,4 @@ class StepOverAction(PauseAction):
         print("resume!")
 
     def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.has_emulator and not self.active_editor.emulator_running
+        self.enabled = self.active_editor.has_emulator and self.active_editor.emulator_running

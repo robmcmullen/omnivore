@@ -66,12 +66,11 @@ class CPU6502Table(cg.HexTable):
 
     def __init__(self, linked_base):
         self.linked_base = linked_base
-        dummy_data = [0] * 13
-        cg.HexTable.__init__(self, dummy_data, dummy_data, 13)
+        data = linked_base.emulator.cpu_info
+        cg.HexTable.__init__(self, data, data, 13)
 
-    def calc_display_text(self, col, dummy):
-        emu = self.linked_base.emulator
-        vals = emu.get_cpu()
+    def calc_display_text(self, row, col):
+        vals = self.data
         if col < 4:
             text = "%02x" % vals[col]
         elif col < 12:
@@ -79,6 +78,11 @@ class CPU6502Table(cg.HexTable):
         else:
             text = "%04x" % vals[5]
         return text
+
+    def get_value_style(self, row, col):
+        style = 0
+        text = self.calc_display_text(row, col)
+        return text, style
 
     def get_label_at_index(self, index):
         return "cpu"
@@ -93,7 +97,7 @@ class CPU6502GridControl(SegmentGridControl):
         return CPU6502Table(linked_base)
 
     def calc_line_renderer(self):
-        return cg.TableLineRenderer(self, 1, None, widths=self.col_widths, col_labels=self.col_labels)
+        return cg.VirtualTableLineRenderer(self, 1, widths=self.col_widths, col_labels=self.col_labels)
 
     ##### editing
 
@@ -112,3 +116,12 @@ class CPU6502Viewer(BaseInfoViewer):
     pretty_name = "6502 CPU Registers"
 
     control_cls = CPU6502GridControl
+
+    @on_trait_change('linked_base.editor.document.emulator_update_event')
+    def process_emulator_update(self, evt):
+        log.debug("process_data_model_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        if evt is not Undefined:
+            self.refresh_view()
+
+    def show_caret(self, control, index, bit):
+        pass
