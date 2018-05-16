@@ -91,13 +91,17 @@ class PauseResumeAction(EmulatorAction):
     """
     name = "Resume"
     tooltip = "Pause or restart the emulation"
+    accelerator = 'F8'
 
     def perform(self, event=None):
-        print("resume!")
+        if self.active_editor.document.emulator_running:
+            self.active_editor.document.pause_emulator()
+        else:
+            self.active_editor.document.restart_emulator()
 
     def _update_enabled(self, ui_state):
         self.enabled = self.active_editor.has_emulator
-        if self.active_editor.emulator_running:
+        if self.active_editor.document.emulator_running:
             self.name = "Pause"
         else:
             self.name = "Resume"
@@ -110,10 +114,10 @@ class StepAction(EmulatorAction):
     tooltip = "Restart the emulation"
 
     def perform(self, event=None):
-        print("resume!")
+        self.active_editor.document.debugger_step()
 
     def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.has_emulator and self.active_editor.emulator_running
+        self.enabled = self.active_editor.has_emulator and self.active_editor.document.emulator_paused
 
 
 class StepIntoAction(StepAction):
@@ -125,9 +129,6 @@ class StepIntoAction(StepAction):
     def perform(self, event=None):
         print("resume!")
 
-    def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.has_emulator and self.active_editor.emulator_running
-
 
 class StepOverAction(StepAction):
     """Restart the emulation
@@ -137,6 +138,3 @@ class StepOverAction(StepAction):
 
     def perform(self, event=None):
         print("resume!")
-
-    def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.has_emulator and self.active_editor.emulator_running

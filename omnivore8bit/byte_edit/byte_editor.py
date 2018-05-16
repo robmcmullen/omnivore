@@ -80,8 +80,6 @@ class ByteEditor(FrameworkEditor):
     # change the emulator. All you can do is create a new editor.
     has_emulator = Bool(False)
 
-    emulator_running = Bool(False)
-
     linked_bases = List(LinkedBase)
 
     viewers = List(Any)

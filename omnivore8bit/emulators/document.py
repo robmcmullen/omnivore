@@ -73,7 +73,15 @@ class EmulationDocument(SegmentedDocument):
     @property
     def timer_delay(self):
         # wxpython delays are in milliseconds
-        return self.tickrate * 1000 
+        return self.tickrate * 1000
+
+    @property
+    def emulator_running(self):
+        return self.emulation_timer is not None and self.emulation_timer.IsRunning()
+
+    @property
+    def emulator_paused(self):
+        return self.emulation_timer is not None and not self.emulation_timer.IsRunning()
 
     #### serialization methods
 
@@ -129,6 +137,9 @@ class EmulationDocument(SegmentedDocument):
         if not self.emulation_timer.IsRunning():
             self.emulation_timer.StartOnce(self.framerate * 1000)
 
+    def stop_timer(self, repeat=False, delay=None, forceupdate=True):
+        self.emulation_timer.Stop()
+
     def ready_for_next_frame(self):
         now = time.time()
         self.emulator.next_frame()
@@ -146,7 +157,6 @@ class EmulationDocument(SegmentedDocument):
         self.last_update_time = now
 
     def pause_emulator(self):
-        self.emulation_timer.Stop()
         emu = self.emulator
         emu.get_current_state()  # force output array update which normally happens only at the end of a frame
         self.emulator_update_event = True
@@ -157,6 +167,7 @@ class EmulationDocument(SegmentedDocument):
     def restart_emulator(self):
         print("restart")
         self.emulator.leave_debugger()
+        self.start_timer()
         self.emulator_update_event = True
 
     def debugger_step(self):
