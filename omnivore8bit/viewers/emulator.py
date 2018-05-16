@@ -113,18 +113,20 @@ class CPU6502Viewer(CPUParamTableViewer):
     override_table_cls = CPU6502Table
 
 
-class ANTICTable(SegmentVirtualTable):
+class DtypeTable(SegmentVirtualTable):
+    emulator_dtype_name = "<from subclass>"
     col_labels = ["value"]
     col_sizes = [4]
-    row_labels = ["DMACTL", "CHACTL", "HSCROL", "VSCROL", "PMBASE", "CHBASE", "NMIEN", "NMIST", "IR", "anticmode", "dctr", "lastline", "need_dl", "vscrol_off", "dlist", "screenaddr", "xpos", "xpos_limit", "ypos"]
     want_col_header = False
     want_row_header = True
 
     def get_data_style_view(self, linked_base):
-        data = np.arange(len(self.row_labels), dtype=np.uint8)
+        data = linked_base.emulator.calc_dtype_data(self.emulator_dtype_name)
+        print(data.dtype.names)
         return data, data
 
     def calc_labels(self):
+        self.row_labels = self.data.dtype.names
         self.label_char_width = max([len(r) for r in self.row_labels])
         self.num_rows = len(self.row_labels)
 
@@ -138,16 +140,32 @@ class ANTICTable(SegmentVirtualTable):
 
     def get_value_style(self, row, col):
         val = self.data[row]
-        text = "%02x" % val
+        try:
+            text = "%02x" % val
+        except TypeError:
+            text = "..."
         return text, 0
 
     def get_label_at_index(self, index):
-        return "antic"
+        return self.emulator_dtype_name
 
 
-class ANTICViewer(CPUParamTableViewer):
-    name = "antic"
+# This dynamically creates clases based on the emulator-defined dtypes.
+#
+# Each resulting class looks like this ANTIC example, except for everywhere
+# that ANTIC appears, the other class name is substituted. Much repetition! So,
+# instead, we create the classes in a loop.
+#
+# class ANTICTableViewer(CPUParamTableViewer):
+#     name = "antic"
+#     pretty_name = "ANTIC Registers"
+#     override_table_cls = type('ANTICTable', (DtypeTable,), {'emulator_dtype_name': 'ANTIC'})
 
-    pretty_name = "ANTIC Registers"
-
-    override_table_cls = ANTICTable
+for dtype_name in ['ANTIC', 'GTIA', 'POKEY', 'PIA']:
+    clsname = '%sViewer' % dtype_name
+    cls = type(clsname, (CPUParamTableViewer,), {
+        'name': dtype_name.lower(),
+        'pretty_name': '%s Registers' % dtype_name,
+        'override_table_cls': type('%sTable' % dtype_name, (DtypeTable,), {'emulator_dtype_name': dtype_name}),
+        })
+    globals()[clsname] = cls
