@@ -101,10 +101,10 @@ class PauseResumeAction(EmulatorAction):
 
     def _update_enabled(self, ui_state):
         self.enabled = self.active_editor.has_emulator
-        if self.active_editor.document.emulator_running:
-            self.name = "Pause"
-        else:
+        if self.enabled and not self.active_editor.document.emulator_running:
             self.name = "Resume"
+        else:
+            self.name = "Pause"
 
 
 class StepAction(EmulatorAction):
