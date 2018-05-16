@@ -10,6 +10,7 @@ from traits.api import on_trait_change, Bool, Undefined
 import pyatari800 as a8
 
 from omnivore.utils.wx import compactgrid as cg
+from omnivore.utils.command import DisplayFlags
 from ..byte_edit.segments import SegmentList
 from ..ui.segment_grid import SegmentVirtualGridControl, SegmentVirtualTable, SegmentGridTextCtrl
 from . import SegmentViewer
@@ -40,6 +41,12 @@ class EmulatorViewer(SegmentViewer):
     def recalc_view(self):
         # self.control.recalc_view()
         self.control.Refresh()
+
+    @on_trait_change('linked_base.editor.document.emulator_update_event')
+    def process_emulator_update(self, evt):
+        log.debug("process_data_model_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        if evt is not Undefined:
+            self.control.show_frame(force=True)
 
 
 class Atari800Viewer(EmulatorViewer):
@@ -99,7 +106,8 @@ class CPUParamTableViewer(BaseInfoViewer):
     def process_emulator_update(self, evt):
         log.debug("process_data_model_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
-            self.refresh_view()
+            flags = DisplayFlags()
+            self.refresh_view(flags)
 
     def show_caret(self, control, index, bit):
         pass

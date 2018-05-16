@@ -1,11 +1,13 @@
 import os
+import time
 import tempfile
 
+import wx
 import numpy as np
 from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, InvalidSegmentParser, SegmentParser
 
 # Enthought library imports.
-from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int, String
+from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int, String, Float
 
 from omnivore8bit.document import SegmentedDocument
 
@@ -29,7 +31,23 @@ def segment_parser_factory(emulator_segments):
     return cls
 
 
+class EmulationTimer(wx.Timer):
+    def __init__(self, document):
+        self.document = document
+        wx.Timer.__init__(self)
+
+    def Notify(self):
+        self.document.ready_for_next_frame()
+
+
 class EmulationDocument(SegmentedDocument):
+
+    # Class attributes
+
+    emulation_timer = None
+
+    # Traits
+
     source_document = Any(None)
 
     emulator_type = Any(None)
@@ -38,15 +56,24 @@ class EmulationDocument(SegmentedDocument):
 
     skip_frames_on_boot = Int(0)
 
-    pause_emulator_event = Event
-
     emulator_update_event = Event
+
+    framerate = Float(1/60.0)
+
+    tickrate = Float(1/60.0)
+
+    last_update_time = Float(0.0)
 
     ##### trait default values
 
     def _emulator_type_changed(self, value):
         emu = self.emulator_type()
         self.emulator = emu
+
+    @property
+    def timer_delay(self):
+        # wxpython delays are in milliseconds
+        return self.tickrate * 1000 
 
     #### serialization methods
 
@@ -87,13 +114,50 @@ class EmulationDocument(SegmentedDocument):
             os.remove(bootfile)
         except IOError:
             log.warning("Unable to remove temporary file %s." % bootfile)
+        self.create_timer()
+        self.start_timer()
 
     ##### Emulator commands
 
+    def create_timer(self):
+        cls = self.__class__
+        if cls.emulation_timer is not None:
+            raise RuntimeError("Timer already exists, can't run multiple emulators at once!")
+        cls.emulation_timer = EmulationTimer(self)
+
+    def start_timer(self, repeat=False, delay=None, forceupdate=True):
+        if not self.emulation_timer.IsRunning():
+            self.emulation_timer.StartOnce(self.framerate * 1000)
+
+    def ready_for_next_frame(self):
+        now = time.time()
+        self.emulator.next_frame()
+        print("showing frame %d" % self.emulator.output['frame_number'])
+        self.emulator_update_event = True
+
+        after = time.time()
+        delta = after - now
+        if delta > self.framerate:
+            next_time = self.framerate * .8
+        elif delta < self.framerate:
+            next_time = self.framerate - delta
+        print("now=%f show=%f delta=%f framerate=%f next_time=%f" % (now, after-now, delta, self.framerate, next_time))
+        self.emulation_timer.StartOnce(next_time * 1000)
+        self.last_update_time = now
+
     def pause_emulator(self):
+        self.emulation_timer.Stop()
         emu = self.emulator
         emu.get_current_state()  # force output array update which normally happens only at the end of a frame
-        frame.update_ui()
-        a, x, y, s, sp, pc = emu.get_cpu()
-        print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, s, sp, pc))
+        self.emulator_update_event = True
+        a, p, sp, x, y, _, pc = emu.cpu_state
+        print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc))
+        self.emulator.enter_debugger()
 
+    def restart_emulator(self):
+        print("restart")
+        self.emulator.leave_debugger()
+        self.emulator_update_event = True
+
+    def debugger_step(self):
+        self.emulator.debugger_step()
