@@ -42,9 +42,9 @@ class EmulatorViewer(SegmentViewer):
         # self.control.recalc_view()
         self.control.Refresh()
 
-    @on_trait_change('linked_base.editor.document.emulator_update_event')
-    def process_emulator_update(self, evt):
-        log.debug("process_data_model_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+    @on_trait_change('linked_base.editor.document.emulator_update_screen_event')
+    def process_emulator_update_screen(self, evt):
+        log.debug("process_emulator_update_screen for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
             self.control.show_frame(force=True)
 
@@ -102,9 +102,9 @@ class CPUParamTableViewer(BaseInfoViewer):
 
     control_cls = SegmentVirtualGridControl
 
-    @on_trait_change('linked_base.editor.document.emulator_update_event')
-    def process_emulator_update(self, evt):
-        log.debug("process_data_model_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+    @on_trait_change('linked_base.editor.document.emulator_update_info_event')
+    def process_emulator_update_info(self, evt):
+        log.debug("process_emulator_update_info for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
             flags = DisplayFlags()
             self.refresh_view(flags)

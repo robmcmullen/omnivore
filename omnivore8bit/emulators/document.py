@@ -56,7 +56,12 @@ class EmulationDocument(SegmentedDocument):
 
     skip_frames_on_boot = Int(0)
 
-    emulator_update_event = Event
+    # Update the graphic screen
+    emulator_update_screen_event = Event
+
+    # Update the info panels; updated at a lower refresh rate than the screen
+    # because they're slow on some platforms.
+    emulator_update_info_event = Event
 
     framerate = Float(1/60.0)
 
@@ -143,9 +148,11 @@ class EmulationDocument(SegmentedDocument):
     def ready_for_next_frame(self):
         now = time.time()
         self.emulator.next_frame()
-        print("showing frame %d" % self.emulator.output['frame_number'])
-        self.emulator_update_event = True
-
+        frame_number = self.emulator.output['frame_number']
+        print("showing frame %d" % frame_number)
+        self.emulator_update_screen_event = True
+        if frame_number % 10 == 0:
+            self.emulator_update_info_event = True
         after = time.time()
         delta = after - now
         if delta > self.framerate:
@@ -159,7 +166,8 @@ class EmulationDocument(SegmentedDocument):
     def pause_emulator(self):
         emu = self.emulator
         emu.get_current_state()  # force output array update which normally happens only at the end of a frame
-        self.emulator_update_event = True
+        self.emulator_update_screen_event = True
+        self.emulator_update_info_event = True
         a, p, sp, x, y, _, pc = emu.cpu_state
         print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc))
         self.emulator.enter_debugger()
@@ -168,7 +176,7 @@ class EmulationDocument(SegmentedDocument):
         print("restart")
         self.emulator.leave_debugger()
         self.start_timer()
-        self.emulator_update_event = True
+        self.emulator_update_screen_event = True
 
     def debugger_step(self):
         self.emulator.debugger_step()
