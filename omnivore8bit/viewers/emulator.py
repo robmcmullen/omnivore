@@ -119,6 +119,7 @@ class DtypeTable(SegmentVirtualTable):
     col_sizes = [4]
     want_col_header = False
     want_row_header = True
+    verbose = False
 
     def get_data_style_view(self, linked_base):
         data = linked_base.emulator.calc_dtype_data(self.emulator_dtype_name)
@@ -126,8 +127,18 @@ class DtypeTable(SegmentVirtualTable):
         return data, data
 
     def calc_labels(self):
-        self.row_labels = self.data.dtype.names
-        self.label_char_width = max([len(r) for r in self.row_labels])
+        self.row_labels = []
+        offsets = []
+        self.label_char_width = 1
+        for i, label in enumerate(self.data.dtype.names):
+            if label.startswith("_") and not self.verbose:
+                continue
+            self.row_labels.append(label)
+            offsets.append(i)
+            size = len(label)
+            if size > self.label_char_width:
+                self.label_char_width = size
+        self.row_offsets_into_data = np.asarray(offsets, dtype=np.int32)
         self.num_rows = len(self.row_labels)
 
     def get_row_label_text(self, start_line, num_lines, step=1):
@@ -139,7 +150,7 @@ class DtypeTable(SegmentVirtualTable):
         return max([view_params.calc_text_width(r) for r in self.row_labels])
 
     def get_value_style(self, row, col):
-        val = self.data[row]
+        val = self.data[self.row_offsets_into_data[row]]
         try:
             text = "%02x" % val
         except TypeError:
