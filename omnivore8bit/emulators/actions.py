@@ -112,6 +112,7 @@ class StepAction(EmulatorAction):
     """
     name = "Step"
     tooltip = "Restart the emulation"
+    accelerator = 'F9'
 
     def perform(self, event=None):
         self.active_editor.document.debugger_step()
@@ -125,6 +126,7 @@ class StepIntoAction(StepAction):
     """
     name = "Step Into"
     tooltip = "Restart the emulation"
+    accelerator = 'F10'
 
     def perform(self, event=None):
         print("resume!")
@@ -138,3 +140,4 @@ class StepOverAction(StepAction):
 
     def perform(self, event=None):
         print("resume!")
+    accelerator = 'F11'
