@@ -120,7 +120,7 @@ class EmulationDocument(SegmentedDocument):
         log.debug("Segments after boot: %s" % str(self.segments))
         try:
             os.remove(bootfile)
-        except IOError:
+        except:  # MSW raises WindowsError, but that's not defined cross-platform
             log.warning("Unable to remove temporary file %s." % bootfile)
         self.create_timer()
         self.start_timer()
