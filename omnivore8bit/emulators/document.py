@@ -160,6 +160,9 @@ class EmulationDocument(SegmentedDocument):
         elif delta < self.framerate:
             next_time = self.framerate - delta
         print("now=%f show=%f delta=%f framerate=%f next_time=%f" % (now, after-now, delta, self.framerate, next_time))
+        if next_time <= 0.001:
+            print("need to drop frames!")
+            next_time = .001
         self.emulation_timer.StartOnce(next_time * 1000)
         self.last_update_time = now
 
