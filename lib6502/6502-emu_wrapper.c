@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "lib6502.h"
+#include "6502-emu_wrapper.h"
 
 long cycles_per_frame;
 

@@ -15,7 +15,7 @@ else:
 
 extensions = [
   Extension("omni8bit.atari800.libatari800",
-    sources = ["libatari800/libatari800bridge.c",
+    sources = ["libatari800/libatari800.c",
     "libatari800/atari800/src/libatari800/main.c",
     "libatari800/atari800/src/libatari800/input.c",
     "libatari800/atari800/src/libatari800/video.c",
@@ -79,7 +79,7 @@ extensions = [
   Extension("omni8bit.generic6502.lib6502",
     sources = [
         "lib6502/lib6502.c",
-        "lib6502/lib6502bridge.c",
+        "lib6502/6502-emu_wrapper.c",
         "lib6502/6502-emu/6502.c",
         ],
     extra_compile_args = extra_compile_args,
@@ -100,8 +100,8 @@ if "sdist" in sys.argv:
 
         class sdist(_sdist):
             def run(self):
-                cythonize(["libatari800/libatari800bridge.pyx"], gdb_debug=True)
-                cythonize(["lib6502/lib6502bridge.pyx"], gdb_debug=True)
+                cythonize(["libatari800/libatari800.pyx"], gdb_debug=True)
+                cythonize(["lib6502/lib6502.pyx"], gdb_debug=True)
                 _sdist.run(self)
         cmdclass["sdist"] = sdist
     except ImportError:
