@@ -5,28 +5,34 @@ import time
 
 import numpy as np
 
-import omni8bit.atari800 as a8
-akey = a8.akey
-
-from omni8bit.atari800.save_state_parser import parse_state
+import omni8bit
 
 
 if __name__ == "__main__":
-    emu = a8.Atari800()
-    emu.begin_emulation()
-    names = emu.names
-    print(names)
-    # with open("state.a8", "wb") as fh:
-    #     fh.write(emu.state_array)
-    while emu.output['frame_number'] < 20:
-        emu.next_frame()
-        print "run.py frame count =", emu.output['frame_number']
-        if emu.output['frame_number'] > 11:
-            emu.enter_debugger()
-        elif emu.output['frame_number'] > 10:
-            emu.debug_video()
-            a, p, sp, x, y, _, pc = emu.cpu_state
-            print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc))
-            # emu.debug_state()
-        if emu.output['frame_number'] > 100:
-            emu.input['keychar'] = ord('A')
+    if len(sys.argv) > 1:
+        emu_name = sys.argv[1]
+    else:
+        emu_name = "atari800"
+    try:
+        emu_cls = omni8bit.find_emulator(emu_name)
+    except UnknownEmulatorError:
+        print("Unknown emulator: %s" % emu_name)
+    else:
+        print("Emulating: %s" % emu_cls.pretty_name)
+        emu = emu_cls()
+        emu.begin_emulation()
+        names = emu.names
+        print(names)
+        # with open("state.a8", "wb") as fh:
+        #     fh.write(emu.state_array)
+        while emu.current_frame_number < 200:
+            emu.next_frame()
+            print "run.py frame count =", emu.current_frame_number
+            # if emu.current_frame_number > 11:
+            #     emu.enter_debugger()
+            if emu.current_frame_number > 10:
+                emu.debug_video()
+                emu.debug_state()
+                # emu.debug_state()
+            if emu.current_frame_number > 100:
+                emu.keypress('A')

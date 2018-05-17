@@ -17,26 +17,6 @@ log = logging.getLogger(__name__)
 
 debug_frames = False
 
-def debug_video(mem):
-    offset = 336*24 + 8
-    for y in range(32):
-        print "%x:" % offset,
-        for x in range(8,60):
-            c = mem[x + offset]
-            if (c == 0 or c == '\x00'):
-                print " ",
-            elif (c == 0x94 or c == '\x94'):
-                print ".",
-            elif (c == 0x9a or c == '\x9a'):
-                print "X",
-            else:
-                try:
-                    print ord(c),
-                except TypeError:
-                    print repr(c),
-        print
-        offset += 336;
-
 def clamp(val):
     if val < 0.0:
         return 0
@@ -116,6 +96,8 @@ class Atari800(EmulatorBase):
     width = g.VIDEO_WIDTH
     height = g.VIDEO_HEIGHT
 
+    low_level_interface = liba8
+
     def compute_color_map(self):
         self.rmap, self.gmap, self.bmap = ntsc_color_map()
 
@@ -144,42 +126,49 @@ class Atari800(EmulatorBase):
     def current_frame_number(self):
         return self.output['frame_number'][0]
 
-    def begin_emulation(self, emu_args=None, event_loop=None, event_loop_args=None):
-        self.args = self.normalize_args(emu_args)
+    def configure_event_loop(self, event_loop=None, event_loop_args=None, *args, **kwargs):
         if event_loop is None:
             event_loop = start_monitor_event_loop
         if event_loop_args is None:
             event_loop_args = self
-        liba8.start_emulator(self.args, event_loop, event_loop_args)
-        liba8.prepare_arrays(self.input, self.output)
-        self.parse_state()
-        self.cpu_state = self.calc_cpu_data_array()
+        return event_loop, event_loop_args
 
-    def normalize_args(self, args):
-        if args is None:
-            args = [
+    def process_args(self, emu_args):
+        if emu_args is None:
+            emu_args = [
                 "-basic",
                 #"-shmem-debug-video",
                 #"jumpman.atr"
             ]
-        return args
+        return emu_args
 
-    def parse_state(self):
-        base = np.byte_bounds(self.output)[0]
-        self.video_start_offset = np.byte_bounds(self.video_array)[0] - base
-        self.audio_start_offset = np.byte_bounds(self.audio_array)[0] - base
-        self.state_start_offset = np.byte_bounds(self.state_array)[0] - base
-        self.offsets, self.names, self.segments, self.segment_starts, self.computed_dtypes = parse_state(self.output['state'], self.state_start_offset)
-        self.segments[0:0] = [
-            (self.video_start_offset, self.video_start_offset + len(self.video_array), 0, "Video Frame"),
-            (self.audio_start_offset, self.audio_start_offset + len(self.audio_array), 0, "Audio Data"),
-        ]
+    def generate_extra_segments(self):
+        self.offsets, self.names, extra_segments, self.segment_starts, self.computed_dtypes = parse_state(self.output['state'], self.state_start_offset)
+        self.segments.extend(extra_segments)
 
     def end_emulation(self):
         pass
 
     def debug_video(self):
-        debug_video(self.output[0]['video'].view(dtype=np.uint8))
+        video_mem = self.output[0]['video'].view(dtype=np.uint8)
+        offset = 336*24 + 8
+        for y in range(32):
+            print "%x:" % offset,
+            for x in range(8,60):
+                c = video_mem[x + offset]
+                if (c == 0 or c == '\x00'):
+                    print " ",
+                elif (c == 0x94 or c == '\x94'):
+                    print ".",
+                elif (c == 0x9a or c == '\x9a'):
+                    print "X",
+                else:
+                    try:
+                        print ord(c),
+                    except TypeError:
+                        print repr(c),
+            print
+            offset += 336;
 
     def debug_state(self):
         a, p, sp, x, y, _, pc = self.cpu_state
@@ -193,23 +182,7 @@ class Atari800(EmulatorBase):
         assert x == raw[names['CPU_X']]
         assert y == raw[names['CPU_Y']]
         assert pc == (raw[names['PC']] + 256 * raw[names['PC'] + 1])
-
-    def next_frame(self):
-        self.process_key_state()
-        self.frame_count += 1
-        liba8.next_frame(self.input, self.output)
-        self.process_frame_events()
-        self.save_history()
-
-    def process_frame_events(self):
-        still_waiting = []
-        for count, callback in self.frame_event:
-            if self.frame_count >= count:
-                print "processing %s", callback
-                callback()
-            else:
-                still_waiting.append((count, callback))
-        self.frame_event = still_waiting
+        print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc))
 
     def calc_cpu_data_array(self):
         names = self.names
@@ -233,7 +206,7 @@ class Atari800(EmulatorBase):
         raw = self.raw_array[start:start + d.itemsize]
         return raw.view(dtype=d)[0]
 
-    # Utility functions
+    # Emulator user input functions
 
     def coldstart(self):
         """Simulate an initial power-on startup.
@@ -245,53 +218,10 @@ class Atari800(EmulatorBase):
         """
         self.send_special_key(akey.AKEY_WARMSTART)
 
-    def load_disk(self, drive_num, pathname):
-        liba8.load_disk(drive_num, pathname)
+    def keypress(self, ascii_char):
+        self.send_char(ord(ascii_char))
 
-    def save_history(self):
-        # History is saved in a big list, which will waste space for empty
-        # entries but makes things extremely easy to manage. Simply delete
-        # a history entry by setting it to NONE.
-        frame_number = self.output['frame_number'][0]
-        if self.frame_count % 10 == 0:
-            d = self.output.copy()
-        else:
-            d = None
-        if len(self.history) != frame_number:
-            print("frame %d: history out of sync. has=%d expecting=%d" % (frame_number, len(self.history), frame_number))
-        self.history.append(d)
-        if d is not None:
-            self.print_history(frame_number)
-
-    def restore_history(self, frame_number):
-        print("restoring state from frame %d" % frame_number)
-        if frame_number < 0:
-            return
-        d = self.history[frame_number]
-        liba8.restore_state(d)
-        self.history[frame_number + 1:] = []  # remove frames newer than this
-        print("  %d items remain in history" % len(self.history))
-        self.frame_event = []
-
-    def print_history(self, frame_number):
-        d = self.history[frame_number]
-        print "history[%d] of %d: %d %s" % (d['frame_number'], len(self.history), len(d), d['state'][0][0:8])
-
-    def get_previous_history(self, frame_cursor):
-        n = frame_cursor - 1
-        while n > 0:
-            if self.history[n] is not None:
-                return n
-            n -= 1
-        raise IndexError("No previous frame")
-
-    def get_next_history(self, frame_cursor):
-        n = frame_cursor + 1
-        while n < len(self.history):
-            if self.history[n] is not None:
-                return n
-            n += 1
-        raise IndexError("No next frame")
+    # Utility functions
 
     def get_color_indexed_screen(self, frame_number=-1):
         if frame_number < 0:

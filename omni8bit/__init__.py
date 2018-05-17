@@ -1,8 +1,17 @@
 from .atari800 import Atari800
+from .generic6502 import Generic6502
 
-known_emulators = [Atari800]
+known_emulators = [Atari800, Generic6502]
 
 default_emulator = Atari800
+
+
+class Omni8bitError(RuntimeError):
+    pass
+
+
+class UnknownEmulatorError(Omni8bitError):
+    pass
 
 
 def find_emulator(emulator_name):

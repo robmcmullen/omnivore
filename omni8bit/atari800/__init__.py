@@ -9,4 +9,3 @@ from ..ui.screen import BitmapScreen, OpenGLScreen, GLSLScreen
 from .save_state_parser import parse_state
 from .colors import NTSC
 from .atari800 import Atari800, wxAtari800
-from ..emulator_base import EmulatorBase

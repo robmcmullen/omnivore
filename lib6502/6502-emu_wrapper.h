@@ -14,12 +14,13 @@ extern int jumping;
 /* new stuff for lib6502 */
 
 typedef struct {
+        uint32_t frame_number;
         uint64_t total_cycles;
+        uint16_t PC;
         uint8_t A;
         uint8_t X;
         uint8_t Y;
         uint8_t SP;
-        uint16_t PC;
         uint8_t SR;
         uint8_t breakpoint_hit;
         uint8_t memory[1<<16];

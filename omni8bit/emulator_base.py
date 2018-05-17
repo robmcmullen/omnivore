@@ -2,7 +2,7 @@ import numpy as np
 
 
 class EmulatorBase(object):
-    cpu = "6502"
+    cpu = "<base>"
     name = "<name>"
     pretty_name = "<pretty name>"
 
@@ -10,6 +10,8 @@ class EmulatorBase(object):
     output_array_dtype = None
     width = 320
     height = 192
+
+    low_level_interface = None  # cython module; e.g.: libatari800, lib6502
 
     def __init__(self):
         self.input = np.zeros([1], dtype=self.input_array_dtype)
@@ -24,6 +26,29 @@ class EmulatorBase(object):
         self.active_event_loop = None
         self.compute_color_map()
         self.screen_rgb, self.screen_rgba = self.calc_screens()
+
+    @property
+    def raw_array(self):
+        return self.output.view(dtype=np.uint8)
+
+    @property
+    def video_array(self):
+        return self.output['video'][0]
+
+    @property
+    def audio_array(self):
+        return self.output['audio'][0]
+
+    @property
+    def state_array(self):
+        return self.output['state'][0]
+
+    @property
+    def current_frame_number(self):
+        return self.output['frame_number'][0]
+
+    def debug_video(self):
+        pass
 
     def compute_color_map(self):
         pass
@@ -46,11 +71,50 @@ class EmulatorBase(object):
     def serialize_state(self, mdict):
         return {"name": self.name}
 
-    def begin_emulation(self, emu_args=None, *args, **kwargs):
+    def begin_emulation(self, emu_args = None, *args, **kwargs):
+        self.args = self.process_args(emu_args)
+        event_loop, event_loop_args = self.configure_event_loop(*args, **kwargs)
+        self.low_level_interface.start_emulator(self.args, event_loop, event_loop_args)
+        self.low_level_interface.prepare_arrays(self.input, self.output)
+        self.parse_state()
+        self.generate_extra_segments()
+        self.cpu_state = self.calc_cpu_data_array()
+
+    def configure_event_loop(self, event_loop=None, event_loop_args=None, *args, **kwargs):
+        return None, None
+
+    def process_args(self, emu_args):
+        return emu_args
+
+    def parse_state(self):
+        base = np.byte_bounds(self.output)[0]
+        self.video_start_offset = np.byte_bounds(self.video_array)[0] - base
+        self.audio_start_offset = np.byte_bounds(self.audio_array)[0] - base
+        self.state_start_offset = np.byte_bounds(self.state_array)[0] - base
+        self.segments = [
+            (self.video_start_offset, self.video_start_offset + len(self.video_array), 0, "Video Frame"),
+            (self.audio_start_offset, self.audio_start_offset + len(self.audio_array), 0, "Audio Data"),
+        ]
+
+    def generate_extra_segments(self):
         pass
 
     def next_frame(self):
-        pass
+        self.process_key_state()
+        self.frame_count += 1
+        self.low_level_interface.next_frame(self.input, self.output)
+        self.process_frame_events()
+        self.save_history()
+
+    def process_frame_events(self):
+        still_waiting = []
+        for count, callback in self.frame_event:
+            if self.frame_count >= count:
+                print "processing %s", callback
+                callback()
+            else:
+                still_waiting.append((count, callback))
+        self.frame_event = still_waiting
 
     def end_emulation(self):
         pass
@@ -61,17 +125,12 @@ class EmulatorBase(object):
         """
         pass
 
-    def get_cpu(self):
-        """Return current state of the CPU registers as a numpy array.
-
-        This should be a view such that changes made here will be reflected for
-        the next instruction processed by the emulator. It should also use a
-        dtype with names so that viewers can display a list of registers
-        without having internal knowledge of the CPU.
+    def debug_state(self):
+        """Show CPU status registers
         """
         pass
 
-    # Utility functions
+    # Emulator user input functions
 
     def coldstart(self):
         """Simulate an initial power-on startup.
@@ -83,32 +142,92 @@ class EmulatorBase(object):
         """
         pass
 
+    def keypress(self, ascii_char):
+        """Pass an ascii char to the emulator
+        """
+        pass
+
+    def joystick(self, stick_num, direction_value, trigger_pressed=False):
+        """Pass a joystick/trigger value to the emulator
+        """
+        pass
+
+    def paddle(self, paddle_num, paddle_percentage):
+        """Pass a paddle value to the emulator
+        """
+        pass
+
+    def process_key_state(self):
+        """Read keyboard and compute any values that should be sent to the
+        emulator.
+        """
+        pass
+
+    # Utility functions
+
     def load_disk(self, drive_num, pathname):
-        a8.load_disk(drive_num, pathname)
+        self.low_level_interface.load_disk(drive_num, pathname)
 
     def save_history(self):
         # History is saved in a big list, which will waste space for empty
         # entries but makes things extremely easy to manage. Simply delete
         # a history entry by setting it to NONE.
+        frame_number = self.output['frame_number'][0]
         if self.frame_count % 10 == 0:
             d = self.output.copy()
-            print "history at %d: %d %s" % (d['frame_number'], len(d), d['state'][0:8])
         else:
             d = None
+        if len(self.history) != frame_number:
+            print("frame %d: history out of sync. has=%d expecting=%d" % (frame_number, len(self.history), frame_number))
         self.history.append(d)
+        if d is not None:
+            self.print_history(frame_number)
 
     def restore_history(self, frame_number):
-        pass
+        print("restoring state from frame %d" % frame_number)
+        if frame_number < 0:
+            return
+        d = self.history[frame_number]
+        self.low_level_interface.restore_state(d)
+        self.history[frame_number + 1:] = []  # remove frames newer than this
+        print("  %d items remain in history" % len(self.history))
+        self.frame_event = []
 
     def print_history(self, frame_number):
-        pass
+        d = self.history[frame_number]
+        print "history[%d] of %d: %d %s" % (d['frame_number'], len(self.history), len(d), d['state'][0][0:8])
 
     def get_previous_history(self, frame_cursor):
+        n = frame_cursor - 1
+        while n > 0:
+            if self.history[n] is not None:
+                return n
+            n -= 1
         raise IndexError("No previous frame")
 
     def get_next_history(self, frame_cursor):
+        n = frame_cursor + 1
+        while n < len(self.history):
+            if self.history[n] is not None:
+                return n
+            n += 1
         raise IndexError("No next frame")
 
-    def get_frame(self, frame_number=-1):
-        # Get numpy array of RGB(A) data for the specified frame
+    def get_color_indexed_screen(self, frame_number=-1):
+        """Return color indexed screen in whatever native format this
+        emulator supports
+        """
         pass
+
+    def get_frame_rgb(self, frame_number=-1):
+        """Return RGB image of the current screen
+        """
+
+    def get_frame_rgba(self, frame_number=-1):
+        """Return RGBA image of the current screen
+        """
+
+    def get_frame_rgba_opengl(self, frame_number=-1):
+        """Return RGBA image of the current screen, suitable for use with
+        OpenGL (flipped vertically)
+        """
