@@ -6,16 +6,16 @@ import numpy as np
 if sys.platform.startswith("win"):
     extra_compile_args = ["-DMSVC", "-D_CRT_SECURE_NO_WARNINGS", "/Zi"]
     extra_link_args=['/DEBUG']
-    config_include = "libatari800/include/win"
+    libatari800_config_include = "libatari800/include/win"
 else:
     # extra_compile_args = ["-g", "-O3"]
     extra_compile_args = ["-O3"]
     extra_link_args = []
-    config_include = "libatari800/include/linux"
+    libatari800_config_include = "libatari800/include/linux"
 
 extensions = [
   Extension("omni8bit.atari800.libatari800",
-    sources = ["libatari800/libatari800.c",
+    sources = ["libatari800/libatari800bridge.c",
     "libatari800/atari800/src/libatari800/main.c",
     "libatari800/atari800/src/libatari800/input.c",
     "libatari800/atari800/src/libatari800/video.c",
@@ -73,7 +73,18 @@ extensions = [
               ],
     extra_compile_args = extra_compile_args,
     extra_link_args = extra_link_args,
-    include_dirs = [config_include, "libatari800/atari800/src", "libatari800/atari800/src/libatari800", np.get_include()],
+    include_dirs = [libatari800_config_include, "libatari800/atari800/src", "libatari800/atari800/src/libatari800", np.get_include()],
+    undef_macros = [ "NDEBUG" ],
+    ),
+  Extension("omni8bit.generic6502.lib6502",
+    sources = [
+        "lib6502/lib6502.c",
+        "lib6502/lib6502bridge.c",
+        "lib6502/6502-emu/6502.c",
+        ],
+    extra_compile_args = extra_compile_args,
+    extra_link_args = extra_link_args,
+    include_dirs = ["lib6502", "lib6502/6502-emu", np.get_include()],
     undef_macros = [ "NDEBUG" ],
     )
 ]
@@ -89,7 +100,8 @@ if "sdist" in sys.argv:
 
         class sdist(_sdist):
             def run(self):
-                cythonize(["libatari800/libatari800.pyx"], gdb_debug=True)
+                cythonize(["libatari800/libatari800bridge.pyx"], gdb_debug=True)
+                cythonize(["lib6502/lib6502bridge.pyx"], gdb_debug=True)
                 _sdist.run(self)
         cmdclass["sdist"] = sdist
     except ImportError:

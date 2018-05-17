@@ -2,32 +2,31 @@ import numpy as np
 cimport numpy as np
 
 cdef extern:
-    int init_cpu()
-    int step_cpu(int)
-    long next_frame(long)
-    void get_current_state(void *buf)
-    void restore_state(void *buf)
+    int lib6502_init_cpu(float, float)
+    int lib6502_step_cpu()
+    long lib6502_next_frame()
+    void lib6502_get_current_state(np.uint8_t *buf)
+    void lib6502_restore_state(np.uint8_t *buf)
 
 def start_emulator(args, python_callback_function, python_callback_args):
-    init_cpu()
+    lib6502_init_cpu(1.023, 60.0)  # apple 2 speed
 
 def prepare_arrays(np.ndarray input not None, np.ndarray output not None):
     return
 
 def next_frame(np.ndarray input not None, np.ndarray output not None):
-    cdef np.uint8_t[:] ibuf
+    cdef np.uint8_t[:] ibuf  # ignored for this emulator
     cdef np.uint8_t[:] obuf
 
-    ibuf = input.view(np.uint8)
+    lib6502_next_frame()
     obuf = output.view(np.uint8)
-    next_frame(&ibuf[0], &obuf[0])
-    load_state(&obuf[0])
+    lib6502_get_current_state(&obuf[0])
 
 def get_current_state(np.ndarray output not None):
     cdef np.uint8_t[:] obuf
 
     obuf = output.view(np.uint8)
-    get_current_state(&obuf[0])
+    lib6502_get_current_state(&obuf[0])
 
 def load_disk(int disknum, char *filename, int readonly=0):
     raise NotImplementedError
@@ -35,11 +34,11 @@ def load_disk(int disknum, char *filename, int readonly=0):
 def restore_state(np.ndarray state not None):
     cdef np.uint8_t[:] sbuf
     sbuf = state.view(np.uint8)
-    restore_state(&sbuf[0])
+    lib6502_restore_state(&sbuf[0])
 
 def monitor_step(int addr=-1):
     cdef int resume;
-    resume = step_cpu(0)
+    resume = lib6502_step_cpu()
     return resume
 
 def monitor_summary():
