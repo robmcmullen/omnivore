@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 debug_frames = False
 
 def debug_video(mem):
-    offset = 336*24 + 128
+    offset = 336*24 + 8
     for y in range(32):
         print "%x:" % offset,
         for x in range(8,60):
