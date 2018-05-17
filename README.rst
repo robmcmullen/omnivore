@@ -2,9 +2,9 @@
 omni8bit
 ================================================
 
-A unified front-end to several emulators that allow normal operation and
-debugging operations. This is used as the basis for the emulation support in
-Omnivore.
+A unified front-end to several 8-bit CPU and system emulators to provide a
+common set of control methods for both normal operation and debugging
+purposes. This is used as the basis for the emulation support in Omnivore.
 
 Currently available are:
 

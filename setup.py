@@ -99,48 +99,35 @@ if "sdist" in sys.argv:
 
 execfile('omni8bit/_metadata.py')
 
-# Temporarily move the config.h in the main src directory out of the way
-# because it will be found before the pyatari800 platform-specific include file
-
-src_config = "src/config.h"
-moved_config = None
-if os.path.exists(src_config):
-    moved_config = "src/configPY.hPY"
-    os.rename(src_config, moved_config)
-
-try:
-    setup(
-  name = "omni8bit",
-  version = __version__,
-  author = __author__,
-  author_email = __author_email__,
-  url = __url__,
-  classifiers = [c.strip() for c in """\
-    Development Status :: 5 - Production/Stable
-    Intended Audience :: Developers
-    License :: OSI Approved :: GNU General Public License (GPL)
-    Operating System :: MacOS
-    Operating System :: Microsoft :: Windows
-    Operating System :: OS Independent
-    Operating System :: POSIX
-    Operating System :: Unix
-    Programming Language :: Python
-    Topic :: Utilities
-    Topic :: Software Development :: Assemblers
+setup(
+    name = "omni8bit",
+    version = __version__,
+    author = __author__,
+    author_email = __author_email__,
+    url = __url__,
+    classifiers = [c.strip() for c in """\
+        Development Status :: 5 - Production/Stable
+        Intended Audience :: Developers
+        License :: OSI Approved :: GNU General Public License (GPL)
+        Operating System :: MacOS
+        Operating System :: Microsoft :: Windows
+        Operating System :: OS Independent
+        Operating System :: POSIX
+        Operating System :: Unix
+        Programming Language :: Python
+        Topic :: Utilities
+        Topic :: Software Development :: Assemblers
     """.splitlines() if len(c.strip()) > 0],
-  description = "Python wrapper for common interface to 8 bit emulators",
-  long_description = open('README.rst').read(),
-  cmdclass = cmdclass,
-  ext_modules = extensions,
-  packages = ["omni8bit"],
-  install_requires = [
-  'numpy',
-  'pyopengl',
-  'pyopengl_accelerate',
-  'pillow',
-  'construct<2.9',  # Construct 2.9 changed the String class
-  ],
+    description = "Unified front-end providing common interface to control several 8 bit emulators",
+    long_description = open('README.rst').read(),
+    cmdclass = cmdclass,
+    ext_modules = extensions,
+    packages = ["omni8bit"],
+    install_requires = [
+    'numpy',
+    'pyopengl',
+    'pyopengl_accelerate',
+    'pillow',
+    'construct<2.9',  # Construct 2.9 changed the String class
+    ],
 )
-finally:
-    if moved_config:
-        os.rename(moved_config, src_config)
