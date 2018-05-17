@@ -175,8 +175,7 @@ class ByteEditor(FrameworkEditor):
                     skip = int(args["skip_frames"])
                 else:
                     skip = 0
-                import pyatari800
-                doc = emu.EmulationDocument(source_document=doc, emulator_type=pyatari800.Atari800, skip_frames_on_boot=skip)
+                doc = emu.EmulationDocument(source_document=doc, emulator_type='atari800', skip_frames_on_boot=skip)
                 doc.boot()
         try:
             doc.emulator_type

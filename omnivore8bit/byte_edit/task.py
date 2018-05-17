@@ -8,6 +8,8 @@ from pyface.tasks.api import Task, TaskWindow, TaskLayout, PaneItem, IEditor, \
 from pyface.tasks.action.api import SMenuBar, SMenu, SToolBar, SchemaAddition
 from traits.api import on_trait_change, Property, Instance, Any, Event, Int, Bool
 
+from omni8bit import known_emulators
+
 from omnivore.framework.task import FrameworkTask
 from omnivore.framework import actions as fa
 from omnivore.framework.toolbar import get_toolbar_group
@@ -16,7 +18,6 @@ from preferences import ByteEditPreferences
 from . import actions as ba
 from ..viewers import actions as va
 from ..jumpman import commands as ja
-from .. import emulators as emu
 from ..emulators import actions as ea
 import omnivore8bit.arch.fonts as fonts
 import omnivore8bit.arch.colors as colors
@@ -636,7 +637,7 @@ class ByteEditTask(FrameworkTask):
 
     def get_actions_Menu_Emulation_BootGroup(self):
         actions = []
-        for e in emu.known_emulators:
+        for e in known_emulators:
             actions.append(ea.UseEmulatorAction(name=e.pretty_name, emulator=e))
         return [
             ea.BootDiskImageAction(),

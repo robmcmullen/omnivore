@@ -54,6 +54,7 @@ install_requires = [
     'configobj',
     'pyparsing>=2.2.0',
     'wxpython>=4.0.1',
+    'omni8bit',
     ]
 
 

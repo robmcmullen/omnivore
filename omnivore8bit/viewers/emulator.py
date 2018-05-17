@@ -7,7 +7,7 @@ import wx
 
 from traits.api import on_trait_change, Bool, Undefined
 
-import pyatari800 as a8
+import omni8bit.atari800 as a8
 
 from omnivore.utils.wx import compactgrid as cg
 from omnivore.utils.command import DisplayFlags

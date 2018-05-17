@@ -9,6 +9,8 @@ from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, InvalidSe
 # Enthought library imports.
 from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int, String, Float
 
+from omni8bit import find_emulator
+
 from omnivore8bit.document import SegmentedDocument
 
 from . import event_loop as el
@@ -72,7 +74,8 @@ class EmulationDocument(SegmentedDocument):
     ##### trait default values
 
     def _emulator_type_changed(self, value):
-        emu = self.emulator_type()
+        emu_cls = find_emulator(value)
+        emu = emu_cls()
         self.emulator = emu
 
     @property
@@ -94,7 +97,7 @@ class EmulationDocument(SegmentedDocument):
         SegmentedDocument.restore_extra_from_dict(self, e)
 
         if 'emulator_type' in e:
-            self.emulator_type = emu.factory[e['emulator_type']]
+            self.emulator_type = find_emulator[e['emulator_type']]
         self.skip_frames_on_boot = e.get('skip_frames_on_boot', 0)
 
     def serialize_extra_to_dict(self, mdict):
