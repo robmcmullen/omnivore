@@ -12,7 +12,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         emu_name = sys.argv[1]
     else:
-        emu_name = "atari800"
+        emu_name = "6502"
     try:
         emu_cls = omni8bit.find_emulator(emu_name)
     except UnknownEmulatorError:
@@ -28,11 +28,11 @@ if __name__ == "__main__":
         while emu.current_frame_number < 200:
             emu.next_frame()
             print "run.py frame count =", emu.current_frame_number
+            emu.debug_state()
             # if emu.current_frame_number > 11:
             #     emu.enter_debugger()
             if emu.current_frame_number > 10:
                 emu.debug_video()
-                emu.debug_state()
                 # emu.debug_state()
             if emu.current_frame_number > 100:
                 emu.keypress('A')

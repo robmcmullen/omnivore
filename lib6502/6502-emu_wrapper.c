@@ -26,6 +26,8 @@ void lib6502_init_debug_kernel() {
 }
 
 void lib6502_init_cpu(float frequency_mhz, float refresh_rate_hz) {
+	init_tables();
+
 	A = 0;
 	X = 0;
 	Y = 0;
@@ -38,6 +40,11 @@ void lib6502_init_cpu(float frequency_mhz, float refresh_rate_hz) {
 	frame_number = 0;
 
 	lib6502_init_debug_kernel();
+}
+
+void lib6502_prepare_arrays(void *input, ProcessorState *output)
+{
+	output->frame_number = 0;
 }
 
 void lib6502_get_current_state(ProcessorState *buf) {

@@ -19,7 +19,7 @@ class EmulatorBase(object):
 
         self.frame_count = 0
         self.frame_event = []
-        self.history = []
+        self.history = {}
         self.offsets = None
         self.names = None
         self.segments = None
@@ -175,23 +175,22 @@ class EmulatorBase(object):
         frame_number = self.output['frame_number'][0]
         if self.frame_count % 10 == 0:
             d = self.output.copy()
-        else:
-            d = None
-        if len(self.history) != frame_number:
-            print("frame %d: history out of sync. has=%d expecting=%d" % (frame_number, len(self.history), frame_number))
-        self.history.append(d)
-        if d is not None:
+            self.history[frame_number] = d
             self.print_history(frame_number)
 
     def restore_history(self, frame_number):
         print("restoring state from frame %d" % frame_number)
         if frame_number < 0:
             return
-        d = self.history[frame_number]
-        self.low_level_interface.restore_state(d)
-        self.history[frame_number + 1:] = []  # remove frames newer than this
-        print("  %d items remain in history" % len(self.history))
-        self.frame_event = []
+        try:
+            d = self.history[frame_number]
+        except KeyError:
+            pass
+        else:
+            self.low_level_interface.restore_state(d)
+            self.history[frame_number + 1:] = []  # remove frames newer than this
+            print("  %d items remain in history" % len(self.history))
+            self.frame_event = []
 
     def print_history(self, frame_number):
         d = self.history[frame_number]
@@ -200,7 +199,7 @@ class EmulatorBase(object):
     def get_previous_history(self, frame_cursor):
         n = frame_cursor - 1
         while n > 0:
-            if self.history[n] is not None:
+            if n in self.history:
                 return n
             n -= 1
         raise IndexError("No previous frame")
@@ -208,7 +207,7 @@ class EmulatorBase(object):
     def get_next_history(self, frame_cursor):
         n = frame_cursor + 1
         while n < len(self.history):
-            if self.history[n] is not None:
+            if n in self.history:
                 return n
             n += 1
         raise IndexError("No next frame")
