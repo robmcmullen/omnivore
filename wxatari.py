@@ -429,11 +429,11 @@ class EmulatorFrame(EmulatorControlBase, wx.Frame):
             dlg.Destroy()
             if filename:
                 self.emulator.load_disk(1, filename)
-                self.emulator.send_special_key(akey.AKEY_COLDSTART)
+                self.emulator.coldstart()
         elif id == self.id_coldstart:
-            self.emulator.send_special_key(akey.AKEY_COLDSTART)
+            self.emulator.coldstart()
         elif id == self.id_warmstart:
-            self.emulator.send_special_key(akey.AKEY_WARMSTART)
+            self.emulator.warmstart()
         elif id == self.id_start_debugging:
             self.pause()
         elif id == self.id_debug_step:

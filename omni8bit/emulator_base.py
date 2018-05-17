@@ -73,6 +73,16 @@ class EmulatorBase(object):
 
     # Utility functions
 
+    def coldstart(self):
+        """Simulate an initial power-on startup.
+        """
+        pass
+
+    def warmstart(self):
+        """Simulate a warm start; i.e. pressing the system reset button
+        """
+        pass
+
     def load_disk(self, drive_num, pathname):
         a8.load_disk(drive_num, pathname)
 

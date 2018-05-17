@@ -235,6 +235,16 @@ class Atari800(EmulatorBase):
 
     # Utility functions
 
+    def coldstart(self):
+        """Simulate an initial power-on startup.
+        """
+        self.send_special_key(akey.AKEY_COLDSTART)
+
+    def warmstart(self):
+        """Simulate a warm start; i.e. pressing the system reset button
+        """
+        self.send_special_key(akey.AKEY_WARMSTART)
+
     def load_disk(self, drive_num, pathname):
         liba8.load_disk(drive_num, pathname)
 
