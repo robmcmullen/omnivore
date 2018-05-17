@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict><key>CFBundleIdentifier</key>
+<string>com.playermissile.omni800</string>
+<key>CFBundleShortVersionString</key>
+<string>{version}</string>
+<key>CFBundleExecutable</key>
+<string>MacOS/Omni800</string>
+<key>CFBundleName</key>
+<string>Omnivore</string>
+<key>CFBundleInfoDictionaryVersion</key>
+<string>6.0</string>
+<key>CFBundleDisplayName</key>
+<string>Omni800</string>
+<key>CFBundleIconFile</key>
+<string>omnivore.icns</string>
+<key>CFBundlePackageType</key>
+<string>APPL</string>
+<key>LSBackgroundOnly</key>
+<string>0</string>
+        <key>CFBundleDocumentTypes</key>
+        <array>
+                <dict>
+			        <key>CFBundleTypeExtensions</key>
+			        <array>
+                                <string>xex</string>
+                                <string>atr</string>
+                                <string>xfd</string>
+                                <string>obx</string>
+                                <string>car</string>
+                                <string>rom</string>
+                                <string>cas</string>
+			        </array>
+			        <key>CFBundleTypeName</key>
+			        <string>8-bit Disk Image</string>
+			        <key>CFBundleTypeRole</key>
+			        <string>Editor</string>
+			        <key>CFBundleVersion</key>
+			        <string>1.0</string>
+                </dict>
+        </array>
+</dict>
+</plist>

@@ -1,0 +1,6 @@
+[submodule "lib6502/6502-emu"]
+	path = lib6502/6502-emu
+	url = git@github.com:robmcmullen/6502-emu.git
+[submodule "libatari800/atari800"]
+	path = libatari800/atari800
+	url = git@github.com:robmcmullen/atari800.git
