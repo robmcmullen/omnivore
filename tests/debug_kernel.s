@@ -27,9 +27,9 @@ fill
     iny
     bne ?1
     inc addr+1
-    lda addr+1
-    cmp page_end
-    bne ?1
+    ldx addr+1
+    cpx page_end
+    bcc ?1
 
     inc value
     clc
