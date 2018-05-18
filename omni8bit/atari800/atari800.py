@@ -98,6 +98,10 @@ class Atari800(EmulatorBase):
 
     low_level_interface = liba8
 
+    # atari800 will call the debugger at the next CPU_GO call, so the timer
+    # must not stop here.
+    stop_timer_for_debugger = False
+
     def compute_color_map(self):
         self.rmap, self.gmap, self.bmap = ntsc_color_map()
 

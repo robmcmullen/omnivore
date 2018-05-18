@@ -13,6 +13,12 @@ class EmulatorBase(object):
 
     low_level_interface = None  # cython module; e.g.: libatari800, lib6502
 
+    # It's possible that the emulator (like atari800) needs the timer to
+    # continue so that the next cpu emulation step will enter the debugger.
+    # Emulators that don't have an alternate event loop will turn the timer
+    # off.
+    stop_timer_for_debugger = True
+
     def __init__(self):
         self.input = np.zeros([1], dtype=self.input_array_dtype)
         self.output = np.zeros([1], dtype=self.output_array_dtype)
