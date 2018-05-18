@@ -54,7 +54,9 @@ class EmulatorBase(object):
         pass
 
     def calc_screens(self):
-        return None, None
+        rgb = np.empty((self.height, self.width, 3), np.uint8)
+        rgba = np.empty((self.height, self.width, 4), np.uint8)
+        return rgb, rgba
 
     def report_configuration(self):
         """Return dictionary of configuration parameters"""
@@ -163,6 +165,33 @@ class EmulatorBase(object):
         emulator.
         """
         pass
+
+    # Debugger interface
+
+    def enter_debugger(self):
+        pass
+
+    def leave_debugger(self):
+        self.low_level_interface.monitor_clear()
+        self.restart_cpu()
+
+    def restart_cpu(self):
+        self.low_level_interface.monitor_summary()
+
+    def get_current_state(self):
+        self.low_level_interface.get_current_state(self.output)
+
+    def debugger_step(self):
+        """Process one CPU instruction.
+
+        Returns boolean indicating if normal processing is to resume (True) or
+        continue debugging (False)
+        """
+        self.low_level_interface.monitor_step()
+        return self.is_debugger_finished()
+
+    def is_debugger_finished(self):
+        raise NotImplementedError("subclass must check if debugger is still running.")
 
     # Utility functions
 

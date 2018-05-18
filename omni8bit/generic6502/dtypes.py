@@ -1,8 +1,8 @@
 # generic6502 input template locations
 import numpy as np
 
-VIDEO_WIDTH = 40
-VIDEO_HEIGHT = 24
+VIDEO_WIDTH = 280
+VIDEO_HEIGHT = 192
 
 VIDEO_SIZE = VIDEO_WIDTH * VIDEO_HEIGHT
 AUDIO_SIZE = 2048

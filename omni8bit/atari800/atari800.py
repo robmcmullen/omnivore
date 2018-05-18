@@ -101,11 +101,6 @@ class Atari800(EmulatorBase):
     def compute_color_map(self):
         self.rmap, self.gmap, self.bmap = ntsc_color_map()
 
-    def calc_screens(self):
-        rgb = np.empty((self.height, self.width, 3), np.uint8)
-        rgba = np.empty((self.height, self.width, 4), np.uint8)
-        return rgb, rgba
-
     @property
     def raw_array(self):
         return self.output.view(dtype=np.uint8)
@@ -302,11 +297,19 @@ class Atari800(EmulatorBase):
             print("Only one debugger may be active at a time!")
         else:
             print("Requesting debugger start via AKEY_UI")
+            # We don't enter the debugger directly because of the way the
+            # debugger is called in atari800: in ANTIC_Frame in antic.c there
+            # are many calls to the CPU_GO function and the breakpoints are
+            # checked there. Using longjmp/setjmp it's easy to intercept each
+            # call and send it back out the normal next_frame loop, but there's
+            # no way to continue back where it was because we'd have to jump in
+            # to the middle of ANTIC_Frame.
+            #
+            # So we have to use the normal atari800 way which is a call through
+            # to PLATFORM_Exit, which calls the monitor routines. In
+            # libatari800, it calls start_monitor_event_loop which is set up
+            # above in configure_event_loop.
             self.send_special_key(akey.AKEY_UI)
-
-    def leave_debugger(self):
-        liba8.monitor_clear()
-        self.restart_cpu()
 
     def restart_cpu(self):
         if self.active_event_loop is not None:
@@ -316,12 +319,12 @@ class Atari800(EmulatorBase):
             self.active_event_loop = None
             liba8.monitor_summary()
 
-    def get_current_state(self):
-        liba8.get_current_state(self.output)
-
-    def debugger_step(self):
-        liba8.monitor_step()
+    def is_debugger_finished(self):
+        # The debugger always finishes after each step because atari800 needs
+        # to go back to normal processing to resume where it left off in
+        # ANTIC_Frame.
         self.restart_cpu()
+        return True
 
 try:
     import wx

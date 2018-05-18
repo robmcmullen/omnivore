@@ -43,12 +43,11 @@ def restore_state(np.ndarray state not None):
     lib6502_restore_state(&sbuf[0])
 
 def monitor_step(int addr=-1):
-    cdef int resume;
-    resume = lib6502_step_cpu()
-    return resume
+    lib6502_step_cpu()
+    return False
 
 def monitor_summary():
-    raise NotImplementedError
+    print("in 6502 monitor")
 
 def monitor_clear():
-    raise NotImplementedError
+    pass

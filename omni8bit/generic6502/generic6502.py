@@ -130,24 +130,24 @@ class Generic6502(EmulatorBase):
 
     def get_frame_rgb(self, frame_number=-1):
         raw = self.get_color_indexed_screen(frame_number)
-        self.screen_rgb[:,:,0] = self.rmap[raw]
-        self.screen_rgb[:,:,1] = self.gmap[raw]
-        self.screen_rgb[:,:,2] = self.bmap[raw]
+        self.screen_rgb[:,:,0] = raw
+        self.screen_rgb[:,:,1] = raw
+        self.screen_rgb[:,:,2] = raw
         return self.screen_rgb
 
     def get_frame_rgba(self, frame_number=-1):
         raw = self.get_color_indexed_screen(frame_number)
-        self.screen_rgba[:,:,0] = self.rmap[raw]
-        self.screen_rgba[:,:,1] = self.gmap[raw]
-        self.screen_rgba[:,:,2] = self.bmap[raw]
+        self.screen_rgba[:,:,0] = raw
+        self.screen_rgba[:,:,1] = raw
+        self.screen_rgba[:,:,2] = raw
         self.screen_rgba[:,:,3] = 255
         return self.screen_rgba
 
     def get_frame_rgba_opengl(self, frame_number=-1):
         raw = np.flipud(self.get_color_indexed_screen(frame_number))
-        self.screen_rgba[:,:,0] = self.rmap[raw]
-        self.screen_rgba[:,:,1] = self.gmap[raw]
-        self.screen_rgba[:,:,2] = self.bmap[raw]
+        self.screen_rgba[:,:,0] = raw
+        self.screen_rgba[:,:,1] = raw
+        self.screen_rgba[:,:,2] = raw
         self.screen_rgba[:,:,3] = 255
         return self.screen_rgba
 
@@ -159,30 +159,9 @@ class Generic6502(EmulatorBase):
     def process_key_state(self):
         pass
 
-    ##### debugger convenience functions
+    # Debugger interface
 
-    def enter_debugger(self):
-        if self.active_event_loop is not None:
-            print("Only one debugger may be active at a time!")
-        else:
-            print("Requesting debugger start via AKEY_UI")
-            self.send_special_key(akey.AKEY_UI)
-
-    def leave_debugger(self):
-        lib6502.monitor_clear()
-        self.restart_cpu()
-
-    def restart_cpu(self):
-        if self.active_event_loop is not None:
-            self.clear_keys()
-            self.active_event_loop.Exit()
-            print("alternate event loop is over.")
-            self.active_event_loop = None
-            lib6502.monitor_summary()
-
-    def get_current_state(self):
+    def is_debugger_finished(self):
         lib6502.get_current_state(self.output)
-
-    def debugger_step(self):
-        lib6502.monitor_step()
-        self.restart_cpu()
+        self.debug_state()
+        return False
