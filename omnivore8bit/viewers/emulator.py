@@ -68,16 +68,34 @@ class Atari800Viewer(EmulatorViewer):
 
 
 class CPU6502Table(SegmentVirtualTable):
-    col_labels = ["A", "X", "Y", "SP", "N", "V", "-", "B", "D", "I", "Z", "C", "PC"]
-    col_from_cpu_state = [0, 3, 4, 2, 1, 1, 1, 1, 1, 1, 1, 1, 6]  # a, p, sp, x, y, _, pc
-    col_sizes = [2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 4]
-    p_bit = [0, 0, 0, 0, 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01]
     want_col_header = True
     want_row_header = False
 
+    col_labels = ["A", "X", "Y", "SP", "N", "V", "-", "B", "D", "I", "Z", "C", "PC"]
+    col_sizes = [2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 4]
+    p_bit = [0, 0, 0, 0, 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01]
+
+    # cpu state is not necessarily in "A,X,Y,SP..." order, so use the dtype
+    # names of the cpu state array to look up which positions they should be
+    # mapped to. The array below is the default from atari800 which is
+    # a, p, sp, x, y, _, pc. It's overridden below in compute_col_lookup
+    col_from_cpu_state = [0, 3, 4, 2, 1, 1, 1, 1, 1, 1, 1, 1, 6]
+
     def get_data_style_view(self, linked_base):
         data = linked_base.emulator.cpu_state
+        self.compute_col_lookup(data.dtype)
         return data, data
+
+    def compute_col_lookup(self, dtype):
+        print(dtype)
+        label_lookup = {label:i for i,label in enumerate(dtype.names)}
+        col_from_cpu_state = [0] * len(self.col_labels)
+        for i, d in enumerate(self.col_labels):
+            if d in "NV-BDIZC":
+                d = "P"
+            if d in label_lookup:
+                col_from_cpu_state[i] = label_lookup[d]
+        self.col_from_cpu_state = col_from_cpu_state
 
     def get_value_style(self, row, col):
         val = self.data[self.col_from_cpu_state[col]]
