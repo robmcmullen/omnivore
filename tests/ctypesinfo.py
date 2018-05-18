@@ -12,6 +12,6 @@ info.out = c_int(121)
 lib = CDLL("./sharedLib.so").getVal
 a = lib(byref(info))
 
-print "python"
-print info.input
-print info.out
+print("python")
+print(info.input)
+print(info.out)

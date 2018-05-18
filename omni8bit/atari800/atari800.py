@@ -78,7 +78,7 @@ def start_monitor_event_loop(emu):
     print("Monitor event loop here!")
     liba8.get_current_state(emu.output)
     a, p, sp, x, y, _, pc = emu.cpu_state
-    print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc))
+    print(("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc)))
 
     # Confirm validity by checking raw locations
     emu.debug_state()
@@ -152,21 +152,21 @@ class Atari800(EmulatorBase):
         video_mem = self.output[0]['video'].view(dtype=np.uint8)
         offset = 336*24 + 8
         for y in range(32):
-            print "%x:" % offset,
+            print("%x:" % offset, end=' ')
             for x in range(8,60):
                 c = video_mem[x + offset]
                 if (c == 0 or c == '\x00'):
-                    print " ",
+                    print(" ", end=' ')
                 elif (c == 0x94 or c == '\x94'):
-                    print ".",
+                    print(".", end=' ')
                 elif (c == 0x9a or c == '\x9a'):
-                    print "X",
+                    print("X", end=' ')
                 else:
                     try:
-                        print ord(c),
+                        print(ord(c), end=' ')
                     except TypeError:
-                        print repr(c),
-            print
+                        print(repr(c), end=' ')
+            print()
             offset += 336;
 
     def debug_state(self):
@@ -181,7 +181,7 @@ class Atari800(EmulatorBase):
         assert x == raw[names['CPU_X']]
         assert y == raw[names['CPU_Y']]
         assert pc == (raw[names['PC']] + 256 * raw[names['PC'] + 1])
-        print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc))
+        print(("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc)))
 
     def calc_cpu_data_array(self):
         names = self.names
@@ -195,7 +195,7 @@ class Atari800(EmulatorBase):
             ("PC", '<u2'),
             ])
         raw = self.raw_array[names['CPU_A']:names['CPU_A'] + computed_dtype.itemsize]
-        print("sizeof raw_array=%d raw=%d dtype=%d" % (len(self.raw_array), len(raw), computed_dtype.itemsize))
+        print(("sizeof raw_array=%d raw=%d dtype=%d" % (len(self.raw_array), len(raw), computed_dtype.itemsize)))
         dataview = raw.view(dtype=computed_dtype)
         return dataview[0]
 

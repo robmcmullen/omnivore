@@ -87,11 +87,11 @@ class BitmapScreen(wx.Panel, EmulatorScreenBase):
         t0 = time.clock()
         for i in range(1000):
             self.get_bitmap_slow(frame)
-        print "slow x 1000: %f" % (time.clock() - t0)
+        print("slow x 1000: %f" % (time.clock() - t0))
         t0 = time.clock()
         for i in range(1000):
             self.get_bitmap_fast(frame)
-        print "fast x 1000: %f" % (time.clock() - t0)
+        print("fast x 1000: %f" % (time.clock() - t0))
 
     def set_scale(self, scale):
         """Scale a numpy array by an integer factor
@@ -157,10 +157,10 @@ class OpenGLEmulatorMixin(object):
         frame = self.get_rgba_texture_data(frame_number)
         try:
             self.update_texture(self.display_texture, frame)
-        except Exception, e:
+        except Exception as e:
             import traceback
 
-            print traceback.format_exc()
+            print(traceback.format_exc())
             sys.exit()
         self.on_draw()
 

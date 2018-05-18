@@ -20,14 +20,14 @@ class GLProgram(object):
         try:
             shader = shaders.compileShader(src, type)
         except (gl.GLError, RuntimeError) as err:
-            print 'shader compile error', err
+            print('shader compile error', err)
         return shader
 
     def link(self, *shader_objs):
         try:
             prog = shaders.compileProgram(*shader_objs)
         except (gl.GLError, RuntimeError) as err:
-            print 'shader link error', err
+            print('shader link error', err)
         return prog
 
     def __enter__(self):

@@ -16,9 +16,9 @@ if __name__ == "__main__":
     try:
         emu_cls = omni8bit.find_emulator(emu_name)
     except UnknownEmulatorError:
-        print("Unknown emulator: %s" % emu_name)
+        print(("Unknown emulator: %s" % emu_name))
     else:
-        print("Emulating: %s" % emu_cls.pretty_name)
+        print(("Emulating: %s" % emu_cls.pretty_name))
         emu = emu_cls()
         emu.begin_emulation()
         names = emu.names
@@ -27,7 +27,7 @@ if __name__ == "__main__":
         #     fh.write(emu.state_array)
         while emu.current_frame_number < 200:
             emu.next_frame()
-            print "run.py frame count =", emu.current_frame_number
+            print(("run.py frame count =", emu.current_frame_number))
             emu.debug_state()
             # if emu.current_frame_number > 11:
             #     emu.enter_debugger()

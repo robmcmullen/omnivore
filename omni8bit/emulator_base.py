@@ -119,7 +119,7 @@ class EmulatorBase(object):
         still_waiting = []
         for count, callback in self.frame_event:
             if self.frame_count >= count:
-                print "processing %s", callback
+                print("processing %s", callback)
                 callback()
             else:
                 still_waiting.append((count, callback))
@@ -215,7 +215,7 @@ class EmulatorBase(object):
             self.print_history(frame_number)
 
     def restore_history(self, frame_number):
-        print("restoring state from frame %d" % frame_number)
+        print(("restoring state from frame %d" % frame_number))
         if frame_number < 0:
             return
         try:
@@ -225,12 +225,12 @@ class EmulatorBase(object):
         else:
             self.low_level_interface.restore_state(d)
             self.history[frame_number + 1:] = []  # remove frames newer than this
-            print("  %d items remain in history" % len(self.history))
+            print(("  %d items remain in history" % len(self.history)))
             self.frame_event = []
 
     def print_history(self, frame_number):
         d = self.history[frame_number]
-        print "history[%d] of %d: %d %s" % (d['frame_number'], len(self.history), len(d), d['state'][0][0:8])
+        print("history[%d] of %d: %d %s" % (d['frame_number'], len(self.history), len(d), d['state'][0][0:8]))
 
     def get_previous_history(self, frame_cursor):
         n = frame_cursor - 1

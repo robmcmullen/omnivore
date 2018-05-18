@@ -109,7 +109,7 @@ if "sdist" in sys.argv:
         # is included in the source distribution.
         pass
 
-execfile('omni8bit/_metadata.py')
+exec(compile(open('omni8bit/_metadata.py').read(), 'omni8bit/_metadata.py', 'exec'))
 
 setup(
     name = "omni8bit",

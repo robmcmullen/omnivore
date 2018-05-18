@@ -27,7 +27,7 @@ def run(args):
     p = Popen(args, stdout=PIPE, bufsize=1)
     with p.stdout:
         for line in iter(p.stdout.readline, b''):
-            print line,
+            print(line, end=' ')
     p.wait()
 
 # can't use Omnivore because omnivore is a directory name and the filesystem is
@@ -45,7 +45,7 @@ final_zip = "%s-%s-darwin.tbz" % (final_target, version)
 dest_exe = "%s/%s" % (dest_dir, final_exe)
 dest_zip = "%s/%s" % (dest_dir, final_zip)
 
-print "Building %s" % build_app
+print("Building %s" % build_app)
 args = ['pyinstaller', '-y', '--debug', '--windowed']
 if win:
     args.append('--onefile')
@@ -54,31 +54,31 @@ run(args)
 
 try:
     os.mkdir(dest_dir)
-    print "Creating %s" % dest_dir
+    print("Creating %s" % dest_dir)
 except OSError:
     # Directory exists; remove old stuff
     if os.path.exists(dest_app):
-        print "Removing old %s" % dest_app
+        print("Removing old %s" % dest_app)
         shutil.rmtree(dest_app)
     if os.path.exists(dest_zip):
-        print "Removing old %s" % dest_zip
+        print("Removing old %s" % dest_zip)
         os.unlink(dest_zip)
     if os.path.exists(dest_app):
-        print "Removing old %s" % dest_exe
+        print("Removing old %s" % dest_exe)
         shutil.rmtree(dest_exe)
 
 if win:
-    print "Copying %s -> %s" % (build_app, dest_exe)
+    print("Copying %s -> %s" % (build_app, dest_exe))
     shutil.copyfile(build_app, dest_exe)
 elif mac:
     contents = "%s/Contents" % build_app
 
-    print "Fixing duplicate wxPython libs"
+    print("Fixing duplicate wxPython libs")
     dup = "%s/MacOS/libwx_osx_cocoau-3.0.dylib" % contents
     os.unlink(dup)
     os.symlink("libwx_osx_cocoau-3.0.0.3.0.dylib", dup)
 
-    print "Copying %s -> %s & removing architectures other than x86_64" % (build_app, dest_app)
+    print("Copying %s -> %s & removing architectures other than x86_64" % (build_app, dest_app))
     #shutil.copytree(build_app, dest_app, True)
     run(['/usr/bin/ditto', '-arch', 'x86_64', build_app, dest_app])
 
@@ -89,8 +89,8 @@ elif mac:
     # with open("%s/Contents/Info.plist" % dest_app, "w") as fh:
     #     fh.write(text)
 
-    print "Signing (with self-signed cert)"
+    print("Signing (with self-signed cert)")
     run(["codesign", "-s", "Player/Missile Podcast", "--deep", dest_app])
 
-    print "Zipping %s" % dest_zip
+    print("Zipping %s" % dest_zip)
     run(['tar', 'cfj', dest_zip, '-C', dest_dir, final_app])

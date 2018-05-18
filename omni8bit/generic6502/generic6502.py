@@ -32,28 +32,28 @@ class Generic6502(EmulatorBase):
         video_mem = self.state_array[17:]
         offset = 0x2000
         for y in range(32):
-            print "%x:" % offset,
+            print("%x:" % offset, end=' ')
             for x in range(0,30):
                 c = video_mem[x + offset]
                 if (c == 0 or c == '\x00'):
-                    print " ",
+                    print(" ", end=' ')
                 elif (c == 0x94 or c == '\x94'):
-                    print ".",
+                    print(".", end=' ')
                 elif (c == 0x9a or c == '\x9a'):
-                    print "X",
+                    print("X", end=' ')
                 else:
                     try:
-                        print ord(c),
+                        print(ord(c), end=' ')
                     except TypeError:
-                        print repr(c),
-            print
+                        print(repr(c), end=' ')
+            print()
             offset += 40;
 
     def debug_state(self):
         pc, a, x, y, sp, p = self.cpu_state
         dtype = d.STATESAV_DTYPE
         state = self.state_array[0:int(d.STATESAV_DTYPE.itemsize)].view(dtype=d.STATESAV_DTYPE)[0]
-        print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x cycles=%ld" % (a, x, y, sp, p, pc, state['total_cycles']))
+        print(("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x cycles=%ld" % (a, x, y, sp, p, pc, state['total_cycles'])))
         # print("raw: %s" % self.raw_array[0:32])
 
     def generate_extra_segments(self):
@@ -70,7 +70,7 @@ class Generic6502(EmulatorBase):
         offset = self.state_start_offset
         dtype = d.CPU_DTYPE
         raw = self.raw_array[offset:offset + dtype.itemsize]
-        print("sizeof raw_array=%d raw=%d dtype=%d" % (len(self.raw_array), len(raw), dtype.itemsize))
+        print(("sizeof raw_array=%d raw=%d dtype=%d" % (len(self.raw_array), len(raw), dtype.itemsize)))
         dataview = raw.view(dtype=dtype)
         return dataview[0]
 
@@ -101,7 +101,7 @@ class Generic6502(EmulatorBase):
 
     def print_history(self, frame_number):
         d = self.history[frame_number]
-        print "history[%d] of %d: %d %s" % (d['frame_number'], len(self.history), len(d), d['state'][0][0:8])
+        print("history[%d] of %d: %d %s" % (d['frame_number'], len(self.history), len(d), d['state'][0][0:8]))
 
     def get_previous_history(self, frame_cursor):
         n = frame_cursor - 1

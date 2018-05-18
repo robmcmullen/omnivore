@@ -97,7 +97,7 @@ class EmulatorControlBase(object):
         def on_timer(self, evt):
             now = time.time()
             self.emulator.next_frame()
-            print("showing frame %d" % self.emulator.output['frame_number'])
+            print(("showing frame %d" % self.emulator.output['frame_number']))
             self.emulator_panel.show_frame()
             self.show_audio()
 
@@ -107,7 +107,7 @@ class EmulatorControlBase(object):
                 next_time = self.framerate * .8
             elif delta < self.framerate:
                 next_time = self.framerate - delta
-            print("now=%f show=%f delta=%f framerate=%f next_time=%f" % (now, after-now, delta, self.framerate, next_time))
+            print(("now=%f show=%f delta=%f framerate=%f next_time=%f" % (now, after-now, delta, self.framerate, next_time)))
             self.timer.StartOnce(next_time * 1000)
             self.last_update_time = now
             evt.Skip()
@@ -117,22 +117,22 @@ class EmulatorControlBase(object):
                 self.process_key_state()
                 now = time.time()
                 delta = now - self.last_update_time
-                print("now=%f delta=%f framerate=%f" % (now, delta, self.framerate))
+                print(("now=%f delta=%f framerate=%f" % (now, delta, self.framerate)))
                 if delta >= self.framerate:
                     self.emulator.next_frame()
-                    print("showing frame %d" % self.emulator.output['frame_number'])
+                    print(("showing frame %d" % self.emulator.output['frame_number']))
                     self.emulator_panel.show_frame()
                     self.show_audio()
                     if delta > 2 * self.framerate:
                         self.emulator.next_frame()
-                        print("got extra frame %d" % self.emulator.output['frame_number'])
+                        print(("got extra frame %d" % self.emulator.output['frame_number']))
                         self.emulator_panel.show_frame()
                         self.show_audio()
                         self.last_update_time = now  # + (delta % self.framerate)
                     else:
                         self.last_update_time += self.framerate
                 else:
-                    print("pausing a tick after frame %d" % self.emulator.output['frame_number'])
+                    print(("pausing a tick after frame %d" % self.emulator.output['frame_number']))
                     #self.last_update_time += self.tickrate
             evt.Skip()
     elif wx.Platform == "__WXMSW__":
@@ -143,7 +143,7 @@ class EmulatorControlBase(object):
                 now = time.time()
                 if now > self.next_update_time:
                     delta = now - self.next_update_time
-                    print("now=%f next=%f delta=%f framerate=%f" % (now, self.next_update_time, delta, self.framerate))
+                    print(("now=%f next=%f delta=%f framerate=%f" % (now, self.next_update_time, delta, self.framerate)))
                     self.emulator.next_frame()
                     self.emulator_panel.show_frame()
                     self.show_audio()
@@ -153,13 +153,13 @@ class EmulatorControlBase(object):
                     delta = now - self.next_update_time
                     if delta > self.framerate:
                         self.emulator.next_frame()
-                        print("got extra frame %d" % self.emulator.output['frame_number'])
+                        print(("got extra frame %d" % self.emulator.output['frame_number']))
                         self.emulator_panel.show_frame()
                         self.show_audio()
                         self.next_update_time += self.framerate
                     self.next_update_time += self.framerate
                 else:
-                    print("pausing a tick after frame %d" % self.emulator.output['frame_number'])
+                    print(("pausing a tick after frame %d" % self.emulator.output['frame_number']))
                     #self.last_update_time += self.tickrate
             evt.Skip()
 
@@ -202,7 +202,7 @@ class MonitorEventLoop(wx.GUIEventLoop):
         # real happening.
         #time.sleep(0.10)
         self.count += 1
-        print("hihihi %d" % self.count)
+        print(("hihihi %d" % self.count))
         time.sleep(0.02)
 
     def Run(self):
@@ -272,7 +272,7 @@ def start_monitor(frame):
     emu.get_current_state()
     frame.update_ui()
     a, p, sp, x, y, _, pc = emu.cpu_state
-    print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc))
+    print(("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc)))
 
     emu.active_event_loop = MonitorEventLoop()
     emu.active_event_loop.Run()
@@ -402,7 +402,7 @@ class EmulatorFrame(EmulatorControlBase, wx.Frame):
 
         self.box.Replace(old, self.emulator_panel)
         old.Destroy()
-        print self.emulator_panel
+        print(self.emulator_panel)
         self.Layout()
         self.emulator_panel.SetFocus()
 
@@ -422,7 +422,7 @@ class EmulatorFrame(EmulatorControlBase, wx.Frame):
         elif id == self.id_load:
             dlg = wx.FileDialog(self, "Choose a disk image", defaultDir = "", defaultFile = "", wildcard = "*.atr")
             if dlg.ShowModal() == wx.ID_OK:
-                print("Opening %s" % dlg.GetPath())
+                print(("Opening %s" % dlg.GetPath()))
                 filename = dlg.GetPath()
             else:
                 filename = None
@@ -459,7 +459,7 @@ class EmulatorFrame(EmulatorControlBase, wx.Frame):
     def on_emulator_command_key(self, evt):
         key = evt.GetKeyCode()
         mod = evt.GetModifiers()
-        print("emu key: %s %s" % (key, mod))
+        print(("emu key: %s %s" % (key, mod)))
         if key == wx.WXK_LEFT:
             if not self.is_paused:
                 self.pause()
