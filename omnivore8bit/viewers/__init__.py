@@ -1,4 +1,5 @@
 import uuid
+import random
 
 import wx
 
@@ -101,6 +102,10 @@ class SegmentViewer(HasTraits):
 
     is_tracing = Bool(False)
 
+    frame_count = Int
+
+    priority_refresh_frame_count = Int(10)
+
     #### Default traits
 
     def _uuid_default(self):
@@ -111,6 +116,12 @@ class SegmentViewer(HasTraits):
 
     def _supported_clipboard_data_objects_default(self):
         return [a[0] for a in self.supported_clipboard_data_object_map.values()]
+
+    def _frame_count_default(self):
+        # start the initial frame count on a random value so the frame refresh
+        # load can be spread around instead of each with the same frame count
+        # being refreshed at the same time.
+        return random.randint(0, self.priority_refresh_frame_count)
 
     ##### Properties
 
@@ -321,6 +332,16 @@ class SegmentViewer(HasTraits):
     def show_caret(self, control, index, bit):
         log.debug("show_caret: %s, index=%d" % (self.pretty_name, index))
         self.control.set_caret_index(control, index, bit)
+
+    @on_trait_change('linked_base.editor.document.priority_level_refresh_event')
+    def process_priority_level_refresh(self, evt):
+        log.debug("process_priority_level_refresh for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        if evt is not Undefined:
+            self.frame_count += 1
+            if self.frame_count > self.priority_refresh_frame_count:
+                flags = DisplayFlags()
+                self.refresh_view(flags)
+                self.frame_count = 0
 
     @on_trait_change('linked_base.refresh_event')
     def process_refresh_view(self, flags):

@@ -25,6 +25,11 @@ class EmulatorViewer(SegmentViewer):
 
     has_caret = False
 
+    # effectively don't allow emulator screen viewers to use the priority
+    # refresh; they will always be explicitly refreshed with the
+    # emulator_update_screen_event
+    priority_refresh_frame_count = 10000000
+
     def use_default_view_params(self):
         pass
 
@@ -119,13 +124,6 @@ class CPUParamTableViewer(BaseInfoViewer):
     pretty_name = "<pretty name>"
 
     control_cls = SegmentVirtualGridControl
-
-    @on_trait_change('linked_base.editor.document.emulator_update_info_event')
-    def process_emulator_update_info(self, evt):
-        log.debug("process_emulator_update_info for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        if evt is not Undefined:
-            flags = DisplayFlags()
-            self.refresh_view(flags)
 
     def show_caret(self, control, index, bit):
         pass
