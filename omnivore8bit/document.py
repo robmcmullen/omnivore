@@ -33,6 +33,15 @@ class SegmentedDocument(BaseDocument):
 
     document_memory_map = Dict
 
+    # During high framerate operations, some panels may not need to be updated
+    # very frequently so only those panels that absolutely need it will get a
+    # high priority refresh event. Others will get lower priority. An integer
+    # should be passed as this event's data; it is up to the viewers to decide
+    # what the value means. Confusingly, high priority levels are lower
+    # numbers! This could mean the number of frames to skip, but it's up to the
+    # viewers, really.
+    priority_level_refresh_event = Event
+
     #### trait default values
 
     def _style_default(self):

@@ -9,6 +9,8 @@ from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, InvalidSe
 # Enthought library imports.
 from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int, String, Float
 
+from omni8bit import find_emulator
+
 from omnivore8bit.document import SegmentedDocument
 
 from . import event_loop as el
@@ -59,10 +61,6 @@ class EmulationDocument(SegmentedDocument):
     # Update the graphic screen
     emulator_update_screen_event = Event
 
-    # Update the info panels; updated at a lower refresh rate than the screen
-    # because they're slow on some platforms.
-    emulator_update_info_event = Event
-
     framerate = Float(1/60.0)
 
     tickrate = Float(1/60.0)
@@ -72,7 +70,8 @@ class EmulationDocument(SegmentedDocument):
     ##### trait default values
 
     def _emulator_type_changed(self, value):
-        emu = self.emulator_type()
+        emu_cls = find_emulator(value)
+        emu = emu_cls()
         self.emulator = emu
 
     @property
@@ -94,7 +93,7 @@ class EmulationDocument(SegmentedDocument):
         SegmentedDocument.restore_extra_from_dict(self, e)
 
         if 'emulator_type' in e:
-            self.emulator_type = emu.factory[e['emulator_type']]
+            self.emulator_type = find_emulator[e['emulator_type']]
         self.skip_frames_on_boot = e.get('skip_frames_on_boot', 0)
 
     def serialize_extra_to_dict(self, mdict):
@@ -151,8 +150,7 @@ class EmulationDocument(SegmentedDocument):
         frame_number = self.emulator.output['frame_number']
         print("showing frame %d" % frame_number)
         self.emulator_update_screen_event = True
-        if frame_number % 10 == 0:
-            self.emulator_update_info_event = True
+        self.priority_level_refresh_event = True
         after = time.time()
         delta = after - now
         if delta > self.framerate:
@@ -170,7 +168,7 @@ class EmulationDocument(SegmentedDocument):
         emu = self.emulator
         emu.get_current_state()  # force output array update which normally happens only at the end of a frame
         self.emulator_update_screen_event = True
-        self.emulator_update_info_event = True
+        self.priority_level_refresh_event = True
         a, p, sp, x, y, _, pc = emu.cpu_state
         print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc))
         self.emulator.enter_debugger()

@@ -1,13 +1,8 @@
 import wx
 
-import pyatari800 as a8
-EmulatorBase = a8.EmulatorBase
+from omni8bit import find_emulator
 
 from .document import EmulationDocument
-
-known_emulators = [a8.Atari800]
-
-default_emulator = a8.Atari800
 
 
 class EmulatorError(RuntimeError):
@@ -20,13 +15,6 @@ class UnknownEmulatorError(EmulatorError):
 
 class EmulatorInUseError(EmulatorError):
     pass
-
-
-def factory(emulator_name):
-    for e in known_emulators:
-        if e.name == emulator_name:
-            return e
-    raise UnknownEmulatorError("Unknown emulator '%s'" % emulator_name)
 
 
 def restore_emulator(e):
