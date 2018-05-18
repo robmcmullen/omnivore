@@ -335,10 +335,16 @@ class SegmentViewer(HasTraits):
 
     @on_trait_change('linked_base.editor.document.priority_level_refresh_event')
     def process_priority_level_refresh(self, evt):
+        """Refresh based on frame count and priority. If the value passed
+        through this event is an integer, all viewers with priority values less
+        than the event priority value (i.e. the viewers with a higher priority)
+        will be refreshed.
+        """
         log.debug("process_priority_level_refresh for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
             self.frame_count += 1
-            if self.frame_count > self.priority_refresh_frame_count:
+            p = self.priority_refresh_frame_count
+            if self.frame_count > p or p < evt:
                 flags = DisplayFlags()
                 self.refresh_view(flags)
                 self.frame_count = 0

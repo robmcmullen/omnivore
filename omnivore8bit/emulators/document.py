@@ -168,7 +168,7 @@ class EmulationDocument(SegmentedDocument):
         emu = self.emulator
         emu.get_current_state()  # force output array update which normally happens only at the end of a frame
         self.emulator_update_screen_event = True
-        self.priority_level_refresh_event = True
+        self.priority_level_refresh_event = 100
         a, p, sp, x, y, _, pc = emu.cpu_state
         print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc))
         self.emulator.enter_debugger()
