@@ -2,6 +2,7 @@ import ctypes
 import time
 
 import numpy as np
+np.set_printoptions(formatter={'int':hex})
 
 from . import lib6502
 from . import dtypes as d
@@ -51,6 +52,8 @@ class Generic6502(EmulatorBase):
     def debug_state(self):
         pc, a, x, y, sp, p = self.cpu_state
         print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc))
+        print("raw: %s" % self.raw_array[0:32])
+
 
     def calc_cpu_data_array(self):
         offset = self.state_start_offset + 8

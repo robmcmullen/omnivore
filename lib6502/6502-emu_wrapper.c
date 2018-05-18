@@ -48,6 +48,7 @@ void lib6502_prepare_arrays(void *input, ProcessorState *output)
 }
 
 void lib6502_get_current_state(ProcessorState *buf) {
+	printf("addr=%lx A=%x X=%x Y=%x SP=%x PC=%x\n", buf, A, X, Y, SP, PC);
 	buf->A = A;
 	buf->X = X;
 	buf->Y = Y;
