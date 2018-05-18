@@ -166,12 +166,13 @@ class EmulationDocument(SegmentedDocument):
 
     def pause_emulator(self):
         emu = self.emulator
+        if emu.stop_timer_for_debugger:
+            self.stop_timer()
         emu.get_current_state()  # force output array update which normally happens only at the end of a frame
         self.emulator_update_screen_event = True
         self.priority_level_refresh_event = 100
-        a, p, sp, x, y, _, pc = emu.cpu_state
-        print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc))
-        self.emulator.enter_debugger()
+        emu.debug_state()
+        emu.enter_debugger()
 
     def restart_emulator(self):
         print("restart")
@@ -180,4 +181,9 @@ class EmulationDocument(SegmentedDocument):
         self.emulator_update_screen_event = True
 
     def debugger_step(self):
-        self.emulator.debugger_step()
+        print("stepping")
+        resume_normal_processing = self.emulator.debugger_step()
+        if not resume_normal_processing:
+            print("updating after step")
+            self.emulator_update_screen_event = True
+            self.priority_level_refresh_event = 100
