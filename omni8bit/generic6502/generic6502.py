@@ -51,8 +51,10 @@ class Generic6502(EmulatorBase):
 
     def debug_state(self):
         pc, a, x, y, sp, p = self.cpu_state
-        print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc))
-        print("raw: %s" % self.raw_array[0:32])
+        dtype = d.STATESAV_DTYPE
+        state = self.state_array[0:int(d.STATESAV_DTYPE.itemsize)].view(dtype=d.STATESAV_DTYPE)[0]
+        print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x cycles=%ld" % (a, x, y, sp, p, pc, state['total_cycles']))
+        # print("raw: %s" % self.raw_array[0:32])
 
 
     def calc_cpu_data_array(self):

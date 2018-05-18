@@ -44,19 +44,17 @@ void lib6502_init_cpu(float frequency_mhz, float refresh_rate_hz) {
 
 void lib6502_prepare_arrays(void *input, ProcessorState *output)
 {
-	output->frame_number = 0;
 }
 
 void lib6502_get_current_state(ProcessorState *buf) {
-	printf("addr=%lx A=%x X=%x Y=%x SP=%x PC=%x\n", buf, A, X, Y, SP, PC);
 	buf->A = A;
 	buf->X = X;
 	buf->Y = Y;
 	buf->SP = SP;
-	buf->PC = PC;
+	save16(buf->PC, PC);
 	buf->SR = SR.byte;
-	buf->total_cycles = total_cycles;
-	buf->frame_number = frame_number;
+	save64(buf->total_cycles, total_cycles);
+	save32(buf->frame_number, frame_number);
 	memcpy(buf->memory, memory, 1<<16);
 }
 
@@ -65,10 +63,10 @@ void lib6502_restore_state(ProcessorState *buf) {
 	X = buf->X;
 	Y = buf->Y;
 	SP = buf->SP;
-	PC = buf->PC;
+	load16(PC, buf->PC);
 	SR.byte = buf->SR;
-	total_cycles = buf->total_cycles;
-	frame_number = buf->frame_number;
+	load64(total_cycles, buf->total_cycles);
+	load32(frame_number, buf->frame_number);
 	memcpy(memory, buf->memory, 1<<16);
 }
 

@@ -11,12 +11,24 @@ extern Instruction inst;
 
 extern int jumping;
 
-/* new stuff for lib6502 */
+/* macros to save variables to (possibly unaligned) data buffer */
+
+#define save16(buf, var) memcpy(buf, &var, 2)
+#define save32(buf, var) memcpy(buf, &var, 4)
+#define save64(buf, var) memcpy(buf, &var, 8)
+
+#define load16(var, buf) memcpy(&var, buf, 2)
+#define load32(var, buf) memcpy(&var, buf, 4)
+#define load64(var, buf) memcpy(&var, buf, 8)
+
+/* lib6502 save state info uses arrays of bytes to maintain compatibility
+ across platforms. Some platforms may have different alignment rules, so
+ forcing as an array of bytes of the proper size works around this. */
 
 typedef struct {
-        uint32_t frame_number;
-        uint64_t total_cycles;
-        uint16_t PC;
+        uint8_t frame_number[4];
+        uint8_t total_cycles[8];
+        uint8_t PC[2];
         uint8_t A;
         uint8_t X;
         uint8_t Y;
