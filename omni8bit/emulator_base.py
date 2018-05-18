@@ -79,6 +79,7 @@ class EmulatorBase(object):
         self.parse_state()
         self.generate_extra_segments()
         self.cpu_state = self.calc_cpu_data_array()
+        self.main_memory = self.calc_main_memory_array()
 
     def configure_event_loop(self, event_loop=None, event_loop_args=None, *args, **kwargs):
         return None, None

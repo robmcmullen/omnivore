@@ -56,14 +56,28 @@ class Generic6502(EmulatorBase):
         print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x cycles=%ld" % (a, x, y, sp, p, pc, state['total_cycles']))
         # print("raw: %s" % self.raw_array[0:32])
 
+    def generate_extra_segments(self):
+        cpu_offset = self.state_start_offset
+        memory_offset = cpu_offset + d.CPU_DTYPE.itemsize
+        memory_size = d.MAIN_MEMORY_SIZE
+        segments = [
+            (cpu_offset, cpu_offset + d.CPU_DTYPE.itemsize, 0, "CPU Status"),
+            (memory_offset, memory_offset + d.MAIN_MEMORY_SIZE, 0, "Main Memory"),
+        ]
+        self.segments.extend(segments)
 
     def calc_cpu_data_array(self):
-        offset = self.state_start_offset + 8
+        offset = self.state_start_offset
         dtype = d.CPU_DTYPE
         raw = self.raw_array[offset:offset + dtype.itemsize]
         print("sizeof raw_array=%d raw=%d dtype=%d" % (len(self.raw_array), len(raw), dtype.itemsize))
         dataview = raw.view(dtype=dtype)
         return dataview[0]
+
+    def calc_main_memory_array(self):
+        offset = self.state_start_offset + d.CPU_DTYPE.itemsize
+        raw = self.raw_array[offset:offset + d.MAIN_MEMORY_SIZE]
+        return raw
 
     # Emulator user input functions
 

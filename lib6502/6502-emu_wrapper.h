@@ -27,15 +27,18 @@ extern int jumping;
 
 typedef struct {
         uint8_t frame_number[4];
-        uint8_t total_cycles[8];
+
         uint8_t PC[2];
         uint8_t A;
         uint8_t X;
         uint8_t Y;
         uint8_t SP;
         uint8_t SR;
-        uint8_t breakpoint_hit;
+
         uint8_t memory[1<<16];
+
+        uint8_t breakpoint_hit;
+        uint8_t total_cycles[8];
 } ProcessorState;
 
 extern long cycles_per_frame;

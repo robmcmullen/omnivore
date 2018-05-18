@@ -206,6 +206,10 @@ class Atari800(EmulatorBase):
         raw = self.raw_array[start:start + d.itemsize]
         return raw.view(dtype=d)[0]
 
+    def calc_main_memory_array(self):
+        offset = self.names['ram_ram']
+        return self.raw_array[offset:offset + 1<<16]
+
     # Emulator user input functions
 
     def coldstart(self):
