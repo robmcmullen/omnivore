@@ -1,5 +1,4 @@
 from libc.stdlib cimport malloc, free
-from cpython.string cimport PyString_AsString
 import numpy as np
 cimport numpy as np
 
@@ -19,7 +18,8 @@ cdef extern:
 cdef char ** to_cstring_array(list_str):
     cdef char **ret = <char **>malloc(len(list_str) * sizeof(char *))
     for i in xrange(len(list_str)):
-        ret[i] = PyString_AsString(list_str[i])
+        text = list_str[i].encode()
+        ret[i] = text
     return ret
 
 monitor_callback = None
