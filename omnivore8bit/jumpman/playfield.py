@@ -287,7 +287,7 @@ class JumpmanPlayfieldModel(object):
                 log.debug("compiling jumpman level code in %s" % filename)
                 self.custom_code = ju.JumpmanCustomCode(filename)
                 self.manual_recompile_needed = False
-            except SyntaxError, e:
+            except SyntaxError as e:
                 log.error("Assembly error: %s" % e.msg)
                 self.linked_base.editor.window.error(e.msg, "Assembly Error")
                 self.manual_recompile_needed = True
@@ -347,7 +347,7 @@ class JumpmanPlayfieldModel(object):
         return code.triggers
 
     def get_trigger_label(self, addr):
-        rev_old_map = {v: k for k, v in self.old_trigger_mapping.iteritems()}
+        rev_old_map = {v: k for k, v in self.old_trigger_mapping.items()}
         if addr in rev_old_map:
             return rev_old_map[addr]
         return None

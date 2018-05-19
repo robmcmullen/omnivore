@@ -107,7 +107,7 @@ class OmnivoreMainPlugin(FrameworkPlugin):
         return [ 'file://' + filename ]
 
     def _preferences_panes_default(self):
-        from preferences import FrameworkPreferencesPane
+        from .preferences import FrameworkPreferencesPane
         from omnivore.tasks.text_edit import TextEditPreferencesPane
         from omnivore.tasks.image_edit import ImageEditPreferencesPane
         from omnivore.tasks.html_view import HtmlViewPreferencesPane

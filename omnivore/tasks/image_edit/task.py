@@ -11,9 +11,9 @@ from traits.api import on_trait_change, Property, Instance
 
 
 from omnivore.framework.task import FrameworkTask
-from panes import Pane1, Pane2, Pane3
-from image_editor import ImageEditor
-from preferences import ImageEditPreferences
+from .panes import Pane1, Pane2, Pane3
+from .image_editor import ImageEditor
+from .preferences import ImageEditPreferences
 
 
 class ImageEditTask(FrameworkTask):

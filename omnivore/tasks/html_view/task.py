@@ -13,9 +13,9 @@ from traits.api import on_trait_change, Property, Instance, Any, Event, Int
 
 from omnivore.framework.task import FrameworkTask
 from omnivore.framework.actions import *
-from html_viewer import HtmlViewer
-from preferences import HtmlViewPreferences
-import pane_layout
+from .html_viewer import HtmlViewer
+from .preferences import HtmlViewPreferences
+from . import pane_layout
 
 
 class HtmlViewTask(FrameworkTask):

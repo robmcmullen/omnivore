@@ -58,7 +58,7 @@ def toolkit_object(mname, oname):
             setattr(sys.modules[mname], oname, be_obj)
         except AttributeError:
             pass
-    except ImportError, e:
+    except ImportError as e:
 
         # Ignore *ANY* errors unless a debug ENV variable is set.
         if 'ETS_DEBUG' in os.environ:

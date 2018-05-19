@@ -16,7 +16,7 @@ from atrcopy import user_bit_mask, data_style, add_xexboot_header, add_atr_heade
 from omnivore.framework.enthought_api import Action, ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
 from omnivore.utils.command import StatusFlags
 
-from commands import *
+from .commands import *
 from omnivore8bit.arch.disasm import ANTIC_DISASM, JUMPMAN_LEVEL, JUMPMAN_HARVEST, UNINITIALIZED_DATA
 from omnivore8bit.arch.ui.antic_colors import AnticColorDialog
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
@@ -452,7 +452,7 @@ class ImportSegmentLabelsAction(EditorAction):
             d = parse_int_label_dict(text, allow_equals=True)
             s = e.segment
             start, end = s.start_addr, s.start_addr + len(s)
-            below, above = count_in_range(d.keys(), start, end)
+            below, above = count_in_range(list(d.keys()), start, end)
             if below + above > 0:
                 msg = ""
                 if below > 0:
@@ -618,13 +618,13 @@ class SaveSegmentGroup(TaskDynamicSubmenuGroup):
     def _get_items(self, event_data=None):
         items = []
         if event_data is not None:
-            print("event_data", event_data)
+            print(("event_data", event_data))
             #segment_number = event_data
             segment_number = self.task.active_editor.segment_number
             segment = self.task.active_editor.document.segments[segment_number]
-            print("segment", segment)
+            print(("segment", segment))
             savers = self.task.active_editor.get_extra_segment_savers(segment)
-            print("extra savers", savers)
+            print(("extra savers", savers))
             savers.extend(segment.savers)
             for saver in savers:
                 action = SaveSegmentAsFormatAction(saver=saver, segment_number=segment_number)

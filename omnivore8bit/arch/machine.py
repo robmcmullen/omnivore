@@ -8,11 +8,11 @@ import numpy as np
 from traits.api import HasTraits, Any, Bool, Int, Str, List, Dict, Event, Enum, DictStrStr
 
 # Local imports.
-import fonts
-import colors
-import disasm
-import memory_map
-import antic_renderers
+from . import fonts
+from . import colors
+from . import disasm
+from . import memory_map
+from . import antic_renderers
 
 import logging
 log = logging.getLogger(__name__)
@@ -177,7 +177,7 @@ class Machine(HasTraits):
                 # convert into list of tuples so json won't mangle the integer
                 # keys into strings
                 value = getattr(self, name)
-                state[name] = value.items()
+                state[name] = list(value.items())
             elif name == "antic_font_data":
                 value = getattr(self, name)
                 state[name] = value['uuid']

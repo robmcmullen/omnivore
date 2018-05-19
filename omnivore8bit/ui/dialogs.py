@@ -69,7 +69,7 @@ class SegmentOrderDialog(wx.Dialog):
         vbox1 = wx.BoxSizer(wx.VERTICAL)
         t = wx.StaticText(self, -1, "All Segments")
         vbox1.Add(t, 0, wx.ALL|wx.EXPAND, self.border)
-        self.source = ReorderableList(self, self.segment_map.keys(), self.get_item_text, columns=["Origin", "Size", "Name"], resize_column=3, allow_drop=False, size=(400,300))
+        self.source = ReorderableList(self, list(self.segment_map.keys()), self.get_item_text, columns=["Origin", "Size", "Name"], resize_column=3, allow_drop=False, size=(400,300))
         vbox1.Add(self.source, 1, wx.ALL|wx.EXPAND, self.border)
         hbox.Add(vbox1, 1, wx.ALL|wx.EXPAND, 0)
 
@@ -159,7 +159,7 @@ class SegmentOrderDialog(wx.Dialog):
             addr = text_to_int(text, "hex")
             if addr < 0 or addr > 0xffff:
                 addr = None
-        except (ValueError, TypeError), e:
+        except (ValueError, TypeError) as e:
             addr = None
         return addr
 
@@ -228,7 +228,7 @@ class SegmentInterleaveDialog(SegmentOrderDialog):
             num = text_to_int(text, "hex")
             if num < 0 or num > length:
                 num = 0
-        except (ValueError, TypeError), e:
+        except (ValueError, TypeError) as e:
             num = 0
         return num
 
@@ -248,7 +248,7 @@ if __name__ == "__main__":
     #     print dlg.get_checked_items()
     dlg = ChooseOnePlusCustomDialog(frame, ["one", "two"], "instructions")
     if dlg.ShowModal() == wx.ID_OK:
-        print "Selected", dlg.get_selected()
+        print("Selected", dlg.get_selected())
     dlg.Destroy()
 
     app.MainLoop()

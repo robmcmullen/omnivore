@@ -147,7 +147,7 @@ class DtypeTable(SegmentVirtualTable):
 
     def get_data_style_view(self, linked_base):
         data = linked_base.emulator.calc_dtype_data(self.emulator_dtype_name)
-        print(data.dtype.names)
+        print((data.dtype.names))
         return data, data
 
     def calc_labels(self):

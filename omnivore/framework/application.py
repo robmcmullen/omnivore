@@ -19,9 +19,9 @@ from apptools.preferences.api import Preferences
 # Local imports.
 from .enthought_api import FrameworkTaskWindow
 from .persistence import FilePersistenceMixin
-from filesystem import init_filesystems
-from document import BaseDocument
-import documentation
+from .filesystem import init_filesystems
+from .document import BaseDocument
+from . import documentation
 from omnivore.help import get_htmlhelp, MissingDocumentationError
 from omnivore.framework.preferences import FrameworkPreferences, \
     FrameworkPreferencesPane
@@ -155,7 +155,7 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
         options, extra_args = parser.parse_known_args(self.command_line_args)
         if options.show_editors:
             for factory in self.task_factories:
-                print("%s %s" % (factory.id, factory.name))
+                print(("%s %s" % (factory.id, factory.name)))
         i = 0
         if ":" in options.task_id:
             options.task_id, task_arguments = options.task_id.split(":", 1)
@@ -247,7 +247,7 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
 
     def show_focused(self):
         focused = self.active_window.active_task.active_editor.control.FindFocus()
-        print("Focus at: %s (%s)" % (focused, focused.GetName() if focused is not None else ""))
+        print(("Focus at: %s (%s)" % (focused, focused.GetName() if focused is not None else "")))
 
     def on_idle_build_docs(self, evt):
         evt.Skip()
@@ -256,17 +256,17 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
         editor = self.active_window.active_task.active_editor
         if editor is None:
             return
-        print "Building documentation."
+        print("Building documentation.")
         wx.CallAfter(self.build_docs)
 
     def build_docs(self):
-        import task as frameworktask
+        from . import task as frameworktask
         task = frameworktask.FrameworkTask()
         sections = []
         docs = documentation.RSTOnePageDocs("%s %s User's Guide" % (task.about_title, task.about_version), "manual")
         for factory in self.task_factories:
             if "omnivore" not in factory.id or "framework" in factory.id:
-                print "Skipping documentation for %s" % factory.id
+                print("Skipping documentation for %s" % factory.id)
                 continue
 
             # For testing, uncomment the following block to only process
@@ -276,17 +276,17 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
             #     print "Skipping documentation for %s" % factory.id
             #     continue
 
-            print "Building documentation for %s (%s)" % (factory.id, factory.name)
+            print("Building documentation for %s (%s)" % (factory.id, factory.name))
             task = self.create_task(factory.id)
             try:
                 self.add_task_to_window(self.active_window, task)
                 task.new()
-            except AttributeError, e:
-                print "Error creating documentation for %s: %s" % (factory.id, e)
+            except AttributeError as e:
+                print("Error creating documentation for %s: %s" % (factory.id, e))
                 continue
             docs.add_task(task)
         docs.create_manual()
-        print "Finished creating documentation! Exiting."
+        print("Finished creating documentation! Exiting.")
         sys.exit()
 
     def update_dynamic_menu_items(self, editor):
@@ -354,7 +354,7 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
         # The FileGuess loads the first part of the file and tries to identify it.
         try:
             guess = FileGuess(uri)
-        except fs.errors.FSError, e:
+        except fs.errors.FSError as e:
             log.error("File load error: %s" % str(e))
             if active_task is not None:
                 active_task.window.error(str(e), "File Load Error")
@@ -699,7 +699,7 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
 
         try:
             filename = get_htmlhelp("userguide.hhp")
-        except MissingDocumentationError, e:
+        except MissingDocumentationError as e:
             self.active_window.warning(str(e), "Help Files Not Found")
             return
 

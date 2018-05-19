@@ -6,7 +6,7 @@ from udis.udis_fast.disasm_info import fast_disassemble_segment
 
 from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bit_mask, data_style
 
-from memory_map import EmptyMemoryMap
+from .memory_map import EmptyMemoryMap
 
 import logging
 log = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ def get_style_name(segment, index):
     return msg
 
 def iter_disasm_styles():
-    for i, name in style_names.iteritems():
+    for i, name in list(style_names.items()):
         if i == 0:
             continue
         yield i, name
@@ -460,11 +460,11 @@ class BaseDisassembler(object):
         s = self.start_addr
         matches = []
         if not match_case:
-            for pc, label in labels.iteritems():
+            for pc, label in list(labels.items()):
                 if search_text in label.lower():
                     matches.append((pc - s, pc - s + 1))
         else:
-            for pc, label in labels.iteritems():
+            for pc, label in list(labels.items()):
                 if search_text in label:
                     matches.append((pc - s, pc - s + 1))
         return matches

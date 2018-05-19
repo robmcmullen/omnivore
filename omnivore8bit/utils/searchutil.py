@@ -99,7 +99,7 @@ class AlgorithmSearcher(BaseSearcher):
             result = expression.eval(self.search_text)
             matches = s.bool_to_ranges(result)
             return matches
-        except ParseException, e:
+        except ParseException as e:
             raise ValueError(e)
 
 

@@ -299,21 +299,21 @@ class PickledDropTarget(wx.PyDropTarget):
 
     # some virtual methods that track the progress of the drag
     def OnEnter(self, x, y, d):
-        if self.debug: print "OnEnter: %d, %d, %d\n" % (x, y, d)
+        if self.debug: print(("OnEnter: %d, %d, %d\n" % (x, y, d)))
         return d
 
     def OnLeave(self):
-        if self.debug: print "OnLeave\n"
+        if self.debug: print("OnLeave\n")
         self.cleanup()
 
     def OnDrop(self, x, y):
-        if self.debug: print "OnDrop: %d %d\n" % (x, y)
+        if self.debug: print(("OnDrop: %d %d\n" % (x, y)))
         self.cleanup()
         return True
 
     def OnDragOver(self, x, y, d):
         top = self.dv.GetTopItem()
-        if self.debug: print "OnDragOver: %d, %d, %d, top=%s" % (x, y, d, top)
+        if self.debug: print(("OnDragOver: %d, %d, %d, top=%s" % (x, y, d, top)))
 
         self.dv.processListScroll(x, y)
 
@@ -328,7 +328,7 @@ class PickledDropTarget(wx.PyDropTarget):
     # Called when OnDrop returns True.  We need to get the data and
     # do something with it.
     def OnData(self, x, y, d):
-        if self.debug: print "OnData: %d, %d, %d\n" % (x, y, d)
+        if self.debug: print(("OnData: %d, %d, %d\n" % (x, y, d)))
 
         self.cleanup()
         # copy the data from the drag source to our data object
@@ -384,7 +384,7 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
     def set_items(self, items):
         self.clear(None)
         for item in items:
-            self.insert_item(sys.maxint, item)
+            self.insert_item(sys.maxsize, item)
         self.resizeLastColumn(0)
 
     def insert_item(self, index, item):
@@ -438,7 +438,7 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
     def add_dropped_items(self, x, y, data):
         src, items = data
         start_index = self.getDropIndex(x, y)
-        if self.debug: print "At (%d,%d), index=%d, adding %s" % (x, y, start_index, items)
+        if self.debug: print(("At (%d,%d), index=%d, adding %s" % (x, y, start_index, items)))
         if start_index == -1:
             start_index = 0
 
@@ -446,17 +446,17 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
 
         if src == id(self):
             # reordering items in the same list!
-            new_order = range(list_count)
+            new_order = list(range(list_count))
             new_indexes = []
             for index, item in items:
                 if index < start_index:
                     start_index -= 1
                 new_order.remove(index)
                 new_indexes.append(index)
-            if self.debug: print("inserting %s into %s at %d" % (str(items), str(new_order), start_index))
+            if self.debug: print(("inserting %s into %s at %d" % (str(items), str(new_order), start_index)))
             new_order[start_index:start_index] = new_indexes
-            if self.debug: print("orig list = %s" % str(range(list_count)))
-            if self.debug: print(" new list = %s" % str(new_order))
+            if self.debug: print(("orig list = %s" % str(list(range(list_count)))))
+            if self.debug: print((" new list = %s" % str(new_order)))
 
             self.change_list(new_order, new_indexes)
         else:
@@ -467,13 +467,13 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
 
     def delete_selected(self):
         list_count = self.GetItemCount()
-        new_order = range(list_count)
+        new_order = list(range(list_count))
         index = self.GetFirstSelected()
         while index != -1:
             new_order.remove(index)
             index = self.GetNextSelected(index)
-        if self.debug: print("orig list = %s" % str(range(list_count)))
-        if self.debug: print(" new list = %s" % str(new_order))
+        if self.debug: print(("orig list = %s" % str(list(range(list_count)))))
+        if self.debug: print((" new list = %s" % str(new_order)))
         self.change_list(new_order)
 
     @property
@@ -508,8 +508,8 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
                 make_selected.append(index_map[index])
             else:
                 new_order.append(unselected.pop(0))
-        if self.debug: print("orig list = %s" % str(range(list_count)))
-        if self.debug: print(" new list = %s" % str(new_order))
+        if self.debug: print(("orig list = %s" % str(list(range(list_count)))))
+        if self.debug: print((" new list = %s" % str(new_order)))
         self.change_list(new_order, make_selected)
 
     def change_list(self, new_order, make_selected=[]):
@@ -556,7 +556,7 @@ class ReorderableList(wx.ListCtrl, listctrl.ListCtrlAutoWidthMixin, ListDropScro
         self.items = new_items
         if self.debug:
             for i, item in enumerate(self.items):
-                print i, item, self.get_item_text(item)
+                print((i, item, self.get_item_text(item)))
 
     def clear(self, evt=None):
         self.DeleteAllItems()
@@ -609,12 +609,12 @@ if __name__ == '__main__':
             self.InsertColumn(0, "#")
             self.InsertColumn(1, "Title")
             for i in range(count):
-                self.InsertStringItem(sys.maxint, str(i))
+                self.InsertStringItem(sys.maxsize, str(i))
                 self.SetStringItem(i, 1, "%s-%d" % (name, i))
 
         def on_start_drag(self, evt):
             index = evt.GetIndex()
-            print "beginning drag of item %d" % index
+            print(("beginning drag of item %d" % index))
 
             # Create the data object containing all currently selected
             # items
@@ -631,13 +631,13 @@ if __name__ == '__main__':
             # and drop opperation
             drop_source = wx.DropSource(self)
             drop_source.SetData(data)
-            print "Begining DragDrop\n"
+            print("Begining DragDrop\n")
             result = drop_source.DoDragDrop(wx.Drag_AllowMove)
-            print "DragDrop completed: %d\n" % result
+            print(("DragDrop completed: %d\n" % result))
 
         def add_dropped_items(self, x, y, items):
             index = self.getDropIndex(x, y)
-            print "At (%d,%d), index=%d, adding %s" % (x, y, index, items)
+            print(("At (%d,%d), index=%d, adding %s" % (x, y, index, items)))
 
             list_count = self.GetItemCount()
             for item in items:

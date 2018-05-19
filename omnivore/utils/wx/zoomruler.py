@@ -3,7 +3,7 @@ import random
 import time
 import zlib
 import base64
-import cStringIO
+import io
 import math
 import bisect
 
@@ -31,7 +31,7 @@ def time_step(self, visible_pixels, total_pixels, low_value, high_value):
 
 class BitSink(object):
     def __len__(self):
-        return sys.maxint
+        return sys.maxsize
 
     def __getitem__(self, i):
         return 0
@@ -526,7 +526,7 @@ class ZoomRulerBase(object):
     def can_drag_cursor(self):
         if self.__class__.open_hand_cursor_ is None:
             raw = zlib.decompress(base64.b64decode(open_hand_cursor_data))
-            stream = cStringIO.StringIO(raw)
+            stream = io.BytesIO(raw)
             image = wx.Image(stream)
             image.SetOption(wx.IMAGE_OPTION_CUR_HOTSPOT_X, 16)
             image.SetOption(wx.IMAGE_OPTION_CUR_HOTSPOT_Y, 16)
@@ -537,7 +537,7 @@ class ZoomRulerBase(object):
     def dragging_cursor(self):
         if self.__class__.closed_hand_cursor_ is None:
             raw = zlib.decompress(base64.b64decode(closed_hand_cursor_data))
-            stream = cStringIO.StringIO(raw)
+            stream = io.BytesIO(raw)
             image = wx.Image(stream)
             image.SetOption(wx.IMAGE_OPTION_CUR_HOTSPOT_X, 16)
             image.SetOption(wx.IMAGE_OPTION_CUR_HOTSPOT_Y, 16)
@@ -1070,11 +1070,11 @@ if __name__ == "__main__":
     time_range = 100000  # seconds
     seconds_per_pixel = 100000 / 800
     step = time_steps[min(bisect.bisect(time_steps, abs(seconds_per_pixel)), len(time_steps) - 1)]
-    print time_steps
-    print step
+    print(time_steps)
+    print(step)
 
     b = BitSink()
-    print b[1000000]
+    print((b[1000000]))
 
     class SampleData(object):
         @classmethod

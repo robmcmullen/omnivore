@@ -14,7 +14,7 @@ class MonitorEventLoop(wx.GUIEventLoop):
         # real happening.
         #time.sleep(0.10)
         self.count += 1
-        print "\rhihihi %d" % self.count,
+        print("\rhihihi %d" % self.count, end=' ')
         # time.sleep(0.02)
 
     def Run(self):
@@ -94,7 +94,7 @@ def start_monitor(document):
     document.emulator_update_screen_event = True
     document.priority_level_refresh_event = True
     a, p, sp, x, y, _, pc = emu.cpu_state
-    print("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc))
+    print(("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc)))
     active_event_loop = MonitorEventLoop()
     emu.active_event_loop = active_event_loop
     active_event_loop.Run()

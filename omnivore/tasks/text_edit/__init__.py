@@ -1,2 +1,2 @@
-from task import TextEditTask
-from preferences import TextEditPreferencesPane
+from .task import TextEditTask
+from .preferences import TextEditPreferencesPane

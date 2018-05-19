@@ -66,7 +66,7 @@ class InsertFileCommand(SetContiguousDataCommand):
     def get_data(self, orig):
         try:
             guess = FileGuess(self.uri)
-        except fs.errors.FSError, e:
+        except fs.errors.FSError as e:
             self.error = "File load error: %s" % str(e)
             return
         data = guess.numpy
@@ -219,11 +219,11 @@ class ClearLabelCommand(ChangeMetadataCommand):
 
     def __init__(self, segment, ranges):
         ChangeMetadataCommand.__init__(self, segment)
-        print ranges
+        print(ranges)
         self.ranges = ranges
 
     def do_change(self, editor, undo):
-        print self.ranges
+        print(self.ranges)
         indexes = ranges_to_indexes(self.ranges)
         origin = self.segment.start_addr
         old = {}
@@ -236,7 +236,7 @@ class ClearLabelCommand(ChangeMetadataCommand):
     def undo_change(self, editor, old_data):
         if old_data is not None:
             indexes = ranges_to_indexes(self.ranges)
-            for addr, label in old_data.iteritems():
+            for addr, label in old_data.items():
                 if label is None:
                     self.segment.memory_map.pop(addr, "")
                 else:
@@ -305,7 +305,7 @@ class FindAllCommand(Command):
                         else:
                             self.match_ids[start] = searcher.pretty_name
                             match_dict[start] = end
-                except ValueError, e:
+                except ValueError as e:
                     errors.append(str(e))
 
             if errors:

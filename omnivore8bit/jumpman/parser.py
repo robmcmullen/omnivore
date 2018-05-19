@@ -1054,7 +1054,7 @@ class JumpmanLevelBuilder(object):
     def update_triggers(self, old_map, new_map, objects=None):
         if objects is None:
             objects = self.objects
-        rev_old_map = {v: k for k, v in old_map.iteritems()}
+        rev_old_map = {v: k for k, v in old_map.items()}
         changed = []
         orphaned = []
         not_labeled = []
@@ -1116,9 +1116,9 @@ class JumpmanCustomCode(object):
         for first, last, raw in self.asm.segments:
             ranges.append("$%04x-$%04x" % (first, last))
             total += len(raw)
-        v = sorted(["%04x %s" % (addr, name) for name, addr in self.vector_labels_used.iteritems()])
-        t = sorted(["%04x %s" % (addr, name) for name, addr in self.triggers.iteritems()])
-        lb = sorted(["%04x %s" % (addr, name) for name, addr in self.labels_used.iteritems()])
+        v = sorted(["%04x %s" % (addr, name) for name, addr in self.vector_labels_used.items()])
+        t = sorted(["%04x %s" % (addr, name) for name, addr in self.triggers.items()])
+        lb = sorted(["%04x %s" % (addr, name) for name, addr in self.labels_used.items()])
 
         text = """\
 Total bytes: %d
@@ -1143,7 +1143,7 @@ Labels defined:
         for first, last, raw in self.asm.segments:
             self.ranges.append((first, last))
             self.data.extend(raw)
-        for label, addr in self.asm.labels.iteritems():
+        for label, addr in self.asm.labels.items():
             if label in self.vector_storage:
                 self.vector_labels_used[label] = addr
                 vector = self.vector_storage[label]
@@ -1159,7 +1159,7 @@ Labels defined:
         # overwriting this, the old vector would still be present in the data
         # and it would get called even though the current code doesn't use that
         # vector.
-        for vector, default in self.vector_defaults.iteritems():
+        for vector, default in self.vector_defaults.items():
             if vector in self.vectors_used:
                 continue
             self.add_vector(vector, default)

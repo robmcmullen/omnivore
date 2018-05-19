@@ -64,11 +64,11 @@ def ExceptionHook(exctype, value, trace):
     ftrace = FormatTrace(exctype, value, trace)
 
     if ErrorDialog.ignore(ftrace):
-        print("Ignoring %s: %s" % (exctype, value))
+        print(("Ignoring %s: %s" % (exctype, value)))
         return
 
     # Ensure that error gets raised to console as well
-    print ftrace
+    print(ftrace)
 
     # If abort has been set and we get here again do a more forcefull shutdown
     if ErrorDialog.ABORT:
@@ -93,7 +93,7 @@ def FormatTrace(etype, value, trace):
 
     """
     exc = traceback.format_exception(etype, value, trace)
-    return u"".join(exc)
+    return "".join(exc)
 
 
 def TimeStamp():
@@ -137,7 +137,7 @@ def send_email_via_gmail(subject, message, sender, passwd, recipient):
         responses.append(s.sendmail(msg['From'], [msg['To']], msg.as_string()))
         responses.append(s.quit())
         sent = True
-    except Exception, e:
+    except Exception as e:
         wx.MessageBox("Unable to send email:\n\%s\n\nPlease email the bug report to %s" % (str(e), recipient))
         responses.append(e)
     text = "\n".join([str(r) for r in responses])
@@ -145,8 +145,8 @@ def send_email_via_gmail(subject, message, sender, passwd, recipient):
 
 
 def message_body_encode(body):
-    import urllib
-    return urllib.quote_plus(body).encode("utf-8")
+    import urllib.request, urllib.parse, urllib.error
+    return urllib.parse.quote_plus(body).encode("utf-8")
 
 
 def send_email_via_webbrowser(subject, message, recipient):
@@ -160,7 +160,7 @@ def send_email_via_webbrowser(subject, message, recipient):
 
         webbrowser.open(url)
         sent = True
-    except Exception, e:
+    except Exception as e:
         wx.MessageBox("Unable to send email:\n\%s\n\nPlease email the bug report to %s" % (str(e), recipient))
         error = str(e)
     return sent, error
@@ -259,7 +259,7 @@ class ErrorDialog(wx.Dialog):
         self._message = message
 
         # Add timestamp and give message to ErrorReporter
-        message = u"********** %s **********\nEditor summary:\n%s\n\n%s" % (TimeStamp(), self.task.active_editor.editor_summary(), message)
+        message = "********** %s **********\nEditor summary:\n%s\n\n%s" % (TimeStamp(), self.task.active_editor.editor_summary(), message)
         ErrorReporter().AddMessage(message)
 
         # Attributes

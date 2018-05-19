@@ -25,7 +25,7 @@ from pyface.wx.python_stc import PythonSTC, faces
 
 # Local imports.
 from omnivore.framework.editor import FrameworkEditor
-from i_styled_text_editor import IStyledTextEditor
+from .i_styled_text_editor import IStyledTextEditor
 from pyface.key_pressed_event import KeyPressedEvent
 
 

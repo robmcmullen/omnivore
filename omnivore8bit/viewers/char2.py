@@ -160,7 +160,7 @@ class CharGridControl(SegmentGridControl):
 
     def handle_char_ordinary(self, evt):
         c = evt.GetKeyCode()
-        print("ordinary char: %s", c)
+        print(("ordinary char: %s", c))
         if c != wx.WXK_NONE:
             c = self.segment_viewer.machine.font_mapping.convert_byte_mapping(c)
             self.process_edit(c| self.inverse)

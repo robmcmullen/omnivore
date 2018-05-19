@@ -92,7 +92,7 @@ class SegmentedDocument(BaseDocument):
         mdict["segment parser"] = self.segment_parser
         mdict["serialized user segments"] = list(self.user_segments)
         self.container_segment.serialize_extra_to_dict(mdict)
-        mdict["document memory map"] = sorted([list(i) for i in self.document_memory_map.iteritems()])  # save as list of pairs because json doesn't allow int keys for dict
+        mdict["document memory map"] = sorted([list(i) for i in list(self.document_memory_map.items())])  # save as list of pairs because json doesn't allow int keys for dict
 
     def restore_extra_from_dict(self, e):
         BaseDocument.restore_extra_from_dict(self, e)

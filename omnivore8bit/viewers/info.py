@@ -84,7 +84,7 @@ class CommentsPanel(wx.VListBox):
         """
         dc = evt.GetDC()
         w, h = self.GetClientSize()
-        print("erasing background", w, h)
+        print(("erasing background", w, h))
         dc.SetBrush(self.select_brush)
         dc.SetPen(wx.TRANSPARENT_PEN)
         dc.DrawRectangle(0, 0, w, h)
@@ -242,7 +242,7 @@ class CommentsPanel(wx.VListBox):
 
     def recalc_view(self):
         comments = self.segment_viewer.document.segments[0].get_sorted_comments()
-        print("COMMENTS!", str(comments))
+        print(("COMMENTS!", str(comments)))
         self.set_items(comments)
 
     def refresh_view(self):

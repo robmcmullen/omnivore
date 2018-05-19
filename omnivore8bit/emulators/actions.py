@@ -16,7 +16,7 @@ from atrcopy import user_bit_mask, data_style, add_xexboot_header, add_atr_heade
 from omnivore.framework.enthought_api import Action, ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
 from omnivore.utils.command import StatusFlags
 
-from commands import *
+from subprocess import *
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
 from omnivore8bit.ui.dialogs import SegmentOrderDialog
 from .. import emulators as emu

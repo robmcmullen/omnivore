@@ -138,14 +138,14 @@ __all__ = ['atari_color_to_rgb', 'powerup_colors', 'gr0_colors']
 
 if __name__ == "__main__":
     def print_opengl_colors(name, func):
-        print "%s = np.array([" % name
+        print("%s = np.array([" % name)
         for i in range(256):
             c = func(i)
             c2 = list(c)
             c2.append(255)
             c2 = tuple(c2)
-            print str(c2)+",",
-        print "])"
+            print(str(c2)+",", end=' ')
+        print("])")
 
     print_opengl_colors("NTSC", gtia_ntsc_to_rgb)
     print_opengl_colors("PAL", gtia_pal_to_rgb)

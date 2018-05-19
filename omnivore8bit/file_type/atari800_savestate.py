@@ -49,7 +49,7 @@ class Atari800Parser(SegmentParser):
     def parse(self):
         d = self.segment_data.data
         values = d[0:10].view(self.format)[0]
-        print values[0]
+        print(values[0])
         if values[0] == "ATARI800":
             if values[1] == 8 and (values[2] == 0 or values[2] == 1):
                 self.parse_segments()
@@ -75,7 +75,7 @@ class Atari800Parser(SegmentParser):
             comments, segments = parse_atari800(d)
             self.set_comments(comments)
             for start, end, origin, name in segments:
-                print("Adding:", start, end, origin, name)
+                print(("Adding:", start, end, origin, name))
                 segment = ObjSegment(r[start:end], 0, 0, origin, name=name)
                 self.segments.append(segment)
 
@@ -83,5 +83,5 @@ class Atari800Parser(SegmentParser):
             raise InvalidSegmentParser("Unsupported Atari800 save state file version: %d" % version)
 
     def set_comments(self, comments):
-        for loc, text in comments.iteritems():
+        for loc, text in comments.items():
             self.container.set_comment_at(loc, text)

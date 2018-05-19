@@ -1,1 +1,1 @@
-from file_browser import FileBrowserPane
+from .file_browser import FileBrowserPane

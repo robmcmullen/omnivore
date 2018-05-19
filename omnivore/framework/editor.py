@@ -169,7 +169,7 @@ class FrameworkEditor(Editor):
             doc = self.document
         try:
             doc.load_baseline(uri, confirm_callback=self.task.confirm)
-        except DocumentError, e:
+        except DocumentError as e:
             self.window.error("Failed opening baseline document file\n\n%s\n\nError: %s" % (uri, str(e)), "Baseline Document Loading Error")
             return
         if doc == self.document:
@@ -265,7 +265,7 @@ class FrameworkEditor(Editor):
 
             # refresh window name in case filename has changed
             self.task._active_editor_tab_change(None)
-        except Exception, e:
+        except Exception as e:
             import traceback
             stack = traceback.format_exc()
             log.error("%s:\n%s" % (uri, stack))
@@ -723,7 +723,7 @@ class FrameworkEditor(Editor):
             # path of current file is the final try
             attempts.append(self.document.uri)
 
-        print("attempts for best_file_save_dir: %s" % str(attempts))
+        print(("attempts for best_file_save_dir: %s" % str(attempts)))
         dirpath = ""
         for uri in attempts:
             try:

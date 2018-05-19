@@ -24,7 +24,7 @@ from .. import emulators as emu
 
 from omnivore.utils.processutil import run_detach
 
-from linked_base import LinkedBase
+from .linked_base import LinkedBase
 
 import logging
 log = logging.getLogger(__name__)
@@ -197,7 +197,7 @@ class ByteEditor(FrameworkEditor):
         if not viewers:
             try:
                 e_default = self.get_default_layout()
-                print("using defaults from template: template=%s" % str(e_default))
+                print(("using defaults from template: template=%s" % str(e_default)))
             except OSError:
                 log.error("No template for default layout; falling back to minimal setup.")
             else:
@@ -243,7 +243,7 @@ class ByteEditor(FrameworkEditor):
             for viewer in self.viewers:
                 if not self.control.in_sidebar(viewer.control):
                     break
-        print("setting focus to %s" % viewer)
+        print(("setting focus to %s" % viewer))
         self.set_focused_viewer(viewer)
 
     def to_metadata_dict(self, mdict, document):
@@ -259,7 +259,7 @@ class ByteEditor(FrameworkEditor):
             v.to_metadata_dict(e, document)
             mdict["viewers"].append(e)
         mdict["linked bases"] = []
-        for u, b in bases.iteritems():
+        for u, b in bases.items():
             e = {}
             b.to_metadata_dict(e, document)
             mdict["linked bases"].append(e)
@@ -360,7 +360,7 @@ class ByteEditor(FrameworkEditor):
             bytes = saver.encode_data(self.segment, self)
             saver = lambda a,b: bytes
             self.document.save_to_uri(uri, self, saver, save_metadata=False)
-        except Exception, e:
+        except Exception as e:
             log.error("%s: %s" % (uri, str(e)))
             #self.window.error("Error trying to save:\n\n%s\n\n%s" % (uri, str(e)), "File Save Error")
             raise
@@ -502,13 +502,13 @@ class ByteEditor(FrameworkEditor):
         # Create a set of viewers from a list
         log.debug("layout: %s" % layout)
         import pprint
-        log.debug("viewer_metadata: %s" % str(viewer_metadata.keys()))
+        log.debug("viewer_metadata: %s" % str(list(viewer_metadata.keys())))
 
         center_base = center_base = LinkedBase(editor=self)
         linked_bases['default'] = center_base
 
         layer = 0
-        viewers = viewer_metadata.keys()
+        viewers = list(viewer_metadata.keys())
         if layout:
             self.control.restore_layout(layout)
 

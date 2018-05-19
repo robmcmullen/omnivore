@@ -54,7 +54,7 @@ class JumpmanPlayfieldRenderer(BaseRenderer):
         data = (style & user_bit_mask) > 0
         match = (style & match_bit_mask) == match_bit_mask
 
-        color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(segment_viewer, range(32))
+        color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(segment_viewer, list(range(32)))
         bitimage = np.empty((nr * bytes_per_row, 3), dtype=np.uint8)
         for i in range(32):
             color_is_set = (pixels == i)
@@ -174,7 +174,7 @@ class JumpmanGridControl(BitmapGridControl):
         if mouse_mode.can_paste:
             first = True
             for obj in self.model.level_builder.objects:
-                print("select_all: adding %s" % str(obj))
+                print(("select_all: adding %s" % str(obj)))
                 mouse_mode.add_to_selection(obj, not first)
                 first = False
             if not first:
@@ -417,7 +417,7 @@ class TriggerList(wx.ListBox):
         event.Skip()
 
     def update_triggers_in_main_viewer(self, new_trigger_root):
-        print("new trigger root:", new_trigger_root)
+        print(("new trigger root:", new_trigger_root))
         self.segment_viewer.linked_base.jumpman_trigger_selected_event = new_trigger_root
 
     def on_dclick(self, event):

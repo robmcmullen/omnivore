@@ -155,13 +155,13 @@ class TileWrapControl(wx.Panel):
 if __name__ == '__main__':
     import sys
     sys.path[0:0] = [".."]
-    print sys.path
+    print(sys.path)
     import omnivore8bit.arch.fonts as fonts
     import omnivore8bit.arch.colors as colors
 
     class Wrapper(object):
         def __init__(self, **kwargs):
-            for k, v in kwargs.iteritems():
+            for k, v in kwargs.items():
                 setattr(self, k, v)
 
         def set_current_draw_pattern(self, *args, **kwargs):
@@ -172,16 +172,16 @@ if __name__ == '__main__':
             wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.DefaultSize)
             tile_map = [
             ("road", [0x70]),
-            ("trees", range(0x80, 0x96), range(0x01, 0x16),),
-            ("buildings", range(0x96, 0x9f), range(0x16, 0x1f), range(0x41, 0x51), range(0x5d, 0x60),),
-            ("people", range(0xf1, 0xf4), range(0x71, 0x74)),
-            ("water", range(0x2e, 0x41),),
-            ("bridges", range(0x69, 0x6d),),
-            ("vehicles", range(0x51, 0x59),),
-            ("airport", range(0x60, 0x68), [0x5f], range(0x59, 0x5d), range(0xd9, 0xdd)),
-            ("golf", range(0xa9, 0xae),),
+            ("trees", list(range(0x80, 0x96)), list(range(0x01, 0x16)),),
+            ("buildings", list(range(0x96, 0x9f)), list(range(0x16, 0x1f)), list(range(0x41, 0x51)), list(range(0x5d, 0x60)),),
+            ("people", list(range(0xf1, 0xf4)), list(range(0x71, 0x74))),
+            ("water", list(range(0x2e, 0x41)),),
+            ("bridges", list(range(0x69, 0x6d)),),
+            ("vehicles", list(range(0x51, 0x59)),),
+            ("airport", list(range(0x60, 0x68)), [0x5f], list(range(0x59, 0x5d)), list(range(0xd9, 0xdd))),
+            ("golf", list(range(0xa9, 0xae)),),
             ("other", [0x20, 0x25, 0x26, ]),
-            ("special", range(0x21, 0x25), range(0x74, 0x76),),
+            ("special", list(range(0x21, 0x25)), list(range(0x74, 0x76)),),
                 ]
             color_converter = colors.gtia_ntsc_to_rgb
             highlight_color = (100, 200, 230)

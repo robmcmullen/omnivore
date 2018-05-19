@@ -1,7 +1,7 @@
 import os
 import sys
 import datetime
-from cStringIO import StringIO
+from io import StringIO
 
 from pyface.api import ImageResource
 
@@ -108,7 +108,7 @@ class WxAboutFileSystemHandler(wx.FileSystemHandler):
         if fsfile is None:
             try:
                 fh = opener.open(location, "rb")
-            except errors.FSError, e:
+            except errors.FSError as e:
                 log.error(str(e))
                 return None
             data = np.fromstring(fh.read(), dtype=np.uint8)
@@ -201,7 +201,7 @@ class TemplateFS(FS):
         log.debug("TemplateFS: loading %s" % url)
         try:
             fh = get_template_fh(url)
-        except OSError, e:
+        except OSError as e:
             raise fs.errors.ResourceNotFoundError(path, details="No template found. %s" % e)
 
         return fh
@@ -283,7 +283,7 @@ class BlankFS(FS):
         log.debug("BlankFS: loading %s" % path)
         try:
             size = int(path)
-        except ValueError, e:
+        except ValueError as e:
             raise fs.errors.ResourceNotFoundError(path, details="Invalid size. %s" % e)
         fh = StringIO('\0' * size)
         return fh
@@ -349,10 +349,10 @@ def init_about_filesystem(task_factories):
     opener.add(AboutOpener)
     opener.add(TemplateOpener)
     opener.add(BlankOpener)
-    for name, text in about.iteritems():
+    for name, text in about.items():
         save_to_about_filesystem(name, text)
     for factory in task_factories:
-        for name, text in factory.factory.about_filesystem.iteritems():
+        for name, text in factory.factory.about_filesystem.items():
             save_to_about_filesystem(name, text)
 
 def save_to_about_filesystem(name, text):

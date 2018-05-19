@@ -243,7 +243,7 @@ class wxLogHandler(logging.Handler):
 
     def post(self, evt):
         if not self.use_gui:
-            print "NO GUI: message=%s" % evt.message
+            print("NO GUI: message=%s" % evt.message)
             return
         m = evt.message
         if m.startswith("START"):
@@ -325,12 +325,12 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
 
     def progress_test():
-        print "HI!"
+        print("HI!")
         progress_log.info("START=First Test")
         try:
             progress_log.info("TITLE=Starting timer")
             for i in range(100):
-                print i
+                print(i)
                 progress_log.info("Trying %d" % i)
                 for j in range(10):
                     time.sleep(.1)
@@ -340,7 +340,7 @@ if __name__ == '__main__':
                 progress_log.info("PULSE")
                 wx.Yield()
 
-        except ProgressCancelError, e:
+        except ProgressCancelError as e:
             error = e.message
         finally:
             progress_log.info("END")

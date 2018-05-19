@@ -34,4 +34,4 @@ def get_all_subclasses(parent, subclassof=None):
         if len(subs)>0:
             for kls in subs:
                 subclasses[kls] = 1
-    return subclasses.keys()
+    return list(subclasses.keys())

@@ -37,8 +37,8 @@ class MyCoolSidebar(wx.ScrolledWindow):
 
 """
 
-import os, sys, struct, Queue, threading, time, socket
-from cStringIO import StringIO
+import os, sys, struct, queue, threading, time, socket
+from io import StringIO
 
 import wx
 import wx.stc
@@ -106,7 +106,7 @@ class RealPopupWindowMac(wx.PopupTransientWindow):
     # Superclass overrides
 
     def OnDismiss(self):
-        print "DISMISSED!!!!!"
+        print("DISMISSED!!!!!")
         wx.CallAfter(self.GetParent().clear_popup)
 
     # local methods
@@ -699,7 +699,7 @@ class PopupStatusBar(StatusPopupWindow):
         frame_pos = frame.ClientToScreen(frame_offset[0], frame_offset[1])
         frame_size = frame.GetClientSize().Get()
         w, h = self.status.GetSize()
-        print("frame pos: %s, size=%s  popup size=%s" % (str(frame_pos), str(frame_size), str((w, h))))
+        print(("frame pos: %s, size=%s  popup size=%s" % (str(frame_pos), str(frame_size), str((w, h)))))
         x = frame_pos[0]
         y = frame_pos[1] + frame_size[1] - h
         if w > frame_size[0]:

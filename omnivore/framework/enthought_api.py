@@ -196,7 +196,7 @@ if BENCHMARK_OLD:
         def _task_changed(self, old, new):
             method = getattr(self, '_enabled_update')
             name = getattr(self, 'enabled_name')
-            print "ACTIVE", name, self.active_editor
+            print("ACTIVE", name, self.active_editor)
             if name:
                 if hasattr(self.active_editor, name):
                     name = "active_editor." + name
@@ -204,7 +204,7 @@ if BENCHMARK_OLD:
                         old.on_trait_change(method, name, remove=True)
                     if new:
                         new.on_trait_change(method, name)
-                    print "ADDED ENABLED_NAME %s TO %s" % (name, self.active_editor)
+                    print("ADDED ENABLED_NAME %s TO %s" % (name, self.active_editor))
             method()
 
         def _enabled_update(self):
@@ -215,7 +215,7 @@ if BENCHMARK_OLD:
                     self.enabled = False
             else:
                 self.enabled = bool(self.task)
-            print "ENABLING %s: %s" % (self.name, self.enabled)
+            print("ENABLING %s: %s" % (self.name, self.enabled))
 
         @property
         def object(self):

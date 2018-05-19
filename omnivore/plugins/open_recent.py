@@ -147,7 +147,7 @@ class RecentFiles(object):
 
     def append_uri(self, uri, extra=None):
         if self.is_acceptable_uri(uri):
-            item = unicode(uri)
+            item = str(uri)
             if extra:
                 item = (item, extra)
             # if we're adding an item that's already in the list, move it
@@ -267,7 +267,7 @@ class OpenRecentPlugin(FrameworkPlugin):
         recent_files = self.get_plugin_data()
         try:
             recent_files.append_uri(uri)
-        except Exception, e:
+        except Exception as e:
             log.warning("FAILED ADDING %s to recent files list: %s" % (uri, e.message))
             return
         self.fire_plugin_event()

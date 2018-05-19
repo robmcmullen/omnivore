@@ -46,7 +46,7 @@ class HexEntryDialog(SimplePromptDialog):
         try:
             value = text_to_int(text, default_base)
             error = ""
-        except (ValueError, TypeError), e:
+        except (ValueError, TypeError) as e:
             value = None
             error = str(e)
         if return_error:
@@ -139,7 +139,7 @@ class DictEditDialog(wx.Dialog):
                 self.controls[key] = control
 
     def set_initial_values(self, d):
-        for key in self.controls.keys():
+        for key in list(self.controls.keys()):
             self.set_initial_value_of(d, key)
 
     def set_initial_value_of(self, d, key):
@@ -162,7 +162,7 @@ class DictEditDialog(wx.Dialog):
         return d[key]
 
     def get_edited_values(self, d):
-        for key in self.controls.keys():
+        for key in list(self.controls.keys()):
             self.get_edited_value_of(d, key)
 
     def get_edited_value_of(self, d, key):
@@ -609,7 +609,7 @@ class CheckItemDialog(wx.Dialog):
             self.deselect_all()
 
     def select_all(self):
-        self.list.SetChecked(range(self.list.GetCount()))
+        self.list.SetChecked(list(range(self.list.GetCount())))
 
     def deselect_all(self):
         self.list.SetChecked([])
@@ -729,7 +729,7 @@ if __name__ == "__main__":
 
         @state.setter
         def state(self, value):
-            print "Setting to:", value
+            print(("Setting to:", value))
             self._state = (value == 'state true')
 
     class TestSetattrDialog(ObjectEditDialog):
@@ -743,9 +743,9 @@ if __name__ == "__main__":
     test_obj = TestObj()
     dlg = TestSetattrDialog(frame, "Test", test_obj)
     dlg.show_and_get_value()
-    print test_obj.state
+    print((test_obj.state))
     dlg = TestSetattrDialog(frame, "Test", test_obj)
     dlg.show_and_get_value()
-    print test_obj.state
+    print((test_obj.state))
 
     app.MainLoop()

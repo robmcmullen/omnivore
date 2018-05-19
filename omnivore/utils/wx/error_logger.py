@@ -40,7 +40,7 @@ def enable_loggers(text):
 
     match_strings = [t.strip() for t in text.split(",") if t] if "," in text else [text.strip()] if text else []
     count = 0
-    for logger_name, level in known_loggers.iteritems():
+    for logger_name, level in list(known_loggers.items()):
         if level < 0:
             level = logging.INFO
         for match in match_strings:
@@ -57,7 +57,7 @@ def get_default_levels():
     global known_loggers
 
     current_loggers = logging.Logger.manager.loggerDict
-    for logger_name in current_loggers.keys():
+    for logger_name in list(current_loggers.keys()):
         if logger_name not in known_loggers:
             known_log = logging.getLogger(logger_name)
             level = known_log.getEffectiveLevel()

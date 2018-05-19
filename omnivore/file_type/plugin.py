@@ -5,7 +5,7 @@ import os.path
 from envisage.api import ExtensionPoint, Plugin, ServiceOffer
 from traits.api import List, Instance
 
-from i_file_recognizer import IFileRecognizer, IFileRecognizerDriver
+from .i_file_recognizer import IFileRecognizer, IFileRecognizerDriver
 
 import logging
 log = logging.getLogger(__name__)

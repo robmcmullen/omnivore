@@ -14,7 +14,7 @@ Unfortunately the primary selection will only be application local if we
 aren't on an X11 system.
 """
 
-import wx
+from . import wx
 
 
 # Global boolean use_x11_primary_selection describes whether or not the

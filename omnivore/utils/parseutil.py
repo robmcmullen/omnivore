@@ -299,9 +299,9 @@ if __name__=='__main__':
         result = arith.eval(test)
         correct = (expected == result).all()
         if correct:
-            print test, "correct!"
+            print((test, "correct!"))
         else:
-            print test, "FAILED", expected, result
+            print((test, "FAILED", expected, result))
 
     arith = NumpyFloatExpression(v)
     tests = [
@@ -313,6 +313,6 @@ if __name__=='__main__':
         result = arith.eval(test)
         correct = (expected == result).all()
         if correct:
-            print test, "correct!"
+            print((test, "correct!"))
         else:
-            print test, "FAILED", expected, result
+            print((test, "FAILED", expected, result))

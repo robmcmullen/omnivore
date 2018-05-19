@@ -115,7 +115,7 @@ class SegmentViewer(HasTraits):
         return Atari800.clone_machine()
 
     def _supported_clipboard_data_objects_default(self):
-        return [a[0] for a in self.supported_clipboard_data_object_map.values()]
+        return [a[0] for a in list(self.supported_clipboard_data_object_map.values())]
 
     def _frame_count_default(self):
         # start the initial frame count on a random value so the frame refresh

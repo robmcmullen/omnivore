@@ -377,7 +377,7 @@ class LinkedBase(CaretHandler):
             # If there are multiple selections, use an indexed segment
             indexes = []
             for start, end in ranges:
-                indexes.extend(range(start, end))
+                indexes.extend(list(range(start, end)))
             if size < 0:
                 size = len(indexes)
             for i in range(0, len(indexes), size):

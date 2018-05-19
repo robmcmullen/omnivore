@@ -2,7 +2,7 @@
 """
 import os
 import time
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import tempfile
 
 import wx
@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 class NoCallback(object):
     def __call__(self):
         def no_callback(req):
-            print "no callback for", req
+            print(("no callback for", req))
             return
         return no_callback
 
@@ -84,8 +84,8 @@ class DownloadURLRequest(BaseRequest):
 
     def get_data_from_server(self):
         try:
-            request = urllib2.Request(self.url)
-            response = urllib2.urlopen(request)
+            request = urllib.request.Request(self.url)
+            response = urllib.request.urlopen(request)
             headers = response.info()
             if "Content-Length" in headers:
                 self.expected_size = int(headers['Content-Length'])
@@ -114,7 +114,7 @@ class DownloadURLRequest(BaseRequest):
                 self.data = self.path
             self.finish()
 
-        except (urllib2.URLError, ValueError, OSError), e:
+        except (urllib.error.URLError, ValueError, OSError) as e:
             self.handle_error(e)
 
     def handle_error(self, e):
@@ -218,7 +218,7 @@ class DownloadControl(scrolled.ScrolledPanel):
     @property
     def num_active(self):
         count = 0
-        for req in self.req_map.keys():
+        for req in list(self.req_map.keys()):
             if not req.is_finished:
                 count += 1
         return count
@@ -292,7 +292,7 @@ if __name__ == "__main__":
             return True
 
     def finished_callback(req, error):
-        print "FINISHED!", req
+        print(("FINISHED!", req))
 
     def do_download(dlc):
         req = dlc.request_download('http://playermissile.com', "index.html", finished_callback)

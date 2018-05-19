@@ -50,10 +50,10 @@
 #           cog.outl("plugins.append(%s())" % name)
 # ]]]*/
 plugins = []
-from exception_handler import ExceptionHandlerPlugin
+from .exception_handler import ExceptionHandlerPlugin
 plugins.append(ExceptionHandlerPlugin())
-from file_progress import FileProgressPlugin
+from .file_progress import FileProgressPlugin
 plugins.append(FileProgressPlugin())
-from open_recent import OpenRecentPlugin
+from .open_recent import OpenRecentPlugin
 plugins.append(OpenRecentPlugin())
 #[[[end]]]

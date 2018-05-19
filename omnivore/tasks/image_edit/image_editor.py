@@ -11,7 +11,7 @@ from pyface.tasks.api import Editor
 
 # Local imports.
 from omnivore.framework.editor import FrameworkEditor
-from i_image_editor import IImageEditor
+from .i_image_editor import IImageEditor
 from omnivore.utils.wx.imagescroller import ImageScroller
 
 

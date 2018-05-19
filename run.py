@@ -36,11 +36,11 @@ def trace_calls(frame, event, arg):
     caller_filename = caller.f_code.co_filename
     if "/python2.7" in caller_filename or "agw/aui" in func_filename or "agw/aui" in caller_filename or "/logging/" in func_filename or "/wx/core.py" in func_filename or "/traits/" in func_filename or "/traits/" in caller_filename or "/traitsui/" in func_filename or "/traitsui/" in caller_filename or "/sre_" in caller_filename or "/logging/" in caller_filename:
         if not last_trace_was_system_call:
-            print '  <system calls>'
+            print('  <system calls>')
             last_trace_was_system_call = True
         return
     last_trace_was_system_call = False
-    print '%s:%s -> %s %s:%s' % (caller_filename, caller_line_no, func_name, func_filename, func_line_no)
+    print('%s:%s -> %s %s:%s' % (caller_filename, caller_line_no, func_name, func_filename, func_line_no))
     return
 
 def create_global_functions():
@@ -49,11 +49,15 @@ def create_global_functions():
         stack = traceback.extract_stack()
         count = len(stack) - 2
         for i, item in enumerate(stack[:-1]):
-            print("#%d %s in %s at %s:%d" % (count - i, item[3], item[2], item[0], item[1]))
-    import __builtin__
-    __builtin__.what_called_me = what_called_me
+            print(("#%d %s in %s at %s:%d" % (count - i, item[3], item[2], item[0], item[1])))
+    import builtins
+    builtins.what_called_me = what_called_me
 
 create_global_functions()
+
+# # Force wx toolkit to be imported before loading plugins
+# from pyface.toolkit import toolkit_object
+# toolkit_object("init:_app")
 
 def main(argv):
     """ Run the application.

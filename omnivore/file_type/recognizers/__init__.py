@@ -49,13 +49,13 @@
 #           cog.outl("recognizers.append(%s())" % name)
 # ]]]*/
 recognizers = []
-from image import ImageRecognizer
+from .image import ImageRecognizer
 recognizers.append(ImageRecognizer())
-from text import PlainTextRecognizer, PoundBangTextRecognizer, XMLTextRecognizer
+from .text import PlainTextRecognizer, PoundBangTextRecognizer, XMLTextRecognizer
 recognizers.append(PlainTextRecognizer())
 recognizers.append(PoundBangTextRecognizer())
 recognizers.append(XMLTextRecognizer())
-from meta import OmnivoreRecognizer
+from .meta import OmnivoreRecognizer
 recognizers.append(OmnivoreRecognizer())
 # [[[end]]]
 

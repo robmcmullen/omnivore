@@ -4,7 +4,7 @@
 # Enthought library imports.
 from pyface.tasks.api import TaskLayout, PaneItem, HSplitter, VSplitter
 
-import panes
+from . import panes
 
 
 # The project ID must be changed when the pane layout changes, otherwise

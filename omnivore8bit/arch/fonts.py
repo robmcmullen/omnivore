@@ -3,7 +3,7 @@ import hashlib, uuid
 import numpy as np
 import wx
 
-import colors
+from . import colors
 
 # Font is a dict (easily serializable with JSON) with the following attributes:
 #    data: string containing font data

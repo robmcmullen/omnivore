@@ -232,7 +232,7 @@ class NextPrevTextMinibuffer(TextMinibuffer):
         self.segment = editor.segment
 
     def create_header_controls(self, parent, sizer):
-        print "BEFORE", self.editor.last_search_settings['match_case']
+        print("BEFORE", self.editor.last_search_settings['match_case'])
         btn = FlatBitmapToggleButton(parent, -1, 'match_case', self.editor.last_search_settings['match_case'], "Case sensitive match")
         btn.Bind(wx.EVT_BUTTON, self.on_case_toggle)
         sizer.Add(btn, 0, wx.LEFT|wx.RIGHT, 2)
@@ -278,17 +278,17 @@ class NextPrevTextMinibuffer(TextMinibuffer):
             if mods == wx.MOD_RAW_CONTROL or mods == wx.MOD_SHIFT:
                 self.prev()
             else:
-                self.next()
+                next(self)
         evt.Skip()
 
-    def next(self):
+    def __next__(self):
         if self.search_command is not None:
             cmd = self.next_cls(self.search_command)
             self.editor.process_command(cmd)
             self.clear_selection()
 
     def on_find_next(self, evt):
-        self.next()
+        next(self)
         evt.Skip()
 
     def prev(self):
@@ -332,7 +332,7 @@ class NextPrevTextMinibuffer(TextMinibuffer):
     def repeat(self, minibuffer=None):
         if minibuffer is not None:
             if minibuffer.next_match:
-                self.next()
+                next(self)
             elif minibuffer.prev_match:
                 self.prev()
             else:
@@ -595,7 +595,7 @@ class LocalFileMinibuffer(CompletionMinibuffer):
             # First, try to process the string as a unicode value.  This will
             # work in most cases on Windows and on unix when the locale is
             # set properly.  It returns unicode values
-            globs = glob.glob(unicode(text)+"*")
+            globs = glob.glob(str(text)+"*")
             utf8 = False
         except UnicodeEncodeError:
             # When text is a unicode string but glob.glob is incapable of

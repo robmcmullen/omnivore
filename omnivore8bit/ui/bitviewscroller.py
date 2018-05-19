@@ -30,7 +30,7 @@ from omnivore.utils.sortutil import invert_rects
 from omnivore8bit.byte_edit.actions import *
 from omnivore8bit.arch.disasm import get_style_name
 
-from mouse_event_mixin import MouseEventMixin
+from .mouse_event_mixin import MouseEventMixin
 
 import logging
 log = logging.getLogger(__name__)
@@ -986,7 +986,7 @@ class CharacterSetViewer(FontMapScroller):
 
     def on_left_down(self, evt):
         byte, bit, inside = self.event_coords_to_byte(evt)
-        print("LEFT! %s,%s,%s,%s" % (byte, bit, inside, self.segment_viewer))
+        print(("LEFT! %s,%s,%s,%s" % (byte, bit, inside, self.segment_viewer)))
         if inside:
             wx.CallAfter(self.segment_viewer.set_draw_pattern, byte)
         evt.Skip()

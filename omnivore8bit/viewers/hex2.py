@@ -51,7 +51,7 @@ class HexTextCtrl(SegmentGridTextCtrl):
 
     def get_processed_value(self):
         text = self.GetValue()
-        print("text value: %s" % text)
+        print(("text value: %s" % text))
         return int(text, 16)
 
 

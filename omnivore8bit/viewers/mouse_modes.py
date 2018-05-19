@@ -182,7 +182,7 @@ class DrawMode(RectangularSelectMode):
         cg = self.control
         v = cg.segment_viewer
         pattern = cg.segment_viewer.draw_pattern
-        print("drawing with!", pattern, type(pattern))
+        print(("drawing with!", pattern, type(pattern)))
         if start:
             self.batch = DrawBatchCommand()
         row, col = cg.get_row_col_from_event(evt)

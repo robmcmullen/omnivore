@@ -220,7 +220,7 @@ class ReverseGroupCommand(SetRangeValueCommand):
             for i in range(1,num_groups):
                 start = i * chunk
                 indexes[start:start+chunk] = indexes[start+chunk-1:start-1:-1]
-        print num, chunk, num_groups, indexes
+        print(num, chunk, num_groups, indexes)
         return orig[indexes]
 
 

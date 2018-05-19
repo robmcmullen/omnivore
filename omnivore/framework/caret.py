@@ -278,7 +278,7 @@ class CaretList(list):
                             collapsed.append(c)
                 self[:] = collapsed
         self.append(current)
-        print("collapsed carets: %s" % str(self))
+        print(("collapsed carets: %s" % str(self)))
 
 class CaretHandler(HasTraits):
     """The pyface editor template for the omnivore framework
@@ -650,4 +650,4 @@ if __name__ == "__main__":
     carets.append(Caret(state=(45,45,45,80,80)))
     carets.append(Caret(state=(90,50,50,90,90)))
     carets.collapse_overlapping()
-    print carets
+    print(carets)

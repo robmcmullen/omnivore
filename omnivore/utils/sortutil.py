@@ -10,7 +10,7 @@ def find_wildcard_matches(item_map, pattern):
     if pattern.endswith("*"):
         pattern = pattern[:-1]
     if pattern:
-        for id, item in item_map.iteritems():
+        for id, item in list(item_map.items()):
             if id.startswith(pattern):
                 yield item
 

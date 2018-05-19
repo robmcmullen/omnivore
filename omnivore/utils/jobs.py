@@ -1,4 +1,4 @@
-import os, time, logging, threading, multiprocessing, Queue
+import os, time, logging, threading, multiprocessing, queue
 
 # Utilities for thread and process based jobs
 
@@ -102,7 +102,7 @@ class Worker(multiprocessing.Process):
                 break
             try:
                 job._start(self)
-            except Exception, e:
+            except Exception as e:
                 import traceback
                 job.exception = traceback.format_exc()
             self._progress.put(Finished(job))
@@ -114,7 +114,7 @@ class JobDispatcher(object):
         if share_input_queue_with is not None:
             self._queue = share_input_queue_with._queue
         else:
-            self._queue = Queue.Queue()
+            self._queue = queue.Queue()
 
     def set_manager(self, manager):
         self._manager = manager
@@ -158,7 +158,7 @@ class ThreadJobDispatcher(threading.Thread, JobDispatcher):
                 break
             try:
                 job._start(self)
-            except Exception, e:
+            except Exception as e:
                 import traceback
                 job.exception = traceback.format_exc()
             self._manager._job_done(job)
@@ -242,7 +242,7 @@ class LargeMemoryWorker(multiprocessing.Process):
         self._progress.put(Running())
         try:
             self._job._start(self)
-        except Exception, e:
+        except Exception as e:
             import traceback
             self._job.exception = traceback.format_exc()
         self._progress.put(None)
@@ -279,7 +279,7 @@ class LargeMemoryJobDispatcher(ThreadJobDispatcher):
                     self._is_running = True
                 else:
                     self._manager._progress_report(progress)
-            except Queue.Empty:
+            except queue.Empty:
                 log.debug("LARGEMEM: %s: progress queue empty; worker %s status=%s alive=%s" % (self.name, self._worker, self._worker.exitcode, self._worker.is_alive()))
             if not self._is_running:
                 log.debug("LARGEMEM: %s: waiting for confirmation that worker is running. %d seconds remaining" % (self.name, self._timeout))
@@ -340,7 +340,7 @@ class JobManager(object):
         log = logging.getLogger(self.__class__.__name__)
         self.event_callback = event_callback
         self.job_id_handlers = {}
-        self._finished = Queue.Queue()
+        self._finished = queue.Queue()
         self.dispatchers = []
         self.dispatcher_classes = [LargeMemoryJobDispatcher]
         self.timer = Timer(event_callback)
@@ -416,7 +416,7 @@ class JobManager(object):
                     log.debug("dispatcher %s joined" % str(item))
                 else:
                     done.add(item)
-        except Queue.Empty:
+        except queue.Empty:
             pass
         for job in done:
             log.debug("job %s completed" % str(job))
@@ -495,7 +495,7 @@ if __name__ == '__main__':
             dispatcher._progress_update("Update #3 for %d" % self.num)
 
     def post_event(event_name, *args):
-        print "event: %s.  args=%s" % (event_name, str(args))
+        print(("event: %s.  args=%s" % (event_name, str(args))))
 
     def get_event_callback(event):
         callback = functools.partial(post_event, event)
@@ -519,17 +519,17 @@ if __name__ == '__main__':
             time.sleep(1)
             jobs = manager.get_finished()
             for job in jobs:
-                print 'FINISHED:', str(job)
+                print(('FINISHED:', str(job)))
 
     #    manager.add_job(TestProcessSleepJob(6, 1))
         manager.shutdown()
         jobs = manager.get_finished()
         for job in jobs:
-            print 'FINISHED:', str(job)
+            print(('FINISHED:', str(job)))
         for i in range(5):
             time.sleep(1)
             jobs = manager.get_finished()
             for job in jobs:
-                print 'FINISHED:', str(job)
+                print(('FINISHED:', str(job)))
 
     test_sleep()

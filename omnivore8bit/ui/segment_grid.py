@@ -277,7 +277,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
 
     def handle_char_ordinary(self, evt):
         c = evt.GetKeyCode()
-        print("ordinary char: %s", c)
+        print(("ordinary char: %s", c))
         if not self.is_editing_in_cell:
             if self.verify_keycode_can_start_edit(c):
                 self.start_editing(evt)
@@ -290,7 +290,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
     def mouse_event_in_edit_cell(self, evt):
         r, c = self.get_row_col_from_event(evt)
         index, _ = self.table.get_index_range(r, c)
-        print("mouse edit cell check: r,c=%d,%d, index=%d" % (r, c, index))
+        print(("mouse edit cell check: r,c=%d,%d, index=%d" % (r, c, index)))
         return self.caret_handler.is_index_of_caret(index)
 
     def on_left_down_in_edit_cell(self, evt):
@@ -307,7 +307,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
         self.edit_source = self.create_hidden_text_ctrl()
         self.edit_source.SetFocus()
         if self.use_first_char_when_starting_edit():
-            print("EmulateKeyPress: %s" % evt.GetKeyCode())
+            print(("EmulateKeyPress: %s" % evt.GetKeyCode()))
             self.edit_source.EmulateKeyPress(evt)
 
     def use_first_char_when_starting_edit(self):
@@ -316,7 +316,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
     def accept_edit(self, autoadvance=False):
         val = self.edit_source.get_processed_value()
         self.end_editing()
-        print("changing to %s" % val)
+        print(("changing to %s" % val))
         self.process_edit(val)
 
     def process_edit(self, val):

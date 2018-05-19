@@ -18,7 +18,7 @@ class PermutePrivate(PermuteBase):
         ciphertext = doc.bytes.tostring() + " "*16
         blocks, _ = divmod(len(ciphertext), 16)
         plaintext = algorithm.decrypt(ciphertext[0:blocks*16])
-        print count, blocks, blocks*16
+        print(count, blocks, blocks*16)
         doc.bytes[:] = np.fromstring(plaintext[:count], dtype=np.uint8)
 #         doc.bytes[:] += 1
 # >>> obj = AES.new('This is a key123', AES.MODE_CBC, 'This is an IV456')

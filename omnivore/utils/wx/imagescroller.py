@@ -823,7 +823,7 @@ class ImageScroller(wx.ScrolledWindow):
             if self.inOrigImage(self.crop[0], self.crop[1]) and self.inOrigImage(self.crop[0] + self.crop[2] - 1, self.crop[1] + self.crop[3] - 1):
                 return self.orig_img.GetSubImage(self.crop)
             else:
-                print("trying to crop outside of image: %s" % str(self.crop))
+                print(("trying to crop outside of image: %s" % str(self.crop)))
         return self.orig_img
 
     def _scaleImage(self):

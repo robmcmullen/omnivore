@@ -3,7 +3,7 @@ from traits.api import HasTraits, provides, List, Instance, Any
 from omnivore.utils.sortutil import before_after_wildcard_sort
 from omnivore.framework.document import DocumentError
 
-from i_file_recognizer import IFileRecognizer, IFileRecognizerDriver
+from .i_file_recognizer import IFileRecognizer, IFileRecognizerDriver
 
 import logging
 log = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class FileRecognizerDriver(HasTraits):
                 log.debug("found %s for %s" % (mime, guess.metadata.uri))
                 try:
                     document = recognizer.load(guess)
-                except DocumentError, e:
+                except DocumentError as e:
                     error = "Error when using %s parser to create a document:\n\n%s\n\nA default document will be opened instead." % (recognizer.name, str(e))
                     document = None
                 break

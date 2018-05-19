@@ -166,17 +166,17 @@ class FrameworkTask(Task):
         for ui in [self.ui_layout_overrides, self.ui_layout_description]:
             try:
                 desc = ui[category]
-                print category, desc
+                print(category, desc)
                 for m in menu_list:
                     desc = desc[m]
-                    print m, desc
+                    print(m, desc)
             except KeyError:
                 desc = ""
                 continue
             else:
                 break
-        print "SUBMENU_DOCS", menu_list, desc
-        if not isinstance(desc, basestring):
+        print("SUBMENU_DOCS", menu_list, desc)
+        if not isinstance(desc, str):
             desc = ""
         return desc
 
@@ -500,7 +500,7 @@ class FrameworkTask(Task):
         method_name = "get_actions_%s_%s_%s" % (location, menu_lookup, group_name)
         try:
             method = getattr(self, method_name)
-        except AttributeError, e:
+        except AttributeError as e:
             log.debug("%s actions not found for %s/%s in %s" % (location, menu_name, group_name, self.id))
             actions = []
         else:
@@ -688,7 +688,7 @@ class FrameworkTask(Task):
         shortcut_map, table = self.create_accelerator_table()
         self.window.control.SetAcceleratorTable(table)
         self.keyboard_shortcut_map = shortcut_map
-        for id in shortcut_map.keys():
+        for id in list(shortcut_map.keys()):
             self.window.control.Bind(wx.EVT_MENU, self.on_keyboard_shortcut, id=id)
 
     def get_editor(self, task_arguments="", **kwargs):
@@ -838,7 +838,7 @@ class FrameworkTask(Task):
         hierarchy = self.get_menu_action_hierarchy()
         for path, action in hierarchy:
             if action is None:
-                print path
+                print(path)
 
     def get_menu_action_hierarchy(self):
         hierarchy = []
@@ -863,7 +863,7 @@ class FrameworkTask(Task):
         submenu = path.split(" -> ")
         submenu.pop()  # has an extra " -> " at the end
         extra_docs = self.get_submenu_docs(submenu)
-        print "EXTRA", extra_docs
+        print("EXTRA", extra_docs)
 
         doclog.debug("pyface_dump_manager: %s" % (path))
         hierarchy.append([path, None, extra_docs])
@@ -877,7 +877,7 @@ class FrameworkTask(Task):
 
         for item in group.items:
             if isinstance(item, Group):
-                print 'Surely, a group cannot contain another group!!!!'
+                print('Surely, a group cannot contain another group!!!!')
                 self.pyface_render_group(item, indent, path, hierarchy)
 
             else:
@@ -900,14 +900,14 @@ class FrameworkTask(Task):
         dirty_editors = dict([(editor.name, editor)
                               for editor in self.editor_area.editors
                               if editor.dirty])
-        if not dirty_editors.keys():
+        if not list(dirty_editors.keys()):
             return True
         message = 'You have unsaved files. Would you like to save them?'
         result = self.confirm_cancel(message=message, title='Save Changes?')
         if result is None:
             return False
         elif result:
-            for name, editor in dirty_editors.items():
+            for name, editor in list(dirty_editors.items()):
                 editor.save(editor.path)
         return True
 

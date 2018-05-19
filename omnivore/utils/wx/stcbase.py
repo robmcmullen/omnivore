@@ -5,9 +5,9 @@ import os, re, time, codecs
 import wx
 import wx.stc
 
-from cStringIO import StringIO
+from io import StringIO
 
-from stcinterface import *
+from .stcinterface import *
 from omnivore.utils.textutil import *
 from omnivore.utils.clipboard import *
 
@@ -108,7 +108,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         classes = {}
         for view in self.subordinates:
             classes[view.__class__] = True
-        self.stc_classses = classes.keys()
+        self.stc_classses = list(classes.keys())
 
     def getSharedClassInfo(self, cls):
         """Get the dict that can be used to store data common to viewers of
@@ -215,12 +215,12 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
                     #Publisher().sendMessage(message, (total*100)/length)
                     pass
 
-                if isinstance(txt, unicode):
+                if isinstance(txt, str):
                     # This only seems to happen for unicode files written
                     # to the mem: filesystem, but if it does happen to be
                     # unicode, there's no need to convert the data
                     self.refstc.encoding = "utf-8"
-                    self.tempstore.write(unicode.encode('utf-8'))
+                    self.tempstore.write(str.encode('utf-8'))
                 else:
                     self.tempstore.write(txt)
             else:
@@ -241,7 +241,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
                 log.debug("unicodestring(%s) = %s bytes" % (type(unicodestring), len(unicodestring)))
                 self.SetText(unicodestring)
                 return
-            except UnicodeDecodeError, e:
+            except UnicodeDecodeError as e:
                 log.debug("bad encoding %s:" % self.refstc.encoding)
                 self.refstc.badencoding = self.refstc.encoding
                 self.refstc.encoding = None
@@ -762,7 +762,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         return self.GetFoldLevel(linenum)&wx.stc.STC_FOLDLEVELNUMBERMASK - wx.stc.STC_FOLDLEVELBASE
 
     def GetPrevLineIndentation(self, linenum):
-        for i in xrange(linenum-1, -1, -1):
+        for i in range(linenum-1, -1, -1):
             indent = self.GetLineIndentPosition(i)
             last = self.GetLineEndPosition(i)
             if indent<last:
@@ -870,7 +870,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
 
         # use regex to search forward for all brace chars
         pattern = "[\(\[\{\)\]\}]"
-        pairs = {u'(': 0, u'[': 0, u'{': 0}
+        pairs = {'(': 0, '[': 0, '{': 0}
         braceopen = ''
         i = pos
         last = self.GetLength()
@@ -884,7 +884,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
                 # Skip matches inside strings
                 i += 1
                 continue
-            if c in u')]}':
+            if c in ')]}':
                 c = matching[c]
                 pairs[c] -= 1
                 #dprint("-->: closing brace %s at %d: pairs=%s" % (matching[c], i, str(pairs)))
@@ -895,7 +895,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
                     # match.  Otherwise, there's some nesting error and we
                     # won't be able to do the search.
                     count = 0
-                    for k,v in pairs.iteritems():
+                    for k,v in list(pairs.items()):
                         if k == c:
                             continue
                         count += v
@@ -917,12 +917,12 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
         # Can't use regular expressions searching backward (scintilla
         # limitation), so have to use the slow char-by-char method.
         i = pos
-        pairs = {u'(': 0, u'[': 0, u'{': 0}
+        pairs = {'(': 0, '[': 0, '{': 0}
         while i > 0:
             i -= 1
             c = self.GetTextRange(i, i+1)
             if c in matching:
-                if c in u')]}':
+                if c in ')]}':
                     c = matching[c]
                     pairs[c] += 1
                     #dprint("<--: closing brace %s at %d: pairs=%s" % (matching[c], i, str(pairs)))
@@ -933,7 +933,7 @@ class PeppyBaseSTC(wx.stc.StyledTextCtrl, STCInterface):
                         # found an unmatched opening brace.  Check nesting
                         # and return
                         count = 0
-                        for k,v in pairs.iteritems():
+                        for k,v in list(pairs.items()):
                             if k == c:
                                 continue
                             count += v
@@ -1235,7 +1235,7 @@ class PeppySTC(PeppyBaseSTC):
         return st
 
     def showInitialPosition(self, url, options=None):
-        log.debug(u"url=%s scheme=%s auth=%s path=%s query=%s fragment=%s" % (url, url.scheme, url.authority, url.path, url.query, url.fragment))
+        log.debug("url=%s scheme=%s auth=%s path=%s query=%s fragment=%s" % (url, url.scheme, url.authority, url.path, url.query, url.fragment))
         if url.fragment:
             line = int(url.fragment)
             line -= self.classprefs.line_number_offset

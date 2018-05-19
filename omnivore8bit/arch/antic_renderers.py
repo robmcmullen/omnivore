@@ -7,10 +7,10 @@ from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, diff_bi
 from omnivore.utils.permute import bit_reverse_table
 from omnivore.utils.nputil import intscale, intwscale, intwscale_font
 
-import colors
-from atascii import internal_to_atascii, atascii_to_internal
+from . import colors
+from .atascii import internal_to_atascii, atascii_to_internal
 try:
-    import antic_speedups as speedups
+    from . import antic_speedups as speedups
 except ImportError:
     speedups = None
 
@@ -450,7 +450,7 @@ class FourBitsPerPixel(BaseRenderer):
     pixels_per_byte = 2
 
     def get_image(self, segment_viewer, bytes_per_row, nr, count, bytes, style):
-        colors = self.get_colors(segment_viewer, range(16))
+        colors = self.get_colors(segment_viewer, list(range(16)))
         bitimage = self.get_4bpp(segment_viewer, bytes_per_row, nr, count, bytes, style, colors)
         return self.reshape(bitimage, bytes_per_row, nr)
 
@@ -474,7 +474,7 @@ class TwoBitPlanesLE(BaseRenderer):
         return bytes_per_row
 
     def get_image(self, segment_viewer, bytes_per_row, nr, count, bytes, style):
-        colors = self.get_colors(segment_viewer, range(2**self.bitplanes))
+        colors = self.get_colors(segment_viewer, list(range(2**self.bitplanes)))
         bitimage = self.get_bitplanes(segment_viewer, bytes_per_row, nr, count, bytes, style, colors)
         return bitimage
 
@@ -613,7 +613,7 @@ class GTIA9(FourBitsPerPixel):
 
     def get_antic_color_registers(self, segment_viewer):
         first_color = segment_viewer.machine.antic_color_registers[8] & 0xf0
-        return range(first_color, first_color + 16)
+        return list(range(first_color, first_color + 16))
 
     def get_colors(self, segment_viewer, registers):
         antic_color_registers = self.get_antic_color_registers(segment_viewer)
@@ -637,7 +637,7 @@ class GTIA11(GTIA9):
 
     def get_antic_color_registers(self, segment_viewer):
         first_color = segment_viewer.machine.antic_color_registers[8] & 0x0f
-        return range(first_color, first_color + 256, 16)
+        return list(range(first_color, first_color + 256, 16))
 
 
 class BaseBytePerPixelRenderer(BaseRenderer):
@@ -672,7 +672,7 @@ class BaseBytePerPixelRenderer(BaseRenderer):
         data = (style & user_bit_mask) > 0
         match = (style & match_bit_mask) == match_bit_mask
 
-        color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(segment_viewer, range(16))
+        color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(segment_viewer, list(range(16)))
         bitimage = np.empty((nr * bytes_per_row, 3), dtype=np.uint8)
         for i in range(16):
             color_is_set = (bytes == i)

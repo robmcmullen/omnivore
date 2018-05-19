@@ -34,7 +34,7 @@ def trigger_dialog(event, segment_viewer, obj):
         custom_value = "%04x" % obj.trigger_function
     else:
         custom_value = ""
-    dlg = ChooseOnePlusCustomDialog(event.task.window.control, possible_labels.keys(), label, custom_value, "Choose Trigger Function", "Select one trigger function or enter custom address", "Trigger Addr (hex)")
+    dlg = ChooseOnePlusCustomDialog(event.task.window.control, list(possible_labels.keys()), label, custom_value, "Choose Trigger Function", "Select one trigger function or enter custom address", "Trigger Addr (hex)")
     if dlg.ShowModal() == wx.ID_OK:
         label, addr = dlg.get_selected()
         if label is not None:

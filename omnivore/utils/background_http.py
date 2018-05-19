@@ -3,11 +3,12 @@
 http://stackoverflow.com/questions/3817505/wxpython-htmlwindow-freezes-when-loading-images
 """
 
-import urllib2 as urllib2
+import urllib.request
+import urllib.error
 import os
 import time
 import threading
-import Queue
+import queue
 
 import logging
 log = logging.getLogger(__name__)
@@ -56,10 +57,10 @@ class URLRequest(BaseRequest):
 
     def get_data_from_server(self):
         try:
-            request = urllib2.Request(self.url)
-            response = urllib2.urlopen(request)
+            request = urllib.request.Request(self.url)
+            response = urllib.request.urlopen(request)
             self.data = response.read()
-        except urllib2.URLError, e:
+        except urllib.error.URLError as e:
             self.error = e
 
 
@@ -108,7 +109,7 @@ class OnlyLatestHttpThread(HttpThread):
             try:
                 req = self.in_q.get(wait)
                 log.debug("found req %s", req)
-            except Queue.Empty:
+            except queue.Empty:
                 break
             wait = False
         return req
@@ -116,8 +117,8 @@ class OnlyLatestHttpThread(HttpThread):
 
 class BackgroundHttpDownloader(object):
     def __init__(self):
-        self.requests = Queue.Queue()
-        self.results = Queue.Queue()
+        self.requests = queue.Queue()
+        self.results = queue.Queue()
         self.thread = OnlyLatestHttpThread(self.requests, self.results, "BackgroundHttpDownloader")
         self.thread.start()
         log.debug("Created thread %s" % self.thread.name)
@@ -143,15 +144,15 @@ class BackgroundHttpDownloader(object):
             while True:
                 data = self.results.get(False)
                 finished.append(data)
-        except Queue.Empty:
+        except queue.Empty:
             pass
         return finished
 
 
 class BackgroundHttpMultiDownloader(object):
     def __init__(self, num_workers=4):
-        self.requests = Queue.Queue()
-        self.results = Queue.Queue()
+        self.requests = queue.Queue()
+        self.results = queue.Queue()
         self.threads = []
         for i in range(num_workers):
             thread = HttpThread(self.requests, self.results, "BackgroundHttpMultiDownloader")
@@ -181,7 +182,7 @@ class BackgroundHttpMultiDownloader(object):
             while True:
                 data = self.results.get(False)
                 finished.append(data)
-        except Queue.Empty:
+        except queue.Empty:
             pass
         return finished
 
@@ -197,10 +198,10 @@ if __name__ == "__main__":
     downloader.send_request(URLRequest('hvvttp://playermissile.com'))
     first = True
     for i in range(10):
-        print "STEP", i
+        print(("STEP", i))
         downloaded = downloader.get_finished()
         for url in downloaded:
-            print 'FINISHED:', url
+            print(('FINISHED:', url))
         if i > 1 and first:
             downloader.send_request(URLRequest('http://www.python.org/images/python-logo.gif'))
             downloader.send_request(URLRequest('http://www.python.org/'))

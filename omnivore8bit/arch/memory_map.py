@@ -1194,12 +1194,12 @@ class Apple2MemoryMap(EmptyMemoryMap):
         0xF941: "PRNTAX",	# Print A and X in hexadecimal
         0xF948: "PRBLNK",	#Print 3 spaces
         0xF94A: "PRBL2",	#Print many spaces
-        0xFF3A: "BELL",	#Output a “bell” character
-        0xFBDD: "BELL1",	# Bep the Apple’s speaker
+        0xFF3A: "BELL",	#Output a 'bell' character
+        0xFBDD: "BELL1",	# Bep the Apple's speaker
 # Input Subroutines, from Assembly Lines
         0xFD0C: "RDKEY",	#Get an input character
         0xFD35: "RDCHAR",	#Get an input character or escape code
-        0xFD1B: "KEYIN",	#Read the Apple’s keyboard
+        0xFD1B: "KEYIN",	#Read the Apple's keyboard
         0xFD6A: "GETLN",	#Get an input line with prompt
         0xFD67: "GETLNZ",	#Get an input line
         0xFD6F: "GETLN1",	#Get an input line, no prompt
@@ -1249,7 +1249,7 @@ class Apple2MemoryMap(EmptyMemoryMap):
 # Other Subroutines, from Assembly Lines
         0xFCA8: "WAIT",	#Delay
         0xFB1E: "PREAD",	#Read a game controller
-        0xFF2D: "PRERR",	#Print “ERR”
+        0xFF2D: "PRERR",	#Print 'ERR'
         0xFF4A: "IOSAVE",	#Save all registers
         0xFF3F: "IOREST"	#Restore all registers
     }

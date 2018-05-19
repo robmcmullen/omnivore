@@ -11,7 +11,7 @@ __bug_report_url__ = "https://github.com/robmcmullen/omnivore/issues"
 # The real version number is maintained in a file that's under version control
 # so I don't have to keep updating and checking in the file
 try:
-    import _omnivore_version
+    from . import _omnivore_version
     __version__ = _omnivore_version.version
 except ImportError:
     __version__ = "dev"

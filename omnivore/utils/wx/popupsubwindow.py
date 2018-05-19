@@ -3,8 +3,8 @@ hiding the subwindow.
 
 """
 
-import os, sys, struct, Queue, threading, time, socket
-from cStringIO import StringIO
+import os, sys, struct, queue, threading, time, socket
+from io import StringIO
 
 import wx
 import wx.stc

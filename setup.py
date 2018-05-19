@@ -24,10 +24,10 @@ else:
     udis_compile_args = []
 
 ext_modules = [
-    Extension("traits.ctraits",
-              sources = ["traits/ctraits.c"],
-              extra_compile_args = ["-DNDEBUG=1", "-O3" ]#, '-DPy_LIMITED_API'],
-              ),
+    # Extension("traits.ctraits",
+    #           sources = ["traits/ctraits.c"],
+    #           extra_compile_args = ["-DNDEBUG=1", "-O3" ]#, '-DPy_LIMITED_API'],
+    #           ),
     Extension("omnivore8bit.arch.antic_speedups",
               sources=["omnivore8bit/arch/antic_speedups.c"],
               extra_compile_args = ["-O3" ],
@@ -48,13 +48,13 @@ ext_modules = [
 install_requires = [
     'numpy',
     'atrcopy>=6',
-    'pyatasm>=1.3',
+    # 'pyatasm>=1.3',
     'jsonpickle>=0.9.4',
     'bson<1.0.0',
     'configobj',
     'pyparsing>=2.2.0',
     'wxpython>=4.0.1',
-    'omni8bit',
+    # 'omni8bit',
     ]
 
 
@@ -209,12 +209,12 @@ if sys.platform.startswith("win") and 'py2exe' in sys.argv:
 
 def remove_pyc(basedir):
     for curdir, dirlist, filelist in os.walk(basedir):
-        print curdir
+        print(curdir)
         for name in filelist:
             if name.endswith(".pyo"):
                 c = name[:-1] + "c"
                 cpath = os.path.join(curdir, c)
-                print "  " + name
+                print("  " + name)
                 # remove .pyc if .pyo exists
                 if os.path.exists(cpath):
                     os.remove(cpath)
@@ -224,12 +224,12 @@ def remove_pyc(basedir):
                     os.remove(path)
 
 def remove_numpy_tests(basedir):
-    print basedir
+    print(basedir)
     for f in glob.glob("%s/*/tests" % basedir):
-        print f
+        print(f)
         shutil.rmtree(f)
     for f in glob.glob("%s/tests" % basedir):
-        print f
+        print(f)
         shutil.rmtree(f)
     for f in ["tests", "f2py", "testing", "core/include", "core/lib", "distutils"]:
         path = os.path.join(basedir, f)
@@ -383,7 +383,7 @@ if 'nsis' not in sys.argv:
         )
 
 if 'py2exe' in sys.argv and sys.platform.startswith("win"):
-    print "*** create installer ***"
+    print("*** create installer ***")
 
     if is_64bit:
         nsis_arch = """ArchitecturesAllowed=x64

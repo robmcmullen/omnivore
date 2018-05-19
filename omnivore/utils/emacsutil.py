@@ -79,7 +79,7 @@ def applyEmacsFileLocalSettings(stc):
     int_mapping = {'fill-column': 'EdgeColumn',
                    'tab-width': 'TabWidth',
                    }
-    for name, setting in int_mapping.iteritems():
+    for name, setting in list(int_mapping.items()):
         if name in vars:
             # Construct the name of the stc setting function and set the value
             func = getattr(stc, "Set%s" % setting)
@@ -89,7 +89,7 @@ def applyEmacsFileLocalSettings(stc):
     # check for booleans -- emacs uses 'nil' for false, everything else for true
     bool_mapping = {'use-tabs': 'UseTabs',
                     }
-    for name, setting in bool_mapping.iteritems():
+    for name, setting in list(bool_mapping.items()):
         if name in vars:
             func = getattr(stc, "Set%s" % setting)
             func(vars[name] != 'nil')

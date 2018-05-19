@@ -193,7 +193,7 @@ class DockTarget(object):
         def in_rect(self, pos):
             for dock_info in self.docking_rectangles:
                 _, _, rect = dock_info
-                print("checking %s in rect %s" % (pos, rect))
+                print(("checking %s in rect %s" % (pos, rect)))
                 if rect.Contains(pos):
                     break
             else:
@@ -332,7 +332,7 @@ class DockTarget(object):
         return rects
 
     def process_dock_target(self, leaf, side):
-        print("inserting leaf=%s, splitting leaf=%s on side=%s" % (leaf, self, side))
+        print(("inserting leaf=%s, splitting leaf=%s on side=%s" % (leaf, self, side)))
         leaf.detach()
         self.tile_mgr.do_layout()
         self.split_side(new_side=side, view=leaf)
@@ -524,26 +524,26 @@ class TileManager(wx.Window):
         if not leaf:
             # no previous leaf or the leaf has been deleted; need to find a new
             # one
-            print("can't focus on leaf %s; finding first suitable leaf" % leaf)
+            print(("can't focus on leaf %s; finding first suitable leaf" % leaf))
             for leaf in self.iter_leafs():
                 if leaf.can_take_leaf_focus:
                     break
             else:
                 leaf = None
         self.current_leaf_focus = leaf
-        print("set_leaf_focus: current=%s last=%s menu=%s is_menu=%s" % (repr(leaf), repr(last_focus), repr(self.menu_currently_displayed), self.current_leaf_focus == self.menu_currently_displayed))
+        print(("set_leaf_focus: current=%s last=%s menu=%s is_menu=%s" % (repr(leaf), repr(last_focus), repr(self.menu_currently_displayed), self.current_leaf_focus == self.menu_currently_displayed)))
         if self.menu_currently_displayed is not None and self.menu_currently_displayed != leaf:
             self.menu_currently_displayed.close_menu()
             self.menu_currently_displayed = None
         if last_focus:
-            print("CLEARING LAST LEAF", last_focus)
+            print(("CLEARING LAST LEAF", last_focus))
             last_focus.Refresh()
         if leaf:
             if leaf == last_focus:
                 print("SAME FOCUS!!!!!!")
             else:
                 leaf.client.set_focus()
-                print("REFRESHING CURRENT LEAF", leaf)
+                print(("REFRESHING CURRENT LEAF", leaf))
                 leaf.Refresh()
             if leaf.can_take_leaf_focus:
                 self.previous_leaf_focus = leaf
@@ -555,7 +555,7 @@ class TileManager(wx.Window):
             self.set_leaf_focus(self.previous_leaf_focus)
 
     def restore_last_main_window_focus(self):
-        print("restoring from", str(self.previous_leaf_focus))
+        print(("restoring from", str(self.previous_leaf_focus)))
         if self.previous_leaf_focus:
             self.previous_leaf_focus.client.set_focus()
             return
@@ -615,15 +615,15 @@ class TileManager(wx.Window):
         except TypeError:
             try:
                 d = json.loads(d)
-            except ValueError, e:
+            except ValueError as e:
                 log.error("Error loading layout: %s" % e.message)
                 return
             layout = d['tile_manager']
         try:
             self.replace_all(layout, d.get('sidebars', []))
-        except KeyError, e:
+        except KeyError as e:
             log.error("Error loading layout: missing key %s. Restoring previous layout." % e.message)
-        print("SIDEBARS!", self.sidebars)
+        print(("SIDEBARS!", self.sidebars))
 
     def update_captions(self):
         for sidebar in self.sidebars:
@@ -675,7 +675,7 @@ class TileManager(wx.Window):
     def force_focus(self, item):
         found = self.find(item)
         if found:
-            print("FOCUS TO:", found)
+            print(("FOCUS TO:", found))
             self.set_leaf_focus(found.leaf)
 
     def replace_by_uuid(self, control, u, **kwargs):
@@ -794,13 +794,13 @@ class TileManager(wx.Window):
         self.menu_popdown_mode = True
         self.menu_hit_test = DockTarget.MenuHitTestManager(self)
         if self.menu_currently_displayed == menu_item:
-            print("START! already showing menu %s" % menu_item)
+            print(("START! already showing menu %s" % menu_item))
         else:
             if self.menu_currently_displayed is not None:
-                print("START! closing currently shown menu %s" % self.menu_currently_displayed)
+                print(("START! closing currently shown menu %s" % self.menu_currently_displayed))
                 self.menu_currently_displayed.close_menu()
             else:
-                print("START! showing menu %s" % menu_item)
+                print(("START! showing menu %s" % menu_item))
             self.menu_currently_displayed = menu_item
             menu_item.open_menu()
         self.CaptureMouse()
@@ -808,7 +808,7 @@ class TileManager(wx.Window):
     def on_motion(self, evt):
         if self.dock_handler.is_active:
             pos = evt.GetPosition()
-            print("docking in main window!", pos)
+            print(("docking in main window!", pos))
             self.dock_handler.process_dragging(evt)
         elif self.menu_popdown_mode:
             pos = evt.GetPosition()
@@ -849,7 +849,7 @@ class TileManager(wx.Window):
             self.menu_popdown_mode = False
             self.menu_hit_test = None
             if leave_open:
-                print("FINISH! setting focus to menu %s" % menu_item)
+                print(("FINISH! setting focus to menu %s" % menu_item))
                 #menu_item.client.on_set_focus(None)
                 self.set_leaf_focus(menu_item)
             else:
@@ -863,15 +863,15 @@ class TileManager(wx.Window):
         targets = []
         missing_sidebars = set([wx.LEFT, wx.RIGHT, wx.TOP, wx.BOTTOM])
         for sidebar in self.sidebars:
-            print("checking sidebar %s" % sidebar)
+            print(("checking sidebar %s" % sidebar))
             sidebar.calc_dock_targets(targets)
             missing_sidebars.remove(sidebar.side)
-        print("dock targets from sidebars: %s" % str(targets))
+        print(("dock targets from sidebars: %s" % str(targets)))
         for side in missing_sidebars:
             targets.append(MissingSidebarDock(self, side))
-            print("dock targets for missing sidebar: %s" % str(MissingSidebarDock))
+            print(("dock targets for missing sidebar: %s" % str(MissingSidebarDock)))
         self.child.calc_dock_targets(targets)
-        print("dock targets: %s" % str(targets))
+        print(("dock targets: %s" % str(targets)))
         return targets
 
     def on_char_hook(self, evt):
@@ -1534,7 +1534,7 @@ class TileClient(wx.Window):
         evt = TileManagerEvent(TileManager.wxEVT_CLIENT_ACTIVATED, self)
         evt.SetChild(self.child)
         self.do_send_event(evt)
-        print("setting focus to %s" % self.child.GetName())
+        print(("setting focus to %s" % self.child.GetName()))
         self.child.SetFocus()
         self.Refresh()
 
@@ -1597,9 +1597,9 @@ class TileClient(wx.Window):
     def on_set_focus(self,evt):
         m = self.tile_mgr
         if self.leaf == m.current_leaf_focus:
-            print("already focused", self.leaf)
+            print(("already focused", self.leaf))
         else:
-            print("on_set_focus", self.leaf, "current_leaf_focus", m.current_leaf_focus, "current menu", m.menu_currently_displayed)
+            print(("on_set_focus", self.leaf, "current_leaf_focus", m.current_leaf_focus, "current menu", m.menu_currently_displayed))
             m.set_leaf_focus(self.leaf)
 
     def on_child_focus(self,evt):
@@ -1914,7 +1914,7 @@ class SidebarMenuItem(wx.Window, DockTarget):
                 self.first_time_shown = True
 
             def Popup(self):
-                print("popup size: %s" % str(self.GetSize()))
+                print(("popup size: %s" % str(self.GetSize())))
                 self.Show(True)
 
                 # Workaround for GTK bug(?) window isn't correct size until 2nd
@@ -1928,7 +1928,7 @@ class SidebarMenuItem(wx.Window, DockTarget):
                 self.Show(False)
 
             def on_char(self, evt):
-                print("on_char: keycode=%s" % evt.GetKeyCode())
+                print(("on_char: keycode=%s" % evt.GetKeyCode()))
                 self.GetParent().GetEventHandler().ProcessEvent(evt)
     else:
         class SidebarPopupWindow(wx.PopupWindow):
@@ -2013,7 +2013,7 @@ class SidebarMenuItem(wx.Window, DockTarget):
         pw, ph = self.actual_popup.GetClientSize()
         self.client.fit_in_popup(0, 0, pw, ph)
         self.actual_popup.Popup()
-        print("positioned popup %s to %s" % (self.client.child.GetName(), (xs, ys, w, h, pw, ph)))
+        print(("positioned popup %s to %s" % (self.client.child.GetName(), (xs, ys, w, h, pw, ph))))
 
     def open_menu(self):
         self.entered = True
@@ -2645,7 +2645,7 @@ if __name__ == '__main__':
         pass
     else:
         text = open(state, 'r').read()
-        print text
+        print(text)
         multi.restore_layout(text)
 
         try:
@@ -2653,7 +2653,7 @@ if __name__ == '__main__':
         except IndexError:
             pass
         else:
-            print("searching for %s" % u)
+            print(("searching for %s" % u))
             wx.CallAfter(replace_uuid, u)
 
     # import wx.lib.inspection

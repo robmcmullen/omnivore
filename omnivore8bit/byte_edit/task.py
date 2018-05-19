@@ -13,8 +13,8 @@ from omni8bit import known_emulators
 from omnivore.framework.task import FrameworkTask
 from omnivore.framework import actions as fa
 from omnivore.framework.toolbar import get_toolbar_group
-from byte_editor import ByteEditor
-from preferences import ByteEditPreferences
+from .byte_editor import ByteEditor
+from .preferences import ByteEditPreferences
 from . import actions as ba
 from ..viewers import actions as va
 from ..jumpman import commands as ja

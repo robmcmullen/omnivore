@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from stcinterface import STCInterface, STCBinaryMixin
+from .stcinterface import STCInterface, STCBinaryMixin
 
 
 class BinarySTC(STCInterface, STCBinaryMixin):

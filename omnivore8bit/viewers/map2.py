@@ -57,7 +57,7 @@ class MapViewer(CharViewer):
 
     def get_paste_command(self, serialized_data):
         print(serialized_data)
-        print(serialized_data.source_data_format_name)
+        print((serialized_data.source_data_format_name))
         if serialized_data.source_data_format_name == "numpy,columns":
             return PasteRectCommand
         return PasteCommand

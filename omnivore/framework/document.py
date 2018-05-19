@@ -1,6 +1,6 @@
 import os
 import types
-import cStringIO as StringIO
+import io as StringIO
 import uuid
 
 import numpy as np
@@ -30,7 +30,7 @@ class TraitNumpyConverter(TraitHandler):
     def validate(self, object, name, value):
         if type(value) is np.ndarray:
             return value
-        elif type(value) is types.StringType:
+        elif type(value) is bytes:
             return np.fromstring(value, dtype=np.uint8)
         self.error(object, name, value)
 
@@ -202,7 +202,7 @@ class BaseDocument(HasTraits):
             return {}
         try:
             guess = FileGuess(uri)
-        except fs.errors.FSError, e:
+        except fs.errors.FSError as e:
             log.error("File load error: %s" % str(e))
             return {}
         log.info("Loading metadata file: %s" % uri)
@@ -213,10 +213,10 @@ class BaseDocument(HasTraits):
             if text.startswith("#"):
                 header, text = text.split("\n", 1)
             unserialized = jsonpickle.loads(text)
-        except ValueError, e:
+        except ValueError as e:
             log.error("JSON parsing error for extra metadata in %s: %s" % (uri, str(e)))
             unserialized = {}
-        except AttributeError, e:
+        except AttributeError as e:
             log.error("JSON library error: %s: %s" % (uri, str(e)))
             unserialized = {}
             raise DocumentError("JSON library error: % s" % str(e))
@@ -266,7 +266,7 @@ class BaseDocument(HasTraits):
         """
         mdict = {}
         known = set(editor.task.known_editor_ids)
-        for k, v in self.extra_metadata.iteritems():
+        for k, v in self.extra_metadata.items():
             if k in known:
                 mdict[k] = dict(v)
         self.serialize_extra_to_dict(mdict)
@@ -303,7 +303,7 @@ class BaseDocument(HasTraits):
             confirm_callback = lambda a: True
         try:
             guess = FileGuess(uri)
-        except Exception, e:
+        except Exception as e:
             log.error("Problem loading baseline file %s: %s" % (uri, str(e)))
             raise DocumentError(str(e))
         bytes = guess.numpy

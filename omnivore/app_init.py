@@ -1,20 +1,20 @@
 import sys
 import argparse
 
-try:
-    # Force wx toolkit because pyface 5 uses entry points to determine
-    # toolkits and I can't figure out how to get that to work in
-    # executable bundlers. It has to be included before any calls to
-    # any pyface modules so the monkey patch can intercept it before
-    # an import of pyface.toolkit.
-    from pyface.base_toolkit import Toolkit
-    class MonkeyPatchPyface(object):
-        toolkit_object = Toolkit('wx', 'pyface.ui.wx')
-    sys.modules["pyface.toolkit"] = MonkeyPatchPyface()
-except ImportError:
-    # An import error means this is an older version of pyface and
-    # does not need this hack.
-    pass
+# try:
+#     # Force wx toolkit because pyface 5 uses entry points to determine
+#     # toolkits and I can't figure out how to get that to work in
+#     # executable bundlers. It has to be included before any calls to
+#     # any pyface modules so the monkey patch can intercept it before
+#     # an import of pyface.toolkit.
+#     from pyface.base_toolkit import Toolkit
+#     class MonkeyPatchPyface(object):
+#         toolkit_object = Toolkit('wx', 'pyface.ui.wx')
+#     sys.modules["pyface.toolkit"] = MonkeyPatchPyface()
+# except ImportError:
+#     # An import error means this is an older version of pyface and
+#     # does not need this hack.
+#     pass
 
 import logging
 log = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ class EnthoughtWxApp(wx.App):
 
     def FilterEventMouseWheel(self, evt):
         if hasattr(evt, "GetWheelRotation"):
-            print "FILTEREVENT!!!", evt.GetWheelRotation(), evt
+            print("FILTEREVENT!!!", evt.GetWheelRotation(), evt)
             wheel = evt.GetWheelRotation()
             if wheel != 0:
                 if self.throw_out_next_wheel_rotation:
@@ -63,7 +63,7 @@ class EnthoughtWxApp(wx.App):
                     return 0
                 self.throw_out_next_wheel_rotation = True
         if hasattr(evt, "GetKeyCode"):
-            print "FILTEREVENT!!! char=%s, key=%s, modifiers=%s" % (evt.GetUnicodeKey(), evt.GetKeyCode(), bin(evt.GetModifiers()))
+            print("FILTEREVENT!!! char=%s, key=%s, modifiers=%s" % (evt.GetUnicodeKey(), evt.GetKeyCode(), bin(evt.GetModifiers())))
         return -1
 
 

@@ -49,7 +49,7 @@
 #           cog.outl("recognizers.append(%s())" % name)
 # ]]]*/
 recognizers = []
-from text import PrivateTextRecognizer
+from .text import PrivateTextRecognizer
 recognizers.append(PrivateTextRecognizer())
 # [[[end]]]
 

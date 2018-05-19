@@ -49,7 +49,7 @@ def piglatin(text):
         word = start + prefix + suffix + end
         #print "preprefix=%s, prefix=%s, suffix=%s, word=%s" % (preprefix, prefix, suffix, word)
         words.append(word)
-    return u' '.join(words)
+    return ' '.join(words)
 
 
 def getMagicComments(bytes, headersize=1024):
@@ -79,7 +79,7 @@ def detectBOM(bytes):
         }
     # FIXME: utf-32 is not available in python 2.5, only 2.6 and later.
 
-    for encoding, bom in boms.iteritems():
+    for encoding, bom in list(boms.items()):
         if bytes.startswith(bom):
             return encoding, bom
     return None, None
@@ -132,7 +132,7 @@ def parseEmacs(header):
     @return: two-tuple of the mode and a dict of the name/value pairs.
     @rtype: tuple
     """
-    import emacsutil
+    from . import emacsutil
 
     lines = getMagicComments(header)
     for line in lines:
@@ -437,7 +437,7 @@ def parse_pretty_seconds(s):
     """
     interval_exc = "Bad interval format for {0}".format(s)
 
-    interval_regex = re.compile("^(?P<value>[0-9.]+)(?P<unit>({0}))".format("|".join(interval_dict.keys())))
+    interval_regex = re.compile("^(?P<value>[0-9.]+)(?P<unit>({0}))".format("|".join(list(interval_dict.keys()))))
     seconds = 0
 
     while s:
@@ -505,16 +505,16 @@ if __name__ == "__main__":
         text = fh.read()
         log.debug("file=%s, tabsize=%d" % (file, guessSpacesPerIndent(text)))
 
-        print parse_int_label_dict(text)
-        print parse_int_label_dict(text, allow_equal=True)
+        print((parse_int_label_dict(text)))
+        print((parse_int_label_dict(text, allow_equal=True)))
 
     if False:
-        print parse_pretty_seconds("5m")
-        print parse_pretty_seconds("5wk")
-        print parse_pretty_seconds("5ms")
+        print((parse_pretty_seconds("5m")))
+        print((parse_pretty_seconds("5wk")))
+        print((parse_pretty_seconds("5ms")))
         step_values = ['10m', '20m', '30m', '40m', '45m', '60m', '90m', '120m', '3hr', '4hr', '5hr', '6hr', '8hr', '10hr', '12hr', '16h', '24hr', '36hr', '48hr', '3d', '4d', '5d', '6d', '7d', '2wk', '3wk', '4wk']
         step_values_as_seconds = [parse_pretty_seconds(a) for a in step_values]
-        print step_values_as_seconds
+        print(step_values_as_seconds)
         print([pretty_seconds(a) for a in step_values_as_seconds])
 
 # ^\s*([-+]?([1-8]?\d(\.\d+)?|90(\.0+)?))\s*[,\s]?\s*([-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?))
@@ -548,9 +548,9 @@ if __name__ == "__main__":
 """
     if True:
         matches, num_unmatched = parse_for_matching_lines(text, re_latlon)
-        print [(m.group(1), m.group(2)) for m in matches]
-        print num_unmatched
+        print([(m.group(1), m.group(2)) for m in matches])
+        print(num_unmatched)
 
         matches, num_unmatched = parse_for_matching_lines(text, re_lonlat)
-        print [(m.group(1), m.group(2)) for m in matches]
-        print num_unmatched
+        print([(m.group(1), m.group(2)) for m in matches])
+        print(num_unmatched)

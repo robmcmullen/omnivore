@@ -1,2 +1,2 @@
-from task import HtmlViewTask
-from preferences import HtmlViewPreferencesPane
+from .task import HtmlViewTask
+from .preferences import HtmlViewPreferencesPane

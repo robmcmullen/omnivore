@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os,sys,re,os.path,time, subprocess
-from cStringIO import StringIO
+from io import StringIO
 from datetime import date
 from optparse import OptionParser
 from string import Template
@@ -25,11 +25,11 @@ def findLatestChangeLogVersion(options):
     for line in fh:
         match = re.match('(\d+-\d+-\d+).*',line)
         if match:
-            if options.verbose: print 'found date %s' % match.group(1)
+            if options.verbose: print('found date %s' % match.group(1))
             release_date = date.fromtimestamp(time.mktime(time.strptime(match.group(1),'%Y-%m-%d'))).strftime('%d %B %Y')
         match = re.match('\s+\*\s*[Rr]eleased Omnivore-([0-9]+\.[0-9]+(?:\.[0-9]+)?)',line)
         if match:
-            if options.verbose: print 'found version %s' % match.group(1)
+            if options.verbose: print('found version %s' % match.group(1))
             version = match.group(1)
             versions.append(version)
         release_date = None
@@ -50,7 +50,7 @@ def findLatestInGit(options):
             found = StrictVersion(match.group(1))
             if found > version:
                 version = found
-            if options.verbose: print "found %s, latest = %s" % (found, version)
+            if options.verbose: print("found %s, latest = %s" % (found, version))
     return str(version)
 
 def next_version(tagged_version):
@@ -104,16 +104,16 @@ def verify_tag(tag):
 def getGitChangeLogSuggestions(tag, options, top="HEAD"):
     tag = verify_tag(tag)
     top = verify_tag(top)
-    if options.verbose: print tag
+    if options.verbose: print(tag)
     suggestions = []
     text = subprocess.Popen(["git", "log", "--pretty=format:%ae--%B", "%s..%s" % (top, tag)], stdout=subprocess.PIPE).communicate()[0]
     lines = text.splitlines()
-    print lines
+    print(lines)
     first = True
     for line in lines:
         if first:
             if "--" in line and "@" in line:
-                print line
+                print(line)
                 email, text = line.split("--", 1)
                 if isImportantChangeLogLine(text):
                     suggestions.append("* %s" % text)
@@ -134,7 +134,7 @@ def getChangeLogBlock(version, next_oldest_version, date, options):
     for line in suggestions:
         new_block.append(line)
     new_block.append("")
-    print "\n".join(new_block)
+    print("\n".join(new_block))
     return new_block
 
 def prepend(filename, block):
@@ -181,14 +181,14 @@ def rebuild(options):
         tag = tag.strip("(").strip(")").strip(",")
         version = StrictVersion(tag)
         if version > next_oldest:
-            if options.verbose: print "found %s" % (version)
+            if options.verbose: print("found %s" % (version))
             block = getChangeLogBlock(version, next_oldest, day, options)
             blocks[0:0] = "\n".join(block) + "\n"
             next_oldest = version
     version = "HEAD"
     day = date.today().strftime("%Y-%m-%d")
     block = getChangeLogBlock(version, next_oldest, day, options)
-    print "\n".join(block) + "\n"
+    print("\n".join(block) + "\n")
     
     if not options.dry_run:
         with open(options.outputfile, "w") as fh:
@@ -208,42 +208,42 @@ if __name__=='__main__':
 
     tagged_version = findLatestInGit(options)
     if options.verbose:
-        print "latest tagged in git: %s" % tagged_version
+        print("latest tagged in git: %s" % tagged_version)
     if options.version:
-        print tagged_version
+        print(tagged_version)
         sys.exit()
     if options.next_version:
-        print next_version(tagged_version)
+        print(next_version(tagged_version))
         sys.exit()
     if options.rebuild:
         rebuild(options)
         sys.exit()
     
     version, latest_date, versions = findLatestChangeLogVersion(options)
-    print "latest from changelog: %s" % version
-    print "all from changelog: %s" % str(versions)
+    print("latest from changelog: %s" % version)
+    print("all from changelog: %s" % str(versions))
 
     import importlib
     module = importlib.import_module("omnivore._omnivore_version")
-    print module
-    print "module version: %s" % module.version
+    print(module)
+    print("module version: %s" % module.version)
     
     v_changelog = StrictVersion(version)
-    print v_changelog
+    print(v_changelog)
     v_module = StrictVersion(module.version)
-    print v_module
+    print(v_module)
     v_tagged = StrictVersion(tagged_version)
-    print v_tagged
+    print(v_tagged)
     
     if v_module > v_changelog:
-        print "adding to ChangeLog!"
+        print("adding to ChangeLog!")
         block = getChangeLogBlock(tagged_version, module.version, options)
         if not options.dry_run:
             prepend(options.outputfile, block)
     elif v_module == v_changelog and v_module > v_tagged:
-        print "replacing ChangeLog entry!"
+        print("replacing ChangeLog entry!")
         block = getChangeLogBlock(tagged_version, module.version, options)
         if not options.dry_run:
             replace(options.outputfile, block)
     else:
-            print "unhandled version differences..."
+            print("unhandled version differences...")

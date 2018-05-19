@@ -114,7 +114,7 @@ def dict_to_list(d):
     amount of text as possible. Tuples would be more efficient in python terms,
     but json can't serialize tuples directly either.
     """
-    return sorted([list(i) for i in d.iteritems()])
+    return sorted([list(i) for i in list(d.items())])
 
 
 if __name__ == "__main__":
@@ -125,13 +125,13 @@ if __name__ == "__main__":
     s = {"zero": ["first", {"second": 2, "third": 3, "fourth": 4, "items": [[1,2,3,4], [5,6,7,8], 9, 10, [11, [12, [13, [14, 15]]]]], "items2": [[1,2,3,4], [5,6,7,8], 9, 10, [11, [12, [13, [14, 15]]]]]}],"zeroprime": [10,[12,[14, 16]]]}
 
     text = json.dumps(s, indent=4)
-    print "original"
-    print text
+    print("original")
+    print(text)
 
     def process(level):
         processed = collapse_json(text, indent=level, special_keys = {"viewers": 1, "linked bases": 1, "items2": 1})
-        print level
-        print processed
+        print(level)
+        print(processed)
         rebuilt = json.loads(processed)
         assert rebuilt == s
 

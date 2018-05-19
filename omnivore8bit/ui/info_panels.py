@@ -14,6 +14,7 @@ from omnivore8bit.arch.ui.antic_colors import AnticColorDialog
 from omnivore.utils.runtime import get_all_subclasses
 
 import logging
+from functools import reduce
 log = logging.getLogger(__name__)
 
 def reduce_from_little_endian(raw):

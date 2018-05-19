@@ -68,7 +68,7 @@ class NewFileAction(Action):
         task.new(guess)
 
     def _get_tooltip(self):
-        return u'Open a new %s' % self.name
+        return 'Open a new %s' % self.name
 
 
 class NewEmptyFileAction(EditorAction):
@@ -216,7 +216,7 @@ class RevertAction(EditorAction):
                 guess = FileGuess(uri)
                 document = event.task.window.application.guess_document(guess)
                 self.active_editor.load(document)
-            except fs.errors.FSError, e:
+            except fs.errors.FSError as e:
                 event.task.error("Can't revert from %s:\n\n%s" % (uri, str(e)), 'Revert Error')
 
 

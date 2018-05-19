@@ -92,5 +92,5 @@ def get_filled_rectangle(start_index, end_index, map_width):
     points = []
     for y in range(y1, y2 + 1):
         index = y * map_width + x1
-        points.extend(range(index, index - x1 + x2 + 1))
+        points.extend(list(range(index, index - x1 + x2 + 1)))
     return points

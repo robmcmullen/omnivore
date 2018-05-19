@@ -641,8 +641,8 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
 
     def pixel_pos_to_row_cell(self, x, y):
         sx, sy = self.parent.GetViewStart()
-        row  = sy + int(y / self.cell_pixel_height)
-        cell = sx + int(x / self.cell_pixel_width)
+        row  = sy + int(y // self.cell_pixel_height)
+        cell = sx + int(x // self.cell_pixel_width)
         return row, cell
 
     def cell_to_col(self, cell):
@@ -677,7 +677,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
                 delta = left_cell - cell
                 # print("LEFT: caret_start_cell=%d caret_width=%d cell=%d left_cell=%d delta=%d" % (caret_start_cell, caret_width, cell, left_cell, delta))
                 scroll_cell = -1
-                delta = max(delta / self.offscreen_scroll_divisor, 1)
+                delta = max(delta // self.offscreen_scroll_divisor, 1)
                 new_cell = left_cell - delta
                 offscreen = True
         elif cell >= right_cell:  # off right side
@@ -686,7 +686,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
             else:
                 delta = cell - right_cell
                 scroll_cell = 1
-                delta = max(delta / self.offscreen_scroll_divisor, 1)
+                delta = max(delta // self.offscreen_scroll_divisor, 1)
                 new_cell = right_cell + delta
                 offscreen = True
         else:
@@ -715,7 +715,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
             new_row = row
 
         if scroll_row != 0:
-            delta = max(delta / self.offscreen_scroll_divisor, 1)
+            delta = max(delta // self.offscreen_scroll_divisor, 1)
             new_row = caret_row + (scroll_row * delta)
             offscreen = True
 
@@ -754,10 +754,10 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         w, h = self.GetClientSize().Get()
         self.cell_pixel_height = self.line_renderer.h
         self.cell_pixel_width = self.line_renderer.w
-        self.fully_visible_rows = int(h / self.cell_pixel_height)
-        self.fully_visible_cells = int(w / self.cell_pixel_width)
-        self.visible_rows = int((h + self.cell_pixel_height - 1) / self.cell_pixel_height)
-        self.visible_cells = int((w + self.cell_pixel_width - 1) / self.cell_pixel_width)
+        self.fully_visible_rows = int(h // self.cell_pixel_height)
+        self.fully_visible_cells = int(w // self.cell_pixel_width)
+        self.visible_rows = int((h + self.cell_pixel_height - 1) // self.cell_pixel_height)
+        self.visible_cells = int((w + self.cell_pixel_width - 1) // self.cell_pixel_width)
         log.debug("fully visible: %d,%d including partial: %d,%d" % (self.fully_visible_rows, self.fully_visible_cells, self.visible_rows, self.visible_cells))
 
     ##### caret
@@ -855,7 +855,7 @@ class HexTable(object):
         self.start_addr = start_addr
         self.items_per_row = items_per_row
         self.start_offset = start_addr & start_offset_mask if start_offset_mask else 0
-        self.num_rows = ((self.start_offset + len(self.data) - 1) / items_per_row) + 1
+        self.num_rows = ((self.start_offset + len(self.data) - 1) // items_per_row) + 1
         self.last_valid_index = len(self.data)
         # print(self.data, self.num_rows, self.start_offset, self.start_addr)
         self.calc_labels()
@@ -1306,7 +1306,7 @@ class CompactGrid(wx.ScrolledWindow):
 
     def on_mouse_wheel(self, evt):
         w = evt.GetWheelRotation()
-        print("on_mouse_wheel rotation=%d, lines_per_action %s" % (w, evt.GetLinesPerAction()))
+        print(("on_mouse_wheel rotation=%d, lines_per_action %s" % (w, evt.GetLinesPerAction())))
         if evt.ControlDown():
             if w < 0:
                 self.zoom_out()
@@ -1321,7 +1321,7 @@ class CompactGrid(wx.ScrolledWindow):
         w = evt.GetWheelRotation()
         dx = self.GetScrollPos(wx.HORIZONTAL)
         dy = self.GetScrollPos(wx.VERTICAL)
-        dy -= w / self.view_params.text_font_char_height
+        dy -= w // self.view_params.text_font_char_height
         self.Scroll(dx, dy)
         self.main.Scroll(dx, dy)
         self.top.Scroll(dx, 0)
@@ -1345,13 +1345,13 @@ class CompactGrid(wx.ScrolledWindow):
         action[wx.WXK_HOME]  = self.handle_char_move_start_of_line
         action[wx.WXK_END]   = self.handle_char_move_end_of_line
         key = evt.GetKeyCode()
-        print("Trying %d" % key)
+        print(("Trying %d" % key))
         try:
             action[key](evt, None)
             self.caret_handler.validate_carets()
             #self.UpdateView()
         except KeyError:
-            print("Error! %d not recognized" % key)
+            print(("Error! %d not recognized" % key))
             evt.Skip()
 
     ##### redrawing

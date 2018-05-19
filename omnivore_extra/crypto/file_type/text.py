@@ -27,5 +27,5 @@ class PrivateTextRecognizer(HasTraits):
         start = len(self.header)
         doc = BaseDocument(metadata=guess.metadata, bytes=guess.numpy[start:])
         doc.permute = PermutePrivate()
-        print "loading %s: %s" % (self.id, doc)
+        print("loading %s: %s" % (self.id, doc))
         return doc

@@ -65,14 +65,14 @@ def trim(docstring):
     # and split into a list of lines:
     lines = docstring.expandtabs().splitlines()
     # Determine minimum indentation (first line doesn't count):
-    indent = sys.maxint
+    indent = sys.maxsize
     for line in lines[1:]:
         stripped = line.lstrip()
         if stripped:
             indent = min(indent, len(line) - len(stripped))
     # Remove indentation (first line is special):
     trimmed = [lines[0].strip()]
-    if indent < sys.maxint:
+    if indent < sys.maxsize:
         for line in lines[1:]:
             trimmed.append(line[indent:].rstrip())
     # Strip off trailing and leading blank lines:
@@ -283,7 +283,7 @@ Menu Items
         subdir = os.path.join(self.directory, name)
         try:
             os.mkdir(subdir)
-        except OSError, e:
+        except OSError as e:
             # directory exists!
             pass
         return subdir
@@ -293,7 +293,7 @@ Menu Items
         try:
             with open(filename, "r") as fh:
                 template = fh.read()
-        except IOError, e:
+        except IOError as e:
             template = self.default_templates[kind]
         return template
 
@@ -365,7 +365,7 @@ Menu Items
                             "title": get_rst_section_title(level, title, True),
                         }
                         current_page = [template.format(**subs)]
-                        print "New page for %s: %s" % (title, slug)
+                        print("New page for %s: %s" % (title, slug))
                         log.debug("New page for %s: %s" % (title, slug))
                         pages.append((slug, title, current_page))
                     else:
@@ -430,7 +430,7 @@ Menu Items
 
         text = template.format(**subs)
 
-        print "New manual index %s: %s" % (self.title, self.title_slug)
+        print("New manual index %s: %s" % (self.title, self.title_slug))
         log.debug("Writing index.rst")
         with open(os.path.join(self.directory, "index.rst"), "w") as fh:
             fh.write(text)
@@ -458,7 +458,7 @@ class RSTOnePageDocs(RSTSeparateMenuDocs):
                             "description": menubar_docs,
                         }
                         current_page = [template.format(**subs)]
-                        print "  New page for %s: %s" % (title, slug)
+                        print("  New page for %s: %s" % (title, slug))
                         log.debug("New page for %s: %s" % (title, slug))
                         pages.append((slug, title, current_page))
                     else:
@@ -514,7 +514,7 @@ class RSTOnePageDocs(RSTSeparateMenuDocs):
 
         text = template.format(**subs)
 
-        print "New manual index %s: %s" % (self.title, self.title_slug)
+        print("New manual index %s: %s" % (self.title, self.title_slug))
         log.debug("Writing index.rst")
         with open(os.path.join(self.directory, "index.rst"), "w") as fh:
             fh.write(text)
