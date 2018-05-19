@@ -27,16 +27,16 @@ class XMLTextRecognizer(RecognizerBase):
 
     def identify(self, guess):
         byte_stream = guess.get_utf8().strip()
-        if not byte_stream.startswith("<"):
+        if not byte_stream.startswith(b"<"):
             return
-        if byte_stream.startswith("<?xml"):
+        if byte_stream.startswith(b"<?xml"):
             found_xml = True
         else:
             found_xml = False
-        if "<rss" in byte_stream:
+        if b"<rss" in byte_stream:
             return "application/rss+xml"
         byte_stream = byte_stream.lower()
-        if "<!doctype html" in byte_stream or "<html" in byte_stream:
+        if b"<!doctype html" in byte_stream or b"<html" in byte_stream:
             return "text/html"
 
         if found_xml:
@@ -54,10 +54,10 @@ class PoundBangTextRecognizer(RecognizerBase):
 
     def identify(self, guess):
         byte_stream = guess.get_utf8()
-        if not byte_stream.startswith("#!"):
+        if not byte_stream.startswith(b"#!"):
             return
         line = byte_stream[2:80].lower().strip()
-        if line.startswith("/usr/bin/env"):
+        if line.startswith(b"/usr/bin/env"):
             line = line[12:].strip()
         words = line.split()
         names = words[0].split("/")

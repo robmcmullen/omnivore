@@ -52,54 +52,55 @@ def piglatin(text):
     return ' '.join(words)
 
 
-def getMagicComments(bytes, headersize=1024):
+def getMagicComments(data, headersize=1024):
     """Given a byte string, get the first two lines.
     
     "Magic comments" appear in the first two lines of the file, and can
     indicate the encoding of the file or the major mode in which the file
     should be interpreted.
     """
-    numbytes = len(bytes)
+    numbytes = len(data)
     if headersize > numbytes:
         headersize = numbytes
-    header = bytes[0:headersize]
+    header = data[0:headersize]
     lines = header.splitlines()
     return lines[0:2]
 
 
-def detectBOM(bytes):
+def detectBOM(data):
     """Search for unicode Byte Order Marks (BOM)
     """
     boms = {
-        'utf-8': '\xef\xbb\xbf',
-        'utf-16-le': '\xff\xfe',
-        'utf-16-be': '\xfe\xff',
-        'utf-32-le': '\xff\xfe\x00\x00',
-        'utf-32-be': '\x00\x00\xfe\xff',
+        'utf-8': b'\xef\xbb\xbf',
+        'utf-16-le': b'\xff\xfe',
+        'utf-16-be': b'\xfe\xff',
+        'utf-32-le': b'\xff\xfe\x00\x00',
+        'utf-32-be': b'\x00\x00\xfe\xff',
         }
     # FIXME: utf-32 is not available in python 2.5, only 2.6 and later.
 
     for encoding, bom in list(boms.items()):
-        if bytes.startswith(bom):
+        if data.startswith(bom):
             return encoding, bom
     return None, None
 
 
-def detectEncoding(bytes):
+def detectEncoding(data):
     """Search for "magic comments" that specify the encoding
     
     @returns tuple containing (encoding name, BOM) where both may be None.  If
     the Byte Order Mark is not None, the bytes should be stripped off before
     decoding using the encoding name.
     """
-    if isinstance(bytes, str):
-        # Only check byte order marks when the input is a raw string.  If the
+    if isinstance(data, str):
+        # Only check byte order marks when the input is a bytes.  If the
         # input is unicode, it can't have a valid byte order mark.
-        encoding, bom = detectBOM(bytes)
-        if encoding:
-            return encoding, bom
-    lines = getMagicComments(bytes)
-    regex = re.compile("coding[:=]\s*([-\w.]+)")
+        return unicode, None
+    encoding, bom = detectBOM(data)
+    if encoding:
+        return encoding, bom
+    lines = getMagicComments(data)
+    regex = re.compile(b"coding[:=]\s*([-\w.]+)")
     for txt in lines:
         match = regex.search(txt)
         if match:
@@ -108,12 +109,12 @@ def detectEncoding(bytes):
     return None, None
 
 
-def encodedBytesToUnicode(bytes, encoding, bom):
+def encodedBytesToUnicode(data, encoding, bom):
     if bom:
         start = len(bom)
     else:
         start = 0
-    unicodestring = bytes[start:].decode(encoding)
+    unicodestring = data[start:].decode(encoding)
     return unicodestring
 
 
@@ -142,7 +143,7 @@ def parseEmacs(header):
     return None, None
 
 
-def guessBinary(text, percentage=5):
+def guessBinary(data, percentage=5):
     """Guess if this is a text or binary file.
     
     Guess if the text in this file is binary or text by scanning
@@ -165,18 +166,17 @@ def guessBinary(text, percentage=5):
 
     @rtype: boolean
     """
-    encoding, bom = detectEncoding(text)
+    encoding, bom = detectEncoding(data)
     if encoding:
         # The presence of an encoding by definition indicates a text file, so
         # therefore not binary!
         return False
-    data = [ord(i) for i in text]
     binary=0
     for ch in data:
         if (ch<8) or (ch>13 and ch<32) or (ch>126):
             binary+=1
-    log.debug("guessBinary: len=%d, num binary=%d" % (len(text), binary))
-    if binary>(len(text)/percentage):
+    log.debug("guessBinary: len=%d, num binary=%d" % (len(data), binary))
+    if binary>(len(data)/percentage):
         return True
     return False
 

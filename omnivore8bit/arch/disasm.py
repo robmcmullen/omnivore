@@ -295,7 +295,7 @@ class BaseDisassembler(object):
             dollar = operand.find("$")
             if dollar >=0 and "#" not in operand:
                 text_hex = operand[dollar+1:dollar+1+4]
-                if len(text_hex) > 2 and text_hex[2] in "0123456789abcdefABCDEF":
+                if len(text_hex) > 2 and text_hex[2] in b"0123456789abcdefABCDEF":
                     size = 4
                 else:
                     size = 2
@@ -316,7 +316,7 @@ class BaseDisassembler(object):
         """ Split string of hex digits into format used by chosen assembler
 
         """
-        count = len(digits) / 2
+        count = len(digits) // 2
         fmt = self.fmt_hex_digit_separator.join(self.fmt_hex_digits for i in range(count))
         return self.fmt_hex_directive + " " + fmt % tuple(digits[0:count*2])
 
@@ -327,11 +327,11 @@ class BaseDisassembler(object):
         return "     " if not text else text
 
     def get_operand_from_instruction(self, text):
-        if ";" in text:
-            operand, _ = text.split(";", 1)
+        if b";" in text:
+            operand, _ = text.split(b";", 1)
         else:
             operand = text.rstrip()
-        return operand
+        return operand.decode("latin-1")
 
     def format_operand(self, line, operand):
         if line.flag == udis_fast.flag_origin:
@@ -344,7 +344,11 @@ class BaseDisassembler(object):
 
     def format_instruction(self, index, line):
         label = self.format_label(line)
+
+        # py3 notes: line.instruction is ascii bytes, but operand will be
+        # unicode after this.
         operand = self.get_operand_from_instruction(line.instruction)
+
         operand = self.format_operand(line, operand)
         return label + " " + operand
 
@@ -355,9 +359,9 @@ class BaseDisassembler(object):
             line = info[row]
         comments = []
         c = line.instruction
-        if ";" in c:
-            _, c = c.split(";", 1)
-            comments.append(c)
+        if b";" in c:
+            _, c = c.split(b";", 1)
+            comments.append(c.decode('utf-8'))
         for i in range(line.num_bytes):
             c = self.segment.get_comment(index + i)
             if c:

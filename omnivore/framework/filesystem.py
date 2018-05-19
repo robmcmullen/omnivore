@@ -1,7 +1,7 @@
 import os
 import sys
 import datetime
-from io import StringIO
+from io import BytesIO
 
 from pyface.api import ImageResource
 
@@ -285,7 +285,7 @@ class BlankFS(FS):
             size = int(path)
         except ValueError as e:
             raise fs.errors.ResourceNotFoundError(path, details="Invalid size. %s" % e)
-        fh = StringIO('\0' * size)
+        fh = BytesIO('\0' * size)
         return fh
 
     def exists(self, path):
@@ -360,8 +360,10 @@ def save_to_about_filesystem(name, text):
     fh = opener.open(url, "wb")
     if hasattr(text, 'create_bitmap'):
         fhb = opener.open(text.absolute_path, "rb")
-        text = fhb.read()
+        data = fhb.read()
         fhb.close()
-    fh.write(text)
+    else:
+        data = text.encode('utf-8')
+    fh.write(data)
     fh.close()
     log.debug("Created %s" % url)

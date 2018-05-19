@@ -15,7 +15,7 @@ class PrivateTextRecognizer(HasTraits):
 
     before = "text/poundbang"
 
-    header = "#!omnivore-private\n"
+    header = b"#!omnivore-private\n"
 
     def identify(self, guess):
         byte_stream = guess.get_utf8()

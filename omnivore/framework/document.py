@@ -1,6 +1,6 @@
 import os
 import types
-import io as StringIO
+import io as BytesIO
 import uuid
 
 import numpy as np
@@ -179,7 +179,7 @@ class BaseDocument(HasTraits):
 
     @property
     def bytestream(self):
-        return StringIO.StringIO(self.bytes)
+        return BytesIO.BytesIO(self.bytes)
 
     # serialization
 
