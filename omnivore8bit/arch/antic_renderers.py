@@ -124,9 +124,9 @@ class BaseRenderer(object):
         if rem > 0:
             bytes = np.append(bytes, np.zeros(rem, dtype=np.uint8))
             style = np.append(style, np.zeros(rem, dtype=np.uint8))
-        pixels_per_row = 8 * bytes_per_row / bitplanes
+        pixels_per_row = 8 * bytes_per_row // bitplanes
         bits = np.unpackbits(bytes).reshape((-1, 8))
-        pixels = np.empty((nr * bytes_per_row / bitplanes, pixels_per_row), dtype=np.uint8)
+        pixels = np.empty((nr * bytes_per_row // bitplanes, pixels_per_row), dtype=np.uint8)
         self.get_bitplane_pixels(bits, pixels, bytes_per_row, pixels_per_row)
         pixels = pixels.reshape((nr, pixels_per_row))
         s = self.get_bitplane_style(style)
@@ -491,7 +491,7 @@ class TwoBitPlanesLineLE(TwoBitPlanesLE):
     name = "2 Bit Planes (little endian, interleave by line)"
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
-        pixel_rows = bytes_per_row / 2
+        pixel_rows = bytes_per_row // 2
         for i in range(pixels_per_row):
             for j in range(pixel_rows):
                 little = j
@@ -503,7 +503,7 @@ class TwoBitPlanesLineBE(TwoBitPlanesLE):
     name = "2 Bit Planes (big endian, interleave by line)"
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
-        pixel_rows = bytes_per_row / 2
+        pixel_rows = bytes_per_row // 2
         for i in range(pixels_per_row):
             for j in range(pixel_rows):
                 little = j + pixel_rows
@@ -536,7 +536,7 @@ class ThreeBitPlanesLineLE(ThreeBitPlanesLE):
     name = "3 Bit Planes (little endian, interleave by line)"
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
-        pixel_rows = bytes_per_row / 3
+        pixel_rows = bytes_per_row // 3
         for i in range(pixels_per_row):
             for j in range(pixel_rows):
                 little = j
@@ -549,7 +549,7 @@ class ThreeBitPlanesLineBE(ThreeBitPlanesBE):
     name = "3 Bit Planes (big endian, interleave by line)"
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
-        pixel_rows = bytes_per_row / 3
+        pixel_rows = bytes_per_row // 3
         for i in range(pixels_per_row):
             for j in range(pixel_rows):
                 little = j + (2 * pixel_rows)
@@ -582,7 +582,7 @@ class FourBitPlanesLineLE(FourBitPlanesLE):
     name = "4 Bit Planes (little endian, interleave by line)"
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
-        pixel_rows = bytes_per_row / 4
+        pixel_rows = bytes_per_row // 4
         for i in range(pixels_per_row):
             for j in range(pixel_rows):
                 little = j
@@ -596,7 +596,7 @@ class FourBitPlanesLineBE(FourBitPlanesLE):
     name = "4 Bit Planes (big endian, interleave by line)"
 
     def get_bitplane_pixels(self, bits, pixels, bytes_per_row, pixels_per_row):
-        pixel_rows = bytes_per_row / 4
+        pixel_rows = bytes_per_row // 4
         for i in range(pixels_per_row):
             for j in range(pixel_rows):
                 little = j + (3 * pixel_rows)
@@ -1092,9 +1092,9 @@ class BytePerPixelMemoryMap(BaseRenderer):
 
 def get_numpy_memory_map_image(segment_viewer, bytes, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols):
     log.debug("SLOW VERSION OF get_numpy_memory_map_image!!!")
-    num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) / bytes_per_row
+    num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) // bytes_per_row
 
-    log.debug(str([end_byte, start_byte, (end_byte - start_byte) / bytes_per_row]))
+    log.debug(str([end_byte, start_byte, (end_byte - start_byte) // bytes_per_row]))
     end_row = min(num_rows_with_data, num_rows)
     end_col = min(bytes_per_row, start_col + num_cols)
 

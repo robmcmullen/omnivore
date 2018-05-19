@@ -105,7 +105,7 @@ class AnticPalette(canvas.Canvas):
         array = np.empty((h, w, 3), dtype=np.uint8)
         array[:,:] = self.color_prefs.empty_background_color[:3]
         for high in range(0, 256, 16):
-            y = self.BORDER + (high / 16) * self.VERTICAL_STEP
+            y = self.BORDER + (high // 16) * self.VERTICAL_STEP
             for low in range(16):
                 x = self.BORDER + low * self.HORIZONTAL_STEP
                 c = colors.gtia_ntsc_to_rgb(high + low)

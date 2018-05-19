@@ -23,7 +23,7 @@ def is_valid_level_segment(segment):
 
 def is_bad_harvest_position(x, y, hx, hy):
     hx = hx & 0x1f
-    hy = (hy & 0x1f) / 2
+    hy = (hy & 0x1f) // 2
     startx = (16 - hx) & 0x1f
     starty = (0 - hy) & 0xf
     endx = (startx + 8) & 0x1f

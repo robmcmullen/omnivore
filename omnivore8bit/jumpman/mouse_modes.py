@@ -70,7 +70,7 @@ class JumpmanSelectMode(NormalSelectMode):
         # x: 16 - hx, 16 - hx + 6 inclusive
         # y: 0 - hy/2, 0 - hy/2 + 2 inclusive
         hx = hx & 0x1f
-        hy = (hy & 0x1f) / 2
+        hy = (hy & 0x1f) // 2
         startx = (16 - hx) & 0x1f
         starty = (0 - hy) & 0xf
 
@@ -336,7 +336,7 @@ class DrawMode(JumpmanSelectMode):
         if obj.vertical_only:
             sx = 0
             sy = obj.default_dy if dy > 0 else -obj.default_dy
-            num = max((dy + sy - 1) / sy, 1)
+            num = max((dy + sy - 1) // sy, 1)
         elif obj.single:
             sx = obj.default_dx
             sy = 0
@@ -344,12 +344,12 @@ class DrawMode(JumpmanSelectMode):
         else:
             if abs(dx) >= abs(dy):
                 sx = obj.default_dx if dx > 0 else -obj.default_dx
-                num = max((abs(dx) + abs(sx) - 1) / abs(sx), 1)
-                sy = dy / num
+                num = max((abs(dx) + abs(sx) - 1) // abs(sx), 1)
+                sy = dy // num
             else:
                 sy = obj.default_dy if dy > 0 else -obj.default_dy
-                num = max((abs(dy) + abs(sy) - 1) / abs(sy), 1)
-                sx = dx / num
+                num = max((abs(dy) + abs(sy) - 1) // abs(sy), 1)
+                sx = dx // num
         screen_x = (self.mouse_down[0] - obj.default_dx/2) & obj.valid_x_mask
         screen_y = self.mouse_down[1] - obj.default_dy/2
 
@@ -556,7 +556,7 @@ class JumpmanRespawnMode(DrawMode):
         source = self.control.segment_viewer.segment
         x = source[0x39]
         y = source[0x3a]
-        return x - 0x30, (y - 0x18) / 2
+        return x - 0x30, (y - 0x18) // 2
 
     def draw_extra_objects(self, level_builder, screen, current_segment):
         objects = [self.current]

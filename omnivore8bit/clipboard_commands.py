@@ -132,7 +132,7 @@ class PasteAndRepeatCommand(PasteCommand):
         data_len = np.alen(bytes)
         orig_len = np.alen(orig)
         if orig_len > data_len:
-            reps = (orig_len / data_len) + 1
+            reps = (orig_len // data_len) + 1
             bytes = np.tile(bytes, reps)
         return bytes[0:orig_len]
 

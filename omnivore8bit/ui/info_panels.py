@@ -328,7 +328,7 @@ class AtasciiC0(TextEditField):
         text = text[0:self.byte_count]
         text = self.map_parsed_to_bytes(text)
         # Center text
-        i = (self.byte_count - len(text)) / 2
+        i = (self.byte_count - len(text)) // 2
         raw[i:i + len(text)] = text
         return raw
 

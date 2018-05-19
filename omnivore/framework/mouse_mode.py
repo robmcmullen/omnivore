@@ -123,13 +123,13 @@ class MouseMode(object):
 
             # add extra to the rotation so the minimum amount is 1 or -1
             extra = delta if rotation > 0 else -delta
-            amount = (rotation + extra) / delta
+            amount = (rotation + extra) // delta
             self.wheel_scroll_count -= abs(amount)
             if self.wheel_scroll_count > 0:
                 return
             self.wheel_scroll_count = self.use_every_nth_wheel_scroll
         else:
-            amount = rotation / delta
+            amount = rotation // delta
 
         if evt.ControlDown():
             if amount < 0:

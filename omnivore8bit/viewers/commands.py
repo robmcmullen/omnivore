@@ -186,7 +186,7 @@ class DivideByCommand(SetRangeValueCommand):
     pretty_name = "Divide By"
 
     def get_data(self, orig):
-        return orig / self.data
+        return orig // self.data
 
 
 class DivideFromCommand(SetRangeValueCommand):
@@ -194,7 +194,7 @@ class DivideFromCommand(SetRangeValueCommand):
     pretty_name = "Divide From"
 
     def get_data(self, orig):
-        return self.data / orig
+        return self.data // orig
 
 
 class ReverseSelectionCommand(SetRangeCommand):
