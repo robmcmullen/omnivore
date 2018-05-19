@@ -210,8 +210,8 @@ class BaseDocument(HasTraits):
 
     def calc_unserialized_extra_metadata(self, uri, text):
         try:
-            if text.startswith("#"):
-                header, text = text.split("\n", 1)
+            if text.startswith(b"#"):
+                header, text = text.split(b"\n", 1)
             unserialized = jsonpickle.loads(text)
         except ValueError as e:
             log.error("JSON parsing error for extra metadata in %s: %s" % (uri, str(e)))

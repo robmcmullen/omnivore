@@ -76,6 +76,10 @@ class DrawObjectBounds(object):
             pass
         return False
 
+    # to be usable in dicts, py3 needs __hash__ defined if __eq__ is defined
+    def __hash__(self):
+        return id(self)
+
     @property
     def w(self):
         return self.xmax - self.xmin + 1
@@ -324,6 +328,10 @@ class JumpmanDrawObject(object):
             pass
         return False
 
+    # to be usable in dicts, py3 needs __hash__ defined if __eq__ is defined
+    def __hash__(self):
+        return id(self)
+
     def equal_except_painting(self, other):
         try:
             if (self.x, self.y, self.count, self.dx, self.dy, self.trigger_function) == (other.x, other.y, other.count, other.dx, other.dy, other.trigger_function):
@@ -336,7 +344,7 @@ class JumpmanDrawObject(object):
         pass
 
     def harvest_checksum(self, hx, hy):
-        return ((self.x + 0x30 + hx) & 0xe0) | (((self.y * 2) + 0x20 + hy) & 0xe0)/0x10
+        return ((self.x + 0x30 + hx) & 0xe0) | (((self.y * 2) + 0x20 + hy) & 0xe0) // 0x10
 
     def is_bad_location(self, hx, hy):
         return is_bad_harvest_position(self.x, self.y, hx, hy) or is_bad_harvest_position(self.x + self.default_dx - 1, self.y + self.default_dy - 1, hx, hy)

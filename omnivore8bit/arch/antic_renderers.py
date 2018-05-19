@@ -33,6 +33,10 @@ class BaseRenderer(object):
             pass
         return False
 
+    # to be usable in dicts, py3 needs __hash__ defined if __eq__ is defined
+    def __hash__(self):
+        return id(self)
+
     def validate_bytes_per_row(self, bytes_per_row):
         return bytes_per_row
 
@@ -1007,6 +1011,10 @@ class ATASCIIFontMapping(object):
         except AttributeError:
             pass
         return False
+
+    # to be usable in dicts, py3 needs __hash__ defined if __eq__ is defined
+    def __hash__(self):
+        return id(self)
 
     def wx_char_to_byte(self, char, mods, control):
         byte = None

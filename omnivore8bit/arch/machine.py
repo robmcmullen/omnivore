@@ -225,6 +225,10 @@ class Machine(HasTraits):
     def __eq__(self, other):
         return self.disassembler == other.disassembler and self.memory_map == other.memory_map
 
+    # to be usable in dicts, py3 needs __hash__ defined if __eq__ is defined
+    def __hash__(self):
+        return id(self)
+
     def clone_machine(self):
         m = self.clone_traits()
         m.update_colors(m.antic_color_registers)
