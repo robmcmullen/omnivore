@@ -6,7 +6,6 @@ import wx
 from traits.api import on_trait_change, Bool, Undefined, Any, List
 
 from ..ui.tilewrap import TileWrapControl
-from ..ui.bitviewscroller import CharacterSetViewer
 from ..byte_edit.commands import ChangeByteCommand
 
 from . import SegmentViewer
@@ -24,7 +23,7 @@ class TileWindow(wx.SplitterWindow):
 
         self.groups = TileWrapControl(self, linked_base, size=(256,100), command=ChangeByteCommand)
 
-        self.tiles = CharacterSetViewer(self, linked_base, size=(256,100))
+        # self.tiles = CharacterSetViewer(self, linked_base, size=(256,100))
 
         self.SetMinimumPaneSize(100)
         self.SetSashGravity(0.5)
