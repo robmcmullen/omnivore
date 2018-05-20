@@ -37,7 +37,7 @@ if "sdist" in sys.argv:
             _sdist.run(self)
     cmdclass["sdist"] = sdist
 
-execfile('pyatasm/_metadata.py')
+exec(compile(open('pyatasm/_metadata.py').read(), 'pyatasm/_metadata.py', 'exec'))
 
 setup(
   name = "pyatasm",

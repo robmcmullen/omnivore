@@ -1,8 +1,10 @@
-from pyatasm_mac65 import mac65_assemble
+from .pyatasm_mac65 import mac65_assemble
 
 class Assemble(object):
     def __init__(self, source, verbose=False):
         self.verbose = verbose
+        if isinstance(source, str):
+            source = source.encode("utf-8")
         self.errors, text = mac65_assemble(source)
         self.segments = []
         self.transitory_equates = {}
@@ -23,7 +25,7 @@ class Assemble(object):
 
     def source_parser(self, line, cleanup=False):
         if cleanup:
-            if self.verbose: print "Code block: %x-%x" % (self.first_addr, self.last_addr)
+            if self.verbose: print("Code block: %x-%x" % (self.first_addr, self.last_addr))
             self.segments.append((self.first_addr, self.last_addr, self.current_bytes))
             self.first_addr = None
             self.last_addr = None
@@ -32,14 +34,14 @@ class Assemble(object):
 
         lineno, addr, data, text = line[0:5], line[6:10], line[12:30], line[31:]
         addr = int(addr, 16)
-        b = map(lambda a:int(a,16), data.split())
+        b = [int(a,16) for a in data.split()]
         #print hex(index), b
         if b:
             count = len(b)
             if self.first_addr is None:
                 self.first_addr = self.last_addr = addr
             elif addr != self.last_addr:
-                if self.verbose: print "Code block: %x-%x" % (self.first_addr, self.last_addr)
+                if self.verbose: print("Code block: %x-%x" % (self.first_addr, self.last_addr))
                 self.segments.append((self.first_addr, self.last_addr, self.current_bytes))
                 self.first_addr = self.last_addr = addr
                 self.current_bytes = []
@@ -67,7 +69,7 @@ class Assemble(object):
             line = line.strip()
             if not line:
                 continue
-            if self.verbose: print "parsing:", line
+            if self.verbose: print("parsing:", line)
             if line.startswith("Source:"):
                 self.current_parser(None, cleanup=True)
                 self.current_parser = self.source_parser

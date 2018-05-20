@@ -6,9 +6,9 @@ def mac65_assemble(source):
     cdef char *listfile_c
     
     source_c = source
-    listfile = source + ".lst"
+    listfile = source + b".lst"
     listfile_c = listfile
-    errfile = source + ".err"
+    errfile = source + b".err"
     errfile_c = errfile
 
     exitval = py_assemble(source_c, listfile_c, errfile_c)
