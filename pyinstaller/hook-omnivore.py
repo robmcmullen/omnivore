@@ -57,10 +57,10 @@ def collect_submodules_traitsui(package, filter=lambda name: True):
                 if ispkg:
                     try:
                         __import__(name)
-                    except ImportError, e:
+                    except ImportError as e:
                         if onerror is not None:
                             onerror(name, e)
-                    except Exception, e:
+                    except Exception as e:
                         if onerror is not None:
                             onerror(name, e)
                         else:
@@ -103,7 +103,8 @@ subpkgs = [
     "traits",
     "pyface",
     "omnivore",
-    "omnivore8bit"
+    "omnivore8bit",
+    "omni8bit",
 ]
 
 hiddenimports = collect_submodules_traitsui("traitsui", qt_filter)
@@ -111,14 +112,8 @@ for s in subpkgs:
     hiddenimports.extend(collect_submodules(s, qt_filter))
 
 if DEBUG or True:
-    print "\n".join(sorted(hiddenimports))
+    print("\n".join(sorted(hiddenimports)))
 
-subpkgs = [
-    "traitsui",
-    "pyface",
-    "omnivore",
-    "omnivore8bit"
-]
 datas = []
 skipped = []
 for s in subpkgs:
@@ -133,6 +128,6 @@ for s in subpkgs:
             skipped.append((src, dest))
 
 if DEBUG:
-    print "\n".join(["%s -> %s" % d for d in datas])
-    print "SKIPPED:"
-    print "\n".join(["%s -> %s" % d for d in skipped])
+    print("\n".join(["%s -> %s" % d for d in datas]))
+    print("SKIPPED:")
+    print("\n".join(["%s -> %s" % d for d in skipped]))

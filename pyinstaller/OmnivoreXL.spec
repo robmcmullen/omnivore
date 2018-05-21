@@ -11,8 +11,13 @@ with open("OmnivoreXL.py", "w") as fh:
 import sys
 sys.modules['FixTk'] = None
 
+if sys.platform == "darwin":
+    pathex = ['/Users/rob.mcmullen/src/omnivore']
+elif sys.platform == "win32":
+    pathex = ['S:/omnivore']
+
 a = Analysis(['OmnivoreXL.py'],
-             pathex=['/Users/rob.mcmullen/src/omnivore'],
+             pathex=pathex,
              binaries=None,
              datas=None,
              hiddenimports=[],
@@ -23,7 +28,7 @@ a = Analysis(['OmnivoreXL.py'],
 
 for pymod, path, tag in sorted(a.pure):
     if ".qt" in pymod or ".test" in pymod:
-        print "why is this still here?", pymod
+        print("why is this still here?", pymod)
 
 # pytz zip bundle from https://github.com/pyinstaller/pyinstaller/wiki/Recipe-pytz-zip-file
 # DOESN'T WORK ON MAC!

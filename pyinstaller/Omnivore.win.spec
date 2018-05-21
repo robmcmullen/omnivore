@@ -8,7 +8,7 @@ with open("Omnivore.py", "w") as fh:
   fh.write(script)
 
 a = Analysis(['Omnivore.py'],
-             pathex=['N:\\maproom-deps\\omnivore'],
+             pathex=['S:\\omnivore'],
              binaries=[],
              datas=[],
              hiddenimports=[],
