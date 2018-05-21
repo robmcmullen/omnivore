@@ -9,12 +9,12 @@ else:
     develop_instead_of_link = False
 
 deps = [
-    ['https://github.com/robmcmullen/traits.git',],
-    ['https://github.com/robmcmullen/pyface.git', {'branch': 'wx4'}],
-    ['https://github.com/robmcmullen/traitsui.git', {'branch': 'wx4'}],
+    ['git@github.com:robmcmullen/traits.git',],
+    ['git@github.com:robmcmullen/pyface.git', {'branch': 'wx4may2018'}],
+    ['git@github.com:robmcmullen/traitsui.git', {'branch': 'wx4may2018'}],
     ['https://github.com/enthought/apptools.git',],
-    ['https://github.com/robmcmullen/envisage.git',],
-    ['https://github.com/robmcmullen/pyfilesystem.git',],
+    ['git@github.com:robmcmullen/envisage.git',],
+    ['git@github.com:robmcmullen/pyfilesystem.git', {'branch': 'py3'}],
 ]
 
 
@@ -49,9 +49,9 @@ for dep in deps:
     except ValueError:
         repourl = dep[0]
         options = {}
-    print(dep, repourl, options)
-    if repourl.startswith("http"):
-        print("UPDATING %s" % repourl)
+    print dep, repourl, options
+    if repourl.startswith("http") or repourl.startswith("git@"):
+        print "UPDATING %s" % repourl
         _, repo = os.path.split(repourl)
         repodir, _ = os.path.splitext(repo)
         if os.path.exists(repodir):
