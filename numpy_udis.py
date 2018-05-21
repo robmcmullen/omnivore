@@ -1,8 +1,8 @@
 import numpy as np
 
-import udis_fast
+from . import udis_fast
 
-from udis_fast.flags import flag_branch, flag_jump, flag_return
+from .udis_fast.flags import flag_branch, flag_jump, flag_return
 
 
 if __name__ == "__main__":
@@ -51,21 +51,21 @@ if __name__ == "__main__":
                         line = "%04x %s %s" % (data['pc'], data['mnemonic'], data['operand'])
                         if data['dest_pc'] > 0:
                             line += " -> %04x" % data['dest_pc']
-                        print line
+                        print(line)
                 else:
                     for r in range(disasm.rows):
                         line = disasm.storage[r]
                         if line.strip():
-                            print line
+                            print(line)
 
         if show:
             addr = 0
             for w in disasm.labels:
                 if w > 0:
-                    print "label: %04x" % addr
+                    print("label: %04x" % addr)
                 addr += 1
 
-        print "total instructions: %d" % count
+        print("total instructions: %d" % count)
 
     def process_fast(binary, show=False):
         pc = int(args.pc, 16)
@@ -86,18 +86,18 @@ if __name__ == "__main__":
                         line += " (jump)"
                 if data.flag & flag_return:
                     line += " (return)"
-                print line
+                print(line)
                 row += 1
 
         np.set_printoptions(formatter={'int':hex})
-        print "total instructions: %d, bytes: %d" % (info.num_instructions, size)
-        print repr(info.index_to_row[0:1000])
-        print repr(info.labels[pc:pc + size])
-        print np.where(info.labels > 0)
+        print("total instructions: %d, bytes: %d" % (info.num_instructions, size))
+        print(repr(info.index_to_row[0:1000]))
+        print(repr(info.labels[pc:pc + size]))
+        print(np.where(info.labels > 0))
 
         for i, entry in enumerate(info):
             pass
-        print "getitem test (looping count): %d" % i
+        print("getitem test (looping count): %d" % i)
 
         # add a label to an opcode if there exists a label that points to a
         # byte in the middle of that instruction, i.e. after that opcode but
@@ -107,13 +107,13 @@ if __name__ == "__main__":
             i -= 1
             has_label = info.labels[pc + i]
             if has_label:
-                print "Found label %04x, info.index_to_row[%d]=%d" % (pc + i, i, info.index_to_row[i])
+                print("Found label %04x, info.index_to_row[%d]=%d" % (pc + i, i, info.index_to_row[i]))
                 while info.index_to_row[i - 1] == info.index_to_row[i]:
                     i -= 1
                 if info.labels[pc + i] == 0:
-                    print "  added label at %04x" % (pc + i)
+                    print("  added label at %04x" % (pc + i))
                 info.labels[pc + i] = 1
-        print np.where(info.labels > 0)
+        print(np.where(info.labels > 0))
 
         start_points = [pc]
         if args.entry_points:
@@ -121,10 +121,10 @@ if __name__ == "__main__":
                 start_points.append(int(spc, 16))
         trace_info = udis_fast.TraceInfo()
         for i, pc in enumerate(start_points):
-            print "start point #%d: %04x" % (i, pc)
+            print("start point #%d: %04x" % (i, pc))
             disasm.trace_disassembly(trace_info, [pc])
-        print "start points:", ", ".join(["%04x" % a for a in sorted(trace_info.start_points)])
-        print "out of range:", ", ".join(["%04x" % a for a in sorted(trace_info.out_of_range_start_points)])
+        print("start points:", ", ".join(["%04x" % a for a in sorted(trace_info.start_points)]))
+        print("out of range:", ", ".join(["%04x" % a for a in sorted(trace_info.out_of_range_start_points)]))
 
     if args.hex:
         try:

@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-import miniasm
+from . import miniasm
 
 
 cputests = [

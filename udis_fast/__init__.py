@@ -17,7 +17,7 @@ import numpy as np
 
 rawdtype = [('pc', 'u2'), ('dest_pc', 'u2'), ('count', 'u1'), ('flag', 'u1'), ('strlen', 'u2'), ('strpos', 'i4')]
 
-from flags import *
+from .flags import *
 
 import logging
 log = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ class StorageWrapper(object):
     def __setitem__(self, index, value):
         self.data[self.row, index] = value
 
-    def next(self):
+    def __next__(self):
         self.row += 1
         if self.row == self.num_rows:
             return False
@@ -101,7 +101,7 @@ class SlowDisassemblyInfo(object):
         for i in range(start, start+count):
             data = self[i]
             line = "%d %s" % (data.pc, data.instruction)
-            print line
+            print(line)
 
 
 def get_disassembled_chunk(parse_mod, storage_wrapper, binary, pc, last, index_of_pc):
@@ -110,7 +110,7 @@ def get_disassembled_chunk(parse_mod, storage_wrapper, binary, pc, last, index_o
         if count > 0:
             pc += count
             index_of_pc += count
-            if not storage_wrapper.next():
+            if not next(storage_wrapper):
                 break
         else:
             break
@@ -147,7 +147,7 @@ def get_disassembler(cpu, fast=True, monolithic=True):
         processor = uninitialized_data_processor
         return processor, cpu, strsize
     if monolithic:
-        import disasm_speedups_monolithic
+        from . import disasm_speedups_monolithic
         processor = functools.partial(disasm_speedups_monolithic.get_disassembled_chunk_fast, cpu)
         return processor, cpu, strsize
     try:
@@ -228,7 +228,7 @@ class DisassemblerWrapper(object):
         return self.chunk_processor(self.metadata_wrapper, binary, pc, last, i, self.mnemonic_lower , self.hex_lower)
 
     def get_all(self, binary, pc, index_of_pc, ranges=[]):
-        import disasm_info
+        from . import disasm_info
 
         self.clear()
         # limit to 64k at once since we're dealing with 8-bit machines

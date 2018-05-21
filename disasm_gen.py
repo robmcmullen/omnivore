@@ -10,21 +10,21 @@ Code generator: Copyright (c) 2017 by Rob McMullen <feedback@playermissile.com>
 udis: Copyright (c) 2015-2016 Jeff Tranter
 Licensed under the Apache License 2.0
 """
-from __future__ import print_function
+
 
 import os
 import glob
 
 import numpy as np
 
-import cputables
+from . import cputables
 
-from disasm_gen_utils import *
+from .disasm_gen_utils import *
 
 import logging
 log = logging.getLogger(__name__)
 
-from udis_fast.flags import *
+from .udis_fast.flags import *
 
 
 disclaimer = """Warning! This is generated code.
@@ -108,7 +108,7 @@ class DisassemblerGenerator(DataGenerator):
         table = cpu['addressModeTable']
         if self.rw_modes is None:
             self.rw_modes = set()
-        for mode, fmt in table.items():
+        for mode, fmt in list(table.items()):
             if self.hex_lower:
                 fmt = fmt.replace(":02X", ":02x").replace(":04X", ":04x")
             self.address_modes[mode] = fmt
@@ -125,7 +125,7 @@ class DisassemblerGenerator(DataGenerator):
         formatter = self.formatter_class(self, lines, indent, leadin, leadin_offset)
         multibyte = dict()
 
-        for opcode, optable in table.items():
+        for opcode, optable in list(table.items()):
             if opcode > 65536:
                 log.debug("found z80 multibyte %x, l=%d" % (opcode, leadin_offset))
                 leadin = opcode >> 24
@@ -168,7 +168,7 @@ class DisassemblerGenerator(DataGenerator):
 
             formatter.process(opcode)
 
-        for leadin, group in multibyte.items():
+        for leadin, group in list(multibyte.items()):
             formatter.start_multibyte_leadin(leadin)
             log.debug("starting multibyte with leadin %x" % leadin)
             log.debug(group)
@@ -241,7 +241,7 @@ def gen_others(pyx, all_case_combos=False, monolithic=False):
                 pyx.function_name_list.append(disasm.function_name)
 
 def gen_all(pyx, all_case_combos=False, monolithic=False):
-    for cpu in cputables.processors.keys():
+    for cpu in list(cputables.processors.keys()):
         gen_cpu(pyx, cpu, all_case_combos, monolithic=monolithic)
 
 

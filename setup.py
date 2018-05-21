@@ -47,7 +47,7 @@ else:
     for parser in glob.glob("udis_fast/hardcoded_parse_*.c"):
         if "monolithic" in parser:
             continue
-        print parser
+        print(parser)
         cpu = parser.replace("udis_fast/hardcoded_parse_", "").replace(".c", "")
         cpu_root = "disasm_speedups_%s" % cpu
         mod_name = "udis_fast.%s" % cpu_root

@@ -6,7 +6,7 @@ perform pattern matching to determine the opcode and addressing mode.
 Copyright (c) 2016 by Rob McMullen <feedback@playermissile.com>
 Licensed under the Apache License 2.0
 """
-from __future__ import print_function
+
 
 import os
 import re
@@ -15,12 +15,12 @@ from collections import defaultdict
 import numpy as np
 
 try:
-    import cputables
+    from . import cputables
 except ImportError:
     raise RuntimeError("Generate cputables.py using cpugen.py before using the miniassembler")
 
-from disasm import Disassembler
-from udis_fast.flags import flag_undoc, pcr, z80bit
+from .disasm import Disassembler
+from .udis_fast.flags import flag_undoc, pcr, z80bit
 
 import logging
 logging.basicConfig(level=logging.WARNING)
@@ -180,7 +180,7 @@ class MiniAssembler(object):
         # opcode lookup table
         formats = {}
         table = cpu['addressModeTable']
-        for mode, fmt in table.items():
+        for mode, fmt in list(table.items()):
             formats[mode] = fmt.lower()
         
         # Create the opcode lookup table that holds a list of possible
@@ -189,7 +189,7 @@ class MiniAssembler(object):
         # cost of some extra space in this lookup table.
         d = defaultdict(list)
         table = cpu['opcodeTable']
-        for opcode, optable in table.items():
+        for opcode, optable in list(table.items()):
             try:
                 num_bytes, mnemonic, mode_name, flag = optable
             except ValueError:

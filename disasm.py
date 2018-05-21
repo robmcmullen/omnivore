@@ -5,14 +5,14 @@ Python 2 version: Copyright (c) 2016 by Rob McMullen <feedback@playermissile.com
 Python 3 version: Copyright (c) 2015-2016 Jeff Tranter
 Licensed under the Apache License 2.0
 """
-from __future__ import print_function
+
 
 import os
 import glob
 
 import numpy as np
 
-import cputables
+from . import cputables
 # flags
 pcr = 1
 und = 2
@@ -51,13 +51,13 @@ class Disassembler(object):
         table = cpu['addressModeTable']
         if rw_modes is None:
             rw_modes = set()
-        for mode, fmt in table.items():
+        for mode, fmt in list(table.items()):
             if self.hex_lower:
                 fmt = fmt.replace(":02X", ":02x").replace(":04X", ":04x")
             modes[mode] = fmt
         d = {}
         table = cpu['opcodeTable']
-        for opcode, optable in table.items():
+        for opcode, optable in list(table.items()):
             try:
                 length, mnemonic, mode, flag = optable
             except ValueError:

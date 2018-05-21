@@ -302,7 +302,7 @@ addressModeTable = {
 # Address modes that reference an address
 # Any opcodes that use one of these address modes refer to an absolute
 # address in memory, and are a candidate to be replaced by a label
-labelTargets = set([m for m in addressModeTable.keys() if ",n" in m or ",nn" in m or "indaa" in m or "indn" in m])
+labelTargets = set([m for m in list(addressModeTable.keys()) if ",n" in m or ",nn" in m or "indaa" in m or "indn" in m])
 
 # Op Code Table
 # Key is numeric opcode (possibly multiple bytes)

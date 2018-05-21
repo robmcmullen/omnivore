@@ -6,7 +6,7 @@ known processors and save it into cputables.py
 import os
 import glob
 
-from udis_fast.flags import pcr, und, z80bit, lbl, comment, flag_label, flag_return, flag_jump, flag_branch
+from .udis_fast.flags import pcr, und, z80bit, lbl, comment, flag_label, flag_return, flag_jump, flag_branch
 
 
 def fix_opcode_table(cpu, allow_undoc=False):
@@ -25,7 +25,7 @@ def fix_opcode_table(cpu, allow_undoc=False):
     nop = 0x00
     found_undoc = False
     fixed_table = {}
-    for opcode, optable in table.items():
+    for opcode, optable in list(table.items()):
         try:
             length, mnemonic, mode, flag = optable
         except ValueError:
