@@ -1,7 +1,7 @@
 # -*- mode: python -*-
 
 block_cipher = None
-DEBUG = False
+DEBUG = True
 
 with open("../run.py", "r") as fh:
     script = fh.read()
@@ -11,8 +11,10 @@ with open("OmnivoreXL.py", "w") as fh:
 import sys
 sys.modules['FixTk'] = None
 
+import os
+
 if sys.platform == "darwin":
-    pathex = ['/Users/rob.mcmullen/src/omnivore']
+    pathex = [os.path.abspath("..")]
 elif sys.platform == "win32":
     pathex = ['S:/omnivore']
 
@@ -42,17 +44,17 @@ if sys.platform == "darwin":
         a.scripts,
         exclude_binaries=True,
         name='OmnivoreXL',
-        debug=False,
-        strip=True,
-        upx=True,
-        console=False,
+        debug=DEBUG,
+        strip=not DEBUG,
+        upx=not DEBUG,
+        console=DEBUG,
         icon=icon)
     coll = COLLECT(exe,
         a.binaries,
         a.zipfiles,
         a.datas,
         strip=None,
-        upx=True,
+        upx=not DEBUG,
         name='OmnivoreXL')  # dir in dist: ..../dist/Omnivore
     app = BUNDLE(coll,
        name='OmnivoreXL.app',
