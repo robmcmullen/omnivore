@@ -1,20 +1,23 @@
 import sys
 import argparse
 
-# try:
-#     # Force wx toolkit because pyface 5 uses entry points to determine
-#     # toolkits and I can't figure out how to get that to work in
-#     # executable bundlers. It has to be included before any calls to
-#     # any pyface modules so the monkey patch can intercept it before
-#     # an import of pyface.toolkit.
-#     from pyface.base_toolkit import Toolkit
-#     class MonkeyPatchPyface(object):
-#         toolkit_object = Toolkit('wx', 'pyface.ui.wx')
-#     sys.modules["pyface.toolkit"] = MonkeyPatchPyface()
-# except ImportError:
-#     # An import error means this is an older version of pyface and
-#     # does not need this hack.
-#     pass
+try:
+    # Force wx toolkit because pyface >= 5 and traitsui >= 5 both use entry
+    # points to determine toolkits and I can't figure out how to get that to
+    # work in executable bundlers. The following code has to be included before
+    # any calls to any pyface or traitsui modules so the monkey patch can
+    # intercept it before an import of pyface.toolkit.
+    from pyface.ui.wx.init import toolkit_object
+    class MonkeyPatchPyface(object):
+        toolkit_object = toolkit_object
+    sys.modules["pyface.toolkit"] = MonkeyPatchPyface()
+    import traitsui.toolkit
+    import traitsui.wx.toolkit
+    traitsui.toolkit._toolkit = traitsui.wx.toolkit
+except ImportError:
+    # An import error means this is an older version of pyface and
+    # does not need this hack.
+    pass
 
 import logging
 log = logging.getLogger(__name__)
