@@ -36,7 +36,7 @@ def get_style_name(segment, index):
     return msg
 
 def iter_disasm_styles():
-    for i, name in list(style_names.items()):
+    for i, name in style_names.items():
         if i == 0:
             continue
         yield i, name
@@ -464,11 +464,11 @@ class BaseDisassembler(object):
         s = self.start_addr
         matches = []
         if not match_case:
-            for pc, label in list(labels.items()):
+            for pc, label in labels.items():
                 if search_text in label.lower():
                     matches.append((pc - s, pc - s + 1))
         else:
-            for pc, label in list(labels.items()):
+            for pc, label in labels.items():
                 if search_text in label:
                     matches.append((pc - s, pc - s + 1))
         return matches

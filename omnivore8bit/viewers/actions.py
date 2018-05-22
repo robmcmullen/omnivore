@@ -681,7 +681,7 @@ class CopyAsCBytesAction(ViewerAction):
         v = self.viewer
         ranges, indexes = v.get_selected_ranges_and_indexes()
         data = v.segment[indexes]
-        text = ",\n".join([",".join(["0x%02x" % d for d in list(c)]) for c in [data[i:i+8] for i in range(0, len(data), 8)]])
+        text = ",\n".join([",".join(["0x%02x" % d for d in c]) for c in [data[i:i+8] for i in range(0, len(data), 8)]])
         data_obj = wx.TextDataObject()
         data_obj.SetText(text)
         clipboard.set_clipboard_object(data_obj)
