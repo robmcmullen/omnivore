@@ -1,7 +1,7 @@
 # -*- mode: python -*-
 
 block_cipher = None
-DEBUG = True
+DEBUG = False
 
 with open("../run.py", "r") as fh:
     script = fh.read()
@@ -13,10 +13,7 @@ sys.modules['FixTk'] = None
 
 import os
 
-if sys.platform == "darwin":
-    pathex = [os.path.abspath("..")]
-elif sys.platform == "win32":
-    pathex = ['S:/omnivore']
+pathex = [os.path.abspath("..")]
 
 a = Analysis(['OmnivoreXL.py'],
              pathex=pathex,
