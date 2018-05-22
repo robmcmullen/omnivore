@@ -17,9 +17,6 @@ from OpenGL import GLU
 from OpenGL.GL import shaders
 from OpenGL.arrays import vbo
 
-import PIL
-from PIL import Image
-
 import logging
 log = logging.getLogger(__name__)
 #log.setLevel(logging.DEBUG)
@@ -231,6 +228,7 @@ class GLSLTextureCanvas(object):
 
     def load_texture(self, filename=None):
         if filename is not None or False:
+            from PIL import Image
             filename = "flicky.png"
             image = Image.open(filename)
             ix = image.size[0]

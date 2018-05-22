@@ -139,7 +139,6 @@ setup(
     'numpy',
     'pyopengl',
     'pyopengl_accelerate',
-    'pillow',
     'construct<2.9',  # Construct 2.9 changed the String class
     ],
 )
