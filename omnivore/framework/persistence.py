@@ -79,7 +79,7 @@ class FilePersistenceMixin(object):
         filename = self.get_log_file_name(log_file_name_base, ext)
 
         try:
-            with open(filename, "wb") as fh:
+            with open(filename, "w") as fh:
                 fh.write(text)
         except IOError:
             log.error("Failed writing %s to %s" % (log_file_name_base, filename))
