@@ -24,6 +24,7 @@ install_requires = [
     'bson<1.0.0',
     'configobj',
     'pyparsing',
+    'pytz',
     'traits'
     ]
 
