@@ -18,19 +18,13 @@ from setuptools import find_packages
 from setuptools import setup
 from distutils.extension import Extension
 
-ext_modules = [
-    Extension("traits.ctraits",
-              sources = ["traits/ctraits.c"],
-              extra_compile_args = ["-DNDEBUG=1", "-O3" ]#, '-DPy_LIMITED_API'],
-              ),
-    ]
-
 install_requires = [
     'numpy',
     'jsonpickle>=0.9.4',
     'bson<1.0.0',
     'configobj',
     'pyparsing',
+    'traits'
     ]
 
 
@@ -173,7 +167,7 @@ setup(
     description = "Traits-based wxPython UI application framework",
     long_description = open('README.rst').read(),
     cmdclass = cmdclass,
-    ext_modules = ext_modules,
+    ext_modules = [],
     install_requires = install_requires,
     setup_requires = ["numpy"],
     license = "GPL",
