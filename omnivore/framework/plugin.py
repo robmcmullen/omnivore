@@ -110,7 +110,7 @@ class OmnivoreMainPlugin(FrameworkPlugin):
         from .preferences import FrameworkPreferencesPane
         from omnivore.tasks.text_edit import TextEditPreferencesPane
         from omnivore.tasks.html_view import HtmlViewPreferencesPane
-        return [ FrameworkPreferencesPane, TextEditPreferencesPane, ImageEditPreferencesPane, HtmlViewPreferencesPane]
+        return [ FrameworkPreferencesPane, TextEditPreferencesPane, HtmlViewPreferencesPane]
 
     def _tasks_default(self):
         from omnivore.tasks.text_edit import TextEditTask
