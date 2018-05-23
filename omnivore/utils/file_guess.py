@@ -1,4 +1,5 @@
 import os
+import io
 
 import numpy as np
 
@@ -165,6 +166,10 @@ class FileGuess(object):
         if self._numpy is None:
             self._numpy = np.fromstring(self.bytes, dtype=np.uint8)
         return self._numpy
+
+    @property
+    def bytes_as_stream(self):
+        return io.BytesIO(self.bytes)
 
     def get_metadata(self):
         return self.metadata.clone_traits()
