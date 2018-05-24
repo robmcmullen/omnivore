@@ -285,7 +285,7 @@ class BlankFS(FS):
             size = int(path)
         except ValueError as e:
             raise fs.errors.ResourceNotFoundError(path, details="Invalid size. %s" % e)
-        fh = BytesIO('\0' * size)
+        fh = BytesIO(b'\0' * size)
         return fh
 
     def exists(self, path):
