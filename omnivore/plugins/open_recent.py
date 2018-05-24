@@ -128,7 +128,7 @@ class RecentFiles(object):
         with open(self.serialize_uri,'w') as fh:
             try:
                 for item in self.iter_items():
-                    fh.write("%s%s" % (item.encode('utf8'),os.linesep))
+                    fh.write("%s%s" % (item, os.linesep))
             except:
                 pass
 
@@ -139,7 +139,7 @@ class RecentFiles(object):
         try:
             with open(self.serialize_uri,'r') as fh:
                 for line in fh:
-                    trimmed = line.decode('utf8').rstrip()
+                    trimmed = line.rstrip()
                     if trimmed.strip():
                         self.storage.append(trimmed)
         except:
