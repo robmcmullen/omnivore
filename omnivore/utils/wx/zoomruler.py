@@ -373,7 +373,14 @@ class LabeledRuler(RulerCtrl):
                 else:
                     s = time.strftime("%H%M", t)
         else:
-            s = RulerCtrl.LabelString(self, d, major)
+            try:
+                s = RulerCtrl.LabelString(self, d, major)
+            except TypeError as e:
+                # FIXME: it seems that with py3, a redraw event can occur
+                # before ZoomRulerBase.rebuild is called, so if the _format
+                # hasn't been set correctly, RulerCtrl can throw a type error.
+                # Catch it here, but it should only happen very early on.
+                s = str(e)
         return s
 
     def step_size(self):
