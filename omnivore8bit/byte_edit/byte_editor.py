@@ -142,6 +142,12 @@ class ByteEditor(FrameworkEditor):
     def emulator(self):
         return self.document.emulator
 
+    #### Traits event handlers
+
+    def _closed_changed(self):
+        if self.has_emulator:
+            self.document.stop_timer()
+
     ###########################################################################
     # 'FrameworkEditor' interface.
     ###########################################################################
