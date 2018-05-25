@@ -297,7 +297,11 @@ class MouseEventMixin(SelectionHandler):
             flags = self.create_mouse_event_flags()
         ch = self.caret_handler
         update = False
-        r, c, index1, index2, inside = self.get_location_from_col(row, col)
+        try:
+            r, c, index1, index2, inside = self.get_location_from_col(row, col)
+        except IndexError:
+            log.debug("mouse location is a hidden cell; skipping")
+            return
         log.debug("handle_select_motion: r=%d c=%d index1: %s, index2: %s pending: %s, sel rows: %s" % (r, c, index1, index2, str(self.pending_select_awaiting_drag), flags.selecting_rows))
         # log.debug("handle_select_motion: r=%d c=%d index1: %s, index2: %s pending: %s, sel rows: %s anchors: initial=%s current=%s" % (r, c, index1, index2, str(self.pending_select_awaiting_drag), flags.selecting_rows, str((caret.anchor_initial_start_index, caret.anchor_initial_end_index)), str((caret.anchor_start_index, caret.anchor_end_index))))
         log.debug(("motion before:", ch.carets))

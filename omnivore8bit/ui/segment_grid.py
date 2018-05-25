@@ -252,14 +252,20 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
         return ""
 
     def get_status_message_at_index(self, index):
-        s = self.segment_viewer.linked_base.segment
-        msg = get_style_name(s, index)
-        comments = s.get_comment(index)
-        return "%s  %s" % (msg, comments)
+        if self.table.is_index_valid(index):
+            s = self.segment_viewer.linked_base.segment
+            msg = get_style_name(s, index)
+            comments = s.get_comment(index)
+            return "%s  %s" % (msg, comments)
+        return ""
 
     def get_status_message_at_cell(self, row, col):
-        r, c, index = self.main.enforce_valid_caret(row, col)
-        return self.get_status_at_index(index)
+        try:
+            r, c, index = self.main.enforce_valid_caret(row, col)
+            return self.get_status_at_index(index)
+        except IndexError:
+            pass
+        return ""
 
     def calc_control_popup_actions(self, popup_data):
         actions = self.calc_common_popup_actions(popup_data)

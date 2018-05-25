@@ -74,6 +74,22 @@ class HiresTable(SegmentVirtualTable):
     def get_label_at_index(self, index):
         return(str(index // 40))
 
+    def get_index_range(self, row, col):
+        index = hgr_offsets[row] + col
+        return index, index + 1
+
+    def is_index_valid(self, index):
+        try:
+            real_index = self.hires_segment.get_index_from_base_index(index)
+        except IndexError:
+            return False
+        else:
+            return True
+
+    def index_to_row_col(self, index):
+        real_index = self.hires_segment.get_index_from_base_index(index)
+        return divmod(real_index + self.start_offset, self.items_per_row)
+
 
 class HiresGridControl(b.BitmapGridControl):
     default_table_cls = HiresTable

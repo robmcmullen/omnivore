@@ -773,6 +773,9 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         self.current_caret_row, self.current_caret_col = row, col
 
     def enforce_valid_caret(self, row, col):
+        """Can raise IndexError (from get_index_range) to indicate that the
+        cursor is in a hidden cell
+        """
         # restrict row, col to grid boundaries first so we don't get e.g. cells
         # from previous line if cell number is negative
         if col >= self.line_renderer.num_cols:
@@ -830,11 +833,15 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
     def process_motion_scroll(self, row, cell, flags):
         self.ensure_visible(row, cell, flags)
         col = self.cell_to_col(cell)
-        index, _ = self.table.get_index_range(row, col)
-        self.parent.caret_handler.move_current_caret_to(index)
-        if self.parent.automatic_refresh:
-            self.parent.Refresh()
-        self.current_caret_row, self.current_caret_col = row, col
+        try:
+            index, _ = self.table.get_index_range(row, col)
+        except IndexError:
+            log.debug("process_motion_scroll: ignoring over hidden cell")
+        else:
+            self.parent.caret_handler.move_current_caret_to(index)
+            if self.parent.automatic_refresh:
+                self.parent.Refresh()
+            self.current_caret_row, self.current_caret_col = row, col
 
 
 class NumpyGridDrawControl(BaseGridDrawControl):
@@ -1449,16 +1456,20 @@ class CompactGrid(wx.ScrolledWindow):
 
     def draw_carets(self, dc, start_row, visible_rows):
         for index in self.caret_handler.iter_caret_indexes():
-            r, c = self.table.index_to_row_col(index)
-            if r >= start_row and r < start_row + visible_rows:
-                if self.edit_source is not None:
-                    log.debug("drawing edit cell at r,c=%d,%d" % (r, c))
-                    self.line_renderer.draw_edit_cell(self, dc, r, c, self.edit_source)
-                else:
-                    log.debug("drawing caret at r,c=%d,%d" % (r, c))
-                    self.line_renderer.draw_caret(self, dc, r, c)
+            try:
+                r, c = self.table.index_to_row_col(index)
+            except IndexError:
+                log.debug("index %d not visible in this view" % index)
             else:
-                log.debug("skipping offscreen caret at r,c=%d,%d" % (r, c))
+                if r >= start_row and r < start_row + visible_rows:
+                    if self.edit_source is not None:
+                        log.debug("drawing edit cell at r,c=%d,%d" % (r, c))
+                        self.line_renderer.draw_edit_cell(self, dc, r, c, self.edit_source)
+                    else:
+                        log.debug("drawing caret at r,c=%d,%d" % (r, c))
+                        self.line_renderer.draw_caret(self, dc, r, c)
+                else:
+                    log.debug("skipping offscreen caret at r,c=%d,%d" % (r, c))
 
     ##### Keyboard movement implementations
 
