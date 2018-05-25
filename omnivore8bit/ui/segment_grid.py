@@ -34,13 +34,17 @@ class SegmentVirtualTable(cg.HexTable):
     col_labels = []
     col_sizes = []
 
-    def __init__(self, linked_base):
+    def __init__(self, linked_base, bytes_per_row_ignored):
         self.linked_base = linked_base
         data, style = self.get_data_style_view(linked_base)
-        cg.HexTable.__init__(self, data, style, len(self.col_sizes))
+        num_cols = self.calc_num_cols()
+        cg.HexTable.__init__(self, data, style, num_cols)
 
     def get_data_style_view(self, linked_base):
         raise NotImplementedError
+
+    def calc_num_cols(self):
+        return len(self.cols)
 
     def get_value_style(self, row, col):
         raise NotImplementedError
