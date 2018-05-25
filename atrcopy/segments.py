@@ -449,6 +449,13 @@ class DefaultSegment(object):
         self.rawdata.replace_arrays(container.rawdata)
         self.update_raw_pointers()
 
+    def create_subset(self, new_order, name, verbose_name=""):
+        raw = self.rawdata.get_indexed(new_order)
+        if not verbose_name:
+            verbose_name = name
+        segment = DefaultSegment(raw, name=name, verbose_name=verbose_name)
+        return segment
+
     def __getstate__(self):
         """Custom jsonpickle state save routine
 
