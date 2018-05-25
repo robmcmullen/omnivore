@@ -6,11 +6,14 @@ import wx
 
 from traits.api import on_trait_change, Bool, Undefined
 
+from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, diff_bit_mask, user_bit_mask, not_user_bit_mask
+
 from omnivore.utils.nputil import intscale
 from omnivore.utils.wx import compactgrid as cg
 
+from ..arch import colors
 from ..ui.segment_grid import SegmentGridControl, SegmentVirtualTable
-from ..utils.apple2util import to_560_pixels, hires_byte_order, hgr_offsets
+from ..utils.apple2util import to_560_bw_pixels, hires_byte_order, hgr_offsets
 
 from . import SegmentViewer
 from . import actions as va
@@ -24,7 +27,22 @@ class HiresLineRenderer(b.BitmapLineRenderer):
     @classmethod
     def get_image(cls, segment_viewer, bytes_per_row, nr, count, data, style):
         print("get_image", bytes_per_row, nr, count, data)
-        return to_560_pixels(data)
+        subset_count = 14 * len(data)
+        bw = np.empty(subset_count, dtype=np.uint8)
+        to_560_bw_pixels(data, bw)
+        h_colors = colors.get_blended_color_registers([(0, 0, 0), (255, 255, 255)], segment_viewer.preferences.highlight_background_color)
+        style_per_pixel = np.repeat(style, 14)
+
+        background = (bw == 0)
+        color1 = (bw == 1)
+        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
+        rgb = np.empty([1, subset_count, 3], dtype=np.uint8)
+        rgb[0,background & highlight] = h_colors[0]
+        rgb[0,background & np.logical_not(highlight)] = (0, 0, 0)
+        rgb[0,color1 & highlight] = h_colors[1]
+        rgb[0,color1 & np.logical_not(highlight)] = (255, 255, 255)
+
+        return rgb
 
     def draw_line(self, grid_control, dc, line_num, col, index, last_index):
         t = grid_control.table
