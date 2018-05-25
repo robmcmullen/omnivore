@@ -55,6 +55,8 @@ hgr_row_order = np.asarray([
     23, 47, 71, 95, 119, 143, 167, 191
 ], dtype=np.uint16)
 
+hgr_byte_order = None
+
 byte_to_14_pixels = np.asarray([
     (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
     (1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
@@ -345,6 +347,28 @@ def hires_data_view(data):
     return view[hgr_row_order].reshape(-1)
 
 
+def hires_byte_order(num_bytes):
+    global hgr_byte_order
+
+    if hgr_byte_order is None:
+        a = (np.arange(192 * 40, dtype=np.uint16) % 40).reshape((192, 40))
+        a[:] += np.repeat(hgr_offsets, 40).reshape((192, 40))
+        hgr_byte_order = a.reshape(-1)
+
+    # If the number of bytes is less than 8192, the final byte is repeated as
+    # many times as necessary.
+    if num_bytes < 1:
+        byte_order = np.empty(0, dtype=np.uint8)
+    elif num_bytes < 8192:
+        byte_order = hgr_byte_order.copy()
+        b = byte_order >= num_bytes
+        byte_order[b] = num_bytes - 1
+    else:
+        byte_order = hgr_byte_order
+
+    return byte_order
+
+
 if __name__ == "__main__":
     gen = False
 
@@ -398,3 +422,5 @@ if __name__ == "__main__":
     view = hires_data_view(data)
     for i in range(192):
         print(view[i])
+
+    print(hires_byte_order(8192)[:256])

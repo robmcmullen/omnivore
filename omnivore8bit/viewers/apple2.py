@@ -10,7 +10,7 @@ from omnivore.utils.nputil import intscale
 from omnivore.utils.wx import compactgrid as cg
 
 from ..ui.segment_grid import SegmentGridControl, SegmentVirtualTable
-from ..utils.apple2util import to_560_pixels, hires_data_view, hgr_offsets
+from ..utils.apple2util import to_560_pixels, hires_byte_order, hgr_offsets
 
 from . import SegmentViewer
 from . import actions as va
@@ -40,8 +40,11 @@ class HiresLineRenderer(b.BitmapLineRenderer):
 
 class HiresTable(SegmentVirtualTable):
     def get_data_style_view(self, linked_base):
-        data = hires_data_view(linked_base.segment.data)
-        style = np.zeros(8192, dtype=np.uint8)
+        byte_order = hires_byte_order(len(linked_base.segment))
+        print(linked_base.segment, byte_order)
+        self.hires_segment = linked_base.segment.create_subset(byte_order, "Hi-res", "Apple ][ Hi-res")
+        data = self.hires_segment.data
+        style = self.hires_segment.style
         return data, style
 
     def calc_num_cols(self):
