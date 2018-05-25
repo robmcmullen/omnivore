@@ -28,6 +28,33 @@ hgr_offsets = np.asarray([
     0x03d0, 0x07d0, 0x0bd0, 0x0fd0, 0x13d0, 0x17d0, 0x1bd0, 0x1fd0
 ], dtype=np.uint16)
 
+hgr_row_order = np.asarray([
+    0, 24, 48, 72, 96, 120, 144, 168,
+    3, 27, 51, 75, 99, 123, 147, 171,
+    6, 30, 54, 78, 102, 126, 150, 174,
+    9, 33, 57, 81, 105, 129, 153, 177,
+    12, 36, 60, 84, 108, 132, 156, 180,
+    15, 39, 63, 87, 111, 135, 159, 183,
+    18, 42, 66, 90, 114, 138, 162, 186,
+    21, 45, 69, 93, 117, 141, 165, 189,
+    1, 25, 49, 73, 97, 121, 145, 169,
+    4, 28, 52, 76, 100, 124, 148, 172,
+    7, 31, 55, 79, 103, 127, 151, 175,
+    10, 34, 58, 82, 106, 130, 154, 178,
+    13, 37, 61, 85, 109, 133, 157, 181,
+    16, 40, 64, 88, 112, 136, 160, 184,
+    19, 43, 67, 91, 115, 139, 163, 187,
+    22, 46, 70, 94, 118, 142, 166, 190,
+    2, 26, 50, 74, 98, 122, 146, 170,
+    5, 29, 53, 77, 101, 125, 149, 173,
+    8, 32, 56, 80, 104, 128, 152, 176,
+    11, 35, 59, 83, 107, 131, 155, 179,
+    14, 38, 62, 86, 110, 134, 158, 182,
+    17, 41, 65, 89, 113, 137, 161, 185,
+    20, 44, 68, 92, 116, 140, 164, 188,
+    23, 47, 71, 95, 119, 143, 167, 191
+], dtype=np.uint16)
+
 byte_to_14_pixels = np.asarray([
     (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
     (1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
@@ -289,16 +316,18 @@ byte_to_14_pixels = np.asarray([
 
 
 def to_560_bw_pixels(data40, pixels560):
-    pixels560[:] = byte_to_14_pixels[data40]
+    print("incoming data40", data40)
+    pixels560[:] = byte_to_14_pixels[data40].reshape(-1)
 
 
 def to_560_pixels(data40):
-    pixels560 = np.empty(560, dtype=np.uint8)
+    subset_count = 14 * len(data40)
+    pixels560 = np.empty(subset_count, dtype=np.uint8)
     to_560_bw_pixels(data40, pixels560)
-    rgb = np.empty([1, 560, 3], dtype=np.uint8)
-    rgb[0,:,0] = pixels560
-    rgb[0,:,1] = pixels560
-    rgb[0,:,2] = pixels560
+    rgb = np.empty([1, subset_count, 3], dtype=np.uint8)
+    rgb[0,:,0] = pixels560 * 255
+    rgb[0,:,1] = pixels560 * 255
+    rgb[0,:,2] = pixels560 * 255
     return rgb
 
 
@@ -313,7 +342,7 @@ def hires_data_view(data):
 
     # but this is in linear order; need the row swap. So, have to use fancy
     # indexing
-    return view[hgr_offsets]
+    return view[hgr_row_order].reshape(-1)
 
 
 if __name__ == "__main__":
@@ -333,6 +362,17 @@ if __name__ == "__main__":
     if gen:
         print(", ".join("0x%04x" % i for i in generate_row_offsets()))
 
+        order = []
+        for i in hgr_offsets:
+            row = (i // 128) * 3
+            if (i & 0x7f) >= 40:
+                row += 1
+            if (i & 0x7f) >= 80:
+                row += 1
+            order.append(row)
+        groups = ",\n".join(", ".join(str(j) for j in order[i:i+8]) for i in range(0, len(order), 8))
+        print(groups)
+
     def generate_byte_pixel_lookup_table():
         table = []
         for val in range(256):
@@ -350,7 +390,11 @@ if __name__ == "__main__":
     if gen:
         print("\n".join(str(i) for i in generate_byte_pixel_lookup_table()))
 
+
     data = np.arange(20, dtype=np.uint8) * 4
     print(byte_to_14_pixels[data])
 
-
+    data = np.linspace(0, 0x40, num=8192, endpoint=False, dtype=np.uint8)
+    view = hires_data_view(data)
+    for i in range(192):
+        print(view[i])

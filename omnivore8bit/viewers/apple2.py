@@ -1,6 +1,7 @@
 import os
 import sys
 
+import numpy as np
 import wx
 
 from traits.api import on_trait_change, Bool, Undefined
@@ -9,7 +10,7 @@ from omnivore.utils.nputil import intscale
 from omnivore.utils.wx import compactgrid as cg
 
 from ..ui.segment_grid import SegmentGridControl, SegmentVirtualTable
-from ..utils.apple2util import to_560_pixels, hires_data_view
+from ..utils.apple2util import to_560_pixels, hires_data_view, hgr_offsets
 
 from . import SegmentViewer
 from . import actions as va
@@ -22,7 +23,19 @@ log = logging.getLogger(__name__)
 class HiresLineRenderer(b.BitmapLineRenderer):
     @classmethod
     def get_image(cls, segment_viewer, bytes_per_row, nr, count, data, style):
+        print("get_image", bytes_per_row, nr, count, data)
         return to_560_pixels(data)
+
+    def draw_line(self, grid_control, dc, line_num, col, index, last_index):
+        t = grid_control.table
+        rect = self.col_to_rect(line_num, col)
+        print("draw_line: col=%d indexes:%d-%d" % (col, index, last_index))
+        data = t.data[index:last_index]
+        style = t.style[index:last_index]
+        self.image_cache.draw_item(grid_control, dc, rect, data, style)
+
+    def draw_grid(self, *args, **kwargs):
+        cg.TableLineRenderer.draw_grid(self, *args, **kwargs)
 
 
 class HiresTable(SegmentVirtualTable):
@@ -32,19 +45,25 @@ class HiresTable(SegmentVirtualTable):
         return data, style
 
     def calc_num_cols(self):
-        return 560
+        return 40
+
+    def get_index_of_row(self, line):
+        return hgr_offsets[line]
+
+    def get_label_at_index(self, index):
+        return(str(index // 40))
 
 
 class HiresGridControl(b.BitmapGridControl):
     default_table_cls = HiresTable
 
     def set_viewer_defaults(self):
-        self.items_per_row = 560
+        self.items_per_row = 40
         self.zoom = 2
 
     @property
     def bitmap_renderer(self):
-        return hires_renderer
+        return HiresLineRenderer
 
     @property
     def pixels_per_byte(self):
