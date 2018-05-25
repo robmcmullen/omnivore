@@ -19,7 +19,7 @@ class MockEditor(object):
         self.segment = segment
 
     def change_bytes(self, start, end, bytes):
-        print "changing bytes %d-%d to %s" % (start, end, repr(bytes))
+        print("changing bytes %d-%d to %s" % (start, end, repr(bytes)))
 
 class MockTask(object):
     def __init__(self, editor):

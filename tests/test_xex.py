@@ -20,30 +20,30 @@ class TestXex(object):
 
     def test_simple(self):
         d = self.editor.document
-        print d, len(d), d.segments
+        print(d, len(d), d.segments)
         for s in d.segments:
-            print s
+            print(s)
         source = []
         code_seg = d.find_segment_by_name("program code")
         runad_seg = d.find_segment_by_name("runad")
         source.append(code_seg)
         source.append(runad_seg)
         main, sub = get_xex(source)
-        print main, sub
-        print len(code_seg)
+        print(main, sub)
+        print(len(code_seg))
         assert len(sub[0]) == len(code_seg) + 4
         assert len(sub[1]) == len(runad_seg) + 4
-        print list(d.container_segment.iter_comments_in_segment())
+        print(list(d.container_segment.iter_comments_in_segment()))
         for i, c in code_seg.iter_comments_in_segment():
-            print i, c
+            print(i, c)
             assert c == sub[0].get_comment(i + 4)
 
         newdoc = SegmentedDocument.create_from_segments(main, sub)
         d = {}
         newdoc.serialize_extra_to_dict(d)
-        print d
+        print(d)
         for i, c in d['comments']:
-            print i, c
+            print(i, c)
             assert c == main.get_comment(i)
         self.editor.save("out.air_defense.atr", document=newdoc)
 

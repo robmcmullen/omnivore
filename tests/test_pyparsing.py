@@ -41,7 +41,7 @@ class TestSearch1(object):
                     s = AlgorithmSearcher(self.editor, search_text)
             else:
                 s = AlgorithmSearcher(self.editor, search_text)
-                print search_text, s.matches
+                print(search_text, s.matches)
                 assert expected == s.matches
 
 if __name__ == "__main__":

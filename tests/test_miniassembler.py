@@ -29,7 +29,7 @@ class TestMiniasm(object):
         pc = 0x4000
         for text, expected in commands:
             actual = self.disasm.assemble_text(pc, text)
-            print repr(actual)
+            print(repr(actual))
             assert expected == actual
 
     def test_pcr(self):
@@ -41,7 +41,7 @@ class TestMiniasm(object):
         pc = 0x4000
         for text, expected in commands:
             actual = self.disasm.assemble_text(pc, text)
-            print ", ".join(hex(i) for i in actual)
+            print(", ".join(hex(i) for i in actual))
             assert expected == actual
 
 

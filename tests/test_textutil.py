@@ -25,7 +25,7 @@ class TestIntLabelDict(object):
 
         for search_text, expected in items:
             d = textutil.parse_int_label_dict(search_text)
-            print search_text, d
+            print(search_text, d)
             assert expected == d
 
     def test_with_equals(self):
@@ -44,7 +44,7 @@ class TestIntLabelDict(object):
 
         for search_text, expected in items:
             d = textutil.parse_int_label_dict(search_text, allow_equals=True)
-            print search_text, d
+            print(search_text, d)
             assert expected == d
 
 if __name__ == "__main__":

@@ -20,8 +20,8 @@ class TestJumpmanLevel(object):
             groups = parse_jumpman_level(before)
             for group in groups:
                 text = get_jumpman_level(group)
-                print "processed:", text
-            print "groups", groups
+                print("processed:", text)
+            print("groups", groups)
             assert len(groups) == count
 
 class TestJumpmanHarvest(object):
@@ -35,8 +35,8 @@ class TestJumpmanHarvest(object):
             groups = parse_jumpman_harvest(before)
             for group in groups:
                 text = get_jumpman_harvest(group)
-                print "processed:", text
-            print "groups", groups
+                print("processed:", text)
+            print("groups", groups)
             assert len(groups) == count
 
 class TestJumpmanScreen(object):
@@ -91,31 +91,31 @@ class TestJumpmanScreen(object):
             if type(d) == str:
                 d = np.fromstring(d, dtype=np.uint8)
             c = self.builder.parse_objects(d)
-            print "\n".join([str(a) for a in c])
+            print("\n".join([str(a) for a in c]))
             #state = self.builder.draw_objects(self.screen, c)
             self.builder.parse_harvest_table(d, addr, haddr, c)
             self.builder.add_objects(objects, c)
-            print "\n".join([str(a) for a in c])
+            print("\n".join([str(a) for a in c]))
 
             d2, haddr2, rl, num_p = self.builder.create_level_definition(addr, 0, 6, c)
-            print d2[0:haddr2 - addr]
-            print d2[haddr2 - addr:]
-            print rl
+            print(d2[0:haddr2 - addr])
+            print(d2[haddr2 - addr:])
+            print(rl)
             c2 = self.builder.parse_objects(d2)
             self.builder.parse_harvest_table(d2, addr, haddr2, c2)
-            print "\n".join([str(a) for a in c2])
+            print("\n".join([str(a) for a in c2]))
             for a1, a2 in zip(c, c2):
-                print a1 == a2
-                print " 1)", a1
-                print " 2)", a2
+                print(a1 == a2)
+                print(" 1)", a1)
+                print(" 2)", a2)
                 if not a1 == a2:
                     for h1, h2 in zip(a1.trigger_painting, a2.trigger_painting):
-                        print "  ", h1 == h2
-                        print "  h1: %s" % h1
-                        print "  h2: %s" % h2
+                        print("  ", h1 == h2)
+                        print("  h1: %s" % h1)
+                        print("  h2: %s" % h2)
                 assert a1 == a2
-                print
-            print c == c2
+                print()
+            print(c == c2)
 
 class TestJumpmanAdd(object):
     def setup(self):
@@ -148,34 +148,34 @@ class TestJumpmanAdd(object):
                 t = np.fromstring(t, dtype=np.uint8)
                 d[a - addr:a - addr + len(t)] = t
             c = self.builder.parse_objects(d)
-            print "\n".join([str(a) for a in c])
+            print("\n".join([str(a) for a in c]))
             #state = self.builder.draw_objects(self.screen, c)
             self.builder.parse_harvest_table(d, addr, haddr, c)
             for a in c:
-                print a
+                print(a)
                 if a.single and not a.trigger_painting:
                     self.builder.add_objects(objects, a.trigger_painting)
             #self.builder.add_objects(objects, c)
-            print "\n".join([str(a) for a in c])
+            print("\n".join([str(a) for a in c]))
 
             d2, haddr2, rl, num_p = self.builder.create_level_definition(addr, 0, 6, c)
-            print d2[0:haddr2 - addr]
-            print d2[haddr2 - addr:]
-            print rl
+            print(d2[0:haddr2 - addr])
+            print(d2[haddr2 - addr:])
+            print(rl)
             c2 = self.builder.parse_objects(d2)
             self.builder.parse_harvest_table(d2, addr, haddr2, c2)
-            print "\n".join([str(a) for a in c2])
+            print("\n".join([str(a) for a in c2]))
             for a1, a2 in zip(c, c2):
-                print a1 == a2
-                print " 1)", a1
-                print " 2)", a2
+                print(a1 == a2)
+                print(" 1)", a1)
+                print(" 2)", a2)
                 if not a1 == a2:
                     for h1, h2 in zip(a1.trigger_painting, a2.trigger_painting):
-                        print "  ", h1 == h2
-                        print "  h1: %s" % h1
-                        print "  h2: %s" % h2
-                print
-            print c == c2
+                        print("  ", h1 == h2)
+                        print("  h1: %s" % h1)
+                        print("  h2: %s" % h2)
+                print()
+            print(c == c2)
 
 class TestJumpmanPainting(object):
     def setup(self):
@@ -189,16 +189,16 @@ class TestJumpmanPainting(object):
         p1.trigger_painting = [p2]
         p2.trigger_painting = [p3]
         objects = [p1]
-        print p1
+        print(p1)
         d2, haddr2, rl, num_p = self.builder.create_level_definition(self.addr, 0, 6, objects)
-        print d2[0:haddr2 - self.addr]
-        print d2[haddr2 - self.addr:]
-        print rl
-        print num_p
+        print(d2[0:haddr2 - self.addr])
+        print(d2[haddr2 - self.addr:])
+        print(rl)
+        print(num_p)
         assert num_p == 3
         c2 = self.builder.parse_objects(d2)
         self.builder.parse_harvest_table(d2, self.addr, haddr2, c2)
-        print c2
+        print(c2)
         assert len(c2) == 1
         assert len(c2[0].trigger_painting) == 1
         assert len(c2[0].trigger_painting[0].trigger_painting) == 1
@@ -234,19 +234,19 @@ class TestJumpmanBounds(object):
         ]
 
         for expected, objects in level_defs:
-            print objects
+            print(objects)
             bounds = DrawObjectBounds.get_bounds(objects)
-            print bounds
-            print expected
+            print(bounds)
+            print(expected)
             assert expected == bounds
-            print "works"
+            print("works")
 
             for o in objects:
                 o.flip_vertical(bounds)
-                print o
+                print(o)
 
             flipped_bounds = DrawObjectBounds.get_bounds(objects)
-            print "flipped bounds", flipped_bounds
+            print("flipped bounds", flipped_bounds)
             assert bounds == flipped_bounds
 
 
@@ -331,14 +331,14 @@ trigger3
         p5.trigger_function = 0x4fff  # not pointing to anything in assembly
         objects = [p1, p4, p5]
         d2, haddr2, rl, num_p = self.builder.create_level_definition(self.addr, 0, 6, objects)
-        print d2[0:haddr2 - self.addr]
-        print d2[haddr2 - self.addr:]
-        print rl
-        print num_p
+        print(d2[0:haddr2 - self.addr])
+        print(d2[haddr2 - self.addr:])
+        print(rl)
+        print(num_p)
         assert num_p == 5
         c2 = self.builder.parse_objects(d2)
         self.builder.parse_harvest_table(d2, self.addr, haddr2, c2)
-        print c2
+        print(c2)
         return c2
 
     def test_address_mapping(self):
@@ -352,9 +352,9 @@ trigger3
         old_map = code1.triggers
         new_map = code2.triggers
         changed, orphaned, not_labeled = self.builder.update_triggers(old_map, new_map, c2)
-        print changed
-        print orphaned
-        print not_labeled
+        print(changed)
+        print(orphaned)
+        print(not_labeled)
         assert len(changed) == 4
         assert len(orphaned) == 0
         assert len(not_labeled) == 1
@@ -373,9 +373,9 @@ trigger3
         old_map = code1.triggers
         new_map = code2.triggers
         changed, orphaned, not_labeled = self.builder.update_triggers(old_map, new_map, c2)
-        print changed
-        print orphaned
-        print not_labeled
+        print(changed)
+        print(orphaned)
+        print(not_labeled)
         assert len(changed) == 3
         assert len(orphaned) == 1
         assert len(not_labeled) == 1
@@ -399,9 +399,9 @@ if __name__ == "__main__":
     t.test_simple()
 
     o = Girder(-1, 50, 20, 5, -4, -1)
-    print "object", o
+    print("object", o)
     bounds = DrawObjectBounds.get_bounds([o])
-    print "bounds", bounds
+    print("bounds", bounds)
     o.flip_vertical(bounds)
     flipped_bounds = DrawObjectBounds.get_bounds([o])
-    print "flipped bounds", flipped_bounds
+    print("flipped bounds", flipped_bounds)

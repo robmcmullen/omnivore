@@ -34,23 +34,23 @@ class TestCopyPaste(object):
         indexes = np.asarray([4,5,8,9,10,11,12,13,28,29,30,31,32,40,41,50,51,52])
         j = self.editor.get_selected_index_metadata(indexes)
         style, where_comments, comments = self.editor.restore_selected_index_metadata(j)
-        print style
+        print(style)
         s1 = s.get_style_at_indexes(indexes)
         assert np.all((s1 - style) == 0)
-        print "comments from source", where_comments, comments
+        print("comments from source", where_comments, comments)
 
         dest = 100
         last = dest + len(style)
         dest_indexes = ranges_to_indexes([(dest, last)])
-        print "dest indexes", dest, last, dest_indexes
+        print("dest indexes", dest, last, dest_indexes)
         assert len(dest_indexes) == len(style)
         s.style[dest_indexes] = style
         assert np.all(s.style[dest_indexes] - style == 0)
-        print "dest comment indexes", dest_indexes[where_comments]
+        print("dest comment indexes", dest_indexes[where_comments])
         s.set_comments_at_indexes(dest_indexes[where_comments], comments)
         j2 = self.editor.get_selected_index_metadata(dest_indexes)
         style2, where_comments2, comments2 = self.editor.restore_selected_index_metadata(j2)
-        print "comments from dest", where_comments2, comments2
+        print("comments from dest", where_comments2, comments2)
         for w, w2 in zip(where_comments, where_comments2):
             assert w == w2
         assert comments == comments2

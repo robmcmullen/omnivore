@@ -27,9 +27,9 @@ class TestSegment1(object):
         s.set_style_ranges([(0,10),], data=True)
         s.set_style_ranges([(12,15),], user=1)
         r = s.get_style_ranges(data=True)
-        print r
-        print s.data
-        print s.style
+        print(r)
+        print(s.data)
+        print(s.style)
         assert r == [(0,10)]
         r = s.get_entire_style_ranges(data=True, user=1)
         assert r == [((0,10), 64), ((10, 12), 0), ((12, 15), 1), ((15, 32), 0)]
@@ -48,15 +48,15 @@ class TestSegment1(object):
         s.set_comment([(22,23),], "comment #5")
         s.set_comment([(26,28),], "comment #6")
         r = s.get_entire_style_ranges(user=user_bit_mask)
-        print s.data
-        print s.style
-        print r
+        print(s.data)
+        print(s.style)
+        print(r)
         assert r == [((0, 10), 2), ((10, 16), 0), ((16, 32), 1)]
 
         r = s.get_entire_style_ranges(user=user_bit_mask, split_comments=[1])
-        print s.data
-        print s.style
-        print r
+        print(s.data)
+        print(s.style)
+        print(r)
         assert r == [((0, 10), 2), ((10, 16), 0), ((16, 22), 1), ((22, 26), 1), ((26, 32), 1)]
 
 if __name__ == "__main__":

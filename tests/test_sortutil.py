@@ -14,21 +14,21 @@ class SortItem(object):
 
 def check_sorted(items):
     order_lookup = {i.id: items.index(i) for i in items}
-    print order_lookup
+    print(order_lookup)
     wildcards = {}
     for item in items:
         for w in (item.before, item.after):
             if "*" in w and w not in wildcards:
                 wildcards[w] = [0, 0]
     if wildcards:
-        print "wildcards: %s" % str(wildcards)
-        for w in wildcards.keys():
+        print("wildcards: %s" % str(wildcards))
+        for w in list(wildcards.keys()):
             start = w[:-1]
             pos = 0
             for item in items:
                 if item.id.startswith(start):
                     wildcards[w][0] = pos
-                    print "found first %s at %s: %s" % (w, pos, item.id)
+                    print("found first %s at %s: %s" % (w, pos, item.id))
                     break
                 pos += 1
             pos = len(items)
@@ -36,9 +36,9 @@ def check_sorted(items):
                 pos -= 1
                 if item.id.startswith(start):
                     wildcards[w][1] = pos
-                    print "found last %s at %s: %s" % (w, pos, item.id)
+                    print("found last %s at %s: %s" % (w, pos, item.id))
                     break
-        print "wildcards: %s" % str(wildcards)
+        print("wildcards: %s" % str(wildcards))
     for item in items:
         pos = order_lookup[item.id]
         if item.before:
@@ -62,7 +62,7 @@ class TestBeforeAfter(object):
 
     def test_simple(self):
         items = before_after_sort(self.items)
-        print ", ".join([i.id for i in items])
+        print(", ".join([i.id for i in items]))
         check_sorted(items)
 
 class TestWildcard(object):
@@ -82,7 +82,7 @@ class TestWildcard(object):
 
     def test_simple(self):
         items = before_after_wildcard_sort(self.items)
-        print ", ".join([i.id for i in items])
+        print(", ".join([i.id for i in items]))
         check_sorted(items)
 
 class TestOverlappingRanges(object):
@@ -104,7 +104,7 @@ class TestOverlappingRanges(object):
         for before, after in self.items:
             for p in itertools.permutations(before):
                 processed = collapse_overlapping_ranges(p)
-                print p, processed, after
+                print(p, processed, after)
                 assert processed == after
 
 class TestInvertRanges(object):
@@ -120,11 +120,11 @@ class TestInvertRanges(object):
     def test_simple(self):
         for before, size, after in self.items:
             processed = invert_ranges(before, size)
-            print size, before, processed, after
+            print(size, before, processed, after)
             assert processed == after
             processed = invert_ranges(after, size)
             assert processed == before
-            print size, before, processed, after
+            print(size, before, processed, after)
 
 class TestInvertRects(object):
     def setup(self):
@@ -135,7 +135,7 @@ class TestInvertRects(object):
     def test_simple(self):
         for before, rows, cols, after in self.items:
             processed = invert_rects(before, rows, cols)
-            print rows, cols, before, processed, after
+            print(rows, cols, before, processed, after)
             assert processed == after
 
 class TestRangeToIndex(object):
@@ -150,7 +150,7 @@ class TestRangeToIndex(object):
         for before, after in self.items:
             processed = ranges_to_indexes(before)
             after = np.asarray(after)
-            print before, processed, after
+            print(before, processed, after)
             np.testing.assert_array_equal(processed, after)
 
 if __name__ == "__main__":

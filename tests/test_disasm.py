@@ -29,7 +29,7 @@ class TestFastDisasm(object):
         self.editor.find_segment("02: robots I")
         s = self.editor.segment
         r = fast_get_entire_style_ranges(s, user=user_bit_mask, split_comments=[])
-        print r
+        print(r)
         assert r == [
         ((0, 497), 0),
         ((497, 524), 1),
@@ -69,7 +69,7 @@ class TestFastDisasmMulti(object):
         self.editor.find_segment("boot code at $0800")
         s = self.editor.segment
         r = fast_get_entire_style_ranges(s, user=user_bit_mask, split_comments=[])
-        print r
+        print(r)
         assert r == [((0, 238), 0),
            ((238, 268), 2),
            ((268, 332), 0),
@@ -105,11 +105,11 @@ class TestDisassemblerChange(object):
     def test_simple(self):
         s = self.get_break(8)
         r = fast_get_entire_style_ranges(s, user=user_bit_mask, split_comments=[])
-        print r
+        print(r)
         info = self.fast.get_all(s.rawdata.unindexed_data, s.start_addr, 0, r)
         inst = info.instructions
         for i in range(info.num_instructions):
-            print info[i].instruction
+            print(info[i].instruction)
 
         assert info[1].instruction.startswith("STA")
         assert info[2].instruction.startswith("8d")
@@ -120,7 +120,7 @@ class TestDisassemblerChange(object):
         info = self.fast.get_all(s.rawdata.unindexed_data, s.start_addr, 0, r)
         inst = info.instructions
         for i in range(info.num_instructions):
-            print info[i].instruction
+            print(info[i].instruction)
         assert info[1].instruction.startswith("STA")
         assert info[2].instruction.startswith("STA")
         assert info[9].instruction.startswith("CALL")
@@ -146,11 +146,11 @@ class TestChunkBreak(object):
         self.editor.find_segment("chunk type changes")
         s = self.editor.segment
         r = fast_get_entire_style_ranges(s, user=user_bit_mask)
-        print r
+        print(r)
         info = self.disasm.disassemble_segment(s)
         inst = info.instructions
         for i in range(info.num_instructions):
-            print info[i].instruction
+            print(info[i].instruction)
 
         assert info[0].instruction.startswith("DEX")
         assert info[2].instruction.startswith("RTS")
@@ -178,17 +178,17 @@ class TestChunkBreak(object):
         info = self.disasm.disassemble_segment(s)
         inst = info.instructions
         for i in range(info.num_instructions):
-            print info[i].instruction
+            print(info[i].instruction)
         text = self.disasm.get_disassembled_text()
-        print "\n".join(text)
+        print("\n".join(text))
 
         text = self.disasm.get_atasm_lst_text()
-        print "\n".join(text)
+        print("\n".join(text))
 
 def print_r(r):
-    print r
-    print ", ".join("((0x%04x, 0x%04x), 0x%x)" % (i[0][0], i[0][1], i[1]) for i in r)
-    print
+    print(r)
+    print(", ".join("((0x%04x, 0x%04x), 0x%x)" % (i[0][0], i[0][1], i[1]) for i in r))
+    print()
 
 class TestSmall(object):
     def get_disasm(self):
