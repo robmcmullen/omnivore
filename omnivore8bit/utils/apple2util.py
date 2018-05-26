@@ -1,5 +1,8 @@
 import numpy as np
 
+import logging
+log = logging.getLogger(__name__)
+
 
 hgr_offsets = np.asarray([
     0x0000, 0x0400, 0x0800, 0x0c00, 0x1000, 0x1400, 0x1800, 0x1c00,
@@ -318,7 +321,7 @@ byte_to_14_pixels = np.asarray([
 
 
 def to_560_bw_pixels(data40, pixels560):
-    print("incoming data40", data40)
+    log.debug(f"to_560_bw_pixels: incoming {data40}")
     pixels560[:] = byte_to_14_pixels[data40].reshape(-1)
 
 

@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 class HiresLineRenderer(b.BitmapLineRenderer):
     @classmethod
     def get_image(cls, segment_viewer, bytes_per_row, nr, count, data, style):
-        print("get_image", bytes_per_row, nr, count, data)
+        log.debug(f"get_image {bytes_per_row} {nr} {count} {data}")
         subset_count = 14 * len(data)
         bw = np.empty(subset_count, dtype=np.uint8)
         to_560_bw_pixels(data, bw)
@@ -47,7 +47,7 @@ class HiresLineRenderer(b.BitmapLineRenderer):
     def draw_line(self, grid_control, dc, line_num, col, index, last_index):
         t = grid_control.table
         rect = self.col_to_rect(line_num, col)
-        print("draw_line: col=%d indexes:%d-%d" % (col, index, last_index))
+        log.debug(f"draw_line: col={col} indexes:{index}-{last_index}")
         data = t.data[index:last_index]
         style = t.style[index:last_index]
         self.image_cache.draw_item(grid_control, dc, rect, data, style)
@@ -96,7 +96,7 @@ class HiresGridControl(b.BitmapGridControl):
 
     def set_viewer_defaults(self):
         self.items_per_row = 40
-        self.zoom = 2
+        self.zoom = 1
 
     @property
     def bitmap_renderer(self):
