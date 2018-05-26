@@ -256,7 +256,7 @@ class LineRenderer(object):
             image_cache = parent.view_params.calc_image_cache(self.default_image_cache)
         self.image_cache = image_cache
         self.set_cell_metadata(widths)
-        self.col_label_text = self.calc_col_labels(col_labels)
+        self.col_label_drawing_info = self.calc_col_label_drawing_info(parent, col_labels)
 
     def set_cell_metadata(self, widths):
         """
@@ -268,6 +268,7 @@ class LineRenderer(object):
             widths = [1] * self.num_cols
         self.col_widths = tuple(widths)  # copy to prevent possible weird errors if parent modifies list!
         self.pixel_widths = [self.w * i for i in self.col_widths]
+        self.largest_label_width = 0
         self.cell_to_col = []
         self.col_to_cell = []
         pos = 0
@@ -289,21 +290,42 @@ class LineRenderer(object):
         last_cell = min(starting_cell + num_cells, self.num_cells) - 1
         last_col = self.cell_to_col[last_cell]
         for col in range(starting_col, last_col + 1):
-            rect = self.col_to_rect(0, col)
-            text = self.col_label_text[col]
-            if text.startswith('^'):
-                text = text[1:]
-                offset = 0
-            else:
-                width = parent.view_params.calc_text_width(text)
-                offset = (rect.width - width)/2  # center text in cell
+            rect, offset, text = self.col_label_drawing_info[col]
+            if rect is None:
+                continue
             yield rect, offset, text
 
+    def calc_col_label_drawing_info(self, parent, labels):
+        labels = self.calc_col_labels(labels)
+        info = []
+        extra_width = 0
+        self.largest_label_width = 0
+        for col in range(self.num_cols):
+            rect = self.col_to_rect(0, col)
+            if extra_width > 0:
+                extra_width -= rect.width
+                info.append((None, None, None))
+            else:
+                text = labels[col]
+                if text.startswith('^'):
+                    text = text[1:]
+                    offset = 0
+                else:
+                    offset = None
+                width = parent.view_params.calc_text_width(text)
+                if width > rect.width:
+                    offset = 0
+                    extra_width = width - rect.width
+                    rect.width = width
+                else:
+                    offset = (rect.width - width)/2  # center text in cell
+                if width > self.largest_label_width:
+                    self.largest_label_width = width
+                info.append((rect, offset, text))
+        return info
+
     def calc_label_size(self, parent):
-        t0 = self.col_label_text[0]
-        t1 = self.col_label_text[-1]
-        w = max(parent.view_params.calc_text_width(t0), parent.view_params.calc_text_width(t1))
-        return w, self.h
+        return self.largest_label_width, self.h
 
     @property
     def virtual_width(self):
@@ -969,12 +991,7 @@ class AuxWindow(wx.ScrolledCanvas):
         self.row_skip = self.calc_row_skip()
 
     def calc_row_skip(self):
-        row_height = self.parent.line_renderer.h
-        if row_height < self.char_height + self.parent.view_params.row_height_extra_padding:
-            skip = (self.char_height + row_height - 1) // row_height
-        else:
-            skip = 1
-        return skip
+        return 1
 
     def recalc_view(self, *args, **kwargs):
         self.set_font_metadata()
@@ -1009,6 +1026,14 @@ class AuxWindow(wx.ScrolledCanvas):
 
 class RowLabelWindow(AuxWindow):
     refresh_count = 0
+
+    def calc_row_skip(self):
+        row_height = self.parent.line_renderer.h
+        if row_height < self.char_height + self.parent.view_params.row_height_extra_padding:
+            skip = (self.char_height + row_height - 1) // row_height
+        else:
+            skip = 1
+        return skip
 
     def draw_row_label_text(self, t, line, dc, skip=1):
         y = line * self.parent.line_renderer.h
