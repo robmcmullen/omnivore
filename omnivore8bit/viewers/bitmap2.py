@@ -37,7 +37,7 @@ class BitmapImageCache(cg.DrawTextImageCache):
 class BitmapLineRenderer(cg.TableLineRenderer):
     default_image_cache = BitmapImageCache
 
-    def __init__(self, grid_control, segment_viewer, image_cache=None):
+    def __init__(self, grid_control, image_cache=None):
         image_cache = BitmapImageCache()
         w = grid_control.zoom_w * grid_control.scale_width * grid_control.pixels_per_byte
         h = grid_control.zoom_h * grid_control.scale_height
@@ -155,8 +155,11 @@ class BitmapGridControl(SegmentGridControl):
 
     def calc_line_renderer(self):
         if hasattr(self, 'segment_viewer'):
-            return BitmapLineRenderer(self, self.segment_viewer)
+            return BitmapLineRenderer(self)
         return SegmentGridControl.calc_line_renderer(self)
+
+    def verify_line_renderer(self):
+        self.recalc_line_renderer()
 
     def get_extra_actions(self):
         actions = [None, va.BitmapWidthAction, va.BitmapZoomAction]

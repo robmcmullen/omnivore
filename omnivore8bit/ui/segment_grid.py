@@ -181,10 +181,19 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
         # let it do it itself.
         self.view_params = self.segment_viewer.linked_base.cached_preferences
         self.table = self.calc_default_table()
+        self.recalc_line_renderer()
+
+    def recalc_line_renderer(self):
         self.line_renderer = self.calc_line_renderer()
         log.debug("recalculating %s; items_per_row=%d" % (self, self.items_per_row))
         self.recalc_view_extra_setup()
         cg.CompactGrid.recalc_view(self)
+
+    def verify_line_renderer(self):
+        # hook for subclass to recreate the line renderer if it needs data from
+        # the Machine (which isn't created until after the control and segment
+        # viewer instances are created)
+        pass
 
     def recalc_view_extra_setup(self):
         """Hook for subclasses to set up any data needed before actually

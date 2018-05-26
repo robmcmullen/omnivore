@@ -141,6 +141,9 @@ class CharGridControl(SegmentGridControl):
             return AnticCharRenderer(self)
         return SegmentGridControl.calc_line_renderer(self)
 
+    def verify_line_renderer(self):
+        self.recalc_line_renderer()
+
     @property
     def font_renderer(self):
         return self.segment_viewer.machine.font_renderer

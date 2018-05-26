@@ -168,6 +168,7 @@ class SegmentViewer(HasTraits):
         if uuid:
             v.uuid = uuid
         control.uuid = v.uuid
+        control.verify_line_renderer()
         v.create_post()
         log.debug("create: control=%s, parent=%s uuid=%s" % (control.__class__.__name__, parent.__class__.__name__, v.uuid))
         return v
