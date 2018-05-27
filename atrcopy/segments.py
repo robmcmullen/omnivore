@@ -71,7 +71,7 @@ class SegmentSaver(object):
 
     @classmethod
     def encode_data(cls, segment, ui_control):
-        return segment.tostring()
+        return segment.tobytes()
 
 
 class OrderWrapper(object):
@@ -119,8 +119,8 @@ class OrderWrapper(object):
     def unindexed(self):
         return self.np_data[self.order]
 
-    def tostring(self):
-        return self.np_data[self.order].tostring()
+    def tobytes(self):
+        return self.np_data[self.order].tobytes()
 
 
 class UserExtraData(object):
@@ -637,8 +637,8 @@ class DefaultSegment(object):
             raise IndexError("index %d not in this segment" % base_index)
         return int(index)
 
-    def tostring(self):
-        return self.data.tostring()
+    def tobytes(self):
+        return self.data.tobytes()
 
     def get_style_bits(self, **kwargs):
         return get_style_bits(**kwargs)
@@ -1053,7 +1053,7 @@ class DefaultSegment(object):
     @property
     def search_copy(self):
         if self._search_copy is None:
-            self._search_copy = self.data.tostring()
+            self._search_copy = self.data.tobytes()
         return self._search_copy
 
     def compare_segment(self, other_segment):

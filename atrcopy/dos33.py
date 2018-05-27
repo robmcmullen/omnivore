@@ -245,7 +245,7 @@ class Dos33Dirent(Dirent):
         self.sector = values[1]
         self._file_type = values[2] & 0x7f
         self.locked = values[2] & 0x80
-        self.filename = (bytes[3:0x20] - 0x80).tostring().rstrip()
+        self.filename = (bytes[3:0x20] - 0x80).tobytes().rstrip()
         self.num_sectors = int(values[4])
         self.is_sane = self.sanity_check(image)
 
@@ -699,12 +699,12 @@ class ProdosDiskImage(DiskImageBase):
         swap_order = False
         if (magic == [1, 56, 176, 3]).all():
             data, style = self.get_sectors(1)
-            prodos = data[3:9].tostring()
+            prodos = data[3:9].tobytes()
             if prodos == "PRODOS":
                 pass
             else:
                 data, style = self.get_sectors(14)
-                prodos = data[3:9].tostring()
+                prodos = data[3:9].tobytes()
                 if prodos == "PRODOS":
                     swap_order = True
                 else:

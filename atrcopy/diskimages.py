@@ -292,7 +292,7 @@ class DiskImageBase(object):
 
     def get_file(self, dirent):
         segment = self.get_file_segment(dirent)
-        return segment.tostring()
+        return segment.tobytes()
 
     def get_file_segment(self, dirent):
         pass
