@@ -99,26 +99,6 @@ class Generic6502(EmulatorBase):
     def load_disk(self, drive_num, pathname):
         lib6502.load_disk(drive_num, pathname)
 
-    def print_history(self, frame_number):
-        d = self.history[frame_number]
-        print("history[%d] of %d: %d %s" % (d['frame_number'], len(self.history), len(d), d['state'][0][0:8]))
-
-    def get_previous_history(self, frame_cursor):
-        n = frame_cursor - 1
-        while n > 0:
-            if self.history[n] is not None:
-                return n
-            n -= 1
-        raise IndexError("No previous frame")
-
-    def get_next_history(self, frame_cursor):
-        n = frame_cursor + 1
-        while n < len(self.history):
-            if self.history[n] is not None:
-                return n
-            n += 1
-        raise IndexError("No next frame")
-
     def get_color_indexed_screen(self, frame_number=-1):
         if frame_number < 0:
             output = self.output
