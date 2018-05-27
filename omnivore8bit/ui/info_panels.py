@@ -284,7 +284,7 @@ class TextEditField(InfoField):
 
     def bytes_to_control_data(self, raw):
         raw = self.map_bytes_to_text(raw)
-        text = raw.tostring().lstrip()
+        text = raw.tobytes().lstrip()
         if self.has_focus():
             data = self.parse_from_control()
             text = text[0:len(data)]

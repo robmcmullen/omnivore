@@ -29,7 +29,7 @@ class BitmapImageCache(cg.DrawTextImageCache):
             array = intscale(array, grid_control.zoom_h * grid_control.scale_height, grid_control.zoom_w * grid_control.scale_width)
             #print("bitmap: %d,%d,3 after scaling: %s" % (height, width, str(array.shape)))
             image = wx.Image(array.shape[1], array.shape[0])
-            image.SetData(array.tostring())
+            image.SetData(array.tobytes())
             bmp = wx.Bitmap(image)
             dc.DrawBitmap(bmp, rect.x, rect.y)
 
@@ -119,7 +119,7 @@ class BitmapLineRenderer(cg.TableLineRenderer):
             array = intscale(array, grid_control.zoom_h, grid_control.zoom_w)
             #print("bitmap: %d,%d,3 after scaling: %s" % (height, width, str(array.shape)))
             image = wx.Image(array.shape[1], array.shape[0])
-            image.SetData(array.tostring())
+            image.SetData(array.tobytes())
             bmp = wx.Bitmap(image)
             dc.DrawBitmap(bmp, frame_rect.x, frame_rect.y)
 

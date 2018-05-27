@@ -113,7 +113,7 @@ class AnticFont(object):
         w = self.char_w
         h = self.char_h
         image = wx.Image(w, h)
-        image.SetData(array.tostring())
+        image.SetData(array.tobytes())
         w *= self.scale_w * zoom
         h *= self.scale_h * zoom
         image.Rescale(w, h)

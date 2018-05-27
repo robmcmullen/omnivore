@@ -703,7 +703,7 @@ class CopyAsReprAction(ViewerAction):
         v = self.viewer
         ranges, indexes = v.get_selected_ranges_and_indexes()
         data = v.segment[indexes]
-        s1 = repr(data.tostring())
+        s1 = repr(data.tobytes())
         q = s1[0]
         text = s1[1:-1]  # remove leading/trailing quotes
         if q == "'":

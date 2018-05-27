@@ -112,7 +112,7 @@ class EmulationDocument(SegmentedDocument):
             boot_file_type = self.source_document.extension
         fd, bootfile = tempfile.mkstemp(boot_file_type)
         fh = os.fdopen(fd, "wb")
-        fh.write(self.source_document.container_segment.data.tostring())
+        fh.write(self.source_document.container_segment.data.tobytes())
         fh.close()
         emu = self.emulator
         emu.begin_emulation([bootfile], el.start_monitor, self)

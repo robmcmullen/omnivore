@@ -19,7 +19,7 @@ class JumpmanSaveAsATR(object):
             raise RuntimeError("Can't find Jumpman Level template file")
         raw = np.fromstring(image, dtype=np.uint8)
         raw[0x0196:0x0996] = segment[:]
-        return raw.tostring()
+        return raw.tobytes()
 
 
 class JumpmanSaveAsXEX(object):
@@ -42,4 +42,4 @@ class JumpmanSaveAsXEX(object):
         # the level tester atr images is a KBoot image, so the XEX is embedded
         # inside it and we can just chop off the initial header
         xex = raw[0x0190:]
-        return xex.tostring()
+        return xex.tobytes()

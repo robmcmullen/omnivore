@@ -98,7 +98,7 @@ class JumpmanFrameRenderer(BitmapLineRenderer):
             array = intscale(cropped, grid_control.zoom_h, grid_control.zoom_w)
             #print("bitmap: %d,%d,3 after scaling: %s" % (height, width, str(array.shape)))
             image = wx.Image(array.shape[1], array.shape[0])
-            image.SetData(array.tostring())
+            image.SetData(array.tobytes())
             bmp = wx.Bitmap(image)
             dc.SetClippingRegion(frame_rect)
             dc.DrawBitmap(bmp, frame_rect.x, frame_rect.y)

@@ -31,7 +31,7 @@ class AnticCharImageCache(cg.DrawTextImageCache):
         if width > 0 and height > 0:
             array = intscale(array, parent.zoom_h, parent.zoom_w)
             image = wx.Image(array.shape[1], array.shape[0])
-            image.SetData(array.tostring())
+            image.SetData(array.tobytes())
             bmp = wx.Bitmap(image)
             dc.DrawBitmap(bmp, rect.x, rect.y)
 
@@ -123,7 +123,7 @@ class AnticCharRenderer(cg.TableLineRenderer):
             array = intscale(array, grid_control.zoom_h, grid_control.zoom_w)
             #print("bitmap: %d,%d,3 after scaling: %s" % (height, width, str(array.shape)))
             image = wx.Image(array.shape[1], array.shape[0])
-            image.SetData(array.tostring())
+            image.SetData(array.tobytes())
             bmp = wx.Bitmap(image)
             dc.DrawBitmap(bmp, frame_rect.x, frame_rect.y)
 

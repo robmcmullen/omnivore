@@ -587,7 +587,7 @@ class SaveAsXEXBootAction(SaveAsXEXAction):
         bytes = add_atr_header(bytes)
         rawdata = SegmentData(bytes)
         atr = BootDiskImage(rawdata)
-        return atr.bytes.tostring()
+        return atr.bytes.tobytes()
 
     def get_dialog(self, e):
         return SegmentOrderDialog(e.window.control, self.title, e.document.segments[1:], "Segment Order for Boot Disk", True)

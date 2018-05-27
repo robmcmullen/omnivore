@@ -372,7 +372,7 @@ class PasteDisassemblyCommentsCommand(SetCommentCommand):
             # use the range from caret to end
             ranges = [(serializer.dest_carets.current.index, len(segment))]
         SetCommentCommand.__init__(self, segment, ranges, serializer.data)
-        self.comments = self.text.tostring().splitlines()
+        self.comments = self.text.tobytes().splitlines()
         self.num_lines = len(self.comments)
 
     def __str__(self):
