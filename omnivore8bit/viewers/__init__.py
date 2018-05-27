@@ -112,7 +112,7 @@ class SegmentViewer(HasTraits):
         return str(uuid.uuid4())
 
     def _machine_default(self):
-        return Atari800.clone_machine()
+        return None
 
     def _supported_clipboard_data_objects_default(self):
         return [a[0] for a in self.supported_clipboard_data_object_map.values()]
@@ -162,8 +162,13 @@ class SegmentViewer(HasTraits):
         control = cls.create_control(parent, linked_base, mdict.get('control',{}))
         v = cls(linked_base=linked_base, control=control)
         v.from_metadata_dict(mdict)
+
         if machine is not None:
             v.machine = machine
+        elif v.machine is None:
+            print("LOOKING UP MACHINE BY MIME", linked_base.document.metadata.mime)
+            v.machine = Machine.find_machine_by_mime(linked_base.document.metadata.mime, default_if_not_matched=True)
+
         control.segment_viewer = v
         if uuid:
             v.uuid = uuid
@@ -194,20 +199,21 @@ class SegmentViewer(HasTraits):
             self.uuid = e['uuid']
 
         # FIXME: deprecated stuff?
-        if 'machine mime' in e:
+        if 'machine' in e:
+            self.machine.restore_extra_from_dict(e['machine'])
+        elif 'machine mime' in e:
             mime = e['machine mime']
-            if not mime.startswith(self.machine.mime_prefix):
-                m = self.machine.find_machine_by_mime(mime)
+            if self.machine is None or not mime.startswith(self.machine.mime_prefix):
+                m = Machine.find_machine_by_mime(mime)
                 if m is not None:
                     self.machine = m
+
         if 'font' in e or 'font renderer' in e or 'font order' in e:
             if 'font renderer' in e or 'font order' in e:
                 self.set_font(e['font'], e.get('font renderer', None), e.get('font order', None))
             else:
                 self.set_font(e['font'][0], e['font'][1])
 
-        if 'machine' in e:
-            self.machine.restore_extra_from_dict(e['machine'])
         # 'control' is handled during viewer creation process
         self.from_metadata_dict_post(e)
 

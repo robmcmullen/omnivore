@@ -111,10 +111,12 @@ class Machine(HasTraits):
         cls.init_assemblers(editor)
 
     @classmethod
-    def find_machine_by_mime(cls, mime):
+    def find_machine_by_mime(cls, mime, default_if_not_matched=False):
         for m in predefined['machine']:
             if mime.startswith(m.mime_prefix):
                 return m
+        if default_if_not_matched:
+            return predefined['machine'][0]
 
     # Trait initializers
 

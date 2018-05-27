@@ -11,14 +11,12 @@
         {
             "control": {},
             "linked base": "a3258186-6700-40f2-ad6c-a96fa350e978",
-            "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
             "name": "atari800",
             "uuid": "d35c8424-a347-42d3-9812-0dc417c1ab5b"
         }, 
         {
             "control": {"items_per_row": 13, "zoom": 1},
             "linked base": "a3258186-6700-40f2-ad6c-a96fa350e978",
-            "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
             "name": "cpu6502",
             "uuid": "3fc1c976-dde9-408c-b102-0e226e8df9e9"
         }

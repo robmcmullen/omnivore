@@ -3,43 +3,36 @@
     "viewers": [
         {
             "control": {"items_per_row": 16, "zoom": 2},
-            "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
             "name": "char",
             "uuid": "ee6a177f-7fbd-44da-b164-2799ed947bc6"
         }, 
         {
             "control": {"items_per_row": 99, "zoom": 1},
-            "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
             "name": "disassembly",
             "uuid": "07a96e5a-b8bc-4104-a45d-0c92c6d20673"
         }, 
         {
             "control": {"items_per_row": 16, "zoom": 1},
-            "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
             "name": "hex",
             "uuid": "64ed8426-00f3-43b3-8614-09d9490bd0f0"
         }, 
         {
             "control": {"items_per_row": 1, "zoom": 2},
-            "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
             "name": "bitmap",
             "uuid": "2d624f5c-b826-41d3-9a69-eb90a18e98e9"
         }, 
         {
             "control": {},
-            "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
             "name": "comments",
             "uuid": "4f39aa80-3410-4488-bb54-755ee0abbda4"
         }, 
         {
             "control": {},
-            "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
             "name": "segments",
             "uuid": "d190c9b3-18b6-4b80-a1fe-463951c6553c"
         }, 
         {
             "control": {},
-            "machine": {"antic_color_registers": [4, 30, 68, 213, 40, 202, 148, 70, 0], "antic_font_data": "e46c1a08-b718-de27-3303-6e2701f0b0b3", "bitmap_renderer": 0, "color_standard": 0, "disassembler": 0, "font_mapping": 0, "font_renderer": 0, "memory_map": 0, "mime_prefix": "application/vnd.atari8bit", "name": "Atari 800", "page_renderer": 0},
             "name": "undo",
             "uuid": "eecf8b21-54d0-461c-8d0b-f91672f92cb8"
         }
