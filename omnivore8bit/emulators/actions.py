@@ -51,23 +51,25 @@ class BootDiskImageAction(EditorAction):
 
     def perform(self, event=None):
         doc = EmulationDocument(source_document=self.active_editor.document, emulator_type=emu.default_emulator)
-        doc.boot(".atr")
+        doc.boot()
         self.task.new(doc)
 
     def _update_enabled(self, ui_state):
         self.enabled = not self.active_editor.has_emulator
 
 
-class BootSegmentsAction(EditorAction):
+class BootSegmentAction(EditorAction):
     """Start an emulator by pre-populating memory using the contents of some
     selected segments.
     """
-    name = "Boot Segments in Memory"
-    tooltip = "Start emulator using segments to pre-fill the memory of the emulator"
+    name = "Boot Current Segment"
+    tooltip = "Start emulator using current segment to pre-fill the memory of the emulator"
 
     def perform(self, event=None):
         #self.task.new(self.active_editor.document, emu.default_emulator)
-        self.task.error("Not implemented yet!")
+        doc = EmulationDocument(source_document=self.active_editor.document, emulator_type=emu.default_emulator)
+        doc.boot(self.active_editor.segment)
+        self.task.new(doc)
 
     def _update_enabled(self, ui_state):
         self.enabled = not self.active_editor.has_emulator

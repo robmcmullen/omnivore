@@ -1,6 +1,5 @@
 import os
 import time
-import tempfile
 
 import wx
 import numpy as np
@@ -51,6 +50,8 @@ class EmulationDocument(SegmentedDocument):
     # Traits
 
     source_document = Any(None)
+
+    boot_segment = Any(None)
 
     emulator_type = Any(None)
 
@@ -107,25 +108,17 @@ class EmulationDocument(SegmentedDocument):
     def calc_layout_template_name(self, task_id):
         return "%s.emulator_layout" % task_id
 
-    def boot(self, boot_file_type=None):
-        if boot_file_type is None:
-            boot_file_type = self.source_document.extension
-        fd, bootfile = tempfile.mkstemp(boot_file_type)
-        fh = os.fdopen(fd, "wb")
-        fh.write(self.source_document.container_segment.data.tobytes())
-        fh.close()
+    def boot(self, segment=None):
+        if segment is None:
+            segment = self.source_document.container_segment
         emu = self.emulator
-        emu.begin_emulation([bootfile], el.start_monitor, self)
+        emu.begin_emulation([], segment, event_loop=el.start_monitor, event_loop_args=self)
         for i in range(self.skip_frames_on_boot):
             emu.next_frame()
         self.bytes = emu.raw_array
         self.style = np.zeros([len(self.bytes)], dtype=np.uint8)
         self.parse_segments([segment_parser_factory(emu.segments)])
         log.debug("Segments after boot: %s" % str(self.segments))
-        try:
-            os.remove(bootfile)
-        except:  # MSW raises WindowsError, but that's not defined cross-platform
-            log.warning("Unable to remove temporary file %s." % bootfile)
         self.create_timer()
         self.start_timer()
 

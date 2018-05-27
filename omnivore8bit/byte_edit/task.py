@@ -641,7 +641,7 @@ class ByteEditTask(FrameworkTask):
             actions.append(ea.UseEmulatorAction(name=e.pretty_name, emulator=e))
         return [
             ea.BootDiskImageAction(),
-            ea.BootSegmentsAction(),
+            ea.BootSegmentAction(),
             SMenu(
                 Group(
                     *actions,
