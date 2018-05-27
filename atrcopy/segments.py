@@ -74,6 +74,20 @@ class SegmentSaver(object):
         return segment.tobytes()
 
 
+class BSAVESaver(object):
+    export_data_name = "Apple ][ Binary"
+    export_extensions = [".bsave"]
+
+    @classmethod
+    def encode_data(cls, segment, ui_control):
+        data = segment.tobytes()
+        header = np.empty(2, dtype="<u2")
+        header[0] = segment.start_addr
+        header[1] = len(data)
+        print("binary data: %x bytes at %x" % (header[1], header[0]))
+        return header.tobytes() + segment.tobytes()
+
+
 class OrderWrapper(object):
     """Wrapper for numpy data so that manipulations can use normal numpy syntax
     and still affect the data according to the byte ordering.
@@ -380,7 +394,7 @@ class SegmentData(object):
 
 
 class DefaultSegment(object):
-    savers = [SegmentSaver]
+    savers = [SegmentSaver, BSAVESaver]
     can_resize_default = False
 
     base_serializable_attributes = ['start_addr', 'error', 'name', 'verbose_name', 'page_size', 'map_width', 'uuid', 'can_resize']
