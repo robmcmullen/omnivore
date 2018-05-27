@@ -295,7 +295,7 @@ class BaseDisassembler(object):
             dollar = operand.find("$")
             if dollar >=0 and "#" not in operand:
                 text_hex = operand[dollar+1:dollar+1+4]
-                if len(text_hex) > 2 and text_hex[2] in b"0123456789abcdefABCDEF":
+                if len(text_hex) > 2 and text_hex[2] in "0123456789abcdefABCDEF":
                     size = 4
                 else:
                     size = 2
