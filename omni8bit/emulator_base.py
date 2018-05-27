@@ -79,8 +79,8 @@ class EmulatorBase(object):
     def serialize_state(self, mdict):
         return {"name": self.name}
 
-    def begin_emulation(self, emu_args = None, *args, **kwargs):
-        self.args = self.process_args(emu_args)
+    def begin_emulation(self, emu_args=None, boot_segment=None, *args, **kwargs):
+        self.args = self.process_args(emu_args, boot_segment)
         event_loop, event_loop_args = self.configure_event_loop(*args, **kwargs)
         self.low_level_interface.start_emulator(self.args, event_loop, event_loop_args)
         self.low_level_interface.prepare_arrays(self.input, self.output)
@@ -88,12 +88,16 @@ class EmulatorBase(object):
         self.generate_extra_segments()
         self.cpu_state = self.calc_cpu_data_array()
         self.main_memory = self.calc_main_memory_array()
+        self.boot_from_segment(boot_segment)
 
     def configure_event_loop(self, event_loop=None, event_loop_args=None, *args, **kwargs):
         return None, None
 
-    def process_args(self, emu_args):
+    def process_args(self, emu_args, boot_segment):
         return emu_args
+
+    def boot_from_segment(self, segment):
+        pass
 
     def parse_state(self):
         base = np.byte_bounds(self.output)[0]

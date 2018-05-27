@@ -79,6 +79,13 @@ class Generic6502(EmulatorBase):
         raw = self.raw_array[offset:offset + d.MAIN_MEMORY_SIZE]
         return raw
 
+    def boot_from_segment(self, segment):
+        # for now, simple copies data into main memory
+        self.main_memory[segment.start_addr:segment.start_addr + len(segment)] = segment.data
+        self.cpu_state[0] = segment.start_addr
+        lib6502.restore_state(self.output)
+        self.debug_state()
+
     # Emulator user input functions
 
     def coldstart(self):
