@@ -651,6 +651,10 @@ class ByteEditTask(FrameworkTask):
             ea.StepAction(),
             ea.StepIntoAction(),
             ea.StepOverAction(),
+            Separator(),
+            ea.StartAction(),
+            ea.SelectAction(),
+            ea.OptionAction(),
             ]
 
     def get_keyboard_actions(self):

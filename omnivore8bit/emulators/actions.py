@@ -139,7 +139,34 @@ class StepOverAction(StepAction):
     """
     name = "Step Over"
     tooltip = "Restart the emulation"
+    accelerator = 'F11'
 
     def perform(self, event=None):
         print("resume!")
-    accelerator = 'F11'
+
+
+class StartAction(EmulatorAction):
+    name = "Start"
+    tooltip = "Press the Start button"
+    accelerator = 'F4'
+
+    def perform(self, event=None):
+        self.active_editor.document.emulator.set_start(True)
+
+
+class SelectAction(EmulatorAction):
+    name = "Select"
+    tooltip = "Press the Select button"
+    accelerator = 'F3'
+
+    def perform(self, event=None):
+        self.active_editor.document.emulator.set_select(True)
+
+
+class OptionAction(EmulatorAction):
+    name = "Option"
+    tooltip = "Press the Option button"
+    accelerator = 'F2'
+
+    def perform(self, event=None):
+        self.active_editor.document.emulator.set_option(True)
