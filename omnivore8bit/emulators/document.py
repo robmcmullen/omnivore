@@ -158,6 +158,7 @@ class EmulationDocument(SegmentedDocument):
         self.last_update_time = now
 
     def pause_emulator(self):
+        print("pause")
         emu = self.emulator
         if emu.stop_timer_for_debugger:
             self.stop_timer()

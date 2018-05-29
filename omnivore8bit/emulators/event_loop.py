@@ -92,7 +92,7 @@ def start_monitor(document):
     document.stop_timer()
     emu.get_current_state()
     document.emulator_update_screen_event = True
-    document.priority_level_refresh_event = True
+    document.priority_level_refresh_event = 100
     a, p, sp, x, y, _, pc = emu.cpu_state
     print(("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc)))
     active_event_loop = MonitorEventLoop()
