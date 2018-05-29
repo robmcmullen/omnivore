@@ -151,6 +151,7 @@ class StartAction(EmulatorAction):
     accelerator = 'F4'
 
     def perform(self, event=None):
+        print("START!")
         self.active_editor.document.emulator.set_start(True)
 
 
@@ -170,3 +171,21 @@ class OptionAction(EmulatorAction):
 
     def perform(self, event=None):
         self.active_editor.document.emulator.set_option(True)
+
+
+class ColdstartAction(EmulatorAction):
+    name = "Reboot"
+    tooltip = "Simulate turning off the power and turning it back on again"
+    accelerator = 'Shift F5'
+
+    def perform(self, event=None):
+        self.active_editor.document.emulator.coldstart()
+
+
+class WarmstartAction(EmulatorAction):
+    name = "System Reset"
+    tooltip = "Simulate pressing the system reset key"
+    accelerator = 'F5'
+
+    def perform(self, event=None):
+        self.active_editor.document.emulator.warmstart()
