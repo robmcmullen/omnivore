@@ -347,12 +347,12 @@ class LinkedBase(CaretHandler):
         comments = self.segment.get_comments_at_indexes(indexes)
         log.debug("after get_comments_at_indexes: %s" % str(comments))
         metadata = [style.tolist(), comments[0].tolist(), comments[1]]
-        j = json.dumps(metadata)
+        j = json.dumps(metadata).encode('utf-8')
         return j
 
     @classmethod
-    def restore_selected_index_metadata(self, metastr):
-        metadata = json.loads(metastr)
+    def restore_selected_index_metadata(self, encoded_meta):
+        metadata = json.loads(encoded_meta.decode('utf-8'))
         style = np.asarray(metadata[0], dtype=np.uint8)
         where_comments = np.asarray(metadata[1], dtype=np.int32)
         return style, where_comments, metadata[2]

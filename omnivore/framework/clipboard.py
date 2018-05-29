@@ -160,14 +160,14 @@ class BinarySelection(ClipboardSerializer):
             if len(ranges) == 1:
                 r = ranges[0]
                 data = viewer.segment[r[0]:r[1]]
-                s1 = data.tostring()
-                serialized = "%d,%s%s" % (len(s1), s1, metadata)
+                s1 = data.tobytes()
+                serialized = b"%d,%s%s" % (len(s1), s1, metadata)
                 name = ""
             elif np.alen(indexes) > 0:
                 data = viewer.segment[indexes]
-                s1 = data.tostring()
-                s2 = indexes.tostring()
-                serialized = "%d,%d,%s%s%s" % (len(s1), len(s2), s1, s2, metadata)
+                s1 = data.tobytes()
+                s2 = indexes.tobytes()
+                serialized = b"%d,%d,%s%s%s" % (len(s1), len(s2), s1, s2, metadata)
                 name = "numpy,multiple"
             else:
                 raise ClipboardError("No ranges or indexes selected")
@@ -177,7 +177,7 @@ class BinarySelection(ClipboardSerializer):
 
     def unpack_data_object(self, viewer, data_obj):
         value = get_data_object_value(data_obj, self.data_format_name)
-        len1, value = value.split(",", 1)
+        len1, value = value.split(b",", 1)
         len1 = int(len1)
         value, j = value[0:len1], value[len1:]
         self.clipboard_data = np.fromstring(value, dtype=np.uint8)
@@ -197,7 +197,7 @@ class MultipleBinarySelection(ClipboardSerializer):
 
     def unpack_data_object(self, viewer, data_obj):
         value = get_data_object_value(data_obj, self.data_format_name)
-        len1, len2, value = value.split(",", 2)
+        len1, len2, value = value.split(b",", 2)
         len1 = int(len1)
         len2 = int(len2)
         split1 = len1
@@ -219,7 +219,7 @@ class RectangularSelection(ClipboardSerializer):
         if rects:
             r = rects[0]  # FIXME: handle multiple rects
             num_rows, num_cols, data = viewer.control.get_data_from_rect(r)
-            return cls.get_composite_object(data.flat, "%d,%d,%s" % (num_rows, num_cols, data.tostring()))
+            return cls.get_composite_object(data.flat, b"%d,%d,%s" % (num_rows, num_cols, data.tobytes()))
         return None
 
     @property
@@ -230,7 +230,7 @@ class RectangularSelection(ClipboardSerializer):
 
     def unpack_data_object(self, viewer, data_obj):
         value = get_data_object_value(data_obj, self.data_format_name)
-        r, c, value = value.split(",", 2)
+        r, c, value = value.split(b",", 2)
         self.clipboard_num_rows = int(r)
         self.clipboard_num_cols = int(c)
         self.clipboard_data = np.fromstring(value, dtype=np.uint8)
