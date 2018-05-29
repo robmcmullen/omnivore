@@ -45,11 +45,13 @@ class ClipboardCommand(SegmentCommand):
         return data[0:data_len]
 
     def get_style(self, data):
-        style_data = self.serializer.clipboard_style
+        s = self.serializer
+        style_data = s.clipboard_style
         if style_data is not None:
             style = s.clipboard_style[0:np.alen(data)]
         else:
-            old_style = None
+            style = None
+        return style
 
     def do_change(self, editor, undo):
         self.prepare_data(editor)
