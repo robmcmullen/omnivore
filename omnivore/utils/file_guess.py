@@ -119,14 +119,14 @@ class FileGuess(object):
     @property
     def likely_binary(self):
         if self._likely_binary is None:
-            t = self.get_utf8()
+            t = self.get_bytes()
             self._likely_binary = guessBinary(t)
         return self._likely_binary
 
     @property
     def likely_text(self):
         if self._likely_binary is None:
-            t = self.get_utf8()
+            t = self.get_bytes()
             self._likely_binary = guessBinary(t)
         return not self._likely_binary
 
@@ -158,7 +158,7 @@ class FileGuess(object):
     def __str__(self):
         return "guess: metadata: %s, %d bytes available for signature" % (self.metadata, len(self.bytes))
 
-    def get_utf8(self):
+    def get_bytes(self):
         return self.bytes
 
     @property

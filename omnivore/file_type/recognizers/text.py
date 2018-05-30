@@ -12,7 +12,7 @@ class PlainTextRecognizer(RecognizerBase):
     id = "text/plain"
 
     def identify(self, guess):
-        if not guessBinary(guess.get_utf8()):
+        if not guessBinary(guess.get_bytes()):
             return "text/plain"
 
 
@@ -26,7 +26,7 @@ class XMLTextRecognizer(RecognizerBase):
     before = "text/plain"
 
     def identify(self, guess):
-        byte_stream = guess.get_utf8().strip()
+        byte_stream = guess.get_bytes().strip()
         if not byte_stream.startswith(b"<"):
             return
         if byte_stream.startswith(b"<?xml"):
@@ -53,7 +53,7 @@ class PoundBangTextRecognizer(RecognizerBase):
     before = "text/plain"
 
     def identify(self, guess):
-        byte_stream = guess.get_utf8()
+        byte_stream = guess.get_bytes()
         if not byte_stream.startswith(b"#!"):
             return
         line = byte_stream[2:80].lower().strip()

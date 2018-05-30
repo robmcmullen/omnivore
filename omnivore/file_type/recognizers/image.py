@@ -23,7 +23,7 @@ class ImageRecognizer(RecognizerBase):
         }
 
     def identify(self, guess):
-        name = imghdr.what("", h=guess.get_utf8())
+        name = imghdr.what("", h=guess.get_bytes())
         if name is None:
             return
         name = self.mime_map.get(name, name)
