@@ -9,11 +9,11 @@ else:
     develop_instead_of_link = False
 
 deps = [
-    ['git@github.com:robmcmullen/pyface.git', {'branch': 'wx4may2018'}],
-    ['git@github.com:robmcmullen/traitsui.git', {'branch': 'wx4may2018'}],
-    ['https://github.com/enthought/apptools.git',],
-    ['git@github.com:robmcmullen/envisage.git',],
-    ['git@github.com:robmcmullen/pyfilesystem.git', {'branch': 'py3'}],
+    ['git@github.com:robmcmullen/pyface.git', {'branch': 'wx4may2018'}, True],
+    ['git@github.com:robmcmullen/traitsui.git', {'branch': 'wx4may2018'}, True],
+    ['https://github.com/enthought/apptools.git', {}, True],
+    ['git@github.com:robmcmullen/envisage.git', {}, False],
+    ['git@github.com:robmcmullen/pyfilesystem.git', {'branch': 'py3'}, False],
 ]
 
 
@@ -43,12 +43,8 @@ topdir = os.path.join(os.getcwd(), "deps")
 
 for dep in deps:
     os.chdir(topdir)
-    try:
-        repourl, options = dep
-    except ValueError:
-        repourl = dep[0]
-        options = {}
-    print(dep, repourl, options)
+    repourl, options, run2to3 = dep
+    print(dep, repourl, options, run2to3)
     if repourl.startswith("http") or repourl.startswith("git@"):
         print("UPDATING %s" % repourl)
         _, repo = os.path.split(repourl)
@@ -61,7 +57,11 @@ for dep in deps:
     else:
         repodir = repourl
 
-    builddir = options.get('builddir', ".")
+    setupdir = options.get('builddir', ".")
+    if run2to3:
+        builddir = os.path.join(setupdir, "build/lib")
+    else:
+        builddir = setupdir
 
     command = options.get('command',
         setup + "build_ext --inplace")
@@ -75,7 +75,7 @@ for dep in deps:
         os.chdir(repodir)
         if 'branch' in options:
             git(['checkout', options['branch']])
-        os.chdir(builddir)
+        os.chdir(setupdir)
         subprocess.call(command.split())
         if "install" not in command and develop_instead_of_link:
             subprocess.call(["python", "setup.py", "develop"])

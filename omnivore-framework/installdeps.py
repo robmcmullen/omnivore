@@ -5,35 +5,30 @@ import sys
 import glob
 
 deps = [
-    ['https://github.com/NOAA-ORR-ERD/GnomeTools.git', {'builddir': 'post_gnome'}],
+    ['https://github.com/robmcmullen/GnomeTools.git', {'builddir': 'post_gnome'}],
     ['https://github.com/robmcmullen/OWSLib.git',],
     ['https://github.com/fathat/glsvg.git',],
     ['https://github.com/robmcmullen/pyugrid.git',],
 ]
 
-parent_dep_dir = "../deps"
-parent_dep_link_target = {"pyfilesystem": "fs"}
+parent_dep_dir = ".."
+#parent_dep_link_target = {"pyfilesystem": "fs"}
 
-parent_deps = glob.glob("%s/*" % parent_dep_dir)
+parent_deps = glob.glob("%s/*/__init__.py" % parent_dep_dir)
 for dep in parent_deps:
-    subdir = os.path.basename(dep)
-    subdir_target = parent_dep_link_target.get(subdir, subdir)
-    src = os.path.normpath(os.path.join(dep, subdir_target))
+    dep = os.path.dirname(dep)
+    if dep.endswith("8bit") or dep.endswith("_extra"):
+        continue
+    here = os.path.basename(dep)
+    print(dep, here)
     try:
-        os.symlink(src, subdir_target)
-        print "symlinking %s to %s" % (src, subdir_target)
-    except OSError, e:
+        os.unlink(here)
+    except FileNotFoundError as e:
         pass
-
-try:
-    os.symlink("../omnivore", "omnivore")
-except OSError, e:
-    pass
-
-sys.exit()
-
-
-
+    try:
+        os.symlink(dep, here)
+    except OSError as e:
+        print("Couldn't symlink %s" % dep)
 
 link_map = {
     "OWSLib": "owslib",
@@ -49,10 +44,10 @@ def git(args, branch=None):
 dry_run = False
 if dry_run:
     def dry_run_call(args):
-        print "in %s: %s" % (os.getcwd(), " ".join(args))
+        print("in %s: %s" % (os.getcwd(), " ".join(args)))
     subprocess.call = dry_run_call
     def dry_run_symlink(source, name):
-        print "in %s: %s -> %s" % (os.getcwd(), name, source)
+        print("in %s: %s -> %s" % (os.getcwd(), name, source))
     os.symlink = dry_run_symlink
 
 setup = "python setup.py "
@@ -73,7 +68,7 @@ for dep in deps:
         repourl = dep[0]
         options = {}
     if repourl.startswith("http"):
-        print "UPDATING %s" % repourl
+        print("UPDATING %s" % repourl)
         _, repo = os.path.split(repourl)
         repodir, _ = os.path.splitext(repo)
         if os.path.exists(repodir):
@@ -106,7 +101,7 @@ for dep in deps:
         os.chdir(linkdir)
         name = link_map.get(repodir, repodir)
         if name is None:
-            print "No link for %s" % repodir
+            print("No link for %s" % repodir)
         else:
             src = os.path.normpath(os.path.join("deps", repodir, builddir, name))
             if os.path.islink(name):
@@ -115,4 +110,7 @@ for dep in deps:
 
         for license in licenses:
             src = os.path.normpath(os.path.join("deps", repodir, license))
-            os.symlink(src, license + "." + repodir)
+            try:
+                os.symlink(src, license + "." + repodir)
+            except FileExistsError as e:
+                pass
