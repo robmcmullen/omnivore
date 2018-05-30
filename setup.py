@@ -184,7 +184,7 @@ package_data = {
                  ],
     }
 
-packages = find_packages()
+packages = [p for p in find_packages() if not (".qt4" in p or "omnivore_extra" in p)]
 
 base_dist_dir = "dist-%s" % spaceless_version
 win_dist_dir = os.path.join(base_dist_dir, "win")
