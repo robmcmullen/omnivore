@@ -112,6 +112,7 @@ class NewFileGroup(Group):
     def _get_items(self):
         items = []
 
+        task_id = "omnivore.text_edit"
         for template in iter_templates():
             name = template.get("label", template["uri"])
             task_id = self.application.find_best_task_id(template.get("task", "byte_edit"))
