@@ -106,8 +106,7 @@ class ClipboardSerializer(object):
         size = np.alen(self.clipboard_data)
         return "%s bytes" % (format_number(size))
 
-    @property
-    def summary(self):
+    def __str__(self):
         """Return a string with a summary of the contents of the data object
         """
         return self.size_info
@@ -127,8 +126,7 @@ class TextSelection(ClipboardSerializer):
     data_format_name = "text"
     pretty_name = "Text"
 
-    @property
-    def summary(self):
+    def __str__(self):
         """Return a string with a summary of the contents of the data object
         """
         return "%s text characters" % (format_number(np.alen(self.data)))
@@ -189,8 +187,7 @@ class MultipleBinarySelection(ClipboardSerializer):
     data_format_name = "numpy,multiple"
     pretty_name = "Multiple Selection"
 
-    @property
-    def summary(self):
+    def __str__(self):
         """Return a string with a summary of the contents of the data object
         """
         return "%s in multiple ranges" % (self.size_info)
@@ -222,8 +219,7 @@ class RectangularSelection(ClipboardSerializer):
             return cls.get_composite_object(data.flat, b"%d,%d,%s" % (num_rows, num_cols, data.tobytes()))
         return None
 
-    @property
-    def summary(self):
+    def __str__(self):
         """Return a string with a summary of the contents of the data object
         """
         return "%s bytes in %sx%s rectangle" % (self.size_info, format_number(self.clipboard_num_cols), format_number(self.clipboard_num_rows))

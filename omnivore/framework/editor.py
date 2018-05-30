@@ -321,7 +321,7 @@ class FrameworkEditor(Editor):
         name = self.clipboard_data_format
         try:
             serialized_data = self.copy_selection_to_clipboard(name)
-            self.task.status_bar.message = "Copied %s" % serialized_data.summary
+            self.task.status_bar.message = "Copied %s" % str(serialized_data)
         except clipboard.ClipboardError as e:
             self.window.error(e.message, "Clipboard Error")
 
@@ -344,7 +344,7 @@ class FrameworkEditor(Editor):
             self.window.error(e.message, "Paste Error")
 
     def get_paste_data_from_clipboard(self):
-        return clipboard.get_paste_data()
+        return clipboard.get_paste_data(self)
 
     def process_paste_data(self, serialized_data, cmd_cls=None):
         pass  # Override in subclass
@@ -361,9 +361,6 @@ class FrameworkEditor(Editor):
     # must be a class attribute because for checking clipboard data formats of
     # custom objects, data formats must be singletons
     supported_clipboard_data_objects = [wx.TextDataObject()]
-
-    def create_clipboard_data_object(self):
-        return wx.TextDataObject("Omnivore!")
 
     def print_preview(self):
         raise NotImplementedError
