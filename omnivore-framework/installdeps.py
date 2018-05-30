@@ -17,7 +17,7 @@ parent_dep_dir = ".."
 parent_deps = glob.glob("%s/*/__init__.py" % parent_dep_dir)
 for dep in parent_deps:
     dep = os.path.dirname(dep)
-    if dep.endswith("8bit") or dep.endswith("_extra"):
+    if dep.endswith("8bit") or dep.endswith("_extra") or dep.endswith("udis"):
         continue
     here = os.path.basename(dep)
     print(dep, here)
