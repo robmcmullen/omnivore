@@ -5,7 +5,7 @@ import sys
 import glob
 
 deps = [
-    ['https://github.com/robmcmullen/GnomeTools.git', {'builddir': 'post_gnome'}],
+    ['git@github.com:robmcmullen/GnomeTools.git', {'builddir': 'post_gnome', 'branch': 'py3'}],
     ['https://github.com/robmcmullen/OWSLib.git',],
     ['https://github.com/fathat/glsvg.git',],
     ['https://github.com/robmcmullen/pyugrid.git',],
@@ -67,7 +67,7 @@ for dep in deps:
     except ValueError:
         repourl = dep[0]
         options = {}
-    if repourl.startswith("http"):
+    if repourl.startswith("http") or repourl.startswith("git@"):
         print("UPDATING %s" % repourl)
         _, repo = os.path.split(repourl)
         repodir, _ = os.path.splitext(repo)
