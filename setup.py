@@ -24,10 +24,6 @@ else:
     udis_compile_args = []
 
 ext_modules = [
-    # Extension("traits.ctraits",
-    #           sources = ["traits/ctraits.c"],
-    #           extra_compile_args = ["-DNDEBUG=1", "-O3" ]#, '-DPy_LIMITED_API'],
-    #           ),
     Extension("omnivore8bit.arch.antic_speedups",
               sources=["omnivore8bit/arch/antic_speedups.c"],
               extra_compile_args = ["-O3" ],
@@ -54,6 +50,7 @@ install_requires = [
     'configobj',
     'pyparsing>=2.2.0',
     'wxpython>=4.0.1',
+    'traits>=4.6'
     # 'omni8bit',
     ]
 
@@ -101,8 +98,6 @@ common_includes = [
     "multiprocessing",
     "pkg_resources",
     "configobj",
-    
-    "traits",
     
     "traitsui",
     "traitsui.editors",

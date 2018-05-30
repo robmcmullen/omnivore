@@ -9,7 +9,6 @@ else:
     develop_instead_of_link = False
 
 deps = [
-    ['git@github.com:robmcmullen/traits.git',],
     ['git@github.com:robmcmullen/pyface.git', {'branch': 'wx4may2018'}],
     ['git@github.com:robmcmullen/traitsui.git', {'branch': 'wx4may2018'}],
     ['https://github.com/enthought/apptools.git',],
