@@ -25,7 +25,7 @@ install_requires = [
     'configobj',
     'pyparsing',
     'pytz',
-    'traits'
+    'traits>=4.6'
     ]
 
 
@@ -124,14 +124,9 @@ package_data = {
                  ],
     }
 
-all_packages = find_packages()
-
-# cull packages
-packages = []
-for p in all_packages:
-    if p.startswith("omnivore8bit") or p.startswith("omnivore_extra") or p.startswith("udis"):
-        continue
-    packages.append(p)
+# Remove qt & other unnecessary stuff
+packages = [p for p in find_packages() if not (".qt4" in p or "omnivore8bit" in p or "omnivore_extra" in p or p.startswith("udis"))]
+#print(all_packages)
 
 base_dist_dir = "dist-%s" % spaceless_version
 win_dist_dir = os.path.join(base_dist_dir, "win")
