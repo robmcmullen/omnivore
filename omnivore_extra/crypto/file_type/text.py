@@ -18,7 +18,7 @@ class PrivateTextRecognizer(HasTraits):
     header = b"#!omnivore-private\n"
 
     def identify(self, guess):
-        byte_stream = guess.get_utf8()
+        byte_stream = guess.get_bytes()
         if not byte_stream.startswith(self.header):
             return
         return self.id
