@@ -16,9 +16,9 @@ from ..arch import fonts
 from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 from omnivore.utils.command import DisplayFlags
 
-from omnivore8bit.arch.machine import Machine, Atari800
-from omnivore8bit.utils import searchutil
-from omnivore8bit.ui.segment_grid import SegmentGridControl
+from ..arch.machine import Machine, Atari800
+from ..utils import searchutil
+from ..ui.segment_grid import SegmentGridControl
 from .mouse_modes import NormalSelectMode
 from . import actions as va
 
@@ -670,17 +670,17 @@ class ByteViewersPlugin(FrameworkPlugin):
     )
 
     def _viewers_default(self):
-        # from omnivore8bit.viewers.bitmap import MemoryMapViewer
-        from omnivore8bit.viewers.bitmap2 import BitmapViewer
-        from omnivore8bit.viewers.char2 import CharViewer
-        from omnivore8bit.viewers.cpu2 import DisassemblyViewer
-        from omnivore8bit.viewers.hex2 import HexEditViewer
-        from omnivore8bit.viewers.info import CommentsViewer, UndoViewer, SegmentListViewer
-        from omnivore8bit.viewers.map2 import MapViewer
-        # from omnivore8bit.viewers.tile import TileViewer
-        from omnivore8bit.viewers.jumpman2 import JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer
-        from omnivore8bit.viewers.emulator import Atari800Viewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer
-        from omnivore8bit.viewers.apple2 import HiresViewer
+        # from ..viewers.bitmap import MemoryMapViewer
+        from ..viewers.bitmap2 import BitmapViewer
+        from ..viewers.char2 import CharViewer
+        from ..viewers.cpu2 import DisassemblyViewer
+        from ..viewers.hex2 import HexEditViewer
+        from ..viewers.info import CommentsViewer, UndoViewer, SegmentListViewer
+        from ..viewers.map2 import MapViewer
+        # from ..viewers.tile import TileViewer
+        from ..viewers.jumpman2 import JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer
+        from ..viewers.emulator import Atari800Viewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer
+        from ..viewers.apple2 import HiresViewer
 
         return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer, Atari800Viewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer, HiresViewer]
 

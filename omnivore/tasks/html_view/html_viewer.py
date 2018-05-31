@@ -9,7 +9,7 @@ import wx.html
 from traits.api import Bool, Event, Instance, File, Unicode, Property, provides
 
 # Local imports.
-from omnivore.framework.editor import FrameworkEditor
+from ...framework.editor import FrameworkEditor
 
 import logging
 log = logging.getLogger(__name__)

@@ -7,7 +7,7 @@ import wx
 from traits.api import on_trait_change, Bool, Undefined
 
 from omnivore.framework.undo_panel import UndoHistoryPanel
-from omnivore8bit.byte_edit.segments import SegmentList
+from ..byte_edit.segments import SegmentList
 from . import SegmentViewer
 
 import logging

@@ -18,7 +18,7 @@ from omnivore.utils.command import StatusFlags
 
 from subprocess import *
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
-from omnivore8bit.ui.dialogs import SegmentOrderDialog
+from ..ui.dialogs import SegmentOrderDialog
 from .. import emulators as emu
 from .document import EmulationDocument
 

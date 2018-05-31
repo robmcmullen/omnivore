@@ -8,7 +8,7 @@ import tempfile
 import wx
 import wx.lib.scrolledpanel as scrolled
 
-from omnivore.utils.background_http import BaseRequest, BackgroundHttpMultiDownloader
+from ..background_http import BaseRequest, BackgroundHttpMultiDownloader
 
 import logging
 log = logging.getLogger(__name__)
@@ -276,7 +276,7 @@ if __name__ == "__main__":
     # directory won't work. Have to hack it:
     #
     # PYTHONPATH=../../.. python download_manager.py
-    from omnivore.utils.background_http import BackgroundHttpDownloader
+    from ..background_http import BackgroundHttpDownloader
     import wx.lib.inspection
 
     class MyFrame(wx.Frame):

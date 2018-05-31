@@ -14,12 +14,12 @@ from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
 from pyface.tasks.action.schema import Schema
 from traits.api import provides, on_trait_change, Property, Instance, Bool, Str, Unicode, Int, Event
 
-from omnivore.utils.wx.error_logger import show_logging_frame
-from omnivore.framework.i_about import IAbout
-from omnivore.framework.actions import *
-from omnivore.framework.status_bar_manager import FrameworkStatusBarManager
-from omnivore.framework.preferences import FrameworkPreferences
-import omnivore.utils.wx.dialogs as dialogs
+from ..utils.wx.error_logger import show_logging_frame
+from .i_about import IAbout
+from .actions import *
+from .status_bar_manager import FrameworkStatusBarManager
+from .preferences import FrameworkPreferences
+from ..utils.wx import dialogs
 
 import logging
 log = logging.getLogger(__name__)
@@ -135,8 +135,8 @@ class FrameworkTask(Task):
     # IAbout interface
 
     def _about_version_default(self):
-        from omnivore import __version__
-        return __version__
+        from .. import _omnivore_version
+        return _omnivore_version.version
 
     ###########################################################################
     # 'Task' interface.

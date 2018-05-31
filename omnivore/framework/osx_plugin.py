@@ -11,8 +11,8 @@ from pyface.tasks.api import Task, TaskWindow
 from pyface.action.api import Action, ActionItem, Group, Separator
 from pyface.tasks.action.api import SMenuBar, SMenu, TaskActionManagerBuilder, SchemaAddition
 
-from omnivore.framework.actions import OpenAction, ExitAction, PreferencesAction, AboutAction
-from omnivore.framework.task import FrameworkTask
+from .actions import OpenAction, ExitAction, PreferencesAction, AboutAction
+from .task import FrameworkTask
 
 import logging
 log = logging.getLogger(__name__)

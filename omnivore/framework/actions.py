@@ -10,11 +10,11 @@ from pyface.api import ImageResource, FileDialog, YES, NO, OK, CANCEL
 from traits.api import on_trait_change, Property, Instance, Bool, Str, Unicode, Any, List, Int
 
 from .enthought_api import Action, ActionItem, Group, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup, ApplicationDynamicSubmenuGroup
-from omnivore.framework.about import AboutDialog
-from omnivore.utils.file_guess import FileGuess
-from omnivore.utils.wx.dialogs import get_file_dialog_wildcard, prompt_for_dec
-from omnivore.utils.wx.error_logger import show_logging_frame
-from omnivore.templates import iter_templates
+from .about import AboutDialog
+from ..utils.file_guess import FileGuess
+from ..utils.wx.dialogs import get_file_dialog_wildcard, prompt_for_dec
+from ..utils.wx.error_logger import show_logging_frame
+from ..templates import iter_templates
 
 import logging
 log = logging.getLogger(__name__)
@@ -404,7 +404,7 @@ class PreferencesAction(Action):
             if ui.result:
                 window.application.preferences.save()
 
-        from omnivore.framework.preferences import FrameworkPreferenceDialog
+        from .preferences import FrameworkPreferenceDialog
         dialog = FrameworkPreferenceDialog(application=event.task.window.application, style="modal")
         status = dialog.open()
         if status == OK:

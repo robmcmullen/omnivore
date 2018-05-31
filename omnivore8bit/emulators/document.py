@@ -10,7 +10,7 @@ from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int, Strin
 
 from omni8bit import find_emulator
 
-from omnivore8bit.document import SegmentedDocument
+from ..document import SegmentedDocument
 
 from . import event_loop as el
 

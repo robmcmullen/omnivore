@@ -14,7 +14,7 @@ from envisage.api import ExtensionPoint, Plugin
 from pyface.action.api import Action
 from pyface.tasks.action.api import SchemaAddition
 
-from omnivore.framework.plugin import FrameworkPlugin
+from ..framework.plugin import FrameworkPlugin
 
 
 # dummy i18n handler

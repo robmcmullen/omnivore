@@ -17,12 +17,12 @@ from omnivore.framework.enthought_api import Action, ActionItem, EditorAction, N
 from omnivore.utils.command import StatusFlags
 
 from .commands import *
-from omnivore8bit.arch.disasm import ANTIC_DISASM, JUMPMAN_LEVEL, JUMPMAN_HARVEST, UNINITIALIZED_DATA
-from omnivore8bit.arch.ui.antic_colors import AnticColorDialog
+from ..arch.disasm import ANTIC_DISASM, JUMPMAN_LEVEL, JUMPMAN_HARVEST, UNINITIALIZED_DATA
+from ..arch.ui.antic_colors import AnticColorDialog
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
-from omnivore8bit.ui.dialogs import SegmentOrderDialog, SegmentInterleaveDialog
-from omnivore8bit.arch.machine import Machine
-from omnivore8bit.document import SegmentedDocument
+from ..ui.dialogs import SegmentOrderDialog, SegmentInterleaveDialog
+from ..arch.machine import Machine
+from ..document import SegmentedDocument
 from omnivore.framework.minibuffer import *
 from omnivore.utils.textutil import parse_int_label_dict
 from omnivore.utils.nputil import count_in_range

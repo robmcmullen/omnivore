@@ -14,10 +14,10 @@ from omnivore.framework.enthought_api import EditorAction, NameChangeAction, Tas
 import omnivore.framework.clipboard as clipboard
 
 from . import commands
-from omnivore8bit.arch.ui.antic_colors import AnticColorDialog
+from ..arch.ui.antic_colors import AnticColorDialog
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
-from omnivore8bit.ui.dialogs import prompt_for_assembler
-from omnivore8bit.arch.machine import Machine
+from ..ui.dialogs import prompt_for_assembler
+from ..arch.machine import Machine
 from ..byte_edit.commands import SetCommentCommand
 
 if sys.platform == "darwin":

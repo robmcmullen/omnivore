@@ -12,7 +12,7 @@ from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, 
 
 # Local imports.
 from omnivore.utils.command import Overlay
-from omnivore8bit.utils.drawutil import get_bounds
+from ..utils.drawutil import get_bounds
 from ..byte_edit.commands import ChangeByteCommand
 from ..clipboard_commands import PasteCommand, PasteRectCommand
 from omnivore.framework.mouse_mode import MouseMode

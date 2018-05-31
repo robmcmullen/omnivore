@@ -13,7 +13,7 @@ from omnivore.framework.enthought_api import Action, ActionItem
 from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, ChooseOnePlusCustomDialog
 from omnivore.utils.textutil import text_to_int
 from omnivore.framework.actions import SelectAllAction, SelectNoneAction, SelectInvertAction, TaskDynamicSubmenuGroup
-from omnivore8bit.byte_edit.actions import UseSegmentAction
+from ..byte_edit.actions import UseSegmentAction
 
 from ..viewers.commands import SetValueCommand
 from ..viewers.actions import ViewerAction

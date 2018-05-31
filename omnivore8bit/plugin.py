@@ -29,11 +29,11 @@ class OmnivoreEditorPlugin(FrameworkPlugin):
     tasks = List(contributes_to=TASKS)
 
     def _preferences_panes_default(self):
-        from omnivore8bit.byte_edit import ByteEditPreferencesPane
+        from .byte_edit import ByteEditPreferencesPane
         return [ByteEditPreferencesPane]
 
     def _tasks_default(self):
-        from omnivore8bit.byte_edit import ByteEditTask
+        from .byte_edit import ByteEditTask
 
         return self.task_factories_from_tasks([
             ByteEditTask,

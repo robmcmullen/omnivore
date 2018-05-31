@@ -108,13 +108,13 @@ class OmnivoreMainPlugin(FrameworkPlugin):
 
     def _preferences_panes_default(self):
         from .preferences import FrameworkPreferencesPane
-        from omnivore.tasks.text_edit import TextEditPreferencesPane
-        from omnivore.tasks.html_view import HtmlViewPreferencesPane
+        from ..tasks.text_edit import TextEditPreferencesPane
+        from ..tasks.html_view import HtmlViewPreferencesPane
         return [ FrameworkPreferencesPane, TextEditPreferencesPane, HtmlViewPreferencesPane]
 
     def _tasks_default(self):
-        from omnivore.tasks.text_edit import TextEditTask
-        from omnivore.tasks.html_view import HtmlViewTask
+        from ..tasks.text_edit import TextEditTask
+        from ..tasks.html_view import HtmlViewTask
 
         return self.task_factories_from_tasks([
             TextEditTask,
@@ -122,7 +122,7 @@ class OmnivoreMainPlugin(FrameworkPlugin):
             ])
 
     def _osx_actions_default(self):
-        from omnivore.framework.actions import NewFileGroup
+        from .actions import NewFileGroup
 
         submenu = lambda: SMenu(
             id='NewFileSubmenu', name="New"

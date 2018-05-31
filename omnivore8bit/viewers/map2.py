@@ -12,7 +12,7 @@ from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, 
 
 # Local imports.
 from omnivore.utils.command import Overlay
-from omnivore8bit.utils.drawutil import get_bounds
+from ..utils.drawutil import get_bounds
 from omnivore.utils.sortutil import invert_rects, rect_ranges_to_indexes
 import omnivore.framework.actions as fa
 from ..byte_edit.commands import ChangeByteCommand

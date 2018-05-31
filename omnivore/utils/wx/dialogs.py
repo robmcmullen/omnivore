@@ -7,9 +7,9 @@ import wx
 import wx.lib.filebrowsebutton as filebrowse
 from wx.lib.expando import ExpandoTextCtrl, EVT_ETC_LAYOUT_NEEDED
 
-from omnivore.utils.processutil import which
-from omnivore.utils.textutil import text_to_int
-from omnivore.utils.wx.dropscroller import ReorderableList, PickledDropTarget, PickledDataObject
+from ..processutil import which
+from ..textutil import text_to_int
+from ..wx.dropscroller import ReorderableList, PickledDropTarget, PickledDataObject
 
 
 class SimplePromptDialog(wx.TextEntryDialog):

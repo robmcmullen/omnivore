@@ -3,7 +3,7 @@ from traits.api import HasTraits, provides
 from atrcopy import iter_parsers, SegmentData, UnsupportedDiskImage
 
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
-from omnivore8bit.document import SegmentedDocument
+from ..document import SegmentedDocument
 
 
 @provides(IFileRecognizer)

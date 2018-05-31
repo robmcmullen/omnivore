@@ -16,7 +16,7 @@ from pyface.key_pressed_event import KeyPressedEvent
 from omnivore.framework.editor import FrameworkEditor
 from omnivore.framework.caret import CaretHandler
 from omnivore.utils.command import DisplayFlags
-from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment
+from ..utils.segmentutil import SegmentData, DefaultSegment
 from . import actions as ba
 from . import commands as bc
 from ..jumpman import playfield as jp

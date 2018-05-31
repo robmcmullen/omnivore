@@ -6,7 +6,7 @@ import json
 import jsonpickle
 from datetime import datetime
 
-from omnivore.third_party.appdirs import user_config_dir, user_log_dir, user_cache_dir, user_data_dir
+from ..third_party.appdirs import user_config_dir, user_log_dir, user_cache_dir, user_data_dir
 
 import logging
 log = logging.getLogger(__name__)

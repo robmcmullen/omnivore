@@ -1,7 +1,7 @@
 import wx
 import numpy as np
 
-from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
+from ..utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 
 import logging
 log = logging.getLogger(__name__)

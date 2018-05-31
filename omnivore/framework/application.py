@@ -22,11 +22,11 @@ from .persistence import FilePersistenceMixin
 from .filesystem import init_filesystems
 from .document import BaseDocument
 from . import documentation
-from omnivore.help import get_htmlhelp, MissingDocumentationError
-from omnivore.framework.preferences import FrameworkPreferences, \
+from ..help import get_htmlhelp, MissingDocumentationError
+from .preferences import FrameworkPreferences, \
     FrameworkPreferencesPane
-from omnivore.utils.background_http import BackgroundHttpDownloader
-import omnivore.utils.wx.error_logger as error_logger
+from ..utils.background_http import BackgroundHttpDownloader
+from ..utils.wx import error_logger
 
 import logging
 log = logging.getLogger(__name__)
@@ -350,7 +350,7 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
 
     def load_file(self, uri, active_task=None, task_id="", in_current_window=False, **kwargs):
         log.debug("load_file: uri=%s task_id=%s" % (uri, task_id))
-        from omnivore.utils.file_guess import FileGuess
+        from ..utils.file_guess import FileGuess
         # The FileGuess loads the first part of the file and tries to identify it.
         try:
             guess = FileGuess(uri)

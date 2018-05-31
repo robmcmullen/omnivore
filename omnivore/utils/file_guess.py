@@ -9,7 +9,7 @@ from fs.errors import FSError
 from traits.api import HasTraits, Bool, Str, Unicode, Trait, TraitHandler, Property
 
 from .textutil import guessBinary
-from omnivore.templates import get_template
+from ..templates import get_template
 
 import logging
 log = logging.getLogger(__name__)

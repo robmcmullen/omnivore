@@ -9,8 +9,8 @@ from traits.api import HasTraits, on_trait_change, Any, Instance, List, Bool, In
 from envisage.api import ExtensionPoint, Plugin
 
 # Local imports.
-from omnivore.framework.plugin import FrameworkPlugin
-from omnivore.framework.errors import ProgressCancelError
+from ..framework.plugin import FrameworkPlugin
+from ..framework.errors import ProgressCancelError
 
 import logging
 log = logging.getLogger(__name__)

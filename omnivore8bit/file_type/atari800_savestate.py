@@ -5,7 +5,7 @@ from traits.api import HasTraits, provides
 from atrcopy import SegmentData, SegmentParser, InvalidSegmentParser, ObjSegment, get_style_bits
 
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
-from omnivore8bit.document import SegmentedDocument
+from ..document import SegmentedDocument
 
 try:
     from pyatari800 import parse_atari800

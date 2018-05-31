@@ -9,7 +9,7 @@ from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bi
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable, SegmentGridTextCtrl
 from omnivore.utils.wx import compactgrid as cg
-from omnivore8bit.arch.disasm import get_style_name
+from ..arch.disasm import get_style_name
 
 from ..byte_edit.actions import GotoIndexAction
 from ..byte_edit.commands import ChangeByteCommand

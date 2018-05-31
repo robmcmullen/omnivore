@@ -1,7 +1,7 @@
 import os
 import sys
 
-from omnivore.utils.textutil import slugify
+from ..utils.textutil import slugify
 
 import logging
 log = logging.getLogger(__name__)

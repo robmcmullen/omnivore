@@ -24,7 +24,7 @@ from traits.api import Bool, Event, Instance, File, Unicode, Property, provides
 from pyface.wx.python_stc import PythonSTC, faces
 
 # Local imports.
-from omnivore.framework.editor import FrameworkEditor
+from ...framework.editor import FrameworkEditor
 from .i_styled_text_editor import IStyledTextEditor
 from pyface.key_pressed_event import KeyPressedEvent
 

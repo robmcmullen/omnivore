@@ -107,23 +107,23 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], template_path=[],
     from envisage.core_plugin import CorePlugin
 
     # Local imports.
-    from omnivore.framework.application import FrameworkApplication
-    from omnivore.framework.plugin import OmnivoreTasksPlugin, OmnivoreMainPlugin
-    from omnivore.file_type.plugin import FileTypePlugin
+    from .framework.application import FrameworkApplication
+    from .framework.plugin import OmnivoreTasksPlugin, OmnivoreMainPlugin
+    from .file_type.plugin import FileTypePlugin
     from omnivore import get_image_path
-    from omnivore.utils.jobs import get_global_job_manager
+    from .utils.jobs import get_global_job_manager
 
     # Include standard plugins
     core_plugins = [ CorePlugin(), OmnivoreTasksPlugin(), OmnivoreMainPlugin(), FileTypePlugin() ]
     if sys.platform == "darwin":
-        from omnivore.framework.osx_plugin import OSXMenuBarPlugin
+        from .framework.osx_plugin import OSXMenuBarPlugin
         core_plugins.append(OSXMenuBarPlugin())
 
-    import omnivore.file_type.recognizers
-    core_plugins.extend(omnivore.file_type.recognizers.plugins)
+    from .file_type import recognizers
+    core_plugins.extend(recognizers.plugins)
 
-    import omnivore.plugins
-    core_plugins.extend(omnivore.plugins.plugins)
+    from . import plugins as omnivore_plugins
+    core_plugins.extend(omnivore_plugins.plugins)
 
     # Add the user's plugins
     core_plugins.extend(plugins)
@@ -175,7 +175,7 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], template_path=[],
     image_paths.append(get_image_path("../omnivore8bit/icons"))
     resource_manager.extra_paths.extend(image_paths)
 
-    from omnivore.templates import template_subdirs
+    from .templates import template_subdirs
     template_subdirs.extend(template_path)
 
     kwargs = {}
@@ -200,7 +200,7 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], template_path=[],
 
     # check for logging stuff again to pick up any new loggers loaded since
     # startup
-    import omnivore.utils.wx.error_logger as error_logger
+    from .utils.wx import error_logger
     if "-d" in extra_args:
         i = extra_args.index("-d")
         error_logger.enable_loggers(extra_args[i+1])

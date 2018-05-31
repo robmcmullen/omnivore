@@ -17,9 +17,9 @@ import omnivore.framework.clipboard as clipboard
 from omnivore.utils.file_guess import FileMetadata
 from omnivore.utils.wx.tilemanager import TileManager
 from omnivore.templates import get_template
-from omnivore8bit.arch.machine import Machine, Atari800
-from omnivore8bit.document import SegmentedDocument
-from omnivore8bit.utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
+from ..arch.machine import Machine, Atari800
+from ..document import SegmentedDocument
+from ..utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
 from .. import emulators as emu
 
 from omnivore.utils.processutil import run_detach
@@ -607,9 +607,9 @@ class ByteEditor(FrameworkEditor):
             self.viewers.remove(v)
             v.prepare_for_destroy()
 
-            import omnivore8bit.viewers
+            from .. import viewers as omnivore8bit_viewers
             if not self.viewers:
-                v = self.add_viewer(omnivore8bit.viewers.PlaceholderViewer, linked_base_save)
+                v = self.add_viewer(omnivore8bit_viewers.PlaceholderViewer, linked_base_save)
             self.set_focused_viewer(self.viewers[0])
             del v
 

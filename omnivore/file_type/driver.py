@@ -1,7 +1,7 @@
 from traits.api import HasTraits, provides, List, Instance, Any
 
-from omnivore.utils.sortutil import before_after_wildcard_sort
-from omnivore.framework.document import DocumentError
+from ..utils.sortutil import before_after_wildcard_sort
+from ..framework.document import DocumentError
 
 from .i_file_recognizer import IFileRecognizer, IFileRecognizerDriver
 

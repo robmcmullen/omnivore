@@ -10,8 +10,8 @@ from pyface.action.api import Action, ActionItem, Group, Separator
 from pyface.tasks.action.api import SMenu, TaskAction, EditorAction, SchemaAddition
 from traitsui.api import EnumEditor, HGroup, VGroup, Item, Label, View
 
-from omnivore.framework.plugin import FrameworkPlugin
-from omnivore.framework.actions import ApplicationDynamicSubmenuGroup
+from ..framework.plugin import FrameworkPlugin
+from ..framework.actions import ApplicationDynamicSubmenuGroup
 
 import logging
 log = logging.getLogger(__name__)

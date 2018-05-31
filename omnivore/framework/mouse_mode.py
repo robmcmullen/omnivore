@@ -6,7 +6,7 @@ import weakref
 import wx
 
 # Local imports.
-from omnivore import get_image_path
+from .. import get_image_path
 
 import logging
 log = logging.getLogger(__name__)

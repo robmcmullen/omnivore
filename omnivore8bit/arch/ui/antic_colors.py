@@ -6,8 +6,7 @@ import wx.lib.sized_controls as sc
 import wx.lib.colourselect as csel
 import wx.lib.colourchooser.canvas as canvas
 
-from omnivore8bit.arch import colors
-from omnivore8bit.arch.machine import Machine
+from ...arch import colors
 
 
 #704  2C0  PCOLR0
@@ -259,6 +258,8 @@ if __name__ == "__main__":
     """
     simple test for the dialog
     """
+    from omnivore8bit.arch.machine import Machine
+
     a = wx.App(False)
     import wx.lib.inspection
     wx.lib.inspection.InspectionTool().Show()

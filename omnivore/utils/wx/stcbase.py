@@ -8,8 +8,8 @@ import wx.stc
 from io import StringIO
 
 from .stcinterface import *
-from omnivore.utils.textutil import *
-from omnivore.utils.clipboard import *
+from ..textutil import *
+from ..clipboard import *
 
 import logging
 log = logging.getLogger(__name__)

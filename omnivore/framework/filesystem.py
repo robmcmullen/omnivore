@@ -13,12 +13,12 @@ import fs
 import wx
 import numpy as np
 
-from omnivore.templates import get_template_fh, find_template_path
+from ..templates import get_template_fh, find_template_path
 
 import logging
 log = logging.getLogger(__name__)
 
-from omnivore import __version__, __author__, __author_email__, __url__
+from .. import __version__, __author__, __author_email__, __url__
 substitutes = {
     'prog': 'Omnivore XL',
     'yearrange': '2014-2017',

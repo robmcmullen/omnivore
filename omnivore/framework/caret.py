@@ -10,8 +10,8 @@ import fs
 # Enthought library imports.
 from traits.api import on_trait_change, HasTraits, Any, Bool, Int, Unicode, Property, Dict, List, Str, Undefined, Event
 
-from omnivore.utils.command import HistoryList
-from omnivore.utils.sortutil import collapse_overlapping_ranges, invert_ranges, ranges_to_indexes
+from ..utils.command import HistoryList
+from ..utils.sortutil import collapse_overlapping_ranges, invert_ranges, ranges_to_indexes
 
 import logging
 log = logging.getLogger(__name__)

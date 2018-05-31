@@ -11,8 +11,8 @@ from pyface.tasks.action.api import DockPaneToggleGroup, SMenuBar, \
     SMenu, SToolBar, TaskAction, TaskToggleGroup, EditorAction, SchemaAddition
 from traits.api import on_trait_change, Property, Instance, Any, Event, Int
 
-from omnivore.framework.task import FrameworkTask
-from omnivore.framework.actions import *
+from ...framework.task import FrameworkTask
+from ...framework.actions import *
 from .html_viewer import HtmlViewer
 from .preferences import HtmlViewPreferences
 from . import pane_layout

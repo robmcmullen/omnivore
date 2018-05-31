@@ -14,7 +14,7 @@ from omnivore.utils.textutil import text_to_int
 from omnivore.utils.wx.dropscroller import ReorderableList, PickledDropTarget, PickledDataObject
 from omnivore.utils.wx.dialogs import DictEditDialog
 
-from omnivore8bit.document import SegmentedDocument
+from ..document import SegmentedDocument
 
 
 class AssemblerDialog(DictEditDialog):

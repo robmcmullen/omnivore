@@ -1,6 +1,6 @@
 import numpy as np
 
-from omnivore8bit.commands import SetRangeCommand, SetRangeValueCommand, ChangeStyleCommand
+from ..commands import SetRangeCommand, SetRangeValueCommand, ChangeStyleCommand
 from omnivore.utils.permute import bit_reverse_table
 
 import logging

@@ -19,10 +19,8 @@ from . import actions as ba
 from ..viewers import actions as va
 from ..jumpman import commands as ja
 from ..emulators import actions as ea
-import omnivore8bit.arch.fonts as fonts
-import omnivore8bit.arch.colors as colors
-import omnivore8bit.arch.machine as machine
-from omnivore8bit.utils.segmentutil import iter_known_segment_parsers
+from ..arch import fonts, colors, machine
+from ..utils.segmentutil import iter_known_segment_parsers
 
 
 class ByteEditTask(FrameworkTask):

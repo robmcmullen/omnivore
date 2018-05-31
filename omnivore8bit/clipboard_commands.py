@@ -1,7 +1,7 @@
 import numpy as np
 
 from omnivore.utils.command import Command, UndoInfo
-from omnivore8bit.commands import SegmentCommand
+from .commands import SegmentCommand
 from omnivore.utils.sortutil import ranges_to_indexes, indexes_to_ranges, collapse_overlapping_ranges
 
 import logging

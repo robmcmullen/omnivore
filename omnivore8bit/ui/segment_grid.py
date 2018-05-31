@@ -5,7 +5,7 @@ from omnivore.utils.command import DisplayFlags
 from omnivore.utils.wx import compactgrid as cg
 from omnivore.utils.wx.char_event_mixin import CharEventMixin
 from omnivore.framework.mouse_mode import MouseMode
-from omnivore8bit.arch.disasm import get_style_name
+from ..arch.disasm import get_style_name
 from omnivore.framework import actions as fa
 from ..byte_edit import actions as ba
 from ..viewers import actions as va

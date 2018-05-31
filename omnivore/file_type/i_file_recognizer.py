@@ -1,7 +1,7 @@
 # Enthought library imports.
 from traits.api import Interface, Str, List, Instance, provides, HasTraits
 
-from omnivore.framework.document import BaseDocument
+from ..framework.document import BaseDocument
 
 
 class IFileRecognizer(Interface):

@@ -12,12 +12,12 @@ from pyface.api import YES, NO
 from pyface.tasks.api import Editor
 from pyface.action.api import ActionEvent
 
-from omnivore import __version__
-from omnivore.utils.command import HistoryList, StatusFlags
-from omnivore.utils.file_guess import FileGuess
-from omnivore.framework.document import DocumentError
-from omnivore.framework.caret import CaretHandler
-import omnivore.framework.clipboard as clipboard
+from .._omnivore_version import version
+from ..utils.command import HistoryList, StatusFlags
+from ..utils.file_guess import FileGuess
+from ..framework.document import DocumentError
+from ..framework.caret import CaretHandler
+from . import clipboard
 
 import logging
 log = logging.getLogger(__name__)
@@ -151,7 +151,7 @@ class FrameworkEditor(Editor):
         self.metadata_dirty = False
 
     def get_extra_metadata_header(self):
-        return "# omnivore %s extra_metadata=v1\n" % __version__
+        return "# omnivore %s extra_metadata=v1\n" % version
 
     def from_metadata_dict(self, e):
         """ Set up additional object attributes from the dict argument

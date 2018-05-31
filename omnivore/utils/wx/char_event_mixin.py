@@ -1,6 +1,6 @@
 import wx
 
-from omnivore.utils.command import DisplayFlags
+from ..command import DisplayFlags
 
 import logging
 log = logging.getLogger(__name__)

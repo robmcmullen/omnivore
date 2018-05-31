@@ -9,8 +9,8 @@ import wx.lib.scrolledpanel
 from wx.lib.expando import ExpandoTextCtrl
 from wx.lib.stattext import GenStaticText  # standard static text can't set background color on some platforms
 
-from omnivore8bit.arch.atascii import internal_to_atascii, atascii_to_internal
-from omnivore8bit.arch.ui.antic_colors import AnticColorDialog
+from ..arch.atascii import internal_to_atascii, atascii_to_internal
+from ..arch.ui.antic_colors import AnticColorDialog
 from omnivore.utils.runtime import get_all_subclasses
 
 import logging
