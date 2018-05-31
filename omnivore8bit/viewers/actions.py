@@ -515,7 +515,7 @@ class IndexRangeValueAction(IndexRangeAction):
     def show_dialog(self):
         value = prompt_for_hex(self.viewer.control, self.prompt, self.cmd.pretty_name)
         if value is not None:
-            cmd = self.cmd(self.linked_base.segment, self.linked_base.selected_ranges, value)
+            cmd = self.cmd(self.linked_base.segment, self.linked_base.carets.selected_ranges, value)
             self.active_editor.process_command(cmd)
 
     def perform(self, event):
