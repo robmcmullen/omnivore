@@ -10,7 +10,7 @@ import wx.lib.dialogs
 # Enthought library imports.
 from traits.api import Any, Int
 
-from omnivore.framework.enthought_api import EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
+from omnivore.framework.enthought_api import ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
 import omnivore.framework.clipboard as clipboard
 
 from . import commands
