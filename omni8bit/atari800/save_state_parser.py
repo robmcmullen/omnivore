@@ -15,6 +15,10 @@ import numpy as np
 
 from construct import *
 
+import logging
+log = logging.getLogger(__name__)
+
+
 Atari800_MACHINE_XLXE = 1
 MEMORY_RAM_320_RAMBO = 320
 MEMORY_RAM_320_COMPY_SHOP = 321
@@ -667,7 +671,7 @@ def get_offsets(container, prefix, comments, segments, dtypes, data_offset=0, cu
     origin = 0
     for k,v in list(container.items()):
         if k.endswith("_offset"):
-            print(("offset", prefix + k[:-7], v))
+            log.debug(("offset", prefix + k[:-7], v))
             comments[v + data_offset] = prefix + k[:-7]
             if current_dtype is not None:
                 if len(current_dtype) > 0:
@@ -678,7 +682,7 @@ def get_offsets(container, prefix, comments, segments, dtypes, data_offset=0, cu
             c = current_dtype
             if c is not None and len(c) > 0:
                 dname, dstart, end = c.pop()
-                print(("HTOESURCHOSECRUHOEUH", k, dname, dstart, end))
+                log.debug(("HTOESURCHOSECRUHOEUH", k, dname, dstart, end))
                 c.append((dname, dstart, v))
         elif k.endswith("_segment"):
             args = k.split("_")
@@ -687,13 +691,13 @@ def get_offsets(container, prefix, comments, segments, dtypes, data_offset=0, cu
                 origin = int(args.pop()[1:], 16)
             else:
                 origin = 0
-            print(("segment:" + prefix + k[:-7], v))
+            log.debug(("segment:" + prefix + k[:-7], v))
             start = v
             name = " ".join(args)
             current_dtype = []
         elif k.endswith("_segment_end"):
             segments.append((start + data_offset, v + data_offset, origin, name))
-            print(("end segment:" + prefix + name, v, segments[-1]))
+            log.debug(("end segment:" + prefix + name, v, segments[-1]))
             if name in dtypes:
                 last_dtype = dtypes[name]
                 if len(last_dtype) > 0:
@@ -701,11 +705,11 @@ def get_offsets(container, prefix, comments, segments, dtypes, data_offset=0, cu
                     last_dtype.append((dname, dstart, v + data_offset))
 
         elif type(v) == Container:
-            print(("Container: %s" % k))
+            log.debug(("Container: %s" % k))
             c = []
             index = get_offsets(v, prefix + "%s_" % k, comments, segments, dtypes, data_offset, c)
             dtypes[k] = c
-            print(("End Container: %s" % k, c))
+            log.debug(("End Container: %s" % k, c))
 
 
 def parse_state(data, data_offset):
@@ -718,9 +722,9 @@ def parse_state(data, data_offset):
     dtypes = {}
     for name, index_data in dtypes_setup.items():
         d = []
-        print(("dtypes for %s" % name))
+        log.debug(("dtypes for %s" % name))
         for varname, start, stop in index_data:
-            print(("varname", varname, start, stop))
+            log.debug(("varname", varname, start, stop))
             size = stop - start
             if size == 1:
                 d.append((varname, np.uint8))
@@ -733,7 +737,7 @@ def parse_state(data, data_offset):
                 if size < 0:
                     size = 1
                 d.append((varname, np.uint8, size))
-        print(("dtype=%s" % str(d)))
+        log.debug(("dtype=%s" % str(d)))
         dtypes[name] = np.dtype(d)
     names = {v: k for k, v in offsets.items()}
     segment_starts = {name: start for start, _, _, name in segments}
