@@ -97,7 +97,7 @@ class EmulatorControlBase(object):
         def on_timer(self, evt):
             now = time.time()
             self.emulator.next_frame()
-            print(("showing frame %d" % self.emulator.output['frame_number']))
+            print(f"showing frame {self.emulator.output['frame_number']} {self.emulator.current_cpu_status}")
             self.emulator_panel.show_frame()
             self.show_audio()
 
@@ -368,10 +368,10 @@ class EmulatorFrame(EmulatorControlBase, wx.Frame):
 
         self.frame_cursor = -1
 
-        self.emulator.configure_emulator(self.parsed_args, start_monitor, self)
+        self.emulator.configure_emulator([], start_monitor, self)
 
-        if bootfile:
-            self.emulator.boot_from_file(bootfile)
+        if self.parsed_args:
+            self.emulator.boot_from_file(self.parsed_args[0])
 
         if autostart:
             wx.CallAfter(self.on_start, None)

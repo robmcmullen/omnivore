@@ -28,6 +28,14 @@ class Generic6502(EmulatorBase):
 
     low_level_interface = lib6502
 
+    @property
+    def current_cpu_status(self):
+        pc, a, x, y, sp, p = self.cpu_state
+        dtype = d.STATESAV_DTYPE
+        state = self.state_array[0:int(d.STATESAV_DTYPE.itemsize)].view(dtype=d.STATESAV_DTYPE)[0]
+        # print("raw: %s" % self.raw_array[0:32])
+        return "A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x cycles=%ld" % (a, x, y, sp, p, pc, state['total_cycles'])
+
     def debug_video(self):
         video_mem = self.state_array[17:]
         offset = 0x2000
@@ -48,13 +56,6 @@ class Generic6502(EmulatorBase):
                         print(repr(c), end=' ')
             print()
             offset += 40;
-
-    def debug_state(self):
-        pc, a, x, y, sp, p = self.cpu_state
-        dtype = d.STATESAV_DTYPE
-        state = self.state_array[0:int(d.STATESAV_DTYPE.itemsize)].view(dtype=d.STATESAV_DTYPE)[0]
-        print(("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x cycles=%ld" % (a, x, y, sp, p, pc, state['total_cycles'])))
-        # print("raw: %s" % self.raw_array[0:32])
 
     def generate_extra_segments(self):
         cpu_offset = self.state_start_offset

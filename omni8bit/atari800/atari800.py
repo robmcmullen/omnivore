@@ -124,6 +124,21 @@ class Atari800(EmulatorBase):
     def current_frame_number(self):
         return self.output['frame_number'][0]
 
+    @property
+    def current_cpu_status(self):
+        a, p, sp, x, y, _, pc = self.cpu_state
+
+        # Confirm validity by checking raw locations
+        names = self.names
+        raw = self.raw_array
+        assert a == raw[names['CPU_A']]
+        assert p == raw[names['CPU_P']]
+        assert sp == raw[names['CPU_S']]
+        assert x == raw[names['CPU_X']]
+        assert y == raw[names['CPU_Y']]
+        assert pc == (raw[names['PC']] + 256 * raw[names['PC'] + 1])
+        return "A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc)
+
     def configure_event_loop(self, event_loop=None, event_loop_args=None, *args, **kwargs):
         if event_loop is None:
             event_loop = start_monitor_event_loop
@@ -132,7 +147,7 @@ class Atari800(EmulatorBase):
         return event_loop, event_loop_args
 
     def process_args(self, emu_args):
-        if emu_args is None:
+        if not emu_args:
             emu_args = [
                 "-basic",
                 #"-shmem-debug-video",
@@ -168,20 +183,6 @@ class Atari800(EmulatorBase):
             print()
             offset += 336;
 
-    def debug_state(self):
-        a, p, sp, x, y, _, pc = self.cpu_state
-
-        # Confirm validity by checking raw locations
-        names = self.names
-        raw = self.raw_array
-        assert a == raw[names['CPU_A']]
-        assert p == raw[names['CPU_P']]
-        assert sp == raw[names['CPU_S']]
-        assert x == raw[names['CPU_X']]
-        assert y == raw[names['CPU_Y']]
-        assert pc == (raw[names['PC']] + 256 * raw[names['PC'] + 1])
-        print(("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc)))
-
     def calc_cpu_data_array(self):
         names = self.names
         computed_dtype = np.dtype([
@@ -214,11 +215,13 @@ class Atari800(EmulatorBase):
         """Simulate an initial power-on startup.
         """
         self.send_special_key(akey.AKEY_COLDSTART)
+        self.configure_io_arrays()
 
     def warmstart(self):
         """Simulate a warm start; i.e. pressing the system reset button
         """
         self.send_special_key(akey.AKEY_WARMSTART)
+        self.configure_io_arrays()
 
     def keypress(self, ascii_char):
         self.send_char(ord(ascii_char))

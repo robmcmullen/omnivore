@@ -88,6 +88,9 @@ class EmulatorBase(object):
         self.args = self.process_args(emu_args)
         event_loop, event_loop_args = self.configure_event_loop(*args, **kwargs)
         self.low_level_interface.start_emulator(self.args, event_loop, event_loop_args)
+        self.configure_io_arrays()
+
+    def configure_io_arrays(self):
         self.low_level_interface.prepare_arrays(self.input, self.output)
         self.parse_state()
         self.generate_extra_segments()
@@ -98,7 +101,7 @@ class EmulatorBase(object):
         return None, None
 
     def process_args(self, emu_args):
-        return emu_args
+        return emu_args if emu_args else []
 
     def boot_from_segment(self, boot_segment):
         if self.bootfile is not None:
@@ -117,7 +120,7 @@ class EmulatorBase(object):
             self.bootfile = None
 
     def boot_from_file(self, filename):
-        self.load_disk(1, self.bootfile)
+        self.load_disk(1, filename)
         self.coldstart()
 
     def parse_state(self):
@@ -162,7 +165,7 @@ class EmulatorBase(object):
     def debug_state(self):
         """Show CPU status registers
         """
-        pass
+        print(self.current_cpu_status)
 
     # Emulator user input functions
 
