@@ -87,11 +87,12 @@ class EmulatorBase(object):
     def configure_emulator(self, emu_args=None, *args, **kwargs):
         self.args = self.process_args(emu_args)
         event_loop, event_loop_args = self.configure_event_loop(*args, **kwargs)
+        self.low_level_interface.clear_state_arrays(self.input, self.output)
         self.low_level_interface.start_emulator(self.args, event_loop, event_loop_args)
         self.configure_io_arrays()
 
     def configure_io_arrays(self):
-        self.low_level_interface.prepare_arrays(self.input, self.output)
+        self.low_level_interface.configure_state_arrays(self.input, self.output)
         self.parse_state()
         self.generate_extra_segments()
         self.cpu_state = self.calc_cpu_data_array()

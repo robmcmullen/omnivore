@@ -6,7 +6,8 @@ ctypedef void (*monitor_callback_ptr)()
 
 cdef extern:
     int a8_init(int, char **, monitor_callback_ptr)
-    void a8_prepare_arrays(void *input, void *output)
+    void a8_clear_state_arrays(void *input, void *output)
+    void a8_configure_state_arrays(void *input, void *output)
     void a8_next_frame(void *input, void *output)
     int a8_mount_disk_image(int diskno, const char *filename, int readonly)
     void a8_get_current_state(void *output)
@@ -53,13 +54,21 @@ def start_emulator(args, python_callback_function, python_callback_args):
     a8_init(argc, argv, &callback)
     free(c_args)
 
-def prepare_arrays(np.ndarray input not None, np.ndarray output not None):
+def clear_state_arrays(np.ndarray input not None, np.ndarray output not None):
     cdef np.uint8_t[:] ibuf
     cdef np.uint8_t[:] obuf
 
     ibuf = input.view(np.uint8)
     obuf = output.view(np.uint8)
-    a8_prepare_arrays(&ibuf[0], &obuf[0])
+    a8_clear_state_arrays(&ibuf[0], &obuf[0])
+
+def configure_state_arrays(np.ndarray input not None, np.ndarray output not None):
+    cdef np.uint8_t[:] ibuf
+    cdef np.uint8_t[:] obuf
+
+    ibuf = input.view(np.uint8)
+    obuf = output.view(np.uint8)
+    a8_configure_state_arrays(&ibuf[0], &obuf[0])
 
 def next_frame(np.ndarray input not None, np.ndarray output not None):
     cdef np.uint8_t[:] ibuf

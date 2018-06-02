@@ -42,7 +42,11 @@ void lib6502_init_cpu(float frequency_mhz, float refresh_rate_hz) {
 	lib6502_init_debug_kernel();
 }
 
-void lib6502_prepare_arrays(void *input, ProcessorState *output)
+void lib6502_clear_state_arrays(void *input, ProcessorState *output)
+{
+}
+
+void lib6502_configure_state_arrays(void *input, ProcessorState *output)
 {
 }
 
