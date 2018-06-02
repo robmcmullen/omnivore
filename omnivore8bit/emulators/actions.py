@@ -75,6 +75,23 @@ class BootSegmentAction(EditorAction):
         self.enabled = not self.active_editor.has_emulator
 
 
+class LoadSegmentAction(EditorAction):
+    """Initialize memory of an emulator using the contents of some
+    selected segments.
+    """
+    name = "Load Current Segment"
+    tooltip = "Create (but not boot) an emulator using current segment to pre-fill the memory"
+
+    def perform(self, event=None):
+        #self.task.new(self.active_editor.document, emu.default_emulator)
+        doc = EmulationDocument(source_document=self.active_editor.document, emulator_type=emu.default_emulator)
+        doc.load(self.active_editor.segment)
+        self.task.new(doc)
+
+    def _update_enabled(self, ui_state):
+        self.enabled = not self.active_editor.has_emulator
+
+
 class EmulatorAction(EditorAction):
     """Base class for emulator actions
     """

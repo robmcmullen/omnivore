@@ -112,6 +112,21 @@ class EmulationDocument(SegmentedDocument):
         if segment is None:
             segment = self.source_document.container_segment
         emu = self.emulator
+        emu.configure_emulator([], event_loop=el.start_monitor, event_loop_args=self)
+        emu.boot_from_segment(segment)
+        for i in range(self.skip_frames_on_boot):
+            emu.next_frame()
+        self.bytes = emu.raw_array
+        self.style = np.zeros([len(self.bytes)], dtype=np.uint8)
+        self.parse_segments([segment_parser_factory(emu.segments)])
+        log.debug("Segments after boot: %s" % str(self.segments))
+        self.create_timer()
+        self.start_timer()
+
+    def load(self, segment=None):
+        if segment is None:
+            segment = self.source_document.container_segment
+        emu = self.emulator
         emu.begin_emulation([], segment, event_loop=el.start_monitor, event_loop_args=self)
         for i in range(self.skip_frames_on_boot):
             emu.next_frame()
