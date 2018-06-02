@@ -64,7 +64,7 @@ class BaseDocument(HasTraits):
 
     baseline_document = Any(transient=True)
 
-    bytes = Trait("", TraitNumpyConverter())
+    bytes = Trait(b"", TraitNumpyConverter())
 
     segments = List
 
@@ -103,7 +103,7 @@ class BaseDocument(HasTraits):
         return UndoStack()
 
     def _bytes_default(self):
-        return ""
+        return b""
 
     def _uuid_default(self):
         return str(uuid.uuid4())
