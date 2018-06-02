@@ -33,6 +33,10 @@ INPUT_DTYPE = np.dtype([
 
 OUTPUT_DTYPE = np.dtype([
     ("frame_number", np.uint32),
+    ("frame_finished", np.uint8),
+    ("breakpoint_hit", np.uint8),
+    ("unused1", np.uint8),
+    ("unused2", np.uint8),
     ("video", np.uint8, VIDEO_SIZE),
     ("audio", np.uint8, AUDIO_SIZE),
     ("state", np.uint8, STATESAV_MAX_SIZE),

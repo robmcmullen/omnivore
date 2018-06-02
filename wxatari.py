@@ -283,7 +283,7 @@ class EmulatorFrame(EmulatorControlBase, wx.Frame):
     parsed_args = []
     options = {}
 
-    def __init__(self, autostart=True):
+    def __init__(self, bootfile=None, autostart=True):
         wx.Frame.__init__(self, None, -1, "wxPython atari800 test", pos=(50,50),
                          size=(200,100), style=wx.DEFAULT_FRAME_STYLE)
         EmulatorControlBase.__init__(self, a8.wxAtari800())
@@ -368,7 +368,10 @@ class EmulatorFrame(EmulatorControlBase, wx.Frame):
 
         self.frame_cursor = -1
 
-        self.emulator.begin_emulation(self.parsed_args, start_monitor, self)
+        self.emulator.configure_emulator(self.parsed_args, start_monitor, self)
+
+        if bootfile:
+            self.emulator.boot_from_file(bootfile)
 
         if autostart:
             wx.CallAfter(self.on_start, None)

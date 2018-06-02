@@ -14,6 +14,8 @@ cdef extern:
     int a8_monitor_step(int addr)
     void a8_monitor_summary()
     void a8_monitor_clear()
+    int a8_breakpoint_set(int addr)
+    int a8_breakpoint_clear()
 
 cdef char ** to_cstring_array(list_str):
     cdef char **ret = <char **>malloc(len(list_str) * sizeof(char *))
@@ -73,7 +75,8 @@ def get_current_state(np.ndarray output not None):
     obuf = output.view(np.uint8)
     a8_get_current_state(&obuf[0])
 
-def load_disk(int disknum, char *filename, int readonly=0):
+def load_disk(int disknum, pathname, int readonly=0):
+    filename = pathname.encode('utf-8')
     a8_mount_disk_image(disknum, filename, readonly)
 
 def restore_state(np.ndarray state not None):
@@ -91,3 +94,9 @@ def monitor_summary():
 
 def monitor_clear():
     a8_monitor_clear()
+
+def breakpoint_set(int addr):
+    a8_breakpoint_set(addr)
+
+def breakpoint_clear():
+    a8_breakpoint_clear()

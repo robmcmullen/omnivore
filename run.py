@@ -20,7 +20,7 @@ if __name__ == "__main__":
     else:
         print(("Emulating: %s" % emu_cls.pretty_name))
         emu = emu_cls()
-        emu.begin_emulation()
+        emu.configure_emulator()
         names = emu.names
         print(names)
         # with open("state.a8", "wb") as fh:
@@ -36,3 +36,5 @@ if __name__ == "__main__":
                 # emu.debug_state()
             if emu.current_frame_number > 100:
                 emu.keypress('A')
+            if emu.current_frame_number > 150:
+                emu.breakpoint_set(0xfe88)

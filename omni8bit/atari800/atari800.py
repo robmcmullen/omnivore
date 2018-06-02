@@ -1,7 +1,4 @@
-import os
-import ctypes
 import time
-import tempfile
 
 import numpy as np
 
@@ -134,31 +131,14 @@ class Atari800(EmulatorBase):
             event_loop_args = self
         return event_loop, event_loop_args
 
-    def process_args(self, emu_args, boot_segment=None):
+    def process_args(self, emu_args):
         if emu_args is None:
             emu_args = [
                 "-basic",
                 #"-shmem-debug-video",
                 #"jumpman.atr"
             ]
-        if boot_segment is not None:
-            fd, self.bootfile = tempfile.mkstemp(".atari_boot_segment")
-            fh = os.fdopen(fd, "wb")
-            fh.write(boot_segment.data.tobytes())
-            fh.close()
-            emu_args.append(self.bootfile)
-        else:
-            self.bootfile = None
-
         return emu_args
-
-    def boot_from_segment(self, segment):
-        if self.bootfile is not None:
-            try:
-                os.remove(self.bootfile)
-                self.bootfile = None
-            except:  # MSW raises WindowsError, but that's not defined cross-platform
-                log.warning("Unable to remove temporary boot file %s." % self.bootfile)
 
     def generate_extra_segments(self):
         self.offsets, self.names, extra_segments, self.segment_starts, self.computed_dtypes = parse_state(self.output['state'], self.state_start_offset)

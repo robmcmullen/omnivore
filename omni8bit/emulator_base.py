@@ -1,3 +1,6 @@
+import os
+import tempfile
+
 import numpy as np
 
 
@@ -23,6 +26,7 @@ class EmulatorBase(object):
         self.input = np.zeros([1], dtype=self.input_array_dtype)
         self.output = np.zeros([1], dtype=self.output_array_dtype)
 
+        self.bootfile = None
         self.frame_count = 0
         self.frame_event = []
         self.history = {}
@@ -30,6 +34,7 @@ class EmulatorBase(object):
         self.names = None
         self.segments = None
         self.active_event_loop = None
+        self.main_memory = None
         self.compute_color_map()
         self.screen_rgb, self.screen_rgba = self.calc_screens()
 
@@ -79,8 +84,8 @@ class EmulatorBase(object):
     def serialize_state(self, mdict):
         return {"name": self.name}
 
-    def begin_emulation(self, emu_args=None, boot_segment=None, *args, **kwargs):
-        self.args = self.process_args(emu_args, boot_segment)
+    def configure_emulator(self, emu_args=None, *args, **kwargs):
+        self.args = self.process_args(emu_args)
         event_loop, event_loop_args = self.configure_event_loop(*args, **kwargs)
         self.low_level_interface.start_emulator(self.args, event_loop, event_loop_args)
         self.low_level_interface.prepare_arrays(self.input, self.output)
@@ -88,16 +93,32 @@ class EmulatorBase(object):
         self.generate_extra_segments()
         self.cpu_state = self.calc_cpu_data_array()
         self.main_memory = self.calc_main_memory_array()
-        self.boot_from_segment(boot_segment)
 
     def configure_event_loop(self, event_loop=None, event_loop_args=None, *args, **kwargs):
         return None, None
 
-    def process_args(self, emu_args, boot_segment):
+    def process_args(self, emu_args):
         return emu_args
 
-    def boot_from_segment(self, segment):
-        pass
+    def boot_from_segment(self, boot_segment):
+        if self.bootfile is not None:
+            try:
+                os.remove(self.bootfile)
+                self.bootfile = None
+            except:  # MSW raises WindowsError, but that's not defined cross-platform
+                log.warning("Unable to remove temporary boot file %s." % self.bootfile)
+        if boot_segment is not None:
+            fd, self.bootfile = tempfile.mkstemp(".atari_boot_segment")
+            fh = os.fdopen(fd, "wb")
+            fh.write(boot_segment.data.tobytes())
+            fh.close()
+            self.boot_from_file(self.bootfile)
+        else:
+            self.bootfile = None
+
+    def boot_from_file(self, filename):
+        self.load_disk(1, self.bootfile)
+        self.coldstart()
 
     def parse_state(self):
         base = np.byte_bounds(self.output)[0]
@@ -202,6 +223,12 @@ class EmulatorBase(object):
 
     def is_debugger_finished(self):
         raise NotImplementedError("subclass must check if debugger is still running.")
+
+    def breakpoint_set(self, addr):
+        self.low_level_interface.breakpoint_set(addr)
+
+    def breakpoint_clear(self):
+        self.low_level_interface.breakpoint_clear()
 
     # Utility functions
 
