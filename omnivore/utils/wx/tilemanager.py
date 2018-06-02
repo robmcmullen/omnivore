@@ -32,6 +32,7 @@
 
 import weakref
 import json
+import math
 from uuid import uuid4
 
 import wx
@@ -432,6 +433,12 @@ class TileManager(wx.Window):
 
         self.mouse_delta_for_window_move = 4
 
+        self.notification_background = wx.Colour(240, 120, 120)
+        self.notification_brush = wx.Brush(self.notification_background, wx.SOLID)
+        self.notification_pen = wx.Pen(self.notification_background, 1, wx.SOLID)
+        self.notification_text = wx.Colour(255, 255, 255)
+        self.notification_font = wx.Font(8, wx.FONTFAMILY_SWISS, wx.NORMAL, wx.NORMAL)
+
     def get_text_size(self, text):
         return self.memory_dc.GetTextExtent(text)
 
@@ -471,6 +478,14 @@ class TileManager(wx.Window):
         dc.SetTextForeground(text)
         dc.SetTextBackground(textbg)
         dc.SetFont(self.title_bar_font)
+
+    def configure_notification_dc(self, dc):
+        dc.SetBackgroundMode(wx.SOLID)
+        dc.SetBrush(self.notification_brush)
+        dc.SetPen(self.notification_pen)
+        dc.SetTextBackground(self.notification_background)
+        dc.SetTextForeground(self.notification_text)
+        dc.SetFont(self.notification_font)
 
     def on_size(self, evt):
         self.do_layout()
@@ -1527,6 +1542,16 @@ class TileClient(wx.Window):
             menu_label = self.child.GetName()
         return menu_label
 
+    @property
+    def notification_count(self):
+        try:
+            return self.child.notification_count
+        except AttributeError:
+            return 0
+
+    def clear_notification_count(self):
+        self.child.notification_count = 0
+
     def clear_focus(self):
         self.Refresh()
 
@@ -2002,6 +2027,14 @@ class SidebarMenuItem(wx.Window, DockTarget):
         s = self.sidebar
         s.tile_mgr.configure_sidebar_dc(dc, self.entered)
         s.title_renderer.draw_label(dc, self)
+        count = self.client.notification_count
+        if count > 0:
+            s.tile_mgr.configure_notification_dc(dc)
+            if count > 99:
+                text = "+"
+            else:
+                text = str(int(count))
+            s.title_renderer.draw_notification(dc, self, text)
 
     def on_left_down(self, evt):
         self.tile_mgr.on_start_menu(self, evt)
@@ -2023,6 +2056,7 @@ class SidebarMenuItem(wx.Window, DockTarget):
     def close_menu(self):
         self.entered = False
         self.actual_popup.Dismiss()
+        self.client.clear_notification_count()
         self.Refresh()
 
     def remove(self):
@@ -2098,6 +2132,19 @@ class Sidebar(wx.Window, ViewContainer):
                 x = x_min
                 cw = sw
             view.position_popup(x, y, cw, ch)
+
+        @classmethod
+        def draw_notification(cls, dc, view, text):
+            margin = view.tile_mgr.sidebar_margin
+            w, h = view.GetSize()
+            h -= 2 * margin
+            tw, th = dc.GetTextExtent(text)
+            tw += 1
+            th += 1
+            tx = w - tw
+            x = w - th
+            dc.DrawCircle(w, 0, math.hypot(tw, th))
+            dc.DrawText(text, tx, 0)
 
 
     class VerticalRenderer(BaseRenderer):
