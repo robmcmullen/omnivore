@@ -1470,14 +1470,18 @@ class CompactGrid(wx.ScrolledWindow):
         self.zoom = zoom
 
     def set_caret_index(self, rel_pos, flags, refresh=True):
-        r, c = self.table.index_to_row_col(rel_pos)
-        dummy_flags = self.create_mouse_event_flags()
-        self.main.ensure_visible(r, c, dummy_flags)
-        if self.automatic_refresh or refresh:
-            if dummy_flags.viewport_origin is not None:
-                self.move_viewport_origin(dummy_flags.viewport_origin)
-                flags.refreshed_as_side_effect.add(self)
-                self.refresh_view()
+        try:
+            r, c = self.table.index_to_row_col(rel_pos)
+        except IndexError:
+            log.debug("index %d not visible in this view" % rel_pos)
+        else:
+            dummy_flags = self.create_mouse_event_flags()
+            self.main.ensure_visible(r, c, dummy_flags)
+            if self.automatic_refresh or refresh:
+                if dummy_flags.viewport_origin is not None:
+                    self.move_viewport_origin(dummy_flags.viewport_origin)
+                    flags.refreshed_as_side_effect.add(self)
+                    self.refresh_view()
 
     def draw_carets(self, dc, start_row, visible_rows):
         for index in self.caret_handler.iter_caret_indexes():
