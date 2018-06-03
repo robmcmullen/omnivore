@@ -17,14 +17,14 @@ import glob
 
 import numpy as np
 
-from . import cputables
+import cputables
 
-from .disasm_gen_utils import *
+from disasm_gen_utils import *
 
 import logging
 log = logging.getLogger(__name__)
 
-from .udis_fast.flags import *
+from udis_fast.flags import *
 
 
 disclaimer = """Warning! This is generated code.
