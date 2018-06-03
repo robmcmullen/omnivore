@@ -51,7 +51,7 @@ class SegmentedDocument(BaseDocument):
         r = SegmentData(self.raw_bytes,self.style)
         return list([DefaultSegment(r, 0)])
 
-    def _program_memory_map_default(self):
+    def _document_memory_map_default(self):
         return dict()
 
     #### trait property getters

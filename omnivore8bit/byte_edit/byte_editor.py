@@ -102,16 +102,6 @@ class ByteEditor(FrameworkEditor):
 
     #### trait default values
 
-    def _style_default(self):
-        return np.zeros(len(self), dtype=np.uint8)
-
-    def _segments_default(self):
-        r = SegmentData(self.raw_bytes,self.style)
-        return list([DefaultSegment(r, 0)])
-
-    def _program_memory_map_default(self):
-        return dict()
-
     def _focused_viewer_default(self):
         return DummyFocusedViewer()
 
