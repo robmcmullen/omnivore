@@ -60,3 +60,9 @@ def monitor_summary():
 
 def monitor_clear():
     pass
+
+def breakpoint_set(int addr):
+    pass
+
+def breakpoint_clear():
+    pass
