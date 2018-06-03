@@ -139,12 +139,12 @@ class SetRangeValueCommand(SetRangeCommand):
     serialize_order =  [
             ('segment', 'int'),
             ('ranges', 'int_list'),
-            ('bytes', 'string'),
+            ('data', 'string'),
             ]
 
-    def __init__(self, segment, ranges, bytes, advance=False):
+    def __init__(self, segment, ranges, data, advance=False):
         SetRangeCommand.__init__(self, segment, ranges, advance)
-        self.data = bytes
+        self.data = data
 
     def get_data(self, orig):
         return self.data

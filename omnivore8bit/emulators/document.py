@@ -116,8 +116,8 @@ class EmulationDocument(SegmentedDocument):
         emu.boot_from_segment(segment)
         for i in range(self.skip_frames_on_boot):
             emu.next_frame()
-        self.bytes = emu.raw_array
-        self.style = np.zeros([len(self.bytes)], dtype=np.uint8)
+        self.raw_bytes = emu.raw_array
+        self.style = np.zeros([len(self.raw_bytes)], dtype=np.uint8)
         self.parse_segments([segment_parser_factory(emu.segments)])
         log.debug("Segments after boot: %s" % str(self.segments))
         self.create_timer()
@@ -130,8 +130,8 @@ class EmulationDocument(SegmentedDocument):
         emu.begin_emulation([], segment, event_loop=el.start_monitor, event_loop_args=self)
         for i in range(self.skip_frames_on_boot):
             emu.next_frame()
-        self.bytes = emu.raw_array
-        self.style = np.zeros([len(self.bytes)], dtype=np.uint8)
+        self.raw_bytes = emu.raw_array
+        self.style = np.zeros([len(self.raw_bytes)], dtype=np.uint8)
         self.parse_segments([segment_parser_factory(emu.segments)])
         log.debug("Segments after boot: %s" % str(self.segments))
         self.create_timer()

@@ -19,8 +19,8 @@ class DrawBatchCommand(Batch):
             return "%s %dx%s" % (self.pretty_name, len(self.commands), str(self.commands[0]))
         return self.pretty_name
 
-    def get_next_batch_command(self, segment, index, bytes):
-        cmd = ChangeByteCommand(segment, index, index+len(bytes), bytes, False, True)
+    def get_next_batch_command(self, segment, index, data):
+        cmd = ChangeByteCommand(segment, index, index+len(data), data, False, True)
         return cmd
 
 
@@ -33,11 +33,11 @@ class LineCommand(SegmentCommand):
             ('end_index', 'int'),
             ]
 
-    def __init__(self, segment, start_index, end_index, bytes, bytes_per_row):
+    def __init__(self, segment, start_index, end_index, data, bytes_per_row):
         SegmentCommand.__init__(self, segment)
         self.start_index = start_index
         self.end_index = end_index
-        self.data = bytes
+        self.data = data
         self.bytes_per_row = bytes_per_row
 
     def __str__(self):
@@ -97,16 +97,16 @@ class PasteRectangularCommand(SegmentCommand):
             ('rows', 'int'),
             ('cols', 'int'),
             ('bytes_per_row', 'int'),
-            ('bytes', 'string'),
+            ('data', 'string'),
             ]
 
-    def __init__(self, segment, start_index, rows, cols, bytes_per_row, bytes):
+    def __init__(self, segment, start_index, rows, cols, bytes_per_row, data):
         SegmentCommand.__init__(self, segment)
         self.start_index = start_index
         self.rows = rows
         self.cols = cols
         self.bytes_per_row = bytes_per_row
-        self.bytes = bytes
+        self.data = data
 
     def __str__(self):
         return "%s @ %04x (%dx%d)" % (self.pretty_name, self.start_index + self.segment.start_addr, self.cols, self.rows)
@@ -124,7 +124,7 @@ class PasteRectangularCommand(SegmentCommand):
         undo.flags.byte_values_changed = True
         #undo.flags.index_range = i1, i2
         old_data = d[r1:r2,c1:c2].copy()
-        new_data = np.fromstring(self.bytes, dtype=np.uint8).reshape(self.rows, self.cols)
+        new_data = np.fromstring(self.data, dtype=np.uint8).reshape(self.rows, self.cols)
         d[r1:r2, c1:c2] = new_data[0:r2 - r1, 0:c2 - c1]
         undo.data = (r1, c1, r2, c2, last, old_data, )
         self.undo_info = undo

@@ -31,7 +31,7 @@ class Atari800Recognizer(HasTraits):
         return self.id
 
     def load(self, guess):
-        doc = SegmentedDocument(metadata=guess.metadata, bytes=guess.numpy)
+        doc = SegmentedDocument(metadata=guess.metadata, raw_bytes=guess.numpy)
         doc.load_metadata(guess)
         return doc
 

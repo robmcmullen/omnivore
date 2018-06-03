@@ -32,7 +32,7 @@ class IFileRecognizer(Interface):
 
 class RecognizerBase(HasTraits):
     def load(self, guess):
-        doc = BaseDocument(metadata=guess.metadata, bytes=guess.numpy)
+        doc = BaseDocument(metadata=guess.metadata, raw_bytes=guess.numpy)
         doc.load_metadata(guess)
         return doc
 

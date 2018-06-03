@@ -18,7 +18,7 @@ class OmnivoreRecognizer(RecognizerBase):
     def identify(self, guess):
         uri = guess.metadata.uri
         if uri.endswith(".omnivore"):
-            b = guess.bytes
+            b = guess.raw_bytes
             if b.startswith(b"#") or b.startswith(b"{"):
                 uri = uri[0:-9]
                 guess.reload(uri)

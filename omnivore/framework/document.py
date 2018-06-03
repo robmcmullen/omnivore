@@ -64,7 +64,7 @@ class BaseDocument(HasTraits):
 
     baseline_document = Any(transient=True)
 
-    bytes = Trait(b"", TraitNumpyConverter())
+    raw_bytes = Trait(b"", TraitNumpyConverter())
 
     segments = List
 
@@ -102,7 +102,7 @@ class BaseDocument(HasTraits):
     def _undo_stack_default(self):
         return UndoStack()
 
-    def _bytes_default(self):
+    def _raw_bytes_default(self):
         return b""
 
     def _uuid_default(self):
@@ -146,23 +146,23 @@ class BaseDocument(HasTraits):
 
     @classmethod
     def get_blank(cls):
-        return cls(bytes="")
+        return cls(raw_bytes=b"")
 
     def __str__(self):
         return "Document(id=%s): %s" % (self.document_id, self.metadata.uri)
 
     def __len__(self):
-        return np.alen(self.bytes)
+        return np.alen(self.raw_bytes)
 
     def __getitem__(self, val):
-        return self.bytes[val]
+        return self.raw_bytes[val]
 
     @property
     def dirty(self):
         return self.undo_stack.is_dirty()
 
     def to_bytes(self):
-        return self.bytes.tostring()
+        return self.raw_bytes.tostring()
 
     def load_permute(self, editor):
         if self.permute:
@@ -179,7 +179,7 @@ class BaseDocument(HasTraits):
 
     @property
     def bytestream(self):
-        return BytesIO.BytesIO(self.bytes)
+        return BytesIO.BytesIO(self.raw_bytes)
 
     # serialization
 
@@ -206,7 +206,7 @@ class BaseDocument(HasTraits):
             log.error("File load error: %s" % str(e))
             return {}
         log.info("Loading metadata file: %s" % uri)
-        return self.calc_unserialized_extra_metadata(uri, guess.bytes)
+        return self.calc_unserialized_extra_metadata(uri, guess.raw_bytes)
 
     def calc_unserialized_extra_metadata(self, uri, text):
         try:
@@ -306,20 +306,20 @@ class BaseDocument(HasTraits):
         except Exception as e:
             log.error("Problem loading baseline file %s: %s" % (uri, str(e)))
             raise DocumentError(str(e))
-        bytes = guess.numpy
-        difference = len(bytes) - len(self)
+        raw_bytes = guess.numpy
+        difference = len(raw_bytes) - len(self)
         if difference > 0:
             if confirm_callback("Truncate baseline data by %d bytes?" % difference, "Baseline Size Difference"):
-                bytes = bytes[0:len(self)]
+                raw_bytes = raw_bytes[0:len(self)]
             else:
-                bytes = []
+                raw_bytes = []
         elif difference < 0:
             if confirm_callback("Pad baseline data with %d zeros?" % (-difference), "Baseline Size Difference"):
-                bytes = np.pad(bytes, (0, -difference), "constant", constant_values=0)
+                raw_bytes = np.pad(raw_bytes, (0, -difference), "constant", constant_values=0)
             else:
-                bytes = []
-        if len(bytes) > 0:
-            self.init_baseline(guess.metadata, bytes)
+                raw_bytes = []
+        if len(raw_bytes) > 0:
+            self.init_baseline(guess.metadata, raw_bytes)
         else:
             self.del_baseline()
 
@@ -330,9 +330,9 @@ class BaseDocument(HasTraits):
         # otherwise the write to the actual file will fail with a read-
         # only filesystem error.
         if saver is None:
-            bytes = self.bytes.tostring()
+            raw_bytes = self.raw_bytes.tostring()
         else:
-            bytes = saver(self, editor)
+            raw_bytes = saver(self, editor)
 
         if uri.startswith("file://"):
             # FIXME: workaround to allow opening of file:// URLs with the
@@ -341,7 +341,7 @@ class BaseDocument(HasTraits):
         fs, relpath = opener.parse(uri, writeable=True)
         fh = fs.open(relpath, 'wb')
         log.debug("saving to %s" % uri)
-        fh.write(bytes)
+        fh.write(raw_bytes)
         fh.close()
 
         if save_metadata:
@@ -353,8 +353,8 @@ class BaseDocument(HasTraits):
                 relpath += ".omnivore"
                 log.debug("saving extra metadata to %s" % relpath)
                 jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
-                bytes = jsonpickle.dumps(mdict)
-                text = jsonutil.collapse_json(bytes, 8, self.json_expand_keywords)
+                raw_bytes = jsonpickle.dumps(mdict)
+                text = jsonutil.collapse_json(raw_bytes, 8, self.json_expand_keywords)
                 header = editor.get_extra_metadata_header()
                 fh = fs.open(relpath, 'wb')
                 fh.write(header)

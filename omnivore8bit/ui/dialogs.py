@@ -178,7 +178,7 @@ class SegmentOrderDialog(wx.Dialog):
     def get_document(self):
         segments = self.get_segments()
         root, segs = get_xex(segments)
-        doc = SegmentedDocument(bytes=root.bytes, style=root.style)
+        doc = SegmentedDocument(bytes=root.raw_bytes, style=root.style)
         Parser = namedtuple("Parser", ['segments'])
         segs[0:0] = [root]
         p = Parser(segments=segs)

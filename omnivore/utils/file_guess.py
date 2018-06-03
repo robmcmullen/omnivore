@@ -142,7 +142,7 @@ class FileGuess(object):
         # header bytes.  If the file is bigger, it will be read by the task
         # as needed.
         self._numpy = None
-        self.bytes = fh.read(self.head_size)
+        self.raw_bytes = fh.read(self.head_size)
         fh.close()
 
         # Use the default mime type until it is recognized
@@ -156,20 +156,20 @@ class FileGuess(object):
         fs.close()
 
     def __str__(self):
-        return "guess: metadata: %s, %d bytes available for signature" % (self.metadata, len(self.bytes))
+        return "guess: metadata: %s, %d bytes available for signature" % (self.metadata, len(self.raw_bytes))
 
     def get_bytes(self):
-        return self.bytes
+        return self.raw_bytes
 
     @property
     def numpy(self):
         if self._numpy is None:
-            self._numpy = np.fromstring(self.bytes, dtype=np.uint8)
+            self._numpy = np.fromstring(self.raw_bytes, dtype=np.uint8)
         return self._numpy
 
     @property
     def bytes_as_stream(self):
-        return io.BytesIO(self.bytes)
+        return io.BytesIO(self.raw_bytes)
 
     def get_metadata(self):
         return self.metadata.clone_traits()

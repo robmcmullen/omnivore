@@ -360,7 +360,7 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
                 active_task.window.error(str(e), "File Load Error")
             return
 
-        if len(guess.bytes) == 0:
+        if len(guess.raw_bytes) == 0:
             if active_task is not None:
                 active_task.window.error("Zero length file!\nUnable to determine file type.", "File Load Error")
             return

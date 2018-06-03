@@ -110,7 +110,7 @@ class BitmapLineRenderer(cg.TableLineRenderer):
             data = t.data[first_index:last_index]
             style = t.style[first_index:last_index]
 
-        # get_image(cls, machine, antic_font, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols):
+        # get_image(cls, machine, antic_font, byte_values, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols):
 
         array = grid_control.bitmap_renderer.get_image(grid_control.segment_viewer, bytes_per_row, nr, bytes_per_row * nr, data, style)
         width = array.shape[1]

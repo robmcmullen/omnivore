@@ -179,8 +179,8 @@ class FrameworkEditor(Editor):
     def use_self_as_baseline(self, doc=None):
         if doc is None:
             doc = self.document
-        bytes = np.copy(doc.bytes)
-        doc.init_baseline(doc.metadata, bytes)
+        raw_bytes = np.copy(doc.raw_bytes)
+        doc.init_baseline(doc.metadata, raw_bytes)
         if doc == self.document:
             self.baseline_present = doc.has_baseline
             self.diff_highlight = self.baseline_present
@@ -287,7 +287,7 @@ class FrameworkEditor(Editor):
         """Document saver interface: take a document and produce a byte
         representation to save to disk.
         """
-        data = document.bytes.tostring()
+        data = document.raw_bytes.tostring()
         return data
 
     @property

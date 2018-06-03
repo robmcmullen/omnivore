@@ -114,7 +114,7 @@ class AnticCharRenderer(cg.TableLineRenderer):
         data = data.reshape((nr, -1))
         style = style.reshape((nr, -1))
 
-        # get_image(cls, machine, antic_font, bytes, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols):
+        # get_image(cls, machine, antic_font, byte_values, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols):
 
         array = grid_control.font_renderer.get_image(grid_control.segment_viewer, grid_control.segment_viewer.current_antic_font, data, style, first_index, last_index, bytes_per_row, nr, first_col, nc)
         width = array.shape[1]

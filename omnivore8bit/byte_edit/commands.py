@@ -24,14 +24,14 @@ class ChangeByteCommand(SetContiguousDataCommand):
             ('segment', 'int'),
             ('start_index', 'int'),
             ('end_index', 'int'),
-            ('bytes', 'string'),
+            ('byte_values', 'string'),
             ('caret_at_end', 'bool'),
             ('ignore_if_same_bytes', 'bool'),
             ]
 
-    def __init__(self, segment, start_index, end_index, bytes, caret_at_end=False, ignore_if_same_bytes=False, advance=False):
+    def __init__(self, segment, start_index, end_index, byte_values, caret_at_end=False, ignore_if_same_bytes=False, advance=False):
         SetContiguousDataCommand.__init__(self, segment, start_index, end_index, advance=advance)
-        self.data = bytes
+        self.data = byte_values
         self.caret_at_end = caret_at_end
         self.ignore_if_same_bytes = ignore_if_same_bytes
 
@@ -98,12 +98,12 @@ class MiniAssemblerCommand(ChangeByteCommand):
             ('segment', 'int'),
             ('start_index', 'int'),
             ('end_index', 'int'),
-            ('bytes', 'string'),
+            ('byte_values', 'string'),
             ('asm', 'string'),
             ]
 
-    def __init__(self, segment, start_index, end_index, bytes, asm):
-        ChangeByteCommand.__init__(self, segment, start_index, end_index, bytes)
+    def __init__(self, segment, start_index, end_index, byte_values, asm):
+        ChangeByteCommand.__init__(self, segment, start_index, end_index, byte_values)
         self.asm = asm
 
     def __str__(self):
@@ -164,8 +164,8 @@ class ClearCommentCommand(SetCommentCommand):
     short_name = "clear_comment"
     pretty_name = "Remove Comment"
 
-    def __init__(self, segment, ranges, bytes=""):
-        SetCommentCommand.__init__(self, segment, ranges, bytes)
+    def __init__(self, segment, ranges, byte_values=""):
+        SetCommentCommand.__init__(self, segment, ranges, byte_values)
 
     def convert_ranges(self, ranges):
         # When clearing comments, we want to look at every space, not just the

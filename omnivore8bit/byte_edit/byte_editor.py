@@ -106,7 +106,7 @@ class ByteEditor(FrameworkEditor):
         return np.zeros(len(self), dtype=np.uint8)
 
     def _segments_default(self):
-        r = SegmentData(self.bytes,self.style)
+        r = SegmentData(self.raw_bytes,self.style)
         return list([DefaultSegment(r, 0)])
 
     def _program_memory_map_default(self):
@@ -363,8 +363,8 @@ class ByteEditor(FrameworkEditor):
 
     def save_segment(self, saver, uri):
         try:
-            bytes = saver.encode_data(self.segment, self)
-            saver = lambda a,b: bytes
+            byte_values = saver.encode_data(self.segment, self)
+            saver = lambda a,b: byte_values
             self.document.save_to_uri(uri, self, saver, save_metadata=False)
         except Exception as e:
             log.error("%s: %s" % (uri, str(e)))
@@ -464,11 +464,11 @@ class ByteEditor(FrameworkEditor):
         wx.CallAfter(self.force_focus, control.segment_viewer)
         return ret
 
-    def change_bytes(self, start, end, bytes, pretty=None):
+    def change_bytes(self, start, end, byte_values, pretty=None):
         """Convenience function to perform a ChangeBytesCommand
         """
         self.document.change_count += 1
-        cmd = CoalescingChangeByteCommand(self.segment, start, end, bytes)
+        cmd = CoalescingChangeByteCommand(self.segment, start, end, byte_values)
         if pretty:
             cmd.pretty_name = pretty
         self.process_command(cmd)

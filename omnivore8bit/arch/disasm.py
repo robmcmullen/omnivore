@@ -155,10 +155,10 @@ class BaseDisassembler(object):
 
     def assemble_text(self, pc, cmd):
         miniasm = self.get_miniassembler(self.cpu)
-        bytes = miniasm.asm(pc, cmd)
-        if not bytes:
+        byte_values = miniasm.asm(pc, cmd)
+        if not byte_values:
             raise RuntimeError("Unknown addressing mode")
-        return bytes
+        return byte_values
 
     def add_chunk_processor(self, disassembler_name, style):
         self.fast.add_chunk_processor(disassembler_name, style)
@@ -345,7 +345,7 @@ class BaseDisassembler(object):
     def format_instruction(self, index, line):
         label = self.format_label(line)
 
-        # py3 notes: line.instruction is ascii bytes, but operand will be
+        # py3 notes: line.instruction is ascii byte_values, but operand will be
         # unicode after this.
         operand = self.get_operand_from_instruction(line.instruction)
 

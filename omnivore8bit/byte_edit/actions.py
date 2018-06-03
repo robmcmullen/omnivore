@@ -583,11 +583,11 @@ class SaveAsXEXBootAction(SaveAsXEXAction):
     def get_bytes(self, dlg):
         xex = dlg.get_bytes()
         title, author = dlg.get_extra_text()[0:2]
-        bytes = add_xexboot_header(xex, title=title, author=author)
-        bytes = add_atr_header(bytes)
-        rawdata = SegmentData(bytes)
+        byte_values = add_xexboot_header(xex, title=title, author=author)
+        byte_values = add_atr_header(byte_values)
+        rawdata = SegmentData(byte_values)
         atr = BootDiskImage(rawdata)
-        return atr.bytes.tobytes()
+        return atr.raw_bytes.tobytes()
 
     def get_dialog(self, e):
         return SegmentOrderDialog(e.window.control, self.title, e.document.segments[1:], "Segment Order for Boot Disk", True)
@@ -890,13 +890,13 @@ class ListDiffAction(EditorAction):
         lines = []
         blank_label = ""
         for start, end in ranges:
-            bytes = list(s[start:end])
+            byte_values = list(s[start:end])
             origin = s.label(start, e.task.hex_grid_lower_case)
             comment = s.get_comment(start)
             if comment:
                 lines.append("%-8s; %s" % (blank_label, comment))
             lines.append("%-8s%s $%s" % (blank_label, d.asm_origin, origin))
-            lines.append("%-8s%s" % (blank_label, d.get_data_byte_string(bytes)))
+            lines.append("%-8s%s" % (blank_label, d.get_data_byte_string(byte_values)))
             lines.append("")
         text = "\n".join(lines) + "\n"
         dlg = wx.lib.dialogs.ScrolledMessageDialog(e.task.window.control, text, "Summary of Differences")

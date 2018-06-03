@@ -130,13 +130,13 @@ class PasteAndRepeatCommand(PasteCommand):
     pretty_name = "Paste And Repeat"
 
     def get_data(self, orig):
-        bytes = self.data
-        data_len = np.alen(bytes)
+        data = self.data
+        data_len = np.alen(data)
         orig_len = np.alen(orig)
         if orig_len > data_len:
             reps = (orig_len // data_len) + 1
-            bytes = np.tile(bytes, reps)
-        return bytes[0:orig_len]
+            data = np.tile(data, reps)
+        return data[0:orig_len]
 
 
 class PasteRectCommand(SegmentCommand):

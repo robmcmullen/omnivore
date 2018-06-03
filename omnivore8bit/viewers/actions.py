@@ -244,7 +244,7 @@ class BitmapRendererAction(ViewerAction):
 class ViewerWidthAction(ViewerAction):
     """Set the number of items per row of the bitmap display. The width can
     mean different things for different viewers (i.e. bitmap widths are in
-    bytes, not pixels), so prompt is based on the viewer.
+    byte_values, not pixels), so prompt is based on the viewer.
     """
     name = "Width"
     enabled_name = 'has_width'

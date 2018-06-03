@@ -48,7 +48,7 @@ class SegmentedDocument(BaseDocument):
         return np.zeros(len(self), dtype=np.uint8)
 
     def _segments_default(self):
-        r = SegmentData(self.bytes,self.style)
+        r = SegmentData(self.raw_bytes,self.style)
         return list([DefaultSegment(r, 0)])
 
     def _program_memory_map_default(self):
@@ -139,7 +139,7 @@ class SegmentedDocument(BaseDocument):
 
     def parse_segments(self, parser_list):
         parser_list.append(DefaultSegmentParser)
-        r = SegmentData(self.bytes, self.style)
+        r = SegmentData(self.raw_bytes, self.style)
         for parser in parser_list:
             try:
                 s = parser(r)
@@ -176,7 +176,7 @@ class SegmentedDocument(BaseDocument):
             oldsize, newsize = c.resize(size)
             for s in self.contained_segments:
                 s.replace_data(c)
-            self.bytes = c.data
+            self.raw_bytes = c.data
             start, end = oldsize, newsize
             r = c.rawdata[start:end]
             s = DefaultSegment(r, 0)
@@ -259,8 +259,8 @@ class SegmentedDocument(BaseDocument):
 
     #### Baseline document for comparisons
 
-    def init_baseline(self, metadata, bytes):
-        d = SegmentedDocument(metadata=metadata, bytes=bytes)
+    def init_baseline(self, metadata, raw_bytes):
+        d = SegmentedDocument(metadata=metadata, raw_bytes=raw_bytes)
         d.parse_segments([])
         self.baseline_document = d
 
@@ -282,7 +282,7 @@ class SegmentedDocument(BaseDocument):
 
     @classmethod
     def create_from_segments(cls, root, user_segments):
-        doc = cls(bytes=root.data, style=root.style)
+        doc = cls(raw_bytes=root.data, style=root.style)
         Parser = namedtuple("Parser", ['segments'])
         segs = [root]
         p = Parser(segments=segs)

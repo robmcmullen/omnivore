@@ -22,8 +22,8 @@ class FileRecognizerDriver(HasTraits):
     def recognize(self, guess):
         """Using the list of known recognizers, attempt to set the MIME of a FileGuess
         """
-        if guess.bytes is None:
-            return self.application.document_class(metadata=guess.metadata, bytes="")
+        if guess.raw_bytes is None:
+            return self.application.document_class(metadata=guess.metadata, raw_bytes="")
 
         error = ""
         document = None
@@ -45,7 +45,7 @@ class FileRecognizerDriver(HasTraits):
             guess.metadata.mime = "application/octet-stream"
             log.debug("Not recognized; default is %s" % guess.metadata.mime)
         if document is None:
-            document = self.application.document_class(metadata=guess.metadata, bytes=guess.numpy,load_error=error)
+            document = self.application.document_class(metadata=guess.metadata, raw_bytes=guess.numpy,load_error=error)
         return document
 
     def _recognizers_changed(self, old, new):
