@@ -10,7 +10,6 @@ from .colors import NTSC
 from ..emulator_base import EmulatorBase
 
 import logging
-logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger(__name__)
 
 

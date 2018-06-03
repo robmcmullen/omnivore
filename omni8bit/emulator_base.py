@@ -3,6 +3,9 @@ import tempfile
 
 import numpy as np
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class EmulatorBase(object):
     cpu = "<base>"
@@ -148,7 +151,7 @@ class EmulatorBase(object):
         still_waiting = []
         for count, callback in self.frame_event:
             if self.frame_count >= count:
-                print("processing %s", callback)
+                log.debug("processing %s", callback)
                 callback()
             else:
                 still_waiting.append((count, callback))
@@ -247,7 +250,7 @@ class EmulatorBase(object):
         if self.frame_count % 10 == 0:
             d = self.output.copy()
             self.history[frame_number] = d
-            self.print_history(frame_number)
+            # self.print_history(frame_number)
 
     def restore_history(self, frame_number):
         print(("restoring state from frame %d" % frame_number))
