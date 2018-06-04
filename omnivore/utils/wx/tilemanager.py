@@ -344,6 +344,8 @@ class TileManager(wx.Window):
 
     sizer_thickness = 5
 
+    default_sidebar_side = wx.LEFT
+
     wxEVT_CLIENT_CLOSE = wx.NewEventType()
     EVT_CLIENT_CLOSE = wx.PyEventBinder(wxEVT_CLIENT_CLOSE, 1)
 
@@ -2341,6 +2343,8 @@ class Sidebar(wx.Window, ViewContainer):
             self.views.append(view)
 
     def set_renderer(self, side):
+        if side == wx.DEFAULT:
+            side = TileManager.default_sidebar_side
         self.title_renderer = self.renderers[side]
         self.side = side
 
