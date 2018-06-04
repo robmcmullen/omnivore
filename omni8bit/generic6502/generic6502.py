@@ -81,9 +81,12 @@ class Generic6502(EmulatorBase):
         return raw
 
     def boot_from_segment(self, segment):
-        # for now, simple copies data into main memory
-        self.main_memory[segment.start_addr:segment.start_addr + len(segment)] = segment.data
-        self.cpu_state[0] = segment.start_addr
+        # for now, simply copies data into main memory
+        start = segment.origin
+        end = start + len(segment)
+        log.debug(f"Copying {segment} to memory: {start:#04x}-{end:#04x}")
+        self.main_memory[start:end] = segment.data
+        self.cpu_state[0] = segment.origin
         lib6502.restore_state(self.output)
         self.debug_state()
 

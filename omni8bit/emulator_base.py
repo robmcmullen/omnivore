@@ -121,11 +121,13 @@ class EmulatorBase(object):
             fh = os.fdopen(fd, "wb")
             fh.write(boot_segment.data.tobytes())
             fh.close()
+            log.debug(f"Created temporary file {self.bootfile} to use as boot disk image")
             self.boot_from_file(self.bootfile)
         else:
             self.bootfile = None
 
     def boot_from_file(self, filename):
+        log.debug(f"booting {self.pretty_name} from {filename}")
         self.load_disk(1, filename)
         self.coldstart()
 
