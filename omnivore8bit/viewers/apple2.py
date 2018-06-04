@@ -47,19 +47,21 @@ class HiresLineRenderer(b.BitmapLineRenderer):
     def draw_line(self, grid_control, dc, line_num, col, index, last_index):
         t = grid_control.table
         rect = self.col_to_rect(line_num, col)
-        log.debug(f"draw_line: col={col} indexes:{index}-{last_index}")
+        log.debug(f"draw_line: table={t} col={col} indexes:{index}-{last_index}")
         data = t.data[index:last_index]
         style = t.style[index:last_index]
         self.image_cache.draw_item(grid_control, dc, rect, data, style)
 
-    def draw_grid(self, *args, **kwargs):
-        cg.TableLineRenderer.draw_grid(self, *args, **kwargs)
+    def draw_grid(self, parent, dc, *args, **kwargs):
+        try:
+            cg.TableLineRenderer.draw_grid(self, parent, dc, *args, **kwargs)
+        except IndexError as e:
+            log.warning("Index error in draw_grid; likely attempted to render grid on hidden index")
 
 
 class HiresTable(SegmentVirtualTable):
     def get_data_style_view(self, linked_base):
         byte_order = hires_byte_order(len(linked_base.segment))
-        print(linked_base.segment, byte_order)
         self.hires_segment = linked_base.segment.create_subset(byte_order, "Hi-res", "Apple ][ Hi-res")
         data = self.hires_segment.data
         style = self.hires_segment.style

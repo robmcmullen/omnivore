@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 
 
 class EmulatorSegmentParser(SegmentParser):
-    menu_name = "Atari 800 Save State"
+    menu_name = "Emulator Save State"
     def parse(self):
         r = self.segment_data
         self.segments.append(self.container_segment(r, 0, name=self.menu_name))
@@ -156,7 +156,7 @@ class EmulationDocument(SegmentedDocument):
         now = time.time()
         self.emulator.next_frame()
         frame_number = self.emulator.output['frame_number']
-        print(("showing frame %d" % frame_number))
+        log.debug(f"showing frame {frame_number}")
         self.emulator_update_screen_event = True
         self.priority_level_refresh_event = True
         after = time.time()
@@ -165,9 +165,9 @@ class EmulationDocument(SegmentedDocument):
             next_time = self.framerate * .8
         elif delta < self.framerate:
             next_time = self.framerate - delta
-        print(("now=%f show=%f delta=%f framerate=%f next_time=%f" % (now, after-now, delta, self.framerate, next_time)))
+        log.debug(f"now={now} show={after-now} delta={delta} framerate={self.framerate} next_time={next_time}")
         if next_time <= 0.001:
-            print("need to drop frames!")
+            log.warning("need to drop frames!")
             next_time = .001
         self.emulation_timer.StartOnce(next_time * 1000)
         self.last_update_time = now

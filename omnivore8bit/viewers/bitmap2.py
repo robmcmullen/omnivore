@@ -199,6 +199,9 @@ class BitmapViewer(SegmentViewer):
     def validate_width(self, width):
         return self.machine.bitmap_renderer.validate_bytes_per_row(width)
 
+    def recalc_data_model(self):
+        self.control.recalc_view()
+
 
 class MemoryMapViewer(BitmapViewer):
     name = "memmap"
