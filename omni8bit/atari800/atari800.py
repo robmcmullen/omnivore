@@ -104,26 +104,6 @@ class Atari800(EmulatorBase):
         self.rmap, self.gmap, self.bmap = ntsc_color_map()
 
     @property
-    def raw_array(self):
-        return self.output.view(dtype=np.uint8)
-
-    @property
-    def video_array(self):
-        return self.output['video'][0]
-
-    @property
-    def audio_array(self):
-        return self.output['audio'][0]
-
-    @property
-    def state_array(self):
-        return self.output['state'][0]
-
-    @property
-    def current_frame_number(self):
-        return self.output['frame_number'][0]
-
-    @property
     def current_cpu_status(self):
         a, p, sp, x, y, _, pc = self.cpu_state
 
