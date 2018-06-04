@@ -641,7 +641,7 @@ class AddTraceStartPointAction(ViewerAction):
         s = v.segment
         checked = set()
         for i in indexes:
-            pc = v.control.table.lines.get_instruction_start_pc(i + s.start_addr)
+            pc = v.control.table.lines.get_instruction_start_pc(i + s.origin)
             if pc not in checked:
                 v.trace_disassembly(pc)
                 checked.add(pc)
@@ -838,7 +838,7 @@ class AddLabelAction(ViewerAction):
 
     def process_ranges(self, editor, segment, ranges):
         index = ranges[0][0]
-        addr = index + segment.start_addr
+        addr = index + segment.origin
         return addr
 
     def process(self, editor, segment, addr):

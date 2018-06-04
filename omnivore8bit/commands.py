@@ -67,7 +67,7 @@ class SetContiguousDataCommand(ChangeByteValuesCommand):
 
     def __str__(self):
         if self.end_index - self.start_index > 1:
-            return "%s @ %04x-%04x" % (self.pretty_name, self.start_index + self.segment.start_addr, self.end_index + self.segment.start_addr)
+            return "%s @ %04x-%04x" % (self.pretty_name, self.start_index + self.segment.origin, self.end_index + self.segment.origin)
         else:
             return "%s @ %04x" % (self.pretty_name, self.start_index)
 

@@ -16,7 +16,7 @@ def is_valid_level_segment(segment):
     # 284c: always FF (target for harvest table if no action to be taken)
     if len(segment) >= 0x800 and segment[0x3f] == 0x4c and segment[0x48] == 0x20 and segment[0x4b] == 0x60 and segment[0x4c] == 0xff:
         # check for sane level definition table
-        index = segment[0x38]*256 + segment[0x37] - segment.start_addr
+        index = segment[0x38]*256 + segment[0x37] - segment.origin
         return index >=0 and index < len(segment)
     return False
 
@@ -762,7 +762,7 @@ class ScreenState(LevelDef):
             return None
         for s in self.search_order:
             log.debug("checking segment %s for object code %x" % (s.name, addr))
-            index = addr - s.start_addr
+            index = addr - s.origin
             if s.is_valid_index(index):
                 codes = s[index:]
 
@@ -931,8 +931,8 @@ class JumpmanLevelBuilder(object):
 
     def parse_level_data(self, segment, level_addr, harvest_addr):
         self.pick_index = 0
-        self.objects = self.parse_objects(segment[level_addr - segment.start_addr:])
-        self.parse_harvest_table(segment, segment.start_addr, harvest_addr)
+        self.objects = self.parse_objects(segment[level_addr - segment.origin:])
+        self.parse_harvest_table(segment, segment.origin, harvest_addr)
 
     def find_equivalent_object(self, old, objects=None):
         found = None
@@ -1186,6 +1186,6 @@ Labels defined:
     def get_ranges(self, segment):
         ranges = []
         for first, last in self.ranges:
-            ranges.append((first - segment.start_addr, last - segment.start_addr))
+            ranges.append((first - segment.origin, last - segment.origin))
 
         return ranges, self.data

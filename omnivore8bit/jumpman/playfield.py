@@ -61,7 +61,7 @@ class JumpmanPlayfieldModel(object):
     def generate_display_objects(self, resync=False):
         try:
             source, level_addr, harvest_addr = self.get_level_addrs()
-            index = level_addr - source.start_addr
+            index = level_addr - source.origin
             self.level_builder.parse_level_data(source, level_addr, harvest_addr)
             self.force_refresh = True
             self.valid_level = True
@@ -104,11 +104,11 @@ class JumpmanPlayfieldModel(object):
         if not self.possible_jumpman_segment:
             raise RuntimeError
         source = self.segment
-        start = source.start_addr
+        start = source.origin
         level_addr = source[0x37] + source[0x38]*256
         harvest_addr = source[0x4e] + source[0x4f]*256
         log.debug("level def table: %x, harvest table: %x" % (level_addr, harvest_addr))
-        last = source.start_addr + len(source)
+        last = source.origin + len(source)
         if level_addr > start and harvest_addr > start and level_addr < last and harvest_addr < last:
             return source, level_addr, harvest_addr
         raise RuntimeError
@@ -224,7 +224,7 @@ class JumpmanPlayfieldModel(object):
     def save_changes(self, command_cls=jc.MoveObjectCommand):
         source, level_addr, old_harvest_addr = self.get_level_addrs()
         level_data, harvest_addr, ropeladder_data, num_peanuts = self.level_builder.create_level_definition(level_addr, source[0x46], source[0x47])
-        index = level_addr - source.start_addr
+        index = level_addr - source.origin
         ranges = [(0x18,0x2a), (0x3e,0x3f), (0x4e,0x50), (index,index + len(level_data))]
         pdata = np.empty([1], dtype=np.uint8)
         if self.peanut_harvest_diff < 0:

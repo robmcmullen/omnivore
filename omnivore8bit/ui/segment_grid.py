@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 class SegmentTable(cg.HexTable):
     def __init__(self, linked_base, bytes_per_row):
         self.linked_base = linked_base
-        cg.HexTable.__init__(self, self.segment.data, self.segment.style, bytes_per_row, self.segment.start_addr, start_offset_mask=0x0f)
+        cg.HexTable.__init__(self, self.segment.data, self.segment.style, bytes_per_row, self.segment.origin, start_offset_mask=0x0f)
 
     @property
     def segment(self):

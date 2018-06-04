@@ -147,7 +147,7 @@ class BaseDisassembler(object):
         d = {}
         if self.info:
             all_pcs = np.where(self.info.labels > 0)[0]
-            inside = np.where((self.start_addr <= all_pcs) & (all_pcs < self.end_addr))[0]
+            inside = np.where((self.origin <= all_pcs) & (all_pcs < self.end_addr))[0]
             pcs = all_pcs[inside]
             fmt = self.label_format
             d = {pc:fmt % pc for pc in pcs}
@@ -166,14 +166,14 @@ class BaseDisassembler(object):
     def disassemble_segment(self, segment):
         self.invalidate_caches()
         self.segment = segment
-        self.start_addr = segment.start_addr
-        self.end_addr = self.start_addr + len(segment)
+        self.origin = segment.origin
+        self.end_addr = self.origin + len(segment)
         self.info = fast_disassemble_segment(self.fast, segment)
-        self.use_labels = self.start_addr > 0
+        self.use_labels = self.origin > 0
         return self.info
 
     def is_current(self, segment):
-        return self.segment == segment and self.start_addr == segment.start_addr
+        return self.segment == segment and self.origin == segment.origin
 
     @property
     def pc_label_cache(self):
@@ -229,7 +229,7 @@ class BaseDisassembler(object):
 
     def get_next_instruction_pc(self, pc):
         info = self.info
-        index = pc - self.start_addr
+        index = pc - self.origin
         row = info.index_to_row[index]
         line = info[row + 1]  # next line!
         return line.pc
@@ -269,7 +269,7 @@ class BaseDisassembler(object):
         plus the offset difference.
         """
         label = self.memory_map.get_name(target_pc)
-        if not label and target_pc >= self.start_addr and target_pc < self.end_addr:
+        if not label and target_pc >= self.origin and target_pc < self.end_addr:
             #print operand, dollar, text_hex, target_pc, operand_labels_start_pc, operand_labels_end_pc
             good_opcode_target_pc = self.info.get_instruction_start_pc(target_pc)
             diff = target_pc - good_opcode_target_pc
@@ -384,7 +384,7 @@ class BaseDisassembler(object):
 
         for row in range(start_row, end_row + 1):
             line = self.info[row]
-            index = line.pc - self.start_addr
+            index = line.pc - self.origin
             label = self.format_label(line)
             comment = self.format_comment(index, line)
             operand = self.get_operand_from_instruction(line.instruction)
@@ -435,7 +435,7 @@ class BaseDisassembler(object):
         lines = [""]
         lines.append("Source: %s.s" % (self.segment.name))
         line_num = 2
-        pc = self.segment.start_addr
+        pc = self.segment.origin
         for line, hex_bytes, code, comment, num_bytes in self.iter_row_text():
             if line.flag == udis_fast.flag_origin:
                 line_num += 1
@@ -461,7 +461,7 @@ class BaseDisassembler(object):
         return lines
 
     def search_labels(self, labels, search_text, match_case=False):
-        s = self.start_addr
+        s = self.origin
         matches = []
         if not match_case:
             for pc, label in labels.items():
@@ -474,7 +474,7 @@ class BaseDisassembler(object):
         return matches
 
     def search(self, search_text, match_case=False):
-        s = self.start_addr
+        s = self.origin
         if not match_case:
             search_text = search_text.lower()
             matches = [(t.pc - s, t.pc - s + t.num_bytes) for t in self.info if search_text in t.instruction.lower()]

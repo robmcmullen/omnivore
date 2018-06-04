@@ -210,13 +210,13 @@ class SegmentedDocument(BaseDocument):
 
     def find_matching_segment(self, segment):
         for s in self.segments:
-            if len(s) == len(segment) and s.start_addr == segment.start_addr and s.name == segment.name:
+            if len(s) == len(segment) and s.origin == segment.origin and s.name == segment.name:
                 return True
         return False
 
     def find_matching_user_segment(self, segment):
         for s in self.user_segments:
-            if len(s) == len(segment) and s.start_addr == segment.start_addr and s.name == segment.name:
+            if len(s) == len(segment) and s.origin == segment.origin and s.name == segment.name:
                 return s
         return None
 
@@ -230,13 +230,13 @@ class SegmentedDocument(BaseDocument):
         return -1
 
     def find_segments_in_range(self, addr):
-        """Assuming segments had a start_addr param, find first segment that
+        """Assuming segments had a origin param, find first segment that
         has addr as a valid address
         """
         found = []
         for i, s in enumerate(self.segments):
-            if s.start_addr > 0 and addr >= s.start_addr and addr < (s.start_addr + len(s)):
-                found.append((i, s, addr - s.start_addr))
+            if s.origin > 0 and addr >= s.origin and addr < (s.origin + len(s)):
+                found.append((i, s, addr - s.origin))
         return found
 
     def find_segments_with_raw_index(self, raw_index):

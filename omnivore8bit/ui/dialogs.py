@@ -135,7 +135,7 @@ class SegmentOrderDialog(wx.Dialog):
 
     def get_item_text(self, sid):
         s = self.segment_map[sid]
-        return "%x" % s.start_addr, "%x" % len(s), s.name
+        return "%x" % s.origin, "%x" % len(s), s.name
 
     def on_button(self, evt):
         if evt.GetId() == wx.ID_OK:

@@ -128,7 +128,7 @@ class SetCommentCommand(ChangeMetadataCommand):
         indexes = ranges_to_indexes(self.ranges)
         self.index_range = indexes[0], indexes[-1]
         if len(ranges) == 1:
-            self.pretty_name = "%s @ %04x" % (self.pretty_name, self.segment.start_addr + indexes[0])
+            self.pretty_name = "%s @ %04x" % (self.pretty_name, self.segment.origin + indexes[0])
 
     def __str__(self):
         if len(self.text) > 20:
@@ -225,7 +225,7 @@ class ClearLabelCommand(ChangeMetadataCommand):
     def do_change(self, editor, undo):
         print(self.ranges)
         indexes = ranges_to_indexes(self.ranges)
-        origin = self.segment.start_addr
+        origin = self.segment.origin
         old = {}
         for i in indexes:
             addr = i + origin
@@ -271,7 +271,7 @@ class FindAllCommand(Command):
         self.repeat = repeat
         self.reverse = reverse
         self.current_match_index = -1
-        self.start_addr = -1
+        self.origin = -1
 
     def __str__(self):
         return "%s %s" % (self.pretty_name, repr(self.search_text))
@@ -283,7 +283,7 @@ class FindAllCommand(Command):
         return editor.searchers
 
     def perform(self, editor, undo):
-        self.start_addr = editor.segment.start_addr
+        self.origin = editor.segment.origin
         self.all_matches = []
         self.match_ids = {}
         undo.flags.changed_document = False
@@ -331,7 +331,7 @@ class FindAllCommand(Command):
                     undo.flags.force_single_caret = True
                     undo.flags.caret_index = start
                     undo.flags.select_range = True
-                    undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (self.current_match_index + 1, len(self.all_matches), start + self.start_addr, self.match_ids[start]))
+                    undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (self.current_match_index + 1, len(self.all_matches), start + self.origin, self.match_ids[start]))
             undo.flags.refresh_needed = True
 
 
@@ -367,7 +367,7 @@ class FindNextCommand(Command):
             undo.flags.caret_index = start
             undo.flags.select_range = True
             c = self.search_command
-            undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (index + 1, len(all_matches), start + c.start_addr, c.match_ids[start]))
+            undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (index + 1, len(all_matches), start + c.origin, c.match_ids[start]))
         except IndexError:
             pass
         undo.flags.refresh_needed = True
@@ -416,12 +416,12 @@ class SetSegmentOriginCommand(SegmentCommand):
         flags.rebuild_ui = True
 
     def do_change(self, editor, undo):
-        old_origin = self.segment.start_addr
-        self.segment.start_addr = self.origin
+        old_origin = self.segment.origin
+        self.segment.origin = self.origin
         return old_origin
 
     def undo_change(self, editor, old_data):
-        self.segment.start_addr = old_data
+        self.segment.origin = old_data
 
 
 class SegmentMemoryMapCommand(ChangeMetadataCommand):

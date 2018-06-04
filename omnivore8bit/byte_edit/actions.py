@@ -220,7 +220,7 @@ class GetSegmentFromSelectionAction(EditorAction):
         if text is not None:
             segment, = e.get_segments_from_selection()
             if not text:
-                text = "%04x-%04x" % (segment.start_addr, segment.start_addr + len(segment) - 1)
+                text = "%04x-%04x" % (segment.origin, segment.origin + len(segment) - 1)
             segment.name = text
             e.add_user_segment(segment)
             e.find_segment(segment=segment, refresh=True)
@@ -241,7 +241,7 @@ class MultipleSegmentsFromSelectionAction(EditorAction):
         if size is not None and size > 0:
             segments = e.get_segments_from_selection(size)
             for segment in segments:
-                text = "%04x-%04x" % (segment.start_addr, segment.start_addr + len(segment) - 1)
+                text = "%04x-%04x" % (segment.origin, segment.origin + len(segment) - 1)
                 segment.name = text
                 e.add_user_segment(segment, False)
             e.find_segment(segment=segments[0], refresh=True)
@@ -451,7 +451,7 @@ class ImportSegmentLabelsAction(EditorAction):
                 text = fh.read()
             d = parse_int_label_dict(text, allow_equals=True)
             s = e.segment
-            start, end = s.start_addr, s.start_addr + len(s)
+            start, end = s.origin, s.origin + len(s)
             below, above = count_in_range(list(d.keys()), start, end)
             if below + above > 0:
                 msg = ""
@@ -660,7 +660,7 @@ class SegmentGotoAction(EditorAction):
         addr, error = prompt_for_hex(e.window.control, "Enter address value:\n(default hex; prefix with # for decimal)", "Goto Address in a Segment", return_error=True, default_base="hex")
         if addr is not None:
             s = e.segment
-            index = addr - s.start_addr
+            index = addr - s.origin
             if e.segment.is_valid_index(index):
                 e.index_clicked(index, 0, None)
                 e.task.status_bar.message = e.get_label_at_index(index)
@@ -886,7 +886,7 @@ class ListDiffAction(EditorAction):
         s = e.segment
         ranges = s.get_style_ranges(diff=True)
         d = e.machine.get_disassembler(e.task.hex_grid_lower_case, e.task.assembly_lower_case)
-        d.set_pc(s, s.start_addr)
+        d.set_pc(s, s.origin)
         lines = []
         blank_label = ""
         for start, end in ranges:

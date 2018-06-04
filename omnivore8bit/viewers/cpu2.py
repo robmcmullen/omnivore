@@ -34,7 +34,7 @@ class UdisFastTable(cg.HexTable):
 
     def __init__(self, linked_base):
         s = linked_base.segment
-        cg.HexTable.__init__(self, s.data, s.style, 2, s.start_addr)
+        cg.HexTable.__init__(self, s.data, s.style, 2, s.origin)
         self.lines = None
         self.num_rows = 0
         self.index_to_row = []
@@ -63,7 +63,7 @@ class UdisFastTable(cg.HexTable):
         self.index_to_row = self.disassembly.info.index_to_row
         self.lines = self.disassembly.info
         self.jump_targets = self.disassembly.info.labels
-        self.start_addr = self.disassembly.start_addr
+        self.origin = self.disassembly.origin
         self.end_addr = self.disassembly.end_addr
         self.num_rows = self.lines.num_instructions
         # print(self.disassembly, self.num_rows)
@@ -76,7 +76,7 @@ class UdisFastTable(cg.HexTable):
                 line = self.lines[-1]
             except TypeError:
                 return 0, 0
-            index = line.pc - self.start_addr
+            index = line.pc - self.origin
             return index, index + line.num_bytes
         except IndexError:
             if r >= self.num_rows:
@@ -90,16 +90,16 @@ class UdisFastTable(cg.HexTable):
 
     def get_index_of_row(self, row):
         line = self.lines[row]
-        index = line.pc - self.start_addr
+        index = line.pc - self.origin
         return index
 
     def get_start_end_index_of_row(self, row):
         line = self.lines[row]
-        index = line.pc - self.start_addr
+        index = line.pc - self.origin
         return index, index + line.num_bytes
 
     def is_pc_valid(self, pc):
-        index = pc - self.start_addr
+        index = pc - self.origin
         return self.is_index_valid(index)
 
     def index_to_row_col(self, index, col=1):
@@ -164,7 +164,7 @@ class UdisFastTable(cg.HexTable):
     def get_value_style(self, row, col, operand_labels_start_pc=-1, operand_labels_end_pc=-1, extra_labels={}, offset_operand_labels={}, line=None):
         if line is None:
             line = self.lines[row]
-        index = line.pc - self.start_addr
+        index = line.pc - self.origin
         style = 0
         for i in range(line.num_bytes):
             style |= self.style[index + i]
@@ -174,7 +174,7 @@ class UdisFastTable(cg.HexTable):
     def calc_display_text(self, row, col, line=None, index=None):
         if line is None:
             line = self.lines[row]
-            index = line.pc - self.start_addr
+            index = line.pc - self.origin
         if col == 0:
             if self.lines[row].flag == flag_origin:
                 text = ""
@@ -388,7 +388,7 @@ class PasteDisassemblyCommentsCommand(SetCommentCommand):
             log.debug("starting range %d:%d" % (start, end))
             while index < end and count > 0:
                 comment_indexes.append(index)
-                pc = index + self.segment.start_addr
+                pc = index + self.segment.origin
                 log.debug("comment at %d, %04x" % (index, pc))
                 try:
                     index = disasm.get_next_instruction_pc(pc)
@@ -543,7 +543,7 @@ class DisassemblyViewer(SegmentViewer):
         style = s.get_style_bits(**kwargs)
         is_data = self.trace_info.marked_as_data
         size = min(len(is_data), len(s))
-        trace = is_data[s.start_addr:s.start_addr + size] * style
+        trace = is_data[s.origin:s.origin + size] * style
         if save:
             # don't change data flags for stuff that's already marked as data
             s = self.segment

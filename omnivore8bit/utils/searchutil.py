@@ -64,7 +64,7 @@ class CommentSearcher(BaseSearcher):
 
     def get_matches(self, editor):
         segment = editor.segment
-        s = segment.start_addr
+        s = segment.origin
         matches = []
         if editor.last_search_settings.get('match_case', False):
             search_text = self.search_text
@@ -88,10 +88,10 @@ class AlgorithmSearcher(BaseSearcher):
 
     def get_matches(self, editor):
         s = editor.segment
-        a = np.arange(s.start_addr, s.start_addr + len(s))
+        a = np.arange(s.origin, s.origin + len(s))
         b = np.copy(s.data)
         v = {
-            'a': np.arange(s.start_addr, s.start_addr + len(s)),
+            'a': np.arange(s.origin, s.origin + len(s)),
             'b': np.copy(s.data),
             }
         expression = NumpyIntExpression(v)

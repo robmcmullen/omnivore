@@ -371,7 +371,7 @@ class LinkedBase(CaretHandler):
                 size = seg_end - seg_start
             for start in range(seg_start, seg_end, size):
                 end = min(seg_end, start + size)
-                segment = DefaultSegment(s.rawdata[start:end], s.start_addr + start)
+                segment = DefaultSegment(s.rawdata[start:end], s.origin + start)
                 segments.append(segment)
         elif len(ranges) > 1:
             # If there are multiple selections, use an indexed segment
@@ -382,7 +382,7 @@ class LinkedBase(CaretHandler):
                 size = len(indexes)
             for i in range(0, len(indexes), size):
                 raw = s.rawdata.get_indexed(indexes[i:i + size])
-                segment = DefaultSegment(raw, s.start_addr + indexes[i])
+                segment = DefaultSegment(raw, s.origin + indexes[i])
                 segments.append(segment)
         return segments
 
@@ -422,7 +422,7 @@ class LinkedBase(CaretHandler):
 
     def get_goto_action_in_segment(self, addr_dest):
         if addr_dest >= 0:
-            segment_start = self.segment.start_addr
+            segment_start = self.segment.origin
             segment_num = -1
             addr_index = addr_dest - segment_start
             segments = self.document.find_segments_in_range(addr_dest)

@@ -41,7 +41,7 @@ class LineCommand(SegmentCommand):
         self.bytes_per_row = bytes_per_row
 
     def __str__(self):
-        return "%s @ %04x-%04x" % (self.pretty_name, self.start_index + self.segment.start_addr, self.end_index + self.segment.start_addr)
+        return "%s @ %04x-%04x" % (self.pretty_name, self.start_index + self.segment.origin, self.end_index + self.segment.origin)
 
     def get_data(self, orig):
         return self.data
@@ -109,7 +109,7 @@ class PasteRectangularCommand(SegmentCommand):
         self.data = data
 
     def __str__(self):
-        return "%s @ %04x (%dx%d)" % (self.pretty_name, self.start_index + self.segment.start_addr, self.cols, self.rows)
+        return "%s @ %04x (%dx%d)" % (self.pretty_name, self.start_index + self.segment.origin, self.cols, self.rows)
 
     def perform(self, editor, undo):
         i1 = self.start_index

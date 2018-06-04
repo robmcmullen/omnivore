@@ -154,7 +154,7 @@ class PasteRectCommand(SegmentCommand):
 
     def __str__(self):
         s = self.serializer
-        return "%s @ %04x (%dx%d)" % (self.pretty_name, s.dest_carets.current.index + self.segment.start_addr, s.clipboard_num_cols, s.clipboard_num_rows)
+        return "%s @ %04x (%dx%d)" % (self.pretty_name, s.dest_carets.current.index + self.segment.origin, s.clipboard_num_cols, s.clipboard_num_rows)
 
     def single_source_single_dest(self, editor, undo):
         s = self.serializer
