@@ -82,7 +82,7 @@ class BSAVESaver(object):
     def encode_data(cls, segment, ui_control):
         data = segment.tobytes()
         header = np.empty(2, dtype="<u2")
-        header[0] = segment.start_addr
+        header[0] = segment.origin
         header[1] = len(data)
         print("binary data: %x bytes at %x" % (header[1], header[0]))
         return header.tobytes() + segment.tobytes()
@@ -101,6 +101,9 @@ class OrderWrapper(object):
         self.np_data = data
         self.base = data.base  # base array for numpy bounds determination
         self.order = byte_order
+
+    def __str__(self):
+        return f"OrderWrapper at {hex(id(self))} count={len(self)} order={self.order} base: count={len(self.np_data)}"
 
     def __len__(self):
         return np.alen(self.order)
@@ -397,11 +400,11 @@ class DefaultSegment(object):
     savers = [SegmentSaver, BSAVESaver]
     can_resize_default = False
 
-    base_serializable_attributes = ['start_addr', 'error', 'name', 'verbose_name', 'page_size', 'map_width', 'uuid', 'can_resize']
+    base_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'page_size', 'map_width', 'uuid', 'can_resize']
     extra_serializable_attributes = []
 
-    def __init__(self, rawdata, start_addr=0, name="All", error=None, verbose_name=None, memory_map=None):
-        self.start_addr = int(start_addr)  # force python int to decouple from possibly being a numpy datatype
+    def __init__(self, rawdata, origin=0, name="All", error=None, verbose_name=None, memory_map=None):
+        self.origin = int(origin)  # force python int to decouple from possibly being a numpy datatype
         self.set_raw(rawdata)
         self.error = error
         self.name = name
@@ -418,6 +421,8 @@ class DefaultSegment(object):
         self.can_resize = self.__class__.can_resize_default
 
     def set_raw(self, rawdata):
+        if type(rawdata) != SegmentData:
+            log.warning(f"data not in SegmentData format {rawdata}, {type(rawdata)}")
         self.rawdata = rawdata
         self.update_raw_pointers()
 
@@ -588,8 +593,8 @@ class DefaultSegment(object):
                 self.set_style_ranges(e[slot], user=i)
 
     def __str__(self):
-        if self.start_addr > 0:
-            origin = " @ %04x" % (self.start_addr)
+        if self.origin > 0:
+            origin = " @ %04x" % (self.origin)
         else:
             origin = ""
         s = "%s ($%x bytes%s)" % (self.name, len(self), origin)
@@ -637,7 +642,7 @@ class DefaultSegment(object):
         """Get index into base array's raw data, given the address of a byte
         into this segment
         """
-        return self.get_raw_index(addr - self.start_addr)
+        return self.get_raw_index(addr - self.origin)
 
     def get_index_from_base_index(self, base_index):
         """Get index into this array's data given the index into the base array
@@ -1042,7 +1047,7 @@ class DefaultSegment(object):
         return sorted([[k, v] for k, v in self.rawdata.extra.comments.items()])
 
     def iter_comments_in_segment(self):
-        start = self.start_addr
+        start = self.origin
         start_index = self.get_raw_index(0)
         end_index = self.get_raw_index(len(self.rawdata))
         for k, v in self.rawdata.extra.comments.items():
@@ -1060,9 +1065,9 @@ class DefaultSegment(object):
 
     def label(self, index, lower_case=True):
         if lower_case:
-            return "%04x" % (index + self.start_addr)
+            return "%04x" % (index + self.origin)
         else:
-            return "%04X" % (index + self.start_addr)
+            return "%04X" % (index + self.origin)
 
     @property
     def search_copy(self):
@@ -1102,14 +1107,14 @@ class EmptySegment(DefaultSegment):
 class ObjSegment(DefaultSegment):
     extra_serializable_attributes = ['metadata_start', 'data_start']
 
-    def __init__(self, rawdata, metadata_start, data_start, start_addr, end_addr=0,  name="", **kwargs):
-        DefaultSegment.__init__(self, rawdata, start_addr, name, **kwargs)
+    def __init__(self, rawdata, metadata_start, data_start, origin, end_addr=0,  name="", **kwargs):
+        DefaultSegment.__init__(self, rawdata, origin, name, **kwargs)
         self.metadata_start = int(metadata_start)
         self.data_start = int(data_start)
 
     def __str__(self):
         count = len(self)
-        s = "%s $%04x-$%04x ($%04x @ $%04x)" % (self.name, self.start_addr, self.start_addr + count, count, self.data_start)
+        s = "%s $%04x-$%04x ($%04x @ $%04x)" % (self.name, self.origin, self.origin + count, count, self.data_start)
         if self.error:
             s += " " + self.error
         return s
@@ -1118,7 +1123,7 @@ class ObjSegment(DefaultSegment):
     def verbose_info(self):
         count = len(self)
         name = self.verbose_name or self.name
-        s = "%s  address range: $%04x-$%04x ($%04x bytes), file index of first byte: $%04x" % (name, self.start_addr, self.start_addr + count, count, self.data_start)
+        s = "%s  address range: $%04x-$%04x ($%04x bytes), file index of first byte: $%04x" % (name, self.origin, self.origin + count, count, self.data_start)
         if self.error:
             s += "  error='%s'" % self.error
         return s
@@ -1225,11 +1230,11 @@ def interleave_segments(segments, num_bytes):
 
 
 class SegmentList(list):
-    def add_segment(self, data, start_addr=0, name=None):
-        last = start_addr + len(data)
+    def add_segment(self, data, origin=0, name=None):
+        last = origin + len(data)
         if name is None:
-            name = "%04x - %04x, size=%04x" % (start_addr, last, len(data))
+            name = "%04x - %04x, size=%04x" % (origin, last, len(data))
         rawdata = SegmentData(data)
-        s = DefaultSegment(rawdata, start_addr, name)
+        s = DefaultSegment(rawdata, origin, name)
         self.append(s)
         return s

@@ -69,14 +69,14 @@ class StandardDeliveryImage(DiskImageBase):
         raw = SegmentData(np.zeros([143360], dtype=np.uint8))
         dsk = cls(raw, create=True)
         if run_addr is None:
-            run_addr = segments[0].start_addr
+            run_addr = segments[0].origin
 
         chunks = []
 
         for s in segments:
             # find size in 256 byte chunks that start on a page boundary
             # since the loader only deals with page boundaries
-            origin = s.start_addr
+            origin = s.origin
             chunk_start, padding = divmod(origin, 256)
             if (chunk_start == 0x20 or chunk_start == 0x40) and padding == 1:
                 show_hgr = False

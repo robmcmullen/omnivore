@@ -589,7 +589,7 @@ class Dos33DiskImage(DiskImageBase):
                 addr = dirent.get_binary_start_address(self) - 4 # factor in 4 byte header
             else:
                 addr = 0
-            segment = ObjSegment(raw, 0, 0, start_addr=addr, name=name, verbose_name=verbose_name)
+            segment = ObjSegment(raw, 0, 0, origin=addr, name=name, verbose_name=verbose_name)
             if addr > 0:
                 style = segment.get_style_bits(data=True)
                 segment.style[0:4] = style
@@ -605,14 +605,14 @@ class Dos33DiskImage(DiskImageBase):
         last = -1
 
         for s in segments:
-            origin = min(origin, s.start_addr)
-            last = max(last, s.start_addr + len(s))
+            origin = min(origin, s.origin)
+            last = max(last, s.origin + len(s))
             if _xd: log.debug("contiguous bytes needed: %04x - %04x" % (origin, last))
         if run_addr and run_addr != origin:
             # check if run_addr points to some location that has data
             found = False
             for s in segments:
-                if run_addr >= s.start_addr and run_addr < s.start_addr + len(s):
+                if run_addr >= s.origin and run_addr < s.origin + len(s):
                     found = True
                     break
             if not found:
@@ -620,7 +620,7 @@ class Dos33DiskImage(DiskImageBase):
             origin -= 3
             hi, lo = divmod(run_addr, 256)
             raw = SegmentData([0x4c, lo, hi])
-            all_segments = [DefaultSegment(raw, start_addr=origin)]
+            all_segments = [DefaultSegment(raw, origin=origin)]
             all_segments.extend(segments)
         else:
             all_segments = segments
@@ -630,8 +630,8 @@ class Dos33DiskImage(DiskImageBase):
         words[0] = origin
         words[1] = size
         for s in all_segments:
-            index = s.start_addr - origin + 4
-            print("setting data for $%04x - $%04x at index $%04x" % (s.start_addr, s.start_addr + len(s), index))
+            index = s.origin - origin + 4
+            print("setting data for $%04x - $%04x at index $%04x" % (s.origin, s.origin + len(s), index))
             image[index:index + len(s)] = s.data
         return image, 'B'
 

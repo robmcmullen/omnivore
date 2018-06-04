@@ -15,7 +15,7 @@ from functools import reduce
 def get_indexed(segment, num, scale):
     indexes = np.arange(num) * scale
     raw = segment.rawdata.get_indexed(indexes)
-    s = DefaultSegment(raw, segment.start_addr + indexes[0])
+    s = DefaultSegment(raw, segment.origin + indexes[0])
     return s, indexes
 
 class TestSegment1(object):
@@ -97,7 +97,7 @@ class TestIndexed(object):
         assert not sub.rawdata.is_indexed
         for i in range(len(sub)):
             ri = sub.get_raw_index(i)
-            assert ri == sub.start_addr + i
+            assert ri == sub.origin + i
             assert sub[i] == base[ri]
         start, end = sub.byte_bounds_offset()
         assert start == 512
@@ -116,7 +116,7 @@ class TestIndexed(object):
         for i in range(len(indexes)):
             ri = s.get_raw_index(i)
             print(ri, "base[ri]=%d" % base[ri], i, indexes[i], "s[i]=%d" % s[i])
-            assert ri == sub.start_addr + indexes[i]
+            assert ri == sub.origin + indexes[i]
             assert s[i] == base[ri]
         start, end = s.byte_bounds_offset()
         assert start == 0
@@ -126,7 +126,7 @@ class TestIndexed(object):
         s2, indexes2 = get_indexed(s, 64, 3)
         assert s2.rawdata.is_indexed
         for i in range(len(indexes2)):
-            assert s2.get_raw_index(i) == sub.start_addr + indexes2[i] * 3
+            assert s2.get_raw_index(i) == sub.origin + indexes2[i] * 3
         start, end = s.byte_bounds_offset()
         assert start == 0
         assert end == len(base)

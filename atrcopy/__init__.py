@@ -231,12 +231,12 @@ def assemble_segments(source_files, data_files, obj_files, run_addr=""):
         parser = find_diskimage(name)
         if parser and parser.image:
             for s in parser.segments:
-                if s.start_addr > 0:
+                if s.origin > 0:
                     print("adding %s from %s" % (s, name))
-                    segments.add_segment(s.data, s.start_addr)
+                    segments.add_segment(s.data, s.origin)
     if options.verbose:
         for s in segments:
-            print("%s - %04x)" % (str(s)[:-1], s.start_addr + len(s)))
+            print("%s - %04x)" % (str(s)[:-1], s.origin + len(s)))
     if run_addr:
         try:
             run_addr = text_to_int(run_addr)

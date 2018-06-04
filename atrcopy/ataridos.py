@@ -759,20 +759,20 @@ def get_xex(segments, run_addr=None):
     runad = False
     for s in segments:
         total += 4 + len(s)
-        if s.start_addr == 0x2e0:
+        if s.origin == 0x2e0:
             runad = True
     if not runad:
         words = np.empty([1], dtype='<u2')
         if run_addr:
             found = False
             for s in segments:
-                if run_addr >= s.start_addr and run_addr < s.start_addr + len(s):
+                if run_addr >= s.origin and run_addr < s.origin + len(s):
                     found = True
                     break
             if not found:
                 raise InvalidBinaryFile("Run address points outside data segments")
         else:
-            run_addr = segments[0].start_addr
+            run_addr = segments[0].origin
         words[0] = run_addr
         r = SegmentData(words.view(dtype=np.uint8))
         s = DefaultSegment(r, 0x2e0)
@@ -787,10 +787,10 @@ def get_xex(segments, run_addr=None):
     for s in segments_copy:
         # create new sub-segment inside new main segment that duplicates the
         # original segment's data/style
-        new_s = DefaultSegment(rawdata[i:i+4+len(s)], s.start_addr)
+        new_s = DefaultSegment(rawdata[i:i+4+len(s)], s.origin)
         words = new_s.data[0:4].view(dtype='<u2')
-        words[0] = s.start_addr
-        words[1] = s.start_addr + len(s) - 1
+        words[0] = s.origin
+        words[1] = s.origin + len(s) - 1
         new_s.style[0:4] = data_style
         new_s.data[4:4+len(s)] = s[:]
         new_s.style[4:4+len(s)] = s.style[:]
