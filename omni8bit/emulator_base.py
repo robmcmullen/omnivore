@@ -26,8 +26,10 @@ class EmulatorBase(object):
     stop_timer_for_debugger = True
 
     def __init__(self):
-        self.input = np.zeros([1], dtype=self.input_array_dtype)
-        self.output = np.zeros([1], dtype=self.output_array_dtype)
+        self.input_raw = np.zeros([self.input_array_dtype.itemsize], dtype=np.uint8)
+        self.input = self.input_raw.view(dtype=self.input_array_dtype)
+        self.output_raw = np.zeros([self.output_array_dtype.itemsize], dtype=np.uint8)
+        self.output = self.output_raw.view(dtype=self.output_array_dtype)
 
         self.bootfile = None
         self.frame_count = 0
@@ -43,7 +45,7 @@ class EmulatorBase(object):
 
     @property
     def raw_array(self):
-        return self.output.view(dtype=np.uint8)
+        return self.output_raw
 
     @property
     def video_array(self):
