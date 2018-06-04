@@ -36,7 +36,6 @@ setup(name="atrcopy",
             "Topic :: Utilities",
         ],
         install_requires = [
-            "future",
             'numpy',
         ],
         tests_require = [

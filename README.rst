@@ -12,7 +12,13 @@ Prerequisites
 Python
 ------
 
+Starting with ``atrcopy`` 7.0, Python 2 support has been dropped.
+
 Supported Python versions:
+
+* Python 3.6 and later
+
+If you need Python 2 support, ``atrcopy`` 6.5 and earlier supports:
 
 * Python 2.7
 * Python 3.5
