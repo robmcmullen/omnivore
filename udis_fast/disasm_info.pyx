@@ -138,9 +138,9 @@ def fast_disassemble_segment(disassembly_wrapper, segment, split_comments=[data_
     cdef np.uint8_t *c_style = <np.uint8_t *>style_copy.data
     cdef num_bytes = min(len(style_copy), disassembly_wrapper.max_bytes)
 
-    cdef int start_addr = segment.start_addr
-    cdef int end_addr = start_addr + len(segment)
-    cdef int pc = start_addr
+    cdef int origin = segment.origin
+    cdef int end_addr = origin + len(segment)
+    cdef int pc = origin
 
     disassembly_wrapper.clear()
     if num_bytes < 1:

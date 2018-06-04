@@ -117,17 +117,17 @@ def get_disassembled_chunk(parse_mod, storage_wrapper, binary, pc, last, index_o
     return pc, index_of_pc
 
 
-def uninitialized_data_processor(metadata_wrapper, binary, start_addr, end_addr, start_index, mnemonic_lower , hex_lower):
+def uninitialized_data_processor(metadata_wrapper, binary, origin, end_addr, start_index, mnemonic_lower , hex_lower):
     """Simple chunk processor that treats everything as undefined and
     creates one line with the origin of the next chunk.
 
     Note that no text is added for this line, it's marked as flag_origin and
     dest_pc contains the origin address.
     """
-    count = end_addr - start_addr
+    count = end_addr - origin
     row = metadata_wrapper.row
     metadata = metadata_wrapper.view(row)
-    metadata['pc'] = start_addr
+    metadata['pc'] = origin
     metadata['dest_pc'] = end_addr
     metadata['count'] = count
     metadata['flag'] = flag_origin
