@@ -42,6 +42,11 @@ class SegmentedDocument(BaseDocument):
     # viewers, really.
     priority_level_refresh_event = Event
 
+    # default emulator class, if the user selects something different than the
+    # normal default. This is usually None, which means that omni8bit will
+    # chose the best emulator based on the type of this segment
+    emulator_class_override = Any(None)
+
     #### trait default values
 
     def _style_default(self):

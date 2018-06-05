@@ -6,9 +6,9 @@ import numpy as np
 from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, InvalidSegmentParser, SegmentParser
 
 # Enthought library imports.
-from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int, String, Float
+from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int, String, Float, Undefined
 
-from omni8bit import find_emulator
+from omni8bit import find_emulator, guess_emulator, default_emulator, UnknownEmulatorError
 
 from ..document import SegmentedDocument
 
@@ -53,7 +53,7 @@ class EmulationDocument(SegmentedDocument):
 
     boot_segment = Any(None)
 
-    emulator_type = Any(None)
+    emulator_type = Any(Undefined)
 
     emulator = Any(None)
 
@@ -71,8 +71,15 @@ class EmulationDocument(SegmentedDocument):
     ##### trait default values
 
     def _emulator_type_changed(self, value):
-        emu_cls = find_emulator(value)
+        try:
+            emu_cls = find_emulator(value)
+        except UnknownEmulatorError:
+            try:
+                emu_cls = guess_emulator(self.source_document)
+            except UnknownEmulatorError:
+                emu_cls = emu.default_emulator
         emu = emu_cls()
+        log.debug(f"emulator changed to {emu}")
         self.emulator = emu
 
     @property

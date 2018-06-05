@@ -40,7 +40,7 @@ class UseEmulatorAction(EditorAction):
     style = RADIO_STYLE
 
     def perform(self, event):
-        emu.default_emulator = self.emulator
+        self.active_editor.document.emulator_class_override = self.emulator
 
 
 class BootDiskImageAction(EditorAction):
@@ -50,7 +50,8 @@ class BootDiskImageAction(EditorAction):
     tooltip = "Start emulator using the current file as the boot disk"
 
     def perform(self, event=None):
-        doc = EmulationDocument(source_document=self.active_editor.document, emulator_type=emu.default_emulator)
+        source = self.active_editor.document
+        doc = EmulationDocument(source_document=source, emulator_type=source.emulator_class_override)
         doc.boot()
         self.task.new(doc)
 
@@ -66,8 +67,8 @@ class BootSegmentAction(EditorAction):
     tooltip = "Start emulator using current segment to pre-fill the memory of the emulator"
 
     def perform(self, event=None):
-        #self.task.new(self.active_editor.document, emu.default_emulator)
-        doc = EmulationDocument(source_document=self.active_editor.document, emulator_type=emu.default_emulator)
+        source = self.active_editor.document
+        doc = EmulationDocument(source_document=source, emulator_type=source.emulator_class_override)
         doc.boot(self.active_editor.segment)
         self.task.new(doc)
 
@@ -83,8 +84,8 @@ class LoadSegmentAction(EditorAction):
     tooltip = "Create (but not boot) an emulator using current segment to pre-fill the memory"
 
     def perform(self, event=None):
-        #self.task.new(self.active_editor.document, emu.default_emulator)
-        doc = EmulationDocument(source_document=self.active_editor.document, emulator_type=emu.default_emulator)
+        source = self.active_editor.document
+        doc = EmulationDocument(source_document=source, emulator_type=source.emulator_class_override)
         doc.load(self.active_editor.segment)
         self.task.new(doc)
 

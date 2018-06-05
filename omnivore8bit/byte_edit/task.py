@@ -635,6 +635,7 @@ class ByteEditTask(FrameworkTask):
 
     def get_actions_Menu_Emulation_BootGroup(self):
         actions = []
+        actions.append(ea.UseEmulatorAction(name="Default Based on Disk Image", emulator=None))
         for e in known_emulators:
             actions.append(ea.UseEmulatorAction(name=e.pretty_name, emulator=e))
         return [
