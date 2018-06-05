@@ -6,7 +6,72 @@ known processors and save it into cputables.py
 import os
 import glob
 
-from udis_fast.flags import pcr, und, z80bit, lbl, comment, flag_label, flag_return, flag_jump, flag_branch
+from omni8bit.udis_fast.flags import pcr, und, z80bit, lbl, comment, flag_label, flag_return, flag_jump, flag_branch
+
+
+# These contain extra info not in udis. Originally they were in udis but they
+# haven't been accepted upstream and I don't want to maintain my own version.
+# So these strings are appended to the python code as it's read in from udis.
+
+# labelTargets: address modes that reference an address
+# Any opcodes that use one of these address modes refer to an absolute
+# address in memory, and are a candidate to be replaced by a label
+
+cpu_extra = {
+    '6502': """
+        labelTargets = set(["absolute", "absolutex", "absolutey", "indirect", "indirectx", "indirecty", "zeropage", "zeropagex", "zeropagey"])
+        jumpOpcodes = set(["jmp"])
+        branchModes = set(["relative"])
+        branchOpcodes = set(["jsr"])
+        modesExclude = set(["indirect"])
+        returnOpcodes = set(["rts", "rti", "brk"])
+        """,
+    '65816': """
+         labelTargets = set(["absolute", "absolutex", "absolutey", "indirect", "indirectx", "indirecty", "zeropage", "zeropagex", "zeropagey", "indirectzeropage", "absoluteindexedindirect", "absolutelong", "absolutelongx", "absoluteindirectx", "absoluteindirectlong", "directpageindirect", "directpageindirectlong", "directpageindirectlongy", "blockmove"])
+         jumpOpcodes = set(["jmp"])
+         branchModes = set(["relative", "relativelong"])
+         branchOpcodes = set(["jsr"])
+         modesExclude = set(["indirect", "absoluteindexedindirect"])
+         returnOpcodes = set(["rts", "rti", "brk"])
+        """,
+    '65c02': """
+        labelTargets = set(["absolute", "absolutex", "absolutey", "indirect", "indirectx", "indirecty", "zeropage", "zeropagex", "zeropagey", "absoluteindexedindirect"])
+        jumpOpcodes = set(["jmp"])
+        branchModes = set(["relative", "relativelong"])
+        branchOpcodes = set(["jsr"])
+        modesExclude = set(["indirect", "absoluteindexedindirect"])
+        returnOpcodes = set(["rts", "rti", "brk"])
+        """,
+    '6800': """
+        labelTargets = set(["direct", "indexed", "extended"])
+        jumpOpcodes = set(["jmp"])
+        branchModes = set(["relative"])
+        branchOpcodes = set(["jsr"])
+        modesExclude = set(["indexed"])
+        returnOpcodes = set(["rts", "rti"])
+        """,
+    '6809': """
+        labelTargets = set(["direct", "indexed", "extended"])
+        jumpOpcodes = set(["jmp"])
+        branchModes = set(["rel8", "rel16"])
+        branchOpcodes = set(["jsr"])
+        modesExclude = set(["indexed"])
+        returnOpcodes = set(["rts", "rti"])
+        """,
+    '6811': """
+        labelTargets = set(["direct", "direct2", "direct3", "extended", "indexedx", "indexedx2", "indexedx3", "indexedy", "indexedy2", "indexedy3"])
+        """,
+    '8051': """
+        """,
+    '8080': """
+        labelTargets = set(["direct"])
+        """,
+    'z80': """
+        labelTargets = set([m for m in list(addressModeTable.keys()) if ",n" in m or ",nn" in m or "indaa" in m or "indn" in m])
+        """,
+}
+
+
 
 
 def fix_opcode_table(cpu, allow_undoc=False):
@@ -66,6 +131,9 @@ def read_udis(pathname):
     cpus = {}
     for filename in files:
         localfile = os.path.basename(filename)
+        if filename.endswith("udis.py"):
+            continue
+        print(f"processing {filename}")
         with open(filename, "r") as fh:
             source = fh.read()
             if "import cputables" in source:
@@ -74,6 +142,12 @@ def read_udis(pathname):
                 cpu_name, _ = os.path.splitext(localfile)
                 g = {"pcr": pcr, "und": und, "z80bit": z80bit, "lbl": lbl, "comment": comment}
                 d = {}
+                try:
+                    extra = cpu_extra[cpu_name]
+                except KeyError:
+                    pass
+                else:
+                    source += "\n".join([line.lstrip() for line in extra.splitlines()])
                 try:
                     exec(source, g, d)
                     if 'opcodeTable' in d:
@@ -84,13 +158,12 @@ def read_udis(pathname):
                             # reload because dict was modified in fix_opcode_table
                             d = {}
                             exec(source, g, d)
-                            cpu_name = "%sundoc" % cpu_name
-                            cpus[cpu_name] = d
+                            undoc_cpu_name = "%sundoc" % cpu_name
+                            cpus[undoc_cpu_name] = d
                             nop, found_undoc = fix_opcode_table(d, True)
-                            cpus[cpu_name]["nop"] = nop
+                            cpus[undoc_cpu_name]["nop"] = nop
                 except SyntaxError:
-                    # ignore any python 3 files
-                    pass
+                    raise
     return cpus
 
 
@@ -98,7 +171,7 @@ if __name__ == "__main__":
     import sys
     import argparse
     
-    supported_cpus = read_udis(".")
+    supported_cpus = read_udis("udis")
     output = []
     import pprint
     output.append("# Autogenerated from udis source! Do not edit here, change udis source instead.")

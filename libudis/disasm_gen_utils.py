@@ -2,7 +2,7 @@ import logging
 log = logging.getLogger(__name__)
 
 # mnemonic flags
-from udis_fast.flags import *
+from omni8bit.udis_fast.flags import *
 
 # output flags
 c_define_flags = ""

@@ -24,7 +24,7 @@ from disasm_gen_utils import *
 import logging
 log = logging.getLogger(__name__)
 
-from udis_fast.flags import *
+from omni8bit.udis_fast.flags import *
 
 
 disclaimer = """Warning! This is generated code.
@@ -183,13 +183,13 @@ class DisassemblerGenerator(DataGenerator):
 
 def get_file(cpu_name, ext, monolithic, first=False):
     if monolithic:
-        file_root = "udis_fast/hardcoded_parse_monolithic"
+        file_root = "hardcoded_parse_monolithic"
         if first:
             mode = "w"
         else:
             mode = "a"
     else:
-        file_root = "udis_fast/hardcoded_parse_%s" % cpu_name
+        file_root = "hardcoded_parse_%s" % cpu_name
         mode = "w"
     if cpu_name is not None:
         print("Generating %s in %s" % (cpu_name, file_root))
@@ -251,7 +251,7 @@ class PyxGenerator(object):
         self.function_name_list = []
 
     def gen_pyx(self):
-        filename = "udis_fast/disasm_speedups_monolithic.pyx"
+        filename = "disasm_speedups_monolithic.pyx"
         prototype_arglist = "(char *wrap, char *src, int pc, int last_pc, np.uint16_t *labels, char *instructions, int strpos, int mnemonic_lower, char *hexdigits)"
         externlist = []
         for n in self.function_name_list:
@@ -263,7 +263,7 @@ class PyxGenerator(object):
         for cpu in self.cpus:
             deflist.append(deftemplate.replace("$CPU", cpu))
 
-        text = """from __future__ import division
+        text = """
 import cython
 import numpy as np
 cimport numpy as np
