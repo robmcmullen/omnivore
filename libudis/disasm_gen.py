@@ -17,14 +17,13 @@ import glob
 
 import numpy as np
 
-import cputables
-
 from disasm_gen_utils import *
 
 import logging
 log = logging.getLogger(__name__)
 
 from omni8bit.udis_fast.flags import *
+from omni8bit.udis_fast import cputables
 
 
 disclaimer = """Warning! This is generated code.

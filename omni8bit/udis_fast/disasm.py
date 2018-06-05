@@ -263,7 +263,9 @@ class Disassembler(object):
 
     def get_disassembly(self):
         while True:
-            yield self.disasm()
+            result = self.disasm()
+            print(f"disassembly result: {result}")
+            yield result
     
     def get_memloc_name(self, memloc, rw):
         if rw == "" or self.memory_map is None:

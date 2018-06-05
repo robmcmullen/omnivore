@@ -18,6 +18,9 @@ import numpy as np
 rawdtype = [('pc', 'u2'), ('dest_pc', 'u2'), ('count', 'u1'), ('flag', 'u1'), ('strlen', 'u2'), ('strpos', 'i4')]
 
 from .flags import *
+from .miniasm import MiniAssembler
+from .disasm import Disassembler
+from .disasm_info import CurrentRow, DisassemblyInfo, fast_disassemble_segment
 
 import logging
 log = logging.getLogger(__name__)

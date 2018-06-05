@@ -20,7 +20,7 @@ except ImportError:
     raise RuntimeError("Generate cputables.py using cpugen.py before using the miniassembler")
 
 from .disasm import Disassembler
-from .udis_fast.flags import flag_undoc, pcr, z80bit
+from .flags import flag_undoc, pcr, z80bit
 
 import logging
 logging.basicConfig(level=logging.WARNING)
@@ -313,7 +313,7 @@ def process(source, filename, start_pc, cpu, assemble_only=False, undoc=False, v
         binary = np.fromstring(source, dtype=np.uint8)
         disasm = Disassembler(cpu, allow_undocumented=undoc, hex_lower=True, mnemonic_lower=True)
         disasm.set_pc(binary, start_pc)
-        for addr, disassembled_bytes, opstr, comment, flag in disasm.get_disassembly():
+        for addr, disassembled_bytes, opstr, comment, is_undocumented, flag in disasm.get_disassembly():
             assembled_bytes = miniasm.asm(addr, opstr)
             if disassembled_bytes == assembled_bytes:
                 success += 1

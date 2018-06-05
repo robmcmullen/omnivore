@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from . import miniasm
+from omni8bit.udis_fast import miniasm
 
 
 cputests = [
@@ -16,7 +16,7 @@ class TestMiniasm(object):
 
     @pytest.mark.parametrize("cpu,binary", cputests)
     def test_cpu(self, cpu, binary):
-        source = binary.decode("hex")
+        source = bytes.fromhex(binary)
         success, failure = miniasm.process(source, cpu, self.start_pc, cpu)
         assert failure == 0
 

@@ -179,6 +179,6 @@ if __name__ == "__main__":
     for line in pprint.pformat(supported_cpus).splitlines():
         output.append(line.strip())
 #    print supported_cpus
-    with open("cputables.py", "w") as fh:
+    with open("../omni8bit/udis_fast/cputables.py", "w") as fh:
         fh.write("\n".join(output))
         fh.write("\n")
