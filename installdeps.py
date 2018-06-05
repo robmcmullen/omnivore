@@ -64,7 +64,7 @@ for dep in deps:
         builddir = setupdir
 
     command = options.get('command',
-        setup + "build_ext --inplace")
+        setup + "build")
     link = repodir
     if "install" in command:
         link = None
