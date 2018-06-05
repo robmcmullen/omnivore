@@ -96,6 +96,8 @@ class Atari800(EmulatorBase):
 
     low_level_interface = liba8
 
+    mime_prefix = "application/vnd.atari8bit"
+
     # atari800 will call the debugger at the next CPU_GO call, so the timer
     # must not stop here.
     stop_timer_for_debugger = False

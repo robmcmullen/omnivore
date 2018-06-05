@@ -21,6 +21,8 @@ class Generic6502(EmulatorBase):
     name = "6502"
     pretty_name = "Generic 6502"
 
+    mime_prefix = ""
+
     input_array_dtype = d.INPUT_DTYPE
     output_array_dtype = d.OUTPUT_DTYPE
     width = d.VIDEO_WIDTH

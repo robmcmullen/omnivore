@@ -19,3 +19,10 @@ def find_emulator(emulator_name):
         if e.name == emulator_name or e == emulator_name:
             return e
     raise UnknownEmulatorError("Unknown emulator '%s'" % emulator_name)
+
+
+def guess_emulator(document):
+    for e in known_emulators:
+        if e.guess_from_document(document):
+            return e
+    raise UnknownEmulatorError("Unknown emulator '%s'" % emulator_name)

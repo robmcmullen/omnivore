@@ -12,6 +12,8 @@ class EmulatorBase(object):
     name = "<name>"
     pretty_name = "<pretty name>"
 
+    mime_prefix = "<mime type>"
+
     input_array_dtype = None
     output_array_dtype = None
     width = 320
@@ -63,8 +65,18 @@ class EmulatorBase(object):
     def current_frame_number(self):
         return self.output['frame_number'][0]
 
-    def debug_video(self):
-        pass
+    @classmethod
+    def guess_from_document(cls, document):
+        try:
+            mime = document.metadata.mime
+        except:
+            pass
+        else:
+            if mime.startswith(cls.mime_prefix):
+                return True
+        return False
+
+    ##### Video
 
     def compute_color_map(self):
         pass
@@ -73,6 +85,8 @@ class EmulatorBase(object):
         rgb = np.empty((self.height, self.width, 3), np.uint8)
         rgba = np.empty((self.height, self.width, 4), np.uint8)
         return rgb, rgba
+
+    ##### Object serialization
 
     def report_configuration(self):
         """Return dictionary of configuration parameters"""
@@ -88,6 +102,8 @@ class EmulatorBase(object):
 
     def serialize_state(self, mdict):
         return {"name": self.name}
+
+    ##### Initialization
 
     def configure_emulator(self, emu_args=None, *args, **kwargs):
         self.args = self.process_args(emu_args)
@@ -108,6 +124,8 @@ class EmulatorBase(object):
 
     def process_args(self, emu_args):
         return emu_args if emu_args else []
+
+    ##### Machine boot
 
     def boot_from_segment(self, boot_segment):
         if self.bootfile is not None:
