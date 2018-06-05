@@ -8,7 +8,7 @@ import wx
 from traits.api import on_trait_change, Bool, Undefined, Any, Instance
 
 from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
-from udis.udis_fast import TraceInfo, flag_origin
+from omni8bit.udis_fast import TraceInfo, flag_origin
 
 from omnivore.framework.enthought_api import EditorAction
 from omnivore.utils.nputil import intscale

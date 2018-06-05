@@ -18,26 +18,10 @@ from setuptools import find_packages
 from setuptools import setup
 from distutils.extension import Extension
 
-if sys.platform.startswith("win"):
-    udis_compile_args = ["-DMSVC", "-D_CRT_SECURE_NO_WARNINGS"]
-else:
-    udis_compile_args = []
-
 ext_modules = [
     Extension("omnivore8bit.arch.antic_speedups",
               sources=["omnivore8bit/arch/antic_speedups.c"],
               extra_compile_args = ["-O3" ],
-              ),
-    Extension("udis.udis_fast.disasm_info",
-              sources = ["udis/udis_fast/disasm_info.c"],
-              extra_compile_args = udis_compile_args,
-              ),
-    Extension("udis.udis_fast.disasm_speedups_monolithic",
-              sources = [
-                  "udis/udis_fast/disasm_speedups_monolithic.c",
-                  "udis/udis_fast/hardcoded_parse_monolithic.c",
-                  ],
-              extra_compile_args = udis_compile_args,
               ),
     ]
 
@@ -79,8 +63,6 @@ if "sdist" in sys.argv:
             from Cython.Build import cythonize
             cythonize([
                 "omnivore8bit/arch/antic_speedups.pyx",
-                "udis/udis_fast/disasm_info.pyx",
-                "udis/udis_fast/disasm_speedups_monolithic.pyx",
                 ])
             _sdist.run(self)
     cmdclass["sdist"] = sdist

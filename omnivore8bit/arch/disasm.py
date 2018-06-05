@@ -1,8 +1,6 @@
 import numpy as np
 
-from udis import miniasm, cputables
-import udis.udis_fast as udis_fast
-from udis.udis_fast.disasm_info import fast_disassemble_segment
+import omni8bit.udis_fast as udis_fast
 
 from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bit_mask, data_style
 
@@ -137,7 +135,7 @@ class BaseDisassembler(object):
     @classmethod
     def get_miniassembler(cls, cpu):
         if not cpu in cls.cached_miniassemblers:
-            asm = miniasm.MiniAssembler(cpu)
+            asm = udis_fast.MiniAssembler(cpu)
             cls.cached_miniassemblers[cpu] = asm
 
         return cls.cached_miniassemblers[cpu]
@@ -168,7 +166,7 @@ class BaseDisassembler(object):
         self.segment = segment
         self.origin = segment.origin
         self.end_addr = self.origin + len(segment)
-        self.info = fast_disassemble_segment(self.fast, segment)
+        self.info = udis_fast.fast_disassemble_segment(self.fast, segment)
         self.use_labels = self.origin > 0
         return self.info
 

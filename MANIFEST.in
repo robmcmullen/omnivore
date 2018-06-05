@@ -8,5 +8,3 @@ recursive-include tests *.sh *.py
 recursive-include omnivore *.c
 include traits/*.h
 prune atrcopy  # force using atrcopy from pypi rather than local dev copy
-recursive-include udis *.c
-exclude udis/udis.py  # python 3 file that causes syntax error

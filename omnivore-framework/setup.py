@@ -125,7 +125,7 @@ package_data = {
     }
 
 # Remove qt & other unnecessary stuff
-packages = [p for p in find_packages() if not (".qt4" in p or "omnivore8bit" in p or "omnivore_extra" in p or p.startswith("udis"))]
+packages = [p for p in find_packages() if not (".qt4" in p or "omnivore8bit" in p or "omnivore_extra" in p)]
 #print(all_packages)
 
 base_dist_dir = "dist-%s" % spaceless_version
