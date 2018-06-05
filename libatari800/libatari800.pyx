@@ -10,6 +10,7 @@ cdef extern:
     void a8_configure_state_arrays(void *input, void *output)
     void a8_next_frame(void *input, void *output)
     int a8_mount_disk_image(int diskno, const char *filename, int readonly)
+    void a8_reboot_with_file(const char *filename)
     void a8_get_current_state(void *output)
     void a8_restore_state(void *restore)
     int a8_monitor_step(int addr)
@@ -87,6 +88,10 @@ def get_current_state(np.ndarray output not None):
 def load_disk(int disknum, pathname, int readonly=0):
     filename = pathname.encode('utf-8')
     a8_mount_disk_image(disknum, filename, readonly)
+
+def reboot_with_file(pathname):
+    filename = pathname.encode('utf-8')
+    a8_reboot_with_file(filename)
 
 def restore_state(np.ndarray state not None):
     cdef np.uint8_t[:] sbuf

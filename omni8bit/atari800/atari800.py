@@ -140,6 +140,10 @@ class Atari800(EmulatorBase):
         self.offsets, self.names, extra_segments, self.segment_starts, self.computed_dtypes = parse_state(self.output['state'], self.state_start_offset)
         self.segments.extend(extra_segments)
 
+    def boot_from_file(self, filename):
+        log.debug(f"booting {self.pretty_name} from {filename}")
+        liba8.reboot_with_file(filename)
+
     def end_emulation(self):
         pass
 
