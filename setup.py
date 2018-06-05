@@ -110,6 +110,11 @@ cmdclass = dict()
 # Cython is only used when creating a source distribution. Users don't need
 # to install Cython unless they are modifying the .pyx files themselves.
 if "sdist" in sys.argv:
+    import subprocess
+    if not os.path.exists("omni8bit/udis_fast/cputables.py"):
+        subprocess.run(['python', 'libudis/cpugen.py'])
+    if not os.path.exists("libudis/disasm_speedups_monolithic.pyx"):
+        subprocess.run(['python', 'libudis/disasm_gen.py'])
     try:
         from Cython.Build import cythonize
         from distutils.command.sdist import sdist as _sdist

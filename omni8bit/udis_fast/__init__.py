@@ -18,12 +18,19 @@ import numpy as np
 rawdtype = [('pc', 'u2'), ('dest_pc', 'u2'), ('count', 'u1'), ('flag', 'u1'), ('strlen', 'u2'), ('strpos', 'i4')]
 
 from .flags import *
-from .miniasm import MiniAssembler
-from .disasm import Disassembler
-from .disasm_info import CurrentRow, DisassemblyInfo, fast_disassemble_segment
 
 import logging
 log = logging.getLogger(__name__)
+
+
+try:
+    from .miniasm import MiniAssembler
+    from .disasm import Disassembler
+    from .disasm_info import CurrentRow, DisassemblyInfo, fast_disassemble_segment
+except RuntimeError:
+    log.warning("cputables.py not generated; disassembler and mini assembler will not be available")
+except ModuleNotFoundError:
+    log.warning("udis_fast C extensions not created; disassembler and mini assembler will not be availabe")
 
 
 class StorageWrapper(object):

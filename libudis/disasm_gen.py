@@ -17,7 +17,7 @@ import glob
 
 import numpy as np
 
-from disasm_gen_utils import *
+from libudis.disasm_gen_utils import *
 
 import logging
 log = logging.getLogger(__name__)
@@ -192,7 +192,8 @@ def get_file(cpu_name, ext, monolithic, first=False):
         mode = "w"
     if cpu_name is not None:
         print("Generating %s in %s" % (cpu_name, file_root))
-    return open("%s.%s" % (file_root, ext), mode)
+    pathname = os.path.join(os.path.dirname(__file__), "%s.%s" % (file_root, ext))
+    return open(pathname, mode)
 
 def gen_cpu(pyx, cpu, all_case_combos=False, do_py=False, do_c=True, monolithic=False, dev=False):
     if dev:
@@ -366,7 +367,7 @@ $DEFLIST
     storage_wrapper.last_strpos = strpos
     return pc, index_of_pc
 """.replace("$EXTERNLIST", "\n".join(externlist)).replace("$DEFLIST", "\n".join(deflist))
-        with open(filename, "w") as fh:
+        with open(os.path.join(os.path.dirname(__file__), filename), "w") as fh:
             fh.write(py_disclaimer)
             fh.write(text)
         return text
@@ -381,7 +382,7 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--dev", help="Build for development testing", action="store_true", default=False)
     parser.add_argument("-p", "--py", help="Also create python code", action="store_true", default=False)
     parser.add_argument("-a", "--all-cases", help="Generate 4 separate functions for the lower/upper combinations", action="store_true", default=False)
-    parser.add_argument("-m", "--monolithic", help="Put all disassemblers in one file", action="store_true")
+    parser.add_argument("-m", "--monolithic", help="Put all disassemblers in one file", action="store_true", default=True)
     parser.add_argument("-v", "--verbose", help="Show verbose progress", action="store_true", default=False)
     args = parser.parse_args()
 
