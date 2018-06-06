@@ -1422,6 +1422,8 @@ class CompactGrid(wx.ScrolledWindow):
     def move_viewport_origin(self, row_col_tuple):
         row, col = row_col_tuple
         sx, sy = self.GetViewStart()
+        if row < 0: row = sy
+        if col < 0: col = sx
         if sx == col and sy == row:
             log.debug("viewport: already at %d,%d" % (row, col))
             # already there!
@@ -1499,6 +1501,22 @@ class CompactGrid(wx.ScrolledWindow):
                         self.line_renderer.draw_caret(self, dc, r, c)
                 else:
                     log.debug("skipping offscreen caret at r,c=%d,%d" % (r, c))
+
+    def calc_primary_caret_visible_info(self):
+        start_row = self.main.first_visible_row
+        last_row = start_row + self.main.visible_rows
+        for index in self.caret_handler.iter_caret_indexes():
+            try:
+                r, c = self.table.index_to_row_col(index)
+            except IndexError:
+                pass
+            else:
+                if r >= start_row and r < last_row:
+                    row_info = index, r, r - start_row, c
+                    break
+        else:
+            row_info = index, start_row, 0, 0
+        return row_info
 
     ##### Keyboard movement implementations
 

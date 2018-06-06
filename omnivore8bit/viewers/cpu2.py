@@ -503,7 +503,12 @@ class DisassemblyViewer(SegmentViewer):
         self.restart_disassembly()
 
     def do_priority_level_refresh(self):
+        index, row1, offset1, col1 = self.control.calc_primary_caret_visible_info()
         self.recalc_data_model()
+        index2, row2, offset2, col2 = self.control.calc_primary_caret_visible_info()
+        new_first_row = row2 - offset1
+        log.debug(f"keep caret in same place: before={row1} {offset1}, after={row2} {offset2}, new={new_first_row}")
+        self.control.move_viewport_origin((new_first_row, -1))
         self.refresh_view(True)
         self.frame_count = 0
 
