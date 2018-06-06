@@ -502,6 +502,11 @@ class DisassemblyViewer(SegmentViewer):
         self.clear_disassembly()
         self.restart_disassembly()
 
+    def do_priority_level_refresh(self):
+        self.recalc_data_model()
+        self.refresh_view(True)
+        self.frame_count = 0
+
     ##### UdisFast interface
 
     def create_disassembler(self):

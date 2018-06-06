@@ -355,9 +355,11 @@ class SegmentViewer(HasTraits):
             self.frame_count += 1
             p = self.priority_refresh_frame_count
             if self.frame_count > p or p < evt:
-                flags = DisplayFlags()
-                self.refresh_view(flags)
-                self.frame_count = 0
+                self.do_priority_level_refresh()
+
+    def do_priority_level_refresh(self):
+        self.refresh_view(True)
+        self.frame_count = 0
 
     @on_trait_change('linked_base.refresh_event')
     def process_refresh_view(self, flags):
