@@ -143,6 +143,7 @@ class Atari800(EmulatorBase):
     def boot_from_file(self, filename):
         log.debug(f"booting {self.pretty_name} from {filename}")
         liba8.reboot_with_file(filename)
+        self.configure_io_arrays()
 
     def end_emulation(self):
         pass
