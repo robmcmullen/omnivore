@@ -268,6 +268,6 @@ class OpenRecentPlugin(FrameworkPlugin):
         try:
             recent_files.append_uri(uri)
         except Exception as e:
-            log.warning("FAILED ADDING %s to recent files list: %s" % (uri, e.message))
+            log.warning("FAILED ADDING %s to recent files list: %s" % (uri, str(e)))
             return
         self.fire_plugin_event()

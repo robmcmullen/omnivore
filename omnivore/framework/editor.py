@@ -323,7 +323,7 @@ class FrameworkEditor(Editor):
             serialized_data = self.copy_selection_to_clipboard(name)
             self.task.status_bar.message = "Copied %s" % str(serialized_data)
         except clipboard.ClipboardError as e:
-            self.window.error(e.message, "Clipboard Error")
+            self.window.error(str(e), "Clipboard Error")
 
     @property
     def clipboard_data_format(self):
@@ -341,7 +341,7 @@ class FrameworkEditor(Editor):
             self.process_paste_data(serialized_data, cmd_cls)
             self.task.status_bar.message = "Pasted %s" % serialized_data.summary
         except clipboard.ClipboardError as e:
-            self.window.error(e.message, "Paste Error")
+            self.window.error(str(e), "Paste Error")
 
     def get_paste_data_from_clipboard(self):
         return clipboard.get_paste_data(self)

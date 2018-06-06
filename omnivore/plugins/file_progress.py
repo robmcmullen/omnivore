@@ -341,7 +341,7 @@ if __name__ == '__main__':
                 wx.Yield()
 
         except ProgressCancelError as e:
-            error = e.message
+            error = str(e)
         finally:
             progress_log.info("END")
 

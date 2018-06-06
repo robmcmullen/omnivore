@@ -633,13 +633,13 @@ class TileManager(wx.Window):
             try:
                 d = json.loads(d)
             except ValueError as e:
-                log.error("Error loading layout: %s" % e.message)
+                log.error("Error loading layout: %s" % str(e))
                 return
             layout = d['tile_manager']
         try:
             self.replace_all(layout, d.get('sidebars', []))
         except KeyError as e:
-            log.error("Error loading layout: missing key %s. Restoring previous layout." % e.message)
+            log.error("Error loading layout: missing key %s. Restoring previous layout." % str(e))
         print(("SIDEBARS!", self.sidebars))
 
     def update_captions(self):
