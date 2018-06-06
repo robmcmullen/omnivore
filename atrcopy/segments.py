@@ -505,6 +505,7 @@ class DefaultSegment(object):
         self.can_resize = state.pop('can_resize', self.__class__.can_resize_default)
         self.restore_missing_serializable_defaults()
         self.__dict__.update(state)
+        self.restore_renamed_serializable_attributes()
 
     def restore_missing_serializable_defaults(self):
         """Hook for the future when extra serializable attributes are added to
@@ -512,6 +513,17 @@ class DefaultSegment(object):
         providing defaults to any missing attributes.
         """
         pass
+
+    def restore_renamed_serializable_attributes(self):
+        """Hook for the future if attributes have been renamed. The old
+        attribute names will have been restored in the __dict__.update in
+        __setstate__, so this routine should move attribute values to their new
+        names.
+        """
+        if hasattr(self, 'start_addr'):
+            self.origin = self.start_addr
+            print(f"moving start_addr to origin: {self.start_addr}")
+            delattr(self, 'start_addr')
 
     def reconstruct_raw(self, rawdata):
         """Reconstruct the pointers to the parent data arrays
