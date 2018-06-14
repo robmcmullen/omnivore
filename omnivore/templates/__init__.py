@@ -12,6 +12,8 @@ try:
     import atrcopy
 except ImportError:
     pass
+except SyntaxError:
+    pass  # importing python 3 code in python 2
 else:
     try:
         path = atrcopy.get_template_path()
