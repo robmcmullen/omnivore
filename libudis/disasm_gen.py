@@ -17,7 +17,10 @@ import glob
 
 import numpy as np
 
-from libudis.disasm_gen_utils import *
+import sys
+sys.path[0:0] = [os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))]
+
+from disasm_gen_utils import *
 
 import logging
 log = logging.getLogger(__name__)

@@ -6,6 +6,9 @@ known processors and save it into cputables.py
 import os
 import glob
 
+import sys
+sys.path[0:0] = [os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))]
+
 from omni8bit.udis_fast.flags import pcr, und, z80bit, lbl, comment, flag_label, flag_return, flag_jump, flag_branch
 
 
