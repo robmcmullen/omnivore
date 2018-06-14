@@ -1,9 +1,21 @@
-from .atari800 import Atari800
-from .generic6502 import Generic6502
+known_emulators = []
+default_emulator = None
 
-known_emulators = [Atari800, Generic6502]
+try:
+    from .atari800 import Atari800
+    known_emulators.append(Atari800)
+    if default_emulator is None:
+        default_emulator = Atari800
+except ImportError:
+    pass
 
-default_emulator = Atari800
+try:
+    from .generic6502 import Generic6502
+    known_emulators.append(Generic6502)
+    if default_emulator is None:
+        default_emulator = Generic6502
+except ImportError:
+    pass
 
 
 class Omni8bitError(RuntimeError):
