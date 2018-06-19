@@ -23,9 +23,9 @@ class EmulatorSegmentParser(SegmentParser):
     def parse(self):
         r = self.segment_data
         self.segments.append(self.container_segment(r, 0, name=self.menu_name))
-        for start, end, offset, name in self.emulator_segments:
-            if end - start > 0:
-                self.segments.append(DefaultSegment(r[start:end], offset, name))
+        for start, count, offset, name in self.emulator_segments:
+            if count > 0:
+                self.segments.append(DefaultSegment(r[start:start + count], offset, name))
 
 def segment_parser_factory(emulator_segments):
     cls = type('EmulatorSegmentParser', (EmulatorSegmentParser, SegmentParser), dict(emulator_segments = emulator_segments))
