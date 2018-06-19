@@ -62,10 +62,9 @@ class Generic6502(EmulatorBase):
     def generate_extra_segments(self):
         cpu_offset = self.state_start_offset
         memory_offset = cpu_offset + d.CPU_DTYPE.itemsize
-        memory_size = d.MAIN_MEMORY_SIZE
         segments = [
-            (cpu_offset, cpu_offset + d.CPU_DTYPE.itemsize, 0, "CPU Status"),
-            (memory_offset, memory_offset + d.MAIN_MEMORY_SIZE, 0, "Main Memory"),
+            (cpu_offset, d.CPU_DTYPE.itemsize, 0, "CPU Status"),
+            (memory_offset, d.MAIN_MEMORY_SIZE, 0, "Main Memory"),
         ]
         self.segments.extend(segments)
 

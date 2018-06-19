@@ -5,7 +5,6 @@ import numpy as np
 from . import libatari800 as liba8
 from . import generic_interface as g
 from . import akey
-from .save_state_parser import parse_state
 from .colors import NTSC
 from ..emulator_base import EmulatorBase
 
@@ -110,14 +109,15 @@ class Atari800(EmulatorBase):
         a, p, sp, x, y, _, pc = self.cpu_state
 
         # Confirm validity by checking raw locations
-        names = self.names
-        raw = self.raw_array
-        assert a == raw[names['CPU_A']]
-        assert p == raw[names['CPU_P']]
-        assert sp == raw[names['CPU_S']]
-        assert x == raw[names['CPU_X']]
-        assert y == raw[names['CPU_Y']]
-        assert pc == (raw[names['PC']] + 256 * raw[names['PC'] + 1])
+        cpu_offset = self.output[0]['tag_cpu']
+        registers = self.raw_state[cpu_offset:cpu_offset+5]
+        assert a == registers[0]
+        assert p == registers[1]
+        assert sp == registers[2]
+        assert x == registers[3]
+        assert y == registers[4]
+        raw_pc = self.raw_state[self.output[0]['tag_pc']:]
+        assert pc == (raw_pc[0] + 256 * raw_pc[1])
         return "A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc)
 
     def configure_event_loop(self, event_loop=None, event_loop_args=None, *args, **kwargs):
@@ -137,8 +137,28 @@ class Atari800(EmulatorBase):
         return emu_args
 
     def generate_extra_segments(self):
-        self.offsets, self.names, extra_segments, self.segment_starts, self.computed_dtypes = parse_state(self.output['state'], self.state_start_offset)
-        self.segments.extend(extra_segments)
+        s = self.state_start_offset
+        self.computed_dtypes = {
+            'ANTIC': g.ANTIC_DTYPE,
+            'GTIA': g.GTIA_DTYPE,
+            'POKEY': g.POKEY_DTYPE,
+            'PIA': g.PIA_DTYPE,
+        }
+        self.segment_starts = {
+            'ANTIC': self.output[0]['tag_antic'],
+            'GTIA': self.output[0]['tag_gtia'],
+            'POKEY': self.output[0]['tag_pia'],
+            'PIA': self.output[0]['tag_pokey'],
+        }
+        segments = [
+            (s + self.output[0]['tag_cpu'], 6, 0, "CPU Regisers"),
+            (s + self.output[0]['tag_base_ram'], 256*256, 0, "Main Memory"),
+            (s + self.output[0]['tag_antic'], g.ANTIC_DTYPE.itemsize, 0, "ANTIC"),
+            (s + self.output[0]['tag_gtia'], g.GTIA_DTYPE.itemsize, 0, "GTIA"),
+            (s + self.output[0]['tag_pia'], g.PIA_DTYPE.itemsize, 0, "PIA"),
+            (s + self.output[0]['tag_pokey'], g.POKEY_DTYPE.itemsize, 0, "POKEY"),
+        ]
+        self.segments.extend(segments)
 
     def boot_from_file(self, filename):
         log.debug(f"booting {self.pretty_name} from {filename}")
@@ -170,17 +190,18 @@ class Atari800(EmulatorBase):
             offset += 336;
 
     def calc_cpu_data_array(self):
-        names = self.names
+        cpu_offset = self.output[0]['tag_cpu']
+        pc_offset = self.output[0]['tag_pc']
         computed_dtype = np.dtype([
             ("A", np.uint8),
             ("P", np.uint8),
             ("SP", np.uint8),
             ("X", np.uint8),
             ("Y", np.uint8),
-            ("_", np.uint8, names['PC'] - names['CPU_A'] - 5),
+            ("_", np.uint8, pc_offset - cpu_offset - 5),
             ("PC", '<u2'),
             ])
-        raw = self.raw_array[names['CPU_A']:names['CPU_A'] + computed_dtype.itemsize]
+        raw = self.raw_state[cpu_offset:cpu_offset + computed_dtype.itemsize]
         print(("sizeof raw_array=%d raw=%d dtype=%d" % (len(self.raw_array), len(raw), computed_dtype.itemsize)))
         dataview = raw.view(dtype=computed_dtype)
         return dataview[0]
@@ -192,7 +213,7 @@ class Atari800(EmulatorBase):
         return raw.view(dtype=d)[0]
 
     def calc_main_memory_array(self):
-        offset = self.names['ram_ram']
+        offset = self.output[0]['tag_base_ram']
         return self.raw_array[offset:offset + 1<<16]
 
     # Emulator user input functions

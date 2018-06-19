@@ -50,6 +50,10 @@ class EmulatorBase(object):
         return self.output_raw
 
     @property
+    def raw_state(self):
+        return self.output_raw[self.state_start_offset:]
+
+    @property
     def video_array(self):
         return self.output['video'][0]
 
@@ -155,8 +159,8 @@ class EmulatorBase(object):
         self.audio_start_offset = np.byte_bounds(self.audio_array)[0] - base
         self.state_start_offset = np.byte_bounds(self.state_array)[0] - base
         self.segments = [
-            (self.video_start_offset, self.video_start_offset + len(self.video_array), 0, "Video Frame"),
-            (self.audio_start_offset, self.audio_start_offset + len(self.audio_array), 0, "Audio Data"),
+            (self.video_start_offset, len(self.video_array), 0, "Video Frame"),
+            (self.audio_start_offset, len(self.audio_array), 0, "Audio Data"),
         ]
 
     def generate_extra_segments(self):
