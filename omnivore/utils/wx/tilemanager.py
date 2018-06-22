@@ -1794,9 +1794,9 @@ class TitleBar(wx.Window):
             split = size.x // 2
             dc.SetBrush(bg_brush)
             dc.SetPen(pen)
-            dc.DrawRectangle(0, 0, split + 1, size.y)
-            dc.SetBrush(fg_brush)
             dc.DrawRectangle(split, 0, size.x - split, size.y)
+            dc.SetBrush(fg_brush)
+            dc.DrawRectangle(0, 0, split + 1, size.y)
 
         def do_action(self, evt):
             self.client.split_side(wx.RIGHT)
@@ -1807,9 +1807,9 @@ class TitleBar(wx.Window):
             split = size.y // 2
             dc.SetBrush(bg_brush)
             dc.SetPen(pen)
-            dc.DrawRectangle(0, 0, size.x, split + 1)
-            dc.SetBrush(fg_brush)
             dc.DrawRectangle(0, split, size.x, size.y - split)
+            dc.SetBrush(fg_brush)
+            dc.DrawRectangle(0, 0, size.x, split + 1)
 
         def do_action(self, evt):
             self.client.split_side(wx.BOTTOM)
