@@ -300,6 +300,8 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
         if not self.is_editing_in_cell:
             if self.verify_keycode_can_start_edit(c):
                 self.start_editing(evt)
+            else:
+                evt.Skip()
         else:
             self.edit_source.EmulateKeyPress(evt)
 
