@@ -259,7 +259,7 @@ class SegmentViewer(HasTraits):
     ##### SegmentViewer interface
 
     def update_caption(self):
-        self.control.SetName(self.window_title)
+        self.control.SetName(self.window_title + self.linked_base_segment_identifier)
         self.control.SetLabel(self.pretty_name)
 
     ##### Trait change handlers
@@ -326,6 +326,13 @@ class SegmentViewer(HasTraits):
     @property
     def window_title(self):
         return self.pretty_name
+
+    @property
+    def linked_base_segment_identifier(self):
+        """If the viewer is always associated with a particular segment
+        override this to return an empty string
+        """
+        return f" ({self.linked_base.segment.name})"
 
     def recalc_data_model(self):
         """Rebuild the data model after a document formatting (or other

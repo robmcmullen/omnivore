@@ -342,6 +342,7 @@ class ByteEditor(FrameworkEditor):
 
     def view_segment_number(self, number):
         self.focused_viewer.linked_base.view_segment_number(number)
+        self.update_pane_names()
 
     def get_extra_segment_savers(self, segment):
         savers = []

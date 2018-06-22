@@ -30,6 +30,10 @@ class EmulatorViewer(SegmentViewer):
     # emulator_update_screen_event
     priority_refresh_frame_count = 10000000
 
+    @property
+    def linked_base_segment_identifier(self):
+        return ""
+
     def use_default_view_params(self):
         pass
 
@@ -124,6 +128,10 @@ class CPUParamTableViewer(BaseInfoViewer):
     pretty_name = "<pretty name>"
 
     control_cls = SegmentVirtualGridControl
+
+    @property
+    def linked_base_segment_identifier(self):
+        return ""
 
     def show_caret(self, control, index, bit):
         pass
