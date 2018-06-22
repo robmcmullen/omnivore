@@ -143,7 +143,7 @@ class LinkedBase(CaretHandler):
         if 'segment number' in e:
             self.segment_number = e['segment number']
         else:
-            self.segment_number = self.editor.initial_segment
+            self.editor.document.find_initial_visbile_segment(self)
 
     def to_metadata_dict(self, mdict, document):
         self.prepare_metadata_for_save()

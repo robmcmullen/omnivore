@@ -110,6 +110,17 @@ class EmulationDocument(SegmentedDocument):
         mdict["emulator_type"] = self.emulator_type.name
         mdict["skip_frames_on_boot"] = self.skip_frames_on_boot
 
+    ##### Initial viewer defaults
+
+    def find_initial_visible_segment(self, linked_base):
+        for segment in self.segments:
+            log.debug(f"Looking for Main Memory segment: {segment}")
+            if segment.name == "Main Memory":
+                linked_base.find_segment(segment, refresh=False)
+                break
+        else:
+            log.warning("Didn't find Main Memory segment in emulator")
+
     #####
 
     def calc_layout_template_name(self, task_id):

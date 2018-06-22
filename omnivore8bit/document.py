@@ -262,6 +262,17 @@ class SegmentedDocument(BaseDocument):
                 pass
         return found
 
+    ##### Initial viewer defaults
+
+    def find_initial_visible_segment(self, linked_base):
+        """Hook for subclasses to force a particular segment to be viewed on
+        document load. Used in emulators to show the main memory, which is not
+        usually the first segment in the list.
+
+        By default, it does show the first segment.
+        """
+        linked_base.find_segment(0)
+
     #### Baseline document for comparisons
 
     def init_baseline(self, metadata, raw_bytes):

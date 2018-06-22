@@ -58,8 +58,6 @@ class ByteEditor(FrameworkEditor):
 #    segment_parser_label = Property(Unicode)
     segment_parser_label = Unicode("whatever")
 
-    initial_segment = Any(None)
-
     initial_font_segment = Any(None)
 
     ### View traits
@@ -182,8 +180,6 @@ class ByteEditor(FrameworkEditor):
 
     def from_metadata_dict(self, e):
         log.debug("metadata: %s" % str(e))
-        if 'initial segment' in e:
-            self.initial_segment = e['initial segment']
         if 'diff highlight' in e:
             self.diff_highlight = bool(e['diff highlight'])
 
@@ -269,11 +265,13 @@ class ByteEditor(FrameworkEditor):
         pass
 
     def rebuild_document_properties(self):
-        log.debug("rebuilding document %s; intitial segment=%s" % (str(self.document), self.initial_segment))
         if not self.document.has_baseline:
             self.use_self_as_baseline(self.document)
         FrameworkEditor.rebuild_document_properties(self)
-        self.focused_viewer.linked_base.find_segment(self.initial_segment)
+        b = self.focused_viewer.linked_base
+        if b.segment_number == 0:
+            self.document.find_initial_visible_segment(b)
+        log.debug("rebuilding document %s; initial segment=%s" % (str(self.document), b.segment))
         self.compare_to_baseline()
         self.can_resize_document = self.document.can_resize
 
@@ -502,6 +500,7 @@ class ByteEditor(FrameworkEditor):
 
         center_base = center_base = LinkedBase(editor=self)
         linked_bases['default'] = center_base
+        self.document.find_initial_visible_segment(center_base)
 
         layer = 0
         viewers = list(viewer_metadata.keys())
