@@ -22,6 +22,12 @@ class ImageRecognizer(RecognizerBase):
         'xbm': 'x-xbitmap,'
         }
 
+    def can_load_mime(self, mime):
+        for name in self.mime_map.values():
+            if mime == "image/%s" % name:
+                return True
+        return False
+
     def identify(self, guess):
         name = imghdr.what("", h=guess.get_bytes())
         if name is None:

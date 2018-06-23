@@ -28,18 +28,26 @@ class FileRecognizerDriver(HasTraits):
         error = ""
         document = None
         log.debug("trying %d recognizers " % len(self.recognizers))
-        for recognizer in self.recognizers:
-            log.debug("trying %s recognizer: " % recognizer.id,)
-            mime = recognizer.identify(guess)
-            if mime is not None:
-                guess.metadata.mime = mime
-                log.debug("found %s for %s" % (mime, guess.metadata.uri))
-                try:
+
+        if guess.force_mime:
+            for recognizer in self.recognizers:
+                log.debug(f"trying {recognizer.id} for MIME {guess.force_mime}")
+                if recognizer.can_load_mime(guess.force_mime):
                     document = recognizer.load(guess)
-                except DocumentError as e:
-                    error = "Error when using %s parser to create a document:\n\n%s\n\nA default document will be opened instead." % (recognizer.name, str(e))
-                    document = None
-                break
+
+        if document is None:
+            for recognizer in self.recognizers:
+                log.debug("trying %s recognizer: " % recognizer.id,)
+                mime = recognizer.identify(guess)
+                if mime is not None:
+                    guess.metadata.mime = mime
+                    log.debug("found %s for %s" % (mime, guess.metadata.uri))
+                    try:
+                        document = recognizer.load(guess)
+                    except DocumentError as e:
+                        error = "Error when using %s parser to create a document:\n\n%s\n\nA default document will be opened instead." % (recognizer.name, str(e))
+                        document = None
+                    break
 
         if mime is None:
             guess.metadata.mime = "application/octet-stream"

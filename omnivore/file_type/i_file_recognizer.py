@@ -31,6 +31,9 @@ class IFileRecognizer(Interface):
 
 
 class RecognizerBase(HasTraits):
+    def can_load_mime(self, mime):
+        return mime == self.id
+
     def load(self, guess):
         doc = BaseDocument(metadata=guess.metadata, raw_bytes=guess.numpy)
         doc.load_metadata(guess)

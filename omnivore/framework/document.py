@@ -189,38 +189,7 @@ class BaseDocument(HasTraits):
         self.extra_metadata = extra
 
     def load_extra_metadata(self, guess):
-        return self.load_filesystem_extra_metadata()
-
-    def load_filesystem_extra_metadata(self):
-        """ Find any extra metadata associated with the document, typically
-        used to load an extra file off the disk.
-        
-        If successful, return a dict to be processed by init_extra_metadata
-        """
-        uri = self.get_filesystem_extra_metadata_uri()
-        if uri is None:
-            return {}
-        try:
-            guess = FileGuess(uri)
-        except fs.errors.FSError as e:
-            log.error("File load error: %s" % str(e))
-            return {}
-        log.info("Loading metadata file: %s" % uri)
-        return self.calc_unserialized_extra_metadata(uri, guess.raw_bytes)
-
-    def calc_unserialized_extra_metadata(self, uri, text):
-        try:
-            if text.startswith(b"#"):
-                header, text = text.split(b"\n", 1)
-            unserialized = jsonpickle.loads(text)
-        except ValueError as e:
-            log.error("JSON parsing error for extra metadata in %s: %s" % (uri, str(e)))
-            unserialized = {}
-        except AttributeError as e:
-            log.error("JSON library error: %s: %s" % (uri, str(e)))
-            unserialized = {}
-            raise DocumentError("JSON library error: % s" % str(e))
-        return unserialized
+        return guess.json_metadata
 
     def calc_unserialized_template(self, template):
         try:
@@ -229,7 +198,7 @@ class BaseDocument(HasTraits):
             log.debug("no template for %s" % template)
             e = {}
         else:
-            e = self.calc_unserialized_extra_metadata(template, text)
+            e = jsonutil.unserialize(template, text)
         return e
 
     def get_filesystem_extra_metadata_uri(self):
@@ -356,7 +325,7 @@ class BaseDocument(HasTraits):
                 raw_bytes = jsonpickle.dumps(mdict)
                 text = jsonutil.collapse_json(raw_bytes, 8, self.json_expand_keywords)
                 header = editor.get_extra_metadata_header()
-                fh = fs.open(relpath, 'wb')
+                fh = fs.open(relpath, 'w')
                 fh.write(header)
                 fh.write(text)
                 fh.close()

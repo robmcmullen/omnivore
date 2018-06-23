@@ -2,12 +2,14 @@ import os
 import io
 
 import numpy as np
+import jsonpickle
 
 from fs.opener import opener, fsopen
 from fs.errors import FSError
 
 from traits.api import HasTraits, Bool, Str, Unicode, Trait, TraitHandler, Property
 
+from . import jsonutil
 from .textutil import guessBinary
 from ..templates import get_template
 
@@ -111,7 +113,9 @@ class FileGuess(object):
     # parsers that rely on size detection
     head_size = 1024*1024 - 1
 
-    def __init__(self, uri):
+    def __init__(self, uri, metadata_ext=".omnivore"):
+        self.metadata_ext = metadata_ext
+        self.force_mime = None
         self._likely_binary = None
         log.debug("Attempting to load %s" % uri)
         self.reload(uri)
@@ -154,6 +158,23 @@ class FileGuess(object):
 
         # Release filesystem resources
         fs.close()
+        self.reload_json_metadata(uri)
+
+    def reload_json_metadata(self, uri):
+        uri = uri + self.metadata_ext
+        try:
+            fh, fs, relpath = self.get_fs(uri)
+        except FSError as e:
+            log.debug(f"No json metadata found for {uri}")
+            unserialized = {}
+        else:
+            raw = fh.read(self.head_size)
+            fh.close()
+            fs.close()
+            unserialized = jsonutil.unserialize(uri, raw)
+        self.json_metadata = unserialized
+        self.force_mime = unserialized.get("mime", None)
+        print("JSON METODOTO", unserialized)
 
     def __str__(self):
         return "guess: metadata: %s, %d bytes available for signature" % (self.metadata, len(self.raw_bytes))

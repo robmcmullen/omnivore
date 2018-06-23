@@ -107,7 +107,7 @@ class EmulationDocument(SegmentedDocument):
     def serialize_extra_to_dict(self, mdict):
         SegmentedDocument.serialize_extra_to_dict(self, mdict)
 
-        mdict["emulator_type"] = self.emulator_type.name
+        mdict["emulator_type"] = self.emulator.name
         mdict["skip_frames_on_boot"] = self.skip_frames_on_boot
 
     ##### Initial viewer defaults

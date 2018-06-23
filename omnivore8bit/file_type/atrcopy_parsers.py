@@ -1,6 +1,6 @@
 from traits.api import HasTraits, provides
 
-from atrcopy import iter_parsers, SegmentData, UnsupportedDiskImage
+from atrcopy import iter_parsers, guess_parser_for_mime, SegmentData, UnsupportedDiskImage
 
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
 from ..document import SegmentedDocument
@@ -11,6 +11,9 @@ class AtrcopyRecognizer(HasTraits):
     name = "Atrcopy Disk Image"
 
     id = "application/vnd.atrcopy"
+
+    def can_load_mime(self, mime):
+        return guess_parser_for_mime(mime) is not None
 
     def identify(self, guess):
         r = SegmentData(guess.numpy)

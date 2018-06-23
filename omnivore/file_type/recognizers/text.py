@@ -25,6 +25,9 @@ class XMLTextRecognizer(RecognizerBase):
 
     before = "text/plain"
 
+    def can_load_mime(self, mime):
+        return mime == "text/xml" or mime == "text/html"
+
     def identify(self, guess):
         byte_stream = guess.get_bytes().strip()
         if not byte_stream.startswith(b"<"):

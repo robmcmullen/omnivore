@@ -1,3 +1,5 @@
+import jsonpickle
+
 import logging
 log = logging.getLogger(__name__)
 #log.setLevel(logging.DEBUG)
@@ -116,6 +118,18 @@ def dict_to_list(d):
     """
     return sorted([list(i) for i in list(d.items())])
 
+def unserialize(name, raw):
+    try:
+        if raw.startswith(b"#"):
+            header, raw = raw.split(b"\n", 1)
+        unserialized = jsonpickle.loads(raw)
+    except ValueError as e:
+        log.error("JSON parsing error for extra metadata in %s: %s" % (uri, str(e)))
+        unserialized = {}
+    except AttributeError as e:
+        log.error("JSON library error: %s: %s" % (uri, str(e)))
+        unserialized = {}
+    return unserialized
 
 if __name__ == "__main__":
     import json

@@ -151,7 +151,7 @@ class FrameworkEditor(Editor):
         self.metadata_dirty = False
 
     def get_extra_metadata_header(self):
-        return "# omnivore %s extra_metadata=v1\n" % version
+        return f"# omnivore {version} extra_metadata=v2\n"
 
     def from_metadata_dict(self, e):
         """ Set up additional object attributes from the dict argument

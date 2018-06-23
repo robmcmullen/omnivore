@@ -74,8 +74,7 @@ class SegmentedDocument(BaseDocument):
             log.debug("extra metadata: loaded template for %s" % guess.metadata.mime)
         if 'machine mime' not in extra:
             extra['machine mime'] = self.metadata.mime
-        loaded_extra = self.load_filesystem_extra_metadata()
-        if 'serialized user segments' in loaded_extra and 'user segments' in extra:
+        if 'serialized user segments' in guess.json_metadata and 'user segments' in extra:
             # Ignore the segments from the built-in data if serialized user
             # segments exist in the .omnivore file. Any built-in segments will
             # have already been saved in the .omnivore file, so this prevents
@@ -83,13 +82,8 @@ class SegmentedDocument(BaseDocument):
             del extra['user segments']
 
         # Overwrite any builtin stuff with saved data from the user
-        extra.update(loaded_extra)
+        extra.update(guess.json_metadata)
         return extra
-
-    def get_filesystem_extra_metadata_uri(self):
-        """ Get filename of file used to store extra metadata
-        """
-        return self.metadata.uri + ".omnivore"
 
     def serialize_extra_to_dict(self, mdict):
         BaseDocument.serialize_extra_to_dict(self, mdict)
