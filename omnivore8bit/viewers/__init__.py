@@ -158,14 +158,14 @@ class SegmentViewer(HasTraits):
         return name == cls.name
 
     @classmethod
-    def create(cls, parent, linked_base, machine=None, uuid=None, mdict={}):
+    def viewer_factory(cls, parent, linked_base, machine=None, uuid=None, mdict={}):
         control = cls.create_control(parent, linked_base, mdict.get('control',{}))
         v = cls(linked_base=linked_base, control=control)
-        v.from_metadata_dict(mdict)
-
         if machine is not None:
             v.machine = machine
-        elif v.machine is None:
+        v.from_metadata_dict(mdict)
+
+        if v.machine is None:
             print("LOOKING UP MACHINE BY MIME", linked_base.document.metadata.mime)
             v.machine = Machine.find_machine_by_mime(linked_base.document.metadata.mime, default_if_not_matched=True)
 
@@ -200,6 +200,8 @@ class SegmentViewer(HasTraits):
 
         # FIXME: deprecated stuff?
         if 'machine' in e:
+            if self.machine is None:
+                self.machine = Machine()
             self.machine.restore_extra_from_dict(e['machine'])
         elif 'machine mime' in e:
             mime = e['machine mime']

@@ -468,7 +468,7 @@ class ByteEditor(FrameworkEditor):
                 linked_base = self.focused_viewer.linked_base
             else:
                 raise RuntimeError("Creating a viewer with no linked base and no focused viewer")
-        viewer = viewer_cls.create(self.control, linked_base)
+        viewer = viewer_cls.viewer_factory(self.control, linked_base)
         self.viewers.append(viewer)
         self.control.add(viewer.control, viewer.uuid)
         viewer.recalc_data_model()
@@ -532,7 +532,7 @@ class ByteEditor(FrameworkEditor):
                     log.error("unknown viewer %s, uuid=%s" % (viewer_type, uuid))
                     continue
                 log.debug("creating viewer %s (%s) with linked base %s" % (uuid, viewer_type, str(linked_base)))
-                viewer = viewer_cls.create(self.control, linked_base, None, uuid, e)
+                viewer = viewer_cls.viewer_factory(self.control, linked_base, None, uuid, e)
                 log.debug("created viewer %s (%s)" % (viewer.uuid, viewer.name))
 
                 self.viewers.append(viewer)

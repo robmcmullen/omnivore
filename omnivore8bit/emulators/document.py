@@ -101,7 +101,7 @@ class EmulationDocument(SegmentedDocument):
         SegmentedDocument.restore_extra_from_dict(self, e)
 
         if 'emulator_type' in e:
-            self.emulator_type = find_emulator[e['emulator_type']]
+            self.emulator_type = find_emulator(e['emulator_type'])
         self.skip_frames_on_boot = e.get('skip_frames_on_boot', 0)
 
     def serialize_extra_to_dict(self, mdict):
