@@ -130,11 +130,10 @@ class DiskImageBase(object):
         return Directory
 
     def set_filename(self, filename):
-        if type(filename) is not bytes: filename = filename.encode("utf-8")
-        if b'.' in filename:
-            self.filename, self.ext = filename.rsplit(b'.', 1)
+        if '.' in filename:
+            self.filename, self.ext = filename.rsplit('.', 1)
         else:
-            self.filename, self.ext = filename, b''
+            self.filename, self.ext = filename, ''
 
     def dir(self):
         lines = []
@@ -180,10 +179,9 @@ class DiskImageBase(object):
         if not filename:
             filename = self.filename
             if self.ext:
-                filename += b'.' + self.ext
+                filename += '.' + self.ext
         if not filename:
             raise RuntimeError("No filename specified for save!")
-        if type(filename) is not bytes: filename = filename.encode("utf-8")
         data = self.bytes[:]
         with open(filename, "wb") as fh:
             data.tofile(fh)
