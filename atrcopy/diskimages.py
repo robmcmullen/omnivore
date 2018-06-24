@@ -276,7 +276,6 @@ class DiskImageBase(object):
         # check if we've been passed a dirent instead of a filename
         if hasattr(filename, "filename"):
             return filename
-        if type(filename) is not bytes: filename = filename.encode("utf-8")
         for dirent in self.files:
             if filename == dirent.filename:
                 return dirent

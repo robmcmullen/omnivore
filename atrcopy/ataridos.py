@@ -106,7 +106,7 @@ class AtariDosDirent(Dirent):
     @property
     def filename(self):
         ext = (b'.' + self.ext) if self.ext else b''
-        return self.basename + ext
+        return (self.basename + ext).decode('utf-8')
 
     @property
     def summary(self):

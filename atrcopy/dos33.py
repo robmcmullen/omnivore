@@ -164,7 +164,7 @@ class Dos33Dirent(Dirent):
         self.deleted = False
         self.track = 0
         self.sector = 0
-        self.filename = b''
+        self.filename = ""
         self.num_sectors = 0
         self.is_sane = True
         self.current_sector_index = 0
@@ -174,7 +174,7 @@ class Dos33Dirent(Dirent):
         self.parse_raw_dirent(image, bytes)
 
     def __str__(self):
-        return "File #%-2d (%s) %03d %-30s %03d %03d" % (self.file_num, self.summary, self.num_sectors, self.filename.decode("ascii", errors='ignore'), self.track, self.sector)
+        return "File #%-2d (%s) %03d %-30s %03d %03d" % (self.file_num, self.summary, self.num_sectors, self.filename, self.track, self.sector)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.filename == other.filename and self.track == other.track and self.sector == other.sector and self.num_sectors == other.num_sectors
@@ -226,20 +226,20 @@ class Dos33Dirent(Dirent):
         lines.append("sector map: " + str(self.sector_map))
         return "\n".join(lines)
 
-    def parse_raw_dirent(self, image, bytes):
-        if bytes is None:
+    def parse_raw_dirent(self, image, data):
+        if data is None:
             return
-        values = bytes.view(dtype=self.format)[0]
+        values = data.view(dtype=self.format)[0]
         self.track = values[0]
         if self.track == 0xff:
             self.deleted = True
-            self.track = bytes[0x20]
+            self.track = data[0x20]
         else:
             self.deleted = False
         self.sector = values[1]
         self._file_type = values[2] & 0x7f
         self.locked = values[2] & 0x80
-        self.filename = (bytes[3:0x20] - 0x80).tobytes().rstrip()
+        self.filename = (data[3:0x20] - 0x80).tobytes().rstrip().decode("ascii", errors='ignore')
         self.num_sectors = int(values[4])
         self.is_sane = self.sanity_check(image)
 
@@ -250,7 +250,7 @@ class Dos33Dirent(Dirent):
         values[1] = self.sector
         values[2] = self.flag
         n = min(len(self.filename), 30)
-        data[3:3+n] = np.fromstring(self.filename, dtype=np.uint8) | 0x80
+        data[3:3+n] = np.fromstring(self.filename.encode("ascii"), dtype=np.uint8) | 0x80
         data[3+n:] = ord(' ') | 0x80
         if self.deleted:
             data[0x20] = self.track
@@ -346,8 +346,7 @@ class Dos33Dirent(Dirent):
         return self.filename
 
     def set_values(self, filename, filetype, index):
-        if type(filename) is not bytes: filename = filename.encode("utf-8")
-        self.filename = b'%-30s' % filename[0:30]
+        self.filename = '%-30s' % filename[0:30]
         self._file_type = self.text_to_type.get(filetype, 0x04)
         self.locked = False
         self.deleted = False
