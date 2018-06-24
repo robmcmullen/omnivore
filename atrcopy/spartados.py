@@ -38,7 +38,7 @@ class SpartaDosDirent(AtariDosDirent):
         deleted = "d" if self.deleted else "."
         locked = "*" if self.locked else " "
         flags = "%s%s%s%s%s %03d" % (output, subdir, in_use, deleted, locked, self.starting_sector)
-        return "File #%-2d (%s) %-8s%-3s  %8d  %s" % (self.file_num, flags, self.basename.decode('utf-8'), self.ext.decode('utf-8'), self.length, self.str_timestamp)
+        return "File #%-2d (%s) %-8s%-3s  %8d  %s" % (self.file_num, flags, self.basename.decode('latin1'), self.ext.decode('latin1'), self.length, self.str_timestamp)
 
     @property
     def verbose_info(self):

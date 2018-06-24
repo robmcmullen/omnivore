@@ -97,8 +97,7 @@ class AtariDosDirent(Dirent):
         self.parse_raw_dirent(image, bytes)
 
     def __str__(self):
-        # return (b'File #%-2d (%s) %03d %-8s%-3s  %03d' % (self.file_num, self.summary.encode("utf-8"), self.starting_sector, self.basename, self.ext, self.num_sectors)).decode("utf-8")
-        return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, self.summary, self.starting_sector, self.basename.decode("utf-8"), self.ext.decode("utf-8"), self.num_sectors)
+        return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, self.summary, self.starting_sector, self.basename.decode("latin1"), self.ext.decode("latin1"), self.num_sectors)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.filename == other.filename and self.starting_sector == other.starting_sector and self.num_sectors == other.num_sectors
@@ -106,7 +105,7 @@ class AtariDosDirent(Dirent):
     @property
     def filename(self):
         ext = (b'.' + self.ext) if self.ext else b''
-        return (self.basename + ext).decode('utf-8')
+        return (self.basename + ext).decode('latin1')
 
     @property
     def summary(self):
@@ -222,7 +221,7 @@ class AtariDosDirent(Dirent):
 
     def set_values(self, filename, filetype, index):
         if type(filename) is not bytes:
-            filename = filename.encode("utf-8")
+            filename = filename.encode("latin1")
         if b'.' in filename:
             filename, ext = filename.split(b'.', 1)
         else:
