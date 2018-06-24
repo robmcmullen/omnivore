@@ -66,7 +66,7 @@ class SpartaDosDirent(AtariDosDirent):
         self.starting_sector = int(values[1])
         self.basename = bytes(values[4]).rstrip()
         if self.is_dir:
-            self.ext = ""
+            self.ext = b""
         else:
             self.ext = bytes(values[5]).rstrip()
         self.length = 256*256*values[3] + values[2]
