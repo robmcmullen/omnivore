@@ -38,7 +38,7 @@ class SpartaDosDirent(AtariDosDirent):
         deleted = "d" if self.deleted else "."
         locked = "*" if self.locked else " "
         flags = "%s%s%s%s%s %03d" % (output, subdir, in_use, deleted, locked, self.starting_sector)
-        return "File #%-2d (%s) %-8s%-3s  %8d  %s" % (self.file_num, flags, self.filename, self.ext, self.length, self.str_timestamp)
+        return "File #%-2d (%s) %-8s%-3s  %8d  %s" % (self.file_num, flags, self.basename.decode('utf-8'), self.ext.decode('utf-8'), self.length, self.str_timestamp)
 
     @property
     def verbose_info(self):
@@ -50,11 +50,11 @@ class SpartaDosDirent(AtariDosDirent):
         if self.locked: flags.append("LOCK")
         return "flags=[%s]" % ", ".join(flags)
 
-    def parse_raw_dirent(self, image, bytes):
-        if bytes is None:
+    def parse_raw_dirent(self, image, data):
+        if data is None:
             return
-        values = bytes.view(dtype=self.format)[0]
-        flag = values['status']
+        values = data.view(dtype=self.format)[0]
+        flag = values[0]
         self.flag = flag
         self.locked = (flag&0x1) > 0
         self.hidden = (flag&0x10) > 0
@@ -63,15 +63,15 @@ class SpartaDosDirent(AtariDosDirent):
         self.deleted = (flag&0b10000) > 0
         self.is_dir = (flag&0b100000) > 0
         self.opened_output = (flag&0b10000000) > 0
-        self.starting_sector = int(values['sector'])
-        self.filename = str(values['filename']).rstrip()
+        self.starting_sector = int(values[1])
+        self.basename = bytes(values[4]).rstrip()
         if self.is_dir:
             self.ext = ""
         else:
-            self.ext = str(values['ext']).rstrip()
-        self.length = 256*256*values['len_h'] + values['len_l']
-        self.date_array = tuple(bytes[17:20])
-        self.time_array = tuple(bytes[20:23])
+            self.ext = bytes(values[5]).rstrip()
+        self.length = 256*256*values[3] + values[2]
+        self.date_array = tuple(data[17:20])
+        self.time_array = tuple(data[20:23])
         self.is_sane = self.sanity_check(image)
 
     def sanity_check(self, image):
@@ -236,10 +236,10 @@ class SpartaDosDiskImage(AtariDosDiskImage):
             else:
                 break
         if len(byte_order) > 0:
-            name = "%s %d@%d %s" % (dirent.get_filename(), dirent.length, dirent.starting_sector, dirent.str_timestamp)
-            verbose_name = "%s (%d bytes, sector map@%d) %s %s" % (dirent.get_filename(), dirent.length, dirent.starting_sector, dirent.verbose_info, dirent.str_timestamp)
+            name = "%s %d@%d %s" % (dirent.filename, dirent.length, dirent.starting_sector, dirent.str_timestamp)
+            verbose_name = "%s (%d bytes, sector map@%d) %s %s" % (dirent.filename, dirent.length, dirent.starting_sector, dirent.verbose_info, dirent.str_timestamp)
             raw = self.rawdata.get_indexed(byte_order)
             segment = DefaultSegment(raw, name=name, verbose_name=verbose_name)
         else:
-            segment = EmptySegment(self.rawdata, name=dirent.get_filename(), error=dirent.str_timestamp)
+            segment = EmptySegment(self.rawdata, name=dirent.filename, error=dirent.str_timestamp)
         return segment
