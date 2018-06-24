@@ -179,9 +179,13 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
     def recalc_view(self):
         # just recreate everything. If a subclass wants something different,
         # let it do it itself.
-        self.view_params = self.segment_viewer.linked_base.cached_preferences
-        self.table = self.calc_default_table()
-        self.recalc_line_renderer()
+        try:
+            self.view_params = self.segment_viewer.linked_base.cached_preferences
+        except AttributeError:
+            log.warning("segment_viewer not set in recalc_view (probably not a real problem; likely a trait event before setup has been completed)")
+        else:
+            self.table = self.calc_default_table()
+            self.recalc_line_renderer()
 
     def recalc_line_renderer(self):
         self.line_renderer = self.calc_line_renderer()
