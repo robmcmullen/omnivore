@@ -1,6 +1,6 @@
 import numpy as np
 
-from .errors import *
+from . import errors
 from .segments import SegmentData
 from .diskimages import BaseHeader, DiskImageBase
 
@@ -20,14 +20,14 @@ class StandardDeliveryHeader(BaseHeader):
         if np.all(data == (0x01, 0xa8, 0xee, 0x06, 0x08)):
             log.debug("Found 48k loader")
         else:
-            raise InvalidDiskImage("No %s boot header" % self.file_format)
+            raise errors.InvalidDiskImage("No %s boot header" % self.file_format)
 
     def __str__(self):
         return "Standard Delivery Boot Disk (size=%d (%dx%dB)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size)
 
     def check_size(self, size):
         if size != 143360:
-            raise InvalidDiskImage("Incorrect size for Standard Delivery image")
+            raise errors.InvalidDiskImage("Incorrect size for Standard Delivery image")
         self.image_size = size
         self.tracks_per_disk = 35
         self.sectors_per_track = 16

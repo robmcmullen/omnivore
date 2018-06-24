@@ -8,7 +8,7 @@ from .cartridge import AtariCartImage, get_known_carts
 from .mame import MameZipImage
 from .dos33 import Dos33DiskImage, ProdosDiskImage, Dos33BinFile
 from .standard_delivery import StandardDeliveryImage
-from .errors import *
+from . import errors
 from .magic import guess_detail_for_mime
 
 import logging
@@ -70,10 +70,10 @@ class SegmentParser(object):
             self.image = self.get_image(r)
             self.check_image()
             self.image.parse_segments()
-        except UnsupportedDiskImage:
+        except errors.UnsupportedDiskImage:
             raise
-        except AtrError as e:
-            raise InvalidSegmentParser(e)
+        except errors.AtrError as e:
+            raise errors.InvalidSegmentParser(e)
         self.segments.extend(self.image.segments)
 
     def get_image(self, r):
@@ -83,8 +83,8 @@ class SegmentParser(object):
         if self.strict:
             try:
                 self.image.strict_check()
-            except AtrError as e:
-                raise InvalidSegmentParser(e)
+            except errors.AtrError as e:
+                raise errors.InvalidSegmentParser(e)
         else:
             self.image.relaxed_check()
 
@@ -164,7 +164,7 @@ def guess_parser_for_mime(mime, r, verbose=False):
         try:
             found = parser(r, True)
             break
-        except InvalidSegmentParser as e:
+        except errors.InvalidSegmentParser as e:
             if verbose:
                 log.info("parser isn't %s: %s" % (parser.__name__, str(e)))
             pass
@@ -207,7 +207,7 @@ def parsers_for_filename(name):
             _, name = name.rsplit(".", 1)
         except ValueError:
             pass
-        raise InvalidDiskImage("no disk image formats that match '%s'" % name)
+        raise errors.InvalidDiskImage("no disk image formats that match '%s'" % name)
     return matches
 
 

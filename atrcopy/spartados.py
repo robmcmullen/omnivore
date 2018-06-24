@@ -1,6 +1,6 @@
 import numpy as np
 
-from .errors import *
+from . import errors
 from .ataridos import AtariDosDirent, AtariDosDiskImage, XexSegment
 from .segments import DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentSaver
 
@@ -90,7 +90,7 @@ class SpartaDosDirent(AtariDosDirent):
     def start_read(self, image):
         if not self.is_sane:
             log.debug("Invalid directory entry '%s', starting_sector=%s" % (str(self), self.starting_sector))
-            raise InvalidDirent("Invalid directory entry '%s'" % str(self))
+            raise errors.InvalidDirent("Invalid directory entry '%s'" % str(self))
         self.sector_map = image.get_sector_map(self.starting_sector)
         self.sector_map_index = 0
         self.length_remaining = self.length
@@ -159,7 +159,7 @@ class SpartaDosDiskImage(AtariDosDiskImage):
         num = self.header.max_sectors
         self.is_sane = self.total_sectors == num and values['first_free'] <= num and self.first_bitmap <= num and self.root_dir <= num and self.fs_version in [0x11, 0x20, 0x21] and self.sector_size != -1
         if not self.is_sane:
-            raise InvalidDiskImage("Invalid SpartaDos parameters in boot header")
+            raise errors.InvalidDiskImage("Invalid SpartaDos parameters in boot header")
 
     def get_vtoc(self):
         pass

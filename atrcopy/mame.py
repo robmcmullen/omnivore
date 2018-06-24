@@ -2,7 +2,7 @@ import zipfile
 
 import numpy as np
 
-from .errors import *
+from . import errors
 from .segments import SegmentData, EmptySegment, ObjSegment
 from .diskimages import DiskImageBase
 from .utils import to_numpy
@@ -20,7 +20,7 @@ class MameZipImage(DiskImageBase):
                 self.check_zip_size(zf)
                 self.create_rawdata(zf)
         else:
-            raise InvalidDiskImage("Not a MAME zip file")
+            raise errors.InvalidDiskImage("Not a MAME zip file")
         DiskImageBase.__init__(self, self.rawdata, filename)
 
     def __str__(self):
@@ -39,7 +39,7 @@ class MameZipImage(DiskImageBase):
         for item in zf.infolist():
             _, r = divmod(item.file_size, 16)
             if r > 0:
-                raise InvalidDiskImage("zip entry not 16 byte multiple")
+                raise errors.InvalidDiskImage("zip entry not 16 byte multiple")
 
     def create_rawdata(self, zf):
         roms = []

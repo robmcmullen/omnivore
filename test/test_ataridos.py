@@ -2,7 +2,8 @@ from __future__ import print_function
 from builtins import object
 from mock import *
 
-from atrcopy import SegmentData, AtariDosFile, InvalidBinaryFile, DefaultSegment, XexContainerSegment
+from atrcopy import SegmentData, AtariDosFile, DefaultSegment, XexContainerSegment, errors
+
 
 
 class TestAtariDosFile(object):
@@ -41,7 +42,7 @@ class TestAtariDosFile(object):
         bytes = [0xff, 0xff, 0x00, 0x60, 0x00, 0x00, 1, 2]
         rawdata = SegmentData(bytes)
         image = AtariDosFile(rawdata)
-        with pytest.raises(InvalidBinaryFile):
+        with pytest.raises(errors.InvalidBinaryFile):
             image.parse_segments()
 
 

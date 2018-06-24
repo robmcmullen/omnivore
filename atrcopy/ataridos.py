@@ -1,6 +1,6 @@
 import numpy as np
 
-from .errors import *
+from . import errors
 from .diskimages import DiskImageBase, BaseHeader
 from .segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentedFileSegment, SegmentSaver, get_style_bits
 from .utils import *
@@ -197,7 +197,7 @@ class AtariDosDirent(Dirent):
 
     def start_read(self, image):
         if not self.is_sane:
-            raise InvalidDirent("Invalid directory entry '%s'" % str(self))
+            raise errors.InvalidDirent("Invalid directory entry '%s'" % str(self))
         self.current_sector = self.starting_sector
         self.current_read = self.num_sectors
         self.sectors_seen = set()
@@ -210,11 +210,11 @@ class AtariDosDirent(Dirent):
     def process_raw_sector(self, image, raw):
         file_num = raw[-3] >> 2
         if file_num != self.file_num:
-            raise FileNumberMismatchError164("Expecting file %d, found %d" % (self.file_num, file_num))
+            raise errors.FileNumberMismatchError164("Expecting file %d, found %d" % (self.file_num, file_num))
         self.sectors_seen.add(self.current_sector)
         next_sector = ((raw[-3] & 0x3) << 8) + raw[-2]
         if next_sector in self.sectors_seen:
-            raise InvalidFile("Bad sector pointer data: attempting to reread sector %d" % next_sector)
+            raise errors.InvalidFile("Bad sector pointer data: attempting to reread sector %d" % next_sector)
         self.current_sector = next_sector
         num_bytes = raw[-1]
         return raw[0:num_bytes], num_bytes
@@ -299,7 +299,7 @@ class AtariDosFile(object):
                 first = False
                 continue
             elif first:
-                raise InvalidBinaryFile("Object file doesn't start with 0xffff")
+                raise errors.InvalidBinaryFile("Object file doesn't start with 0xffff")
             if _xd: log.debug("header parsing: header=0x%x" % header)
             if len(b[pos:pos + 4]) < 4:
                 self.segments.append(ObjSegment(r[pos:pos + 4], 0, 0, 0, len(b[pos:pos + 4]), "Short Segment Header"))
@@ -307,7 +307,7 @@ class AtariDosFile(object):
             start, end = b[pos:pos + 4].view(dtype='<u2')
             s[style_pos:pos + 4] = get_style_bits(data=True)
             if end < start:
-                raise InvalidBinaryFile("Nonsensical start and end addresses")
+                raise errors.InvalidBinaryFile("Nonsensical start and end addresses")
             count = end - start + 1
             found = len(b[pos + 4:pos + 4 + count])
             if found < count:
@@ -344,7 +344,7 @@ class AtrHeader(BaseHeader):
         if len(bytes) == 16:
             values = bytes.view(dtype=self.format)[0]
             if values[0] != 0x296:
-                raise InvalidAtrHeader("no ATR header magic value")
+                raise errors.InvalidAtrHeader("no ATR header magic value")
             self.image_size = (int(values[3]) * 256 * 256 + int(values[1])) * 16
             self.sector_size = int(values[2])
             self.crc = int(values[4])
@@ -352,7 +352,7 @@ class AtrHeader(BaseHeader):
             self.flags = int(values[6])
             self.header_offset = 16
         else:
-            raise InvalidAtrHeader("incorrect AHC header size of %d" % len(bytes))
+            raise errors.InvalidAtrHeader("incorrect AHC header size of %d" % len(bytes))
 
     def __str__(self):
         return "%s Disk Image (size=%d (%dx%dB), crc=%d flags=%d unused=%d)" % (self.file_format, self.image_size, self.max_sectors, self.sector_size, self.crc, self.flags, self.unused)
@@ -414,7 +414,7 @@ class AtrHeader(BaseHeader):
         size = len(image)
         if self.header_offset == 16 or size in [92176, 133136, 184336, 183952]:
             return
-        raise InvalidDiskImage("Uncommon size of ATR file")
+        raise errors.InvalidDiskImage("Uncommon size of ATR file")
 
 
 class XfdHeader(AtrHeader):
@@ -434,7 +434,7 @@ class XfdHeader(AtrHeader):
         size = len(image)
         if size in [92160, 133120, 183936, 184320]:
             return
-        raise InvalidDiskImage("Uncommon size of XFD file")
+        raise errors.InvalidDiskImage("Uncommon size of XFD file")
 
 
 class AtariDosDiskImage(DiskImageBase):
@@ -489,7 +489,7 @@ class AtariDosDiskImage(DiskImageBase):
         bytes = self.bytes[0:16]
         try:
             self.header = AtrHeader(bytes)
-        except InvalidAtrHeader:
+        except errors.InvalidAtrHeader:
             self.header = XfdHeader()
 
     def calc_vtoc_code(self):
@@ -521,7 +521,7 @@ class AtariDosDiskImage(DiskImageBase):
         self.assert_valid_sector(self.first_vtoc)
         self.num_vtoc = num
         if num < 0 or num > self.calc_vtoc_code():
-            raise InvalidDiskImage("Invalid number of VTOC sectors: %d" % num)
+            raise errors.InvalidDiskImage("Invalid number of VTOC sectors: %d" % num)
 
         self.total_sectors = values[1]
         self.unused_sectors = values[2]
@@ -657,7 +657,7 @@ class AtariDosDiskImage(DiskImageBase):
             try:
                 binary = AtariDosFile(segment.rawdata)
                 segments_out.extend(binary.segments)
-            except InvalidBinaryFile:
+            except errors.InvalidBinaryFile:
                 log.debug("%s not a binary file; skipping segment generation" % str(segment))
         return segments_out
 
@@ -678,7 +678,7 @@ class BootDiskImage(AtariDosDiskImage):
         i = self.header.header_offset
         flag = b[i:i + 2].view(dtype='<u2')[0]
         if flag == 0xffff:
-            raise InvalidDiskImage("Appears to be an executable")
+            raise errors.InvalidDiskImage("Appears to be an executable")
         nsec = b[i + 1]
         bload = b[i + 2:i + 4].view(dtype='<u2')[0]
 
@@ -689,9 +689,9 @@ class BootDiskImage(AtariDosDiskImage):
         max_size = max_ram - bload
         max_sectors = max_size // self.header.sector_size
         if nsec > max_sectors or nsec < 1:
-            raise InvalidDiskImage("Number of boot sectors out of range (tried %d, max=%d" % (nsec, max_sectors))
+            raise errors.InvalidDiskImage("Number of boot sectors out of range (tried %d, max=%d" % (nsec, max_sectors))
         if bload > (0xc000 - (nsec * self.header.sector_size)):
-            raise InvalidDiskImage("Bad boot load address")
+            raise errors.InvalidDiskImage("Bad boot load address")
 
     def get_boot_sector_info(self):
         pass
@@ -764,7 +764,7 @@ def get_xex(segments, run_addr=None):
                     found = True
                     break
             if not found:
-                raise InvalidBinaryFile("Run address points outside data segments")
+                raise errors.InvalidBinaryFile("Run address points outside data segments")
         else:
             run_addr = segments[0].origin
         words[0] = run_addr

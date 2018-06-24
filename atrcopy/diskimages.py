@@ -1,6 +1,6 @@
 import numpy as np
 
-from .errors import *
+from . import errors
 from .segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment
 from .utils import *
 
@@ -80,7 +80,7 @@ class BaseHeader(object):
         return track, sector
 
     def check_size(self, size):
-        raise InvalidDiskImage("BaseHeader subclasses need custom checks for size")
+        raise errors.InvalidDiskImage("BaseHeader subclasses need custom checks for size")
 
     def strict_check(self, image):
         pass
@@ -168,12 +168,12 @@ class DiskImageBase(object):
 
     @classmethod
     def new_header(cls, diskimage, format="ATR"):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     def as_new_format(self, format="ATR"):
         """ Create a new disk image in the specified format
         """
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     def save(self, filename=""):
         if not filename:
@@ -192,7 +192,7 @@ class DiskImageBase(object):
 
     def check_sane(self):
         if not self.all_sane:
-            raise InvalidDiskImage("Invalid directory entries; may be boot disk")
+            raise errors.InvalidDiskImage("Invalid directory entries; may be boot disk")
 
     def read_header(self):
         return BaseHeader()
@@ -277,7 +277,7 @@ class DiskImageBase(object):
         for dirent in self.files:
             if filename == dirent.filename:
                 return dirent
-        raise FileNotFound("%s not found on disk" % str(filename))
+        raise errors.FileNotFound("%s not found on disk" % str(filename))
 
     def find_file(self, filename):
         dirent = self.find_dirent(filename)
@@ -295,17 +295,17 @@ class DiskImageBase(object):
         for dirent in self.files:
             try:
                 segment = self.get_file_segment(dirent)
-            except InvalidFile as e:
+            except errors.InvalidFile as e:
                 segment = EmptySegment(self.rawdata, name=dirent.filename, error=str(e))
             segments.append(segment)
         return segments
 
     def create_executable_file_image(self, segments, run_addr=None):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     @classmethod
     def create_boot_image(self, segments, run_addr=None):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     # file writing methods
 
@@ -341,7 +341,7 @@ class DiskImageBase(object):
             self.write_sector_list(sector_list)
             self.write_sector_list(vtoc)
             self.write_sector_list(directory)
-        except AtrError:
+        except errors.AtrError:
             self.rollback_transaction(state)
             raise
         finally:
@@ -375,7 +375,7 @@ class DiskImageBase(object):
             directory.remove_dirent(self, dirent, vtoc, sector_list)
             self.write_sector_list(vtoc)
             self.write_sector_list(directory)
-        except AtrError:
+        except errors.AtrError:
             self.rollback_transaction(state)
             raise
         finally:
@@ -388,7 +388,7 @@ class DiskImageBase(object):
             for sector_num, pos, size in vtoc.iter_free_sectors():
                 if _xd: log.debug("shredding: sector %s at %d, fill value=%d" % (sector_num, pos, fill_value))
                 self.bytes[pos:pos + size] = fill_value
-        except AtrError:
+        except errors.AtrError:
             self.rollback_transaction(state)
             raise
         finally:

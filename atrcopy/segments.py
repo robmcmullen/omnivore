@@ -3,7 +3,7 @@ import io
 
 import numpy as np
 
-from .errors import *
+from . import errors
 from .utils import to_numpy, to_numpy_list, uuid
 from functools import reduce
 
@@ -194,7 +194,7 @@ class SegmentData(object):
         newsize = len(base_raw)
         oldsize = len(self.data_base)
         if newsize < oldsize:
-            raise NotImplementedError("Can't truncate yet")
+            raise errors.NotImplementedError("Can't truncate yet")
         if self.is_indexed:
             self.data.np_data = base_raw.data
             self.data.base = base_raw.data.base

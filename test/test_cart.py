@@ -3,7 +3,8 @@ from __future__ import division
 from builtins import object
 from mock import *
 
-from atrcopy import AtariCartImage, SegmentData, InvalidDiskImage
+from atrcopy import AtariCartImage, SegmentData
+from atrcopy import errors
 
 
 class TestAtariCart(object):
@@ -60,16 +61,16 @@ class TestAtariCart(object):
         # check for error because invalid data in cart image itself
         data = self.get_cart(k_size, 1337)
         rawdata = SegmentData(data)
-        with pytest.raises(InvalidDiskImage):
+        with pytest.raises(errors.InvalidDiskImage):
             image = AtariCartImage(rawdata, 1337)
-        with pytest.raises(InvalidDiskImage):
+        with pytest.raises(errors.InvalidDiskImage):
             image = AtariCartImage(rawdata, 12)
 
         # check for error with valid cart image, but invalid cart type supplied
         # to the image parser
         data = self.get_cart(k_size, 12)
         rawdata = SegmentData(data)
-        with pytest.raises(InvalidDiskImage):
+        with pytest.raises(errors.InvalidDiskImage):
             image = AtariCartImage(rawdata, 1337)
 
 

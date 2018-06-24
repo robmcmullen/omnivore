@@ -1,6 +1,6 @@
 import numpy as np
 
-from .errors import *
+from . import errors
 from .diskimages import BaseHeader, DiskImageBase
 from .utils import Directory, VTOC, WriteableSector, BaseSectorList, Dirent
 from .segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver, get_style_bits, SegmentData
@@ -320,7 +320,7 @@ class Dos33Dirent(Dirent):
 
     def start_read(self, image):
         if not self.is_sane:
-            raise InvalidDirent("Invalid directory entry '%s'" % str(self))
+            raise errors.InvalidDirent("Invalid directory entry '%s'" % str(self))
         self.get_track_sector_list(image)
         if _xd: log.debug("start_read: %s, t/s list: %s" % (str(self), str(self.sector_map)))
         self.current_sector_index = 0
@@ -369,7 +369,7 @@ class Dos33Header(BaseHeader):
 
     def check_size(self, size):
         if size != 143360:
-            raise InvalidDiskImage("Incorrect size for DOS 3.3 image")
+            raise errors.InvalidDiskImage("Incorrect size for DOS 3.3 image")
         self.image_size = size
         self.first_vtoc = 17 * 16
         self.num_vtoc = 1
@@ -408,7 +408,7 @@ class Dos33DiskImage(DiskImageBase):
         data, style = self.get_sectors(0)
         magic = data[0:4]
         if (magic == [1, 56, 176, 3]).all():
-            raise InvalidDiskImage("ProDOS format found; not DOS 3.3 image")
+            raise errors.InvalidDiskImage("ProDOS format found; not DOS 3.3 image")
         swap_order = False
         data, style = self.get_sectors(self.header.first_vtoc)
         if data[3] == 3:
@@ -418,7 +418,7 @@ class Dos33DiskImage(DiskImageBase):
                     log.warning("DOS 3.3 byte swap needed!")
                     swap_order = True
             else:
-                raise InvalidDiskImage("Invalid VTOC location for DOS 3.3")
+                raise errors.InvalidDiskImage("Invalid VTOC location for DOS 3.3")
 
 
     vtoc_type = np.dtype([
@@ -563,7 +563,7 @@ class Dos33DiskImage(DiskImageBase):
         next_sector = self.header.sector_from_track(raw[1], raw[2])
         if _xd: log.debug("checking catalog sector %d, next catalog sector: %d" % (sector_num, next_sector))
         if next_sector == 0:
-            raise NoSpaceInDirectory("No space left in catalog")
+            raise errors.NoSpaceInDirectory("No space left in catalog")
         return sector_num, next_sector
 
     def get_file_segment(self, dirent):
@@ -609,7 +609,7 @@ class Dos33DiskImage(DiskImageBase):
                     found = True
                     break
             if not found:
-                raise InvalidBinaryFile("Run address points outside data segments")
+                raise errors.InvalidBinaryFile("Run address points outside data segments")
             origin -= 3
             hi, lo = divmod(run_addr, 256)
             raw = SegmentData([0x4c, lo, hi])
@@ -708,7 +708,7 @@ class ProdosDiskImage(DiskImageBase):
                     # https://github.com/RasppleII/a2server but it seems that
                     # more magic bytes might be acceptable?
 
-                    #raise InvalidDiskImage("No ProDOS header info found")
+                    #raise errors.InvalidDiskImage("No ProDOS header info found")
                     pass
-            raise UnsupportedDiskImage("ProDOS format found but not supported")
-        raise InvalidDiskImage("Not ProDOS format")
+            raise errors.UnsupportedDiskImage("ProDOS format found but not supported")
+        raise errors.InvalidDiskImage("Not ProDOS format")

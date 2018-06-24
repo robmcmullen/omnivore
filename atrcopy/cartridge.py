@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from .errors import *
+from . import errors
 from .segments import SegmentData, EmptySegment, ObjSegment
 from .diskimages import DiskImageBase
 from .utils import to_numpy
@@ -108,7 +108,7 @@ def get_cart(cart_type):
     try:
         return known_cart_types[known_cart_type_map[cart_type]]
     except KeyError:
-        raise InvalidDiskImage("Unsupported cart type %d" % cart_type)
+        raise errors.InvalidDiskImage("Unsupported cart type %d" % cart_type)
 
 
 class A8CartHeader(object):
@@ -146,13 +146,13 @@ class A8CartHeader(object):
         if len(bytes) == 16:
             values = bytes.view(dtype=self.format)[0]
             if values[0] != b'CART':
-                raise InvalidCartHeader
+                raise errors.InvalidCartHeader
             self.cart_type = int(values[1])
             self.crc = int(values[2])
             self.header_offset = 16
             self.set_type(self.cart_type)
         else:
-            raise InvalidCartHeader
+            raise errors.InvalidCartHeader
 
     def __str__(self):
         return "%s Cartridge (atari800 type=%d size=%d, %d banks, crc=%d)" % (self.cart_name, self.cart_type, self.cart_size, self.bank_size, self.crc)
@@ -208,13 +208,13 @@ class AtariCartImage(DiskImageBase):
         data = self.bytes[0:16]
         try:
             self.header = A8CartHeader(data)
-        except InvalidCartHeader:
+        except errors.InvalidCartHeader:
             self.header = A8CartHeader()
             self.header.set_type(self.cart_type)
 
     def strict_check(self):
         if self.header.cart_type != self.cart_type:
-            raise InvalidDiskImage("Cart type doesn't match type defined in header")
+            raise errors.InvalidDiskImage("Cart type doesn't match type defined in header")
 
     def relaxed_check(self):
         if self.header.cart_type != self.cart_type:
@@ -229,9 +229,9 @@ class AtariCartImage(DiskImageBase):
         c = get_cart(self.cart_type)
         log.debug("checking type=%d, k=%d, rem=%d for %s, %s" % (self.cart_type, k, rem, c[1], c[2]))
         if rem > 0:
-            raise InvalidDiskImage("Cart not multiple of 1K")
+            raise errors.InvalidDiskImage("Cart not multiple of 1K")
         if k != c[2]:
-            raise InvalidDiskImage("Image size %d doesn't match cart type %d size %d" % (k, self.cart_type, c[2]))
+            raise errors.InvalidDiskImage("Image size %d doesn't match cart type %d size %d" % (k, self.cart_type, c[2]))
 
     def parse_segments(self):
         r = self.rawdata

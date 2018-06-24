@@ -3,7 +3,7 @@ import uuid as stdlib_uuid
 
 import numpy as np
 
-from .errors import *
+from . import errors
 
 import logging
 log = logging.getLogger(__name__)
@@ -159,28 +159,28 @@ class Dirent(object):
         self.file_num = file_num
 
     def __eq__(self, other):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     def extra_metadata(self, image):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     def mark_deleted(self):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     def parse_raw_dirent(self, image, bytes):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     def encode_dirent(self):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     def get_sectors_in_vtoc(self, image):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     def start_read(self, image):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     def read_sector(self, image):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
 
 class Directory(BaseSectorList):
@@ -205,7 +205,7 @@ class Directory(BaseSectorList):
                     return i
                 used.add(i)
             if self.num_dirents > 0 and (len(used) >= self.num_dirents):
-                raise NoSpaceInDirectory()
+                raise errors.NoSpaceInDirectory()
             i += 1
         else:
             i = 0
@@ -229,7 +229,7 @@ class Directory(BaseSectorList):
             for dirent in list(self.dirents.values()):
                 if filename == dirent.filename:
                     return dirent
-        raise FileNotFound("%s not found on disk" % filename)
+        raise errors.FileNotFound("%s not found on disk" % filename)
 
     def save_dirent(self, image, dirent, vtoc, sector_list):
         vtoc.assign_sector_numbers(dirent, sector_list)
@@ -244,7 +244,7 @@ class Directory(BaseSectorList):
 
     @property
     def dirent_class(self):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     def calc_sectors(self, image):
         self.sectors = []
@@ -270,10 +270,10 @@ class Directory(BaseSectorList):
         return self.sector_class(self.sector_size)
 
     def encode_empty(self):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     def encode_dirent(self, dirent):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     def store_encoded(self, data):
         while True:
@@ -291,7 +291,7 @@ class Directory(BaseSectorList):
         self.set_sector_numbers(image)
 
     def set_sector_numbers(self, image):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
 
 class VTOC(BaseSectorList):
@@ -317,7 +317,7 @@ class VTOC(BaseSectorList):
                 yield i, pos, size
 
     def parse_segments(self, segments):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     def assign_sector_numbers(self, dirent, sector_list):
         """ Map out the sectors and link the sectors together
@@ -328,7 +328,7 @@ class VTOC(BaseSectorList):
         num = len(sector_list)
         order = self.reserve_space(num)
         if len(order) != num:
-            raise InvalidFile("VTOC reserved space for %d sectors. Sectors needed: %d" % (len(order), num))
+            raise errors.InvalidFile("VTOC reserved space for %d sectors. Sectors needed: %d" % (len(order), num))
         file_length = 0
         last_sector = None
         for sector, sector_num in zip(sector_list.sectors, order):
@@ -357,10 +357,10 @@ class VTOC(BaseSectorList):
             if _xd: log.debug("Found sector %d free" % num)
             self.sector_map[num] = 0
             return num
-        raise NotEnoughSpaceOnDisk("No space left in VTOC")
+        raise errors.NotEnoughSpaceOnDisk("No space left in VTOC")
 
     def calc_bitmap(self):
-        raise NotImplementedError
+        raise errors.NotImplementedError
 
     def free_sector_list(self, sector_list):
         for sector in sector_list:

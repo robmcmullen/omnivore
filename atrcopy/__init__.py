@@ -13,7 +13,7 @@ try:
 except ImportError:
     raise RuntimeError("atrcopy %s requires numpy" % __version__)
 
-from .errors import *
+from . import errors
 from .ataridos import AtrHeader, AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment, get_xex, add_atr_header
 from .dos33 import Dos33DiskImage
 from .kboot import KBootImage, add_xexboot_header
@@ -74,7 +74,7 @@ def find_diskimage(filename):
                 break
             if parser is None:
                 print("%s: Unknown disk image type" % filename)
-    except UnsupportedDiskImage as e:
+    except errors.UnsupportedDiskImage as e:
         print("%s: %s" % (filename, e))
         return None
     except IOError as e:
@@ -92,7 +92,7 @@ def extract_files(image, files):
     for name in files:
         try:
             dirent = image.find_dirent(name)
-        except FileNotFound:
+        except errors.FileNotFound:
             print("%s not in %s" % (name, image))
             continue
         output = dirent.filename
@@ -118,7 +118,7 @@ def save_file(image, name, filetype, data):
         else:
             print("skipping %s, use -f to overwrite" % (name))
             return False
-    except FileNotFound:
+    except errors.FileNotFound:
         pass
     print("copying %s to %s" % (name, image.filename))
     if not options.dry_run:
@@ -145,7 +145,7 @@ def remove_files(image, files):
     for name in files:
         try:
             dirent = image.find_dirent(name)
-        except FileNotFound:
+        except errors.FileNotFound:
             print("%s not in %s" % (name, image))
             continue
         print("removing %s from %s" % (name, image))
@@ -185,14 +185,14 @@ def assemble_segments(source_files, data_files, obj_files, run_addr=""):
         try:
             import pyatasm
         except ImportError:
-            raise AtrError("Please install pyatasm to compile code.")
+            raise errors.AtrError("Please install pyatasm to compile code.")
     changed = False
     segments = SegmentList()
     for name in source_files:
         try:
             asm = pyatasm.Assemble(name)
         except SyntaxError as e:
-            raise AtrError("Assembly error: %s" % e.msg)
+            raise errors.AtrError("Assembly error: %s" % e.msg)
         log.debug("Assembled %s into:" % name)
         for first, last, object_code in asm.segments:
             s = segments.add_segment(object_code, first)
@@ -200,7 +200,7 @@ def assemble_segments(source_files, data_files, obj_files, run_addr=""):
             print("adding %s from %s assembly" % (s, name))
     for name in data_files:
         if "@" not in name:
-            raise AtrError("Data files must include a load address specified with the @ char")
+            raise errors.AtrError("Data files must include a load address specified with the @ char")
         name, addr = name.rsplit("@", 1)
         first = text_to_int(addr)
         log.debug("Adding data file %s at $%04x" % (name, first))
@@ -254,7 +254,7 @@ def assemble(image, source_files, data_files, obj_files, run_addr=""):
 def boot_image(image_name, source_files, data_files, obj_files, run_addr=""):
     try:
         image_cls = parsers_for_filename(image_name)[0]
-    except InvalidDiskImage as e:
+    except errors.InvalidDiskImage as e:
         print("%s: %s" % (image_name, e))
         return None
     segments, run_addr = assemble_segments(source_files, data_files, obj_files, run_addr)
@@ -339,16 +339,16 @@ def get_template_info():
 def get_template_data(template):
     possibilities = get_template_images(template)
     if not possibilities:
-        raise InvalidDiskImage("Unknown template disk image %s" % template)
+        raise errors.InvalidDiskImage("Unknown template disk image %s" % template)
     if len(possibilities) > 1:
-        raise InvalidDiskImage("Name %s is ambiguous (%d matches: %s)" % (template, len(possibilities), ", ".join(sorted(possibilities.keys()))))
+        raise errors.InvalidDiskImage("Name %s is ambiguous (%d matches: %s)" % (template, len(possibilities), ", ".join(sorted(possibilities.keys()))))
     name, inf = possibilities.popitem()
     path = inf['path']
     try:
         with open(path, "rb") as fh:
             data = fh.read()
     except IOError:
-        raise InvalidDiskImage("Failed reading template file %s" % path)
+        raise errors.InvalidDiskImage("Failed reading template file %s" % path)
     return data, inf
 
 
@@ -357,7 +357,7 @@ def create_image(template, name):
 
     try:
         data, inf = get_template_data(template)
-    except InvalidDiskImage as e:
+    except errors.InvalidDiskImage as e:
         info = get_template_info()
         print("Error: %s\n\n%s" % (e, info))
         return

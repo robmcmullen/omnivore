@@ -4,8 +4,8 @@ import numpy as np
 
 from mock import *
 
-from atrcopy import SegmentData, AtariDosDiskImage, Dos33DiskImage,InvalidBinaryFile
-from atrcopy.errors import *
+from atrcopy import SegmentData, AtariDosDiskImage, Dos33DiskImage
+from atrcopy import errors
 
 
 class BaseFilesystemModifyTest(object):
@@ -85,7 +85,7 @@ class BaseFilesystemModifyTest(object):
         data = np.arange(50*1024, dtype=np.uint8)
         self.image.write_file("RAMP50K.BIN", None, data)
         assert len(self.image.files) == self.num_files_in_sample + 1
-        with pytest.raises(NotEnoughSpaceOnDisk):
+        with pytest.raises(errors.NotEnoughSpaceOnDisk):
             huge = np.arange(500*1024, dtype=np.uint8)
             self.image.write_file("RAMP500K.BIN", None, huge)
         assert len(self.image.files) == self.num_files_in_sample + 1

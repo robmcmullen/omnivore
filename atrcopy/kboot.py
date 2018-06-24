@@ -1,6 +1,6 @@
 import numpy as np
 
-from .errors import *
+from . import errors
 from .ataridos import AtariDosDirent, AtariDosDiskImage, XexSegment, get_xex
 from .segments import SegmentData
 
@@ -41,7 +41,7 @@ class KBootImage(AtariDosDiskImage):
 
     def check_sane(self):
         if not self.all_sane:
-            raise InvalidDiskImage("Doesn't seem to be KBoot header")
+            raise errors.InvalidDiskImage("Doesn't seem to be KBoot header")
 
     def get_vtoc(self):
         pass

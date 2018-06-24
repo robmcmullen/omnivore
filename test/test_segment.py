@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from atrcopy import DefaultSegment, SegmentData, get_xex, interleave_segments, user_bit_mask, diff_bit_mask
-from atrcopy.errors import *
+from atrcopy import errors
 from functools import reduce
 
 
@@ -38,7 +38,7 @@ class TestSegment1(object):
             s[1].set_comment_at(10, "comment 10")
             s[1].set_comment_at(100, "comment 100")
             print(list(s[1].iter_comments_in_segment()))
-            with pytest.raises(InvalidBinaryFile):
+            with pytest.raises(errors.InvalidBinaryFile):
                 seg, subseg = get_xex(s, 0xbeef)
             seg, subseg = get_xex(s)
             assert tuple(seg.data[0:2]) == (0xff, 0xff)

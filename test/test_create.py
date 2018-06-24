@@ -4,8 +4,8 @@ import numpy as np
 
 from mock import *
 
-from atrcopy import SegmentData, AtariDosDiskImage, Dos33DiskImage,InvalidBinaryFile, DefaultSegment
-from atrcopy.errors import *
+from atrcopy import SegmentData, AtariDosDiskImage, Dos33DiskImage, DefaultSegment
+from atrcopy import errors
 
 
 def get_image(file_name, diskimage_type):
@@ -39,8 +39,8 @@ class BaseCreateTest(object):
         image = get_image(sample_file, diskimage_type)
         segments = self.get_exe_segments()
         try:
-            _ = issubclass(AtrError, expected)
-            with pytest.raises(InvalidBinaryFile) as e:
+            _ = issubclass(errors.AtrError, expected)
+            with pytest.raises(errors.InvalidBinaryFile) as e:
                 file_data, filetype = image.create_executable_file_image(segments, run_addr)
         except TypeError:
             file_data, filetype = image.create_executable_file_image(segments, run_addr)
@@ -53,11 +53,11 @@ class TestAtariDosSDImage(BaseCreateTest):
     diskimage_type = AtariDosDiskImage
 
     @pytest.mark.parametrize("run_addr,expected", [
-        (0x2000, InvalidBinaryFile),
+        (0x2000, errors.InvalidBinaryFile),
         (None, (2 + 6 + (4 + 0x1000) + (4 + 0x1000))),
         (0x4000, (2 + 6 + (4 + 0x1000) + (4 + 0x1000))),
         (0x8000, (2 + 6 + (4 + 0x1000) + (4 + 0x1000))),
-        (0xffff, InvalidBinaryFile),
+        (0xffff, errors.InvalidBinaryFile),
         ])
     def test_exe(self, run_addr, expected, sample_file):
         self.check_exe(sample_file, self.diskimage_type, run_addr, expected)
@@ -68,11 +68,11 @@ class TestDos33Image(BaseCreateTest):
     diskimage_type = Dos33DiskImage
 
     @pytest.mark.parametrize("run_addr,expected", [
-        (0x2000, InvalidBinaryFile),
+        (0x2000, errors.InvalidBinaryFile),
         (None, (4 + (0x9000 - 0x4000))),
         (0x4000, (4 + (0x9000 - 0x4000))),
         (0x8000, (4 + 3 + (0x9000 - 0x4000))),
-        (0xffff, InvalidBinaryFile),
+        (0xffff, errors.InvalidBinaryFile),
         ])
     def test_exe(self, run_addr, expected, sample_file):
         self.check_exe(sample_file, self.diskimage_type, run_addr, expected)
