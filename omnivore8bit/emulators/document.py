@@ -112,7 +112,7 @@ class EmulationDocument(SegmentedDocument):
 
     ##### Initial viewer defaults
 
-    def find_initial_visible_segment(self, linked_base):
+    def find_initial_visible_segment(self, linked_base, default=0):
         for segment in self.segments:
             log.debug(f"Looking for Main Memory segment: {segment}")
             if segment.name == "Main Memory":

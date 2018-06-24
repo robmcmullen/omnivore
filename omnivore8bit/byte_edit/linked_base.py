@@ -140,10 +140,7 @@ class LinkedBase(CaretHandler):
             self.diff_highlight = bool(e['diff highlight'])
         if 'segment view params' in e:
             self.segment_view_params = e['segment view params']
-        if 'segment number' in e:
-            self.segment_number = e['segment number']
-        else:
-            self.editor.document.find_initial_visbile_segment(self)
+        self.editor.document.find_initial_visible_segment(self, e.get('segment number', 0))
 
     def to_metadata_dict(self, mdict, document):
         self.prepare_metadata_for_save()
