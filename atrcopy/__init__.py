@@ -54,40 +54,29 @@ def process(image, dirent, options):
 
 
 def find_diskimage(filename):
-    try:
-        with open(filename, "rb") as fh:
-            if options.verbose:
-                print("Loading file %s" % filename)
-            data = to_numpy(fh.read())
-            parser = None
-            try:
-                container = guess_container(data, options.verbose)
-                if container is not None:
-                    data = container.unpacked
-            except errors.UnsupportedContainer as e:
-                print(f"{filename}: {e}")
-                return None
-            rawdata = SegmentData(data)
-            for mime in mime_parse_order:
-                if options.verbose:
-                    print("Trying MIME type %s" % mime)
-                parser = guess_parser_for_mime(mime, rawdata, options.verbose)
-                if parser is None:
-                    continue
-                if options.verbose:
-                    print("Found parser %s" % parser.menu_name)
-                mime2 = guess_detail_for_mime(mime, rawdata, parser)
-                if mime != mime2 and options.verbose:
-                    print("Signature match: %s" % mime2)
-                break
-            if parser is None:
-                print("%s: Unknown disk image type" % filename)
-    except errors.UnsupportedDiskImage as e:
-        print("%s: %s" % (filename, e))
-        return None
-    except IOError as e:
-        print("%s: %s" % (filename, e))
-        return None
+    with open(filename, "rb") as fh:
+        if options.verbose:
+            print("Loading file %s" % filename)
+        data = to_numpy(fh.read())
+    parser = None
+    container = guess_container(data, options.verbose)
+    if container is not None:
+        data = container.unpacked
+    rawdata = SegmentData(data)
+    for mime in mime_parse_order:
+        if options.verbose:
+            print("Trying MIME type %s" % mime)
+        parser = guess_parser_for_mime(mime, rawdata, options.verbose)
+        if parser is None:
+            continue
+        if options.verbose:
+            print("Found parser %s" % parser.menu_name)
+        mime2 = guess_detail_for_mime(mime, rawdata, parser)
+        if mime != mime2 and options.verbose:
+            print("Signature match: %s" % mime2)
+        break
+    if parser is None:
+        raise errors.UnsupportedDiskImage("Unknown disk image type")
     else:
         parser.image.filename = filename
         parser.image.ext = ""
@@ -233,8 +222,11 @@ def assemble_segments(source_files, data_files, obj_files, run_addr=""):
             s = segments.add_segment(data, first)
             log.debug("read data for %s" % s.name)
     for name in obj_files:
-        parser = find_diskimage(name)
-        if parser and parser.image:
+        try:
+            parser = find_diskimage(name)
+        except errors.AtrError as e:
+            print(f"skipping {name}: {e}")
+        else:
             for s in parser.segments:
                 if s.origin > 0:
                     print("adding %s from %s" % (s, name))
@@ -581,8 +573,11 @@ def run():
         obj = options.obj[0] if options.obj else []
         boot_image(disk_image_name, asm, data, obj, options.run_addr)
     else:
-        parser = find_diskimage(disk_image_name)
-        if parser and parser.image:
+        try:
+            parser = find_diskimage(disk_image_name)
+        except (errors.UnsupportedContainer, errors.UnsupportedDiskImage, IOError) as e:
+            print(f"{disk_image_name}: {e}")
+        else:
             if command not in skip_diskimage_summary:
                 print("%s: %s" % (disk_image_name, parser.image))
             if command == "vtoc":
@@ -607,5 +602,3 @@ def run():
                 assemble(parser.image, asm, data, obj, options.run_addr)
             elif command == "segments":
                 print("\n".join([str(a) for a in parser.segments]))
-        else:
-            log.error("Invalid disk image: %s" % disk_image_name)
