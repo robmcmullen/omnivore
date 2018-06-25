@@ -400,7 +400,7 @@ class AtrHeader(BaseHeader):
 
     def get_pos(self, sector):
         if not self.sector_is_valid(sector):
-            raise ByteNotInFile166("Sector %d out of range" % sector)
+            raise errors.ByteNotInFile166("Sector %d out of range" % sector)
         if sector <= self.num_initial_sectors:
             pos = self.num_initial_sectors * (sector - 1)
             size = self.initial_sector_size
@@ -738,7 +738,7 @@ class AtariDiskImage(BootDiskImage):
 
     def check_size(self):
         if self.header is None:
-            raise ("Not a known Atari disk image format")
+            raise errors.InvalidDiskImage("Not a known Atari disk image format")
 
     def get_boot_segments(self):
         return []
