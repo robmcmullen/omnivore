@@ -659,16 +659,18 @@ class Dos33BinFile:
         if _xd: log.debug("Initial parsing: size=%d" % self.size)
         if len(b[pos:pos + 4]) == 4:
             start, count = b[pos:pos + 4].view(dtype='<u2')
+            if count != self.size - 4:
+                raise errors.InvalidBinaryFile(f"Extra data after BSAVE segment: file size {self.size}, header specifies {count} bytes")
             s[pos:pos + 4] = get_style_bits(data=True)
             data = b[pos + 4:pos + 4 + count]
             if len(data) == count:
                 name = "BSAVE data" % start
             else:
-                name = "Incomplete data: expected %04x, loaded %04x" % (count, len(data))
+                raise errors.InvalidBinaryFile(f"Incomplete BSAVE data: expected {count}, loaded {len(data)}")
             self.segments.append(ObjSegment(r[pos + 4:pos + 4 + count], pos, pos + 4, start, start + len(data), name))
 
         else:
-            self.segments.append(ObjSegment(r[pos:pos + 4], 0, 0, 0, len(b[pos:pos + 4]), "Short Segment Header"))
+            raise errors.InvalidBinaryFile(f"Invalid BSAVE header")
 
 
 class ProdosHeader(Dos33Header):
