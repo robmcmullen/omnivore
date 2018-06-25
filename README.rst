@@ -125,7 +125,7 @@ atari800 ``.car`` format
 Supported Compression/Container Formats
 ---------------------------------------
 
-Starting with ``atrcopy`` 7.2, compressed disk images are supported
+Starting with ``atrcopy`` 8.0, compressed disk images are supported
 transparently, so any type of disk image compressed with one of the supported
 container formats can be used directly, without first decompressing it before
 running ``atrcopy``.
