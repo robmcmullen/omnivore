@@ -10,6 +10,7 @@ from .dos33 import Dos33DiskImage, ProdosDiskImage, Dos33BinFile
 from .standard_delivery import StandardDeliveryImage
 from . import errors
 from .magic import guess_detail_for_mime
+from .dcm import DCMContainer
 
 import logging
 log = logging.getLogger(__name__)
@@ -157,6 +158,22 @@ class ProdosSegmentParser(SegmentParser):
     image_type = ProdosDiskImage
 
 
+known_containers = [
+    DCMContainer,
+]
+
+
+def guess_container(r):
+    for c in known_containers:
+        try:
+            found = c(r)
+        except errors.InvalidContainer:
+            continue
+        else:
+            return found
+    return None
+
+
 def guess_parser_for_mime(mime, r, verbose=False):
     parsers = mime_parsers[mime]
     found = None
@@ -182,6 +199,9 @@ def guess_parser_for_system(mime_base, r):
 
 
 def iter_parsers(r):
+    container = guess_container(r.data)
+    if container is not None:
+        r = container.unpacked
     for mime in mime_parse_order:
         p = guess_parser_for_mime(mime, r)
         if p is not None:

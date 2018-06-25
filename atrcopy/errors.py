@@ -65,3 +65,11 @@ class NotEnoughSpaceOnDisk(AtrError):
 
 class FileNotFound(AtrError):
     pass
+
+
+class UnsupportedContainer(AtrError):
+    pass
+
+
+class InvalidContainer(AtrError):
+    pass
