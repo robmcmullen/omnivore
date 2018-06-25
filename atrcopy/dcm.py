@@ -21,7 +21,7 @@ class DCMContainer(DiskImageContainer):
             self.index += 1
         return data
 
-    def unpack_raw_data(self, data):
+    def unpack_bytes(self, data):
         self.index = 0
         self.count = len(data)
         self.raw = data

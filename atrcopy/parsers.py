@@ -10,6 +10,7 @@ from .dos33 import Dos33DiskImage, ProdosDiskImage, Dos33BinFile
 from .standard_delivery import StandardDeliveryImage
 from . import errors
 from .magic import guess_detail_for_mime
+from .container import GZipContainer
 from .dcm import DCMContainer
 
 import logging
@@ -159,17 +160,22 @@ class ProdosSegmentParser(SegmentParser):
 
 
 known_containers = [
+    GZipContainer,
     DCMContainer,
 ]
 
 
-def guess_container(r):
+def guess_container(r, verbose=False):
     for c in known_containers:
+        if verbose:
+            log.info(f"trying container {c}")
         try:
             found = c(r)
-        except errors.InvalidContainer:
+        except errors.InvalidContainer as e:
             continue
         else:
+            if verbose:
+                log.info(f"found container {c}")
             return found
     return None
 

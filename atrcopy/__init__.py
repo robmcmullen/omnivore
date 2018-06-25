@@ -58,13 +58,16 @@ def find_diskimage(filename):
         with open(filename, "rb") as fh:
             if options.verbose:
                 print("Loading file %s" % filename)
-            rawdata = SegmentData(fh.read())
+            data = to_numpy(fh.read())
             parser = None
             try:
-                unpacked = guess_container(rawdata.data)
+                container = guess_container(data, options.verbose)
+                if container is not None:
+                    data = container.unpacked
             except errors.UnsupportedContainer as e:
                 print(f"{filename}: {e}")
                 return None
+            rawdata = SegmentData(data)
             for mime in mime_parse_order:
                 if options.verbose:
                     print("Trying MIME type %s" % mime)
