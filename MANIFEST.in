@@ -4,6 +4,10 @@ recursive-include scripts *
 include atrcopy/templates/*
 include test_data/dos*atr
 include test_data/sd*atr
+include test_data/container*gz
+include test_data/container*bz2
+include test_data/container*xz
+include test_data/container*dcm
 include test_data/*.xex
 include test_data/rebuild.sh
 include test_data/create_binary.py
