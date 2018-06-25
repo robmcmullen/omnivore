@@ -1,4 +1,4 @@
-__version__ = "8.0"
+__version__ = "8.1"
 __author__ = "Rob McMullen"
 __author_email__ = "feedback@playermissile.com"
 __url__ = "https://github.com/robmcmullen/atrcopy"
