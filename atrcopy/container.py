@@ -9,6 +9,13 @@ from .utils import to_numpy
 
 
 class DiskImageContainer:
+    """Unpacker for disk image compression.
+
+    Disk images may be compressed by any number of techniques. Subclasses of
+    DiskImageContainer implement the `unpack_bytes` method which examines the
+    byte_data argument for the supported compression type, and if valid returns
+    the unpacked bytes to be used in the disk image parsing.
+    """
     def __init__(self, data):
         self.unpacked = self.__unpack_raw_data(data)
 
@@ -18,6 +25,22 @@ class DiskImageContainer:
         return to_numpy(unpacked)
 
     def unpack_bytes(self, byte_data):
+        """Attempt to unpack `byte_data` using this unpacking algorithm.
+
+        `byte_data` is a byte string, and should return a byte string if
+        successfully unpacked. Conversion to a numpy array will take place
+        automatically, outside of this method.
+
+        If the data is not recognized by this subclass, raise an
+        InvalidContainer exception. This signals to the caller that a different
+        container type should be tried.
+
+        If the data is recognized by this subclass but the unpacking algorithm
+        is not implemented, raise an UnsupportedContainer exception. This is
+        different than the InvalidContainer exception because it indicates that
+        the data was indeed recognized by this subclass (despite not being
+        unpacked) and checking further containers is not necessary.
+        """
         pass
 
 

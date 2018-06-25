@@ -16,7 +16,7 @@ class DCMContainer(DiskImageContainer):
         try:
             data = self.raw[self.index]
         except IndexError:
-            raise errors.InvalidContainer
+            raise errors.InvalidContainer("Incomplete DCM file")
         else:
             self.index += 1
         return data
@@ -38,4 +38,11 @@ class DCMContainer(DiskImageContainer):
                 raise errors.InvalidContainer(f"Unsupported density flag {density_flag} in DCM")
         else:
             raise errors.InvalidContainer("Not a DCM file")
+
+        # DCM decoding goes here. Currently, instead of decoding it raises the
+        # UnsupportedContainer exception, which signals to the caller that the
+        # container has been successfully identified but can't be parsed.
+        #
+        # When decoding is supported, return the decoded byte array instead of
+        # this exception.
         raise errors.UnsupportedContainer("DCM archives are not yet supported")
