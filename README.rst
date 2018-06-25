@@ -12,11 +12,15 @@ Prerequisites
 Python
 ------
 
-Starting with ``atrcopy`` 7.0, Python 2 support has been dropped.
+Starting with ``atrcopy`` 7.0, Python 3.6 is **required**. Python 2 support has
+been dropped. Python 3.7 and beyond will be supported when they are released,
+but 3.6 will probably remain the minimum version. From what I know now of
+future Python versions, I don't plan on requiring any language features beyond
+3.6.
 
 Supported Python versions:
 
-* Python 3.6 and later
+* Python 3.6 (and later)
 
 If you need Python 2 support, ``atrcopy`` 6.5 and earlier supports:
 
@@ -24,18 +28,16 @@ If you need Python 2 support, ``atrcopy`` 6.5 and earlier supports:
 * Python 3.5
 * Python 3.6
 
-Python 3 compatibility was added in ``atrcopy`` 5.0, but support for Python 3.4
-and older is not planned.
-
 Dependencies
 ------------
 
-Starting with ``atrcopy`` 2.0, `numpy <http://www.numpy.org/>`_ is required. It
-will be automatically installed when installing ``atrcopy`` with ``pip`` as
+* numpy
+
+It will be automatically installed when installing ``atrcopy`` with ``pip`` as
 described below.
 
-It also uses the pure-Python ``future`` compatibility library to help support
-both Python 2 and Python 3.
+For development, pytest is used to run the test suite, but this is not required
+for normal installation of ``atrcopy``.
 
 Installation
 ============
@@ -118,6 +120,23 @@ Other Supported Formats
 
 **Note:** Atari ROM cartridges are supported in both both plain binary and
 atari800 ``.car`` format
+
+
+Supported Compression/Container Formats
+---------------------------------------
+
+Starting with ``atrcopy`` 7.2, compressed disk images are supported
+transparently, so any type of disk image compressed with one of the supported
+container formats can be used directly, without first decompressing it before
+running ``atrcopy``.
+
++--------------------+----------+------+-------+------------------------------+
+| Container          | File Ext | Read | Write | Status                       |
++====================+==========+======+=======+==============================+
+| gzip               | .gz      | Yes  | No    | Read only                    |
++--------------------+----------+------+-------+------------------------------+
+| Disk Communicator  | .dcm     | No   | No    | Recognized but unimplemented |
++--------------------+----------+------+-------+------------------------------+
 
 
 Usage
