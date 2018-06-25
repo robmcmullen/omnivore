@@ -18,7 +18,7 @@ def get_indexed(segment, num, scale):
     s = DefaultSegment(raw, segment.origin + indexes[0])
     return s, indexes
 
-class TestSegment1(object):
+class TestSegment1:
     def setup(self):
         self.segments = []
         for i in range(8):
@@ -68,7 +68,7 @@ class TestSegment1(object):
             assert not np.all((c.data[:] - s.data[:]) == 0)
 
 
-class TestIndexed(object):
+class TestIndexed:
     def setup(self):
         data = np.arange(4096, dtype=np.uint8)
         data[1::2] = np.repeat(np.arange(16, dtype=np.uint8), 128)
@@ -242,7 +242,7 @@ class TestIndexed(object):
         assert not np.all((c.data[:] - s.data[:]) == 0)
 
 
-class TestComments(object):
+class TestComments:
     def setup(self):
         data = np.ones([4000], dtype=np.uint8)
         r = SegmentData(data)
@@ -392,7 +392,7 @@ class TestComments(object):
             assert set(item1[3].values()) == set(item2[3].values())
 
 
-class TestResize(object):
+class TestResize:
     def setup(self):
         data = np.arange(4096, dtype=np.uint8)
         data[1::2] = np.repeat(np.arange(16, dtype=np.uint8), 128)

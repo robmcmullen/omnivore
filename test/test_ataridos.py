@@ -6,7 +6,7 @@ from atrcopy import SegmentData, AtariDosFile, DefaultSegment, XexContainerSegme
 
 
 
-class TestAtariDosFile(object):
+class TestAtariDosFile:
     def setup(self):
         pass
 

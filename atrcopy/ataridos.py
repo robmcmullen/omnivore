@@ -256,7 +256,7 @@ class XexSegment(ObjSegment):
     savers = [SegmentSaver, XexSegmentSaver]
 
 
-class AtariDosFile(object):
+class AtariDosFile:
     """Parse a binary chunk into segments according to the Atari DOS object
     file format.
     

@@ -629,7 +629,7 @@ class Dos33DiskImage(DiskImageBase):
         return image, 'B'
 
 
-class Dos33BinFile(object):
+class Dos33BinFile:
     """Parse a binary chunk into segments according to the DOS 3.3 binary
     dump format
     """

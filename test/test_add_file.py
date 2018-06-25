@@ -8,7 +8,7 @@ from atrcopy import SegmentData, AtariDosDiskImage, Dos33DiskImage
 from atrcopy import errors
 
 
-class BaseFilesystemModifyTest(object):
+class BaseFilesystemModifyTest:
     diskimage_type = None
     sample_data = None
     num_files_in_sample = 0

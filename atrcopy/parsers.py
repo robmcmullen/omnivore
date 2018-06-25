@@ -15,7 +15,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class SegmentParser(object):
+class SegmentParser:
     menu_name = ""
     image_type = None
     container_segment = DefaultSegment

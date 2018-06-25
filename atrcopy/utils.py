@@ -60,7 +60,7 @@ def text_to_int(text, default_base="hex"):
     return value
 
 
-class WriteableSector(object):
+class WriteableSector:
     def __init__(self, sector_size, data=None, num=-1):
         self._sector_num = num
         self._next_sector = 0
@@ -109,7 +109,7 @@ class WriteableSector(object):
         return data[count:]
 
 
-class BaseSectorList(object):
+class BaseSectorList:
     def __init__(self, header):
         self.header = header
         self.sector_size = header.sector_size
@@ -150,7 +150,7 @@ class BaseSectorList(object):
         self.sectors.extend(sectors)
 
 
-class Dirent(object):
+class Dirent:
     """Abstract base class for a directory entry
 
     """

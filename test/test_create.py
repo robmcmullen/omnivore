@@ -15,7 +15,7 @@ def get_image(file_name, diskimage_type):
     return image
 
 
-class BaseCreateTest(object):
+class BaseCreateTest:
     diskimage_type = None
 
     def get_exe_segments(self):

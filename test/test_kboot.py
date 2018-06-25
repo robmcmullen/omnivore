@@ -10,7 +10,7 @@ from mock import *
 from atrcopy import SegmentData, KBootImage, add_xexboot_header, add_atr_header
 
 
-class TestKbootHeader(object):
+class TestKbootHeader:
     def setup(self):
         pass
 

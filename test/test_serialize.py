@@ -10,7 +10,7 @@ import pytest
 from atrcopy import DefaultSegment, SegmentData, get_xex, interleave_segments
 
 
-class TestSegment(object):
+class TestSegment:
     def setup(self):
         data = np.ones([4000], dtype=np.uint8)
         r = SegmentData(data)

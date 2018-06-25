@@ -111,7 +111,7 @@ def get_cart(cart_type):
         raise errors.InvalidDiskImage("Unsupported cart type %d" % cart_type)
 
 
-class A8CartHeader(object):
+class A8CartHeader:
     # Atari Cart format described by https://sourceforge.net/p/atari800/source/ci/master/tree/DOC/cart.txt  NOTE: Big endian!
     format = np.dtype([
         ('magic', '|S4'),

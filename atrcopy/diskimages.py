@@ -12,7 +12,7 @@ except NameError:
     _xd = False
 
 
-class BaseHeader(object):
+class BaseHeader:
     file_format = "generic"  # text descriptor of file format
     sector_class = WriteableSector
 
@@ -91,7 +91,7 @@ class BaseHeader(object):
         return self.sector_class(self.sector_size, data)
 
 
-class DiskImageBase(object):
+class DiskImageBase:
     def __init__(self, rawdata, filename="", create=False):
         self.rawdata = rawdata
         self.bytes = self.rawdata.get_data()

@@ -7,7 +7,7 @@ from atrcopy import AtariCartImage, SegmentData
 from atrcopy import errors
 
 
-class TestAtariCart(object):
+class TestAtariCart:
     def setup(self):
         pass
 

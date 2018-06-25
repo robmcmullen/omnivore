@@ -3,7 +3,7 @@ from mock import *
 from atrcopy import utils
 
 
-class TestTextToInt(object):
+class TestTextToInt:
     def setup(self):
         pass
 

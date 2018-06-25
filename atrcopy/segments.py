@@ -57,7 +57,7 @@ def get_style_mask(**kwargs):
     return 0xff ^ bits
 
 
-class SegmentSaver(object):
+class SegmentSaver:
     export_data_name = "Raw Data"
     export_extensions = [".dat"]
 
@@ -66,7 +66,7 @@ class SegmentSaver(object):
         return segment.tobytes()
 
 
-class BSAVESaver(object):
+class BSAVESaver:
     export_data_name = "Apple ][ Binary"
     export_extensions = [".bsave"]
 
@@ -80,7 +80,7 @@ class BSAVESaver(object):
         return header.tobytes() + segment.tobytes()
 
 
-class OrderWrapper(object):
+class OrderWrapper:
     """Wrapper for numpy data so that manipulations can use normal numpy syntax
     and still affect the data according to the byte ordering.
 
@@ -132,7 +132,7 @@ class OrderWrapper(object):
         return self.np_data[self.order].tobytes()
 
 
-class UserExtraData(object):
+class UserExtraData:
     def __init__(self):
         self.comments = dict()
         self.user_data = dict()
@@ -140,7 +140,7 @@ class UserExtraData(object):
             self.user_data[i] = dict()
 
 
-class SegmentData(object):
+class SegmentData:
     def __init__(self, data, style=None, extra=None, debug=False, order=None):
         """Storage for raw data
 
@@ -388,7 +388,7 @@ class SegmentData(object):
         return r
 
 
-class DefaultSegment(object):
+class DefaultSegment:
     savers = [SegmentSaver, BSAVESaver]
     can_resize_default = False
 

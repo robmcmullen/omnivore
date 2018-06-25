@@ -12,7 +12,7 @@ import numpy as np
 from atrcopy import DefaultSegment, SegmentData
 
 
-class TestJsonPickle(object):
+class TestJsonPickle:
     def setup(self):
         data = np.arange(2048, dtype=np.uint8)
         self.segment = DefaultSegment(SegmentData(data))
