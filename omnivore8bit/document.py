@@ -11,7 +11,7 @@ from omnivore.utils.file_guess import FileGuess
 # Enthought library imports.
 from traits.api import Trait, Any, List, Event, Dict, Property, Bool
 
-from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, InvalidSegmentParser, iter_parsers
+from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, errors, iter_parsers
 
 import logging
 log = logging.getLogger(__name__)
@@ -143,7 +143,7 @@ class SegmentedDocument(BaseDocument):
             try:
                 s = parser(r)
                 break
-            except InvalidSegmentParser:
+            except errors.InvalidSegmentParser:
                 pass
         self.set_segments(s)
 

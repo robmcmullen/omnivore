@@ -2,7 +2,7 @@ import numpy as np
 
 from traits.api import HasTraits, provides
 
-from atrcopy import SegmentData, SegmentParser, InvalidSegmentParser, ObjSegment, get_style_bits
+from atrcopy import SegmentData, SegmentParser, errors, ObjSegment, get_style_bits
 
 from omnivore.file_type.i_file_recognizer import IFileRecognizer
 from ..document import SegmentedDocument
@@ -25,7 +25,7 @@ class Atari800Recognizer(HasTraits):
         r = SegmentData(guess.numpy)
         try:
             parser = Atari800Parser(r)
-        except InvalidSegmentParser:
+        except errors.InvalidSegmentParser:
             return
         guess.parser = parser
         return self.id
@@ -54,7 +54,7 @@ class Atari800Parser(SegmentParser):
             if values[1] == 8 and (values[2] == 0 or values[2] == 1):
                 self.parse_segments()
                 return
-        raise InvalidSegmentParser("Not Atari800 save state")
+        raise errors.InvalidSegmentParser("Not Atari800 save state")
 
     def parse_segments(self):
         r = self.segment_data
@@ -80,7 +80,7 @@ class Atari800Parser(SegmentParser):
                 self.segments.append(segment)
 
         else:
-            raise InvalidSegmentParser("Unsupported Atari800 save state file version: %d" % version)
+            raise errors.InvalidSegmentParser("Unsupported Atari800 save state file version: %d" % version)
 
     def set_comments(self, comments):
         for loc, text in comments.items():
