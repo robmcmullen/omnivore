@@ -12,11 +12,11 @@ class KBootDirent(AtariDosDirent):
         self.starting_sector = 4
         self.basename = image.filename
         if not self.basename:
-            self.basename = "KBOOT"
+            self.basename = b"KBOOT"
         if self.basename == self.basename.upper():
-            self.ext = "XEX"
+            self.ext = b"XEX"
         else:
-            self.ext = "xex"
+            self.ext = b"xex"
         start, size = image.header.get_pos(4)
         i = image.header.header_offset + 9
         count = image.bytes[i] + 256 * image.bytes[i+1] + 256 * 256 *image.bytes[i + 2]
