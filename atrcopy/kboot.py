@@ -1,7 +1,7 @@
 import numpy as np
 
 from . import errors
-from .ataridos import AtariDosDirent, AtariDosDiskImage, XexSegment, get_xex
+from .ataridos import AtrHeader, AtariDosDirent, AtariDosDiskImage, XexSegment, get_xex
 from .segments import SegmentData
 
 
@@ -70,7 +70,13 @@ class KBootImage(AtariDosDiskImage):
     @classmethod
     def create_boot_image(cls, segments, run_addr=None):
         data_segment, _ = get_xex(segments)
-        data_bytes = add_xexboot_header(data_segment.data)
+        payload_bytes = add_xexboot_header(data_segment.data)
+        data_bytes = np.zeros(len(payload_bytes) + 16, np.uint8)
+        data_bytes[16:] = payload_bytes[:]
+        header_bytes = data_bytes[0:16]
+        atr_header = AtrHeader(create=True)
+        atr_header.check_size(len(payload_bytes))
+        atr_header.encode(header_bytes)
         raw = SegmentData(data_bytes)
         atr = cls(raw, create=True)
         return atr
