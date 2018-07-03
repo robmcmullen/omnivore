@@ -13,11 +13,12 @@ from omnivore.utils.wx import compactgrid as cg
 
 from ..arch import colors
 from ..ui.segment_grid import SegmentGridControl, SegmentVirtualTable
-from ..utils.apple2util import to_560_bw_pixels, hires_byte_order, hgr_offsets
+from ..utils import apple2util as a2
 
 from . import SegmentViewer
 from . import actions as va
 from . import bitmap2 as b
+from . import char2 as c
 
 import logging
 log = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ class HiresLineRenderer(b.BitmapLineRenderer):
         log.debug(f"get_image {bytes_per_row} {nr} {count} {data}")
         subset_count = 14 * len(data)
         bw = np.empty(subset_count, dtype=np.uint8)
-        to_560_bw_pixels(data, bw)
+        a2.to_560_bw_pixels(data, bw)
         h_colors = colors.get_blended_color_registers([(0, 0, 0), (255, 255, 255)], segment_viewer.preferences.highlight_background_color)
         style_per_pixel = np.repeat(style, 14)
 
@@ -60,36 +61,44 @@ class HiresLineRenderer(b.BitmapLineRenderer):
 
 
 class HiresTable(SegmentVirtualTable):
+    row_offset_for_line = a2.hgr_offsets
+    segment_name = "Hi-res"
+    segment_pretty_name = "Apple ][ Hi-res"
+
     def get_data_style_view(self, linked_base):
-        byte_order = hires_byte_order(len(linked_base.segment))
-        self.hires_segment = linked_base.segment.create_subset(byte_order, "Hi-res", "Apple ][ Hi-res")
-        data = self.hires_segment.data
-        style = self.hires_segment.style
+        byte_order = self.calc_byte_order(linked_base)
+        self.apple2_segment = linked_base.segment.create_subset(byte_order, self.segment_name, self.segment_pretty_name)
+        data = self.apple2_segment.data
+        style = self.apple2_segment.style
         return data, style
+
+    def calc_byte_order(self, linked_base):
+        byte_order = a2.hires_byte_order(len(linked_base.segment))
+        return byte_order
 
     def calc_num_cols(self):
         return 40
 
     def get_index_of_row(self, line):
-        return hgr_offsets[line]
+        return self.row_offset_for_line[line]
 
     def get_label_at_index(self, index):
         return(str(index // 40))
 
     def get_index_range(self, row, col):
-        index = hgr_offsets[row] + col
+        index = self.row_offset_for_line[row] + col
         return index, index + 1
 
     def is_index_valid(self, index):
         try:
-            real_index = self.hires_segment.get_index_from_base_index(index)
+            real_index = self.apple2_segment.get_index_from_base_index(index)
         except IndexError:
             return False
         else:
             return True
 
     def index_to_row_col(self, index):
-        real_index = self.hires_segment.get_index_from_base_index(index)
+        real_index = self.apple2_segment.get_index_from_base_index(index)
         return divmod(real_index + self.start_offset, self.items_per_row)
 
 
@@ -127,7 +136,7 @@ class HiresGridControl(b.BitmapGridControl):
 
 
 class HiresViewer(b.BitmapViewer):
-    name = "hires"
+    name = "hgr"
 
     pretty_name = "Apple ][ Hi-res"
 
@@ -149,3 +158,33 @@ class HiresViewer(b.BitmapViewer):
 
     def validate_width(self, width):
         return 560
+
+
+class TextTable(HiresTable):
+    row_offset_for_line = a2.gr_offsets
+    segment_name = "Text"
+    segment_pretty_name = "Apple ][ Text"
+
+    def calc_byte_order(self, linked_base):
+        byte_order = a2.lores_byte_order(len(linked_base.segment))
+        return byte_order
+
+
+class TextGridControl(c.CharGridControl):
+    default_table_cls = TextTable
+
+    def set_viewer_defaults(self):
+        c.CharGridControl.set_viewer_defaults(self)
+        self.items_per_row = 40
+
+
+class TextViewer(c.CharViewer):
+    name = "text"
+
+    pretty_name = "Apple ][ Text"
+
+    control_cls = TextGridControl
+
+    @property
+    def window_title(self):
+        return self.pretty_name

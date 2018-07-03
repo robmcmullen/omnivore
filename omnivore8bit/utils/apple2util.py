@@ -60,6 +60,12 @@ hgr_row_order = np.asarray([
 
 hgr_byte_order = None
 
+gr_offsets = hgr_offsets[::8]
+
+gr_row_order = hgr_row_order[::8]
+
+gr_byte_order = None
+
 byte_to_14_pixels = np.asarray([
     (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
     (1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
@@ -372,6 +378,42 @@ def hires_byte_order(num_bytes):
     return byte_order
 
 
+def lores_data_view(data):
+    if len(data) < 0x400:
+        subset = np.zeros(0x400, dtype=np.uint8)
+        subset[0:len(data)] = data
+    else:
+        subset = data[0:0x400]
+
+    view = subset.reshape((8,128))[:,:120].reshape((24,40))
+
+    # but this is in linear order; need the row swap. So, have to use fancy
+    # indexing
+    return view[gr_row_order].reshape(-1)
+
+
+def lores_byte_order(num_bytes):
+    global gr_byte_order
+
+    if gr_byte_order is None:
+        a = (np.arange(24 * 40, dtype=np.uint16) % 40).reshape((24, 40))
+        a[:] += np.repeat(gr_offsets, 40).reshape((24, 40))
+        gr_byte_order = a.reshape(-1)
+
+    # If the number of bytes is less than 8192, the final byte is repeated as
+    # many times as necessary.
+    if num_bytes < 1:
+        byte_order = np.empty(0, dtype=np.uint8)
+    elif num_bytes < 0x400:
+        byte_order = gr_byte_order.copy()
+        b = byte_order >= num_bytes
+        byte_order[b] = num_bytes - 1
+    else:
+        byte_order = gr_byte_order
+
+    return byte_order
+
+
 if __name__ == "__main__":
     gen = False
 
@@ -427,3 +469,12 @@ if __name__ == "__main__":
         print(view[i])
 
     print(hires_byte_order(8192)[:256])
+
+    data = np.linspace(0, 0x40, num=0x400, endpoint=False, dtype=np.uint8)
+    view = lores_data_view(data)
+    for i in range(24):
+        print(view[i])
+
+    bytes_order = lores_byte_order(0x400)
+    # print([:256])
+    print(bytes_order, len(bytes_order))
