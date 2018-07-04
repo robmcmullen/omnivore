@@ -145,30 +145,6 @@ class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
         return items
 
 
-class UseSegmentAction(EditorAction):
-    """This submenu contains a list of all segments in the disk image.
-    Selecting one of these items will change the view to the selected segment.
-    """
-    doc_hint = "parent"
-    style = RADIO_STYLE
-
-    segment = Any
-
-    segment_number = Int
-
-    def _name_default(self):
-        return str(self.segment)
-
-    def perform(self, event):
-        wx.CallAfter(self.active_editor.view_segment_number, self.segment_number)
-
-    def _update_checked(self, ui_state):
-        if self.active_editor:
-            state = self.active_editor.segment_number == self.segment_number
-            log.debug("UseSegmentAction: checked=%s %s %s %s" % (state, str(self.segment), self.active_editor.segment_number, self.segment_number))
-            self.checked = state
-
-
 class ParseSubSegmentsAction(EditorAction):
     """Expand the segment into sub-segments using a parser.  The disk image
     parser only parses the first level of segments automatically, so if there
