@@ -97,8 +97,13 @@ class NormalSelectMode(MouseMode):
     def calc_popup_data(self, evt):
         cg = self.control
         row, col = cg.get_row_col_from_event(evt)
-        index, _ = cg.table.get_index_range(row, col)
-        inside = True  # fixme
+        try:
+            index, _ = cg.table.get_index_range(row, col)
+        except IndexError:
+            index = 0
+            inside = False
+        else:
+            inside = True
         style = cg.table.segment.style[index] if inside else 0
         popup_data = {
             'index': index,
