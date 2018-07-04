@@ -1,3 +1,7 @@
+import logging
+logging.basicConfig(level=logging.WARNING)
+log = logging.getLogger(__name__)
+
 known_emulators = []
 default_emulator = None
 
@@ -7,7 +11,7 @@ try:
     if default_emulator is None:
         default_emulator = Atari800
 except ImportError:
-    pass
+    log.warning(f"Atari800 emulator not available: {e}")
 
 try:
     from .generic6502 import Generic6502
@@ -15,7 +19,15 @@ try:
     if default_emulator is None:
         default_emulator = Generic6502
 except ImportError:
-    pass
+    log.warning(f"Generic6502 emulator not available: {e}")
+
+try:
+    from .crabapple import Crabapple
+    known_emulators.append(Crabapple)
+    if default_emulator is None:
+        default_emulator = Crabapple
+except ImportError as e:
+    log.warning(f"Crabapple emulator not available: {e}")
 
 
 class Omni8bitError(RuntimeError):
