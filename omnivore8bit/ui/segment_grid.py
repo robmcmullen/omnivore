@@ -40,6 +40,10 @@ class SegmentVirtualTable(cg.HexTable):
         num_cols = self.calc_num_cols()
         cg.HexTable.__init__(self, data, style, num_cols)
 
+    @property
+    def segment(self):
+        return self.linked_base.segment
+
     def get_data_style_view(self, linked_base):
         raise NotImplementedError
 
