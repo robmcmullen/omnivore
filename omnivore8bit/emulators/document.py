@@ -126,9 +126,15 @@ class EmulationDocument(SegmentedDocument):
     def calc_layout_template_name(self, task_id):
         return "%s.emulator_layout" % task_id
 
+    def find_default_boot_segment(self):
+        for segment in self.source_document.segments:
+            if segment.origin > 0:
+                return segment
+        return self.source_document.container_segment
+
     def boot(self, segment=None):
         if segment is None:
-            segment = self.source_document.container_segment
+            segment = self.find_default_boot_segment()
         emu = self.emulator
         emu.configure_emulator([], event_loop=el.start_monitor, event_loop_args=self)
         emu.boot_from_segment(segment)
