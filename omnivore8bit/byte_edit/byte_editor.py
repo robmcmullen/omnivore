@@ -490,6 +490,7 @@ class ByteEditor(FrameworkEditor):
         panel.Bind(TileManager.EVT_CLIENT_ACTIVATED, self.on_viewer_active)
         panel.Bind(TileManager.EVT_CLIENT_CLOSE, self.on_viewer_close)
         panel.Bind(TileManager.EVT_CLIENT_REPLACE, self.on_viewer_replace)
+        panel.Bind(TileManager.EVT_CLIENT_TOGGLED, self.on_viewer_link)
 
         return panel
 
@@ -620,3 +621,19 @@ class ByteEditor(FrameworkEditor):
             v.prepare_for_destroy()
             self.set_focused_viewer(evt.replacement_child.segment_viewer)
             del v
+
+    def on_viewer_link(self, evt):
+        try:
+            v = evt.child.segment_viewer
+        except AttributeError:
+            # must be an empty window (a multisash window that has no segment
+            # viewer). It can be closed without any further action.
+            pass
+        else:
+            toggle = evt.GetInt()
+            state = evt.IsChecked()
+            log.debug("on_viewer_replace: linking viewer %s %s: %s" % (v, v.window_title, state))
+            if state:
+                print("LINKED!")
+            else:
+                print("UNLINKED!")

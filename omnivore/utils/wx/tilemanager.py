@@ -355,6 +355,9 @@ class TileManager(wx.Window):
     wxEVT_CLIENT_ACTIVATED = wx.NewEventType()
     EVT_CLIENT_ACTIVATED = wx.PyEventBinder(wxEVT_CLIENT_ACTIVATED, 1)
 
+    wxEVT_CLIENT_TOGGLED = wx.NewEventType()
+    EVT_CLIENT_TOGGLED = wx.PyEventBinder(wxEVT_CLIENT_TOGGLED, 1)
+
     wxEVT_LAYOUT_CHANGED = wx.NewEventType()
     EVT_LAYOUT_CHANGED = wx.PyEventBinder(wxEVT_LAYOUT_CHANGED, 1)
 
@@ -1533,6 +1536,14 @@ class TileClient(wx.Window):
         evt.SetReplacementChild(new_child)
         self.do_send_event(evt)
 
+    def do_send_toggle_event(self, toggle_flag, toggle_state):
+        log.debug(f"sending toggle event for {self}: {toggle_state}")
+        evt = TileManagerEvent(TileManager.wxEVT_CLIENT_TOGGLED, self)
+        evt.SetChild(self.child)
+        evt.SetInt(toggle_flag)
+        evt.SetChecked(toggle_state)
+        self.do_send_event(evt)
+
     @property
     def title(self):
         return self.child.GetName()
@@ -1659,6 +1670,7 @@ class TitleBar(wx.Window):
             self.client = parent.GetParent()
             wx.Window.__init__(self, parent, -1, pos=(0, 0), size=size, style=wx.BORDER_NONE, name=TileManager.debug_window_name("TitleBarButton"))
 
+            self.layout_direction = wx.LEFT
             self.down = False
             self.entered = False
             self.is_enabled = True
@@ -1714,9 +1726,12 @@ class TitleBar(wx.Window):
 
         def do_button_pos(self, x, h):
             bw, bh = self.GetSize()
-            x -= bw
+            if self.layout_direction == wx.LEFT:
+                x -= bw
             y = (h - bh) // 2
             self.SetPosition((x, y))
+            if self.layout_direction == wx.RIGHT:
+                x += bw
             return x
 
 
@@ -1827,6 +1842,29 @@ class TitleBar(wx.Window):
         def do_action(self, evt):
             self.client.split_side(wx.TOP)
 
+
+    class Toggle(Button):
+        def __init__(self, parent, size, toggle_flag):
+            self.toggle_flag = toggle_flag
+            TitleBar.Button.__init__(self, parent, size)
+            self.layout_direction = wx.RIGHT
+            self.is_always_shown = True
+            self.is_enabled = True
+            self.toggle_set = True
+
+        def draw_button(self, dc, size, bg_brush, pen, fg_brush):
+            dc.SetPen(pen)
+            if self.toggle_set:
+                dc.SetBrush(fg_brush)
+            else:
+                dc.SetBrush(bg_brush)
+            dc.DrawRectangle(0, 0, size.x, size.y)
+
+        def do_action(self, evt):
+            self.toggle_set = not self.toggle_set
+            self.client.do_send_toggle_event(self.toggle_flag, self.toggle_set)
+            self.Refresh()
+
     def __init__(self, parent, in_sidebar=False):
         wx.Window.__init__(self, parent, -1, name=TileManager.debug_window_name("TitleBar"))
         self.client = parent
@@ -1841,7 +1879,11 @@ class TitleBar(wx.Window):
         self.buttons.append(TitleBar.VSplitNewRight(self, m.close_button_size))
         self.buttons.append(TitleBar.VSplitNewLeft(self, m.close_button_size))
 
+        self.toggle_buttons = []
+        self.toggle_buttons.append(TitleBar.Toggle(self, m.close_button_size, 1))
+
         # self.SetBackgroundColour(wx.RED)
+        self.title_text_x = m.title_bar_margin
         self.set_buttons_for_sidebar_state(in_sidebar)
         self.hide_buttons()
 
@@ -1885,7 +1927,7 @@ class TitleBar(wx.Window):
         dc.SetTextBackground(textbg)
         dc.SetTextForeground(text)
         dc.DrawRectangle(0, 0, w, h)
-        dc.DrawText(self.client.title, m.title_bar_x, m.title_bar_y)
+        dc.DrawText(self.client.title, self.title_text_x, m.title_bar_y)
 
     def on_paint(self, event):
         dc = wx.PaintDC(self)
@@ -1901,6 +1943,11 @@ class TitleBar(wx.Window):
                 x -= m.title_bar_margin
             else:
                 button.SetPosition((-100, -100))
+        x = m.title_bar_margin
+        for button in self.toggle_buttons:
+            x = button.do_button_pos(x, h)
+            x += m.title_bar_margin
+        self.title_text_x = x
 
     def on_size(self, evt):
         self.position_buttons()
@@ -2431,6 +2478,7 @@ class TileManagerEvent(wx.PyCommandEvent):
         self.child = None
         self.replacement_child = None
         self.isAllowed = True
+        self.is_checked = True
 
     def SetChild(self, child):
         """
@@ -2449,6 +2497,21 @@ class TileManagerEvent(wx.PyCommandEvent):
 
         """
         return self.child
+
+    def SetChecked(self, checked):
+        """
+        Sets the state of the toggle button
+
+        :param `checked`: True if toggle button is set
+
+        """
+        self.is_checked = checked
+
+    def IsChecked(self):
+        """
+        Returns the state of the toggle button
+        """
+        return self.is_checked
 
     def SetReplacementChild(self, child):
         """
