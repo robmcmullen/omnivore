@@ -350,8 +350,8 @@ class DrawMode(JumpmanSelectMode):
                 sy = obj.default_dy if dy > 0 else -obj.default_dy
                 num = max((abs(dy) + abs(sy) - 1) // abs(sy), 1)
                 sx = dx // num
-        screen_x = (self.mouse_down[0] - obj.default_dx/2) & obj.valid_x_mask
-        screen_y = self.mouse_down[1] - obj.default_dy/2
+        screen_x = (self.mouse_down[0] - obj.default_dx // 2) & obj.valid_x_mask
+        screen_y = self.mouse_down[1] - obj.default_dy // 2
 
         self.objects = []
         item = obj(-1, screen_x, screen_y, num, sx, sy)
@@ -464,7 +464,7 @@ class DrawPeanutMode(DrawMode):
         if self.objects:
             self.is_bad_location = self.objects[0].is_bad_location(hx, hy)
         else:
-            self.is_bad_location = is_bad_harvest_position(x, y, hx, hy)
+            self.is_bad_location = jp.is_bad_harvest_position(x, y, hx, hy)
 
     def draw_extra_objects(self, level_builder, screen, current_segment):
         if self.objects:
@@ -492,9 +492,8 @@ class DrawPeanutMode(DrawMode):
             dy = ((self.mouse_down[1] - y) & 0xf) * 2
             self.display_coords(evt)
             values = [dx, dy]
-            source = self.control.segment_viewer.segment
-            cmd = ChangeByteCommand(source, 0x46, 0x48, values)
-            e.process_command(cmd, self.batch)
+            cmd = ChangeByteCommand(e.segment, 0x46, 0x48, values)
+            e.editor.process_command(cmd, self.batch)
 
     def process_left_down(self, evt):
         self.create_objects(evt, True)
@@ -513,12 +512,12 @@ class DrawPeanutMode(DrawMode):
             e = c.segment_viewer
             if e is None:
                 return
-            e.end_batch()
+            e.editor.end_batch()
             self.batch = None
 
             # Force updating of the hex view
             e.document.change_count += 1
-            e.refresh_panes()
+            e.linked_base.refresh_event = True
         else:
             DrawMode.process_left_up(self, evt)
             return
@@ -549,7 +548,7 @@ class JumpmanRespawnMode(DrawMode):
 
     def init_post_hook(self):
         x, y = self.get_respawn_point()
-        self.current = JumpmanRespawn(-1, x, y, 1, 0, 0)
+        self.current = self.drawing_object(-1, x, y, 1, 0, 0)
         self.objects = []
 
     def get_respawn_point(self):
