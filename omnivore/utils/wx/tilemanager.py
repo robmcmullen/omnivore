@@ -355,8 +355,8 @@ class TileManager(wx.Window):
     wxEVT_CLIENT_ACTIVATED = wx.NewEventType()
     EVT_CLIENT_ACTIVATED = wx.PyEventBinder(wxEVT_CLIENT_ACTIVATED, 1)
 
-    wxEVT_CLIENT_TOGGLED = wx.NewEventType()
-    EVT_CLIENT_TOGGLED = wx.PyEventBinder(wxEVT_CLIENT_TOGGLED, 1)
+    wxEVT_CLIENT_TOGGLE_REQUESTED = wx.NewEventType()
+    EVT_CLIENT_TOGGLE_REQUESTED = wx.PyEventBinder(wxEVT_CLIENT_TOGGLE_REQUESTED, 1)
 
     wxEVT_LAYOUT_CHANGED = wx.NewEventType()
     EVT_LAYOUT_CHANGED = wx.PyEventBinder(wxEVT_LAYOUT_CHANGED, 1)
@@ -1464,6 +1464,7 @@ class TileClient(wx.Window):
         self.init_kwargs(**kwargs)
 
         self.extra_border = 0
+        self.toggle_states = {}
         self.title_bar = TitleBar(self)
 
         if child is None:
@@ -1538,7 +1539,7 @@ class TileClient(wx.Window):
 
     def do_send_toggle_event(self, toggle_flag, toggle_state):
         log.debug(f"sending toggle event for {self}: {toggle_state}")
-        evt = TileManagerEvent(TileManager.wxEVT_CLIENT_TOGGLED, self)
+        evt = TileManagerEvent(TileManager.wxEVT_CLIENT_TOGGLE_REQUESTED, self)
         evt.SetChild(self.child)
         evt.SetInt(toggle_flag)
         evt.SetChecked(toggle_state)
@@ -1850,7 +1851,12 @@ class TitleBar(wx.Window):
             self.layout_direction = wx.RIGHT
             self.is_always_shown = True
             self.is_enabled = True
-            self.toggle_set = True
+
+        @property
+        def toggle_set(self):
+            c = self.GetParent().client.child
+            # FIXME: hardcoded for omnivore viewers for now!
+            return c.segment_viewer.is_toggle_set(self.toggle_flag)
 
         def draw_button(self, dc, size, bg_brush, pen, fg_brush):
             dc.SetPen(pen)
@@ -1861,8 +1867,8 @@ class TitleBar(wx.Window):
             dc.DrawRectangle(0, 0, size.x, size.y)
 
         def do_action(self, evt):
-            self.toggle_set = not self.toggle_set
-            self.client.do_send_toggle_event(self.toggle_flag, self.toggle_set)
+            desired_state = not self.toggle_set
+            self.client.do_send_toggle_event(self.toggle_flag, desired_state)
             self.Refresh()
 
     def __init__(self, parent, in_sidebar=False):

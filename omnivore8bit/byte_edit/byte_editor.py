@@ -341,7 +341,8 @@ class ByteEditor(FrameworkEditor):
         self.control.update_captions()
 
     def view_segment_number(self, number):
-        self.focused_viewer.linked_base.view_segment_number(number)
+        base = self.focused_viewer.linked_base
+        base.view_segment_number(number)
         self.update_pane_names()
 
     def get_extra_segment_savers(self, segment):
@@ -462,18 +463,60 @@ class ByteEditor(FrameworkEditor):
             cmd.pretty_name = pretty
         self.process_command(cmd)
 
-    def add_viewer(self, viewer_cls, linked_base=None):
-        if linked_base is None:
-            if self.focused_viewer is not None:
-                linked_base = self.focused_viewer.linked_base
-            else:
-                raise RuntimeError("Creating a viewer with no linked base and no focused viewer")
-        viewer = viewer_cls.viewer_factory(self.control, linked_base)
+    def add_viewer(self, viewer_or_viewer_cls, linked_base=None, replace_uuid=None):
+        if hasattr(viewer_or_viewer_cls, "control"):
+            viewer = viewer_or_viewer_cls
+        else:
+            if linked_base is None:
+                if self.focused_viewer is not None:
+                    linked_base = self.focused_viewer.linked_base
+                else:
+                    raise RuntimeError("Creating a viewer with no linked base and no focused viewer")
+            viewer = viewer_or_viewer_cls.viewer_factory(self.control, linked_base)
+        print("VIWER", viewer, type(viewer_or_viewer_cls), linked_base)
+        print("SEGMENT", linked_base.segment)
+        if replace_uuid:
+            viewer.uuid = replace_uuid
         self.viewers.append(viewer)
         self.control.add(viewer.control, viewer.uuid)
         viewer.recalc_data_model()
         self.update_pane_names()
         return viewer
+
+    def replace_viewer(self, viewer_to_replace, new_viewer, linked_base):
+        # self.viewers.remove(viewer_to_replace)
+        # viewer_to_replace.prepare_for_destroy()
+        created_viewer = self.add_viewer(new_viewer, linked_base, replace_uuid=viewer_to_replace.uuid)
+        # self.set_focused_viewer(created_viewer)
+        # del viewer_to_replace
+
+    def replace_focused_viewer(self, linked_base):
+        viewer_cls = self.focused_viewer.__class__
+        self.replace_viewer(self.focused_viewer, viewer_cls, linked_base)
+
+    def verify_center_base_is_used(self):
+        if self.center_base is not None:
+            for v in self.viewers:
+                if v.linked_base == self.center_base:
+                    break
+            else:
+                self.center_base = None
+        print(f"Center base is: {self.center_base}")
+
+    def unlink_viewer(self):
+        number = self.focused_viewer.linked_base.segment_number
+        base = LinkedBase(editor=self)
+        base.view_segment_number(number)
+        self.replace_focused_viewer(base)
+        self.verify_center_base_is_used()
+
+    def link_viewer(self):
+        if self.center_base is None:
+            self.center_base = self.focused_viewer.linked_base
+        else:
+            base = self.center_base
+            self.replace_focused_viewer(base)
+
 
     ###########################################################################
     # Trait handlers.
@@ -490,7 +533,7 @@ class ByteEditor(FrameworkEditor):
         panel.Bind(TileManager.EVT_CLIENT_ACTIVATED, self.on_viewer_active)
         panel.Bind(TileManager.EVT_CLIENT_CLOSE, self.on_viewer_close)
         panel.Bind(TileManager.EVT_CLIENT_REPLACE, self.on_viewer_replace)
-        panel.Bind(TileManager.EVT_CLIENT_TOGGLED, self.on_viewer_link)
+        panel.Bind(TileManager.EVT_CLIENT_TOGGLE_REQUESTED, self.on_viewer_link)
 
         return panel
 
@@ -500,6 +543,7 @@ class ByteEditor(FrameworkEditor):
         import pprint
         log.debug("viewer_metadata: %s" % str(list(viewer_metadata.keys())))
 
+        self.center_base = None
         center_base = center_base = LinkedBase(editor=self)
         linked_bases['default'] = center_base
         self.document.find_initial_visible_segment(center_base)
@@ -519,11 +563,13 @@ class ByteEditor(FrameworkEditor):
                         linked_base = linked_bases[e['linked base']]
                     except KeyError:
                         linked_base = center_base
+                        self.center_base = center_base
                     log.debug("recreating viewer %s: %s" % (viewer_type, uuid))
                 else:  # either not a uuid or an unknown uuid
                     e = default_viewer_metadata
                     viewer_type = uuid  # try the value of 'uuid' as a viewer name
                     linked_base = center_base
+                    self.center_base = center_base
                     uuid = None
                     log.debug("using default metadata for %s" % (viewer_type))
 
@@ -631,9 +677,11 @@ class ByteEditor(FrameworkEditor):
             pass
         else:
             toggle = evt.GetInt()
-            state = evt.IsChecked()
-            log.debug("on_viewer_replace: linking viewer %s %s: %s" % (v, v.window_title, state))
-            if state:
+            desired_state = evt.IsChecked()
+            log.debug("on_viewer_replace: linking viewer %s %s: %s" % (v, v.window_title, desired_state))
+            if desired_state:
                 print("LINKED!")
+                self.link_viewer()
             else:
                 print("UNLINKED!")
+                self.unlink_viewer()

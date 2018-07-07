@@ -228,7 +228,7 @@ class LinkedBase(CaretHandler):
         log.debug("view_segment_number: changing to %d from %d" % (number, self.segment_number))
         doc = self.document
         num = number if number < len(doc.segments) else len(doc.segments) - 1
-        if num != self.segment_number:
+        if num != self.segment_number or len(self.segment) == 0:
             old_segment = self.segment
             if old_segment is not None:
                 self.save_segment_view_params(old_segment)

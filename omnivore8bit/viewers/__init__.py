@@ -244,6 +244,11 @@ class SegmentViewer(HasTraits):
         self.machine = machine
         self.reconfigure_panes()
 
+    ##### User interface
+
+    def is_toggle_set(self, toggle_flag):
+        return self.linked_base == self.editor.center_base
+
     ##### Range operations
 
     def _get_range_processor(self):  # Trait property getter
