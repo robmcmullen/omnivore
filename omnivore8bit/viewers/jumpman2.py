@@ -202,6 +202,13 @@ class JumpmanGridControl(BitmapGridControl):
             if not first:
                 self.refresh_view()
 
+    ##### Keyboard handling
+
+    def handle_char_move_backspace(self, evt, flags):
+        self.mouse_mode.delete_objects()
+
+    handle_char_move_delete = handle_char_move_backspace
+
 
 class JumpmanViewer(BitmapViewer):
     name = "jumpman"
