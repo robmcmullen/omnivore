@@ -226,6 +226,11 @@ class ByteEditor(FrameworkEditor):
             base.from_metadata_dict(b)
             linked_bases[base.uuid] = base
             log.debug("metadata: linked_base[%s]=%s" % (base.uuid, base))
+        uuid = e.get("center_base", None)
+        if uuid is not None:
+            self.center_base = linked_bases[uuid]
+        else:
+            self.center_base = LinkedBase(editor=self)
         self.create_viewers(layout, viewer_metadata, e, linked_bases)
         viewer = None
         if 'focused viewer' in e:
@@ -250,6 +255,11 @@ class ByteEditor(FrameworkEditor):
             e = {"linked base": v.linked_base.uuid}
             v.to_metadata_dict(e, document)
             mdict["viewers"].append(e)
+        if self.center_base is not None:
+            bases[self.center_base.uuid] = self.center_base
+            mdict["center_base"] = self.center_base.uuid
+        else:
+            mdict["center_base"] = None
         mdict["linked bases"] = []
         for u, b in bases.items():
             e = {}
@@ -543,16 +553,14 @@ class ByteEditor(FrameworkEditor):
         import pprint
         log.debug("viewer_metadata: %s" % str(list(viewer_metadata.keys())))
 
-        self.center_base = None
-        center_base = center_base = LinkedBase(editor=self)
-        linked_bases['default'] = center_base
-        self.document.find_initial_visible_segment(center_base)
+        self.document.find_initial_visible_segment(self.center_base)
 
         layer = 0
         viewers = list(viewer_metadata.keys())
         if layout:
             self.control.restore_layout(layout)
 
+        center_base_used = False
         while not self.viewers:
             for uuid in viewers:
                 log.debug("loading viewer: %s" % uuid)
@@ -561,15 +569,17 @@ class ByteEditor(FrameworkEditor):
                     viewer_type = e['name']
                     try:
                         linked_base = linked_bases[e['linked base']]
+                        if linked_base == self.center_base:
+                            center_base_used = True
                     except KeyError:
-                        linked_base = center_base
-                        self.center_base = center_base
+                        linked_base = self.center_base
+                        center_base_used = True
                     log.debug("recreating viewer %s: %s" % (viewer_type, uuid))
                 else:  # either not a uuid or an unknown uuid
                     e = default_viewer_metadata
                     viewer_type = uuid  # try the value of 'uuid' as a viewer name
-                    linked_base = center_base
-                    self.center_base = center_base
+                    linked_base = self.center_base
+                    center_base_used = True
                     uuid = None
                     log.debug("using default metadata for %s" % (viewer_type))
 
@@ -592,6 +602,8 @@ class ByteEditor(FrameworkEditor):
                 viewers = ['hex']
                 first = False
 
+        if not center_base_used:
+            self.center_base = None
         self.update_pane_names()
 
     def find_viewer_by_uuid(self, u):
