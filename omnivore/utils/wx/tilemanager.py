@@ -371,11 +371,14 @@ class TileManager(wx.Window):
         def reparent_client(self, client):
             client.Reparent(self)
 
-    def __init__(self, parent, layout_direction=wx.HORIZONTAL, name="top", *_args, **_kwargs):
+    def __init__(self, parent, layout_direction=wx.HORIZONTAL, name="top", toggle_checker=None, *_args, **_kwargs):
         wx.Window.__init__(self, parent, name=name, *_args, **_kwargs)
         self.debug_id = "root"
         self.set_defaults()
         self._defChild = EmptyChild
+        if toggle_checker is None:
+            toggle_checker = lambda client, toggle_id: True
+        self.toggle_checker = toggle_checker
         self.child = TileSplit(self, self, layout_direction)
         self.hiding_space = TileManager.HidingSpace(self, -1, name="reparenting hiding space")
         self.hiding_space.Hide()
@@ -1537,11 +1540,11 @@ class TileClient(wx.Window):
         evt.SetReplacementChild(new_child)
         self.do_send_event(evt)
 
-    def do_send_toggle_event(self, toggle_flag, toggle_state):
+    def do_send_toggle_event(self, toggle_id, toggle_state):
         log.debug(f"sending toggle event for {self}: {toggle_state}")
         evt = TileManagerEvent(TileManager.wxEVT_CLIENT_TOGGLE_REQUESTED, self)
         evt.SetChild(self.child)
-        evt.SetInt(toggle_flag)
+        evt.SetInt(toggle_id)
         evt.SetChecked(toggle_state)
         self.do_send_event(evt)
 
@@ -1845,8 +1848,8 @@ class TitleBar(wx.Window):
 
 
     class Toggle(Button):
-        def __init__(self, parent, size, toggle_flag):
-            self.toggle_flag = toggle_flag
+        def __init__(self, parent, size, toggle_id):
+            self.toggle_id = toggle_id
             TitleBar.Button.__init__(self, parent, size)
             self.layout_direction = wx.RIGHT
             self.is_always_shown = True
@@ -1854,9 +1857,8 @@ class TitleBar(wx.Window):
 
         @property
         def toggle_set(self):
-            c = self.GetParent().client.child
-            # FIXME: hardcoded for omnivore viewers for now!
-            return c.segment_viewer.is_toggle_set(self.toggle_flag)
+            client = self.GetParent().client
+            return client.tile_mgr.toggle_checker(client.child, self.toggle_id)
 
         def draw_button(self, dc, size, bg_brush, pen, fg_brush):
             dc.SetPen(pen)
@@ -1868,7 +1870,7 @@ class TitleBar(wx.Window):
 
         def do_action(self, evt):
             desired_state = not self.toggle_set
-            self.client.do_send_toggle_event(self.toggle_flag, desired_state)
+            self.client.do_send_toggle_event(self.toggle_id, desired_state)
             self.Refresh()
 
     def __init__(self, parent, in_sidebar=False):

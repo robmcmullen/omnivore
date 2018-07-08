@@ -539,13 +539,22 @@ class ByteEditor(FrameworkEditor):
     def _create_control(self, parent):
         """ Creates the toolkit-specific control for the widget. """
 
-        panel = TileManager(parent)
+        panel = TileManager(parent, toggle_checker=self.check_viewer_center_base)
         panel.Bind(TileManager.EVT_CLIENT_ACTIVATED, self.on_viewer_active)
         panel.Bind(TileManager.EVT_CLIENT_CLOSE, self.on_viewer_close)
         panel.Bind(TileManager.EVT_CLIENT_REPLACE, self.on_viewer_replace)
         panel.Bind(TileManager.EVT_CLIENT_TOGGLE_REQUESTED, self.on_viewer_link)
 
         return panel
+
+    def check_viewer_center_base(self, viewer_control, toggle_id):
+        try:
+            v = viewer_control.segment_viewer
+        except AttributeError:
+            state = True
+        else:
+            state = v.linked_base == self.center_base
+        return state
 
     def create_viewers(self, layout, viewer_metadata, default_viewer_metadata, linked_bases):
         # Create a set of viewers from a list
