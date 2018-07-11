@@ -3,7 +3,7 @@ import time
 import numpy as np
 
 from . import libatari800 as liba8
-from . import generic_interface as g
+from . import dtypes as d
 from . import akey
 from .colors import NTSC
 from .atari800 import Atari800, wxAtari800

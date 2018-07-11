@@ -3,7 +3,7 @@ import time
 import numpy as np
 
 from . import libatari800 as liba8
-from . import generic_interface as g
+from . import dtypes as d
 from . import akey
 from .colors import NTSC
 from ..emulator_base import EmulatorBase
@@ -88,10 +88,10 @@ class Atari800(EmulatorBase):
     name = "atari800"
     pretty_name = "Atari 800"
 
-    input_array_dtype = g.INPUT_DTYPE
-    output_array_dtype = g.OUTPUT_DTYPE
-    width = g.VIDEO_WIDTH
-    height = g.VIDEO_HEIGHT
+    input_array_dtype = d.INPUT_DTYPE
+    output_array_dtype = d.OUTPUT_DTYPE
+    width = d.VIDEO_WIDTH
+    height = d.VIDEO_HEIGHT
 
     low_level_interface = liba8
 
@@ -139,10 +139,10 @@ class Atari800(EmulatorBase):
     def generate_extra_segments(self):
         s = self.state_start_offset
         self.computed_dtypes = {
-            'ANTIC': g.ANTIC_DTYPE,
-            'GTIA': g.GTIA_DTYPE,
-            'POKEY': g.POKEY_DTYPE,
-            'PIA': g.PIA_DTYPE,
+            'ANTIC': d.ANTIC_DTYPE,
+            'GTIA': d.GTIA_DTYPE,
+            'POKEY': d.POKEY_DTYPE,
+            'PIA': d.PIA_DTYPE,
         }
         self.segment_starts = {
             'ANTIC': self.output[0]['tag_antic'],
@@ -153,10 +153,10 @@ class Atari800(EmulatorBase):
         segments = [
             (s + self.output[0]['tag_cpu'], 6, 0, "CPU Regisers"),
             (s + self.output[0]['tag_base_ram'], 256*256, 0, "Main Memory"),
-            (s + self.output[0]['tag_antic'], g.ANTIC_DTYPE.itemsize, 0, "ANTIC"),
-            (s + self.output[0]['tag_gtia'], g.GTIA_DTYPE.itemsize, 0, "GTIA"),
-            (s + self.output[0]['tag_pia'], g.PIA_DTYPE.itemsize, 0, "PIA"),
-            (s + self.output[0]['tag_pokey'], g.POKEY_DTYPE.itemsize, 0, "POKEY"),
+            (s + self.output[0]['tag_antic'], d.ANTIC_DTYPE.itemsize, 0, "ANTIC"),
+            (s + self.output[0]['tag_gtia'], d.GTIA_DTYPE.itemsize, 0, "GTIA"),
+            (s + self.output[0]['tag_pia'], d.PIA_DTYPE.itemsize, 0, "PIA"),
+            (s + self.output[0]['tag_pokey'], d.POKEY_DTYPE.itemsize, 0, "POKEY"),
         ]
         self.segments.extend(segments)
 
