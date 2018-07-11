@@ -153,12 +153,12 @@ if __name__ == "__main__":
 
         # Tokenize
         tokens = []
-        print("infix:")
         while True:
             tok = lexer.token()
             if not tok: 
                 break      # No more input
-            print(tok, tok.type, type(tok.type), tok.value)
+            #print(tok, tok.type, type(tok.type), tok.value)
             tokens.append(tok)
+        print("\ninfix:", " ".join([str(t.value) for t in tokens]))
         print("postfix:",)
         print("\n".join([str(tok) for tok in to_postfix(tokens)]))
