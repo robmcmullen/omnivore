@@ -91,13 +91,17 @@ int lib6502_step_cpu()
 	return inst.cycles + extra_cycles;
 }
 
-long lib6502_next_frame()
+long lib6502_next_frame(void *input, ProcessorState *output)
 {
 	long cycles = 0;
 
+	output->frame_finished = 0;
 	do {
 		cycles += lib6502_step_cpu();
 	} while (cycles < cycles_per_frame);
 	frame_number += 1;
+	lib6502_get_current_state(output);
+	output->frame_finished = 1;
+	output->breakpoint_hit = 0;
 	return cycles;
 }

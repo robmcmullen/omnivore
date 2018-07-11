@@ -27,6 +27,10 @@ extern int jumping;
 
 typedef struct {
         uint8_t frame_number[4];
+        uint8_t frame_finished;
+        uint8_t breakpoint_hit;
+        uint8_t unused1;
+        uint8_t unused2;
 
         uint8_t PC[2];
         uint8_t A;
@@ -37,7 +41,6 @@ typedef struct {
 
         uint8_t memory[1<<16];
 
-        uint8_t breakpoint_hit;
         uint8_t total_cycles[8];
 } ProcessorState;
 
@@ -53,4 +56,4 @@ void lib6502_restore_state(ProcessorState *buf);
 
 int lib6502_step_cpu();
 
-long lib6502_next_frame();
+long lib6502_next_frame(void *input, ProcessorState *output);
