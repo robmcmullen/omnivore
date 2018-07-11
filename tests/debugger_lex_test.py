@@ -4,6 +4,7 @@
 # tokenizer for a simple expression evaluator for
 # numbers and +,-,*,/
 # ------------------------------------------------------------
+import re
 import ply.lex as lex
 
 # precedence based on python operator precedence
@@ -70,7 +71,7 @@ def t_REG(t):
 
 # A regular expression rule with some action code
 def t_NUMBER(t):
-    r'\$?[a-fA-F\d]+'
+    r'\$?[a-f\d]+'
     t.value = int(t.value, 16)
     return t
 
@@ -88,7 +89,7 @@ def t_error(t):
     t.lexer.skip(1)
 
 # Build the lexer
-lexer = lex.lex()
+lexer = lex.lex(reflags=re.IGNORECASE)
 
 
 # From https://stackoverflow.com/questions/17254080/
@@ -139,6 +140,7 @@ if __name__ == "__main__":
     a + - (b + c)
     a + 10 + -x + -y + (4*8)  # evaluates as a + 10 + -x + (-y) + (4*8)
     a + 10 + -x + ~y + (4*8)  # Notice the difference; ~ has lower precedence than +. evaluates as a + 10 + -x + ~(y + (4*8))
+    A + - (B + X)
     '''
 
     # Give the lexer some input
