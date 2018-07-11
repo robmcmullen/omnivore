@@ -3,11 +3,13 @@ import tempfile
 
 import numpy as np
 
+from .debugger import Debugger
+
 import logging
 log = logging.getLogger(__name__)
 
 
-class EmulatorBase(object):
+class EmulatorBase(Debugger):
     cpu = "<base>"
     name = "<name>"
     pretty_name = "<pretty name>"
@@ -28,6 +30,7 @@ class EmulatorBase(object):
     stop_timer_for_debugger = True
 
     def __init__(self):
+        Debugger.__init__(self)
         self.input_raw = np.zeros([self.input_array_dtype.itemsize], dtype=np.uint8)
         self.input = self.input_raw.view(dtype=self.input_array_dtype)
         self.output_raw = np.zeros([self.output_array_dtype.itemsize], dtype=np.uint8)
@@ -68,6 +71,10 @@ class EmulatorBase(object):
     @property
     def current_frame_number(self):
         return self.output['frame_number'][0]
+
+    @property
+    def current_cpu_status(self):
+        return "not running"
 
     @classmethod
     def guess_from_document(cls, document):
@@ -256,12 +263,6 @@ class EmulatorBase(object):
 
     def is_debugger_finished(self):
         raise NotImplementedError("subclass must check if debugger is still running.")
-
-    def breakpoint_set(self, addr):
-        self.low_level_interface.breakpoint_set(addr)
-
-    def breakpoint_clear(self):
-        self.low_level_interface.breakpoint_clear()
 
     # Utility functions
 

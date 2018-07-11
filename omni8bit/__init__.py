@@ -30,6 +30,9 @@ except ImportError as e:
     log.warning(f"Crabapple emulator not available: {e}")
 
 
+from . import debugger
+
+
 class Omni8bitError(RuntimeError):
     pass
 
