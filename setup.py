@@ -163,5 +163,6 @@ setup(
     'pyopengl',
     'pyopengl_accelerate',
     'construct<2.9',  # Construct 2.9 changed the String class
+    'ply',
     ],
 )
