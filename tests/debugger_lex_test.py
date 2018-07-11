@@ -27,7 +27,7 @@ token_unary_replacement = {
     'OP_PLUS': 'OP_UPLUS',
 }
 
-op_tokens = []
+op_tokens = set()
 precedence = {}
 unary = set()
 precedence_level = 1
@@ -38,13 +38,13 @@ for group in precedence_groups:
     for token_name in group:
         if is_unary:
             unary.add(token_name)
-        op_tokens.append(token_name)
+        op_tokens.add(token_name)
         precedence[token_name] = precedence_level
     precedence_level += 1
 
 
 # List of token names.   This is always required
-tokens = ['REG', 'NUMBER', 'RPAREN'] + op_tokens
+tokens = ['REG', 'NUMBER', 'RPAREN'] + list(op_tokens)
 
 # Regular expression rules for simple tokens
 t_OP_PLUS    = r'\+'
@@ -100,25 +100,12 @@ lexer = lex.lex()
 #  variants in the postfix notation.
 
 
-# precedence = {
-#     'LPAREN': 1,
-#     'OP_PLUS': 10,
-#     'OP_MINUS': 10,
-#     'OP_MULT': 20,
-#     'OP_DIV': 20,
-#     'OP_UMINUS': 30,
-# }
-print(precedence)
-print(unary)
-
 def to_postfix(tokens):
     operands = []
-    right_operands = []
     postfix = []
+    last_tok = None
     for tok in tokens:
-        if tok.type == "REG":
-            postfix.append(tok)
-        elif tok.type == "NUMBER":
+        if tok.type == "REG" or tok.type == "NUMBER":
             postfix.append(tok)
         elif tok.type == "LPAREN":
             operands.append(tok)
@@ -129,28 +116,13 @@ def to_postfix(tokens):
                 top_token = operands.pop()
         else:
             if tok.type in token_unary_replacement:
-                if not operands and not postfix:
-                    # first thing
-                    is_unary = True
-                elif operands and postfix:
-                    peek = operands[-1].type
-                    if peek.startswith("OP_") or peek == "LPAREN":
-                        is_unary = True
-                else:
-                    is_unary = False
-                if is_unary:
+                if last_tok is None or last_tok.type in op_tokens or last_tok.type == "LPAREN":
                     tok.type = token_unary_replacement[tok.type]
-            if tok.type in unary:
-                right_operands.append(tok)
-                continue
-            while right_operands:
-                postfix.append(right_operands.pop())
             while operands and precedence[operands[-1].type] >= precedence[tok.type]:
                 postfix.append(operands.pop())
             operands.append(tok)
+        last_tok = tok
 
-    while right_operands:
-        postfix.append(right_operands.pop())
     while operands:
         postfix.append(operands.pop())
     return postfix
@@ -162,12 +134,17 @@ if __name__ == "__main__":
     -~5
     a + -- 4
     a + -+- ~4
-    a + 10 + -x + ~y + (4*8)
     a + 10 +-+x
+    a + 10 + (not (a or b))
+    a + - (b + c)
+    a + 10 + -x + -y + (4*8)  # evaluates as a + 10 + -x + (-y) + (4*8)
+    a + 10 + -x + ~y + (4*8)  # Notice the difference; ~ has lower precedence than +. evaluates as a + 10 + -x + ~(y + (4*8))
     '''
 
     # Give the lexer some input
     for line in data.splitlines():
+        if "#" in line:
+            line, _ = line.split("#", 1)
         line = line.strip()
         if not line: continue
         lexer.input(line)
