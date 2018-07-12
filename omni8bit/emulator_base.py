@@ -9,6 +9,13 @@ import logging
 log = logging.getLogger(__name__)
 
 
+# Values must correspond to values in libdebugger.h
+FRAME_START = 0
+FRAME_FINISHED = 1
+FRAME_BREAKPOINT = 2
+FRAME_WATCHPOINT = 3
+
+
 class EmulatorBase(Debugger):
     cpu = "<base>"
     name = "<name>"
@@ -71,6 +78,21 @@ class EmulatorBase(Debugger):
     @property
     def current_frame_number(self):
         return self.output['frame_number'][0]
+
+    @property
+    def is_frame_finished(self):
+        return self.output['frame_status'][0] == FRAME_FINISHED
+
+    @property
+    def break_condition(self):
+        if self.output['frame_status'][0] == FRAME_BREAKPOINT:
+            bpid = self.output['breakpoint_id'][0]
+            return self.get_breakpoint(bpid)
+        elif self.output['frame_status'][0] == FRAME_WATCHPOINT:
+            bpid = self.output['breakpoint_id'][0]
+            return self.get_watchpoint(bpid)
+        else:
+            return None
 
     @property
     def current_cpu_status(self):
@@ -175,10 +197,12 @@ class EmulatorBase(Debugger):
 
     def next_frame(self):
         self.process_key_state()
-        self.frame_count += 1
         self.low_level_interface.next_frame(self.input, self.output, self.debug_cmd)
-        self.process_frame_events()
-        self.save_history()
+        if self.is_frame_finished:
+            self.frame_count += 1
+            self.process_frame_events()
+            self.save_history()
+        return self.break_condition
 
     def process_frame_events(self):
         still_waiting = []

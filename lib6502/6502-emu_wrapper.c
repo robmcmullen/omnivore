@@ -46,7 +46,7 @@ void lib6502_clear_state_arrays(void *input, ProcessorState *output)
 }
 
 void lib6502_configure_state_arrays(void *input, ProcessorState *output) {
-	output->frame_finished = 1;
+	output->frame_status = 0;
 	output->cycles_since_power_on = 0;
 }
 
@@ -88,17 +88,24 @@ int lib6502_step_cpu()
 
 long lib6502_next_frame(void *input, ProcessorState *output, debugger_t *state)
 {
-	int cycles;
+	int cycles, bpid;
 
-	if (output->frame_finished) {
-		output->frame_finished = 0;
+	switch (output->frame_status) {
+		case FRAME_BREAKPOINT:
+		case FRAME_WATCHPOINT:
+		output->breakpoint_id = 0;
+		break;
+
+		default:
 		output->current_cycle_in_frame = 0;
 		output->final_cycle_in_frame = cycles_per_frame - 1;
 	}
-	output->breakpoint_hit = 0;
+	output->frame_status = FRAME_INCOMPLETE;
 	do {
-		if (libdebugger_check_breakpoints(state, PC) >= 0) {
-			output->breakpoint_hit = 1;
+		bpid = libdebugger_check_breakpoints(state, PC);
+		if (bpid >= 0) {
+			output->frame_status = FRAME_BREAKPOINT;
+			output->breakpoint_id = bpid;
 			goto get_state;
 		}
 		cycles = lib6502_step_cpu();
@@ -106,7 +113,7 @@ long lib6502_next_frame(void *input, ProcessorState *output, debugger_t *state)
 		output->cycles_since_power_on += cycles;
 	} while (output->current_cycle_in_frame < output->final_cycle_in_frame);
 	output->frame_number += 1;
-	output->frame_finished = 1;
+	output->frame_status = FRAME_FINISHED;
 
 get_state:
 	lib6502_get_current_state(output);

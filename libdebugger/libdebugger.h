@@ -9,6 +9,12 @@
 #define NUM_WATCHPOINT_TERMS 16384
 #define MAX_TERMS_PER_WATCHPOINT 255
 
+/* frame status values */
+#define FRAME_INCOMPLETE 0
+#define FRAME_FINISHED 1
+#define FRAME_BREAKPOINT 2
+#define FRAME_WATCHPOINT 3
+
 /* breakpoint/watchpoint status values */
 #define BREAKPOINT_EMPTY 0
 #define BREAKPOINT_ENABLED 1

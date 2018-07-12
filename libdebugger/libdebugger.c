@@ -19,7 +19,7 @@ int libdebugger_check_breakpoints(debugger_t *state, uint16_t pc) {
 		printf("checking breakpoint %d of %d: status=%d addr=%04x\n", i, num_entries, state->breakpoint_status[i], state->breakpoint_address[i]);
 		if (state->breakpoint_status[i] == BREAKPOINT_ENABLED) {
 			if (pc == state->breakpoint_address[i]) {
-				printf("triggered breakpoint %d at %d", i, pc);
+				printf("triggered breakpoint %d at %04x\n", i, pc);
 				return i;
 			}
 		}

@@ -26,15 +26,19 @@ if __name__ == "__main__":
         # with open("state.a8", "wb") as fh:
         #     fh.write(emu.state_array)
         while emu.current_frame_number < 200:
-            emu.next_frame()
-            print(("run.py frame count =", emu.current_frame_number))
-            emu.debug_state()
-            # if emu.current_frame_number > 11:
-            #     emu.enter_debugger()
-            if emu.current_frame_number > 10:
-                emu.debug_video()
-                # emu.debug_state()
-            if emu.current_frame_number > 100:
-                emu.keypress('A')
-            if emu.current_frame_number == 150:
-                b = emu.create_breakpoint(0xfe88)
+            brk = emu.next_frame()
+            if brk:
+                print(f"break condition {brk}")
+                break
+            else:
+                print(("run.py frame count =", emu.current_frame_number))
+                emu.debug_state()
+                # if emu.current_frame_number > 11:
+                #     emu.enter_debugger()
+                if emu.current_frame_number > 10:
+                    emu.debug_video()
+                    # emu.debug_state()
+                if emu.current_frame_number > 100:
+                    emu.keypress('A')
+                if emu.current_frame_number == 150:
+                    b = emu.create_breakpoint(0xf01a)

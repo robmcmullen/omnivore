@@ -32,8 +32,8 @@ typedef struct {
         uint32_t current_cycle_in_frame;
         uint32_t final_cycle_in_frame;
 
-        uint8_t frame_finished;
-        uint8_t breakpoint_hit;
+        uint8_t frame_status;
+        uint8_t breakpoint_id;
         uint8_t unused1;
         uint8_t unused2;
 

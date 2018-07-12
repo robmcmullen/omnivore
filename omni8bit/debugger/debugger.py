@@ -13,6 +13,9 @@ class Breakpoint:
         if addr is not None:
             self.address = addr
 
+    def __str__(self):
+        return f"<breakpoint {self.id} at {hex(self.address)}>"
+
     @property
     def address(self):
         c = self.debugger.debug_cmd[0]
@@ -47,6 +50,12 @@ class Breakpoint:
         c['breakpoint_status'][self.id] = dd.BREAKPOINT_DISABLED
 
 
+class Watchpoint:
+    def __init__(self, debugger, id, addr=None):
+        self.debugger = debugger
+        self.id = id
+
+
 class Debugger:
     def __init__(self):
         self.debug_cmd_raw = np.zeros([dd.DEBUGGER_COMMANDS_DTYPE.itemsize], dtype=np.uint8)
@@ -64,3 +73,9 @@ class Debugger:
         if bpid >= c['num_breakpoints']:
             c['num_breakpoints'] = bpid + 1
         return Breakpoint(self, bpid, addr)
+
+    def get_breakpoint(self, bpid):
+        return Breakpoint(self, bpid)
+
+    def get_watchpoint(self, bpid):
+        return Watchpoint(self, bpid)
