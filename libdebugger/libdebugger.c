@@ -16,8 +16,10 @@ int libdebugger_check_breakpoints(debugger_t *state, uint16_t pc) {
 	num_entries = state->num_breakpoints;
 
 	for (i=0; i < num_entries; i++) {
-		if (state->breakpoint_status == BREAKPOINT_ENABLED) {
+		printf("checking breakpoint %d of %d: status=%d addr=%04x\n", i, num_entries, state->breakpoint_status[i], state->breakpoint_address[i]);
+		if (state->breakpoint_status[i] == BREAKPOINT_ENABLED) {
 			if (pc == state->breakpoint_address[i]) {
+				printf("triggered breakpoint %d at %d", i, pc);
 				return i;
 			}
 		}
@@ -30,7 +32,7 @@ typedef struct {
 	int index;
 } stack_t;
 
-int push(stack *s, uint16_t value) {
+int push(stack_t *s, uint16_t value) {
 	if (s->index >= MAX_TERMS_PER_WATCHPOINT) {
 		return -STACK_OVERFLOW;
 	}
@@ -38,25 +40,25 @@ int push(stack *s, uint16_t value) {
 	return 0;
 }
 
-int pop(stack *s) {
+int pop(stack_t *s) {
 	if (s->index > 0) {
-		return (int)(s->stack[s->stack_index--]);
+		return (int)(s->stack[s->index--]);
 	}
 	return -STACK_UNDERFLOW;
 }
 
-int process_binary(uint16_t cmd, stack *s) {
+int process_binary(uint16_t cmd, stack_t *s) {
 	return 0;
 }
 
-int process_unary(uint16_t cmd, stack *s) {
+int process_unary(uint16_t cmd, stack_t *s) {
 	return 0;
 }
 
 /* returns: index number of watchpoint if found or -1 if no breakpoint found */
 int libdebugger_check_watchpoints(debugger_t *state, cpu_state_callback_ptr get_emulator_value) {
 	uint16_t cmd, addr, value;
-	int i, num_entries, index;
+	int i, num_entries, index, status, final_value, count;
 	stack_t stack;
 
 	num_entries = state->num_watchpoints;
@@ -104,7 +106,7 @@ int libdebugger_check_watchpoints(debugger_t *state, cpu_state_callback_ptr get_
 				return i;
 			}
 		}
-next:
+next: ;
 	}
 	return -1;
 }
