@@ -16,7 +16,10 @@ INPUT_DTYPE = np.dtype([
 ])
 
 OUTPUT_DTYPE = np.dtype([
+    ("cycles_since_power_on", np.uint64),
     ("frame_number", np.uint32),
+    ("current_cycle_in_frame", np.uint32),
+    ("final_cycle_in_frame", np.uint32),
     ("frame_finished", np.uint8),
     ("breakpoint_hit", np.uint8),
     ("unused1", np.uint8),
@@ -34,7 +37,6 @@ STATESAV_DTYPE = np.dtype([
     ("SP", np.uint8),
     ("P", np.uint8),
     ("memory", np.uint8, MAIN_MEMORY_SIZE),
-    ("total_cycles", np.uint64),
     ])
 
 CPU_DTYPE = np.dtype([

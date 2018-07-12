@@ -3,9 +3,9 @@
 #include <stdlib.h>
 
 #include "6502-emu_wrapper.h"
+#include "libdebugger.h"
 
 long cycles_per_frame;
-uint32_t frame_number;
 
 
 uint8_t simple_kernel[] = {
@@ -37,7 +37,6 @@ void lib6502_init_cpu(float frequency_mhz, float refresh_rate_hz) {
 	memset(memory, 0, sizeof(memory));
 
 	cycles_per_frame = (long)((frequency_mhz * 1000000.0) / refresh_rate_hz);
-	frame_number = 0;
 
 	lib6502_init_debug_kernel();
 }
@@ -46,8 +45,9 @@ void lib6502_clear_state_arrays(void *input, ProcessorState *output)
 {
 }
 
-void lib6502_configure_state_arrays(void *input, ProcessorState *output)
-{
+void lib6502_configure_state_arrays(void *input, ProcessorState *output) {
+	output->frame_finished = 1;
+	output->cycles_since_power_on = 0;
 }
 
 void lib6502_get_current_state(ProcessorState *buf) {
@@ -57,8 +57,6 @@ void lib6502_get_current_state(ProcessorState *buf) {
 	buf->SP = SP;
 	save16(buf->PC, PC);
 	buf->SR = SR.byte;
-	save64(buf->total_cycles, total_cycles);
-	save32(buf->frame_number, frame_number);
 	memcpy(buf->memory, memory, 1<<16);
 }
 
@@ -69,8 +67,6 @@ void lib6502_restore_state(ProcessorState *buf) {
 	SP = buf->SP;
 	load16(PC, buf->PC);
 	SR.byte = buf->SR;
-	load64(total_cycles, buf->total_cycles);
-	load32(frame_number, buf->frame_number);
 	memcpy(memory, buf->memory, 1<<16);
 }
 
@@ -87,21 +83,32 @@ int lib6502_step_cpu()
 	// crossing a page boundary.
 	if (inst.cycles == 7) extra_cycles = 0;
 
-	total_cycles += inst.cycles + extra_cycles;
 	return inst.cycles + extra_cycles;
 }
 
-long lib6502_next_frame(void *input, ProcessorState *output)
+long lib6502_next_frame(void *input, ProcessorState *output, debugger_t *state)
 {
-	long cycles = 0;
+	int cycles;
 
-	output->frame_finished = 0;
-	do {
-		cycles += lib6502_step_cpu();
-	} while (cycles < cycles_per_frame);
-	frame_number += 1;
-	lib6502_get_current_state(output);
-	output->frame_finished = 1;
+	if (output->frame_finished) {
+		output->frame_finished = 0;
+		output->current_cycle_in_frame = 0;
+		output->final_cycle_in_frame = cycles_per_frame - 1;
+	}
 	output->breakpoint_hit = 0;
+	do {
+		if (libdebugger_check_breakpoints(state, PC) >= 0) {
+			output->breakpoint_hit = 1;
+			goto get_state;
+		}
+		cycles = lib6502_step_cpu();
+		output->current_cycle_in_frame += cycles;
+		output->cycles_since_power_on += cycles;
+	} while (output->current_cycle_in_frame < output->final_cycle_in_frame);
+	output->frame_number += 1;
+	output->frame_finished = 1;
+
+get_state:
+	lib6502_get_current_state(output);
 	return cycles;
 }

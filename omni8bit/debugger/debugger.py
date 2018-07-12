@@ -7,9 +7,11 @@ log = logging.getLogger(__name__)
 
 
 class Breakpoint:
-    def __init__(self, debugger, id):
+    def __init__(self, debugger, id, addr=None):
         self.debugger = debugger
         self.id = id
+        if addr is not None:
+            self.address = addr
 
     @property
     def address(self):
@@ -55,10 +57,10 @@ class Debugger:
         c['breakpoint_status'][:] = 0
         c['num_breakpoints'] = 0
 
-    def create_breakpoint(self):
+    def create_breakpoint(self, addr=None):
         c = self.debug_cmd[0]
         empty = np.where(c['breakpoint_status'] == 0)[0]
         bpid = empty[0]
         if bpid >= c['num_breakpoints']:
             c['num_breakpoints'] = bpid + 1
-        return Breakpoint(self, bpid)
+        return Breakpoint(self, bpid, addr)

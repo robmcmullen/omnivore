@@ -36,5 +36,5 @@ if __name__ == "__main__":
                 # emu.debug_state()
             if emu.current_frame_number > 100:
                 emu.keypress('A')
-            if emu.current_frame_number > 150:
-                emu.breakpoint_set(0xfe88)
+            if emu.current_frame_number == 150:
+                b = emu.create_breakpoint(0xfe88)

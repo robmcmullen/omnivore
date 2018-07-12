@@ -176,7 +176,7 @@ class EmulatorBase(Debugger):
     def next_frame(self):
         self.process_key_state()
         self.frame_count += 1
-        self.low_level_interface.next_frame(self.input, self.output)
+        self.low_level_interface.next_frame(self.input, self.output, self.debug_cmd)
         self.process_frame_events()
         self.save_history()
 

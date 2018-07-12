@@ -36,7 +36,7 @@ class Generic6502(EmulatorBase):
         dtype = d.STATESAV_DTYPE
         state = self.state_array[0:int(d.STATESAV_DTYPE.itemsize)].view(dtype=d.STATESAV_DTYPE)[0]
         # print("raw: %s" % self.raw_array[0:32])
-        return "A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x cycles=%ld" % (a, x, y, sp, p, pc, state['total_cycles'])
+        return "A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x cycles=%ld" % (a, x, y, sp, p, pc, self.output['cycles_since_power_on'][0])
 
     def generate_extra_segments(self):
         cpu_offset = self.state_start_offset

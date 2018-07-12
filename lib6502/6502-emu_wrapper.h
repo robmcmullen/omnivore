@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 #include "6502.h"
+#include "libdebugger.h"
 
 
 /* variables internal to 6502.c that we need to see */
@@ -26,7 +27,11 @@ extern int jumping;
  forcing as an array of bytes of the proper size works around this. */
 
 typedef struct {
-        uint8_t frame_number[4];
+        uint64_t cycles_since_power_on;
+        uint32_t frame_number;
+        uint32_t current_cycle_in_frame;
+        uint32_t final_cycle_in_frame;
+
         uint8_t frame_finished;
         uint8_t breakpoint_hit;
         uint8_t unused1;
@@ -40,8 +45,6 @@ typedef struct {
         uint8_t SR;
 
         uint8_t memory[1<<16];
-
-        uint8_t total_cycles[8];
 } ProcessorState;
 
 extern long cycles_per_frame;
@@ -56,4 +59,4 @@ void lib6502_restore_state(ProcessorState *buf);
 
 int lib6502_step_cpu();
 
-long lib6502_next_frame(void *input, ProcessorState *output);
+long lib6502_next_frame(void *input, ProcessorState *output, debugger_t *state);
