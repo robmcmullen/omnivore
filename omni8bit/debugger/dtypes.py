@@ -35,14 +35,17 @@ DEBUGGER_COMMANDS_DTYPE = np.dtype([
 # error is corrected.
 
 BREAKPOINT_EMPTY = 0
-BREAKPOINT_ENABLED = 1
-BREAKPOINT_DISABLED = 2
-BREAKPOINT_RESERVED = 3
-EVALUATION_ERROR = 10  # a problem with the postfix definition
-INDEX_OUT_OF_RANGE = 11  # a watchpoint tried to go beyond the watchpoint_term array size
-TOO_MANY_TERMS = 12  # an single watchpoint can only have 255 terms
-STACK_UNDERFLOW = 13  # too many operators/not enough values
-STACK_OVERFLOW = 14  # too many values
+
+BREAKPOINT_ENABLED = 0x20
+BREAKPOINT_COUNT_INSTRUCTIONS = 0x21
+BREAKPOINT_COUNT_CYCLES = 0x22
+
+BREAKPOINT_DISABLED = 0x40
+
+BREAKPOINT_ERROR = 0x80
+EVALUATION_ERROR = 0x81  # a problem with the postfix definition
+STACK_UNDERFLOW = 0x82  # too many operators/not enough values
+STACK_OVERFLOW = 0x83  # too many values
 
 
 # contitional breakpoint definitions
@@ -89,3 +92,6 @@ REG_C = (211)
 REG_PC = (212)
 REG_SP = REG_S
 NUMBER = (301 | VALUE_ARGUMENT)
+
+COUNT_INSTRUCTIONS = (401 | VALUE_ARGUMENT)
+COUNT_CYCLES = (402 | VALUE_ARGUMENT)

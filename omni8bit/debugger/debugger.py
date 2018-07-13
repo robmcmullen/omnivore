@@ -76,6 +76,12 @@ until|u [ADDRESS|LABEL]
   Continue until reaching address
 
 
+NON-GDB commands:
+
+ccontinue|cc NUMBER
+  Continue executing under NUMBER cycles has been reached.
+
+
 """
 
 import numpy as np
@@ -125,13 +131,18 @@ class Breakpoint:
     def step_into(self, count):
         # shortcut to create a break after `count` instructions
         c = self.debugger.debug_cmd[0]
-        c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
-        i = self.index
-        c['tokens'][i:i+5] = (dd.COUNT_INSTRUCTIONS, dd.NUMBER, dd.END_OF_LIST)
+        c['breakpoint_status'][self.id] = dd.BREAKPOINT_COUNT_INSTRUCTIONS
+        c['tokens'][self.index] = count
+
+    def count_cycles(self, count):
+        # shortcut to create a break after `count` instructions
+        c = self.debugger.debug_cmd[0]
+        c['breakpoint_status'][self.id] = dd.BREAKPOINT_COUNT_CYCLES
+        c['tokens'][self.index] = count
 
     def clear(self):
         c = self.debugger.debug_cmd[0]
-        status = dd.BREAKPOINT_RESERVED if self.id == 0 else dd.BREAKPOINT_EMPTY
+        status = dd.BREAKPOINT_DISABLED if self.id == 0 else dd.BREAKPOINT_EMPTY
         c['breakpoint_status'][self.id] = status
         c['tokens'][self.index] = dd.END_OF_LIST
 
@@ -141,8 +152,7 @@ class Breakpoint:
 
     def disable(self):
         c = self.debugger.debug_cmd[0]
-        status = dd.BREAKPOINT_RESERVED if self.id == 0 else dd.BREAKPOINT_DISABLED
-        c['breakpoint_status'][self.id] = status
+        c['breakpoint_status'][self.id] = dd.BREAKPOINT_DISABLED
 
 
 class Debugger:
@@ -154,7 +164,7 @@ class Debugger:
     def clear_all_breakpoints(self):
         c = self.debug_cmd[0]
         c['breakpoint_status'][:] = 0
-        c['breakpoint_status'][0] = dd.BREAKPOINT_RESERVED
+        c['breakpoint_status'][0] = dd.BREAKPOINT_DISABLED
         c['num_breakpoints'] = 0
 
     def create_breakpoint(self, addr=None):
@@ -175,3 +185,7 @@ class Debugger:
     def step_into(self, number=1):
         b = Breakpoint(self, 0)
         b.step_into(number)
+
+    def count_cycles(self, cycles=1):
+        b = Breakpoint(self, 0)
+        b.count_cycles(number)

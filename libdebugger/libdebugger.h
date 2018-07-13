@@ -15,13 +15,17 @@
 
 /* breakpoint/watchpoint status values */
 #define BREAKPOINT_EMPTY 0
-#define BREAKPOINT_ENABLED 1
-#define BREAKPOINT_DISABLED 2
-#define EVALUATION_ERROR 3
-#define INDEX_OUT_OF_RANGE 4
-#define TOO_MANY_TERMS 5
-#define STACK_UNDERFLOW 6  /* too many operators/not enough values */
-#define STACK_OVERFLOW 7  /* too many values */
+
+#define BREAKPOINT_ENABLED 0x20
+#define BREAKPOINT_COUNT_INSTRUCTIONS 0x21
+#define BREAKPOINT_COUNT_CYCLES 0x22
+
+#define BREAKPOINT_DISABLED 0x40
+
+#define BREAKPOINT_ERROR 0x80
+#define EVALUATION_ERROR 0x81  /* a problem with the postfix definition */
+#define STACK_UNDERFLOW 0x82  /* too many operators/not enough values */
+#define STACK_OVERFLOW 0x83  /* too many values */
 
 /* status values returned */
 #define NO_BREAKPOINT_FOUND -1
@@ -79,6 +83,7 @@ typedef struct {
 #define NUMBER (301 | VALUE_ARGUMENT)
 
 #define COUNT_INSTRUCTIONS (401 | VALUE_ARGUMENT)
+#define COUNT_CYCLES (402 | VALUE_ARGUMENT)
 
 /* library functions defined in libdebugger.c */
 
@@ -86,6 +91,6 @@ void libdebugger_init_array(debugger_t *state);
 
 typedef int (*cpu_state_callback_ptr)(uint16_t token, uint16_t addr);
 
-int libdebugger_check_breakpoints(debugger_t *state, cpu_state_callback_ptr get_emulator_value);
+int libdebugger_check_breakpoints(debugger_t *state, int cycles, cpu_state_callback_ptr get_emulator_value);
 
 #endif /* LIBDEBUGGER_H */

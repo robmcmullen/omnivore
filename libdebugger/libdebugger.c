@@ -74,7 +74,7 @@ int process_unary(uint16_t token, cpu_state_callback_ptr get_emulator_value, sta
 }
 
 /* returns: index number of breakpoint or -1 if no breakpoint condition met. */
-int libdebugger_check_breakpoints(debugger_t *state, cpu_state_callback_ptr get_emulator_value) {
+int libdebugger_check_breakpoints(debugger_t *state, int cycles, cpu_state_callback_ptr get_emulator_value) {
 	uint16_t token, addr, value;
 	int i, num_entries, index, status, final_value, count;
 	stack_t stack;
@@ -82,8 +82,23 @@ int libdebugger_check_breakpoints(debugger_t *state, cpu_state_callback_ptr get_
 	num_entries = state->num_breakpoints;
 
 	for (i=0; i < num_entries; i++) {
-		if (state->breakpoint_status[i] == BREAKPOINT_ENABLED) {
+		status = state->breakpoint_status[i];
+		if (status & BREAKPOINT_ENABLED) {
 			index = i * TOKENS_PER_BREAKPOINT;
+			if (i == 0) { /* Check the zeroth breakpoint for step conditions */
+				count = (int)state->tokens[index]; /* tokens are unsigned */
+				if (status == BREAKPOINT_COUNT_CYCLES) {
+					if (count - cycles <= 0) return 0;
+					else state->tokens[index] -= cycles;
+					continue;
+				}
+				else if (status == BREAKPOINT_COUNT_INSTRUCTIONS) {
+					if (--count <= 0) return 0;
+					else state->tokens[index] -= 1;
+					continue;
+				}
+				/* otherwise, process normally */
+			}
 			clear(&stack);
 			for (count=0; count < TOKENS_PER_BREAKPOINT - 1; count++) {
 				token = state->tokens[index++];
