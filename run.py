@@ -29,11 +29,18 @@ if __name__ == "__main__":
         while emu.current_frame_number < 200:
             brk = emu.next_frame()
             if brk:
-                print(f"break condition {brk} at {emu.current_cycle_in_frame} cycles into frame {emu.current_frame_number}")
-                time.sleep(.1)
-                num_breaks -= 1
-                if num_breaks <= 0:
+                if brk.id == 0:
+                    # Stepping
+                    print(f"step {brk} at {emu.current_cycle_in_frame} cycles into frame {emu.current_frame_number}")
+                    time.sleep(1)
                     brk.disable()
+                else:
+                    print(f"break condition {brk} at {emu.current_cycle_in_frame} cycles into frame {emu.current_frame_number}")
+                    time.sleep(.1)
+                    num_breaks -= 1
+                    if num_breaks <= 0:
+                        brk.disable()
+                        emu.step_into(1)
             else:
                 print(f"completed frame {emu.current_frame_number}: {emu.current_cpu_status}")
                 # if emu.current_frame_number > 11:
@@ -45,3 +52,5 @@ if __name__ == "__main__":
                     emu.keypress('A')
                 if emu.current_frame_number == 180:
                     b = emu.create_breakpoint(0xf018)
+                if emu.current_frame_number == 190:
+                    b = emu.step_into(10)

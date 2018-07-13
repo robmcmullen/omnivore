@@ -1,3 +1,83 @@
+"""Debugger interface mimicking GDB
+
+info|i
+  breakpoints (bp)   List breakpoints
+  cpu  show CPU registers
+  antic
+  pokey
+  gtia
+
+
+break|b ADDRESS|LABEL|+OFFSET|-OFFSET [if CONDITION]
+  ADDRESS:
+    literal hex address at which to break
+  LABEL:
+    break at address stored in LABEL
+  +OFFSET
+    break at current address + offset
+  -OFFSET
+    break at current address - offset
+  CONDITION:
+    an expression that evaluates to a boolean, triggering the breakpoint when
+    true.  E.g. (A > 10 and (X < 0x80 and not C))
+
+
+watch|w CONDITION
+  CONDITION:
+    same as above (watchpoints are the same as breakpoints without an address)
+
+
+tbreak|t COMMAND [if CONDITION]
+  Temporary break: break once only and then it is removed. See "break" above.
+
+
+delete|d [BREAKPOINT[-RANGE]]
+  Delete breakpoints
+
+  BREAKPOINT:
+    delete specified breakpoint
+  RANGE:
+    delete range from BREAKPOINT to RANGE
+
+  No argument: delete all breakpoints
+
+
+disable|di [BREAKPOINT[-RANGE]]
+  Disable breakpoints, specifiers as above
+
+
+enable|en [BREAKPOINT[-RANGE]]
+  Enable breakpoints, specifiers as above
+
+
+continue|c [COUNT]
+  Continue executing until next breakpoint
+
+  COUNT:
+    Continue, but ignore current breakpoint NUMBER times
+
+
+finish|f
+  Continue to end of function
+
+
+step|s [NUMBER]
+  Step to next line, will step into functions
+
+  NUMBER:
+    number of steps to perform
+
+
+next|n [NUMBER]
+  Next line, stepping over function calls
+
+
+until|u [ADDRESS|LABEL]
+  Continue until reaching address
+
+
+"""
+
 import numpy as np
 
 from . import dtypes as dd
@@ -42,6 +122,13 @@ class Breakpoint:
         i = self.index
         c['tokens'][i:i+5] = (dd.REG_PC, dd.NUMBER, addr, dd.OP_EQ, dd.END_OF_LIST)
 
+    def step_into(self, count):
+        # shortcut to create a break after `count` instructions
+        c = self.debugger.debug_cmd[0]
+        c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
+        i = self.index
+        c['tokens'][i:i+5] = (dd.COUNT_INSTRUCTIONS, dd.NUMBER, dd.END_OF_LIST)
+
     def clear(self):
         c = self.debugger.debug_cmd[0]
         status = dd.BREAKPOINT_RESERVED if self.id == 0 else dd.BREAKPOINT_EMPTY
@@ -84,3 +171,7 @@ class Debugger:
 
     def get_watchpoint(self, bpid):
         return Watchpoint(self, bpid)
+
+    def step_into(self, number=1):
+        b = Breakpoint(self, 0)
+        b.step_into(number)

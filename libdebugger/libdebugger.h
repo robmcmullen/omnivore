@@ -78,6 +78,7 @@ typedef struct {
 #define REG_SP REG_S
 #define NUMBER (301 | VALUE_ARGUMENT)
 
+#define COUNT_INSTRUCTIONS (401 | VALUE_ARGUMENT)
 
 /* library functions defined in libdebugger.c */
 
