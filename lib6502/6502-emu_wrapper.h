@@ -28,9 +28,11 @@ extern int jumping;
 
 typedef struct {
         uint64_t cycles_since_power_on;
+        uint64_t instructions_since_power_on;
         uint32_t frame_number;
         uint32_t current_cycle_in_frame;
         uint32_t final_cycle_in_frame;
+        uint32_t current_instruction_in_frame;
 
         uint8_t frame_status;
         uint8_t breakpoint_id;
@@ -45,7 +47,7 @@ typedef struct {
         uint8_t SR;
 
         uint8_t memory[1<<16];
-} ProcessorState;
+} output_t;
 
 extern long cycles_per_frame;
 
@@ -53,10 +55,10 @@ extern long cycles_per_frame;
 
 void lib6502_init_cpu(float frequency_mhz, float refresh_rate_hz);
 
-void lib6502_get_current_state(ProcessorState *buf);
+void lib6502_get_current_state(output_t *output);
 
-void lib6502_restore_state(ProcessorState *buf);
+void lib6502_restore_state(output_t *output);
 
 int lib6502_step_cpu();
 
-long lib6502_next_frame(void *input, ProcessorState *output, debugger_t *state);
+long lib6502_next_frame(void *input, output_t *output, debugger_t *state);

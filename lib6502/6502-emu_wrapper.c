@@ -41,16 +41,17 @@ void lib6502_init_cpu(float frequency_mhz, float refresh_rate_hz) {
 	lib6502_init_debug_kernel();
 }
 
-void lib6502_clear_state_arrays(void *input, ProcessorState *output)
+void lib6502_clear_state_arrays(void *input, output_t *output)
 {
 }
 
-void lib6502_configure_state_arrays(void *input, ProcessorState *output) {
+void lib6502_configure_state_arrays(void *input, output_t *output) {
 	output->frame_status = 0;
 	output->cycles_since_power_on = 0;
+	output->instructions_since_power_on = 0;
 }
 
-void lib6502_get_current_state(ProcessorState *buf) {
+void lib6502_get_current_state(output_t *buf) {
 	buf->A = A;
 	buf->X = X;
 	buf->Y = Y;
@@ -60,7 +61,7 @@ void lib6502_get_current_state(ProcessorState *buf) {
 	memcpy(buf->memory, memory, 1<<16);
 }
 
-void lib6502_restore_state(ProcessorState *buf) {
+void lib6502_restore_state(output_t *buf) {
 	A = buf->A;
 	X = buf->X;
 	Y = buf->Y;
@@ -113,7 +114,7 @@ int lib6502_register_callback(uint16_t token, uint16_t addr) {
 	return value;
 }
 
-long lib6502_next_frame(void *input, ProcessorState *output, debugger_t *state)
+long lib6502_next_frame(void *input, output_t *output, debugger_t *state)
 {
 	int cycles, bpid;
 
@@ -124,12 +125,15 @@ long lib6502_next_frame(void *input, ProcessorState *output, debugger_t *state)
 
 		default:
 		output->frame_number += 1;
+		output->current_instruction_in_frame = 0;
 		output->current_cycle_in_frame = 0;
 		output->final_cycle_in_frame = cycles_per_frame - 1;
 	}
 	output->frame_status = FRAME_INCOMPLETE;
 	do {
 		cycles = lib6502_step_cpu();
+		output->current_instruction_in_frame += 1;
+		output->instructions_since_power_on += 1;
 		output->current_cycle_in_frame += cycles;
 		output->cycles_since_power_on += cycles;
 		bpid = libdebugger_check_breakpoints(state, &lib6502_register_callback);
