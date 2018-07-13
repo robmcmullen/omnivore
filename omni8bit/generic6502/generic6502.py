@@ -97,10 +97,3 @@ class Generic6502(EmulatorBase):
 
     def process_key_state(self):
         pass
-
-    # Debugger interface
-
-    def is_debugger_finished(self):
-        lib6502.get_current_state(self.output)
-        self.debug_state()
-        return False

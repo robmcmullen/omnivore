@@ -2,10 +2,8 @@ from libc.stdlib cimport malloc, free
 import numpy as np
 cimport numpy as np
 
-ctypedef void (*monitor_callback_ptr)()
-
 cdef extern:
-    int a8_init(int, char **, monitor_callback_ptr)
+    int a8_init(int, char **)
     void a8_clear_state_arrays(void *input, void *output)
     void a8_configure_state_arrays(void *input, void *output)
     void a8_next_frame(void *input, void *output, void *breakpoints)
@@ -13,11 +11,6 @@ cdef extern:
     void a8_reboot_with_file(const char *filename)
     void a8_get_current_state(void *output)
     void a8_restore_state(void *restore)
-    int a8_monitor_step(int addr)
-    void a8_monitor_summary()
-    void a8_monitor_clear()
-    int a8_breakpoint_set(int addr)
-    int a8_breakpoint_clear()
 
 cdef char ** to_cstring_array(list_str):
     cdef char **ret = <char **>malloc(len(list_str) * sizeof(char *))
@@ -26,24 +19,12 @@ cdef char ** to_cstring_array(list_str):
         ret[i] = text
     return ret
 
-monitor_callback = None
-
-monitor_callback_args = None
-
-cdef void callback():
-    print "in cython callback"
-    monitor_callback(monitor_callback_args)
-
-def start_emulator(args, python_callback_function, python_callback_args):
-    global monitor_callback
-    global monitor_callback_args
+def start_emulator(args):
     cdef char *fake_args[10]
     cdef char **argv = fake_args
     cdef int argc
     cdef char *progname="pyatari800"
     cdef char **c_args = to_cstring_array(args)
-    monitor_callback = python_callback_function
-    monitor_callback_args = python_callback_args
 
     argc = 1
     fake_args[0] = progname
@@ -52,7 +33,7 @@ def start_emulator(args, python_callback_function, python_callback_args):
         fake_args[argc] = arg
         argc += 1
 
-    a8_init(argc, argv, &callback)
+    a8_init(argc, argv)
     free(c_args)
 
 def clear_state_arrays(np.ndarray input not None, np.ndarray output not None):
@@ -99,20 +80,3 @@ def restore_state(np.ndarray state not None):
     cdef np.uint8_t[:] sbuf
     sbuf = state.view(np.uint8)
     a8_restore_state(&sbuf[0])
-
-def monitor_step(int addr=-1):
-    cdef int resume;
-    resume = a8_monitor_step(addr)
-    return resume
-
-def monitor_summary():
-    a8_monitor_summary()
-
-def monitor_clear():
-    a8_monitor_clear()
-
-def breakpoint_set(int addr):
-    a8_breakpoint_set(addr)
-
-def breakpoint_clear():
-    a8_breakpoint_clear()

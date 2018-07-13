@@ -71,18 +71,6 @@ def ntsc_color_map():
     return rmap, gmap, bmap
 
 
-def start_monitor_event_loop(emu):
-    print("Monitor event loop here!")
-    liba8.get_current_state(emu.output)
-    a, p, sp, x, y, _, pc = emu.cpu_state
-    print(("A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc)))
-
-    # Confirm validity by checking raw locations
-    emu.debug_state()
-    liba8.monitor_step()
-    #time.sleep(.5)
-
-
 class Atari800(EmulatorBase):
     cpu = "6502"
     name = "atari800"
@@ -96,10 +84,6 @@ class Atari800(EmulatorBase):
     low_level_interface = liba8
 
     mime_prefix = "application/vnd.atari8bit"
-
-    # atari800 will call the debugger at the next CPU_GO call, so the timer
-    # must not stop here.
-    stop_timer_for_debugger = False
 
     def compute_color_map(self):
         self.rmap, self.gmap, self.bmap = ntsc_color_map()
@@ -119,13 +103,6 @@ class Atari800(EmulatorBase):
         raw_pc = self.raw_state[self.output[0]['tag_pc']:]
         assert pc == (raw_pc[0] + 256 * raw_pc[1])
         return "A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc)
-
-    def configure_event_loop(self, event_loop=None, event_loop_args=None, *args, **kwargs):
-        if event_loop is None:
-            event_loop = start_monitor_event_loop
-        if event_loop_args is None:
-            event_loop_args = self
-        return event_loop, event_loop_args
 
     def process_args(self, emu_args):
         if not emu_args:
@@ -302,42 +279,6 @@ class Atari800(EmulatorBase):
 
     def process_key_state(self):
         pass
-
-    ##### debugger convenience functions
-
-    def enter_debugger(self):
-        if self.active_event_loop is not None:
-            print("Only one debugger may be active at a time!")
-        else:
-            print("Requesting debugger start via AKEY_UI")
-            # We don't enter the debugger directly because of the way the
-            # debugger is called in atari800: in ANTIC_Frame in antic.c there
-            # are many calls to the CPU_GO function and the breakpoints are
-            # checked there. Using longjmp/setjmp it's easy to intercept each
-            # call and send it back out the normal next_frame loop, but there's
-            # no way to continue back where it was because we'd have to jump in
-            # to the middle of ANTIC_Frame.
-            #
-            # So we have to use the normal atari800 way which is a call through
-            # to PLATFORM_Exit, which calls the monitor routines. In
-            # libatari800, it calls start_monitor_event_loop which is set up
-            # above in configure_event_loop.
-            self.send_special_key(akey.AKEY_UI)
-
-    def restart_cpu(self):
-        if self.active_event_loop is not None:
-            self.clear_keys()
-            self.active_event_loop.Exit()
-            print("alternate event loop is over.")
-            self.active_event_loop = None
-            liba8.monitor_summary()
-
-    def is_debugger_finished(self):
-        # The debugger always finishes after each step because atari800 needs
-        # to go back to normal processing to resume where it left off in
-        # ANTIC_Frame.
-        self.restart_cpu()
-        return True
 
 try:
     import wx

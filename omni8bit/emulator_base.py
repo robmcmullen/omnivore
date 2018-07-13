@@ -30,12 +30,6 @@ class EmulatorBase(Debugger):
 
     low_level_interface = None  # cython module; e.g.: libatari800, lib6502
 
-    # It's possible that the emulator (like atari800) needs the timer to
-    # continue so that the next cpu emulation step will enter the debugger.
-    # Emulators that don't have an alternate event loop will turn the timer
-    # off.
-    stop_timer_for_debugger = True
-
     def __init__(self):
         Debugger.__init__(self)
         self.input_raw = np.zeros([self.input_array_dtype.itemsize], dtype=np.uint8)
@@ -144,9 +138,8 @@ class EmulatorBase(Debugger):
 
     def configure_emulator(self, emu_args=None, *args, **kwargs):
         self.args = self.process_args(emu_args)
-        event_loop, event_loop_args = self.configure_event_loop(*args, **kwargs)
         self.low_level_interface.clear_state_arrays(self.input, self.output)
-        self.low_level_interface.start_emulator(self.args, event_loop, event_loop_args)
+        self.low_level_interface.start_emulator(self.args)
         self.configure_io_arrays()
 
     def configure_io_arrays(self):
@@ -155,9 +148,6 @@ class EmulatorBase(Debugger):
         self.generate_extra_segments()
         self.cpu_state = self.calc_cpu_data_array()
         self.main_memory = self.calc_main_memory_array()
-
-    def configure_event_loop(self, event_loop=None, event_loop_args=None, *args, **kwargs):
-        return None, None
 
     def process_args(self, emu_args):
         return emu_args if emu_args else []
@@ -266,33 +256,6 @@ class EmulatorBase(Debugger):
         emulator.
         """
         pass
-
-    # Debugger interface
-
-    def enter_debugger(self):
-        pass
-
-    def leave_debugger(self):
-        self.low_level_interface.monitor_clear()
-        self.restart_cpu()
-
-    def restart_cpu(self):
-        self.low_level_interface.monitor_summary()
-
-    def get_current_state(self):
-        self.low_level_interface.get_current_state(self.output)
-
-    def debugger_step(self):
-        """Process one CPU instruction.
-
-        Returns boolean indicating if normal processing is to resume (True) or
-        continue debugging (False)
-        """
-        self.low_level_interface.monitor_step()
-        return self.is_debugger_finished()
-
-    def is_debugger_finished(self):
-        raise NotImplementedError("subclass must check if debugger is still running.")
 
     # Utility functions
 
