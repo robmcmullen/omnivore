@@ -12,8 +12,6 @@ from omni8bit import find_emulator, guess_emulator, default_emulator, UnknownEmu
 
 from ..document import SegmentedDocument
 
-from . import event_loop as el
-
 import logging
 log = logging.getLogger(__name__)
 
@@ -136,7 +134,7 @@ class EmulationDocument(SegmentedDocument):
         if segment is None:
             segment = self.find_default_boot_segment()
         emu = self.emulator
-        emu.configure_emulator([], event_loop=el.start_monitor, event_loop_args=self)
+        emu.configure_emulator([])
         emu.boot_from_segment(segment)
         for i in range(self.skip_frames_on_boot):
             emu.next_frame()
@@ -151,7 +149,7 @@ class EmulationDocument(SegmentedDocument):
         if segment is None:
             segment = self.source_document.container_segment
         emu = self.emulator
-        emu.begin_emulation([], segment, event_loop=el.start_monitor, event_loop_args=self)
+        emu.begin_emulation([], segment)
         for i in range(self.skip_frames_on_boot):
             emu.next_frame()
         self.raw_bytes = emu.raw_array
@@ -199,17 +197,12 @@ class EmulationDocument(SegmentedDocument):
     def pause_emulator(self):
         print("pause")
         emu = self.emulator
-        if emu.stop_timer_for_debugger:
-            self.stop_timer()
-        emu.get_current_state()  # force output array update which normally happens only at the end of a frame
+        self.stop_timer()
         self.emulator_update_screen_event = True
         self.priority_level_refresh_event = 100
-        emu.debug_state()
-        emu.enter_debugger()
 
     def restart_emulator(self):
         print("restart")
-        self.emulator.leave_debugger()
         self.start_timer()
         self.emulator_update_screen_event = True
 
