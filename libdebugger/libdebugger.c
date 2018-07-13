@@ -10,7 +10,7 @@ void libdebugger_init_array(debugger_t *state) {
 }
 
 typedef struct {
-	int stack[TOKENS_PER_BREAKPOINT];
+	uint16_t stack[TOKENS_PER_BREAKPOINT];
 	int index;
 	int error;
 } stack_t;
@@ -20,24 +20,31 @@ void clear(stack_t *s) {
 	s->error = 0;
 }
 
-int push(stack_t *s, int value) {
+void push(stack_t *s, uint16_t value) {
 	if (s->index >= TOKENS_PER_BREAKPOINT) {
 		s->error = STACK_OVERFLOW;
 	}
 	else {
 		s->stack[s->index++] = value;
 	}
+#ifdef DEBUG_STACK
+	printf("push; stack is now: ");
+	for (int i=0; i<s->index; i++) {
+		printf("%x,", s->stack[i]);
+	}
+	printf("\n");
+#endif
 }
 
-int pop(stack_t *s) {
+uint16_t pop(stack_t *s) {
 	if (s->index > 0) {
-		return (int)(s->stack[s->index--]);
+		return (uint16_t)(s->stack[--s->index]);
 	}
 	s->error = STACK_UNDERFLOW;
 }
 
-int process_binary(uint16_t token, stack_t *s) {
-	int first, second, value;
+void process_binary(uint16_t token, stack_t *s) {
+	uint16_t first, second, value;
 
 	first = pop(s);
 	second = pop(s);
@@ -55,6 +62,9 @@ int process_binary(uint16_t token, stack_t *s) {
 			value = first == second;
 			break;
 		}
+#ifdef DEBUG_STACK
+		printf("process_binary: op=%d first=%d second=%d value=%d\n", token, first, second, value);
+#endif
 		push(s, value);
 	}
 }
