@@ -61,4 +61,4 @@ void lib6502_restore_state(output_t *output);
 
 int lib6502_step_cpu();
 
-long lib6502_next_frame(void *input, output_t *output, debugger_t *state);
+int lib6502_next_frame(void *input, output_t *output, breakpoints_t *state);

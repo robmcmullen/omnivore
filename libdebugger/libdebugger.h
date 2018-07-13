@@ -4,6 +4,21 @@
 
 /* The debugger structure must match the definition in omni8bit/debugger/dtypes.py */
 
+typedef struct {
+        uint64_t cycles_since_power_on;
+        uint64_t instructions_since_power_on;
+        uint32_t frame_number;
+        uint32_t current_cycle_in_frame;
+        uint32_t final_cycle_in_frame;
+        uint32_t current_instruction_in_frame;
+
+        uint8_t frame_status;
+        uint8_t breakpoint_id;
+        uint8_t unused1;
+        uint8_t unused2;
+} frame_status_t;
+
+
 #define NUM_BREAKPOINT_ENTRIES 256
 #define TOKENS_PER_BREAKPOINT 64
 #define TOKEN_LIST_SIZE (NUM_BREAKPOINT_ENTRIES * TOKENS_PER_BREAKPOINT)
@@ -35,7 +50,7 @@ typedef struct {
         int num_breakpoints;
         uint8_t breakpoint_status[NUM_BREAKPOINT_ENTRIES];
         uint16_t tokens[TOKEN_LIST_SIZE];  /* indexed by breakpoint number * TOKENS_PER_BREAKPOINT */
-} debugger_t;
+} breakpoints_t;
 
 
 /* operation flags */
@@ -87,10 +102,14 @@ typedef struct {
 
 /* library functions defined in libdebugger.c */
 
-void libdebugger_init_array(debugger_t *state);
+void libdebugger_init_array(breakpoints_t *breakpoints);
 
 typedef int (*cpu_state_callback_ptr)(uint16_t token, uint16_t addr);
 
-int libdebugger_check_breakpoints(debugger_t *state, int cycles, cpu_state_callback_ptr get_emulator_value);
+typedef int (*emu_frame_callback_ptr)(frame_status_t *output, breakpoints_t *breakpoints);
+
+int libdebugger_check_breakpoints(breakpoints_t *breakpoints, int cycles, cpu_state_callback_ptr get_emulator_value);
+
+int libdebugger_calc_frame(emu_frame_callback_ptr calc, frame_status_t *output, breakpoints_t *breakpoints);
 
 #endif /* LIBDEBUGGER_H */

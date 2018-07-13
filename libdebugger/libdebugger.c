@@ -5,8 +5,8 @@
 #include "libdebugger.h"
 
 
-void libdebugger_init_array(debugger_t *state) {
-	memset(state, 0, sizeof(debugger_t));
+void libdebugger_init_array(breakpoints_t *breakpoints) {
+	memset(breakpoints, 0, sizeof(breakpoints_t));
 }
 
 typedef struct {
@@ -74,34 +74,34 @@ int process_unary(uint16_t token, cpu_state_callback_ptr get_emulator_value, sta
 }
 
 /* returns: index number of breakpoint or -1 if no breakpoint condition met. */
-int libdebugger_check_breakpoints(debugger_t *state, int cycles, cpu_state_callback_ptr get_emulator_value) {
+int libdebugger_check_breakpoints(breakpoints_t *breakpoints, int cycles, cpu_state_callback_ptr get_emulator_value) {
 	uint16_t token, addr, value;
 	int i, num_entries, index, status, final_value, count;
 	stack_t stack;
 
-	num_entries = state->num_breakpoints;
+	num_entries = breakpoints->num_breakpoints;
 
 	for (i=0; i < num_entries; i++) {
-		status = state->breakpoint_status[i];
+		status = breakpoints->breakpoint_status[i];
 		if (status & BREAKPOINT_ENABLED) {
 			index = i * TOKENS_PER_BREAKPOINT;
 			if (i == 0) { /* Check the zeroth breakpoint for step conditions */
-				count = (int)state->tokens[index]; /* tokens are unsigned */
+				count = (int)breakpoints->tokens[index]; /* tokens are unsigned */
 				if (status == BREAKPOINT_COUNT_CYCLES) {
 					if (count - cycles <= 0) return 0;
-					else state->tokens[index] -= cycles;
+					else breakpoints->tokens[index] -= cycles;
 					continue;
 				}
 				else if (status == BREAKPOINT_COUNT_INSTRUCTIONS) {
 					if (--count <= 0) return 0;
-					else state->tokens[index] -= 1;
+					else breakpoints->tokens[index] -= 1;
 					continue;
 				}
 				/* otherwise, process normally */
 			}
 			clear(&stack);
 			for (count=0; count < TOKENS_PER_BREAKPOINT - 1; count++) {
-				token = state->tokens[index++];
+				token = breakpoints->tokens[index++];
 				if (token == END_OF_LIST) goto compute;
 
 				if (token & OP_BINARY) {
@@ -112,7 +112,7 @@ int libdebugger_check_breakpoints(debugger_t *state, int cycles, cpu_state_callb
 				}
 				else {
 					if (token & VALUE_ARGUMENT) {
-						addr = state->tokens[index++];
+						addr = breakpoints->tokens[index++];
 					}
 					else {
 						addr = 0;
@@ -126,14 +126,14 @@ int libdebugger_check_breakpoints(debugger_t *state, int cycles, cpu_state_callb
 					push(&stack, value);
 				}
 				if (stack.error) {
-					state->breakpoint_status[i] = stack.error;
+					breakpoints->breakpoint_status[i] = stack.error;
 					goto next;
 				}
 			}
 compute:
 			final_value = pop(&stack);
 			if (stack.error) {
-				state->breakpoint_status[i] = stack.error;
+				breakpoints->breakpoint_status[i] = stack.error;
 				goto next;
 			}
 			if (final_value != 0) {
@@ -144,4 +144,24 @@ compute:
 next: ;
 	}
 	return -1;
+}
+
+int libdebugger_calc_frame(emu_frame_callback_ptr calc, frame_status_t *output, breakpoints_t *breakpoints) {
+	int bpid;
+
+	switch (output->frame_status) {
+		case FRAME_BREAKPOINT:
+		output->breakpoint_id = 0;
+		break;
+
+		default:
+		output->frame_number += 1;
+		output->current_instruction_in_frame = 0;
+		output->current_cycle_in_frame = 0;
+	}
+	output->frame_status = FRAME_INCOMPLETE;
+	bpid = calc(output, breakpoints);
+	if (bpid < 0) {
+		output->frame_status = FRAME_FINISHED;
+	}
 }
