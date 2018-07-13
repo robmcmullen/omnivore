@@ -86,13 +86,39 @@ int lib6502_step_cpu()
 	return inst.cycles + extra_cycles;
 }
 
+int lib6502_register_callback(uint16_t token, uint16_t addr) {
+	int value;
+
+	switch (token) {
+		case REG_A:
+		value = A;
+		break;
+
+		case REG_X:
+		value = X;
+		break;
+
+		case REG_Y:
+		value = Y;
+		break;
+
+		case REG_PC:
+		value = PC;
+		break;
+
+		default:
+		value = 0;
+	}
+	printf("lib6502_register_callback: token=%d addr=%04x value=%04x\n", token, addr, value);
+	return value;
+}
+
 long lib6502_next_frame(void *input, ProcessorState *output, debugger_t *state)
 {
 	int cycles, bpid;
 
 	switch (output->frame_status) {
 		case FRAME_BREAKPOINT:
-		case FRAME_WATCHPOINT:
 		output->breakpoint_id = 0;
 		break;
 
@@ -102,7 +128,7 @@ long lib6502_next_frame(void *input, ProcessorState *output, debugger_t *state)
 	}
 	output->frame_status = FRAME_INCOMPLETE;
 	do {
-		bpid = libdebugger_check_breakpoints(state, PC);
+		bpid = libdebugger_check_breakpoints(state, &lib6502_register_callback);
 		if (bpid >= 0) {
 			output->frame_status = FRAME_BREAKPOINT;
 			output->breakpoint_id = bpid;

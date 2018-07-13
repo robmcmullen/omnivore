@@ -5,7 +5,6 @@ cdef extern:
     int lib6502_init_cpu(float, float)
     int lib6502_clear_state_arrays(np.uint8_t *buf, np.uint8_t *buf)
     int lib6502_configure_state_arrays(np.uint8_t *buf, np.uint8_t *buf)
-    int lib6502_step_cpu()
     long lib6502_next_frame(np.uint8_t *buf, np.uint8_t *buf, np.uint8_t *buf)
     void lib6502_get_current_state(np.uint8_t *buf)
     void lib6502_restore_state(np.uint8_t *buf)
@@ -52,19 +51,3 @@ def restore_state(np.ndarray state not None):
     cdef np.uint8_t[:] sbuf
     sbuf = state.view(np.uint8)
     lib6502_restore_state(&sbuf[0])
-
-def monitor_step(int addr=-1):
-    lib6502_step_cpu()
-    return False
-
-def monitor_summary():
-    print("in 6502 monitor")
-
-def monitor_clear():
-    pass
-
-def breakpoint_set(int addr):
-    pass
-
-def breakpoint_clear():
-    pass

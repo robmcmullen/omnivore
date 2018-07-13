@@ -162,3 +162,28 @@ if __name__ == "__main__":
         print("\ninfix:", " ".join([str(t.value) for t in tokens]))
         print("postfix:",)
         print("\n".join([str(tok) for tok in to_postfix(tokens)]))
+
+    op_id = 100
+    for op in sorted(precedence):
+        op_id += 1
+        if op == 'LPAREN':
+            continue
+        if op in unary:
+            value = f"{op_id} | OP_UNARY"
+        else:
+            value = f"{op_id} | OP_BINARY"
+        print(f"#define {op} ({value})")
+
+    regs = "AXYSNVBDIZC"
+    op_id = 200
+    for r in regs:
+        op_id += 1
+        print(f"#define REG_{r} ({op_id})")
+    op_id += 1
+    print(f"#define REG_PC ({op_id})")
+    print(f"#define REG_SP REG_S")
+
+    op_id = 300
+    op_id += 1
+    print(f"#define NUMBER ({op_id} | VALUE_ARGUMENT)")
+

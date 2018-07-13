@@ -9,100 +9,110 @@ void libdebugger_init_array(debugger_t *state) {
 	memset(state, 0, sizeof(debugger_t));
 }
 
-/* returns: index number of breakpoint if found or -1 if no breakpoint found */
-int libdebugger_check_breakpoints(debugger_t *state, uint16_t pc) {
-	int i, num_entries;
-
-	num_entries = state->num_breakpoints;
-
-	for (i=0; i < num_entries; i++) {
-		printf("checking breakpoint %d of %d: status=%d addr=%04x\n", i, num_entries, state->breakpoint_status[i], state->breakpoint_address[i]);
-		if (state->breakpoint_status[i] == BREAKPOINT_ENABLED) {
-			if (pc == state->breakpoint_address[i]) {
-				printf("triggered breakpoint %d at %04x\n", i, pc);
-				return i;
-			}
-		}
-	}
-	return -1;
-}
-
 typedef struct {
-	uint16_t stack[MAX_TERMS_PER_WATCHPOINT];
+	int stack[TOKENS_PER_BREAKPOINT];
 	int index;
+	int error;
 } stack_t;
 
-int push(stack_t *s, uint16_t value) {
-	if (s->index >= MAX_TERMS_PER_WATCHPOINT) {
-		return -STACK_OVERFLOW;
+void clear(stack_t *s) {
+	s->index = 0;
+	s->error = 0;
+}
+
+int push(stack_t *s, int value) {
+	if (s->index >= TOKENS_PER_BREAKPOINT) {
+		s->error = STACK_OVERFLOW;
 	}
-	s->stack[s->index++] = value;
-	return 0;
+	else {
+		s->stack[s->index++] = value;
+	}
 }
 
 int pop(stack_t *s) {
 	if (s->index > 0) {
 		return (int)(s->stack[s->index--]);
 	}
-	return -STACK_UNDERFLOW;
+	s->error = STACK_UNDERFLOW;
 }
 
-int process_binary(uint16_t cmd, stack_t *s) {
+int process_binary(uint16_t token, stack_t *s) {
+	int first, second, value;
+
+	first = pop(s);
+	second = pop(s);
+	if (!s->error) {
+		switch(token) {
+			case OP_PLUS:
+			value = first + second;
+			break;
+
+			case OP_MINUS:
+			value = first - second;
+			break;
+
+			case OP_EQ:
+			value = first == second;
+			break;
+		}
+		push(s, value);
+	}
+}
+
+int process_unary(uint16_t token, cpu_state_callback_ptr get_emulator_value, stack_t *s) {
 	return 0;
 }
 
-int process_unary(uint16_t cmd, stack_t *s) {
-	return 0;
-}
-
-/* returns: index number of watchpoint if found or -1 if no breakpoint found */
-int libdebugger_check_watchpoints(debugger_t *state, cpu_state_callback_ptr get_emulator_value) {
-	uint16_t cmd, addr, value;
+/* returns: index number of breakpoint or -1 if no breakpoint condition met. */
+int libdebugger_check_breakpoints(debugger_t *state, cpu_state_callback_ptr get_emulator_value) {
+	uint16_t token, addr, value;
 	int i, num_entries, index, status, final_value, count;
 	stack_t stack;
 
-	num_entries = state->num_watchpoints;
+	num_entries = state->num_breakpoints;
 
 	for (i=0; i < num_entries; i++) {
-		if (state->watchpoint_status[i] == BREAKPOINT_ENABLED) {
-			index = state->watchpoint_index[i];
-			count = state->watchpoint_length[i];
-			if (count > MAX_TERMS_PER_WATCHPOINT) {
-				state->watchpoint_status[i] = TOO_MANY_TERMS;
-				goto next;
-			}
-			stack.index = 0;
-			while (count > 0) {
-				count -= 1;
-				if (index >= NUM_WATCHPOINT_TERMS - 1) {
-					state->watchpoint_status[i] = INDEX_OUT_OF_RANGE;
-					goto next;
-				}
-				cmd = state->watchpoint_term[index++];
-				addr = state->watchpoint_term[index++];
+		if (state->breakpoint_status[i] == BREAKPOINT_ENABLED) {
+			index = i * TOKENS_PER_BREAKPOINT;
+			clear(&stack);
+			for (count=0; count < TOKENS_PER_BREAKPOINT - 1; count++) {
+				token = state->tokens[index++];
+				if (token == END_OF_LIST) goto compute;
 
-				if (cmd & OP_BINARY) {
-					status = process_binary(cmd, &stack);
+				if (token & OP_BINARY) {
+					process_binary(token, &stack);
 				}
-				else if (cmd & OP_UNARY) {
-					status = process_unary(cmd, &stack);
+				else if (token & OP_UNARY) {
+					process_unary(token, get_emulator_value, &stack);
 				}
 				else {
-					value = get_emulator_value(cmd, addr);
-					status = push(&stack, value);
+					if (token & VALUE_ARGUMENT) {
+						addr = state->tokens[index++];
+					}
+					else {
+						addr = 0;
+					}
+					if (token == NUMBER) {
+						value = addr;
+					}
+					else {
+						value = get_emulator_value(token, addr);
+					}
+					push(&stack, value);
 				}
-				if (status < 0) {
-					state->watchpoint_status[i] = -status;
+				if (stack.error) {
+					state->breakpoint_status[i] = stack.error;
 					goto next;
 				}
 			}
+compute:
 			final_value = pop(&stack);
-			if (final_value < 0) {
-				state->watchpoint_status[i] = -status;
+			if (stack.error) {
+				state->breakpoint_status[i] = stack.error;
 				goto next;
 			}
 			if (final_value != 0) {
-				/* watchpoint should be triggered! */
+				/* condition true, so the breakpoint should be triggered! */
 				return i;
 			}
 		}
