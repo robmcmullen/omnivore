@@ -8,7 +8,7 @@ cdef extern:
     int a8_init(int, char **, monitor_callback_ptr)
     void a8_clear_state_arrays(void *input, void *output)
     void a8_configure_state_arrays(void *input, void *output)
-    void a8_next_frame(void *input, void *output)
+    void a8_next_frame(void *input, void *output, void *breakpoints)
     int a8_mount_disk_image(int diskno, const char *filename, int readonly)
     void a8_reboot_with_file(const char *filename)
     void a8_get_current_state(void *output)
@@ -71,13 +71,15 @@ def configure_state_arrays(np.ndarray input not None, np.ndarray output not None
     obuf = output.view(np.uint8)
     a8_configure_state_arrays(&ibuf[0], &obuf[0])
 
-def next_frame(np.ndarray input not None, np.ndarray output not None):
+def next_frame(np.ndarray input not None, np.ndarray output not None, np.ndarray breakpoints not None):
     cdef np.uint8_t[:] ibuf
     cdef np.uint8_t[:] obuf
+    cdef np.uint8_t[:] dbuf
 
     ibuf = input.view(np.uint8)
     obuf = output.view(np.uint8)
-    a8_next_frame(&ibuf[0], &obuf[0])
+    dbuf = breakpoints.view(np.uint8)
+    a8_next_frame(&ibuf[0], &obuf[0], &dbuf[0])
 
 def get_current_state(np.ndarray output not None):
     cdef np.uint8_t[:] obuf

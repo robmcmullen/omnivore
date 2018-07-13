@@ -5,7 +5,7 @@ cdef extern:
     int lib6502_init_cpu(float, float)
     int lib6502_clear_state_arrays(np.uint8_t *buf, np.uint8_t *buf)
     int lib6502_configure_state_arrays(np.uint8_t *buf, np.uint8_t *buf)
-    long lib6502_next_frame(np.uint8_t *buf, np.uint8_t *buf, np.uint8_t *buf)
+    int lib6502_next_frame(np.uint8_t *buf, np.uint8_t *buf, np.uint8_t *buf)
     void lib6502_get_current_state(np.uint8_t *buf)
     void lib6502_restore_state(np.uint8_t *buf)
 
@@ -28,14 +28,14 @@ def configure_state_arrays(np.ndarray input not None, np.ndarray output not None
     obuf = output.view(np.uint8)
     lib6502_configure_state_arrays(&ibuf[0], &obuf[0])
 
-def next_frame(np.ndarray input not None, np.ndarray output not None, np.ndarray debug not None):
+def next_frame(np.ndarray input not None, np.ndarray output not None, np.ndarray breakpoints not None):
     cdef np.uint8_t[:] ibuf  # ignored for this emulator
     cdef np.uint8_t[:] obuf
     cdef np.uint8_t[:] dbuf
 
     ibuf = input.view(np.uint8)
     obuf = output.view(np.uint8)
-    dbuf = debug.view(np.uint8)
+    dbuf = breakpoints.view(np.uint8)
     lib6502_next_frame(&ibuf[0], &obuf[0], &dbuf[0])
 
 def get_current_state(np.ndarray output not None):
