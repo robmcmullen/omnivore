@@ -25,14 +25,17 @@ if __name__ == "__main__":
         print(names)
         # with open("state.a8", "wb") as fh:
         #     fh.write(emu.state_array)
+        num_breaks = 5
         while emu.current_frame_number < 200:
             brk = emu.next_frame()
             if brk:
-                print(f"break condition {brk}")
-                break
+                print(f"break condition {brk} at {emu.current_cycle_in_frame} cycles into frame {emu.current_frame_number}")
+                time.sleep(.1)
+                num_breaks -= 1
+                if num_breaks <= 0:
+                    brk.disable()
             else:
-                print(("run.py frame count =", emu.current_frame_number))
-                emu.debug_state()
+                print(f"completed frame {emu.current_frame_number}: {emu.current_cpu_status}")
                 # if emu.current_frame_number > 11:
                 #     emu.enter_debugger()
                 if emu.current_frame_number > 10:
@@ -40,5 +43,5 @@ if __name__ == "__main__":
                     # emu.debug_state()
                 if emu.current_frame_number > 100:
                     emu.keypress('A')
-                if emu.current_frame_number == 150:
-                    b = emu.create_breakpoint(0xf01a)
+                if emu.current_frame_number == 180:
+                    b = emu.create_breakpoint(0xf018)

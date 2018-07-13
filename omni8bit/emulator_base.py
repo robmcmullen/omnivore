@@ -84,6 +84,10 @@ class EmulatorBase(Debugger):
         return self.output['frame_status'][0] == FRAME_FINISHED
 
     @property
+    def current_cycle_in_frame(self):
+        return self.output['current_cycle_in_frame'][0]
+
+    @property
     def break_condition(self):
         if self.output['frame_status'][0] == FRAME_BREAKPOINT:
             bpid = self.output['breakpoint_id'][0]
@@ -197,6 +201,8 @@ class EmulatorBase(Debugger):
 
     def next_frame(self):
         self.process_key_state()
+        if not self.is_frame_finished:
+            print(f"next_frame: continuing frame from cycle {self.current_cycle_in_frame} of frame {self.current_frame_number}")
         self.low_level_interface.next_frame(self.input, self.output, self.debug_cmd)
         if self.is_frame_finished:
             self.frame_count += 1

@@ -73,7 +73,6 @@ class Debugger:
     def create_breakpoint(self, addr=None):
         c = self.debug_cmd[0]
         empty = np.where(c['breakpoint_status'] == dd.BREAKPOINT_EMPTY)[0]
-        print("before", empty)
         bpid = empty[0]
         if bpid >= c['num_breakpoints']:
             c['num_breakpoints'] = bpid + 1
