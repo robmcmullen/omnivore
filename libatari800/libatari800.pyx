@@ -6,11 +6,14 @@ cdef extern:
     int libatari800_init(int, char **)
     void libatari800_clear_state_arrays(void *input, void *output)
     void libatari800_configure_state_arrays(void *input, void *output)
-    void a8bridge_next_frame(void *input, void *output, void *breakpoints)
     int libatari800_mount_disk_image(int diskno, const char *filename, int readonly)
     void libatari800_reboot_with_file(const char *filename)
     void libatari800_get_current_state(void *output)
     void libatari800_restore_state(void *restore)
+
+    void a8bridge_init()
+    void a8bridge_next_frame(void *input, void *output, void *breakpoints)
+
 
 cdef char ** to_cstring_array(list_str):
     cdef char **ret = <char **>malloc(len(list_str) * sizeof(char *))
@@ -34,6 +37,7 @@ def start_emulator(args):
         argc += 1
 
     libatari800_init(argc, argv)
+    a8bridge_init()
     free(c_args)
 
 def clear_state_arrays(np.ndarray input not None, np.ndarray output not None):

@@ -16,8 +16,9 @@ else:
 extensions = [
     Extension("omni8bit.atari800.libatari800",
         sources = [
-            "libatari800/libatari800.c",
             "libatari800/atari800_bridge.c",
+            "libatari800/libatari800.c",
+            "libatari800/tinycthread.c",
             "libatari800/atari800/src/libatari800/main.c",
             "libatari800/atari800/src/libatari800/input.c",
             "libatari800/atari800/src/libatari800/video.c",
