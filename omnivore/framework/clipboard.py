@@ -129,7 +129,7 @@ class TextSelection(ClipboardSerializer):
     def __str__(self):
         """Return a string with a summary of the contents of the data object
         """
-        return "%s text characters" % (format_number(np.alen(self.data)))
+        return "%s text characters" % (format_number(np.alen(self.clipboard_data)))
 
     def unpack_data_object(self, viewer, data_obj):
         fmts = data_obj.GetAllFormats()
@@ -289,6 +289,7 @@ def get_paste_data(viewer):
     data_obj = get_paste_data_object(viewer)
     if wx.DF_TEXT in data_obj.GetAllFormats() or wx.DF_UNICODETEXT in data_obj.GetAllFormats():  # for windows
         serializer_cls = TextSelection
+        name = "text"
     else:
         fmt = data_obj.GetPreferredFormat()
         name = fmt.GetId()
