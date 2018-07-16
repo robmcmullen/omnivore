@@ -256,7 +256,11 @@ class DisassemblyGridControl(SegmentGridControl):
         if self.editing_type == "comment":
             self.process_comment(val)
         else:
-            self.process_mnemonic(val)
+            try:
+                self.process_mnemonic(val)
+            except RuntimeError as e:
+                log.error(f"Invalid assembly: {e}")
+                self.segment_viewer.editor.window.error(str(e), "Invalid Assembly")
 
     def process_comment(self, val):
         ranges = self.get_selected_ranges_including_carets(self.caret_handler)
