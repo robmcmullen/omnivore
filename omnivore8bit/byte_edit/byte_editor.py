@@ -307,10 +307,10 @@ class ByteEditor(FrameworkEditor):
     def get_paste_data_from_clipboard(self):
         return clipboard.get_paste_data(self.focused_viewer)
 
-    def process_paste_data(self, serialized_data, cmd_cls=None):
+    def process_paste_data(self, serialized_data, cmd_cls=None, *args, **kwargs):
         if cmd_cls is None:
             cmd_cls = self.focused_viewer.get_paste_command(serialized_data)
-        cmd = cmd_cls(self.segment, serialized_data)
+        cmd = cmd_cls(self.segment, serialized_data, *args, **kwargs)
         log.debug("processing paste object %s" % cmd)
         self.process_command(cmd)
         return cmd

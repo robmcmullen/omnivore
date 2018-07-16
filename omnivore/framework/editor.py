@@ -332,21 +332,21 @@ class FrameworkEditor(Editor):
     def copy_selection_to_clipboard(self, name):
         return clipboard.set_from_selection(self, name)
 
-    def paste(self, cmd_cls=None):
+    def paste(self, cmd_cls=None, *args, **kwargs):
         """ Pastes the current clipboard at the current insertion point or over
         the current selection
         """
         try:
             serialized_data = self.get_paste_data_from_clipboard()
-            self.process_paste_data(serialized_data, cmd_cls)
-            self.task.status_bar.message = "Pasted %s" % serialized_data.summary
+            self.process_paste_data(serialized_data, cmd_cls, *args, **kwargs)
+            self.task.status_bar.message = f"Pasted {serialized_data}"
         except clipboard.ClipboardError as e:
             self.window.error(str(e), "Paste Error")
 
     def get_paste_data_from_clipboard(self):
         return clipboard.get_paste_data(self)
 
-    def process_paste_data(self, serialized_data, cmd_cls=None):
+    def process_paste_data(self, serialized_data, cmd_cls=None, *args, **kwargs):
         pass  # Override in subclass
 
     def select_all(self):

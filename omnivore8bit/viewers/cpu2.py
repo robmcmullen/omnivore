@@ -13,6 +13,7 @@ from omni8bit.udis_fast import TraceInfo, flag_origin
 from omnivore.framework.enthought_api import EditorAction
 from omnivore.utils.nputil import intscale
 from omnivore.utils.wx import compactgrid as cg
+import omnivore.framework.clipboard as clipboard
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable, SegmentGridTextCtrl
 from .hex2 import HexEditControl
@@ -20,6 +21,7 @@ from ..arch.disasm import iter_disasm_styles
 from ..utils import searchutil
 from ..byte_edit.commands import SetCommentCommand
 from ..commands import SetIndexedDataCommand
+from .actions import ViewerAction
 
 from . import SegmentViewer
 
@@ -295,7 +297,7 @@ class DisassemblyGridControl(SegmentGridControl):
         self.segment_viewer.editor.process_command(cmd)
 
 
-class CopyDisassemblyAction(EditorAction):
+class CopyDisassemblyAction(ViewerAction):
     """Copy the disassembly text of the current selection to the clipboard.
 
     """
@@ -309,20 +311,20 @@ class CopyDisassemblyAction(EditorAction):
         lines = []
         try:
             for start, end in ranges:
-                lines.extend(e.disassembly.get_disassembled_text(start, end))
+                lines.extend(self.viewer.control.table.disassembly.get_disassembled_text(start, end))
         except IndexError:
             e.window.error("Disassembly tried to jump to an address outside this segment.")
             return
         text = os.linesep.join(lines) + os.linesep
         data_obj = wx.TextDataObject()
         data_obj.SetText(text)
-        e.set_clipboard_object(data_obj)
+        clipboard.set_clipboard_object(data_obj)
 
     def _update_enabled(self, ui_state):
         self.enabled = self.active_editor.focused_viewer.has_cpu
 
 
-class CopyDisassemblyCommentsAction(EditorAction):
+class CopyDisassemblyCommentsAction(ViewerAction):
     """Copy the text of the comments only, using the disassembly for line
     breaks. Any blank lines that appear in the disassembly are included in the
     copy.
@@ -337,25 +339,25 @@ class CopyDisassemblyCommentsAction(EditorAction):
         ranges = s.get_style_ranges(selected=True)
         lines = []
         for start, end in ranges:
-            for _, _, _, comment, _ in e.disassembly.table.disassembler.iter_row_text(start, end):
+            for _, _, _, comment, _ in self.viewer.control.table.disassembly.iter_row_text(start, end):
                 lines.append(comment)
         text = os.linesep.join(lines) + os.linesep
         data_obj = wx.TextDataObject()
         data_obj.SetText(text)
-        e.set_clipboard_object(data_obj)
+        clipboard.set_clipboard_object(data_obj)
 
     def _update_enabled(self, ui_state):
         self.enabled = self.active_editor.focused_viewer.has_cpu
 
 
-class PasteDisassemblyCommentsAction(EditorAction):
+class PasteDisassemblyCommentsAction(ViewerAction):
     name = 'Paste Disassembly Comments'
     tooltip = 'Paste text as comment lines'
     enabled_name = 'can_paste'
     accelerator = 'Shift-F6'
 
     def perform(self, event):
-        self.active_editor.paste(PasteDisassemblyCommentsCommand)
+        self.active_editor.paste(PasteDisassemblyCommentsCommand, disasm=self.viewer.control.table.disassembly)
 
 
 class PasteDisassemblyCommentsCommand(SetCommentCommand):
@@ -366,20 +368,21 @@ class PasteDisassemblyCommentsCommand(SetCommentCommand):
     """
     name = 'Paste Disassembly Comments'
 
-    def __init__(self, segment, serializer):
+    def __init__(self, segment, serializer, disasm=None):
         ranges = serializer.dest_carets.selected_ranges
         if not ranges:
             # use the range from caret to end
             ranges = [(serializer.dest_carets.current.index, len(segment))]
-        SetCommentCommand.__init__(self, segment, ranges, serializer.data)
+        SetCommentCommand.__init__(self, segment, ranges, serializer.clipboard_data)
         self.comments = self.text.tobytes().splitlines()
         self.num_lines = len(self.comments)
+        self.disasm = disasm
 
     def __str__(self):
         return "%s: %d line%s" % (self.pretty_name, self.num_lines, "" if self.num_lines == 1 else "s")
 
     def clamp_ranges_and_indexes(self, editor):
-        disasm = editor.disassembly.table.disassembler
+        disasm = self.disasm
         count = self.num_lines
         comment_indexes = []
         clamped = []

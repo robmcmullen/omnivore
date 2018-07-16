@@ -681,7 +681,7 @@ class PasteAndRepeatAction(EditorAction):
     enabled_name = 'can_paste'
 
     def perform(self, event):
-        self.active_editor.paste(PasteAndRepeatCommand)
+        self.active_editor.paste(cc.PasteAndRepeatCommand)
 
 
 class PasteCommentsAction(EditorAction):
@@ -691,7 +691,7 @@ class PasteCommentsAction(EditorAction):
     accelerator = 'F6'
 
     def perform(self, event):
-        self.active_editor.paste(PasteCommentsCommand)
+        self.active_editor.paste(cc.PasteCommentsCommand)
 
 
 class FindAction(EditorAction):
