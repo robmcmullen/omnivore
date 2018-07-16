@@ -86,7 +86,8 @@ class NewEmptyFileAction(EditorAction):
         if val is not None and val > 0:
             uri = "blank://%d" % val
             guess = FileGuess(uri)
-            self.task.new(guess)
+            # self.task.new(guess)
+            e.task.window.application.load_file(uri, e.task)
 
 
 class NewFileGroup(Group):
