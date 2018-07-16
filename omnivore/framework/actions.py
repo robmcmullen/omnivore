@@ -80,7 +80,9 @@ class NewEmptyFileAction(EditorAction):
     def perform(self, event=None):
         e = self.active_editor
         val = prompt_for_dec(e.window.control, 'Enter file size in bytes', 'New Blank File', 256)
-        val = 256
+        if val > 256*256*16:
+            if not e.task.confirm(f"{val} bytes seems large. Are you sure you want to open a file this big?", "Confirm Large File"):
+                val = 0
         if val is not None and val > 0:
             uri = "blank://%d" % val
             guess = FileGuess(uri)
