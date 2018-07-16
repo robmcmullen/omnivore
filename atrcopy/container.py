@@ -23,7 +23,10 @@ class DiskImageContainer:
 
     def __unpack_raw_data(self, data):
         raw = data.tobytes()
-        unpacked = self.unpack_bytes(raw)
+        try:
+            unpacked = self.unpack_bytes(raw)
+        except EOFError as e:
+            raise errors.InvalidContainer(e)
         return to_numpy(unpacked)
 
     def unpack_bytes(self, byte_data):
