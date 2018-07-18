@@ -75,12 +75,12 @@ class Generic6502(EmulatorBase):
     def coldstart(self):
         """Simulate an initial power-on startup.
         """
-        lib6502.start_emulator(None, None, None)
+        lib6502.start_emulator(None)
 
     def warmstart(self):
         """Simulate a warm start; i.e. pressing the system reset button
         """
-        lib6502.start_emulator(None, None, None)
+        lib6502.start_emulator(None)
 
     def keypress(self, ascii_char):
         self.send_char(ord(ascii_char))
