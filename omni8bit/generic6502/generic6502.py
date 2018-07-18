@@ -69,6 +69,7 @@ class Generic6502(EmulatorBase):
         self.cpu_state[0] = segment.origin
         lib6502.restore_state(self.output)
         self.debug_state()
+        self.last_boot_state = self.calc_current_state()
 
     # Emulator user input functions
 
@@ -76,11 +77,13 @@ class Generic6502(EmulatorBase):
         """Simulate an initial power-on startup.
         """
         lib6502.start_emulator(None)
+        lib6502.restore_state(self.last_boot_state)
 
     def warmstart(self):
         """Simulate a warm start; i.e. pressing the system reset button
         """
         lib6502.start_emulator(None)
+        lib6502.restore_state(self.last_boot_state)
 
     def keypress(self, ascii_char):
         self.send_char(ord(ascii_char))

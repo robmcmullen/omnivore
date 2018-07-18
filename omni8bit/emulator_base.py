@@ -48,6 +48,7 @@ class EmulatorBase(Debugger):
         self.main_memory = None
         self.compute_color_map()
         self.screen_rgb, self.screen_rgba = self.calc_screens()
+        self.last_boot_state = None
 
     @property
     def raw_array(self):
@@ -262,13 +263,16 @@ class EmulatorBase(Debugger):
     def load_disk(self, drive_num, pathname):
         self.low_level_interface.load_disk(drive_num, pathname)
 
+    def calc_current_state(self):
+        return self.output.copy()
+
     def save_history(self):
         # History is saved in a big list, which will waste space for empty
         # entries but makes things extremely easy to manage. Simply delete
         # a history entry by setting it to NONE.
         frame_number = self.output['frame_number'][0]
         if self.frame_count % 10 == 0:
-            d = self.output.copy()
+            d = self.calc_current_state()
             self.history[frame_number] = d
             # self.print_history(frame_number)
 

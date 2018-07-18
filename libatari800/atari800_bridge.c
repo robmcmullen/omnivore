@@ -24,8 +24,7 @@ mtx_t calculating_frame;
 cnd_t talking_stick;
 thrd_t frame_thread;
 
-frame_status_t *output_for_thread = NULL;
-breakpoints_t *breakpoints_for_thread = NULL;
+breakpoints_t *LIBATRAI800_Breakpoints = NULL;
 
 int threaded_frame(void *arg);
 
@@ -152,6 +151,7 @@ int a8bridge_next_frame(input_template_t *input, output_template_t *output, brea
 	LIBATARI800_Video_array = output->video;
 	LIBATARI800_Sound_array = output->audio;
 	LIBATARI800_Save_state = output->state;
+	LIBATRAI800_Breakpoints = breakpoints;
 	INPUT_key_code = PLATFORM_Keyboard();
 
 	libdebugger_calc_frame(&a8bridge_calc_frame, (frame_status_t *)output, breakpoints);
