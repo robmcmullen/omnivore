@@ -14,6 +14,7 @@ from omnivore.utils.wx import compactgrid as cg
 from ..arch import colors
 from ..ui.segment_grid import SegmentGridControl, SegmentVirtualTable
 from ..utils import apple2util as a2
+from ..byte_edit.linked_base import LinkedBase
 
 from . import SegmentViewer
 from . import actions as va
@@ -135,10 +136,17 @@ class HiresGridControl(b.BitmapGridControl):
         return actions
 
 
-class HiresViewer(b.BitmapViewer):
-    name = "hgr"
+class AppleSegmentChecker:
+    @classmethod
+    def is_segment_specific_for_display(cls, segment):
+        print(f"checking {segment} for origin {cls.segment_origin}: {segment.origin}, size {cls.segment_size}: {len(segment)}")
+        return segment.origin == cls.segment_origin and len(segment) == cls.segment_size
 
-    pretty_name = "Apple ][ Hi-res"
+
+class HiresPage1Viewer(AppleSegmentChecker, b.BitmapViewer):
+    name = "hgr1"
+
+    pretty_name = "Apple ][ Hi-res Page 1"
 
     control_cls = HiresGridControl
 
@@ -152,12 +160,23 @@ class HiresViewer(b.BitmapViewer):
 
     zoom_text = "bitmap zoom factor"
 
+    segment_origin = 0x2000
+
+    segment_size = 0x2000
+
     @property
     def window_title(self):
         return self.pretty_name
 
     def validate_width(self, width):
         return 560
+
+class HiresPage2Viewer(HiresPage1Viewer):
+    name = "hgr2"
+
+    pretty_name = "Apple ][ Hi-res Page 2"
+
+    segment_origin = 0x4000
 
 
 class TextTable(HiresTable):
@@ -178,13 +197,25 @@ class TextGridControl(c.CharGridControl):
         self.items_per_row = 40
 
 
-class TextViewer(c.CharViewer):
-    name = "text"
+class TextPage1Viewer(AppleSegmentChecker, c.CharViewer):
+    name = "text1"
 
-    pretty_name = "Apple ][ Text"
+    pretty_name = "Apple ][ Text Page 1"
 
     control_cls = TextGridControl
+
+    segment_origin = 0x400
+
+    segment_size = 0x400
 
     @property
     def window_title(self):
         return self.pretty_name
+
+
+class TextPage2Viewer(TextPage1Viewer):
+    name = "text2"
+
+    pretty_name = "Apple ][ Text Page 2"
+
+    segment_origin = 0x800

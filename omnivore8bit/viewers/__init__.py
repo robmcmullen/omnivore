@@ -158,6 +158,24 @@ class SegmentViewer(HasTraits):
         return name == cls.name
 
     @classmethod
+    def is_segment_specific_for_display(cls, segment):
+        return False
+
+    @classmethod
+    def calc_segment_specific_linked_base(cls, editor):
+        # Some viewers need a particular address range to display correctly,
+        # e.g. the Apple 2 hires and text modes. If one is needed, create and
+        # return it here.
+        for s in editor.document.segments:
+            if cls.is_segment_specific_for_display(s):
+                linked_base = LinkedBase(editor=editor)
+                linked_base.find_segment(s, data_model_changed=False)
+                break
+        else:
+            linked_base = None
+        return linked_base
+
+    @classmethod
     def viewer_factory(cls, parent, linked_base, machine=None, uuid=None, mdict={}):
         control = cls.create_control(parent, linked_base, mdict.get('control',{}))
         v = cls(linked_base=linked_base, control=control)
@@ -696,8 +714,8 @@ class ByteViewersPlugin(FrameworkPlugin):
         # from ..viewers.tile import TileViewer
         from ..viewers.jumpman2 import JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer
         from ..viewers.emulator import Atari800Viewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer
-        from ..viewers.apple2 import HiresViewer, TextViewer
+        from ..viewers.apple2 import HiresPage1Viewer, HiresPage2Viewer, TextPage1Viewer, TextPage2Viewer
 
-        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer, Atari800Viewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer, HiresViewer, TextViewer]
+        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer, Atari800Viewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer, HiresPage1Viewer, HiresPage2Viewer, TextPage1Viewer, TextPage2Viewer]
 
 plugins = [ByteViewersPlugin()]

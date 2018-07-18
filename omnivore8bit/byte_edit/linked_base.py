@@ -198,7 +198,7 @@ class LinkedBase(CaretHandler):
     def find_first_valid_segment_index(self):
         return 0
 
-    def find_segment(self, segment, refresh=False):
+    def find_segment(self, segment, refresh=False, data_model_changed=True):
         if segment is not None:
             index = self.document.find_segment_index(segment)
         elif self.segment_number == 0:
@@ -209,12 +209,16 @@ class LinkedBase(CaretHandler):
         if index < 0:
             index = 0
         self.segment_parser = self.document.segment_parser
+
         if refresh:
             self.view_segment_number(index)
+            data_model_changed = False
         else:
             self.segment_number = index
             self.segment_parser = self.document.segment_parser
             self.segment = self.document.segments[index]
+
+        if data_model_changed:
             self.force_data_model_update()
             self.restore_segment_view_params(self.segment)
             self.task.segments_changed = self.document.segments

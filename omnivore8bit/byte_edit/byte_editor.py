@@ -242,6 +242,7 @@ class ByteEditor(FrameworkEditor):
                     break
         print(("setting focus to %s" % viewer))
         self.set_focused_viewer(viewer)
+        self.task.segments_changed = self.document.segments
 
     def to_metadata_dict(self, mdict, document):
         self.prepare_metadata_for_save()
@@ -576,27 +577,29 @@ class ByteEditor(FrameworkEditor):
                 e = viewer_metadata[uuid]
                 if e:
                     viewer_type = e['name']
-                    try:
-                        linked_base = linked_bases[e['linked base']]
-                        if linked_base == self.center_base:
-                            center_base_used = True
-                    except KeyError:
-                        linked_base = self.center_base
-                        center_base_used = True
-                    log.debug("recreating viewer %s: %s" % (viewer_type, uuid))
                 else:  # either not a uuid or an unknown uuid
-                    e = default_viewer_metadata
                     viewer_type = uuid  # try the value of 'uuid' as a viewer name
-                    linked_base = self.center_base
-                    center_base_used = True
-                    uuid = None
-                    log.debug("using default metadata for %s" % (viewer_type))
-
                 try:
                     viewer_cls = self.task.find_viewer_by_name(viewer_type)
                 except ValueError:
                     log.error("unknown viewer %s, uuid=%s" % (viewer_type, uuid))
                     continue
+                log.debug("identified viewer: %s" % viewer_cls)
+
+                if e:
+                    try:
+                        linked_base = linked_bases[e['linked base']]
+                    except KeyError:
+                        linked_base = self.center_base
+                    log.debug("recreating viewer %s: %s" % (viewer_type, uuid))
+                else:  # either not a uuid or an unknown uuid
+                    linked_base = viewer_cls.calc_segment_specific_linked_base(self)
+                    if linked_base is None:
+                        linked_base = self.center_base
+                    log.debug("using default metadata for %s" % (viewer_type))
+                if linked_base == self.center_base:
+                    center_base_used = True
+
                 log.debug("creating viewer %s (%s) with linked base %s" % (uuid, viewer_type, str(linked_base)))
                 viewer = viewer_cls.viewer_factory(self.control, linked_base, None, uuid, e)
                 log.debug("created viewer %s (%s)" % (viewer.uuid, viewer.name))
@@ -633,6 +636,7 @@ class ByteEditor(FrameworkEditor):
         self.focused_viewer_changed_event = viewer
         self.caret_handler = viewer.linked_base
         viewer.linked_base.calc_action_enabled_flags()
+        viewer.linked_base.segment_selected_event = viewer.linked_base.segment_number
 
     def on_viewer_active(self, evt):
         try:
