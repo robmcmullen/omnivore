@@ -4,6 +4,7 @@ from . import errors
 from .diskimages import BaseHeader, DiskImageBase
 from .utils import Directory, VTOC, WriteableSector, BaseSectorList, Dirent
 from .segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver, get_style_bits, SegmentData
+from .executables import get_bsave
 
 import logging
 log = logging.getLogger(__name__)
@@ -591,42 +592,8 @@ class Dos33DiskImage(DiskImageBase):
         return segment
 
     def create_executable_file_image(self, segments, run_addr=None):
-        # Apple 2 executables get executed at the first address loaded. If the
-        # run_addr is not the first byte of the combined data, have to create a
-        # new 3-byte segment with a "JMP run_addr" to go at the beginning
-        origin = 100000000
-        last = -1
-
-        for s in segments:
-            origin = min(origin, s.origin)
-            last = max(last, s.origin + len(s))
-            if _xd: log.debug("contiguous bytes needed: %04x - %04x" % (origin, last))
-        if run_addr and run_addr != origin:
-            # check if run_addr points to some location that has data
-            found = False
-            for s in segments:
-                if run_addr >= s.origin and run_addr < s.origin + len(s):
-                    found = True
-                    break
-            if not found:
-                raise errors.InvalidBinaryFile("Run address points outside data segments")
-            origin -= 3
-            hi, lo = divmod(run_addr, 256)
-            raw = SegmentData([0x4c, lo, hi])
-            all_segments = [DefaultSegment(raw, origin=origin)]
-            all_segments.extend(segments)
-        else:
-            all_segments = segments
-        size = last - origin
-        image = np.zeros([size + 4], dtype=np.uint8)
-        words = image[0:4].view(dtype="<u2")  # always little endian
-        words[0] = origin
-        words[1] = size
-        for s in all_segments:
-            index = s.origin - origin + 4
-            print("setting data for $%04x - $%04x at index $%04x" % (s.origin, s.origin + len(s), index))
-            image[index:index + len(s)] = s.data
-        return image, 'B'
+        data = get_bsave(segments, run_addr)
+        return data, 'B'
 
 
 class Dos33BinFile:

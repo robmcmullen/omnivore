@@ -4,6 +4,7 @@ from . import errors
 from .diskimages import DiskImageBase, BaseHeader
 from .segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentedFileSegment, SegmentSaver, get_style_bits
 from .utils import *
+from .executables import get_xex
 
 import logging
 log = logging.getLogger(__name__)
@@ -256,6 +257,16 @@ class XexSegment(ObjSegment):
     savers = [SegmentSaver, XexSegmentSaver]
 
 
+class RunAddressSegment(ObjSegment):
+    # FIXME: defining run_address as a property doesn't work for some reason.
+    # @property
+    # def run_address(self):
+    #     return self.rawdata[0:2].view(dtype="<u2")[0]
+    def run_address(self):
+        return self.rawdata[0:2].data.view(dtype="<u2")[0]
+
+
+
 class AtariDosFile:
     """Parse a binary chunk into segments according to the Atari DOS object
     file format.
@@ -313,7 +324,12 @@ class AtariDosFile:
             if found < count:
                 self.segments.append(ObjSegment(r[pos + 4:pos + 4 + count], pos, pos + 4, start, end, "Incomplete Data"))
                 break
-            self.segments.append(ObjSegment(r[pos + 4:pos + 4 + count], pos, pos + 4, start, end))
+            if start == 0x2e0:
+                segment_cls = RunAddressSegment
+            else:
+                segment_cls = ObjSegment
+            print(start, end, segment_cls)
+            self.segments.append(segment_cls(r[pos + 4:pos + 4 + count], pos, pos + 4, start, end))
             pos += 4 + count
             style_pos = pos
 
@@ -742,56 +758,6 @@ class AtariDiskImage(BootDiskImage):
 
     def get_boot_segments(self):
         return []
-
-
-def get_xex(segments, run_addr=None):
-    segments_copy = [s for s in segments]  # don't affect the original list!
-    main_segment = None
-    sub_segments = []
-    data_style = get_style_bits(data=True)
-    total = 2
-    runad = False
-    for s in segments:
-        total += 4 + len(s)
-        if s.origin == 0x2e0:
-            runad = True
-    if not runad:
-        words = np.empty([1], dtype='<u2')
-        if run_addr:
-            found = False
-            for s in segments:
-                if run_addr >= s.origin and run_addr < s.origin + len(s):
-                    found = True
-                    break
-            if not found:
-                raise errors.InvalidBinaryFile("Run address points outside data segments")
-        else:
-            run_addr = segments[0].origin
-        words[0] = run_addr
-        r = SegmentData(words.view(dtype=np.uint8))
-        s = DefaultSegment(r, 0x2e0)
-        segments_copy[0:0] = [s]
-        total += 6
-    bytes = np.zeros([total], dtype=np.uint8)
-    rawdata = SegmentData(bytes)
-    main_segment = DefaultSegment(rawdata)
-    main_segment.data[0:2] = 0xff  # FFFF header
-    main_segment.style[0:2] = data_style
-    i = 2
-    for s in segments_copy:
-        # create new sub-segment inside new main segment that duplicates the
-        # original segment's data/style
-        new_s = DefaultSegment(rawdata[i:i+4+len(s)], s.origin)
-        words = new_s.data[0:4].view(dtype='<u2')
-        words[0] = s.origin
-        words[1] = s.origin + len(s) - 1
-        new_s.style[0:4] = data_style
-        new_s.data[4:4+len(s)] = s[:]
-        new_s.style[4:4+len(s)] = s.style[:]
-        i += 4 + len(s)
-        new_s.copy_user_data(s, 4)
-        sub_segments.append(new_s)
-    return main_segment, sub_segments
 
 
 def add_atr_header(bytes):

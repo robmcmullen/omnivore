@@ -228,8 +228,13 @@ def assemble_segments(source_files, data_files, obj_files, run_addr=""):
             print(f"skipping {name}: {e}")
         else:
             for s in parser.segments:
-                if s.origin > 0:
-                    print("adding %s from %s" % (s, name))
+                if hasattr(s, 'run_address'):
+                    if not run_addr:
+                        run_addr = s.run_address()
+                    else:
+                        print(f"already have run address {run_addr}; skipping {s.run_address()}")
+                elif s.origin > 0:
+                    print(f"adding {s} from {name}")
                     segments.add_segment(s.data, s.origin)
     if options.verbose:
         for s in segments:
@@ -237,8 +242,12 @@ def assemble_segments(source_files, data_files, obj_files, run_addr=""):
     if run_addr:
         try:
             run_addr = text_to_int(run_addr)
-        except ValueError:
-            run_addr = None
+        except (AttributeError, ValueError):
+            # not text, try as integer
+            try:
+                run_addr = int(run_addr)
+            except ValueError:
+                run_addr = None
 
     return segments, run_addr
 
