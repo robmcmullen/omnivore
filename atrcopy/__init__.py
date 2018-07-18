@@ -23,6 +23,7 @@ from .cartridge import A8CartHeader, AtariCartImage
 from .parsers import SegmentParser, DefaultSegmentParser, guess_parser_for_mime, guess_parser_for_system, guess_container, iter_parsers, iter_known_segment_parsers, mime_parse_order, parsers_for_filename
 from .magic import guess_detail_for_mime
 from .utils import to_numpy, text_to_int
+from .dummy import LocalFilesystem
 
 
 def process(image, dirent, options):
@@ -54,27 +55,30 @@ def process(image, dirent, options):
 
 
 def find_diskimage(filename):
-    with open(filename, "rb") as fh:
-        if options.verbose:
-            print("Loading file %s" % filename)
-        data = to_numpy(fh.read())
-    parser = None
-    container = guess_container(data, options.verbose)
-    if container is not None:
-        data = container.unpacked
-    rawdata = SegmentData(data)
-    for mime in mime_parse_order:
-        if options.verbose:
-            print("Trying MIME type %s" % mime)
-        parser = guess_parser_for_mime(mime, rawdata, options.verbose)
-        if parser is None:
-            continue
-        if options.verbose:
-            print("Found parser %s" % parser.menu_name)
-        mime2 = guess_detail_for_mime(mime, rawdata, parser)
-        if mime != mime2 and options.verbose:
-            print("Signature match: %s" % mime2)
-        break
+    if filename == ".":
+        parser = LocalFilesystem()
+    else:
+        with open(filename, "rb") as fh:
+            if options.verbose:
+                print("Loading file %s" % filename)
+            data = to_numpy(fh.read())
+        parser = None
+        container = guess_container(data, options.verbose)
+        if container is not None:
+            data = container.unpacked
+        rawdata = SegmentData(data)
+        for mime in mime_parse_order:
+            if options.verbose:
+                print("Trying MIME type %s" % mime)
+            parser = guess_parser_for_mime(mime, rawdata, options.verbose)
+            if parser is None:
+                continue
+            if options.verbose:
+                print("Found parser %s" % parser.menu_name)
+            mime2 = guess_detail_for_mime(mime, rawdata, parser)
+            if mime != mime2 and options.verbose:
+                print("Signature match: %s" % mime2)
+            break
     if parser is None:
         raise errors.UnsupportedDiskImage("Unknown disk image type")
     else:
