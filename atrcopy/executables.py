@@ -1,7 +1,6 @@
 import numpy as np
 
 from . import errors
-from .diskimages import DiskImageBase, BaseHeader
 from .segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentedFileSegment, SegmentSaver, get_style_bits
 from .utils import *
 
@@ -62,6 +61,7 @@ def get_xex(segments, run_addr=None):
         sub_segments.append(new_s)
     return main_segment, sub_segments
 
+
 def get_bsave(segments, run_addr=None):
     # Apple 2 executables get executed at the first address loaded. If the
     # run_addr is not the first byte of the combined data, have to create a
@@ -99,3 +99,14 @@ def get_bsave(segments, run_addr=None):
         print("setting data for $%04x - $%04x at index $%04x" % (s.origin, s.origin + len(s), index))
         image[index:index + len(s)] = s.data
     return image
+
+
+def create_executable_file_data(filename, segments, run_addr=None):
+    name = filename.lower()
+    if name.endswith("xex"):
+        base_segment, user_segments = get_xex(segments, run_addr)
+        return base_segment.data, "XEX"
+    elif name.endswith("bin") or name.endswith("bsave"):
+        data = get_bsave(segments, run_addr)
+        return data, "B"
+    raise errors.UnsupportedContainer

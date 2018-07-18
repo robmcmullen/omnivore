@@ -454,6 +454,8 @@ class XfdHeader(AtrHeader):
 
 
 class AtariDosDiskImage(DiskImageBase):
+    default_executable_extension = "XEX"
+
     def __init__(self, *args, **kwargs):
         self.first_vtoc = 360
         self.num_vtoc = 1
@@ -676,10 +678,6 @@ class AtariDosDiskImage(DiskImageBase):
             except errors.InvalidBinaryFile:
                 log.debug("%s not a binary file; skipping segment generation" % str(segment))
         return segments_out
-
-    def create_executable_file_image(self, segments, run_addr=None):
-        base_segment, user_segments = get_xex(segments, run_addr)
-        return base_segment.data, "XEX"
 
 
 class BootDiskImage(AtariDosDiskImage):

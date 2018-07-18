@@ -382,6 +382,8 @@ class Dos33Header(BaseHeader):
 
 
 class Dos33DiskImage(DiskImageBase):
+    default_executable_extension = "BSAVE"
+
     def __init__(self, rawdata, filename=""):
         DiskImageBase.__init__(self, rawdata, filename)
         self.default_filetype = "B"
@@ -590,10 +592,6 @@ class Dos33DiskImage(DiskImageBase):
         else:
             segment = EmptySegment(self.rawdata, name=dirent.filename)
         return segment
-
-    def create_executable_file_image(self, segments, run_addr=None):
-        data = get_bsave(segments, run_addr)
-        return data, 'B'
 
 
 class Dos33BinFile:

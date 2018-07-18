@@ -3,6 +3,7 @@ import numpy as np
 from . import errors
 from .segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment
 from .utils import *
+from .executables import create_executable_file_data
 
 import logging
 log = logging.getLogger(__name__)
@@ -92,6 +93,8 @@ class BaseHeader:
 
 
 class DiskImageBase:
+    default_executable_extension = None
+
     def __init__(self, rawdata, filename="", create=False):
         self.rawdata = rawdata
         self.bytes = self.rawdata.get_data()
@@ -300,8 +303,12 @@ class DiskImageBase:
             segments.append(segment)
         return segments
 
-    def create_executable_file_image(self, segments, run_addr=None):
-        raise errors.NotImplementedError
+    def create_executable_file_image(self, output_name, segments, run_addr=None):
+        try:
+            data, filetype = create_executable_file_data(output_name, segments, run_addr)
+        except errors.UnsupportedContainer:
+            data, filetype = create_executable_file_data(self.default_executable_extension, segments, run_addr)
+        return data, filetype
 
     @classmethod
     def create_boot_image(self, segments, run_addr=None):

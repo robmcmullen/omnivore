@@ -253,7 +253,7 @@ def assemble_segments(source_files, data_files, obj_files, run_addr=""):
 
 def assemble(image, source_files, data_files, obj_files, run_addr=""):
     segments, run_addr = assemble_segments(source_files, data_files, obj_files, run_addr)
-    file_data, filetype = image.create_executable_file_image(segments, run_addr)
+    file_data, filetype = image.create_executable_file_image(options.output, segments, run_addr)
     print("total file size: $%x (%d) bytes" % (len(file_data), len(file_data)))
     changed = save_file(image, options.output, filetype, file_data)
     if changed:
