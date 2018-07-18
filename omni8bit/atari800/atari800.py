@@ -105,9 +105,12 @@ class Atari800(EmulatorBase):
         return "A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc)
 
     def process_args(self, emu_args):
+        # FIXME: need to find a way to turn on/off carts outside of the init
+        # routines because boot_from_file restarts the machine with the new
+        # file but currently doesn't change cart status.
         if not emu_args:
             emu_args = [
-                "-basic",
+                #"-basic",
                 #"-shmem-debug-video",
                 #"jumpman.atr"
             ]
