@@ -28,10 +28,10 @@ class Crabapple(Generic6502):
         segments = [
             (cpu_offset, d.CPU_DTYPE.itemsize, 0, "CPU Status"),
             (memory_offset, d.MAIN_MEMORY_SIZE, 0, "Main Memory"),
-            (memory_offset + 0x400, 0x400, 0, "Text/Lo-res Page 1"),
-            (memory_offset + 0x800, 0x400, 0, "Text/Lo-res Page 2"),
-            (memory_offset + 0x2000, 0x2000, 0, "Hi-res Page 1"),
-            (memory_offset + 0x4000, 0x2000, 0, "Hi-res Page 2"),
+            (memory_offset + 0x400, 0x400, 0x400, "Text/Lo-res Page 1"),
+            (memory_offset + 0x800, 0x400, 0x800, "Text/Lo-res Page 2"),
+            (memory_offset + 0x2000, 0x2000, 0x2000, "Hi-res Page 1"),
+            (memory_offset + 0x4000, 0x2000, 0x4000, "Hi-res Page 2"),
         ]
         self.segments.extend(segments)
 
