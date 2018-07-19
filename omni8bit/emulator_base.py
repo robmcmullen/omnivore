@@ -83,6 +83,10 @@ class EmulatorBase(Debugger):
         return self.output['current_cycle_in_frame'][0]
 
     @property
+    def cycles_since_power_on(self):
+        return self.output['cycles_since_power_on'][0]
+
+    @property
     def break_condition(self):
         if self.output['frame_status'][0] == FRAME_BREAKPOINT:
             bpid = self.output['breakpoint_id'][0]
