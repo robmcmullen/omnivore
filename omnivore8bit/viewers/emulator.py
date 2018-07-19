@@ -31,6 +31,10 @@ class EmulatorViewer(SegmentViewer):
     priority_refresh_frame_count = 10000000
 
     @property
+    def emulator(self):
+        return self.linked_base.editor.document.emulator
+
+    @property
     def linked_base_segment_identifier(self):
         return ""
 

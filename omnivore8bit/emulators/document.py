@@ -60,9 +60,9 @@ class EmulationDocument(SegmentedDocument):
     # Update the graphic screen
     emulator_update_screen_event = Event
 
-    framerate = Float(1/60.0)
+    framerate = Float(1/150.0)  # FIXME: timing needs much smaller delay to approximate real speed
 
-    tickrate = Float(1/60.0)
+    tickrate = Float(1/150.0)  # FIXME: timing needs much smaller delay to approximate real speed
 
     last_update_time = Float(0.0)
 
@@ -176,22 +176,29 @@ class EmulationDocument(SegmentedDocument):
 
     def ready_for_next_frame(self):
         now = time.time()
-        self.emulator.next_frame()
+        breakpoint = self.emulator.next_frame()
         frame_number = self.emulator.output['frame_number']
-        log.debug(f"showing frame {frame_number}")
-        self.emulator_update_screen_event = True
-        self.priority_level_refresh_event = True
-        after = time.time()
-        delta = after - now
-        if delta > self.framerate:
-            next_time = self.framerate * .8
-        elif delta < self.framerate:
-            next_time = self.framerate - delta
-        log.debug(f"now={now} show={after-now} delta={delta} framerate={self.framerate} next_time={next_time}")
-        if next_time <= 0.001:
-            log.warning("need to drop frames!")
-            next_time = .001
-        self.emulation_timer.StartOnce(next_time * 1000)
+        log.debug(f"showing frame {frame_number}, breakpoint_id={breakpoint}")
+        if breakpoint is None:
+            self.emulator_update_screen_event = True
+            self.priority_level_refresh_event = True
+            after = time.time()
+            delta = after - now
+            if delta > self.framerate:
+                next_time = self.framerate * .8
+            elif delta < self.framerate:
+                next_time = self.framerate - delta
+            log.debug(f"now={now} show={after-now} delta={delta} framerate={self.framerate} next_time={next_time}")
+            if next_time <= 0.001:
+                log.warning("need to drop frames!")
+                next_time = .001
+            self.emulation_timer.StartOnce(next_time * 1000)
+        else:
+            self.emulator_update_screen_event = True
+            self.priority_level_refresh_event = 100
+            print(f"generating breakpoint event: {breakpoint} at cycles={self.emulator.cycles_since_power_on}")
+            self.emulator_breakpoint_event = breakpoint
+            self.stop_timer()
         self.last_update_time = now
 
     def pause_emulator(self):
@@ -208,8 +215,5 @@ class EmulationDocument(SegmentedDocument):
 
     def debugger_step(self):
         print("stepping")
-        resume_normal_processing = self.emulator.debugger_step()
-        if not resume_normal_processing:
-            print("updating after step")
-            self.emulator_update_screen_event = True
-            self.priority_level_refresh_event = 100
+        self.emulator.step_into(1)
+        self.start_timer()

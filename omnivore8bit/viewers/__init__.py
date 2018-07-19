@@ -393,6 +393,15 @@ class SegmentViewer(HasTraits):
         self.refresh_view(True)
         self.frame_count = 0
 
+    @on_trait_change('linked_base.editor.document.emulator_breakpoint_event')
+    def process_emulator_breakpoint(self, evt):
+        log.debug("process_emulator_breakpoint for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        if evt is not Undefined:
+            self.do_emulator_breakpoint()
+
+    def do_emulator_breakpoint(self):
+            self.task.status_bar.message = f"{self.document.emulator.cycles_since_power_on} cycles"
+
     @on_trait_change('linked_base.refresh_event')
     def process_refresh_view(self, flags):
         """Redraw the UI.
