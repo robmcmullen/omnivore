@@ -53,18 +53,29 @@ t_OP_MINUS   = r'-'
 t_OP_MULT    = r'\*'
 t_OP_DIV     = r'/'
 t_OP_EXP     = r'\*\*'
+t_OP_EQ      = r'='
 t_OP_BITWISE_OR = r'\|'
 t_OP_BITWISE_AND = r'\&'
 t_OP_BITWISE_NOT = r'~'
-t_OP_LOGICAL_OR = r'or'
-t_OP_LOGICAL_AND = r'and'
-t_OP_LOGICAL_NOT = r'not'
 t_OP_LSHIFT  = r'<<'
 t_OP_RSHIFT  = r'>>'
 t_LPAREN  = r'\('
 t_RPAREN  = r'\)'
 
 # Define as a function because simple token regexes don't respect file order
+
+def t_OP_LOGICAL_AND(t):
+    r'and|\&\&'
+    return t
+
+def t_OP_LOGICAL_OR(t):
+    r'or|\|\|'
+    return t
+
+def t_OP_LOGICAL_NOT(t):
+    r'not'
+    return t
+
 def t_REG(t):
     r'[axy]|pc|sp'
     return t
@@ -141,6 +152,7 @@ if __name__ == "__main__":
     a + 10 + -x + -y + (4*8)  # evaluates as a + 10 + -x + (-y) + (4*8)
     a + 10 + -x + ~y + (4*8)  # Notice the difference; ~ has lower precedence than +. evaluates as a + 10 + -x + ~(y + (4*8))
     A + - (B + X)
+    SP = 5000 and C = 60
     '''
 
     # Give the lexer some input

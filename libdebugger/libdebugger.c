@@ -4,6 +4,9 @@
 
 #include "libdebugger.h"
 
+/*#define DEBUG_STACK */
+/*#define DEBUG_BREAKPOINT */
+
 
 void libdebugger_init_array(breakpoints_t *breakpoints) {
 	memset(breakpoints, 0, sizeof(breakpoints_t));
@@ -28,7 +31,7 @@ void push(stack_t *s, uint16_t value) {
 		s->stack[s->index++] = value;
 	}
 #ifdef DEBUG_STACK
-	printf("push; stack is now: ");
+	printf("push; (err=%d) stack is now: ", s->error);
 	for (int i=0; i<s->index; i++) {
 		printf("%x,", s->stack[i]);
 	}
@@ -37,10 +40,23 @@ void push(stack_t *s, uint16_t value) {
 }
 
 uint16_t pop(stack_t *s) {
+	uint16_t value;
+
 	if (s->index > 0) {
-		return (uint16_t)(s->stack[--s->index]);
+		value = (uint16_t)(s->stack[--s->index]);
 	}
-	s->error = STACK_UNDERFLOW;
+	else {
+		s->error = STACK_UNDERFLOW;
+		value = 0;
+	}
+#ifdef DEBUG_STACK
+	printf("pop; (err=%d) stack is now: ", s->error);
+	for (int i=0; i<s->index; i++) {
+		printf("%x,", s->stack[i]);
+	}
+	printf("\n");
+#endif
+	return value;
 }
 
 void process_binary(uint16_t token, stack_t *s) {
@@ -48,6 +64,7 @@ void process_binary(uint16_t token, stack_t *s) {
 
 	first = pop(s);
 	second = pop(s);
+	value = 0;
 	if (!s->error) {
 		switch(token) {
 			case OP_PLUS:
@@ -60,6 +77,14 @@ void process_binary(uint16_t token, stack_t *s) {
 
 			case OP_EQ:
 			value = first == second;
+			break;
+
+			case OP_LOGICAL_AND:
+			value = first && second;
+			break;
+
+			default:
+			printf("unimplemented binary operation: token=%d\n", token);
 			break;
 		}
 #ifdef DEBUG_STACK
@@ -84,6 +109,10 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, int cycles, cpu_st
 	for (i=0; i < num_entries; i++) {
 		status = breakpoints->breakpoint_status[i];
 		if (status & BREAKPOINT_ENABLED) {
+#ifdef DEBUG_BREAKPOINT
+			printf("Breakpoint %d enabled\n", i);
+#endif
+
 			index = i * TOKENS_PER_BREAKPOINT;
 			if (i == 0) { /* Check the zeroth breakpoint for step conditions */
 				count = (int)breakpoints->tokens[index]; /* tokens are unsigned */
@@ -102,12 +131,21 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, int cycles, cpu_st
 			clear(&stack);
 			for (count=0; count < TOKENS_PER_BREAKPOINT - 1; count++) {
 				token = breakpoints->tokens[index++];
+#ifdef DEBUG_BREAKPOINT
+				printf("index=%d, count=%d token=%x\n", index-1, count, token);
+#endif
 				if (token == END_OF_LIST) goto compute;
 
 				if (token & OP_BINARY) {
+#ifdef DEBUG_BREAKPOINT
+					printf("binary: op=%d\n", token & TOKEN_FLAG);
+#endif
 					process_binary(token, &stack);
 				}
 				else if (token & OP_UNARY) {
+#ifdef DEBUG_BREAKPOINT
+					printf("unary: op=%d\n", token & TOKEN_FLAG);
+#endif
 					process_unary(token, get_emulator_value, &stack);
 				}
 				else {
@@ -117,11 +155,18 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, int cycles, cpu_st
 					else {
 						addr = 0;
 					}
-					if (token == NUMBER) {
+					if ((token & TOKEN_FLAG) == NUMBER) {
 						value = addr;
+#ifdef DEBUG_BREAKPOINT
+						printf("number: op=%d value=%04x\n", token & TOKEN_FLAG, addr);
+#endif
+
 					}
 					else {
 						value = get_emulator_value(token, addr);
+#ifdef DEBUG_BREAKPOINT
+						printf("emu value: op=%d value=%04x\n", token & TOKEN_FLAG, value);
+#endif
 					}
 					push(&stack, value);
 				}
@@ -164,4 +209,5 @@ int libdebugger_calc_frame(emu_frame_callback_ptr calc, frame_status_t *output, 
 	if (bpid < 0) {
 		output->frame_status = FRAME_FINISHED;
 	}
+	return bpid;
 }

@@ -34,6 +34,7 @@ typedef struct {
 #define BREAKPOINT_ENABLED 0x20
 #define BREAKPOINT_COUNT_INSTRUCTIONS 0x21
 #define BREAKPOINT_COUNT_CYCLES 0x22
+#define BREAKPOINT_AT_RETURN 0x23
 
 #define BREAKPOINT_DISABLED 0x40
 
@@ -96,9 +97,15 @@ typedef struct {
 #define REG_PC (212)
 #define REG_SP REG_S
 #define NUMBER (301 | VALUE_ARGUMENT)
+#define OPCODE_TYPE (302 | VALUE_ARGUMENT)
 
 #define COUNT_INSTRUCTIONS (401 | VALUE_ARGUMENT)
 #define COUNT_CYCLES (402 | VALUE_ARGUMENT)
+
+#define OPCODE_READ 1
+#define OPCODE_WRITE 2
+#define OPCODE_RETURN 4
+#define OPCODE_INTERRUPT 8
 
 /* library functions defined in libdebugger.c */
 

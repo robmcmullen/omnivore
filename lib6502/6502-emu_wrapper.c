@@ -71,8 +71,12 @@ void lib6502_restore_state(output_t *buf) {
 	memcpy(memory, buf->memory, 1<<16);
 }
 
+
+uint16_t last_pc;
+
 int lib6502_step_cpu()
 {
+	last_pc = PC;
 	inst = instructions[memory[PC]];
 
 	jumping = 0;
@@ -89,6 +93,7 @@ int lib6502_step_cpu()
 
 int lib6502_register_callback(uint16_t token, uint16_t addr) {
 	int value;
+	uint8_t opcode;
 
 	switch (token) {
 		case REG_A:
@@ -107,17 +112,31 @@ int lib6502_register_callback(uint16_t token, uint16_t addr) {
 		value = PC;
 		break;
 
+		case REG_SP:
+		value = SP;
+		break;
+
+		case OPCODE_TYPE:
+		opcode = memory[last_pc];
+		if (opcode == 0x60) value = 8;
+		else value = 0;
+#ifdef DEBUG_CALLBACK
+		printf("opcode_type at PC=%04x: opcode=%02x value=%02x\n", last_pc, opcode, value);
+#endif
+		break;
+
 		default:
 		value = 0;
 	}
+#ifdef DEBUG_CALLBACK
 	printf("lib6502_register_callback: token=%d addr=%04x value=%04x\n", token, addr, value);
+#endif
 	return value;
 }
 
 int lib6502_calc_frame(frame_status_t *output, breakpoints_t *breakpoints)
 {
 	int cycles, bpid;
-	uint16_t last_pc;
 
 	do {
 		last_pc = PC;

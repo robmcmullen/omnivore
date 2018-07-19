@@ -38,6 +38,18 @@ class Generic6502(EmulatorBase):
         # print("raw: %s" % self.raw_array[0:32])
         return "A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x cyc=%ld instr=%ld" % (a, x, y, sp, p, pc, self.output['cycles_since_power_on'][0], self.output['instructions_since_power_on'][0])
 
+    @property
+    def stack_pointer(self):
+        return self.cpu_state[4]
+
+    @property
+    def program_counter(self):
+        return self.cpu_state[0]
+
+    @program_counter.setter
+    def program_counter(self, value):
+        self.cpu_state[0] = value
+
     def generate_extra_segments(self):
         cpu_offset = self.state_start_offset
         memory_offset = cpu_offset + d.CPU_DTYPE.itemsize
@@ -77,13 +89,15 @@ class Generic6502(EmulatorBase):
         """Simulate an initial power-on startup.
         """
         lib6502.start_emulator(None)
-        lib6502.restore_state(self.last_boot_state)
+        if self.last_boot_state is not None:
+            lib6502.restore_state(self.last_boot_state)
 
     def warmstart(self):
         """Simulate a warm start; i.e. pressing the system reset button
         """
         lib6502.start_emulator(None)
-        lib6502.restore_state(self.last_boot_state)
+        if self.last_boot_state is not None:
+            lib6502.restore_state(self.last_boot_state)
 
     def keypress(self, ascii_char):
         self.send_char(ord(ascii_char))

@@ -3,6 +3,8 @@ import tempfile
 
 import numpy as np
 
+from atrcopy import find_diskimage
+
 from .debugger import Debugger
 
 import logging
@@ -98,6 +100,18 @@ class EmulatorBase(Debugger):
             return None
 
     @property
+    def stack_pointer(self):
+        raise NotImplementedError("define stack_pointer property in subclass")
+
+    @property
+    def program_counter(self):
+        raise NotImplementedError("define stack_pointer property in subclass")
+
+    @program_counter.setter
+    def program_counter(self, value):
+        raise NotImplementedError("define stack_pointer property in subclass")
+
+    @property
     def current_cpu_status(self):
         return "not running"
 
@@ -157,6 +171,13 @@ class EmulatorBase(Debugger):
     def process_args(self, emu_args):
         return emu_args if emu_args else []
 
+    def add_segment_to_memory(self, segment):
+        start = segment.origin
+        end = (start + len(segment)) & 0xffff
+        count = end - start
+        log.debug(f"Copying {segment} to memory: {start:#04x}-{end:#04x}")
+        self.main_memory[start:end] = segment.data[:count]
+
     ##### Machine boot
 
     def boot_from_segment(self, boot_segment):
@@ -177,8 +198,20 @@ class EmulatorBase(Debugger):
             self.bootfile = None
 
     def boot_from_file(self, filename):
-        log.debug(f"booting {self.pretty_name} from {filename}")
-        self.load_disk(1, filename)
+        parser = find_diskimage(filename, True)
+        print(f"diskimage: filename={filename} image={parser.image}")
+        run_addr = None
+        for s in parser.image.segments:
+            print(f"segment: {s}")
+            try:
+                run_addr = s.run_address()
+            except AttributeError:
+                if run_addr is None:
+                    run_addr = s.origin
+            self.add_segment_to_memory(s)
+        print(f"running at: {hex(run_addr)}")
+        self.program_counter = run_addr
+        self.last_boot_state = self.calc_current_state()
         self.coldstart()
 
     def parse_state(self):
