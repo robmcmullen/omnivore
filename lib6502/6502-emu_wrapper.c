@@ -117,14 +117,23 @@ int lib6502_register_callback(uint16_t token, uint16_t addr) {
 int lib6502_calc_frame(frame_status_t *output, breakpoints_t *breakpoints)
 {
 	int cycles, bpid;
+	uint16_t last_pc;
 
 	do {
+		last_pc = PC;
 		cycles = lib6502_step_cpu();
 		output->current_instruction_in_frame += 1;
 		output->instructions_since_power_on += 1;
 		output->current_cycle_in_frame += cycles;
 		output->cycles_since_power_on += cycles;
-		bpid = libdebugger_check_breakpoints(breakpoints, cycles, &lib6502_register_callback);
+		if (SR.bits.brk) {
+			/* automatically jump into debugger on BRK */
+			PC = last_pc;
+			bpid = 0;
+		}
+		else {
+			bpid = libdebugger_check_breakpoints(breakpoints, cycles, &lib6502_register_callback);
+		}
 		if (bpid >= 0) {
 			output->frame_status = FRAME_BREAKPOINT;
 			output->breakpoint_id = bpid;
