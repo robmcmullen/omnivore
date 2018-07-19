@@ -35,6 +35,9 @@ class LocalFilesystemImage(DiskImageBase):
         with open(path, "wb") as fh:
             fh.write(data)
 
+    def delete_file(self, name):
+        pass
+
 
 class LocalFilesystem():
     def __init__(self, path="."):
