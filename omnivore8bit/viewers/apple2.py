@@ -178,6 +178,8 @@ class HiresPage1Viewer(AppleSegmentChecker, b.BitmapViewer):
 
     segment_size = 0x2000
 
+    priority_refresh_frame_count = 1
+
     @property
     def window_title(self):
         return self.pretty_name
