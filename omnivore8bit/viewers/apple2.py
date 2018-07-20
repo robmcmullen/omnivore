@@ -135,6 +135,20 @@ class HiresGridControl(b.BitmapGridControl):
         actions = [None, va.BitmapZoomAction]
         return actions
 
+    ##### Keyboard handling
+
+    def handle_char_move_left(self, evt, flags):
+        self.segment_viewer.document.emulator.send_char(0x88)
+
+    def handle_char_move_right(self, evt, flags):
+        self.segment_viewer.document.emulator.send_char(0x95)
+
+    def handle_char_move_up(self, evt, flags):
+        self.segment_viewer.document.emulator.send_char(0x8b)
+
+    def handle_char_move_down(self, evt, flags):
+        self.segment_viewer.document.emulator.send_char(0x8a)
+
 
 class AppleSegmentChecker:
     @classmethod
