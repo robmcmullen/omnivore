@@ -191,7 +191,7 @@ class DiskImageBase:
 
     def assert_valid_sector(self, sector):
         if not self.header.sector_is_valid(sector):
-            raise ByteNotInFile166("Sector %d out of range" % sector)
+            raise errors.ByteNotInFile166("Sector %d out of range" % sector)
 
     def check_sane(self):
         if not self.all_sane:
