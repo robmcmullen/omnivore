@@ -60,9 +60,9 @@ class EmulationDocument(SegmentedDocument):
     # Update the graphic screen
     emulator_update_screen_event = Event
 
-    framerate = Float(1/150.0)  # FIXME: timing needs much smaller delay to approximate real speed
+    framerate = Float(1/60.0)
 
-    tickrate = Float(1/150.0)  # FIXME: timing needs much smaller delay to approximate real speed
+    tickrate = Float(1/60.0)
 
     last_update_time = Float(0.0)
 
