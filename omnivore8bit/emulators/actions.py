@@ -207,3 +207,35 @@ class WarmstartAction(EmulatorAction):
 
     def perform(self, event=None):
         self.active_editor.document.emulator.warmstart()
+
+
+class PreviousSaveStateAction(EmulatorAction):
+    """Load the previous saved frame into the current state of the emulator
+    """
+    name = "Previous Save Point"
+    tooltip = "Show previous frame in saved state of the history"
+    accelerator = 'F6'
+
+    def perform(self, event=None):
+        d = self.active_editor.document
+        if d.emulator_running:
+            d.pause_emulator()
+        else:
+            d.history_previous()
+
+
+class NextSaveStateAction(EmulatorAction):
+    """Load the next saved frame into the current state of the emulator
+    """
+    name = "Next Save Point"
+    tooltip = "Show next frame in saved state of the history"
+    accelerator = 'F7'
+
+    def perform(self, event=None):
+        d = self.active_editor.document 
+        print("OEUOEU", d.emulator_running)
+        if d.emulator_running:
+            d.pause_emulator()
+        else:
+            print("BBVJKBVJKBQJBKQB")
+            d.history_next()

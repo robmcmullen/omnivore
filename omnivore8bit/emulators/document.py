@@ -217,3 +217,29 @@ class EmulationDocument(SegmentedDocument):
         print("stepping")
         self.emulator.step_into(1)
         self.start_timer()
+
+    def history_previous(self):
+        emu = self.emulator
+        try:
+            desired = emu.get_previous_history(emu.current_frame_number)
+        except IndexError:
+            log.warning("No previous frame")
+        else:
+            emu.restore_history(desired)
+            frame_number = self.emulator.output['frame_number']
+            log.debug(f"showing frame {frame_number}")
+            self.emulator_update_screen_event = True
+            self.priority_level_refresh_event = 100
+
+    def history_next(self):
+        emu = self.emulator
+        try:
+            desired = emu.get_next_history(emu.current_frame_number)
+        except IndexError:
+            log.warning(f"No next frame: current = {emu.current_frame_number}")
+        else:
+            emu.restore_history(desired)
+            frame_number = self.emulator.output['frame_number']
+            log.debug(f"showing frame {frame_number}")
+            self.emulator_update_screen_event = True
+            self.priority_level_refresh_event = 100
