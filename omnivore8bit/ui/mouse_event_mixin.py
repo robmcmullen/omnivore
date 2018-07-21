@@ -232,8 +232,12 @@ class MouseEventMixin(SelectionHandler):
         if flags is None:
             flags = self.create_mouse_event_flags()
         ch = self.caret_handler
+        try:
+            r, c, index1, index2, inside = self.get_location_from_event(evt)
+        except IndexError:
+            log.warning("mouse event on invalid index")
+            return
         self.mouse_drag_started = True
-        r, c, index1, index2, inside = self.get_location_from_event(evt)
         if c < 0 or flags.selecting_rows or not inside:
             c = 0
             selecting_rows = True
