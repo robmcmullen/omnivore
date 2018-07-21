@@ -307,25 +307,29 @@ class EmulatorBase(Debugger):
         # History is saved in a big list, which will waste space for empty
         # entries but makes things extremely easy to manage. Simply delete
         # a history entry by setting it to NONE.
-        frame_number = self.output['frame_number'][0]
+        frame_number = int(self.output['frame_number'][0])
         if self.frame_count % 10 == 0:
+            print(f"Saving history at {frame_number}")
             d = self.calc_current_state()
             self.history[frame_number] = d
-            # self.print_history(frame_number)
+            self.print_history(frame_number)
 
     def restore_history(self, frame_number):
         print(("restoring state from frame %d" % frame_number))
+        frame_number = int(frame_number)
         if frame_number < 0:
             return
         try:
             d = self.history[frame_number]
         except KeyError:
+            log.error(f"{frame_number} not in history")
             pass
         else:
             self.low_level_interface.restore_state(d)
-            self.history[frame_number + 1:] = []  # remove frames newer than this
-            print(("  %d items remain in history" % len(self.history)))
-            self.frame_event = []
+            self.output[:] = d
+            # self.history[(frame_number + 1):] = []  # remove frames newer than this
+            # print(("  %d items remain in history" % len(self.history)))
+            # self.frame_event = []
 
     def print_history(self, frame_number):
         d = self.history[frame_number]
@@ -341,7 +345,8 @@ class EmulatorBase(Debugger):
 
     def get_next_history(self, frame_cursor):
         n = frame_cursor + 1
-        while n < len(self.history):
+        largest = max(self.history.keys())
+        while n < largest:
             if n in self.history:
                 return n
             n += 1
