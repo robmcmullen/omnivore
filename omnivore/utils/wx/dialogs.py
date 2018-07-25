@@ -55,6 +55,37 @@ class HexEntryDialog(SimplePromptDialog):
             return value
 
 
+class SliceEntryDialog(SimplePromptDialog):
+    """Simple subclass of wx.TextEntryDialog to convert text result from
+    hexidecimal if necessary.
+    """
+
+    def convert_text(self, text, return_error=False, default_base="dec", **kwargs):
+        try:
+            if "," in text:
+                start, extra = text.split(",")
+                if "," in extra:
+                    end, step = extra.split(",")
+                else:
+                    end = extra
+                    step = "1"
+            else:
+                start = text
+                end = "-1"
+                step = "1"
+            start = text_to_int(start, default_base)
+            end = text_to_int(end, default_base)
+            step = text_to_int(step, default_base)
+            error = ""
+        except (ValueError, TypeError) as e:
+            start, end, step = None, None, None
+            error = str(e)
+        if return_error:
+            return None, error
+        else:
+            return slice(start, end, step)
+
+
 def prompt_for_string(parent, message, title, default=None):
     if default is not None:
         default = str(default)
@@ -80,6 +111,20 @@ def prompt_for_hex(parent, message, title, default=None, return_error=False, def
 
 def prompt_for_dec(parent, message, title, default=None, return_error=False, default_base="dec"):
     return prompt_for_hex(parent, message, title, default, return_error, default_base)
+
+
+def prompt_for_slice(parent, message, title, default=None, return_error=False, default_base="hex"):
+    if default is not None:
+        if default_base == "hex":
+            default = hex(int(default))[2:]
+        else:
+            default = str(int(default))
+    else:
+        default = ""
+    d = SliceEntryDialog(parent, message, title, default)
+    if default:
+        d.SetValue(default)
+    return d.show_and_get_value(return_error=return_error, default_base=default_base)
 
 
 class DictEditDialog(wx.Dialog):

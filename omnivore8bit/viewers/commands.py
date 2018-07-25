@@ -137,7 +137,17 @@ class RampUpCommand(SetRangeValueCommand):
 
     def get_data(self, orig):
         num = np.alen(orig)
-        return np.arange(self.data, self.data + num)
+        if type(self.data) == slice:
+            first = self.data.start
+            last = self.data.stop
+            if last == -1:
+                last = self.data.start + num
+        else:
+            first = self.data
+            last = self.data + num
+        step = (last - first) / num
+        print(f"range: {first}, {last}, {step}")
+        return np.arange(first, last, step)
 
 
 class RampDownCommand(SetRangeValueCommand):
@@ -146,7 +156,16 @@ class RampDownCommand(SetRangeValueCommand):
 
     def get_data(self, orig):
         num = np.alen(orig)
-        return np.arange(self.data, self.data - num, -1)
+        if type(self.data) == slice:
+            first = self.data.start
+            last = self.data.stop
+            if last == -1:
+                last = self.data.start - num
+        else:
+            first = self.data
+            last = self.data - num
+        step = (last - first) / num
+        return np.arange(first, last, step)
 
 
 class AddValueCommand(SetRangeValueCommand):

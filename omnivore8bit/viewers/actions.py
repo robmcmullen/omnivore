@@ -15,7 +15,7 @@ import omnivore.framework.clipboard as clipboard
 
 from . import commands
 from ..arch.ui.antic_colors import AnticColorDialog
-from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
+from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog, prompt_for_slice
 from ..ui.dialogs import prompt_for_assembler
 from ..arch.machine import Machine
 from ..byte_edit.commands import SetCommentCommand
@@ -550,7 +550,17 @@ class XorWithAction(IndexRangeValueAction):
     accelerator = 'Ctrl+6'
 
 
-class RampUpAction(IndexRangeValueAction):
+class SliceValueAction(IndexRangeValueAction):
+    prompt = "Enter byte value: (default hex, prefix with # for decimal, %% for binary)"
+
+    def show_dialog(self):
+        slice_obj = prompt_for_slice(self.viewer.control, self.prompt, self.cmd.pretty_name)
+        if slice_obj is not None:
+            cmd = self.cmd(self.linked_base.segment, self.linked_base.carets.selected_ranges, slice_obj)
+            self.active_editor.process_command(cmd)
+
+
+class RampUpAction(SliceValueAction):
     """Starting with the user specified value at the first selected byte, loops
     over each byte in the selection and adds one to the value of the previous
     byte. At $ff, it wraps around to $00.
@@ -558,7 +568,7 @@ class RampUpAction(IndexRangeValueAction):
     cmd = commands.RampUpCommand
 
 
-class RampDownAction(IndexRangeValueAction):
+class RampDownAction(SliceValueAction):
     """Starting with the user specified value at the first selected byte, loops
     over each byte in the selection and subtracts one from the value of the
     previous byte. At $00, it wraps around to $ff.
