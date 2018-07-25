@@ -7952,7 +7952,7 @@ class CustomTreeCtrl(wx.ScrolledWindow):
                         self._editCtrl.StopEditing()
                     return
 
-                if self._editCtrl != None and item != self._editCtrl.item():
+                if self._editCtrl != None:
                     self._editCtrl.StopEditing()
 
                 self._hasFocus = True
