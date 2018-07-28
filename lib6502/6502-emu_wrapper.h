@@ -12,6 +12,9 @@ extern Instruction inst;
 
 extern int jumping;
 
+extern void *write_addr;
+extern void *read_addr;
+
 /* macros to save variables to (possibly unaligned) data buffer */
 
 #define save16(buf, var) memcpy(buf, &var, 2)
@@ -39,6 +42,9 @@ typedef struct {
         uint8_t unused1;
         uint8_t unused2;
 
+        uint16_t memory_access[MAIN_MEMORY_SIZE];
+        uint8_t access_type[MAIN_MEMORY_SIZE];
+
         uint8_t PC[2];
         uint8_t A;
         uint8_t X;
@@ -59,6 +65,6 @@ void lib6502_get_current_state(output_t *output);
 
 void lib6502_restore_state(output_t *output);
 
-int lib6502_step_cpu();
+int lib6502_step_cpu(frame_status_t *output);
 
 int lib6502_next_frame(void *input, output_t *output, breakpoints_t *state);

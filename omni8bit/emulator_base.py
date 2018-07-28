@@ -71,6 +71,14 @@ class EmulatorBase(Debugger):
         return self.output['state'][0]
 
     @property
+    def memory_access_array(self):
+        return self.output['memory_access'][0]
+
+    @property
+    def access_type_array(self):
+        return self.output['access_type'][0]
+
+    @property
     def current_frame_number(self):
         return self.output['frame_number'][0]
 
@@ -179,12 +187,17 @@ class EmulatorBase(Debugger):
 
     def parse_state(self):
         base = np.byte_bounds(self.output)[0]
-        self.video_start_offset = np.byte_bounds(self.video_array)[0] - base
-        self.audio_start_offset = np.byte_bounds(self.audio_array)[0] - base
         self.state_start_offset = np.byte_bounds(self.state_array)[0] - base
+
+        memaccess_offset = np.byte_bounds(self.memory_access_array)[0] - base
+        memtype_offset = np.byte_bounds(self.access_type_array)[0] - base
+        video_offset = np.byte_bounds(self.video_array)[0] - base
+        audio_offset = np.byte_bounds(self.audio_array)[0] - base
         self.segments = [
-            (self.video_start_offset, len(self.video_array), 0, "Video Frame"),
-            (self.audio_start_offset, len(self.audio_array), 0, "Audio Data"),
+            (memaccess_offset, self.memory_access_array.nbytes, 0, "Memory Access"),
+            (memtype_offset, self.access_type_array.nbytes, 0, "Access Type"),
+            (video_offset, self.video_array.nbytes, 0, "Video Frame"),
+            (audio_offset, self.audio_array.nbytes, 0, "Audio Data"),
         ]
 
     def generate_extra_segments(self):

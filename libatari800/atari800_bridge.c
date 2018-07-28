@@ -39,6 +39,12 @@ int a8bridge_init(void) {
 	if (err == thrd_success) {
 		err = thrd_create(&frame_thread, threaded_frame, (void *)NULL);
 	}
+	if (err == thrd_success) {
+		printf("a8bridge_init: successfully created threading context\n");
+	}
+	else {
+		printf("a8bridge_init: failed creating threading context: %d\n", err);
+	}
 	return err;
 }
 
