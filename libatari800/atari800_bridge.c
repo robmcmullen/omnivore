@@ -8,6 +8,7 @@
 #include "log.h"
 #include "input.h"
 #include "platform.h"
+#include "cpu.h"
 #ifdef SOUND
 #include "sound.h"
 #endif
@@ -24,7 +25,7 @@ mtx_t calculating_frame;
 cnd_t talking_stick;
 thrd_t frame_thread;
 
-breakpoints_t *LIBATRAI800_Breakpoints = NULL;
+breakpoints_t *LIBATARI800_Breakpoints = NULL;
 
 int threaded_frame(void *arg);
 
@@ -46,6 +47,49 @@ int a8bridge_init(void) {
 		printf("a8bridge_init: failed creating threading context: %d\n", err);
 	}
 	return err;
+}
+
+
+int a8bridge_register_callback(uint16_t token, uint16_t addr) {
+	int value;
+
+	switch (token) {
+		case REG_A:
+		value = CPU_regA;
+		break;
+
+		case REG_X:
+		value = CPU_regX;
+		break;
+
+		case REG_Y:
+		value = CPU_regY;
+		break;
+
+		case REG_PC:
+		value = CPU_regPC;
+		break;
+
+		default:
+		value = 0;
+	}
+	printf("a8bridge_register_callback: token=%d addr=%04x value=%04x\n", token, addr, value);
+	return value;
+}
+
+
+
+int LIBATARI800_CheckBreakpoints() {
+	int bpid;
+	int cycles = 0; /*fixme*/
+
+	bpid = libdebugger_check_breakpoints(LIBATARI800_Breakpoints, cycles, &a8bridge_register_callback);
+	if (bpid >= 0) {
+		LIBATARI800_Output_array->frame_status = FRAME_BREAKPOINT;
+		LIBATARI800_Output_array->breakpoint_id = bpid;
+		return bpid;
+	}
+	return -1;
 }
 
 
@@ -157,7 +201,7 @@ int a8bridge_next_frame(input_template_t *input, output_template_t *output, brea
 	LIBATARI800_Video_array = output->video;
 	LIBATARI800_Sound_array = output->audio;
 	LIBATARI800_Save_state = output->state;
-	LIBATRAI800_Breakpoints = breakpoints;
+	LIBATARI800_Breakpoints = breakpoints;
 	INPUT_key_code = PLATFORM_Keyboard();
 
 	libdebugger_calc_frame(&a8bridge_calc_frame, (frame_status_t *)output, breakpoints);
@@ -168,3 +212,5 @@ int a8bridge_next_frame(input_template_t *input, output_template_t *output, brea
 	}
 	return bpid;
 }
+
+

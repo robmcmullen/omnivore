@@ -178,6 +178,11 @@ int lib6502_calc_frame(frame_status_t *output, breakpoints_t *breakpoints)
 		output->instructions_since_power_on += 1;
 		output->current_cycle_in_frame += cycles;
 		output->cycles_since_power_on += cycles;
+		if (last_pc >= 0x5074 && last_pc < 0xC000) {
+			output->instructions_user += 1;
+			output->cycles_user += cycles;
+			// printf("pc=%04x user cycle = %ld\n", last_pc, output->cycles_user);
+		}
 		if (SR.bits.brk) {
 			/* automatically jump into debugger on BRK */
 			PC = last_pc;
@@ -196,10 +201,11 @@ int lib6502_calc_frame(frame_status_t *output, breakpoints_t *breakpoints)
 	return -1;
 }
 
-int lib6502_next_frame(void *input, output_t *output, breakpoints_t *breakpoints)
+int lib6502_next_frame(input_t *input, output_t *output, breakpoints_t *breakpoints)
 {
 	int bpid;
 
+	memory[0xc000] = input->keychar;
 	output->final_cycle_in_frame = cycles_per_frame - 1;
 	libdebugger_calc_frame(&lib6502_calc_frame, (frame_status_t *)output, breakpoints);
 	lib6502_get_current_state(output);

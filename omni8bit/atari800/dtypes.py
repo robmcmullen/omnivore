@@ -35,6 +35,8 @@ INPUT_DTYPE = np.dtype([
 OUTPUT_DTYPE = np.dtype([
     ("cycles_since_power_on", np.uint64),
     ("instructions_since_power_on", np.uint64),
+    ("cycles_user", np.uint64),
+    ("instructions_user", np.uint64),
     ("frame_number", np.uint32),
     ("current_cycle_in_frame", np.uint32),
     ("final_cycle_in_frame", np.uint32),

@@ -93,6 +93,10 @@ class EmulatorBase(Debugger):
         return self.output['current_cycle_in_frame'][0]
 
     @property
+    def cycles_user(self):
+        return self.output['cycles_user'][0]
+
+    @property
     def cycles_since_power_on(self):
         return self.output['cycles_since_power_on'][0]
 
@@ -290,7 +294,7 @@ class EmulatorBase(Debugger):
     def keypress(self, ascii_char):
         """Pass an ascii char to the emulator
         """
-        pass
+        self.send_char(ord(ascii_char))
 
     def joystick(self, stick_num, direction_value, trigger_pressed=False):
         """Pass a joystick/trigger value to the emulator
@@ -307,6 +311,29 @@ class EmulatorBase(Debugger):
         emulator.
         """
         pass
+
+    ##### Input routines
+
+    def send_char(self, key_char):
+        print(f"sending char: {key_char}")
+        self.input['keychar'] = key_char
+        self.input['keycode'] = 0
+        self.input['special'] = 0
+
+    def send_keycode(self, keycode):
+        self.input['keychar'] = 0
+        self.input['keycode'] = keycode
+        self.input['special'] = 0
+
+    def send_special_key(self, key_id):
+        self.input['keychar'] = 0
+        self.input['keycode'] = 0
+        self.input['special'] = key_id
+
+    def clear_keys(self):
+        self.input['keychar'] = 0
+        self.input['keycode'] = 0
+        self.input['special'] = 0
 
     # Utility functions
 

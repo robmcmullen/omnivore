@@ -249,27 +249,12 @@ class Atari800(EmulatorBase):
 
     ##### Input routines
 
-    def send_char(self, key_char):
-        self.input['keychar'] = key_char
-        self.input['keycode'] = 0
-        self.input['special'] = 0
-
-    def send_keycode(self, keycode):
-        self.input['keychar'] = 0
-        self.input['keycode'] = keycode
-        self.input['special'] = 0
-
     def send_special_key(self, key_id):
         self.input['keychar'] = 0
         self.input['keycode'] = 0
         self.input['special'] = key_id
         if key_id in [2, 3]:
             self.frame_event.append((self.frame_count + 2, self.clear_keys))
-
-    def clear_keys(self):
-        self.input['keychar'] = 0
-        self.input['keycode'] = 0
-        self.input['special'] = 0
 
     def set_option(self, state):
         self.input['option'] = state

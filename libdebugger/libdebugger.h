@@ -9,6 +9,8 @@
 typedef struct {
         uint64_t cycles_since_power_on;
         uint64_t instructions_since_power_on;
+        uint64_t cycles_user;
+        uint64_t instructions_user;
         uint32_t frame_number;
         uint32_t current_cycle_in_frame;
         uint32_t final_cycle_in_frame;

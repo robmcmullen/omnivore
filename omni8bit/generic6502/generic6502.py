@@ -106,11 +106,3 @@ class Generic6502(EmulatorBase):
 
     def load_disk(self, drive_num, pathname):
         lib6502.load_disk(drive_num, pathname)
-
-    ##### Input routines
-
-    def send_char(self, key_char):
-        pass
-
-    def process_key_state(self):
-        pass

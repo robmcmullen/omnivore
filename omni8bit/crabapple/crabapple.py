@@ -34,11 +34,3 @@ class Crabapple(Generic6502):
             (memory_offset + 0x4000, 0x2000, 0x4000, "Hi-res Page 2"),
         ]
         self.segments.extend(segments)
-
-    ##### Input routines
-
-    def send_char(self, key_char):
-        pass
-
-    def process_key_state(self):
-        pass
