@@ -4,6 +4,8 @@
 
 /* The debugger structure must match the definition in omni8bit/debugger/dtypes.py */
 
+#define MAIN_MEMORY_SIZE (256*256)
+
 typedef struct {
         uint64_t cycles_since_power_on;
         uint64_t instructions_since_power_on;
@@ -16,8 +18,16 @@ typedef struct {
         uint8_t breakpoint_id;
         uint8_t unused1;
         uint8_t unused2;
+
+        uint16_t memory_access[MAIN_MEMORY_SIZE];
+        uint8_t access_type[MAIN_MEMORY_SIZE];
 } frame_status_t;
 
+#define ACCESS_TYPE_READ 1
+#define ACCESS_TYPE_WRITE 2
+#define ACCESS_TYPE_EXECUTE 4
+#define ACCESS_TYPE_VIDEO 8
+#define ACCESS_TYPE_DISPLAY_LIST 16
 
 #define NUM_BREAKPOINT_ENTRIES 256
 #define TOKENS_PER_BREAKPOINT 64

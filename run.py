@@ -6,6 +6,7 @@ import time
 import numpy as np
 
 import omni8bit
+import omni8bit.generic6502.dtypes as d
 
 
 if __name__ == "__main__":
@@ -57,3 +58,8 @@ if __name__ == "__main__":
                     b = emu.create_breakpoint(0xf018)
                 if emu.current_frame_number == 190:
                     b = emu.step_into(100)
+
+        print(f"access frame {np.where(emu.memory_access_array > 0)[0]}")
+        print(f"read access {np.where(emu.access_type_array & d.ACCESS_TYPE_READ)[0]}")
+        print(f"write access{np.where(emu.access_type_array & d.ACCESS_TYPE_WRITE)[0]}")
+        print(f"exec access {np.where(emu.access_type_array & d.ACCESS_TYPE_EXECUTE)[0]}")

@@ -71,22 +71,55 @@ void lib6502_restore_state(output_t *buf) {
 	memcpy(memory, buf->memory, 1<<16);
 }
 
-
 uint16_t last_pc;
 
-int lib6502_step_cpu()
+int lib6502_step_cpu(frame_status_t *output)
 {
+	int count;
+	intptr_t index;
+
 	last_pc = PC;
+
 	inst = instructions[memory[PC]];
 
+	write_addr = NULL;
+	read_addr = NULL;
 	jumping = 0;
 	extra_cycles = 0;
+
+	output->memory_access[PC] = (uint16_t)output->frame_number;
+	output->access_type[PC] = ACCESS_TYPE_EXECUTE;
+	count = lengths[inst.mode];
+	if (count > 1) {
+		output->memory_access[PC + 1] = (uint16_t)output->frame_number;
+		output->access_type[PC + 1] = ACCESS_TYPE_EXECUTE;
+	}
+	if (count > 2) {
+		output->memory_access[PC + 2] = (uint16_t)output->frame_number;
+		output->access_type[PC + 2] = ACCESS_TYPE_EXECUTE;
+	}
+
 	inst.function();
-	if (jumping == 0) PC += lengths[inst.mode];
+	if (jumping == 0) PC += count;
 
 	// 7 cycle instructions (e.g. ROL $nnnn,X) don't have a penalty cycle for
 	// crossing a page boundary.
 	if (inst.cycles == 7) extra_cycles = 0;
+
+	if (read_addr != NULL) {
+		index = (intptr_t)read_addr - (intptr_t)(&memory[0]);
+		if (index >= 0 && index < MAIN_MEMORY_SIZE) {
+			output->memory_access[(uint16_t)index] = (uint16_t)output->frame_number;
+			output->access_type[(uint16_t)index] = ACCESS_TYPE_READ;
+		}
+	}
+	if (write_addr != NULL) {
+		index = (intptr_t)write_addr - (intptr_t)(&memory[0]);
+		if (index >= 0 && index < MAIN_MEMORY_SIZE) {
+			output->memory_access[(uint16_t)index] = (uint16_t)output->frame_number;
+			output->access_type[(uint16_t)index] = ACCESS_TYPE_WRITE;
+		}
+	}
 
 	return inst.cycles + extra_cycles;
 }
@@ -136,11 +169,11 @@ int lib6502_register_callback(uint16_t token, uint16_t addr) {
 
 int lib6502_calc_frame(frame_status_t *output, breakpoints_t *breakpoints)
 {
-	int cycles, bpid;
+	int cycles, bpid, count;
 
 	do {
 		last_pc = PC;
-		cycles = lib6502_step_cpu();
+		cycles = lib6502_step_cpu(output);
 		output->current_instruction_in_frame += 1;
 		output->instructions_since_power_on += 1;
 		output->current_cycle_in_frame += cycles;
@@ -159,6 +192,7 @@ int lib6502_calc_frame(frame_status_t *output, breakpoints_t *breakpoints)
 			return bpid;
 		}
 	} while (output->current_cycle_in_frame < output->final_cycle_in_frame);
+	output->frame_number += 1;
 	return -1;
 }
 

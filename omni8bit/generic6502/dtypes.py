@@ -9,6 +9,12 @@ AUDIO_SIZE = 2048
 MAIN_MEMORY_SIZE = 1<<16
 STATESAV_MAX_SIZE = MAIN_MEMORY_SIZE + 256
 
+ACCESS_TYPE_READ = 1
+ACCESS_TYPE_WRITE = 2
+ACCESS_TYPE_EXECUTE = 4
+ACCESS_TYPE_VIDEO = 8
+ACCESS_TYPE_DISPLAY_LIST = 16
+
 
 INPUT_DTYPE = np.dtype([
     ("keychar", np.uint8),
@@ -26,6 +32,8 @@ OUTPUT_DTYPE = np.dtype([
     ("breakpoint_id", np.uint8),
     ("unused1", np.uint8),
     ("unused2", np.uint8),
+    ("memory_access", np.uint16, MAIN_MEMORY_SIZE),
+    ("access_type", np.uint8, MAIN_MEMORY_SIZE),
     ("state", np.uint8, STATESAV_MAX_SIZE),
     ("video", np.uint8, VIDEO_SIZE),
     ("audio", np.uint8, AUDIO_SIZE),

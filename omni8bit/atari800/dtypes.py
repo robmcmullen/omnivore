@@ -6,6 +6,7 @@ VIDEO_HEIGHT = 240
 
 VIDEO_SIZE = VIDEO_WIDTH * VIDEO_HEIGHT
 AUDIO_SIZE = 2048
+MAIN_MEMORY_SIZE = 1<<16
 STATESAV_MAX_SIZE = 210000
 
 INPUT_DTYPE = np.dtype([
@@ -42,6 +43,8 @@ OUTPUT_DTYPE = np.dtype([
     ("breakpoint_id", np.uint8),
     ("unused1", np.uint8),
     ("unused2", np.uint8),
+    ("memory_access", np.uint16, MAIN_MEMORY_SIZE),
+    ("access_type", np.uint8, MAIN_MEMORY_SIZE),
     ("video", np.uint8, VIDEO_SIZE),
     ("audio", np.uint8, AUDIO_SIZE),
     ("tag_cpu", np.uint32),
