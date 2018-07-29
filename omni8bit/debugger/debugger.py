@@ -180,7 +180,7 @@ class Breakpoint:
 
     def disable(self):
         c = self.debugger.debug_cmd[0]
-        c['breakpoint_status'][self.id] &= ~dd.BREAKPOINT_DISABLED
+        c['breakpoint_status'][self.id] &= ~dd.BREAKPOINT_ENABLED
 
 
 class Debugger:

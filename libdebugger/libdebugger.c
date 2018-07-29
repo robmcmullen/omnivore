@@ -5,7 +5,7 @@
 #include "libdebugger.h"
 
 /*#define DEBUG_STACK */
-/*#define DEBUG_BREAKPOINT */
+#define DEBUG_BREAKPOINT 
 
 
 void libdebugger_init_array(breakpoints_t *breakpoints) {

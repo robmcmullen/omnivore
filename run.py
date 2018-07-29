@@ -37,6 +37,7 @@ if __name__ == "__main__":
                     num_breaks -= 1
                     if num_breaks <= 0:
                         brk.disable()
+                        print(f"DISABLING {brk}")
                 else:
                     print(f"break condition {brk} at {emu.current_cycle_in_frame} cycles into frame {emu.current_frame_number}")
                     time.sleep(.1)
