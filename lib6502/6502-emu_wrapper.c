@@ -87,15 +87,15 @@ int lib6502_step_cpu(frame_status_t *output)
 	jumping = 0;
 	extra_cycles = 0;
 
-	output->memory_access[PC] = (uint16_t)output->frame_number;
+	output->memory_access[PC] = 255;
 	output->access_type[PC] = ACCESS_TYPE_EXECUTE;
 	count = lengths[inst.mode];
 	if (count > 1) {
-		output->memory_access[PC + 1] = (uint16_t)output->frame_number;
+		output->memory_access[PC + 1] = 255;
 		output->access_type[PC + 1] = ACCESS_TYPE_EXECUTE;
 	}
 	if (count > 2) {
-		output->memory_access[PC + 2] = (uint16_t)output->frame_number;
+		output->memory_access[PC + 2] = 255;
 		output->access_type[PC + 2] = ACCESS_TYPE_EXECUTE;
 	}
 
@@ -109,14 +109,14 @@ int lib6502_step_cpu(frame_status_t *output)
 	if (read_addr != NULL) {
 		index = (intptr_t)read_addr - (intptr_t)(&memory[0]);
 		if (index >= 0 && index < MAIN_MEMORY_SIZE) {
-			output->memory_access[(uint16_t)index] = (uint16_t)output->frame_number;
+			output->memory_access[(uint16_t)index] = 255;
 			output->access_type[(uint16_t)index] = ACCESS_TYPE_READ;
 		}
 	}
 	if (write_addr != NULL) {
 		index = (intptr_t)write_addr - (intptr_t)(&memory[0]);
 		if (index >= 0 && index < MAIN_MEMORY_SIZE) {
-			output->memory_access[(uint16_t)index] = (uint16_t)output->frame_number;
+			output->memory_access[(uint16_t)index] = 255;
 			output->access_type[(uint16_t)index] = ACCESS_TYPE_WRITE;
 		}
 	}

@@ -191,23 +191,50 @@ next: ;
 	return -1;
 }
 
+/* Reduce brightness of each access at start of each frame */
+void libdebugger_memory_access_start_frame(frame_status_t *output) {
+	uint8_t val, *ptr;
+
+	for (ptr=output->memory_access; ptr<&output->memory_access[MAIN_MEMORY_SIZE]; ptr++) {
+		val = *ptr;
+		if (val > 0) *ptr = val - 1;
+	}
+}
+
+/* Reduce brightness of most recent access at end of frame, but not called if
+	the	frame doesn't reach the end due to a breakpoint. This allows the
+	location of the current access to be shown as value 255 when single
+	stepping.
+*/
+void libdebugger_memory_access_finish_frame(frame_status_t *output) {
+	uint8_t val, *ptr;
+
+	for (ptr=output->memory_access; ptr<&output->memory_access[MAIN_MEMORY_SIZE]; ptr++) {
+		val = *ptr;
+		if (val > 200) *ptr = 200;
+	}
+}
+
 int libdebugger_calc_frame(emu_frame_callback_ptr calc, frame_status_t *output, breakpoints_t *breakpoints) {
 	int bpid;
 
 	switch (output->frame_status) {
 		case FRAME_BREAKPOINT:
 		output->breakpoint_id = 0;
+		libdebugger_memory_access_finish_frame(output);
 		break;
 
 		default:
 		output->frame_number += 1;
 		output->current_instruction_in_frame = 0;
 		output->current_cycle_in_frame = 0;
+		libdebugger_memory_access_start_frame(output);
 	}
 	output->frame_status = FRAME_INCOMPLETE;
 	bpid = calc(output, breakpoints);
 	if (bpid < 0) {
 		output->frame_status = FRAME_FINISHED;
+		libdebugger_memory_access_finish_frame(output);
 	}
 	return bpid;
 }

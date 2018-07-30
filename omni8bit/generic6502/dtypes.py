@@ -37,7 +37,7 @@ OUTPUT_DTYPE = np.dtype([
     ("breakpoint_id", np.uint8),
     ("unused1", np.uint8),
     ("unused2", np.uint8),
-    ("memory_access", np.uint16, MAIN_MEMORY_SIZE),
+    ("memory_access", np.uint8, MAIN_MEMORY_SIZE),
     ("access_type", np.uint8, MAIN_MEMORY_SIZE),
     ("state", np.uint8, STATESAV_MAX_SIZE),
     ("video", np.uint8, VIDEO_SIZE),

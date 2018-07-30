@@ -21,7 +21,7 @@ typedef struct {
         uint8_t unused1;
         uint8_t unused2;
 
-        uint16_t memory_access[MAIN_MEMORY_SIZE];
+        uint8_t memory_access[MAIN_MEMORY_SIZE];
         uint8_t access_type[MAIN_MEMORY_SIZE];
 } frame_status_t;
 
