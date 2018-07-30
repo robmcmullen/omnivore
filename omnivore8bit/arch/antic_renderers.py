@@ -1127,7 +1127,12 @@ class MemoryAccessMap(BytePerPixelMemoryMap):
     name = "Memory Access"
 
     def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style):
-        array = get_numpy_memory_access_image(segment_viewer, bytes_per_row, nr, count, byte_values, style)
+        if speedups is not None:
+            source = byte_values.reshape((nr, bytes_per_row))
+            style = style.reshape((nr, bytes_per_row))
+            array = speedups.get_numpy_memory_access_image(segment_viewer, bytes_per_row, nr, count, source, style, 0, bytes_per_row)
+        else:
+            array = get_numpy_memory_access_image(segment_viewer, bytes_per_row, nr, count, byte_values, style)
         return array
 
 
