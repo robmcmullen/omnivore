@@ -187,7 +187,7 @@ class BitmapViewer(SegmentViewer):
 
     @property
     def window_title(self):
-        return self.machine.bitmap_renderer.name
+        return self.control.bitmap_renderer.name
 
     @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self, evt):
