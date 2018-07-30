@@ -724,7 +724,8 @@ class ByteViewersPlugin(FrameworkPlugin):
         from ..viewers.jumpman2 import JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer
         from ..viewers.emulator import Atari800Viewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer
         from ..viewers.apple2 import HiresPage1Viewer, HiresPage2Viewer, TextPage1Viewer, TextPage2Viewer
+        from ..viewers.memory import MemoryAccessViewer
 
-        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer, Atari800Viewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer, HiresPage1Viewer, HiresPage2Viewer, TextPage1Viewer, TextPage2Viewer]
+        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer, Atari800Viewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer, HiresPage1Viewer, HiresPage2Viewer, TextPage1Viewer, TextPage2Viewer, MemoryAccessViewer]
 
 plugins = [ByteViewersPlugin()]

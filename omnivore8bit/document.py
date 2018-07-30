@@ -230,6 +230,15 @@ class SegmentedDocument(BaseDocument):
                     return i
         return -1
 
+    def find_segment_by_name(self, name):
+        """Assuming segments had a origin param, find first segment that
+        has addr as a valid address
+        """
+        for i, s in enumerate(self.segments):
+            if s.name == name:
+                return s
+        return None
+
     def find_segments_in_range(self, addr):
         """Assuming segments had a origin param, find first segment that
         has addr as a valid address

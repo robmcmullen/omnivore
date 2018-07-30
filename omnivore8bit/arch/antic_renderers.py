@@ -1097,39 +1097,61 @@ class BytePerPixelMemoryMap(BaseRenderer):
             array = get_numpy_memory_map_image(segment_viewer, byte_values, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols)
         return array
 
+    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style):
+        array = get_numpy_memory_map_image(segment_viewer, bytes_per_row, nr, count, byte_values, style)
+        return array
 
-def get_numpy_memory_map_image(segment_viewer, byte_values, style, start_byte, end_byte, bytes_per_row, num_rows, start_col, num_cols):
+
+def get_numpy_memory_map_image(segment_viewer, bytes_per_row, nr, count, byte_values, style):
     log.debug("SLOW VERSION OF get_numpy_memory_map_image!!!")
-    num_rows_with_data = (end_byte - start_byte + bytes_per_row - 1) // bytes_per_row
 
-    log.debug(str([end_byte, start_byte, (end_byte - start_byte) // bytes_per_row]))
-    end_row = min(num_rows_with_data, num_rows)
-    end_col = min(bytes_per_row, start_col + num_cols)
-
-    width = end_col - start_col
-    height = num_rows_with_data
-    log.debug("memory map size: %dx%d, rows with data=%d, rows %d, cols %d-%d" % (width, height, num_rows_with_data, num_rows, start_col, start_col + width - 1))
-    array = np.empty((height, width, 3), dtype=np.uint8)
+    array = np.empty((nr, bytes_per_row, 3), dtype=np.uint8)
     array[:,:] = segment_viewer.preferences.empty_background_color.Get(False)
     selected_color = segment_viewer.preferences.highlight_background_color
 
-    y = 0
-    e = start_byte
-    for j in range(end_row):
-        x = 0
-        for i in range(start_col, end_col):
-            if e + i >= end_byte:
-                break
-            c = byte_values[j, i] ^ 0xff
-            s = style[j, i]
+    for j in range(nr):
+        for i in range(bytes_per_row):
+            c = byte_values[j * 256 + i] ^ 0xff
+            s = style[j * 256 + i]
             if s & selected_bit_mask:
                 r = selected_color[0] * c >> 8
                 g = selected_color[1] * c >> 8
                 b = selected_color[2] * c >> 8
-                array[y,x,:] = (r, g, b)
+                array[j,i,:] = (r, g, b)
             else:
-                array[y,x,:] = (c, c, c)
-            x += 1
-        y += 1
-        e += bytes_per_row
+                array[j,i,:] = (c, c, c)
+    return array
+
+
+class MemoryAccessMap(BytePerPixelMemoryMap):
+    name = "Memory Access"
+
+    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style):
+        array = get_numpy_memory_access_image(segment_viewer, bytes_per_row, nr, count, byte_values, style)
+        return array
+
+
+def get_numpy_memory_access_image(segment_viewer, bytes_per_row, nr, count, byte_values, style):
+
+    source = byte_values.reshape((nr, bytes_per_row))
+    style = style.reshape((nr, bytes_per_row))
+    array = np.empty((nr, bytes_per_row, 3), dtype=np.uint8)
+    array[:,:] = segment_viewer.preferences.empty_background_color.Get(False)
+    selected_color = segment_viewer.preferences.highlight_background_color
+
+    current_frame_number = segment_viewer.current_frame_number
+    print(f"SLOW VERSION OF get_numpy_memory_access_image; frame = {current_frame_number}")
+    print(source)
+
+    import omni8bit.debugger.dtypes as dd
+
+    for j in range(nr):
+        for i in range(bytes_per_row):
+            c = source[j, i]
+            s = style[j, i]
+
+            rgb = ((np.asarray(dd.default_access_type_colors[s])*c)/256).astype(np.uint8)
+            if s & selected_bit_mask:
+                rgb = rgb >> 8
+            array[j,i,:] = rgb
     return array
