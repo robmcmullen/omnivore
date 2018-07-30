@@ -21,12 +21,12 @@ class EmulatorSegmentParser(SegmentParser):
     def parse(self):
         r = self.segment_data
         self.segments.append(self.container_segment(r, 0, name=self.menu_name))
-        for start, count, offset, name in self.emulator_segments:
+        for start, count, offset, name in self.save_state_memory_blocks:
             if count > 0:
                 self.segments.append(DefaultSegment(r[start:start + count], offset, name))
 
-def segment_parser_factory(emulator_segments):
-    cls = type('EmulatorSegmentParser', (EmulatorSegmentParser, SegmentParser), dict(emulator_segments = emulator_segments))
+def segment_parser_factory(save_state_memory_blocks):
+    cls = type('EmulatorSegmentParser', (EmulatorSegmentParser, SegmentParser), dict(save_state_memory_blocks = save_state_memory_blocks))
     return cls
 
 
@@ -140,7 +140,7 @@ class EmulationDocument(SegmentedDocument):
             emu.next_frame()
         self.raw_bytes = emu.raw_array
         self.style = np.zeros([len(self.raw_bytes)], dtype=np.uint8)
-        self.parse_segments([segment_parser_factory(emu.segments)])
+        self.parse_segments([segment_parser_factory(emu.save_state_memory_blocks)])
         log.debug("Segments after boot: %s" % str(self.segments))
         self.create_timer()
         self.start_timer()
@@ -154,7 +154,7 @@ class EmulationDocument(SegmentedDocument):
             emu.next_frame()
         self.raw_bytes = emu.raw_array
         self.style = np.zeros([len(self.raw_bytes)], dtype=np.uint8)
-        self.parse_segments([segment_parser_factory(emu.segments)])
+        self.parse_segments([segment_parser_factory(emu.save_state_memory_blocks)])
         log.debug("Segments after boot: %s" % str(self.segments))
         self.create_timer()
         self.start_timer()
