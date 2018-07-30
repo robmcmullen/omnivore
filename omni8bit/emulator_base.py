@@ -45,7 +45,7 @@ class EmulatorBase(Debugger):
         self.history = {}
         self.offsets = None
         self.names = None
-        self.segments = None
+        self.save_state_memory_blocks = None
         self.active_event_loop = None
         self.main_memory = None
         self.compute_color_map()
@@ -176,7 +176,7 @@ class EmulatorBase(Debugger):
     def configure_io_arrays(self):
         self.low_level_interface.configure_state_arrays(self.input, self.output)
         self.parse_state()
-        self.generate_extra_segments()
+        self.generate_save_state_memory_blocks()
         self.cpu_state = self.calc_cpu_data_array()
         self.main_memory = self.calc_main_memory_array()
 
@@ -234,14 +234,14 @@ class EmulatorBase(Debugger):
         memtype_offset = np.byte_bounds(self.access_type_array)[0] - base
         video_offset = np.byte_bounds(self.video_array)[0] - base
         audio_offset = np.byte_bounds(self.audio_array)[0] - base
-        self.segments = [
+        self.save_state_memory_blocks = [
             (memaccess_offset, self.memory_access_array.nbytes, 0, "Memory Access"),
             (memtype_offset, self.access_type_array.nbytes, 0, "Access Type"),
             (video_offset, self.video_array.nbytes, 0, "Video Frame"),
             (audio_offset, self.audio_array.nbytes, 0, "Audio Data"),
         ]
 
-    def generate_extra_segments(self):
+    def generate_save_state_memory_blocks(self):
         pass
 
     def next_frame(self):

@@ -116,7 +116,7 @@ class Atari800(EmulatorBase):
             ]
         return emu_args
 
-    def generate_extra_segments(self):
+    def generate_save_state_memory_blocks(self):
         s = self.state_start_offset
         self.computed_dtypes = {
             'ANTIC': d.ANTIC_DTYPE,
@@ -138,7 +138,7 @@ class Atari800(EmulatorBase):
             (s + self.output[0]['tag_pia'], d.PIA_DTYPE.itemsize, 0, "PIA"),
             (s + self.output[0]['tag_pokey'], d.POKEY_DTYPE.itemsize, 0, "POKEY"),
         ]
-        self.segments.extend(segments)
+        self.save_state_memory_blocks.extend(segments)
 
     def boot_from_file(self, filename):
         log.debug(f"booting {self.pretty_name} from {filename}")

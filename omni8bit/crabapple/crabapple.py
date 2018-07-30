@@ -22,7 +22,7 @@ class Crabapple(Generic6502):
 
     mime_prefix = "application/vnd.apple2"
 
-    def generate_extra_segments(self):
+    def generate_save_state_memory_blocks(self):
         cpu_offset = self.state_start_offset
         memory_offset = cpu_offset + d.CPU_DTYPE.itemsize
         segments = [
@@ -33,4 +33,4 @@ class Crabapple(Generic6502):
             (memory_offset + 0x2000, 0x2000, 0x2000, "Hi-res Page 1"),
             (memory_offset + 0x4000, 0x2000, 0x4000, "Hi-res Page 2"),
         ]
-        self.segments.extend(segments)
+        self.save_state_memory_blocks.extend(segments)

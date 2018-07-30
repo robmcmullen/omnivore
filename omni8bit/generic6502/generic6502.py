@@ -50,14 +50,14 @@ class Generic6502(EmulatorBase):
     def program_counter(self, value):
         self.cpu_state[0] = value
 
-    def generate_extra_segments(self):
+    def generate_save_state_memory_blocks(self):
         cpu_offset = self.state_start_offset
         memory_offset = cpu_offset + d.CPU_DTYPE.itemsize
         segments = [
             (cpu_offset, d.CPU_DTYPE.itemsize, 0, "CPU Status"),
             (memory_offset, d.MAIN_MEMORY_SIZE, 0, "Main Memory"),
         ]
-        self.segments.extend(segments)
+        self.save_state_memory_blocks.extend(segments)
 
     def calc_cpu_data_array(self):
         offset = self.state_start_offset
