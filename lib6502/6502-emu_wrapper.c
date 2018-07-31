@@ -76,9 +76,11 @@ uint16_t last_pc;
 int lib6502_step_cpu(frame_status_t *output)
 {
 	int count;
+	uint8_t last_sp;
 	intptr_t index;
 
 	last_pc = PC;
+	last_sp = SP;
 
 	inst = instructions[memory[PC]];
 
@@ -118,6 +120,38 @@ int lib6502_step_cpu(frame_status_t *output)
 		if (index >= 0 && index < MAIN_MEMORY_SIZE) {
 			output->memory_access[(uint16_t)index] = 255;
 			output->access_type[(uint16_t)index] = ACCESS_TYPE_WRITE;
+		}
+	}
+
+	/* Maximum of 3 bytes will have changed on the stack */
+	if (last_sp < SP) {
+		last_sp++;
+		output->memory_access[0x100 + last_sp] = 255;
+		output->access_type[0x100 + last_sp] = ACCESS_TYPE_READ;
+		if (last_sp < SP) {
+			last_sp++;
+			output->memory_access[0x100 + last_sp] = 255;
+			output->access_type[0x100 + last_sp] = ACCESS_TYPE_READ;
+		}
+		if (last_sp < SP) {
+			last_sp++;
+			output->memory_access[0x100 + last_sp] = 255;
+			output->access_type[0x100 + last_sp] = ACCESS_TYPE_READ;
+		}
+	}
+	else if (last_sp > SP) {
+		output->memory_access[0x100 + last_sp] = 255;
+		output->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE;
+		last_sp--;
+		if (last_sp > SP) {
+			output->memory_access[0x100 + last_sp] = 255;
+			output->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE;
+			last_sp--;
+		}
+		if (last_sp > SP) {
+			output->memory_access[0x100 + last_sp] = 255;
+			output->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE;
+			last_sp--;
 		}
 	}
 
